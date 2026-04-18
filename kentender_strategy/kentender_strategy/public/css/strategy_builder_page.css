@@ -1,0 +1,21 @@
+/* Strategy Builder Desk page — two-pane layout */
+.kt-strategy-builder {
+	padding: 0 var(--padding-md, 1rem);
+}
+
+.kt-sb-row {
+	min-height: 360px;
+}
+
+.kt-sb-tree-pane .btn-group .btn {
+	margin-bottom: 0.25rem;
+}
+
+.kt-sb-tree-level .btn-link {
+	white-space: normal;
+	text-align: left;
+}
+
+.kt-sb-editor-pane .form-group {
+	margin-bottom: 1rem;
+}

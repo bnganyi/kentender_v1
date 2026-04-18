@@ -1,0 +1,109 @@
+/* Strategy Management workspace shell — Desk only, scoped via body.kt-strategy-shell */
+
+.kt-strategy-shell #editorjs .editor-js-container,
+.kt-strategy-shell #editorjs.desk-page {
+	--kt-surface-bg: var(--control-bg, #f4f5f6);
+	--kt-surface-border: var(--border-color, #e2e6ea);
+}
+
+/* Primary shortcut: read as a button, not a grey field */
+.kt-strategy-shell .shortcut-widget-box {
+	background: var(--primary, #0289f7) !important;
+	border: 1px solid transparent !important;
+	border-radius: var(--border-radius-lg, 8px);
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+	padding: 0.65rem 1rem !important;
+	min-height: 2.75rem;
+	align-items: center;
+	transition:
+		background 0.15s ease,
+		box-shadow 0.15s ease,
+		transform 0.1s ease;
+}
+
+.kt-strategy-shell .shortcut-widget-box:hover,
+.kt-strategy-shell .shortcut-widget-box:focus-visible {
+	background: var(--primary-dark, #0270d0) !important;
+	box-shadow: 0 2px 8px rgba(2, 137, 247, 0.35);
+}
+
+.kt-strategy-shell .shortcut-widget-box .widget-title,
+.kt-strategy-shell .shortcut-widget-box .widget-title span {
+	color: var(--neutral-white, #fff) !important;
+	font-weight: 600;
+}
+
+.kt-strategy-shell .shortcut-widget-box .widget-control .es-line-arrow-up-right,
+.kt-strategy-shell .shortcut-widget-box .widget-control svg {
+	color: var(--neutral-white, #fff) !important;
+	opacity: 0.95;
+}
+
+/* Section surfaces */
+.kt-strategy-shell .kt-strategy-section.kt-surface {
+	background: var(--kt-surface-bg);
+	border: 1px solid var(--kt-surface-border);
+	border-radius: var(--border-radius-lg, 8px);
+	padding: 1rem 1.15rem;
+	margin-bottom: 0.5rem;
+}
+
+.kt-strategy-shell .kt-strategy-section__title {
+	font-size: 1rem;
+	font-weight: 600;
+	margin: 0 0 0.5rem;
+	color: var(--text-color, #1f272e);
+}
+
+/* Intro line breathing room */
+.kt-strategy-shell .kt-strategy-intro {
+	margin-bottom: 0.75rem;
+	color: var(--text-muted, #74808b);
+}
+
+/* Two-column inactive cards */
+.kt-strategy-shell .kt-strategy-cards-row {
+	margin-top: 0.25rem;
+	margin-bottom: 0.5rem;
+}
+
+.kt-strategy-shell .kt-strategy-card {
+	position: relative;
+	height: 100%;
+	background: var(--kt-surface-bg);
+	border: 1px solid var(--kt-surface-border);
+	border-radius: var(--border-radius-lg, 8px);
+	padding: 1rem 1.1rem 2.75rem;
+	min-height: 7.5rem;
+	opacity: 0.95;
+	pointer-events: none;
+}
+
+.kt-strategy-shell .kt-strategy-card__title {
+	font-size: 1rem;
+	font-weight: 600;
+	margin: 0 0 0.35rem;
+	color: var(--text-color);
+}
+
+.kt-strategy-shell .kt-strategy-card__meta {
+	font-size: var(--text-sm, 0.85rem);
+	color: var(--text-muted);
+	margin: 0;
+	line-height: 1.35;
+}
+
+.kt-strategy-shell .kt-strategy-card__badge {
+	position: absolute;
+	right: 0.85rem;
+	bottom: 0.75rem;
+	font-size: 0.7rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	color: var(--text-muted);
+	background: var(--fg-color, #fff);
+	border: 1px solid var(--kt-surface-border);
+	border-radius: 999px;
+	padding: 0.2rem 0.55rem;
+}

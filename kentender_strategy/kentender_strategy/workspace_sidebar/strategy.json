@@ -1,0 +1,25 @@
+{
+ "app": "kentender_strategy",
+ "docstatus": 0,
+ "doctype": "Workspace Sidebar",
+ "header_icon": "color-swatch",
+ "idx": 0,
+ "items": [
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "home",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Strategy Management",
+   "link_to": "Strategy Management",
+   "link_type": "Workspace",
+   "show_arrow": 0,
+   "type": "Link"
+  }
+ ],
+ "module": "Kentender Strategy",
+ "name": "Strategy",
+ "standard": 1,
+ "title": "Strategy"
+}

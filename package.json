@@ -1,0 +1,13 @@
+{
+  "name": "kentender-v1-ui",
+  "private": true,
+  "scripts": {
+    "test:ui": "playwright test",
+    "test:ui:smoke": "playwright test tests/ui/smoke"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "dotenv": "^16.4.5",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,21 @@
+{
+ "app": "kentender_budget",
+ "bg_color": "blue",
+ "creation": "2026-04-18 12:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Desktop Icon",
+ "hidden": 0,
+ "icon": "finance",
+ "icon_type": "Link",
+ "idx": 42,
+ "label": "Budget",
+ "link_to": "Budget",
+ "link_type": "Workspace Sidebar",
+ "modified": "2026-04-18 12:00:00.000000",
+ "modified_by": "Administrator",
+ "name": "Budget",
+ "owner": "Administrator",
+ "roles": [],
+ "sidebar": "Budget",
+ "standard": 1
+}

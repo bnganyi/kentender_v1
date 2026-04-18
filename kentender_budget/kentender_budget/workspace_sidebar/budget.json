@@ -1,0 +1,25 @@
+{
+ "app": "kentender_budget",
+ "docstatus": 0,
+ "doctype": "Workspace Sidebar",
+ "header_icon": "finance",
+ "idx": 0,
+ "items": [
+  {
+   "child": 0,
+   "collapsible": 1,
+   "icon": "home",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Budget Management",
+   "link_to": "Budget Management",
+   "link_type": "Workspace",
+   "show_arrow": 0,
+   "type": "Link"
+  }
+ ],
+ "module": "Kentender Budget",
+ "name": "Budget",
+ "standard": 1,
+ "title": "Budget"
+}

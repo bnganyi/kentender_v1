@@ -1,0 +1,109 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "hash",
+ "creation": "2026-04-18 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "strategic_plan",
+  "parent_strategy_node",
+  "node_type",
+  "node_title",
+  "node_description",
+  "order_index",
+  "section_target",
+  "target_year",
+  "target_value",
+  "target_unit"
+ ],
+ "fields": [
+  {
+   "fieldname": "strategic_plan",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Strategic Plan",
+   "options": "Strategic Plan",
+   "reqd": 1
+  },
+  {
+   "fieldname": "parent_strategy_node",
+   "fieldtype": "Link",
+   "label": "Parent Strategy Node",
+   "options": "Strategy Node"
+  },
+  {
+   "fieldname": "node_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Node Type",
+   "options": "Program\nObjective\nTarget",
+   "reqd": 1
+  },
+  {
+   "fieldname": "node_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "node_description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "default": "0",
+   "fieldname": "order_index",
+   "fieldtype": "Int",
+   "label": "Order Index",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "section_target",
+   "fieldtype": "Section Break",
+   "label": "Target details"
+  },
+  {
+   "fieldname": "target_year",
+   "fieldtype": "Int",
+   "label": "Target Year"
+  },
+  {
+   "fieldname": "target_value",
+   "fieldtype": "Float",
+   "label": "Target Value"
+  },
+  {
+   "fieldname": "target_unit",
+   "fieldtype": "Data",
+   "label": "Target Unit"
+  }
+ ],
+ "links": [],
+ "modified": "2026-04-18 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Strategy",
+ "name": "Strategy Node",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "node_title",
+ "track_changes": 1
+}

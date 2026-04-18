@@ -1,0 +1,9 @@
+{
+  "hooks": {
+    "pre_write_code": [
+      {
+        "command": "python3 /home/midasuser/frappe-bench/apps/kentender_v1/scripts/guard_frappe_scaffolds.py"
+      }
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+/* Strategic Plan form — footer alignment + intro hierarchy hint (Desk) */
+
+.kt-sp-intro .kt-sp-hierarchy-hint {
+	border-left: 3px solid var(--primary, #0289f7);
+	padding-left: 0.75rem;
+	margin-top: 0.5rem;
+	color: var(--text-muted);
+}
+
+/* Ties bottom action to the form field column (see strategic_plan.js row/offset) */
+.kt-sp-footer {
+	margin-top: 1.5rem;
+}
+
+.kt-sp-footer .kt-sp-save-continue {
+	min-width: 11rem;
+}

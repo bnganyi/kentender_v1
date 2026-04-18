@@ -1,0 +1,21 @@
+{
+ "app": "kentender_strategy",
+ "bg_color": "blue",
+ "creation": "2026-04-18 12:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Desktop Icon",
+ "hidden": 0,
+ "icon": "color-swatch",
+ "icon_type": "Link",
+ "idx": 40,
+ "label": "Strategy",
+ "link_to": "Strategy",
+ "link_type": "Workspace Sidebar",
+ "modified": "2026-04-18 12:00:00.000000",
+ "modified_by": "Administrator",
+ "name": "Strategy",
+ "owner": "Administrator",
+ "roles": [],
+ "sidebar": "Strategy",
+ "standard": 1
+}

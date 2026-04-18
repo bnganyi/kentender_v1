@@ -1,0 +1,33 @@
+{
+ "app": "kentender_strategy",
+ "charts": [],
+ "content": "[{\"id\":\"sm_intro\",\"type\":\"paragraph\",\"data\":{\"text\":\"<div class=\\\"kt-strategy-intro\\\">Create and manage strategic plans and hierarchy.</div>\",\"col\":12}},{\"id\":\"sm_short\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Strategic Plan\",\"col\":12}},{\"id\":\"sm_sp1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"sm_sec_plans\",\"type\":\"paragraph\",\"data\":{\"text\":\"<div class=\\\"kt-strategy-section kt-surface\\\"><h4 class=\\\"kt-strategy-section__title\\\">Strategic Plans</h4><p class=\\\"text-muted mb-0\\\">No strategic plans yet. Create one to begin.</p></div>\",\"col\":12}},{\"id\":\"sm_sp2\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"sm_cards\",\"type\":\"paragraph\",\"data\":{\"text\":\"<div class=\\\"row kt-strategy-cards-row\\\"><div class=\\\"col-md-6 mb-3 mb-md-0\\\"><div class=\\\"kt-strategy-card kt-strategy-card--inactive\\\"><div class=\\\"kt-strategy-card__title\\\">Programs</div><p class=\\\"kt-strategy-card__meta\\\">Manage program hierarchy</p><span class=\\\"kt-strategy-card__badge\\\">Coming soon</span></div></div><div class=\\\"col-md-6\\\"><div class=\\\"kt-strategy-card kt-strategy-card--inactive\\\"><div class=\\\"kt-strategy-card__title\\\">Objectives</div><p class=\\\"kt-strategy-card__meta\\\">Track measurable objectives</p><span class=\\\"kt-strategy-card__badge\\\">Coming soon</span></div></div></div>\",\"col\":12}}]",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "color-swatch",
+ "idx": 0,
+ "is_hidden": 0,
+ "label": "Strategy Management",
+ "links": [],
+ "module": "Kentender Strategy",
+ "name": "Strategy Management",
+ "number_cards": [],
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 10.0,
+ "shortcuts": [
+  {
+   "color": "Blue",
+   "doc_view": "New",
+   "label": "New Strategic Plan",
+   "link_to": "Strategic Plan",
+   "type": "DocType"
+  }
+ ],
+ "title": "Strategy Management"
+}

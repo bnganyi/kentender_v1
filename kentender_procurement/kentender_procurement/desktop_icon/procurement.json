@@ -1,0 +1,21 @@
+{
+ "app": "kentender_procurement",
+ "bg_color": "blue",
+ "creation": "2026-04-18 12:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Desktop Icon",
+ "hidden": 0,
+ "icon": "buying",
+ "icon_type": "Link",
+ "idx": 41,
+ "label": "Procurement",
+ "link_to": "Procurement",
+ "link_type": "Workspace Sidebar",
+ "modified": "2026-04-18 12:00:00.000000",
+ "modified_by": "Administrator",
+ "name": "Procurement",
+ "owner": "Administrator",
+ "roles": [],
+ "sidebar": "Procurement",
+ "standard": 1
+}
