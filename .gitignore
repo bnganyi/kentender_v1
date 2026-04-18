@@ -1,6 +1,156 @@
+##############################
+# Bench / Frappe Core
+##############################
+
 node_modules/
 playwright-report/
 test-results/
 blob-report/
 playwright/.cache/
 .env.ui
+
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment (bench env)
+env/
+.env/
+.venv/
+
+# Node modules
+node_modules/
+
+# Logs
+logs/
+*.log
+
+# Redis / socket files
+*.sock
+*.pid
+
+# Compiled assets
+*.bundle.js
+*.min.js
+*.map
+public/build/
+public/dist/
+
+##############################
+# Sites (CRITICAL)
+##############################
+
+# Ignore all sites by default
+sites/*
+
+# Keep site config template if needed
+!sites/common_site_config.json
+!sites/apps.txt
+
+# NEVER commit these
+sites/*/private/
+sites/*/public/files/
+sites/*/backups/
+sites/*/locks/
+sites/*/site_config.json
+sites/*/site_config_backup.json
+
+##############################
+# Database dumps / backups
+##############################
+
+*.sql
+*.sql.gz
+*.dump
+*.bak
+
+##############################
+# OS / Editor junk
+##############################
+
+# macOS
+.DS_Store
+
+# Linux
+*~
+
+# Windows
+Thumbs.db
+desktop.ini
+
+##############################
+# IDEs / Editors
+##############################
+
+# VS Code / Cursor / Windsurf
+.vscode/
+.idea/
+*.swp
+*.swo
+
+##############################
+# Bench build artifacts
+##############################
+
+assets/
+public/assets/
+*.tar
+*.gz
+
+##############################
+# Python packaging
+##############################
+
+build/
+dist/
+*.egg-info/
+
+##############################
+# Frappe specific temp files
+##############################
+
+# Scheduler / worker artifacts
+celerybeat-schedule
+
+# frappe cache
+*.cache
+
+##############################
+# Test / coverage
+##############################
+
+.coverage
+htmlcov/
+.pytest_cache/
+
+##############################
+# Optional: local configs
+##############################
+
+*.local
+*.env.local
+
+##############################
+# Monorepo (kentender_v1)
+##############################
+
+# If you keep scripts/logs inside your monorepo
+apps/kentender_v1/logs/
+apps/kentender_v1/tmp/
+
+##############################
+# Allow tracked apps
+##############################
+
+# Ensure your custom apps are NOT ignored
+!apps/kentender_assets/
+!apps/kentender_budget/
+!apps/kentender_compliance/
+!apps/kentender_core/
+!apps/kentender_governance/
+!apps/kentender_integrations/
+!apps/kentender_procurement/
+!apps/kentender_stores/
+!apps/kentender_strategy/

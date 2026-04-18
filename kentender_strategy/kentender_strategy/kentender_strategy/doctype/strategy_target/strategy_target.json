@@ -1,0 +1,168 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-04-18 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "strategic_plan",
+  "program",
+  "objective",
+  "target_title",
+  "description",
+  "order_index",
+  "section_measurement",
+  "measurement_type",
+  "target_period_type",
+  "target_period_value",
+  "section_value",
+  "target_value_numeric",
+  "target_value_text",
+  "target_unit",
+  "section_baseline",
+  "baseline_value_numeric",
+  "baseline_value_text",
+  "baseline_year"
+ ],
+ "fields": [
+  {
+   "fieldname": "strategic_plan",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Strategic Plan",
+   "options": "Strategic Plan",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "program",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Program",
+   "options": "Strategy Program",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "objective",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Objective",
+   "options": "Strategy Objective",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "target_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Target Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text",
+   "label": "Description"
+  },
+  {
+   "default": "0",
+   "fieldname": "order_index",
+   "fieldtype": "Int",
+   "label": "Order Index",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_measurement",
+   "fieldtype": "Section Break",
+   "label": "Measurement"
+  },
+  {
+   "fieldname": "measurement_type",
+   "fieldtype": "Select",
+   "label": "Measurement Type",
+   "options": "Numeric\nPercentage\nCurrency\nMilestone\nBoolean",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_period_type",
+   "fieldtype": "Select",
+   "label": "Target Period Type",
+   "options": "Annual\nEnd of Plan\nQuarterly\nMilestone Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_period_value",
+   "fieldtype": "Data",
+   "label": "Target Period Value",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_value",
+   "fieldtype": "Section Break",
+   "label": "Values"
+  },
+  {
+   "fieldname": "target_value_numeric",
+   "fieldtype": "Float",
+   "label": "Target Value (Numeric)"
+  },
+  {
+   "fieldname": "target_value_text",
+   "fieldtype": "Text",
+   "label": "Target Value (Text)"
+  },
+  {
+   "fieldname": "target_unit",
+   "fieldtype": "Data",
+   "label": "Target Unit"
+  },
+  {
+   "fieldname": "section_baseline",
+   "fieldtype": "Section Break",
+   "label": "Baseline"
+  },
+  {
+   "fieldname": "baseline_value_numeric",
+   "fieldtype": "Float",
+   "label": "Baseline Value (Numeric)"
+  },
+  {
+   "fieldname": "baseline_value_text",
+   "fieldtype": "Text",
+   "label": "Baseline Value (Text)"
+  },
+  {
+   "fieldname": "baseline_year",
+   "fieldtype": "Int",
+   "label": "Baseline Year"
+  }
+ ],
+ "links": [],
+ "modified": "2026-04-18 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Strategy",
+ "name": "Strategy Target",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "target_title",
+ "track_changes": 1
+}

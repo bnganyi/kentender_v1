@@ -1,27 +1,93 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "hash",
  "creation": "2026-04-18 12:00:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "title",
+  "strategic_plan_name",
+  "procuring_entity",
+  "column_break_1",
+  "start_year",
+  "end_year",
+  "section_version",
+  "status",
+  "version_no",
+  "is_current_version",
+  "supersedes_plan",
   "description"
  ],
  "fields": [
   {
-   "description": "e.g. MOH Strategic Plan 2026\u20132030",
-   "fieldname": "title",
+   "fieldname": "strategic_plan_name",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Strategic Plan Name",
    "reqd": 1
   },
   {
-   "description": "Briefly describe the purpose and scope of this strategic plan.",
+   "fieldname": "procuring_entity",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Procuring Entity",
+   "options": "Company",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "start_year",
+   "fieldtype": "Int",
+   "label": "Start Year",
+   "reqd": 1
+  },
+  {
+   "fieldname": "end_year",
+   "fieldtype": "Int",
+   "label": "End Year",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_version",
+   "fieldtype": "Section Break",
+   "label": "Version"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nActive\nArchived",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "version_no",
+   "fieldtype": "Int",
+   "label": "Version Number",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_current_version",
+   "fieldtype": "Check",
+   "label": "Is Current Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "supersedes_plan",
+   "fieldtype": "Link",
+   "label": "Supersedes Plan",
+   "options": "Strategic Plan"
+  },
+  {
    "fieldname": "description",
-   "fieldtype": "Small Text",
+   "fieldtype": "Text",
    "label": "Description"
   }
  ],
@@ -30,7 +96,7 @@
  "modified_by": "Administrator",
  "module": "Kentender Strategy",
  "name": "Strategic Plan",
- "naming_rule": "Random",
+ "naming_rule": "",
  "owner": "Administrator",
  "permissions": [
   {
@@ -49,6 +115,6 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "title_field": "title",
+ "title_field": "strategic_plan_name",
  "track_changes": 1
 }

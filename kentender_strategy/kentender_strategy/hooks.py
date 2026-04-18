@@ -94,6 +94,8 @@ doctype_js = {"Strategic Plan": "public/js/strategic_plan.js"}
 # before_install = "kentender_strategy.install.before_install"
 # after_install = "kentender_strategy.install.after_install"
 
+after_migrate = "kentender_strategy.install.after_migrate"
+
 # Uninstallation
 # ------------
 
@@ -257,6 +259,22 @@ doctype_js = {"Strategic Plan": "public/js/strategic_plan.js"}
 # ignore_translatable_strings_from = []
 
 fixtures = [
-	{"dt": "DocType", "filters": [["name", "in", ["Strategy Navigation", "Strategic Plan", "Strategy Node"]]]},
+	{
+		"dt": "DocType",
+		"filters": [
+			[
+				"name",
+				"in",
+				[
+					"Strategy Navigation",
+					"Strategic Plan",
+					"Strategy Node",
+					"Strategy Program",
+					"Strategy Objective",
+					"Strategy Target",
+				],
+			]
+		],
+	},
 ]
 
