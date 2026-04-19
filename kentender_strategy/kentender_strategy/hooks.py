@@ -26,11 +26,11 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 app_include_css = [
-	"/assets/kentender_strategy/css/strategy_workspace.css",
+	"/assets/kentender_strategy/css/strategy_workspace.css?v=9",
 	"/assets/kentender_strategy/css/strategic_plan_form.css",
-	"/assets/kentender_strategy/css/strategy_builder_page.css",
+	"/assets/kentender_strategy/css/strategy_builder_page.css?v=10",
 ]
-app_include_js = "/assets/kentender_strategy/js/strategy_workspace.js"
+app_include_js = "/assets/kentender_strategy/js/strategy_workspace.js?v=9"
 
 page_js = {"strategy-builder": "public/js/strategy_builder_page.js"}
 
@@ -128,13 +128,19 @@ after_migrate = "kentender_strategy.install.after_migrate"
 # -----------
 # Permissions evaluated in scripted ways
 
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
+permission_query_conditions = {
+	"Strategic Plan": "kentender_strategy.permissions.get_strategic_plan_permission_query_conditions",
+	"Strategy Program": "kentender_strategy.permissions.get_strategy_program_permission_query_conditions",
+	"Strategy Objective": "kentender_strategy.permissions.get_strategy_objective_permission_query_conditions",
+	"Strategy Target": "kentender_strategy.permissions.get_strategy_target_permission_query_conditions",
+}
+
+has_permission = {
+	"Strategic Plan": "kentender_strategy.permissions.has_strategic_plan_permission",
+	"Strategy Program": "kentender_strategy.permissions.has_strategy_program_permission",
+	"Strategy Objective": "kentender_strategy.permissions.has_strategy_objective_permission",
+	"Strategy Target": "kentender_strategy.permissions.has_strategy_target_permission",
+}
 
 # Document Events
 # ---------------

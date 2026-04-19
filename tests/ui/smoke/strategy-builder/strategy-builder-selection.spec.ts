@@ -25,5 +25,5 @@ test('Selecting nodes updates editor pane correctly', async ({ page }, testInfo)
 
 	await expect(page.getByTestId('target-year-input')).toBeVisible();
 	await expect(page.getByTestId('target-value-input')).toBeVisible();
-	await expect(page.getByTestId('target-unit-input')).toBeVisible();
+	await expect(page.getByTestId('target-unit-select')).toBeVisible();
 });

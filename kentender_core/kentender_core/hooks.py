@@ -88,6 +88,8 @@ app_license = "mit"
 # before_install = "kentender_core.install.before_install"
 # after_install = "kentender_core.install.after_install"
 
+after_migrate = "kentender_core.install.after_migrate"
+
 # Uninstallation
 # ------------
 

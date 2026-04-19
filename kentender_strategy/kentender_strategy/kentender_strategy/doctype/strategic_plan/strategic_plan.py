@@ -17,9 +17,9 @@ class StrategicPlan(Document):
 	def _make_autoname(self) -> str:
 		if not self.procuring_entity:
 			frappe.throw(_("Procuring Entity is required before naming."))
-		abbr = frappe.db.get_value("Company", self.procuring_entity, "abbr")
+		abbr = frappe.db.get_value("Procuring Entity", self.procuring_entity, "entity_code")
 		if not abbr:
-			abbr = frappe.db.get_value("Company", self.procuring_entity, "name") or "ORG"
+			abbr = frappe.db.get_value("Procuring Entity", self.procuring_entity, "entity_name") or "ORG"
 		year = self.start_year or frappe.utils.getdate().year
 		prefix = f"{abbr}-.SP-.{year}-."
 		return make_autoname(prefix + ".####", self.doctype)

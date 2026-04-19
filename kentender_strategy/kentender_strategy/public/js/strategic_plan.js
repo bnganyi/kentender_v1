@@ -1,7 +1,7 @@
 // Strategic Plan form — guided creation UX. No extra fields.
 frappe.ui.form.on("Strategic Plan", {
 	refresh(frm) {
-		$(frm.wrapper).find(".kt-sp-intro, .kt-sp-footer").remove();
+		$(frm.wrapper).find(".kt-sp-intro, .kt-sp-footer, .kt-sp-back-bar").remove();
 
 		// Single primary action: hide toolbar Save; bottom button calls frm.save() (save() still works).
 		frm.disable_save();
@@ -10,6 +10,16 @@ frappe.ui.form.on("Strategic Plan", {
 		if (!$page.length) {
 			return;
 		}
+
+		const $back = $(
+			`<div class="kt-sp-back-bar mb-2"><button type="button" class="btn btn-xs btn-default" data-testid="strategic-plan-form-back-desktop">${__(
+				"← Back to Desktop",
+			)}</button></div>`,
+		);
+		$back.find("button").on("click", () => {
+			frappe.set_route("/desk");
+		});
+		$page.prepend($back);
 
 		const intro = $(
 			`<div class="kt-sp-intro alert alert-info mb-3" role="status">

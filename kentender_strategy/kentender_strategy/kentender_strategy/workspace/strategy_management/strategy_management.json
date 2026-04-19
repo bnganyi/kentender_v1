@@ -1,7 +1,7 @@
 {
  "app": "kentender_strategy",
  "charts": [],
- "content": "[{\"id\":\"sm_intro\",\"type\":\"paragraph\",\"data\":{\"text\":\"<div class=\\\"kt-strategy-intro\\\">Create and manage strategic plans and hierarchy.</div>\",\"col\":12}},{\"id\":\"sm_short\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Strategic Plan\",\"col\":12}},{\"id\":\"sm_sp1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"sm_master_detail\",\"type\":\"paragraph\",\"data\":{\"text\":\"<div class=\\\"row g-3 kt-strategy-master-detail\\\"><div class=\\\"col-md-5\\\"><div class=\\\"kt-strategy-section kt-surface\\\"><h4 class=\\\"kt-strategy-section__title\\\">Strategic Plans</h4><div id=\\\"kt-strategy-plans-root\\\"></div></div></div><div class=\\\"col-md-7\\\"><div class=\\\"kt-strategy-section kt-surface\\\"><div id=\\\"kt-strategy-detail-root\\\"></div></div></div></div>\",\"col\":12}}]",
+ "content": "[{\"id\":\"sm_sp1\",\"type\":\"spacer\",\"data\":{\"col\":12}}]",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -18,16 +18,18 @@
  "parent_page": "",
  "public": 1,
  "quick_lists": [],
- "roles": [],
- "sequence_id": 10.0,
- "shortcuts": [
+ "roles": [
   {
-   "color": "Blue",
-   "doc_view": "New",
-   "label": "New Strategic Plan",
-   "link_to": "Strategic Plan",
-   "type": "DocType"
+   "role": "System Manager"
+  },
+  {
+   "role": "Strategy Manager"
+  },
+  {
+   "role": "Planning Authority"
   }
  ],
+ "sequence_id": 10.0,
+ "shortcuts": [],
  "title": "Strategy Management"
 }

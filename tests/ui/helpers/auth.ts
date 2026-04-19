@@ -43,18 +43,29 @@ export async function loginAsAdministrator(page: Page) {
 	);
 }
 
+/** Default seeded KenTender v1 password (see kentender_core.seeds.constants.TEST_PASSWORD). */
+const DEFAULT_SEED_PASSWORD = 'Test@123';
+
 export async function loginAsStrategyManager(page: Page) {
 	await login(
 		page,
-		process.env.UI_STRATEGY_USER || '',
-		process.env.UI_STRATEGY_PASSWORD || '',
+		process.env.UI_STRATEGY_USER || 'strategy.manager@moh.test',
+		process.env.UI_STRATEGY_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
 
 export async function loginAsPlanningAuthority(page: Page) {
-  await login(
-    page,
-    process.env.UI_PLANNING_USER || '',
-    process.env.UI_PLANNING_PASSWORD || '',
-  );
+	await login(
+		page,
+		process.env.UI_PLANNING_USER || 'planning.authority@moh.test',
+		process.env.UI_PLANNING_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+export async function loginAsRequisitioner(page: Page) {
+	await login(
+		page,
+		process.env.UI_REQUISITIONER_USER || 'requisitioner@moh.test',
+		process.env.UI_REQUISITIONER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
 }

@@ -7,14 +7,18 @@ from kentender_strategy.services import strategy_builder as svc
 
 
 def _check_plan_write(plan_name: str):
-	frappe.has_permission("Strategic Plan", ptype="write", throw=True)
 	if not plan_name or not frappe.db.exists("Strategic Plan", plan_name):
 		frappe.throw(_("Strategic Plan not found."), frappe.DoesNotExistError)
+	doc = frappe.get_doc("Strategic Plan", plan_name)
+	frappe.has_permission(doc, ptype="write", throw=True)
 
 
 @frappe.whitelist()
 def get_strategy_tree(plan_name: str):
-	frappe.has_permission("Strategic Plan", ptype="read", throw=True)
+	if not plan_name or not frappe.db.exists("Strategic Plan", plan_name):
+		frappe.throw(_("Strategic Plan not found."), frappe.DoesNotExistError)
+	doc = frappe.get_doc("Strategic Plan", plan_name)
+	frappe.has_permission(doc, ptype="read", throw=True)
 	return svc.build_tree(plan_name)
 
 

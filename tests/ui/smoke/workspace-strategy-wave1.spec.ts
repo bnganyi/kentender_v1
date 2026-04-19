@@ -9,12 +9,24 @@ test('Strategy workspace shell shows actionable entry points', async ({ page }) 
 	await page.waitForLoadState('networkidle');
 
 	await expect(page.getByText(strategyWorkspace.heading).first()).toBeVisible();
-	// Frappe shortcut widgets use role="link" (see shortcut_widget.js), not <button>.
-	await expect(page.getByRole('link', { name: 'New Strategic Plan' })).toBeVisible();
+	await expect(page.getByTestId('strategy-landing-page')).toBeVisible({ timeout: 60_000 });
+	await expect(page.getByTestId('strategic-plan-create-button')).toBeVisible();
 	await expect(page.getByText('Strategic Plans', { exact: true }).first()).toBeVisible();
-	await expect(page.getByText('Programs', { exact: true }).first()).toBeVisible();
-	await expect(page.getByText('Objectives', { exact: true }).first()).toBeVisible();
-	await expect(
-		page.getByText('No strategic plans yet. Create one to begin.'),
-	).toBeVisible();
+	// Empty-state vs populated list depends on site data; do not assert here (see workspace-strategy-master-detail.spec.ts).
+});
+
+test('Strategy workspace shell appears after in-app navigation from desk home', async ({ page }) => {
+	await loginAsAdministrator(page);
+
+	// Start at desk home (same state as clicking Strategy from the desktop apps grid).
+	await page.goto('/desk');
+	await page.waitForLoadState('networkidle');
+
+	// Simulate Frappe in-app navigation to the strategy workspace (what the desktop icon does).
+	await page.evaluate(() => frappe.set_route('strategy-management'));
+	await page.waitForLoadState('networkidle');
+
+	await expect(page.getByText(strategyWorkspace.heading).first()).toBeVisible({ timeout: 30_000 });
+	await expect(page.getByTestId('strategy-landing-page')).toBeVisible({ timeout: 60_000 });
+	await expect(page.getByText('Strategic Plans', { exact: true }).first()).toBeVisible();
 });

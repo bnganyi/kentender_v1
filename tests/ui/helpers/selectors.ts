@@ -5,10 +5,11 @@ export const procurementModule = 'Procurement';
 
 export const strategyWorkspace = {
 	heading: 'Strategy Management',
-	route: '/app/strategy-management',
+	/** Frappe Desk resolves workspaces under `/desk/<slug>` (pathname must include `strategy-management` for client binding). */
+	route: '/desk/strategy-management',
 	/** Matches workspace intro paragraph (Wave 1 shell). */
 	placeholderBlurb: 'Create and manage strategic plans',
-	appPath: '/app/strategy-management',
+	appPath: '/desk/strategy-management',
 };
 
 export const budgetWorkspace = {

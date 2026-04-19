@@ -129,7 +129,10 @@ def _ensure_target(plan_name: str, program_name: str, objective_name: str, n: di
 	if existing:
 		return
 	year = n.get("target_year")
-	period_val = str(year) if year else str(frappe.utils.today()[:4])
+	if not year:
+		from frappe.utils import getdate
+
+		year = getdate().year
 	doc = frappe.get_doc(
 		{
 			"doctype": "Strategy Target",
@@ -141,7 +144,7 @@ def _ensure_target(plan_name: str, program_name: str, objective_name: str, n: di
 			"order_index": n.get("order_index") or 0,
 			"measurement_type": "Numeric",
 			"target_period_type": "Annual",
-			"target_period_value": period_val,
+			"target_year": year,
 			"target_value_numeric": n.get("target_value") or 0,
 			"target_unit": (n.get("target_unit") or "Unit").strip() or "Unit",
 		}

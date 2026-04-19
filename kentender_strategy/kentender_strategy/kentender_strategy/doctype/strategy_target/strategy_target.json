@@ -9,17 +9,20 @@
   "strategic_plan",
   "program",
   "objective",
+  "section_target_definition",
   "target_title",
   "description",
   "order_index",
   "section_measurement",
   "measurement_type",
-  "target_period_type",
-  "target_period_value",
-  "section_value",
+  "section_target_value",
   "target_value_numeric",
   "target_value_text",
   "target_unit",
+  "section_timeframe",
+  "target_period_type",
+  "target_year",
+  "target_due_date",
   "section_baseline",
   "baseline_value_numeric",
   "baseline_value_text",
@@ -54,6 +57,11 @@
    "search_index": 1
   },
   {
+   "fieldname": "section_target_definition",
+   "fieldtype": "Section Break",
+   "label": "Target Definition"
+  },
+  {
    "fieldname": "target_title",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -86,22 +94,9 @@
    "reqd": 1
   },
   {
-   "fieldname": "target_period_type",
-   "fieldtype": "Select",
-   "label": "Target Period Type",
-   "options": "Annual\nEnd of Plan\nQuarterly\nMilestone Date",
-   "reqd": 1
-  },
-  {
-   "fieldname": "target_period_value",
-   "fieldtype": "Data",
-   "label": "Target Period Value",
-   "reqd": 1
-  },
-  {
-   "fieldname": "section_value",
+   "fieldname": "section_target_value",
    "fieldtype": "Section Break",
-   "label": "Values"
+   "label": "Target value"
   },
   {
    "fieldname": "target_value_numeric",
@@ -117,6 +112,28 @@
    "fieldname": "target_unit",
    "fieldtype": "Data",
    "label": "Target Unit"
+  },
+  {
+   "fieldname": "section_timeframe",
+   "fieldtype": "Section Break",
+   "label": "Timeframe"
+  },
+  {
+   "fieldname": "target_period_type",
+   "fieldtype": "Select",
+   "label": "Target Period Type",
+   "options": "Annual\nEnd of Plan\nMilestone Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_year",
+   "fieldtype": "Int",
+   "label": "Target Year"
+  },
+  {
+   "fieldname": "target_due_date",
+   "fieldtype": "Date",
+   "label": "Target Due Date"
   },
   {
    "fieldname": "section_baseline",
@@ -158,6 +175,30 @@
    "role": "System Manager",
    "share": 1,
    "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Strategy Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Planning Authority",
+   "share": 0,
+   "write": 0
   }
  ],
  "sort_field": "modified",

@@ -1,5 +1,6 @@
 import frappe
 from frappe import _
+from frappe.utils import cint, getdate
 
 
 def get_plan_or_throw(plan_name: str):
@@ -57,7 +58,8 @@ def build_tree(plan_name: str) -> dict:
 					"order_index",
 					"measurement_type",
 					"target_period_type",
-					"target_period_value",
+					"target_year",
+					"target_due_date",
 					"target_value_numeric",
 					"target_value_text",
 					"target_unit",
@@ -79,7 +81,8 @@ def build_tree(plan_name: str) -> dict:
 						"doctype_ref": "Strategy Target",
 						"measurement_type": t.measurement_type,
 						"target_period_type": t.target_period_type,
-						"target_period_value": t.target_period_value,
+						"target_year": t.target_year,
+						"target_due_date": t.target_due_date,
 						"target_value_numeric": t.target_value_numeric,
 						"target_value_text": t.target_value_text,
 						"target_unit": t.target_unit or "",
@@ -103,6 +106,8 @@ def build_tree(plan_name: str) -> dict:
 			"name": plan.name,
 			"title": plan.strategic_plan_name,
 			"description": plan.description or "",
+			"start_year": plan.start_year,
+			"end_year": plan.end_year,
 		},
 		"nodes": rows,
 		"counts": counts,
@@ -210,9 +215,10 @@ def create_node(
 	# Target
 	obj = frappe.get_doc("Strategy Objective", parent_name)
 	mt = data.get("measurement_type") or "Numeric"
-	period_val = data.get("target_period_value") or (
-		str(data.get("target_year")) if data.get("target_year") is not None else str(frappe.utils.today()[:4])
-	)
+	ptype = data.get("target_period_type") or "Annual"
+	start_y = frappe.db.get_value("Strategic Plan", plan_name, "start_year")
+	default_year = cint(start_y) if start_y is not None else cint(frappe.utils.today()[:4])
+
 	row = {
 		"doctype": "Strategy Target",
 		"strategic_plan": plan_name,
@@ -222,18 +228,34 @@ def create_node(
 		"description": data.get("node_description") or data.get("description"),
 		"order_index": _next_order_index_target(plan_name, parent_name),
 		"measurement_type": mt,
-		"target_period_type": data.get("target_period_type") or "Annual",
-		"target_period_value": period_val,
+		"target_period_type": ptype,
 		"baseline_value_numeric": data.get("baseline_value_numeric"),
 		"baseline_value_text": data.get("baseline_value_text"),
 		"baseline_year": data.get("baseline_year"),
 	}
+	if ptype == "Annual":
+		ty = data.get("target_year")
+		if ty is None or ty == "":
+			ty = default_year
+		row["target_year"] = cint(ty)
+		row["target_due_date"] = None
+	elif ptype == "End of Plan":
+		row["target_year"] = None
+		row["target_due_date"] = None
+	else:
+		row["target_year"] = None
+		dd = data.get("target_due_date")
+		row["target_due_date"] = getdate(dd) if dd else getdate(frappe.utils.today())
+
 	if mt in ("Numeric", "Percentage", "Currency"):
 		nv = data.get("target_value_numeric")
 		if nv is None and data.get("target_value") is not None:
 			nv = data.get("target_value")
 		row["target_value_numeric"] = nv if nv is not None else 0
-		row["target_unit"] = (data.get("target_unit") or "").strip() or _("Unit")
+		if mt == "Percentage":
+			row["target_unit"] = "Percent"
+		else:
+			row["target_unit"] = (data.get("target_unit") or "").strip() or ("KES" if mt == "Currency" else _("Unit"))
 		row["target_value_text"] = ""
 	else:
 		row["target_value_text"] = (data.get("target_value_text") or "").strip() or _("Description")
@@ -273,7 +295,6 @@ def update_node(node_name: str, data: dict) -> None:
 		for f in (
 			"measurement_type",
 			"target_period_type",
-			"target_period_value",
 			"target_value_numeric",
 			"target_value_text",
 			"target_unit",
@@ -283,10 +304,12 @@ def update_node(node_name: str, data: dict) -> None:
 		):
 			if f in data and data[f] is not None:
 				doc.set(f, data[f])
-		if data.get("target_year") is not None and data.get("target_year") != "":
-			doc.target_period_value = str(data.get("target_year"))
-			if not doc.target_period_type:
-				doc.target_period_type = "Annual"
+		if "target_year" in data:
+			vy = data["target_year"]
+			doc.target_year = cint(vy) if vy not in (None, "") else None
+		if "target_due_date" in data:
+			vd = data["target_due_date"]
+			doc.target_due_date = getdate(vd) if vd not in (None, "") else None
 		if data.get("target_value") is not None and data.get("target_value") != "":
 			doc.target_value_numeric = data.get("target_value")
 		doc.save()

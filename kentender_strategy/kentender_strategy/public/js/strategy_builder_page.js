@@ -2,6 +2,10 @@
 frappe.provide("kentender_strategy.strategy_builder");
 
 (function () {
+	/** Preset units for Numeric measurement (stored as target_unit string). */
+	const NUMERIC_UNIT_PRESETS = ["Facilities", "Staff", "People", "Sites", "Index", "Unit"];
+	const CURRENCY_UNITS = ["KES", "USD", "EUR", "GBP"];
+	const UNIT_OTHER_VALUE = "__other__";
 	function planFromRoute() {
 		const r = frappe.get_route() || [];
 		return r.length > 1 ? r[1] : null;
@@ -84,6 +88,13 @@ frappe.provide("kentender_strategy.strategy_builder");
 			/** @type {string|null} After create, focus this node once tree reloads */
 			this._focusAfterLoad = null;
 			this.lastCounts = { programs: 0, objectives: 0, targets: 0 };
+			/** Plan years from tree API (for End of Plan hint). */
+			this.planMeta = { start_year: null, end_year: null };
+			/** Planning Authority v1: read-only builder (no create/write on hierarchy DocTypes). */
+			this.readOnly =
+				typeof frappe !== "undefined" &&
+				frappe.model &&
+				!frappe.model.can_write("Strategic Plan");
 		}
 
 		init() {
@@ -115,9 +126,21 @@ frappe.provide("kentender_strategy.strategy_builder");
 		}
 
 		renderShell() {
+			const esc = frappe.utils.escape_html;
+			const numericUnitOpts = NUMERIC_UNIT_PRESETS.map(
+				(u) => `<option value="${esc(u)}">${esc(u)}</option>`,
+			).join("");
+			const currencyOpts = CURRENCY_UNITS.map(
+				(c) => `<option value="${esc(c)}">${esc(c)}</option>`,
+			).join("");
 			this.$wrapper.html(`
 				<div class="kt-strategy-builder" data-testid="strategy-builder-page">
 					<div class="page-head-content pb-2">
+						<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+							<button type="button" class="btn btn-xs btn-default kt-sb-back-desktop" data-testid="strategy-builder-back-desktop">${__(
+								"← Back to Desktop",
+							)}</button>
+						</div>
 						<div class="kt-sb-readiness-host small mb-2"></div>
 					</div>
 					<div class="row kt-sb-row">
@@ -140,69 +163,112 @@ frappe.provide("kentender_strategy.strategy_builder");
 								)}</div>
 								<div class="kt-sb-editor-form" style="display:none;">
 									<div class="mb-2"><span class="badge" data-testid="selected-node-type"></span></div>
-									<div class="form-group">
-										<label>${__("Title")}</label>
-										<input type="text" class="form-control" data-testid="node-title-input" />
-									</div>
-									<div class="form-group">
-										<label>${__("Description")}</label>
-										<textarea class="form-control" rows="3" data-testid="node-description-input"></textarea>
+									<div class="kt-sb-section kt-sb-section--definition card shadow-sm border rounded kt-sb-section--compact mb-2">
+										<h6 class="text-muted text-uppercase small mb-2 kt-sb-definition-heading">${__("Definition")}</h6>
+										<div class="form-group kt-sb-fg-compact">
+											<label>${__("Title")}</label>
+											<input type="text" class="form-control" data-testid="node-title-input" />
+										</div>
+										<div class="form-group mb-0 kt-sb-fg-compact">
+											<label>${__("Description")}</label>
+											<textarea class="form-control" rows="3" data-testid="node-description-input"></textarea>
+										</div>
 									</div>
 									<div class="kt-sb-target-fields" style="display:none;">
-										<div class="form-group">
-											<label>${__("Measurement Type")}</label>
-											<select class="form-control" data-testid="measurement-type-input">
-												<option value="Numeric">${__("Numeric")}</option>
-												<option value="Percentage">${__("Percentage")}</option>
-												<option value="Currency">${__("Currency")}</option>
-												<option value="Milestone">${__("Milestone")}</option>
-												<option value="Boolean">${__("Boolean")}</option>
-											</select>
-										</div>
-										<div class="form-group">
-											<label>${__("Target Period Type")}</label>
-											<select class="form-control" data-testid="target-period-type-input">
-												<option value="Annual">${__("Annual")}</option>
-												<option value="End of Plan">${__("End of Plan")}</option>
-												<option value="Quarterly">${__("Quarterly")}</option>
-												<option value="Milestone Date">${__("Milestone Date")}</option>
-											</select>
-										</div>
-										<div class="form-group">
-											<label>${__("Period Value")}</label>
-											<input type="text" class="form-control" data-testid="target-period-value-input" />
-										</div>
-										<div class="kt-sb-target-numeric-fields">
-											<div class="form-group">
-												<label>${__("Target Year")}</label>
-												<input type="number" class="form-control" data-testid="target-year-input" />
+										<div class="kt-sb-section kt-sb-section--measurement card shadow-sm border rounded kt-sb-section--compact mb-2">
+											<h6 class="text-muted text-uppercase small mb-2">${__("Measurement")}</h6>
+											<div class="row g-2 kt-sb-measurement-layout">
+												<div class="col-md-6 kt-sb-measurement-left">
+													<div class="form-group kt-sb-fg-compact">
+														<label>${__("Measurement Type")}</label>
+														<select class="form-control" data-testid="measurement-type-input">
+															<option value="Numeric">${__("Numeric")}</option>
+															<option value="Percentage">${__("Percentage")}</option>
+															<option value="Currency">${__("Currency")}</option>
+															<option value="Milestone">${__("Milestone")}</option>
+															<option value="Boolean">${__("Boolean")}</option>
+														</select>
+													</div>
+													<div class="kt-sb-target-numeric-fields">
+														<div class="form-group kt-sb-fg-compact mb-0">
+															<label>${__("Target Value")}</label>
+															<input type="number" step="any" class="form-control" data-testid="target-value-input" />
+														</div>
+													</div>
+													<div class="kt-sb-target-text-fields" style="display:none;">
+														<div class="form-group mb-0 kt-sb-fg-compact">
+															<label>${__("Target Value")}</label>
+															<textarea class="form-control" rows="2" data-testid="target-value-text-input"></textarea>
+														</div>
+													</div>
+												</div>
+												<div class="col-md-6 kt-sb-measurement-unit-col kt-sb-target-numeric-fields">
+													<div class="form-group kt-sb-fg-compact mb-0 kt-sb-unit-block">
+														<label class="kt-sb-unit-label">${__("Unit")}</label>
+														<div class="kt-sb-unit-numeric-wrap">
+															<select class="form-control" data-testid="target-unit-select">${numericUnitOpts}
+																<option value="${UNIT_OTHER_VALUE}">${__("Other…")}</option>
+															</select>
+															<input type="text" class="form-control mt-2" data-testid="target-unit-other-input" style="display:none;" placeholder="${__(
+																"Specify unit",
+															)}" />
+														</div>
+														<div class="kt-sb-unit-currency-wrap" style="display:none;">
+															<select class="form-control" data-testid="target-unit-currency-select">${currencyOpts}</select>
+														</div>
+														<div class="kt-sb-unit-percent-wrap" style="display:none;">
+															<input type="text" class="form-control" data-testid="target-unit-input" readonly />
+														</div>
+													</div>
+												</div>
 											</div>
-											<div class="form-group">
-												<label>${__("Target Value (numeric)")}</label>
-												<input type="number" step="any" class="form-control" data-testid="target-value-input" />
+										</div>
+										<div class="kt-sb-section kt-sb-section--timeframe card shadow-sm border rounded kt-sb-section--compact mb-2">
+											<h6 class="text-muted text-uppercase small mb-2">${__("Timeframe")}</h6>
+											<div class="row g-2 align-items-end">
+												<div class="col-md-6">
+													<div class="form-group kt-sb-fg-compact mb-0">
+														<label>${__("Target Period Type")}</label>
+														<select class="form-control" data-testid="target-period-type-input">
+															<option value="Annual">${__("Annual")}</option>
+															<option value="End of Plan">${__("End of Plan")}</option>
+															<option value="Milestone Date">${__("Milestone Date")}</option>
+														</select>
+													</div>
+												</div>
+												<div class="col-md-6 kt-sb-timeframe-dynamic">
+													<div class="form-group kt-sb-fg-compact kt-sb-target-year-group mb-0">
+														<label>${__("Target Year")}</label>
+														<input type="number" class="form-control" data-testid="target-year-input" />
+													</div>
+													<div class="form-group kt-sb-fg-compact kt-sb-target-duedate-group mb-0" style="display:none;">
+														<label>${__("Target Due Date")}</label>
+														<input type="date" class="form-control" data-testid="target-due-date-input" />
+													</div>
+													<p class="small text-muted kt-sb-eop-hint mb-0" style="display:none;" data-testid="target-eop-hint"></p>
+												</div>
 											</div>
-											<div class="form-group">
-												<label>${__("Target Unit")}</label>
-												<input type="text" class="form-control" data-testid="target-unit-input" />
+										</div>
+										<div class="kt-sb-section kt-sb-section--baseline card shadow-sm border rounded kt-sb-section--compact mb-2">
+											<h6 class="text-muted text-uppercase small mb-2">${__("Baseline")}</h6>
+											<div class="row g-2">
+												<div class="col-md-6 kt-sb-baseline-fields">
+													<div class="form-group kt-sb-fg-compact mb-0">
+														<label>${__("Baseline value")}</label>
+														<input type="number" step="any" class="form-control" data-testid="baseline-value-numeric-input" />
+													</div>
+												</div>
+												<div class="col-md-6 kt-sb-baseline-year-col">
+													<div class="form-group kt-sb-fg-compact mb-0">
+														<label>${__("Baseline Year")}</label>
+														<input type="number" class="form-control" data-testid="baseline-year-input" />
+													</div>
+												</div>
 											</div>
-										</div>
-										<div class="kt-sb-target-text-fields" style="display:none;">
-											<div class="form-group">
-												<label>${__("Target Value (text)")}</label>
-												<textarea class="form-control" rows="2" data-testid="target-value-text-input"></textarea>
+											<div class="form-group mb-0 kt-sb-fg-compact">
+												<label>${__("Baseline Notes")}</label>
+												<textarea class="form-control" rows="2" data-testid="baseline-value-text-input"></textarea>
 											</div>
-										</div>
-										<div class="form-group kt-sb-baseline-fields">
-											<label>${__("Baseline (numeric, optional)")}</label>
-											<input type="number" step="any" class="form-control" data-testid="baseline-value-numeric-input" />
-										</div>
-										<div class="form-group">
-											<label>${__("Baseline (text, optional)")}</label>
-											<textarea class="form-control" rows="2" data-testid="baseline-value-text-input"></textarea>
-										</div>
-										<div class="form-group">
-											<label>${__("Baseline Year")}</label>
-											<input type="number" class="form-control" data-testid="baseline-year-input" />
 										</div>
 									</div>
 									<button type="button" class="btn btn-primary" data-testid="save-node-button">${__("Save")}</button>
@@ -219,16 +285,42 @@ frappe.provide("kentender_strategy.strategy_builder");
 			this.$emptyHint = this.$wrapper.find("[data-testid='empty-editor-hint']");
 			this.$editorForm = this.$wrapper.find(".kt-sb-editor-form");
 			this.$targetFields = this.$wrapper.find(".kt-sb-target-fields");
+			this.$eopHint = this.$wrapper.find("[data-testid='target-eop-hint']");
 
 			const me = this;
+			if (me.readOnly) {
+				me.$wrapper.addClass("kt-sb-readonly");
+				me.$wrapper.find(".kt-sb-tree-pane .btn-group").hide();
+				me.$wrapper.find("[data-testid='save-node-button'], [data-testid='delete-node-button']").hide();
+			}
 			this.$wrapper.find("[data-testid='add-program-button']").on("click", () => me.promptCreate("Program"));
 			this.$wrapper.find("[data-testid='add-objective-button']").on("click", () => me.promptCreate("Objective"));
 			this.$wrapper.find("[data-testid='add-target-button']").on("click", () => me.promptCreate("Target"));
 			this.$wrapper.find("[data-testid='save-node-button']").on("click", () => me.saveSelected());
 			this.$wrapper.find("[data-testid='delete-node-button']").on("click", () => me.deleteSelected());
 			this.$wrapper.on("change", "[data-testid='measurement-type-input']", function () {
-				me.toggleTargetEditorMode($(this).val());
+				const mt = $(this).val();
+				me.toggleTargetEditorMode(mt);
+				if (["Numeric", "Percentage", "Currency"].includes(mt)) {
+					const preset =
+						mt === "Percentage" ? "Percent" : mt === "Currency" ? "KES" : "";
+					me.fillTargetUnitFields(mt, preset);
+				}
 			});
+			this.$wrapper.on("change", "[data-testid='target-period-type-input']", function () {
+				me.toggleTimeframeFields($(this).val());
+			});
+			this.$wrapper.on("change", "[data-testid='target-unit-select']", function () {
+				me.syncNumericUnitOtherVisibility();
+			});
+			this.$wrapper.find("[data-testid='strategy-builder-back-desktop']").on("click", () => {
+				frappe.set_route("/desk");
+			});
+		}
+
+		syncNumericUnitOtherVisibility() {
+			const show = this.$wrapper.find("[data-testid='target-unit-select']").val() === UNIT_OTHER_VALUE;
+			this.$wrapper.find("[data-testid='target-unit-other-input']").toggle(show);
 		}
 
 		toggleTargetEditorMode(mt) {
@@ -236,6 +328,118 @@ frappe.provide("kentender_strategy.strategy_builder");
 			this.$wrapper.find(".kt-sb-target-numeric-fields").toggle(numeric);
 			this.$wrapper.find(".kt-sb-target-text-fields").toggle(!numeric);
 			this.$wrapper.find(".kt-sb-baseline-fields").toggle(numeric);
+			this.$wrapper.find(".kt-sb-measurement-unit-col").toggle(numeric);
+			const $mLeft = this.$wrapper.find(".kt-sb-measurement-left");
+			const $mLayout = this.$wrapper.find(".kt-sb-measurement-layout");
+			if (numeric) {
+				$mLayout.removeClass("kt-sb-measurement-layout--text");
+				$mLeft.removeClass("col-12").addClass("col-md-6");
+			} else {
+				$mLayout.addClass("kt-sb-measurement-layout--text");
+				$mLeft.removeClass("col-md-6").addClass("col-12");
+			}
+			const $byCol = this.$wrapper.find(".kt-sb-baseline-year-col");
+			$byCol.toggleClass("col-md-6", numeric).toggleClass("col-12", !numeric);
+			const $numWrap = this.$wrapper.find(".kt-sb-unit-numeric-wrap");
+			const $curWrap = this.$wrapper.find(".kt-sb-unit-currency-wrap");
+			const $pctWrap = this.$wrapper.find(".kt-sb-unit-percent-wrap");
+			$numWrap.hide();
+			$curWrap.hide();
+			$pctWrap.hide();
+			if (!numeric) {
+				return;
+			}
+			if (mt === "Percentage") {
+				$pctWrap.show();
+				this.$wrapper.find("[data-testid='target-unit-input']").val("Percent");
+			} else if (mt === "Currency") {
+				$curWrap.show();
+			} else {
+				$numWrap.show();
+				this.syncNumericUnitOtherVisibility();
+			}
+		}
+
+		fillTargetUnitFields(mt, unitStr) {
+			const u = (unitStr || "").trim();
+			if (mt === "Percentage") {
+				this.$wrapper.find("[data-testid='target-unit-input']").val("Percent");
+				return;
+			}
+			if (mt === "Currency") {
+				const $sel = this.$wrapper.find("[data-testid='target-unit-currency-select']");
+				if (u && CURRENCY_UNITS.includes(u)) {
+					$sel.val(u);
+				} else if (u) {
+					let found = false;
+					$sel.find("option").each(function () {
+						if ($(this).attr("value") === u) {
+							found = true;
+						}
+					});
+					if (!found) {
+						$sel.append($("<option>").attr("value", u).text(u));
+					}
+					$sel.val(u);
+				} else {
+					$sel.val("KES");
+				}
+				return;
+			}
+			if (mt === "Numeric") {
+				const $sel = this.$wrapper.find("[data-testid='target-unit-select']");
+				const $other = this.$wrapper.find("[data-testid='target-unit-other-input']");
+				if (!u) {
+					$sel.val("Unit");
+					$other.val("").hide();
+					return;
+				}
+				if (NUMERIC_UNIT_PRESETS.includes(u)) {
+					$sel.val(u);
+					$other.val("").hide();
+				} else {
+					$sel.val(UNIT_OTHER_VALUE);
+					$other.val(u).show();
+				}
+			}
+		}
+
+		getTargetUnitForSave(mt) {
+			if (mt === "Percentage") {
+				return this.$wrapper.find("[data-testid='target-unit-input']").val() || "Percent";
+			}
+			if (mt === "Currency") {
+				return this.$wrapper.find("[data-testid='target-unit-currency-select']").val() || "KES";
+			}
+			if (mt === "Numeric") {
+				const v = this.$wrapper.find("[data-testid='target-unit-select']").val();
+				if (v === UNIT_OTHER_VALUE) {
+					return this.$wrapper.find("[data-testid='target-unit-other-input']").val() || "Unit";
+				}
+				return v || "Unit";
+			}
+			return "";
+		}
+
+		toggleTimeframeFields(ptype) {
+			const annual = ptype === "Annual";
+			const milestone = ptype === "Milestone Date";
+			const eop = ptype === "End of Plan";
+			this.$wrapper.find(".kt-sb-target-year-group").toggle(annual);
+			this.$wrapper.find(".kt-sb-target-duedate-group").toggle(milestone);
+			const sy = this.planMeta.start_year;
+			const ey = this.planMeta.end_year;
+			if (eop) {
+				if (sy != null && sy !== "" && ey != null && ey !== "") {
+					this.$eopHint
+						.text(__("Aligned with the strategic plan period ({0}–{1}).", [String(sy), String(ey)]))
+						.show();
+				} else {
+					this.$eopHint.text(__("Uses the strategic plan period—no separate year or due date.")).show();
+				}
+			} else {
+				this.$eopHint.hide().text("");
+			}
 		}
 
 		defaultExpandAllParents() {
@@ -303,7 +507,17 @@ frappe.provide("kentender_strategy.strategy_builder");
 					args: { plan_name: me.planName },
 				})
 				.then((r) => {
-					me.flatNodes = (r.message && r.message.nodes) || [];
+					const payload = r.message || {};
+					me.flatNodes = payload.nodes || [];
+					me.planMeta = { start_year: null, end_year: null };
+					if (payload.plan) {
+						if (payload.plan.start_year != null) {
+							me.planMeta.start_year = payload.plan.start_year;
+						}
+						if (payload.plan.end_year != null) {
+							me.planMeta.end_year = payload.plan.end_year;
+						}
+					}
 					me.nodeByName = {};
 					me.flatNodes.forEach((n) => {
 						me.nodeByName[n.name] = n;
@@ -352,8 +566,14 @@ frappe.provide("kentender_strategy.strategy_builder");
 		labelForNode(n) {
 			const kind = n.node_type;
 			const t = n.title || "";
-			if (kind === "Target" && n.target_period_value) {
-				return `${kind} — ${n.target_period_value}: ${t}`;
+			if (kind === "Target") {
+				const pt = n.target_period_type || "";
+				if (pt === "Annual" && n.target_year) {
+					return `${kind} — ${n.target_year}: ${t}`;
+				}
+				if (pt === "Milestone Date" && n.target_due_date) {
+					return `${kind} — ${n.target_due_date}: ${t}`;
+				}
 			}
 			return `${kind} — ${t}`;
 		}
@@ -471,25 +691,30 @@ frappe.provide("kentender_strategy.strategy_builder");
 			this.$emptyHint.hide();
 			this.$editorForm.show();
 			this.$wrapper.find("[data-testid='selected-node-type']").text(n.node_type);
+			this.$wrapper
+				.find(".kt-sb-definition-heading")
+				.text(n.node_type === "Target" ? __("Target Definition") : __("Definition"));
 			this.$wrapper.find("[data-testid='node-title-input']").val(n.title || "");
 			this.$wrapper.find("[data-testid='node-description-input']").val(n.description || "");
 			if (n.node_type === "Target") {
 				this.$targetFields.show();
 				const mt = n.measurement_type || "Numeric";
+				const ptype = n.target_period_type || "Annual";
 				this.$wrapper.find("[data-testid='measurement-type-input']").val(mt);
-				this.$wrapper.find("[data-testid='target-period-type-input']").val(n.target_period_type || "Annual");
-				this.$wrapper.find("[data-testid='target-period-value-input']").val(n.target_period_value || "");
-				const py =
-					n.target_period_type === "Annual" && n.target_period_value
-						? parseInt(n.target_period_value, 10)
-						: "";
-				this.$wrapper.find("[data-testid='target-year-input']").val(py || "");
+				this.$wrapper.find("[data-testid='target-period-type-input']").val(ptype);
+				this.$wrapper.find("[data-testid='target-year-input']").val(
+					n.target_year !== null && n.target_year !== undefined ? n.target_year : "",
+				);
+				let due = n.target_due_date || "";
+				if (due && due.indexOf(" ") !== -1) {
+					due = due.split(" ")[0];
+				}
+				this.$wrapper.find("[data-testid='target-due-date-input']").val(due);
 				this.$wrapper.find("[data-testid='target-value-input']").val(
 					n.target_value_numeric !== null && n.target_value_numeric !== undefined
 						? n.target_value_numeric
 						: "",
 				);
-				this.$wrapper.find("[data-testid='target-unit-input']").val(n.target_unit || "");
 				this.$wrapper.find("[data-testid='target-value-text-input']").val(n.target_value_text || "");
 				this.$wrapper.find("[data-testid='baseline-value-numeric-input']").val(
 					n.baseline_value_numeric !== null && n.baseline_value_numeric !== undefined
@@ -499,12 +724,18 @@ frappe.provide("kentender_strategy.strategy_builder");
 				this.$wrapper.find("[data-testid='baseline-value-text-input']").val(n.baseline_value_text || "");
 				this.$wrapper.find("[data-testid='baseline-year-input']").val(n.baseline_year || "");
 				this.toggleTargetEditorMode(mt);
+				this.fillTargetUnitFields(mt, n.target_unit || "");
+				this.toggleTimeframeFields(ptype);
 			} else {
 				this.$targetFields.hide();
 			}
 		}
 
 		promptCreate(nodeType) {
+			if (this.readOnly) {
+				frappe.msgprint(__("You have read-only access to this plan."));
+				return;
+			}
 			const me = this;
 			let parent = null;
 			if (nodeType === "Objective") {
@@ -536,18 +767,24 @@ frappe.provide("kentender_strategy.strategy_builder");
 						fieldname: "target_period_type",
 						fieldtype: "Select",
 						label: __("Target Period Type"),
-						options: ["Annual", "End of Plan", "Quarterly", "Milestone Date"].join("\n"),
+						options: ["Annual", "End of Plan", "Milestone Date"].join("\n"),
 						default: "Annual",
 					},
 					{
-						fieldname: "target_period_value",
-						fieldtype: "Data",
-						label: __("Period Value"),
-						description: __("For Annual, enter the year (e.g. 2026)."),
+						fieldname: "target_year",
+						fieldtype: "Int",
+						label: __("Target Year"),
+						description: __("Required when period type is Annual."),
 					},
-					{ fieldname: "target_value", fieldtype: "Float", label: __("Target Value (numeric)") },
-					{ fieldname: "target_unit", fieldtype: "Data", label: __("Target Unit") },
-					{ fieldname: "target_value_text", fieldtype: "Small Text", label: __("Target Value (text)") },
+					{
+						fieldname: "target_due_date",
+						fieldtype: "Date",
+						label: __("Target Due Date"),
+						description: __("Required when period type is Milestone Date."),
+					},
+					{ fieldname: "target_value", fieldtype: "Float", label: __("Target Value") },
+					{ fieldname: "target_unit", fieldtype: "Data", label: __("Unit") },
+					{ fieldname: "target_value_text", fieldtype: "Small Text", label: __("Target Value") },
 				);
 			}
 
@@ -568,8 +805,8 @@ frappe.provide("kentender_strategy.strategy_builder");
 					if (nodeType === "Target") {
 						data.measurement_type = values.measurement_type || "Numeric";
 						data.target_period_type = values.target_period_type || "Annual";
-						data.target_period_value =
-							values.target_period_value || String(new Date().getFullYear());
+						data.target_year = values.target_year;
+						data.target_due_date = values.target_due_date;
 						data.target_value_numeric = values.target_value;
 						data.target_value_text = values.target_value_text || "";
 						data.target_unit = values.target_unit || "";
@@ -611,6 +848,10 @@ frappe.provide("kentender_strategy.strategy_builder");
 		}
 
 		saveSelected() {
+			if (this.readOnly) {
+				frappe.msgprint(__("You have read-only access to this plan."));
+				return;
+			}
 			const me = this;
 			if (!me.selectedName) {
 				return;
@@ -625,19 +866,20 @@ frappe.provide("kentender_strategy.strategy_builder");
 			};
 			if (n.node_type === "Target") {
 				const ptype = me.$wrapper.find("[data-testid='target-period-type-input']").val();
-				let periodVal = me.$wrapper.find("[data-testid='target-period-value-input']").val();
-				if (ptype === "Annual") {
-					const y = me.$wrapper.find("[data-testid='target-year-input']").val();
-					if (y) {
-						periodVal = String(y);
-					}
-				}
 				data.measurement_type = me.$wrapper.find("[data-testid='measurement-type-input']").val();
 				data.target_period_type = ptype;
-				data.target_period_value = periodVal || "";
+				data.target_year = null;
+				data.target_due_date = null;
+				if (ptype === "Annual") {
+					const y = me.$wrapper.find("[data-testid='target-year-input']").val();
+					data.target_year = y !== "" && y !== undefined ? parseInt(y, 10) : null;
+				} else if (ptype === "Milestone Date") {
+					const d = me.$wrapper.find("[data-testid='target-due-date-input']").val();
+					data.target_due_date = d || null;
+				}
 				data.target_value_numeric = me.$wrapper.find("[data-testid='target-value-input']").val();
 				data.target_value_text = me.$wrapper.find("[data-testid='target-value-text-input']").val();
-				data.target_unit = me.$wrapper.find("[data-testid='target-unit-input']").val();
+				data.target_unit = me.getTargetUnitForSave(data.measurement_type);
 				data.baseline_value_numeric = me.$wrapper.find("[data-testid='baseline-value-numeric-input']").val();
 				data.baseline_value_text = me.$wrapper.find("[data-testid='baseline-value-text-input']").val();
 				data.baseline_year = me.$wrapper.find("[data-testid='baseline-year-input']").val();
@@ -659,6 +901,10 @@ frappe.provide("kentender_strategy.strategy_builder");
 		}
 
 		deleteSelected() {
+			if (this.readOnly) {
+				frappe.msgprint(__("You have read-only access to this plan."));
+				return;
+			}
 			const me = this;
 			if (!me.selectedName) {
 				return;
@@ -680,22 +926,60 @@ frappe.provide("kentender_strategy.strategy_builder");
 	function bootStrategyBuilderPage() {
 		const el = frappe.pages["strategy-builder"];
 		if (!el) {
-			return;
+			return false;
 		}
 		const $w = $(el);
 		if ($w.data("kt_sb")) {
-			return;
+			return true;
 		}
 		const sb = new StrategyBuilder($w);
 		$w.data("kt_sb", sb);
 		sb.init();
-		$w.on("show", function () {
+		$w.off("show.kt_sb_boot").on("show.kt_sb_boot", function () {
 			const s = $w.data("kt_sb");
 			if (s && s.planName) {
 				s.loadTree();
 			}
 		});
+		return true;
 	}
 
-	bootStrategyBuilderPage();
+	function scheduleStrategyBuilderBoot() {
+		const r = frappe.get_route() || [];
+		if (r[0] !== "strategy-builder") {
+			return;
+		}
+		if (bootStrategyBuilderPage()) {
+			return;
+		}
+		// Page container can appear on the tick after route change; avoid permanent blank main area.
+		let n = 0;
+		const max = 60;
+		const t = setInterval(function () {
+			n += 1;
+			const r2 = frappe.get_route() || [];
+			if (r2[0] !== "strategy-builder") {
+				clearInterval(t);
+				return;
+			}
+			if (bootStrategyBuilderPage()) {
+				clearInterval(t);
+			} else if (n >= max) {
+				clearInterval(t);
+				// eslint-disable-next-line no-console
+				console.warn(
+					"Strategy Builder: page container not ready or boot failed. If the main area stays blank, check Page \"strategy-builder\" roles (Planning Authority / Strategy Manager) and reload.",
+				);
+			}
+		}, 50);
+	}
+
+	// Desk may eval this script before `frappe.pages["strategy-builder"]` exists; SPA navigation
+	// can fire page-change before listeners run. Cover router + delayed retries.
+	$(document).on("page-change", scheduleStrategyBuilderBoot);
+	if (frappe.router && frappe.router.on) {
+		frappe.router.on("change", scheduleStrategyBuilderBoot);
+	}
+
+	scheduleStrategyBuilderBoot();
 })();

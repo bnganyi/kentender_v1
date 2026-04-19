@@ -1,45 +1,29 @@
-/* Strategy Management workspace shell — Desk only, scoped via body.kt-strategy-shell */
+/*
+ * Strategy Management workspace — Desk only.
+ * Scope UI rules to `.kt-strategy-injected-shell` so badges/cards always style (body.kt-strategy-shell may toggle late).
+ */
+.kt-strategy-sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
 
+.kt-strategy-injected-shell #editorjs .editor-js-container,
+.kt-strategy-injected-shell #editorjs.desk-page,
 .kt-strategy-shell #editorjs .editor-js-container,
 .kt-strategy-shell #editorjs.desk-page {
 	--kt-surface-bg: var(--control-bg, #f4f5f6);
 	--kt-surface-border: var(--border-color, #e2e6ea);
 }
 
-/* Primary shortcut: read as a button, not a grey field */
-.kt-strategy-shell .shortcut-widget-box {
-	background: var(--primary, #0289f7) !important;
-	border: 1px solid transparent !important;
-	border-radius: var(--border-radius-lg, 8px);
-	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
-	padding: 0.65rem 1rem !important;
-	min-height: 2.75rem;
-	align-items: center;
-	transition:
-		background 0.15s ease,
-		box-shadow 0.15s ease,
-		transform 0.1s ease;
-}
-
-.kt-strategy-shell .shortcut-widget-box:hover,
-.kt-strategy-shell .shortcut-widget-box:focus-visible {
-	background: var(--primary-dark, #0270d0) !important;
-	box-shadow: 0 2px 8px rgba(2, 137, 247, 0.35);
-}
-
-.kt-strategy-shell .shortcut-widget-box .widget-title,
-.kt-strategy-shell .shortcut-widget-box .widget-title span {
-	color: var(--neutral-white, #fff) !important;
-	font-weight: 600;
-}
-
-.kt-strategy-shell .shortcut-widget-box .widget-control .es-line-arrow-up-right,
-.kt-strategy-shell .shortcut-widget-box .widget-control svg {
-	color: var(--neutral-white, #fff) !important;
-	opacity: 0.95;
-}
-
 /* Section surfaces */
+.kt-strategy-injected-shell .kt-strategy-section.kt-surface,
 .kt-strategy-shell .kt-strategy-section.kt-surface {
 	background: var(--kt-surface-bg);
 	border: 1px solid var(--kt-surface-border);
@@ -48,6 +32,7 @@
 	margin-bottom: 0.5rem;
 }
 
+.kt-strategy-injected-shell .kt-strategy-section__title,
 .kt-strategy-shell .kt-strategy-section__title {
 	font-size: 1rem;
 	font-weight: 600;
@@ -55,55 +40,322 @@
 	color: var(--text-color, #1f272e);
 }
 
-/* Intro line breathing room */
-.kt-strategy-shell .kt-strategy-intro {
+/* Root injected wrapper (always present when Strategy landing is shown) */
+div.kt-strategy-injected-shell {
 	margin-bottom: 0.75rem;
-	color: var(--text-muted, #74808b);
 }
 
-/* Two-column inactive cards */
-.kt-strategy-shell .kt-strategy-cards-row {
-	margin-top: 0.25rem;
-	margin-bottom: 0.5rem;
+.kt-strategy-injected-shell .kt-strategy-workspace-header,
+.kt-strategy-shell .kt-strategy-workspace-header {
+	max-width: 100%;
 }
 
-.kt-strategy-shell .kt-strategy-card {
-	position: relative;
-	height: 100%;
-	background: var(--kt-surface-bg);
+.kt-strategy-injected-shell .kt-strategy-page-title,
+.kt-strategy-shell .kt-strategy-page-title {
+	color: var(--text-color, #1f272e);
+}
+
+.kt-strategy-injected-shell .kt-strategy-header-create,
+.kt-strategy-shell .kt-strategy-header-create {
+	margin-top: 0.15rem;
+}
+
+.kt-strategy-injected-shell .kt-strategy-master-detail,
+.kt-strategy-shell .kt-strategy-master-detail {
+	align-items: stretch;
+}
+
+/* Plan list (left) */
+.kt-strategy-injected-shell .kt-strategy-plan-list,
+.kt-strategy-shell .kt-strategy-plan-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	max-height: min(60vh, 28rem);
+	overflow-y: auto;
+}
+
+.kt-strategy-injected-shell .kt-strategy-plan-row,
+.kt-strategy-shell .kt-strategy-plan-row {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 0.5rem;
+	width: 100%;
+	text-align: left;
+	padding: 0.65rem 0.75rem;
 	border: 1px solid var(--kt-surface-border);
-	border-radius: var(--border-radius-lg, 8px);
-	padding: 1rem 1.1rem 2.75rem;
-	min-height: 7.5rem;
-	opacity: 0.95;
-	pointer-events: none;
+	border-radius: var(--border-radius, 6px);
+	background: var(--fg-color, #fff);
+	cursor: pointer;
+	transition:
+		background 0.12s ease,
+		border-color 0.12s ease;
 }
 
-.kt-strategy-shell .kt-strategy-card__title {
-	font-size: 1rem;
+.kt-strategy-injected-shell .kt-strategy-plan-row:hover,
+.kt-strategy-shell .kt-strategy-plan-row:hover {
+	background: var(--control-bg, #f4f5f6);
+}
+
+.kt-strategy-injected-shell .kt-strategy-plan-row.is-active,
+.kt-strategy-shell .kt-strategy-plan-row.is-active {
+	border-color: var(--primary, #0289f7);
+	background: var(--control-bg, #f4f5f6);
+	box-shadow: inset 3px 0 0 var(--primary, #0289f7);
+}
+
+.kt-strategy-injected-shell .kt-strategy-plan-row__main,
+.kt-strategy-shell .kt-strategy-plan-row__main {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.25rem;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.kt-strategy-injected-shell .kt-strategy-plan-row__title,
+.kt-strategy-shell .kt-strategy-plan-row__title {
+	display: block;
+	width: 100%;
 	font-weight: 600;
-	margin: 0 0 0.35rem;
+	font-size: 1rem;
 	color: var(--text-color);
-}
-
-.kt-strategy-shell .kt-strategy-card__meta {
-	font-size: var(--text-sm, 0.85rem);
-	color: var(--text-muted);
-	margin: 0;
 	line-height: 1.35;
 }
 
-.kt-strategy-shell .kt-strategy-card__badge {
-	position: absolute;
-	right: 0.85rem;
-	bottom: 0.75rem;
-	font-size: 0.7rem;
-	font-weight: 600;
-	text-transform: uppercase;
-	letter-spacing: 0.02em;
+.kt-strategy-injected-shell .kt-strategy-plan-row__meta,
+.kt-strategy-shell .kt-strategy-plan-row__meta {
+	display: block;
+	margin-top: 0.2rem;
+	font-size: 0.8125rem;
 	color: var(--text-muted);
-	background: var(--fg-color, #fff);
-	border: 1px solid var(--kt-surface-border);
+	font-weight: 500;
+}
+
+.kt-strategy-injected-shell .kt-strategy-plan-row__meta--empty,
+.kt-strategy-shell .kt-strategy-plan-row__meta--empty {
+	display: none;
+	margin: 0;
+}
+
+/*
+ * Status pills — high contrast so Draft vs Active vs Archived read at a glance.
+ * !important beats global Desk / Bootstrap rules on buttons and workspace text.
+ */
+.kt-strategy-injected-shell .kt-strategy-badge,
+.kt-strategy-shell .kt-strategy-badge {
+	display: inline-flex !important;
+	align-items: center;
+	justify-content: center;
+	font-size: 0.7rem !important;
+	font-weight: 700 !important;
+	line-height: 1.25;
+	padding: 0.35rem 0.65rem !important;
+	min-height: 1.45rem;
 	border-radius: 999px;
-	padding: 0.2rem 0.55rem;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	flex-shrink: 0;
+	white-space: nowrap;
+	border-width: 1px !important;
+	border-style: solid !important;
+	box-sizing: border-box;
+	vertical-align: middle;
+}
+
+/* Draft — warm amber (work in progress, not live) */
+.kt-strategy-injected-shell .kt-strategy-badge--draft,
+.kt-strategy-injected-shell [data-kt-status="draft"].kt-strategy-badge,
+.kt-strategy-shell .kt-strategy-badge--draft,
+.kt-strategy-shell [data-kt-status="draft"].kt-strategy-badge {
+	background: #fff3cd !important;
+	color: #664d03 !important;
+	border-color: #ffc107 !important;
+	box-shadow: inset 0 0 0 1px rgba(102, 77, 3, 0.12);
+}
+
+/* Active — strong green (approved / in force) */
+.kt-strategy-injected-shell .kt-strategy-badge--active,
+.kt-strategy-injected-shell [data-kt-status="active"].kt-strategy-badge,
+.kt-strategy-shell .kt-strategy-badge--active,
+.kt-strategy-shell [data-kt-status="active"].kt-strategy-badge {
+	background: #d1e7dd !important;
+	color: #0f5132 !important;
+	border-color: #198754 !important;
+	box-shadow: inset 0 0 0 1px rgba(25, 135, 84, 0.15);
+}
+
+/* Archived — neutral slate (historical) */
+.kt-strategy-injected-shell .kt-strategy-badge--archived,
+.kt-strategy-injected-shell [data-kt-status="archived"].kt-strategy-badge,
+.kt-strategy-shell .kt-strategy-badge--archived,
+.kt-strategy-shell [data-kt-status="archived"].kt-strategy-badge {
+	background: #e9ecef !important;
+	color: #495057 !important;
+	border-color: #adb5bd !important;
+	box-shadow: inset 0 0 0 1px rgba(73, 80, 87, 0.12);
+}
+
+/* Selected Plan Overview (right) — card + hero row + full-width stats */
+.kt-strategy-injected-shell .kt-strategy-detail-section.kt-surface,
+.kt-strategy-shell .kt-strategy-detail-section.kt-surface {
+	min-height: 8rem;
+	background: transparent !important;
+	border: none !important;
+	box-shadow: none !important;
+	padding: 0 !important;
+	margin-bottom: 0 !important;
+}
+
+.kt-strategy-injected-shell .kt-strategy-detail-overview,
+.kt-strategy-shell .kt-strategy-detail-overview {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 1rem 1.15rem 1.1rem;
+	border-radius: var(--border-radius-lg, 10px);
+	background: #fff;
+	border: 1px solid var(--kt-surface-border, #e2e6ea);
+	box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.kt-strategy-injected-shell .kt-strategy-detail__overview-heading,
+.kt-strategy-shell .kt-strategy-detail__overview-heading {
+	font-size: 0.6875rem;
+	font-weight: 700;
+	letter-spacing: 0.07em;
+	text-transform: uppercase;
+	margin: 0 0 0.85rem;
+	color: var(--text-muted, #74808b);
+}
+
+.kt-strategy-injected-shell .kt-strategy-detail__hero,
+.kt-strategy-shell .kt-strategy-detail__hero {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 0.75rem 1.25rem;
+	margin-bottom: 1.1rem;
+	padding-bottom: 1rem;
+	border-bottom: 1px solid var(--kt-surface-border, #e2e6ea);
+}
+
+.kt-strategy-injected-shell .kt-strategy-detail__hero-main,
+.kt-strategy-shell .kt-strategy-detail__hero-main {
+	flex: 1 1 14rem;
+	min-width: 0;
+}
+
+.kt-strategy-injected-shell .kt-strategy-detail__hero-badge,
+.kt-strategy-shell .kt-strategy-detail__hero-badge {
+	flex: 0 0 auto;
+	align-self: flex-start;
+	padding-top: 0.15rem;
+}
+
+.kt-strategy-injected-shell .kt-strategy-detail__title,
+.kt-strategy-shell .kt-strategy-detail__title {
+	font-size: 1.25rem;
+	font-weight: 600;
+	margin: 0 0 0.5rem;
+	color: var(--text-color);
+	line-height: 1.3;
+}
+
+.kt-strategy-injected-shell .kt-strategy-detail__years-row,
+.kt-strategy-shell .kt-strategy-detail__years-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0.35rem 0.5rem;
+	font-size: 0.9rem;
+}
+
+.kt-strategy-injected-shell .kt-strategy-detail__years-label,
+.kt-strategy-shell .kt-strategy-detail__years-label {
+	font-weight: 600;
+	color: var(--text-muted, #74808b);
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.kt-strategy-injected-shell .kt-strategy-detail__years-value,
+.kt-strategy-shell .kt-strategy-detail__years-value {
+	font-weight: 600;
+	color: var(--text-color);
+}
+
+/* Full-width stat tiles */
+.kt-strategy-injected-shell .kt-strategy-detail__stats,
+.kt-strategy-shell .kt-strategy-detail__stats {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 0.6rem;
+	margin-bottom: 1.1rem;
+	width: 100%;
+}
+
+@media (max-width: 700px) {
+	.kt-strategy-injected-shell .kt-strategy-detail__stats,
+	.kt-strategy-shell .kt-strategy-detail__stats {
+		grid-template-columns: 1fr;
+	}
+}
+
+.kt-strategy-injected-shell .kt-strategy-detail-stat,
+.kt-strategy-shell .kt-strategy-detail-stat {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	min-width: 0;
+	padding: 0.65rem 0.45rem;
+	border-radius: var(--border-radius, 8px);
+	background: var(--kt-surface-bg, #f4f5f6);
+	border: 1px solid var(--kt-surface-border, #e2e6ea);
+}
+
+.kt-strategy-injected-shell .kt-strategy-detail-stat__label,
+.kt-strategy-shell .kt-strategy-detail-stat__label {
+	display: block;
+	font-size: 0.65rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--text-muted, #74808b);
+	margin-bottom: 0.2rem;
+}
+
+.kt-strategy-injected-shell .kt-strategy-detail-stat__num,
+.kt-strategy-shell .kt-strategy-detail-stat__num {
+	display: block;
+	font-size: 1.5rem;
+	font-weight: 700;
+	line-height: 1.2;
+	color: var(--text-color);
+	font-variant-numeric: tabular-nums;
+}
+
+.kt-strategy-injected-shell .kt-strategy-detail__actions-group,
+.kt-strategy-shell .kt-strategy-detail__actions-group {
+	width: 100%;
+	padding-top: 0.15rem;
+}
+
+.kt-strategy-injected-shell .kt-strategy-detail__actions,
+.kt-strategy-shell .kt-strategy-detail__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	width: 100%;
+}
+
+.kt-strategy-injected-shell .kt-strategy-empty-wrap,
+.kt-strategy-shell .kt-strategy-empty-wrap {
+	padding: 0.15rem 0;
 }

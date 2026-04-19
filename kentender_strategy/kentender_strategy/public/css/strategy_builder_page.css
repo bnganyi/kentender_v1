@@ -1,10 +1,43 @@
 /* Strategy Builder Desk page — two-pane layout + hierarchy tree */
+
+/*
+ * Frappe sets `.page-container { background-color: var(--bg-color) }` (often grey in themes).
+ * Our app mounts directly under `#page-strategy-builder`; override the shell so the pane is not one flat grey block.
+ */
+#page-strategy-builder.page-container,
+body[data-route^="strategy-builder"] #page-strategy-builder.page-container {
+	background-color: #ffffff !important;
+}
+
 .kt-strategy-builder {
 	padding: 0 var(--padding-md, 1rem);
+	background-color: #ffffff;
 }
 
 .kt-sb-row {
 	min-height: 360px;
+}
+
+.kt-sb-row > [class*="col-"] {
+	background-color: #ffffff;
+}
+
+.kt-sb-back-desktop {
+	font-weight: 500;
+}
+
+/* Tree + editor: white surfaces (tree keeps a hairline separation from editor) */
+.kt-sb-tree-pane {
+	background-color: #ffffff;
+	padding-right: 0.5rem;
+}
+
+/* Editor pane: explicit white — do not rely on --fg-color (may match grey themes) */
+.kt-sb-editor-pane {
+	background-color: #ffffff;
+	border-radius: var(--border-radius-md, 6px);
+	border: 1px solid var(--border-color, #e2e6ea);
+	padding: 0.65rem 0.75rem 0.85rem;
 }
 
 .kt-sb-tree-pane .btn-group .btn {
@@ -173,5 +206,79 @@
 }
 
 .kt-sb-editor-pane .form-group {
-	margin-bottom: 1rem;
+	margin-bottom: 0.65rem;
+}
+
+.kt-sb-editor-pane .kt-sb-fg-compact {
+	margin-bottom: 0.5rem;
+}
+
+.kt-sb-editor-pane .kt-sb-fg-compact label {
+	margin-bottom: 0.2rem;
+	font-size: 0.8rem;
+	color: var(--text-muted, #74808b);
+}
+
+.kt-sb-editor-pane .kt-sb-section--compact {
+	padding: 0.65rem 0.85rem;
+}
+
+/* Section cards — visible on white: light border + soft shadow (not flat grey slabs) */
+.kt-sb-section.card {
+	background-color: #ffffff !important;
+	border-color: var(--border-color, #e2e6ea) !important;
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+}
+
+.kt-sb-section.card h6.text-uppercase {
+	letter-spacing: 0.04em;
+	font-size: 0.7rem;
+	margin-bottom: 0.5rem;
+	color: var(--text-muted, #74808b);
+	border-bottom: 1px solid var(--border-color, #e8eaec);
+	padding-bottom: 0.35rem;
+}
+
+.kt-sb-editor-pane .kt-sb-section--definition.card {
+	background-color: #ffffff !important;
+}
+
+/*
+ * Desk themes often style `.form-control` with --control-bg (grey). Force readable white fields in this editor only.
+ */
+#page-strategy-builder .kt-sb-editor-pane .form-control,
+body[data-route^="strategy-builder"] .kt-sb-editor-pane .form-control {
+	background-color: #ffffff !important;
+	color: var(--text-color, #36414c);
+	border: 1px solid var(--border-color, #d1d8dd) !important;
+	box-shadow: none;
+}
+
+#page-strategy-builder .kt-sb-editor-pane .form-control:focus,
+body[data-route^="strategy-builder"] .kt-sb-editor-pane .form-control:focus {
+	border-color: var(--primary, #5e64ff) !important;
+	box-shadow: 0 0 0 1px rgba(94, 100, 255, 0.2);
+}
+
+#page-strategy-builder .kt-sb-editor-pane .form-control[readonly],
+body[data-route^="strategy-builder"] .kt-sb-editor-pane .form-control[readonly] {
+	background-color: #f8f9fa !important;
+	color: var(--text-muted, #74808b);
+}
+
+.kt-sb-measurement-layout--text .kt-sb-measurement-left {
+	flex: 0 0 100%;
+	max-width: 100%;
+}
+
+/* Prevent Bootstrap flex columns from growing past half-width (short fields stay in two columns). */
+#page-strategy-builder .kt-sb-measurement-layout.row > [class*="col-"],
+body[data-route^="strategy-builder"] .kt-sb-measurement-layout.row > [class*="col-"] {
+	min-width: 0;
+}
+
+.kt-sb-eop-hint {
+	border-left: 3px solid var(--primary, #5e64ff);
+	padding-left: 0.5rem;
+	margin-top: 0.15rem;
 }
