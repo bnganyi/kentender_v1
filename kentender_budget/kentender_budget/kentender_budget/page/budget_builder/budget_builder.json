@@ -1,0 +1,29 @@
+{
+ "content": null,
+ "creation": "2026-04-20 16:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2026-04-20 16:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Budget",
+ "name": "budget-builder",
+ "owner": "Administrator",
+ "page_name": "budget-builder",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Strategy Manager"
+  },
+  {
+   "role": "Planning Authority"
+  }
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "Budget Builder"
+}

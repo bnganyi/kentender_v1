@@ -1,17 +1,149 @@
 // Scoped UX for Strategy Management workspace only (Desk).
-// Data-bound master–detail: Strategic Plan list + selected plan detail, counts, actions.
+// Data-bound master–detail: KPIs, work tabs, Strategic Plan list + selected plan detail (counts from landing API).
 
 (function () {
-	const PLANS_FIELDS = [
-		"name",
-		"strategic_plan_name",
-		"start_year",
-		"end_year",
-		"status",
-		"modified",
-	];
-
 	let workspaceLoadGen = 0;
+	/** @type {Array<object>|null} */
+	let landingPlans = null;
+	let selectedPlanName = null;
+	let bindScheduled = false;
+	/** @type {string|null} */
+	let pendingLandingReselect = null;
+	/** @type {'all'|'mywork'|'draft'|'active'|'archived'} */
+	let activeWorkTab = "all";
+	let workTabInitialized = false;
+	let workTabBindingsDone = false;
+
+	function userRoleNames() {
+		if (typeof frappe === "undefined" || !frappe.boot || !frappe.boot.user) {
+			return [];
+		}
+		if (frappe.session && frappe.session.user === "Administrator") {
+			return ["Administrator", "System Manager", "Strategy Manager", "Planning Authority"];
+		}
+		const roles = frappe.boot.user.roles || [];
+		return roles.map(function (r) {
+			return typeof r === "string" ? r : r.role;
+		});
+	}
+
+	function userHasRole(roleName) {
+		return userRoleNames().indexOf(roleName) !== -1;
+	}
+
+	function shouldUseInboxMyWorkSemantics() {
+		return userHasRole("Planning Authority") || userHasRole("Strategy Manager");
+	}
+
+	function passesMyWorkFilter(p) {
+		if (!shouldUseInboxMyWorkSemantics()) {
+			return true;
+		}
+		const uid = frappe.session.user;
+		const mine = p.owner === uid;
+		const st = String(p.status || "").trim();
+		if (userHasRole("Planning Authority")) {
+			return st === "Active";
+		}
+		if (userHasRole("Strategy Manager")) {
+			return mine;
+		}
+		return mine;
+	}
+
+	function filterPlansForWorkTab(plans, tab) {
+		if (!plans || !plans.length) {
+			return [];
+		}
+		if (tab === "all") {
+			return plans.slice();
+		}
+		if (tab === "mywork") {
+			return plans.filter(passesMyWorkFilter);
+		}
+		if (tab === "draft") {
+			return plans.filter(function (p) {
+				return String(p.status || "").trim() === "Draft";
+			});
+		}
+		if (tab === "active") {
+			return plans.filter(function (p) {
+				return String(p.status || "").trim() === "Active";
+			});
+		}
+		if (tab === "archived") {
+			return plans.filter(function (p) {
+				return String(p.status || "").trim() === "Archived";
+			});
+		}
+		return plans.slice();
+	}
+
+	function getDefaultWorkTab() {
+		if (frappe.session && frappe.session.user === "Administrator") {
+			return "all";
+		}
+		if (userHasRole("Planning Authority")) {
+			return "active";
+		}
+		if (userHasRole("Strategy Manager")) {
+			return "draft";
+		}
+		return "all";
+	}
+
+	function syncWorkTabButtons() {
+		const wrap = document.getElementById("kt-strategy-work-tabs");
+		if (!wrap) {
+			return;
+		}
+		wrap.querySelectorAll("[data-kt-tab]").forEach(function (btn) {
+			const t = btn.getAttribute("data-kt-tab");
+			const on = t === activeWorkTab;
+			btn.classList.toggle("btn-primary", on);
+			btn.classList.toggle("btn-default", !on);
+			btn.setAttribute("aria-selected", on ? "true" : "false");
+		});
+	}
+
+	function ensureWorkTabBindings() {
+		if (workTabBindingsDone) {
+			return;
+		}
+		const wrap = document.getElementById("kt-strategy-work-tabs");
+		if (!wrap) {
+			return;
+		}
+		workTabBindingsDone = true;
+		wrap.addEventListener("click", function (ev) {
+			const btn = ev.target.closest("button[data-kt-tab]");
+			if (!btn || !wrap.contains(btn)) {
+				return;
+			}
+			const tab = btn.getAttribute("data-kt-tab");
+			if (!tab || tab === activeWorkTab) {
+				return;
+			}
+			activeWorkTab = tab;
+			syncWorkTabButtons();
+			const plansRoot = document.getElementById("kt-strategy-plans-root");
+			const detailRoot = document.getElementById("kt-strategy-detail-root");
+			if (plansRoot && detailRoot) {
+				renderLandingListAndDetail(plansRoot, detailRoot);
+			}
+		});
+	}
+
+	function refreshStrategyLanding(resumeName) {
+		pendingLandingReselect = resumeName || selectedPlanName;
+		const plansRoot = document.getElementById("kt-strategy-plans-root");
+		const detailRoot = document.getElementById("kt-strategy-detail-root");
+		if (!plansRoot || !detailRoot) {
+			return;
+		}
+		plansRoot.dataset.ktStrategyLoaded = "0";
+		loadStrategyWorkspace(plansRoot, detailRoot);
+	}
 
 	function getWorkspacesPageRoot() {
 		return (
@@ -91,15 +223,79 @@
 			"</p>" +
 			'<div class="kt-strategy-header-create-slot" data-testid="strategic-plan-create-slot"></div>' +
 			"</div>" +
+			'<div class="kt-strategy-overview-metrics row g-3 mb-3" data-testid="strategy-overview-metrics">' +
+			'<div class="col-6 col-lg-3">' +
+			'<div class="kt-strategy-kpi-card kt-surface">' +
+			'<div class="kt-strategy-kpi-label">' +
+			escapeHtml(__("Total plans")) +
+			"</div>" +
+			'<div class="kt-strategy-kpi-value" data-testid="strategy-metric-total-plans">0</div>' +
+			"</div></div>" +
+			'<div class="col-6 col-lg-3">' +
+			'<div class="kt-strategy-kpi-card kt-surface">' +
+			'<div class="kt-strategy-kpi-label">' +
+			escapeHtml(__("Active")) +
+			"</div>" +
+			'<div class="kt-strategy-kpi-value" data-testid="strategy-metric-active">0</div>' +
+			"</div></div>" +
+			'<div class="col-6 col-lg-3">' +
+			'<div class="kt-strategy-kpi-card kt-surface">' +
+			'<div class="kt-strategy-kpi-label">' +
+			escapeHtml(__("Draft")) +
+			"</div>" +
+			'<div class="kt-strategy-kpi-value" data-testid="strategy-metric-draft">0</div>' +
+			"</div></div>" +
+			'<div class="col-6 col-lg-3">' +
+			'<div class="kt-strategy-kpi-card kt-surface">' +
+			'<div class="kt-strategy-kpi-label">' +
+			escapeHtml(__("Programs (total)")) +
+			"</div>" +
+			'<div class="kt-strategy-kpi-value" data-testid="strategy-metric-total-programs">0</div>' +
+			"</div></div>" +
+			"</div>" +
+			'<div class="row kt-strategy-overview-metrics kt-strategy-overview-metrics--secondary g-3 mb-3" data-testid="strategy-overview-metrics-secondary">' +
+			'<div class="col-6 col-lg-3 d-none" data-testid="strategy-kpi-my-drafts-wrap">' +
+			'<div class="kt-strategy-kpi-card kt-surface">' +
+			'<div class="kt-strategy-kpi-label">' +
+			escapeHtml(__("My drafts")) +
+			"</div>" +
+			'<div class="kt-strategy-kpi-value" data-testid="strategy-metric-my-drafts">0</div>' +
+			"</div></div>" +
+			'<div class="col-6 col-lg-3" data-testid="strategy-kpi-archived-wrap">' +
+			'<div class="kt-strategy-kpi-card kt-surface">' +
+			'<div class="kt-strategy-kpi-label">' +
+			escapeHtml(__("Archived")) +
+			"</div>" +
+			'<div class="kt-strategy-kpi-value" data-testid="strategy-metric-archived">0</div>' +
+			"</div></div>" +
+			"</div>" +
 			'<div class="row g-3 kt-strategy-master-detail">' +
-			'<div class="col-md-5">' +
+			'<div class="kt-strategy-col-list">' +
 			'<div class="kt-strategy-section kt-surface" data-testid="strategic-plans-section">' +
 			'<h4 class="kt-strategy-section__title">' +
 			escapeHtml(__("Strategic Plans")) +
 			"</h4>" +
+			'<div class="kt-strategy-work-tabs mb-2" role="tablist" id="kt-strategy-work-tabs" data-testid="strategy-work-tabs">' +
+			'<div class="btn-group btn-group-sm flex-wrap kt-strategy-tab-group" role="group">' +
+			'<button type="button" class="btn btn-primary" data-testid="strategy-tab-all" data-kt-tab="all" role="tab" aria-selected="true">' +
+			escapeHtml(__("All")) +
+			"</button>" +
+			'<button type="button" class="btn btn-default" data-testid="strategy-tab-my-work" data-kt-tab="mywork" role="tab" aria-selected="false">' +
+			escapeHtml(__("My Work")) +
+			"</button>" +
+			'<button type="button" class="btn btn-default" data-testid="strategy-tab-draft" data-kt-tab="draft" role="tab" aria-selected="false">' +
+			escapeHtml(__("Draft")) +
+			"</button>" +
+			'<button type="button" class="btn btn-default" data-testid="strategy-tab-active" data-kt-tab="active" role="tab" aria-selected="false">' +
+			escapeHtml(__("Active")) +
+			"</button>" +
+			'<button type="button" class="btn btn-default" data-testid="strategy-tab-archived" data-kt-tab="archived" role="tab" aria-selected="false">' +
+			escapeHtml(__("Archived")) +
+			"</button>" +
+			"</div></div>" +
 			'<div id="kt-strategy-plans-root"></div>' +
 			"</div></div>" +
-			'<div class="col-md-7">' +
+			'<div class="kt-strategy-col-detail">' +
 			'<div class="kt-strategy-section kt-surface kt-strategy-detail-section">' +
 			'<div id="kt-strategy-detail-root"></div>' +
 			"</div></div></div>";
@@ -206,6 +402,20 @@
 		document.body.classList.toggle("kt-strategy-shell", isStrategyWorkspaceRoute());
 	}
 
+	function removeStrategyLandingIfWrongRoute() {
+		document.querySelectorAll(".kt-strategy-injected-shell").forEach(function (el) {
+			el.remove();
+		});
+		document.body.classList.remove("kt-strategy-shell");
+		landingPlans = null;
+		selectedPlanName = null;
+		activeWorkTab = "all";
+		workTabInitialized = false;
+		workTabBindingsDone = false;
+		bindScheduled = false;
+		pendingLandingReselect = null;
+	}
+
 	function escapeHtml(s) {
 		if (s == null || s === undefined) return "";
 		return String(s)
@@ -282,48 +492,111 @@
 		slot.appendChild(btn);
 	}
 
-	function fetchStrategicPlans() {
+	function updateOverviewMetrics(portfolio) {
+		const p = portfolio || {};
+		const elTotal = document.querySelector('[data-testid="strategy-metric-total-plans"]');
+		const elActive = document.querySelector('[data-testid="strategy-metric-active"]');
+		const elDraft = document.querySelector('[data-testid="strategy-metric-draft"]');
+		const elProg = document.querySelector('[data-testid="strategy-metric-total-programs"]');
+		const elArch = document.querySelector('[data-testid="strategy-metric-archived"]');
+		const elMyD = document.querySelector('[data-testid="strategy-metric-my-drafts"]');
+		const wrapD = document.querySelector('[data-testid="strategy-kpi-my-drafts-wrap"]');
+		if (elTotal) {
+			const v = String(p.total_plans != null ? p.total_plans : 0);
+			elTotal.textContent = v;
+			elTotal.title = v;
+		}
+		if (elActive) {
+			const v = String(p.active_count != null ? p.active_count : 0);
+			elActive.textContent = v;
+			elActive.title = v;
+		}
+		if (elDraft) {
+			const v = String(p.draft_count != null ? p.draft_count : 0);
+			elDraft.textContent = v;
+			elDraft.title = v;
+		}
+		if (elProg) {
+			const v = String(p.total_programs != null ? p.total_programs : 0);
+			elProg.textContent = v;
+			elProg.title = v;
+		}
+		if (elArch) {
+			const v = String(p.archived_count != null ? p.archived_count : 0);
+			elArch.textContent = v;
+			elArch.title = v;
+		}
+		if (elMyD) {
+			const v = String(p.my_drafts_count != null ? p.my_drafts_count : 0);
+			elMyD.textContent = v;
+			elMyD.title = v;
+		}
+		if (wrapD) {
+			wrapD.classList.toggle("d-none", !userHasRole("Strategy Manager"));
+		}
+	}
+
+	function fetchLandingData() {
 		return new Promise((resolve, reject) => {
 			frappe.call({
-				method: "frappe.client.get_list",
-				args: {
-					doctype: "Strategic Plan",
-					fields: PLANS_FIELDS,
-					order_by: "modified desc",
-					limit_page_length: 1000,
-				},
+				method: "kentender_strategy.api.landing.get_strategy_landing_data",
 				callback(r) {
-					resolve(r.message || []);
+					if (r.exc) {
+						reject(r);
+						return;
+					}
+					resolve(r.message || { portfolio: {}, plans: [] });
 				},
-				error(r) {
-					reject(r);
+				error(err) {
+					reject(err);
 				},
 			});
 		});
 	}
 
-	function fetchCounts(planName) {
-		const f = { strategic_plan: planName };
-		return Promise.all([
-			frappe.db.count("Strategy Program", { filters: f }),
-			frappe.db.count("Strategy Objective", { filters: f }),
-			frappe.db.count("Strategy Target", { filters: f }),
-		]).then(([programs, objectives, targets]) => [
-			programs == null ? 0 : programs,
-			objectives == null ? 0 : objectives,
-			targets == null ? 0 : targets,
-		]);
-	}
-
-	function renderEmptyList(plansRoot) {
+	function renderEmptyList(plansRoot, emptyOpts) {
+		emptyOpts = emptyOpts || {};
+		const filtered = emptyOpts.filteredEmpty;
+		const msg = filtered ? __("No strategic plans match this filter.") : __("No strategic plans yet.");
+		const sub = filtered ? "" : __("Create one to begin.");
 		plansRoot.innerHTML =
 			'<div data-testid="strategic-plans-empty-state" class="kt-strategy-empty-wrap">' +
-			'<p class="text-muted mb-0 kt-strategy-empty-msg">' +
-			escapeHtml(__("No strategic plans yet. Create one to begin.")) +
-			"</p></div>";
+			'<p class="text-muted mb-2 kt-strategy-empty-msg">' +
+			escapeHtml(msg) +
+			"</p>" +
+			(sub ? '<p class="text-muted mb-0 small">' + escapeHtml(sub) + "</p>" : "") +
+			"</div>";
 	}
 
-	function renderPlanList(plansRoot, plans, selectedName, onSelect) {
+	function planIsMine(p) {
+		const uid = frappe.session.user;
+		return p.owner === uid;
+	}
+
+	function rowNeedsActionCue(p) {
+		const st = String(p.status || "").trim();
+		if (st === "Draft" && userHasRole("Strategy Manager") && planIsMine(p)) {
+			return frappe.model && frappe.model.can_write("Strategic Plan", p.name);
+		}
+		if (st === "Active" && userHasRole("Planning Authority")) {
+			return true;
+		}
+		return false;
+	}
+
+	function rowActionCueLabel(p) {
+		const st = String(p.status || "").trim();
+		if (st === "Draft" && userHasRole("Strategy Manager") && planIsMine(p)) {
+			return __("In progress");
+		}
+		if (st === "Active" && userHasRole("Planning Authority")) {
+			return __("In force");
+		}
+		return "";
+	}
+
+	function renderPlanList(plansRoot, plans, selectedName, onSelect, opts) {
+		opts = opts || {};
 		const items = plans
 			.map((p) => {
 				const slug = planNameSlug(p.name);
@@ -331,7 +604,8 @@
 				const statusRaw = p.status || "";
 				const status = escapeHtml(statusRaw);
 				const stKey = statusKeyFromRaw(statusRaw);
-				const title = escapeHtml(p.strategic_plan_name || p.name);
+				const fullTitle = p.strategic_plan_name || p.name;
+				const title = escapeHtml(fullTitle);
 				const showYears = !yearRangeAlreadyInName(p);
 				const yearsHtml = showYears
 					? `<span class="kt-strategy-plan-row__meta" data-testid="strategic-plan-row-years-${slug}">${formatYearRange(
@@ -342,46 +616,107 @@
 					p.name === selectedName
 						? `<span class="kt-strategy-sr-only" data-testid="strategic-plan-row-selected-${slug}" aria-hidden="true"></span>`
 						: "";
-				return `<button type="button" class="kt-strategy-plan-row${active}" data-plan-name="${escapeHtml(
+				const actionCue = rowNeedsActionCue(p) ? " kt-strategy-plan-row--action" : "";
+				const cueText = rowActionCueLabel(p);
+				const cueHtml = cueText
+					? `<span class="kt-strategy-plan-row__cue text-muted" data-testid="strategic-plan-row-cue-${slug}">${escapeHtml(
+							cueText
+						)}</span>`
+					: "";
+				const metaSep = cueHtml ? " · " : "";
+				const badgeExtra =
+					userHasRole("Planning Authority") && String(statusRaw).trim() === "Active"
+						? " kt-strategy-badge--active-pa"
+						: "";
+				return `<button type="button" class="kt-strategy-plan-row${active}${actionCue}" data-plan-name="${escapeHtml(
 					p.name
 				)}" data-testid="strategic-plan-row-${slug}">
 					${selectedMarker}
 					<span class="kt-strategy-plan-row__main">
-						<span class="kt-strategy-plan-row__title" data-testid="strategic-plan-row-title-${slug}">${title}</span>
-						${yearsHtml}
+						<span class="kt-strategy-plan-row__title" data-testid="strategic-plan-row-title-${slug}" title="${escapeHtml(
+							fullTitle
+						)}">${title}</span>
+						<span class="kt-strategy-plan-row__meta" data-testid="strategic-plan-row-meta-${slug}">${yearsHtml}${metaSep}${cueHtml}</span>
 					</span>
 					<span class="${statusBadgeClass(
 						statusRaw
-					)}" data-testid="strategic-plan-row-status-${slug}" data-kt-status="${escapeHtml(
+					)}${badgeExtra}" data-testid="strategic-plan-row-status-${slug}" data-kt-status="${escapeHtml(
 						stKey
 					)}">${status}</span>
 				</button>`;
 			})
 			.join("");
 		plansRoot.innerHTML = `<div class="kt-strategy-plan-list" data-testid="strategic-plan-list">${items}</div>`;
+		const rowList = plansRoot.querySelector('[data-testid="strategic-plan-list"]');
+		if (rowList && typeof opts.preserveScrollTop === "number") {
+			rowList.scrollTop = opts.preserveScrollTop;
+		}
+		const selectedSlug = planNameSlug(selectedName);
+		const selectedEl = plansRoot.querySelector(`[data-testid="strategic-plan-row-${selectedSlug}"]`);
+		if (rowList && selectedEl && opts.ensureSelectedVisible) {
+			const rowRect = selectedEl.getBoundingClientRect();
+			const listRect = rowList.getBoundingClientRect();
+			if (rowRect.top < listRect.top || rowRect.bottom > listRect.bottom) {
+				selectedEl.scrollIntoView({ block: "nearest" });
+			}
+		}
 		plansRoot.querySelectorAll(".kt-strategy-plan-row").forEach((btn) => {
 			btn.addEventListener("click", () => onSelect(btn.getAttribute("data-plan-name")));
 		});
 	}
 
-	function renderDetailLoading(detailRoot) {
-		detailRoot.innerHTML =
-			'<div class="text-muted small">' + __("Loading…") + "</div>";
+	function syncPlanListSelection(plansRoot, selectedName, opts) {
+		opts = opts || {};
+		const rowList = plansRoot.querySelector('[data-testid="strategic-plan-list"]');
+		if (!rowList) {
+			return;
+		}
+		if (typeof opts.preserveScrollTop === "number") {
+			rowList.scrollTop = opts.preserveScrollTop;
+		}
+		plansRoot.querySelectorAll(".kt-strategy-plan-row").forEach((btn) => {
+			const isActive = btn.getAttribute("data-plan-name") === selectedName;
+			btn.classList.toggle("is-active", isActive);
+		});
+		const selectedSlug = planNameSlug(selectedName);
+		const selectedEl = plansRoot.querySelector(`[data-testid="strategic-plan-row-${selectedSlug}"]`);
+		if (selectedEl && opts.ensureSelectedVisible) {
+			const rowRect = selectedEl.getBoundingClientRect();
+			const listRect = rowList.getBoundingClientRect();
+			if (rowRect.top < listRect.top || rowRect.bottom > listRect.bottom) {
+				selectedEl.scrollIntoView({ block: "nearest" });
+			}
+		}
 	}
 
-	function renderDetail(
-		detailRoot,
-		plan,
-		counts,
-		onOpenBuilder,
-		onEdit
-	) {
+	function getSelectedPlan() {
+		if (!landingPlans || !selectedPlanName) {
+			return null;
+		}
+		return landingPlans.find(function (p) {
+			return p.name === selectedPlanName;
+		}) || null;
+	}
+
+	function renderDetailPanel(detailRoot, plan, opts) {
+		opts = opts || {};
+		if (!plan) {
+			const msg = opts.noPlansInSystem
+				? __("When you create a strategic plan, details will appear here.")
+				: __("Select a strategic plan from the list, or create one with New Strategic Plan above.");
+			detailRoot.innerHTML =
+				'<p class="text-muted mb-0 small" data-testid="strategy-detail-stub">' + escapeHtml(msg) + "</p>";
+			return;
+		}
+
+		const cp = plan.program_count != null ? plan.program_count : 0;
+		const co = plan.objective_count != null ? plan.objective_count : 0;
+		const ct = plan.target_count != null ? plan.target_count : 0;
 		const years = formatYearRange(plan);
 		const title = escapeHtml(plan.strategic_plan_name || plan.name);
 		const statusRaw = plan.status || "";
 		const status = escapeHtml(statusRaw);
 		const statusKeyAttr = statusKeyFromRaw(statusRaw);
-		const [cp, co, ct] = counts;
 		const canWrite =
 			typeof frappe !== "undefined" &&
 			frappe.model &&
@@ -450,88 +785,126 @@
 
 		const ob = detailRoot.querySelector('[data-testid="selected-plan-open-builder"]');
 		if (ob) {
-			ob.addEventListener("click", onOpenBuilder);
+			ob.addEventListener("click", () => {
+				frappe.set_route("strategy-builder", plan.name);
+			});
 		}
 		const eb = detailRoot.querySelector('[data-testid="selected-plan-edit-plan"]');
 		if (eb) {
-			eb.addEventListener("click", onEdit);
+			eb.addEventListener("click", () => {
+				frappe.set_route("Form", "Strategic Plan", plan.name);
+			});
 		}
 	}
 
-	function renderDetailEmpty(detailRoot) {
-		detailRoot.innerHTML =
-			'<p class="text-muted mb-0 small">' +
-			escapeHtml(
-				__("Select a strategic plan from the list, or create one with New Strategic Plan above.")
-			) +
-			"</p>";
+	function renderLandingListAndDetail(plansRoot, detailRoot) {
+		const plans = landingPlans || [];
+		ensureWorkTabBindings();
+		syncWorkTabButtons();
+
+		function selectByName(name) {
+			const rowList = plansRoot.querySelector('[data-testid="strategic-plan-list"]');
+			const prevScrollTop = rowList ? rowList.scrollTop : 0;
+			selectedPlanName = name;
+			const p = plans.find(function (x) {
+				return x.name === name;
+			});
+			if (!p) {
+				return;
+			}
+			selectedPlanName = p.name;
+			syncPlanListSelection(plansRoot, selectedPlanName, {
+				preserveScrollTop: prevScrollTop,
+				ensureSelectedVisible: true,
+			});
+			renderDetailPanel(detailRoot, p);
+			syncStrategicPlanCreateButton();
+		}
+
+		if (!plans.length) {
+			selectedPlanName = null;
+			pendingLandingReselect = null;
+			renderEmptyList(plansRoot);
+			renderDetailPanel(detailRoot, null, { noPlansInSystem: true });
+			syncStrategicPlanCreateButton();
+			return;
+		}
+
+		const view = filterPlansForWorkTab(plans, activeWorkTab);
+
+		if (!view.length) {
+			selectedPlanName = null;
+			pendingLandingReselect = null;
+			renderEmptyList(plansRoot, { filteredEmpty: true });
+			renderDetailPanel(detailRoot, null, {});
+			syncStrategicPlanCreateButton();
+			return;
+		}
+
+		let pickName = view[0].name;
+		if (pendingLandingReselect && view.some(function (x) { return x.name === pendingLandingReselect; })) {
+			pickName = pendingLandingReselect;
+		} else if (selectedPlanName && view.some(function (x) { return x.name === selectedPlanName; })) {
+			pickName = selectedPlanName;
+		}
+		pendingLandingReselect = null;
+		selectedPlanName = pickName;
+
+		renderPlanList(plansRoot, view, selectedPlanName, selectByName);
+		syncPlanListSelection(plansRoot, selectedPlanName);
+		renderDetailPanel(detailRoot, getSelectedPlan());
+		syncStrategicPlanCreateButton();
 	}
 
 	function loadStrategyWorkspace(plansRoot, detailRoot) {
+		if (plansRoot.dataset.ktStrategyLoading === "1") {
+			return;
+		}
+		if (plansRoot.dataset.ktStrategyLoaded === "1" && landingPlans) {
+			return;
+		}
+		plansRoot.dataset.ktStrategyLoading = "1";
 		const gen = ++workspaceLoadGen;
 
-		renderDetailLoading(detailRoot);
-		fetchStrategicPlans()
-			.then((plans) => {
+		if (!landingPlans) {
+			detailRoot.innerHTML =
+				'<div class="text-muted small" data-testid="strategy-detail-loading">' + escapeHtml(__("Loading…")) + "</div>";
+		}
+
+		fetchLandingData()
+			.then((payload) => {
 				if (gen !== workspaceLoadGen) return;
-				if (!plans.length) {
-					renderEmptyList(plansRoot);
-					renderDetailEmpty(detailRoot);
-					return;
+				plansRoot.dataset.ktStrategyLoading = "0";
+				plansRoot.dataset.ktStrategyLoaded = "1";
+				const portfolio = payload.portfolio || {};
+				const pls = payload.plans || [];
+				landingPlans = pls;
+				updateOverviewMetrics(portfolio);
+
+				if (!workTabInitialized) {
+					activeWorkTab = getDefaultWorkTab();
+					workTabInitialized = true;
 				}
 
-				let selected = plans[0];
-				const selectedName = selected.name;
-
-				function selectByName(name) {
-					selected = plans.find((p) => p.name === name) || selected;
-					renderPlanList(plansRoot, plans, selected.name, selectByName);
-					refreshDetail();
-				}
-
-				function refreshDetail() {
-					renderDetailLoading(detailRoot);
-					fetchCounts(selected.name)
-						.then((counts) => {
-							if (gen !== workspaceLoadGen) return;
-							renderDetail(
-								detailRoot,
-								selected,
-								counts,
-								() => {
-									frappe.set_route("strategy-builder", selected.name);
-								},
-								() => {
-									frappe.set_route("Form", "Strategic Plan", selected.name);
-								}
-							);
-						})
-						.catch(() => {
-							if (gen !== workspaceLoadGen) return;
-							renderDetail(
-								detailRoot,
-								selected,
-								[0, 0, 0],
-								() => {
-									frappe.set_route("strategy-builder", selected.name);
-								},
-								() => {
-									frappe.set_route("Form", "Strategic Plan", selected.name);
-								}
-							);
-						});
-				}
-
-				renderPlanList(plansRoot, plans, selectedName, selectByName);
-				refreshDetail();
+				renderLandingListAndDetail(plansRoot, detailRoot);
 			})
 			.catch(() => {
 				if (gen !== workspaceLoadGen) return;
+				plansRoot.dataset.ktStrategyLoading = "0";
+				plansRoot.dataset.ktStrategyLoaded = "0";
+				landingPlans = null;
+				selectedPlanName = null;
 				plansRoot.innerHTML =
-					'<p class="text-danger small">' +
-					__("Could not load strategic plans.") +
-					"</p>";
+					'<p class="text-danger small">' + escapeHtml(__("Could not load strategic plans.")) + "</p>";
 				detailRoot.innerHTML = "";
+				updateOverviewMetrics({
+					total_plans: 0,
+					draft_count: 0,
+					active_count: 0,
+					archived_count: 0,
+					my_drafts_count: 0,
+					total_programs: 0,
+				});
 			});
 	}
 
@@ -550,16 +923,29 @@
 		loadStrategyWorkspace(plansRoot, detailRoot);
 	}
 
-	function scheduleStrategyWorkspaceBind() {
-		syncStrategyShellClass();
-		if (!isStrategyWorkspaceRoute()) {
+	function requestStrategyBind(delayMs) {
+		if (bindScheduled) {
 			return;
 		}
-		if (typeof frappe.after_ajax === "function") {
-			frappe.after_ajax(() => tryBindStrategyWorkspace());
+		bindScheduled = true;
+		setTimeout(function () {
+			bindScheduled = false;
+			tryBindStrategyWorkspace();
+		}, delayMs || 0);
+	}
+
+	function scheduleStrategyWorkspaceBind() {
+		if (!isStrategyWorkspaceRoute()) {
+			removeStrategyLandingIfWrongRoute();
+			return;
 		}
-		setTimeout(tryBindStrategyWorkspace, 0);
-		setTimeout(tryBindStrategyWorkspace, 400);
+		syncStrategyShellClass();
+		if (typeof frappe.after_ajax === "function") {
+			frappe.after_ajax(() => requestStrategyBind(0));
+		} else {
+			requestStrategyBind(0);
+		}
+		requestStrategyBind(120);
 	}
 
 	let hooksBound = false;
@@ -608,7 +994,9 @@
 		}
 		pollStarted = true;
 		function tick() {
-			if (isStrategyWorkspaceRoute() && !document.getElementById("kt-strategy-plans-root")) {
+			if (!isStrategyWorkspaceRoute()) {
+				removeStrategyLandingIfWrongRoute();
+			} else if (!document.getElementById("kt-strategy-plans-root")) {
 				tryBindStrategyWorkspace();
 			}
 			setTimeout(tick, 400);
@@ -648,6 +1036,7 @@
 		bindStrategyWorkspaceHooks();
 		ensurePollStrategyWorkspace();
 		hideNewPlanShortcutIfNoCreate();
+		setTimeout(scheduleStrategyWorkspaceBind, 400);
 		[300, 1200].forEach((ms) => setTimeout(hideNewPlanShortcutIfNoCreate, ms));
 	}
 
@@ -673,4 +1062,7 @@
 		});
 	}
 	bootstrapStrategyWorkspace();
+
+	/* Expose for Doc hooks / future refresh after builder edits */
+	window.ktRefreshStrategyLanding = refreshStrategyLanding;
 })();

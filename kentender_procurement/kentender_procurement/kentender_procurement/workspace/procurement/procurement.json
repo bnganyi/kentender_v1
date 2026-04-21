@@ -1,7 +1,7 @@
 {
  "app": "kentender_procurement",
  "charts": [],
- "content": "[{\"id\":\"pr_h1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Procurement</b></span>\",\"col\":12}},{\"id\":\"pr_p1\",\"type\":\"paragraph\",\"data\":{\"text\":\"Wave 0 placeholder — navigation only.\",\"col\":12}}]",
+ "content": "[{\"id\":\"pr_h1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Procurement</b></span>\",\"col\":12}},{\"id\":\"pr_p1\",\"type\":\"paragraph\",\"data\":{\"text\":\"Transaction lifecycle (DIA → planning → tendering → …). Supplier lifecycle: Kentender Suppliers app. Public notices/publication: Kentender Transparency app.\",\"col\":12}}]",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",

@@ -21,11 +21,13 @@ APP_NAMES = {
     "kentender_strategy",
     "kentender_budget",
     "kentender_procurement",
+    "kentender_suppliers",
     "kentender_governance",
     "kentender_compliance",
     "kentender_stores",
     "kentender_assets",
     "kentender_integrations",
+    "kentender_transparency",
 }
 
 def app_root(app: str) -> Path:

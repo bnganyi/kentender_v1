@@ -26,11 +26,11 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 app_include_css = [
-	"/assets/kentender_strategy/css/strategy_workspace.css?v=9",
+	"/assets/kentender_strategy/css/strategy_workspace.css?v=12",
 	"/assets/kentender_strategy/css/strategic_plan_form.css",
 	"/assets/kentender_strategy/css/strategy_builder_page.css?v=10",
 ]
-app_include_js = "/assets/kentender_strategy/js/strategy_workspace.js?v=9"
+app_include_js = "/assets/kentender_strategy/js/strategy_workspace.js?v=12"
 
 page_js = {"strategy-builder": "public/js/strategy_builder_page.js"}
 

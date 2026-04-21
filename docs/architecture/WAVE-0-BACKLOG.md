@@ -6,7 +6,7 @@
 
 **Execution order:** Phases **A → B → … → L** in prompt order, then **La** (UI smoke, after L). Do not skip or reorder without an explicit architecture decision.
 
-**Architecture (non‑negotiable):** [`kentender_architecture_rules.md`](kentender_architecture_rules.md)
+**Architecture (non‑negotiable):** [`kentender_architecture_rules_v3.md`](kentender_architecture_rules_v3.md) (v2 drafts archived under [`archive/`](archive/))
 
 **Last verified (repo + bench):** 2026-04-18 — Phases A–L and **La** (docs + automation): nine apps; master DocTypes; numbering + **Audit Event** + `log_audit_event`; **Exception Record**; **Typed Attachment**; entity-scope stubs; `run_workflow_guard`; `execute_business_action`; `send_notification`; placeholder **Workspaces** (Strategy / Budget / Procurement) + **Workspace Sidebar** JSON; `test_wave0_smoke.py` + `make -C apps/kentender_v1 smoke`; `bench --site kentender.midas.com run-tests --app kentender_core` passes; `python3 apps/kentender_v1/scripts/guard_frappe_scaffolds.py` exits 0. **Phase La:** `cd apps/kentender_v1 && npm run test:ui:smoke` (requires running site, Node, `.env.ui` — see `playwright.config.ts`); `make -C apps/kentender_v1 ui-smoke` runs the same.
 
@@ -16,7 +16,7 @@
 
 | Phase ID | Title (short) | Epic | Depends on | # | Status | Verify (repeatable) | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| PHASE-A | App skeleton | EPIC-FOUNDATION | none | 1 | Done | `make -C apps/kentender_v1 validate-links`; `bench --site kentender.midas.com list-apps`; `python3 apps/kentender_v1/scripts/guard_frappe_scaffolds.py` | Nine apps; `doctype/`, `services/`, `api/`, `tests/`, `utils/` under each inner package; monorepo Makefile + scripts. |
+| PHASE-A | App skeleton | EPIC-FOUNDATION | none | 1 | Done | `make -C apps/kentender_v1 validate-links`; `bench --site kentender.midas.com list-apps`; `python3 apps/kentender_v1/scripts/guard_frappe_scaffolds.py` | v3 app set (eleven KenTender apps incl. `kentender_suppliers`, `kentender_transparency`); `doctype/`, `services/`, `api/`, `tests/`, `utils/` under each inner package; monorepo Makefile + scripts. |
 | PHASE-B | Core foundational DocTypes | EPIC-FOUNDATION | PHASE-A | 2 | Done | `bench --site kentender.midas.com run-tests --app kentender_core`; DocTypes visible in Desk under Kentender Core | **Procuring Department** (not `Department`) — ERPNext already defines `Department`. Files live under `kentender_core/kentender_core/kentender_core/doctype/`. |
 | PHASE-C | Numbering service | EPIC-SERVICES | PHASE-B | 3 | Done | `bench --site kentender.midas.com run-tests --app kentender_core` (includes `test_numbering.py`) | `generate_business_id` in `kentender_core/kentender_core/services/business_id_service.py`; counters in DocType **Business ID Counter**. |
 | PHASE-D | Audit event framework | EPIC-SERVICES | PHASE-A | 4 | Done | `bench --site kentender.midas.com run-tests --app kentender_core` (includes `test_audit_event.py`) | DocType **Audit Event**; `log_audit_event` in `kentender_core/kentender_core/services/audit_event_service.py` (insert with `ignore_permissions=True`). |

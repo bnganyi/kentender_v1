@@ -14,8 +14,10 @@ export const strategyWorkspace = {
 
 export const budgetWorkspace = {
 	heading: 'Budget Management',
-	route: '/app/budget-management',
-	appPath: '/app/budget-management',
+	/** Desk resolves workspaces under `/desk/<slug>` or `/app/<slug>` depending on build. */
+	route: '/desk/budget-management',
+	placeholderBlurb: 'Create and manage budget allocations aligned to strategic plans.',
+	appPath: '/desk/budget-management',
 };
 
 export const procurementWorkspace = {

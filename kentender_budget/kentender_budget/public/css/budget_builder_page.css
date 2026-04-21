@@ -1,0 +1,66 @@
+/*
+ * Budget Builder — chrome only. Shared cards / KPI / rows / sections come from
+ * `budget_workspace.css` via `.kt-budget-builder-shell` (same tokens as landing).
+ */
+
+.kt-bb-builder-layout {
+	width: 100%;
+}
+
+/* Breadcrumbs only — matches desk `.page-head` separator above workspace content */
+.kt-bb-page-head {
+	position: sticky;
+	top: 0;
+	z-index: 6;
+	background: var(--bg-color, #fff);
+	border-bottom: 1px solid var(--border-color);
+	padding-top: var(--padding-sm, 7px);
+	padding-bottom: var(--padding-md, 15px);
+}
+
+.kt-bb-page-head .navbar-breadcrumbs {
+	margin-bottom: 0;
+}
+
+.kt-bb-page-head .navbar-breadcrumbs li:first-child a {
+	display: inline-flex;
+	align-items: center;
+	line-height: 1;
+}
+
+.kt-bb-page-body.container {
+	padding-top: 0;
+	padding-bottom: var(--padding-lg, 20px);
+}
+
+/* Program list scroll — landing list uses row-list max-height */
+.kt-budget-builder-shell .kt-budget-row-list {
+	max-height: min(56vh, 620px);
+}
+
+/* Allocation editor: form density inside landing section cards */
+.kt-budget-builder-shell .kt-budget-section.kt-surface .form-group label {
+	font-size: 0.78rem;
+	font-weight: 500;
+}
+
+.kt-budget-builder-shell .kt-budget-section.kt-surface .form-control {
+	min-height: 34px;
+	font-size: 0.9rem;
+}
+
+/* B5.4 — submitted/approved: builder is view-only (inputs disabled in JS) */
+.kt-budget-builder-shell--locked .kt-budget-row[data-program] {
+	cursor: default;
+}
+
+@media (max-width: 991.98px) {
+	.kt-bb-page-head {
+		padding-top: var(--padding-xs, 5px);
+		padding-bottom: var(--padding-sm, 7px);
+	}
+
+	.kt-bb-page-body.container {
+		padding-bottom: var(--padding-md, 15px);
+	}
+}

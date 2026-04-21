@@ -13,5 +13,5 @@ KenTender architecture constraints:
 - Do not create hidden coupling or deep cross-app imports.
 
 Read:
-- docs/architecture/kentender-architecture-rules.md
-- docs/architecture/global-architecture-v2.md
+- docs/architecture/kentender_architecture_rules_v3.md
+- docs/architecture/global-architecture-v3.md

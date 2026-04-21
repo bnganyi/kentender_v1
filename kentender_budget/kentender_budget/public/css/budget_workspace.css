@@ -1,0 +1,486 @@
+/*
+ * Budget Management workspace — Desk only.
+ * Scope UI under `.kt-budget-injected-shell` / `body.kt-budget-shell`.
+ */
+.kt-budget-sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.kt-budget-injected-shell,
+.kt-budget-shell,
+.kt-budget-builder-shell {
+	--kt-budget-surface-bg: var(--fg-color, #fff);
+	--kt-budget-kpi-bg: var(--fg-color, #fff);
+	--kt-budget-page-bg: var(--control-bg, #f5f7fa);
+	--kt-budget-surface-border: var(--border-color, #e2e6ea);
+	--kt-budget-surface-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.kt-budget-injected-shell,
+.kt-budget-shell .kt-budget-injected-shell,
+.kt-budget-builder-shell {
+	padding: 0.35rem 0 0.75rem;
+}
+
+.kt-budget-injected-shell .kt-budget-section.kt-surface,
+.kt-budget-shell .kt-budget-section.kt-surface,
+.kt-budget-builder-shell .kt-budget-section.kt-surface {
+	background: var(--kt-budget-surface-bg);
+	border: 1px solid var(--kt-budget-surface-border);
+	border-radius: var(--border-radius-lg, 8px);
+	padding: 1rem 1.15rem;
+	margin-bottom: 0.5rem;
+	box-shadow: var(--kt-budget-surface-shadow);
+}
+
+.kt-budget-injected-shell .kt-budget-section__title,
+.kt-budget-shell .kt-budget-section__title,
+.kt-budget-builder-shell .kt-budget-section__title {
+	font-size: 1.05rem;
+	font-weight: 600;
+	margin: 0 0 0.65rem;
+	color: var(--text-color, #1f272e);
+}
+
+div.kt-budget-injected-shell,
+div.kt-budget-builder-shell {
+	margin-bottom: 0.75rem;
+}
+
+.kt-budget-injected-shell .kt-budget-page-title,
+.kt-budget-shell .kt-budget-page-title,
+.kt-budget-builder-shell .kt-budget-page-title {
+	color: var(--text-color, #1f272e);
+	font-size: 1.38rem;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+.kt-budget-injected-shell .kt-budget-page-intro,
+.kt-budget-shell .kt-budget-page-intro,
+.kt-budget-builder-shell .kt-budget-page-intro {
+	font-size: 0.92rem;
+	line-height: 1.45;
+	max-width: 44rem;
+}
+
+.kt-budget-injected-shell .kt-budget-header-row,
+.kt-budget-shell .kt-budget-header-row,
+.kt-budget-builder-shell .kt-budget-header-row {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+
+.kt-budget-injected-shell .kt-budget-header-cta,
+.kt-budget-shell .kt-budget-header-cta,
+.kt-budget-builder-shell .kt-budget-header-cta {
+	flex-shrink: 0;
+}
+
+.kt-budget-injected-shell .kt-budget-overview-metrics,
+.kt-budget-shell .kt-budget-overview-metrics,
+.kt-budget-builder-shell .kt-budget-overview-metrics {
+	margin-bottom: 1.2rem !important;
+}
+
+.kt-budget-injected-shell .kt-budget-overview-metrics--secondary,
+.kt-budget-shell .kt-budget-overview-metrics--secondary {
+	margin-bottom: 1rem !important;
+}
+
+/* BS4: no `gap` on btn-group — spacing between tab buttons */
+.kt-budget-injected-shell .kt-budget-tab-group .btn + .btn,
+.kt-budget-shell .kt-budget-tab-group .btn + .btn {
+	margin-left: 0.25rem;
+	margin-bottom: 0.25rem;
+}
+
+.kt-budget-injected-shell .kt-budget-row--action,
+.kt-budget-shell .kt-budget-row--action {
+	border-left: 3px solid var(--primary, #0289f7);
+	padding-left: calc(0.62rem - 2px);
+}
+
+.kt-budget-injected-shell .kt-budget-row__cue,
+.kt-budget-shell .kt-budget-row__cue {
+	font-size: 0.72rem;
+	font-weight: 500;
+}
+
+.kt-budget-injected-shell .kt-budget-badge--submitted-pa,
+.kt-budget-shell .kt-budget-badge--submitted-pa {
+	box-shadow: inset 0 0 0 1px rgba(8, 66, 152, 0.35);
+}
+
+/* KPI row — ERPNext-style equal tiles */
+.kt-budget-injected-shell .kt-budget-kpi-card,
+.kt-budget-shell .kt-budget-kpi-card,
+.kt-budget-builder-shell .kt-budget-kpi-card {
+	background: var(--kt-budget-kpi-bg);
+	border: 1px solid var(--kt-budget-surface-border);
+	border-radius: var(--border-radius-lg, 8px);
+	padding: 0.8rem 0.95rem;
+	height: 100%;
+	box-shadow: var(--kt-budget-surface-shadow);
+}
+
+.kt-budget-injected-shell .kt-budget-kpi-label,
+.kt-budget-shell .kt-budget-kpi-label,
+.kt-budget-builder-shell .kt-budget-kpi-label {
+	font-size: 0.68rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--text-muted);
+	margin-bottom: 0.45rem;
+}
+
+.kt-budget-injected-shell .kt-budget-kpi-value,
+.kt-budget-shell .kt-budget-kpi-value,
+.kt-budget-builder-shell .kt-budget-kpi-value {
+	font-size: clamp(1.05rem, 1.55vw, 1.45rem);
+	font-weight: 600;
+	line-height: 1.15;
+	color: var(--text-color, #1f272e);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	font-variant-numeric: tabular-nums;
+}
+
+/* Master–detail: 35% / 65% */
+.kt-budget-injected-shell .kt-budget-master-detail,
+.kt-budget-shell .kt-budget-master-detail,
+.kt-budget-builder-shell .kt-budget-master-detail {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: stretch;
+	gap: 1.1rem;
+	margin-bottom: 0.35rem;
+}
+
+.kt-budget-injected-shell .kt-budget-col-list,
+.kt-budget-shell .kt-budget-col-list,
+.kt-budget-builder-shell .kt-budget-col-list {
+	flex: 1 1 35%;
+	min-width: 15rem;
+}
+
+.kt-budget-injected-shell .kt-budget-col-detail,
+.kt-budget-shell .kt-budget-col-detail,
+.kt-budget-builder-shell .kt-budget-col-detail {
+	flex: 1 1 62%;
+	min-width: 18rem;
+}
+
+.kt-budget-injected-shell .kt-budget-detail-panel .kt-budget-detail-block + .kt-budget-detail-block,
+.kt-budget-shell .kt-budget-detail-panel .kt-budget-detail-block + .kt-budget-detail-block,
+.kt-budget-builder-shell .kt-budget-detail-panel .kt-budget-detail-block + .kt-budget-detail-block {
+	margin-top: 0.85rem;
+	padding-top: 0;
+	border-top: none;
+}
+
+.kt-budget-injected-shell .kt-budget-detail-card,
+.kt-budget-shell .kt-budget-detail-card,
+.kt-budget-builder-shell .kt-budget-detail-card {
+	padding: 0.85rem 0.95rem;
+	border: 1px solid var(--kt-budget-surface-border);
+	border-radius: var(--border-radius, 6px);
+	background: var(--fg-color, #fff);
+}
+
+.kt-budget-injected-shell .kt-budget-detail-panel .kt-budget-detail-block:first-child,
+.kt-budget-shell .kt-budget-detail-panel .kt-budget-detail-block:first-child,
+.kt-budget-builder-shell .kt-budget-detail-panel .kt-budget-detail-block:first-child {
+	margin-top: 0;
+}
+
+.kt-budget-injected-shell .kt-budget-dl dt,
+.kt-budget-shell .kt-budget-dl dt,
+.kt-budget-builder-shell .kt-budget-dl dt {
+	font-weight: 500;
+}
+
+.kt-budget-injected-shell .kt-budget-detail-actions,
+.kt-budget-shell .kt-budget-detail-actions,
+.kt-budget-builder-shell .kt-budget-detail-actions {
+	margin-bottom: 0;
+}
+
+/* BS4 Desk has no flex gap utilities — `gap-2` on the actions row is a no-op. */
+.kt-budget-injected-shell [data-testid="selected-budget-actions"],
+.kt-budget-shell [data-testid="selected-budget-actions"] {
+	gap: 0.5rem;
+	row-gap: 0.5rem;
+}
+
+.kt-budget-injected-shell .kt-budget-health-badge,
+.kt-budget-shell .kt-budget-health-badge,
+.kt-budget-builder-shell .kt-budget-health-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.2rem;
+	margin-left: 0.35rem;
+	padding: 0.08rem 0.42rem;
+	border: 1px solid transparent;
+	border-radius: 999px;
+	font-size: 0.78rem;
+	font-weight: 600;
+	line-height: 1.2;
+	vertical-align: middle;
+}
+
+.kt-budget-injected-shell .kt-budget-health-badge--none,
+.kt-budget-shell .kt-budget-health-badge--none,
+.kt-budget-builder-shell .kt-budget-health-badge--none {
+	background: #eef2f7;
+	color: #475569;
+	border-color: #cbd5e1;
+}
+
+.kt-budget-injected-shell .kt-budget-health-badge--low,
+.kt-budget-shell .kt-budget-health-badge--low,
+.kt-budget-builder-shell .kt-budget-health-badge--low {
+	background: #fff7ed;
+	color: #9a3412;
+	border-color: #fdba74;
+}
+
+.kt-budget-injected-shell .kt-budget-health-badge--partial,
+.kt-budget-shell .kt-budget-health-badge--partial,
+.kt-budget-builder-shell .kt-budget-health-badge--partial {
+	background: #fef9c3;
+	color: #854d0e;
+	border-color: #fde047;
+}
+
+.kt-budget-injected-shell .kt-budget-health-badge--full,
+.kt-budget-shell .kt-budget-health-badge--full,
+.kt-budget-builder-shell .kt-budget-health-badge--full {
+	background: #dcfce7;
+	color: #166534;
+	border-color: #86efac;
+}
+
+.kt-budget-injected-shell .kt-budget-health-badge--unknown,
+.kt-budget-shell .kt-budget-health-badge--unknown,
+.kt-budget-builder-shell .kt-budget-health-badge--unknown {
+	background: #f3f4f6;
+	color: #4b5563;
+	border-color: #d1d5db;
+}
+
+.kt-budget-injected-shell .kt-budget-detail-section__title,
+.kt-budget-shell .kt-budget-detail-section__title,
+.kt-budget-builder-shell .kt-budget-detail-section__title {
+	font-size: 0.98rem;
+	font-weight: 600;
+	margin: 0 0 0.55rem;
+	color: var(--text-color, #1f272e);
+}
+
+.kt-budget-injected-shell .kt-budget-master-detail,
+.kt-budget-shell .kt-budget-master-detail,
+.kt-budget-builder-shell .kt-budget-master-detail {
+	align-items: stretch;
+}
+
+.kt-budget-injected-shell .kt-budget-row-list,
+.kt-budget-shell .kt-budget-row-list,
+.kt-budget-builder-shell .kt-budget-row-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	max-height: min(60vh, 28rem);
+	overflow-y: auto;
+}
+
+.kt-budget-injected-shell .kt-budget-row,
+.kt-budget-shell .kt-budget-row,
+.kt-budget-builder-shell .kt-budget-row {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 0.5rem;
+	width: 100%;
+	text-align: left;
+	padding: 0.48rem 0.62rem;
+	border: 1px solid var(--kt-budget-surface-border);
+	border-radius: var(--border-radius, 6px);
+	background: var(--fg-color, #fff);
+	cursor: pointer;
+	transition:
+		background 0.12s ease,
+		border-color 0.12s ease;
+	box-shadow: 0 1px 1px rgba(15, 23, 42, 0.03);
+}
+
+.kt-budget-injected-shell .kt-budget-row:hover,
+.kt-budget-shell .kt-budget-row:hover,
+.kt-budget-builder-shell .kt-budget-row:hover {
+	background: var(--control-bg, #f4f5f6);
+}
+
+.kt-budget-injected-shell .kt-budget-row.is-active,
+.kt-budget-shell .kt-budget-row.is-active,
+.kt-budget-builder-shell .kt-budget-row.is-active {
+	border-color: var(--primary, #0289f7);
+	background: #f0f7ff;
+	box-shadow:
+		inset 3px 0 0 var(--primary, #0289f7),
+		0 1px 2px rgba(2, 137, 247, 0.08);
+}
+
+.kt-budget-injected-shell .kt-budget-row__main,
+.kt-budget-shell .kt-budget-row__main,
+.kt-budget-builder-shell .kt-budget-row__main {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.25rem;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.kt-budget-injected-shell .kt-budget-row__title,
+.kt-budget-shell .kt-budget-row__title,
+.kt-budget-builder-shell .kt-budget-row__title {
+	display: block;
+	width: 100%;
+	font-weight: 650;
+	font-size: 0.92rem;
+	color: var(--text-color);
+	line-height: 1.35;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.kt-budget-injected-shell .kt-budget-row__meta,
+.kt-budget-shell .kt-budget-row__meta,
+.kt-budget-builder-shell .kt-budget-row__meta {
+	display: block;
+	margin-top: 0.15rem;
+	font-size: 0.76rem;
+	color: var(--text-muted);
+	font-weight: 500;
+}
+
+.kt-budget-injected-shell [data-testid="selected-budget-title"],
+.kt-budget-shell [data-testid="selected-budget-title"],
+.kt-budget-builder-shell [data-testid="selected-budget-title"] {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.kt-budget-injected-shell .kt-budget-badge,
+.kt-budget-shell .kt-budget-badge,
+.kt-budget-builder-shell .kt-budget-badge {
+	display: inline-flex !important;
+	align-items: center;
+	justify-content: center;
+	font-size: 0.7rem !important;
+	font-weight: 700 !important;
+	line-height: 1.25;
+	padding: 0.35rem 0.65rem !important;
+	min-height: 1.45rem;
+	border-radius: 999px;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	flex-shrink: 0;
+	white-space: nowrap;
+	border-width: 1px !important;
+	border-style: solid !important;
+	box-sizing: border-box;
+	vertical-align: middle;
+}
+
+.kt-budget-injected-shell .kt-budget-badge--draft,
+.kt-budget-injected-shell [data-kt-status="draft"].kt-budget-badge,
+.kt-budget-shell .kt-budget-badge--draft,
+.kt-budget-shell [data-kt-status="draft"].kt-budget-badge,
+.kt-budget-builder-shell .kt-budget-badge--draft,
+.kt-budget-builder-shell [data-kt-status="draft"].kt-budget-badge {
+	background: #fff3cd !important;
+	color: #664d03 !important;
+	border-color: #ffc107 !important;
+	box-shadow: inset 0 0 0 1px rgba(102, 77, 3, 0.12);
+}
+
+.kt-budget-injected-shell .kt-budget-badge--submitted,
+.kt-budget-injected-shell [data-kt-status="submitted"].kt-budget-badge,
+.kt-budget-shell .kt-budget-badge--submitted,
+.kt-budget-shell [data-kt-status="submitted"].kt-budget-badge,
+.kt-budget-builder-shell .kt-budget-badge--submitted,
+.kt-budget-builder-shell [data-kt-status="submitted"].kt-budget-badge {
+	background: #cfe2ff !important;
+	color: #084298 !important;
+	border-color: #0d6efd !important;
+}
+
+.kt-budget-injected-shell .kt-budget-badge--approved,
+.kt-budget-injected-shell [data-kt-status="approved"].kt-budget-badge,
+.kt-budget-shell .kt-budget-badge--approved,
+.kt-budget-shell [data-kt-status="approved"].kt-budget-badge,
+.kt-budget-builder-shell .kt-budget-badge--approved,
+.kt-budget-builder-shell [data-kt-status="approved"].kt-budget-badge {
+	background: #d1e7dd !important;
+	color: #0f5132 !important;
+	border-color: #198754 !important;
+}
+
+.kt-budget-injected-shell .kt-budget-badge--rejected,
+.kt-budget-injected-shell [data-kt-status="rejected"].kt-budget-badge,
+.kt-budget-shell .kt-budget-badge--rejected,
+.kt-budget-shell [data-kt-status="rejected"].kt-budget-badge,
+.kt-budget-builder-shell .kt-budget-badge--rejected,
+.kt-budget-builder-shell [data-kt-status="rejected"].kt-budget-badge {
+	background: #f8d7da !important;
+	color: #842029 !important;
+	border-color: #f1aeb5 !important;
+}
+
+.kt-budget-injected-shell .kt-budget-badge--archived,
+.kt-budget-injected-shell [data-kt-status="archived"].kt-budget-badge,
+.kt-budget-shell .kt-budget-badge--archived,
+.kt-budget-shell [data-kt-status="archived"].kt-budget-badge,
+.kt-budget-builder-shell .kt-budget-badge--archived,
+.kt-budget-builder-shell [data-kt-status="archived"].kt-budget-badge {
+	background: #e2e3e5 !important;
+	color: #41464b !important;
+	border-color: #adb5bd !important;
+}
+
+.kt-budget-injected-shell .kt-budget-empty-wrap,
+.kt-budget-shell .kt-budget-empty-wrap,
+.kt-budget-builder-shell .kt-budget-empty-wrap {
+	padding: 0.65rem 0 0.3rem;
+}
+
+@media (max-width: 991px) {
+	.kt-budget-injected-shell .kt-budget-kpi-value,
+	.kt-budget-shell .kt-budget-kpi-value,
+	.kt-budget-builder-shell .kt-budget-kpi-value {
+		font-size: 1.45rem;
+	}
+
+	.kt-budget-injected-shell .kt-budget-header-row,
+	.kt-budget-shell .kt-budget-header-row,
+	.kt-budget-builder-shell .kt-budget-header-row {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+}

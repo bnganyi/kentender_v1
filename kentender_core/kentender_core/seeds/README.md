@@ -11,6 +11,9 @@ bench --site <site> execute kentender_core.seeds.seed_core_minimal.run
 bench --site <site> execute kentender_core.seeds.seed_strategy_empty.run
 bench --site <site> execute kentender_core.seeds.seed_strategy_basic.run
 bench --site <site> execute kentender_core.seeds.seed_strategy_extended.run
+bench --site <site> execute kentender_core.seeds.seed_budget_empty.run
+bench --site <site> execute kentender_core.seeds.seed_budget_basic.run
+bench --site <site> execute kentender_core.seeds.seed_budget_extended.run
 ```
 
 ## Reset / purge

@@ -2,6 +2,14 @@
  * Strategy Management workspace — Desk only.
  * Scope UI rules to `.kt-strategy-injected-shell` so badges/cards always style (body.kt-strategy-shell may toggle late).
  */
+.kt-strategy-injected-shell,
+.kt-strategy-shell {
+	--kt-strategy-surface-bg: var(--fg-color, #fff);
+	--kt-strategy-kpi-bg: var(--fg-color, #fff);
+	--kt-strategy-surface-border: var(--border-color, #e2e6ea);
+	--kt-strategy-surface-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
 .kt-strategy-sr-only {
 	position: absolute;
 	width: 1px;
@@ -48,6 +56,94 @@ div.kt-strategy-injected-shell {
 .kt-strategy-injected-shell .kt-strategy-workspace-header,
 .kt-strategy-shell .kt-strategy-workspace-header {
 	max-width: 100%;
+}
+
+.kt-strategy-injected-shell .kt-strategy-overview-metrics,
+.kt-strategy-shell .kt-strategy-overview-metrics {
+	margin-bottom: 1.2rem !important;
+}
+
+.kt-strategy-injected-shell .kt-strategy-overview-metrics--secondary,
+.kt-strategy-shell .kt-strategy-overview-metrics--secondary {
+	margin-bottom: 1rem !important;
+}
+
+/* BS4: no `gap` on btn-group — spacing between tab buttons */
+.kt-strategy-injected-shell .kt-strategy-tab-group .btn + .btn,
+.kt-strategy-shell .kt-strategy-tab-group .btn + .btn {
+	margin-left: 0.25rem;
+	margin-bottom: 0.25rem;
+}
+
+.kt-strategy-injected-shell .kt-strategy-kpi-card,
+.kt-strategy-shell .kt-strategy-kpi-card {
+	background: var(--kt-strategy-kpi-bg);
+	border: 1px solid var(--kt-strategy-surface-border);
+	border-radius: var(--border-radius-lg, 8px);
+	padding: 0.8rem 0.95rem;
+	height: 100%;
+	box-shadow: var(--kt-strategy-surface-shadow);
+}
+
+.kt-strategy-injected-shell .kt-strategy-kpi-label,
+.kt-strategy-shell .kt-strategy-kpi-label {
+	font-size: 0.68rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--text-muted);
+	margin-bottom: 0.45rem;
+}
+
+.kt-strategy-injected-shell .kt-strategy-kpi-value,
+.kt-strategy-shell .kt-strategy-kpi-value {
+	font-size: clamp(1.05rem, 1.55vw, 1.45rem);
+	font-weight: 600;
+	line-height: 1.15;
+	color: var(--text-color, #1f272e);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	font-variant-numeric: tabular-nums;
+}
+
+/* Master–detail: ~35% / ~65% (align with Budget workspace) */
+.kt-strategy-injected-shell .kt-strategy-master-detail,
+.kt-strategy-shell .kt-strategy-master-detail {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: stretch;
+	gap: 1.1rem;
+	margin-bottom: 0.35rem;
+}
+
+.kt-strategy-injected-shell .kt-strategy-col-list,
+.kt-strategy-shell .kt-strategy-col-list {
+	flex: 1 1 35%;
+	min-width: 15rem;
+}
+
+.kt-strategy-injected-shell .kt-strategy-col-detail,
+.kt-strategy-shell .kt-strategy-col-detail {
+	flex: 1 1 62%;
+	min-width: 18rem;
+}
+
+.kt-strategy-injected-shell .kt-strategy-plan-row--action,
+.kt-strategy-shell .kt-strategy-plan-row--action {
+	border-left: 3px solid var(--primary, #0289f7);
+	padding-left: calc(0.62rem - 2px);
+}
+
+.kt-strategy-injected-shell .kt-strategy-plan-row__cue,
+.kt-strategy-shell .kt-strategy-plan-row__cue {
+	font-size: 0.72rem;
+	font-weight: 500;
+}
+
+.kt-strategy-injected-shell .kt-strategy-badge--active-pa,
+.kt-strategy-shell .kt-strategy-badge--active-pa {
+	box-shadow: inset 0 0 0 1px rgba(25, 135, 84, 0.35);
 }
 
 .kt-strategy-injected-shell .kt-strategy-page-title,

@@ -1,3 +1,13 @@
+from pathlib import Path
+
+
+def _asset_version(rel_path: str) -> int:
+	try:
+		return int((Path(__file__).resolve().parent / rel_path).stat().st_mtime)
+	except OSError:
+		return 1
+
+
 app_name = "kentender_budget"
 app_title = "Kentender Budget"
 app_publisher = "KenTender"
@@ -8,7 +18,7 @@ app_license = "mit"
 # Apps
 # ------------------
 
-# required_apps = []
+required_apps = ["kentender_core", "kentender_strategy"]
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
@@ -25,8 +35,13 @@ app_license = "mit"
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/kentender_budget/css/kentender_budget.css"
-# app_include_js = "/assets/kentender_budget/js/kentender_budget.js"
+app_include_css = [
+	f"/assets/kentender_budget/css/budget_workspace.css?v={_asset_version('public/css/budget_workspace.css')}",
+	f"/assets/kentender_budget/css/budget_builder_page.css?v={_asset_version('public/css/budget_builder_page.css')}",
+]
+app_include_js = (
+	f"/assets/kentender_budget/js/budget_workspace.js?v={_asset_version('public/js/budget_workspace.js')}"
+)
 
 # include js, css files in header of web template
 # web_include_css = "/assets/kentender_budget/css/kentender_budget.css"
@@ -40,10 +55,10 @@ app_license = "mit"
 # webform_include_css = {"doctype": "public/css/doctype.css"}
 
 # include js in page
-# page_js = {"page" : "public/js/file.js"}
+page_js = {"budget-builder": "public/js/budget_builder_page.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {"Budget": "public/js/budget.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -87,6 +102,8 @@ app_license = "mit"
 
 # before_install = "kentender_budget.install.before_install"
 # after_install = "kentender_budget.install.after_install"
+
+after_migrate = "kentender_budget.install.after_migrate"
 
 # Uninstallation
 # ------------
@@ -234,6 +251,10 @@ app_license = "mit"
 # Authentication and authorization
 # --------------------------------
 
+has_permission = {
+	"Budget": "kentender_budget.permissions.budget_has_permission",
+}
+
 # auth_hooks = [
 # 	"kentender_budget.auth.validate"
 # ]
@@ -251,6 +272,34 @@ app_license = "mit"
 # ignore_translatable_strings_from = []
 
 fixtures = [
-	{"dt": "DocType", "filters": [["name", "=", "Budget Navigation"]]},
+	{
+		"dt": "DocType",
+		"filters": [
+			[
+				"name",
+				"in",
+				[
+					"Budget",
+					"Budget Allocation",
+				],
+			]
+		],
+	},
+	{
+		"dt": "Workspace",
+		"filters": [["name", "in", ["Budget Management"]]],
+	},
+	{
+		"dt": "Page",
+		"filters": [["name", "in", ["budget-builder"]]],
+	},
+	{
+		"dt": "Workspace Sidebar",
+		"filters": [["name", "in", ["Budget"]]],
+	},
+	{
+		"dt": "Desktop Icon",
+		"filters": [["name", "in", ["Budget"]]],
+	},
 ]
 

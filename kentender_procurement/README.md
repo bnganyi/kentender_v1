@@ -1,6 +1,10 @@
 ### Kentender Procurement
 
-KenTender procurement lifecycle module.
+KenTender **procurement transaction lifecycle** module (strategy → budget → **demand intake** → planning → tendering → … → inspection/acceptance), per architecture v3.
+
+**Does not own:** supplier lifecycle (`kentender_suppliers`), public publication (`kentender_transparency`), or payments (`kentender_integrations`).
+
+Internal layout: see [PROCUREMENT_INTERNAL_STRUCTURE.md](PROCUREMENT_INTERNAL_STRUCTURE.md).
 
 ### Installation
 

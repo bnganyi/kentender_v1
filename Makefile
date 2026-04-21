@@ -3,8 +3,8 @@
 
 SITE ?= kentender.midas.com
 BENCH_ROOT := /home/midasuser/frappe-bench
-KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations
-INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations
+KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency
+INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency
 
 .PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke
 
@@ -65,7 +65,9 @@ symlinks:
 	ln -sfn kentender_v1/kentender_compliance kentender_compliance && \
 	ln -sfn kentender_v1/kentender_stores kentender_stores && \
 	ln -sfn kentender_v1/kentender_assets kentender_assets && \
-	ln -sfn kentender_v1/kentender_integrations kentender_integrations
+	ln -sfn kentender_v1/kentender_integrations kentender_integrations && \
+	ln -sfn kentender_v1/kentender_suppliers kentender_suppliers && \
+	ln -sfn kentender_v1/kentender_transparency kentender_transparency
 
 validate-links:
 	@test -L $(BENCH_ROOT)/apps/kentender_core
@@ -77,6 +79,8 @@ validate-links:
 	@test -L $(BENCH_ROOT)/apps/kentender_stores
 	@test -L $(BENCH_ROOT)/apps/kentender_assets
 	@test -L $(BENCH_ROOT)/apps/kentender_integrations
+	@test -L $(BENCH_ROOT)/apps/kentender_suppliers
+	@test -L $(BENCH_ROOT)/apps/kentender_transparency
 	@echo "All KenTender symlinks look present."
 
 smoke:

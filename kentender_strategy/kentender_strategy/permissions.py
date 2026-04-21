@@ -37,7 +37,9 @@ def _plan_entity(plan_name: str | None) -> str | None:
 
 
 def _sql_in_strings(values: list[str]) -> str:
-	return ", ".join(f"'{frappe.db.escape(a, percent=False)}'" for a in values)
+	# frappe.db.escape already returns a single-quoted SQL literal (MariaDB/MySQLdb and PyMySQL).
+	# Do not wrap again — double quotes break IN (...) and cause ProgrammingError near e.g. 'MOH'')).
+	return ", ".join(frappe.db.escape(a, percent=False) for a in values)
 
 
 def get_strategic_plan_permission_query_conditions(user: str) -> str:
