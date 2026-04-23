@@ -19,6 +19,8 @@ BUSINESS_ROLES = (
 	"Requisitioner",
 	"Procurement Planner",
 	"Finance Reviewer",
+	"Department Approver",
+	"Auditor",
 )
 
 # (email, full_name, business_role, department_label)
@@ -28,6 +30,7 @@ SEED_USERS = (
 	("requisitioner@moh.test", "Requisitioner MOH", "Requisitioner", DEPT_CLIN),
 	("planner@moh.test", "Procurement Planner MOH", "Procurement Planner", DEPT_PROC),
 	("finance.reviewer@moh.test", "Finance Reviewer MOH", "Finance Reviewer", DEPT_FIN),
+	("hod.approver@moh.test", "HoD Approver MOH", "Department Approver", DEPT_CLIN),
 )
 
 # Strategic plan titles (exact spec strings)

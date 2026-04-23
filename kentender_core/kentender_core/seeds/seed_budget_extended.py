@@ -20,11 +20,14 @@ from kentender_core.seeds.seed_budget_basic import run as run_budget_basic
 
 def run():
 	frappe.only_for(("System Manager", "Administrator"))
+	from kentender_core.seeds.seed_budget_line_dia import run as run_budget_line_dia
+
 	# Extended must include everything from basic, then add second budget.
 	basic = run_budget_basic()
 	out = _add_budget_2027()
+	lines = run_budget_line_dia(include_budget_extended=False)
 	frappe.db.commit()
-	return {"basic": basic, "extended": out}
+	return {"basic": basic, "extended": out, "budget_lines": lines}
 
 
 def _add_budget_2027():

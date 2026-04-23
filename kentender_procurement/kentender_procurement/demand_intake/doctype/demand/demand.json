@@ -9,37 +9,46 @@
   "section_identifiers",
   "title",
   "demand_id",
-  "section_org",
-  "procuring_entity",
   "requesting_department",
-  "requested_by",
+  "required_by_date",
+  "demand_type",
+  "procuring_entity",
   "column_dates",
   "request_date",
-  "required_by_date",
-  "section_classification",
   "priority_level",
-  "demand_type",
   "requisition_type",
+  "requested_by",
+  "section_items",
+  "items",
+  "section_amount",
+  "total_amount",
+  "section_justification_delivery",
+  "beneficiary_summary",
+  "specification_summary",
   "section_budget_strategy",
   "budget_line",
-  "budget",
-  "funding_source",
   "column_strategy",
   "strategic_plan",
   "program",
   "sub_program",
   "output_indicator",
   "performance_target",
-  "section_amount",
-  "total_amount",
-  "section_workflow_state",
-  "status",
-  "planning_status",
+  "budget",
+  "funding_source",
   "reservation_status",
-  "section_reservation",
   "reservation_reference",
   "available_budget_at_check",
   "budget_check_datetime",
+  "column_delivery_side",
+  "delivery_location",
+  "requested_delivery_period_days",
+  "section_exceptions",
+  "is_exception",
+  "impact_if_not_procured",
+  "emergency_justification",
+  "section_workflow_state",
+  "status",
+  "planning_status",
   "section_submit_meta",
   "submitted_by",
   "submitted_at",
@@ -53,16 +62,12 @@
   "rejected_by",
   "rejected_at",
   "rejection_reason",
+  "return_reason",
+  "returned_by",
+  "returned_at",
   "cancellation_reason",
-  "section_exceptions",
-  "is_exception",
-  "impact_if_not_procured",
-  "emergency_justification",
-  "section_justification_delivery",
-  "beneficiary_summary",
-  "specification_summary",
-  "delivery_location",
-  "requested_delivery_period_days",
+  "cancelled_by",
+  "cancelled_at",
   "section_meta",
   "created_by"
  ],
@@ -70,7 +75,7 @@
   {
    "fieldname": "section_identifiers",
    "fieldtype": "Section Break",
-   "label": "Identifiers"
+   "label": "1. Demand identity"
   },
   {
    "fieldname": "title",
@@ -88,20 +93,6 @@
    "unique": 1
   },
   {
-   "fieldname": "section_org",
-   "fieldtype": "Section Break",
-   "label": "Organizational context"
-  },
-  {
-   "fieldname": "procuring_entity",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Procuring Entity",
-   "options": "Procuring Entity",
-   "reqd": 1,
-   "search_index": 1
-  },
-  {
    "fieldname": "requesting_department",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -111,12 +102,30 @@
    "search_index": 1
   },
   {
-   "fieldname": "requested_by",
-   "fieldtype": "Link",
-   "label": "Requested By",
-   "options": "User",
-   "read_only": 1,
+   "fieldname": "required_by_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Required By Date",
    "reqd": 1
+  },
+  {
+   "default": "Planned",
+   "fieldname": "demand_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Demand Type",
+   "options": "Planned\nUnplanned\nEmergency",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "procuring_entity",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Procuring Entity",
+   "options": "Procuring Entity",
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "fieldname": "column_dates",
@@ -131,18 +140,6 @@
    "reqd": 1
   },
   {
-   "fieldname": "required_by_date",
-   "fieldtype": "Date",
-   "in_list_view": 1,
-   "label": "Required By Date",
-   "reqd": 1
-  },
-  {
-   "fieldname": "section_classification",
-   "fieldtype": "Section Break",
-   "label": "Classification"
-  },
-  {
    "default": "Normal",
    "fieldname": "priority_level",
    "fieldtype": "Select",
@@ -150,16 +147,6 @@
    "label": "Priority",
    "options": "Low\nNormal\nHigh\nCritical",
    "reqd": 1
-  },
-  {
-   "default": "Planned",
-   "fieldname": "demand_type",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Demand Type",
-   "options": "Planned\nUnplanned\nEmergency",
-   "reqd": 1,
-   "search_index": 1
   },
   {
    "default": "Goods",
@@ -170,33 +157,69 @@
    "reqd": 1
   },
   {
-   "fieldname": "section_budget_strategy",
-   "fieldtype": "Section Break",
-   "label": "Budget and strategy linkage"
+   "fieldname": "requested_by",
+   "fieldtype": "Link",
+   "label": "Requested By",
+   "options": "User",
+   "read_only": 1,
+   "reqd": 1
   },
   {
+   "fieldname": "section_items",
+   "fieldtype": "Section Break",
+   "label": "2. What is being requested"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Demand Item"
+  },
+  {
+   "fieldname": "section_amount",
+   "fieldtype": "Section Break",
+   "label": "Amount summary"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total requested (from line items)",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_justification_delivery",
+   "fieldtype": "Section Break",
+   "label": "3. Why / business justification"
+  },
+  {
+   "fieldname": "beneficiary_summary",
+   "fieldtype": "Text",
+   "label": "Business justification / who benefits"
+  },
+  {
+   "fieldname": "specification_summary",
+   "fieldtype": "Text",
+   "label": "What is being requested",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_budget_strategy",
+   "fieldtype": "Section Break",
+   "label": "4. Funding & delivery"
+  },
+  {
+   "description": "Active budget lines only. Search matches name or code. After selection, strategy and balances load automatically.",
    "fieldname": "budget_line",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Budget Line",
+   "link_filters": "[[\"Budget Line\", \"is_active\", \"=\", 1]]",
    "options": "Budget Line",
    "reqd": 1,
    "search_index": 1
-  },
-  {
-   "fieldname": "budget",
-   "fieldtype": "Link",
-   "label": "Budget",
-   "options": "Budget",
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "funding_source",
-   "fieldtype": "Link",
-   "label": "Funding Source",
-   "options": "Funding Source",
-   "read_only": 1
   },
   {
    "fieldname": "column_strategy",
@@ -248,23 +271,91 @@
    "search_index": 1
   },
   {
-   "fieldname": "section_amount",
+   "fieldname": "budget",
+   "fieldtype": "Link",
+   "label": "Budget",
+   "options": "Budget",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "funding_source",
+   "fieldtype": "Link",
+   "label": "Funding Source",
+   "options": "Funding Source",
+   "read_only": 1
+  },
+  {
+   "default": "None",
+   "fieldname": "reservation_status",
+   "fieldtype": "Select",
+   "label": "Reservation Status",
+   "options": "None\nPending Check\nReserved\nReleased\nFailed",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reservation_reference",
+   "fieldtype": "Data",
+   "label": "Reservation Ref",
+   "read_only": 1
+  },
+  {
+   "fieldname": "available_budget_at_check",
+   "fieldtype": "Currency",
+   "label": "Available Budget Snapshot",
+   "read_only": 1
+  },
+  {
+   "fieldname": "budget_check_datetime",
+   "fieldtype": "Datetime",
+   "label": "Budget Check Time",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_delivery_side",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "delivery_location",
+   "fieldtype": "Data",
+   "label": "Delivery Location",
+   "reqd": 1
+  },
+  {
+   "description": "Optional. Enter only if your department already has an estimated lead time.",
+   "fieldname": "requested_delivery_period_days",
+   "fieldtype": "Int",
+   "label": "Requested Delivery Period (days)",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "section_exceptions",
    "fieldtype": "Section Break",
-   "label": "Amount"
+   "label": "5. Exception handling"
   },
   {
    "default": "0",
-   "fieldname": "total_amount",
-   "fieldtype": "Currency",
-   "in_list_view": 1,
-   "label": "Requested Amount",
+   "fieldname": "is_exception",
+   "fieldtype": "Check",
+   "label": "Exception Flag",
    "read_only": 1,
    "reqd": 1
   },
   {
+   "fieldname": "impact_if_not_procured",
+   "fieldtype": "Text",
+   "label": "Impact if Not Procured"
+  },
+  {
+   "fieldname": "emergency_justification",
+   "fieldtype": "Text",
+   "label": "Emergency Justification"
+  },
+  {
    "fieldname": "section_workflow_state",
    "fieldtype": "Section Break",
-   "label": "Workflow state"
+   "label": "System: workflow",
+   "collapsible": 1
   },
   {
    "default": "Draft",
@@ -287,40 +378,10 @@
    "search_index": 1
   },
   {
-   "default": "None",
-   "fieldname": "reservation_status",
-   "fieldtype": "Select",
-   "label": "Reservation Status",
-   "options": "None\nPending Check\nReserved\nReleased\nFailed",
-   "reqd": 1
-  },
-  {
-   "fieldname": "section_reservation",
-   "fieldtype": "Section Break",
-   "label": "Reservation"
-  },
-  {
-   "fieldname": "reservation_reference",
-   "fieldtype": "Data",
-   "label": "Reservation Ref",
-   "read_only": 1
-  },
-  {
-   "fieldname": "available_budget_at_check",
-   "fieldtype": "Currency",
-   "label": "Available Budget Snapshot",
-   "read_only": 1
-  },
-  {
-   "fieldname": "budget_check_datetime",
-   "fieldtype": "Datetime",
-   "label": "Budget Check Time",
-   "read_only": 1
-  },
-  {
    "fieldname": "section_submit_meta",
    "fieldtype": "Section Break",
-   "label": "Submission"
+   "label": "Submission",
+   "collapsible": 1
   },
   {
    "fieldname": "submitted_by",
@@ -372,7 +433,8 @@
   {
    "fieldname": "section_rejection",
    "fieldtype": "Section Break",
-   "label": "Rejection and cancellation"
+   "label": "Closure & returns",
+   "collapsible": 1
   },
   {
    "fieldname": "rejected_by",
@@ -390,63 +452,46 @@
   {
    "fieldname": "rejection_reason",
    "fieldtype": "Text",
-   "label": "Rejection Reason"
+   "label": "Rejection Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "return_reason",
+   "fieldtype": "Text",
+   "label": "Return to Draft Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "returned_by",
+   "fieldtype": "Link",
+   "label": "Returned By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "returned_at",
+   "fieldtype": "Datetime",
+   "label": "Returned At",
+   "read_only": 1
   },
   {
    "fieldname": "cancellation_reason",
    "fieldtype": "Text",
-   "label": "Cancellation Reason"
+   "label": "Cancellation Reason",
+   "read_only": 1
   },
   {
-   "fieldname": "section_exceptions",
-   "fieldtype": "Section Break",
-   "label": "Flags and exceptions"
+   "fieldname": "cancelled_by",
+   "fieldtype": "Link",
+   "label": "Cancelled By",
+   "options": "User",
+   "read_only": 1
   },
   {
-   "default": "0",
-   "fieldname": "is_exception",
-   "fieldtype": "Check",
-   "label": "Exception Flag",
-   "read_only": 1,
-   "reqd": 1
-  },
-  {
-   "fieldname": "impact_if_not_procured",
-   "fieldtype": "Text",
-   "label": "Impact if Not Procured"
-  },
-  {
-   "fieldname": "emergency_justification",
-   "fieldtype": "Text",
-   "label": "Emergency Justification"
-  },
-  {
-   "fieldname": "section_justification_delivery",
-   "fieldtype": "Section Break",
-   "label": "Justification and delivery"
-  },
-  {
-   "fieldname": "beneficiary_summary",
-   "fieldtype": "Text",
-   "label": "Beneficiary Summary"
-  },
-  {
-   "fieldname": "specification_summary",
-   "fieldtype": "Text",
-   "label": "Specification Summary",
-   "reqd": 1
-  },
-  {
-   "fieldname": "delivery_location",
-   "fieldtype": "Data",
-   "label": "Delivery Location",
-   "reqd": 1
-  },
-  {
-   "fieldname": "requested_delivery_period_days",
-   "fieldtype": "Int",
-   "label": "Requested Delivery Period (days)",
-   "non_negative": 1
+   "fieldname": "cancelled_at",
+   "fieldtype": "Datetime",
+   "label": "Cancelled At",
+   "read_only": 1
   },
   {
    "fieldname": "section_meta",
@@ -463,7 +508,7 @@
   }
  ],
  "links": [],
- "modified": "2026-04-21 12:00:00.000000",
+ "modified": "2026-04-22 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Demand Intake",
  "name": "Demand",
@@ -492,11 +537,73 @@
    "role": "Administrator",
    "share": 1,
    "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Requisitioner",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Department Approver",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Finance Reviewer",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Planner",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 1,
+   "write": 0
   }
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
+ "show_title_field_in_link": 1,
+ "search_fields": "demand_id,title",
  "title_field": "title",
  "track_changes": 1
 }

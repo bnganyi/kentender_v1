@@ -11,6 +11,7 @@
   "objective",
   "section_target_definition",
   "target_title",
+  "target_code",
   "description",
   "order_index",
   "section_measurement",
@@ -67,6 +68,12 @@
    "in_list_view": 1,
    "label": "Target Title",
    "reqd": 1
+  },
+  {
+   "fieldname": "target_code",
+   "fieldtype": "Data",
+   "label": "Target Code",
+   "search_index": 1
   },
   {
    "fieldname": "description",
@@ -201,6 +208,8 @@
    "write": 0
   }
  ],
+ "search_fields": "target_title,target_code",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

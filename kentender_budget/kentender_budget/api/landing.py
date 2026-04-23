@@ -55,32 +55,24 @@ def get_budget_landing_data():
 
 	names = [b.name for b in budgets]
 
-	alloc_rows = frappe.db.sql(
+	line_rows = frappe.db.sql(
 		"""
-		SELECT budget, SUM(amount) AS allocated_amount, COUNT(DISTINCT program) AS programs_allocated
-		FROM `tabBudget Allocation`
+		SELECT
+			budget,
+			COUNT(*) AS budget_line_total,
+			SUM(CASE WHEN amount_allocated > 0 THEN 1 ELSE 0 END) AS budget_lines_allocated,
+			SUM(amount_allocated) AS allocated_amount,
+			SUM(amount_reserved) AS reserved_amount,
+			SUM(amount_available) AS available_amount
+		FROM `tabBudget Line`
 		WHERE budget IN %(names)s
+			AND IFNULL(`is_active`, 1) = 1
 		GROUP BY budget
 		""",
 		{"names": tuple(names)},
 		as_dict=True,
 	)
-	alloc_by_budget = {r.budget: r for r in alloc_rows}
-
-	plans = list({b.strategic_plan for b in budgets if b.get("strategic_plan")})
-	prog_counts = {}
-	if plans:
-		for r in frappe.db.sql(
-			"""
-			SELECT strategic_plan, COUNT(*) AS cnt
-			FROM `tabStrategy Program`
-			WHERE strategic_plan IN %(plans)s
-			GROUP BY strategic_plan
-			""",
-			{"plans": tuple(plans)},
-			as_dict=True,
-		):
-			prog_counts[r.strategic_plan] = int(r.cnt or 0)
+	line_by_budget = {r.budget: r for r in line_rows}
 
 	active_count = sum(1 for b in budgets if b.get("status") == "Approved")
 	draft_count = sum(1 for b in budgets if b.get("status") == "Draft")
@@ -98,19 +90,20 @@ def get_budget_landing_data():
 
 	total_budget_sum = sum(flt(b.get("total_budget_amount")) for b in budgets)
 	allocated_sum = sum(
-		flt(alloc_by_budget.get(b.name, {}).get("allocated_amount")) for b in budgets
+		flt(line_by_budget.get(b.name, {}).get("allocated_amount")) for b in budgets
 	)
 	allocation_pct = (allocated_sum / total_budget_sum * 100.0) if total_budget_sum else 0.0
 
 	out_budgets = []
 	for b in budgets:
 		total = flt(b.get("total_budget_amount"))
-		arow = alloc_by_budget.get(b.name)
+		arow = line_by_budget.get(b.name)
 		allocated_amount = flt(arow.get("allocated_amount")) if arow else 0.0
-		programs_allocated = int(arow.get("programs_allocated") or 0) if arow else 0
-		sp = b.get("strategic_plan")
-		program_total = int(prog_counts.get(sp, 0)) if sp else 0
-		programs_unallocated = max(0, program_total - programs_allocated)
+		budget_line_total = int(arow.get("budget_line_total") or 0) if arow else 0
+		budget_lines_allocated = int(arow.get("budget_lines_allocated") or 0) if arow else 0
+		budget_lines_unallocated = max(0, budget_line_total - budget_lines_allocated)
+		reserved_amount = flt(arow.get("reserved_amount")) if arow else 0.0
+		available_amount = flt(arow.get("available_amount")) if arow else 0.0
 
 		out_budgets.append(
 			{
@@ -118,7 +111,7 @@ def get_budget_landing_data():
 				"budget_name": b.budget_name,
 				"fiscal_year": b.fiscal_year,
 				"status": b.status,
-				"strategic_plan": sp,
+				"strategic_plan": b.get("strategic_plan"),
 				"currency": b.currency,
 				"total_budget_amount": total,
 				"owner": b.get("owner"),
@@ -127,11 +120,13 @@ def get_budget_landing_data():
 				"rejected_by": b.get("rejected_by"),
 				"rejected_at": b.get("rejected_at"),
 				"allocated_amount": allocated_amount,
+				"reserved_amount": reserved_amount,
+				"available_amount": available_amount,
 				"remaining_amount": max(0.0, total - allocated_amount),
 				"allocation_pct": (allocated_amount / total * 100.0) if total else 0.0,
-				"program_total": program_total,
-				"programs_allocated": programs_allocated,
-				"programs_unallocated": programs_unallocated,
+				"budget_line_total": budget_line_total,
+				"budget_lines_allocated": budget_lines_allocated,
+				"budget_lines_unallocated": budget_lines_unallocated,
 			}
 		)
 

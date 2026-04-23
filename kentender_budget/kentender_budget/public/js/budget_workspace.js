@@ -847,6 +847,20 @@
 			"</dd></div>" +
 			'<div class="col-12 col-md-6 mb-2">' +
 			'<dt class="small text-muted">' +
+			escapeHtml(__("Reserved")) +
+			"</dt>" +
+			'<dd class="mb-0" data-testid="selected-budget-reserved">' +
+			escapeHtml(formatAmount(budget.reserved_amount, 2)) +
+			"</dd></div>" +
+			'<div class="col-12 col-md-6 mb-2">' +
+			'<dt class="small text-muted">' +
+			escapeHtml(__("Available")) +
+			"</dt>" +
+			'<dd class="mb-0" data-testid="selected-budget-available">' +
+			escapeHtml(formatAmount(budget.available_amount, 2)) +
+			"</dd></div>" +
+			'<div class="col-12 col-md-6 mb-2">' +
+			'<dt class="small text-muted">' +
 			escapeHtml(__("Allocation")) +
 			"</dt>" +
 			'<dd class="mb-0" data-testid="selected-budget-allocation-pct">' +
@@ -869,19 +883,19 @@
 			"</h4>" +
 			'<ul class="list-unstyled small mb-0">' +
 			"<li>" +
-			escapeHtml(__("Programs")) +
+			escapeHtml(__("Budget Lines")) +
 			": " +
-			escapeHtml(String(budget.program_total != null ? budget.program_total : 0)) +
+			escapeHtml(String(budget.budget_line_total != null ? budget.budget_line_total : 0)) +
 			"</li>" +
 			"<li>" +
-			escapeHtml(__("Allocated programs")) +
+			escapeHtml(__("Allocated lines")) +
 			": " +
-			escapeHtml(String(budget.programs_allocated != null ? budget.programs_allocated : 0)) +
+			escapeHtml(String(budget.budget_lines_allocated != null ? budget.budget_lines_allocated : 0)) +
 			"</li>" +
 			"<li>" +
-			escapeHtml(__("Unallocated programs")) +
+			escapeHtml(__("Unallocated lines")) +
 			": " +
-			escapeHtml(String(budget.programs_unallocated != null ? budget.programs_unallocated : 0)) +
+			escapeHtml(String(budget.budget_lines_unallocated != null ? budget.budget_lines_unallocated : 0)) +
 			"</li>" +
 			"</ul></section>" +
 			'<section class="kt-budget-detail-card kt-budget-detail-block kt-budget-detail-actions">' +

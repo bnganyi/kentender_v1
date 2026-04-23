@@ -1,0 +1,735 @@
+/*
+ * Demand Intake and Approval workspace — Desk only.
+ * Scoped under `.kt-dia-injected-shell` / `body.kt-dia-shell`.
+ */
+.kt-dia-sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.kt-dia-injected-shell,
+.kt-dia-shell {
+	--kt-dia-surface-bg: var(--fg-color, #fff);
+	--kt-dia-kpi-bg: var(--fg-color, #fff);
+	--kt-dia-page-bg: var(--control-bg, #f5f7fa);
+	--kt-dia-surface-border: var(--border-color, #e2e6ea);
+	--kt-dia-surface-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.kt-dia-injected-shell {
+	padding: 0.35rem 0 0.75rem;
+}
+
+.kt-dia-injected-shell .kt-dia-section.kt-surface {
+	background: var(--kt-dia-surface-bg);
+	border: 1px solid var(--kt-dia-surface-border);
+	border-radius: var(--border-radius-lg, 8px);
+	padding: 1rem 1.15rem;
+	margin-bottom: 0.5rem;
+	box-shadow: var(--kt-dia-surface-shadow);
+}
+
+.kt-dia-injected-shell .kt-dia-section__title {
+	font-size: 1.05rem;
+	font-weight: 600;
+	margin: 0 0 0.65rem;
+	color: var(--text-color, #1f272e);
+}
+
+.kt-dia-injected-shell .kt-dia-page-title {
+	color: var(--text-color, #1f272e);
+	font-size: 1.38rem;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+.kt-dia-injected-shell .kt-dia-page-intro {
+	font-size: 0.92rem;
+	line-height: 1.45;
+	max-width: 44rem;
+}
+
+.kt-dia-injected-shell .kt-dia-header-row {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+
+.kt-dia-injected-shell .kt-dia-header-cta {
+	flex-shrink: 0;
+}
+
+.kt-dia-injected-shell .kt-dia-kpi-card {
+	background: var(--kt-dia-kpi-bg);
+	border: 1px solid var(--kt-dia-surface-border);
+	border-radius: var(--border-radius-lg, 8px);
+	padding: 0.8rem 0.95rem;
+	height: 100%;
+	box-shadow: var(--kt-dia-surface-shadow);
+}
+
+.kt-dia-injected-shell .kt-dia-kpi-label {
+	font-size: 0.68rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--text-muted);
+	margin-bottom: 0.45rem;
+}
+
+.kt-dia-injected-shell .kt-dia-kpi-card--clickable {
+	cursor: pointer;
+	transition: box-shadow 0.12s ease, border-color 0.12s ease;
+}
+
+.kt-dia-injected-shell .kt-dia-kpi-card--clickable:hover {
+	box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
+}
+
+.kt-dia-injected-shell .kt-dia-kpi-card--clickable:focus {
+	outline: 2px solid var(--primary-color, #2490ef);
+	outline-offset: 2px;
+}
+
+.kt-dia-injected-shell .kt-dia-kpi-value {
+	font-size: clamp(1.05rem, 1.55vw, 1.45rem);
+	font-weight: 600;
+	line-height: 1.15;
+	color: var(--text-color, #1f272e);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	font-variant-numeric: tabular-nums;
+}
+
+.kt-dia-injected-shell .kt-dia-tab-group .btn + .btn {
+	margin-left: 0.25rem;
+	margin-bottom: 0.25rem;
+}
+
+.kt-dia-injected-shell .kt-dia-queue-pills {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+	margin-bottom: 0.65rem;
+}
+
+.kt-dia-injected-shell .kt-dia-queue-pill {
+	border-radius: 999px;
+	font-size: 0.8rem;
+	font-weight: 500;
+	padding: 0.28rem 0.75rem;
+}
+
+.kt-dia-injected-shell .kt-dia-queue-pill.is-active {
+	background: var(--primary-color, #2490ef);
+	color: #fff;
+	border-color: transparent;
+}
+
+.kt-dia-injected-shell .kt-dia-filters {
+	margin-bottom: 0.75rem;
+	border: 1px dashed var(--kt-dia-surface-border);
+	border-radius: var(--border-radius, 6px);
+	padding: 0.35rem 0.65rem;
+	background: var(--kt-dia-page-bg);
+}
+
+.kt-dia-injected-shell .kt-dia-filters summary {
+	cursor: pointer;
+	font-weight: 600;
+	font-size: 0.85rem;
+	color: var(--text-color);
+	user-select: none;
+}
+
+.kt-dia-injected-shell .kt-dia-filter-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+	gap: 0.5rem 0.75rem;
+	margin-top: 0.65rem;
+}
+
+.kt-dia-injected-shell .kt-dia-filter-grid .form-group {
+	margin-bottom: 0;
+}
+
+.kt-dia-injected-shell .kt-dia-search-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	align-items: flex-end;
+	margin-bottom: 0.75rem;
+}
+
+.kt-dia-injected-shell .kt-dia-search-row .form-group {
+	flex: 1 1 12rem;
+	margin-bottom: 0;
+}
+
+.kt-dia-injected-shell .kt-dia-master-detail {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: stretch;
+	gap: 1.1rem;
+	margin-bottom: 0.35rem;
+}
+
+.kt-dia-injected-shell .kt-dia-col-list {
+	flex: 1 1 38%;
+	min-width: 15rem;
+}
+
+.kt-dia-injected-shell .kt-dia-col-detail {
+	flex: 1 1 58%;
+	min-width: 18rem;
+}
+
+.kt-dia-injected-shell .kt-dia-empty {
+	padding: 1rem 0.5rem;
+	text-align: center;
+	color: var(--text-muted);
+	font-size: 0.92rem;
+}
+
+.kt-dia-injected-shell .kt-dia-chip-row {
+	min-height: 1.25rem;
+	margin-bottom: 0.35rem;
+	font-size: 0.78rem;
+	color: var(--text-muted);
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+	align-items: center;
+}
+
+.kt-dia-injected-shell .kt-dia-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.2rem;
+	padding: 0.1rem 0.35rem 0.1rem 0.5rem;
+	border-radius: 999px;
+	border: 1px solid var(--kt-dia-surface-border, #e2e6ea);
+	background: var(--control-bg, #f0f4f8);
+	font-size: 0.78rem;
+}
+
+.kt-dia-injected-shell .kt-dia-chip__x {
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	padding: 0 0.15rem;
+	line-height: 1;
+	color: var(--text-muted, #6c757d);
+	font-size: 1rem;
+}
+
+.kt-dia-injected-shell .kt-dia-chip__x:hover {
+	color: var(--text-color, #36414c);
+}
+
+/* D5 — master list (UI spec §4.2–4.3) */
+.kt-dia-injected-shell .kt-dia-queue-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	max-height: min(70vh, 36rem);
+	overflow-y: auto;
+	font-size: 0.88rem;
+	padding-right: 0.15rem;
+}
+
+.kt-dia-injected-shell .kt-dia-queue-item {
+	cursor: pointer;
+	border: 1px solid var(--kt-dia-surface-border, #e2e6ea);
+	border-radius: var(--border-radius, 6px);
+	padding: 0.55rem 0.65rem 0.5rem;
+	background: var(--kt-dia-surface-bg, #fff);
+	transition:
+		background 0.12s ease,
+		border-color 0.12s ease,
+		box-shadow 0.12s ease;
+}
+
+.kt-dia-injected-shell .kt-dia-queue-item:hover {
+	border-color: color-mix(in srgb, var(--primary-color, #2490ef) 35%, var(--kt-dia-surface-border));
+	box-shadow: var(--kt-dia-surface-shadow);
+}
+
+.kt-dia-injected-shell .kt-dia-queue-item:focus {
+	outline: 2px solid var(--primary-color, #2490ef);
+	outline-offset: 1px;
+}
+
+.kt-dia-injected-shell .kt-dia-queue-item--emergency {
+	border-left: 3px solid #c0392b;
+}
+
+.kt-dia-injected-shell .kt-dia-queue-item--unplanned {
+	border-left: 3px solid #d68910;
+}
+
+.kt-dia-injected-shell .kt-dia-queue-item--exception {
+	box-shadow: inset 0 0 0 1px rgba(192, 57, 43, 0.2);
+}
+
+.kt-dia-injected-shell .kt-dia-queue-item.is-active {
+	background: color-mix(in srgb, var(--primary-color, #2490ef) 10%, var(--control-bg, #f0f4f8));
+	border-color: var(--primary-color, #2490ef);
+	box-shadow:
+		0 0 0 1px var(--primary-color, #2490ef),
+		inset 3px 0 0 var(--primary-color, #2490ef);
+}
+
+.kt-dia-injected-shell .kt-dia-queue-item__id {
+	font-weight: 600;
+	font-size: 0.82rem;
+	color: var(--text-color, #1f272e);
+	font-variant-numeric: tabular-nums;
+}
+
+.kt-dia-injected-shell .kt-dia-queue-item__title {
+	font-weight: 500;
+	line-height: 1.35;
+	margin-top: 0.12rem;
+	color: var(--text-color, #1f272e);
+}
+
+.kt-dia-injected-shell .kt-dia-queue-item__dept {
+	font-size: 0.8rem;
+	margin-top: 0.15rem;
+}
+
+.kt-dia-injected-shell .kt-dia-queue-item__badges {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.28rem;
+	margin-top: 0.38rem;
+	align-items: center;
+}
+
+.kt-dia-injected-shell .kt-dia-badge {
+	display: inline-block;
+	font-size: 0.68rem;
+	font-weight: 600;
+	line-height: 1.2;
+	padding: 0.12rem 0.4rem;
+	border-radius: 999px;
+	letter-spacing: 0.01em;
+}
+
+.kt-dia-injected-shell .kt-dia-badge--pri-high {
+	background: rgba(192, 57, 43, 0.12);
+	color: #922b21;
+	border: 1px solid rgba(192, 57, 43, 0.35);
+}
+
+.kt-dia-injected-shell .kt-dia-badge--pri-normal {
+	background: var(--control-bg, #eef2f6);
+	color: var(--text-color, #36414c);
+	border: 1px solid var(--kt-dia-surface-border, #e2e6ea);
+}
+
+.kt-dia-injected-shell .kt-dia-badge--pri-low {
+	background: rgba(39, 174, 96, 0.1);
+	color: #1e6b3d;
+	border: 1px solid rgba(39, 174, 96, 0.28);
+}
+
+.kt-dia-injected-shell .kt-dia-badge--st-draft {
+	background: #eceff1;
+	color: #455a64;
+	border: 1px solid #cfd8dc;
+}
+
+.kt-dia-injected-shell .kt-dia-badge--st-pending-hod {
+	background: rgba(243, 156, 18, 0.15);
+	color: #9a6b0c;
+	border: 1px solid rgba(243, 156, 18, 0.45);
+}
+
+.kt-dia-injected-shell .kt-dia-badge--st-pending-fin {
+	background: rgba(41, 128, 185, 0.12);
+	color: #1f4f73;
+	border: 1px solid rgba(41, 128, 185, 0.35);
+}
+
+.kt-dia-injected-shell .kt-dia-badge--st-approved {
+	background: rgba(39, 174, 96, 0.12);
+	color: #1b6b3a;
+	border: 1px solid rgba(39, 174, 96, 0.35);
+}
+
+.kt-dia-injected-shell .kt-dia-badge--st-planning {
+	background: rgba(142, 68, 173, 0.1);
+	color: #5b2c6f;
+	border: 1px solid rgba(142, 68, 173, 0.32);
+}
+
+.kt-dia-injected-shell .kt-dia-badge--st-rejected {
+	background: rgba(192, 57, 43, 0.1);
+	color: #7b241c;
+	border: 1px solid rgba(192, 57, 43, 0.32);
+}
+
+.kt-dia-injected-shell .kt-dia-badge--st-cancelled {
+	background: #f4f6f7;
+	color: var(--text-muted, #6c757d);
+	border: 1px solid #dfe4e6;
+}
+
+.kt-dia-injected-shell .kt-dia-badge--st-neutral {
+	background: var(--control-bg, #eef2f6);
+	color: var(--text-muted, #5c6c74);
+	border: 1px solid var(--kt-dia-surface-border, #e2e6ea);
+}
+
+.kt-dia-injected-shell .kt-dia-badge--dtype-emergency {
+	background: rgba(192, 57, 43, 0.14);
+	color: #7b241c;
+	border: 1px solid rgba(192, 57, 43, 0.45);
+	font-weight: 700;
+}
+
+.kt-dia-injected-shell .kt-dia-badge--dtype-unplanned {
+	background: rgba(214, 137, 16, 0.14);
+	color: #7d5209;
+	border: 1px solid rgba(214, 137, 16, 0.42);
+}
+
+.kt-dia-injected-shell .kt-dia-badge--dtype-planned {
+	background: rgba(41, 128, 185, 0.08);
+	color: #1a5270;
+	border: 1px solid rgba(41, 128, 185, 0.25);
+}
+
+.kt-dia-injected-shell .kt-dia-queue-item__amount-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.35rem 0.75rem;
+	margin-top: 0.42rem;
+	padding-top: 0.35rem;
+	border-top: 1px dashed var(--kt-dia-surface-border, #e2e6ea);
+}
+
+.kt-dia-injected-shell .kt-dia-queue-item__amount {
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	font-size: 0.92rem;
+	color: var(--text-color, #1f272e);
+}
+
+.kt-dia-injected-shell .kt-dia-queue-item__due {
+	white-space: nowrap;
+}
+
+.kt-dia-injected-shell .kt-dia-queue-item__secondary {
+	font-size: 0.76rem;
+	color: var(--text-muted, #6c757d);
+	margin-top: 0.35rem;
+	line-height: 1.35;
+}
+
+.kt-dia-injected-shell .kt-dia-queue-item__flag {
+	font-weight: 600;
+	color: #922b21;
+}
+
+.kt-dia-injected-shell .kt-dia-queue-item__dot {
+	opacity: 0.55;
+}
+
+@supports not (background: color-mix(in srgb, white 50%, black)) {
+	.kt-dia-injected-shell .kt-dia-queue-item:hover {
+		border-color: var(--primary-color, #2490ef);
+	}
+
+	.kt-dia-injected-shell .kt-dia-queue-item.is-active {
+		background: var(--control-bg, #f0f4f8);
+	}
+}
+
+/* D6 — detail panel (UI spec §5.2) */
+.kt-dia-injected-shell .kt-dia-detail {
+	font-size: 0.88rem;
+	color: var(--text-color, #36414c);
+	max-height: min(78vh, 42rem);
+	overflow-y: auto;
+	padding-right: 0.2rem;
+}
+
+.kt-dia-injected-shell .kt-dia-detail__section {
+	border: 1px solid var(--kt-dia-surface-border, #e2e6ea);
+	border-radius: var(--border-radius, 6px);
+	padding: 0.65rem 0.85rem;
+	margin-bottom: 0.55rem;
+	background: var(--kt-dia-surface-bg, #fff);
+}
+
+.kt-dia-injected-shell .kt-dia-detail__section[data-testid="dia-detail-section-f"] {
+	position: sticky;
+	top: 0;
+	z-index: 4;
+	border-color: color-mix(in srgb, var(--primary-color, #2490ef) 28%, var(--kt-dia-surface-border, #e2e6ea));
+	background: color-mix(in srgb, var(--primary-color, #2490ef) 5%, var(--kt-dia-surface-bg, #fff));
+	box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+}
+
+.kt-dia-injected-shell .kt-dia-detail__section[data-testid="dia-detail-section-f"] .kt-dia-detail__heading {
+	color: color-mix(in srgb, var(--primary-color, #2490ef) 60%, var(--text-color, #1f272e));
+	display: none;
+}
+
+.kt-dia-injected-shell .kt-dia-detail__section[data-testid="dia-detail-section-f"] {
+	padding-top: 0.45rem;
+	padding-bottom: 0.45rem;
+}
+
+.kt-dia-injected-shell .kt-dia-detail__heading {
+	font-size: 0.72rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--text-muted, #6c757d);
+	margin: 0 0 0.45rem;
+}
+
+.kt-dia-injected-shell .kt-dia-detail__title {
+	font-size: 1.05rem;
+	font-weight: 600;
+	margin: 0;
+	line-height: 1.35;
+	color: var(--text-color, #1f272e);
+}
+
+.kt-dia-injected-shell .kt-dia-detail__badges {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.28rem;
+	align-items: center;
+}
+
+.kt-dia-injected-shell .kt-dia-detail__dl {
+	display: grid;
+	grid-template-columns: minmax(7.5rem, 38%) 1fr;
+	gap: 0.25rem 0.65rem;
+	margin: 0;
+	font-size: 0.84rem;
+}
+
+.kt-dia-injected-shell .kt-dia-detail__dl dt {
+	margin: 0;
+	color: var(--text-muted, #6c757d);
+	font-weight: 500;
+}
+
+.kt-dia-injected-shell .kt-dia-detail__dl dd {
+	margin: 0;
+	word-break: break-word;
+}
+
+.kt-dia-injected-shell .kt-dia-detail__amount {
+	font-variant-numeric: tabular-nums;
+}
+
+.kt-dia-injected-shell .kt-dia-detail-items th,
+.kt-dia-injected-shell .kt-dia-detail-items td {
+	font-size: 0.78rem;
+	vertical-align: top;
+}
+
+.kt-dia-injected-shell .kt-dia-detail__exception {
+	color: #922b21;
+}
+
+.kt-dia-injected-shell .kt-dia-detail--error {
+	padding: 0.5rem 0;
+}
+
+.kt-dia-injected-shell .kt-dia-detail__actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem 0.65rem;
+}
+
+.kt-dia-injected-shell .kt-dia-detail__actions .btn {
+	margin: 0;
+}
+
+/* E1 — Demand Form builder shell (outside workspace; uses shared badge tokens) */
+.kt-dia-builder-shell {
+	background: var(--control-bg, #f5f7fa);
+	border-bottom: 1px solid var(--border-color, #e2e6ea);
+	padding: 0.55rem 0.85rem;
+	margin: 0 0 0.85rem;
+	border-radius: var(--border-radius, 6px);
+}
+
+.kt-dia-builder-shell__inner {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem 0.75rem;
+}
+
+.kt-dia-builder-shell__back {
+	flex-shrink: 0;
+	font-weight: 500;
+}
+
+.kt-dia-builder-shell__titlewrap {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.4rem 0.6rem;
+	flex: 1 1 12rem;
+	min-width: 0;
+}
+
+.kt-dia-builder-shell__title {
+	font-weight: 600;
+	font-size: 1rem;
+	color: var(--text-color, #1f272e);
+	word-break: break-word;
+}
+
+.kt-dia-builder-shell__badges {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+	align-items: center;
+}
+
+.kt-dia-builder-shell__actions {
+	flex: 2 1 14rem;
+	display: flex;
+	justify-content: flex-end;
+	min-width: 0;
+}
+
+.kt-dia-builder-shell__actions-inner {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 0.5rem 0.65rem;
+}
+
+.kt-dia-builder-shell__actions-inner .btn {
+	margin: 0;
+}
+
+.kt-dia-builder-shell__hint {
+	width: 100%;
+	margin-top: 0.35rem !important;
+}
+
+/* E2 — Demand builder: sectioned form (Desk); light section rhythm, no heavy grey bands */
+.kt-dia-demand-form-layout .form-layout {
+	max-width: 100%;
+}
+
+.kt-dia-demand-form-layout .form-section {
+	margin-bottom: 0.35rem;
+}
+
+.kt-dia-demand-form-layout .form-section .section-head,
+.kt-dia-demand-form-layout .form-dashboard-section .section-head {
+	padding: 0.4rem 0 0.35rem;
+	margin: 0.75rem 0 0.25rem;
+	font-size: 0.95rem;
+	font-weight: 600;
+	color: var(--text-color, #1f272e);
+	background: transparent;
+	border-bottom: 1px solid var(--border-color, #e2e6ea);
+}
+
+.kt-dia-demand-form-layout .form-section:first-of-type .section-head {
+	margin-top: 0;
+}
+
+.kt-dia-demand-form-layout .form-column .form-group[data-fieldtype="Table"],
+.kt-dia-demand-form-layout .form-column .form-group[data-fieldtype="Text"] {
+	clear: both;
+}
+
+.kt-dia-demand-form-layout .form-column .form-group[data-fieldtype="Table"] .grid-row,
+.kt-dia-demand-form-layout .form-column .form-group[data-fieldtype="Table"] .form-grid-container {
+	max-width: 100%;
+}
+
+/* E4 — Budget-line-first strategy trace (derived links slightly de-emphasized) */
+.kt-dia-demand-form-layout .kt-dia-e4-derived-trace .control-label {
+	font-weight: 500;
+	color: var(--text-muted);
+	font-size: 0.92em;
+}
+
+.kt-dia-demand-form-layout .kt-dia-e4-derived-trace .help-box,
+.kt-dia-demand-form-layout .kt-dia-e4-derived-trace .clearfix {
+	margin-bottom: 0.15rem;
+}
+
+/* E5 — Workflow / gate fields (builder: lifecycle via header actions only) */
+.kt-dia-demand-form-layout .kt-dia-e5-workflow-field .control-label {
+	font-weight: 600;
+	font-size: 0.88rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--text-muted);
+}
+
+/* Demand Form UI Fix — compact text blocks, decision strip, exception emphasis */
+.kt-dia-demand-form-layout .kt-dia-budget-decision-strip {
+	margin: 0 0 0.65rem;
+	padding: 0.45rem 0.65rem;
+	font-size: 0.84rem;
+	line-height: 1.35;
+	border-radius: var(--border-radius, 6px);
+	border: 1px solid var(--border-color, #e2e6ea);
+	background: var(--control-bg, #f8fafc);
+}
+
+.kt-dia-demand-form-layout .kt-dia-budget-decision-strip .text-danger {
+	font-weight: 600;
+}
+
+.kt-dia-demand-form-layout .form-group[data-fieldtype="Text"] textarea {
+	min-height: 3.25rem;
+	max-height: 6.5rem;
+	transition: max-height 0.15s ease;
+}
+
+.kt-dia-demand-form-layout .form-group[data-fieldtype="Text"] textarea:focus {
+	max-height: 14rem;
+}
+
+.kt-dia-demand-form-layout .kt-dia-exception-block {
+	border-left: 3px solid var(--border-color, #e2e6ea);
+	padding-left: 0.5rem;
+	margin: 0.25rem 0 0.5rem;
+}
+
+.kt-dia-demand-form-layout .kt-dia-exception-block.kt-dia-exception-block--hot {
+	border-left-color: #c0392b;
+	background: rgba(192, 57, 43, 0.04);
+	padding-top: 0.35rem;
+	padding-bottom: 0.35rem;
+	border-radius: 0 4px 4px 0;
+}
+
+.kt-dia-demand-form-layout .kt-dia-total-derived-summary {
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}

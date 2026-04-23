@@ -12,8 +12,10 @@ TEXT_TYPES = ("Milestone", "Boolean")
 class StrategyTarget(Document):
 	def validate(self):
 		assert_plan_is_draft_for_mutation(self.strategic_plan)
+		self._normalize_target_code()
 		self._normalize_measurement_defaults()
 		self._validate_hierarchy()
+		self._validate_target_code_uniqueness()
 		self._validate_measurement_values()
 		self._validate_period_fields()
 		self._validate_baseline_fields()
@@ -26,6 +28,13 @@ class StrategyTarget(Document):
 			self.target_unit = "Percent"
 		if self.measurement_type == "Currency" and not (self.target_unit and str(self.target_unit).strip()):
 			self.target_unit = "KES"
+
+	def _normalize_target_code(self):
+		if not frappe.get_meta("Strategy Target").has_field("target_code"):
+			return
+		if not self.target_code:
+			return
+		self.target_code = str(self.target_code).strip()
 
 	def _validate_hierarchy(self):
 		if not frappe.db.exists("Strategic Plan", self.strategic_plan):
@@ -44,6 +53,19 @@ class StrategyTarget(Document):
 			frappe.throw(_("Target Strategic Plan must match Objective Strategic Plan."))
 		if obj.program != self.program:
 			frappe.throw(_("Target Program must match Objective Program."))
+
+	def _validate_target_code_uniqueness(self):
+		if not frappe.get_meta("Strategy Target").has_field("target_code"):
+			return
+		if not self.target_code:
+			return
+		existing = frappe.db.get_value(
+			"Strategy Target",
+			{"objective": self.objective, "target_code": self.target_code},
+			"name",
+		)
+		if existing and existing != self.name:
+			frappe.throw(_("Target Code must be unique per Objective."))
 
 	def _validate_measurement_values(self):
 		mt = self.measurement_type

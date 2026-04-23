@@ -1,3 +1,13 @@
+from pathlib import Path
+
+
+def _asset_version(rel_path: str) -> int:
+	try:
+		return int((Path(__file__).resolve().parent / rel_path).stat().st_mtime)
+	except OSError:
+		return 1
+
+
 app_name = "kentender_procurement"
 app_title = "Kentender Procurement"
 app_publisher = "KenTender"
@@ -25,8 +35,12 @@ required_apps = ["kentender_core", "kentender_strategy", "kentender_budget"]
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/kentender_procurement/css/kentender_procurement.css"
-# app_include_js = "/assets/kentender_procurement/js/kentender_procurement.js"
+app_include_css = [
+	f"/assets/kentender_procurement/css/demand_intake_workspace.css?v={_asset_version('public/css/demand_intake_workspace.css')}",
+]
+app_include_js = (
+	f"/assets/kentender_procurement/js/demand_intake_workspace.js?v={_asset_version('public/js/demand_intake_workspace.js')}"
+)
 
 # include js, css files in header of web template
 # web_include_css = "/assets/kentender_procurement/css/kentender_procurement.css"
@@ -43,7 +57,7 @@ required_apps = ["kentender_core", "kentender_strategy", "kentender_budget"]
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {"Demand": "public/js/demand_form.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -120,13 +134,13 @@ required_apps = ["kentender_core", "kentender_strategy", "kentender_budget"]
 # -----------
 # Permissions evaluated in scripted ways
 
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
+permission_query_conditions = {
+	"Demand": "kentender_procurement.demand_intake.permissions.demand_permissions.get_permission_query_conditions_for_demand",
+}
+
+has_permission = {
+	"Demand": "kentender_procurement.demand_intake.permissions.demand_permissions.demand_has_permission",
+}
 
 # Document Events
 # ---------------
@@ -252,5 +266,13 @@ required_apps = ["kentender_core", "kentender_strategy", "kentender_budget"]
 
 fixtures = [
 	{"dt": "DocType", "filters": [["name", "=", "Procurement Navigation"]]},
+	{
+		"dt": "Workspace",
+		"filters": [["name", "in", ["Demand Intake and Approval", "Procurement"]]],
+	},
+	{
+		"dt": "Workspace Sidebar",
+		"filters": [["name", "in", ["Procurement", "Demand Intake"]]],
+	},
 ]
 

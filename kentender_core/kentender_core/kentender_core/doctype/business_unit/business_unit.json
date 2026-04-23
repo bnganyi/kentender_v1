@@ -60,9 +60,12 @@
    "write": 1
   }
  ],
+ "search_fields": "unit_name",
+ "show_title_field_in_link": 1,
  "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
+ "title_field": "unit_name",
  "track_changes": 1
 }

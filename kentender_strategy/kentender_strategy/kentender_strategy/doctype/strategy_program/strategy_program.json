@@ -93,6 +93,8 @@
    "write": 0
   }
  ],
+ "search_fields": "program_title,program_code",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

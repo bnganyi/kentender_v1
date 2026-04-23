@@ -69,3 +69,36 @@ export async function loginAsRequisitioner(page: Page) {
 		process.env.UI_REQUISITIONER_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
+
+/** Department Approver (HoD) — see `kentender_core.seeds.constants.SEED_USERS`. */
+export async function loginAsHoDApprover(page: Page) {
+	await login(
+		page,
+		process.env.UI_HOD_USER || 'hod.approver@moh.test',
+		process.env.UI_HOD_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+export async function loginAsFinanceReviewer(page: Page) {
+	await login(
+		page,
+		process.env.UI_FINANCE_USER || 'finance.reviewer@moh.test',
+		process.env.UI_FINANCE_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+export async function loginAsProcurementPlanner(page: Page) {
+	await login(
+		page,
+		process.env.UI_PLANNER_USER || 'planner@moh.test',
+		process.env.UI_PLANNER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
+export async function loginAsAuditor(page: Page) {
+	await login(
+		page,
+		process.env.UI_AUDITOR_USER || 'auditor@moh.test',
+		process.env.UI_AUDITOR_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}

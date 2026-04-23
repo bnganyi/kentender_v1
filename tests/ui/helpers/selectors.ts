@@ -25,3 +25,10 @@ export const procurementWorkspace = {
 	route: '/app/procurement',
 	appPath: '/app/procurement',
 };
+
+/** Demand Intake and Approval (DIA) Desk workspace — slug from Workspace label. */
+export const diaWorkspace = {
+	heading: 'Demand Intake and Approval',
+	route: '/desk/demand-intake-and-approval',
+	introSnippet: 'Capture, approve, and prepare procurement demand',
+};
