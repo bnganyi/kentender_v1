@@ -10,7 +10,7 @@ import {
 	loginAsPlanningAuthority,
 	loginAsStrategyManager,
 } from '../../helpers/auth';
-import { openBudgetLanding } from '../../helpers/budgetLanding';
+import { openBudgetLanding, openBudgetLandingAllQueues } from '../../helpers/budgetLanding';
 
 async function tryLogin(fn: () => Promise<void>) {
 	try {
@@ -44,7 +44,7 @@ test('Budget landing exposes Rejected tab and reject modal test ids (Administrat
 test('Planning Authority can open reject dialog on Submitted budget (seeded FY2027)', async ({ page }) => {
 	const loggedIn = await tryLogin(() => loginAsPlanningAuthority(page));
 	test.skip(!loggedIn, 'Planning Authority test user not configured');
-	await openBudgetLanding(page);
+	await openBudgetLandingAllQueues(page);
 
 	const row2027 = page.locator('.kt-budget-row').filter({ hasText: 'FY2027 Budget' });
 	const hasRow = await row2027.count();
@@ -63,9 +63,12 @@ test('Planning Authority can open reject dialog on Submitted budget (seeded FY20
 	}
 
 	await page.getByTestId('budget-reject').click();
-	await expect(page.getByTestId('budget-reject-modal')).toBeVisible({ timeout: 15_000 });
+	const modal = page.getByTestId('budget-reject-modal');
+	await expect(modal).toBeVisible({ timeout: 15_000 });
 	await expect(page.getByTestId('budget-reject-reason-input')).toBeVisible();
-	await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+	// Footer label varies by Frappe version; Escape reliably dismisses the dialog.
+	await page.keyboard.press('Escape');
+	await expect(modal).toBeHidden({ timeout: 15_000 });
 });
 
 test('Strategy Manager sees rejection summary when a Rejected budget is selected', async ({ page }) => {

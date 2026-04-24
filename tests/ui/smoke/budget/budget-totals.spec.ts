@@ -77,12 +77,102 @@ test('Builder totals arithmetic reflects in landing panel', async ({ page }) => 
 				total_budget_amount: 1000000,
 			},
 		});
+		const budgetName = budgetDoc?.name;
+		const fy = budgetDoc?.fiscal_year;
+		const p0 = programs[0];
+		const p1 = programs[1] || programs[0];
+		const subs0 = await call('frappe.client.get_list', {
+			doctype: 'Sub Program',
+			filters: { program: p0.name },
+			fields: ['name'],
+			limit_page_length: 1,
+		});
+		const subs1 = await call('frappe.client.get_list', {
+			doctype: 'Sub Program',
+			filters: { program: p1.name },
+			fields: ['name'],
+			limit_page_length: 1,
+		});
+		const obj0 = await call('frappe.client.get_list', {
+			doctype: 'Strategy Objective',
+			filters: { program: p0.name },
+			fields: ['name'],
+			limit_page_length: 1,
+		});
+		const obj1 = await call('frappe.client.get_list', {
+			doctype: 'Strategy Objective',
+			filters: { program: p1.name },
+			fields: ['name'],
+			limit_page_length: 1,
+		});
+		if (!subs0?.[0] || !obj0?.[0]) {
+			throw new Error('Need Sub Program and Strategy Objective on first program for budget line smoke.');
+		}
+		const tgt0 = await call('frappe.client.get_list', {
+			doctype: 'Strategy Target',
+			filters: { objective: obj0[0].name },
+			fields: ['name'],
+			limit_page_length: 1,
+		});
+		const sub1 = subs1?.[0] || subs0[0];
+		const obj1n = obj1?.[0] || obj0[0];
+		const tgt1rows = await call('frappe.client.get_list', {
+			doctype: 'Strategy Target',
+			filters: { objective: obj1n.name },
+			fields: ['name'],
+			limit_page_length: 1,
+		});
+		const tgt0n = tgt0?.[0]?.name;
+		const tgt1n = tgt1rows?.[0]?.name || tgt0n;
+		if (!tgt0n) {
+			throw new Error('Need Strategy Target for budget line smoke.');
+		}
+		const lineOneName = `B33 Totals Line A ${Date.now()}`;
+		const lineTwoName = `B33 Totals Line B ${Date.now()}`;
+		for (const row of [
+			{
+				budget_line_name: lineOneName,
+				program: p0.name,
+				sub_program: subs0[0].name,
+				objective: obj0[0].name,
+				target: tgt0n,
+				allocated: 0,
+			},
+			{
+				budget_line_name: lineTwoName,
+				program: p1.name,
+				sub_program: sub1.name,
+				objective: obj1n.name,
+				target: tgt1n,
+				allocated: 0,
+			},
+		]) {
+			await call('frappe.client.insert', {
+				doc: {
+					doctype: 'Budget Line',
+					budget_line_name: row.budget_line_name,
+					budget: budgetName,
+					procuring_entity: 'MOH',
+					fiscal_year: fy,
+					amount_allocated: row.allocated,
+					amount_reserved: 0,
+					amount_consumed: 0,
+					currency: 'KES',
+					strategic_plan: planName,
+					program: row.program,
+					sub_program: row.sub_program,
+					output_indicator: row.objective,
+					performance_target: row.target,
+					is_active: 1,
+				},
+			});
+		}
 
 		return {
-			budgetName: budgetDoc?.name,
+			budgetName,
 			budgetLabel,
-			programOneTitle: programs[0]?.program_title || programs[0]?.name,
-			programTwoTitle: programs[1]?.program_title || programs[1]?.name,
+			lineOneName,
+			lineTwoName,
 		};
 	});
 
@@ -94,7 +184,9 @@ test('Builder totals arithmetic reflects in landing panel', async ({ page }) => 
 		return;
 	}
 
-	await page.getByTestId(`budget-program-row-${testIdPart(seeded.programOneTitle)}`).click();
+	const id1 = testIdPart(seeded.lineOneName);
+	const id2 = testIdPart(seeded.lineTwoName);
+	await page.getByTestId(`budget-line-row-${id1}`).click();
 	await page.getByTestId('budget-allocation-amount-input').fill('100000');
 	await page.getByTestId('budget-allocation-notes-input').fill('B3.3 first allocation');
 	await page.getByTestId('budget-allocation-save-button').click();
@@ -102,7 +194,7 @@ test('Builder totals arithmetic reflects in landing panel', async ({ page }) => 
 	await expect(page.getByTestId('budget-builder-allocated')).toContainText('100,000.00');
 	await expect(page.getByTestId('budget-builder-remaining')).toContainText('900,000.00');
 
-	await page.getByTestId(`budget-program-row-${testIdPart(seeded.programTwoTitle)}`).click();
+	await page.getByTestId(`budget-line-row-${id2}`).click();
 	await page.getByTestId('budget-allocation-amount-input').fill('250000');
 	await page.getByTestId('budget-allocation-notes-input').fill('B3.3 second allocation');
 	await page.getByTestId('budget-allocation-save-button').click();

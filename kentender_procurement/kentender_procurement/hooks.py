@@ -8,6 +8,18 @@ def _asset_version(rel_path: str) -> int:
 		return 1
 
 
+def _desk_asset_v(rel_path: str) -> int:
+	"""Cache-bust string for app_include: combine asset + hooks mtime so any edit rebusts; clear-cache + restart still required for Redis hook cache in prod."""
+	try:
+		base = Path(__file__).resolve().parent
+		a = (base / rel_path).stat()
+		h = (base / "hooks.py").stat()
+		# Use nanosecond precision + file size to avoid same-second cache-bust collisions.
+		return int((a.st_mtime_ns + h.st_mtime_ns + a.st_size + h.st_size) % 2_147_483_647)
+	except OSError:
+		return 1
+
+
 app_name = "kentender_procurement"
 app_title = "Kentender Procurement"
 app_publisher = "KenTender"
@@ -36,11 +48,17 @@ required_apps = ["kentender_core", "kentender_strategy", "kentender_budget"]
 
 # include js, css files in header of desk.html
 app_include_css = [
-	f"/assets/kentender_procurement/css/demand_intake_workspace.css?v={_asset_version('public/css/demand_intake_workspace.css')}",
+	f"/assets/kentender_procurement/css/demand_intake_workspace.css?v={_desk_asset_v('public/css/demand_intake_workspace.css')}",
+	f"/assets/kentender_procurement/css/procurement_planning_workspace.css?v={_desk_asset_v('public/css/procurement_planning_workspace.css')}",
+	f"/assets/kentender_procurement/css/procurement_home_workspace.css?v={_desk_asset_v('public/css/procurement_home_workspace.css')}",
+	f"/assets/kentender_procurement/css/procurement_package.css?v={_desk_asset_v('public/css/procurement_package.css')}",
 ]
-app_include_js = (
-	f"/assets/kentender_procurement/js/demand_intake_workspace.js?v={_asset_version('public/js/demand_intake_workspace.js')}"
-)
+app_include_js = [
+	f"/assets/kentender_procurement/js/demand_intake_workspace.js?v={_desk_asset_v('public/js/demand_intake_workspace.js')}",
+	f"/assets/kentender_procurement/js/pp_template_selector.js?v={_desk_asset_v('public/js/pp_template_selector.js')}",
+	f"/assets/kentender_procurement/js/procurement_planning_workspace.js?v={_desk_asset_v('public/js/procurement_planning_workspace.js')}",
+	f"/assets/kentender_procurement/js/procurement_home_workspace.js?v={_desk_asset_v('public/js/procurement_home_workspace.js')}",
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/kentender_procurement/css/kentender_procurement.css"
@@ -57,7 +75,10 @@ app_include_js = (
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-doctype_js = {"Demand": "public/js/demand_form.js"}
+doctype_js = {
+	"Demand": "public/js/demand_form.js",
+	"Procurement Package": "public/js/procurement_package.js",
+}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -136,10 +157,14 @@ doctype_js = {"Demand": "public/js/demand_form.js"}
 
 permission_query_conditions = {
 	"Demand": "kentender_procurement.demand_intake.permissions.demand_permissions.get_permission_query_conditions_for_demand",
+	"Procurement Plan": "kentender_procurement.procurement_planning.permissions.pp_record_permissions.get_permission_query_conditions_for_procurement_plan",
+	"Procurement Package": "kentender_procurement.procurement_planning.permissions.pp_record_permissions.get_permission_query_conditions_for_procurement_package",
 }
 
 has_permission = {
 	"Demand": "kentender_procurement.demand_intake.permissions.demand_permissions.demand_has_permission",
+	"Procurement Plan": "kentender_procurement.procurement_planning.permissions.pp_record_permissions.procurement_plan_has_permission",
+	"Procurement Package": "kentender_procurement.procurement_planning.permissions.pp_record_permissions.procurement_package_has_permission",
 }
 
 # Document Events
@@ -264,15 +289,34 @@ has_permission = {
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
 
+after_migrate = [
+	"kentender_procurement.setup.after_migrate_navigation.run",
+]
+
+boot_session = [
+	"kentender_procurement.setup.workspace_permissions.patch_bootinfo",
+]
+
+# Optional hooks for downstream apps (e.g. Tendering). Each path: dotted ``callable(payload: dict)``.
+release_procurement_package_to_tender = []
+
 fixtures = [
 	{"dt": "DocType", "filters": [["name", "=", "Procurement Navigation"]]},
 	{
 		"dt": "Workspace",
-		"filters": [["name", "in", ["Demand Intake and Approval", "Procurement"]]],
+		"filters": [
+			["name", "in", ["Demand Intake and Approval", "Procurement Home", "Procurement Planning"]]
+		],
 	},
 	{
 		"dt": "Workspace Sidebar",
-		"filters": [["name", "in", ["Procurement", "Demand Intake"]]],
+		"filters": [
+			[
+				"name",
+				"in",
+				["Procurement", "Demand Intake", "Planning module navigation"],
+			]
+		],
 	},
 ]
 

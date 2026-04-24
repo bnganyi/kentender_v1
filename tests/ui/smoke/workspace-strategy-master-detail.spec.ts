@@ -19,16 +19,14 @@ test('Strategy workspace shows created plans and selected-plan actions', async (
 
 	await expect(page.getByTestId('strategy-landing-page')).toBeVisible({ timeout: 60_000 });
 	await expect(page.getByRole('heading', { name: 'Strategic Plans' })).toBeVisible();
-	const planRow = page
-		.locator('[data-testid^="strategic-plan-row-"]')
-		.filter({ hasText: strategicPlanName });
+	const planRow = page.getByTestId(`strategic-plan-row-${docName}`);
 	await expect(planRow).toBeVisible({ timeout: 60_000 });
 
 	await planRow.click();
 
 	await expect(page.getByTestId('selected-plan-open-builder')).toBeVisible();
 	await expect(page.getByTestId('selected-plan-edit-plan')).toBeVisible();
-	await expect(page.getByText(/Programs:/i)).toBeVisible();
-	await expect(page.getByText(/Objectives:/i)).toBeVisible();
-	await expect(page.getByText(/Targets:/i)).toBeVisible();
+	await expect(page.getByTestId('selected-plan-program-count')).toBeVisible();
+	await expect(page.getByTestId('selected-plan-objective-count')).toBeVisible();
+	await expect(page.getByTestId('selected-plan-target-count')).toBeVisible();
 });

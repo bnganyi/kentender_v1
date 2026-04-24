@@ -1,0 +1,120 @@
+/* D4 — Procurement Package builder (Desk Form) */
+
+.form-layout.kt-pp-package-builder .form-tabs-list .nav-link {
+	font-size: 0.8rem;
+	font-weight: 500;
+}
+
+.form-layout.kt-pp-package-builder .kt-pp-builder-progress {
+	font-size: 0.78rem;
+	color: var(--text-muted, #5c6c74);
+	margin: 0.2rem 0.6rem 0.5rem;
+	padding: 0.15rem 0 0.25rem;
+	border-bottom: 1px solid var(--border-color, #e2e6ea);
+}
+
+.form-layout.kt-pp-package-builder .form-tabs-list {
+	margin: 0 0.6rem 0.5rem;
+}
+
+.form-layout.kt-pp-package-builder .kt-pp-builder-progress__line strong {
+	color: var(--text-color, #1f272e);
+	font-weight: 600;
+}
+
+.form-layout.kt-pp-package-builder .kt-pp-builder-progress__missing {
+	margin-top: 0.1rem;
+}
+
+.form-layout.kt-pp-package-builder .form-tabs-list .nav-link .kt-pp-tab-state {
+	font-size: 0.75rem;
+	margin-left: 0.15rem;
+	color: var(--text-muted, #6c757d);
+}
+
+.form-layout.kt-pp-package-builder .form-tabs-list .nav-link[data-kt-state="COMPLETE"] .kt-pp-tab-state {
+	color: #1b5e20;
+}
+
+.form-layout.kt-pp-package-builder .form-tabs-list .nav-link[data-kt-state="ERROR"] .kt-pp-tab-state {
+	color: #b45309;
+}
+
+.form-layout.kt-pp-package-builder .form-column {
+	column-gap: 1rem;
+}
+
+.form-layout.kt-pp-package-builder .form-section .section-head,
+.form-layout.kt-pp-package-builder .frappe-control[data-fieldtype="Tab Break"] {
+	margin-bottom: 0.35rem;
+}
+
+.form-layout.kt-pp-package-builder .kt-pp-builder-lines {
+	margin-top: 0.5rem;
+}
+
+.form-layout.kt-pp-package-builder .kt-pp-builder-table-wrap {
+	overflow-x: auto;
+	max-width: 100%;
+}
+
+.form-layout.kt-pp-package-builder .kt-pp-builder-table-wrap table {
+	font-size: 0.85rem;
+}
+
+.form-layout.kt-pp-package-builder .kt-pp-builder-table-wrap th {
+	white-space: nowrap;
+	font-size: 0.7rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.form-layout.kt-pp-package-builder #kt-pp-builder-lines-host .text-muted.small {
+	margin-bottom: 0.35rem;
+}
+
+.form-layout.kt-pp-package-builder .kt-pp-builder-lines-help {
+	padding: 0.45rem 0;
+}
+
+/* D5 — template selector + preview (shared with workbench; loaded app-wide) */
+.kt-pp-tpl-modal {
+	min-height: 14rem;
+}
+
+.kt-pp-tpl-modal__main {
+	min-height: 12rem;
+}
+
+.kt-pp-tpl-list .kt-pp-tpl-row {
+	border-radius: var(--border-radius, 4px);
+	transition: background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.kt-pp-tpl-list .kt-pp-tpl-row:hover {
+	background: var(--control-bg, #f5f7fa);
+}
+
+.kt-pp-tpl-list .kt-pp-tpl-row.is-active,
+.kt-pp-tpl-list .kt-pp-tpl-row.btn-primary {
+	box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08);
+}
+
+.kt-pp-tpl-preview-wrap .kt-pp-tpl-preview-inner {
+	font-size: 0.88rem;
+}
+
+.kt-pp-tpl-preview-wrap .kt-pp-tpl-preview-inner dt {
+	font-size: 0.7rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.kt-pp-tpl-preview-wrap .kt-pp-tpl-preview-inner dd {
+	margin-bottom: 0.2rem;
+}
+
+.kt-pp-tpl-demand-block #kt-pp-tpl-demand-chips {
+	max-height: 7rem;
+	overflow: auto;
+}

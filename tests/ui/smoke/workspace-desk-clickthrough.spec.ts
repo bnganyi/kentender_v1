@@ -27,7 +27,7 @@ test('Procurement opens from module tile then sidebar (not address-bar deep link
 	await openWorkspaceFromDeskLauncher(page, procurementModule, procurementWorkspace.heading);
 
 	await expect(page.getByText(procurementWorkspace.heading).first()).toBeVisible();
-	await expect(page).toHaveURL(/\/(app|desk)\/procurement$/);
+	await expect(page).toHaveURL(/\/(app|desk)\/procurement-home/);
 });
 
 test('Budget Management opens from module tile then sidebar (not address-bar deep link)', async ({

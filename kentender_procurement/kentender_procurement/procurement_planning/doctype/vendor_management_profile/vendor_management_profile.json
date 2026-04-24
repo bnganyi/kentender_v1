@@ -1,0 +1,148 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:profile_code",
+ "creation": "2026-04-23 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "profile_code",
+  "profile_name",
+  "section_rules",
+  "monitoring_rules",
+  "escalation_rules"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "1. Identity"
+  },
+  {
+   "fieldname": "profile_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Profile Code",
+   "reqd": 1,
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "profile_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Profile Name",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_rules",
+   "fieldtype": "Section Break",
+   "label": "2. Rules"
+  },
+  {
+   "default": "{}",
+   "description": "JSON object describing monitoring expectations (e.g. cadence lists).",
+   "fieldname": "monitoring_rules",
+   "fieldtype": "JSON",
+   "label": "Monitoring Rules",
+   "reqd": 1
+  },
+  {
+   "default": "{}",
+   "description": "JSON object describing escalation expectations.",
+   "fieldname": "escalation_rules",
+   "fieldtype": "JSON",
+   "label": "Escalation Rules",
+   "reqd": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-04-23 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "Vendor Management Profile",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Planner",
+   "share": 1,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Officer",
+   "share": 1,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Planning Authority",
+   "share": 1,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 1,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "show_title_field_in_link": 1,
+ "search_fields": "profile_code,profile_name",
+ "title_field": "profile_name",
+ "track_changes": 1
+}

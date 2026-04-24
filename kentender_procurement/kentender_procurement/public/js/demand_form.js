@@ -609,6 +609,19 @@ kentender_procurement.dia_demand_form = (function () {
 	}
 
 	function recalcDemandFinancials(frm) {
+		let scrollHost = null;
+		let prevScrollTop = 0;
+		try {
+			const g = frm.fields_dict.items && frm.fields_dict.items.grid;
+			if (g && g.$wrapper) {
+				scrollHost = g.$wrapper.find(".grid-body").get(0);
+				if (scrollHost && typeof scrollHost.scrollTop === "number") {
+					prevScrollTop = scrollHost.scrollTop;
+				}
+			}
+		} catch (e0) {
+			scrollHost = null;
+		}
 		const rows = frm.doc.items || [];
 		let sum = 0;
 		for (let i = 0; i < rows.length; i++) {
@@ -626,6 +639,14 @@ kentender_procurement.dia_demand_form = (function () {
 			frm.set_value("total_amount", next);
 		}
 		updateBudgetDecisionStrip(frm);
+		if (scrollHost && typeof prevScrollTop === "number") {
+			requestAnimationFrame(function () {
+				scrollHost.scrollTop = prevScrollTop;
+				requestAnimationFrame(function () {
+					scrollHost.scrollTop = prevScrollTop;
+				});
+			});
+		}
 	}
 
 	function runSaveValidation(frm) {

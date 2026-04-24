@@ -442,9 +442,9 @@
 		wrap.className = "kt-budget-injected-shell";
 		wrap.setAttribute("data-testid", "budget-landing-page");
 		wrap.innerHTML =
-			'<div class="kt-budget-workspace-header mb-3">' +
+			'<div class="kt-budget-workspace-header kt-budget-workspace-header--compact mb-2">' +
 			'<div class="kt-budget-header-row">' +
-			'<h2 class="kt-budget-page-title h4 mb-2" data-testid="budget-page-title">' +
+			'<h2 class="kt-budget-page-title h5 mb-1" data-testid="budget-page-title">' +
 			escapeHtml(__("Budget Management")) +
 			"</h2>" +
 			'<div class="kt-budget-header-cta" data-testid="budget-header-cta"></div>' +
@@ -453,7 +453,7 @@
 			escapeHtml(__("Create and manage budgets aligned to strategic plans.")) +
 			"</p>" +
 			"</div>" +
-			'<div class="kt-budget-overview-metrics row g-3 mb-3" data-testid="budget-overview-metrics">' +
+			'<div class="kt-budget-overview-metrics row g-2 mb-1" data-testid="budget-overview-metrics">' +
 			'<div class="col-6 col-lg-3">' +
 			'<div class="kt-budget-kpi-card kt-surface">' +
 			'<div class="kt-budget-kpi-label">' +
@@ -483,7 +483,8 @@
 			'<div class="kt-budget-kpi-value" data-testid="budget-metric-allocation-pct">0%</div>' +
 			"</div></div>" +
 			"</div>" +
-			'<div class="row kt-budget-overview-metrics kt-budget-overview-metrics--secondary g-3 mb-3" data-testid="budget-overview-metrics-secondary">' +
+			'<p class="kt-budget-kpi-currency-note text-muted" id="kt-budget-kpi-currency-note" data-testid="budget-kpi-currency-context"></p>' +
+			'<div class="row kt-budget-overview-metrics kt-budget-overview-metrics--secondary g-2 mb-1" data-testid="budget-overview-metrics-secondary">' +
 			'<div class="col-6 col-lg-3 d-none" data-testid="budget-kpi-pending-wrap">' +
 			'<div class="kt-budget-kpi-card kt-surface">' +
 			'<div class="kt-budget-kpi-label">' +
@@ -499,7 +500,7 @@
 			'<div class="kt-budget-kpi-value" data-testid="budget-metric-my-drafts">0</div>' +
 			"</div></div>" +
 			"</div>" +
-			'<div class="row g-3 kt-budget-master-detail">' +
+			'<div class="row g-2 kt-budget-master-detail kt-budget-master-detail--tight">' +
 			'<div class="kt-budget-col-list">' +
 			'<div class="kt-budget-section kt-surface">' +
 			'<h3 class="kt-budget-section__title">' +
@@ -572,12 +573,24 @@
 		}
 	}
 
+	function resolveLandingDisplayCurrency() {
+		const list = landingBudgets || [];
+		for (let i = 0; i < list.length; i++) {
+			const c = list[i] && list[i].currency;
+			if (c) {
+				return String(c);
+			}
+		}
+		return "KES";
+	}
+
 	function updateOverviewMetrics(portfolio) {
 		const p = portfolio || {};
 		const elActive = document.querySelector('[data-testid="budget-metric-active"]');
 		const elDraft = document.querySelector('[data-testid="budget-metric-draft"]');
 		const elTotal = document.querySelector('[data-testid="budget-metric-total"]');
 		const elPct = document.querySelector('[data-testid="budget-metric-allocation-pct"]');
+		const elCur = document.getElementById("kt-budget-kpi-currency-note");
 		if (elActive) {
 			const v = String(p.active_count != null ? p.active_count : 0);
 			elActive.textContent = v;
@@ -597,6 +610,10 @@
 			const v = formatPercent(p.allocation_pct || 0);
 			elPct.textContent = v;
 			elPct.title = v;
+		}
+		if (elCur) {
+			const cur = resolveLandingDisplayCurrency();
+			elCur.textContent = __("All monetary figures in {0}").replace("{0}", cur);
 		}
 		updateExtraKpiCards(p);
 	}

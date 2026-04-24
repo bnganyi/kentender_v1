@@ -1,0 +1,266 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:plan_code",
+ "creation": "2026-04-23 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "plan_name",
+  "plan_code",
+  "column_context",
+  "fiscal_year",
+  "procuring_entity",
+  "currency",
+  "section_state",
+  "status",
+  "workflow_reason",
+  "is_active",
+  "total_planned_value",
+  "submit_package_integrity_hash",
+  "section_audit",
+  "created_by",
+  "created_at",
+  "column_approval",
+  "approved_by",
+  "approved_at",
+  "rejected_by",
+  "rejected_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "1. Plan identity"
+  },
+  {
+   "fieldname": "plan_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Plan Name",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "plan_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Plan Code",
+   "reqd": 1,
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "column_context",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "fiscal_year",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Fiscal Year",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "procuring_entity",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Procuring Entity",
+   "options": "Procuring Entity",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Currency",
+   "options": "Currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_state",
+   "fieldtype": "Section Break",
+   "label": "2. Planning state"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nSubmitted\nApproved\nLocked\nRejected\nReturned",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Required when returning from Submitted, rejecting from Submitted, or unlocking from Locked (Administrator/System Manager). May be set by workflow APIs before save.",
+   "fieldname": "workflow_reason",
+   "fieldtype": "Long Text",
+   "label": "Workflow Reason"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_planned_value",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Planned Value",
+   "read_only": 1
+  },
+  {
+   "description": "SHA-256 fingerprint of active packages at last transition to Submitted (governance).",
+   "fieldname": "submit_package_integrity_hash",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Submit Package Integrity Hash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_audit",
+   "fieldtype": "Section Break",
+   "label": "3. Audit metadata",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "created_by",
+   "fieldtype": "Link",
+   "label": "Created By",
+   "options": "User",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "created_at",
+   "fieldtype": "Datetime",
+   "label": "Created At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_approval",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_at",
+   "fieldtype": "Datetime",
+   "label": "Approved At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rejected_by",
+   "fieldtype": "Link",
+   "label": "Rejected By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rejected_at",
+   "fieldtype": "Datetime",
+   "label": "Rejected At",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-04-23 20:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "Procurement Plan",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Planner",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Officer",
+   "share": 1,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Planning Authority",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 1,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "show_title_field_in_link": 1,
+ "search_fields": "plan_code,plan_name",
+ "title_field": "plan_name",
+ "track_changes": 1
+}

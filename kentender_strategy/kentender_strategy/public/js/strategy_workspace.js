@@ -209,21 +209,21 @@
 		wrap.className = "kt-strategy-injected-shell";
 		wrap.setAttribute("data-testid", "strategy-landing-page");
 		wrap.innerHTML =
-			'<div class="kt-strategy-workspace-header mb-3">' +
-			'<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">' +
-			'<h2 class="kt-strategy-page-title h4 mb-0" data-testid="strategy-page-title">' +
+			'<div class="kt-strategy-workspace-header kt-strategy-workspace-header--compact mb-2">' +
+			'<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1">' +
+			'<h2 class="kt-strategy-page-title h5 mb-0" data-testid="strategy-page-title">' +
 			escapeHtml(__("Strategy Management")) +
 			"</h2>" +
 			'<button type="button" class="btn btn-xs btn-default" data-testid="strategy-workspace-back-desktop">' +
 			escapeHtml(__("← Back to Desktop")) +
 			"</button>" +
 			"</div>" +
-			'<p class="kt-strategy-page-intro text-muted mb-3 mb-md-2" data-testid="strategy-page-intro">' +
+			'<p class="kt-strategy-page-intro text-muted mb-0" data-testid="strategy-page-intro">' +
 			escapeHtml(__("Create and manage strategic plans and hierarchy.")) +
 			"</p>" +
 			'<div class="kt-strategy-header-create-slot" data-testid="strategic-plan-create-slot"></div>' +
 			"</div>" +
-			'<div class="kt-strategy-overview-metrics row g-3 mb-3" data-testid="strategy-overview-metrics">' +
+			'<div class="kt-strategy-overview-metrics row g-2 mb-1" data-testid="strategy-overview-metrics">' +
 			'<div class="col-6 col-lg-3">' +
 			'<div class="kt-strategy-kpi-card kt-surface">' +
 			'<div class="kt-strategy-kpi-label">' +
@@ -253,7 +253,7 @@
 			'<div class="kt-strategy-kpi-value" data-testid="strategy-metric-total-programs">0</div>' +
 			"</div></div>" +
 			"</div>" +
-			'<div class="row kt-strategy-overview-metrics kt-strategy-overview-metrics--secondary g-3 mb-3" data-testid="strategy-overview-metrics-secondary">' +
+			'<div class="row kt-strategy-overview-metrics kt-strategy-overview-metrics--secondary g-2 mb-1" data-testid="strategy-overview-metrics-secondary">' +
 			'<div class="col-6 col-lg-3 d-none" data-testid="strategy-kpi-my-drafts-wrap">' +
 			'<div class="kt-strategy-kpi-card kt-surface">' +
 			'<div class="kt-strategy-kpi-label">' +
@@ -269,7 +269,7 @@
 			'<div class="kt-strategy-kpi-value" data-testid="strategy-metric-archived">0</div>' +
 			"</div></div>" +
 			"</div>" +
-			'<div class="row g-3 kt-strategy-master-detail">' +
+			'<div class="row g-2 kt-strategy-master-detail kt-strategy-master-detail--tight">' +
 			'<div class="kt-strategy-col-list">' +
 			'<div class="kt-strategy-section kt-surface" data-testid="strategic-plans-section">' +
 			'<h4 class="kt-strategy-section__title">' +

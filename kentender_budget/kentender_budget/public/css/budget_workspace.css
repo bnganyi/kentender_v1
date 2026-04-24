@@ -64,12 +64,40 @@ div.kt-budget-builder-shell {
 	letter-spacing: -0.01em;
 }
 
+.kt-budget-injected-shell .kt-budget-workspace-header--compact .kt-budget-page-title,
+.kt-budget-shell .kt-budget-workspace-header--compact .kt-budget-page-title,
+.kt-budget-builder-shell .kt-budget-workspace-header--compact .kt-budget-page-title {
+	font-size: 1.2rem;
+	line-height: 1.25;
+}
+
 .kt-budget-injected-shell .kt-budget-page-intro,
 .kt-budget-shell .kt-budget-page-intro,
 .kt-budget-builder-shell .kt-budget-page-intro {
 	font-size: 0.92rem;
 	line-height: 1.45;
 	max-width: 44rem;
+}
+
+.kt-budget-injected-shell .kt-budget-workspace-header--compact,
+.kt-budget-shell .kt-budget-workspace-header--compact,
+.kt-budget-builder-shell .kt-budget-workspace-header--compact {
+	margin-bottom: 0.35rem;
+}
+
+.kt-budget-injected-shell .kt-budget-workspace-header--compact .kt-budget-page-intro,
+.kt-budget-shell .kt-budget-workspace-header--compact .kt-budget-page-intro,
+.kt-budget-builder-shell .kt-budget-workspace-header--compact .kt-budget-page-intro {
+	font-size: 0.86rem;
+	line-height: 1.35;
+}
+
+.kt-budget-injected-shell .kt-budget-kpi-currency-note,
+.kt-budget-shell .kt-budget-kpi-currency-note,
+.kt-budget-builder-shell .kt-budget-kpi-currency-note {
+	font-size: 0.72rem;
+	margin: 0.1rem 0 0.35rem;
+	line-height: 1.35;
 }
 
 .kt-budget-injected-shell .kt-budget-header-row,
@@ -128,8 +156,9 @@ div.kt-budget-builder-shell {
 .kt-budget-builder-shell .kt-budget-kpi-card {
 	background: var(--kt-budget-kpi-bg);
 	border: 1px solid var(--kt-budget-surface-border);
-	border-radius: var(--border-radius-lg, 8px);
-	padding: 0.8rem 0.95rem;
+	border-radius: var(--border-radius, 6px);
+	padding: 0.5rem 0.65rem;
+	min-height: 3.1rem;
 	height: 100%;
 	box-shadow: var(--kt-budget-surface-shadow);
 }
@@ -137,24 +166,23 @@ div.kt-budget-builder-shell {
 .kt-budget-injected-shell .kt-budget-kpi-label,
 .kt-budget-shell .kt-budget-kpi-label,
 .kt-budget-builder-shell .kt-budget-kpi-label {
-	font-size: 0.68rem;
+	font-size: 0.65rem;
 	font-weight: 700;
 	text-transform: uppercase;
 	letter-spacing: 0.06em;
 	color: var(--text-muted);
-	margin-bottom: 0.45rem;
+	margin-bottom: 0.22rem;
 }
 
 .kt-budget-injected-shell .kt-budget-kpi-value,
 .kt-budget-shell .kt-budget-kpi-value,
 .kt-budget-builder-shell .kt-budget-kpi-value {
-	font-size: clamp(1.05rem, 1.55vw, 1.45rem);
+	font-size: clamp(1.05rem, 1.55vw, 1.4rem);
 	font-weight: 600;
 	line-height: 1.15;
 	color: var(--text-color, #1f272e);
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+	white-space: normal;
+	overflow: visible;
 	font-variant-numeric: tabular-nums;
 }
 
@@ -167,6 +195,13 @@ div.kt-budget-builder-shell {
 	align-items: stretch;
 	gap: 1.1rem;
 	margin-bottom: 0.35rem;
+}
+
+.kt-budget-injected-shell .kt-budget-master-detail--tight,
+.kt-budget-shell .kt-budget-master-detail--tight,
+.kt-budget-builder-shell .kt-budget-master-detail--tight {
+	gap: 0.7rem;
+	margin-top: 0.15rem;
 }
 
 .kt-budget-injected-shell .kt-budget-col-list,
@@ -302,7 +337,7 @@ div.kt-budget-builder-shell {
 	display: flex;
 	flex-direction: column;
 	gap: 0.3rem;
-	max-height: min(60vh, 28rem);
+	max-height: min(78vh, 40rem);
 	overflow-y: auto;
 }
 

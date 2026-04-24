@@ -20,10 +20,11 @@ export const budgetWorkspace = {
 	appPath: '/desk/budget-management',
 };
 
+/** Default workspace under the Procurement module tile (see `procurement_home` Workspace). */
 export const procurementWorkspace = {
-	heading: 'Procurement',
-	route: '/app/procurement',
-	appPath: '/app/procurement',
+	heading: 'Procurement Home',
+	route: '/desk/procurement-home',
+	appPath: '/desk/procurement-home',
 };
 
 /** Demand Intake and Approval (DIA) Desk workspace — slug from Workspace label. */

@@ -13,6 +13,114 @@
 	let selectedDemandName = null;
 	let diaSearchTimer = null;
 	let detailLoadSeq = 0;
+	let diaQueueListReqId = 0;
+	/** v3: single-row queue line + overflow; keep primary for operational queues */
+	const DIA_MAX_INLINE_QUEUES = 4;
+
+	function userCanCreateDemand() {
+		return (
+			typeof frappe !== "undefined" &&
+			frappe.model &&
+			typeof frappe.model.can_create === "function" &&
+			frappe.model.can_create("Demand")
+		);
+	}
+
+	function focusDiaQueueToolbar() {
+		const row = document.getElementById("kt-dia-queue-selector");
+		const pills = document.getElementById("kt-dia-queue-pills");
+		if (row && typeof row.scrollIntoView === "function") {
+			row.scrollIntoView({ block: "nearest", behavior: "smooth" });
+		}
+		if (!pills) {
+			return;
+		}
+		const t =
+			pills.querySelector("[data-toggle=dropdown]") || pills.querySelector("button[data-dia-queue]");
+		if (t && typeof t.focus === "function") {
+			t.focus();
+		}
+	}
+
+	function diaQueueListScrollHost(listRoot) {
+		if (!listRoot) {
+			return null;
+		}
+		return listRoot.querySelector(".kt-dia-queue-list");
+	}
+
+	function diaReadQueueListScrollTop(listRoot) {
+		const host = diaQueueListScrollHost(listRoot);
+		return host && typeof host.scrollTop === "number" ? host.scrollTop : 0;
+	}
+
+	function diaRestoreQueueListScrollTop(listRoot, top, selectedName) {
+		const host = diaQueueListScrollHost(listRoot);
+		if (!host) {
+			return;
+		}
+		host.scrollTop = typeof top === "number" ? top : 0;
+		if (!selectedName) {
+			return;
+		}
+		let sel = null;
+		host.querySelectorAll("[data-dia-demand]").forEach(function (el) {
+			if (el.getAttribute("data-dia-demand") === selectedName) {
+				sel = el;
+			}
+		});
+		if (!sel || typeof sel.getBoundingClientRect !== "function") {
+			return;
+		}
+		const rowRect = sel.getBoundingClientRect();
+		const listRect = host.getBoundingClientRect();
+		if (rowRect.top < listRect.top || rowRect.bottom > listRect.bottom) {
+			sel.scrollIntoView({ block: "nearest" });
+		}
+	}
+
+	function queueListSignature(payload) {
+		if (!payload || !Array.isArray(payload.demands)) {
+			return "";
+		}
+		const cur = payload.currency || "";
+		const rk = payload.role_key || "";
+		const rows = payload.demands
+			.map(function (r) {
+				return (
+					(r.name || "") +
+					"#" +
+					(r.status || "") +
+					"#" +
+					String(r.total_amount != null ? r.total_amount : "") +
+					"#" +
+					(r.demand_id || "") +
+					"#" +
+					(r.title || "") +
+					"#" +
+					(r.reservation_status || "")
+				);
+			})
+			.join("|");
+		return rk + "|" + cur + "|" + rows;
+	}
+
+	function syncDemandListSelection(listRoot, selectedName, opts) {
+		opts = opts || {};
+		const host = diaQueueListScrollHost(listRoot);
+		if (!host) {
+			return;
+		}
+		host.querySelectorAll(".kt-dia-queue-item[data-dia-demand]").forEach(function (el) {
+			const nm = el.getAttribute("data-dia-demand");
+			const on = nm && nm === selectedName;
+			el.classList.toggle("is-active", !!on);
+			el.setAttribute("aria-selected", on ? "true" : "false");
+		});
+		if (opts.ensureSelectedVisible) {
+			diaRestoreQueueListScrollTop(listRoot, diaReadQueueListScrollTop(listRoot), selectedName);
+		}
+	}
 
 	const TAB_APPROVED_QUEUE_IDS = {
 		requisitioner: ["my_approved"],
@@ -111,9 +219,21 @@
 				if (r[0] === "Workspaces" && r.length >= 2) {
 					const workspaceName = r[1] === "private" && r.length >= 3 ? r[2] : r[1];
 					if (workspaceNameMatchesDia(workspaceName)) return true;
+					/* Another workspace is active — do not use stale URL/hash heuristics (would mount DIA on e.g. Procurement Home). */
+					if (workspaceName) return false;
 				}
 			}
 		} catch (e) {
+			/* ignore */
+		}
+		try {
+			const route = frappe.get_route() || [];
+			if (route[0] === "Workspaces" && route.length >= 2) {
+				const w = route[1] === "private" && route.length >= 3 ? route[2] : route[1];
+				if (workspaceNameMatchesDia(w)) return true;
+				if (w) return false;
+			}
+		} catch (e2) {
 			/* ignore */
 		}
 		const loc = window.location;
@@ -124,18 +244,6 @@
 		const dr = (document.body && document.body.getAttribute("data-route")) || "";
 		if (dr.includes(DIA_WS) || dr.toLowerCase().includes("demand-intake")) {
 			return true;
-		}
-		try {
-			const route = frappe.get_route() || [];
-			if (route[0] !== "Workspaces") return false;
-			const w = route[1] === "private" && route.length >= 3 ? route[2] : route[1];
-			if (!w) return false;
-			if (w === DIA_WS || w === "demand-intake-and-approval") return true;
-			if (frappe.router && typeof frappe.router.slug === "function") {
-				return frappe.router.slug(w) === frappe.router.slug(DIA_WS);
-			}
-		} catch (e) {
-			return false;
 		}
 		return false;
 	}
@@ -202,18 +310,18 @@
 		wrap.className = "kt-dia-injected-shell";
 		wrap.setAttribute("data-testid", "dia-landing-page");
 		wrap.innerHTML =
-			'<div class="kt-dia-workspace-header mb-3">' +
+			'<div class="kt-dia-workspace-header kt-dia-workspace-header--compact mb-1">' +
 			'<div class="kt-dia-header-row">' +
 			'<div>' +
-			'<h2 class="kt-dia-page-title h4 mb-2" data-testid="dia-page-title">' +
+			'<h2 class="kt-dia-page-title h5 mb-1" data-testid="dia-page-title">' +
 			escapeHtml(__("Demand Intake and Approval")) +
 			"</h2>" +
-			'<p class="kt-dia-page-intro text-muted mb-0" data-testid="dia-page-intro">' +
+			'<p class="kt-dia-page-intro text-muted small mb-0" data-testid="dia-page-intro">' +
 			escapeHtml(__("Capture, approve, and prepare procurement demand for planning.")) +
 			"</p></div>" +
 			'<div class="kt-dia-header-cta" data-testid="dia-header-cta"></div>' +
 			"</div></div>" +
-			'<div class="row g-3 mb-3" data-testid="dia-kpi-row">' +
+			'<div class="row g-1 align-items-stretch" data-testid="dia-kpi-row">' +
 			'<div class="col-6 col-lg-3"><div class="kt-dia-kpi-card kt-surface">' +
 			'<div class="kt-dia-kpi-label" data-testid="dia-kpi-0-label">—</div>' +
 			'<div class="kt-dia-kpi-value" data-testid="dia-kpi-0-value">—</div></div></div>' +
@@ -227,28 +335,46 @@
 			'<div class="kt-dia-kpi-label" data-testid="dia-kpi-3-label">—</div>' +
 			'<div class="kt-dia-kpi-value" data-testid="dia-kpi-3-value">—</div></div></div>' +
 			"</div>" +
-			'<div class="kt-dia-section kt-surface mb-2">' +
-			'<div class="kt-dia-work-tabs mb-2" role="tablist" id="kt-dia-work-tabs" data-testid="dia-work-tabs">' +
-			'<div class="btn-group btn-group-sm flex-wrap kt-dia-tab-group" role="group">' +
-			'<button type="button" class="btn btn-default" data-testid="dia-tab-my-work" data-kt-dia-tab="mywork" role="tab">' +
+			'<p class="kt-dia-kpi-currency-note text-muted" id="kt-dia-kpi-currency-note" data-testid="dia-kpi-currency-context" hidden></p>' +
+			'<div class="kt-dia-control-bar" data-testid="dia-control-bar">' +
+			'<div class="kt-dia-control-bar__row kt-dia-control-bar__row--tabs" data-testid="dia-control-row-tabs">' +
+			'<div class="kt-dia-work-tabs" role="tablist" id="kt-dia-work-tabs" data-testid="dia-work-tabs">' +
+			'<div class="btn-group btn-group-sm flex-nowrap kt-dia-tab-group" role="group">' +
+			'<button type="button" class="btn btn-default kt-dia-work-tab" data-testid="dia-tab-my-work" data-kt-dia-tab="mywork" role="tab">' +
 			escapeHtml(__("My Work")) +
 			"</button>" +
-			'<button type="button" class="btn btn-default" data-testid="dia-tab-all" data-kt-dia-tab="all" role="tab">' +
+			'<button type="button" class="btn btn-default kt-dia-work-tab" data-testid="dia-tab-all" data-kt-dia-tab="all" role="tab">' +
 			escapeHtml(__("All")) +
 			"</button>" +
-			'<button type="button" class="btn btn-default" data-testid="dia-tab-approved" data-kt-dia-tab="approved" role="tab">' +
+			'<button type="button" class="btn btn-default kt-dia-work-tab" data-testid="dia-tab-approved" data-kt-dia-tab="approved" role="tab">' +
 			escapeHtml(__("Approved")) +
 			"</button>" +
-			'<button type="button" class="btn btn-default" data-testid="dia-tab-rejected" data-kt-dia-tab="rejected" role="tab">' +
+			'<button type="button" class="btn btn-default kt-dia-work-tab" data-testid="dia-tab-rejected" data-kt-dia-tab="rejected" role="tab">' +
 			escapeHtml(__("Rejected")) +
 			"</button></div></div>" +
-			'<div class="kt-dia-queue-selector" id="kt-dia-queue-selector" data-testid="dia-queue-selector">' +
-			'<div class="kt-dia-queue-pills" id="kt-dia-queue-pills" data-testid="dia-queue-pills"></div></div>' +
-			'<p class="small text-muted mb-2 kt-dia-scope-hint" id="kt-dia-scope-hint" data-testid="dia-scope-hint" hidden></p>' +
-			'<details class="kt-dia-filters" data-testid="dia-filters-panel">' +
-			"<summary>" +
-			escapeHtml(__("Filters")) +
-			"</summary>" +
+			'<div class="kt-dia-search-compact-wrap">' +
+			'<div class="kt-dia-search-compact">' +
+			'<label class="kt-dia-sr-only" for="kt-dia-search-input">' +
+			escapeHtml(__("Search")) +
+			'</label><input type="search" class="form-control form-control-sm" id="kt-dia-search-input" data-testid="dia-search-input" placeholder="' +
+			escapeHtml(__("Demand ID, title, requester, department…")) +
+			'" />' +
+			"</div></div></div>" +
+			'<div class="kt-dia-control-bar__row kt-dia-control-bar__row--queues" data-testid="dia-control-row-queues" id="kt-dia-queue-selector">' +
+			'<div class="kt-dia-queue-pills" id="kt-dia-queue-pills" data-testid="dia-queue-pills"></div>' +
+			'<div class="kt-dia-toolbar-queues-right">' +
+			'<button type="button" class="btn btn-default btn-sm kt-dia-filters-icon-btn" data-dia-action="toggle-filters" data-testid="dia-filters-toggle" id="kt-dia-filters-toggle" aria-expanded="false" aria-controls="kt-dia-filters-popover" title="' +
+			escapeHtml(__("Refine (filters)")) +
+			'">' +
+			'<svg class="kt-dia-filters-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M0 1.25h16v1.2H0V1.25zM2.5 6.1h11v1.2h-11V6.1zM4.5 10.8h7v1.2h-7v-1.2z" /></svg>' +
+			'<span class="kt-dia-sr-only">' +
+			escapeHtml(__("Refine (filters)")) +
+			"</span></button>" +
+			'<button type="button" class="kt-dia-scope-hint-btn" id="kt-dia-scope-hint" data-testid="dia-scope-hint" hidden="">' +
+			'<span class="kt-dia-scope-hint-glyph" aria-hidden="true">' +
+			"\u2139" +
+			"</span></button></div></div>" +
+			'<div id="kt-dia-filters-popover" class="kt-dia-filters-popover" data-testid="dia-filters-panel" hidden data-kt-dia-filters="1">' +
 			'<div class="kt-dia-filter-grid">' +
 			'<div class="form-group"><label class="small text-muted">' +
 			escapeHtml(__("Demand Type")) +
@@ -304,17 +430,9 @@
 			"</button>" +
 			'<button type="button" class="btn btn-default btn-sm" data-dia-action="clear-filters" data-testid="dia-filter-clear">' +
 			escapeHtml(__("Clear")) +
-			"</button></div></div></details>" +
-			'<div class="kt-dia-search-row">' +
-			'<div class="form-group">' +
-			'<label class="small text-muted">' +
-			escapeHtml(__("Search")) +
-			'</label><input type="search" class="form-control form-control-sm" data-testid="dia-search-input" placeholder="' +
-			escapeHtml(__("Demand ID, title, requester, department…")) +
-			'" /></div></div>' +
-			'<div class="kt-dia-chip-row" data-testid="dia-active-filter-chips"></div>' +
-			"</div>" +
-			'<div class="kt-dia-master-detail">' +
+			"</button></div></div></div>" +
+			'<div class="kt-dia-chip-row" data-testid="dia-active-filter-chips" hidden></div></div>' +
+			'<div class="kt-dia-master-detail kt-dia-master-detail--tight">' +
 			'<div class="kt-dia-col-list">' +
 			'<div class="kt-dia-section kt-surface">' +
 			'<h3 class="kt-dia-section__title" id="kt-dia-queue-list-title" data-testid="dia-list-title">' +
@@ -334,6 +452,42 @@
 		return { ok: true, inserted: true };
 	}
 
+	function closeDiaFiltersPopover() {
+		const p = document.getElementById("kt-dia-filters-popover");
+		const b = document.getElementById("kt-dia-root")
+			? document.querySelector("#kt-dia-root [data-dia-action=\"toggle-filters\"]")
+			: null;
+		if (p) {
+			p.hidden = true;
+		}
+		if (b) {
+			b.setAttribute("aria-expanded", "false");
+		}
+		document.removeEventListener("mousedown", onDiaFiltersDocMouseDown, true);
+		document.removeEventListener("keydown", onDiaFiltersEscape, true);
+	}
+
+	function onDiaFiltersDocMouseDown(ev) {
+		const p = document.getElementById("kt-dia-filters-popover");
+		if (!p || p.hidden) {
+			return;
+		}
+		const t = ev.target;
+		if (p.contains(t) || (t && t.closest && t.closest("#kt-dia-filters-popover"))) {
+			return;
+		}
+		if (t && t.closest && t.closest("[data-dia-action=\"toggle-filters\"]")) {
+			return;
+		}
+		closeDiaFiltersPopover();
+	}
+
+	function onDiaFiltersEscape(ev) {
+		if (ev.key === "Escape") {
+			closeDiaFiltersPopover();
+		}
+	}
+
 	function ensureDiaDelegatedClicks() {
 		const root = document.getElementById("kt-dia-root");
 		if (!root || root.dataset.diaDelegated === "1") return;
@@ -350,13 +504,33 @@
 			const act = ev.target.closest("[data-dia-action]");
 			if (act && root.contains(act)) {
 				const a = act.getAttribute("data-dia-action");
+				if (a === "empty-new-demand" && userCanCreateDemand() && typeof frappe !== "undefined" && frappe.new_doc) {
+					frappe.new_doc("Demand");
+					return;
+				}
+				if (a === "empty-focus-queues") {
+					focusDiaQueueToolbar();
+					return;
+				}
+				if (a === "toggle-filters") {
+					const p = document.getElementById("kt-dia-filters-popover");
+					if (!p) {
+						return;
+					}
+					if (p.hidden) {
+						p.hidden = false;
+						act.setAttribute("aria-expanded", "true");
+						document.addEventListener("mousedown", onDiaFiltersDocMouseDown, true);
+						document.addEventListener("keydown", onDiaFiltersEscape, true);
+					} else {
+						closeDiaFiltersPopover();
+					}
+					return;
+				}
 				if (a === "apply-filters") {
 					renderFilterChips();
 					loadDiaQueueList();
-					const det = act.closest("details");
-					if (det) {
-						det.open = false;
-					}
+					closeDiaFiltersPopover();
 					return;
 				}
 				if (a === "clear-filters") {
@@ -374,8 +548,11 @@
 			const demRow = ev.target.closest("[data-dia-demand]");
 			if (demRow && root.contains(demRow) && demRow.getAttribute("data-dia-demand")) {
 				selectedDemandName = demRow.getAttribute("data-dia-demand");
-				if (lastQueueListPayload) {
-					renderDemandList(lastQueueListPayload);
+				const listRoot = document.getElementById("kt-dia-list-root");
+				if (listRoot) {
+					syncDemandListSelection(listRoot, selectedDemandName, {
+						ensureSelectedVisible: true,
+					});
 				}
 				loadDiaDemandDetail();
 				return;
@@ -389,11 +566,17 @@
 				loadDiaQueueList();
 				return;
 			}
-			const qBtn = ev.target.closest("button[data-dia-queue]");
+			const qBtn = ev.target.closest("[data-dia-queue]");
 			if (qBtn && root.contains(qBtn)) {
-				activeQueueId = qBtn.getAttribute("data-dia-queue");
-				renderQueuePills(lastRoleKey || "requisitioner");
-				loadDiaQueueList();
+				if (qBtn.tagName === "A") {
+					ev.preventDefault();
+				}
+				const qid = qBtn.getAttribute("data-dia-queue");
+				if (qid) {
+					activeQueueId = qid;
+					renderQueuePills(lastRoleKey || "requisitioner");
+					loadDiaQueueList();
+				}
 				return;
 			}
 			const kpiCard = ev.target.closest(".kt-dia-kpi-card--clickable");
@@ -431,12 +614,7 @@
 		const slot = document.querySelector('[data-testid="dia-header-cta"]');
 		if (!slot) return;
 		slot.innerHTML = "";
-		const canCreate =
-			typeof frappe !== "undefined" &&
-			frappe.model &&
-			typeof frappe.model.can_create === "function" &&
-			frappe.model.can_create("Demand");
-		if (canCreate) {
+		if (userCanCreateDemand()) {
 			const btn = document.createElement("button");
 			btn.type = "button";
 			btn.className = "btn btn-primary btn-sm";
@@ -449,21 +627,16 @@
 		}
 	}
 
-	function formatKpiValue(row, currency) {
+	function formatKpiValue(row, _currency) {
 		if (!row) return "—";
 		if (row.format === "currency") {
 			const v = Number(row.value);
 			if (Number.isNaN(v)) return "—";
-			const cur = currency || "KES";
 			try {
-				return (
-					cur +
-					" " +
-					Math.round(v).toLocaleString("en-US", {
-						minimumFractionDigits: 0,
-						maximumFractionDigits: 0,
-					})
-				);
+				return Math.round(v).toLocaleString("en-US", {
+					minimumFractionDigits: 0,
+					maximumFractionDigits: 0,
+				});
 			} catch (e) {
 				return String(v);
 			}
@@ -475,6 +648,19 @@
 		const kpis = (payload && payload.kpis) || [];
 		const currency = (payload && payload.currency) || "KES";
 		const rowWrap = document.querySelector('[data-testid="dia-kpi-row"]');
+		const curNote = document.getElementById("kt-dia-kpi-currency-note");
+		if (curNote) {
+			const hasCurrency = kpis.some(function (k) {
+				return k && k.format === "currency";
+			});
+			if (hasCurrency) {
+				curNote.textContent = __("All monetary figures in {0}").replace("{0}", currency);
+				curNote.hidden = false;
+			} else {
+				curNote.textContent = "";
+				curNote.hidden = true;
+			}
+		}
 		const cards = rowWrap ? rowWrap.querySelectorAll(".kt-dia-kpi-card") : [];
 		for (let i = 0; i < 4; i++) {
 			const row = kpis[i];
@@ -556,7 +742,8 @@
 			return;
 		}
 		if (!lastRoleKey) {
-			el.textContent = "";
+			el.removeAttribute("title");
+			el.setAttribute("aria-label", "");
 			el.hidden = true;
 			return;
 		}
@@ -612,11 +799,13 @@
 			}
 		}
 		if (!msg) {
-			el.textContent = "";
+			el.removeAttribute("title");
+			el.setAttribute("aria-label", "");
 			el.hidden = true;
 			return;
 		}
-		el.textContent = msg;
+		el.setAttribute("title", msg);
+		el.setAttribute("aria-label", msg);
 		el.hidden = false;
 	}
 
@@ -635,6 +824,22 @@
 					maximumFractionDigits: 0,
 				})
 			);
+		} catch (e) {
+			return String(v);
+		}
+	}
+
+	/** Main queue list: numbers only; currency is in the KPI “All monetary figures in …” line (Layout spec). */
+	function formatDiaQueueListAmount(value) {
+		if (value == null || value === undefined || Number.isNaN(Number(value))) {
+			return "—";
+		}
+		const v = Number(value);
+		try {
+			return Math.round(v).toLocaleString("en-US", {
+				minimumFractionDigits: 0,
+				maximumFractionDigits: 0,
+			});
 		} catch (e) {
 			return String(v);
 		}
@@ -1191,7 +1396,9 @@
 		const fTop = diaDetailSection(__("Actions"), fBody, "dia-detail-section-f");
 
 		return (
-			'<div class="kt-dia-detail" data-testid="dia-detail-panel">' +
+			'<div class="kt-dia-detail" data-testid="dia-detail-panel" data-dia-detail-for="' +
+			escapeHtml(nm) +
+			'">' +
 			fTop +
 			diaDetailSection(__("A. Demand summary"), aBody, "dia-detail-section-a") +
 			diaDetailSection(__("B. Budget and strategy"), bBody, "dia-detail-section-b") +
@@ -1228,10 +1435,16 @@
 		}
 		detailLoadSeq += 1;
 		const mySeq = detailLoadSeq;
-		detailRoot.innerHTML =
-			'<div class="text-muted small py-3" data-testid="dia-detail-loading">' +
-			escapeHtml(__("Loading details…")) +
-			"</div>";
+		const existingPanel = detailRoot.querySelector(".kt-dia-detail[data-dia-detail-for]");
+		const keepVisibleDetail =
+			existingPanel &&
+			existingPanel.getAttribute("data-dia-detail-for") === selectedDemandName;
+		if (!keepVisibleDetail) {
+			detailRoot.innerHTML =
+				'<div class="text-muted small py-3" data-testid="dia-detail-loading">' +
+				escapeHtml(__("Loading details…")) +
+				"</div>";
+		}
 		frappe.call({
 			method: "kentender_procurement.demand_intake.api.dia_detail.get_dia_demand_detail",
 			args: { name: selectedDemandName },
@@ -1273,6 +1486,7 @@
 		if (!listRoot) {
 			return;
 		}
+		const prevScrollTop = diaReadQueueListScrollTop(listRoot);
 		const rows = (payload && payload.demands) || [];
 		if (selectedDemandName && rows.length) {
 			const names = new Set(rows.map(function (r) { return r.name; }));
@@ -1289,13 +1503,26 @@
 			const cap =
 				(payload && payload.empty_caption) ||
 				__("This queue is empty.");
+			const canC = userCanCreateDemand();
+			const newBtn = canC
+				? '<button type="button" class="btn btn-primary btn-sm" data-dia-action="empty-new-demand" data-testid="dia-empty-cta-new">' +
+					escapeHtml(__("Create new demand")) +
+					"</button>"
+				: "";
+			const switchBtn =
+				'<button type="button" class="btn btn-default btn-sm" data-dia-action="empty-focus-queues" data-testid="dia-empty-cta-queues">' +
+				escapeHtml(__("Switch queue")) +
+				"</button>";
+			const actions = '<div class="kt-dia-empty__actions mt-2 d-flex flex-wrap gap-2 justify-content-center align-items-center">' + newBtn + switchBtn + "</div>";
 			listRoot.innerHTML =
-				'<div class="kt-dia-empty" data-testid="dia-list-empty"><p class="mb-0">' +
+				'<div class="kt-dia-empty kt-dia-empty--v3" data-testid="dia-list-empty">' +
+				'<p class="mb-0 text-center">' +
 				escapeHtml(cap) +
-				"</p></div>";
+				"</p>" +
+				actions +
+				"</div>";
 			return;
 		}
-		const cur = payload.currency || "KES";
 		const roleKey = (payload && payload.role_key) || lastRoleKey || "requisitioner";
 		let html =
 			'<div class="kt-dia-queue-list" data-testid="dia-list" role="listbox" aria-label="' +
@@ -1307,7 +1534,7 @@
 			const active = isSel ? " is-active" : "";
 			const accent = diaDemandRowAccentClass(row.demand_type);
 			const exc = row.is_exception ? " kt-dia-queue-item--exception" : "";
-			const amt = formatListMoney(row.total_amount, cur);
+			const amt = formatDiaQueueListAmount(row.total_amount);
 			const did = row.demand_id || row.name || "";
 			const ttl = row.title || "";
 			const dept = row.requesting_department_label || row.requesting_department || "";
@@ -1384,6 +1611,10 @@
 		}
 		html += "</div>";
 		listRoot.innerHTML = html;
+		// Full list DOM rebuild resets scroll; restore after paint (see diaRestoreQueueListScrollTop).
+		requestAnimationFrame(function () {
+			diaRestoreQueueListScrollTop(listRoot, prevScrollTop, selectedDemandName);
+		});
 	}
 
 	function fillDiaSelectOptions(testId, values, useObjects) {
@@ -1621,6 +1852,12 @@
 			);
 		}
 		host.innerHTML = chips.length ? chips.join(" ") : "";
+		const has = chips.length > 0;
+		host.hidden = !has;
+		const fbtn = document.getElementById("kt-dia-filters-toggle");
+		if (fbtn) {
+			fbtn.classList.toggle("is-active", has);
+		}
 	}
 
 	function loadDiaQueueList() {
@@ -1628,6 +1865,10 @@
 		if (!listRoot || !lastRoleKey) {
 			return;
 		}
+		diaQueueListReqId += 1;
+		const myReq = diaQueueListReqId;
+		listRoot.classList.remove("kt-dia-list-root--refreshing");
+		listRoot.removeAttribute("aria-busy");
 		const visible = queuesVisibleForTab(lastRoleKey, activeWorkTab);
 		if (!visible.length) {
 			listRoot.innerHTML =
@@ -1637,8 +1878,16 @@
 			renderDetailForSelection();
 			return;
 		}
-		listRoot.innerHTML =
-			'<div class="text-muted small py-3">' + escapeHtml(__("Loading…")) + "</div>";
+		const hadQueueListDom = !!listRoot.querySelector(".kt-dia-queue-list");
+		if (hadQueueListDom) {
+			listRoot.classList.add("kt-dia-list-root--refreshing");
+			listRoot.setAttribute("aria-busy", "true");
+		} else {
+			listRoot.innerHTML =
+				'<div class="text-muted small py-3" data-testid="dia-list-loading">' +
+				escapeHtml(__("Loading…")) +
+				"</div>";
+		}
 		const searchEl = document.querySelector('[data-testid="dia-search-input"]');
 		const search = searchEl && searchEl.value ? String(searchEl.value).trim() : "";
 		const rf = collectRefineFilters();
@@ -1654,6 +1903,11 @@
 				filters: filtersJson,
 			},
 			callback: function (r) {
+				if (myReq !== diaQueueListReqId) {
+					return;
+				}
+				listRoot.classList.remove("kt-dia-list-root--refreshing");
+				listRoot.removeAttribute("aria-busy");
 				if (!r || !r.message) {
 					return;
 				}
@@ -1662,12 +1916,42 @@
 					renderLandingBlocked(p);
 					return;
 				}
+				const prevSig = lastQueueListPayload ? queueListSignature(lastQueueListPayload) : "";
+				const newSig = queueListSignature(p);
+				const demands = (p && p.demands) || [];
+				const nameSet = new Set(demands.map(function (row) { return row.name; }));
+				const sel = selectedDemandName;
+				if (
+					prevSig &&
+					prevSig === newSig &&
+					sel &&
+					nameSet.has(sel)
+				) {
+					lastQueueListPayload = p;
+					syncDemandListSelection(listRoot, sel);
+					renderDetailForSelection();
+					return;
+				}
 				renderDemandList(p);
 				renderDetailForSelection();
 			},
 			error: function () {
+				if (myReq !== diaQueueListReqId) {
+					return;
+				}
+				listRoot.classList.remove("kt-dia-list-root--refreshing");
+				listRoot.removeAttribute("aria-busy");
+				if (hadQueueListDom) {
+					frappe.show_alert({
+						message: __("Could not refresh the list. Showing the last loaded rows."),
+						indicator: "orange",
+					});
+					return;
+				}
 				listRoot.innerHTML =
-					'<p class="text-danger small">' + escapeHtml(__("Could not load list.")) + "</p>";
+					'<p class="text-danger small" data-testid="dia-list-error">' +
+					escapeHtml(__("Could not load list.")) +
+					"</p>";
 			},
 		});
 	}
@@ -1689,23 +1973,58 @@
 		if (!activeQueueId || !list.some(function (q) { return q.id === activeQueueId; })) {
 			activeQueueId = list[0].id;
 		}
-		host.innerHTML = list
-			.map(function (q) {
-				const cls =
-					"btn btn-sm kt-dia-queue-pill " + (q.id === activeQueueId ? "btn-primary" : "btn-default");
-				return (
-					'<button type="button" class="' +
-					cls +
-					'" data-dia-queue="' +
-					escapeHtml(q.id) +
-					'" data-testid="dia-queue-' +
-					escapeHtml(q.id) +
-					'">' +
-					escapeHtml(String(q.label)) +
-					"</button>"
-				);
-			})
-			.join("");
+		const inline = list.slice(0, DIA_MAX_INLINE_QUEUES);
+		const overflow = list.slice(DIA_MAX_INLINE_QUEUES);
+		const parts = inline.map(function (q) {
+			const cls =
+				"btn btn-sm kt-dia-queue-pill " + (q.id === activeQueueId ? "btn-primary is-active" : "btn-default");
+			return (
+				'<button type="button" class="' +
+				cls +
+				'" data-dia-queue="' +
+				escapeHtml(q.id) +
+				'" data-testid="dia-queue-' +
+				escapeHtml(q.id) +
+				'">' +
+				escapeHtml(String(q.label)) +
+				"</button>"
+			);
+		});
+		if (overflow.length) {
+			const moreOn = overflow.some(function (q) { return q.id === activeQueueId; });
+			const moreItems = overflow
+				.map(function (q) {
+					const on = q.id === activeQueueId;
+					return (
+						'<li><button type="button" class="kt-dia-queue-more__item' +
+						(on ? " is-active" : "") +
+						'" data-dia-queue="' +
+						escapeHtml(q.id) +
+						'" data-testid="dia-queue-' +
+						escapeHtml(q.id) +
+						'" role="menuitem">' +
+						escapeHtml(String(q.label)) +
+						"</button></li>"
+					);
+				})
+				.join("");
+			parts.push(
+				'<div class="btn-group kt-dia-queue-more' +
+				(moreOn ? " kt-dia-queue-more--open" : "") +
+				'">' +
+				'<button type="button" class="btn btn-sm btn-default dropdown-toggle' +
+				(moreOn ? " is-active" : "") +
+				'" data-toggle="dropdown" data-testid="dia-queue-more-toggle" aria-haspopup="true" aria-expanded="false" aria-label="' +
+				escapeHtml(__("More queues")) +
+				'">' +
+				escapeHtml(__("More")) +
+				' <span class="caret"></span></button>' +
+				'<ul class="dropdown-menu kt-dia-queue-more__menu" role="menu">' +
+				moreItems +
+				"</ul></div>"
+			);
+		}
+		host.innerHTML = parts.join("");
 		const titleEl = document.getElementById("kt-dia-queue-list-title");
 		if (titleEl) titleEl.textContent = String(queueLabel(roleKey, activeQueueId));
 		updateDiaScopeHint();
@@ -1717,8 +2036,9 @@
 		wrap.querySelectorAll("[data-kt-dia-tab]").forEach(function (btn) {
 			const t = btn.getAttribute("data-kt-dia-tab");
 			const on = t === activeWorkTab;
-			btn.classList.toggle("btn-primary", on);
-			btn.classList.toggle("btn-default", !on);
+			btn.classList.remove("btn-primary");
+			btn.classList.add("btn", "btn-default", "kt-dia-work-tab");
+			btn.classList.toggle("kt-dia-work-tab--active", on);
 			btn.setAttribute("aria-selected", on ? "true" : "false");
 		});
 	}

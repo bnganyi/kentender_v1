@@ -12,6 +12,7 @@ test.describe('DIA landing shell (H2 testids)', () => {
 		await expect(page.getByTestId('dia-tab-all')).toBeVisible();
 		await expect(page.getByTestId('dia-tab-approved')).toBeVisible();
 		await expect(page.getByTestId('dia-tab-rejected')).toBeVisible();
+		await page.getByTestId('dia-filters-toggle').click();
 		await expect(page.getByTestId('dia-filter-date-range')).toBeVisible();
 		await expect(page.getByTestId('dia-filter-demand-type')).toBeVisible();
 		await expect(page.getByTestId('dia-filter-department')).toBeVisible();

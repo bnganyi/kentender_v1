@@ -11,6 +11,9 @@ test('Strategy landing shows correct empty state when no plans exist', async ({ 
 	await loginAsStrategyManager(page);
 	await openStrategyLanding(page);
 
+	const planRows = await page.locator('[data-testid^="strategic-plan-row-"]').count();
+	test.skip(planRows > 0, 'Site has strategic plans — use an empty site or seed_strategy_empty to assert empty state');
+
 	await expect(page.getByTestId('strategic-plans-section')).toBeVisible();
 	await expect(page.getByTestId('strategic-plans-empty-state')).toContainText(
 		'No strategic plans yet. Create one to begin.',

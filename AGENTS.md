@@ -5,6 +5,7 @@ Before making changes, read:
 - [docs/architecture/kentender_architecture_rules_v3.md](docs/architecture/kentender_architecture_rules_v3.md)
 - [docs/architecture/global-architecture-v3.md](docs/architecture/global-architecture-v3.md)
 - [docs/architecture/README.md](docs/architecture/README.md) (index; v2 drafts live in `docs/architecture/archive/`)
+- For **architecture restructure** or ticket-style phased work, also read [docs/prompts/architecture/architecture-restructure-cursor-prompt-pack.md](docs/prompts/architecture/architecture-restructure-cursor-prompt-pack.md) — use it as the continuing reference while building in this area.
 
 **IMPORTANT: Rule Precedence Hierarchy**
 
@@ -26,7 +27,7 @@ Any instruction with "DO NOT" or "NEVER" automatically overrides all rules (`11-
 
 - `apps/kentender_v1/` is the **container repo** (docs, Makefile, scripts). Frappe **apps** are `kentender_*` folders inside it.
 - Bench sees each app via **symlinks** under `apps/` (see `make -C apps/kentender_v1 symlinks` and [mono-repo-v2.md](docs/architecture/mono-repo-v2.md)).
-- Run `bench` from the bench root (`/home/midasuser/frappe-bench`). Use `./scripts/bench-with-node.sh` for builds so Node 24 matches Frappe (see root `AGENTS.md`).
+- Run `bench` from the bench root (`/home/midasuser/frappe-bench`). **Asset builds (`bench build`, yarn in apps):** use **`./scripts/bench-with-node.sh`** only — **never** plain `bench build` (Cursor/agent `PATH` often injects Node 20; Frappe requires Node ≥24). See bench root **`AGENTS.md`** and **`.cursor/rules/frappe-bench-node.mdc`**.
 
 ## Final app set (v3)
 

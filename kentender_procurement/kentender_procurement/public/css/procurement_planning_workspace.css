@@ -1,0 +1,649 @@
+/*
+ * Procurement Planning workbench — Desk only.
+ * Scoped under `.kt-pp-injected-shell` / `body.kt-pp-shell`.
+ */
+.kt-pp-sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.kt-pp-injected-shell,
+.kt-pp-shell {
+	--kt-pp-surface-bg: var(--fg-color, #fff);
+	--kt-pp-kpi-bg: var(--fg-color, #fff);
+	--kt-pp-page-bg: var(--control-bg, #f5f7fa);
+	--kt-pp-surface-border: var(--border-color, #e2e6ea);
+	--kt-pp-surface-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.kt-pp-injected-shell {
+	padding: 0.2rem 0 0.5rem;
+}
+
+/* Builder landing — match DIA compact band (Builder Landing Page Refactor) */
+.kt-pp-injected-shell .kt-pp-workspace-header--compact .kt-pp-page-title {
+	font-size: 1.2rem;
+	line-height: 1.25;
+}
+
+.kt-pp-injected-shell .kt-pp-kpi-currency-note {
+	font-size: 0.72rem;
+	margin: 0.1rem 0 0;
+	line-height: 1.35;
+}
+
+.kt-pp-injected-shell .kt-pp-section.kt-surface,
+.kt-pp-injected-shell .kt-surface {
+	background: var(--kt-pp-surface-bg);
+	border: 1px solid var(--kt-pp-surface-border);
+	border-radius: var(--border-radius-lg, 8px);
+	padding: 1rem 1.15rem;
+	margin-bottom: 0.5rem;
+	box-shadow: var(--kt-pp-surface-shadow);
+}
+
+/* Work area = primary (Layout Spec) */
+.kt-pp-injected-shell .kt-pp-master-detail .kt-pp-section.kt-surface {
+	box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+}
+
+.kt-pp-injected-shell .kt-pp-section__title {
+	font-size: 1.05rem;
+	font-weight: 600;
+	margin: 0 0 0.65rem;
+	color: var(--text-color, #1f272e);
+}
+
+.kt-pp-injected-shell .kt-pp-page-title {
+	color: var(--text-color, #1f272e);
+	font-size: 1.2rem;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+.kt-pp-injected-shell .kt-pp-page-intro {
+	font-size: 0.86rem;
+	line-height: 1.35;
+	max-width: 44rem;
+}
+
+.kt-pp-injected-shell .kt-pp-header-row {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+
+.kt-pp-injected-shell .kt-pp-header-cta {
+	flex-shrink: 0;
+}
+
+.kt-pp-injected-shell .kt-pp-workspace-header--compact {
+	/* 12–16px before plan context bar (Layout: hierarchy) */
+	margin-bottom: 0.75rem;
+}
+
+/* Plan context bar — thin header strip, not a content card */
+.kt-pp-injected-shell .kt-pp-plan-context,
+.kt-pp-injected-shell .kt-pp-plan-bar {
+	margin-bottom: 0.75rem;
+	padding: 0.45rem 0.65rem;
+	min-height: 2.75rem;
+	max-width: 100%;
+	font-size: 0.86rem;
+	line-height: 1.35;
+	background: var(--control-bg, #f0f4f8);
+	border: none;
+	border-bottom: 1px solid var(--kt-pp-surface-border, #e2e6ea);
+	border-radius: 0;
+	box-shadow: none;
+}
+
+.kt-pp-injected-shell .kt-pp-plan-context__inner {
+	width: 100%;
+}
+
+.kt-pp-injected-shell .kt-pp-plan-context__actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 0.45rem 0.55rem;
+	flex-shrink: 0;
+}
+
+.kt-pp-injected-shell .kt-pp-plan-context__plan-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 0.45rem;
+}
+
+.kt-pp-injected-shell .kt-pp-plan-context__status-wrap {
+	display: inline-flex;
+	align-items: center;
+}
+
+.kt-pp-injected-shell .kt-pp-plan-status {
+	font-size: 0.7rem;
+	font-weight: 600;
+	letter-spacing: 0.01em;
+}
+
+.kt-pp-injected-shell .kt-pp-plan-meta-sep {
+	margin: 0 0.25rem;
+	color: var(--text-muted, #5c6c74);
+}
+
+/* Plan summary: label + KPIs (separation from context bar is the bar’s bottom border) */
+.kt-pp-injected-shell .kt-pp-plan-summary-belt {
+	margin-top: 0;
+	margin-bottom: 0.75rem;
+	padding-top: 0.1rem;
+}
+
+.kt-pp-injected-shell .kt-pp-plan-summary__label {
+	font-size: 0.65rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	margin: 0.4rem 0 0.45rem;
+	color: var(--text-muted, #5c6c74);
+}
+
+.kt-pp-injected-shell .kt-pp-plan-summary-belt--empty {
+	margin-bottom: 0.35rem;
+	padding: 0;
+	border-top: 0;
+}
+
+.kt-pp-injected-shell .kt-pp-plan-summary-belt--empty .kt-pp-plan-summary__label {
+	display: none;
+}
+
+/* Package work: controls + list/detail (dominant work area) */
+.kt-pp-injected-shell .kt-pp-package-work {
+	margin-top: 0.15rem;
+}
+
+.kt-pp-injected-shell .kt-pp-package-work__label {
+	font-size: 0.65rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	margin: 0 0 0.4rem;
+	color: var(--text-muted, #5c6c74);
+}
+
+.kt-pp-injected-shell .kt-pp-package-work .kt-pp-control-bar {
+	margin-top: 0;
+	margin-bottom: 0.5rem;
+}
+
+/* v3: two-row control; queues are primary, tabs are secondary (match DIA) */
+.kt-pp-injected-shell .kt-pp-control-bar {
+	margin-top: 0.5rem;
+	margin-bottom: 0.5rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.kt-pp-injected-shell .kt-pp-control-bar__row--tabs {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.65rem;
+	min-width: 0;
+}
+
+.kt-pp-injected-shell .kt-pp-control-bar__row--tabs .kt-pp-tab-group {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+	scrollbar-width: thin;
+	white-space: nowrap;
+}
+
+.kt-pp-injected-shell .kt-pp-control-bar__row--tabs .kt-pp-search-compact-wrap {
+	flex: 0 0 auto;
+}
+
+.kt-pp-injected-shell .kt-pp-work-tab {
+	font-size: 0.78rem;
+	font-weight: 500;
+	color: var(--text-muted, #5c6c74);
+}
+
+.kt-pp-injected-shell .kt-pp-work-tab.kt-pp-work-tab--active,
+.kt-pp-injected-shell .kt-pp-work-tab--active {
+	color: var(--text-color, #1f272e);
+	background: var(--control-bg, #eef2f6);
+	border-color: var(--kt-pp-surface-border, #e2e6ea);
+	box-shadow: none;
+}
+
+.kt-pp-injected-shell .kt-pp-tab-group .btn + .btn {
+	margin-left: 0.25rem;
+}
+
+.kt-pp-injected-shell .kt-pp-control-bar__row--queues {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	min-width: 0;
+}
+
+.kt-pp-injected-shell .kt-pp-toolbar-queues-right {
+	display: flex;
+	align-items: center;
+	gap: 0.3rem;
+	flex: 0 0 auto;
+}
+
+.kt-pp-injected-shell .kt-pp-search-compact {
+	width: 18rem;
+	max-width: min(20rem, 32vw);
+}
+
+.kt-pp-injected-shell .kt-pp-search-compact .form-control {
+	min-height: 2.125rem;
+}
+
+.kt-pp-injected-shell .kt-pp-scope-hint-btn {
+	margin: 0;
+	padding: 0 0.15rem;
+	border: none;
+	background: transparent;
+	color: var(--text-muted);
+	font-size: 0.9rem;
+	cursor: help;
+	flex-shrink: 0;
+}
+
+.kt-pp-injected-shell .kt-pp-scope-hint-glyph {
+	font-size: 1.05rem;
+}
+
+
+.kt-pp-injected-shell .kt-pp-kpi-card {
+	background: var(--kt-pp-kpi-bg);
+	border: 1px solid var(--kt-pp-surface-border);
+	border-radius: var(--border-radius, 6px);
+	padding: 0.45rem 0.6rem;
+	min-height: 3.25rem;
+	height: 100%;
+	box-shadow: var(--kt-pp-surface-shadow);
+}
+
+.kt-pp-injected-shell .kt-pp-kpi-label {
+	font-size: 0.65rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--text-muted);
+	margin-bottom: 0.2rem;
+}
+
+.kt-pp-injected-shell .kt-pp-kpi-value {
+	font-size: clamp(0.95rem, 1.2vw, 1.2rem);
+	font-weight: 600;
+	line-height: 1.2;
+	color: var(--text-color, #1f272e);
+	white-space: normal;
+	overflow: visible;
+	word-break: break-word;
+	font-variant-numeric: tabular-nums;
+}
+
+.kt-pp-injected-shell .kt-pp-master-detail--tight {
+	margin-top: 0;
+}
+
+.kt-pp-injected-shell .kt-pp-queue-pills {
+	display: flex;
+	flex-wrap: nowrap;
+	gap: 0.35rem 0.4rem;
+	margin-bottom: 0;
+	min-width: 0;
+	flex: 1 1 auto;
+	overflow: hidden;
+	align-items: center;
+}
+
+.kt-pp-injected-shell .kt-pp-queue-pill,
+.kt-pp-injected-shell .kt-pp-queue-more .dropdown-toggle {
+	border-radius: 999px;
+	font-size: 0.8rem;
+	font-weight: 600;
+	padding: 0.3rem 0.75rem;
+}
+
+.kt-pp-injected-shell .kt-pp-queue-more {
+	flex: 0 0 auto;
+}
+
+.kt-pp-injected-shell .kt-pp-queue-more__menu {
+	font-size: 0.8rem;
+	max-height: 60vh;
+	overflow-y: auto;
+}
+
+.kt-pp-injected-shell .kt-pp-queue-more__item {
+	width: 100%;
+	text-align: left;
+	background: none;
+	border: 0;
+	padding: 0.4rem 0.85rem;
+	white-space: normal;
+}
+
+.kt-pp-injected-shell .kt-pp-queue-more__item.is-active {
+	color: var(--primary-color, #2490ef);
+	font-weight: 600;
+}
+
+.kt-pp-injected-shell .kt-pp-queue-pill.is-active {
+	background: var(--primary-color, #2490ef);
+	color: #fff;
+	border-color: transparent;
+}
+
+.kt-pp-injected-shell .kt-pp-master-detail {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: stretch;
+	gap: 0.85rem;
+	margin-bottom: 0.2rem;
+}
+
+.kt-pp-injected-shell .kt-pp-col-list {
+	flex: 1 1 38%;
+	min-width: 15rem;
+}
+
+.kt-pp-injected-shell .kt-pp-col-detail {
+	flex: 1 1 58%;
+	min-width: 18rem;
+}
+
+.kt-pp-injected-shell .kt-pp-empty {
+	padding: 1rem 0.5rem;
+	text-align: center;
+	color: var(--text-muted);
+	font-size: 0.92rem;
+}
+
+#kt-pp-list-root:has(> .kt-pp-empty--v3) {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: min(56vh, 28rem);
+}
+
+.kt-pp-injected-shell .kt-pp-empty--v3 {
+	padding: 1.25rem 0.5rem 1.5rem;
+}
+
+.kt-pp-injected-shell .kt-pp-package-list-inner {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	min-height: 25rem;
+	max-height: min(78vh, 40rem);
+	overflow-y: auto;
+	padding-right: 0.15rem;
+}
+
+.kt-pp-injected-shell .kt-pp-package-row {
+	display: block;
+	width: 100%;
+	text-align: left;
+	border: 1px solid var(--kt-pp-surface-border);
+	border-radius: var(--border-radius-md, 6px);
+	padding: 0.55rem 0.65rem;
+	background: var(--kt-pp-surface-bg);
+	cursor: pointer;
+	transition: border-color 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+
+.kt-pp-injected-shell .kt-pp-package-row:hover {
+	border-color: var(--border-color-hover, #c7cdd5);
+}
+
+.kt-pp-injected-shell .kt-pp-package-row.is-active {
+	border-color: var(--primary, #2490ef);
+	box-shadow: 0 0 0 1px rgba(36, 144, 239, 0.2);
+	background: var(--control-bg, #f4f5f6);
+}
+
+.kt-pp-injected-shell .kt-pp-package-row__primary {
+	font-weight: 600;
+	font-size: 0.95rem;
+	color: var(--text-color, #1f272e);
+	line-height: 1.25;
+	margin-bottom: 0.1rem;
+}
+
+/* Plan scope hint on package rows (same plan, muted) */
+.kt-pp-injected-shell .kt-pp-package-row__plan {
+	font-size: 0.68rem;
+	color: var(--text-muted, #5c6c74);
+	line-height: 1.2;
+	margin-bottom: 0.2rem;
+	opacity: 0.9;
+}
+
+.kt-pp-injected-shell .kt-pp-package-row__secondary {
+	font-size: 0.78rem;
+	color: var(--text-muted);
+	margin-bottom: 0.12rem;
+}
+
+.kt-pp-injected-shell .kt-pp-package-row__tertiary {
+	font-size: 0.78rem;
+	color: var(--text-muted);
+}
+
+.kt-pp-injected-shell .kt-pp-package-row__badges {
+	margin-top: 0.35rem;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+}
+
+.kt-pp-injected-shell .kt-pp-badge {
+	display: inline-block;
+	font-size: 0.65rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	padding: 0.12rem 0.38rem;
+	border-radius: 999px;
+	line-height: 1.2;
+}
+
+.kt-pp-injected-shell .kt-pp-badge--emergency {
+	background: rgba(220, 53, 69, 0.12);
+	color: #c0392b;
+	border: 1px solid rgba(220, 53, 69, 0.35);
+}
+
+.kt-pp-injected-shell .kt-pp-badge--risk {
+	background: rgba(255, 152, 0, 0.12);
+	color: #b45309;
+	border: 1px solid rgba(255, 152, 0, 0.35);
+}
+
+.kt-pp-injected-shell .kt-pp-badge--neutral {
+	background: var(--control-bg, #eef0f2);
+	color: var(--text-muted);
+	border: 1px solid var(--border-color, #e2e6ea);
+}
+
+.kt-pp-injected-shell .kt-pp-badge--ready {
+	background: rgba(46, 125, 50, 0.1);
+	color: #1b5e20;
+	border: 1px solid rgba(46, 125, 50, 0.3);
+}
+
+/* D3 — Package detail panel
+ * Sticky workbench actions mirror DIA (`dia-detail-section-f` in demand_intake_workspace.css).
+ * When adding another master–detail workbench, reuse `kt-pp-workbench-actions` + sticky section pattern.
+ */
+.kt-pp-injected-shell .kt-pp-detail-section--sticky-actions {
+	position: sticky;
+	top: 0;
+	z-index: 4;
+	border-color: color-mix(in srgb, var(--primary-color, #2490ef) 28%, var(--kt-pp-surface-border, #e2e6ea));
+	background: color-mix(in srgb, var(--primary-color, #2490ef) 5%, var(--kt-pp-surface-bg, #fff));
+	box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+	padding-top: 0.45rem;
+	padding-bottom: 0.45rem;
+}
+
+.kt-pp-injected-shell .kt-pp-workbench-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 0.5rem 0.65rem;
+}
+
+.kt-pp-injected-shell .kt-pp-detail-section--sticky-actions .kt-pp-detail-section__title--actions-h {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.kt-pp-injected-shell .kt-pp-detail-section--sticky-actions + .kt-pp-detail-header {
+	margin-top: 0;
+}
+
+.kt-pp-injected-shell .kt-pp-workbench-actions .btn {
+	margin: 0;
+}
+
+.kt-pp-injected-shell .kt-pp-detail-inner {
+	font-size: 0.88rem;
+	color: var(--text-color, #36414c);
+	max-height: min(78vh, 42rem);
+	overflow-y: auto;
+	padding-left: 0.35rem;
+	padding-right: 0.2rem;
+}
+
+.kt-pp-injected-shell .kt-pp-detail-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 0.65rem;
+	margin-bottom: 0.5rem;
+}
+
+.kt-pp-injected-shell .kt-pp-detail-header__main {
+	min-width: 0;
+	flex: 1 1 auto;
+}
+
+.kt-pp-injected-shell .kt-pp-detail-header__cta {
+	min-width: 8rem;
+}
+
+.kt-pp-injected-shell .kt-pp-detail-header__meta span + span::before {
+	content: "·";
+	margin: 0 0.35rem;
+	color: var(--text-muted);
+}
+
+.kt-pp-injected-shell .kt-pp-detail-section {
+	border: 1px solid var(--kt-pp-surface-border, #e2e6ea);
+	border-radius: var(--border-radius, 6px);
+	padding: 0.65rem 0.85rem;
+	margin-bottom: 0.55rem;
+	background: var(--kt-pp-surface-bg, #fff);
+}
+
+.kt-pp-injected-shell .kt-pp-detail-section__title {
+	font-size: 0.72rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--text-muted);
+	margin: 0 0 0.45rem;
+}
+
+.kt-pp-injected-shell .kt-pp-detail-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+	gap: 0.35rem 1rem;
+}
+
+.kt-pp-injected-shell .kt-pp-detail-kv {
+	display: flex;
+	flex-direction: column;
+	gap: 0.1rem;
+}
+
+.kt-pp-injected-shell .kt-pp-detail-kv dt {
+	font-size: 0.68rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--text-muted);
+}
+
+.kt-pp-injected-shell .kt-pp-detail-kv dd {
+	margin: 0;
+	font-size: 0.86rem;
+	color: var(--text-color, #1f272e);
+	word-break: break-word;
+}
+
+.kt-pp-injected-shell .kt-pp-detail-kv__money {
+	font-variant-numeric: tabular-nums;
+	font-weight: 600;
+}
+
+.kt-pp-injected-shell .kt-pp-detail-table-wrap {
+	overflow-x: auto;
+	margin-top: 0.35rem;
+}
+
+.kt-pp-injected-shell .kt-pp-detail-table th {
+	font-size: 0.68rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	white-space: nowrap;
+}
+
+.kt-pp-injected-shell .kt-pp-detail-list {
+	padding-left: 1.1rem;
+	margin: 0.35rem 0 0;
+}
+
+/* D5 — header CTA group spacing when multiple buttons */
+.kt-pp-injected-shell [data-testid="pp-header-cta"] {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+	align-items: center;
+}

@@ -14,7 +14,8 @@ test('Strategy landing shows seeded plans when plans exist', async ({ page }) =>
 	await openStrategyLanding(page);
 
 	await expect(page.getByTestId('strategic-plan-list')).toBeVisible();
-	await expect(page.getByText(SEEDED_BASIC_PLAN_TITLE)).toBeVisible();
+	// Title appears in list + detail; scope to list to avoid Playwright strict-mode violation.
+	await expect(page.getByTestId('strategic-plan-list').getByText(SEEDED_BASIC_PLAN_TITLE)).toBeVisible();
 	await expect(page.getByTestId('strategic-plans-empty-state')).toHaveCount(0);
 	await expect(page.getByTestId('selected-plan-panel')).toBeVisible();
 	await expect(page.getByTestId('selected-plan-title')).toBeVisible();

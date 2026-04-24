@@ -105,7 +105,11 @@ def upsert_budget_line(
 	existing = frappe.db.get_value("Budget Line", {"budget_line_code": code}, "name")
 	if existing:
 		doc = frappe.get_doc("Budget Line", existing)
-		doc.update(fields)
+		update_fields = {**fields}
+		# Service-controlled balances: do not touch on re-seed (validate blocks edits).
+		update_fields.pop("amount_reserved", None)
+		update_fields.pop("amount_consumed", None)
+		doc.update(update_fields)
 		doc.save(ignore_permissions=True)
 		return doc.name
 	doc = frappe.get_doc({"doctype": "Budget Line", **fields})

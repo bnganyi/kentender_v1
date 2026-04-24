@@ -1,0 +1,319 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:template_code",
+ "creation": "2026-04-23 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "template_code",
+  "template_name",
+  "category",
+  "is_active",
+  "section_applicability",
+  "applicable_requisition_types",
+  "applicable_demand_types",
+  "section_defaults",
+  "default_method",
+  "allowed_methods",
+  "default_contract_type",
+  "section_profiles",
+  "risk_profile_id",
+  "kpi_profile_id",
+  "column_profiles",
+  "decision_criteria_profile_id",
+  "vendor_management_profile_id",
+  "section_packaging",
+  "grouping_strategy",
+  "threshold_rules",
+  "section_governance",
+  "override_requires_justification",
+  "high_risk_escalation_required",
+  "section_schedule",
+  "schedule_required",
+  "planning_lead_days",
+  "procurement_cycle_days"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "1. Identity"
+  },
+  {
+   "fieldname": "template_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Template Code",
+   "reqd": 1,
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "template_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Template Name",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Data",
+   "label": "Category"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_applicability",
+   "fieldtype": "Section Break",
+   "label": "2. Applicability"
+  },
+  {
+   "default": "[\"Goods\", \"Works\", \"Services\"]",
+   "description": "JSON list of requisition types this template applies to.",
+   "fieldname": "applicable_requisition_types",
+   "fieldtype": "JSON",
+   "label": "Applicable Requisition Types",
+   "reqd": 1
+  },
+  {
+   "default": "[\"Planned\", \"Unplanned\", \"Emergency\"]",
+   "description": "JSON list of demand types this template applies to.",
+   "fieldname": "applicable_demand_types",
+   "fieldtype": "JSON",
+   "label": "Applicable Demand Types",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_defaults",
+   "fieldtype": "Section Break",
+   "label": "3. Method and contract defaults"
+  },
+  {
+   "default": "Open Tender",
+   "fieldname": "default_method",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Default Method",
+   "options": "Open Tender\nRFQ\nDirect",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Optional JSON list of allowed procurement methods (subset of Open Tender, RFQ, Direct).",
+   "fieldname": "allowed_methods",
+   "fieldtype": "JSON",
+   "label": "Allowed Methods"
+  },
+  {
+   "default": "Fixed Price",
+   "fieldname": "default_contract_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Default Contract Type",
+   "options": "Fixed Price\nCost Reimbursable\nT&M",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_profiles",
+   "fieldtype": "Section Break",
+   "label": "4. Default profiles"
+  },
+  {
+   "fieldname": "risk_profile_id",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Risk Profile",
+   "options": "Risk Profile",
+   "reqd": 0,
+   "search_index": 1
+  },
+  {
+   "fieldname": "kpi_profile_id",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "KPI Profile",
+   "options": "KPI Profile",
+   "reqd": 0,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_profiles",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "decision_criteria_profile_id",
+   "fieldtype": "Link",
+   "label": "Decision Criteria Profile",
+   "options": "Decision Criteria Profile",
+   "search_index": 1
+  },
+  {
+   "fieldname": "vendor_management_profile_id",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Vendor Management Profile",
+   "options": "Vendor Management Profile",
+   "reqd": 0,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_packaging",
+   "fieldtype": "Section Break",
+   "label": "5. Packaging and thresholds"
+  },
+  {
+   "default": "{\"group_by\": []}",
+   "description": "JSON object with grouping rules (e.g. {\"group_by\": [\"region\", \"equipment_type\"]}).",
+   "fieldname": "grouping_strategy",
+   "fieldtype": "JSON",
+   "label": "Grouping Strategy",
+   "reqd": 1
+  },
+  {
+   "description": "Optional JSON for value/method threshold bands.",
+   "fieldname": "threshold_rules",
+   "fieldtype": "JSON",
+   "label": "Threshold Rules"
+  },
+  {
+   "fieldname": "section_governance",
+   "fieldtype": "Section Break",
+   "label": "6. Governance"
+  },
+  {
+   "default": "1",
+   "fieldname": "override_requires_justification",
+   "fieldtype": "Check",
+   "label": "Override Requires Justification",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "high_risk_escalation_required",
+   "fieldtype": "Check",
+   "label": "High Risk Escalation Required",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_schedule",
+   "fieldtype": "Section Break",
+   "label": "7. Schedule hints"
+  },
+  {
+   "default": "0",
+   "description": "When set, package schedule start/end are required before Complete / release.",
+   "fieldname": "schedule_required",
+   "fieldtype": "Check",
+   "label": "Schedule Required",
+   "reqd": 1
+  },
+  {
+   "fieldname": "planning_lead_days",
+   "fieldtype": "Int",
+   "label": "Planning Lead (days)",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "procurement_cycle_days",
+   "fieldtype": "Int",
+   "label": "Procurement Cycle (days)",
+   "non_negative": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-04-23 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "Procurement Template",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Planner",
+   "share": 1,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Officer",
+   "share": 1,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Planning Authority",
+   "share": 1,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 1,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "show_title_field_in_link": 1,
+ "search_fields": "template_code,template_name,category",
+ "title_field": "template_name",
+ "track_changes": 1
+}

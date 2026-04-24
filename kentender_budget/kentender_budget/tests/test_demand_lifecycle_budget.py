@@ -16,7 +16,12 @@ import frappe
 from frappe.tests import IntegrationTestCase
 from frappe.utils import flt, today
 
-from kentender_core.seeds._common import ensure_currency_kes, ensure_department, ensure_procuring_entity
+from kentender_core.seeds._common import (
+	ensure_currency_kes,
+	ensure_department,
+	ensure_procuring_entity,
+	upsert_seed_user,
+)
 from kentender_procurement.demand_intake.api.lifecycle import (
 	approve_finance,
 	approve_hod,
@@ -128,6 +133,18 @@ class TestDemandLifecycleBudget(IntegrationTestCase):
 			}
 		)
 		self.bl.insert(ignore_permissions=True)
+		self._req_email = f"req_dlcb_{h}@test.local"
+		self._hod_email = f"hod_dlcb_{h}@test.local"
+		self._fin_email = f"fin_dlcb_{h}@test.local"
+		upsert_seed_user(
+			self._req_email, "REQ DLCB", "Requisitioner", entity_name=self.entity, department_docname=self.dept
+		)
+		upsert_seed_user(
+			self._hod_email, "HOD DLCB", "Department Approver", entity_name=self.entity, department_docname=self.dept
+		)
+		upsert_seed_user(
+			self._fin_email, "FIN DLCB", "Finance Reviewer", entity_name=self.entity, department_docname=self.dept
+		)
 		self.demand_name = None
 
 	def tearDown(self):
@@ -156,6 +173,9 @@ class TestDemandLifecycleBudget(IntegrationTestCase):
 		):
 			if frappe.db.exists(d, n):
 				frappe.delete_doc(d, n, force=True, ignore_permissions=True)
+		for u in (getattr(self, "_fin_email", None), getattr(self, "_hod_email", None), getattr(self, "_req_email", None)):
+			if u and frappe.db.exists("User", u):
+				frappe.delete_doc("User", u, force=True, ignore_permissions=True)
 		if frappe.db.exists("Procuring Entity", self.entity):
 			frappe.delete_doc("Procuring Entity", self.entity, force=True, ignore_permissions=True)
 
@@ -164,6 +184,9 @@ class TestDemandLifecycleBudget(IntegrationTestCase):
 			{
 				"doctype": "Demand",
 				"title": f"DLCB demand {frappe.generate_hash(length=4)}",
+				"specification_summary": "DLCB test demand — requested goods for budget reservation flow.",
+				"delivery_location": "Nairobi",
+				"requested_by": self._req_email,
 				"procuring_entity": self.entity,
 				"requesting_department": self.dept,
 				"request_date": today(),
@@ -187,10 +210,13 @@ class TestDemandLifecycleBudget(IntegrationTestCase):
 		if getattr(self, "_skipped_no_demand_doctype", False):
 			self.skipTest("Demand DocType not on site; install kentender_procurement and bench migrate.")
 		self.demand_name = self._make_demand()
+		frappe.set_user(self._req_email)
 		submit_demand(self.demand_name)
+		frappe.set_user(self._hod_email)
 		approve_hod(self.demand_name)
 		did = frappe.db.get_value("Demand", self.demand_name, "demand_id")
 		self.assertTrue(did)
+		frappe.set_user(self._fin_email)
 		approve_finance(self.demand_name)
 		d = frappe.get_doc("Demand", self.demand_name)
 		self.assertEqual(d.status, "Approved")
@@ -206,6 +232,7 @@ class TestDemandLifecycleBudget(IntegrationTestCase):
 		self.assertTrue(res_name)
 		biz = frappe.db.get_value("Budget Reservation", res_name, "source_business_id")
 		self.assertEqual(biz, did)
+		frappe.set_user(self._req_email)
 		cancel_demand(self.demand_name, cancellation_reason="Test cancel budget release")
 		bl.reload()
 		self.assertAlmostEqual(flt(bl.amount_reserved), 0.0, places=2)
@@ -218,10 +245,14 @@ class TestDemandLifecycleBudget(IntegrationTestCase):
 		if getattr(self, "_skipped_no_demand_doctype", False):
 			self.skipTest("Demand DocType not on site; install kentender_procurement and bench migrate.")
 		self.demand_name = self._make_demand()
+		frappe.set_user(self._req_email)
 		submit_demand(self.demand_name)
+		frappe.set_user(self._hod_email)
 		approve_hod(self.demand_name)
+		frappe.set_user(self._fin_email)
 		approve_finance(self.demand_name)
 		frappe.db.set_value("Demand", self.demand_name, "reservation_reference", None)
+		frappe.set_user(self._req_email)
 		cancel_demand(self.demand_name, cancellation_reason="Cancel after ref cleared")
 		bl = frappe.get_doc("Budget Line", self.bl.name)
 		self.assertAlmostEqual(flt(bl.amount_reserved), 0.0, places=2)

@@ -248,13 +248,14 @@ export async function ensureTestStrategicPlan(page: Page, planName: string = TES
 			return;
 		}
 
-		const company =
+		let procuringEntity =
 			(await new Promise<string | null>((resolve, reject) => {
 				// @ts-expect-error desk global
 				frappe.call({
 					method: 'frappe.client.get_list',
 					args: {
-						doctype: 'Company',
+						doctype: 'Procuring Entity',
+						filters: { name: 'MOH' },
 						fields: ['name'],
 						limit_page_length: 1,
 					},
@@ -268,8 +269,29 @@ export async function ensureTestStrategicPlan(page: Page, planName: string = TES
 					error: (err: unknown) => reject(toErr(err)),
 				});
 			})) || null;
-		if (!company) {
-			throw new Error('No Company found — create a Company before UI tests.');
+		if (!procuringEntity) {
+			procuringEntity = await new Promise<string | null>((resolve, reject) => {
+				// @ts-expect-error desk global
+				frappe.call({
+					method: 'frappe.client.get_list',
+					args: {
+						doctype: 'Procuring Entity',
+						fields: ['name'],
+						limit_page_length: 1,
+					},
+					callback: (r: { message?: { name?: string }[]; exc?: unknown }) => {
+						if (r.exc) {
+							reject(toErr(r.exc));
+						} else {
+							resolve(r.message?.[0]?.name ?? null);
+						}
+					},
+					error: (err: unknown) => reject(toErr(err)),
+				});
+			});
+		}
+		if (!procuringEntity) {
+			throw new Error('No Procuring Entity found — run seed_core_minimal before UI tests.');
 		}
 
 		const ins = await new Promise<{ message?: { name?: string }; docs?: { name: string }[] }>(
@@ -281,7 +303,7 @@ export async function ensureTestStrategicPlan(page: Page, planName: string = TES
 						doc: {
 							doctype: 'Strategic Plan',
 							strategic_plan_name: 'Test Strategic Plan 2026–2030',
-							procuring_entity: company,
+							procuring_entity: procuringEntity,
 							start_year: 2026,
 							end_year: 2030,
 							status: 'Draft',
@@ -428,13 +450,14 @@ export async function ensureStrategicPlanForWorkspace(
 			return;
 		}
 
-		const company =
+		let procuringEntity =
 			(await new Promise<string | null>((resolve, reject) => {
 				// @ts-expect-error desk global
 				frappe.call({
 					method: 'frappe.client.get_list',
 					args: {
-						doctype: 'Company',
+						doctype: 'Procuring Entity',
+						filters: { name: 'MOH' },
 						fields: ['name'],
 						limit_page_length: 1,
 					},
@@ -448,8 +471,29 @@ export async function ensureStrategicPlanForWorkspace(
 					error: (err: unknown) => reject(toErr(err)),
 				});
 			})) || null;
-		if (!company) {
-			throw new Error('No Company found — create a Company before UI tests.');
+		if (!procuringEntity) {
+			procuringEntity = await new Promise<string | null>((resolve, reject) => {
+				// @ts-expect-error desk global
+				frappe.call({
+					method: 'frappe.client.get_list',
+					args: {
+						doctype: 'Procuring Entity',
+						fields: ['name'],
+						limit_page_length: 1,
+					},
+					callback: (r: { message?: { name?: string }[]; exc?: unknown }) => {
+						if (r.exc) {
+							reject(toErr(r.exc));
+						} else {
+							resolve(r.message?.[0]?.name ?? null);
+						}
+					},
+					error: (err: unknown) => reject(toErr(err)),
+				});
+			});
+		}
+		if (!procuringEntity) {
+			throw new Error('No Procuring Entity found — run seed_core_minimal before UI tests.');
 		}
 
 		const ins = await new Promise<{ message?: { name?: string }; docs?: { name: string }[] }>(
@@ -461,7 +505,7 @@ export async function ensureStrategicPlanForWorkspace(
 						doc: {
 							doctype: 'Strategic Plan',
 							strategic_plan_name: o.strategic_plan_name,
-							procuring_entity: company,
+							procuring_entity: procuringEntity,
 							start_year: 2026,
 							end_year: 2030,
 							status: 'Draft',

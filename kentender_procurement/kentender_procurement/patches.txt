@@ -2,7 +2,12 @@
 # Patches added in this section will be executed before doctypes are migrated
 # Read docs to understand patches: https://frappeframework.com/docs/v14/user/en/database-migrations
 kentender_procurement.patches.ensure_demand_intake_module_def
+kentender_procurement.patches.ensure_procurement_planning_module_def
 
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
+kentender_procurement.patches.rename_procurement_workspace_to_home
 kentender_procurement.patches.b4_backfill_cancel_return_metadata
+kentender_procurement.patches.rename_pp_reference_names_to_codes
+kentender_procurement.patches.rename_procurement_package_names_to_codes
+kentender_procurement.patches.migrate_pp_package_statuses_governance_v1
