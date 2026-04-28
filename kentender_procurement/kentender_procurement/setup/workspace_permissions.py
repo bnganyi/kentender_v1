@@ -57,6 +57,10 @@ _KT_SIDEBAR_NAMES: tuple[str, ...] = (
 
 # Maps workspace page name → sidebar name that should be shown for that page.
 #
+# REGRESSION CHECKLIST: every **public Procurement-module workspace** that users can
+# open from the desk (including direct URL / hard refresh) needs a row here, or the
+# left rail renders empty. Add a test in ``setup/tests/test_workspace_sidebar_fastpath.py``.
+#
 # WHY: Frappe's sidebar JS (sidebar.js set_workspace_sidebar) first checks
 # ``frappe.boot.workspace_sidebar_item[entity_name.toLowerCase()]``.  If the
 # key exists it calls ``setup(entity_name)`` directly — bypassing the
@@ -79,6 +83,7 @@ _KT_WORKSPACE_TO_SIDEBAR: dict[str, str] = {
 	"procurement planning": "Procurement",
 	"demand intake and approval": "Procurement",
 	"procurement home": "Procurement",
+	"ktsm supplier registry": "Procurement",
 }
 
 

@@ -1,0 +1,83 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-04-24 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "supplier_profile",
+  "previous_status",
+  "new_status",
+  "status_type",
+  "reason",
+  "changed_by",
+  "changed_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "supplier_profile",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Supplier profile",
+   "options": "KTSM Supplier Profile",
+   "reqd": 1
+  },
+  {
+   "fieldname": "previous_status",
+   "fieldtype": "Data",
+   "label": "Previous status"
+  },
+  {
+   "fieldname": "new_status",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "New status",
+   "reqd": 1
+  },
+  {
+   "fieldname": "status_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status type",
+   "options": "Approval\nOperational\nCompliance",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Text",
+   "label": "Reason"
+  },
+  {
+   "fieldname": "changed_by",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Changed by",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "changed_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Changed at",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "module": "Supplier Management",
+ "name": "KTSM Status History",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "changed_at",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

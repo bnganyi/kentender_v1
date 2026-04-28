@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 import { login } from '../../helpers/auth';
-import { diaWorkspace } from '../../helpers/selectors';
+import { navigateToDiaWorkspace } from '../../helpers/dia';
 
 /** S22 — non-DIA role is blocked from actionable DIA workbench usage. */
 test('Non-DIA role cannot access workbench actions (S22)', async ({ page }) => {
@@ -10,8 +10,7 @@ test('Non-DIA role cannot access workbench actions (S22)', async ({ page }) => {
 		'Set UI_NON_DIA_USER/UI_NON_DIA_PASSWORD for a non-DIA role account.',
 	);
 	await login(page, process.env.UI_NON_DIA_USER || '', process.env.UI_NON_DIA_PASSWORD || '');
-	await page.goto(diaWorkspace.route, { waitUntil: 'domcontentloaded' });
-	await page.waitForLoadState('domcontentloaded');
+	await navigateToDiaWorkspace(page);
 
 	const noPagePerm = page.getByText('No permission for Page');
 	const landingBlocked = page.getByTestId('dia-landing-blocked');

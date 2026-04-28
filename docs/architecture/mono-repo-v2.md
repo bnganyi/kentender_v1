@@ -22,9 +22,9 @@ repo/
 
 kentender_procurement/
 
+  kentender_procurement/
   demand_intake/
   procurement_planning/
-  tendering/
   bid_submission_opening/
   evaluation_award/
   contract_management/

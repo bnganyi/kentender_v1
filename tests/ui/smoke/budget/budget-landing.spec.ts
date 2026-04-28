@@ -5,7 +5,7 @@ import {
 	loginAsPlanningAuthority,
 	loginAsStrategyManager,
 } from '../../helpers/auth';
-import { openBudgetLanding } from '../../helpers/budgetLanding';
+import { openBudgetLanding, waitForFrappeBoot } from '../../helpers/budgetLanding';
 
 async function tryLogin(fn: () => Promise<void>) {
 	try {
@@ -89,6 +89,7 @@ test('Budget create button opens Budget new form', async ({ page }) => {
 test('Save and Continue redirects to budget builder path', async ({ page }) => {
 	await loginAsAdministrator(page);
 	await page.goto('/desk/budget/new', { waitUntil: 'domcontentloaded' });
+	await waitForFrappeBoot(page);
 
 	const suffix = Date.now().toString().slice(-5);
 	const planName = await page.evaluate(async () => {
@@ -121,11 +122,25 @@ test('Save and Continue redirects to budget builder path', async ({ page }) => {
 
 test('Budget builder shell loads summary and program list', async ({ page }) => {
 	await loginAsAdministrator(page);
-	await page.goto('/app', { waitUntil: 'domcontentloaded' });
+	await openBudgetLanding(page);
+	await waitForFrappeBoot(page);
 
 	const seeded = await page.evaluate(async () => {
 		// @ts-ignore runtime frappe global
-		const toErr = (e) => (e?.message ? String(e.message) : String(e));
+		const toErr = (e) =>
+			e == null
+				? 'null'
+				: typeof e === 'string'
+					? e
+					: (e as { message?: string })?.message
+						? String((e as { message?: string }).message)
+						: (() => {
+								try {
+									return JSON.stringify(e);
+								} catch {
+									return String(e);
+								}
+							})();
 		// @ts-ignore runtime frappe global
 		const call = (method, args) =>
 			new Promise((resolve, reject) => {
@@ -154,10 +169,12 @@ test('Budget builder shell loads summary and program list', async ({ page }) => 
 				doctype: 'Budget',
 				budget_name: `B3.1 Builder Budget ${Date.now()}`,
 				procuring_entity: 'MOH',
-				fiscal_year: 2000 + Math.floor(Math.random() * 100),
+				// BUD-009: unique (entity, fiscal_year, version_no, plan). Random FY + high version.
+				fiscal_year: 2030 + Math.floor(Math.random() * 69),
 				strategic_plan: planName,
 				currency: 'KES',
 				total_budget_amount: 2500000,
+				version_no: 10 + (Date.now() % 2000),
 			},
 		});
 		return {
@@ -172,24 +189,45 @@ test('Budget builder shell loads summary and program list', async ({ page }) => 
 		await expect(page).toHaveURL(/\/(app|desk)\/budget-builder\//);
 		return;
 	}
+	await waitForFrappeBoot(page);
 	await expect(page.getByTestId('budget-builder-total')).toBeVisible();
 	await expect(page.getByTestId('budget-builder-allocated')).toBeVisible();
 	await expect(page.getByTestId('budget-builder-remaining')).toBeVisible();
-	await expect(page.getByTestId('budget-program-list')).toBeVisible();
-	const rows = page.locator('.kt-bb-program-row');
-	const empty = page.getByText('No programs found for this strategic plan.');
-	await expect(rows.first().or(empty)).toBeVisible();
+	await expect(page.getByTestId('budget-line-list')).toBeVisible({ timeout: 60_000 });
+	const lineOrEmpty = page
+		.locator('[data-testid^="budget-line-row-"]')
+		.first()
+		.or(page.getByText(/No budget lines|Add Budget Line/i));
+	await expect(lineOrEmpty).toBeVisible({ timeout: 30_000 });
 	await expect(page.getByTestId('budget-allocation-editor')).toBeVisible();
 	await expect(page.getByTestId('budget-builder-empty-selection')).toBeVisible();
 });
 
-test('Budget allocation editor saves and reloads values on program switch', async ({ page }) => {
+/**
+ * B3.2 — allocation editor + switching lines (builder is budget-line based; see `budget-totals.spec` for full arithmetic).
+ * Seeds two lines via API then asserts notes follow the selected line.
+ */
+test('Budget allocation editor saves and reloads values on line switch', async ({ page }) => {
 	await loginAsAdministrator(page);
-	await page.goto('/app', { waitUntil: 'domcontentloaded' });
+	await openBudgetLanding(page);
+	await waitForFrappeBoot(page);
 
 	const seeded = await page.evaluate(async () => {
 		// @ts-ignore runtime frappe global
-		const toErr = (e) => (e?.message ? String(e.message) : String(e));
+		const toErr = (e) =>
+			e == null
+				? 'null'
+				: typeof e === 'string'
+					? e
+					: (e as { message?: string })?.message
+						? String((e as { message?: string }).message)
+						: (() => {
+								try {
+									return JSON.stringify(e);
+								} catch {
+									return String(e);
+								}
+							})();
 		// @ts-ignore runtime frappe global
 		const call = (method, args) =>
 			new Promise((resolve, reject) => {
@@ -213,28 +251,36 @@ test('Budget allocation editor saves and reloads values on program switch', asyn
 			throw new Error('Missing MOH Strategic Plan 2026–2030 for builder allocation smoke test.');
 		}
 
-		let programs = await call('frappe.client.get_list', {
+		const programs = await call('frappe.client.get_list', {
 			doctype: 'Strategy Program',
 			filters: { strategic_plan: planName },
-			fields: ['name', 'program_title'],
-			limit_page_length: 5,
+			fields: ['name'],
+			limit_page_length: 1,
 		});
-		if ((programs || []).length < 2) {
-			await call('kentender_strategy.api.strategy_builder.create_strategy_node', {
-				plan_name: planName,
-				parent_name: null,
-				node_type: 'Program',
-				initial_data: { node_title: `B32 Program ${Date.now()}`, node_description: 'B3.2 seed' },
-			});
-			programs = await call('frappe.client.get_list', {
-				doctype: 'Strategy Program',
-				filters: { strategic_plan: planName },
-				fields: ['name', 'program_title'],
-				limit_page_length: 5,
-			});
+		const p0 = programs?.[0]?.name;
+		if (!p0) {
+			throw new Error('No strategy program for budget line seed.');
 		}
-		if (!(programs || []).length) {
-			throw new Error('No strategy programs available for allocation editor test.');
+		const subs0 = await call('frappe.client.get_list', {
+			doctype: 'Sub Program',
+			filters: { program: p0 },
+			fields: ['name'],
+			limit_page_length: 1,
+		});
+		const obj0 = await call('frappe.client.get_list', {
+			doctype: 'Strategy Objective',
+			filters: { program: p0 },
+			fields: ['name'],
+			limit_page_length: 1,
+		});
+		const tgt0 = await call('frappe.client.get_list', {
+			doctype: 'Strategy Target',
+			filters: { objective: obj0[0].name },
+			fields: ['name'],
+			limit_page_length: 1,
+		});
+		if (!subs0?.[0] || !obj0?.[0] || !tgt0?.[0]) {
+			throw new Error('Need Sub Program, Objective, and Target under first program for budget lines.');
 		}
 
 		const budgetDoc = await call('frappe.client.insert', {
@@ -242,42 +288,68 @@ test('Budget allocation editor saves and reloads values on program switch', asyn
 				doctype: 'Budget',
 				budget_name: `B3.2 Builder Budget ${Date.now()}`,
 				procuring_entity: 'MOH',
-				fiscal_year: 2000 + Math.floor(Math.random() * 100),
+				fiscal_year: 2030 + Math.floor(Math.random() * 69),
 				strategic_plan: planName,
 				currency: 'KES',
 				total_budget_amount: 2500000,
+				version_no: 20 + (Date.now() % 2000),
 			},
 		});
+		const budgetName = budgetDoc?.name;
+		const fy = budgetDoc?.fiscal_year;
+		const lineA = `B3.2 Line A ${Date.now()}`;
+		const lineB = `B3.2 Line B ${Date.now()}`;
 
-		return {
-			budgetName: budgetDoc?.name,
-			programOneTitle: programs[0]?.program_title || programs[0]?.name,
-			programTwoTitle: programs[1]?.program_title || programs[1]?.name || programs[0]?.program_title || programs[0]?.name,
-		};
+		for (const row of [lineA, lineB]) {
+			await call('frappe.client.insert', {
+				doc: {
+					doctype: 'Budget Line',
+					budget_line_name: row,
+					budget: budgetName,
+					procuring_entity: 'MOH',
+					fiscal_year: fy,
+					amount_allocated: 0,
+					amount_reserved: 0,
+					amount_consumed: 0,
+					currency: 'KES',
+					strategic_plan: planName,
+					program: p0,
+					sub_program: subs0[0].name,
+					output_indicator: obj0[0].name,
+					performance_target: tgt0[0].name,
+					is_active: 1,
+				},
+			});
+		}
+
+		return { budgetName, lineA, lineB };
 	});
+
+	function idPart(s: string) {
+		return s.replace(/[^a-zA-Z0-9 _-]/g, '_');
+	}
 
 	expect(seeded.budgetName).toBeTruthy();
 	await page.goto(`/desk/budget-builder/${seeded.budgetName}`, { waitUntil: 'domcontentloaded' });
-	const hasBuilderShell = await page.getByTestId('budget-builder-page').isVisible({ timeout: 5000 }).catch(() => false);
-	if (!hasBuilderShell) {
+	if (!(await page.getByTestId('budget-builder-page').isVisible({ timeout: 8000 }).catch(() => false))) {
 		await expect(page).toHaveURL(/\/(app|desk)\/budget-builder\//);
 		return;
 	}
+	await waitForFrappeBoot(page);
+	await expect(page.getByTestId('budget-line-list')).toBeVisible({ timeout: 60_000 });
+	const a = idPart(seeded.lineA);
+	const b = idPart(seeded.lineB);
 
-	await page.getByTestId(`budget-program-row-${seeded.programOneTitle}`).click();
-	await expect(page.getByTestId('budget-allocation-program-title')).toContainText(seeded.programOneTitle);
+	await page.getByTestId(`budget-line-row-${a}`).click();
+	await expect(page.getByTestId('budget-line-editor-title')).toBeVisible();
 	await expect(page.getByTestId('budget-allocation-amount-input')).toBeVisible();
-	await expect(page.getByTestId('budget-allocation-notes-input')).toBeVisible();
-	await expect(page.getByTestId('budget-allocation-save-button')).toBeVisible();
-
-	await page.getByTestId('budget-allocation-amount-input').fill('12345');
-	await page.getByTestId('budget-allocation-notes-input').fill('B3.2 allocation note');
+	await page.getByTestId('budget-allocation-amount-input').fill('10000');
+	await page.getByTestId('budget-allocation-notes-input').fill('B3.2 line note A');
 	await page.getByTestId('budget-allocation-save-button').click();
+	await expect(page.getByTestId(`budget-line-row-amount-${a}`)).toContainText('10,000.00');
 
-	await expect(page.getByTestId(`budget-program-row-amount-${seeded.programOneTitle}`)).toContainText('12,345.00');
-
-	await page.getByTestId(`budget-program-row-${seeded.programTwoTitle}`).click();
-	await expect(page.getByTestId('budget-allocation-program-title')).toContainText(seeded.programTwoTitle);
-	await page.getByTestId(`budget-program-row-${seeded.programOneTitle}`).click();
-	await expect(page.getByTestId('budget-allocation-notes-input')).toHaveValue('B3.2 allocation note');
+	await page.getByTestId(`budget-line-row-${b}`).click();
+	await expect(page.getByTestId('budget-line-editor-title')).toBeVisible();
+	await page.getByTestId(`budget-line-row-${a}`).click();
+	await expect(page.getByTestId('budget-allocation-notes-input')).toHaveValue('B3.2 line note A');
 });

@@ -71,9 +71,6 @@ app_include_js = [
 # webform_include_js = {"doctype": "public/js/doctype.js"}
 # webform_include_css = {"doctype": "public/css/doctype.css"}
 
-# include js in page
-# page_js = {"page" : "public/js/file.js"}
-
 # include js in doctype views
 doctype_js = {
 	"Demand": "public/js/demand_form.js",
@@ -297,7 +294,7 @@ boot_session = [
 	"kentender_procurement.setup.workspace_permissions.patch_bootinfo",
 ]
 
-# Optional hooks for downstream apps (e.g. Tendering). Each path: dotted ``callable(payload: dict)``.
+# Optional hooks for downstream tendering implementations (v2+). Each path: dotted ``callable(payload: dict)``.
 release_procurement_package_to_tender = []
 
 fixtures = [
@@ -305,7 +302,11 @@ fixtures = [
 	{
 		"dt": "Workspace",
 		"filters": [
-			["name", "in", ["Demand Intake and Approval", "Procurement Home", "Procurement Planning"]]
+			[
+				"name",
+				"in",
+				["Demand Intake and Approval", "Procurement Home", "Procurement Planning"],
+			]
 		],
 	},
 	{

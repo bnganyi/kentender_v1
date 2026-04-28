@@ -1,0 +1,194 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-04-24 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "erpnext_supplier",
+  "identity_display",
+  "section_governance",
+  "approval_status",
+  "operational_status",
+  "compliance_status",
+  "risk_level",
+  "section_users",
+  "external_user",
+  "section_submit",
+  "submitted_by",
+  "submitted_at",
+  "section_approval",
+  "approved_by",
+  "approved_at",
+  "section_return",
+  "return_reason",
+  "section_reject",
+  "rejection_reason",
+  "is_active"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity (ERPNext)"
+  },
+  {
+   "fieldname": "erpnext_supplier",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "ERPNext Supplier",
+   "options": "Supplier",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "identity_display",
+   "fieldtype": "Data",
+   "fetch_from": "erpnext_supplier.supplier_name",
+   "in_list_view": 1,
+   "label": "Supplier name (from ERPNext)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_governance",
+   "fieldtype": "Section Break",
+   "label": "Governance"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "approval_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Approval status",
+   "options": "Draft\nSubmitted\nUnder Review\nApproved\nReturned\nRejected",
+   "reqd": 1
+  },
+  {
+   "default": "Pending",
+   "fieldname": "operational_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Operational status",
+   "options": "Pending\nActive\nSuspended\nBlacklisted\nExpired",
+   "reqd": 1
+  },
+  {
+   "default": "Unknown",
+   "fieldname": "compliance_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Compliance status",
+   "options": "Unknown\nComplete\nIncomplete\nExpired\nNon-Compliant",
+   "reqd": 1
+  },
+  {
+   "default": "Medium",
+   "fieldname": "risk_level",
+   "fieldtype": "Select",
+   "label": "Risk level",
+   "options": "Low\nMedium\nHigh"
+  },
+  {
+   "fieldname": "section_users",
+   "fieldtype": "Section Break",
+   "label": "External user"
+  },
+  {
+   "fieldname": "external_user",
+   "fieldtype": "Link",
+   "label": "External user (Website User)",
+   "options": "User"
+  },
+  {
+   "fieldname": "section_submit",
+   "fieldtype": "Section Break",
+   "label": "Submission"
+  },
+  {
+   "fieldname": "submitted_by",
+   "fieldtype": "Link",
+   "label": "Submitted by",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_at",
+   "fieldtype": "Datetime",
+   "label": "Submitted at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_approval",
+   "fieldtype": "Section Break",
+   "label": "Approval"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved by",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_at",
+   "fieldtype": "Datetime",
+   "label": "Approved at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_return",
+   "fieldtype": "Section Break",
+   "label": "Return"
+  },
+  {
+   "fieldname": "return_reason",
+   "fieldtype": "Text",
+   "label": "Return reason"
+  },
+  {
+   "fieldname": "section_reject",
+   "fieldtype": "Section Break",
+   "label": "Rejection"
+  },
+  {
+   "fieldname": "rejection_reason",
+   "fieldtype": "Text",
+   "label": "Rejection reason"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is active (soft flag)"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-04-24 00:00:00.000000",
+ "module": "Supplier Management",
+ "name": "KTSM Supplier Profile",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Administrator",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "identity_display",
+ "track_changes": 1
+}

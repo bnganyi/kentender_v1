@@ -102,3 +102,13 @@ export async function loginAsAuditor(page: Page) {
 		process.env.UI_AUDITOR_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
+
+/** Supplier portal (Phase O) — user must be linked to ``KTSM Supplier Profile.external_user``. */
+export async function loginAsSupplierPortalUser(page: Page) {
+	const user = process.env.UI_SUPPLIER_PORTAL_USER || '';
+	const password = process.env.UI_SUPPLIER_PORTAL_PASSWORD || DEFAULT_SEED_PASSWORD;
+	if (!user) {
+		throw new Error('UI_SUPPLIER_PORTAL_USER is not set');
+	}
+	await login(page, user, password);
+}

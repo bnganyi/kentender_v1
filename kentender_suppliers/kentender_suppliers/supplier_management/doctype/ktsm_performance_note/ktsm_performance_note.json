@@ -1,0 +1,99 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-04-24 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "supplier_profile",
+  "related_record_type",
+  "related_record_id",
+  "note_type",
+  "severity",
+  "summary",
+  "details",
+  "recorded_by",
+  "recorded_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "supplier_profile",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Supplier profile",
+   "options": "KTSM Supplier Profile",
+   "reqd": 1
+  },
+  {
+   "fieldname": "related_record_type",
+   "fieldtype": "Data",
+   "label": "Related record type"
+  },
+  {
+   "fieldname": "related_record_id",
+   "fieldtype": "Data",
+   "label": "Related record id"
+  },
+  {
+   "default": "Issue",
+   "fieldname": "note_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Note type",
+   "options": "Positive\nIssue\nWarning\nPerformance Concern",
+   "reqd": 1
+  },
+  {
+   "default": "Medium",
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "label": "Severity",
+   "options": "Low\nMedium\nHigh"
+  },
+  {
+   "fieldname": "summary",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Summary",
+   "reqd": 1
+  },
+  {
+   "fieldname": "details",
+   "fieldtype": "Text",
+   "label": "Details"
+  },
+  {
+   "fieldname": "recorded_by",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Recorded by",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "recorded_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Recorded at",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "module": "Supplier Management",
+ "name": "KTSM Performance Note",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "recorded_at",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

@@ -128,7 +128,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Procurement Method",
-   "options": "Open Tender\nRFQ\nDirect",
+   "options": "Open Tender\nRestricted Tender\nRFQ\nRFP\nDirect Procurement",
    "reqd": 1,
    "search_index": 1
   },

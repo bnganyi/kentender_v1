@@ -1,3 +1,18 @@
+from pathlib import Path
+
+
+def _desk_asset_v(rel_path: str) -> int:
+	try:
+		base = Path(__file__).resolve().parent
+		a = (base / rel_path).stat()
+		h = (base / "hooks.py").stat()
+		return int(
+			(a.st_mtime_ns + h.st_mtime_ns + a.st_size + h.st_size) % 2_147_483_647
+		)
+	except OSError:
+		return 1
+
+
 app_name = "kentender_suppliers"
 app_title = "Kentender Suppliers"
 app_publisher = "KenTender Suppliers app"
@@ -8,7 +23,7 @@ app_license = "mit"
 # Apps
 # ------------------
 
-# required_apps = []
+required_apps = ["erpnext", "kentender_core"]
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
@@ -25,8 +40,12 @@ app_license = "mit"
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/kentender_suppliers/css/kentender_suppliers.css"
-# app_include_js = "/assets/kentender_suppliers/js/kentender_suppliers.js"
+app_include_css = [
+	f"/assets/kentender_suppliers/css/ktsm_supplier_workbench.css?v={_desk_asset_v('public/css/ktsm_supplier_workbench.css')}"
+]
+app_include_js = [
+	f"/assets/kentender_suppliers/js/ktsm_supplier_workbench.js?v={_desk_asset_v('public/js/ktsm_supplier_workbench.js')}"
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/kentender_suppliers/css/kentender_suppliers.css"
@@ -43,7 +62,7 @@ app_license = "mit"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {"KTSM Supplier Profile": "public/js/ktsm_supplier_profile.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -132,13 +151,11 @@ app_license = "mit"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"Supplier": {
+		"validate": "kentender_suppliers.validators.supplier_hooks.validate_kentender_supplier",
+	}
+}
 
 # Scheduled Tasks
 # ---------------

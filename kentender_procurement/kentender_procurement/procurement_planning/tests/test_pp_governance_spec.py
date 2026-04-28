@@ -73,7 +73,7 @@ class TestPpGovernanceSpec(IntegrationTestCase):
 				"package_name": "Completeness probe",
 				"plan_id": plan.name,
 				"template_id": tpl[0],
-				"procurement_method": "Direct",
+				"procurement_method": "Direct Procurement",
 				"contract_type": "Fixed Price",
 				"currency": "KES",
 				"risk_profile_id": frappe.get_all("Risk Profile", limit=1, pluck="name")[0],

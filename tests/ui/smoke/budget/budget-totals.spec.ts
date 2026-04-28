@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import { loginAsAdministrator } from '../../helpers/auth';
-import { openBudgetLanding } from '../../helpers/budgetLanding';
+import { openBudgetLanding, waitForFrappeBoot } from '../../helpers/budgetLanding';
 
 function testIdPart(value: string) {
 	return value.replace(/[^a-zA-Z0-9 _-]/g, '_');
@@ -13,11 +13,25 @@ function budgetNameSlug(name: string) {
 
 test('Builder totals arithmetic reflects in landing panel', async ({ page }) => {
 	await loginAsAdministrator(page);
-	await page.goto('/app', { waitUntil: 'domcontentloaded' });
+	await openBudgetLanding(page);
+	await waitForFrappeBoot(page);
 
 	const seeded = await page.evaluate(async () => {
 		// @ts-ignore runtime frappe global
-		const toErr = (e) => (e?.message ? String(e.message) : String(e));
+		const toErr = (e) =>
+			e == null
+				? 'null'
+				: typeof e === 'string'
+					? e
+					: (e as { message?: string })?.message
+						? String((e as { message?: string }).message)
+						: (() => {
+								try {
+									return JSON.stringify(e);
+								} catch {
+									return String(e);
+								}
+							})();
 		// @ts-ignore runtime frappe global
 		const call = (method, args) =>
 			new Promise((resolve, reject) => {
@@ -71,10 +85,11 @@ test('Builder totals arithmetic reflects in landing panel', async ({ page }) => 
 				doctype: 'Budget',
 				budget_name: budgetLabel,
 				procuring_entity: 'MOH',
-				fiscal_year: 2000 + Math.floor(Math.random() * 100),
+				fiscal_year: 2030 + Math.floor(Math.random() * 69),
 				strategic_plan: planName,
 				currency: 'KES',
 				total_budget_amount: 1000000,
+				version_no: 30 + (Date.now() % 2000),
 			},
 		});
 		const budgetName = budgetDoc?.name;

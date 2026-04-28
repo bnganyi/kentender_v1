@@ -1,0 +1,79 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:document_type_code",
+ "creation": "2026-04-24 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "document_type_code",
+  "document_type_name",
+  "required_for_registration",
+  "required_for_categories",
+  "expires",
+  "default_validity_days",
+  "is_active"
+ ],
+ "fields": [
+  {
+   "fieldname": "document_type_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Document type code",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "document_type_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Document type name",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "required_for_registration",
+   "fieldtype": "Check",
+   "label": "Required for registration"
+  },
+  {
+   "fieldname": "required_for_categories",
+   "fieldtype": "Small Text",
+   "label": "Required for categories (JSON, optional)"
+  },
+  {
+   "default": "0",
+   "fieldname": "expires",
+   "fieldtype": "Check",
+   "label": "Expires"
+  },
+  {
+   "fieldname": "default_validity_days",
+   "fieldtype": "Int",
+   "label": "Default validity (days)"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is active"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "module": "Supplier Management",
+ "name": "KTSM Document Type",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "document_type_code",
+ "sort_order": "ASC",
+ "title_field": "document_type_name",
+ "track_changes": 1
+}

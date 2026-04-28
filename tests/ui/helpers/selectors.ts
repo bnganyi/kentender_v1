@@ -27,9 +27,11 @@ export const procurementWorkspace = {
 	appPath: '/desk/procurement-home',
 };
 
-/** Demand Intake and Approval (DIA) Desk workspace — slug from Workspace label. */
+/**
+ * Demand Intake and Approval (DIA). Do not `page.goto` a path for this screen — Frappe can treat
+ * `/app/...` or `/desk/...` as a legacy `Page` and 404. Use `openDIALanding` / `navigateToDiaWorkspace`.
+ */
 export const diaWorkspace = {
 	heading: 'Demand Intake and Approval',
-	route: '/desk/demand-intake-and-approval',
 	introSnippet: 'Capture, approve, and prepare procurement demand',
 };

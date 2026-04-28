@@ -8,6 +8,6 @@ test('New Demand opens builder with dia-builder-page', async ({ page }) => {
 	await loginAsRequisitioner(page);
 	await openDIALanding(page);
 	await page.getByTestId('dia-new-demand-button').click();
-	await expect(page).toHaveURL(/Form[/,]Demand[/,]/i, { timeout: 30_000 });
+	await expect(page).toHaveURL(/\/(app|desk)\/.*demand/i, { timeout: 30_000 });
 	await expect(page.getByTestId('dia-builder-page')).toBeVisible({ timeout: 30_000 });
 });

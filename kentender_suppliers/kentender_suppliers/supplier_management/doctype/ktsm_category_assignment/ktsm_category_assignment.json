@@ -1,0 +1,90 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-04-24 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "supplier_profile",
+  "category",
+  "qualification_status",
+  "qualified_from",
+  "qualified_until",
+  "reviewed_by",
+  "reviewed_at",
+  "review_notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "supplier_profile",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Supplier profile",
+   "options": "KTSM Supplier Profile",
+   "reqd": 1
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Category",
+   "options": "KTSM Supplier Category",
+   "reqd": 1
+  },
+  {
+   "default": "Requested",
+   "fieldname": "qualification_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Qualification status",
+   "options": "Requested\nUnder Review\nQualified\nRejected\nExpired",
+   "reqd": 1
+  },
+  {
+   "fieldname": "qualified_from",
+   "fieldtype": "Date",
+   "label": "Qualified from"
+  },
+  {
+   "fieldname": "qualified_until",
+   "fieldtype": "Date",
+   "label": "Qualified until"
+  },
+  {
+   "fieldname": "reviewed_by",
+   "fieldtype": "Link",
+   "label": "Reviewed by",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reviewed_at",
+   "fieldtype": "Datetime",
+   "label": "Reviewed at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "review_notes",
+   "fieldtype": "Text",
+   "label": "Review notes"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "module": "Supplier Management",
+ "name": "KTSM Category Assignment",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

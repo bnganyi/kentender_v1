@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Stable handoff surface for the Tendering module (governance v1).
+"""Stable handoff surface when a procurement package is released to tender (v2+).
 
 Apps register ``release_procurement_package_to_tender`` in hooks.py; each callable
 receives a single ``payload`` dict. Failures in hooks are logged and do not block
@@ -16,7 +16,7 @@ import frappe
 
 
 def build_release_payload(package_doc) -> dict[str, Any]:
-	"""Documented intake shape for Tendering (extend when Tendering ships)."""
+	"""Documented intake shape for downstream tendering hooks (extend when v2 ships)."""
 	return {
 		"event": "procurement_package_released_to_tender",
 		"package": package_doc.name,
@@ -36,5 +36,5 @@ def deliver_procurement_package_release(payload: dict[str, Any]) -> None:
 		except Exception:
 			frappe.log_error(
 				frappe.get_traceback(),
-				title=f"Tendering handoff hook failed: {dotted}",
+				title=f"Release-to-tender hook failed: {dotted}",
 			)

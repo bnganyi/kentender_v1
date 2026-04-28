@@ -34,9 +34,11 @@ VALID_STATUSES = frozenset(
 READONLY_STATUSES = frozenset(
 	(ST_SUBMITTED, ST_APPROVED, ST_READY_FOR_TENDER, ST_RELEASED_TO_TENDER, ST_REJECTED)
 )
-VALID_METHODS = frozenset(("Open Tender", "RFQ", "Direct"))
+VALID_METHODS = frozenset(
+	("Open Tender", "Restricted Tender", "RFQ", "RFP", "Direct Procurement")
+)
 VALID_CONTRACT_TYPES = frozenset(("Fixed Price", "Cost Reimbursable", "T&M"))
-COMPETITIVE_METHODS = frozenset(("Open Tender", "RFQ"))
+COMPETITIVE_METHODS = frozenset(("Open Tender", "Restricted Tender", "RFQ", "RFP"))
 
 _SKIP_FIELD_TYPES = frozenset(
 	(
@@ -274,7 +276,7 @@ class ProcurementPackage(Document):
 			)
 		if self.procurement_method not in VALID_METHODS:
 			frappe.throw(
-				_("Procurement Method must be one of: Open Tender, RFQ, Direct."),
+				_("Procurement Method must be one of: {0}.").format(", ".join(sorted(VALID_METHODS))),
 				title=_("Invalid procurement method"),
 			)
 		if self.contract_type not in VALID_CONTRACT_TYPES:
@@ -432,7 +434,10 @@ class ProcurementPackage(Document):
 	def _validate_competitive_decision_profile(self):
 		if self.procurement_method in COMPETITIVE_METHODS and not self.decision_criteria_profile_id:
 			frappe.throw(
-				_("Decision Criteria Profile is required for competitive methods (Open Tender, RFQ)."),
+				_(
+					"Decision Criteria Profile is required for competitive methods "
+					"(Open Tender, Restricted Tender, RFQ, RFP)."
+				),
 				title=_("Missing decision criteria"),
 			)
 
@@ -579,7 +584,10 @@ class ProcurementPackage(Document):
 				)
 			if self.procurement_method in COMPETITIVE_METHODS and not self.decision_criteria_profile_id:
 				frappe.throw(
-					_("Decision Criteria Profile is required for competitive methods before handoff."),
+					_(
+						"Decision Criteria Profile is required for competitive methods "
+						"(Open Tender, Restricted Tender, RFQ, RFP) before handoff."
+					),
 					title=_("Missing decision criteria"),
 				)
 		elif (old_status, new_status) == (ST_READY_FOR_TENDER, ST_RELEASED_TO_TENDER):

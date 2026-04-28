@@ -1,0 +1,88 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-04-24 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "supplier_profile",
+  "external_user",
+  "access_status",
+  "api_client_id",
+  "scopes",
+  "issued_at",
+  "revoked_at",
+  "revoked_reason"
+ ],
+ "fields": [
+  {
+   "fieldname": "supplier_profile",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Supplier profile",
+   "options": "KTSM Supplier Profile",
+   "reqd": 1
+  },
+  {
+   "fieldname": "external_user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "External user",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "default": "Pending",
+   "fieldname": "access_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Access status",
+   "options": "Pending\nActive\nSuspended\nRevoked",
+   "reqd": 1
+  },
+  {
+   "fieldname": "api_client_id",
+   "fieldtype": "Data",
+   "label": "API client id"
+  },
+  {
+   "default": "[]",
+   "fieldname": "scopes",
+   "fieldtype": "JSON",
+   "label": "Scopes"
+  },
+  {
+   "fieldname": "issued_at",
+   "fieldtype": "Datetime",
+   "label": "Issued at"
+  },
+  {
+   "fieldname": "revoked_at",
+   "fieldtype": "Datetime",
+   "label": "Revoked at"
+  },
+  {
+   "fieldname": "revoked_reason",
+   "fieldtype": "Text",
+   "label": "Revoked reason"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "module": "Supplier Management",
+ "name": "KTSM Supplier API Access",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

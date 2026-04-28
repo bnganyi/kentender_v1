@@ -7,9 +7,11 @@ from frappe.model.document import Document
 from frappe.utils import cint
 from frappe.utils.data import parse_json
 
-VALID_METHODS = frozenset(("Open Tender", "RFQ", "Direct"))
+VALID_METHODS = frozenset(
+	("Open Tender", "Restricted Tender", "RFQ", "RFP", "Direct Procurement")
+)
 VALID_CONTRACT_TYPES = frozenset(("Fixed Price", "Cost Reimbursable", "T&M"))
-COMPETITIVE_METHODS = frozenset(("Open Tender", "RFQ"))
+COMPETITIVE_METHODS = frozenset(("Open Tender", "Restricted Tender", "RFQ", "RFP"))
 VALID_REQUISITION_TYPES = frozenset(("Goods", "Works", "Services"))
 VALID_DEMAND_TYPES = frozenset(("Planned", "Unplanned", "Emergency"))
 
@@ -62,7 +64,7 @@ class ProcurementTemplate(Document):
 	def _validate_canonical_selects(self):
 		if self.default_method not in VALID_METHODS:
 			frappe.throw(
-				_("Default Method must be one of: Open Tender, RFQ, Direct."),
+				_("Default Method must be one of: {0}.").format(", ".join(sorted(VALID_METHODS))),
 				title=_("Invalid method"),
 			)
 		if self.default_contract_type not in VALID_CONTRACT_TYPES:
@@ -143,7 +145,10 @@ class ProcurementTemplate(Document):
 	def _validate_competitive_decision_profile(self):
 		if self.default_method in COMPETITIVE_METHODS and not self.decision_criteria_profile_id:
 			frappe.throw(
-				_("Decision Criteria Profile is required when Default Method is competitive (Open Tender, RFQ)."),
+				_(
+					"Decision Criteria Profile is required when Default Method is competitive "
+					"(Open Tender, Restricted Tender, RFQ, RFP)."
+				),
 				title=_("Missing decision criteria"),
 			)
 

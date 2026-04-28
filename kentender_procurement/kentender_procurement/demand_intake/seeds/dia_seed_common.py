@@ -156,12 +156,12 @@ def _insert_demand(row: dict) -> frappe.model.document.Document:
 
 
 def _as(user: str, fn, *args, **kwargs):
-	prev = frappe.session.user
-	frappe.set_user(user)
-	try:
+	from kentender_procurement.utils.session_actor import with_optional_user_actor
+
+	def inner():
 		return fn(*args, **kwargs)
-	finally:
-		frappe.set_user(prev)
+
+	return with_optional_user_actor(user, inner)
 
 
 def _submit(name: str, user: str = U_REQ):

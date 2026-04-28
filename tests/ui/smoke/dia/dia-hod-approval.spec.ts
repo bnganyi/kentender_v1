@@ -2,20 +2,11 @@ import { test, expect } from '@playwright/test';
 
 import { loginAsFinanceReviewer, loginAsHoDApprover } from '../../helpers/auth';
 import { openDIALanding } from '../../helpers/dia';
-import { diaWorkspace } from '../../helpers/selectors';
 
 /** S6 — HoD approve transitions pending demand into finance queue. */
 test('HoD approve moves demand to finance (S6)', async ({ page }) => {
 	await loginAsHoDApprover(page);
-	await page.goto(diaWorkspace.route, { waitUntil: 'domcontentloaded' });
-	await page.waitForLoadState('domcontentloaded');
-	const noPermVisible = await page
-		.getByText('No permission for Page')
-		.waitFor({ state: 'visible', timeout: 8_000 })
-		.then(() => true)
-		.catch(() => false);
-	test.skip(noPermVisible, 'HoD user lacks workspace Page permission in this site.');
-	await expect(page.getByTestId('dia-landing-page')).toBeVisible({ timeout: 45_000 });
+	await openDIALanding(page);
 
 	const row = page.getByTestId('dia-row-DIA-MOH-2026-0002');
 	const hasSeed = await row.isVisible({ timeout: 20_000 }).catch(() => false);

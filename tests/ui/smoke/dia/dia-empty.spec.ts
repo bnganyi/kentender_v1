@@ -13,7 +13,7 @@ test.describe('DIA empty / landing shell', () => {
 		await openDIALanding(page);
 		await expectDiaShellVisible(page);
 		await expect(page.getByTestId('dia-work-tabs')).toBeVisible();
-		await expect(page.getByTestId('dia-queue-selector')).toBeVisible();
+		await expect(page.getByTestId('dia-control-row-queues')).toBeVisible();
 		await expect(page.getByTestId('dia-kpi-my-drafts')).toBeVisible();
 		const queueSurface = page.getByTestId('dia-list-empty').or(page.getByTestId('dia-list'));
 		await expect(queueSurface.first()).toBeVisible({ timeout: 30_000 });

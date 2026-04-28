@@ -18,6 +18,16 @@
 | 7 | [7. Cursor Pack.md](./7.%20Cursor%20Pack.md) |
 | 8 | [8. DIA Master Checklist.md](./8.%20DIA%20Master%20Checklist.md) |
 
+## Quality gate checklist (hard rule)
+
+Mark any ticket/phase as **Done** only when all checks pass:
+
+- [ ] **TDD evidence:** changed behavior covered by automated tests (test-first or same-change before closure).
+- [ ] **Service/API coverage:** includes happy path + key negative/permission path.
+- [ ] **UI coverage:** for Desk/workspace UX changes, Playwright validation executed and passing.
+- [ ] **Regression guard:** bug fixes include a reproducing automated test.
+- [ ] **Tracker discipline:** if any gate is incomplete, status is **Partial/In progress**, not Done.
+
 ## Ticket status
 
 **Last updated:** 2026-04-23 (Phase I module exit review — I1/I2/I3)

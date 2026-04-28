@@ -213,6 +213,17 @@
 	}
 
 	function isDiaWorkspaceRoute() {
+		/* Direct deep links (`/desk/demand-intake-and-approval`) must work even if `frappe.router`
+		is briefly stale as Workspaces init (common in Playwright + cold loads). */
+		try {
+			const loc = window.location;
+			const path = ((loc && (loc.pathname + (loc.search || "") + (loc.hash || ""))) || "").toLowerCase();
+			if (path.includes("demand-intake-and-approval") || path.includes("demand_intake_and_approval")) {
+				return true;
+			}
+		} catch (e) {
+			/* ignore */
+		}
 		try {
 			if (typeof frappe !== "undefined" && frappe.router && Array.isArray(frappe.router.current_route)) {
 				const r = frappe.router.current_route;
@@ -235,11 +246,6 @@
 			}
 		} catch (e2) {
 			/* ignore */
-		}
-		const loc = window.location;
-		const path = ((loc && (loc.pathname + (loc.search || "") + (loc.hash || ""))) || "").toLowerCase();
-		if (path.includes("demand-intake-and-approval") || path.includes("demand_intake_and_approval")) {
-			return true;
 		}
 		const dr = (document.body && document.body.getAttribute("data-route")) || "";
 		if (dr.includes(DIA_WS) || dr.toLowerCase().includes("demand-intake")) {

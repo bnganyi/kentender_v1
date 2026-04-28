@@ -290,7 +290,7 @@ def _emg_template_body(rp: str, kpi: str, crit: str, vm: str) -> dict:
 		"is_active": 1,
 		"applicable_requisition_types": json.dumps(["Goods", "Works", "Services"]),
 		"applicable_demand_types": json.dumps(["Planned", "Unplanned", "Emergency"]),
-		"default_method": "Direct",
+		"default_method": "Direct Procurement",
 		"default_contract_type": "T&M",
 		"grouping_strategy": json.dumps({"group_by": []}),
 		"threshold_rules": json.dumps([]),

@@ -5,10 +5,12 @@ import {
 	clickSidebarLink,
 	expectProcurementHomeShell,
 	expectProcurementPlanningShell,
+	expectKtsmSupplierRegistryWorkbenchShell,
 	expectSidebarProcurementHomeFirst,
 	openProcurementWorkspaceFromModule,
 	procurementHomeWorkspace,
 	procurementPlanningWorkspace,
+	supplierRegistryWorkspace,
 } from '../../helpers/procurement';
 
 test.describe('G3 Procurement desk smoke', () => {
@@ -43,6 +45,18 @@ test.describe('G3 Procurement desk smoke', () => {
 		await openProcurementWorkspaceFromModule(page, procurementHomeWorkspace.heading);
 		await clickSidebarLink(page, 'Procurement Planning');
 		await expectProcurementPlanningShell(page);
+	});
+
+	test('Supplier Management appears in Procurement sidebar and opens KTSM registry workbench', async ({
+		page,
+	}) => {
+		await loginAsAdministrator(page);
+		await openProcurementWorkspaceFromModule(page, procurementHomeWorkspace.heading);
+		await expectSidebarProcurementHomeFirst(page);
+
+		await clickSidebarLink(page, 'Supplier Management');
+		await expect(page).toHaveURL(supplierRegistryWorkspace.routePattern, { timeout: 45_000 });
+		await expectKtsmSupplierRegistryWorkbenchShell(page);
 	});
 
 	test('Planning keeps single Procurement sidebar rail', async ({ page }) => {

@@ -1,0 +1,94 @@
+/**
+ * KenTender desk builders — use horizontal space.
+ *
+ * Frappe workspaces set `.layout-main { max-width: var(--page-max-width) }` (~900px)
+ * unless `body.full-width` is toggled from the toolbar. Builder UIs (workbenches,
+ * multi-pane tools) need more width without asking each user to enable full-width.
+ *
+ * Selectors: body classes are toggled by workspace shells (PP, DIA, Budget, Strategy,
+ * Procurement Home, KTSM). `body[data-route="Workspaces/…"]` mirrors Frappe's route_str.
+ * Dedicated desk pages use `body[data-route^="…"]`.
+ */
+@media (min-width: 992px) {
+	/*
+	 * Route fallbacks: `body[data-route]` is set on every Desk navigation from Frappe's container.
+	 * Shell classes (kt-*-shell) are toggled by workbench JS and can miss the first paint; pairing
+	 * both avoids regressions when injection runs late.
+	 */
+	/* ---- Workspace (EditorJS) routes: #page-Workspaces ---- */
+	body.kt-pp-shell [data-page-route="Workspaces"] .layout-main,
+	body.kt-dia-shell [data-page-route="Workspaces"] .layout-main,
+	body.kt-budget-shell [data-page-route="Workspaces"] .layout-main,
+	body.kt-strategy-shell [data-page-route="Workspaces"] .layout-main,
+	body.kt-ph-shell [data-page-route="Workspaces"] .layout-main,
+	body.kt-ktsm-shell [data-page-route="Workspaces"] .layout-main,
+	body[data-route="Workspaces/Procurement Planning"] #page-Workspaces .layout-main,
+	body[data-route="Workspaces/Demand Intake and Approval"] #page-Workspaces .layout-main,
+	body[data-route="Workspaces/Procurement Home"] #page-Workspaces .layout-main,
+	body[data-route="Workspaces/KTSM Supplier Registry"] #page-Workspaces .layout-main {
+		max-width: none !important;
+		width: 100% !important;
+	}
+
+	/* Let the main pane span the flex row (Frappe defaults wrapper to ~80%). */
+	body.kt-pp-shell [data-page-route="Workspaces"] .layout-main-section-wrapper,
+	body.kt-dia-shell [data-page-route="Workspaces"] .layout-main-section-wrapper,
+	body.kt-budget-shell [data-page-route="Workspaces"] .layout-main-section-wrapper,
+	body.kt-strategy-shell [data-page-route="Workspaces"] .layout-main-section-wrapper,
+	body.kt-ph-shell [data-page-route="Workspaces"] .layout-main-section-wrapper,
+	body.kt-ktsm-shell [data-page-route="Workspaces"] .layout-main-section-wrapper,
+	body[data-route="Workspaces/Procurement Planning"] #page-Workspaces .layout-main-section-wrapper,
+	body[data-route="Workspaces/Demand Intake and Approval"] #page-Workspaces .layout-main-section-wrapper,
+	body[data-route="Workspaces/Procurement Home"] #page-Workspaces .layout-main-section-wrapper,
+	body[data-route="Workspaces/KTSM Supplier Registry"] #page-Workspaces .layout-main-section-wrapper {
+		width: 100% !important;
+		flex: 1 1 100% !important;
+		max-width: none !important;
+	}
+
+	/* Page head uses Bootstrap `.container` — relax cap so title/actions align with wide canvas */
+	body.kt-pp-shell [data-page-route="Workspaces"] .page-head .container,
+	body.kt-dia-shell [data-page-route="Workspaces"] .page-head .container,
+	body.kt-budget-shell [data-page-route="Workspaces"] .page-head .container,
+	body.kt-strategy-shell [data-page-route="Workspaces"] .page-head .container,
+	body.kt-ph-shell [data-page-route="Workspaces"] .page-head .container,
+	body.kt-ktsm-shell [data-page-route="Workspaces"] .page-head .container,
+	body[data-route="Workspaces/Procurement Planning"] #page-Workspaces .page-head .container,
+	body[data-route="Workspaces/Demand Intake and Approval"] #page-Workspaces .page-head .container,
+	body[data-route="Workspaces/Procurement Home"] #page-Workspaces .page-head .container,
+	body[data-route="Workspaces/KTSM Supplier Registry"] #page-Workspaces .page-head .container {
+		max-width: none !important;
+		width: 100% !important;
+		padding-left: 1rem;
+		padding-right: 1rem;
+	}
+
+	/* ---- Dedicated desk Page routes (custom Page doctypes) ---- */
+	body[data-route^="strategy-builder"] .layout-main,
+	body[data-route^="budget-builder"] .layout-main {
+		max-width: none !important;
+		width: 100% !important;
+	}
+
+	body[data-route^="strategy-builder"] .layout-main-section-wrapper,
+	body[data-route^="budget-builder"] .layout-main-section-wrapper {
+		width: 100% !important;
+		flex: 1 1 100% !important;
+		max-width: none !important;
+	}
+
+	body[data-route^="budget-builder"] .kt-bb-page-head .container,
+	body[data-route^="budget-builder"] .kt-bb-page-body.container {
+		max-width: none !important;
+		width: 100% !important;
+		padding-left: 1rem;
+		padding-right: 1rem;
+	}
+
+	/* ---- Form builders (package wizard, demand record) ---- */
+	body[data-route^="Form/Procurement Package"] .layout-main,
+	body[data-route^="Form/Demand"] .layout-main {
+		max-width: none !important;
+		width: 100% !important;
+	}
+}

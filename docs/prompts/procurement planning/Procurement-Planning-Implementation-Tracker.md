@@ -18,6 +18,16 @@
 | 8 | [8. Smoke Test Contracts.md](./8.%20Smoke%20Test%20Contracts.md) |
 | 9 | [9. Cursor Pack.md](./9.%20Cursor%20Pack.md) |
 
+## Quality gate checklist (hard rule)
+
+Mark any ticket/phase as **Done** only when all checks pass:
+
+- [ ] **TDD evidence:** changed behavior covered by automated tests (test-first or same-change before closure).
+- [ ] **Service/API coverage:** includes happy path + key negative/permission path.
+- [ ] **UI coverage:** for Desk/workspace UX changes, Playwright validation executed and passing.
+- [ ] **Regression guard:** bug fixes include a reproducing automated test.
+- [ ] **Tracker discipline:** if any gate is incomplete, status is **Partial/In progress**, not Done.
+
 ## Ticket status
 
 **Last updated:** 2026-04-24 (**H3** module exit complete — Procurement Planning implementation track closed)

@@ -3,6 +3,17 @@ import { expect, type Page } from '@playwright/test';
 /** Budget Management workspace Desk route (slug). */
 export const BUDGET_LANDING_PATH = '/desk/budget-management';
 
+/** Wait until Frappe `frappe.session` is present (avoids `frappe.call` 417 in `page.evaluate`). */
+export async function waitForFrappeBoot(page: Page) {
+	await page.waitForFunction(
+		() => {
+			const f = (window as { frappe?: { session?: { user?: string } } }).frappe;
+			return Boolean(f && f.session && f.session.user);
+		},
+		{ timeout: 60_000 },
+	);
+}
+
 export async function openBudgetLanding(page: Page) {
 	await page.goto(BUDGET_LANDING_PATH);
 	await page.waitForLoadState('networkidle');

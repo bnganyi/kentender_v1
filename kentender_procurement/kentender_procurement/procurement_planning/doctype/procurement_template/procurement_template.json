@@ -102,12 +102,12 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Default Method",
-   "options": "Open Tender\nRFQ\nDirect",
+   "options": "Open Tender\nRestricted Tender\nRFQ\nRFP\nDirect Procurement",
    "reqd": 1,
    "search_index": 1
   },
   {
-   "description": "Optional JSON list of allowed procurement methods (subset of Open Tender, RFQ, Direct).",
+   "description": "Optional JSON list of allowed procurement methods (same labels as Procurement Package method).",
    "fieldname": "allowed_methods",
    "fieldtype": "JSON",
    "label": "Allowed Methods"

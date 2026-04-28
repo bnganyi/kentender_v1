@@ -2,20 +2,11 @@ import { test, expect } from '@playwright/test';
 
 import { loginAsHoDApprover, loginAsRequisitioner } from '../../helpers/auth';
 import { openDIALanding } from '../../helpers/dia';
-import { diaWorkspace } from '../../helpers/selectors';
 
 /** S8 — HoD returns pending demand to draft with reason; owner sees it in returned queue. */
 test('HoD return to draft with reason (S8)', async ({ page }) => {
 	await loginAsHoDApprover(page);
-	await page.goto(diaWorkspace.route, { waitUntil: 'domcontentloaded' });
-	await page.waitForLoadState('domcontentloaded');
-	const noPermVisible = await page
-		.getByText('No permission for Page')
-		.waitFor({ state: 'visible', timeout: 8_000 })
-		.then(() => true)
-		.catch(() => false);
-	test.skip(noPermVisible, 'HoD user lacks workspace Page permission in this site.');
-	await expect(page.getByTestId('dia-landing-page')).toBeVisible({ timeout: 45_000 });
+	await openDIALanding(page);
 
 	const row = page.getByTestId('dia-row-DIA-MOH-2026-0002');
 	const hasSeed = await row.isVisible({ timeout: 20_000 }).catch(() => false);
@@ -28,8 +19,10 @@ test('HoD return to draft with reason (S8)', async ({ page }) => {
 	test.skip(!canReturn, 'Seed demand not currently actionable for HoD return.');
 
 	await returnBtn.click();
-	await page.getByRole('dialog').getByLabel('Return reason').fill('Please revise quantities and scope.');
-	await page.getByRole('button', { name: 'Return', exact: true }).click();
+	// Frappe `frappe.prompt` — label may not be wired to a11y; target the open modal field
+	const modal = page.locator('div.modal.show[role="dialog"]');
+	await modal.locator('textarea, input[type="text"]').first().fill('Please revise quantities and scope.');
+	await modal.getByRole('button', { name: /^Return$/i }).click();
 	await expect(page.getByTestId('dia-detail-current-stage')).toContainText('Returned', { timeout: 20_000 });
 	await expect(page.getByTestId('dia-row-DIA-MOH-2026-0002')).toBeHidden({ timeout: 20_000 });
 

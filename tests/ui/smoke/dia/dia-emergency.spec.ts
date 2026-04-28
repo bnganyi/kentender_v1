@@ -1,20 +1,12 @@
 import { test, expect } from '@playwright/test';
 
 import { loginAsRequisitioner } from '../../helpers/auth';
-import { diaWorkspace } from '../../helpers/selectors';
+import { openDIALanding } from '../../helpers/dia';
 
 /** S19 — emergency demand cannot be saved/submitted without emergency justification. */
 test('Emergency demand requires justification before submit (S19)', async ({ page }) => {
 	await loginAsRequisitioner(page);
-	await page.goto(diaWorkspace.route, { waitUntil: 'domcontentloaded' });
-	await page.waitForLoadState('domcontentloaded');
-	const noPermVisible = await page
-		.getByText('No permission for Page')
-		.waitFor({ state: 'visible', timeout: 8_000 })
-		.then(() => true)
-		.catch(() => false);
-	test.skip(noPermVisible, 'Requisitioner lacks workspace Page permission in this site.');
-	await expect(page.getByTestId('dia-landing-page')).toBeVisible({ timeout: 45_000 });
+	await openDIALanding(page);
 
 	const row = page.getByTestId('dia-row-DIA-MOH-2026-0001');
 	const hasSeed = await row.isVisible({ timeout: 20_000 }).catch(() => false);
