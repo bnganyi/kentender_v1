@@ -1,0 +1,285 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:version_code",
+ "creation": "2026-04-28 16:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "version_code",
+  "template_code",
+  "version_label",
+  "revision_label",
+  "source_document_code",
+  "effective_from_date",
+  "effective_from_text",
+  "issuing_authority",
+  "procurement_category",
+  "works_profile_type",
+  "section_state",
+  "version_status",
+  "legal_review_status",
+  "policy_review_status",
+  "structure_validation_status",
+  "is_current_active_version",
+  "immutable_after_activation",
+  "section_lineage",
+  "supersedes_version_code",
+  "superseded_by_version_code",
+  "activated_at",
+  "activated_by",
+  "retired_at",
+  "retired_by"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "version_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Version Code",
+   "reqd": 1,
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "template_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Template Code",
+   "options": "STD Template Family",
+   "reqd": 1
+  },
+  {
+   "fieldname": "version_label",
+   "fieldtype": "Small Text",
+   "label": "Version Label",
+   "reqd": 1
+  },
+  {
+   "fieldname": "revision_label",
+   "fieldtype": "Data",
+   "label": "Revision Label",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_document_code",
+   "fieldtype": "Link",
+   "label": "Source Document Code",
+   "options": "Source Document Registry",
+   "reqd": 1
+  },
+  {
+   "fieldname": "effective_from_date",
+   "fieldtype": "Date",
+   "label": "Effective From Date"
+  },
+  {
+   "fieldname": "effective_from_text",
+   "fieldtype": "Data",
+   "label": "Effective From Text"
+  },
+  {
+   "fieldname": "issuing_authority",
+   "fieldtype": "Data",
+   "label": "Issuing Authority",
+   "reqd": 1
+  },
+  {
+   "fieldname": "procurement_category",
+   "fieldtype": "Select",
+   "label": "Procurement Category",
+   "options": "Works\nGoods\nServices",
+   "reqd": 1
+  },
+  {
+   "fieldname": "works_profile_type",
+   "fieldtype": "Data",
+   "label": "Works Profile Type"
+  },
+  {
+   "fieldname": "section_state",
+   "fieldtype": "Section Break",
+   "label": "State"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "version_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Version Status",
+   "options": "Draft\nStructure In Progress\nValidation Blocked\nValidation Passed\nLegal Review Pending\nApproved\nActive\nSuspended\nSuperseded\nRetired\nArchived",
+   "reqd": 1
+  },
+  {
+   "default": "Pending",
+   "fieldname": "legal_review_status",
+   "fieldtype": "Select",
+   "label": "Legal Review Status",
+   "options": "Not Required\nPending\nReturned\nApproved",
+   "reqd": 1
+  },
+  {
+   "default": "Pending",
+   "fieldname": "policy_review_status",
+   "fieldtype": "Select",
+   "label": "Policy Review Status",
+   "options": "Not Required\nPending\nReturned\nApproved",
+   "reqd": 1
+  },
+  {
+   "default": "Not Run",
+   "fieldname": "structure_validation_status",
+   "fieldtype": "Select",
+   "label": "Structure Validation Status",
+   "options": "Not Run\nPass\nFail",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_current_active_version",
+   "fieldtype": "Check",
+   "label": "Is Current Active Version",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "immutable_after_activation",
+   "fieldtype": "Check",
+   "label": "Immutable After Activation",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_lineage",
+   "fieldtype": "Section Break",
+   "label": "Lineage"
+  },
+  {
+   "fieldname": "supersedes_version_code",
+   "fieldtype": "Link",
+   "label": "Supersedes Version Code",
+   "options": "STD Template Version"
+  },
+  {
+   "fieldname": "superseded_by_version_code",
+   "fieldtype": "Link",
+   "label": "Superseded By Version Code",
+   "options": "STD Template Version"
+  },
+  {
+   "fieldname": "activated_at",
+   "fieldtype": "Datetime",
+   "label": "Activated At"
+  },
+  {
+   "fieldname": "activated_by",
+   "fieldtype": "Link",
+   "label": "Activated By",
+   "options": "User"
+  },
+  {
+   "fieldname": "retired_at",
+   "fieldtype": "Datetime",
+   "label": "Retired At"
+  },
+  {
+   "fieldname": "retired_by",
+   "fieldtype": "Link",
+   "label": "Retired By",
+   "options": "User"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-04-28 16:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "STD Template Version",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Planner",
+   "share": 1,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Officer",
+   "share": 1,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Planning Authority",
+   "share": 1,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 1,
+   "write": 0
+  }
+ ],
+ "search_fields": "version_code,version_label,revision_label",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "version_label",
+ "track_changes": 1
+}
+

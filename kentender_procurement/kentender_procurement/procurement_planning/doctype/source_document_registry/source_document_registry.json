@@ -1,0 +1,256 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:source_document_code",
+ "creation": "2026-04-28 15:30:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "source_document_code",
+  "source_document_title",
+  "issuing_authority",
+  "country",
+  "source_revision_label",
+  "issued_date_text",
+  "procurement_category",
+  "works_profile_type",
+  "legal_use_status",
+  "status",
+  "section_source_proof",
+  "source_file_reference",
+  "source_file_hash",
+  "source_text_hash",
+  "full_source_pdf_required",
+  "source_text_extraction_required",
+  "section_review",
+  "human_review_status",
+  "reviewed_by",
+  "reviewed_at",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "source_document_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Source Document Code",
+   "reqd": 1,
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "source_document_title",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Source Document Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "issuing_authority",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Issuing Authority",
+   "reqd": 1
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Data",
+   "label": "Country"
+  },
+  {
+   "fieldname": "source_revision_label",
+   "fieldtype": "Data",
+   "label": "Source Revision Label",
+   "reqd": 1
+  },
+  {
+   "fieldname": "issued_date_text",
+   "fieldtype": "Data",
+   "label": "Issued Date Text"
+  },
+  {
+   "fieldname": "procurement_category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Procurement Category",
+   "options": "Works\nGoods\nServices",
+   "reqd": 1
+  },
+  {
+   "fieldname": "works_profile_type",
+   "fieldtype": "Data",
+   "label": "Works Profile Type"
+  },
+  {
+   "fieldname": "legal_use_status",
+   "fieldtype": "Select",
+   "label": "Legal Use Status",
+   "options": "Draft\nApproved for Use\nRestricted\nRetired",
+   "reqd": 1
+  },
+  {
+   "default": "Active",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Active\nRetired\nArchived",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_source_proof",
+   "fieldtype": "Section Break",
+   "label": "Source Proof"
+  },
+  {
+   "fieldname": "source_file_reference",
+   "fieldtype": "Data",
+   "label": "Source File Reference"
+  },
+  {
+   "fieldname": "source_file_hash",
+   "fieldtype": "Data",
+   "label": "Source File Hash"
+  },
+  {
+   "fieldname": "source_text_hash",
+   "fieldtype": "Data",
+   "label": "Source Text Hash"
+  },
+  {
+   "default": "1",
+   "fieldname": "full_source_pdf_required",
+   "fieldtype": "Check",
+   "label": "Full Source PDF Required",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "source_text_extraction_required",
+   "fieldtype": "Check",
+   "label": "Source Text Extraction Required",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_review",
+   "fieldtype": "Section Break",
+   "label": "Review"
+  },
+  {
+   "fieldname": "human_review_status",
+   "fieldtype": "Select",
+   "label": "Human Review Status",
+   "options": "\nNot Started\nIn Review\nApproved\nReturned"
+  },
+  {
+   "fieldname": "reviewed_by",
+   "fieldtype": "Link",
+   "label": "Reviewed By",
+   "options": "User"
+  },
+  {
+   "fieldname": "reviewed_at",
+   "fieldtype": "Datetime",
+   "label": "Reviewed At"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-04-28 15:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "Source Document Registry",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Planner",
+   "share": 1,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Officer",
+   "share": 1,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Planning Authority",
+   "share": 1,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 1,
+   "write": 0
+  }
+ ],
+ "search_fields": "source_document_code,source_document_title,source_revision_label,issuing_authority",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "source_document_title",
+ "track_changes": 1
+}
+
