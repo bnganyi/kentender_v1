@@ -1,0 +1,20 @@
+{
+ "doctype":"DocType",
+ "name":"STD BOQ Item Instance",
+ "module":"Procurement Planning",
+ "autoname":"field:item_instance_code",
+ "engine":"InnoDB",
+ "field_order":["item_instance_code","bill_instance_code","item_number","description","unit","quantity","rate","amount","payload_json"],
+ "fields":[
+  {"fieldname":"item_instance_code","fieldtype":"Data","label":"Item Instance Code","reqd":1,"unique":1},
+  {"fieldname":"bill_instance_code","fieldtype":"Link","label":"Bill Instance Code","options":"STD BOQ Bill Instance","reqd":1},
+  {"fieldname":"item_number","fieldtype":"Data","label":"Item Number","reqd":1},
+  {"fieldname":"description","fieldtype":"Small Text","label":"Description","reqd":1},
+  {"fieldname":"unit","fieldtype":"Data","label":"Unit","reqd":1},
+  {"fieldname":"quantity","fieldtype":"Float","label":"Quantity","reqd":1},
+  {"fieldname":"rate","fieldtype":"Float","label":"Rate"},
+  {"fieldname":"amount","fieldtype":"Float","label":"Amount"},
+  {"fieldname":"payload_json","fieldtype":"JSON","label":"Payload JSON"}
+ ],
+ "permissions":[{"role":"System Manager","read":1,"write":1,"create":1,"delete":1},{"role":"Administrator","read":1,"write":1,"create":1,"delete":1}]
+}

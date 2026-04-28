@@ -1,0 +1,17 @@
+{
+ "doctype":"DocType",
+ "name":"STD BOQ Bill Instance",
+ "module":"Procurement Planning",
+ "autoname":"field:bill_instance_code",
+ "engine":"InnoDB",
+ "field_order":["bill_instance_code","boq_instance_code","bill_number","bill_title","bill_type","order_index"],
+ "fields":[
+  {"fieldname":"bill_instance_code","fieldtype":"Data","label":"Bill Instance Code","reqd":1,"unique":1},
+  {"fieldname":"boq_instance_code","fieldtype":"Link","label":"BOQ Instance Code","options":"STD BOQ Instance","reqd":1},
+  {"fieldname":"bill_number","fieldtype":"Data","label":"Bill Number","reqd":1},
+  {"fieldname":"bill_title","fieldtype":"Small Text","label":"Bill Title","reqd":1},
+  {"fieldname":"bill_type","fieldtype":"Data","label":"Bill Type","reqd":1},
+  {"fieldname":"order_index","fieldtype":"Int","label":"Order Index","reqd":1}
+ ],
+ "permissions":[{"role":"System Manager","read":1,"write":1,"create":1,"delete":1},{"role":"Administrator","read":1,"write":1,"create":1,"delete":1}]
+}

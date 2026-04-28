@@ -1,0 +1,16 @@
+{
+ "doctype":"DocType",
+ "name":"STD BOQ Instance",
+ "module":"Procurement Planning",
+ "autoname":"field:boq_instance_code",
+ "engine":"InnoDB",
+ "field_order":["boq_instance_code","instance_code","boq_definition_code","status","validation_status"],
+ "fields":[
+  {"fieldname":"boq_instance_code","fieldtype":"Data","label":"BOQ Instance Code","reqd":1,"unique":1},
+  {"fieldname":"instance_code","fieldtype":"Link","label":"Instance Code","options":"STD Instance","reqd":1},
+  {"fieldname":"boq_definition_code","fieldtype":"Link","label":"BOQ Definition Code","options":"STD BOQ Definition","reqd":1},
+  {"fieldname":"status","fieldtype":"Select","label":"Status","options":"Draft\nValidated\nPublished","reqd":1},
+  {"fieldname":"validation_status","fieldtype":"Select","label":"Validation Status","options":"Not Run\nPass\nFail","reqd":1}
+ ],
+ "permissions":[{"role":"System Manager","read":1,"write":1,"create":1,"delete":1},{"role":"Administrator","read":1,"write":1,"create":1,"delete":1}]
+}

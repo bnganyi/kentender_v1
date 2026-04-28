@@ -26,7 +26,7 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 
 ## Ticket status
 
-**Last updated:** 2026-04-28 (Phase 1 STD-CURSOR-0101 to STD-CURSOR-0109, Phase 2 STD-CURSOR-0201 to STD-CURSOR-0205, Phase 3 STD-CURSOR-0301 to STD-CURSOR-0303, and Phase 4 STD-CURSOR-0401 to STD-CURSOR-0404 executed)
+**Last updated:** 2026-04-28 (Phase 1 STD-CURSOR-0101 to STD-CURSOR-0109, Phase 2 STD-CURSOR-0201 to STD-CURSOR-0205, Phase 3 STD-CURSOR-0301 to STD-CURSOR-0303, Phase 4 STD-CURSOR-0401 to STD-CURSOR-0404, and Phase 5 STD-CURSOR-0501 to STD-CURSOR-0503 executed)
 
 ### Phase 0 - Reconnaissance and planning baseline
 
@@ -80,9 +80,9 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 
 | Ticket | Description | Status |
 |---|---|---|
-| STD-CURSOR-0501 | Works requirements service | Pending |
-| STD-CURSOR-0502 | BOQ instance service | Pending |
-| STD-CURSOR-0503 | BOQ structured import | Pending |
+| STD-CURSOR-0501 | Works requirements service | Done |
+| STD-CURSOR-0502 | BOQ instance service | Done |
+| STD-CURSOR-0503 | BOQ structured import | Done |
 
 ### Phase 6 - Generation engine (reference only)
 
@@ -508,5 +508,44 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 | Files changed | `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_section_attachment/std_section_attachment.json`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_section_attachment/std_section_attachment.py`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_section_attachment/__init__.py`, `kentender_procurement/kentender_procurement/std_engine/services/section_attachment_service.py`, `kentender_procurement/kentender_procurement/std_engine/services/__init__.py`, `kentender_procurement/kentender_procurement/std_engine/tests/test_std_section_attachment_service.py`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
 | Test evidence | `bench --site kentender.midas.com reload-doc procurement_planning doctype std_section_attachment` + `bench --site kentender.midas.com migrate` (pass), `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_section_attachment_service` (3/3 pass). Regression safety: `...test_std_parameter_value_service` (3/3 pass), `...test_std_instance_creation_service` (4/4 pass), `...test_std_template_query_service` (3/3 pass), `...test_std_audit_service` (3/3 pass; first run hit transient DB deadlock during test setup cleanup, immediate rerun passed cleanly). |
 | Risks remaining | Runtime attachment records are now persisted and bounded, but attachment content provenance/file-store integrity and addendum supersession lineage enrichment still require dedicated downstream governance and integration hardening. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-28 |
+| Ticket(s) | STD-CURSOR-0501 |
+| Reviewer | Engineering |
+| Completed | Implemented Works Requirements services in `std_engine.services.works_requirements_service`: `get_works_requirement_components(instance_code)`, `update_works_requirement_component(instance_code, component_code, payload, actor)`, and `validate_works_requirements(instance_code)`. Added runtime persistence model `STD Instance Works Requirement Component` for per-instance component content/status (`structured_text`, `table_data`, `completion_status`). Service loads component definitions from the active template version, enforces payload-mode support (`supports_structured_text`, `supports_table_data`), marks completion status, denies edits after publication/superseded/cancelled states, and applies readiness/output invalidation for DSM/DEM/DCM-driving components. Validation enforces required-component completion and attachment-required gates, sets instance readiness (`Ready`/`Blocked`), and returns deterministic blockers. Audit emission added for updates (`WORKS_REQUIREMENT_UPDATED`). |
+| Not completed | Advanced component-level dependency orchestration and richer attachment register schema semantics are deferred to subsequent BOQ/generation/readiness tickets. |
+| Assumptions | Output staleness continues to be represented by output status demotion to `Draft` (no dedicated stale-flag fields in current output schema). |
+| Files changed | `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_instance_works_requirement_component/std_instance_works_requirement_component.json`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_instance_works_requirement_component/std_instance_works_requirement_component.py`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_instance_works_requirement_component/__init__.py`, `kentender_procurement/kentender_procurement/std_engine/services/works_requirements_service.py`, `kentender_procurement/kentender_procurement/std_engine/services/__init__.py`, `kentender_procurement/kentender_procurement/std_engine/tests/test_std_works_requirements_service.py`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | `bench --site kentender.midas.com reload-doc procurement_planning doctype std_instance_works_requirement_component` + `bench --site kentender.midas.com migrate` (pass), `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_works_requirements_service` (3/3 pass). Regression safety: `...test_std_section_attachment_service` (3/3 pass; first run hit transient DB deadlock in setup cleanup, immediate rerun passed), `...test_std_parameter_value_service` (3/3 pass). |
+| Risks remaining | Required-component and attachment gates are now enforced at validation time, but downstream readiness/run orchestration must still bind these blockers into broader phase gates and UI diagnostics in later tickets. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-28 |
+| Ticket(s) | STD-CURSOR-0502 |
+| Reviewer | Engineering |
+| Completed | Implemented BOQ instance services in `std_engine.services.boq_instance_service`: `get_boq_instance(instance_code)`, `create_or_initialize_boq_instance(instance_code, actor)`, `add_boq_bill(instance_code, bill_payload, actor)`, `add_boq_item(bill_instance_code, item_payload, actor)`, `update_boq_item(item_instance_code, payload, actor)`, and `validate_boq_instance(instance_code)`. Added runtime BOQ graph models `STD BOQ Instance`, `STD BOQ Bill Instance`, and `STD BOQ Item Instance`. Enforced profile-driven BOQ requirement at initialization, publication-lock edit denial, negative-quantity rejection, required-field validation, and deterministic amount computation (`quantity * rate`) as system rule. Applied BOQ change invalidation by setting instance readiness to `Invalidated` and demoting current/published generated outputs to `Draft`. Emitted BOQ update audit events. |
+| Not completed | Rich bill/item type exception catalog (e.g., sanctioned negative quantity edge-case types) and advanced schema-driven field ownership matrices are deferred to later BOQ/import refinement tickets. |
+| Assumptions | Missing required BOQ fields are validated at runtime instance level (bill/item rows) independent of template schema extensions not yet materialized as dynamic columns. |
+| Files changed | `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_boq_instance/std_boq_instance.json`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_boq_instance/std_boq_instance.py`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_boq_instance/__init__.py`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_boq_bill_instance/std_boq_bill_instance.json`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_boq_bill_instance/std_boq_bill_instance.py`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_boq_bill_instance/__init__.py`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_boq_item_instance/std_boq_item_instance.json`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_boq_item_instance/std_boq_item_instance.py`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_boq_item_instance/__init__.py`, `kentender_procurement/kentender_procurement/std_engine/services/boq_instance_service.py`, `kentender_procurement/kentender_procurement/std_engine/services/__init__.py`, `kentender_procurement/kentender_procurement/std_engine/tests/test_std_boq_instance_service.py`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | `bench --site kentender.midas.com reload-doc procurement_planning doctype std_boq_instance` + `... std_boq_bill_instance` + `... std_boq_item_instance` + `bench --site kentender.midas.com migrate` (pass), `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_boq_instance_service` (3/3 pass). Regression safety: `...test_std_works_requirements_service` (3/3 pass), `...test_std_section_attachment_service` (3/3 pass). |
+| Risks remaining | BOQ runtime layer is now functional and governed, but richer schema-expression enforcement and advanced reconciliation diagnostics are still limited and will be deepened in subsequent generation/readiness coupling tickets. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-28 |
+| Ticket(s) | STD-CURSOR-0503 |
+| Reviewer | Engineering |
+| Completed | Implemented `import_boq_structured(instance_code, file_reference, mapping_config, actor, dry_run=False)` in `std_engine.services.boq_import_service` with strict structured-import flow: row mapping intake, dry-run preview, ambiguous-row rejection reporting, confirmed import path that creates BOQ bills/items as structured runtime records, and retention of original import file as supporting evidence attachment through section-attachment service. Added deterministic audit emission on import completion and returned validation result from BOQ validator. Enforced that file-only payload (no structured rows) does not satisfy BOQ readiness/validation. |
+| Not completed | Spreadsheet parser adapters (column auto-detection, workbook sheet inference, locale/unit normalization) are deferred; current ticket consumes normalized mapped rows via `mapping_config.rows` contract. |
+| Assumptions | Parsing/mapping UI layer will normalize spreadsheet contents into `mapping_config.rows` before invoking this service; service scope remains structured import orchestration/validation, not binary file parsing internals. |
+| Files changed | `kentender_procurement/kentender_procurement/std_engine/services/boq_import_service.py`, `kentender_procurement/kentender_procurement/std_engine/services/__init__.py`, `kentender_procurement/kentender_procurement/std_engine/tests/test_std_boq_import_service.py`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_boq_import_service` (9/9 pass including inherited BOQ instance checks), focused regression: `...test_std_boq_instance_service` (3/3 pass), cross-service regression: `...test_std_works_requirements_service` (3/3 pass), `...test_std_parameter_value_service` (3/3 pass). |
+| Risks remaining | Current import path expects already-mapped row payloads; robustness against malformed real-world workbooks depends on forthcoming parser/mapping UX hardening and richer rejection diagnostics. |
 | Ready for next ticket | Yes |
 

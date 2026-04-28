@@ -1,0 +1,18 @@
+{
+ "doctype":"DocType",
+ "name":"STD Instance Works Requirement Component",
+ "module":"Procurement Planning",
+ "autoname":"field:instance_component_code",
+ "engine":"InnoDB",
+ "field_order":["instance_component_code","instance_code","component_code","structured_text","table_data","completion_status","updated_by"],
+ "fields":[
+  {"fieldname":"instance_component_code","fieldtype":"Data","label":"Instance Component Code","reqd":1,"unique":1},
+  {"fieldname":"instance_code","fieldtype":"Link","label":"Instance Code","options":"STD Instance","reqd":1},
+  {"fieldname":"component_code","fieldtype":"Link","label":"Component Code","options":"STD Works Requirement Component Definition","reqd":1},
+  {"fieldname":"structured_text","fieldtype":"Long Text","label":"Structured Text"},
+  {"fieldname":"table_data","fieldtype":"JSON","label":"Table Data"},
+  {"fieldname":"completion_status","fieldtype":"Select","label":"Completion Status","options":"Not Started\nIn Progress\nComplete\nBlocked","reqd":1},
+  {"fieldname":"updated_by","fieldtype":"Link","label":"Updated By","options":"User"}
+ ],
+ "permissions":[{"role":"System Manager","read":1,"write":1,"create":1,"delete":1},{"role":"Administrator","read":1,"write":1,"create":1,"delete":1}]
+}
