@@ -26,7 +26,7 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 
 ## Ticket status
 
-**Last updated:** 2026-04-28 (Phase 1 STD-CURSOR-0101 to STD-CURSOR-0109, Phase 2 STD-CURSOR-0201 to STD-CURSOR-0205, and Phase 3 STD-CURSOR-0301 to STD-CURSOR-0302 executed)
+**Last updated:** 2026-04-28 (Phase 1 STD-CURSOR-0101 to STD-CURSOR-0109, Phase 2 STD-CURSOR-0201 to STD-CURSOR-0205, Phase 3 STD-CURSOR-0301 to STD-CURSOR-0303, and Phase 4 STD-CURSOR-0401 to STD-CURSOR-0404 executed)
 
 ### Phase 0 - Reconnaissance and planning baseline
 
@@ -71,10 +71,10 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 
 | Ticket | Description | Status |
 |---|---|---|
-| STD-CURSOR-0401 | Eligible template query service | Pending |
-| STD-CURSOR-0402 | Create STD instance service | Pending |
-| STD-CURSOR-0403 | Parameter value service | Pending |
-| STD-CURSOR-0404 | Section attachment service | Pending |
+| STD-CURSOR-0401 | Eligible template query service | Done |
+| STD-CURSOR-0402 | Create STD instance service | Done |
+| STD-CURSOR-0403 | Parameter value service | Done |
+| STD-CURSOR-0404 | Section attachment service | Done |
 
 ### Phase 5 - Works requirements and BOQ engine (reference only)
 
@@ -456,5 +456,57 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 | Files changed | `kentender_procurement/kentender_procurement/std_engine/services/authorization_service.py`, `kentender_procurement/kentender_procurement/std_engine/services/__init__.py`, `kentender_procurement/kentender_procurement/std_engine/services/state_transition_service.py`, `kentender_procurement/kentender_procurement/std_engine/tests/test_std_authorization_service.py` |
 | Test evidence | `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_authorization_service` (5/5 pass). Regression safety: `...test_std_state_transition_service` (4/4 pass), `...test_std_seed_validation_command` (3/3 pass). |
 | Risks remaining | Some policy branches depend on caller-provided context flags (e.g., addendum/model-generation/source-of-truth); hard-binding these to domain objects/services will be strengthened in follow-on integration tickets. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-28 |
+| Ticket(s) | STD-CURSOR-0401 |
+| Reviewer | Engineering |
+| Completed | Implemented `get_eligible_std_templates(procurement_category, procurement_method, works_profile_type=None, contract_type=None)` in `std_engine.services.template_query_service` with active-only filters for `STD Template Version` and `STD Applicability Profile`, procurement category and method compatibility checks, Works profile-type filtering, optional contract-type filtering, deterministic blocking reasons when no compatible records exist, and response payload including version/profile identifiers and labels for tender-side selection. Exported service via `std_engine.services.__init__`. |
+| Not completed | Instance creation and runtime placeholder initialization are deferred to `STD-CURSOR-0402`; this ticket only delivers the eligibility query surface. |
+| Assumptions | Method compatibility must pass both template-family allowed methods and profile allowed methods; for Works, `works_profile_type` acts as a strict match when supplied by caller. |
+| Files changed | `kentender_procurement/kentender_procurement/std_engine/services/template_query_service.py`, `kentender_procurement/kentender_procurement/std_engine/services/__init__.py`, `kentender_procurement/kentender_procurement/std_engine/tests/test_std_template_query_service.py`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_template_query_service` (3/3 pass). Regression safety: `...test_std_audit_service` (3/3 pass), `...test_std_state_transition_service` (4/4 pass). |
+| Risks remaining | Current blocking-reason contract is stable but minimal (reason codes); richer user-facing diagnostics and policy traceability can be added when Tender Management UI integration starts. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-28 |
+| Ticket(s) | STD-CURSOR-0402 |
+| Reviewer | Engineering |
+| Completed | Implemented `create_std_instance(tender_code, template_version_code, profile_code, tender_context, actor)` in `std_engine.services.instance_creation_service` with mandatory active-version and active-profile validation, profile/version linkage enforcement, tender-context compatibility gate (via eligible-template query service), duplicate current-instance prevention unless supersession path is provided, and `STD Instance` creation in `Draft` with `readiness_status=Not Run`. Added deterministic placeholder initialization payloads sourced from current template definitions (`STD Section Definition`, `STD Parameter Definition`, `STD Works Requirement Component Definition`, and `STD BOQ Definition` when profile requires BOQ). Emitted `STD_INSTANCE_CREATED` audit event with creation metadata and placeholder counts. |
+| Not completed | Persistent runtime row materialization for per-instance section/parameter/component/BOQ value tables is deferred to subsequent runtime/value services; this ticket initializes and returns definition-backed placeholders and creates the canonical instance record. |
+| Assumptions | Supersession bypass is explicitly indicated through `tender_context.supersession_instance_code`; when not provided, any non-superseded/non-cancelled instance for the same tender is treated as duplicate current instance. |
+| Files changed | `kentender_procurement/kentender_procurement/std_engine/services/instance_creation_service.py`, `kentender_procurement/kentender_procurement/std_engine/services/__init__.py`, `kentender_procurement/kentender_procurement/std_engine/tests/test_std_instance_creation_service.py`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_instance_creation_service` (4/4 pass). Regression safety: `...test_std_template_query_service` (3/3 pass), `...test_std_audit_service` (3/3 pass), `...test_std_state_transition_service` (4/4 pass). |
+| Risks remaining | Placeholder initialization is currently definition-derived and returned in service response; future tickets should persist and version runtime placeholder rows to support edits, diffs, readiness traceability, and downstream generation provenance. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-28 |
+| Ticket(s) | STD-CURSOR-0403 |
+| Reviewer | Engineering |
+| Completed | Implemented `set_std_parameter_value(instance_code, parameter_code, value, actor)` in `std_engine.services.parameter_value_service` with authorization gate (`STD_PARAMETER_SET`), instance immutability enforcement for post-publication/superseded/cancelled states, template-version ownership validation for parameter definitions, type-aware coercion and validation (Boolean/Int/Float/Date/Datetime/JSON/String/Select), allowed-values enforcement, and required-value enforcement. Added runtime persistence model `STD Instance Parameter Value` and upsert logic for tender-specific values. Implemented readiness invalidation and output staleness handling for DEM/DCM-driving parameters by setting instance readiness to `Invalidated` and demoting current/published generated outputs to draft under transition-service context. Emitted `PARAMETER_VALUE_SET` audit events with invalidation metadata. |
+| Not completed | Full conditional-expression evaluation (`required_condition` / `validation_expression`) and advanced dependency-graph re-evaluation are deferred to follow-on parameter/dependency tickets; current implementation enforces foundational type/allowed/required constraints. |
+| Assumptions | Output staleness is represented in current schema by status demotion to `Draft` for affected generated outputs because no explicit stale-flag field exists yet. |
+| Files changed | `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_instance_parameter_value/std_instance_parameter_value.json`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_instance_parameter_value/std_instance_parameter_value.py`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_instance_parameter_value/__init__.py`, `kentender_procurement/kentender_procurement/std_engine/services/parameter_value_service.py`, `kentender_procurement/kentender_procurement/std_engine/services/authorization_service.py`, `kentender_procurement/kentender_procurement/std_engine/services/__init__.py`, `kentender_procurement/kentender_procurement/std_engine/tests/test_std_parameter_value_service.py`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | `bench --site kentender.midas.com reload-doc procurement_planning doctype std_instance_parameter_value` + `bench --site kentender.midas.com migrate` (pass), `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_parameter_value_service` (3/3 pass). Regression safety: `...test_std_instance_creation_service` (4/4 pass), `...test_std_template_query_service` (3/3 pass), `...test_std_audit_service` (3/3 pass). |
+| Risks remaining | Parameter runtime values now persist, but cross-parameter dependency execution and comprehensive output-diff provenance are still limited until dependency and generation-phase services are expanded. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-28 |
+| Ticket(s) | STD-CURSOR-0404 |
+| Reviewer | Engineering |
+| Completed | Implemented `add_std_section_attachment(instance_code, section_code, file_reference, classification, actor, component_code=None)` in `std_engine.services.section_attachment_service` with required binding and validation gates: mandatory section/classification/file reference, allowed classification set (`Specification`, `Drawing`, `Supporting`), section-template binding to instance version (reject unbound attachments), optional works-component binding validation, SHA-256 file-hash persistence, and attachment storage in new runtime model `STD Section Attachment`. Enforced publication lock and supersession discipline by denying direct replacement when an attachment for the same instance/section/classification is already `Published` (addendum/supersession path required). Applied readiness/output invalidation on attachment add by setting instance readiness to `Invalidated` and demoting current/published outputs to `Draft` under transition-service context. Emitted `SECTION_ATTACHMENT_ADDED` audit events with attachment and invalidation metadata. |
+| Not completed | Full addendum-driven supersession workflow (explicit `supersedes_attachment_code` population with addendum references) is deferred to addendum integration tickets; this ticket enforces the no-overwrite guard and foundational runtime attachment persistence. |
+| Assumptions | Output staleness is represented by output status demotion to `Draft` because explicit stale-flag fields are not yet part of current generated-output schema. |
+| Files changed | `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_section_attachment/std_section_attachment.json`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_section_attachment/std_section_attachment.py`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_section_attachment/__init__.py`, `kentender_procurement/kentender_procurement/std_engine/services/section_attachment_service.py`, `kentender_procurement/kentender_procurement/std_engine/services/__init__.py`, `kentender_procurement/kentender_procurement/std_engine/tests/test_std_section_attachment_service.py`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | `bench --site kentender.midas.com reload-doc procurement_planning doctype std_section_attachment` + `bench --site kentender.midas.com migrate` (pass), `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_section_attachment_service` (3/3 pass). Regression safety: `...test_std_parameter_value_service` (3/3 pass), `...test_std_instance_creation_service` (4/4 pass), `...test_std_template_query_service` (3/3 pass), `...test_std_audit_service` (3/3 pass; first run hit transient DB deadlock during test setup cleanup, immediate rerun passed cleanly). |
+| Risks remaining | Runtime attachment records are now persisted and bounded, but attachment content provenance/file-store integrity and addendum supersession lineage enrichment still require dedicated downstream governance and integration hardening. |
 | Ready for next ticket | Yes |
 

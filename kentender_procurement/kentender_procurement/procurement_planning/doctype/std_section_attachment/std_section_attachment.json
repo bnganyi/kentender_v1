@@ -1,0 +1,20 @@
+{
+ "doctype":"DocType",
+ "name":"STD Section Attachment",
+ "module":"Procurement Planning",
+ "autoname":"field:attachment_code",
+ "engine":"InnoDB",
+ "field_order":["attachment_code","instance_code","section_code","component_code","classification","file_reference","file_hash","status","supersedes_attachment_code"],
+ "fields":[
+  {"fieldname":"attachment_code","fieldtype":"Data","label":"Attachment Code","reqd":1,"unique":1},
+  {"fieldname":"instance_code","fieldtype":"Link","label":"Instance Code","options":"STD Instance","reqd":1},
+  {"fieldname":"section_code","fieldtype":"Link","label":"Section Code","options":"STD Section Definition","reqd":1},
+  {"fieldname":"component_code","fieldtype":"Link","label":"Component Code","options":"STD Works Requirement Component Definition"},
+  {"fieldname":"classification","fieldtype":"Select","label":"Classification","options":"Specification\nDrawing\nSupporting","reqd":1},
+  {"fieldname":"file_reference","fieldtype":"Data","label":"File Reference","reqd":1},
+  {"fieldname":"file_hash","fieldtype":"Data","label":"File Hash"},
+  {"fieldname":"status","fieldtype":"Select","label":"Status","options":"Draft\nPublished\nSuperseded","reqd":1},
+  {"fieldname":"supersedes_attachment_code","fieldtype":"Link","label":"Supersedes Attachment Code","options":"STD Section Attachment"}
+ ],
+ "permissions":[{"role":"System Manager","read":1,"write":1,"create":1,"delete":1},{"role":"Administrator","read":1,"write":1,"create":1,"delete":1}]
+}

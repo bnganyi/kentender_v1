@@ -11,6 +11,7 @@ ACTION_POLICY = {
 	"STD_OUTPUT_EDIT_CONTENT": {"risk_level": "High", "requires_confirmation": False, "roles": ("Administrator", "System Manager")},
 	"STD_AUDIT_EDIT": {"risk_level": "High", "requires_confirmation": False, "roles": ("Administrator", "System Manager")},
 	"STD_INSTANCE_CREATE_FROM_TEMPLATE": {"risk_level": "Medium", "requires_confirmation": False, "roles": ("Administrator", "System Manager", "Procurement Planner")},
+	"STD_PARAMETER_SET": {"risk_level": "Medium", "requires_confirmation": False, "roles": ("Administrator", "System Manager", "Procurement Planner")},
 }
 
 OBJECTS = {
