@@ -9,6 +9,7 @@ from datetime import datetime
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from kentender_procurement.std_engine.state_transition_guard import assert_transition_service_controlled
 
 VERSION_STATUS = (
 	"Draft",
@@ -39,6 +40,7 @@ ACTIVE_IMMUTABLE_ALLOWED_FIELDS = {
 
 class STDTemplateVersion(Document):
 	def validate(self):
+		assert_transition_service_controlled(self, "version_status")
 		self._set_defaults()
 		self._validate_status_fields()
 		self._validate_links_and_category_alignment()

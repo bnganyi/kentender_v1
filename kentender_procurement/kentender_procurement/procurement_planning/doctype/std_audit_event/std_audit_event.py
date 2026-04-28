@@ -8,6 +8,14 @@ from frappe.model.document import Document
 
 
 class STDAuditEvent(Document):
+	def validate(self):
+		if self.is_new():
+			return
+		frappe.throw(
+			_("STD Audit Event is append-only and cannot be updated."),
+			title=_("Update blocked"),
+		)
+
 	def on_trash(self):
 		frappe.throw(_("STD Audit Event is append-only and cannot be deleted."), title=_("Delete blocked"))
 

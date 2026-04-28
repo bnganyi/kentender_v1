@@ -7,6 +7,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils.data import parse_json
+from kentender_procurement.std_engine.state_transition_guard import assert_transition_service_controlled
 
 PROFILE_STATUS = ("Draft", "Validation Blocked", "Approved", "Active", "Suspended", "Retired")
 PROCUREMENT_CATEGORIES = ("Works", "Goods", "Services")
@@ -15,6 +16,7 @@ IMMUTABLE_ACTIVE_ALLOWED_FIELDS = {"profile_status", "modified", "modified_by"}
 
 class STDApplicabilityProfile(Document):
 	def validate(self):
+		assert_transition_service_controlled(self, "profile_status")
 		self._set_defaults()
 		self._validate_enums()
 		self._validate_methods()

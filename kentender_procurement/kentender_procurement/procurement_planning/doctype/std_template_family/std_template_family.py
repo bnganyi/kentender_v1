@@ -9,6 +9,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils.data import parse_json
+from kentender_procurement.std_engine.state_transition_guard import assert_transition_service_controlled
 
 ALLOWED_STATUS = (
 	"Draft",
@@ -23,6 +24,7 @@ ALLOWED_PROCUREMENT_CATEGORIES = ("Works", "Goods", "Services")
 
 class STDTemplateFamily(Document):
 	def validate(self):
+		assert_transition_service_controlled(self, "family_status")
 		self._set_defaults()
 		self._validate_procurement_category()
 		self._validate_allowed_methods()

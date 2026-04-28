@@ -7,7 +7,7 @@
 ## Scope guard (current execution)
 
 - Phase 0 planning artifacts are complete and retained as baseline.
-- Current approved execution scope: **Phase 1 through Phase 2 STD-CURSOR-0205**.
+- Current approved execution scope: **Phase 1 through Phase 3 STD-CURSOR-0302**.
 - Keep all unapproved tickets in `Pending` status until explicit approval.
 
 ## Execution order (from Cursor pack)
@@ -26,7 +26,7 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 
 ## Ticket status
 
-**Last updated:** 2026-04-28 (Phase 1 STD-CURSOR-0101 to STD-CURSOR-0109 and Phase 2 STD-CURSOR-0201 to STD-CURSOR-0205 executed)
+**Last updated:** 2026-04-28 (Phase 1 STD-CURSOR-0101 to STD-CURSOR-0109, Phase 2 STD-CURSOR-0201 to STD-CURSOR-0205, and Phase 3 STD-CURSOR-0301 to STD-CURSOR-0302 executed)
 
 ### Phase 0 - Reconnaissance and planning baseline
 
@@ -63,9 +63,9 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 
 | Ticket | Description | Status |
 |---|---|---|
-| STD-CURSOR-0301 | State transition service | Pending |
-| STD-CURSOR-0302 | Server-side authorization service | Pending |
-| STD-CURSOR-0303 | Audit service | Pending |
+| STD-CURSOR-0301 | State transition service | Done |
+| STD-CURSOR-0302 | Server-side authorization service | Done |
+| STD-CURSOR-0303 | Audit service | Done |
 
 ### Phase 4 - STD instance services (reference only)
 
@@ -209,6 +209,19 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 | Files changed | `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
 | Test evidence | Documentation-only change; no runtime tests applicable. |
 | Risks remaining | Phase 1+ still pending formal execution and test evidence. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-28 |
+| Ticket(s) | STD-CURSOR-0303 |
+| Reviewer | Engineering |
+| Completed | Implemented audit service `record_std_audit_event(event_type, object_type, object_code, actor=None, previous_state=None, new_state=None, reason=None, denial_code=None, metadata=None)` with stable `AUD-*` event code generation, required event-type catalog enforcement, actor and role capture, state transition context capture, denial/reason payload capture, and metadata persistence. Added read API `get_std_audit_events(object_type=None, object_code=None, limit=50)` with explicit authorized-role gating and deterministic filtering/sorting. Upgraded `STD Audit Event` DocType with audit payload fields and strengthened append-only model protection to block both updates and deletes. |
+| Not completed | Full evidence-export endpoint wiring and downstream consumer integrations are deferred to later phase tickets; this ticket delivers foundational append-only audit write/read services and policy gates. |
+| Assumptions | `System Manager`, `Administrator`, and `Auditor` are the authorized roles for audit read access in current governance scope; role matrix can be extended when compliance scope expands. |
+| Files changed | `kentender_procurement/kentender_procurement/std_engine/services/audit_service.py`, `kentender_procurement/kentender_procurement/std_engine/services/__init__.py`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_audit_event/std_audit_event.json`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_audit_event/std_audit_event.py`, `kentender_procurement/kentender_procurement/std_engine/tests/test_std_audit_service.py`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | `bench --site kentender.midas.com reload-doc procurement_planning doctype std_audit_event` + `./scripts/bench-with-node.sh --site kentender.midas.com migrate` (pass), `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_audit_service` (3/3 pass). Regression safety: `...test_std_state_transition_service` (4/4 pass), `...test_std_authorization_service` (5/5 pass). |
+| Risks remaining | Audit payload is currently stored as JSON text fields without schema versioning/signature; tamper-evidence and long-term evidentiary packaging controls remain to be added in future audit hardening tickets. |
 | Ready for next ticket | Yes |
 
 | Field | Value |
@@ -417,5 +430,31 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 | Files changed | `kentender_procurement/kentender_procurement/std_engine/seed/validator.py`, `kentender_procurement/kentender_procurement/std_engine/seed/__init__.py`, `kentender_procurement/kentender_procurement/std_engine/tests/test_std_seed_validation_command.py` |
 | Test evidence | `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_seed_validation_command` (3/3 pass). Regression safety: `...test_std_seed_loader` (4/4), `...test_std_seed_population_0203` (3/3), `...test_std_seed_manifest_schema` (6/6), `...test_std_seed_package_structure` (3/3) all pass. |
 | Risks remaining | Validation command currently enforces structural and selected semantic invariants from available seed/model context; deeper legal extraction QA and full cross-phase semantic gates remain dependent on subsequent governance and smoke-contract tickets. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-28 |
+| Ticket(s) | STD-CURSOR-0301 |
+| Reviewer | Engineering |
+| Completed | Implemented centralized transition service `transition_std_object(object_type, object_code, action_code, actor, reason=None, context=None)` with object/state mapping for template family, template version, applicability profile, STD instance, generated outputs, generation jobs, readiness runs, and addendum impact analyses. Added transition rule table, role checks, separation-of-duties checks, precondition checks (including version review/structure and readiness requirements), atomic state application through service context flag, stable denial codes, and success/denial audit event emission via `STD Audit Event`. |
+| Not completed | Full authorization matrix and rich denial semantics across all policy dimensions are deferred to `STD-CURSOR-0302`; expanded audit payload model and service enhancements are deferred to `STD-CURSOR-0303`. |
+| Assumptions | Service-level transition ownership is enforced by status-field guards in current status-bearing DocTypes; future status-bearing models should adopt the same guard utility. |
+| Files changed | `kentender_procurement/kentender_procurement/std_engine/services/state_transition_service.py`, `kentender_procurement/kentender_procurement/std_engine/state_transition_guard.py`, `kentender_procurement/kentender_procurement/std_engine/services/__init__.py`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_template_family/std_template_family.py`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_template_version/std_template_version.py`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_applicability_profile/std_applicability_profile.py`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_instance/std_instance.py`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_generated_output/std_generated_output.py`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_generation_job/std_generation_job.py`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_readiness_run/std_readiness_run.py`, `kentender_procurement/kentender_procurement/procurement_planning/doctype/std_addendum_impact_analysis/std_addendum_impact_analysis.py`, `kentender_procurement/kentender_procurement/std_engine/tests/test_std_state_transition_service.py` |
+| Test evidence | `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_state_transition_service` (4/4 pass). Regression safety: `...test_std_seed_validation_command` (3/3), `...test_std_seed_loader` (4/4), `...test_std_runtime_models` (1/1) all pass. |
+| Risks remaining | Transition coverage currently focuses on foundational action set and core preconditions; broader workflow graph and state-policy combinations require follow-on expansion in authorization/audit tickets. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-28 |
+| Ticket(s) | STD-CURSOR-0302 |
+| Reviewer | Engineering |
+| Completed | Implemented server-side authorization service `check_std_permission(actor, action_code, object_type, object_code=None, context=None)` with stable response contract (`allowed`, `action_code`, `denial_code`, `message`, `requires_reason`, `requires_confirmation`, `risk_level`). Enforced required policy areas: active template immutability, published instance immutability, generated output immutability, audit immutability, role permission checks, separation-of-duties via context, template/profile active checks for instance creation, addendum requirement, model-generation requirement, and source-of-truth ownership checks. Integrated transition service to consume authorization decisions, preserving stable denial behavior expected by transition tests. |
+| Not completed | UI action availability and API endpoint integration points outside current transition service remain to be wired in later surface-specific tickets. |
+| Assumptions | Authorization service currently expresses policy using action-centric rules and context inputs; expanded policy catalogs and role matrices will be extended as subsequent governance tickets land. |
+| Files changed | `kentender_procurement/kentender_procurement/std_engine/services/authorization_service.py`, `kentender_procurement/kentender_procurement/std_engine/services/__init__.py`, `kentender_procurement/kentender_procurement/std_engine/services/state_transition_service.py`, `kentender_procurement/kentender_procurement/std_engine/tests/test_std_authorization_service.py` |
+| Test evidence | `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_authorization_service` (5/5 pass). Regression safety: `...test_std_state_transition_service` (4/4 pass), `...test_std_seed_validation_command` (3/3 pass). |
+| Risks remaining | Some policy branches depend on caller-provided context flags (e.g., addendum/model-generation/source-of-truth); hard-binding these to domain objects/services will be strengthened in follow-on integration tickets. |
 | Ready for next ticket | Yes |
 
