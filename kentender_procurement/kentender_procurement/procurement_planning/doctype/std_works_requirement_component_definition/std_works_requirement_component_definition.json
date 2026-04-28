@@ -1,0 +1,46 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:component_code",
+ "creation": "2026-04-28 17:20:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": ["component_code","version_code","section_code","component_title","component_type","is_required","supports_structured_text","supports_table_data","supports_attachments","attachment_required","drives_dsm","drives_dem","drives_dcm","source_basis"],
+ "fields": [
+  {"fieldname":"component_code","fieldtype":"Data","label":"Component Code","reqd":1,"unique":1,"in_list_view":1},
+  {"fieldname":"version_code","fieldtype":"Link","label":"Version Code","options":"STD Template Version","reqd":1},
+  {"fieldname":"section_code","fieldtype":"Link","label":"Section Code","options":"STD Section Definition","reqd":1},
+  {"fieldname":"component_title","fieldtype":"Small Text","label":"Component Title","reqd":1},
+  {"fieldname":"component_type","fieldtype":"Data","label":"Component Type","reqd":1},
+  {"fieldname":"is_required","fieldtype":"Check","label":"Is Required","default":"0","reqd":1},
+  {"fieldname":"supports_structured_text","fieldtype":"Check","label":"Supports Structured Text","default":"0","reqd":1},
+  {"fieldname":"supports_table_data","fieldtype":"Check","label":"Supports Table Data","default":"0","reqd":1},
+  {"fieldname":"supports_attachments","fieldtype":"Check","label":"Supports Attachments","default":"0","reqd":1},
+  {"fieldname":"attachment_required","fieldtype":"Check","label":"Attachment Required","default":"0","reqd":1},
+  {"fieldname":"drives_dsm","fieldtype":"Check","label":"Drives DSM","default":"0","reqd":1},
+  {"fieldname":"drives_dem","fieldtype":"Check","label":"Drives DEM","default":"0","reqd":1},
+  {"fieldname":"drives_dcm","fieldtype":"Check","label":"Drives DCM","default":"0","reqd":1},
+  {"fieldname":"source_basis","fieldtype":"Text","label":"Source Basis"}
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-04-28 17:20:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "STD Works Requirement Component Definition",
+ "owner": "Administrator",
+ "permissions": [
+  {"role":"System Manager","read":1,"write":1,"create":1,"delete":1,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"Administrator","read":1,"write":1,"create":1,"delete":1,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"Procurement Planner","read":1,"write":0,"create":0,"delete":0,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"Procurement Officer","read":1,"write":0,"create":0,"delete":0,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"Planning Authority","read":1,"write":0,"create":0,"delete":0,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"Auditor","read":1,"write":0,"create":0,"delete":0,"print":1,"email":1,"report":1,"export":1,"share":1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "component_title",
+ "track_changes": 1
+}
+

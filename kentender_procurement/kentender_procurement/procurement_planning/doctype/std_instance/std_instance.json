@@ -1,0 +1,18 @@
+{
+ "doctype":"DocType",
+ "name":"STD Instance",
+ "module":"Procurement Planning",
+ "autoname":"field:instance_code",
+ "engine":"InnoDB",
+ "field_order":["instance_code","tender_code","template_version_code","profile_code","instance_status","readiness_status"],
+ "fields":[
+  {"fieldname":"instance_code","fieldtype":"Data","label":"Instance Code","reqd":1,"unique":1},
+  {"fieldname":"tender_code","fieldtype":"Data","label":"Tender Code","reqd":1},
+  {"fieldname":"template_version_code","fieldtype":"Link","label":"Template Version Code","options":"STD Template Version","reqd":1},
+  {"fieldname":"profile_code","fieldtype":"Link","label":"Profile Code","options":"STD Applicability Profile","reqd":1},
+  {"fieldname":"instance_status","fieldtype":"Select","label":"Instance Status","options":"Draft\nIn Progress\nReady for Validation\nBlocked\nReady\nLocked Pre-Publication\nPublished Locked\nSuperseded\nCancelled","reqd":1},
+  {"fieldname":"readiness_status","fieldtype":"Select","label":"Readiness Status","options":"Not Run\nIncomplete\nBlocked\nWarning\nReady\nInvalidated\nSuperseded","reqd":1}
+ ],
+ "permissions":[{"role":"System Manager","read":1,"write":1,"create":1,"delete":1},{"role":"Administrator","read":1,"write":1,"create":1,"delete":1}]
+}
+

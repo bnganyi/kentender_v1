@@ -1,0 +1,40 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:part_code",
+ "creation": "2026-04-28 16:35:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": ["part_code","version_code","part_number","part_title","order_index","is_supplier_facing","is_contract_facing","is_mandatory"],
+ "fields": [
+  {"fieldname":"part_code","fieldtype":"Data","label":"Part Code","reqd":1,"unique":1,"in_list_view":1},
+  {"fieldname":"version_code","fieldtype":"Link","label":"Version Code","options":"STD Template Version","reqd":1,"in_list_view":1},
+  {"fieldname":"part_number","fieldtype":"Data","label":"Part Number","reqd":1},
+  {"fieldname":"part_title","fieldtype":"Small Text","label":"Part Title","reqd":1},
+  {"fieldname":"order_index","fieldtype":"Int","label":"Order Index","reqd":1},
+  {"fieldname":"is_supplier_facing","fieldtype":"Check","label":"Is Supplier Facing","default":"0","reqd":1},
+  {"fieldname":"is_contract_facing","fieldtype":"Check","label":"Is Contract Facing","default":"0","reqd":1},
+  {"fieldname":"is_mandatory","fieldtype":"Check","label":"Is Mandatory","default":"0","reqd":1}
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-04-28 16:35:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "STD Part Definition",
+ "owner": "Administrator",
+ "permissions": [
+  {"role":"System Manager","read":1,"write":1,"create":1,"delete":1,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"Administrator","read":1,"write":1,"create":1,"delete":1,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"Procurement Planner","read":1,"write":0,"create":0,"delete":0,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"Procurement Officer","read":1,"write":0,"create":0,"delete":0,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"Planning Authority","read":1,"write":0,"create":0,"delete":0,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"Auditor","read":1,"write":0,"create":0,"delete":0,"print":1,"email":1,"report":1,"export":1,"share":1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "part_title",
+ "track_changes": 1
+}
+

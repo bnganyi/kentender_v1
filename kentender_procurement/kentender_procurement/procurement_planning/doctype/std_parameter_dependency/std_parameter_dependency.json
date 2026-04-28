@@ -1,0 +1,41 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:dependency_code",
+ "creation": "2026-04-28 16:50:30.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": ["dependency_code","version_code","trigger_parameter_code","trigger_operator","trigger_value","dependent_parameter_code","effect","condition_expression","blocker_code"],
+ "fields": [
+  {"fieldname":"dependency_code","fieldtype":"Data","label":"Dependency Code","reqd":1,"unique":1,"in_list_view":1},
+  {"fieldname":"version_code","fieldtype":"Link","label":"Version Code","options":"STD Template Version","reqd":1},
+  {"fieldname":"trigger_parameter_code","fieldtype":"Link","label":"Trigger Parameter Code","options":"STD Parameter Definition","reqd":1},
+  {"fieldname":"trigger_operator","fieldtype":"Data","label":"Trigger Operator","reqd":1},
+  {"fieldname":"trigger_value","fieldtype":"JSON","label":"Trigger Value","reqd":1},
+  {"fieldname":"dependent_parameter_code","fieldtype":"Link","label":"Dependent Parameter Code","options":"STD Parameter Definition","reqd":1},
+  {"fieldname":"effect","fieldtype":"Select","label":"Effect","options":"Required\nVisible\nHidden\nDefault\nValidation","reqd":1},
+  {"fieldname":"condition_expression","fieldtype":"Text","label":"Condition Expression","reqd":1},
+  {"fieldname":"blocker_code","fieldtype":"Data","label":"Blocker Code"}
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-04-28 16:50:30.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "STD Parameter Dependency",
+ "owner": "Administrator",
+ "permissions": [
+  {"role":"System Manager","read":1,"write":1,"create":1,"delete":1,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"Administrator","read":1,"write":1,"create":1,"delete":1,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"Procurement Planner","read":1,"write":0,"create":0,"delete":0,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"Procurement Officer","read":1,"write":0,"create":0,"delete":0,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"Planning Authority","read":1,"write":0,"create":0,"delete":0,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"Auditor","read":1,"write":0,"create":0,"delete":0,"print":1,"email":1,"report":1,"export":1,"share":1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "dependency_code",
+ "track_changes": 1
+}
+

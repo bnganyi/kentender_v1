@@ -1,0 +1,16 @@
+{
+ "doctype":"DocType",
+ "name":"STD Addendum Impact Analysis",
+ "module":"Procurement Planning",
+ "autoname":"field:impact_analysis_code",
+ "engine":"InnoDB",
+ "field_order":["impact_analysis_code","instance_code","addendum_code","status"],
+ "fields":[
+  {"fieldname":"impact_analysis_code","fieldtype":"Data","label":"Impact Analysis Code","reqd":1,"unique":1},
+  {"fieldname":"instance_code","fieldtype":"Link","label":"Instance Code","options":"STD Instance","reqd":1},
+  {"fieldname":"addendum_code","fieldtype":"Data","label":"Addendum Code","reqd":1},
+  {"fieldname":"status","fieldtype":"Select","label":"Status","options":"Draft\nAnalysis Pending\nAnalysis Complete\nApproved\nRegeneration Required\nRegenerated\nIssued\nCancelled","reqd":1}
+ ],
+ "permissions":[{"role":"System Manager","read":1,"write":1,"create":1,"delete":1},{"role":"Administrator","read":1,"write":1,"create":1,"delete":1}]
+}
+

@@ -1,0 +1,17 @@
+{
+ "doctype":"DocType",
+ "name":"STD Readiness Run",
+ "module":"Procurement Planning",
+ "autoname":"field:readiness_run_code",
+ "engine":"InnoDB",
+ "field_order":["readiness_run_code","object_type","object_code","status","run_at"],
+ "fields":[
+  {"fieldname":"readiness_run_code","fieldtype":"Data","label":"Readiness Run Code","reqd":1,"unique":1},
+  {"fieldname":"object_type","fieldtype":"Data","label":"Object Type","reqd":1},
+  {"fieldname":"object_code","fieldtype":"Data","label":"Object Code","reqd":1},
+  {"fieldname":"status","fieldtype":"Select","label":"Status","options":"Not Run\nIncomplete\nBlocked\nWarning\nReady\nInvalidated\nSuperseded","reqd":1},
+  {"fieldname":"run_at","fieldtype":"Datetime","label":"Run At","reqd":1}
+ ],
+ "permissions":[{"role":"System Manager","read":1,"write":1,"create":1,"delete":0},{"role":"Administrator","read":1,"write":1,"create":1,"delete":0}]
+}
+

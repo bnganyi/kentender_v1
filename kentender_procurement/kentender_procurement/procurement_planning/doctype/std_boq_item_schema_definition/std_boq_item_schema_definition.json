@@ -1,0 +1,42 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:schema_field_code",
+ "creation": "2026-04-28 17:21:30.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": ["schema_field_code","boq_definition_code","field_key","label","item_owner","supplier_editable","required","required_condition","validation_expression","computation_rule"],
+ "fields": [
+  {"fieldname":"schema_field_code","fieldtype":"Data","label":"Schema Field Code","reqd":1,"unique":1,"in_list_view":1},
+  {"fieldname":"boq_definition_code","fieldtype":"Link","label":"BOQ Definition Code","options":"STD BOQ Definition","reqd":1},
+  {"fieldname":"field_key","fieldtype":"Data","label":"Field Key","reqd":1},
+  {"fieldname":"label","fieldtype":"Small Text","label":"Label","reqd":1},
+  {"fieldname":"item_owner","fieldtype":"Select","label":"Owner","options":"Procuring Entity\nTenderer\nSystem","reqd":1},
+  {"fieldname":"supplier_editable","fieldtype":"Check","label":"Supplier Editable","reqd":1,"default":"0"},
+  {"fieldname":"required","fieldtype":"Check","label":"Required","default":"0","reqd":1},
+  {"fieldname":"required_condition","fieldtype":"Text","label":"Required Condition"},
+  {"fieldname":"validation_expression","fieldtype":"Text","label":"Validation Expression"},
+  {"fieldname":"computation_rule","fieldtype":"Text","label":"Computation Rule"}
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-04-28 17:21:30.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "STD BOQ Item Schema Definition",
+ "owner": "Administrator",
+ "permissions": [
+  {"role":"System Manager","read":1,"write":1,"create":1,"delete":1,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"Administrator","read":1,"write":1,"create":1,"delete":1,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"Procurement Planner","read":1,"write":0,"create":0,"delete":0,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"Procurement Officer","read":1,"write":0,"create":0,"delete":0,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"Planning Authority","read":1,"write":0,"create":0,"delete":0,"print":1,"email":1,"report":1,"export":1,"share":1},
+  {"role":"Auditor","read":1,"write":0,"create":0,"delete":0,"print":1,"email":1,"report":1,"export":1,"share":1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "label",
+ "track_changes": 1
+}
+

@@ -1,0 +1,17 @@
+{
+ "doctype":"DocType",
+ "name":"STD Generation Job",
+ "module":"Procurement Planning",
+ "autoname":"field:generation_job_code",
+ "engine":"InnoDB",
+ "field_order":["generation_job_code","instance_code","job_type","trigger_type","status"],
+ "fields":[
+  {"fieldname":"generation_job_code","fieldtype":"Data","label":"Generation Job Code","reqd":1,"unique":1},
+  {"fieldname":"instance_code","fieldtype":"Link","label":"Instance Code","options":"STD Instance","reqd":1},
+  {"fieldname":"job_type","fieldtype":"Select","label":"Job Type","options":"Bundle\nDSM\nDOM\nDEM\nDCM\nAll\nAddendum Regeneration","reqd":1},
+  {"fieldname":"trigger_type","fieldtype":"Select","label":"Trigger Type","options":"Manual\nSystem\nReadiness\nAddendum","reqd":1},
+  {"fieldname":"status","fieldtype":"Select","label":"Status","options":"Pending\nRunning\nCompleted\nFailed\nSuperseded","reqd":1}
+ ],
+ "permissions":[{"role":"System Manager","read":1,"write":1,"create":1,"delete":1},{"role":"Administrator","read":1,"write":1,"create":1,"delete":1}]
+}
+
