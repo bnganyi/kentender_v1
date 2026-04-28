@@ -7,7 +7,7 @@
 ## Scope guard (current execution)
 
 - Phase 0 planning artifacts are complete and retained as baseline.
-- Current approved execution scope: **Phase 1 through STD-CURSOR-0109**.
+- Current approved execution scope: **Phase 1 through Phase 2 STD-CURSOR-0205**.
 - Keep all unapproved tickets in `Pending` status until explicit approval.
 
 ## Execution order (from Cursor pack)
@@ -26,7 +26,7 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 
 ## Ticket status
 
-**Last updated:** 2026-04-28 (Phase 1 STD-CURSOR-0101 to STD-CURSOR-0109 executed)
+**Last updated:** 2026-04-28 (Phase 1 STD-CURSOR-0101 to STD-CURSOR-0109 and Phase 2 STD-CURSOR-0201 to STD-CURSOR-0205 executed)
 
 ### Phase 0 - Reconnaissance and planning baseline
 
@@ -53,11 +53,11 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 
 | Ticket | Description | Status |
 |---|---|---|
-| STD-CURSOR-0201 | Modular seed package directory | Pending |
-| STD-CURSOR-0202 | Seed manifest schema | Pending |
-| STD-CURSOR-0203 | Populate seed files from seed spec | Pending |
-| STD-CURSOR-0204 | Seed loader service | Pending |
-| STD-CURSOR-0205 | Seed validation command | Pending |
+| STD-CURSOR-0201 | Modular seed package directory | Done |
+| STD-CURSOR-0202 | Seed manifest schema | Done |
+| STD-CURSOR-0203 | Populate seed files from seed spec | Done |
+| STD-CURSOR-0204 | Seed loader service | Done |
+| STD-CURSOR-0205 | Seed validation command | Done |
 
 ### Phase 3 - Governance, authorization, audit (reference only)
 
@@ -352,5 +352,70 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 | Files changed | `kentender_procurement/procurement_planning/doctype/std_extraction_mapping/*`, `kentender_procurement/procurement_planning/doctype/std_instance/*`, `kentender_procurement/procurement_planning/doctype/std_generated_output/*`, `kentender_procurement/procurement_planning/doctype/std_generation_job/*`, `kentender_procurement/procurement_planning/doctype/std_readiness_run/*`, `kentender_procurement/procurement_planning/doctype/std_readiness_finding/*`, `kentender_procurement/procurement_planning/doctype/std_addendum_impact_analysis/*`, `kentender_procurement/procurement_planning/doctype/std_audit_event/*`, `kentender_procurement/std_engine/tests/test_std_runtime_models.py` |
 | Test evidence | `bench --site kentender.midas.com migrate` (pass), `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_runtime_models` (1/1 pass), cumulative regression pass: `...test_std_works_boq` (3/3), `...test_std_forms` (4/4), `...test_std_parameters` (4/4), `...test_std_structure_definitions` (4/4), `...test_std_applicability_profile` (4/4), `...test_source_document_registry` (3/3), `...test_std_template_family` (4/4), `...test_std_template_version` (6/6). |
 | Risks remaining | Append-only/readiness governance is baseline at model level only; deeper immutability/event-signing/impact-diff behavior remains for later governance and workflow tickets. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-28 |
+| Ticket(s) | STD-CURSOR-0201 |
+| Reviewer | Engineering |
+| Completed | Created modular DOC1 seed package directory scaffold under `kentender_procurement/kentender_procurement/fixtures/std_engine/works_building_rev_apr_2022` with all required phase files and subdirectories (`07_clauses`, `08_parameters`, `09_forms`, `11_boq`, `14_extraction_mappings`). Added deterministic `00_manifest.yaml` load-order references for all required files and placeholder-safe YAML content in each file with explicit deferred extraction markers. Added focused structure validation tests to assert root existence, required file completeness, and manifest discovery references. |
+| Not completed | Manifest schema enforcement and semantic validation are deferred to `STD-CURSOR-0202`; payload population is deferred to `STD-CURSOR-0203`; loader integration is deferred to `STD-CURSOR-0204/0205`. |
+| Assumptions | Canonical in-repo package root for this app is `kentender_procurement/kentender_procurement/fixtures/std_engine/works_building_rev_apr_2022`; loader path from pack (`apps/procurement/...`) is normalized to current app layout. |
+| Files changed | `kentender_procurement/kentender_procurement/fixtures/std_engine/works_building_rev_apr_2022/**`, `kentender_procurement/kentender_procurement/std_engine/tests/test_std_seed_package_structure.py` |
+| Test evidence | `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_seed_package_structure` (3/3 pass). Regression safety: `...test_source_document_registry` (3/3), `...test_std_template_family` (4/4), `...test_std_template_version` (6/6), `...test_std_applicability_profile` (4/4), `...test_std_structure_definitions` (4/4), `...test_std_parameters` (4/4), `...test_std_forms` (4/4), `...test_std_works_boq` (3/3), `...test_std_runtime_models` (1/1) all pass. |
+| Risks remaining | Placeholder content is intentionally non-authoritative; downstream tickets must prevent accidental production use before semantic population and loader validation complete. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-28 |
+| Ticket(s) | STD-CURSOR-0202 |
+| Reviewer | Engineering |
+| Completed | Implemented strict manifest schema validation module for DOC1 seed package with deterministic required key and load-order contract checks, `manifest_code == idempotency_key` enforcement, and missing path detection for load entries. Normalized `00_manifest.yaml` to the `0202` required shape using grouped directory entries (`07_clauses`, `08_parameters`, `09_forms`, `11_boq`, `14_extraction_mappings`). Added focused schema tests for valid/invalid manifest scenarios. |
+| Not completed | Loader-level idempotent execution and CLI wiring remain deferred to `STD-CURSOR-0204` and `STD-CURSOR-0205`; semantic data population remains deferred to `STD-CURSOR-0203`. |
+| Assumptions | Ticket `0202` contract is authoritative for manifest shape and grouped load-order entries even when finer-grained file paths exist in the package scaffold. |
+| Files changed | `kentender_procurement/kentender_procurement/std_engine/seed/manifest_schema.py`, `kentender_procurement/kentender_procurement/std_engine/seed/__init__.py`, `kentender_procurement/kentender_procurement/std_engine/tests/test_std_seed_manifest_schema.py`, `kentender_procurement/kentender_procurement/std_engine/tests/test_std_seed_package_structure.py`, `kentender_procurement/kentender_procurement/fixtures/std_engine/works_building_rev_apr_2022/00_manifest.yaml` |
+| Test evidence | `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_seed_manifest_schema` (6/6 pass), `...test_std_seed_package_structure` (3/3 pass), regression safety: `...test_source_document_registry` (3/3), `...test_std_template_family` (4/4), `...test_std_template_version` (6/6), `...test_std_applicability_profile` (4/4), `...test_std_structure_definitions` (4/4), `...test_std_parameters` (4/4), `...test_std_forms` (4/4), `...test_std_works_boq` (3/3), `...test_std_runtime_models` (1/1) all pass. |
+| Risks remaining | Manifest schema currently validates contract and file/discovery integrity only; semantic payload validation and duplicate-load execution behavior are enforced in subsequent tickets. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-28 |
+| Ticket(s) | STD-CURSOR-0203 |
+| Reviewer | Engineering |
+| Completed | Populated modular DOC1 seed files with structured records sourced from the seed specification for source document, template family/version, applicability profile, parts, sections, clause indices, parameter sets, forms, works requirements, BOQ definition/bills/schema/dayworks/summary, evaluation and carry-forward seeds, extraction mappings, readiness rules, seed instance fixture, output expectations, addendum fixture, and smoke expectations. Legal-text-bearing files keep `text_verbatim: null` with `extraction_status: Pending Human-Reviewed Extraction` to satisfy non-invention requirements. |
+| Not completed | Complete verbatim legal text extraction for ITT/forms/GCC/SCC/contract forms remains pending human-reviewed extraction QA; loader/idempotent execution and CLI validation remain in `STD-CURSOR-0204/0205`. |
+| Assumptions | Seed content remains structural and authoritative for model scaffolding; legal text completeness gates are explicitly deferred per specification extraction requirements. |
+| Files changed | `kentender_procurement/kentender_procurement/fixtures/std_engine/works_building_rev_apr_2022/01_source_documents.yaml` through `19_smoke_expected_results.yaml` (excluding manifest), `kentender_procurement/kentender_procurement/std_engine/tests/test_std_seed_population_0203.py` |
+| Test evidence | `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_seed_population_0203` (3/3 pass), regression: `...test_std_seed_manifest_schema` (6/6 pass), `...test_std_seed_package_structure` (3/3 pass). |
+| Risks remaining | Seed detail depth still depends on final legal extraction pass; until extraction completion, downstream consumers must treat placeholder legal text fields as non-final and non-authoritative text payloads. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-28 |
+| Ticket(s) | STD-CURSOR-0204 |
+| Reviewer | Engineering |
+| Completed | Implemented `load_std_seed_package(package_path, *, dry_run=False, force=False)` in `std_engine.seed.loader` with manifest validation pre-check, grouped load-order discovery, YAML payload processing, DocType mapping/upsert behavior, deterministic report output, and commit on non-dry runs. Added idempotency-by-content comparison, JSON/check-field normalization, immutable/non-draft mutation guards, and explicit error handling (`SeedLoadError`) for missing manifest and unsafe mutations. |
+| Not completed | Full semantic loaders for future model groups not yet present in current Phase 1/2 schema remain deferred; CLI wrapper command is deferred to `STD-CURSOR-0205`. |
+| Assumptions | Unknown seed groups (without current mapped Doctypes) are intentionally ignored at this ticket stage; mapped groups cover currently available STD models. |
+| Files changed | `kentender_procurement/kentender_procurement/std_engine/seed/loader.py`, `kentender_procurement/kentender_procurement/std_engine/tests/test_std_seed_loader.py` |
+| Test evidence | `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_seed_loader` (4/4 pass). Regression safety: `...test_std_seed_population_0203` (3/3 pass), `...test_std_seed_manifest_schema` (6/6 pass), `...test_std_seed_package_structure` (3/3 pass). |
+| Risks remaining | Loader currently provides structural and idempotency guard behavior; deep domain semantic validation and full cross-model load choreography for later-phase objects will need expansion as additional tickets introduce those models/services. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-28 |
+| Ticket(s) | STD-CURSOR-0205 |
+| Reviewer | Engineering |
+| Completed | Implemented seed validation command entrypoint `validate_seed_package(package_path)` (whitelisted and exportable via `bench execute`) with checks for manifest validity, file presence, unique business codes, reference resolution, mandatory section coverage, ITT/GCC locked editability, TDS/SCC parameter-only editability, required DEM/DSM mapping presence, BOQ definition presence, SCC parameter presence, readiness rule presence, and placeholder legal-text ban (`sample text`, `lorem ipsum`). Added precise path-aware failures for missing required groups (e.g., BOQ path hint). |
+| Not completed | Loader invocation wiring into a dedicated CLI command wrapper remains optional; current implementation is callable via `bench execute` through module path and does not add custom click command surface. |
+| Assumptions | Command path equivalence uses `kentender_procurement.std_engine.seed.validate_seed_package` within this app layout as the framework-equivalent of the pack example command namespace. |
+| Files changed | `kentender_procurement/kentender_procurement/std_engine/seed/validator.py`, `kentender_procurement/kentender_procurement/std_engine/seed/__init__.py`, `kentender_procurement/kentender_procurement/std_engine/tests/test_std_seed_validation_command.py` |
+| Test evidence | `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_seed_validation_command` (3/3 pass). Regression safety: `...test_std_seed_loader` (4/4), `...test_std_seed_population_0203` (3/3), `...test_std_seed_manifest_schema` (6/6), `...test_std_seed_package_structure` (3/3) all pass. |
+| Risks remaining | Validation command currently enforces structural and selected semantic invariants from available seed/model context; deeper legal extraction QA and full cross-phase semantic gates remain dependent on subsequent governance and smoke-contract tickets. |
 | Ready for next ticket | Yes |
 

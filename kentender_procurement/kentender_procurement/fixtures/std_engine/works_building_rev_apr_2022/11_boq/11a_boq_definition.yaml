@@ -1,0 +1,13 @@
+boq_definition:
+  boq_definition_code: DOC1-WORKS-BUILDING-BOQ-DEFINITION
+  version_code: STDTV-WORKS-BUILDING-REV-APR-2022
+  section_code: DOC1-WORKS-SECTION-V-BOQ
+  pricing_model: Item Rate
+  quantity_owner: Procuring Entity
+  supplier_input_mode: Rate Only
+  amount_computation_rule: quantity * rate
+  total_computation_rule: sum(item_amount)
+  arithmetic_correction_stage: Evaluation
+  allows_provisional_sums: true
+  allows_dayworks: true
+  is_required_for_readiness: true

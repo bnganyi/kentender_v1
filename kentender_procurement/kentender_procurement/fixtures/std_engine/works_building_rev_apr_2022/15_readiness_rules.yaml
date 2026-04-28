@@ -1,0 +1,17 @@
+readiness_rules:
+  - rule_code: STD-RULE-STRUCTURE-COMPLETE
+    object_type: STD Instance
+    severity: Critical
+    condition: All mandatory sections must be instantiated.
+  - rule_code: STD-RULE-TDS-COMPLETE
+    object_type: STD Instance
+    severity: Critical
+    condition: All required TDS parameters must have valid values.
+  - rule_code: STD-RULE-SCC-COMPLETE
+    object_type: STD Instance
+    severity: Critical
+    condition: All required SCC parameters must have valid values or correct value resolution stage.
+  - rule_code: STD-RULE-MAPPINGS-COMPLETE
+    object_type: STD Instance
+    severity: High
+    condition: All required Bundle/DSM/DOM/DEM/DCM mappings must exist.

@@ -1,0 +1,6 @@
+evaluation_rule_templates:
+  - rule_code: DOC1-EVAL-RULE-001
+    version_code: STDTV-WORKS-BUILDING-REV-APR-2022
+    title: Preliminary Examination Rule Set
+    rule_type: Eligibility
+    status: Active

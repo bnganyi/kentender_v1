@@ -1,0 +1,100 @@
+sections:
+  - section_code: DOC1-WORKS-SECTION-INVITATION
+    version_code: STDTV-WORKS-BUILDING-REV-APR-2022
+    part_code: DOC1-WORKS-PART-1
+    section_number: Invitation
+    section_title: Invitation to Tender
+    section_classification: Core
+    editability: Locked
+    order_index: 1
+    source_document_code: DOC1_WORKS_BUILDING_REV_APR_2022
+  - section_code: DOC1-WORKS-SECTION-I-ITT
+    version_code: STDTV-WORKS-BUILDING-REV-APR-2022
+    part_code: DOC1-WORKS-PART-1
+    section_number: I
+    section_title: Instructions to Tenderers
+    section_classification: Core
+    editability: Locked
+    order_index: 2
+    source_document_code: DOC1_WORKS_BUILDING_REV_APR_2022
+  - section_code: DOC1-WORKS-SECTION-II-TDS
+    version_code: STDTV-WORKS-BUILDING-REV-APR-2022
+    part_code: DOC1-WORKS-PART-1
+    section_number: II
+    section_title: Tender Data Sheet
+    section_classification: Core
+    editability: Parameter Only
+    order_index: 3
+    source_document_code: DOC1_WORKS_BUILDING_REV_APR_2022
+  - section_code: DOC1-WORKS-SECTION-III-EVALUATION
+    version_code: STDTV-WORKS-BUILDING-REV-APR-2022
+    part_code: DOC1-WORKS-PART-1
+    section_number: III
+    section_title: Evaluation and Qualification Criteria
+    section_classification: Core
+    editability: Structured Editable
+    order_index: 4
+    source_document_code: DOC1_WORKS_BUILDING_REV_APR_2022
+  - section_code: DOC1-WORKS-SECTION-IV-FORMS
+    version_code: STDTV-WORKS-BUILDING-REV-APR-2022
+    part_code: DOC1-WORKS-PART-2
+    section_number: IV
+    section_title: Tendering Forms
+    section_classification: Core
+    editability: Structured Editable
+    order_index: 5
+    source_document_code: DOC1_WORKS_BUILDING_REV_APR_2022
+  - section_code: DOC1-WORKS-SECTION-V-BOQ
+    version_code: STDTV-WORKS-BUILDING-REV-APR-2022
+    part_code: DOC1-WORKS-PART-2
+    section_number: V
+    section_title: Bills of Quantities
+    section_classification: Core
+    editability: Structured Editable
+    order_index: 6
+    source_document_code: DOC1_WORKS_BUILDING_REV_APR_2022
+  - section_code: DOC1-WORKS-SECTION-VI-SPECIFICATIONS
+    version_code: STDTV-WORKS-BUILDING-REV-APR-2022
+    part_code: DOC1-WORKS-PART-2
+    section_number: VI
+    section_title: Specifications
+    section_classification: Core
+    editability: Structured Editable
+    order_index: 7
+    source_document_code: DOC1_WORKS_BUILDING_REV_APR_2022
+  - section_code: DOC1-WORKS-SECTION-VII-DRAWINGS
+    version_code: STDTV-WORKS-BUILDING-REV-APR-2022
+    part_code: DOC1-WORKS-PART-2
+    section_number: VII
+    section_title: Drawings
+    section_classification: Core
+    editability: Structured Editable
+    order_index: 8
+    source_document_code: DOC1_WORKS_BUILDING_REV_APR_2022
+  - section_code: DOC1-WORKS-SECTION-VIII-GCC
+    version_code: STDTV-WORKS-BUILDING-REV-APR-2022
+    part_code: DOC1-WORKS-PART-3
+    section_number: VIII
+    section_title: General Conditions of Contract
+    section_classification: Core
+    editability: Locked
+    order_index: 9
+    source_document_code: DOC1_WORKS_BUILDING_REV_APR_2022
+  - section_code: DOC1-WORKS-SECTION-IX-SCC
+    version_code: STDTV-WORKS-BUILDING-REV-APR-2022
+    part_code: DOC1-WORKS-PART-3
+    section_number: IX
+    section_title: Special Conditions of Contract
+    section_classification: Core
+    editability: Parameter Only
+    order_index: 10
+    source_document_code: DOC1_WORKS_BUILDING_REV_APR_2022
+  - section_code: DOC1-WORKS-SECTION-X-CONTRACT-FORMS
+    version_code: STDTV-WORKS-BUILDING-REV-APR-2022
+    part_code: DOC1-WORKS-PART-3
+    section_number: X
+    section_title: Contract Forms
+    section_classification: Core
+    editability: Structured Editable
+    order_index: 11
+    source_document_code: DOC1_WORKS_BUILDING_REV_APR_2022

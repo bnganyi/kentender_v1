@@ -1,0 +1,8 @@
+dem_mappings:
+  - mapping_code: DOC1-MAP-DEM-001
+    version_code: STDTV-WORKS-BUILDING-REV-APR-2022
+    source_object_type: Evaluation Rule
+    source_object_code: DOC1-EVAL-RULE-001
+    target_model: DEM
+    target_component_type: Evaluation Criterion
+    mandatory: true

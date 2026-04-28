@@ -1,0 +1,19 @@
+tds_parameters:
+  - parameter_code: DOC1-TDS-001
+    version_code: STDTV-WORKS-BUILDING-REV-APR-2022
+    section_code: DOC1-WORKS-SECTION-II-TDS
+    label: Tender Security Required
+    parameter_group: Tender Security
+    data_type: Boolean
+    required: true
+    drives_dsm: true
+    addendum_change_requires_acknowledgement: true
+  - parameter_code: DOC1-TDS-002
+    version_code: STDTV-WORKS-BUILDING-REV-APR-2022
+    section_code: DOC1-WORKS-SECTION-II-TDS
+    label: Tender Security Amount
+    parameter_group: Tender Security
+    data_type: Float
+    required: false
+    required_condition: DOC1-TDS-001 == true
+    drives_dsm: true

@@ -1,0 +1,11 @@
+scc_parameters:
+  - parameter_code: DOC1-SCC-001
+    version_code: STDTV-WORKS-BUILDING-REV-APR-2022
+    section_code: DOC1-WORKS-SECTION-IX-SCC
+    label: Defects Liability Period
+    parameter_group: SCC
+    data_type: Int
+    required: true
+    value_resolution_stage: Contract Creation
+    drives_dcm: true
+    addendum_change_requires_deadline_review: true

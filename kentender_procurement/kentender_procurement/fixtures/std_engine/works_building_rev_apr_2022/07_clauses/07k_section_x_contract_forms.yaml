@@ -1,0 +1,15 @@
+contract_form_clauses:
+  - clause_code: DOC1-CONTRACT-FORM-CLAUSE-001
+    section_code: DOC1-WORKS-SECTION-X-CONTRACT-FORMS
+    version_code: STDTV-WORKS-BUILDING-REV-APR-2022
+    clause_number: "1"
+    clause_title: Contract Forms Clause Index
+    editability: Locked
+    is_mandatory: true
+    order_index: 1
+    source_document_code: DOC1_WORKS_BUILDING_REV_APR_2022
+    text_verbatim: null
+    extraction_status: Pending Human-Reviewed Extraction
+    source_page_start: null
+    source_page_end: null
+    drives_addendum: true

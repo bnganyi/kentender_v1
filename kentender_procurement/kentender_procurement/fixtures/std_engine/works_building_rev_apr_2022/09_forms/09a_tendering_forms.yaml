@@ -1,0 +1,15 @@
+tendering_forms:
+  - form_code: DOC1-FORM-TENDER-001
+    version_code: STDTV-WORKS-BUILDING-REV-APR-2022
+    section_code: DOC1-WORKS-SECTION-IV-FORMS
+    title: Form of Tender
+    form_type: Tendering Form
+    completed_by: Tenderer
+    is_required: true
+    supplier_submission_requirement: true
+    drives_dsm: true
+    source_document_code: DOC1_WORKS_BUILDING_REV_APR_2022
+    text_verbatim: null
+    extraction_status: Pending Human-Reviewed Extraction
+    source_page_start: null
+    source_page_end: null

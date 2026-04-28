@@ -1,0 +1,8 @@
+dsm_mappings:
+  - mapping_code: DOC1-MAP-DSM-001
+    version_code: STDTV-WORKS-BUILDING-REV-APR-2022
+    source_object_type: Form
+    source_object_code: DOC1-FORM-TENDER-001
+    target_model: DSM
+    target_component_type: Submission Requirement
+    mandatory: true

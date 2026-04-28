@@ -1,0 +1,14 @@
+template_versions:
+  - version_code: STDTV-WORKS-BUILDING-REV-APR-2022
+    template_code: STD-WORKS
+    version_label: Building and Associated Civil Engineering Works Rev April 2022
+    revision_label: Rev April 2022
+    source_document_code: DOC1_WORKS_BUILDING_REV_APR_2022
+    issuing_authority: PPRA
+    procurement_category: Works
+    version_status: Active
+    legal_review_status: Approved
+    policy_review_status: Approved
+    structure_validation_status: Pass
+    is_current_active_version: true
+    immutable_after_activation: true

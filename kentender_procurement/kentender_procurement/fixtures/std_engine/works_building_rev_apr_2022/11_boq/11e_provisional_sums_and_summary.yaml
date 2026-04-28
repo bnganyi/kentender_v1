@@ -1,0 +1,4 @@
+provisional_sums_and_summary:
+  - summary_code: DOC1-BOQ-SUMMARY-001
+    boq_definition_code: DOC1-WORKS-BUILDING-BOQ-DEFINITION
+    includes_provisional_sums: true

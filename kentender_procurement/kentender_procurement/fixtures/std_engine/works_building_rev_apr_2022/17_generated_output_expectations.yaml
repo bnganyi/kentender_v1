@@ -1,0 +1,11 @@
+generated_output_expectations:
+  - output_type: Bundle
+    must_exist: true
+  - output_type: DSM
+    must_exist: true
+  - output_type: DOM
+    must_exist: true
+  - output_type: DEM
+    must_exist: true
+  - output_type: DCM
+    must_exist: true

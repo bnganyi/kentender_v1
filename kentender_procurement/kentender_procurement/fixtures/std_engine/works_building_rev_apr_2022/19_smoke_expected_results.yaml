@@ -1,0 +1,10 @@
+smoke_expected_results:
+  - check_code: STD-SMOKE-001
+    condition: All required sections from issued page through Section X exist.
+    expected: Pass
+  - check_code: STD-SMOKE-002
+    condition: Section IV forms exist and drive DSM requirements.
+    expected: Pass
+  - check_code: STD-SMOKE-003
+    condition: SCC parameters exist and drive DCM.
+    expected: Pass
