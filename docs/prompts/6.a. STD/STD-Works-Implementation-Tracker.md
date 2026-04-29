@@ -7,7 +7,7 @@
 ## Scope guard (current execution)
 
 - Phase 0 planning artifacts are complete and retained as baseline.
-- Current approved execution scope: **Phase 1 through Phase 3 STD-CURSOR-0302**.
+- Current approved execution scope: **Phase 1 through Phase 6 STD-CURSOR-0606** (server-side generation engine; no Desk UI in this phase).
 - Keep all unapproved tickets in `Pending` status until explicit approval.
 
 ## Execution order (from Cursor pack)
@@ -26,7 +26,7 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 
 ## Ticket status
 
-**Last updated:** 2026-04-28 (Phase 1 STD-CURSOR-0101 to STD-CURSOR-0109, Phase 2 STD-CURSOR-0201 to STD-CURSOR-0205, Phase 3 STD-CURSOR-0301 to STD-CURSOR-0303, Phase 4 STD-CURSOR-0401 to STD-CURSOR-0404, and Phase 5 STD-CURSOR-0501 to STD-CURSOR-0503 executed)
+**Last updated:** 2026-04-29 (through Phase 6 STD-CURSOR-0601 to STD-CURSOR-0606; Phases 1–5 as previously executed)
 
 ### Phase 0 - Reconnaissance and planning baseline
 
@@ -88,12 +88,12 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 
 | Ticket | Description | Status |
 |---|---|---|
-| STD-CURSOR-0601 | Generation job framework | Pending |
-| STD-CURSOR-0602 | Bundle generator | Pending |
-| STD-CURSOR-0603 | DSM generator | Pending |
-| STD-CURSOR-0604 | DOM generator | Pending |
-| STD-CURSOR-0605 | DEM generator | Pending |
-| STD-CURSOR-0606 | DCM generator | Pending |
+| STD-CURSOR-0601 | Generation job framework | Done |
+| STD-CURSOR-0602 | Bundle generator | Done |
+| STD-CURSOR-0603 | DSM generator | Done |
+| STD-CURSOR-0604 | DOM generator | Done |
+| STD-CURSOR-0605 | DEM generator | Done |
+| STD-CURSOR-0606 | DCM generator | Done |
 
 ### Phase 7 - Readiness validator (reference only)
 
@@ -547,5 +547,18 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 | Files changed | `kentender_procurement/kentender_procurement/std_engine/services/boq_import_service.py`, `kentender_procurement/kentender_procurement/std_engine/services/__init__.py`, `kentender_procurement/kentender_procurement/std_engine/tests/test_std_boq_import_service.py`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
 | Test evidence | `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_boq_import_service` (9/9 pass including inherited BOQ instance checks), focused regression: `...test_std_boq_instance_service` (3/3 pass), cross-service regression: `...test_std_works_requirements_service` (3/3 pass), `...test_std_parameter_value_service` (3/3 pass). |
 | Risks remaining | Current import path expects already-mapped row payloads; robustness against malformed real-world workbooks depends on forthcoming parser/mapping UX hardening and richer rejection diagnostics. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-0601 through STD-CURSOR-0606 |
+| Reviewer | Engineering |
+| Completed | **0601** — `generate_std_outputs` in `generation_job_service`: job lifecycle (Pending/Running/Completed/Failed), input hash, savepoint-wrapped generation, outputs Draft→Current, supersede Current only, audit events; transitions `STD_JOB_FAIL`, `STD_OUTPUT_SUPERSEDE`; DocType fields `input_hash`/`error_message` on jobs and `output_payload`/`input_hash`/`output_hash` on outputs. **0602–0606** — `output_generators.build_output_payload` implements Bundle manifest (required sections + preface exclusions), DSM (BOQ rate-only editability), DOM (opening fields + prohibited list), DEM (sourced rules + stages), DCM (carry-forward + contract price source rule). |
+| Not completed | Legal-grade clause rendering, live addendum/award binding, and consumer-specific serializers remain future work; payloads are trace-oriented JSON. |
+| Assumptions | Safe field read via `_inst()` for `as_dict()` instances; tests use `_output_payload_dict` when JSON field loads as string. |
+| Files changed | `procurement_planning/doctype/std_generation_job/std_generation_job.json`, `procurement_planning/doctype/std_generated_output/std_generated_output.json`, `std_engine/services/state_transition_service.py`, `std_engine/services/generation_job_service.py`, `std_engine/services/output_generators.py`, `std_engine/services/__init__.py`, `std_engine/tests/test_std_phase6_generation_engine.py`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | `bench --site kentender.midas.com migrate` (pass), `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase6_generation_engine` (11/11 pass). Playwright: not applicable (no Desk/UI). |
+| Risks remaining | Generator depth is MVP-structured; readiness/addendum phases must align hashes and invalidation with this contract. |
 | Ready for next ticket | Yes |
 

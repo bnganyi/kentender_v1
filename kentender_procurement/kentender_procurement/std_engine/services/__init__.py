@@ -11,6 +11,7 @@ from .boq_instance_service import (
 	validate_boq_instance,
 )
 from .boq_import_service import import_boq_structured
+from .generation_job_service import generate_std_outputs
 from .instance_creation_service import create_std_instance
 from .parameter_value_service import set_std_parameter_value
 from .section_attachment_service import add_std_section_attachment

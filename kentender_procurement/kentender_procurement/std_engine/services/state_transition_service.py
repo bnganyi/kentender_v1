@@ -90,6 +90,8 @@ TRANSITIONS: dict[str, TransitionSpec] = {
 	"STD_OUTPUT_PUBLISH": TransitionSpec(("Current",), "Published", ("Administrator", "System Manager"), risk_level="High", requires_confirmation=True),
 	"STD_JOB_START": TransitionSpec(("Pending",), "Running", ("Administrator", "System Manager")),
 	"STD_JOB_COMPLETE": TransitionSpec(("Running",), "Completed", ("Administrator", "System Manager")),
+	"STD_JOB_FAIL": TransitionSpec(("Running",), "Failed", ("Administrator", "System Manager")),
+	"STD_OUTPUT_SUPERSEDE": TransitionSpec(("Current",), "Superseded", ("Administrator", "System Manager")),
 	"STD_READINESS_MARK_READY": TransitionSpec(("Not Run", "Incomplete", "Warning"), "Ready", ("Administrator", "System Manager")),
 	"STD_ADDENDUM_ANALYZE": TransitionSpec(("Draft",), "Analysis Pending", ("Administrator", "System Manager")),
 	"STD_ADDENDUM_COMPLETE_ANALYSIS": TransitionSpec(("Analysis Pending",), "Analysis Complete", ("Administrator", "System Manager")),
