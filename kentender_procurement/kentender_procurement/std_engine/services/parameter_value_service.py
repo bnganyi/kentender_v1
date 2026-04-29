@@ -70,7 +70,10 @@ def _parse_allowed_values(raw: Any) -> list[Any]:
 
 
 @frappe.whitelist()
-def set_std_parameter_value(instance_code: str, parameter_code: str, value: Any, actor: str) -> dict[str, Any]:
+def set_std_parameter_value(
+	instance_code: str, parameter_code: str, value: Any, actor: str | None = None
+) -> dict[str, Any]:
+	actor = (actor or "").strip() or frappe.session.user
 	instance_name = frappe.db.get_value("STD Instance", {"instance_code": instance_code}, "name")
 	if not instance_name:
 		frappe.throw(_("STD Instance not found."), title=_("Invalid instance"))

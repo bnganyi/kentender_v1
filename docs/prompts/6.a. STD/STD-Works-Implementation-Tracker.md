@@ -7,7 +7,7 @@
 ## Scope guard (current execution)
 
 - Phase 0 planning artifacts are complete and retained as baseline.
-- Current approved execution scope: **Phase 1 through Phase 10 STD-CURSOR-1014** (workbench shell through template-version Audit & evidence tab; Phase 11+ next).
+- Current approved execution scope: **Phase 1 through Phase 11 STD-CURSOR-1108** (workbench shell through Tender STD binding panel; Phase 12+ next).
 - Keep all unapproved tickets in `Pending` status until explicit approval.
 
 ## Execution order (from Cursor pack)
@@ -26,7 +26,7 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 
 ## Ticket status
 
-**Last updated:** 2026-04-29 (through Phase 10 STD-CURSOR-1014; Phases 1–9 as previously executed)
+**Last updated:** 2026-04-29 (through Phase 11 STD-CURSOR-1108; Phases 1–10 as previously executed)
 
 ### Phase 0 - Reconnaissance and planning baseline
 
@@ -142,14 +142,14 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 
 | Ticket | Description | Status |
 |---|---|---|
-| STD-CURSOR-1101 | STD instance detail tabs | Pending |
-| STD-CURSOR-1102 | Instance parameters UI | Pending |
-| STD-CURSOR-1103 | Works requirements UI | Pending |
-| STD-CURSOR-1104 | BOQ configuration UI | Pending |
-| STD-CURSOR-1105 | Generated outputs preview UI | Pending |
-| STD-CURSOR-1106 | Readiness UI | Pending |
-| STD-CURSOR-1107 | Addendum impact UI | Pending |
-| STD-CURSOR-1108 | TM v2 STD panel integration UI | Pending |
+| STD-CURSOR-1101 | STD instance detail tabs | Done |
+| STD-CURSOR-1102 | Instance parameters UI | Done |
+| STD-CURSOR-1103 | Works requirements UI | Done |
+| STD-CURSOR-1104 | BOQ configuration UI | Done |
+| STD-CURSOR-1105 | Generated outputs preview UI | Done |
+| STD-CURSOR-1106 | Readiness UI | Done |
+| STD-CURSOR-1107 | Addendum impact UI | Done |
+| STD-CURSOR-1108 | TM v2 STD panel integration UI | Done |
 
 ### Phase 12 - Smoke contract automation (reference only)
 
@@ -834,4 +834,30 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 | Test evidence | Backend: `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase10_template_version_audit_evidence` (4/4 pass). UI: `cd apps/kentender_v1 && npx playwright test tests/ui/smoke/procurement/std-workbench-1001.spec.ts --grep "STD-CURSOR-1007"`. Assets: `./scripts/bench-with-node.sh build --app kentender_procurement`. |
 | Risks remaining | Heuristic buckets may mis-file rare `event_type` values; large histories may need server-side pagination later. |
 | Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-1101 |
+| Reviewer | Engineering |
+| Completed | STD Instance workbench detail tabs (pack test IDs): Overview, Parameters, Works Requirements, BOQ, Generated Outputs, Readiness, Addendum Impact, Usage / Downstream Contracts, Audit & Evidence. Added `build_std_instance_workbench_shell` in `std_engine/services/instance_workbench_service.py` and whitelisted `get_std_instance_workbench_shell` in `std_engine/api/instance_workbench.py` (read-only when `instance_status` is Published Locked / Superseded / Cancelled; `addendum_guidance` for Published Locked, Locked Pre-Publication, Superseded). Desk `public/js/std_engine_workspace.js`: `detailTabMode === "instance"`, `injectStdInstanceDetailTabs`, overview panel (`std-instance-*` test IDs, `std-instance-addendum-path`), placeholders for later 1102+ tabs. `public/css/std_engine_workspace.css`: horizontal scroll for instance tab strip. |
+| Not completed | Superseded by Phase 11 completion record below (1102–1108). |
+| Assumptions | `instance_code` / `tender_code` / linked codes are business keys suitable for operator overview; no internal `name` exposed in UI. |
+| Files changed | `std_engine/services/instance_workbench_service.py`, `std_engine/api/instance_workbench.py`, `std_engine/tests/test_std_phase11_instance_shell.py`, `public/js/std_engine_workspace.js`, `public/css/std_engine_workspace.css`, `tests/ui/smoke/procurement/std-workbench-1001.spec.ts`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | Backend: `bench run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase11_instance_shell` (6/6 pass). UI: `cd apps/kentender_v1 && npx playwright test tests/ui/smoke/procurement/std-workbench-1001.spec.ts --grep "STD-CURSOR-1101"` (1 passed; queues: draft → ready → published-locked → blocked). Assets: `./scripts/bench-with-node.sh build --app kentender_procurement` from bench root. |
+| Risks remaining | Playwright skips only when no STD Instance exists in any instances-queue search on the site. |
+| Ready for next ticket | Yes (Phase 12) |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-1102 — STD-CURSOR-1108 |
+| Reviewer | Engineering |
+| Completed | **1102** Instance parameter catalogue (`instance_parameter_catalogue_service`, `get_std_instance_parameter_catalogue`) with grouped defs, values, stale flag, tender-security hint, read-only/addendum banners; desk editors + save via `set_std_parameter_value` (actor defaults to session). **1103** Works panel (`instance_works_panel_service`, `get_std_instance_works_requirements_panel`) + works tab UI (components, attachment action labels per pack, save structured text). **1104** BOQ panel (`instance_boq_workbench_service`, `get_std_instance_boq_workbench_panel`) with summary bar / bill list / item grid / validation / import placeholders / DSM impact note; `validate_boq_instance(..., persist=False)` for read-only preview. **1105** Outputs preview (`instance_outputs_preview_service`, `get_std_instance_outputs_preview`) + DEM/DOM/DCM warning copy + job list. **1106** Readiness panel (`instance_readiness_panel_service`, `get_std_instance_readiness_panel`, `run_std_instance_readiness_now`) + findings sort + manual-ready forbidden copy. **1107** Addendum impact list (`instance_addendum_panel_service`). **1108** Tender STD panel API (`tender_std_panel_service`, `get_tender_std_panel_data`) + `public/js/tender_std_panel.js` on `STD Tender Binding` (`hooks.py` `doctype_js`). Regression: `defaultdict` import in `template_version_parameters_service.py`. |
+| Not completed | Full BOQ import pipeline UI, rich downstream contract modelling, addendum “Request” deep-link to impact workflow, and full TM v2 shell beyond STD Tender Binding form. |
+| Assumptions | Tender “v2” surface is represented by STD Tender Binding DocType until a dedicated tender workbench ships; currency summary uses KES placeholder when BOQ definition has no currency field. |
+| Files changed | `std_engine/services/instance_*.py`, `std_engine/services/tender_std_panel_service.py`, `std_engine/api/instance_workbench.py`, `std_engine/api/tender_std_panel.py`, `std_engine/tests/test_std_phase11_instance_panels.py`, `std_engine/services/boq_instance_service.py`, `std_engine/services/parameter_value_service.py`, `std_engine/services/section_attachment_service.py`, `std_engine/services/works_requirements_service.py`, `std_engine/services/template_version_parameters_service.py`, `public/js/std_engine_workspace.js`, `public/js/tender_std_panel.js`, `kentender_procurement/hooks.py` |
+| Test evidence | Backend: `bench run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase11_instance_panels` (10/10 pass); `test_std_phase11_instance_shell` (6/6); `test_std_parameter_value_service` (3/3). UI: `npx playwright test tests/ui/smoke/procurement/std-workbench-1001.spec.ts --grep "STD-CURSOR-1101"` (covers 1101+1102 instance parameters poll). **STD Tender Binding** form panel not automated in Playwright (requires DocType form session). Assets: `./scripts/bench-with-node.sh build --app kentender_procurement`. |
+| Risks remaining | `tender_std_panel.js` prepends a custom HTML block on each refresh (stable host via `frm._kt_tm_std_panel_host`); operators should hard-refresh after deploy. |
+| Ready for next ticket | Yes (Phase 12) |
 

@@ -349,6 +349,21 @@
 	white-space: nowrap;
 }
 
+.kt-std-detail-tabs.kt-std-detail-tabs--instance {
+	flex-wrap: nowrap;
+	overflow-x: auto;
+	overflow-y: hidden;
+	max-width: 100%;
+	gap: 0.2rem;
+	padding-bottom: 0.15rem;
+	-webkit-overflow-scrolling: touch;
+}
+
+.kt-std-detail-tabs.kt-std-detail-tabs--instance .kt-std-detail-tab {
+	flex: 0 0 auto;
+	white-space: nowrap;
+}
+
 .kt-std-detail-tab.is-active {
 	border-color: var(--primary, #171717);
 }

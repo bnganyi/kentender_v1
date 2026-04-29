@@ -67,7 +67,10 @@ def get_works_requirement_components(instance_code: str) -> list[dict[str, Any]]
 
 
 @frappe.whitelist()
-def update_works_requirement_component(instance_code: str, component_code: str, payload: dict, actor: str) -> dict[str, Any]:
+def update_works_requirement_component(
+	instance_code: str, component_code: str, payload: dict, actor: str | None = None
+) -> dict[str, Any]:
+	actor = (actor or "").strip() or frappe.session.user
 	instance = _get_instance(instance_code)
 	if instance.instance_status in {"Published Locked", "Superseded", "Cancelled"}:
 		frappe.throw(_("Works requirement edits are locked after publication."), title=_("Instance locked"))

@@ -185,7 +185,7 @@ def get_boq_instance(instance_code: str) -> dict[str, Any]:
 
 
 @frappe.whitelist()
-def validate_boq_instance(instance_code: str) -> dict[str, Any]:
+def validate_boq_instance(instance_code: str, persist: bool = True) -> dict[str, Any]:
 	name = frappe.db.get_value("STD BOQ Instance", {"instance_code": instance_code}, "name")
 	if not name:
 		return {"is_valid": False, "errors": ["BOQ instance not initialized"], "validation_status": "Fail"}
@@ -207,8 +207,10 @@ def validate_boq_instance(instance_code: str) -> dict[str, Any]:
 				for f in ("item_number", "description", "unit"):
 					if not item.get(f):
 						errors.append(f"Item missing required field: {f}")
-	boq.validation_status = "Pass" if not errors else "Fail"
-	boq.status = "Validated" if not errors else "Draft"
-	boq.save(ignore_permissions=True)
-	return {"is_valid": not errors, "errors": errors, "validation_status": boq.validation_status}
+	validation_status = "Pass" if not errors else "Fail"
+	if persist:
+		boq.validation_status = validation_status
+		boq.status = "Validated" if not errors else "Draft"
+		boq.save(ignore_permissions=True)
+	return {"is_valid": not errors, "errors": errors, "validation_status": validation_status}
 

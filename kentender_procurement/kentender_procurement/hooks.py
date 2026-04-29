@@ -78,6 +78,7 @@ app_include_js = [
 doctype_js = {
 	"Demand": "public/js/demand_form.js",
 	"Procurement Package": "public/js/procurement_package.js",
+	"STD Tender Binding": "public/js/tender_std_panel.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}

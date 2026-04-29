@@ -23,9 +23,10 @@ def add_std_section_attachment(
 	section_code: str,
 	file_reference: str,
 	classification: str,
-	actor: str,
+	actor: str | None = None,
 	component_code: str | None = None,
 ) -> dict[str, Any]:
+	actor = (actor or "").strip() or frappe.session.user
 	if not section_code:
 		frappe.throw(_("Section code is required."), title=_("Invalid attachment"))
 	if not classification:

@@ -52,6 +52,33 @@
 	let activeMappingsTargetModel = "Bundle";
 	let selectedStructureKind = "";
 	let selectedStructureCode = "";
+	let stdInstanceWorkbenchShell = null;
+	let stdInstanceWorkbenchShellError = null;
+	let stdInstanceParameters = null;
+	let stdInstanceParametersError = null;
+	let stdInstanceParametersLoading = false;
+	let stdInstanceWorks = null;
+	let stdInstanceWorksError = null;
+	let stdInstanceWorksLoading = false;
+	let stdInstanceBoq = null;
+	let stdInstanceBoqError = null;
+	let stdInstanceBoqLoading = false;
+	let stdInstanceOutputs = null;
+	let stdInstanceOutputsError = null;
+	let stdInstanceOutputsLoading = false;
+	let stdInstanceReadiness = null;
+	let stdInstanceReadinessError = null;
+	let stdInstanceReadinessLoading = false;
+	let stdInstanceReadinessRunning = false;
+	let stdInstanceAddendum = null;
+	let stdInstanceAddendumError = null;
+	let stdInstanceAddendumLoading = false;
+	let stdInstanceDownstream = null;
+	let stdInstanceDownstreamError = null;
+	let stdInstanceDownstreamLoading = false;
+	let stdInstanceAudit = null;
+	let stdInstanceAuditError = null;
+	let stdInstanceAuditLoading = false;
 	const STRUCTURE_LOCKED_SECTION_WARNING = __(
 		"This section is locked standard text and cannot be edited in a tender-specific STD instance."
 	);
@@ -525,6 +552,7 @@
 	function injectGenericDetailTabs(tabsHost) {
 		if (!tabsHost) return;
 		tabsHost.classList.remove("kt-std-detail-tabs--template");
+		tabsHost.classList.remove("kt-std-detail-tabs--instance");
 		tabsHost.innerHTML =
 			'<button type="button" class="btn btn-xs btn-default kt-std-detail-tab is-active" data-std-detail-tab="overview" data-testid="std-detail-tab-overview" aria-selected="true">' +
 			esc(__("Overview")) +
@@ -536,6 +564,7 @@
 
 	function injectTemplateVersionDetailTabs(tabsHost) {
 		if (!tabsHost) return;
+		tabsHost.classList.remove("kt-std-detail-tabs--instance");
 		tabsHost.classList.add("kt-std-detail-tabs--template");
 		const tabs = [
 			{ key: "tpl-overview", tid: "std-tab-template-overview", lab: __("Overview") },
@@ -548,6 +577,41 @@
 			{ key: "tpl-reviews", tid: "std-tab-reviews-approval", lab: __("Reviews & Approval") },
 			{ key: "tpl-usage", tid: "std-tab-usage", lab: __("Usage") },
 			{ key: "tpl-audit-evidence", tid: "std-tab-template-audit-evidence", lab: __("Audit & Evidence") },
+		];
+		let h = "";
+		for (let i = 0; i < tabs.length; i++) {
+			const t = tabs[i];
+			const active = i === 0;
+			h +=
+				'<button type="button" class="btn btn-xs btn-default kt-std-detail-tab' +
+				(active ? " is-active" : "") +
+				'" data-std-detail-tab="' +
+				esc(t.key) +
+				'" data-testid="' +
+				esc(t.tid) +
+				'" aria-selected="' +
+				(active ? "true" : "false") +
+				'">' +
+				esc(t.lab) +
+				"</button>";
+		}
+		tabsHost.innerHTML = h;
+	}
+
+	function injectStdInstanceDetailTabs(tabsHost) {
+		if (!tabsHost) return;
+		tabsHost.classList.remove("kt-std-detail-tabs--template");
+		tabsHost.classList.add("kt-std-detail-tabs--instance");
+		const tabs = [
+			{ key: "inst-overview", tid: "std-tab-instance-overview", lab: __("Overview") },
+			{ key: "inst-parameters", tid: "std-tab-instance-parameters", lab: __("Parameters") },
+			{ key: "inst-works", tid: "std-tab-instance-works-requirements", lab: __("Works Requirements") },
+			{ key: "inst-boq", tid: "std-tab-instance-boq", lab: __("BOQ") },
+			{ key: "inst-outputs", tid: "std-tab-generated-outputs", lab: __("Generated Outputs") },
+			{ key: "inst-readiness", tid: "std-tab-instance-readiness", lab: __("Readiness") },
+			{ key: "inst-addendum", tid: "std-tab-addendum-impact", lab: __("Addendum Impact") },
+			{ key: "inst-downstream", tid: "std-tab-downstream-contracts", lab: __("Usage / Downstream Contracts") },
+			{ key: "inst-audit", tid: "std-tab-instance-audit-evidence", lab: __("Audit & Evidence") },
 		];
 		let h = "";
 		for (let i = 0; i < tabs.length; i++) {
@@ -2225,6 +2289,843 @@
 		panel.innerHTML = h;
 	}
 
+	function renderInstanceOverviewPanel(panel, lr, payload) {
+		if (!stdInstanceWorkbenchShell && !stdInstanceWorkbenchShellError) {
+			panel.innerHTML =
+				'<p class="small text-muted mb-0" data-testid="std-instance-summary-loading">' +
+				esc(__("Loading instance summary…")) +
+				"</p>";
+			return;
+		}
+		const sh = stdInstanceWorkbenchShell || {};
+		let badges = '<div class="d-flex flex-wrap gap-1 mb-2" data-testid="std-instance-overview-badges">';
+		if (sh.read_only) {
+			badges +=
+				'<span class="badge badge-warning" data-testid="std-instance-read-only">' +
+				esc(__("Read-only (locked or closed instance)")) +
+				"</span>";
+		}
+		badges += "</div>";
+		let guidance = "";
+		const g = String(sh.addendum_guidance || "").trim();
+		if (g) {
+			guidance =
+				'<div class="alert alert-info small mb-2" data-testid="std-instance-addendum-path" role="status">' +
+				esc(g) +
+				"</div>";
+		}
+		let errLine = "";
+		if (stdInstanceWorkbenchShellError) {
+			errLine =
+				'<p class="text-warning small mb-2" data-testid="std-instance-summary-error">' +
+				esc(String(stdInstanceWorkbenchShellError)) +
+				"</p>";
+		}
+		panel.innerHTML =
+			errLine +
+			badges +
+			guidance +
+			'<dl class="row mb-0 small kt-std-overview-dl">' +
+			'<dt class="col-sm-4 text-muted">' +
+			esc(__("Object type")) +
+			'</dt><dd class="col-sm-8" data-testid="std-overview-object-type">' +
+			esc(String(lr.object_type || payload.object_type || "")) +
+			"</dd>" +
+			'<dt class="col-sm-4 text-muted">' +
+			esc(__("DocType")) +
+			'</dt><dd class="col-sm-8" data-testid="std-overview-doctype">' +
+			esc(String(payload.doctype || "")) +
+			"</dd>" +
+			'<dt class="col-sm-4 text-muted">' +
+			esc(__("Instance status")) +
+			'</dt><dd class="col-sm-8" data-testid="std-instance-status">' +
+			esc(String(sh.instance_status || "—")) +
+			"</dd>" +
+			'<dt class="col-sm-4 text-muted">' +
+			esc(__("Readiness")) +
+			'</dt><dd class="col-sm-8" data-testid="std-instance-readiness-status">' +
+			esc(String(sh.readiness_status || "—")) +
+			"</dd>" +
+			'<dt class="col-sm-4 text-muted">' +
+			esc(__("Tender")) +
+			'</dt><dd class="col-sm-8" data-testid="std-instance-tender-code">' +
+			esc(String(sh.tender_code || "—")) +
+			"</dd>" +
+			'<dt class="col-sm-4 text-muted">' +
+			esc(__("Template version")) +
+			'</dt><dd class="col-sm-8" data-testid="std-instance-template-version-code">' +
+			esc(String(sh.template_version_code || "—")) +
+			"</dd>" +
+			'<dt class="col-sm-4 text-muted">' +
+			esc(__("Applicability profile")) +
+			'</dt><dd class="col-sm-8" data-testid="std-instance-profile-code">' +
+			esc(String(sh.profile_code || "—")) +
+			"</dd></dl>";
+	}
+
+
+	function resetStdInstancePanelCaches() {
+		stdInstanceParameters = null;
+		stdInstanceParametersError = null;
+		stdInstanceParametersLoading = false;
+		stdInstanceWorks = null;
+		stdInstanceWorksError = null;
+		stdInstanceWorksLoading = false;
+		stdInstanceBoq = null;
+		stdInstanceBoqError = null;
+		stdInstanceBoqLoading = false;
+		stdInstanceOutputs = null;
+		stdInstanceOutputsError = null;
+		stdInstanceOutputsLoading = false;
+		stdInstanceReadiness = null;
+		stdInstanceReadinessError = null;
+		stdInstanceReadinessLoading = false;
+		stdInstanceReadinessRunning = false;
+		stdInstanceAddendum = null;
+		stdInstanceAddendumError = null;
+		stdInstanceAddendumLoading = false;
+		stdInstanceDownstream = null;
+		stdInstanceDownstreamError = null;
+		stdInstanceDownstreamLoading = false;
+		stdInstanceAudit = null;
+		stdInstanceAuditError = null;
+		stdInstanceAuditLoading = false;
+	}
+
+	function stdInstanceCodeFromPayload() {
+		const payload = detailLastPayload;
+		return String((payload && payload.code) || selectedObjectCode || "").trim();
+	}
+
+	function ensureStdInstanceTabFetched(tabId) {
+		const myReq = detailReqId;
+		const icode = stdInstanceCodeFromPayload();
+		if (!icode || typeof frappe === "undefined" || !frappe.call) return;
+		if (tabId === "inst-parameters") {
+			if (stdInstanceParametersLoading) return;
+			if (stdInstanceParameters && stdInstanceParameters.ok) return;
+			if (stdInstanceParametersError) return;
+			stdInstanceParametersLoading = true;
+			frappe.call({
+				method: "kentender_procurement.std_engine.api.instance_workbench.get_std_instance_parameter_catalogue",
+				args: { instance_code: icode },
+				callback: function (r) {
+					stdInstanceParametersLoading = false;
+					if (!routeLooksLikeStdEngine() || myReq !== detailReqId) return;
+					const msg = (r && r.message) || {};
+					if (msg && msg.ok) {
+						stdInstanceParameters = msg;
+						stdInstanceParametersError = null;
+					} else {
+						stdInstanceParameters = null;
+						stdInstanceParametersError = String((msg && msg.message) || __("Could not load parameters."));
+					}
+					if (detailTabMode === "instance" && detailActiveTab === "inst-parameters") renderDetailTabPanel();
+				},
+				error: function () {
+					stdInstanceParametersLoading = false;
+					stdInstanceParameters = null;
+					stdInstanceParametersError = __("Could not load parameters.");
+					if (detailTabMode === "instance" && detailActiveTab === "inst-parameters") renderDetailTabPanel();
+				},
+			});
+			return;
+		}
+		if (tabId === "inst-works") {
+			if (stdInstanceWorksLoading) return;
+			if (stdInstanceWorks && stdInstanceWorks.ok) return;
+			if (stdInstanceWorksError) return;
+			stdInstanceWorksLoading = true;
+			frappe.call({
+				method: "kentender_procurement.std_engine.api.instance_workbench.get_std_instance_works_requirements_panel",
+				args: { instance_code: icode },
+				callback: function (r) {
+					stdInstanceWorksLoading = false;
+					if (!routeLooksLikeStdEngine() || myReq !== detailReqId) return;
+					const msg = (r && r.message) || {};
+					if (msg && msg.ok) {
+						stdInstanceWorks = msg;
+						stdInstanceWorksError = null;
+					} else {
+						stdInstanceWorks = null;
+						stdInstanceWorksError = String((msg && msg.message) || __("Could not load works requirements."));
+					}
+					if (detailTabMode === "instance" && detailActiveTab === "inst-works") renderDetailTabPanel();
+				},
+				error: function () {
+					stdInstanceWorksLoading = false;
+					stdInstanceWorks = null;
+					stdInstanceWorksError = __("Could not load works requirements.");
+					if (detailTabMode === "instance" && detailActiveTab === "inst-works") renderDetailTabPanel();
+				},
+			});
+			return;
+		}
+		if (tabId === "inst-boq") {
+			if (stdInstanceBoqLoading) return;
+			if (stdInstanceBoq && stdInstanceBoq.ok) return;
+			if (stdInstanceBoqError) return;
+			stdInstanceBoqLoading = true;
+			frappe.call({
+				method: "kentender_procurement.std_engine.api.instance_workbench.get_std_instance_boq_workbench_panel",
+				args: { instance_code: icode },
+				callback: function (r) {
+					stdInstanceBoqLoading = false;
+					if (!routeLooksLikeStdEngine() || myReq !== detailReqId) return;
+					const msg = (r && r.message) || {};
+					if (msg && msg.ok) {
+						stdInstanceBoq = msg;
+						stdInstanceBoqError = null;
+					} else {
+						stdInstanceBoq = null;
+						stdInstanceBoqError = String((msg && msg.message) || __("Could not load BOQ."));
+					}
+					if (detailTabMode === "instance" && detailActiveTab === "inst-boq") renderDetailTabPanel();
+				},
+				error: function () {
+					stdInstanceBoqLoading = false;
+					stdInstanceBoq = null;
+					stdInstanceBoqError = __("Could not load BOQ.");
+					if (detailTabMode === "instance" && detailActiveTab === "inst-boq") renderDetailTabPanel();
+				},
+			});
+			return;
+		}
+		if (tabId === "inst-outputs") {
+			if (stdInstanceOutputsLoading) return;
+			if (stdInstanceOutputs && stdInstanceOutputs.ok) return;
+			if (stdInstanceOutputsError) return;
+			stdInstanceOutputsLoading = true;
+			frappe.call({
+				method: "kentender_procurement.std_engine.api.instance_workbench.get_std_instance_outputs_preview",
+				args: { instance_code: icode },
+				callback: function (r) {
+					stdInstanceOutputsLoading = false;
+					if (!routeLooksLikeStdEngine() || myReq !== detailReqId) return;
+					const msg = (r && r.message) || {};
+					if (msg && msg.ok) {
+						stdInstanceOutputs = msg;
+						stdInstanceOutputsError = null;
+					} else {
+						stdInstanceOutputs = null;
+						stdInstanceOutputsError = String((msg && msg.message) || __("Could not load outputs."));
+					}
+					if (detailTabMode === "instance" && detailActiveTab === "inst-outputs") renderDetailTabPanel();
+				},
+				error: function () {
+					stdInstanceOutputsLoading = false;
+					stdInstanceOutputs = null;
+					stdInstanceOutputsError = __("Could not load outputs.");
+					if (detailTabMode === "instance" && detailActiveTab === "inst-outputs") renderDetailTabPanel();
+				},
+			});
+			return;
+		}
+		if (tabId === "inst-readiness") {
+			if (stdInstanceReadinessLoading) return;
+			if (stdInstanceReadiness && stdInstanceReadiness.ok) return;
+			if (stdInstanceReadinessError) return;
+			stdInstanceReadinessLoading = true;
+			frappe.call({
+				method: "kentender_procurement.std_engine.api.instance_workbench.get_std_instance_readiness_panel",
+				args: { instance_code: icode },
+				callback: function (r) {
+					stdInstanceReadinessLoading = false;
+					if (!routeLooksLikeStdEngine() || myReq !== detailReqId) return;
+					const msg = (r && r.message) || {};
+					if (msg && msg.ok) {
+						stdInstanceReadiness = msg;
+						stdInstanceReadinessError = null;
+					} else {
+						stdInstanceReadiness = null;
+						stdInstanceReadinessError = String((msg && msg.message) || __("Could not load readiness."));
+					}
+					if (detailTabMode === "instance" && detailActiveTab === "inst-readiness") renderDetailTabPanel();
+				},
+				error: function () {
+					stdInstanceReadinessLoading = false;
+					stdInstanceReadiness = null;
+					stdInstanceReadinessError = __("Could not load readiness.");
+					if (detailTabMode === "instance" && detailActiveTab === "inst-readiness") renderDetailTabPanel();
+				},
+			});
+			return;
+		}
+		if (tabId === "inst-addendum") {
+			if (stdInstanceAddendumLoading) return;
+			if (stdInstanceAddendum && stdInstanceAddendum.ok) return;
+			if (stdInstanceAddendumError) return;
+			stdInstanceAddendumLoading = true;
+			frappe.call({
+				method: "kentender_procurement.std_engine.api.instance_workbench.get_std_instance_addendum_impact_panel",
+				args: { instance_code: icode },
+				callback: function (r) {
+					stdInstanceAddendumLoading = false;
+					if (!routeLooksLikeStdEngine() || myReq !== detailReqId) return;
+					const msg = (r && r.message) || {};
+					if (msg && msg.ok) {
+						stdInstanceAddendum = msg;
+						stdInstanceAddendumError = null;
+					} else {
+						stdInstanceAddendum = null;
+						stdInstanceAddendumError = String((msg && msg.message) || __("Could not load addendum impact."));
+					}
+					if (detailTabMode === "instance" && detailActiveTab === "inst-addendum") renderDetailTabPanel();
+				},
+				error: function () {
+					stdInstanceAddendumLoading = false;
+					stdInstanceAddendum = null;
+					stdInstanceAddendumError = __("Could not load addendum impact.");
+					if (detailTabMode === "instance" && detailActiveTab === "inst-addendum") renderDetailTabPanel();
+				},
+			});
+			return;
+		}
+		if (tabId === "inst-downstream") {
+			const sh = stdInstanceWorkbenchShell || {};
+			const tc = String(sh.tender_code || "").trim();
+			if (!tc) {
+				stdInstanceDownstreamLoading = false;
+				stdInstanceDownstream = {
+					ok: true,
+					tender_code: "",
+					binding: null,
+					message: __("No tender code on instance."),
+				};
+				stdInstanceDownstreamError = null;
+				return;
+			}
+			if (stdInstanceDownstreamLoading) return;
+			if (stdInstanceDownstream && stdInstanceDownstream.ok) return;
+			if (stdInstanceDownstreamError) return;
+			stdInstanceDownstreamLoading = true;
+			frappe.call({
+				method: "kentender_procurement.std_engine.api.tender_std_panel.get_tender_std_panel_data",
+				args: { tender_code: tc },
+				callback: function (r) {
+					stdInstanceDownstreamLoading = false;
+					if (!routeLooksLikeStdEngine() || myReq !== detailReqId) return;
+					const msg = (r && r.message) || {};
+					if (msg && msg.ok) {
+						stdInstanceDownstream = msg;
+						stdInstanceDownstreamError = null;
+					} else {
+						stdInstanceDownstream = null;
+						stdInstanceDownstreamError = String((msg && msg.message) || __("Could not load tender STD panel."));
+					}
+					if (detailTabMode === "instance" && detailActiveTab === "inst-downstream") renderDetailTabPanel();
+				},
+				error: function () {
+					stdInstanceDownstreamLoading = false;
+					stdInstanceDownstream = null;
+					stdInstanceDownstreamError = __("Could not load tender STD panel.");
+					if (detailTabMode === "instance" && detailActiveTab === "inst-downstream") renderDetailTabPanel();
+				},
+			});
+			return;
+		}
+		if (tabId === "inst-audit") {
+			if (stdInstanceAuditLoading) return;
+			if (stdInstanceAudit && stdInstanceAudit.ok) return;
+			if (stdInstanceAuditError) return;
+			stdInstanceAuditLoading = true;
+			frappe.call({
+				method: "kentender_procurement.std_engine.api.instance_workbench.get_std_instance_audit_trail",
+				args: { instance_code: icode },
+				callback: function (r) {
+					stdInstanceAuditLoading = false;
+					if (!routeLooksLikeStdEngine() || myReq !== detailReqId) return;
+					const msg = (r && r.message) || {};
+					if (msg && msg.ok) {
+						stdInstanceAudit = msg;
+						stdInstanceAuditError = null;
+					} else {
+						stdInstanceAudit = null;
+						stdInstanceAuditError = String((msg && msg.message) || __("Could not load audit trail."));
+					}
+					if (detailTabMode === "instance" && detailActiveTab === "inst-audit") renderDetailTabPanel();
+				},
+				error: function () {
+					stdInstanceAuditLoading = false;
+					stdInstanceAudit = null;
+					stdInstanceAuditError = __("Could not load audit trail.");
+					if (detailTabMode === "instance" && detailActiveTab === "inst-audit") renderDetailTabPanel();
+				},
+			});
+		}
+	}
+
+	function saveStdInstanceParameterFromRow(btn) {
+		const pcode = String(btn.getAttribute("data-parameter-code") || "").trim();
+		const icode = stdInstanceCodeFromPayload();
+		if (!pcode || !icode) return;
+		const row = btn.closest("[data-std-inst-param-row]");
+		const input = row && row.querySelector("[data-std-inst-param-input]");
+		const val = input ? input.value : "";
+		frappe.call({
+			method: "kentender_procurement.std_engine.services.parameter_value_service.set_std_parameter_value",
+			args: { instance_code: icode, parameter_code: pcode, value: val },
+			callback: function (r) {
+				if (!r || r.exc) return;
+				frappe.show_alert({ message: __("Parameter saved"), indicator: "green" });
+				stdInstanceParameters = null;
+				stdInstanceParametersError = null;
+				stdInstanceParametersLoading = false;
+				renderDetailTabPanel();
+			},
+		});
+	}
+
+	function runStdInstanceReadinessNow() {
+		const icode = stdInstanceCodeFromPayload();
+		if (!icode || stdInstanceReadinessRunning) return;
+		stdInstanceReadinessRunning = true;
+		frappe.call({
+			method: "kentender_procurement.std_engine.api.instance_workbench.run_std_instance_readiness_now",
+			args: { instance_code: icode },
+			callback: function (r) {
+				stdInstanceReadinessRunning = false;
+				if (!r || r.exc) return;
+				stdInstanceReadiness = null;
+				stdInstanceReadinessError = null;
+				stdInstanceReadinessLoading = false;
+				stdInstanceWorkbenchShell = null;
+				stdInstanceWorkbenchShellError = null;
+				frappe.show_alert({ message: __("Readiness run complete"), indicator: "green" });
+				const myReq = detailReqId;
+				frappe.call({
+					method: "kentender_procurement.std_engine.api.instance_workbench.get_std_instance_workbench_shell",
+					args: { instance_code: icode },
+					callback: function (r2) {
+						if (!routeLooksLikeStdEngine() || myReq !== detailReqId) return;
+						const m2 = (r2 && r2.message) || {};
+						if (m2 && m2.ok) stdInstanceWorkbenchShell = m2;
+						if (detailTabMode === "instance") renderDetailTabPanel();
+					},
+				});
+			},
+			error: function () {
+				stdInstanceReadinessRunning = false;
+			},
+		});
+	}
+
+	function saveStdInstanceWorksText(btn) {
+		const cc = String(btn.getAttribute("data-component-code") || "").trim();
+		const icode = stdInstanceCodeFromPayload();
+		const wrap = btn.closest("[data-std-inst-works-editor]");
+		const ta = wrap && wrap.querySelector("textarea");
+		if (!cc || !icode || !ta) return;
+		frappe.call({
+			method: "kentender_procurement.std_engine.services.works_requirements_service.update_works_requirement_component",
+			args: { instance_code: icode, component_code: cc, payload: { structured_text: ta.value } },
+			callback: function () {
+				frappe.show_alert({ message: __("Works requirement updated"), indicator: "green" });
+				stdInstanceWorks = null;
+				renderDetailTabPanel();
+			},
+		});
+	}
+
+	function promptStdInstanceAttachment(classification, label) {
+		const icode = stdInstanceCodeFromPayload();
+		const w = stdInstanceWorks || {};
+		const sec = String(w.section_vii_section_code || "").trim();
+		if (!icode) return;
+		const fileRef = window.prompt(label + "\n" + __("File reference (business id / URL):"));
+		if (!fileRef) return;
+		frappe.call({
+			method: "kentender_procurement.std_engine.services.section_attachment_service.add_std_section_attachment",
+			args: {
+				instance_code: icode,
+				section_code: sec,
+				file_reference: fileRef,
+				classification: classification,
+				component_code: null,
+			},
+			callback: function () {
+				frappe.show_alert({ message: __("Attachment recorded"), indicator: "green" });
+				stdInstanceWorks = null;
+				stdInstanceWorksLoading = false;
+				renderDetailTabPanel();
+			},
+		});
+	}
+
+	function renderInstanceSubTabPanel(panel) {
+		const tid = detailActiveTab;
+		if (tid === "inst-parameters") {
+			let h = '<div class="kt-std-surface p-2" data-testid="std-instance-panel-parameters">';
+			if (stdInstanceParametersError) {
+				h += '<p class="text-warning small" data-testid="std-instance-parameters-error">' + esc(String(stdInstanceParametersError)) + "</p></div>";
+				panel.innerHTML = h;
+				return;
+			}
+			if (stdInstanceParametersLoading && !stdInstanceParameters) {
+				h += '<p class="small text-muted" data-testid="std-instance-parameters-loading">' + esc(__("Loading…")) + "</p></div>";
+				panel.innerHTML = h;
+				return;
+			}
+			const cat = stdInstanceParameters || {};
+			if (!cat.ok) {
+				h += '<p class="small text-muted">' + esc(__("Loading…")) + "</p></div>";
+				panel.innerHTML = h;
+				return;
+			}
+			if (cat.read_only) {
+				h +=
+					'<div class="alert alert-warning py-2 px-2 small mb-2" data-testid="std-instance-parameters-read-only">' +
+					esc(__("Published / locked instance — use addendum path to change parameters.")) +
+					"</div>";
+			}
+			if (String(cat.addendum_guidance || "").trim()) {
+				h +=
+					'<div class="alert alert-info py-2 px-2 small mb-2" data-testid="std-instance-parameters-addendum">' +
+					esc(String(cat.addendum_guidance)) +
+					"</div>";
+			}
+			const groups = cat.groups || [];
+			for (let gi = 0; gi < groups.length; gi++) {
+				const g = groups[gi] || {};
+				const gslug = slugForTestId(g.group_name || "g");
+				h += '<section class="mb-2" data-testid="std-param-group-' + esc(gslug) + '"><h4 class="h6">' + esc(String(g.group_name || "")) + "</h4>";
+				const params = g.parameters || [];
+				for (let pi = 0; pi < params.length; pi++) {
+					const p = params[pi] || {};
+					const pcode = String(p.parameter_code || "");
+					const pslug = slugForTestId(pcode);
+					h += '<div class="kt-std-surface p-2 mb-1" data-testid="std-param-row-' + esc(pslug) + '" data-std-inst-param-row="1">';
+					h += '<div class="small font-weight-bold" data-testid="std-param-title-' + esc(pslug) + '">' + esc(String(p.label || "")) + " (" + esc(pcode) + ")</div>";
+					if (p.tender_security_dependency) {
+						h +=
+							'<div class="small text-muted mb-1" data-testid="std-instance-param-tender-security-' +
+							esc(pslug) +
+							'">' +
+							esc(__("Tender security dependency")) +
+							"</div>";
+					}
+					h += '<div class="small">' + impactChipsHtml(p.impact) + "</div>";
+					if (p.value_is_stale) {
+						h += '<span class="badge badge-warning" data-testid="std-instance-param-stale-' + esc(pslug) + '">' + esc(__("Stale outputs")) + "</span> ";
+					}
+					const ro = cat.read_only;
+					h +=
+						'<div class="mt-1"><label class="small d-block">' +
+						esc(__("Value")) +
+						'<input class="form-control form-control-sm" data-std-inst-param-input="1" value="' +
+						esc(String(p.current_value_display || "")) +
+						'" ' +
+						(ro ? "disabled" : "") +
+						"/></label>";
+					if (!ro) {
+						h +=
+							'<button type="button" class="btn btn-xs btn-primary mt-1" data-std-inst-param-save="1" data-parameter-code="' +
+							esc(pcode) +
+							'">' +
+							esc(__("Save")) +
+							"</button>";
+					}
+					h += "</div></div>";
+				}
+				h += "</section>";
+			}
+			h += "</div>";
+			panel.innerHTML = h;
+			return;
+		}
+		if (tid === "inst-works") {
+			let h = '<div data-testid="std-instance-panel-works-requirements">';
+			if (stdInstanceWorksError) {
+				panel.innerHTML = h + '<p class="text-warning small">' + esc(String(stdInstanceWorksError)) + "</p></div>";
+				return;
+			}
+			if (stdInstanceWorksLoading && !stdInstanceWorks) {
+				panel.innerHTML = h + '<p class="small text-muted">' + esc(__("Loading…")) + "</p></div>";
+				return;
+			}
+			const w = stdInstanceWorks || {};
+			if (!w.ok) {
+				panel.innerHTML = h + '<p class="small text-muted">' + esc(__("Loading…")) + "</p></div>";
+				return;
+			}
+			const labels = w.attachment_action_labels || {};
+			h += '<div class="d-flex flex-wrap gap-1 mb-2">';
+			h +=
+				'<button type="button" class="btn btn-xs btn-default" data-std-inst-attachment-action="1" data-act="spec">' +
+				esc(labels.specification || __("Add Specification Attachment")) +
+				"</button>";
+			h +=
+				'<button type="button" class="btn btn-xs btn-default" data-std-inst-attachment-action="1" data-act="draw">' +
+				esc(labels.drawing_register || __("Add Drawing to Register")) +
+				"</button>";
+			h +=
+				'<button type="button" class="btn btn-xs btn-default" data-std-inst-attachment-action="1" data-act="sup">' +
+				esc(labels.supersede || __("Supersede Attachment by Addendum")) +
+				"</button>";
+			h += "</div>";
+			if (w.read_only) {
+				h += '<div class="alert alert-warning small">' + esc(__("Read-only instance.")) + "</div>";
+			}
+			h += '<div class="small mb-2" data-testid="std-instance-works-derived">' + esc(__("Derived impacts (DSM/DEM/DCM drivers):")) + " ";
+			const di = w.derived_impacts || [];
+			h += esc(String(di.length)) + "</div>";
+			const comps = w.components || [];
+			for (let i = 0; i < comps.length; i++) {
+				const c = comps[i] || {};
+				const cc = String(c.component_code || "");
+				h +=
+					'<div class="kt-std-surface p-2 mb-2" data-testid="std-instance-works-component" data-std-inst-works-editor="1"><div class="small font-weight-bold">' +
+					esc(String(c.component_title || cc)) +
+					" (" +
+					esc(cc) +
+					")</div>";
+				h +=
+					'<textarea class="form-control form-control-sm mt-1" rows="3" ' +
+					(w.read_only ? "disabled" : "") +
+					">" +
+					esc(String(c.structured_text || "")) +
+					"</textarea>";
+				if (!w.read_only && intOr0(c.supports_structured_text)) {
+					h +=
+						'<button type="button" class="btn btn-xs btn-primary mt-1" data-std-inst-works-save="1" data-component-code="' +
+						esc(cc) +
+						'">' +
+						esc(__("Save")) +
+						"</button>";
+				}
+				h += "</div>";
+			}
+			h += "</div>";
+			panel.innerHTML = h;
+			return;
+		}
+		if (tid === "inst-boq") {
+			let h = '<div data-testid="std-instance-panel-boq">';
+			if (stdInstanceBoqError) {
+				panel.innerHTML = h + '<p class="text-warning small">' + esc(String(stdInstanceBoqError)) + "</p></div>";
+				return;
+			}
+			if (stdInstanceBoqLoading && !stdInstanceBoq) {
+				panel.innerHTML = h + '<p class="small text-muted">' + esc(__("Loading…")) + "</p></div>";
+				return;
+			}
+			const bq = stdInstanceBoq || {};
+			if (!bq.ok) {
+				panel.innerHTML = h + '<p class="small text-muted">' + esc(__("Loading…")) + "</p></div>";
+				return;
+			}
+			const boq = bq.boq;
+			if (!boq) {
+				h += '<p class="small text-muted" data-testid="std-boq-validation-panel">' + esc(__("No BOQ instance.")) + "</p></div>";
+				panel.innerHTML = h;
+				return;
+			}
+			const defn = boq.definition || {};
+			h += '<div class="kt-std-surface p-2 mb-2 small" data-testid="std-boq-summary-bar">';
+			h += esc(__("BOQ")) + ": " + esc(String(boq.boq_instance_code)) + " · ";
+			h += esc(__("Status")) + ": " + esc(String(boq.status)) + " · ";
+			h += esc(__("Pricing")) + ": " + esc(String(defn.pricing_model || "—")) + " · ";
+			h += esc(__("Currency")) + ": " + esc(String(boq.currency || "KES")) + " · ";
+			h += esc(__("Quantity owner")) + ": " + esc(String(bq.quantity_owner_label || "")) + " · ";
+			h += esc(__("Items")) + ": " + esc(String(boq.item_count || 0)) + "</div>";
+			h += '<p class="small text-muted" data-testid="std-boq-owner-hint">' + esc(String(bq.rate_owner_note || "")) + "</p>";
+			h += '<div class="mb-2" data-testid="std-boq-bill-list">';
+			const bills = boq.bills || [];
+			for (let bi = 0; bi < bills.length; bi++) {
+				const bill = bills[bi] || {};
+				h += '<div class="small font-weight-bold mb-1">' + esc(String(bill.bill_title || bill.bill_instance_code)) + "</div>";
+				h += '<div class="table-responsive" data-testid="std-boq-item-grid"><table class="table table-sm table-bordered"><thead><tr>';
+				h += "<th>" + esc(__("Item")) + "</th><th>" + esc(__("Description")) + "</th><th>" + esc(__("Unit")) + "</th>";
+				h += "<th>" + esc(__("Qty (PE)")) + "</th><th>" + esc(__("Rate (supplier)")) + "</th><th>" + esc(__("Amount")) + "</th></tr></thead><tbody>";
+				const items = bill.items || [];
+				for (let ii = 0; ii < items.length; ii++) {
+					const it = items[ii] || {};
+					h += "<tr><td>" + esc(String(it.item_number || "")) + "</td><td>" + esc(String(it.description || "")) + "</td><td>" + esc(String(it.unit || "")) + "</td>";
+					h += "<td>" + esc(String(it.quantity != null ? it.quantity : "")) + "</td><td>" + esc(String(it.rate != null ? it.rate : "—")) + "</td><td>" + esc(String(it.amount != null ? it.amount : "—")) + "</td></tr>";
+				}
+				h += "</tbody></table></div>";
+			}
+			h += "</div>";
+			const val = bq.validation || {};
+			h += '<div class="kt-std-surface p-2 small" data-testid="std-boq-validation-panel">';
+			h += esc(__("Validation")) + ": " + esc(String(val.validation_status || "")) + "<ul class=\"mb-0\">";
+			const errs = val.errors || [];
+			for (let ei = 0; ei < errs.length; ei++) {
+				h += "<li>" + esc(String(errs[ei])) + "</li>";
+			}
+			h += "</ul></div>";
+			h +=
+				'<button type="button" class="btn btn-xs btn-default mt-1" disabled data-testid="std-action-boq-import">' +
+				esc(__("Import (preview in later ticket)")) +
+				"</button>";
+			h += '<div class="small text-muted mt-1" data-testid="std-boq-import-preview">' + esc(__("Import preview not saved until structured records exist.")) + "</div>";
+			h += '<div class="small mt-2" data-testid="std-boq-dsm-impact">' + esc(__("BOQ changes mark DSM/DEM/DCM stale via generation rules.")) + "</div>";
+			h += "</div>";
+			panel.innerHTML = h;
+			return;
+		}
+		if (tid === "inst-outputs") {
+			let h = '<div data-testid="std-instance-panel-generated-outputs">';
+			if (stdInstanceOutputsError) {
+				panel.innerHTML = h + '<p class="text-warning small">' + esc(String(stdInstanceOutputsError)) + "</p></div>";
+				return;
+			}
+			const o = stdInstanceOutputs || {};
+			if (!o.ok) {
+				panel.innerHTML = h + '<p class="small text-muted">' + esc(__("Loading…")) + "</p></div>";
+				return;
+			}
+			const warn = o.warnings || {};
+			const by = o.outputs_by_type || {};
+			function panelBlock(testid, title, typeKey) {
+				const rows = by[typeKey] || [];
+				let s = '<section class="kt-std-surface p-2 mb-2" data-testid="' + testid + '"><h4 class="h6">' + esc(title) + "</h4>";
+				if (typeKey === "DEM" && warn.dem) s += '<p class="small text-warning" data-testid="std-preview-dem-warning">' + esc(String(warn.dem)) + "</p>";
+				if (typeKey === "DOM" && warn.dom) s += '<p class="small text-warning" data-testid="std-preview-dom-warning">' + esc(String(warn.dom)) + "</p>";
+				if (typeKey === "DCM" && warn.dcm) s += '<p class="small text-warning" data-testid="std-preview-dcm-warning">' + esc(String(warn.dcm)) + "</p>";
+				if (!rows.length) s += '<p class="small text-muted">' + esc(__("No rows.")) + "</p>";
+				for (let i = 0; i < rows.length; i++) {
+					const r = rows[i] || {};
+					s += '<div class="small">' + esc(String(r.output_code || "")) + " · " + esc(String(r.status || "")) + " ";
+					if (intOr0(r.is_stale)) s += '<span class="badge badge-warning">' + esc(__("Stale")) + "</span>";
+					s += "</div>";
+				}
+				s += "</section>";
+				return s;
+			}
+			h += panelBlock("std-preview-bundle", __("Bundle"), "Bundle");
+			h += panelBlock("std-preview-dsm", __("DSM"), "DSM");
+			h += panelBlock("std-preview-dom", __("DOM"), "DOM");
+			h += panelBlock("std-preview-dem", __("DEM"), "DEM");
+			h += panelBlock("std-preview-dcm", __("DCM"), "DCM");
+			h += '<section class="kt-std-surface p-2 small" data-testid="std-instance-output-jobs"><h4 class="h6">' + esc(__("Generation jobs")) + "</h4>";
+			const jobs = o.generation_jobs || [];
+			for (let j = 0; j < jobs.length; j++) {
+				const jj = jobs[j] || {};
+				h += "<div>" + esc(String(jj.generation_job_code || "")) + " · " + esc(String(jj.status || "")) + "</div>";
+			}
+			const fj = o.failed_jobs || [];
+			if (fj.length) {
+				h += '<p class="text-danger small mb-0" data-testid="std-instance-failed-job">' + esc(String(fj[0].error_message || __("Job failed"))) + "</p>";
+			}
+			h += "</section></div>";
+			panel.innerHTML = h;
+			return;
+		}
+		if (tid === "inst-readiness") {
+			let h = '<div data-testid="std-instance-panel-readiness">';
+			if (stdInstanceReadinessError) {
+				panel.innerHTML = h + '<p class="text-warning small">' + esc(String(stdInstanceReadinessError)) + "</p></div>";
+				return;
+			}
+			const rd = stdInstanceReadiness || {};
+			if (!rd.ok) {
+				panel.innerHTML = h + '<p class="small text-muted">' + esc(__("Loading…")) + "</p></div>";
+				return;
+			}
+			h += '<div class="mb-2 small" data-testid="std-instance-readiness-summary">' + esc(__("Instance readiness:")) + " " + esc(String(rd.instance_readiness_status || "")) + "</div>";
+			h +=
+				'<button type="button" class="btn btn-xs btn-primary mb-2" data-std-inst-readiness-run="1" data-testid="std-instance-readiness-run">' +
+				esc(__("Run readiness")) +
+				"</button>";
+			h += '<p class="small text-muted" data-testid="std-instance-readiness-manual-forbidden">' + esc(String(rd.manual_ready_message || "")) + "</p>";
+			h += '<table class="table table-sm table-bordered" data-testid="std-instance-readiness-findings"><thead><tr>';
+			h += "<th>" + esc(__("Severity")) + "</th><th>" + esc(__("Rule")) + "</th><th>" + esc(__("Message")) + "</th></tr></thead><tbody>";
+			const finds = rd.findings || [];
+			for (let i = 0; i < finds.length; i++) {
+				const f = finds[i] || {};
+				h += "<tr><td>" + esc(String(f.severity || "")) + "</td><td>" + esc(String(f.rule_code || "")) + "</td><td>" + esc(String(f.message || "")) + "</td></tr>";
+			}
+			h += "</tbody></table></div>";
+			panel.innerHTML = h;
+			return;
+		}
+		if (tid === "inst-addendum") {
+			let h = '<div data-testid="std-instance-panel-addendum-impact">';
+			if (stdInstanceAddendumError) {
+				panel.innerHTML = h + '<p class="text-warning small">' + esc(String(stdInstanceAddendumError)) + "</p></div>";
+				return;
+			}
+			const ad = stdInstanceAddendum || {};
+			if (!ad.ok) {
+				panel.innerHTML = h + '<p class="small text-muted">' + esc(__("Loading…")) + "</p></div>";
+				return;
+			}
+			const hints = ad.regeneration_hints || {};
+			h += '<div class="small mb-2" data-testid="std-instance-addendum-regen-hint">' + esc(String(hints.boq || "")) + " " + esc(String(hints.deadline || "")) + "</div>";
+			h += "<table class=\"table table-sm\"><thead><tr><th>Code</th><th>Status</th><th>Regen</th></tr></thead><tbody>";
+			const rows = ad.impact_analyses || [];
+			for (let i = 0; i < rows.length; i++) {
+				const r = rows[i] || {};
+				h += "<tr><td>" + esc(String(r.impact_analysis_code || "")) + "</td><td>" + esc(String(r.status || "")) + "</td><td>" + esc(String(r.requires_regeneration || "")) + "</td></tr>";
+			}
+			h += "</tbody></table>";
+			h += '<div class="small mt-2" data-testid="std-instance-supersession">' + esc(__("Related instances (tender):")) + " ";
+			const sup = ad.supersession_chain || [];
+			h += esc(String(sup.length)) + "</div></div>";
+			panel.innerHTML = h;
+			return;
+		}
+		if (tid === "inst-downstream") {
+			let h = '<div data-testid="std-instance-panel-downstream-contracts">';
+			if (stdInstanceDownstreamError) {
+				panel.innerHTML = h + '<p class="text-warning small">' + esc(String(stdInstanceDownstreamError)) + "</p></div>";
+				return;
+			}
+			const d = stdInstanceDownstream || {};
+			if (!d.ok) {
+				panel.innerHTML = h + '<p class="small text-muted">' + esc(__("Loading…")) + "</p></div>";
+				return;
+			}
+			h += '<p class="small" data-testid="std-instance-downstream-tender">' + esc(__("Tender")) + ": " + esc(String(d.tender_code || "")) + "</p>";
+			if (d.message) {
+				h += '<p class="small text-muted" data-testid="std-instance-downstream-message">' + esc(String(d.message)) + "</p>";
+			}
+			const bind = d.binding;
+			h += '<pre class="small" data-testid="std-instance-downstream-binding">' + esc(JSON.stringify(bind || {}, null, 0).slice(0, 2000)) + "</pre>";
+			h +=
+				'<a class="small" href="/app/std-engine" data-testid="std-instance-open-std-engine">' +
+				esc(__("Open STD Engine")) +
+				"</a></div>";
+			panel.innerHTML = h;
+			return;
+		}
+		if (tid === "inst-audit") {
+			let h = '<div data-testid="std-instance-panel-audit-evidence">';
+			if (stdInstanceAuditError) {
+				panel.innerHTML = h + '<p class="text-warning small">' + esc(String(stdInstanceAuditError)) + "</p></div>";
+				return;
+			}
+			const a = stdInstanceAudit || {};
+			if (!a.ok) {
+				panel.innerHTML = h + '<p class="small text-muted">' + esc(__("Loading…")) + "</p></div>";
+				return;
+			}
+			h += "<table class=\"table table-sm\"><thead><tr><th>Type</th><th>Actor</th><th>When</th></tr></thead><tbody>";
+			const evs = a.events || [];
+			for (let i = 0; i < evs.length; i++) {
+				const e = evs[i] || {};
+				h +=
+					"<tr><td>" +
+					esc(String(e.event_type || "")) +
+					"</td><td>" +
+					esc(String(e.actor || "")) +
+					"</td><td>" +
+					esc(String(e.timestamp || "")) +
+					"</td></tr>";
+			}
+			h += "</tbody></table></div>";
+			panel.innerHTML = h;
+			return;
+		}
+		panel.innerHTML = '<p class="small text-muted">' + esc(__("Unknown tab.")) + "</p>";
+	}
+
+	function intOr0(v) {
+		const n = parseInt(String(v || 0), 10);
+		return isNaN(n) ? 0 : n;
+	}
+
 	function renderDetailTabPanel() {
 		const root = getActiveStdShellRoot();
 		const panel = root && root.querySelector("#kt-std-detail-tab-panel");
@@ -2268,6 +3169,15 @@
 				'<p class="small text-muted mb-0 mt-2" data-testid="std-detail-tab-placeholder">' +
 				esc(__("Type-specific configuration tabs follow in STD-CURSOR-1007+.")) +
 				"</p>";
+			return;
+		}
+		if (detailTabMode === "instance") {
+			if (detailActiveTab === "inst-overview") {
+				renderInstanceOverviewPanel(panel, lr, payload);
+				return;
+			}
+			ensureStdInstanceTabFetched(detailActiveTab);
+			renderInstanceSubTabPanel(panel);
 			return;
 		}
 		if (detailActiveTab === "tpl-structure") {
@@ -2418,6 +3328,9 @@
 			templateVersionAudit = null;
 			templateVersionAuditError = null;
 			templateVersionAuditLoading = false;
+			stdInstanceWorkbenchShell = null;
+			stdInstanceWorkbenchShellError = null;
+			resetStdInstancePanelCaches();
 			activeMappingsTargetModel = "Bundle";
 			selectedStructureKind = "";
 			selectedStructureCode = "";
@@ -2428,6 +3341,9 @@
 		if (ot === "Template Version") {
 			detailTabMode = "template";
 			detailActiveTab = "tpl-overview";
+			stdInstanceWorkbenchShell = null;
+			stdInstanceWorkbenchShellError = null;
+			resetStdInstancePanelCaches();
 			templateVersionSummary = null;
 			templateVersionSummaryError = null;
 			templateVersionStructure = null;
@@ -2494,6 +3410,78 @@
 			});
 			return;
 		}
+		if (ot === "STD Instance") {
+			detailTabMode = "instance";
+			detailActiveTab = "inst-overview";
+			templateVersionSummary = null;
+			templateVersionSummaryError = null;
+			templateVersionStructure = null;
+			templateVersionStructureError = null;
+			templateVersionStructureLoading = false;
+			templateVersionParameters = null;
+			templateVersionParametersError = null;
+			templateVersionParametersLoading = false;
+			templateVersionForms = null;
+			templateVersionFormsError = null;
+			templateVersionFormsLoading = false;
+			activeFormsCategoryId = "";
+			selectedFormCode = "";
+			templateVersionWorks = null;
+			templateVersionWorksError = null;
+			templateVersionWorksLoading = false;
+			templateVersionMappings = null;
+			templateVersionMappingsError = null;
+			templateVersionMappingsLoading = false;
+			templateVersionReviews = null;
+			templateVersionReviewsError = null;
+			templateVersionReviewsLoading = false;
+			templateVersionAudit = null;
+			templateVersionAuditError = null;
+			templateVersionAuditLoading = false;
+			activeMappingsTargetModel = "Bundle";
+			selectedStructureKind = "";
+			selectedStructureCode = "";
+			resetStdInstancePanelCaches();
+			stdInstanceWorkbenchShell = null;
+			stdInstanceWorkbenchShellError = null;
+			injectStdInstanceDetailTabs(tabsHost);
+			syncStdDetailTabs("inst-overview");
+			const icode = String((payload && payload.code) || selectedObjectCode || "").trim();
+			if (!icode || typeof frappe === "undefined" || !frappe.call) {
+				stdInstanceWorkbenchShellError = __("Could not load instance summary.");
+				renderDetailTabPanel();
+				return;
+			}
+			frappe.call({
+				method: "kentender_procurement.std_engine.api.instance_workbench.get_std_instance_workbench_shell",
+				args: { instance_code: icode },
+				callback: function (r) {
+					if (!routeLooksLikeStdEngine() || myReq !== detailReqId) return;
+					const msg = (r && r.message) || {};
+					if (msg && msg.ok) {
+						stdInstanceWorkbenchShell = msg;
+						stdInstanceWorkbenchShellError = null;
+					} else {
+						stdInstanceWorkbenchShell = null;
+						stdInstanceWorkbenchShellError = String(
+							(msg && msg.message) || __("Could not load STD instance summary.")
+						);
+					}
+					if (detailTabMode === "instance") {
+						renderDetailTabPanel();
+					}
+				},
+				error: function () {
+					if (!routeLooksLikeStdEngine() || myReq !== detailReqId) return;
+					stdInstanceWorkbenchShell = null;
+					stdInstanceWorkbenchShellError = __("Could not load STD instance summary.");
+					if (detailTabMode === "instance") {
+						renderDetailTabPanel();
+					}
+				},
+			});
+			return;
+		}
 		detailTabMode = "generic";
 		detailActiveTab = "overview";
 		templateVersionSummary = null;
@@ -2521,6 +3509,9 @@
 		templateVersionAudit = null;
 		templateVersionAuditError = null;
 		templateVersionAuditLoading = false;
+		stdInstanceWorkbenchShell = null;
+		stdInstanceWorkbenchShellError = null;
+		resetStdInstancePanelCaches();
 		activeMappingsTargetModel = "Bundle";
 		selectedStructureKind = "";
 		selectedStructureCode = "";
@@ -2560,6 +3551,9 @@
 		templateVersionAudit = null;
 		templateVersionAuditError = null;
 		templateVersionAuditLoading = false;
+		stdInstanceWorkbenchShell = null;
+		stdInstanceWorkbenchShellError = null;
+		resetStdInstancePanelCaches();
 		activeMappingsTargetModel = "Bundle";
 		selectedStructureKind = "";
 		selectedStructureCode = "";
@@ -2590,7 +3584,13 @@
 		if (!root) return;
 		let id = activeId || "";
 		if (!id) {
-			id = detailTabMode === "template" ? "tpl-overview" : "overview";
+			if (detailTabMode === "template") {
+				id = "tpl-overview";
+			} else if (detailTabMode === "instance") {
+				id = "inst-overview";
+			} else {
+				id = "overview";
+			}
 		}
 		detailActiveTab = id;
 		root.querySelectorAll("[data-std-detail-tab]").forEach(function (btn) {
@@ -3039,6 +4039,37 @@
 			if (auditExport && root.contains(auditExport) && !auditExport.disabled) {
 				ev.preventDefault();
 				runStdTemplateAuditExportCsv();
+				return;
+			}
+			const instParamSave = target.closest("[data-std-inst-param-save]");
+			if (instParamSave && root.contains(instParamSave)) {
+				ev.preventDefault();
+				saveStdInstanceParameterFromRow(instParamSave);
+				return;
+			}
+			const instReadRun = target.closest("[data-std-inst-readiness-run]");
+			if (instReadRun && root.contains(instReadRun)) {
+				ev.preventDefault();
+				runStdInstanceReadinessNow();
+				return;
+			}
+			const instWorksSave = target.closest("[data-std-inst-works-save]");
+			if (instWorksSave && root.contains(instWorksSave)) {
+				ev.preventDefault();
+				saveStdInstanceWorksText(instWorksSave);
+				return;
+			}
+			const instAtt = target.closest("[data-std-inst-attachment-action]");
+			if (instAtt && root.contains(instAtt)) {
+				ev.preventDefault();
+				const act = String(instAtt.getAttribute("data-act") || "");
+				if (act === "spec") {
+					promptStdInstanceAttachment("Specification", __("Add Specification Attachment"));
+				} else if (act === "draw") {
+					promptStdInstanceAttachment("Drawing", __("Add Drawing to Register"));
+				} else if (act === "sup") {
+					frappe.show_alert({ message: __("Supersede via addendum workflow in Desk."), indicator: "orange" });
+				}
 				return;
 			}
 			const row = target.closest("[data-std-object-code]");
