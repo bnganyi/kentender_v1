@@ -8,6 +8,10 @@ import frappe
 from frappe import _
 
 from kentender_procurement.std_engine.services.audit_service import record_std_audit_event
+from kentender_procurement.std_engine.services.stale_output_service import (
+	mark_std_outputs_stale,
+	resolve_parameter_change_kind,
+)
 from kentender_procurement.std_engine.services.authorization_service import check_std_permission
 
 
@@ -127,10 +131,24 @@ def set_std_parameter_value(instance_code: str, parameter_code: str, value: Any,
 			}
 		).insert(ignore_permissions=True)
 
+	mark_std_outputs_stale(
+		instance_code,
+		resolve_parameter_change_kind(
+			parameter.parameter_code,
+			int(parameter.drives_dem or 0),
+			int(parameter.drives_dcm or 0),
+		),
+		actor=actor,
+	)
+
 	invalidated_outputs: list[str] = []
 	if int(parameter.drives_dem or 0) or int(parameter.drives_dcm or 0):
-		instance.readiness_status = "Invalidated"
-		instance.save(ignore_permissions=True)
+		frappe.flags.std_transition_service_context = True
+		try:
+			instance.readiness_status = "Invalidated"
+			instance.save(ignore_permissions=True)
+		finally:
+			frappe.flags.std_transition_service_context = False
 		output_rows = frappe.get_all(
 			"STD Generated Output",
 			filters={"instance_code": instance_code, "status": ("in", ["Current", "Published"])},

@@ -7,6 +7,7 @@ import frappe
 from frappe import _
 
 from kentender_procurement.std_engine.services.audit_service import record_std_audit_event
+from kentender_procurement.std_engine.services.stale_output_service import mark_std_outputs_stale
 
 
 def _instance(instance_code: str):
@@ -89,8 +90,13 @@ def add_boq_bill(instance_code: str, bill_payload: dict, actor: str) -> dict[str
 			"order_index": int(bill_payload.get("order_index", 1)),
 		}
 	).insert(ignore_permissions=True)
-	instance.readiness_status = "Invalidated"
-	instance.save(ignore_permissions=True)
+	mark_std_outputs_stale(instance.instance_code, "boq_item_quantity", actor=actor)
+	frappe.flags.std_transition_service_context = True
+	try:
+		instance.readiness_status = "Invalidated"
+		instance.save(ignore_permissions=True)
+	finally:
+		frappe.flags.std_transition_service_context = False
 	return {"bill_instance_code": doc.bill_instance_code}
 
 
@@ -122,8 +128,13 @@ def add_boq_item(bill_instance_code: str, item_payload: dict, actor: str) -> dic
 			"payload_json": json.dumps(item_payload),
 		}
 	).insert(ignore_permissions=True)
-	instance.readiness_status = "Invalidated"
-	instance.save(ignore_permissions=True)
+	mark_std_outputs_stale(instance.instance_code, "boq_item_quantity", actor=actor)
+	frappe.flags.std_transition_service_context = True
+	try:
+		instance.readiness_status = "Invalidated"
+		instance.save(ignore_permissions=True)
+	finally:
+		frappe.flags.std_transition_service_context = False
 	_invalidate_outputs(instance.instance_code)
 	record_std_audit_event("BOQ_UPDATED", "STD_INSTANCE", instance.instance_code, actor=actor)
 	return {"item_instance_code": doc.item_instance_code, "amount": amount}
@@ -147,8 +158,13 @@ def update_boq_item(item_instance_code: str, payload: dict, actor: str) -> dict[
 	doc.amount = float(doc.quantity or 0) * float(doc.rate or 0)
 	doc.payload_json = json.dumps(payload)
 	doc.save(ignore_permissions=True)
-	instance.readiness_status = "Invalidated"
-	instance.save(ignore_permissions=True)
+	mark_std_outputs_stale(instance.instance_code, "boq_item_quantity", actor=actor)
+	frappe.flags.std_transition_service_context = True
+	try:
+		instance.readiness_status = "Invalidated"
+		instance.save(ignore_permissions=True)
+	finally:
+		frappe.flags.std_transition_service_context = False
 	_invalidate_outputs(instance.instance_code)
 	record_std_audit_event("BOQ_UPDATED", "STD_INSTANCE", instance.instance_code, actor=actor)
 	return {"item_instance_code": item_instance_code, "amount": doc.amount}

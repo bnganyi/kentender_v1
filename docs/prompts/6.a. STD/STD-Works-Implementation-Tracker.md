@@ -7,7 +7,7 @@
 ## Scope guard (current execution)
 
 - Phase 0 planning artifacts are complete and retained as baseline.
-- Current approved execution scope: **Phase 1 through Phase 6 STD-CURSOR-0606** (server-side generation engine; no Desk UI in this phase).
+- Current approved execution scope: **Phase 1 through Phase 7 STD-CURSOR-0702** (readiness validator + stale output detection; no Desk UI in this phase).
 - Keep all unapproved tickets in `Pending` status until explicit approval.
 
 ## Execution order (from Cursor pack)
@@ -26,7 +26,7 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 
 ## Ticket status
 
-**Last updated:** 2026-04-29 (through Phase 6 STD-CURSOR-0601 to STD-CURSOR-0606; Phases 1–5 as previously executed)
+**Last updated:** 2026-04-29 (through Phase 7 STD-CURSOR-0701 to STD-CURSOR-0702; Phases 1–6 as previously executed)
 
 ### Phase 0 - Reconnaissance and planning baseline
 
@@ -99,8 +99,8 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 
 | Ticket | Description | Status |
 |---|---|---|
-| STD-CURSOR-0701 | Readiness rule engine | Pending |
-| STD-CURSOR-0702 | Stale output detection | Pending |
+| STD-CURSOR-0701 | Readiness rule engine | Done |
+| STD-CURSOR-0702 | Stale output detection | Done |
 
 ### Phase 8 - Addendum impact/regeneration (reference only)
 
@@ -560,5 +560,18 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 | Files changed | `procurement_planning/doctype/std_generation_job/std_generation_job.json`, `procurement_planning/doctype/std_generated_output/std_generated_output.json`, `std_engine/services/state_transition_service.py`, `std_engine/services/generation_job_service.py`, `std_engine/services/output_generators.py`, `std_engine/services/__init__.py`, `std_engine/tests/test_std_phase6_generation_engine.py`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
 | Test evidence | `bench --site kentender.midas.com migrate` (pass), `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase6_generation_engine` (11/11 pass). Playwright: not applicable (no Desk/UI). |
 | Risks remaining | Generator depth is MVP-structured; readiness/addendum phases must align hashes and invalidation with this contract. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-0701, STD-CURSOR-0702 |
+| Reviewer | Engineering |
+| Completed | **0701** — `run_std_readiness(object_type, object_code, actor)` for `STD_INSTANCE`: evaluates template/profile active, mandatory sections present, required parameter values set, works-requirements blockers (via `validate_works_requirements(..., persist=False)`), BOQ validation, and Current non-stale generated outputs for Bundle/DSM/DOM/DEM/DCM; creates `STD Readiness Run` + `STD Readiness Finding` rows; supersedes prior runs; updates instance `readiness_status` only under transition-service context; emits `READINESS_RUN_CREATED`. **0702** — `mark_std_outputs_stale(instance_code, change_kind, actor)` with change-kind → output-type matrix; `resolve_parameter_change_kind` / attachment inference; wired from parameter, BOQ, and section-attachment mutation paths. `STD Generated Output` gains `is_stale` / `stale_reason`. `STD Instance` now guards `readiness_status` mutations the same way as `instance_status`. |
+| Not completed | Full addendum-impact, ITT/GCC tamper checks, dependency graph, forms/mappings completeness, and audit-trace materiality checks are partial or stubbed; Playwright N/A (no Desk). |
+| Assumptions | Readiness run `status` reuses instance readiness vocabulary (`Ready`, `Blocked`, `Warning`, `Incomplete`); prior runs move to `Superseded` via controlled save. |
+| Files changed | `procurement_planning/doctype/std_generated_output/std_generated_output.json`, `procurement_planning/doctype/std_instance/std_instance.py`, `std_engine/services/readiness_service.py`, `std_engine/services/stale_output_service.py`, `std_engine/services/parameter_value_service.py`, `std_engine/services/boq_instance_service.py`, `std_engine/services/section_attachment_service.py`, `std_engine/services/works_requirements_service.py`, `std_engine/services/__init__.py`, `std_engine/tests/test_std_phase7_readiness.py`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | `bench --site kentender.midas.com migrate` (pass), `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase7_readiness` (5/5 pass); regressions: `...test_std_parameter_value_service` (3/3), `...test_std_works_requirements_service` (3/3), `...test_std_section_attachment_service` (3/3), `...test_std_boq_instance_service` (3/3). |
+| Risks remaining | Stale matrix is code-centralized; real tender metadata should drive finer parameter→change_kind mapping in later tickets. |
 | Ready for next ticket | Yes |
 

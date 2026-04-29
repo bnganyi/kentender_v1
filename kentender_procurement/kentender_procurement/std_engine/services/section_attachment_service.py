@@ -7,6 +7,10 @@ import frappe
 from frappe import _
 
 from kentender_procurement.std_engine.services.audit_service import record_std_audit_event
+from kentender_procurement.std_engine.services.stale_output_service import (
+	infer_change_kind_from_attachment_classification,
+	mark_std_outputs_stale,
+)
 
 
 def _sha256_text(value: str) -> str:
@@ -96,8 +100,14 @@ def add_std_section_attachment(
 		}
 	).insert(ignore_permissions=True)
 
-	instance.readiness_status = "Invalidated"
-	instance.save(ignore_permissions=True)
+	mark_std_outputs_stale(instance_code, infer_change_kind_from_attachment_classification(classification), actor=actor)
+
+	frappe.flags.std_transition_service_context = True
+	try:
+		instance.readiness_status = "Invalidated"
+		instance.save(ignore_permissions=True)
+	finally:
+		frappe.flags.std_transition_service_context = False
 	invalidated_outputs: list[str] = []
 	output_rows = frappe.get_all(
 		"STD Generated Output",

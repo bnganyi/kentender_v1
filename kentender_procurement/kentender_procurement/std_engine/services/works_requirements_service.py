@@ -110,8 +110,12 @@ def update_works_requirement_component(instance_code: str, component_code: str, 
 	rt.updated_by = actor
 	rt.save(ignore_permissions=True)
 
-	instance.readiness_status = "Invalidated"
-	instance.save(ignore_permissions=True)
+	frappe.flags.std_transition_service_context = True
+	try:
+		instance.readiness_status = "Invalidated"
+		instance.save(ignore_permissions=True)
+	finally:
+		frappe.flags.std_transition_service_context = False
 	invalidated_outputs: list[str] = []
 	if int(component.drives_dsm or 0) or int(component.drives_dem or 0) or int(component.drives_dcm or 0):
 		outputs = frappe.get_all(
@@ -147,7 +151,7 @@ def update_works_requirement_component(instance_code: str, component_code: str, 
 
 
 @frappe.whitelist()
-def validate_works_requirements(instance_code: str) -> dict[str, Any]:
+def validate_works_requirements(instance_code: str, persist: bool = True) -> dict[str, Any]:
 	instance = _get_instance(instance_code)
 	definitions = frappe.get_all(
 		"STD Works Requirement Component Definition",
@@ -174,7 +178,18 @@ def validate_works_requirements(instance_code: str) -> dict[str, Any]:
 				blockers.append({"component_code": d["component_code"], "reason": "ATTACHMENT_REQUIRED"})
 
 	ready = len(blockers) == 0
-	instance.readiness_status = "Ready" if ready else "Blocked"
-	instance.save(ignore_permissions=True)
-	return {"instance_code": instance_code, "is_valid": ready, "blockers": blockers, "readiness_status": instance.readiness_status}
+	new_status = "Ready" if ready else "Blocked"
+	if persist:
+		frappe.flags.std_transition_service_context = True
+		try:
+			instance.readiness_status = new_status
+			instance.save(ignore_permissions=True)
+		finally:
+			frappe.flags.std_transition_service_context = False
+	return {
+		"instance_code": instance_code,
+		"is_valid": ready,
+		"blockers": blockers,
+		"readiness_status": instance.readiness_status if persist else new_status,
+	}
 
