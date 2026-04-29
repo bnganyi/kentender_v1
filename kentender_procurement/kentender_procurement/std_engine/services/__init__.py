@@ -1,6 +1,8 @@
 """STD engine service package."""
 
 from .authorization_service import check_std_permission
+from .addendum_impact_service import analyze_std_addendum_impact
+from .addendum_regeneration_service import regenerate_std_outputs_for_addendum
 from .audit_service import get_std_audit_events, record_std_audit_event
 from .boq_instance_service import (
 	add_boq_bill,

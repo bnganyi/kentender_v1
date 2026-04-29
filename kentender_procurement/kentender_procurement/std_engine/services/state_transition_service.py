@@ -95,6 +95,9 @@ TRANSITIONS: dict[str, TransitionSpec] = {
 	"STD_READINESS_MARK_READY": TransitionSpec(("Not Run", "Incomplete", "Warning"), "Ready", ("Administrator", "System Manager")),
 	"STD_ADDENDUM_ANALYZE": TransitionSpec(("Draft",), "Analysis Pending", ("Administrator", "System Manager")),
 	"STD_ADDENDUM_COMPLETE_ANALYSIS": TransitionSpec(("Analysis Pending",), "Analysis Complete", ("Administrator", "System Manager")),
+	"STD_ADDENDUM_APPROVE": TransitionSpec(("Analysis Complete", "Regeneration Required"), "Approved", ("Administrator", "System Manager")),
+	"STD_ADDENDUM_REQUIRE_REGEN": TransitionSpec(("Analysis Complete", "Approved"), "Regeneration Required", ("Administrator", "System Manager")),
+	"STD_ADDENDUM_MARK_REGENERATED": TransitionSpec(("Approved", "Regeneration Required"), "Regenerated", ("Administrator", "System Manager")),
 }
 
 

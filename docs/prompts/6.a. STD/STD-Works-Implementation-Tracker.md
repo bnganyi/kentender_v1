@@ -7,7 +7,7 @@
 ## Scope guard (current execution)
 
 - Phase 0 planning artifacts are complete and retained as baseline.
-- Current approved execution scope: **Phase 1 through Phase 7 STD-CURSOR-0702** (readiness validator + stale output detection; no Desk UI in this phase).
+- Current approved execution scope: **Phase 1 through Phase 8 STD-CURSOR-0802** (addendum impact/regeneration services; no Desk UI in this phase).
 - Keep all unapproved tickets in `Pending` status until explicit approval.
 
 ## Execution order (from Cursor pack)
@@ -26,7 +26,7 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 
 ## Ticket status
 
-**Last updated:** 2026-04-29 (through Phase 7 STD-CURSOR-0701 to STD-CURSOR-0702; Phases 1–6 as previously executed)
+**Last updated:** 2026-04-29 (through Phase 8 STD-CURSOR-0801 to STD-CURSOR-0802; Phases 1–7 as previously executed)
 
 ### Phase 0 - Reconnaissance and planning baseline
 
@@ -106,8 +106,8 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 
 | Ticket | Description | Status |
 |---|---|---|
-| STD-CURSOR-0801 | Addendum impact analyzer | Pending |
-| STD-CURSOR-0802 | Addendum regeneration service | Pending |
+| STD-CURSOR-0801 | Addendum impact analyzer | Done |
+| STD-CURSOR-0802 | Addendum regeneration service | Done |
 
 ### Phase 9 - Tender Management integration refactor (reference only)
 
@@ -573,5 +573,18 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 | Files changed | `procurement_planning/doctype/std_generated_output/std_generated_output.json`, `procurement_planning/doctype/std_instance/std_instance.py`, `std_engine/services/readiness_service.py`, `std_engine/services/stale_output_service.py`, `std_engine/services/parameter_value_service.py`, `std_engine/services/boq_instance_service.py`, `std_engine/services/section_attachment_service.py`, `std_engine/services/works_requirements_service.py`, `std_engine/services/__init__.py`, `std_engine/tests/test_std_phase7_readiness.py`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
 | Test evidence | `bench --site kentender.midas.com migrate` (pass), `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase7_readiness` (5/5 pass); regressions: `...test_std_parameter_value_service` (3/3), `...test_std_works_requirements_service` (3/3), `...test_std_section_attachment_service` (3/3), `...test_std_boq_instance_service` (3/3). |
 | Risks remaining | Stale matrix is code-centralized; real tender metadata should drive finer parameter→change_kind mapping in later tickets. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-0801, STD-CURSOR-0802 |
+| Reviewer | Engineering |
+| Completed | **0801** — Added `analyze_std_addendum_impact(instance_code, addendum_code, proposed_changes, actor)` in `std_engine/services/addendum_impact_service.py` with required change-type matrix mapping to affected outputs, acknowledgement, and deadline-review flags. Persists `STD Addendum Impact Analysis` with analysis payload fields, transitions `Draft -> Analysis Pending -> Analysis Complete`, then `Regeneration Required` (or `Approved` when no output regeneration impact), and emits `ADDENDUM_IMPACT_ANALYZED`. **0802** — Added `regenerate_std_outputs_for_addendum(impact_analysis_code, actor)` in `std_engine/services/addendum_regeneration_service.py`, enforcing impact status gate (`Approved` or `Regeneration Required`), regenerating only impacted output types via generation engine with `addendum_code`, attaching addendum lineage (`source_addendum_code`, `supersedes_output_code`) to new outputs, and moving impact status to `Regenerated` with `OUTPUT_REGENERATED` audit events. |
+| Not completed | Addendum issuance gate wiring in TM workflows and full legal/business-policy approval workflow are deferred to later integration phases; Playwright not applicable (no Desk changes). |
+| Assumptions | JSON fields for impact payloads are persisted as JSON strings for MariaDB compatibility in `db.set_value`; regeneration supersedes prior **Current** outputs while preserving prior `Published` records as immutable history. |
+| Files changed | `procurement_planning/doctype/std_addendum_impact_analysis/std_addendum_impact_analysis.json`, `procurement_planning/doctype/std_generated_output/std_generated_output.json`, `std_engine/services/addendum_impact_service.py`, `std_engine/services/addendum_regeneration_service.py`, `std_engine/services/state_transition_service.py`, `std_engine/services/__init__.py`, `std_engine/tests/test_std_phase8_addendum.py`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | `bench --site kentender.midas.com migrate` (pass), `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase8_addendum` (5/5 pass). Regression: `...test_std_phase7_readiness` (5/5 pass), `...test_std_phase6_generation_engine` (11/11 pass). |
+| Risks remaining | Impact matrix is deterministic but still coarse-grained for some conditional pack rows (e.g., evaluation-option and drawing/spec conditional branches); finer configuration-driven branching can be added in later hardening. |
 | Ready for next ticket | Yes |
 
