@@ -7,7 +7,7 @@
 ## Scope guard (current execution)
 
 - Phase 0 planning artifacts are complete and retained as baseline.
-- Current approved execution scope: **Phase 1 through Phase 11 STD-CURSOR-1108** (workbench shell through Tender STD binding panel; Phase 12+ next).
+- Current approved execution scope: **Phase 1 through Phase 12 STD-CURSOR-1206** (Smoke Contract automation suite + UI smoke; Phase 13+ next).
 - Keep all unapproved tickets in `Pending` status until explicit approval.
 
 ## Execution order (from Cursor pack)
@@ -151,16 +151,16 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 | STD-CURSOR-1107 | Addendum impact UI | Done |
 | STD-CURSOR-1108 | TM v2 STD panel integration UI | Done |
 
-### Phase 12 - Smoke contract automation (reference only)
+### Phase 12 - Smoke contract automation
 
 | Ticket | Description | Status |
 |---|---|---|
-| STD-CURSOR-1201 | Seed load smoke tests | Pending |
-| STD-CURSOR-1202 | Locked section and parameter tests | Pending |
-| STD-CURSOR-1203 | DSM/DOM/DEM/DCM/BOQ tests | Pending |
-| STD-CURSOR-1204 | Bundle/readiness/addendum tests | Pending |
-| STD-CURSOR-1205 | Cross-module and negative regression tests | Pending |
-| STD-CURSOR-1206 | UI smoke tests | Pending |
+| STD-CURSOR-1201 | Seed load smoke tests | Done |
+| STD-CURSOR-1202 | Locked section and parameter tests | Done |
+| STD-CURSOR-1203 | DSM/DOM/DEM/DCM/BOQ tests | Done |
+| STD-CURSOR-1204 | Bundle/readiness/addendum tests | Done |
+| STD-CURSOR-1205 | Cross-module and negative regression tests | Done |
+| STD-CURSOR-1206 | UI smoke tests | Done |
 
 ### Phase 13 - Hardening and evidence export (reference only)
 
@@ -859,5 +859,18 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 | Files changed | `std_engine/services/instance_*.py`, `std_engine/services/tender_std_panel_service.py`, `std_engine/api/instance_workbench.py`, `std_engine/api/tender_std_panel.py`, `std_engine/tests/test_std_phase11_instance_panels.py`, `std_engine/services/boq_instance_service.py`, `std_engine/services/parameter_value_service.py`, `std_engine/services/section_attachment_service.py`, `std_engine/services/works_requirements_service.py`, `std_engine/services/template_version_parameters_service.py`, `public/js/std_engine_workspace.js`, `public/js/tender_std_panel.js`, `kentender_procurement/hooks.py` |
 | Test evidence | Backend: `bench run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase11_instance_panels` (10/10 pass); `test_std_phase11_instance_shell` (6/6); `test_std_parameter_value_service` (3/3). UI: `npx playwright test tests/ui/smoke/procurement/std-workbench-1001.spec.ts --grep "STD-CURSOR-1101"` (covers 1101+1102 instance parameters poll). **STD Tender Binding** form panel not automated in Playwright (requires DocType form session). Assets: `./scripts/bench-with-node.sh build --app kentender_procurement`. |
 | Risks remaining | `tender_std_panel.js` prepends a custom HTML block on each refresh (stable host via `frm._kt_tm_std_panel_host`); operators should hard-refresh after deploy. |
-| Ready for next ticket | Yes (Phase 12) |
+| Ready for next ticket | Yes (Phase 13) |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-1201 — STD-CURSOR-1206 |
+| Reviewer | Engineering |
+| Completed | Phase 12 Smoke Contract automation: **1201** DOC1/STD-WORKS/building version/profile/parts/sections/source-trace (`phase12_smoke_helpers.py`, `test_std_phase12_1201_seed_load_smoke.py`). **1202** ITT/GCC locked + TDS/SCC parameter-only (tree + DB); required-parameter readiness blocker; published BOQ edit denial; tender-security dependency (`test_std_phase12_1202_locked_and_parameters_smoke.py`). **1203** Section IV in bundle, DSM read-only BOQ, DOM without arithmetic correction, DEM arithmetic stage, DCM carry-forward, BOQ validate (`test_std_phase12_1203_output_models_smoke.py`). **1204** bundle manifest + preface exclusion, published bundle immutability, readiness pass/block/manual field denial, addendum analyze + deadline regeneration (`test_std_phase12_1204_bundle_readiness_addendum_smoke.py`). **1205** binding readiness gating, DOM/DCM guards, manual submission/opening/eval/contract denial + published output regression (`test_std_phase12_1205_cross_module_negative_smoke.py`). **1206** Playwright `STD-CURSOR-1206 smoke contract UI` in `std-workbench-1001.spec.ts`. |
+| Not completed | Dedicated upload-as-source denial API not in repo (no Upload STD in UI + TM guards). Single tender-publish vs STD readiness guard not centralized beyond binding `std_outputs_current`. |
+| Assumptions | DOC1 Works Building seed on site for 1201/1202 seed-only tests (skipped otherwise). PH6 `_Phase6Fixture` for generation tests. Run Phase 12 backend modules sequentially if parallel runs deadlock on `DOC1_WORKS_PH6` inserts. |
+| Files changed | `std_engine/tests/phase12_smoke_helpers.py`, `std_engine/tests/test_std_phase12_1201_seed_load_smoke.py`, `test_std_phase12_1202_locked_and_parameters_smoke.py`, `test_std_phase12_1203_output_models_smoke.py`, `test_std_phase12_1204_bundle_readiness_addendum_smoke.py`, `test_std_phase12_1205_cross_module_negative_smoke.py`, `tests/ui/smoke/procurement/std-workbench-1001.spec.ts`, `STD-Works-Implementation-Tracker.md` |
+| Test evidence | Backend (sequential): `bench run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase12_1201_seed_load_smoke` (7/7); `--module ...1202...` (7/7); `--module ...1203...` (6/6); `--module ...1204...` (7/7); `--module ...1205...` (10/10). UI: `cd apps/kentender_v1 && npx playwright test tests/ui/smoke/procurement/std-workbench-1001.spec.ts --grep "STD-CURSOR-1206" --retries=0`. |
+| Risks remaining | Parallel workers may deadlock on PH6 fixture `Source Document Registry` insert; serialize modules in CI. |
+| Ready for next ticket | Yes (Phase 13) |
 

@@ -503,3 +503,133 @@ test.describe('STD-CURSOR-1001 workbench shell', () => {
 		await expect(page.getByTestId('std-instance-status')).toBeVisible();
 	});
 });
+
+test.describe('STD-CURSOR-1206 smoke contract UI', () => {
+	test('workbench, template ITT/GCC badges, instance BOQ/previews/readiness, no Upload STD', async ({ page }) => {
+		await loginAsAdministrator(page);
+		await page.goto('/app/std-engine');
+		await page.waitForLoadState('domcontentloaded');
+		await expect(page.getByTestId('std-workbench-page')).toBeVisible({ timeout: 45_000 });
+		await expect(page.getByTestId('std-page-title')).toBeVisible();
+		await expect(page.getByRole('button', { name: /^Upload STD$/i })).toHaveCount(0);
+
+		await page.getByTestId('std-scope-active-versions').click();
+		await page.getByTestId('std-queue-active').click();
+		await page.getByTestId('std-search-input').fill('STDTV-WORKS-BUILDING');
+		await expect
+			.poll(
+				async () =>
+					(await page.locator('[data-testid^="std-row-"]').count()) +
+					((await page.getByTestId('std-search-results-empty').count()) > 0 ? 1 : 0),
+				{ timeout: 45_000 },
+			)
+			.toBeGreaterThan(0);
+		const buildingTv = page
+			.locator('[data-testid^="std-row-"][data-std-object-type="Template Version"]')
+			.filter({ hasText: 'STDTV-WORKS-BUILDING-REV-APR-2022' })
+			.first();
+		if ((await buildingTv.count()) > 0) {
+			await buildingTv.click();
+			await expect(page.getByTestId('std-selected-object-code')).toContainText('STDTV-WORKS-BUILDING', {
+				timeout: 45_000,
+			});
+			await page.getByTestId('std-tab-template-structure').click();
+			await expect(page.getByTestId('std-template-panel-structure')).toBeVisible({ timeout: 45_000 });
+			const tree = page.getByTestId('std-structure-tree');
+			await expect(tree).toBeVisible({ timeout: 45_000 });
+			await expect(tree.locator('span.badge').filter({ hasText: /^ITT$/ }).first()).toBeVisible({
+				timeout: 45_000,
+			});
+			await expect(tree.locator('span.badge').filter({ hasText: /^GCC$/ }).first()).toBeVisible({
+				timeout: 45_000,
+			});
+		} else {
+			await page.getByTestId('std-search-input').fill('');
+			await expect
+				.poll(
+					async () =>
+						(await page.locator('[data-testid^="std-row-"][data-std-object-type="Template Version"]').count()) +
+						((await page.getByTestId('std-search-results-empty').count()) > 0 ? 1 : 0),
+					{ timeout: 45_000 },
+				)
+				.toBeGreaterThan(0);
+			const anyTv = page.locator('[data-testid^="std-row-"][data-std-object-type="Template Version"]').first();
+			test.skip((await anyTv.count()) === 0, 'No Template Version row on this site.');
+			await anyTv.click();
+			await page.getByTestId('std-tab-template-structure').click();
+			await expect(page.getByTestId('std-template-panel-structure')).toBeVisible({ timeout: 45_000 });
+			await expect(page.getByTestId('std-structure-tree')).toBeVisible({ timeout: 45_000 });
+			await expect(page.getByTestId('std-structure-node-section').first()).toBeVisible({ timeout: 45_000 });
+		}
+
+		await page.getByTestId('std-scope-std-instances').click();
+		const instanceQueues = [
+			'std-queue-draft-instances',
+			'std-queue-instance-ready',
+			'std-queue-published-locked',
+			'std-queue-instance-blocked',
+		];
+		let instRow = page.locator('[data-testid^="std-row-"][data-std-object-type="STD Instance"]').first();
+		for (const qid of instanceQueues) {
+			const q = page.getByTestId(qid);
+			if ((await q.count()) === 0) {
+				continue;
+			}
+			await q.click();
+			await page.getByTestId('std-search-input').fill('');
+			await expect
+				.poll(
+					async () =>
+						(await page.locator('[data-testid^="std-row-"]').count()) +
+						((await page.getByTestId('std-search-results-empty').count()) > 0 ? 1 : 0),
+					{ timeout: 45_000 },
+				)
+				.toBeGreaterThan(0);
+			instRow = page.locator('[data-testid^="std-row-"][data-std-object-type="STD Instance"]').first();
+			if ((await instRow.count()) > 0) {
+				break;
+			}
+		}
+		test.skip((await instRow.count()) === 0, 'No STD Instance rows in instances scope on this site.');
+		await instRow.click();
+		await page.getByTestId('std-tab-instance-boq').click();
+		await expect(page.getByTestId('std-instance-panel-boq')).toBeVisible({ timeout: 45_000 });
+		await expect
+			.poll(
+				async () =>
+					(await page.getByTestId('std-boq-summary-bar').count()) +
+					((await page.getByTestId('std-boq-validation-panel').count()) > 0 ? 1 : 0),
+				{ timeout: 45_000 },
+			)
+			.toBeGreaterThan(0);
+		if ((await page.getByTestId('std-boq-summary-bar').count()) > 0) {
+			await expect(page.getByTestId('std-boq-item-grid')).toBeVisible({ timeout: 45_000 });
+		}
+
+		await page.getByTestId('std-tab-generated-outputs').click();
+		await expect(page.getByTestId('std-instance-panel-generated-outputs')).toBeVisible({ timeout: 45_000 });
+		await expect
+			.poll(
+				async () =>
+					(await page.getByTestId('std-preview-dsm').count()) +
+					((await page.getByTestId('std-preview-dom').count()) > 0 ? 1 : 0) +
+					((await page.getByTestId('std-preview-dem').count()) > 0 ? 1 : 0) +
+					((await page.getByTestId('std-preview-dcm').count()) > 0 ? 1 : 0) +
+					((await page.getByTestId('std-instance-output-jobs').count()) > 0 ? 1 : 0),
+				{ timeout: 45_000 },
+			)
+			.toBeGreaterThan(0);
+
+		await page.getByTestId('std-tab-instance-readiness').click();
+		await expect(page.getByTestId('std-instance-panel-readiness')).toBeVisible({ timeout: 45_000 });
+		await expect
+			.poll(
+				async () =>
+					(await page.getByTestId('std-instance-readiness-findings').count()) +
+					((await page.getByTestId('std-instance-readiness-run').count()) > 0 ? 1 : 0) +
+					((await page.getByTestId('std-instance-readiness-summary').count()) > 0 ? 1 : 0),
+				{ timeout: 45_000 },
+			)
+			.toBeGreaterThan(0);
+	});
+});
