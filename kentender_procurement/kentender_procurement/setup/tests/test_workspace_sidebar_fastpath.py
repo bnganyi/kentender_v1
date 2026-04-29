@@ -44,3 +44,4 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		items = bootinfo.get("workspace_sidebar_item") or {}
 		self.assertIn("procurement home", items)
 		self.assertIn("procurement planning", items)
+		self.assertIn("std engine", items)

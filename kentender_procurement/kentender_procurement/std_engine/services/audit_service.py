@@ -37,7 +37,7 @@ REQUIRED_EVENT_TYPES = {
 	"STD_TRANSITION_DENIED",
 }
 
-AUDIT_READ_ROLES = {"System Manager", "Administrator", "Auditor"}
+AUDIT_READ_ROLES = frozenset({"System Manager", "Administrator", "Auditor"})
 
 
 @frappe.whitelist()

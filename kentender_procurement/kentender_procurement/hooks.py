@@ -51,13 +51,16 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/demand_intake_workspace.css?v={_desk_asset_v('public/css/demand_intake_workspace.css')}",
 	f"/assets/kentender_procurement/css/procurement_planning_workspace.css?v={_desk_asset_v('public/css/procurement_planning_workspace.css')}",
 	f"/assets/kentender_procurement/css/procurement_home_workspace.css?v={_desk_asset_v('public/css/procurement_home_workspace.css')}",
+	f"/assets/kentender_procurement/css/std_engine_workspace.css?v={_desk_asset_v('public/css/std_engine_workspace.css')}",
 	f"/assets/kentender_procurement/css/procurement_package.css?v={_desk_asset_v('public/css/procurement_package.css')}",
 ]
 app_include_js = [
+	f"/assets/kentender_procurement/js/workspace_list_selection_utils.js?v={_desk_asset_v('public/js/workspace_list_selection_utils.js')}",
 	f"/assets/kentender_procurement/js/demand_intake_workspace.js?v={_desk_asset_v('public/js/demand_intake_workspace.js')}",
 	f"/assets/kentender_procurement/js/pp_template_selector.js?v={_desk_asset_v('public/js/pp_template_selector.js')}",
 	f"/assets/kentender_procurement/js/procurement_planning_workspace.js?v={_desk_asset_v('public/js/procurement_planning_workspace.js')}",
 	f"/assets/kentender_procurement/js/procurement_home_workspace.js?v={_desk_asset_v('public/js/procurement_home_workspace.js')}",
+	f"/assets/kentender_procurement/js/std_engine_workspace.js?v={_desk_asset_v('public/js/std_engine_workspace.js')}",
 ]
 
 # include js, css files in header of web template

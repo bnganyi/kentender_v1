@@ -43,6 +43,10 @@
 	}
 
 	function diaQueueListScrollHost(listRoot) {
+		const helper = window.KTWorkspaceListSelection;
+		if (helper && typeof helper.listHost === "function") {
+			return helper.listHost(listRoot, ".kt-dia-queue-list");
+		}
 		if (!listRoot) {
 			return null;
 		}
@@ -50,11 +54,27 @@
 	}
 
 	function diaReadQueueListScrollTop(listRoot) {
+		const helper = window.KTWorkspaceListSelection;
+		if (helper && typeof helper.readScrollTop === "function") {
+			return helper.readScrollTop(listRoot, ".kt-dia-queue-list");
+		}
 		const host = diaQueueListScrollHost(listRoot);
 		return host && typeof host.scrollTop === "number" ? host.scrollTop : 0;
 	}
 
 	function diaRestoreQueueListScrollTop(listRoot, top, selectedName) {
+		const helper = window.KTWorkspaceListSelection;
+		if (helper && typeof helper.restoreScrollTop === "function") {
+			helper.restoreScrollTop(
+				listRoot,
+				".kt-dia-queue-list",
+				top,
+				selectedName,
+				"[data-dia-demand]",
+				"data-dia-demand"
+			);
+			return;
+		}
 		const host = diaQueueListScrollHost(listRoot);
 		if (!host) {
 			return;
@@ -107,6 +127,21 @@
 
 	function syncDemandListSelection(listRoot, selectedName, opts) {
 		opts = opts || {};
+		const helper = window.KTWorkspaceListSelection;
+		if (helper && typeof helper.syncSelection === "function") {
+			helper.syncSelection(
+				listRoot,
+				".kt-dia-queue-list",
+				".kt-dia-queue-item[data-dia-demand]",
+				"data-dia-demand",
+				selectedName,
+				"is-active"
+			);
+			if (opts.ensureSelectedVisible) {
+				diaRestoreQueueListScrollTop(listRoot, diaReadQueueListScrollTop(listRoot), selectedName);
+			}
+			return;
+		}
 		const host = diaQueueListScrollHost(listRoot);
 		if (!host) {
 			return;

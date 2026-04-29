@@ -1740,6 +1740,18 @@
 					: "";
 			planMetaLine = [pCode, pFy].filter(function (s) { return s; }).join(" · ");
 		}
+		const scrollHostSel = ".kt-pp-package-list-inner";
+		const rowSel = ".kt-pp-package-row";
+		const rowAttr = "data-pp-package-name";
+		const helper = window.KTWorkspaceListSelection;
+		let prevScroll = 0;
+		if (helper && typeof helper.readScrollTop === "function") {
+			prevScroll = helper.readScrollTop(listRoot, scrollHostSel);
+		} else {
+			const prevInner = listRoot.querySelector(scrollHostSel);
+			prevScroll =
+				prevInner && typeof prevInner.scrollTop === "number" ? prevInner.scrollTop : 0;
+		}
 		let html = '<div class="kt-pp-package-list-inner">';
 		for (let i = 0; i < rows.length; i++) {
 			const row = rows[i];
@@ -1793,11 +1805,34 @@
 		}
 		html += "</div>";
 		listRoot.innerHTML = html;
+		if (helper && typeof helper.syncSelection === "function" && typeof helper.restoreScrollTop === "function") {
+			helper.syncSelection(listRoot, scrollHostSel, rowSel, rowAttr, selectedPackageName, "is-active");
+			helper.restoreScrollTop(listRoot, scrollHostSel, prevScroll, selectedPackageName, rowSel, rowAttr);
+		} else {
+			const inner = listRoot.querySelector(scrollHostSel);
+			if (inner) {
+				inner.scrollTop = prevScroll;
+			}
+		}
 	}
 
-	function syncPackageRowSelectionHighlight() {
-		document.querySelectorAll(".kt-pp-package-row").forEach(function (btn) {
-			const n = btn.getAttribute("data-pp-package-name");
+	function syncPackageRowSelectionHighlight(opts) {
+		opts = opts || {};
+		const listRoot = document.getElementById("kt-pp-list-root");
+		const helper = window.KTWorkspaceListSelection;
+		const scrollHostSel = ".kt-pp-package-list-inner";
+		const rowSel = ".kt-pp-package-row";
+		const rowAttr = "data-pp-package-name";
+		if (listRoot && helper && typeof helper.syncSelection === "function") {
+			helper.syncSelection(listRoot, scrollHostSel, rowSel, rowAttr, selectedPackageName, "is-active");
+			if (opts.ensureSelectedVisible && selectedPackageName && typeof helper.restoreScrollTop === "function") {
+				const top = helper.readScrollTop(listRoot, scrollHostSel);
+				helper.restoreScrollTop(listRoot, scrollHostSel, top, selectedPackageName, rowSel, rowAttr);
+			}
+			return;
+		}
+		document.querySelectorAll(rowSel).forEach(function (btn) {
+			const n = btn.getAttribute(rowAttr);
 			btn.classList.toggle("is-active", !!(n && n === selectedPackageName));
 		});
 	}

@@ -1,3 +1,16 @@
+from pathlib import Path
+
+
+def _workspace_list_selection_utils_v() -> int:
+	"""Cache-bust for strategy-shipped list scroll/selection helper (no cross-app path)."""
+	try:
+		p = Path(__file__).resolve().parent / "public" / "js" / "workspace_list_selection_utils.js"
+		s = p.stat()
+		return int((s.st_mtime_ns + s.st_size) % 2_147_483_647)
+	except OSError:
+		return 1
+
+
 app_name = "kentender_strategy"
 app_title = "Kentender Strategy"
 app_publisher = "KenTender"
@@ -30,7 +43,10 @@ app_include_css = [
 	"/assets/kentender_strategy/css/strategic_plan_form.css",
 	"/assets/kentender_strategy/css/strategy_builder_page.css?v=10",
 ]
-app_include_js = "/assets/kentender_strategy/js/strategy_workspace.js?v=12"
+app_include_js = [
+	f"/assets/kentender_strategy/js/workspace_list_selection_utils.js?v={_workspace_list_selection_utils_v()}",
+	"/assets/kentender_strategy/js/strategy_workspace.js?v=12",
+]
 
 page_js = {"strategy-builder": "public/js/strategy_builder_page.js"}
 

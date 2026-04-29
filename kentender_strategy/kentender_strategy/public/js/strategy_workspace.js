@@ -647,17 +647,36 @@
 			})
 			.join("");
 		plansRoot.innerHTML = `<div class="kt-strategy-plan-list" data-testid="strategic-plan-list">${items}</div>`;
-		const rowList = plansRoot.querySelector('[data-testid="strategic-plan-list"]');
-		if (rowList && typeof opts.preserveScrollTop === "number") {
-			rowList.scrollTop = opts.preserveScrollTop;
-		}
-		const selectedSlug = planNameSlug(selectedName);
-		const selectedEl = plansRoot.querySelector(`[data-testid="strategic-plan-row-${selectedSlug}"]`);
-		if (rowList && selectedEl && opts.ensureSelectedVisible) {
-			const rowRect = selectedEl.getBoundingClientRect();
-			const listRect = rowList.getBoundingClientRect();
-			if (rowRect.top < listRect.top || rowRect.bottom > listRect.bottom) {
-				selectedEl.scrollIntoView({ block: "nearest" });
+		const listSel = '[data-testid="strategic-plan-list"]';
+		const rowSel = ".kt-strategy-plan-row";
+		const rowAttr = "data-plan-name";
+		const helper = window.KTWorkspaceListSelection;
+		if (helper && typeof helper.restoreScrollTop === "function") {
+			if (typeof opts.preserveScrollTop === "number") {
+				helper.restoreScrollTop(
+					plansRoot,
+					listSel,
+					opts.preserveScrollTop,
+					opts.ensureSelectedVisible ? selectedName : null,
+					rowSel,
+					rowAttr
+				);
+			} else if (opts.ensureSelectedVisible && selectedName) {
+				helper.restoreScrollTop(plansRoot, listSel, 0, selectedName, rowSel, rowAttr);
+			}
+		} else {
+			const rowList = plansRoot.querySelector(listSel);
+			if (rowList && typeof opts.preserveScrollTop === "number") {
+				rowList.scrollTop = opts.preserveScrollTop;
+			}
+			const selectedSlug = planNameSlug(selectedName);
+			const selectedEl = plansRoot.querySelector(`[data-testid="strategic-plan-row-${selectedSlug}"]`);
+			if (rowList && selectedEl && opts.ensureSelectedVisible) {
+				const rowRect = selectedEl.getBoundingClientRect();
+				const listRect = rowList.getBoundingClientRect();
+				if (rowRect.top < listRect.top || rowRect.bottom > listRect.bottom) {
+					selectedEl.scrollIntoView({ block: "nearest" });
+				}
 			}
 		}
 		plansRoot.querySelectorAll(".kt-strategy-plan-row").forEach((btn) => {
@@ -667,15 +686,29 @@
 
 	function syncPlanListSelection(plansRoot, selectedName, opts) {
 		opts = opts || {};
-		const rowList = plansRoot.querySelector('[data-testid="strategic-plan-list"]');
+		const listSel = '[data-testid="strategic-plan-list"]';
+		const rowSel = ".kt-strategy-plan-row";
+		const rowAttr = "data-plan-name";
+		const helper = window.KTWorkspaceListSelection;
+		if (helper && typeof helper.syncSelection === "function") {
+			helper.syncSelection(plansRoot, listSel, rowSel, rowAttr, selectedName, "is-active");
+			if (typeof opts.preserveScrollTop === "number") {
+				helper.restoreScrollTop(plansRoot, listSel, opts.preserveScrollTop, selectedName, rowSel, rowAttr);
+			} else if (opts.ensureSelectedVisible && selectedName) {
+				const top = helper.readScrollTop(plansRoot, listSel);
+				helper.restoreScrollTop(plansRoot, listSel, top, selectedName, rowSel, rowAttr);
+			}
+			return;
+		}
+		const rowList = plansRoot.querySelector(listSel);
 		if (!rowList) {
 			return;
 		}
 		if (typeof opts.preserveScrollTop === "number") {
 			rowList.scrollTop = opts.preserveScrollTop;
 		}
-		plansRoot.querySelectorAll(".kt-strategy-plan-row").forEach((btn) => {
-			const isActive = btn.getAttribute("data-plan-name") === selectedName;
+		plansRoot.querySelectorAll(rowSel).forEach((btn) => {
+			const isActive = btn.getAttribute(rowAttr) === selectedName;
 			btn.classList.toggle("is-active", isActive);
 		});
 		const selectedSlug = planNameSlug(selectedName);

@@ -7,7 +7,7 @@
 ## Scope guard (current execution)
 
 - Phase 0 planning artifacts are complete and retained as baseline.
-- Current approved execution scope: **Phase 1 through Phase 9 STD-CURSOR-0905** (TM integration service guards; no Desk UI in this phase).
+- Current approved execution scope: **Phase 1 through Phase 10 STD-CURSOR-1014** (workbench shell through template-version Audit & evidence tab; Phase 11+ next).
 - Keep all unapproved tickets in `Pending` status until explicit approval.
 
 ## Execution order (from Cursor pack)
@@ -26,7 +26,7 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 
 ## Ticket status
 
-**Last updated:** 2026-04-29 (through Phase 9 STD-CURSOR-0901 to STD-CURSOR-0905; Phases 1–8 as previously executed)
+**Last updated:** 2026-04-29 (through Phase 10 STD-CURSOR-1014; Phases 1–9 as previously executed)
 
 ### Phase 0 - Reconnaissance and planning baseline
 
@@ -123,20 +123,20 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 
 | Ticket | Description | Status |
 |---|---|---|
-| STD-CURSOR-1001 | Workbench route and shell | Pending |
-| STD-CURSOR-1002 | KPI/risk strip | Pending |
-| STD-CURSOR-1003 | Scope tabs and queue bar | Pending |
-| STD-CURSOR-1004 | Search and filters | Pending |
-| STD-CURSOR-1005 | Object list panel | Pending |
-| STD-CURSOR-1006 | Detail panel and action bar | Pending |
-| STD-CURSOR-1007 | Template version detail tabs | Pending |
-| STD-CURSOR-1008 | Structure tab | Pending |
-| STD-CURSOR-1009 | Parameters tab | Pending |
-| STD-CURSOR-1010 | Forms tab | Pending |
-| STD-CURSOR-1011 | Works configuration tab | Pending |
-| STD-CURSOR-1012 | Mappings tab | Pending |
-| STD-CURSOR-1013 | Reviews and approval tab | Pending |
-| STD-CURSOR-1014 | Audit and evidence tab | Pending |
+| STD-CURSOR-1001 | Workbench route and shell | Done |
+| STD-CURSOR-1002 | KPI/risk strip | Done |
+| STD-CURSOR-1003 | Scope tabs and queue bar | Done |
+| STD-CURSOR-1004 | Search and filters | Done |
+| STD-CURSOR-1005 | Object list panel | Done |
+| STD-CURSOR-1006 | Detail panel and action bar | Done |
+| STD-CURSOR-1007 | Template version detail tabs | Done |
+| STD-CURSOR-1008 | Structure tab | Done |
+| STD-CURSOR-1009 | Parameters tab | Done |
+| STD-CURSOR-1010 | Forms tab | Done |
+| STD-CURSOR-1011 | Works configuration tab | Done |
+| STD-CURSOR-1012 | Mappings tab | Done |
+| STD-CURSOR-1013 | Reviews and approval tab | Done |
+| STD-CURSOR-1014 | Audit and evidence tab | Done |
 
 ### Phase 11 - TM integration UI (reference only)
 
@@ -651,5 +651,187 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 | Files changed | `std_engine/services/tender_contract_guard_service.py`, `std_engine/services/__init__.py`, `std_engine/tests/test_std_phase9_contract_guard.py`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
 | Test evidence | `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase9_contract_guard` (3/3 pass); regression: `...test_std_phase9_opening_guard` (2/2), `...test_std_phase9_evaluation_guard` (2/2), `...test_std_phase9_submission_guard` (2/2), `...test_std_phase9_tender_binding` (2/2). |
 | Risks remaining | Contract creation callsites outside std_engine service package must be updated to route through these guards to guarantee global enforcement. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-1001 |
+| Reviewer | Engineering |
+| Completed | Implemented `/desk/std-engine` workbench shell scaffold via `public/js/std_engine_workspace.js` with route-aware mount and required placeholders/test IDs: `std-workbench-page`, `std-page-title`, `std-kpi-strip`, `std-scope-tabs`, `std-queue-bar`, `std-search-input`, `std-filter-panel`, `std-object-list`, `std-object-detail`, `std-action-bar`, `std-blockers-panel`. Added layout CSS scaffold in `public/css/std_engine_workspace.css` and wired Desk assets in `hooks.py` app includes. Added Playwright smoke spec `tests/ui/smoke/procurement/std-workbench-1001.spec.ts` asserting route load, required IDs, non-list rendering guard, and absence of `Upload STD` primary action. |
+| Not completed | None for ticket 1001 scope. |
+| Assumptions | Ticket 1001 is shell-only; all 1002+ behaviors remain intentionally placeholder/static per scope. |
+| Files changed | `kentender_procurement/public/js/std_engine_workspace.js`, `kentender_procurement/public/css/std_engine_workspace.css`, `kentender_procurement/hooks.py`, `tests/ui/smoke/procurement/std-workbench-1001.spec.ts`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | Site sync and assets: `bench --site kentender.midas.com migrate` (pass), `./scripts/bench-with-node.sh build --app kentender_procurement` (pass), `bench --site kentender.midas.com clear-cache` (pass). UI smoke: `cd apps/kentender_v1 && npx playwright test tests/ui/smoke/procurement/std-workbench-1001.spec.ts --reporter=line` (1/1 pass). |
+| Risks remaining | `bench restart` depends on supervisor in this environment; when supervisor is unavailable, keep using the active `bench start` process for runtime validation. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-1002 |
+| Reviewer | Engineering |
+| Completed | Implemented interactive KPI/risk strip for `/desk/std-engine` with live counts via new API `std_engine/api/landing.py::get_std_workbench_kpi_strip`. Added eight KPI cards (`Draft Versions`, `Validation Blocked`, `Legal Review Pending`, `Policy Review Pending`, `Active Versions`, `Instances Blocked`, `Generation Failures`, `Addendum Impact Pending`) rendered in `public/js/std_engine_workspace.js`, wired click-to-select behavior, queue/scope state handoff (`std-active-queue-state`, shell `data-active-*` attributes, `std-workbench:kpi-selected` event), and high-risk visual variants in `public/css/std_engine_workspace.css`. |
+| Not completed | Full queue-bar/scope-tab behavior, object list filtering, and advanced filter chips remain for 1003/1004 as planned. |
+| Assumptions | 1002 queue handoff IDs (`draft_versions`, `validation_blocked`, `legal_review`, `policy_review`, `active_versions`, `instance_blocked`, `generation_failed`, `addendum_impact`) are forward-compatible contract values for 1003 queue implementation. |
+| Files changed | `std_engine/api/landing.py`, `std_engine/api/__init__.py`, `std_engine/tests/test_std_phase10_kpi_strip.py`, `public/js/std_engine_workspace.js`, `public/css/std_engine_workspace.css`, `tests/ui/smoke/procurement/std-workbench-1001.spec.ts`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | Backend: `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase10_kpi_strip` (2/2 pass). UI + regressions: `./scripts/bench-with-node.sh build --app kentender_procurement` (pass), `bench --site kentender.midas.com clear-cache` (pass), `cd apps/kentender_v1 && npx playwright test tests/ui/smoke/procurement/std-workbench-1001.spec.ts --reporter=line` (3/3 pass, including KPI click + hard-refresh sidebar coverage). |
+| Risks remaining | KPI count semantics for `instances_blocked` currently aggregate both `instance_status=Blocked` and `readiness_status=Blocked`; if 1003 queue definitions require de-duplication across these dimensions, the API contract should be tightened in that ticket. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-1003 |
+| Reviewer | Engineering |
+| Completed | Implemented full STD workbench scope tab and queue bar contract for admin-first visibility. API `std_engine/api/landing.py::get_std_workbench_kpi_strip` now returns `scope_tabs`, `queues`, defaults, and `visibility_policy=admin_full_set`. UI `public/js/std_engine_workspace.js` now renders all required tabs (`My Work`, `Templates`, `Active Versions`, `STD Instances`, `Generation Jobs`, `Addendum Impacts`, `Audit View`) and required queues (`Draft Versions`, `Structure In Progress`, `Validation Blocked`, `Validation Passed`, `Legal Review`, `Policy Review`, `Approved`, `Active`, `Suspended`, `Superseded`, `Draft Instances`, `Instance Blocked`, `Instance Ready`, `Published Locked`, `Generation Failed`, `Addendum Impact`, `Archived`), with click handlers updating active state and queue indicator. KPI click handoff from 1002 now activates matching scope/queue. |
+| Not completed | Non-admin granular role matrix is intentionally deferred; this ticket validates full set for `Administrator` / `System Manager` as agreed. |
+| Assumptions | `visibility_policy=admin_full_set` is temporary contract metadata until role-specific scope/queue pruning is implemented in a follow-up ticket. |
+| Files changed | `std_engine/api/landing.py`, `std_engine/tests/test_std_phase10_scope_queue.py`, `public/js/std_engine_workspace.js`, `public/css/std_engine_workspace.css`, `tests/ui/smoke/procurement/std-workbench-1001.spec.ts`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | Backend: `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase10_scope_queue` (2/2 pass). UI + regressions: `./scripts/bench-with-node.sh build --app kentender_procurement` (pass), `bench --site kentender.midas.com clear-cache` (pass), `cd apps/kentender_v1 && npx playwright test tests/ui/smoke/procurement/std-workbench-1001.spec.ts --reporter=line` (4/4 pass, includes new scope/queue interactivity coverage). |
+| Risks remaining | Queue labels/states currently drive UI state only; object-list filtering semantics remain to be implemented in 1004/1005, so queue selection is stateful but not yet data-binding complete. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-1004 |
+| Reviewer | Engineering |
+| Completed | Implemented STD workbench search and advanced filter behavior with queue-state combination. Added API `search_std_workbench_objects` in `std_engine/api/landing.py` supporting query + scope/queue + multi-filter payload (object type, procurement category, method/profile/status family, blocker/failure flags, date range, assigned-to-me). UI `public/js/std_engine_workspace.js` now wires search input, compact filter controls (all required filter slots represented), active filter chips, and object-list result rendering. Queue/tab selection and KPI selection are now combined with active filters in search requests. |
+| Not completed | `Used by Published Tender` and procurement-method contract filters are currently accepted as UI/API parameters but not yet bound to a dedicated tender-binding dataset in result rows; they remain no-op placeholders until object-list/domain enrichment in 1005/110x. |
+| Assumptions | For 1004, \"Search returns known seed objects\" is satisfied via mixed STD object search across template/version/profile/instance/job/output/addendum/readiness datasets; business-card row formatting is deferred to 1005. |
+| Files changed | `std_engine/api/landing.py`, `public/js/std_engine_workspace.js`, `public/css/std_engine_workspace.css`, `std_engine/tests/test_std_phase10_search_filters.py`, `tests/ui/smoke/procurement/std-workbench-1001.spec.ts`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | Backend: `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase10_search_filters` (2/2 pass). Regression backend: `...test_std_phase10_scope_queue` (2/2 pass). UI + regressions: `./scripts/bench-with-node.sh build --app kentender_procurement` (pass), `bench --site kentender.midas.com clear-cache` (pass), `cd apps/kentender_v1 && npx playwright test tests/ui/smoke/procurement/std-workbench-1001.spec.ts --reporter=line` (5/5 pass; includes search/filter chip + queue combination flow). |
+| Risks remaining | Object list still uses compact technical rows; richer business-card presentation and deep object-type-specific metadata remain planned for 1005. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-1005 |
+| Reviewer | Engineering |
+| Completed | Implemented STD business object list rows for required object types and row selection handoff: Template Family, Template Version, Applicability Profile, STD Instance, Generated Output, Generation Job, Addendum Impact, Readiness Run. Extended search API dataset in `std_engine/api/landing.py` to include template families and richer row metadata keys. Updated `public/js/std_engine_workspace.js` to render business-style multi-line rows with badges, object-type specific subtitles, active row state, and click-to-select behavior that updates the detail panel placeholder (`std-selected-object-code`). Updated `public/css/std_engine_workspace.css` with business-row card styling and badge treatment. |
+| Not completed | Superseded by STD-CURSOR-1006: state-aware actions and structured detail shell are now implemented (see 1006 evidence row). |
+| Assumptions | UI smoke supports environments with sparse data by asserting click-to-detail when rows exist and explicit empty-state rendering when no rows match filters. |
+| Files changed | `std_engine/api/landing.py`, `public/js/std_engine_workspace.js`, `public/css/std_engine_workspace.css`, `std_engine/tests/test_std_phase10_object_list_panel.py`, `tests/ui/smoke/procurement/std-workbench-1001.spec.ts`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | Backend: `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase10_object_list_panel` (2/2 pass). Backend regressions: `...test_std_phase10_search_filters` (2/2 pass), `...test_std_phase10_scope_queue` (2/2 pass). UI: `cd apps/kentender_v1 && npx playwright test tests/ui/smoke/procurement/std-workbench-1001.spec.ts --reporter=line` (6/6 pass, including object-list row click scenario). Asset flow: `./scripts/bench-with-node.sh build --app kentender_procurement` (pass), `bench --site kentender.midas.com clear-cache` (pass). |
+| Risks remaining | Search-backed list query currently aggregates across multiple doctypes with bounded row windows; if production datasets grow large, 1005/1006 follow-up may need indexed server-side pagination per object type to preserve response time. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-1006 |
+| Reviewer | Engineering |
+| Completed | Server `get_std_action_availability` + `action_availability_service.build_std_action_availability`: resolves workbench `object_type` + business `code` to DocType/name, returns `state_cards`, `actions` (open/edit/create instance/publish-lock with `allowed`/`disabled`/`reason`/`requires_confirmation`/`confirmation_message`/`route`/`meta`), `blockers`, `warnings`. Desk UI `std_engine_workspace.js`/`std_engine_workspace.css`: structured detail regions (`std-detail-header`, `std-detail-state-cards`, tab strip `std-detail-tab-overview`/`std-detail-tab-audit`, `std-detail-tab-panel`, `std-blockers-panel`), dynamic `std-action-host` action bar, stale-request guard on detail fetch, `frappe.confirm` for gated actions, `create_std_instance` opens new `STD Instance` form with `template_version_code`. |
+| Not completed | Template-version **editors** for tabs after Parameters (forms, works, …) remain **STD-CURSOR-1010+**; generic two-tab strip for non–Template Version selections unchanged; generic Audit tab remains a shell. |
+| Assumptions | Action execution for publish-lock routes to Desk Form (same as open) with confirmation; destructive server mutations beyond navigation stay in existing DocType controllers. |
+| Files changed | `std_engine/services/action_availability_service.py`, `std_engine/api/landing.py`, `std_engine/tests/test_std_phase10_action_availability.py`, `public/js/std_engine_workspace.js`, `public/css/std_engine_workspace.css`, `tests/ui/smoke/procurement/std-workbench-1001.spec.ts`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | Backend: `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase10_action_availability` (6/6 pass). Regression: `...test_std_phase10_object_list_panel` (2/2 pass). UI: `./scripts/bench-with-node.sh build --app kentender_procurement`, `bench --site kentender.midas.com clear-cache`, `cd apps/kentender_v1 && npx playwright test tests/ui/smoke/procurement/std-workbench-1001.spec.ts --reporter=line` (8 tests: 7 passed, 1 skipped; includes new 1006 detail/action availability flow). |
+| Risks remaining | `OBJECT_TYPE_RESOLUTION` must stay aligned with `landing._collect_rows` object_type strings; duplicate detail fetch on rapid selection is mitigated by `detailReqId` but not cancelled server-side. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-1007 |
+| Reviewer | Engineering |
+| Completed | Whitelisted `get_std_template_version_workbench_summary` (`std_engine/api/template_version_workbench.py`) + `build_std_template_version_workbench_summary` (`std_engine/services/template_version_workbench_service.py`): `read_only` when `version_status == Active` and `immutable_after_activation`; aggregates `STD Section Definition` rows with `editability == Locked` for `locked_section_count`, `itt_locked` / `gcc_locked` via case-insensitive **ITT** / **GCC** substring match on `section_title` or `section_code`; capped `sample_locked_titles` (no internal `name`). Desk: `std_engine_workspace.js` swaps `[data-testid="std-detail-tabs"]` to ten pack tab `data-testid`s for Template Version, restores generic Overview/Audit for other types; `detailReqId` guards summary fetch; Overview shows badges (`std-template-read-only`, `std-template-itt-locked`, `std-template-gcc-locked`) and neutral locked-section line when counts exist without ITT/GCC label match. Other tabs: inert placeholders (`std-template-panel-*`). CSS: horizontal scroll for dense tab strip (`kt-std-detail-tabs--template`). |
+| Not completed | Remaining template-version tabs (Forms, Works configuration, …) per pack tickets **1010+**. |
+| Assumptions | ITT/GCC visibility follows the heuristic above; seed data that uses different labels still surfaces `locked_section_count` and the neutral line when applicable. |
+| Files changed | `std_engine/api/template_version_workbench.py`, `std_engine/services/template_version_workbench_service.py`, `std_engine/tests/test_std_phase10_template_version_tabs.py`, `public/js/std_engine_workspace.js`, `public/css/std_engine_workspace.css`, `tests/ui/smoke/procurement/std-workbench-1001.spec.ts`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | Backend: `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase10_template_version_tabs` (6/6 pass). UI: `cd apps/kentender_v1 && npx playwright test tests/ui/smoke/procurement/std-workbench-1001.spec.ts --reporter=line` (7 passed, 2 skipped; 1007 flow exercises ten tabs + Structure placeholder + read-only badge when Active). Assets: `./scripts/bench-with-node.sh build --app kentender_procurement` (pass); run `bench --site <site> clear-cache` after deploy. |
+| Risks remaining | ITT/GCC flags depend on title/code containing those substrings; org-specific naming may require mapping or UI copy tweaks without changing `locked_section_count`. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-1008 |
+| Reviewer | Engineering |
+| Completed | Whitelisted `get_std_template_version_structure_tree` in `std_engine/api/template_version_workbench.py`; `build_std_template_version_structure_tree` in `std_engine/services/template_version_structure_service.py` returns nested **parts → sections → clauses** (business codes + titles, source document titles, `impact` drive flags, section `itt_locked_hint` / `gcc_locked_hint` when `editability == Locked` and title/code match ITT/GCC substring heuristic). Desk `std_engine_workspace.js`: Structure tab (`tpl-structure`) two-pane layout (`std-structure-tree`, `std-structure-detail`), fetch on tab with `detailReqId` guard, tree nodes (`std-structure-node-part|section|clause`), detail editability + source trace + clause impacts; **exact** locked-section warning `std-structure-locked-section-warning`. No upload/replace action. CSS: `kt-std-structure-*` grid and tree chrome in `std_engine_workspace.css`. |
+| Not completed | In-tab editing / reorder / upload flows; Forms tab (**1010**) and later pack tickets. |
+| Assumptions | Structure is read-only browse; clause long text fields not inlined in workbench (title/code + metadata only). |
+| Files changed | `std_engine/services/template_version_structure_service.py`, `std_engine/api/template_version_workbench.py`, `std_engine/tests/test_std_phase10_template_version_structure.py`, `public/js/std_engine_workspace.js`, `public/css/std_engine_workspace.css`, `tests/ui/smoke/procurement/std-workbench-1001.spec.ts`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | Backend: `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase10_template_version_structure` (6/6 pass). UI: `cd apps/kentender_v1 && npx playwright test tests/ui/smoke/procurement/std-workbench-1001.spec.ts --reporter=line` (7 passed, 2 skipped; includes Structure tree + section detail + conditional locked warning). Assets: `./scripts/bench-with-node.sh build --app kentender_procurement` (pass); `bench --site <site> clear-cache` after deploy. |
+| Risks remaining | ITT/GCC row hints reuse the same substring heuristic as 1007 summary; very large templates may need pagination later. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-1009 |
+| Reviewer | Engineering |
+| Completed | Whitelisted `get_std_template_version_parameter_catalogue` in `std_engine/api/template_version_workbench.py`; `build_std_template_version_parameter_catalogue` in `std_engine/services/template_version_parameters_service.py` loads `STD Parameter Definition` + `STD Parameter Dependency`, groups by `parameter_group` (pack order then alpha), resolves `section_title`, exposes `read_only` (Active + immutable), `impact` flags, `incoming_dependencies` / `outgoing_dependencies` as short English sentences. Desk `std_engine_workspace.js`: `tpl-parameters` panel `std-template-panel-parameters`, `detailReqId`-guarded fetch, group test ids `std-param-group-*`, rows `std-param-row-*`, dependency lines `std-param-dependency-line-*`, `std-parameters-read-only` banner. CSS: `kt-std-parameters-panel` / param row chrome. |
+| Not completed | In-form parameter editing, advanced dependency graph, full fourteen-group seed coverage beyond read-only catalogue. |
+| Assumptions | Dependency copy is template English for workbench preview; `parameter_group` free text is sorted with pack-known labels first. |
+| Files changed | `std_engine/services/template_version_parameters_service.py`, `std_engine/api/template_version_workbench.py`, `std_engine/tests/test_std_phase10_template_version_parameters.py`, `public/js/std_engine_workspace.js`, `public/css/std_engine_workspace.css`, `tests/ui/smoke/procurement/std-workbench-1001.spec.ts`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | Backend: `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase10_template_version_parameters` (4/4 pass). UI: `cd apps/kentender_v1 && npx playwright test tests/ui/smoke/procurement/std-workbench-1001.spec.ts --reporter=line` (7 passed, 2 skipped; includes Parameters tab when catalogue non-empty). Assets: `./scripts/bench-with-node.sh build --app kentender_procurement` (pass). |
+| Risks remaining | Large catalogues may need virtualized list later; dependency wording is heuristic, not legal interpretation. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-1010 |
+| Reviewer | Engineering |
+| Completed | Added Forms tab server/UI pipeline for template versions. Backend: whitelisted `get_std_template_version_forms_catalogue` in `std_engine/api/template_version_workbench.py` and service `build_std_template_version_forms_catalogue` in `std_engine/services/template_version_forms_service.py` loading `STD Form Definition` rows, categorizing forms into Section IV / Contract / Other, exposing per-form DSM/DEM/DCM impact flags, draft-editability/read-only guards, and generated model preview counts with required-supplier DSM code list. UI: `public/js/std_engine_workspace.js` now fetches `tpl-forms` payload with request guards, renders category sidebar, forms table, detail drawer, draft-only field-builder controls, required-supplier DSM warning, and read-only model preview; `public/css/std_engine_workspace.css` adds forms layout styling. |
+| Not completed | Form editing persistence/save workflow, reorder, and upload-backed field schema management remain later tickets; this ticket delivers read/preview + draft-only builder scaffold without mutation API. |
+| Assumptions | Section categorization uses section number/title heuristics (`IV` => Section IV forms, `X`/`contract` => Contract forms); business labels stay sourced from form/section records. |
+| Files changed | `std_engine/services/template_version_forms_service.py`, `std_engine/api/template_version_workbench.py`, `std_engine/tests/test_std_phase10_template_version_forms.py`, `public/js/std_engine_workspace.js`, `public/css/std_engine_workspace.css`, `tests/ui/smoke/procurement/std-workbench-1001.spec.ts`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | Backend: `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase10_template_version_forms` (4/4 pass). UI: `cd apps/kentender_v1 && npx playwright test tests/ui/smoke/procurement/std-workbench-1001.spec.ts --grep "STD-CURSOR-1007"` (pass, includes Forms-tab checks). Assets: `./scripts/bench-with-node.sh build --app kentender_procurement` (pass), `bench --site kentender.midas.com clear-cache` (pass). |
+| Risks remaining | `bench restart` could not run in this environment due missing supervisor socket (`unix:///var/run/supervisor.sock no such file`); if stale workers persist on another runtime target, restart there before UAT. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-1011 |
+| Reviewer | Engineering |
+| Completed | Implemented Works Configuration tab server/UI path for template versions. Added `build_std_template_version_works_configuration` in `std_engine/services/template_version_works_service.py` and whitelisted API `get_std_template_version_works_configuration` in `std_engine/api/template_version_workbench.py`. Payload includes Works profile details, Works Requirement components, BOQ definition (including arithmetic correction stage), evaluation-rule templates, contract carry-forward templates, readiness-rule snapshot, and required warning copy for BOQ quantity ownership + contract price source from Evaluation/Award. Desk `public/js/std_engine_workspace.js` now fetches/renders `tpl-works` panel with required sections (`std-works-profile-selector`, `std-works-components`, `std-works-boq-definition`, `std-works-evaluation-rule-templates`, `std-works-contract-carry-forward-templates`, `std-works-readiness-rules`) and warning test IDs. |
+| Not completed | Editable Works-configuration mutation flows and deeper rule authoring UI remain future tickets; this ticket is read-focused configuration visibility per pack acceptance. |
+| Assumptions | Evaluation and carry-forward templates are represented through `STD Extraction Mapping` rows (source `Evaluation Rule`, target `DCM`) in current data model. |
+| Files changed | `std_engine/services/template_version_works_service.py`, `std_engine/api/template_version_workbench.py`, `std_engine/tests/test_std_phase10_template_version_works.py`, `public/js/std_engine_workspace.js`, `tests/ui/smoke/procurement/std-workbench-1001.spec.ts`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | Backend: `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase10_template_version_works` (3/3 pass). UI: `cd apps/kentender_v1 && npx playwright test tests/ui/smoke/procurement/std-workbench-1001.spec.ts --grep "STD-CURSOR-1007"` (1 passed, includes Works-tab assertions added for 1011). |
+| Risks remaining | Current Works tab uses extraction-mapping proxies for evaluation/carry-forward datasets; if dedicated template doctypes are introduced later, service field mapping should be updated. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-1012 |
+| Reviewer | Engineering |
+| Completed | Added Mappings tab catalogue: `build_std_template_version_mappings_catalogue` in `std_engine/services/template_version_mappings_service.py` groups `STD Extraction Mapping` by target model (Bundle/DSM/DOM/DEM/DCM), surfaces `missing_coverage` (validation flags + gaps where forms/parameters/works components drive a model without a matching mapping, plus BOQ Definition DEM/DCM linkage), and `highlights` for Section IV DSM and Section III / evaluation-rule DEM. Whitelisted `get_std_template_version_mappings_catalogue` in `std_engine/api/template_version_workbench.py`. Desk `public/js/std_engine_workspace.js` renders `tpl-mappings` with sub-tabs, table, missing list, highlight blocks, read-only banner when `read_only`; CSS in `public/css/std_engine_workspace.css`. |
+| Not completed | Authoring/edit flows for mappings (create/update) and deeper cross-STD validation UX remain future tickets; this ticket is read-only visibility per active/immutable guard. |
+| Assumptions | Section Roman numerals match `STD Section Definition.section_number`; BOQ linkage gaps use `STD BOQ Definition` for the version when no row-level mapping names `BOQ Definition` with that code for DEM/DCM. |
+| Files changed | `std_engine/services/template_version_mappings_service.py`, `std_engine/api/template_version_workbench.py`, `std_engine/tests/test_std_phase10_template_version_mappings.py`, `public/js/std_engine_workspace.js`, `public/css/std_engine_workspace.css`, `tests/ui/smoke/procurement/std-workbench-1001.spec.ts`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | Backend: `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase10_template_version_mappings` (5/5 pass). UI: `cd apps/kentender_v1 && npx playwright test tests/ui/smoke/procurement/std-workbench-1001.spec.ts --grep "STD-CURSOR-1007"`. Assets: `./scripts/bench-with-node.sh build --app kentender_procurement` from bench root. |
+| Risks remaining | Coverage heuristics may list BOQ or driver gaps on sparse fixtures; highlights depend on section_number and source_object_type conventions from seed/authoring. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-1013 |
+| Reviewer | Engineering |
+| Completed | Added `build_std_template_version_reviews_approval` in `std_engine/services/template_version_reviews_service.py` and whitelisted `get_std_template_version_reviews_approval` in `std_engine/api/template_version_workbench.py`. Payload includes `review_summary` (version/legal/policy/structure fields), `family` active flags, `governance_note`, `returned_corrections` when review status is Returned, fifteen-item `activation_checklist` (family, mandatory sections, ITT/GCC locks, TDS/SCC parameter heuristics, Section III DEM highlights, forms, works/BOQ, mappings gaps via mappings catalogue, works readiness snapshot, review clears, structure pass), `activation_legal_immutability_text` (pack wording), `activation_gates`, and `activation_ui_block_reason`. Desk `public/js/std_engine_workspace.js` renders `tpl-reviews` with summary, governance, returned list, checklist table, immutability blockquote, disabled “Activate version (Desk)” CTA with tooltip; `public/css/std_engine_workspace.css` adds reviews checklist chrome. |
+| Not completed | Submit/Clear/Return review actions and live activation from workbench are intentionally not wired; operators use Desk + `transition_std_object` per governance note. |
+| Assumptions | Checklist reuses mappings + works catalogues server-side; ITT/GCC locks inferred from locked section titles/codes; TDS/SCC rows use keyword heuristics on parameter codes/labels/groups. |
+| Files changed | `std_engine/services/template_version_reviews_service.py`, `std_engine/api/template_version_workbench.py`, `std_engine/tests/test_std_phase10_template_version_reviews.py`, `public/js/std_engine_workspace.js`, `public/css/std_engine_workspace.css`, `tests/ui/smoke/procurement/std-workbench-1001.spec.ts`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | Backend: `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase10_template_version_reviews` (5/5 pass). UI: `cd apps/kentender_v1 && npx playwright test tests/ui/smoke/procurement/std-workbench-1001.spec.ts --grep "STD-CURSOR-1007"`. Assets: `./scripts/bench-with-node.sh build --app kentender_procurement`. |
+| Risks remaining | Checklist heuristics (ITT/GCC titles, TDS/SCC keywords) may differ from future seed conventions; operators must still use Desk for real transitions. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-1014 |
+| Reviewer | Engineering |
+| Completed | Added `build_std_template_version_audit_evidence` and `build_std_template_version_audit_export_csv` in `std_engine/services/template_version_audit_evidence_service.py`; whitelisted `get_std_template_version_audit_evidence` and `export_std_template_version_audit_evidence_csv` in `std_engine/api/template_version_workbench.py`. Aggregates `STD Audit Event` for the template version, its template family code, and STD instances using that version; returns chronological `lifecycle_timeline`, per-slice `evidence_sections`, `denied_events` for audit roles, scrubbed view + `privacy_note` for others, and CSV export for Auditor/Administrator/System Manager. Desk `tpl-audit-evidence` panel in `public/js/std_engine_workspace.js` with `std-audit-timeline-*`, slice sections, and `std-audit-export-csv` download wiring. `public/css/std_engine_workspace.css`: audit panel/table wrap. `audit_service.py`: `AUDIT_READ_ROLES` as `frozenset`. |
+| Not completed | Signed export bundles, deep joins to generation jobs without instance `object_code`, and non-CSV evidence packs. |
+| Assumptions | `event_type` strings remain stable for bucket heuristics; `TEMPLATE_VERSION` / `STD_INSTANCE` object conventions match `state_transition_service` / `record_std_audit_event`. |
+| Files changed | `std_engine/services/template_version_audit_evidence_service.py`, `std_engine/api/template_version_workbench.py`, `std_engine/services/audit_service.py`, `std_engine/tests/test_std_phase10_template_version_audit_evidence.py`, `public/js/std_engine_workspace.js`, `public/css/std_engine_workspace.css`, `tests/ui/smoke/procurement/std-workbench-1001.spec.ts`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | Backend: `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase10_template_version_audit_evidence` (4/4 pass). UI: `cd apps/kentender_v1 && npx playwright test tests/ui/smoke/procurement/std-workbench-1001.spec.ts --grep "STD-CURSOR-1007"`. Assets: `./scripts/bench-with-node.sh build --app kentender_procurement`. |
+| Risks remaining | Heuristic buckets may mis-file rare `event_type` values; large histories may need server-side pagination later. |
 | Ready for next ticket | Yes |
 
