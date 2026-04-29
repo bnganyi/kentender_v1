@@ -1,0 +1,34 @@
+{
+ "doctype":"DocType",
+ "name":"STD Tender Binding",
+ "module":"Procurement Planning",
+ "autoname":"field:tender_code",
+ "engine":"InnoDB",
+ "field_order":[
+  "tender_code",
+  "std_instance_code",
+  "std_template_version_code",
+  "std_profile_code",
+  "std_bundle_code",
+  "std_dsm_code",
+  "std_dom_code",
+  "std_dem_code",
+  "std_dcm_code",
+  "std_readiness_status",
+  "std_outputs_current"
+ ],
+ "fields":[
+  {"fieldname":"tender_code","fieldtype":"Data","label":"Tender Code","reqd":1,"unique":1},
+  {"fieldname":"std_instance_code","fieldtype":"Link","label":"STD Instance Code","options":"STD Instance","reqd":1},
+  {"fieldname":"std_template_version_code","fieldtype":"Link","label":"STD Template Version Code","options":"STD Template Version"},
+  {"fieldname":"std_profile_code","fieldtype":"Link","label":"STD Profile Code","options":"STD Applicability Profile"},
+  {"fieldname":"std_bundle_code","fieldtype":"Data","label":"STD Bundle Code"},
+  {"fieldname":"std_dsm_code","fieldtype":"Data","label":"STD DSM Code"},
+  {"fieldname":"std_dom_code","fieldtype":"Data","label":"STD DOM Code"},
+  {"fieldname":"std_dem_code","fieldtype":"Data","label":"STD DEM Code"},
+  {"fieldname":"std_dcm_code","fieldtype":"Data","label":"STD DCM Code"},
+  {"fieldname":"std_readiness_status","fieldtype":"Select","label":"STD Readiness Status","options":"Not Run\nIncomplete\nBlocked\nWarning\nReady\nInvalidated\nSuperseded"},
+  {"fieldname":"std_outputs_current","fieldtype":"Check","label":"STD Outputs Current","default":"0"}
+ ],
+ "permissions":[{"role":"System Manager","read":1,"write":1,"create":1,"delete":1},{"role":"Administrator","read":1,"write":1,"create":1,"delete":1}]
+}

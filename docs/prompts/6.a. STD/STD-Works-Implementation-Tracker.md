@@ -7,7 +7,7 @@
 ## Scope guard (current execution)
 
 - Phase 0 planning artifacts are complete and retained as baseline.
-- Current approved execution scope: **Phase 1 through Phase 8 STD-CURSOR-0802** (addendum impact/regeneration services; no Desk UI in this phase).
+- Current approved execution scope: **Phase 1 through Phase 9 STD-CURSOR-0905** (TM integration service guards; no Desk UI in this phase).
 - Keep all unapproved tickets in `Pending` status until explicit approval.
 
 ## Execution order (from Cursor pack)
@@ -26,7 +26,7 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 
 ## Ticket status
 
-**Last updated:** 2026-04-29 (through Phase 8 STD-CURSOR-0801 to STD-CURSOR-0802; Phases 1–7 as previously executed)
+**Last updated:** 2026-04-29 (through Phase 9 STD-CURSOR-0901 to STD-CURSOR-0905; Phases 1–8 as previously executed)
 
 ### Phase 0 - Reconnaissance and planning baseline
 
@@ -113,11 +113,11 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 
 | Ticket | Description | Status |
 |---|---|---|
-| STD-CURSOR-0901 | STD binding to Tender Management v2 | Pending |
-| STD-CURSOR-0902 | Disable manual submission requirements | Pending |
-| STD-CURSOR-0903 | Disable manual evaluation criteria | Pending |
-| STD-CURSOR-0904 | Disable manual opening fields outside DOM | Pending |
-| STD-CURSOR-0905 | Bind Contract Management to DCM | Pending |
+| STD-CURSOR-0901 | STD binding to Tender Management v2 | Done |
+| STD-CURSOR-0902 | Disable manual submission requirements | Done |
+| STD-CURSOR-0903 | Disable manual evaluation criteria | Done |
+| STD-CURSOR-0904 | Disable manual opening fields outside DOM | Done |
+| STD-CURSOR-0905 | Bind Contract Management to DCM | Done |
 
 ### Phase 10 - STD workbench UI (reference only)
 
@@ -586,5 +586,70 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 | Files changed | `procurement_planning/doctype/std_addendum_impact_analysis/std_addendum_impact_analysis.json`, `procurement_planning/doctype/std_generated_output/std_generated_output.json`, `std_engine/services/addendum_impact_service.py`, `std_engine/services/addendum_regeneration_service.py`, `std_engine/services/state_transition_service.py`, `std_engine/services/__init__.py`, `std_engine/tests/test_std_phase8_addendum.py`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
 | Test evidence | `bench --site kentender.midas.com migrate` (pass), `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase8_addendum` (5/5 pass). Regression: `...test_std_phase7_readiness` (5/5 pass), `...test_std_phase6_generation_engine` (11/11 pass). |
 | Risks remaining | Impact matrix is deterministic but still coarse-grained for some conditional pack rows (e.g., evaluation-option and drawing/spec conditional branches); finer configuration-driven branching can be added in later hardening. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-0901 |
+| Reviewer | Engineering |
+| Completed | Added tender binding runtime surface via `STD Tender Binding` Doctype and `bind_std_instance_to_tender(tender_code, std_instance_code, actor)` / `get_tender_std_binding(tender_code)` in `std_engine/services/tender_binding_service.py`. Binding stores references to STD instance/template/profile plus current output codes (`Bundle/DSM/DOM/DEM/DCM`), computes `std_outputs_current`, and mirrors instance readiness (`std_readiness_status`) so downstream tender publication checks can consume STD readiness directly without duplicating editable payloads. |
+| Not completed | Tickets 0902–0905 remain pending; no cross-module TM UI wiring yet in this ticket. |
+| Assumptions | In this repo phase, Tender Management v2 binding is represented through dedicated reference Doctype (`STD Tender Binding`) as allowed by pack (“or equivalent relational child/reference table”). |
+| Files changed | `procurement_planning/doctype/std_tender_binding/std_tender_binding.json`, `procurement_planning/doctype/std_tender_binding/std_tender_binding.py`, `procurement_planning/doctype/std_tender_binding/__init__.py`, `std_engine/services/tender_binding_service.py`, `std_engine/services/__init__.py`, `std_engine/tests/test_std_phase9_tender_binding.py`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | `bench --site kentender.midas.com migrate` (pass), `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase9_tender_binding` (2/2 pass). |
+| Risks remaining | Actual TM write-path integration hooks must be connected in 0902+ so denials/disablement happen at manual checklist/evaluation/opening entrypoints. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-0902 |
+| Reviewer | Engineering |
+| Completed | Added server-side guard service `tender_submission_guard_service.py` with `check_manual_submission_requirement_permission(tender_code, actor)` and guarded API `create_manual_submission_requirement(...)`. When `std_engine_v2_enabled=1` and tender has `STD Tender Binding` with `std_instance_code`, manual submission requirement injection is denied with stable code `STD_TM_MANUAL_SUBMISSION_BLOCKED`, and `PERMISSION_DENIED` audit event is written. Added export wiring in `std_engine/services/__init__.py`. |
+| Not completed | Desk/UI DSM preview wiring for TM screens remains pending (UI ticket scope later); this ticket enforces server-side API block and denial telemetry. |
+| Assumptions | Feature flag is read from `frappe.conf.std_engine_v2_enabled` in current phase; a richer flag storage/service can replace this in later hardening without changing denial contract. |
+| Files changed | `std_engine/services/tender_submission_guard_service.py`, `std_engine/services/__init__.py`, `std_engine/tests/test_std_phase9_submission_guard.py`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase9_submission_guard` (2/2 pass), regression: `...test_std_phase9_tender_binding` (2/2 pass). |
+| Risks remaining | Downstream TM endpoints must call this guard consistently; follow-up tickets 0903/0904 will apply equivalent denial patterns to evaluation/opening fields. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-0903 |
+| Reviewer | Engineering |
+| Completed | Added server-side DEM-only evaluation guard service `tender_evaluation_guard_service.py` with `check_manual_evaluation_criteria_permission(tender_code, actor)` and guarded API `create_manual_evaluation_criterion(...)`. For `std_engine_v2_enabled=1` + STD-bound tender, manual evaluation criterion creation is denied with stable code `STD_TM_MANUAL_EVALUATION_BLOCKED`; denial is audit-logged via `PERMISSION_DENIED`. Export wiring added in `std_engine/services/__init__.py`. |
+| Not completed | Ticket 0904 opening-field guard and 0905 DCM contract binding still pending; UI disable/preview surfaces remain later-phase work. |
+| Assumptions | Current enforcement is API/service-layer canonical path for TM integration in this phase; actual module endpoints should call this guard without changing denial code contract. |
+| Files changed | `std_engine/services/tender_evaluation_guard_service.py`, `std_engine/services/__init__.py`, `std_engine/tests/test_std_phase9_evaluation_guard.py`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase9_evaluation_guard` (2/2 pass), regression: `...test_std_phase9_submission_guard` (2/2 pass). |
+| Risks remaining | Evaluation engine endpoints must consistently route through this guard to fully prevent bypass in non-service codepaths. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-0904 |
+| Reviewer | Engineering |
+| Completed | Added DOM-only opening guard service `tender_opening_guard_service.py` with: `check_manual_opening_field_permission(tender_code, actor)`, guarded API `create_manual_opening_field(...)`, and gate `validate_opening_can_proceed(tender_code, actor)`. For `std_engine_v2_enabled=1` + STD-bound tender, manual opening fields are denied with `STD_TM_MANUAL_OPENING_BLOCKED`; opening progression requires `std_dom_code` and returns `STD_TM_DOM_REQUIRED` if missing. Denials are audit-logged (`PERMISSION_DENIED`). |
+| Not completed | Ticket 0905 DCM/contract binding still pending; cross-module bid-opening endpoint wiring remains to be connected to these guards. |
+| Assumptions | `STD Tender Binding.std_dom_code` is canonical DOM readiness reference for opening gate in this phase. |
+| Files changed | `std_engine/services/tender_opening_guard_service.py`, `std_engine/services/__init__.py`, `std_engine/tests/test_std_phase9_opening_guard.py`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase9_opening_guard` (2/2 pass), regression: `...test_std_phase9_evaluation_guard` (2/2 pass). |
+| Risks remaining | Consumer modules must call `validate_opening_can_proceed` before opening action dispatch to fully enforce no-DOM gate. |
+| Ready for next ticket | Yes |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | STD-CURSOR-0905 |
+| Reviewer | Engineering |
+| Completed | Added DCM contract binding guard service `tender_contract_guard_service.py` with `validate_contract_creation_inputs(tender_code, contract_payload, actor)` and guarded API `create_contract_from_std(...)`. For `std_engine_v2_enabled=1` + STD-bound tender, contract creation is denied if `std_dcm_code` is missing (`STD_TM_DCM_REQUIRED`). For Works profile tenders, contract price source is enforced to `corrected evaluated BOQ total from Evaluation/Award`; mismatches are denied with `STD_TM_CONTRACT_SOURCE_MISMATCH`. Denials are audit-logged via `PERMISSION_DENIED`. Export wiring added in `std_engine/services/__init__.py`. |
+| Not completed | Downstream contract-management module endpoint wiring remains to consume this guard uniformly; this ticket delivers canonical server-side contract validation surface. |
+| Assumptions | Works detection derives from bound STD instance profile procurement category (`Works`) and uses `STD Tender Binding` as the TM integration reference table. |
+| Files changed | `std_engine/services/tender_contract_guard_service.py`, `std_engine/services/__init__.py`, `std_engine/tests/test_std_phase9_contract_guard.py`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | `bench --site kentender.midas.com run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase9_contract_guard` (3/3 pass); regression: `...test_std_phase9_opening_guard` (2/2), `...test_std_phase9_evaluation_guard` (2/2), `...test_std_phase9_submission_guard` (2/2), `...test_std_phase9_tender_binding` (2/2). |
+| Risks remaining | Contract creation callsites outside std_engine service package must be updated to route through these guards to guarantee global enforcement. |
 | Ready for next ticket | Yes |
 
