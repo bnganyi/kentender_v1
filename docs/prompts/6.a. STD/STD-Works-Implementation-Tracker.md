@@ -166,8 +166,8 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 
 | Ticket | Description | Status |
 |---|---|---|
-| STD-CURSOR-1301 | Evidence export service | Pending |
-| STD-CURSOR-1302 | Production safety checks | Pending |
+| STD-CURSOR-1301 | Evidence export service | Done |
+| STD-CURSOR-1302 | Production safety checks | Done |
 
 ## Decision log pointers
 
@@ -873,4 +873,43 @@ Mark a ticket/phase as **Done** only when all applicable checks pass:
 | Test evidence | Backend (sequential): `bench run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase12_1201_seed_load_smoke` (7/7); `--module ...1202...` (7/7); `--module ...1203...` (6/6); `--module ...1204...` (7/7); `--module ...1205...` (10/10). UI: `cd apps/kentender_v1 && npx playwright test tests/ui/smoke/procurement/std-workbench-1001.spec.ts --grep "STD-CURSOR-1206" --retries=0`. |
 | Risks remaining | Parallel workers may deadlock on PH6 fixture `Source Document Registry` insert; serialize modules in CI. |
 | Ready for next ticket | Yes (Phase 13) |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-29 |
+| Ticket(s) | UI/UX alignment plan (gap matrix P0–P6 + TDD/Playwright gate) |
+| Reviewer | Engineering |
+| Completed | **IA (§3.1):** `Governance & Configuration` parent workspace + `STD Engine` `parent_page`; procurement sidebar section + link; fixtures extended in `hooks.py`; boot fast-path `governance & configuration` in `workspace_permissions.py`. **URL (§3.3):** `std_scope`, `std_queue`, `std_code` query sync in `std_engine_workspace.js`. **Header (§5):** product subtitle; `header_actions` from `landing.build_std_header_actions` + client `runStdHeaderAction`. **Roles:** `resolve_std_workbench_chrome` + `search_std_workbench_objects` scope/queue guard; `visibility_policy` `full_governance` / `instance_operational`. **Queues (§8.2.4):** inline limit + “More queues” dropdown. **Tests:** `STD-UI-UX-Alignment-Gap-Matrix.md`, `test_std_phase13_*.py`, Playwright helpers for overflow chips; `test_std_phase10_scope_queue` policy assertion. |
+| Not completed | Full §15–32 content parity line-by-line; wizards §33; literal `/desk/std-engine/versions/...` path routes (query contract only). |
+| Assumptions | `bench --site <site> migrate` loads new Workspace + `after_migrate` reapplies `workspace_sidebar/procurement.json`. |
+| Files changed | `workspace/governance_and_configuration/`, `workspace/std_engine/std_engine.json`, `workspace_sidebar/procurement.json`, `setup/workspace_permissions.py`, `hooks.py`, `std_engine/api/landing.py`, `public/js/std_engine_workspace.js`, `public/css/std_engine_workspace.css`, `docs/.../STD-UI-UX-Alignment-Gap-Matrix.md`, `tests/ui/smoke/procurement/std-workbench-1001.spec.ts`, `std_engine/tests/test_std_phase13_*.py`, `std_engine/tests/test_std_phase10_scope_queue.py`, `setup/tests/test_workspace_sidebar_fastpath.py` |
+| Test evidence | `bench run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase13_workbench_chrome_visibility`; `--module ...test_std_phase13_prd_boq_ux_labels`; `--module ...test_workspace_sidebar_fastpath`; `--module ...test_std_phase10_scope_queue`. `cd apps/kentender_v1 && npx playwright test tests/ui/smoke/procurement/std-workbench-1001.spec.ts` (exit 0; occasional flaky retry on STD-CURSOR-1206). `./scripts/bench-with-node.sh build --app kentender_procurement`. |
+| Risks remaining | `_` must never shadow `frappe._` / gettext `_` in `landing.py` unpacks. |
+| Ready for next ticket | Partial (residual §15–32 parity deferred) |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-30 |
+| Ticket(s) | STD-CURSOR-1301 |
+| Reviewer | Engineering |
+| Completed | Implemented cross-object evidence export service `build_std_evidence_export_package(object_type, object_code, actor)` with role-gated access (`AUDIT_READ_ROLES`), object validation, and CSV export payload for **Template Version** and **STD Instance**. Added whitelisted endpoint `std_engine.api.evidence_export.export_std_evidence_package`. Added lineage-rich package sections for instance export (source document, family/version/profile, sections/clauses, parameters, works, BOQ, attachments, generated outputs incl. Bundle/DSM/DOM/DEM/DCM, readiness runs, addendum analyses, supersession chain, audit events, downstream bindings). Wired global header action **Evidence Export** in `std_engine_workspace.js` to export selected object and download CSV. Export action now writes audit event `EVIDENCE_EXPORTED`. |
+| Not completed | STD-CURSOR-1302 production safety checks (out of scope). |
+| Assumptions | Evidence export requires selecting a template version or STD instance in workbench; if none selected, UI routes to audit scope and prompts user to select one. |
+| Files changed | `std_engine/services/evidence_export_service.py`, `std_engine/api/evidence_export.py`, `std_engine/tests/test_std_phase13_evidence_export_service.py`, `public/js/std_engine_workspace.js`, `tests/ui/smoke/procurement/std-workbench-1001.spec.ts`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | `bench run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase13_evidence_export_service` (7/7 pass); `bench run-tests --app kentender_procurement --module kentender_procurement.std_engine.tests.test_std_phase10_template_version_audit_evidence` (4/4 pass); `cd apps/kentender_v1 && npx playwright test tests/ui/smoke/procurement/std-workbench-1001.spec.ts --grep "global header actions|Evidence Export downloads"` (2/2 pass); `./scripts/bench-with-node.sh build --app kentender_procurement` (pass). |
+| Risks remaining | Instance package section coverage depends on DocType field availability in target site schema; service intentionally uses safe field introspection and may output partial sections when fields/doctypes are absent. |
+| Ready for next ticket | Yes (STD-CURSOR-1302) |
+
+| Field | Value |
+|---|---|
+| Date | 2026-04-30 |
+| Ticket(s) | STD-CURSOR-1302 |
+| Reviewer | Engineering |
+| Completed | Implemented production preflight report service `build_std_production_safety_report(smoke_tests_passed, actor)` and whitelisted API `std_engine.api.production_safety.get_std_production_safety_report`. Report evaluates 7 required checks: canonical DOC1 seed presence, explicit smoke signal, feature flag default review, active DOC1 template version, legacy upload-as-source risk signal (`STD Tender Binding.std_outputs_current=0`) under STD v2, manual downstream guard enforcement for STD-backed tenders (submission/opening/evaluation), and append-only audit verification probe. Added audit events `SAFETY_CHECK_PROBE` and `SAFETY_CHECK_RUN` to allowed event types. |
+| Not completed | Live Playwright execution of deployment checklist UI slice was not rerun because ticket scope is backend command/report; existing smoke gate remains documented in prior entries. |
+| Assumptions | `smoke_tests_passed` is provided by release operator/CI at invocation time; report keeps this explicit to avoid inferring smoke status from stale artifacts. |
+| Files changed | `std_engine/services/production_safety_service.py`, `std_engine/api/production_safety.py`, `std_engine/tests/test_std_phase13_production_safety_checks.py`, `std_engine/services/audit_service.py`, `docs/prompts/6.a. STD/STD-Works-Implementation-Tracker.md` |
+| Test evidence | `bench --site kentender.midas.com run-tests --module kentender_procurement.std_engine.tests.test_std_phase13_production_safety_checks` (3/3 pass). |
+| Risks remaining | Legacy upload-as-source detection is inferred through `std_outputs_current=0` on STD-bound tender bindings; if future data model introduces an explicit legacy-source flag, this check should be tightened to that field. |
+| Ready for next ticket | Yes |
 

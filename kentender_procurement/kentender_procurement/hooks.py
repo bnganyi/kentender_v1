@@ -309,7 +309,13 @@ fixtures = [
 			[
 				"name",
 				"in",
-				["Demand Intake and Approval", "Procurement Home", "Procurement Planning"],
+				[
+					"Demand Intake and Approval",
+					"Governance & Configuration",
+					"Procurement Home",
+					"Procurement Planning",
+					"STD Engine",
+				],
 			]
 		],
 	},

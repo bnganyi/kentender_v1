@@ -1,6 +1,21 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 import { loginAsAdministrator } from '../../helpers/auth';
+
+/** Queue chip may be under "More queues" when the template scope overflows (UI/UX §8.2.4). */
+async function clickStdQueueChip(page: Page, testId: string) {
+	const direct = page.getByTestId(testId);
+	if ((await direct.count()) > 0 && (await direct.first().isVisible().catch(() => false))) {
+		await direct.first().click();
+		return;
+	}
+	await page.getByTestId('std-queue-overflow-toggle').click();
+	await page.getByTestId(`${testId}-overflow`).click();
+}
+
+function stdQueueLocator(page: Page, testId: string) {
+	return page.getByTestId(testId).or(page.getByTestId(`${testId}-overflow`)).first();
+}
 
 test.describe('STD-CURSOR-1001 workbench shell', () => {
 	test('std workbench route renders required shell test ids', async ({ page }) => {
@@ -26,6 +41,32 @@ test.describe('STD-CURSOR-1001 workbench shell', () => {
 		await expect(page.getByRole('button', { name: /^Upload STD$/i })).toHaveCount(0);
 	});
 
+	test('std workbench keeps list/detail layout near 30/70 split', async ({ page }) => {
+		await loginAsAdministrator(page);
+		await page.goto('/app/std-engine');
+		await page.waitForLoadState('domcontentloaded');
+		await expect(page.getByTestId('std-workbench-page')).toBeVisible({ timeout: 45_000 });
+
+		const widths = await page.evaluate(() => {
+			const list = document.querySelector('[data-testid="std-object-list"]') as HTMLElement | null;
+			const detail = document.querySelector('[data-testid="std-object-detail"]') as HTMLElement | null;
+			if (!list || !detail) return null;
+			return {
+				list: list.getBoundingClientRect().width,
+				detail: detail.getBoundingClientRect().width,
+			};
+		});
+		expect(widths).not.toBeNull();
+		if (!widths) return;
+		const total = widths.list + widths.detail;
+		expect(total).toBeGreaterThan(0);
+		const listRatio = widths.list / total;
+		const detailRatio = widths.detail / total;
+		expect(listRatio).toBeGreaterThan(0.24);
+		expect(listRatio).toBeLessThan(0.36);
+		expect(detailRatio).toBeGreaterThan(0.64);
+	});
+
 	test('std workbench keeps procurement sidebar after hard refresh', async ({ page }) => {
 		await loginAsAdministrator(page);
 		await page.goto('/desk/std-engine');
@@ -40,8 +81,78 @@ test.describe('STD-CURSOR-1001 workbench shell', () => {
 		await expect(page.getByRole('link', { name: 'Procurement Home', exact: true }).first()).toBeVisible();
 		await expect(page.getByRole('link', { name: /Demand Intake/i }).first()).toBeVisible();
 		await expect(page.getByRole('link', { name: 'Procurement Planning', exact: true }).first()).toBeVisible();
+		await expect(page.getByRole('link', { name: 'Governance & Configuration', exact: true }).first()).toBeVisible({
+			timeout: 45_000,
+		});
 		await expect(page.getByRole('link', { name: 'STD Engine', exact: true }).first()).toBeVisible();
 		await expect(page.getByRole('link', { name: 'Supplier Management', exact: true }).first()).toBeVisible();
+	});
+
+	test('std workbench URL params restore scope and queue after reload', async ({ page }) => {
+		await loginAsAdministrator(page);
+		const url =
+			'/app/std-engine?std_scope=templates&std_queue=policy_review';
+		await page.goto(url);
+		await page.waitForLoadState('domcontentloaded');
+		await expect(page.getByTestId('std-workbench-page')).toBeVisible({ timeout: 45_000 });
+		await expect(page.getByTestId('std-scope-templates')).toHaveClass(/is-active|btn-primary/, {
+			timeout: 45_000,
+		});
+		await expect(page.getByTestId('std-active-queue-state')).toContainText('policy_review');
+		await page.reload({ waitUntil: 'domcontentloaded' });
+		await expect(page.getByTestId('std-scope-templates')).toHaveClass(/is-active|btn-primary/, {
+			timeout: 45_000,
+		});
+		await expect(page.getByTestId('std-active-queue-state')).toContainText('policy_review');
+	});
+
+	test('std global header actions render for Administrator', async ({ page }) => {
+		await loginAsAdministrator(page);
+		await page.goto('/app/std-engine');
+		await page.waitForLoadState('domcontentloaded');
+		await expect(page.getByTestId('std-global-header-actions')).toBeVisible({ timeout: 45_000 });
+		await expect(page.getByTestId('std-header-new-template-version')).toBeVisible();
+		await expect(page.getByTestId('std-header-evidence-export')).toBeVisible();
+		await expect(page.getByTestId('std-header-production-safety-report')).toBeVisible();
+		await expect(page.getByTestId('std-page-subtitle')).not.toContainText(/Phase 10 ticket 1001/i);
+	});
+
+	test('std header Production Safety Report downloads CSV', async ({ page }) => {
+		await loginAsAdministrator(page);
+		await page.goto('/app/std-engine');
+		await page.waitForLoadState('domcontentloaded');
+		const dlPromise = page.waitForEvent('download', { timeout: 45_000 });
+		await page.getByTestId('std-header-production-safety-report').click();
+		const modal = page.locator('.modal.show, .modal.in').first();
+		await expect(modal).toBeVisible({ timeout: 10_000 });
+		await modal.getByRole('button', { name: 'Yes' }).click();
+		const download = await dlPromise;
+		expect(download.suggestedFilename()).toMatch(/std-production-safety-.*\.csv/i);
+	});
+
+	test('std header Evidence Export downloads CSV for selected object', async ({ page }) => {
+		await loginAsAdministrator(page);
+		await page.goto('/app/std-engine');
+		await page.waitForLoadState('domcontentloaded');
+		await page.getByTestId('std-scope-active-versions').click();
+		await page.getByTestId('std-queue-active').click();
+		await page.getByTestId('std-search-input').fill('STD');
+		const rows = page.locator('[data-testid^="std-row-"]');
+		const count = await rows.count();
+		test.skip(count === 0, 'No STD workbench rows available for export.');
+		await rows.first().click();
+		const dlPromise = page.waitForEvent('download', { timeout: 45_000 });
+		await page.getByTestId('std-header-evidence-export').click();
+		const download = await dlPromise;
+		expect(download.suggestedFilename()).toMatch(/std-evidence-.*\.csv/i);
+	});
+
+	test('std queue bar shows More queues overflow on dense template queues', async ({ page }) => {
+		await loginAsAdministrator(page);
+		await page.goto('/app/std-engine');
+		await page.waitForLoadState('domcontentloaded');
+		await page.getByTestId('std-scope-templates').click();
+		await expect(page.getByTestId('std-queue-overflow-toggle')).toBeVisible({ timeout: 45_000 });
 	});
 
 	test('std kpi strip renders interactive risk cards', async ({ page }) => {
@@ -97,7 +208,7 @@ test.describe('STD-CURSOR-1001 workbench shell', () => {
 
 		await page.getByTestId('std-kpi-policy-review-pending').click();
 		await expect(page.getByTestId('std-scope-templates')).toHaveClass(/is-active|btn-primary/);
-		await expect(page.getByTestId('std-queue-policy-review')).toHaveClass(/is-active|btn-primary/);
+		await expect(stdQueueLocator(page, 'std-queue-policy-review')).toHaveClass(/is-active|btn-primary|\bactive\b/);
 		await expect(page.getByTestId('std-active-queue-state')).toContainText('policy_review');
 	});
 
@@ -107,7 +218,7 @@ test.describe('STD-CURSOR-1001 workbench shell', () => {
 		await page.waitForLoadState('domcontentloaded');
 
 		await page.getByTestId('std-scope-templates').click();
-		await page.getByTestId('std-queue-policy-review').click();
+		await clickStdQueueChip(page, 'std-queue-policy-review');
 		await expect(page.getByTestId('std-active-queue-state')).toContainText('policy_review');
 
 		await page.getByTestId('std-filter-toggle').click();

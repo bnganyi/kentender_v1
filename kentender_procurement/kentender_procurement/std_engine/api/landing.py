@@ -107,6 +107,156 @@ _OBJECT_TYPES: tuple[str, ...] = (
     "Readiness Run",
 )
 
+# Roles from STD Works roles matrix §3.1–3.2 (Desk chrome filtering).
+_STD_GOVERNANCE_ROLES: frozenset[str] = frozenset(
+    {
+        "STD Administrator",
+        "Senior STD Administrator",
+        "STD Legal Reviewer",
+        "STD Policy Reviewer",
+        "STD Governance Approver",
+        "STD Configuration Auditor",
+        "STD Technical Maintainer",
+        "STD Support Analyst",
+    }
+)
+_STD_INSTANCE_OPERATIONS_ROLES: frozenset[str] = frozenset(
+    {
+        "Procurement Officer",
+        "Technical Officer",
+        "Technical Officer / Engineer",
+        "Quantity Surveyor",
+        "Quantity Surveyor / BOQ Preparer",
+        "Procurement Manager",
+        "Legal Reviewer",
+        "Compliance Reviewer",
+        "Auditor",
+        "Auditor / Oversight User",
+    }
+)
+_INSTANCE_OPERATIONS_SCOPE_IDS: frozenset[str] = frozenset(
+    {"mywork", "instances", "generation_jobs", "addendum_impacts", "audit_view"}
+)
+_INSTANCE_OPERATIONS_KPI_IDS: frozenset[str] = frozenset(
+    {
+        "validation_blocked",
+        "active_versions",
+        "instances_blocked",
+        "generation_failures",
+        "addendum_impact_pending",
+    }
+)
+
+
+def _stdlib_role_names(user: str | None = None) -> set[str]:
+    return set(frappe.get_roles(user or frappe.session.user))
+
+
+def resolve_std_workbench_chrome(
+    roles: set[str],
+) -> tuple[str, list[dict[str, object]], list[dict[str, str]], list[dict[str, str]]]:
+    """Return (visibility_policy, kpis, scope_tabs, queues) for the current role mix."""
+    if not roles or roles & {"Administrator", "System Manager", "All"}:
+        return (
+            "full_governance",
+            [dict(x) for x in _KPI_ROWS],
+            [dict(x) for x in _SCOPE_TABS],
+            [dict(x) for x in _QUEUE_ROWS],
+        )
+    if roles & _STD_GOVERNANCE_ROLES:
+        return (
+            "full_governance",
+            [dict(x) for x in _KPI_ROWS],
+            [dict(x) for x in _SCOPE_TABS],
+            [dict(x) for x in _QUEUE_ROWS],
+        )
+    if roles & _STD_INSTANCE_OPERATIONS_ROLES:
+        kpis = [dict(x) for x in _KPI_ROWS if str(x.get("id") or "") in _INSTANCE_OPERATIONS_KPI_IDS]
+        scopes = [dict(x) for x in _SCOPE_TABS if x["id"] in _INSTANCE_OPERATIONS_SCOPE_IDS]
+        queues = [
+            dict(x) for x in _QUEUE_ROWS if str(x.get("scope_tab_id") or "") in _INSTANCE_OPERATIONS_SCOPE_IDS
+        ]
+        return ("instance_operational", kpis, scopes, queues)
+    return (
+        "full_governance",
+        [dict(x) for x in _KPI_ROWS],
+        [dict(x) for x in _SCOPE_TABS],
+        [dict(x) for x in _QUEUE_ROWS],
+    )
+
+
+def build_std_header_actions() -> list[dict[str, object]]:
+    """Global STD workbench header CTAs (permission-gated; client renders allowed only)."""
+
+    def _can_create(doctype: str) -> bool:
+        try:
+            return bool(frappe.has_permission(doctype, "create"))
+        except Exception:
+            return False
+
+    def _can_read(doctype: str) -> bool:
+        try:
+            return bool(frappe.has_permission(doctype, "read"))
+        except Exception:
+            return False
+
+    def _can_run_safety_report() -> bool:
+        roles = _stdlib_role_names()
+        return bool(
+            {
+                "Administrator",
+                "System Manager",
+                "STD Auditor",
+                "Head of Procurement and Disposal Unit (HPDU)",
+                "Procurement Compliance Officer",
+            }.intersection(roles)
+        )
+
+    return [
+        {
+            "id": "new_template_version",
+            "label": str(_("New Template Version")),
+            "testid": "std-header-new-template-version",
+            "allowed": _can_create("STD Template Version"),
+        },
+        {
+            "id": "new_applicability_profile",
+            "label": str(_("New Applicability Profile")),
+            "testid": "std-header-new-applicability-profile",
+            "allowed": _can_create("STD Applicability Profile"),
+        },
+        {
+            "id": "find_std_instance",
+            "label": str(_("Find STD Instance")),
+            "testid": "std-header-find-std-instance",
+            "allowed": _can_read("STD Instance"),
+        },
+        {
+            "id": "my_reviews",
+            "label": str(_("My Reviews")),
+            "testid": "std-header-my-reviews",
+            "allowed": _can_read("STD Template Version") or _can_read("STD Instance"),
+        },
+        {
+            "id": "evidence_export",
+            "label": str(_("Evidence Export")),
+            "testid": "std-header-evidence-export",
+            "allowed": _can_read("STD Template Version") or _can_read("STD Instance"),
+        },
+        {
+            "id": "production_safety_report",
+            "label": str(_("Production Safety Report")),
+            "testid": "std-header-production-safety-report",
+            "allowed": _can_run_safety_report(),
+        },
+        {
+            "id": "settings",
+            "label": str(_("Settings")),
+            "testid": "std-header-settings",
+            "allowed": "System Manager" in _stdlib_role_names(),
+        },
+    ]
+
 
 def _count(doctype: str, filters: dict | None = None) -> int:
     rows = frappe.get_list(
@@ -412,9 +562,12 @@ def get_std_workbench_kpi_strip() -> dict:
     if frappe.session.user in (None, "Guest"):
         frappe.throw(_("Not permitted"), frappe.PermissionError)
 
+    roles = _stdlib_role_names()
+    _policy, kpi_defs, scope_defs, queue_defs = resolve_std_workbench_chrome(roles)
+
     counts = _build_counts()
     rows: list[dict] = []
-    for definition in _KPI_ROWS:
+    for definition in kpi_defs:
         row = dict(definition)
         row["value"] = int(counts.get(str(row["id"]), 0))
         rows.append(row)
@@ -422,11 +575,12 @@ def get_std_workbench_kpi_strip() -> dict:
     return {
         "ok": True,
         "kpis": rows,
-        "scope_tabs": [dict(x) for x in _SCOPE_TABS],
-        "queues": [dict(x) for x in _QUEUE_ROWS],
+        "scope_tabs": [dict(x) for x in scope_defs],
+        "queues": [dict(x) for x in queue_defs],
         "default_scope_tab_id": "mywork",
         "default_queue_id": "validation_blocked",
-        "visibility_policy": "admin_full_set",
+        "visibility_policy": _policy,
+        "header_actions": build_std_header_actions(),
     }
 
 
@@ -440,9 +594,18 @@ def search_std_workbench_objects(
 ) -> dict:
     if frappe.session.user in (None, "Guest"):
         frappe.throw(_("Not permitted"), frappe.PermissionError)
+    roles = _stdlib_role_names()
+    _visibility_policy, _kpis, scope_defs, queue_defs = resolve_std_workbench_chrome(roles)
+    allowed_scope_ids = {str(x.get("id") or "") for x in scope_defs if x.get("id")}
+    allowed_queue_ids = {str(x.get("id") or "") for x in queue_defs if x.get("id")}
     needle = str(query or "").strip().lower()
     filt = _as_filters_dict(filters)
     scope = str(scope_tab_id or "").strip()
+    if scope and allowed_scope_ids and scope not in allowed_scope_ids:
+        raise frappe.PermissionError(_("Not permitted for this workbench scope."))
+    qid = str(queue_id or "").strip()
+    if qid and allowed_queue_ids and qid not in allowed_queue_ids:
+        raise frappe.PermissionError(_("Not permitted for this queue."))
     max_rows = max(1, min(int(limit or 50), 200))
     rows = _collect_rows(limit=max_rows)
     out: list[dict] = []

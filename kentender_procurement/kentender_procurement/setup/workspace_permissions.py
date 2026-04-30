@@ -85,6 +85,7 @@ _KT_WORKSPACE_TO_SIDEBAR: dict[str, str] = {
 	"procurement home": "Procurement",
 	"ktsm supplier registry": "Procurement",
 	"std engine": "Procurement",
+	"governance & configuration": "Procurement",
 }
 
 

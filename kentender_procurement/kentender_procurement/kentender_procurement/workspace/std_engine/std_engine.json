@@ -1,7 +1,7 @@
 {
  "app": "kentender_procurement",
  "charts": [],
- "content": "[{\"id\":\"std_h1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>STD Engine</b></span>\",\"col\":12}},{\"id\":\"std_p1\",\"type\":\"paragraph\",\"data\":{\"text\":\"STD Engine workbench shell placeholder.\",\"col\":12}}]",
+ "content": "[{\"id\":\"std_h1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>STD Engine</b></span>\",\"col\":12}},{\"id\":\"std_p1\",\"type\":\"paragraph\",\"data\":{\"text\":\"Standard Tender Document (STD) Engine workbench for Works: template governance, tender instances, generation, readiness, and audit.\",\"col\":12}},{\"id\":\"std_sc1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Open STD Engine Workbench\",\"col\":4}}]",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -15,11 +15,17 @@
  "module": "Kentender Procurement",
  "name": "STD Engine",
  "number_cards": [],
- "parent_page": "",
+ "parent_page": "Governance & Configuration",
  "public": 1,
  "quick_lists": [],
  "roles": [],
  "sequence_id": 40.0,
- "shortcuts": [],
+ "shortcuts": [
+  {
+   "label": "Open STD Engine Workbench",
+   "type": "URL",
+   "url": "/app/std-engine"
+  }
+ ],
  "title": "STD Engine"
 }

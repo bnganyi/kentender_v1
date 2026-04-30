@@ -3,6 +3,9 @@
 (function () {
 	const WS_NAME = "STD Engine";
 	const HIGH_RISK_KPI_IDS = new Set(["validation_blocked", "generation_failures", "addendum_impact_pending"]);
+	/* When a scope exposes more chips than this, extras move to "More queues" (UI/UX §8.2.4). */
+	const STD_QUEUE_INLINE_LIMIT = 4;
+	let headerActionsCache = [];
 	let bindScheduled = false;
 	let hooksBound = false;
 	let domObserver = null;
@@ -90,6 +93,194 @@
 			.replace(/</g, "&lt;")
 			.replace(/>/g, "&gt;")
 			.replace(/"/g, "&quot;");
+	}
+
+	function syncStdWorkbenchUrl() {
+		if (!routeLooksLikeStdEngine()) return;
+		if (typeof window === "undefined" || !window.history || !window.location) return;
+		try {
+			const u = new URL(window.location.href);
+			if (activeWorkTab) u.searchParams.set("std_scope", activeWorkTab);
+			else u.searchParams.delete("std_scope");
+			if (activeQueueId) u.searchParams.set("std_queue", activeQueueId);
+			else u.searchParams.delete("std_queue");
+			if (selectedObjectCode) u.searchParams.set("std_code", selectedObjectCode);
+			else u.searchParams.delete("std_code");
+			const qs = u.searchParams.toString();
+			const next = u.pathname + (qs ? "?" + qs : "") + (u.hash || "");
+			const cur = window.location.pathname + window.location.search + (window.location.hash || "");
+			if (next !== cur) window.history.replaceState({}, "", next);
+		} catch (e) { }
+	}
+
+	function consumeStdWorkbenchUrlOnce() {
+		if (typeof window === "undefined" || !window.location) return;
+		let scope = "";
+		let queue = "";
+		let code = "";
+		try {
+			const u = new URL(window.location.href);
+			scope = String(u.searchParams.get("std_scope") || "").trim();
+			queue = String(u.searchParams.get("std_queue") || "").trim();
+			code = String(u.searchParams.get("std_code") || "").trim();
+		} catch (e) {
+			return;
+		}
+		const tabs = scopeTabs.length ? scopeTabs : fallbackScopeTabs();
+		const allowedScopes = new Set(tabs.map(function (t) { return String(t.id || ""); }));
+		const queuesSrc = queueRows.length ? queueRows : fallbackQueues();
+		const allowedQueues = new Set(queuesSrc.map(function (q) { return String(q.id || ""); }));
+		if (queue && allowedQueues.has(queue)) {
+			activeQueueId = queue;
+			const qd = queuesSrc.find(function (q) { return String(q.id || "") === queue; });
+			if (qd && qd.scope_tab_id) activeWorkTab = String(qd.scope_tab_id);
+		} else if (scope && allowedScopes.has(scope)) {
+			activeWorkTab = scope;
+		}
+		if (code) selectedObjectCode = code;
+	}
+
+	function selectInitialKpiAfterUrlOrFirst() {
+		const rows = kpiRows.length ? kpiRows : fallbackKpis();
+		if (!rows.length) return;
+		let row = null;
+		if (activeQueueId) {
+			row = rows.find(function (x) { return String(x.select_queue_id || "") === String(activeQueueId); });
+		}
+		if (!row && activeWorkTab) {
+			row = rows.find(function (x) { return String(x.select_work_tab || "") === String(activeWorkTab); });
+		}
+		if (!row) row = rows[0];
+		applyKpiSelection(row);
+	}
+
+	function renderGlobalHeaderActions() {
+		const root = getActiveStdShellRoot();
+		if (!root) return;
+		const host = root.querySelector("#kt-std-global-action-host");
+		if (!host) return;
+		const actions = Array.isArray(headerActionsCache) ? headerActionsCache : [];
+		let h = "";
+		for (let i = 0; i < actions.length; i++) {
+			const a = actions[i] || {};
+			if (!a.allowed) continue;
+			const tid = String(a.testid || "std-header-action-" + String(a.id || i));
+			h +=
+				'<button type="button" class="btn btn-xs btn-default" data-std-header-action="' +
+				esc(String(a.id || "")) +
+				'" data-testid="' +
+				esc(tid) +
+				'">' +
+				esc(String(a.label || "")) +
+				"</button>";
+		}
+		host.innerHTML =
+			h ||
+			'<span class="text-muted small" data-testid="std-global-header-actions-empty">' +
+			esc(__("No global actions for your role.")) +
+			"</span>";
+	}
+
+	function runStdHeaderAction(actionId) {
+		const id = String(actionId || "").trim();
+		const root = getActiveStdShellRoot();
+		if (id === "new_template_version") {
+			if (typeof frappe !== "undefined" && frappe.set_route) frappe.set_route("Form", "STD Template Version", "new");
+			return;
+		}
+		if (id === "new_applicability_profile") {
+			if (typeof frappe !== "undefined" && frappe.set_route) frappe.set_route("Form", "STD Applicability Profile", "new");
+			return;
+		}
+		if (id === "find_std_instance") {
+			activeWorkTab = "instances";
+			const qs = queueRows.length ? queueRows : fallbackQueues();
+			const firstQ = qs.find(function (q) { return String(q.scope_tab_id || "") === "instances"; });
+			if (firstQ) activeQueueId = String(firstQ.id || "");
+			activeKpiId = "";
+			const shell = getActiveStdShellRoot();
+			if (shell) {
+				shell.setAttribute("data-active-work-tab", activeWorkTab);
+				shell.setAttribute("data-active-queue-id", activeQueueId);
+			}
+			renderKpiStrip();
+			renderScopeTabs();
+			renderQueueBar();
+			renderQueueStateHint();
+			loadSearchResults();
+			const si = root && root.querySelector('[data-testid="std-search-input"]');
+			if (si && si.focus) si.focus();
+			syncStdWorkbenchUrl();
+			return;
+		}
+		if (id === "my_reviews") {
+			activeWorkTab = "mywork";
+			activeQueueId = "legal_review";
+			activeKpiId = "";
+			const shell = getActiveStdShellRoot();
+			if (shell) {
+				shell.setAttribute("data-active-work-tab", activeWorkTab);
+				shell.setAttribute("data-active-queue-id", activeQueueId);
+			}
+			renderKpiStrip();
+			renderScopeTabs();
+			renderQueueBar();
+			renderQueueStateHint();
+			loadSearchResults();
+			syncStdWorkbenchUrl();
+			return;
+		}
+		if (id === "evidence_export") {
+			const payload = detailLastPayload || {};
+			const ot = String(payload.object_type || selectedObjectType || "").trim();
+			const oc = String(payload.code || selectedObjectCode || "").trim();
+			if (ot && oc) {
+				runStdEvidenceExportPackage(ot, oc);
+				return;
+			}
+			activeWorkTab = "audit_view";
+			activeQueueId = "archived";
+			activeKpiId = "";
+			const shell = getActiveStdShellRoot();
+			if (shell) {
+				shell.setAttribute("data-active-work-tab", activeWorkTab);
+				shell.setAttribute("data-active-queue-id", activeQueueId);
+			}
+			renderKpiStrip();
+			renderScopeTabs();
+			renderQueueBar();
+			renderQueueStateHint();
+			loadSearchResults();
+			syncStdWorkbenchUrl();
+			if (typeof frappe !== "undefined" && frappe.show_alert) {
+				frappe.show_alert({
+					message: __("Select a template version or STD instance to export full evidence."),
+					indicator: "blue",
+				});
+			}
+			return;
+		}
+		if (id === "settings") {
+			if (typeof frappe !== "undefined" && frappe.set_route) frappe.set_route("Form", "System Settings");
+			return;
+		}
+		if (id === "production_safety_report") {
+			const msg = __(
+				"Confirm that automated smoke tests have passed for this release candidate. The report will record PASS/FAIL in the audit trail."
+			);
+			if (typeof frappe !== "undefined" && frappe.confirm) {
+				frappe.confirm(
+					msg,
+					function () {
+						runStdProductionSafetyReport(true);
+					},
+					function () {}
+				);
+			} else {
+				runStdProductionSafetyReport(true);
+			}
+			return;
+		}
 	}
 
 	function routeLooksLikeStdEngine() {
@@ -263,13 +454,29 @@
 		const host = root.querySelector("#kt-std-queue-host");
 		if (!host) return;
 		const queues = queueRows.length ? queueRows : fallbackQueues();
-		let html = "";
+		const visible = [];
 		for (let i = 0; i < queues.length; i++) {
 			const q = queues[i] || {};
+			const scopeId = String(q.scope_tab_id || "");
+			const isVisible = !activeWorkTab || !scopeId || scopeId === activeWorkTab;
+			if (isVisible) visible.push(q);
+		}
+		const limit = STD_QUEUE_INLINE_LIMIT;
+		let inline = visible;
+		let overflow = [];
+		if (visible.length > limit) {
+			inline = visible.slice(0, limit - 1);
+			overflow = visible.slice(limit - 1);
+		}
+		let html =
+			'<div class="kt-std-queue-inline d-flex flex-wrap align-items-center gap-1" role="toolbar" aria-label="' +
+			esc(__("Queue filters")) +
+			'">';
+		for (let i = 0; i < inline.length; i++) {
+			const q = inline[i] || {};
 			const id = String(q.id || "queue_" + i);
 			const label = String(q.label || "");
 			const scopeId = String(q.scope_tab_id || "");
-			const isVisible = !activeWorkTab || !scopeId || scopeId === activeWorkTab;
 			const isActive = activeQueueId === id;
 			html +=
 				'<button type="button" class="kt-std-queue-chip btn btn-xs ' +
@@ -281,11 +488,41 @@
 				'" data-testid="' +
 				esc(String(q.testid || "std-queue-" + id.replace(/_/g, "-"))) +
 				'"' +
-				(isVisible ? "" : ' hidden="hidden"') +
 				">" +
 				esc(label) +
 				"</button>";
 		}
+		if (overflow.length) {
+			html +=
+				'<div class="dropdown kt-std-queue-overflow">' +
+				'<button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown" data-testid="std-queue-overflow-toggle" aria-haspopup="true" aria-expanded="false">' +
+				esc(__("More queues")) +
+				" (" +
+				String(overflow.length) +
+				")</button>" +
+				'<div class="dropdown-menu dropdown-menu-right p-2" style="min-width:12rem">';
+			for (let j = 0; j < overflow.length; j++) {
+				const q = overflow[j] || {};
+				const id = String(q.id || "queue_ov_" + j);
+				const label = String(q.label || "");
+				const scopeId = String(q.scope_tab_id || "");
+				const isActive = activeQueueId === id;
+				html +=
+					'<button type="button" class="dropdown-item btn btn-sm btn-link text-left px-1 py-1 ' +
+					(isActive ? "active" : "") +
+					'" data-std-queue="' +
+					esc(id) +
+					'" data-std-queue-scope="' +
+					esc(scopeId) +
+					'" data-testid="' +
+					esc(String(q.testid || "std-queue-" + id.replace(/_/g, "-")) + "-overflow") +
+					'">' +
+					esc(label) +
+					"</button>";
+			}
+			html += "</div></div>";
+		}
+		html += "</div>";
 		host.innerHTML = html;
 	}
 
@@ -2087,6 +2324,119 @@
 		});
 	}
 
+	function runStdEvidenceExportPackage(objectType, objectCode) {
+		const ot = String(objectType || "").trim();
+		const oc = String(objectCode || "").trim();
+		if (!ot || !oc || typeof frappe === "undefined" || !frappe.call) return;
+		frappe.call({
+			method: "kentender_procurement.std_engine.api.evidence_export.export_std_evidence_package",
+			args: { object_type: ot, object_code: oc },
+			callback: function (r) {
+				const msg = (r && r.message) || {};
+				if (!msg || !msg.ok) {
+					if (typeof frappe !== "undefined" && frappe.show_alert) {
+						frappe.show_alert({
+							message: String((msg && msg.message) || __("Export not permitted.")),
+							indicator: "orange",
+						});
+					}
+					return;
+				}
+				const csv = String(msg.csv_text || "");
+				const fn = String(msg.filename || "std-evidence-export.csv");
+				try {
+					const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+					const url = URL.createObjectURL(blob);
+					const a = document.createElement("a");
+					a.href = url;
+					a.download = fn;
+					a.rel = "noopener";
+					document.body.appendChild(a);
+					a.click();
+					a.remove();
+					setTimeout(function () {
+						URL.revokeObjectURL(url);
+					}, 2500);
+					if (typeof frappe !== "undefined" && frappe.show_alert) {
+						frappe.show_alert({ message: __("Evidence export started."), indicator: "green" });
+					}
+				} catch (e) {
+					if (typeof frappe !== "undefined" && frappe.show_alert) {
+						frappe.show_alert({ message: __("Could not start download."), indicator: "red" });
+					}
+				}
+			},
+			error: function () {
+				if (typeof frappe !== "undefined" && frappe.show_alert) {
+					frappe.show_alert({ message: __("Export failed."), indicator: "red" });
+				}
+			},
+		});
+	}
+
+	function runStdProductionSafetyReport(smokeTestsPassed) {
+		const smoke = !!smokeTestsPassed;
+		if (typeof frappe === "undefined" || !frappe.call) return;
+		frappe.call({
+			method: "kentender_procurement.std_engine.api.production_safety.get_std_production_safety_report",
+			args: { smoke_tests_passed: smoke ? 1 : 0 },
+			callback: function (r) {
+				const msg = (r && r.message) || {};
+				if (!msg || !msg.ok) {
+					if (typeof frappe !== "undefined" && frappe.show_alert) {
+						frappe.show_alert({
+							message: String((msg && msg.message) || __("Safety report not available.")),
+							indicator: "orange",
+						});
+					}
+					return;
+				}
+				const checks = Array.isArray(msg.checks) ? msg.checks : [];
+				let csv = "check_key,passed,message\n";
+				for (let i = 0; i < checks.length; i++) {
+					const row = checks[i] || {};
+					const key = String(row.check_key || "").replace(/"/g, '""');
+					const passed = row.passed ? "true" : "false";
+					const message = String(row.message || "").replace(/"/g, '""');
+					csv += '"' + key + '","' + passed + '","' + message + '"\n';
+				}
+				const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+				const filename = "std-production-safety-" + stamp + ".csv";
+				try {
+					const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+					const url = URL.createObjectURL(blob);
+					const a = document.createElement("a");
+					a.href = url;
+					a.download = filename;
+					a.rel = "noopener";
+					document.body.appendChild(a);
+					a.click();
+					a.remove();
+					setTimeout(function () {
+						URL.revokeObjectURL(url);
+					}, 2500);
+					if (typeof frappe !== "undefined" && frappe.show_alert) {
+						frappe.show_alert({
+							message: msg.overall_pass
+								? __("Production safety report generated (PASS).")
+								: __("Production safety report generated (FAIL)."),
+							indicator: msg.overall_pass ? "green" : "orange",
+						});
+					}
+				} catch (e) {
+					if (typeof frappe !== "undefined" && frappe.show_alert) {
+						frappe.show_alert({ message: __("Could not start download."), indicator: "red" });
+					}
+				}
+			},
+			error: function () {
+				if (typeof frappe !== "undefined" && frappe.show_alert) {
+					frappe.show_alert({ message: __("Safety report failed."), indicator: "red" });
+				}
+			},
+		});
+	}
+
 	function ensureTemplateAuditFetched() {
 		const myReq = detailReqId;
 		const payload = detailLastPayload;
@@ -3577,6 +3927,7 @@
 			act.innerHTML = '<span class="text-muted small">' + esc(__("Select an object to see actions.")) + "</span>";
 		}
 		syncStdDetailTabs("overview");
+		syncStdWorkbenchUrl();
 	}
 
 	function syncStdDetailTabs(activeId) {
@@ -3824,11 +4175,13 @@
 		});
 		if (!selected || !selectedObjectCode) {
 			clearStdDetailUi();
+			syncStdWorkbenchUrl();
 			return;
 		}
 		selectedObjectType = String(selected.object_type || selectedObjectType || "");
 		renderDetailHeaderFromListRow(selected);
 		loadStdDetailContext(selected);
+		syncStdWorkbenchUrl();
 	}
 
 	function loadSearchResults() {
@@ -3866,6 +4219,7 @@
 				syncStdListSelection(root, selectedObjectCode);
 				stdRestoreListScrollTop(root, prevScrollTop, selectedObjectCode);
 				renderDetailSelection();
+				syncStdWorkbenchUrl();
 			},
 			error: function () {
 				if (!routeLooksLikeStdEngine()) return;
@@ -3902,6 +4256,7 @@
 				},
 			})
 		);
+		syncStdWorkbenchUrl();
 	}
 
 	function renderKpiStrip() {
@@ -3927,6 +4282,7 @@
 			]
 				.join(" ")
 				.trim();
+			const ariaLabel = esc(label + ", " + String(value));
 			html +=
 				'<button type="button" class="' +
 				esc(classes) +
@@ -3934,6 +4290,8 @@
 				esc(id) +
 				'" data-testid="' +
 				esc(testid) +
+				'" aria-label="' +
+				ariaLabel +
 				'" aria-pressed="' +
 				(isActive ? "true" : "false") +
 				'">' +
@@ -3976,6 +4334,7 @@
 				renderScopeTabs();
 				renderQueueBar();
 				renderQueueStateHint();
+				syncStdWorkbenchUrl();
 				loadSearchResults();
 				return;
 			}
@@ -3987,7 +4346,15 @@
 				renderScopeTabs();
 				renderQueueBar();
 				renderQueueStateHint();
+				syncStdWorkbenchUrl();
 				loadSearchResults();
+				return;
+			}
+			const hdrAct = target.closest("[data-std-header-action]");
+			if (hdrAct && root.contains(hdrAct)) {
+				ev.preventDefault();
+				runStdHeaderAction(String(hdrAct.getAttribute("data-std-header-action") || ""));
+				return;
 			}
 			const actBtn = target.closest("[data-std-desk-action]");
 			if (actBtn && root.contains(actBtn)) {
@@ -4114,13 +4481,16 @@
 				kpiRows = Array.isArray(payload.kpis) && payload.kpis.length ? payload.kpis : fallbackKpis();
 				scopeTabs = Array.isArray(payload.scope_tabs) && payload.scope_tabs.length ? payload.scope_tabs : fallbackScopeTabs();
 				queueRows = Array.isArray(payload.queues) && payload.queues.length ? payload.queues : fallbackQueues();
+				consumeStdWorkbenchUrlOnce();
 				if (!activeWorkTab) activeWorkTab = String(payload.default_scope_tab_id || "mywork");
 				if (!activeQueueId) activeQueueId = String(payload.default_queue_id || "");
+				headerActionsCache = Array.isArray(payload.header_actions) ? payload.header_actions : [];
+				renderGlobalHeaderActions();
 				renderKpiStrip();
 				renderScopeTabs();
 				renderQueueBar();
 				if (!activeKpiId && kpiRows.length) {
-					applyKpiSelection(kpiRows[0]);
+					selectInitialKpiAfterUrlOrFirst();
 				} else {
 					renderQueueStateHint();
 				}
@@ -4133,13 +4503,15 @@
 				kpiRows = fallbackKpis();
 				scopeTabs = fallbackScopeTabs();
 				queueRows = fallbackQueues();
+				headerActionsCache = [];
 				if (!activeWorkTab) activeWorkTab = "mywork";
 				if (!activeQueueId) activeQueueId = "validation_blocked";
+				renderGlobalHeaderActions();
 				renderKpiStrip();
 				renderScopeTabs();
 				renderQueueBar();
 				if (!activeKpiId && kpiRows.length) {
-					applyKpiSelection(kpiRows[0]);
+					selectInitialKpiAfterUrlOrFirst();
 				} else {
 					renderQueueStateHint();
 				}
@@ -4162,9 +4534,12 @@
 			'<header class="kt-std-header kt-std-surface">' +
 			'<div>' +
 			'<h2 class="h5 mb-1" data-testid="std-page-title">' + esc(__(WS_NAME)) + '</h2>' +
-			'<p class="small text-muted mb-0">' + esc(__("STD Engine workbench shell (Phase 10 ticket 1001).")) + '</p>' +
+			'<p class="small text-muted mb-0" data-testid="std-page-subtitle">' +
+			esc(__("Governance workbench for Works STD templates, instances, generation, readiness, and audit evidence.")) +
+			'</p>' +
 			'</div>' +
 			'<div class="kt-std-header-actions" data-testid="std-action-bar">' +
+			'<div id="kt-std-global-action-host" class="d-flex flex-wrap gap-1 justify-content-end mb-1" data-testid="std-global-header-actions"></div>' +
 			'<div id="kt-std-action-host" class="kt-std-action-host d-flex flex-wrap gap-1 justify-content-end" data-testid="std-action-host">' +
 			'<span class="text-muted small">' + esc(__("Select an object to see actions.")) + "</span></div></div>" +
 			'</header>' +
@@ -4214,6 +4589,12 @@
 		document.querySelectorAll('.kt-std-injected-shell').forEach((n) => n.remove());
 		document.body.classList.remove('kt-std-shell');
 		bindScheduled = false;
+		activeKpiId = null;
+		activeQueueId = null;
+		activeWorkTab = null;
+		selectedObjectCode = "";
+		selectedObjectType = "";
+		headerActionsCache = [];
 	}
 
 	function bindShell() {

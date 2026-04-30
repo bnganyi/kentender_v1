@@ -30,7 +30,11 @@ class TestSTDCURSOR1003ScopeQueueContract(IntegrationTestCase):
 			],
 			[x.get("id") for x in tabs],
 		)
-		self.assertEqual("admin_full_set", payload.get("visibility_policy"))
+		self.assertEqual("full_governance", payload.get("visibility_policy"))
+		self.assertIsInstance(payload.get("header_actions"), list)
+		self.assertGreaterEqual(len(payload.get("header_actions") or []), 1)
+		action_ids = {str((x or {}).get("id") or "") for x in (payload.get("header_actions") or [])}
+		self.assertIn("production_safety_report", action_ids)
 
 	def test_admin_payload_includes_all_required_queues(self):
 		payload = get_std_workbench_kpi_strip()

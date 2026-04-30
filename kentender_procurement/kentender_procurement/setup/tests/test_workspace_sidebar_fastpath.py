@@ -45,3 +45,8 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		self.assertIn("procurement home", items)
 		self.assertIn("procurement planning", items)
 		self.assertIn("std engine", items)
+		self.assertIn(
+			"governance & configuration",
+			items,
+			msg="Governance & Configuration workspace hard refresh requires boot sidebar key",
+		)

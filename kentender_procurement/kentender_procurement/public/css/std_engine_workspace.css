@@ -58,8 +58,13 @@
 .kt-std-main {
 	display: grid;
 	gap: 0.4rem;
-	grid-template-columns: minmax(16rem, 0.9fr) minmax(20rem, 1.1fr);
+	grid-template-columns: minmax(0, 30%) minmax(0, 70%);
 	align-items: stretch;
+}
+
+.kt-std-main > [data-testid="std-object-list"],
+.kt-std-main > [data-testid="std-object-detail"] {
+	min-width: 0;
 }
 
 .kt-std-kpi-grid {
@@ -113,6 +118,11 @@
 	flex-wrap: wrap;
 	gap: 0.3rem;
 	align-items: center;
+}
+
+.kt-std-queue-overflow .dropdown-menu {
+	max-height: 16rem;
+	overflow-y: auto;
 }
 
 .kt-std-scope-tab,
