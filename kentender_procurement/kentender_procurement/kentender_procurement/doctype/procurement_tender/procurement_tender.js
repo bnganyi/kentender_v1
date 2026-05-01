@@ -405,6 +405,13 @@ frappe.ui.form.on("Procurement Tender", {
 
 		if (hasOfficerDeskRole()) {
 			frm.add_custom_button(
+				__("Load Sample Tender (POC)"),
+				() =>
+					call_pt_method("load_sample_tender", {}, __("Load Sample Tender (POC)")),
+				OFFICER_GROUP,
+			);
+
+			frm.add_custom_button(
 				__("Sync Configuration"),
 				() => call_pt_method("sync_officer_configuration", {}, __("Sync Configuration")),
 				OFFICER_GROUP,
