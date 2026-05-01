@@ -1,12 +1,9 @@
 // Copyright (c) 2026, KenTender and contributors
 // For license information, please see license.txt
 //
-// STD-WORKS-POC Steps 12 + 13 — Procurement Tender Desk buttons.
-// Admin Console Step 5 — STD Demo workspace HTML + actions (Trace rules, Open package viewer).
-//
-// Sidecar client script that adds custom buttons under "STD POC" and, for demo
-// tenders, "STD Demo". Each button is a thin wrapper around whitelisted server
-// methods on `procurement_tender.py` / `std_template.py`.
+// STD-WORKS-POC Steps 12 + 13 — Procurement Tender Desk buttons (admin STD POC group).
+// Admin Console Step 5 — STD Demo workspace (admin-only demo group).
+// Procurement Officer Tender Configuration POC — Officer Tender Configuration group.
 
 function std_poc_demo_html_dialog(title, html) {
 	const d = new frappe.ui.Dialog({
@@ -24,6 +21,23 @@ function std_poc_demo_html_dialog(title, html) {
 const STD_POC_TEMPLATE_DEMO = "KE-PPRA-WORKS-BLDG-2022-04-POC";
 const DEMO_WORKSPACE_MARKER = "STD DEMO WORKSPACE";
 
+const PT_MODULE =
+	"kentender_procurement.kentender_procurement.doctype.procurement_tender.procurement_tender";
+
+function hasAdminStdPocRole() {
+	return (
+		frappe.user.has_role("System Manager") || frappe.user.has_role("Administrator")
+	);
+}
+
+function hasOfficerDeskRole() {
+	return frappe.user.has_role("Procurement Officer") || hasAdminStdPocRole();
+}
+
+function officerOnlyHideRawJson() {
+	return frappe.user.has_role("Procurement Officer") && !hasAdminStdPocRole();
+}
+
 function isStdDemoWorkspace(frm) {
 	if (!frm || !frm.doc) {
 		return false;
@@ -37,12 +51,87 @@ function isStdDemoWorkspace(frm) {
 
 frappe.ui.form.on("Procurement Tender", {
 	refresh(frm) {
-		if (frm.is_new()) {
-			return;
+		if (officerOnlyHideRawJson()) {
+			frm.set_df_property("configuration_json", "hidden", 1);
+		} else {
+			frm.set_df_property("configuration_json", "hidden", 0);
 		}
 
 		const STD_POC_GROUP = __("STD POC");
 		const STD_DEMO_GROUP = __("STD Demo");
+		const OFFICER_GROUP = __("Officer Tender Configuration");
+
+		if (frm.is_new()) {
+			if (hasOfficerDeskRole()) {
+				frm.add_custom_button(
+					__("Start new tender from POC STD"),
+					() => {
+						frappe.call({
+							method: `${PT_MODULE}.get_available_std_templates_for_officer`,
+							freeze: true,
+							freeze_message: __("Loading templates…"),
+							callback(r) {
+								const rows = r.message || [];
+								if (!rows.length) {
+									frappe.msgprint(
+										__(
+											"No POC STD template found. Import STD-WORKS-POC package first.",
+										),
+									);
+									return;
+								}
+								frappe.call({
+									method: `${PT_MODULE}.initialize_officer_tender_from_template`,
+									args: { std_template: rows[0].name },
+									freeze: true,
+									freeze_message: __("Creating tender…"),
+									callback(r2) {
+										const msg = r2.message || {};
+										if (msg.tender) {
+											frappe.set_route("Form", "Procurement Tender", msg.tender);
+										}
+									},
+								});
+							},
+						});
+					},
+					OFFICER_GROUP,
+				);
+			}
+			return;
+		}
+
+		if (hasOfficerDeskRole() && frm.doc.configuration_json) {
+			frappe.call({
+				method: `${PT_MODULE}.get_officer_conditional_state_for_tender`,
+				args: { tender_name: frm.doc.name },
+				callback(r) {
+					const msg = r.message || {};
+					const notices = msg.notices || [];
+					const field = frm.get_field("html_officer_guided_notices");
+					if (!field || !field.$wrapper) {
+						return;
+					}
+					if (!notices.length) {
+						field.$wrapper.html(
+							`<div class="text-muted">${__(
+								"No conditional branch notices for the current configuration.",
+							)}</div>`,
+						);
+						return;
+					}
+					const html = notices
+						.map(
+							(n) =>
+								`<div class="alert alert-${
+									n.level === "info" ? "info" : "default"
+								}">${frappe.utils.escape_html(n.message || "")}</div>`,
+						)
+						.join("");
+					field.$wrapper.html(html);
+				},
+			});
+		}
 
 		const VARIANT_OPTIONS = [
 			"VARIANT-INTERNATIONAL",
@@ -54,7 +143,7 @@ frappe.ui.form.on("Procurement Tender", {
 			"VARIANT-RETENTION-MONEY-SECURITY",
 		].join("\n");
 
-		if (isStdDemoWorkspace(frm)) {
+		if (hasAdminStdPocRole() && isStdDemoWorkspace(frm)) {
 			const loading = frm.get_field("html_std_demo_workspace");
 			if (loading && loading.$wrapper) {
 				loading.$wrapper.html(
@@ -63,8 +152,7 @@ frappe.ui.form.on("Procurement Tender", {
 					)}</div>`,
 				);
 			}
-			const demoHtmlMethod =
-				"kentender_procurement.kentender_procurement.doctype.procurement_tender.procurement_tender.get_std_demo_workspace_html";
+			const demoHtmlMethod = `${PT_MODULE}.get_std_demo_workspace_html`;
 			frappe.call({
 				method: demoHtmlMethod,
 				args: { tender_name: frm.doc.name },
@@ -131,14 +219,11 @@ frappe.ui.form.on("Procurement Tender", {
 				STD_DEMO_GROUP,
 			);
 
-			const ptInspect =
-				"kentender_procurement.kentender_procurement.doctype.procurement_tender.procurement_tender";
-
 			frm.add_custom_button(
 				__("Required forms inspector"),
 				() => {
 					frappe.call({
-						method: `${ptInspect}.get_required_forms_inspection`,
+						method: `${PT_MODULE}.get_required_forms_inspection`,
 						args: { tender_name: frm.doc.name },
 						freeze: true,
 						freeze_message: __("Loading inspector…"),
@@ -157,7 +242,7 @@ frappe.ui.form.on("Procurement Tender", {
 				__("BoQ inspector"),
 				() => {
 					frappe.call({
-						method: `${ptInspect}.get_boq_inspection`,
+						method: `${PT_MODULE}.get_boq_inspection`,
 						args: { tender_name: frm.doc.name },
 						freeze: true,
 						freeze_message: __("Loading inspector…"),
@@ -176,7 +261,7 @@ frappe.ui.form.on("Procurement Tender", {
 				__("Preview and audit viewer"),
 				() => {
 					frappe.call({
-						method: `${ptInspect}.get_preview_audit_summary`,
+						method: `${PT_MODULE}.get_preview_audit_summary`,
 						args: { tender_name: frm.doc.name },
 						freeze: true,
 						freeze_message: __("Loading preview and audit…"),
@@ -196,7 +281,7 @@ frappe.ui.form.on("Procurement Tender", {
 			if (frm.is_new() || frm.is_dirty()) {
 				frappe.msgprint({
 					title: __("Save the tender first"),
-					message: __("Save the tender before running STD POC actions."),
+					message: __("Save the tender before running this action."),
 					indicator: "orange",
 				});
 				return false;
@@ -212,13 +297,10 @@ frappe.ui.form.on("Procurement Tender", {
 			return true;
 		};
 
-		const call_std_poc = (method, args = {}, label = method) => {
+		const call_pt_method = (method, args = {}, label = method, reload = true) => {
 			if (!ensure_saved_and_template()) return;
-			const method_path =
-				"kentender_procurement.kentender_procurement.doctype.procurement_tender.procurement_tender." +
-				method;
 			frappe.call({
-				method: method_path,
+				method: `${PT_MODULE}.${method}`,
 				args: { tender_name: frm.doc.name, ...args },
 				freeze: true,
 				freeze_message: __("Running {0}...", [label]),
@@ -236,83 +318,266 @@ frappe.ui.form.on("Procurement Tender", {
 							indicator: "green",
 						});
 					}
-					frm.reload_doc();
+					if (reload) {
+						frm.reload_doc();
+					}
 				},
 			});
 		};
 
-		frm.add_custom_button(
-			__("Load Template Defaults"),
-			() => call_std_poc("load_template_defaults", {}, "Load Template Defaults"),
-			STD_POC_GROUP,
-		);
+		if (hasAdminStdPocRole()) {
+			frm.add_custom_button(
+				__("Load Template Defaults"),
+				() => call_pt_method("load_template_defaults", {}, "Load Template Defaults"),
+				STD_POC_GROUP,
+			);
 
-		frm.add_custom_button(
-			__("Load Sample Tender"),
-			() => call_std_poc("load_sample_tender", {}, "Load Sample Tender"),
-			STD_POC_GROUP,
-		);
+			frm.add_custom_button(
+				__("Load Sample Tender"),
+				() => call_pt_method("load_sample_tender", {}, "Load Sample Tender"),
+				STD_POC_GROUP,
+			);
 
-		frm.add_custom_button(
-			__("Load Sample Variant"),
-			() => {
-				if (!ensure_saved_and_template()) return;
-				frappe.prompt(
-					[
-						{
-							label: __("Variant code"),
-							fieldname: "variant_code",
-							fieldtype: "Select",
-							options: VARIANT_OPTIONS,
-							reqd: 1,
+			frm.add_custom_button(
+				__("Load Sample Variant"),
+				() => {
+					if (!ensure_saved_and_template()) return;
+					frappe.prompt(
+						[
+							{
+								label: __("Variant code"),
+								fieldname: "variant_code",
+								fieldtype: "Select",
+								options: VARIANT_OPTIONS,
+								reqd: 1,
+							},
+						],
+						(values) =>
+							call_pt_method(
+								"load_sample_variant",
+								{ variant_code: values.variant_code },
+								"Load Sample Variant",
+							),
+						__("Choose a sample variant"),
+						__("Apply"),
+					);
+				},
+				STD_POC_GROUP,
+			);
+
+			frm.add_custom_button(
+				__("Validate Configuration"),
+				() =>
+					call_pt_method("validate_tender_configuration", {}, "Validate Configuration"),
+				STD_POC_GROUP,
+			);
+
+			frm.add_custom_button(
+				__("Generate Required Forms"),
+				() =>
+					call_pt_method("generate_required_forms", {}, "Generate Required Forms"),
+				STD_POC_GROUP,
+			);
+
+			frm.add_custom_button(
+				__("Generate Sample BoQ"),
+				() => call_pt_method("generate_sample_boq", {}, "Generate Sample BoQ"),
+				STD_POC_GROUP,
+			);
+
+			frm.add_custom_button(
+				__("Prepare Render Context"),
+				() => call_pt_method("prepare_render_context", {}, "Prepare Render Context"),
+				STD_POC_GROUP,
+			);
+
+			frm.add_custom_button(
+				__("Generate Tender Pack Preview"),
+				() =>
+					call_pt_method(
+						"generate_tender_pack_preview",
+						{},
+						"Generate Tender Pack Preview",
+					),
+				STD_POC_GROUP,
+			);
+		}
+
+		if (hasOfficerDeskRole()) {
+			frm.add_custom_button(
+				__("Sync Configuration"),
+				() => call_pt_method("sync_officer_configuration", {}, __("Sync Configuration")),
+				OFFICER_GROUP,
+			);
+
+			frm.add_custom_button(
+				__("Validate (officer)"),
+				() =>
+					call_pt_method(
+						"validate_officer_configuration",
+						{},
+						__("Validate (officer)"),
+					),
+				OFFICER_GROUP,
+			);
+
+			frm.add_custom_button(
+				__("Validation feedback"),
+				() => {
+					if (!ensure_saved_and_template()) return;
+					frappe.call({
+						method: `${PT_MODULE}.get_officer_validation_feedback`,
+						args: { tender_name: frm.doc.name },
+						freeze: true,
+						callback(r) {
+							const msg = r.message || {};
+							const lines = [
+								`<p><strong>${__("Validation status")}:</strong> ${frappe.utils.escape_html(
+									msg.validation_status || "",
+								)}</p>`,
+								`<p><strong>${__("Tender status (officer)")}:</strong> ${frappe.utils.escape_html(
+									msg.tender_status_ux || "",
+								)}</p>`,
+								`<p><strong>${__("Messages")}:</strong> ${msg.message_count ?? 0}</p>`,
+							];
+							std_poc_demo_html_dialog(__("Validation feedback"), lines.join(""));
 						},
-					],
-					(values) =>
-						call_std_poc(
-							"load_sample_variant",
-							{ variant_code: values.variant_code },
-							"Load Sample Variant",
-						),
-					__("Choose a sample variant"),
-					__("Apply"),
-				);
-			},
-			STD_POC_GROUP,
-		);
+					});
+				},
+				OFFICER_GROUP,
+			);
 
-		frm.add_custom_button(
-			__("Validate Configuration"),
-			() => call_std_poc("validate_tender_configuration", {}, "Validate Configuration"),
-			STD_POC_GROUP,
-		);
+			frm.add_custom_button(
+				__("Generate required forms (officer)"),
+				() =>
+					call_pt_method(
+						"generate_officer_required_forms",
+						{},
+						__("Generate required forms (officer)"),
+					),
+				OFFICER_GROUP,
+			);
 
-		frm.add_custom_button(
-			__("Generate Required Forms"),
-			() => call_std_poc("generate_required_forms", {}, "Generate Required Forms"),
-			STD_POC_GROUP,
-		);
+			frm.add_custom_button(
+				__("View required forms checklist"),
+				() => {
+					if (!ensure_saved_and_template()) return;
+					frappe.call({
+						method: `${PT_MODULE}.get_officer_required_forms_checklist`,
+						args: { tender_name: frm.doc.name },
+						freeze: true,
+						callback(r) {
+							const msg = r.message || {};
+							const rows = msg.rows || [];
+							const body = rows
+								.map(
+									(row) =>
+										`<tr><td>${frappe.utils.escape_html(
+											row.form_code || "",
+										)}</td><td>${frappe.utils.escape_html(
+											row.form_title || "",
+										)}</td><td>${frappe.utils.escape_html(
+											row.required_because || "",
+										)}</td></tr>`,
+								)
+								.join("");
+							const html = `<table class="table table-bordered"><thead><tr><th>${__(
+								"Code",
+							)}</th><th>${__("Form")}</th><th>${__(
+								"Required because",
+							)}</th></tr></thead><tbody>${body}</tbody></table>`;
+							std_poc_demo_html_dialog(__("Required forms checklist"), html);
+						},
+					});
+				},
+				OFFICER_GROUP,
+			);
 
-		frm.add_custom_button(
-			__("Generate Sample BoQ"),
-			() => call_std_poc("generate_sample_boq", {}, "Generate Sample BoQ"),
-			STD_POC_GROUP,
-		);
+			frm.add_custom_button(
+				__("Generate representative BoQ"),
+				() =>
+					call_pt_method(
+						"generate_officer_representative_boq",
+						{},
+						__("Generate representative BoQ"),
+					),
+				OFFICER_GROUP,
+			);
 
-		frm.add_custom_button(
-			__("Prepare Render Context"),
-			() => call_std_poc("prepare_render_context", {}, "Prepare Render Context"),
-			STD_POC_GROUP,
-		);
+			frm.add_custom_button(
+				__("BoQ status"),
+				() => {
+					if (!ensure_saved_and_template()) return;
+					frappe.call({
+						method: `${PT_MODULE}.get_officer_boq_status`,
+						args: { tender_name: frm.doc.name },
+						freeze: true,
+						callback(r) {
+							const msg = r.message || {};
+							const html = `<pre style="white-space:pre-wrap;">${frappe.utils.escape_html(
+								JSON.stringify(msg, null, 2),
+							)}</pre>`;
+							std_poc_demo_html_dialog(__("BoQ status"), html);
+						},
+					});
+				},
+				OFFICER_GROUP,
+			);
 
-		frm.add_custom_button(
-			__("Generate Tender Pack Preview"),
-			() =>
-				call_std_poc(
-					"generate_tender_pack_preview",
-					{},
-					"Generate Tender Pack Preview",
-				),
-			STD_POC_GROUP,
-		);
+			frm.add_custom_button(
+				__("Generate preview (officer)"),
+				() =>
+					call_pt_method(
+						"generate_officer_preview",
+						{},
+						__("Generate preview (officer)"),
+					),
+				OFFICER_GROUP,
+			);
+
+			frm.add_custom_button(
+				__("Preview and audit summary (officer)"),
+				() => {
+					if (!ensure_saved_and_template()) return;
+					frappe.call({
+						method: `${PT_MODULE}.get_officer_preview_audit_summary`,
+						args: { tender_name: frm.doc.name },
+						freeze: true,
+						callback(r) {
+							const msg = r.message || {};
+							if (msg.html) {
+								std_poc_demo_html_dialog(
+									__("Preview and audit summary (officer)"),
+									msg.html,
+								);
+							}
+						},
+					});
+				},
+				OFFICER_GROUP,
+			);
+
+			frm.add_custom_button(
+				__("Mark ready for review"),
+				() =>
+					call_pt_method(
+						"mark_officer_tender_ready_for_review",
+						{},
+						__("Mark ready for review"),
+					),
+				OFFICER_GROUP,
+			);
+
+			frm.add_custom_button(
+				__("Reset to configuring"),
+				() =>
+					call_pt_method(
+						"reset_officer_tender_to_configuring",
+						{},
+						__("Reset to configuring"),
+					),
+				OFFICER_GROUP,
+			);
+		}
 	},
 });

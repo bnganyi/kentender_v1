@@ -95,6 +95,15 @@ export async function loginAsProcurementPlanner(page: Page) {
 	);
 }
 
+/** Procurement Officer — `kentender_core.seeds.constants.SEED_USERS` (seed_core_minimal). */
+export async function loginAsProcurementOfficer(page: Page) {
+	await login(
+		page,
+		process.env.UI_PROCUREMENT_OFFICER_USER || 'procurement.officer@moh.test',
+		process.env.UI_PROCUREMENT_OFFICER_PASSWORD || DEFAULT_SEED_PASSWORD,
+	);
+}
+
 export async function loginAsAuditor(page: Page) {
 	await login(
 		page,

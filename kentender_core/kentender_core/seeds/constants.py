@@ -18,6 +18,7 @@ BUSINESS_ROLES = (
 	"Planning Authority",
 	"Requisitioner",
 	"Procurement Planner",
+	"Procurement Officer",
 	"Finance Reviewer",
 	"Department Approver",
 	"Auditor",
@@ -29,6 +30,7 @@ SEED_USERS = (
 	("planning.authority@moh.test", "Planning Authority MOH", "Planning Authority", DEPT_FIN),
 	("requisitioner@moh.test", "Requisitioner MOH", "Requisitioner", DEPT_CLIN),
 	("planner@moh.test", "Procurement Planner MOH", "Procurement Planner", DEPT_PROC),
+	("procurement.officer@moh.test", "Procurement Officer MOH", "Procurement Officer", DEPT_PROC),
 	("finance.reviewer@moh.test", "Finance Reviewer MOH", "Finance Reviewer", DEPT_FIN),
 	("hod.approver@moh.test", "HoD Approver MOH", "Department Approver", DEPT_CLIN),
 )

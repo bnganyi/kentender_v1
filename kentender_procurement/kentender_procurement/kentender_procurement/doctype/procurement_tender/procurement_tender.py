@@ -627,3 +627,231 @@ def get_preview_audit_summary(tender_name: str) -> dict[str, Any]:
 
 	_get_tender_doc_read(tender_name)
 	return build_summary(tender_name)
+
+
+# ---------------------------------------------------------------------------
+# Procurement Officer Tender Configuration POC — officer workflow (doc 8)
+# ---------------------------------------------------------------------------
+
+
+@frappe.whitelist()
+def get_available_std_templates_for_officer() -> list[dict[str, Any]]:
+	"""STD templates the officer may use for this POC (controlled allowlist)."""
+	from kentender_procurement.tender_management.services.officer_tender_config import (
+		OFFICER_POC_TEMPLATE_CODE,
+	)
+
+	frappe.only_for(("System Manager", "Administrator", "Procurement Officer"))
+	return frappe.get_all(
+		"STD Template",
+		filters={"template_code": OFFICER_POC_TEMPLATE_CODE},
+		fields=["name", "template_code", "template_name", "template_short_name"],
+	)
+
+
+@frappe.whitelist()
+def initialize_officer_tender_from_template(std_template: str) -> dict[str, Any]:
+	"""Create a draft ``Procurement Tender`` linked to ``std_template`` and load template defaults."""
+	frappe.only_for(("System Manager", "Administrator", "Procurement Officer"))
+	if not std_template:
+		frappe.throw(frappe._("std_template is required."), frappe.ValidationError)
+	if not frappe.db.exists("STD Template", std_template):
+		frappe.throw(frappe._("STD Template not found."), frappe.DoesNotExistError)
+	std = frappe.get_doc("STD Template", std_template)
+	frappe.has_permission("Procurement Tender", "create", throw=True)
+	tender_doc = frappe.new_doc("Procurement Tender")
+	tender_doc.std_template = std.name
+	tender_doc.tender_title = std.template_short_name or std.template_name or "New tender"
+	tender_doc.tender_reference = f"NEW-{frappe.generate_hash(length=8)}"
+	tender_doc.procurement_method = "OPEN_COMPETITIVE_TENDERING"
+	tender_doc.tender_scope = "NATIONAL"
+	tender_doc.insert()
+	load_template_defaults(tender_doc.name)
+	return {"ok": True, "tender": tender_doc.name, "message": "Tender initialized from STD template."}
+
+
+@frappe.whitelist()
+def sync_officer_configuration(tender_name: str) -> dict[str, Any]:
+	"""Merge guided top-level fields into ``configuration_json``; invalidate stale outputs."""
+	from kentender_procurement.tender_management.services.officer_tender_config import (
+		apply_officer_configuration_stale_marks,
+		merge_officer_overlay_into_configuration,
+	)
+
+	tender_doc = _get_tender_doc(tender_name)
+	_require_std_template(tender_doc)
+	config = _parse_configuration_json(tender_doc)
+	merged = merge_officer_overlay_into_configuration(config, tender_doc)
+	engine.apply_config_to_tender_doc(tender_doc, merged)
+	apply_officer_configuration_stale_marks(tender_doc)
+	return _save_and_return(
+		tender_doc,
+		{"message": "Guided fields synced into configuration JSON."},
+	)
+
+
+@frappe.whitelist()
+def mark_officer_configuration_changed(tender_name: str) -> dict[str, Any]:
+	"""Mark validation and preview stale after configuration-affecting edits (without full sync)."""
+	from kentender_procurement.tender_management.services.officer_tender_config import (
+		apply_officer_configuration_stale_marks,
+	)
+
+	tender_doc = _get_tender_doc(tender_name)
+	apply_officer_configuration_stale_marks(tender_doc)
+	return _save_and_return(
+		tender_doc,
+		{"message": "Validation and preview marked stale; re-validate when ready."},
+	)
+
+
+@frappe.whitelist()
+def validate_officer_configuration(tender_name: str) -> dict[str, Any]:
+	"""Sync guided fields then run engine validation (doc 8 §9.3)."""
+	sync_officer_configuration(tender_name)
+	return validate_tender_configuration(tender_name)
+
+
+@frappe.whitelist()
+def get_officer_validation_feedback(tender_name: str) -> dict[str, Any]:
+	"""Officer-facing validation summary from persisted rows."""
+	from kentender_procurement.tender_management.services.officer_tender_config import (
+		tender_status_to_officer_ux_label,
+	)
+
+	tender_doc = _get_tender_doc_read(tender_name)
+	rows = _child_rows_to_dicts(tender_doc.get("validation_messages"))
+	blockers = sum(
+		1
+		for m in rows
+		if (m.get("severity") or "").upper() in ("BLOCKER", "ERROR")
+		or m.get("blocks_generation") in (1, True, "1")
+	)
+	warnings = sum(1 for m in rows if (m.get("severity") or "").upper() == "WARNING")
+	return {
+		"ok": True,
+		"tender": tender_doc.name,
+		"validation_status": tender_doc.validation_status or "",
+		"tender_status_ux": tender_status_to_officer_ux_label(tender_doc.tender_status),
+		"blocker_count": blockers,
+		"warning_count": warnings,
+		"message_count": len(rows),
+		"grouped": {"all": rows},
+	}
+
+
+@frappe.whitelist()
+def can_generate_officer_preview(tender_name: str) -> dict[str, Any]:
+	"""Whether preview generation is allowed (no blocking validation errors)."""
+	tender_doc = _get_tender_doc_read(tender_name)
+	_require_std_template(tender_doc)
+	config = _parse_configuration_json(tender_doc)
+	template = engine.load_template(tender_doc.std_template)
+	lots = _child_rows_to_dicts(tender_doc.get("lots"))
+	boq_items = _child_rows_to_dicts(tender_doc.get("boq_items"))
+	vr = engine.validate_config(template, config, lots=lots, boq_items=boq_items)
+	bg = bool(vr.get("blocks_generation"))
+	return {
+		"ok": True,
+		"can_generate": not bg,
+		"validation_status": vr.get("status"),
+		"blocks_generation": bg,
+	}
+
+
+@frappe.whitelist()
+def generate_officer_required_forms(tender_name: str) -> dict[str, Any]:
+	sync_officer_configuration(tender_name)
+	return generate_required_forms(tender_name)
+
+
+@frappe.whitelist()
+def get_officer_required_forms_checklist(tender_name: str) -> dict[str, Any]:
+	from kentender_procurement.tender_management.services.officer_tender_config import (
+		shape_officer_required_forms_checklist,
+	)
+
+	tender_doc = _get_tender_doc_read(tender_name)
+	rows = _child_rows_to_dicts(tender_doc.get("required_forms"))
+	shaped = shape_officer_required_forms_checklist(rows)
+	return {
+		"ok": True,
+		"tender": tender_doc.name,
+		**shaped,
+		"stale_hint": (tender_doc.validation_status or "") == "Not Validated",
+	}
+
+
+@frappe.whitelist()
+def generate_officer_representative_boq(tender_name: str) -> dict[str, Any]:
+	sync_officer_configuration(tender_name)
+	return generate_sample_boq(tender_name)
+
+
+@frappe.whitelist()
+def get_officer_boq_status(tender_name: str) -> dict[str, Any]:
+	from kentender_procurement.tender_management.services.officer_tender_config import (
+		get_officer_boq_readiness_summary,
+	)
+
+	tender_doc = _get_tender_doc_read(tender_name)
+	_require_std_template(tender_doc)
+	config = _parse_configuration_json(tender_doc)
+	boq_items = _child_rows_to_dicts(tender_doc.get("boq_items"))
+	lots = _child_rows_to_dicts(tender_doc.get("lots"))
+	lot_codes = frozenset(
+		str(l.get("lot_code")) for l in lots if l.get("lot_code") not in (None, "")
+	)
+	summary = get_officer_boq_readiness_summary(
+		config, boq_items, existing_lot_codes=lot_codes or None
+	)
+	return {"ok": True, "tender": tender_doc.name, **summary}
+
+
+@frappe.whitelist()
+def generate_officer_preview(tender_name: str) -> dict[str, Any]:
+	sync_officer_configuration(tender_name)
+	return generate_tender_pack_preview(tender_name)
+
+
+@frappe.whitelist()
+def get_officer_preview_audit_summary(tender_name: str) -> dict[str, Any]:
+	from kentender_procurement.tender_management.services.officer_tender_config import (
+		get_officer_preview_audit_summary_enriched,
+	)
+	from kentender_procurement.tender_management.services.std_preview_audit_viewer import (
+		render_preview_audit_viewer_html,
+	)
+
+	_get_tender_doc_read(tender_name)
+	out = get_officer_preview_audit_summary_enriched(tender_name)
+	out["html"] = render_preview_audit_viewer_html(out)
+	return out
+
+
+@frappe.whitelist()
+def mark_officer_tender_ready_for_review(tender_name: str) -> dict[str, Any]:
+	tender_doc = _get_tender_doc(tender_name)
+	tender_doc.tender_status = "POC Demonstrated"
+	return _save_and_return(
+		tender_doc,
+		{"message": "Tender marked ready for review (POC Demonstrated)."},
+	)
+
+
+@frappe.whitelist()
+def reset_officer_tender_to_configuring(tender_name: str) -> dict[str, Any]:
+	tender_doc = _get_tender_doc(tender_name)
+	tender_doc.tender_status = "Configured"
+	return _save_and_return(tender_doc, {"message": "Tender status reset to Configuring."})
+
+
+@frappe.whitelist()
+def get_officer_conditional_state_for_tender(tender_name: str) -> dict[str, Any]:
+	from kentender_procurement.tender_management.services.officer_tender_config import (
+		get_officer_conditional_state,
+	)
+
+	tender_doc = _get_tender_doc_read(tender_name)
+	cfg = _parse_configuration_json(tender_doc)
+	return {"ok": True, "tender": tender_doc.name, **get_officer_conditional_state(cfg)}

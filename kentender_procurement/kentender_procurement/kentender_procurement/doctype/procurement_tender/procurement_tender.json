@@ -18,6 +18,9 @@
   "section_std_demo_workspace",
   "html_std_demo_workspace",
   "section_configuration",
+  "section_officer_poc_boundary",
+  "html_officer_poc_boundary",
+  "html_officer_guided_notices",
   "procurement_method",
   "procurement_category",
   "tender_scope",
@@ -114,6 +117,24 @@
    "fieldname": "section_configuration",
    "fieldtype": "Section Break",
    "label": "3. Configuration"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_officer_poc_boundary",
+   "fieldtype": "Section Break",
+   "label": "Officer POC — scope notice"
+  },
+  {
+   "fieldname": "html_officer_poc_boundary",
+   "fieldtype": "HTML",
+   "label": "POC boundary",
+   "options": "<div class=\"text-muted\" style=\"padding:4px 0;\">Officer Tender Configuration POC: guided setup only. No publication, bidder portal, evaluation, award, final PDF, or production BoQ.</div>"
+  },
+  {
+   "fieldname": "html_officer_guided_notices",
+   "fieldtype": "HTML",
+   "label": "Guided notices",
+   "options": "<div></div>"
   },
   {
    "fieldname": "procurement_method",
@@ -278,6 +299,18 @@
    "report": 1,
    "role": "Administrator",
    "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
    "write": 1
   }
  ],

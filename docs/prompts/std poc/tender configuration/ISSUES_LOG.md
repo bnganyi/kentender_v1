@@ -12,6 +12,7 @@ Append new entries at the bottom. Reference **Tracker step** as `Officer 1` … 
 |----|------|--------------|------|---------|-------------------|
 | STD-OFFICER-001 | 2026-05-01 | — | meta | Officer POC folder trackers and issues log created (`IMPLEMENTATION_TRACKER.md`, `ISSUES_LOG.md`, `README.md`). | This file + [`IMPLEMENTATION_TRACKER.md`](IMPLEMENTATION_TRACKER.md) |
 | STD-OFFICER-002 | 2026-05-01 | Officer 1 / Impl seq 1 | decision | Officer POC code lives at `kentender_procurement/.../tender_management/services/officer_tender_config.py` (not `{app}/procurement/officer_tender_config.py`). Prevents path drift vs doc 8 literal. | [`officer_tender_config.py`](../../../../kentender_procurement/kentender_procurement/tender_management/services/officer_tender_config.py); Officer step **1** tracker row. |
+| STD-OFFICER-003 | 2026-05-01 | Officer 9 | decision | Frappe Desk routes tender forms as `/desk/procurement-tender/{name}` (not `/app/procurement-tender/...`). Playwright assertions must allow `/desk/` prefix. | [`officer-tender-poc-mvp.spec.ts`](../../../../tests/ui/smoke/procurement/officer-tender-poc-mvp.spec.ts) |
 
 **Types:** `blocker` | `question` | `decision` | `debt` | `deviation` | `meta`
 

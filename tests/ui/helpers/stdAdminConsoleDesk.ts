@@ -45,6 +45,18 @@ export async function clickStdPocAction(page: Page, label: string) {
 	await item.click();
 }
 
+/** Procurement Officer Tender Configuration POC actions under "Officer Tender Configuration". */
+export async function clickOfficerTenderConfigurationAction(page: Page, label: string) {
+	const group = page
+		.locator(`.inner-group-button[data-label="${enc('Officer Tender Configuration')}"]`)
+		.first();
+	await expect(group).toBeVisible({ timeout: 120_000 });
+	await group.locator('button').first().click();
+	const item = group.locator(`.dropdown-menu.show a.dropdown-item[data-label="${enc(label)}"]`);
+	await expect(item).toBeVisible({ timeout: 15_000 });
+	await item.click();
+}
+
 /**
  * `std_admin_prompt_string` dialogs: single Data field `value`, primary "Run".
  */
