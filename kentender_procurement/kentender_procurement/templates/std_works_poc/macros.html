@@ -1,0 +1,48 @@
+{# STD-WORKS-POC Step 13 — shared rendering helpers (spec §11.2). Pure Jinja; no Python calls. #}
+
+{%- macro value_or_na(value) -%}
+	{%- if value is none or value == "" or value == [] or value == {} -%}
+		<span class="std-poc-muted">Not specified</span>
+	{%- else -%}
+		{{ value }}
+	{%- endif -%}
+{%- endmacro -%}
+
+{%- macro yes_no(value) -%}
+	{%- if value is sameas true or value == 1 or value == "1" or value == "YES" or value == "yes" or value == "Yes" or value == "TRUE" or value == "true" or value == "True" -%}
+		Yes
+	{%- elif value is none or value == "" -%}
+		<span class="std-poc-muted">Not specified</span>
+	{%- else -%}
+		No
+	{%- endif -%}
+{%- endmacro -%}
+
+{%- macro money(value, currency=None) -%}
+	{%- if value is none or value == "" -%}
+		<span class="std-poc-muted">Not specified</span>
+	{%- else -%}
+		{%- if currency -%}{{ currency }} {% endif -%}{{ value }}
+	{%- endif -%}
+{%- endmacro -%}
+
+{%- macro percent(value) -%}
+	{%- if value is none or value == "" -%}
+		<span class="std-poc-muted">Not specified</span>
+	{%- else -%}
+		{{ value }}%
+	{%- endif -%}
+{%- endmacro -%}
+
+{%- macro section_heading(title, subtitle=None) -%}
+	<h2>{{ title }}</h2>
+	{%- if subtitle %}<p class="std-poc-muted">{{ subtitle }}</p>{%- endif -%}
+{%- endmacro -%}
+
+{%- macro status_badge(status) -%}
+	{%- if status -%}
+		<span class="std-poc-badge std-poc-badge-{{ status | lower | replace(' ', '-') }}">{{ status }}</span>
+	{%- else -%}
+		<span class="std-poc-muted">Not specified</span>
+	{%- endif -%}
+{%- endmacro -%}

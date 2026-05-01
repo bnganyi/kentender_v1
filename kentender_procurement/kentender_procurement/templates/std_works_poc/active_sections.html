@@ -1,0 +1,33 @@
+{# STD-WORKS-POC Step 13 — Active STD Sections (spec §11.5). #}
+{%- from "templates/std_works_poc/macros.html" import value_or_na, section_heading -%}
+<section class="std-poc-section">
+	{{ section_heading("Active STD Sections", subtitle="Sections included in this POC preview.") }}
+	{% if active_sections %}
+	<table class="std-poc-table">
+		<thead>
+			<tr>
+				<th>Order</th>
+				<th>Section Code</th>
+				<th>Source Section</th>
+				<th>Title</th>
+				<th>Mutability</th>
+				<th>POC Treatment</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for section in active_sections %}
+			<tr>
+				<td>{{ value_or_na(section.render_order) }}</td>
+				<td>{{ value_or_na(section.section_code) }}</td>
+				<td>{{ value_or_na(section.source_section_code) }}</td>
+				<td>{{ value_or_na(section.title) }}</td>
+				<td>{{ value_or_na(section.mutability) }}</td>
+				<td>{{ value_or_na(section.poc_treatment) }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	{% else %}
+	<p class="std-poc-muted">No active sections resolved.</p>
+	{% endif %}
+</section>

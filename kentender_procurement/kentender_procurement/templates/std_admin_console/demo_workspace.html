@@ -1,0 +1,88 @@
+<div class="std-admin-demo-workspace" style="max-width: 100%; overflow-x: auto;">
+	<div class="alert alert-warning std-demo-workspace-banner" style="margin-bottom: 12px;">
+		<strong>POC Demo Workspace</strong>
+		<p style="margin: 8px 0 0 0; font-size: 13px;">{{ banner_text | e }}</p>
+	</div>
+
+	<h4 style="margin-top: 0;">Current state summary</h4>
+	<table class="table table-bordered table-condensed" style="font-size: 12px; margin-bottom: 16px;">
+		<tbody>
+			<tr><th style="width: 220px;">Tender status</th><td>{{ tender_status | e }}</td></tr>
+			<tr><th>Validation status</th><td>{{ validation_status | e }}</td></tr>
+			<tr><th>Required forms (rows)</th><td>{{ required_form_count }}</td></tr>
+			<tr><th>Validation messages (rows)</th><td>{{ validation_message_count }}</td></tr>
+			<tr><th>Tender pack / preview</th><td>{{ pack_preview_state | e }}</td></tr>
+		</tbody>
+	</table>
+
+	<h4>Demo identity</h4>
+	<table class="table table-bordered table-condensed" style="font-size: 12px; margin-bottom: 16px;">
+		<tbody>
+			<tr><th style="width: 220px;">Demo tender name</th><td>{{ tender_name | e }}</td></tr>
+			<tr><th>Tender title</th><td>{{ tender_title | e }}</td></tr>
+			<tr><th>Tender reference</th><td>{{ tender_reference | e }}</td></tr>
+			<tr><th>STD Template</th><td>{{ std_template | e }}</td></tr>
+			<tr><th>Template code</th><td>{{ template_code | e }}</td></tr>
+		</tbody>
+	</table>
+
+	<h4>Configuration summary (subset)</h4>
+	<details open style="margin-bottom: 12px;">
+		<summary style="cursor: pointer; font-weight: 600;">Tender identity + method / scope</summary>
+		<table class="table table-bordered table-condensed" style="font-size: 12px; margin-top: 8px;">
+			<tbody>
+				<tr><th style="width: 220px;">Procurement method (form)</th><td>{{ procurement_method | e }}</td></tr>
+				<tr><th>Tender scope (form)</th><td>{{ tender_scope | e }}</td></tr>
+				<tr><th>METHOD.PROCUREMENT_METHOD (config)</th><td>{{ cfg_method | e }}</td></tr>
+			</tbody>
+		</table>
+	</details>
+	<details open style="margin-bottom: 16px;">
+		<summary style="cursor: pointer; font-weight: 600;">System / audit (from configuration)</summary>
+		<table class="table table-bordered table-condensed" style="font-size: 12px; margin-top: 8px;">
+			<tbody>
+				<tr><th style="width: 220px;">SYSTEM.TEMPLATE_CODE</th><td>{{ cfg_template_code | e }}</td></tr>
+				<tr><th>SYSTEM.PACKAGE_VERSION</th><td>{{ cfg_package_version | e }}</td></tr>
+			</tbody>
+		</table>
+	</details>
+
+	<h4>Lots and BoQ (summaries)</h4>
+	<table class="table table-bordered table-condensed" style="font-size: 12px; margin-bottom: 16px;">
+		<tbody>
+			<tr><th style="width: 220px;">Lot count</th><td>{{ lot_count }}</td></tr>
+			<tr><th>BoQ row count</th><td>{{ boq_count }}</td></tr>
+			<tr><th>BoQ categories</th><td>{{ (boq_categories | join(', ')) | e }}</td></tr>
+		</tbody>
+	</table>
+	{% if lots_preview %}
+	<p style="font-size: 12px;"><em>Lot codes (preview)</em></p>
+	<ul style="font-size: 12px; margin-top: 0;">
+		{% for l in lots_preview %}
+		<li><strong>{{ l.lot_code | e }}</strong> — {{ l.lot_title | e }}</li>
+		{% endfor %}
+	</ul>
+	{% endif %}
+
+	<hr style="margin: 20px 0;" />
+	{{ preview_audit_html | safe }}
+
+	<hr style="margin: 20px 0;" />
+	{{ forms_inspector_html | safe }}
+
+	<hr style="margin: 20px 0;" />
+	{{ boq_inspector_html | safe }}
+
+	<h4>Audit summary</h4>
+	<table class="table table-bordered table-condensed" style="font-size: 12px; margin-bottom: 0;">
+		<tbody>
+			<tr><th style="width: 220px;">Configuration hash</th><td>{{ configuration_hash | e }}</td></tr>
+			<tr><th>Package hash (form)</th><td>{{ package_hash | e }}</td></tr>
+			<tr><th>Template version</th><td>{{ template_version | e }}</td></tr>
+			<tr><th>Last validated at</th><td>{{ last_validated_at | e }}</td></tr>
+			<tr><th>Last generated at</th><td>{{ last_generated_at | e }}</td></tr>
+			<tr><th>Owner</th><td>{{ owner | e }}</td></tr>
+			<tr><th>Modified</th><td>{{ modified | e }}</td></tr>
+		</tbody>
+	</table>
+</div>

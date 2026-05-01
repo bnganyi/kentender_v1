@@ -1,0 +1,97 @@
+<div class="std-admin-preview-audit-viewer" style="max-width: 100%; overflow-x: auto;">
+	<h4 class="std-preview-audit-title">Preview and audit viewer</h4>
+	<div class="alert alert-warning std-preview-audit-poc-banner" style="font-size: 12px;">
+		{{ poc_warning | e }}
+	</div>
+
+	<h5>Preview status</h5>
+	<p style="font-size: 13px;"><strong>Status:</strong> <span class="std-preview-status">{{ preview_status | e }}</span></p>
+
+	{% if warnings %}
+	<div class="alert alert-warning" style="font-size: 12px;">
+		{% for w in warnings %}<div>{{ w | e }}</div>{% endfor %}
+	</div>
+	{% endif %}
+
+	<h5>Output completeness</h5>
+	<table class="table table-bordered table-condensed" style="font-size: 11px; margin-bottom: 12px;">
+		<thead><tr><th>Check</th><th>Status</th><th>Detail</th></tr></thead>
+		<tbody>
+			{% for row in output_completeness %}
+			<tr>
+				<td>{{ row.label | e }}</td>
+				<td>{{ row.status | e }}</td>
+				<td>{{ row.detail | e }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<h5>Validation summary</h5>
+	<table class="table table-bordered table-condensed" style="font-size: 12px; margin-bottom: 12px;">
+		<tbody>
+			<tr><th style="width: 200px;">Validation status</th><td>{{ validation_summary.validation_status | e }}</td></tr>
+			<tr><th>Message count</th><td>{{ validation_summary.message_count }}</td></tr>
+			<tr><th>Has blockers</th><td>{% if validation_summary.has_blockers %}yes{% else %}no{% endif %}</td></tr>
+			<tr><th>Severity counts</th><td>
+				{% set sev = validation_summary.severity_counts or {} %}
+				{% for k, v in sev.items() %}
+				{{ k | e }}={{ v }}{% if not loop.last %}; {% endif %}
+				{% else %}—{% endfor %}
+			</td></tr>
+		</tbody>
+	</table>
+	{% if validation_summary.sample_messages %}
+	<p style="font-size: 11px;"><em>Sample messages</em></p>
+	<ul style="font-size: 11px;">
+		{% for m in validation_summary.sample_messages %}
+		{% if m %}<li>{{ m | e }}</li>{% endif %}
+		{% endfor %}
+	</ul>
+	{% endif %}
+
+	<h5>Required forms and BoQ</h5>
+	<table class="table table-bordered table-condensed" style="font-size: 12px; margin-bottom: 12px;">
+		<tbody>
+			<tr><th style="width: 200px;">Required form rows</th><td>{{ required_forms_summary.row_count }}</td></tr>
+			<tr><th>BoQ item rows</th><td>{{ boq_summary.row_count }}</td></tr>
+		</tbody>
+	</table>
+
+	<h5>Audit and reproducibility</h5>
+	<table class="table table-bordered table-condensed" style="font-size: 11px; margin-bottom: 12px;">
+		<tbody>
+			<tr><th style="width: 220px;">Template code</th><td><code>{{ audit.template_code | e }}</code></td></tr>
+			<tr><th>Template version</th><td>{{ audit.template_version | e }}</td></tr>
+			<tr><th>Source document code</th><td>{{ audit.source_document_code | e }}</td></tr>
+			<tr><th>Package version (STD Template)</th><td>{{ audit.package_version | e }}</td></tr>
+			<tr><th>Package hash</th><td><code style="word-break: break-all;">{{ audit.package_hash | e }}</code></td></tr>
+			<tr><th>Configuration hash</th><td><code style="word-break: break-all;">{{ audit.configuration_hash | e }}</code></td></tr>
+			<tr><th>Last validated at</th><td>{{ audit.last_validated_at | e }}</td></tr>
+			<tr><th>Last generated at</th><td>{{ audit.last_generated_at | e }}</td></tr>
+			<tr><th>Preview HTML length (chars)</th><td>{{ audit.preview_html_length }}</td></tr>
+		</tbody>
+	</table>
+
+	<h5>Related (use STD Demo or desk navigation)</h5>
+	<ul style="font-size: 12px;">
+		<li>Open STD Template: <code>{{ links.std_template | e }}</code></li>
+		<li>Desk paths: <code>{{ links.std_template_desk_path | e }}</code> · <code>{{ links.procurement_tender_desk_path | e }}</code></li>
+	</ul>
+
+	<h5>Generated preview (read-only, sandboxed)</h5>
+	{% if preview_iframe_srcdoc %}
+	<p style="font-size: 11px;" class="text-muted">Rendered inside a sandboxed iframe (scripts disabled).</p>
+	<iframe
+		class="std-preview-audit-iframe"
+		title="Tender pack preview"
+		sandbox=""
+		style="width: 100%; min-height: 320px; border: 1px solid #ccc; background: #fff;"
+		srcdoc="{{ preview_iframe_srcdoc | safe }}"
+	></iframe>
+	{% else %}
+	<div class="alert alert-info" style="font-size: 12px;">
+		No tender-pack preview HTML yet. Use <strong>STD POC → Generate Tender Pack Preview</strong> (after validation allows generation).
+	</div>
+	{% endif %}
+</div>

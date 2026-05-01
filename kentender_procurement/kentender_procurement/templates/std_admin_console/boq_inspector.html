@@ -1,0 +1,81 @@
+<div class="std-admin-boq-inspector" style="max-width: 100%; overflow-x: auto;">
+	<h4 class="std-inspector-boq-title">BoQ inspector</h4>
+	<div class="alert alert-info std-inspector-boq-warning" style="font-size: 12px;">
+		{{ poc_warning | e }}
+	</div>
+	{% if warnings %}
+	<div class="alert alert-warning" style="font-size: 12px;">
+		{% for w in warnings %}
+		<div>{{ w | e }}</div>
+		{% endfor %}
+	</div>
+	{% endif %}
+	{% if summary %}
+	<table class="table table-bordered table-condensed" style="font-size: 12px; margin-bottom: 12px;">
+		<tbody>
+			<tr><th style="width: 220px;">Row count</th><td>{{ summary.row_count }}</td></tr>
+			<tr><th>Unique item codes</th><td>{{ summary.unique_item_code_count }}</td></tr>
+			<tr><th>Duplicate item codes</th><td>{{ summary.duplicate_item_code_count }}</td></tr>
+			<tr><th>Bidder-priced rows</th><td>{{ summary.bidder_priced_count }}</td></tr>
+			<tr><th>Fixed amount rows</th><td>{{ summary.fixed_amount_count }}</td></tr>
+			<tr><th>Invalid lot references</th><td>{{ summary.invalid_lot_reference_count }}</td></tr>
+		</tbody>
+	</table>
+	{% endif %}
+	{% if category_coverage and category_coverage|length > 0 %}
+	<h5>Category coverage</h5>
+	<table class="table table-bordered table-condensed" style="font-size: 11px; margin-bottom: 12px;">
+		<thead><tr><th>Category</th><th>Rows</th><th>Present</th></tr></thead>
+		<tbody>
+			{% for c in category_coverage %}
+			<tr>
+				<td>{{ c.category | e }}</td>
+				<td>{{ c.row_count }}</td>
+				<td>{% if c.present %}yes{% else %}no{% endif %}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	{% endif %}
+	{% if rule_relationship %}
+	<h5>Rule / scenario hints</h5>
+	<ul style="font-size: 12px;">
+		<li>BoQ rows present: {% if rule_relationship.boq_rows_present %}yes{% else %}no{% endif %}</li>
+		<li>DAYWORKS row: {% if rule_relationship.dayworks_row_present %}yes{% else %}no{% endif %}</li>
+		<li>PROVISIONAL_SUMS row: {% if rule_relationship.provisional_sums_present %}yes{% else %}no{% endif %}</li>
+		<li>Multiple lots: {% if rule_relationship.multiple_lots %}yes{% else %}no{% endif %}</li>
+	</ul>
+	{% endif %}
+	{% if rows and rows|length > 0 %}
+	<table class="table table-bordered table-condensed" style="font-size: 11px;">
+		<thead>
+			<tr>
+				<th>Item</th>
+				<th>Lot</th>
+				<th>Lot title</th>
+				<th>Category</th>
+				<th>Qty</th>
+				<th>Bidder priced</th>
+				<th>Row type</th>
+				<th>Lot check</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for row in rows %}
+			<tr>
+				<td><code>{{ row.item_code | e }}</code></td>
+				<td>{{ (row.lot_code or '') | e }}</td>
+				<td>{{ (row.lot_title or '') | e }}</td>
+				<td>{{ (row.item_category or '') | e }}</td>
+				<td>{% if row.quantity is not none %}{{ row.quantity }}{% endif %}</td>
+				<td>{% if row.is_priced_by_bidder %}yes{% else %}no{% endif %}</td>
+				<td>{{ row.row_type | e }}</td>
+				<td>{{ row.lot_reference_status | e }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	{% elif not warnings %}
+	<p class="text-muted" style="font-size: 12px;">No BoQ rows.</p>
+	{% endif %}
+</div>

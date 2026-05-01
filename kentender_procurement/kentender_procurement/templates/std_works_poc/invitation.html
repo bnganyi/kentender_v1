@@ -1,0 +1,26 @@
+{# STD-WORKS-POC Step 13 — Invitation to Tender summary (spec §11.4). #}
+{%- from "templates/std_works_poc/macros.html" import value_or_na, yes_no, money, section_heading -%}
+<section class="std-poc-section">
+	{{ section_heading("Invitation to Tender", subtitle="POC summary; not a full legal invitation text.") }}
+	<p>
+		{{ value_or_na(configuration.get("TENDER.PROCURING_ENTITY_NAME")) }}
+		invites sealed tenders for:
+		<strong>{{ value_or_na(configuration.get("TENDER.CONTRACT_DESCRIPTION")) }}</strong>.
+	</p>
+	<table class="std-poc-table">
+		<tbody>
+			<tr><th>Procurement Method</th><td>{{ value_or_na(configuration.get("METHOD.PROCUREMENT_METHOD")) }}</td></tr>
+			<tr><th>Tender Scope</th><td>{{ value_or_na(configuration.get("METHOD.TENDER_SCOPE")) }}</td></tr>
+			<tr><th>Reservation Applicable</th><td>{{ yes_no(configuration.get("PARTICIPATION.RESERVATION_APPLICABLE")) }}</td></tr>
+			<tr><th>Reserved Group</th><td>{{ value_or_na(configuration.get("PARTICIPATION.RESERVED_GROUP")) }}</td></tr>
+			<tr><th>Tender Security Mode</th><td>{{ value_or_na(configuration.get("SECURITY.TENDER_SECURITY_MODE")) }}</td></tr>
+			<tr><th>Tender Security Amount</th><td>{{ money(configuration.get("SECURITY.TENDER_SECURITY_AMOUNT"), configuration.get("SECURITY.TENDER_SECURITY_CURRENCY")) }}</td></tr>
+			<tr><th>Submission Deadline</th><td>{{ value_or_na(configuration.get("DATES.SUBMISSION_DEADLINE")) }}</td></tr>
+			<tr><th>Opening Date and Time</th><td>{{ value_or_na(configuration.get("DATES.OPENING_DATETIME")) }}</td></tr>
+			<tr><th>Site Visit Required</th><td>{{ yes_no(configuration.get("DATES.SITE_VISIT_REQUIRED")) }}</td></tr>
+			<tr><th>Site Visit Date</th><td>{{ value_or_na(configuration.get("DATES.SITE_VISIT_DATE")) }}</td></tr>
+			<tr><th>Pre-Tender Meeting Required</th><td>{{ yes_no(configuration.get("DATES.PRE_TENDER_MEETING_REQUIRED")) }}</td></tr>
+			<tr><th>Pre-Tender Meeting Date</th><td>{{ value_or_na(configuration.get("DATES.PRE_TENDER_MEETING_DATE")) }}</td></tr>
+		</tbody>
+	</table>
+</section>

@@ -1,0 +1,192 @@
+{
+  "template_code": "KE-PPRA-WORKS-BLDG-2022-04-POC",
+  "template_name": "PPRA Standard Tender Document for Procurement of Works — Building and Associated Civil Engineering Works",
+  "template_short_name": "PPRA Works STD — Building and Civil Works",
+  "description": "Proof-of-concept template package representing the PPRA Standard Tender Document for Procurement of Works — Building and Associated Civil Engineering Works, April 2022 revision. This package is not a full legal digitization of the entire STD. It is intended to prove safe template-package import, controlled tender configuration, scenario activation, required bidder-form generation, BoQ hook integration, validation, and tender-pack preview rendering.",
+  "authority": {
+    "name": "Public Procurement Regulatory Authority",
+    "abbreviation": "PPRA",
+    "country": "Kenya",
+    "authority_type": "Public Procurement Regulatory Authority"
+  },
+  "jurisdiction": {
+    "country_code": "KE",
+    "country_name": "Kenya",
+    "legal_framework": [
+      "Public Procurement and Asset Disposal Act, 2015",
+      "Public Procurement and Asset Disposal Regulations",
+      "Applicable PPRA standard tender document guidance"
+    ]
+  },
+  "classification": {
+    "procurement_category": "WORKS",
+    "template_family": "BUILDING_AND_ASSOCIATED_CIVIL_ENGINEERING_WORKS",
+    "contract_nature": "WORKS_CONSTRUCTION",
+    "contract_pricing_type": "ADMEASUREMENT_UNIT_RATE",
+    "complexity_level": "HIGH"
+  },
+  "source_document": {
+    "source_document_code": "DOC. 1",
+    "source_title": "Standard Tender Document for Procurement of Works",
+    "source_subtitle": "Building and Associated Civil Engineering Works",
+    "revision_label": "Rev April 2022",
+    "source_file_name": "DOC 1. STD FOR WORKS-BUILDING AND ASSOCIATED CIVIL ENGINEERING WORKS Rev April 2022(2).pdf",
+    "source_file_expected": true,
+    "source_file_hash": null,
+    "source_file_hash_algorithm": "SHA-256",
+    "source_pages_known": 159,
+    "source_treatment": "Reference legal source for POC template package"
+  },
+  "versioning": {
+    "source_version_label": "April 2022",
+    "package_version": "0.1.0-poc",
+    "package_version_date": "2026-05-01",
+    "is_poc_version": true,
+    "supersedes_template_code": null,
+    "superseded_by_template_code": null
+  },
+  "status": {
+    "package_status": "DRAFT_PACKAGE",
+    "allowed_for_import": true,
+    "allowed_for_tender_creation": false,
+    "requires_review_before_tender_creation": true
+  },
+  "applicability": {
+    "allowed_procurement_methods": [
+      "OPEN_COMPETITIVE_TENDERING",
+      "RESTRICTED_COMPETITIVE_TENDERING"
+    ],
+    "allowed_tender_scopes": [
+      "NATIONAL",
+      "INTERNATIONAL"
+    ],
+    "allowed_contract_structures": [
+      "SINGLE_LOT",
+      "MULTIPLE_LOTS"
+    ],
+    "supports_prequalification": true,
+    "supports_reservations": true,
+    "supports_margin_of_preference": true,
+    "supports_alternative_tenders": true,
+    "supports_joint_ventures": true,
+    "supports_boq": true,
+    "supports_dayworks": true,
+    "supports_provisional_sums": true
+  },
+  "poc_scope": {
+    "is_full_legal_digitization": false,
+    "uses_representative_locked_text": true,
+    "includes_full_itt_text": false,
+    "includes_full_gcc_text": false,
+    "includes_full_bidder_submission_workflow": false,
+    "includes_full_evaluation_workflow": false,
+    "includes_pdf_generation": false,
+    "primary_purpose": "Prove template-package import, safe tender configuration, scenario activation, required-form generation, BoQ hook, validation, and tender-pack preview rendering.",
+    "explicit_exclusions": [
+      "Full clause-by-clause digitization of the 159-page source STD",
+      "Live administrative template editor",
+      "Complete bidder portal",
+      "Electronic bid sealing and opening",
+      "Full evaluation committee workflow",
+      "Full contract execution workflow",
+      "External registry integrations",
+      "Production-grade PDF generation"
+    ]
+  },
+  "package_files": [
+    {
+      "file_name": "manifest.json",
+      "required": true,
+      "included_in_package_hash": true,
+      "purpose": "Template identity, source, classification, applicability, status, and import policy"
+    },
+    {
+      "file_name": "sections.json",
+      "required": true,
+      "included_in_package_hash": true,
+      "purpose": "Major STD sections and mutability classification"
+    },
+    {
+      "file_name": "fields.json",
+      "required": true,
+      "included_in_package_hash": true,
+      "purpose": "Procurement-officer configuration fields"
+    },
+    {
+      "file_name": "rules.json",
+      "required": true,
+      "included_in_package_hash": true,
+      "purpose": "Validation and activation rules"
+    },
+    {
+      "file_name": "forms.json",
+      "required": true,
+      "included_in_package_hash": true,
+      "purpose": "Bidder response forms and form activation metadata"
+    },
+    {
+      "file_name": "render_map.json",
+      "required": true,
+      "included_in_package_hash": true,
+      "purpose": "Mapping from package content and tender configuration to tender-pack preview sections"
+    },
+    {
+      "file_name": "sample_tender.json",
+      "required": true,
+      "included_in_package_hash": true,
+      "purpose": "Sample tender configuration for testing and demonstration"
+    },
+    {
+      "file_name": "README.md",
+      "required": true,
+      "included_in_package_hash": false,
+      "purpose": "Package-level explanatory documentation"
+    }
+  ],
+  "import_policy": {
+    "import_mode": "UPSERT_BY_TEMPLATE_CODE",
+    "store_package_json": true,
+    "compute_package_hash": true,
+    "hash_algorithm": "SHA-256",
+    "validate_required_files": true,
+    "validate_json_syntax": true,
+    "fail_on_missing_required_file": true,
+    "fail_on_template_code_mismatch": true,
+    "create_template_record_if_missing": true,
+    "update_template_record_if_exists": true
+  },
+  "runtime_policy": {
+    "ordinary_user_can_edit_template": false,
+    "ordinary_user_can_edit_locked_text": false,
+    "ordinary_user_can_create_tender_from_template_when_unapproved": false,
+    "ordinary_user_configures_tender_only": true,
+    "generated_outputs_are_directly_editable": false,
+    "configuration_must_validate_before_render": true,
+    "block_render_on_blocker_messages": true
+  },
+  "audit_policy": {
+    "record_template_code": true,
+    "record_package_version": true,
+    "record_package_hash": true,
+    "record_source_document_reference": true,
+    "record_configuration_hash": true,
+    "record_generation_timestamp": true,
+    "record_validation_messages": true
+  },
+  "ownership": {
+    "business_owner": "Procurement Product Owner",
+    "technical_owner": "Frappe Development Team",
+    "review_required_from": [
+      "Procurement SME",
+      "Legal/Compliance Reviewer",
+      "Technical Reviewer"
+    ],
+    "ordinary_procurement_officer_owner": false
+  },
+  "notes": [
+    "This package is a POC representation and is not a full legal digitization of the PPRA Works STD.",
+    "The package shall be imported through the seed loader.",
+    "Ordinary procurement officers shall configure tenders through controlled Frappe screens only.",
+    "Future full production implementation may expand locked text, forms, evaluation workflow, PDF generation, and bidder submission workflow."
+  ]
+}

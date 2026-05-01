@@ -1,0 +1,76 @@
+<div class="std-admin-forms-inspector" style="max-width: 100%; overflow-x: auto;">
+	<h4 class="std-inspector-forms-title">Required forms inspector</h4>
+	{% if warnings %}
+	<div class="alert alert-warning" style="font-size: 12px;">
+		{% for w in warnings %}
+		<div>{{ w | e }}</div>
+		{% endfor %}
+	</div>
+	{% endif %}
+	{% if summary %}
+	<table class="table table-bordered table-condensed" style="font-size: 12px; margin-bottom: 12px;">
+		<tbody>
+			<tr><th style="width: 220px;">Total rows</th><td>{{ summary.total_forms }}</td></tr>
+			<tr><th>Unique form codes</th><td>{{ summary.unique_form_codes }}</td></tr>
+			<tr><th>Duplicate form codes</th><td>{{ summary.duplicate_form_code_count }}</td></tr>
+			<tr><th>Rows with default activation</th><td>{{ summary.default_activated_count }}</td></tr>
+			<tr><th>Rows with rule activation</th><td>{{ summary.rule_activated_count }}</td></tr>
+			{% if variant_detected %}
+			<tr><th>Detected scenario variant</th><td>{{ variant_detected | e }}</td></tr>
+			{% endif %}
+		</tbody>
+	</table>
+	{% endif %}
+	{% if rows and rows|length > 0 %}
+	<table class="table table-bordered table-condensed" style="font-size: 11px;">
+		<thead>
+			<tr>
+				<th>Order</th>
+				<th>Group</th>
+				<th>Form code</th>
+				<th>Title</th>
+				<th>Activation</th>
+				<th>Evidence</th>
+				<th>Stage</th>
+				<th>Package</th>
+				<th>Dup</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for row in rows %}
+			<tr class="{% if row.duplicate_row %}danger{% endif %}">
+				<td>{% if row.display_order is not none %}{{ row.display_order }}{% endif %}</td>
+				<td>{{ (row.display_group or '') | e }}</td>
+				<td><code>{{ row.form_code | e }}</code></td>
+				<td>{{ row.form_title | e }}</td>
+				<td style="max-width: 220px;">{{ row.activation_explanation | e }}</td>
+				<td>{{ (row.evidence_policy or '') | e }}</td>
+				<td>{{ (row.workflow_stage or '') | e }}</td>
+				<td>{% if row.package_source_exists %}yes{% else %}no{% endif %}</td>
+				<td>{% if row.duplicate_row %}yes{% else %}no{% endif %}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	{% elif not warnings %}
+	<p class="text-muted" style="font-size: 12px;">No required forms data.</p>
+	{% endif %}
+	{% if expected_comparison and expected_comparison|length > 0 %}
+	<h5 style="margin-top: 16px;">Expected vs observed (sample package)</h5>
+	<table class="table table-bordered table-condensed" style="font-size: 11px;">
+		<thead>
+			<tr><th>Form code</th><th>Expected</th><th>Observed</th><th>Status</th></tr>
+		</thead>
+		<tbody>
+			{% for c in expected_comparison %}
+			<tr class="{% if c.status == 'missing' %}warning{% elif c.status == 'extra' %}info{% endif %}">
+				<td><code>{{ c.form_code | e }}</code></td>
+				<td>{% if c.expected %}yes{% else %}no{% endif %}</td>
+				<td>{% if c.observed %}yes{% else %}no{% endif %}</td>
+				<td>{{ c.status | e }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	{% endif %}
+</div>

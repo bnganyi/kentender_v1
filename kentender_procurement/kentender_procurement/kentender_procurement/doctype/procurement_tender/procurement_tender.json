@@ -1,0 +1,291 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-05-01 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_tender_identity",
+  "naming_series",
+  "tender_title",
+  "tender_reference",
+  "section_template_reference",
+  "std_template",
+  "template_code",
+  "template_version",
+  "package_hash",
+  "section_std_demo_workspace",
+  "html_std_demo_workspace",
+  "section_configuration",
+  "procurement_method",
+  "procurement_category",
+  "tender_scope",
+  "configuration_json",
+  "configuration_hash",
+  "section_validation",
+  "tender_status",
+  "validation_status",
+  "last_validated_at",
+  "last_generated_at",
+  "section_lots",
+  "lots",
+  "section_boq",
+  "boq_items",
+  "section_required_forms",
+  "required_forms",
+  "section_validation_messages",
+  "validation_messages",
+  "section_generated_pack",
+  "generated_tender_pack_html",
+  "section_poc_notes",
+  "poc_notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_tender_identity",
+   "fieldtype": "Section Break",
+   "label": "1. Tender Identity"
+  },
+  {
+   "default": "PT-.YYYY.-.#####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "PT-.YYYY.-.#####\n",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender_reference",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Reference",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_template_reference",
+   "fieldtype": "Section Break",
+   "label": "2. Template Reference"
+  },
+  {
+   "fieldname": "std_template",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "STD Template",
+   "options": "STD Template",
+   "reqd": 1
+  },
+  {
+   "fieldname": "template_code",
+   "fieldtype": "Data",
+   "label": "Template Code",
+   "read_only": 1
+  },
+  {
+   "fieldname": "template_version",
+   "fieldtype": "Data",
+   "label": "Template Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "package_hash",
+   "fieldtype": "Data",
+   "label": "Package Hash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_std_demo_workspace",
+   "fieldtype": "Section Break",
+   "label": "STD Demo Workspace (read-only)"
+  },
+  {
+   "fieldname": "html_std_demo_workspace",
+   "fieldtype": "HTML",
+   "label": "Demo workspace summary"
+  },
+  {
+   "fieldname": "section_configuration",
+   "fieldtype": "Section Break",
+   "label": "3. Configuration"
+  },
+  {
+   "fieldname": "procurement_method",
+   "fieldtype": "Select",
+   "label": "Procurement Method",
+   "options": "OPEN_COMPETITIVE_TENDERING\nRESTRICTED_COMPETITIVE_TENDERING"
+  },
+  {
+   "default": "WORKS",
+   "fieldname": "procurement_category",
+   "fieldtype": "Select",
+   "label": "Procurement Category",
+   "options": "WORKS\nGOODS\nSERVICES\nCONSULTING\nDISPOSAL\nOTHER",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tender_scope",
+   "fieldtype": "Select",
+   "label": "Tender Scope",
+   "options": "NATIONAL\nINTERNATIONAL"
+  },
+  {
+   "fieldname": "configuration_json",
+   "fieldtype": "Code",
+   "label": "Configuration JSON",
+   "options": "JSON"
+  },
+  {
+   "fieldname": "configuration_hash",
+   "fieldtype": "Data",
+   "label": "Configuration Hash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_validation",
+   "fieldtype": "Section Break",
+   "label": "4. Validation (future)"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "tender_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Tender Status",
+   "options": "Draft\nConfigured\nValidation Failed\nValidated\nTender Pack Generated\nPOC Demonstrated\nCancelled",
+   "reqd": 1
+  },
+  {
+   "default": "Not Validated",
+   "fieldname": "validation_status",
+   "fieldtype": "Select",
+   "label": "Validation Status",
+   "options": "Not Validated\nPassed\nPassed With Warnings\nFailed\nBlocked",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_validated_at",
+   "fieldtype": "Datetime",
+   "label": "Last Validated At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_generated_at",
+   "fieldtype": "Datetime",
+   "label": "Last Generated At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_lots",
+   "fieldtype": "Section Break",
+   "label": "5. Lots"
+  },
+  {
+   "fieldname": "lots",
+   "fieldtype": "Table",
+   "label": "Lots",
+   "options": "Tender Lot"
+  },
+  {
+   "fieldname": "section_boq",
+   "fieldtype": "Section Break",
+   "label": "6. BoQ Items"
+  },
+  {
+   "fieldname": "boq_items",
+   "fieldtype": "Table",
+   "label": "BoQ Items",
+   "options": "Tender BoQ Item"
+  },
+  {
+   "fieldname": "section_required_forms",
+   "fieldtype": "Section Break",
+   "label": "7. Required Forms"
+  },
+  {
+   "fieldname": "required_forms",
+   "fieldtype": "Table",
+   "label": "Required Forms",
+   "options": "Tender Required Form",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_validation_messages",
+   "fieldtype": "Section Break",
+   "label": "8. Validation Messages"
+  },
+  {
+   "fieldname": "validation_messages",
+   "fieldtype": "Table",
+   "label": "Validation Messages",
+   "options": "Tender Validation Message",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_generated_pack",
+   "fieldtype": "Section Break",
+   "label": "9. Generated Tender Pack"
+  },
+  {
+   "fieldname": "generated_tender_pack_html",
+   "fieldtype": "Long Text",
+   "label": "Generated Tender Pack HTML",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_poc_notes",
+   "fieldtype": "Section Break",
+   "label": "10. POC Notes"
+  },
+  {
+   "fieldname": "poc_notes",
+   "fieldtype": "Small Text",
+   "label": "POC Notes"
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-01 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "Procurement Tender",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "tender_reference,tender_title,std_template,tender_status",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "tender_title",
+ "track_changes": 1
+}

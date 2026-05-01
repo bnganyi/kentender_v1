@@ -1,0 +1,180 @@
+<div class="std-admin-pkg-viewer" style="max-width: 100%; overflow-x: auto;">
+	<div class="alert alert-warning" style="margin-bottom: 12px;">
+		<strong>POC Administration View:</strong>
+		This screen exposes a controlled STD template package for inspection and demonstration.
+		Package internals are read-only in this POC and are not editable by ordinary users through the administration console.
+	</div>
+
+	<h4 style="margin-top: 0;">Overview — summary</h4>
+	<table class="table table-bordered table-condensed" style="font-size: 12px; margin-bottom: 16px;">
+		<tbody>
+			{% for k, v in overview_cards.items() %}
+			<tr><th style="width: 220px;">{{ k | replace('_', ' ') | title }}</th><td>{{ v | e }}</td></tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<h4>Overview — identity (manifest)</h4>
+	<table class="table table-bordered table-condensed" style="font-size: 12px; margin-bottom: 16px;">
+		<tbody>
+			{% for k, v in overview_identity.items() %}
+			<tr><th style="width: 260px;">{{ k | replace('_', ' ') | title }}</th><td>{{ v | e }}</td></tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<h4>Overview — audit</h4>
+	<table class="table table-bordered table-condensed" style="font-size: 12px; margin-bottom: 16px;">
+		<tbody>
+			{% for k, v in overview_audit.items() %}
+			<tr><th style="width: 260px;">{{ k | replace('_', ' ') | title }}</th><td>{{ v | e }}</td></tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<h4>Package structure (counts)</h4>
+	<p style="font-size: 12px;"><em>Source: combined <code>package_json</code> keys</em></p>
+	<table class="table table-bordered table-condensed" style="font-size: 12px; margin-bottom: 16px;">
+		<tbody>
+			{% for k, v in structure.items() %}
+			<tr><th style="width: 320px;">{{ k | replace('_', ' ') | title }}</th><td>{{ v | e }}</td></tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<h4>Sections <span style="font-weight: normal; font-size: 12px;">({{ section_rows | length }} rows)</span></h4>
+	<table class="table table-bordered table-condensed" style="font-size: 11px; margin-bottom: 16px;">
+		<thead><tr>
+			<th>render_order</th><th>section_code</th><th>title</th><th>mutability</th><th>included_in_poc_render</th><th>poc_treatment</th>
+		</tr></thead>
+		<tbody>
+			{% for s in section_rows %}
+			<tr>
+				<td>{{ s.get('render_order', '') | e }}</td>
+				<td>{{ s.get('section_code', '') | e }}</td>
+				<td>{{ s.get('title', '') | e }}</td>
+				<td>{{ s.get('mutability', '') | e }}</td>
+				<td>{{ s.get('included_in_poc_render', '') | e }}</td>
+				<td>{{ ((s.get('poc_treatment') or '')[:200]) | e }}{% if (s.get('poc_treatment') or '')|length > 200 %}…{% endif %}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<h4>Fields <span style="font-weight: normal; font-size: 12px;">(grouped by group_code)</span></h4>
+	{% for group, rows in fields_by_group.items() %}
+	<h5 style="font-size: 13px;">{{ group | e }} <span style="font-weight: normal;">({{ rows | length }})</span></h5>
+	<table class="table table-bordered table-condensed" style="font-size: 11px; margin-bottom: 12px;">
+		<thead><tr>
+			<th>field_code</th><th>label</th><th>field_type</th><th>required_by_default</th>
+		</tr></thead>
+		<tbody>
+			{% for f in rows %}
+			<tr>
+				<td>{{ f.get('field_code', '') | e }}</td>
+				<td>{{ f.get('label', '') | e }}</td>
+				<td>{{ f.get('field_type', '') | e }}</td>
+				<td>{{ f.get('required_by_default', '') | e }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	{% endfor %}
+
+	<h4>Rules <span style="font-weight: normal; font-size: 12px;">({{ rule_summaries | length }} rows)</span></h4>
+	<table class="table table-bordered table-condensed" style="font-size: 11px; margin-bottom: 16px;">
+		<thead><tr>
+			<th>rule_code</th><th>label</th><th>rule_type</th><th>enabled</th><th>severity</th><th>conditions (trunc.)</th><th>effects (trunc.)</th>
+		</tr></thead>
+		<tbody>
+			{% for r in rule_summaries %}
+			<tr>
+				<td>{{ r.rule_code | e }}</td>
+				<td>{{ r.label | e }}</td>
+				<td>{{ r.rule_type | e }}</td>
+				<td>{{ r.enabled | e }}</td>
+				<td>{{ r.severity | e }}</td>
+				<td><code style="font-size: 10px;">{{ r.conditions_summary | e }}</code></td>
+				<td><code style="font-size: 10px;">{{ r.effects_summary | e }}</code></td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<h4>Forms <span style="font-weight: normal; font-size: 12px;">({{ form_summaries | length }} rows)</span></h4>
+	<table class="table table-bordered table-condensed" style="font-size: 11px; margin-bottom: 16px;">
+		<thead><tr>
+			<th>display_order</th><th>display_group</th><th>form_code</th><th>title</th><th>default_required</th><th>activation_rule_codes</th><th>evidence_policy</th>
+		</tr></thead>
+		<tbody>
+			{% for f in form_summaries %}
+			<tr>
+				<td>{{ f.display_order | e }}</td>
+				<td>{{ f.display_group | e }}</td>
+				<td>{{ f.form_code | e }}</td>
+				<td>{{ f.title | e }}</td>
+				<td>{{ f.default_required | e }}</td>
+				<td style="max-width: 200px; word-break: break-all;">{{ f.activation_rules | e }}</td>
+				<td>{{ f.evidence_policy | e }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<h4>Sample tender</h4>
+	<p style="font-size: 12px;"><strong>Sample code:</strong> {{ (sample.get('sample_code') or '') | e }} —
+	<strong>Name:</strong> {{ (sample.get('sample_name') or '') | e }}</p>
+	<p style="font-size: 12px;"><strong>Tender title:</strong> {{ (tender_obj.get('tender_title') or '') | e }} —
+	<strong>Reference:</strong> {{ (tender_obj.get('tender_reference') or '') | e }}</p>
+	<p style="font-size: 12px;"><strong>Lots:</strong> {{ sample_lots | length }} —
+	<strong>BoQ rows (sample):</strong> {{ sample_boq | length }} —
+	<strong>Expected activated forms:</strong> {{ expected_forms | length }}</p>
+
+	<h5>Scenario variants</h5>
+	<table class="table table-bordered table-condensed" style="font-size: 11px; margin-bottom: 16px;">
+		<thead><tr><th>variant_code</th><th>description</th><th>expected_blockers</th></tr></thead>
+		<tbody>
+			{% for v in variant_rows %}
+			<tr>
+				<td>{{ v.variant_code | e }}</td>
+				<td>{{ v.description | e }}</td>
+				<td>{{ v.expected_blockers | e }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<h4>Render map</h4>
+	{% if render_minimal %}
+	<div class="alert alert-info" style="font-size: 12px;">
+		Render map is minimal for the POC. The current preview renderer uses controlled Jinja sections and does not represent full legal STD rendering.
+	</div>
+	{% endif %}
+	<p style="font-size: 12px;"><strong>render_sections:</strong> {{ render_rows | length }}</p>
+	{% if render_rows | length > 0 %}
+	<table class="table table-bordered table-condensed" style="font-size: 11px; margin-bottom: 16px;">
+		<thead><tr>
+			<th>component</th><th>section_code</th><th>template_partial</th><th>render_order</th><th>included_in_poc</th><th>notes</th>
+		</tr></thead>
+		<tbody>
+			{% for r in render_rows %}
+			<tr>
+				<td>{{ r.component_code | e }}</td>
+				<td>{{ r.section_code | e }}</td>
+				<td>{{ r.template_partial | e }}</td>
+				<td>{{ r.render_order | e }}</td>
+				<td>{{ r.included_in_poc | e }}</td>
+				<td>{{ r.notes | e }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	{% endif %}
+
+	<h4>Raw JSON (read-only technical fallback)</h4>
+	<p style="font-size: 12px;">Full package JSON below is <strong>read-only</strong> in this viewer. Use Desk <code>package_json</code> / <code>manifest_json</code> fields for copy operations if needed.</p>
+	<details>
+		<summary style="cursor: pointer;">Show inline package JSON{% if raw_truncated %} (truncated){% endif %}</summary>
+		<pre style="font-size: 10px; max-height: 420px; overflow: auto; background: #f8f8f8; padding: 8px;">{{ raw_display }}</pre>
+	</details>
+</div>

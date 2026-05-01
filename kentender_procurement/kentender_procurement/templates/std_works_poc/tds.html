@@ -1,0 +1,59 @@
+{# STD-WORKS-POC Step 13 — Tender Data Sheet Summary (spec §11.7). #}
+{%- from "templates/std_works_poc/macros.html" import value_or_na, yes_no, money, section_heading -%}
+<section class="std-poc-section">
+	{{ section_heading("Tender Data Sheet Summary") }}
+
+	<h3>Method and Participation</h3>
+	<table class="std-poc-table">
+		<tbody>
+			<tr><th>Procurement Method</th><td>{{ value_or_na(configuration.get("METHOD.PROCUREMENT_METHOD")) }}</td></tr>
+			<tr><th>Tender Scope</th><td>{{ value_or_na(configuration.get("METHOD.TENDER_SCOPE")) }}</td></tr>
+			<tr><th>Reservation Applicable</th><td>{{ yes_no(configuration.get("PARTICIPATION.RESERVATION_APPLICABLE")) }}</td></tr>
+			<tr><th>Reserved Group</th><td>{{ value_or_na(configuration.get("PARTICIPATION.RESERVED_GROUP")) }}</td></tr>
+			<tr><th>Margin of Preference</th><td>{{ yes_no(configuration.get("PARTICIPATION.MARGIN_OF_PREFERENCE_APPLICABLE")) }}</td></tr>
+			<tr><th>Prequalification Used</th><td>{{ yes_no(configuration.get("PARTICIPATION.PREQUALIFICATION_USED")) }}</td></tr>
+			<tr><th>JV Allowed</th><td>{{ yes_no(configuration.get("PARTICIPATION.JV_ALLOWED")) }}</td></tr>
+			<tr><th>Maximum JV Members</th><td>{{ value_or_na(configuration.get("PARTICIPATION.MAX_JV_MEMBERS")) }}</td></tr>
+		</tbody>
+	</table>
+
+	<h3>Dates and Meetings</h3>
+	<table class="std-poc-table">
+		<tbody>
+			<tr><th>Publication Date</th><td>{{ value_or_na(configuration.get("DATES.PUBLICATION_DATE")) }}</td></tr>
+			<tr><th>Clarification Deadline</th><td>{{ value_or_na(configuration.get("DATES.CLARIFICATION_DEADLINE")) }}</td></tr>
+			<tr><th>Site Visit Required</th><td>{{ yes_no(configuration.get("DATES.SITE_VISIT_REQUIRED")) }}</td></tr>
+			<tr><th>Site Visit Date</th><td>{{ value_or_na(configuration.get("DATES.SITE_VISIT_DATE")) }}</td></tr>
+			<tr><th>Site Visit Location</th><td>{{ value_or_na(configuration.get("DATES.SITE_VISIT_LOCATION")) }}</td></tr>
+			<tr><th>Pre-Tender Meeting Required</th><td>{{ yes_no(configuration.get("DATES.PRE_TENDER_MEETING_REQUIRED")) }}</td></tr>
+			<tr><th>Pre-Tender Meeting Date</th><td>{{ value_or_na(configuration.get("DATES.PRE_TENDER_MEETING_DATE")) }}</td></tr>
+			<tr><th>Pre-Tender Meeting Location</th><td>{{ value_or_na(configuration.get("DATES.PRE_TENDER_MEETING_LOCATION")) }}</td></tr>
+			<tr><th>Submission Deadline</th><td>{{ value_or_na(configuration.get("DATES.SUBMISSION_DEADLINE")) }}</td></tr>
+			<tr><th>Opening Date and Time</th><td>{{ value_or_na(configuration.get("DATES.OPENING_DATETIME")) }}</td></tr>
+			<tr><th>Tender Validity (days)</th><td>{{ value_or_na(configuration.get("DATES.TENDER_VALIDITY_DAYS")) }}</td></tr>
+		</tbody>
+	</table>
+
+	<h3>Securities</h3>
+	<table class="std-poc-table">
+		<tbody>
+			<tr><th>Tender Security Mode</th><td>{{ value_or_na(configuration.get("SECURITY.TENDER_SECURITY_MODE")) }}</td></tr>
+			<tr><th>Tender Security Type</th><td>{{ value_or_na(configuration.get("SECURITY.TENDER_SECURITY_TYPE")) }}</td></tr>
+			<tr><th>Tender Security Amount</th><td>{{ money(configuration.get("SECURITY.TENDER_SECURITY_AMOUNT"), configuration.get("SECURITY.TENDER_SECURITY_CURRENCY")) }}</td></tr>
+			<tr><th>Tender Security Validity (days after tender validity)</th><td>{{ value_or_na(configuration.get("SECURITY.TENDER_SECURITY_VALIDITY_DAYS_AFTER_TENDER_VALIDITY")) }}</td></tr>
+			<tr><th>Tender Securing Declaration Required</th><td>{{ yes_no(configuration.get("SECURITY.TENDER_SECURING_DECLARATION_REQUIRED")) }}</td></tr>
+		</tbody>
+	</table>
+
+	<h3>Alternatives and Lots</h3>
+	<table class="std-poc-table">
+		<tbody>
+			<tr><th>Alternative Tenders Allowed</th><td>{{ yes_no(configuration.get("ALTERNATIVES.ALTERNATIVE_TENDERS_ALLOWED")) }}</td></tr>
+			<tr><th>Alternative Tender Type</th><td>{{ value_or_na(configuration.get("ALTERNATIVES.ALTERNATIVE_TENDER_TYPE")) }}</td></tr>
+			<tr><th>Alternative Scope Description</th><td>{{ value_or_na(configuration.get("ALTERNATIVES.ALTERNATIVE_SCOPE_DESCRIPTION")) }}</td></tr>
+			<tr><th>Multiple Lots Enabled</th><td>{{ yes_no(configuration.get("LOTS.MULTIPLE_LOTS_ENABLED")) }}</td></tr>
+			<tr><th>Lot Evaluation Method</th><td>{{ value_or_na(configuration.get("LOTS.LOT_EVALUATION_METHOD")) }}</td></tr>
+			<tr><th>Lot Award Method</th><td>{{ value_or_na(configuration.get("LOTS.LOT_AWARD_METHOD")) }}</td></tr>
+		</tbody>
+	</table>
+</section>

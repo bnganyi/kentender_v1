@@ -1,0 +1,21 @@
+{# STD-WORKS-POC Step 13 — Tender Cover and Identity (spec §11.3). #}
+{%- from "templates/std_works_poc/macros.html" import value_or_na, section_heading -%}
+<section class="std-poc-section">
+	{{ section_heading("Tender Cover and Identity") }}
+	<table class="std-poc-table">
+		<tbody>
+			<tr><th>Template Name</th><td>{{ value_or_na(manifest.template_name) }}</td></tr>
+			<tr><th>Template Code</th><td>{{ value_or_na(manifest.template_code) }}</td></tr>
+			<tr><th>Template Short Name</th><td>{{ value_or_na(manifest.template_short_name) }}</td></tr>
+			<tr><th>Tender Name</th><td>{{ value_or_na(configuration.get("TENDER.TENDER_NAME")) }}</td></tr>
+			<tr><th>Tender Reference</th><td>{{ value_or_na(configuration.get("TENDER.TENDER_REFERENCE")) }}</td></tr>
+			<tr><th>Procuring Entity</th><td>{{ value_or_na(configuration.get("TENDER.PROCURING_ENTITY_NAME")) }}</td></tr>
+			<tr><th>Procuring Entity Address</th><td>{{ value_or_na(configuration.get("TENDER.PROCURING_ENTITY_ADDRESS")) }}</td></tr>
+			<tr><th>Contract Description</th><td>{{ value_or_na(configuration.get("TENDER.CONTRACT_DESCRIPTION")) }}</td></tr>
+			<tr><th>Works Location</th><td>{{ value_or_na(configuration.get("TENDER.WORKS_LOCATION")) }}</td></tr>
+			<tr><th>Procurement Method</th><td>{{ value_or_na(configuration.get("METHOD.PROCUREMENT_METHOD")) }}</td></tr>
+			<tr><th>Tender Scope</th><td>{{ value_or_na(configuration.get("METHOD.TENDER_SCOPE")) }}</td></tr>
+			<tr><th>Source Document Code</th><td>{{ value_or_na(manifest.source_document.source_document_code if manifest.source_document else None) }}</td></tr>
+		</tbody>
+	</table>
+</section>

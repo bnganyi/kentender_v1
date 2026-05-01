@@ -1,0 +1,50 @@
+{# STD-WORKS-POC Step 13 / Step 15 — Bills of Quantities Summary (spec §11.10 / §15). #}
+{%- from "templates/std_works_poc/macros.html" import value_or_na, yes_no, money, section_heading -%}
+<section class="std-poc-section">
+	{{ section_heading("Bills of Quantities Summary") }}
+	<p class="std-poc-muted">
+		The BoQ shown in this POC preview is representative sample structured data and is not a complete production BoQ.
+	</p>
+	<table class="std-poc-table">
+		<tbody>
+			<tr><th>BoQ Required</th><td>{{ yes_no(configuration.get("WORKS.BOQ_REQUIRED")) }}</td></tr>
+			<tr><th>Dayworks Included</th><td>{{ yes_no(configuration.get("WORKS.DAYWORKS_INCLUDED")) }}</td></tr>
+			<tr><th>Provisional Sums Included</th><td>{{ yes_no(configuration.get("WORKS.PROVISIONAL_SUMS_INCLUDED")) }}</td></tr>
+			<tr><th>Lot Count</th><td>{{ lots | length }}</td></tr>
+			<tr><th>BoQ Row Count</th><td>{{ boq_items | length }}</td></tr>
+		</tbody>
+	</table>
+
+	{% if boq_items %}
+	<table class="std-poc-table">
+		<thead>
+			<tr>
+				<th>Item Code</th>
+				<th>Lot Code</th>
+				<th>Category</th>
+				<th>Description</th>
+				<th>Unit</th>
+				<th>Quantity</th>
+				<th>Fixed Amount</th>
+				<th>Priced by Bidder</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for row in boq_items %}
+			<tr>
+				<td>{{ value_or_na(row.item_code) }}</td>
+				<td>{{ value_or_na(row.lot_code) }}</td>
+				<td>{{ value_or_na(row.item_category) }}</td>
+				<td>{{ value_or_na(row.description) }}</td>
+				<td>{{ value_or_na(row.unit) }}</td>
+				<td>{{ value_or_na(row.quantity) }}</td>
+				<td>{{ money(row.amount) }}</td>
+				<td>{{ yes_no(row.is_priced_by_bidder) }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	{% else %}
+	<p class="std-poc-muted">No BoQ rows captured.</p>
+	{% endif %}
+</section>

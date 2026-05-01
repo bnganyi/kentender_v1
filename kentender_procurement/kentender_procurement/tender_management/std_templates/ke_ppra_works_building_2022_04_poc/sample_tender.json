@@ -1,0 +1,351 @@
+{
+  "sample_code": "WORKS-WARD-ADMIN-BLOCK-POC",
+  "sample_name": "Construction of Ward Administration Block",
+  "template_code": "KE-PPRA-WORKS-BLDG-2022-04-POC",
+  "sample_status": "DRAFT_SAMPLE",
+  "purpose": "Sample Works tender configuration used to test STD-WORKS-POC package loading, rule validation, scenario activation, required-form generation, BoQ handling, and tender-pack preview rendering.",
+  "tender": {
+    "title": "Construction of Ward Administration Block",
+    "reference": "CGK/WKS/OT/001/2026",
+    "procuring_entity": "County Government of Kisiwa",
+    "procurement_category": "WORKS",
+    "procurement_method": "OPEN_COMPETITIVE_TENDERING",
+    "template_code": "KE-PPRA-WORKS-BLDG-2022-04-POC"
+  },
+  "configuration": {
+    "TENDER.PROCURING_ENTITY_REF": null,
+    "TENDER.PROCURING_ENTITY_NAME": "County Government of Kisiwa",
+    "TENDER.PROCURING_ENTITY_ADDRESS": "County Headquarters, Procurement Department, P.O. Box 100-00100, Kisiwa, Kenya",
+    "TENDER.PROCURING_ENTITY_EMAIL": "procurement@kisiwa.go.ke",
+    "TENDER.TENDER_NAME": "Construction of Ward Administration Block",
+    "TENDER.TENDER_REFERENCE": "CGK/WKS/OT/001/2026",
+    "TENDER.CONTRACT_DESCRIPTION": "Construction of a ward administration block including substructure, superstructure, roofing, finishes, associated external works, drainage, paving, and service connections.",
+    "TENDER.WORKS_LOCATION": "Mwangaza Ward, Kisiwa County",
+    "TENDER.ESTIMATED_COST": 100000000,
+    "METHOD.PROCUREMENT_METHOD": "OPEN_COMPETITIVE_TENDERING",
+    "METHOD.TENDER_SCOPE": "NATIONAL",
+    "PARTICIPATION.RESERVATION_APPLICABLE": false,
+    "PARTICIPATION.RESERVED_GROUP": null,
+    "PARTICIPATION.MARGIN_OF_PREFERENCE_APPLICABLE": false,
+    "PARTICIPATION.PREQUALIFICATION_USED": false,
+    "PARTICIPATION.PREQUALIFICATION_REFERENCE": null,
+    "PARTICIPATION.JV_ALLOWED": true,
+    "PARTICIPATION.MAX_JV_MEMBERS": 3,
+    "PARTICIPATION.FOREIGN_TENDERER_LOCAL_INPUT_RULE_APPLICABLE": false,
+    "DATES.PUBLICATION_DATE": "2026-06-01",
+    "DATES.CLARIFICATION_DEADLINE": "2026-06-18T17:00:00",
+    "DATES.SITE_VISIT_REQUIRED": true,
+    "DATES.SITE_VISIT_DATE": "2026-06-10T10:00:00",
+    "DATES.SITE_VISIT_LOCATION": "Proposed Ward Administration Block Site, Mwangaza Ward",
+    "DATES.PRE_TENDER_MEETING_REQUIRED": true,
+    "DATES.PRE_TENDER_MEETING_DATE": "2026-06-12T10:00:00",
+    "DATES.PRE_TENDER_MEETING_LOCATION": "County Government of Kisiwa Boardroom, Procurement Department",
+    "DATES.SUBMISSION_DEADLINE": "2026-06-30T10:00:00",
+    "DATES.OPENING_DATETIME": "2026-06-30T10:30:00",
+    "DATES.TENDER_VALIDITY_DAYS": 120,
+    "SECURITY.TENDER_SECURITY_MODE": "TENDER_SECURITY",
+    "SECURITY.TENDER_SECURITY_TYPE": "BANK_OR_INSURANCE_GUARANTEE",
+    "SECURITY.TENDER_SECURITY_AMOUNT": 1500000,
+    "SECURITY.TENDER_SECURITY_CURRENCY": "KES",
+    "SECURITY.TENDER_SECURITY_VALIDITY_DAYS_AFTER_TENDER_VALIDITY": 30,
+    "SECURITY.TENDER_SECURING_DECLARATION_REQUIRED": false,
+    "SECURITY.PERFORMANCE_SECURITY_REQUIRED": true,
+    "SECURITY.PERFORMANCE_SECURITY_PERCENTAGE": 10,
+    "SECURITY.ADVANCE_PAYMENT_SECURITY_REQUIRED": true,
+    "SECURITY.RETENTION_MONEY_SECURITY_REQUIRED": false,
+    "ALTERNATIVES.ALTERNATIVE_TENDERS_ALLOWED": true,
+    "ALTERNATIVES.ALTERNATIVE_TENDER_TYPE": "TECHNICAL_ALTERNATIVE_SPECIFIED_PARTS",
+    "ALTERNATIVES.ALTERNATIVE_SCOPE_DESCRIPTION": "Alternative technical solutions are permitted only for the roof structure, provided the tenderer first prices the procuring entity's base design and provides sufficient technical details for comparison.",
+    "LOTS.MULTIPLE_LOTS_ENABLED": true,
+    "LOTS.LOT_EVALUATION_METHOD": "LOT_BY_LOT",
+    "LOTS.LOT_AWARD_METHOD": "ONE_OR_MORE_LOTS",
+    "QUALIFICATION.MIN_AVERAGE_ANNUAL_TURNOVER": 250000000,
+    "QUALIFICATION.MIN_LIQUID_ASSETS": 25000000,
+    "QUALIFICATION.SIMILAR_CONTRACT_COUNT": 2,
+    "QUALIFICATION.SIMILAR_CONTRACT_MIN_VALUE": 80000000,
+    "QUALIFICATION.KEY_PERSONNEL_REQUIRED": true,
+    "QUALIFICATION.EQUIPMENT_REQUIRED": true,
+    "QUALIFICATION.NCA_REGISTRATION_REQUIRED": true,
+    "QUALIFICATION.TAX_COMPLIANCE_REQUIRED": true,
+    "QUALIFICATION.BENEFICIAL_OWNERSHIP_REQUIRED": true,
+    "WORKS.SCOPE_SUMMARY": "The works comprise construction of a ward administration block, associated external works, drainage, paving, and service connections in Mwangaza Ward.",
+    "WORKS.SPECIFICATION_SUMMARY": "Works shall be executed in accordance with approved drawings, specifications, applicable building standards, quality requirements, and instructions issued under the contract.",
+    "WORKS.ESHS_REQUIREMENTS": "The contractor shall comply with applicable environmental, social, health and safety requirements, including site safety controls, waste management, worker welfare, and public safety around the construction site.",
+    "WORKS.DRAWINGS_REQUIRED": true,
+    "WORKS.BOQ_REQUIRED": true,
+    "WORKS.DAYWORKS_INCLUDED": true,
+    "WORKS.PROVISIONAL_SUMS_INCLUDED": true,
+    "CONTRACT.ENGINEER_OR_PROJECT_MANAGER": "County Director of Public Works or appointed representative",
+    "CONTRACT.DEFECTS_LIABILITY_PERIOD_MONTHS": 12,
+    "CONTRACT.LIQUIDATED_DAMAGES_RATE": "0.05 percent of contract price per day of delay, subject to the maximum stated in the SCC",
+    "CONTRACT.PAYMENT_TERMS": "Interim payments shall be made against certified works executed, subject to contract conditions, retention, taxes, and approved payment certificates.",
+    "CONTRACT.INSURANCE_REQUIREMENTS": "Contractor shall maintain insurance for works, contractor's equipment, third-party liability, workers, and other risks required under the contract.",
+    "CONTRACT.RETENTION_PERCENTAGE": 10,
+    "CONTRACT.DISPUTE_RESOLUTION_FORUM": "ADJUDICATION_THEN_ARBITRATION",
+    "CONTRACT.COMPLETION_PERIOD_MONTHS": 12,
+    "CONTRACT.ADVANCE_PAYMENT_ALLOWED": true,
+    "SYSTEM.TEMPLATE_CODE": "KE-PPRA-WORKS-BLDG-2022-04-POC",
+    "SYSTEM.PACKAGE_VERSION": "0.1.0-poc",
+    "SYSTEM.PACKAGE_HASH": null,
+    "SYSTEM.CONFIGURATION_HASH": null
+  },
+  "lots": [
+    {
+      "lot_code": "LOT-001",
+      "lot_title": "Main Building Works",
+      "description": "Construction of ward administration block substructure, superstructure, roofing, finishes, and associated building works.",
+      "estimated_value": 75000000,
+      "currency": "KES"
+    },
+    {
+      "lot_code": "LOT-002",
+      "lot_title": "External Works and Services",
+      "description": "Drainage, paving, boundary works, water connection, external electrical service works, and associated site works.",
+      "estimated_value": 25000000,
+      "currency": "KES"
+    }
+  ],
+  "boq": {
+    "currency": "KES",
+    "pricing_mode": "UNIT_RATE",
+    "rows": [
+      {
+        "item_code": "BQ-001",
+        "lot_code": "LOT-001",
+        "item_category": "PRELIMINARIES",
+        "description": "Preliminary and general items including mobilization, insurances, site establishment, and temporary works.",
+        "unit": "Item",
+        "quantity": 1,
+        "rate": null,
+        "amount": null,
+        "is_priced_by_bidder": true
+      },
+      {
+        "item_code": "BQ-002",
+        "lot_code": "LOT-001",
+        "item_category": "SUBSTRUCTURE",
+        "description": "Excavation, foundation works, hardcore filling, blinding, and ground slab works.",
+        "unit": "Item",
+        "quantity": 1,
+        "rate": null,
+        "amount": null,
+        "is_priced_by_bidder": true
+      },
+      {
+        "item_code": "BQ-003",
+        "lot_code": "LOT-001",
+        "item_category": "SUPERSTRUCTURE",
+        "description": "Walling, columns, beams, suspended slabs, and related structural works.",
+        "unit": "Item",
+        "quantity": 1,
+        "rate": null,
+        "amount": null,
+        "is_priced_by_bidder": true
+      },
+      {
+        "item_code": "BQ-004",
+        "lot_code": "LOT-001",
+        "item_category": "ROOFING",
+        "description": "Roof structure, covering, rainwater goods, and associated roof works.",
+        "unit": "Item",
+        "quantity": 1,
+        "rate": null,
+        "amount": null,
+        "is_priced_by_bidder": true
+      },
+      {
+        "item_code": "BQ-005",
+        "lot_code": "LOT-001",
+        "item_category": "FINISHES",
+        "description": "Internal and external finishes including plaster, screed, paint, doors, windows, fittings, and fixtures.",
+        "unit": "Item",
+        "quantity": 1,
+        "rate": null,
+        "amount": null,
+        "is_priced_by_bidder": true
+      },
+      {
+        "item_code": "BQ-006",
+        "lot_code": "LOT-002",
+        "item_category": "EXTERNAL_WORKS",
+        "description": "Drainage, paving, site clearance, landscaping, boundary works, and service connections.",
+        "unit": "Item",
+        "quantity": 1,
+        "rate": null,
+        "amount": null,
+        "is_priced_by_bidder": true
+      },
+      {
+        "item_code": "BQ-007",
+        "lot_code": "LOT-001",
+        "item_category": "DAYWORKS",
+        "description": "Daywork allowance for labour, materials, and contractor's equipment as instructed under the contract.",
+        "unit": "Provisional",
+        "quantity": 1,
+        "rate": null,
+        "amount": null,
+        "is_priced_by_bidder": true
+      },
+      {
+        "item_code": "BQ-008",
+        "lot_code": "LOT-002",
+        "item_category": "PROVISIONAL_SUMS",
+        "description": "Provisional sum for utility service adjustments and statutory service provider requirements.",
+        "unit": "Sum",
+        "quantity": 1,
+        "rate": null,
+        "amount": 5000000,
+        "is_priced_by_bidder": false
+      },
+      {
+        "item_code": "BQ-009",
+        "lot_code": null,
+        "item_category": "GRAND_SUMMARY",
+        "description": "Grand summary of priced BoQ sections and provisional sums.",
+        "unit": "Summary",
+        "quantity": 1,
+        "rate": null,
+        "amount": null,
+        "is_priced_by_bidder": false
+      }
+    ]
+  },
+  "expected_activated_forms": [
+    "FORM_OF_TENDER",
+    "FORM_CONFIDENTIAL_BUSINESS_QUESTIONNAIRE",
+    "FORM_CERTIFICATE_INDEPENDENT_TENDER_DETERMINATION",
+    "FORM_SELF_DECLARATION",
+    "FORM_TENDER_SECURITY",
+    "FORM_JV_INFORMATION",
+    "FORM_ALTERNATIVE_TECHNICAL_PROPOSAL",
+    "FORM_TECHNICAL_PROPOSAL",
+    "FORM_SIMILAR_EXPERIENCE",
+    "FORM_FINANCIAL_CAPACITY",
+    "FORM_PERSONNEL_SCHEDULE",
+    "FORM_EQUIPMENT_SCHEDULE",
+    "FORM_BENEFICIAL_OWNERSHIP_DISCLOSURE",
+    "FORM_PERFORMANCE_SECURITY",
+    "FORM_ADVANCE_PAYMENT_SECURITY"
+  ],
+  "expected_validation_profile": {
+    "expected_blockers": 0,
+    "expected_errors": 0,
+    "expected_warnings": 0,
+    "expected_inactive_forms": [
+      "FORM_TENDER_SECURING_DECLARATION",
+      "FORM_FOREIGN_TENDERER_LOCAL_INPUT",
+      "FORM_RETENTION_MONEY_SECURITY"
+    ],
+    "notes": [
+      "The primary sample should validate successfully after package import and before deliberate negative test variants are applied.",
+      "The primary sample contains representative BoQ rows, so BoQ, dayworks, and provisional sums child-row rules should pass."
+    ]
+  },
+  "scenario_variants": [
+    {
+      "variant_code": "VARIANT-INTERNATIONAL",
+      "description": "Switches the tender scope to international to test foreign tenderer local input activation.",
+      "configuration_overrides": {
+        "METHOD.TENDER_SCOPE": "INTERNATIONAL",
+        "PARTICIPATION.FOREIGN_TENDERER_LOCAL_INPUT_RULE_APPLICABLE": true
+      },
+      "lot_overrides": [],
+      "boq_overrides": {},
+      "expected_additional_forms": ["FORM_FOREIGN_TENDERER_LOCAL_INPUT"],
+      "expected_blockers": 0
+    },
+    {
+      "variant_code": "VARIANT-TENDER-SECURING-DECLARATION",
+      "description": "Uses tender-securing declaration instead of tender security to test security form switching.",
+      "configuration_overrides": {
+        "SECURITY.TENDER_SECURITY_MODE": "TENDER_SECURING_DECLARATION",
+        "SECURITY.TENDER_SECURITY_TYPE": null,
+        "SECURITY.TENDER_SECURITY_AMOUNT": null,
+        "SECURITY.TENDER_SECURITY_CURRENCY": null,
+        "SECURITY.TENDER_SECURING_DECLARATION_REQUIRED": true
+      },
+      "lot_overrides": [],
+      "boq_overrides": {},
+      "expected_additional_forms": ["FORM_TENDER_SECURING_DECLARATION"],
+      "expected_inactive_forms": ["FORM_TENDER_SECURITY"],
+      "expected_blockers": 0
+    },
+    {
+      "variant_code": "VARIANT-RESERVED-TENDER",
+      "description": "Enables reservation and provides reserved group to test reserved tender rendering.",
+      "configuration_overrides": {
+        "PARTICIPATION.RESERVATION_APPLICABLE": true,
+        "PARTICIPATION.RESERVED_GROUP": "YOUTH_ENTERPRISES"
+      },
+      "lot_overrides": [],
+      "boq_overrides": {},
+      "expected_additional_forms": [],
+      "expected_blockers": 0
+    },
+    {
+      "variant_code": "VARIANT-MISSING-SITE-VISIT-DATE",
+      "description": "Removes site visit date and location to test blocker validation.",
+      "configuration_overrides": {
+        "DATES.SITE_VISIT_REQUIRED": true,
+        "DATES.SITE_VISIT_DATE": null,
+        "DATES.SITE_VISIT_LOCATION": null
+      },
+      "lot_overrides": [],
+      "boq_overrides": {},
+      "expected_additional_forms": [],
+      "expected_blockers": 1
+    },
+    {
+      "variant_code": "VARIANT-MISSING-ALTERNATIVE-SCOPE",
+      "description": "Removes alternative tender scope to test blocker validation.",
+      "configuration_overrides": {
+        "ALTERNATIVES.ALTERNATIVE_TENDERS_ALLOWED": true,
+        "ALTERNATIVES.ALTERNATIVE_TENDER_TYPE": "TECHNICAL_ALTERNATIVE_SPECIFIED_PARTS",
+        "ALTERNATIVES.ALTERNATIVE_SCOPE_DESCRIPTION": null
+      },
+      "lot_overrides": [],
+      "boq_overrides": {},
+      "expected_additional_forms": [],
+      "expected_blockers": 1
+    },
+    {
+      "variant_code": "VARIANT-SINGLE-LOT",
+      "description": "Disables multiple lots and uses a single default lot scenario.",
+      "configuration_overrides": {
+        "LOTS.MULTIPLE_LOTS_ENABLED": false,
+        "LOTS.LOT_EVALUATION_METHOD": null,
+        "LOTS.LOT_AWARD_METHOD": null
+      },
+      "lot_overrides": [
+        {
+          "lot_code": "LOT-001",
+          "lot_title": "Main Building Works",
+          "description": "Single lot comprising all works.",
+          "estimated_value": 100000000,
+          "currency": "KES"
+        }
+      ],
+      "boq_overrides": {},
+      "expected_additional_forms": [],
+      "expected_blockers": 0
+    },
+    {
+      "variant_code": "VARIANT-RETENTION-MONEY-SECURITY",
+      "description": "Enables retention money security to test contract security form activation.",
+      "configuration_overrides": {
+        "SECURITY.RETENTION_MONEY_SECURITY_REQUIRED": true
+      },
+      "lot_overrides": [],
+      "boq_overrides": {},
+      "expected_additional_forms": ["FORM_RETENTION_MONEY_SECURITY"],
+      "expected_blockers": 0
+    }
+  ],
+  "notes": [
+    "This sample tender is fictional and is for POC testing only.",
+    "The sample does not represent an approved procurement plan, real budget, or real public tender.",
+    "BoQ rows are representative and intentionally simplified.",
+    "The primary sample is expected to pass validation after the template engine and child-row validation are implemented.",
+    "Scenario variants are override patches to support targeted tests without duplicating the full sample configuration."
+  ]
+}

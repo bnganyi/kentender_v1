@@ -1,0 +1,94 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-05-01 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "form_code",
+  "form_title",
+  "display_group",
+  "workflow_stage",
+  "respondent_type",
+  "required",
+  "activation_source",
+  "evidence_policy",
+  "display_order",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "form_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Form Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "form_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Form Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "display_group",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Display Group"
+  },
+  {
+   "fieldname": "workflow_stage",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Workflow Stage"
+  },
+  {
+   "fieldname": "respondent_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Respondent Type"
+  },
+  {
+   "default": "0",
+   "fieldname": "required",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Required"
+  },
+  {
+   "fieldname": "activation_source",
+   "fieldtype": "Small Text",
+   "label": "Activation Source"
+  },
+  {
+   "fieldname": "evidence_policy",
+   "fieldtype": "Data",
+   "label": "Evidence Policy"
+  },
+  {
+   "fieldname": "display_order",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Display Order"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-01 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "Tender Required Form",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

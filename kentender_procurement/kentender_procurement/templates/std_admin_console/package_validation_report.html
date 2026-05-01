@@ -1,0 +1,43 @@
+<div class="std-admin-validation-report" style="max-width: 100%; overflow-x: auto;">
+	<h4 style="margin-top: 0;">Package validation</h4>
+	<p>
+		<strong>Overall status:</strong> {{ result.overall_status | e }}<br>
+		<strong>Template code:</strong> {{ result.template_code | e }}<br>
+		<strong>Package hash:</strong> {{ result.package_hash | e }}
+	</p>
+	<p style="font-size: 12px;">
+		<strong>Summary:</strong>
+		total {{ result.summary.total_checks }},
+		passed {{ result.summary.passed }},
+		warnings {{ result.summary.warnings }},
+		errors {{ result.summary.errors }},
+		blockers {{ result.summary.blockers }},
+		skipped {{ result.summary.skipped }}
+	</p>
+	<table class="table table-bordered table-condensed" style="font-size: 11px;">
+		<thead>
+			<tr>
+				<th>Category</th>
+				<th>Check code</th>
+				<th>Severity</th>
+				<th>Status</th>
+				<th>Message</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for c in result.checks %}
+			<tr>
+				<td>{{ c.category | e }}</td>
+				<td>{{ c.check_code | e }}</td>
+				<td>{{ c.severity | e }}</td>
+				<td>{{ c.status | e }}</td>
+				<td>{{ c.message | e }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	<details style="margin-top: 8px;">
+		<summary>Raw JSON</summary>
+		<pre style="font-size: 10px; max-height: 240px; overflow: auto;">{{ result | json }}</pre>
+	</details>
+</div>

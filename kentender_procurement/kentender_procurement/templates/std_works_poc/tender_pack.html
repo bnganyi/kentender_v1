@@ -1,0 +1,44 @@
+{# STD-WORKS-POC Step 13 — master tender-pack preview (spec §11.1, §16). #}
+{%- from "templates/std_works_poc/macros.html" import value_or_na, yes_no, money, percent, section_heading, status_badge -%}
+<div class="std-poc-preview">
+	<style>
+		.std-poc-preview { font-family: Arial, sans-serif; font-size: 13px; line-height: 1.45; color: #222; }
+		.std-poc-preview h1 { font-size: 20px; margin: 0 0 12px; }
+		.std-poc-preview h2 { font-size: 16px; margin: 18px 0 8px; padding-bottom: 4px; border-bottom: 1px solid #ddd; }
+		.std-poc-preview h3 { font-size: 14px; margin: 12px 0 6px; }
+		.std-poc-warning { border: 1px solid #b36b00; background: #fff8e6; padding: 10px; margin-bottom: 16px; }
+		.std-poc-section { margin: 18px 0; }
+		.std-poc-table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; }
+		.std-poc-table th, .std-poc-table td { border: 1px solid #ccc; padding: 6px; vertical-align: top; text-align: left; }
+		.std-poc-table th { background: #f5f5f5; }
+		.std-poc-muted { color: #666; }
+		.std-poc-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; background: #eef; border: 1px solid #ccd; font-size: 12px; }
+	</style>
+
+	<div class="std-poc-warning">
+		<strong>POC Preview Only:</strong>
+		This tender-pack preview is generated from the STD-WORKS-POC template package and controlled tender configuration.
+		It is not a final legally certified tender document and does not contain the full PPRA Works STD text.
+	</div>
+
+	<h1>STD-WORKS-POC Tender Pack Preview</h1>
+	<p class="std-poc-muted">
+		Template: {{ value_or_na(template.template_name) }}
+		({{ value_or_na(template.template_code) }})
+		&middot; Package version {{ value_or_na(template.package_version) }}
+	</p>
+
+	{% include "templates/std_works_poc/cover.html" %}
+	{% include "templates/std_works_poc/invitation.html" %}
+	{% include "templates/std_works_poc/active_sections.html" %}
+	{% include "templates/std_works_poc/locked_sections.html" %}
+	{% include "templates/std_works_poc/tds.html" %}
+	{% include "templates/std_works_poc/evaluation_summary.html" %}
+	{% include "templates/std_works_poc/forms_checklist.html" %}
+	{% include "templates/std_works_poc/boq_summary.html" %}
+	{% include "templates/std_works_poc/specifications.html" %}
+	{% include "templates/std_works_poc/drawings.html" %}
+	{% include "templates/std_works_poc/scc_summary.html" %}
+	{% include "templates/std_works_poc/contract_forms.html" %}
+	{% include "templates/std_works_poc/audit_summary.html" %}
+</div>

@@ -1,0 +1,20 @@
+{# STD-WORKS-POC Step 13 - Special Conditions of Contract Summary (spec 11.13). #}
+{%- from "templates/std_works_poc/macros.html" import value_or_na, yes_no, percent, section_heading -%}
+<section class="std-poc-section">
+	{{ section_heading("Special Conditions of Contract Summary") }}
+	<table class="std-poc-table">
+		<tbody>
+			<tr><th>Engineer or Project Manager</th><td>{{ value_or_na(configuration.get("CONTRACT.ENGINEER_OR_PROJECT_MANAGER")) }}</td></tr>
+			<tr><th>Completion Period (months)</th><td>{{ value_or_na(configuration.get("CONTRACT.COMPLETION_PERIOD_MONTHS")) }}</td></tr>
+			<tr><th>Defects Liability Period (months)</th><td>{{ value_or_na(configuration.get("CONTRACT.DEFECTS_LIABILITY_PERIOD_MONTHS")) }}</td></tr>
+			<tr><th>Liquidated Damages Rate</th><td>{{ value_or_na(configuration.get("CONTRACT.LIQUIDATED_DAMAGES_RATE")) }}</td></tr>
+			<tr><th>Payment Terms</th><td>{{ value_or_na(configuration.get("CONTRACT.PAYMENT_TERMS")) }}</td></tr>
+			<tr><th>Insurance Requirements</th><td>{{ value_or_na(configuration.get("CONTRACT.INSURANCE_REQUIREMENTS")) }}</td></tr>
+			<tr><th>Retention Percentage</th><td>{{ percent(configuration.get("CONTRACT.RETENTION_PERCENTAGE")) }}</td></tr>
+			<tr><th>Dispute Resolution Forum</th><td>{{ value_or_na(configuration.get("CONTRACT.DISPUTE_RESOLUTION_FORUM")) }}</td></tr>
+			<tr><th>Advance Payment Allowed</th><td>{{ yes_no(configuration.get("CONTRACT.ADVANCE_PAYMENT_ALLOWED")) }}</td></tr>
+			<tr><th>Performance Security Required</th><td>{{ yes_no(configuration.get("SECURITY.PERFORMANCE_SECURITY_REQUIRED")) }}</td></tr>
+			<tr><th>Performance Security Percentage</th><td>{{ percent(configuration.get("SECURITY.PERFORMANCE_SECURITY_PERCENTAGE")) }}</td></tr>
+		</tbody>
+	</table>
+</section>

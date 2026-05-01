@@ -1,0 +1,47 @@
+{# STD-WORKS-POC Step 13 — Template and Configuration Audit Summary (spec §11.15). #}
+{%- from "templates/std_works_poc/macros.html" import value_or_na, status_badge, yes_no, section_heading -%}
+<section class="std-poc-section">
+	{{ section_heading("Template and Configuration Audit Summary") }}
+	<table class="std-poc-table">
+		<tbody>
+			<tr><th>Template Code</th><td>{{ value_or_na(audit.template_code) }}</td></tr>
+			<tr><th>Template Name</th><td>{{ value_or_na(template.template_name) }}</td></tr>
+			<tr><th>Package Version</th><td>{{ value_or_na(audit.package_version) }}</td></tr>
+			<tr><th>Source Document Code</th><td>{{ value_or_na(manifest.source_document.source_document_code if manifest.source_document else None) }}</td></tr>
+			<tr><th>Package Hash</th><td><code>{{ value_or_na(audit.package_hash) }}</code></td></tr>
+			<tr><th>Configuration Hash</th><td><code>{{ value_or_na(audit.configuration_hash) }}</code></td></tr>
+			<tr><th>Validation Status</th><td>{{ status_badge(validation.status) }}</td></tr>
+			<tr><th>Last Generated At</th><td>{{ value_or_na(last_generated_at) }}</td></tr>
+		</tbody>
+	</table>
+
+	{% if validation.messages %}
+	<h3>Validation Messages</h3>
+	<table class="std-poc-table">
+		<thead>
+			<tr>
+				<th>Severity</th>
+				<th>Rule Code</th>
+				<th>Message</th>
+				<th>Affected Field</th>
+				<th>Affected Section</th>
+				<th>Blocks Generation</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for message in validation.messages %}
+			<tr>
+				<td>{{ value_or_na(message.severity) }}</td>
+				<td>{{ value_or_na(message.rule_code) }}</td>
+				<td>{{ value_or_na(message.message) }}</td>
+				<td>{{ value_or_na(message.affected_field) }}</td>
+				<td>{{ value_or_na(message.affected_section) }}</td>
+				<td>{{ yes_no(message.blocks_generation) }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	{% else %}
+	<p class="std-poc-muted">No validation messages emitted by this configuration.</p>
+	{% endif %}
+</section>

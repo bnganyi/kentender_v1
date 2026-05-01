@@ -1,0 +1,13 @@
+{# STD-WORKS-POC Step 13 — Specifications and Works Requirements Summary (spec §11.11). #}
+{%- from "templates/std_works_poc/macros.html" import value_or_na, section_heading -%}
+<section class="std-poc-section">
+	{{ section_heading("Specifications and Works Requirements Summary") }}
+	<table class="std-poc-table">
+		<tbody>
+			<tr><th>Scope Summary</th><td>{{ value_or_na(configuration.get("WORKS.SCOPE_SUMMARY")) }}</td></tr>
+			<tr><th>Specification Summary</th><td>{{ value_or_na(configuration.get("WORKS.SPECIFICATION_SUMMARY")) }}</td></tr>
+			<tr><th>Environmental, Social, Health and Safety (ESHS) Requirements</th><td>{{ value_or_na(configuration.get("WORKS.ESHS_REQUIREMENTS")) }}</td></tr>
+			<tr><th>Alternative Scope Description</th><td>{{ value_or_na(configuration.get("ALTERNATIVES.ALTERNATIVE_SCOPE_DESCRIPTION")) }}</td></tr>
+		</tbody>
+	</table>
+</section>

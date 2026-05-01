@@ -1,0 +1,13 @@
+{# STD-WORKS-POC Step 13 — Drawings Summary (spec §11.12). #}
+{%- from "templates/std_works_poc/macros.html" import yes_no, section_heading -%}
+<section class="std-poc-section">
+	{{ section_heading("Drawings Summary") }}
+	<table class="std-poc-table">
+		<tbody>
+			<tr><th>Drawings Required</th><td>{{ yes_no(configuration.get("WORKS.DRAWINGS_REQUIRED")) }}</td></tr>
+		</tbody>
+	</table>
+	<p class="std-poc-muted">
+		Actual drawing attachment, drawing reference control, and drawing release approval are outside the scope of this POC unless implemented in a later step.
+	</p>
+</section>

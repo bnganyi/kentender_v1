@@ -1,0 +1,39 @@
+{# STD-WORKS-POC Step 13 — Required Bidder Forms Checklist (spec §11.9). #}
+{%- from "templates/std_works_poc/macros.html" import value_or_na, yes_no, section_heading -%}
+<section class="std-poc-section">
+	{{ section_heading("Required Bidder Forms Checklist", subtitle="Forms are generated from structured schema metadata. The POC does not accept manually uploaded completed tender documents.") }}
+	{% if required_forms %}
+	<table class="std-poc-table">
+		<thead>
+			<tr>
+				<th>Display Order</th>
+				<th>Display Group</th>
+				<th>Form Code</th>
+				<th>Form Title</th>
+				<th>Respondent Type</th>
+				<th>Workflow Stage</th>
+				<th>Evidence Policy</th>
+				<th>Required</th>
+				<th>Activation Source</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for form in required_forms %}
+			<tr>
+				<td>{{ value_or_na(form.display_order) }}</td>
+				<td>{{ value_or_na(form.display_group) }}</td>
+				<td>{{ value_or_na(form.form_code) }}</td>
+				<td>{{ value_or_na(form.form_title) }}</td>
+				<td>{{ value_or_na(form.respondent_type) }}</td>
+				<td>{{ value_or_na(form.workflow_stage) }}</td>
+				<td>{{ value_or_na(form.evidence_policy) }}</td>
+				<td>{{ yes_no(form.required) }}</td>
+				<td>{{ value_or_na(form.activation_source) }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	{% else %}
+	<p class="std-poc-muted">No required forms resolved.</p>
+	{% endif %}
+</section>

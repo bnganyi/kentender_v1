@@ -1,0 +1,20 @@
+{# STD-WORKS-POC Step 13 — Evaluation and Qualification Criteria Summary (spec §11.8). #}
+{%- from "templates/std_works_poc/macros.html" import value_or_na, yes_no, money, section_heading -%}
+<section class="std-poc-section">
+	{{ section_heading("Evaluation and Qualification Criteria Summary") }}
+	<table class="std-poc-table">
+		<tbody>
+			<tr><th>Minimum Average Annual Turnover</th><td>{{ money(configuration.get("QUALIFICATION.MIN_AVERAGE_ANNUAL_TURNOVER"), configuration.get("SECURITY.TENDER_SECURITY_CURRENCY")) }}</td></tr>
+			<tr><th>Minimum Liquid Assets / Credit Line</th><td>{{ money(configuration.get("QUALIFICATION.MIN_LIQUID_ASSETS"), configuration.get("SECURITY.TENDER_SECURITY_CURRENCY")) }}</td></tr>
+			<tr><th>Similar Contracts Required</th><td>{{ value_or_na(configuration.get("QUALIFICATION.SIMILAR_CONTRACT_COUNT")) }}</td></tr>
+			<tr><th>Similar Contract Minimum Value</th><td>{{ money(configuration.get("QUALIFICATION.SIMILAR_CONTRACT_MIN_VALUE"), configuration.get("SECURITY.TENDER_SECURITY_CURRENCY")) }}</td></tr>
+			<tr><th>Key Personnel Required</th><td>{{ yes_no(configuration.get("QUALIFICATION.KEY_PERSONNEL_REQUIRED")) }}</td></tr>
+			<tr><th>Equipment Required</th><td>{{ yes_no(configuration.get("QUALIFICATION.EQUIPMENT_REQUIRED")) }}</td></tr>
+			<tr><th>NCA Registration Required</th><td>{{ yes_no(configuration.get("QUALIFICATION.NCA_REGISTRATION_REQUIRED")) }}</td></tr>
+			<tr><th>Tax Compliance Required</th><td>{{ yes_no(configuration.get("QUALIFICATION.TAX_COMPLIANCE_REQUIRED")) }}</td></tr>
+			<tr><th>Beneficial Ownership Disclosure Required</th><td>{{ yes_no(configuration.get("QUALIFICATION.BENEFICIAL_OWNERSHIP_REQUIRED")) }}</td></tr>
+			<tr><th>Margin of Preference Applicable</th><td>{{ yes_no(configuration.get("PARTICIPATION.MARGIN_OF_PREFERENCE_APPLICABLE")) }}</td></tr>
+			<tr><th>Lot Evaluation Method</th><td>{{ value_or_na(configuration.get("LOTS.LOT_EVALUATION_METHOD")) }}</td></tr>
+		</tbody>
+	</table>
+</section>

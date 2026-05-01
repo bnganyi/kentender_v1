@@ -1,0 +1,51 @@
+<div class="std-admin-rule-trace-report" style="max-width: 100%; overflow-x: auto;">
+	<h4 style="margin-top: 0;">Rule trace</h4>
+	<p style="font-size: 12px;">
+		<strong>Trace source:</strong> {{ trace_source | e }}<br>
+		{% if variant_code %}<strong>Variant:</strong> {{ variant_code | e }}<br>{% endif %}
+		{% if tender %}<strong>Tender:</strong> {{ tender | e }}<br>{% endif %}
+		<strong>Configuration hash:</strong> {{ configuration_hash | e }}
+	</p>
+	<p style="font-size: 12px;">
+		<strong>Summary:</strong>
+		rules {{ summary.total_rules }},
+		enabled {{ summary.enabled_rules }},
+		applied {{ summary.applied_rules }},
+		non-applied {{ summary.non_applied_rules }},
+		messages {{ summary.messages }},
+		blockers {{ summary.blockers }},
+		active forms {{ summary.active_forms }}
+	</p>
+	<table class="table table-bordered table-condensed" style="font-size: 11px;">
+		<thead>
+			<tr>
+				<th>Rule code</th>
+				<th>Type</th>
+				<th>Enabled</th>
+				<th>Applies</th>
+				<th>Severity</th>
+				<th>Conditions</th>
+				<th>Effects</th>
+				<th>Blocks gen.</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for r in rules %}
+			<tr>
+				<td>{{ r.rule_code | e }}</td>
+				<td>{{ r.rule_type | e }}</td>
+				<td>{{ r.enabled | e }}</td>
+				<td>{{ r.applies | e }}</td>
+				<td>{{ r.severity | e }}</td>
+				<td>{{ r.condition_summary | e }}</td>
+				<td>{{ r.effect_summary | e }}</td>
+				<td>{{ r.blocks_generation | e }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	<details style="margin-top: 8px;">
+		<summary>Raw trace JSON</summary>
+		<pre style="font-size: 10px; max-height: 240px; overflow: auto;">{{ raw_payload | json }}</pre>
+	</details>
+</div>
