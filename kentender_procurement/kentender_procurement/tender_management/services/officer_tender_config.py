@@ -10,6 +10,9 @@ values without schema migration. See ``OFFICER_TENDER_STATUS_*`` and
 
 from __future__ import annotations
 
+from pathlib import Path
+from typing import Any
+
 # POC template allowlist (planning correction §9)
 OFFICER_POC_TEMPLATE_CODE: str = "KE-PPRA-WORKS-BLDG-2022-04-POC"
 
@@ -80,3 +83,44 @@ OFFICER_SCOPE_BOUNDARY_FORBIDDEN_PHRASES: tuple[str, ...] = (
 	"Build PDF generation",
 	"Build production BoQ module",
 )
+
+
+def load_officer_fields_document(package_path: Path | None = None) -> dict[str, Any]:
+	"""Load ``fields.json`` from the STD-WORKS-POC package (officer field model source)."""
+	from kentender_procurement.tender_management.services.std_template_loader import (
+		get_template_package_path,
+		load_json_file,
+	)
+
+	root = package_path if package_path is not None else get_template_package_path()
+	return load_json_file(root / "fields.json")
+
+
+def build_officer_guided_field_model(fields_doc: dict[str, Any]) -> dict[str, Any]:
+	"""Build grouped officer field model from a ``fields.json`` payload (doc 3 §6–§7)."""
+	groups: dict[str, Any] = {g["group_code"]: {**g, "fields": []} for g in fields_doc.get("field_groups", [])}
+	for field in fields_doc.get("fields", []):
+		gc = field.get("group_code")
+		if gc not in groups:
+			continue
+		required_mode = "Always" if field.get("required_by_default") else "Optional"
+		if field.get("poc_required") and not field.get("required_by_default"):
+			required_mode = "POC required"
+		groups[gc]["fields"].append(
+			{
+				"field_code": field.get("field_code"),
+				"label": field.get("label"),
+				"field_type": field.get("field_type"),
+				"required_mode": required_mode,
+				"ordinary_user_editable": bool(field.get("ordinary_user_editable", True)),
+				"help_text": field.get("help_text"),
+			}
+		)
+	ordered = sorted(groups.values(), key=lambda g: int(g.get("render_order") or 999))
+	return {"template_code": fields_doc.get("template_code"), "groups": ordered}
+
+
+def get_officer_guided_field_model(package_path: Path | None = None) -> dict[str, Any]:
+	"""Return grouped guided configuration model for the Works POC package."""
+	fields_doc = load_officer_fields_document(package_path)
+	return build_officer_guided_field_model(fields_doc)
