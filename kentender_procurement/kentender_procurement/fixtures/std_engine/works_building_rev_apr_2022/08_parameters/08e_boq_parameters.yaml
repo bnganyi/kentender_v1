@@ -1,9 +1,0 @@
-boq_parameters:
-  - parameter_code: DOC1-BOQ-PARAM-001
-    version_code: STDTV-WORKS-BUILDING-REV-APR-2022
-    section_code: DOC1-WORKS-SECTION-V-BOQ
-    label: BOQ Currency
-    parameter_group: BOQ
-    data_type: String
-    required: true
-    drives_dsm: true

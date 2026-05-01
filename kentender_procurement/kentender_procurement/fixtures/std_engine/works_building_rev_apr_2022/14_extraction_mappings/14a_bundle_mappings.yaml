@@ -1,8 +1,0 @@
-bundle_mappings:
-  - mapping_code: DOC1-MAP-BUNDLE-001
-    version_code: STDTV-WORKS-BUILDING-REV-APR-2022
-    source_object_type: Section
-    source_object_code: DOC1-WORKS-SECTION-I-ITT
-    target_model: Bundle
-    target_component_type: Locked Section
-    mandatory: true

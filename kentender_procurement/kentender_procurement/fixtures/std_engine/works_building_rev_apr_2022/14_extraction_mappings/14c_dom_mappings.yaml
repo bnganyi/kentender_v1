@@ -1,8 +1,0 @@
-dom_mappings:
-  - mapping_code: DOC1-MAP-DOM-001
-    version_code: STDTV-WORKS-BUILDING-REV-APR-2022
-    source_object_type: Parameter
-    source_object_code: DOC1-TDS-001
-    target_model: DOM
-    target_component_type: Opening Requirement
-    mandatory: true

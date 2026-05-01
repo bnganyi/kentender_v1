@@ -10,6 +10,8 @@ cannot disambiguate when multiple sidebars link to workspaces and
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import frappe
 from frappe.tests import IntegrationTestCase
 
@@ -44,9 +46,24 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		items = bootinfo.get("workspace_sidebar_item") or {}
 		self.assertIn("procurement home", items)
 		self.assertIn("procurement planning", items)
-		self.assertIn("std engine", items)
 		self.assertIn(
 			"governance & configuration",
 			items,
 			msg="Governance & Configuration workspace hard refresh requires boot sidebar key",
+		)
+
+	def test_governance_workspace_boot_key_for_limited_roles(self):
+		if not frappe.db.exists("Workspace Sidebar", "Procurement"):
+			self.skipTest("Procurement Workspace Sidebar not on site")
+		bootinfo: dict = {"workspace_sidebar_item": {}}
+		with patch(
+			"kentender_procurement.setup.workspace_permissions.frappe.get_roles",
+			return_value=["Accounts User"],
+		):
+			patch_bootinfo(bootinfo)
+		items = bootinfo.get("workspace_sidebar_item") or {}
+		self.assertIn(
+			"governance & configuration",
+			items,
+			msg="Governance workspace must remain reachable without STD-only roles",
 		)

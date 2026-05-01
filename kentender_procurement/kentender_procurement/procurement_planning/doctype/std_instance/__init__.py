@@ -1,2 +1,0 @@
-"""STD Instance DocType package."""
-

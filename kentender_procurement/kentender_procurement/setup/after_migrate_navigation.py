@@ -16,7 +16,6 @@ import os
 
 import frappe
 
-
 def _sidebar_json_path(basename: str) -> str:
 	return os.path.join(
 		frappe.get_app_path("kentender_procurement"),

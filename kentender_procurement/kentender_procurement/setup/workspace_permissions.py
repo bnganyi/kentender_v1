@@ -84,7 +84,6 @@ _KT_WORKSPACE_TO_SIDEBAR: dict[str, str] = {
 	"demand intake and approval": "Procurement",
 	"procurement home": "Procurement",
 	"ktsm supplier registry": "Procurement",
-	"std engine": "Procurement",
 	"governance & configuration": "Procurement",
 }
 
@@ -155,6 +154,25 @@ def patch_bootinfo(bootinfo) -> None:
 		payload = built.get(sidebar_name) or sidebar_items.get(sidebar_name.lower(), {})
 		if payload:
 			sidebar_items[ws_key] = payload
+
+	# Frappe builds `bootinfo.desktop_icons` in `get_bootinfo()` *before* `boot_session`
+	# hooks run. `DesktopIcon.is_permitted` reads `workspace_sidebar_item["procurement"]`
+	# — without a second pass the Procurement tile stays hidden for users whose sidebar
+	# only becomes valid after this patch (e.g. narrowly-scoped desk roles). Recompute icons
+	# against the patched bootinfo and refresh the per-user desktop icon cache.
+	if frappe.session.user not in (None, "Guest"):
+		from frappe import _dict as frappe_dict
+		from frappe.desk.doctype.desktop_icon.desktop_icon import clear_desktop_icons_cache, get_desktop_icons
+
+		clear_desktop_icons_cache(frappe.session.user)
+		# `DesktopIcon.is_permitted` uses attribute access (`bootinfo.workspace_sidebar_item`);
+		# unit tests pass a plain `dict` — wrap for compatibility with Frappe core.
+		boot_for_icons = frappe_dict(bootinfo) if type(bootinfo) is dict else bootinfo
+		icons = get_desktop_icons(bootinfo=boot_for_icons)
+		if type(bootinfo) is dict:
+			bootinfo["desktop_icons"] = icons
+		else:
+			bootinfo.desktop_icons = icons
 
 
 def _build_sidebar_dict(name: str, allowed_workspaces: set[str]) -> dict:

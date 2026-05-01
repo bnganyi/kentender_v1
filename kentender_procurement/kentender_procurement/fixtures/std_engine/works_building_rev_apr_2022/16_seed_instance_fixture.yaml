@@ -1,7 +1,0 @@
-seed_instance_fixture:
-  instance_code: STDINST-WORKS-EXAMPLE-001
-  tender_code: TND-WORKS-EXAMPLE-001
-  template_version_code: STDTV-WORKS-BUILDING-REV-APR-2022
-  profile_code: WORKS-PROFILE-BUILDING-CIVIL-REV-APR-2022
-  instance_status: Published Locked
-  readiness_status: Ready

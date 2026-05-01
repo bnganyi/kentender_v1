@@ -1,9 +1,0 @@
-addendum_fixture:
-  addendum_code: ADD-WORKS-001
-  instance_code: STDINST-WORKS-EXAMPLE-001
-  status: Draft
-  expected_regeneration_targets:
-    - Bundle
-    - DSM
-    - DEM
-    - DCM

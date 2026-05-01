@@ -1,8 +1,0 @@
-dcm_mappings:
-  - mapping_code: DOC1-MAP-DCM-001
-    version_code: STDTV-WORKS-BUILDING-REV-APR-2022
-    source_object_type: Parameter
-    source_object_code: DOC1-SCC-001
-    target_model: DCM
-    target_component_type: Contract Clause
-    mandatory: true

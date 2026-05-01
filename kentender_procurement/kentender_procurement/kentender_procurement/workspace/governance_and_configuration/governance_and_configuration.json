@@ -1,7 +1,7 @@
 {
  "app": "kentender_procurement",
  "charts": [],
- "content": "[{\"id\":\"gov_h1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Governance & Configuration</b></span>\",\"col\":12}},{\"id\":\"gov_p1\",\"type\":\"paragraph\",\"data\":{\"text\":\"Procurement governance: STD Engine workbench, template lifecycle, and related configuration. Use the shortcut below to open the STD Engine workbench.\",\"col\":12}},{\"id\":\"gov_sc1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"STD Engine Workbench\",\"col\":4}}]",
+ "content": "[{\"id\":\"gov_h1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Governance & Configuration</b></span>\",\"col\":12}},{\"id\":\"gov_p1\",\"type\":\"paragraph\",\"data\":{\"text\":\"Procurement governance: templates, risk and KPI profiles, decision criteria, vendor management profiles, procurement plans, and packages.\",\"col\":12}}]",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -19,13 +19,8 @@
  "public": 1,
  "quick_lists": [],
  "roles": [],
+ "type": "Workspace",
  "sequence_id": 35.0,
- "shortcuts": [
-  {
-   "label": "STD Engine Workbench",
-   "type": "URL",
-   "url": "/app/std-engine"
-  }
- ],
+ "shortcuts": [],
  "title": "Governance & Configuration"
 }
