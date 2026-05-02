@@ -62,6 +62,9 @@ class TestOfficerPocStep8MergeOverlayUnit(UnitTestCase):
 			template_version = "1"
 			package_hash = "phash"
 
+			def get(self, key: str, default=None):
+				return getattr(self, key, default)
+
 		merged = merge_officer_overlay_into_configuration(base, _T())
 		self.assertEqual(merged["TENDER.TENDER_NAME"], "New Title")
 		self.assertEqual(merged["CUSTOM.UNKNOWN"], {"x": 1})

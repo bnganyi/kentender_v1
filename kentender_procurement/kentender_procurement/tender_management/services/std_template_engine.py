@@ -1100,9 +1100,13 @@ def build_validation_message_rows(
 	validation_result: dict[str, Any],
 ) -> list[dict[str, Any]]:
 	"""Convert in-memory validation messages into ``Tender Validation Message`` child rows."""
+	from kentender_procurement.tender_management.services.officer_guided_field_registry import (
+		enrich_validation_row_for_officer,
+	)
+
 	rows: list[dict[str, Any]] = []
 	for message in (validation_result or {}).get("messages") or []:
-		rows.append(
+		row = enrich_validation_row_for_officer(
 			{
 				"severity": message.get("severity"),
 				"rule_code": message.get("rule_code"),
@@ -1117,6 +1121,7 @@ def build_validation_message_rows(
 				),
 			}
 		)
+		rows.append(row)
 	return rows
 
 
@@ -1210,6 +1215,12 @@ def apply_config_to_tender_doc(tender_doc: Any, config: dict[str, Any]) -> None:
 	package_hash = config.get("SYSTEM.PACKAGE_HASH")
 	if package_hash:
 		tender_doc.package_hash = package_hash
+
+	from kentender_procurement.tender_management.services.officer_guided_field_registry import (
+		hydrate_officer_guided_fields_from_configuration,
+	)
+
+	hydrate_officer_guided_fields_from_configuration(tender_doc, config)
 
 
 def populate_sample_tender(tender_doc: Any, variant_code: str | None = None) -> None:

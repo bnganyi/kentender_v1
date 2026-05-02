@@ -6,10 +6,8 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_tender_identity",
-  "naming_series",
-  "tender_title",
-  "tender_reference",
+  "section_officer_poc_boundary",
+  "html_officer_poc_boundary",
   "section_template_reference",
   "std_template",
   "template_code",
@@ -17,13 +15,88 @@
   "package_hash",
   "section_std_demo_workspace",
   "html_std_demo_workspace",
-  "section_configuration",
-  "section_officer_poc_boundary",
-  "html_officer_poc_boundary",
-  "html_officer_guided_notices",
+  "section_tender_identity",
+  "naming_series",
+  "tender_title",
+  "tender_reference",
+  "og_tender_contract_description",
+  "og_tender_estimated_cost",
+  "og_tender_procuring_entity_address",
+  "og_tender_procuring_entity_email",
+  "og_tender_procuring_entity_name",
+  "og_tender_procuring_entity_ref",
+  "og_tender_works_location",
+  "section_guided_method_participation",
   "procurement_method",
   "procurement_category",
   "tender_scope",
+  "og_participation_foreign_tenderer_local_input_rule_applicable",
+  "og_participation_jv_allowed",
+  "og_participation_margin_of_preference_applicable",
+  "og_participation_max_jv_members",
+  "og_participation_prequalification_reference",
+  "og_participation_prequalification_used",
+  "og_participation_reservation_applicable",
+  "og_participation_reserved_group",
+  "section_guided_dates_meetings",
+  "og_dates_clarification_deadline",
+  "og_dates_opening_datetime",
+  "og_dates_pre_tender_meeting_date",
+  "og_dates_pre_tender_meeting_location",
+  "og_dates_pre_tender_meeting_required",
+  "og_dates_publication_date",
+  "og_dates_site_visit_date",
+  "og_dates_site_visit_location",
+  "og_dates_site_visit_required",
+  "og_dates_submission_deadline",
+  "og_dates_tender_validity_days",
+  "section_guided_securities",
+  "og_security_advance_payment_security_required",
+  "og_security_performance_security_percentage",
+  "og_security_performance_security_required",
+  "og_security_retention_money_security_required",
+  "og_security_tender_security_amount",
+  "og_security_tender_security_currency",
+  "og_security_tender_security_mode",
+  "og_security_tender_security_type",
+  "og_security_tender_security_validity_days_after_tender_validity",
+  "section_guided_alternatives_lots",
+  "og_alternatives_alternative_scope_description",
+  "og_alternatives_alternative_tenders_allowed",
+  "og_alternatives_alternative_tender_type",
+  "og_lots_lot_award_method",
+  "og_lots_lot_evaluation_method",
+  "og_lots_multiple_lots_enabled",
+  "section_guided_qualification",
+  "og_qualification_beneficial_ownership_required",
+  "og_qualification_equipment_required",
+  "og_qualification_key_personnel_required",
+  "og_qualification_min_average_annual_turnover",
+  "og_qualification_min_liquid_assets",
+  "og_qualification_nca_registration_required",
+  "og_qualification_similar_contract_count",
+  "og_qualification_similar_contract_min_value",
+  "og_qualification_tax_compliance_required",
+  "section_guided_works_requirements",
+  "og_works_boq_required",
+  "og_works_dayworks_included",
+  "og_works_drawings_required",
+  "og_works_eshs_requirements",
+  "og_works_provisional_sums_included",
+  "og_works_scope_summary",
+  "og_works_specification_summary",
+  "section_guided_contract_scc",
+  "og_contract_advance_payment_allowed",
+  "og_contract_completion_period_months",
+  "og_contract_defects_liability_period_months",
+  "og_contract_dispute_resolution_forum",
+  "og_contract_engineer_or_project_manager",
+  "og_contract_insurance_requirements",
+  "og_contract_liquidated_damages_rate",
+  "og_contract_payment_terms",
+  "og_contract_retention_percentage",
+  "section_configuration",
+  "html_officer_guided_notices",
   "configuration_json",
   "configuration_hash",
   "section_validation",
@@ -46,31 +119,16 @@
  ],
  "fields": [
   {
-   "fieldname": "section_tender_identity",
+   "collapsible": 1,
+   "fieldname": "section_officer_poc_boundary",
    "fieldtype": "Section Break",
-   "label": "1. Tender Identity"
+   "label": "Officer POC — scope notice"
   },
   {
-   "default": "PT-.YYYY.-.#####",
-   "fieldname": "naming_series",
-   "fieldtype": "Select",
-   "label": "Naming Series",
-   "options": "PT-.YYYY.-.#####\n",
-   "reqd": 1
-  },
-  {
-   "fieldname": "tender_title",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Tender Title",
-   "reqd": 1
-  },
-  {
-   "fieldname": "tender_reference",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Tender Reference",
-   "reqd": 1
+   "fieldname": "html_officer_poc_boundary",
+   "fieldtype": "HTML",
+   "label": "POC boundary",
+   "options": "<div class=\"text-muted\" style=\"padding:4px 0;\">Officer Tender Configuration POC: guided setup only. No publication, bidder portal, evaluation, award, final PDF, or production BoQ.</div>"
   },
   {
    "fieldname": "section_template_reference",
@@ -114,27 +172,79 @@
    "label": "Demo workspace summary"
   },
   {
-   "fieldname": "section_configuration",
+   "fieldname": "section_tender_identity",
    "fieldtype": "Section Break",
-   "label": "3. Configuration"
+   "label": "30. Tender Identity"
   },
   {
-   "collapsible": 1,
-   "fieldname": "section_officer_poc_boundary",
+   "default": "PT-.YYYY.-.#####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "PT-.YYYY.-.#####\n",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender_reference",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Reference",
+   "reqd": 1
+  },
+  {
+   "fieldname": "og_tender_contract_description",
+   "fieldtype": "Long Text",
+   "label": "Contract Description",
+   "description": "Provide a concise description of the construction works, location, and expected output."
+  },
+  {
+   "fieldname": "og_tender_estimated_cost",
+   "fieldtype": "Float",
+   "label": "Estimated Cost",
+   "description": "Enter the internal estimated cost used for configuration, thresholds, and validation. Public display may be controlled in production."
+  },
+  {
+   "fieldname": "og_tender_procuring_entity_address",
+   "fieldtype": "Long Text",
+   "label": "Procuring Entity Address",
+   "description": "Enter the official physical or postal address to appear in the tender package."
+  },
+  {
+   "fieldname": "og_tender_procuring_entity_email",
+   "fieldtype": "Data",
+   "label": "Procuring Entity Email",
+   "description": "Enter the official email address for clarification and tender correspondence."
+  },
+  {
+   "fieldname": "og_tender_procuring_entity_name",
+   "fieldtype": "Data",
+   "label": "Procuring Entity Name",
+   "description": "Enter the official name of the procuring entity issuing the tender."
+  },
+  {
+   "fieldname": "og_tender_procuring_entity_ref",
+   "fieldtype": "Data",
+   "label": "Procuring Entity Reference",
+   "description": "Use a linked organization record where available. If not available, enter the procuring entity name and address fields manually."
+  },
+  {
+   "fieldname": "og_tender_works_location",
+   "fieldtype": "Data",
+   "label": "Works Location",
+   "description": "Enter the county, site, facility, or other location description for the works."
+  },
+  {
+   "fieldname": "section_guided_method_participation",
    "fieldtype": "Section Break",
-   "label": "Officer POC — scope notice"
-  },
-  {
-   "fieldname": "html_officer_poc_boundary",
-   "fieldtype": "HTML",
-   "label": "POC boundary",
-   "options": "<div class=\"text-muted\" style=\"padding:4px 0;\">Officer Tender Configuration POC: guided setup only. No publication, bidder portal, evaluation, award, final PDF, or production BoQ.</div>"
-  },
-  {
-   "fieldname": "html_officer_guided_notices",
-   "fieldtype": "HTML",
-   "label": "Guided notices",
-   "options": "<div></div>"
+   "label": "40–50. Method, Scope and Participation",
+   "collapsible": 1
   },
   {
    "fieldname": "procurement_method",
@@ -157,6 +267,415 @@
    "options": "NATIONAL\nINTERNATIONAL"
   },
   {
+   "fieldname": "og_participation_foreign_tenderer_local_input_rule_applicable",
+   "fieldtype": "Check",
+   "label": "Foreign Tenderer Local Input Rule Applicable",
+   "description": "Usually relevant for international tendering where foreign tenderer participation is expected."
+  },
+  {
+   "fieldname": "og_participation_jv_allowed",
+   "fieldtype": "Check",
+   "label": "Joint Ventures Allowed",
+   "description": "Controls whether joint venture information forms are required from bidders."
+  },
+  {
+   "fieldname": "og_participation_margin_of_preference_applicable",
+   "fieldtype": "Check",
+   "label": "Margin of Preference Applicable",
+   "description": "Enable only where preference is legally applicable and disclosed in the tender."
+  },
+  {
+   "fieldname": "og_participation_max_jv_members",
+   "fieldtype": "Int",
+   "label": "Maximum JV Members",
+   "description": "Required when joint ventures are allowed. Use a reasonable maximum consistent with the tender configuration."
+  },
+  {
+   "fieldname": "og_participation_prequalification_reference",
+   "fieldtype": "Data",
+   "label": "Prequalification Reference",
+   "description": "Required only when prequalification was used."
+  },
+  {
+   "fieldname": "og_participation_prequalification_used",
+   "fieldtype": "Check",
+   "label": "Prequalification Used",
+   "description": "Enable if tendering is limited to prequalified tenderers under an earlier process."
+  },
+  {
+   "fieldname": "og_participation_reservation_applicable",
+   "fieldtype": "Check",
+   "label": "Reservation Applicable",
+   "description": "Enable only where the tender is legally reserved for an eligible group."
+  },
+  {
+   "fieldname": "og_participation_reserved_group",
+   "fieldtype": "Select",
+   "label": "Reserved Group",
+   "description": "Required only when reservation is enabled. The selected group will be rendered in the invitation and TDS summary.",
+   "options": "SMALL_AND_MEDIUM_ENTERPRISES\nWOMEN_ENTERPRISES\nYOUTH_ENTERPRISES\nPERSONS_WITH_DISABILITY_ENTERPRISES\nOTHER_APPROVED_GROUP"
+  },
+  {
+   "fieldname": "section_guided_dates_meetings",
+   "fieldtype": "Section Break",
+   "label": "60. Key Dates and Meetings",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "og_dates_clarification_deadline",
+   "fieldtype": "Datetime",
+   "label": "Clarification Deadline",
+   "description": "Enter the final date and time for clarification requests before submission."
+  },
+  {
+   "fieldname": "og_dates_opening_datetime",
+   "fieldtype": "Datetime",
+   "label": "Opening Date and Time",
+   "description": "Enter the date and time for tender opening. For the POC, this should be the same as or after the submission deadline."
+  },
+  {
+   "fieldname": "og_dates_pre_tender_meeting_date",
+   "fieldtype": "Datetime",
+   "label": "Pre-Tender Meeting Date",
+   "description": "Required only when a pre-tender meeting is enabled."
+  },
+  {
+   "fieldname": "og_dates_pre_tender_meeting_location",
+   "fieldtype": "Data",
+   "label": "Pre-Tender Meeting Location",
+   "description": "Required only when a pre-tender meeting is enabled."
+  },
+  {
+   "fieldname": "og_dates_pre_tender_meeting_required",
+   "fieldtype": "Check",
+   "label": "Pre-Tender Meeting Required",
+   "description": "Enable if a pre-tender meeting is scheduled."
+  },
+  {
+   "fieldname": "og_dates_publication_date",
+   "fieldtype": "Date",
+   "label": "Publication Date",
+   "description": "Enter the date the tender is intended to be published."
+  },
+  {
+   "fieldname": "og_dates_site_visit_date",
+   "fieldtype": "Datetime",
+   "label": "Site Visit Date",
+   "description": "Required only when site visit is enabled."
+  },
+  {
+   "fieldname": "og_dates_site_visit_location",
+   "fieldtype": "Data",
+   "label": "Site Visit Location",
+   "description": "Required only when site visit is enabled."
+  },
+  {
+   "fieldname": "og_dates_site_visit_required",
+   "fieldtype": "Check",
+   "label": "Site Visit Required",
+   "description": "Enable if a site visit is part of the tender process."
+  },
+  {
+   "fieldname": "og_dates_submission_deadline",
+   "fieldtype": "Datetime",
+   "label": "Submission Deadline",
+   "description": "Enter the final date and time for tender submission."
+  },
+  {
+   "fieldname": "og_dates_tender_validity_days",
+   "fieldtype": "Int",
+   "label": "Tender Validity Days",
+   "description": "Enter the tender validity period in calendar days."
+  },
+  {
+   "fieldname": "section_guided_securities",
+   "fieldtype": "Section Break",
+   "label": "70. Securities and Guarantees",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "og_security_advance_payment_security_required",
+   "fieldtype": "Check",
+   "label": "Advance Payment Security Required",
+   "description": "Controls whether the advance payment security form is included in the contract forms checklist."
+  },
+  {
+   "fieldname": "og_security_performance_security_percentage",
+   "fieldtype": "Percent",
+   "label": "Performance Security Percentage",
+   "description": "Required when performance security is enabled."
+  },
+  {
+   "fieldname": "og_security_performance_security_required",
+   "fieldtype": "Check",
+   "label": "Performance Security Required",
+   "description": "Controls whether performance security contract forms are included in the contract forms checklist."
+  },
+  {
+   "fieldname": "og_security_retention_money_security_required",
+   "fieldtype": "Check",
+   "label": "Retention Money Security Required",
+   "description": "Controls whether the retention money security form is included in the contract forms checklist."
+  },
+  {
+   "fieldname": "og_security_tender_security_amount",
+   "fieldtype": "Float",
+   "label": "Tender Security Amount",
+   "description": "Required when tender security mode is Tender Security. The amount should be validated against the configured estimated cost rule."
+  },
+  {
+   "fieldname": "og_security_tender_security_currency",
+   "fieldtype": "Select",
+   "label": "Tender Security Currency",
+   "description": "Required when a tender security amount is required. KES is the default for this POC.",
+   "options": "KES\nUSD\nEUR\nGBP"
+  },
+  {
+   "fieldname": "og_security_tender_security_mode",
+   "fieldtype": "Select",
+   "label": "Tender Security Mode",
+   "description": "Select whether bidders must provide a tender security, a tender-securing declaration, or no securing instrument for the POC scenario.",
+   "options": "TENDER_SECURITY\nTENDER_SECURING_DECLARATION\nNONE"
+  },
+  {
+   "fieldname": "og_security_tender_security_type",
+   "fieldtype": "Select",
+   "label": "Tender Security Type",
+   "description": "Required when tender security mode is Tender Security.",
+   "options": "BANK_GUARANTEE\nINSURANCE_GUARANTEE\nBANK_OR_INSURANCE_GUARANTEE\nOTHER_APPROVED_FINANCIAL_INSTITUTION_GUARANTEE"
+  },
+  {
+   "fieldname": "og_security_tender_security_validity_days_after_tender_validity",
+   "fieldtype": "Int",
+   "label": "Tender Security Additional Validity Days",
+   "description": "Required when tender security mode is Tender Security. The POC default is 30 days beyond tender validity."
+  },
+  {
+   "fieldname": "section_guided_alternatives_lots",
+   "fieldtype": "Section Break",
+   "label": "80–90. Alternatives and Lots",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "og_alternatives_alternative_scope_description",
+   "fieldtype": "Long Text",
+   "label": "Alternative Scope Description",
+   "description": "Required when alternative technical solutions are allowed. Describe the permitted scope precisely."
+  },
+  {
+   "fieldname": "og_alternatives_alternative_tenders_allowed",
+   "fieldtype": "Check",
+   "label": "Alternative Tenders Allowed",
+   "description": "Enable only if alternative tenders are permitted for this procurement."
+  },
+  {
+   "fieldname": "og_alternatives_alternative_tender_type",
+   "fieldtype": "Select",
+   "label": "Alternative Tender Type",
+   "description": "Required only when alternative tenders are allowed.",
+   "options": "COMPLETION_TIME_ONLY\nTECHNICAL_ALTERNATIVE_SPECIFIED_PARTS\nOTHER_APPROVED_ALTERNATIVE"
+  },
+  {
+   "fieldname": "og_lots_lot_award_method",
+   "fieldtype": "Select",
+   "label": "Lot Award Method",
+   "description": "Required when multiple lots are enabled. Defines whether tenderers may win one or more lots or a package.",
+   "options": "SINGLE_LOT_ONLY\nONE_OR_MORE_LOTS\nALL_LOTS_AS_PACKAGE"
+  },
+  {
+   "fieldname": "og_lots_lot_evaluation_method",
+   "fieldtype": "Select",
+   "label": "Lot Evaluation Method",
+   "description": "Required when multiple lots are enabled.",
+   "options": "LOT_BY_LOT\nPACKAGE_COMBINATION\nLOWEST_EVALUATED_COMBINATION"
+  },
+  {
+   "fieldname": "og_lots_multiple_lots_enabled",
+   "fieldtype": "Check",
+   "label": "Multiple Lots Enabled",
+   "description": "Enable where tenderers may bid for one or more lots."
+  },
+  {
+   "fieldname": "section_guided_qualification",
+   "fieldtype": "Section Break",
+   "label": "100. Qualification Requirements",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "og_qualification_beneficial_ownership_required",
+   "fieldtype": "Check",
+   "label": "Beneficial Ownership Disclosure Required",
+   "description": "Controls whether beneficial ownership disclosure is required in bidder and contract form checklists."
+  },
+  {
+   "fieldname": "og_qualification_equipment_required",
+   "fieldtype": "Check",
+   "label": "Equipment Required",
+   "description": "Controls whether the equipment schedule form is required."
+  },
+  {
+   "fieldname": "og_qualification_key_personnel_required",
+   "fieldtype": "Check",
+   "label": "Key Personnel Required",
+   "description": "Controls whether the personnel schedule form is required."
+  },
+  {
+   "fieldname": "og_qualification_min_average_annual_turnover",
+   "fieldtype": "Float",
+   "label": "Minimum Average Annual Turnover",
+   "description": "Enter the minimum average annual turnover threshold for qualification."
+  },
+  {
+   "fieldname": "og_qualification_min_liquid_assets",
+   "fieldtype": "Float",
+   "label": "Minimum Liquid Assets or Credit Line",
+   "description": "Enter the minimum liquidity or credit capacity required for contract execution."
+  },
+  {
+   "fieldname": "og_qualification_nca_registration_required",
+   "fieldtype": "Check",
+   "label": "NCA Registration Required Before Award",
+   "description": "Indicates whether National Construction Authority registration is required before contract award or signature."
+  },
+  {
+   "fieldname": "og_qualification_similar_contract_count",
+   "fieldtype": "Int",
+   "label": "Similar Contract Count",
+   "description": "Enter the number of similar contracts required for qualification."
+  },
+  {
+   "fieldname": "og_qualification_similar_contract_min_value",
+   "fieldtype": "Float",
+   "label": "Similar Contract Minimum Value",
+   "description": "Enter the minimum value threshold for similar contract experience."
+  },
+  {
+   "fieldname": "og_qualification_tax_compliance_required",
+   "fieldtype": "Check",
+   "label": "Tax Compliance Required",
+   "description": "Controls whether tax compliance appears in the qualification summary and bidder response requirements."
+  },
+  {
+   "fieldname": "section_guided_works_requirements",
+   "fieldtype": "Section Break",
+   "label": "110. Works Requirements",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "og_works_boq_required",
+   "fieldtype": "Check",
+   "label": "BoQ Required",
+   "description": "For this Works POC, BoQ is expected to be required and represented through structured child rows."
+  },
+  {
+   "fieldname": "og_works_dayworks_included",
+   "fieldtype": "Check",
+   "label": "Dayworks Included",
+   "description": "Controls whether sample daywork BoQ rows are generated in the POC."
+  },
+  {
+   "fieldname": "og_works_drawings_required",
+   "fieldtype": "Check",
+   "label": "Drawings Required",
+   "description": "Controls whether the drawings section is shown as required in the tender-pack preview."
+  },
+  {
+   "fieldname": "og_works_eshs_requirements",
+   "fieldtype": "Long Text",
+   "label": "ESHS Requirements",
+   "description": "Enter any ESHS requirements to be reflected in the tender-pack preview."
+  },
+  {
+   "fieldname": "og_works_provisional_sums_included",
+   "fieldtype": "Check",
+   "label": "Provisional Sums Included",
+   "description": "Controls whether sample provisional sum BoQ rows are generated in the POC."
+  },
+  {
+   "fieldname": "og_works_scope_summary",
+   "fieldtype": "Long Text",
+   "label": "Scope Summary",
+   "description": "Provide a controlled summary of the works requirements."
+  },
+  {
+   "fieldname": "og_works_specification_summary",
+   "fieldtype": "Long Text",
+   "label": "Specification Summary",
+   "description": "Provide a controlled high-level specification summary. Full detailed specification authoring is outside this POC."
+  },
+  {
+   "fieldname": "section_guided_contract_scc",
+   "fieldtype": "Section Break",
+   "label": "120. Contract / SCC Parameters",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "og_contract_advance_payment_allowed",
+   "fieldtype": "Check",
+   "label": "Advance Payment Allowed",
+   "description": "Controls whether advance payment appears in the contract/SCC summary. The related security field controls whether an advance payment securit"
+  },
+  {
+   "fieldname": "og_contract_completion_period_months",
+   "fieldtype": "Int",
+   "label": "Completion Period",
+   "description": "Enter the contract completion period for the works."
+  },
+  {
+   "fieldname": "og_contract_defects_liability_period_months",
+   "fieldtype": "Int",
+   "label": "Defects Liability Period",
+   "description": "Enter the defects liability period for the works contract."
+  },
+  {
+   "fieldname": "og_contract_dispute_resolution_forum",
+   "fieldtype": "Select",
+   "label": "Dispute Resolution Forum",
+   "description": "Select the dispute resolution mechanism for the POC summary.",
+   "options": "ADJUDICATION_THEN_ARBITRATION\nARBITRATION\nCOURT\nOTHER_APPROVED_FORUM"
+  },
+  {
+   "fieldname": "og_contract_engineer_or_project_manager",
+   "fieldtype": "Data",
+   "label": "Engineer or Project Manager",
+   "description": "Enter the office, role, or person responsible for contract administration in the POC summary."
+  },
+  {
+   "fieldname": "og_contract_insurance_requirements",
+   "fieldtype": "Long Text",
+   "label": "Insurance Requirements",
+   "description": "Enter the insurance requirements for the works contract."
+  },
+  {
+   "fieldname": "og_contract_liquidated_damages_rate",
+   "fieldtype": "Data",
+   "label": "Liquidated Damages Rate",
+   "description": "Enter the liquidated damages rate in the required tender wording, for example percentage per week or fixed amount per day."
+  },
+  {
+   "fieldname": "og_contract_payment_terms",
+   "fieldtype": "Long Text",
+   "label": "Payment Terms",
+   "description": "Enter a controlled summary of payment terms for the POC."
+  },
+  {
+   "fieldname": "og_contract_retention_percentage",
+   "fieldtype": "Percent",
+   "label": "Retention Percentage",
+   "description": "Enter the retention percentage to be reflected in the SCC summary."
+  },
+  {
+   "fieldname": "section_configuration",
+   "fieldtype": "Section Break",
+   "label": "130. Configuration store (technical)"
+  },
+  {
+   "fieldname": "html_officer_guided_notices",
+   "fieldtype": "HTML",
+   "label": "Guided notices",
+   "options": "<div></div>"
+  },
+  {
    "fieldname": "configuration_json",
    "fieldtype": "Code",
    "label": "Configuration JSON",
@@ -171,7 +690,7 @@
   {
    "fieldname": "section_validation",
    "fieldtype": "Section Break",
-   "label": "4. Validation (future)"
+   "label": "140. Validation status"
   },
   {
    "default": "Draft",
@@ -205,7 +724,7 @@
   {
    "fieldname": "section_lots",
    "fieldtype": "Section Break",
-   "label": "5. Lots"
+   "label": "90. Lots"
   },
   {
    "fieldname": "lots",
@@ -216,7 +735,7 @@
   {
    "fieldname": "section_boq",
    "fieldtype": "Section Break",
-   "label": "6. BoQ Items"
+   "label": "160. BoQ Items"
   },
   {
    "fieldname": "boq_items",
@@ -227,7 +746,7 @@
   {
    "fieldname": "section_required_forms",
    "fieldtype": "Section Break",
-   "label": "7. Required Forms"
+   "label": "150. Required Forms"
   },
   {
    "fieldname": "required_forms",
@@ -239,7 +758,7 @@
   {
    "fieldname": "section_validation_messages",
    "fieldtype": "Section Break",
-   "label": "8. Validation Messages"
+   "label": "170. Validation Messages"
   },
   {
    "fieldname": "validation_messages",
@@ -251,7 +770,7 @@
   {
    "fieldname": "section_generated_pack",
    "fieldtype": "Section Break",
-   "label": "9. Generated Tender Pack"
+   "label": "180. Generated Tender Pack"
   },
   {
    "fieldname": "generated_tender_pack_html",
@@ -262,7 +781,7 @@
   {
    "fieldname": "section_poc_notes",
    "fieldtype": "Section Break",
-   "label": "10. POC Notes"
+   "label": "190. POC Notes"
   },
   {
    "fieldname": "poc_notes",

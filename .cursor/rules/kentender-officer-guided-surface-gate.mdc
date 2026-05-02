@@ -1,0 +1,33 @@
+---
+description: Prevent “guided model in code” without officer-resolvable Desk surface (STD officer POC).
+globs:
+  - "**/kentender_procurement/**/procurement_tender/**"
+  - "**/kentender_procurement/**/tender_management/services/officer_*.py"
+  - "**/kentender_procurement/**/tender_management/services/officer_guided_field_registry.py"
+  - "**/docs/prompts/std poc/tender configuration/**"
+alwaysApply: false
+---
+
+# KenTender — Officer guided surface gate (STD POC)
+
+When changing **Procurement Officer** tender configuration work (`Procurement Tender`, `officer_tender_config`, `officer_guided_field_registry`, officer Desk JS, or officer POC docs under `apps/kentender_v1/docs/prompts/std poc/tender configuration/`):
+
+## Three-layer acceptance (all required before “Done”)
+
+1. **L1 — Package contract:** `fields.json` / engine keys remain the source of truth for `field_code` values (not prose-only doc tables).
+2. **L2 — DocType surface:** Every `ordinary_user_editable` package field the officer must resolve in POC has a **visible** `Procurement Tender` column (or an explicitly logged `STD-OFFICER-*` deviation with tracker **Partial**).
+3. **L3 — Sync + validate loop:** `sync_officer_configuration` merges **all** guided columns into `configuration_json` before validation; include at least one integration test that clears or improves a **real** validation outcome by editing guided fields (no sample JSON as the only fix path).
+
+## Registry discipline
+
+- Maintain **`officer_guided_field_registry`** (or equivalent) as the **field_code → DocType fieldname** matrix.
+- Run / extend **`assert_registry_covers_poc_required_editable_fields`** when `fields.json` changes.
+- **Subset sync** (merging only some keys) requires an explicit **`STD-OFFICER-*` deviation** in `ISSUES_LOG.md` for this workstream — do not ship silent partial sync.
+
+## Naming
+
+- Frappe `fieldname` max length is **64**. Prefer the `og_` prefix pattern from `officer_guided_field_registry` over longer prefixes.
+
+## Evidence
+
+- Update the officer **`IMPLEMENTATION_TRACKER.md`** row with **bench** + **Playwright** commands when Desk behaviour changes.

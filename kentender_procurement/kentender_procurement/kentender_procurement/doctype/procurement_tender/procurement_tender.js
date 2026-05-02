@@ -38,6 +38,19 @@ function officerOnlyHideRawJson() {
 	return frappe.user.has_role("Procurement Officer") && !hasAdminStdPocRole();
 }
 
+function officerApplyGuidedConditionalVisibility(frm, msg) {
+	if (!msg || !Array.isArray(msg.guided_fieldnames)) {
+		return;
+	}
+	const hidden = new Set(msg.hidden_fieldnames || []);
+	for (const fn of msg.guided_fieldnames) {
+		if (!frm.fields_dict[fn]) {
+			continue;
+		}
+		frm.set_df_property(fn, "hidden", hidden.has(fn) ? 1 : 0);
+	}
+}
+
 function isStdDemoWorkspace(frm) {
 	if (!frm || !frm.doc) {
 		return false;
@@ -101,12 +114,13 @@ frappe.ui.form.on("Procurement Tender", {
 			return;
 		}
 
-		if (hasOfficerDeskRole() && frm.doc.configuration_json) {
+		if (hasOfficerDeskRole() && !frm.is_new()) {
 			frappe.call({
 				method: `${PT_MODULE}.get_officer_conditional_state_for_tender`,
 				args: { tender_name: frm.doc.name },
 				callback(r) {
 					const msg = r.message || {};
+					officerApplyGuidedConditionalVisibility(frm, msg);
 					const notices = msg.notices || [];
 					const field = frm.get_field("html_officer_guided_notices");
 					if (!field || !field.$wrapper) {

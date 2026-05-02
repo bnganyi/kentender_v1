@@ -8,6 +8,8 @@
 
 **Related workstream — STD Administration Console POC:** tracker [`admin console/IMPLEMENTATION_TRACKER.md`](admin%20console/IMPLEMENTATION_TRACKER.md) · rule [`.cursor/rules/kentender-std-admin-console-implementation.mdc`](../../../../../.cursor/rules/kentender-std-admin-console-implementation.mdc) · issues still in [`ISSUES_LOG.md`](ISSUES_LOG.md) as **`STD-ADMIN-*`**.
 
+**Related workstream — Procurement Officer Tender Configuration POC:** tracker [`tender configuration/IMPLEMENTATION_TRACKER.md`](tender%20configuration/IMPLEMENTATION_TRACKER.md) · issues in [`tender configuration/ISSUES_LOG.md`](tender%20configuration/ISSUES_LOG.md) as **`STD-OFFICER-*`** (optional cross-post to shared [`ISSUES_LOG.md`](ISSUES_LOG.md)).
+
 ---
 
 ## Rules of engagement (non-optional)

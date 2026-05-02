@@ -18,16 +18,14 @@ from typing import Any
 OFFICER_POC_TEMPLATE_CODE: str = "KE-PPRA-WORKS-BLDG-2022-04-POC"
 
 # Keys merged from guided ``Procurement Tender`` fields into ``configuration_json`` (doc 8 §13).
-OFFICER_SYNC_CONFIG_KEYS: tuple[str, ...] = (
-	"TENDER.TENDER_NAME",
-	"TENDER.TENDER_REFERENCE",
-	"METHOD.PROCUREMENT_METHOD",
-	"METHOD.TENDER_SCOPE",
-	"SYSTEM.PROCUREMENT_CATEGORY",
-	"SYSTEM.TEMPLATE_CODE",
-	"SYSTEM.PACKAGE_VERSION",
-	"SYSTEM.PACKAGE_HASH",
-)
+# Derived from ``officer_guided_field_registry.get_officer_sync_field_codes()`` (all officer-editable package fields).
+def get_officer_sync_config_keys() -> tuple[str, ...]:
+	from kentender_procurement.tender_management.services.officer_guided_field_registry import (
+		get_officer_sync_field_codes,
+	)
+
+	return get_officer_sync_field_codes()
+
 
 # Actual ``tender_status`` values on ``Procurement Tender`` (no migration this phase)
 TENDER_STATUS_DRAFT: str = "Draft"
@@ -134,27 +132,36 @@ def build_officer_guided_field_model(fields_doc: dict[str, Any]) -> dict[str, An
 
 
 def build_officer_config_overlay_from_tender_doc(tender_doc: Any) -> dict[str, Any]:
-	"""Map top-level tender fields to flat STD configuration keys (reverse of ``apply_config_to_tender_doc``)."""
-	return {
-		"TENDER.TENDER_NAME": getattr(tender_doc, "tender_title", None) or "",
-		"TENDER.TENDER_REFERENCE": getattr(tender_doc, "tender_reference", None) or "",
-		"METHOD.PROCUREMENT_METHOD": getattr(tender_doc, "procurement_method", None) or "",
-		"METHOD.TENDER_SCOPE": getattr(tender_doc, "tender_scope", None) or "",
-		"SYSTEM.PROCUREMENT_CATEGORY": getattr(tender_doc, "procurement_category", None) or "WORKS",
-		"SYSTEM.TEMPLATE_CODE": getattr(tender_doc, "template_code", None) or "",
-		"SYSTEM.PACKAGE_VERSION": getattr(tender_doc, "template_version", None) or "",
-		"SYSTEM.PACKAGE_HASH": getattr(tender_doc, "package_hash", None) or "",
-	}
+	"""Map guided ``Procurement Tender`` columns to flat STD configuration keys (doc 8 §13.1)."""
+	from kentender_procurement.tender_management.services.officer_guided_field_registry import (
+		build_officer_config_overlay_from_registry,
+	)
+
+	return build_officer_config_overlay_from_registry(tender_doc)
 
 
 def merge_officer_overlay_into_configuration(
 	existing: dict[str, Any], tender_doc: Any
 ) -> dict[str, Any]:
 	"""Deep-merge officer-owned keys; preserve unknown ``configuration_json`` keys."""
-	merged = copy.deepcopy(existing)
-	overlay = build_officer_config_overlay_from_tender_doc(tender_doc)
-	for k in OFFICER_SYNC_CONFIG_KEYS:
-		merged[k] = overlay.get(k, merged.get(k))
+	from kentender_procurement.tender_management.services.officer_guided_field_registry import (
+		merge_registry_overlay_into_configuration,
+	)
+
+	merged = merge_registry_overlay_into_configuration(existing, tender_doc)
+	# System keys are not ordinary-user-editable in ``fields.json`` but must round-trip for the engine.
+	merged["SYSTEM.TEMPLATE_CODE"] = getattr(tender_doc, "template_code", None) or merged.get(
+		"SYSTEM.TEMPLATE_CODE", ""
+	)
+	merged["SYSTEM.PACKAGE_VERSION"] = getattr(tender_doc, "template_version", None) or merged.get(
+		"SYSTEM.PACKAGE_VERSION", ""
+	)
+	merged["SYSTEM.PACKAGE_HASH"] = getattr(tender_doc, "package_hash", None) or merged.get(
+		"SYSTEM.PACKAGE_HASH", ""
+	)
+	merged["SYSTEM.PROCUREMENT_CATEGORY"] = (
+		getattr(tender_doc, "procurement_category", None) or merged.get("SYSTEM.PROCUREMENT_CATEGORY") or "WORKS"
+	)
 	return merged
 
 

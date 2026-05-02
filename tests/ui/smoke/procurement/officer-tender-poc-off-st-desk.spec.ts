@@ -53,10 +53,11 @@ test.describe('Officer POC — doc 9 OFF-ST desk bundle (001–009,016–018)', 
 
 		await test.step('OFF-ST-003 — guided sections present', async () => {
 			const layout = page.locator('.form-layout').first();
-			await expect(layout).toContainText('1. Tender Identity');
+			await expect(layout).toContainText('30. Tender Identity');
 			await expect(layout).toContainText('2. Template Reference');
-			// Section 3 may start collapsed; presence in the form shell is enough for POC.
-			await expect(layout).toContainText('3. Configuration');
+			await expect(layout).toContainText('40–50. Method, Scope and Participation');
+			await expect(layout).toContainText('60. Key Dates and Meetings');
+			await expect(layout).toContainText('130. Configuration store (technical)');
 		});
 
 		await test.step('OFF-ST-004 — load sample + sync (no manual save; OFF-ST-015 covered in API)', async () => {

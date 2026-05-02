@@ -139,6 +139,20 @@ def _parse_configuration_json(tender_doc: Document) -> dict[str, Any]:
 	return parsed
 
 
+def _parse_configuration_json_optional(tender_doc: Document) -> dict[str, Any]:
+	"""Parse ``configuration_json`` when present; otherwise return an empty dict."""
+	raw = tender_doc.configuration_json
+	if not raw or not str(raw).strip():
+		return {}
+	try:
+		parsed = json.loads(raw)
+	except json.JSONDecodeError:
+		return {}
+	if not isinstance(parsed, dict):
+		return {}
+	return parsed
+
+
 def _child_rows_to_dicts(child_rows: list[Any] | None) -> list[dict[str, Any]]:
 	if not child_rows:
 		return []
@@ -848,10 +862,28 @@ def reset_officer_tender_to_configuring(tender_name: str) -> dict[str, Any]:
 
 @frappe.whitelist()
 def get_officer_conditional_state_for_tender(tender_name: str) -> dict[str, Any]:
+	from kentender_procurement.tender_management.services.officer_guided_field_registry import (
+		doctype_fieldname_for_field_code,
+		get_officer_guided_field_specs,
+	)
 	from kentender_procurement.tender_management.services.officer_tender_config import (
 		get_officer_conditional_state,
+		merge_officer_overlay_into_configuration,
 	)
 
 	tender_doc = _get_tender_doc_read(tender_name)
-	cfg = _parse_configuration_json(tender_doc)
-	return {"ok": True, "tender": tender_doc.name, **get_officer_conditional_state(cfg)}
+	cfg = _parse_configuration_json_optional(tender_doc)
+	merged = merge_officer_overlay_into_configuration(cfg, tender_doc)
+	state = get_officer_conditional_state(merged)
+	hidden_codes = state.get("hidden_fields") or []
+	hidden_fieldnames = [
+		doctype_fieldname_for_field_code(str(fc)) for fc in hidden_codes if fc
+	]
+	guided_fieldnames = [s.doctype_fieldname for s in get_officer_guided_field_specs()]
+	return {
+		"ok": True,
+		"tender": tender_doc.name,
+		**state,
+		"hidden_fieldnames": hidden_fieldnames,
+		"guided_fieldnames": guided_fieldnames,
+	}
