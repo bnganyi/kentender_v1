@@ -1,0 +1,500 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:package_code",
+ "creation": "2026-04-23 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "tab_definition",
+  "package_name",
+  "column_def_code",
+  "package_code",
+  "column_def_plan",
+  "plan_id",
+  "column_def_tpl",
+  "template_id",
+  "tab_template_method",
+  "procurement_method",
+  "column_tm_contract",
+  "contract_type",
+  "section_tm_override",
+  "method_override_flag",
+  "column_tm_reason",
+  "method_override_reason",
+  "tab_demand_lines",
+  "demand_lines_html",
+  "tab_financial_schedule",
+  "currency",
+  "column_fs_value",
+  "estimated_value",
+  "column_fs_start",
+  "schedule_start",
+  "column_fs_end",
+  "schedule_end",
+  "tab_risk",
+  "risk_profile_id",
+  "tab_kpi",
+  "kpi_profile_id",
+  "tab_decision",
+  "decision_criteria_profile_id",
+  "tab_vendor",
+  "vendor_management_profile_id",
+  "tab_workflow",
+  "status",
+  "column_wf_planning",
+  "planning_status",
+  "column_wf_flags",
+  "is_emergency",
+  "is_active",
+  "section_wf_reason",
+  "workflow_reason",
+  "section_wf_audit",
+  "created_by",
+  "column_wf_approval",
+  "approved_by",
+  "approved_at",
+  "released_to_tender_at",
+  "column_wf_reject",
+  "rejected_by",
+  "rejected_at",
+  "tab_notes",
+  "planner_notes",
+  "column_notes_exc",
+  "exception_notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "tab_definition",
+   "fieldtype": "Tab Break",
+   "label": "1. Package definition"
+  },
+  {
+   "fieldname": "package_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Package Name",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_def_code",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Auto-generated on save.",
+   "fieldname": "package_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Package Code",
+   "read_only": 1,
+   "reqd": 0,
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "column_def_plan",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "plan_id",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Procurement Plan",
+   "options": "Procurement Plan",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_def_tpl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "template_id",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Procurement Template",
+   "options": "Procurement Template",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tab_template_method",
+   "fieldtype": "Tab Break",
+   "label": "2. Template and method"
+  },
+  {
+   "fieldname": "procurement_method",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Procurement Method",
+   "options": "Open Tender\nRestricted Tender\nRFQ\nRFP\nDirect Procurement",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_tm_contract",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "contract_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Contract Type",
+   "options": "Fixed Price\nCost Reimbursable\nT&M",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_tm_override",
+   "fieldtype": "Section Break",
+   "label": "Method override",
+   "collapsible": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "method_override_flag",
+   "fieldtype": "Check",
+   "label": "Method Override",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_tm_reason",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.method_override_flag",
+   "fieldname": "method_override_reason",
+   "fieldtype": "Text",
+   "label": "Method Override Reason"
+  },
+  {
+   "fieldname": "tab_demand_lines",
+   "fieldtype": "Tab Break",
+   "label": "3. Demand assignment"
+  },
+  {
+   "fieldname": "demand_lines_html",
+   "fieldtype": "HTML",
+   "label": "Demand assignment",
+   "options": "<div class=\"kt-pp-builder-lines-host\" id=\"kt-pp-builder-lines-host\"></div>"
+  },
+  {
+   "fieldname": "tab_financial_schedule",
+   "fieldtype": "Tab Break",
+   "label": "4. Financial and schedule"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Currency",
+   "options": "Currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_fs_value",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Derived: sum of active package line amounts (server-maintained).",
+   "fieldname": "estimated_value",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Estimated Value",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_fs_start",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "schedule_start",
+   "fieldtype": "Date",
+   "label": "Schedule Start"
+  },
+  {
+   "fieldname": "column_fs_end",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "schedule_end",
+   "fieldtype": "Date",
+   "label": "Schedule End"
+  },
+  {
+   "fieldname": "tab_risk",
+   "fieldtype": "Tab Break",
+   "label": "5. Risk and mitigation"
+  },
+  {
+   "fieldname": "risk_profile_id",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Risk Profile",
+   "options": "Risk Profile",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tab_kpi",
+   "fieldtype": "Tab Break",
+   "label": "6. KPI profile"
+  },
+  {
+   "fieldname": "kpi_profile_id",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "KPI Profile",
+   "options": "KPI Profile",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tab_decision",
+   "fieldtype": "Tab Break",
+   "label": "7. Decision criteria"
+  },
+  {
+   "fieldname": "decision_criteria_profile_id",
+   "fieldtype": "Link",
+   "label": "Decision Criteria Profile",
+   "options": "Decision Criteria Profile",
+   "search_index": 1
+  },
+  {
+   "fieldname": "tab_vendor",
+   "fieldtype": "Tab Break",
+   "label": "8. Vendor management"
+  },
+  {
+   "fieldname": "vendor_management_profile_id",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Vendor Management Profile",
+   "options": "Vendor Management Profile",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tab_workflow",
+   "fieldtype": "Tab Break",
+   "label": "9. Workflow and approval"
+  },
+  {
+   "default": "Draft",
+   "description": "Ready for Tender = cleared for handoff; Released to Tender = handed off to Tendering.",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nCompleted\nSubmitted\nApproved\nReady for Tender\nReleased to Tender\nReturned\nRejected",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_wf_planning",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "planning_status",
+   "fieldtype": "Data",
+   "label": "Planning Status"
+  },
+  {
+   "fieldname": "column_wf_flags",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_emergency",
+   "fieldtype": "Check",
+   "label": "Is Emergency",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_wf_reason",
+   "fieldtype": "Section Break",
+   "label": "Workflow notes",
+   "collapsible": 1
+  },
+  {
+   "description": "Required when returning from Submitted, rejecting from Submitted, or reverting Ready for Tender to Draft (Administrator/System Manager).",
+   "fieldname": "workflow_reason",
+   "fieldtype": "Long Text",
+   "label": "Workflow Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_wf_audit",
+   "fieldtype": "Section Break",
+   "label": "Audit trail",
+   "collapsible": 1
+  },
+  {
+   "default": "__user",
+   "fieldname": "created_by",
+   "fieldtype": "Link",
+   "label": "Created By",
+   "options": "User",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_wf_approval",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_at",
+   "fieldtype": "Datetime",
+   "label": "Approved At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "released_to_tender_at",
+   "fieldtype": "Datetime",
+   "label": "Released to Tender At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_wf_reject",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "rejected_by",
+   "fieldtype": "Link",
+   "label": "Rejected By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rejected_at",
+   "fieldtype": "Datetime",
+   "label": "Rejected At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tab_notes",
+   "fieldtype": "Tab Break",
+   "label": "10. Notes and exceptions"
+  },
+  {
+   "fieldname": "planner_notes",
+   "fieldtype": "Small Text",
+   "label": "Planner notes"
+  },
+  {
+   "fieldname": "column_notes_exc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "exception_notes",
+   "fieldtype": "Small Text",
+   "label": "Exception notes"
+  }
+ ],
+ "links": [],
+ "modified": "2026-04-23 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "Procurement Package",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Planner",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Officer",
+   "share": 1,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Planning Authority",
+   "share": 1,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 1,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "show_title_field_in_link": 1,
+ "search_fields": "package_code,package_name",
+ "title_field": "package_name",
+ "track_changes": 1
+}

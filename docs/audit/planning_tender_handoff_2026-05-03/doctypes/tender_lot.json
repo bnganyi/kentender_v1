@@ -1,0 +1,67 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-05-01 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "lot_code",
+  "lot_title",
+  "description",
+  "estimated_value",
+  "currency",
+  "award_method_notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "lot_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Lot Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "lot_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Lot Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "estimated_value",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Estimated Value"
+  },
+  {
+   "default": "KES",
+   "fieldname": "currency",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Currency"
+  },
+  {
+   "fieldname": "award_method_notes",
+   "fieldtype": "Small Text",
+   "label": "Award Method Notes"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-01 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "Tender Lot",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

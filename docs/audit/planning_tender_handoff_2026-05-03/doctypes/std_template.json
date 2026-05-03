@@ -1,0 +1,267 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:template_code",
+ "creation": "2026-05-01 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_template_identity",
+  "template_code",
+  "template_name",
+  "template_short_name",
+  "column_template_identity_2",
+  "authority",
+  "country",
+  "procurement_category",
+  "template_family",
+  "version_label",
+  "package_version",
+  "section_source_document",
+  "source_document_code",
+  "source_file_name",
+  "source_file_hash",
+  "section_import_status",
+  "status",
+  "allowed_for_import",
+  "allowed_for_tender_creation",
+  "imported_at",
+  "imported_by",
+  "section_std_package_viewer",
+  "html_std_package_viewer",
+  "section_package_payload",
+  "package_hash",
+  "package_json",
+  "manifest_json",
+  "section_review_notes",
+  "review_notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_template_identity",
+   "fieldtype": "Section Break",
+   "label": "1. Template Identity"
+  },
+  {
+   "fieldname": "template_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Template Code",
+   "reqd": 1,
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "template_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Template Name",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "template_short_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Template Short Name",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_template_identity_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "authority",
+   "fieldtype": "Data",
+   "label": "Authority",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Data",
+   "label": "Country",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "procurement_category",
+   "fieldtype": "Select",
+   "label": "Procurement Category",
+   "options": "WORKS\nGOODS\nSERVICES\nCONSULTING\nDISPOSAL\nOTHER",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "template_family",
+   "fieldtype": "Data",
+   "label": "Template Family",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "version_label",
+   "fieldtype": "Data",
+   "label": "Version Label",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "package_version",
+   "fieldtype": "Data",
+   "label": "Package Version",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_source_document",
+   "fieldtype": "Section Break",
+   "label": "2. Source Document"
+  },
+  {
+   "fieldname": "source_document_code",
+   "fieldtype": "Data",
+   "label": "Source Document Code",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_file_name",
+   "fieldtype": "Data",
+   "label": "Source File Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_file_hash",
+   "fieldtype": "Data",
+   "label": "Source File Hash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_import_status",
+   "fieldtype": "Section Break",
+   "label": "3. Import and Status"
+  },
+  {
+   "default": "Draft Package",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft Package\nImported\nPOC Approved\nSuspended\nSuperseded\nRetired",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "allowed_for_import",
+   "fieldtype": "Check",
+   "label": "Allowed For Import",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "allowed_for_tender_creation",
+   "fieldtype": "Check",
+   "label": "Allowed For Tender Creation"
+  },
+  {
+   "fieldname": "imported_at",
+   "fieldtype": "Datetime",
+   "label": "Imported At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "imported_by",
+   "fieldtype": "Link",
+   "label": "Imported By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_std_package_viewer",
+   "fieldtype": "Section Break",
+   "label": "STD Package Viewer (POC)"
+  },
+  {
+   "fieldname": "html_std_package_viewer",
+   "fieldtype": "HTML",
+   "label": "Read-only package inspection",
+   "options": "<div class=\"text-muted\">Loading package viewer…</div>"
+  },
+  {
+   "fieldname": "section_package_payload",
+   "fieldtype": "Section Break",
+   "label": "4. Package Payload"
+  },
+  {
+   "fieldname": "package_hash",
+   "fieldtype": "Data",
+   "label": "Package Hash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "package_json",
+   "fieldtype": "Code",
+   "label": "Package JSON",
+   "options": "JSON",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "manifest_json",
+   "fieldtype": "Code",
+   "label": "Manifest JSON",
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_review_notes",
+   "fieldtype": "Section Break",
+   "label": "5. Review Notes"
+  },
+  {
+   "fieldname": "review_notes",
+   "fieldtype": "Small Text",
+   "label": "Review Notes"
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-01 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "STD Template",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "template_code,template_name,authority,version_label,status",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "template_short_name",
+ "track_changes": 1
+}

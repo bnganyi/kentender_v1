@@ -1,0 +1,90 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-05-01 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "severity",
+  "rule_code",
+  "message",
+  "affected_field",
+  "affected_section",
+  "affected_form",
+  "blocks_generation",
+  "resolution_hint",
+  "details_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Severity",
+   "options": "INFO\nWARNING\nERROR\nBLOCKER",
+   "reqd": 1
+  },
+  {
+   "fieldname": "rule_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Rule Code"
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Message",
+   "reqd": 1
+  },
+  {
+   "fieldname": "affected_field",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Affected Field"
+  },
+  {
+   "fieldname": "affected_section",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Affected Section"
+  },
+  {
+   "fieldname": "affected_form",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Affected Form"
+  },
+  {
+   "default": "0",
+   "fieldname": "blocks_generation",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Blocks Generation"
+  },
+  {
+   "fieldname": "resolution_hint",
+   "fieldtype": "Small Text",
+   "label": "Resolution Hint"
+  },
+  {
+   "fieldname": "details_json",
+   "fieldtype": "Code",
+   "label": "Details JSON",
+   "options": "JSON"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-01 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "Tender Validation Message",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

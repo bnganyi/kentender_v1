@@ -1,0 +1,609 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-04-21 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identifiers",
+  "title",
+  "demand_id",
+  "requesting_department",
+  "required_by_date",
+  "demand_type",
+  "procuring_entity",
+  "column_dates",
+  "request_date",
+  "priority_level",
+  "requisition_type",
+  "requested_by",
+  "section_items",
+  "items",
+  "section_amount",
+  "total_amount",
+  "section_justification_delivery",
+  "beneficiary_summary",
+  "specification_summary",
+  "section_budget_strategy",
+  "budget_line",
+  "column_strategy",
+  "strategic_plan",
+  "program",
+  "sub_program",
+  "output_indicator",
+  "performance_target",
+  "budget",
+  "funding_source",
+  "reservation_status",
+  "reservation_reference",
+  "available_budget_at_check",
+  "budget_check_datetime",
+  "column_delivery_side",
+  "delivery_location",
+  "requested_delivery_period_days",
+  "section_exceptions",
+  "is_exception",
+  "impact_if_not_procured",
+  "emergency_justification",
+  "section_workflow_state",
+  "status",
+  "planning_status",
+  "section_submit_meta",
+  "submitted_by",
+  "submitted_at",
+  "column_hod",
+  "hod_approved_by",
+  "hod_approved_at",
+  "column_finance",
+  "finance_approved_by",
+  "finance_approved_at",
+  "section_rejection",
+  "rejected_by",
+  "rejected_at",
+  "rejection_reason",
+  "return_reason",
+  "returned_by",
+  "returned_at",
+  "cancellation_reason",
+  "cancelled_by",
+  "cancelled_at",
+  "section_meta",
+  "created_by"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identifiers",
+   "fieldtype": "Section Break",
+   "label": "1. Demand identity"
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "demand_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Demand ID",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "requesting_department",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Department",
+   "options": "Procuring Department",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "required_by_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Required By Date",
+   "reqd": 1
+  },
+  {
+   "default": "Planned",
+   "fieldname": "demand_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Demand Type",
+   "options": "Planned\nUnplanned\nEmergency",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "procuring_entity",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Procuring Entity",
+   "options": "Procuring Entity",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_dates",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Today",
+   "fieldname": "request_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Request Date",
+   "reqd": 1
+  },
+  {
+   "default": "Normal",
+   "fieldname": "priority_level",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Priority",
+   "options": "Low\nNormal\nHigh\nCritical",
+   "reqd": 1
+  },
+  {
+   "default": "Goods",
+   "fieldname": "requisition_type",
+   "fieldtype": "Select",
+   "label": "Demand Category",
+   "options": "Goods\nWorks\nServices",
+   "reqd": 1
+  },
+  {
+   "fieldname": "requested_by",
+   "fieldtype": "Link",
+   "label": "Requested By",
+   "options": "User",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_items",
+   "fieldtype": "Section Break",
+   "label": "2. What is being requested"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Demand Item"
+  },
+  {
+   "fieldname": "section_amount",
+   "fieldtype": "Section Break",
+   "label": "Amount summary"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total requested (from line items)",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_justification_delivery",
+   "fieldtype": "Section Break",
+   "label": "3. Why / business justification"
+  },
+  {
+   "fieldname": "beneficiary_summary",
+   "fieldtype": "Text",
+   "label": "Business justification / who benefits"
+  },
+  {
+   "fieldname": "specification_summary",
+   "fieldtype": "Text",
+   "label": "What is being requested",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_budget_strategy",
+   "fieldtype": "Section Break",
+   "label": "4. Funding & delivery"
+  },
+  {
+   "description": "Active budget lines only. Search matches name or code. After selection, strategy and balances load automatically.",
+   "fieldname": "budget_line",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Budget Line",
+   "link_filters": "[[\"Budget Line\", \"is_active\", \"=\", 1]]",
+   "options": "Budget Line",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_strategy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "strategic_plan",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Strategic Plan",
+   "options": "Strategic Plan",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "program",
+   "fieldtype": "Link",
+   "label": "Program",
+   "options": "Strategy Program",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "sub_program",
+   "fieldtype": "Link",
+   "label": "Sub-Program",
+   "options": "Sub Program",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "output_indicator",
+   "fieldtype": "Link",
+   "label": "Output Indicator",
+   "options": "Strategy Objective",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "performance_target",
+   "fieldtype": "Link",
+   "label": "Performance Target",
+   "options": "Strategy Target",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "budget",
+   "fieldtype": "Link",
+   "label": "Budget",
+   "options": "Budget",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "funding_source",
+   "fieldtype": "Link",
+   "label": "Funding Source",
+   "options": "Funding Source",
+   "read_only": 1
+  },
+  {
+   "default": "None",
+   "fieldname": "reservation_status",
+   "fieldtype": "Select",
+   "label": "Reservation Status",
+   "options": "None\nPending Check\nReserved\nReleased\nFailed",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reservation_reference",
+   "fieldtype": "Data",
+   "label": "Reservation Ref",
+   "read_only": 1
+  },
+  {
+   "fieldname": "available_budget_at_check",
+   "fieldtype": "Currency",
+   "label": "Available Budget Snapshot",
+   "read_only": 1
+  },
+  {
+   "fieldname": "budget_check_datetime",
+   "fieldtype": "Datetime",
+   "label": "Budget Check Time",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_delivery_side",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "delivery_location",
+   "fieldtype": "Data",
+   "label": "Delivery Location",
+   "reqd": 1
+  },
+  {
+   "description": "Optional. Enter only if your department already has an estimated lead time.",
+   "fieldname": "requested_delivery_period_days",
+   "fieldtype": "Int",
+   "label": "Requested Delivery Period (days)",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "section_exceptions",
+   "fieldtype": "Section Break",
+   "label": "5. Exception handling"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_exception",
+   "fieldtype": "Check",
+   "label": "Exception Flag",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "impact_if_not_procured",
+   "fieldtype": "Text",
+   "label": "Impact if Not Procured"
+  },
+  {
+   "fieldname": "emergency_justification",
+   "fieldtype": "Text",
+   "label": "Emergency Justification"
+  },
+  {
+   "fieldname": "section_workflow_state",
+   "fieldtype": "Section Break",
+   "label": "System: workflow",
+   "collapsible": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Workflow State",
+   "options": "Draft\nPending HoD Approval\nPending Finance Approval\nApproved\nPlanning Ready\nRejected\nCancelled",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "default": "Not Planned",
+   "fieldname": "planning_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Planning Status",
+   "options": "Not Planned\nPartially Planned\nFully Planned\nPlanning Ready",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_submit_meta",
+   "fieldtype": "Section Break",
+   "label": "Submission",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "submitted_by",
+   "fieldtype": "Link",
+   "label": "Submitted By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_at",
+   "fieldtype": "Datetime",
+   "label": "Submitted At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_hod",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "hod_approved_by",
+   "fieldtype": "Link",
+   "label": "HoD Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "hod_approved_at",
+   "fieldtype": "Datetime",
+   "label": "HoD Approved At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_finance",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "finance_approved_by",
+   "fieldtype": "Link",
+   "label": "Finance Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "finance_approved_at",
+   "fieldtype": "Datetime",
+   "label": "Finance Approved At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_rejection",
+   "fieldtype": "Section Break",
+   "label": "Closure & returns",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "rejected_by",
+   "fieldtype": "Link",
+   "label": "Rejected By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rejected_at",
+   "fieldtype": "Datetime",
+   "label": "Rejected At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rejection_reason",
+   "fieldtype": "Text",
+   "label": "Rejection Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "return_reason",
+   "fieldtype": "Text",
+   "label": "Return to Draft Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "returned_by",
+   "fieldtype": "Link",
+   "label": "Returned By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "returned_at",
+   "fieldtype": "Datetime",
+   "label": "Returned At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancellation_reason",
+   "fieldtype": "Text",
+   "label": "Cancellation Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancelled_by",
+   "fieldtype": "Link",
+   "label": "Cancelled By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancelled_at",
+   "fieldtype": "Datetime",
+   "label": "Cancelled At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_meta",
+   "fieldtype": "Section Break",
+   "label": "Metadata"
+  },
+  {
+   "fieldname": "created_by",
+   "fieldtype": "Link",
+   "label": "Created By",
+   "options": "User",
+   "read_only": 1,
+   "reqd": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-04-22 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Demand Intake",
+ "name": "Demand",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Requisitioner",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Department Approver",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Finance Reviewer",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Planner",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 1,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "show_title_field_in_link": 1,
+ "search_fields": "demand_id,title",
+ "title_field": "title",
+ "track_changes": 1
+}

@@ -1,0 +1,257 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:budget_line_code",
+ "creation": "2026-04-21 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "budget_line_code",
+  "budget_line_name",
+  "column_identity",
+  "is_active",
+  "section_removal",
+  "removed_at",
+  "removed_by",
+  "section_budget",
+  "budget",
+  "procuring_entity",
+  "fiscal_year",
+  "column_budget",
+  "section_amounts",
+  "amount_allocated",
+  "amount_reserved",
+  "amount_consumed",
+  "amount_available",
+  "section_currency",
+  "currency",
+  "funding_source",
+  "section_strategy",
+  "strategic_plan",
+  "program",
+  "sub_program",
+  "output_indicator",
+  "performance_target",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "budget_line_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Budget Line Code",
+   "unique": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "budget_line_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Budget Line Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_identity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Active",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_removal",
+   "fieldtype": "Section Break",
+   "label": "Removal audit",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "removed_at",
+   "fieldtype": "Datetime",
+   "label": "Removed At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "removed_by",
+   "fieldtype": "Link",
+   "label": "Removed By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_budget",
+   "fieldtype": "Section Break",
+   "label": "Budget scope"
+  },
+  {
+   "fieldname": "budget",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Budget",
+   "options": "Budget",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "procuring_entity",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Procuring Entity",
+   "options": "Procuring Entity",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "fiscal_year",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Fiscal Year",
+   "non_negative": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_budget",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_amounts",
+   "fieldtype": "Section Break",
+   "label": "Amounts"
+  },
+  {
+   "default": "0",
+   "fieldname": "amount_allocated",
+   "fieldtype": "Currency",
+   "label": "Amount Allocated",
+   "non_negative": 1,
+   "options": "currency",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "amount_reserved",
+   "fieldtype": "Currency",
+   "label": "Amount Reserved",
+   "non_negative": 1,
+   "options": "currency",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "amount_consumed",
+   "fieldtype": "Currency",
+   "label": "Amount Consumed",
+   "non_negative": 1,
+   "options": "currency"
+  },
+  {
+   "fieldname": "amount_available",
+   "fieldtype": "Currency",
+   "label": "Amount Available",
+   "options": "currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_currency",
+   "fieldtype": "Section Break",
+   "label": "Currency and funding"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "funding_source",
+   "fieldtype": "Link",
+   "label": "Funding Source",
+   "options": "Funding Source"
+  },
+  {
+   "fieldname": "section_strategy",
+   "fieldtype": "Section Break",
+   "label": "Strategy linkage"
+  },
+  {
+   "fieldname": "strategic_plan",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Strategic Plan",
+   "options": "Strategic Plan",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "program",
+   "fieldtype": "Link",
+   "label": "Program",
+   "options": "Strategy Program",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "sub_program",
+   "fieldtype": "Link",
+   "label": "Sub-Program",
+   "options": "Sub Program"
+  },
+  {
+   "fieldname": "output_indicator",
+   "fieldtype": "Link",
+   "label": "Output Indicator",
+   "options": "Strategy Objective",
+   "search_index": 1
+  },
+  {
+   "fieldname": "performance_target",
+   "fieldtype": "Link",
+   "label": "Performance Target",
+   "options": "Strategy Target",
+   "search_index": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text",
+   "label": "Notes"
+  }
+ ],
+ "links": [],
+ "modified": "2026-04-21 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Budget",
+ "name": "Budget Line",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "budget_line_name,budget_line_code",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "budget_line_name",
+ "track_changes": 1
+}
