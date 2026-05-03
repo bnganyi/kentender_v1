@@ -10,8 +10,10 @@ playwright/.cache/
 .env.ui
 
 
-# Python cache
+# Python cache (never `git add` these — if they appear as tracked, remove with
+# `git ls-files | grep -E '__pycache__|\\.pyc$' | xargs git rm -f --cached`)
 __pycache__/
+**/__pycache__/
 *.py[cod]
 *$py.class
 
