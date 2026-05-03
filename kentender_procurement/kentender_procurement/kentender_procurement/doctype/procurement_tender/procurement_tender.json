@@ -19,6 +19,16 @@
   "naming_series",
   "tender_title",
   "tender_reference",
+  "section_planning_handoff",
+  "procurement_plan",
+  "procurement_package",
+  "procurement_template",
+  "column_planning_lineage_snapshot",
+  "source_package_code",
+  "source_package_hash",
+  "source_demand_count",
+  "source_budget_line_count",
+  "source_package_snapshot_json",
   "og_tender_contract_description",
   "og_tender_estimated_cost",
   "og_tender_procuring_entity_address",
@@ -197,6 +207,73 @@
    "in_list_view": 1,
    "label": "Tender Reference",
    "reqd": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_planning_handoff",
+   "fieldtype": "Section Break",
+   "label": "Planning handoff lineage"
+  },
+  {
+   "fieldname": "procurement_plan",
+   "fieldtype": "Link",
+   "label": "Procurement Plan",
+   "options": "Procurement Plan",
+   "search_index": 1
+  },
+  {
+   "fieldname": "procurement_package",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Procurement Package",
+   "options": "Procurement Package",
+   "search_index": 1
+  },
+  {
+   "fieldname": "procurement_template",
+   "fieldtype": "Link",
+   "label": "Procurement Template",
+   "options": "Procurement Template",
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_planning_lineage_snapshot",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "source_package_code",
+   "fieldtype": "Data",
+   "label": "Source Package Code",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_package_hash",
+   "fieldtype": "Data",
+   "label": "Source Package Hash",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "source_demand_count",
+   "fieldtype": "Int",
+   "label": "Source Demand Count",
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "source_budget_line_count",
+   "fieldtype": "Int",
+   "label": "Source Budget Line Count",
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_package_snapshot_json",
+   "fieldtype": "Code",
+   "label": "Source Package Snapshot JSON",
+   "options": "JSON",
+   "read_only": 1
   },
   {
    "fieldname": "og_tender_contract_description",
@@ -833,7 +910,7 @@
    "write": 1
   }
  ],
- "search_fields": "tender_reference,tender_title,std_template,tender_status",
+ "search_fields": "tender_reference,tender_title,std_template,tender_status,procurement_plan,procurement_package,procurement_template",
  "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",

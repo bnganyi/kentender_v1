@@ -67,7 +67,46 @@ VARIANT_CODES: tuple[str, ...] = (
 
 
 class ProcurementTender(Document):
-	"""STD-WORKS-POC: tender instance linked to an STD template. Schema-only controller."""
+	"""STD-WORKS-POC: tender instance linked to an STD template.
+
+	Planning-to-tender integration (B1): when ``procurement_package`` is set, ``plan_id``
+	on the package is the source of truth for ``procurement_plan`` (auto-filled if empty;
+	validated for mismatch if both are set).
+	"""
+
+	def validate(self) -> None:
+		self._validate_planning_lineage()
+		self._validate_unique_active_handoff_tender()
+
+	def _validate_unique_active_handoff_tender(self) -> None:
+		"""Doc 2 sec. 16.3 / B9 — at most one non-cancelled tender per planning package."""
+		from kentender_procurement.tender_management.services.planning_tender_handoff_duplicates import (
+			validate_at_most_one_active_planning_tender_per_package,
+		)
+
+		validate_at_most_one_active_planning_tender_per_package(
+			self.get("procurement_package"),
+			current_tender_name=self.name,
+		)
+
+	def _validate_planning_lineage(self) -> None:
+		if not self.get("procurement_package"):
+			return
+		pkg_plan = frappe.db.get_value(
+			"Procurement Package", self.procurement_package, "plan_id"
+		)
+		if not pkg_plan:
+			return
+		if not self.get("procurement_plan"):
+			self.procurement_plan = pkg_plan
+			return
+		if self.procurement_plan != pkg_plan:
+			frappe.throw(
+				frappe._(
+					"Procurement Plan {0} does not match Procurement Package {1} (expected plan {2})."
+				).format(self.procurement_plan, self.procurement_package, pkg_plan),
+				frappe.ValidationError,
+			)
 
 
 # ---------------------------------------------------------------------------

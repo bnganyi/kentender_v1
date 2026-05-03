@@ -296,7 +296,9 @@ boot_session = [
 ]
 
 # Optional hooks for downstream tendering implementations (v2+). Each path: dotted ``callable(payload: dict)``.
-release_procurement_package_to_tender = []
+release_procurement_package_to_tender = [
+	"kentender_procurement.tender_management.services.release_procurement_package_to_tender.hook_release_procurement_package_to_tender",
+]
 
 fixtures = [
 	{"dt": "DocType", "filters": [["name", "=", "Procurement Navigation"]]},

@@ -264,9 +264,9 @@ class TestStdWorksPocStep10Loader(IntegrationTestCase):
 		)
 		self.assertEqual(doc.version_label, "April 2022")
 		self.assertEqual(doc.package_version, "0.1.0-poc")
-		self.assertEqual(doc.status, "Draft Package")
+		self.assertEqual(doc.status, "Imported")
 		self.assertEqual(doc.allowed_for_import, 1)
-		self.assertEqual(doc.allowed_for_tender_creation, 0)
+		self.assertEqual(doc.allowed_for_tender_creation, 1)
 		self.assertEqual(doc.source_document_code, "DOC. 1")
 		self.assertIn("STD FOR WORKS", doc.source_file_name)
 		self.assertEqual(doc.package_hash, compute_package_hash())
@@ -278,7 +278,7 @@ class TestStdWorksPocStep10Loader(IntegrationTestCase):
 
 		stored_manifest = json.loads(doc.manifest_json)
 		self.assertEqual(stored_manifest["template_code"], TEMPLATE_CODE)
-		self.assertEqual(stored_manifest["status"]["package_status"], "DRAFT_PACKAGE")
+		self.assertEqual(stored_manifest["status"]["package_status"], "IMPORTED")
 
 	def test_step10_ac012_structured_result_shape(self) -> None:
 		_delete_existing_std_template()
@@ -287,7 +287,7 @@ class TestStdWorksPocStep10Loader(IntegrationTestCase):
 		self.assertTrue(result["ok"])
 		self.assertEqual(result["template_code"], TEMPLATE_CODE)
 		self.assertEqual(result["std_template_name"], TEMPLATE_CODE)
-		self.assertEqual(result["status"], "Draft Package")
+		self.assertEqual(result["status"], "Imported")
 		self.assertIsNotNone(SHA256_HEX_PATTERN.match(result["package_hash"]))
 		self.assertIn(result["action"], {"created", "updated"})
 
@@ -310,8 +310,8 @@ class TestStdWorksPocStep10Loader(IntegrationTestCase):
 
 		self.assertEqual(
 			doc.allowed_for_tender_creation,
-			0,
-			"STEP10-AC-014: allowed_for_tender_creation must reflect manifest (false)",
+			1,
+			"STEP10-AC-014: allowed_for_tender_creation must reflect manifest (true for planning-to-tender handoff)",
 		)
 
 		std_meta = frappe.get_meta("STD Template")

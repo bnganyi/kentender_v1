@@ -846,12 +846,13 @@ class TestStdWorksPocManifestStep3(IntegrationTestCase):
 		self.assertIs(runtime.get("configuration_must_validate_before_render"), True)
 		self.assertIs(runtime.get("block_render_on_blocker_messages"), True, "STEP3-AC-008")
 
-	def test_step3_ac009_import_allowed_tender_creation_blocked(self) -> None:
+	def test_step3_ac009_manifest_status_allows_import_and_tender_creation(self) -> None:
+		"""STEP3-AC-009 (revised): manifest flags package IMPORTED and tender-creation allowed (B5 / XMV-PT-008)."""
 		status = self.manifest["status"]
-		self.assertEqual(status.get("package_status"), "DRAFT_PACKAGE", "STEP3-AC-009")
+		self.assertEqual(status.get("package_status"), "IMPORTED", "STEP3-AC-009")
 		self.assertIs(status.get("allowed_for_import"), True, "STEP3-AC-009")
-		self.assertIs(status.get("allowed_for_tender_creation"), False, "STEP3-AC-009")
-		self.assertIs(status.get("requires_review_before_tender_creation"), True)
+		self.assertIs(status.get("allowed_for_tender_creation"), True, "STEP3-AC-009")
+		self.assertIs(status.get("requires_review_before_tender_creation"), False)
 
 	def test_step3_ac010_other_files_unchanged(self) -> None:
 		"""STEP3-AC-010: no development outside manifest.json (other files at skeleton)."""

@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""B3 — Whitelisted Procurement Planning workflow actions (Cursor Pack B3).
+"""B3/B4 — Whitelisted Procurement Planning workflow actions (Cursor Pack B3).
 
 Phase E1: loads use **read** where possible; ``pp_policy`` asserts role + state;
 ``doc.save(ignore_permissions=True)`` applies transitions when DocPerm write is
@@ -14,6 +14,13 @@ from frappe.utils import now_datetime
 from frappe.utils.data import parse_json
 
 from kentender_procurement.procurement_planning.permissions import pp_policy
+from kentender_procurement.tender_management.services.planning_tender_handoff_xmv import (
+	format_xmv_critical_message,
+	validate_package_for_release_xmv,
+)
+from kentender_procurement.tender_management.services.release_procurement_package_to_tender import (
+	package_has_release_tender,
+)
 
 _AUDIT_REASON_MAX = 800
 
@@ -366,8 +373,22 @@ def release_package_to_tender(package_id: str | None = None):
 			_("Package is not complete: {0}").format("; ".join(blockers)),
 			title=_("Package not complete"),
 		)
+	xmv = validate_package_for_release_xmv(doc)
+	if xmv.has_critical():
+		frappe.throw(
+			format_xmv_critical_message(xmv),
+			title=_("Planning-to-tender validation"),
+		)
 	payload = build_release_payload(doc)
 	deliver_procurement_package_release(payload)
+	if not package_has_release_tender(doc.name):
+		frappe.throw(
+			_(
+				"No Procurement Tender was linked to this package after the release handoff. "
+				"Check Error Log for release-to-tender hook messages."
+			),
+			title=_("Handoff incomplete"),
+		)
 	try:
 		frappe.local.pp_allow_package_release_to_tender = True
 		doc.status = "Released to Tender"

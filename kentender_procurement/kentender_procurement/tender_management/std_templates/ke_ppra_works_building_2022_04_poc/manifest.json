@@ -46,10 +46,10 @@
     "superseded_by_template_code": null
   },
   "status": {
-    "package_status": "DRAFT_PACKAGE",
+    "package_status": "IMPORTED",
     "allowed_for_import": true,
-    "allowed_for_tender_creation": false,
-    "requires_review_before_tender_creation": true
+    "allowed_for_tender_creation": true,
+    "requires_review_before_tender_creation": false
   },
   "applicability": {
     "allowed_procurement_methods": [

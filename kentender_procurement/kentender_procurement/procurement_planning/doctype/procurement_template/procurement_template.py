@@ -22,6 +22,7 @@ class ProcurementTemplate(Document):
 		self._validate_template_code_unique()
 		self._validate_profile_links()
 		self._validate_canonical_selects()
+		self._validate_default_std_template()
 		self._validate_applicable_lists()
 		self._validate_allowed_methods()
 		self._validate_grouping_strategy()
@@ -71,6 +72,15 @@ class ProcurementTemplate(Document):
 			frappe.throw(
 				_("Default Contract Type must be one of: Fixed Price, Cost Reimbursable, T&M."),
 				title=_("Invalid contract type"),
+			)
+
+	def _validate_default_std_template(self):
+		if not self.default_std_template:
+			return
+		if not frappe.db.exists("STD Template", self.default_std_template):
+			frappe.throw(
+				_("Default STD Template is not valid."),
+				title=_("Invalid STD template"),
 			)
 
 	def _parse_list_field(self, raw, label):

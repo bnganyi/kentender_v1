@@ -18,6 +18,8 @@
   "default_method",
   "allowed_methods",
   "default_contract_type",
+  "section_std_template",
+  "default_std_template",
   "section_profiles",
   "risk_profile_id",
   "kpi_profile_id",
@@ -120,6 +122,19 @@
    "label": "Default Contract Type",
    "options": "Fixed Price\nCost Reimbursable\nT&M",
    "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_std_template",
+   "fieldtype": "Section Break",
+   "label": "STD template mapping"
+  },
+  {
+   "description": "When set, planning-to-tender handoff may use this STD Template without ambiguity (doc 2 sec. 12.1).",
+   "fieldname": "default_std_template",
+   "fieldtype": "Link",
+   "label": "Default STD Template",
+   "options": "STD Template",
    "search_index": 1
   },
   {
@@ -313,7 +328,7 @@
  "sort_order": "DESC",
  "states": [],
  "show_title_field_in_link": 1,
- "search_fields": "template_code,template_name,category",
+ "search_fields": "template_code,template_name,category,default_std_template",
  "title_field": "template_name",
  "track_changes": 1
 }
