@@ -1,0 +1,101 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-05-03 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "model_type",
+  "model_code",
+  "source_std_template",
+  "source_tender",
+  "status",
+  "blocking_for_publication",
+  "components_summary",
+  "deferred_reason",
+  "validation_status",
+  "version"
+ ],
+ "fields": [
+  {
+   "fieldname": "model_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Model Type",
+   "options": "Submission\nOpening\nEvaluation\nContract Carry-Forward",
+   "reqd": 1
+  },
+  {
+   "fieldname": "model_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Model Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_std_template",
+   "fieldtype": "Link",
+   "label": "Source STD Template",
+   "options": "STD Template"
+  },
+  {
+   "fieldname": "source_tender",
+   "fieldtype": "Link",
+   "label": "Source Tender",
+   "options": "Procurement Tender"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Generated\nPlaceholder\nMissing\nBlocked",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "blocking_for_publication",
+   "fieldtype": "Check",
+   "label": "Blocking for Publication"
+  },
+  {
+   "fieldname": "components_summary",
+   "fieldtype": "Long Text",
+   "label": "Components Summary"
+  },
+  {
+   "fieldname": "deferred_reason",
+   "fieldtype": "Small Text",
+   "label": "Deferred Reason"
+  },
+  {
+   "default": "Not Checked",
+   "fieldname": "validation_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Validation Status",
+   "options": "Pass\nWarning\nBlocked\nNot Checked",
+   "reqd": 1
+  },
+  {
+   "default": "V1",
+   "fieldname": "version",
+   "fieldtype": "Data",
+   "label": "Version",
+   "reqd": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-03 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "Tender Derived Model Readiness",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

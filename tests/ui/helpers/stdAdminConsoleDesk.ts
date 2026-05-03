@@ -35,6 +35,18 @@ export async function clickStdDemoAction(page: Page, label: string) {
 	await item.click();
 }
 
+/** Doc 5 §24 — Works Hardening actions on Procurement Tender (WH-012). */
+export async function clickWorksHardeningAction(page: Page, label: string) {
+	const group = page
+		.locator(`.inner-group-button[data-label="${encodeURIComponent('Works Hardening')}"]`)
+		.first();
+	await expect(group).toBeVisible({ timeout: 120_000 });
+	await group.locator('button').first().click();
+	const item = group.locator(`.dropdown-menu.show a.dropdown-item[data-label="${encodeURIComponent(label)}"]`);
+	await expect(item).toBeVisible({ timeout: 15_000 });
+	await item.click();
+}
+
 /** Procurement Tender STD POC engine actions under "STD POC". */
 export async function clickStdPocAction(page: Page, label: string) {
 	const group = page.locator(`.inner-group-button[data-label="${enc('STD POC')}"]`).first();

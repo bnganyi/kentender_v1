@@ -1,0 +1,83 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-05-03 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "finding_code",
+  "severity",
+  "area",
+  "message",
+  "source_object",
+  "resolution_hint",
+  "blocks_transition",
+  "blocking_for"
+ ],
+ "fields": [
+  {
+   "fieldname": "finding_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Finding Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Severity",
+   "options": "Critical\nHigh\nMedium\nLow\nInfo",
+   "reqd": 1
+  },
+  {
+   "fieldname": "area",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Area",
+   "options": "Works Requirements\nAttachments\nBoQ\nLots\nForms\nDerived Models\nAudit\nLegacy Lockout\nPlanning Handoff\nSTD Binding",
+   "reqd": 1
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Message",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_object",
+   "fieldtype": "Data",
+   "label": "Source Object"
+  },
+  {
+   "fieldname": "resolution_hint",
+   "fieldtype": "Small Text",
+   "label": "Resolution Hint"
+  },
+  {
+   "default": "0",
+   "fieldname": "blocks_transition",
+   "fieldtype": "Check",
+   "label": "Blocks Transition"
+  },
+  {
+   "fieldname": "blocking_for",
+   "fieldtype": "Data",
+   "label": "Blocking For"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-03 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "Tender Hardening Finding",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

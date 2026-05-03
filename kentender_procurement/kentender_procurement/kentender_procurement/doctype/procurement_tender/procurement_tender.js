@@ -2,6 +2,7 @@
 // For license information, please see license.txt
 //
 // STD-WORKS-POC Steps 12 + 13 — Procurement Tender Desk buttons (admin STD POC group).
+// Doc 5 §24 — Works Hardening button group (WH-012).
 // Admin Console Step 5 — STD Demo workspace (admin-only demo group).
 // Procurement Officer Tender Configuration POC — Officer Tender Configuration group.
 
@@ -598,6 +599,275 @@ frappe.ui.form.on("Procurement Tender", {
 						__("Reset to configuring"),
 					),
 				OFFICER_GROUP,
+			);
+
+			// Doc 5 §24 — Works Hardening (WH-012)
+			const WORKS_HARDENING_GROUP = __("Works Hardening");
+			const wh012_esc = (v) =>
+				frappe.utils.escape_html(v === null || v === undefined ? "" : String(v));
+			const wh012_top_findings_rows = (findings, limit) => {
+				const rows = (findings || []).slice(0, limit || 60);
+				return rows
+					.map(
+						(f) =>
+							`<tr><td>${wh012_esc(f.severity)}</td><td>${wh012_esc(
+								f.finding_code,
+							)}</td><td>${wh012_esc(f.message)}</td></tr>`,
+					)
+					.join("");
+			};
+
+			frm.add_custom_button(
+				__("Run Works Hardening"),
+				() => {
+					if (!ensure_saved_and_template()) return;
+					frappe.call({
+						method: `${PT_MODULE}.run_works_tender_stage_hardening`,
+						args: { tender_name: frm.doc.name },
+						freeze: true,
+						freeze_message: __("Running Works Hardening…"),
+						callback(r) {
+							if (r && r.exc) {
+								frm.reload_doc();
+								return;
+							}
+							const msg = r.message || {};
+							if (msg.ok === false) {
+								frappe.msgprint({
+									title: __("Works Hardening"),
+									message:
+										msg.message || __("Validation blocked or failed."),
+									indicator: "orange",
+								});
+							} else {
+								frappe.show_alert({
+									message: __("Works Hardening completed."),
+									indicator: "green",
+								});
+							}
+							frm.reload_doc();
+						},
+					});
+				},
+				WORKS_HARDENING_GROUP,
+			);
+
+			frm.add_custom_button(
+				__("Check Works Hardening"),
+				() => {
+					if (!ensure_saved_and_template()) return;
+					frappe.call({
+						method: `${PT_MODULE}.validate_works_tender_stage`,
+						args: { tender_name: frm.doc.name },
+						freeze: true,
+						freeze_message: __("Validating…"),
+						callback(r) {
+							const env = r.message || {};
+							const sum = env.summary || {};
+							const parts = [
+								`<h4>${__("Overall")}</h4>`,
+								`<p><strong>${__("Status")}:</strong> ${wh012_esc(env.status)}</p>`,
+								`<p><strong>${__("Boundary")}:</strong> ${wh012_esc(
+									env.boundary_code,
+								)}</p>`,
+								`<p>${__("Severity counts")}: ${__("Critical")} ${wh012_esc(
+									env.critical_count,
+								)}, ${__("High")} ${wh012_esc(env.high_count)}, ${__(
+									"Medium",
+								)} ${wh012_esc(env.medium_count)}, ${__("Low")} ${wh012_esc(
+									env.low_count,
+								)}, ${__("Info")} ${wh012_esc(env.info_count)}</p>`,
+								`<h4>${__("Area status")}</h4>`,
+								"<ul>",
+								`<li>${__("Works requirements")}: ${wh012_esc(
+									sum.works_requirements_status,
+								)}</li>`,
+								`<li>${__("Section attachments")}: ${wh012_esc(
+									sum.attachments_status,
+								)}</li>`,
+								`<li>${__("BoQ hardening")}: ${wh012_esc(
+									sum.boq_hardening_status,
+								)}</li>`,
+								`<li>${__("Required forms")}: ${wh012_esc(sum.forms_status)}</li>`,
+								`<li>${__("Lot / BoQ linkage")}: ${wh012_esc(
+									sum.lot_linkage_status,
+								)}</li>`,
+								`<li>${__("Derived models")}: ${wh012_esc(
+									sum.derived_models_status,
+								)}</li>`,
+								`<li>${__("Audit")}: ${wh012_esc(sum.audit_status)}</li>`,
+								"</ul>",
+								`<h4>${__("Findings")} (${(env.findings || []).length})</h4>`,
+								'<div style="max-height:320px;overflow:auto;">',
+								`<table class="table table-bordered"><thead><tr><th>${__(
+									"Severity",
+								)}</th><th>${__("Code")}</th><th>${__(
+									"Message",
+								)}</th></tr></thead><tbody>`,
+								wh012_top_findings_rows(env.findings, 60),
+								"</tbody></table></div>",
+							];
+							std_poc_demo_html_dialog(
+								__("Works Hardening — Check"),
+								parts.join(""),
+							);
+							frm.reload_doc();
+						},
+					});
+				},
+				WORKS_HARDENING_GROUP,
+			);
+
+			frm.add_custom_button(
+				__("View Works Hardening Summary"),
+				() => {
+					if (frm.is_dirty()) {
+						frappe.msgprint({
+							title: __("Save the tender first"),
+							message: __(
+								"Save the tender before running this action.",
+							),
+							indicator: "orange",
+						});
+						return;
+					}
+					frappe.call({
+						method: `${PT_MODULE}.get_works_hardening_summary`,
+						args: { tender_name: frm.doc.name },
+						freeze: true,
+						freeze_message: __("Loading summary…"),
+						callback(r1) {
+							frappe.call({
+								method: `${PT_MODULE}.get_works_hardening_findings`,
+								args: { tender_name: frm.doc.name },
+								freeze: true,
+								freeze_message: __("Loading findings…"),
+								callback(r2) {
+									const m1 = r1.message || {};
+									const m2 = r2.message || {};
+									const s = m1.summary || {};
+									const counts = s.counts || {};
+									const findings = m2.findings || [];
+									const body = [
+										`<h4>${__("Overall hardening")}</h4>`,
+										`<p><strong>${__("Status")}:</strong> ${wh012_esc(
+											s.works_hardening_status,
+										)}</p>`,
+										`<p><strong>${__("Checked at")}:</strong> ${wh012_esc(
+											s.works_hardening_checked_at,
+										)}</p>`,
+										`<h4>${__("1. Works requirements status")}</h4>`,
+										`<p>${wh012_esc(s.works_requirements_status)} — ${__(
+											"Rows",
+										)}: ${wh012_esc(counts.works_requirements)}</p>`,
+										`<h4>${__("2. Section attachments status")}</h4>`,
+										`<p>${wh012_esc(s.attachments_status)} — ${__(
+											"Rows",
+										)}: ${wh012_esc(counts.section_attachments)}</p>`,
+										`<h4>${__("3. BoQ hardening status")}</h4>`,
+										`<p>${wh012_esc(s.boq_hardening_status)} — ${__(
+											"BoQ items",
+										)}: ${wh012_esc(counts.boq_items)}</p>`,
+										`<h4>${__("4. Derived models status")}</h4>`,
+										`<p>${wh012_esc(s.derived_models_status)} — ${__(
+											"Rows",
+										)}: ${wh012_esc(counts.derived_model_readiness)}</p>`,
+										`<h4>${__("5. Hardening findings")}</h4>`,
+										`<p>${__("Count")}: ${wh012_esc(findings.length)}</p>`,
+										'<div style="max-height:240px;overflow:auto;">',
+										`<table class="table table-sm table-bordered"><thead><tr><th>${__(
+											"Severity",
+										)}</th><th>${__("Code")}</th><th>${__(
+											"Message",
+										)}</th></tr></thead><tbody>`,
+										wh012_top_findings_rows(findings, 80),
+										"</tbody></table></div>",
+										`<h4>${__("6. Snapshot hash")}</h4>`,
+										`<p><code>${wh012_esc(
+											s.works_hardening_snapshot_hash,
+										)}</code></p>`,
+									];
+									std_poc_demo_html_dialog(
+										__("Works Hardening — Summary"),
+										body.join(""),
+									);
+								},
+							});
+						},
+					});
+				},
+				WORKS_HARDENING_GROUP,
+			);
+
+			frm.add_custom_button(
+				__("View Works Snapshot"),
+				() => {
+					if (frm.is_dirty()) {
+						frappe.msgprint({
+							title: __("Save the tender first"),
+							message: __(
+								"Save the tender before running this action.",
+							),
+							indicator: "orange",
+						});
+						return;
+					}
+					frappe.call({
+						method: `${PT_MODULE}.get_works_tender_stage_snapshot`,
+						args: { tender_name: frm.doc.name },
+						freeze: true,
+						freeze_message: __("Loading snapshot…"),
+						callback(r) {
+							const msg = r.message || {};
+							const hash = msg.hash || "";
+							const snap = msg.snapshot;
+							let html = "";
+							if (officerOnlyHideRawJson()) {
+								const pv = snap && snap.preview ? snap.preview : {};
+								const val = snap && snap.validation ? snap.validation : {};
+								html = [
+									`<h4>${__("Snapshot hash")}</h4>`,
+									`<p><code>${wh012_esc(hash)}</code></p>`,
+									`<h4>${__("Snapshot identity")}</h4>`,
+									`<p>${__("Type")}: ${wh012_esc(
+										snap && snap.snapshot_type,
+									)} — ${__("Version")}: ${wh012_esc(
+										snap && snap.snapshot_version,
+									)}</p>`,
+									`<h4>${__("Preview (summary)")}</h4>`,
+									`<pre style="white-space:pre-wrap;max-height:200px;overflow:auto;">${wh012_esc(
+										JSON.stringify(pv, null, 2),
+									)}</pre>`,
+									`<h4>${__("Validation (summary)")}</h4>`,
+									`<pre style="white-space:pre-wrap;max-height:200px;overflow:auto;">${wh012_esc(
+										JSON.stringify(val, null, 2),
+									)}</pre>`,
+									`<p class="text-muted">${__(
+										"Full snapshot JSON is available to system administrators.",
+									)}</p>`,
+								].join("");
+							} else {
+								const json =
+									snap === null || snap === undefined
+										? __("No snapshot stored yet. Run Works Hardening first.")
+										: JSON.stringify(snap, null, 2);
+								html = [
+									`<h4>${__("Snapshot hash")}</h4>`,
+									`<p><code>${wh012_esc(hash)}</code></p>`,
+									`<h4>${__("Snapshot JSON")}</h4>`,
+									`<pre style="white-space:pre-wrap;max-height:70vh;overflow:auto;">${wh012_esc(
+										json,
+									)}</pre>`,
+								].join("");
+							}
+							std_poc_demo_html_dialog(
+								__("Works Hardening — Snapshot"),
+								html,
+							);
+						},
+					});
+				},
+				WORKS_HARDENING_GROUP,
 			);
 		}
 	},

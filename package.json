@@ -8,7 +8,8 @@
     "test:ui:smoke:procurement": "playwright test tests/ui/smoke/procurement",
     "test:ui:smoke:procurement-officer": "playwright test tests/ui/smoke/procurement/officer-tender-poc-mvp.spec.ts",
     "test:ui:smoke:procurement-officer-doc9": "playwright test tests/ui/smoke/procurement/officer-tender-poc-off-st-desk.spec.ts",
-    "test:ui:smoke:admin-console": "playwright test tests/ui/smoke/procurement/std-admin-console-step9-smoke.spec.ts"
+    "test:ui:smoke:admin-console": "playwright test tests/ui/smoke/procurement/std-admin-console-step9-smoke.spec.ts",
+    "test:ui:smoke:works-hardening-wh012": "playwright test tests/ui/smoke/procurement/works-hardening-desk-wh012.spec.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.0",

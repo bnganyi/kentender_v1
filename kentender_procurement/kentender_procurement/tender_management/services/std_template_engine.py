@@ -412,6 +412,68 @@ def validate_sample_boq_rows(
 				)
 
 
+_FORMULA_TYPES = frozenset(
+	{"Measured", "Provisional Sum", "Daywork", "Summary", "Fixed"}
+)
+_BOQ_ROW_STATUSES = frozenset({"Draft", "Active", "Superseded"})
+_DEFAULT_SAMPLE_BOQ_CODE = "WORKS-POC-BOQ"
+
+
+def default_wh007_fields_for_boq_source(raw: dict[str, Any]) -> dict[str, Any]:
+	"""Return WH-007 §13 field defaults derived from a package-style or child-row-shaped dict.
+
+	Used by :func:`build_boq_child_rows` and :func:`harden_works_boq_structure` (WH-009).
+	"""
+	item_code = str(raw.get("item_code") or "").strip()
+	desc = str(raw.get("description") or "").strip()
+	cat = str(raw.get("item_category") or "").strip()
+	bill_title = str(raw.get("bill_title") or "").strip()
+	if not bill_title:
+		bill_title = (desc[:140] if desc else None) or cat or "Bill"
+	bill_title = bill_title[:140]
+
+	ft = raw.get("formula_type")
+	formula_type = str(ft).strip() if ft not in (None, "") else "Measured"
+	if formula_type not in _FORMULA_TYPES:
+		formula_type = "Measured"
+
+	rs = raw.get("boq_row_status")
+	boq_row_status = str(rs).strip() if rs not in (None, "") else "Draft"
+	if boq_row_status not in _BOQ_ROW_STATUSES:
+		boq_row_status = "Draft"
+
+	qlocked = raw.get("quantity_locked")
+	if qlocked is None:
+		quantity_locked = 1
+	else:
+		quantity_locked = _coerce_boq_check(qlocked)
+
+	out: dict[str, Any] = {
+		"boq_code": (raw.get("boq_code") or _DEFAULT_SAMPLE_BOQ_CODE),
+		"boq_version": (raw.get("boq_version") or "V1"),
+		"bill_code": (raw.get("bill_code") or cat or "BILL"),
+		"bill_title": bill_title,
+		"item_number": (raw.get("item_number") or item_code),
+		"quantity_locked": quantity_locked,
+		"pricing_required": _coerce_boq_check(raw.get("pricing_required")),
+		"supplier_rate_editable": _coerce_boq_check(raw.get("supplier_rate_editable")),
+		"formula_type": formula_type,
+		"allow_supplier_amount_edit": _coerce_boq_check(
+			raw.get("allow_supplier_amount_edit")
+		),
+		"boq_row_status": boq_row_status,
+	}
+	bn = raw.get("bill_number")
+	if bn not in (None, ""):
+		out["bill_number"] = bn
+	sp = raw.get("source_package_line_code")
+	if sp not in (None, ""):
+		out["source_package_line_code"] = sp
+	if raw.get("fixed_amount") is not None:
+		out["fixed_amount"] = raw.get("fixed_amount")
+	return out
+
+
 def build_boq_child_rows(
 	rows: list[dict[str, Any]],
 	*,
@@ -429,6 +491,7 @@ def build_boq_child_rows(
 			"quantity": float(raw.get("quantity")),
 			"is_priced_by_bidder": _coerce_boq_check(raw.get("is_priced_by_bidder")),
 			"notes": note,
+			**default_wh007_fields_for_boq_source(raw),
 		}
 		lc = raw.get("lot_code")
 		if lc not in (None, ""):
@@ -1024,6 +1087,60 @@ def resolve_active_sections(
 	return chosen
 
 
+def _sanitize_tender_reference_for_dsm(ref: Any) -> str:
+	"""Normalize ``TENDER.TENDER_REFERENCE`` for deterministic DSM placeholder codes."""
+	s = str(ref or "").strip().upper()
+	if not s:
+		return "UNKNOWN"
+	parts: list[str] = []
+	for ch in s:
+		if ch.isalnum():
+			parts.append(ch)
+		else:
+			parts.append("-")
+	out = "".join(parts)
+	while "--" in out:
+		out = out.replace("--", "-")
+	out = out.strip("-")
+	return out or "UNKNOWN"
+
+
+def _workflow_stage_to_doc_stage(workflow_stage: Any) -> str:
+	"""Map package ``workflow_stage`` codes to doc 5 §14 ``stage`` Select labels."""
+	ws = str(workflow_stage or "").strip().upper()
+	if ws == "BID_SUBMISSION":
+		return "Bid Submission"
+	if ws == "CONTRACT_SIGNATURE":
+		return "Contract Stage"
+	if ws == "POST_AWARD":
+		return "Post-Award"
+	return "Other"
+
+
+def _first_rule_code_from_activation_sources(activation_source: str) -> str:
+	"""Return the first ``RULE:…`` token after the prefix (empty when none)."""
+	src = (activation_source or "").strip()
+	if "RULE:" not in src:
+		return ""
+	return src.split("RULE:", 1)[1].split(";", 1)[0].strip()
+
+
+def _submission_component_placeholder(
+	*,
+	workflow_stage: Any,
+	tender_reference: Any,
+	form_code: str,
+) -> str:
+	"""Doc 5 §14 DSM placeholder for bid-stage forms only."""
+	if str(workflow_stage or "").strip().upper() != "BID_SUBMISSION":
+		return ""
+	slug = _sanitize_tender_reference_for_dsm(tender_reference)
+	fc = str(form_code or "").strip().upper()
+	if not fc:
+		return ""
+	return f"DSM-{slug}-{fc}"
+
+
 def resolve_required_forms(
 	template: dict[str, Any],
 	config: dict[str, Any],
@@ -1064,6 +1181,13 @@ def resolve_required_forms(
 		for form_code, source in (validation_result.get("active_forms") or {}).items():
 			_add_source(form_code, source)
 
+	from kentender_procurement.tender_management.services.officer_tender_config import (
+		_officer_required_because_text,
+	)
+
+	cfg = config if isinstance(config, dict) else {}
+	tender_ref = cfg.get("TENDER.TENDER_REFERENCE")
+
 	rows: list[dict[str, Any]] = []
 	for form_code, sources in activation_sources.items():
 		form = form_definitions.get(form_code)
@@ -1073,18 +1197,30 @@ def resolve_required_forms(
 				f"{form_code!r}; check forms.json and rules.json."
 			)
 		checklist = form.get("checklist_display") or {}
+		activation_joined = "; ".join(sources)
+		wf_stage = form.get("workflow_stage")
 		rows.append(
 			{
 				"form_code": form_code,
 				"form_title": form.get("title"),
 				"display_group": checklist.get("display_group"),
-				"workflow_stage": form.get("workflow_stage"),
+				"workflow_stage": wf_stage,
+				"stage": _workflow_stage_to_doc_stage(wf_stage),
 				"respondent_type": form.get("respondent_type"),
 				"required": 1,
-				"activation_source": "; ".join(sources),
+				"activation_source": activation_joined,
 				"evidence_policy": form.get("evidence_policy"),
 				"display_order": checklist.get("display_order") or 0,
 				"notes": "",
+				"submission_component_code": _submission_component_placeholder(
+					workflow_stage=wf_stage,
+					tender_reference=tender_ref,
+					form_code=form_code,
+				),
+				"required_because": _officer_required_because_text(activation_joined),
+				"source_rule_code": _first_rule_code_from_activation_sources(
+					activation_joined
+				),
 			}
 		)
 	rows.sort(key=lambda r: (r.get("display_order") or 0, r.get("form_code") or ""))

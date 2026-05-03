@@ -48,7 +48,10 @@ class TestPlanningTenderHandoffReleaseIntegrationB10(_ReleaseProcurementPackageH
 		return plan, tpl, pkg
 
 	def test_b10_s21_happy_path_structured_result_and_lineage(self) -> None:
-		"""§21 success path: structured handoff result + PT-HANDOFF-AC-002 linkage."""
+		"""§21 success path: structured handoff result + PT-HANDOFF-AC-002 linkage.
+
+		Also cited as **§E E1** cross-cut evidence (IMPLEMENTATION_TRACKER §E).
+		"""
 		_, _, pkg = self._ready_package_fixture()
 		out = release_procurement_package_to_tender(pkg.name)
 		self.assertTrue(out.get("ok"), out)

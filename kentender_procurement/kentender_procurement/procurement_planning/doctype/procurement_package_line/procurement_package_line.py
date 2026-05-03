@@ -17,6 +17,7 @@ PRIORITY_LEVELS = frozenset(("Low", "Normal", "High", "Critical"))
 class ProcurementPackageLine(Document):
 	def validate(self):
 		self._set_defaults()
+		self._validate_package_line_code()
 		self._validate_amount()
 		self._validate_parent_package_mutable()
 		self._validate_demand()
@@ -46,6 +47,21 @@ class ProcurementPackageLine(Document):
 	def _set_defaults(self):
 		if self.is_active is None:
 			self.is_active = 1
+
+	def _validate_package_line_code(self):
+		code = (self.package_line_code or "").strip()
+		if not code:
+			self.package_line_code = None
+			return
+		self.package_line_code = code
+		filters: dict = {"package_line_code": code}
+		if not self.is_new():
+			filters["name"] = ("!=", self.name)
+		if frappe.db.exists("Procurement Package Line", filters):
+			frappe.throw(
+				_("Package line code {0} is already in use.").format(code),
+				title=_("Duplicate package line code"),
+			)
 
 	def _validate_amount(self):
 		if flt(self.amount) <= 0:

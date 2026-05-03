@@ -107,12 +107,16 @@ EXPECTED_REQUIRED_FORM_ROW_KEYS = {
 	"form_title",
 	"display_group",
 	"workflow_stage",
+	"stage",
 	"respondent_type",
 	"required",
 	"activation_source",
 	"evidence_policy",
 	"display_order",
 	"notes",
+	"submission_component_code",
+	"required_because",
+	"source_rule_code",
 }
 
 PRIMARY_SAMPLE_ACTIVATED_FORMS = [

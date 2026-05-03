@@ -8,6 +8,7 @@
  "field_order": [
   "section_links",
   "package_id",
+  "package_line_code",
   "demand_id",
   "budget_line_id",
   "section_amounts",
@@ -33,6 +34,15 @@
    "options": "Procurement Package",
    "reqd": 1,
    "search_index": 1
+  },
+  {
+   "description": "Stable business identifier for Works integrated seed (doc 3 sec. 8) and traceability.",
+   "fieldname": "package_line_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Package line code",
+   "search_index": 1,
+   "unique": 1
   },
   {
    "fieldname": "demand_id",
@@ -182,7 +192,7 @@
  "sort_order": "DESC",
  "states": [],
  "show_title_field_in_link": 1,
- "search_fields": "package_id,demand_id,budget_line_id",
+ "search_fields": "package_line_code,package_id,demand_id,budget_line_id",
  "title_field": "demand_id",
  "track_changes": 1
 }

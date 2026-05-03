@@ -1,0 +1,122 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-05-03 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "attachment_code",
+  "file_name",
+  "file_url",
+  "section_code",
+  "component_code",
+  "attachment_type",
+  "version",
+  "supplier_facing",
+  "internal_only",
+  "source_hash",
+  "status",
+  "publication_included",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "attachment_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Attachment Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "file_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "File Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "file_url",
+   "fieldtype": "Data",
+   "label": "File URL"
+  },
+  {
+   "fieldname": "section_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Section Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "component_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Works Component Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "attachment_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Attachment Type",
+   "options": "Drawing\nTechnical Specification\nSite Photo\nPermit\nGeotechnical Report\nESHS Document\nOther",
+   "reqd": 1
+  },
+  {
+   "default": "V1",
+   "fieldname": "version",
+   "fieldtype": "Data",
+   "label": "Version",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "supplier_facing",
+   "fieldtype": "Check",
+   "label": "Supplier Facing"
+  },
+  {
+   "default": "0",
+   "fieldname": "internal_only",
+   "fieldtype": "Check",
+   "label": "Internal Only"
+  },
+  {
+   "fieldname": "source_hash",
+   "fieldtype": "Data",
+   "label": "Source Hash"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nActive\nSuperseded",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "publication_included",
+   "fieldtype": "Check",
+   "label": "Publication Included"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-03 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "Tender Section Attachment",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

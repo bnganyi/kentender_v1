@@ -66,6 +66,16 @@ VARIANT_CODES: tuple[str, ...] = (
 )
 
 
+_WORKS_HARDENING_STATUS_FIELDS: tuple[str, ...] = (
+	"works_hardening_status",
+	"derived_models_status",
+	"boq_hardening_status",
+	"works_requirements_status",
+	"attachments_status",
+)
+_WORKS_HARDENING_STATUS_DEFAULT = "Not Checked"
+
+
 class ProcurementTender(Document):
 	"""STD-WORKS-POC: tender instance linked to an STD template.
 
@@ -75,8 +85,27 @@ class ProcurementTender(Document):
 	"""
 
 	def validate(self) -> None:
+		self._ensure_works_hardening_status_defaults()
 		self._validate_planning_lineage()
 		self._validate_unique_active_handoff_tender()
+		self._validate_section_attachment_rows()
+		self._validate_derived_model_readiness_rows()
+
+	def _validate_section_attachment_rows(self) -> None:
+		"""WH-003 — child ``validate`` is not auto-run on parent save; invoke explicitly (doc 5 §9)."""
+		for row in self.get("section_attachments") or []:
+			row.run_method("validate")
+
+	def _validate_derived_model_readiness_rows(self) -> None:
+		"""WH-004 — child ``validate`` is not auto-run on parent save; invoke explicitly (doc 5 §10)."""
+		for row in self.get("derived_model_readiness") or []:
+			row.run_method("validate")
+
+	def _ensure_works_hardening_status_defaults(self) -> None:
+		"""Doc 5 §7 / WH-001 — status fields default to ``Not Checked`` when unset."""
+		for fn in _WORKS_HARDENING_STATUS_FIELDS:
+			if not (self.get(fn) or "").strip():
+				self.set(fn, _WORKS_HARDENING_STATUS_DEFAULT)
 
 	def _validate_unique_active_handoff_tender(self) -> None:
 		"""Doc 2 sec. 16.3 / B9 — at most one non-cancelled tender per planning package."""
@@ -897,6 +926,46 @@ def reset_officer_tender_to_configuring(tender_name: str) -> dict[str, Any]:
 	tender_doc = _get_tender_doc(tender_name)
 	tender_doc.tender_status = "Configured"
 	return _save_and_return(tender_doc, {"message": "Tender status reset to Configuring."})
+
+
+# ---------------------------------------------------------------------------
+# Doc 5 §16 / §24 — Works tender-stage hardening (WH-009)
+# ---------------------------------------------------------------------------
+
+
+@frappe.whitelist()
+def run_works_tender_stage_hardening(tender_name: str) -> dict[str, Any]:
+	from kentender_procurement.tender_management.services import works_tender_hardening
+
+	return works_tender_hardening.run_works_tender_stage_hardening(tender_name)
+
+
+@frappe.whitelist()
+def validate_works_tender_stage(tender_name: str) -> dict[str, Any]:
+	from kentender_procurement.tender_management.services import works_tender_hardening_validation
+
+	return works_tender_hardening_validation.validate_works_tender_stage(tender_name)
+
+
+@frappe.whitelist()
+def get_works_hardening_summary(tender_name: str) -> dict[str, Any]:
+	from kentender_procurement.tender_management.services import works_tender_hardening
+
+	return works_tender_hardening.get_works_hardening_summary(tender_name)
+
+
+@frappe.whitelist()
+def get_works_hardening_findings(tender_name: str) -> dict[str, Any]:
+	from kentender_procurement.tender_management.services import works_tender_hardening
+
+	return works_tender_hardening.get_works_hardening_findings(tender_name)
+
+
+@frappe.whitelist()
+def get_works_tender_stage_snapshot(tender_name: str) -> dict[str, Any]:
+	from kentender_procurement.tender_management.services import works_tender_hardening
+
+	return works_tender_hardening.get_works_tender_stage_snapshot(tender_name)
 
 
 @frappe.whitelist()

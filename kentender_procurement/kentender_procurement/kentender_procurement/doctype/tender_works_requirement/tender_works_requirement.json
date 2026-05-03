@@ -1,0 +1,108 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-05-03 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "component_code",
+  "component_type",
+  "title",
+  "structured_text",
+  "supplier_facing",
+  "submission_linked",
+  "contract_carry_forward",
+  "source_field_codes",
+  "status",
+  "version",
+  "display_order"
+ ],
+ "fields": [
+  {
+   "fieldname": "component_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Component Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "component_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Component Type",
+   "options": "Scope\nSite Information\nTechnical Specification\nDrawing Register\nESHS / HSE\nWork Programme\nKey Personnel\nEquipment\nCompletion Period\nDefects Liability\nOther",
+   "reqd": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "structured_text",
+   "fieldtype": "Long Text",
+   "label": "Structured Text",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "supplier_facing",
+   "fieldtype": "Check",
+   "label": "Supplier Facing"
+  },
+  {
+   "default": "0",
+   "fieldname": "submission_linked",
+   "fieldtype": "Check",
+   "label": "Submission Linked"
+  },
+  {
+   "default": "0",
+   "fieldname": "contract_carry_forward",
+   "fieldtype": "Check",
+   "label": "Contract Carry Forward"
+  },
+  {
+   "fieldname": "source_field_codes",
+   "fieldtype": "Small Text",
+   "label": "Source Field Codes"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nComplete\nMissing\nSuperseded",
+   "reqd": 1
+  },
+  {
+   "default": "V1",
+   "fieldname": "version",
+   "fieldtype": "Data",
+   "label": "Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "display_order",
+   "fieldtype": "Int",
+   "label": "Display Order",
+   "non_negative": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-03 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "Tender Works Requirement",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

@@ -125,7 +125,21 @@
   "section_generated_pack",
   "generated_tender_pack_html",
   "section_poc_notes",
-  "poc_notes"
+  "poc_notes",
+  "section_works_tender_hardening",
+  "works_hardening_status",
+  "works_hardening_checked_at",
+  "works_hardening_validation_json",
+  "works_hardening_snapshot_json",
+  "works_hardening_snapshot_hash",
+  "derived_models_status",
+  "boq_hardening_status",
+  "works_requirements_status",
+  "attachments_status",
+  "works_requirements",
+  "section_attachments",
+  "derived_model_readiness",
+  "hardening_findings"
  ],
  "fields": [
   {
@@ -864,6 +878,106 @@
    "fieldname": "poc_notes",
    "fieldtype": "Small Text",
    "label": "POC Notes"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_works_tender_hardening",
+   "fieldtype": "Section Break",
+   "label": "200. Works tender-stage hardening"
+  },
+  {
+   "default": "Not Checked",
+   "fieldname": "works_hardening_status",
+   "fieldtype": "Select",
+   "label": "Works Hardening Status",
+   "options": "Not Checked\nPass\nWarning\nBlocked\nFailed\nDeferred",
+   "read_only": 1
+  },
+  {
+   "fieldname": "works_hardening_checked_at",
+   "fieldtype": "Datetime",
+   "label": "Works Hardening Checked At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "works_hardening_validation_json",
+   "fieldtype": "Code",
+   "label": "Works Hardening Validation JSON",
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "fieldname": "works_hardening_snapshot_json",
+   "fieldtype": "Code",
+   "label": "Works Hardening Snapshot JSON",
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "fieldname": "works_hardening_snapshot_hash",
+   "fieldtype": "Data",
+   "label": "Works Hardening Snapshot Hash",
+   "read_only": 1
+  },
+  {
+   "default": "Not Checked",
+   "fieldname": "derived_models_status",
+   "fieldtype": "Select",
+   "label": "Derived Models Status",
+   "options": "Not Checked\nPass\nWarning\nBlocked\nFailed\nDeferred",
+   "read_only": 1
+  },
+  {
+   "default": "Not Checked",
+   "fieldname": "boq_hardening_status",
+   "fieldtype": "Select",
+   "label": "BoQ Hardening Status",
+   "options": "Not Checked\nPass\nWarning\nBlocked\nFailed\nDeferred",
+   "read_only": 1
+  },
+  {
+   "default": "Not Checked",
+   "fieldname": "works_requirements_status",
+   "fieldtype": "Select",
+   "label": "Works Requirements Status",
+   "options": "Not Checked\nPass\nWarning\nBlocked\nFailed\nDeferred",
+   "read_only": 1
+  },
+  {
+   "default": "Not Checked",
+   "fieldname": "attachments_status",
+   "fieldtype": "Select",
+   "label": "Attachments Status",
+   "options": "Not Checked\nPass\nWarning\nBlocked\nFailed\nDeferred",
+   "read_only": 1
+  },
+  {
+   "fieldname": "works_requirements",
+   "fieldtype": "Table",
+   "label": "Works Requirements",
+   "options": "Tender Works Requirement",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_attachments",
+   "fieldtype": "Table",
+   "label": "Section Attachments",
+   "options": "Tender Section Attachment",
+   "read_only": 1
+  },
+  {
+   "fieldname": "derived_model_readiness",
+   "fieldtype": "Table",
+   "label": "Derived Model Readiness",
+   "options": "Tender Derived Model Readiness",
+   "read_only": 1
+  },
+  {
+   "fieldname": "hardening_findings",
+   "fieldtype": "Table",
+   "label": "Hardening Findings",
+   "options": "Tender Hardening Finding",
+   "read_only": 1
   }
  ],
  "links": [],

@@ -3,6 +3,10 @@
 
 """B6 — STD template handoff resolution (doc 2 sec. 12.1–12.2).
 
+Cross-cut **§E E2** (**PT-HANDOFF-AC-005**): Works POC path uses deterministic
+``works_poc_fallback`` to ``KE-PPRA-WORKS-BLDG-2022-04-POC`` when mapping is empty;
+``default_std_template`` short-circuits; ambiguity / invalid default are fail-closed.
+
 Run:
 	bench --site <site> run-tests --app kentender_procurement \\
 		--module kentender_procurement.tender_management.tests.test_std_template_handoff_resolution_b6
@@ -59,6 +63,7 @@ class TestStdTemplateHandoffResolutionB6(_ReleaseProcurementPackageHandoffFixtur
 		self.assertEqual(res.ambiguous_candidates, ("STD-CAND-A", "STD-CAND-B"))
 
 	def test_b6_works_poc_fallback_when_mapping_empty(self) -> None:
+		"""§E E2 — Works + empty STD mapping list resolves deterministically to POC template."""
 		upsert_std_template()
 		plan = self._mk_plan()
 		tpl = self._mk_template()

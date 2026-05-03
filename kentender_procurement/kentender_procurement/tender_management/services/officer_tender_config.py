@@ -427,13 +427,17 @@ def shape_officer_required_forms_checklist(
 	"""Map engine ``resolve_required_forms`` rows to officer-facing checklist (doc 5)."""
 	out: list[dict[str, Any]] = []
 	for row in engine_rows:
+		act = row.get("activation_source") or ""
 		out.append(
 			{
 				"form_code": row.get("form_code"),
 				"form_title": row.get("form_title"),
 				"display_group": row.get("display_group"),
 				"required": bool(row.get("required")),
-				"required_because": _officer_required_because_text(row.get("activation_source") or ""),
+				"required_because": row.get("required_because")
+				or _officer_required_because_text(act),
+				"submission_component_code": row.get("submission_component_code"),
+				"stage": row.get("stage"),
 				"respondent_type": row.get("respondent_type"),
 				"workflow_stage": row.get("workflow_stage"),
 				"evidence_policy": row.get("evidence_policy"),
