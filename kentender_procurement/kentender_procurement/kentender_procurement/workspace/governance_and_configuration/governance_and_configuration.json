@@ -1,7 +1,7 @@
 {
  "app": "kentender_procurement",
  "charts": [],
- "content": "[{\"id\":\"gov_h1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Governance & Configuration</b></span>\",\"col\":12}},{\"id\":\"gov_p1\",\"type\":\"paragraph\",\"data\":{\"text\":\"Procurement governance: templates, risk and KPI profiles, decision criteria, vendor management profiles, procurement plans, and packages.\",\"col\":12}}]",
+ "content": "[{\"id\":\"gov_nav_h\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Official STD Library</b></span>\",\"col\":12}},{\"id\":\"gov_nav_p\",\"type\":\"paragraph\",\"data\":{\"text\":\"Manage official standard tender documents available for tender preparation. Use the shortcuts below for catalogue, structured package import, validation queues, approval, active templates, superseded or retired versions, usage, audit, and package inspection.\",\"col\":12}},{\"id\":\"gov_nav_p2\",\"type\":\"paragraph\",\"data\":{\"text\":\"Built-in seed packages or reviewed JSON/YAML are the normal path for STD templates the engine can use. PDF or Word files alone do not create a working STD; retain them as source evidence alongside a structured package.\",\"col\":12}},{\"id\":\"gov_nav_p3\",\"type\":\"paragraph\",\"data\":{\"text\":\"Validate before activation: use the Pending Validation shortcut and, on STD Template, Run Governance Validation and Package validation. Present outcomes as health checks (blockers and warnings by category), not raw engine traces. Preview the recombined tender bundle to sanity-check output before go-live; dedicated Validation and Bundle Preview tabs on the library detail view are STD-LIB-0300 and STD-LIB-0310, with import-step bundle preview as STD-LIB-0250.\",\"col\":12}},{\"id\":\"gov_nav_p4\",\"type\":\"paragraph\",\"data\":{\"text\":\"Most library administration uses catalogue, queues, validation, and usage—not deep technical structure. Advanced Technical View is for explicit review of sections, parameters, mappings, BOQ rules, and generated model definitions; it is not the default path. When naming source-mapping families, use plain titles with acronyms in parentheses: Submission Requirements (DSM), Opening Register (DOM), Evaluation Rules (DEM), Contract Carry-Forward (DCM). The library detail Advanced tab shell and advanced source mappings UI are STD-LIB-0340 and STD-LIB-0341.\",\"col\":12}},{\"id\":\"gov_nav_p5\",\"type\":\"paragraph\",\"data\":{\"text\":\"STD Instances belong on the tender side: managing them is not the primary task for Official STD library administrators. Use the STD Template Usage shortcut for read-only references to tenders and publications using each template; instance creation and editing stay outside this workspace. The detailed Usage tab with read-only STD Instance lists on the library detail view is STD-LIB-0320.\",\"col\":12}},{\"id\":\"gov_nav_p6\",\"type\":\"paragraph\",\"data\":{\"text\":\"This programme delivers the Official STD Library on Frappe Desk: workspaces, core DocTypes, and desk scripts under kentender_procurement. A separate single-page application for library administration is not the default; adopting one requires explicit programme sign-off and a recorded update in this tracker or ISSUES_LOG. Pack-style REST contracts map to whitelisted server methods and Desk integration unless a SPA is approved.\",\"col\":12}},{\"id\":\"gov_nav_p7\",\"type\":\"paragraph\",\"data\":{\"text\":\"Pack identifiers such as ROLE_STD_ADMIN are conceptual: enforce library access with Frappe roles STD Template Administrator, STD Template Importer, STD Template Reviewer, STD Template Approver, STD Template Activator, and STD Template Auditor (aligned with this workspace Has Role list). DocPerm on STD Template and related DocTypes plus whitelisted server checks remain authoritative; see Workstream 1 STD governance matrix for duties and separation of controls.\",\"col\":12}},{\"id\":\"gov_sc_1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Official STD Library \\u2014 Catalogue\",\"col\":4}},{\"id\":\"gov_sc_2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Import Official STD Package\",\"col\":4}},{\"id\":\"gov_sc_3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Pending Validation\",\"col\":4}},{\"id\":\"gov_sc_4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Pending Approval\",\"col\":4}},{\"id\":\"gov_sc_5\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Active STD Templates\",\"col\":4}},{\"id\":\"gov_sc_6\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Superseded / Retired / Archived\",\"col\":4}},{\"id\":\"gov_sc_7\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"STD Template Usage\",\"col\":4}},{\"id\":\"gov_sc_8\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"STD Governance Audit\",\"col\":4}},{\"id\":\"gov_sc_9\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"STD Package Inspector\",\"col\":4}}]",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -11,16 +11,205 @@
  "idx": 0,
  "is_hidden": 0,
  "label": "Governance & Configuration",
- "links": [],
+ "links": [
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Catalogues & queues",
+   "link_count": 0,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "STD Template",
+   "link_count": 0,
+   "link_to": "STD Template",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "STD Template Usage",
+   "link_count": 0,
+   "link_to": "STD Template Usage",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "STD Template Lifecycle Event",
+   "link_count": 0,
+   "link_to": "STD Template Lifecycle Event",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
  "module": "Kentender Procurement",
  "name": "Governance & Configuration",
  "number_cards": [],
  "parent_page": "",
  "public": 1,
  "quick_lists": [],
- "roles": [],
- "type": "Workspace",
+ "roles": [
+  {
+   "role": "Administrator"
+  },
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "STD Template Administrator"
+  },
+  {
+   "role": "STD Template Importer"
+  },
+  {
+   "role": "STD Template Reviewer"
+  },
+  {
+   "role": "STD Template Approver"
+  },
+  {
+   "role": "STD Template Activator"
+  },
+  {
+   "role": "STD Template Auditor"
+  },
+  {
+   "role": "STD Technical Inspector"
+  }
+ ],
  "sequence_id": 35.0,
- "shortcuts": [],
- "title": "Governance & Configuration"
+ "shortcuts": [
+  {
+   "color": "",
+   "doc_view": "List",
+   "format": "",
+   "icon": "file",
+   "kanban_board": "",
+   "label": "Official STD Library — Catalogue",
+   "link_to": "STD Template",
+   "restrict_to_domain": "",
+   "stats_filter": "",
+   "type": "DocType",
+   "url": ""
+  },
+  {
+   "color": "",
+   "doc_view": "New",
+   "format": "",
+   "icon": "file",
+   "kanban_board": "",
+   "label": "Import Official STD Package",
+   "link_to": "STD Template",
+   "restrict_to_domain": "",
+   "stats_filter": "",
+   "type": "DocType",
+   "url": ""
+  },
+  {
+   "color": "",
+   "doc_view": "List",
+   "format": "",
+   "icon": "file",
+   "kanban_board": "",
+   "label": "Pending Validation",
+   "link_to": "STD Template",
+   "restrict_to_domain": "",
+   "stats_filter": "{\"lifecycle_status\":[\"in\",[\"Imported\",\"Validation Failed\"]]}",
+   "type": "DocType",
+   "url": ""
+  },
+  {
+   "color": "",
+   "doc_view": "List",
+   "format": "",
+   "icon": "file",
+   "kanban_board": "",
+   "label": "Pending Approval",
+   "link_to": "STD Template",
+   "restrict_to_domain": "",
+   "stats_filter": "{\"lifecycle_status\":[\"=\",\"Submitted for Approval\"]}",
+   "type": "DocType",
+   "url": ""
+  },
+  {
+   "color": "",
+   "doc_view": "List",
+   "format": "",
+   "icon": "file",
+   "kanban_board": "",
+   "label": "Active STD Templates",
+   "link_to": "STD Template",
+   "restrict_to_domain": "",
+   "stats_filter": "{\"lifecycle_status\":[\"=\",\"Active\"]}",
+   "type": "DocType",
+   "url": ""
+  },
+  {
+   "color": "",
+   "doc_view": "List",
+   "format": "",
+   "icon": "file",
+   "kanban_board": "",
+   "label": "Superseded / Retired / Archived",
+   "link_to": "STD Template",
+   "restrict_to_domain": "",
+   "stats_filter": "{\"lifecycle_status\":[\"in\",[\"Superseded\",\"Retired\",\"Archived\"]]}",
+   "type": "DocType",
+   "url": ""
+  },
+  {
+   "color": "",
+   "doc_view": "List",
+   "format": "",
+   "icon": "file",
+   "kanban_board": "",
+   "label": "STD Template Usage",
+   "link_to": "STD Template Usage",
+   "restrict_to_domain": "",
+   "stats_filter": "",
+   "type": "DocType",
+   "url": ""
+  },
+  {
+   "color": "",
+   "doc_view": "List",
+   "format": "",
+   "icon": "file",
+   "kanban_board": "",
+   "label": "STD Governance Audit",
+   "link_to": "STD Template Lifecycle Event",
+   "restrict_to_domain": "",
+   "stats_filter": "",
+   "type": "DocType",
+   "url": ""
+  },
+  {
+   "color": "",
+   "doc_view": "List",
+   "format": "",
+   "icon": "file",
+   "kanban_board": "",
+   "label": "STD Package Inspector",
+   "link_to": "STD Template",
+   "restrict_to_domain": "",
+   "stats_filter": "{\"template_code\":[\"=\",\"KE-PPRA-WORKS-BLDG-2022-04-POC\"]}",
+   "type": "DocType",
+   "url": ""
+  }
+ ],
+ "title": "Governance & Configuration",
+ "type": "Workspace"
 }

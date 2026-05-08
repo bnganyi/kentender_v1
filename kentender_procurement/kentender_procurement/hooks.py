@@ -52,6 +52,7 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/procurement_planning_workspace.css?v={_desk_asset_v('public/css/procurement_planning_workspace.css')}",
 	f"/assets/kentender_procurement/css/procurement_home_workspace.css?v={_desk_asset_v('public/css/procurement_home_workspace.css')}",
 	f"/assets/kentender_procurement/css/procurement_package.css?v={_desk_asset_v('public/css/procurement_package.css')}",
+	f"/assets/kentender_procurement/css/std_library_shell.css?v={_desk_asset_v('public/css/std_library_shell.css')}",
 ]
 app_include_js = [
 	f"/assets/kentender_procurement/js/workspace_list_selection_utils.js?v={_desk_asset_v('public/js/workspace_list_selection_utils.js')}",
@@ -59,6 +60,7 @@ app_include_js = [
 	f"/assets/kentender_procurement/js/pp_template_selector.js?v={_desk_asset_v('public/js/pp_template_selector.js')}",
 	f"/assets/kentender_procurement/js/procurement_planning_workspace.js?v={_desk_asset_v('public/js/procurement_planning_workspace.js')}",
 	f"/assets/kentender_procurement/js/procurement_home_workspace.js?v={_desk_asset_v('public/js/procurement_home_workspace.js')}",
+	f"/assets/kentender_procurement/js/std_engine_desk_boot.js?v={_desk_asset_v('public/js/std_engine_desk_boot.js')}",
 ]
 
 # include js, css files in header of web template
@@ -77,6 +79,23 @@ doctype_js = {
 	"Demand": "public/js/demand_form.js",
 	"Procurement Package": "public/js/procurement_package.js",
 }
+
+# Never append ?v= to page_js values — Frappe resolves them as disk paths (meta.py get_code_files_via_hooks).
+page_js = {
+	"std-engine": [
+		"public/js/std_library/action_availability.js",
+		"public/js/std_library/summary_data.js",
+		"public/js/std_library/templates_data.js",
+		"public/js/std_library/import_wizard_data.js",
+		"public/js/std_library/std_library_api.js",
+		"public/js/std_library/std_library_user_messages.js",
+		"public/js/std_library/std_library_import_wizard_shell.js",
+		"public/js/std_library/std_library_shell_detail_renderers.js",
+		"public/js/std_library/std_library_shell.js",
+		"public/js/std_engine_page.js",
+	],
+}
+
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -289,6 +308,8 @@ has_permission = {
 
 after_migrate = [
 	"kentender_procurement.setup.after_migrate_navigation.run",
+	"kentender_procurement.tender_management.seeds.std_template_governance_roles.run_after_migrate",
+	"kentender_procurement.tender_management.seeds.std_template_governance_seed.run_after_migrate",
 ]
 
 boot_session = [

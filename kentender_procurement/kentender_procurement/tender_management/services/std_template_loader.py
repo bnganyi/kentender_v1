@@ -60,6 +60,41 @@ MANIFEST_TO_TEMPLATE_STATUS: dict[str, str] = {
 	"RETIRED": "Retired",
 }
 
+# STD-GOV-002 — governance ``lifecycle_status`` (doc 7 §7.4) from manifest machine code.
+MANIFEST_TO_LIFECYCLE_STATUS: dict[str, str] = {
+	"DRAFT_PACKAGE": "Imported",
+	"IMPORTED": "Imported",
+	"POC_APPROVED": "Approved",
+	"SUSPENDED": "Suspended",
+	"SUPERSEDED": "Superseded",
+	"RETIRED": "Retired",
+}
+
+
+def _normalize_template_family_for_select(raw: str | None) -> str:
+	"""Map manifest / legacy free text to ``STD Template.template_family`` Select (STD-GOV-002)."""
+	if not raw:
+		return "Other"
+	u = str(raw).strip().upper()
+	# Exact manifest / spec strings from STD-WORKS-POC package.
+	if u in (
+		"BUILDING_AND_ASSOCIATED_CIVIL_ENGINEERING_WORKS",
+		"WORKS",
+		"WORK",
+	):
+		return "Works"
+	if u in ("GOODS", "GOOD"):
+		return "Goods"
+	if u in ("SERVICES", "SERVICE"):
+		return "Services"
+	if u in ("CONSULTING", "CONSULTANCY"):
+		return "Consultancy"
+	if u in ("ICT",):
+		return "ICT"
+	if "WORKS" in u or ("BUILDING" in u and "CIVIL" in u):
+		return "Works"
+	return "Other"
+
 _PACKAGE_KEY_BY_FILE_NAME: dict[str, str] = {
 	"manifest.json": "manifest",
 	"sections.json": "sections",
@@ -309,6 +344,10 @@ def upsert_std_template(
 	template_code = manifest["template_code"]
 	manifest_status = (manifest.get("status") or {}).get("package_status")
 	template_status = map_manifest_status_to_template_status(manifest_status)
+	lifecycle_status = MANIFEST_TO_LIFECYCLE_STATUS.get(
+		manifest_status or "",
+		"Imported",
+	)
 
 	authority = (manifest.get("authority") or {}).get("name")
 	country = (manifest.get("jurisdiction") or {}).get("country_code")
@@ -330,14 +369,41 @@ def upsert_std_template(
 	doc.authority = authority
 	doc.country = country
 	doc.procurement_category = classification.get("procurement_category")
-	doc.template_family = classification.get("template_family")
+	doc.template_family = _normalize_template_family_for_select(
+		classification.get("template_family")
+	)
 	doc.version_label = versioning.get("source_version_label")
 	doc.package_version = versioning.get("package_version")
+	doc.template_version = (
+		str(versioning.get("source_version_label") or "").strip()
+		or str(versioning.get("package_version") or "").strip()
+		or str(doc.package_version or "").strip()
+	)
 	doc.status = template_status
+	doc.lifecycle_status = lifecycle_status
 	doc.allowed_for_import = 1 if status_block.get("allowed_for_import") else 0
 	doc.allowed_for_tender_creation = (
 		1 if status_block.get("allowed_for_tender_creation") else 0
 	)
+	doc.import_source_type = "Seed"
+	doc.package_hash_algorithm = "SHA-256"
+	doc.canonicalization_version = "V1"
+	doc.latest_validation_status = "Not Run"
+	doc.critical_finding_count = 0
+	doc.warning_finding_count = 0
+	doc.info_finding_count = 0
+	doc.validation_is_current = 0
+	doc.is_governed_version = 1
+	doc.tender_usage_count = 0
+	doc.locked_due_to_usage = 0
+	doc.mutation_blocked = 0
+	doc.delete_blocked = 1
+	doc.payload_locked = 0
+	doc.is_suspended = 0
+	doc.is_historical = 0
+	doc.approval_override_used = 0
+	doc.is_default_active_version = 0
+	doc.source_authority = authority
 	doc.source_document_code = source_document.get("source_document_code")
 	doc.source_file_name = source_document.get("source_file_name")
 	doc.source_file_hash = source_document.get("source_file_hash")
@@ -347,6 +413,7 @@ def upsert_std_template(
 	doc.imported_at = now_datetime()
 	doc.imported_by = getattr(getattr(frappe, "session", None), "user", None)
 
+	doc.flags.skip_std_template_guards = True
 	if action == "created":
 		doc.insert(ignore_permissions=True)
 	else:

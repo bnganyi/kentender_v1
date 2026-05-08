@@ -55,6 +55,18 @@
   {
    "child": 1,
    "collapsible": 0,
+   "icon": "book",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Official STD Library",
+   "link_to": "std-engine",
+   "link_type": "Page",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 1,
+   "collapsible": 0,
    "icon": "setting-gear",
    "indent": 0,
    "keep_closed": 0,

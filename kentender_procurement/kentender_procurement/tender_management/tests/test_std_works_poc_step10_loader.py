@@ -259,14 +259,20 @@ class TestStdWorksPocStep10Loader(IntegrationTestCase):
 		self.assertEqual(doc.authority, "Public Procurement Regulatory Authority")
 		self.assertEqual(doc.country, "KE")
 		self.assertEqual(doc.procurement_category, "WORKS")
-		self.assertEqual(
-			doc.template_family, "BUILDING_AND_ASSOCIATED_CIVIL_ENGINEERING_WORKS"
-		)
+		self.assertEqual(doc.template_family, "Works")
+		self.assertEqual(doc.lifecycle_status, "Imported")
+		self.assertEqual(doc.import_source_type, "Seed")
+		self.assertEqual(doc.package_hash_algorithm, "SHA-256")
+		self.assertEqual(doc.canonicalization_version, "V1")
+		self.assertEqual(doc.latest_validation_status, "Not Run")
 		self.assertEqual(doc.version_label, "April 2022")
 		self.assertEqual(doc.package_version, "0.1.0-poc")
+		self.assertEqual(doc.template_version, "April 2022")
 		self.assertEqual(doc.status, "Imported")
 		self.assertEqual(doc.allowed_for_import, 1)
-		self.assertEqual(doc.allowed_for_tender_creation, 1)
+		# STD-GOV-010 / STD-DM-VAL-006: effective tender creation flag is 0 until lifecycle Active,
+		# even when the manifest requests planning→tender handoff for the POC package.
+		self.assertEqual(doc.allowed_for_tender_creation, 0)
 		self.assertEqual(doc.source_document_code, "DOC. 1")
 		self.assertIn("STD FOR WORKS", doc.source_file_name)
 		self.assertEqual(doc.package_hash, compute_package_hash())
@@ -310,8 +316,9 @@ class TestStdWorksPocStep10Loader(IntegrationTestCase):
 
 		self.assertEqual(
 			doc.allowed_for_tender_creation,
-			1,
-			"STEP10-AC-014: allowed_for_tender_creation must reflect manifest (true for planning-to-tender handoff)",
+			0,
+			"STEP10-AC-014: manifest may request handoff, but STD Template governance clamps "
+			"allowed_for_tender_creation until lifecycle Active (STD-GOV-010 / STD-DM-VAL-006).",
 		)
 
 		std_meta = frappe.get_meta("STD Template")

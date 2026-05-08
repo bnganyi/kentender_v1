@@ -1,0 +1,104 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-05-03 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "usage_code",
+  "used_at",
+  "used_by",
+  "usage_type",
+  "tender",
+  "tender_std_instance",
+  "procurement_package",
+  "package_hash_at_use",
+  "configuration_hash_at_use",
+  "usage_status",
+  "payload_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "usage_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Usage Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "used_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Used At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "used_by",
+   "fieldtype": "Link",
+   "label": "Used By",
+   "options": "User"
+  },
+  {
+   "fieldname": "usage_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Usage Type",
+   "options": "Tender\nTender STD Instance\nPlanning Mapping Test",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender",
+   "fieldtype": "Data",
+   "label": "Tender"
+  },
+  {
+   "fieldname": "tender_std_instance",
+   "fieldtype": "Data",
+   "label": "Tender STD Instance"
+  },
+  {
+   "fieldname": "procurement_package",
+   "fieldtype": "Data",
+   "label": "Procurement Package"
+  },
+  {
+   "fieldname": "package_hash_at_use",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Package Hash At Use",
+   "reqd": 1
+  },
+  {
+   "fieldname": "configuration_hash_at_use",
+   "fieldtype": "Data",
+   "label": "Configuration Hash At Use"
+  },
+  {
+   "fieldname": "usage_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Usage Status",
+   "options": "Active\nSuperseded\nHistorical",
+   "reqd": 1
+  },
+  {
+   "fieldname": "payload_json",
+   "fieldtype": "Code",
+   "label": "Payload JSON",
+   "options": "JSON"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-03 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "STD Template Usage",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

@@ -1,0 +1,132 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-05-03 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "event_code",
+  "event_type",
+  "from_status",
+  "to_status",
+  "actor",
+  "actor_roles",
+  "event_at",
+  "reason",
+  "comment",
+  "package_hash",
+  "validation_run_id",
+  "related_template",
+  "related_tender",
+  "override_used",
+  "override_reason",
+  "payload_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "event_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Event Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "event_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Event Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "from_status",
+   "fieldtype": "Data",
+   "label": "From Status"
+  },
+  {
+   "fieldname": "to_status",
+   "fieldtype": "Data",
+   "label": "To Status"
+  },
+  {
+   "fieldname": "actor",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Actor",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "actor_roles",
+   "fieldtype": "Small Text",
+   "label": "Actor Roles"
+  },
+  {
+   "fieldname": "event_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Event At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason"
+  },
+  {
+   "fieldname": "comment",
+   "fieldtype": "Small Text",
+   "label": "Comment"
+  },
+  {
+   "fieldname": "package_hash",
+   "fieldtype": "Data",
+   "label": "Package Hash"
+  },
+  {
+   "fieldname": "validation_run_id",
+   "fieldtype": "Data",
+   "label": "Validation Run ID"
+  },
+  {
+   "fieldname": "related_template",
+   "fieldtype": "Link",
+   "label": "Related Template",
+   "options": "STD Template"
+  },
+  {
+   "fieldname": "related_tender",
+   "fieldtype": "Data",
+   "label": "Related Tender"
+  },
+  {
+   "default": "0",
+   "fieldname": "override_used",
+   "fieldtype": "Check",
+   "label": "Override Used"
+  },
+  {
+   "fieldname": "override_reason",
+   "fieldtype": "Small Text",
+   "label": "Override Reason"
+  },
+  {
+   "fieldname": "payload_json",
+   "fieldtype": "Code",
+   "label": "Payload JSON",
+   "options": "JSON"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-03 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "STD Template Lifecycle Event",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

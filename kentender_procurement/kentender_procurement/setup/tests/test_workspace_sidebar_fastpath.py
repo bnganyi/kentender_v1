@@ -67,3 +67,25 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 			items,
 			msg="Governance workspace must remain reachable without STD-only roles",
 		)
+
+	def test_procurement_sidebar_one_workspace_row_for_governance(self):
+		"""Official STD Library should target std-engine page while governance workspace stays reachable."""
+		if not frappe.db.exists("Workspace Sidebar", "Procurement"):
+			self.skipTest("Procurement Workspace Sidebar not on site")
+		doc = frappe.get_doc("Workspace Sidebar", "Procurement")
+		ws_links = [
+			r
+			for r in doc.items
+			if r.type == "Link"
+			and (r.link_type or "").lower() == "workspace"
+			and r.link_to == "Governance & Configuration"
+		]
+		self.assertEqual(len(ws_links), 1)
+		page_std_engine = [
+			r
+			for r in doc.items
+			if r.type == "Link"
+			and (r.link_type or "").lower() == "page"
+			and r.link_to == "std-engine"
+		]
+		self.assertEqual(len(page_std_engine), 1)

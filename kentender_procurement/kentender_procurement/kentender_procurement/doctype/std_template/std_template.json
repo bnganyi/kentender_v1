@@ -8,31 +8,128 @@
  "field_order": [
   "section_template_identity",
   "template_code",
+  "template_title",
   "template_name",
   "template_short_name",
   "column_template_identity_2",
   "authority",
   "country",
   "procurement_category",
+  "procurement_method_profile",
   "template_family",
   "version_label",
+  "template_version",
   "package_version",
+  "is_governed_version",
   "section_source_document",
+  "source_authority",
   "source_document_code",
   "source_file_name",
   "source_file_hash",
+  "source_document_title",
+  "source_effective_date",
+  "source_url",
+  "source_notes",
+  "import_source_type",
+  "import_batch_id",
   "section_import_status",
   "status",
   "allowed_for_import",
   "allowed_for_tender_creation",
+  "lifecycle_status",
+  "previous_lifecycle_status",
+  "status_changed_at",
+  "status_changed_by",
+  "status_reason",
+  "is_suspended",
+  "is_historical",
+  "section_governance_validation",
+  "latest_validation_status",
+  "latest_validation_run_id",
+  "latest_validation_at",
+  "latest_validation_by",
+  "latest_validation_package_hash",
+  "latest_validation_result_json",
+  "critical_finding_count",
+  "warning_finding_count",
+  "info_finding_count",
+  "validation_is_current",
+  "section_governance_approval",
+  "submitted_for_approval_by",
+  "submitted_for_approval_at",
+  "submission_comment",
+  "reviewed_by",
+  "reviewed_at",
+  "review_comment",
+  "approved_by",
+  "approved_at",
+  "approval_decision",
+  "approval_comments",
+  "approval_validation_run_id",
+  "approval_package_hash",
+  "approval_override_used",
+  "approval_override_reason",
+  "section_governance_activation",
+  "activated_by",
+  "activated_at",
+  "activation_reason",
+  "activation_approval_reference",
+  "activation_package_hash",
+  "active_from",
+  "active_until",
+  "suspended_by",
+  "suspended_at",
+  "suspension_reason",
+  "reinstated_by",
+  "reinstated_at",
+  "reinstatement_reason",
+  "retired_by",
+  "retired_at",
+  "retirement_reason",
+  "section_governance_versioning",
+  "supersedes_template",
+  "superseded_by_template",
+  "superseded_by",
+  "superseded_at",
+  "supersession_reason",
+  "supersession_effective_date",
+  "is_default_active_version",
+  "active_profile_key",
+  "section_governance_usage",
+  "tender_usage_count",
+  "first_used_at",
+  "last_used_at",
+  "locked_due_to_usage",
+  "mutation_blocked",
+  "delete_blocked",
+  "usage_summary_json",
+  "section_governance_notes",
+  "governance_notes",
+  "correction_notes",
+  "internal_admin_notes",
+  "legal_review_notes",
   "imported_at",
   "imported_by",
   "section_std_package_viewer",
   "html_std_package_viewer",
   "section_package_payload",
   "package_hash",
+  "package_hash_algorithm",
+  "package_size_bytes",
+  "package_file_reference",
+  "canonicalization_version",
+  "payload_locked",
   "package_json",
   "manifest_json",
+  "section_governance_snapshot",
+  "latest_governance_snapshot_json",
+  "latest_governance_snapshot_hash",
+  "latest_governance_snapshot_at",
+  "latest_governance_snapshot_by",
+  "section_governance_child_tables",
+  "lifecycle_events",
+  "validation_findings",
+  "template_usage",
   "section_review_notes",
   "review_notes"
  ],
@@ -50,6 +147,13 @@
    "reqd": 1,
    "search_index": 1,
    "unique": 1
+  },
+  {
+   "fieldname": "template_title",
+   "fieldtype": "Data",
+   "label": "Template Title",
+   "fetch_from": "template_name",
+   "read_only": 1
   },
   {
    "fieldname": "template_name",
@@ -94,16 +198,29 @@
    "reqd": 1
   },
   {
-   "fieldname": "template_family",
+   "fieldname": "procurement_method_profile",
    "fieldtype": "Data",
+   "label": "Procurement Method Profile"
+  },
+  {
+   "fieldname": "template_family",
+   "fieldtype": "Select",
    "label": "Template Family",
-   "read_only": 1,
-   "reqd": 1
+   "reqd": 1,
+   "options": "Works\nGoods\nServices\nConsultancy\nICT\nOther",
+   "read_only": 1
   },
   {
    "fieldname": "version_label",
    "fieldtype": "Data",
    "label": "Version Label",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "template_version",
+   "fieldtype": "Data",
+   "label": "Template Version",
    "read_only": 1,
    "reqd": 1
   },
@@ -115,9 +232,24 @@
    "reqd": 1
   },
   {
+   "fieldname": "is_governed_version",
+   "fieldtype": "Check",
+   "label": "Is Governed Version",
+   "default": "1",
+   "read_only": 1
+  },
+  {
    "fieldname": "section_source_document",
    "fieldtype": "Section Break",
    "label": "2. Source Document"
+  },
+  {
+   "fieldname": "source_authority",
+   "fieldtype": "Data",
+   "label": "Source Authority",
+   "fetch_from": "authority",
+   "read_only": 1,
+   "reqd": 1
   },
   {
    "fieldname": "source_document_code",
@@ -136,6 +268,39 @@
    "fieldtype": "Data",
    "label": "Source File Hash",
    "read_only": 1
+  },
+  {
+   "fieldname": "source_document_title",
+   "fieldtype": "Data",
+   "label": "Source Document Title"
+  },
+  {
+   "fieldname": "source_effective_date",
+   "fieldtype": "Date",
+   "label": "Source Effective Date"
+  },
+  {
+   "fieldname": "source_url",
+   "fieldtype": "Data",
+   "label": "Source URL"
+  },
+  {
+   "fieldname": "source_notes",
+   "fieldtype": "Small Text",
+   "label": "Source Notes"
+  },
+  {
+   "fieldname": "import_source_type",
+   "fieldtype": "Select",
+   "label": "Import Source Type",
+   "options": "Seed\nPackage Upload\nSystem Migration\nManual Technical Import",
+   "default": "Seed",
+   "reqd": 1
+  },
+  {
+   "fieldname": "import_batch_id",
+   "fieldtype": "Data",
+   "label": "Import Batch ID"
   },
   {
    "fieldname": "section_import_status",
@@ -163,6 +328,408 @@
    "fieldname": "allowed_for_tender_creation",
    "fieldtype": "Check",
    "label": "Allowed For Tender Creation"
+  },
+  {
+   "fieldname": "lifecycle_status",
+   "fieldtype": "Select",
+   "label": "Lifecycle Status",
+   "options": "Imported\nValidation Failed\nValidated\nSubmitted for Approval\nReturned for Correction\nRejected\nApproved\nActive\nSuspended\nSuperseded\nRetired\nArchived",
+   "default": "Imported",
+   "in_list_view": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "previous_lifecycle_status",
+   "fieldtype": "Data",
+   "label": "Previous Lifecycle Status"
+  },
+  {
+   "fieldname": "status_changed_at",
+   "fieldtype": "Datetime",
+   "label": "Status Changed At"
+  },
+  {
+   "fieldname": "status_changed_by",
+   "fieldtype": "Link",
+   "label": "Status Changed By",
+   "options": "User"
+  },
+  {
+   "fieldname": "status_reason",
+   "fieldtype": "Small Text",
+   "label": "Status Reason"
+  },
+  {
+   "fieldname": "is_suspended",
+   "fieldtype": "Check",
+   "label": "Is Suspended",
+   "default": "0"
+  },
+  {
+   "fieldname": "is_historical",
+   "fieldtype": "Check",
+   "label": "Is Historical",
+   "default": "0"
+  },
+  {
+   "fieldname": "section_governance_validation",
+   "fieldtype": "Section Break",
+   "label": "Governance — Validation"
+  },
+  {
+   "fieldname": "latest_validation_status",
+   "fieldtype": "Select",
+   "label": "Latest Validation Status",
+   "options": "Not Run\nPass\nPass with Warnings\nBlocked\nFailed",
+   "default": "Not Run",
+   "reqd": 1
+  },
+  {
+   "fieldname": "latest_validation_run_id",
+   "fieldtype": "Data",
+   "label": "Latest Validation Run ID"
+  },
+  {
+   "fieldname": "latest_validation_at",
+   "fieldtype": "Datetime",
+   "label": "Latest Validation At"
+  },
+  {
+   "fieldname": "latest_validation_by",
+   "fieldtype": "Link",
+   "label": "Latest Validation By",
+   "options": "User"
+  },
+  {
+   "fieldname": "latest_validation_package_hash",
+   "fieldtype": "Data",
+   "label": "Latest Validation Package Hash"
+  },
+  {
+   "fieldname": "latest_validation_result_json",
+   "fieldtype": "Code",
+   "label": "Latest Validation Result JSON",
+   "options": "JSON"
+  },
+  {
+   "fieldname": "critical_finding_count",
+   "fieldtype": "Int",
+   "label": "Critical Finding Count",
+   "default": "0",
+   "reqd": 1
+  },
+  {
+   "fieldname": "warning_finding_count",
+   "fieldtype": "Int",
+   "label": "Warning Finding Count",
+   "default": "0",
+   "reqd": 1
+  },
+  {
+   "fieldname": "info_finding_count",
+   "fieldtype": "Int",
+   "label": "Info Finding Count",
+   "default": "0",
+   "reqd": 1
+  },
+  {
+   "fieldname": "validation_is_current",
+   "fieldtype": "Check",
+   "label": "Validation Is Current",
+   "default": "0",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_governance_approval",
+   "fieldtype": "Section Break",
+   "label": "Governance — Review and approval"
+  },
+  {
+   "fieldname": "submitted_for_approval_by",
+   "fieldtype": "Link",
+   "label": "Submitted For Approval By",
+   "options": "User"
+  },
+  {
+   "fieldname": "submitted_for_approval_at",
+   "fieldtype": "Datetime",
+   "label": "Submitted For Approval At"
+  },
+  {
+   "fieldname": "submission_comment",
+   "fieldtype": "Small Text",
+   "label": "Submission Comment"
+  },
+  {
+   "fieldname": "reviewed_by",
+   "fieldtype": "Link",
+   "label": "Reviewed By",
+   "options": "User"
+  },
+  {
+   "fieldname": "reviewed_at",
+   "fieldtype": "Datetime",
+   "label": "Reviewed At"
+  },
+  {
+   "fieldname": "review_comment",
+   "fieldtype": "Small Text",
+   "label": "Review Comment"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User"
+  },
+  {
+   "fieldname": "approved_at",
+   "fieldtype": "Datetime",
+   "label": "Approved At"
+  },
+  {
+   "fieldname": "approval_decision",
+   "fieldtype": "Select",
+   "label": "Approval Decision",
+   "options": "Approved\nRejected\nReturned"
+  },
+  {
+   "fieldname": "approval_comments",
+   "fieldtype": "Small Text",
+   "label": "Approval Comments"
+  },
+  {
+   "fieldname": "approval_validation_run_id",
+   "fieldtype": "Data",
+   "label": "Approval Validation Run ID"
+  },
+  {
+   "fieldname": "approval_package_hash",
+   "fieldtype": "Data",
+   "label": "Approval Package Hash"
+  },
+  {
+   "fieldname": "approval_override_used",
+   "fieldtype": "Check",
+   "label": "Approval Override Used",
+   "default": "0"
+  },
+  {
+   "fieldname": "approval_override_reason",
+   "fieldtype": "Small Text",
+   "label": "Approval Override Reason"
+  },
+  {
+   "fieldname": "section_governance_activation",
+   "fieldtype": "Section Break",
+   "label": "Governance — Activation and availability"
+  },
+  {
+   "fieldname": "activated_by",
+   "fieldtype": "Link",
+   "label": "Activated By",
+   "options": "User"
+  },
+  {
+   "fieldname": "activated_at",
+   "fieldtype": "Datetime",
+   "label": "Activated At"
+  },
+  {
+   "fieldname": "activation_reason",
+   "fieldtype": "Small Text",
+   "label": "Activation Reason"
+  },
+  {
+   "fieldname": "activation_approval_reference",
+   "fieldtype": "Data",
+   "label": "Activation Approval Reference"
+  },
+  {
+   "fieldname": "activation_package_hash",
+   "fieldtype": "Data",
+   "label": "Activation Package Hash"
+  },
+  {
+   "fieldname": "active_from",
+   "fieldtype": "Date",
+   "label": "Active From"
+  },
+  {
+   "fieldname": "active_until",
+   "fieldtype": "Date",
+   "label": "Active Until"
+  },
+  {
+   "fieldname": "suspended_by",
+   "fieldtype": "Link",
+   "label": "Suspended By",
+   "options": "User"
+  },
+  {
+   "fieldname": "suspended_at",
+   "fieldtype": "Datetime",
+   "label": "Suspended At"
+  },
+  {
+   "fieldname": "suspension_reason",
+   "fieldtype": "Small Text",
+   "label": "Suspension Reason"
+  },
+  {
+   "fieldname": "reinstated_by",
+   "fieldtype": "Link",
+   "label": "Reinstated By",
+   "options": "User"
+  },
+  {
+   "fieldname": "reinstated_at",
+   "fieldtype": "Datetime",
+   "label": "Reinstated At"
+  },
+  {
+   "fieldname": "reinstatement_reason",
+   "fieldtype": "Small Text",
+   "label": "Reinstatement Reason"
+  },
+  {
+   "fieldname": "retired_by",
+   "fieldtype": "Link",
+   "label": "Retired By",
+   "options": "User"
+  },
+  {
+   "fieldname": "retired_at",
+   "fieldtype": "Datetime",
+   "label": "Retired At"
+  },
+  {
+   "fieldname": "retirement_reason",
+   "fieldtype": "Small Text",
+   "label": "Retirement Reason"
+  },
+  {
+   "fieldname": "section_governance_versioning",
+   "fieldtype": "Section Break",
+   "label": "Governance — Versioning and supersession"
+  },
+  {
+   "fieldname": "supersedes_template",
+   "fieldtype": "Link",
+   "label": "Supersedes Template",
+   "options": "STD Template"
+  },
+  {
+   "fieldname": "superseded_by_template",
+   "fieldtype": "Link",
+   "label": "Superseded By Template",
+   "options": "STD Template"
+  },
+  {
+   "fieldname": "superseded_by",
+   "fieldtype": "Link",
+   "label": "Superseded By User",
+   "options": "User"
+  },
+  {
+   "fieldname": "superseded_at",
+   "fieldtype": "Datetime",
+   "label": "Superseded At"
+  },
+  {
+   "fieldname": "supersession_reason",
+   "fieldtype": "Small Text",
+   "label": "Supersession Reason"
+  },
+  {
+   "fieldname": "supersession_effective_date",
+   "fieldtype": "Date",
+   "label": "Supersession Effective Date"
+  },
+  {
+   "fieldname": "is_default_active_version",
+   "fieldtype": "Check",
+   "label": "Is Default Active Version",
+   "default": "0"
+  },
+  {
+   "fieldname": "active_profile_key",
+   "fieldtype": "Data",
+   "label": "Active Profile Key"
+  },
+  {
+   "fieldname": "section_governance_usage",
+   "fieldtype": "Section Break",
+   "label": "Governance — Usage and locking"
+  },
+  {
+   "fieldname": "tender_usage_count",
+   "fieldtype": "Int",
+   "label": "Tender Usage Count",
+   "default": "0",
+   "reqd": 1
+  },
+  {
+   "fieldname": "first_used_at",
+   "fieldtype": "Datetime",
+   "label": "First Used At"
+  },
+  {
+   "fieldname": "last_used_at",
+   "fieldtype": "Datetime",
+   "label": "Last Used At"
+  },
+  {
+   "fieldname": "locked_due_to_usage",
+   "fieldtype": "Check",
+   "label": "Locked Due To Usage",
+   "default": "0",
+   "reqd": 1
+  },
+  {
+   "fieldname": "mutation_blocked",
+   "fieldtype": "Check",
+   "label": "Mutation Blocked",
+   "default": "0",
+   "reqd": 1
+  },
+  {
+   "fieldname": "delete_blocked",
+   "fieldtype": "Check",
+   "label": "Delete Blocked",
+   "default": "1",
+   "reqd": 1
+  },
+  {
+   "fieldname": "usage_summary_json",
+   "fieldtype": "Code",
+   "label": "Usage Summary JSON",
+   "options": "JSON"
+  },
+  {
+   "fieldname": "section_governance_notes",
+   "fieldtype": "Section Break",
+   "label": "Governance — Notes"
+  },
+  {
+   "fieldname": "governance_notes",
+   "fieldtype": "Long Text",
+   "label": "Governance Notes"
+  },
+  {
+   "fieldname": "correction_notes",
+   "fieldtype": "Long Text",
+   "label": "Correction Notes"
+  },
+  {
+   "fieldname": "internal_admin_notes",
+   "fieldtype": "Long Text",
+   "label": "Internal Admin Notes"
+  },
+  {
+   "fieldname": "legal_review_notes",
+   "fieldtype": "Long Text",
+   "label": "Legal Review Notes"
   },
   {
    "fieldname": "imported_at",
@@ -200,6 +767,42 @@
    "read_only": 1
   },
   {
+   "fieldname": "package_hash_algorithm",
+   "fieldtype": "Data",
+   "label": "Package Hash Algorithm",
+   "default": "SHA-256",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "package_size_bytes",
+   "fieldtype": "Int",
+   "label": "Package Size Bytes",
+   "read_only": 1
+  },
+  {
+   "fieldname": "package_file_reference",
+   "fieldtype": "Data",
+   "label": "Package File Reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "canonicalization_version",
+   "fieldtype": "Data",
+   "label": "Canonicalization Version",
+   "default": "V1",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "payload_locked",
+   "fieldtype": "Check",
+   "label": "Payload Locked",
+   "default": "0",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
    "fieldname": "package_json",
    "fieldtype": "Code",
    "label": "Package JSON",
@@ -213,6 +816,60 @@
    "label": "Manifest JSON",
    "options": "JSON",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_governance_snapshot",
+   "fieldtype": "Section Break",
+   "label": "Governance — Snapshot"
+  },
+  {
+   "fieldname": "latest_governance_snapshot_json",
+   "fieldtype": "Code",
+   "label": "Latest Governance Snapshot JSON",
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "fieldname": "latest_governance_snapshot_hash",
+   "fieldtype": "Data",
+   "label": "Latest Governance Snapshot Hash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "latest_governance_snapshot_at",
+   "fieldtype": "Datetime",
+   "label": "Latest Governance Snapshot At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "latest_governance_snapshot_by",
+   "fieldtype": "Link",
+   "label": "Latest Governance Snapshot By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_governance_child_tables",
+   "fieldtype": "Section Break",
+   "label": "Governance — History (child tables)"
+  },
+  {
+   "fieldname": "lifecycle_events",
+   "fieldtype": "Table",
+   "label": "Lifecycle Events",
+   "options": "STD Template Lifecycle Event"
+  },
+  {
+   "fieldname": "validation_findings",
+   "fieldtype": "Table",
+   "label": "Validation Findings",
+   "options": "STD Template Validation Finding"
+  },
+  {
+   "fieldname": "template_usage",
+   "fieldtype": "Table",
+   "label": "Template Usage",
+   "options": "STD Template Usage"
   },
   {
    "fieldname": "section_review_notes",
@@ -257,7 +914,7 @@
    "write": 1
   }
  ],
- "search_fields": "template_code,template_name,authority,version_label,status",
+ "search_fields": "template_code,template_name,template_title,authority,version_label,status,lifecycle_status",
  "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",

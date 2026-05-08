@@ -15,6 +15,13 @@ export async function expectStdAdminGroupVisible(page: Page) {
 	).toBeVisible({ timeout: 120_000 });
 }
 
+/** STD-GOV-011 — governance lifecycle actions on ``STD Template`` form. */
+export async function expectStdGovernanceGroupVisible(page: Page) {
+	await expect(
+		page.locator(`.inner-group-button[data-label="${enc('STD Governance')}"]`).first(),
+	).toBeVisible({ timeout: 120_000 });
+}
+
 /** STD Template custom actions under "STD Admin". */
 export async function clickStdAdminAction(page: Page, label: string) {
 	const group = page.locator(`.inner-group-button[data-label="${enc('STD Admin')}"]`).first();
