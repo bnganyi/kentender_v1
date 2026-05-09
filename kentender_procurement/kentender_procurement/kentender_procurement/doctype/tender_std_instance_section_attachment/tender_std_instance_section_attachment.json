@@ -1,0 +1,122 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-05-08 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "attachment_code",
+  "section_code",
+  "component_code",
+  "file_reference",
+  "file_name",
+  "file_hash",
+  "classification",
+  "version_number",
+  "status",
+  "source_addendum_code",
+  "supersedes_attachment_code",
+  "uploaded_by",
+  "uploaded_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "attachment_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Attachment Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Section Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "component_code",
+   "fieldtype": "Data",
+   "label": "Component Code"
+  },
+  {
+   "fieldname": "file_reference",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "File Reference",
+   "reqd": 1
+  },
+  {
+   "fieldname": "file_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "File Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "file_hash",
+   "fieldtype": "Data",
+   "label": "File Hash"
+  },
+  {
+   "default": "Internal Only",
+   "fieldname": "classification",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Classification",
+   "options": "Supplier Facing\nInternal Only\nContract Facing",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "version_number",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Version Number",
+   "reqd": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nCurrent\nPublished\nSuperseded\nArchived",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_addendum_code",
+   "fieldtype": "Data",
+   "label": "Source Addendum Code"
+  },
+  {
+   "fieldname": "supersedes_attachment_code",
+   "fieldtype": "Data",
+   "label": "Supersedes Attachment Code"
+  },
+  {
+   "fieldname": "uploaded_by",
+   "fieldtype": "Link",
+   "label": "Uploaded By",
+   "options": "User"
+  },
+  {
+   "fieldname": "uploaded_at",
+   "fieldtype": "Datetime",
+   "label": "Uploaded At"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-08 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "Tender STD Instance Section Attachment",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

@@ -1,0 +1,193 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-05-08 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "naming_series",
+  "tender_std_instance",
+  "boq_definition_code",
+  "currency",
+  "pricing_model",
+  "quantity_owner",
+  "supplier_input_mode",
+  "amount_computation_rule",
+  "arithmetic_correction_stage",
+  "status",
+  "version_number",
+  "source_addendum_code",
+  "section_boq_tables",
+  "boq_bills",
+  "boq_items"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "default": "STD-BOQ-.#####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "STD-BOQ-.#####\n",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender_std_instance",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Tender STD Instance",
+   "options": "Tender STD Instance",
+   "reqd": 1
+  },
+  {
+   "default": "DEFAULT",
+   "fieldname": "boq_definition_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "BOQ Definition Code",
+   "reqd": 1
+  },
+  {
+   "default": "USD",
+   "fieldname": "currency",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Currency",
+   "reqd": 1
+  },
+  {
+   "default": "Bills of Quantities",
+   "fieldname": "pricing_model",
+   "fieldtype": "Select",
+   "label": "Pricing Model",
+   "options": "Bills of Quantities\nOther",
+   "reqd": 1
+  },
+  {
+   "default": "Procuring Entity",
+   "fieldname": "quantity_owner",
+   "fieldtype": "Select",
+   "label": "Quantity Owner",
+   "options": "Procuring Entity",
+   "reqd": 1
+  },
+  {
+   "default": "Rate Only",
+   "fieldname": "supplier_input_mode",
+   "fieldtype": "Select",
+   "label": "Supplier Input Mode",
+   "options": "Rate Only",
+   "reqd": 1
+  },
+  {
+   "default": "quantity_times_rate",
+   "fieldname": "amount_computation_rule",
+   "fieldtype": "Data",
+   "label": "Amount Computation Rule",
+   "reqd": 1
+  },
+  {
+   "default": "Evaluation",
+   "fieldname": "arithmetic_correction_stage",
+   "fieldtype": "Select",
+   "label": "Arithmetic Correction Stage",
+   "options": "Evaluation",
+   "reqd": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nCurrent\nPublished\nSuperseded\nArchived",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "version_number",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Version Number",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_addendum_code",
+   "fieldtype": "Data",
+   "label": "Source Addendum Code"
+  },
+  {
+   "fieldname": "section_boq_tables",
+   "fieldtype": "Section Break",
+   "label": "Bills and items"
+  },
+  {
+   "fieldname": "boq_bills",
+   "fieldtype": "Table",
+   "label": "BOQ Bills",
+   "options": "Tender STD Instance BOQ Bill"
+  },
+  {
+   "fieldname": "boq_items",
+   "fieldtype": "Table",
+   "label": "BOQ Items",
+   "options": "Tender STD Instance BOQ Item"
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-08 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "Tender STD Instance BOQ",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "boq_definition_code",
+ "track_changes": 1
+}

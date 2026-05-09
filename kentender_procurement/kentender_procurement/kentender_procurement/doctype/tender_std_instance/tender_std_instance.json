@@ -1,0 +1,333 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-05-08 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "naming_series",
+  "section_binding",
+  "procurement_tender",
+  "procurement_package",
+  "template_version_code",
+  "applicability_profile_code",
+  "procurement_category",
+  "procurement_method",
+  "section_status",
+  "instance_status",
+  "readiness_status",
+  "section_parameters",
+  "parameter_values",
+  "section_std_attachments",
+  "section_attachments",
+  "section_works_requirements",
+  "works_requirements",
+  "section_drawing_register",
+  "drawing_register",
+  "section_outputs",
+  "outputs_stale_flags",
+  "current_bundle_output_code",
+  "current_dsm_output_code",
+  "current_dom_output_code",
+  "current_dem_output_code",
+  "current_dcm_output_code",
+  "section_provenance",
+  "created_from_tender_context",
+  "created_by",
+  "created_at",
+  "section_approval_publish_lock",
+  "locked_for_approval_at",
+  "locked_for_approval_by",
+  "published_locked_at",
+  "published_locked_by",
+  "section_terminal",
+  "superseded_by_instance_code",
+  "cancellation_reason"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "default": "STDINST-.#####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "STDINST-.#####\n",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_binding",
+   "fieldtype": "Section Break",
+   "label": "Tender and template binding"
+  },
+  {
+   "fieldname": "procurement_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Procurement Tender",
+   "options": "Procurement Tender",
+   "reqd": 1
+  },
+  {
+   "fieldname": "procurement_package",
+   "fieldtype": "Link",
+   "label": "Procurement Package",
+   "options": "Procurement Package"
+  },
+  {
+   "fieldname": "template_version_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Template Version Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "applicability_profile_code",
+   "fieldtype": "Data",
+   "label": "Applicability Profile Code",
+   "reqd": 1
+  },
+  {
+   "default": "WORKS",
+   "fieldname": "procurement_category",
+   "fieldtype": "Select",
+   "label": "Procurement Category",
+   "options": "WORKS\nGOODS\nSERVICES\nCONSULTING\nDISPOSAL\nOTHER",
+   "reqd": 1
+  },
+  {
+   "default": "OPEN_COMPETITIVE_TENDERING",
+   "fieldname": "procurement_method",
+   "fieldtype": "Select",
+   "label": "Procurement Method",
+   "options": "OPEN_COMPETITIVE_TENDERING\nRESTRICTED_COMPETITIVE_TENDERING",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_status",
+   "fieldtype": "Section Break",
+   "label": "Status"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "instance_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Instance Status",
+   "options": "Draft\nIn Configuration\nValidation Blocked\nReady for Publication\nLocked for Approval\nPublished Locked\nAddendum Pending\nAddendum Regenerated\nSuperseded\nCancelled",
+   "reqd": 1
+  },
+  {
+   "default": "Not Ready",
+   "fieldname": "readiness_status",
+   "fieldtype": "Select",
+   "label": "Readiness Status",
+   "options": "Not Ready\nReady\nBlocked",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_parameters",
+   "fieldtype": "Section Break",
+   "label": "STD parameter values"
+  },
+  {
+   "fieldname": "parameter_values",
+   "fieldtype": "Table",
+   "label": "Parameter Values",
+   "options": "Tender STD Instance Parameter Value"
+  },
+  {
+   "fieldname": "section_std_attachments",
+   "fieldtype": "Section Break",
+   "label": "STD section attachments"
+  },
+  {
+   "fieldname": "section_attachments",
+   "fieldtype": "Table",
+   "label": "Section Attachments",
+   "options": "Tender STD Instance Section Attachment"
+  },
+  {
+   "fieldname": "section_works_requirements",
+   "fieldtype": "Section Break",
+   "label": "Works requirements"
+  },
+  {
+   "fieldname": "works_requirements",
+   "fieldtype": "Table",
+   "label": "Works Requirements",
+   "options": "Tender STD Instance Works Requirement"
+  },
+  {
+   "fieldname": "section_drawing_register",
+   "fieldtype": "Section Break",
+   "label": "Drawing register"
+  },
+  {
+   "fieldname": "drawing_register",
+   "fieldtype": "Table",
+   "label": "Drawing Register",
+   "options": "Tender STD Instance Drawing Register Entry"
+  },
+  {
+   "fieldname": "section_outputs",
+   "fieldtype": "Section Break",
+   "label": "Current generated outputs (references)"
+  },
+  {
+   "description": "JSON array of logical output keys marked stale after parameter changes (e.g. [\"Bundle\", \"DOM\"]).",
+   "fieldname": "outputs_stale_flags",
+   "fieldtype": "Code",
+   "label": "Outputs Stale Flags"
+  },
+  {
+   "fieldname": "current_bundle_output_code",
+   "fieldtype": "Data",
+   "label": "Current Bundle Output Code"
+  },
+  {
+   "fieldname": "current_dsm_output_code",
+   "fieldtype": "Data",
+   "label": "Current DSM Output Code"
+  },
+  {
+   "fieldname": "current_dom_output_code",
+   "fieldtype": "Data",
+   "label": "Current DOM Output Code"
+  },
+  {
+   "fieldname": "current_dem_output_code",
+   "fieldtype": "Data",
+   "label": "Current DEM Output Code"
+  },
+  {
+   "fieldname": "current_dcm_output_code",
+   "fieldtype": "Data",
+   "label": "Current DCM Output Code"
+  },
+  {
+   "fieldname": "section_provenance",
+   "fieldtype": "Section Break",
+   "label": "Provenance"
+  },
+  {
+   "default": "0",
+   "description": "Must be set when creating from a Tender context. Instances created without this flag are rejected.",
+   "fieldname": "created_from_tender_context",
+   "fieldtype": "Check",
+   "label": "Created From Tender Context",
+   "reqd": 1
+  },
+  {
+   "fieldname": "created_by",
+   "fieldtype": "Link",
+   "label": "Created By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "created_at",
+   "fieldtype": "Datetime",
+   "label": "Created At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_approval_publish_lock",
+   "fieldtype": "Section Break",
+   "label": "Approval and publication lock"
+  },
+  {
+   "fieldname": "locked_for_approval_at",
+   "fieldtype": "Datetime",
+   "label": "Locked For Approval At"
+  },
+  {
+   "fieldname": "locked_for_approval_by",
+   "fieldtype": "Link",
+   "label": "Locked For Approval By",
+   "options": "User"
+  },
+  {
+   "fieldname": "published_locked_at",
+   "fieldtype": "Datetime",
+   "label": "Published Locked At"
+  },
+  {
+   "fieldname": "published_locked_by",
+   "fieldtype": "Link",
+   "label": "Published Locked By",
+   "options": "User"
+  },
+  {
+   "fieldname": "section_terminal",
+   "fieldtype": "Section Break",
+   "label": "Supersession and cancellation"
+  },
+  {
+   "fieldname": "superseded_by_instance_code",
+   "fieldtype": "Link",
+   "label": "Superseded By Instance",
+   "options": "Tender STD Instance"
+  },
+  {
+   "fieldname": "cancellation_reason",
+   "fieldtype": "Small Text",
+   "label": "Cancellation Reason"
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-08 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "Tender STD Instance",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "search_fields": "procurement_tender,template_version_code,instance_status",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "template_version_code",
+ "track_changes": 1
+}

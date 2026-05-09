@@ -1,0 +1,127 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-05-08 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_instance_code",
+  "bill_instance_code",
+  "item_number",
+  "description",
+  "unit",
+  "quantity",
+  "item_type",
+  "supplier_input_mode",
+  "rate_required_from_supplier",
+  "fixed_amount",
+  "provisional_sum_amount",
+  "status",
+  "source_addendum_code"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_instance_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Instance Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "bill_instance_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Bill Instance Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "item_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Number",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "unit",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Unit",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "quantity",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Quantity",
+   "reqd": 1
+  },
+  {
+   "default": "Normal",
+   "fieldname": "item_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Item Type",
+   "options": "Normal\nPreliminary\nDaywork\nProvisional Sum\nSummary",
+   "reqd": 1
+  },
+  {
+   "default": "Rate Only",
+   "fieldname": "supplier_input_mode",
+   "fieldtype": "Select",
+   "label": "Supplier Input Mode",
+   "options": "Rate Only\nNone\nFixed Amount",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "rate_required_from_supplier",
+   "fieldtype": "Check",
+   "label": "Rate Required From Supplier"
+  },
+  {
+   "fieldname": "fixed_amount",
+   "fieldtype": "Currency",
+   "label": "Fixed Amount"
+  },
+  {
+   "fieldname": "provisional_sum_amount",
+   "fieldtype": "Currency",
+   "label": "Provisional Sum Amount"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nCurrent\nPublished\nSuperseded",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_addendum_code",
+   "fieldtype": "Data",
+   "label": "Source Addendum Code"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-08 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "Tender STD Instance BOQ Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

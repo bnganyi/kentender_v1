@@ -1,0 +1,127 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-05-08 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "requirement_code",
+  "component_code",
+  "requirement_status",
+  "structured_text",
+  "structured_data",
+  "attachment_required",
+  "attachment_status",
+  "drives_bundle",
+  "drives_dsm",
+  "drives_dem",
+  "drives_dcm",
+  "source_addendum_code",
+  "updated_by",
+  "updated_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "requirement_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Requirement Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "component_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Component Code",
+   "reqd": 1
+  },
+  {
+   "default": "Missing",
+   "fieldname": "requirement_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Requirement Status",
+   "options": "Missing\nIn Progress\nComplete\nNot Applicable",
+   "reqd": 1
+  },
+  {
+   "fieldname": "structured_text",
+   "fieldtype": "Long Text",
+   "label": "Structured Text"
+  },
+  {
+   "fieldname": "structured_data",
+   "fieldtype": "Code",
+   "label": "Structured Data",
+   "options": "JSON"
+  },
+  {
+   "default": "0",
+   "fieldname": "attachment_required",
+   "fieldtype": "Check",
+   "label": "Attachment Required"
+  },
+  {
+   "default": "Not Required",
+   "fieldname": "attachment_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Attachment Status",
+   "options": "Not Required\nMissing\nComplete",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "drives_bundle",
+   "fieldtype": "Check",
+   "label": "Drives Bundle"
+  },
+  {
+   "default": "0",
+   "fieldname": "drives_dsm",
+   "fieldtype": "Check",
+   "label": "Drives DSM"
+  },
+  {
+   "default": "0",
+   "fieldname": "drives_dem",
+   "fieldtype": "Check",
+   "label": "Drives DEM"
+  },
+  {
+   "default": "0",
+   "fieldname": "drives_dcm",
+   "fieldtype": "Check",
+   "label": "Drives DCM"
+  },
+  {
+   "fieldname": "source_addendum_code",
+   "fieldtype": "Data",
+   "label": "Source Addendum Code"
+  },
+  {
+   "fieldname": "updated_by",
+   "fieldtype": "Link",
+   "label": "Updated By",
+   "options": "User"
+  },
+  {
+   "fieldname": "updated_at",
+   "fieldtype": "Datetime",
+   "label": "Updated At"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-08 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "Tender STD Instance Works Requirement",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

@@ -1,0 +1,210 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "naming_series:",
+ "creation": "2026-05-08 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "naming_series",
+  "tender_std_instance",
+  "procurement_tender",
+  "snapshot_type",
+  "snapshot_reason",
+  "snapshot_status",
+  "section_provenance",
+  "source_template_version_code",
+  "source_addendum_code",
+  "section_output_refs",
+  "ref_bundle_output",
+  "ref_dsm_output",
+  "ref_dom_output",
+  "ref_dem_output",
+  "ref_dcm_output",
+  "section_hashes",
+  "parameter_values_hash",
+  "works_requirements_hash",
+  "attachments_hash",
+  "boq_hash",
+  "complete_instance_hash",
+  "section_audit",
+  "created_by",
+  "created_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "default": "STD-SNAP-.#####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "STD-SNAP-.#####\n",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender_std_instance",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Tender STD Instance",
+   "options": "Tender STD Instance",
+   "reqd": 1
+  },
+  {
+   "fieldname": "procurement_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Procurement Tender",
+   "options": "Procurement Tender",
+   "reqd": 1
+  },
+  {
+   "fieldname": "snapshot_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Snapshot Type",
+   "options": "Configuration\nPublication\nAddendum\nOpening\nEvaluation\nContract",
+   "reqd": 1
+  },
+  {
+   "fieldname": "snapshot_reason",
+   "fieldtype": "Small Text",
+   "label": "Snapshot Reason",
+   "reqd": 1
+  },
+  {
+   "default": "Final",
+   "fieldname": "snapshot_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Snapshot Status",
+   "options": "Draft\nFinal\nSuperseded\nArchived",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_provenance",
+   "fieldtype": "Section Break",
+   "label": "Provenance"
+  },
+  {
+   "fieldname": "source_template_version_code",
+   "fieldtype": "Data",
+   "label": "Source Template Version Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_addendum_code",
+   "fieldtype": "Data",
+   "label": "Source Addendum Code"
+  },
+  {
+   "fieldname": "section_output_refs",
+   "fieldtype": "Section Break",
+   "label": "Referenced generated outputs"
+  },
+  {
+   "fieldname": "ref_bundle_output",
+   "fieldtype": "Data",
+   "label": "Bundle Output (doc name)"
+  },
+  {
+   "fieldname": "ref_dsm_output",
+   "fieldtype": "Data",
+   "label": "DSM Output (doc name)"
+  },
+  {
+   "fieldname": "ref_dom_output",
+   "fieldtype": "Data",
+   "label": "DOM Output (doc name)"
+  },
+  {
+   "fieldname": "ref_dem_output",
+   "fieldtype": "Data",
+   "label": "DEM Output (doc name)"
+  },
+  {
+   "fieldname": "ref_dcm_output",
+   "fieldtype": "Data",
+   "label": "DCM Output (doc name)"
+  },
+  {
+   "fieldname": "section_hashes",
+   "fieldtype": "Section Break",
+   "label": "Evidence hashes"
+  },
+  {
+   "fieldname": "parameter_values_hash",
+   "fieldtype": "Data",
+   "label": "Parameter Values Hash"
+  },
+  {
+   "fieldname": "works_requirements_hash",
+   "fieldtype": "Data",
+   "label": "Works Requirements Hash"
+  },
+  {
+   "fieldname": "attachments_hash",
+   "fieldtype": "Data",
+   "label": "Attachments Hash"
+  },
+  {
+   "fieldname": "boq_hash",
+   "fieldtype": "Data",
+   "label": "BOQ Hash"
+  },
+  {
+   "fieldname": "complete_instance_hash",
+   "fieldtype": "Data",
+   "label": "Complete Instance Hash"
+  },
+  {
+   "fieldname": "section_audit",
+   "fieldtype": "Section Break",
+   "label": "Audit"
+  },
+  {
+   "fieldname": "created_by",
+   "fieldtype": "Link",
+   "label": "Created By",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "created_at",
+   "fieldtype": "Datetime",
+   "label": "Created At",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-05-08 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "Tender STD Instance Snapshot",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

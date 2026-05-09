@@ -1,0 +1,127 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-05-08 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "value_code",
+  "parameter_code",
+  "value",
+  "value_status",
+  "source",
+  "drives_bundle",
+  "drives_dsm",
+  "drives_dom",
+  "drives_dem",
+  "drives_dcm",
+  "parameter_locked",
+  "changed_by",
+  "changed_at",
+  "source_addendum_code"
+ ],
+ "fields": [
+  {
+   "fieldname": "value_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Value Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "parameter_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Parameter Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "value",
+   "fieldtype": "Small Text",
+   "label": "Value"
+  },
+  {
+   "default": "Missing",
+   "fieldname": "value_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Value Status",
+   "options": "Provided\nMissing\nInvalid\nLocked",
+   "reqd": 1
+  },
+  {
+   "default": "Officer Entry",
+   "fieldname": "source",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Source",
+   "options": "Template Default\nOfficer Entry\nIntegration\nDerived\nWorks TDS\nWorks Evaluation Options\nWorks SCC Completion",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "drives_bundle",
+   "fieldtype": "Check",
+   "label": "Drives Bundle"
+  },
+  {
+   "default": "0",
+   "fieldname": "drives_dsm",
+   "fieldtype": "Check",
+   "label": "Drives DSM"
+  },
+  {
+   "default": "0",
+   "fieldname": "drives_dom",
+   "fieldtype": "Check",
+   "label": "Drives DOM"
+  },
+  {
+   "default": "0",
+   "fieldname": "drives_dem",
+   "fieldtype": "Check",
+   "label": "Drives DEM"
+  },
+  {
+   "default": "0",
+   "fieldname": "drives_dcm",
+   "fieldtype": "Check",
+   "label": "Drives DCM"
+  },
+  {
+   "default": "0",
+   "fieldname": "parameter_locked",
+   "fieldtype": "Check",
+   "label": "Parameter Locked"
+  },
+  {
+   "fieldname": "changed_by",
+   "fieldtype": "Link",
+   "label": "Changed By",
+   "options": "User"
+  },
+  {
+   "fieldname": "changed_at",
+   "fieldtype": "Datetime",
+   "label": "Changed At"
+  },
+  {
+   "fieldname": "source_addendum_code",
+   "fieldtype": "Data",
+   "label": "Source Addendum Code"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-08 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "Tender STD Instance Parameter Value",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

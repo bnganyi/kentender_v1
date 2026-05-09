@@ -1,0 +1,124 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-05-09 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "register_row_code",
+  "drawing_code",
+  "title",
+  "revision",
+  "file_reference",
+  "file_name",
+  "file_hash",
+  "section_code",
+  "classification",
+  "issue_status",
+  "acknowledgement_required",
+  "updated_by",
+  "updated_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "register_row_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Register Row Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "drawing_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Drawing Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "revision",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Revision",
+   "reqd": 1
+  },
+  {
+   "fieldname": "file_reference",
+   "fieldtype": "Data",
+   "label": "File Reference",
+   "reqd": 1
+  },
+  {
+   "fieldname": "file_name",
+   "fieldtype": "Data",
+   "label": "File Name"
+  },
+  {
+   "fieldname": "file_hash",
+   "fieldtype": "Data",
+   "label": "File Hash"
+  },
+  {
+   "fieldname": "section_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Section Code",
+   "reqd": 1
+  },
+  {
+   "default": "Supplier Facing",
+   "fieldname": "classification",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Classification",
+   "options": "Supplier Facing\nInternal Only",
+   "reqd": 1
+  },
+  {
+   "default": "Current",
+   "fieldname": "issue_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Issue Status",
+   "options": "Draft\nCurrent\nSuperseded",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "description": "When set, drawing changes also mark DSM stale (bidder acknowledgement surface).",
+   "fieldname": "acknowledgement_required",
+   "fieldtype": "Check",
+   "label": "Acknowledgement Required"
+  },
+  {
+   "fieldname": "updated_by",
+   "fieldtype": "Link",
+   "label": "Updated By",
+   "options": "User"
+  },
+  {
+   "fieldname": "updated_at",
+   "fieldtype": "Datetime",
+   "label": "Updated At"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-09 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "Tender STD Instance Drawing Register Entry",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}
