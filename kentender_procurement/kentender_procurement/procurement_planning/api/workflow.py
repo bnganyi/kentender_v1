@@ -384,7 +384,7 @@ def release_package_to_tender(package_id: str | None = None):
 	if not package_has_release_tender(doc.name):
 		frappe.throw(
 			_(
-				"No Procurement Tender was linked to this package after the release handoff. "
+				"No TM2 Tender was linked to this package after the release handoff. "
 				"Check Error Log for release-to-tender hook messages."
 			),
 			title=_("Handoff incomplete"),

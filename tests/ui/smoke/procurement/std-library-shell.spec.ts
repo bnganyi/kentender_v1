@@ -3,7 +3,7 @@
  */
 import { expect, test } from '@playwright/test';
 
-import { loginAsAdministrator } from '../../helpers/auth';
+import { loginAsAdministrator, loginAsProcurementOfficer } from '../../helpers/auth';
 import { dismissOptionalDeskModals, openWorkspaceFromDeskLauncher } from '../../helpers/routes';
 import { procurementModule } from '../../helpers/selectors';
 
@@ -79,6 +79,46 @@ test.describe('Official STD Library shell (STD-LIB-0100)', () => {
 		await expect(shell).not.toContainText('Configure Bid Opening');
 		await expect(shell).not.toContainText('Generate Contract');
 		await expect(shell).not.toContainText('Upload STD as Tender Document');
+	});
+
+	test('UI-HARD-0210 — Procurement Officer cannot access Official STD Library advanced tab', async ({
+		page,
+		baseURL,
+	}) => {
+		await loginAsProcurementOfficer(page);
+		const root = (baseURL || 'http://127.0.0.1:8000').replace(/\/$/, '');
+		await page.goto(`${root}/app/std-engine/library`, { waitUntil: 'domcontentloaded' });
+		await dismissOptionalDeskModals(page);
+		await page.waitForLoadState('load').catch(() => {});
+		/* Align with §26 item 23 (pack smoke): officer has no Page role — shell never mounts. */
+		await expect(page.locator('[data-testid="std-library-page"]')).toHaveCount(0, { timeout: 90_000 });
+		await expect(page.locator('[data-testid="std-library-tab-advanced"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="std-advanced-technical-view"]')).toHaveCount(0);
+	});
+
+	test('UI-HARD-0200 — sentinel selector, advanced disclosure default-closed, prohibited CTAs absent', async ({
+		page,
+		baseURL,
+	}) => {
+		await loginAsAdministrator(page);
+		const root = (baseURL || 'http://127.0.0.1:8000').replace(/\/$/, '');
+		await page.goto(`${root}/app/std-engine/library`);
+		await page.waitForLoadState('domcontentloaded');
+		await dismissOptionalDeskModals(page);
+		const shell = page.locator('[data-testid="std-library-page"]');
+		await expect(shell).toBeVisible({ timeout: 90_000 });
+		await expect(shell.locator('[data-testid="std-library-create-instance-button-absent"]')).toBeAttached();
+		await expect(shell.locator('[data-testid="std-library-advanced-view-toggle"]')).toBeVisible();
+		await expect(shell.locator('[data-testid="std-library-advanced-catalogue-open"]')).toBeHidden();
+		for (const phrase of [
+			'Create STD Instance',
+			'Release to Tender',
+			'Configure Tender Document',
+			'Approve Tender',
+			'Publish Tender',
+		]) {
+			await expect(shell).not.toContainText(phrase);
+		}
 	});
 
 	test('register source document panel opens and shows non-activation warning', async ({
@@ -2276,7 +2316,14 @@ test.describe('Official STD Library shell (STD-LIB-0100)', () => {
 		await dismissOptionalDeskModals(page);
 		await page.locator('[data-testid="std-library-card-view-details-adv-std"]').click();
 		await page.locator('[data-testid="std-library-tab-advanced"]').click();
+		await expect(page.locator('[data-testid="std-advanced-technical-view"]')).toBeVisible();
 		await expect(page.locator('[data-testid="std-library-advanced-tab"]')).toBeVisible();
+		await expect(page.locator('[data-testid="std-advanced-readonly-banner"]')).toContainText(
+			'Editing is disabled for Active versions.',
+		);
+		await expect(page.locator('[data-testid="std-advanced-technical-view-toggle"]')).toBeVisible();
+		await expect(page.locator('[data-testid="std-advanced-sections-clauses"]')).toBeHidden();
+		await page.locator('[data-testid="std-advanced-technical-view-toggle"]').click();
 		await expect(page.locator('[data-testid="std-advanced-intro"]')).toContainText(
 			'Most STD administration tasks can be completed from Summary, Validation, and Bundle Preview.',
 		);
@@ -2432,6 +2479,7 @@ test.describe('Official STD Library shell (STD-LIB-0100)', () => {
 		await dismissOptionalDeskModals(page);
 		await page.locator('[data-testid="std-library-card-view-details-map-std"]').click();
 		await page.locator('[data-testid="std-library-tab-advanced"]').click();
+		await page.locator('[data-testid="std-advanced-technical-view-toggle"]').click();
 		const sourceMappings = page.locator('[data-testid="std-advanced-source-mappings"]');
 		await expect(sourceMappings).toContainText('Submission Requirements (DSM)');
 		await expect(sourceMappings).toContainText('Opening Register (DOM)');

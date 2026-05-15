@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""B9 — at most one active (non-cancelled) tender per planning package (doc 2 sec. 16.3).
+"""B9 — at most one active TM2 tender per planning package (doc 2 sec. 16.3).
 
 Run:
 	bench --site <site> run-tests --app kentender_procurement \\
@@ -38,11 +38,11 @@ class TestPlanningTenderHandoffDuplicateB9(_ReleaseProcurementPackageHandoffFixt
 		out = release_procurement_package_to_tender(pkg.name)
 		self.assertTrue(out.get("ok"), out)
 		tn = out["tender"]
-		self._created.append(("Procurement Tender", tn))
+		self._created.append(("TM2 Tender", tn))
 
-		t1 = frappe.get_doc("Procurement Tender", tn)
+		t1 = frappe.get_doc("TM2 Tender", tn)
 		dup = frappe.copy_doc(t1)
-		dup.tender_reference = f"DUP-{dup.tender_reference}-b9"
+		dup.tender_code = None
 		with self.assertRaises(frappe.ValidationError) as ctx:
 			dup.insert(ignore_permissions=True)
 		self.assertIn("already linked", str(ctx.exception).lower())
@@ -59,19 +59,19 @@ class TestPlanningTenderHandoffDuplicateB9(_ReleaseProcurementPackageHandoffFixt
 		out1 = release_procurement_package_to_tender(pkg.name)
 		self.assertTrue(out1.get("ok"), out1)
 		t1 = out1["tender"]
-		self._created.append(("Procurement Tender", t1))
+		self._created.append(("TM2 Tender", t1))
 
-		frappe.db.set_value("Procurement Tender", t1, "tender_status", "Cancelled")
+		frappe.db.set_value("TM2 Tender", t1, "status", "Cancelled")
 
 		out2 = release_procurement_package_to_tender(pkg.name)
 		self.assertTrue(out2.get("ok"), out2)
 		self.assertFalse(out2.get("existing"), out2)
 		t2 = out2["tender"]
 		self.assertNotEqual(t1, t2)
-		self._created.append(("Procurement Tender", t2))
+		self._created.append(("TM2 Tender", t2))
 
 		self.assertEqual(
-			frappe.db.get_value("Procurement Tender", t2, "procurement_package"),
+			frappe.db.get_value("TM2 Tender", t2, "procurement_package"),
 			pkg.name,
 		)
-		self.assertEqual(frappe.db.get_value("Procurement Tender", t2, "std_template"), TEMPLATE_CODE)
+		self.assertEqual(frappe.db.get_value("TM2 Tender", t2, "std_template"), TEMPLATE_CODE)

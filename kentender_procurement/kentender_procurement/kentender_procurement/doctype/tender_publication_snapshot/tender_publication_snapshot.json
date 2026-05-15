@@ -1,0 +1,188 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-05-10 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "tm2_tender",
+  "procurement_package",
+  "tender_std_instance",
+  "configuration_snapshot",
+  "std_publication_snapshot",
+  "source_template_version_code",
+  "applicability_profile_code",
+  "bundle_output_code",
+  "dsm_output_code",
+  "dom_output_code",
+  "dem_output_code",
+  "dcm_output_code",
+  "readiness_result_code",
+  "approval_decision_code",
+  "evidence_package_code",
+  "complete_publication_hash",
+  "snapshot_status",
+  "created_by",
+  "created_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "tm2_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender",
+   "options": "TM2 Tender",
+   "reqd": 0
+  },
+  {
+   "fieldname": "procurement_package",
+   "fieldtype": "Link",
+   "label": "Procurement Package",
+   "options": "Procurement Package"
+  },
+  {
+   "fieldname": "tender_std_instance",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Tender STD Instance",
+   "options": "Tender STD Instance",
+   "reqd": 1
+  },
+  {
+   "fieldname": "configuration_snapshot",
+   "fieldtype": "Link",
+   "label": "Configuration Snapshot",
+   "options": "Tender STD Instance Snapshot",
+   "reqd": 1
+  },
+  {
+   "fieldname": "std_publication_snapshot",
+   "fieldtype": "Link",
+   "label": "STD Publication Snapshot",
+   "options": "Tender STD Instance Snapshot",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_template_version_code",
+   "fieldtype": "Data",
+   "label": "Template Version Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "applicability_profile_code",
+   "fieldtype": "Data",
+   "label": "Applicability Profile Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "bundle_output_code",
+   "fieldtype": "Data",
+   "label": "Bundle Output Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "dsm_output_code",
+   "fieldtype": "Data",
+   "label": "DSM Output Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "dom_output_code",
+   "fieldtype": "Data",
+   "label": "DOM Output Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "dem_output_code",
+   "fieldtype": "Data",
+   "label": "DEM Output Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "dcm_output_code",
+   "fieldtype": "Data",
+   "label": "DCM Output Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "readiness_result_code",
+   "fieldtype": "Data",
+   "label": "Readiness Result Code",
+   "description": "Stable fingerprint of tender publication readiness at snapshot time (PUB-0500).",
+   "reqd": 1
+  },
+  {
+   "fieldname": "approval_decision_code",
+   "fieldtype": "Link",
+   "label": "Approval Decision",
+   "options": "Tender Publication Approval Decision",
+   "reqd": 1
+  },
+  {
+   "fieldname": "evidence_package_code",
+   "fieldtype": "Data",
+   "label": "Evidence Package Code",
+   "description": "Fingerprint / code for evidence package binding until PUB-0700 assembles real packages.",
+   "reqd": 1
+  },
+  {
+   "fieldname": "complete_publication_hash",
+   "fieldtype": "Data",
+   "label": "Complete Publication Hash",
+   "reqd": 1
+  },
+  {
+   "default": "Final",
+   "fieldname": "snapshot_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Snapshot Status",
+   "options": "Draft\nFinal\nSuperseded\nArchived",
+   "reqd": 1
+  },
+  {
+   "fieldname": "created_by",
+   "fieldtype": "Link",
+   "label": "Created By",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "default": "Now",
+   "fieldname": "created_at",
+   "fieldtype": "Datetime",
+   "label": "Created At",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-05-10 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "Tender Publication Snapshot",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "read_only": 0,
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

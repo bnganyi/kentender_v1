@@ -25,6 +25,9 @@ from kentender_procurement.tender_management.std_instance.parameter import (
 	INSTANCE_STATUSES_BLOCKING_PARAMETER_MUTATION,
 	OUTPUT_KEY_TO_PARENT_FIELD,
 )
+from kentender_procurement.tender_management.security.authorization.integration import (
+	enforce_sec_authorization,
+)
 
 INSTANCE_STATUSES_BLOCKING_WORKS_REQUIREMENT_MUTATION = INSTANCE_STATUSES_BLOCKING_PARAMETER_MUTATION
 
@@ -212,6 +215,14 @@ class StdInstanceWorksRequirementService:
 		user: str | None = None,
 		ignore_publication_lock: bool = False,
 	) -> Document:
+		enforce_sec_authorization(
+			action_code="EDIT_STD_INSTANCE_PARAMETERS",
+			actor=user or frappe.session.user,
+			object_type="Tender STD Instance",
+			object_code=instance_name,
+			context={"object_exists": bool(frappe.db.exists("Tender STD Instance", instance_name))},
+			fallback_message="Not authorized to edit works requirements.",
+		)
 		cc = _normalize_cc(component_code)
 		if not cc:
 			frappe.throw(_("component_code is required."), title=_("STD Works Requirement"))
@@ -224,7 +235,10 @@ class StdInstanceWorksRequirementService:
 				StdPublicationLockService,
 			)
 
-			StdAuthorizationService.assert_can_edit_draft_instance(instance_name)
+			StdAuthorizationService.assert_can_edit_draft_instance(
+				instance_name,
+				attempted_change="edit works requirements",
+			)
 			StdPublicationLockService.assert_editable(instance_name, operation_label="edit works requirements")
 
 		doc = frappe.get_doc("Tender STD Instance", instance_name)

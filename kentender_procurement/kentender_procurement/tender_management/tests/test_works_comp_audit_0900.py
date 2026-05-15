@@ -97,7 +97,7 @@ class TestWorksCompAudit0900(IntegrationTestCase):
 	def _cleanup_tender(self, tender_name: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
-			filters={"procurement_tender": tender_name},
+			filters={"tm2_tender": tender_name},
 			pluck="name",
 		):
 			for snap_name in frappe.get_all(
@@ -240,7 +240,7 @@ class TestWorksCompAudit0900(IntegrationTestCase):
 	def test_works_comp_0900_tds_save_emits_works_tds_changed(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -272,7 +272,7 @@ class TestWorksCompAudit0900(IntegrationTestCase):
 	def test_works_comp_0900_generate_outputs_emits_works_outputs_generated(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -306,7 +306,7 @@ class TestWorksCompAudit0900(IntegrationTestCase):
 	def test_works_comp_0900_readiness_emits_run_and_blocked_when_blocked(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -341,7 +341,7 @@ class TestWorksCompAudit0900(IntegrationTestCase):
 	def test_works_comp_0900_snapshot_lock_emits_works_snapshot_and_lock(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -377,7 +377,7 @@ class TestWorksCompAudit0900(IntegrationTestCase):
 	def test_works_comp_0900_manual_criteria_denial_emits_works_audit(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -405,7 +405,7 @@ class TestWorksCompAudit0900(IntegrationTestCase):
 	def test_works_comp_0900_evaluation_options_save_emits_works_eval_changed(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -431,7 +431,7 @@ class TestWorksCompAudit0900(IntegrationTestCase):
 	def test_works_comp_0900_works_edit_denied_locked_on_parameter_context_fail(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -460,7 +460,7 @@ class TestWorksCompAudit0900(IntegrationTestCase):
 
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,

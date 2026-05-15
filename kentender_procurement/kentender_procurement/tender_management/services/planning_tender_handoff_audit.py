@@ -3,8 +3,8 @@
 
 """Planning-to-tender handoff audit + snapshot (doc 2 sec. 18, Tracker B8).
 
-Persists ``source_package_snapshot_json`` / ``source_package_hash`` / lineage counts on
-``Procurement Tender`` and appends a structured **Comment** for audit evidence.
+Persists planning handoff snapshot / hashes on ``TM2 Tender`` (when fields exist)
+and appends a structured **Comment** for audit evidence.
 
 This module does **not** load ``sample_tender.json``; snapshot content is derived from
 ``Procurement Package`` / plan / active lines only.
@@ -95,6 +95,7 @@ def build_handoff_snapshot_and_hashes(
 def append_handoff_audit_comment(
 	tender_name: str,
 	*,
+	tender_doctype: str = "TM2 Tender",
 	actor: str,
 	roles: list[str],
 	source_package: str,
@@ -127,5 +128,5 @@ def append_handoff_audit_comment(
 	text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
 	if len(text) > 12000:
 		text = text[:11900] + "…"
-	doc = frappe.get_doc("Procurement Tender", tender_name)
+	doc = frappe.get_doc(tender_doctype, tender_name)
 	doc.add_comment("Comment", text=text)

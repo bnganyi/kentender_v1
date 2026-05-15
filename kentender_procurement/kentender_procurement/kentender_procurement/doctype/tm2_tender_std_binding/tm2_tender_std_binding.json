@@ -1,0 +1,263 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:binding_code",
+ "creation": "2026-05-12 14:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_parent",
+  "tm2_tender",
+  "tender_code",
+  "binding_code",
+  "section_std",
+  "std_template",
+  "std_template_code",
+  "std_template_version_code",
+  "std_applicability_profile_code",
+  "tender_std_instance",
+  "tender_std_instance_code",
+  "section_outputs",
+  "bundle_output_code",
+  "dsm_output_code",
+  "dom_output_code",
+  "dem_output_code",
+  "dcm_output_code",
+  "publication_snapshot_code",
+  "published_snapshot_hash",
+  "section_state",
+  "binding_status",
+  "readiness_status",
+  "is_active",
+  "section_supersede",
+  "superseded_by_binding",
+  "section_audit",
+  "bound_by",
+  "bound_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_parent",
+   "fieldtype": "Section Break",
+   "label": "Tender"
+  },
+  {
+   "fieldname": "tm2_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender",
+   "options": "TM2 Tender",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Business code TSB-{tender_code}-{###}. Auto-generated if omitted.",
+   "fieldname": "binding_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Binding Code",
+   "read_only_depends_on": "eval:!doc.__islocal",
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "section_std",
+   "fieldtype": "Section Break",
+   "label": "STD references"
+  },
+  {
+   "fieldname": "std_template",
+   "fieldtype": "Link",
+   "label": "STD Template",
+   "options": "STD Template"
+  },
+  {
+   "fieldname": "std_template_code",
+   "fieldtype": "Data",
+   "label": "STD Template Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "std_template_version_code",
+   "fieldtype": "Data",
+   "label": "STD Template Version Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "std_applicability_profile_code",
+   "fieldtype": "Data",
+   "label": "STD Applicability Profile Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender_std_instance",
+   "fieldtype": "Link",
+   "label": "Tender STD Instance",
+   "options": "Tender STD Instance",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender_std_instance_code",
+   "fieldtype": "Data",
+   "label": "Tender STD Instance Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_outputs",
+   "fieldtype": "Section Break",
+   "label": "Output references"
+  },
+  {
+   "fieldname": "bundle_output_code",
+   "fieldtype": "Data",
+   "label": "Bundle Output Code"
+  },
+  {
+   "fieldname": "dsm_output_code",
+   "fieldtype": "Data",
+   "label": "DSM Output Code"
+  },
+  {
+   "fieldname": "dom_output_code",
+   "fieldtype": "Data",
+   "label": "DOM Output Code"
+  },
+  {
+   "fieldname": "dem_output_code",
+   "fieldtype": "Data",
+   "label": "DEM Output Code"
+  },
+  {
+   "fieldname": "dcm_output_code",
+   "fieldtype": "Data",
+   "label": "DCM Output Code"
+  },
+  {
+   "fieldname": "publication_snapshot_code",
+   "fieldtype": "Data",
+   "label": "Publication Snapshot Code"
+  },
+  {
+   "fieldname": "published_snapshot_hash",
+   "fieldtype": "Data",
+   "label": "Published Snapshot Hash"
+  },
+  {
+   "fieldname": "section_state",
+   "fieldtype": "Section Break",
+   "label": "State"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "binding_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Binding Status",
+   "options": "Draft\nActive\nPublished\nSuperseded\nCancelled",
+   "reqd": 1
+  },
+  {
+   "default": "Not Assessed",
+   "fieldname": "readiness_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Readiness Status",
+   "options": "Not Assessed\nNot Ready\nReady With Warnings\nReady\nBlocked",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active"
+  },
+  {
+   "fieldname": "section_supersede",
+   "fieldtype": "Section Break",
+   "label": "Supersession"
+  },
+  {
+   "fieldname": "superseded_by_binding",
+   "fieldtype": "Link",
+   "label": "Superseded By Binding",
+   "options": "TM2 Tender STD Binding"
+  },
+  {
+   "fieldname": "section_audit",
+   "fieldtype": "Section Break",
+   "label": "Binding audit"
+  },
+  {
+   "fieldname": "bound_by",
+   "fieldtype": "Link",
+   "label": "Bound By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bound_at",
+   "fieldtype": "Datetime",
+   "label": "Bound At",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-12 14:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "TM2 Tender STD Binding",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "search_fields": "binding_code,tender_code,std_template_code,tender_std_instance_code",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "binding_code",
+ "track_changes": 1
+}

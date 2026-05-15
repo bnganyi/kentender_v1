@@ -169,6 +169,30 @@ frappe.provide("kentender_procurement.std_library_shell");
 		"audit",
 	]);
 
+	/** UI-HARD-0210 — matches Page `std-engine` / `std-engine-advanced` governance roles (not Procurement Officer). */
+	const ADVANCED_TECHNICAL_TAB_ROLES = Object.freeze([
+		"Administrator",
+		"System Manager",
+		"STD Template Administrator",
+		"STD Template Importer",
+		"STD Template Reviewer",
+		"STD Template Approver",
+		"STD Template Activator",
+		"STD Template Auditor",
+		"STD Technical Inspector",
+	]);
+
+	function userMayUseAdvancedTechnicalTab() {
+		const roles = frappe.user_roles || [];
+		return roles.some((r) => ADVANCED_TECHNICAL_TAB_ROLES.includes(r));
+	}
+
+	function coerceAdvancedTabIfDenied() {
+		if (activeDetailTab === "advanced" && !userMayUseAdvancedTechnicalTab()) {
+			activeDetailTab = "summary";
+		}
+	}
+
 	function normalizeTabFromUrl(raw) {
 		const s = String(raw || "")
 			.trim()
@@ -334,9 +358,10 @@ frappe.provide("kentender_procurement.std_library_shell");
 			const message = state.message || DEFAULT_UNAVAILABLE;
 
 			set_button_enabled(button, allowed, message);
+			/* Use onclick (not addEventListener) so repeated availability refreshes do not stack handlers. */
 			button.onclick = null;
 			if (allowed) {
-				const handler =
+				button.onclick =
 					key === "registerSource"
 						? function () {
 								const nextOpen = !registerSourceState.visible;
@@ -368,7 +393,6 @@ frappe.provide("kentender_procurement.std_library_shell");
 									}
 							  }
 							: cfg.handler;
-				button.addEventListener("click", handler);
 			}
 		});
 	}
@@ -701,6 +725,7 @@ frappe.provide("kentender_procurement.std_library_shell");
 			String(params.get("std_code") || params.get("version_code") || "").trim() || "";
 		selectedVersionCode = code;
 		activeDetailTab = code ? normalizeTabFromUrl(params.get("tab")) : "summary";
+		coerceAdvancedTabIfDenied();
 	}
 
 	function writeFiltersToUrl() {
@@ -833,7 +858,8 @@ frappe.provide("kentender_procurement.std_library_shell");
 			return;
 		}
 		const d = selectedDetail || {};
-		const tabs = [
+		coerceAdvancedTabIfDenied();
+		const tabsAll = [
 			["summary", "std-library-tab-summary", __("Summary"), false],
 			["validation", "std-library-tab-validation", __("Validation"), false],
 			["bundle-preview", "std-library-tab-bundle-preview", __("Bundle Preview"), false],
@@ -842,6 +868,12 @@ frappe.provide("kentender_procurement.std_library_shell");
 			["advanced", "std-library-tab-advanced", __("Advanced Technical View"), true],
 			["audit", "std-library-tab-audit", __("Audit Trail"), false],
 		];
+		const tabs = userMayUseAdvancedTechnicalTab()
+			? tabsAll
+			: tabsAll.filter((row) => row[0] !== "advanced");
+		if (!tabs.some((row) => row[0] === activeDetailTab)) {
+			activeDetailTab = "summary";
+		}
 		const activeTabMeta = tabs.find((row) => row[0] === activeDetailTab);
 		const activeTestId = activeTabMeta ? activeTabMeta[1] : "std-library-tab-summary";
 		const summaryHtml = tabR.renderSummaryTabContent(d);
@@ -1352,6 +1384,20 @@ frappe.provide("kentender_procurement.std_library_shell");
 				data-testid="std-library-register-source-button"></button>
 			<button type="button" class="btn btn-default btn-sm"
 				data-testid="std-library-validate-library-button"></button>
+			<details class="std-library-advanced-route-disclosure">
+				<summary data-testid="std-library-advanced-view-toggle" class="std-library-advanced-view-summary">${__(
+					"Advanced Technical View",
+				)}</summary>
+				<div class="std-library-advanced-route-body">
+					<p class="text-muted small">${__(
+						"Open the advanced catalogue for authorized technical review. This is not the default library experience.",
+					)}</p>
+					<button type="button" class="btn btn-primary btn-sm" data-testid="std-library-advanced-catalogue-open">${__(
+						"Open advanced catalogue",
+					)}</button>
+				</div>
+			</details>
+			<span data-testid="std-library-create-instance-button-absent" aria-hidden="true" class="std-library-prohibited-marker"></span>
 		</div>
 	</header>
 
@@ -1437,6 +1483,12 @@ frappe.provide("kentender_procurement.std_library_shell");
 		renderLibraryCards(wrap);
 
 		ensureLibraryActionModalHandlers(wrap);
+		const advCatOpen = wrap.querySelector('[data-testid="std-library-advanced-catalogue-open"]');
+		if (advCatOpen) {
+			advCatOpen.addEventListener("click", function () {
+				frappe.set_route("std-engine-advanced");
+			});
+		}
 		apply_action_policy(wrap, {});
 		stdApi
 			.getActionAvailability([

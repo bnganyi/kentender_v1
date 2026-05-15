@@ -47,6 +47,9 @@ from kentender_procurement.tender_management.services.std_template_governance_ev
 from kentender_procurement.tender_management.services.std_template_governance_usage import (
 	get_std_template_usage_impact,
 )
+from kentender_procurement.tender_management.security.authorization.integration import (
+	enforce_sec_authorization,
+)
 
 ROLE_STD_TEMPLATE_ADMINISTRATOR = "STD Template Administrator"
 ROLE_STD_TEMPLATE_APPROVER = "STD Template Approver"
@@ -399,6 +402,14 @@ def activate_std_template(
 ) -> dict[str, Any]:
 	"""Doc 7 §14.6 — ``Approved`` → ``Active``."""
 	_guest_blocked()
+	enforce_sec_authorization(
+		action_code="ACTIVATE_STD_TEMPLATE",
+		actor=frappe.session.user,
+		object_type="STD Template",
+		object_code=std_template,
+		context={"object_exists": bool(frappe.db.exists("STD Template", std_template))},
+		fallback_message="Not authorized to activate STD template.",
+	)
 	_assert_roles_activate_ops()
 	text = _require_non_empty_reason(reason, label=_("Activation reason"))
 	doc = frappe.get_doc("STD Template", std_template)

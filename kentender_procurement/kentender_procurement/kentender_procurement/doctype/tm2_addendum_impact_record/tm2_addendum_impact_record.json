@@ -1,0 +1,254 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:impact_record_code",
+ "creation": "2026-05-12 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_parent",
+  "tm2_addendum",
+  "addendum_code",
+  "tm2_tender",
+  "tender_code",
+  "impact_record_code",
+  "section_std",
+  "std_impact_analysis_code",
+  "section_refs",
+  "affected_parameter_refs",
+  "affected_section_refs",
+  "affected_boq_refs",
+  "section_outputs",
+  "previous_bundle_output_code",
+  "revised_bundle_output_code",
+  "column_dsm",
+  "previous_dsm_output_code",
+  "revised_dsm_output_code",
+  "column_dom",
+  "previous_dom_output_code",
+  "revised_dom_output_code",
+  "column_dem",
+  "previous_dem_output_code",
+  "revised_dem_output_code",
+  "column_dcm",
+  "previous_dcm_output_code",
+  "revised_dcm_output_code",
+  "section_publication",
+  "previous_publication_snapshot_code",
+  "revised_publication_snapshot_code",
+  "section_flags",
+  "deadline_extension_required",
+  "supplier_acknowledgement_required",
+  "bid_resubmission_required",
+  "section_payload",
+  "impact_payload",
+  "section_audit",
+  "created_at"
+ ],
+ "fields": [
+  {"fieldname": "section_parent", "fieldtype": "Section Break", "label": "Addendum"},
+  {
+   "fieldname": "tm2_addendum",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Addendum",
+   "options": "TM2 Addendum",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "addendum_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Addendum Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "tm2_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender",
+   "options": "TM2 Tender",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tender_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Business code AIR-{addendum_code} per doc 3 §3.1 (one record per addendum in v1).",
+   "fieldname": "impact_record_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Impact Record Code",
+   "read_only_depends_on": "eval:!doc.__islocal",
+   "search_index": 1,
+   "unique": 1
+  },
+  {"fieldname": "section_std", "fieldtype": "Section Break", "label": "STD impact"},
+  {
+   "description": "External STD Engine analysis identifier (no TM2 DocType until STD integration).",
+   "fieldname": "std_impact_analysis_code",
+   "fieldtype": "Data",
+   "label": "STD Impact Analysis Code",
+   "reqd": 1
+  },
+  {"fieldname": "section_refs", "fieldtype": "Section Break", "label": "Affected refs"},
+  {
+   "fieldname": "affected_parameter_refs",
+   "fieldtype": "JSON",
+   "label": "Affected Parameter Refs"
+  },
+  {
+   "fieldname": "affected_section_refs",
+   "fieldtype": "JSON",
+   "label": "Affected Section Refs"
+  },
+  {"fieldname": "affected_boq_refs", "fieldtype": "JSON", "label": "Affected BOQ Refs"},
+  {"fieldname": "section_outputs", "fieldtype": "Section Break", "label": "Output codes (before / after)"},
+  {
+   "fieldname": "previous_bundle_output_code",
+   "fieldtype": "Data",
+   "label": "Previous Bundle Output Code"
+  },
+  {
+   "fieldname": "revised_bundle_output_code",
+   "fieldtype": "Data",
+   "label": "Revised Bundle Output Code"
+  },
+  {"fieldname": "column_dsm", "fieldtype": "Column Break"},
+  {
+   "fieldname": "previous_dsm_output_code",
+   "fieldtype": "Data",
+   "label": "Previous DSM Output Code"
+  },
+  {"fieldname": "revised_dsm_output_code", "fieldtype": "Data", "label": "Revised DSM Output Code"},
+  {"fieldname": "column_dom", "fieldtype": "Column Break"},
+  {
+   "fieldname": "previous_dom_output_code",
+   "fieldtype": "Data",
+   "label": "Previous DOM Output Code"
+  },
+  {"fieldname": "revised_dom_output_code", "fieldtype": "Data", "label": "Revised DOM Output Code"},
+  {"fieldname": "column_dem", "fieldtype": "Column Break"},
+  {
+   "fieldname": "previous_dem_output_code",
+   "fieldtype": "Data",
+   "label": "Previous DEM Output Code"
+  },
+  {"fieldname": "revised_dem_output_code", "fieldtype": "Data", "label": "Revised DEM Output Code"},
+  {"fieldname": "column_dcm", "fieldtype": "Column Break"},
+  {
+   "fieldname": "previous_dcm_output_code",
+   "fieldtype": "Data",
+   "label": "Previous DCM Output Code"
+  },
+  {"fieldname": "revised_dcm_output_code", "fieldtype": "Data", "label": "Revised DCM Output Code"},
+  {"fieldname": "section_publication", "fieldtype": "Section Break", "label": "Publication snapshot"},
+  {
+   "fieldname": "previous_publication_snapshot_code",
+   "fieldtype": "Data",
+   "label": "Previous Publication Snapshot Code"
+  },
+  {
+   "fieldname": "revised_publication_snapshot_code",
+   "fieldtype": "Data",
+   "label": "Revised Publication Snapshot Code"
+  },
+  {"fieldname": "section_flags", "fieldtype": "Section Break", "label": "Analysis flags"},
+  {
+   "default": "0",
+   "fieldname": "deadline_extension_required",
+   "fieldtype": "Check",
+   "label": "Deadline Extension Required",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "supplier_acknowledgement_required",
+   "fieldtype": "Check",
+   "label": "Supplier Acknowledgement Required",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "bid_resubmission_required",
+   "fieldtype": "Check",
+   "label": "Bid Resubmission Required",
+   "reqd": 1
+  },
+  {"fieldname": "section_payload", "fieldtype": "Section Break", "label": "Payload"},
+  {
+   "fieldname": "impact_payload",
+   "fieldtype": "JSON",
+   "label": "Impact Payload",
+   "reqd": 1
+  },
+  {"fieldname": "section_audit", "fieldtype": "Section Break", "label": "Audit"},
+  {
+   "fieldname": "created_at",
+   "fieldtype": "Datetime",
+   "label": "Created At",
+   "read_only": 1,
+   "reqd": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-12 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "TM2 Addendum Impact Record",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "search_fields": "impact_record_code,addendum_code,tender_code,std_impact_analysis_code",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "impact_record_code",
+ "track_changes": 1
+}

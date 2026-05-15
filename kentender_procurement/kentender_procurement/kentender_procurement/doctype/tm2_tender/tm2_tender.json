@@ -1,0 +1,523 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:tender_code",
+ "creation": "2026-05-12 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "tender_code",
+  "tender_title",
+  "tender_description",
+  "column_status",
+  "status",
+  "is_active",
+  "section_planning",
+  "procurement_package",
+  "procurement_plan",
+  "column_codes",
+  "procurement_package_code",
+  "procurement_plan_code",
+  "procuring_entity_code",
+  "fiscal_year",
+  "column_method",
+  "procurement_method",
+  "procurement_category",
+  "contract_type",
+  "tender_visibility",
+  "column_std",
+  "std_bound",
+  "std_readiness_status",
+  "column_finance",
+  "estimated_value_internal",
+  "currency",
+  "section_governance_flags",
+  "publication_approval_required",
+  "allow_bid_replacement",
+  "allow_bid_withdrawal",
+  "require_addendum_acknowledgement",
+  "configuration_json",
+  "section_planning_handoff",
+  "std_template",
+  "template_code",
+  "template_version",
+  "package_hash",
+  "tender_reference",
+  "tender_scope",
+  "source_package_code",
+  "planning_handoff_snapshot_json",
+  "planning_handoff_snapshot_sha256",
+  "planning_handoff_configuration_sha256",
+  "planning_handoff_source_demand_count",
+  "planning_handoff_source_budget_line_count",
+  "section_lineage",
+  "retender_of_tender_code",
+  "supersedes_tender_code",
+  "section_review",
+  "submitted_for_review_by",
+  "submitted_for_review_at",
+  "approved_for_publication_by",
+  "approved_for_publication_at",
+  "section_publication",
+  "published_by",
+  "published_at",
+  "section_closure",
+  "closed_at",
+  "section_cancel",
+  "cancelled_by",
+  "cancelled_at",
+  "cancellation_reason",
+  "section_audit",
+  "created_by_user",
+  "created_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "description": "Business code (TND-*). Auto-generated if omitted on new documents.",
+   "fieldname": "tender_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Code",
+   "read_only_depends_on": "eval:!doc.__islocal",
+   "reqd": 0,
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "tender_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender_description",
+   "fieldtype": "Text",
+   "label": "Tender Description"
+  },
+  {
+   "fieldname": "column_status",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nSTD Instance Incomplete\nReady for Publication Review\nReturned for Correction\nApproved for Publication\nPublished\nAddendum Pending\nSuspended Pending Addendum\nClosed\nClosed - No Valid Submissions\nOpening Ready\nOpening Completed\nEvaluation Ready\nEvaluation In Progress\nAwarded\nContract Handoff Completed\nCancelled\nRetender Required\nSuperseded\nArchived",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active"
+  },
+  {
+   "fieldname": "section_planning",
+   "fieldtype": "Section Break",
+   "label": "Planning lineage"
+  },
+  {
+   "fieldname": "procurement_package",
+   "fieldtype": "Link",
+   "label": "Procurement Package",
+   "options": "Procurement Package",
+   "reqd": 1
+  },
+  {
+   "fieldname": "procurement_plan",
+   "fieldtype": "Link",
+   "label": "Procurement Plan",
+   "options": "Procurement Plan",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_codes",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "procurement_package_code",
+   "fieldtype": "Data",
+   "label": "Procurement Package Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "procurement_plan_code",
+   "fieldtype": "Data",
+   "label": "Procurement Plan Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "procuring_entity_code",
+   "fieldtype": "Data",
+   "label": "Procuring Entity Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "fiscal_year",
+   "fieldtype": "Data",
+   "label": "Fiscal Year",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_method",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "procurement_method",
+   "fieldtype": "Select",
+   "label": "Procurement Method",
+   "options": "Open Tender\nRestricted Tender\nRFQ\nRFP\nDirect Procurement",
+   "reqd": 1
+  },
+  {
+   "fieldname": "procurement_category",
+   "fieldtype": "Select",
+   "label": "Procurement Category",
+   "options": "Works\nGoods\nConsultancy\nServices",
+   "reqd": 1
+  },
+  {
+   "fieldname": "contract_type",
+   "fieldtype": "Select",
+   "label": "Contract Type",
+   "options": "\nFixed Price\nCost Reimbursable\nT&M"
+  },
+  {
+   "fieldname": "tender_visibility",
+   "fieldtype": "Select",
+   "label": "Tender Visibility",
+   "options": "Public\nRestricted\nInvite Only\nInternal Preview",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_std",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "std_bound",
+   "fieldtype": "Check",
+   "label": "STD Bound",
+   "read_only": 1
+  },
+  {
+   "default": "Not Assessed",
+   "fieldname": "std_readiness_status",
+   "fieldtype": "Select",
+   "label": "STD Readiness Status",
+   "options": "Not Assessed\nNot Ready\nReady With Warnings\nReady\nBlocked",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_finance",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Internal estimate; not supplier-facing unless published via STD outputs.",
+   "fieldname": "estimated_value_internal",
+   "fieldtype": "Currency",
+   "label": "Estimated Value (Internal)"
+  },
+  {
+   "default": "KES",
+   "fieldname": "currency",
+   "fieldtype": "Data",
+   "label": "Currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_governance_flags",
+   "fieldtype": "Section Break",
+   "label": "Governance flags"
+  },
+  {
+   "default": "0",
+   "fieldname": "publication_approval_required",
+   "fieldtype": "Check",
+   "label": "Publication Approval Required"
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_bid_replacement",
+   "fieldtype": "Check",
+   "label": "Allow Bid Replacement"
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_bid_withdrawal",
+   "fieldtype": "Check",
+   "label": "Allow Bid Withdrawal"
+  },
+  {
+   "default": "0",
+   "fieldname": "require_addendum_acknowledgement",
+   "fieldtype": "Check",
+   "label": "Require Addendum Acknowledgement"
+  },
+  {
+   "description": "Optional structural metadata only. v1 DSM/DOM/DEM/DCM rule-injection keys are forbidden (doc 9 \u00a725 EX-04).",
+   "fieldname": "configuration_json",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "Configuration JSON"
+  },
+  {
+   "fieldname": "section_planning_handoff",
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "label": "Planning handoff"
+  },
+  {
+   "fieldname": "std_template",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "STD Template",
+   "options": "STD Template"
+  },
+  {
+   "fieldname": "template_code",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Template Code"
+  },
+  {
+   "fieldname": "template_version",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Template Version"
+  },
+  {
+   "fieldname": "package_hash",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Package Hash"
+  },
+  {
+   "fieldname": "tender_reference",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Tender Reference"
+  },
+  {
+   "default": "NATIONAL",
+   "fieldname": "tender_scope",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Tender Scope"
+  },
+  {
+   "fieldname": "source_package_code",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Source Package Code"
+  },
+  {
+   "fieldname": "planning_handoff_snapshot_json",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "Planning Handoff Snapshot JSON"
+  },
+  {
+   "fieldname": "planning_handoff_snapshot_sha256",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Planning Handoff Snapshot SHA256"
+  },
+  {
+   "fieldname": "planning_handoff_configuration_sha256",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Planning Handoff Configuration SHA256"
+  },
+  {
+   "fieldname": "planning_handoff_source_demand_count",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Planning Handoff Source Demand Count"
+  },
+  {
+   "fieldname": "planning_handoff_source_budget_line_count",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Planning Handoff Source Budget Line Count"
+  },
+  {
+   "fieldname": "section_lineage",
+   "fieldtype": "Section Break",
+   "label": "Lineage"
+  },
+  {
+   "fieldname": "retender_of_tender_code",
+   "fieldtype": "Data",
+   "label": "Retender Of Tender Code"
+  },
+  {
+   "fieldname": "supersedes_tender_code",
+   "fieldtype": "Data",
+   "label": "Supersedes Tender Code"
+  },
+  {
+   "fieldname": "section_review",
+   "fieldtype": "Section Break",
+   "label": "Publication review"
+  },
+  {
+   "fieldname": "submitted_for_review_by",
+   "fieldtype": "Link",
+   "label": "Submitted For Review By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_for_review_at",
+   "fieldtype": "Datetime",
+   "label": "Submitted For Review At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_for_publication_by",
+   "fieldtype": "Link",
+   "label": "Approved For Publication By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_for_publication_at",
+   "fieldtype": "Datetime",
+   "label": "Approved For Publication At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_publication",
+   "fieldtype": "Section Break",
+   "label": "Publication"
+  },
+  {
+   "fieldname": "published_by",
+   "fieldtype": "Link",
+   "label": "Published By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "published_at",
+   "fieldtype": "Datetime",
+   "label": "Published At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_closure",
+   "fieldtype": "Section Break",
+   "label": "Closure"
+  },
+  {
+   "fieldname": "closed_at",
+   "fieldtype": "Datetime",
+   "label": "Closed At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_cancel",
+   "fieldtype": "Section Break",
+   "label": "Cancellation"
+  },
+  {
+   "fieldname": "cancelled_by",
+   "fieldtype": "Link",
+   "label": "Cancelled By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancelled_at",
+   "fieldtype": "Datetime",
+   "label": "Cancelled At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancellation_reason",
+   "fieldtype": "Text",
+   "label": "Cancellation Reason"
+  },
+  {
+   "fieldname": "section_audit",
+   "fieldtype": "Section Break",
+   "label": "Audit"
+  },
+  {
+   "fieldname": "created_by_user",
+   "fieldtype": "Link",
+   "label": "Created By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "created_at",
+   "fieldtype": "Datetime",
+   "label": "Created At",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-12 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "TM2 Tender",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "search_fields": "tender_code,tender_title,procurement_package_code,status",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "tender_title",
+ "track_changes": 1
+}

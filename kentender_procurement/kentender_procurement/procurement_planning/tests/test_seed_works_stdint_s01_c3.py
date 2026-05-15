@@ -13,16 +13,39 @@ from __future__ import annotations
 
 import frappe
 from frappe.tests import IntegrationTestCase
+from frappe.utils import cstr
 
 from kentender_core.seeds.seed_budget_line_dia import verify_prerequisites_for_dia
 from kentender_procurement.demand_intake.seeds.seed_dia_basic import run as run_seed_dia_basic
 from kentender_procurement.procurement_planning.seeds import seed_works_stdint_s01 as sws
+from kentender_procurement.tender_management.services.planning_tender_handoff_duplicates import (
+	TM2_STATUSES_RELEASING_PACKAGE_FOR_NEW_TENDER,
+)
 from kentender_procurement.tender_management.services.std_template_loader import TEMPLATE_CODE
 
 
+def _delete_tm2_for_package(package_name: str) -> None:
+	for t in frappe.get_all("TM2 Tender", filters={"procurement_package": package_name}, pluck="name"):
+		for r in frappe.get_all(
+			"TM2 Tender Access Rule",
+			filters={"tm2_tender": t},
+			pluck="name",
+		):
+			if frappe.db.exists("TM2 Tender Access Rule", r):
+				frappe.delete_doc("TM2 Tender Access Rule", r, force=True, ignore_permissions=True)
+		for r in frappe.get_all(
+			"TM2 Tender Timeline",
+			filters={"tm2_tender": t},
+			pluck="name",
+		):
+			if frappe.db.exists("TM2 Tender Timeline", r):
+				frappe.delete_doc("TM2 Tender Timeline", r, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", t):
+			frappe.delete_doc("TM2 Tender", t, force=True, ignore_permissions=True)
+
+
 def _delete_tenders_for_package(package_name: str) -> None:
-	for t in frappe.get_all("Procurement Tender", filters={"procurement_package": package_name}, pluck="name"):
-		frappe.delete_doc("Procurement Tender", t, force=True, ignore_permissions=True)
+	_delete_tm2_for_package(package_name)
 
 
 def _delete_package_cascade_by_code(package_code: str) -> None:
@@ -67,8 +90,8 @@ class TestSeedWorksStdintS01C3(IntegrationTestCase):
 	def _skip_if_no_pp(self) -> None:
 		if not frappe.db.exists("DocType", "Procurement Plan"):
 			self.skipTest("Procurement Plan not installed")
-		if not frappe.db.exists("DocType", "Procurement Tender"):
-			self.skipTest("Procurement Tender not installed")
+		if not frappe.db.exists("DocType", "TM2 Tender"):
+			self.skipTest("TM2 Tender not installed")
 
 	def _ensure_budget_and_dia(self) -> None:
 		v = verify_prerequisites_for_dia()
@@ -97,15 +120,15 @@ class TestSeedWorksStdintS01C3(IntegrationTestCase):
 			(frappe.db.get_value("Procurement Plan", plan, "status") or "").strip(),
 			"Approved",
 		)
-		self.assertEqual(frappe.db.get_value("Procurement Tender", tender, "procurement_package"), pkg)
-		self.assertEqual(frappe.db.get_value("Procurement Tender", tender, "procurement_plan"), plan)
-		std = frappe.db.get_value("Procurement Tender", tender, "std_template")
+		self.assertEqual(frappe.db.get_value("TM2 Tender", tender, "procurement_package"), pkg)
+		self.assertEqual(frappe.db.get_value("TM2 Tender", tender, "procurement_plan"), plan)
+		std = frappe.db.get_value("TM2 Tender", tender, "std_template")
 		self.assertTrue(std)
 		self.assertEqual(
 			frappe.db.get_value("STD Template", std, "template_code"),
 			TEMPLATE_CODE,
 		)
-		self.assertTrue((frappe.db.get_value("Procurement Tender", tender, "configuration_json") or "").strip())
+		self.assertTrue((frappe.db.get_value("TM2 Tender", tender, "configuration_json") or "").strip())
 
 	def test_c3_idempotent_second_run_same_tender(self) -> None:
 		self._skip_if_no_pp()
@@ -121,9 +144,9 @@ class TestSeedWorksStdintS01C3(IntegrationTestCase):
 		self.assertTrue(second.get("release_skipped"))
 		self.assertEqual(second.get("tender"), t1)
 
-		active = frappe.get_all(
-			"Procurement Tender",
-			filters={"procurement_package": first.get("package"), "tender_status": ("!=", "Cancelled")},
-			pluck="name",
-		)
+		active = []
+		for n in frappe.get_all("TM2 Tender", filters={"procurement_package": first.get("package")}, pluck="name"):
+			st = cstr(frappe.db.get_value("TM2 Tender", n, "status") or "").strip()
+			if st and st not in TM2_STATUSES_RELEASING_PACKAGE_FOR_NEW_TENDER:
+				active.append(n)
 		self.assertEqual(len(active), 1)

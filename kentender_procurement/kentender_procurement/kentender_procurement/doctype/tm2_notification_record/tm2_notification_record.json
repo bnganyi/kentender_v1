@@ -1,0 +1,183 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:notification_code",
+ "creation": "2026-05-12 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "tm2_tender",
+  "tender_code",
+  "notification_code",
+  "section_related",
+  "related_object_type",
+  "related_object_id",
+  "section_message",
+  "notification_type",
+  "recipient_type",
+  "recipient_ref",
+  "channel",
+  "message_template_code",
+  "payload_snapshot",
+  "section_delivery",
+  "sent_at",
+  "delivery_status",
+  "failure_reason"
+ ],
+ "fields": [
+  {"fieldname": "section_identity", "fieldtype": "Section Break", "label": "Identity"},
+  {
+   "fieldname": "tm2_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender",
+   "options": "TM2 Tender",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tender_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Business code NTF-{tender_code}-{####} per doc 3 §3.1.",
+   "fieldname": "notification_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Notification Code",
+   "read_only_depends_on": "eval:!doc.__islocal",
+   "search_index": 1,
+   "unique": 1
+  },
+  {"fieldname": "section_related", "fieldtype": "Section Break", "label": "Related object"},
+  {
+   "fieldname": "related_object_type",
+   "fieldtype": "Data",
+   "label": "Related Object Type",
+   "description": "Addendum, clarification, bid, publication, etc."
+  },
+  {
+   "fieldname": "related_object_id",
+   "fieldtype": "Data",
+   "label": "Related Object Id"
+  },
+  {"fieldname": "section_message", "fieldtype": "Section Break", "label": "Message"},
+  {
+   "fieldname": "notification_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Notification Type",
+   "options": "Publication\nInvitation\nAddendum\nClarification\nClosing\nOpening\nEvaluation\nContract\nGeneral",
+   "reqd": 1
+  },
+  {
+   "fieldname": "recipient_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Recipient Type",
+   "options": "Supplier\nInternal\nPublic\nSystem",
+   "reqd": 1
+  },
+  {
+   "fieldname": "recipient_ref",
+   "fieldtype": "Data",
+   "label": "Recipient Ref",
+   "description": "Supplier code, user id, mailing list code, etc."
+  },
+  {
+   "fieldname": "channel",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Channel",
+   "options": "Email\nPortal\nSMS\nIn App\nOther",
+   "reqd": 1
+  },
+  {
+   "fieldname": "message_template_code",
+   "fieldtype": "Data",
+   "label": "Message Template Code"
+  },
+  {
+   "fieldname": "payload_snapshot",
+   "fieldtype": "JSON",
+   "label": "Payload Snapshot",
+   "reqd": 1
+  },
+  {"fieldname": "section_delivery", "fieldtype": "Section Break", "label": "Delivery"},
+  {
+   "fieldname": "sent_at",
+   "fieldtype": "Datetime",
+   "label": "Sent At"
+  },
+  {
+   "default": "Pending",
+   "fieldname": "delivery_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Delivery Status",
+   "options": "Pending\nQueued\nSent\nDelivered\nFailed\nSkipped",
+   "reqd": 1
+  },
+  {
+   "fieldname": "failure_reason",
+   "fieldtype": "Text",
+   "label": "Failure Reason"
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-12 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "TM2 Notification Record",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "search_fields": "notification_code,tender_code,notification_type,recipient_type,delivery_status",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "notification_code",
+ "track_changes": 1
+}

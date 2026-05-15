@@ -1,0 +1,176 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:acknowledgement_code",
+ "creation": "2026-05-12 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_addendum",
+  "tm2_addendum",
+  "addendum_code",
+  "tm2_tender",
+  "tender_code",
+  "section_supplier",
+  "supplier",
+  "supplier_code",
+  "acknowledgement_code",
+  "section_ack",
+  "required",
+  "acknowledged",
+  "acknowledged_by",
+  "acknowledged_at",
+  "acknowledgement_payload"
+ ],
+ "fields": [
+  {"fieldname": "section_addendum", "fieldtype": "Section Break", "label": "Addendum"},
+  {
+   "fieldname": "tm2_addendum",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Addendum",
+   "options": "TM2 Addendum",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "addendum_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Addendum Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "tm2_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender",
+   "options": "TM2 Tender",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tender_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {"fieldname": "section_supplier", "fieldtype": "Section Break", "label": "Supplier"},
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Supplier",
+   "options": "Supplier",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "supplier_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Supplier Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Business code ACK-{addendum_code}-{supplier_code} per doc 3 §3.1.",
+   "fieldname": "acknowledgement_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Acknowledgement Code",
+   "read_only_depends_on": "eval:!doc.__islocal",
+   "search_index": 1,
+   "unique": 1
+  },
+  {"fieldname": "section_ack", "fieldtype": "Section Break", "label": "Acknowledgement"},
+  {
+   "default": "1",
+   "fieldname": "required",
+   "fieldtype": "Check",
+   "label": "Required",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "acknowledged",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Acknowledged",
+   "reqd": 1
+  },
+  {
+   "fieldname": "acknowledged_by",
+   "fieldtype": "Link",
+   "label": "Acknowledged By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "acknowledged_at",
+   "fieldtype": "Datetime",
+   "label": "Acknowledged At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "acknowledgement_payload",
+   "fieldtype": "JSON",
+   "label": "Acknowledgement Payload"
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-12 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "TM2 Addendum Acknowledgement",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "search_fields": "acknowledgement_code,addendum_code,tender_code,supplier_code",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "acknowledgement_code",
+ "track_changes": 1
+}

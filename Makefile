@@ -6,15 +6,15 @@ BENCH_ROOT := /home/midasuser/frappe-bench
 KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency
 INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency
 
-.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke
+.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate
 
 help:
 	@echo "Targets:"
 	@echo "  make install SITE=$(SITE)     — install-app all KenTender apps in order"
 	@echo "  make install-one APP=...      — install-app single app"
 	@echo "  make migrate SITE=$(SITE)"
-	@echo "  make build"
-	@echo "  make build-kentender"
+	@echo "  make build — desk assets via ./scripts/bench-with-node.sh (Node ≥24; see frappe-bench AGENTS.md)"
+	@echo "  make build-kentender — all KenTender apps via bench-with-node.sh"
 	@echo "  make clear SITE=$(SITE)"
 	@echo "  make restart"
 	@echo "  make doctor"
@@ -22,9 +22,14 @@ help:
 	@echo "  make symlinks"
 	@echo "  make validate-links"
 	@echo "  make smoke SITE=$(SITE) — guard_frappe_scaffolds + Wave 0 smoke tests"
+	@echo "  make tm2-v1-contamination-audit SITE=$(SITE) — P11-03 static scan + catalogue (kentender_procurement)"
+	@echo "  make p11-04-tm2-surface-gate SITE=$(SITE) — P11-04 TM2 paths must not get_doc/new_doc Procurement Tender"
+	@echo "  make p11-05-tm2-surface-legacy-literal-gate SITE=$(SITE) — P11-05 TM2 paths + v2 desk JS must not quote Procurement Tender"
+	@echo "  make p12-01-scenario-harness SITE=$(SITE) — P12-01 doc 7 §2 scenario catalog + S01–S13 stub test modules"
+	@echo "  make x-01-planning-std-poc-gate SITE=$(SITE) — X-01 planning + STD POC regression slice (tender-management §X)"
+	@echo "  make x-02-no-plain-bench-build-gate — X-02 tender-management prompts must not document bare bench asset build (doc 9 §3.1)"
+	@echo "  make x-03-doc9-acceptance-sequence-gate — X-03 doc 9 §23.4 KenTender acceptance runbook markers (doc + audit)"
 	@echo "  make ui-smoke — Phase La: npm run test:ui:smoke (needs Node, running site, apps/kentender_v1/.env.ui)"
-
-install:
 	@for app in $(INSTALL_ORDER); do \
 		echo "Installing $$app on $(SITE)"; \
 		cd $(BENCH_ROOT) && bench --site $(SITE) install-app $$app || exit 1; \
@@ -38,10 +43,10 @@ migrate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) migrate
 
 build:
-	cd $(BENCH_ROOT) && bench build
+	cd $(BENCH_ROOT) && ./scripts/bench-with-node.sh build
 
 build-kentender:
-	cd $(BENCH_ROOT) && bench build --apps $(KENTENDER_APPS)
+	cd $(BENCH_ROOT) && ./scripts/bench-with-node.sh build --apps $(KENTENDER_APPS)
 
 clear:
 	cd $(BENCH_ROOT) && bench --site $(SITE) clear-cache && bench --site $(SITE) clear-website-cache
@@ -89,3 +94,27 @@ smoke:
 
 ui-smoke:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npm run test:ui:smoke
+
+tm2-v1-contamination-audit:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_management.tests.test_p11_03_tm2_v1_contamination_audit
+
+p11-04-tm2-surface-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_management.tests.test_p11_04_tm2_surface_no_procurement_tender
+
+p11-05-tm2-surface-legacy-literal-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_management.tests.test_p11_05_tm2_surface_no_procurement_tender_literal
+
+p12-01-scenario-harness:
+	SITE=$(SITE) $(BENCH_ROOT)/scripts/p12_01_tm2_works_scenario_harness.sh
+
+x-01-planning-std-poc-gate:
+	SITE=$(SITE) $(BENCH_ROOT)/scripts/x_01_planning_std_poc_regression_gate.sh
+
+x-02-no-plain-bench-build-gate:
+	$(BENCH_ROOT)/scripts/x_02_tender_management_docs_no_plain_bench_build_gate.sh
+
+x-03-doc9-acceptance-sequence-gate:
+	$(BENCH_ROOT)/scripts/x_03_doc9_section_23_4_acceptance_sequence_gate.sh

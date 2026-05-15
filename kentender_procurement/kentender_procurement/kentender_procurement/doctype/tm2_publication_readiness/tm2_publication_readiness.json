@@ -1,0 +1,346 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:readiness_code",
+ "creation": "2026-05-12 22:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_parent",
+  "tm2_tender",
+  "tender_code",
+  "tm2_tender_std_binding",
+  "binding_code",
+  "readiness_code",
+  "section_run",
+  "validation_run_number",
+  "readiness_status",
+  "std_readiness_status",
+  "section_checks",
+  "package_lineage_valid",
+  "template_version_active",
+  "std_instance_exists",
+  "parameters_complete",
+  "sections_complete",
+  "column_outputs",
+  "bundle_current",
+  "dsm_current",
+  "dom_current",
+  "dem_current",
+  "dcm_current",
+  "column_more_checks",
+  "timeline_valid",
+  "supplier_access_valid",
+  "column_counts",
+  "unresolved_blocker_count",
+  "warning_count",
+  "section_payload",
+  "validation_payload",
+  "section_validation_meta",
+  "validated_by",
+  "validated_at",
+  "section_supersede",
+  "superseded_by_readiness"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_parent",
+   "fieldtype": "Section Break",
+   "label": "Tender"
+  },
+  {
+   "fieldname": "tm2_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender",
+   "options": "TM2 Tender",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tender_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "tm2_tender_std_binding",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender STD Binding",
+   "options": "TM2 Tender STD Binding",
+   "reqd": 1
+  },
+  {
+   "fieldname": "binding_code",
+   "fieldtype": "Data",
+   "label": "Binding Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Business code TRD-{tender_code}-{###} per doc 3 §3.1 / doc 7 §13.",
+   "fieldname": "readiness_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Readiness Code",
+   "read_only_depends_on": "eval:!doc.__islocal",
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "section_run",
+   "fieldtype": "Section Break",
+   "label": "Run"
+  },
+  {
+   "fieldname": "validation_run_number",
+   "fieldtype": "Int",
+   "label": "Validation Run Number",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "readiness_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Readiness Status",
+   "options": "Blocked\nReady\nReady With Warnings",
+   "reqd": 1
+  },
+  {
+   "fieldname": "std_readiness_status",
+   "fieldtype": "Select",
+   "label": "STD Readiness Status",
+   "options": "Not Assessed\nNot Ready\nReady With Warnings\nReady\nBlocked",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_checks",
+   "fieldtype": "Section Break",
+   "label": "Checks"
+  },
+  {
+   "default": "0",
+   "fieldname": "package_lineage_valid",
+   "fieldtype": "Check",
+   "label": "Package Lineage Valid",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "template_version_active",
+   "fieldtype": "Check",
+   "label": "Template Version Active",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "std_instance_exists",
+   "fieldtype": "Check",
+   "label": "STD Instance Exists",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "parameters_complete",
+   "fieldtype": "Check",
+   "label": "Parameters Complete",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "sections_complete",
+   "fieldtype": "Check",
+   "label": "Sections Complete",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_outputs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "bundle_current",
+   "fieldtype": "Check",
+   "label": "Bundle Current",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "dsm_current",
+   "fieldtype": "Check",
+   "label": "DSM Current",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "dom_current",
+   "fieldtype": "Check",
+   "label": "DOM Current",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "dem_current",
+   "fieldtype": "Check",
+   "label": "DEM Current",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "dcm_current",
+   "fieldtype": "Check",
+   "label": "DCM Current",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_more_checks",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "timeline_valid",
+   "fieldtype": "Check",
+   "label": "Timeline Valid",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "supplier_access_valid",
+   "fieldtype": "Check",
+   "label": "Supplier Access Valid",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_counts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "unresolved_blocker_count",
+   "fieldtype": "Int",
+   "label": "Unresolved Blocker Count",
+   "non_negative": 1,
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "warning_count",
+   "fieldtype": "Int",
+   "label": "Warning Count",
+   "non_negative": 1,
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_payload",
+   "fieldtype": "Section Break",
+   "label": "Validation"
+  },
+  {
+   "fieldname": "validation_payload",
+   "fieldtype": "JSON",
+   "label": "Validation Payload",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_validation_meta",
+   "fieldtype": "Section Break",
+   "label": "Validated"
+  },
+  {
+   "fieldname": "validated_by",
+   "fieldtype": "Link",
+   "label": "Validated By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "validated_at",
+   "fieldtype": "Datetime",
+   "label": "Validated At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_supersede",
+   "fieldtype": "Section Break",
+   "label": "Supersession"
+  },
+  {
+   "fieldname": "superseded_by_readiness",
+   "fieldtype": "Link",
+   "label": "Superseded By Readiness",
+   "options": "TM2 Publication Readiness",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-12 22:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "TM2 Publication Readiness",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "search_fields": "readiness_code,tender_code,binding_code",
+ "show_title_field_in_link": 1,
+ "sort_field": "validation_run_number",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "readiness_code",
+ "track_changes": 1
+}

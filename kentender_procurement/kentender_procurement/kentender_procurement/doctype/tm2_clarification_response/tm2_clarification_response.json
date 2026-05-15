@@ -1,0 +1,230 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:response_code",
+ "creation": "2026-05-13 00:30:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_parent",
+  "tm2_clarification_request",
+  "clarification_request_code",
+  "tm2_tender",
+  "tender_code",
+  "response_code",
+  "section_content",
+  "response_text",
+  "visibility",
+  "addendum_required",
+  "section_draft",
+  "drafted_by",
+  "drafted_at",
+  "section_approval",
+  "approved_by",
+  "approved_at",
+  "section_publish",
+  "published_by",
+  "published_at",
+  "section_status",
+  "status"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_parent",
+   "fieldtype": "Section Break",
+   "label": "Clarification"
+  },
+  {
+   "fieldname": "tm2_clarification_request",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Clarification Request",
+   "options": "TM2 Clarification Request",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "clarification_request_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Clarification Request Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "tm2_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender",
+   "options": "TM2 Tender",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tender_code",
+   "fieldtype": "Data",
+   "label": "Tender Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Business code CLRR-{clarification_code}-{##} per doc 3 §3.1.",
+   "fieldname": "response_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Response Code",
+   "read_only_depends_on": "eval:!doc.__islocal",
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "section_content",
+   "fieldtype": "Section Break",
+   "label": "Response"
+  },
+  {
+   "fieldname": "response_text",
+   "fieldtype": "Text",
+   "label": "Response Text",
+   "reqd": 1
+  },
+  {
+   "default": "Requesting Supplier Only",
+   "fieldname": "visibility",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Visibility",
+   "options": "Requesting Supplier Only\nAll Participants\nPublic\nInternal Only",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "addendum_required",
+   "fieldtype": "Check",
+   "label": "Addendum Required",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_draft",
+   "fieldtype": "Section Break",
+   "label": "Draft"
+  },
+  {
+   "fieldname": "drafted_by",
+   "fieldtype": "Link",
+   "label": "Drafted By",
+   "options": "User",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "drafted_at",
+   "fieldtype": "Datetime",
+   "label": "Drafted At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_approval",
+   "fieldtype": "Section Break",
+   "label": "Approval"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_at",
+   "fieldtype": "Datetime",
+   "label": "Approved At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_publish",
+   "fieldtype": "Section Break",
+   "label": "Publication"
+  },
+  {
+   "fieldname": "published_by",
+   "fieldtype": "Link",
+   "label": "Published By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "published_at",
+   "fieldtype": "Datetime",
+   "label": "Published At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_status",
+   "fieldtype": "Section Break",
+   "label": "Workflow"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nResponse Drafted\nPending Approval\nPublished\nRejected\nReturned\nConverted to Addendum",
+   "reqd": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-13 00:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "TM2 Clarification Response",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "search_fields": "response_code,tender_code,clarification_request_code,status",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "response_code",
+ "track_changes": 1
+}

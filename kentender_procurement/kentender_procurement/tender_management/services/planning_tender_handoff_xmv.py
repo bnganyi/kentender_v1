@@ -16,10 +16,13 @@ from typing import Any, Literal
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cint, flt
+from frappe.utils import cint, cstr, flt
 
 from kentender_procurement.procurement_planning.services.package_completeness import (
 	get_package_completeness_blockers,
+)
+from kentender_procurement.tender_management.services.planning_tender_handoff_duplicates import (
+	TM2_STATUSES_RELEASING_PACKAGE_FOR_NEW_TENDER,
 )
 from kentender_procurement.tender_management.services.std_template_handoff_resolution import (
 	format_ambiguous_std_message,
@@ -95,14 +98,16 @@ def _lines_missing_budget_count(package_name: str | None) -> int:
 
 
 def _non_cancelled_tender_count(package_name: str | None) -> int:
+	"""Count active ``TM2 Tender`` rows for duplicate / corruption checks (XMV-PT-009)."""
 	if not package_name:
 		return 0
-	return cint(
-		frappe.db.count(
-			"Procurement Tender",
-			{"procurement_package": package_name, "tender_status": ("!=", "Cancelled")},
-		)
-	)
+	pkg = (package_name or "").strip()
+	n = 0
+	for row in frappe.get_all("TM2 Tender", filters={"procurement_package": pkg}, pluck="name"):
+		st = cstr(frappe.db.get_value("TM2 Tender", row, "status") or "").strip()
+		if st and st not in TM2_STATUSES_RELEASING_PACKAGE_FOR_NEW_TENDER:
+			n += 1
+	return n
 
 
 def resolve_std_template_name_for_xmv(pkg: Document) -> str | None:

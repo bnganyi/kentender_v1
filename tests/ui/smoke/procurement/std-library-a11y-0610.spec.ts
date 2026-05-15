@@ -399,6 +399,7 @@ test.describe('STD-LIB-0610 — pack §27 accessibility basics', () => {
 		await expect(genBtn).toHaveAttribute('aria-describedby', 'std-bundle-generate-preview-reason');
 
 		await page.locator('[data-testid="std-library-tab-advanced"]').click();
+		await page.locator('[data-testid="std-advanced-technical-view-toggle"]').click();
 		await expect(page.locator('[data-testid="std-advanced-intro"]')).toHaveAttribute('role', 'region');
 		await expect(page.locator('[data-testid="std-advanced-intro"]')).toHaveAttribute(
 			'aria-label',

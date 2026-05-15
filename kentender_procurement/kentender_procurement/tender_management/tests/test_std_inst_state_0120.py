@@ -47,7 +47,7 @@ class TestStdInstState0120(IntegrationTestCase):
 	def _cleanup_tender(self, tender_name: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
-			filters={"procurement_tender": tender_name},
+			filters={"tm2_tender": tender_name},
 			pluck="name",
 		):
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
@@ -57,7 +57,7 @@ class TestStdInstState0120(IntegrationTestCase):
 	def test_std_inst_0120_apply_transition_happy_path(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -83,7 +83,7 @@ class TestStdInstState0120(IntegrationTestCase):
 	def test_std_inst_0120_cancelled_from_draft(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -96,7 +96,7 @@ class TestStdInstState0120(IntegrationTestCase):
 	def test_std_inst_0120_published_locked_to_draft_denied(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -120,7 +120,7 @@ class TestStdInstState0120(IntegrationTestCase):
 	def test_std_inst_0120_replace_supersession_regression(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			TenderStdBindingService.create_std_instance_for_tender(
+			TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -131,7 +131,7 @@ class TestStdInstState0120(IntegrationTestCase):
 				record_template_usage=False,
 			)
 			self.assertTrue(second.name)
-			cur = TenderStdBindingService.get_current_std_instance_for_tender(tender)
+			cur = TenderStdBindingService.get_current_std_instance_for_tm2_tender(tender)
 			self.assertIsNotNone(cur)
 			self.assertEqual(cur.name, second.name)
 		finally:
@@ -140,7 +140,7 @@ class TestStdInstState0120(IntegrationTestCase):
 	def test_std_inst_0120_terminal_no_transition(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,

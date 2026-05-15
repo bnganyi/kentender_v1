@@ -60,7 +60,7 @@ class TestStdInstSnapshot0500(IntegrationTestCase):
 	def _cleanup_tender(self, tender_name: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
-			filters={"procurement_tender": tender_name},
+			filters={"tm2_tender": tender_name},
 			pluck="name",
 		):
 			for snap_name in frappe.get_all(
@@ -103,7 +103,7 @@ class TestStdInstSnapshot0500(IntegrationTestCase):
 	def test_std_inst_0500_configuration_snapshot(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -122,7 +122,7 @@ class TestStdInstSnapshot0500(IntegrationTestCase):
 	def test_std_inst_0500_publication_snapshot_and_assert(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -158,7 +158,7 @@ class TestStdInstSnapshot0500(IntegrationTestCase):
 	def test_std_inst_0500_final_snapshot_immutable(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,

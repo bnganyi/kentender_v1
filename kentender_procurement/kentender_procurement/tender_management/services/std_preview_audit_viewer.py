@@ -11,8 +11,8 @@ from typing import Any
 import frappe
 from frappe.model.document import Document
 
-from kentender_procurement.kentender_procurement.doctype.procurement_tender.procurement_tender import (
-	RENDER_CONTEXT_BANNER,
+RENDER_CONTEXT_BANNER = (
+	"// STD POC RENDER CONTEXT — JSON, not final tender pack HTML"
 )
 
 PREVIEW_VIEWER_POC_WARNING = (

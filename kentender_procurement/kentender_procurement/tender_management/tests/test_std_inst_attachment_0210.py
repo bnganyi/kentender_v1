@@ -48,7 +48,7 @@ class TestStdInstAttachment0210(IntegrationTestCase):
 	def _cleanup_tender(self, tender_name: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
-			filters={"procurement_tender": tender_name},
+			filters={"tm2_tender": tender_name},
 			pluck="name",
 		):
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
@@ -58,7 +58,7 @@ class TestStdInstAttachment0210(IntegrationTestCase):
 	def test_std_inst_0210_attach_file_to_section(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -86,7 +86,7 @@ class TestStdInstAttachment0210(IntegrationTestCase):
 	def test_std_inst_0210_unbound_section_denied(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -119,7 +119,7 @@ class TestStdInstAttachment0210(IntegrationTestCase):
 	def test_std_inst_0210_replace_through_addendum(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -154,7 +154,7 @@ class TestStdInstAttachment0210(IntegrationTestCase):
 	def test_std_inst_0210_published_row_immutable(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -178,7 +178,7 @@ class TestStdInstAttachment0210(IntegrationTestCase):
 	def test_std_inst_0210_publication_instance_lock(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,

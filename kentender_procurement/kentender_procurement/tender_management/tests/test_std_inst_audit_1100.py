@@ -48,7 +48,7 @@ class TestStdInstAudit1100(IntegrationTestCase):
 	def _cleanup_tender(self, tender_name: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
-			filters={"procurement_tender": tender_name},
+			filters={"tm2_tender": tender_name},
 			pluck="name",
 		):
 			for snap_name in frappe.get_all(
@@ -76,7 +76,7 @@ class TestStdInstAudit1100(IntegrationTestCase):
 	def test_std_inst_1100_append_only_parameter_events(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender, ignore_permissions=True, record_template_usage=False
 			)
 			base = frappe.db.count(
@@ -112,7 +112,7 @@ class TestStdInstAudit1100(IntegrationTestCase):
 		try:
 			frappe.set_user("Guest")
 			with self.assertRaises(frappe.ValidationError):
-				TenderStdBindingService.create_std_instance_for_tender(
+				TenderStdBindingService.create_std_instance_for_tm2_tender(
 					tender, ignore_permissions=True, record_template_usage=False
 				)
 		finally:
@@ -124,7 +124,7 @@ class TestStdInstAudit1100(IntegrationTestCase):
 	def test_std_inst_1100_snapshot_creation_is_audited(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender, ignore_permissions=True, record_template_usage=False
 			)
 			before = frappe.db.count(
@@ -160,7 +160,7 @@ class TestStdInstAudit1100(IntegrationTestCase):
 		"""WORKS-COMP-0900 regression: STD parameter API stays separate from Works TDS façade."""
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender, ignore_permissions=True, record_template_usage=False
 			)
 			wb = frappe.db.count(

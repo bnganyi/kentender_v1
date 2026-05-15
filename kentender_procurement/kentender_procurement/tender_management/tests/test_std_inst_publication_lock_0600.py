@@ -45,7 +45,7 @@ class TestStdInstPublicationLock0600(IntegrationTestCase):
 	def _cleanup_tender(self, tender_name: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
-			filters={"procurement_tender": tender_name},
+			filters={"tm2_tender": tender_name},
 			pluck="name",
 		):
 			for snap_name in frappe.get_all(
@@ -85,7 +85,7 @@ class TestStdInstPublicationLock0600(IntegrationTestCase):
 	def test_std_inst_0600_lock_for_approval_sets_metadata(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender, ignore_permissions=True, record_template_usage=False
 			)
 			si = StdInstanceStateService.apply_transition(si.name, "In Configuration", ignore_permissions=True)
@@ -100,7 +100,7 @@ class TestStdInstPublicationLock0600(IntegrationTestCase):
 	def test_std_inst_0600_assert_editable_denies_locked_for_approval(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender, ignore_permissions=True, record_template_usage=False
 			)
 			si = StdInstanceStateService.apply_transition(si.name, "In Configuration", ignore_permissions=True)
@@ -115,7 +115,7 @@ class TestStdInstPublicationLock0600(IntegrationTestCase):
 	def test_std_inst_0600_lock_for_publication_requires_snapshot(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender, ignore_permissions=True, record_template_usage=False
 			)
 			si = StdInstanceStateService.apply_transition(si.name, "In Configuration", ignore_permissions=True)
@@ -130,7 +130,7 @@ class TestStdInstPublicationLock0600(IntegrationTestCase):
 	def test_std_inst_0600_lock_for_publication_sets_metadata(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender, ignore_permissions=True, record_template_usage=False
 			)
 			si = StdInstanceStateService.apply_transition(si.name, "In Configuration", ignore_permissions=True)
@@ -148,7 +148,7 @@ class TestStdInstPublicationLock0600(IntegrationTestCase):
 	def test_std_inst_0600_published_mutation_requires_addendum(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender, ignore_permissions=True, record_template_usage=False
 			)
 			si = StdInstanceStateService.apply_transition(si.name, "In Configuration", ignore_permissions=True)

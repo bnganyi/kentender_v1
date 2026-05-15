@@ -195,7 +195,10 @@ class StdInstanceAttachmentService:
 				StdPublicationLockService,
 			)
 
-			StdAuthorizationService.assert_can_edit_draft_instance(instance_name)
+			StdAuthorizationService.assert_can_edit_draft_instance(
+				instance_name,
+				attempted_change="edit section attachments",
+			)
 			StdPublicationLockService.assert_editable(instance_name, operation_label="edit section attachments")
 
 		doc = frappe.get_doc("Tender STD Instance", instance_name)

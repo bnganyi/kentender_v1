@@ -1,0 +1,264 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:bid_code",
+ "creation": "2026-05-12 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "tm2_tender",
+  "tender_code",
+  "supplier",
+  "supplier_code",
+  "bid_code",
+  "submission_sequence",
+  "section_refs",
+  "dsm_output_code",
+  "tender_std_instance_code",
+  "publication_snapshot_code",
+  "addendum_acknowledgement_snapshot",
+  "section_submit",
+  "bid_status",
+  "submitted_by",
+  "submitted_at",
+  "sealed_at",
+  "submission_hash",
+  "section_finance",
+  "total_submitted_price",
+  "currency",
+  "section_lineage",
+  "previous_tm2_bid_submission",
+  "superseded_by_tm2_bid_submission",
+  "section_withdraw",
+  "withdrawn_by",
+  "withdrawn_at",
+  "withdrawal_reason",
+  "section_opening",
+  "opened_at",
+  "evaluation_locked_at"
+ ],
+ "fields": [
+  {"fieldname": "section_identity", "fieldtype": "Section Break", "label": "Identity"},
+  {
+   "fieldname": "tm2_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender",
+   "options": "TM2 Tender",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tender_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Supplier",
+   "options": "Supplier",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "supplier_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Supplier Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Business code BID-{tender_code}-{supplier_code}-{##} per doc 3 §3.1.",
+   "fieldname": "bid_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Bid Code",
+   "read_only_depends_on": "eval:!doc.__islocal",
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "submission_sequence",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Submission Sequence",
+   "non_negative": 1,
+   "read_only": 1,
+   "reqd": 1
+  },
+  {"fieldname": "section_refs", "fieldtype": "Section Break", "label": "STD / publication"},
+  {
+   "fieldname": "dsm_output_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "DSM Output Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender_std_instance_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender STD Instance Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "publication_snapshot_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Publication Snapshot Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "addendum_acknowledgement_snapshot",
+   "fieldtype": "JSON",
+   "label": "Addendum Acknowledgement Snapshot"
+  },
+  {"fieldname": "section_submit", "fieldtype": "Section Break", "label": "Submission"},
+  {
+   "default": "Submitted",
+   "fieldname": "bid_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Bid Status",
+   "options": "Draft\nSubmitted\nSealed\nSuperseded\nWithdrawn\nLate Attempt Rejected\nOpened\nExcluded by System Rule\nEvaluation Locked",
+   "reqd": 1
+  },
+  {
+   "fieldname": "submitted_by",
+   "fieldtype": "Link",
+   "label": "Submitted By",
+   "options": "User",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "submitted_at",
+   "fieldtype": "Datetime",
+   "label": "Submitted At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "sealed_at",
+   "fieldtype": "Datetime",
+   "label": "Sealed At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "submission_hash",
+   "fieldtype": "Data",
+   "label": "Submission Hash",
+   "read_only": 1
+  },
+  {"fieldname": "section_finance", "fieldtype": "Section Break", "label": "Finance"},
+  {
+   "fieldname": "total_submitted_price",
+   "fieldtype": "Currency",
+   "label": "Total Submitted Price",
+   "read_only": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Data",
+   "label": "Currency",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {"fieldname": "section_lineage", "fieldtype": "Section Break", "label": "Lineage"},
+  {
+   "fieldname": "previous_tm2_bid_submission",
+   "fieldtype": "Link",
+   "label": "Previous TM2 Bid Submission",
+   "options": "TM2 Bid Submission"
+  },
+  {
+   "fieldname": "superseded_by_tm2_bid_submission",
+   "fieldtype": "Link",
+   "label": "Superseded By TM2 Bid Submission",
+   "options": "TM2 Bid Submission",
+   "read_only": 1
+  },
+  {"fieldname": "section_withdraw", "fieldtype": "Section Break", "label": "Withdrawal"},
+  {
+   "fieldname": "withdrawn_by",
+   "fieldtype": "Link",
+   "label": "Withdrawn By",
+   "options": "User",
+   "read_only": 1
+  },
+  {"fieldname": "withdrawn_at", "fieldtype": "Datetime", "label": "Withdrawn At", "read_only": 1},
+  {
+   "fieldname": "withdrawal_reason",
+   "fieldtype": "Text",
+   "label": "Withdrawal Reason",
+   "read_only": 1
+  },
+  {"fieldname": "section_opening", "fieldtype": "Section Break", "label": "Opening / evaluation"},
+  {"fieldname": "opened_at", "fieldtype": "Datetime", "label": "Opened At", "read_only": 1},
+  {
+   "fieldname": "evaluation_locked_at",
+   "fieldtype": "Datetime",
+   "label": "Evaluation Locked At",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-12 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "TM2 Bid Submission",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "search_fields": "bid_code,tender_code,supplier_code,bid_status,dsm_output_code",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "bid_code",
+ "track_changes": 1
+}

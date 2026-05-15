@@ -331,16 +331,31 @@ frappe.provide("kentender_procurement.std_library_detail_renderers");
 			readiness_rules: "std-advanced-readiness-rules",
 			generated_models: "std-advanced-generated-models",
 		};
-		return `
-<section class="std-library-advanced-tab" data-testid="std-library-advanced-tab">
-	<div class="std-advanced-intro" data-testid="std-advanced-intro" role="region" aria-label="${escHtml(
-		__("Advanced Technical View introduction"),
-	)}">
-		<p>${advanced.intro_text || ""}</p>
-		<p><strong>${__("Read-only")}:</strong> ${editing.reason || __("Advanced shell is read-only in this phase.")}</p>
-	</div>
-	<div class="std-advanced-grid">
-		${sections
+		const status = String(detail?.status || "")
+			.trim()
+			.toLowerCase();
+		const isActive = status === "active";
+		const editingExplicitlyDisabled = editing && editing.enabled === false;
+		const showReadonlyBanner =
+			isActive || editingExplicitlyDisabled || Boolean(editing.force_readonly_banner);
+		const readonlyBody =
+			(editing.reason || "").trim() ||
+			(isActive
+				? __(
+						"This version is Active. Mapping and structural edits are disabled; create a new revision to change configuration.",
+				  )
+				: __("Advanced technical surfaces are read-only in this phase."));
+		const readonlyBannerHtml = showReadonlyBanner
+			? `<div class="alert alert-warning" data-testid="std-advanced-readonly-banner" role="status"><strong>${__(
+					"Read-only",
+			  )}:</strong> ${escHtml(readonlyBody)}</div>`
+			: `<div data-testid="std-advanced-readonly-banner" class="hidden" aria-hidden="true"></div>`;
+		const defaultIntro = __(
+			"For authorized administrators reviewing structured sections, parameters, mappings, readiness rules, and generated model definitions.",
+		);
+		const introSource = (advanced.intro_text || "").trim();
+		const introParagraph = introSource ? escHtml(introSource) : escHtml(defaultIntro);
+		const gridHtml = sections
 			.filter((s) => s.key !== "raw_package_data")
 			.map((s) => {
 				const tid = sectionHtml[s.key] || "";
@@ -400,18 +415,37 @@ frappe.provide("kentender_procurement.std_library_detail_renderers");
 					<p>${__("Shell ready. Detailed internals are implemented in follow-on tickets where applicable.")}</p>
 				</div>`;
 			})
-			.join("")}
-	</div>
-	<details class="std-advanced-raw" data-testid="std-advanced-raw-package-data"${
-		raw.collapsed_by_default ? "" : " open"
-	}>
-		<summary>${__("Raw Package Data")} - ${raw.technical_label || __("Technical (Read-Only)")}</summary>
-		${
-			raw.visible_for_advanced_users
-				? `<p>${__("Raw package data is technical, hidden by default, and read-only.")}</p>`
-				: `<p>${__("Raw package data is hidden for users without advanced permissions.")}</p>`
-		}
-	</details>
+			.join("");
+		return `
+<section data-testid="std-advanced-technical-view" class="std-advanced-technical-view-root">
+	<section class="std-library-advanced-tab" data-testid="std-library-advanced-tab">
+		${readonlyBannerHtml}
+		<details class="std-advanced-technical-disclosure">
+			<summary data-testid="std-advanced-technical-view-toggle" class="std-advanced-technical-summary">${__(
+				"Show advanced technical internals",
+			)}</summary>
+			<div class="std-advanced-technical-disclosure-body">
+				<div class="std-advanced-intro" data-testid="std-advanced-intro" role="region" aria-label="${escHtml(
+					__("Advanced Technical View introduction"),
+				)}">
+					<p>${introParagraph}</p>
+				</div>
+				<div class="std-advanced-grid">
+					${gridHtml}
+				</div>
+			</div>
+		</details>
+		<details class="std-advanced-raw" data-testid="std-advanced-raw-package-data"${
+			raw.collapsed_by_default ? "" : " open"
+		}>
+			<summary>${__("Raw Package Data")} - ${raw.technical_label || __("Technical (Read-Only)")}</summary>
+			${
+				raw.visible_for_advanced_users
+					? `<p>${__("Raw package data is technical, hidden by default, and read-only.")}</p>`
+					: `<p>${__("Raw package data is hidden for users without advanced permissions.")}</p>`
+			}
+		</details>
+	</section>
 </section>`;
 	};
 

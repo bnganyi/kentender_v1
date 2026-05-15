@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""B8 — handoff audit + ``source_package_snapshot_json`` (doc 2 sec. 18).
+"""B8 — handoff audit + planning snapshot on ``TM2 Tender`` (doc 2 sec. 18).
 
 Run:
 	bench --site <site> run-tests --app kentender_procurement \\
@@ -43,37 +43,38 @@ class TestPlanningTenderHandoffAuditB8(_ReleaseProcurementPackageHandoffFixtures
 		out = release_procurement_package_to_tender(pkg.name)
 		self.assertTrue(out.get("ok"), out)
 		tn = out["tender"]
-		self._created.append(("Procurement Tender", tn))
+		self._created.append(("TM2 Tender", tn))
 
-		raw_snap = frappe.db.get_value("Procurement Tender", tn, "source_package_snapshot_json") or ""
+		raw_snap = frappe.db.get_value("TM2 Tender", tn, "planning_handoff_snapshot_json") or ""
 		self.assertTrue(raw_snap.strip())
 		snap = json.loads(raw_snap)
 		self.assertEqual(snap.get("schema"), "kentender.planning_to_tender.handoff_snapshot/v1")
 		self.assertEqual(snap.get("package", {}).get("name"), pkg.name)
 
-		db_hash = frappe.db.get_value("Procurement Tender", tn, "source_package_hash")
+		db_hash = frappe.db.get_value("TM2 Tender", tn, "planning_handoff_snapshot_sha256")
 		expect_hash = hashlib.sha256(raw_snap.encode("utf-8")).hexdigest()
 		self.assertEqual(db_hash, expect_hash)
 
-		cfg_raw = frappe.db.get_value("Procurement Tender", tn, "configuration_json") or "{}"
+		cfg_raw = frappe.db.get_value("TM2 Tender", tn, "configuration_json") or "{}"
 		expect_cfg_hash = hash_config(json.loads(cfg_raw))
 		self.assertEqual(
-			frappe.db.get_value("Procurement Tender", tn, "configuration_hash"),
+			frappe.db.get_value("TM2 Tender", tn, "planning_handoff_configuration_sha256"),
 			expect_cfg_hash,
 		)
 
-		self.assertEqual(frappe.db.get_value("Procurement Tender", tn, "source_demand_count"), 1)
-		self.assertEqual(frappe.db.get_value("Procurement Tender", tn, "source_budget_line_count"), 1)
+		self.assertEqual(frappe.db.get_value("TM2 Tender", tn, "planning_handoff_source_demand_count"), 1)
+		self.assertEqual(frappe.db.get_value("TM2 Tender", tn, "planning_handoff_source_budget_line_count"), 1)
 
 		comments = frappe.get_all(
 			"Comment",
-			filters={"reference_doctype": "Procurement Tender", "reference_name": tn},
+			filters={"reference_doctype": "TM2 Tender", "reference_name": tn},
 			fields=["content"],
 			order_by="creation desc",
 			limit=5,
 		)
 		self.assertTrue(comments, "expected at least one Comment on the tender")
-		payload = json.loads(comments[0].content)
+		raw_comment = comments[0].get("content") or comments[0].get("comment") or ""
+		payload = json.loads(raw_comment)
 		self.assertEqual(payload.get("event"), "planning_to_tender_handoff")
 		self.assertEqual(payload.get("target_tender"), tn)
 		self.assertEqual(payload.get("handoff_snapshot_sha256"), db_hash)
@@ -97,8 +98,8 @@ class TestPlanningTenderHandoffAuditB8(_ReleaseProcurementPackageHandoffFixtures
 				release_procurement_package_to_tender(pkg.name)
 
 		linked = frappe.get_all(
-			"Procurement Tender",
-			filters={"procurement_package": pkg.name, "tender_status": ("!=", "Cancelled")},
+			"TM2 Tender",
+			filters={"procurement_package": pkg.name},
 			pluck="name",
 		)
 		self.assertFalse(linked, "tender must be removed when audit comment fails")

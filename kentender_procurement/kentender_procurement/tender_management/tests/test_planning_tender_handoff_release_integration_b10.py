@@ -18,9 +18,6 @@ from unittest.mock import patch
 import frappe
 from frappe.tests import IntegrationTestCase
 
-from kentender_procurement.tender_management.services.officer_tender_config import (
-	TENDER_STATUS_CONFIGURED,
-)
 from kentender_procurement.tender_management.services.release_procurement_package_to_tender import (
 	release_procurement_package_to_tender,
 )
@@ -57,22 +54,27 @@ class TestPlanningTenderHandoffReleaseIntegrationB10(_ReleaseProcurementPackageH
 		self.assertTrue(out.get("ok"), out)
 		self.assertFalse(out.get("existing"))
 		self.assertEqual(out.get("std_template"), TEMPLATE_CODE)
-		self.assertEqual(out.get("tender_status"), TENDER_STATUS_CONFIGURED)
+		self.assertEqual(out.get("tender_status"), "Draft")
 		for key in ("tender", "tender_reference", "std_template", "tender_status"):
 			self.assertIn(key, out, f"missing structured key {key}")
 
 		tn = out["tender"]
-		self._created.append(("Procurement Tender", tn))
+		self._created.append(("TM2 Tender", tn))
 		row = frappe.db.get_value(
-			"Procurement Tender",
+			"TM2 Tender",
 			tn,
-			["procurement_package", "procurement_plan", "configuration_json", "source_package_hash"],
+			[
+				"procurement_package",
+				"procurement_plan",
+				"configuration_json",
+				"planning_handoff_snapshot_sha256",
+			],
 			as_dict=True,
 		)
 		self.assertEqual(row.procurement_package, pkg.name)
 		self.assertEqual(row.procurement_plan, pkg.plan_id)
 		self.assertTrue((row.configuration_json or "").strip())
-		self.assertTrue((row.source_package_hash or "").strip())
+		self.assertTrue((row.planning_handoff_snapshot_sha256 or "").strip())
 
 	def test_b10_s21_package_not_found(self) -> None:
 		out = release_procurement_package_to_tender("PKG-NONEXISTENT-B10-99999")
@@ -108,7 +110,7 @@ class TestPlanningTenderHandoffReleaseIntegrationB10(_ReleaseProcurementPackageH
 		_orig = frappe.has_permission
 
 		def _fake(*args, **kwargs):
-			if len(args) >= 2 and args[0] == "Procurement Tender" and args[1] == "create":
+			if len(args) >= 2 and args[0] == "TM2 Tender" and args[1] == "create":
 				return False
 			return _orig(*args, **kwargs)
 
@@ -123,7 +125,7 @@ class TestPlanningTenderHandoffReleaseIntegrationB10(_ReleaseProcurementPackageH
 		out1 = release_procurement_package_to_tender(pkg.name)
 		self.assertTrue(out1.get("ok"), out1)
 		tn = out1["tender"]
-		self._created.append(("Procurement Tender", tn))
+		self._created.append(("TM2 Tender", tn))
 
 		out2 = release_procurement_package_to_tender(pkg.name)
 		self.assertTrue(out2.get("ok"), out2)
@@ -155,7 +157,7 @@ class TestPlanningTenderHandoffReleaseIntegrationB10(_ReleaseProcurementPackageH
 		self.assertIn("no std template", (out.get("message") or "").lower())
 		self.assertEqual(out.get("std_resolution_path"), "unresolved")
 		self.assertFalse(
-			frappe.db.exists("Procurement Tender", {"procurement_package": pkg.name}),
+			bool(frappe.get_all("TM2 Tender", filters={"procurement_package": pkg.name}, limit=1)),
 			"must not persist tender when STD unresolved",
 		)
 
@@ -173,7 +175,7 @@ class TestPlanningTenderHandoffReleaseIntegrationB10(_ReleaseProcurementPackageH
 			out = release_procurement_package_to_tender(pkg.name)
 		self.assertFalse(out.get("ok"))
 		self.assertFalse(
-			frappe.db.exists("Procurement Tender", {"procurement_package": pkg.name}),
+			bool(frappe.get_all("TM2 Tender", filters={"procurement_package": pkg.name}, limit=1)),
 		)
 
 	def test_b10_s21_audit_write_fail_closed(self) -> None:
@@ -186,8 +188,8 @@ class TestPlanningTenderHandoffReleaseIntegrationB10(_ReleaseProcurementPackageH
 				release_procurement_package_to_tender(pkg.name)
 		self.assertFalse(
 			frappe.get_all(
-				"Procurement Tender",
-				filters={"procurement_package": pkg.name, "tender_status": ("!=", "Cancelled")},
+				"TM2 Tender",
+				filters={"procurement_package": pkg.name},
 			)
 		)
 
@@ -201,8 +203,8 @@ class TestPlanningTenderHandoffReleaseIntegrationB10(_ReleaseProcurementPackageH
 				release_procurement_package_to_tender(pkg.name)
 		self.assertFalse(
 			frappe.get_all(
-				"Procurement Tender",
-				filters={"procurement_package": pkg.name, "tender_status": ("!=", "Cancelled")},
+				"TM2 Tender",
+				filters={"procurement_package": pkg.name},
 			)
 		)
 
@@ -217,7 +219,7 @@ class TestPlanningTenderHandoffReleaseIntegrationB10(_ReleaseProcurementPackageH
 				release_procurement_package_to_tender(pkg.name)
 		self.assertFalse(
 			frappe.get_all(
-				"Procurement Tender",
-				filters={"procurement_package": pkg.name, "tender_status": ("!=", "Cancelled")},
+				"TM2 Tender",
+				filters={"procurement_package": pkg.name},
 			)
 		)

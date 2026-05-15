@@ -1,0 +1,281 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:addendum_code",
+ "creation": "2026-05-12 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_tender",
+  "tm2_tender",
+  "tender_code",
+  "addendum_code",
+  "addendum_number",
+  "section_content",
+  "title",
+  "reason",
+  "status",
+  "primary_impact_type",
+  "column_impact_flags",
+  "affects_deadline",
+  "affects_submission_model",
+  "affects_opening_model",
+  "affects_evaluation_model",
+  "affects_contract_model",
+  "requires_supplier_acknowledgement",
+  "section_source",
+  "tm2_source_clarification_request",
+  "section_create",
+  "created_by",
+  "created_at",
+  "section_submit",
+  "submitted_for_approval_by",
+  "submitted_for_approval_at",
+  "section_approval",
+  "approved_by",
+  "approved_at",
+  "section_issue",
+  "issued_by",
+  "issued_at",
+  "section_cancel",
+  "cancelled_by",
+  "cancelled_at",
+  "cancellation_reason"
+ ],
+ "fields": [
+  {"fieldname": "section_tender", "fieldtype": "Section Break", "label": "Tender"},
+  {
+   "fieldname": "tm2_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender",
+   "options": "TM2 Tender",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tender_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Business code ADD-{tender_code}-{##} per doc 3 §3.1.",
+   "fieldname": "addendum_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Addendum Code",
+   "read_only_depends_on": "eval:!doc.__islocal",
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "addendum_number",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Addendum Number",
+   "non_negative": 1,
+   "read_only": 1,
+   "reqd": 1
+  },
+  {"fieldname": "section_content", "fieldtype": "Section Break", "label": "Addendum"},
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Text",
+   "label": "Reason",
+   "read_only_depends_on": "eval:['Issued','Cancelled','Superseded'].includes(doc.status)",
+   "reqd": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nImpact Analysis Pending\nImpact Analysis Complete\nPending Legal Review\nPending Approval\nApproved\nIssued\nCancelled\nSuperseded\nWithdrawn",
+   "reqd": 1
+  },
+  {
+   "default": "No Structural Impact",
+   "fieldname": "primary_impact_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Primary Impact Type",
+   "options": "No Structural Impact\nParameter Change\nDeadline Change\nWorks Requirement Change\nBOQ Change\nSubmission Model Change\nOpening Model Change\nEvaluation Model Change\nContract Carry-Forward Change\nCancellation / Reissue Required",
+   "reqd": 1
+  },
+  {"fieldname": "column_impact_flags", "fieldtype": "Column Break"},
+  {
+   "default": "0",
+   "fieldname": "affects_deadline",
+   "fieldtype": "Check",
+   "label": "Affects Deadline",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "affects_submission_model",
+   "fieldtype": "Check",
+   "label": "Affects Submission Model",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "affects_opening_model",
+   "fieldtype": "Check",
+   "label": "Affects Opening Model",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "affects_evaluation_model",
+   "fieldtype": "Check",
+   "label": "Affects Evaluation Model",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "affects_contract_model",
+   "fieldtype": "Check",
+   "label": "Affects Contract Model",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_supplier_acknowledgement",
+   "fieldtype": "Check",
+   "label": "Requires Supplier Acknowledgement",
+   "reqd": 1
+  },
+  {"fieldname": "section_source", "fieldtype": "Section Break", "label": "Lineage"},
+  {
+   "fieldname": "tm2_source_clarification_request",
+   "fieldtype": "Link",
+   "label": "Source TM2 Clarification Request",
+   "options": "TM2 Clarification Request"
+  },
+  {"fieldname": "section_create", "fieldtype": "Section Break", "label": "Created"},
+  {
+   "fieldname": "created_by",
+   "fieldtype": "Link",
+   "label": "Created By",
+   "options": "User",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "created_at",
+   "fieldtype": "Datetime",
+   "label": "Created At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {"fieldname": "section_submit", "fieldtype": "Section Break", "label": "Submission for approval"},
+  {
+   "fieldname": "submitted_for_approval_by",
+   "fieldtype": "Link",
+   "label": "Submitted For Approval By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_for_approval_at",
+   "fieldtype": "Datetime",
+   "label": "Submitted For Approval At",
+   "read_only": 1
+  },
+  {"fieldname": "section_approval", "fieldtype": "Section Break", "label": "Approval"},
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {"fieldname": "approved_at", "fieldtype": "Datetime", "label": "Approved At", "read_only": 1},
+  {"fieldname": "section_issue", "fieldtype": "Section Break", "label": "Issue"},
+  {
+   "fieldname": "issued_by",
+   "fieldtype": "Link",
+   "label": "Issued By",
+   "options": "User",
+   "read_only": 1
+  },
+  {"fieldname": "issued_at", "fieldtype": "Datetime", "label": "Issued At", "read_only": 1},
+  {"fieldname": "section_cancel", "fieldtype": "Section Break", "label": "Cancellation"},
+  {
+   "fieldname": "cancelled_by",
+   "fieldtype": "Link",
+   "label": "Cancelled By",
+   "options": "User",
+   "read_only": 1
+  },
+  {"fieldname": "cancelled_at", "fieldtype": "Datetime", "label": "Cancelled At", "read_only": 1},
+  {
+   "fieldname": "cancellation_reason",
+   "fieldtype": "Text",
+   "label": "Cancellation Reason",
+   "read_only_depends_on": "eval:['Issued','Superseded'].includes(doc.status)"
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-12 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "TM2 Addendum",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "search_fields": "addendum_code,tender_code,title,status",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "addendum_code",
+ "track_changes": 1
+}

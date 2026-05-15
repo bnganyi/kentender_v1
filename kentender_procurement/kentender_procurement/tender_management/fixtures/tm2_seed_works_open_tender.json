@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "_doc": "doc 9 §8.4 stub / §20.1–20.2 — canonical Works open-tender codes for CI and adapter stub validation. Not a full relational seed; see tm2_stub_seed.load_tm2_works_open_tender_fixture.",
+  "tender_code": "TND-MOH-2026-001",
+  "package_code": "PKG-MOH-2026-001",
+  "std_template_version_code": "STDTV-WORKS-BUILDING-CIVIL-APR2022",
+  "applicability_profile_code": "WORKS-PROFILE-BUILDING-CIVIL",
+  "tender_std_instance_code": "STDINST-TND-MOH-2026-001",
+  "output_refs_v83": {
+    "bundle_output_code": "GB-TND-MOH-2026-001-V2",
+    "dsm_output_code": "DSM-TND-MOH-2026-001-V2",
+    "dom_output_code": "DOM-TND-MOH-2026-001-V2",
+    "dem_output_code": "DEM-TND-MOH-2026-001-V2",
+    "dcm_output_code": "DCM-TND-MOH-2026-001-V2",
+    "publication_snapshot_code": "PUBSNAP-TND-MOH-2026-001-V2",
+    "snapshot_hash": "HASH-PUBSNAP-TND-MOH-2026-001-V2",
+    "status": "CURRENT"
+  },
+  "addendum_code": "ADD-TND-MOH-2026-001-01",
+  "suppliers": ["SUP-ALPHA", "SUP-BETA", "SUP-GAMMA", "SUP-DELTA"]
+}

@@ -52,7 +52,7 @@ class TestWorksCompDrawingRegister0230(IntegrationTestCase):
 	def _delete_std_instances_for_tender(self, tender: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
-			filters={"procurement_tender": tender},
+			filters={"tm2_tender": tender},
 			pluck="name",
 		):
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
@@ -79,7 +79,7 @@ class TestWorksCompDrawingRegister0230(IntegrationTestCase):
 	def test_works_comp_0230_validate_empty_register(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -96,7 +96,7 @@ class TestWorksCompDrawingRegister0230(IntegrationTestCase):
 			td = frappe.get_doc("Procurement Tender", tender)
 			td.configuration_json = json.dumps({"WORKS.DRAWING_REGISTER_OPTIONAL": True})
 			td.save(ignore_permissions=True)
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -109,7 +109,7 @@ class TestWorksCompDrawingRegister0230(IntegrationTestCase):
 	def test_works_comp_0230_validate_file_missing(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -140,7 +140,7 @@ class TestWorksCompDrawingRegister0230(IntegrationTestCase):
 	def test_works_comp_0230_validate_revision_missing(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -171,7 +171,7 @@ class TestWorksCompDrawingRegister0230(IntegrationTestCase):
 	def test_works_comp_0230_validate_invalid_section(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -201,7 +201,7 @@ class TestWorksCompDrawingRegister0230(IntegrationTestCase):
 	def test_works_comp_0230_validate_duplicate_rows(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -235,7 +235,7 @@ class TestWorksCompDrawingRegister0230(IntegrationTestCase):
 	def test_works_comp_0230_save_payload_duplicate_throws(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -252,7 +252,7 @@ class TestWorksCompDrawingRegister0230(IntegrationTestCase):
 	def test_works_comp_0230_save_validate_happy_path(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -275,7 +275,7 @@ class TestWorksCompDrawingRegister0230(IntegrationTestCase):
 	def test_works_comp_0230_attach_file_updates_row(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -300,7 +300,7 @@ class TestWorksCompDrawingRegister0230(IntegrationTestCase):
 	def test_works_comp_0230_substantive_edit_marks_stale(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,

@@ -46,7 +46,7 @@ class TestStdInstAddendumImpact0800(IntegrationTestCase):
 	def _cleanup_tender(self, tender_name: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
-			filters={"procurement_tender": tender_name},
+			filters={"tm2_tender": tender_name},
 			pluck="name",
 		):
 			for snap_name in frappe.get_all(
@@ -89,7 +89,7 @@ class TestStdInstAddendumImpact0800(IntegrationTestCase):
 	def test_std_inst_0800_analyse_impact_supplier_notification(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender, ignore_permissions=True, record_template_usage=False
 			)
 			out = StdAddendumImpactService.analyse_impact(
@@ -106,7 +106,7 @@ class TestStdInstAddendumImpact0800(IntegrationTestCase):
 	def test_std_inst_0800_create_regeneration_plan_shape(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender, ignore_permissions=True, record_template_usage=False
 			)
 			plan = StdAddendumImpactService.create_regeneration_plan(
@@ -124,7 +124,7 @@ class TestStdInstAddendumImpact0800(IntegrationTestCase):
 	def test_std_inst_0800_execute_regeneration_creates_outputs_and_snapshot(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender, ignore_permissions=True, record_template_usage=False
 			)
 			self._publish_all_outputs(si.name)

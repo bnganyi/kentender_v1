@@ -23,9 +23,6 @@ from kentender_core.seeds._common import ensure_currency_kes, ensure_department
 from kentender_procurement.procurement_planning.services.tendering_handoff import (
 	build_release_payload,
 )
-from kentender_procurement.tender_management.services.officer_tender_config import (
-	TENDER_STATUS_CONFIGURED,
-)
 from kentender_procurement.tender_management.services.release_procurement_package_to_tender import (
 	hook_release_procurement_package_to_tender,
 	release_procurement_package_to_tender,
@@ -44,9 +41,30 @@ class _ReleaseProcurementPackageHandoffFixtures(IntegrationTestCase):
 		frappe.set_user("Administrator")
 		self._created: list[tuple[str, str]] = []
 
+	def _cleanup_tm2_tender(self, tm2_name: str) -> None:
+		for r in frappe.get_all(
+			"TM2 Tender Access Rule",
+			filters={"tm2_tender": tm2_name},
+			pluck="name",
+		):
+			if frappe.db.exists("TM2 Tender Access Rule", r):
+				frappe.delete_doc("TM2 Tender Access Rule", r, force=True, ignore_permissions=True)
+		for r in frappe.get_all(
+			"TM2 Tender Timeline",
+			filters={"tm2_tender": tm2_name},
+			pluck="name",
+		):
+			if frappe.db.exists("TM2 Tender Timeline", r):
+				frappe.delete_doc("TM2 Tender Timeline", r, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tm2_name):
+			frappe.delete_doc("TM2 Tender", tm2_name, force=True, ignore_permissions=True)
+
 	def tearDown(self):
 		for dt, name in reversed(self._created):
 			if not name:
+				continue
+			if dt == "TM2 Tender":
+				self._cleanup_tm2_tender(name)
 				continue
 			if dt == "Procurement Tender":
 				if frappe.db.exists(dt, name):
@@ -259,14 +277,13 @@ class TestReleaseProcurementPackageToTenderB3(_ReleaseProcurementPackageHandoffF
 		self.assertFalse(out1.get("existing"))
 		tname = out1.get("tender")
 		self.assertTrue(tname)
-		self._created.append(("Procurement Tender", tname))
+		self._created.append(("TM2 Tender", tname))
 
-		t = frappe.get_doc("Procurement Tender", tname)
+		t = frappe.get_doc("TM2 Tender", tname)
 		self.assertEqual(t.procurement_package, pkg.name)
 		self.assertEqual(t.procurement_plan, plan.name)
-		self.assertEqual(t.procurement_template, tpl.name)
 		self.assertEqual(t.std_template, TEMPLATE_CODE)
-		self.assertEqual(t.tender_status, TENDER_STATUS_CONFIGURED)
+		self.assertEqual(t.status, "Draft")
 		cfg = json.loads(t.configuration_json or "{}")
 		self.assertIn("TENDER.TENDER_NAME", cfg)
 
@@ -298,12 +315,12 @@ class TestReleaseProcurementPackageToTenderB3(_ReleaseProcurementPackageHandoffF
 		payload = build_release_payload(pkg)
 		hook_release_procurement_package_to_tender(payload)
 		tn = frappe.db.get_value(
-			"Procurement Tender",
+			"TM2 Tender",
 			{"procurement_package": pkg.name},
 			"name",
 		)
 		self.assertTrue(tn)
-		self._created.append(("Procurement Tender", tn))
+		self._created.append(("TM2 Tender", tn))
 
 	def test_hook_missing_package_logs_only(self):
 		hook_release_procurement_package_to_tender({"plan_id": "x"})
@@ -336,11 +353,11 @@ class TestReleaseProcurementPackageToTenderB3(_ReleaseProcurementPackageHandoffF
 				with patch.object(wf_mod, "package_has_release_tender", return_value=False):
 					with self.assertRaises(frappe.ValidationError) as ctx:
 						release_package_to_tender(package_id=pkg.name)
-		self.assertIn("No Procurement Tender was linked", str(ctx.exception))
+		self.assertIn("No TM2 Tender was linked", str(ctx.exception))
 		self.assertEqual(
 			frappe.db.get_value("Procurement Package", pkg.name, "status"),
 			"Ready for Tender",
 			"package must stay Ready for Tender when handoff guard fails",
 		)
-		for tn in frappe.get_all("Procurement Tender", filters={"procurement_package": pkg.name}, pluck="name"):
-			self._created.append(("Procurement Tender", tn))
+		for tn in frappe.get_all("TM2 Tender", filters={"procurement_package": pkg.name}, pluck="name"):
+			self._created.append(("TM2 Tender", tn))

@@ -53,7 +53,7 @@ class TestWorksCompContextValidator0110(IntegrationTestCase):
 	def _delete_std_instances_for_tender(self, tender: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
-			filters={"procurement_tender": tender},
+			filters={"tm2_tender": tender},
 			pluck="name",
 		):
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
@@ -74,7 +74,7 @@ class TestWorksCompContextValidator0110(IntegrationTestCase):
 	def test_works_comp_0110_valid_works_instance(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -88,7 +88,7 @@ class TestWorksCompContextValidator0110(IntegrationTestCase):
 	def test_works_comp_0110_category_invalid(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -105,7 +105,7 @@ class TestWorksCompContextValidator0110(IntegrationTestCase):
 			configuration_json=json.dumps({"WORKS.BOQ_REQUIRED": True}, sort_keys=True),
 		)
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -120,7 +120,7 @@ class TestWorksCompContextValidator0110(IntegrationTestCase):
 	def test_works_comp_0110_instance_locked(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -135,7 +135,7 @@ class TestWorksCompContextValidator0110(IntegrationTestCase):
 	def test_works_comp_0110_template_lineage_mismatch(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -155,7 +155,7 @@ class TestWorksCompContextValidator0110(IntegrationTestCase):
 	def test_works_comp_0110_profile_fields_missing(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,

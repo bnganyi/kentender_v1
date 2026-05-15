@@ -62,7 +62,7 @@ class TestStdInstBoq0300(IntegrationTestCase):
 	def _cleanup_tender(self, tender_name: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
-			filters={"procurement_tender": tender_name},
+			filters={"tm2_tender": tender_name},
 			pluck="name",
 		):
 			for boq_name in frappe.get_all(
@@ -83,7 +83,7 @@ class TestStdInstBoq0300(IntegrationTestCase):
 	def test_std_inst_0300_create_add_validate(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -123,7 +123,7 @@ class TestStdInstBoq0300(IntegrationTestCase):
 	def test_std_inst_0300_stale_outputs_on_change(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -152,7 +152,7 @@ class TestStdInstBoq0300(IntegrationTestCase):
 	def test_std_inst_0300_instance_publication_lock(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -190,7 +190,7 @@ class TestStdInstBoq0300(IntegrationTestCase):
 	def test_std_inst_0300_update_published_item_denied(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -217,7 +217,7 @@ class TestStdInstBoq0300(IntegrationTestCase):
 	def test_std_inst_0300_replace_through_addendum(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,

@@ -68,7 +68,7 @@ class TestStdInstAuthorization1000(IntegrationTestCase):
 	def _cleanup_tender(self, tender_name: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
-			filters={"procurement_tender": tender_name},
+			filters={"tm2_tender": tender_name},
 			pluck="name",
 		):
 			for snap_name in frappe.get_all(
@@ -111,12 +111,12 @@ class TestStdInstAuthorization1000(IntegrationTestCase):
 		try:
 			frappe.set_user("Guest")
 			with self.assertRaises(frappe.ValidationError):
-				TenderStdBindingService.create_std_instance_for_tender(
+				TenderStdBindingService.create_std_instance_for_tm2_tender(
 					tender, ignore_permissions=True, record_template_usage=False
 				)
 
 			frappe.set_user(officer)
-			doc = TenderStdBindingService.create_std_instance_for_tender(
+			doc = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender, ignore_permissions=True, record_template_usage=False
 			)
 			self.assertTrue(doc.name)
@@ -131,7 +131,7 @@ class TestStdInstAuthorization1000(IntegrationTestCase):
 		observer = self._ensure_user_with_roles("stdinst1000-observer@example.test", ["Auditor"])
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender, ignore_permissions=True, record_template_usage=False
 			)
 			frappe.set_user(assistant)
@@ -157,7 +157,7 @@ class TestStdInstAuthorization1000(IntegrationTestCase):
 		observer = self._ensure_user_with_roles("stdinst1000-output-observer@example.test", ["Auditor"])
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender, ignore_permissions=True, record_template_usage=False
 			)
 			frappe.set_user(observer)
@@ -171,7 +171,7 @@ class TestStdInstAuthorization1000(IntegrationTestCase):
 		officer = self._ensure_user_with_roles("stdinst1000-nonpublisher@example.test", ["Procurement Officer"])
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender, ignore_permissions=True, record_template_usage=False
 			)
 			si = StdInstanceStateService.apply_transition(si.name, "In Configuration", ignore_permissions=True)
@@ -187,7 +187,7 @@ class TestStdInstAuthorization1000(IntegrationTestCase):
 	def test_std_inst_1000_published_mutation_denied_with_addendum_message(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender, ignore_permissions=True, record_template_usage=False
 			)
 			si = StdInstanceStateService.apply_transition(si.name, "In Configuration", ignore_permissions=True)

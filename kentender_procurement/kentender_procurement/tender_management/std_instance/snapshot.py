@@ -48,7 +48,7 @@ def final_snapshot_content_fingerprint(doc: Document) -> tuple[Any, ...]:
 	"""Substantive evidence fields while snapshot is Final (excludes ``snapshot_status``)."""
 	return (
 		_strip(doc.tender_std_instance),
-		_strip(doc.procurement_tender),
+		_strip(getattr(doc, "tm2_tender", None)),
 		_strip(doc.snapshot_type),
 		_strip(doc.snapshot_reason),
 		_strip(doc.source_template_version_code),
@@ -63,6 +63,7 @@ def final_snapshot_content_fingerprint(doc: Document) -> tuple[Any, ...]:
 		_strip(doc.attachments_hash),
 		_strip(doc.boq_hash),
 		_strip(doc.complete_instance_hash),
+		_strip(getattr(doc, "readiness_summary_json", None)),
 	)
 
 
@@ -220,6 +221,8 @@ class StdInstanceSnapshotService:
 		source_addendum_code: str | None = None,
 		output_ref_overrides: dict[str, str | None] | None = None,
 		readiness_evidence: dict[str, Any] | None = None,
+		readiness_summary_json: str | None = None,
+		snapshot_name: str | None = None,
 	) -> Document:
 		reason = _strip(snapshot_reason)
 		if not reason:
@@ -229,9 +232,12 @@ class StdInstanceSnapshotService:
 			frappe.throw(_("Tender STD Instance not found."), frappe.DoesNotExistError)
 
 		inst = frappe.get_doc("Tender STD Instance", instance_name)
-		pt = _strip(inst.procurement_tender)
-		if not pt:
-			frappe.throw(_("STD Instance has no Procurement Tender."), title=_("STD Instance Snapshot"))
+		tm2_id = _strip(inst.tm2_tender)
+		if not tm2_id:
+			frappe.throw(
+				_("STD Instance has no TM2 Tender link."),
+				title=_("STD Instance Snapshot"),
+			)
 
 		ph, wh, ah, bh, ch, refs = _compute_hashes_and_refs(
 			inst, output_ref_overrides, readiness_evidence
@@ -239,7 +245,7 @@ class StdInstanceSnapshotService:
 
 		doc = frappe.new_doc("Tender STD Instance Snapshot")
 		doc.tender_std_instance = instance_name
-		doc.procurement_tender = pt
+		doc.tm2_tender = tm2_id or None
 		doc.snapshot_type = snapshot_type
 		doc.snapshot_reason = reason
 		doc.snapshot_status = snapshot_status
@@ -258,6 +264,9 @@ class StdInstanceSnapshotService:
 		doc.attachments_hash = ah
 		doc.boq_hash = bh
 		doc.complete_instance_hash = ch
+		rsj = _strip(readiness_summary_json)
+		if rsj:
+			doc.readiness_summary_json = rsj
 
 		user = frappe.session.user
 		if user == "Guest":
@@ -265,7 +274,11 @@ class StdInstanceSnapshotService:
 		doc.created_by = user
 		doc.created_at = now_datetime()
 
-		doc.insert(ignore_permissions=True)
+		snm = (snapshot_name or "").strip() or None
+		if snm:
+			doc.insert(ignore_permissions=True, set_name=snm)
+		else:
+			doc.insert(ignore_permissions=True)
 		emit_std_instance_event(
 			EVT_STDINST_SNAPSHOT_CREATED,
 			instance_code=instance_name,
@@ -290,11 +303,14 @@ class StdInstanceSnapshotService:
 		output_ref_overrides: dict[str, str | None] | None = None,
 		source_addendum_code: str | None = None,
 		readiness_evidence: dict[str, Any] | None = None,
+		readiness_summary_json: str | None = None,
 	) -> Document:
 		"""Create a Configuration snapshot.
 
 		:param readiness_evidence: optional dict (e.g. Works readiness status + codes) folded into
 			``complete_instance_hash`` when not ``None`` (WORKS-COMP-0700).
+		:param readiness_summary_json: optional JSON string stored on the row for approval review
+			package section 4 (PUB-0300).
 		"""
 		return StdInstanceSnapshotService._create_snapshot(
 			instance_name,
@@ -304,6 +320,7 @@ class StdInstanceSnapshotService:
 			output_ref_overrides=output_ref_overrides,
 			source_addendum_code=source_addendum_code,
 			readiness_evidence=readiness_evidence,
+			readiness_summary_json=readiness_summary_json,
 		)
 
 	@staticmethod
@@ -314,6 +331,7 @@ class StdInstanceSnapshotService:
 		snapshot_status: str = "Final",
 		output_ref_overrides: dict[str, str | None] | None = None,
 		source_addendum_code: str | None = None,
+		snapshot_name: str | None = None,
 	) -> Document:
 		return StdInstanceSnapshotService._create_snapshot(
 			instance_name,
@@ -322,6 +340,7 @@ class StdInstanceSnapshotService:
 			snapshot_status=snapshot_status,
 			output_ref_overrides=output_ref_overrides,
 			source_addendum_code=source_addendum_code,
+			snapshot_name=snapshot_name,
 		)
 
 	@staticmethod

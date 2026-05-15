@@ -1,0 +1,194 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:opening_readiness_code",
+ "creation": "2026-05-12 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "tm2_tender",
+  "tender_code",
+  "tm2_tender_closing_record",
+  "opening_readiness_code",
+  "section_dom",
+  "dom_output_code",
+  "tender_std_instance_code",
+  "section_refs",
+  "sealed_submission_refs",
+  "valid_submission_count",
+  "section_handoff",
+  "readiness_status",
+  "blocker_payload",
+  "prepared_by",
+  "prepared_at",
+  "accepted_by_opening_module_at",
+  "opening_record_code"
+ ],
+ "fields": [
+  {"fieldname": "section_identity", "fieldtype": "Section Break", "label": "Identity"},
+  {
+   "fieldname": "tm2_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender",
+   "options": "TM2 Tender",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tender_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "tm2_tender_closing_record",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender Closing Record",
+   "options": "TM2 Tender Closing Record",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Business code ORR-{tender_code} per doc 3 §3.1.",
+   "fieldname": "opening_readiness_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Opening Readiness Code",
+   "read_only_depends_on": "eval:!doc.__islocal",
+   "search_index": 1,
+   "unique": 1
+  },
+  {"fieldname": "section_dom", "fieldtype": "Section Break", "label": "DOM / STD"},
+  {
+   "fieldname": "dom_output_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "DOM Output Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender_std_instance_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender STD Instance Code",
+   "reqd": 1
+  },
+  {"fieldname": "section_refs", "fieldtype": "Section Break", "label": "Submissions"},
+  {
+   "fieldname": "sealed_submission_refs",
+   "fieldtype": "JSON",
+   "label": "Sealed Submission Refs",
+   "description": "JSON object {\"refs\": [\"BID-…\"]} — list of sealed bid codes (Frappe JSON field; not a raw array).",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "valid_submission_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Valid Submission Count",
+   "non_negative": 1,
+   "read_only": 1,
+   "reqd": 1
+  },
+  {"fieldname": "section_handoff", "fieldtype": "Section Break", "label": "Handoff"},
+  {
+   "default": "Not Ready",
+   "fieldname": "readiness_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Readiness Status",
+   "options": "Not Ready\nReady\nSent\nAccepted\nRejected\nSuperseded",
+   "reqd": 1
+  },
+  {
+   "fieldname": "blocker_payload",
+   "fieldtype": "JSON",
+   "label": "Blocker Payload"
+  },
+  {
+   "default": "SYSTEM",
+   "fieldname": "prepared_by",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Prepared By",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "prepared_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Prepared At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "accepted_by_opening_module_at",
+   "fieldtype": "Datetime",
+   "label": "Accepted By Opening Module At"
+  },
+  {
+   "description": "Formal opening result code when Bid Opening module exists (doc 3 §25 opening_record_id as code ref).",
+   "fieldname": "opening_record_code",
+   "fieldtype": "Data",
+   "label": "Opening Record Code"
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-12 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "TM2 Opening Readiness Record",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "search_fields": "opening_readiness_code,tender_code,dom_output_code,readiness_status",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "opening_readiness_code",
+ "track_changes": 1
+}

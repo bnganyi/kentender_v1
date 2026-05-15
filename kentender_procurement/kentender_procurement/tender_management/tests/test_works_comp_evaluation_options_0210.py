@@ -60,7 +60,7 @@ class TestWorksCompEvaluationOptions0210(IntegrationTestCase):
 	def _delete_std_instances_for_tender(self, tender: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
-			filters={"procurement_tender": tender},
+			filters={"tm2_tender": tender},
 			pluck="name",
 		):
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
@@ -81,7 +81,7 @@ class TestWorksCompEvaluationOptions0210(IntegrationTestCase):
 	def test_works_comp_0210_validate_empty_ok(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -95,7 +95,7 @@ class TestWorksCompEvaluationOptions0210(IntegrationTestCase):
 	def test_works_comp_0210_turnover_amount_requires_currency(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -116,7 +116,7 @@ class TestWorksCompEvaluationOptions0210(IntegrationTestCase):
 	def test_works_comp_0210_save_flat_persists(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -143,7 +143,7 @@ class TestWorksCompEvaluationOptions0210(IntegrationTestCase):
 	def test_works_comp_0210_save_nested_flatten(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -169,7 +169,7 @@ class TestWorksCompEvaluationOptions0210(IntegrationTestCase):
 	def test_works_comp_0210_save_rejects_manual_payload(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -186,7 +186,7 @@ class TestWorksCompEvaluationOptions0210(IntegrationTestCase):
 	def test_works_comp_0210_key_personnel_change_marks_stale(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -218,7 +218,7 @@ class TestWorksCompEvaluationOptions0210(IntegrationTestCase):
 	def test_works_comp_0210_completion_status_blocked_when_invalid_persisted(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,

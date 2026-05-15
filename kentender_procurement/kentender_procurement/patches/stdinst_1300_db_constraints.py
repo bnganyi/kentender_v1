@@ -90,15 +90,34 @@ def _add_active_slot_column_and_unique_index() -> None:
 			"""
 		)
 
-	frappe.db.sql(
-		"""
+	if _column_exists(table, "tm2_tender") and _column_exists(table, "procurement_tender"):
+		_slot_sql = """
 		update `tabTender STD Instance`
 		set active_tender_slot = case
 			when instance_status in ('Superseded', 'Cancelled') then null
-			else procurement_tender
+			else nullif(trim(coalesce(nullif(trim(`tm2_tender`), ''), nullif(trim(`procurement_tender`), ''))), '')
 		end
 		"""
-	)
+	elif _column_exists(table, "tm2_tender"):
+		_slot_sql = """
+		update `tabTender STD Instance`
+		set active_tender_slot = case
+			when instance_status in ('Superseded', 'Cancelled') then null
+			else nullif(trim(`tm2_tender`), '')
+		end
+		"""
+	elif _column_exists(table, "procurement_tender"):
+		_slot_sql = """
+		update `tabTender STD Instance`
+		set active_tender_slot = case
+			when instance_status in ('Superseded', 'Cancelled') then null
+			else nullif(trim(`procurement_tender`), '')
+		end
+		"""
+	else:
+		_slot_sql = None
+	if _slot_sql:
+		frappe.db.sql(_slot_sql)
 
 	duplicates = frappe.db.sql(
 		"""
@@ -125,28 +144,41 @@ def _add_active_slot_column_and_unique_index() -> None:
 	_drop_trigger_if_exists("trg_stdinst_active_slot_bi")
 	_drop_trigger_if_exists("trg_stdinst_active_slot_bu")
 
-	frappe.db.sql_ddl(
-		"""
-		create trigger `trg_stdinst_active_slot_bi`
-		before insert on `tabTender STD Instance`
-		for each row
-		set new.active_tender_slot = case
-			when new.instance_status in ('Superseded', 'Cancelled') then null
-			else new.procurement_tender
-		end
-		"""
-	)
-	frappe.db.sql_ddl(
-		"""
-		create trigger `trg_stdinst_active_slot_bu`
-		before update on `tabTender STD Instance`
-		for each row
-		set new.active_tender_slot = case
-			when new.instance_status in ('Superseded', 'Cancelled') then null
-			else new.procurement_tender
-		end
-		"""
-	)
+	if _column_exists(table, "tm2_tender") and _column_exists(table, "procurement_tender"):
+		_slot_expr = (
+			"nullif(trim(coalesce(nullif(trim(new.`tm2_tender`), ''), "
+			"nullif(trim(new.`procurement_tender`), ''))), '')"
+		)
+	elif _column_exists(table, "tm2_tender"):
+		_slot_expr = "nullif(trim(new.`tm2_tender`), '')"
+	elif _column_exists(table, "procurement_tender"):
+		_slot_expr = "nullif(trim(new.`procurement_tender`), '')"
+	else:
+		_slot_expr = ""
+
+	if _slot_expr:
+		frappe.db.sql_ddl(
+			f"""
+			create trigger `trg_stdinst_active_slot_bi`
+			before insert on `tabTender STD Instance`
+			for each row
+			set new.active_tender_slot = case
+				when new.instance_status in ('Superseded', 'Cancelled') then null
+				else {_slot_expr}
+			end
+			"""
+		)
+		frappe.db.sql_ddl(
+			f"""
+			create trigger `trg_stdinst_active_slot_bu`
+			before update on `tabTender STD Instance`
+			for each row
+			set new.active_tender_slot = case
+				when new.instance_status in ('Superseded', 'Cancelled') then null
+				else {_slot_expr}
+			end
+			"""
+		)
 
 
 def _add_output_uniqueness_constraint() -> None:
@@ -231,9 +263,16 @@ def _add_snapshot_append_only_trigger() -> None:
 	if not _table_exists(table):
 		return
 
+	tender_checks: list[str] = []
+	if _column_exists(table, "procurement_tender"):
+		tender_checks.append("new.procurement_tender <=> old.procurement_tender")
+	if _column_exists(table, "tm2_tender"):
+		tender_checks.append("new.tm2_tender <=> old.tm2_tender")
+	tender_clause = " and\n					".join(tender_checks) if tender_checks else "1"
+
 	_drop_trigger_if_exists("trg_stdsnap_final_append_only_bu")
 	frappe.db.sql_ddl(
-		"""
+		f"""
 		create trigger `trg_stdsnap_final_append_only_bu`
 		before update on `tabTender STD Instance Snapshot`
 		for each row
@@ -246,7 +285,7 @@ def _add_snapshot_append_only_trigger() -> None:
 
 				if not (
 					new.tender_std_instance <=> old.tender_std_instance and
-					new.procurement_tender <=> old.procurement_tender and
+					{tender_clause} and
 					new.snapshot_type <=> old.snapshot_type and
 					new.snapshot_reason <=> old.snapshot_reason and
 					new.source_template_version_code <=> old.source_template_version_code and

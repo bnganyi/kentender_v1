@@ -21,6 +21,9 @@ from kentender_procurement.tender_management.std_instance.events import (
 	EVT_STDINST_OUTPUTS_STALED,
 	EVT_STDINST_PARAMETER_CHANGED,
 )
+from kentender_procurement.tender_management.security.authorization.integration import (
+	enforce_sec_authorization,
+)
 # Pack §8 — post-publication parameters frozen unless addendum flow (future STDINST-0800).
 INSTANCE_STATUSES_BLOCKING_PARAMETER_MUTATION: frozenset[str] = frozenset(
 	{
@@ -241,6 +244,14 @@ class StdInstanceParameterService:
 		ignore_row_lock: bool = False,
 		ignore_works_completion_context: bool = False,
 	) -> Document:
+		enforce_sec_authorization(
+			action_code="EDIT_STD_INSTANCE_PARAMETERS",
+			actor=user or frappe.session.user,
+			object_type="Tender STD Instance",
+			object_code=instance_name,
+			context={"object_exists": bool(frappe.db.exists("Tender STD Instance", instance_name))},
+			fallback_message="Not authorized to edit STD instance parameters.",
+		)
 		pc = _normalize_pc(parameter_code)
 		if not pc:
 			frappe.throw(_("parameter_code is required."), title=_("STD Parameter"))
@@ -253,7 +264,10 @@ class StdInstanceParameterService:
 				StdPublicationLockService,
 			)
 
-			StdAuthorizationService.assert_can_edit_draft_instance(instance_name)
+			StdAuthorizationService.assert_can_edit_draft_instance(
+				instance_name,
+				attempted_change="edit parameters",
+			)
 			StdPublicationLockService.assert_editable(instance_name, operation_label="edit parameters")
 
 		doc = frappe.get_doc("Tender STD Instance", instance_name)

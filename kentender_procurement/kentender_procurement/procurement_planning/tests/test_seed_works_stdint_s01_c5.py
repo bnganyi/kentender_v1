@@ -25,9 +25,28 @@ from kentender_procurement.demand_intake.seeds.seed_dia_basic import run as run_
 from kentender_procurement.procurement_planning.seeds import seed_works_stdint_s01 as sws
 
 
+def _delete_tm2_for_package(package_name: str) -> None:
+	for t in frappe.get_all("TM2 Tender", filters={"procurement_package": package_name}, pluck="name"):
+		for r in frappe.get_all(
+			"TM2 Tender Access Rule",
+			filters={"tm2_tender": t},
+			pluck="name",
+		):
+			if frappe.db.exists("TM2 Tender Access Rule", r):
+				frappe.delete_doc("TM2 Tender Access Rule", r, force=True, ignore_permissions=True)
+		for r in frappe.get_all(
+			"TM2 Tender Timeline",
+			filters={"tm2_tender": t},
+			pluck="name",
+		):
+			if frappe.db.exists("TM2 Tender Timeline", r):
+				frappe.delete_doc("TM2 Tender Timeline", r, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", t):
+			frappe.delete_doc("TM2 Tender", t, force=True, ignore_permissions=True)
+
+
 def _delete_tenders_for_package(package_name: str) -> None:
-	for t in frappe.get_all("Procurement Tender", filters={"procurement_package": package_name}, pluck="name"):
-		frappe.delete_doc("Procurement Tender", t, force=True, ignore_permissions=True)
+	_delete_tm2_for_package(package_name)
 
 
 def _delete_package_cascade_by_code(package_code: str) -> None:
@@ -89,13 +108,13 @@ class TestSeedWorksStdintS01C5(IntegrationTestCase):
 		self.assertTrue(out.get("sample_officer_completion_applied"))
 		tender = out.get("tender")
 		self.assertTrue(tender)
-		cfg = json.loads(frappe.db.get_value("Procurement Tender", tender, "configuration_json") or "{}")
+		cfg = json.loads(frappe.db.get_value("TM2 Tender", tender, "configuration_json") or "{}")
 		self.assertEqual(cfg.get("SEED.STDINT_WORKS_S01.SAMPLE_OFFICER_APPLIED"), 1)
 		label = cfg.get("SEED.STDINT_WORKS_S01.SAMPLE_OFFICER_LABEL") or ""
 		self.assertIn("doc 3 §20", label.lower())
 		self.assertIn("not planning authority", label.lower())
-		# Officer-only merge used 90 days / int flags; primary sample (post WH-013) uses 120 / booleans.
-		self.assertEqual(cfg.get("DATES.TENDER_VALIDITY_DAYS"), 120)
+		# Integrated seed officer merge (no WH-013 ``load_sample_tender`` on TM2-only path).
+		self.assertEqual(cfg.get("DATES.TENDER_VALIDITY_DAYS"), 90)
 		self.assertTrue(cfg.get("DATES.SITE_VISIT_REQUIRED") in (True, 1))
 		self.assertEqual(cfg.get("SECURITY.TENDER_SECURITY_MODE"), "TENDER_SECURITY")
 		self.assertTrue(cfg.get("PARTICIPATION.JV_ALLOWED") in (True, 1))

@@ -43,7 +43,7 @@ class TestWorksCompApi1000(IntegrationTestCase):
 	def _cleanup_tender(self, tender_name: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
-			filters={"procurement_tender": tender_name},
+			filters={"tm2_tender": tender_name},
 			pluck="name",
 		):
 			for snap_name in frappe.get_all(
@@ -111,7 +111,7 @@ class TestWorksCompApi1000(IntegrationTestCase):
 	def test_works_comp_1000_get_completion_status_ok(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -128,7 +128,7 @@ class TestWorksCompApi1000(IntegrationTestCase):
 	def test_works_comp_1000_save_tds_values_ok(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -143,7 +143,7 @@ class TestWorksCompApi1000(IntegrationTestCase):
 	def test_works_comp_1000_save_boq_validation_error_envelope(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -159,7 +159,7 @@ class TestWorksCompApi1000(IntegrationTestCase):
 	def test_works_comp_1000_guest_denied_on_mutation(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -175,7 +175,7 @@ class TestWorksCompApi1000(IntegrationTestCase):
 	def test_works_comp_1000_readiness_persist_false_ok_as_admin(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -190,7 +190,7 @@ class TestWorksCompApi1000(IntegrationTestCase):
 	def test_works_comp_1000_return_to_preparation_api(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,

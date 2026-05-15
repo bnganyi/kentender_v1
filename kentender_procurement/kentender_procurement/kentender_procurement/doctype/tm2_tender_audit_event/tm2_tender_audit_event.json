@@ -1,0 +1,260 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:audit_event_code",
+ "creation": "2026-05-12 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "tm2_tender",
+  "tender_code",
+  "audit_event_code",
+  "section_event",
+  "event_type",
+  "actor_type",
+  "actor_user",
+  "actor_role",
+  "occurred_at",
+  "section_related",
+  "related_object_type",
+  "related_object_id",
+  "previous_state",
+  "new_state",
+  "section_std",
+  "std_template_version_code",
+  "tender_std_instance_code",
+  "output_reference_code",
+  "publication_snapshot_code",
+  "section_outcome",
+  "denial_code",
+  "reason",
+  "section_client",
+  "source_ip",
+  "user_agent",
+  "section_payload",
+  "event_payload",
+  "hash"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "tm2_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender",
+   "options": "TM2 Tender",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tender_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Business code TAE-{tender_code}-{####} per doc 3 §3.1.",
+   "fieldname": "audit_event_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Audit Event Code",
+   "read_only_depends_on": "eval:!doc.__islocal",
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "section_event",
+   "fieldtype": "Section Break",
+   "label": "Event"
+  },
+  {
+   "fieldname": "event_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Event Type",
+   "options": "Tender Created\nTender STD Bound\nSTD Readiness Validation Run\nTender Submitted for Publication Review\nTender Returned for Correction\nTender Approved for Publication\nTender Published\nPublication Failed\nSupplier Invited\nSupplier Viewed Tender\nSupplier Downloaded Bundle\nClarification Submitted\nClarification Response Drafted\nClarification Response Approved\nClarification Published\nClarification Converted to Addendum\nAddendum Created\nAddendum Impact Analysis Requested\nAddendum Impact Analysis Completed\nAddendum Approved\nAddendum Issued\nAddendum Cancelled\nBid Draft Started\nBid Draft Saved\nBid Submitted\nBid Sealed\nBid Replaced\nBid Withdrawn\nLate Submission Rejected\nTender Closed\nOpening Readiness Created\nEvaluation Handoff Completed\nContract Handoff Reference Created\nTender Cancelled\nRetender Required\nTender Superseded\nAccess Denied\nAdministrative Override\nOther",
+   "reqd": 1
+  },
+  {
+   "fieldname": "actor_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Actor Type",
+   "options": "User\nSystem\nSupplier\nAPI",
+   "reqd": 1
+  },
+  {
+   "fieldname": "actor_user",
+   "fieldtype": "Link",
+   "label": "Actor User",
+   "options": "User"
+  },
+  {
+   "fieldname": "actor_role",
+   "fieldtype": "Data",
+   "label": "Actor Role"
+  },
+  {
+   "fieldname": "occurred_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Occurred At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_related",
+   "fieldtype": "Section Break",
+   "label": "Related object / state"
+  },
+  {
+   "fieldname": "related_object_type",
+   "fieldtype": "Data",
+   "label": "Related Object Type"
+  },
+  {
+   "fieldname": "related_object_id",
+   "fieldtype": "Data",
+   "label": "Related Object Id"
+  },
+  {
+   "fieldname": "previous_state",
+   "fieldtype": "Data",
+   "label": "Previous State"
+  },
+  {
+   "fieldname": "new_state",
+   "fieldtype": "Data",
+   "label": "New State"
+  },
+  {
+   "fieldname": "section_std",
+   "fieldtype": "Section Break",
+   "label": "STD / outputs"
+  },
+  {
+   "fieldname": "std_template_version_code",
+   "fieldtype": "Data",
+   "label": "STD Template Version Code"
+  },
+  {
+   "fieldname": "tender_std_instance_code",
+   "fieldtype": "Data",
+   "label": "Tender STD Instance Code"
+  },
+  {
+   "fieldname": "output_reference_code",
+   "fieldtype": "Data",
+   "label": "Output Reference Code"
+  },
+  {
+   "fieldname": "publication_snapshot_code",
+   "fieldtype": "Data",
+   "label": "Publication Snapshot Code"
+  },
+  {
+   "fieldname": "section_outcome",
+   "fieldtype": "Section Break",
+   "label": "Outcome"
+  },
+  {
+   "fieldname": "denial_code",
+   "fieldtype": "Data",
+   "label": "Denial Code"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Text",
+   "label": "Reason"
+  },
+  {
+   "fieldname": "section_client",
+   "fieldtype": "Section Break",
+   "label": "Client context"
+  },
+  {
+   "fieldname": "source_ip",
+   "fieldtype": "Data",
+   "label": "Source IP"
+  },
+  {
+   "fieldname": "user_agent",
+   "fieldtype": "Data",
+   "label": "User Agent"
+  },
+  {
+   "fieldname": "section_payload",
+   "fieldtype": "Section Break",
+   "label": "Payload"
+  },
+  {
+   "fieldname": "event_payload",
+   "fieldtype": "JSON",
+   "label": "Event Payload",
+   "reqd": 1
+  },
+  {
+   "fieldname": "hash",
+   "fieldtype": "Data",
+   "label": "Hash",
+   "description": "Optional tamper-evidence digest."
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-12 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "TM2 Tender Audit Event",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 0
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 0
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "search_fields": "audit_event_code,tender_code,event_type,actor_type,denial_code",
+ "show_title_field_in_link": 1,
+ "sort_field": "occurred_at",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "audit_event_code",
+ "track_changes": 0
+}

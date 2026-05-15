@@ -1,0 +1,162 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:late_attempt_code",
+ "creation": "2026-05-12 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "tm2_tender",
+  "tender_code",
+  "supplier",
+  "supplier_code",
+  "late_attempt_code",
+  "section_attempt",
+  "attempted_by",
+  "attempted_at",
+  "submission_deadline_at",
+  "rejection_reason",
+  "section_metadata",
+  "attempted_payload_metadata"
+ ],
+ "fields": [
+  {"fieldname": "section_identity", "fieldtype": "Section Break", "label": "Identity"},
+  {
+   "fieldname": "tm2_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender",
+   "options": "TM2 Tender",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tender_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Supplier",
+   "options": "Supplier",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "supplier_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Supplier Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Business code LATE-{tender_code}-{supplier_code}-{##} per doc 3 §3.1.",
+   "fieldname": "late_attempt_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Late Attempt Code",
+   "read_only_depends_on": "eval:!doc.__islocal",
+   "search_index": 1,
+   "unique": 1
+  },
+  {"fieldname": "section_attempt", "fieldtype": "Section Break", "label": "Attempt"},
+  {
+   "fieldname": "attempted_by",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Attempted By",
+   "options": "User",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "attempted_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Attempted At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "submission_deadline_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Submission Deadline At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "rejection_reason",
+   "fieldtype": "Text",
+   "in_list_view": 1,
+   "label": "Rejection Reason",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {"fieldname": "section_metadata", "fieldtype": "Section Break", "label": "Metadata"},
+  {
+   "fieldname": "attempted_payload_metadata",
+   "fieldtype": "JSON",
+   "label": "Attempted Payload Metadata",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-12 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "TM2 Late Submission Attempt",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "search_fields": "late_attempt_code,tender_code,supplier_code,rejection_reason",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "late_attempt_code",
+ "track_changes": 1
+}

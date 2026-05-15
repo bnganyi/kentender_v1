@@ -53,7 +53,7 @@ class TestStdInstWorksRequirement0220(IntegrationTestCase):
 	def _cleanup_tender(self, tender_name: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
-			filters={"procurement_tender": tender_name},
+			filters={"tm2_tender": tender_name},
 			pluck="name",
 		):
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
@@ -63,7 +63,7 @@ class TestStdInstWorksRequirement0220(IntegrationTestCase):
 	def test_std_inst_0220_set_and_upsert(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -95,7 +95,7 @@ class TestStdInstWorksRequirement0220(IntegrationTestCase):
 	def test_std_inst_0220_validate_attachment_blocking(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -116,7 +116,7 @@ class TestStdInstWorksRequirement0220(IntegrationTestCase):
 	def test_std_inst_0220_stale_outputs_on_drives_change(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -162,7 +162,7 @@ class TestStdInstWorksRequirement0220(IntegrationTestCase):
 	def test_std_inst_0220_publication_instance_lock(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,

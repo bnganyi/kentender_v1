@@ -55,7 +55,7 @@ class TestWorksCompSeed1100(IntegrationTestCase):
 	def _cleanup_tender(self, tender_name: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
-			filters={"procurement_tender": tender_name},
+			filters={"tm2_tender": tender_name},
 			pluck="name",
 		):
 			for snap_name in frappe.get_all(
@@ -153,7 +153,7 @@ class TestWorksCompSeed1100(IntegrationTestCase):
 			doc.insert(ignore_permissions=True)
 			tender_name = doc.name
 
-			inst = TenderStdBindingService.create_std_instance_for_tender(
+			inst = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender_name,
 				ignore_permissions=True,
 				record_template_usage=False,

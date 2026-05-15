@@ -67,7 +67,7 @@ class TestWorksCompReadiness0600(IntegrationTestCase):
 	def _cleanup_tender(self, tender_name: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
-			filters={"procurement_tender": tender_name},
+			filters={"tm2_tender": tender_name},
 			pluck="name",
 		):
 			for out_name in frappe.get_all(
@@ -193,7 +193,7 @@ class TestWorksCompReadiness0600(IntegrationTestCase):
 	def test_works_comp_0600_boq_missing_has_pack_fields(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -215,7 +215,7 @@ class TestWorksCompReadiness0600(IntegrationTestCase):
 	def test_works_comp_0600_stale_maps_to_output_stale(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -231,7 +231,7 @@ class TestWorksCompReadiness0600(IntegrationTestCase):
 	def test_works_comp_0600_missing_dcm_not_generated(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -253,7 +253,7 @@ class TestWorksCompReadiness0600(IntegrationTestCase):
 	def test_works_comp_0600_ready_persist_matches_doc(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -282,7 +282,7 @@ class TestWorksCompReadiness0600(IntegrationTestCase):
 	def test_works_comp_0600_failed_output_bundle_render_failed(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,

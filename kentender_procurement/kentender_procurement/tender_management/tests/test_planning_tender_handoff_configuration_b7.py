@@ -64,9 +64,9 @@ class TestPlanningTenderHandoffConfigurationB7(_ReleaseProcurementPackageHandoff
 		self.assertTrue(out.get("ok"), out)
 		tn = out.get("tender")
 		self.assertTrue(tn)
-		self._created.append(("Procurement Tender", tn))
+		self._created.append(("TM2 Tender", tn))
 
-		raw = frappe.db.get_value("Procurement Tender", tn, "configuration_json") or ""
+		raw = frappe.db.get_value("TM2 Tender", tn, "configuration_json") or ""
 		lower = raw.lower()
 		for needle in (
 			"county government of kisiwa",
@@ -92,9 +92,9 @@ class TestPlanningTenderHandoffConfigurationB7(_ReleaseProcurementPackageHandoff
 		out = release_procurement_package_to_tender(pkg.name)
 		self.assertTrue(out.get("ok"), out)
 		tn = out["tender"]
-		self._created.append(("Procurement Tender", tn))
+		self._created.append(("TM2 Tender", tn))
 
-		cfg = json.loads(frappe.db.get_value("Procurement Tender", tn, "configuration_json") or "{}")
+		cfg = json.loads(frappe.db.get_value("TM2 Tender", tn, "configuration_json") or "{}")
 		self.assertEqual(cfg.get("TENDER.TENDER_NAME"), pkg.package_name)
 		ref = (pkg.package_code or "").strip() or f"REL-{pkg.name[:12]}"
 		self.assertEqual(cfg.get("TENDER.TENDER_REFERENCE"), ref)
@@ -114,16 +114,16 @@ class TestPlanningTenderHandoffConfigurationB7(_ReleaseProcurementPackageHandoff
 		out = release_procurement_package_to_tender(pkg.name)
 		self.assertTrue(out.get("ok"), out)
 		tn = out["tender"]
-		self._created.append(("Procurement Tender", tn))
+		self._created.append(("TM2 Tender", tn))
 
 		row = frappe.db.get_value(
-			"Procurement Tender",
+			"TM2 Tender",
 			tn,
-			["validation_status", "generated_tender_pack_html"],
+			["status", "configuration_json"],
 			as_dict=True,
 		)
-		self.assertEqual(row.validation_status, "Not Validated")
-		self.assertFalse((row.generated_tender_pack_html or "").strip())
+		self.assertEqual(row.status, "Draft")
+		self.assertTrue((row.configuration_json or "").strip())
 
 	def test_b7_procurement_category_follows_template(self) -> None:
 		upsert_std_template()
@@ -136,6 +136,6 @@ class TestPlanningTenderHandoffConfigurationB7(_ReleaseProcurementPackageHandoff
 
 		out = release_procurement_package_to_tender(pkg.name)
 		self.assertTrue(out.get("ok"), out)
-		self._created.append(("Procurement Tender", out["tender"]))
-		pc = frappe.db.get_value("Procurement Tender", out["tender"], "procurement_category")
-		self.assertEqual(pc, "GOODS")
+		self._created.append(("TM2 Tender", out["tender"]))
+		pc = frappe.db.get_value("TM2 Tender", out["tender"], "procurement_category")
+		self.assertEqual(pc, "Goods")

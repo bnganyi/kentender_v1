@@ -62,7 +62,7 @@ class TestWorksCompOutputGeneration0500(IntegrationTestCase):
 	def _delete_std_instances_for_tender(self, tender: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
-			filters={"procurement_tender": tender},
+			filters={"tm2_tender": tender},
 			pluck="name",
 		):
 			for out_name in frappe.get_all(
@@ -120,7 +120,7 @@ class TestWorksCompOutputGeneration0500(IntegrationTestCase):
 	def test_works_comp_0500_precheck_boq_missing(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -134,7 +134,7 @@ class TestWorksCompOutputGeneration0500(IntegrationTestCase):
 	def test_works_comp_0500_precheck_manual_criteria_in_parameter_json(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -161,7 +161,7 @@ class TestWorksCompOutputGeneration0500(IntegrationTestCase):
 	def test_works_comp_0500_generate_all_happy_path(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -193,7 +193,7 @@ class TestWorksCompOutputGeneration0500(IntegrationTestCase):
 	def test_works_comp_0500_mid_chain_failure_deletes_partial_publishes(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,

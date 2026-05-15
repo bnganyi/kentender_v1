@@ -89,10 +89,10 @@ def _ensure_tender_exists(package_code: str) -> str:
 
 
 def _ensure_instance(tender_name: str) -> Document:
-	current = TenderStdBindingService.get_current_std_instance_for_tender(tender_name)
+	current = TenderStdBindingService.get_current_std_instance_for_tm2_tender(tender_name)
 	if current:
 		return current
-	inst = TenderStdBindingService.create_std_instance_for_tender(
+	inst = TenderStdBindingService.create_std_instance_for_tm2_tender(
 		tender_name,
 		ignore_permissions=True,
 		record_template_usage=False,

@@ -3,32 +3,28 @@
 
 """WORKS-COMP-0500 — Works output generation orchestration.
 
-Generates and publishes Bundle, DSM, DOM, DEM, DCM in that order via
-``StdInstanceGeneratedOutputService`` (stub payloads; hashes on rows).
-
 Pre-generation gates (pack §14): Works completion context, BOQ structurally valid
 per ``WorksBoqCompletionService``, and no prohibited manual-criteria keys in any
 parameter value JSON. Template lineage is enforced by ``validate_works_completion_context``.
+
+Generation and publish run through ``DerivedModelGenerationService`` (DERIVED-0700)
+with ``publish=True`` and ``rollback_on_failure=True`` so mid-chain failures match
+historical transactional cleanup.
 """
 
 from __future__ import annotations
 
 import json
-from typing import Any, Callable
+from typing import Any
 
 import frappe
 from frappe import _
 
-from kentender_procurement.tender_management.std_instance.generated_output import (
-	OUTPUT_KEY_TO_PARENT_FIELD,
-	StdInstanceGeneratedOutputService,
-)
-from kentender_procurement.tender_management.works_completion.services.boq_completion import (
-	WorksBoqCompletionService,
+from kentender_procurement.tender_management.derived_models.orchestration import (
+	DerivedModelGenerationService,
 )
 from kentender_procurement.tender_management.works_completion.audit import (
 	WORKS_MANUAL_CRITERIA_DENIED,
-	WORKS_OUTPUTS_GENERATED,
 	emit_works_completion_audit,
 )
 from kentender_procurement.tender_management.works_completion.services.context_validator import (
@@ -38,14 +34,6 @@ from kentender_procurement.tender_management.works_completion.services.evaluatio
 	DENY_CODE,
 	DENY_MESSAGE,
 	find_prohibited_evaluation_key,
-)
-
-_OUTPUT_ORDER: tuple[tuple[str, Callable[..., Any]], ...] = (
-	("Bundle", StdInstanceGeneratedOutputService.generate_bundle),
-	("DSM", StdInstanceGeneratedOutputService.generate_dsm),
-	("DOM", StdInstanceGeneratedOutputService.generate_dom),
-	("DEM", StdInstanceGeneratedOutputService.generate_dem),
-	("DCM", StdInstanceGeneratedOutputService.generate_dcm),
 )
 
 
@@ -114,6 +102,10 @@ class WorksOutputGenerationService:
 				exc=frappe.ValidationError,
 			)
 
+		from kentender_procurement.tender_management.works_completion.services.boq_completion import (
+			WorksBoqCompletionService,
+		)
+
 		boq = WorksBoqCompletionService.validate_boq(code)
 		if not boq.get("valid"):
 			_raise_precheck_from_blockers(list(boq.get("blockers") or []), title_code="WORKS_OUTPUT_GEN_BOQ")
@@ -133,39 +125,10 @@ class WorksOutputGenerationService:
 			frappe.set_user(act)
 		try:
 			WorksOutputGenerationService.assert_prechecks(code)
-			outputs: dict[str, str] = {}
-			try:
-				for label, gen_fn in _OUTPUT_ORDER:
-					draft = gen_fn(code)
-					published = StdInstanceGeneratedOutputService.publish_output(draft.name)
-					outputs[label] = published.name
-				all_labels = [label for label, _fn in _OUTPUT_ORDER]
-				emit_works_completion_audit(
-					WORKS_OUTPUTS_GENERATED,
-					code,
-					affected_outputs=all_labels,
-					details={"outputs": outputs},
-					performed_by=act or frappe.session.user,
-				)
-				return {"ok": True, "outputs": outputs}
-			except Exception:
-				deleted_names = {n for n in outputs.values() if n}
-				for _lbl in reversed(list(outputs.keys())):
-					name = outputs.get(_lbl)
-					if name and frappe.db.exists("Tender STD Generated Output", name):
-						try:
-							frappe.delete_doc("Tender STD Generated Output", name, force=True, ignore_permissions=True)
-						except Exception:
-							pass
-				if deleted_names:
-					try:
-						inst = frappe.get_doc("Tender STD Instance", code)
-						for _k, field in OUTPUT_KEY_TO_PARENT_FIELD.items():
-							if (inst.get(field) or "").strip() in deleted_names:
-								inst.set(field, None)
-						inst.save(ignore_permissions=True)
-					except Exception:
-						pass
-				raise
+			return DerivedModelGenerationService.generate_all(
+				code,
+				publish=True,
+				rollback_on_failure=True,
+			)
 		finally:
 			frappe.set_user(prev_user)

@@ -1,0 +1,210 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:timeline_code",
+ "creation": "2026-05-12 20:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_parent",
+  "tm2_tender",
+  "tender_code",
+  "timeline_code",
+  "section_dates",
+  "planned_publication_at",
+  "actual_publication_at",
+  "clarification_deadline_at",
+  "addendum_cutoff_at",
+  "submission_deadline_at",
+  "opening_scheduled_at",
+  "column_validity",
+  "tender_validity_days",
+  "timezone",
+  "section_extension",
+  "deadline_extended",
+  "extension_source_addendum_code",
+  "extension_reason",
+  "section_audit",
+  "created_at",
+  "updated_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_parent",
+   "fieldtype": "Section Break",
+   "label": "Tender"
+  },
+  {
+   "fieldname": "tm2_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender",
+   "options": "TM2 Tender",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "tender_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Business code TTL-{tender_code} per domain doc 3 §3.1.",
+   "fieldname": "timeline_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Timeline Code",
+   "read_only_depends_on": "eval:!doc.__islocal",
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "section_dates",
+   "fieldtype": "Section Break",
+   "label": "Deadlines"
+  },
+  {
+   "fieldname": "planned_publication_at",
+   "fieldtype": "Datetime",
+   "label": "Planned Publication At"
+  },
+  {
+   "fieldname": "actual_publication_at",
+   "fieldtype": "Datetime",
+   "label": "Actual Publication At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "clarification_deadline_at",
+   "fieldtype": "Datetime",
+   "label": "Clarification Deadline At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "addendum_cutoff_at",
+   "fieldtype": "Datetime",
+   "label": "Addendum Cutoff At"
+  },
+  {
+   "fieldname": "submission_deadline_at",
+   "fieldtype": "Datetime",
+   "label": "Submission Deadline At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "opening_scheduled_at",
+   "fieldtype": "Datetime",
+   "label": "Opening Scheduled At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_validity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tender_validity_days",
+   "fieldtype": "Int",
+   "label": "Tender Validity Days",
+   "reqd": 1
+  },
+  {
+   "default": "Africa/Nairobi",
+   "fieldname": "timezone",
+   "fieldtype": "Data",
+   "label": "Timezone",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_extension",
+   "fieldtype": "Section Break",
+   "label": "Extension"
+  },
+  {
+   "default": "0",
+   "fieldname": "deadline_extended",
+   "fieldtype": "Check",
+   "label": "Deadline Extended"
+  },
+  {
+   "fieldname": "extension_source_addendum_code",
+   "fieldtype": "Data",
+   "label": "Extension Source Addendum Code"
+  },
+  {
+   "fieldname": "extension_reason",
+   "fieldtype": "Text",
+   "label": "Extension Reason"
+  },
+  {
+   "fieldname": "section_audit",
+   "fieldtype": "Section Break",
+   "label": "Audit"
+  },
+  {
+   "fieldname": "created_at",
+   "fieldtype": "Datetime",
+   "label": "Created At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "updated_at",
+   "fieldtype": "Datetime",
+   "label": "Updated At",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-12 20:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "TM2 Tender Timeline",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "search_fields": "timeline_code,tender_code,timezone",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "timeline_code",
+ "track_changes": 1
+}

@@ -1,0 +1,106 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-05-10 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "tm2_tender",
+  "tender_std_instance",
+  "configuration_snapshot",
+  "decision",
+  "decision_note",
+  "decided_by",
+  "decided_at",
+  "payload_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "tm2_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender",
+   "options": "TM2 Tender",
+   "reqd": 0
+  },
+  {
+   "fieldname": "tender_std_instance",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Tender STD Instance",
+   "options": "Tender STD Instance",
+   "reqd": 1
+  },
+  {
+   "fieldname": "configuration_snapshot",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Configuration Snapshot",
+   "options": "Tender STD Instance Snapshot",
+   "reqd": 1
+  },
+  {
+   "fieldname": "decision",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Decision",
+   "options": "Approved for Publication\nReturned for Correction\nRejected\nClarification Requested",
+   "reqd": 1
+  },
+  {
+   "fieldname": "decision_note",
+   "fieldtype": "Small Text",
+   "label": "Decision Note"
+  },
+  {
+   "fieldname": "decided_by",
+   "fieldtype": "Link",
+   "label": "Decided By",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "default": "Now",
+   "fieldname": "decided_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Decided At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "payload_json",
+   "fieldtype": "JSON",
+   "label": "Payload JSON"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-05-10 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "Tender Publication Approval Decision",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 0
+  }
+ ],
+ "read_only": 0,
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

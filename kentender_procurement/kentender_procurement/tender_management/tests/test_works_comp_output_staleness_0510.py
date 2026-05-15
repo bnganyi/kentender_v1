@@ -58,7 +58,7 @@ class TestWorksCompOutputStaleness0510(IntegrationTestCase):
 	def _delete_std_instances_for_tender(self, tender: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
-			filters={"procurement_tender": tender},
+			filters={"tm2_tender": tender},
 			pluck="name",
 		):
 			for out_name in frappe.get_all(
@@ -142,7 +142,7 @@ class TestWorksCompOutputStaleness0510(IntegrationTestCase):
 	def test_works_comp_0510_parameter_change_emits_outputs_staled_audit(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -172,7 +172,7 @@ class TestWorksCompOutputStaleness0510(IntegrationTestCase):
 	def test_works_comp_0510_boq_save_emits_outputs_staled(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -194,7 +194,7 @@ class TestWorksCompOutputStaleness0510(IntegrationTestCase):
 	def test_works_comp_0510_readiness_blocked_when_stale_flags_present(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,

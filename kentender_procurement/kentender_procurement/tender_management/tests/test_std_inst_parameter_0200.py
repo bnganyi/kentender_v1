@@ -53,7 +53,7 @@ class TestStdInstParameter0200(IntegrationTestCase):
 	def _cleanup_tender(self, tender_name: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
-			filters={"procurement_tender": tender_name},
+			filters={"tm2_tender": tender_name},
 			pluck="name",
 		):
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
@@ -63,7 +63,7 @@ class TestStdInstParameter0200(IntegrationTestCase):
 	def test_std_inst_0200_set_and_upsert_parameter(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -96,7 +96,7 @@ class TestStdInstParameter0200(IntegrationTestCase):
 	def test_std_inst_0200_validate_missing(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -116,7 +116,7 @@ class TestStdInstParameter0200(IntegrationTestCase):
 	def test_std_inst_0200_lock_then_set_denied(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -141,7 +141,7 @@ class TestStdInstParameter0200(IntegrationTestCase):
 	def test_std_inst_0200_publication_locked_denies_set(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -179,7 +179,7 @@ class TestStdInstParameter0200(IntegrationTestCase):
 	def test_std_inst_0200_submission_deadline_marks_stale_and_blocked(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,

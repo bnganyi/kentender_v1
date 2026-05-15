@@ -43,7 +43,7 @@ class TestStdInstApi1200(IntegrationTestCase):
 	def _cleanup_tender(self, tender_name: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
-			filters={"procurement_tender": tender_name},
+			filters={"tm2_tender": tender_name},
 			pluck="name",
 		):
 			for snap_name in frappe.get_all(
@@ -86,7 +86,7 @@ class TestStdInstApi1200(IntegrationTestCase):
 	def test_std_inst_1200_endpoint_examples_generate_readiness_snapshot(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender, ignore_permissions=True, record_template_usage=False
 			)
 			gen = api.generate_outputs(si.name, ["DSM"])
@@ -108,7 +108,7 @@ class TestStdInstApi1200(IntegrationTestCase):
 	def test_std_inst_1200_deterministic_validation_error_for_illegal_state(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender, ignore_permissions=True, record_template_usage=False
 			)
 			out = api.lock_publication(si.name)
@@ -132,7 +132,7 @@ class TestStdInstApi1200(IntegrationTestCase):
 		tender = self._minimal_tender()
 		try:
 			with patch(
-				"kentender_procurement.tender_management.api.std_instance.TenderStdBindingService.create_std_instance_for_tender",
+				"kentender_procurement.tender_management.api.std_instance.TenderStdBindingService.create_std_instance_for_tm2_tender",
 				side_effect=frappe.DuplicateEntryError("db duplicate"),
 			):
 				out = api.create_instance(tender, ignore_permissions=True)

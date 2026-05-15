@@ -66,76 +66,8 @@ VARIANT_CODES: tuple[str, ...] = (
 )
 
 
-_WORKS_HARDENING_STATUS_FIELDS: tuple[str, ...] = (
-	"works_hardening_status",
-	"derived_models_status",
-	"boq_hardening_status",
-	"works_requirements_status",
-	"attachments_status",
-)
-_WORKS_HARDENING_STATUS_DEFAULT = "Not Checked"
-
-
 class ProcurementTender(Document):
-	"""STD-WORKS-POC: tender instance linked to an STD template.
-
-	Planning-to-tender integration (B1): when ``procurement_package`` is set, ``plan_id``
-	on the package is the source of truth for ``procurement_plan`` (auto-filled if empty;
-	validated for mismatch if both are set).
-	"""
-
-	def validate(self) -> None:
-		self._ensure_works_hardening_status_defaults()
-		self._validate_planning_lineage()
-		self._validate_unique_active_handoff_tender()
-		self._validate_section_attachment_rows()
-		self._validate_derived_model_readiness_rows()
-
-	def _validate_section_attachment_rows(self) -> None:
-		"""WH-003 — child ``validate`` is not auto-run on parent save; invoke explicitly (doc 5 §9)."""
-		for row in self.get("section_attachments") or []:
-			row.run_method("validate")
-
-	def _validate_derived_model_readiness_rows(self) -> None:
-		"""WH-004 — child ``validate`` is not auto-run on parent save; invoke explicitly (doc 5 §10)."""
-		for row in self.get("derived_model_readiness") or []:
-			row.run_method("validate")
-
-	def _ensure_works_hardening_status_defaults(self) -> None:
-		"""Doc 5 §7 / WH-001 — status fields default to ``Not Checked`` when unset."""
-		for fn in _WORKS_HARDENING_STATUS_FIELDS:
-			if not (self.get(fn) or "").strip():
-				self.set(fn, _WORKS_HARDENING_STATUS_DEFAULT)
-
-	def _validate_unique_active_handoff_tender(self) -> None:
-		"""Doc 2 sec. 16.3 / B9 — at most one non-cancelled tender per planning package."""
-		from kentender_procurement.tender_management.services.planning_tender_handoff_duplicates import (
-			validate_at_most_one_active_planning_tender_per_package,
-		)
-
-		validate_at_most_one_active_planning_tender_per_package(
-			self.get("procurement_package"),
-			current_tender_name=self.name,
-		)
-
-	def _validate_planning_lineage(self) -> None:
-		if not self.get("procurement_package"):
-			return
-		pkg_plan = frappe.db.get_value(
-			"Procurement Package", self.procurement_package, "plan_id"
-		)
-		if not pkg_plan:
-			return
-		if not self.get("procurement_plan"):
-			self.procurement_plan = pkg_plan
-			return
-		if self.procurement_plan != pkg_plan:
-			frappe.throw(
-				frappe._(
-					"Procurement Plan {0} does not match Procurement Package {1} (expected plan {2})."
-				).format(self.procurement_plan, self.procurement_package, pkg_plan),
-				frappe.ValidationError,
-			)
+	"""STD-WORKS-POC: tender instance linked to an STD template. Schema-only controller."""
 
 
 # ---------------------------------------------------------------------------
@@ -926,46 +858,6 @@ def reset_officer_tender_to_configuring(tender_name: str) -> dict[str, Any]:
 	tender_doc = _get_tender_doc(tender_name)
 	tender_doc.tender_status = "Configured"
 	return _save_and_return(tender_doc, {"message": "Tender status reset to Configuring."})
-
-
-# ---------------------------------------------------------------------------
-# Doc 5 §16 / §24 — Works tender-stage hardening (WH-009)
-# ---------------------------------------------------------------------------
-
-
-@frappe.whitelist()
-def run_works_tender_stage_hardening(tender_name: str) -> dict[str, Any]:
-	from kentender_procurement.tender_management.services import works_tender_hardening
-
-	return works_tender_hardening.run_works_tender_stage_hardening(tender_name)
-
-
-@frappe.whitelist()
-def validate_works_tender_stage(tender_name: str) -> dict[str, Any]:
-	from kentender_procurement.tender_management.services import works_tender_hardening_validation
-
-	return works_tender_hardening_validation.validate_works_tender_stage(tender_name)
-
-
-@frappe.whitelist()
-def get_works_hardening_summary(tender_name: str) -> dict[str, Any]:
-	from kentender_procurement.tender_management.services import works_tender_hardening
-
-	return works_tender_hardening.get_works_hardening_summary(tender_name)
-
-
-@frappe.whitelist()
-def get_works_hardening_findings(tender_name: str) -> dict[str, Any]:
-	from kentender_procurement.tender_management.services import works_tender_hardening
-
-	return works_tender_hardening.get_works_hardening_findings(tender_name)
-
-
-@frappe.whitelist()
-def get_works_tender_stage_snapshot(tender_name: str) -> dict[str, Any]:
-	from kentender_procurement.tender_management.services import works_tender_hardening
-
-	return works_tender_hardening.get_works_tender_stage_snapshot(tender_name)
 
 
 @frappe.whitelist()

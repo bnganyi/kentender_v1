@@ -1,0 +1,201 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:evaluation_handoff_code",
+ "creation": "2026-05-12 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "tm2_tender",
+  "tender_code",
+  "evaluation_handoff_code",
+  "section_opening",
+  "opening_record_code",
+  "section_outputs",
+  "dem_output_code",
+  "dsm_output_code",
+  "tender_std_instance_code",
+  "section_refs",
+  "opened_submission_refs",
+  "addendum_history_refs",
+  "section_package",
+  "handoff_payload",
+  "handoff_status",
+  "section_send",
+  "sent_by",
+  "sent_at",
+  "accepted_by_evaluation_at",
+  "rejection_reason"
+ ],
+ "fields": [
+  {"fieldname": "section_identity", "fieldtype": "Section Break", "label": "Identity"},
+  {
+   "fieldname": "tm2_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender",
+   "options": "TM2 Tender",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tender_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Business code EHR-{tender_code} per doc 3 §3.1.",
+   "fieldname": "evaluation_handoff_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Evaluation Handoff Code",
+   "read_only_depends_on": "eval:!doc.__islocal",
+   "search_index": 1,
+   "unique": 1
+  },
+  {"fieldname": "section_opening", "fieldtype": "Section Break", "label": "Opening"},
+  {
+   "description": "Formal opening result code from Bid Opening (doc 3 §26 opening_record_id as code ref).",
+   "fieldname": "opening_record_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Opening Record Code",
+   "reqd": 1
+  },
+  {"fieldname": "section_outputs", "fieldtype": "Section Break", "label": "STD outputs"},
+  {
+   "fieldname": "dem_output_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "DEM Output Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "dsm_output_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "DSM Output Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender_std_instance_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender STD Instance Code",
+   "reqd": 1
+  },
+  {"fieldname": "section_refs", "fieldtype": "Section Break", "label": "Refs"},
+  {
+   "fieldname": "opened_submission_refs",
+   "fieldtype": "JSON",
+   "label": "Opened Submission Refs",
+   "description": "JSON object {\"refs\": [\"BID-…\"]} — Frappe JSON field (not a raw array).",
+   "reqd": 1
+  },
+  {
+   "fieldname": "addendum_history_refs",
+   "fieldtype": "JSON",
+   "label": "Addendum History Refs",
+   "description": "Optional {\"refs\": [\"ADD-…\"]} or {}."
+  },
+  {"fieldname": "section_package", "fieldtype": "Section Break", "label": "Handoff"},
+  {
+   "fieldname": "handoff_payload",
+   "fieldtype": "JSON",
+   "label": "Handoff Payload",
+   "reqd": 1
+  },
+  {
+   "default": "Not Ready",
+   "fieldname": "handoff_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Handoff Status",
+   "options": "Not Ready\nReady\nSent\nAccepted\nRejected\nSuperseded",
+   "reqd": 1
+  },
+  {"fieldname": "section_send", "fieldtype": "Section Break", "label": "Send / acceptance"},
+  {
+   "default": "SYSTEM",
+   "fieldname": "sent_by",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Sent By",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "sent_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Sent At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "accepted_by_evaluation_at",
+   "fieldtype": "Datetime",
+   "label": "Accepted By Evaluation At"
+  },
+  {
+   "fieldname": "rejection_reason",
+   "fieldtype": "Text",
+   "label": "Rejection Reason"
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-12 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "TM2 Evaluation Handoff Record",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "search_fields": "evaluation_handoff_code,tender_code,dem_output_code,dsm_output_code,handoff_status",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "evaluation_handoff_code",
+ "track_changes": 1
+}

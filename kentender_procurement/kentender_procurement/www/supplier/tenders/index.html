@@ -1,0 +1,503 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_content %}
+{% if tm2_supplier_tender_code %}
+<section data-testid="tm2-supplier-tender-detail" class="tm2-supplier-portal container py-4">
+	{% if tm2_supplier_detail and tm2_supplier_detail.ok %}
+	<header data-testid="tm2-supplier-tender-detail-header" class="border-bottom pb-3 mb-3">
+		<h1 class="h5 mb-1">{{ tm2_supplier_detail.header_line }}</h1>
+		<p class="text-muted mb-2">{{ tm2_supplier_detail.subheader_line }}</p>
+		<p class="mb-1" data-testid="tm2-supplier-server-time"><strong>{{ _("Server time") }}:</strong> {{ tm2_supplier_detail.server_time_display }}</p>
+		<p class="mb-1" data-testid="tm2-supplier-submission-deadline"><strong>{{ _("Submission deadline") }}:</strong> {% if tm2_supplier_detail.submission_deadline_display %}{{ tm2_supplier_detail.submission_deadline_display }}{% else %}—{% endif %}</p>
+		<p class="mb-0" data-testid="tm2-supplier-time-remaining"><strong>{{ _("Time remaining") }}:</strong> {% if tm2_supplier_detail.time_remaining_display %}{{ tm2_supplier_detail.time_remaining_display }}{% else %}—{% endif %}</p>
+		<p class="small text-muted mt-2 mb-0"><strong>{{ _("Status") }}:</strong> {{ tm2_supplier_detail.tender_status }}</p>
+	</header>
+	<nav class="nav nav-pills flex-wrap gap-1 mb-3 small text-muted" aria-label="{{ _('Supplier tender areas') }}">
+		<span class="nav-link disabled py-1">{{ _("Summary") }}</span>
+		<span class="nav-link disabled py-1">{{ _("Documents & Addenda") }}</span>
+		<span class="nav-link disabled py-1">{{ _("Clarifications") }}</span>
+		<span class="nav-link disabled py-1">{{ _("Submission Requirements") }}</span>
+		<span class="nav-link disabled py-1">{{ _("BOQ") }}</span>
+		<span class="nav-link disabled py-1">{{ _("Submit Bid") }}</span>
+		<span class="nav-link disabled py-1">{{ _("Receipts") }}</span>
+	</nav>
+	{% set dd = tm2_supplier_detail.documents_addenda %}
+	{% set bundle = dd.bundle %}
+	<div data-testid="tm2-supplier-documents-panel" class="border rounded p-3 mb-3">
+		<h2 class="h6">{{ _("Documents") }}</h2>
+		{% if bundle.current_bundle_display %}
+		<p class="mb-1" data-testid="tm2-supplier-bundle-summary">{{ bundle.current_bundle_display }}</p>
+		{% endif %}
+		{% if bundle.std_template_version_code %}
+		<p class="mb-1 small text-muted" data-testid="tm2-supplier-bundle-version"><strong>{{ _("Template version") }}:</strong> {{ bundle.std_template_version_code }}</p>
+		{% endif %}
+		{% if bundle.bundle_output_code %}
+		<p class="mb-2 small" data-testid="tm2-supplier-bundle-code"><strong>{{ _("Bundle code") }}:</strong> {{ bundle.bundle_output_code }}</p>
+		{% else %}
+		<p class="mb-2 small text-muted" data-testid="tm2-supplier-bundle-code">{{ _("Bundle code") }}: —</p>
+		{% endif %}
+		<div data-testid="tm2-supplier-bundle-download-control" data-bundle-download-allowed="{{ '1' if bundle.download_allowed else '0' }}">
+			<a class="btn btn-sm {% if bundle.download_allowed %}btn-primary{% else %}btn-outline-secondary disabled{% endif %}" data-testid="tm2-supplier-bundle-download" href="#" {% if bundle.download_allowed %}aria-label="{{ _('Download bundle') }}"{% else %}aria-disabled="true" title="{{ bundle.download_denial_reason }}"{% endif %}>{{ _("Download bundle") }}</a>
+			{% if not bundle.download_allowed and bundle.download_denial_reason %}
+			<span id="tm2-supplier-bundle-download-reason" class="visually-hidden">{{ bundle.download_denial_reason }}</span>
+			{% endif %}
+		</div>
+		{% if bundle.publication_snapshot_code %}
+		<p class="mt-2 mb-0 small text-muted" data-testid="tm2-supplier-publication-snapshot-code"><strong>{{ _("Publication snapshot") }}:</strong> {{ bundle.publication_snapshot_code }}</p>
+		{% endif %}
+		{% if dd.attachments %}
+		<h3 class="h6 mt-3">{{ _("Supplier-facing attachments") }}</h3>
+		<ul class="list-unstyled mb-0 small">
+			{% for att in dd.attachments %}
+			<li data-testid="tm2-supplier-attachment-row"><a href="{{ att.file_url }}" target="_blank" rel="noopener noreferrer">{{ att.file_label }}</a></li>
+			{% endfor %}
+		</ul>
+		{% else %}
+		<p class="mt-2 mb-0 small text-muted" data-testid="tm2-supplier-attachments-empty">{{ _("No public attachments are linked to this tender page yet.") }}</p>
+		{% endif %}
+	</div>
+	<div data-testid="tm2-supplier-addenda-panel" class="border rounded p-3 mb-3">
+		<h2 class="h6">{{ _("Addenda") }}</h2>
+		{% if dd.addenda %}
+		<ul class="list-unstyled mb-0 small">
+			{% for row in dd.addenda %}
+			<li class="mb-2" data-testid="tm2-supplier-addendum-row" data-addendum-row="{{ row.row_test_suffix }}">
+				<span data-testid="tm2-supplier-addendum-summary">{{ row.summary_line }}</span>
+				{% if row.title %}<div class="text-muted">{{ row.title }}</div>{% endif %}
+			</li>
+			{% endfor %}
+		</ul>
+		{% else %}
+		<p class="mb-0 small text-muted" data-testid="tm2-supplier-addenda-empty">{{ _("No addenda on record for this tender.") }}</p>
+		{% endif %}
+	</div>
+	{% set cl = tm2_supplier_detail.submission_checklist %}
+	<div data-testid="tm2-supplier-submission-checklist" class="border rounded p-3 mb-2">
+		<h2 class="h6">{{ _("Submission checklist") }}</h2>
+		{% if not cl or not cl.has_dsm %}
+		<p class="small text-muted mb-0" data-testid="tm2-supplier-checklist-no-dsm">{% if cl and cl.message %}{{ cl.message }}{% else %}{{ _("No DSM checklist is available for this tender yet.") }}{% endif %}</p>
+		{% else %}
+		<p class="small mb-2" data-testid="tm2-supplier-checklist-summary" data-all-mandatory-complete="{{ '1' if cl.all_mandatory_complete else '0' }}">
+			{% if cl.all_mandatory_complete %}
+			<span class="text-success">{{ _("All mandatory items are complete.") }}</span>
+			{% else %}
+			<span class="text-warning">{{ _("Mandatory items are still incomplete.") }}</span>
+			{% endif %}
+		</p>
+		<ul class="list-unstyled mb-0 small">
+			{% for it in cl["items"] %}
+			<li class="mb-1 d-flex align-items-start gap-2" data-testid="tm2-supplier-checklist-row" data-checklist-row="{{ it.row_test_suffix }}">
+				<span class="{% if it.satisfied %}text-success{% else %}text-danger{% endif %}" aria-hidden="true">{% if it.satisfied %}✓{% else %}○{% endif %}</span>
+				<span>
+					{% if it.mandatory %}<strong>{{ _("Required") }}</strong> · {% endif %}{{ it.label }}
+					{% if it.kind == 'requirement' and it.requirement_type %}<span class="text-muted">({{ it.requirement_type }})</span>{% endif %}
+				</span>
+			</li>
+			{% endfor %}
+		</ul>
+		{% endif %}
+	</div>
+	{% set boq = tm2_supplier_detail.works_boq %}
+	<div
+		data-testid="tm2-supplier-works-boq-editor"
+		class="border rounded p-3 mb-2 small"
+		data-boq-currency="{{ boq.currency }}"
+		data-dsm-boq-enabled="{{ '1' if boq.dsm_boq_rates_enabled else '0' }}"
+		data-msg-rate-negative="{{ _('Rate cannot be negative.') }}"
+	>
+		<h2 class="h6">{{ _("Bills of Quantities") }}</h2>
+		{% if not boq.show_panel %}
+		<p class="text-muted mb-0" data-testid="tm2-supplier-boq-empty">{{ boq.message }}</p>
+		{% else %}
+		<p class="text-muted mb-2" data-testid="tm2-supplier-boq-intro">{{ _("Quantities are fixed by the Procuring Entity. Enter unit rates only.") }}</p>
+		<p class="text-muted small mb-2" data-testid="tm2-supplier-boq-arithmetic-notice">{{ boq.arithmetic_notice }}</p>
+		<div class="table-responsive">
+			<table class="table table-sm table-bordered align-middle mb-2" data-testid="tm2-supplier-boq-table">
+				<thead class="table-light">
+					<tr>
+						<th scope="col">{{ _("Item") }}</th>
+						<th scope="col">{{ _("Description") }}</th>
+						<th scope="col">{{ _("Unit") }}</th>
+						<th scope="col">{{ _("Quantity") }}</th>
+						<th scope="col">{{ _("Rate") }}</th>
+						<th scope="col">{{ _("Amount") }}</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for r in boq["rows"] %}
+					<tr
+						data-testid="tm2-supplier-boq-row"
+						data-boq-row="{{ r.row_test_suffix }}"
+						data-rate-editable="{{ 1 if r.rate_editable else 0 }}"
+						data-quantity="{{ r.quantity }}"
+						data-line-locked-amount="{{ r.line_locked_amount }}"
+					>
+						<td>{{ r.item_number }}</td>
+						<td><span data-testid="tm2-supplier-boq-description">{{ r.description }}</span></td>
+						<td><span data-testid="tm2-supplier-boq-unit">{{ r.unit }}</span></td>
+						<td>
+							<span
+								data-testid="tm2-supplier-boq-quantity"
+								class="d-inline-block px-1"
+							>{{ r.quantity_display }}</span>
+						</td>
+						<td>
+							{% if r.rate_editable %}
+							<input
+								type="number"
+								class="form-control form-control-sm"
+								min="0"
+								step="any"
+								inputmode="decimal"
+								data-testid="tm2-supplier-boq-rate-input"
+								aria-label="{{ _('Unit rate for item {0}').format(r.item_number) }}"
+							/>
+							{% else %}
+							<span class="text-muted" data-testid="tm2-supplier-boq-rate-locked">{{ _("locked") }}</span>
+							{% endif %}
+						</td>
+						<td data-testid="tm2-supplier-boq-amount">
+							{% if not r.rate_editable and r.line_amount_display %}{{ r.line_amount_display }}{% else %}<span data-testid="tm2-supplier-boq-amount-dynamic">—</span>{% endif %}
+						</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+		<p class="mb-1" data-testid="tm2-supplier-boq-total-live">
+			<strong>{{ _("Indicative total") }}:</strong>
+			<span data-testid="tm2-supplier-boq-total-value">—</span> {{ boq.currency }}
+		</p>
+		{% if boq.submitted_total_display %}
+		<p class="mb-0 text-muted" data-testid="tm2-supplier-boq-last-submitted-total">
+			<strong>{{ _("Last submitted total") }}:</strong> {{ boq.submitted_total_display }} {{ boq.currency }}
+		</p>
+		{% endif %}
+		<script>
+		(function () {
+			var root = document.querySelector('[data-testid="tm2-supplier-works-boq-editor"]');
+			if (!root) { return; }
+			var negMsg = root.getAttribute("data-msg-rate-negative") || "Invalid rate";
+			function num(v) { var n = parseFloat(v); return isFinite(n) ? n : 0; }
+			function fmt(n) { if (!isFinite(n)) { return "0"; } return n.toLocaleString(undefined, { maximumFractionDigits: 2 }); }
+			function recalc() {
+				var cur = root.getAttribute("data-boq-currency") || "";
+				var sumLocked = 0;
+				var sumRates = 0;
+				root.querySelectorAll('[data-testid="tm2-supplier-boq-row"]').forEach(function (tr) {
+					var editable = parseInt(tr.getAttribute("data-rate-editable"), 10) === 1;
+					var qty = num(tr.getAttribute("data-quantity"));
+					var locked = num(tr.getAttribute("data-line-locked-amount"));
+					if (!editable) {
+						sumLocked += locked;
+						return;
+					}
+					var inp = tr.querySelector('[data-testid="tm2-supplier-boq-rate-input"]');
+					var span = tr.querySelector('[data-testid="tm2-supplier-boq-amount-dynamic"]');
+					var raw = inp ? inp.value : "";
+					var r = raw === "" ? NaN : num(raw);
+					if (inp) {
+						if (!isNaN(r) && r < 0) { inp.setCustomValidity(negMsg); }
+						else { inp.setCustomValidity(""); }
+					}
+					if (!span) { return; }
+					if (isNaN(r)) { span.textContent = "—"; return; }
+					var lineAmt = qty * r;
+					sumRates += lineAmt;
+					span.textContent = lineAmt.toLocaleString(undefined, { maximumFractionDigits: 2 }) + " " + cur;
+				});
+				var totalEl = root.querySelector('[data-testid="tm2-supplier-boq-total-value"]');
+				if (totalEl) { totalEl.textContent = fmt(sumLocked + sumRates); }
+			}
+			root.querySelectorAll('[data-testid="tm2-supplier-boq-rate-input"]').forEach(function (inp) {
+				inp.addEventListener("input", recalc);
+			});
+			recalc();
+		})();
+		</script>
+		{% endif %}
+	</div>
+	{% set sb = tm2_supplier_detail.submit_bid_panel or {} %}
+	<div
+		data-testid="tm2-supplier-action-submit-bid"
+		class="border rounded p-3 mb-2 small"
+		data-tender-code="{{ tm2_supplier_detail.tender_code|e }}"
+		data-submit-disabled-by-addendum="{{ '1' if sb.get('submit_disabled_by_addendum_ack') else '0' }}"
+		data-submit-disabled-by-deadline="{{ '1' if sb.get('submit_disabled_by_deadline') else '0' }}"
+		data-checklist-complete="{{ '1' if sb.get('checklist_all_mandatory_complete') else '0' }}"
+		data-addendum-ack-complete="{{ '1' if sb.get('addendum_ack_complete') else '0' }}"
+	>
+		<h2 class="h6">{{ _("Submit bid") }}</h2>
+		<p class="text-muted mb-2">{{ _("Review the summary, confirm, then submit your sealed bid.") }}</p>
+		<button
+			type="button"
+			class="btn btn-primary btn-sm"
+			data-testid="tm2-supplier-submit-bid-open"
+		>{{ _("Open submit bid") }}</button>
+		{% if sb.get('pending_addendum_codes') %}
+		<p class="text-danger mb-0 mt-2 small" data-testid="tm2-supplier-submit-bid-addendum-blocked-msg">{{ _("Required addendum acknowledgement is still missing.") }}</p>
+		{% endif %}
+	</div>
+	{% if sb.get('bid_payload_template') %}
+	<script type="application/json" id="tm2-supplier-bid-payload-template">{{ sb.get('bid_payload_template') | tojson }}</script>
+	{% endif %}
+	<div class="modal fade" id="tm2SupplierSubmitBidModal" tabindex="-1" role="dialog" aria-labelledby="tm2SupplierSubmitBidModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-lg" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h2 class="h5 modal-title" id="tm2SupplierSubmitBidModalLabel">{{ _("Submit official bid") }}</h2>
+					<button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"><span aria-hidden="true">&times;</span></button>
+				</div>
+				<div class="modal-body">
+					{% if sb.get('deadline_passed') %}
+					<div class="alert alert-warning" role="status" data-testid="tm2-supplier-submit-modal-late-banner">
+						<p class="mb-2 small" data-testid="tm2-supplier-submit-modal-late-banner-lead">{{ (sb.get('late_submission_notice') or {}).get('lead_message') }}</p>
+						<p class="mb-1 small"><strong>{{ _("Deadline") }}:</strong> {{ (sb.get('late_submission_notice') or {}).get('deadline_label') or '—' }}</p>
+						<p class="mb-0 small"><strong>{{ _("Official server time") }}:</strong> {{ (sb.get('late_submission_notice') or {}).get('official_server_time_label') or '—' }}</p>
+					</div>
+					{% endif %}
+					<p class="mb-1" data-testid="tm2-supplier-submit-modal-tender"><strong>{{ _("Tender") }}:</strong> {{ tm2_supplier_detail.header_line }}</p>
+					<p class="mb-1" data-testid="tm2-supplier-submit-modal-supplier"><strong>{{ _("Supplier") }}:</strong> {{ sb.get('supplier_display') or '—' }}</p>
+					<p class="mb-1" data-testid="tm2-supplier-submit-modal-server-time"><strong>{{ _("Server time") }}:</strong> {{ tm2_supplier_detail.server_time_display }}</p>
+					<p class="mb-1" data-testid="tm2-supplier-submit-modal-deadline"><strong>{{ _("Submission deadline") }}:</strong> {% if tm2_supplier_detail.submission_deadline_display %}{{ tm2_supplier_detail.submission_deadline_display }}{% else %}—{% endif %}</p>
+					<p class="mb-1" data-testid="tm2-supplier-submit-modal-checklist-line">
+						<strong>{{ _("Submission checklist") }}:</strong>
+						{% if sb.get('checklist_all_mandatory_complete') %}<span class="text-success">{{ _("Complete") }}</span>{% else %}<span class="text-warning">{{ _("Incomplete") }}</span>{% endif %}
+					</p>
+					<p class="mb-1" data-testid="tm2-supplier-submit-modal-addendum-line">
+						<strong>{{ _("Addendum acknowledgement") }}:</strong>
+						{% if sb.get('addendum_ack_complete') %}<span class="text-success">{{ _("Complete") }}</span>{% else %}<span class="text-danger">{{ _("Incomplete") }}</span>{% endif %}
+					</p>
+					{% if sb.get('pending_addendum_codes') %}
+					<p class="small text-danger mb-2" data-testid="tm2-supplier-submit-modal-pending-addenda">{{ _("Pending codes:") }} {{ ", ".join(sb.get('pending_addendum_codes') or []) }}</p>
+					{% endif %}
+					<p class="mb-2" data-testid="tm2-supplier-submit-modal-total-line">
+						<strong>{{ _("Indicative total") }}:</strong>
+						<span data-testid="tm2-supplier-submit-modal-total-value">—</span>
+						{% if boq.show_panel %} {{ boq.currency }}{% endif %}
+					</p>
+					<div class="form-check mb-3">
+						<input class="form-check-input" type="checkbox" value="1" id="tm2-supplier-submit-bid-confirm" data-testid="tm2-supplier-submit-bid-confirm" />
+						<label class="form-check-label" for="tm2-supplier-submit-bid-confirm">{{ _("I confirm this bid is complete and accurate to the best of my knowledge.") }}</label>
+					</div>
+					<div class="alert alert-danger d-none" role="alert" data-testid="tm2-supplier-submit-bid-error"></div>
+					<div class="alert alert-success d-none" role="status" data-testid="tm2-supplier-submit-bid-success"></div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-outline-secondary" data-dismiss="modal" data-bs-dismiss="modal">{{ _("Cancel") }}</button>
+					<button type="button" class="btn btn-primary" data-testid="tm2-supplier-submit-bid-submit" disabled>{{ _("Submit bid") }}</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script>
+	(function () {
+		var root = document.querySelector('[data-testid="tm2-supplier-action-submit-bid"]');
+		var modal = document.getElementById('tm2SupplierSubmitBidModal');
+		if (!root || !modal) { return; }
+		var openBtn = root.querySelector('[data-testid="tm2-supplier-submit-bid-open"]');
+		var submitBtn = modal.querySelector('[data-testid="tm2-supplier-submit-bid-submit"]');
+		var confirmCb = modal.querySelector('[data-testid="tm2-supplier-submit-bid-confirm"]');
+		var errBox = modal.querySelector('[data-testid="tm2-supplier-submit-bid-error"]');
+		var okBox = modal.querySelector('[data-testid="tm2-supplier-submit-bid-success"]');
+		var totalSpan = modal.querySelector('[data-testid="tm2-supplier-submit-modal-total-value"]');
+		var tplEl = document.getElementById('tm2-supplier-bid-payload-template');
+		function flag(name) { return root.getAttribute(name) === '1'; }
+		function showModal() {
+			if (window.jQuery && typeof window.jQuery(modal).modal === 'function') {
+				window.jQuery(modal).modal('show');
+			} else {
+				modal.classList.add('show');
+				modal.style.display = 'block';
+				modal.removeAttribute('aria-hidden');
+				document.body.classList.add('modal-open');
+			}
+		}
+		function hideModal() {
+			if (window.jQuery && typeof window.jQuery(modal).modal === 'function') {
+				window.jQuery(modal).modal('hide');
+			} else {
+				modal.classList.remove('show');
+				modal.style.display = 'none';
+				modal.setAttribute('aria-hidden', 'true');
+				document.body.classList.remove('modal-open');
+			}
+		}
+		function syncIndicativeTotal() {
+			var live = document.querySelector('[data-testid="tm2-supplier-boq-total-value"]');
+			if (totalSpan && live) { totalSpan.textContent = live.textContent || '—'; }
+		}
+		function syncSubmitEnabled() {
+			if (!submitBtn) { return; }
+			var blocked = flag('data-submit-disabled-by-addendum') || flag('data-submit-disabled-by-deadline');
+			submitBtn.disabled = blocked || !(confirmCb && confirmCb.checked);
+		}
+		function showErr(msg) {
+			if (!errBox) { return; }
+			errBox.textContent = msg || '';
+			errBox.classList.toggle('d-none', !msg);
+		}
+		function showOk(msg) {
+			if (!okBox) { return; }
+			okBox.textContent = msg || '';
+			okBox.classList.toggle('d-none', !msg);
+		}
+		function collectBoqFromTable(baseBoq) {
+			var byNum = {};
+			(baseBoq || []).forEach(function (row) {
+				if (row && row.item_number) { byNum[String(row.item_number).trim()] = Object.assign({}, row); }
+			});
+			document.querySelectorAll('[data-testid="tm2-supplier-boq-row"]').forEach(function (tr) {
+				if (parseInt(tr.getAttribute('data-rate-editable'), 10) !== 1) { return; }
+				var cells = tr.querySelectorAll('td');
+				var itemNo = cells.length ? (cells[0].textContent || '').trim() : '';
+				if (!itemNo) { return; }
+				var inp = tr.querySelector('[data-testid="tm2-supplier-boq-rate-input"]');
+				var raw = inp ? inp.value : '';
+				var r = raw === '' ? NaN : parseFloat(raw);
+				if (!byNum[itemNo]) { byNum[itemNo] = { item_number: itemNo }; }
+				byNum[itemNo].rate = r;
+			});
+			return Object.keys(byNum).sort().map(function (k) { return byNum[k]; });
+		}
+		function validateBoqRates(boq) {
+			for (var i = 0; i < boq.length; i++) {
+				var row = boq[i];
+				if (!row || row.rate === undefined || row.rate === null) { continue; }
+				if (typeof row.rate === 'number' && (isNaN(row.rate) || row.rate <= 0)) {
+					return 'Each priced BOQ line needs a positive unit rate.';
+				}
+			}
+			return '';
+		}
+		if (openBtn) {
+			openBtn.addEventListener('click', function () {
+				showErr('');
+				showOk('');
+				syncIndicativeTotal();
+				syncSubmitEnabled();
+				showModal();
+			});
+		}
+		if (confirmCb) {
+			confirmCb.addEventListener('change', syncSubmitEnabled);
+		}
+		modal.querySelectorAll('[data-dismiss="modal"], [data-bs-dismiss="modal"]').forEach(function (btn) {
+			btn.addEventListener('click', function () { hideModal(); });
+		});
+		if (submitBtn) {
+			submitBtn.addEventListener('click', function () {
+				showErr('');
+				showOk('');
+				var tc = (root.getAttribute('data-tender-code') || '').trim();
+				if (!tc) { showErr('Missing tender code.'); return; }
+				if (!tplEl) { showErr('Bid template is not available for this tender.'); return; }
+				var base;
+				try { base = JSON.parse(tplEl.textContent || '{}'); } catch (e) { showErr('Invalid bid template.'); return; }
+				base.boq = collectBoqFromTable(base.boq || []);
+				var vmsg = validateBoqRates(base.boq || []);
+				if (vmsg) { showErr(vmsg); return; }
+				if (typeof frappe === 'undefined' || !frappe.call) { showErr('Submit is unavailable (desk scripts not loaded).'); return; }
+				submitBtn.disabled = true;
+				frappe.call({
+					method: 'kentender_procurement.tender_management.api.supplier_portal.submit_supplier_portal_bid',
+					args: { tender_code: tc, bid_payload: base },
+					callback: function (r) {
+						submitBtn.disabled = false;
+						syncSubmitEnabled();
+						var msg = (r && r.message) ? r.message : {};
+						if (msg.ok) {
+							var line = (msg.bid_code || '') + ' · ' + (msg.receipt_code || '');
+							showOk('Bid submitted. ' + line);
+							return;
+						}
+						if (msg.denial_code === 'AUTH_DEADLINE_PASSED') {
+							var late = document.querySelector('[data-testid="tm2-supplier-late-submission-message"]');
+							var block = late ? ('\n\n' + late.innerText.replace(/\s*\n\s*/g, '\n').trim()) : '';
+							showErr((msg.message || msg.denial_code || '') + block);
+							return;
+						}
+						showErr(msg.message || msg.denial_code || 'Submit failed.');
+					},
+					error: function (r) {
+						submitBtn.disabled = false;
+						syncSubmitEnabled();
+						var m = (r && (r._server_messages || r.exc)) ? String(r._server_messages || r.exc) : 'Submit failed.';
+						showErr(m);
+					}
+				});
+			});
+		}
+		syncSubmitEnabled();
+	})();
+	</script>
+	{% set ls = sb.get('late_submission_notice') or {} %}
+	{% if ls.get('visible') %}
+	<div data-testid="tm2-supplier-late-submission-message" class="border rounded p-3 mb-2 border-warning" role="alert">
+		<p class="mb-2" data-testid="tm2-supplier-late-submission-lead">{{ ls.get('lead_message') }}</p>
+		<p class="mb-1 small" data-testid="tm2-supplier-late-deadline-line"><strong>{{ _("Deadline") }}:</strong> {{ ls.get('deadline_label') or '—' }}</p>
+		<p class="mb-0 small" data-testid="tm2-supplier-late-official-server-time-line"><strong>{{ _("Official server time") }}:</strong> {{ ls.get('official_server_time_label') or '—' }}</p>
+	</div>
+	{% endif %}
+	<div data-testid="tm2-supplier-receipt-panel" class="border rounded p-3 mb-2 small text-muted">{{ _("Bid receipts appear here after a successful on-time submission.") }}</div>
+	{% elif tm2_supplier_detail %}
+	<header data-testid="tm2-supplier-tender-detail-header" class="border-bottom pb-3 mb-3">
+		<h1 class="h5 mb-1">{{ tm2_supplier_tender_code }}</h1>
+	</header>
+	<div class="alert alert-warning" role="alert">{{ tm2_supplier_detail.message }}</div>
+	<p class="mt-3"><a href="/supplier/tenders">{{ _("Back to tender list") }}</a></p>
+	{% else %}
+	<header data-testid="tm2-supplier-tender-detail-header" class="border-bottom pb-3 mb-3">
+		<h1 class="h5 mb-1">{{ tm2_supplier_tender_code }}</h1>
+	</header>
+	<div class="alert alert-secondary" role="alert">{{ _("Unable to load tender detail.") }}</div>
+	{% endif %}
+</section>
+{% else %}
+<div data-testid="tm2-supplier-tender-list" class="tm2-supplier-portal container py-4">
+	<nav data-testid="tm2-supplier-tender-list-tabs" class="nav nav-pills mb-3" aria-label="{{ _('Supplier tender views') }}">
+		<span class="nav-link active">{{ _("Open tenders") }}</span>
+	</nav>
+	{% if tm2_supplier_portal_message %}
+	<div data-testid="tm2-supplier-portal-empty" class="alert alert-secondary" role="status">
+		{{ tm2_supplier_portal_message }}
+	</div>
+	{% elif not tm2_supplier_tender_rows %}
+	<div data-testid="tm2-supplier-portal-empty" class="alert alert-light border" role="status">
+		{{ _("No tenders are available for your supplier account yet.") }}
+	</div>
+	{% else %}
+	<div class="table-responsive">
+		<table class="table table-striped table-hover align-middle" data-testid="tm2-supplier-tender-list-table">
+			<thead>
+				<tr>
+					<th scope="col">{{ _("Tender code") }}</th>
+					<th scope="col">{{ _("Title") }}</th>
+					<th scope="col">{{ _("Procuring entity") }}</th>
+					<th scope="col">{{ _("Method") }}</th>
+					<th scope="col">{{ _("Category") }}</th>
+					<th scope="col">{{ _("Deadline") }}</th>
+					<th scope="col">{{ _("Status") }}</th>
+					<th scope="col">{{ _("Access requirement") }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for row in tm2_supplier_tender_rows %}
+				<tr data-testid="tm2-supplier-tender-list-row">
+					<td><a href="/supplier/tenders/{{ row.tender_code }}">{{ row.tender_code }}</a></td>
+					<td>{{ row.tender_title }}</td>
+					<td>{{ row.procuring_entity_code }}</td>
+					<td>{{ row.procurement_method }}</td>
+					<td>{{ row.procurement_category }}</td>
+					<td>{% if row.submission_deadline_display %}{{ row.submission_deadline_display }}{% else %}—{% endif %}</td>
+					<td>{{ row.tender_status }}</td>
+					<td>{{ row.access_requirement }}</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+	{% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -54,7 +54,7 @@ class TestWorksCompWorksRequirements0220(IntegrationTestCase):
 	def _delete_std_instances_for_tender(self, tender: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
-			filters={"procurement_tender": tender},
+			filters={"tm2_tender": tender},
 			pluck="name",
 		):
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
@@ -70,7 +70,7 @@ class TestWorksCompWorksRequirements0220(IntegrationTestCase):
 	def test_works_comp_0220_validate_missing_specifications(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -84,7 +84,7 @@ class TestWorksCompWorksRequirements0220(IntegrationTestCase):
 	def test_works_comp_0220_save_minimal_valid(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -107,7 +107,7 @@ class TestWorksCompWorksRequirements0220(IntegrationTestCase):
 			td = frappe.get_doc("Procurement Tender", tender)
 			td.configuration_json = json.dumps({"WORKS.REQUIRE_HSE_REQUIREMENTS": True})
 			td.save(ignore_permissions=True)
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -134,7 +134,7 @@ class TestWorksCompWorksRequirements0220(IntegrationTestCase):
 	def test_works_comp_0220_attachment_reference_not_bound(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -155,7 +155,7 @@ class TestWorksCompWorksRequirements0220(IntegrationTestCase):
 	def test_works_comp_0220_validate_lists_unbound_attachment(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -183,7 +183,7 @@ class TestWorksCompWorksRequirements0220(IntegrationTestCase):
 	def test_works_comp_0220_attach_file_smoke(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -222,7 +222,7 @@ class TestWorksCompWorksRequirements0220(IntegrationTestCase):
 	def test_works_comp_0220_nested_flags(self) -> None:
 		tender = self._minimal_procurement_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,

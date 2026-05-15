@@ -1,0 +1,182 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:draft_metadata_code",
+ "creation": "2026-05-12 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "tm2_tender",
+  "tender_code",
+  "supplier",
+  "supplier_code",
+  "draft_metadata_code",
+  "section_dsm",
+  "dsm_output_code",
+  "section_status",
+  "draft_status",
+  "completeness_status",
+  "section_times",
+  "draft_started_at",
+  "last_saved_at",
+  "section_validation",
+  "validation_summary",
+  "section_submission",
+  "tm2_final_bid_submission"
+ ],
+ "fields": [
+  {"fieldname": "section_identity", "fieldtype": "Section Break", "label": "Identity"},
+  {
+   "fieldname": "tm2_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender",
+   "options": "TM2 Tender",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tender_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Supplier",
+   "options": "Supplier",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "supplier_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Supplier Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Business code BDM-{tender_code}-{supplier_code} (not listed in doc 3 §3.1 table; stable per tender/supplier).",
+   "fieldname": "draft_metadata_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Draft Metadata Code",
+   "read_only_depends_on": "eval:!doc.__islocal",
+   "search_index": 1,
+   "unique": 1
+  },
+  {"fieldname": "section_dsm", "fieldtype": "Section Break", "label": "DSM"},
+  {
+   "description": "DSM output controlling draft validation (TM2-BDM-002).",
+   "fieldname": "dsm_output_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "DSM Output Code",
+   "reqd": 1
+  },
+  {"fieldname": "section_status", "fieldtype": "Section Break", "label": "Status"},
+  {
+   "default": "Draft",
+   "fieldname": "draft_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Draft Status",
+   "options": "Draft\nSaved\nAbandoned",
+   "reqd": 1
+  },
+  {
+   "default": "Unknown",
+   "fieldname": "completeness_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Completeness Status",
+   "options": "Unknown\nPartial\nComplete\nNot Applicable",
+   "reqd": 1
+  },
+  {"fieldname": "section_times", "fieldtype": "Section Break", "label": "Timestamps"},
+  {
+   "fieldname": "draft_started_at",
+   "fieldtype": "Datetime",
+   "label": "Draft Started At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "last_saved_at",
+   "fieldtype": "Datetime",
+   "label": "Last Saved At"
+  },
+  {"fieldname": "section_validation", "fieldtype": "Section Break", "label": "Validation summary"},
+  {
+   "fieldname": "validation_summary",
+   "fieldtype": "JSON",
+   "label": "Validation Summary",
+   "description": "Derived metadata only; must not contain raw bid body (TM2-BDM-001)."
+  },
+  {"fieldname": "section_submission", "fieldtype": "Section Break", "label": "Submission"},
+  {
+   "fieldname": "tm2_final_bid_submission",
+   "fieldtype": "Link",
+   "label": "Final TM2 Bid Submission",
+   "options": "TM2 Bid Submission",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-12 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "TM2 Bid Draft Metadata",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "search_fields": "draft_metadata_code,tender_code,supplier_code,dsm_output_code,draft_status",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "draft_metadata_code",
+ "track_changes": 1
+}

@@ -170,7 +170,7 @@ class TestWorksCompSmoke1200(IntegrationTestCase):
 	def _cleanup_tender(self, tender_name: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
-			filters={"procurement_tender": tender_name},
+			filters={"tm2_tender": tender_name},
 			pluck="name",
 		):
 			for snap_name in frappe.get_all(
@@ -214,7 +214,7 @@ class TestWorksCompSmoke1200(IntegrationTestCase):
 		return [b["code"] for b in out.get("blockers") or []]
 
 	def _bind(self, tender: str):
-		return TenderStdBindingService.create_std_instance_for_tender(
+		return TenderStdBindingService.create_std_instance_for_tm2_tender(
 			tender,
 			ignore_permissions=True,
 			record_template_usage=False,

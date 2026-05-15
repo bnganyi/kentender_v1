@@ -26,9 +26,28 @@ from kentender_procurement.procurement_planning.seeds.seed_procurement_planning_
 )
 
 
+def _delete_tm2_for_package(package_name: str) -> None:
+	for t in frappe.get_all("TM2 Tender", filters={"procurement_package": package_name}, pluck="name"):
+		for r in frappe.get_all(
+			"TM2 Tender Access Rule",
+			filters={"tm2_tender": t},
+			pluck="name",
+		):
+			if frappe.db.exists("TM2 Tender Access Rule", r):
+				frappe.delete_doc("TM2 Tender Access Rule", r, force=True, ignore_permissions=True)
+		for r in frappe.get_all(
+			"TM2 Tender Timeline",
+			filters={"tm2_tender": t},
+			pluck="name",
+		):
+			if frappe.db.exists("TM2 Tender Timeline", r):
+				frappe.delete_doc("TM2 Tender Timeline", r, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", t):
+			frappe.delete_doc("TM2 Tender", t, force=True, ignore_permissions=True)
+
+
 def _delete_tenders_for_package(package_name: str) -> None:
-	for t in frappe.get_all("Procurement Tender", filters={"procurement_package": package_name}, pluck="name"):
-		frappe.delete_doc("Procurement Tender", t, force=True, ignore_permissions=True)
+	_delete_tm2_for_package(package_name)
 
 
 def _delete_package_cascade_by_code(package_code: str) -> None:

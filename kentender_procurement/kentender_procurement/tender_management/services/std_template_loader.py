@@ -36,6 +36,12 @@ from typing import Any
 
 import frappe
 from frappe.utils import now_datetime
+from kentender_procurement.tender_management.services.std_template_governance import (
+	STATUS_ACTIVE,
+)
+from kentender_procurement.tender_management.security.authorization.integration import (
+	enforce_sec_authorization,
+)
 
 PACKAGE_FOLDER_NAME = "ke_ppra_works_building_2022_04_poc"
 TEMPLATE_CODE = "KE-PPRA-WORKS-BLDG-2022-04-POC"
@@ -342,19 +348,34 @@ def upsert_std_template(
 
 	manifest = package["manifest"]
 	template_code = manifest["template_code"]
+	enforce_sec_authorization(
+		action_code="IMPORT_OFFICIAL_STD_PACKAGE",
+		actor=getattr(getattr(frappe, "session", None), "user", None),
+		object_type="STD Template",
+		object_code=template_code,
+		context={"object_exists": bool(frappe.db.exists("STD Template", template_code))},
+		fallback_message="Not authorized to import official STD package.",
+	)
 	manifest_status = (manifest.get("status") or {}).get("package_status")
+	status_block = manifest.get("status") or {}
 	template_status = map_manifest_status_to_template_status(manifest_status)
 	lifecycle_status = MANIFEST_TO_LIFECYCLE_STATUS.get(
 		manifest_status or "",
 		"Imported",
 	)
+	# ``STD Template._std_template_refresh_derived_flags`` clears
+	# ``allowed_for_tender_creation`` unless ``lifecycle_status`` is **Active**.
+	# Seed packages that declare ``allowed_for_tender_creation`` must therefore land
+	# in **Active** so planning handoff / XMV (doc 2 §17) sees the manifest intent.
+	ms = (manifest_status or "").strip()
+	if status_block.get("allowed_for_tender_creation") and ms in ("IMPORTED", "POC_APPROVED"):
+		lifecycle_status = STATUS_ACTIVE
 
 	authority = (manifest.get("authority") or {}).get("name")
 	country = (manifest.get("jurisdiction") or {}).get("country_code")
 	classification = manifest.get("classification") or {}
 	versioning = manifest.get("versioning") or {}
 	source_document = manifest.get("source_document") or {}
-	status_block = manifest.get("status") or {}
 
 	if frappe.db.exists("STD Template", template_code):
 		doc = frappe.get_doc("STD Template", template_code)

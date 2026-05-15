@@ -25,6 +25,9 @@ from kentender_procurement.tender_management.std_instance.parameter import (
 	INSTANCE_STATUSES_BLOCKING_PARAMETER_MUTATION,
 	OUTPUT_KEY_TO_PARENT_FIELD,
 )
+from kentender_procurement.tender_management.security.authorization.integration import (
+	enforce_sec_authorization,
+)
 
 INSTANCE_STATUSES_BLOCKING_BOQ_MUTATION = INSTANCE_STATUSES_BLOCKING_PARAMETER_MUTATION
 
@@ -247,7 +250,10 @@ class StdInstanceBoqService:
 			StdPublicationLockService,
 		)
 
-		StdAuthorizationService.assert_can_edit_draft_instance(instance_name)
+		StdAuthorizationService.assert_can_edit_draft_instance(
+			instance_name,
+			attempted_change="edit BOQ",
+		)
 		StdPublicationLockService.assert_editable(instance_name, operation_label="edit BOQ")
 		st = frappe.db.get_value("Tender STD Instance", instance_name, "instance_status")
 		if StdInstanceBoqService.status_blocks_boq_at_instance_level(st):
@@ -348,6 +354,14 @@ class StdInstanceBoqService:
 		status: str = "Draft",
 		ignore_boq_publication_lock: bool = False,
 	) -> Document:
+		enforce_sec_authorization(
+			action_code="CONFIGURE_WORKS_BOQ",
+			actor=frappe.session.user,
+			object_type="Tender STD Instance BOQ",
+			object_code=boq_name,
+			context={"object_exists": bool(frappe.db.exists("Tender STD Instance BOQ", boq_name))},
+			fallback_message="Not authorized to configure works BOQ.",
+		)
 		bic = _strip(bill_instance_code)
 		if not bic:
 			frappe.throw(_("bill_instance_code is required."), title=_("STD Instance BOQ"))

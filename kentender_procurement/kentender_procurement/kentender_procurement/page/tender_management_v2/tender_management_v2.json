@@ -1,0 +1,32 @@
+{
+ "content": null,
+ "creation": "2026-05-13 12:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2026-05-13 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "tender-management-v2",
+ "owner": "Administrator",
+ "page_name": "tender-management-v2",
+ "roles": [
+  {
+   "role": "Administrator"
+  },
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Procurement Officer"
+  },
+  {
+   "role": "Procurement Planner"
+  }
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "Tender Management"
+}

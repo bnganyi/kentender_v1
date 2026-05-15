@@ -145,7 +145,7 @@ def _ensure_instance(tender_name: str) -> Any:
 		frappe.throw("Procurement Tender has no std_template.", title="WORKS_COMP_1100_NO_TEMPLATE")
 
 	version_code, profile_code = TenderStdBindingService._codes_from_std_template(std)
-	current = TenderStdBindingService.get_current_std_instance_for_tender(tender_name)
+	current = TenderStdBindingService.get_current_std_instance_for_tm2_tender(tender_name)
 	if current:
 		doc = frappe.get_doc("Tender STD Instance", current.name)
 		changed = False
@@ -159,7 +159,7 @@ def _ensure_instance(tender_name: str) -> Any:
 			doc.save(ignore_permissions=True)
 			return frappe.get_doc("Tender STD Instance", doc.name)
 		return doc
-	return TenderStdBindingService.create_std_instance_for_tender(
+	return TenderStdBindingService.create_std_instance_for_tm2_tender(
 		tender_name,
 		ignore_permissions=True,
 		record_template_usage=False,

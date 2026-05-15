@@ -1,0 +1,294 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:publication_code",
+ "creation": "2026-05-12 23:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_parent",
+  "tm2_tender",
+  "tender_code",
+  "tm2_tender_std_binding",
+  "binding_code",
+  "tm2_publication_readiness",
+  "readiness_code",
+  "publication_code",
+  "section_outputs",
+  "bundle_output_code",
+  "bundle_output_hash",
+  "dsm_output_code",
+  "dom_output_code",
+  "dem_output_code",
+  "dcm_output_code",
+  "publication_snapshot_code",
+  "section_channel",
+  "publication_channel",
+  "publication_url",
+  "visibility",
+  "section_payload",
+  "publication_payload_snapshot",
+  "section_publish_meta",
+  "published_by",
+  "published_at",
+  "status",
+  "failure_reason",
+  "section_supersede",
+  "superseded_by_publication"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_parent",
+   "fieldtype": "Section Break",
+   "label": "Tender"
+  },
+  {
+   "fieldname": "tm2_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender",
+   "options": "TM2 Tender",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tender_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "tm2_tender_std_binding",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender STD Binding",
+   "options": "TM2 Tender STD Binding",
+   "reqd": 1
+  },
+  {
+   "fieldname": "binding_code",
+   "fieldtype": "Data",
+   "label": "Binding Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "tm2_publication_readiness",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Publication Readiness",
+   "options": "TM2 Publication Readiness",
+   "reqd": 1
+  },
+  {
+   "fieldname": "readiness_code",
+   "fieldtype": "Data",
+   "label": "Readiness Code",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Business code PUB-{tender_code}-{###} per doc 7 §14 / doc 3 §3.1.",
+   "fieldname": "publication_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Publication Code",
+   "read_only_depends_on": "eval:!doc.__islocal",
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "section_outputs",
+   "fieldtype": "Section Break",
+   "label": "STD outputs"
+  },
+  {
+   "fieldname": "bundle_output_code",
+   "fieldtype": "Data",
+   "label": "Bundle Output Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "bundle_output_hash",
+   "fieldtype": "Data",
+   "label": "Bundle Output Hash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "dsm_output_code",
+   "fieldtype": "Data",
+   "label": "DSM Output Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "dom_output_code",
+   "fieldtype": "Data",
+   "label": "DOM Output Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "dem_output_code",
+   "fieldtype": "Data",
+   "label": "DEM Output Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "dcm_output_code",
+   "fieldtype": "Data",
+   "label": "DCM Output Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "publication_snapshot_code",
+   "fieldtype": "Data",
+   "label": "Publication Snapshot Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_channel",
+   "fieldtype": "Section Break",
+   "label": "Channel"
+  },
+  {
+   "fieldname": "publication_channel",
+   "fieldtype": "Data",
+   "label": "Publication Channel",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "publication_url",
+   "fieldtype": "Data",
+   "label": "Publication URL",
+   "read_only": 1
+  },
+  {
+   "fieldname": "visibility",
+   "fieldtype": "Select",
+   "label": "Visibility",
+   "options": "Public\nRestricted\nInvite Only\nInternal Preview",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_payload",
+   "fieldtype": "Section Break",
+   "label": "Snapshot"
+  },
+  {
+   "fieldname": "publication_payload_snapshot",
+   "fieldtype": "JSON",
+   "label": "Publication Payload Snapshot",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_publish_meta",
+   "fieldtype": "Section Break",
+   "label": "Published"
+  },
+  {
+   "fieldname": "published_by",
+   "fieldtype": "Link",
+   "label": "Published By",
+   "options": "User",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "published_at",
+   "fieldtype": "Datetime",
+   "label": "Published At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "Published",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Pending\nPublished\nFailed\nSuperseded\nWithdrawn",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "failure_reason",
+   "fieldtype": "Text",
+   "label": "Failure Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_supersede",
+   "fieldtype": "Section Break",
+   "label": "Supersession"
+  },
+  {
+   "fieldname": "superseded_by_publication",
+   "fieldtype": "Link",
+   "label": "Superseded By Publication",
+   "options": "TM2 Publication Record",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-12 23:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "TM2 Publication Record",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "search_fields": "publication_code,tender_code,binding_code,readiness_code",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "publication_code",
+ "track_changes": 1
+}

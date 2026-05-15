@@ -70,6 +70,12 @@ app_include_js = [
 # include custom scss in every website theme (without file extension ".scss")
 # website_theme_scss = "kentender_procurement/public/scss/website"
 
+# Doc 9 §18.1 — supplier portal URLs (`/supplier/tenders`, `/supplier/tenders/<tender_code>`).
+# Resolves dynamic detail paths to ``www/supplier/tenders`` (same shell as list).
+website_route_rules = [
+	{"from_route": "/supplier/tenders/<tender_code>", "to_route": "supplier/tenders"},
+]
+
 # include js, css files in header of web form
 # webform_include_js = {"doctype": "public/js/doctype.js"}
 # webform_include_css = {"doctype": "public/css/doctype.css"}
@@ -82,6 +88,7 @@ doctype_js = {
 
 # Never append ?v= to page_js values — Frappe resolves them as disk paths (meta.py get_code_files_via_hooks).
 page_js = {
+	"tender-management-v2": "public/js/tender_management_v2_workbench_page.js",
 	"std-engine": [
 		"public/js/std_library/action_availability.js",
 		"public/js/std_library/summary_data.js",

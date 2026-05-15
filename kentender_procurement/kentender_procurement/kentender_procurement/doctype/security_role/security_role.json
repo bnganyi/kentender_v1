@@ -1,0 +1,75 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:role_code",
+ "creation": "2026-05-09 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "role_code",
+  "role_name",
+  "description",
+  "active",
+  "assigned_permissions"
+ ],
+ "fields": [
+  {
+   "fieldname": "role_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Role Code",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "role_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Role Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "default": "1",
+   "fieldname": "active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active"
+  },
+  {
+   "fieldname": "assigned_permissions",
+   "fieldtype": "Table",
+   "label": "Assigned Permissions",
+   "options": "Security Role Permission",
+   "reqd": 0
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-09 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "Security Role",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "import": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "role_code",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 1
+}

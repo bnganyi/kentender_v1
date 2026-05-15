@@ -62,23 +62,13 @@ class TestSeedWorksStdintS01C6(IntegrationTestCase):
 
 		s29 = out.get("section_29_smoke") or {}
 		self.assertTrue(s29.get("ok"), s29)
-		self.assertEqual(s29.get("officer_path_required_forms_count"), ver.EXPECTED_REQUIRED_FORMS_INTEGRATED_SEED)
-		self.assertEqual(s29.get("required_forms_count"), ver.EXPECTED_REQUIRED_FORMS_PRIMARY_SAMPLE)
-		self.assertGreater(int(s29.get("preview_html_length") or 0), 1000)
-		self.assertTrue(s29.get("configuration_hash_present"))
-		# Doc 5 §25 / WH-013 — hardening + snapshot after §29 smoke
-		self.assertEqual(s29.get("hardening_critical_count"), 0, s29)
-		self.assertIn(s29.get("works_hardening_status"), ("Pass", "Warning"), s29)
-		self.assertTrue(s29.get("hardening_snapshot_hash_present"), s29)
-		self.assertTrue(s29.get("hardening_snapshot_json_present"), s29)
-		self.assertIn("load_sample_tender_wh013", s29.get("steps") or {}, s29)
-		self.assertIn("run_works_tender_stage_hardening", s29.get("steps") or {}, s29)
+		self.assertTrue(s29.get("skipped"), s29)
+		self.assertIn("TM2-only", (s29.get("reason") or ""))
 
-		td = frappe.get_doc("Procurement Tender", tender)
-		self.assertGreaterEqual(len(td.get("boq_items") or []), ver.EXPECTED_BOQ_ROWS)
-		self.assertIn("std-poc-preview", (td.generated_tender_pack_html or "").lower())
-		self.assertTrue((td.works_hardening_snapshot_hash or "").strip())
-		self.assertTrue((td.works_hardening_snapshot_json or "").strip())
+		self.assertTrue((frappe.db.get_value("TM2 Tender", tender, "configuration_json") or "").strip())
+		self.assertTrue(
+			(frappe.db.get_value("TM2 Tender", tender, "planning_handoff_snapshot_sha256") or "").strip()
+		)
 
 	def test_c6_gather_section_28_checks_shape(self) -> None:
 		self._skip_if_no_pp()
@@ -111,10 +101,4 @@ class TestSeedWorksStdintS01C6(IntegrationTestCase):
 		self.assertTrue(h.get("ok"), h)
 		sm = h.get("section_29_smoke") or {}
 		self.assertTrue(sm.get("ok"), sm)
-		# Second smoke call may short-circuit to hardening-only re-run (tender already WH-013 complete).
-		self.assertTrue(
-			sm.get("rerun_wh013_short_circuit")
-			or "load_sample_tender_wh013" in (sm.get("steps") or {}),
-			sm,
-		)
-		self.assertEqual(sm.get("hardening_critical_count"), 0, sm)
+		self.assertTrue(sm.get("skipped"), sm)

@@ -1,0 +1,90 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:permission_id",
+ "creation": "2026-05-10 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "permission_id",
+  "permission_name",
+  "domain",
+  "description",
+  "risk_level",
+  "audit_required",
+  "active"
+ ],
+ "fields": [
+  {
+   "fieldname": "permission_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Permission ID",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "permission_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Permission Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "domain",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Domain",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "risk_level",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Risk Level",
+   "options": "Low\nMedium\nHigh\nCritical",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "audit_required",
+   "fieldtype": "Check",
+   "label": "Audit Required"
+  },
+  {
+   "default": "1",
+   "fieldname": "active",
+   "fieldtype": "Check",
+   "label": "Active"
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-10 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "Security Permission",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "import": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "permission_id",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 1
+}

@@ -66,6 +66,9 @@ from kentender_procurement.procurement_planning.api import workflow as pp_workfl
 from kentender_procurement.procurement_planning.doctype.procurement_package.procurement_package import (
 	recompute_plan_total_planned_value,
 )
+from kentender_procurement.tender_management.services.create_tender_from_package import (
+	active_tm2_tender_name_for_package,
+)
 from kentender_procurement.tender_management.services.officer_guided_field_registry import (
 	hydrate_officer_guided_fields_from_configuration,
 )
@@ -485,13 +488,7 @@ def _ensure_line(
 
 
 def _find_non_cancelled_tender_for_package(package_name: str) -> str | None:
-	rows = frappe.get_all(
-		"Procurement Tender",
-		filters={"procurement_package": package_name, "tender_status": ("!=", "Cancelled")},
-		pluck="name",
-		limit=1,
-	)
-	return rows[0] if rows else None
+	return active_tm2_tender_name_for_package(package_name)
 
 
 def _ensure_works_s01_released_to_tender(*, plan_name: str, package_name: str) -> dict[str, Any]:
@@ -501,7 +498,7 @@ def _ensure_works_s01_released_to_tender(*, plan_name: str, package_name: str) -
 		tn = _find_non_cancelled_tender_for_package(package_name)
 		if not tn:
 			frappe.throw(
-				_("Package {0} is Released to Tender but no active Procurement Tender is linked.").format(
+				_("Package {0} is Released to Tender but no active TM2 Tender is linked.").format(
 					package_name
 				),
 				title=_("WORKS S01 seed"),
@@ -572,7 +569,7 @@ def _ensure_works_s01_released_to_tender(*, plan_name: str, package_name: str) -
 		)
 	tn = _find_non_cancelled_tender_for_package(package_name)
 	if not tn:
-		frappe.throw(_("No Procurement Tender linked after release."), title=_("WORKS S01 seed"))
+		frappe.throw(_("No TM2 Tender linked after release."), title=_("WORKS S01 seed"))
 
 	return {
 		"release_skipped": False,
@@ -583,16 +580,10 @@ def _ensure_works_s01_released_to_tender(*, plan_name: str, package_name: str) -
 
 
 def _apply_works_s01_sample_officer_completion(tender_name: str) -> bool:
-	"""Doc 3 §20 / §28: merge labelled sample officer fields into ``configuration_json``. Idempotent by merge version."""
-	if not tender_name or not frappe.db.exists("Procurement Tender", tender_name):
+	"""Doc 3 §20 / §28: merge labelled sample officer fields into ``TM2 Tender.configuration_json``."""
+	if not tender_name or not frappe.db.exists("TM2 Tender", tender_name):
 		return False
-	# WH-013: after §29 ``load_sample_tender``, snapshot exists and required forms are full primary set — do not
-	# re-merge officer flat keys (would confuse doc 3 §20 idempotency vs ``configuration_json`` from sample).
-	td_gate = frappe.get_doc("Procurement Tender", tender_name)
-	if (frappe.db.get_value("Procurement Tender", tender_name, "works_hardening_snapshot_hash") or "").strip():
-		if len(td_gate.get("required_forms") or []) >= 15:
-			return False
-	raw = frappe.db.get_value("Procurement Tender", tender_name, "configuration_json") or "{}"
+	raw = frappe.db.get_value("TM2 Tender", tender_name, "configuration_json") or "{}"
 	try:
 		existing: dict[str, Any] = json.loads(raw) if raw else {}
 	except json.JSONDecodeError:
@@ -606,7 +597,7 @@ def _apply_works_s01_sample_officer_completion(tender_name: str) -> bool:
 	merged[_SEED_SAMPLE_OFFICER_APPLIED_KEY] = 1
 	merged[_SAMPLE_OFFICER_MERGE_VERSION_KEY] = _SAMPLE_OFFICER_MERGE_VERSION
 
-	doc = frappe.get_doc("Procurement Tender", tender_name)
+	doc = frappe.get_doc("TM2 Tender", tender_name)
 	hydrate_officer_guided_fields_from_configuration(doc, merged)
 	doc.configuration_json = json.dumps(merged, indent=2, ensure_ascii=False)
 	doc.save(ignore_permissions=True)

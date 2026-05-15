@@ -32,6 +32,9 @@ from kentender_procurement.tender_management.std_instance.works_requirement impo
 from kentender_procurement.tender_management.std_instance.events import (
 	EVT_STDINST_READINESS_EVALUATED,
 )
+from kentender_procurement.tender_management.security.authorization.integration import (
+	enforce_sec_authorization,
+)
 
 BLOCKER_MESSAGES: dict[str, str] = {
 	"TEMPLATE_OR_PROFILE_MISSING": "Template/profile binding is incomplete.",
@@ -89,7 +92,17 @@ class StdInstanceReadinessService:
 		*,
 		persist: bool = True,
 		emit_audit: bool = True,
+		skip_sec_enforcement: bool = False,
 	) -> dict[str, Any]:
+		if not skip_sec_enforcement:
+			enforce_sec_authorization(
+				action_code="RUN_PUBLICATION_READINESS",
+				actor=frappe.session.user,
+				object_type="Tender STD Instance",
+				object_code=instance_name,
+				context={"object_exists": bool(frappe.db.exists("Tender STD Instance", instance_name))},
+				fallback_message="Not authorized to run readiness.",
+			)
 		doc = frappe.get_doc("Tender STD Instance", instance_name)
 		blockers: list[dict[str, str]] = []
 		warnings: list[dict[str, str]] = []

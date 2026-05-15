@@ -9,7 +9,7 @@
   "section_identity",
   "naming_series",
   "section_binding",
-  "procurement_tender",
+  "tm2_tender",
   "procurement_package",
   "template_version_code",
   "applicability_profile_code",
@@ -66,12 +66,11 @@
    "label": "Tender and template binding"
   },
   {
-   "fieldname": "procurement_tender",
+   "fieldname": "tm2_tender",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Procurement Tender",
-   "options": "Procurement Tender",
-   "reqd": 1
+   "label": "TM2 Tender",
+   "options": "TM2 Tender"
   },
   {
    "fieldname": "procurement_package",

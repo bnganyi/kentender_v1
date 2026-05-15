@@ -49,12 +49,18 @@ class TenderSTDInstance(Document):
 		self._validate_tender_context()
 		self._validate_status_enums()
 		self._validate_instance_status_transition()
-		self._validate_procurement_tender_immutable()
+		self._validate_tender_parent_immutable()
 		self._validate_parameter_value_rules()
 		self._validate_section_attachment_rules()
 		self._validate_works_requirement_rules()
 		if self.is_new():
 			self._validate_single_active_instance_per_tender_on_insert()
+
+	def _validate_status_enums(self) -> None:
+		if not is_valid_instance_status(self.instance_status):
+			frappe.throw(_("Invalid Instance Status: {0}").format(self.instance_status))
+		if not is_valid_readiness_status(self.readiness_status):
+			frappe.throw(_("Invalid Readiness Status: {0}").format(self.readiness_status))
 
 	def _validate_instance_status_transition(self) -> None:
 		if self.is_new():
@@ -84,12 +90,44 @@ class TenderSTDInstance(Document):
 				_("STD Instances may only be created from a Tender context."),
 				title=_("STD Instance Orphan Creation Denied"),
 			)
+		tm2 = (self.tm2_tender or "").strip()
+		if not tm2:
+			frappe.throw(
+				_("Set TM2 Tender (required)."),
+				title=_("STD Instance Tender Parent"),
+			)
 
-	def _validate_status_enums(self) -> None:
-		if not is_valid_instance_status(self.instance_status):
-			frappe.throw(_("Invalid Instance Status: {0}").format(self.instance_status))
-		if not is_valid_readiness_status(self.readiness_status):
-			frappe.throw(_("Invalid Readiness Status: {0}").format(self.readiness_status))
+	def _validate_tender_parent_immutable(self) -> None:
+		if self.is_new():
+			return
+		prev = frappe.db.get_value(
+			"Tender STD Instance",
+			self.name,
+			["tm2_tender"],
+			as_dict=True,
+		)
+		if not prev:
+			return
+		if (prev.tm2_tender or "") != (self.tm2_tender or ""):
+			frappe.throw(
+				_("TM2 Tender cannot be changed after creation."),
+				title=_("STD Instance Tender Immutable"),
+			)
+
+	def _validate_single_active_instance_per_tender_on_insert(self) -> None:
+		filters: dict = {"instance_status": ["not in", list(INSTANCE_STATUS_RELEASES_SLOT)]}
+		if self.tm2_tender:
+			filters["tm2_tender"] = self.tm2_tender
+		else:
+			return
+		others = frappe.get_all("Tender STD Instance", filters=filters, pluck="name")
+		if others:
+			frappe.throw(
+				_("Another active STD Instance already exists for this tender: {0}").format(
+					", ".join(others)
+				),
+				title=_("Duplicate STD Instance"),
+			)
 
 	def _validate_works_requirement_rules(self) -> None:
 		assert_no_duplicate_requirement_codes(self)
@@ -148,37 +186,4 @@ class TenderSTDInstance(Document):
 					"Use an addendum workflow when implemented."
 				).format(self.instance_status),
 				title=_("STD Parameters Locked"),
-			)
-
-	def _validate_procurement_tender_immutable(self) -> None:
-		if self.is_new():
-			return
-		prev = frappe.db.get_value(
-			"Tender STD Instance",
-			self.name,
-			"procurement_tender",
-		)
-		if prev and prev != self.procurement_tender:
-			frappe.throw(
-				_("Procurement Tender cannot be changed after creation."),
-				title=_("STD Instance Tender Immutable"),
-			)
-
-	def _validate_single_active_instance_per_tender_on_insert(self) -> None:
-		if not self.procurement_tender:
-			return
-		others = frappe.get_all(
-			"Tender STD Instance",
-			filters={
-				"procurement_tender": self.procurement_tender,
-				"instance_status": ["not in", list(INSTANCE_STATUS_RELEASES_SLOT)],
-			},
-			pluck="name",
-		)
-		if others:
-			frappe.throw(
-				_("Another active STD Instance already exists for this tender: {0}").format(
-					", ".join(others)
-				),
-				title=_("Duplicate STD Instance"),
 			)

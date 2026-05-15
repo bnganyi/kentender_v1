@@ -1,0 +1,211 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:bsc_code",
+ "creation": "2026-05-12 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_parent",
+  "tm2_bid_submission",
+  "bid_code",
+  "tm2_tender",
+  "tender_code",
+  "supplier",
+  "supplier_code",
+  "bsc_code",
+  "section_identity",
+  "std_submission_requirement_code",
+  "component_type",
+  "component_label",
+  "required",
+  "submitted",
+  "file_ref",
+  "structured_payload_ref",
+  "section_validation",
+  "validation_status",
+  "validation_payload"
+ ],
+ "fields": [
+  {"fieldname": "section_parent", "fieldtype": "Section Break", "label": "Bid submission"},
+  {
+   "fieldname": "tm2_bid_submission",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Bid Submission",
+   "options": "TM2 Bid Submission",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "bid_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Bid Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "tm2_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender",
+   "options": "TM2 Tender",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tender_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Supplier",
+   "options": "Supplier",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "supplier_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Supplier Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Business code BSC-{bid_code}-{##} (per tender doc 3 §21, CLRR-style suffix).",
+   "fieldname": "bsc_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "BSC Code",
+   "read_only_depends_on": "eval:!doc.__islocal",
+   "search_index": 1,
+   "unique": 1
+  },
+  {"fieldname": "section_identity", "fieldtype": "Section Break", "label": "Component"},
+  {
+   "fieldname": "std_submission_requirement_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "STD Submission Requirement Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "component_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Component Type",
+   "options": "STRUCTURED_TEXT\nSTRUCTURED_TEXT_AND_FILE\nSTRUCTURED_TEXT_AND_TABLE\nFILE_SET\nOTHER",
+   "reqd": 1
+  },
+  {
+   "fieldname": "component_label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Component Label",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "required",
+   "fieldtype": "Check",
+   "label": "Required (DSM)",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "submitted",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Submitted",
+   "reqd": 1
+  },
+  {
+   "fieldname": "file_ref",
+   "fieldtype": "Data",
+   "label": "File Reference"
+  },
+  {
+   "fieldname": "structured_payload_ref",
+   "fieldtype": "Data",
+   "label": "Structured Payload Reference"
+  },
+  {"fieldname": "section_validation", "fieldtype": "Section Break", "label": "Validation"},
+  {
+   "default": "Pending",
+   "fieldname": "validation_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Validation Status",
+   "options": "Pending\nPassed\nFailed\nWarning",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "validation_payload",
+   "fieldtype": "JSON",
+   "label": "Validation Payload",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-12 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "TM2 Bid Submission Component",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "search_fields": "bsc_code,bid_code,std_submission_requirement_code,component_label",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "bsc_code",
+ "track_changes": 1
+}

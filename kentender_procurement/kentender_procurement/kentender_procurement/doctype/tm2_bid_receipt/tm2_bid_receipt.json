@@ -1,0 +1,181 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:receipt_code",
+ "creation": "2026-05-12 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_bid",
+  "tm2_bid_submission",
+  "bid_code",
+  "tm2_tender",
+  "tender_code",
+  "supplier",
+  "supplier_code",
+  "receipt_code",
+  "section_issue",
+  "receipt_type",
+  "issued_at",
+  "issued_by_system",
+  "section_evidence",
+  "receipt_payload",
+  "receipt_hash"
+ ],
+ "fields": [
+  {"fieldname": "section_bid", "fieldtype": "Section Break", "label": "Bid"},
+  {
+   "fieldname": "tm2_bid_submission",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Bid Submission",
+   "options": "TM2 Bid Submission",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "bid_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Bid Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "tm2_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender",
+   "options": "TM2 Tender",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tender_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Supplier",
+   "options": "Supplier",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "supplier_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Supplier Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Business code RCT-{bid_code} per doc 3 §3.1.",
+   "fieldname": "receipt_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Receipt Code",
+   "read_only_depends_on": "eval:!doc.__islocal",
+   "search_index": 1,
+   "unique": 1
+  },
+  {"fieldname": "section_issue", "fieldtype": "Section Break", "label": "Issue"},
+  {
+   "default": "Submission",
+   "fieldname": "receipt_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Receipt Type",
+   "options": "Submission\nReplacement\nWithdrawal",
+   "reqd": 1
+  },
+  {
+   "fieldname": "issued_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Issued At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "issued_by_system",
+   "fieldtype": "Check",
+   "label": "Issued By System",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {"fieldname": "section_evidence", "fieldtype": "Section Break", "label": "Evidence"},
+  {
+   "fieldname": "receipt_payload",
+   "fieldtype": "JSON",
+   "label": "Receipt Payload",
+   "reqd": 1
+  },
+  {
+   "fieldname": "receipt_hash",
+   "fieldtype": "Data",
+   "label": "Receipt Hash",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-12 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "TM2 Bid Receipt",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "search_fields": "receipt_code,bid_code,tender_code,supplier_code,receipt_type",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "receipt_code",
+ "track_changes": 1
+}

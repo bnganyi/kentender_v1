@@ -52,6 +52,56 @@
 	cursor: not-allowed;
 }
 
+/* UI-HARD-0200 — advanced catalogue access stays collapsed until the user expands the disclosure */
+.std-library-advanced-route-disclosure {
+	align-self: center;
+}
+.std-library-advanced-view-summary {
+	cursor: pointer;
+	list-style: none;
+	font-size: var(--text-sm);
+	color: var(--text-muted);
+	padding: 0.15rem 0.35rem;
+	border-radius: var(--border-radius);
+}
+.std-library-advanced-view-summary::-webkit-details-marker {
+	display: none;
+}
+.std-library-advanced-route-body {
+	margin-top: var(--margin-xs);
+	padding: var(--padding-sm);
+	border: 1px solid var(--border-color);
+	border-radius: var(--border-radius);
+	background: var(--control-bg);
+	min-width: 14rem;
+}
+.std-library-prohibited-marker {
+	display: none;
+}
+
+/* UI-HARD-0210 — Advanced Technical View: disclosure + pack selectors */
+.std-advanced-technical-view-root {
+	margin-top: var(--margin-xs);
+}
+.std-advanced-technical-disclosure {
+	margin-top: var(--margin-sm);
+	border: 1px solid var(--border-color);
+	border-radius: var(--border-radius);
+	padding: var(--padding-sm);
+	background: var(--control-bg);
+}
+.std-advanced-technical-summary {
+	cursor: pointer;
+	list-style: none;
+	font-weight: 600;
+}
+.std-advanced-technical-summary::-webkit-details-marker {
+	display: none;
+}
+.std-advanced-technical-disclosure-body {
+	margin-top: var(--margin-sm);
+}
+
 .std-library-guidance {
 	background: var(--control-bg);
 	border-radius: var(--border-radius);

@@ -1,0 +1,227 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:invitation_code",
+ "creation": "2026-05-12 23:45:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_parent",
+  "tm2_tender",
+  "tender_code",
+  "supplier",
+  "supplier_code",
+  "supplier_name_snapshot",
+  "invitation_code",
+  "section_eligibility",
+  "eligibility_result_ref",
+  "section_status",
+  "status",
+  "column_invited",
+  "invited_by",
+  "invited_at",
+  "delivered_at",
+  "column_response",
+  "accepted_at",
+  "declined_at",
+  "section_revoke",
+  "revoked_by",
+  "revoked_at",
+  "revocation_reason"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_parent",
+   "fieldtype": "Section Break",
+   "label": "Tender"
+  },
+  {
+   "fieldname": "tm2_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender",
+   "options": "TM2 Tender",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tender_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Supplier",
+   "options": "Supplier",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "supplier_code",
+   "fieldtype": "Data",
+   "label": "Supplier Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "supplier_name_snapshot",
+   "fieldtype": "Data",
+   "label": "Supplier Name Snapshot",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Business code INV-{tender_code}-{####} per doc 3 §3.1.",
+   "fieldname": "invitation_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Invitation Code",
+   "read_only_depends_on": "eval:!doc.__islocal",
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "section_eligibility",
+   "fieldtype": "Section Break",
+   "label": "Eligibility"
+  },
+  {
+   "fieldname": "eligibility_result_ref",
+   "fieldtype": "Data",
+   "label": "Eligibility Result Ref",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_status",
+   "fieldtype": "Section Break",
+   "label": "Status"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nSent\nDelivered\nAccepted\nDeclined\nRevoked\nExpired\nSuperseded",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_invited",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "invited_by",
+   "fieldtype": "Link",
+   "label": "Invited By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invited_at",
+   "fieldtype": "Datetime",
+   "label": "Invited At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "delivered_at",
+   "fieldtype": "Datetime",
+   "label": "Delivered At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_response",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "accepted_at",
+   "fieldtype": "Datetime",
+   "label": "Accepted At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "declined_at",
+   "fieldtype": "Datetime",
+   "label": "Declined At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_revoke",
+   "fieldtype": "Section Break",
+   "label": "Revocation"
+  },
+  {
+   "fieldname": "revoked_by",
+   "fieldtype": "Link",
+   "label": "Revoked By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "revoked_at",
+   "fieldtype": "Datetime",
+   "label": "Revoked At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "revocation_reason",
+   "fieldtype": "Text",
+   "label": "Revocation Reason"
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-12 23:45:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "TM2 Tender Invitation",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "search_fields": "invitation_code,tender_code,supplier_code,status",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "invitation_code",
+ "track_changes": 1
+}

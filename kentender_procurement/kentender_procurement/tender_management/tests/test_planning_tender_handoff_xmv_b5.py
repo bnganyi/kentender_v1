@@ -15,19 +15,12 @@ from pathlib import Path
 import frappe
 from frappe.tests import IntegrationTestCase
 
-from kentender_procurement.tender_management.services.officer_tender_config import (
-	TENDER_STATUS_CONFIGURED,
-)
 from kentender_procurement.tender_management.services.planning_tender_handoff_xmv import (
 	XMV_PT_PLAN_CODES,
 	validate_package_for_release_xmv,
 )
 from frappe.utils import flt
 
-from kentender_procurement.tender_management.services.planning_tender_handoff_configuration import (
-	build_handoff_configuration_json,
-	load_plan_for_handoff,
-)
 from kentender_procurement.tender_management.services.std_template_loader import (
 	TEMPLATE_CODE,
 	upsert_std_template,
@@ -76,31 +69,41 @@ class TestPlanningTenderHandoffXmvB5(_ReleaseProcurementPackageHandoffFixtures):
 		self._add_seed_budget_line_and_demand(pkg.name)
 		frappe.db.set_value("Procurement Package", pkg.name, "status", "Ready for Tender")
 
-		def _mk_tender(ref_suffix: str, *, bypass_duplicate_guard: bool = False) -> str:
-			pkg_doc = frappe.get_doc("Procurement Package", pkg.name)
-			plan_doc = load_plan_for_handoff(pkg_doc)
-			t = frappe.new_doc("Procurement Tender")
-			t.naming_series = "PT-.YYYY.-.#####"
-			t.std_template = TEMPLATE_CODE
+		def _mk_tm2(ref_suffix: str, *, bypass_duplicate_guard: bool = False) -> str:
+			pc_row = frappe.db.get_value(
+				"Procurement Package",
+				pkg.name,
+				["package_code", "plan_id", "currency", "procurement_method", "contract_type"],
+				as_dict=True,
+			)
+			pl_row = frappe.db.get_value(
+				"Procurement Plan",
+				plan.name,
+				["plan_code", "fiscal_year", "procuring_entity", "currency"],
+				as_dict=True,
+			)
+			t = frappe.new_doc("TM2 Tender")
 			t.tender_title = f"B5 dup {ref_suffix}"
-			t.tender_reference = f"B5-DUP-{ref_suffix}"
-			t.procurement_plan = plan.name
 			t.procurement_package = pkg.name
-			t.procurement_template = tpl.name
-			t.procurement_method = "OPEN_COMPETITIVE_TENDERING"
-			t.tender_scope = "NATIONAL"
-			t.procurement_category = "WORKS"
-			t.tender_status = TENDER_STATUS_CONFIGURED
-			t.configuration_json = build_handoff_configuration_json(t, pkg_doc, plan_doc)
-			# B9 blocks a second active tender at validate; simulate legacy DB corruption for XMV-PT-009.
+			t.procurement_plan = plan.name
+			t.status = "Draft"
+			t.tender_visibility = "Public"
+			t.procurement_package_code = (pc_row or {}).get("package_code") or pkg.name
+			t.procurement_plan_code = (pl_row or {}).get("plan_code") or ""
+			t.procuring_entity_code = (pl_row or {}).get("procuring_entity") or ""
+			t.fiscal_year = str((pl_row or {}).get("fiscal_year") or "")
+			t.currency = (pc_row or {}).get("currency") or (pl_row or {}).get("currency") or "KES"
+			t.procurement_method = (pc_row or {}).get("procurement_method") or "Direct Procurement"
+			t.contract_type = (pc_row or {}).get("contract_type")
+			t.procurement_category = "Goods"
 			if bypass_duplicate_guard:
 				t.flags.ignore_validate = True
 			t.insert(ignore_permissions=True)
-			self._created.append(("Procurement Tender", t.name))
+			self._created.append(("TM2 Tender", t.name))
 			return t.name
 
-		t1 = _mk_tender("a")
-		t2 = _mk_tender("b", bypass_duplicate_guard=True)
+		t1 = _mk_tm2("a")
+		t2 = _mk_tm2("b", bypass_duplicate_guard=True)
 		self.assertNotEqual(t1, t2)
 
 		doc = frappe.get_doc("Procurement Package", pkg.name)

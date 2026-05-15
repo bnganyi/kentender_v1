@@ -9,7 +9,7 @@
   "section_identity",
   "naming_series",
   "tender_std_instance",
-  "procurement_tender",
+  "tm2_tender",
   "snapshot_type",
   "snapshot_reason",
   "snapshot_status",
@@ -28,6 +28,7 @@
   "attachments_hash",
   "boq_hash",
   "complete_instance_hash",
+  "readiness_summary_json",
   "section_audit",
   "created_by",
   "created_at"
@@ -55,12 +56,12 @@
    "reqd": 1
   },
   {
-   "fieldname": "procurement_tender",
+   "fieldname": "tm2_tender",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Procurement Tender",
-   "options": "Procurement Tender",
-   "reqd": 1
+   "label": "TM2 Tender",
+   "options": "TM2 Tender",
+   "reqd": 0
   },
   {
    "fieldname": "snapshot_type",
@@ -160,6 +161,12 @@
    "fieldname": "complete_instance_hash",
    "fieldtype": "Data",
    "label": "Complete Instance Hash"
+  },
+  {
+   "fieldname": "readiness_summary_json",
+   "fieldtype": "Long Text",
+   "label": "Readiness summary (JSON)",
+   "description": "Publication readiness payload captured when this Configuration snapshot was created (PUB-0200 / PUB-0300)."
   },
   {
    "fieldname": "section_audit",

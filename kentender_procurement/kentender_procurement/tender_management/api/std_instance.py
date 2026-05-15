@@ -97,7 +97,7 @@ def _run_api(handler: Callable[[], dict[str, Any]]) -> dict[str, Any]:
 def _instance_payload(doc: Any) -> dict[str, Any]:
 	return {
 		"instance_code": doc.name,
-		"procurement_tender": doc.procurement_tender,
+		"tm2_tender": getattr(doc, "tm2_tender", None),
 		"instance_status": doc.instance_status,
 		"readiness_status": doc.readiness_status,
 	}
@@ -129,14 +129,14 @@ def _generate_for_type(instance_name: str, output_type: str, source_addendum_cod
 
 
 @frappe.whitelist()
-def create_instance(procurement_tender: str, ignore_permissions: bool = False) -> dict[str, Any]:
+def create_instance(tm2_tender: str, ignore_permissions: bool = False) -> dict[str, Any]:
 	return _run_api(
 		lambda: _ok(
 			"STD_INSTANCE_CREATED",
 			_("STD Instance created."),
 			instance=_instance_payload(
-				TenderStdBindingService.create_std_instance_for_tender(
-					procurement_tender,
+				TenderStdBindingService.create_std_instance_for_tm2_tender(
+					tm2_tender,
 					ignore_permissions=_as_bool(ignore_permissions),
 				)
 			),

@@ -1,0 +1,218 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:contract_handoff_code",
+ "creation": "2026-05-12 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "tm2_tender",
+  "tender_code",
+  "contract_handoff_code",
+  "section_award",
+  "award_decision_code",
+  "awarded_supplier",
+  "section_outputs",
+  "dcm_output_code",
+  "tender_std_instance_code",
+  "section_price",
+  "final_evaluated_price",
+  "currency",
+  "final_boq_reference",
+  "section_refs",
+  "addendum_history_refs",
+  "section_package",
+  "contract_handoff_payload",
+  "handoff_status",
+  "section_send",
+  "created_by",
+  "created_at",
+  "accepted_by_contract_module_at",
+  "rejection_reason"
+ ],
+ "fields": [
+  {"fieldname": "section_identity", "fieldtype": "Section Break", "label": "Identity"},
+  {
+   "fieldname": "tm2_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender",
+   "options": "TM2 Tender",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tender_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Business code CHR-{tender_code} per doc 3 §3.1.",
+   "fieldname": "contract_handoff_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Contract Handoff Code",
+   "read_only_depends_on": "eval:!doc.__islocal",
+   "search_index": 1,
+   "unique": 1
+  },
+  {"fieldname": "section_award", "fieldtype": "Section Break", "label": "Award"},
+  {
+   "description": "Award decision reference until formal Award DocType exists (doc 3 §27).",
+   "fieldname": "award_decision_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Award Decision Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "awarded_supplier",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Awarded Supplier",
+   "options": "Supplier",
+   "reqd": 1
+  },
+  {"fieldname": "section_outputs", "fieldtype": "Section Break", "label": "STD outputs"},
+  {
+   "fieldname": "dcm_output_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "DCM Output Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender_std_instance_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender STD Instance Code",
+   "reqd": 1
+  },
+  {"fieldname": "section_price", "fieldtype": "Section Break", "label": "Price / BOQ"},
+  {
+   "description": "Corrected evaluated total for Works (TM2-CHR-003); optional for non-Works.",
+   "fieldname": "final_evaluated_price",
+   "fieldtype": "Currency",
+   "label": "Final Evaluated Price"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Currency",
+   "reqd": 1
+  },
+  {
+   "description": "Works corrected BOQ schedule reference when applicable (doc 3 §27).",
+   "fieldname": "final_boq_reference",
+   "fieldtype": "Data",
+   "label": "Final BOQ Reference"
+  },
+  {"fieldname": "section_refs", "fieldtype": "Section Break", "label": "Refs"},
+  {
+   "fieldname": "addendum_history_refs",
+   "fieldtype": "JSON",
+   "label": "Addendum History Refs",
+   "description": "Optional {\"refs\": [\"ADD-…\"]} or {} — Frappe JSON field (not a raw array)."
+  },
+  {"fieldname": "section_package", "fieldtype": "Section Break", "label": "Handoff"},
+  {
+   "fieldname": "contract_handoff_payload",
+   "fieldtype": "JSON",
+   "label": "Contract Handoff Payload",
+   "reqd": 1
+  },
+  {
+   "default": "Not Ready",
+   "fieldname": "handoff_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Handoff Status",
+   "options": "Not Ready\nReady\nSent\nAccepted\nRejected\nSuperseded",
+   "reqd": 1
+  },
+  {"fieldname": "section_send", "fieldtype": "Section Break", "label": "Create / acceptance"},
+  {
+   "default": "SYSTEM",
+   "fieldname": "created_by",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Created By",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "created_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Created At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "accepted_by_contract_module_at",
+   "fieldtype": "Datetime",
+   "label": "Accepted By Contract Module At"
+  },
+  {
+   "fieldname": "rejection_reason",
+   "fieldtype": "Text",
+   "label": "Rejection Reason"
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-12 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "TM2 Contract Handoff Reference",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "search_fields": "contract_handoff_code,tender_code,dcm_output_code,handoff_status,award_decision_code",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "contract_handoff_code",
+ "track_changes": 1
+}

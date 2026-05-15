@@ -13,6 +13,10 @@ from typing import Any
 import frappe
 from frappe import _
 
+from kentender_procurement.tender_management.derived_models.events.audit import emit_derived_model_audit
+from kentender_procurement.tender_management.derived_models.events.codes import (
+	ADDENDUM_DERIVED_MODELS_REGENERATED,
+)
 from kentender_procurement.tender_management.std_instance.audit import emit_std_instance_event
 from kentender_procurement.tender_management.std_instance.events import (
 	EVT_STDINST_ADDENDUM_IMPACT_ANALYSED,
@@ -156,16 +160,28 @@ class StdAddendumImpactService:
 		if not execute:
 			return plan
 
+		inst = frappe.get_doc("Tender STD Instance", instance_name)
+		tm2_only_no_pt = not (inst.procurement_tender or "").strip() and bool((inst.tm2_tender or "").strip())
+
 		executed_outputs: list[dict[str, Any]] = []
+		_allow = bool((ad_code or "").strip())
 		for output_type in affected:
-			StdInstanceGeneratedOutputService.mark_output_stale(instance_name, output_type=output_type)
+			StdInstanceGeneratedOutputService.mark_output_stale(
+				instance_name,
+				output_type=output_type,
+				ignore_generated_output_immutability=_allow,
+			)
 			gen_method = getattr(StdInstanceGeneratedOutputService, OUTPUT_TYPE_TO_GENERATE_METHOD[output_type])
 			new_doc = gen_method(
 				instance_name,
 				source_addendum_code=ad_code,
+				ignore_generated_output_lock=_allow,
 			)
 			if publish_outputs:
-				new_doc = StdInstanceGeneratedOutputService.publish_output(new_doc.name)
+				new_doc = StdInstanceGeneratedOutputService.publish_output(
+					new_doc.name,
+					ignore_generated_output_immutability=_allow,
+				)
 			executed_outputs.append(
 				{
 					"output_type": output_type,
@@ -174,13 +190,29 @@ class StdAddendumImpactService:
 				}
 			)
 
-		snapshot = StdInstanceSnapshotService.create_addendum_snapshot(
-			instance_name,
-			snapshot_reason=_("Addendum regeneration for {0}").format(ad_code or "N/A"),
-			source_addendum_code=ad_code,
-		)
+		snap_code: str | None = None
+		if not tm2_only_no_pt:
+			snapshot = StdInstanceSnapshotService.create_addendum_snapshot(
+				instance_name,
+				snapshot_reason=_("Addendum regeneration for {0}").format(ad_code or "N/A"),
+				source_addendum_code=ad_code,
+			)
+			snap_code = snapshot.name
+		else:
+			# TM2-only instances (doc 9 §9.2) have no ``procurement_tender``; snapshot rows still require it.
+			plan["addendum_snapshot_skipped_reason"] = "tm2_only_no_procurement_tender"
 
 		plan["executed"] = True
 		plan["executed_outputs"] = executed_outputs
-		plan["addendum_snapshot_code"] = snapshot.name
+		plan["addendum_snapshot_code"] = snap_code
+		emit_derived_model_audit(
+			ADDENDUM_DERIVED_MODELS_REGENERATED,
+			instance_code=instance_name,
+			extra={
+				"source_addendum_code": ad_code,
+				"executed_outputs": executed_outputs,
+				"addendum_snapshot_code": snap_code or "",
+				"publish_outputs": bool(publish_outputs),
+			},
+		)
 		return plan

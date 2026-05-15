@@ -53,7 +53,7 @@ class TestStdInstReadiness0700(IntegrationTestCase):
 	def _cleanup_tender(self, tender_name: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
-			filters={"procurement_tender": tender_name},
+			filters={"tm2_tender": tender_name},
 			pluck="name",
 		):
 			for snap_name in frappe.get_all(
@@ -115,7 +115,7 @@ class TestStdInstReadiness0700(IntegrationTestCase):
 	def test_std_inst_0700_blocked_when_outputs_missing(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -131,7 +131,7 @@ class TestStdInstReadiness0700(IntegrationTestCase):
 	def test_std_inst_0700_blocked_when_stale_outputs_present(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -149,7 +149,7 @@ class TestStdInstReadiness0700(IntegrationTestCase):
 	def test_std_inst_0700_blocked_when_parameter_and_works_invalid(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -174,7 +174,7 @@ class TestStdInstReadiness0700(IntegrationTestCase):
 	def test_std_inst_0700_ready_when_inputs_and_outputs_current(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -203,7 +203,7 @@ class TestStdInstReadiness0700(IntegrationTestCase):
 	def test_std_inst_0700_deterministic_blocker_order(self) -> None:
 		tender = self._minimal_tender()
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,

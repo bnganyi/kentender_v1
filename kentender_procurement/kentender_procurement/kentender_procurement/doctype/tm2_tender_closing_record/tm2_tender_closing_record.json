@@ -1,0 +1,188 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:closing_code",
+ "creation": "2026-05-12 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "tm2_tender",
+  "tender_code",
+  "closing_code",
+  "section_timing",
+  "submission_deadline_at",
+  "closed_at",
+  "closed_by",
+  "section_status",
+  "closing_status",
+  "valid_submission_count",
+  "withdrawn_submission_count",
+  "late_attempt_count",
+  "no_valid_submissions",
+  "section_payload",
+  "closing_payload"
+ ],
+ "fields": [
+  {"fieldname": "section_identity", "fieldtype": "Section Break", "label": "Identity"},
+  {
+   "fieldname": "tm2_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender",
+   "options": "TM2 Tender",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tender_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Business code CLS-{tender_code} per doc 3 §3.1.",
+   "fieldname": "closing_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Closing Code",
+   "read_only_depends_on": "eval:!doc.__islocal",
+   "search_index": 1,
+   "unique": 1
+  },
+  {"fieldname": "section_timing", "fieldtype": "Section Break", "label": "Timing"},
+  {
+   "fieldname": "submission_deadline_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Submission Deadline At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "closed_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Closed At",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "SYSTEM",
+   "fieldname": "closed_by",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Closed By",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {"fieldname": "section_status", "fieldtype": "Section Break", "label": "Outcome"},
+  {
+   "default": "Closed On Time",
+   "fieldname": "closing_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Closing Status",
+   "options": "Pending\nClosed On Time\nClosed With No Valid Submissions\nClosure Failed\nManually Confirmed\nReopened by Authorized Addendum",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "valid_submission_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Valid Submission Count",
+   "non_negative": 1,
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "withdrawn_submission_count",
+   "fieldtype": "Int",
+   "label": "Withdrawn Submission Count",
+   "non_negative": 1,
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "late_attempt_count",
+   "fieldtype": "Int",
+   "label": "Late Attempt Count",
+   "non_negative": 1,
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "no_valid_submissions",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "No Valid Submissions",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {"fieldname": "section_payload", "fieldtype": "Section Break", "label": "Payload"},
+  {
+   "fieldname": "closing_payload",
+   "fieldtype": "JSON",
+   "label": "Closing Payload",
+   "read_only": 1,
+   "reqd": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-12 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "TM2 Tender Closing Record",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "search_fields": "closing_code,tender_code,closing_status,closed_by",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "closing_code",
+ "track_changes": 1
+}

@@ -9,7 +9,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, now_datetime
 
-from kentender_procurement.kentender_procurement.doctype.procurement_tender.procurement_tender import (
+from kentender_procurement.tender_management.services.std_template_engine import (
 	_child_rows_to_dicts,
 )
 from kentender_procurement.tender_management.services import std_template_engine as engine

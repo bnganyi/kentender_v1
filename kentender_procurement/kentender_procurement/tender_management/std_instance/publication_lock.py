@@ -54,7 +54,10 @@ class StdPublicationLockService:
 			return doc
 
 		if status in ADDENDUM_REQUIRED_INSTANCE_STATUSES:
-			StdPublicationLockService.assert_addendum_required(instance_name)
+			StdPublicationLockService.assert_addendum_required(
+				instance_name,
+				attempted_change=operation_label,
+			)
 
 		if status in NON_EDITABLE_INSTANCE_STATUSES:
 			cat = (doc.get("procurement_category") or "").strip()
@@ -88,14 +91,17 @@ class StdPublicationLockService:
 		return doc
 
 	@staticmethod
-	def assert_addendum_required(instance_name: str) -> None:
+	def assert_addendum_required(instance_name: str, *, attempted_change: str | None = None) -> None:
 		status = (frappe.db.get_value("Tender STD Instance", instance_name, "instance_status") or "").strip()
 		if status in ADDENDUM_REQUIRED_INSTANCE_STATUSES:
 			from kentender_procurement.tender_management.std_instance.authorization import (
 				StdAuthorizationService,
 			)
 
-			StdAuthorizationService.assert_can_mutate_published(instance_name)
+			StdAuthorizationService.assert_can_mutate_published(
+				instance_name,
+				attempted_change=attempted_change or "mutate_after_publication",
+			)
 
 	@staticmethod
 	def lock_for_approval(

@@ -17,6 +17,8 @@
   "source_profile_code",
   "source_instance_snapshot_code",
   "source_addendum_code",
+  "tender_code",
+  "supersedes_output_code",
   "section_payload",
   "content_json",
   "rendered_file_reference",
@@ -102,6 +104,18 @@
    "fieldname": "source_addendum_code",
    "fieldtype": "Data",
    "label": "Source Addendum Code"
+  },
+  {
+   "fieldname": "tender_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Code",
+   "read_only": 1
+  },
+  {
+   "fieldname": "supersedes_output_code",
+   "fieldtype": "Data",
+   "label": "Supersedes Output Code"
   },
   {
    "fieldname": "section_payload",

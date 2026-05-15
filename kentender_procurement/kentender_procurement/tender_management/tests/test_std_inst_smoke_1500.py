@@ -71,7 +71,7 @@ class TestStdInstSmoke1500(IntegrationTestCase):
 	def _cleanup_tender(self, tender_name: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
-			filters={"procurement_tender": tender_name},
+			filters={"tm2_tender": tender_name},
 			pluck="name",
 		):
 			for snap_name in frappe.get_all(
@@ -147,7 +147,7 @@ class TestStdInstSmoke1500(IntegrationTestCase):
 
 	def _create_publishable_instance(self, suffix: str) -> tuple[str, str]:
 		tender = self._minimal_tender(suffix)
-		si = TenderStdBindingService.create_std_instance_for_tender(
+		si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 			tender,
 			ignore_permissions=True,
 			record_template_usage=False,
@@ -160,7 +160,7 @@ class TestStdInstSmoke1500(IntegrationTestCase):
 	def test_std_inst_1500_creation_smoke_contracts(self) -> None:
 		tender = self._minimal_tender("CRT")
 		try:
-			created = TenderStdBindingService.create_std_instance_for_tender(
+			created = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,
@@ -168,14 +168,14 @@ class TestStdInstSmoke1500(IntegrationTestCase):
 			self.assertTrue(created.name)
 
 			with self.assertRaises(frappe.ValidationError):
-				TenderStdBindingService.create_std_instance_for_tender(
+				TenderStdBindingService.create_std_instance_for_tm2_tender(
 					"NONEXISTENT-TENDER-STDINST1500",
 					ignore_permissions=True,
 					record_template_usage=False,
 				)
 
 			with self.assertRaises(frappe.ValidationError):
-				TenderStdBindingService.create_std_instance_for_tender(
+				TenderStdBindingService.create_std_instance_for_tm2_tender(
 					tender,
 					ignore_permissions=True,
 					record_template_usage=False,
@@ -184,7 +184,7 @@ class TestStdInstSmoke1500(IntegrationTestCase):
 			frappe.db.set_value("STD Template", TEMPLATE_CODE, "lifecycle_status", STATUS_IMPORTED)
 			inactive_tender = self._minimal_tender("CRT-INACTIVE")
 			with self.assertRaises(frappe.ValidationError):
-				TenderStdBindingService.create_std_instance_for_tender(
+				TenderStdBindingService.create_std_instance_for_tm2_tender(
 					inactive_tender,
 					ignore_permissions=True,
 					record_template_usage=False,
@@ -197,7 +197,7 @@ class TestStdInstSmoke1500(IntegrationTestCase):
 	def test_std_inst_1500_readiness_smoke_contracts(self) -> None:
 		tender = self._minimal_tender("READ")
 		try:
-			si = TenderStdBindingService.create_std_instance_for_tender(
+			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
 				ignore_permissions=True,
 				record_template_usage=False,

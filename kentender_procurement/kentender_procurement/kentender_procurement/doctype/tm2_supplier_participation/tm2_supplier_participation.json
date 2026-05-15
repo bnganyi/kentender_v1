@@ -1,0 +1,222 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:participation_code",
+ "creation": "2026-05-13 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_parent",
+  "tm2_tender",
+  "tender_code",
+  "supplier",
+  "supplier_code",
+  "participation_code",
+  "section_status",
+  "current_status",
+  "clarification_count",
+  "section_activity",
+  "first_viewed_at",
+  "documents_downloaded_at",
+  "interest_expressed_at",
+  "column_draft",
+  "bid_draft_started_at",
+  "last_bid_submission_code",
+  "bid_submitted_at",
+  "withdrawn_at",
+  "section_json",
+  "eligibility_snapshot",
+  "addendum_acknowledgement_status"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_parent",
+   "fieldtype": "Section Break",
+   "label": "Tender"
+  },
+  {
+   "fieldname": "tm2_tender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "TM2 Tender",
+   "options": "TM2 Tender",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tender_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Supplier",
+   "options": "Supplier",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "supplier_code",
+   "fieldtype": "Data",
+   "label": "Supplier Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Business code TPR-{tender_code}-{supplier_code} per doc 3 §3.1.",
+   "fieldname": "participation_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Participation Code",
+   "read_only_depends_on": "eval:!doc.__islocal",
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "section_status",
+   "fieldtype": "Section Break",
+   "label": "Status"
+  },
+  {
+   "default": "Viewed Tender",
+   "fieldname": "current_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Current Status",
+   "options": "Viewed Tender\nDownloaded Documents\nExpressed Interest\nClarification Submitted\nBid Draft Started\nBid Submitted\nBid Replaced\nBid Withdrawn\nNo Response\nIneligible",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "clarification_count",
+   "fieldtype": "Int",
+   "label": "Clarification Count",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_activity",
+   "fieldtype": "Section Break",
+   "label": "Activity"
+  },
+  {
+   "fieldname": "first_viewed_at",
+   "fieldtype": "Datetime",
+   "label": "First Viewed At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "documents_downloaded_at",
+   "fieldtype": "Datetime",
+   "label": "Documents Downloaded At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "interest_expressed_at",
+   "fieldtype": "Datetime",
+   "label": "Interest Expressed At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_draft",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "bid_draft_started_at",
+   "fieldtype": "Datetime",
+   "label": "Bid Draft Started At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_bid_submission_code",
+   "fieldtype": "Data",
+   "label": "Last Bid Submission Code",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bid_submitted_at",
+   "fieldtype": "Datetime",
+   "label": "Bid Submitted At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "withdrawn_at",
+   "fieldtype": "Datetime",
+   "label": "Withdrawn At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_json",
+   "fieldtype": "Section Break",
+   "label": "Snapshots"
+  },
+  {
+   "fieldname": "eligibility_snapshot",
+   "fieldtype": "JSON",
+   "label": "Eligibility Snapshot",
+   "read_only": 1
+  },
+  {
+   "fieldname": "addendum_acknowledgement_status",
+   "fieldtype": "JSON",
+   "label": "Addendum Acknowledgement Status",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-13 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "TM2 Supplier Participation",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "search_fields": "participation_code,tender_code,supplier_code,current_status",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "participation_code",
+ "track_changes": 1
+}
