@@ -46,7 +46,7 @@ def _as_dict(content_json: object) -> dict:
 
 def _purge_tender_chain(tender_reference: str) -> None:
 	tname = frappe.db.get_value(
-		"Procurement Tender",
+		"TM2 Tender",
 		{"tender_reference": tender_reference},
 		"name",
 	)
@@ -91,15 +91,15 @@ def _purge_tender_chain(tender_reference: str) -> None:
 				ignore_permissions=True,
 			)
 		frappe.delete_doc("Tender STD Instance", si, force=True, ignore_permissions=True)
-	frappe.delete_doc("Procurement Tender", tname, force=True, ignore_permissions=True)
+	frappe.delete_doc("TM2 Tender", tname, force=True, ignore_permissions=True)
 
 
 def _purge_std_instance_named(si_name: str) -> None:
 	if not frappe.db.exists("Tender STD Instance", si_name):
 		return
-	tn = frappe.db.get_value("Tender STD Instance", si_name, "procurement_tender")
-	if tn and frappe.db.exists("Procurement Tender", tn):
-		ref = frappe.db.get_value("Procurement Tender", tn, "tender_reference")
+	tn = frappe.db.get_value("Tender STD Instance", si_name, "tm2_tender")
+	if tn and frappe.db.exists("TM2 Tender", tn):
+		ref = frappe.db.get_value("TM2 Tender", tn, "tender_reference")
 		if ref:
 			_purge_tender_chain(ref)
 			return

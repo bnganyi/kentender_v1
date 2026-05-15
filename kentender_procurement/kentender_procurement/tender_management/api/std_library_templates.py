@@ -102,7 +102,7 @@ def _has_tender_usage(names: list[str]) -> set[str]:
 	if not names:
 		return set()
 	rows = frappe.get_all(
-		"Procurement Tender",
+		"TM2 Tender",
 		filters={"std_template": ("in", names)},
 		fields=["std_template"],
 		limit_page_length=0,

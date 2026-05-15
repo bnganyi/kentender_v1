@@ -82,8 +82,8 @@ class TestDerivedDom0400(IntegrationTestCase):
 					ignore_permissions=True,
 				)
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def test_derived_0400_valid_minimal_passes(self) -> None:
 		p = _minimal_dom_shell()
@@ -138,7 +138,7 @@ class TestDerivedDom0400(IntegrationTestCase):
 		self.assertEqual(_last_msg_title(), DERIVED_SOURCE_TRACE_MISSING)
 
 	def test_derived_0400_generate_dom_stub_matches_schema(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0400 DOM"
 		doc.tender_reference = "DERIVED0400-DOM"

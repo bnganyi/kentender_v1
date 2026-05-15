@@ -117,9 +117,9 @@ class ObjectScopeService:
 			return _outcome_deny("Actor and tender code are required.")
 		if _break_glass(act):
 			return _outcome_ok()
-		if not frappe.db.exists("Procurement Tender", tn):
-			return _outcome_deny(f"Procurement Tender {tn!r} not found.")
-		owner = _norm_user(frappe.db.get_value("Procurement Tender", tn, "owner"))
+		if not frappe.db.exists("TM2 Tender", tn):
+			return _outcome_deny(f"TM2 Tender {tn!r} not found.")
+		owner = _norm_user(frappe.db.get_value("TM2 Tender", tn, "owner"))
 		if owner and act == owner:
 			return _outcome_ok()
 		return _outcome_deny(_("Actor is not in scope for this tender."))
@@ -171,7 +171,6 @@ class ObjectScopeService:
 				"created_by",
 				"locked_for_approval_by",
 				"published_locked_by",
-				"procurement_tender",
 				"tm2_tender",
 			],
 			as_dict=True,
@@ -185,11 +184,6 @@ class ObjectScopeService:
 		inst_users.discard("")
 		if act in inst_users:
 			return _outcome_ok()
-		tn = _norm_user(row.get("procurement_tender"))
-		if tn:
-			t_owner = _norm_user(frappe.db.get_value("Procurement Tender", tn, "owner"))
-			if t_owner and act == t_owner:
-				return _outcome_ok()
 		tm2 = _norm_user(row.get("tm2_tender"))
 		if tm2:
 			t2_owner = _norm_user(frappe.db.get_value("TM2 Tender", tm2, "owner"))
@@ -214,8 +208,8 @@ class ObjectScopeService:
 			return _outcome_ok()
 		if ct not in ("opening", "evaluation"):
 			return _outcome_deny(_("committee_type must be opening or evaluation."))
-		if not frappe.db.exists("Procurement Tender", tn):
-			return _outcome_deny(f"Procurement Tender {tn!r} not found.")
+		if not frappe.db.exists("TM2 Tender", tn):
+			return _outcome_deny(f"TM2 Tender {tn!r} not found.")
 		members = cls._committee_registry.get((tn, ct), frozenset())
 		if not members:
 			return _outcome_deny(

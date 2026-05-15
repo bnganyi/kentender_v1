@@ -35,7 +35,7 @@ class TestStdInstPublicationLock0600(IntegrationTestCase):
 		super().tearDown()
 
 	def _minimal_tender(self) -> str:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "STDINST-0600 Test Tender"
 		doc.tender_reference = "STDINST0600-REF"
@@ -67,8 +67,8 @@ class TestStdInstPublicationLock0600(IntegrationTestCase):
 			):
 				frappe.delete_doc("Tender STD Instance BOQ", boq_name, force=True, ignore_permissions=True)
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def _prepare_publication_ready_instance(self, instance_name: str) -> None:
 		for fn in (

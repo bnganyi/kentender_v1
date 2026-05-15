@@ -78,7 +78,7 @@ class TestStdLibraryTemplatesStdLib0130(IntegrationTestCase):
 		def fake_get_all(doctype, **kwargs):
 			if doctype == "STD Template":
 				return fake_rows
-			if doctype == "Procurement Tender":
+			if doctype == "TM2 Tender":
 				return [{"std_template": "STD-ACT"}]
 			return []
 

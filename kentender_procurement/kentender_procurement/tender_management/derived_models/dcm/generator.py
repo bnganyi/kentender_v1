@@ -123,10 +123,10 @@ def _section_trace(section_code: str) -> dict[str, str]:
 
 
 def _tender_title(inst: Document) -> str:
-	code = (getattr(inst, "procurement_tender", None) or "").strip()
-	if not code or not frappe.db.exists("Procurement Tender", code):
+	code = (getattr(inst, "tm2_tender", None) or "").strip()
+	if not code or not frappe.db.exists("TM2 Tender", code):
 		return ""
-	return (frappe.db.get_value("Procurement Tender", code, "tender_title") or "").strip()
+	return (frappe.db.get_value("TM2 Tender", code, "tender_title") or "").strip()
 
 
 def _build_contract_documents(

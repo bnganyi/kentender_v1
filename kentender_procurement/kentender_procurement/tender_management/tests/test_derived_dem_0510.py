@@ -105,11 +105,11 @@ class TestDerivedDem0510(IntegrationTestCase):
 					ignore_permissions=True,
 				)
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def test_derived_0510_generate_dem_seven_stages_and_validates(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0510 DEM"
 		doc.tender_reference = "DERIVED0510-DEM"
@@ -144,7 +144,7 @@ class TestDerivedDem0510(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0510_qualification_includes_threshold_when_turnover_set(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0510 QUAL"
 		doc.tender_reference = "DERIVED0510-QUAL"
@@ -177,7 +177,7 @@ class TestDerivedDem0510(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0510_rejects_manual_criteria_in_parameter_json(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0510 MANUAL"
 		doc.tender_reference = "DERIVED0510-MAN"

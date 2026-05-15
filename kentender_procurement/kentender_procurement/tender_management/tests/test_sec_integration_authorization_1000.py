@@ -37,7 +37,7 @@ class TestSecIntegrationAuthorization1000(IntegrationTestCase):
 				enforce_sec_authorization(
 					action_code="PUBLISH_TENDER",
 					actor="Administrator",
-					object_type="Procurement Tender",
+					object_type="TM2 Tender",
 					object_code="PT-SEC-1000",
 				)
 		denied_audit.assert_called_once()

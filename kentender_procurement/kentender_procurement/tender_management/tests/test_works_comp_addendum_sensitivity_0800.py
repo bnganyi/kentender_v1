@@ -51,7 +51,7 @@ class TestWorksCompAddendumSensitivity0800(IntegrationTestCase):
 		super().tearDown()
 
 	def _minimal_tender(self) -> str:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "WORKS-COMP-0800 Test Tender"
 		doc.tender_reference = "WORKSCOMP0800-REF"
@@ -65,8 +65,8 @@ class TestWorksCompAddendumSensitivity0800(IntegrationTestCase):
 			pluck="name",
 		):
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def test_works_comp_0800_submission_opening_match_staleness_service(self) -> None:
 		for ct, pc in (

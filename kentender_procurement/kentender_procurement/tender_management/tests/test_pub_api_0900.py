@@ -59,7 +59,7 @@ class TestPubApi0900(IntegrationTestCase):
 			frappe.delete_doc("User", email, force=True, ignore_permissions=True)
 
 	def _minimal_tender(self, *, ref: str) -> str:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = f"PUB-0900 {ref}"
 		doc.tender_reference = ref
@@ -67,8 +67,8 @@ class TestPubApi0900(IntegrationTestCase):
 		return doc.name
 
 	def _cleanup_tender(self, tender_name: str) -> None:
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def test_pub_0900_tender_not_found_envelope(self) -> None:
 		r = pub_api_run_publication_readiness("NO-SUCH-TENDER-REF-999")

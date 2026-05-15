@@ -47,8 +47,8 @@ class TestWorksCompOutputStaleness0510(IntegrationTestCase):
 		frappe.set_user("Administrator")
 		super().tearDown()
 
-	def _minimal_procurement_tender(self) -> str:
-		doc = frappe.new_doc("Procurement Tender")
+	def _minimal_tm2_tender(self) -> str:
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "WORKS-COMP-0510 Test Tender"
 		doc.tender_reference = "WORKSCOMP0510-REF"
@@ -86,9 +86,9 @@ class TestWorksCompOutputStaleness0510(IntegrationTestCase):
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
 
 	def _delete_tender(self, name: str) -> None:
-		if frappe.db.exists("Procurement Tender", name):
+		if frappe.db.exists("TM2 Tender", name):
 			self._delete_std_instances_for_tender(name)
-			frappe.delete_doc("Procurement Tender", name, force=True, ignore_permissions=True)
+			frappe.delete_doc("TM2 Tender", name, force=True, ignore_permissions=True)
 
 	def _minimal_boq_payload(self) -> dict:
 		return {
@@ -140,7 +140,7 @@ class TestWorksCompOutputStaleness0510(IntegrationTestCase):
 		)
 
 	def test_works_comp_0510_parameter_change_emits_outputs_staled_audit(self) -> None:
-		tender = self._minimal_procurement_tender()
+		tender = self._minimal_tm2_tender()
 		try:
 			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
@@ -170,7 +170,7 @@ class TestWorksCompOutputStaleness0510(IntegrationTestCase):
 			self._delete_tender(tender)
 
 	def test_works_comp_0510_boq_save_emits_outputs_staled(self) -> None:
-		tender = self._minimal_procurement_tender()
+		tender = self._minimal_tm2_tender()
 		try:
 			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
@@ -192,7 +192,7 @@ class TestWorksCompOutputStaleness0510(IntegrationTestCase):
 			self._delete_tender(tender)
 
 	def test_works_comp_0510_readiness_blocked_when_stale_flags_present(self) -> None:
-		tender = self._minimal_procurement_tender()
+		tender = self._minimal_tm2_tender()
 		try:
 			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,

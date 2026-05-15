@@ -155,13 +155,6 @@ class TM2TenderSTDBinding(Document):
 					),
 					title=_("STD Instance Mismatch"),
 				)
-		elif row.procurement_tender:
-			frappe.throw(
-				_("Tender STD Instance {0} is bound to Procurement Tender, not TM2.").format(
-					self.tender_std_instance
-				),
-				title=_("STD Instance Mismatch"),
-			)
 		else:
 			frappe.throw(
 				_("Tender STD Instance {0} has no tender parent.").format(self.tender_std_instance),

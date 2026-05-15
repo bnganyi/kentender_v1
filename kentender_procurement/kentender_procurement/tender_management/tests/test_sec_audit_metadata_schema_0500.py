@@ -55,7 +55,7 @@ class TestSecAuditMetadataSchema0500(IntegrationTestCase):
 		meta = build_audit_metadata(
 			audit_event_code="PUBLISH_TENDER",
 			event_type="PUBLISH_TENDER",
-			object_type="Procurement Tender",
+			object_type="TM2 Tender",
 			object_code="TND-001",
 			result="Denied",
 			risk_level="Critical",
@@ -93,7 +93,7 @@ class TestSecAuditMetadataSchema0500(IntegrationTestCase):
 		meta = build_audit_metadata(
 			audit_event_code="EVIDENCE_PACKAGE_EXPORTED",
 			event_type="EVIDENCE_PACKAGE_EXPORTED",
-			object_type="Procurement Tender",
+			object_type="TM2 Tender",
 			object_code="TND-010",
 			result="Success",
 			risk_level="High",

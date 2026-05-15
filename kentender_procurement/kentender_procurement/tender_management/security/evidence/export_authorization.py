@@ -60,14 +60,14 @@ class EvidenceExportAuthorizationService:
 		ctx = dict(context or {})
 		act = _norm(actor)
 		tc = _norm(tender_code)
-		if not act or not tc or not frappe.db.exists("Procurement Tender", tc):
+		if not act or not tc or not frappe.db.exists("TM2 Tender", tc):
 			return EvidenceExportAuthorizationOutcome(
 				False,
 				DenialCode.AUDIT_EXPORT_DENIED,
 				"Evidence export requires a valid actor and tender.",
 			)
 		roles = _role_set(ctx)
-		owner = _norm(frappe.db.get_value("Procurement Tender", tc, "owner"))
+		owner = _norm(frappe.db.get_value("TM2 Tender", tc, "owner"))
 		if "ROLE_AUDITOR" in roles:
 			return EvidenceExportAuthorizationOutcome(True, None, "Auditor can export evidence.")
 		if "ROLE_PROCUREMENT_OFFICER" in roles:
@@ -96,7 +96,7 @@ class EvidenceExportAuthorizationService:
 		DeniedActionAuditService.record_denied_action(
 			actor,
 			"EXPORT_EVIDENCE_PACKAGE",
-			"Procurement Tender",
+			"TM2 Tender",
 			tender_code,
 			{
 				"denial_code": _norm(out.denial_code) or DenialCode.AUDIT_EXPORT_DENIED,
@@ -130,7 +130,7 @@ class EvidenceExportAuthorizationService:
 				"audit_event_code": AuditEventCode.EVIDENCE_PACKAGE_EXPORTED,
 				"event_type": AuditEventCode.EVIDENCE_PACKAGE_EXPORTED,
 				"actor_user_code": act or _norm(getattr(frappe.session, "user", None)) or "Administrator",
-				"object_type": "Procurement Tender",
+				"object_type": "TM2 Tender",
 				"object_code": tc,
 				"tender_code": tc,
 				"action_code": "EXPORT_EVIDENCE_PACKAGE",

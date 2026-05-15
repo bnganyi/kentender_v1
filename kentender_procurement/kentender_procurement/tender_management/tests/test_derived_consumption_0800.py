@@ -100,8 +100,8 @@ class TestDerivedConsumption0800(IntegrationTestCase):
 					ignore_permissions=True,
 				)
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def _minimal_valid_boq_payload(self) -> dict:
 		return {
@@ -130,7 +130,7 @@ class TestDerivedConsumption0800(IntegrationTestCase):
 		inst = frappe.get_doc("Tender STD Instance", si_name)
 		snap = frappe.new_doc("Tender STD Instance Snapshot")
 		snap.tender_std_instance = si_name
-		snap.procurement_tender = tender
+		snap.tm2_tender = tender
 		snap.snapshot_type = "Configuration"
 		snap.snapshot_reason = "DERIVED-0800"
 		snap.snapshot_status = "Final"
@@ -146,7 +146,7 @@ class TestDerivedConsumption0800(IntegrationTestCase):
 		return snap.name
 
 	def test_derived_0800_get_current_submission_allows_published_dsm(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0800 DSM"
 		doc.tender_reference = "DERIVED0800-DSM"
@@ -169,7 +169,7 @@ class TestDerivedConsumption0800(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0800_submission_cannot_consume_dem(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0800 Wrong Type"
 		doc.tender_reference = "DERIVED0800-WT"
@@ -191,7 +191,7 @@ class TestDerivedConsumption0800(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0800_evaluation_cannot_consume_dom(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0800 DOM"
 		doc.tender_reference = "DERIVED0800-DOM"
@@ -213,7 +213,7 @@ class TestDerivedConsumption0800(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0800_stale_denied(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0800 Stale"
 		doc.tender_reference = "DERIVED0800-STALE"
@@ -237,7 +237,7 @@ class TestDerivedConsumption0800(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0800_superseded_denied_without_historical(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0800 Super"
 		doc.tender_reference = "DERIVED0800-SUP"
@@ -267,7 +267,7 @@ class TestDerivedConsumption0800(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0800_publication_requires_published_bundle(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0800 Pub"
 		doc.tender_reference = "DERIVED0800-PUB"
@@ -299,7 +299,7 @@ class TestDerivedConsumption0800(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0800_contract_requires_final_snapshot(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0800 Contract"
 		doc.tender_reference = "DERIVED0800-CON"
@@ -330,7 +330,7 @@ class TestDerivedConsumption0800(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0800_record_consumption_audits_when_allowed(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0800 Record"
 		doc.tender_reference = "DERIVED0800-REC"

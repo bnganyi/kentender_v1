@@ -50,7 +50,7 @@ class TestStdInstSnapshot0500(IntegrationTestCase):
 		super().tearDown()
 
 	def _minimal_tender(self) -> str:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "STDINST-0500 Test Tender"
 		doc.tender_reference = "STDINST0500-REF"
@@ -97,8 +97,8 @@ class TestStdInstSnapshot0500(IntegrationTestCase):
 					ignore_permissions=True,
 				)
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def test_std_inst_0500_configuration_snapshot(self) -> None:
 		tender = self._minimal_tender()

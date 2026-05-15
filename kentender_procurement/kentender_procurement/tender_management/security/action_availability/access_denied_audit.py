@@ -70,7 +70,7 @@ def audit_access_denied(
 		ctx["event_type"] = AuditEventCode.ACTION_AVAILABILITY_DENIED.value
 
 	tc = _norm(ctx.get("tender_code"))
-	if not tc and obj_type in {"TM2 Tender", "Procurement Tender"}:
+	if not tc and obj_type == "TM2 Tender":
 		ctx["tender_code"] = obj_code
 
 	return DeniedActionAuditService.record_denied_action(

@@ -33,7 +33,7 @@ class TestStdInstApi1200(IntegrationTestCase):
 		super().tearDown()
 
 	def _minimal_tender(self) -> str:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "STDINST-1200 Test Tender"
 		doc.tender_reference = f"STDINST1200-{frappe.generate_hash(length=8)}"
@@ -65,8 +65,8 @@ class TestStdInstApi1200(IntegrationTestCase):
 			):
 				frappe.delete_doc("Tender STD Instance BOQ", boq_name, force=True, ignore_permissions=True)
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def test_std_inst_1200_create_and_get_instance(self) -> None:
 		tender = self._minimal_tender()

@@ -3,9 +3,7 @@
 
 """Doc 9 §22.1 / §25 **EX-04** / **EX-20** — block v1 rule-injection configuration and publish without STD binding.
 
-Mirrors detectable legacy flags from
-:func:`works_tender_hardening_validation_checks.validate_legacy_lockout_checks`
-(WORKS-LEGACY-001..005). All denials use ``AUTH_LEGACY_PATH_DENIED`` and record
+Detects v1-style manual rule-injection flags on tender documents. All denials use ``AUTH_LEGACY_PATH_DENIED`` and record
 ``DeniedActionAuditService`` (smoke doc 8 — Access Denied).
 
 **TM2 Tender** must not carry DSM/DOM/DEM/DCM-owned rule injection (top-level flags or
@@ -113,32 +111,6 @@ def record_auth_legacy_path_denial(
 			"tender_code": tc or object_code,
 			"message": full_message,
 		},
-	)
-
-
-def assert_procurement_tender_no_legacy_rule_injection(tender_doc: Document) -> None:
-	"""On legacy flags: audit + :exc:`frappe.ValidationError` with title ``AUTH_LEGACY_PATH_DENIED``."""
-	flags = collect_legacy_rule_injection_flags(tender_doc)
-	if not flags:
-		return
-	actor = (frappe.session.user or "").strip() or "Administrator"
-	record_auth_legacy_path_denial(
-		actor=actor,
-		action_code="SAVE_PROCUREMENT_TENDER",
-		object_type="Procurement Tender",
-		object_code=tender_doc.name,
-		user_message=_(
-			"Legacy v1 rule-injection is not allowed ({0})."
-		).format(", ".join(flags)),
-		event_type=AuditEventCode.MANUAL_RULE_INJECTION_DENIED.value,
-		tender_code=tender_doc.name,
-	)
-	frappe.throw(
-		_("Tender Management v2 does not allow legacy rule-injection flags ({0}).").format(
-			", ".join(flags)
-		),
-		frappe.ValidationError,
-		title=DenialCode.AUTH_LEGACY_PATH_DENIED.value,
 	)
 
 

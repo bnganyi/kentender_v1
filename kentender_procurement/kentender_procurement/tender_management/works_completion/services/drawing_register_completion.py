@@ -14,7 +14,7 @@ import frappe
 from frappe import _
 from frappe.utils import cint
 
-from kentender_procurement.tender_management.services.std_forms_boq_inspectors import _parse_cfg
+from kentender_procurement.tender_management.services.tender_configuration import parse_configuration_json
 from kentender_procurement.tender_management.std_instance.drawing_register import (
 	SECTION_VII_ALLOWED_CODES,
 	StdInstanceDrawingRegisterService,
@@ -60,11 +60,11 @@ def _drawing_register_rows_required(instance_code: str) -> bool:
 	"""Non-empty register required unless tender config ``WORKS.DRAWING_REGISTER_OPTIONAL`` is truthy."""
 	if not DRAWING_REGISTER_REQUIRED:
 		return False
-	pt = frappe.db.get_value("Tender STD Instance", instance_code, "procurement_tender")
-	if not pt or not frappe.db.exists("Procurement Tender", pt):
+	tm2 = frappe.db.get_value("Tender STD Instance", instance_code, "tm2_tender")
+	if not tm2 or not frappe.db.exists("TM2 Tender", tm2):
 		return True
-	tender = frappe.get_doc("Procurement Tender", pt)
-	cfg = _parse_cfg(tender)
+	tender = frappe.get_doc("TM2 Tender", tm2)
+	cfg = parse_configuration_json(tender)
 	if _truthy(cfg.get("WORKS.DRAWING_REGISTER_OPTIONAL")):
 		return False
 	return True

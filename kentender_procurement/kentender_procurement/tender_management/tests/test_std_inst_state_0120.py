@@ -37,7 +37,7 @@ class TestStdInstState0120(IntegrationTestCase):
 		super().tearDown()
 
 	def _minimal_tender(self) -> str:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "STDINST-0120 Test Tender"
 		doc.tender_reference = "STDINST0120-REF"
@@ -51,8 +51,8 @@ class TestStdInstState0120(IntegrationTestCase):
 			pluck="name",
 		):
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def test_std_inst_0120_apply_transition_happy_path(self) -> None:
 		tender = self._minimal_tender()

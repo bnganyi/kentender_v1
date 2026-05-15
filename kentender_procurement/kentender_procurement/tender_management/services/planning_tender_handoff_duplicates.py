@@ -6,7 +6,6 @@
 At most **one** active ``TM2 Tender`` (status not in the retender/replan terminal set)
 may reference a given ``Procurement Package``. Enforced on ``TM2 Tender`` validate.
 
-Legacy ``Procurement Tender`` duplicate checks remain until that DocType is removed (R07/P11-04).
 """
 
 from __future__ import annotations
@@ -19,37 +18,6 @@ from frappe.utils import cstr
 TM2_STATUSES_RELEASING_PACKAGE_FOR_NEW_TENDER = frozenset(
 	{"Cancelled", "Superseded", "Archived", "Retender Required"}
 )
-
-
-def validate_at_most_one_active_planning_tender_per_package(
-	procurement_package: str | None,
-	*,
-	current_tender_name: str | None = None,
-) -> None:
-	"""Raise ``ValidationError`` if another non-cancelled tender already uses this package."""
-	if not (procurement_package or "").strip():
-		return
-	pkg = procurement_package.strip()
-	excl = (current_tender_name or "").strip()
-	others = frappe.get_all(
-		"Procurement Tender",
-		filters={
-			"procurement_package": pkg,
-			"tender_status": ("!=", "Cancelled"),
-		},
-		pluck="name",
-		limit=5,
-	)
-	peer = next((n for n in others if n != excl), None)
-	if not peer:
-		return
-	frappe.throw(
-		_(
-			"A Procurement Tender is already linked to package {0} (tender {1}). "
-			"Cancel it before creating another, or use the existing handoff record."
-		).format(pkg, peer),
-		title=_("Duplicate planning handoff"),
-	)
 
 
 def validate_at_most_one_active_tm2_tender_per_package(

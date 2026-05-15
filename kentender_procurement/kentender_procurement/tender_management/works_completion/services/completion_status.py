@@ -345,11 +345,11 @@ def get_completion_status(instance_code: str) -> dict[str, Any]:
 
 	readiness_status = str(readiness.get("status") or "Blocked")
 
-	pt = (inst.procurement_tender or "").strip()
+	tm2 = (inst.tm2_tender or "").strip()
 	tender_code = ""
-	if pt and frappe.db.exists("Procurement Tender", pt):
-		ref = frappe.db.get_value("Procurement Tender", pt, "tender_reference")
-		tender_code = ((ref or "").strip() or pt).strip()
+	if tm2 and frappe.db.exists("TM2 Tender", tm2):
+		ref = frappe.db.get_value("TM2 Tender", tm2, "tender_reference")
+		tender_code = ((ref or "").strip() or tm2).strip()
 
 	overall = "Incomplete"
 	if (

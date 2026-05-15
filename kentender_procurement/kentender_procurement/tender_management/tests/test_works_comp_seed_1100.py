@@ -42,7 +42,7 @@ class TestWorksCompSeed1100(IntegrationTestCase):
 	def _scrub_tenders_for_package(self, package_code: str) -> None:
 		"""Remove tenders on ``package_code`` so planning handoff uniqueness does not break tests."""
 		for name in frappe.get_all(
-			"Procurement Tender",
+			"TM2 Tender",
 			filters={"procurement_package": package_code},
 			pluck="name",
 		):
@@ -92,8 +92,8 @@ class TestWorksCompSeed1100(IntegrationTestCase):
 					ignore_permissions=True,
 				)
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def _suffix(self) -> str:
 		return f"CI{secrets.token_hex(5)}"
@@ -145,7 +145,7 @@ class TestWorksCompSeed1100(IntegrationTestCase):
 			)
 
 			tref = _resolve_tender_reference(sfx)
-			doc = frappe.new_doc("Procurement Tender")
+			doc = frappe.new_doc("TM2 Tender")
 			doc.std_template = TEMPLATE_CODE
 			doc.tender_title = "WORKS-COMP-1100 conflict probe"
 			doc.tender_reference = tref

@@ -57,7 +57,7 @@ class TestDerivedMetadata0100(IntegrationTestCase):
 			derived_metadata.validate_output_status("NotAStatus")
 
 	def _minimal_tender(self) -> str:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0100 Test Tender"
 		doc.tender_reference = "DERIVED0100-REF"
@@ -93,8 +93,8 @@ class TestDerivedMetadata0100(IntegrationTestCase):
 					ignore_permissions=True,
 				)
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def test_derived_0100_tender_code_on_generate_and_supersedes_on_second_publish(self) -> None:
 		tender = self._minimal_tender()
@@ -151,7 +151,7 @@ class TestDerivedMetadata0100(IntegrationTestCase):
 			inst = frappe.get_doc("Tender STD Instance", si.name)
 			snap = frappe.new_doc("Tender STD Instance Snapshot")
 			snap.tender_std_instance = si.name
-			snap.procurement_tender = tender
+			snap.tm2_tender = tender
 			snap.snapshot_type = "Configuration"
 			snap.snapshot_reason = "DERIVED-0100 test snapshot"
 			snap.snapshot_status = "Final"

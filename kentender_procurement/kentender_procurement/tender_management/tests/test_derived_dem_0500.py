@@ -154,8 +154,8 @@ class TestDerivedDem0500(IntegrationTestCase):
 					ignore_permissions=True,
 				)
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def test_derived_0500_valid_payload_passes(self) -> None:
 		p = _shell()
@@ -253,7 +253,7 @@ class TestDerivedDem0500(IntegrationTestCase):
 		self.assertEqual(_last_msg_title(), DEM_SCHEMA_INVALID)
 
 	def test_derived_0500_generate_dem_stub_without_boq(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0500 DEM"
 		doc.tender_reference = "DERIVED0500-DEM"
@@ -273,7 +273,7 @@ class TestDerivedDem0500(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0500_generate_dem_stub_with_boq(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0500 DEM BOQ"
 		doc.tender_reference = "DERIVED0500-DEM-BOQ"

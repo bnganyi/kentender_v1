@@ -530,25 +530,27 @@ def apply_officer_preview_audit_labels(summary: dict[str, Any]) -> dict[str, Any
 
 
 def get_officer_preview_audit_summary_enriched(tender_name: str) -> dict[str, Any]:
-	"""Wrapper: preview/audit summary + officer display labels (no fork of audit logic)."""
+	"""TM2 preview/audit summary + officer display labels (legacy Procurement Tender retired)."""
 	import frappe
 
-	from kentender_procurement.tender_management.services.std_preview_audit_viewer import (
-		get_preview_audit_summary,
-	)
-
-	base = get_preview_audit_summary(tender_name)
-	tender = frappe.get_doc("Procurement Tender", tender_name)
-	audit = dict(base.get("audit") or {})
-	audit["tender_status"] = tender.tender_status
+	if not tender_name or not frappe.db.exists("TM2 Tender", tender_name):
+		frappe.throw(frappe._("TM2 Tender {0} was not found.").format(tender_name))
+	tender = frappe.get_doc("TM2 Tender", tender_name)
+	tender.check_permission("read")
+	base: dict[str, Any] = {
+		"ok": True,
+		"audit": {
+			"tender_status": (tender.get("status") or "").strip(),
+			"tender_reference": (tender.get("tender_reference") or "").strip(),
+		},
+	}
 	if tender.std_template:
 		try:
 			std = frappe.get_doc("STD Template", tender.std_template)
-			audit["template_name"] = std.template_name or ""
-			audit["template_short_name"] = std.template_short_name or ""
+			base["audit"]["template_name"] = std.template_name or ""
+			base["audit"]["template_short_name"] = std.template_short_name or ""
 		except Exception:
 			pass
-	base["audit"] = audit
 	return apply_officer_preview_audit_labels(base)
 
 

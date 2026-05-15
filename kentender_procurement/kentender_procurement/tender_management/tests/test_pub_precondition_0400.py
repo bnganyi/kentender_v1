@@ -111,15 +111,15 @@ class TestPubPrecondition0400(IntegrationTestCase):
 			):
 				frappe.delete_doc("Tender STD Instance BOQ", boq_name, force=True, ignore_permissions=True)
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def _cleanup_user(self, email: str) -> None:
 		if frappe.db.exists("User", email):
 			frappe.delete_doc("User", email, force=True, ignore_permissions=True)
 
 	def _minimal_tender(self, *, ref: str) -> str:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = f"PUB-0400 {ref}"
 		doc.tender_reference = ref
@@ -162,7 +162,7 @@ class TestPubPrecondition0400(IntegrationTestCase):
 
 	def _approved_locked_fixture(self, ref: str) -> tuple[str, str]:
 		tn = self._minimal_tender(ref=ref)
-		frappe.db.set_value("Procurement Tender", tn, "source_package_code", f"REL-{ref}")
+		frappe.db.set_value("TM2 Tender", tn, "source_package_code", f"REL-{ref}")
 		si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 			tn,
 			ignore_permissions=True,
@@ -210,7 +210,7 @@ class TestPubPrecondition0400(IntegrationTestCase):
 	def test_pub_0400_without_approval(self) -> None:
 		tn = self._minimal_tender(ref="PUB0400-NOAPR")
 		try:
-			frappe.db.set_value("Procurement Tender", tn, "source_package_code", "REL-PUB0400-NOAPR")
+			frappe.db.set_value("TM2 Tender", tn, "source_package_code", "REL-PUB0400-NOAPR")
 			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tn,
 				ignore_permissions=True,
@@ -311,7 +311,7 @@ class TestPubPrecondition0400(IntegrationTestCase):
 	def test_pub_0400_readiness_not_ready_generic(self) -> None:
 		tn, _si_name = self._approved_locked_fixture("PUB0400-RNR")
 		try:
-			frappe.db.set_value("Procurement Tender", tn, "source_package_code", "")
+			frappe.db.set_value("TM2 Tender", tn, "source_package_code", "")
 			pub_read_mod.clear_publication_readiness_cache()
 			frappe.clear_messages()
 			with self.assertRaises(frappe.ValidationError):

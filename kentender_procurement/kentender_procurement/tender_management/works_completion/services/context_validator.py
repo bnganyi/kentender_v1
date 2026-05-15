@@ -13,8 +13,8 @@ from typing import Any
 import frappe
 from frappe import _
 
-from kentender_procurement.tender_management.services.std_forms_boq_inspectors import (
-	_parse_cfg,
+from kentender_procurement.tender_management.services.tender_configuration import (
+	parse_configuration_json,
 )
 from kentender_procurement.tender_management.std_instance.binding import (
 	TenderStdBindingService,
@@ -28,7 +28,7 @@ BOQ_REQUIRED_KEY = "WORKS.BOQ_REQUIRED"
 
 _BLOCKERS: dict[str, str] = {
 	"WORKS_INSTANCE_NOT_FOUND": _("Tender STD Instance was not found."),
-	"WORKS_INSTANCE_NOT_TENDER_BOUND": _("This STD Instance is not bound to a procurement tender."),
+	"WORKS_INSTANCE_NOT_TENDER_BOUND": _("This STD Instance is not bound to a TM2 tender."),
 	"WORKS_CATEGORY_INVALID": _("Works completion applies only when Procurement Category is Works."),
 	"WORKS_PROFILE_INVALID": _("Template version or applicability profile binding is incomplete or incompatible."),
 	"WORKS_TEMPLATE_LINEAGE_MISSING": _("STD Template version or profile does not match this instance binding."),
@@ -70,12 +70,12 @@ def validate_works_completion_context(
 		return _result(False, [_blocker("WORKS_INSTANCE_NOT_FOUND")])
 
 	inst = frappe.get_doc("Tender STD Instance", code)
-	pt = (inst.get("procurement_tender") or "").strip()
-	if not pt or not frappe.db.exists("Procurement Tender", pt):
+	tm2 = (inst.get("tm2_tender") or "").strip()
+	if not tm2 or not frappe.db.exists("TM2 Tender", tm2):
 		return _result(False, [_blocker("WORKS_INSTANCE_NOT_TENDER_BOUND")])
 
-	tender = frappe.get_doc("Procurement Tender", pt)
-	cfg = _parse_cfg(tender)
+	tender = frappe.get_doc("TM2 Tender", tm2)
+	cfg = parse_configuration_json(tender)
 
 	icat = (inst.get("procurement_category") or "").strip()
 	if icat != WORKS_CATEGORY:

@@ -45,8 +45,8 @@ def tender_code_for_instance(instance_name: str) -> str:
 	"""Business tender reference for denormalized ``tender_code`` on generated output rows."""
 	if not instance_name or not frappe.db.exists("Tender STD Instance", instance_name):
 		return ""
-	tender = frappe.db.get_value("Tender STD Instance", instance_name, "procurement_tender")
+	tender = frappe.db.get_value("Tender STD Instance", instance_name, "tm2_tender")
 	if not tender:
 		return ""
-	ref = frappe.db.get_value("Procurement Tender", tender, "tender_reference")
+	ref = frappe.db.get_value("TM2 Tender", tender, "tender_reference")
 	return (ref or "").strip()

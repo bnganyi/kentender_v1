@@ -115,11 +115,11 @@ class TestDerivedDom0410(IntegrationTestCase):
 					ignore_permissions=True,
 				)
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def test_derived_0410_generate_dom_validates(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0410 DOM"
 		doc.tender_reference = "DERIVED0410-DOM"
@@ -140,7 +140,7 @@ class TestDerivedDom0410(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0410_submitted_total_uses_boq_trace_when_boq_present(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0410 BOQ"
 		doc.tender_reference = "DERIVED0410-BOQ"
@@ -160,7 +160,7 @@ class TestDerivedDom0410(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0410_addendum_marks_ack_field_mandatory(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0410 ADD"
 		doc.tender_reference = "DERIVED0410-ADD"
@@ -188,7 +188,7 @@ class TestDerivedDom0410(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0410_opening_datetime_from_parameter(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0410 OPEN"
 		doc.tender_reference = "DERIVED0410-OPEN"

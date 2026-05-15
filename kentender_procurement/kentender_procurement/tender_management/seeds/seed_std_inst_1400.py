@@ -68,23 +68,26 @@ def _ensure_package_exists() -> str:
 
 def _ensure_tender_exists(package_code: str) -> str:
 	existing = frappe.db.get_value(
-		"Procurement Tender",
+		"TM2 Tender",
 		{"tender_reference": TENDER_REFERENCE},
 		"name",
 	)
 	if existing:
-		doc = frappe.get_doc("Procurement Tender", existing)
+		doc = frappe.get_doc("TM2 Tender", existing)
 		if (doc.std_template or "").strip() != TEMPLATE_CODE:
 			doc.std_template = TEMPLATE_CODE
 			doc.save(ignore_permissions=True)
 		return existing
 
-	tender = frappe.new_doc("Procurement Tender")
+	tender = frappe.new_doc("TM2 Tender")
 	tender.std_template = TEMPLATE_CODE
 	tender.tender_title = "MOH Works Tender 2026 Seed"
 	tender.tender_reference = TENDER_REFERENCE
 	tender.procurement_package = package_code
-	tender.insert(ignore_permissions=True)
+	tender.procurement_category = "Works"
+	tender.procuring_entity_code = "MOH"
+	tender.fiscal_year = "2026"
+	tender.insert(ignore_permissions=True, ignore_mandatory=True)
 	return tender.name
 
 

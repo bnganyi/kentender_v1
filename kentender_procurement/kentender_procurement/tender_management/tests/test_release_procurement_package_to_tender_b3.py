@@ -66,7 +66,7 @@ class _ReleaseProcurementPackageHandoffFixtures(IntegrationTestCase):
 			if dt == "TM2 Tender":
 				self._cleanup_tm2_tender(name)
 				continue
-			if dt == "Procurement Tender":
+			if dt == "TM2 Tender":
 				if frappe.db.exists(dt, name):
 					frappe.delete_doc(dt, name, force=True, ignore_permissions=True)
 				continue

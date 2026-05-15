@@ -125,11 +125,11 @@ class TestDerivedDsm0310(IntegrationTestCase):
 					ignore_permissions=True,
 				)
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def test_derived_0310_generate_dsm_validates_and_includes_core_requirements(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0310 DSM"
 		doc.tender_reference = "DERIVED0310-DSM"
@@ -150,7 +150,7 @@ class TestDerivedDsm0310(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0310_boq_enables_rate_entry_and_requirement(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0310 BOQ"
 		doc.tender_reference = "DERIVED0310-BOQ"
@@ -174,7 +174,7 @@ class TestDerivedDsm0310(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0310_tender_security_parameter_adds_requirement(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0310 SEC"
 		doc.tender_reference = "DERIVED0310-SEC"
@@ -193,7 +193,7 @@ class TestDerivedDsm0310(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0310_method_statement_flag_adds_requirement(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0310 METH"
 		doc.tender_reference = "DERIVED0310-METH"
@@ -218,7 +218,7 @@ class TestDerivedDsm0310(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0310_addendum_codes_surface_in_acknowledgements(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0310 ADD"
 		doc.tender_reference = "DERIVED0310-ADD"

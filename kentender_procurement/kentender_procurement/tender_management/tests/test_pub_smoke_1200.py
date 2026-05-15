@@ -155,17 +155,17 @@ class TestPubSmoke1200(IntegrationTestCase):
 			):
 				frappe.delete_doc("Tender STD Instance BOQ", boq_name, force=True, ignore_permissions=True)
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def _cleanup_seed_variant(self, variant: str) -> None:
 		ref = fixture_codes(variant)["tender_reference"]
-		tn = frappe.db.get_value("Procurement Tender", {"tender_reference": ref}, "name")
+		tn = frappe.db.get_value("TM2 Tender", {"tender_reference": ref}, "name")
 		if tn:
 			self._cleanup_tender(tn)
 
 	def _minimal_tender(self, *, ref: str) -> str:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = f"PUB-SMOKE {ref}"
 		doc.tender_reference = ref
@@ -209,7 +209,7 @@ class TestPubSmoke1200(IntegrationTestCase):
 	def _ready_tender_locked_for_approval(self, ref: str) -> tuple[str, str]:
 		"""Ready STD + configuration snapshot + ``Locked for Approval`` (no approval row)."""
 		tn = self._minimal_tender(ref=ref)
-		frappe.db.set_value("Procurement Tender", tn, "source_package_code", f"REL-{ref}")
+		frappe.db.set_value("TM2 Tender", tn, "source_package_code", f"REL-{ref}")
 		si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 			tn,
 			ignore_permissions=True,
@@ -305,7 +305,7 @@ class TestPubSmoke1200(IntegrationTestCase):
 	def test_PUB_SMOKE_READY_006_evidence_gate_failure_blocked(self) -> None:
 		tn = self._minimal_tender(ref="PUB1200-EVID")
 		try:
-			frappe.db.set_value("Procurement Tender", tn, "source_package_code", "REL-PUB1200-EVID")
+			frappe.db.set_value("TM2 Tender", tn, "source_package_code", "REL-PUB1200-EVID")
 			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tn,
 				ignore_permissions=True,
@@ -458,7 +458,7 @@ class TestPubSmoke1200(IntegrationTestCase):
 		try:
 			before_final = frappe.db.count(
 				"Tender Publication Snapshot",
-				{"procurement_tender": tn, "snapshot_status": "Final"},
+				{"tm2_tender": tn, "snapshot_status": "Final"},
 			)
 			with patch.object(
 				PublicationSnapshotService,
@@ -468,12 +468,12 @@ class TestPubSmoke1200(IntegrationTestCase):
 				with self.assertRaises(frappe.ValidationError):
 					PublicationTransactionService.publishTender(tn, actor="Administrator")
 			self.assertNotEqual(
-				(frappe.db.get_value("Procurement Tender", tn, "tender_status") or "").strip(),
+				(frappe.db.get_value("TM2 Tender", tn, "tender_status") or "").strip(),
 				"Published",
 			)
 			after_final = frappe.db.count(
 				"Tender Publication Snapshot",
-				{"procurement_tender": tn, "snapshot_status": "Final"},
+				{"tm2_tender": tn, "snapshot_status": "Final"},
 			)
 			self.assertEqual(after_final, before_final)
 		finally:
@@ -514,7 +514,7 @@ class TestPubSmoke1200(IntegrationTestCase):
 				with self.assertRaises(frappe.ValidationError):
 					PublicationTransactionService.publishTender(tn, actor="Administrator")
 			self.assertNotEqual(
-				(frappe.db.get_value("Procurement Tender", tn, "tender_status") or "").strip(),
+				(frappe.db.get_value("TM2 Tender", tn, "tender_status") or "").strip(),
 				"Published",
 			)
 			self.assertNotEqual(

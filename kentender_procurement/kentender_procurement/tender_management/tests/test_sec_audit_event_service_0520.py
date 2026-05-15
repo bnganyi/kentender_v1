@@ -60,7 +60,7 @@ class TestSecAuditEventService0520(IntegrationTestCase):
 			AuditEventCode.PUBLICATION_DENIED,
 			"PUBLISH_APPROVAL_REQUIRED",
 			{
-				"object_type": "Procurement Tender",
+				"object_type": "TM2 Tender",
 				"object_code": "TND-0520",
 				"tender_code": "TND-0520",
 				"actor_user_code": "Administrator",
@@ -111,7 +111,7 @@ class TestSecAuditEventService0520(IntegrationTestCase):
 			AuditEventCode.PUBLICATION_DENIED,
 			"PUBLISH_PERMISSION_DENIED",
 			{
-				"object_type": "Procurement Tender",
+				"object_type": "TM2 Tender",
 				"object_code": "TND-0520-Q",
 				"tender_code": "TND-0520-Q",
 				"actor_user_code": "Administrator",

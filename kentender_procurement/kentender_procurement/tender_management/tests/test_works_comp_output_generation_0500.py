@@ -51,8 +51,8 @@ class TestWorksCompOutputGeneration0500(IntegrationTestCase):
 		frappe.set_user("Administrator")
 		super().tearDown()
 
-	def _minimal_procurement_tender(self) -> str:
-		doc = frappe.new_doc("Procurement Tender")
+	def _minimal_tm2_tender(self) -> str:
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "WORKS-COMP-0500 Test Tender"
 		doc.tender_reference = "WORKSCOMP0500-REF"
@@ -90,9 +90,9 @@ class TestWorksCompOutputGeneration0500(IntegrationTestCase):
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
 
 	def _delete_tender(self, name: str) -> None:
-		if frappe.db.exists("Procurement Tender", name):
+		if frappe.db.exists("TM2 Tender", name):
 			self._delete_std_instances_for_tender(name)
-			frappe.delete_doc("Procurement Tender", name, force=True, ignore_permissions=True)
+			frappe.delete_doc("TM2 Tender", name, force=True, ignore_permissions=True)
 
 	def _minimal_valid_boq_payload(self) -> dict:
 		return {
@@ -118,7 +118,7 @@ class TestWorksCompOutputGeneration0500(IntegrationTestCase):
 		}
 
 	def test_works_comp_0500_precheck_boq_missing(self) -> None:
-		tender = self._minimal_procurement_tender()
+		tender = self._minimal_tm2_tender()
 		try:
 			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
@@ -132,7 +132,7 @@ class TestWorksCompOutputGeneration0500(IntegrationTestCase):
 			self._delete_tender(tender)
 
 	def test_works_comp_0500_precheck_manual_criteria_in_parameter_json(self) -> None:
-		tender = self._minimal_procurement_tender()
+		tender = self._minimal_tm2_tender()
 		try:
 			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
@@ -159,7 +159,7 @@ class TestWorksCompOutputGeneration0500(IntegrationTestCase):
 			self._delete_tender(tender)
 
 	def test_works_comp_0500_generate_all_happy_path(self) -> None:
-		tender = self._minimal_procurement_tender()
+		tender = self._minimal_tm2_tender()
 		try:
 			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
@@ -191,7 +191,7 @@ class TestWorksCompOutputGeneration0500(IntegrationTestCase):
 			self._delete_tender(tender)
 
 	def test_works_comp_0500_mid_chain_failure_deletes_partial_publishes(self) -> None:
-		tender = self._minimal_procurement_tender()
+		tender = self._minimal_tm2_tender()
 		try:
 			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,

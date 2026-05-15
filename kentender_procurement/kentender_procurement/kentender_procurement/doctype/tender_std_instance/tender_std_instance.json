@@ -323,7 +323,7 @@
    "write": 1
   }
  ],
- "search_fields": "procurement_tender,template_version_code,instance_status",
+ "search_fields": "tm2_tender,template_version_code,instance_status",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

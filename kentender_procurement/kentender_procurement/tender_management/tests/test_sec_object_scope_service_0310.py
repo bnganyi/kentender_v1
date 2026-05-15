@@ -61,7 +61,7 @@ class TestSecObjectScopeService0310(IntegrationTestCase):
 			frappe.delete_doc("User", email, force=True, ignore_permissions=True)
 
 	def _minimal_tender(self, ref: str) -> str:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = f"SEC-0310 {ref}"
 		doc.tender_reference = ref
@@ -69,19 +69,19 @@ class TestSecObjectScopeService0310(IntegrationTestCase):
 		return doc.name
 
 	def _delete_tender(self, name: str) -> None:
-		if frappe.db.exists("Procurement Tender", name):
+		if frappe.db.exists("TM2 Tender", name):
 			for row in frappe.get_all(
 				"Tender STD Instance",
 				filters={"tm2_tender": name},
 				pluck="name",
 			):
 				frappe.delete_doc("Tender STD Instance", row, force=True, ignore_permissions=True)
-			frappe.delete_doc("Procurement Tender", name, force=True, ignore_permissions=True)
+			frappe.delete_doc("TM2 Tender", name, force=True, ignore_permissions=True)
 
 	def test_sec_0310_tender_owner_passes_stranger_denied(self) -> None:
 		tn = self._minimal_tender(ref="scope-owner")
 		try:
-			owner = frappe.db.get_value("Procurement Tender", tn, "owner")
+			owner = frappe.db.get_value("TM2 Tender", tn, "owner")
 			self.assertTrue(owner)
 			self.assertTrue(ObjectScopeService.check_tender_scope(owner, tn).allowed)
 			other_email = "sec0310_stranger@example.com"
@@ -134,7 +134,7 @@ class TestSecObjectScopeService0310(IntegrationTestCase):
 				ignore_permissions=True,
 				record_template_usage=False,
 			)
-			owner = frappe.db.get_value("Procurement Tender", tn, "owner")
+			owner = frappe.db.get_value("TM2 Tender", tn, "owner")
 			self.assertTrue(ObjectScopeService.check_std_instance_scope(owner, si.name).allowed)
 		finally:
 			self._delete_tender(tn)
@@ -158,7 +158,7 @@ class TestSecObjectScopeService0310(IntegrationTestCase):
 			res = AuthorizationDecisionEngine.evaluate(
 				other,
 				"PUBLISH_TENDER",
-				"Procurement Tender",
+				"TM2 Tender",
 				tn,
 				context={
 					"granted_permissions": ["PERM_TENDER_PUBLISH"],

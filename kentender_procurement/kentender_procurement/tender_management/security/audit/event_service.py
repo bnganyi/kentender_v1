@@ -136,7 +136,7 @@ class AuditEventService:
 			meta = payload.get("metadata") or {}
 			mtc = _norm_text(meta.get("tender_code"))
 			if not mtc:
-				if payload.get("document_type") == "Procurement Tender" and _norm_text(payload.get("document_name")) == tc:
+				if payload.get("document_type") == "TM2 Tender" and _norm_text(payload.get("document_name")) == tc:
 					mtc = tc
 			if mtc != tc:
 				continue

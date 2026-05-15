@@ -38,8 +38,8 @@ class TestWorksCompBoq0300(IntegrationTestCase):
 		frappe.set_user("Administrator")
 		super().tearDown()
 
-	def _minimal_procurement_tender(self) -> str:
-		doc = frappe.new_doc("Procurement Tender")
+	def _minimal_tm2_tender(self) -> str:
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "WORKS-COMP-0300 Test Tender"
 		doc.tender_reference = "WORKSCOMP0300-REF"
@@ -66,9 +66,9 @@ class TestWorksCompBoq0300(IntegrationTestCase):
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
 
 	def _delete_tender(self, name: str) -> None:
-		if frappe.db.exists("Procurement Tender", name):
+		if frappe.db.exists("TM2 Tender", name):
 			self._delete_std_instances_for_tender(name)
-			frappe.delete_doc("Procurement Tender", name, force=True, ignore_permissions=True)
+			frappe.delete_doc("TM2 Tender", name, force=True, ignore_permissions=True)
 
 	def _codes(self, out: dict) -> list[str]:
 		return [b["code"] for b in out.get("blockers") or []]
@@ -97,7 +97,7 @@ class TestWorksCompBoq0300(IntegrationTestCase):
 		}
 
 	def test_works_comp_0300_zero_quantity_normal_fails_validation(self) -> None:
-		tender = self._minimal_procurement_tender()
+		tender = self._minimal_tm2_tender()
 		try:
 			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
@@ -112,7 +112,7 @@ class TestWorksCompBoq0300(IntegrationTestCase):
 			self._delete_tender(tender)
 
 	def test_works_comp_0300_validate_missing_boq(self) -> None:
-		tender = self._minimal_procurement_tender()
+		tender = self._minimal_tm2_tender()
 		try:
 			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
@@ -126,7 +126,7 @@ class TestWorksCompBoq0300(IntegrationTestCase):
 			self._delete_tender(tender)
 
 	def test_works_comp_0300_save_validate_happy_path(self) -> None:
-		tender = self._minimal_procurement_tender()
+		tender = self._minimal_tm2_tender()
 		try:
 			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
@@ -149,7 +149,7 @@ class TestWorksCompBoq0300(IntegrationTestCase):
 			self._delete_tender(tender)
 
 	def test_works_comp_0300_duplicate_item_number_blocked(self) -> None:
-		tender = self._minimal_procurement_tender()
+		tender = self._minimal_tm2_tender()
 		try:
 			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
@@ -173,7 +173,7 @@ class TestWorksCompBoq0300(IntegrationTestCase):
 			self._delete_tender(tender)
 
 	def test_works_comp_0300_prohibited_field_throws(self) -> None:
-		tender = self._minimal_procurement_tender()
+		tender = self._minimal_tm2_tender()
 		try:
 			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
@@ -188,7 +188,7 @@ class TestWorksCompBoq0300(IntegrationTestCase):
 			self._delete_tender(tender)
 
 	def test_works_comp_0300_import_boq_delegates(self) -> None:
-		tender = self._minimal_procurement_tender()
+		tender = self._minimal_tm2_tender()
 		try:
 			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
@@ -202,7 +202,7 @@ class TestWorksCompBoq0300(IntegrationTestCase):
 			self._delete_tender(tender)
 
 	def test_works_comp_0300_import_csv_format(self) -> None:
-		tender = self._minimal_procurement_tender()
+		tender = self._minimal_tm2_tender()
 		try:
 			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,
@@ -222,7 +222,7 @@ class TestWorksCompBoq0300(IntegrationTestCase):
 			self._delete_tender(tender)
 
 	def test_works_comp_0300_get_boq_summary(self) -> None:
-		tender = self._minimal_procurement_tender()
+		tender = self._minimal_tm2_tender()
 		try:
 			si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 				tender,

@@ -137,11 +137,11 @@ class TestDerivedVersioning0120(IntegrationTestCase):
 					ignore_permissions=True,
 				)
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def test_derived_0120_create_draft_increments_version(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0120 Draft"
 		doc.tender_reference = "DERIVED0120-DRAFT"
@@ -169,7 +169,7 @@ class TestDerivedVersioning0120(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0120_mark_current_second_draft_fails(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0120 Current"
 		doc.tender_reference = "DERIVED0120-CUR"
@@ -190,7 +190,7 @@ class TestDerivedVersioning0120(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0120_mark_published_sets_snapshot_code(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0120 Snap"
 		doc.tender_reference = "DERIVED0120-SNAP"
@@ -204,7 +204,7 @@ class TestDerivedVersioning0120(IntegrationTestCase):
 			inst = frappe.get_doc("Tender STD Instance", si.name)
 			snap = frappe.new_doc("Tender STD Instance Snapshot")
 			snap.tender_std_instance = si.name
-			snap.procurement_tender = doc.name
+			snap.tm2_tender = doc.name
 			snap.snapshot_type = "Configuration"
 			snap.snapshot_reason = "DERIVED-0120"
 			snap.snapshot_status = "Draft"
@@ -226,7 +226,7 @@ class TestDerivedVersioning0120(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0120_mark_stale_blocks_readiness_flags(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0120 Stale"
 		doc.tender_reference = "DERIVED0120-STALE"
@@ -254,7 +254,7 @@ class TestDerivedVersioning0120(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0120_supersede_output_and_clears_pointer(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0120 Super"
 		doc.tender_reference = "DERIVED0120-SUP"
@@ -283,7 +283,7 @@ class TestDerivedVersioning0120(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0120_get_current_and_get_version(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0120 Get"
 		doc.tender_reference = "DERIVED0120-GET"
@@ -310,7 +310,7 @@ class TestDerivedVersioning0120(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0120_get_current_raises_when_missing(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0120 Missing"
 		doc.tender_reference = "DERIVED0120-MISS"

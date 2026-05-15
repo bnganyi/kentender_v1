@@ -110,11 +110,11 @@ class TestPubApprovalDecision0310(IntegrationTestCase):
 			):
 				frappe.delete_doc("Tender STD Instance BOQ", boq_name, force=True, ignore_permissions=True)
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def _minimal_tender(self, *, ref: str) -> str:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = f"PUB-0310 {ref}"
 		doc.tender_reference = ref
@@ -157,7 +157,7 @@ class TestPubApprovalDecision0310(IntegrationTestCase):
 
 	def _locked_tender_with_snapshot(self, ref: str) -> tuple[str, str, str]:
 		tn = self._minimal_tender(ref=ref)
-		frappe.db.set_value("Procurement Tender", tn, "source_package_code", f"REL-{ref}")
+		frappe.db.set_value("TM2 Tender", tn, "source_package_code", f"REL-{ref}")
 		si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 			tn,
 			ignore_permissions=True,

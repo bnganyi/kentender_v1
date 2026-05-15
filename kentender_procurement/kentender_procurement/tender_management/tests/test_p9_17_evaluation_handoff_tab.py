@@ -111,7 +111,7 @@ class TestP917EvaluationHandoffTab(_P401Tm2Cleanup, P6PublishedTm2Fixture):
 			return json.loads(content_json)
 		return {}
 
-	def _ex09_cleanup_procurement_tender(self, tender_name: str) -> None:
+	def _ex09_cleanup_tm2_tender(self, tender_name: str) -> None:
 		for name in frappe.get_all(
 			"Tender STD Instance",
 			filters={"tm2_tender": tender_name},
@@ -155,8 +155,8 @@ class TestP917EvaluationHandoffTab(_P401Tm2Cleanup, P6PublishedTm2Fixture):
 					)
 			if frappe.db.exists("Tender STD Instance", name):
 				frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def _ex09_minimal_valid_boq_payload(self) -> dict:
 		return {
@@ -184,7 +184,7 @@ class TestP917EvaluationHandoffTab(_P401Tm2Cleanup, P6PublishedTm2Fixture):
 	def test_EX_09_published_dem_boq_arithmetic_correction_allowed_for_evaluation_consumer(self) -> None:
 		"""Doc 9 §25 EX-09 / doc 8 TM2-SMOKE-EVAL-005 — DEM carries correction rules; Evaluation may consume."""
 		frappe.set_user("Administrator")
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "P917 EX-09 DEM arithmetic"
 		doc.tender_reference = "P917-EX09"
@@ -208,7 +208,7 @@ class TestP917EvaluationHandoffTab(_P401Tm2Cleanup, P6PublishedTm2Fixture):
 			self.assertEqual(res.get("output_status"), "Published")
 			self.assertEqual(res.get("blockers"), [])
 		finally:
-			self._ex09_cleanup_procurement_tender(doc.name)
+			self._ex09_cleanup_tm2_tender(doc.name)
 
 	def _published_si_supplier(self) -> tuple[str, str, str, str]:
 		tcode, tm2, sup = self._published_with_supplier()

@@ -20,7 +20,7 @@ from typing import Any
 import frappe
 from frappe import _
 
-from kentender_procurement.tender_management.services.std_forms_boq_inspectors import _parse_cfg
+from kentender_procurement.tender_management.services.tender_configuration import parse_configuration_json
 from kentender_procurement.tender_management.std_instance.attachment import StdInstanceAttachmentService
 from kentender_procurement.tender_management.std_instance.works_requirement import (
 	StdInstanceWorksRequirementService,
@@ -81,11 +81,11 @@ def _norm_cc(value: str | None) -> str:
 
 
 def _tender_cfg_for_instance(instance_name: str) -> dict[str, Any]:
-	pt = frappe.db.get_value("Tender STD Instance", instance_name, "procurement_tender")
-	if not pt or not frappe.db.exists("Procurement Tender", pt):
+	tm2 = frappe.db.get_value("Tender STD Instance", instance_name, "tm2_tender")
+	if not tm2 or not frappe.db.exists("TM2 Tender", tm2):
 		return {}
-	tender = frappe.get_doc("Procurement Tender", pt)
-	return _parse_cfg(tender)
+	tender = frappe.get_doc("TM2 Tender", tm2)
+	return parse_configuration_json(tender)
 
 
 def _truthy_cfg(val: Any) -> bool:

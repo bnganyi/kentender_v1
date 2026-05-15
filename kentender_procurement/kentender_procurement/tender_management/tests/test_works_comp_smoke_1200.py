@@ -160,7 +160,7 @@ class TestWorksCompSmoke1200(IntegrationTestCase):
 		return f"WKSM1200-{tag}-{secrets.token_hex(4)}"
 
 	def _new_tender(self, tag: str) -> str:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = f"WORKS-COMP-1200 {tag}"
 		doc.tender_reference = self._ref(tag)
@@ -207,8 +207,8 @@ class TestWorksCompSmoke1200(IntegrationTestCase):
 					ignore_permissions=True,
 				)
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def _codes(self, out: dict) -> list[str]:
 		return [b["code"] for b in out.get("blockers") or []]

@@ -36,8 +36,8 @@ class TestSecEvidenceExportAuthorization0600(IntegrationTestCase):
 			if frappe.db.exists("Audit Event", name):
 				frappe.delete_doc("Audit Event", name, force=True, ignore_permissions=True)
 		for tn in self._created_tenders:
-			if frappe.db.exists("Procurement Tender", tn):
-				frappe.delete_doc("Procurement Tender", tn, force=True, ignore_permissions=True)
+			if frappe.db.exists("TM2 Tender", tn):
+				frappe.delete_doc("TM2 Tender", tn, force=True, ignore_permissions=True)
 		for user in self._created_users:
 			if frappe.db.exists("User", user):
 				frappe.delete_doc("User", user, force=True, ignore_permissions=True)
@@ -57,7 +57,7 @@ class TestSecEvidenceExportAuthorization0600(IntegrationTestCase):
 		return u.name
 
 	def _new_tender(self, ref: str) -> str:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = f"SEC-0600 {ref}"
 		doc.tender_reference = ref
@@ -97,7 +97,7 @@ class TestSecEvidenceExportAuthorization0600(IntegrationTestCase):
 			)
 		rows = frappe.get_all(
 			"Audit Event",
-			filters={"document_type": "Procurement Tender", "document_name": tender},
+			filters={"document_type": "TM2 Tender", "document_name": tender},
 			fields=["name", "event_type", "metadata"],
 			order_by="timestamp desc",
 			limit=1,
@@ -111,7 +111,7 @@ class TestSecEvidenceExportAuthorization0600(IntegrationTestCase):
 	def test_sec_0600_procurement_officer_assignment_policy(self) -> None:
 		actor = self._new_user("sec0600_proc@example.com")
 		tender = self._new_tender("sec0600-proc")
-		frappe.db.set_value("Procurement Tender", tender, "owner", actor)
+		frappe.db.set_value("TM2 Tender", tender, "owner", actor)
 		EvidenceExportAuthorizationService.assert_can_export_evidence(
 			actor,
 			tender,

@@ -143,14 +143,14 @@ def _cleanup_tender(tender_name: str) -> None:
 				ignore_permissions=True,
 			)
 		frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-	if frappe.db.exists("Procurement Tender", tender_name):
-		frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+	if frappe.db.exists("TM2 Tender", tender_name):
+		frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 
 def _new_tender_and_instance() -> tuple[str, str]:
 	_ensure_package_by_code(SMOKE_PKG, "DERIVED-1300 smoke package")
 	ref = f"DERIVED-SMOKE-1300-{uuid.uuid4().hex[:10]}"
-	doc = frappe.new_doc("Procurement Tender")
+	doc = frappe.new_doc("TM2 Tender")
 	doc.std_template = TEMPLATE_CODE
 	doc.tender_title = "DERIVED-1300 smoke"
 	doc.tender_reference = ref

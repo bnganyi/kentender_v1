@@ -77,8 +77,8 @@ class TestDerivedOrchestration0700(IntegrationTestCase):
 					ignore_permissions=True,
 				)
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def _minimal_valid_boq_payload(self) -> dict:
 		return {
@@ -104,7 +104,7 @@ class TestDerivedOrchestration0700(IntegrationTestCase):
 		}
 
 	def test_derived_0700_generate_all_current_without_publish(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0700 All Current"
 		doc.tender_reference = "DERIVED0700-CUR"
@@ -134,7 +134,7 @@ class TestDerivedOrchestration0700(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0700_partial_failure_marks_failed_and_preserves_prior_current(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0700 Partial"
 		doc.tender_reference = "DERIVED0700-PART"
@@ -182,7 +182,7 @@ class TestDerivedOrchestration0700(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0700_validate_generated_output_rejects_empty_payload(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0700 Validate"
 		doc.tender_reference = "DERIVED0700-VAL"
@@ -200,7 +200,7 @@ class TestDerivedOrchestration0700(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_derived_0700_generated_by_job_from_actor_or_job(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-0700 Job"
 		doc.tender_reference = "DERIVED0700-JOB"

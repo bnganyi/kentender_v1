@@ -44,8 +44,10 @@ def emit_publication_audit_event(
 	user = (performed_by or "").strip() or getattr(frappe.session, "user", None) or "Administrator"
 	pec = pack_event_code or EVENT_TYPE_TO_PACK_EVENT_CODE.get(event_type) or event_type
 	tm2 = resolve_tm2_tender_document(tc)
-	doc_type = "TM2 Tender" if tm2 else "Procurement Tender"
-	doc_name = (tm2.name if tm2 else tc) or tc
+	if not tm2:
+		frappe.throw(frappe._("TM2 Tender not found for audit event: {0}").format(tc))
+	doc_type = "TM2 Tender"
+	doc_name = tm2.name
 	meta = _compact(
 		{
 			"event_code": pec,

@@ -100,11 +100,11 @@ class TestPubReturnToPreparation0320(IntegrationTestCase):
 			):
 				frappe.delete_doc("Tender STD Instance BOQ", boq_name, force=True, ignore_permissions=True)
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def _minimal_tender(self, *, ref: str) -> str:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = f"PUB-0320 {ref}"
 		doc.tender_reference = ref
@@ -147,7 +147,7 @@ class TestPubReturnToPreparation0320(IntegrationTestCase):
 
 	def _locked_tender(self, ref: str) -> tuple[str, str]:
 		tn = self._minimal_tender(ref=ref)
-		frappe.db.set_value("Procurement Tender", tn, "source_package_code", f"REL-{ref}")
+		frappe.db.set_value("TM2 Tender", tn, "source_package_code", f"REL-{ref}")
 		si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 			tn,
 			ignore_permissions=True,
@@ -225,7 +225,7 @@ class TestPubReturnToPreparation0320(IntegrationTestCase):
 			)
 			self.assertIsNone(ConfigurationSnapshotService.getCurrentConfigurationSnapshot(tn))
 			self.assertEqual(PublicationReadinessService.getLatestReadiness(tn)["status"], "Invalidated")
-			self.assertEqual((frappe.db.get_value("Procurement Tender", tn, "tender_status") or "").strip(), "Configured")
+			self.assertEqual((frappe.db.get_value("TM2 Tender", tn, "tender_status") or "").strip(), "Configured")
 
 			after_ae = frappe.db.count("Audit Event", {"document_name": tn})
 			self.assertGreaterEqual(after_ae, before_ae + 2)

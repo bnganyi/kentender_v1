@@ -332,14 +332,14 @@ def trace_std_rules_for_sample(template_name: str, variant_code: str | None = No
 
 @frappe.whitelist()
 def trace_std_rules_for_tender(tender_name: str) -> dict[str, Any]:
-	"""Admin Step 4 — rule trace for an existing Procurement Tender."""
+	"""Admin Step 4 — rule trace for an existing TM2 Tender."""
 	if not tender_name:
 		frappe.throw(_("tender_name is required"))
-	tender = frappe.get_doc("Procurement Tender", tender_name)
-	if not frappe.has_permission("Procurement Tender", "read", doc=tender):
-		frappe.throw(_("Not permitted to read Procurement Tender"), frappe.PermissionError)
+	tender = frappe.get_doc("TM2 Tender", tender_name)
+	if not frappe.has_permission("TM2 Tender", "read", doc=tender):
+		frappe.throw(_("Not permitted to read TM2 Tender"), frappe.PermissionError)
 	if not tender.std_template:
-		err = _("Procurement Tender has no STD Template linked.")
+		err = _("TM2 Tender has no STD Template linked.")
 		return {"ok": False, "error": str(err), "html": f"<div class=\"alert alert-warning\">{frappe.utils.escape_html(str(err))}</div>"}
 	raw = tender.configuration_json
 	if not raw:
@@ -385,7 +385,7 @@ def create_or_open_std_demo_tender(
 	template_name: str,
 	variant_code: str | None = None,
 ) -> dict[str, Any]:
-	"""Admin Step 5 — create a new demo Procurement Tender linked to this STD Template (primary or variant sample)."""
+	"""Admin Step 5 — create a new demo TM2 Tender linked to this STD Template."""
 	if variant_code in (None, "", "null"):
 		variant_code = None
 	if not template_name:
@@ -393,44 +393,28 @@ def create_or_open_std_demo_tender(
 	std_doc = frappe.get_doc("STD Template", template_name)
 	if not frappe.has_permission("STD Template", "read", doc=std_doc):
 		frappe.throw(_("Not permitted to read STD Template"), frappe.PermissionError)
-	if not frappe.has_permission("Procurement Tender", "create"):
-		frappe.throw(_("Not permitted to create Procurement Tender"), frappe.PermissionError)
+	if not frappe.has_permission("TM2 Tender", "create"):
+		frappe.throw(_("Not permitted to create TM2 Tender"), frappe.PermissionError)
 
 	import time
 
 	t_ref = f"STD-DEMO-{int(time.time())}"
-	marker = (
-		"STD DEMO WORKSPACE — POC demonstration record for STD-WORKS-POC. "
-		"Not for production procurement."
-	)
-	tender = frappe.new_doc("Procurement Tender")
-	tender.naming_series = "PT-.YYYY.-.#####"
+	tender = frappe.new_doc("TM2 Tender")
 	tender.tender_title = _("STD-WORKS-POC Demo Tender")
 	tender.tender_reference = t_ref
 	tender.std_template = std_doc.name
-	tender.procurement_method = "OPEN_COMPETITIVE_TENDERING"
-	tender.tender_scope = "NATIONAL"
-	tender.poc_notes = f"{marker} template={std_doc.name}"
-	try:
-		engine.populate_sample_tender(tender, variant_code=variant_code or None)
-	except ValueError as e:
-		return {"ok": False, "error": str(e), "message": str(e)}
-	# Sample config overwrites title/reference; restore demo workspace identity.
-	tender.tender_reference = t_ref
-	tender.tender_title = _("STD-WORKS-POC Demo Tender")
-	tender.tender_status = "Configured"
-	tender.validation_status = "Not Validated"
-	tender.set("validation_messages", [])
-	tender.set("required_forms", [])
-	tender.insert()
+	tender.procurement_category = "Works"
+	tender.procuring_entity_code = "MOH"
+	tender.fiscal_year = str(frappe.utils.now_datetime().year)
+	tender.insert(ignore_permissions=True, ignore_mandatory=True)
 	frappe.db.commit()
 	return {
 		"ok": True,
 		"message": _("Demo tender ready."),
 		"tender": tender.name,
-		"template_code": tender.template_code or std_doc.template_code,
+		"template_code": std_doc.template_code,
 		"variant_code": variant_code,
-		"route": f"/app/procurement-tender/{tender.name}",
+		"route": f"/app/tm2-tender/{tender.name}",
 	}
 
 

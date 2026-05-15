@@ -115,12 +115,12 @@ def _ensure_package_exists() -> str:
 
 def _ensure_tender_exists(package_code: str, tender_reference: str) -> str:
 	existing = frappe.db.get_value(
-		"Procurement Tender",
+		"TM2 Tender",
 		{"tender_reference": tender_reference},
 		"name",
 	)
 	if existing:
-		doc = frappe.get_doc("Procurement Tender", existing)
+		doc = frappe.get_doc("TM2 Tender", existing)
 		if (doc.std_template or "").strip() != TEMPLATE_CODE:
 			doc.std_template = TEMPLATE_CODE
 			doc.save(ignore_permissions=True)
@@ -129,20 +129,23 @@ def _ensure_tender_exists(package_code: str, tender_reference: str) -> str:
 			doc.save(ignore_permissions=True)
 		return existing
 
-	tender = frappe.new_doc("Procurement Tender")
+	tender = frappe.new_doc("TM2 Tender")
 	tender.std_template = TEMPLATE_CODE
 	tender.tender_title = "MOH Works Tender 2026 — Works completion seed"
 	tender.tender_reference = tender_reference
 	tender.procurement_package = package_code
-	tender.insert(ignore_permissions=True)
+	tender.procurement_category = "Works"
+	tender.procuring_entity_code = "MOH"
+	tender.fiscal_year = "2026"
+	tender.insert(ignore_permissions=True, ignore_mandatory=True)
 	return tender.name
 
 
 def _ensure_instance(tender_name: str) -> Any:
 	"""Bind or refresh STD instance; profile/version must match ``_codes_from_std_template`` (WORKS-COMP-0110)."""
-	std = (frappe.db.get_value("Procurement Tender", tender_name, "std_template") or "").strip()
+	std = (frappe.db.get_value("TM2 Tender", tender_name, "std_template") or "").strip()
 	if not std:
-		frappe.throw("Procurement Tender has no std_template.", title="WORKS_COMP_1100_NO_TEMPLATE")
+		frappe.throw("TM2 Tender has no std_template.", title="WORKS_COMP_1100_NO_TEMPLATE")
 
 	version_code, profile_code = TenderStdBindingService._codes_from_std_template(std)
 	current = TenderStdBindingService.get_current_std_instance_for_tm2_tender(tender_name)

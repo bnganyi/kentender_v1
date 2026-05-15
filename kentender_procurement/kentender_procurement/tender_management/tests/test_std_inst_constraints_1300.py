@@ -33,7 +33,7 @@ class TestStdInstConstraints1300(IntegrationTestCase):
 		super().tearDown()
 
 	def _minimal_tender(self) -> str:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "STDINST-1300 Test Tender"
 		doc.tender_reference = f"STDINST1300-{frappe.generate_hash(length=8)}"
@@ -65,8 +65,8 @@ class TestStdInstConstraints1300(IntegrationTestCase):
 			):
 				frappe.delete_doc("Tender STD Instance BOQ", boq_name, force=True, ignore_permissions=True)
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def _index_exists(self, table_name: str, index_name: str) -> bool:
 		return bool(
@@ -108,7 +108,7 @@ class TestStdInstConstraints1300(IntegrationTestCase):
 					"""
 					insert into `tabTender STD Instance`
 					(name, creation, modified, modified_by, owner, docstatus, naming_series,
-					 procurement_tender, template_version_code, applicability_profile_code,
+					 tm2_tender, template_version_code, applicability_profile_code,
 					 procurement_category, procurement_method, instance_status, readiness_status,
 					 created_from_tender_context, active_tender_slot)
 					values

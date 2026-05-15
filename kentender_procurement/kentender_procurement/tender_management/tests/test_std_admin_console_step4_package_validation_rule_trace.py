@@ -102,9 +102,9 @@ class TestSTDAdminConsoleStep4PackageValidationRuleTrace(unittest.TestCase):
 
 	def test_trace_std_rules_for_tender(self):
 		tname = "PW-STD-ADMIN4-TENDER"
-		if frappe.db.exists("Procurement Tender", tname):
-			frappe.delete_doc("Procurement Tender", tname, force=True)
-		doc = frappe.new_doc("Procurement Tender")
+		if frappe.db.exists("TM2 Tender", tname):
+			frappe.delete_doc("TM2 Tender", tname, force=True)
+		doc = frappe.new_doc("TM2 Tender")
 		doc.tender_title = "Admin step 4 trace tender"
 		doc.tender_reference = "STD-ADMIN-4-TRACE"
 		doc.std_template = TEMPLATE_NAME
@@ -121,7 +121,7 @@ class TestSTDAdminConsoleStep4PackageValidationRuleTrace(unittest.TestCase):
 			self.assertIn("rules", res)
 			self.assertIn("validation_result", res)
 		finally:
-			frappe.delete_doc("Procurement Tender", doc.name, force=True)
+			frappe.delete_doc("TM2 Tender", doc.name, force=True)
 			frappe.db.commit()
 
 

@@ -33,8 +33,8 @@ class TestStdInstAggregate0100(IntegrationTestCase):
 		frappe.set_user("Administrator")
 		super().tearDown()
 
-	def _minimal_procurement_tender(self) -> str:
-		doc = frappe.new_doc("Procurement Tender")
+	def _minimal_tm2_tender(self) -> str:
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "STDINST-0100 Test Tender"
 		doc.tender_reference = "STDINST0100-REF"
@@ -42,12 +42,12 @@ class TestStdInstAggregate0100(IntegrationTestCase):
 		return doc.name
 
 	def _delete_tender(self, name: str) -> None:
-		if frappe.db.exists("Procurement Tender", name):
-			frappe.delete_doc("Procurement Tender", name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", name):
+			frappe.delete_doc("TM2 Tender", name, force=True, ignore_permissions=True)
 
 	def _new_std_instance(self, tender_name: str, *, tender_context: bool = True):
 		si = frappe.new_doc("Tender STD Instance")
-		si.procurement_tender = tender_name
+		si.tm2_tender = tender_name
 		si.template_version_code = "STDTV-WORKS-BUILDING-REV-APR-2022"
 		si.applicability_profile_code = "WORKS-PROFILE-BUILDING-CIVIL-REV-APR-2022"
 		si.procurement_category = "WORKS"
@@ -58,7 +58,7 @@ class TestStdInstAggregate0100(IntegrationTestCase):
 		return si
 
 	def test_std_inst_0100_insert_happy_path(self) -> None:
-		tender = self._minimal_procurement_tender()
+		tender = self._minimal_tm2_tender()
 		si_name = None
 		try:
 			si = self._new_std_instance(tender)
@@ -68,10 +68,10 @@ class TestStdInstAggregate0100(IntegrationTestCase):
 			row = frappe.db.get_value(
 				"Tender STD Instance",
 				si_name,
-				["procurement_tender", "instance_status", "created_from_tender_context"],
+				["tm2_tender", "instance_status", "created_from_tender_context"],
 				as_dict=True,
 			)
-			self.assertEqual(row.procurement_tender, tender)
+			self.assertEqual(row.tm2_tender, tender)
 			self.assertEqual(row.instance_status, "Draft")
 			self.assertEqual(row.created_from_tender_context, 1)
 		finally:
@@ -80,7 +80,7 @@ class TestStdInstAggregate0100(IntegrationTestCase):
 			self._delete_tender(tender)
 
 	def test_std_inst_0100_rejects_without_tender_context(self) -> None:
-		tender = self._minimal_procurement_tender()
+		tender = self._minimal_tm2_tender()
 		try:
 			si = self._new_std_instance(tender, tender_context=False)
 			with self.assertRaises(frappe.ValidationError):
@@ -89,7 +89,7 @@ class TestStdInstAggregate0100(IntegrationTestCase):
 			self._delete_tender(tender)
 
 	def test_std_inst_0100_rejects_second_active_instance_same_tender(self) -> None:
-		tender = self._minimal_procurement_tender()
+		tender = self._minimal_tm2_tender()
 		first_name = None
 		try:
 			si1 = self._new_std_instance(tender)
@@ -103,15 +103,15 @@ class TestStdInstAggregate0100(IntegrationTestCase):
 				frappe.delete_doc("Tender STD Instance", first_name, force=True, ignore_permissions=True)
 			self._delete_tender(tender)
 
-	def test_std_inst_0100_procurement_tender_immutable(self) -> None:
-		t_a = self._minimal_procurement_tender()
-		t_b = self._minimal_procurement_tender()
+	def test_std_inst_0100_tm2_tender_immutable(self) -> None:
+		t_a = self._minimal_tm2_tender()
+		t_b = self._minimal_tm2_tender()
 		first_name = None
 		try:
 			si = self._new_std_instance(t_a)
 			si.insert(ignore_permissions=True)
 			first_name = si.name
-			si.procurement_tender = t_b
+			si.tm2_tender = t_b
 			with self.assertRaises(frappe.ValidationError):
 				si.save(ignore_permissions=True)
 		finally:
@@ -121,7 +121,7 @@ class TestStdInstAggregate0100(IntegrationTestCase):
 			self._delete_tender(t_b)
 
 	def test_std_inst_0100_second_instance_after_superseded(self) -> None:
-		tender = self._minimal_procurement_tender()
+		tender = self._minimal_tm2_tender()
 		first_name = None
 		second_name = None
 		try:
@@ -142,7 +142,7 @@ class TestStdInstAggregate0100(IntegrationTestCase):
 			self._delete_tender(tender)
 
 	def test_std_inst_0100_invalid_instance_status(self) -> None:
-		tender = self._minimal_procurement_tender()
+		tender = self._minimal_tm2_tender()
 		try:
 			si = self._new_std_instance(tender)
 			si.instance_status = "Not A Real Status"
@@ -157,7 +157,7 @@ class TestStdInstAggregate0100(IntegrationTestCase):
 		self.assertTrue(instance_status_occupies_tender_slot("Draft"))
 
 	def test_std_inst_0100_active_slot_column_tracks_status(self) -> None:
-		tender = self._minimal_procurement_tender()
+		tender = self._minimal_tm2_tender()
 		first_name = None
 		try:
 			si = self._new_std_instance(tender)

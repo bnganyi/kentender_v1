@@ -90,8 +90,8 @@ class TestDerivedAudit1100(IntegrationTestCase):
 					ignore_permissions=True,
 				)
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def _minimal_valid_boq_payload(self) -> dict:
 		return {
@@ -123,7 +123,7 @@ class TestDerivedAudit1100(IntegrationTestCase):
 		)
 
 	def test_1100_generated_on_insert_draft_output(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-1100 GEN"
 		doc.tender_reference = "DERIVED1100-GEN"
@@ -143,7 +143,7 @@ class TestDerivedAudit1100(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_1100_generation_requested_via_orchestrator(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-1100 REQ"
 		doc.tender_reference = "DERIVED1100-REQ"
@@ -176,7 +176,7 @@ class TestDerivedAudit1100(IntegrationTestCase):
 			OutputConsumptionService,
 		)
 
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-1100 CONS"
 		doc.tender_reference = "DERIVED1100-CONS"
@@ -202,7 +202,7 @@ class TestDerivedAudit1100(IntegrationTestCase):
 
 		from kentender_procurement.tender_management.std_instance import addendum as std_addendum
 
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "DERIVED-1100 ADD"
 		doc.tender_reference = "DERIVED1100-ADD"

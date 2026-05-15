@@ -149,11 +149,11 @@ class TestSecSmokeAuditCompleteness0830(IntegrationTestCase):
 			):
 				frappe.delete_doc("Tender STD Instance BOQ", boq_name, force=True, ignore_permissions=True)
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def _minimal_tender(self, *, ref: str) -> str:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = f"SEC-0830 {ref}"
 		doc.tender_reference = ref
@@ -196,7 +196,7 @@ class TestSecSmokeAuditCompleteness0830(IntegrationTestCase):
 
 	def _approved_ready_tender(self, ref: str) -> tuple[str, str]:
 		tn = self._minimal_tender(ref=ref)
-		frappe.db.set_value("Procurement Tender", tn, "source_package_code", f"REL-{ref}")
+		frappe.db.set_value("TM2 Tender", tn, "source_package_code", f"REL-{ref}")
 		si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 			tn,
 			ignore_permissions=True,
@@ -226,7 +226,7 @@ class TestSecSmokeAuditCompleteness0830(IntegrationTestCase):
 
 	def _locked_for_return(self, ref: str) -> tuple[str, str]:
 		tn = self._minimal_tender(ref=ref)
-		frappe.db.set_value("Procurement Tender", tn, "source_package_code", f"REL-{ref}")
+		frappe.db.set_value("TM2 Tender", tn, "source_package_code", f"REL-{ref}")
 		si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 			tn,
 			ignore_permissions=True,
@@ -262,13 +262,13 @@ class TestSecSmokeAuditCompleteness0830(IntegrationTestCase):
 				enforce_sec_authorization(
 					action_code="PUBLISH_TENDER",
 					actor="Administrator",
-					object_type="Procurement Tender",
+					object_type="TM2 Tender",
 					object_code=fake,
 					context={"object_exists": False},
 					fallback_message="missing tender",
 				)
 			rows = AuditEventService.get_audit_events_for_object(
-				"Procurement Tender",
+				"TM2 Tender",
 				fake,
 				{"result": "Denied"},
 			)
@@ -325,7 +325,7 @@ class TestSecSmokeAuditCompleteness0830(IntegrationTestCase):
 	def test_sec_smoke_audit_004_output_generation_audited(self) -> None:
 		"""SEC-SMOKE-AUDIT-004 — derived output generation emits DERIVED_MODEL_GENERATED audit."""
 		tn = self._minimal_tender(ref="SEC0830-AUDIT004")
-		frappe.db.set_value("Procurement Tender", tn, "source_package_code", "REL-SEC0830-A4")
+		frappe.db.set_value("TM2 Tender", tn, "source_package_code", "REL-SEC0830-A4")
 		si = TenderStdBindingService.create_std_instance_for_tm2_tender(
 			tn,
 			ignore_permissions=True,

@@ -161,7 +161,7 @@ class StdAddendumImpactService:
 			return plan
 
 		inst = frappe.get_doc("Tender STD Instance", instance_name)
-		tm2_only_no_pt = not (inst.procurement_tender or "").strip() and bool((inst.tm2_tender or "").strip())
+		tm2_only_no_pt = bool((inst.tm2_tender or "").strip())
 
 		executed_outputs: list[dict[str, Any]] = []
 		_allow = bool((ad_code or "").strip())

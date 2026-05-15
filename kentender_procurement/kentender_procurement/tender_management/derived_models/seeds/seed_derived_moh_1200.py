@@ -99,23 +99,26 @@ def _ensure_package_by_code(package_code: str, package_label: str) -> str:
 
 def _ensure_tender_for_reference(package_code: str, tender_reference: str) -> str:
 	existing = frappe.db.get_value(
-		"Procurement Tender",
+		"TM2 Tender",
 		{"tender_reference": tender_reference},
 		"name",
 	)
 	if existing:
-		doc = frappe.get_doc("Procurement Tender", existing)
+		doc = frappe.get_doc("TM2 Tender", existing)
 		if (doc.std_template or "").strip() != TEMPLATE_CODE:
 			doc.std_template = TEMPLATE_CODE
 			doc.save(ignore_permissions=True)
 		return existing
 
-	tender = frappe.new_doc("Procurement Tender")
+	tender = frappe.new_doc("TM2 Tender")
 	tender.std_template = TEMPLATE_CODE
 	tender.tender_title = "MOH Works Tender 2026 (DERIVED-1200 fixture)"
 	tender.tender_reference = tender_reference
 	tender.procurement_package = package_code
-	tender.insert(ignore_permissions=True)
+	tender.procurement_category = "Works"
+	tender.procuring_entity_code = "MOH"
+	tender.fiscal_year = "2026"
+	tender.insert(ignore_permissions=True, ignore_mandatory=True)
 	return tender.name
 
 
@@ -323,7 +326,7 @@ def run(
 
 	if frappe.db.exists("Tender STD Instance", INSTANCE_CODE):
 		existing_si = frappe.get_doc("Tender STD Instance", INSTANCE_CODE)
-		if (existing_si.procurement_tender or "").strip() != tender_name:
+		if (existing_si.tm2_tender or "").strip() != tender_name:
 			return {
 				"ok": False,
 				"code": CODE_INSTANCE_TENDER_MISMATCH,

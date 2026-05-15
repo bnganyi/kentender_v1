@@ -110,8 +110,8 @@ class TestSecSmokeDownstreamControls0820(IntegrationTestCase):
 					ignore_permissions=True,
 				)
 			frappe.delete_doc("Tender STD Instance", name, force=True, ignore_permissions=True)
-		if frappe.db.exists("Procurement Tender", tender_name):
-			frappe.delete_doc("Procurement Tender", tender_name, force=True, ignore_permissions=True)
+		if frappe.db.exists("TM2 Tender", tender_name):
+			frappe.delete_doc("TM2 Tender", tender_name, force=True, ignore_permissions=True)
 
 	def _minimal_valid_boq_payload(self) -> dict:
 		return {
@@ -140,7 +140,7 @@ class TestSecSmokeDownstreamControls0820(IntegrationTestCase):
 		inst = frappe.get_doc("Tender STD Instance", si_name)
 		snap = frappe.new_doc("Tender STD Instance Snapshot")
 		snap.tender_std_instance = si_name
-		snap.procurement_tender = tender
+		snap.tm2_tender = tender
 		snap.snapshot_type = "Configuration"
 		snap.snapshot_reason = "SEC-0820"
 		snap.snapshot_status = "Final"
@@ -156,7 +156,7 @@ class TestSecSmokeDownstreamControls0820(IntegrationTestCase):
 		return snap.name
 
 	def test_sec_smoke_down_001_submission_consumes_dsm_allowed(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "SEC-0820 DOWN-001"
 		doc.tender_reference = "SEC0820-DOWN-001"
@@ -186,7 +186,7 @@ class TestSecSmokeDownstreamControls0820(IntegrationTestCase):
 		self.assertEqual(_last_title(), MANUAL_SUBMISSION_REQUIREMENT_DENIED)
 
 	def test_sec_smoke_down_003_opening_consumes_dom_allowed(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "SEC-0820 DOWN-003"
 		doc.tender_reference = "SEC0820-DOWN-003"
@@ -216,7 +216,7 @@ class TestSecSmokeDownstreamControls0820(IntegrationTestCase):
 		self.assertEqual(_last_title(), BOQ_ARITHMETIC_CORRECTION_STAGE_VIOLATION)
 
 	def test_sec_smoke_down_005_evaluation_consumes_dem_allowed(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "SEC-0820 DOWN-005"
 		doc.tender_reference = "SEC0820-DOWN-005"
@@ -244,7 +244,7 @@ class TestSecSmokeDownstreamControls0820(IntegrationTestCase):
 		self.assertEqual(_last_title(), MANUAL_EVALUATION_CRITERIA_DENIED)
 
 	def test_sec_smoke_down_007_contract_consumes_dcm_allowed(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "SEC-0820 DOWN-007"
 		doc.tender_reference = "SEC0820-DOWN-007"
@@ -268,7 +268,7 @@ class TestSecSmokeDownstreamControls0820(IntegrationTestCase):
 			self._cleanup_tender(doc.name)
 
 	def test_sec_smoke_down_008_contract_override_dcm_denied(self) -> None:
-		doc = frappe.new_doc("Procurement Tender")
+		doc = frappe.new_doc("TM2 Tender")
 		doc.std_template = TEMPLATE_CODE
 		doc.tender_title = "SEC-0820 DOWN-008"
 		doc.tender_reference = "SEC0820-DOWN-008"

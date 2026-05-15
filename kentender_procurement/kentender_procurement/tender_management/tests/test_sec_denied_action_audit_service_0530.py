@@ -60,11 +60,11 @@ class TestSecDeniedActionAuditService0530(IntegrationTestCase):
 		cases = [
 			("std-admin@example.com", "CREATE_STD_INSTANCE_FROM_TENDER", "Tender STD Instance", "INST-0530-1", "STD_AUTH_PERMISSION_DENIED", "High"),
 			("proc@example.com", "CONFIGURE_STD_TEMPLATE_MAPPINGS", "STD Template", "TPL-0530-2", "STD_AUTH_PERMISSION_DENIED", "High"),
-			("assistant@example.com", "PUBLISH_TENDER", "Procurement Tender", "TND-0530-3", "PUBLISH_PERMISSION_DENIED", "Critical"),
-			("approver@example.com", "EDIT_WORKS_BOQ_DURING_APPROVAL", "Procurement Tender", "TND-0530-4", "STD_AUTH_PERMISSION_DENIED", "High"),
-			("opening@example.com", "PERFORM_BOQ_ARITHMETIC_CORRECTION", "Procurement Tender", "TND-0530-5", "BOQ_ARITHMETIC_CORRECTION_STAGE_VIOLATION", "High"),
-			("eval@example.com", "ADD_MANUAL_EVALUATION_CRITERIA", "Procurement Tender", "TND-0530-6", "MANUAL_EVALUATION_CRITERIA_DENIED", "High"),
-			("contract@example.com", "SILENT_DCM_CONTRACT_OVERRIDE", "Procurement Tender", "TND-0530-7", "STD_AUTH_DCM_CONTRACT_BINDING_VIOLATION", "Critical"),
+			("assistant@example.com", "PUBLISH_TENDER", "TM2 Tender", "TND-0530-3", "PUBLISH_PERMISSION_DENIED", "Critical"),
+			("approver@example.com", "EDIT_WORKS_BOQ_DURING_APPROVAL", "TM2 Tender", "TND-0530-4", "STD_AUTH_PERMISSION_DENIED", "High"),
+			("opening@example.com", "PERFORM_BOQ_ARITHMETIC_CORRECTION", "TM2 Tender", "TND-0530-5", "BOQ_ARITHMETIC_CORRECTION_STAGE_VIOLATION", "High"),
+			("eval@example.com", "ADD_MANUAL_EVALUATION_CRITERIA", "TM2 Tender", "TND-0530-6", "MANUAL_EVALUATION_CRITERIA_DENIED", "High"),
+			("contract@example.com", "SILENT_DCM_CONTRACT_OVERRIDE", "TM2 Tender", "TND-0530-7", "STD_AUTH_DCM_CONTRACT_BINDING_VIOLATION", "Critical"),
 			("auditor@example.com", "EDIT_STD_INSTANCE_PARAMETERS", "Tender STD Instance", "INST-0530-8", "STD_AUTH_PERMISSION_DENIED", "High"),
 			("user@example.com", "EDIT_STD_INSTANCE_PARAMETERS", "Tender STD Instance", "INST-0530-9", "POST_PUBLICATION_EDIT_DENIED_ADDENDUM_REQUIRED", "Critical"),
 		]
@@ -130,7 +130,7 @@ class TestSecDeniedActionAuditService0530(IntegrationTestCase):
 		name = DeniedActionAuditService.recordDeniedAction(
 			"alias@example.com",
 			"PUBLISH_TENDER",
-			"Procurement Tender",
+			"TM2 Tender",
 			"TND-0530-ALIAS",
 			{"denial_code": "PUBLISH_PERMISSION_DENIED", "risk_level": "Critical"},
 			{},

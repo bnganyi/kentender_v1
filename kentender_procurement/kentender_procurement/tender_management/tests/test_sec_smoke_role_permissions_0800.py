@@ -42,7 +42,7 @@ class TestSecSmokeRolePermissions0800(IntegrationTestCase):
 		return ActionAvailabilityService.get_action_availability(
 			self._actor_email(actor_user_code),
 			action_code,
-			"Procurement Tender",
+			"TM2 Tender",
 			"TND-SEC-0800",
 			context=ctx,
 		)

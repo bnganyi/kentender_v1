@@ -75,14 +75,14 @@ def resolve_tender_code_for_instance(instance_code: str) -> str:
 	code = (instance_code or "").strip()
 	if not code:
 		return ""
-	pt = frappe.db.get_value("Tender STD Instance", code, "procurement_tender")
-	if not pt:
+	tm2 = frappe.db.get_value("Tender STD Instance", code, "tm2_tender")
+	if not tm2:
 		return ""
-	ref = frappe.db.get_value("Procurement Tender", pt, "tender_reference")
+	ref = frappe.db.get_value("TM2 Tender", tm2, "tender_reference")
 	if (ref or "").strip():
 		return str(ref).strip()
-	name = frappe.db.get_value("Procurement Tender", pt, "name")
-	return (name or pt or "").strip()
+	name = frappe.db.get_value("TM2 Tender", tm2, "name")
+	return (name or tm2 or "").strip()
 
 
 def union_stale_outputs_for_parameter_codes(parameter_codes: Iterable[str]) -> list[str]:

@@ -31,10 +31,10 @@ class TestSecSecurityAuditApis0900(IntegrationTestCase):
 			"kentender_procurement.tender_management.security.api.AuditEventService.get_audit_events_for_object",
 			return_value=[{"name": "AE-1", "event_type": "E1"}],
 		):
-			res = sec_api_audit_events("Procurement Tender", "TND-0900-1")
+			res = sec_api_audit_events("TM2 Tender", "TND-0900-1")
 		self.assertTrue(res["success"])
 		self.assertEqual(res["actor_user_code"], "Administrator")
-		self.assertEqual(res["object_type"], "Procurement Tender")
+		self.assertEqual(res["object_type"], "TM2 Tender")
 		self.assertEqual(res["object_code"], "TND-0900-1")
 		self.assertEqual(len(res["events"]), 1)
 
