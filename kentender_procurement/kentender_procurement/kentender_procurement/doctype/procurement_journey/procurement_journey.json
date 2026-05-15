@@ -1,0 +1,400 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:journey_code",
+ "creation": "2026-05-15 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "journey_code",
+  "journey_title",
+  "description",
+  "section_entity",
+  "procuring_entity_code",
+  "fiscal_year",
+  "procurement_category",
+  "procurement_method",
+  "section_aggregate",
+  "current_stage_key",
+  "current_stage_label",
+  "current_status_category",
+  "current_owner_module",
+  "current_owner_role",
+  "next_action",
+  "blocker_count",
+  "critical_blocker_count",
+  "section_refs",
+  "strategy_ref",
+  "budget_line_ref",
+  "demand_ref",
+  "procurement_plan_ref",
+  "procurement_package_ref",
+  "std_template_version_ref",
+  "tender_std_instance_ref",
+  "tm2_tender_ref",
+  "publication_snapshot_ref",
+  "opening_readiness_ref",
+  "section_journey_steps",
+  "steps",
+  "section_audit",
+  "created_at",
+  "updated_at",
+  "is_master_seed"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "journey_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Journey Code",
+   "reqd": 1,
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "journey_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Journey Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "section_entity",
+   "fieldtype": "Section Break",
+   "label": "Procurement context"
+  },
+  {
+   "fieldname": "procuring_entity_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Procuring Entity Code",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "fiscal_year",
+   "fieldtype": "Data",
+   "label": "Fiscal Year",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "procurement_category",
+   "fieldtype": "Select",
+   "label": "Procurement Category",
+   "options": "Works\nServices\nGoods\nConsultancy"
+  },
+  {
+   "fieldname": "procurement_method",
+   "fieldtype": "Select",
+   "label": "Procurement Method",
+   "options": "Open Tender\nRestricted Tender\nRFQ\nRFP\nDirect Procurement"
+  },
+  {
+   "fieldname": "section_aggregate",
+   "fieldtype": "Section Break",
+   "label": "Aggregate snapshot (non-authoritative)"
+  },
+  {
+   "fieldname": "current_stage_key",
+   "fieldtype": "Data",
+   "label": "Current Stage Key",
+   "reqd": 1,
+   "description": "Stable key aligned with JOURNEY_STEP_CONFIG (R1-002), e.g. tender_published."
+  },
+  {
+   "fieldname": "current_stage_label",
+   "fieldtype": "Data",
+   "label": "Current Stage Label",
+   "reqd": 1
+  },
+  {
+   "default": "Not Started",
+   "fieldname": "current_status_category",
+   "fieldtype": "Select",
+   "label": "Current Status Category",
+   "options": "Not Started\nIn Progress\nNeeds Action\nBlocked\nReady for Handoff\nHanded Off\nCompleted\nReturned\nCancelled\nSuperseded\nAudit Only\nStale",
+   "reqd": 1
+  },
+  {
+   "fieldname": "current_owner_module",
+   "fieldtype": "Data",
+   "label": "Current Owner Module",
+   "reqd": 1
+  },
+  {
+   "fieldname": "current_owner_role",
+   "fieldtype": "Data",
+   "label": "Current Owner Role"
+  },
+  {
+   "fieldname": "next_action",
+   "fieldtype": "Small Text",
+   "label": "Next Action"
+  },
+  {
+   "default": "0",
+   "fieldname": "blocker_count",
+   "fieldtype": "Int",
+   "label": "Blocker Count",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "critical_blocker_count",
+   "fieldtype": "Int",
+   "label": "Critical Blocker Count",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_refs",
+   "fieldtype": "Section Break",
+   "label": "Source references (navigation only — ADR-PLC-002)"
+  },
+  {
+   "fieldname": "strategy_ref",
+   "fieldtype": "Data",
+   "label": "Strategy Ref",
+   "search_index": 1
+  },
+  {
+   "fieldname": "budget_line_ref",
+   "fieldtype": "Data",
+   "label": "Budget Line Ref",
+   "search_index": 1
+  },
+  {
+   "fieldname": "demand_ref",
+   "fieldtype": "Data",
+   "label": "Demand Ref",
+   "search_index": 1
+  },
+  {
+   "fieldname": "procurement_plan_ref",
+   "fieldtype": "Data",
+   "label": "Procurement Plan Ref",
+   "search_index": 1
+  },
+  {
+   "fieldname": "procurement_package_ref",
+   "fieldtype": "Data",
+   "label": "Procurement Package Ref",
+   "search_index": 1
+  },
+  {
+   "fieldname": "std_template_version_ref",
+   "fieldtype": "Data",
+   "label": "STD Template Version Ref",
+   "search_index": 1
+  },
+  {
+   "fieldname": "tender_std_instance_ref",
+   "fieldtype": "Data",
+   "label": "Tender STD Instance Ref",
+   "search_index": 1
+  },
+  {
+   "fieldname": "tm2_tender_ref",
+   "fieldtype": "Data",
+   "label": "TM2 Tender Ref",
+   "search_index": 1
+  },
+  {
+   "fieldname": "publication_snapshot_ref",
+   "fieldtype": "Data",
+   "label": "Publication Snapshot Ref",
+   "search_index": 1
+  },
+  {
+   "fieldname": "opening_readiness_ref",
+   "fieldtype": "Data",
+   "label": "Opening Readiness Ref",
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_journey_steps",
+   "fieldtype": "Section Break",
+   "label": "Journey steps"
+  },
+  {
+   "fieldname": "steps",
+   "fieldtype": "Table",
+   "label": "Steps",
+   "options": "Procurement Journey Step"
+  },
+  {
+   "fieldname": "section_audit",
+   "fieldtype": "Section Break",
+   "label": "Audit"
+  },
+  {
+   "fieldname": "created_at",
+   "fieldtype": "Datetime",
+   "label": "Created At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "updated_at",
+   "fieldtype": "Datetime",
+   "label": "Updated At",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_master_seed",
+   "fieldtype": "Check",
+   "label": "Is Master Seed",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-05-15 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "Procurement Journey",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Procurement Planner",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Requisitioner",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Department Approver",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Auditor",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Planning Authority",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Finance Reviewer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "Strategy Manager",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "journey_code,journey_title,procuring_entity_code,tm2_tender_ref",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "journey_title",
+ "track_changes": 1
+}
