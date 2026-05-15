@@ -12,13 +12,41 @@
  "is_hidden": 0,
  "label": "Procurement Home",
  "links": [],
- "module": "Kentender Procurement",
+ "module": "Desk",
  "name": "Procurement Home",
  "number_cards": [],
  "parent_page": "",
  "public": 1,
  "quick_lists": [],
- "roles": [],
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Administrator"
+  },
+  {
+   "role": "Requisitioner"
+  },
+  {
+   "role": "Department Approver"
+  },
+  {
+   "role": "Finance Reviewer"
+  },
+  {
+   "role": "Procurement Planner"
+  },
+  {
+   "role": "Procurement Officer"
+  },
+  {
+   "role": "Planning Authority"
+  },
+  {
+   "role": "Auditor"
+  }
+ ],
  "type": "Workspace",
  "sequence_id": 10.0,
  "shortcuts": [],

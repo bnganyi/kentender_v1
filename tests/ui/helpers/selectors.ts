@@ -4,7 +4,7 @@ export const budgetModule = 'Budget';
 export const procurementModule = 'Procurement';
 
 export const strategyWorkspace = {
-	heading: 'Strategy Management',
+	heading: 'Strategy Alignment',
 	/** Frappe Desk resolves workspaces under `/desk/<slug>` (pathname must include `strategy-management` for client binding). */
 	route: '/desk/strategy-management',
 	/** Matches workspace intro paragraph (Wave 1 shell). */
@@ -13,7 +13,7 @@ export const strategyWorkspace = {
 };
 
 export const budgetWorkspace = {
-	heading: 'Budget Management',
+	heading: 'Budget & Funding',
 	/** Desk resolves workspaces under `/desk/<slug>` or `/app/<slug>` depending on build. */
 	route: '/desk/budget-management',
 	placeholderBlurb: 'Create and manage budget allocations aligned to strategic plans.',

@@ -26,16 +26,12 @@ Required variables used by smoke helpers:
 - `UI_HOD_USER`, `UI_HOD_PASSWORD`
 - `UI_FINANCE_USER`, `UI_FINANCE_PASSWORD`
 
-## Fixtures for Procurement G3
+## Fixtures for Procurement G3 / G0-012
 
-`tests/ui/smoke/procurement/procurement-g3.spec.ts` expects:
+`tests/ui/smoke/procurement/procurement-g3.spec.ts` and `procurement-sidebar-g0-012.spec.ts` expect:
 
 - Procurement module Desktop Icon is present and clickable.
-- Procurement sidebar contains:
-  - `Procurement Home`
-  - `Demand Intake & Approval`
-  - `Procurement Planning`
-  - `Settings` section (with links such as `Procurement Templates`).
+- Procurement sidebar follows **G0-012** order (see `workspace_sidebar/procurement.json`): **Procurement Home** through **Evidence & Audit**, then **Configuration** (Official STD Library, Governance, templates/profiles DocTypes).
 - DIA shell exposes `dia-landing-page` and `dia-page-title`.
 - Procurement Planning shell exposes `pp-page-title`, `pp-current-plan-bar`, `pp-control-bar`.
 - Procurement Home shell exposes `ph-landing-page` and quick-link buttons for DIA and Planning.

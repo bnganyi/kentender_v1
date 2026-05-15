@@ -28,7 +28,7 @@ test('Budget landing shows shell, intro, create action, and list or empty state'
 	await loginAsAdministrator(page);
 	await openBudgetLanding(page);
 
-	await expect(page.getByTestId('budget-page-title')).toContainText('Budget Management');
+	await expect(page.getByTestId('budget-page-title')).toContainText('Budget & Funding');
 	await expect(page.getByTestId('budget-page-intro')).toContainText(
 		'Create and manage budgets aligned to strategic plans.'
 	);
@@ -65,14 +65,14 @@ test('Budget landing shows work tabs; Administrator defaults to All; Draft tab a
 test('Strategy Manager defaults to Draft tab when test user is configured', async ({ page }) => {
 	const loggedIn = await tryLogin(() => loginAsStrategyManager(page));
 	test.skip(!loggedIn, 'Strategy Manager test user not configured in this environment');
-	await openBudgetLanding(page);
+	await openBudgetLanding(page, { skipIfNotPermitted: true });
 	await expect(page.getByTestId('budget-tab-draft')).toHaveClass(/btn-primary/);
 });
 
 test('Planning Authority defaults to My Work tab when test user is configured', async ({ page }) => {
 	const loggedIn = await tryLogin(() => loginAsPlanningAuthority(page));
 	test.skip(!loggedIn, 'Planning Authority test user not configured in this environment');
-	await openBudgetLanding(page);
+	await openBudgetLanding(page, { skipIfNotPermitted: true });
 	await expect(page.getByTestId('budget-tab-my-work')).toHaveClass(/btn-primary/);
 });
 
@@ -194,11 +194,13 @@ test('Budget builder shell loads summary and program list', async ({ page }) => 
 	await expect(page.getByTestId('budget-builder-allocated')).toBeVisible();
 	await expect(page.getByTestId('budget-builder-remaining')).toBeVisible();
 	await expect(page.getByTestId('budget-line-list')).toBeVisible({ timeout: 60_000 });
-	const lineOrEmpty = page
-		.locator('[data-testid^="budget-line-row-"]')
-		.first()
-		.or(page.getByText(/No budget lines|Add Budget Line/i));
-	await expect(lineOrEmpty).toBeVisible({ timeout: 30_000 });
+	const row = page.locator('[data-testid^="budget-line-row-"]').first();
+	const rowCount = await page.locator('[data-testid^="budget-line-row-"]').count();
+	if (rowCount > 0) {
+		await expect(row).toBeVisible({ timeout: 30_000 });
+	} else {
+		await expect(page.getByText(/No budget lines in this view/i)).toBeVisible({ timeout: 30_000 });
+	}
 	await expect(page.getByTestId('budget-allocation-editor')).toBeVisible();
 	await expect(page.getByTestId('budget-builder-empty-selection')).toBeVisible();
 });

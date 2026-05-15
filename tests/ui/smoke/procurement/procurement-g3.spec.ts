@@ -68,10 +68,10 @@ test.describe('G3 Procurement desk smoke', () => {
 		const homeLinks = page.getByRole('link', { name: 'Procurement Home', exact: true });
 		await expect(homeLinks.first()).toBeVisible();
 		await expect(homeLinks).toHaveCount(1);
-		await expect(page.getByText('Settings', { exact: true }).first()).toBeVisible();
+		await expect(page.getByText('Configuration', { exact: true }).first()).toBeVisible();
 	});
 
-	test('DIA and Settings DocType keep full Procurement sidebar (regression)', async ({ page }) => {
+	test('DIA and Configuration DocType keep full Procurement sidebar (regression)', async ({ page }) => {
 		await loginAsAdministrator(page);
 		await openProcurementWorkspaceFromModule(page, procurementHomeWorkspace.heading);
 		await expectSidebarProcurementHomeFirst(page);
@@ -81,11 +81,11 @@ test.describe('G3 Procurement desk smoke', () => {
 		await expect(page.getByTestId('dia-page-title')).toContainText('Demand Intake and Approval');
 		await expectSidebarProcurementHomeFirst(page);
 
-		// Expand Settings (keep_closed=1), then follow the DocType link (same UX as a user).
-		const settingsSection = page
+		// Expand Configuration (keep_closed=1), then follow the DocType link (same UX as a user).
+		const configurationSection = page
 			.locator('.body-sidebar .sidebar-item-container.section-item')
-			.filter({ hasText: 'Settings' });
-		await settingsSection.locator('.standard-sidebar-item').first().click();
+			.filter({ hasText: 'Configuration' });
+		await configurationSection.locator('.standard-sidebar-item').first().click();
 		await page
 			.locator('.body-sidebar a.item-anchor')
 			.filter({ hasText: 'Procurement Templates' })

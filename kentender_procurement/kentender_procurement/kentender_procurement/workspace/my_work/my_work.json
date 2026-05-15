@@ -1,0 +1,93 @@
+{
+ "app": "kentender_procurement",
+ "charts": [],
+ "content": "[{\"id\":\"mw_h1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>My Work</b></span>\",\"col\":12}},{\"id\":\"mw_p1\",\"type\":\"paragraph\",\"data\":{\"text\":\"Queue-first entry to demand, plans, and packages you are working on. Use the shortcuts below; deeper journey views will consolidate here in a later release.\",\"col\":12}}]",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "inbox",
+ "idx": 0,
+ "is_hidden": 0,
+ "label": "My Work",
+ "links": [],
+ "module": "Kentender Procurement",
+ "name": "My Work",
+ "number_cards": [],
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Administrator"
+  },
+  {
+   "role": "Requisitioner"
+  },
+  {
+   "role": "Department Approver"
+  },
+  {
+   "role": "Finance Reviewer"
+  },
+  {
+   "role": "Procurement Planner"
+  },
+  {
+   "role": "Procurement Officer"
+  },
+  {
+   "role": "Planning Authority"
+  },
+  {
+   "role": "Auditor"
+  }
+ ],
+ "sequence_id": 20.0,
+ "shortcuts": [
+  {
+   "color": "",
+   "doc_view": "List",
+   "format": "",
+   "icon": "clipboard",
+   "kanban_board": "",
+   "label": "Demands",
+   "link_to": "Demand",
+   "restrict_to_domain": "",
+   "stats_filter": "",
+   "type": "DocType",
+   "url": ""
+  },
+  {
+   "color": "",
+   "doc_view": "List",
+   "format": "",
+   "icon": "kanban",
+   "kanban_board": "",
+   "label": "Procurement Plans",
+   "link_to": "Procurement Plan",
+   "restrict_to_domain": "",
+   "stats_filter": "",
+   "type": "DocType",
+   "url": ""
+  },
+  {
+   "color": "",
+   "doc_view": "List",
+   "format": "",
+   "icon": "folder",
+   "kanban_board": "",
+   "label": "Procurement Packages",
+   "link_to": "Procurement Package",
+   "restrict_to_domain": "",
+   "stats_filter": "",
+   "type": "DocType",
+   "url": ""
+  }
+ ],
+ "title": "My Work"
+}

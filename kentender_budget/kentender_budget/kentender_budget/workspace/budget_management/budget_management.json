@@ -10,9 +10,9 @@
  "icon": "finance",
  "idx": 0,
  "is_hidden": 0,
- "label": "Budget Management",
+ "label": "Budget & Funding",
  "links": [],
- "module": "Kentender Budget",
+ "module": "Desk",
  "name": "Budget Management",
  "number_cards": [],
  "parent_page": "",
@@ -23,10 +23,31 @@
    "role": "System Manager"
   },
   {
+   "role": "Administrator"
+  },
+  {
    "role": "Strategy Manager"
   },
   {
    "role": "Planning Authority"
+  },
+  {
+   "role": "Finance Reviewer"
+  },
+  {
+   "role": "Requisitioner"
+  },
+  {
+   "role": "Procurement Planner"
+  },
+  {
+   "role": "Procurement Officer"
+  },
+  {
+   "role": "Department Approver"
+  },
+  {
+   "role": "Auditor"
   }
  ],
  "sequence_id": 10.0,

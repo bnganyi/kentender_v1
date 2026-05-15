@@ -60,6 +60,8 @@ _KT_SIDEBAR_NAMES: tuple[str, ...] = (
 # REGRESSION CHECKLIST: every **public Procurement-module workspace** that users can
 # open from the desk (including direct URL / hard refresh) needs a row here, or the
 # left rail renders empty. Add a test in ``setup/tests/test_workspace_sidebar_fastpath.py``.
+# G0-012 spine stubs (**My Work**, **Bid Opening**, **Evaluation and Award**,
+# **Contract Management**) must stay mapped to the main **Procurement** rail.
 #
 # WHY: Frappe's sidebar JS (sidebar.js set_workspace_sidebar) first checks
 # ``frappe.boot.workspace_sidebar_item[entity_name.toLowerCase()]``.  If the
@@ -83,8 +85,16 @@ _KT_WORKSPACE_TO_SIDEBAR: dict[str, str] = {
 	"procurement planning": "Procurement",
 	"demand intake and approval": "Procurement",
 	"procurement home": "Procurement",
+	"my work": "Procurement",
+	"bid opening": "Procurement",
+	"evaluation and award": "Procurement",
+	"contract management": "Procurement",
 	"ktsm supplier registry": "Procurement",
 	"governance & configuration": "Procurement",
+	# Cross-app lifecycle workspaces: keep the Procurement rail when users follow
+	# G0-012 sidebar links (same pattern as DIA / Planning).
+	"strategy management": "Procurement",
+	"budget management": "Procurement",
 }
 
 

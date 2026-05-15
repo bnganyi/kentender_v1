@@ -16,6 +16,7 @@ def after_migrate():
 	if os.path.exists(page_path) and not frappe.db.exists("Page", "strategy-builder"):
 		import_file_by_path(page_path)
 	_sync_strategy_management_workspace()
+	_sync_strategy_desktop_icon()
 	_backfill_strategic_plan_required_fields()
 
 
@@ -30,7 +31,27 @@ def _sync_strategy_management_workspace():
 	)
 	if not os.path.exists(path):
 		return
-	import_file_by_path(path)
+	import_file_by_path(path, force=True)
+	# G0-016: harmonised sidebar/list label. Keep `title` == legacy headline: Frappe Desk
+	# `generate_route` for module tiles uses `workspaces.title` (see frappe/desk/page/desktop/desktop.js).
+	if frappe.db.exists("Workspace", "Strategy Management"):
+		frappe.db.set_value(
+			"Workspace",
+			"Strategy Management",
+			{"label": "Strategy Alignment", "title": "Strategy Management"},
+			update_modified=False,
+		)
+
+
+def _sync_strategy_desktop_icon():
+	"""Keep Desktop Icon row aligned with repo JSON (e.g. hidden home tile per IA)."""
+	path = os.path.join(
+		frappe.get_app_path("kentender_strategy"),
+		"desktop_icon",
+		"strategy.json",
+	)
+	if os.path.exists(path):
+		import_file_by_path(path, force=True)
 
 
 def _backfill_strategic_plan_required_fields():

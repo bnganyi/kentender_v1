@@ -88,6 +88,7 @@ doctype_js = {
 
 # Never append ?v= to page_js values — Frappe resolves them as disk paths (meta.py get_code_files_via_hooks).
 page_js = {
+	"procurement-journey": "public/js/procurement_journey_page.js",
 	"tender-management-v2": "public/js/tender_management_v2_workbench_page.js",
 	"std-engine": [
 		"public/js/std_library/action_availability.js",

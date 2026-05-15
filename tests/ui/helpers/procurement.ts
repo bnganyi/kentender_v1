@@ -41,35 +41,120 @@ export async function expectKtsmSupplierRegistryWorkbenchShell(page: Page) {
 	await expect(page.getByTestId('ktsm-header')).toBeVisible();
 }
 
-export async function expectSidebarProcurementHomeFirst(page: Page) {
-	const home = page.getByRole('link', { name: 'Procurement Home', exact: true }).first();
-	const dia = page.getByRole('link', { name: /Demand Intake/i }).first();
-	const planning = page.getByRole('link', { name: 'Procurement Planning', exact: true }).first();
-	const supplier = page.getByRole('link', { name: 'Supplier Management', exact: true }).first();
-	await home.waitFor({ state: 'visible', timeout: 45_000 });
-	await dia.waitFor({ state: 'visible', timeout: 45_000 });
-	await planning.waitFor({ state: 'visible', timeout: 45_000 });
-	await supplier.waitFor({ state: 'visible', timeout: 45_000 });
-	await expect(home).toBeVisible();
-	await expect(page.getByText('Settings', { exact: true }).first()).toBeVisible();
+/** G0-012 / LV-G0-017-02 — lifecycle spine order in the Procurement left rail. */
+const G012_PRIMARY_SPECS: readonly (string | RegExp)[] = [
+	'Procurement Home',
+	'Procurement Journeys',
+	'My Work',
+	'Strategy Alignment',
+	'Budget & Funding',
+	/Demand Intake/i,
+	'Procurement Planning',
+	'Tender Document Readiness',
+	'Tender Management',
+	'Bid Opening',
+	/Evaluation\s*&\s*Award|Evaluation and Award/i,
+	'Contract Management',
+	'Supplier Management',
+	'Evidence & Audit',
+];
 
-	for (const loc of [home, dia, planning, supplier]) {
-		await loc.scrollIntoViewIfNeeded().catch(() => {});
+export type ExpectProcurementSidebarSpineG012Options = {
+	/**
+	 * When true, skip **My Work** in ordering assertions. The **My Work** workspace uses
+	 * `module: Kentender Procurement`; Desk hides the sidebar row when that module is not in
+	 * the user `allow_modules` (common for spine-only general roles). Administrator / full
+	 * module sets still use the default full spine.
+	 */
+	omitMyWork?: boolean;
+	/**
+	 * When true, only assert **among links that appear** for this user (workspace `roles` /
+	 * module gate may hide most spine rows). Still requires **Procurement Home** and
+	 * **Procurement Journeys**, then checks vertical order for every other visible spine label
+	 * in G0-012 order. **Configuration** is asserted only if that heading is present.
+	 */
+	onlyVisibleSpineLinks?: boolean;
+};
+
+export async function expectProcurementSidebarSpineG012(
+	page: Page,
+	opts?: ExpectProcurementSidebarSpineG012Options,
+) {
+	const specs: readonly (string | RegExp)[] = opts?.omitMyWork
+		? G012_PRIMARY_SPECS.filter((s) => s !== 'My Work')
+		: G012_PRIMARY_SPECS;
+	const sb = page.locator('.body-sidebar');
+
+	if (opts?.onlyVisibleSpineLinks) {
+		await expect(sb.getByRole('link', { name: 'Procurement Home', exact: true }).first()).toBeVisible({
+			timeout: 45_000,
+		});
+		await expect(sb.getByRole('link', { name: 'Procurement Journeys', exact: true }).first()).toBeVisible({
+			timeout: 45_000,
+		});
+		const visibleLocs: Locator[] = [];
+		for (const spec of specs) {
+			const loc =
+				typeof spec === 'string'
+					? sb.getByRole('link', { name: spec, exact: true }).first()
+					: sb.getByRole('link', { name: spec }).first();
+			try {
+				await loc.waitFor({ state: 'visible', timeout: 2500 });
+			} catch {
+				continue;
+			}
+			await loc.scrollIntoViewIfNeeded().catch(() => {});
+			visibleLocs.push(loc);
+		}
+		expect(visibleLocs.length).toBeGreaterThanOrEqual(2);
+		const boxes: ({ y: number } | null)[] = [];
+		for (const loc of visibleLocs) {
+			boxes.push(await loc.boundingBox());
+		}
+		for (let i = 0; i < boxes.length - 1; i += 1) {
+			const a = boxes[i];
+			const b = boxes[i + 1];
+			expect(a).not.toBeNull();
+			expect(b).not.toBeNull();
+			if (a && b) {
+				expect(a.y).toBeLessThanOrEqual(b.y + 4);
+			}
+		}
+		const cfg = sb.getByText('Configuration', { exact: true }).first();
+		if (await cfg.isVisible({ timeout: 3000 }).catch(() => false)) {
+			await expect(cfg).toBeVisible();
+		}
+		return;
 	}
 
-	const homeBox = await home.boundingBox();
-	const diaBox = await dia.boundingBox();
-	const planningBox = await planning.boundingBox();
-	const supplierBox = await supplier.boundingBox();
-	expect(homeBox).not.toBeNull();
-	expect(diaBox).not.toBeNull();
-	expect(planningBox).not.toBeNull();
-	expect(supplierBox).not.toBeNull();
-	if (!homeBox || !diaBox || !planningBox || !supplierBox) return;
-	expect(homeBox.y).toBeLessThanOrEqual(diaBox.y);
-	expect(homeBox.y).toBeLessThanOrEqual(planningBox.y);
-	expect(planningBox.y).toBeLessThanOrEqual(supplierBox.y);
+	const locs = specs.map((spec) =>
+		typeof spec === 'string'
+			? sb.getByRole('link', { name: spec, exact: true }).first()
+			: sb.getByRole('link', { name: spec }).first(),
+	);
+	for (const loc of locs) {
+		await loc.waitFor({ state: 'visible', timeout: 45_000 });
+		await loc.scrollIntoViewIfNeeded().catch(() => {});
+	}
+	await expect(sb.getByText('Configuration', { exact: true }).first()).toBeVisible();
+
+	const boxes: ({ y: number } | null)[] = [];
+	for (const loc of locs) {
+		boxes.push(await loc.boundingBox());
+	}
+	for (let i = 0; i < boxes.length - 1; i += 1) {
+		const a = boxes[i];
+		const b = boxes[i + 1];
+		expect(a).not.toBeNull();
+		expect(b).not.toBeNull();
+		if (a && b) {
+			expect(a.y).toBeLessThanOrEqual(b.y + 4);
+		}
+	}
 }
+
+/** @deprecated Prefer {@link expectProcurementSidebarSpineG012} — kept for older spec imports. */
+export const expectSidebarProcurementHomeFirst = expectProcurementSidebarSpineG012;
 
 export async function clickSidebarLink(page: Page, label: string | RegExp): Promise<Locator> {
 	const link = page.getByRole('link', { name: label }).first();

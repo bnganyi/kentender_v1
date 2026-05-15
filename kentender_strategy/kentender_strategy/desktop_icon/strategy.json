@@ -15,7 +15,17 @@
  "modified_by": "Administrator",
  "name": "Strategy",
  "owner": "Administrator",
- "roles": [],
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Administrator"
+  },
+  {
+   "role": "Strategy Manager"
+  }
+ ],
  "sidebar": "Strategy",
  "standard": 1
 }

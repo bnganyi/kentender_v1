@@ -15,7 +15,20 @@
  "modified_by": "Administrator",
  "name": "Budget",
  "owner": "Administrator",
- "roles": [],
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Administrator"
+  },
+  {
+   "role": "Planning Authority"
+  },
+  {
+   "role": "Finance Reviewer"
+  }
+ ],
  "sidebar": "Budget",
  "standard": 1
 }

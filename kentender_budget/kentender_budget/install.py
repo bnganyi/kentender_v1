@@ -24,12 +24,19 @@ def _sync_budget_management_workspace():
 	)
 	if os.path.exists(path):
 		import_file_by_path(path, force=True)
+	# G0-016: harmonised label; `title` must stay "Budget Management" for Desk routing (slug).
+	if frappe.db.exists("Workspace", "Budget Management"):
+		frappe.db.set_value(
+			"Workspace",
+			"Budget Management",
+			{"label": "Budget & Funding", "title": "Budget Management"},
+			update_modified=False,
+		)
 
 
 def _sync_budget_workspace_sidebar():
 	path = os.path.join(
 		frappe.get_app_path("kentender_budget"),
-		"kentender_budget",
 		"workspace_sidebar",
 		"budget.json",
 	)
@@ -40,7 +47,6 @@ def _sync_budget_workspace_sidebar():
 def _sync_budget_desktop_icon():
 	path = os.path.join(
 		frappe.get_app_path("kentender_budget"),
-		"kentender_budget",
 		"desktop_icon",
 		"budget.json",
 	)

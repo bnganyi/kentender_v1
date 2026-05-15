@@ -7,6 +7,7 @@ Run:
 """
 
 import frappe
+from frappe.desk.desktop import Workspace
 from frappe.tests import IntegrationTestCase
 
 import kentender_budget.install
@@ -21,11 +22,34 @@ class TestBudgetWorkspaceB02(IntegrationTestCase):
 		self.assertTrue(frappe.db.exists("Workspace", "Budget Management"))
 		ws = frappe.get_doc("Workspace", "Budget Management")
 		role_names = {r.role for r in ws.roles}
-		self.assertEqual(
-			role_names,
-			{"System Manager", "Strategy Manager", "Planning Authority"},
-		)
-		self.assertNotIn("Requisitioner", role_names)
+		# Strategy Manager: Draft tab + submit flows on Budget landing (B5.x / Playwright smoke).
+		self.assertIn("Strategy Manager", role_names)
+		# G0-015: Procurement spine roles that open the Budget wrapper from the shared rail.
+		for r in (
+			"Requisitioner",
+			"Procurement Planner",
+			"Procurement Officer",
+			"Department Approver",
+			"Auditor",
+		):
+			self.assertIn(r, role_names)
+		self.assertIn("Planning Authority", role_names)
+		self.assertIn("Finance Reviewer", role_names)
+		self.assertIn("System Manager", role_names)
+		self.assertIn("Administrator", role_names)
+
+	def test_strategy_manager_permitted_on_budget_workspace(self):
+		email = "strategy.manager@moh.test"
+		if not frappe.db.exists("User", email):
+			self.skipTest("Seed Strategy Manager user not present on this site")
+		frappe.set_user(email)
+		page = frappe.get_all(
+			"Workspace",
+			filters={"name": "Budget Management"},
+			fields=["name", "title", "public", "for_user", "module"],
+			limit=1,
+		)[0]
+		self.assertTrue(Workspace(page, minimal=True).is_permitted())
 
 	def test_budget_workspace_has_no_list_shortcuts(self):
 		"""Landing lists budgets in-app; EditorJS shortcuts would duplicate the list (UX)."""

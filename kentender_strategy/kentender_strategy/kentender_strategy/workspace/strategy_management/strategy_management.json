@@ -10,9 +10,9 @@
  "icon": "color-swatch",
  "idx": 0,
  "is_hidden": 0,
- "label": "Strategy Management",
+ "label": "Strategy Alignment",
  "links": [],
- "module": "Kentender Strategy",
+ "module": "Desk",
  "name": "Strategy Management",
  "number_cards": [],
  "parent_page": "",
@@ -23,10 +23,25 @@
    "role": "System Manager"
   },
   {
+   "role": "Administrator"
+  },
+  {
    "role": "Strategy Manager"
   },
   {
-   "role": "Planning Authority"
+   "role": "Requisitioner"
+  },
+  {
+   "role": "Procurement Planner"
+  },
+  {
+   "role": "Procurement Officer"
+  },
+  {
+   "role": "Department Approver"
+  },
+  {
+   "role": "Auditor"
   }
  ],
  "sequence_id": 10.0,

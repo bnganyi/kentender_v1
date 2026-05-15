@@ -445,7 +445,7 @@
 			'<div class="kt-budget-workspace-header kt-budget-workspace-header--compact mb-2">' +
 			'<div class="kt-budget-header-row">' +
 			'<h2 class="kt-budget-page-title h5 mb-1" data-testid="budget-page-title">' +
-			escapeHtml(__("Budget Management")) +
+			escapeHtml(__("Budget & Funding")) +
 			"</h2>" +
 			'<div class="kt-budget-header-cta" data-testid="budget-header-cta"></div>' +
 			"</div>" +

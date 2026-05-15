@@ -18,6 +18,7 @@ Scanned trees (relative to ``tender_management/``):
   ``services/create_tender_from_package.py``,
   ``services/submit_tender_for_publication_review.py``, ``services/approve_tender_publication.py``,
   ``services/bind_tender_std_instance.py``, ``services/run_publication_readiness.py`` (when present)
+- ``services/planning_tender_handoff_*.py`` (package → TM2 release / audit / XMV chain)
 - ``std_instance/tm2_publication_readiness_service.py``
 """
 
@@ -63,6 +64,9 @@ def _tm2_surface_py_files() -> list[Path]:
 		p = tm / "services" / name
 		if p.is_file():
 			out.append(p)
+	services_dir = tm / "services"
+	if services_dir.is_dir():
+		out.extend(sorted(services_dir.glob("planning_tender_handoff_*.py")))
 	extra = tm / "std_instance" / "tm2_publication_readiness_service.py"
 	if extra.is_file():
 		out.append(extra)

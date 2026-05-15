@@ -212,7 +212,7 @@
 			'<div class="kt-strategy-workspace-header kt-strategy-workspace-header--compact mb-2">' +
 			'<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1">' +
 			'<h2 class="kt-strategy-page-title h5 mb-0" data-testid="strategy-page-title">' +
-			escapeHtml(__("Strategy Management")) +
+			escapeHtml(__("Strategy Alignment")) +
 			"</h2>" +
 			'<button type="button" class="btn btn-xs btn-default" data-testid="strategy-workspace-back-desktop">' +
 			escapeHtml(__("← Back to Desktop")) +

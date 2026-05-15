@@ -46,6 +46,19 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		items = bootinfo.get("workspace_sidebar_item") or {}
 		self.assertIn("procurement home", items)
 		self.assertIn("procurement planning", items)
+		for key in (
+			"my work",
+			"bid opening",
+			"evaluation and award",
+			"contract management",
+			"strategy management",
+			"budget management",
+		):
+			self.assertIn(
+				key,
+				items,
+				msg=f"G0-012 workspace {key!r} requires boot sidebar fast-path key",
+			)
 		self.assertIn(
 			"governance & configuration",
 			items,
