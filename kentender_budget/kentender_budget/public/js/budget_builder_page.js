@@ -367,18 +367,23 @@
 					</div>
 				</div>
 
-				<div class="small text-muted mb-2 mt-3">${escapeHtml(__("Financial Context"))}</div>
-				<div class="row">
-					<div class="col-12 col-md-6">
-						<div class="kt-budget-display-row"><div class="kt-budget-display-row__label">${escapeHtml(__("Reserved Amount"))}</div><div class="kt-budget-display-row__value">KES ${escapeHtml(formatAmount(selectedLine.amount_reserved, 2))}</div></div>
-						<div class="kt-budget-display-row"><div class="kt-budget-display-row__label">${escapeHtml(__("Available Amount"))}</div><div class="kt-budget-display-row__value">KES ${escapeHtml(formatAmount(selectedLine.amount_available, 2))}</div></div>
-					</div>
-					<div class="col-12 col-md-6">
-						<div class="kt-budget-display-row"><div class="kt-budget-display-row__label">${escapeHtml(__("Currency"))}</div><div class="kt-budget-display-row__value">${escapeHtml(parentBudget.currency || "—")}</div></div>
-						<div class="kt-budget-display-row"><div class="kt-budget-display-row__label">${escapeHtml(__("Active"))}</div><div class="kt-budget-display-row__value">${Number(selectedLine.is_active || 0) ? escapeHtml(__("Yes")) : escapeHtml(__("No"))}</div></div>
-					</div>
+			<div class="small text-muted mb-2 mt-3">${escapeHtml(__("Financial Context"))}</div>
+			<div class="row">
+				<div class="col-12 col-md-6">
+					<div class="kt-budget-display-row"><div class="kt-budget-display-row__label">${escapeHtml(__("Reserved Amount"))}</div><div class="kt-budget-display-row__value">KES ${escapeHtml(formatAmount(selectedLine.amount_reserved, 2))}</div></div>
+					<div class="kt-budget-display-row"><div class="kt-budget-display-row__label">${escapeHtml(__("Available Amount"))}</div><div class="kt-budget-display-row__value">KES ${escapeHtml(formatAmount(selectedLine.amount_available, 2))}</div></div>
 				</div>
-			</div>`;
+				<div class="col-12 col-md-6">
+					<div class="kt-budget-display-row"><div class="kt-budget-display-row__label">${escapeHtml(__("Currency"))}</div><div class="kt-budget-display-row__value">${escapeHtml(parentBudget.currency || "—")}</div></div>
+					<div class="kt-budget-display-row"><div class="kt-budget-display-row__label">${escapeHtml(__("Active"))}</div><div class="kt-budget-display-row__value">${Number(selectedLine.is_active || 0) ? escapeHtml(__("Yes")) : escapeHtml(__("No"))}</div></div>
+				</div>
+			</div>
+
+			<div class="small text-muted mb-2 mt-3">${escapeHtml(__("Procurement Use"))}</div>
+			<div data-testid="plc-budget-procurement-use" class="kt-budget-procurement-use-section">
+				<div data-testid="plc-budget-procurement-use-loading" class="text-muted small">${escapeHtml(__("Loading…"))}</div>
+			</div>
+		</div>`;
 		}
 
 		showAddBudgetLineModal() {
@@ -652,19 +657,101 @@
 			);
 		}
 
-		bindHandlers() {
-			const me = this;
-			function bindBack(el) {
-				$(el).on("click", function (e) {
-					if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
-						return;
-					}
-					e.preventDefault();
-					frappe.set_route("Workspaces", "Budget Management");
-				});
-			}
-			bindBack(this.$wrapper.find("[data-testid='budget-builder-back-to-landing']"));
-			bindBack(this.$wrapper.find("[data-testid='budget-builder-back-button']"));
+	loadProcurementUseSection(lineName) {
+		const $section = this.$wrapper.find('[data-testid="plc-budget-procurement-use"]');
+		if (!$section.length || !lineName) {
+			return;
+		}
+
+		function esc(s) {
+			const t = String(s == null ? "" : s);
+			return frappe.utils && frappe.utils.escape_html ? frappe.utils.escape_html(t) : t;
+		}
+
+		frappe.call({
+			method: "kentender_procurement.procurement_lifecycle.api.journey_api.get_procurement_use_for_budget_line",
+			args: { budget_line_name: lineName },
+			callback: function (r) {
+				if (!$section.length) return;
+				if (r.exc) {
+					$section.html(`<p class="text-danger small mb-0" data-testid="plc-budget-procurement-use-error">${esc(r.exc)}</p>`);
+					return;
+				}
+				const d = r.message;
+				if (!d || !d.ok) {
+					const msg = (d && d.message) || __("Unable to load procurement use data.");
+					$section.html(`<p class="text-muted small mb-0" data-testid="plc-budget-procurement-use-empty">${esc(msg)}</p>`);
+					return;
+				}
+
+				const journeys = d.journeys || [];
+				const demands = d.demands || [];
+				const packages = d.packages || [];
+
+				if (!journeys.length && !demands.length && !packages.length) {
+					$section.html(`<p class="text-muted small mb-0" data-testid="plc-budget-procurement-use-none">${__("No linked procurement journeys, demands, or packages.")}</p>`);
+					return;
+				}
+
+				let html = "";
+
+				if (journeys.length) {
+					html += `<div class="mb-2" data-testid="plc-budget-procurement-use-journeys"><div class="small font-weight-bold mb-1">${__("Linked procurement journeys")}</div><ul class="list-unstyled mb-0 pl-0">`;
+					journeys.forEach(function (j) {
+						const title = esc(j.journey_title || j.journey_code || "");
+						const code = esc(j.journey_code || "");
+						const stage = esc(j.current_stage_label || "");
+						const href = esc(j.open_route || "#");
+						html += `<li class="mb-1" data-testid="plc-budget-procurement-use-journey-row"><a href="${href}"><span data-testid="plc-budget-procurement-use-journey-title">${title}</span></a> <span class="text-muted small">(${code})</span>${stage ? `<span class="text-muted small"> — ${stage}</span>` : ""}</li>`;
+					});
+					html += `</ul></div>`;
+				}
+
+				if (demands.length) {
+					html += `<div class="mb-2" data-testid="plc-budget-procurement-use-demands"><div class="small font-weight-bold mb-1">${__("Linked demands")}</div><ul class="list-unstyled mb-0 pl-0">`;
+					demands.forEach(function (dem) {
+						const title = esc(dem.title || dem.demand_id || "");
+						const code = esc(dem.demand_id || "");
+						const status = esc(dem.status || "");
+						const href = esc(dem.list_route || "#");
+						html += `<li class="mb-1" data-testid="plc-budget-procurement-use-demand-row"><a href="${href}"><span data-testid="plc-budget-procurement-use-demand-title">${title}</span></a> <span class="text-muted small">(${code})</span>${status ? `<span class="text-muted small"> — ${status}</span>` : ""}</li>`;
+					});
+					html += `</ul></div>`;
+				}
+
+				if (packages.length) {
+					html += `<div data-testid="plc-budget-procurement-use-packages"><div class="small font-weight-bold mb-1">${__("Linked procurement packages")}</div><ul class="list-unstyled mb-0 pl-0">`;
+					packages.forEach(function (pkg) {
+						const title = esc(pkg.name || pkg.code || "");
+						const code = esc(pkg.code || "");
+						const status = esc(pkg.status || "");
+						const href = esc(pkg.list_route || "#");
+						html += `<li class="mb-1" data-testid="plc-budget-procurement-use-package-row"><a href="${href}"><span data-testid="plc-budget-procurement-use-package-name">${title}</span></a> <span class="text-muted small">(${code})</span>${status ? `<span class="text-muted small"> — ${status}</span>` : ""}</li>`;
+					});
+					html += `</ul></div>`;
+				}
+
+				$section.html(html);
+			},
+			error: function (err) {
+				$section.html(`<p class="text-danger small mb-0" data-testid="plc-budget-procurement-use-error">${esc(err && err.message)}</p>`);
+			},
+		});
+	}
+
+	bindHandlers() {
+		const me = this;
+		function bindBack(el) {
+			$(el).on("click", function (e) {
+				if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+					return;
+				}
+				e.preventDefault();
+				frappe.set_route("Workspaces", "Budget Management");
+			});
+		}
+		bindBack(this.$wrapper.find("[data-testid='budget-builder-back-to-landing']"));
+		bindBack(this.$wrapper.find("[data-testid='budget-builder-back-button']"));
 			this.$wrapper.find(".kt-budget-row[data-budget-line]").on("click", function () {
 				me.selectedBudgetLineName = $(this).attr("data-budget-line") || null;
 				me.render();
@@ -686,10 +773,16 @@
 			this.$wrapper.find("[data-testid='budget-line-remove-button']").on("click", function () {
 				me.confirmRemoveBudgetLine();
 			});
-			this.$wrapper.find("[data-testid='budget-line-hard-delete-button']").on("click", function () {
-				me.confirmHardDeleteBudgetLine();
-			});
+		this.$wrapper.find("[data-testid='budget-line-hard-delete-button']").on("click", function () {
+			me.confirmHardDeleteBudgetLine();
+		});
+
+		// Async-load Procurement Use section for the currently selected budget line.
+		const selLine = this.getSelectedBudgetLine();
+		if (selLine && selLine.name) {
+			this.loadProcurementUseSection(selLine.name);
 		}
+	}
 
 		saveSelectedAllocation() {
 			if (this.readOnly) {

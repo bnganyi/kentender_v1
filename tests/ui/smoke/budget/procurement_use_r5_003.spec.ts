@@ -1,5 +1,5 @@
 /**
- * R5-003 / LV-R5-003-01 — Procurement Use panel on Budget Line form.
+ * R5-003 / LV-R5-003-01 — Procurement Use panel on Budget Line form AND Budget Builder.
  */
 import { expect, test } from '@playwright/test';
 
@@ -10,6 +10,7 @@ const WORKS_JOURNEY_CODE = 'JRN-MOH-2026-001';
 const WORKS_DEMAND_ID = 'DEM-MOH-2026-001';
 const WORKS_PKG_CODE = 'PKG-MOH-2026-001';
 const WORKS_BUDGET_NAME = 'BUDGET-MOH-2026';
+const WORKS_BUDGET_DOC = 'BUD-MOH-2026-.0084';
 
 test.describe('Procurement use panel on Budget Line (R5-003)', () => {
 	test('PLC-R5-003-01: Budget Line shows Procurement Use panel with funding confirmation', async ({
@@ -129,5 +130,31 @@ test.describe('Procurement use panel on Budget Line (R5-003)', () => {
 		await expect(
 			page.getByTestId('plc-budget-procurement-use-package-row').first(),
 		).toContainText(WORKS_PKG_CODE);
+	});
+
+	test('PLC-R5-003-03: Budget Builder inline detail shows Procurement Use section', async ({
+		page,
+	}) => {
+		await loginAsAdministrator(page);
+
+		// Navigate to Budget Builder for the WORKS budget
+		await page.goto(`/desk/budget-builder/${encodeURIComponent(WORKS_BUDGET_DOC)}`, {
+			waitUntil: 'domcontentloaded',
+		});
+
+		// The WORKS budget line should be auto-selected (first in list)
+		// Wait for the procurement use section to appear in the detail panel
+		const section = page.getByTestId('plc-budget-procurement-use');
+		await expect(section).toBeVisible({ timeout: 60_000 });
+
+		// Wait for the loading state to resolve (journeys section appears)
+		await expect(
+			page.getByTestId('plc-budget-procurement-use-journeys'),
+		).toBeVisible({ timeout: 30_000 });
+
+		// Journey title visible in the builder
+		await expect(
+			page.getByTestId('plc-budget-procurement-use-journey-title').first(),
+		).toContainText(/District Hospital|Renovation/i, { timeout: 30_000 });
 	});
 });
