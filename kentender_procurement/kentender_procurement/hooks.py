@@ -52,10 +52,14 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/procurement_planning_workspace.css?v={_desk_asset_v('public/css/procurement_planning_workspace.css')}",
 	f"/assets/kentender_procurement/css/procurement_home_workspace.css?v={_desk_asset_v('public/css/procurement_home_workspace.css')}",
 	f"/assets/kentender_procurement/css/procurement_journey_page.css?v={_desk_asset_v('public/css/procurement_journey_page.css')}",
+	f"/assets/kentender_procurement/css/module_journey_context_header.css?v={_desk_asset_v('public/css/module_journey_context_header.css')}",
+	f"/assets/kentender_procurement/css/tm2_tender_handoff_panel.css?v={_desk_asset_v('public/css/tm2_tender_handoff_panel.css')}",
 	f"/assets/kentender_procurement/css/procurement_package.css?v={_desk_asset_v('public/css/procurement_package.css')}",
 	f"/assets/kentender_procurement/css/std_library_shell.css?v={_desk_asset_v('public/css/std_library_shell.css')}",
 ]
 app_include_js = [
+	f"/assets/kentender_procurement/js/module_journey_context_header.js?v={_desk_asset_v('public/js/module_journey_context_header.js')}",
+	f"/assets/kentender_procurement/js/tm2_tender_handoff_panel.js?v={_desk_asset_v('public/js/tm2_tender_handoff_panel.js')}",
 	f"/assets/kentender_procurement/js/workspace_list_selection_utils.js?v={_desk_asset_v('public/js/workspace_list_selection_utils.js')}",
 	f"/assets/kentender_procurement/js/demand_intake_workspace.js?v={_desk_asset_v('public/js/demand_intake_workspace.js')}",
 	f"/assets/kentender_procurement/js/pp_template_selector.js?v={_desk_asset_v('public/js/pp_template_selector.js')}",
@@ -90,6 +94,7 @@ doctype_js = {
 # Never append ?v= to page_js values — Frappe resolves them as disk paths (meta.py get_code_files_via_hooks).
 page_js = {
 	"plc-procurement-journey": "public/js/procurement_journey_page.js",
+	"plc-module-journey-context": "public/js/plc_module_journey_context_page.js",
 	"tender-management-v2": "public/js/tender_management_v2_workbench_page.js",
 	"std-engine": [
 		"public/js/std_library/action_availability.js",

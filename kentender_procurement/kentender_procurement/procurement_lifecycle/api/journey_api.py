@@ -39,7 +39,7 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from frappe.utils import cstr
+from frappe.utils import cint, cstr
 
 from kentender_procurement.procurement_lifecycle.journey_aggregate import (
     get_procurement_journey,
@@ -60,8 +60,14 @@ from kentender_procurement.procurement_lifecycle.strategy_node_journeys import (
 from kentender_procurement.procurement_lifecycle.budget_line_procurement_use import (
     build_procurement_use_payload,
 )
+from kentender_procurement.procurement_lifecycle.demand_planning_status import (
+    build_demand_planning_status_payload,
+)
 from kentender_procurement.procurement_lifecycle.api.permission_guard import (
     require_journey_read,
+)
+from kentender_procurement.tender_management.services.tm2_handoff_panel import (
+    build_tm2_handoff_panel_payload,
 )
 
 # Status categories considered "terminal / not active"
@@ -260,6 +266,57 @@ def get_journey_by_object(
 
 
 # ---------------------------------------------------------------------------
+# 3b. get_tm2_handoff_panel — TM2 Tender Form (R5-011 / LV-R5-011-01)
+# ---------------------------------------------------------------------------
+
+@frappe.whitelist()
+def get_tm2_handoff_panel(
+    tender_code: str | None = None,
+    include_optional_opening: str | int | bool | None = None,
+) -> dict[str, Any] | None:
+    """Return lifecycle handoffs relevant to ``tender_code`` for TM2 desk panel.
+
+    :param tender_code: Business code / TM2 document name.
+    :param include_optional_opening: When truthy (``1``, ``True``),
+        include Tender Closing Certificate + Opening Readiness Record summaries
+        when present on the linked journey aggregate.
+    :returns: Payload with ``handoffs`` list or ``None`` when the tender /
+        linkage is missing or inaccessible.
+    :raises frappe.PermissionError: If the caller cannot read Procurement
+        Journey or the TM2 tender document.
+    """
+    _require_journey_read_permission()
+    tc = cstr(tender_code or "").strip()
+    if not tc:
+        frappe.throw("tender_code is required.", frappe.ValidationError)
+    if not frappe.db.exists("TM2 Tender", tc):
+        return None
+    if not frappe.has_permission("TM2 Tender", "read", doc=tc):
+        frappe.throw(
+            frappe._("You are not permitted to read this TM2 Tender."),
+            frappe.PermissionError,
+        )
+
+    include_open = False
+    raw = include_optional_opening
+    if isinstance(raw, bool):
+        include_open = raw
+    elif isinstance(raw, (int, float)) and raw:
+        include_open = True
+    elif raw not in (None, ""):
+        rs = str(raw).strip().lower()
+        include_open = (
+            rs not in {"", "false", "0", "none", "no"}
+            and (rs in {"true", "yes", "1", "on"} or bool(cint(raw)))
+        )
+
+    return build_tm2_handoff_panel_payload(
+        tc,
+        include_optional_opening=include_open,
+    )
+
+
+# ---------------------------------------------------------------------------
 # 4. get_journey_steps  (pack §9.3)
 # ---------------------------------------------------------------------------
 
@@ -350,6 +407,25 @@ def get_procurement_use_for_budget_line(
     if not nm:
         frappe.throw("budget_line_name is required.", frappe.ValidationError)
     return build_procurement_use_payload(nm)
+
+
+@frappe.whitelist()
+def get_demand_planning_status(
+    demand_name: str | None = None,
+) -> dict[str, Any]:
+    """Return planning status and Demand→Planning handoff artefacts for a Demand.
+
+    Read-only aggregate for the Demand desk panel (R5-004 / LV-R5-004-02).
+
+    :param demand_name: Frappe ``name`` (primary key) of the ``Demand`` document.
+    :raises frappe.PermissionError: If the user cannot read Procurement Journey.
+    :raises frappe.ValidationError: If ``demand_name`` is blank.
+    """
+    _require_journey_read_permission()
+    nm = cstr(demand_name or "").strip()
+    if not nm:
+        frappe.throw("demand_name is required.", frappe.ValidationError)
+    return build_demand_planning_status_payload(nm)
 
 
 # ---------------------------------------------------------------------------

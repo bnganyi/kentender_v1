@@ -1,0 +1,41 @@
+{
+ "content": null,
+ "creation": "2026-05-16 12:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2026-05-16 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "plc-module-journey-context",
+ "owner": "Administrator",
+ "page_name": "plc-module-journey-context",
+ "roles": [
+  {
+   "role": "Administrator"
+  },
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Procurement Officer"
+  },
+  {
+   "role": "Procurement Planner"
+  },
+  {
+   "role": "Requisitioner"
+  },
+  {
+   "role": "Planning Authority"
+  },
+  {
+   "role": "Auditor"
+  }
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "Module journey context"
+}

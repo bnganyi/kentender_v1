@@ -12,8 +12,13 @@ from typing import Any
 import frappe
 from frappe import _
 from frappe.utils import getdate
+from frappe.utils.data import quoted, slug
 
 from kentender_procurement.tender_management.services import std_template_governance as gov
+from kentender_procurement.tender_management.seeds.works_master_std_seed import (
+	STD_TEMPLATE_CODE as _WORKS_SEED_STD_TEMPLATE_CODE,
+	STD_TEMPLATE_VERSION_REF as _WORKS_SEED_PLC_VERSION_REF,
+)
 
 _FILTER_FIELDS = (
 	"name",
@@ -384,50 +389,146 @@ def _bundle_preview_detail(
 	}
 
 
-def _usage_detail(version_code: str, status: str, bundle_status: str) -> dict[str, Any]:
-	tenders = [
-		{
-			"code": f"TND-{version_code[-4:] or '0001'}",
-			"title": "Roads Rehabilitation Works FY 2026",
-			"status": "Published" if status == "Active" else "Draft",
-			"procuring_entity": "KenTender Authority",
-			"view_label": "View Tender",
-		}
-	]
-	instances = [
-		{
-			"code": f"INST-{version_code[-4:] or '0001'}",
-			"status": "In Use" if status == "Active" else "Prepared",
-			"publication_state": "Published" if status == "Active" else "Internal",
-			"view_label": "View STD Instance Read-Only",
-		}
-	]
-	outputs = (
-		[
-			{
-				"output_code": f"BNDL-{version_code[-4:] or '0001'}",
-				"version": "v1",
-				"view_label": "View Evidence",
-			}
-		]
-		if bundle_status == "Available"
-		else []
+def _plc_binding_codes(template_code: str, std_doc_name: str) -> tuple[str, ...]:
+	"""Return version strings PLC/TM2 may store for this catalogue row."""
+	codes = {(template_code or "").strip(), (std_doc_name or "").strip()}
+	codes.discard("")
+	if _WORKS_SEED_STD_TEMPLATE_CODE in codes:
+		plc = (_WORKS_SEED_PLC_VERSION_REF or "").strip()
+		if plc:
+			codes.add(plc)
+	return tuple(sorted(codes))
+
+
+def _build_usage_detail(
+	template_code: str, std_doc_name: str, _status: str, _bundle_preview_status: str
+) -> dict[str, Any]:
+	"""PLC usage for STD-LIB Usage tab (aggregates Procurement Journey + TM2 Tender rows).
+
+	Uses ``ignore_permissions`` so hidden technical reference fields participate in filtering
+	while the enclosing ``get_std_library_template_detail`` call remains authenticated.
+	"""
+	bindings = set(_plc_binding_codes(template_code, std_doc_name))
+	std_link_name = (std_doc_name or "").strip() or (template_code or "").strip()
+
+	code_list = list(bindings)
+	journey_rows_raw: list[dict[str, Any]] = frappe.get_list(
+		"Procurement Journey",
+		filters={"docstatus": ("!=", 2), "std_template_version_ref": ("in", code_list)},
+		fields=[
+			"name",
+			"journey_code",
+			"journey_title",
+			"tm2_tender_ref",
+			"procuring_entity_code",
+		],
+		order_by="modified desc",
+		limit=150,
+		# Field-level hides std_template_version_ref for most roles; this read serves the
+		# authorised STD catalogue detail surface (`get_std_library_template_detail`).
+		ignore_permissions=True,
 	)
-	addenda = [
-		{
-			"addendum_code": f"ADD-{version_code[-3:] or '001'}",
-			"linked_context": "Clarification on qualification criteria",
-			"view_label": "View Evidence",
-		}
+
+	link_tender_refs: set[str] = set()
+	journeys_out: list[dict[str, Any]] = []
+	for jr in journey_rows_raw:
+		jc = str(jr.get("journey_code") or "").strip()
+		title = str(jr.get("journey_title") or "").strip()
+		entity = str(jr.get("procuring_entity_code") or "").strip()
+		ref = str(jr.get("tm2_tender_ref") or "").strip()
+		journeys_out.append(
+			{
+				"journey_code": jc,
+				"title": title,
+				"procuring_entity": entity,
+				"open_route": f"/desk/plc-procurement-journey/{quoted(jc)}"
+				if jc
+				else "/desk/plc-procurement-journey",
+				"view_label": _("Open journey"),
+			}
+		)
+		if ref:
+			link_tender_refs.add(ref)
+
+	tenders_by_name: dict[str, dict[str, Any]] = {}
+
+	blist = sorted(bindings)
+	or_filters: list[Any] = [
+		["template_version", "in", blist],
+		["template_code", "in", blist],
 	]
+	if std_link_name:
+		or_filters.append(["std_template", "=", std_link_name])
+
+	found = frappe.get_list(
+		"TM2 Tender",
+		filters={"docstatus": ("!=", 2)},
+		or_filters=or_filters,
+		fields=[
+			"name",
+			"tender_code",
+			"tender_title",
+			"status",
+			"procuring_entity_code",
+			"template_version",
+		],
+		order_by="modified desc",
+		limit=200,
+		ignore_permissions=True,
+	)
+	for t in found:
+		nm = str(t.get("name") or "").strip()
+		if nm:
+			tenders_by_name[nm] = dict(t)
+
+	if link_tender_refs:
+		linked = frappe.get_list(
+			"TM2 Tender",
+			filters={
+				"docstatus": ("!=", 2),
+				"name": ("in", list(link_tender_refs)),
+			},
+			fields=[
+				"name",
+				"tender_code",
+				"tender_title",
+				"status",
+				"procuring_entity_code",
+				"template_version",
+			],
+			limit=min(len(link_tender_refs), 250) + 5,
+			ignore_permissions=True,
+		)
+		for t in linked:
+			nm = str(t.get("name") or "").strip()
+			if nm:
+				tenders_by_name[nm] = dict(t)
+
+	tenders_out: list[dict[str, Any]] = []
+	doc_slug = slug("TM2 Tender")
+	for nm in sorted(tenders_by_name.keys(), key=lambda k: tenders_by_name[k].get("tender_code") or k):
+		trow = tenders_by_name[nm]
+		tenders_out.append(
+			{
+				"code": str(trow.get("tender_code") or "").strip(),
+				"title": str(trow.get("tender_title") or "").strip(),
+				"status": str(trow.get("status") or "").strip(),
+				"procuring_entity": str(trow.get("procuring_entity_code") or "").strip(),
+				"view_label": _("Open tender"),
+				"open_route": f"/desk/{quoted(doc_slug)}/{quoted(nm)}",
+			}
+		)
+
 	return {
 		"summary": {
-			"tenders_using_count": len(tenders),
+			"tenders_using_count": len(tenders_out),
+			"journeys_using_count": len(journeys_out),
 		},
-		"tenders": tenders,
-		"instances": instances,
-		"outputs": outputs,
-		"addenda": addenda,
+		"journeys": journeys_out,
+		"tenders": tenders_out,
+		"instances": [],
+		"outputs": [],
+		"addenda": [],
 	}
 
 
@@ -900,7 +1001,12 @@ def get_std_library_template_detail(version_code: str) -> dict:
 
 	validation_health = _validation_category_health(status, validation_label)
 	bundle_preview_detail = _bundle_preview_detail(status, validation_label, bundle_preview, user_roles)
-	usage_detail = _usage_detail(code, status, bundle_preview)
+	usage_detail = _build_usage_detail(
+		str(doc.get("template_code") or code),
+		str(doc.get("name") or code),
+		status,
+		bundle_preview,
+	)
 	supersession_detail = _supersession_detail(code, status, lifecycle_status, user_roles)
 	advanced_detail = _advanced_detail(lifecycle_status, user_roles)
 	audit_detail = _audit_detail(code, user_roles)

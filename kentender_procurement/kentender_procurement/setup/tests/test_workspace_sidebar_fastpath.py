@@ -102,3 +102,32 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 			and r.link_to == "std-engine"
 		]
 		self.assertEqual(len(page_std_engine), 1)
+
+	def test_procurement_boot_sidebar_includes_strategy_alignment_and_budget_links(self):
+		"""Regression: G0-012 primary rail must list Strategy Alignment + Budget before DIA."""
+		if not frappe.db.exists("Workspace Sidebar", "Procurement"):
+			self.skipTest("Procurement Workspace Sidebar not on site")
+		bootinfo: dict = {"workspace_sidebar_item": {}}
+		patch_bootinfo(bootinfo)
+		proc = (bootinfo.get("workspace_sidebar_item") or {}).get("procurement") or {}
+		labels = [row.get("label") for row in proc.get("items") or []]
+		self.assertIn(
+			"Strategy Alignment",
+			labels,
+			msg="Strategy Management workspace link must survive boot sidebar rebuild",
+		)
+		self.assertIn(
+			"Budget & Funding",
+			labels,
+			msg="Budget Management workspace link must survive boot sidebar rebuild",
+		)
+		try:
+			i_strat = labels.index("Strategy Alignment")
+			i_dia = next(i for i, lab in enumerate(labels) if lab and "Demand Intake" in lab)
+			self.assertLess(
+				i_strat,
+				i_dia,
+				msg="Strategy Alignment must appear before Demand Intake in the Procurement rail",
+			)
+		except ValueError:
+			self.fail("Demand Intake sidebar label not found — cannot verify G0-012 order")

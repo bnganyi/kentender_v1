@@ -1,0 +1,21 @@
+/*
+ * R5-011 — TM2 Tender Procurement handoffs panel (`tm2-tender-handoff-panel`).
+ */
+.tm2-handoff-inner .tm2-handoff-card {
+	border: 1px solid var(--border-color, #e2e6ea);
+	border-radius: var(--border-radius-lg, 8px);
+	background: var(--modal-bg);
+}
+
+.tm2-handoff-inner .tm2-handoff-card .tm2-handoff-route {
+	word-break: break-word;
+	color: var(--text-muted, #6c7680);
+}
+
+.tm2-handoff-inner .badge.tm2-handoff-status {
+	font-weight: 500;
+	max-width: 100%;
+	word-break: break-word;
+	text-align: left;
+	white-space: normal;
+}

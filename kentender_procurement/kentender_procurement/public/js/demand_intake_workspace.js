@@ -1015,7 +1015,7 @@
 			escapeHtml(__("Select a demand record to view details and take action.")) +
 			"</p>" +
 			'<p class="small text-muted mb-0">' +
-			escapeHtml(__("Choose a row in the queue list to load summary sections A–F.")) +
+			escapeHtml(__("Choose a row in the queue list to load Actions plus summary sections A through F.")) +
 			"</p>" +
 			"</div>";
 	}
@@ -1047,6 +1047,161 @@
 
 	function diaDemandIdRowSlug(demandId) {
 		return String(demandId || "row").replace(/[^a-zA-Z0-9_-]/g, "-");
+	}
+
+	/** PLC read model for DIA detail (R5-004); mirrors ``get_demand_planning_status`` payload. */
+	function buildDiaPlanningHandoffContentHtml(d) {
+		if (!d) {
+			return (
+				'<p class="text-muted small mb-0" data-testid="dia-detail-planning-handoff-empty">' +
+				diaDetailDash(__("Unable to load planning handoff data.")) +
+				"</p>"
+			);
+		}
+		if (!d.ok) {
+			const msg =
+				d && d.message !== undefined && d.message !== null && String(d.message).trim()
+					? String(d.message)
+					: __("Unable to load planning handoff data.");
+			return (
+				'<p class="text-muted small mb-0" data-testid="dia-detail-planning-handoff-empty">' +
+				diaDetailDash(msg) +
+				"</p>"
+			);
+		}
+
+		let h = "";
+		if (d.hint) {
+			h +=
+				'<p class="text-muted small mb-2" data-testid="dia-detail-planning-handoff-hint">' +
+				escapeHtml(String(d.hint)) +
+				"</p>";
+		}
+
+		h += '<dl class="kt-dia-detail__dl">';
+		if (d.journey) {
+			const j = d.journey;
+			const jc = escapeHtml(String(j.journey_code || ""));
+			const title = String(j.journey_title || "").trim();
+			const href = escapeHtml(String(j.open_route || "#"));
+			const primary = escapeHtml(title || String(j.journey_code || ""));
+			const mutedCode =
+				title && j.journey_code && title !== String(j.journey_code).trim()
+					? ' <span class="text-muted small">(' + jc + ")</span>"
+					: !title && j.journey_code
+						? ' <span class="text-muted small">(' + jc + ")</span>"
+						: "";
+			const jourVal =
+				'<a href="' +
+				href +
+				'" data-testid="dia-detail-planning-handoff-journey-link"><span data-testid="dia-detail-planning-handoff-journey-title">' +
+				primary +
+				"</span></a>" +
+				mutedCode;
+			h +=
+				diaDetailDlRow(
+					__("Linked procurement journey"),
+					'<span data-testid="dia-detail-planning-handoff-journey">' + jourVal + "</span>"
+				);
+		}
+		h += "</dl>";
+
+		const cert = d.demand_approval_certificate;
+		if (cert && cert.handoff_code) {
+			const certHref = escapeHtml(String(cert.demand_approval_record_route || "#"));
+			const certLabelEsc = escapeHtml(String(cert.demand_approval_record_label || __("Demand Approval Record")));
+			const certCode = cert.demand_approval_record_code ? escapeHtml(String(cert.demand_approval_record_code)) : "";
+			const hCodeEsc = escapeHtml(String(cert.handoff_code || ""));
+			const stEsc = escapeHtml(String(cert.status || ""));
+			const nxt = cert.next_action
+				? '<p class="small text-muted mb-0 mt-1" data-testid="dia-detail-planning-handoff-certificate-next">' +
+					diaDetailDash(cert.next_action) +
+					"</p>"
+				: "";
+			const linkHtml =
+				'<a href="' +
+				certHref +
+				'" data-testid="dia-detail-planning-handoff-certificate-link">' +
+				certLabelEsc +
+				"</a>" +
+				(certCode ? ' <span class="text-muted small">(' + certCode + ")</span>" : "");
+			h +=
+				'<div class="border-top mt-3 pt-2" data-testid="dia-detail-planning-handoff-certificate">' +
+				'<p class="small font-weight-bold mb-1">' +
+				escapeHtml(__("Demand Approval Certificate")) +
+				"</p>" +
+				'<dl class="kt-dia-detail__dl">' +
+				diaDetailDlRow(__("Handoff"), hCodeEsc + ' <span class="text-muted">(' + stEsc + ")</span>") +
+				diaDetailDlRow(__("Record"), linkHtml) +
+				"</dl>" +
+				nxt +
+				"</div>";
+		}
+
+		const incl = d.planning_inclusion;
+		if (incl && incl.handoff_code) {
+			const pcode = incl.target_object_code || incl.plan_code_hint || "";
+			const pcodeTxt = pcode ? escapeHtml(String(pcode)) : "";
+			h +=
+				'<div class="border-top mt-3 pt-2" data-testid="dia-detail-planning-handoff-planning-inclusion">' +
+				'<p class="small font-weight-bold mb-1">' +
+				escapeHtml(__("Planning inclusion")) +
+				"</p>" +
+				'<dl class="kt-dia-detail__dl">' +
+				diaDetailDlRow(
+					__("Handoff"),
+					escapeHtml(String(incl.handoff_code || "")) +
+						' <span class="text-muted">(' +
+						escapeHtml(String(incl.status || "")) +
+						")</span>"
+				) +
+				(pcodeTxt
+					? diaDetailDlRow(
+							__("Procurement plan"),
+							'<span data-testid="dia-detail-planning-handoff-plan-code">' + pcodeTxt + "</span>"
+						)
+					: "") +
+				"</dl>" +
+				"</div>";
+		}
+
+		return h;
+	}
+
+	function loadDiaPlanningHandoffAggregate(demandDocName, seq) {
+		const host = document.getElementById("kt-dia-planning-handoff-body-inner");
+		if (!host) {
+			return;
+		}
+		frappe.call({
+			method:
+				"kentender_procurement.procurement_lifecycle.api.journey_api.get_demand_planning_status",
+			args: { demand_name: demandDocName },
+			callback: function (r) {
+				if (seq !== detailLoadSeq || !document.body.contains(host)) {
+					return;
+				}
+				if (r && r.exc) {
+					host.innerHTML =
+						'<p class="text-danger small mb-0" data-testid="dia-detail-planning-handoff-error">' +
+						diaDetailDash(String(r.exc).slice(0, 500)) +
+						"</p>";
+					return;
+				}
+				host.innerHTML = buildDiaPlanningHandoffContentHtml(r && r.message);
+			},
+			error: function (err) {
+				if (seq !== detailLoadSeq || !document.body.contains(host)) {
+					return;
+				}
+				const m =
+					err && err.message !== undefined ? String(err.message) : __("Unable to load planning context.");
+				host.innerHTML =
+					'<p class="text-danger small mb-0" data-testid="dia-detail-planning-handoff-error">' +
+					escapeHtml(m) +
+					"</p>";
+			},
+		});
 	}
 
 	const DIA_LANDING_ACTION_TESTID = {
@@ -1436,6 +1591,30 @@
 		const fBody = buildDiaDetailActionsHtml(act, nm);
 		const fTop = diaDetailSection(__("Actions"), fBody, "dia-detail-section-f");
 
+		const planningSubBits = [];
+		if (a.demand_id) {
+			planningSubBits.push(escapeHtml(String(a.demand_id)));
+		}
+		if (a.status) {
+			planningSubBits.push(escapeHtml(String(a.status)));
+		}
+		const planningSub =
+			planningSubBits.length
+				? '<p class="text-muted small mb-2" data-testid="dia-detail-planning-handoff-subtitle">' +
+				  planningSubBits.join(" · ") +
+				  "</p>"
+				: "";
+		const planningBody =
+			planningSub +
+			'<div id="kt-dia-planning-handoff-body-inner" data-testid="dia-detail-planning-handoff-body"><p class="text-muted small mb-0" data-testid="dia-detail-planning-handoff-loading">' +
+			escapeHtml(__("Loading procurement planning context…")) +
+			"</p></div>";
+		const planningSection = diaDetailSection(
+			__("F. Procurement planning handoff"),
+			planningBody,
+			"dia-detail-section-planning-handoff"
+		);
+
 		return (
 			'<div class="kt-dia-detail" data-testid="dia-detail-panel" data-dia-detail-for="' +
 			escapeHtml(nm) +
@@ -1446,6 +1625,7 @@
 			diaDetailSection(__("C. Financial summary"), cBody, "dia-detail-section-c") +
 			diaDetailSection(__("D. Items summary"), dBody, "dia-detail-section-d") +
 			diaDetailSection(__("E. Workflow and audit"), eBody, "dia-detail-section-e") +
+			planningSection +
 			"</div>"
 		);
 	}
@@ -1503,6 +1683,7 @@
 					return;
 				}
 				detailRoot.innerHTML = buildDiaDetailPanelHtml(resp);
+				loadDiaPlanningHandoffAggregate(selectedDemandName, mySeq);
 			},
 			error: function () {
 				if (mySeq !== detailLoadSeq) {

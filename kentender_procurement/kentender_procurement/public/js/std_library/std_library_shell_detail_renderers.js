@@ -233,21 +233,45 @@ frappe.provide("kentender_procurement.std_library_detail_renderers");
 	R.renderUsageTabContent = function (detail) {
 		const usage = detail?.usage || {};
 		const summary = usage.summary || {};
+		const tenders = usage.tenders;
+		const tenderFormatter = (row) => {
+			const linkInner = row.open_route
+				? `<a class="std-usage-row-link" href="${escHtml(row.open_route)}" data-testid="std-usage-tender-open-link">${escHtml(row.view_label || __("Open tender"))}</a>`
+				: `<span class="std-usage-view-label">${escHtml(row.view_label || "")}</span>`;
+			return `<div class="std-usage-row" data-testid="std-usage-tender-row">
+			<span class="std-usage-primary"><strong>${__("Title")}:</strong> ${escHtml(row.title || "")} <span class="text-muted">${escHtml(row.code ? `(${row.code})` : "")}</span></span>
+			<span><strong>${__("Status")}:</strong> ${escHtml(row.status || "")}</span>
+			<span><strong>${__("Procuring entity")}:</strong> ${escHtml(row.procuring_entity || __("Not set"))}</span>
+			${linkInner}
+		</div>`;
+		};
+		const journeyFormatter = (row) => {
+			const jc = escHtml(row.journey_code || "");
+			const title = escHtml(row.title || "");
+			const ent = row.procuring_entity ? escHtml(row.procuring_entity) : escHtml(__("Not set"));
+			const linkInner = row.open_route
+				? `<a class="std-usage-row-link" href="${escHtml(row.open_route)}" data-testid="std-usage-journey-open-link">${escHtml(row.view_label || __("Open journey"))}</a>`
+				: `<span class="std-usage-view-label">${escHtml(row.view_label || "")}</span>`;
+			return `<div class="std-usage-row" data-testid="std-usage-journey-row">
+			<span class="std-usage-primary"><strong>${__("Title")}:</strong> ${title}${jc ? ` <span class="text-muted std-usage-row-code">${jc}</span>` : ""}</span>
+			<span><strong>${__("Procuring entity")}:</strong> ${ent}</span>
+			${linkInner}
+		</div>`;
+		};
 		return `
 <section class="std-library-usage-tab" data-testid="std-library-usage-tab">
 	<div class="std-usage-panel" data-testid="std-usage-summary">
 		<h5>${__("Usage Summary")}</h5>
-		<p><strong>${__("Tenders using this STD version")}:</strong> ${Number(summary.tenders_using_count || 0)}</p>
+		<p><strong>${__("Procurement journeys using this catalogue row")}:</strong> ${Number(summary.journeys_using_count || 0)}</p>
+		<p><strong>${__("Linked tenders matching version references")}:</strong> ${Number(summary.tenders_using_count || 0)}</p>
+	</div>
+	<div class="std-usage-panel" data-testid="std-usage-journey-list">
+		<h5>${__("Procurement Journeys")}</h5>
+		${R.renderUsageRows(usage.journeys, journeyFormatter)}
 	</div>
 	<div class="std-usage-panel" data-testid="std-usage-tender-list">
-		<h5>${__("Tender List")}</h5>
-		${R.renderUsageRows(usage.tenders, (row) => `<div class="std-usage-row">
-			<span><strong>${__("Code")}:</strong> ${row.code || ""}</span>
-			<span><strong>${__("Title")}:</strong> ${row.title || ""}</span>
-			<span><strong>${__("Status")}:</strong> ${row.status || ""}</span>
-			<span><strong>${__("Procuring Entity")}:</strong> ${row.procuring_entity || ""}</span>
-			<span class="std-usage-view-label">${__("View Tender")}</span>
-		</div>`)}
+		<h5>${__("Tenders")}</h5>
+		${R.renderUsageRows(tenders, tenderFormatter)}
 	</div>
 	<div class="std-usage-panel" data-testid="std-usage-instance-list">
 		<h5>${__("STD Instance References")}</h5>

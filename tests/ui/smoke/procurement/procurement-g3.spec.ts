@@ -24,6 +24,21 @@ test.describe('G3 Procurement desk smoke', () => {
 		await expect(page.getByTestId('pp-page-title')).toHaveCount(0);
 	});
 
+	test('G0-012 regression: Strategy Alignment appears above Demand Intake in Procurement rail', async ({
+		page,
+	}) => {
+		await loginAsAdministrator(page);
+		await openProcurementWorkspaceFromModule(page, procurementHomeWorkspace.heading);
+		const sb = page.locator('.body-sidebar');
+		const strat = sb.getByRole('link', { name: 'Strategy Alignment', exact: true }).first();
+		const dia = sb.getByRole('link', { name: /Demand Intake/i }).first();
+		await expect(strat).toBeVisible({ timeout: 45_000 });
+		await expect(dia).toBeVisible({ timeout: 45_000 });
+		const yStrat = (await strat.boundingBox())?.y ?? 0;
+		const yDia = (await dia.boundingBox())?.y ?? 0;
+		expect(yStrat).toBeLessThan(yDia);
+	});
+
 	test('DIA and PP shells open from Procurement module sidebar', async ({ page }) => {
 		await loginAsAdministrator(page);
 		await openProcurementWorkspaceFromModule(page, procurementHomeWorkspace.heading);

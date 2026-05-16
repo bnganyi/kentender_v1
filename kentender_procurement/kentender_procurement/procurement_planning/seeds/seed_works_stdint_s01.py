@@ -498,7 +498,7 @@ def _ensure_works_s01_released_to_tender(*, plan_name: str, package_name: str) -
 		tn = _find_non_cancelled_tender_for_package(package_name)
 		if not tn:
 			frappe.throw(
-				_("Package {0} is Released to Tender but no active TM2 Tender is linked.").format(
+				_("Package {0} is Released to Tender but no active tender is linked.").format(
 					package_name
 				),
 				title=_("WORKS S01 seed"),
@@ -569,7 +569,7 @@ def _ensure_works_s01_released_to_tender(*, plan_name: str, package_name: str) -
 		)
 	tn = _find_non_cancelled_tender_for_package(package_name)
 	if not tn:
-		frappe.throw(_("No TM2 Tender linked after release."), title=_("WORKS S01 seed"))
+		frappe.throw(_("No tender linked after release."), title=_("WORKS S01 seed"))
 
 	return {
 		"release_skipped": False,

@@ -965,6 +965,16 @@ frappe.provide("kentender_procurement.std_library_shell");
 				fetchTemplateDetailForCard(wrap, item);
 				return;
 			}
+			if (actionCode === "view_usage") {
+				selectedVersionCode = String(item.version_code || "");
+				selectedDetail = null;
+				activeDetailTab = "usage";
+				bundleSectionState.section = "";
+				writeFiltersToUrl();
+				renderLibraryCards(wrap);
+				fetchTemplateDetailForCard(wrap, item);
+				return;
+			}
 			frappe.show_alert({
 				message: __(`${label} is queued for a future ticket.`),
 				indicator: "blue",

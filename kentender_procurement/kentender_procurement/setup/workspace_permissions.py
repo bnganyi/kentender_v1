@@ -97,6 +97,18 @@ _KT_WORKSPACE_TO_SIDEBAR: dict[str, str] = {
 	"budget management": "Procurement",
 }
 
+# G0-012 / R5 sidebar regression: **Strategy Management** and **Budget Management**
+# live in other apps. If those Workspace rows are not ``public`` / are ``is_hidden``,
+# ``allowed_workspaces`` drops them and the primary-rail links **Strategy Alignment**
+# and **Budget & Funding** disappear (My Work → Demand Intake with no bridge).
+# Always include these workspace targets when the Workspace document exists.
+_FORCE_INCLUDE_WORKSPACE_IF_EXISTS: frozenset[str] = frozenset(
+	(
+		"Strategy Management",
+		"Budget Management",
+	)
+)
+
 
 def patch_bootinfo(bootinfo) -> None:
 	"""boot_session hook – unconditionally rebuild all KenTender sidebars.
@@ -188,19 +200,21 @@ def patch_bootinfo(bootinfo) -> None:
 def _build_sidebar_dict(name: str, allowed_workspaces: set[str]) -> dict:
 	"""Return the bootinfo-format sidebar dict for *name*.
 
-	Workspace-type links are included only when their target is public and
-	visible (present in *allowed_workspaces*).  All other link types (DocType,
-	Report, Dashboard, URL, Page, Help) are included unconditionally — they
-	carry their own permission checks when the user actually clicks them.
+	Workspace-type links are included when their target is public and visible,
+	**or** when the target is one of ``_FORCE_INCLUDE_WORKSPACE_IF_EXISTS`` and a
+	``Workspace`` row exists (cross-app G0-012 rail — see module docstring).
+	All other link types are included unconditionally.
 	"""
 	doc = frappe.get_doc("Workspace Sidebar", name)
 	items: list[dict] = []
 
 	for item in doc.items:
 		link_type = (item.link_type or "").lower()
-		# Workspace items: only include if target is public & visible.
-		# Everything else (DocType, Report, Section Break, URL, …): always include.
-		if item.type == "Section Break" or link_type != "workspace" or item.link_to in allowed_workspaces:
+		if item.type == "Section Break" or _workspace_link_passes_filters(
+			item.link_to,
+			link_type,
+			allowed_workspaces,
+		):
 			items.append(
 				{
 					"label": item.label,
@@ -229,3 +243,23 @@ def _build_sidebar_dict(name: str, allowed_workspaces: set[str]) -> dict:
 		"module": doc.module,
 		"app": doc.app,
 	}
+
+
+def _workspace_link_passes_filters(
+	link_to: str | None,
+	link_type: str,
+	allowed_workspaces: set[str],
+) -> bool:
+	lt = (link_type or "").lower()
+	if lt != "workspace":
+		return True
+	code = (link_to or "").strip()
+	if not code:
+		return False
+	if code in allowed_workspaces:
+		return True
+	if code in _FORCE_INCLUDE_WORKSPACE_IF_EXISTS:
+		# Include cross-app lifecycle workspaces even when `public` / hidden flags
+		# were mis-set on site — navigation-only; Workspace route still enforces perms.
+		return bool(frappe.db.exists("Workspace", code))
+	return False

@@ -628,6 +628,22 @@
 	color: var(--text-muted);
 }
 
+.std-usage-primary {
+	line-height: 1.35;
+}
+
+.std-usage-row-code {
+	display: inline;
+}
+
+.std-usage-row-link {
+	margin-top: var(--margin-xs);
+}
+
+.std-usage-panel .std-usage-row-link {
+	word-break: break-word;
+}
+
 @media (max-width: 1024px) {
 	.std-library-usage-tab {
 		grid-template-columns: 1fr;

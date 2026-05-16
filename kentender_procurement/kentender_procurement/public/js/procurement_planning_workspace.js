@@ -53,6 +53,224 @@
 		return escapeHtml(String(v.toLocaleString()));
 	}
 
+	function buildPpJourneyRowLine(row, slug) {
+		const j = row && row.procurement_journey;
+		if (!j || !j.open_route || !j.journey_code) {
+			return "";
+		}
+		const href = escapeHtml(String(j.open_route));
+		const jt = String(j.journey_title || "").trim();
+		const jc = String(j.journey_code || "").trim();
+		const primaryEsc = escapeHtml(jt || jc);
+		const muted =
+			jt && jc && jt !== jc ? ' <span class="text-muted">(' + escapeHtml(jc) + ")</span>" : "";
+		return (
+			'<div class="kt-pp-package-row__journey text-truncate" data-testid="pp-row-journey-' +
+			escapeHtml(slug) +
+			'">' +
+			'<span class="kt-pp-package-row__journey-label text-muted">' +
+			escapeHtml(__("Journey")) +
+			': </span>' +
+			'<a href="' +
+			href +
+			'" data-testid="pp-row-journey-link-' +
+			escapeHtml(slug) +
+			'" class="kt-pp-package-row__journey-link">' +
+			'<span data-testid="pp-row-journey-title-' +
+			escapeHtml(slug) +
+			'">' +
+			primaryEsc +
+			"</span></a>" +
+			muted +
+			"</div>"
+		);
+	}
+
+	function buildPpJourneyDetailStrip(pj) {
+		const j = pj;
+		if (!j || !j.open_route || !j.journey_code) {
+			return "";
+		}
+		const href = escapeHtml(String(j.open_route));
+		const jt = String(j.journey_title || "").trim();
+		const jc = String(j.journey_code || "").trim();
+		const primaryEsc = escapeHtml(jt || jc);
+		const muted =
+			jt && jc && jt !== jc ? ' <span class="text-muted">(' + escapeHtml(jc) + ")</span>" : "";
+		return (
+			'<div class="kt-pp-detail-journey small mb-2" data-testid="pp-detail-procurement-journey">' +
+			'<span class="text-muted">' +
+			escapeHtml(__("Linked procurement journey")) +
+			": </span>" +
+			'<a href="' +
+			href +
+			'" data-testid="pp-detail-journey-open-link">' +
+			primaryEsc +
+			"</a>" +
+			muted +
+			"</div>"
+		);
+	}
+
+	function buildPpPlanningReleaseRowLine(row, slug) {
+		const pr = row && row.planning_release_handoff;
+		if (!pr || !pr.handoff_code) {
+			return "";
+		}
+		const st = String(pr.status || "").trim();
+		const tc = String(pr.tender_code || "").trim();
+		const tt = String(pr.tender_title || "").trim();
+		let body = "";
+		if (tt && tc) {
+			body = escapeHtml(tt) + ' <span class="text-muted">(' + escapeHtml(tc) + ")</span>";
+		} else if (tc) {
+			body = escapeHtml(tc);
+		} else if (st) {
+			body = escapeHtml(st);
+		} else {
+			body = escapeHtml(__("Planning release"));
+		}
+		return (
+			'<div class="kt-pp-package-row__handoff text-truncate" data-testid="pp-row-planning-release-' +
+			escapeHtml(slug) +
+			'">' +
+			'<span class="kt-pp-package-row__handoff-label text-muted">' +
+			escapeHtml(__("Release handoff")) +
+			': </span>' +
+			'<span data-testid="pp-row-planning-release-body-' +
+			escapeHtml(slug) +
+			'">' +
+			body +
+			(st && (tc || tt) ? ' · <span class="text-muted">' + escapeHtml(st) + "</span>" : "") +
+			"</span></div>"
+		);
+	}
+
+	function buildPpPlanningReleaseDetailStrip(pr) {
+		if (!pr || !pr.handoff_code) {
+			return "";
+		}
+		const status = String(pr.status || "").trim();
+		let badgeCls = "badge-secondary";
+		if (/consumed/i.test(status)) {
+			badgeCls = "badge-success";
+		} else if (/stale/i.test(status)) {
+			badgeCls = "badge-warning";
+		}
+		const tc = String(pr.tender_code || "").trim();
+		const tt = String(pr.tender_title || "").trim();
+		const route = String(pr.tender_open_route || "").trim();
+		const primary = escapeHtml(tt || tc || "—");
+		const muted =
+			tt && tc && tt !== tc ? ' <span class="text-muted">(' + escapeHtml(tc) + ")</span>" : "";
+		const body = primary + muted;
+		const tenderHtml =
+			route && (tc || tt)
+				? '<a href="' + escapeHtml(route) + '" data-testid="pp-detail-pr-tender-open">' + body + "</a>"
+				: '<span data-testid="pp-detail-pr-tender-plain">' + body + "</span>";
+		let stale = "";
+		if (pr.fresh === false && pr.stale_reason) {
+			stale =
+				'<div class="alert alert-warning small mt-2 mb-0" role="status" data-testid="pp-detail-pr-stale">' +
+				escapeHtml(String(pr.stale_reason)) +
+				"</div>";
+		}
+		const next = pr.next_action
+			? '<div class="small mt-1 text-muted" data-testid="pp-detail-pr-next-action">' +
+				escapeHtml(__("Next action")) +
+				": " +
+				escapeHtml(String(pr.next_action)) +
+				"</div>"
+			: "";
+		return (
+			'<div class="kt-pp-detail-planning-release small mb-2" data-testid="pp-detail-planning-release-handoff">' +
+			'<div class="d-flex flex-wrap gap-2 align-items-center">' +
+			'<span class="font-weight-medium">' +
+			escapeHtml(__("Planning release package")) +
+			"</span>" +
+			(status
+				? '<span class="badge ' +
+					badgeCls +
+					'" data-testid="pp-detail-pr-status">' +
+					escapeHtml(status) +
+					"</span>"
+				: "") +
+			"</div>" +
+			'<div class="small text-muted" data-testid="pp-detail-pr-handoff-code">' +
+			escapeHtml(__("Handoff code")) +
+			": " +
+			escapeHtml(String(pr.handoff_code || "")) +
+			"</div>" +
+			'<div class="mt-1">' +
+			'<span class="text-muted">' +
+			escapeHtml(__("Linked tender")) +
+			": </span>" +
+			tenderHtml +
+			"</div>" +
+			next +
+			stale +
+			"</div>"
+		);
+	}
+
+	function buildPpBusinessReadinessDetailStrip(br) {
+		const b = br;
+		const checks = b && Array.isArray(b.checks) ? b.checks : [];
+		if (!checks.length) {
+			return "";
+		}
+		let rows = "";
+		for (let i = 0; i < checks.length; i++) {
+			const c = checks[i];
+			const ok = !!c.ok;
+			const lbl = String(c.label || "");
+			const det = String(c.detail || "").trim();
+			let badgeCls = ok ? "badge-success" : "badge-warning";
+			const txt = ok ? __("Pass") : __("Not met");
+			rows +=
+				'<li class="d-flex flex-wrap gap-2 align-items-start kt-pp-readiness-row"' +
+				' data-testid="pp-detail-readiness-' +
+				escapeHtml(String(c.id || "")) +
+				'">' +
+				'<span class="badge ' +
+				badgeCls +
+				' kt-pp-readiness-badge" data-readiness-pass="' +
+				(ok ? "1" : "0") +
+				'">' +
+				escapeHtml(txt) +
+				"</span>" +
+				'<span class="kt-pp-readiness-label">' +
+				escapeHtml(lbl) +
+				"</span>";
+			if (det) {
+				rows +=
+					'<span class="text-muted small kt-pp-readiness-hint">' + escapeHtml(det) + "</span>";
+			}
+			rows += "</li>";
+		}
+		const allReady = !!(b && b.all_ready === true);
+		const head = allReady
+			? '<span class="badge badge-success kt-pp-readiness-summary-badge" data-testid="pp-detail-readiness-summary">' +
+				escapeHtml(__("All checks pass")) +
+				"</span>"
+			: '<span class="badge badge-warning kt-pp-readiness-summary-badge" data-testid="pp-detail-readiness-summary">' +
+				escapeHtml(__("Outstanding items")) +
+				"</span>";
+
+		return (
+			'<section class="kt-pp-detail-business-readiness small mb-2" data-testid="pp-detail-business-readiness">' +
+			'<div class="d-flex flex-wrap gap-2 align-items-center mb-1">' +
+			'<strong class="kt-pp-readiness-title">' +
+			escapeHtml(__("Business readiness")) +
+			"</strong>" +
+			head +
+			"</div>" +
+			'<ul class="list-unstyled kt-pp-readiness-list mb-0">' +
+			rows +
+			"</ul></section>"
+		);
+	}
+
 	function formatDetailMoney(currency, amount) {
 		const cur = currency || "KES";
 		const v = Math.round(Number(amount) || 0);
@@ -516,12 +734,19 @@
 			detailDlRow(__("Workflow notes"), wf.workflow_reason) +
 			"</div></section>";
 
+		const journeyStrip = buildPpJourneyDetailStrip(d.procurement_journey || null);
+		const releaseStrip = buildPpPlanningReleaseDetailStrip(d.planning_release_handoff || null);
+		const readinessStrip = buildPpBusinessReadinessDetailStrip(d.business_readiness || null);
+
 		return (
 			'<div class="kt-pp-detail-inner" data-pp-detail-package="' +
 			escapeHtml(d.name || "") +
 			'">' +
 			stickyActions +
 			hdr +
+			journeyStrip +
+			releaseStrip +
+			readinessStrip +
 			sec1 +
 			sec2 +
 			sec3 +
@@ -1671,6 +1896,22 @@
 		const rows = !q
 			? lastPackageListRows
 			: lastPackageListRows.filter(function (row) {
+					const pj = row.procurement_journey || {};
+					const jBlob =
+						String(pj.journey_title || "") +
+						" " +
+						String(pj.journey_code || "") +
+						" " +
+						String(pj.open_route || "");
+					const pr = row.planning_release_handoff || {};
+					const prBlob =
+						String(pr.handoff_code || "") +
+						" " +
+						String(pr.status || "") +
+						" " +
+						String(pr.tender_code || "") +
+						" " +
+						String(pr.tender_title || "");
 					const a =
 						String(row.package_name || "") +
 						" " +
@@ -1678,7 +1919,11 @@
 						" " +
 						String(row.procurement_method || "") +
 						" " +
-						String(row.template_name || "");
+						String(row.template_name || "") +
+						" " +
+						jBlob +
+						" " +
+						prBlob;
 					return a.toLowerCase().indexOf(q) !== -1;
 				});
 		const still = rows.some(function (x) {
@@ -1760,6 +2005,8 @@
 			const nm = row.name || "";
 			const isOn = nm && nm === selectedPackageName;
 			const badgeHtml = buildBadgeChips(row.badges || {});
+			const journeyLine = buildPpJourneyRowLine(row, slug);
+			const releaseLine = buildPpPlanningReleaseRowLine(row, slug);
 			const planLine =
 				planMetaLine.length > 0
 					? '<div class="kt-pp-package-row__plan" data-testid="pp-row-plan-' +
@@ -1797,7 +2044,9 @@
 				escapeHtml(slug) +
 				'">' +
 				escapeHtml(row.template_name || "") +
-				"</span></div>";
+				"</span></div>" +
+				journeyLine +
+				releaseLine;
 			if (badgeHtml) {
 				html += '<div class="kt-pp-package-row__badges">' + badgeHtml + "</div>";
 			}

@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import frappe
 from frappe import _
 from frappe.utils import cint, flt
@@ -14,6 +16,12 @@ from kentender_procurement.procurement_planning.api.landing import (
 	_high_risk_profile_names,
 	_resolve_current_plan,
 	resolve_pp_role_key,
+)
+from kentender_procurement.procurement_planning.package_journey_surfaces import (
+	journey_link_hints_by_package_codes,
+)
+from kentender_procurement.procurement_planning.package_planning_release_display import (
+	batch_planning_release_handoff_hints_for_packages,
 )
 
 _ALLOWED_QUEUE_IDS: frozenset[str] = frozenset(
@@ -111,6 +119,8 @@ def _row_dict(
 	*,
 	template_labels: dict[str, str],
 	risk_levels: dict[str, str],
+	procurement_journey: dict[str, Any] | None,
+	planning_release_handoff: dict[str, Any] | None,
 ) -> dict:
 	rid = pkg.get("risk_profile_id")
 	high = bool(rid and risk_levels.get(str(rid)) == "High")
@@ -129,6 +139,8 @@ def _row_dict(
 			"submitted": st == "Submitted",
 			"ready": st == "Ready for Tender",
 		},
+		"procurement_journey": procurement_journey,
+		"planning_release_handoff": planning_release_handoff,
 	}
 
 
@@ -209,7 +221,25 @@ def get_pp_package_list(plan: str | None = None, queue_id: str | None = None, li
 	tpl_map = _template_names_for(list({str(x) for x in tpl_ids if x}))
 	risk_map = _risk_levels_for(list({str(x) for x in risk_ids if x}))
 
-	rows = [_row_dict(p, template_labels=tpl_map, risk_levels=risk_map) for p in pkgs]
+	package_codes_hint = [
+		str(p.get("package_code") or "").strip() for p in pkgs if str(p.get("package_code") or "").strip()
+	]
+	journey_by_pkg = journey_link_hints_by_package_codes(package_codes_hint)
+	release_by_pkg = batch_planning_release_handoff_hints_for_packages(
+		package_codes_hint,
+		journey_by_pkg,
+	)
+
+	rows = [
+		_row_dict(
+			p,
+			template_labels=tpl_map,
+			risk_levels=risk_map,
+			procurement_journey=journey_by_pkg.get(str(p.get("package_code") or "").strip()),
+			planning_release_handoff=release_by_pkg.get(str(p.get("package_code") or "").strip()),
+		)
+		for p in pkgs
+	]
 
 	return {
 		"ok": True,

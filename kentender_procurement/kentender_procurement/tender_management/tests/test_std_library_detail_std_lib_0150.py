@@ -14,12 +14,29 @@ from kentender_procurement.tender_management.api.std_library_templates import (
 )
 from kentender_procurement.tender_management.services import std_template_governance as gov
 
+from collections.abc import Callable
+from typing import Any
+
+
+def _std_template_row_get_stub(*template_rows: dict[str, Any]) -> Callable[..., Any]:
+	idx = {r["template_code"]: r for r in template_rows}
+
+	def fake_get_all(doctype, *args, **kwargs):  # noqa
+		if doctype != "STD Template":
+			return []
+		tc = (kwargs.get("filters") or {}).get("template_code")
+		found = idx.get(tc)
+		return [dict(found)] if found else []
+
+	return fake_get_all
+
+
 
 class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 	def test_detail_contract_by_version_code(self) -> None:
 		with patch(
 			"kentender_procurement.tender_management.api.std_library_templates.frappe.get_all",
-			return_value=[
+			side_effect=_std_template_row_get_stub(
 				{
 					"name": "STD-ACT",
 					"template_code": "STD-ACT-001",
@@ -29,7 +46,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 					"lifecycle_status": gov.STATUS_ACTIVE,
 					"latest_validation_status": gov.VALIDATION_PASS,
 				}
-			],
+			),
 		):
 			out = get_std_library_template_detail("STD-ACT-001")
 
@@ -85,7 +102,9 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 			},
 		]
 
-		def fake_get_all(*args, **kwargs):
+		def fake_get_all(doctype, *args, **kwargs):
+			if doctype != "STD Template":
+				return []
 			code = (kwargs.get("filters") or {}).get("template_code")
 			for r in rows:
 				if r["template_code"] == code:
@@ -109,7 +128,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 	def test_summary_payload_avoids_raw_json_or_xml(self) -> None:
 		with patch(
 			"kentender_procurement.tender_management.api.std_library_templates.frappe.get_all",
-			return_value=[
+			side_effect=_std_template_row_get_stub(
 				{
 					"name": "STD-R",
 					"template_code": "STD-R-001",
@@ -122,7 +141,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 					"lifecycle_status": gov.STATUS_ACTIVE,
 					"latest_validation_status": gov.VALIDATION_PASS,
 				}
-			],
+			),
 		):
 			out = get_std_library_template_detail("STD-R-001")
 		payload = str(out.get("detail", {}).get("summary", {})).lower()
@@ -132,7 +151,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 	def test_validation_payload_has_category_health_and_remediation(self) -> None:
 		with patch(
 			"kentender_procurement.tender_management.api.std_library_templates.frappe.get_all",
-			return_value=[
+			side_effect=_std_template_row_get_stub(
 				{
 					"name": "STD-V",
 					"template_code": "STD-V-001",
@@ -145,7 +164,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 					"lifecycle_status": gov.STATUS_IMPORTED,
 					"latest_validation_status": gov.VALIDATION_BLOCKED,
 				}
-			],
+			),
 		):
 			out = get_std_library_template_detail("STD-V-001")
 		validation = out.get("detail", {}).get("validation", {})
@@ -158,7 +177,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 	def test_bundle_preview_payload_has_required_sections(self) -> None:
 		with patch(
 			"kentender_procurement.tender_management.api.std_library_templates.frappe.get_all",
-			return_value=[
+			side_effect=_std_template_row_get_stub(
 				{
 					"name": "STD-B",
 					"template_code": "STD-B-001",
@@ -171,7 +190,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 					"lifecycle_status": gov.STATUS_ACTIVE,
 					"latest_validation_status": gov.VALIDATION_PASS,
 				}
-			],
+			),
 		):
 			out = get_std_library_template_detail("STD-B-001")
 		bundle = out.get("detail", {}).get("bundle_preview", {})
@@ -186,7 +205,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 	def test_bundle_preview_action_mapping_hides_downloads_when_not_available(self) -> None:
 		with patch(
 			"kentender_procurement.tender_management.api.std_library_templates.frappe.get_all",
-			return_value=[
+			side_effect=_std_template_row_get_stub(
 				{
 					"name": "STD-B2",
 					"template_code": "STD-B2-001",
@@ -199,7 +218,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 					"lifecycle_status": gov.STATUS_IMPORTED,
 					"latest_validation_status": gov.VALIDATION_BLOCKED,
 				}
-			],
+			),
 		):
 			out = get_std_library_template_detail("STD-B2-001")
 		actions = out.get("detail", {}).get("bundle_preview", {}).get("actions", {})
@@ -209,7 +228,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 	def test_bundle_preview_payload_avoids_raw_json_or_xml(self) -> None:
 		with patch(
 			"kentender_procurement.tender_management.api.std_library_templates.frappe.get_all",
-			return_value=[
+			side_effect=_std_template_row_get_stub(
 				{
 					"name": "STD-B3",
 					"template_code": "STD-B3-001",
@@ -222,7 +241,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 					"lifecycle_status": gov.STATUS_ACTIVE,
 					"latest_validation_status": gov.VALIDATION_PASS,
 				}
-			],
+			),
 		):
 			out = get_std_library_template_detail("STD-B3-001")
 		payload = str(out.get("detail", {}).get("bundle_preview", {})).lower()
@@ -232,7 +251,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 	def test_usage_payload_has_required_sections(self) -> None:
 		with patch(
 			"kentender_procurement.tender_management.api.std_library_templates.frappe.get_all",
-			return_value=[
+			side_effect=_std_template_row_get_stub(
 				{
 					"name": "STD-U",
 					"template_code": "STD-U-001",
@@ -245,7 +264,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 					"lifecycle_status": gov.STATUS_ACTIVE,
 					"latest_validation_status": gov.VALIDATION_PASS,
 				}
-			],
+			),
 		):
 			out = get_std_library_template_detail("STD-U-001")
 		usage = out.get("detail", {}).get("usage", {})
@@ -254,12 +273,14 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 		self.assertIn("instances", usage)
 		self.assertIn("outputs", usage)
 		self.assertIn("addenda", usage)
+		self.assertIn("journeys", usage)
+		self.assertGreaterEqual(usage.get("summary", {}).get("journeys_using_count", -1), 0)
 		self.assertGreaterEqual(usage.get("summary", {}).get("tenders_using_count", 0), 0)
 
 	def test_usage_payload_is_read_only_and_excludes_mutation_actions(self) -> None:
 		with patch(
 			"kentender_procurement.tender_management.api.std_library_templates.frappe.get_all",
-			return_value=[
+			side_effect=_std_template_row_get_stub(
 				{
 					"name": "STD-U2",
 					"template_code": "STD-U2-001",
@@ -272,7 +293,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 					"lifecycle_status": gov.STATUS_IMPORTED,
 					"latest_validation_status": gov.VALIDATION_NOT_RUN,
 				}
-			],
+			),
 		):
 			out = get_std_library_template_detail("STD-U2-001")
 		payload = str(out.get("detail", {}).get("usage", {}))
@@ -283,7 +304,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 	def test_supersession_payload_has_lineage_and_impact(self) -> None:
 		with patch(
 			"kentender_procurement.tender_management.api.std_library_templates.frappe.get_all",
-			return_value=[
+			side_effect=_std_template_row_get_stub(
 				{
 					"name": "STD-S",
 					"template_code": "STD-S-001",
@@ -296,7 +317,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 					"lifecycle_status": gov.STATUS_ACTIVE,
 					"latest_validation_status": gov.VALIDATION_PASS,
 				}
-			],
+			),
 		):
 			out = get_std_library_template_detail("STD-S-001")
 		sup = out.get("detail", {}).get("supersession", {})
@@ -309,7 +330,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 	def test_supersession_create_revision_not_in_place_edit(self) -> None:
 		with patch(
 			"kentender_procurement.tender_management.api.std_library_templates.frappe.get_all",
-			return_value=[
+			side_effect=_std_template_row_get_stub(
 				{
 					"name": "STD-S2",
 					"template_code": "STD-S2-001",
@@ -322,7 +343,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 					"lifecycle_status": gov.STATUS_SUPERSEDED,
 					"latest_validation_status": gov.VALIDATION_PASS,
 				}
-			],
+			),
 		):
 			out = get_std_library_template_detail("STD-S2-001")
 		payload = str(out.get("detail", {}).get("supersession", {}))
@@ -332,7 +353,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 	def test_advanced_payload_has_required_shell_metadata(self) -> None:
 		with patch(
 			"kentender_procurement.tender_management.api.std_library_templates.frappe.get_all",
-			return_value=[
+			side_effect=_std_template_row_get_stub(
 				{
 					"name": "STD-A",
 					"template_code": "STD-A-001",
@@ -345,7 +366,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 					"lifecycle_status": gov.STATUS_ACTIVE,
 					"latest_validation_status": gov.VALIDATION_PASS,
 				}
-			],
+			),
 		):
 			out = get_std_library_template_detail("STD-A-001")
 		advanced = out.get("detail", {}).get("advanced", {})
@@ -360,7 +381,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 	def test_advanced_source_mappings_has_plain_label_targets(self) -> None:
 		with patch(
 			"kentender_procurement.tender_management.api.std_library_templates.frappe.get_all",
-			return_value=[
+			side_effect=_std_template_row_get_stub(
 				{
 					"name": "STD-M1",
 					"template_code": "STD-M1-001",
@@ -373,7 +394,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 					"lifecycle_status": gov.STATUS_ACTIVE,
 					"latest_validation_status": gov.VALIDATION_PASS,
 				}
-			],
+			),
 		):
 			out = get_std_library_template_detail("STD-M1-001")
 		targets = out.get("detail", {}).get("advanced", {}).get("source_mappings", {}).get("targets", [])
@@ -387,7 +408,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 	def test_advanced_source_mappings_rows_have_required_columns(self) -> None:
 		with patch(
 			"kentender_procurement.tender_management.api.std_library_templates.frappe.get_all",
-			return_value=[
+			side_effect=_std_template_row_get_stub(
 				{
 					"name": "STD-M2",
 					"template_code": "STD-M2-001",
@@ -400,7 +421,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 					"lifecycle_status": gov.STATUS_ACTIVE,
 					"latest_validation_status": gov.VALIDATION_PASS,
 				}
-			],
+			),
 		):
 			out = get_std_library_template_detail("STD-M2-001")
 		rows = out.get("detail", {}).get("advanced", {}).get("source_mappings", {}).get("rows", [])
@@ -412,7 +433,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 	def test_advanced_source_mappings_missing_rows_have_blocker_reference(self) -> None:
 		with patch(
 			"kentender_procurement.tender_management.api.std_library_templates.frappe.get_all",
-			return_value=[
+			side_effect=_std_template_row_get_stub(
 				{
 					"name": "STD-M3",
 					"template_code": "STD-M3-001",
@@ -425,7 +446,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 					"lifecycle_status": gov.STATUS_ACTIVE,
 					"latest_validation_status": gov.VALIDATION_BLOCKED,
 				}
-			],
+			),
 		):
 			out = get_std_library_template_detail("STD-M3-001")
 		rows = out.get("detail", {}).get("advanced", {}).get("source_mappings", {}).get("rows", [])
@@ -436,7 +457,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 	def test_audit_payload_has_required_columns(self) -> None:
 		with patch(
 			"kentender_procurement.tender_management.api.std_library_templates.frappe.get_all",
-			return_value=[
+			side_effect=_std_template_row_get_stub(
 				{
 					"name": "STD-AUD",
 					"template_code": "STD-AUD-001",
@@ -449,7 +470,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 					"lifecycle_status": gov.STATUS_ACTIVE,
 					"latest_validation_status": gov.VALIDATION_PASS,
 				}
-			],
+			),
 		):
 			out = get_std_library_template_detail("STD-AUD-001")
 		rows = out.get("detail", {}).get("audit", {}).get("rows", [])
@@ -462,7 +483,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 		with (
 			patch(
 				"kentender_procurement.tender_management.api.std_library_templates.frappe.get_all",
-				return_value=[
+				side_effect=_std_template_row_get_stub(
 					{
 						"name": "STD-AUD2",
 						"template_code": "STD-AUD2-001",
@@ -475,7 +496,7 @@ class TestStdLibraryDetailStdLib0150(IntegrationTestCase):
 						"lifecycle_status": gov.STATUS_ACTIVE,
 						"latest_validation_status": gov.VALIDATION_PASS,
 					}
-				],
+				),
 			),
 			patch(
 				"kentender_procurement.tender_management.api.std_library_templates.frappe.get_roles",

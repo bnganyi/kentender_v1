@@ -24,3 +24,9 @@ export const procurementWorkspace = {
 	heading: 'Procurement Home',
 	route: workspaceAppPath('Procurement Home'),
 };
+
+/** DIA injected workbench (see `Demand Intake and Approval` workspace). */
+export const diaWorkspace = {
+	heading: 'Demand Intake and Approval',
+	route: workspaceAppPath('Demand Intake and Approval'),
+};

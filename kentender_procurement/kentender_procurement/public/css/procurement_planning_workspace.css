@@ -457,6 +457,94 @@
 	color: var(--text-muted);
 }
 
+.kt-pp-injected-shell .kt-pp-package-row__journey {
+	font-size: 0.72rem;
+	line-height: 1.25;
+	margin-top: 0.2rem;
+	max-width: 100%;
+}
+
+.kt-pp-injected-shell .kt-pp-package-row__journey-label {
+	font-weight: 500;
+	margin-right: 0.15rem;
+}
+
+.kt-pp-injected-shell .kt-pp-package-row__journey-link {
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.kt-pp-injected-shell .kt-pp-package-row__journey-link:hover {
+	text-decoration: underline;
+}
+
+.kt-pp-injected-shell .kt-pp-detail-journey {
+	border-left: 3px solid var(--border-color, #d1d8dd);
+	padding-left: 0.65rem;
+}
+
+.kt-pp-injected-shell .kt-pp-detail-journey a {
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.kt-pp-injected-shell .kt-pp-detail-journey a:hover {
+	text-decoration: underline;
+}
+
+.kt-pp-injected-shell .kt-pp-package-row__handoff {
+	font-size: 0.72rem;
+	line-height: 1.25;
+	margin-top: 0.12rem;
+	max-width: 100%;
+}
+
+.kt-pp-injected-shell .kt-pp-package-row__handoff-label {
+	font-weight: 500;
+	margin-right: 0.15rem;
+}
+
+.kt-pp-injected-shell .kt-pp-detail-planning-release {
+	border-left: 3px solid var(--border-color, #d1d8dd);
+	padding: 0.35rem 0.35rem 0.35rem 0.65rem;
+	border-radius: 0 var(--border-radius, 4px) var(--border-radius, 4px) 0;
+	background: var(--control-bg, rgba(248, 250, 252, 0.9));
+}
+
+.kt-pp-injected-shell .kt-pp-detail-planning-release a {
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.kt-pp-injected-shell .kt-pp-detail-planning-release a:hover {
+	text-decoration: underline;
+}
+
+.kt-pp-injected-shell .kt-pp-detail-business-readiness {
+	border-left: 3px solid var(--border-color, #d1d8dd);
+	padding: 0.35rem 0.35rem 0.35rem 0.65rem;
+	border-radius: 0 var(--border-radius, 4px) var(--border-radius, 4px) 0;
+	background: var(--control-bg, rgba(248, 250, 252, 0.9));
+}
+
+.kt-pp-injected-shell .kt-pp-readiness-list .kt-pp-readiness-row {
+	margin-bottom: 0.28rem;
+}
+
+.kt-pp-injected-shell .kt-pp-readiness-list .kt-pp-readiness-row:last-child {
+	margin-bottom: 0;
+}
+
+.kt-pp-injected-shell .kt-pp-readiness-label {
+	font-weight: 500;
+}
+
+.kt-pp-injected-shell .kt-pp-readiness-hint {
+	flex-basis: 100%;
+	max-width: 100%;
+	padding-left: 0.05rem;
+}
+
 .kt-pp-injected-shell .kt-pp-package-row__badges {
 	margin-top: 0.35rem;
 	display: flex;

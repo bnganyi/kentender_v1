@@ -1,0 +1,16 @@
+/*
+ * R5-001 — Module journey context header (``plc-module-journey-context-header``).
+ * Scoped to Desk hosts using ``.kt-plc-module-journey-context`` or the header card.
+ */
+.kt-plc-module-journey-context .plc-module-journey-context-header.card,
+.plc-module-journey-context-header.card {
+	border: 1px solid var(--border-color, #e2e6ea);
+	border-radius: var(--border-radius-lg, 8px);
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.kt-plc-module-journey-context .plc-module-journey-context-title {
+	color: var(--text-color, #1f272e);
+	font-size: 0.98rem;
+	line-height: 1.35;
+}

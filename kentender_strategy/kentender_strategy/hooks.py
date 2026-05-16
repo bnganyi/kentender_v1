@@ -1,12 +1,12 @@
+# Copyright (c) 2026, KenTender and contributors
+# For license information, please see license.txt
+
 from pathlib import Path
 
 
-def _workspace_list_selection_utils_v() -> int:
-	"""Cache-bust for strategy-shipped list scroll/selection helper (no cross-app path)."""
+def _asset_version(rel_path: str) -> int:
 	try:
-		p = Path(__file__).resolve().parent / "public" / "js" / "workspace_list_selection_utils.js"
-		s = p.stat()
-		return int((s.st_mtime_ns + s.st_size) % 2_147_483_647)
+		return int((Path(__file__).resolve().parent / rel_path).stat().st_mtime)
 	except OSError:
 		return 1
 
@@ -21,54 +21,33 @@ app_license = "mit"
 # Apps
 # ------------------
 
-# required_apps = []
-
-# Each item in the list will be shown as an app in the apps page
-# add_to_apps_screen = [
-# 	{
-# 		"name": "kentender_strategy",
-# 		"logo": "/assets/kentender_strategy/logo.png",
-# 		"title": "Kentender Strategy",
-# 		"route": "/kentender_strategy",
-# 		"has_permission": "kentender_strategy.api.permission.has_app_permission"
-# 	}
-# ]
+required_apps = ["kentender_core"]
 
 # Includes in <head>
 # ------------------
 
 # include js, css files in header of desk.html
 app_include_css = [
-	"/assets/kentender_strategy/css/strategy_workspace.css?v=12",
-	"/assets/kentender_strategy/css/strategic_plan_form.css",
-	"/assets/kentender_strategy/css/strategy_builder_page.css?v=10",
+	f"/assets/kentender_strategy/css/strategy_workspace.css?v={_asset_version('public/css/strategy_workspace.css')}",
+	f"/assets/kentender_strategy/css/strategic_plan_form.css?v={_asset_version('public/css/strategic_plan_form.css')}",
+	f"/assets/kentender_strategy/css/strategy_builder_page.css?v={_asset_version('public/css/strategy_builder_page.css')}",
+	f"/assets/kentender_strategy/css/procurement_journey_impact_panel.css?v={_asset_version('public/css/procurement_journey_impact_panel.css')}",
 ]
 app_include_js = [
-	f"/assets/kentender_strategy/js/workspace_list_selection_utils.js?v={_workspace_list_selection_utils_v()}",
-	"/assets/kentender_strategy/js/strategy_workspace.js?v=12",
+	f"/assets/kentender_strategy/js/workspace_list_selection_utils.js?v={_asset_version('public/js/workspace_list_selection_utils.js')}",
+	f"/assets/kentender_strategy/js/strategy_workspace.js?v={_asset_version('public/js/strategy_workspace.js')}",
+	f"/assets/kentender_strategy/js/strategic_plan.js?v={_asset_version('public/js/strategic_plan.js')}",
 ]
 
+# include js in page
 page_js = {"strategy-builder": "public/js/strategy_builder_page.js"}
 
-# include js, css files in header of web template
-# web_include_css = "/assets/kentender_strategy/css/kentender_strategy.css"
-# web_include_js = "/assets/kentender_strategy/js/kentender_strategy.js"
-
-# include custom scss in every website theme (without file extension ".scss")
-# website_theme_scss = "kentender_strategy/public/scss/website"
-
-# include js, css files in header of web form
-# webform_include_js = {"doctype": "public/js/doctype.js"}
-# webform_include_css = {"doctype": "public/css/doctype.css"}
-
-# include js in page
-# page_js = {"page" : "public/js/file.js"}
-
 # include js in doctype views
-doctype_js = {"Strategic Plan": "public/js/strategic_plan.js"}
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
-# doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
-# doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
+doctype_js = {
+	"Strategic Plan": "public/js/strategic_plan.js",
+	"Strategy Objective": "public/js/procurement_journey_impact_panel.js",
+	"Strategy Target": "public/js/procurement_journey_impact_panel.js",
+}
 
 # Svg Icons
 # ------------------
@@ -92,9 +71,6 @@ doctype_js = {"Strategic Plan": "public/js/strategic_plan.js"}
 # automatically create page for each record of this doctype
 # website_generators = ["Web Page"]
 
-# automatically load and sync documents of this doctype from downstream apps
-# importable_doctypes = [doctype_1]
-
 # Jinja
 # ----------
 
@@ -110,13 +86,11 @@ doctype_js = {"Strategic Plan": "public/js/strategic_plan.js"}
 # before_install = "kentender_strategy.install.before_install"
 # after_install = "kentender_strategy.install.after_install"
 
-after_migrate = "kentender_strategy.install.after_migrate"
-
 # Uninstallation
 # ------------
 
-# before_uninstall = "kentender_strategy.uninstall.before_uninstall"
-# after_uninstall = "kentender_strategy.uninstall.after_uninstall"
+# before_uninstall = "kentender_strategy.install.before_uninstall"
+# after_uninstall = "kentender_strategy.install.after_uninstall"
 
 # Integration Setup
 # ------------------
@@ -158,6 +132,14 @@ has_permission = {
 	"Strategy Target": "kentender_strategy.permissions.has_strategy_target_permission",
 }
 
+# DocType Class
+# ---------------
+# Override standard doctype classes
+
+# override_doctype_class = {
+# 	"ToDo": "custom_app.overrides.CustomToDo"
+# }
+
 # Document Events
 # ---------------
 # Hook on document methods and events
@@ -196,89 +178,15 @@ has_permission = {
 
 # before_tests = "kentender_strategy.install.before_tests"
 
-# Extend DocType Class
-# ------------------------------
-#
-# Specify custom mixins to extend the standard doctype controller.
-# extend_doctype_class = {
-# 	"Task": "kentender_strategy.custom.task.CustomTaskMixin"
-# }
-
 # Overriding Methods
 # ------------------------------
 #
 # override_whitelisted_methods = {
 # 	"frappe.desk.doctype.event.event.get_events": "kentender_strategy.event.get_events"
 # }
-#
-# each overriding function accepts a `data` argument;
-# generated from the base implementation of the doctype dashboard,
-# along with any modifications made in other Frappe apps
-# override_doctype_dashboards = {
-# 	"Task": "kentender_strategy.task.get_dashboard_data"
-# }
 
-# exempt linked doctypes from being automatically cancelled
-#
-# auto_cancel_exempted_doctypes = ["Auto Repeat"]
-
-# Ignore links to specified DocTypes when deleting documents
-# -----------------------------------------------------------
-
-# ignore_links_on_delete = ["Communication", "ToDo"]
-
-# Request Events
-# ----------------
-# before_request = ["kentender_strategy.utils.before_request"]
-# after_request = ["kentender_strategy.utils.after_request"]
-
-# Job Events
-# ----------
-# before_job = ["kentender_strategy.utils.before_job"]
-# after_job = ["kentender_strategy.utils.after_job"]
-
-# User Data Protection
-# --------------------
-
-# user_data_fields = [
-# 	{
-# 		"doctype": "{doctype_1}",
-# 		"filter_by": "{filter_by}",
-# 		"redact_fields": ["{field_1}", "{field_2}"],
-# 		"partial": 1,
-# 	},
-# 	{
-# 		"doctype": "{doctype_2}",
-# 		"filter_by": "{filter_by}",
-# 		"partial": 1,
-# 	},
-# 	{
-# 		"doctype": "{doctype_3}",
-# 		"strict": False,
-# 	},
-# 	{
-# 		"doctype": "{doctype_4}"
-# 	}
-# ]
-
-# Authentication and authorization
-# --------------------------------
-
-# auth_hooks = [
-# 	"kentender_strategy.auth.validate"
-# ]
-
-# Automatically update python controller files with type annotations for this app.
-# export_python_type_annotations = True
-
-# default_log_clearing_doctypes = {
-# 	"Logging DocType Name": 30  # days to retain logs
-# }
-
-# Translation
-# ------------
-# List of apps whose translatable strings should be excluded from this app's translations.
-# ignore_translatable_strings_from = []
+# Fixtures
+# --------
 
 fixtures = [
 	{
@@ -288,30 +196,31 @@ fixtures = [
 				"name",
 				"in",
 				[
-					"Strategy Navigation",
 					"Strategic Plan",
-					"Strategy Node",
 					"Strategy Program",
 					"Strategy Objective",
 					"Strategy Target",
+					"Strategy Node",
+					"Sub Program",
+					"Strategy Navigation",
 				],
 			]
 		],
 	},
-	# Desktop Icon hidden:1 — prevents "Strategy" from appearing as a standalone
-	# home-grid tile. NEVER change hidden to 0; access Strategy via the
-	# consolidated Procurement workspace sidebar only.
 	{
-		"dt": "Desktop Icon",
-		"filters": [["name", "in", ["Strategy"]]],
+		"dt": "Workspace",
+		"filters": [["name", "in", ["Strategy Management"]]],
+	},
+	{
+		"dt": "Page",
+		"filters": [["name", "in", ["strategy-builder"]]],
 	},
 	{
 		"dt": "Workspace Sidebar",
 		"filters": [["name", "in", ["Strategy"]]],
 	},
 	{
-		"dt": "Workspace",
-		"filters": [["name", "in", ["Strategy Management"]]],
+		"dt": "Desktop Icon",
+		"filters": [["name", "in", ["Strategy"]]],
 	},
 ]
-

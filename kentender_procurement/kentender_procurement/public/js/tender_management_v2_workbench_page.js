@@ -1652,10 +1652,10 @@
 			.join(" · ");
 
 		$p.html(
-			`<div data-testid="tm2-overview-next-step" class="alert alert-light border mb-3 py-2">
-				<div class="small font-weight-bold text-muted">${esc(__("Current next step"))}</div>
-				<div class="font-weight-bold">${esc(String(next.headline || ""))}</div>
-				<div class="small text-muted mt-1">${esc(String(next.reason || ""))}</div>
+			`<div data-testid="tm2-overview-next-step" class="alert alert-info border mb-4 py-3 px-3">
+				<div class="small font-weight-bold text-uppercase">${esc(__("Current next step"))}</div>
+				<div class="h6 font-weight-bold mt-2 mb-1">${esc(String(next.headline || ""))}</div>
+				<div class="small text-muted">${esc(String(next.reason || ""))}</div>
 			</div>
 			<div data-testid="tm2-overview-tender-summary" class="mb-3">
 				<div class="small font-weight-bold text-muted mb-1">${esc(__("Tender summary"))}</div>
@@ -1675,12 +1675,6 @@
 				<div class="small">${esc(String(pl.lineage_display || ""))}</div>
 				<div class="small text-muted">${esc(__("Package status"))}: ${esc(String(pl.package_status || __("—")))}</div>
 			</div>
-			<div data-testid="tm2-overview-std-line" class="mb-3">
-				<div class="small font-weight-bold text-muted mb-1">${esc(__("STD & snapshot"))}</div>
-				<div class="small">${stdLine || esc(__("No active binding summary."))}</div>
-				<div class="small">${esc(__("Publication snapshot"))}: ${esc(snap || __("—"))}</div>
-			</div>
-			<div data-testid="tm2-overview-output-refs" class="mb-3">${outHtml}</div>
 			<div data-testid="tm2-overview-key-dates" class="mb-3">
 				<div class="small font-weight-bold text-muted mb-1">${esc(__("Key dates"))}</div>
 				${keyDatesHtml}
@@ -1691,10 +1685,21 @@
 				${esc(__("Addenda (non-terminal)"))}: ${esc(String(counts.addenda_non_terminal != null ? counts.addenda_non_terminal : 0))} ·
 				${esc(__("Bid submissions"))}: ${esc(String(counts.bid_submissions != null ? counts.bid_submissions : 0))}
 			</div>
-			<div data-testid="tm2-overview-recent-events">
+			<div data-testid="tm2-overview-recent-events" class="mb-3">
 				<div class="small font-weight-bold text-muted mb-1">${esc(__("Recent events"))}</div>
 				${evHtml}
-			</div>`,
+			</div>
+			<details class="mb-2 border rounded tm2-overview-technical-wrap" data-testid="tm2-overview-technical-collapsed">
+				<summary class="px-3 py-2 small font-weight-bold text-muted tm2-overview-technical-summary" data-testid="tm2-overview-technical-summary">${esc(__("Technical references (advanced)"))}</summary>
+				<div class="px-3 pb-3 tm2-overview-technical-body" data-testid="tm2-overview-technical-body">
+					<div data-testid="tm2-overview-std-line" class="mb-2">
+						<div class="small font-weight-bold text-muted mb-1">${esc(__("STD & snapshot"))}</div>
+						<div class="small">${stdLine || esc(__("No active binding summary."))}</div>
+						<div class="small">${esc(__("Publication snapshot"))}: ${esc(snap || __("—"))}</div>
+					</div>
+					<div data-testid="tm2-overview-output-refs">${outHtml}</div>
+				</div>
+			</details>`,
 		);
 	}
 

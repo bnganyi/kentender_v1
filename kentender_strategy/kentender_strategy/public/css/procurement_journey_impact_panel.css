@@ -1,0 +1,12 @@
+/* R5-002 — Procurement journey impact panel (Strategy Objective / Target) */
+.kt-plc-strategy-procurement-journey-impact-root {
+	border-color: var(--border-color, #d1d8dd) !important;
+}
+
+.kt-plc-strategy-procurement-journey-impact-root ul li a {
+	font-weight: 500;
+}
+
+.kt-plc-strategy-impact-content .text-muted.small {
+	font-size: 0.85rem;
+}

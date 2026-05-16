@@ -17,6 +17,15 @@ from kentender_procurement.procurement_planning.api.landing import (
 	resolve_pp_role_key,
 )
 from kentender_procurement.procurement_planning.api.package_list import _template_names_for
+from kentender_procurement.procurement_planning.package_journey_surfaces import (
+	journey_link_hints_by_package_codes,
+)
+from kentender_procurement.procurement_planning.package_planning_release_display import (
+	summarize_planning_release_handoff_for_package_detail,
+)
+from kentender_procurement.procurement_planning.pp_package_business_readiness import (
+	summarize_pp_package_business_readiness,
+)
 
 
 def _fail(
@@ -394,6 +403,20 @@ def get_pp_package_detail(package: str | None = None) -> dict:
 	actions = _actions_for_workbench(doc.status or "", role_key, plan_status=plan_status)
 	release_blocked_by_plan = (doc.status or "") == "Ready for Tender" and plan_status != "Approved"
 
+	package_code_hint = str(doc.package_code or "").strip()
+	procurement_journey = None
+	if package_code_hint:
+		pj_map = journey_link_hints_by_package_codes([package_code_hint])
+		procurement_journey = pj_map.get(package_code_hint)
+
+	planning_release_handoff = None
+	if package_code_hint:
+		planning_release_handoff = summarize_planning_release_handoff_for_package_detail(
+			package_code_hint,
+		)
+
+	business_readiness = summarize_pp_package_business_readiness(doc)
+
 	return {
 		"ok": True,
 		"role_key": role_key,
@@ -416,6 +439,9 @@ def get_pp_package_detail(package: str | None = None) -> dict:
 		"workflow_reason": doc.workflow_reason or "",
 		"badges": badges,
 		"actions": actions,
+		"procurement_journey": procurement_journey,
+		"planning_release_handoff": planning_release_handoff,
+		"business_readiness": business_readiness,
 		"definition": {
 			"package_name": doc.package_name or "",
 			"package_code": doc.package_code or "",
