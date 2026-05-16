@@ -56,6 +56,11 @@ a Journey Context Header.
 - **evidence_summary**: one entry per handoff card, ordered by ``generated_at``
   ascending, in the event shape from pack §9.5.
 
+- **R4-012** — ``open_module_route`` on each step is **sanitized** for the session user:
+  only strict ``["Form", <Doctype>, <name>]`` JSON (allowlisted DocTypes) is retained
+  when ``frappe.has_permission(doctype, "read", doc=name)`` passes; otherwise the field
+  is cleared so the Desk UI cannot deep-link into unauthorised documents.
+
 ## Error codes
 
 | Code | Condition |
@@ -67,13 +72,78 @@ a Journey Context Header.
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, Final
 
 import frappe
 
 from kentender_procurement.procurement_lifecycle.journey_step_aggregator import (
     aggregate_procurement_journey_steps,
 )
+
+# R4-012 — allowlisted Desk ``Form`` targets for ``open_module_route`` (defence in depth;
+# must stay aligned with ``procurement_journey_page.js`` ``_OPEN_MODULE_ALLOWED_DOCTYPES``).
+_OPEN_MODULE_ROUTE_ALLOWED_DOCTYPES: Final[frozenset[str]] = frozenset(
+    {
+        "TM2 Tender",
+        "Tender STD Instance",
+        "Demand",
+        "Procurement Package",
+        "Procurement Plan",
+        "Strategy Objective",
+        "Budget Line",
+    }
+)
+
+
+def _parse_open_module_route_form_target(raw: str | None) -> tuple[str, str] | None:
+    """If ``raw`` is JSON ``["Form", doctype, name]``, return ``(doctype, name)`` else ``None``."""
+    if raw is None:
+        return None
+    s = str(raw).strip()
+    if not s:
+        return None
+    try:
+        segs = json.loads(s)
+    except (json.JSONDecodeError, TypeError, ValueError):
+        return None
+    if not isinstance(segs, list) or len(segs) != 3:
+        return None
+    if str(segs[0]).strip() != "Form":
+        return None
+    doctype = str(segs[1]).strip()
+    name = str(segs[2]).strip()
+    if not doctype or not name:
+        return None
+    return (doctype, name)
+
+
+def open_module_route_permitted_for_session(raw: str | None) -> bool:
+    """Return ``True`` if the session user may use ``open_module_route`` for navigation (R4-012)."""
+    parsed = _parse_open_module_route_form_target(raw)
+    if parsed is None:
+        return False
+    doctype, name = parsed
+    if doctype not in _OPEN_MODULE_ROUTE_ALLOWED_DOCTYPES:
+        return False
+    if not frappe.db.exists(doctype, name):
+        return False
+    return bool(frappe.has_permission(doctype, "read", doc=name))
+
+
+def sanitize_journey_steps_open_module_routes(
+    steps: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Return a shallow-copied step list with ``open_module_route`` cleared when unsafe."""
+    out: list[dict[str, Any]] = []
+    for row in steps or []:
+        d = dict(row)
+        raw = d.get("open_module_route")
+        if raw is not None and str(raw).strip():
+            if not open_module_route_permitted_for_session(str(raw)):
+                d["open_module_route"] = None
+        out.append(d)
+    return out
+
 
 # Fields fetched from Procurement Journey
 _JOURNEY_FIELDS = (
@@ -267,8 +337,10 @@ def get_procurement_journey(journey_code: str) -> dict[str, Any]:
             title="JOURNEY_NOT_FOUND",
         )
 
-    # 2. Aggregate steps (R3-013)
-    steps = aggregate_procurement_journey_steps(code)
+    # 2. Aggregate steps (R3-013) + R4-012 sanitize deep links
+    steps = sanitize_journey_steps_open_module_routes(
+        aggregate_procurement_journey_steps(code),
+    )
 
     # 3. Re-derive blocker counts from live steps
     blocker_count, critical_blocker_count = _derive_blocker_counts(steps)

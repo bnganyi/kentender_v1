@@ -43,6 +43,7 @@ from frappe.utils import cstr
 
 from kentender_procurement.procurement_lifecycle.journey_aggregate import (
     get_procurement_journey,
+    sanitize_journey_steps_open_module_routes,
 )
 from kentender_procurement.procurement_lifecycle.journey_by_object import (
     get_procurement_journey_by_object,
@@ -191,8 +192,8 @@ def list_journeys(
             "critical_blocker_count": int(r.critical_blocker_count or 0),
             "primary_object_code": _primary_object_code(r),
             "open_route": (
-                f"/desk/plc-procurement-journey?journey_code={r.journey_code or ''}"
-                if r.journey_code
+                f"/desk/plc-procurement-journey/{cstr(r.journey_code or r.name).strip()}"
+                if (r.journey_code or r.name)
                 else "/desk/plc-procurement-journey"
             ),
         }
@@ -270,7 +271,9 @@ def get_journey_steps(journey_code: str | None = None) -> list[dict[str, Any]]:
     code = cstr(journey_code or "").strip()
     if not code:
         frappe.throw("journey_code is required.", frappe.ValidationError)
-    return aggregate_procurement_journey_steps(code)
+    return sanitize_journey_steps_open_module_routes(
+        aggregate_procurement_journey_steps(code),
+    )
 
 
 # ---------------------------------------------------------------------------

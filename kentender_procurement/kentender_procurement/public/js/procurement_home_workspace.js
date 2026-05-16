@@ -1,4 +1,4 @@
-// Procurement Home workbench — Desk shell (IA v1.0 §5.1).
+// Procurement Home workbench — Desk shell (IA v1.0 §5.1, pack §11.1).
 
 (function () {
 	const HOME_WS = "Procurement Home";
@@ -140,7 +140,6 @@
 	}
 
 	function injectHomeLandingShell() {
-		/* Do not use global getElementById — a hidden #page-Workspaces can retain a shell and block the visible page. */
 		if (homeShellPresentOnActiveWsPage()) {
 			return { ok: true, inserted: false };
 		}
@@ -160,12 +159,41 @@
 			escapeHtml(__("Loading journeys…")) +
 			"</p>" +
 			"</div>" +
+			"</div>" +
+			'<div id="kt-ph-needs-action" class="kt-ph-section kt-surface plc-procurement-home-needs-action">' +
+			'<h3 class="kt-ph-section-title h6 mb-2">' +
+			escapeHtml(__("Needs My Action")) +
+			"</h3>" +
+			'<div id="kt-ph-needs-action-host" class="kt-ph-journey-panel-host">' +
+			'<p class="text-muted small mb-0 kt-ph-panel-loading">' +
+			escapeHtml(__("Loading journeys…")) +
+			"</p>" +
+			"</div>" +
+			"</div>" +
+			'<div id="kt-ph-blocked-journeys" class="kt-ph-section kt-surface plc-procurement-home-blocked-journeys">' +
+			'<h3 class="kt-ph-section-title h6 mb-2">' +
+			escapeHtml(__("Blocked Journeys")) +
+			"</h3>" +
+			'<div id="kt-ph-blocked-journeys-host" class="kt-ph-journey-panel-host">' +
+			'<p class="text-muted small mb-0 kt-ph-panel-loading">' +
+			escapeHtml(__("Loading journeys…")) +
+			"</p>" +
+			"</div>" +
+			"</div>" +
+			'<div id="kt-ph-ready-for-handoff" class="kt-ph-section kt-surface plc-procurement-home-ready-for-handoff">' +
+			'<h3 class="kt-ph-section-title h6 mb-2">' +
+			escapeHtml(__("Ready for Handoff")) +
+			"</h3>" +
+			'<div id="kt-ph-ready-for-handoff-host" class="kt-ph-journey-panel-host">' +
+			'<p class="text-muted small mb-0 kt-ph-panel-loading">' +
+			escapeHtml(__("Loading journeys…")) +
+			"</p>" +
+			"</div>" +
 			"</div>";
 
 		const ed = document.getElementById("editorjs");
 		if (ed && esc.contains(ed)) {
 			esc.insertBefore(wrap, ed);
-			/* Hide the native workspace editor content — the injected shell is the full surface. */
 			ed.style.display = "none";
 		} else {
 			esc.insertBefore(wrap, esc.firstChild);
@@ -191,7 +219,7 @@
 		return parts.join(", ");
 	}
 
-	function renderActiveJourneyCard(item) {
+	function renderHomeJourneyCard(item) {
 		const title = (item && item.journey_title) || "";
 		const code = (item && item.journey_code) || "";
 		const stage = (item && item.current_stage_label) || "";
@@ -263,7 +291,7 @@
 		}
 		let html = "";
 		for (let i = 0; i < items.length; i++) {
-			html += renderActiveJourneyCard(items[i]);
+			html += renderHomeJourneyCard(items[i]);
 		}
 		host.innerHTML = html;
 	}
@@ -297,14 +325,163 @@
 		});
 	}
 
+	function applyNeedsActionJourneys(payload) {
+		const root = getVisibleWorkspacesPageRoot();
+		const host =
+			(root && root.querySelector("#kt-ph-needs-action-host")) ||
+			document.getElementById("kt-ph-needs-action-host");
+		if (!host) return;
+		const items = (payload && payload.items) || [];
+		if (!items.length) {
+			host.innerHTML =
+				'<p class="text-muted small mb-0">' +
+				escapeHtml(__("No journeys need your action.")) +
+				"</p>";
+			return;
+		}
+		let html = "";
+		for (let i = 0; i < items.length; i++) {
+			html += renderHomeJourneyCard(items[i]);
+		}
+		host.innerHTML = html;
+	}
+
+	function loadNeedsActionJourneys() {
+		if (!isHomeWorkspaceRoute()) return;
+		frappe.call({
+			method: "kentender_procurement.procurement_lifecycle.api.journey_api.list_journeys",
+			args: { status: "needs_action", scope: "my-work", limit: 20 },
+			callback: function (r) {
+				if (!isHomeWorkspaceRoute()) return;
+				const payload = r && r.message;
+				if (!payload || !Array.isArray(payload.items)) {
+					applyNeedsActionJourneys({ items: [] });
+					return;
+				}
+				applyNeedsActionJourneys(payload);
+			},
+			error: function () {
+				if (!isHomeWorkspaceRoute()) return;
+				const root = getVisibleWorkspacesPageRoot();
+				const host =
+					(root && root.querySelector("#kt-ph-needs-action-host")) ||
+					document.getElementById("kt-ph-needs-action-host");
+				if (!host) return;
+				host.innerHTML =
+					'<p class="text-muted small mb-0 text-danger">' +
+					escapeHtml(__("Unable to load journeys that need your action.")) +
+					"</p>";
+			},
+		});
+	}
+
+	function applyBlockedJourneys(payload) {
+		const root = getVisibleWorkspacesPageRoot();
+		const host =
+			(root && root.querySelector("#kt-ph-blocked-journeys-host")) ||
+			document.getElementById("kt-ph-blocked-journeys-host");
+		if (!host) return;
+		const items = (payload && payload.items) || [];
+		if (!items.length) {
+			host.innerHTML =
+				'<p class="text-muted small mb-0">' +
+				escapeHtml(__("No critical blockers.")) +
+				"</p>";
+			return;
+		}
+		let html = "";
+		for (let i = 0; i < items.length; i++) {
+			html += renderHomeJourneyCard(items[i]);
+		}
+		host.innerHTML = html;
+	}
+
+	function loadBlockedJourneys() {
+		if (!isHomeWorkspaceRoute()) return;
+		frappe.call({
+			method: "kentender_procurement.procurement_lifecycle.api.journey_api.list_journeys",
+			args: { status: "blocked", limit: 20 },
+			callback: function (r) {
+				if (!isHomeWorkspaceRoute()) return;
+				const payload = r && r.message;
+				if (!payload || !Array.isArray(payload.items)) {
+					applyBlockedJourneys({ items: [] });
+					return;
+				}
+				applyBlockedJourneys(payload);
+			},
+			error: function () {
+				if (!isHomeWorkspaceRoute()) return;
+				const root = getVisibleWorkspacesPageRoot();
+				const host =
+					(root && root.querySelector("#kt-ph-blocked-journeys-host")) ||
+					document.getElementById("kt-ph-blocked-journeys-host");
+				if (!host) return;
+				host.innerHTML =
+					'<p class="text-muted small mb-0 text-danger">' +
+					escapeHtml(__("Unable to load blocked journeys.")) +
+					"</p>";
+			},
+		});
+	}
+
+	function applyReadyForHandoffJourneys(payload) {
+		const root = getVisibleWorkspacesPageRoot();
+		const host =
+			(root && root.querySelector("#kt-ph-ready-for-handoff-host")) ||
+			document.getElementById("kt-ph-ready-for-handoff-host");
+		if (!host) return;
+		const items = (payload && payload.items) || [];
+		if (!items.length) {
+			host.innerHTML =
+				'<p class="text-muted small mb-0">' +
+				escapeHtml(__("No journeys ready for handoff.")) +
+				"</p>";
+			return;
+		}
+		let html = "";
+		for (let i = 0; i < items.length; i++) {
+			html += renderHomeJourneyCard(items[i]);
+		}
+		host.innerHTML = html;
+	}
+
+	function loadReadyForHandoffJourneys() {
+		if (!isHomeWorkspaceRoute()) return;
+		frappe.call({
+			method: "kentender_procurement.procurement_lifecycle.api.journey_api.list_journeys",
+			args: { status: "ready_for_handoff", limit: 20 },
+			callback: function (r) {
+				if (!isHomeWorkspaceRoute()) return;
+				const payload = r && r.message;
+				if (!payload || !Array.isArray(payload.items)) {
+					applyReadyForHandoffJourneys({ items: [] });
+					return;
+				}
+				applyReadyForHandoffJourneys(payload);
+			},
+			error: function () {
+				if (!isHomeWorkspaceRoute()) return;
+				const root = getVisibleWorkspacesPageRoot();
+				const host =
+					(root && root.querySelector("#kt-ph-ready-for-handoff-host")) ||
+					document.getElementById("kt-ph-ready-for-handoff-host");
+				if (!host) return;
+				host.innerHTML =
+					'<p class="text-muted small mb-0 text-danger">' +
+					escapeHtml(__("Unable to load journeys ready for handoff.")) +
+					"</p>";
+			},
+		});
+	}
+
 	function navigateToProcurementJourney(journeyCode, focusEvidence) {
 		if (!journeyCode || typeof frappe === "undefined" || !frappe.set_route) return;
-		// Desk Page `plc-procurement-journey` — slug avoids collision with Procurement Journey DocType.
-		frappe.route_options = { journey_code: journeyCode };
+		frappe.route_options = {};
 		if (focusEvidence) {
 			frappe.route_options.plc_focus = "evidence";
 		}
-		frappe.set_route("plc-procurement-journey");
+		frappe.set_route("plc-procurement-journey", journeyCode);
 	}
 
 	function ensureHomeDelegatedClicks() {
@@ -333,7 +510,6 @@
 				if (tc) frappe.set_route("Form", "TM2 Tender", tc);
 				return;
 			}
-		/* reserved for future action buttons */
 		});
 	}
 
@@ -346,6 +522,9 @@
 		const inj = injectHomeLandingShell();
 		if (inj && inj.ok) {
 			loadActiveJourneys();
+			loadNeedsActionJourneys();
+			loadBlockedJourneys();
+			loadReadyForHandoffJourneys();
 		}
 	}
 

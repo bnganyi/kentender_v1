@@ -9,6 +9,8 @@ import {
 	activeJourneyCard,
 	expectProcurementHomeActiveJourneysPanel,
 	expectProcurementHomeShell,
+	expectProcurementJourneyPageShell,
+	expectWorksMasterJourneyHeader,
 	openProcurementWorkspaceFromModule,
 	procurementHomeWorkspace,
 } from '../../helpers/procurement';
@@ -36,11 +38,12 @@ test.describe('Procurement Home active journeys (R4-001)', () => {
 		await expect(openJourney).toBeVisible();
 		await openJourney.click();
 
-		await expect(page).toHaveURL(/plc-procurement-journey/, { timeout: 45_000 });
-		await expect(page.getByTestId('plc-procurement-journey-placeholder')).toBeVisible({
+		await expect(page).toHaveURL(new RegExp(`plc-procurement-journey/${WORKS_JOURNEY_CODE}`), {
 			timeout: 45_000,
 		});
-		await expect(page.getByTestId('plc-journey-route-code')).toContainText(WORKS_JOURNEY_CODE, {
+		await expectProcurementJourneyPageShell(page, WORKS_JOURNEY_CODE);
+		await expectWorksMasterJourneyHeader(page);
+		await expect(page.getByTestId('plc-procurement-journey-placeholder')).toBeVisible({
 			timeout: 45_000,
 		});
 	});
@@ -57,9 +60,10 @@ test.describe('Procurement Home active journeys (R4-001)', () => {
 		await expect(viewEvidence).toBeVisible();
 		await viewEvidence.click();
 
-		await expect(page).toHaveURL(/plc-procurement-journey/, { timeout: 45_000 });
-		await expect(page.getByTestId('plc-journey-route-code')).toContainText(WORKS_JOURNEY_CODE, {
+		await expect(page).toHaveURL(new RegExp(`plc-procurement-journey/${WORKS_JOURNEY_CODE}`), {
 			timeout: 45_000,
 		});
+		await expectProcurementJourneyPageShell(page, WORKS_JOURNEY_CODE);
+		await expectWorksMasterJourneyHeader(page);
 	});
 });

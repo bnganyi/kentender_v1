@@ -13,7 +13,7 @@
 | API-004 | list_journeys — counts shape has all required keys | active/needs_action/blocked/ready_for_handoff/completed |
 | API-005 | list_journeys status filter "active" — WORKS journey present | ≥1 active item |
 | API-006 | list_journeys search filter matches title substring | hospital → WORKS journey |
-| API-007 | list_journeys open_route matches pattern | "/desk/plc-procurement-journey?journey_code=JRN-MOH-2026-001" |
+| API-007 | list_journeys open_route matches pattern | `/desk/plc-procurement-journey/JRN-MOH-2026-001` (path segment; R4-005) |
 | API-008 | get_journey — returns full aggregate for WORKS | journey_code, steps, handoff_cards |
 | API-009 | get_journey — blank code raises ValidationError | frappe.ValidationError |
 | API-010 | get_journey — unknown code raises DoesNotExistError | DoesNotExistError |
@@ -23,6 +23,10 @@
 | API-014 | get_journey_steps — blank code raises | frappe.ValidationError |
 | API-015 | get_journey_evidence — returns ≥7 events for WORKS | ≥7 events, required keys present |
 | API-016 | get_journey_evidence — blank code raises | frappe.ValidationError |
+| API-018 | list_journeys(status='needs_action') — category | All "Needs Action" |
+| API-019 | list_journeys(status='needs_action', scope='my-work') | Same category guard |
+| API-020 | list_journeys(status='blocked') — open blockers | blocker or critical > 0 |
+| API-021 | list_journeys(status='ready_for_handoff') — category | All "Ready for Handoff" |
 | API-017 | list_journeys — my-work scope returns list (smoke, no error) | No exception |
 | PERM-001 | Guest user cannot call list_journeys | frappe.PermissionError |
 """
@@ -136,7 +140,7 @@ class TestR3017JourneyAPI(IntegrationTestCase):
         self.assertEqual(works_item["primary_object_code"], _WORKS_TENDER_CODE, msg=works_item)
         self.assertEqual(
             works_item["open_route"],
-            f"/desk/plc-procurement-journey?journey_code={_WORKS_JOURNEY_CODE}",
+            f"/desk/plc-procurement-journey/{_WORKS_JOURNEY_CODE}",
             msg=works_item,
         )
 
@@ -190,7 +194,7 @@ class TestR3017JourneyAPI(IntegrationTestCase):
     # -----------------------------------------------------------------------
 
     def test_open_route_matches_pattern(self):
-        """API-007: open_route = '/desk/plc-procurement-journey?journey_code={journey_code}'."""
+        """API-007: open_route = '/desk/plc-procurement-journey/{journey_code}' (R4-005 path)."""
         works_item = next(
             (i for i in self.list_result["items"] if i["journey_code"] == _WORKS_JOURNEY_CODE),
             None,
@@ -198,7 +202,7 @@ class TestR3017JourneyAPI(IntegrationTestCase):
         self.assertIsNotNone(works_item)
         self.assertEqual(
             works_item["open_route"],
-            f"/desk/plc-procurement-journey?journey_code={_WORKS_JOURNEY_CODE}",
+            f"/desk/plc-procurement-journey/{_WORKS_JOURNEY_CODE}",
             msg=works_item,
         )
 
@@ -292,6 +296,40 @@ class TestR3017JourneyAPI(IntegrationTestCase):
         """API-016: get_journey_evidence('') raises ValidationError."""
         with self.assertRaises((frappe.ValidationError, ValueError)):
             get_journey_evidence("")
+
+    def test_status_filter_needs_action_items_are_needs_action_category(self):
+        """API-018: list_journeys(status='needs_action') returns only Needs Action rows."""
+        result = list_journeys(status="needs_action")
+        self.assertIn("items", result)
+        for item in result["items"]:
+            self.assertEqual(item["current_status_category"], "Needs Action", msg=item)
+
+    def test_status_filter_needs_action_my_work_scope_smoke(self):
+        """API-019: list_journeys(status='needs_action', scope='my-work') filters consistently."""
+        result = list_journeys(status="needs_action", scope="my-work")
+        self.assertIn("items", result)
+        for item in result["items"]:
+            self.assertEqual(item["current_status_category"], "Needs Action", msg=item)
+
+    def test_status_filter_blocked_items_have_open_blockers(self):
+        """API-020: list_journeys(status='blocked') returns only rows with blockers."""
+        result = list_journeys(status="blocked")
+        self.assertIn("items", result)
+        for item in result["items"]:
+            bc = int(item.get("blocker_count") or 0)
+            cc = int(item.get("critical_blocker_count") or 0)
+            self.assertGreater(bc + cc, 0, msg=item)
+
+    def test_status_filter_ready_for_handoff_items_are_ready_category(self):
+        """API-021: list_journeys(status='ready_for_handoff') returns only Ready for Handoff rows."""
+        result = list_journeys(status="ready_for_handoff")
+        self.assertIn("items", result)
+        for item in result["items"]:
+            self.assertEqual(
+                item["current_status_category"],
+                "Ready for Handoff",
+                msg=item,
+            )
 
     # -----------------------------------------------------------------------
     # API-017  list_journeys my-work scope smoke

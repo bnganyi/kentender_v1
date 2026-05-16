@@ -136,6 +136,8 @@ WORKS_BASE_STEP_ROWS: Final[tuple[dict[str, Any], ...]] = (
 		"next_action": "Await tender closing",
 		"blocker_count": 0,
 		"blockers_json": {},
+		# R4-008: Desk "Open module" uses JSON array of `frappe.set_route` segments (Data field).
+		"open_module_route": '["Form", "TM2 Tender", "TND-MOH-2026-001"]',
 	},
 	{
 		"step_order": 8,

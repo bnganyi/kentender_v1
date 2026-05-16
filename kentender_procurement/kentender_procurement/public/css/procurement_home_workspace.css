@@ -23,8 +23,15 @@
 	box-shadow: var(--kt-ph-surface-shadow);
 }
 
-/* R4-001 — Active Procurement Journeys panel */
+/* R4-001 — Active Procurement Journeys */
 .kt-ph-injected-shell .plc-procurement-home-active-journeys {
+	margin-top: 0;
+}
+
+/* R4-002 / R4-003 / R4-004 — pack §11.1 panels */
+.kt-ph-injected-shell .plc-procurement-home-needs-action,
+.kt-ph-injected-shell .plc-procurement-home-blocked-journeys,
+.kt-ph-injected-shell .plc-procurement-home-ready-for-handoff {
 	margin-top: 0;
 }
 
@@ -33,7 +40,8 @@
 	color: var(--text-color, #1f272e);
 }
 
-.kt-ph-injected-shell .kt-ph-active-journeys-host {
+.kt-ph-injected-shell .kt-ph-active-journeys-host,
+.kt-ph-injected-shell .kt-ph-journey-panel-host {
 	display: flex;
 	flex-direction: column;
 	gap: 0.65rem;

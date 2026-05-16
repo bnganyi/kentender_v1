@@ -51,6 +51,7 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/demand_intake_workspace.css?v={_desk_asset_v('public/css/demand_intake_workspace.css')}",
 	f"/assets/kentender_procurement/css/procurement_planning_workspace.css?v={_desk_asset_v('public/css/procurement_planning_workspace.css')}",
 	f"/assets/kentender_procurement/css/procurement_home_workspace.css?v={_desk_asset_v('public/css/procurement_home_workspace.css')}",
+	f"/assets/kentender_procurement/css/procurement_journey_page.css?v={_desk_asset_v('public/css/procurement_journey_page.css')}",
 	f"/assets/kentender_procurement/css/procurement_package.css?v={_desk_asset_v('public/css/procurement_package.css')}",
 	f"/assets/kentender_procurement/css/std_library_shell.css?v={_desk_asset_v('public/css/std_library_shell.css')}",
 ]

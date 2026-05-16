@@ -1,0 +1,251 @@
+/*
+ * R4-006 … R4-013 — Procurement Journey Desk page (`plc-procurement-journey`).
+ */
+.kt-plc-journey .plc-journey-header.card {
+	border: 1px solid var(--border-color, #e2e6ea);
+	border-radius: var(--border-radius-lg, 8px);
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.kt-plc-journey .plc-journey-title {
+	color: var(--text-color, #1f272e);
+	font-weight: 600;
+}
+
+.kt-plc-journey .plc-journey-meta-label {
+	color: var(--text-muted, #74808b);
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	margin-right: 0.35rem;
+}
+
+/* R4-007 — spine timeline (`plc-journey-timeline`, pack `plc-journey-step-*`) */
+.kt-plc-journey .plc-journey-timeline.card {
+	border: 1px solid var(--border-color, #e2e6ea);
+	border-radius: var(--border-radius-lg, 8px);
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.kt-plc-journey .plc-journey-timeline-track {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	justify-content: flex-start;
+	gap: 0.35rem 0.5rem;
+}
+
+.kt-plc-journey .plc-journey-timeline-node {
+	position: relative;
+	min-width: 5.5rem;
+	max-width: 8.5rem;
+	padding-bottom: 0.35rem;
+}
+
+.kt-plc-journey .plc-journey-step-pill {
+	border: 1px solid var(--border-color, #e2e6ea);
+	border-radius: 8px;
+	padding: 0.45rem 0.5rem;
+	background: var(--fg-color, #fff);
+	min-height: 3.75rem;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	text-align: center;
+}
+
+.kt-plc-journey .plc-journey-step-pill.plc-journey-step--done {
+	border-color: rgba(34, 139, 34, 0.45);
+	background: rgba(34, 139, 34, 0.06);
+}
+
+.kt-plc-journey .plc-journey-step-pill.plc-journey-step--active {
+	border-color: rgba(59, 130, 246, 0.5);
+	background: rgba(59, 130, 246, 0.06);
+}
+
+.kt-plc-journey .plc-journey-step-pill.plc-journey-step--not-started {
+	opacity: 0.92;
+}
+
+.kt-plc-journey .plc-journey-step-pill.plc-journey-step--blocked {
+	border-color: rgba(220, 38, 38, 0.45);
+	background: rgba(220, 38, 38, 0.05);
+}
+
+.kt-plc-journey .plc-journey-step-label {
+	line-height: 1.25;
+	max-width: 100%;
+	overflow: hidden;
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+}
+
+.kt-plc-journey .plc-journey-step-status {
+	font-size: 0.68rem;
+	line-height: 1.2;
+	margin-top: 0.2rem;
+}
+
+@media (min-width: 992px) {
+	.kt-plc-journey .plc-journey-timeline-track {
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		padding-bottom: 0.25rem;
+	}
+
+	.kt-plc-journey .plc-journey-timeline-node {
+		flex: 1 1 0;
+		min-width: 4.5rem;
+		max-width: none;
+	}
+}
+
+/* R4-008 — step cards (`plc-journey-step-cards`, blocker badge, `plc-open-current-module`) */
+.kt-plc-journey .plc-journey-step-cards.card {
+	border: 1px solid var(--border-color, #e2e6ea);
+	border-radius: var(--border-radius-lg, 8px);
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.kt-plc-journey .plc-journey-step-card {
+	border: 1px solid var(--border-color, #e2e6ea);
+	border-radius: var(--border-radius-md, 6px);
+	box-shadow: none;
+}
+
+.kt-plc-journey .plc-journey-step-card-title {
+	color: var(--text-color, #1f272e);
+	font-weight: 600;
+	font-size: 0.95rem;
+	line-height: 1.3;
+}
+
+.kt-plc-journey .plc-journey-step-card-status-chip {
+	display: inline-flex;
+	align-items: center;
+	border-radius: 6px;
+	padding: 0.15rem 0.45rem;
+	font-size: 0.75rem;
+	line-height: 1.25;
+	border: 1px solid var(--border-color, #e2e6ea);
+}
+
+.kt-plc-journey .plc-journey-step-card-status-chip.plc-journey-step--done {
+	border-color: rgba(34, 139, 34, 0.45);
+	background: rgba(34, 139, 34, 0.06);
+	color: var(--text-color, #1f272e);
+}
+
+.kt-plc-journey .plc-journey-step-card-status-chip.plc-journey-step--active {
+	border-color: rgba(59, 130, 246, 0.45);
+	background: rgba(59, 130, 246, 0.06);
+}
+
+.kt-plc-journey .plc-journey-step-card-status-chip.plc-journey-step--not-started {
+	opacity: 0.95;
+}
+
+.kt-plc-journey .plc-journey-step-card-status-chip.plc-journey-step--blocked {
+	border-color: rgba(220, 38, 38, 0.45);
+	background: rgba(220, 38, 38, 0.05);
+}
+
+.kt-plc-journey .plc-journey-step-blocker-badge {
+	font-size: 0.68rem;
+	font-weight: 600;
+}
+
+.kt-plc-journey .plc-journey-step-card-ref {
+	color: var(--text-color, #1f272e);
+}
+
+.kt-plc-journey .plc-journey-step-card .plc-open-current-module {
+	width: 100%;
+	text-align: center;
+}
+
+/* R4-009 — current focus + blockers (`plc-current-focus`) */
+.kt-plc-journey .plc-current-focus.card {
+	border: 1px solid var(--border-color, #e2e6ea);
+	border-radius: var(--border-radius-lg, 8px);
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+	border-left: 3px solid rgba(59, 130, 246, 0.35);
+}
+
+.kt-plc-journey .plc-current-focus-step-label {
+	font-size: 1.05rem;
+	color: var(--text-color, #1f272e);
+}
+
+.kt-plc-journey .plc-current-focus-blocker-critical {
+	font-weight: 600;
+}
+
+/* R4-010 — handoff evidence panel (`plc-handoff-panel`, `plc-handoff-card`) */
+.kt-plc-journey .plc-handoff-panel.card {
+	border: 1px solid var(--border-color, #e2e6ea);
+	border-radius: var(--border-radius-lg, 8px);
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.kt-plc-journey .plc-handoff-card {
+	border: 1px solid var(--border-color, #e2e6ea);
+	border-radius: var(--border-radius-md, 6px);
+	background: var(--fg-color, #fff);
+}
+
+.kt-plc-journey .plc-handoff-card-title {
+	font-size: 0.92rem;
+	line-height: 1.35;
+	color: var(--text-color, #1f272e);
+}
+
+/* R4-011 — evidence timeline (`plc-evidence-timeline`) — pack §9.5 events */
+.kt-plc-journey .plc-evidence-timeline.card {
+	border: 1px solid var(--border-color, #e2e6ea);
+	border-radius: var(--border-radius-lg, 8px);
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.kt-plc-journey .plc-evidence-timeline-track {
+	border-left: 2px solid var(--border-color, #e2e6ea);
+	padding-left: 0.75rem;
+	margin-left: 0.35rem;
+}
+
+.kt-plc-journey .plc-evidence-timeline-event {
+	position: relative;
+	padding-bottom: 0.75rem;
+	margin-bottom: 0.25rem;
+}
+
+.kt-plc-journey .plc-evidence-timeline-event:last-child {
+	padding-bottom: 0;
+	margin-bottom: 0;
+}
+
+.kt-plc-journey .plc-evidence-timeline-date {
+	min-width: 7.5rem;
+}
+
+.kt-plc-journey .plc-evidence-timeline-event-title {
+	font-size: 0.92rem;
+	line-height: 1.35;
+	color: var(--text-color, #1f272e);
+}
+
+/* R4-013 — technical evidence drawer (`plc-technical-evidence-drawer`, modal on `body`) */
+.kt-plc-tech-evidence-drawer .plc-technical-evidence-json {
+	font-size: 0.8rem;
+	max-height: min(60vh, 28rem);
+	overflow: auto;
+	white-space: pre-wrap;
+	word-break: break-word;
+	background: var(--control-bg, #f4f5f6);
+	border: 1px solid var(--border-color, #e2e6ea);
+	border-radius: 6px;
+	padding: 0.75rem;
+}
