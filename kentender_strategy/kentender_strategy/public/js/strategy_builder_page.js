@@ -273,6 +273,14 @@ frappe.provide("kentender_strategy.strategy_builder");
 									</div>
 									<button type="button" class="btn btn-primary" data-testid="save-node-button">${__("Save")}</button>
 									<button type="button" class="btn btn-default ml-2" data-testid="delete-node-button">${__("Delete")}</button>
+									<div class="kt-sb-procurement-impact-section mt-3" style="display:none;">
+										<div class="kt-sb-section card shadow-sm border rounded kt-sb-section--compact" data-testid="plc-strategy-procurement-journey-impact">
+											<h6 class="text-muted text-uppercase small mb-2">${__("Procurement journey impact")}</h6>
+											<div data-testid="plc-strategy-procurement-journey-impact-body">
+												<p class="text-muted small mb-0" data-testid="plc-strategy-procurement-journey-impact-loading">${__("Loading…")}</p>
+											</div>
+										</div>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -280,12 +288,13 @@ frappe.provide("kentender_strategy.strategy_builder");
 				</div>
 			`);
 
-			this.$treeList = this.$wrapper.find(".kt-sb-tree-list");
-			this.$readinessHost = this.$wrapper.find(".kt-sb-readiness-host");
-			this.$emptyHint = this.$wrapper.find("[data-testid='empty-editor-hint']");
-			this.$editorForm = this.$wrapper.find(".kt-sb-editor-form");
-			this.$targetFields = this.$wrapper.find(".kt-sb-target-fields");
-			this.$eopHint = this.$wrapper.find("[data-testid='target-eop-hint']");
+		this.$treeList = this.$wrapper.find(".kt-sb-tree-list");
+		this.$readinessHost = this.$wrapper.find(".kt-sb-readiness-host");
+		this.$emptyHint = this.$wrapper.find("[data-testid='empty-editor-hint']");
+		this.$editorForm = this.$wrapper.find(".kt-sb-editor-form");
+		this.$targetFields = this.$wrapper.find(".kt-sb-target-fields");
+		this.$eopHint = this.$wrapper.find("[data-testid='target-eop-hint']");
+		this.$procurementImpactSection = this.$wrapper.find(".kt-sb-procurement-impact-section");
 
 			const me = this;
 			if (me.readOnly) {
@@ -682,15 +691,87 @@ frappe.provide("kentender_strategy.strategy_builder");
 			$tar.prop("disabled", t !== "Objective");
 		}
 
-		showEmptyEditor() {
-			this.$emptyHint.show();
-			this.$editorForm.hide();
+	showEmptyEditor() {
+		this.$emptyHint.show();
+		this.$editorForm.hide();
+		if (this.$procurementImpactSection) {
+			this.$procurementImpactSection.hide();
+		}
+	}
+
+	loadProcurementJourneyImpact(nodeName, nodeDoctype) {
+		const $section = this.$procurementImpactSection;
+		if (!$section || !$section.length) return;
+
+		const $body = $section.find('[data-testid="plc-strategy-procurement-journey-impact-body"]');
+		$body.html(`<p class="text-muted small mb-0" data-testid="plc-strategy-procurement-journey-impact-loading">${__("Loading\u2026")}</p>`);
+
+		function esc(s) {
+			const t = String(s == null ? "" : s);
+			return frappe.utils && frappe.utils.escape_html ? frappe.utils.escape_html(t) : t;
 		}
 
-		fillEditor(n) {
-			this.$emptyHint.hide();
-			this.$editorForm.show();
-			this.$wrapper.find("[data-testid='selected-node-type']").text(n.node_type);
+		frappe.call({
+			method: "kentender_procurement.procurement_lifecycle.api.journey_api.get_procurement_journeys_for_strategy_node",
+			args: { strategy_node_doctype: nodeDoctype, name: nodeName },
+			callback: function (r) {
+				if (!$body.length) return;
+				if (r.exc) {
+					$body.html(`<p class="text-danger small mb-0" data-testid="plc-strategy-procurement-journey-impact-error">${esc(r.exc)}</p>`);
+					return;
+				}
+				const d = r.message;
+				if (!d || !d.ok) {
+					const msg = (d && d.message) || __("Unable to load procurement links.");
+					$body.html(`<p class="text-muted small mb-0" data-testid="plc-strategy-procurement-journey-impact-empty">${esc(msg)}</p>`);
+					return;
+				}
+
+				const journeys = d.journeys || [];
+				const lines = d.budget_lines || [];
+
+				if (!journeys.length && !lines.length) {
+					$body.html(`<p class="text-muted small mb-0" data-testid="plc-strategy-procurement-journey-impact-none">${__("No linked procurement journeys or budget lines.")}</p>`);
+					return;
+				}
+
+				let html = "";
+
+				if (journeys.length) {
+					html += `<div class="mb-2" data-testid="plc-strategy-procurement-journey-impact-journeys"><div class="small font-weight-bold mb-1">${__("Linked procurement journeys")}</div><ul class="list-unstyled mb-0 pl-0">`;
+					journeys.forEach(function (j) {
+						const title = esc(j.journey_title || j.journey_code || "");
+						const code = esc(j.journey_code || "");
+						const stage = esc(j.current_stage_label || "");
+						const href = esc(j.open_route || "#");
+						html += `<li class="mb-1" data-testid="plc-strategy-procurement-journey-impact-journey-row"><a href="${href}"><span data-testid="plc-strategy-procurement-journey-impact-journey-title">${title}</span></a> <span class="text-muted small">(${code})</span>${stage ? `<span class="text-muted small"> — ${stage}</span>` : ""}</li>`;
+					});
+					html += `</ul></div>`;
+				}
+
+				if (lines.length) {
+					html += `<div data-testid="plc-strategy-procurement-journey-impact-budget-lines"><div class="small font-weight-bold mb-1">${__("Linked budget lines")}</div><ul class="list-unstyled mb-0 pl-0">`;
+					lines.forEach(function (line) {
+						const nm = esc(line.name || "");
+						const code = esc(line.code || "");
+						const href = esc(line.list_route || "#");
+						html += `<li class="mb-1" data-testid="plc-strategy-procurement-journey-impact-budget-row"><a href="${href}"><span data-testid="plc-strategy-procurement-journey-impact-budget-name">${nm}</span></a> <span class="text-muted small">(${code})</span></li>`;
+					});
+					html += `</ul></div>`;
+				}
+
+				$body.html(html);
+			},
+			error: function (err) {
+				$body.html(`<p class="text-danger small mb-0" data-testid="plc-strategy-procurement-journey-impact-error">${esc(err && err.message)}</p>`);
+			},
+		});
+	}
+
+	fillEditor(n) {
+		this.$emptyHint.hide();
+		this.$editorForm.show();
+		this.$wrapper.find("[data-testid='selected-node-type']").text(n.node_type);
 			this.$wrapper
 				.find(".kt-sb-definition-heading")
 				.text(n.node_type === "Target" ? __("Target Definition") : __("Definition"));
@@ -726,12 +807,23 @@ frappe.provide("kentender_strategy.strategy_builder");
 				this.toggleTargetEditorMode(mt);
 				this.fillTargetUnitFields(mt, n.target_unit || "");
 				this.toggleTimeframeFields(ptype);
-			} else {
-				this.$targetFields.hide();
-			}
+		} else {
+			this.$targetFields.hide();
 		}
 
-		promptCreate(nodeType) {
+		// Show Procurement Journey Impact section for Objective and Target nodes only.
+		if (this.$procurementImpactSection) {
+			if (n.node_type === "Objective" || n.node_type === "Target") {
+				this.$procurementImpactSection.show();
+				const doctype = n.node_type === "Objective" ? "Strategy Objective" : "Strategy Target";
+				this.loadProcurementJourneyImpact(n.name, doctype);
+			} else {
+				this.$procurementImpactSection.hide();
+			}
+		}
+	}
+
+	promptCreate(nodeType) {
 			if (this.readOnly) {
 				frappe.msgprint(__("You have read-only access to this plan."));
 				return;
