@@ -54,6 +54,12 @@ from kentender_procurement.procurement_lifecycle.journey_step_aggregator import 
 from kentender_procurement.procurement_lifecycle.evidence_timeline import (
     get_journey_evidence_timeline,
 )
+from kentender_procurement.procurement_lifecycle.strategy_node_journeys import (
+    build_procurement_links_payload,
+)
+from kentender_procurement.procurement_lifecycle.budget_line_procurement_use import (
+    build_procurement_use_payload,
+)
 from kentender_procurement.procurement_lifecycle.api.permission_guard import (
     require_journey_read,
 )
@@ -295,6 +301,55 @@ def get_journey_evidence(journey_code: str | None = None) -> list[dict[str, Any]
     if not code:
         frappe.throw("journey_code is required.", frappe.ValidationError)
     return get_journey_evidence_timeline(code)
+
+
+# ---------------------------------------------------------------------------
+# 6. get_procurement_journeys_for_strategy_node  (R5-002 / LV-R5-002-02)
+# ---------------------------------------------------------------------------
+
+
+@frappe.whitelist()
+def get_procurement_journeys_for_strategy_node(
+    strategy_node_doctype: str | None = None,
+    name: str | None = None,
+) -> dict[str, Any]:
+    """Return linked procurement journeys and budget lines for a strategy node.
+
+    Read-only aggregate for Strategy Objective / Strategy Target desk panels (R5-002).
+
+    :param strategy_node_doctype: ``Strategy Objective`` or ``Strategy Target``.
+    :param name: Document name (primary key).
+    :raises frappe.PermissionError: If the user cannot read Procurement Journey.
+    :raises frappe.ValidationError: If doctype is not supported (after non-empty checks).
+    """
+    _require_journey_read_permission()
+    dt = cstr(strategy_node_doctype or "").strip()
+    nm = cstr(name or "").strip()
+    if not dt or not nm:
+        frappe.throw(
+            "strategy_node_doctype and name are required.",
+            frappe.ValidationError,
+        )
+    return build_procurement_links_payload(dt, nm)
+
+
+@frappe.whitelist()
+def get_procurement_use_for_budget_line(
+    budget_line_name: str | None = None,
+) -> dict[str, Any]:
+    """Return funding confirmation and linked procurement objects for a Budget Line.
+
+    Read-only aggregate for Budget Line desk panel (R5-003 / LV-R5-003-02).
+
+    :param budget_line_name: Frappe ``name`` (primary key) of the ``Budget Line`` document.
+    :raises frappe.PermissionError: If the user cannot read Procurement Journey.
+    :raises frappe.ValidationError: If ``budget_line_name`` is blank.
+    """
+    _require_journey_read_permission()
+    nm = cstr(budget_line_name or "").strip()
+    if not nm:
+        frappe.throw("budget_line_name is required.", frappe.ValidationError)
+    return build_procurement_use_payload(nm)
 
 
 # ---------------------------------------------------------------------------

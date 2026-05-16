@@ -58,7 +58,10 @@ app_include_js = (
 page_js = {"budget-builder": "public/js/budget_builder_page.js"}
 
 # include js in doctype views
-doctype_js = {"Budget": "public/js/budget.js"}
+doctype_js = {
+	"Budget": "public/js/budget.js",
+	"Budget Line": "public/js/budget_line_procurement_use_panel.js",
+}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
