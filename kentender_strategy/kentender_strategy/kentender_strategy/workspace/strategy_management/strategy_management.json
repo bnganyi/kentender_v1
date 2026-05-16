@@ -1,7 +1,7 @@
 {
  "app": "kentender_strategy",
  "charts": [],
- "content": "[{\"id\":\"sm_sp1\",\"type\":\"spacer\",\"data\":{\"col\":12}}]",
+ "content": "[{\"id\":\"sm_h1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Strategy Alignment</b></span>\",\"col\":12}},{\"id\":\"sm_p1\",\"type\":\"paragraph\",\"data\":{\"text\":\"<span class=\\\"small\\\">Strategic Plan lists and the landing view are filtered by your <b>Procuring Entity</b> scope (<b>User</b> field <b>kt_procuring_entity</b> or a matching <b>User Permission</b>). Use <b>Administrator</b> to see all plans, or re-run the §8 seed with <b>sync_scope_user_email</b> so your user is linked to the MOH entity.</span>\",\"col\":12}},{\"id\":\"sm_sp1\",\"type\":\"spacer\",\"data\":{\"col\":12}}]",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -29,6 +29,9 @@
    "role": "Strategy Manager"
   },
   {
+   "role": "Planning Authority"
+  },
+  {
    "role": "Requisitioner"
   },
   {
@@ -45,6 +48,59 @@
   }
  ],
  "sequence_id": 10.0,
- "shortcuts": [],
+ "shortcuts": [
+  {
+   "color": "",
+   "doc_view": "List",
+   "format": "",
+   "icon": "file",
+   "kanban_board": "",
+   "label": "Strategic Plans",
+   "link_to": "Strategic Plan",
+   "restrict_to_domain": "",
+   "stats_filter": "",
+   "type": "DocType",
+   "url": ""
+  },
+  {
+   "color": "",
+   "doc_view": "List",
+   "format": "",
+   "icon": "organization",
+   "kanban_board": "",
+   "label": "Strategy Programmes",
+   "link_to": "Strategy Program",
+   "restrict_to_domain": "",
+   "stats_filter": "",
+   "type": "DocType",
+   "url": ""
+  },
+  {
+   "color": "",
+   "doc_view": "List",
+   "format": "",
+   "icon": "list",
+   "kanban_board": "",
+   "label": "Strategy Objectives",
+   "link_to": "Strategy Objective",
+   "restrict_to_domain": "",
+   "stats_filter": "",
+   "type": "DocType",
+   "url": ""
+  },
+  {
+   "color": "",
+   "doc_view": "List",
+   "format": "",
+   "icon": "dashboard",
+   "kanban_board": "",
+   "label": "Strategy Targets",
+   "link_to": "Strategy Target",
+   "restrict_to_domain": "",
+   "stats_filter": "",
+   "type": "DocType",
+   "url": ""
+  }
+ ],
  "title": "Strategy Management"
 }

@@ -1,0 +1,83 @@
+app,frappe_module,doctype_name
+kentender_budget,Kentender Budget,Budget
+kentender_budget,Kentender Budget,Budget Allocation
+kentender_budget,Kentender Budget,Budget Line
+kentender_budget,Kentender Budget,Budget Navigation
+kentender_budget,Kentender Budget,Budget Reservation
+kentender_budget,Kentender Budget,Funding Source
+kentender_core,Kentender Core,Audit Event
+kentender_core,Kentender Core,Business ID Counter
+kentender_core,Kentender Core,Business Unit
+kentender_core,Kentender Core,Exception Record
+kentender_core,Kentender Core,Procuring Department
+kentender_core,Kentender Core,Procuring Entity
+kentender_core,Kentender Core,Typed Attachment
+kentender_procurement,Demand Intake,Demand
+kentender_procurement,Demand Intake,Demand Item
+kentender_procurement,Kentender Procurement,Procurement Navigation
+kentender_procurement,Kentender Procurement,STD Template
+kentender_procurement,Kentender Procurement,STD Template Lifecycle Event
+kentender_procurement,Kentender Procurement,STD Template Usage
+kentender_procurement,Kentender Procurement,STD Template Validation Finding
+kentender_procurement,Kentender Procurement,Security Permission
+kentender_procurement,Kentender Procurement,Security Role
+kentender_procurement,Kentender Procurement,Security Role Permission
+kentender_procurement,Kentender Procurement,TM2 Addendum
+kentender_procurement,Kentender Procurement,TM2 Addendum Acknowledgement
+kentender_procurement,Kentender Procurement,TM2 Addendum Impact Record
+kentender_procurement,Kentender Procurement,TM2 Bid Draft Metadata
+kentender_procurement,Kentender Procurement,TM2 Bid Receipt
+kentender_procurement,Kentender Procurement,TM2 Bid Submission
+kentender_procurement,Kentender Procurement,TM2 Bid Submission Component
+kentender_procurement,Kentender Procurement,TM2 Clarification Request
+kentender_procurement,Kentender Procurement,TM2 Clarification Response
+kentender_procurement,Kentender Procurement,TM2 Contract Handoff Reference
+kentender_procurement,Kentender Procurement,TM2 Evaluation Handoff Record
+kentender_procurement,Kentender Procurement,TM2 Late Submission Attempt
+kentender_procurement,Kentender Procurement,TM2 Notification Record
+kentender_procurement,Kentender Procurement,TM2 Opening Readiness Record
+kentender_procurement,Kentender Procurement,TM2 Publication Readiness
+kentender_procurement,Kentender Procurement,TM2 Publication Record
+kentender_procurement,Kentender Procurement,TM2 Supplier Participation
+kentender_procurement,Kentender Procurement,TM2 Tender
+kentender_procurement,Kentender Procurement,TM2 Tender Access Rule
+kentender_procurement,Kentender Procurement,TM2 Tender Audit Event
+kentender_procurement,Kentender Procurement,TM2 Tender Closing Record
+kentender_procurement,Kentender Procurement,TM2 Tender Invitation
+kentender_procurement,Kentender Procurement,TM2 Tender STD Binding
+kentender_procurement,Kentender Procurement,TM2 Tender Timeline
+kentender_procurement,Kentender Procurement,Tender BoQ Item
+kentender_procurement,Kentender Procurement,Tender Derived Model Readiness
+kentender_procurement,Kentender Procurement,Tender Hardening Finding
+kentender_procurement,Kentender Procurement,Tender Lot
+kentender_procurement,Kentender Procurement,Tender Publication Approval Decision
+kentender_procurement,Kentender Procurement,Tender Publication Snapshot
+kentender_procurement,Kentender Procurement,Tender Required Form
+kentender_procurement,Kentender Procurement,Tender STD Generated Output
+kentender_procurement,Kentender Procurement,Tender STD Instance
+kentender_procurement,Kentender Procurement,Tender STD Instance BOQ
+kentender_procurement,Kentender Procurement,Tender STD Instance BOQ Bill
+kentender_procurement,Kentender Procurement,Tender STD Instance BOQ Item
+kentender_procurement,Kentender Procurement,Tender STD Instance Drawing Register Entry
+kentender_procurement,Kentender Procurement,Tender STD Instance Parameter Value
+kentender_procurement,Kentender Procurement,Tender STD Instance Section Attachment
+kentender_procurement,Kentender Procurement,Tender STD Instance Snapshot
+kentender_procurement,Kentender Procurement,Tender STD Instance Works Requirement
+kentender_procurement,Kentender Procurement,Tender Section Attachment
+kentender_procurement,Kentender Procurement,Tender Validation Message
+kentender_procurement,Kentender Procurement,Tender Works Requirement
+kentender_procurement,Procurement Planning,Decision Criteria Profile
+kentender_procurement,Procurement Planning,KPI Profile
+kentender_procurement,Procurement Planning,Procurement Package
+kentender_procurement,Procurement Planning,Procurement Package Line
+kentender_procurement,Procurement Planning,Procurement Plan
+kentender_procurement,Procurement Planning,Procurement Template
+kentender_procurement,Procurement Planning,Risk Profile
+kentender_procurement,Procurement Planning,Vendor Management Profile
+kentender_strategy,Kentender Strategy,Strategic Plan
+kentender_strategy,Kentender Strategy,Strategy Navigation
+kentender_strategy,Kentender Strategy,Strategy Node
+kentender_strategy,Kentender Strategy,Strategy Objective
+kentender_strategy,Kentender Strategy,Strategy Program
+kentender_strategy,Kentender Strategy,Strategy Target
+kentender_strategy,Kentender Strategy,Sub Program

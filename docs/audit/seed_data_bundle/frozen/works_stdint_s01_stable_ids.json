@@ -1,0 +1,9 @@
+{
+  "_source": "procurement_planning/seeds/seed_works_stdint_s01.py (docstrings and stable identifiers)",
+  "plan_code": "PLAN-MOH-2026-WORKS-S01",
+  "package_code": "PKG-MOH-2026-001",
+  "package_line_codes": ["PKGL-MOH-2026-001-01", "PKGL-MOH-2026-001-02"],
+  "demand_codes": ["DEM-MOH-WORKS-2026-001", "DEM-MOH-WORKS-2026-002"],
+  "budget_line_code": "BL-MOH-2026-001",
+  "bench_execute": "bench --site <site> execute kentender_procurement.procurement_planning.seeds.seed_works_stdint_s01.run"
+}

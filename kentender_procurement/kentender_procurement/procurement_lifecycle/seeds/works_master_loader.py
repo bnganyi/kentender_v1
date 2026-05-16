@@ -254,7 +254,15 @@ def _assert_journey_slot_safe_for_master() -> None:
 
 
 def _reset_master_plc_rows(*, include_opening_handoffs: bool) -> None:
-	"""§19.4 — delete master PLC artefacts for WORKS codes (reverse dependency: handoffs → journey)."""
+	"""§19.4 / R2-002 / SEED-TEST-006 — safe reset for WORKS master PLC only.
+
+	Deletes **Procurement Handoff Card** rows whose ``handoff_code`` is in the WORKS base (and,
+	when ``include_opening_handoffs``, optional opening) allowlist **and** ``is_master_seed`` is
+	set, then the **Procurement Journey** named ``JOURNEY_CODE`` if ``is_master_seed`` is set.
+	Rows outside those codes, or allowlisted codes with ``is_master_seed=0``, are **not** deleted
+	(operators must resolve conflicts separately — :func:`_assert_journey_slot_safe_for_master`).
+	Order: handoffs first, then journey (reverse dependency).
+	"""
 	codes = list(BASE_HANDOFF_CODES)
 	if include_opening_handoffs:
 		codes.extend(OPENING_HANDOFF_CODES)

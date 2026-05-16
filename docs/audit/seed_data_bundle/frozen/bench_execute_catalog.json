@@ -1,0 +1,43 @@
+{
+  "_comment": "Authoritative dotted paths for bench execute. Site: kentender.midas.com in examples.",
+  "kentender_core": [
+    {"callable": "kentender_core.seeds.seed_core_minimal.run", "purpose": "MOH departments + seed users (minimal core)"},
+    {"callable": "kentender_core.seeds.dev_full_reseed.run", "purpose": "Orchestrated multi-vertical reseed"},
+    {"callable": "kentender_core.seeds.seed_strategy_basic.run", "purpose": "MOH strategic plan 2026–2030 + hierarchy"},
+    {"callable": "kentender_core.seeds.seed_strategy_extended.run", "purpose": "Extended strategic plan variant"},
+    {"callable": "kentender_core.seeds.seed_strategy_empty.run", "purpose": "Clear strategy slice"},
+    {"callable": "kentender_core.seeds.seed_budget_basic.run", "purpose": "Minimal budgets"},
+    {"callable": "kentender_core.seeds.seed_budget_extended.run", "purpose": "FY2026/2027 budgets linked to basic plan"},
+    {"callable": "kentender_core.seeds.seed_budget_empty.run", "purpose": "Budget empty baseline"},
+    {"callable": "kentender_core.seeds.seed_budget_line_dia.run", "purpose": "DIA budget lines BL-MOH-* (calls extended by default)"},
+    {"callable": "kentender_core.seeds.seed_budget_line_dia.verify_prerequisites_for_dia", "purpose": "Read-only check for BL rows"},
+    {"callable": "kentender_core.seeds.reset_core_seed.run", "purpose": "Teardown core seed data"},
+    {"callable": "kentender_core.seeds.reset_strategy_seed.run", "purpose": "Teardown strategy seed data"}
+  ],
+  "kentender_procurement_demand_intake": [
+    {"callable": "kentender_procurement.demand_intake.seeds.seed_dia_basic.run", "purpose": "DIA-MOH-2026-0001..0006"},
+    {"callable": "kentender_procurement.demand_intake.seeds.seed_dia_extended.run", "purpose": "DIA-MOH-2026-0001..0009"},
+    {"callable": "kentender_procurement.demand_intake.seeds.seed_dia_exceptions.run", "purpose": "DIA extended + exception variant on 0002"},
+    {"callable": "kentender_procurement.demand_intake.seeds.seed_dia_empty.run", "purpose": "Clear DIA seed demands"},
+    {"callable": "kentender_procurement.demand_intake.seeds.seed_dia_planning_f1_prerequisites.run", "purpose": "Planning F1 DIA prerequisites"}
+  ],
+  "kentender_procurement_procurement_planning": [
+    {"callable": "kentender_procurement.procurement_planning.seeds.validate_planning_seed_dependencies.run", "purpose": "Validate planning seed deps"},
+    {"callable": "kentender_procurement.procurement_planning.seeds.seed_procurement_planning_f1.run", "purpose": "Planning F1 chain"},
+    {"callable": "kentender_procurement.procurement_planning.seeds.seed_planning_pp3_slice.run", "purpose": "PP3 slice"},
+    {"callable": "kentender_procurement.procurement_planning.seeds.seed_works_stdint_s01.run", "purpose": "WORKS STDINT-S01 full planning→release chain"}
+  ],
+  "kentender_procurement_tender_management": [
+    {"callable": "kentender_procurement.tender_management.seeds.seed_std_inst_1400.run", "purpose": "STD instance 1400 publishable fixture"},
+    {"callable": "kentender_procurement.tender_management.derived_models.seeds.seed_derived_moh_1200.run", "purpose": "Derived models MOH 1200"},
+    {"callable": "kentender_procurement.tender_management.tender_publication.seeds.seed_pub_moh_1100.run", "purpose": "Publication MOH 1100"},
+    {"callable": "kentender_procurement.tender_management.works_completion.seeds.works_completion_moh_fixture.run", "purpose": "WORKS-COMP-1100 golden completion seed"}
+  ],
+  "kentender_suppliers": [
+    {"callable": "kentender_suppliers.seeds.seed_ktsm_mvp.run", "purpose": "Supplier MVP seed (outside six modules but linked to TM2)"}
+  ],
+  "frappe_after_migrate_hooks": [
+    {"hook": "kentender_procurement.tender_management.seeds.std_template_governance_roles.run_after_migrate", "purpose": "STD governance roles"},
+    {"hook": "kentender_procurement.tender_management.seeds.std_template_governance_seed.run_after_migrate", "purpose": "STD governance seed rows"}
+  ]
+}

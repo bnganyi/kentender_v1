@@ -1,0 +1,40 @@
+{
+  "_source": "kentender_procurement/.../demand_intake/seeds/dia_seed_common.py",
+  "reserved_demand_business_ids": ["DIA-MOH-2026-0001", "DIA-MOH-2026-0002", "DIA-MOH-2026-0003", "DIA-MOH-2026-0004", "DIA-MOH-2026-0005", "DIA-MOH-2026-0006", "DIA-MOH-2026-0007", "DIA-MOH-2026-0008", "DIA-MOH-2026-0009"],
+  "actors": {
+    "requisitioner": "requisitioner@moh.test",
+    "hod_approver": "hod.approver@moh.test",
+    "finance_reviewer": "finance.reviewer@moh.test",
+    "planner": "planner@moh.test"
+  },
+  "default_demand_template": {
+    "procuring_entity": "MOH",
+    "requesting_department_label": "CLIN-SERV — Clinical Services",
+    "default_budget_line_code": "BL-MOH-2026-001",
+    "request_date": "2026-06-01",
+    "required_by_date": "2026-12-31",
+    "priority_level": "Normal",
+    "demand_type_default": "Planned",
+    "requisition_type": "Goods",
+    "default_item": {
+      "item_description": "Seeded catalogue line",
+      "category": "Medical supplies",
+      "uom": "ea",
+      "quantity": 2,
+      "estimated_unit_cost": 5000
+    }
+  },
+  "seed_basic_demands": [
+    {"demand_id": "DIA-MOH-2026-0001", "title": "DIA seed 0001 Draft", "scenario": "Draft Planned", "workflow": "insert only"},
+    {"demand_id": "DIA-MOH-2026-0002", "title": "DIA seed 0002 Pending HoD", "scenario": "Submitted", "workflow": "submit"},
+    {"demand_id": "DIA-MOH-2026-0003", "title": "DIA seed 0003 Pending Finance", "scenario": "HoD approved", "workflow": "submit, hod_approve"},
+    {"demand_id": "DIA-MOH-2026-0004", "title": "DIA seed 0004 Approved", "scenario": "Finance approved", "workflow": "submit, hod_approve, fin_approve", "items": {"quantity": 3, "estimated_unit_cost": 10000}},
+    {"demand_id": "DIA-MOH-2026-0005", "title": "DIA seed 0005 Planning Ready", "scenario": "Planning ready", "workflow": "submit, hod_approve, fin_approve, mark_planning", "items": {"quantity": 1, "estimated_unit_cost": 25000}},
+    {"demand_id": "DIA-MOH-2026-0006", "title": "DIA seed 0006 HoD Rejected", "scenario": "HoD rejected", "workflow": "submit, hod_reject"}
+  ],
+  "seed_extended_only": [
+    {"demand_id": "DIA-MOH-2026-0007", "title": "DIA seed 0007 Cancelled", "workflow": "submit, hod_approve, fin_approve, cancel"},
+    {"demand_id": "DIA-MOH-2026-0008", "title": "DIA seed 0008 Unplanned Draft", "demand_type": "Unplanned", "extra_fields": ["impact_if_not_procured"]},
+    {"demand_id": "DIA-MOH-2026-0009", "title": "DIA seed 0009 Emergency Over Budget", "demand_type": "Emergency", "items": {"quantity": 50000, "estimated_unit_cost": 500000}, "workflow": "submit, hod_approve (finance pending)"}
+  ]
+}

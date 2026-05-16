@@ -298,5 +298,20 @@ fixtures = [
 			]
 		],
 	},
+	# Desktop Icon hidden:1 — prevents "Strategy" from appearing as a standalone
+	# home-grid tile. NEVER change hidden to 0; access Strategy via the
+	# consolidated Procurement workspace sidebar only.
+	{
+		"dt": "Desktop Icon",
+		"filters": [["name", "in", ["Strategy"]]],
+	},
+	{
+		"dt": "Workspace Sidebar",
+		"filters": [["name", "in", ["Strategy"]]],
+	},
+	{
+		"dt": "Workspace",
+		"filters": [["name", "in", ["Strategy Management"]]],
+	},
 ]
 

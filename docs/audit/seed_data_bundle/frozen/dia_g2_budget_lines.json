@@ -1,0 +1,35 @@
+{
+  "_source": "kentender_core/kentender_core/seeds/seed_budget_line_dia.py",
+  "prerequisite_command": "bench --site <site> execute kentender_core.seeds.seed_budget_line_dia.run",
+  "verify_command": "bench --site <site> execute kentender_core.seeds.seed_budget_line_dia.verify_prerequisites_for_dia",
+  "budget_line_codes": ["BL-MOH-2026-001", "BL-MOH-2026-002", "BL-MOH-2027-001"],
+  "lines": [
+    {
+      "budget_line_code": "BL-MOH-2026-001",
+      "budget_line_name": "Medical Equipment Capex",
+      "fiscal_year": 2026,
+      "amount_allocated": 5000000,
+      "program_title": "Healthcare Access",
+      "sub_program_title": "Primary Care Infrastructure",
+      "objective_title": "Increase rural healthcare coverage"
+    },
+    {
+      "budget_line_code": "BL-MOH-2026-002",
+      "budget_line_name": "Clinical Workforce Training",
+      "fiscal_year": 2026,
+      "amount_allocated": 3000000,
+      "program_title": "Workforce Development",
+      "sub_program_title": "Clinical Training Delivery",
+      "objective_title": "Expand nursing and clinical workforce capacity"
+    },
+    {
+      "budget_line_code": "BL-MOH-2027-001",
+      "budget_line_name": "Rural Facility Expansion",
+      "fiscal_year": 2027,
+      "amount_allocated": 9000000,
+      "program_title": "Healthcare Access",
+      "sub_program_title": "Primary Care Infrastructure",
+      "objective_title": "Improve maternal health service access"
+    }
+  ]
+}

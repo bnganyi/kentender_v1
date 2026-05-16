@@ -1,0 +1,7 @@
+{
+  "_source": "tender_management/seeds/seed_std_inst_1400.py",
+  "WORKS_PROFILE_CODE": "WORKS-PROFILE-BUILDING-CIVIL-REV-APR-2022",
+  "PACKAGE_CODE": "PKG-MOH-2026-001",
+  "TENDER_REFERENCE": "TND-MOH-2026-001",
+  "bench_execute": "bench --site <site> execute kentender_procurement.tender_management.seeds.seed_std_inst_1400.run"
+}

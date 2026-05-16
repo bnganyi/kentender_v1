@@ -1,0 +1,96 @@
+{
+  "_source": "kentender_core/kentender_core/seeds/seed_strategy_basic.py",
+  "strategic_plan": {
+    "strategic_plan_name": "MOH Strategic Plan 2026–2030",
+    "procuring_entity": "MOH",
+    "start_year": 2026,
+    "end_year": 2030,
+    "status": "Draft",
+    "version_no": 1,
+    "is_current_version": 1
+  },
+  "programs": [
+    {
+      "program_title": "Healthcare Access",
+      "program_code": "P001",
+      "order_index": 1,
+      "description": "Expand equitable access to essential healthcare services across underserved areas."
+    },
+    {
+      "program_title": "Workforce Development",
+      "program_code": "P002",
+      "order_index": 2,
+      "description": "Strengthen health workforce capacity, deployment, and specialist availability."
+    }
+  ],
+  "objectives": [
+    {
+      "program": "Healthcare Access",
+      "objective_title": "Increase rural healthcare coverage",
+      "objective_code": "O001",
+      "order_index": 1
+    },
+    {
+      "program": "Healthcare Access",
+      "objective_title": "Improve maternal health service access",
+      "objective_code": "O002",
+      "order_index": 2
+    },
+    {
+      "program": "Workforce Development",
+      "objective_title": "Expand nursing and clinical workforce capacity",
+      "objective_code": "O003",
+      "order_index": 1
+    }
+  ],
+  "targets": [
+    {
+      "program": "Healthcare Access",
+      "objective": "Increase rural healthcare coverage",
+      "target_title": "Rural healthcare coverage reaches 65 percent",
+      "measurement_type": "Percentage",
+      "target_period_type": "Annual",
+      "target_year": 2027,
+      "target_value_numeric": 65,
+      "target_unit": "Percent",
+      "baseline_value_numeric": 52,
+      "baseline_year": 2025
+    },
+    {
+      "program": "Healthcare Access",
+      "objective": "Increase rural healthcare coverage",
+      "target_title": "Rural healthcare coverage reaches 85 percent",
+      "measurement_type": "Percentage",
+      "target_period_type": "End of Plan",
+      "target_value_numeric": 85,
+      "target_unit": "Percent",
+      "baseline_value_numeric": 52,
+      "baseline_year": 2025
+    },
+    {
+      "program": "Healthcare Access",
+      "objective": "Improve maternal health service access",
+      "target_title": "Additional maternal health facilities operational",
+      "measurement_type": "Numeric",
+      "target_period_type": "Annual",
+      "target_year": 2028,
+      "target_value_numeric": 40,
+      "target_unit": "Facilities",
+      "baseline_value_numeric": 18,
+      "baseline_year": 2025
+    },
+    {
+      "program": "Workforce Development",
+      "objective": "Expand nursing and clinical workforce capacity",
+      "target_title": "Nurses trained and deployed",
+      "measurement_type": "Numeric",
+      "target_period_type": "Annual",
+      "target_year": 2026,
+      "target_value_numeric": 500,
+      "target_unit": "Staff",
+      "baseline_value_numeric": 0,
+      "baseline_year": 2025
+    }
+  ],
+  "expected_counts": {"programs": 2, "objectives": 3, "targets": 4}
+}
