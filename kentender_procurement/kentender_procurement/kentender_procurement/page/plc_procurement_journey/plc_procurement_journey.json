@@ -7,9 +7,9 @@
  "modified": "2026-05-15 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
- "name": "procurement-journey",
+ "name": "plc-procurement-journey",
  "owner": "Administrator",
- "page_name": "procurement-journey",
+ "page_name": "plc-procurement-journey",
  "roles": [
   {
    "role": "Administrator"

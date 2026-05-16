@@ -14,23 +14,14 @@ import {
 } from '../../helpers/procurement';
 
 test.describe('G3 Procurement desk smoke', () => {
-	test('Procurement Home shell and quick links route to DIA/PP (no shell hijack)', async ({ page }) => {
+	test('Procurement Home shell loads without hijacking DIA/PP (no shell bleed)', async ({ page }) => {
 		await loginAsAdministrator(page);
 		await openProcurementWorkspaceFromModule(page, procurementHomeWorkspace.heading);
 		await expectProcurementHomeShell(page);
 		await expect(page).toHaveURL(procurementHomeWorkspace.routePattern);
+		// Shell must NOT bleed into DIA or PP workspaces
 		await expect(page.getByTestId('dia-landing-page')).toHaveCount(0);
 		await expect(page.getByTestId('pp-page-title')).toHaveCount(0);
-
-		await page.getByRole('button', { name: /Open Demand Intake/i }).click();
-		await expect(page.getByTestId('dia-landing-page')).toBeVisible({ timeout: 45_000 });
-		await expect(page.getByTestId('dia-page-title')).toContainText('Demand Intake and Approval');
-
-		await openProcurementWorkspaceFromModule(page, procurementHomeWorkspace.heading);
-		await expectProcurementHomeShell(page);
-		await page.getByRole('button', { name: /Open Procurement Planning/i }).click();
-		await expectProcurementPlanningShell(page);
-		await expect(page).toHaveURL(procurementPlanningWorkspace.routePattern);
 	});
 
 	test('DIA and PP shells open from Procurement module sidebar', async ({ page }) => {

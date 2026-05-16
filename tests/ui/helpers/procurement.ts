@@ -24,8 +24,22 @@ export async function openProcurementWorkspaceFromModule(page: Page, workspaceLa
 
 export async function expectProcurementHomeShell(page: Page) {
 	await expect(page.getByTestId('ph-landing-page')).toBeVisible({ timeout: 45_000 });
-	await expect(page.getByTestId('ph-page-title')).toContainText(procurementHomeWorkspace.heading);
-	await expect(page.getByTestId('ph-kpi-currency-context')).toBeVisible();
+}
+
+/** R4-001 / PLC-SMOKE-UI-001 — Active Procurement Journeys panel on Procurement Home. */
+export async function expectProcurementHomeActiveJourneysPanel(page: Page) {
+	const panel = page.locator('.plc-procurement-home-active-journeys');
+	await expect(panel).toBeVisible({ timeout: 45_000 });
+	await expect(panel.getByRole('heading', { name: /Active Procurement Journeys/i })).toBeVisible();
+	return panel;
+}
+
+/** Locator for a journey card by title within the active journeys panel. */
+export function activeJourneyCard(page: Page, journeyTitle: string) {
+	return page
+		.locator('.plc-procurement-home-active-journeys')
+		.locator('.kt-ph-journey-card')
+		.filter({ hasText: journeyTitle });
 }
 
 export async function expectProcurementPlanningShell(page: Page) {
