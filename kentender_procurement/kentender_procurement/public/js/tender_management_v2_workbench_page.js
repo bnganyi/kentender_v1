@@ -1657,6 +1657,7 @@
 				<div class="h6 font-weight-bold mt-2 mb-1">${esc(String(next.headline || ""))}</div>
 				<div class="small text-muted">${esc(String(next.reason || ""))}</div>
 			</div>
+			<div data-testid="tm2-overview-business-readiness-host" class="mb-3"></div>
 			<div data-testid="tm2-overview-tender-summary" class="mb-3">
 				<div class="small font-weight-bold text-muted mb-1">${esc(__("Tender summary"))}</div>
 				<div class="small"><strong>${esc(String(ts.tender_code || ""))}</strong> — ${esc(String(ts.tender_title || ""))}</div>
@@ -1701,6 +1702,21 @@
 				</div>
 			</details>`,
 		);
+
+		const tcMount = String(ts.tender_code || "").trim();
+		const $brH = $p.find('[data-testid="tm2-overview-business-readiness-host"]');
+		if (
+			tcMount &&
+			typeof window.kentender_procurement !== "undefined" &&
+			kentender_procurement.BusinessReadinessSummary
+		) {
+			kentender_procurement.BusinessReadinessSummary.mount($brH, {
+				object_type: "TM2 Tender",
+				object_code: tcMount,
+			});
+		} else {
+			$brH.remove();
+		}
 	}
 
 	function loadTenderDetail($w, tenderCode) {

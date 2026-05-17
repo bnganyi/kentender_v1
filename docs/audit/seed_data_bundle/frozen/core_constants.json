@@ -24,7 +24,8 @@
     ["planner@moh.test", "Procurement Planner MOH", "Procurement Planner", "PROC — Procurement"],
     ["procurement.officer@moh.test", "Procurement Officer MOH", "Procurement Officer", "PROC — Procurement"],
     ["finance.reviewer@moh.test", "Finance Reviewer MOH", "Finance Reviewer", "FIN — Finance"],
-    ["hod.approver@moh.test", "HoD Approver MOH", "Department Approver", "CLIN-SERV — Clinical Services"]
+    ["hod.approver@moh.test", "HoD Approver MOH", "Department Approver", "CLIN-SERV — Clinical Services"],
+    ["auditor@moh.test", "Auditor MOH", "Auditor", "FIN — Finance"]
   ],
   "PLAN_BASIC_NAME": "MOH Strategic Plan 2026–2030",
   "PLAN_EXTENDED_NAME": "MOH Service Delivery Improvement Plan 2027–2031"

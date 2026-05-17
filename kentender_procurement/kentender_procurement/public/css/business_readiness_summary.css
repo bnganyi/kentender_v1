@@ -1,0 +1,18 @@
+/* R6-001 / R6-003 — Business readiness + TM2 technical drawer */
+.plc-business-readiness-summary .plc-br-check-row:last-child {
+	border-bottom: none !important;
+}
+
+.plc-business-readiness-summary details.plc-br-technical-wrap summary {
+	cursor: pointer;
+	list-style: none;
+}
+
+.plc-business-readiness-summary details.plc-br-technical-wrap summary::-webkit-details-marker {
+	display: none;
+}
+
+/* R6-003 — keep STD output codes out of the collapsed summary slot (details closed). */
+.plc-business-readiness-summary details.plc-tm2-readiness-technical-drawer:not([open]) .plc-technical-evidence-body {
+	display: none;
+}

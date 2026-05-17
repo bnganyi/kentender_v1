@@ -203,6 +203,11 @@ class TestR3016BusinessReadinessSummary(IntegrationTestCase):
             self.assertEqual(dem_check["blocker_code"], "DEM_MISSING_OR_STALE", msg=dem_check)
             self.assertEqual(dem_check["owner_module"], "STD Engine", msg=dem_check)
             self.assertIn("required_action", dem_check, msg=dem_check)
+            ubm = dem_check.get("user_blocker_message")
+            self.assertIsInstance(ubm, str, msg=dem_check)
+            self.assertGreater(len(ubm.strip()), 10, msg=dem_check)
+            self.assertNotIn("DEM_MISSING_OR_STALE", ubm, msg=dem_check)
+            self.assertIn("Evaluation", ubm, msg=dem_check)
             # Other checks still PASS
             for tech in ("Bundle", "DSM", "DOM", "DCM"):
                 self.assertEqual(by_label[tech]["result"], "PASS", msg=by_label[tech])

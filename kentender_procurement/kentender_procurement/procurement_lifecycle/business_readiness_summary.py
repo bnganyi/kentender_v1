@@ -14,6 +14,9 @@ For ``TM2 Tender``, the service returns 5 readiness checks plus a publication sn
 reference line (6 items total — "6 lines incl. snapshot" per LV-R3-016-01), which
 corresponds to the PLC-SMOKE-BE-004 acceptance criterion.
 
+R6-004 / NEG-TND-MISSING-DEM-001: DEM **FAIL** rows may include ``user_blocker_message`` —
+a business-readable sentence that does not use machine blocker codes as primary copy.
+
 ## Data sources (in priority order)
 
 1. ``PUBCERT-{tender_code}`` handoff card → ``technical_refs_json`` (has all 5 codes
@@ -44,6 +47,7 @@ If no handoff card exists for the tender, all checks return ``result="FAIL"`` wi
       # "blocker_code": str,
       # "owner_module": str,
       # "required_action": str,
+      # "user_blocker_message": str,   # optional; DEM R6-004 curated copy for Desk
     },
     ...
   ],
@@ -244,17 +248,21 @@ def _tm2_tender_readiness(tender_code: str) -> dict[str, Any]:
             )
             any_pass = True
         else:
-            checks.append(
-                {
-                    "business_label": biz_label,
-                    "technical_label": tech_label,
-                    "technical_ref": None,
-                    "result": "FAIL",
-                    "blocker_code": blocker_code if handoff_source else "PENDING",
-                    "owner_module": owner_module,
-                    "required_action": required_action,
-                }
-            )
+            eff_blocker = blocker_code if handoff_source else "PENDING"
+            row: dict[str, Any] = {
+                "business_label": biz_label,
+                "technical_label": tech_label,
+                "technical_ref": None,
+                "result": "FAIL",
+                "blocker_code": eff_blocker,
+                "owner_module": owner_module,
+                "required_action": required_action,
+            }
+            if tech_label == "DEM":
+                umsg = _user_facing_dem_blocker(eff_blocker)
+                if umsg:
+                    row["user_blocker_message"] = umsg
+            checks.append(row)
             any_fail = True
 
     # --- 4. Determine overall status ----------------------------------------
@@ -277,8 +285,29 @@ def _tm2_tender_readiness(tender_code: str) -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
-# Private helpers
+# R6-004 — DEM missing / stale: business-readable blocker (never raw code as UX)
 # ---------------------------------------------------------------------------
+
+def _user_facing_dem_blocker(blocker_code: str | None) -> str | None:
+    """Return procurement-facing copy for DEM failures (NEG-TND-MISSING-DEM-001).
+
+    Machine codes (``DEM_MISSING_OR_STALE``) stay on ``blocker_code`` for integration;
+    the Desk shows ``user_blocker_message`` instead of foregrounding the token.
+    """
+    bc = str(blocker_code or "").strip()
+    if bc == "DEM_MISSING_OR_STALE":
+        return frappe._(
+            "Evaluation rules are not ready: the evaluation model is missing or out of date. "
+            "Complete Evaluation and Qualification Criteria, then generate or refresh the "
+            "evaluation rules in the STD Engine."
+        )
+    if bc == "PENDING":
+        return frappe._(
+            "Evaluation rules are not assessed yet. Complete tender document readiness so "
+            "the evaluation model can be produced."
+        )
+    return None
+
 
 def _parse_tech_refs(technical_refs_json: str | None) -> dict[str, str | None]:
     """Parse the ``technical_refs_json`` field into a flat key→value dict."""

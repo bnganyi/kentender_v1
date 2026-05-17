@@ -33,6 +33,7 @@ SEED_USERS = (
 	("procurement.officer@moh.test", "Procurement Officer MOH", "Procurement Officer", DEPT_PROC),
 	("finance.reviewer@moh.test", "Finance Reviewer MOH", "Finance Reviewer", DEPT_FIN),
 	("hod.approver@moh.test", "HoD Approver MOH", "Department Approver", DEPT_CLIN),
+	("auditor@moh.test", "Auditor MOH", "Auditor", DEPT_FIN),
 )
 
 # Strategic plan titles (exact spec strings)

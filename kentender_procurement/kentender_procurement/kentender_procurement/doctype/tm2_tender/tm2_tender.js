@@ -2,6 +2,7 @@
 // Doc 9 §22.2 — primary Tender Management UX is the workbench, not raw DocType forms.
 //
 // R5-010 / R5-011 — Module journey header + Procurement hand-offs on the TM2 desk Form.
+// R6-002 — `BusinessReadinessSummary.mount` → `read_business_readiness_summary` (loading / error UX).
 
 (function () {
 	function businessTenderCode(frm) {
@@ -26,6 +27,20 @@
 		frm._plc_tm2_module_journey_inner = $inner;
 	}
 
+	function ensureBusinessReadinessHost(frm) {
+		ensureModuleJourneyContextHost(frm);
+		if (frm._plc_tm2_br_host) {
+			return frm._plc_tm2_br_host;
+		}
+		const $br = $('<div class="mb-3"></div>').attr(
+			"data-testid",
+			"tm2-tender-business-readiness-host",
+		);
+		frm._plc_tm2_module_journey_host_wrap.after($br);
+		frm._plc_tm2_br_host = $br;
+		return $br;
+	}
+
 	function ensureTm2HandoffShell(frm) {
 		ensureModuleJourneyContextHost(frm);
 		if (frm._plc_tm2_handoff_shell) {
@@ -35,9 +50,35 @@
 			"data-testid",
 			"tm2-tender-handoff-panel",
 		);
-		frm._plc_tm2_module_journey_host_wrap.after($hand);
+		const $anchor = frm._plc_tm2_br_host || frm._plc_tm2_module_journey_host_wrap;
+		$anchor.after($hand);
 		frm._plc_tm2_handoff_shell = $hand;
 		return $hand;
+	}
+
+	function syncBusinessReadinessSummary(frm) {
+		const $br = ensureBusinessReadinessHost(frm);
+		const code = businessTenderCode(frm);
+
+		if (!code) {
+			$br.hide().empty();
+			return;
+		}
+
+		if (
+			typeof kentender_procurement === "undefined" ||
+			!kentender_procurement.BusinessReadinessSummary ||
+			typeof kentender_procurement.BusinessReadinessSummary.mount !== "function"
+		) {
+			$br.hide().empty();
+			return;
+		}
+
+		$br.show();
+		kentender_procurement.BusinessReadinessSummary.mount($br, {
+			object_type: "TM2 Tender",
+			object_code: code,
+		});
 	}
 
 	function syncModuleJourneyContextHeader(frm) {
@@ -49,6 +90,9 @@
 		if (!code) {
 			$wrap.hide();
 			$inner.empty();
+			if (frm._plc_tm2_br_host) {
+				frm._plc_tm2_br_host.hide().empty();
+			}
 			if (frm._plc_tm2_handoff_shell) {
 				frm._plc_tm2_handoff_shell.hide().empty();
 			}
@@ -62,6 +106,9 @@
 		) {
 			$wrap.hide();
 			$inner.empty();
+			if (frm._plc_tm2_br_host) {
+				frm._plc_tm2_br_host.hide().empty();
+			}
 			return;
 		}
 
@@ -86,6 +133,7 @@
 			const code = businessTenderCode(frm);
 
 			syncModuleJourneyContextHeader(frm);
+			syncBusinessReadinessSummary(frm);
 
 			const $hos = ensureTm2HandoffShell(frm);
 			if (!code) {
