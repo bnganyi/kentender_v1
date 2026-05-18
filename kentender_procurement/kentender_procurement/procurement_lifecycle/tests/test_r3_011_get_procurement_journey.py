@@ -223,9 +223,25 @@ class TestR3011GetProcurementJourney(IntegrationTestCase):
         result = get_procurement_journey(JOURNEY_CODE)
         evidence = result["evidence_summary"]
 
-        self.assertGreaterEqual(len(evidence), 7, "Expected at least 7 evidence events")
+        self.assertGreaterEqual(len(evidence), 7, "Expected at least 7 evidence rows")
 
-        required_evt_keys = {"occurred_at", "module", "event_type", "handoff_code"}
+        handoff_linked = [e for e in evidence if e.get("handoff_code")]
+        self.assertGreaterEqual(len(handoff_linked), 7, "Seven base handoffs must emit events")
+
+        required_evt_keys = {
+            "occurred_at",
+            "module",
+            "event_type",
+            "business_label",
+            "object_type",
+            "object_code",
+            "handoff_code",
+            "evidence_refs",
+            "handoff_status",
+            "stale_reason",
+            "stale_warning",
+            "audit_event_code",
+        }
         for evt in evidence:
             missing = required_evt_keys - set(evt.keys())
             self.assertFalse(
@@ -233,7 +249,21 @@ class TestR3011GetProcurementJourney(IntegrationTestCase):
                 f"Evidence event missing keys {missing}: {evt}",
             )
             self.assertIsNotNone(evt["module"], "module must be non-null")
-            self.assertIsNotNone(evt["handoff_code"], "handoff_code must be non-null")
+            if evt.get("handoff_code") is not None:
+                hc = str(evt["handoff_code"]).strip()
+                self.assertTrue(hc, msg="when handoff_code is set it must be non-empty")
+
+        pubcert = next(
+            (x for x in evidence if x.get("handoff_code") == "PUBCERT-TND-MOH-2026-001"),
+            None,
+        )
+        self.assertIsNotNone(pubcert, msg="WORKS timeline must contain PUBCERT")
+        assert pubcert is not None
+        self.assertIn(
+            "PUBSNAP-TND-MOH-2026-001-V2",
+            pubcert["evidence_refs"],
+            msg="Publication snapshot surfaces in lifecycle evidence_refs (**R7-004**)",
+        )
 
     # ------------------------------------------------------------------
     # Test 6 — AGG-006: blocker counts

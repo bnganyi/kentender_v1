@@ -749,6 +749,20 @@
 						.text(__("Refs") + ": " + refStr),
 				);
 			}
+			if (e.stale_warning) {
+				const sr = String(e.stale_reason || "").trim();
+				var staleText = __("Stale handoff");
+				if (sr) {
+					staleText = staleText + ": " + sr;
+				}
+				$main.append(
+					$("<div>")
+						.addClass("alert alert-warning small py-1 px-2 mt-2 mb-0 plc-evidence-timeline-stale")
+						.attr("data-testid", "plc-evidence-timeline-stale-warning")
+						.attr("role", "alert")
+						.text(staleText),
+				);
+			}
 			$row.append($main);
 			$ev.append($row);
 			$track.append($ev);

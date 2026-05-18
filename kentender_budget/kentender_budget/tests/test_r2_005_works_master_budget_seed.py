@@ -83,6 +83,7 @@ class TestR2005WorksMasterBudgetSeed(IntegrationTestCase):
     # ── Test 1: fresh seed shape and values ───────────────────────────────────
     def test_001_fresh_seed_creates_budget_and_line_with_spec_values(self):
         """SEED-TEST-R2-005-001: First run materialises correct codes and amounts."""
+        _clean_budget(self.pe_name)
         out = upsert_works_master_budget()
 
         self.assertTrue(out.get("ok"), f"Seed returned error: {out}")
@@ -114,6 +115,8 @@ class TestR2005WorksMasterBudgetSeed(IntegrationTestCase):
         self.assertAlmostEqual(flt(bl_doc.amount_available), 22_000_000.0, places=2)
         self.assertEqual(bl_doc.currency, "KES")
         self.assertEqual(int(bl_doc.is_active), 1)
+        self.assertTrue(bl_doc.sub_program)
+        self.assertTrue(frappe.db.exists("Sub Program", bl_doc.sub_program))
 
     # ── Test 2: idempotency ───────────────────────────────────────────────────
     def test_002_idempotent_second_run_does_not_duplicate(self):

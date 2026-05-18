@@ -150,7 +150,7 @@
 		wrap.className = "kt-ph-injected-shell";
 		wrap.setAttribute("data-testid", "ph-landing-page");
 		wrap.innerHTML =
-			'<div id="kt-ph-active-journeys" class="kt-ph-section kt-surface plc-procurement-home-active-journeys">' +
+			'<div id="kt-ph-active-journeys" class="kt-ph-section kt-surface plc-procurement-home-active-journeys" data-testid="plc-procurement-home-active-journeys">' +
 			'<h3 class="kt-ph-section-title h6 mb-2">' +
 			escapeHtml(__("Active Procurement Journeys")) +
 			"</h3>" +
@@ -227,7 +227,7 @@
 		const blockers = formatBlockersLabel(item);
 		const tenderCode = (item && item.primary_object_code) || "";
 		let actions =
-			'<button type="button" class="btn btn-primary btn-sm plc-home-open-journey" data-journey-code="' +
+			'<button type="button" class="btn btn-primary btn-sm plc-home-open-journey" data-testid="plc-home-open-journey" data-journey-code="' +
 			escapeHtml(code) +
 			'">' +
 			escapeHtml(__("Open Journey")) +

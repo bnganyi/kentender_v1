@@ -11,7 +11,8 @@
 - Stored journey header fields (title, category, method, stage, status).
 - Aggregated step list from R3-013 (``aggregate_procurement_journey_steps``).
 - All associated ``Procurement Handoff Card`` records in a compact summary shape.
-- A lightweight evidence summary derived from handoff cards (ordered chronologically).
+- ``evidence_summary`` from ``get_journey_evidence_timeline`` (§9.5 / **R7-001**) —
+  handoffs, tender addenda, TM2 Tender Audit Events, parity with ``get_journey_evidence``.
 - Re-derived blocker counts from live step data (overrides stored counts for accuracy).
 
 This is the primary read API for the Journey Detail view and any module that displays
@@ -53,8 +54,8 @@ a Journey Context Header.
   freshness checks). Cards include parsed JSON for ``locked_summary``,
   ``passed_forward_summary``, ``evidence_links``, and ``technical_refs``.
 
-- **evidence_summary**: one entry per handoff card, ordered by ``generated_at``
-  ascending, in the event shape from pack §9.5.
+- **evidence_summary**: pack §9.5 timeline from ``get_journey_evidence_timeline``
+  — handoffs, real tender addenda, and TM2 audit rows (**R7-001**, **R7-003**).
 
 - **R4-012** — ``open_module_route`` on each step is **sanitized** for the session user:
   only strict ``["Form", <Doctype>, <name>]`` JSON (allowlisted DocTypes) is retained
@@ -75,6 +76,10 @@ import json
 from typing import Any, Final
 
 import frappe
+
+from kentender_procurement.procurement_lifecycle.evidence_timeline import (
+    get_journey_evidence_timeline,
+)
 
 from kentender_procurement.procurement_lifecycle.journey_step_aggregator import (
     aggregate_procurement_journey_steps,
@@ -254,37 +259,6 @@ def _card_to_summary(card: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _card_to_evidence_event(card: dict[str, Any]) -> dict[str, Any] | None:
-    """Convert a handoff card to an evidence timeline event (pack §9.5 shape).
-
-    Returns ``None`` if essential fields are missing.
-    """
-    handoff_code = str(card.get("handoff_code") or "").strip()
-    source_module = str(card.get("source_module") or "").strip()
-    if not handoff_code or not source_module:
-        return None
-
-    occurred_at = str(card["generated_at"]) if card.get("generated_at") else None
-    source_type = str(card.get("source_object_type") or "").strip() or None
-    source_code = str(card.get("source_object_code") or "").strip() or None
-    title = str(card.get("handoff_title") or "").strip()
-
-    # Derive evidence_refs from evidence_links (first external link code, or source code)
-    links = _parse_evidence_links(card.get("evidence_links_json"))
-    evidence_refs = [lnk["object_code"] for lnk in links if lnk.get("object_code")]
-
-    return {
-        "occurred_at": occurred_at,
-        "module": source_module,
-        "event_type": title,
-        "business_label": f"{title} issued",
-        "object_type": source_type,
-        "object_code": source_code,
-        "handoff_code": handoff_code,
-        "evidence_refs": evidence_refs,
-    }
-
-
 def _derive_blocker_counts(steps: list[dict[str, Any]]) -> tuple[int, int]:
     """Re-derive (blocker_count, critical_blocker_count) from live step data.
 
@@ -355,13 +329,8 @@ def get_procurement_journey(journey_code: str) -> dict[str, Any]:
 
     handoff_cards = [_card_to_summary(c) for c in (raw_cards or [])]
 
-    # 5. Build evidence summary (one event per non-stale handoff card, ordered by generated_at)
-    evidence_summary: list[dict[str, Any]] = []
-    for card_row in (raw_cards or []):
-        evt = _card_to_evidence_event(card_row)
-        if evt is not None:
-            evidence_summary.append(evt)
-    # evidence_summary is already ordered by generated_at asc (from the DB query above)
+    # 5. Evidence summary — single source of truth vs ``get_journey_evidence`` (**R7-001**, **R7-004**)
+    evidence_summary: list[dict[str, Any]] = get_journey_evidence_timeline(code)
 
     # 6. Build the primary object ref (latest non-null ref in journey spine order)
     _spine_refs = (

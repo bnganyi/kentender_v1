@@ -4,7 +4,9 @@
 """WORKS master budget hierarchy — seed data specification §9 (R2-005 / LV-R2-001-05).
 
 Idempotent upsert of **Budget** cycle ``BUDGET-MOH-2026`` and **Budget Line**
-``BUD-MOH-INFRA-2026-001`` for the MOH healthcare-infrastructure priority.
+``BUD-MOH-INFRA-2026-001`` for the MOH healthcare-infrastructure priority, including
+``sub_program`` linkage (Sub Program under **PROG-MOH-INFRA**) so DIA-aligned Demands
+receive strategy derivation from the budget line.
 
 **Prerequisites (must already exist before calling this seed):**
 
@@ -69,6 +71,7 @@ PLAN_START_YEAR: Final[int] = 2026
 PLAN_END_YEAR: Final[int] = 2030
 PLAN_TITLE: Final[str] = "Ministry of Health Strategic Plan 2026\u20132030"
 
+WORKS_SUB_PROGRAM_TITLE: Final[str] = "District health facility rehabilitation (WORKS seed)"
 
 # ── Prerequisite resolvers ────────────────────────────────────────────────────
 
@@ -135,6 +138,43 @@ def _resolve_strategy_refs(
         else None
     )
     return {"program": program, "objective": objective, "target": target}
+
+
+def _ensure_works_sub_program(program_name: str | None) -> str | None:
+    """Return a Sub Program under ``program_name`` for WORKS budget-line / DIA joins.
+
+    DIA ``Demand`` documents require ``sub_program`` when ``budget_line`` is set
+    (``_apply_budget_line_strategy``). WORKS §9 historically omitted this link; we
+    idempotently attach a seed Sub Program (or reuse any existing row under the programme).
+    """
+    if not program_name:
+        return None
+    existing_title = frappe.db.get_value(
+        "Sub Program",
+        {"program": program_name, "title": WORKS_SUB_PROGRAM_TITLE},
+        "name",
+    )
+    if existing_title:
+        return existing_title
+    reuse = frappe.get_all(
+        "Sub Program",
+        filters={"program": program_name},
+        pluck="name",
+        order_by="modified asc",
+        limit=1,
+    )
+    if reuse:
+        return reuse[0]
+    doc = frappe.get_doc(
+        {
+            "doctype": "Sub Program",
+            "program": program_name,
+            "title": WORKS_SUB_PROGRAM_TITLE,
+            "sub_program_code": "SUB-WORKS-MOH-INFRA-SEED-001",
+        }
+    )
+    doc.insert(ignore_permissions=True)
+    return doc.name
 
 
 # ── Funding Source ────────────────────────────────────────────────────────────
@@ -211,13 +251,21 @@ def _ensure_budget_line(
 ) -> tuple[str, bool]:
     """Return (budget_line_doc_name, created). BUD-MOH-INFRA-2026-001."""
     if frappe.db.exists("Budget Line", BUDGET_LINE_CODE):
-        # Already present. Verify status (is_active) and return.
+        # Already present. Verify status (is_active); backfill sub_program for DIA joins.
         active = frappe.db.get_value("Budget Line", BUDGET_LINE_CODE, "is_active")
         if not active:
             frappe.db.set_value("Budget Line", BUDGET_LINE_CODE, "is_active", 1)
+        bl_program = frappe.db.get_value("Budget Line", BUDGET_LINE_CODE, "program")
+        bl_sub = frappe.db.get_value("Budget Line", BUDGET_LINE_CODE, "sub_program")
+        if bl_program and not bl_sub:
+            sp = _ensure_works_sub_program(bl_program)
+            if sp:
+                frappe.db.set_value("Budget Line", BUDGET_LINE_CODE, "sub_program", sp)
         return BUDGET_LINE_CODE, False
 
     ensure_currency_kes()
+    sub_program_name = _ensure_works_sub_program(program_name)
+
     payload: dict[str, Any] = {
         "doctype": "Budget Line",
         "budget_line_code": BUDGET_LINE_CODE,
@@ -237,6 +285,8 @@ def _ensure_budget_line(
         "is_active": 1,
         "notes": BUDGET_LINE_NOTES,
     }
+    if sub_program_name:
+        payload["sub_program"] = sub_program_name
     if objective_name:
         payload["output_indicator"] = objective_name
     if target_name:

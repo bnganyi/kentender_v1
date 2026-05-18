@@ -27,6 +27,7 @@ from kentender_procurement.tender_management.services.std_template_loader import
 )
 from kentender_procurement.tender_management.tests.test_release_procurement_package_to_tender_b3 import (
 	_ReleaseProcurementPackageHandoffFixtures,
+	handoff_integration_test_budget_line_name,
 )
 
 
@@ -136,7 +137,7 @@ class TestPlanningTenderHandoffXmvB5(_ReleaseProcurementPackageHandoffFixtures):
 			res = validate_package_for_release_xmv(doc)
 			self.assertIn("XMV-PT-006", {f.code for f in res.critical})
 		finally:
-			bl = frappe.db.get_value("Budget Line", {"budget_line_code": "BL-MOH-2026-001"}, "name")
+			bl = handoff_integration_test_budget_line_name()
 			if bl:
 				frappe.db.set_value("Procurement Package Line", ln, "budget_line_id", bl)
 			frappe.db.commit()

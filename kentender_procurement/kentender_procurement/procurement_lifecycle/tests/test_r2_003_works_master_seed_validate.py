@@ -1,7 +1,10 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""R2-003 — WORKS master seed validator (VAL-SEED-001–022, OPEN-001–006)."""
+"""R2-003 — WORKS master seed validator (VAL-SEED-001–022, OPEN-001–006).
+
+Also bundled under **§14 G9-009** via ``test_g9_009_master_seed_acceptance``.
+"""
 
 from __future__ import annotations
 

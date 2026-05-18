@@ -26,9 +26,9 @@ export async function expectProcurementHomeShell(page: Page) {
 	await expect(page.getByTestId('ph-landing-page')).toBeVisible({ timeout: 45_000 });
 }
 
-/** R4-001 / PLC-SMOKE-UI-001 — Active Procurement Journeys panel on Procurement Home. */
+/** R4-001 / R8-006 / PLC-SMOKE-UI-001 — Active Procurement Journeys panel on Procurement Home. */
 export async function expectProcurementHomeActiveJourneysPanel(page: Page) {
-	const panel = page.locator('.plc-procurement-home-active-journeys');
+	const panel = page.getByTestId('plc-procurement-home-active-journeys');
 	await expect(panel).toBeVisible({ timeout: 45_000 });
 	await expect(panel.getByRole('heading', { name: /Active Procurement Journeys/i })).toBeVisible();
 	return panel;
@@ -37,9 +37,29 @@ export async function expectProcurementHomeActiveJourneysPanel(page: Page) {
 /** Locator for a journey card by title within the active journeys panel. */
 export function activeJourneyCard(page: Page, journeyTitle: string) {
 	return page
-		.locator('.plc-procurement-home-active-journeys')
+		.getByTestId('plc-procurement-home-active-journeys')
 		.locator('.kt-ph-journey-card')
 		.filter({ hasText: journeyTitle });
+}
+
+/** §14 G9-003 — Procurement Home usable: active journeys list with stage, substantive next action, blockers, Open Journey. */
+export async function expectG9ProcurementHomeUsable(page: Page, journeyTitle: string) {
+	await expectProcurementHomeShell(page);
+	const panel = await expectProcurementHomeActiveJourneysPanel(page);
+	const host = panel.locator('#kt-ph-active-journeys-host');
+	await expect(host.locator('.kt-ph-journey-card').first()).toBeVisible({ timeout: 45_000 });
+
+	const card = activeJourneyCard(page, journeyTitle);
+	await expect(card).toBeVisible({ timeout: 45_000 });
+
+	const meta = card.locator('.kt-ph-journey-card-meta');
+	await expect(meta.locator('div').filter({ hasText: /Current stage/i }).first()).toBeVisible();
+	await expect(meta.locator('div').filter({ hasText: /Next action/i }).first()).toBeVisible();
+	const nextRow = meta.locator('div').filter({ hasText: /Next action/i }).first();
+	await expect(nextRow).not.toHaveText(/Next action:\s*[—\-]\s*$/);
+
+	await expect(meta.locator('div').filter({ hasText: /Blockers/i }).first()).toBeVisible();
+	await expect(card.getByTestId('plc-home-open-journey')).toBeVisible();
 }
 
 /** R4-002 — Needs My Action panel (pack §11.1). */
@@ -159,6 +179,29 @@ export async function expectWorksJourneyTimelineSpine(page: Page) {
 	}
 }
 
+/** Cursor pack §15.2 PLC-SMOKE-UI-002 — spine pillar **class** hooks on timeline pills (`procurement_journey_page.js`). */
+export const PLC_SMOKE_UI_002_SPINE_PILLAR_CLASSES: readonly string[] = [
+	'plc-journey-step-strategy',
+	'plc-journey-step-budget',
+	'plc-journey-step-demand',
+	'plc-journey-step-planning',
+	'plc-journey-step-std-readiness',
+	'plc-journey-step-tender',
+	'plc-journey-step-opening',
+];
+
+/** R8-007 / PLC-SMOKE-UI-002 — `plc-journey-page` + spine pillars visible; statuses via {@link expectWorksJourneyTimelineSpine}. */
+export async function expectPlcSmokeUi002JourneyFullSpine(page: Page) {
+	await expect(page.getByTestId('plc-journey-page')).toBeVisible({ timeout: 45_000 });
+	await expectWorksJourneyTimelineSpine(page);
+	const timeline = page.getByTestId('plc-journey-timeline');
+	for (const cls of PLC_SMOKE_UI_002_SPINE_PILLAR_CLASSES) {
+		const pill = timeline.locator(`.plc-journey-step-pill.${cls}`).first();
+		await expect(pill).toBeVisible({ timeout: 45_000 });
+		await expect(pill.locator('.plc-journey-step-status')).not.toHaveText(/^\s*$/);
+	}
+}
+
 /** R4-008 — Step detail cards (blocker badge, `plc-open-current-module` when route present). */
 export async function expectWorksJourneyStepCardsSection(page: Page) {
 	const section = page.getByTestId('plc-journey-step-cards');
@@ -240,21 +283,319 @@ export async function expectWorksJourneyHandoffPanel(page: Page) {
 	await expect(panel.getByTestId('plc-open-evidence')).toHaveCount(WORKS_BASE_HANDOFF_CODES.length);
 }
 
+/** §14 G9-002 — Base checkpoint handoff cards with locked/passed-forward preview, evidence line, and journey-level next action. */
+const G9_BASE_HANDOFF_CARD_EXPECTATIONS: ReadonlyArray<{
+	code: string;
+	titlePattern: RegExp;
+	statusPattern: RegExp;
+}> = [
+	{
+		code: 'STRATREF-MOH-2026-001',
+		titlePattern: /Strategy Alignment Reference/i,
+		statusPattern: /Consumed/i,
+	},
+	{
+		code: 'BUDCONF-MOH-2026-001',
+		titlePattern: /Budget Funding Confirmation/i,
+		statusPattern: /Consumed/i,
+	},
+	{
+		code: 'DEMAPP-MOH-2026-001',
+		titlePattern: /Demand Approval Certificate/i,
+		statusPattern: /Consumed/i,
+	},
+	{
+		code: 'PLANINCL-MOH-2026-001',
+		titlePattern: /Planning Inclusion Record/i,
+		statusPattern: /Consumed/i,
+	},
+	{
+		code: 'PKGREL-MOH-2026-001',
+		titlePattern: /Planning Release Package/i,
+		statusPattern: /Consumed/i,
+	},
+	{
+		code: 'STDREADY-TND-MOH-2026-001',
+		titlePattern: /Tender Document Readiness Certificate/i,
+		statusPattern: /Consumed/i,
+	},
+	{
+		code: 'PUBCERT-TND-MOH-2026-001',
+		titlePattern: /Tender Publication Certificate/i,
+		statusPattern: /Handed Off/i,
+	},
+];
+
+export async function expectG9BaseHandoffCardsDetail(page: Page) {
+	await expectWorksJourneyHandoffPanel(page);
+
+	const panel = page.getByTestId('plc-handoff-panel');
+	for (const row of G9_BASE_HANDOFF_CARD_EXPECTATIONS) {
+		const card = panel.locator(`[data-handoff-code="${row.code}"]`);
+		await expect(card).toBeVisible({ timeout: 45_000 });
+		await expect(card.getByTestId('plc-handoff-card-title')).toContainText(row.titlePattern);
+		await expect(card.getByTestId('plc-handoff-card-status')).toContainText(row.statusPattern);
+		await expect(card.getByTestId('plc-handoff-card-route')).not.toHaveText(/^\s*$/);
+
+		const preview = card.getByTestId('plc-handoff-card-preview');
+		await expect(preview).toBeVisible();
+		await expect(preview).not.toHaveText(/^\s*$/);
+
+		const evidence = card.getByTestId('plc-handoff-card-evidence');
+		await expect(evidence).toBeVisible();
+		await expect(evidence).not.toHaveText(/^\s*$/);
+
+		await expect(card.getByTestId('plc-open-evidence')).toBeVisible();
+		await expect(card.getByTestId('plc-handoff-card-stale')).toHaveCount(0);
+	}
+
+	await expect(page.getByTestId('plc-current-focus-next-action')).toBeVisible({ timeout: 45_000 });
+	await expect(page.getByTestId('plc-current-focus-next-action')).not.toHaveText(/^\s*$/);
+}
+
+/** True when both CLOSECERT and OPENREADY WORKS master cards exist (`OPENING_READY` checkpoint seed). Caller must be logged in; loads `/desk` so `frappe.call` is available. */
+export async function plcOpeningCheckpointHandoffsSeeded(page: Page): Promise<boolean> {
+	await page.goto('/desk', { waitUntil: 'domcontentloaded' });
+	return page.evaluate(async () => {
+		return new Promise<boolean>((resolve, reject) => {
+			// @ts-ignore desk global
+			frappe.call({
+				method: 'frappe.client.get_list',
+				args: {
+					doctype: 'Procurement Handoff Card',
+					filters: [
+						[
+							'handoff_code',
+							'in',
+							['CLOSECERT-TND-MOH-2026-001', 'OPENREADY-TND-MOH-2026-001'],
+						],
+					],
+					fields: ['handoff_code'],
+					limit_page_length: 2,
+				},
+				callback: (r: { message?: { handoff_code?: string }[] }) => {
+					const codes = new Set((r.message || []).map((row) => row.handoff_code));
+					resolve(
+						codes.has('CLOSECERT-TND-MOH-2026-001') &&
+							codes.has('OPENREADY-TND-MOH-2026-001'),
+					);
+				},
+				error: reject,
+			});
+		});
+	});
+}
+
+/** §14 G9-002A — Optional opening checkpoint: CLOSECERT + OPENREADY on journey handoff panel (requires OPENING_READY seed). */
+export async function expectG9OpeningCheckpointHandoffCards(page: Page) {
+	const panel = page.getByTestId('plc-handoff-panel');
+	await expect(panel).toBeVisible({ timeout: 45_000 });
+
+	const closing = panel.locator('[data-handoff-code="CLOSECERT-TND-MOH-2026-001"]');
+	await expect(closing).toBeVisible({ timeout: 45_000 });
+	await expect(closing.getByTestId('plc-handoff-card-title')).toContainText(/Tender Closing Certificate/i);
+	await expect(closing.getByTestId('plc-handoff-card-status')).toContainText(/Consumed/i);
+	await expect(closing.getByTestId('plc-handoff-card-route')).not.toHaveText(/^\s*$/);
+	await expect(closing.getByTestId('plc-handoff-card-preview')).toBeVisible();
+	await expect(closing.getByTestId('plc-handoff-card-preview')).not.toHaveText(/^\s*$/);
+	await expect(closing.getByTestId('plc-handoff-card-evidence')).toBeVisible();
+	await expect(closing.getByTestId('plc-handoff-card-evidence')).not.toHaveText(/^\s*$/);
+	await expect(closing.getByTestId('plc-open-evidence')).toBeVisible();
+	await expect(closing.getByTestId('plc-handoff-card-stale')).toHaveCount(0);
+
+	const opening = panel.locator('[data-handoff-code="OPENREADY-TND-MOH-2026-001"]');
+	await expect(opening).toBeVisible({ timeout: 45_000 });
+	await expect(opening.getByTestId('plc-handoff-card-title')).toContainText(/Opening Readiness Record/i);
+	await expect(opening.getByTestId('plc-handoff-card-status')).toContainText(/Handed Off/i);
+	await expect(opening.getByTestId('plc-handoff-card-route')).not.toHaveText(/^\s*$/);
+	await expect(opening.getByTestId('plc-handoff-card-preview')).toBeVisible();
+	await expect(opening.getByTestId('plc-handoff-card-preview')).not.toHaveText(/^\s*$/);
+	await expect(opening.getByTestId('plc-handoff-card-evidence')).toBeVisible();
+	await expect(opening.getByTestId('plc-handoff-card-evidence')).not.toHaveText(/^\s*$/);
+	await expect(opening.getByTestId('plc-open-evidence')).toBeVisible();
+	await expect(opening.getByTestId('plc-handoff-card-stale')).toHaveCount(0);
+}
+
+/**
+ * R8-008 / PLC-SMOKE-UI-003 — Planning Release Package handoff (`plc-handoff-card` for PKGREL).
+ * Pack §15.2: source/target, locked + passed-forward preview, technical details drawer.
+ */
+export async function expectPlcSmokeUi003PlanningReleaseHandoffCard(page: Page) {
+	const panel = page.getByTestId('plc-handoff-panel');
+	await expect(panel).toBeVisible({ timeout: 45_000 });
+
+	const card = panel.locator('[data-handoff-code="PKGREL-MOH-2026-001"]');
+	await expect(card).toBeVisible({ timeout: 45_000 });
+	await expect(card).toHaveAttribute('data-testid', 'plc-handoff-card');
+
+	await expect(card.getByTestId('plc-handoff-card-title')).toContainText(/Planning Release Package/i);
+	await expect(card.getByTestId('plc-handoff-card-status')).toContainText(/Consumed/i);
+	await expect(card.getByTestId('plc-handoff-card-route')).toContainText(/Procurement Planning/i);
+	await expect(card.getByTestId('plc-handoff-card-route')).toContainText(/Tender Management/i);
+	await expect(card.getByTestId('plc-handoff-card-source')).toContainText(/Procurement Package/i);
+	await expect(card.getByTestId('plc-handoff-card-source')).toContainText(/PKG-MOH-2026-001/);
+	await expect(card.getByTestId('plc-handoff-card-target')).toContainText(/TM2 Tender/i);
+	await expect(card.getByTestId('plc-handoff-card-target')).toContainText(/TND-MOH-2026-001/);
+
+	// passed_forward_summary preview (first string keys → blurb lines in `procurement_journey_page.js`).
+	await expect(card.getByTestId('plc-handoff-card-preview')).toContainText(/Required Std Category/i);
+	await expect(card.getByTestId('plc-handoff-card-preview')).toContainText(/Works/i);
+	await expect(card.getByTestId('plc-handoff-card-preview')).toContainText(/District Hospital/i);
+	await expect(card.getByTestId('plc-handoff-card-evidence')).toContainText(/PKG-MOH-2026-001/);
+
+	const techBtn = card.getByTestId('plc-open-evidence');
+	await expect(techBtn).toBeVisible();
+	await techBtn.click();
+	await expect(page.getByTestId('plc-technical-evidence-drawer')).toBeVisible({ timeout: 15_000 });
+	await expect(page.getByTestId('plc-technical-evidence-handoff-code')).toContainText('PKGREL-MOH-2026-001');
+	const body = page.getByTestId('plc-technical-evidence-body');
+	await expect(body).toContainText('tm2_tender_code');
+	await expect(body).toContainText('TND-MOH-2026-001');
+	await page.keyboard.press('Escape');
+	await expect(page.getByTestId('plc-technical-evidence-drawer')).toBeHidden({ timeout: 15_000 });
+}
+
+/** Pack §15.2 PLC-SMOKE-UI-004 / R3-016 BRS-003 — exact business label strings. */
+export const PLC_SMOKE_UI_004_BUSINESS_LABELS: readonly string[] = [
+	'Tender document package ready',
+	'Supplier submission checklist ready',
+	'Opening register rules ready',
+	'Evaluation rules ready',
+	'Contract carry-forward terms ready',
+];
+
+/**
+ * R8-009 / PLC-SMOKE-UI-004 — TM2 Tender Desk form (`tm2-tender-business-readiness-host`): business labels
+ * first; technical output codes only after expanding `plc-br-technical-collapsed`.
+ * Precondition: caller has opened `/app/tm2-tender/{code}` and the form layout is visible.
+ */
+export async function expectPlcSmokeUi004Tm2TenderFormBusinessReadiness(page: Page) {
+	const host = page.getByTestId('tm2-tender-business-readiness-host');
+	await expect(host).toBeVisible({ timeout: 45_000 });
+
+	const summary = page.getByTestId('plc-business-readiness-summary');
+	await expect(summary).toBeVisible({ timeout: 90_000 });
+	await expect(host.getByTestId('plc-br-loading')).toHaveCount(0);
+
+	await expect(summary.getByTestId('plc-br-summary-label')).toContainText(/Tender document readiness/i);
+
+	for (const label of PLC_SMOKE_UI_004_BUSINESS_LABELS) {
+		await expect(
+			summary.getByTestId('plc-br-business-label').filter({ hasText: label }).first(),
+		).toBeVisible({ timeout: 15_000 });
+	}
+
+	await expect(summary.getByTestId('plc-br-technical-restricted')).toHaveCount(0);
+
+	const checksRoot = summary.getByTestId('plc-br-business-checks');
+	await expect(checksRoot).toBeVisible();
+
+	const details = summary.getByTestId('plc-br-technical-collapsed');
+	await expect(details).toBeVisible();
+	await expect(details).not.toHaveAttribute('open');
+
+	const body = summary.getByTestId('plc-technical-evidence-body');
+	await expect(body).not.toBeVisible();
+
+	await summary.getByTestId('plc-br-technical-summary').click({ timeout: 15_000 });
+	await expect(details).toHaveAttribute('open', '');
+	await expect(body).toBeVisible({ timeout: 15_000 });
+
+	const codes = body.locator('.plc-technical-output-code');
+	await expect(codes.first()).toBeVisible();
+	await expect(codes.first()).toContainText(/GB-TND-MOH-2026-001-V2/);
+
+	await summary.getByTestId('plc-br-technical-summary').click();
+	await expect(details).not.toHaveAttribute('open');
+	await expect(body).not.toBeVisible();
+}
+
+/** PLC-SMOKE-UI-005 / R3-016 / PLC-SMOKE-BE-004 — canonical STD outputs + snapshot (pack §15.2). */
+export const PLC_SMOKE_UI_005_TECH_AND_SNAPSHOT_EXPECTATIONS: readonly string[] = [
+	'GB-TND-MOH-2026-001-V2',
+	'DSM-TND-MOH-2026-001-V2',
+	'DOM-TND-MOH-2026-001-V2',
+	'DEM-TND-MOH-2026-001-V2',
+	'DCM-TND-MOH-2026-001-V2',
+	'PUBSNAP-TND-MOH-2026-001-V2',
+];
+
+/**
+ * R8-010 / PLC-SMOKE-UI-005 — TM2 Tender form: **`plc-technical-evidence-body`** (inside
+ * **`plc-br-technical-collapsed`**) exposes every pack STD/ref token after expansion.
+ *
+ * Uses the shared `plc-technical-evidence-body` test-id as **`business_readiness_summary.js`**;
+ * Bootstrap **`plc-technical-evidence-drawer`** remains handoff‑card JSON (**R4-013**) but is not mounted on this route.
+ *
+ * Preconditions: **`/app/tm2-tender/TND-MOH-2026-001`** opened; **`plc-business-readiness-summary`** hydrated.
+ */
+export async function expectPlcSmokeUi005Tm2ReadinessTechnicalBodyStdout(page: Page) {
+	const summary = page.getByTestId('plc-business-readiness-summary');
+	await expect(summary).toBeVisible({ timeout: 90_000 });
+
+	const details = summary.getByTestId('plc-br-technical-collapsed');
+	const body = summary.getByTestId('plc-technical-evidence-body');
+
+	if (!(await body.isVisible().catch(() => false))) {
+		await summary.getByTestId('plc-br-technical-summary').click({ timeout: 15_000 });
+	}
+
+	await expect(details).toHaveAttribute('open', '');
+	await expect(body).toBeVisible({ timeout: 15_000 });
+
+	for (const token of PLC_SMOKE_UI_005_TECH_AND_SNAPSHOT_EXPECTATIONS) {
+		await expect(body).toContainText(token);
+	}
+
+	await summary.getByTestId('plc-br-technical-summary').click();
+	await expect(details).not.toHaveAttribute('open');
+	await expect(body).not.toBeVisible();
+}
+
+/**
+ * R8-011 / PLC-SMOKE-UI-006 — TM2 Tender Desk form **`tm2-tender-module-journey-context`** hosts the
+ * shared **`plc-module-journey-context-header`** (District Hospital Renovation WORKS journey baseline).
+ *
+ * Depends on **LV-R5-010-01** wiring in `tm2_tender.js`; adds stage + procuring entity checks for §15.2 wording.
+ */
+export async function expectPlcSmokeUi006Tm2ModuleJourneyContextHeader(page: Page) {
+	const shell = page.getByTestId('tm2-tender-module-journey-context');
+	await expect(shell).toBeVisible({ timeout: 45_000 });
+
+	const header = shell.getByTestId('plc-module-journey-context-header');
+	await expect(header).toBeVisible({ timeout: 45_000 });
+
+	await expect(shell.getByTestId('plc-module-journey-context-title')).toContainText(
+		/District Hospital Renovation Works/i,
+		{ timeout: 45_000 },
+	);
+	await expect(shell.getByTestId('plc-module-journey-context-code')).toContainText('JRN-MOH-2026-001');
+	await expect(shell.getByTestId('plc-module-journey-context-entity')).toContainText('PE-MOH');
+	await expect(shell.getByTestId('plc-module-journey-context-stage')).toContainText(/Tender Published/i);
+	await expect(shell.getByTestId('plc-module-journey-context-open')).toBeVisible();
+}
+
 /** R4-011 — Evidence timeline (`plc-evidence-timeline`, `get_journey.evidence_summary` §9.5). */
 export async function expectWorksJourneyEvidenceTimeline(page: Page) {
 	const section = page.getByTestId('plc-evidence-timeline');
 	await expect(section).toBeVisible({ timeout: 45_000 });
 	await expect(page.getByTestId('plc-evidence-timeline-title')).toContainText(/Evidence timeline/i);
 
-	const events = section.getByTestId('plc-evidence-timeline-event');
+	// Exclude addendum-only / TM2 audit rows (handoffs keep non-empty ``data-handoff-code`` — **R7-003**)
+	const events = section.locator(
+		`.plc-evidence-timeline-event[data-handoff-code]:not([data-handoff-code=""])`,
+	);
 	await expect(events).toHaveCount(WORKS_BASE_HANDOFF_CODES.length);
 
 	const strat = section.locator('[data-handoff-code="STRATREF-MOH-2026-001"]').first();
 	await expect(strat.getByTestId('plc-evidence-timeline-module')).toContainText(/Strategy/i);
-	await expect(strat.getByTestId('plc-evidence-timeline-event-title')).toContainText(/Strategy Alignment Reference/i);
+	// ``event_type`` follows journey step label (R3-015); ``business_label`` carries handoff_title.
+	await expect(strat.getByTestId('plc-evidence-timeline-event-title')).toContainText(/Strategy Priority/i);
+	await expect(strat.getByTestId('plc-evidence-timeline-business-label')).toContainText(/Strategy Alignment Reference/i);
 
 	const pub = section.locator('[data-handoff-code="PUBCERT-TND-MOH-2026-001"]').first();
-	await expect(pub.getByTestId('plc-evidence-timeline-event-title')).toContainText(/Tender Publication Certificate/i);
+	await expect(pub.getByTestId('plc-evidence-timeline-event-title')).toContainText(/Tender Published/i);
+	await expect(pub.getByTestId('plc-evidence-timeline-business-label')).toContainText(/Tender Publication Certificate/i);
 	await expect(pub.getByTestId('plc-evidence-timeline-object')).toContainText(/TM2 Tender · TND-MOH-2026-001/i);
 	await expect(pub.getByTestId('plc-evidence-timeline-handoff-code')).toContainText(/PUBCERT-TND-MOH-2026-001/);
 }

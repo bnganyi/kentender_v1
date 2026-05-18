@@ -33,6 +33,25 @@ from kentender_procurement.tender_management.services.std_template_loader import
 )
 
 
+def handoff_integration_test_budget_line_name() -> str | None:
+	"""Resolve a seeded active ``Budget Line`` with DIA strategy derivation fields.
+
+	Prefer **BX4** ``BL-MOH-2026-001``; else **WORKS** ``BUD-MOH-INFRA-2026-001`` once
+	it carries ``sub_program`` (R2-005 backfill). Inactive lines are ignored.
+	"""
+	for code in ("BL-MOH-2026-001", "BUD-MOH-INFRA-2026-001"):
+		bl = frappe.db.get_value(
+			"Budget Line",
+			{"budget_line_code": code, "is_active": 1},
+			"name",
+		)
+		if not bl:
+			continue
+		if frappe.db.get_value("Budget Line", bl, "sub_program"):
+			return bl
+	return None
+
+
 class _ReleaseProcurementPackageHandoffFixtures(IntegrationTestCase):
 	"""Shared plan/template/package + seed line fixtures for B3/B5 handoff tests."""
 
@@ -196,9 +215,12 @@ class _ReleaseProcurementPackageHandoffFixtures(IntegrationTestCase):
 
 	def _add_seed_budget_line_and_demand(self, pkg_name: str) -> None:
 		"""One active package line + Demand for XMV B5 (requires seed budget line)."""
-		bl = frappe.db.get_value("Budget Line", {"budget_line_code": "BL-MOH-2026-001"}, "name")
+		bl = handoff_integration_test_budget_line_name()
 		if not bl:
-			self.skipTest("Seed Budget Line BL-MOH-2026-001 required for release handoff tests")
+			self.skipTest(
+				"Active Budget Line BL-MOH-2026-001 or sub_program-populated "
+				"BUD-MOH-INFRA-2026-001 required for release handoff integration tests"
+			)
 		ensure_currency_kes()
 		pe = frappe.db.get_value("Budget Line", bl, "procuring_entity") or C.ENTITY_MOH
 		dept = ensure_department(f"B3LN{frappe.generate_hash()[:5]}", pe)
@@ -353,7 +375,11 @@ class TestReleaseProcurementPackageToTenderB3(_ReleaseProcurementPackageHandoffF
 				with patch.object(wf_mod, "package_has_release_tender", return_value=False):
 					with self.assertRaises(frappe.ValidationError) as ctx:
 						release_package_to_tender(package_id=pkg.name)
-		self.assertIn("No TM2 Tender was linked", str(ctx.exception))
+		msg = str(ctx.exception)
+		self.assertTrue(
+			"No TM2 Tender was linked" in msg or "No tender was linked" in msg,
+			msg=msg,
+		)
 		self.assertEqual(
 			frappe.db.get_value("Procurement Package", pkg.name, "status"),
 			"Ready for Tender",

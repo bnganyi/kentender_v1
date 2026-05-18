@@ -80,6 +80,10 @@ _REQUIRED_EVIDENCE_KEYS = {
     "object_code",
     "handoff_code",
     "evidence_refs",
+    "handoff_status",
+    "stale_reason",
+    "stale_warning",
+    "audit_event_code",
 }
 
 
