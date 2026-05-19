@@ -67,6 +67,33 @@ from kentender_procurement.tender_management.services.export_tender_evidence imp
 from kentender_procurement.tender_management.services.submit_tender_for_publication_review import (
 	_resolve_tm2,
 )
+from kentender_procurement.procurement_lifecycle.business_readiness_summary import (
+	_user_facing_dem_blocker,
+)
+from kentender_procurement.tender_management.services.tm2_workbench_terminology import (
+	business_label_for_checklist_row,
+	business_label_for_derived_output,
+	business_label_for_output_field,
+	business_label_for_readiness_status,
+	business_label_for_technical_term,
+	business_label_for_tender_status,
+	CONTRACT_HANDOFF_SUMMARY_NOTICE,
+	CONTRACT_TERMS_READ_ONLY_NOTICE,
+	CONTRACT_UNCORRECTED_PRICE_EDUCATION,
+	EVALUATION_CRITERIA_FIXED_NOTICE,
+	EVALUATION_RULES_READ_ONLY_NOTICE,
+	EVIDENCE_EXPORT_TAB_NOTICE,
+	format_lifecycle_audit_display_line,
+	READ_ONLY_TAB_NOTICE_ADDENDA,
+	READ_ONLY_TAB_NOTICE_AUDIT,
+	READ_ONLY_TAB_NOTICE_CLARIFICATIONS,
+	READ_ONLY_TAB_NOTICE_CONTRACT,
+	READ_ONLY_TAB_NOTICE_EVALUATION,
+	READ_ONLY_TAB_NOTICE_OPENING,
+	READ_ONLY_TAB_NOTICE_SUBMISSIONS,
+	READ_ONLY_TAB_NOTICE_SUPPLIER_ACCESS,
+	WORKS_CONTRACT_VALUE_SOURCE_NOTICE,
+)
 from kentender_procurement.tender_management.services.tm2_sensitive_denial_events import (
 	denied_actions_for_audit_evidence_tab,
 )
@@ -77,8 +104,8 @@ _OBJECT_TYPE = "TM2 Tender"
 _WORKBENCH_DETAIL_ACTION_CODES: tuple[tuple[str, str], ...] = (
 	("TND2_VIEW", _("View")),
 	("TND2_EDIT_DRAFT", _("Edit draft")),
-	("TND2_BIND_STD", _("Bind STD")),
-	("TND2_RUN_READINESS", _("Run readiness")),
+	("TND2_BIND_STD", _("Link official template")),
+	("TND2_RUN_READINESS", _("Run publication check")),
 	("TND2_SUBMIT_PUBLICATION_REVIEW", _("Submit for review")),
 	("TND2_RETURN_CORRECTION", _("Return for correction")),
 	("TND2_APPROVE_PUBLICATION", _("Approve publication")),
@@ -89,11 +116,11 @@ _WORKBENCH_DETAIL_ACTION_CODES: tuple[tuple[str, str], ...] = (
 )
 
 _OUTPUT_DEFS: tuple[tuple[str, str, str], ...] = (
-	("bundle_output_code", "bundle_current", _("Bundle")),
-	("dsm_output_code", "dsm_current", _("DSM")),
-	("dom_output_code", "dom_current", _("DOM")),
-	("dem_output_code", "dem_current", _("DEM")),
-	("dcm_output_code", "dcm_current", _("DCM")),
+	("bundle_output_code", "bundle_current", business_label_for_technical_term("Bundle")),
+	("dsm_output_code", "dsm_current", business_label_for_technical_term("DSM")),
+	("dom_output_code", "dom_current", business_label_for_technical_term("DOM")),
+	("dem_output_code", "dem_current", business_label_for_technical_term("DEM")),
+	("dcm_output_code", "dcm_current", business_label_for_technical_term("DCM")),
 )
 
 
@@ -233,11 +260,15 @@ def _dem_missing_block(
 	dem_code = cstr(bind.get("dem_output_code") or "").strip()
 	dem_current = bool(int(readiness.get("dem_current") or 0))
 	if in_pack or not dem_code or not dem_current:
+		user_msg = _user_facing_dem_blocker("DEM_MISSING_OR_STALE")
 		return {
 			"blocker_code": "DEM_MISSING_OR_STALE",
-			"headline": _("Publication blocked: DEM — Document Evaluation Model is missing."),
+			"headline": user_msg
+			or _("Publication blocked: evaluation rules are missing or out of date."),
 			"owner": _("STD Engine"),
-			"required_action": _("Generate DEM after completing Section III — Evaluation and Qualification Criteria."),
+			"required_action": _(
+				"Complete Evaluation and Qualification Criteria, then generate or refresh the evaluation rules."
+			),
 			"severity": "Critical",
 		}
 	return None
@@ -294,9 +325,11 @@ def _build_std_readiness_tab(
 		*,
 		output_code: str = "",
 	) -> dict[str, Any]:
+		tech_label = str(label)
 		return {
 			"id": rid,
-			"label": str(label),
+			"label": business_label_for_checklist_row(rid, tech_label),
+			"technical_label": tech_label,
 			"status": _checklist_tri(flag, has_readiness=has_r),
 			"output_code": output_code,
 			"owner": str(owner),
@@ -359,13 +392,34 @@ def _build_std_readiness_tab(
 	derived: list[dict[str, str]] = [
 		{
 			"id": "bundle",
-			"label": _("Bundle"),
+			"label": business_label_for_derived_output("bundle", _("Bundle")),
+			"technical_label": "Bundle",
 			"code": cstr(bind.get("bundle_output_code") or "").strip() if bind else "",
 		},
-		{"id": "dsm", "label": _("DSM — Document Submission Model"), "code": cstr(bind.get("dsm_output_code") or "").strip() if bind else ""},
-		{"id": "dom", "label": _("DOM — Document Opening Model"), "code": cstr(bind.get("dom_output_code") or "").strip() if bind else ""},
-		{"id": "dem", "label": _("DEM — Document Evaluation Model"), "code": cstr(bind.get("dem_output_code") or "").strip() if bind else ""},
-		{"id": "dcm", "label": _("DCM — Document Contract Model"), "code": cstr(bind.get("dcm_output_code") or "").strip() if bind else ""},
+		{
+			"id": "dsm",
+			"label": business_label_for_derived_output("dsm", _("DSM")),
+			"technical_label": "DSM",
+			"code": cstr(bind.get("dsm_output_code") or "").strip() if bind else "",
+		},
+		{
+			"id": "dom",
+			"label": business_label_for_derived_output("dom", _("DOM")),
+			"technical_label": "DOM",
+			"code": cstr(bind.get("dom_output_code") or "").strip() if bind else "",
+		},
+		{
+			"id": "dem",
+			"label": business_label_for_derived_output("dem", _("DEM")),
+			"technical_label": "DEM",
+			"code": cstr(bind.get("dem_output_code") or "").strip() if bind else "",
+		},
+		{
+			"id": "dcm",
+			"label": business_label_for_derived_output("dcm", _("DCM")),
+			"technical_label": "DCM",
+			"code": cstr(bind.get("dcm_output_code") or "").strip() if bind else "",
+		},
 	]
 
 	return {
@@ -475,29 +529,17 @@ _WORKS_OPENING_ARITHMETIC_NOTICE: str = _(
 	"Arithmetic correction is not performed at opening. Correction occurs only during Evaluation.",
 )
 
-_EVALUATION_CRITERIA_FIXED_NOTICE: str = _(
-	"Evaluation criteria are derived from the controlling STD instance and cannot be modified in Tender Management.",
-)
+_EVALUATION_CRITERIA_FIXED_NOTICE: str = EVALUATION_CRITERIA_FIXED_NOTICE
 
-_DEM_WORKBENCH_READ_ONLY_NOTICE: str = _(
-	"The Document Evaluation Model (DEM) is read-only on the workbench. Criteria are maintained in the STD / Evaluation module (doc 6 §23.3).",
-)
+_DEM_WORKBENCH_READ_ONLY_NOTICE: str = EVALUATION_RULES_READ_ONLY_NOTICE
 
-_DCM_WORKBENCH_READ_ONLY_NOTICE: str = _(
-	"The Document Contract Model (DCM) is read-only on the workbench. Contract terms are maintained in the STD / Contract module (doc 6 §24.3).",
-)
+_DCM_WORKBENCH_READ_ONLY_NOTICE: str = CONTRACT_TERMS_READ_ONLY_NOTICE
 
-_CONTRACT_TERMS_READ_ONLY_NOTICE: str = _(
-	"Tender Management does not edit contract terms here; this tab is a read-only handoff summary (doc 6 §24.3).",
-)
+_CONTRACT_TERMS_READ_ONLY_NOTICE: str = CONTRACT_HANDOFF_SUMMARY_NOTICE
 
-_WORKS_CONTRACT_VALUE_SOURCE_NOTICE: str = _(
-	"Contract value source: corrected evaluated BOQ total from Evaluation/Award.",
-)
+_WORKS_CONTRACT_VALUE_SOURCE_NOTICE: str = WORKS_CONTRACT_VALUE_SOURCE_NOTICE
 
-_CONTRACT_UNCORRECTED_PRICE_EDUCATION: str = _(
-	"Works contract handoff must use the corrected evaluated BOQ total; using the uncorrected total is denied (AUTH_CONTRACT_PRICE_SOURCE_INVALID) (doc 9 §17.11).",
-)
+_CONTRACT_UNCORRECTED_PRICE_EDUCATION: str = CONTRACT_UNCORRECTED_PRICE_EDUCATION
 
 _OPENED_BID_CODES_FOR_EVAL_TAB: frozenset[str] = frozenset({"Opened", "Evaluation Locked"})
 
@@ -1225,11 +1267,7 @@ def _build_supplier_access_tab(tm2_name: str) -> dict[str, Any]:
 		"access_rule": access_block,
 		"invitations": inv_rows,
 		"participation_rows": part_rows,
-		"read_only_notice": str(
-			_(
-				"This tab is read-only on the workbench. Supplier access changes follow governed workflows; bid contents are not shown here.",
-			),
-		),
+		"read_only_notice": str(READ_ONLY_TAB_NOTICE_SUPPLIER_ACCESS),
 	}
 
 
@@ -1246,7 +1284,7 @@ def _clarification_section_display_row(req: dict[str, Any]) -> str:
 	cl = cstr(req.get("related_std_clause_ref") or "").strip()
 	boq = cstr(req.get("related_boq_item_code") or "").strip()
 	if sec:
-		parts.append(str(_("STD section {0}").format(sec)))
+		parts.append(str(_("Document section {0}").format(sec)))
 	if cl:
 		parts.append(str(_("Clause {0}").format(cl)))
 	if boq:
@@ -1376,11 +1414,7 @@ def _build_clarifications_tab(tm2_name: str, tender_code: str) -> dict[str, Any]
 		"status_counts": status_counts,
 		"status_filter_order": status_filter_order,
 		"rows": out_rows,
-		"read_only_notice": str(
-			_(
-				"This tab is read-only on the workbench. Clarification threads, responses, and addendum conversion follow governed workflows.",
-			),
-		),
+		"read_only_notice": str(READ_ONLY_TAB_NOTICE_CLARIFICATIONS),
 	}
 
 
@@ -1640,11 +1674,7 @@ def _build_addenda_tab(tm2_name: str, tender_code: str) -> dict[str, Any]:
 		"status_counts": status_counts,
 		"status_filter_order": status_filter_order,
 		"rows": out_rows,
-		"read_only_notice": str(
-			_(
-				"This tab is read-only on the workbench. Addendum creation, approval, issue, and STD regeneration follow governed workflows.",
-			),
-		),
+		"read_only_notice": str(READ_ONLY_TAB_NOTICE_ADDENDA),
 	}
 
 
@@ -1754,11 +1784,7 @@ def _build_submissions_tab(tm2_name: str, tender_code: str, tender_status: str) 
 		"status_counts": status_counts,
 		"status_filter_order": status_filter_order,
 		"rows": out_rows,
-		"read_only_notice": str(
-			_(
-				"This tab is read-only on the workbench. Bid submission, sealing, and opening workflows are governed elsewhere.",
-			),
-		),
+		"read_only_notice": str(READ_ONLY_TAB_NOTICE_SUBMISSIONS),
 	}
 
 
@@ -1851,11 +1877,7 @@ def _build_opening_readiness_tab(
 		"tender_code": cstr(tender_code or "").strip(),
 		"tender_status": st,
 		"procurement_category": cat,
-		"read_only_notice": str(
-			_(
-				"This tab is read-only on the workbench. Prepare / send opening readiness use governed actions and downstream modules.",
-			),
-		),
+		"read_only_notice": str(READ_ONLY_TAB_NOTICE_OPENING),
 		"readiness_status": readiness_status,
 		"opening_readiness_code": orr_code,
 		"closing_record_code": closing_code,
@@ -1985,11 +2007,7 @@ def _build_evaluation_handoff_tab(
 
 	return {
 		"tender_code": cstr(tender_code or "").strip(),
-		"read_only_notice": str(
-			_(
-				"This tab is read-only on the workbench. Evaluation criteria are not edited here; handoff actions use governed availability checks.",
-			),
-		),
+		"read_only_notice": str(READ_ONLY_TAB_NOTICE_EVALUATION),
 		"dem_readonly_notice": str(_DEM_WORKBENCH_READ_ONLY_NOTICE),
 		"criteria_derived_notice": str(_EVALUATION_CRITERIA_FIXED_NOTICE),
 		"handoff_status": handoff_status,
@@ -2143,11 +2161,7 @@ def _build_contract_handoff_tab(
 	return {
 		"tender_code": cstr(tender_code or "").strip(),
 		"procurement_category": cat,
-		"read_only_notice": str(
-			_(
-				"This tab is read-only on the workbench. Contract handoff creation uses governed actions and award context.",
-			),
-		),
+		"read_only_notice": str(READ_ONLY_TAB_NOTICE_CONTRACT),
 		"dcm_readonly_notice": str(_DCM_WORKBENCH_READ_ONLY_NOTICE),
 		"contract_terms_notice": str(_CONTRACT_TERMS_READ_ONLY_NOTICE),
 		"works_contract_value_source_notice": works_value_notice,
@@ -2202,11 +2216,12 @@ def _audit_lifecycle_timeline(tm2_name: str, limit: int = 120) -> list[dict[str,
 			continue
 		occ = row.get("occurred_at")
 		ts = format_datetime(occ) if occ else ""
-		line = f"{ts} · {et}".strip(" ·")
-		ns = cstr(row.get("new_state") or "").strip()
-		ps = cstr(row.get("previous_state") or "").strip()
-		if ps or ns:
-			line += f" ({ps} → {ns})" if ps and ns else f" ({ns or ps})"
+		line = format_lifecycle_audit_display_line(
+			ts,
+			et,
+			cstr(row.get("previous_state") or "").strip(),
+			cstr(row.get("new_state") or "").strip(),
+		)
 		out.append(
 			{
 				"occurred_at": cstr(occ) if occ else "",
@@ -2228,16 +2243,8 @@ def _build_audit_evidence_tab(
 	st = cstr(tender_status or "").strip()
 	return {
 		"tender_code": cstr(tender_code or "").strip(),
-		"read_only_notice": str(
-			_(
-				"This tab is read-only on the workbench. Lifecycle and sensitive-denial rows come from TM2 Tender Audit Event.",
-			),
-		),
-		"evidence_export_notice": str(
-			_(
-				"Evidence export (doc 9 §13.3) builds a structured package; sealed bid bodies follow post-opening rules unless export explicitly allows confidential material.",
-			),
-		),
+		"read_only_notice": str(READ_ONLY_TAB_NOTICE_AUDIT),
+		"evidence_export_notice": str(EVIDENCE_EXPORT_TAB_NOTICE),
 		"include_confidential_toggle_allowed": tender_status_in_post_opening_evidence_corridor(st),
 		"lifecycle_events": _audit_lifecycle_timeline(tm2_name),
 		"sensitive_denials": denied_actions_for_audit_evidence_tab(tm2_name),
@@ -2272,11 +2279,12 @@ def _recent_audit_events(tm2_name: str, limit: int = 10) -> list[dict[str, str]]
 		occ = row.get("occurred_at")
 		ts = format_datetime(occ) if occ else ""
 		ev = cstr(row.get("event_type") or "").strip()
-		line = f"{ts} · {ev}".strip(" ·")
-		ns = cstr(row.get("new_state") or "").strip()
-		ps = cstr(row.get("previous_state") or "").strip()
-		if ps or ns:
-			line += f" ({ps} → {ns})" if ps and ns else f" ({ns or ps})"
+		line = format_lifecycle_audit_display_line(
+			ts,
+			ev,
+			cstr(row.get("previous_state") or "").strip(),
+			cstr(row.get("new_state") or "").strip(),
+		)
 		out.append(
 			{
 				"occurred_at": cstr(occ) if occ else "",
@@ -2331,7 +2339,7 @@ def _next_step_from_actions(actions: list[dict[str, Any]], bsum: str, st: str) -
 		if a.get("ui_state") == "enabled" and str(a.get("action_code") or "") == "TND2_VIEW":
 			return {
 				"headline": _("Next step: open the tender record"),
-				"reason": _("Use View when you need the full TM2 Tender form."),
+				"reason": _("Use View when you need the full tender record."),
 			}
 	if bsum:
 		return {"headline": _("Address blockers before progressing"), "reason": bsum}
@@ -2342,7 +2350,7 @@ def _next_step_from_actions(actions: list[dict[str, Any]], bsum: str, st: str) -
 		}
 	return {
 		"headline": _("Complete setup and reviews"),
-		"reason": _("Run readiness, resolve STD gaps, or advance publication review as applicable."),
+		"reason": _("Run publication checks, resolve document readiness gaps, or advance publication review as applicable."),
 	}
 
 
@@ -2484,6 +2492,51 @@ def batch_workbench_tender_action_availability(
 	}
 
 
+def _build_status_ribbon(
+	tender_status: str,
+	readiness_status: str,
+	blocker_summary: str,
+) -> list[dict[str, Any]]:
+	badges: list[dict[str, Any]] = []
+	st = cstr(tender_status or "").strip()
+	rs = cstr(readiness_status or "").strip()
+	if st:
+		sev = "warning" if st in ("STD Instance Incomplete", "Returned for Correction", "Addendum Pending") else "neutral"
+		if st in ("Published", "Approved for Publication", "Opening Ready", "Evaluation Ready"):
+			sev = "ready"
+		badges.append(
+			{
+				"id": "lifecycle",
+				"label": _("Lifecycle"),
+				"value": business_label_for_tender_status(st),
+				"severity": sev,
+				"target_tab": "tm2-tab-overview",
+			}
+		)
+	if rs:
+		sev = "ready" if rs == "Ready" else "warning" if rs in ("Not Ready", "Ready With Warnings") else "blocked" if rs == "Blocked" else "neutral"
+		badges.append(
+			{
+				"id": "readiness",
+				"label": _("Document readiness"),
+				"value": business_label_for_readiness_status(rs),
+				"severity": sev,
+				"target_tab": "tm2-tab-preparation",
+			}
+		)
+	if blocker_summary:
+		badges.append(
+			{
+				"id": "blockers",
+				"label": _("Blockers"),
+				"value": blocker_summary,
+				"severity": "blocked",
+				"target_tab": "tm2-tab-preparation",
+			}
+		)
+	return badges
+
+
 def get_workbench_tender_detail(actor: str, tender_code: str) -> dict[str, Any]:
 	"""Return header lines, state cards, action bar, tab DTOs through §17.12 (``audit_evidence_tab``).
 
@@ -2536,8 +2589,14 @@ def get_workbench_tender_detail(actor: str, tender_code: str) -> dict[str, Any]:
 	header_lines = [
 		f"{tcode} · {title}",
 		_("{0} · {1} · {2} · {3}").format(pkg, pe, method, cat),
-		_("{0} · {1} · {2}").format(st, vis, deadline_label or _("No deadline set")),
-		_("STD version: {0} · Publication snapshot: {1}").format(
+		_("{0} · {1} · {2}").format(
+			business_label_for_tender_status(st),
+			vis,
+			deadline_label or _("No deadline set"),
+		),
+	]
+	technical_header_lines = [
+		_("Official document version: {0} · Published tender evidence snapshot: {1}").format(
 			std_ver or _("—"),
 			snap_code or _("—"),
 		),
@@ -2555,32 +2614,36 @@ def get_workbench_tender_detail(actor: str, tender_code: str) -> dict[str, Any]:
 	if readiness is not None and not bool(int(readiness.get("timeline_valid") or 0)):
 		timeline_line += " · " + _("checks pending")
 
-	binding_line = _("No active STD binding")
+	binding_line = _("No active tender document binding")
 	if bind:
-		binding_line = _("Binding {0} · {1} · readiness {2}").format(
+		binding_line = _("Tender document binding {0} · {1} · readiness {2}").format(
 			cstr(bind.get("binding_code") or "").strip() or _("—"),
 			cstr(bind.get("binding_status") or "").strip() or _("—"),
-			cstr(bind.get("readiness_status") or "").strip() or _("—"),
+			business_label_for_readiness_status(cstr(bind.get("readiness_status") or "").strip())
+			or cstr(bind.get("readiness_status") or "").strip()
+			or _("—"),
 		)
 
-	readiness_line = _("Latest readiness: {0}").format(
+	readiness_line = _("Latest publication readiness check: {0}").format(
 		cstr(readiness.get("readiness_code") or "").strip() if readiness else _("—"),
 	)
 	if readiness:
-		readiness_line += " · " + cstr(readiness.get("readiness_status") or "")
+		readiness_line += " · " + business_label_for_readiness_status(
+			cstr(readiness.get("readiness_status") or "").strip(),
+		)
 
 	state_cards = [
-		{"id": "tender_state", "title": _("Tender state"), "lines": [st]},
-		{"id": "std_binding", "title": _("STD binding"), "lines": [binding_line]},
+		{"id": "tender_state", "title": _("Tender state"), "lines": [business_label_for_tender_status(st)]},
+		{"id": "std_binding", "title": _("Tender document binding"), "lines": [binding_line]},
 		{
 			"id": "readiness",
-			"title": _("Readiness"),
-			"lines": [rs, readiness_line],
+			"title": _("Document readiness"),
+			"lines": [business_label_for_readiness_status(rs), readiness_line],
 		},
-		{"id": "outputs", "title": _("Outputs"), "lines": _output_lines(bind, readiness)},
+		{"id": "outputs", "title": _("Document outputs"), "lines": _output_lines(bind, readiness)},
 		{
 			"id": "publication_snapshot",
-			"title": _("Publication snapshot"),
+			"title": _("Published tender evidence snapshot"),
 			"lines": [snap_code or _("None")],
 		},
 		{"id": "timeline", "title": _("Timeline"), "lines": [timeline_line]},
@@ -2630,9 +2693,28 @@ def get_workbench_tender_detail(actor: str, tender_code: str) -> dict[str, Any]:
 		"publication_snapshot_code": snap_code or "",
 	}
 	output_refs: dict[str, str] = {}
+	output_refs_labeled: list[dict[str, str]] = []
 	if bind:
-		for code_field, _cur, _label in _OUTPUT_DEFS:
-			output_refs[code_field] = cstr(bind.get(code_field) or "").strip()
+		for code_field, _cur, label in _OUTPUT_DEFS:
+			code = cstr(bind.get(code_field) or "").strip()
+			output_refs[code_field] = code
+			if code:
+				output_refs_labeled.append(
+					{
+						"field": code_field,
+						"label": label,
+						"code": code,
+					},
+				)
+		snap_ref = cstr(bind.get("publication_snapshot_code") or "").strip()
+		if snap_ref:
+			output_refs_labeled.append(
+				{
+					"field": "publication_snapshot_code",
+					"label": business_label_for_output_field("publication_snapshot_code"),
+					"code": snap_ref,
+				},
+			)
 
 	overview: dict[str, Any] = {
 		"tender_summary": {
@@ -2652,6 +2734,7 @@ def get_workbench_tender_detail(actor: str, tender_code: str) -> dict[str, Any]:
 		"timeline": timeline_detail,
 		"std_binding": std_binding_summary,
 		"output_refs": output_refs,
+		"output_refs_labeled": output_refs_labeled,
 		"publication_snapshot_code": snap_code,
 		"blockers_summary": bsum,
 		"tab_counts": tabs,
@@ -2678,6 +2761,12 @@ def get_workbench_tender_detail(actor: str, tender_code: str) -> dict[str, Any]:
 		"tender_status": st,
 		"tm2_tender": tm2.name,
 		"header_lines": header_lines,
+		"technical_header_lines": technical_header_lines,
+		"status_ribbon": _build_status_ribbon(st, rs, bsum),
+		"display": {
+			"tender_status_label": business_label_for_tender_status(st),
+			"readiness_status_label": business_label_for_readiness_status(rs),
+		},
 		"state_cards": state_cards,
 		"actions": actions,
 		"blocker_summary": bsum,

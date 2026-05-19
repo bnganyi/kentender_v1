@@ -119,4 +119,11 @@ def get_workbench_kpi_counts(_user: str | None = None) -> dict[str, Any]:
 	)
 	queue_counts["cancelled"] = _count_tenders({"status": "Cancelled"}, active_only=False)
 
-	return {"ok": True, "counts": counts, "queue_counts": queue_counts}
+	total_accessible = _count_tenders({})
+
+	return {
+		"ok": True,
+		"counts": counts,
+		"queue_counts": queue_counts,
+		"total_accessible": total_accessible,
+	}

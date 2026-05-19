@@ -12,6 +12,7 @@
 import { expect, test } from '@playwright/test';
 
 import { loginAsAdministrator } from './helpers/auth';
+import { clickTm2LegacyTab } from './helpers/tm2Workbench';
 import { dismissOptionalDeskModals } from './helpers/routes';
 
 function digitsOnly(s: string): string {
@@ -56,12 +57,13 @@ test.describe('TM2 opening / contract handoff (Q-06 / doc 9 §21.3)', () => {
 		const row = shell.locator(`[data-testid="tm2-tender-list-row"][data-tm2-tender-code="${tenderCode}"]`).first();
 		await expect(row).toBeVisible({ timeout: 60_000 });
 		await row.click();
-		await expect(shell.getByTestId('tm2-overview-tender-summary')).toBeVisible({ timeout: 60_000 });
+		await expect(shell.getByTestId('tm2-detail-sticky')).toBeVisible({ timeout: 60_000 });
 
-		const tab = shell.getByTestId('tm2-tab-contract-handoff');
+		const legacyTab = 'tm2-tab-contract-handoff';
+		const tab = shell.getByTestId('tm2-tab-handoff');
 		await expect(tab).toBeVisible();
 		await expect(tab).toBeEnabled();
-		await tab.click();
+		await clickTm2LegacyTab(page, 'tm2-tab-contract-handoff');
 
 		await expect(shell.getByTestId('tm2-tab-panel-contract-handoff')).toBeVisible({ timeout: 30_000 });
 		await expect(shell.getByTestId('tm2-ch-readonly-notice')).toBeVisible({ timeout: 30_000 });

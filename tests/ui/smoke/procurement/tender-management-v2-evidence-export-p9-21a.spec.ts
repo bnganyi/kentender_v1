@@ -30,7 +30,7 @@ test.describe('Tender Management workbench evidence export (P9-21a)', () => {
 		}
 
 		await row.click();
-		await expect(shell.getByTestId('tm2-overview-tender-summary')).toBeVisible({ timeout: 60_000 });
+		await expect(shell.getByTestId('tm2-detail-sticky')).toBeVisible({ timeout: 60_000 });
 
 		const hdrBtn = shell.getByTestId('tm2-action-evidence-export');
 		await expect(hdrBtn).toBeVisible();

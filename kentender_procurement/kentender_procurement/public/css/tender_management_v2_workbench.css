@@ -1,0 +1,553 @@
+/*
+ * TM2 Tender Management v2 workbench — three-zone layout (UI refactor).
+ * Typography and spacing aligned with Strategy / Procurement Planning workspaces.
+ * Custom Desk page: `.tm2-injected-shell` mounts under `#page-tender-management-v2`.
+ */
+/* Constrain Frappe shell height so list + detail panes scroll internally (not the whole Desk page). */
+body[data-route^="tender-management-v2"] .main-section,
+body.kt-tm2-shell .main-section {
+	display: flex;
+	flex-direction: column;
+	height: 100dvh;
+	max-height: 100dvh;
+	overflow: hidden;
+	box-sizing: border-box;
+}
+
+body[data-route^="tender-management-v2"] .main-section > header,
+body.kt-tm2-shell .main-section > header {
+	flex-shrink: 0;
+}
+
+body[data-route^="tender-management-v2"] .main-section > #body,
+body.kt-tm2-shell .main-section > #body {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+}
+
+body[data-route^="tender-management-v2"] .main-section > footer,
+body.kt-tm2-shell .main-section > footer {
+	flex-shrink: 0;
+}
+
+#page-tender-management-v2.page-container,
+.page-container[data-page-route="tender-management-v2"] {
+	background: var(--bg-color);
+	flex: 1 1 auto;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	box-sizing: border-box;
+}
+
+.tm2-injected-shell {
+	padding: var(--padding-sm, 12px) var(--padding-md, 16px);
+	box-sizing: border-box;
+	width: 100%;
+}
+
+.tm2-injected-shell.tm2-workbench-page {
+	--tm2-surface-bg: var(--fg-color, #fff);
+	--tm2-surface-border: var(--border-color, #e2e6ea);
+	--tm2-surface-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+	--tm2-page-bg: var(--control-bg, #f5f7fa);
+
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: hidden;
+	box-sizing: border-box;
+}
+
+/* Compact page header — matches `.kt-pp-workspace-header--compact` */
+.tm2-workbench-page .tm2-workspace-header--compact {
+	flex-shrink: 0;
+	margin-bottom: 0.75rem;
+}
+
+.tm2-workbench-page .tm2-header-row {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+
+.tm2-workbench-page .tm2-header-copy {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.tm2-workbench-page .tm2-header-cta {
+	flex-shrink: 0;
+	gap: 0.45rem;
+}
+
+.tm2-workbench-page .tm2-page-title {
+	font-size: 1.2rem;
+	font-weight: 600;
+	line-height: 1.25;
+	color: var(--text-color, #1f272e);
+	margin: 0;
+	letter-spacing: -0.01em;
+}
+
+.tm2-workbench-page .tm2-page-intro {
+	font-size: 0.86rem;
+	line-height: 1.35;
+	color: var(--text-muted, #6c757d);
+	max-width: 44rem;
+}
+
+.tm2-workbench-body {
+	display: flex;
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: hidden;
+	gap: 0.75rem;
+	margin-top: 0;
+}
+
+.tm2-workbench-page .tm2-lifecycle-bar {
+	flex-shrink: 0;
+}
+
+/* Shared surface card (Strategy `.kt-surface`) */
+.tm2-workbench-page .tm2-surface {
+	background: var(--tm2-surface-bg);
+	border: 1px solid var(--tm2-surface-border);
+	border-radius: var(--border-radius-lg, 8px);
+	padding: 1rem 1.15rem;
+	box-shadow: var(--tm2-surface-shadow);
+}
+
+.tm2-tender-list-column {
+	flex: 0 0 28%;
+	max-width: 22rem;
+	min-width: 14rem;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.tm2-workbench-page [data-testid="tm2-tender-list"],
+.tm2-workbench-page [data-testid="tm2-tender-detail"] {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+.tm2-tender-detail.tm2-detail-is-loading {
+	position: relative;
+}
+
+/* First-load placeholder only — tender switches keep prior detail visible until swap completes. */
+.tm2-tender-detail.tm2-detail-is-loading:not(.tm2-detail-is-swapping) [data-testid="tm2-tab-panels"] {
+	opacity: 0.55;
+}
+
+.tm2-tender-detail.tm2-detail-is-swapping {
+	pointer-events: none;
+}
+
+.tm2-tender-detail.tm2-detail-is-swapping [data-testid="tm2-detail-sticky"],
+.tm2-tender-detail.tm2-detail-is-swapping [data-testid="tm2-tab-panels"] {
+	will-change: contents;
+	contain: layout style paint;
+}
+
+.tm2-tender-list-row.tm2-tender-list-row--pending {
+	opacity: 0.78;
+}
+
+.tm2-tender-list-scroll {
+	flex: 1 1 auto;
+	overflow-y: auto;
+	overflow-x: hidden;
+	min-height: 0;
+	max-height: 100%;
+	margin-top: 0.65rem;
+	padding-right: 0.5rem;
+	-webkit-overflow-scrolling: touch;
+	overscroll-behavior: contain;
+	scrollbar-gutter: stable;
+	scrollbar-width: thin;
+}
+
+.tm2-detail-column {
+	flex: 1 1 auto;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.tm2-list-toolbar {
+	margin-bottom: 0.65rem;
+}
+
+.tm2-workbench-page .tm2-list-toolbar .form-control-sm {
+	font-size: 0.85rem;
+	margin-bottom: 0;
+}
+
+.tm2-detail-sticky {
+	flex-shrink: 0;
+	position: sticky;
+	top: 0;
+	z-index: 3;
+	background: var(--tm2-surface-bg);
+	border-bottom: 1px solid var(--tm2-surface-border);
+	padding-bottom: 0.65rem;
+	margin-bottom: 0.65rem;
+}
+
+.tm2-detail-title {
+	font-size: 1rem;
+	font-weight: 600;
+	line-height: 1.3;
+	color: var(--text-color, #1f272e);
+	margin-bottom: 0.15rem;
+}
+
+.tm2-detail-meta {
+	font-size: 0.8rem;
+	line-height: 1.35;
+	color: var(--text-muted, #6c757d);
+}
+
+.tm2-workbench-page .tm2-task-tabs-wrap {
+	flex-shrink: 0;
+}
+
+.tm2-tab-panels-scroll {
+	flex: 1 1 auto;
+	overflow-y: auto;
+	overflow-x: hidden;
+	min-height: 0;
+	max-height: 100%;
+	padding-top: 0.35rem;
+	padding-right: 0.65rem;
+	padding-bottom: 0.35rem;
+	-webkit-overflow-scrolling: touch;
+	overscroll-behavior: contain;
+	scrollbar-gutter: stable;
+	scrollbar-width: thin;
+}
+
+/* Keep key/value rows and tables clear of the vertical scrollbar. */
+.tm2-workbench-page [data-testid="tm2-tab-panels"] .d-flex.justify-content-between > .text-muted:first-child {
+	flex: 1 1 auto;
+	min-width: 0;
+	padding-right: 0.5rem;
+}
+
+.tm2-workbench-page [data-testid="tm2-tab-panels"] .d-flex.justify-content-between > .text-right,
+.tm2-workbench-page [data-testid="tm2-tab-panels"] .tm2-detail-value-cell {
+	flex: 0 1 auto;
+	max-width: 58%;
+	padding-left: 0.75rem;
+	padding-right: 0.15rem;
+	text-align: right;
+	word-break: break-word;
+	overflow-wrap: anywhere;
+}
+
+.tm2-workbench-page [data-testid="tm2-tab-panels"] .table-responsive {
+	margin-right: 0;
+}
+
+.tm2-workbench-page [data-testid="tm2-tab-panels"] .table td,
+.tm2-workbench-page [data-testid="tm2-tab-panels"] .table th {
+	word-break: break-word;
+	overflow-wrap: anywhere;
+}
+
+.tm2-tab-panels-scroll::-webkit-scrollbar,
+.tm2-tender-list-scroll::-webkit-scrollbar {
+	width: 6px;
+}
+
+.tm2-tab-panels-scroll::-webkit-scrollbar-thumb {
+	background: var(--border-color, #cbd5e0);
+	border-radius: 3px;
+}
+
+.tm2-workbench-page .tm2-task-tabs-wrap .nav-tabs {
+	border-bottom: 1px solid var(--tm2-surface-border);
+	margin-bottom: 0;
+}
+
+.tm2-workbench-page .tm2-task-tabs-wrap .nav-link {
+	font-size: 0.85rem;
+	padding: 0.35rem 0.65rem;
+	color: var(--text-muted, #6c757d);
+	border: none;
+	border-bottom: 2px solid transparent;
+	background: transparent;
+}
+
+.tm2-workbench-page .tm2-task-tabs-wrap .nav-link.active {
+	color: var(--text-color, #1f272e);
+	font-weight: 600;
+	border-bottom-color: var(--primary, #171717);
+	background: transparent;
+}
+
+.tm2-lifecycle-bar {
+	background: var(--tm2-surface-bg);
+	border: 1px solid var(--tm2-surface-border);
+	border-radius: 12px;
+	padding: 8px 12px;
+	box-shadow: none;
+}
+
+.tm2-lifecycle-scope-inline {
+	display: inline-flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-right: 4px;
+	padding-right: 10px;
+	border-right: 1px solid var(--tm2-surface-border, #e2e6ea);
+	flex-shrink: 0;
+}
+
+.tm2-lifecycle-scope-chip {
+	font-size: 0.8125rem;
+	font-weight: 500;
+	height: 26px;
+	padding: 0 9px;
+	border-radius: 999px;
+	line-height: 1;
+	display: inline-flex;
+	align-items: center;
+}
+
+.tm2-lifecycle-scope-chip.tm2-lifecycle-chip--active {
+	background: var(--primary, #171717);
+	color: #fff;
+	border-color: var(--primary, #171717);
+}
+
+.tm2-lifecycle-stage-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 14px;
+	min-width: 0;
+}
+
+.tm2-lifecycle-stage-row--primary {
+	margin-bottom: 4px;
+}
+
+.tm2-lifecycle-stage-row--closing {
+	margin-bottom: 0;
+}
+
+.tm2-lifecycle-stage {
+	display: inline-flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 6px;
+	min-width: 0;
+}
+
+.tm2-lifecycle-stage-label {
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--text-muted, #6c757d);
+	margin: 0;
+	line-height: 1.2;
+	flex-shrink: 0;
+	background: none;
+	border: none;
+	padding: 0;
+	white-space: nowrap;
+}
+
+.tm2-lifecycle-stage-chips {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+}
+
+.tm2-lifecycle-chip {
+	font-size: 0.8125rem;
+	font-weight: 500;
+	height: 26px;
+	padding: 0 9px;
+	margin: 0;
+	border-radius: 999px;
+	line-height: 1;
+	display: inline-flex;
+	align-items: center;
+	white-space: nowrap;
+}
+
+.tm2-lifecycle-chip.tm2-lifecycle-chip--active {
+	background: var(--primary, #171717);
+	color: #fff;
+	border-color: var(--primary, #171717);
+	font-weight: 600;
+}
+
+.tm2-lifecycle-chip.tm2-lifecycle-chip--zero:not(.tm2-lifecycle-chip--active) {
+	opacity: 0.55;
+	color: var(--text-muted, #6c757d);
+	background: transparent;
+	border-color: transparent;
+	box-shadow: none;
+	font-weight: 400;
+}
+
+.tm2-lifecycle-chip.tm2-lifecycle-chip--zero:not(.tm2-lifecycle-chip--active):hover {
+	background: var(--control-bg, #f4f5f6);
+	border-color: var(--border-color, #d1d8dd);
+	opacity: 0.85;
+}
+
+.tm2-lifecycle-chip.tm2-lifecycle-chip--risk:not(.tm2-lifecycle-chip--active) {
+	border-left: 3px solid var(--warning, #ffc107);
+	padding-left: 0.55rem;
+}
+
+.tm2-status-ribbon {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+	margin: 0.5rem 0 0.35rem;
+}
+
+.tm2-status-ribbon-badge {
+	font-size: 0.72rem;
+	padding: 0.18rem 0.5rem;
+	border-radius: 999px;
+	border: 1px solid var(--tm2-surface-border);
+	background: var(--control-bg, #f8f9fa);
+	cursor: pointer;
+	line-height: 1.35;
+}
+
+.tm2-status-ribbon-badge.tm2-severity-ready {
+	border-color: #28a745;
+	color: #155724;
+	background: #f0fff4;
+}
+
+.tm2-status-ribbon-badge.tm2-severity-warning {
+	border-color: #ffc107;
+	color: #856404;
+	background: #fffbf0;
+}
+
+.tm2-status-ribbon-badge.tm2-severity-blocked {
+	border-color: #dc3545;
+	color: #721c24;
+	background: #fff5f5;
+}
+
+.tm2-next-step-card {
+	font-size: 0.85rem;
+	line-height: 1.35;
+	padding: 0.55rem 0.75rem;
+	margin: 0.35rem 0;
+	border: 1px solid #bee5eb;
+	border-radius: var(--border-radius, 6px);
+	background: #f0f9fc;
+	color: var(--text-color, #1f272e);
+}
+
+.tm2-next-step-label {
+	font-size: 0.65rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--text-muted, #6c757d);
+	margin-bottom: 0.2rem;
+}
+
+.tm2-next-step-headline {
+	font-size: 0.9rem;
+	font-weight: 600;
+	line-height: 1.35;
+	margin-bottom: 0.15rem;
+}
+
+.tm2-next-step-reason {
+	font-size: 0.8rem;
+	color: var(--text-muted, #6c757d);
+}
+
+.tm2-workbench-page .tm2-action-bar .btn {
+	font-size: 0.78rem;
+	margin-bottom: 0;
+	margin-right: 0.25rem;
+}
+
+.tm2-action-bar-inner {
+	gap: 0.15rem;
+}
+
+.tm2-tender-list-row {
+	cursor: pointer;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+	padding: 0.4rem 0.55rem !important;
+	margin-bottom: 0.35rem !important;
+	border-color: var(--tm2-surface-border) !important;
+}
+
+.tm2-tender-list-row:hover {
+	box-shadow: var(--tm2-surface-shadow);
+}
+
+.tm2-tender-list-row.border-primary {
+	border-color: var(--primary, #171717) !important;
+}
+
+.tm2-tender-list-row-title {
+	font-weight: 600;
+	font-size: 0.82rem;
+	line-height: 1.3;
+}
+
+.tm2-tender-list-row-subtitle {
+	font-size: 0.78rem;
+	line-height: 1.35;
+	color: var(--text-muted, #6c757d);
+}
+
+.tm2-tender-list-row .small {
+	font-size: 0.74rem;
+	line-height: 1.35;
+}
+
+.tm2-legacy-tabs-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.tm2-readiness-work-queue .plc-br-action-btn {
+	font-size: 0.75rem;
+}

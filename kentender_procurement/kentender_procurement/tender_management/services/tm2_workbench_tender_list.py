@@ -23,6 +23,12 @@ from kentender_procurement.tender_management.services.tm2_workbench_kpis import 
 	_CLAR_PENDING,
 	get_workbench_kpi_counts as get_workbench_kpi_counts_service,
 )
+from kentender_procurement.tender_management.services.tm2_workbench_terminology import (
+	business_label_for_queue_slug,
+	business_label_for_readiness_status,
+	business_label_for_tender_status,
+	business_readiness_short_label,
+)
 
 _ACTIVE = {"is_active": 1}
 
@@ -216,19 +222,19 @@ def _current_action_label_for_list_queue(queue_slug: str | None) -> str:
 	if not s:
 		return ""
 	labels: dict[str, str] = {
-		"draft": _("Draft"),
-		"std-incomplete": _("STD Incomplete"),
-		"ready-review": _("Ready for publication review"),
-		"returned": _("Returned for correction"),
-		"approved": _("Approved for publication"),
-		"published": _("Published"),
-		"clarifications": _("Clarifications"),
-		"addenda": _("Addenda pending"),
-		"closing-soon": _("Closing Soon"),
-		"closed": _("Closed"),
-		"opening-ready": _("Opening Ready"),
-		"evaluation-ready": _("Evaluation Ready"),
-		"cancelled": _("Cancelled"),
+		"draft": business_label_for_queue_slug("draft"),
+		"std-incomplete": business_label_for_queue_slug("std-incomplete"),
+		"ready-review": business_label_for_queue_slug("ready-review"),
+		"returned": business_label_for_queue_slug("returned"),
+		"approved": business_label_for_queue_slug("approved"),
+		"published": business_label_for_queue_slug("published"),
+		"clarifications": business_label_for_queue_slug("clarifications"),
+		"addenda": business_label_for_queue_slug("addenda"),
+		"closing-soon": business_label_for_queue_slug("closing-soon"),
+		"closed": business_label_for_queue_slug("closed"),
+		"opening-ready": business_label_for_queue_slug("opening-ready"),
+		"evaluation-ready": business_label_for_queue_slug("evaluation-ready"),
+		"cancelled": business_label_for_queue_slug("cancelled"),
 	}
 	return str(labels.get(s, "") or "")
 
@@ -249,7 +255,7 @@ def _blocker_bits(row: dict[str, Any]) -> tuple[int, str]:
 	parts: list[str] = []
 	if rs in ("Not Ready", "Blocked", "Not Assessed"):
 		n += 1
-		parts.append(_("STD readiness: {0}").format(rs))
+		parts.append(_("Document readiness: {0}").format(business_label_for_readiness_status(rs)))
 	if st == "Addendum Pending":
 		n += 1
 		parts.append(_("Addendum pending"))
@@ -267,13 +273,13 @@ def _badges(row: dict[str, Any], issued_addenda: int) -> list[str]:
 	rs = cstr(row.get("std_readiness_status") or "")
 	out: list[str] = []
 	if st:
-		out.append(st)
+		out.append(business_label_for_tender_status(st))
 	if cat:
 		out.append(cat)
 	if rs == "Ready":
-		out.append(_("STD Ready"))
+		out.append(_("Document ready"))
 	elif rs in ("Not Ready", "Blocked", "Ready With Warnings", "Not Assessed"):
-		out.append(rs)
+		out.append(business_label_for_readiness_status(rs))
 	if issued_addenda > 0:
 		out.append(_("Addendum {0}").format(issued_addenda))
 	return out
@@ -353,7 +359,9 @@ def list_workbench_tenders(
 				"procurement_method": cstr(row.get("procurement_method") or ""),
 				"procurement_category": cstr(row.get("procurement_category") or ""),
 				"status": cstr(row.get("status") or ""),
+				"status_label": business_label_for_tender_status(cstr(row.get("status") or "")),
 				"std_readiness_status": cstr(row.get("std_readiness_status") or ""),
+				"readiness_short": business_readiness_short_label(cstr(row.get("std_readiness_status") or "")),
 				"std_template_version_code": ver,
 				"submission_deadline_at": _iso,
 				"timezone": tz or "",

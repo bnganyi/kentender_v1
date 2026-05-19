@@ -1,17 +1,14 @@
 /**
  * Q-02 — doc 9 §21.3 items 3–4 (canonical `tm2_std_readiness.spec.ts`).
  *
- * 3. STD readiness tab shows Bundle / DSM / DOM / DEM / DCM derived rows (`tm2-std-derived-*`).
- * 4. When workbench detail exposes a DEM gap (``dem_missing_block``), the STD tab shows
- *    ``tm2-std-dem-blocker-code`` **DEM_MISSING_OR_STALE** (doc 8 / P9-10).
- *
- * Item 4 scans **Ready for Publication Review**, **STD Incomplete**, then **Draft** queues — a readiness
- * row is usually required for the blocker to render (``STD Instance Incomplete`` alone may not).
- * Skips if no tender surfaces the blocker (empty / fully-green fixture site).
+ * 3. Preparation tab lists derived document outputs under Legal basis / Advanced.
+ * 4. When workbench detail exposes a DEM gap, the Preparation tab shows a business-readable
+ *    blocker headline (machine code retained for integration only).
  */
 import { expect, test } from '@playwright/test';
 
 import { loginAsAdministrator } from './helpers/auth';
+import { clickTm2LegacyTab } from './helpers/tm2Workbench';
 import { dismissOptionalDeskModals } from './helpers/routes';
 
 const DERIVED_IDS = [
@@ -31,7 +28,7 @@ async function openFirstTenderRowIfAny(
 		return false;
 	}
 	await row.click();
-	await expect(shell.getByTestId('tm2-overview-tender-summary')).toBeVisible({ timeout: 60_000 });
+	await expect(shell.getByTestId('tm2-detail-sticky')).toBeVisible({ timeout: 60_000 });
 	return true;
 }
 
@@ -66,7 +63,7 @@ test.describe('TM2 STD readiness tab (Q-02 / doc 9 §21.3)', () => {
 		'tm2-queue-draft',
 	] as const;
 
-	test('§21.3 (3) — STD & Readiness tab lists Bundle, DSM, DOM, DEM, DCM derived rows', async ({
+	test('§21.3 (3) — Preparation tab lists derived document outputs under Legal basis / Advanced', async ({
 		page,
 		baseURL,
 	}) => {
@@ -86,8 +83,11 @@ test.describe('TM2 STD readiness tab (Q-02 / doc 9 §21.3)', () => {
 			test.skip(true, 'No tenders in default or sampled queues — cannot assert STD readiness derived rows.');
 		}
 
-		await shell.getByTestId('tm2-tab-std-readiness').click();
+		await clickTm2LegacyTab(page, 'tm2-tab-std-readiness');
 		await expect(shell.getByTestId('tm2-tab-panel-std-readiness')).toBeVisible({ timeout: 30_000 });
+		const legal = shell.getByTestId('tm2-preparation-legal-basis');
+		await expect(legal).toBeVisible({ timeout: 30_000 });
+		await legal.locator('summary').click();
 		await expect(shell.getByTestId('tm2-std-binding-block')).toBeVisible({ timeout: 30_000 });
 
 		const derived = shell.getByTestId('tm2-std-derived-outputs');
@@ -97,7 +97,7 @@ test.describe('TM2 STD readiness tab (Q-02 / doc 9 §21.3)', () => {
 		}
 	});
 
-	test('§21.3 (4) — DEM missing posture shows blocker code DEM_MISSING_OR_STALE', async ({
+	test('§21.3 (4) — DEM missing posture shows business-readable blocker headline', async ({
 		page,
 		baseURL,
 	}) => {
@@ -126,12 +126,20 @@ test.describe('TM2 STD readiness tab (Q-02 / doc 9 §21.3)', () => {
 				continue;
 			}
 
-			await shell.getByTestId('tm2-tab-std-readiness').click();
+			await clickTm2LegacyTab(page, 'tm2-tab-std-readiness');
 			await expect(shell.getByTestId('tm2-tab-panel-std-readiness')).toBeVisible({ timeout: 30_000 });
 
-			const codeEl = shell.getByTestId('tm2-std-dem-blocker-code');
-			if (await codeEl.isVisible().catch(() => false)) {
+			const legal = shell.getByTestId('tm2-preparation-legal-basis');
+			if (await legal.isVisible().catch(() => false)) {
+				await legal.locator('summary').click();
+			}
+
+			const blocker = shell.getByTestId('tm2-std-dem-blocker');
+			if (await blocker.isVisible().catch(() => false)) {
+				await expect(blocker).toContainText(/Evaluation rules/i);
+				const codeEl = shell.getByTestId('tm2-std-dem-blocker-code');
 				await expect(codeEl).toHaveText(/DEM_MISSING_OR_STALE/);
+				await expect(codeEl).toBeHidden();
 				sawBlocker = true;
 				break;
 			}
@@ -143,7 +151,7 @@ test.describe('TM2 STD readiness tab (Q-02 / doc 9 §21.3)', () => {
 		if (!sawBlocker) {
 			test.skip(
 				true,
-				'No tender in sampled queues surfaced tm2-std-dem-blocker-code (needs publication readiness + DEM gap per P9-10).',
+				'No tender in sampled queues surfaced tm2-std-dem-blocker (needs publication readiness + DEM gap per P9-10).',
 			);
 		}
 	});

@@ -1,143 +1,99 @@
-/** P9-00 … P9-21a — workbench shell through Audit & Evidence + §13.3 export panel (doc 9 §14–17.12, §14.5). */
+/** P9-00 … P9-21a + UI refactor — three-zone TM2 workbench. */
 (function () {
-	const LAYOUT_VERSION = 22;
+	const LAYOUT_VERSION = 50;
 
 	let tm2SearchTimer = null;
 
-	const QUEUE_SLUGS = new Set([
-		"draft",
-		"std-incomplete",
-		"ready-review",
-		"returned",
-		"approved",
-		"published",
-		"clarifications",
-		"addenda",
-		"closing-soon",
-		"closed",
-		"opening-ready",
-		"evaluation-ready",
-		"cancelled",
-	]);
+	const TM2_OUTPUT_FIELD_LABELS = {
+		bundle_output_code: __("Tender document package"),
+		dsm_output_code: __("Supplier submission checklist"),
+		dom_output_code: __("Opening register rules"),
+		dem_output_code: __("Evaluation rules"),
+		dcm_output_code: __("Contract carry-forward terms"),
+		publication_snapshot_code: __("Published tender evidence snapshot"),
+		tender_std_instance_code: __("Tender-specific document setup"),
+		binding_code: __("Tender document binding"),
+		std_template_version_code: __("Official document version"),
+	};
 
-	const QUEUE_ROWS = [
-		["tm2-queue-draft", __("Draft"), "draft"],
-		["tm2-queue-std-incomplete", __("STD Incomplete"), "std-incomplete"],
-		["tm2-queue-ready-review", __("Ready Review"), "ready-review"],
-		["tm2-queue-returned", __("Returned"), "returned"],
-		["tm2-queue-approved", __("Approved"), "approved"],
-		["tm2-queue-published", __("Published"), "published"],
-		["tm2-queue-clarifications", __("Clarifications"), "clarifications"],
-		["tm2-queue-addenda", __("Addenda"), "addenda"],
-		["tm2-queue-closing-soon", __("Closing Soon"), "closing-soon"],
-		["tm2-queue-closed", __("Closed"), "closed"],
-		["tm2-queue-opening-ready", __("Opening Ready"), "opening-ready"],
-		["tm2-queue-evaluation-ready", __("Evaluation Ready"), "evaluation-ready"],
-		["tm2-queue-cancelled", __("Cancelled"), "cancelled"],
-	];
+	function tm2OutputFieldLabel(field) {
+		const key = String(field || "").trim();
+		return TM2_OUTPUT_FIELD_LABELS[key] || key;
+	}
+
+	function tm2HandoffTechnicalRefsHtml(rows, testId) {
+		let inner = "";
+		for (let i = 0; i < rows.length; i += 1) {
+			const row = rows[i] || {};
+			const lab = esc(String(row.label || ""));
+			const val = esc(String(row.value || "—"));
+			const tid = row.testid ? ` data-testid="${esc(String(row.testid))}"` : "";
+			inner += `<div class="small mt-1"><span class="text-muted">${lab}:</span> <span${tid}>${val}</span></div>`;
+		}
+		if (!inner) {
+			return "";
+		}
+		return `<details class="mb-2 mt-2" data-testid="${esc(String(testId || "tm2-handoff-technical-refs"))}">
+			<summary class="small font-weight-bold text-muted">${esc(__("Legal basis / Technical references"))}</summary>
+			<div class="pt-1">${inner}</div>
+		</details>`;
+	}
+
+	const LC = function () {
+		return (typeof kentender_procurement !== "undefined" && kentender_procurement.Tm2Lifecycle) || {};
+	};
 
 	function queueLabelForSlug(slug) {
-		for (let i = 0; i < QUEUE_ROWS.length; i += 1) {
-			if (QUEUE_ROWS[i][2] === slug) {
-				return QUEUE_ROWS[i][1];
-			}
-		}
-		return slug || "";
+		const lc = LC();
+		return lc.queueLabelForSlug ? lc.queueLabelForSlug(slug) : slug || "";
 	}
 
 	function setWorkbenchQueueUrl(slug) {
-		if (slug && !QUEUE_SLUGS.has(slug)) {
-			return;
+		const lc = LC();
+		if (lc.setWorkbenchQueueUrl) {
+			lc.setWorkbenchQueueUrl(slug);
 		}
-		const u = new URL(window.location.href);
-		if (slug) {
-			u.searchParams.set("queue", slug);
-		} else {
-			u.searchParams.delete("queue");
-		}
-		window.history.replaceState({}, "", u.pathname + u.search + u.hash);
 	}
 
 	function readQueueSlugFromUrl() {
-		const raw = new URLSearchParams(window.location.search).get("queue");
-		if (raw && QUEUE_SLUGS.has(raw)) {
-			return raw;
-		}
-		return null;
+		const lc = LC();
+		return lc.readQueueSlugFromUrl ? lc.readQueueSlugFromUrl() : null;
 	}
 
 	function applyQueueSelection($w, slug) {
-		const s = slug && QUEUE_SLUGS.has(slug) ? slug : null;
-		$w.find(".tm2-kpi-chip, .tm2-queue-chip").removeClass("btn-primary");
-		if (s) {
-			$w.find('.tm2-kpi-chip[data-tm2-queue-slug="' + s + '"], .tm2-queue-chip[data-tm2-queue-slug="' + s + '"]').addClass(
-				"btn-primary",
-			);
+		const lc = LC();
+		if (lc.applyQueueSelection) {
+			lc.applyQueueSelection($w, slug);
 		}
-		const $f = $w.find('[data-testid="tm2-tender-list-filter"]');
-		if (!$f.length) {
-			return;
-		}
-		if (!s) {
-			$f.text(__("All queues"));
-			return;
-		}
-		$f.text(__("Queue") + ": " + queueLabelForSlug(s));
 	}
 
 	function refreshKpiCounts($w) {
-		frappe.call({
-			method: "kentender_procurement.tender_management.api.tm2_workbench.get_workbench_kpi_counts",
-			callback(r) {
-				const msg = r.message || {};
-				if (!msg.ok) {
-					return;
-				}
-				const counts = msg.counts || {};
-				const queueCounts = msg.queue_counts || {};
-				$w.find(".tm2-kpi-chip").each(function () {
-					const $b = $(this);
-					const tid = $b.attr("data-testid");
-					const base = $b.data("tm2KpiBase") || "";
-					const c = typeof counts[tid] === "number" ? counts[tid] : 0;
-					$b.text(base + " (" + c + ")");
-					const risk = c > 0 && (tid === "tm2-kpi-std-incomplete" || tid === "tm2-kpi-addenda");
-					$b.toggleClass("border-left border-warning pl-2", risk);
-				});
-				$w.find(".tm2-queue-chip").each(function () {
-					const $b = $(this);
-					const slug = $b.attr("data-tm2-queue-slug");
-					const base = $b.data("tm2QueueBase") || "";
-					const c = slug && typeof queueCounts[slug] === "number" ? queueCounts[slug] : 0;
-					$b.text(base + " (" + c + ")");
-					const hot = slug === "std-incomplete" && c > 0;
-					$b.toggleClass("border-bottom border-warning", hot);
-				});
-			},
-		});
+		const lc = LC();
+		if (lc.refreshLifecycleCounts) {
+			lc.refreshLifecycleCounts($w);
+		}
 	}
 
 	function initTm2WorkbenchQueueAndKpis($w) {
-		$w.find(".tm2-kpi-chip").each(function () {
-			const $b = $(this);
-			if (!$b.data("tm2KpiBase")) {
-				$b.data("tm2KpiBase", $.trim($b.text()));
-			}
-		});
-		$w.find(".tm2-queue-chip").each(function () {
-			const $b = $(this);
-			if (!$b.data("tm2QueueBase")) {
-				$b.data("tm2QueueBase", $.trim($b.text()));
-			}
-		});
-		$w.off("click.tm2qs").on("click.tm2qs", ".tm2-kpi-chip, .tm2-queue-chip", function (e) {
+		const lc = LC();
+		if (lc.initLifecycleChipBases) {
+			lc.initLifecycleChipBases($w);
+		}
+		$w.off("click.tm2qs").on("click.tm2qs", ".tm2-lifecycle-chip", function (e) {
 			e.preventDefault();
-			const slug = $(this).attr("data-tm2-queue-slug");
-			if (!slug || !QUEUE_SLUGS.has(slug)) {
-				return;
+			const slug = $(this).attr("data-tm2-queue-slug") || "";
+			setWorkbenchQueueUrl(slug || null);
+			applyQueueSelection($w, slug || null);
+			refreshTenderList($w);
+		});
+		$w.off("click.tm2scope").on("click.tm2scope", '[data-testid="tm2-lifecycle-my-work"]', function (e) {
+			e.preventDefault();
+			const on = !$(this).hasClass("tm2-lifecycle-chip--active");
+			$w.data("tm2ListScopeMyWork", on);
+			const lc = LC();
+			if (lc.applyMyWorkScope) {
+				lc.applyMyWorkScope($w, on);
 			}
-			setWorkbenchQueueUrl(slug);
-			applyQueueSelection($w, slug);
 			refreshTenderList($w);
 		});
 		$w.off("input.tm2search").on("input.tm2search", '[data-testid="tm2-search-input"]', function () {
@@ -154,6 +110,10 @@
 		initTm2DetailTabs($w);
 		refreshKpiCounts($w);
 		applyQueueSelection($w, readQueueSlugFromUrl());
+		const lcScope = LC();
+		if (lcScope.applyMyWorkScope) {
+			lcScope.applyMyWorkScope($w, !!$w.data("tm2ListScopeMyWork"));
+		}
 		refreshTenderList($w);
 		loadTenderDetail($w, "");
 	}
@@ -165,6 +125,99 @@
 
 	function esc(s) {
 		return frappe.utils.escape_html(s);
+	}
+
+	function setTm2DetailLoading($w, on) {
+		const $detail = $w.find('[data-testid="tm2-tender-detail"]');
+		if (!$detail.length) {
+			return;
+		}
+		if (on) {
+			$detail.addClass("tm2-detail-is-loading");
+			$detail.attr("aria-busy", "true");
+		} else {
+			$detail.removeClass("tm2-detail-is-loading");
+			$detail.removeAttr("aria-busy");
+		}
+	}
+
+	function setTm2DetailSwapping($w, on) {
+		const $detail = $w.find('[data-testid="tm2-tender-detail"]');
+		if (!$detail.length) {
+			return;
+		}
+		if (on) {
+			$detail.addClass("tm2-detail-is-swapping");
+		} else {
+			$detail.removeClass("tm2-detail-is-swapping");
+		}
+	}
+
+	function markTm2ListRowPending($w, tenderCode) {
+		const tc = String(tenderCode || "").trim();
+		const $rows = $w.find('[data-testid="tm2-tender-list-row"]');
+		$rows.removeClass("tm2-tender-list-row--pending");
+		if (!tc) {
+			return;
+		}
+		$rows.filter(`[data-tm2-tender-code="${tc}"]`).addClass("tm2-tender-list-row--pending");
+	}
+
+	function clearTm2ListRowPending($w) {
+		$w.find(".tm2-tender-list-row--pending").removeClass("tm2-tender-list-row--pending");
+	}
+
+	function finishTm2DetailSwap($w, reqId) {
+		requestAnimationFrame(function () {
+			requestAnimationFrame(function () {
+				if (reqId && !isTm2DetailRequestCurrent($w, reqId)) {
+					return;
+				}
+				setTm2DetailSwapping($w, false);
+				setTm2DetailLoading($w, false);
+				clearTm2ListRowPending($w);
+			});
+		});
+	}
+
+	function applyTm2DetailPayload($w, msg, reqId, tabToShow) {
+		const $sticky = $w.find('[data-testid="tm2-detail-sticky"]');
+		const $h = $w.find('[data-testid="tm2-tender-detail-header"]');
+		const $ribbon = $w.find('[data-testid="tm2-status-ribbon"]');
+		const $ns = $w.find('[data-testid="tm2-sticky-next-step"]');
+		const $bar = $w.find('[data-testid="tm2-action-bar"]');
+		const $blk = $w.find('[data-testid="tm2-blockers-panel"]');
+		const $panels = $w.find('[data-testid="tm2-tab-panels"]');
+
+		setTm2DetailSwapping($w, true);
+		$sticky.removeClass("d-none");
+		$w.data("tm2DetailPayload", msg);
+		renderDetailHeader($h, msg);
+		renderStatusRibbon($ribbon, msg);
+		renderStickyNextStep($ns, msg);
+		renderActionBar($w, $bar, msg);
+		const summary = String(msg.blocker_summary || "").trim();
+		if (summary) {
+			$blk.removeClass("d-none").html(
+				`<div class="small text-danger" data-testid="tm2-blockers-summary">${esc(summary)}</div>`,
+			);
+		} else {
+			$blk.addClass("d-none").empty();
+		}
+		switchTaskTab($w, tabToShow);
+		syncHeaderEvidenceExport($w, msg);
+		$panels.scrollTop(0);
+		finishTm2DetailSwap($w, reqId);
+	}
+
+	function tm2DetailRequestId($w) {
+		const next = ($w.data("tm2DetailReqId") || 0) + 1;
+		$w.data("tm2DetailReqId", next);
+		return next;
+	}
+
+	function isTm2DetailRequestCurrent($w, reqId) {
+		return ($w.data("tm2DetailReqId") || 0) === reqId;
 	}
 
 	function renderTenderListRows($w, items) {
@@ -183,34 +236,19 @@
 			const it = items[i];
 			const code = esc(String(it.tender_code || ""));
 			const title = esc(String(it.tender_title || ""));
-			const pkg = esc(String(it.package_code || ""));
-			const method = esc(String(it.procurement_method || ""));
-			const cat = esc(String(it.procurement_category || ""));
-			const pe = esc(String(it.procuring_entity_code || ""));
-			const st = esc(String(it.status || ""));
-			const rs = esc(String(it.std_readiness_status || ""));
-			const stdv = esc(String(it.std_template_version_code || __("—")));
-			const deadline = esc(String(it.submission_deadline_label || __("No deadline set")));
+			const st = esc(String(it.status_label || it.status || ""));
+			const readinessShort = esc(String(it.readiness_short || it.std_readiness_status || __("—")));
+			const dueRaw = esc(String(it.due_label || it.submission_deadline_label || __("No deadline set")));
 			const blkRaw = it.blocker_summary ? String(it.blocker_summary) : "";
-			const blockersHtml = blkRaw
-				? `<div class="small mt-1 text-danger" data-testid="tm2-tender-list-row-blockers">${esc(blkRaw)}</div>`
-				: `<div class="small mt-1 text-muted" data-testid="tm2-tender-list-row-blockers">${esc(__("No blockers"))}</div>`;
-			const badges = Array.isArray(it.badges)
-				? it.badges
-						.map(function (b) {
-							return `<span class="badge badge-light border mr-1 mb-1">${esc(String(b))}</span>`;
-						})
-						.join("")
-				: "";
+			const dueLine = blkRaw
+				? esc(__("Due")) + " " + dueRaw + " · " + esc(blkRaw)
+				: esc(__("Due")) + " " + dueRaw + " · " + esc(__("No blockers"));
 			const $row = $(
 				`<div role="button" tabindex="0" class="tm2-tender-list-row border rounded px-2 py-2 mb-2 bg-white" data-testid="tm2-tender-list-row" data-tm2-tender-code="${code}">
-					<div class="font-weight-bold small">${code} · ${title}</div>
-					<div class="small text-muted">${esc(__("Package"))}: ${pkg} · ${method} · ${cat}</div>
-					<div class="small text-muted">${esc(__("Entity"))}: ${pe}</div>
-					<div class="small">${esc(__("Status"))}: ${st} · ${esc(__("STD"))}: ${stdv} · ${esc(__("Readiness"))}: ${rs}</div>
-					<div class="small text-muted" data-testid="tm2-tender-list-row-deadline">${esc(__("Deadline"))}: ${deadline}</div>
-					${blockersHtml}
-					<div class="mt-1">${badges}</div>
+					<div class="tm2-tender-list-row-title">${code}</div>
+					<div class="tm2-tender-list-row-subtitle">${title}</div>
+					<div class="small tm2-tender-list-row-status">${st} · ${readinessShort}</div>
+					<div class="small text-muted" data-testid="tm2-tender-list-row-deadline">${dueLine}</div>
 				</div>`,
 			);
 			$body.append($row);
@@ -226,7 +264,12 @@
 		}
 		frappe.call({
 			method: "kentender_procurement.tender_management.api.tm2_workbench.list_workbench_tenders",
-			args: { queue: slug || "", search: q, limit: 50 },
+			args: {
+				queue: slug || "",
+				search: q,
+				limit: 50,
+				scope: $w.data("tm2ListScopeMyWork") ? "my-work" : "",
+			},
 			callback(r) {
 				const msg = r.message || {};
 				if (!msg.ok) {
@@ -271,7 +314,91 @@
 		$w.find('[data-testid="tm2-tab-panel-audit-evidence"]').addClass("d-none");
 	}
 
+	function tm2UserCanViewTechnicalRefs() {
+		try {
+			const roles = (frappe.boot && frappe.boot.user && frappe.boot.user.roles) || frappe.user_roles || [];
+			const auditRoles = ["Auditor", "System Manager", "Administrator", "Compliance Reviewer"];
+			for (let i = 0; i < auditRoles.length; i += 1) {
+				if (roles.indexOf(auditRoles[i]) >= 0) {
+					return true;
+				}
+			}
+		} catch (e) {
+			/* ignore */
+		}
+		return !!(frappe.boot && frappe.boot.developer_mode);
+	}
+
+	function pickDefaultTaskTab(msg) {
+		if (!msg || !msg.ok) {
+			return "tm2-tab-overview";
+		}
+		try {
+			const roles = (frappe.boot && frappe.boot.user && frappe.boot.user.roles) || frappe.user_roles || [];
+			if (roles.indexOf("Auditor") >= 0 || roles.indexOf("Compliance Reviewer") >= 0) {
+				return "tm2-tab-audit";
+			}
+		} catch (e1) {
+			/* ignore */
+		}
+		const st = String((msg.tender_status || "") + "").trim();
+		const rs = String((msg.std_readiness || {}).binding || "");
+		if (st === "Draft" || st === "STD Instance Incomplete" || rs.indexOf("Incomplete") >= 0) {
+			return "tm2-tab-preparation";
+		}
+		return "tm2-tab-overview";
+	}
+
+	function switchTaskTab($w, taskTabId) {
+		const prevTab = $w.data("tm2ActiveTaskTab");
+		const sameTab = prevTab === taskTabId;
+		$w.data("tm2ActiveTaskTab", taskTabId);
+		syncTaskTabHighlight($w, taskTabId);
+		if (!sameTab) {
+			_hideAllTm2DetailPanels($w);
+		}
+		if (taskTabId === "tm2-tab-overview") {
+			$w.find('[data-testid="tm2-tab-panel-overview"]').removeClass("d-none");
+			renderOverviewPanel($w);
+			return;
+		}
+		if (taskTabId === "tm2-tab-preparation") {
+			$w.find('[data-testid="tm2-tab-panel-std-readiness"]').removeClass("d-none");
+			renderStdReadinessPanel($w);
+			return;
+		}
+		if (taskTabId === "tm2-tab-live-tender") {
+			$w.find('[data-testid="tm2-tab-panel-supplier-access"]').removeClass("d-none");
+			$w.find('[data-testid="tm2-tab-panel-clarifications"]').removeClass("d-none");
+			$w.find('[data-testid="tm2-tab-panel-addenda"]').removeClass("d-none");
+			$w.find('[data-testid="tm2-tab-panel-submissions"]').removeClass("d-none");
+			renderSupplierAccessPanel($w);
+			renderClarificationsPanel($w);
+			renderAddendaPanel($w);
+			renderSubmissionsPanel($w);
+			return;
+		}
+		if (taskTabId === "tm2-tab-handoff") {
+			$w.find('[data-testid="tm2-tab-panel-opening-readiness"]').removeClass("d-none");
+			$w.find('[data-testid="tm2-tab-panel-evaluation-handoff"]').removeClass("d-none");
+			$w.find('[data-testid="tm2-tab-panel-contract-handoff"]').removeClass("d-none");
+			renderOpeningReadinessPanel($w);
+			renderEvaluationHandoffPanel($w);
+			renderContractHandoffPanel($w);
+			return;
+		}
+		if (taskTabId === "tm2-tab-audit") {
+			$w.find('[data-testid="tm2-tab-panel-timeline"]').removeClass("d-none");
+			$w.find('[data-testid="tm2-tab-panel-audit-evidence"]').removeClass("d-none");
+			renderTimelinePanel($w);
+			renderAuditEvidencePanel($w);
+		}
+	}
+
 	function switchDetailTab($w, tabTestId) {
+		const taskTabId = _legacyTabToTaskTab(tabTestId);
+		$w.data("tm2ActiveTaskTab", taskTabId);
+		syncTaskTabHighlight($w, taskTabId);
 		const $tabs = $w.find('[data-testid="tm2-detail-tabs"]');
 		$tabs.find('[role="tab"]').removeClass("active").attr("aria-selected", "false");
 		const $hit = $tabs.find(`[data-testid="${tabTestId}"]`);
@@ -346,6 +473,15 @@
 	}
 
 	function initTm2DetailTabs($w) {
+		const $taskTabs = $w.find('[data-testid="tm2-task-tabs"]');
+		$taskTabs.off("click.tm2tt").on("click.tm2tt", '[role="tab"]:not([disabled])', function (e) {
+			e.preventDefault();
+			const tid = $(this).attr("data-testid");
+			if (!tid) {
+				return;
+			}
+			switchTaskTab($w, tid);
+		});
 		const $tabs = $w.find('[data-testid="tm2-detail-tabs"]');
 		$tabs
 			.off("click.tm2dt")
@@ -361,6 +497,15 @@
 					switchDetailTab($w, tid);
 				},
 			);
+		$w.off("click.tm2ribbon").on("click.tm2ribbon", ".tm2-status-ribbon-badge", function (e) {
+			e.preventDefault();
+			const target = $(this).attr("data-target-tab") || "tm2-tab-overview";
+			switchTaskTab($w, target);
+		});
+		$w.off("click.tm2tech").on("click.tm2tech", '[data-testid="tm2-open-technical-references"]', function (e) {
+			e.preventDefault();
+			openTechnicalReferencesDrawer($w);
+		});
 		$w.off("click.tm2aexp").on("click.tm2aexp", '[data-testid="tm2-ae-action-export"]:not([disabled])', function (e) {
 			e.preventDefault();
 			openEvidenceExportDialog($w);
@@ -385,7 +530,7 @@
 		const $p = $w.find('[data-testid="tm2-tab-panel-std-readiness"]');
 		const msg = $w.data("tm2DetailPayload");
 		if (!msg || !msg.ok) {
-			$p.html(`<div class="text-muted small">${esc(__("Select a tender to see STD & Readiness."))}</div>`);
+			$p.html(`<div class="text-muted small">${esc(__("Select a tender to see Preparation."))}</div>`);
 			return;
 		}
 		const sr = msg.std_readiness || {};
@@ -397,17 +542,17 @@
 
 		let bindHtml = "";
 		const pairs = [
-			[__("Template (code)"), String(bind.std_template_code || "").trim() || __("—")],
-			[__("Template title"), String(bind.std_template_title || "").trim() || __("—")],
+			[__("Official template (code)"), String(bind.std_template_code || "").trim() || __("—")],
+			[__("Official template title"), String(bind.std_template_title || "").trim() || __("—")],
 			[__("Template lifecycle"), String(bind.std_template_lifecycle || "").trim() || __("—")],
-			[__("Template version"), String(bind.std_template_version_code || "").trim() || __("—")],
+			[__("Official document version"), String(bind.std_template_version_code || "").trim() || __("—")],
 			[__("Applicability profile"), String(bind.std_applicability_profile_code || "").trim() || __("—")],
-			[__("Tender STD instance"), String(bind.tender_std_instance_code || "").trim() || __("—")],
-			[__("Binding"), String(bind.binding_code || "").trim() || __("—")],
+			[__("Tender-specific document setup"), String(bind.tender_std_instance_code || "").trim() || __("—")],
+			[__("Binding reference"), String(bind.binding_code || "").trim() || __("—")],
 			[__("Binding status"), String(bind.binding_status || "").trim() || __("—")],
 			[__("Bound by"), String(bind.bound_by || "").trim() || __("—")],
 			[__("Bound at"), String(bind.bound_at_display || "").trim() || __("—")],
-			[__("Publication snapshot"), String(bind.publication_snapshot_code || "").trim() || __("—")],
+			[__("Published tender evidence snapshot"), String(bind.publication_snapshot_code || "").trim() || __("—")],
 			[__("Published snapshot hash"), String(bind.published_snapshot_hash || "").trim() || __("—")],
 		];
 		for (let i = 0; i < pairs.length; i += 1) {
@@ -419,7 +564,7 @@
 		let metaHtml = "";
 		if (String(meta.readiness_code || "").trim()) {
 			metaHtml = `<div class="small text-muted mb-2" data-testid="tm2-std-readiness-meta">
-				${esc(__("Latest readiness"))}: ${esc(String(meta.readiness_code || ""))} · ${esc(String(meta.readiness_status || ""))}
+				${esc(__("Latest publication readiness check"))}: ${esc(String(meta.readiness_status || ""))}
 				· ${esc(String(meta.std_readiness_status || ""))}
 				${meta.validated_at_display ? " · " + esc(String(meta.validated_at_display || "")) : ""}
 			</div>`;
@@ -431,13 +576,8 @@
 			const rawCheckId = String(row.id || `row-${r}`).replace(/[^a-z0-9_-]/gi, "-");
 			const st = String(row.status || "unknown");
 			const stLab = esc(_tm2ChecklistStatusLabel(st));
-			const outc = String(row.output_code || "").trim();
-			const outPart = outc ? ` <span class="text-monospace">${esc(outc)}</span>` : "";
-			const own = esc(String(row.owner || ""));
-			const srcm = esc(String(row.source_module || ""));
 			chkHtml += `<div class="small border-bottom py-1 d-flex justify-content-between align-items-start" data-testid="tm2-std-check-${rawCheckId}">
-				<div><span class="font-weight-bold">${stLab}</span> — ${esc(String(row.label || ""))}${outPart}</div>
-				<div class="text-muted text-right" style="max-width:12rem">${own}<br/>${srcm}</div>
+				<div><span class="font-weight-bold">${stLab}</span> — ${esc(String(row.label || ""))}</div>
 			</div>`;
 		}
 		if (!chkHtml) {
@@ -448,18 +588,16 @@
 		if (demBlk && demBlk.blocker_code) {
 			demHtml = `<div class="alert alert-danger small py-2 mb-3" data-testid="tm2-std-dem-blocker">
 				<div class="font-weight-bold">${esc(String(demBlk.headline || ""))}</div>
-				<div>${esc(__("Owner"))}: ${esc(String(demBlk.owner || ""))}</div>
 				<div>${esc(__("Required action"))}: ${esc(String(demBlk.required_action || ""))}</div>
-				<div>${esc(__("Blocker code"))}: <span data-testid="tm2-std-dem-blocker-code">${esc(String(demBlk.blocker_code || ""))}</span></div>
-				<div>${esc(__("Severity"))}: ${esc(String(demBlk.severity || ""))}</div>
+				<div class="text-muted small mt-1 d-none" data-testid="tm2-std-dem-blocker-code">${esc(String(demBlk.blocker_code || ""))}</div>
 			</div>`;
 		}
 
 		const viewLabels = {
-			dsm: __("View DSM summary"),
-			dom: __("View DOM summary"),
-			dem: __("View DEM summary"),
-			dcm: __("View DCM summary"),
+			dsm: __("View supplier submission checklist"),
+			dom: __("View opening register rules"),
+			dem: __("View evaluation rules"),
+			dcm: __("View contract carry-forward terms"),
 		};
 		let derHtml = "";
 		for (let d = 0; d < derived.length; d += 1) {
@@ -467,6 +605,7 @@
 			const did = String(it.id || "");
 			const code = String(it.code || "").trim();
 			const lab = esc(String(it.label || ""));
+			const techLab = esc(String(it.technical_label || did.toUpperCase()));
 			const summaryKey = did === "dsm" || did === "dom" || did === "dem" || did === "dcm" ? did : "";
 			const vlab = summaryKey ? String(viewLabels[summaryKey] || "") : "";
 			const codeEsc = esc(code);
@@ -475,32 +614,54 @@
 					? `<button type="button" class="btn btn-default btn-sm ml-2" data-testid="tm2-std-view-${summaryKey}">${esc(vlab)}</button>`
 					: summaryKey
 						? `<button type="button" class="btn btn-default btn-sm ml-2" disabled title="${esc(
-								__("No output code yet — generate via STD Engine workflows."),
+								__("No output code yet — generate via document engine workflows."),
 							)}">${esc(vlab)}</button>`
 						: "";
 			const derTid = (did || "x").replace(/[^a-z0-9_-]/gi, "-");
 			derHtml += `<div class="small border-bottom py-1 d-flex justify-content-between align-items-center" data-testid="tm2-std-derived-${derTid}">
-				<div><strong>${lab}:</strong> <span class="text-monospace">${codeEsc || esc(__("—"))}</span></div>
+				<div><strong>${lab}</strong>${code ? `<span class="text-muted"> (${techLab}: ${codeEsc})</span>` : ""}</div>
 				<div>${btnId}</div>
 			</div>`;
 		}
 
 		$p.html(
-			`<div data-testid="tm2-std-binding-block" class="mb-3">
-				<div class="small font-weight-bold text-muted mb-1">${esc(__("STD binding"))}</div>
-				${bindHtml}
-			</div>
-			${metaHtml}
-			<div data-testid="tm2-std-readiness-checklist" class="mb-3">
-				<div class="small font-weight-bold text-muted mb-1">${esc(__("Readiness checklist"))}</div>
-				${chkHtml}
-			</div>
-			${demHtml}
-			<div data-testid="tm2-std-derived-outputs">
-				<div class="small font-weight-bold text-muted mb-1">${esc(__("Derived outputs (read-only)"))}</div>
-				${derHtml || `<div class="text-muted small">${esc(__("No binding outputs yet."))}</div>`}
-			</div>`,
+			`<div data-testid="tm2-preparation-readiness-queue-host" class="mb-3 tm2-readiness-work-queue"></div>
+			<details class="mb-2" data-testid="tm2-preparation-legal-basis">
+				<summary class="small font-weight-bold text-muted">${esc(__("Legal basis / Advanced"))}</summary>
+				<div class="pt-2">
+					<div data-testid="tm2-std-binding-block" class="mb-3">
+						<div class="small font-weight-bold text-muted mb-1">${esc(__("Tender document binding"))}</div>
+						${bindHtml}
+					</div>
+					${metaHtml}
+					<div data-testid="tm2-std-readiness-checklist" class="mb-3">
+						<div class="small font-weight-bold text-muted mb-1">${esc(__("Publication readiness checks"))}</div>
+						${chkHtml}
+					</div>
+					${demHtml}
+					<div data-testid="tm2-std-derived-outputs">
+						<div class="small font-weight-bold text-muted mb-1">${esc(__("Technical document outputs (read-only)"))}</div>
+						${derHtml || `<div class="text-muted small">${esc(__("No binding outputs yet."))}</div>`}
+					</div>
+				</div>
+			</details>`,
 		);
+
+		const tcMount = String(msg.tender_code || "").trim();
+		const $brQ = $p.find('[data-testid="tm2-preparation-readiness-queue-host"]');
+		if (
+			tcMount &&
+			typeof window.kentender_procurement !== "undefined" &&
+			kentender_procurement.BusinessReadinessSummary
+		) {
+			kentender_procurement.BusinessReadinessSummary.mount($brQ, {
+				object_type: "TM2 Tender",
+				object_code: tcMount,
+				render_mode: "workbench_queue",
+			});
+		} else {
+			$brQ.remove();
+		}
 
 		$p.off("click.tm2vsum").on("click.tm2vsum", "[data-testid^='tm2-std-view-']", function (ev) {
 			ev.preventDefault();
@@ -509,7 +670,12 @@
 				return;
 			}
 			const tid = ($b.attr("data-testid") || "").replace("tm2-std-view-", "");
-			const map = { dsm: __("DSM"), dom: __("DOM"), dem: __("DEM"), dcm: __("DCM") };
+			const map = {
+				dsm: __("Supplier submission checklist"),
+				dom: __("Opening register rules"),
+				dem: __("Evaluation rules"),
+				dcm: __("Contract carry-forward terms"),
+			};
 			let code = "";
 			for (let x = 0; x < derived.length; x += 1) {
 				const di = derived[x] || {};
@@ -523,7 +689,7 @@
 				message:
 					`<p class="mb-0 small">${esc(
 						__(
-							"This workbench control does not regenerate or edit derived models. Use STD Engine desk flows when you are permitted to change artifacts.",
+							"This view does not regenerate or edit derived document outputs. Use the permitted document setup workflows when you need to change artifacts.",
 						),
 					)}</p>` +
 					`<p class="mb-0 small"><strong>${esc(String(map[tid] || tid))}:</strong> <span class="text-monospace">${esc(code)}</span></p>`,
@@ -551,7 +717,7 @@
 		}
 		if (!datesHtml) {
 			datesHtml = `<div class="text-muted small" data-testid="tm2-timeline-key-empty">${esc(
-				__("No TM2 Tender Timeline row yet."),
+				__("No submission deadlines recorded yet."),
 			)}</div>`;
 		}
 
@@ -606,7 +772,7 @@
 			${serverHtml}
 			${noticeHtml}
 			<div data-testid="tm2-timeline-key-dates" class="mb-3">
-				<div class="small font-weight-bold text-muted mb-1">${esc(__("Deadlines (TM2 Tender Timeline)"))}</div>
+				<div class="small font-weight-bold text-muted mb-1">${esc(__("Key deadlines"))}</div>
 				${datesHtml}
 			</div>
 			<div data-testid="tm2-timeline-warnings" class="mb-3">
@@ -633,7 +799,7 @@
 
 		let ruleHtml = "";
 		if (!ar.has_rule) {
-			ruleHtml = `<div class="text-muted small">${esc(__("No TM2 Tender Access Rule row yet."))}</div>`;
+			ruleHtml = `<div class="text-muted small">${esc(__("No supplier access rules recorded yet."))}</div>`;
 		} else {
 			const lines = [
 				[__("Access rule"), String(ar.access_rule_code || "")],
@@ -1167,6 +1333,15 @@
 		const prepDis = prep.allowed && prep.ui_state === "enabled" ? "" : "disabled";
 		const sendDis = send.allowed && send.ui_state === "enabled" ? "" : "disabled";
 
+		const techRefs = tm2HandoffTechnicalRefsHtml(
+			[
+				{ label: __("Opening register rules"), value: dom, testid: "tm2-or-dom-ref" },
+				{ label: __("Published tender evidence snapshot"), value: snap },
+				{ label: __("Tender-specific document setup"), value: tsi },
+			],
+			"tm2-or-technical-refs",
+		);
+
 		$p.html(
 			`<div class="alert alert-light border small py-2 mb-3" data-testid="tm2-or-readonly-notice">${notice}</div>
 			${arithBlock}
@@ -1177,15 +1352,13 @@
 				<div class="small mt-1"><span class="text-muted">${esc(__("Closing record"))}:</span> ${cls}${
 				clsStat ? " · " + clsStat : ""
 			}</div>
-				<div class="small mt-1"><span class="text-muted">${esc(__("DOM"))}:</span> <span data-testid="tm2-or-dom-ref">${dom}</span></div>
-				<div class="small mt-1"><span class="text-muted">${esc(__("Publication snapshot"))}:</span> ${snap}</div>
-				<div class="small mt-1"><span class="text-muted">${esc(__("STD instance"))}:</span> ${tsi}</div>
 				<div class="small mt-1"><span class="text-muted">${esc(__("Valid sealed submissions"))}:</span> ${esc(String(validN))}</div>
 				<div class="small mt-1"><span class="text-muted">${esc(__("Sealed submission refs"))}:</span> ${esc(String(sealedN))}</div>
 				<div class="small mt-1"><span class="text-muted">${esc(__("Opening record"))}:</span> ${oprec}</div>
 				<div class="small mt-1 text-muted">${esc(__("Prepared at"))}: ${prepAt || "—"} · ${esc(__("Accepted by opening module"))}: ${
 				accAt || "—"
 			}</div>
+				${techRefs}
 			</div>
 			${blkHtml}
 			<div class="mb-2" data-testid="tm2-or-opening-rules-wrap">
@@ -1263,6 +1436,17 @@
 		const prepDis = prep.allowed && prep.ui_state === "enabled" ? "" : "disabled";
 		const sendDis = send.allowed && send.ui_state === "enabled" ? "" : "disabled";
 
+		const techRefs = tm2HandoffTechnicalRefsHtml(
+			[
+				{ label: __("Evaluation rules"), value: dem, testid: "tm2-eh-dem-ref" },
+				{ label: __("Supplier submission checklist"), value: dsm, testid: "tm2-eh-dsm-ref" },
+				{ label: __("Tender document package"), value: bundle },
+				{ label: __("Published tender evidence snapshot"), value: snap },
+				{ label: __("Tender-specific document setup"), value: tsi },
+			],
+			"tm2-eh-technical-refs",
+		);
+
 		$p.html(
 			`<div class="alert alert-light border small py-2 mb-2" data-testid="tm2-eh-readonly-notice">${notice}</div>
 			<div class="alert alert-info small py-2 mb-2" data-testid="tm2-eh-dem-readonly-notice">${demRo}</div>
@@ -1272,14 +1456,10 @@
 				<div class="small" data-testid="tm2-eh-handoff-status">${st}</div>
 				<div class="small mt-2"><span class="text-muted">${esc(__("Evaluation handoff"))}:</span> <span data-testid="tm2-eh-code">${ehr}</span></div>
 				<div class="small mt-1"><span class="text-muted">${esc(__("Opening record"))}:</span> ${opn}</div>
-				<div class="small mt-1"><span class="text-muted">${esc(__("DEM"))}:</span> <span data-testid="tm2-eh-dem-ref">${dem}</span></div>
-				<div class="small mt-1"><span class="text-muted">${esc(__("DSM"))}:</span> <span data-testid="tm2-eh-dsm-ref">${dsm}</span></div>
-				<div class="small mt-1"><span class="text-muted">${esc(__("Bundle"))}:</span> ${bundle}</div>
-				<div class="small mt-1"><span class="text-muted">${esc(__("Publication snapshot"))}:</span> ${snap}</div>
-				<div class="small mt-1"><span class="text-muted">${esc(__("STD instance"))}:</span> ${tsi}</div>
 				<div class="small mt-1"><span class="text-muted">${esc(__("Opened submissions"))}:</span> ${openedLine}</div>
 				<div class="small mt-1"><span class="text-muted">${esc(__("Addenda"))}:</span> ${addendaLine}</div>
 				<div class="small mt-1 text-muted">${esc(__("Sent at"))}: ${sentAt || "—"} · ${esc(__("Accepted by evaluation"))}: ${accAt || "—"}</div>
+				${techRefs}
 			</div>
 			${blkHtml}
 			<div class="mb-2" data-testid="tm2-eh-opened-table-wrap">
@@ -1359,6 +1539,15 @@
 			uncHtml = `<div class="alert alert-light border small py-2 mb-2" data-testid="tm2-ch-uncorrected-education">${uncEdu}</div>`;
 		}
 
+		const techRefs = tm2HandoffTechnicalRefsHtml(
+			[
+				{ label: __("Contract carry-forward terms"), value: dcm, testid: "tm2-ch-dcm-ref" },
+				{ label: __("Published tender evidence snapshot"), value: snap },
+				{ label: __("Tender-specific document setup"), value: tsi },
+			],
+			"tm2-ch-technical-refs",
+		);
+
 		$p.html(
 			`<div class="alert alert-light border small py-2 mb-2" data-testid="tm2-ch-readonly-notice">${notice}</div>
 			<div class="alert alert-info small py-2 mb-2" data-testid="tm2-ch-dcm-readonly-notice">${dcmRo}</div>
@@ -1371,13 +1560,11 @@
 				<div class="small mt-2"><span class="text-muted">${esc(__("Contract handoff"))}:</span> <span data-testid="tm2-ch-code">${chr}</span></div>
 				<div class="small mt-1"><span class="text-muted">${esc(__("Award decision"))}:</span> ${awd}</div>
 				<div class="small mt-1"><span class="text-muted">${esc(__("Awarded supplier"))}:</span> ${supLine}</div>
-				<div class="small mt-1"><span class="text-muted">${esc(__("DCM"))}:</span> <span data-testid="tm2-ch-dcm-ref">${dcm}</span></div>
-				<div class="small mt-1"><span class="text-muted">${esc(__("Publication snapshot"))}:</span> ${snap}</div>
-				<div class="small mt-1"><span class="text-muted">${esc(__("STD instance"))}:</span> ${tsi}</div>
 				<div class="small mt-1"><span class="text-muted">${esc(__("Final evaluated price (contract basis)"))}:</span> <span data-testid="tm2-ch-final-price">${priceLine}</span></div>
 				<div class="small mt-1"><span class="text-muted">${esc(__("Final BOQ reference"))}:</span> ${boq}</div>
 				<div class="small mt-1"><span class="text-muted">${esc(__("Addenda"))}:</span> ${addendaLine}</div>
 				<div class="small mt-1 text-muted">${esc(__("Created"))}: ${createdAt || "—"} · ${esc(__("Accepted by contract"))}: ${accAt || "—"}</div>
+				${techRefs}
 			</div>
 			${blkHtml}
 			<div class="d-flex flex-wrap gap-2 mb-2" data-testid="tm2-ch-tab-actions">
@@ -1403,7 +1590,7 @@
 		const hint = String(ex.user_message || ex.message || "").trim();
 		if (ex.allowed && ex.ui_state === "enabled") {
 			$btn.prop("disabled", false);
-			$btn.attr("title", hint || __("Export tender evidence package (§13.3)."));
+			$btn.attr("title", hint || __("Export a read-only tender evidence package."));
 		} else {
 			$btn.prop("disabled", true);
 			$btn.attr("title", hint || __("Evidence export is not available for this tender."));
@@ -1440,7 +1627,9 @@
 			st,
 		)}</span></p>
 			<p class="text-muted mb-2">${esc(
-				__("Builds the §13.3 read-only evidence package. Denied-action rows match the Audit tab and the export sensitive slice."),
+				__(
+					"Builds a read-only evidence package for audit and review. Blocked-action rows match what you see on this tab.",
+				),
 			)}</p>
 			${chkHtml}
 		</div>`;
@@ -1545,17 +1734,17 @@
 				const sfx = String(row.row_test_suffix != null ? row.row_test_suffix : s).replace(/[^a-z0-9_-]/gi, "-");
 				const when = esc(String(row.occurred_at_display || ""));
 				const actor = esc(String(row.actor_display || ""));
-				const act = esc(String(row.action_guess || ""));
-				const dc = esc(String(row.denial_code || row.event_type || ""));
-				drows += `<tr data-testid="tm2-ae-denied-row-${esc(sfx)}"><td class="small">${when}</td><td class="small">${actor}</td><td class="small">${act}</td><td class="small">${dc}</td></tr>`;
+				const act = esc(String(row.action_label || row.action_guess || ""));
+				const reason = esc(String(row.reason_label || row.denial_code || row.event_type || ""));
+				drows += `<tr data-testid="tm2-ae-denied-row-${esc(sfx)}"><td class="small">${when}</td><td class="small">${actor}</td><td class="small">${act}</td><td class="small">${reason}</td></tr>`;
 			}
 			deniedTable = `<table class="table table-bordered table-sm mb-0" data-testid="tm2-ae-denied-table"><thead><tr><th class="small">${esc(
 				__("When"),
 			)}</th><th class="small">${esc(__("Actor"))}</th><th class="small">${esc(__("Action"))}</th><th class="small">${esc(
-				__("Denial / type"),
+				__("Reason"),
 			)}</th></tr></thead><tbody>${drows}</tbody></table>`;
 		} else {
-			deniedTable = `<div class="text-muted small" data-testid="tm2-ae-sensitive-empty">${esc(__("No denied or sensitive audit rows yet."))}</div>`;
+			deniedTable = `<div class="text-muted small" data-testid="tm2-ae-sensitive-empty">${esc(__("No blocked actions recorded yet."))}</div>`;
 		}
 
 		const tact = tab.tab_actions || {};
@@ -1577,10 +1766,193 @@
 				${lifeRows}
 			</div>
 			<div class="mb-2" data-testid="tm2-ae-sensitive-wrap">
-				<div class="small font-weight-bold text-muted mb-1">${esc(__("Denied / sensitive actions"))}</div>
+				<div class="small font-weight-bold text-muted mb-1">${esc(__("Blocked actions"))}</div>
 				${deniedTable}
+			</div>
+			${
+				tm2UserCanViewTechnicalRefs()
+					? `<div class="mt-3 pt-2 border-top" data-testid="tm2-ae-technical-refs-wrap">
+				<button type="button" class="btn btn-link btn-sm p-0" data-testid="tm2-open-technical-references">${esc(
+					__("Technical references"),
+				)}</button>
+			</div>`
+					: ""
+			}`,
+		);
+	}
+
+	function tm2ShowDebugNote() {
+		try {
+			if (frappe.boot && frappe.boot.developer_mode) {
+				return true;
+			}
+			if (typeof localStorage !== "undefined" && localStorage.getItem("kt_tm2_debug") === "1") {
+				return true;
+			}
+		} catch (e) {
+			/* ignore */
+		}
+		return false;
+	}
+
+	function _legacyTabToTaskTab(legacyTabId) {
+		const map = {
+			"tm2-tab-overview": "tm2-tab-overview",
+			"tm2-tab-std-readiness": "tm2-tab-preparation",
+			"tm2-tab-timeline": "tm2-tab-audit",
+			"tm2-tab-supplier-access": "tm2-tab-live-tender",
+			"tm2-tab-clarifications": "tm2-tab-live-tender",
+			"tm2-tab-addenda": "tm2-tab-live-tender",
+			"tm2-tab-submissions": "tm2-tab-live-tender",
+			"tm2-tab-opening-readiness": "tm2-tab-handoff",
+			"tm2-tab-evaluation-handoff": "tm2-tab-handoff",
+			"tm2-tab-contract-handoff": "tm2-tab-handoff",
+			"tm2-tab-audit-evidence": "tm2-tab-audit",
+		};
+		return map[legacyTabId] || "tm2-tab-overview";
+	}
+
+	function syncTaskTabHighlight($w, taskTabId) {
+		const $tabs = $w.find('[data-testid="tm2-task-tabs"]');
+		$tabs.find('[role="tab"]').removeClass("active").attr("aria-selected", "false");
+		$tabs.find(`[data-testid="${taskTabId}"]`).addClass("active").attr("aria-selected", "true");
+	}
+
+	function renderStatusRibbon($ribbon, msg) {
+		if (!msg || !msg.ok) {
+			$ribbon.html("");
+			return;
+		}
+		const badges = Array.isArray(msg.status_ribbon) ? msg.status_ribbon : [];
+		if (!badges.length) {
+			$ribbon.html(`<span class="text-muted small">${esc(__("No status badges."))}</span>`);
+			return;
+		}
+		let html = "";
+		for (let i = 0; i < badges.length; i += 1) {
+			const b = badges[i] || {};
+			const sev = String(b.severity || "neutral").trim();
+			const sevCls =
+				sev === "ready" ? "tm2-severity-ready" : sev === "warning" ? "tm2-severity-warning" : sev === "blocked" ? "tm2-severity-blocked" : "";
+			const target = String(b.target_tab || "tm2-tab-overview").trim();
+			const label = esc(String(b.label || ""));
+			const value = esc(String(b.value || ""));
+			html +=
+				`<button type="button" class="tm2-status-ribbon-badge ${sevCls}" data-testid="tm2-ribbon-${esc(
+					String(b.id || `badge-${i}`),
+				)}" data-target-tab="${esc(target)}" title="${label}"><span class="font-weight-bold">${label}</span>: ${value}</button>`;
+		}
+		$ribbon.html(html);
+	}
+
+	function renderStickyNextStep($ns, msg) {
+		if (!msg || !msg.ok || !msg.overview) {
+			$ns.addClass("d-none").html("");
+			return;
+		}
+		const next = msg.overview.current_required_action || {};
+		const headline = String(next.headline || "").trim();
+		if (!headline) {
+			$ns.addClass("d-none").html("");
+			return;
+		}
+		$ns.removeClass("d-none");
+		$ns.html(
+			`<div data-testid="tm2-overview-next-step" class="tm2-next-step-card">
+				<div class="tm2-next-step-label">${esc(__("Current next step"))}</div>
+				<div class="tm2-next-step-headline">${esc(headline)}</div>
+				<div class="tm2-next-step-reason">${esc(String(next.reason || ""))}</div>
 			</div>`,
 		);
+	}
+
+	function ensureTm2TechnicalReferencesDrawer() {
+		const id = "tm2-technical-references-drawer-root";
+		let $m = $("#" + id);
+		if ($m.length) {
+			return $m;
+		}
+		$m = $(
+			`<div id="${id}" class="modal fade tm2-tech-refs-drawer" data-testid="tm2-technical-references-drawer" tabindex="-1" role="dialog" aria-hidden="true">
+				<div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+					<div class="modal-content">
+						<div class="modal-header">
+							<h5 class="modal-title" data-testid="tm2-technical-references-drawer-title">${esc(__("Technical references"))}</h5>
+							<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+						</div>
+						<div class="modal-body" data-testid="tm2-technical-references-drawer-body"></div>
+					</div>
+				</div>
+			</div>`,
+		);
+		$("body").append($m);
+		return $m;
+	}
+
+	function openTechnicalReferencesDrawer($w) {
+		if (!tm2UserCanViewTechnicalRefs()) {
+			frappe.show_alert({
+				message: __("Technical references are available under Audit for your role."),
+				indicator: "orange",
+			});
+			return;
+		}
+		const msg = $w.data("tm2DetailPayload") || {};
+		if (!msg.ok) {
+			frappe.show_alert({ message: __("Select a tender first."), indicator: "orange" });
+			return;
+		}
+		const refs = msg.technical_refs || msg.overview && msg.overview.output_refs || {};
+		const tc = String(msg.tender_code || "").trim();
+		const snap = String((msg.overview || {}).publication_snapshot_code || refs.publication_snapshot_code || "").trim();
+		const std = (msg.overview || {}).std_binding || {};
+		let body = "";
+		if (tc) {
+			body += `<div class="small mb-2"><strong>${esc(__("Tender"))}:</strong> ${esc(tc)}</div>`;
+		}
+		if (snap) {
+			body += `<div class="small mb-2" data-testid="tm2-tech-drawer-snapshot"><strong>${esc(__("Published tender evidence snapshot"))}:</strong> <span class="font-monospace">${esc(
+				snap,
+			)}</span></div>`;
+		}
+		const outKeys = [
+			["bundle_output_code", __("Tender document package")],
+			["dsm_output_code", __("Supplier submission checklist")],
+			["dom_output_code", __("Opening register rules")],
+			["dem_output_code", __("Evaluation rules")],
+			["dcm_output_code", __("Contract carry-forward terms")],
+		];
+		body += `<div data-testid="tm2-overview-output-refs" class="mb-2">`;
+		let anyOut = false;
+		for (let i = 0; i < outKeys.length; i += 1) {
+			const k = outKeys[i][0];
+			const lab = outKeys[i][1];
+			const v = String((refs[k] != null ? refs[k] : "") || "").trim();
+			if (v) {
+				anyOut = true;
+				body += `<div class="small"><strong>${esc(String(lab))}:</strong> <span class="font-monospace">${esc(v)}</span></div>`;
+			}
+		}
+		if (!anyOut) {
+			body += `<div class="text-muted small">${esc(__("Output codes appear after tender document binding generates artifacts."))}</div>`;
+		}
+		body += `</div>`;
+		const stdLine = [
+			std.std_template_code ? `${esc(__("Official template"))}: ${esc(String(std.std_template_code))}` : "",
+			std.std_template_version_code ? `${esc(__("Official document version"))}: ${esc(String(std.std_template_version_code))}` : "",
+			std.binding_status ? `${esc(__("Tender document binding status"))}: ${esc(String(std.binding_status))}` : "",
+		]
+			.filter(Boolean)
+			.join(" · ");
+		if (stdLine) {
+			body += `<div class="small mb-2" data-testid="tm2-overview-std-line">${stdLine}</div>`;
+		}
+		const $m = ensureTm2TechnicalReferencesDrawer();
+		$m.find('[data-testid="tm2-technical-references-drawer-title"]').text(
+			__("Technical references") + (tc ? " — " + tc : ""),
+		);
+		$m.find('[data-testid="tm2-technical-references-drawer-body"]').html(body);
+		$m.modal("show");
 	}
 
 	function renderOverviewPanel($w) {
@@ -1591,16 +1963,14 @@
 			return;
 		}
 		const ov = msg.overview;
-		const ts = ov.tender_summary || {};
-		const next = ov.current_required_action || {};
 		const pl = ov.package_lineage || {};
-		const cs = ov.current_state || {};
 		const tl = ov.timeline || {};
-		const std = ov.std_binding || {};
-		const out = ov.output_refs || {};
-		const snap = String(ov.publication_snapshot_code || "").trim();
 		const counts = ov.tab_counts || {};
 		const events = Array.isArray(ov.recent_audit_events) ? ov.recent_audit_events : [];
+		const stdBind = ov.std_binding || {};
+		const outputRefs = ov.output_refs || {};
+		const outputRefsLabeled = Array.isArray(ov.output_refs_labeled) ? ov.output_refs_labeled : [];
+		const blkSummary = String(msg.blocker_summary || "").trim();
 
 		let keyDatesHtml = "";
 		const kds = Array.isArray(tl.key_dates) ? tl.key_dates : [];
@@ -1614,25 +1984,9 @@
 			keyDatesHtml = `<div class="text-muted small">${esc(__("No timeline row yet."))}</div>`;
 		}
 
-		let outHtml = "";
-		const outKeys = ["bundle_output_code", "dsm_output_code", "dom_output_code", "dem_output_code", "dcm_output_code"];
-		const outLabels = {
-			bundle_output_code: __("Bundle"),
-			dsm_output_code: __("DSM"),
-			dom_output_code: __("DOM"),
-			dem_output_code: __("DEM"),
-			dcm_output_code: __("DCM"),
-		};
-		for (let j = 0; j < outKeys.length; j += 1) {
-			const k = outKeys[j];
-			const v = String(out[k] || "").trim();
-			if (v) {
-				outHtml += `<div class="small"><strong>${esc(String(outLabels[k] || k))}:</strong> ${esc(v)}</div>`;
-			}
-		}
-		if (!outHtml) {
-			outHtml = `<div class="text-muted small">${esc(__("Output codes appear after STD binding generates artifacts."))}</div>`;
-		}
+		const clar = counts.clarifications_open != null ? counts.clarifications_open : 0;
+		const addenda = counts.addenda_non_terminal != null ? counts.addenda_non_terminal : 0;
+		const bids = counts.bid_submissions != null ? counts.bid_submissions : 0;
 
 		let evHtml = "";
 		for (let e = 0; e < events.length; e += 1) {
@@ -1643,173 +1997,165 @@
 			evHtml = `<div class="text-muted small">${esc(__("No audit events yet."))}</div>`;
 		}
 
-		const stdLine = [
-			std.std_template_code ? `${esc(__("Template"))}: ${esc(String(std.std_template_code))}` : "",
-			std.std_template_version_code ? `${esc(__("Version"))}: ${esc(String(std.std_template_version_code))}` : "",
-			std.binding_status ? `${esc(__("Binding"))}: ${esc(String(std.binding_status))}` : "",
-		]
-			.filter(Boolean)
-			.join(" · ");
+		let blockersHtml = "";
+		if (blkSummary) {
+			blockersHtml = `<div data-testid="tm2-overview-blockers-summary" class="alert alert-warning py-2 px-3 small mb-3">${esc(blkSummary)}</div>`;
+		} else {
+			blockersHtml = `<div data-testid="tm2-overview-blockers-summary" class="small text-muted mb-3">${esc(
+				__("No tender-level blockers."),
+			)}</div>`;
+		}
+
+		let outputSummary = "";
+		if (outputRefsLabeled.length) {
+			for (let o = 0; o < outputRefsLabeled.length; o += 1) {
+				const row = outputRefsLabeled[o] || {};
+				const lab = esc(String(row.label || tm2OutputFieldLabel(row.field)));
+				const code = esc(String(row.code || "").trim());
+				if (code) {
+					outputSummary += `<div class="small">${lab}: ${code}</div>`;
+				}
+			}
+		} else {
+			const outKeys = Object.keys(outputRefs);
+			for (let o = 0; o < outKeys.length; o += 1) {
+				const k = outKeys[o];
+				const v = String(outputRefs[k] || "").trim();
+				if (v) {
+					outputSummary += `<div class="small">${esc(tm2OutputFieldLabel(k))}: ${esc(v)}</div>`;
+				}
+			}
+		}
+		if (!outputSummary) {
+			outputSummary = `<div class="text-muted small">${esc(__("No output references bound yet."))}</div>`;
+		}
 
 		$p.html(
-			`<div data-testid="tm2-overview-next-step" class="alert alert-info border mb-4 py-3 px-3">
-				<div class="small font-weight-bold text-uppercase">${esc(__("Current next step"))}</div>
-				<div class="h6 font-weight-bold mt-2 mb-1">${esc(String(next.headline || ""))}</div>
-				<div class="small text-muted">${esc(String(next.reason || ""))}</div>
-			</div>
-			<div data-testid="tm2-overview-business-readiness-host" class="mb-3"></div>
-			<div data-testid="tm2-overview-tender-summary" class="mb-3">
-				<div class="small font-weight-bold text-muted mb-1">${esc(__("Tender summary"))}</div>
-				<div class="small"><strong>${esc(String(ts.tender_code || ""))}</strong> — ${esc(String(ts.tender_title || ""))}</div>
-				<div class="small text-muted">${esc(String(ts.procuring_entity_code || ""))} · ${esc(String(ts.procurement_method || ""))} · ${esc(
-				String(ts.procurement_category || ""),
-			)}</div>
-				<div class="small">${esc(__("Package"))}: ${esc(String(ts.procurement_package_code || ""))} · ${esc(__("Visibility"))}: ${esc(
-				String(ts.tender_visibility || ""),
-			)}</div>
-				<div class="small">${esc(__("Status"))}: ${esc(String(cs.status || ""))} · ${esc(__("STD readiness"))}: ${esc(
-				String(cs.std_readiness_status || ""),
-			)}</div>
-			</div>
-			<div data-testid="tm2-overview-package-lineage" class="mb-3">
-				<div class="small font-weight-bold text-muted mb-1">${esc(__("Package lineage"))}</div>
-				<div class="small">${esc(String(pl.lineage_display || ""))}</div>
-				<div class="small text-muted">${esc(__("Package status"))}: ${esc(String(pl.package_status || __("—")))}</div>
-			</div>
+			`${blockersHtml}
 			<div data-testid="tm2-overview-key-dates" class="mb-3">
 				<div class="small font-weight-bold text-muted mb-1">${esc(__("Key dates"))}</div>
 				${keyDatesHtml}
 			</div>
-			<div data-testid="tm2-overview-tab-counts" class="mb-3 small">
-				<span class="font-weight-bold text-muted">${esc(__("Related counts"))}:</span>
-				${esc(__("Clarifications"))}: ${esc(String(counts.clarifications_open != null ? counts.clarifications_open : 0))} ·
-				${esc(__("Addenda (non-terminal)"))}: ${esc(String(counts.addenda_non_terminal != null ? counts.addenda_non_terminal : 0))} ·
-				${esc(__("Bid submissions"))}: ${esc(String(counts.bid_submissions != null ? counts.bid_submissions : 0))}
+			<div data-testid="tm2-overview-current-activity" class="mb-3">
+				<div class="small font-weight-bold text-muted mb-1">${esc(__("Current activity"))}</div>
+				<div class="d-flex justify-content-between border-bottom py-1 small"><span class="text-muted">${esc(__("Clarifications"))}</span><span>${esc(String(clar))} ${esc(__("pending"))}</span></div>
+				<div class="d-flex justify-content-between border-bottom py-1 small"><span class="text-muted">${esc(__("Addenda"))}</span><span>${esc(String(addenda))}</span></div>
+				<div class="d-flex justify-content-between border-bottom py-1 small"><span class="text-muted">${esc(__("Submissions"))}</span><span>${esc(String(bids))} ${esc(__("received"))}</span></div>
 			</div>
 			<div data-testid="tm2-overview-recent-events" class="mb-3">
-				<div class="small font-weight-bold text-muted mb-1">${esc(__("Recent events"))}</div>
+				<div class="small font-weight-bold text-muted mb-1">${esc(__("Recent activity"))}</div>
 				${evHtml}
 			</div>
-			<details class="mb-2 border rounded tm2-overview-technical-wrap" data-testid="tm2-overview-technical-collapsed">
-				<summary class="px-3 py-2 small font-weight-bold text-muted tm2-overview-technical-summary" data-testid="tm2-overview-technical-summary">${esc(__("Technical references (advanced)"))}</summary>
-				<div class="px-3 pb-3 tm2-overview-technical-body" data-testid="tm2-overview-technical-body">
-					<div data-testid="tm2-overview-std-line" class="mb-2">
-						<div class="small font-weight-bold text-muted mb-1">${esc(__("STD & snapshot"))}</div>
-						<div class="small">${stdLine || esc(__("No active binding summary."))}</div>
-						<div class="small">${esc(__("Publication snapshot"))}: ${esc(snap || __("—"))}</div>
-					</div>
-					<div data-testid="tm2-overview-output-refs">${outHtml}</div>
-				</div>
+			<details class="mb-2" data-testid="tm2-overview-lineage-collapsed">
+				<summary class="small font-weight-bold text-muted">${esc(__("Package lineage"))}</summary>
+				<div class="small pt-1">${esc(String(pl.lineage_display || __("—")))}</div>
+				<div class="small text-muted">${esc(__("Package status"))}: ${esc(String(pl.package_status || __("—")))}</div>
+			</details>
+			<details class="mb-2" data-testid="tm2-overview-std-refs-collapsed">
+				<summary class="small font-weight-bold text-muted">${esc(__("Legal basis / Technical references"))}</summary>
+				<div class="small pt-1">${esc(__("Official document version"))}: ${esc(String(stdBind.std_template_version_code || __("—")))}</div>
+				<div class="small">${esc(__("Tender document binding"))}: ${esc(String(stdBind.binding_code || __("—")))}</div>
+				${outputSummary}
+			</details>
+			<details class="mb-2" data-testid="tm2-overview-timeline-collapsed">
+				<summary class="small font-weight-bold text-muted">${esc(__("Timeline details"))}</summary>
+				<div class="pt-1">${keyDatesHtml}</div>
 			</details>`,
 		);
-
-		const tcMount = String(ts.tender_code || "").trim();
-		const $brH = $p.find('[data-testid="tm2-overview-business-readiness-host"]');
-		if (
-			tcMount &&
-			typeof window.kentender_procurement !== "undefined" &&
-			kentender_procurement.BusinessReadinessSummary
-		) {
-			kentender_procurement.BusinessReadinessSummary.mount($brH, {
-				object_type: "TM2 Tender",
-				object_code: tcMount,
-			});
-		} else {
-			$brH.remove();
-		}
 	}
 
-	function loadTenderDetail($w, tenderCode) {
+	function loadTenderDetail($w, tenderCode, options) {
+		options = options || {};
+		const force = options.force === true;
 		const tc = String(tenderCode || "").trim();
-		$w.data("tm2SelectedTenderCode", tc);
+		const prevCode = String($w.data("tm2SelectedTenderCode") || "").trim();
+		const $sticky = $w.find('[data-testid="tm2-detail-sticky"]');
 		const $h = $w.find('[data-testid="tm2-tender-detail-header"]');
-		const $cards = $w.find('[data-testid="tm2-state-summary-cards"]');
+		const $ribbon = $w.find('[data-testid="tm2-status-ribbon"]');
+		const $ns = $w.find('[data-testid="tm2-sticky-next-step"]');
 		const $bar = $w.find('[data-testid="tm2-action-bar"]');
 		const $blk = $w.find('[data-testid="tm2-blockers-panel"]');
 		if (!tc) {
+			setTm2DetailLoading($w, false);
+			$w.data("tm2SelectedTenderCode", "");
+			$sticky.addClass("d-none");
 			$h.html(`<span class="text-muted small">${esc(__("Select a tender from the list."))}</span>`);
-			$cards
-				.removeClass("d-flex flex-wrap")
-				.html(`<div class="text-muted small">${esc(__("No tender selected."))}</div>`);
+			$ribbon.empty();
+			$ns.empty().addClass("d-none");
 			$bar.empty();
-			$blk.html(`<span class="text-muted small">${esc(__("No tender selected."))}</span>`);
+			$blk.addClass("d-none").html(`<span class="text-muted small">${esc(__("No tender selected."))}</span>`);
+			_hideAllTm2DetailPanels($w);
 			$w.find('[data-testid="tm2-tab-panel-overview"]').empty().removeClass("d-none");
-			$w.find('[data-testid="tm2-tab-panel-std-readiness"]').empty().addClass("d-none");
-			$w.find('[data-testid="tm2-tab-panel-timeline"]').empty().addClass("d-none");
-			$w.find('[data-testid="tm2-tab-panel-supplier-access"]').empty().addClass("d-none");
-			$w.find('[data-testid="tm2-tab-panel-clarifications"]').empty().addClass("d-none");
-			$w.find('[data-testid="tm2-tab-panel-addenda"]').empty().addClass("d-none");
-			$w.find('[data-testid="tm2-tab-panel-submissions"]').empty().addClass("d-none");
-			$w.find('[data-testid="tm2-tab-panel-opening-readiness"]').empty().addClass("d-none");
-			$w.find('[data-testid="tm2-tab-panel-evaluation-handoff"]').empty().addClass("d-none");
-			$w.find('[data-testid="tm2-tab-panel-contract-handoff"]').empty().addClass("d-none");
-			$w.find('[data-testid="tm2-tab-panel-audit-evidence"]').empty().addClass("d-none");
-			const $dt = $w.find('[data-testid="tm2-detail-tabs"]');
-			$dt.find('[role="tab"]').removeClass("active").attr("aria-selected", "false");
-			$dt.find('[data-testid="tm2-tab-overview"]').addClass("active").attr("aria-selected", "true");
+			$w.data("tm2ActiveTaskTab", "tm2-tab-overview");
+			syncTaskTabHighlight($w, "tm2-tab-overview");
 			$w.removeData("tm2DetailPayload");
 			renderOverviewPanel($w);
 			syncHeaderEvidenceExport($w, null);
 			return;
 		}
-		$h.html(`<div class="text-muted small">${esc(__("Loading…"))}</div>`);
-		$cards.removeClass("d-flex flex-wrap").html(`<div class="text-muted small">${esc(__("Loading…"))}</div>`);
-		$bar.html(`<div class="text-muted small">${esc(__("Loading…"))}</div>`);
-		$blk.html("");
+		if (!force && tc === prevCode && $w.data("tm2DetailPayload")) {
+			return;
+		}
+		const hadPreviousDetail = !!prevCode && !!$w.data("tm2DetailPayload");
+		const isFirstTenderSelection = !prevCode;
+		$w.data("tm2SelectedTenderCode", tc);
+		const reqId = tm2DetailRequestId($w);
+		markTm2ListRowPending($w, tc);
+		if (hadPreviousDetail) {
+			$sticky.removeClass("d-none");
+		} else {
+			$sticky.removeClass("d-none");
+			setTm2DetailLoading($w, true);
+			$h.html(
+				`<div class="tm2-detail-title">${esc(tc)}</div><div class="tm2-detail-meta text-muted">${esc(
+					__("Loading details…"),
+				)}</div>`,
+			);
+			$ribbon.html("");
+			$ns.addClass("d-none").html("");
+			$bar.html("");
+			$blk.addClass("d-none").html("");
+		}
 		frappe.call({
 			method: "kentender_procurement.tender_management.api.tm2_workbench.get_workbench_tender_detail",
 			args: { tender_code: tc },
 			callback(r) {
+				if (!isTm2DetailRequestCurrent($w, reqId)) {
+					return;
+				}
 				const msg = r.message || {};
 				if (!msg.ok) {
+					setTm2DetailSwapping($w, false);
+					setTm2DetailLoading($w, false);
+					clearTm2ListRowPending($w);
 					$h.html(`<div class="small text-danger" data-testid="tm2-tender-detail-error">${esc(
 						msg.message || __("Could not load detail."),
 					)}</div>`);
-					$cards.removeClass("d-flex flex-wrap").empty();
-					$bar.empty();
+					$ribbon.html("");
+					$ns.addClass("d-none").html("");
+					$bar.html("");
 					$w.find('[data-testid="tm2-tab-panel-overview"]').html(
 						`<div class="text-muted small">${esc(__("Overview unavailable until a tender loads."))}</div>`,
 					);
-					$w.find('[data-testid="tm2-tab-panel-std-readiness"]').empty().addClass("d-none");
-					$w.find('[data-testid="tm2-tab-panel-timeline"]').empty().addClass("d-none");
-					$w.find('[data-testid="tm2-tab-panel-supplier-access"]').empty().addClass("d-none");
-					$w.find('[data-testid="tm2-tab-panel-clarifications"]').empty().addClass("d-none");
-					$w.find('[data-testid="tm2-tab-panel-addenda"]').empty().addClass("d-none");
-					$w.find('[data-testid="tm2-tab-panel-submissions"]').empty().addClass("d-none");
-					$w.find('[data-testid="tm2-tab-panel-opening-readiness"]').empty().addClass("d-none");
-					$w.find('[data-testid="tm2-tab-panel-evaluation-handoff"]').empty().addClass("d-none");
-					$w.find('[data-testid="tm2-tab-panel-contract-handoff"]').empty().addClass("d-none");
-					$w.find('[data-testid="tm2-tab-panel-audit-evidence"]').empty().addClass("d-none");
+					_hideAllTm2DetailPanels($w);
 					$w.find('[data-testid="tm2-tab-panel-overview"]').removeClass("d-none");
-					const $dte = $w.find('[data-testid="tm2-detail-tabs"]');
-					$dte.find('[role="tab"]').removeClass("active").attr("aria-selected", "false");
-					$dte.find('[data-testid="tm2-tab-overview"]').addClass("active").attr("aria-selected", "true");
+					$w.data("tm2ActiveTaskTab", "tm2-tab-overview");
+					syncTaskTabHighlight($w, "tm2-tab-overview");
 					syncHeaderEvidenceExport($w, null);
 					return;
 				}
-				$w.data("tm2DetailPayload", msg);
-				renderDetailHeader($h, msg);
-				renderStateSummaryCards($cards, msg);
-				renderActionBar($w, $bar, msg);
-				renderBlockersPanel($blk, msg);
-				const $dts = $w.find('[data-testid="tm2-detail-tabs"]');
-				$dts.find('[role="tab"]').removeClass("active").attr("aria-selected", "false");
-				$dts.find('[data-testid="tm2-tab-overview"]').addClass("active").attr("aria-selected", "true");
-				$w.find('[data-testid="tm2-tab-panel-overview"]').removeClass("d-none");
-				$w.find('[data-testid="tm2-tab-panel-std-readiness"]').empty().addClass("d-none");
-				$w.find('[data-testid="tm2-tab-panel-timeline"]').empty().addClass("d-none");
-				$w.find('[data-testid="tm2-tab-panel-supplier-access"]').empty().addClass("d-none");
-				$w.find('[data-testid="tm2-tab-panel-clarifications"]').empty().addClass("d-none");
-				$w.find('[data-testid="tm2-tab-panel-addenda"]').empty().addClass("d-none");
-				$w.find('[data-testid="tm2-tab-panel-submissions"]').empty().addClass("d-none");
-				$w.find('[data-testid="tm2-tab-panel-opening-readiness"]').empty().addClass("d-none");
-				$w.find('[data-testid="tm2-tab-panel-evaluation-handoff"]').empty().addClass("d-none");
-				$w.find('[data-testid="tm2-tab-panel-contract-handoff"]').empty().addClass("d-none");
-				$w.find('[data-testid="tm2-tab-panel-audit-evidence"]').empty().addClass("d-none");
-				renderOverviewPanel($w);
-				syncHeaderEvidenceExport($w, msg);
+				const tabToShow = isFirstTenderSelection
+					? pickDefaultTaskTab(msg)
+					: $w.data("tm2ActiveTaskTab") || pickDefaultTaskTab(msg);
+				applyTm2DetailPayload($w, msg, reqId, tabToShow);
 			},
 			error() {
+				if (!isTm2DetailRequestCurrent($w, reqId)) {
+					return;
+				}
+				setTm2DetailSwapping($w, false);
+				setTm2DetailLoading($w, false);
+				clearTm2ListRowPending($w);
 				$h.html(`<div class="small text-danger">${esc(__("Request failed."))}</div>`);
 			},
 		});
@@ -1817,35 +2163,15 @@
 
 	function renderDetailHeader($h, msg) {
 		const lines = Array.isArray(msg.header_lines) ? msg.header_lines : [];
-		let html = "";
-		for (let i = 0; i < lines.length; i += 1) {
-			const c = i === 0 ? "font-weight-bold" : "small text-muted";
-			html += `<div class="${c}">${esc(String(lines[i] || ""))}</div>`;
-		}
-		$h.html(html || `<span class="text-muted small">${esc(__("No detail."))}</span>`);
-	}
-
-	function renderStateSummaryCards($cards, msg) {
-		$cards.removeClass("d-flex flex-wrap").empty();
-		const cards = Array.isArray(msg.state_cards) ? msg.state_cards : [];
-		if (!cards.length) {
-			$cards.append(`<span class="text-muted small">${esc(__("No summary."))}</span>`);
+		if (!lines.length) {
+			$h.html(`<span class="text-muted small">${esc(__("No detail."))}</span>`);
 			return;
 		}
-		$cards.addClass("d-flex flex-wrap");
-		for (let i = 0; i < cards.length; i += 1) {
-			const c = cards[i];
-			const id = esc(String(c.id || "card"));
-			const title = esc(String(c.title || ""));
-			const lines = Array.isArray(c.lines) ? c.lines : [];
-			let body = "";
-			for (let j = 0; j < lines.length; j += 1) {
-				body += `<div class="small">${esc(String(lines[j] || ""))}</div>`;
-			}
-			$cards.append(
-				`<div data-testid="tm2-state-card-${id}" class="border rounded px-2 py-1 mb-2 mr-2 bg-light" style="min-width:9rem;max-width:16rem;flex:1 1 9rem"><div class="small font-weight-bold text-muted">${title}</div>${body}</div>`,
-			);
+		let html = `<div class="tm2-detail-title">${esc(String(lines[0] || ""))}</div>`;
+		for (let i = 1; i < lines.length; i += 1) {
+			html += `<div class="tm2-detail-meta">${esc(String(lines[i] || ""))}</div>`;
 		}
+		$h.html(html);
 	}
 
 	function renderBlockersPanel($blk, msg) {
@@ -1862,25 +2188,82 @@
 	}
 
 	function renderActionBar($w, $bar, msg) {
-		$bar.empty();
-		const actions = Array.isArray(msg.actions) ? msg.actions : [];
-		const tc = String(msg.tender_code || "").trim();
-		for (let i = 0; i < actions.length; i += 1) {
-			const a = actions[i];
+		const bar = msg.action_bar || {};
+		let primary = Array.isArray(bar.primary) ? bar.primary : [];
+		let secondary = Array.isArray(bar.secondary) ? bar.secondary : [];
+		const moreItems = Array.isArray(bar.more) ? bar.more.slice() : [];
+
+		if (!primary.length && !secondary.length && !moreItems.length) {
+			const actions = Array.isArray(msg.actions) ? msg.actions : [];
+			for (let i = 0; i < actions.length; i += 1) {
+				const a = actions[i];
+				if (a.ui_state === "enabled") {
+					if (!primary.length) {
+						primary = [a];
+					} else {
+						secondary.push(a);
+					}
+				}
+			}
+		}
+
+		let html = '<div class="tm2-action-bar-inner d-flex flex-wrap align-items-center">';
+		const renderBtn = function (a, tier, extraTestId) {
 			const code = String(a.action_code || "");
 			const ui = String(a.ui_state || "disabled");
 			const lab = esc(String(a.label || code));
 			const av = a.availability || {};
 			const hint = esc(String(av.user_message || av.message || ""));
 			const dis = ui !== "enabled";
+			const isNav = code.indexOf("NAV_") === 0;
 			const slug = code.toLowerCase().replace(/_/g, "-");
-			const $btn = $(
-				`<button type="button" class="btn btn-default btn-sm mb-1 mr-1 tm2-action-btn" data-tm2-action-code="${esc(
+			const btnClass = tier === "primary" ? "btn-primary" : "btn-default";
+			const tid = extraTestId || (isNav ? "tm2-nav-" + slug : "tm2-action-" + slug);
+			const navTab = a.nav_target_tab ? esc(String(a.nav_target_tab)) : "";
+			return (
+				`<button type="button" class="btn ${btnClass} btn-sm tm2-action-btn mr-1 mb-1" data-tm2-action-code="${esc(
 					code,
-				)}" data-testid="tm2-action-${slug}" ${dis ? "disabled" : ""} title="${hint}">${lab}</button>`,
+				)}" data-testid="${tid}" ${navTab ? 'data-tm2-nav-tab="' + navTab + '"' : ""} ${dis ? "disabled" : ""} title="${hint}">${lab}</button>`
 			);
-			$bar.append($btn);
+		};
+
+		if (primary.length) {
+			html += renderBtn(primary[0], "primary", "tm2-action-primary");
 		}
+		for (let s = 0; s < secondary.length && s < 4; s += 1) {
+			html += renderBtn(secondary[s], "secondary");
+		}
+		if (moreItems.length) {
+			html += '<div class="dropdown d-inline-block mb-1">';
+			html +=
+				'<button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" data-testid="tm2-action-more">' +
+				esc(__("More")) +
+				"</button>";
+			html += '<div class="dropdown-menu dropdown-menu-right">';
+			for (let m = 0; m < moreItems.length; m += 1) {
+				const a = moreItems[m];
+				const code = String(a.action_code || "");
+				const lab = esc(String(a.label || code));
+				const ui = String(a.ui_state || "disabled");
+				const dis = ui !== "enabled";
+				html +=
+					'<button type="button" class="dropdown-item tm2-action-btn' +
+					(dis ? " disabled" : "") +
+					'" data-tm2-action-code="' +
+					esc(code) +
+					'" data-testid="tm2-action-more-' +
+					code.toLowerCase().replace(/_/g, "-") +
+					'" ' +
+					(dis ? "disabled" : "") +
+					">" +
+					lab +
+					"</button>";
+			}
+			html += "</div></div>";
+		}
+		html += "</div>";
+		$bar.html(html);
+
 		$bar.off("click.tm2act").on("click.tm2act", ".tm2-action-btn", function (e) {
 			e.preventDefault();
 			const $b = $(this);
@@ -1888,6 +2271,16 @@
 				return;
 			}
 			const ac = $b.attr("data-tm2-action-code") || "";
+			const navTab = $b.attr("data-tm2-nav-tab") || "";
+			if (ac === "NAV_TECHNICAL_REFERENCES") {
+				openTechnicalReferencesDrawer($w);
+				return;
+			}
+			if (navTab) {
+				switchTaskTab($w, navTab);
+				return;
+			}
+			const tc = String(msg.tender_code || "").trim();
 			if (ac === "TND2_PUBLISH") {
 				openTm2PublishLegalModal($w, tc);
 				return;
@@ -1901,7 +2294,7 @@
 				return;
 			}
 			frappe.show_alert({
-				message: __("Action") + ": " + String(ac) + " — " + __("not wired in workbench yet."),
+				message: __("Action") + ": " + String(ac) + " — " + __("not available in this view yet."),
 				indicator: "orange",
 			});
 		});
@@ -2046,7 +2439,7 @@
 					dlg.hide();
 					frappe.show_alert({ message: __("Tender published."), indicator: "green" });
 					refreshTenderList($w);
-					loadTenderDetail($w, tc);
+					loadTenderDetail($w, tc, { force: true });
 				},
 				error() {
 					dlg.enable_primary_action();
@@ -2119,7 +2512,7 @@
 				});
 			}
 			if (state.step === 5) {
-				dlg.set_primary_action(__("Create draft & bind STD"), function () {
+				dlg.set_primary_action(__("Create draft & link template"), function () {
 					submitWizard();
 				});
 			} else if (state.step === 6) {
@@ -2201,7 +2594,7 @@
 			}
 			if (state.step === 3) {
 				if (!state.selOpt) {
-					frappe.show_alert({ message: __("Select an STD template version."), indicator: "orange" });
+					frappe.show_alert({ message: __("Select an official document version."), indicator: "orange" });
 					return;
 				}
 				state.step = 4;
@@ -2230,7 +2623,7 @@
 					state.busy = false;
 					const msg = r.message || {};
 					if (!msg.ok) {
-						frappe.msgprint(msg.message || __("Could not load STD options."));
+						frappe.msgprint(msg.message || __("Could not load official document options."));
 						state.step = 2;
 						render();
 						return;
@@ -2243,7 +2636,7 @@
 				},
 				error() {
 					state.busy = false;
-					frappe.msgprint(__("Could not load STD options."));
+					frappe.msgprint(__("Could not load official document options."));
 					state.step = 2;
 					render();
 				},
@@ -2297,7 +2690,7 @@
 				const wz = p.requires_std_wizard_choice
 					? `<div class="alert alert-info small py-2 mb-2" data-testid="tm2-wizard-std-choice-hint">${esc(
 							__(
-								"This package requires you to choose an STD template version and applicability profile in the following steps.",
+								"This package requires you to choose an official document version and applicability profile in the following steps.",
 							),
 						)}</div>`
 					: "";
@@ -2318,10 +2711,10 @@
 					</div>`;
 			} else if (state.step === 3) {
 				if (state.busy && !state.stdOptions.length) {
-					inner = `<div data-testid="tm2-wizard-step-3"><p class="text-muted small">${esc(__("Loading STD options…"))}</p></div>`;
+					inner = `<div data-testid="tm2-wizard-step-3"><p class="text-muted small">${esc(__("Loading official document options…"))}</p></div>`;
 				} else if (!state.stdOptions.length) {
 					inner = `<div data-testid="tm2-wizard-step-3"><p class="text-danger small">${esc(
-						__("No active compatible STD versions are available for this package."),
+						__("No active compatible official document versions are available for this package."),
 					)}</p></div>`;
 				} else {
 					let rows = "";
@@ -2344,7 +2737,7 @@
 					inner = `
 						<div data-testid="tm2-wizard-step-3">
 							<p class="text-muted small mb-2" data-testid="tm2-wizard-step-label">${esc(stepTitle(3))}</p>
-							<p class="small mb-2">${esc(__("Choose the STD template version to govern this tender (doc 9 §15.4)."))}</p>
+							<p class="small mb-2">${esc(__("Choose the official document version to govern this tender."))}</p>
 							${rows}
 						</div>`;
 				}
@@ -2353,7 +2746,7 @@
 				inner = `
 					<div data-testid="tm2-wizard-step-4">
 						<p class="text-muted small mb-2" data-testid="tm2-wizard-step-label">${esc(stepTitle(4))}</p>
-						<p class="small mb-2">${esc(__("Applicability profile and activated requirements for this template (doc 9 §15.5)."))}</p>
+						<p class="small mb-2">${esc(__("Applicability profile and activated requirements for this template."))}</p>
 						<div class="border rounded p-2 mb-2 bg-light small">
 							<div><strong>${esc(__("Profile code"))}:</strong> ${esc(String(o.applicability_profile_code || ""))}</div>
 							<div><strong>${esc(__("Version"))}:</strong> ${esc(String(o.template_version_code || ""))}</div>
@@ -2369,7 +2762,7 @@
 						<p class="text-muted small mb-2" data-testid="tm2-wizard-step-label">${esc(stepTitle(5))}</p>
 						<p class="small mb-2">${esc(
 							__(
-								"Create a draft TM2 tender for this package and bind the selected STD instance. You can complete STD parameters after creation.",
+								"Create a draft tender for this package and link the selected official document setup. You can complete document parameters after creation.",
 							),
 						)}</p>
 						<ul class="small mb-0">
@@ -2391,12 +2784,12 @@
 						<p class="text-muted small mb-2" data-testid="tm2-wizard-step-label">${esc(stepTitle(6))}</p>
 						<p class="small mb-2">${esc(
 							__(
-								"Tender draft created and STD instance bound. Open the tender form to complete STD readiness and publication steps.",
+								"Tender draft created and official document setup linked. Open the tender form to complete document readiness and publication steps.",
 							),
 						)}</p>
 						<div class="border rounded p-2 bg-light small">
 							<div data-testid="tm2-wizard-result-tender-code"><strong>${esc(__("Tender code"))}:</strong> ${tc}</div>
-							<div data-testid="tm2-wizard-result-std-instance"><strong>${esc(__("STD instance"))}:</strong> ${si}</div>
+							<div data-testid="tm2-wizard-result-std-instance"><strong>${esc(__("Tender-specific document setup"))}:</strong> ${si}</div>
 						</div>
 					</div>`;
 			} else {
@@ -2438,7 +2831,7 @@
 								const wChoice = !!p2.requires_std_wizard_choice;
 								const badge = sel2
 									? wChoice
-										? `<span class="badge badge-info">${esc(__("Eligible — choose STD"))}</span>`
+										? `<span class="badge badge-info">${esc(__("Eligible — choose document version"))}</span>`
 										: `<span class="badge badge-success">${esc(__("Eligible"))}</span>`
 									: `<span class="badge badge-secondary">${esc(__("Not eligible"))}</span>`;
 								const hint = sel2
@@ -2525,68 +2918,62 @@
 		}, 0);
 	}
 
-	function mountShell() {
-		const el = frappe.pages["tender-management-v2"];
-		if (!el) {
+	function syncTm2ShellBodyClass() {
+		if (is_tm2_route()) {
+			document.body.classList.add("kt-tm2-shell");
+		} else {
+			document.body.classList.remove("kt-tm2-shell");
+		}
+	}
+
+	function mountShell(wrapper) {
+		const pageEl = wrapper || frappe.pages["tender-management-v2"];
+		if (!pageEl) {
 			return false;
 		}
-		const $w = $(el);
-		if ($w.data("kt_tm2_layout_v") === LAYOUT_VERSION) {
-			initTm2WorkbenchQueueAndKpis($w);
+		const $page = $(pageEl);
+		const $existing = $page.find('[data-testid="tm2-workbench-page"]').first();
+		if ($existing.length && $existing.data("kt_tm2_layout_v") === LAYOUT_VERSION) {
+			initTm2WorkbenchQueueAndKpis($page);
 			return true;
 		}
-		$w.empty();
+		$page.empty();
 
 		const title = __("Tender Management");
 		const blurb = __(
-			"Create, publish, amend, close, and hand off STD-governed tenders.",
+			"Create, publish, amend, close, and hand off governed tenders through Tender Management.",
 		);
 		const layoutNote = __(
 			"Workbench shell (P9-01–P9-02). New Tender wizard (P9-07). KPI + queue (P9-04–P9-05). Tender list (P9-06). Detail + action bar + publish modal (P9-08). Overview tab (P9-09). STD & Readiness tab (P9-10). Timeline tab (P9-11). Supplier Access tab (P9-12). Clarifications tab (P9-13). Addenda tab (P9-14). Submissions tab (P9-15). Opening Readiness tab (P9-16). Evaluation Handoff tab (P9-17). Contract Handoff tab (P9-18). Audit & Evidence tab (P9-19). Evidence export panel + denied-actions table (P9-21a).",
 		);
+		const debugNoteHtml = tm2ShowDebugNote()
+			? `<p class="text-muted small mb-2" data-testid="tm2-debug-layout-note">${esc(layoutNote)}</p>`
+			: "";
 
-		const kpi = [
-			["tm2-kpi-draft", __("Draft"), "draft"],
-			["tm2-kpi-std-incomplete", __("STD Incomplete"), "std-incomplete"],
-			["tm2-kpi-publication-review", __("Publication Review"), "ready-review"],
-			["tm2-kpi-published", __("Published"), "published"],
-			["tm2-kpi-closing-soon", __("Closing Soon"), "closing-soon"],
-			["tm2-kpi-clarifications", __("Clarifications Pending"), "clarifications"],
-			["tm2-kpi-addenda", __("Addenda Pending"), "addenda"],
-			["tm2-kpi-opening-ready", __("Opening Ready"), "opening-ready"],
+		const lc = LC();
+		const lifecycleInner = lc.buildLifecycleBarHtml ? lc.buildLifecycleBarHtml() : "";
+
+		const taskTabs = [
+			["tm2-tab-overview", __("Overview")],
+			["tm2-tab-preparation", __("Preparation")],
+			["tm2-tab-live-tender", __("Live Tender")],
+			["tm2-tab-handoff", __("Handoff")],
+			["tm2-tab-audit", __("Audit")],
 		];
-
-		const scopes = [
-			["tm2-scope-my-work", __("My Work")],
-			["tm2-scope-all", __("All")],
-			["tm2-scope-drafts", __("Drafts")],
-			["tm2-scope-published", __("Published")],
-			["tm2-scope-closing-soon", __("Closing Soon")],
-			["tm2-scope-opening-ready", __("Opening Ready")],
-		];
-
-		let kpiHtml = "";
-		for (let i = 0; i < kpi.length; i += 1) {
-			const tid = kpi[i][0];
-			const lab = kpi[i][1];
-			const kslug = kpi[i][2];
-			kpiHtml += `<button type="button" class="btn btn-default btn-sm mb-1 mr-1 tm2-kpi-chip" data-testid="${tid}" data-tm2-queue-slug="${kslug}" title="${esc(
-				lab,
-			)}">${esc(lab)}</button>`;
-		}
-
-		let scopeHtml = "";
-		for (let j = 0; j < scopes.length; j += 1) {
-			const sid = scopes[j][0];
-			const slab = scopes[j][1];
-			scopeHtml += `<button type="button" class="btn btn-default btn-sm mb-1 mr-1" data-testid="${sid}" disabled title="${esc(
-				slab,
-			)}">${esc(slab)}</button>`;
+		let taskTabsHtml = "";
+		for (let tt = 0; tt < taskTabs.length; tt += 1) {
+			const tid = taskTabs[tt][0];
+			const tlab = taskTabs[tt][1];
+			const isOv = tid === "tm2-tab-overview";
+			taskTabsHtml += `<li class="nav-item" role="none">
+				<button type="button" class="nav-link btn btn-link text-left px-2 py-1 small text-nowrap${isOv ? " active" : ""}" role="tab" aria-selected="${isOv ? "true" : "false"}" data-testid="${tid}" title="${esc(
+					tlab,
+				)}">${esc(tlab)}</button>
+			</li>`;
 		}
 
 		const detailTabs = [
-			["tm2-tab-overview", __("Overview")],
-			["tm2-tab-std-readiness", __("STD & Readiness")],
+			["tm2-tab-std-readiness", __("Preparation")],
 			["tm2-tab-timeline", __("Timeline")],
 			["tm2-tab-supplier-access", __("Supplier Access")],
 			["tm2-tab-clarifications", __("Clarifications")],
@@ -2601,154 +2988,113 @@
 		for (let t = 0; t < detailTabs.length; t += 1) {
 			const tid = detailTabs[t][0];
 			const tlab = detailTabs[t][1];
-			const isOv = tid === "tm2-tab-overview";
-			const enabledTab =
-				tid === "tm2-tab-overview" ||
-				tid === "tm2-tab-std-readiness" ||
-				tid === "tm2-tab-timeline" ||
-				tid === "tm2-tab-supplier-access" ||
-				tid === "tm2-tab-clarifications" ||
-				tid === "tm2-tab-addenda" ||
-				tid === "tm2-tab-submissions" ||
-				tid === "tm2-tab-opening-readiness" ||
-				tid === "tm2-tab-evaluation-handoff" ||
-				tid === "tm2-tab-contract-handoff" ||
-				tid === "tm2-tab-audit-evidence";
-			const disAttr = enabledTab ? "" : "disabled";
-			const activeCls = isOv ? " active" : "";
-			const ariaSel = isOv ? "true" : "false";
 			detailTabsHtml += `<li class="nav-item" role="none">
-				<button type="button" class="nav-link btn btn-link text-left px-2 py-1 small text-nowrap${activeCls}" role="tab" aria-selected="${ariaSel}" data-testid="${tid}" ${disAttr} title="${esc(
+				<button type="button" class="nav-link btn btn-link text-left px-2 py-1 small text-nowrap" role="tab" aria-selected="false" data-testid="${tid}" title="${esc(
 					tlab,
 				)}">${esc(tlab)}</button>
 			</li>`;
 		}
 
-		let queueHtml = "";
-		for (let q = 0; q < QUEUE_ROWS.length; q += 1) {
-			const qid = QUEUE_ROWS[q][0];
-			const qlab = QUEUE_ROWS[q][1];
-			const qslug = QUEUE_ROWS[q][2];
-			queueHtml += `<button type="button" class="btn btn-link btn-sm p-1 mr-2 text-nowrap tm2-queue-chip" data-testid="${qid}" data-tm2-queue-slug="${qslug}">${esc(
-				qlab,
-			)}</button>`;
-		}
-
-		$w.append(
-			`<div class="layout-main-section-wrapper">
-				<div class="layout-main-section">
-					<div data-testid="tm2-workbench-page" class="tm2-workbench-page">
-						<div class="page-head pb-3 border-bottom mb-3">
-							<div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
-								<div class="title-area flex-grow-1">
-									<h1 class="page-title mb-1" data-testid="tm2-page-title">${esc(title)}</h1>
-									<p class="text-muted small mb-0">${esc(blurb)}</p>
-								</div>
-								<div class="btn-group flex-shrink-0" role="group" aria-label="${esc(__("Workbench actions"))}">
-									<button type="button" class="btn btn-default btn-sm" data-testid="tm2-action-my-actions" disabled title="${esc(
-										__("Filters to your action items (P9-04+)."),
-									)}">${esc(__("My Actions"))}</button>
-									<button type="button" class="btn btn-default btn-sm" data-testid="tm2-action-evidence-export" disabled title="${esc(
-										__("Select a tender to export evidence."),
-									)}">${esc(__("Evidence Export"))}</button>
-									<button type="button" class="btn btn-primary btn-sm" data-testid="tm2-action-new-tender" title="${esc(
-										__("Choose a procurement package (not a free-form tender)."),
-									)}">${esc(__("New Tender"))}</button>
-								</div>
-							</div>
+		$page.append(
+			`<div class="tm2-injected-shell tm2-workbench-page" data-testid="tm2-workbench-page">
+				<div class="tm2-workspace-header tm2-workspace-header--compact" data-testid="tm2-page-header">
+					<div class="tm2-header-row">
+						<div class="tm2-header-copy">
+							<h2 class="h5 tm2-page-title mb-1" data-testid="tm2-page-title">${esc(title)}</h2>
+							<p class="tm2-page-intro text-muted small mb-0">${esc(blurb)}</p>
 						</div>
-
-						<p class="text-muted small mb-3">${esc(layoutNote)}</p>
-
-						<div data-testid="tm2-kpi-strip" class="tm2-kpi-strip border rounded px-2 py-2 mb-3 bg-light">
-							<div class="small text-muted mb-1">${esc(__("KPI strip"))}</div>
-							<div class="d-flex flex-wrap align-items-center">${kpiHtml}</div>
-						</div>
-
-						<div data-testid="tm2-scope-tabs" class="tm2-scope-tabs border-bottom pb-2 mb-3">
-							<div class="small text-muted mb-1">${esc(__("Scope"))}</div>
-							<div class="d-flex flex-wrap">${scopeHtml}</div>
-						</div>
-
-						<div data-testid="tm2-queue-bar" class="tm2-queue-bar border-bottom pb-2 mb-3">
-							<div class="small text-muted mb-1">${esc(__("Queues"))}</div>
-							<div class="d-flex flex-wrap align-items-center">${queueHtml}</div>
-						</div>
-
-						<div class="row g-2 mb-3">
-							<div class="col-md-8">
-								<label class="small text-muted mb-1 d-block">${esc(__("Search"))}</label>
-								<input type="search" class="form-control form-control-sm" data-testid="tm2-search-input" placeholder="${esc(
-									__("Tender code, title, package, supplier…"),
-								)}" />
-							</div>
-							<div class="col-md-4">
-								<label class="small text-muted mb-1 d-block">${esc(__("Filters"))}</label>
-								<div data-testid="tm2-filter-panel" class="tm2-filter-panel border rounded px-2 py-2 bg-white text-muted small">${esc(
-									__("Filter panel (P9-08+)."),
-								)}</div>
-							</div>
-						</div>
-
-						<div class="row">
-							<div class="col-md-4 pr-md-2 mb-3 mb-md-0">
-								<div data-testid="tm2-tender-list" class="tm2-tender-list border rounded p-3 bg-white" style="min-height: 10rem">
-									<div class="small text-muted font-weight-bold mb-2">${esc(__("Tender list"))}</div>
-									<div data-testid="tm2-tender-list-filter" class="tm2-tender-list-filter small text-muted mb-2"></div>
-									<div data-testid="tm2-tender-list-rows" class="tm2-tender-list-rows"></div>
-								</div>
-							</div>
-							<div class="col-md-8 pl-md-2">
-								<div data-testid="tm2-tender-detail" class="tm2-tender-detail border rounded p-3 bg-white">
-									<div class="small text-muted font-weight-bold mb-2">${esc(__("Tender detail"))}</div>
-									<div data-testid="tm2-tender-detail-header" class="tm2-tender-detail-header border-bottom pb-2 mb-2">
-										<span class="text-muted small">${esc(__("Select a tender from the list."))}</span>
-									</div>
-									<div data-testid="tm2-state-summary-cards" class="tm2-state-summary-cards mb-3">
-										<span class="text-muted small">${esc(__("No tender selected."))}</span>
-									</div>
-									<div data-testid="tm2-action-bar" class="tm2-action-bar border-bottom pb-2 mb-2"></div>
-									<div data-testid="tm2-blockers-panel" class="tm2-blockers-panel mb-2">
-										<span class="text-muted small">${esc(__("No tender selected."))}</span>
-									</div>
-									<div class="tm2-detail-tabs-wrap">
-										<div class="small text-muted mb-1">${esc(__("Detail tabs"))}</div>
-										<ul class="nav nav-tabs flex-nowrap flex-md-wrap border-bottom-0" role="tablist" data-testid="tm2-detail-tabs" style="overflow-x:auto">
-											${detailTabsHtml}
-										</ul>
-										<div data-testid="tm2-tab-panels" class="tm2-tab-panels mt-2 pt-2 border-top">
-											<div data-testid="tm2-tab-panel-overview" class="tm2-tab-panel-overview"></div>
-											<div data-testid="tm2-tab-panel-std-readiness" class="tm2-tab-panel-std-readiness d-none"></div>
-											<div data-testid="tm2-tab-panel-timeline" class="tm2-tab-panel-timeline d-none"></div>
-											<div data-testid="tm2-tab-panel-supplier-access" class="tm2-tab-panel-supplier-access d-none"></div>
-											<div data-testid="tm2-tab-panel-clarifications" class="tm2-tab-panel-clarifications d-none"></div>
-											<div data-testid="tm2-tab-panel-addenda" class="tm2-tab-panel-addenda d-none"></div>
-											<div data-testid="tm2-tab-panel-submissions" class="tm2-tab-panel-submissions d-none"></div>
-											<div data-testid="tm2-tab-panel-opening-readiness" class="tm2-tab-panel-opening-readiness d-none"></div>
-											<div data-testid="tm2-tab-panel-evaluation-handoff" class="tm2-tab-panel-evaluation-handoff d-none"></div>
-											<div data-testid="tm2-tab-panel-contract-handoff" class="tm2-tab-panel-contract-handoff d-none"></div>
-											<div data-testid="tm2-tab-panel-audit-evidence" class="tm2-tab-panel-audit-evidence d-none"></div>
-										</div>
-								</div>
-							</div>
+						<div class="tm2-header-cta d-flex flex-wrap align-items-start" data-testid="tm2-page-actions">
+							<button type="button" class="btn btn-default btn-sm" data-testid="tm2-action-my-actions" disabled title="${esc(
+								__("Filters to your action items."),
+							)}">${esc(__("My Actions"))}</button>
+							<button type="button" class="btn btn-default btn-sm" data-testid="tm2-action-evidence-export" disabled title="${esc(
+								__("Select a tender to export evidence."),
+							)}">${esc(__("Evidence Export"))}</button>
+							<button type="button" class="btn btn-primary btn-sm" data-testid="tm2-action-new-tender" title="${esc(
+								__("Choose a procurement package (not a free-form tender)."),
+							)}">${esc(__("New Tender"))}</button>
 						</div>
 					</div>
+					${debugNoteHtml}
 				</div>
+
+				<div data-testid="tm2-lifecycle-bar" class="tm2-lifecycle-bar mb-3">${lifecycleInner}</div>
+
+				<div class="tm2-workbench-body">
+							<div class="tm2-tender-list-column">
+								<div data-testid="tm2-tender-list" class="tm2-tender-list tm2-surface d-flex flex-column">
+									<div class="tm2-list-toolbar flex-shrink-0">
+										<input type="search" class="form-control form-control-sm" data-testid="tm2-search-input" placeholder="${esc(
+											__("Tender code, title, package…"),
+										)}" />
+									</div>
+									<div class="tm2-tender-list-scroll">
+										<div data-testid="tm2-tender-list-rows" class="tm2-tender-list-rows"></div>
+									</div>
+								</div>
+							</div>
+							<div class="tm2-detail-column">
+								<div data-testid="tm2-tender-detail" class="tm2-tender-detail tm2-surface d-flex flex-column">
+									<div data-testid="tm2-detail-sticky" class="tm2-detail-sticky d-none">
+										<div data-testid="tm2-tender-detail-header" class="tm2-tender-detail-header"></div>
+										<div data-testid="tm2-status-ribbon" class="tm2-status-ribbon"></div>
+										<div data-testid="tm2-sticky-next-step" class="tm2-sticky-next-step"></div>
+										<div data-testid="tm2-action-bar" class="tm2-action-bar py-1"></div>
+										<div data-testid="tm2-blockers-panel" class="tm2-blockers-panel d-none"></div>
+									</div>
+									<div class="tm2-task-tabs-wrap flex-shrink-0">
+										<ul class="nav nav-tabs flex-nowrap border-bottom-0" role="tablist" data-testid="tm2-task-tabs" style="overflow-x:auto">
+											${taskTabsHtml}
+										</ul>
+									</div>
+									<div data-testid="tm2-tab-panels" class="tm2-tab-panels tm2-tab-panels-scroll mt-2 pt-2 border-top">
+										<div data-testid="tm2-tab-panel-overview" class="tm2-tab-panel-overview"></div>
+										<div data-testid="tm2-tab-panel-std-readiness" class="tm2-tab-panel-std-readiness d-none"></div>
+										<div data-testid="tm2-tab-panel-timeline" class="tm2-tab-panel-timeline d-none"></div>
+										<div data-testid="tm2-tab-panel-supplier-access" class="tm2-tab-panel-supplier-access d-none"></div>
+										<div data-testid="tm2-tab-panel-clarifications" class="tm2-tab-panel-clarifications d-none"></div>
+										<div data-testid="tm2-tab-panel-addenda" class="tm2-tab-panel-addenda d-none"></div>
+										<div data-testid="tm2-tab-panel-submissions" class="tm2-tab-panel-submissions d-none"></div>
+										<div data-testid="tm2-tab-panel-opening-readiness" class="tm2-tab-panel-opening-readiness d-none"></div>
+										<div data-testid="tm2-tab-panel-evaluation-handoff" class="tm2-tab-panel-evaluation-handoff d-none"></div>
+										<div data-testid="tm2-tab-panel-contract-handoff" class="tm2-tab-panel-contract-handoff d-none"></div>
+										<div data-testid="tm2-tab-panel-audit-evidence" class="tm2-tab-panel-audit-evidence d-none"></div>
+									</div>
+									<div class="tm2-legacy-tabs-hidden" aria-hidden="true">
+										<ul class="nav nav-tabs" role="tablist" data-testid="tm2-detail-tabs">
+											${detailTabsHtml}
+										</ul>
+									</div>
+								</div>
+							</div>
+						</div>
 			</div>`,
 		);
 
-		$w.off("click.kt2nt").on("click.kt2nt", '[data-testid="tm2-action-new-tender"]', function (e) {
+		const $shell = $page.find('[data-testid="tm2-workbench-page"]').first();
+
+		$page.off("click.kt2nt").on("click.kt2nt", '[data-testid="tm2-action-new-tender"]', function (e) {
 			e.preventDefault();
 			openNewTenderPackagePicker();
 		});
 
-		initTm2WorkbenchQueueAndKpis($w);
+		initTm2WorkbenchQueueAndKpis($page);
 
-		$w.data("kt_tm2_layout_v", LAYOUT_VERSION);
+		$shell.data("kt_tm2_layout_v", LAYOUT_VERSION);
 		return true;
 	}
 
+	frappe.provide("frappe.pages");
+	frappe.pages["tender-management-v2"] = frappe.pages["tender-management-v2"] || {};
+	frappe.pages["tender-management-v2"].on_page_load = function (wrapper) {
+		mountShell(wrapper);
+	};
+	frappe.pages["tender-management-v2"].on_page_show = function (wrapper) {
+		mountShell(wrapper);
+	};
+
 	function scheduleBoot() {
+		syncTm2ShellBodyClass();
 		if (!is_tm2_route()) {
 			return;
 		}

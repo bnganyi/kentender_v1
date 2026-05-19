@@ -57,6 +57,7 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/business_readiness_summary.css?v={_desk_asset_v('public/css/business_readiness_summary.css')}",
 	f"/assets/kentender_procurement/css/procurement_package.css?v={_desk_asset_v('public/css/procurement_package.css')}",
 	f"/assets/kentender_procurement/css/std_library_shell.css?v={_desk_asset_v('public/css/std_library_shell.css')}",
+	f"/assets/kentender_procurement/css/tender_management_v2_workbench.css?v={_desk_asset_v('public/css/tender_management_v2_workbench.css')}",
 ]
 app_include_js = [
 	f"/assets/kentender_procurement/js/module_journey_context_header.js?v={_desk_asset_v('public/js/module_journey_context_header.js')}",
@@ -67,6 +68,7 @@ app_include_js = [
 	f"/assets/kentender_procurement/js/pp_template_selector.js?v={_desk_asset_v('public/js/pp_template_selector.js')}",
 	f"/assets/kentender_procurement/js/procurement_planning_workspace.js?v={_desk_asset_v('public/js/procurement_planning_workspace.js')}",
 	f"/assets/kentender_procurement/js/procurement_home_workspace.js?v={_desk_asset_v('public/js/procurement_home_workspace.js')}",
+	f"/assets/kentender_procurement/js/tm2_workbench_lifecycle.js?v={_desk_asset_v('public/js/tm2_workbench_lifecycle.js')}",
 	f"/assets/kentender_procurement/js/std_engine_desk_boot.js?v={_desk_asset_v('public/js/std_engine_desk_boot.js')}",
 ]
 

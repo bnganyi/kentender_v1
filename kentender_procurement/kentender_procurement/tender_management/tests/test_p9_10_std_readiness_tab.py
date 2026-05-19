@@ -156,4 +156,6 @@ class TestP910StdReadinessTab(_P401Tm2Cleanup, IntegrationTestCase):
 		dem_blk = sr.get("dem_missing_block")
 		self.assertIsInstance(dem_blk, dict)
 		self.assertEqual(dem_blk.get("blocker_code"), "DEM_MISSING_OR_STALE")
-		self.assertIn("Document Evaluation Model", str(dem_blk.get("headline") or ""))
+		headline = str(dem_blk.get("headline") or "")
+		self.assertIn("Evaluation rules", headline)
+		self.assertNotIn("Document Evaluation Model", headline)

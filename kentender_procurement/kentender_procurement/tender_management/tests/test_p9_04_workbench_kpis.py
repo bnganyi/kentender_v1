@@ -46,6 +46,18 @@ class TestP904WorkbenchKpis(IntegrationTestCase):
 		for _slug, n in qc.items():
 			self.assertIsInstance(n, int)
 			self.assertGreaterEqual(n, 0)
+		total = out.get("total_accessible")
+		self.assertIsInstance(total, int)
+		self.assertGreaterEqual(total, 0)
+
+	def test_p9_04_total_accessible_matches_active_tender_list(self) -> None:
+		frappe.set_user("Administrator")
+		out = get_workbench_kpi_counts_service("Administrator")
+		self.assertTrue(out.get("ok"))
+		expected = len(
+			frappe.get_list("TM2 Tender", filters={"is_active": 1}, pluck="name", limit=10_000) or []
+		)
+		self.assertEqual(out.get("total_accessible"), expected)
 
 	def test_p9_04_whitelist_matches_service(self) -> None:
 		frappe.set_user("Administrator")
@@ -54,3 +66,4 @@ class TestP904WorkbenchKpis(IntegrationTestCase):
 		self.assertEqual(api_out.get("ok"), svc_out.get("ok"))
 		self.assertEqual(api_out.get("counts"), svc_out.get("counts"))
 		self.assertEqual(api_out.get("queue_counts"), svc_out.get("queue_counts"))
+		self.assertEqual(api_out.get("total_accessible"), svc_out.get("total_accessible"))

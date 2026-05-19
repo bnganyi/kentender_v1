@@ -15,6 +15,13 @@ import frappe
 from frappe import _
 from frappe.utils import cstr, format_datetime
 
+from kentender_procurement.tender_management.services.tm2_workbench_terminology import (
+	business_label_for_action_code,
+	business_label_for_audit_event,
+	business_label_for_denial_code,
+	format_denied_action_display_line,
+)
+
 
 def parse_event_payload(raw: Any) -> dict[str, Any]:
 	if isinstance(raw, dict):
@@ -102,7 +109,9 @@ def denied_actions_for_audit_evidence_tab(tm2_name: str, *, max_rows: int = 80) 
 		dc = cstr(ev.get("denial_code") or "").strip()
 		occ = ev.get("occurred_at")
 		ts = format_datetime(occ) if occ else ""
-		disp = _("{0} denied {1} · {2}").format(ad, ag, dc or et)
+		reason_label = business_label_for_denial_code(dc) or business_label_for_audit_event(et)
+		action_label = business_label_for_action_code(ag) or ag
+		disp = format_denied_action_display_line(ad, ag, dc, et)
 		code = cstr(ev.get("audit_event_code") or ev.get("name") or "").strip()
 		sfx = code.replace(" ", "-").lower() if code else str(len(out))
 		out.append(
@@ -111,7 +120,9 @@ def denied_actions_for_audit_evidence_tab(tm2_name: str, *, max_rows: int = 80) 
 				"occurred_at_display": ts,
 				"actor_display": ad,
 				"action_guess": ag,
+				"action_label": action_label,
 				"denial_code": dc,
+				"reason_label": reason_label,
 				"event_type": et,
 				"display_line": str(disp),
 				"row_test_suffix": sfx,

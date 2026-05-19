@@ -4,6 +4,7 @@
 import { expect, test } from '@playwright/test';
 
 import { loginAsAdministrator } from '../../helpers/auth';
+import { clickTm2LegacyTab } from '../../helpers/tm2Workbench';
 import { dismissOptionalDeskModals } from '../../helpers/routes';
 
 test.describe('Tender Management workbench Timeline tab (P9-11)', () => {
@@ -22,28 +23,27 @@ test.describe('Tender Management workbench Timeline tab (P9-11)', () => {
 		const shell = page.getByTestId('tm2-workbench-page');
 		await expect(shell).toBeVisible({ timeout: 90_000 });
 
-		const tab = shell.getByTestId('tm2-tab-timeline');
-		await expect(tab).toBeVisible();
-		await expect(tab).toBeEnabled();
+		const legacyTab = 'tm2-tab-timeline';
+		await expect(shell.getByTestId('tm2-tab-audit')).toBeVisible();
 
 		const rows = shell.getByTestId('tm2-tender-list-rows');
 		const row = rows.getByTestId('tm2-tender-list-row').first();
 		const empty = rows.getByTestId('tm2-tender-list-empty');
 		if (await empty.isVisible().catch(() => false)) {
-			await tab.click();
+			await clickTm2LegacyTab(page, legacyTab);
 			await expect(shell.getByTestId('tm2-tab-panel-timeline')).toBeVisible();
 			return;
 		}
 		if (!(await row.isVisible().catch(() => false))) {
-			await tab.click();
+			await clickTm2LegacyTab(page, legacyTab);
 			await expect(shell.getByTestId('tm2-tab-panel-timeline')).toBeVisible();
 			return;
 		}
 
 		await row.click();
-		await expect(shell.getByTestId('tm2-overview-tender-summary')).toBeVisible({ timeout: 60_000 });
+		await expect(shell.getByTestId('tm2-detail-sticky')).toBeVisible({ timeout: 60_000 });
 
-		await tab.click();
+		await clickTm2LegacyTab(page, legacyTab);
 		await expect(shell.getByTestId('tm2-timeline-key-dates')).toBeVisible({ timeout: 30_000 });
 		await expect(shell.getByTestId('tm2-timeline-warnings')).toBeVisible();
 		await expect(shell.getByTestId('tm2-timeline-extension-history')).toBeVisible();
