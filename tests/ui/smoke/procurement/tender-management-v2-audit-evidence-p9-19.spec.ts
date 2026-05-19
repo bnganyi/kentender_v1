@@ -39,12 +39,16 @@ test.describe('Tender Management workbench Audit & Evidence tab (P9-19)', () => 
 
 		await row.click();
 		await expect(shell.getByTestId('tm2-detail-sticky')).toBeVisible({ timeout: 60_000 });
+		await expect(shell.getByText('Loading details…')).toHaveCount(0, { timeout: 60_000 });
+		await expect(shell.getByTestId('tm2-action-bar').locator('button').first()).toBeVisible({ timeout: 60_000 });
 
 		await clickTm2LegacyTab(page, legacyTab);
 		await expect(shell.getByTestId('tm2-ae-readonly-notice')).toBeVisible({ timeout: 30_000 });
-		await expect(shell.getByTestId('tm2-ae-export-notice')).toBeVisible();
+		await expect(shell.getByTestId('tm2-ae-export-notice')).toHaveCount(0);
 		await expect(shell.getByTestId('tm2-ae-readonly-notice')).not.toContainText(/TM2|workbench|doc 9/i);
-		await expect(shell.getByTestId('tm2-ae-export-notice')).not.toContainText(/doc 9|§/i);
+		await expect(shell.getByTestId('tm2-blockers-panel')).toHaveCount(0);
+		const sticky = shell.getByTestId('tm2-detail-sticky');
+		await expect(sticky.getByText(/^Document readiness:/)).toHaveCount(1);
 		await expect(shell.getByTestId('tm2-timeline-key-dates')).not.toContainText(/TM2/i);
 		await expect(shell.getByText('Denied / sensitive actions')).toHaveCount(0);
 		await expect(shell.getByTestId('tm2-ae-sensitive-wrap')).toBeVisible();

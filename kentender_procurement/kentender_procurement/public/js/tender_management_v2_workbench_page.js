@@ -1,6 +1,6 @@
 /** P9-00 … P9-21a + UI refactor — three-zone TM2 workbench. */
 (function () {
-	const LAYOUT_VERSION = 50;
+	const LAYOUT_VERSION = 52;
 
 	let tm2SearchTimer = null;
 
@@ -186,7 +186,6 @@
 		const $ribbon = $w.find('[data-testid="tm2-status-ribbon"]');
 		const $ns = $w.find('[data-testid="tm2-sticky-next-step"]');
 		const $bar = $w.find('[data-testid="tm2-action-bar"]');
-		const $blk = $w.find('[data-testid="tm2-blockers-panel"]');
 		const $panels = $w.find('[data-testid="tm2-tab-panels"]');
 
 		setTm2DetailSwapping($w, true);
@@ -196,14 +195,6 @@
 		renderStatusRibbon($ribbon, msg);
 		renderStickyNextStep($ns, msg);
 		renderActionBar($w, $bar, msg);
-		const summary = String(msg.blocker_summary || "").trim();
-		if (summary) {
-			$blk.removeClass("d-none").html(
-				`<div class="small text-danger" data-testid="tm2-blockers-summary">${esc(summary)}</div>`,
-			);
-		} else {
-			$blk.addClass("d-none").empty();
-		}
 		switchTaskTab($w, tabToShow);
 		syncHeaderEvidenceExport($w, msg);
 		$panels.scrollTop(0);
@@ -1712,7 +1703,7 @@
 		}
 		const tab = msg.audit_evidence_tab || {};
 		const notice = esc(String(tab.read_only_notice || ""));
-		const expNotice = esc(String(tab.evidence_export_notice || ""));
+		const expNotice = String(tab.evidence_export_notice || "").trim();
 		const lifecycle = Array.isArray(tab.lifecycle_events) ? tab.lifecycle_events : [];
 		const sens = Array.isArray(tab.sensitive_denials) ? tab.sensitive_denials : [];
 
@@ -1752,9 +1743,13 @@
 		const exHint = esc(String(ex.user_message || "").trim());
 		const exDis = ex.allowed && ex.ui_state === "enabled" ? "" : "disabled";
 
+		const exportNoticeHtml = expNotice
+			? `<div class="alert alert-info small py-2 mb-3" data-testid="tm2-ae-export-notice">${esc(expNotice)}</div>`
+			: "";
+
 		$p.html(
 			`<div class="alert alert-light border small py-2 mb-2" data-testid="tm2-ae-readonly-notice">${notice}</div>
-			<div class="alert alert-info small py-2 mb-3" data-testid="tm2-ae-export-notice">${expNotice}</div>
+			${exportNoticeHtml}
 			<div class="mb-3" data-testid="tm2-ae-export-wrap">
 				<div class="small font-weight-bold text-muted mb-1">${esc(__("Evidence export"))}</div>
 				<button type="button" class="btn btn-xs btn-primary" data-testid="tm2-ae-action-export" ${exDis} title="${exHint}">${esc(
@@ -2074,7 +2069,6 @@
 		const $ribbon = $w.find('[data-testid="tm2-status-ribbon"]');
 		const $ns = $w.find('[data-testid="tm2-sticky-next-step"]');
 		const $bar = $w.find('[data-testid="tm2-action-bar"]');
-		const $blk = $w.find('[data-testid="tm2-blockers-panel"]');
 		if (!tc) {
 			setTm2DetailLoading($w, false);
 			$w.data("tm2SelectedTenderCode", "");
@@ -2083,7 +2077,6 @@
 			$ribbon.empty();
 			$ns.empty().addClass("d-none");
 			$bar.empty();
-			$blk.addClass("d-none").html(`<span class="text-muted small">${esc(__("No tender selected."))}</span>`);
 			_hideAllTm2DetailPanels($w);
 			$w.find('[data-testid="tm2-tab-panel-overview"]').empty().removeClass("d-none");
 			$w.data("tm2ActiveTaskTab", "tm2-tab-overview");
@@ -2114,7 +2107,6 @@
 			$ribbon.html("");
 			$ns.addClass("d-none").html("");
 			$bar.html("");
-			$blk.addClass("d-none").html("");
 		}
 		frappe.call({
 			method: "kentender_procurement.tender_management.api.tm2_workbench.get_workbench_tender_detail",
@@ -2175,15 +2167,8 @@
 	}
 
 	function renderBlockersPanel($blk, msg) {
-		const summary = String(msg.blocker_summary || "").trim();
-		if (summary) {
-			$blk.html(
-				`<div class="small text-danger" data-testid="tm2-blockers-summary">${esc(summary)}</div><div class="small text-muted">${esc(
-					__("Resolve readiness and governance checks before publication executes."),
-				)}</div>`,
-			);
-		} else {
-			$blk.html(`<div class="small text-muted" data-testid="tm2-blockers-summary">${esc(__("No tender-level blockers."))}</div>`);
+		if ($blk && $blk.length) {
+			$blk.addClass("d-none").empty();
 		}
 	}
 
@@ -3040,7 +3025,6 @@
 										<div data-testid="tm2-status-ribbon" class="tm2-status-ribbon"></div>
 										<div data-testid="tm2-sticky-next-step" class="tm2-sticky-next-step"></div>
 										<div data-testid="tm2-action-bar" class="tm2-action-bar py-1"></div>
-										<div data-testid="tm2-blockers-panel" class="tm2-blockers-panel d-none"></div>
 									</div>
 									<div class="tm2-task-tabs-wrap flex-shrink-0">
 										<ul class="nav nav-tabs flex-nowrap border-bottom-0" role="tablist" data-testid="tm2-task-tabs" style="overflow-x:auto">

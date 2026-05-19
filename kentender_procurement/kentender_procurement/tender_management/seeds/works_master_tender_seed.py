@@ -28,9 +28,14 @@ All steps are idempotent — re-running is safe.
 
 from __future__ import annotations
 
+from typing import Any
+
 import frappe
 from frappe.utils import now_datetime
 
+from kentender_procurement.tender_management.seeds.works_master_tender_publication_evidence import (
+	ensure_works_master_publication_evidence,
+)
 from kentender_procurement.tender_management.services.create_tender_from_package import (
 	active_tm2_tender_name_for_package,
 )
@@ -138,6 +143,28 @@ def _promote_to_published() -> None:
 	)
 
 
+def _finalize_master_tender(action: str, **extra: Any) -> dict[str, Any]:
+	"""Apply spec fields, timeline, publication evidence, and Published status."""
+	_apply_spec_fields()
+	timeline_name = _ensure_timeline()
+	_promote_to_published()
+	pub = ensure_works_master_publication_evidence()
+	tender = frappe.db.get_value(
+		"TM2 Tender", TENDER_CODE, ["status", "template_version"], as_dict=True
+	)
+	out: dict[str, Any] = {
+		"ok": True,
+		"action": action,
+		"tender_code": TENDER_CODE,
+		"status": (tender or {}).get("status", ""),
+		"template_version": (tender or {}).get("template_version", ""),
+		"timeline": timeline_name,
+		"publication_evidence": pub,
+	}
+	out.update(extra)
+	return out
+
+
 # ── public entry point ────────────────────────────────────────────────────────
 
 
@@ -153,20 +180,7 @@ def upsert_works_master_tender() -> dict:
 
 	# ── idempotency ─────────────────────────────────────────────────────────
 	if frappe.db.exists("TM2 Tender", TENDER_CODE):
-		_apply_spec_fields()
-		timeline_name = _ensure_timeline()
-		_promote_to_published()
-		tender = frappe.db.get_value(
-			"TM2 Tender", TENDER_CODE, ["status", "template_version"], as_dict=True
-		)
-		return {
-			"ok": True,
-			"action": "existing",
-			"tender_code": TENDER_CODE,
-			"status": (tender or {}).get("status", ""),
-			"template_version": (tender or {}).get("template_version", ""),
-			"timeline": timeline_name,
-		}
+		return _finalize_master_tender("existing")
 
 	# ── prerequisite check ───────────────────────────────────────────────────
 	pkg_name = _pkg_name()
@@ -182,21 +196,7 @@ def upsert_works_master_tender() -> dict:
 	if existing_tm2 and existing_tm2 != TENDER_CODE:
 		# Adopt the auto-created record and rename it to the canonical code.
 		_rename_to_canonical(existing_tm2)
-		_apply_spec_fields()
-		timeline_name = _ensure_timeline()
-		_promote_to_published()
-		tender = frappe.db.get_value(
-			"TM2 Tender", TENDER_CODE, ["status", "template_version"], as_dict=True
-		)
-		return {
-			"ok": True,
-			"action": "adopted",
-			"tender_code": TENDER_CODE,
-			"renamed_from": existing_tm2,
-			"status": (tender or {}).get("status", ""),
-			"template_version": (tender or {}).get("template_version", ""),
-			"timeline": timeline_name,
-		}
+		return _finalize_master_tender("adopted", renamed_from=existing_tm2)
 
 	# ── approved creation path ───────────────────────────────────────────────
 	# Call the governed release service (XMV validation, STD resolution, handoff
@@ -215,19 +215,4 @@ def upsert_works_master_tender() -> dict:
 
 	# ── rename to canonical + spec enrichment ────────────────────────────────
 	_rename_to_canonical(auto_name)
-	_apply_spec_fields()
-	timeline_name = _ensure_timeline()
-	_promote_to_published()
-
-	tender = frappe.db.get_value(
-		"TM2 Tender", TENDER_CODE, ["status", "template_version"], as_dict=True
-	)
-	return {
-		"ok": True,
-		"action": "created",
-		"tender_code": TENDER_CODE,
-		"auto_code": auto_name,
-		"status": (tender or {}).get("status", ""),
-		"template_version": (tender or {}).get("template_version", ""),
-		"timeline": timeline_name,
-	}
+	return _finalize_master_tender("created", auto_code=auto_name)

@@ -161,22 +161,23 @@
 		return "kt-budget-badge";
 	}
 
+	function formatAmount(value, digits) {
+		const n = Number(value);
+		if (Number.isNaN(n)) return "0";
+		const precision = Number.isInteger(digits) ? digits : 2;
+		return n.toLocaleString("en-US", {
+			minimumFractionDigits: precision,
+			maximumFractionDigits: precision,
+		});
+	}
+
 	function fmtMoney(n, currency) {
 		if (n == null || n === "") return "—";
 		const num = Number(n);
 		if (Number.isNaN(num)) return "—";
-		try {
-			if (typeof frappe !== "undefined" && frappe.format) {
-				const txt = frappe.format(num, {
-					fieldtype: "Currency",
-					options: currency || "",
-				});
-				if (txt) return String(txt);
-			}
-		} catch (e) {
-			/* ignore */
-		}
-		return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+		const amount = formatAmount(num, 2);
+		const cur = String(currency || "").trim();
+		return cur ? cur + " " + amount : amount;
 	}
 
 	function renderBudgetLandingContent(host, payload) {
@@ -312,17 +313,17 @@
 				"</dd>" +
 				"<dt>" +
 				escapeHtml(__("Total")) +
-				"</dt><dd data-testid=\"selected-budget-total\">" +
+				"</dt><dd class=\"kt-budget-money\" data-testid=\"selected-budget-total\">" +
 				escapeHtml(fmtMoney(selected.total_budget_amount, cur)) +
 				"</dd>" +
 				"<dt>" +
 				escapeHtml(__("Allocated")) +
-				"</dt><dd data-testid=\"selected-budget-allocated\">" +
+				"</dt><dd class=\"kt-budget-money\" data-testid=\"selected-budget-allocated\">" +
 				escapeHtml(fmtMoney(selected.allocated_amount, cur)) +
 				"</dd>" +
 				"<dt>" +
 				escapeHtml(__("Remaining")) +
-				"</dt><dd data-testid=\"selected-budget-remaining\">" +
+				"</dt><dd class=\"kt-budget-money\" data-testid=\"selected-budget-remaining\">" +
 				escapeHtml(fmtMoney(selected.remaining_amount, cur)) +
 				"</dd>" +
 				"</dl>" +

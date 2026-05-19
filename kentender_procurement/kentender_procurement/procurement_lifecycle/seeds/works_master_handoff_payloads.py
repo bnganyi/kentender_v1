@@ -316,6 +316,7 @@ def base_handoff_blueprints() -> list[dict[str, Any]]:
 			],
 			"technical_refs": {
 				"publication_code": "PUB-TND-MOH-2026-001-001",
+				"publication_snapshot_code": "PUBSNAP-TND-MOH-2026-001-V2",
 				"bundle_output_code": "GB-TND-MOH-2026-001-V2",
 				"dsm_output_code": "DSM-TND-MOH-2026-001-V2",
 				"dom_output_code": "DOM-TND-MOH-2026-001-V2",

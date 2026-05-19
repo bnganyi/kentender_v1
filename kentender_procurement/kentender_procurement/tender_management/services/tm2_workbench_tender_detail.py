@@ -2492,6 +2492,19 @@ def batch_workbench_tender_action_availability(
 	}
 
 
+def _blocker_summary_is_readiness_only(blocker_summary: str, readiness_status: str) -> bool:
+	"""True when blocker text only repeats the document-readiness badge."""
+	bsum = cstr(blocker_summary or "").strip()
+	if not bsum:
+		return False
+	rs = cstr(readiness_status or "").strip()
+	if rs in ("Not Ready", "Blocked", "Not Assessed", "Ready With Warnings"):
+		readiness_only = _("Document readiness: {0}").format(business_label_for_readiness_status(rs))
+		if bsum == readiness_only:
+			return True
+	return False
+
+
 def _build_status_ribbon(
 	tender_status: str,
 	readiness_status: str,
@@ -2524,7 +2537,7 @@ def _build_status_ribbon(
 				"target_tab": "tm2-tab-preparation",
 			}
 		)
-	if blocker_summary:
+	if blocker_summary and not _blocker_summary_is_readiness_only(blocker_summary, rs):
 		badges.append(
 			{
 				"id": "blockers",

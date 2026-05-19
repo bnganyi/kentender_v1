@@ -305,8 +305,23 @@ def _promote_package_released(pkg_name: str) -> None:
 def _ensure_package_line(
     pkg_name: str, demand_name: str, budget_line_name: str
 ) -> bool:
-    """Insert Package Line while Package is still Draft. Returns True if created."""
-    if frappe.db.exists("Procurement Package Line", {"package_line_code": PKG_LINE_CODE}):
+    """Insert or repair Package Line while Package is still Draft. Returns True if created."""
+    existing = frappe.db.get_value(
+        "Procurement Package Line",
+        {"package_line_code": PKG_LINE_CODE},
+        ["name", "package_id", "demand_id", "budget_line_id"],
+        as_dict=True,
+    )
+    if existing:
+        patch: dict[str, str] = {}
+        if (existing.get("package_id") or "") != pkg_name:
+            patch["package_id"] = pkg_name
+        if (existing.get("demand_id") or "") != demand_name:
+            patch["demand_id"] = demand_name
+        if (existing.get("budget_line_id") or "") != budget_line_name:
+            patch["budget_line_id"] = budget_line_name
+        if patch:
+            frappe.db.set_value("Procurement Package Line", existing.name, patch, update_modified=False)
         return False
 
     doc = frappe.get_doc(
@@ -384,6 +399,7 @@ def upsert_works_master_planning() -> dict:
         "Procurement Package Line", {"package_line_code": PKG_LINE_CODE}
     )
     if plan_exists and pkg_name_existing and line_exists:
+        _ensure_package_line(pkg_name_existing, demand_name, budget_line_name)
         return {
             "ok": True,
             "idempotent": True,

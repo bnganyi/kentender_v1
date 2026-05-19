@@ -51,6 +51,19 @@ _PE_NAME_DISPLAY = "Ministry of Health"
 
 def _clean_tender() -> None:
     """Remove TND-MOH-2026-001 and all linked satellite records."""
+    for addendum in frappe.get_all(
+        "TM2 Addendum",
+        filters={"tm2_tender": TENDER_CODE},
+        pluck="name",
+    ):
+        for air in frappe.get_all(
+            "TM2 Addendum Impact Record",
+            filters={"tm2_addendum": addendum},
+            pluck="name",
+        ):
+            frappe.db.delete("TM2 Addendum Impact Record", {"name": air})
+        frappe.db.delete("TM2 Addendum", {"name": addendum})
+    frappe.db.delete("Tender Publication Snapshot", {"tm2_tender": TENDER_CODE})
     # Timeline (UNIQUE on tm2_tender)
     frappe.db.delete("TM2 Tender Timeline", {"tm2_tender": TENDER_CODE})
     frappe.db.delete("TM2 Tender Timeline", {"tender_code": TENDER_CODE})
@@ -109,6 +122,9 @@ class TestR2009WorksMasterTenderSeed(IntegrationTestCase):
         # R2-008: STD template
         std = upsert_works_master_std()
         assert std.get("ok"), f"STD prerequisite failed: {std}"
+
+    def setUp(self):
+        _clean_tender()
 
     def tearDown(self):
         _clean_tender()
@@ -199,3 +215,23 @@ class TestR2009WorksMasterTenderSeed(IntegrationTestCase):
         self.assertIsNotNone(tl.submission_deadline_at, "submission_deadline_at must be set")
         self.assertIsNotNone(tl.clarification_deadline_at, "clarification_deadline_at must be set")
         self.assertIsNotNone(tl.opening_scheduled_at, "opening_scheduled_at must be set")
+
+    def test_005_publication_snapshot_and_addendum_exist(self):
+        """SEED-TEST-R2-009-005: Publication snapshot + issued addendum for VAL-SEED-014/015."""
+        from kentender_procurement.tender_management.seeds.works_master_tender_publication_evidence import (
+            PUBSNAP_CODE,
+        )
+
+        upsert_works_master_tender()
+
+        self.assertTrue(
+            frappe.db.exists("Tender Publication Snapshot", {"evidence_package_code": PUBSNAP_CODE}),
+            "Tender Publication Snapshot with master PUBSNAP code must exist",
+        )
+        self.assertTrue(
+            frappe.db.exists("TM2 Addendum", {"addendum_code": _ADDENDUM_CODE}),
+            "Master addendum must exist",
+        )
+        st = frappe.db.get_value("TM2 Addendum", {"addendum_code": _ADDENDUM_CODE}, "status")
+        self.assertEqual(st, "Issued")
+        self.assertTrue(frappe.db.exists("Tender STD Instance", "STDINST-TND-MOH-2026-001"))

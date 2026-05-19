@@ -219,6 +219,10 @@ test('Builder totals arithmetic reflects in landing panel', async ({ page }) => 
 	await openBudgetLanding(page);
 	await page.getByTestId(`budget-row-${budgetNameSlug(seeded.budgetName)}`).click();
 	await expect(page.getByTestId('selected-budget-title')).toContainText('B3.3 Totals');
+	await expect(page.getByTestId('selected-budget-total')).toContainText('1,000,000.00');
+	await expect(page.getByTestId('selected-budget-total')).not.toContainText('<div');
 	await expect(page.getByTestId('selected-budget-allocated')).toContainText('350,000.00');
+	await expect(page.getByTestId('selected-budget-allocated')).not.toContainText('<div');
 	await expect(page.getByTestId('selected-budget-remaining')).toContainText('650,000.00');
+	await expect(page.getByTestId('selected-budget-remaining')).not.toContainText('<div');
 });

@@ -316,9 +316,7 @@ READ_ONLY_TAB_NOTICE_CONTRACT: str = _(
 READ_ONLY_TAB_NOTICE_AUDIT: str = _(
 	"This view is read-only. The lifecycle timeline and blocked-action records come from the tender audit trail."
 )
-EVIDENCE_EXPORT_TAB_NOTICE: str = _(
-	"Export packages tender evidence for audit and review. Bid contents remain protected until opening rules allow export."
-)
+EVIDENCE_EXPORT_TAB_NOTICE: str = ""
 EVALUATION_RULES_READ_ONLY_NOTICE: str = _(
 	"Evaluation rules are read-only here. Criteria are maintained in the Evaluation module."
 )

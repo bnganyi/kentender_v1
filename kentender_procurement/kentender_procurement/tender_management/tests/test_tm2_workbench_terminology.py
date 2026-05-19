@@ -5,15 +5,23 @@
 
 from __future__ import annotations
 
+from frappe import _
+
 from frappe.tests import UnitTestCase
 
+from kentender_procurement.tender_management.services.tm2_workbench_tender_detail import (
+	_blocker_summary_is_readiness_only,
+	_build_status_ribbon,
+)
 from kentender_procurement.tender_management.services.tm2_workbench_terminology import (
+	EVIDENCE_EXPORT_TAB_NOTICE,
 	business_label_for_audit_event,
 	business_label_for_checklist_row,
 	business_label_for_denial_code,
 	business_label_for_derived_output,
 	business_label_for_output_field,
 	business_label_for_queue_slug,
+	business_label_for_readiness_status,
 	business_label_for_technical_term,
 	business_label_for_tender_status,
 	format_denied_action_display_line,
@@ -88,3 +96,29 @@ class TestTm2WorkbenchTerminology(UnitTestCase):
 		self.assertNotIn("BID2_", line)
 		self.assertNotIn("AUTH_", line)
 		self.assertIn("sealed", line.lower())
+
+	def test_evidence_export_tab_notice_is_empty(self) -> None:
+		self.assertEqual(str(EVIDENCE_EXPORT_TAB_NOTICE or "").strip(), "")
+
+	def test_status_ribbon_skips_redundant_blocker_badge(self) -> None:
+		rs = "Not Ready"
+		blocker_summary = _("Document readiness: {0}").format(business_label_for_readiness_status(rs))
+		self.assertTrue(_blocker_summary_is_readiness_only(blocker_summary, rs))
+		badges = _build_status_ribbon("STD Instance Incomplete", rs, blocker_summary)
+		ids = [b.get("id") for b in badges]
+		self.assertIn("readiness", ids)
+		self.assertNotIn("blockers", ids)
+
+	def test_status_ribbon_keeps_distinct_blocker_badge(self) -> None:
+		badges = _build_status_ribbon("Addendum Pending", "Ready", "Addendum pending")
+		ids = [b.get("id") for b in badges]
+		self.assertIn("blockers", ids)
+
+	def test_pubcert_technical_refs_include_pubsnap_code(self) -> None:
+		from kentender_procurement.procurement_lifecycle.seeds.works_master_handoff_payloads import (
+			base_handoff_blueprints,
+		)
+
+		pubcert = next(bp for bp in base_handoff_blueprints() if bp["handoff_code"] == "PUBCERT-TND-MOH-2026-001")
+		self.assertIn("publication_snapshot_code", pubcert["technical_refs"])
+		self.assertEqual(pubcert["technical_refs"]["publication_snapshot_code"], "PUBSNAP-TND-MOH-2026-001-V2")

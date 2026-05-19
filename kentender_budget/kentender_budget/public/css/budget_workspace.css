@@ -247,6 +247,13 @@ div.kt-budget-builder-shell {
 	font-weight: 500;
 }
 
+.kt-budget-injected-shell .kt-budget-dl dd.kt-budget-money,
+.kt-budget-shell .kt-budget-dl dd.kt-budget-money,
+.kt-budget-builder-shell .kt-budget-dl dd.kt-budget-money {
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+
 .kt-budget-injected-shell .kt-budget-detail-actions,
 .kt-budget-shell .kt-budget-detail-actions,
 .kt-budget-builder-shell .kt-budget-detail-actions {
