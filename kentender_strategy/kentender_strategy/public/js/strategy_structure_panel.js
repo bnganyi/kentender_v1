@@ -25,6 +25,16 @@ frappe.provide("kentender_strategy.strategy_structure_panel");
 		return map[nodeType] || "?";
 	}
 
+	function nodeTypeSlug(nodeType) {
+		const map = {
+			Program: "program",
+			SubProgram: "subprogram",
+			Indicator: "indicator",
+			Target: "target",
+		};
+		return map[nodeType] || "unknown";
+	}
+
 	function nestNodes(flat) {
 		const byParent = {};
 		flat.forEach((n) => {
@@ -102,17 +112,19 @@ frappe.provide("kentender_strategy.strategy_structure_panel");
 		}
 
 		renderSubTabs() {
-			let html = '<div class="btn-group btn-group-sm flex-wrap" role="group">';
+			let html = '<div class="kt-secondary-tabs" role="tablist">';
 			for (let i = 0; i < SUB_TABS.length; i++) {
 				const t = SUB_TABS[i];
 				const on = this.activeSubTab === t.id;
 				html +=
-					'<button type="button" class="btn ' +
-					(on ? "btn-primary" : "btn-default") +
-					' kt-strategy-structure-subtab" data-subtab="' +
+					'<button type="button" class="kt-secondary-tab kt-strategy-structure-subtab' +
+					(on ? " is-active kt-secondary-tab-active" : "") +
+					'" data-subtab="' +
 					esc(t.id) +
 					'" data-testid="' +
 					esc(t.testId) +
+					'" role="tab" aria-selected="' +
+					(on ? "true" : "false") +
 					'">' +
 					esc(t.label) +
 					"</button>";
@@ -138,23 +150,39 @@ frappe.provide("kentender_strategy.strategy_structure_panel");
 
 		renderOverview() {
 			const tree = nestNodes(this.flatNodes);
-			const me = this;
 			function walk(nodes, depth) {
 				let html = "";
 				nodes.forEach((n) => {
+					const nodeType = nodeTypeSlug(n.node_type);
 					html +=
-						'<div class="kt-strategy-outline-row" style="margin-left:' +
-						depth * 1.25 +
-						'rem" data-testid="structure-outline-' +
+						'<div class="kt-strategy-outline-row kt-strategy-outline-row--' +
+						esc(nodeType) +
+						'" style="--kt-outline-depth:' +
+						esc(String(depth)) +
+						'" data-testid="structure-outline-' +
 						esc(n.name) +
 						'">' +
-						'<span class="badge badge-light mr-1">' +
+						'<span class="kt-strategy-outline-row__left">' +
+						'<span class="kt-strategy-type-token kt-strategy-type-token--' +
+						esc(nodeType) +
+						'" data-testid="structure-token-' +
+						esc(n.name) +
+						'">' +
 						esc(typeBadge(n.node_type)) +
 						"</span> " +
-						"<strong>" +
+						'<span class="kt-strategy-outline-title kt-strategy-outline-title--' +
+						esc(nodeType) +
+						'">' +
 						esc(n.title) +
-						"</strong>" +
-						(n.code ? ' <span class="text-muted small">(' + esc(n.code) + ")</span>" : "") +
+						"</span>" +
+						"</span>" +
+						(n.code
+							? '<span class="kt-strategy-outline-code" data-testid="structure-code-' +
+								esc(n.name) +
+								'">(' +
+								esc(n.code) +
+								")</span>"
+							: "") +
 						"</div>";
 					if (n.children && n.children.length) html += walk(n.children, depth + 1);
 				});
@@ -185,11 +213,12 @@ frappe.provide("kentender_strategy.strategy_structure_panel");
 				"</h6>";
 			if (!this.readOnly) {
 				html +=
-					'<button type="button" class="btn btn-primary btn-xs" data-add-node-type="' +
+					'<button type="button" class="btn btn-default btn-xs kt-context-action" data-add-node-type="' +
 					esc(nodeType) +
 					'" data-testid="structure-add-' +
 					esc(nodeType.toLowerCase()) +
 					'">' +
+					'<span aria-hidden="true">+</span> ' +
 					esc(addLabels[nodeType] || __("Add")) +
 					"</button>";
 			}
@@ -251,7 +280,7 @@ frappe.provide("kentender_strategy.strategy_structure_panel");
 				}
 				if (!this.readOnly) {
 					html +=
-						'<td class="text-right"><button type="button" class="btn btn-xs btn-default" data-edit-node="' +
+						'<td class="text-right"><button type="button" class="btn btn-xs btn-link kt-row-action" data-edit-node="' +
 						esc(n.name) +
 						'" data-testid="structure-edit-' +
 						esc(n.name) +

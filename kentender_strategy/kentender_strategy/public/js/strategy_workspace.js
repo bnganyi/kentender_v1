@@ -23,6 +23,7 @@
 	let planSelectionInitialized = false;
 	let pendingPlanListScrollTop = null;
 	let structurePanelMounted = false;
+	let sidebarSyncTimer = null;
 
 	function saveStrategyWorkbenchState() {
 		if (typeof kentender_core === "undefined" || !kentender_core.kt_state) return;
@@ -159,6 +160,35 @@
 		document.body.classList.toggle("kt-strategy-shell", isStrategyWorkspaceRoute());
 	}
 
+	function syncStrategySidebarHighlight() {
+		if (!isStrategyWorkspaceRoute()) return;
+		const items = Array.from(document.querySelectorAll(".standard-sidebar-item"));
+		if (!items.length) return;
+		let primary = null;
+		for (let i = 0; i < items.length; i++) {
+			const item = items[i];
+			const label = String(item.textContent || "").trim().toLowerCase();
+			if (label === "strategy alignment" && !primary) primary = item;
+		}
+		if (!primary) return;
+		for (let i = 0; i < items.length; i++) {
+			const item = items[i];
+			const label = String(item.textContent || "").trim().toLowerCase();
+			if (label === "strategy alignment (full)" || item === primary) {
+				item.classList.remove("active-sidebar");
+			}
+		}
+		primary.classList.add("active-sidebar");
+	}
+
+	function scheduleStrategySidebarHighlightSync() {
+		syncStrategySidebarHighlight();
+		if (sidebarSyncTimer) window.clearTimeout(sidebarSyncTimer);
+		sidebarSyncTimer = window.setTimeout(function () {
+			syncStrategySidebarHighlight();
+		}, 120);
+	}
+
 	function removeStrategyLandingIfWrongRoute() {
 		document.querySelectorAll(".kt-strategy-injected-shell").forEach(function (el) {
 			el.remove();
@@ -287,21 +317,26 @@
 		];
 		let html =
 			'<div class="kt-strategy-status-chips mb-2" data-testid="strategy-status-chips">' +
-			'<div class="btn-group btn-group-sm flex-wrap kt-strategy-tab-group" role="group">';
+			'<div class="kt-status-filter-row" role="group" aria-label="' +
+			escapeHtml(__("Status Filters")) +
+			'">';
 		for (let i = 0; i < chips.length; i++) {
 			const c = chips[i];
 			const on = activeStatusFilter === c.id;
 			const count = statusChipCount(portfolio, c.id);
+			const isZero = Number(count) === 0;
 			html +=
-				'<button type="button" class="btn ' +
-				(on ? "btn-primary" : "btn-default") +
-				' kt-strategy-status-chip" data-kt-strategy-status="' +
+				'<button type="button" class="kt-status-filter kt-strategy-status-chip' +
+				(on ? " is-active kt-status-filter-active" : "") +
+				(isZero ? " is-zero" : "") +
+				'" data-kt-strategy-status="' +
 				escapeHtml(c.id) +
 				'" data-testid="' +
 				escapeHtml(c.testId) +
 				'">' +
+				'<span class="kt-status-filter__label">' +
 				escapeHtml(c.label) +
-				' <span class="badge badge-light">' +
+				'</span> <span class="kt-status-filter__count">' +
 				escapeHtml(String(count)) +
 				"</span></button>";
 		}
@@ -313,14 +348,14 @@
 		ensurePlanTab();
 		let html =
 			'<div class="kt-strategy-plan-tabs mb-3" role="tablist" data-testid="strategy-plan-tabs">' +
-			'<div class="btn-group btn-group-sm flex-wrap kt-strategy-tab-group" role="group">';
+			'<div class="kt-primary-tabs">';
 		for (let i = 0; i < PLAN_TABS.length; i++) {
 			const tab = PLAN_TABS[i];
 			const on = activePlanTab === tab.id;
 			html +=
-				'<button type="button" class="btn ' +
-				(on ? "btn-primary" : "btn-default") +
-				' kt-strategy-plan-tab" data-kt-strategy-plan-tab="' +
+				'<button type="button" class="kt-primary-tab kt-strategy-plan-tab' +
+				(on ? " is-active kt-primary-tab-active" : "") +
+				'" data-kt-strategy-plan-tab="' +
 				escapeHtml(tab.id) +
 				'" data-testid="' +
 				escapeHtml(tab.testId) +
@@ -379,11 +414,19 @@
 			escapeHtml(String(version)) +
 			"</dd>" +
 			"</dl>" +
+			'<div class="kt-strategy-detail__actions-group"><div class="kt-strategy-detail__actions">' +
+			'<button type="button" class="btn btn-default btn-sm kt-context-action" data-testid="selected-plan-open-builder">' +
+			escapeHtml(__("Manage Structure")) +
+			"</button>" +
+			'<button type="button" class="btn btn-default btn-sm kt-context-action" data-testid="selected-plan-review">' +
+			escapeHtml(__("Review")) +
+			"</button>" +
 			(userCanWriteStrategicPlan()
-				? '<button type="button" class="btn btn-default btn-sm" data-testid="selected-plan-edit-plan">' +
+				? '<button type="button" class="btn btn-default btn-sm kt-context-action" data-testid="selected-plan-edit-plan">' +
 				  escapeHtml(__("Edit Plan Info")) +
 				  "</button>"
 				: "") +
+			"</div></div>" +
 			"</div>"
 		);
 	}
@@ -570,7 +613,8 @@
 			"</p>" +
 			"</div>" +
 			(userCanCreateStrategicPlan()
-				? '<button type="button" class="btn btn-primary btn-sm kt-strategy-header-create" data-testid="strategic-plan-create-button">' +
+				? '<button type="button" class="btn btn-primary btn-sm kt-strategy-header-create kt-page-action-primary" data-testid="strategic-plan-create-button">' +
+				  '<span aria-hidden="true">+</span> ' +
 				  escapeHtml(__("New Strategic Plan")) +
 				  "</button>"
 				: "") +
@@ -608,6 +652,7 @@
 			mountReviewPanelIfNeeded(host, selected);
 			mountAuditPanelIfNeeded(host, selected.name);
 		}
+		scheduleStrategySidebarHighlightSync();
 	}
 
 	function switchPlanTab(tabId) {
@@ -844,6 +889,7 @@
 			return;
 		}
 		syncStrategyShellClass();
+		scheduleStrategySidebarHighlightSync();
 		if (typeof frappe.after_ajax === "function") {
 			frappe.after_ajax(function () {
 				requestBind(0);
@@ -874,6 +920,9 @@
 				window.jQuery(document).on("app_ready", scheduleBind);
 			}
 			document.addEventListener("kt-strategy-structure-changed", function () {
+				loadStrategyLanding();
+			});
+			document.addEventListener("kt-strategy-workflow-changed", function () {
 				loadStrategyLanding();
 			});
 			if (frappe.router && frappe.router.on) frappe.router.on("change", scheduleBind);

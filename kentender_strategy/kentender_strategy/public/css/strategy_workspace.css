@@ -180,6 +180,12 @@ div.kt-strategy-injected-shell {
 	margin-top: 0.15rem;
 }
 
+.kt-strategy-injected-shell .kt-page-action-primary,
+.kt-strategy-shell .kt-page-action-primary {
+	height: 36px;
+	padding: 0 14px;
+}
+
 .kt-strategy-injected-shell .kt-strategy-master-detail,
 .kt-strategy-shell .kt-strategy-master-detail {
 	align-items: stretch;
@@ -540,16 +546,21 @@ div.kt-strategy-injected-shell {
 	margin-bottom: 0.75rem;
 }
 
+.kt-strategy-injected-shell .kt-status-filter__count,
+.kt-strategy-shell .kt-status-filter__count {
+	font-weight: 600;
+	margin-left: 2px;
+}
+
 .kt-strategy-injected-shell .kt-strategy-plan-tabs,
 .kt-strategy-shell .kt-strategy-plan-tabs {
 	margin-top: 0;
 	margin-bottom: 0.5rem !important;
 }
 
-.kt-strategy-injected-shell .kt-strategy-plan-tabs .btn,
-.kt-strategy-shell .kt-strategy-plan-tabs .btn {
-	font-size: 0.875rem;
-	padding: 0.3rem 0.6rem;
+.kt-strategy-injected-shell .kt-strategy-plan-tabs .kt-primary-tabs,
+.kt-strategy-shell .kt-strategy-plan-tabs .kt-primary-tabs {
+	margin-bottom: 0;
 }
 
 .kt-strategy-injected-shell .kt-strategy-tab-panel,
@@ -584,6 +595,142 @@ div.kt-strategy-injected-shell {
 .kt-strategy-injected-shell .kt-strategy-tab-panel .btn,
 .kt-strategy-shell .kt-strategy-tab-panel .btn {
 	border-radius: 6px;
+}
+
+.kt-strategy-injected-shell .kt-strategy-structure-subtabs,
+.kt-strategy-shell .kt-strategy-structure-subtabs {
+	margin-bottom: 0.5rem;
+}
+
+.kt-strategy-injected-shell .kt-row-action,
+.kt-strategy-shell .kt-row-action {
+	background: transparent;
+	border: none;
+}
+
+.kt-strategy-injected-shell .kt-strategy-review-actions,
+.kt-strategy-shell .kt-strategy-review-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	align-items: center;
+}
+
+.kt-strategy-injected-shell .kt-strategy-outline,
+.kt-strategy-shell .kt-strategy-outline {
+	padding-top: 0.15rem;
+}
+
+.kt-strategy-injected-shell .kt-strategy-outline-row,
+.kt-strategy-shell .kt-strategy-outline-row {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.6rem;
+	margin-left: calc(var(--kt-outline-depth, 0) * 1.1rem);
+	margin-top: 2px;
+}
+
+.kt-strategy-injected-shell .kt-strategy-outline-row--program,
+.kt-strategy-shell .kt-strategy-outline-row--program {
+	margin-top: 0;
+	margin-bottom: 12px;
+}
+
+.kt-strategy-injected-shell .kt-strategy-outline-row--subprogram,
+.kt-strategy-shell .kt-strategy-outline-row--subprogram {
+	margin-top: 6px;
+}
+
+.kt-strategy-injected-shell .kt-strategy-outline-row--indicator,
+.kt-strategy-shell .kt-strategy-outline-row--indicator {
+	margin-top: 4px;
+}
+
+.kt-strategy-injected-shell .kt-strategy-outline-row--target,
+.kt-strategy-shell .kt-strategy-outline-row--target {
+	margin-top: 2px;
+}
+
+.kt-strategy-injected-shell .kt-strategy-outline-row__left,
+.kt-strategy-shell .kt-strategy-outline-row__left {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 0.45rem;
+	min-width: 0;
+}
+
+.kt-strategy-injected-shell .kt-strategy-type-token,
+.kt-strategy-shell .kt-strategy-type-token {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 2.2rem;
+	height: 1.2rem;
+	padding: 0 0.35rem;
+	border-radius: 6px;
+	font-size: 0.67rem;
+	font-weight: 600;
+	line-height: 1;
+	letter-spacing: 0.04em;
+}
+
+.kt-strategy-injected-shell .kt-strategy-type-token--program,
+.kt-strategy-shell .kt-strategy-type-token--program {
+	background: #e8f0ff;
+	color: #284c8f;
+}
+
+.kt-strategy-injected-shell .kt-strategy-type-token--subprogram,
+.kt-strategy-shell .kt-strategy-type-token--subprogram {
+	background: #f2ecff;
+	color: #5b3b8a;
+}
+
+.kt-strategy-injected-shell .kt-strategy-type-token--indicator,
+.kt-strategy-shell .kt-strategy-type-token--indicator {
+	background: #eef4e8;
+	color: #4d6630;
+}
+
+.kt-strategy-injected-shell .kt-strategy-type-token--target,
+.kt-strategy-shell .kt-strategy-type-token--target {
+	background: #e6f3eb;
+	color: #2f6947;
+}
+
+.kt-strategy-injected-shell .kt-strategy-outline-title,
+.kt-strategy-shell .kt-strategy-outline-title {
+	color: var(--text-color, #1f272e);
+	line-height: 1.35;
+}
+
+.kt-strategy-injected-shell .kt-strategy-outline-title--program,
+.kt-strategy-shell .kt-strategy-outline-title--program {
+	font-weight: 600;
+}
+
+.kt-strategy-injected-shell .kt-strategy-outline-title--subprogram,
+.kt-strategy-shell .kt-strategy-outline-title--subprogram {
+	font-weight: 500;
+}
+
+.kt-strategy-injected-shell .kt-strategy-outline-title--indicator,
+.kt-strategy-shell .kt-strategy-outline-title--indicator {
+	font-weight: 500;
+}
+
+.kt-strategy-injected-shell .kt-strategy-outline-title--target,
+.kt-strategy-shell .kt-strategy-outline-title--target {
+	font-weight: 400;
+}
+
+.kt-strategy-injected-shell .kt-strategy-outline-code,
+.kt-strategy-shell .kt-strategy-outline-code {
+	color: var(--text-muted, #74808b);
+	font-weight: 400;
+	font-size: 0.85rem;
+	white-space: nowrap;
 }
 
 

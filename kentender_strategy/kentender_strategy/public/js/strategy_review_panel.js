@@ -36,7 +36,7 @@ frappe.provide("kentender_strategy.strategy_review_panel");
 				"</li>";
 		});
 		html += "</ul>";
-		html += '<div class="btn-group btn-group-sm" data-testid="strategy-review-actions">';
+		html += '<div class="kt-strategy-review-actions mt-2" data-testid="strategy-review-actions">';
 		if (status === "Draft") {
 			html +=
 				'<button type="button" class="btn btn-primary" data-testid="strategy-submit-plan"' +
@@ -65,6 +65,14 @@ frappe.provide("kentender_strategy.strategy_review_panel");
 		}
 		html += "</div></div>";
 		return html;
+	}
+
+	function emitWorkflowChanged(planName) {
+		document.dispatchEvent(
+			new CustomEvent("kt-strategy-workflow-changed", {
+				detail: { plan_name: planName || "" },
+			}),
+		);
 	}
 
 	function buildFallbackPayload(planSnapshot) {
@@ -126,6 +134,8 @@ frappe.provide("kentender_strategy.strategy_review_panel");
 								args: { plan_name: planName },
 								callback() {
 									frappe.show_alert({ message: __("Submitted"), indicator: "green" });
+									delete readinessCacheByPlan[planName];
+									emitWorkflowChanged(planName);
 									kentender_strategy.strategy_review_panel.mount(hostEl, planName);
 								},
 								error(r) {
@@ -140,6 +150,8 @@ frappe.provide("kentender_strategy.strategy_review_panel");
 								method: "kentender_strategy.api.strategy_workflow.approve_plan",
 								args: { plan_name: planName },
 								callback() {
+									delete readinessCacheByPlan[planName];
+									emitWorkflowChanged(planName);
 									kentender_strategy.strategy_review_panel.mount(hostEl, planName);
 								},
 							});
@@ -149,6 +161,8 @@ frappe.provide("kentender_strategy.strategy_review_panel");
 								method: "kentender_strategy.api.strategy_workflow.activate_plan",
 								args: { plan_name: planName },
 								callback() {
+									delete readinessCacheByPlan[planName];
+									emitWorkflowChanged(planName);
 									kentender_strategy.strategy_review_panel.mount(hostEl, planName);
 								},
 							});
@@ -158,6 +172,8 @@ frappe.provide("kentender_strategy.strategy_review_panel");
 								method: "kentender_strategy.api.strategy_workflow.return_for_correction",
 								args: { plan_name: planName },
 								callback() {
+									delete readinessCacheByPlan[planName];
+									emitWorkflowChanged(planName);
 									kentender_strategy.strategy_review_panel.mount(hostEl, planName);
 								},
 							});
@@ -167,6 +183,8 @@ frappe.provide("kentender_strategy.strategy_review_panel");
 								method: "kentender_strategy.api.strategy_workflow.archive_plan",
 								args: { plan_name: planName },
 								callback() {
+									delete readinessCacheByPlan[planName];
+									emitWorkflowChanged(planName);
 									kentender_strategy.strategy_review_panel.mount(hostEl, planName);
 								},
 							});
