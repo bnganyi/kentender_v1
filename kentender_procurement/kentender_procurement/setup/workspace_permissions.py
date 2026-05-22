@@ -95,7 +95,30 @@ _KT_WORKSPACE_TO_SIDEBAR: dict[str, str] = {
 	# G0-012 sidebar links (same pattern as DIA / Planning).
 	"strategy management": "Procurement",
 	"budget management": "Procurement",
+	# Module-level and DocType-level routes fallback to this key path in
+	# frappe/ui/sidebar/sidebar.js when route key disambiguation is missing.
+	# Without these keys, /desk/budget/new-* and /desk/strategic-plan/new-*
+	# frequently collapse to reduced app-specific sidebars.
+	"budget": "Procurement",
+	"strategy": "Procurement",
 }
+
+# Custom desk page + guided form routes → parent sidebar (context-preserving navigation).
+# Keys match Frappe sidebar.js fast-path lookups (route segment or Form/Doctype).
+try:
+	from kentender_core.module_registry import get_route_sidebar_keys
+
+	_KT_ROUTE_TO_SIDEBAR: dict[str, str] = get_route_sidebar_keys()
+except Exception:
+	_KT_ROUTE_TO_SIDEBAR = {
+		"strategy-builder": "Procurement",
+		"budget-builder": "Procurement",
+		"form/strategic plan": "Procurement",
+		"form/budget": "Procurement",
+		"form/demand": "Procurement",
+		"form/procurement package": "Procurement",
+		"form/ktsm supplier profile": "Procurement",
+	}
 
 # G0-012 / R5 sidebar regression: **Strategy Management** and **Budget Management**
 # live in other apps. If those Workspace rows are not ``public`` / are ``is_hidden``,
@@ -176,6 +199,12 @@ def patch_bootinfo(bootinfo) -> None:
 		payload = built.get(sidebar_name) or sidebar_items.get(sidebar_name.lower(), {})
 		if payload:
 			sidebar_items[ws_key] = payload
+
+	# Step 3: builder / form route prefixes (strategy-builder, Form/Demand, …)
+	for route_key, sidebar_name in _KT_ROUTE_TO_SIDEBAR.items():
+		payload = built.get(sidebar_name) or sidebar_items.get(sidebar_name.lower(), {})
+		if payload:
+			sidebar_items[route_key.lower()] = payload
 
 	# Frappe builds `bootinfo.desktop_icons` in `get_bootinfo()` *before* `boot_session`
 	# hooks run. `DesktopIcon.is_permitted` reads `workspace_sidebar_item["procurement"]`

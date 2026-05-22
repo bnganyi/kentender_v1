@@ -61,7 +61,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Draft\nActive\nArchived",
+   "options": "Draft\nSubmitted\nApproved\nActive\nArchived",
    "reqd": 1
   },
   {

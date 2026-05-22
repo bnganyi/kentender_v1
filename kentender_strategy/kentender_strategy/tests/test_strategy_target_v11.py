@@ -38,11 +38,21 @@ class TestStrategyTargetV11(IntegrationTestCase):
 			}
 		)
 		self.program.insert(ignore_permissions=True)
+		self.sub_program = frappe.get_doc(
+			{
+				"doctype": "Sub Program",
+				"strategic_plan": self.plan.name,
+				"program": self.program.name,
+				"title": "SP1",
+			}
+		)
+		self.sub_program.insert(ignore_permissions=True)
 		self.objective = frappe.get_doc(
 			{
 				"doctype": "Strategy Objective",
 				"strategic_plan": self.plan.name,
 				"program": self.program.name,
+				"sub_program": self.sub_program.name,
 				"objective_title": "O1",
 				"order_index": 0,
 			}

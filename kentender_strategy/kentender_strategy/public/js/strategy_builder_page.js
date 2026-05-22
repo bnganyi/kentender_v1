@@ -99,6 +99,27 @@ frappe.provide("kentender_strategy.strategy_builder");
 
 		init() {
 			this.planName = planFromRoute();
+			if (this.planName) {
+				if (typeof kentender_core !== "undefined" && kentender_core.kt_state) {
+					kentender_core.kt_state.save("strategy", {
+						workTab: "structure",
+						selectedRecord: this.planName,
+					});
+				}
+				if (typeof kentender_core !== "undefined" && kentender_core.kt_nav) {
+					kentender_core.kt_nav.toWorkbench("strategy", { restore: true });
+					return;
+				}
+				frappe.set_route("strategy-management");
+				return;
+			}
+			if (
+				typeof kentender_core !== "undefined" &&
+				kentender_core.kt_nav &&
+				typeof kentender_core.kt_nav.ensureSidebar === "function"
+			) {
+				kentender_core.kt_nav.ensureSidebar("strategy");
+			}
 			if (!this.planName) {
 				this.$wrapper.html(
 					`<div class="alert alert-warning">${__("Open this page from a Strategic Plan (missing plan in the URL).")}</div>`,
@@ -125,6 +146,24 @@ frappe.provide("kentender_strategy.strategy_builder");
 			this.loadTree();
 		}
 
+		mountModuleShellHeader(planTitle) {
+			if (
+				typeof kentender_core === "undefined" ||
+				!kentender_core.kt_shell
+			) {
+				return;
+			}
+			const title = planTitle || this.planName || "";
+			kentender_core.kt_shell.mountHeader(this.$wrapper.find(".kt-sb-module-shell-host"), {
+				moduleId: "strategy",
+				recordTitle: title,
+				taskLabel:
+					kentender_core.kt_nav && typeof kentender_core.kt_nav.taskLabel === "function"
+						? kentender_core.kt_nav.taskLabel("strategy", "builder")
+						: __("Manage Structure"),
+			});
+		}
+
 		renderShell() {
 			const esc = frappe.utils.escape_html;
 			const numericUnitOpts = NUMERIC_UNIT_PRESETS.map(
@@ -136,11 +175,7 @@ frappe.provide("kentender_strategy.strategy_builder");
 			this.$wrapper.html(`
 				<div class="kt-strategy-builder" data-testid="strategy-builder-page">
 					<div class="page-head-content pb-2">
-						<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
-							<button type="button" class="btn btn-xs btn-default kt-sb-back-desktop" data-testid="strategy-builder-back-desktop">${__(
-								"← Back to Desktop",
-							)}</button>
-						</div>
+						<div class="kt-sb-module-shell-host mb-2"></div>
 						<div class="kt-sb-readiness-host small mb-2"></div>
 					</div>
 					<div class="row kt-sb-row">
@@ -322,9 +357,7 @@ frappe.provide("kentender_strategy.strategy_builder");
 			this.$wrapper.on("change", "[data-testid='target-unit-select']", function () {
 				me.syncNumericUnitOtherVisibility();
 			});
-			this.$wrapper.find("[data-testid='strategy-builder-back-desktop']").on("click", () => {
-				frappe.set_route("/desk");
-			});
+			this.mountModuleShellHeader();
 		}
 
 		syncNumericUnitOtherVisibility() {
@@ -526,6 +559,11 @@ frappe.provide("kentender_strategy.strategy_builder");
 						if (payload.plan.end_year != null) {
 							me.planMeta.end_year = payload.plan.end_year;
 						}
+						me.mountModuleShellHeader(
+							payload.plan.strategic_plan_name || payload.plan.name || me.planName,
+						);
+					} else {
+						me.mountModuleShellHeader();
 					}
 					me.nodeByName = {};
 					me.flatNodes.forEach((n) => {

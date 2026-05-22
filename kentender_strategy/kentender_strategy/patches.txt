@@ -8,3 +8,4 @@ kentender_strategy.patches.v1.strategy_target_v11_pre_migrate
 kentender_strategy.patches.v1.migrate_strategy_node_to_typed
 kentender_strategy.patches.v1.backfill_strategy_reference_codes
 kentender_strategy.patches.v1.backfill_strategy_display_titles
+kentender_strategy.patches.v1.backfill_four_level_strategy_hierarchy

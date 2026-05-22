@@ -108,23 +108,31 @@
 		return "";
 	}
 
-	function renderBuilderBreadcrumbs() {
-		const { desk, workspace } = builderBreadcrumbHrefs();
-		const icon = builderMonitorIconHtml();
+	function renderShellHeadHost() {
+		return `<div class="kt-bb-module-shell-host mb-2"></div>`;
+	}
+
+	function renderWorkspaceHeaderBlock(opts) {
+		opts = opts || {};
+		const subtitle = opts.subtitle != null ? opts.subtitle : "";
+		const title =
+			opts.title != null
+				? opts.title
+				: typeof kentender_core !== "undefined" && kentender_core.kt_nav
+					? kentender_core.kt_nav.taskLabel("budget", "builder") || __("Manage Allocations")
+					: __("Manage Allocations");
 		return (
-			`<nav class="kt-bb-page-nav" aria-label="${escapeHtml(__("Breadcrumb"))}">` +
-			`<ul class="nav d-sm-flex navbar-breadcrumbs ellipsis" data-testid="budget-builder-nav">` +
-			`<li><a href="${escapeHtml(desk)}">${icon}</a></li>` +
-			`<li class="ellipsis"><a href="${escapeHtml(workspace)}" data-testid="budget-builder-back-to-landing">${escapeHtml(
-				__("Budget Management")
-			)}</a></li>` +
-			`<li class="disabled ellipsis"><a href="javascript:void(0)">${escapeHtml(__("Budget Builder"))}</a></li>` +
-			`</ul></nav>`
+			`<div class="kt-budget-workspace-header mb-3">` +
+			`<div class="kt-budget-header-row">` +
+			`<h2 class="kt-budget-page-title h4 mb-2">${escapeHtml(title)}</h2>` +
+			`</div>` +
+			`<p class="kt-budget-page-intro text-muted mb-0" data-testid="budget-builder-intro">${escapeHtml(subtitle)}</p>` +
+			`</div>`
 		);
 	}
 
 	/**
-	 * Standard desk: full-width `.page-head` (breadcrumbs) + container body.
+	 * Standard desk: full-width `.page-head` (module shell) + container body.
 	 * Body uses `kt-budget-builder-shell` so `budget_workspace.css` tokens apply (same as landing).
 	 */
 	function deskPageLayout(headInnerHtml, bodyInnerHtml) {
@@ -141,26 +149,6 @@
 		);
 	}
 
-	function renderWorkspaceHeaderBlock(opts) {
-		opts = opts || {};
-		const subtitle = opts.subtitle != null ? opts.subtitle : "";
-		const title = opts.title != null ? opts.title : __("Budget Builder");
-		return (
-			`<div class="kt-budget-workspace-header mb-3">` +
-			`<div class="kt-budget-header-row">` +
-			`<h2 class="kt-budget-page-title h4 mb-2">${escapeHtml(title)}</h2>` +
-			`<div class="kt-budget-header-cta" data-testid="budget-builder-header-cta">` +
-			(opts.showBack === false
-				? ""
-				: `<button type="button" class="btn btn-default btn-sm" data-testid="budget-builder-back-button">${escapeHtml(
-						__("Back to Budgets")
-					)}</button>`) +
-			`</div></div>` +
-			`<p class="kt-budget-page-intro text-muted mb-0" data-testid="budget-builder-intro">${escapeHtml(subtitle)}</p>` +
-			`</div>`
-		);
-	}
-
 	class BudgetBuilderPage {
 		constructor($wrapper) {
 			this.$wrapper = $wrapper;
@@ -172,15 +160,41 @@
 			this.linesFilter = "active";
 		}
 
+		mountModuleShellHeader() {
+			if (
+				typeof kentender_core === "undefined" ||
+				!kentender_core.kt_shell
+			) {
+				return;
+			}
+			const budget = (this.payload && this.payload.budget) || {};
+			const intro = displayBudgetLabel(budget.budget_name || budget.name || "");
+			const st = String(budget.status || "Draft").trim();
+			const statusHtml =
+				`<span class="${budgetBadgeClass(st)}" data-testid="budget-builder-status-badge" data-kt-status="${escapeHtml(
+					statusKeyFromRaw(st),
+				)}">${escapeHtml(__(st))}</span>`;
+			kentender_core.kt_shell.mountHeader(this.$wrapper.find(".kt-bb-module-shell-host"), {
+				moduleId: "budget",
+				recordTitle: intro || this.budgetName || "",
+				taskLabel:
+					kentender_core.kt_nav && typeof kentender_core.kt_nav.taskLabel === "function"
+						? kentender_core.kt_nav.taskLabel("budget", "builder")
+						: __("Manage Allocations"),
+				statusHtml: statusHtml,
+			});
+		}
+
 		init() {
 			this.budgetName = budgetFromRoute();
 			if (!this.budgetName) {
-				const headHtml = renderBuilderBreadcrumbs();
+				const headHtml = renderShellHeadHost();
 				const bodyHtml =
 					renderWorkspaceHeaderBlock({ subtitle: "", showBack: false }) +
 					`<div class="alert alert-warning">${__("Open this page from a Budget (missing budget in URL).")}</div>`;
 				this.$wrapper.html(deskPageLayout(headHtml, bodyHtml));
 				this.applyDocumentTitle();
+				this.mountModuleShellHeader();
 				return;
 			}
 			this.renderLoading();
@@ -207,12 +221,13 @@
 		}
 
 		renderLoading() {
-			const headHtml = renderBuilderBreadcrumbs();
+			const headHtml = renderShellHeadHost();
 			const bodyHtml =
 				renderWorkspaceHeaderBlock({ subtitle: "" }) +
 				`<div class="text-muted small">${__("Loading…")}</div>`;
 			this.$wrapper.html(deskPageLayout(headHtml, bodyHtml));
 			this.applyDocumentTitle();
+			this.mountModuleShellHeader();
 		}
 
 		load() {
@@ -224,6 +239,8 @@
 				})
 				.then((r) => {
 					me.payload = r.message || {};
+					const st = String(((me.payload.budget || {}).status) || "").trim();
+					me.readOnly = st === "Submitted" || st === "Approved";
 					const lines = me.payload.budget_lines || [];
 					if (me.selectedBudgetLineName && !lines.some((p) => p.name === me.selectedBudgetLineName)) {
 						me.selectedBudgetLineName = null;
@@ -231,12 +248,13 @@
 					me.render();
 				})
 				.catch(() => {
-					const headHtml = renderBuilderBreadcrumbs();
+					const headHtml = renderShellHeadHost();
 					const bodyHtml =
 						renderWorkspaceHeaderBlock({ subtitle: "" }) +
 						`<div class="alert alert-danger">${__("Could not load Budget Builder data.")}</div>`;
 					me.$wrapper.html(deskPageLayout(headHtml, bodyHtml));
 					me.applyDocumentTitle();
+					me.mountModuleShellHeader();
 				});
 		}
 
@@ -540,7 +558,7 @@
 					__(st),
 				)}</span>` +
 				`</div>`;
-			const headHtml = renderBuilderBreadcrumbs();
+			const headHtml = renderShellHeadHost();
 			const bodyHtml =
 				renderWorkspaceHeaderBlock({ subtitle: intro }) +
 				statusRow +
@@ -597,6 +615,7 @@
 				.toggleClass("kt-budget-builder-shell--locked", !!this.readOnly);
 			this.applyDocumentTitle();
 			this.bindHandlers();
+			this.mountModuleShellHeader();
 		}
 
 		confirmRemoveBudgetLine() {
@@ -741,17 +760,6 @@
 
 	bindHandlers() {
 		const me = this;
-		function bindBack(el) {
-			$(el).on("click", function (e) {
-				if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
-					return;
-				}
-				e.preventDefault();
-				frappe.set_route("Workspaces", "Budget Management");
-			});
-		}
-		bindBack(this.$wrapper.find("[data-testid='budget-builder-back-to-landing']"));
-		bindBack(this.$wrapper.find("[data-testid='budget-builder-back-button']"));
 			this.$wrapper.find(".kt-budget-row[data-budget-line]").on("click", function () {
 				me.selectedBudgetLineName = $(this).attr("data-budget-line") || null;
 				me.render();

@@ -8,6 +8,7 @@
  "field_order": [
   "strategic_plan",
   "program",
+  "sub_program",
   "objective_title",
   "objective_code",
   "description",
@@ -28,6 +29,15 @@
    "in_list_view": 1,
    "label": "Program",
    "options": "Strategy Program",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "sub_program",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Sub-program",
+   "options": "Sub Program",
    "reqd": 1,
    "search_index": 1
   },

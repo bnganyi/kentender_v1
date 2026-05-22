@@ -94,6 +94,17 @@ def get_budget_landing_data():
 	)
 	allocation_pct = (allocated_sum / total_budget_sum * 100.0) if total_budget_sum else 0.0
 
+	plan_names = {b.strategic_plan for b in budgets if b.get("strategic_plan")}
+	plan_titles: dict[str, str] = {}
+	if plan_names:
+		for row in frappe.get_all(
+			"Strategic Plan",
+			filters={"name": ["in", list(plan_names)]},
+			fields=["name", "strategic_plan_name"],
+			limit=5000,
+		):
+			plan_titles[row.name] = (row.strategic_plan_name or row.name or "").strip()
+
 	out_budgets = []
 	for b in budgets:
 		total = flt(b.get("total_budget_amount"))
@@ -112,6 +123,8 @@ def get_budget_landing_data():
 				"fiscal_year": b.fiscal_year,
 				"status": b.status,
 				"strategic_plan": b.get("strategic_plan"),
+				"strategic_plan_title": plan_titles.get(b.get("strategic_plan"))
+				or b.get("strategic_plan"),
 				"currency": b.currency,
 				"total_budget_amount": total,
 				"owner": b.get("owner"),

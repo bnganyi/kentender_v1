@@ -105,14 +105,19 @@ class BudgetLine(Document):
 					title=_("Budget Line"),
 				)
 		if self.output_indicator:
-			obj_plan, obj_prog = frappe.db.get_value(
+			obj_plan, obj_prog, obj_sp = frappe.db.get_value(
 				"Strategy Objective",
 				self.output_indicator,
-				("strategic_plan", "program"),
+				("strategic_plan", "program", "sub_program"),
 			)
 			if not obj_plan or obj_plan != self.strategic_plan or obj_prog != self.program:
 				frappe.throw(
 					_("Output Indicator must belong to the selected plan and program (BL-006)."),
+					title=_("Budget Line"),
+				)
+			if self.sub_program and obj_sp and obj_sp != self.sub_program:
+				frappe.throw(
+					_("Output Indicator must belong to the selected Sub-program (BL-006)."),
 					title=_("Budget Line"),
 				)
 		if self.performance_target:

@@ -2,6 +2,18 @@ import frappe
 from frappe import _
 from frappe.utils import cint, getdate
 
+NODE_TYPE_ALIASES = {
+	"Objective": "Indicator",
+	"Output Indicator": "Indicator",
+	"Sub-program": "SubProgram",
+	"Sub Program": "SubProgram",
+}
+
+
+def normalize_node_type(node_type: str) -> str:
+	nt = (node_type or "").strip()
+	return NODE_TYPE_ALIASES.get(nt, nt)
+
 
 def get_plan_or_throw(plan_name: str):
 	if not plan_name or not frappe.db.exists("Strategic Plan", plan_name):
@@ -15,7 +27,7 @@ def build_tree(plan_name: str) -> dict:
 	programs = frappe.db.get_all(
 		"Strategy Program",
 		filters={"strategic_plan": plan_name},
-		fields=["name", "program_title", "description", "order_index"],
+		fields=["name", "program_title", "description", "order_index", "program_code"],
 		order_by="order_index asc, name asc",
 	)
 	for p in programs:
@@ -28,78 +40,105 @@ def build_tree(plan_name: str) -> dict:
 				"description": p.description or "",
 				"order_index": p.order_index or 0,
 				"doctype_ref": "Strategy Program",
+				"code": p.program_code or "",
 			}
 		)
-		objectives = frappe.db.get_all(
-			"Strategy Objective",
+		sub_programs = frappe.db.get_all(
+			"Sub Program",
 			filters={"strategic_plan": plan_name, "program": p.name},
-			fields=["name", "objective_title", "description", "order_index"],
-			order_by="order_index asc, name asc",
+			fields=["name", "title", "sub_program_code"],
+			order_by="modified asc, name asc",
 		)
-		for o in objectives:
+		for sp in sub_programs:
 			rows.append(
 				{
-					"name": o.name,
+					"name": sp.name,
 					"parent": p.name,
-					"node_type": "Objective",
-					"title": o.objective_title,
-					"description": o.description or "",
-					"order_index": o.order_index or 0,
-					"doctype_ref": "Strategy Objective",
+					"node_type": "SubProgram",
+					"title": sp.title,
+					"description": "",
+					"order_index": 0,
+					"doctype_ref": "Sub Program",
+					"code": sp.sub_program_code or "",
 				}
 			)
-			targets = frappe.db.get_all(
-				"Strategy Target",
-				filters={"strategic_plan": plan_name, "objective": o.name},
-				fields=[
-					"name",
-					"target_title",
-					"description",
-					"order_index",
-					"measurement_type",
-					"target_period_type",
-					"target_year",
-					"target_due_date",
-					"target_value_numeric",
-					"target_value_text",
-					"target_unit",
-					"baseline_value_numeric",
-					"baseline_value_text",
-					"baseline_year",
-				],
+			objectives = frappe.db.get_all(
+				"Strategy Objective",
+				filters={"strategic_plan": plan_name, "sub_program": sp.name},
+				fields=["name", "objective_title", "description", "order_index", "objective_code"],
 				order_by="order_index asc, name asc",
 			)
-			for t in targets:
+			for o in objectives:
 				rows.append(
 					{
-						"name": t.name,
-						"parent": o.name,
-						"node_type": "Target",
-						"title": t.target_title,
-						"description": t.description or "",
-						"order_index": t.order_index or 0,
-						"doctype_ref": "Strategy Target",
-						"measurement_type": t.measurement_type,
-						"target_period_type": t.target_period_type,
-						"target_year": t.target_year,
-						"target_due_date": t.target_due_date,
-						"target_value_numeric": t.target_value_numeric,
-						"target_value_text": t.target_value_text,
-						"target_unit": t.target_unit or "",
-						"baseline_value_numeric": t.baseline_value_numeric,
-						"baseline_value_text": t.baseline_value_text,
-						"baseline_year": t.baseline_year,
+						"name": o.name,
+						"parent": sp.name,
+						"node_type": "Indicator",
+						"title": o.objective_title,
+						"description": o.description or "",
+						"order_index": o.order_index or 0,
+						"doctype_ref": "Strategy Objective",
+						"code": o.objective_code or "",
 					}
 				)
+				targets = frappe.db.get_all(
+					"Strategy Target",
+					filters={"strategic_plan": plan_name, "objective": o.name},
+					fields=[
+						"name",
+						"target_title",
+						"description",
+						"order_index",
+						"target_code",
+						"measurement_type",
+						"target_period_type",
+						"target_year",
+						"target_due_date",
+						"target_value_numeric",
+						"target_value_text",
+						"target_unit",
+						"baseline_value_numeric",
+						"baseline_value_text",
+						"baseline_year",
+					],
+					order_by="order_index asc, name asc",
+				)
+				for t in targets:
+					rows.append(
+						{
+							"name": t.name,
+							"parent": o.name,
+							"node_type": "Target",
+							"title": t.target_title,
+							"description": t.description or "",
+							"order_index": t.order_index or 0,
+							"doctype_ref": "Strategy Target",
+							"code": t.target_code or "",
+							"measurement_type": t.measurement_type,
+							"target_period_type": t.target_period_type,
+							"target_year": t.target_year,
+							"target_due_date": t.target_due_date,
+							"target_value_numeric": t.target_value_numeric,
+							"target_value_text": t.target_value_text,
+							"target_unit": t.target_unit or "",
+							"baseline_value_numeric": t.baseline_value_numeric,
+							"baseline_value_text": t.baseline_value_text,
+							"baseline_year": t.baseline_year,
+						}
+					)
 
-	counts = {"programs": 0, "objectives": 0, "targets": 0}
+	counts = {"programs": 0, "sub_programs": 0, "indicators": 0, "targets": 0}
 	for r in rows:
-		if r["node_type"] == "Program":
+		nt = r["node_type"]
+		if nt == "Program":
 			counts["programs"] += 1
-		elif r["node_type"] == "Objective":
-			counts["objectives"] += 1
-		elif r["node_type"] == "Target":
+		elif nt == "SubProgram":
+			counts["sub_programs"] += 1
+		elif nt == "Indicator":
+			counts["indicators"] += 1
+		elif nt == "Target":
 			counts["targets"] += 1
+	counts["objectives"] = counts["indicators"]
 
 	return {
 		"plan": {
@@ -108,6 +147,7 @@ def build_tree(plan_name: str) -> dict:
 			"description": plan.description or "",
 			"start_year": plan.start_year,
 			"end_year": plan.end_year,
+			"status": plan.status,
 		},
 		"nodes": rows,
 		"counts": counts,
@@ -115,6 +155,7 @@ def build_tree(plan_name: str) -> dict:
 
 
 def validate_new_node(plan_name: str, parent_name: str | None, node_type: str) -> None:
+	node_type = normalize_node_type(node_type)
 	get_plan_or_throw(plan_name)
 	if node_type == "Program":
 		if parent_name:
@@ -122,15 +163,27 @@ def validate_new_node(plan_name: str, parent_name: str | None, node_type: str) -
 		return
 	if not parent_name:
 		frappe.throw(_("Parent node is required."))
-	if node_type == "Objective":
+	if node_type == "SubProgram":
 		if not frappe.db.exists("Strategy Program", parent_name):
-			frappe.throw(_("Objective must be created under a Program."))
+			frappe.throw(_("Sub-program must be created under a Program."))
 		p = frappe.get_doc("Strategy Program", parent_name)
 		if p.strategic_plan != plan_name:
 			frappe.throw(_("Parent belongs to a different Strategic Plan."))
+	elif node_type == "Indicator":
+		if frappe.db.exists("Sub Program", parent_name):
+			sp = frappe.get_doc("Sub Program", parent_name)
+			if sp.strategic_plan != plan_name:
+				frappe.throw(_("Parent belongs to a different Strategic Plan."))
+			return
+		if frappe.db.exists("Strategy Program", parent_name):
+			frappe.throw(
+				_("Indicator must be created under a Sub-program, not directly under a Program."),
+				title=_("Invalid hierarchy"),
+			)
+		frappe.throw(_("Indicator must be created under a Sub-program."))
 	elif node_type == "Target":
 		if not frappe.db.exists("Strategy Objective", parent_name):
-			frappe.throw(_("Target must be created under an Objective."))
+			frappe.throw(_("Target must be created under an Indicator."))
 		o = frappe.get_doc("Strategy Objective", parent_name)
 		if o.strategic_plan != plan_name:
 			frappe.throw(_("Parent belongs to a different Strategic Plan."))
@@ -151,10 +204,10 @@ def _next_order_index_program(plan_name: str) -> int:
 	return (rows[0].order_index or 0) + 1
 
 
-def _next_order_index_objective(plan_name: str, program_name: str) -> int:
+def _next_order_index_objective(plan_name: str, sub_program_name: str) -> int:
 	rows = frappe.db.get_all(
 		"Strategy Objective",
-		filters={"strategic_plan": plan_name, "program": program_name},
+		filters={"strategic_plan": plan_name, "sub_program": sub_program_name},
 		fields=["order_index"],
 		order_by="order_index desc",
 		limit=1,
@@ -183,6 +236,7 @@ def create_node(
 	node_type: str,
 	initial_data: dict | None = None,
 ) -> str:
+	node_type = normalize_node_type(node_type)
 	validate_new_node(plan_name, parent_name, node_type)
 	data = initial_data or {}
 	if node_type == "Program":
@@ -198,12 +252,27 @@ def create_node(
 		doc.insert()
 		return doc.name
 
-	if node_type == "Objective":
+	if node_type == "SubProgram":
+		prog = frappe.get_doc("Strategy Program", parent_name)
+		doc = frappe.get_doc(
+			{
+				"doctype": "Sub Program",
+				"strategic_plan": plan_name,
+				"program": parent_name,
+				"title": data.get("node_title") or data.get("title") or _("Untitled"),
+			}
+		)
+		doc.insert()
+		return doc.name
+
+	if node_type == "Indicator":
+		sp = frappe.get_doc("Sub Program", parent_name)
 		doc = frappe.get_doc(
 			{
 				"doctype": "Strategy Objective",
 				"strategic_plan": plan_name,
-				"program": parent_name,
+				"program": sp.program,
+				"sub_program": parent_name,
 				"objective_title": data.get("node_title") or data.get("objective_title") or _("Untitled"),
 				"description": data.get("node_description") or data.get("description"),
 				"order_index": _next_order_index_objective(plan_name, parent_name),
@@ -212,7 +281,6 @@ def create_node(
 		doc.insert()
 		return doc.name
 
-	# Target
 	obj = frappe.get_doc("Strategy Objective", parent_name)
 	mt = data.get("measurement_type") or "Numeric"
 	ptype = data.get("target_period_type") or "Annual"
@@ -274,8 +342,31 @@ def update_node(node_name: str, data: dict) -> None:
 			doc.description = data["node_description"]
 		doc.save()
 		return
+	if frappe.db.exists("Sub Program", node_name):
+		doc = frappe.get_doc("Sub Program", node_name)
+		if data.get("parent_name"):
+			pname = data["parent_name"]
+			if not frappe.db.exists("Strategy Program", pname):
+				frappe.throw(_("Parent program not found."))
+			parent_prog = frappe.get_doc("Strategy Program", pname)
+			doc.program = parent_prog.name
+			doc.strategic_plan = parent_prog.strategic_plan
+		if "node_title" in data and data["node_title"] is not None:
+			doc.title = data["node_title"]
+		if "title" in data and data["title"] is not None:
+			doc.title = data["title"]
+		doc.save()
+		return
 	if frappe.db.exists("Strategy Objective", node_name):
 		doc = frappe.get_doc("Strategy Objective", node_name)
+		if data.get("parent_name"):
+			spname = data["parent_name"]
+			if not frappe.db.exists("Sub Program", spname):
+				frappe.throw(_("Parent sub-program not found."))
+			sub_program = frappe.get_doc("Sub Program", spname)
+			doc.sub_program = sub_program.name
+			doc.program = sub_program.program
+			doc.strategic_plan = sub_program.strategic_plan
 		if "node_title" in data and data["node_title"] is not None:
 			doc.objective_title = data["node_title"]
 		if "node_description" in data and data["node_description"] is not None:
@@ -284,6 +375,14 @@ def update_node(node_name: str, data: dict) -> None:
 		return
 	if frappe.db.exists("Strategy Target", node_name):
 		doc = frappe.get_doc("Strategy Target", node_name)
+		if data.get("parent_name"):
+			oname = data["parent_name"]
+			if not frappe.db.exists("Strategy Objective", oname):
+				frappe.throw(_("Parent indicator not found."))
+			objective = frappe.get_doc("Strategy Objective", oname)
+			doc.objective = objective.name
+			doc.program = objective.program
+			doc.strategic_plan = objective.strategic_plan
 		for src, dest in (
 			("node_title", "target_title"),
 			("node_description", "description"),
@@ -319,13 +418,20 @@ def update_node(node_name: str, data: dict) -> None:
 
 def delete_node(node_name: str) -> None:
 	if frappe.db.exists("Strategy Program", node_name):
-		if frappe.db.count("Strategy Objective", {"program": node_name}):
-			frappe.throw(_("Delete objectives under this program first."))
+		if frappe.db.count("Sub Program", {"program": node_name}):
+			frappe.throw(_("Delete sub-programs under this program first."))
+		if frappe.db.count("Strategy Target", {"program": node_name}):
+			frappe.throw(_("Delete targets under this program first."))
 		frappe.delete_doc("Strategy Program", node_name)
+		return
+	if frappe.db.exists("Sub Program", node_name):
+		if frappe.db.count("Strategy Objective", {"sub_program": node_name}):
+			frappe.throw(_("Delete indicators under this sub-program first."))
+		frappe.delete_doc("Sub Program", node_name)
 		return
 	if frappe.db.exists("Strategy Objective", node_name):
 		if frappe.db.count("Strategy Target", {"objective": node_name}):
-			frappe.throw(_("Delete targets under this objective first."))
+			frappe.throw(_("Delete targets under this indicator first."))
 		frappe.delete_doc("Strategy Objective", node_name)
 		return
 	if frappe.db.exists("Strategy Target", node_name):

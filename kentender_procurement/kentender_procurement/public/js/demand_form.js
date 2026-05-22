@@ -45,6 +45,10 @@ kentender_procurement.dia_demand_form = (function () {
 	let diaNavGuardBound = false;
 
 	function routeToDiaWorkspace() {
+		if (typeof kentender_core !== "undefined" && kentender_core.kt_nav) {
+			kentender_core.kt_nav.toWorkbench("dia", { restore: true });
+			return;
+		}
 		if (typeof frappe !== "undefined" && typeof frappe.set_route === "function") {
 			frappe.set_route("Workspaces", "Demand Intake and Approval");
 		}
@@ -1010,6 +1014,16 @@ kentender_procurement.dia_demand_form = (function () {
 		const title = frm.is_new()
 			? __("New Demand")
 			: frm.doc.demand_id || frm.doc.name || __("Demand");
+		const $host = $(frm.wrapper).find(".kt-dia-module-shell-host");
+		if ($host.length && typeof kentender_core !== "undefined" && kentender_core.kt_shell) {
+			kentender_core.kt_shell.mountHeader($host, {
+				moduleId: "dia",
+				recordTitle: title,
+				taskLabel: frm.is_new()
+					? __("Create Demand")
+					: kentender_core.kt_nav.taskLabel("dia", "edit"),
+			});
+		}
 		$s.find("[data-dia-fh-title]").text(title);
 		const st = frm.is_new() ? __("Draft") : frm.doc.status || "";
 		$s.find("[data-dia-fh-badge]").html(statusBadgeHtml(st));
@@ -1025,12 +1039,21 @@ kentender_procurement.dia_demand_form = (function () {
 			refresh(frm);
 			return;
 		}
+		const $shellHost = $('<div class="kt-dia-module-shell-host mb-2"></div>');
+		$(frm.wrapper).prepend($shellHost);
+		if (typeof kentender_core !== "undefined" && kentender_core.kt_shell) {
+			kentender_core.kt_shell.mountHeader($shellHost, {
+				moduleId: "dia",
+				recordTitle: frm.is_new()
+					? __("New Demand")
+					: frm.doc.demand_id || frm.doc.name || __("Demand"),
+				taskLabel: frm.is_new()
+					? __("Create Demand")
+					: kentender_core.kt_nav.taskLabel("dia", "edit"),
+			});
+		}
 		const inner =
 			'<div class="kt-dia-builder-shell__inner">' +
-			'<button type="button" class="btn btn-xs btn-default kt-dia-builder-shell__back" data-testid="dia-builder-back">' +
-			"← " +
-			esc(__("Demand Intake and Approval")) +
-			"</button>" +
 			'<div class="kt-dia-builder-shell__titlewrap">' +
 			'<span class="kt-dia-builder-shell__title" data-dia-fh-title></span>' +
 			'<span class="kt-dia-builder-shell__badges" data-dia-fh-badge></span>' +
@@ -1039,18 +1062,14 @@ kentender_procurement.dia_demand_form = (function () {
 			"</div>" +
 			'<p class="text-muted small mb-0 kt-dia-builder-shell__hint" data-dia-fh-hint style="display:none"></p>';
 		const $shell = $('<div class="kt-dia-builder-shell" data-testid="dia-builder-page">' + inner + "</div>");
+		$shellHost.after($shell);
 		$(frm.wrapper).addClass("kt-dia-demand-form-layout");
-		$(frm.wrapper).prepend($shell);
 		frm._dia_builder_shell = $shell;
 		const $strip = $(
 			'<div class="kt-dia-budget-decision-strip" data-testid="dia-builder-budget-strip" style="display:none"></div>'
 		);
 		$shell.after($strip);
 		frm._dia_budget_strip = $strip;
-		$shell.find(".kt-dia-builder-shell__back").on("click", function (e) {
-			e.preventDefault();
-			routeToDiaWorkspace();
-		});
 		refresh(frm);
 	}
 

@@ -21,6 +21,7 @@ def run():
 def _wipe_plan_content(plan_name: str):
 	frappe.db.delete("Strategy Target", {"strategic_plan": plan_name})
 	frappe.db.delete("Strategy Objective", {"strategic_plan": plan_name})
+	frappe.db.delete("Sub Program", {"strategic_plan": plan_name})
 	frappe.db.delete("Strategy Program", {"strategic_plan": plan_name})
 
 
@@ -50,7 +51,6 @@ def _ensure_basic_plan():
 	plan.insert(ignore_permissions=True)
 	pn = plan.name
 
-	# Programs
 	p1 = frappe.get_doc(
 		{
 			"doctype": "Strategy Program",
@@ -74,12 +74,33 @@ def _ensure_basic_plan():
 	)
 	p2.insert(ignore_permissions=True)
 
-	# Objectives
+	sp1 = frappe.get_doc(
+		{
+			"doctype": "Sub Program",
+			"strategic_plan": pn,
+			"program": p1.name,
+			"title": "Rural Access Initiatives",
+			"sub_program_code": "SP001",
+		}
+	)
+	sp1.insert(ignore_permissions=True)
+	sp2 = frappe.get_doc(
+		{
+			"doctype": "Sub Program",
+			"strategic_plan": pn,
+			"program": p2.name,
+			"title": "Workforce Expansion",
+			"sub_program_code": "SP002",
+		}
+	)
+	sp2.insert(ignore_permissions=True)
+
 	o1 = frappe.get_doc(
 		{
 			"doctype": "Strategy Objective",
 			"strategic_plan": pn,
 			"program": p1.name,
+			"sub_program": sp1.name,
 			"objective_title": "Increase rural healthcare coverage",
 			"objective_code": "O001",
 			"description": "Improve population access to healthcare services in rural and underserved counties.",
@@ -92,6 +113,7 @@ def _ensure_basic_plan():
 			"doctype": "Strategy Objective",
 			"strategic_plan": pn,
 			"program": p1.name,
+			"sub_program": sp1.name,
 			"objective_title": "Improve maternal health service access",
 			"objective_code": "O002",
 			"description": "Expand access to maternal care infrastructure and referral capability.",
@@ -104,6 +126,7 @@ def _ensure_basic_plan():
 			"doctype": "Strategy Objective",
 			"strategic_plan": pn,
 			"program": p2.name,
+			"sub_program": sp2.name,
 			"objective_title": "Expand nursing and clinical workforce capacity",
 			"objective_code": "O003",
 			"description": "Increase trained personnel and improve workforce deployment.",
@@ -112,7 +135,6 @@ def _ensure_basic_plan():
 	)
 	o3.insert(ignore_permissions=True)
 
-	# Targets (§8.5)
 	targets = [
 		{
 			"strategic_plan": pn,
@@ -180,6 +202,8 @@ def _ensure_basic_plan():
 	return {
 		"plan": pn,
 		"programs": 2,
+		"sub_programs": 2,
+		"indicators": 3,
 		"objectives": 3,
 		"targets": 4,
 	}

@@ -7,14 +7,13 @@ import {
 	openStrategyBuilder,
 } from '../../helpers/strategyBuilder';
 
-test('Empty Strategy Builder shows correct first action', async ({ page }, testInfo) => {
+test('Empty Structure tab shows correct first action', async ({ page }, testInfo) => {
 	const plan = isolatedPlanName(testInfo);
 	await ensureTestStrategicPlan(page, plan);
 	await clearStrategyNodes(page, plan);
 	await openStrategyBuilder(page, plan);
 
-	await expect(page.getByTestId('empty-tree-message')).toBeVisible();
-	await expect(page.getByTestId('add-program-button')).toBeVisible();
-	await expect(page.getByTestId('add-objective-button')).toBeDisabled();
-	await expect(page.getByTestId('add-target-button')).toBeDisabled();
+	await expect(page.getByTestId('structure-overview-empty')).toBeVisible();
+	await page.getByTestId('structure-subtab-programs').click();
+	await expect(page.getByTestId('structure-add-program')).toBeVisible();
 });

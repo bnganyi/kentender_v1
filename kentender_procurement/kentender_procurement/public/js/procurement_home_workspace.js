@@ -1,4 +1,4 @@
-// Procurement Home workbench — Desk shell (IA v1.0 §5.1, pack §11.1).
+// Procurement Home workbench — Desk shell (IA v1.0 §5.1).
 
 (function () {
 	const HOME_WS = "Procurement Home";
@@ -140,6 +140,7 @@
 	}
 
 	function injectHomeLandingShell() {
+		/* Do not use global getElementById — a hidden #page-Workspaces can retain a shell and block the visible page. */
 		if (homeShellPresentOnActiveWsPage()) {
 			return { ok: true, inserted: false };
 		}
@@ -150,338 +151,131 @@
 		wrap.className = "kt-ph-injected-shell";
 		wrap.setAttribute("data-testid", "ph-landing-page");
 		wrap.innerHTML =
-			'<div id="kt-ph-active-journeys" class="kt-ph-section kt-surface plc-procurement-home-active-journeys" data-testid="plc-procurement-home-active-journeys">' +
-			'<h3 class="kt-ph-section-title h6 mb-2">' +
-			escapeHtml(__("Active Procurement Journeys")) +
-			"</h3>" +
-			'<div id="kt-ph-active-journeys-host" class="kt-ph-active-journeys-host">' +
-			'<p class="text-muted small mb-0 kt-ph-active-journeys-loading">' +
-			escapeHtml(__("Loading journeys…")) +
+			'<div class="kt-ph-workspace-header kt-ph-workspace-header--compact mb-2">' +
+			'<div class="kt-ph-header-row">' +
+			"<div>" +
+			'<h2 class="kt-ph-page-title h5 mb-1" data-testid="ph-page-title">' +
+			escapeHtml(__("Procurement Home")) +
+			"</h2>" +
+			'<p class="kt-ph-page-intro text-muted small mb-0">' +
+			escapeHtml(
+				__(
+					"Role-aware entry point: demand intake, planning, and settings — without raw configuration clutter in the main rail."
+				)
+			) +
 			"</p>" +
 			"</div>" +
 			"</div>" +
-			'<div id="kt-ph-needs-action" class="kt-ph-section kt-surface plc-procurement-home-needs-action">' +
-			'<h3 class="kt-ph-section-title h6 mb-2">' +
-			escapeHtml(__("Needs My Action")) +
-			"</h3>" +
-			'<div id="kt-ph-needs-action-host" class="kt-ph-journey-panel-host">' +
-			'<p class="text-muted small mb-0 kt-ph-panel-loading">' +
-			escapeHtml(__("Loading journeys…")) +
-			"</p>" +
+			'<div id="kt-ph-hints" class="small text-muted mb-1"></div>' +
+			'<div class="mb-1"><div class="row g-2 align-items-stretch" id="kt-ph-kpi-host"></div>' +
+			'<p class="kt-ph-kpi-currency-note text-muted" id="kt-ph-kpi-currency-note" data-testid="ph-kpi-currency-context" hidden></p></div>' +
+			'<div class="kt-ph-section kt-surface kt-ph-actions">' +
+			'<div class="fw-bold small text-muted text-uppercase mb-1">' +
+			escapeHtml(__("Quick links")) +
 			"</div>" +
-			"</div>" +
-			'<div id="kt-ph-blocked-journeys" class="kt-ph-section kt-surface plc-procurement-home-blocked-journeys">' +
-			'<h3 class="kt-ph-section-title h6 mb-2">' +
-			escapeHtml(__("Blocked Journeys")) +
-			"</h3>" +
-			'<div id="kt-ph-blocked-journeys-host" class="kt-ph-journey-panel-host">' +
-			'<p class="text-muted small mb-0 kt-ph-panel-loading">' +
-			escapeHtml(__("Loading journeys…")) +
-			"</p>" +
-			"</div>" +
-			"</div>" +
-			'<div id="kt-ph-ready-for-handoff" class="kt-ph-section kt-surface plc-procurement-home-ready-for-handoff">' +
-			'<h3 class="kt-ph-section-title h6 mb-2">' +
-			escapeHtml(__("Ready for Handoff")) +
-			"</h3>" +
-			'<div id="kt-ph-ready-for-handoff-host" class="kt-ph-journey-panel-host">' +
-			'<p class="text-muted small mb-0 kt-ph-panel-loading">' +
-			escapeHtml(__("Loading journeys…")) +
-			"</p>" +
+			'<button type="button" class="btn btn-primary btn-sm" data-ph-action="new-demand">' +
+			escapeHtml(__("New Demand")) +
+			"</button>" +
+			'<button type="button" class="btn btn-default btn-sm" data-ph-action="open-dia">' +
+			escapeHtml(__("Open Demand Intake & Approval")) +
+			"</button>" +
+			'<button type="button" class="btn btn-default btn-sm" data-ph-action="open-pp">' +
+			escapeHtml(__("Open Procurement Planning")) +
+			"</button>" +
+			'<button type="button" class="btn btn-default btn-sm" data-ph-action="open-pending">' +
+			escapeHtml(__("Open Pending Approvals")) +
+			"</button>" +
 			"</div>" +
 			"</div>";
 
 		const ed = document.getElementById("editorjs");
-		if (ed && esc.contains(ed)) {
-			esc.insertBefore(wrap, ed);
-			ed.style.display = "none";
-		} else {
-			esc.insertBefore(wrap, esc.firstChild);
-		}
+		if (ed && esc.contains(ed)) esc.insertBefore(wrap, ed);
+		else esc.insertBefore(wrap, esc.firstChild);
 
 		ensureHomeDelegatedClicks();
 		return { ok: true, inserted: true };
 	}
 
-	function formatBlockersLabel(item) {
-		const bc = Number(item && item.blocker_count) || 0;
-		const cc = Number(item && item.critical_blocker_count) || 0;
-		if (bc === 0 && cc === 0) {
-			return __("None");
+	function formatKpiValue(row, _fallbackCurrency) {
+		const fmt = row.format || "int";
+		const v = Number(row.value) || 0;
+		if (fmt === "currency") {
+			const n = Math.round(v).toLocaleString(undefined, { maximumFractionDigits: 0 });
+			return escapeHtml(n);
 		}
-		const parts = [];
-		if (cc > 0) {
-			parts.push(cc + " " + __("critical"));
-		}
-		if (bc > 0) {
-			parts.push(bc + " " + __("total"));
-		}
-		return parts.join(", ");
+		return escapeHtml(String(Math.round(v)));
 	}
 
-	function renderHomeJourneyCard(item) {
-		const title = (item && item.journey_title) || "";
-		const code = (item && item.journey_code) || "";
-		const stage = (item && item.current_stage_label) || "";
-		const next = (item && item.next_action) || __("—");
-		const blockers = formatBlockersLabel(item);
-		const tenderCode = (item && item.primary_object_code) || "";
-		let actions =
-			'<button type="button" class="btn btn-primary btn-sm plc-home-open-journey" data-testid="plc-home-open-journey" data-journey-code="' +
-			escapeHtml(code) +
-			'">' +
-			escapeHtml(__("Open Journey")) +
-			"</button>";
-		if (tenderCode) {
-			actions +=
-				'<button type="button" class="btn btn-default btn-sm plc-home-open-tender" data-tender-code="' +
-				escapeHtml(tenderCode) +
+	function applyKpis(payload) {
+		const root = getVisibleWorkspacesPageRoot();
+		const host = (root && root.querySelector("#kt-ph-kpi-host")) || document.getElementById("kt-ph-kpi-host");
+		if (!host) return;
+		const curNote = document.getElementById("kt-ph-kpi-currency-note");
+		const cur = (payload && payload.currency) || "KES";
+		const kpis = (payload && payload.kpis) || [];
+		if (curNote) {
+			const hasCurrency = kpis.some(function (k) {
+				return k && (k.format || "int") === "currency";
+			});
+			if (hasCurrency) {
+				curNote.textContent = __("All monetary figures in {0}").replace("{0}", cur);
+				curNote.hidden = false;
+			} else {
+				curNote.textContent = "";
+				curNote.hidden = true;
+			}
+		}
+		if (!kpis.length) {
+			if (curNote) {
+				curNote.textContent = "";
+				curNote.hidden = true;
+			}
+			host.innerHTML =
+				'<div class="col-12"><p class="text-muted small mb-0">' +
+				escapeHtml(
+					__(
+						"No summary metrics yet — open Demand Intake or Procurement Planning when you have access."
+					)
+				) +
+				"</p></div>";
+			return;
+		}
+		let html = "";
+		for (let i = 0; i < kpis.length; i++) {
+			const k = kpis[i];
+			const tid = k.testid || "ph-kpi-" + (k.id || i);
+			html +=
+				'<div class="col-6 col-md-3">' +
+				'<div class="kt-ph-kpi-card kt-ph-kpi-card--static kt-surface" data-testid="' +
+				escapeHtml(tid) +
 				'">' +
-				escapeHtml(__("Open Tender")) +
-				"</button>";
-		}
-		actions +=
-			'<button type="button" class="btn btn-default btn-sm plc-home-view-evidence" data-journey-code="' +
-			escapeHtml(code) +
-			'">' +
-			escapeHtml(__("View Evidence")) +
-			"</button>";
-		return (
-			'<div class="kt-ph-journey-card kt-surface">' +
-			'<div class="kt-ph-journey-card-title fw-semibold">' +
-			escapeHtml(title) +
-			"</div>" +
-			'<div class="kt-ph-journey-card-meta small text-muted">' +
-			"<div><strong>" +
-			escapeHtml(__("Current stage")) +
-			":</strong> " +
-			escapeHtml(stage) +
-			"</div>" +
-			"<div><strong>" +
-			escapeHtml(__("Next action")) +
-			":</strong> " +
-			escapeHtml(next) +
-			"</div>" +
-			"<div><strong>" +
-			escapeHtml(__("Blockers")) +
-			":</strong> " +
-			escapeHtml(blockers) +
-			"</div>" +
-			"</div>" +
-			'<div class="kt-ph-journey-card-actions">' +
-			actions +
-			"</div>" +
-			"</div>"
-		);
-	}
-
-	function applyActiveJourneys(payload) {
-		const root = getVisibleWorkspacesPageRoot();
-		const host =
-			(root && root.querySelector("#kt-ph-active-journeys-host")) ||
-			document.getElementById("kt-ph-active-journeys-host");
-		if (!host) return;
-		const items = (payload && payload.items) || [];
-		if (!items.length) {
-			host.innerHTML =
-				'<p class="text-muted small mb-0">' +
-				escapeHtml(__("No active procurement journeys.")) +
-				"</p>";
-			return;
-		}
-		let html = "";
-		for (let i = 0; i < items.length; i++) {
-			html += renderHomeJourneyCard(items[i]);
+				'<div class="kt-ph-kpi-label">' +
+				escapeHtml(k.label || "") +
+				"</div>" +
+				'<div class="kt-ph-kpi-value">' +
+				formatKpiValue(k, cur) +
+				"</div></div></div>";
 		}
 		host.innerHTML = html;
 	}
 
-	function loadActiveJourneys() {
-		if (!isHomeWorkspaceRoute()) return;
-		frappe.call({
-			method: "kentender_procurement.procurement_lifecycle.api.journey_api.list_journeys",
-			args: { status: "active", limit: 20 },
-			callback: function (r) {
-				if (!isHomeWorkspaceRoute()) return;
-				const payload = r && r.message;
-				if (!payload || !Array.isArray(payload.items)) {
-					applyActiveJourneys({ items: [] });
-					return;
-				}
-				applyActiveJourneys(payload);
-			},
-			error: function () {
-				if (!isHomeWorkspaceRoute()) return;
-				const root = getVisibleWorkspacesPageRoot();
-				const host =
-					(root && root.querySelector("#kt-ph-active-journeys-host")) ||
-					document.getElementById("kt-ph-active-journeys-host");
-				if (!host) return;
-				host.innerHTML =
-					'<p class="text-muted small mb-0 text-danger">' +
-					escapeHtml(__("Unable to load active journeys.")) +
-					"</p>";
-			},
-		});
-	}
-
-	function applyNeedsActionJourneys(payload) {
+	function applyHints(payload) {
 		const root = getVisibleWorkspacesPageRoot();
-		const host =
-			(root && root.querySelector("#kt-ph-needs-action-host")) ||
-			document.getElementById("kt-ph-needs-action-host");
+		const host = (root && root.querySelector("#kt-ph-hints")) || document.getElementById("kt-ph-hints");
 		if (!host) return;
-		const items = (payload && payload.items) || [];
-		if (!items.length) {
-			host.innerHTML =
-				'<p class="text-muted small mb-0">' +
-				escapeHtml(__("No journeys need your action.")) +
-				"</p>";
-			return;
+		const parts = [];
+		if (payload && !payload.dia_ok && payload.dia_message) {
+			parts.push("<span>" + escapeHtml(String(payload.dia_message)) + "</span>");
 		}
-		let html = "";
-		for (let i = 0; i < items.length; i++) {
-			html += renderHomeJourneyCard(items[i]);
+		if (payload && !payload.pp_ok && payload.pp_message) {
+			parts.push("<span>" + escapeHtml(String(payload.pp_message)) + "</span>");
 		}
-		host.innerHTML = html;
+		host.innerHTML = parts.join(" · ");
 	}
 
-	function loadNeedsActionJourneys() {
-		if (!isHomeWorkspaceRoute()) return;
-		frappe.call({
-			method: "kentender_procurement.procurement_lifecycle.api.journey_api.list_journeys",
-			args: { status: "needs_action", scope: "my-work", limit: 20 },
-			callback: function (r) {
-				if (!isHomeWorkspaceRoute()) return;
-				const payload = r && r.message;
-				if (!payload || !Array.isArray(payload.items)) {
-					applyNeedsActionJourneys({ items: [] });
-					return;
-				}
-				applyNeedsActionJourneys(payload);
-			},
-			error: function () {
-				if (!isHomeWorkspaceRoute()) return;
-				const root = getVisibleWorkspacesPageRoot();
-				const host =
-					(root && root.querySelector("#kt-ph-needs-action-host")) ||
-					document.getElementById("kt-ph-needs-action-host");
-				if (!host) return;
-				host.innerHTML =
-					'<p class="text-muted small mb-0 text-danger">' +
-					escapeHtml(__("Unable to load journeys that need your action.")) +
-					"</p>";
-			},
-		});
-	}
-
-	function applyBlockedJourneys(payload) {
-		const root = getVisibleWorkspacesPageRoot();
-		const host =
-			(root && root.querySelector("#kt-ph-blocked-journeys-host")) ||
-			document.getElementById("kt-ph-blocked-journeys-host");
-		if (!host) return;
-		const items = (payload && payload.items) || [];
-		if (!items.length) {
-			host.innerHTML =
-				'<p class="text-muted small mb-0">' +
-				escapeHtml(__("No critical blockers.")) +
-				"</p>";
-			return;
-		}
-		let html = "";
-		for (let i = 0; i < items.length; i++) {
-			html += renderHomeJourneyCard(items[i]);
-		}
-		host.innerHTML = html;
-	}
-
-	function loadBlockedJourneys() {
-		if (!isHomeWorkspaceRoute()) return;
-		frappe.call({
-			method: "kentender_procurement.procurement_lifecycle.api.journey_api.list_journeys",
-			args: { status: "blocked", limit: 20 },
-			callback: function (r) {
-				if (!isHomeWorkspaceRoute()) return;
-				const payload = r && r.message;
-				if (!payload || !Array.isArray(payload.items)) {
-					applyBlockedJourneys({ items: [] });
-					return;
-				}
-				applyBlockedJourneys(payload);
-			},
-			error: function () {
-				if (!isHomeWorkspaceRoute()) return;
-				const root = getVisibleWorkspacesPageRoot();
-				const host =
-					(root && root.querySelector("#kt-ph-blocked-journeys-host")) ||
-					document.getElementById("kt-ph-blocked-journeys-host");
-				if (!host) return;
-				host.innerHTML =
-					'<p class="text-muted small mb-0 text-danger">' +
-					escapeHtml(__("Unable to load blocked journeys.")) +
-					"</p>";
-			},
-		});
-	}
-
-	function applyReadyForHandoffJourneys(payload) {
-		const root = getVisibleWorkspacesPageRoot();
-		const host =
-			(root && root.querySelector("#kt-ph-ready-for-handoff-host")) ||
-			document.getElementById("kt-ph-ready-for-handoff-host");
-		if (!host) return;
-		const items = (payload && payload.items) || [];
-		if (!items.length) {
-			host.innerHTML =
-				'<p class="text-muted small mb-0">' +
-				escapeHtml(__("No journeys ready for handoff.")) +
-				"</p>";
-			return;
-		}
-		let html = "";
-		for (let i = 0; i < items.length; i++) {
-			html += renderHomeJourneyCard(items[i]);
-		}
-		host.innerHTML = html;
-	}
-
-	function loadReadyForHandoffJourneys() {
-		if (!isHomeWorkspaceRoute()) return;
-		frappe.call({
-			method: "kentender_procurement.procurement_lifecycle.api.journey_api.list_journeys",
-			args: { status: "ready_for_handoff", limit: 20 },
-			callback: function (r) {
-				if (!isHomeWorkspaceRoute()) return;
-				const payload = r && r.message;
-				if (!payload || !Array.isArray(payload.items)) {
-					applyReadyForHandoffJourneys({ items: [] });
-					return;
-				}
-				applyReadyForHandoffJourneys(payload);
-			},
-			error: function () {
-				if (!isHomeWorkspaceRoute()) return;
-				const root = getVisibleWorkspacesPageRoot();
-				const host =
-					(root && root.querySelector("#kt-ph-ready-for-handoff-host")) ||
-					document.getElementById("kt-ph-ready-for-handoff-host");
-				if (!host) return;
-				host.innerHTML =
-					'<p class="text-muted small mb-0 text-danger">' +
-					escapeHtml(__("Unable to load journeys ready for handoff.")) +
-					"</p>";
-			},
-		});
-	}
-
-	function navigateToProcurementJourney(journeyCode, focusEvidence) {
-		if (!journeyCode || typeof frappe === "undefined" || !frappe.set_route) return;
-		frappe.route_options = {};
-		if (focusEvidence) {
-			frappe.route_options.plc_focus = "evidence";
-		}
-		frappe.set_route("plc-procurement-journey", journeyCode);
+	function navigateToWorkspace(wsName) {
+		if (!wsName || typeof frappe === "undefined" || !frappe.set_route) return;
+		frappe.set_route("Workspaces", wsName);
 	}
 
 	function ensureHomeDelegatedClicks() {
@@ -492,24 +286,39 @@
 		root.addEventListener("click", function (ev) {
 			const t = ev.target;
 			if (!t || !t.closest) return;
-			const openJourney = t.closest(".plc-home-open-journey");
-			if (openJourney) {
-				const jc = openJourney.getAttribute("data-journey-code");
-				if (jc) navigateToProcurementJourney(jc, false);
-				return;
+			const btn = t.closest("[data-ph-action]");
+			if (!btn) return;
+			const act = btn.getAttribute("data-ph-action");
+			if (act === "new-demand") {
+				frappe.new_doc("Demand");
+			} else if (act === "open-dia") {
+				navigateToWorkspace("Demand Intake and Approval");
+			} else if (act === "open-pp") {
+				navigateToWorkspace("Procurement Planning");
+			} else if (act === "open-pending") {
+				navigateToWorkspace("Demand Intake and Approval");
 			}
-			const viewEvidence = t.closest(".plc-home-view-evidence");
-			if (viewEvidence) {
-				const jc = viewEvidence.getAttribute("data-journey-code");
-				if (jc) navigateToProcurementJourney(jc, true);
-				return;
-			}
-			const openTender = t.closest(".plc-home-open-tender");
-			if (openTender) {
-				const tc = openTender.getAttribute("data-tender-code");
-				if (tc) frappe.set_route("Form", "TM2 Tender", tc);
-				return;
-			}
+		});
+	}
+
+	function loadHomeLandingData() {
+		if (!isHomeWorkspaceRoute()) return;
+		frappe.call({
+			method: "kentender_procurement.procurement_home.api.landing.get_procurement_home_landing_data",
+			callback: function (r) {
+				if (!isHomeWorkspaceRoute()) return;
+				const payload = r && r.message;
+				if (!payload || !payload.ok) {
+					applyKpis({ kpis: [] });
+					return;
+				}
+				applyHints(payload);
+				applyKpis(payload);
+			},
+			error: function () {
+				if (!isHomeWorkspaceRoute()) return;
+				applyKpis({ kpis: [] });
+			},
 		});
 	}
 
@@ -521,10 +330,7 @@
 		syncHomeShellClass();
 		const inj = injectHomeLandingShell();
 		if (inj && inj.ok) {
-			loadActiveJourneys();
-			loadNeedsActionJourneys();
-			loadBlockedJourneys();
-			loadReadyForHandoffJourneys();
+			loadHomeLandingData();
 		}
 	}
 

@@ -48,6 +48,19 @@ Any instruction with "DO NOT" or "NEVER" automatically overrides all rules (`11-
 9. **Use workspace-first UX** (Landing → queue → detail → builder), not raw DocType-first UX.
 10. **If changing architecture-sensitive code**, summarize impacted apps/files before editing.
 
+## Context-preserving navigation (new modules)
+
+Every module workbench → builder/form flow must use the shared shell in `kentender_core`:
+
+1. Register the module in `kentender_core/kentender_core/module_registry.py` and `public/js/kt_module_registry.js` (mirror fields: `workspaceRoute`, `builderPage`, `formDoctype`, `stateKey`, `selectKey`, `routePrefixes`, `taskLabels`, `backLabel`).
+2. Mount `kentender_core.kt_shell.mountHeader()` on builder pages and guided forms — never `frappe.set_route("/desk")` or raw `location.assign` for primary exit paths.
+3. Expose `data-testid="back-to-workbench"` via the shell; save/restore workbench state with `kentender_core.kt_state` before leaving the workbench.
+4. Add Playwright coverage using `tests/ui/helpers/moduleShell.ts` (`expectBackToWorkbench`).
+
+Canonical spec: [docs/prompts/strategy/1. ken_tender_frappe_context_preserving_form_navigation_pattern.md](docs/prompts/strategy/1.%20ken_tender_frappe_context_preserving_form_navigation_pattern.md). Cursor rule: `.cursor/rules/kentender-context-preserving-navigation.mdc`.
+
+**Strategy module:** Primary UX is the **Strategy Management** workspace (`strategy_workspace.js`) with in-workspace tabs (Plan Info | Structure | Review | Audit). The legacy `/app/strategy-builder/<plan>` route redirects to the workspace Structure tab; do not treat the standalone builder page as the main editing surface.
+
 ## Governance-first modules (v3)
 
 No module is complete without: pre-PRD, full PRD, domain model, governance/state model, tabular role/permission matrices, UI spec, seed data, smoke contracts — per `kentender_architecture_rules_v3.md`.

@@ -46,7 +46,8 @@ from typing import Any, Final
 
 import frappe
 
-from kentender_core.seeds._common import ensure_currency_kes, ensure_procuring_entity
+from kentender_core.seeds._common import ensure_currency_kes, ensure_moh_entity_permission_aliases, ensure_procuring_entity
+from kentender_core.seeds import constants as C
 from kentender_strategy.seeds.works_master_strategy_hierarchy import (
     upsert_works_master_strategy_hierarchy,
 )
@@ -152,6 +153,9 @@ def run_works_master_full_seed(
     # ── Step 1-2: currency + procuring entity ────────────────────────────────
     ensure_currency_kes()
     ensure_procuring_entity(_PE_CODE, _PE_DISPLAY)
+    for email, _full_name, _role, _dept in C.SEED_USERS:
+        if frappe.db.exists("User", email):
+            ensure_moh_entity_permission_aliases(email, C.ENTITY_MOH)
 
     # ── Step 3: strategy ─────────────────────────────────────────────────────
     strat = upsert_works_master_strategy_hierarchy()

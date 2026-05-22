@@ -95,6 +95,13 @@ def ensure_user_permission(user: str, entity: str):
 	add_user_entity_permission(user, entity)
 
 
+def ensure_moh_entity_permission_aliases(user: str, entity_name: str) -> None:
+	"""Grant MOH seed users access to PE-MOH alias used by WORKS master seed."""
+	ensure_user_permission(user, entity_name)
+	if entity_name == C.ENTITY_MOH and frappe.db.exists("Procuring Entity", "PE-MOH"):
+		ensure_user_permission(user, "PE-MOH")
+
+
 def upsert_seed_user(
 	email: str,
 	full_name: str,
@@ -137,7 +144,7 @@ def upsert_seed_user(
 				"kt_primary_department": department_docname,
 			},
 		)
-	ensure_user_permission(email, entity_name)
+	ensure_moh_entity_permission_aliases(email, entity_name)
 
 	from frappe.utils.password import update_password
 

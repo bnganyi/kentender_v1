@@ -3,36 +3,66 @@ import { test, expect } from '@playwright/test';
 import { loginAsAdministrator, loginAsStrategyManager } from '../../helpers/auth';
 import { openStrategyLanding } from '../../helpers/strategyLanding';
 
-test('Open Strategy Builder action routes correctly', async ({ page }) => {
-	// Administrator: Strategy Manager Desk session can fail to boot the builder page script
-	// (blank main area while URL matches); route + shell are still validated here.
+test('Manage Structure opens Structure tab in workspace', async ({ page }) => {
 	await loginAsAdministrator(page);
 	await openStrategyLanding(page);
 
 	await page.getByTestId('selected-plan-open-builder').click();
 
-	await expect(page).toHaveURL(/strategy-builder/);
-	await page.waitForLoadState('networkidle');
-	await expect(page.getByTestId('strategy-tree-pane')).toBeVisible({ timeout: 60_000 });
-	await expect(page.getByTestId('strategy-builder-page')).toBeVisible({ timeout: 15_000 });
+	await expect(page).toHaveURL(/strategy-management/);
+	await expect(page.getByTestId('strategy-tab-panel-structure')).toBeVisible({ timeout: 60_000 });
+	await expect(page.getByTestId('strategy-structure-panel')).toBeVisible({ timeout: 30_000 });
 });
 
-test('Edit Plan action routes correctly', async ({ page }) => {
+test('Edit Plan Info opens drawer', async ({ page }) => {
 	await loginAsStrategyManager(page);
 	await openStrategyLanding(page);
 
 	await page.getByTestId('selected-plan-edit-plan').click();
 
-	await expect(page).toHaveURL(/strategic-plan/);
-	await expect(page.getByText(/Strategic Plan/i).first()).toBeVisible();
+	await expect(page.getByRole('heading', { name: /Edit Plan Info/i })).toBeVisible({ timeout: 15_000 });
+	await expect(page).toHaveURL(/strategy-management/);
 });
 
-test('New Strategic Plan action opens create form', async ({ page }) => {
+test('New Strategic Plan opens create drawer', async ({ page }) => {
 	await loginAsStrategyManager(page);
 	await openStrategyLanding(page);
 
 	await page.getByTestId('strategic-plan-create-button').click();
 
-	await expect(page).toHaveURL(/strategic-plan.*new|new.*strategic-plan/i);
-	await expect(page.getByText(/Strategic Plan Name/i)).toBeVisible();
+	await expect(page.getByRole('heading', { name: /New Strategic Plan/i })).toBeVisible({ timeout: 15_000 });
+	await expect(page).toHaveURL(/strategy-management/);
+});
+
+test('Search keeps focus while typing', async ({ page }) => {
+	await loginAsStrategyManager(page);
+	await openStrategyLanding(page);
+
+	const search = page.getByTestId('strategic-plan-search');
+	await search.click();
+	await search.type('u');
+	await expect(search).toBeFocused();
+	await search.type('p');
+	await expect(search).toBeFocused();
+	await expect(search).toHaveValue('up');
+});
+
+test('Detail tab switch preserves list scroll position', async ({ page }) => {
+	await loginAsStrategyManager(page);
+	await openStrategyLanding(page);
+
+	const list = page.getByTestId('strategic-plan-list');
+	await expect(list).toBeVisible();
+	await list.evaluate((el) => {
+		el.scrollTop = el.scrollHeight;
+	});
+
+	const before = await list.evaluate((el) => el.scrollTop);
+	await expect(before).toBeGreaterThan(0);
+
+	await page.getByTestId('strategy-tab-review').click();
+	await expect(page.getByTestId('strategy-tab-panel-review')).toBeVisible();
+
+	const after = await page.getByTestId('strategic-plan-list').evaluate((el) => el.scrollTop);
+	expect(Math.abs(after - before)).toBeLessThanOrEqual(2);
 });

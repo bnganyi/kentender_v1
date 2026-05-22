@@ -1,32 +1,34 @@
-/**
- * Desk module tile labels (`Desktop Icon` name / `data-id`) and workspace routes
- * for launcher + sidebar navigation helpers.
- */
-import { workspaceAppPath } from './routes';
+/** Shared Desk module / workspace selectors for Playwright smoke tests. */
 
-export const procurementModule = 'Procurement';
-export const budgetModule = 'Budget';
-export const strategyModule = 'Strategy';
+export type ModuleSelector = {
+	label: string;
+};
 
-export const strategyWorkspace = {
+export type WorkspaceSelector = {
+	route: string;
+	heading: string;
+};
+
+export const strategyModule: ModuleSelector = { label: 'Strategy' };
+export const budgetModule: ModuleSelector = { label: 'Budget' };
+export const procurementModule: ModuleSelector = { label: 'Procurement' };
+
+export const strategyWorkspace: WorkspaceSelector = {
+	route: '/app/strategy-management',
 	heading: 'Strategy Management',
-	route: workspaceAppPath('Strategy Management'),
-	/** Visible copy on the Strategy workspace shell (see workspace-shell / workspace-clickability specs). */
-	placeholderBlurb: 'Strategic Plan',
 };
 
-export const budgetWorkspace = {
+export const budgetWorkspace: WorkspaceSelector = {
+	route: '/app/budget-management',
 	heading: 'Budget Management',
-	route: workspaceAppPath('Budget Management'),
 };
 
-export const procurementWorkspace = {
+export const procurementWorkspace: WorkspaceSelector = {
+	route: '/app/procurement-home',
 	heading: 'Procurement Home',
-	route: workspaceAppPath('Procurement Home'),
 };
 
-/** DIA injected workbench (see `Demand Intake and Approval` workspace). */
-export const diaWorkspace = {
+export const diaWorkspace: WorkspaceSelector = {
+	route: '/app/demand-intake-and-approval',
 	heading: 'Demand Intake and Approval',
-	route: workspaceAppPath('Demand Intake and Approval'),
 };

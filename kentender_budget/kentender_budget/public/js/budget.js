@@ -1,6 +1,7 @@
 frappe.ui.form.on("Budget", {
 	refresh(frm) {
 		applyCreateLayout(frm);
+		mountBudgetShellHeader(frm);
 		addSaveAndContinueButton(frm);
 	},
 
@@ -72,8 +73,36 @@ function addSaveAndContinueButton(frm) {
 		await frm.save();
 		// Client-side fallback/primary UX for B2.1 flow.
 		if (frm.doc.name) {
-			window.location.assign(`/app/budget-builder/${encodeURIComponent(frm.doc.name)}`);
+			if (typeof kentender_core !== "undefined" && kentender_core.kt_nav) {
+				kentender_core.kt_nav.toBuilder("budget", frm.doc.name);
+			} else {
+				frappe.set_route("budget-builder", frm.doc.name);
+			}
 		}
 	});
 	$(btn).removeClass("btn-default").addClass("btn-primary");
+}
+
+function mountBudgetShellHeader(frm) {
+	$(frm.wrapper).find(".kt-budget-module-shell-host").remove();
+	const $page = $(frm.wrapper).find(".form-layout .form-page").first();
+	if (!$page.length) {
+		return;
+	}
+	const $host = $('<div class="kt-budget-module-shell-host mb-2"></div>');
+	$page.prepend($host);
+	if (
+		typeof kentender_core !== "undefined" &&
+		kentender_core.kt_shell &&
+		kentender_core.kt_nav
+	) {
+		if (typeof kentender_core.kt_nav.ensureSidebar === "function") {
+			kentender_core.kt_nav.ensureSidebar("budget");
+		}
+		kentender_core.kt_shell.mountHeader($host, {
+			moduleId: "budget",
+			recordTitle: frm.is_new() ? __("New Budget") : frm.doc.budget_name || frm.doc.name,
+			taskLabel: frm.is_new() ? __("Create Budget") : kentender_core.kt_nav.taskLabel("budget", "form"),
+		});
+	}
 }

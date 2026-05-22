@@ -618,7 +618,35 @@
 			(root && root.querySelector('.kt-strategy-injected-shell[data-testid="strategy-landing-page"]')) ||
 			document.querySelector('.kt-strategy-injected-shell[data-testid="strategy-landing-page"]');
 		if (shell && lastPayload) {
+			const listEl = shell.querySelector('[data-testid="strategic-plan-list"]');
+			pendingPlanListScrollTop = listEl ? listEl.scrollTop : null;
 			renderStrategyLandingContent(shell, lastPayload);
+		}
+	}
+
+	function rerenderLandingPreservingSearchFocus(root) {
+		if (!root || !lastPayload) return;
+		const search = root.querySelector('[data-testid="strategic-plan-search"]');
+		const keepFocus = !!search && document.activeElement === search;
+		let selectionStart = null;
+		let selectionEnd = null;
+		if (keepFocus) {
+			selectionStart = search.selectionStart;
+			selectionEnd = search.selectionEnd;
+		}
+		renderStrategyLandingContent(root, lastPayload);
+		if (!keepFocus) return;
+		const nextSearch = root.querySelector('[data-testid="strategic-plan-search"]');
+		if (!nextSearch) return;
+		nextSearch.focus();
+		try {
+			const max = String(nextSearch.value || "").length;
+			const start =
+				typeof selectionStart === "number" ? Math.max(0, Math.min(selectionStart, max)) : max;
+			const end = typeof selectionEnd === "number" ? Math.max(start, Math.min(selectionEnd, max)) : start;
+			nextSearch.setSelectionRange(start, end);
+		} catch (e) {
+			/* ignore unsupported input selection */
 		}
 	}
 
@@ -630,7 +658,7 @@
 			const t = ev.target;
 			if (t && t.matches && t.matches('[data-testid="strategic-plan-search"]')) {
 				planSearchQuery = t.value || "";
-				if (lastPayload) renderStrategyLandingContent(root, lastPayload);
+				rerenderLandingPreservingSearchFocus(root);
 			}
 		});
 

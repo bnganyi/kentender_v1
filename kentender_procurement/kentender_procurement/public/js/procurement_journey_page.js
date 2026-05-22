@@ -903,6 +903,201 @@
 		}
 	}
 
+	function escapeHtml(s) {
+		if (s == null || s === undefined) {
+			return "";
+		}
+		return String(s)
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;")
+			.replace(/"/g, "&quot;");
+	}
+
+	function formatBlockersLabel(item) {
+		const bc = Number(item && item.blocker_count) || 0;
+		const cc = Number(item && item.critical_blocker_count) || 0;
+		if (bc === 0 && cc === 0) {
+			return __("None");
+		}
+		const parts = [];
+		if (cc > 0) {
+			parts.push(cc + " " + __("critical"));
+		}
+		if (bc > 0) {
+			parts.push(bc + " " + __("total"));
+		}
+		return parts.join(", ");
+	}
+
+	function renderJourneyListCard(item) {
+		const title = (item && item.journey_title) || "";
+		const code = (item && item.journey_code) || "";
+		const stage = (item && item.current_stage_label) || "";
+		const next = (item && item.next_action) || __("—");
+		const blockers = formatBlockersLabel(item);
+		const tenderCode = (item && item.primary_object_code) || "";
+		let actions =
+			'<button type="button" class="btn btn-primary btn-sm plc-journey-list-open-journey" data-testid="plc-journey-list-open-journey" data-journey-code="' +
+			escapeHtml(code) +
+			'">' +
+			escapeHtml(__("Open Journey")) +
+			"</button>";
+		if (tenderCode) {
+			actions +=
+				'<button type="button" class="btn btn-default btn-sm plc-journey-list-open-tender" data-tender-code="' +
+				escapeHtml(tenderCode) +
+				'">' +
+				escapeHtml(__("Open Tender")) +
+				"</button>";
+		}
+		actions +=
+			'<button type="button" class="btn btn-default btn-sm plc-journey-list-view-evidence" data-journey-code="' +
+			escapeHtml(code) +
+			'">' +
+			escapeHtml(__("View Evidence")) +
+			"</button>";
+		return (
+			'<div class="plc-journey-list-card kt-surface">' +
+			'<div class="plc-journey-list-card-title fw-semibold">' +
+			escapeHtml(title) +
+			"</div>" +
+			'<div class="plc-journey-list-card-meta small text-muted">' +
+			"<div><strong>" +
+			escapeHtml(__("Current stage")) +
+			":</strong> " +
+			escapeHtml(stage) +
+			"</div>" +
+			"<div><strong>" +
+			escapeHtml(__("Next action")) +
+			":</strong> " +
+			escapeHtml(next) +
+			"</div>" +
+			"<div><strong>" +
+			escapeHtml(__("Blockers")) +
+			":</strong> " +
+			escapeHtml(blockers) +
+			"</div>" +
+			"</div>" +
+			'<div class="plc-journey-list-card-actions">' +
+			actions +
+			"</div>" +
+			"</div>"
+		);
+	}
+
+	function applyJourneyListPanel($host, payload, emptyMessage) {
+		if (!$host || !$host.length) {
+			return;
+		}
+		const items = (payload && payload.items) || [];
+		if (!items.length) {
+			$host.html('<p class="text-muted small mb-0">' + escapeHtml(emptyMessage) + "</p>");
+			return;
+		}
+		let html = "";
+		for (let i = 0; i < items.length; i += 1) {
+			html += renderJourneyListCard(items[i]);
+		}
+		$host.html(html);
+	}
+
+	function loadJourneyListPanel($page, hostTestId, apiArgs, emptyMessage) {
+		const $host = $page.find('[data-testid="' + hostTestId + '"]');
+		if (!$host.length) {
+			return;
+		}
+		frappe.call({
+			method: "kentender_procurement.procurement_lifecycle.api.journey_api.list_journeys",
+			args: apiArgs,
+			callback: function (r) {
+				if (journeyCodeFromRoute()) {
+					return;
+				}
+				const payload = r && r.message;
+				if (!payload || !Array.isArray(payload.items)) {
+					applyJourneyListPanel($host, { items: [] }, emptyMessage);
+					return;
+				}
+				applyJourneyListPanel($host, payload, emptyMessage);
+			},
+			error: function () {
+				if (journeyCodeFromRoute()) {
+					return;
+				}
+				$host.html(
+					'<p class="text-muted small mb-0 text-danger">' +
+						escapeHtml(__("Unable to load journeys.")) +
+						"</p>",
+				);
+			},
+		});
+	}
+
+	function navigateToProcurementJourney(journeyCode, focusEvidence) {
+		if (!journeyCode || typeof frappe === "undefined" || !frappe.set_route) {
+			return;
+		}
+		frappe.route_options = {};
+		if (focusEvidence) {
+			frappe.route_options.plc_focus = "evidence";
+		}
+		frappe.set_route(PAGE_NAME, journeyCode);
+	}
+
+	function ensureJourneyListDelegatedClicks($page) {
+		if (!$page.length || $page.data("plcJourneyListClicks")) {
+			return;
+		}
+		$page.data("plcJourneyListClicks", 1);
+		$page.on("click.plcJourneyList", function (ev) {
+			const t = ev.target;
+			if (!t || !t.closest) {
+				return;
+			}
+			const openJourney = t.closest(".plc-journey-list-open-journey");
+			if (openJourney) {
+				const jc = openJourney.getAttribute("data-journey-code");
+				if (jc) {
+					navigateToProcurementJourney(jc, false);
+				}
+				return;
+			}
+			const viewEvidence = t.closest(".plc-journey-list-view-evidence");
+			if (viewEvidence) {
+				const jc = viewEvidence.getAttribute("data-journey-code");
+				if (jc) {
+					navigateToProcurementJourney(jc, true);
+				}
+				return;
+			}
+			const openTender = t.closest(".plc-journey-list-open-tender");
+			if (openTender) {
+				const tc = openTender.getAttribute("data-tender-code");
+				if (tc) {
+					frappe.set_route("Form", "TM2 Tender", tc);
+				}
+			}
+		});
+	}
+
+	function loadJourneyListSections($page) {
+		loadJourneyListPanel($page, "plc-journeys-active-host", { status: "active", limit: 20 }, __("No active procurement journeys."));
+		loadJourneyListPanel(
+			$page,
+			"plc-journeys-needs-action-host",
+			{ status: "needs_action", scope: "my-work", limit: 20 },
+			__("No journeys need your action."),
+		);
+		loadJourneyListPanel($page, "plc-journeys-blocked-host", { status: "blocked", limit: 20 }, __("No critical blockers."));
+		loadJourneyListPanel(
+			$page,
+			"plc-journeys-ready-for-handoff-host",
+			{ status: "ready_for_handoff", limit: 20 },
+			__("No journeys ready for handoff."),
+		);
+	}
+
 	function journeyCodeFromRoute() {
 		try {
 			const r = frappe.get_route && frappe.get_route();
@@ -937,21 +1132,46 @@
 	function renderNoJourneyCode(wrapper) {
 		const $w = $(wrapper);
 		const $outer = $('<div class="kt-plc-journey">');
-		const $page = $('<div class="container py-4 plc-journey-page">')
+		const $page = $('<div class="container py-4 plc-journey-page plc-journey-list-page">')
 			.attr("data-testid", "plc-journey-page")
-			.addClass("plc-journey-page--no-code");
+			.addClass("plc-journey-page--list");
 		$page.append(
-			$("<h4>").text(__("Procurement Journeys")),
-			$("<p class='text-muted'>")
-				.attr("data-testid", "plc-journey-empty-hint")
-				.text(
-					__(
-						"Open a journey from Procurement Home or follow a link that includes a journey code.",
-					),
-				),
+			$("<h4>").attr("data-testid", "plc-journeys-page-title").text(__("Procurement Journeys")),
+			$("<p class='text-muted small mb-3'>")
+				.attr("data-testid", "plc-journeys-page-intro")
+				.text(__("Browse active procurement journeys, open a journey detail view, or jump to related tender work.")),
 		);
+
+		const section = function (title, sectionTestId, hostTestId) {
+			return (
+				'<section class="card plc-journey-list-section mb-3" data-testid="' +
+				sectionTestId +
+				'">' +
+				'<div class="card-body">' +
+				'<h5 class="h6 text-muted mb-2">' +
+				escapeHtml(title) +
+				"</h5>" +
+				'<div class="plc-journey-list-host" data-testid="' +
+				hostTestId +
+				'">' +
+				'<p class="text-muted small mb-0">' +
+				escapeHtml(__("Loading journeys…")) +
+				"</p>" +
+				"</div></div></section>"
+			);
+		};
+
+		$page.append(
+			section(__("Active Procurement Journeys"), "plc-procurement-journeys-active", "plc-journeys-active-host"),
+			section(__("Needs My Action"), "plc-procurement-journeys-needs-action", "plc-journeys-needs-action-host"),
+			section(__("Blocked Journeys"), "plc-procurement-journeys-blocked", "plc-journeys-blocked-host"),
+			section(__("Ready for Handoff"), "plc-procurement-journeys-ready-for-handoff", "plc-journeys-ready-for-handoff-host"),
+		);
+
 		$outer.append($page);
 		$w.empty().append($outer);
+		ensureJourneyListDelegatedClicks($page);
+		loadJourneyListSections($page);
 	}
 
 	function renderLoading(wrapper, journeyCode) {

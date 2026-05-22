@@ -6,11 +6,21 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "strategic_plan",
   "program",
   "title",
   "sub_program_code"
  ],
  "fields": [
+  {
+   "fieldname": "strategic_plan",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Strategic Plan",
+   "options": "Strategic Plan",
+   "reqd": 1,
+   "search_index": 1
+  },
   {
    "fieldname": "program",
    "fieldtype": "Link",

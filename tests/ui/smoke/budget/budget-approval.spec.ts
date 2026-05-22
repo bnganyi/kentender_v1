@@ -38,16 +38,18 @@ async function confirmFrappeYes(page: Page) {
 	await yes.click();
 }
 
+async function expectInlineReadOnlyBudgetDetail(page: Page) {
+	await expect(page.getByTestId('budget-builder-readonly-banner')).toBeVisible({ timeout: 30_000 });
+	await expect(page.getByTestId('budget-line-list')).toBeVisible();
+	await expect(page.getByTestId('budget-allocation-editor')).toBeVisible();
+	await expect(page.getByTestId('budget-allocation-save-button')).toHaveCount(0);
+	await expect(page.getByTestId('selected-budget-open-builder')).toHaveCount(0);
+}
+
 async function gotoBudgetBuilder(page: Page, budgetDocName: string) {
 	await page.goto(`/desk/budget-builder/${encodeURIComponent(budgetDocName)}`, {
 		waitUntil: 'domcontentloaded',
 	});
-	const onDesk = await page.getByTestId('budget-builder-page').isVisible({ timeout: 8000 }).catch(() => false);
-	if (!onDesk) {
-		await page.goto(`/app/budget-builder/${encodeURIComponent(budgetDocName)}`, {
-			waitUntil: 'domcontentloaded',
-		});
-	}
 	await expect(page.getByTestId('budget-builder-page')).toBeVisible({ timeout: 60_000 });
 }
 
@@ -107,12 +109,11 @@ test.describe.serial('Budget approval flow (B5.7)', () => {
 		expect(docName).toBeTruthy();
 		await gotoBudgetBuilder(page, docName!);
 
-		await expect(page.getByTestId('budget-builder-readonly-banner')).toBeVisible();
+		await expectInlineReadOnlyBudgetDetail(page);
 		await expect(page.getByTestId('budget-builder-readonly-banner')).toContainText(
 			'submitted and awaiting approval'
 		);
-		await expect(page.getByTestId('budget-builder-status-badge')).toBeVisible();
-		await expect(page.getByTestId('budget-allocation-save-button')).toHaveCount(0);
+		await expect(page.getByTestId('selected-budget-status-badge')).toBeVisible();
 	});
 
 	test('Strategy Manager does not see Approve on Submitted budget (FY2027)', async ({ page }) => {
@@ -196,10 +197,9 @@ test.describe.serial('Budget approval flow (B5.7)', () => {
 		expect(docName).toBeTruthy();
 
 		await gotoBudgetBuilder(page, docName!);
-		await expect(page.getByTestId('budget-builder-readonly-banner')).toBeVisible();
+		await expectInlineReadOnlyBudgetDetail(page);
 		await expect(page.getByTestId('budget-builder-readonly-banner')).toContainText('approved and locked');
-		await expect(page.getByTestId('budget-builder-status-badge')).toContainText('Approved');
-		await expect(page.getByTestId('budget-allocation-save-button')).toHaveCount(0);
+		await expect(page.getByTestId('selected-budget-status-badge')).toContainText('Approved');
 	});
 
 	test('Planning Authority does not see Submit or Edit on Approved FY2027', async ({ page }) => {

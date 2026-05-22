@@ -53,6 +53,10 @@ Summary strip (optional)
 
 Master-detail (left selector + right editor)
 
+**Context-preserving navigation**
+
+Builder and guided-form routes must keep the parent module context (left rail, breadcrumbs, back-to-workbench). Use `kentender_core` `kt_module_shell` + `kt_module_registry`; see [KenTender context-preserving form navigation](../../../prompts/strategy/1.%20ken_tender_frappe_context_preserving_form_navigation_pattern.md) and `.cursor/rules/kentender-context-preserving-navigation.mdc`.
+
 **2.3 Review / Approval Page (can be inline in workbench)**
 
 Used by:

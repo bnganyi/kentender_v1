@@ -35,6 +35,10 @@ app_include_css = [
 ]
 app_include_js = [
 	f"/assets/kentender_strategy/js/workspace_list_selection_utils.js?v={_asset_version('public/js/workspace_list_selection_utils.js')}",
+	f"/assets/kentender_strategy/js/strategy_structure_panel.js?v={_asset_version('public/js/strategy_structure_panel.js')}",
+	f"/assets/kentender_strategy/js/strategy_plan_drawer.js?v={_asset_version('public/js/strategy_plan_drawer.js')}",
+	f"/assets/kentender_strategy/js/strategy_review_panel.js?v={_asset_version('public/js/strategy_review_panel.js')}",
+	f"/assets/kentender_strategy/js/strategy_audit_panel.js?v={_asset_version('public/js/strategy_audit_panel.js')}",
 	f"/assets/kentender_strategy/js/strategy_workspace.js?v={_asset_version('public/js/strategy_workspace.js')}",
 	f"/assets/kentender_strategy/js/strategic_plan.js?v={_asset_version('public/js/strategic_plan.js')}",
 ]

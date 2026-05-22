@@ -33,6 +33,8 @@ OBJECTIVE_TITLE: Final[str] = "Improve district hospital infrastructure readines
 OBJECTIVE_DESCRIPTION: Final[str] = (
 	"Renovate and restore critical district hospital facilities to support safe and continuous healthcare service delivery."
 )
+SUB_PROGRAM_CODE: Final[str] = "SUB-MOH-INFRA-001"
+SUB_PROGRAM_TITLE: Final[str] = "District health facility rehabilitation"
 TARGET_CODE: Final[str] = "TGT-MOH-HOSP-RENOV-2026"
 TARGET_TITLE: Final[str] = "Renovate priority district hospital facilities in FY 2026/2027"
 TARGET_METRIC_TEXT: Final[str] = "Number of priority district hospital renovation projects initiated"
@@ -118,13 +120,20 @@ def _hierarchy_complete(plan_name: str) -> bool:
 	)
 	if not prog:
 		return False
+	sp = frappe.db.get_value(
+		"Sub Program",
+		{"program": prog, "sub_program_code": SUB_PROGRAM_CODE},
+		"name",
+	)
+	if not sp:
+		return False
 	obj = frappe.db.get_value(
 		"Strategy Objective",
-		{"program": prog, "objective_code": OBJECTIVE_CODE},
-		["name", "strategic_plan", "program"],
+		{"sub_program": sp, "objective_code": OBJECTIVE_CODE},
+		["name", "strategic_plan", "program", "sub_program"],
 		as_dict=True,
 	)
-	if not obj or obj.strategic_plan != plan_name or obj.program != prog:
+	if not obj or obj.strategic_plan != plan_name or obj.program != prog or obj.sub_program != sp:
 		return False
 	tgt = frappe.db.get_value(
 		"Strategy Target",
@@ -166,10 +175,41 @@ def _ensure_program(plan_name: str) -> str:
 	return child.name
 
 
-def _ensure_objective(plan_name: str, program_name: str) -> str:
+def _ensure_sub_program(plan_name: str, program_name: str) -> str:
+	existing = frappe.db.get_value(
+		"Sub Program",
+		{"program": program_name, "sub_program_code": SUB_PROGRAM_CODE},
+		"name",
+	)
+	if existing:
+		doc = frappe.get_doc("Sub Program", existing)
+		changed = False
+		if doc.strategic_plan != plan_name:
+			doc.strategic_plan = plan_name
+			changed = True
+		if (doc.title or "").strip() != SUB_PROGRAM_TITLE:
+			doc.title = SUB_PROGRAM_TITLE
+			changed = True
+		if changed:
+			doc.save(ignore_permissions=True)
+		return existing
+	child = frappe.get_doc(
+		{
+			"doctype": "Sub Program",
+			"strategic_plan": plan_name,
+			"program": program_name,
+			"title": SUB_PROGRAM_TITLE,
+			"sub_program_code": SUB_PROGRAM_CODE,
+		}
+	)
+	child.insert(ignore_permissions=True)
+	return child.name
+
+
+def _ensure_objective(plan_name: str, program_name: str, sub_program_name: str) -> str:
 	existing = frappe.db.get_value(
 		"Strategy Objective",
-		{"program": program_name, "objective_code": OBJECTIVE_CODE},
+		{"sub_program": sub_program_name, "objective_code": OBJECTIVE_CODE},
 		"name",
 	)
 	if existing:
@@ -177,6 +217,12 @@ def _ensure_objective(plan_name: str, program_name: str) -> str:
 		changed = False
 		if doc.strategic_plan != plan_name:
 			doc.strategic_plan = plan_name
+			changed = True
+		if doc.program != program_name:
+			doc.program = program_name
+			changed = True
+		if doc.sub_program != sub_program_name:
+			doc.sub_program = sub_program_name
 			changed = True
 		if (doc.objective_title or "").strip() != OBJECTIVE_TITLE:
 			doc.objective_title = OBJECTIVE_TITLE
@@ -192,6 +238,7 @@ def _ensure_objective(plan_name: str, program_name: str) -> str:
 			"doctype": "Strategy Objective",
 			"strategic_plan": plan_name,
 			"program": program_name,
+			"sub_program": sub_program_name,
 			"objective_title": OBJECTIVE_TITLE,
 			"objective_code": OBJECTIVE_CODE,
 			"description": OBJECTIVE_DESCRIPTION,
@@ -256,9 +303,16 @@ def _names_when_complete(plan_name: str) -> tuple[str, str, str] | None:
 	)
 	if not prog:
 		return None
+	sp = frappe.db.get_value(
+		"Sub Program",
+		{"program": prog, "sub_program_code": SUB_PROGRAM_CODE},
+		"name",
+	)
+	if not sp:
+		return None
 	obj = frappe.db.get_value(
 		"Strategy Objective",
-		{"program": prog, "objective_code": OBJECTIVE_CODE},
+		{"sub_program": sp, "objective_code": OBJECTIVE_CODE},
 		"name",
 	)
 	if not obj:
@@ -324,7 +378,8 @@ def upsert_works_master_strategy_hierarchy() -> dict[str, Any]:
 		plan.reload()
 
 	program_name = _ensure_program(plan_name)
-	objective_name = _ensure_objective(plan_name, program_name)
+	sub_program_name = _ensure_sub_program(plan_name, program_name)
+	objective_name = _ensure_objective(plan_name, program_name, sub_program_name)
 	target_name = _ensure_target(plan_name, program_name, objective_name)
 
 	plan.reload()

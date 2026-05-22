@@ -4,7 +4,9 @@
 import frappe
 from frappe.tests import IntegrationTestCase
 
+from kentender_budget.api.builder import get_budget_builder_data
 from kentender_budget.api.landing import get_budget_landing_data
+from kentender_budget.api.review import get_budget_review_data
 
 
 class TestBudgetLandingAPI(IntegrationTestCase):
@@ -27,3 +29,27 @@ class TestBudgetLandingAPI(IntegrationTestCase):
 			"allocation_pct",
 		):
 			self.assertIn(key, p)
+
+	def test_landing_budget_rows_include_strategic_plan_title(self):
+		frappe.set_user("Administrator")
+		out = get_budget_landing_data()
+		for row in out.get("budgets") or []:
+			self.assertIn("strategic_plan_title", row)
+
+	def test_builder_totals_include_programs_funded(self):
+		frappe.set_user("Administrator")
+		budget = frappe.db.get_value("Budget", {"is_current_version": 1}, "name")
+		if not budget:
+			self.skipTest("No current-version budget on site")
+		payload = get_budget_builder_data(budget)
+		self.assertIn("programs_funded", payload.get("totals") or {})
+
+	def test_review_payload_matches_builder_active_lines(self):
+		frappe.set_user("Administrator")
+		budget = frappe.db.get_value("Budget", {"is_current_version": 1}, "name")
+		if not budget:
+			self.skipTest("No current-version budget on site")
+		review = get_budget_review_data(budget)
+		builder = get_budget_builder_data(budget, lines_filter="active")
+		self.assertEqual(review.get("budget", {}).get("name"), builder.get("budget", {}).get("name"))
+		self.assertEqual(len(review.get("budget_lines") or []), len(builder.get("budget_lines") or []))

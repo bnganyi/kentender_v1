@@ -1,0 +1,34 @@
+/*
+ * KenTender module shell — context header for builders and guided forms.
+ */
+.kt-module-shell-header {
+	margin-bottom: 0.75rem;
+	padding-bottom: 0.65rem;
+	border-bottom: 1px solid var(--border-color, #e2e6ea);
+}
+
+.kt-module-shell-breadcrumbs {
+	margin-bottom: 0.35rem;
+}
+
+.kt-module-shell-heading-row {
+	margin-top: 0.25rem;
+}
+
+.kt-module-shell-title {
+	color: var(--text-color, #1f272e);
+	font-weight: 600;
+}
+
+.kt-module-shell-meta {
+	line-height: 1.4;
+}
+
+.kt-module-shell-actions .btn[data-testid="back-to-workbench"] {
+	white-space: nowrap;
+}
+
+body[data-route^="strategy-builder"] .kt-module-shell-header,
+body[data-route^="budget-builder"] .kt-module-shell-header {
+	margin-top: 0.15rem;
+}

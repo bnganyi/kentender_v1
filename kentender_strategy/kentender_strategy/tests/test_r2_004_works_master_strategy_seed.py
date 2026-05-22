@@ -48,6 +48,8 @@ def _purge_plan_chain_for_tests(pe_name: str) -> None:
 			frappe.delete_doc("Strategy Target", tgt, force=1, ignore_permissions=True)
 		for obj in frappe.get_all("Strategy Objective", filters={"strategic_plan": pid}, pluck="name"):
 			frappe.delete_doc("Strategy Objective", obj, force=1, ignore_permissions=True)
+		for sp in frappe.get_all("Sub Program", filters={"strategic_plan": pid}, pluck="name"):
+			frappe.delete_doc("Sub Program", sp, force=1, ignore_permissions=True)
 		for prog in frappe.get_all("Strategy Program", filters={"strategic_plan": pid}, pluck="name"):
 			frappe.delete_doc("Strategy Program", prog, force=1, ignore_permissions=True)
 		frappe.delete_doc("Strategic Plan", pid, force=1, ignore_permissions=True)

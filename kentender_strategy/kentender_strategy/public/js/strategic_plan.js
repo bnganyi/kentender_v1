@@ -1,7 +1,7 @@
 // Strategic Plan form — guided creation UX. No extra fields.
 frappe.ui.form.on("Strategic Plan", {
 	refresh(frm) {
-		$(frm.wrapper).find(".kt-sp-intro, .kt-sp-footer, .kt-sp-back-bar").remove();
+		$(frm.wrapper).find(".kt-sp-intro, .kt-sp-footer, .kt-sp-back-bar, .kt-sp-module-shell-host").remove();
 
 		// Single primary action: hide toolbar Save; bottom button calls frm.save() (save() still works).
 		frm.disable_save();
@@ -11,15 +11,26 @@ frappe.ui.form.on("Strategic Plan", {
 			return;
 		}
 
-		const $back = $(
-			`<div class="kt-sp-back-bar mb-2"><button type="button" class="btn btn-xs btn-default" data-testid="strategic-plan-form-back-desktop">${__(
-				"← Back to Desktop",
-			)}</button></div>`,
-		);
-		$back.find("button").on("click", () => {
-			frappe.set_route("/desk");
-		});
-		$page.prepend($back);
+		if (
+			typeof kentender_core !== "undefined" &&
+			kentender_core.kt_shell &&
+			kentender_core.kt_nav
+		) {
+			const $host = $('<div class="kt-sp-module-shell-host mb-2"></div>');
+			$page.prepend($host);
+			if (typeof kentender_core.kt_nav.ensureSidebar === "function") {
+				kentender_core.kt_nav.ensureSidebar("strategy");
+			}
+			kentender_core.kt_shell.mountHeader($host, {
+				moduleId: "strategy",
+				recordTitle: frm.is_new()
+					? __("New Strategic Plan")
+					: frm.doc.strategic_plan_name || frm.doc.name,
+				taskLabel: frm.is_new()
+					? __("Create Plan")
+					: kentender_core.kt_nav.taskLabel("strategy", "form"),
+			});
+		}
 
 		const intro = $(
 			`<div class="kt-sp-intro alert alert-info mb-3" role="status">
@@ -32,7 +43,7 @@ frappe.ui.form.on("Strategic Plan", {
 				${
 					frm.is_new()
 						? `<p class="small mb-0 mt-2">${__(
-								"After you save, you will open the Strategy Builder to add programs, objectives, and targets (this is not the same screen as this form).",
+								"After you save, you will open Manage Structure to add programs, objectives, and targets.",
 						  )}</p>`
 						: ""
 				}
@@ -48,7 +59,7 @@ frappe.ui.form.on("Strategic Plan", {
 						"Save and Continue",
 					)}</button>
 					<button type="button" class="btn btn-default kt-sp-open-builder ml-2" style="display:none;">${__(
-						"Open Strategy Builder",
+						"Manage Structure",
 					)}</button>
 					<p class="text-muted small mt-3 mb-0">${__(
 						"Next: Add programs first, then objectives nested under each program (hierarchy — not a single flat list).",
@@ -59,7 +70,11 @@ frappe.ui.form.on("Strategic Plan", {
 
 		if (!frm.is_new()) {
 			$footer.find("button.kt-sp-open-builder").show().on("click", () => {
-				frappe.set_route("strategy-builder", frm.doc.name);
+				if (typeof kentender_core !== "undefined" && kentender_core.kt_nav) {
+					kentender_core.kt_nav.toBuilder("strategy", frm.doc.name);
+				} else {
+					frappe.set_route("strategy-builder", frm.doc.name);
+				}
 			});
 		}
 
@@ -71,9 +86,12 @@ frappe.ui.form.on("Strategic Plan", {
 						message: __("Strategic Plan saved"),
 						indicator: "green",
 					});
-					// Guided flow: land on the Strategy Builder (separate Desk page), not only this form.
 					if (frm.doc && frm.doc.name) {
-						frappe.set_route("strategy-builder", frm.doc.name);
+						if (typeof kentender_core !== "undefined" && kentender_core.kt_nav) {
+							kentender_core.kt_nav.toBuilder("strategy", frm.doc.name);
+						} else {
+							frappe.set_route("strategy-builder", frm.doc.name);
+						}
 					}
 				})
 				.catch(() => {});

@@ -30,7 +30,7 @@ Mark any ticket/phase as **Done** only when all checks pass:
 
 ## Ticket status
 
-**Last updated:** 2026-04-21
+**Last updated:** 2026-05-19
 
 | Ticket | Description | Status |
 |--------|-------------|--------|
@@ -59,6 +59,15 @@ Mark any ticket/phase as **Done** only when all checks pass:
 | **B5.7** | Playwright approval smoke | **Done** |
 | **B5.8** | Governance review (no code) | **Done** ([Budget-B5.8-Governance-Review.md](./Budget-B5.8-Governance-Review.md)) |
 
+### Review workbench (B6)
+
+| Ticket | Description | Status |
+|--------|-------------|--------|
+| **B6.1** | Review landing refactor: work tabs, anchor metrics (Total/Allocated/Remaining/Programs funded), allocations table + drawer; remove nested builder/procurement from primary view | **Done** |
+| **B6.2** | Restore B5.4/fix-3 governance UI on landing (Submit/Approve/Reject, role-default tabs, approver banner) | **Done** |
+| **B6.3** | API: `programs_funded`, `strategic_plan_title`, `get_budget_review_data` | **Done** |
+| **B6.4** | Playwright + smoke contract updates (`budget-work-tabs`, inline detail without procurement) | **Done** |
+
 ## Post-ticket polish (tracked here)
 
 | Area | What shipped |
@@ -69,6 +78,11 @@ Mark any ticket/phase as **Done** only when all checks pass:
 | **Rejection flow (8.a)** | `Rejected` status; `rejection_reason` / `rejected_by` / `rejected_at`; `reject_budget` + re-submit from `Rejected`; landing Rejected tab + modal; builder editable when Rejected; tests ([8.a.Budget-Approval-Flow - 2.md](./8.a.Budget-Approval-Flow%20-%202.md)). |
 | **Budget Builder** | Aligns with landing via `.kt-budget-builder-shell` + shared `budget_workspace.css` tokens; desk-style `page-head` strip + breadcrumbs; `frappe.utils.set_title` for tab; “Back to Budgets” in header CTA. |
 | **Budget form** | Two-column DocType layout: section/column breaks in `budget.json` (details, status, metadata); Notes full-width. |
+| **Review workbench (B6)** | Landing is allocation-focused Review mode; Budget Builder remains separate edit route; B5 approval UI restored on landing per [budget-landing-page-fix-3.md](./budget-landing-page-fix-3.md). |
+
+## PRD note (MVP+)
+
+Original PRD §2 listed budget approval as out of scope for strict MVP v1. **B5/B6 ship approval + Review workbench as MVP+**: Draft → Submitted → Approved/Rejected is in scope for this bench; procurement reservation metrics stay off the Review landing primary path.
 
 ## Global instruction (prepend to each ticket)
 

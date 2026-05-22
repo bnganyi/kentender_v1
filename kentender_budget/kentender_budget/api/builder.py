@@ -262,6 +262,13 @@ def _get_builder_payload(budget_name: str, lines_filter: str = "active"):
 	lines_allocated_active = sum(1 for r in all_active if flt(r.get("amount_allocated")) > 0)
 	lines_unallocated_active = max(0, line_total_active - lines_allocated_active)
 	remaining_amount = max(0.0, total_budget - allocated_sum)
+	funded_program_rows = frappe.get_all(
+		"Budget Line",
+		filters={"budget": budget.name, "is_active": 1, "amount_allocated": [">", 0]},
+		fields=["program"],
+		limit=5000,
+	)
+	programs_funded = len({r.program for r in funded_program_rows if r.get("program")})
 
 	return {
 		"budget": {
@@ -284,6 +291,7 @@ def _get_builder_payload(budget_name: str, lines_filter: str = "active"):
 			"line_total": line_total_active,
 			"lines_allocated": lines_allocated_active,
 			"lines_unallocated": lines_unallocated_active,
+			"programs_funded": programs_funded,
 		},
 		"lines_filter": (lines_filter or "active").strip().lower(),
 		"budget_lines": budget_lines,

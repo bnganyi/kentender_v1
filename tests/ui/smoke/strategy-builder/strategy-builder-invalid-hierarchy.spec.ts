@@ -5,22 +5,22 @@ import {
 	ensureTestStrategicPlan,
 	isolatedPlanName,
 	openStrategyBuilder,
-	submitNewNodeDialog,
-	treeNodeButton,
 } from '../../helpers/strategyBuilder';
 
-test('Invalid hierarchy actions are blocked', async ({ page }, testInfo) => {
+test('Invalid hierarchy actions are blocked in workspace Structure tab', async ({ page }, testInfo) => {
 	const plan = isolatedPlanName(testInfo);
 	await ensureTestStrategicPlan(page, plan);
 	await clearStrategyNodes(page, plan);
 	await openStrategyBuilder(page, plan);
 
-	await expect(page.getByTestId('add-objective-button')).toBeDisabled();
-	await expect(page.getByTestId('add-target-button')).toBeDisabled();
+	await page.getByTestId('structure-subtab-subprograms').click();
+	await expect(page.getByTestId('structure-add-subprogram')).toBeVisible({ timeout: 15_000 });
+	await page.getByTestId('structure-add-subprogram').click();
+	await expect(page.getByText(/Create the parent level first/i)).toBeVisible({ timeout: 15_000 });
+	await page.locator('.modal.show .btn-modal-close, .modal.show .close').first().click();
 
-	await page.getByTestId('add-program-button').click();
-	await submitNewNodeDialog(page, { title: 'Healthcare Delivery' }, /New Program/i);
-
-	await treeNodeButton(page, /Healthcare Delivery/).click();
-	await expect(page.getByTestId('add-target-button')).toBeDisabled();
+	await page.getByTestId('structure-subtab-targets').click();
+	await expect(page.getByTestId('structure-add-target')).toBeVisible({ timeout: 15_000 });
+	await page.getByTestId('structure-add-target').click();
+	await expect(page.getByText(/Create the parent level first/i)).toBeVisible({ timeout: 15_000 });
 });

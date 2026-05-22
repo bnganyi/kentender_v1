@@ -131,3 +131,49 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 			)
 		except ValueError:
 			self.fail("Demand Intake sidebar label not found — cannot verify G0-012 order")
+
+	def test_bootinfo_includes_builder_route_sidebar_keys(self):
+		"""Context-preserving navigation: builder/form routes must map to Procurement sidebar."""
+		if not frappe.db.exists("Workspace Sidebar", "Procurement"):
+			self.skipTest("Procurement Workspace Sidebar not on site")
+		bootinfo: dict = {"workspace_sidebar_item": {}}
+		patch_bootinfo(bootinfo)
+		items = bootinfo.get("workspace_sidebar_item") or {}
+		proc = items.get("procurement") or {}
+		self.assertTrue(len(proc.get("items") or []) > 0, msg="Procurement sidebar baseline required")
+		for route_key in ("strategy-builder", "budget-builder", "form/demand"):
+			self.assertIn(
+				route_key,
+				items,
+				msg=f"Route {route_key!r} requires boot sidebar fast-path key for hard refresh",
+			)
+			payload = items[route_key]
+			self.assertIsInstance(payload, dict)
+			self.assertTrue(len(payload.get("items") or []) > 0)
+			self.assertEqual(
+				payload.get("items"),
+				proc.get("items"),
+				msg=f"Route {route_key!r} should reuse Procurement sidebar rail",
+			)
+
+	def test_bootinfo_includes_module_fallback_sidebar_keys(self):
+		"""DocType module routes should preserve Procurement rail context."""
+		if not frappe.db.exists("Workspace Sidebar", "Procurement"):
+			self.skipTest("Procurement Workspace Sidebar not on site")
+		bootinfo: dict = {"workspace_sidebar_item": {}}
+		patch_bootinfo(bootinfo)
+		items = bootinfo.get("workspace_sidebar_item") or {}
+		proc = items.get("procurement") or {}
+		for key in ("budget", "strategy"):
+			self.assertIn(
+				key,
+				items,
+				msg=f"Module fallback key {key!r} should be injected for context-preserving sidebars",
+			)
+			payload = items[key]
+			self.assertIsInstance(payload, dict)
+			self.assertEqual(
+				payload.get("items"),
+				proc.get("items"),
+				msg=f"Module key {key!r} should reuse Procurement sidebar rail",
+			)

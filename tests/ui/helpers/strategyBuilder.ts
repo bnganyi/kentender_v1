@@ -26,12 +26,15 @@ export async function submitNewNodeDialog(
 	/** Match Strategy Builder dialog title (Program / Objective / Target). */
 	expectedHeading: RegExp,
 ) {
-	await expect(page.getByRole('heading', { level: 4, name: expectedHeading })).toBeVisible({
-		timeout: 20_000,
-	});
-	const d = page
-		.locator('.modal.show')
-		.filter({ has: page.getByRole('heading', { level: 4, name: expectedHeading }) });
+	const heading = page.getByRole('heading', { level: 4, name: expectedHeading });
+	if (await heading.count()) {
+		await expect(heading).toBeVisible({ timeout: 20_000 });
+	} else {
+		await expect(page.locator('.modal.show').getByText(expectedHeading).first()).toBeVisible({
+			timeout: 20_000,
+		});
+	}
+	const d = page.locator('.modal.show').filter({ has: page.getByText(expectedHeading) }).last();
 	await expect(d).toBeVisible();
 	const titleInput = d
 		.locator(
@@ -40,9 +43,12 @@ export async function submitNewNodeDialog(
 		.first();
 	await titleInput.fill(opts.title);
 	if (opts.description !== undefined) {
-		await d
-			.locator('[data-fieldname="node_description"] textarea, .form-group[data-fieldname="node_description"] textarea')
-			.fill(opts.description);
+		const desc = d.locator(
+			'[data-fieldname="node_description"] textarea, .form-group[data-fieldname="node_description"] textarea',
+		);
+		if ((await desc.count()) > 0) {
+			await desc.fill(opts.description);
+		}
 	}
 	const isTargetDialog =
 		opts.targetYear !== undefined || opts.targetValue !== undefined || opts.targetUnit !== undefined;
@@ -82,21 +88,12 @@ export async function submitNewNodeDialog(
 		await d.locator('[data-fieldname="target_unit"] input, .form-group[data-fieldname="target_unit"] input').fill(opts.targetUnit);
 	}
 	const primary = d.locator('.modal-footer button.btn-primary').first();
-	await Promise.all([
-		page.waitForResponse(
-			(r) =>
-				r.url().includes('kentender_strategy.api.strategy_builder.create_strategy_node') &&
-				r.request().method() === 'POST' &&
-				r.ok(),
-			{ timeout: 60_000 },
-		),
-		primary.click(),
-	]);
+	await primary.click();
 	// Wait for this dialog to close (another .modal.show may exist underneath).
 	await expect(d).toBeHidden({ timeout: 30_000 });
 }
 
-/** Remove all typed strategy rows for a plan (Target → Objective → Program). */
+/** Remove all typed strategy rows for a plan (Target → Indicator → Sub Program → Program). */
 export async function clearStrategyNodes(page: Page, planName: string = TEST_PLAN_NAME) {
 	await page.evaluate(async (plan: string) => {
 		function toErr(e: unknown): Error {
@@ -139,33 +136,35 @@ export async function clearStrategyNodes(page: Page, planName: string = TEST_PLA
 		const delNode = (name: string) =>
 			call('kentender_strategy.api.strategy_builder.delete_strategy_node', { node_name: name });
 
+		const deleteAll = async (doctype: string) => {
+			const rows = (await call('frappe.client.get_list', {
+				doctype,
+				filters: [['strategic_plan', '=', plan]],
+				fields: ['name'],
+				limit_page_length: 500,
+			})) as { name: string }[];
+			for (const row of rows) {
+				await delNode(row.name);
+			}
+			return rows.length;
+		};
+
 		try {
-			const targets = (await call('frappe.client.get_list', {
-				doctype: 'Strategy Target',
-				filters: [['strategic_plan', '=', plan]],
-				fields: ['name'],
-				limit_page_length: 500,
-			})) as { name: string }[];
-			for (const t of targets) {
-				await delNode(t.name);
-			}
-			const objectives = (await call('frappe.client.get_list', {
-				doctype: 'Strategy Objective',
-				filters: [['strategic_plan', '=', plan]],
-				fields: ['name'],
-				limit_page_length: 500,
-			})) as { name: string }[];
-			for (const o of objectives) {
-				await delNode(o.name);
-			}
-			const programs = (await call('frappe.client.get_list', {
-				doctype: 'Strategy Program',
-				filters: [['strategic_plan', '=', plan]],
-				fields: ['name'],
-				limit_page_length: 500,
-			})) as { name: string }[];
-			for (const p of programs) {
-				await delNode(p.name);
+			await call('frappe.client.set_value', {
+				doctype: 'Strategic Plan',
+				name: plan,
+				fieldname: 'status',
+				value: 'Draft',
+			});
+			for (let pass = 0; pass < 5; pass += 1) {
+				let removed = 0;
+				removed += await deleteAll('Strategy Target');
+				removed += await deleteAll('Strategy Objective');
+				removed += await deleteAll('Sub Program');
+				removed += await deleteAll('Strategy Program');
+				if (removed === 0) {
+					break;
+				}
 			}
 		} catch (e: unknown) {
 			const msg = e instanceof Error ? e.message : String(e);
@@ -183,11 +182,11 @@ export async function clearStrategyNodes(page: Page, planName: string = TEST_PLA
  * the page script and the main area stays blank while the shell sidebar still renders.
  */
 export async function openStrategyBuilder(page: Page, planName: string) {
-	await page.goto(`/app/strategy-builder/${planName}`, { waitUntil: 'domcontentloaded' });
-	await expect(page.getByTestId('strategy-builder-page')).toBeVisible({ timeout: 30_000 });
-	// Shell can load while the page script fails permission or boot races; require the tree UI.
-	await expect(page.getByTestId('strategy-tree-pane')).toBeVisible({ timeout: 30_000 });
-	await expect(page.getByTestId('add-program-button')).toBeVisible({ timeout: 30_000 });
+	await page.goto(`/app/strategy-management`, { waitUntil: 'domcontentloaded' });
+	await expect(page.getByTestId('strategy-landing-page')).toBeVisible({ timeout: 60_000 });
+	await page.getByTestId(`strategic-plan-row-${planName}`).click();
+	await page.getByTestId('strategy-tab-structure').click();
+	await expect(page.getByTestId('strategy-structure-panel')).toBeVisible({ timeout: 30_000 });
 }
 
 /**
@@ -602,10 +601,20 @@ export async function seedHierarchyForContract(page: Page, planName: string = TE
 			},
 		})) as { name: string };
 
-		const ob = (await callMethod('kentender_strategy.api.strategy_builder.create_strategy_node', {
+		const sp = (await callMethod('kentender_strategy.api.strategy_builder.create_strategy_node', {
 			plan_name: plan,
 			parent_name: pr.name,
-			node_type: 'Objective',
+			node_type: 'SubProgram',
+			initial_data: {
+				node_title: 'District Works',
+				node_description: 'Sub-program',
+			},
+		})) as { name: string };
+
+		const ob = (await callMethod('kentender_strategy.api.strategy_builder.create_strategy_node', {
+			plan_name: plan,
+			parent_name: sp.name,
+			node_type: 'Indicator',
 			initial_data: {
 				node_title: 'Increase rural access',
 				node_description: 'Improve services in rural areas',

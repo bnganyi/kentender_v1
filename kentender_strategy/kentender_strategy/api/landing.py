@@ -9,12 +9,13 @@ import frappe
 from frappe import _
 
 
-def _counts_by_plan(plan_names: list) -> Tuple[Dict[str, int], Dict[str, int], Dict[str, int]]:
-	"""Return three maps: strategic_plan -> count for Program / Objective / Target."""
+def _counts_by_plan(plan_names: list) -> Tuple[Dict[str, int], Dict[str, int], Dict[str, int], Dict[str, int]]:
+	"""Return four maps: strategic_plan -> count for Program / Sub Program / Indicator / Target."""
 	if not plan_names:
-		return {}, {}, {}
+		return {}, {}, {}, {}
 	params = tuple(plan_names)
 	prog: dict[str, int] = {}
+	sub: dict[str, int] = {}
 	obj: dict[str, int] = {}
 	tgt: dict[str, int] = {}
 	for row in frappe.db.sql(
@@ -28,6 +29,18 @@ def _counts_by_plan(plan_names: list) -> Tuple[Dict[str, int], Dict[str, int], D
 		as_dict=True,
 	):
 		prog[row.strategic_plan] = int(row.c or 0)
+	if frappe.db.exists("DocType", "Sub Program"):
+		for row in frappe.db.sql(
+			"""
+			SELECT strategic_plan, COUNT(*) AS c
+			FROM `tabSub Program`
+			WHERE strategic_plan IN %(plans)s
+			GROUP BY strategic_plan
+			""",
+			{"plans": params},
+			as_dict=True,
+		):
+			sub[row.strategic_plan] = int(row.c or 0)
 	for row in frappe.db.sql(
 		"""
 		SELECT strategic_plan, COUNT(*) AS c
@@ -50,7 +63,7 @@ def _counts_by_plan(plan_names: list) -> Tuple[Dict[str, int], Dict[str, int], D
 		as_dict=True,
 	):
 		tgt[row.strategic_plan] = int(row.c or 0)
-	return prog, obj, tgt
+	return prog, sub, obj, tgt
 
 
 @frappe.whitelist()
@@ -71,6 +84,7 @@ def get_strategy_landing_data():
 			"modified",
 			"owner",
 			"procuring_entity",
+			"version_no",
 		],
 		order_by="modified desc",
 		limit=2000,
@@ -81,6 +95,8 @@ def get_strategy_landing_data():
 	empty_portfolio = {
 		"total_plans": 0,
 		"draft_count": 0,
+		"submitted_count": 0,
+		"approved_count": 0,
 		"active_count": 0,
 		"archived_count": 0,
 		"my_drafts_count": 0,
@@ -91,11 +107,16 @@ def get_strategy_landing_data():
 		return {"portfolio": empty_portfolio, "plans": []}
 
 	names = [p.name for p in plans]
-	prog_by, obj_by, tgt_by = _counts_by_plan(names)
+	prog_by, sub_by, obj_by, tgt_by = _counts_by_plan(names)
 
-	draft_count = sum(1 for p in plans if (p.get("status") or "").strip() == "Draft")
-	active_count = sum(1 for p in plans if (p.get("status") or "").strip() == "Active")
-	archived_count = sum(1 for p in plans if (p.get("status") or "").strip() == "Archived")
+	def _status_count(status: str) -> int:
+		return sum(1 for p in plans if (p.get("status") or "").strip() == status)
+
+	draft_count = _status_count("Draft")
+	submitted_count = _status_count("Submitted")
+	approved_count = _status_count("Approved")
+	active_count = _status_count("Active")
+	archived_count = _status_count("Archived")
 	my_drafts_count = sum(
 		1
 		for p in plans
@@ -107,13 +128,16 @@ def get_strategy_landing_data():
 	for p in plans:
 		n = p.name
 		pc = int(prog_by.get(n, 0))
-		oc = int(obj_by.get(n, 0))
+		spc = int(sub_by.get(n, 0))
+		ic = int(obj_by.get(n, 0))
 		tc = int(tgt_by.get(n, 0))
 		out_plans.append(
 			{
 				**p,
 				"program_count": pc,
-				"objective_count": oc,
+				"sub_program_count": spc,
+				"indicator_count": ic,
+				"objective_count": ic,
 				"target_count": tc,
 			}
 		)
@@ -122,6 +146,8 @@ def get_strategy_landing_data():
 		"portfolio": {
 			"total_plans": len(plans),
 			"draft_count": draft_count,
+			"submitted_count": submitted_count,
+			"approved_count": approved_count,
 			"active_count": active_count,
 			"archived_count": archived_count,
 			"my_drafts_count": my_drafts_count,

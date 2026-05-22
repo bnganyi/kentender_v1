@@ -15,7 +15,7 @@ def assert_plan_is_draft_for_mutation(strategic_plan: str) -> None:
 	status = frappe.db.get_value("Strategic Plan", strategic_plan, "status")
 	if status and status != "Draft":
 		frappe.throw(
-			_("Cannot change programs, objectives, or targets while the strategic plan is {0}. Set status to Draft to edit.").format(
+			_("Cannot change structure while the strategic plan is {0}. Return to Draft to edit.").format(
 				frappe.bold(status)
 			)
 		)

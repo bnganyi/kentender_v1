@@ -1,3 +1,13 @@
+from pathlib import Path
+
+
+def _asset_version(rel_path: str) -> int:
+	try:
+		return int((Path(__file__).resolve().parent / rel_path).stat().st_mtime)
+	except OSError:
+		return 1
+
+
 app_name = "kentender_core"
 app_title = "Kentender Core"
 app_publisher = "KenTender"
@@ -25,8 +35,14 @@ app_license = "mit"
 # ------------------
 
 # include js, css files in header of desk.html
-app_include_css = "/assets/kentender_core/css/kentender_desk_builder_layout.css"
-# app_include_js = "/assets/kentender_core/js/kentender_core.js"
+app_include_css = [
+	"/assets/kentender_core/css/kentender_desk_builder_layout.css",
+	f"/assets/kentender_core/css/kt_module_shell.css?v={_asset_version('public/css/kt_module_shell.css')}",
+]
+app_include_js = [
+	f"/assets/kentender_core/js/kt_module_registry.js?v={_asset_version('public/js/kt_module_registry.js')}",
+	f"/assets/kentender_core/js/kt_module_shell.js?v={_asset_version('public/js/kt_module_shell.js')}",
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/kentender_core/css/kentender_core.css"

@@ -6,32 +6,27 @@ import {
 	isolatedPlanName,
 	openStrategyBuilder,
 	submitNewNodeDialog,
-	treeNodeButton,
 } from '../../helpers/strategyBuilder';
+import { clickStructureSubtab } from '../../helpers/strategyWorkbench';
 
-test('Can add Objective under Program', async ({ page }, testInfo) => {
+test('Can add Indicator under Sub-program in workspace Structure tab', async ({ page }, testInfo) => {
 	const plan = isolatedPlanName(testInfo);
 	await ensureTestStrategicPlan(page, plan);
 	await clearStrategyNodes(page, plan);
 	await openStrategyBuilder(page, plan);
 
-	await page.getByTestId('add-program-button').click();
+	await clickStructureSubtab(page, 'structure-subtab-programs', 'structure-add-program');
+	await page.getByTestId('structure-add-program').click();
 	await submitNewNodeDialog(page, { title: 'Healthcare Delivery' }, /New Program/i);
-	await expect(treeNodeButton(page, /Healthcare Delivery/)).toBeVisible();
 
-	await treeNodeButton(page, /Healthcare Delivery/).click();
-	await expect(page.getByTestId('add-objective-button')).toBeEnabled();
+	await clickStructureSubtab(page, 'structure-subtab-subprograms', 'structure-add-subprogram');
+	await page.getByTestId('structure-add-subprogram').click();
+	await submitNewNodeDialog(page, { title: 'District Works' }, /New Sub-program/i);
 
-	await page.getByTestId('add-objective-button').click();
-	await submitNewNodeDialog(
-		page,
-		{
-			title: 'Increase rural access',
-			description: 'Improve services in rural areas',
-		},
-		/New Objective/i,
-	);
+	await clickStructureSubtab(page, 'structure-subtab-indicators', 'structure-add-indicator');
+	await page.getByTestId('structure-add-indicator').click();
+	await submitNewNodeDialog(page, { title: 'Increase rural access' }, /New Indicator/i);
 
-	await expect(treeNodeButton(page, /Increase rural access/)).toBeVisible();
-	await expect(page.getByTestId('selected-node-type')).toHaveText(/Objective/i);
+	await page.getByTestId('structure-subtab-overview').click();
+	await expect(page.getByTestId('structure-overview')).toContainText('Increase rural access');
 });

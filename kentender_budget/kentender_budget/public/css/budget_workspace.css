@@ -526,3 +526,287 @@ div.kt-budget-builder-shell {
 		align-items: flex-start;
 	}
 }
+
+.kt-budget-injected-shell .kt-budget-master-detail--nested,
+.kt-budget-builder-shell .kt-budget-master-detail--nested {
+	margin-top: 0.25rem;
+}
+
+.kt-budget-injected-shell .kt-budget-detail-panel--locked .kt-budget-row[data-budget-line],
+.kt-budget-builder-shell .kt-budget-detail-panel--locked .kt-budget-row[data-budget-line] {
+	cursor: pointer;
+}
+
+.kt-budget-injected-shell .kt-budget-detail-panel .kt-budget-overview-metrics,
+.kt-budget-builder-shell .kt-budget-detail-panel .kt-budget-overview-metrics {
+	margin-bottom: 0.75rem;
+}
+
+/* Workspace body: budgets rail + main (lines workspace lives in main) */
+.kt-budget-injected-shell .kt-budget-workspace-body,
+.kt-budget-builder-shell .kt-budget-workspace-body {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: stretch;
+	gap: 1rem;
+	min-height: 28rem;
+}
+
+.kt-budget-injected-shell .kt-budget-budgets-rail,
+.kt-budget-builder-shell .kt-budget-budgets-rail {
+	flex: 0 0 17rem;
+	max-width: 17rem;
+	padding: 0.85rem 0.95rem;
+	overflow: auto;
+}
+
+.kt-budget-injected-shell .kt-budget-workspace-main-wrap,
+.kt-budget-builder-shell .kt-budget-workspace-main-wrap {
+	flex: 1 1 0;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.kt-budget-injected-shell .kt-budget-workspace-main,
+.kt-budget-builder-shell .kt-budget-workspace-main {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.kt-budget-injected-shell .kt-budget-workspace-main__header,
+.kt-budget-builder-shell .kt-budget-workspace-main__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	flex-wrap: wrap;
+	gap: 0.5rem 1rem;
+}
+
+.kt-budget-injected-shell .kt-budget-workspace-main__actions,
+.kt-budget-builder-shell .kt-budget-workspace-main__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.kt-budget-injected-shell .kt-budget-meta-line,
+.kt-budget-builder-shell .kt-budget-meta-line {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.kt-budget-injected-shell .kt-budget-meta-sep,
+.kt-budget-builder-shell .kt-budget-meta-sep {
+	opacity: 0.55;
+}
+
+.kt-budget-injected-shell .kt-budget-metrics-strip,
+.kt-budget-builder-shell .kt-budget-metrics-strip {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.65rem 1.25rem;
+	padding: 0.75rem 0.95rem;
+}
+
+.kt-budget-injected-shell .kt-budget-inspect-metric,
+.kt-budget-builder-shell .kt-budget-inspect-metric {
+	display: flex;
+	flex-direction: column;
+	min-width: 7.5rem;
+}
+
+.kt-budget-injected-shell .kt-budget-inspect-metric__label,
+.kt-budget-builder-shell .kt-budget-inspect-metric__label {
+	font-size: 0.72rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--text-muted, #6c757d);
+}
+
+.kt-budget-injected-shell .kt-budget-inspect-metric__value,
+.kt-budget-builder-shell .kt-budget-inspect-metric__value {
+	font-size: 1.05rem;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+.kt-budget-injected-shell .kt-budget-inspect-metric__hint,
+.kt-budget-builder-shell .kt-budget-inspect-metric__hint {
+	font-size: 0.75rem;
+	margin-top: 0.1rem;
+}
+
+.kt-budget-injected-shell .kt-budget-lines-workspace,
+.kt-budget-builder-shell .kt-budget-lines-workspace {
+	display: flex;
+	flex: 1 1 auto;
+	gap: 0.85rem;
+	min-height: 18rem;
+	min-width: 0;
+}
+
+.kt-budget-injected-shell .kt-budget-lines-rail,
+.kt-budget-builder-shell .kt-budget-lines-rail {
+	flex: 0 0 16rem;
+	max-width: 16rem;
+	padding: 0.75rem 0.85rem;
+	overflow: auto;
+}
+
+.kt-budget-injected-shell .kt-budget-line-detail-pane,
+.kt-budget-builder-shell .kt-budget-line-detail-pane {
+	flex: 1 1 0;
+	min-width: 0;
+	overflow: auto;
+}
+
+.kt-budget-injected-shell .kt-budget-line-inspect,
+.kt-budget-builder-shell .kt-budget-line-inspect {
+	height: 100%;
+}
+
+.kt-budget-injected-shell .kt-budget-line-inspect__header,
+.kt-budget-builder-shell .kt-budget-line-inspect__header {
+	margin-bottom: 0.75rem;
+}
+
+.kt-budget-injected-shell .kt-budget-inspect-metrics,
+.kt-budget-builder-shell .kt-budget-inspect-metrics {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.65rem 1rem;
+	margin-bottom: 0.85rem;
+	padding-bottom: 0.75rem;
+	border-bottom: 1px solid var(--kt-budget-surface-border);
+}
+
+.kt-budget-injected-shell .kt-budget-inspect-block + .kt-budget-inspect-block,
+.kt-budget-builder-shell .kt-budget-inspect-block + .kt-budget-inspect-block {
+	margin-top: 0.85rem;
+	padding-top: 0.75rem;
+	border-top: 1px solid var(--kt-budget-surface-border);
+}
+
+.kt-budget-injected-shell .kt-budget-inspect-block__title,
+.kt-budget-builder-shell .kt-budget-inspect-block__title {
+	font-size: 0.72rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--text-muted, #6c757d);
+	margin-bottom: 0.45rem;
+}
+
+.kt-budget-injected-shell .kt-budget-inspect-grid,
+.kt-budget-builder-shell .kt-budget-inspect-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+	gap: 0.55rem 0.85rem;
+	font-size: 0.9rem;
+}
+
+@media (max-width: 991px) {
+	.kt-budget-injected-shell .kt-budget-workspace-body,
+	.kt-budget-builder-shell .kt-budget-workspace-body {
+		flex-direction: column;
+		min-height: 0;
+	}
+
+	.kt-budget-injected-shell .kt-budget-budgets-rail,
+	.kt-budget-builder-shell .kt-budget-budgets-rail,
+	.kt-budget-injected-shell .kt-budget-lines-rail,
+	.kt-budget-builder-shell .kt-budget-lines-rail {
+		flex: 1 1 auto;
+		max-width: none;
+	}
+
+	.kt-budget-injected-shell .kt-budget-lines-workspace,
+	.kt-budget-builder-shell .kt-budget-lines-workspace {
+		flex-direction: column;
+	}
+}
+
+/* Review workbench — work tabs, allocations table, drawer */
+.kt-budget-review-shell .kt-budget-work-tabs {
+	margin-top: 0.35rem;
+}
+
+.kt-budget-review-shell .kt-budget-work-tab {
+	font-size: 0.82rem;
+}
+
+.kt-budget-review-shell .kt-budget-anchor-card {
+	padding: 0.85rem 0.95rem;
+}
+
+.kt-budget-review-shell .kt-budget-allocations-wrap {
+	padding: 0.85rem 0.95rem;
+	flex: 1 1 auto;
+	min-height: 12rem;
+	overflow: auto;
+}
+
+.kt-budget-review-shell .kt-budget-allocations-table th {
+	font-size: 0.72rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--text-muted, #6c757d);
+	border-top: none;
+}
+
+.kt-budget-review-shell .kt-budget-allocation-row {
+	cursor: pointer;
+}
+
+.kt-budget-review-shell .kt-budget-allocation-program {
+	font-weight: 500;
+}
+
+.kt-budget-review-shell .kt-budget-review-body {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
+	gap: 0.75rem;
+}
+
+.kt-budget-review-shell .kt-budget-allocation-drawer {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	width: min(22rem, 100%);
+	max-width: 100%;
+	padding: 0.85rem 0.95rem;
+	overflow: auto;
+	z-index: 2;
+	box-shadow: -4px 0 16px rgba(15, 23, 42, 0.12);
+}
+
+.kt-budget-review-shell .kt-budget-allocation-drawer__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 0.5rem;
+	margin-bottom: 0.65rem;
+}
+
+.kt-budget-review-shell .kt-budget-drawer-details summary {
+	cursor: pointer;
+}
+
+@media (max-width: 767px) {
+	.kt-budget-review-shell .kt-budget-allocation-drawer {
+		position: static;
+		width: 100%;
+		box-shadow: var(--kt-budget-surface-shadow);
+	}
+}

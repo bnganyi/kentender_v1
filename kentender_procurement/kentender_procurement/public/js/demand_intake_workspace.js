@@ -26,6 +26,42 @@
 		);
 	}
 
+	function saveDiaWorkbenchState() {
+		if (typeof kentender_core === "undefined" || !kentender_core.kt_state) {
+			return;
+		}
+		kentender_core.kt_state.save("dia", {
+			workTab: activeWorkTab,
+			queueId: activeQueueId,
+			selectedRecord: selectedDemandName,
+		});
+		if (selectedDemandName) {
+			kentender_core.kt_state.setSelectedRecord("dia", selectedDemandName);
+		}
+	}
+
+	function restoreDiaWorkbenchState() {
+		if (typeof kentender_core === "undefined" || !kentender_core.kt_state) {
+			return;
+		}
+		const stored = kentender_core.kt_state.consumeSelectedRecord("dia");
+		if (stored) {
+			selectedDemandName = stored;
+		}
+		const st = kentender_core.kt_state.restore("dia");
+		if (st) {
+			if (st.workTab) {
+				activeWorkTab = st.workTab;
+			}
+			if (st.queueId) {
+				activeQueueId = st.queueId;
+			}
+			if (!selectedDemandName && st.selectedRecord) {
+				selectedDemandName = st.selectedRecord;
+			}
+		}
+	}
+
 	function focusDiaQueueToolbar() {
 		const row = document.getElementById("kt-dia-queue-selector");
 		const pills = document.getElementById("kt-dia-queue-pills");
@@ -546,6 +582,7 @@
 			if (act && root.contains(act)) {
 				const a = act.getAttribute("data-dia-action");
 				if (a === "empty-new-demand" && userCanCreateDemand() && typeof frappe !== "undefined" && frappe.new_doc) {
+					saveDiaWorkbenchState();
 					frappe.new_doc("Demand");
 					return;
 				}
@@ -662,6 +699,7 @@
 			btn.setAttribute("data-testid", "dia-new-demand-button");
 			btn.textContent = __("New Demand");
 			btn.addEventListener("click", function () {
+				saveDiaWorkbenchState();
 				frappe.new_doc("Demand");
 			});
 			slot.appendChild(btn);
@@ -1272,7 +1310,10 @@
 			return;
 		}
 		if (action === "open_form") {
-			if (typeof frappe !== "undefined" && frappe.set_route) {
+			saveDiaWorkbenchState();
+			if (typeof kentender_core !== "undefined" && kentender_core.kt_nav) {
+				kentender_core.kt_nav.toForm("dia", nm);
+			} else if (typeof frappe !== "undefined" && frappe.set_route) {
 				frappe.set_route("Form", "Demand", nm);
 			}
 			return;
@@ -2306,6 +2347,7 @@
 	}
 
 	function loadDiaLandingData() {
+		restoreDiaWorkbenchState();
 		const listRoot = document.getElementById("kt-dia-list-root");
 		const detailRoot = document.getElementById("kt-dia-detail-root");
 		if (!listRoot || !detailRoot) return;
@@ -2352,8 +2394,8 @@
 		const detailRoot = document.getElementById("kt-dia-detail-root");
 		if (!listRoot || !detailRoot) return;
 		if (inj.inserted) {
-			activeWorkTab = "mywork";
-			activeQueueId = null;
+			restoreDiaWorkbenchState();
+			if (!activeWorkTab) activeWorkTab = "mywork";
 			syncWorkTabButtons();
 			loadDiaLandingData();
 		}
