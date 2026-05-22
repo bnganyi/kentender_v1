@@ -14,14 +14,25 @@ test('Strategy landing shows seeded plans when plans exist', async ({ page }) =>
 	await openStrategyLanding(page);
 
 	await expect(page.getByTestId('strategic-plan-list')).toBeVisible();
-	// Title appears in list + detail; scope to list to avoid Playwright strict-mode violation.
 	await expect(page.getByTestId('strategic-plan-list').getByText(SEEDED_BASIC_PLAN_TITLE)).toBeVisible();
 	await expect(page.getByTestId('strategic-plans-empty-state')).toHaveCount(0);
 	await expect(page.getByTestId('selected-plan-panel')).toBeVisible();
 	await expect(page.getByTestId('selected-plan-title')).toBeVisible();
 	await expect(page.getByTestId('selected-plan-program-count')).toBeVisible();
-	await expect(page.getByTestId('selected-plan-objective-count')).toBeVisible();
+	await expect(page.getByTestId('selected-plan-sub-program-count')).toBeVisible();
+	await expect(page.getByTestId('selected-plan-indicator-count')).toBeVisible();
 	await expect(page.getByTestId('selected-plan-target-count')).toBeVisible();
+});
+
+test('Plan rail keeps header separated and uses inline status only', async ({ page }) => {
+	await loginAsStrategyManager(page);
+	await openStrategyLanding(page);
+
+	const section = page.getByTestId('strategic-plans-section');
+	const railHead = section.locator('.kt-strategy-plan-list-head');
+	await expect(railHead).toBeVisible();
+	await expect(railHead.getByTestId('strategic-plan-search')).toBeVisible();
+	await expect(page.locator('[data-testid^="strategic-plan-row-status-"]')).toHaveCount(0);
 });
 
 test('Selected plan shows correct seeded counts for basic plan', async ({ page }) => {
@@ -32,6 +43,7 @@ test('Selected plan shows correct seeded counts for basic plan', async ({ page }
 
 	await expect(page.getByTestId('selected-plan-title')).toContainText(SEEDED_BASIC_PLAN_TITLE);
 	await expect(page.getByTestId('selected-plan-program-count')).toContainText('2');
-	await expect(page.getByTestId('selected-plan-objective-count')).toContainText('3');
+	await expect(page.getByTestId('selected-plan-sub-program-count')).toContainText('2');
+	await expect(page.getByTestId('selected-plan-indicator-count')).toContainText('3');
 	await expect(page.getByTestId('selected-plan-target-count')).toContainText('4');
 });

@@ -33,3 +33,11 @@ test('Selecting another plan updates the detail panel', async ({ page }) => {
 
 	await expect(page.getByTestId('selected-plan-title')).toContainText(EXTENDED_PLAN_TITLE);
 });
+
+test('Review tab renders panel container', async ({ page }) => {
+	await loginAsStrategyManager(page);
+	await openStrategyLanding(page);
+
+	await page.getByTestId('strategy-tab-review').click();
+	await expect(page.getByTestId('strategy-tab-panel-review')).toBeVisible();
+});
