@@ -15,6 +15,7 @@ test('Approved budget shows allocations table and drawer on Review landing', asy
 	await approvedRow.click();
 	await expect(page.getByTestId('budget-builder-readonly-banner')).toBeVisible({ timeout: 30_000 });
 	await expect(page.getByTestId('budget-builder-readonly-banner')).toContainText('approved and locked');
+	await page.getByTestId('budget-tab-allocations').click();
 	await expect(page.getByTestId('budget-allocations-table')).toBeVisible();
 	await expect(page.getByTestId('selected-budget-total')).toContainText('120,000,000.00');
 	await expect(page.getByTestId('budget-builder-available')).toHaveCount(0);
@@ -26,7 +27,6 @@ test('Approved budget shows allocations table and drawer on Review landing', asy
 		.filter({ hasText: 'District Health Facility Infrastructure Rehabilitation' })
 		.first();
 	await expect(lineRow).toBeVisible();
-	await lineRow.click();
+	await lineRow.getByRole('button', { name: 'View' }).click();
 	await expect(page.getByTestId('budget-allocation-drawer')).toBeVisible({ timeout: 15_000 });
-	await expect(page.getByTestId('budget-allocation-editor')).toBeVisible();
 });

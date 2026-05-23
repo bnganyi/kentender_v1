@@ -91,12 +91,15 @@ export async function expectPrimarySidebarItemHighlighted(
 	}
 }
 
-export async function expectStatusFiltersUseHierarchyContract(container: Locator) {
-	const allFilter = container.getByTestId('strategy-status-all');
+export async function expectStatusFiltersUseHierarchyContract(
+	container: Locator,
+	options?: { allTestId?: string; sampleZeroTestId?: string },
+) {
+	const allFilter = container.getByTestId(options?.allTestId || 'strategy-status-all');
 	await expect(allFilter).toHaveClass(/kt-status-filter/);
 	await expect(allFilter).not.toHaveClass(/btn-primary/);
 
-	const zeroFilter = container.getByTestId('strategy-status-submitted');
+	const zeroFilter = container.getByTestId(options?.sampleZeroTestId || 'strategy-status-submitted');
 	const countText = ((await zeroFilter.textContent()) || '').replace(/\s+/g, ' ').trim();
 	const isZeroCount = /\b0$/.test(countText);
 	if (isZeroCount) {
@@ -104,8 +107,12 @@ export async function expectStatusFiltersUseHierarchyContract(container: Locator
 	}
 }
 
-export async function expectPrimaryTabsUseHierarchyContract(page: Page) {
-	const activePrimaryTab = page.locator('[data-testid^="strategy-tab-"][aria-selected="true"]').last();
+export async function expectPrimaryTabsUseHierarchyContract(
+	page: Page,
+	options?: { tabPrefix?: string },
+) {
+	const prefix = options?.tabPrefix || 'strategy-tab-';
+	const activePrimaryTab = page.locator(`[data-testid^="${prefix}"][aria-selected="true"]`).last();
 	await expect(activePrimaryTab).toHaveClass(/kt-primary-tab/);
 	await expect(activePrimaryTab).not.toHaveClass(/btn-primary/);
 }

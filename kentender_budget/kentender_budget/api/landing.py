@@ -29,6 +29,10 @@ def get_budget_landing_data():
 			"rejection_reason",
 			"rejected_by",
 			"rejected_at",
+			"submitted_by",
+			"submitted_at",
+			"approved_by",
+			"approved_at",
 		],
 		order_by="modified desc",
 		limit=2000,
@@ -105,6 +109,21 @@ def get_budget_landing_data():
 		):
 			plan_titles[row.name] = (row.strategic_plan_name or row.name or "").strip()
 
+	user_ids = set()
+	for b in budgets:
+		for key in ("submitted_by", "approved_by", "rejected_by"):
+			if b.get(key):
+				user_ids.add(b.get(key))
+	user_labels: dict[str, str] = {}
+	if user_ids:
+		for row in frappe.get_all(
+			"User",
+			filters={"name": ["in", list(user_ids)]},
+			fields=["name", "full_name"],
+			limit=5000,
+		):
+			user_labels[row.name] = (row.full_name or row.name or "").strip()
+
 	out_budgets = []
 	for b in budgets:
 		total = flt(b.get("total_budget_amount"))
@@ -132,6 +151,12 @@ def get_budget_landing_data():
 				"rejection_reason": b.get("rejection_reason"),
 				"rejected_by": b.get("rejected_by"),
 				"rejected_at": b.get("rejected_at"),
+				"submitted_by": b.get("submitted_by"),
+				"submitted_at": b.get("submitted_at"),
+				"approved_by": b.get("approved_by"),
+				"approved_at": b.get("approved_at"),
+				"approved_by_label": user_labels.get(b.get("approved_by"))
+				or b.get("approved_by"),
 				"allocated_amount": allocated_amount,
 				"reserved_amount": reserved_amount,
 				"available_amount": available_amount,

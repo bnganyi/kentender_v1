@@ -39,9 +39,15 @@ app_include_css = [
 	f"/assets/kentender_budget/css/budget_workspace.css?v={_asset_version('public/css/budget_workspace.css')}",
 	f"/assets/kentender_budget/css/budget_builder_page.css?v={_asset_version('public/css/budget_builder_page.css')}",
 ]
-app_include_js = (
-	f"/assets/kentender_budget/js/budget_workspace.js?v={_asset_version('public/js/budget_workspace.js')}"
-)
+app_include_js = [
+	f"/assets/kentender_budget/js/budget_allocation_drawer.js?v={_asset_version('public/js/budget_allocation_drawer.js')}",
+	f"/assets/kentender_budget/js/budget_metadata_drawer.js?v={_asset_version('public/js/budget_metadata_drawer.js')}",
+	f"/assets/kentender_budget/js/budget_summary_panel.js?v={_asset_version('public/js/budget_summary_panel.js')}",
+	f"/assets/kentender_budget/js/budget_allocations_panel.js?v={_asset_version('public/js/budget_allocations_panel.js')}",
+	f"/assets/kentender_budget/js/budget_review_panel.js?v={_asset_version('public/js/budget_review_panel.js')}",
+	f"/assets/kentender_budget/js/budget_audit_panel.js?v={_asset_version('public/js/budget_audit_panel.js')}",
+	f"/assets/kentender_budget/js/budget_workspace.js?v={_asset_version('public/js/budget_workspace.js')}",
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/kentender_budget/css/kentender_budget.css"

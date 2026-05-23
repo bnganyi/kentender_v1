@@ -1,13 +1,5 @@
 /**
  * B5.7 — Budget approval flow (8.Budget-Approval-Flow.md).
- *
- * Preconditions:
- * - Run `bench --site <site> execute kentender_core.seeds.seed_budget_extended.run` so the site has:
- *   - **FY2026 Budget** — Draft (then tests may move it to Submitted)
- *   - **FY2027 Budget** — Submitted (extended pack sets this for approval-flow coverage)
- * - Playwright `.env.ui` users: Strategy Manager + Planning Authority (see `helpers/auth.ts`).
- *
- * Re-run: if FY2027 is already Approved / FY2026 already Submitted, re-seed extended or run a fresh site.
  */
 
 import { expect, test, type Page } from '@playwright/test';
@@ -38,21 +30,6 @@ async function confirmFrappeYes(page: Page) {
 	await yes.click();
 }
 
-async function expectInlineReadOnlyBudgetDetail(page: Page) {
-	await expect(page.getByTestId('budget-builder-readonly-banner')).toBeVisible({ timeout: 30_000 });
-	await expect(page.getByTestId('budget-line-list')).toBeVisible();
-	await expect(page.getByTestId('budget-allocation-editor')).toBeVisible();
-	await expect(page.getByTestId('budget-allocation-save-button')).toHaveCount(0);
-	await expect(page.getByTestId('selected-budget-open-builder')).toHaveCount(0);
-}
-
-async function gotoBudgetBuilder(page: Page, budgetDocName: string) {
-	await page.goto(`/desk/budget-builder/${encodeURIComponent(budgetDocName)}`, {
-		waitUntil: 'domcontentloaded',
-	});
-	await expect(page.getByTestId('budget-builder-page')).toBeVisible({ timeout: 60_000 });
-}
-
 async function selectBudgetRowByTitle(page: Page, title: string) {
 	const row = page.locator('.kt-budget-row').filter({ hasText: title }).first();
 	await expect(row).toBeVisible({ timeout: 30_000 });
@@ -60,8 +37,9 @@ async function selectBudgetRowByTitle(page: Page, title: string) {
 	await expect(row).toHaveClass(/is-active/);
 }
 
-async function activeBudgetDocName(page: Page): Promise<string | null> {
-	return page.locator('.kt-budget-row.is-active').getAttribute('data-budget-name');
+async function openReviewTab(page: Page) {
+	await page.getByTestId('budget-tab-review').click();
+	await expect(page.getByTestId('budget-review-panel')).toBeVisible({ timeout: 30_000 });
 }
 
 test.describe.serial('Budget approval flow (B5.7)', () => {
@@ -83,11 +61,11 @@ test.describe.serial('Budget approval flow (B5.7)', () => {
 	test.beforeEach(async () => {
 		test.skip(
 			!seedOk,
-			'Requires seed_budget_extended (FY2026 + FY2027 budgets). Run: bench execute kentender_core.seeds.seed_budget_extended.run'
+			'Requires seed_budget_extended (FY2026 + FY2027 budgets). Run: bench execute kentender_core.seeds.seed_budget_extended.run',
 		);
 	});
 
-	test('FY2027 builder is read-only when budget is Submitted', async ({ page }) => {
+	test('FY2027 allocations are read-only when budget is Submitted', async ({ page }) => {
 		const loggedIn = await tryLogin(() => loginAsStrategyManager(page));
 		test.skip(!loggedIn, 'Strategy Manager test user not configured');
 		await openBudgetLandingAllQueues(page);
@@ -99,21 +77,12 @@ test.describe.serial('Budget approval flow (B5.7)', () => {
 			return;
 		}
 		if (!st?.includes('Submitted')) {
-			test.skip(
-				true,
-				`FY2027 not Submitted (badge: ${(st || '').trim() || 'empty'}) — re-run seed_budget_extended for approval-flow coverage`,
-			);
+			test.skip(true, `FY2027 not Submitted — re-run seed_budget_extended`);
 			return;
 		}
-		const docName = await activeBudgetDocName(page);
-		expect(docName).toBeTruthy();
-		await gotoBudgetBuilder(page, docName!);
-
-		await expectInlineReadOnlyBudgetDetail(page);
-		await expect(page.getByTestId('budget-builder-readonly-banner')).toContainText(
-			'submitted and awaiting approval'
-		);
-		await expect(page.getByTestId('selected-budget-status-badge')).toBeVisible();
+		await page.getByTestId('budget-tab-allocations').click();
+		await expect(page.getByTestId('budget-allocations-readonly-banner')).toBeVisible();
+		await expect(page.getByTestId('budget-allocation-add')).toHaveCount(0);
 	});
 
 	test('Strategy Manager does not see Approve on Submitted budget (FY2027)', async ({ page }) => {
@@ -123,20 +92,11 @@ test.describe.serial('Budget approval flow (B5.7)', () => {
 		await selectBudgetRowByTitle(page, 'FY2027 Budget');
 		const badge = page.getByTestId('selected-budget-status-badge');
 		const st = await badge.textContent();
-		if (st?.includes('Approved')) {
-			test.skip(
-				true,
-				'FY2027 already Approved — re-seed for Submitted FY2027, or this assertion is covered when budget is not Draft',
-			);
+		if (st?.includes('Approved') || !st?.includes('Submitted')) {
+			test.skip(true, 'FY2027 not in Submitted state for this assertion');
 			return;
 		}
-		if (!st?.includes('Submitted')) {
-			test.skip(
-				true,
-				`FY2027 not Submitted (badge: ${(st || '').trim() || 'empty'}) — re-run seed_budget_extended for approval-flow coverage`,
-			);
-			return;
-		}
+		await openReviewTab(page);
 		await expect(page.getByTestId('budget-approve')).toHaveCount(0);
 		await expect(page.getByTestId('selected-budget-edit')).toHaveCount(0);
 		await expect(badge).toContainText('Submitted');
@@ -147,19 +107,17 @@ test.describe.serial('Budget approval flow (B5.7)', () => {
 		test.skip(!loggedIn, 'Strategy Manager test user not configured');
 		await openBudgetLandingAllQueues(page);
 		await selectBudgetRowByTitle(page, 'FY2026 Budget');
+		await openReviewTab(page);
 
 		const submit = page.getByTestId('budget-submit-approval');
 		const statusBadge = page.getByTestId('selected-budget-status-badge');
 		if ((await submit.count()) === 0) {
 			const t = (await statusBadge.textContent()) || '';
 			if (t.includes('Submitted')) {
-				test.skip(true, 'FY2026 already Submitted — re-run seed_budget_extended for a clean Draft FY2026');
+				test.skip(true, 'FY2026 already Submitted');
 				return;
 			}
-			test.skip(
-				true,
-				'FY2026 is Draft but Submit is hidden (validation / seed preconditions) — check allocations and B5.7 seed',
-			);
+			test.skip(true, 'FY2026 Submit hidden — check seed preconditions');
 			return;
 		}
 
@@ -173,11 +131,12 @@ test.describe.serial('Budget approval flow (B5.7)', () => {
 		test.skip(!loggedIn, 'Planning Authority test user not configured');
 		await openBudgetLandingAllQueues(page);
 		await selectBudgetRowByTitle(page, 'FY2027 Budget');
+		await openReviewTab(page);
 
 		const approve = page.getByTestId('budget-approve');
 		if ((await approve.count()) === 0) {
 			await expect(page.getByTestId('selected-budget-status-badge')).toContainText('Approved');
-			test.skip(true, 'FY2027 already Approved — re-run seed_budget_extended to reset');
+			test.skip(true, 'FY2027 already Approved');
 			return;
 		}
 
@@ -188,18 +147,15 @@ test.describe.serial('Budget approval flow (B5.7)', () => {
 		});
 	});
 
-	test('FY2027 builder is read-only when budget is Approved', async ({ page }) => {
+	test('FY2027 allocations are read-only when budget is Approved', async ({ page }) => {
 		const loggedIn = await tryLogin(() => loginAsPlanningAuthority(page));
 		test.skip(!loggedIn, 'Planning Authority test user not configured');
 		await openBudgetLandingAllQueues(page);
 		await selectBudgetRowByTitle(page, 'FY2027 Budget');
-		const docName = await activeBudgetDocName(page);
-		expect(docName).toBeTruthy();
-
-		await gotoBudgetBuilder(page, docName!);
-		await expectInlineReadOnlyBudgetDetail(page);
-		await expect(page.getByTestId('budget-builder-readonly-banner')).toContainText('approved and locked');
 		await expect(page.getByTestId('selected-budget-status-badge')).toContainText('Approved');
+		await page.getByTestId('budget-tab-allocations').click();
+		await expect(page.getByTestId('budget-allocations-readonly-banner')).toContainText('approved and locked');
+		await expect(page.getByTestId('budget-allocation-add')).toHaveCount(0);
 	});
 
 	test('Planning Authority does not see Submit or Edit on Approved FY2027', async ({ page }) => {
@@ -207,6 +163,7 @@ test.describe.serial('Budget approval flow (B5.7)', () => {
 		test.skip(!loggedIn, 'Planning Authority test user not configured');
 		await openBudgetLandingAllQueues(page);
 		await selectBudgetRowByTitle(page, 'FY2027 Budget');
+		await openReviewTab(page);
 		await expect(page.getByTestId('budget-submit-approval')).toHaveCount(0);
 		await expect(page.getByTestId('selected-budget-edit')).toHaveCount(0);
 	});

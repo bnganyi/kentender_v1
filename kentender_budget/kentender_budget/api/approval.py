@@ -17,6 +17,8 @@ def submit_budget(budget_name: str | None = None):
 	if doc.status not in ("Draft", "Rejected"):
 		frappe.throw(_("Only Draft or Rejected budgets can be submitted."))
 	doc.status = "Submitted"
+	doc.submitted_by = frappe.session.user
+	doc.submitted_at = now_datetime()
 	doc.save()
 	return {"name": doc.name, "status": doc.status}
 
@@ -31,6 +33,8 @@ def approve_budget(budget_name: str | None = None):
 	if doc.status != "Submitted":
 		frappe.throw(_("Only Submitted budgets can be approved."))
 	doc.status = "Approved"
+	doc.approved_by = frappe.session.user
+	doc.approved_at = now_datetime()
 	doc.save()
 	return {"name": doc.name, "status": doc.status}
 

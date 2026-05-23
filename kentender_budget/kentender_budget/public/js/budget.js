@@ -71,12 +71,17 @@ function addSaveAndContinueButton(frm) {
 		// Transient flag consumed by Budget.after_insert for redirect response.
 		frm.doc.save_and_continue = 1;
 		await frm.save();
-		// Client-side fallback/primary UX for B2.1 flow.
 		if (frm.doc.name) {
+			if (typeof kentender_core !== "undefined" && kentender_core.kt_state) {
+				kentender_core.kt_state.save("budget", {
+					selectedRecord: frm.doc.name,
+					detailTab: "allocations",
+				});
+			}
 			if (typeof kentender_core !== "undefined" && kentender_core.kt_nav) {
-				kentender_core.kt_nav.toBuilder("budget", frm.doc.name);
+				kentender_core.kt_nav.toWorkbench("budget");
 			} else {
-				frappe.set_route("budget-builder", frm.doc.name);
+				frappe.set_route("Workspaces", "Budget Management");
 			}
 		}
 	});

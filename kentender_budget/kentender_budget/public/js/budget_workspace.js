@@ -1,30 +1,36 @@
-// Budget Management — Review workbench (allocation-focused landing; builder is separate route).
+// Budget Management workspace — strategy-pattern aligned shell.
+
+frappe.provide("kentender_budget.budget_workspace");
 
 (function () {
 	const WS_LABEL = "Budget Management";
-	const STORAGE_SELECT_BUDGET = "kt_budget_workspace_select";
+	const DETAIL_TABS = [
+		{ id: "summary", label: __("Summary"), testId: "budget-tab-summary" },
+		{ id: "allocations", label: __("Allocations"), testId: "budget-tab-allocations" },
+		{ id: "review", label: __("Review"), testId: "budget-tab-review" },
+		{ id: "audit", label: __("Audit"), testId: "budget-tab-audit" },
+	];
 
 	let bindScheduled = false;
 	let hooksBound = false;
-	let workspaceDomObserver = null;
 	let pollStarted = false;
+	let workspaceDomObserver = null;
+	let landingLoadInFlight = false;
 	let lastPayload = null;
 	let selectedBudgetName = null;
-	let lastReviewPayload = null;
-	let drawerLineName = null;
-	let reviewLoadToken = 0;
-	let landingLoadInFlight = false;
-	let reviewLoadError = null;
 	let activeWorkTab = null;
-	let workTabInitialized = false;
+	let activeDetailTab = "summary";
+	let searchQuery = "";
+	let stateInitialized = false;
+	let currentShell = null;
+	let currentList = null;
+	let currentDetail = null;
+	let reviewLoadToken = 0;
+	const reviewCacheByBudget = Object.create(null);
+	const reviewInFlightByBudget = Object.create(null);
 
-	function escapeHtml(s) {
-		if (s == null || s === undefined) return "";
-		return String(s)
-			.replace(/&/g, "&amp;")
-			.replace(/</g, "&lt;")
-			.replace(/>/g, "&gt;")
-			.replace(/"/g, "&quot;");
+	function esc(value) {
+		return frappe.utils.escape_html(value == null ? "" : String(value));
 	}
 
 	function workspaceNameMatchesBudget(name) {
@@ -85,35 +91,23 @@
 		document.body.classList.remove("kt-budget-shell");
 		selectedBudgetName = null;
 		lastPayload = null;
-		lastReviewPayload = null;
-		drawerLineName = null;
-		reviewLoadToken = 0;
 		activeWorkTab = null;
-		workTabInitialized = false;
+		activeDetailTab = "summary";
+		searchQuery = "";
+		stateInitialized = false;
+		reviewLoadToken = 0;
+		currentShell = null;
+		currentList = null;
+		currentDetail = null;
 		bindScheduled = false;
-	}
-
-	function consumeStoredBudgetSelection() {
-		if (typeof kentender_core !== "undefined" && kentender_core.kt_state) {
-			const fromKt = kentender_core.kt_state.consumeSelectedRecord("budget");
-			if (fromKt) return fromKt;
-		}
-		try {
-			const v = sessionStorage.getItem(STORAGE_SELECT_BUDGET);
-			if (v) {
-				sessionStorage.removeItem(STORAGE_SELECT_BUDGET);
-				return v;
-			}
-		} catch (e) {
-			/* ignore */
-		}
-		return null;
 	}
 
 	function saveBudgetWorkbenchState() {
 		if (typeof kentender_core === "undefined" || !kentender_core.kt_state) return;
 		kentender_core.kt_state.save("budget", {
 			workTab: activeWorkTab,
+			detailTab: activeDetailTab,
+			searchQuery: searchQuery,
 			selectedRecord: selectedBudgetName,
 		});
 		if (selectedBudgetName) {
@@ -129,14 +123,6 @@
 	function testIdPart(value) {
 		if (value == null || value === "") return "unknown";
 		return String(value).replace(/[^a-zA-Z0-9 _-]/g, "_");
-	}
-
-	function formatReferenceDisplay(label, code) {
-		const cleanLabel = String(label || "").trim();
-		const cleanCode = String(code || "").trim();
-		if (!cleanLabel && !cleanCode) return "—";
-		if (!cleanCode) return cleanLabel || "—";
-		return cleanLabel + " (" + cleanCode + ")";
 	}
 
 	function getVisibleWorkspacesPageRoot() {
@@ -228,21 +214,19 @@
 		return "all";
 	}
 
-	function ensureWorkTab() {
-		if (!workTabInitialized) {
-			if (typeof kentender_core !== "undefined" && kentender_core.kt_state) {
-				const st = kentender_core.kt_state.restore("budget");
-				if (st && st.workTab) {
-					activeWorkTab = st.workTab;
-				} else {
-					activeWorkTab = defaultWorkTab();
-				}
-			} else {
-				activeWorkTab = defaultWorkTab();
-			}
-			workTabInitialized = true;
+	function initializeStateFromStore() {
+		if (stateInitialized) return;
+		stateInitialized = true;
+		activeWorkTab = defaultWorkTab();
+		activeDetailTab = "summary";
+		if (typeof kentender_core !== "undefined" && kentender_core.kt_state) {
+			const st = kentender_core.kt_state.restore("budget");
+			if (st && st.workTab) activeWorkTab = st.workTab;
+			if (st && st.detailTab) activeDetailTab = st.detailTab;
+			if (st && st.searchQuery) searchQuery = String(st.searchQuery);
+			const selected = kentender_core.kt_state.consumeSelectedRecord("budget");
+			if (selected) selectedBudgetName = selected;
 		}
-		if (!activeWorkTab) activeWorkTab = "all";
 	}
 
 	function findBudget(payload, name) {
@@ -292,13 +276,51 @@
 		return 0;
 	}
 
+	function statusKeyFromRaw(status) {
+		return String(status || "")
+			.trim()
+			.toLowerCase();
+	}
+
+	function inlineStatusHtml(status) {
+		const st = statusKeyFromRaw(status);
+		return (
+			'<span class="kt-budget-inline-status kt-budget-inline-status--' +
+			esc(st) +
+			'" data-testid="budget-row-status-inline">' +
+			esc(status || "") +
+			"</span>"
+		);
+	}
+
 	function statusBadgeClass(status) {
-		const s = String(status || "").trim().toLowerCase();
+		const s = statusKeyFromRaw(status);
 		if (s === "draft") return "kt-budget-badge kt-budget-badge--draft";
 		if (s === "submitted") return "kt-budget-badge kt-budget-badge--submitted";
 		if (s === "approved") return "kt-budget-badge kt-budget-badge--approved";
 		if (s === "rejected") return "kt-budget-badge kt-budget-badge--rejected";
 		return "kt-budget-badge";
+	}
+
+	function editabilityBadgeClass(status) {
+		return isBudgetReadOnly(status)
+			? "kt-budget-badge kt-budget-badge--locked"
+			: "kt-budget-badge kt-budget-badge--editable";
+	}
+
+	function editabilityLabel(status) {
+		return isBudgetReadOnly(status) ? __("Locked") : __("Editable");
+	}
+
+	function compactMoney(n, currency) {
+		if (n == null || n === "") return "—";
+		const num = Number(n);
+		if (Number.isNaN(num)) return "—";
+		const cur = String(currency || "").trim();
+		if (num >= 1e9) return cur + " " + (num / 1e9).toFixed(1) + "B";
+		if (num >= 1e6) return cur + " " + (num / 1e6).toFixed(1) + "M";
+		if (num >= 1e3) return cur + " " + (num / 1e3).toFixed(1) + "K";
+		return fmtMoney(n, currency);
 	}
 
 	function formatAmount(value, digits) {
@@ -324,27 +346,20 @@
 		return (payload && payload.budget_lines) || [];
 	}
 
-	function findReviewLine(payload, name) {
-		const lines = getReviewLines(payload);
-		for (let i = 0; i < lines.length; i++) {
-			if (lines[i].name === name) return lines[i];
-		}
-		return null;
+	function nextStepLabel(status) {
+		const st = String(status || "").trim();
+		if (st === "Draft") return __("Next step: add allocations and submit for approval.");
+		if (st === "Submitted") return __("Next step: review and approve or reject.");
+		if (st === "Approved") return __("This budget is approved and locked.");
+		if (st === "Rejected") return __("Next step: revise and resubmit.");
+		return __("Next step: review readiness.");
 	}
 
-	function resetReviewForBudget(budgetName) {
-		if (!lastReviewPayload || !lastReviewPayload.budget) {
-			drawerLineName = null;
-			return;
-		}
-		if (lastReviewPayload.budget.name !== budgetName) {
-			lastReviewPayload = null;
-			drawerLineName = null;
-		}
+	function normalizeBudgetName(raw) {
+		return String(raw || "").trim().replace(/\s+\d{10,}$/, "");
 	}
 
-	function renderWorkTabs(portfolio) {
-		ensureWorkTab();
+	function renderStatusChips(portfolio) {
 		const tabs = [
 			{ id: "all", label: __("All"), testId: "budget-tab-all" },
 			{ id: "mywork", label: __("My Work"), testId: "budget-tab-my-work" },
@@ -353,791 +368,252 @@
 			{ id: "approved", label: __("Approved"), testId: "budget-tab-approved" },
 			{ id: "rejected", label: __("Rejected"), testId: "budget-tab-rejected" },
 		];
-		let html =
-			'<div class="kt-budget-work-tabs mb-2" role="tablist" data-testid="budget-work-tabs">' +
-			'<div class="btn-group btn-group-sm flex-wrap kt-budget-tab-group" role="group">';
+		let html = '<div class="kt-status-filter-row" role="group">';
 		for (let i = 0; i < tabs.length; i++) {
 			const tab = tabs[i];
 			const on = activeWorkTab === tab.id;
 			const count = tabCount(portfolio, tab.id);
+			const isZero = Number(count) === 0;
 			html +=
-				'<button type="button" class="btn ' +
-				(on ? "btn-primary" : "btn-default") +
-				' kt-budget-work-tab" data-kt-budget-tab="' +
-				escapeHtml(tab.id) +
+				'<button type="button" class="kt-status-filter kt-budget-status-chip' +
+				(on ? " is-active kt-status-filter-active" : "") +
+				(isZero ? " is-zero" : "") +
+				'" data-kt-budget-work-tab="' +
+				esc(tab.id) +
 				'" data-testid="' +
-				escapeHtml(tab.testId) +
-				'" role="tab" aria-selected="' +
+				esc(tab.testId) +
+				'" aria-selected="' +
 				(on ? "true" : "false") +
 				'">' +
-				escapeHtml(tab.label) +
-				' <span class="badge badge-light">' +
-				escapeHtml(String(count)) +
+				'<span class="kt-status-filter__label">' +
+				esc(tab.label) +
+				'</span> <span class="kt-status-filter__count">' +
+				esc(String(count)) +
 				"</span></button>";
 		}
-		html += "</div></div>";
+		html += "</div>";
 		return html;
 	}
 
-	function renderAllocationsTable(lines, currency) {
-		const cur = String(currency || "KES").trim() || "KES";
-		if (!lines || !lines.length) {
-			return (
-				'<div class="text-muted small py-2" data-testid="budget-allocations-empty">' +
-				escapeHtml(__("No program allocations yet.")) +
-				"</div>"
-			);
-		}
-		let rows = "";
-		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i];
-			const idPart = testIdPart(line.budget_line_name || line.name);
-			const programDisplay = formatReferenceDisplay(line.program_label, line.program_code);
-			const notesSnippet = String(line.notes || "").trim();
-			const notesCell = notesSnippet
-				? escapeHtml(notesSnippet.length > 80 ? notesSnippet.slice(0, 77) + "…" : notesSnippet)
-				: '<span class="text-muted">—</span>';
-			rows +=
-				'<tr class="kt-budget-allocation-row" data-budget-line="' +
-				escapeHtml(line.name) +
-				'" data-testid="budget-allocation-row-' +
-				escapeHtml(idPart) +
-				'" tabindex="0" role="button">' +
-				'<td><span class="kt-budget-allocation-program">' +
-				escapeHtml(programDisplay) +
-				"</span></td>" +
-				'<td class="text-right" data-testid="budget-allocation-amount-' +
-				escapeHtml(idPart) +
+	function renderPrimaryTabs() {
+		let html = '<div class="kt-primary-tabs kt-budget-detail-tabs" role="tablist">';
+		for (let i = 0; i < DETAIL_TABS.length; i++) {
+			const tab = DETAIL_TABS[i];
+			const on = tab.id === activeDetailTab;
+			html +=
+				'<button type="button" class="kt-primary-tab kt-budget-tab' +
+				(on ? " is-active kt-primary-tab-active" : "") +
+				'" data-kt-budget-detail-tab="' +
+				esc(tab.id) +
+				'" data-testid="' +
+				esc(tab.testId) +
+				'" role="tab" aria-selected="' +
+				(on ? "true" : "false") +
 				'">' +
-				escapeHtml(cur) +
-				" " +
-				escapeHtml(formatAmount(line.amount_allocated, 2)) +
-				"</td>" +
-				'<td class="kt-budget-allocation-notes small text-muted">' +
-				notesCell +
-				"</td></tr>";
+				esc(tab.label) +
+				"</button>";
 		}
-		return (
-			'<div class="kt-budget-allocations-wrap kt-surface">' +
-			'<h3 class="kt-budget-section__title">' +
-			escapeHtml(__("Program allocations")) +
-			"</h3>" +
-			'<table class="table table-sm table-hover mb-0 kt-budget-allocations-table" data-testid="budget-allocations-table">' +
-			"<thead><tr>" +
-			"<th>" +
-			escapeHtml(__("Program")) +
-			"</th>" +
-			'<th class="text-right">' +
-			escapeHtml(__("Allocated")) +
-			"</th>" +
-			"<th>" +
-			escapeHtml(__("Notes")) +
-			"</th></tr></thead><tbody>" +
-			rows +
-			"</tbody></table></div>"
-		);
+		html += "</div>";
+		return html;
 	}
 
-	function renderAllocationDrawer(line, currency, open) {
-		if (!line || !open) return "";
-		const contextHtml =
-			'<details class="kt-budget-drawer-details">' +
-			'<summary class="small font-weight-bold">' +
-			escapeHtml(__("Strategic context")) +
-			"</summary>" +
-			'<div class="kt-budget-inspect-grid small pt-2">' +
-			"<div><span class=\"text-muted\">" +
-			escapeHtml(__("Sub-program")) +
-			"</span><div>" +
-			escapeHtml(formatReferenceDisplay(line.sub_program_label, line.sub_program_code)) +
-			"</div></div>" +
-			"<div><span class=\"text-muted\">" +
-			escapeHtml(__("Output indicator")) +
-			"</span><div>" +
-			escapeHtml(formatReferenceDisplay(line.output_indicator_label, line.output_indicator_code)) +
-			"</div></div>" +
-			"<div><span class=\"text-muted\">" +
-			escapeHtml(__("Performance target")) +
-			"</span><div>" +
-			escapeHtml(formatReferenceDisplay(line.performance_target_label, line.performance_target_code)) +
-			"</div></div></div></details>";
-
-		return (
-			'<div class="kt-budget-allocation-drawer kt-surface" data-testid="budget-allocation-drawer">' +
-			'<div class="kt-budget-allocation-drawer__header">' +
-			'<h3 class="h6 mb-1" data-testid="budget-line-editor-title">' +
-			escapeHtml(line.budget_line_name || line.name) +
-			"</h3>" +
-			'<button type="button" class="btn btn-xs btn-default" data-testid="budget-allocation-drawer-close" aria-label="' +
-			escapeHtml(__("Close")) +
-			'">&times;</button></div>' +
-			'<div class="kt-budget-section kt-budget-allocation-drawer__body" data-testid="budget-allocation-editor">' +
-			'<div class="mb-2"><span class="text-muted small">' +
-			escapeHtml(__("Program")) +
-			"</span><div>" +
-			escapeHtml(formatReferenceDisplay(line.program_label, line.program_code)) +
-			"</div></div>" +
-			'<div class="mb-2"><span class="text-muted small">' +
-			escapeHtml(__("Allocated")) +
-			"</span><div>" +
-			escapeHtml(fmtMoney(line.amount_allocated, currency)) +
-			"</div></div>" +
-			(line.notes
-				? '<div class="mb-2"><span class="text-muted small">' +
-					escapeHtml(__("Notes")) +
-					"</span><div class=\"small\">" +
-					escapeHtml(line.notes) +
-					"</div></div>"
-				: "") +
-			contextHtml +
-			"</div></div>"
-		);
+	function renderTabPanels() {
+		let html = '<div class="kt-budget-tab-panel-wrap">';
+		for (let i = 0; i < DETAIL_TABS.length; i++) {
+			const tab = DETAIL_TABS[i];
+			const on = tab.id === activeDetailTab;
+			html +=
+				'<section class="kt-budget-tab-panel' +
+				(on ? " is-active" : "") +
+				'" data-kt-budget-panel="' +
+				esc(tab.id) +
+				'" data-testid="budget-tab-panel-' +
+				esc(tab.id) +
+				'"><div data-testid="budget-panel-host-' +
+				esc(tab.id) +
+				'"></div></section>';
+		}
+		html += "</div>";
+		return html;
 	}
 
-	function renderReviewActions(selected) {
+	function renderDetailHeader(selected, reviewPayload) {
 		const st = String(selected.status || "").trim();
-		const readOnly = isBudgetReadOnly(st);
-		const parts = [];
-
-		if (st === "Draft" || st === "Rejected") {
-			if (canSubmitBudget()) {
-				parts.push(
-					'<button type="button" class="btn btn-primary btn-sm" data-testid="selected-budget-open-builder">' +
-						escapeHtml(__("Manage Allocations")) +
-						"</button>",
-				);
-				parts.push(
-					'<button type="button" class="btn btn-default btn-sm" data-testid="selected-budget-edit">' +
-						escapeHtml(__("Edit budget")) +
-						"</button>",
-				);
-				parts.push(
-					'<button type="button" class="btn btn-default btn-sm" data-testid="budget-submit-approval">' +
-						escapeHtml(__("Submit for approval")) +
-						"</button>",
-				);
-			}
-		} else if (st === "Submitted") {
-			parts.push(
-				'<button type="button" class="btn btn-default btn-sm" data-testid="selected-budget-open-builder">' +
-					escapeHtml(__("Manage Allocations")) +
-					"</button>",
-			);
-			if (canApproveBudget()) {
-				parts.push(
-					'<button type="button" class="btn btn-primary btn-sm" data-testid="budget-approve">' +
-						escapeHtml(__("Approve")) +
-						"</button>",
-				);
-				parts.push(
-					'<button type="button" class="btn btn-default btn-sm" data-testid="budget-reject">' +
-						escapeHtml(__("Reject")) +
-						"</button>",
-				);
-			}
-		} else if (st === "Approved") {
-			parts.push(
-				'<button type="button" class="btn btn-default btn-sm" data-testid="selected-budget-open-builder">' +
-					escapeHtml(__("Manage Allocations")) +
-					"</button>",
-			);
-		}
-
-		if (!parts.length) return "";
-		return (
-			'<div class="kt-budget-workspace-main__actions" data-testid="selected-budget-actions">' +
-			parts.join("") +
-			"</div>"
-		);
-	}
-
-	function renderMetricsStrip(selected, totals, cur) {
+		const totals = (reviewPayload && reviewPayload.totals) || {};
+		const cur = selected.currency || "";
 		const programsFunded =
 			totals && totals.programs_funded != null
 				? totals.programs_funded
 				: selected.budget_lines_allocated != null
 					? selected.budget_lines_allocated
 					: 0;
-		const total = totals.total_budget_amount != null ? totals.total_budget_amount : selected.total_budget_amount;
-		const allocated = totals.allocated_sum != null ? totals.allocated_sum : selected.allocated_amount;
-		const remaining = totals.remaining_amount != null ? totals.remaining_amount : selected.remaining_amount;
-
 		return (
-			'<div class="kt-budget-metrics-strip kt-surface">' +
-			'<div class="kt-budget-inspect-metric">' +
-			'<span class="kt-budget-inspect-metric__label">' +
-			escapeHtml(__("Total")) +
-			'</span><span class="kt-budget-inspect-metric__value kt-budget-money" data-testid="selected-budget-total">' +
-			escapeHtml(fmtMoney(total, cur)) +
-			"</span></div>" +
-			'<div class="kt-budget-inspect-metric">' +
-			'<span class="kt-budget-inspect-metric__label">' +
-			escapeHtml(__("Allocated")) +
-			'</span><span class="kt-budget-inspect-metric__value kt-budget-money" data-testid="selected-budget-allocated">' +
-			escapeHtml(fmtMoney(allocated, cur)) +
-			'</span><span class="kt-budget-sr-only" data-testid="budget-builder-allocated">' +
-			escapeHtml(fmtMoney(allocated, cur)) +
-			"</span></div>" +
-			'<div class="kt-budget-inspect-metric">' +
-			'<span class="kt-budget-inspect-metric__label">' +
-			escapeHtml(__("Remaining")) +
-			'</span><span class="kt-budget-inspect-metric__value kt-budget-money" data-testid="selected-budget-remaining">' +
-			escapeHtml(fmtMoney(remaining, cur)) +
-			'</span><span class="kt-budget-sr-only" data-testid="budget-builder-remaining">' +
-			escapeHtml(fmtMoney(remaining, cur)) +
-			"</span></div>" +
-			'<div class="kt-budget-inspect-metric">' +
-			'<span class="kt-budget-inspect-metric__label">' +
-			escapeHtml(__("Programs funded")) +
-			'</span><span class="kt-budget-inspect-metric__value" data-testid="budget-programs-funded">' +
-			escapeHtml(String(programsFunded)) +
-			'</span><span class="kt-budget-sr-only" data-testid="budget-builder-total">' +
-			escapeHtml(fmtMoney(total, cur)) +
-			"</span></div></div>"
-		);
-	}
-
-	function renderReviewPanel(selected, reviewPayload, reviewLoading) {
-		const cur = selected.currency || "";
-		const st = String(selected.status || "").trim();
-		const stLower = st.toLowerCase();
-		const readOnly = isBudgetReadOnly(st);
-		const budget = (reviewPayload && reviewPayload.budget) || selected;
-		const totals = (reviewPayload && reviewPayload.totals) || {};
-		const lines = getReviewLines(reviewPayload);
-		const drawerLine = drawerLineName ? findReviewLine(reviewPayload, drawerLineName) : null;
-		const planLabel = selected.strategic_plan_title || selected.strategic_plan || "—";
-
-		let banners = "";
-		if (readOnly) {
-			banners +=
-				'<div class="alert alert-info py-2 mb-2 kt-budget-builder-lock-banner" data-testid="budget-builder-readonly-banner" role="status">' +
-				escapeHtml(
-					st === "Approved"
-						? __("This budget is approved and locked.")
-						: __("This budget is submitted and awaiting approval."),
-				) +
-				"</div>";
-		}
-		if (st === "Rejected" && (budget.rejection_reason || selected.rejection_reason)) {
-			banners +=
-				'<div class="alert alert-danger py-2 mb-2" data-testid="budget-rejection-summary" role="status">' +
-				escapeHtml(__("This budget was rejected.")) +
-				" " +
-				escapeHtml(String(budget.rejection_reason || selected.rejection_reason || "")) +
-				"</div>";
-		}
-		if (canApproveBudget() && st === "Submitted") {
-			banners +=
-				'<div class="alert alert-warning py-2 mb-2" data-testid="budget-approver-banner" role="status">' +
-				escapeHtml(__("This budget is awaiting your approval.")) +
-				"</div>";
-		}
-
-		let body = "";
-		if (reviewLoading) {
-			body =
-				'<div class="text-muted small py-3" data-testid="budget-detail-loading">' +
-				escapeHtml(__("Loading allocations…")) +
-				"</div>";
-		} else if (reviewLoadError) {
-			body =
-				'<div class="alert alert-warning mb-0" data-testid="budget-detail-error">' +
-				escapeHtml(reviewLoadError) +
-				"</div>";
-		} else if (reviewPayload) {
-			body = renderAllocationsTable(lines, cur);
-		}
-
-		const drawerHtml = renderAllocationDrawer(drawerLine, cur, !!drawerLine);
-
-		return (
-			'<div class="kt-budget-workspace-main' +
-			(readOnly ? " kt-budget-workspace-main--locked" : "") +
-			'" data-testid="selected-budget-panel">' +
-			'<header class="kt-budget-workspace-main__header kt-budget-anchor-card kt-surface">' +
-			'<div class="kt-budget-workspace-main__heading">' +
-			'<h2 class="h5 mb-1" data-testid="selected-budget-title">' +
-			escapeHtml(selected.budget_name || selected.name) +
+			'<section class="kt-budget-detail-section kt-surface" data-testid="selected-budget-panel">' +
+			'<div class="kt-budget-detail-overview">' +
+			'<header class="kt-budget-detail__hero">' +
+			'<div class="kt-budget-detail__hero-main">' +
+			'<h2 class="kt-budget-detail__title" data-testid="selected-budget-title">' +
+			esc(normalizeBudgetName(selected.budget_name || selected.name)) +
 			"</h2>" +
-			'<div class="kt-budget-meta-line text-muted small" data-testid="selected-budget-status">' +
+			'<div class="text-muted" data-testid="selected-budget-meta">' +
+			esc(selected.fiscal_year || "—") +
+			" · " +
+			esc(selected.strategic_plan_title || selected.strategic_plan || "—") +
+			" · " +
+			esc(cur || "—") +
+			"</div>" +
+			'<div class="kt-budget-status-guidance mt-2">' +
 			'<span class="' +
-			statusBadgeClass(selected.status) +
-			'" data-testid="selected-budget-status-badge" data-kt-status="' +
-			escapeHtml(stLower) +
-			'">' +
-			escapeHtml(selected.status || "") +
-			"</span>" +
-			'<span class="kt-budget-meta-sep">·</span>' +
-			'<span data-testid="selected-budget-fiscal-year">' +
-			escapeHtml(selected.fiscal_year || "—") +
-			"</span>" +
-			'<span class="kt-budget-meta-sep">·</span>' +
-			'<span data-testid="selected-budget-strategy">' +
-			escapeHtml(planLabel) +
-			"</span>" +
-			'<span class="kt-budget-meta-sep">·</span>' +
-			'<span data-testid="selected-budget-currency">' +
-			escapeHtml(cur || "—") +
-			"</span></div></div>" +
-			renderReviewActions(selected) +
+			statusBadgeClass(st) +
+			'" data-testid="selected-budget-status-badge">' +
+			esc(st) +
+			'</span> <span class="' +
+			editabilityBadgeClass(st) +
+			'" data-testid="selected-budget-editability-badge">' +
+			esc(editabilityLabel(st)) +
+			'</span><span class="kt-budget-next-step-inline text-muted small">' +
+			esc(nextStepLabel(st)) +
+			"</span></div>" +
+			"</div>" +
+			'<div class="kt-budget-detail__hero-actions" data-testid="selected-budget-actions">' +
+			renderStateActions(selected) +
+			"</div>" +
 			"</header>" +
-			banners +
-			renderMetricsStrip(selected, totals, cur) +
-			'<div class="kt-budget-review-body">' +
-			body +
-			drawerHtml +
-			"</div></div>"
+			(isBudgetReadOnly(st)
+				? '<div class="alert alert-info py-2 mb-2 kt-budget-builder-lock-banner" data-testid="budget-builder-readonly-banner">' +
+					esc(st === "Approved" ? __("This budget is approved and locked.") : __("This budget is submitted and awaiting approval.")) +
+					"</div>"
+				: "") +
+			(st === "Rejected" && (selected.rejection_reason || "")
+				? '<div class="alert alert-danger py-2 mb-2" data-testid="budget-rejection-summary">' +
+					esc(__("This budget was rejected.")) +
+					" " +
+					esc(selected.rejection_reason || "") +
+					"</div>"
+				: "") +
+			'<div class="kt-budget-detail__stats">' +
+			'<div class="kt-budget-detail-stat"><div class="kt-budget-detail-stat__label">' +
+			esc(__("Total")) +
+			'</div><div class="kt-budget-detail-stat__num" data-testid="selected-budget-total">' +
+			esc(fmtMoney(totals.total_budget_amount != null ? totals.total_budget_amount : selected.total_budget_amount, cur)) +
+			"</div></div>" +
+			'<div class="kt-budget-detail-stat"><div class="kt-budget-detail-stat__label">' +
+			esc(__("Allocated")) +
+			'</div><div class="kt-budget-detail-stat__num" data-testid="selected-budget-allocated">' +
+			esc(fmtMoney(totals.allocated_sum != null ? totals.allocated_sum : selected.allocated_amount, cur)) +
+			"</div></div>" +
+			'<div class="kt-budget-detail-stat"><div class="kt-budget-detail-stat__label">' +
+			esc(__("Remaining")) +
+			'</div><div class="kt-budget-detail-stat__num" data-testid="selected-budget-remaining">' +
+			esc(fmtMoney(totals.remaining_amount != null ? totals.remaining_amount : selected.remaining_amount, cur)) +
+			"</div></div>" +
+			'<div class="kt-budget-detail-stat"><div class="kt-budget-detail-stat__label">' +
+			esc(__("Programs funded")) +
+			'</div><div class="kt-budget-detail-stat__num" data-testid="budget-programs-funded">' +
+			esc(String(programsFunded || 0)) +
+			"</div></div>" +
+			"</div>" +
+			renderPrimaryTabs() +
+			renderTabPanels() +
+			"</div></section>"
 		);
 	}
 
-	function loadReviewData(host, payload) {
-		const selected =
-			selectedBudgetName && payload ? findBudget(payload, selectedBudgetName) : null;
-		if (!selected || !selected.name) return;
-
-		resetReviewForBudget(selected.name);
-		const token = ++reviewLoadToken;
-		const needsLoad =
-			!lastReviewPayload ||
-			!lastReviewPayload.budget ||
-			lastReviewPayload.budget.name !== selected.name;
-
-		if (!needsLoad) return;
-
-		reviewLoadError = null;
-		renderBudgetLandingContent(host, payload, true);
-		frappe.call({
-			method: "kentender_budget.api.review.get_budget_review_data",
-			args: { budget_name: selected.name },
-			callback: function (r) {
-				if (token !== reviewLoadToken) return;
-				if (!isBudgetWorkspaceRoute()) return;
-				if (r.exc) {
-					lastReviewPayload = null;
-					reviewLoadError = __("Unable to load budget allocations.");
-					renderBudgetLandingContent(host, lastPayload, false);
-					return;
-				}
-				reviewLoadError = null;
-				lastReviewPayload = r.message || {};
-				renderBudgetLandingContent(host, lastPayload, false);
-			},
-			error: function () {
-				if (token !== reviewLoadToken) return;
-				lastReviewPayload = null;
-				reviewLoadError = __("Unable to load budget allocations.");
-				renderBudgetLandingContent(host, lastPayload, false);
-			},
-		});
-	}
-
-	function reloadLandingAfterTransition(host) {
-		lastReviewPayload = null;
-		drawerLineName = null;
-		frappe.call({
-			method: "kentender_budget.api.landing.get_budget_landing_data",
-			callback: function (r) {
-				if (!isBudgetWorkspaceRoute()) return;
-				const msg = r.message || { portfolio: {}, budgets: [] };
-				lastPayload = msg;
-				renderBudgetLandingContent(host, lastPayload, false);
-				loadReviewData(host, lastPayload);
-			},
-		});
-	}
-
-	function confirmAndCall(method, args, host) {
-		frappe.confirm(__("Are you sure you want to continue?"), function () {
-			frappe.call({
-				method: method,
-				args: args,
-				callback: function (r) {
-					if (r.exc) return;
-					reloadLandingAfterTransition(host);
-				},
-			});
-		});
-	}
-
-	function openRejectDialog(budgetName, host) {
-		const d = new frappe.ui.Dialog({
-			title: __("Reject budget"),
-			fields: [
-				{
-					fieldname: "rejection_reason",
-					label: __("Reason for rejection"),
-					fieldtype: "Small Text",
-					reqd: 1,
-				},
-			],
-			primary_action_label: __("Reject"),
-			primary_action: function (values) {
-				const reason = (values.rejection_reason || "").trim();
-				if (!reason) {
-					frappe.msgprint(__("Reason for rejection is required."));
-					return;
-				}
-				frappe.call({
-					method: "kentender_budget.api.approval.reject_budget",
-					args: { budget_name: budgetName, rejection_reason: reason },
-					callback: function (r) {
-						if (r.exc) return;
-						d.hide();
-						reloadLandingAfterTransition(host);
-					},
-				});
-			},
-		});
-		d.$wrapper.attr("data-testid", "budget-reject-modal");
-		d.fields_dict.rejection_reason.$wrapper.find("textarea").attr(
-			"data-testid",
-			"budget-reject-reason-input",
-		);
-		d.show();
-	}
-
-	function renderBudgetLandingContent(host, payload, reviewLoading) {
-		reviewLoading = !!reviewLoading;
-		ensureWorkTab();
-		const portfolio = (payload && payload.portfolio) || {};
-		const allBudgets = (payload && payload.budgets) || [];
-		const stored = consumeStoredBudgetSelection();
-		if (stored && findBudget(payload, stored)) {
-			selectedBudgetName = stored;
-		}
-
-		const filteredBudgets = filterBudgetsByTab(allBudgets, activeWorkTab);
-		let selected =
-			selectedBudgetName && allBudgets.length
-				? findBudget(payload, selectedBudgetName)
-				: allBudgets.length
-					? allBudgets[0]
-					: null;
-		if (selected && filteredBudgets.length) {
-			const inTab = filteredBudgets.some(function (b) { return b.name === selected.name; });
-			if (!inTab) selected = filteredBudgets[0];
-		} else if (filteredBudgets.length) {
-			selected = filteredBudgets[0];
-		} else if (!filteredBudgets.length && allBudgets.length) {
-			selected = null;
-		}
-
-		if (selected) {
-			selectedBudgetName = selected.name;
-		} else if (!allBudgets.length) {
-			selectedBudgetName = null;
-			lastReviewPayload = null;
-			drawerLineName = null;
-		}
-
-		const emptyBudgets = allBudgets.length === 0;
-		const emptyTab = !emptyBudgets && filteredBudgets.length === 0;
-
-		const createBtn = canCreateBudget()
-			? '<button type="button" class="btn btn-primary btn-sm" data-testid="budget-create-button">' +
-				escapeHtml(__("New Budget")) +
-				"</button>"
-			: "";
-
-		let listHtml = "";
-		for (let i = 0; i < filteredBudgets.length; i++) {
-			const b = filteredBudgets[i];
-			const active = selected && b.name === selected.name ? " is-active" : "";
-			const st = String(b.status || "").toLowerCase();
-			const needsAction =
-				(st === "submitted" && isPlanningAuthority()) ||
-				((st === "draft" || st === "rejected") &&
-					isStrategyManager() &&
-					(b.owner === sessionUser() || b.created_by === sessionUser()));
-			const actionClass = needsAction ? " kt-budget-row--action" : "";
-			const planLabel = b.strategic_plan_title || b.strategic_plan || "";
-			listHtml +=
-				'<button type="button" class="kt-budget-row' +
-				active +
-				actionClass +
-				'" data-budget="' +
-				escapeHtml(b.name) +
-				'" data-budget-name="' +
-				escapeHtml(b.name) +
-				'" data-testid="budget-row-' +
-				escapeHtml(b.name) +
-				'">' +
-				'<span class="kt-budget-row__main">' +
-				'<span class="kt-budget-row__title" data-testid="budget-row-title-' +
-				escapeHtml(b.name) +
-				'">' +
-				escapeHtml(b.budget_name || b.name) +
-				"</span>" +
-				'<span class="text-muted small">' +
-				escapeHtml(b.fiscal_year || "") +
-				" · " +
-				escapeHtml(b.currency || "") +
-				(planLabel ? " · " + escapeHtml(planLabel) : "") +
-				"</span>" +
-				(needsAction
-					? '<span class="kt-budget-row__cue text-primary">' +
-						escapeHtml(__("Requires action")) +
-						"</span>"
-					: "") +
-				"</span>" +
-				'<span class="' +
-				statusBadgeClass(b.status) +
-				(st === "submitted" && isPlanningAuthority() ? " kt-budget-badge--submitted-pa" : "") +
-				'" data-kt-status="' +
-				escapeHtml(st) +
-				'" data-testid="budget-row-status-' +
-				escapeHtml(b.name) +
-				'">' +
-				escapeHtml(b.status || "") +
-				"</span></button>";
-		}
-
-		let emptyHtml = "";
-		if (emptyBudgets) {
-			emptyHtml =
-				'<p class="text-muted small mb-0" data-testid="budget-empty-state">' +
-				escapeHtml(__("No budgets yet. Create one to begin.")) +
-				"</p>";
-		} else if (emptyTab) {
-			emptyHtml =
-				'<p class="text-muted small mb-0" data-testid="budget-tab-empty-state">' +
-				escapeHtml(__("No budgets in this tab.")) +
-				"</p>";
-		}
-
-		let detailHtml = "";
-		if (selected && !emptyTab) {
-			const reviewPayload =
-				lastReviewPayload &&
-				lastReviewPayload.budget &&
-				lastReviewPayload.budget.name === selected.name
-					? lastReviewPayload
-					: null;
-			detailHtml = renderReviewPanel(
-				selected,
-				reviewPayload,
-				reviewLoading || !reviewPayload,
+	function renderStateActions(selected) {
+		const st = String(selected.status || "").trim();
+		const actions = [];
+		if ((st === "Draft" || st === "Rejected") && canSubmitBudget()) {
+			actions.push(
+				'<button type="button" class="btn btn-default btn-sm kt-context-action" data-testid="selected-budget-edit">' +
+					esc(__("Edit Budget Info")) +
+					"</button>",
+			);
+		} else if (st === "Approved") {
+			actions.push(
+				'<button type="button" class="btn btn-default btn-sm kt-context-action" data-testid="selected-budget-view-audit">' +
+					esc(__("View Audit")) +
+					"</button>",
 			);
 		}
-
-		host.className = "kt-budget-injected-shell kt-budget-review-shell";
-		host.innerHTML =
-			'<div class="kt-budget-workspace-header kt-budget-workspace-header--compact mb-2">' +
-			'<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 kt-budget-header-row">' +
-			"<div>" +
-			'<h1 class="h4 kt-budget-page-title mb-1" data-testid="budget-page-title">' +
-			escapeHtml(WS_LABEL) +
-			"</h1>" +
-			'<p class="text-muted mb-0" data-testid="budget-page-intro">' +
-			escapeHtml(__("Review program allocations and manage budget approval.")) +
-			"</p></div>" +
-			'<div class="kt-budget-header-cta">' +
-			createBtn +
-			"</div></div>" +
-			renderWorkTabs(portfolio) +
-			"</div>" +
-			(emptyBudgets
-				? '<div class="kt-budget-empty-wrap">' + emptyHtml + "</div>"
-				: '<div class="kt-budget-workspace-body">' +
-					'<aside class="kt-budget-budgets-rail kt-surface">' +
-					'<h2 class="h6 mb-2">' +
-					escapeHtml(__("Budgets")) +
-					"</h2>" +
-					(emptyTab
-						? emptyHtml
-						: '<div class="kt-budget-row-list" data-testid="budget-list">' + listHtml + "</div>") +
-					"</aside>" +
-					'<div class="kt-budget-workspace-main-wrap">' +
-					(emptyTab
-						? '<div class="text-muted small" data-testid="budget-review-empty-tab">' +
-							escapeHtml(__("Select another tab or create a budget.")) +
-							"</div>"
-						: detailHtml) +
-					"</div></div>");
-		host.setAttribute("data-testid", "budget-landing-page");
-
-		if (selected && !emptyTab) {
-			const reviewPayload =
-				lastReviewPayload &&
-				lastReviewPayload.budget &&
-				lastReviewPayload.budget.name === selected.name
-					? lastReviewPayload
-					: null;
-			if (!reviewPayload && !reviewLoading) {
-				loadReviewData(host, payload);
-			}
-		}
+		return actions.join("");
 	}
 
-	function ensureBudgetDelegatedClicks(root) {
-		if (!root || root.getAttribute("data-kt-budget-delegated") === "1") return;
-		root.setAttribute("data-kt-budget-delegated", "1");
-		root.addEventListener("click", function (ev) {
-			const t = ev.target;
-			if (!t || !t.closest) return;
+	function renderRowList(filtered, selected) {
+		if (!filtered.length) {
+			return '<div class="kt-budget-plan-list-empty"><p class="text-muted small mb-0" data-testid="budget-tab-empty-state">' + esc(__("No budgets in this queue.")) + "</p></div>";
+		}
+		let html = "";
+		for (let i = 0; i < filtered.length; i++) {
+			const b = filtered[i];
+			const on = selected && selected.name === b.name;
+			const programCount = b.budget_lines_allocated != null ? b.budget_lines_allocated : 0;
+			const programLabel = programCount === 1 ? __("program") : __("programs");
+			const amountLine = compactMoney(b.allocated_amount, b.currency) + " · " + programCount + " " + programLabel;
+			const planLine = b.strategic_plan_title || b.strategic_plan || "";
+			html +=
+				'<button type="button" class="kt-budget-row' +
+				(on ? " is-active" : "") +
+				'" data-budget="' +
+				esc(b.name) +
+				'" data-budget-name="' +
+				esc(b.name) +
+				'" data-testid="budget-row-' +
+				esc(testIdPart(b.name)) +
+				'"><span class="kt-budget-row__main"><span class="kt-budget-row__title">' +
+				esc(normalizeBudgetName(b.budget_name || b.name)) +
+				'</span><span class="kt-budget-row__meta text-muted small">' +
+				esc(b.fiscal_year || "—") +
+				" · " +
+				inlineStatusHtml(b.status) +
+				'</span><span class="kt-budget-row__meta text-muted small">' +
+				esc(amountLine) +
+				"</span>" +
+				(planLine
+					? '<span class="kt-budget-row__meta text-muted small">' + esc(planLine) + "</span>"
+					: "") +
+				"</span></button>";
+		}
+		return '<div class="kt-budget-row-list" data-testid="budget-list">' + html + "</div>";
+	}
 
-			const tabBtn = t.closest("[data-kt-budget-tab]");
-			if (tabBtn) {
-				const nextTab = tabBtn.getAttribute("data-kt-budget-tab") || "all";
-				if (nextTab !== activeWorkTab) {
-					const prevSelected = selectedBudgetName;
-					activeWorkTab = nextTab;
-					drawerLineName = null;
-					const budgets = (lastPayload && lastPayload.budgets) || [];
-					const filtered = filterBudgetsByTab(budgets, activeWorkTab);
-					let nextSelected = prevSelected && findBudget(lastPayload, prevSelected);
-					if (!nextSelected || !filtered.some(function (b) { return b.name === nextSelected.name; })) {
-						nextSelected = filtered.length ? filtered[0] : null;
-					}
-					const selectedChanged = (nextSelected && nextSelected.name) !== prevSelected;
-					selectedBudgetName = nextSelected ? nextSelected.name : null;
-					const needReview =
-						!!selectedBudgetName &&
-						(selectedChanged ||
-							!lastReviewPayload ||
-							!lastReviewPayload.budget ||
-							lastReviewPayload.budget.name !== selectedBudgetName);
-					if (selectedChanged) {
-						lastReviewPayload = null;
-					}
-					renderBudgetLandingContent(root, lastPayload, needReview);
-					if (needReview) {
-						loadReviewData(root, lastPayload);
-					}
-				}
-				return;
-			}
-
-			const allocRow = t.closest(".kt-budget-allocation-row[data-budget-line]");
-			if (allocRow) {
-				const lineName = allocRow.getAttribute("data-budget-line");
-				if (lineName) {
-					drawerLineName = lineName;
-					renderBudgetLandingContent(root, lastPayload, false);
-				}
-				return;
-			}
-
-			if (t.closest("[data-testid='budget-allocation-drawer-close']")) {
-				drawerLineName = null;
-				renderBudgetLandingContent(root, lastPayload, false);
-				return;
-			}
-
-			const row = t.closest(".kt-budget-row[data-budget]");
-			if (row) {
-				const name = row.getAttribute("data-budget");
-				if (name && lastPayload) {
-					const switching = name !== selectedBudgetName;
-					if (switching) {
-						selectedBudgetName = name;
-						lastReviewPayload = null;
-						drawerLineName = null;
-						renderBudgetLandingContent(root, lastPayload, true);
-						loadReviewData(root, lastPayload);
-					} else if (
-						!lastReviewPayload ||
-						!lastReviewPayload.budget ||
-						lastReviewPayload.budget.name !== name
-					) {
-						loadReviewData(root, lastPayload);
-					}
-				}
-				return;
-			}
-
-			if (t.closest("[data-testid='budget-create-button']")) {
-				saveBudgetWorkbenchState();
-				if (
-					typeof kentender_core !== "undefined" &&
-					kentender_core.kt_nav
-				) {
-					kentender_core.kt_nav.toForm("budget", null, true);
-				} else if (typeof frappe.new_doc === "function") {
-					frappe.new_doc("Budget");
-				} else {
-					frappe.set_route("Form", "Budget", "new-budget");
-				}
-				return;
-			}
-
-			if (t.closest("[data-testid='selected-budget-open-builder']")) {
-				const sel =
-					lastPayload && selectedBudgetName ? findBudget(lastPayload, selectedBudgetName) : null;
-				if (sel && sel.name) {
-					saveBudgetWorkbenchState();
-					if (
-						typeof kentender_core !== "undefined" &&
-						kentender_core.kt_nav
-					) {
-						kentender_core.kt_nav.toBuilder("budget", sel.name);
-					} else {
-						frappe.set_route("budget-builder", sel.name);
-					}
-				}
-				return;
-			}
-
-			if (t.closest("[data-testid='selected-budget-edit']")) {
-				const sel2 =
-					lastPayload && selectedBudgetName ? findBudget(lastPayload, selectedBudgetName) : null;
-				if (sel2 && sel2.name) {
-					saveBudgetWorkbenchState();
-					if (
-						typeof kentender_core !== "undefined" &&
-						kentender_core.kt_nav
-					) {
-						kentender_core.kt_nav.toForm("budget", sel2.name);
-					} else {
-						frappe.set_route("Form", "Budget", sel2.name);
-					}
-				}
-				return;
-			}
-
-			if (t.closest("[data-testid='budget-submit-approval']")) {
-				const sel3 =
-					lastPayload && selectedBudgetName ? findBudget(lastPayload, selectedBudgetName) : null;
-				if (sel3 && sel3.name) {
-					confirmAndCall(
-						"kentender_budget.api.approval.submit_budget",
-						{ budget_name: sel3.name },
-						root,
-					);
-				}
-				return;
-			}
-
-			if (t.closest("[data-testid='budget-approve']")) {
-				const sel4 =
-					lastPayload && selectedBudgetName ? findBudget(lastPayload, selectedBudgetName) : null;
-				if (sel4 && sel4.name) {
-					confirmAndCall(
-						"kentender_budget.api.approval.approve_budget",
-						{ budget_name: sel4.name },
-						root,
-					);
-				}
-				return;
-			}
-
-			if (t.closest("[data-testid='budget-reject']")) {
-				const sel5 =
-					lastPayload && selectedBudgetName ? findBudget(lastPayload, selectedBudgetName) : null;
-				if (sel5 && sel5.name) openRejectDialog(sel5.name, root);
-				return;
-			}
+	function filterBudgets(payload) {
+		const source = filterBudgetsByTab((payload && payload.budgets) || [], activeWorkTab);
+		const q = String(searchQuery || "").trim().toLowerCase();
+		if (!q) return source;
+		return source.filter(function (b) {
+			const n = String(b.budget_name || b.name || "").toLowerCase();
+			const fy = String(b.fiscal_year || "").toLowerCase();
+			const st = String(b.status || "").toLowerCase();
+			return n.indexOf(q) >= 0 || fy.indexOf(q) >= 0 || st.indexOf(q) >= 0;
 		});
 	}
 
-	function injectBudgetMount() {
+	function ensureSelectedBudget(payload, filtered) {
+		if (!filtered.length) {
+			selectedBudgetName = null;
+			return null;
+		}
+		let selected = selectedBudgetName ? findBudget(payload, selectedBudgetName) : null;
+		if (!selected || filtered.every(function (b) { return b.name !== selected.name; })) {
+			selected = filtered[0];
+		}
+		selectedBudgetName = selected ? selected.name : null;
+		return selected;
+	}
+
+	function ensureShell(root) {
+		if (!root) return null;
+		if (!currentShell || !currentShell.isConnected) {
+			currentShell =
+				root.querySelector('.kt-budget-injected-shell[data-testid="budget-landing-page"]') ||
+				document.querySelector('.kt-budget-injected-shell[data-testid="budget-landing-page"]');
+		}
+		if (currentShell) return currentShell;
 		const esc = resolveWorkspaceEditorMount();
-		if (!esc) return { ok: false };
+		if (!esc) return null;
 		const wrap = document.createElement("div");
-		wrap.className = "kt-budget-injected-shell";
-		wrap.innerHTML =
-			'<div class="text-muted small py-3">' + escapeHtml(__("Loading budget workspace…")) + "</div>";
+		wrap.className = "kt-budget-injected-shell kt-budget-review-shell";
+		wrap.setAttribute("data-testid", "budget-landing-page");
 		const ed = document.getElementById("editorjs");
 		if (ed && esc.contains(ed)) {
 			esc.insertBefore(wrap, ed);
@@ -1145,26 +621,155 @@
 		} else {
 			esc.insertBefore(wrap, esc.firstChild);
 		}
-		return { ok: true, wrap: wrap };
+		currentShell = wrap;
+		return wrap;
 	}
 
-	function applyBudgetPayload(payload) {
-		lastPayload = payload || { portfolio: {}, budgets: [] };
-		const budgets = lastPayload.budgets || [];
-		if (budgets.length && !selectedBudgetName) {
-			selectedBudgetName = budgets[0].name;
+	function mountPanel(panelId, host, selected, reviewPayload) {
+		const ctx = {
+			selected: selected,
+			reviewPayload: reviewPayload,
+			canEditBudget: canSubmitBudget() && !isBudgetReadOnly(selected.status),
+			canSubmitBudget: canSubmitBudget(),
+			canApproveBudget: canApproveBudget(),
+			isBudgetReadOnly: isBudgetReadOnly,
+			formatMoney: fmtMoney,
+			nextStepLabel: nextStepLabel,
+		};
+		if (panelId === "summary" && kentender_budget.budget_summary_panel) {
+			kentender_budget.budget_summary_panel.mount(host, ctx);
+			return;
 		}
+		if (panelId === "allocations" && kentender_budget.budget_allocations_panel) {
+			kentender_budget.budget_allocations_panel.mount(host, ctx);
+			return;
+		}
+		if (panelId === "review" && kentender_budget.budget_review_panel) {
+			kentender_budget.budget_review_panel.mount(host, ctx);
+			return;
+		}
+		if (panelId === "audit" && kentender_budget.budget_audit_panel) {
+			kentender_budget.budget_audit_panel.mount(host, ctx);
+			return;
+		}
+		host.innerHTML = '<div class="text-muted small py-2">' + esc(__("Loading…")) + "</div>";
+	}
+
+	function setTabVisibility() {
+		if (!currentDetail) return;
+		const tabButtons = currentDetail.querySelectorAll("[data-kt-budget-detail-tab]");
+		for (let i = 0; i < tabButtons.length; i++) {
+			const el = tabButtons[i];
+			const on = el.getAttribute("data-kt-budget-detail-tab") === activeDetailTab;
+			el.classList.toggle("is-active", on);
+			el.classList.toggle("kt-primary-tab-active", on);
+			el.setAttribute("aria-selected", on ? "true" : "false");
+		}
+		const panels = currentDetail.querySelectorAll(".kt-budget-tab-panel");
+		for (let i = 0; i < panels.length; i++) {
+			const panel = panels[i];
+			const on = panel.getAttribute("data-kt-budget-panel") === activeDetailTab;
+			panel.classList.toggle("is-active", on);
+		}
+	}
+
+	function ensureReviewData(budgetName, callback) {
+		if (!budgetName) {
+			callback(null);
+			return;
+		}
+		if (reviewCacheByBudget[budgetName]) {
+			callback(reviewCacheByBudget[budgetName]);
+			return;
+		}
+		if (reviewInFlightByBudget[budgetName]) {
+			reviewInFlightByBudget[budgetName].push(callback);
+			return;
+		}
+		reviewInFlightByBudget[budgetName] = [callback];
+		const token = ++reviewLoadToken;
+		frappe.call({
+			method: "kentender_budget.api.review.get_budget_review_data",
+			args: { budget_name: budgetName },
+			callback: function (r) {
+				if (!isBudgetWorkspaceRoute() || token !== reviewLoadToken) return;
+				const payload = (r && r.message) || null;
+				if (payload) reviewCacheByBudget[budgetName] = payload;
+				const waiters = reviewInFlightByBudget[budgetName] || [];
+				delete reviewInFlightByBudget[budgetName];
+				for (let i = 0; i < waiters.length; i++) waiters[i](payload);
+			},
+			error: function () {
+				const waiters = reviewInFlightByBudget[budgetName] || [];
+				delete reviewInFlightByBudget[budgetName];
+				for (let i = 0; i < waiters.length; i++) waiters[i](null);
+			},
+		});
+	}
+
+	function updatePanels(selected) {
+		if (!currentDetail || !selected) return;
+		const reviewPayload = reviewCacheByBudget[selected.name] || null;
+		for (let i = 0; i < DETAIL_TABS.length; i++) {
+			const tab = DETAIL_TABS[i];
+			const host = currentDetail.querySelector('[data-testid="budget-panel-host-' + tab.id + '"]');
+			if (!host) continue;
+			mountPanel(tab.id, host, selected, reviewPayload);
+		}
+		setTabVisibility();
+		if (!reviewPayload) {
+			ensureReviewData(selected.name, function () {
+				if (!lastPayload || selected.name !== selectedBudgetName) return;
+				const nextSelected = findBudget(lastPayload, selectedBudgetName);
+				if (nextSelected) updatePanels(nextSelected);
+			});
+		}
+	}
+
+	function renderWorkspace(payload) {
 		const root = getVisibleWorkspacesPageRoot();
-		let shell =
-			(root && root.querySelector(".kt-budget-injected-shell")) ||
-			document.querySelector(".kt-budget-injected-shell");
-		if (!shell) {
-			const inj = injectBudgetMount();
-			if (!inj.ok) return;
-			shell = inj.wrap;
-		}
-		renderBudgetLandingContent(shell, lastPayload);
-		ensureBudgetDelegatedClicks(shell);
+		if (!root) return;
+		const shell = ensureShell(root);
+		if (!shell) return;
+		const filtered = filterBudgets(payload);
+		const selected = ensureSelectedBudget(payload, filtered);
+		shell.innerHTML =
+			'<div class="kt-budget-workspace-header kt-budget-workspace-header--compact">' +
+			'<div class="kt-budget-header-row">' +
+			'<div><h1 class="h4 kt-budget-page-title" data-testid="budget-page-title">' +
+			esc(WS_LABEL) +
+			'</h1><p class="text-muted kt-budget-page-intro" data-testid="budget-page-intro">' +
+			esc(__("Create, review, approve, and manage strategy-linked budget allocations.")) +
+			"</p></div>" +
+			(canCreateBudget()
+				? '<button type="button" class="btn btn-primary btn-sm kt-page-action-primary" data-testid="budget-create-button"><span aria-hidden="true">+</span> ' +
+					esc(__("New Budget")) +
+					"</button>"
+				: "") +
+			"</div>" +
+			'<div class="kt-budget-status-chips" data-testid="budget-status-chips">' +
+			renderStatusChips(payload.portfolio || {}) +
+			"</div>" +
+			"</div>" +
+			'<div class="kt-budget-master-detail">' +
+			'<div class="kt-budget-col-list"><section class="kt-budget-section kt-surface kt-budget-list-section">' +
+			'<div class="kt-budget-list-head" data-testid="budget-list-head"><h2 class="kt-budget-section__title">' +
+			esc(__("Budgets")) +
+			'</h2><input type="search" class="form-control form-control-sm kt-budget-list-search" data-testid="budget-search" placeholder="' +
+			esc(__("Search budgets…")) +
+			'" value="' +
+			esc(searchQuery) +
+			'"/></div>' +
+			renderRowList(filtered, selected) +
+			"</section></div>" +
+			'<div class="kt-budget-col-detail" data-testid="budget-detail-col">' +
+			(selected ? renderDetailHeader(selected, reviewCacheByBudget[selected.name] || null) : '<div class="kt-budget-section kt-surface"><p class="text-muted mb-0" data-testid="budget-review-empty-tab">' + esc(__("Select a budget to view details.")) + "</p></div>") +
+			"</div></div>";
+		currentShell = shell;
+		currentList = shell.querySelector('[data-testid="budget-list"]');
+		currentDetail = shell.querySelector('[data-testid="budget-detail-col"]');
+		if (selected) updatePanels(selected);
+		saveBudgetWorkbenchState();
 	}
 
 	function loadBudgetLanding(force) {
@@ -1177,12 +782,8 @@
 			callback: function (r) {
 				landingLoadInFlight = false;
 				if (!isBudgetWorkspaceRoute()) return;
-				const msg = r && r.message;
-				if (!msg) {
-					applyBudgetPayload({ portfolio: {}, budgets: [] });
-				} else {
-					applyBudgetPayload(msg);
-				}
+				lastPayload = (r && r.message) || { portfolio: {}, budgets: [] };
+				renderWorkspace(lastPayload);
 			},
 			error: function (r) {
 				landingLoadInFlight = false;
@@ -1198,21 +799,13 @@
 				) {
 					return;
 				}
-				const esc = resolveWorkspaceEditorMount();
-				if (!esc) return;
+				const host = ensureShell(getVisibleWorkspacesPageRoot());
+				if (!host) return;
 				const wrap = document.createElement("div");
 				wrap.className = "kt-budget-injected-shell";
 				wrap.innerHTML =
-					'<div class="alert alert-danger mb-0">' +
-					escapeHtml(__("Unable to load budget workspace data.")) +
-					"</div>";
-				const ed = document.getElementById("editorjs");
-				if (ed && esc.contains(ed)) {
-					esc.insertBefore(wrap, ed);
-					ed.style.display = "none";
-				} else {
-					esc.insertBefore(wrap, esc.firstChild);
-				}
+					'<div class="alert alert-danger mb-0">' + esc(__("Unable to load budget workspace data.")) + "</div>";
+				host.innerHTML = wrap.innerHTML;
 			},
 		});
 	}
@@ -1223,13 +816,8 @@
 			return;
 		}
 		syncBudgetShellClass();
-		const existing =
-			getVisibleWorkspacesPageRoot() &&
-			getVisibleWorkspacesPageRoot().querySelector(".kt-budget-injected-shell");
-		if (!existing) {
-			const inj = injectBudgetMount();
-			if (!inj.ok) return;
-		}
+		initializeStateFromStore();
+		if (!ensureShell(getVisibleWorkspacesPageRoot())) return;
 		if (!lastPayload) {
 			loadBudgetLanding(true);
 		}
@@ -1282,6 +870,34 @@
 				frappe.router.on("change", scheduleBind);
 			}
 			ensureDomObserver();
+			document.addEventListener("kt-budget-panel-changed", function (ev) {
+				const budgetName =
+					(ev && ev.detail && ev.detail.budget_name) || selectedBudgetName;
+				if (budgetName) {
+					delete reviewCacheByBudget[budgetName];
+					if (
+						kentender_budget.budget_audit_panel &&
+						typeof kentender_budget.budget_audit_panel.invalidate === "function"
+					) {
+						kentender_budget.budget_audit_panel.invalidate(budgetName);
+					}
+				}
+				loadBudgetLanding(true);
+			});
+			document.addEventListener("kt-budget-workflow-changed", function (ev) {
+				const budgetName =
+					(ev && ev.detail && ev.detail.budget_name) || selectedBudgetName;
+				if (budgetName) {
+					delete reviewCacheByBudget[budgetName];
+					if (
+						kentender_budget.budget_audit_panel &&
+						typeof kentender_budget.budget_audit_panel.invalidate === "function"
+					) {
+						kentender_budget.budget_audit_panel.invalidate(budgetName);
+					}
+				}
+				loadBudgetLanding(true);
+			});
 		}
 		syncBudgetShellClass();
 		scheduleBind();
@@ -1304,6 +920,121 @@
 		setTimeout(scheduleBind, 400);
 	}
 
+	function openCreateDialog() {
+		const d = new frappe.ui.Dialog({
+			title: __("New Budget"),
+			fields: [
+				{ fieldname: "budget_name", label: __("Budget name"), fieldtype: "Data", reqd: 1 },
+				{ fieldname: "strategic_plan", label: __("Strategic plan"), fieldtype: "Link", options: "Strategic Plan", reqd: 1 },
+				{ fieldname: "procuring_entity", label: __("Procuring entity"), fieldtype: "Link", options: "Procuring Entity", reqd: 1 },
+				{ fieldname: "fiscal_year", label: __("Fiscal year"), fieldtype: "Int", reqd: 1 },
+				{ fieldname: "currency", label: __("Currency"), fieldtype: "Link", options: "Currency", reqd: 1, default: "KES" },
+				{ fieldname: "total_budget_amount", label: __("Total budget amount"), fieldtype: "Currency", reqd: 1 },
+				{ fieldname: "notes", label: __("Notes"), fieldtype: "Small Text" },
+			],
+			primary_action_label: __("Create Budget"),
+			primary_action: function (values) {
+				frappe.call({
+					method: "frappe.client.insert",
+					args: {
+						doc: {
+							doctype: "Budget",
+							budget_name: values.budget_name,
+							strategic_plan: values.strategic_plan,
+							procuring_entity: values.procuring_entity,
+							fiscal_year: values.fiscal_year,
+							currency: values.currency,
+							total_budget_amount: values.total_budget_amount,
+							notes: values.notes || "",
+						},
+					},
+					callback: function (r) {
+						if (!r || !r.message || !r.message.name) return;
+						selectedBudgetName = r.message.name;
+						activeDetailTab = "allocations";
+						if (typeof kentender_core !== "undefined" && kentender_core.kt_state) {
+							kentender_core.kt_state.save("budget", {
+								selectedRecord: r.message.name,
+								detailTab: "allocations",
+							});
+						}
+						d.hide();
+						loadBudgetLanding(true);
+					},
+				});
+			},
+		});
+		d.show();
+	}
+
+	function bindInteractions() {
+		document.addEventListener("click", function (ev) {
+			if (!isBudgetWorkspaceRoute() || !lastPayload) return;
+			const t = ev.target;
+			if (!t || !t.closest) return;
+
+			const statusChip = t.closest("[data-kt-budget-work-tab]");
+			if (statusChip) {
+				activeWorkTab = statusChip.getAttribute("data-kt-budget-work-tab") || "all";
+				renderWorkspace(lastPayload);
+				return;
+			}
+
+			const row = t.closest(".kt-budget-row[data-budget]");
+			if (row) {
+				selectedBudgetName = row.getAttribute("data-budget");
+				renderWorkspace(lastPayload);
+				return;
+			}
+
+			const detailTab = t.closest("[data-kt-budget-detail-tab]");
+			if (detailTab) {
+				activeDetailTab = detailTab.getAttribute("data-kt-budget-detail-tab") || "summary";
+				setTabVisibility();
+				const selected = selectedBudgetName ? findBudget(lastPayload, selectedBudgetName) : null;
+				if (selected) updatePanels(selected);
+				saveBudgetWorkbenchState();
+				return;
+			}
+
+			if (t.closest("[data-testid='budget-create-button']")) {
+				openCreateDialog();
+				return;
+			}
+			if (t.closest("[data-testid='selected-budget-view-audit']")) {
+				activeDetailTab = "audit";
+				setTabVisibility();
+				const selected = selectedBudgetName ? findBudget(lastPayload, selectedBudgetName) : null;
+				if (selected) updatePanels(selected);
+				saveBudgetWorkbenchState();
+				return;
+			}
+			if (t.closest("[data-testid='selected-budget-edit']")) {
+				const selected = selectedBudgetName ? findBudget(lastPayload, selectedBudgetName) : null;
+				if (
+					selected &&
+					selected.name &&
+					kentender_budget.budget_metadata_drawer
+				) {
+					kentender_budget.budget_metadata_drawer.openEdit(selected.name, function () {
+						loadBudgetLanding(true);
+					});
+				}
+				return;
+			}
+		});
+
+		document.addEventListener("input", function (ev) {
+			if (!isBudgetWorkspaceRoute() || !lastPayload) return;
+			const t = ev.target;
+			if (!t || !t.matches) return;
+			if (t.matches('[data-testid="budget-search"]')) {
+				searchQuery = t.value || "";
+				renderWorkspace(lastPayload);
+			}
+		});
+	}
+
 	function bootstrap() {
 		function whenFrappeExists() {
 			if (typeof window.frappe === "undefined") {
@@ -1316,6 +1047,7 @@
 			}
 		}
 		whenFrappeExists();
+		bindInteractions();
 		window.addEventListener("load", kick);
 		setTimeout(kick, 900);
 	}

@@ -31,8 +31,12 @@ test('Strategy Manager has create, work tabs, and allocations on landing', async
 	const firstRow = page.locator('.kt-budget-row[data-budget]').first();
 	await expect(firstRow).toBeVisible({ timeout: 30_000 });
 	await firstRow.click();
+	await page.getByTestId('budget-tab-allocations').click();
 	await expect(page.getByTestId('budget-allocations-table')).toBeVisible({ timeout: 30_000 });
-	await expect(page.getByTestId('selected-budget-open-builder')).toBeVisible();
+	const status = await page.getByTestId('selected-budget-status-badge').textContent();
+	if (status?.includes('Draft') || status?.includes('Rejected')) {
+		await expect(page.getByTestId('budget-allocation-add')).toBeVisible();
+	}
 });
 
 test('Planning Authority has read-only Budget landing access', async ({ page }) => {

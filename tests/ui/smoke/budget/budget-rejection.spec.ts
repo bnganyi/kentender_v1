@@ -38,7 +38,7 @@ test('Budget landing exposes Rejected tab and reject modal test ids (Administrat
 
 	await expect(page.getByTestId('budget-tab-rejected')).toBeVisible();
 	await page.getByTestId('budget-tab-rejected').click();
-	await expect(page.getByTestId('budget-tab-rejected')).toHaveClass(/btn-primary/);
+	await expect(page.getByTestId('budget-tab-rejected')).toHaveClass(/is-active|kt-status-filter-active/);
 });
 
 test('Planning Authority can open reject dialog on Submitted budget (seeded FY2027)', async ({ page }) => {
@@ -62,6 +62,8 @@ test('Planning Authority can open reject dialog on Submitted budget (seeded FY20
 		return;
 	}
 
+	await page.getByTestId('budget-tab-review').click();
+	await expect(page.getByTestId('budget-review-panel')).toBeVisible({ timeout: 30_000 });
 	await page.getByTestId('budget-reject').click();
 	const modal = page.getByTestId('budget-reject-modal');
 	await expect(modal).toBeVisible({ timeout: 15_000 });

@@ -4,7 +4,7 @@ import {
 	loginAsPlanningAuthority,
 	loginAsStrategyManager,
 } from '../../helpers/auth';
-import { openBudgetLanding, openBudgetLandingAllQueues } from '../../helpers/budgetLanding';
+import { openBudgetLanding } from '../../helpers/budgetLanding';
 
 async function tryLogin(fn: () => Promise<void>) {
 	try {
@@ -24,7 +24,7 @@ test('Strategy Manager lands on Draft tab by default', async ({ page }) => {
 	test.skip(!loggedIn, 'Strategy Manager test user not configured');
 	await openBudgetLanding(page);
 
-	await expect(page.getByTestId('budget-tab-draft')).toHaveClass(/btn-primary/);
+	await expect(page.getByTestId('budget-tab-draft')).toHaveClass(/is-active|kt-status-filter-active/);
 });
 
 test('Planning Authority lands on My Work tab by default', async ({ page }) => {
@@ -32,15 +32,16 @@ test('Planning Authority lands on My Work tab by default', async ({ page }) => {
 	test.skip(!loggedIn, 'Planning Authority test user not configured');
 	await openBudgetLanding(page);
 
-	await expect(page.getByTestId('budget-tab-my-work')).toHaveClass(/btn-primary/);
+	await expect(page.getByTestId('budget-tab-my-work')).toHaveClass(/is-active|kt-status-filter-active/);
 });
 
 test('My Work tab filters to role-appropriate budgets', async ({ page }) => {
 	const loggedIn = await tryLogin(() => loginAsPlanningAuthority(page));
 	test.skip(!loggedIn, 'Planning Authority test user not configured');
-	await openBudgetLandingAllQueues(page);
+	await openBudgetLanding(page);
 
-	await expect(page.getByTestId('budget-tab-all')).toHaveClass(/btn-primary/);
+	await page.getByTestId('budget-tab-all').click();
+	await expect(page.getByTestId('budget-tab-all')).toHaveClass(/is-active|kt-status-filter-active/);
 	await expect(
 		page
 			.getByTestId('budget-list')
@@ -50,11 +51,10 @@ test('My Work tab filters to role-appropriate budgets', async ({ page }) => {
 	const allCount = await page.locator('.kt-budget-row[data-budget]').count();
 	test.skip(allCount === 0, 'No budgets on site for My Work filter smoke');
 
-	await page.evaluate(() => {
-		const btn = document.querySelector('[data-testid="budget-tab-my-work"]');
-		if (btn instanceof HTMLElement) btn.click();
+	await page.getByTestId('budget-tab-my-work').click();
+	await expect(page.getByTestId('budget-tab-my-work')).toHaveClass(/is-active|kt-status-filter-active/, {
+		timeout: 15_000,
 	});
-	await expect(page.getByTestId('budget-tab-my-work')).toHaveClass(/btn-primary/, { timeout: 15_000 });
 	const myCount = await page.locator('.kt-budget-row[data-budget]').count();
 	expect(myCount).toBeLessThanOrEqual(allCount);
 
@@ -66,6 +66,6 @@ test('My Work tab filters to role-appropriate budgets', async ({ page }) => {
 	const rows = page.locator('.kt-budget-row[data-budget]');
 	const n = await rows.count();
 	for (let i = 0; i < n; i++) {
-		await expect(rows.nth(i).locator('[data-testid^="budget-row-status-"]')).toContainText('Submitted');
+		await expect(rows.nth(i).locator('[data-testid="budget-row-status-inline"]')).toContainText('Submitted');
 	}
 });

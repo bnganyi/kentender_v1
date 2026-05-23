@@ -98,7 +98,8 @@ ui-smoke:
 
 ui-workspace-pattern-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test \
-		tests/ui/smoke/strategy-landing/strategy-pattern-lock.spec.ts
+		tests/ui/smoke/strategy-landing/strategy-pattern-lock.spec.ts \
+		tests/ui/smoke/budget-landing/budget-pattern-lock.spec.ts
 
 tm2-v1-contamination-audit:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \

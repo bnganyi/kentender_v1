@@ -74,11 +74,10 @@ class Budget(Document):
 		assert_allowed_transition_roles(previous, self.status)
 
 	def after_insert(self):
-		# B2.1 "Save and Continue": redirect to builder only when explicitly requested
-		# by client-side create flow; regular Save remains unchanged.
+		# B2.1 "Save and Continue": redirect to workspace when explicitly requested.
 		if cint(getattr(self, "save_and_continue", 0)):
 			frappe.local.response["type"] = "redirect"
-			frappe.local.response["location"] = f"/app/budget-builder/{self.name}"
+			frappe.local.response["location"] = "/app/budget-management"
 
 	def _validate_required_links(self):
 		if not self.budget_name:
