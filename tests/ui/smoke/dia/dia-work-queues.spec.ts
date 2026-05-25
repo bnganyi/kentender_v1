@@ -15,6 +15,6 @@ test.describe('DIA work queues', () => {
 		test.skip(!hasSeed, 'Seed DIA-MOH-2026-0002 not present — run seed_dia_basic or seed_dia_extended.');
 		await row.click();
 		await expect(page.getByTestId('dia-detail-panel')).toBeVisible();
-		await expect(page.getByTestId('dia-detail-title')).toBeVisible();
+		await expect(page.getByTestId('selected-demand-title')).toBeVisible();
 	});
 });

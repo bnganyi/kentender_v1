@@ -9,6 +9,7 @@ import {
 	expectNoLoadingFlash,
 	expectPrimarySidebarItemHighlighted,
 	expectPrimaryTabsUseHierarchyContract,
+	expectRowSwitchKeepsDetailShell,
 	expectReviewStatusMatchesWorkspace,
 	expectRowActionUsesHierarchyContract,
 	expectSearchKeepsFocusWhileTyping,
@@ -63,6 +64,17 @@ test.describe('Strategy workspace pattern lock', () => {
 		const reviewTab = page.getByTestId('strategy-tab-review');
 		const reviewPanel = page.getByTestId('strategy-tab-panel-review');
 		await expectDetailTabSwitchPreservesListScroll(list, reviewTab, reviewPanel);
+	});
+
+	test('row switch updates detail without shell remount', async ({ page }) => {
+		await loginAsStrategyManager(page);
+		await openStrategyLanding(page);
+		await expectRowSwitchKeepsDetailShell(page, {
+			rowSelector: '.kt-strategy-plan-row[data-strategy-plan]',
+			detailRootSelector: '.kt-strategy-col-detail',
+			detailPanelSelector: '[data-testid="selected-plan-panel"]',
+			loadingSelectors: ['[data-testid="strategy-landing-loading"]'],
+		});
 	});
 
 	test('sidebar highlights Strategy Alignment as active item', async ({ page }) => {

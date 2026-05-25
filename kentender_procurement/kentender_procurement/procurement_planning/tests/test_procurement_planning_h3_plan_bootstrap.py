@@ -8,6 +8,8 @@ from __future__ import annotations
 import frappe
 from frappe.tests import IntegrationTestCase
 
+from kentender_procurement.procurement_planning.pp2_constants import PLAN_CLOSED
+
 
 class TestProcurementPlanningH3PlanBootstrap(IntegrationTestCase):
 	def test_new_package_rejected_when_parent_plan_not_draft(self) -> None:
@@ -18,7 +20,7 @@ class TestProcurementPlanningH3PlanBootstrap(IntegrationTestCase):
 			return
 		plan_name = rows[0].name
 		orig_status = frappe.db.get_value("Procurement Plan", plan_name, "status")
-		frappe.db.set_value("Procurement Plan", plan_name, "status", "Submitted", update_modified=False)
+		frappe.db.set_value("Procurement Plan", plan_name, "status", PLAN_CLOSED, update_modified=False)
 		frappe.db.commit()
 		try:
 			frappe.set_user("Administrator")

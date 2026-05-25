@@ -1,0 +1,237 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:method_decision_code",
+ "creation": "2026-05-24 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "method_decision_code",
+  "package_code",
+  "column_pkg",
+  "procurement_category",
+  "procurement_method",
+  "contract_type_expectation",
+  "section_std",
+  "required_std_category",
+  "required_std_type",
+  "section_basis",
+  "method_basis",
+  "threshold_check_result",
+  "template_code",
+  "rule_profile_code",
+  "section_override",
+  "override_flag",
+  "override_reason",
+  "section_actor",
+  "decided_by",
+  "decided_at",
+  "approved_by",
+  "approved_at",
+  "column_flags",
+  "is_current",
+  "is_master_seed"
+ ],
+ "fields": [
+  {
+   "fieldname": "method_decision_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Method Decision Code",
+   "reqd": 1,
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "package_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Package Code",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_pkg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "procurement_category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Procurement Category",
+   "options": "Works\nGoods\nServices\nConsultancy",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "procurement_method",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Procurement Method",
+   "options": "Open Tender\nRestricted Tender\nRFQ\nRFP\nDirect Procurement",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "contract_type_expectation",
+   "fieldtype": "Data",
+   "label": "Contract Type Expectation"
+  },
+  {
+   "fieldname": "section_std",
+   "fieldtype": "Section Break",
+   "label": "STD path"
+  },
+  {
+   "fieldname": "required_std_category",
+   "fieldtype": "Data",
+   "label": "Required STD Category",
+   "reqd": 1
+  },
+  {
+   "fieldname": "required_std_type",
+   "fieldtype": "Data",
+   "label": "Required STD Type"
+  },
+  {
+   "fieldname": "section_basis",
+   "fieldtype": "Section Break",
+   "label": "Decision basis"
+  },
+  {
+   "fieldname": "method_basis",
+   "fieldtype": "Select",
+   "label": "Method Basis",
+   "options": "Template\nThreshold\nManual Confirmation\nRule Profile",
+   "reqd": 1
+  },
+  {
+   "fieldname": "threshold_check_result",
+   "fieldtype": "Select",
+   "label": "Threshold Check Result",
+   "options": "PASS\nFAIL\nNOT APPLICABLE"
+  },
+  {
+   "fieldname": "template_code",
+   "fieldtype": "Data",
+   "label": "Template Code"
+  },
+  {
+   "fieldname": "rule_profile_code",
+   "fieldtype": "Data",
+   "label": "Rule Profile Code"
+  },
+  {
+   "fieldname": "section_override",
+   "fieldtype": "Section Break",
+   "label": "Override"
+  },
+  {
+   "default": "0",
+   "fieldname": "override_flag",
+   "fieldtype": "Check",
+   "label": "Override Flag",
+   "reqd": 1
+  },
+  {
+   "fieldname": "override_reason",
+   "fieldtype": "Text",
+   "label": "Override Reason"
+  },
+  {
+   "fieldname": "section_actor",
+   "fieldtype": "Section Break",
+   "label": "Actor"
+  },
+  {
+   "fieldname": "decided_by",
+   "fieldtype": "Link",
+   "label": "Decided By",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "decided_at",
+   "fieldtype": "Datetime",
+   "label": "Decided At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User"
+  },
+  {
+   "fieldname": "approved_at",
+   "fieldtype": "Datetime",
+   "label": "Approved At"
+  },
+  {
+   "fieldname": "column_flags",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_current",
+   "fieldtype": "Check",
+   "label": "Is Current",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_master_seed",
+   "fieldtype": "Check",
+   "label": "Is Master Seed"
+  }
+ ],
+ "links": [],
+ "modified": "2026-05-24 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "Package Method Decision",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Planner",
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "read": 1,
+   "report": 1,
+   "role": "Planning Authority",
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -21,6 +21,11 @@ from frappe.utils import cint, cstr, flt
 from kentender_procurement.procurement_planning.services.package_completeness import (
 	get_package_completeness_blockers,
 )
+from kentender_procurement.procurement_planning.pp2_constants import (
+	PKG_READY_FOR_RELEASE,
+	PKG_RELEASED,
+	PLAN_ACTIVE,
+)
 from kentender_procurement.tender_management.services.planning_tender_handoff_duplicates import (
 	TM2_STATUSES_RELEASING_PACKAGE_FOR_NEW_TENDER,
 )
@@ -35,7 +40,11 @@ BOUNDARY_CODE = "XMV-BND-001"
 # Doc 2 sec. 17.1 — all governance codes implemented or intentionally mapped here.
 XMV_PT_PLAN_CODES: frozenset[str] = frozenset(f"XMV-PT-{i:03d}" for i in range(1, 12))
 
-_RELEASABLE_PACKAGE_STATUS = frozenset(("Ready for Tender", "Released to Tender"))
+_RELEASABLE_PACKAGE_STATUS = frozenset(
+	("Ready for Tender", "Released to Tender", PKG_READY_FOR_RELEASE, PKG_RELEASED)
+)
+
+_RELEASABLE_PLAN_STATUSES = frozenset(("Approved", PLAN_ACTIVE))
 
 _STD_STATUS_ALLOWLIST = frozenset(("Imported", "POC Approved"))
 
@@ -137,11 +146,11 @@ def validate_package_for_release_xmv(pkg: Document) -> XmvReleaseValidationResul
 		)
 	else:
 		plan_st = frappe.db.get_value("Procurement Plan", pkg.plan_id, "status")
-		if (plan_st or "") != "Approved":
+		if (plan_st or "") not in _RELEASABLE_PLAN_STATUSES:
 			critical.append(
 				_crit(
 					"XMV-PT-002",
-					_("[{0}] Procurement Plan must be Approved (got {1}).").format(
+					_("[{0}] Procurement Plan must be Approved or Active (got {1}).").format(
 						BOUNDARY_CODE, plan_st or _("(empty)")
 					),
 				)

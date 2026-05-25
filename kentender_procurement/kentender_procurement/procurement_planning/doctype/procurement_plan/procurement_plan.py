@@ -1,17 +1,23 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-import hashlib
-import json
-
 import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt, now_datetime
 
-VALID_STATUSES = frozenset(("Draft", "Submitted", "Approved", "Locked", "Rejected", "Returned"))
-# B4: Submitted onward — field lock for non-privileged users (Roles §11). Returned is planner-editable.
-READONLY_STATUSES = frozenset(("Submitted", "Approved", "Locked", "Rejected"))
+from kentender_procurement.procurement_planning.pp2_constants import (
+	PLAN_ACTIVE,
+	PLAN_ALLOWED_TRANSITIONS,
+	PLAN_CANCELLED,
+	PLAN_CLOSED,
+	PLAN_DRAFT,
+	PLAN_READONLY_STATUSES,
+	PLAN_SUPERSEDED,
+	PLAN_TRANSITIONS_REQUIRING_REASON,
+	PLAN_VALID_STATUSES,
+)
+
 _SKIP_LOCK_VALUE_CHANGE = frozenset(("total_planned_value", "submit_package_integrity_hash"))
 _SKIP_FIELD_TYPES = frozenset(
 	(
@@ -25,22 +31,10 @@ _SKIP_FIELD_TYPES = frozenset(
 )
 _WORKFLOW_FIELDS_WHEN_READONLY = frozenset(("status", "workflow_reason"))
 
-ALLOWED_STATUS_TRANSITIONS = {
-	"Draft": ("Submitted",),
-	"Returned": ("Submitted",),
-	"Submitted": ("Approved", "Returned", "Rejected"),
-	"Approved": ("Locked",),
-	"Locked": ("Draft",),
-	"Rejected": (),
-}
-
-_TRANSITIONS_REQUIRING_REASON = frozenset(
-	(
-		("Submitted", "Returned"),
-		("Submitted", "Rejected"),
-		("Locked", "Draft"),
-	)
-)
+VALID_STATUSES = PLAN_VALID_STATUSES
+READONLY_STATUSES = PLAN_READONLY_STATUSES
+ALLOWED_STATUS_TRANSITIONS = PLAN_ALLOWED_TRANSITIONS
+_TRANSITIONS_REQUIRING_REASON = PLAN_TRANSITIONS_REQUIRING_REASON
 
 _ROLE_PLANNER = frozenset(("Procurement Planner", "Administrator", "System Manager"))
 _ROLE_AUTHORITY = frozenset(("Planning Authority", "Administrator", "System Manager"))
@@ -62,12 +56,12 @@ class ProcurementPlan(Document):
 		self._validate_canonical_status()
 		self._validate_plan_code_unique()
 		self._validate_status_transitions()
-		self._enforce_lock_on_approved_states()
+		self._enforce_lock_on_readonly_states()
 		self._sync_approval_metadata()
 
 	def _set_defaults(self):
 		if not self.status:
-			self.status = "Draft"
+			self.status = PLAN_DRAFT
 		if self.is_active is None:
 			self.is_active = 1
 		if not self.created_by:
@@ -90,7 +84,7 @@ class ProcurementPlan(Document):
 	def _validate_canonical_status(self):
 		if self.status not in VALID_STATUSES:
 			frappe.throw(
-				_("Status must be one of: Draft, Submitted, Approved, Locked, Rejected, Returned."),
+				_("Status must be one of: Draft, Active, Closed, Cancelled, Superseded."),
 				title=_("Invalid status"),
 			)
 
@@ -109,29 +103,25 @@ class ProcurementPlan(Document):
 			return
 
 		if self.is_new():
-			if new_status == "Draft":
+			if new_status == PLAN_DRAFT:
 				return
-			self._raise_if_invalid_transition("Draft", new_status)
-			self._validate_transition_roles("Draft", new_status)
-			self._validate_transition_reason("Draft", new_status)
-			self._validate_submitted_to_approved_preconditions("Draft", new_status)
-			# Strict submit (all packages Approved + integrity hash) applies on real
-			# Draft/Returned → Submitted saves, not on rare insert-with-status bootstrap rows.
+			self._raise_if_invalid_transition(PLAN_DRAFT, new_status)
+			self._validate_transition_roles(PLAN_DRAFT, new_status)
+			self._validate_transition_reason(PLAN_DRAFT, new_status)
 			return
 
 		if not self.has_value_changed("status"):
 			return
 
 		before = self.get_doc_before_save()
-		old_status = (before.get("status") if before else None) or "Draft"
+		old_status = (before.get("status") if before else None) or PLAN_DRAFT
 		if old_status == new_status:
 			return
 
 		self._raise_if_invalid_transition(old_status, new_status)
 		self._validate_transition_roles(old_status, new_status)
 		self._validate_transition_reason(old_status, new_status)
-		self._validate_submitted_to_approved_preconditions(old_status, new_status)
-		self._validate_transition_to_submitted(old_status, new_status)
+		self._validate_activate_preconditions(old_status, new_status)
 
 	def _raise_if_invalid_transition(self, old_status, new_status):
 		allowed = ALLOWED_STATUS_TRANSITIONS.get(old_status)
@@ -148,32 +138,21 @@ class ProcurementPlan(Document):
 
 	def _validate_transition_roles(self, old_status, new_status):
 		roles = _session_roles()
-		if (old_status, new_status) in (("Draft", "Submitted"), ("Returned", "Submitted")):
-			if not (roles & _ROLE_PLANNER):
+		if (old_status, new_status) == (PLAN_DRAFT, PLAN_ACTIVE):
+			if not (roles & _ROLE_AUTHORITY):
 				frappe.throw(
-					_("Only a Procurement Planner or Administrator may submit this plan."),
+					_("Only Planning Authority or Administrator may activate this plan."),
 					title=_("Not permitted"),
 				)
 		elif (old_status, new_status) in (
-			("Submitted", "Approved"),
-			("Submitted", "Returned"),
-			("Submitted", "Rejected"),
+			(PLAN_ACTIVE, PLAN_CLOSED),
+			(PLAN_ACTIVE, PLAN_CANCELLED),
+			(PLAN_DRAFT, PLAN_CANCELLED),
+			(PLAN_ACTIVE, PLAN_SUPERSEDED),
 		):
 			if not (roles & _ROLE_AUTHORITY):
 				frappe.throw(
 					_("Only Planning Authority or Administrator may perform this transition."),
-					title=_("Not permitted"),
-				)
-		elif (old_status, new_status) == ("Approved", "Locked"):
-			if not (roles & _ROLE_AUTHORITY):
-				frappe.throw(
-					_("Only Planning Authority or Administrator may lock this plan."),
-					title=_("Not permitted"),
-				)
-		elif (old_status, new_status) == ("Locked", "Draft"):
-			if not (roles & _ROLE_ADMIN_ONLY):
-				frappe.throw(
-					_("Only Administrator or System Manager may unlock this plan."),
 					title=_("Not permitted"),
 				)
 
@@ -186,88 +165,19 @@ class ProcurementPlan(Document):
 				title=_("Missing workflow reason"),
 			)
 
-	def _compute_package_integrity_hash(self) -> str:
-		rows = frappe.db.sql(
-			"""
-			select name, status, estimated_value,
-				(select count(*) from `tabProcurement Package Line` pl
-				 where pl.package_id = p.name and ifnull(pl.is_active,1)=1) as line_count
-			from `tabProcurement Package` p
-			where plan_id = %s and ifnull(is_active,1)=1
-			order by name
-			""",
-			self.name,
-		)
-		payload = json.dumps(rows, sort_keys=True, default=str)
-		return hashlib.sha256(payload.encode()).hexdigest()
-
-	def _validate_transition_to_submitted(self, old_status, new_status):
-		if new_status != "Submitted" or old_status not in ("Draft", "Returned"):
-			return
-		rows = frappe.get_all(
-			"Procurement Package",
-			filters={"plan_id": self.name, "is_active": 1},
-			fields=["name", "package_code", "status"],
-			limit=500,
-		)
-		if not rows:
-			frappe.throw(
-				_("At least one active procurement package is required before the plan can be submitted."),
-				title=_("Plan not ready"),
-			)
-		not_approved = [r for r in rows if (r.status or "") != "Approved"]
-		if not_approved:
-			detail = "; ".join(
-				f"{(r.package_code or r.name or '').strip()}: {r.status or _('unknown')}" for r in not_approved
-			)
-			frappe.throw(
-				_("Every active package must be Approved before the plan can be submitted: {0}").format(detail),
-				title=_("Packages not approved"),
-			)
-		self.submit_package_integrity_hash = self._compute_package_integrity_hash()
-
-	def _validate_submitted_to_approved_preconditions(self, old_status, new_status):
-		if (old_status, new_status) != ("Submitted", "Approved"):
+	def _validate_activate_preconditions(self, old_status, new_status):
+		if (old_status, new_status) != (PLAN_DRAFT, PLAN_ACTIVE):
 			return
 		n = frappe.db.sql(
 			"""select count(*) from `tabProcurement Package`
 			where plan_id = %s and ifnull(is_active, 1) = 1""",
 			self.name,
 		)[0][0]
-		if not n:
+		if not n and not _is_privileged_plan_actor():
 			frappe.throw(
-				_("At least one active procurement package is required before the plan can be approved."),
-				title=_("Plan not ready for approval"),
+				_("At least one active procurement package is recommended before activating the plan."),
+				title=_("Plan not ready"),
 			)
-		not_ap = frappe.db.sql(
-			"""select name, package_code, status from `tabProcurement Package`
-			where plan_id = %s and ifnull(is_active,1)=1 and ifnull(status,'') != 'Approved'""",
-			self.name,
-		)
-		if not_ap:
-			detail = "; ".join(f"{(r[1] or r[0]).strip()}: {r[2]}" for r in not_ap)
-			frappe.throw(
-				_("All active packages must remain Approved before the plan can be approved: {0}").format(detail),
-				title=_("Package not approved"),
-			)
-		before = self.get_doc_before_save()
-		expected = (before.get("submit_package_integrity_hash") if before else None) or ""
-		if expected and not _is_privileged_plan_actor():
-			current = self._compute_package_integrity_hash()
-			if current != expected:
-				frappe.throw(
-					_(
-						"Package data changed after plan submission. Re-submit the plan or contact an administrator."
-					),
-					title=_("Integrity check failed"),
-				)
-		elif expected and _is_privileged_plan_actor():
-			current = self._compute_package_integrity_hash()
-			if current != expected:
-				frappe.log_error(
-					message=f"Plan {self.name}: package integrity drift at approve (admin override by {frappe.session.user}).",
-					title="Procurement Plan approve override",
-				)
 
 	def _changed_business_fieldnames(self):
 		changed = set()
@@ -281,7 +191,7 @@ class ProcurementPlan(Document):
 				changed.add(fieldname)
 		return changed
 
-	def _enforce_lock_on_approved_states(self):
+	def _enforce_lock_on_readonly_states(self):
 		if self.is_new():
 			return
 		if _is_privileged_plan_actor():
@@ -289,7 +199,7 @@ class ProcurementPlan(Document):
 		before = self.get_doc_before_save()
 		if not before:
 			return
-		previous_status = before.get("status") or "Draft"
+		previous_status = before.get("status") or PLAN_DRAFT
 		if previous_status not in READONLY_STATUSES:
 			return
 
@@ -300,32 +210,25 @@ class ProcurementPlan(Document):
 		if changed.issubset(_WORKFLOW_FIELDS_WHEN_READONLY):
 			if "status" not in changed and "workflow_reason" in changed:
 				frappe.throw(
-					_("Submitted, Approved, Locked, and Rejected plans are read-only."),
+					_("Closed, Cancelled, and Superseded plans are read-only."),
 					title=_("Record locked"),
 				)
 			return
 
 		frappe.throw(
-			_("Submitted, Approved, Locked, and Rejected plans are read-only."),
+			_("Closed, Cancelled, and Superseded plans are read-only."),
 			title=_("Record locked"),
 		)
 
 	def _sync_approval_metadata(self):
-		if self.status == "Approved":
+		if self.status == PLAN_ACTIVE:
 			if not self.approved_by:
 				self.approved_by = frappe.session.user
 			if not self.approved_at:
 				self.approved_at = now_datetime()
 			self.rejected_by = None
 			self.rejected_at = None
-		elif self.status == "Locked":
-			if not self.approved_by:
-				self.approved_by = frappe.session.user
-			if not self.approved_at:
-				self.approved_at = now_datetime()
-			self.rejected_by = None
-			self.rejected_at = None
-		elif self.status == "Rejected":
+		elif self.status == PLAN_CANCELLED:
 			self.approved_by = None
 			self.approved_at = None
 			if not self.rejected_by:
@@ -333,7 +236,8 @@ class ProcurementPlan(Document):
 			if not self.rejected_at:
 				self.rejected_at = now_datetime()
 		else:
-			self.approved_by = None
-			self.approved_at = None
+			if self.status not in (PLAN_CLOSED, PLAN_SUPERSEDED):
+				self.approved_by = None
+				self.approved_at = None
 			self.rejected_by = None
 			self.rejected_at = None

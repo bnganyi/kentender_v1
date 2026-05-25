@@ -36,7 +36,7 @@ ALLOWED_STATUS_TRANSITIONS = {
 		("Pending Finance Approval", "Draft", "Rejected", "Cancelled")
 	),
 	"Pending Finance Approval": frozenset(("Approved", "Draft", "Rejected", "Cancelled")),
-	"Approved": frozenset(("Planning Ready", "Cancelled")),
+	"Approved": frozenset(("Planning Ready", "Cancelled", "Pending Finance Approval")),
 	"Planning Ready": frozenset(),
 	"Rejected": frozenset(("Pending HoD Approval",)),
 	"Cancelled": frozenset(),
@@ -72,6 +72,18 @@ class Demand(Document):
 		self._validate_canonical_selects()
 		self._validate_status_transitions()
 		self._validate_rejection_and_closure_metadata()
+		self._validate_approval_integrity()
+		self._validate_draft_save_contract()
+
+	def _validate_draft_save_contract(self):
+		"""§24.1 — belt-and-braces draft save contract when still in Draft."""
+		if (self.status or "Draft") != "Draft":
+			return
+		if getattr(frappe.flags, "demand_lifecycle_action", None):
+			return
+		from kentender_procurement.demand_intake.services.readiness import assert_draft_save
+
+		assert_draft_save(self)
 
 	def _set_audit_defaults(self):
 		if not self.request_date:
@@ -109,68 +121,10 @@ class Demand(Document):
 		self.performance_target = data.get("performance_target")
 
 	def validate_submission_gate(self):
-		"""C2–C3 — submit-time validation (Cursor Pack / PRD)."""
-		from kentender_budget.api.dia_budget_control import get_budget_line_context
+		"""C2–C3 — submit-time validation (delegates to readiness service)."""
+		from kentender_procurement.demand_intake.services.readiness import assert_submission_ready
 
-		if not (self.title or "").strip():
-			frappe.throw(_("Title is required."), title=_("Cannot submit"))
-		if not self.procuring_entity:
-			frappe.throw(_("Procuring Entity is required."), title=_("Cannot submit"))
-		if not self.requesting_department:
-			frappe.throw(_("Department is required."), title=_("Cannot submit"))
-		if not self.requested_by:
-			frappe.throw(_("Requester is required."), title=_("Cannot submit"))
-		if not self.request_date or not self.required_by_date:
-			frappe.throw(_("Request Date and Required By Date are required."), title=_("Cannot submit"))
-		if not self.budget_line:
-			frappe.throw(_("Budget Line is required."), title=_("Cannot submit"))
-		ctx = get_budget_line_context(self.budget_line)
-		if not ctx.get("ok"):
-			frappe.throw(_(ctx.get("message") or _("Budget Line is not valid.")), title=_("Cannot submit"))
-		data = ctx.get("data") or {}
-		if data.get("procuring_entity") != self.procuring_entity:
-			frappe.throw(
-				_("Budget line must belong to the same procuring entity as this demand."),
-				title=_("Cannot submit"),
-			)
-		if not self.get("items") or len(self.items) < 1:
-			frappe.throw(_("At least one line item is required."), title=_("Cannot submit"))
-		if flt(self.total_amount) <= 0:
-			frappe.throw(_("Requested amount must be greater than zero."), title=_("Cannot submit"))
-		rd = getdate(self.required_by_date)
-		rq = getdate(self.request_date)
-		if self.demand_type != "Emergency" and rd < rq:
-			frappe.throw(
-				_("Required By Date must be on or after Request Date."),
-				title=_("Cannot submit"),
-			)
-		if self.demand_type == "Unplanned":
-			if not (self.beneficiary_summary or "").strip():
-				frappe.throw(
-					_("Justification (Beneficiary Summary) is required for Unplanned demands."),
-					title=_("Cannot submit"),
-				)
-			if not (self.impact_if_not_procured or "").strip():
-				frappe.throw(
-					_("Impact if Not Procured is required for Unplanned demands."),
-					title=_("Cannot submit"),
-				)
-		if self.demand_type == "Emergency":
-			if not (self.beneficiary_summary or "").strip():
-				frappe.throw(
-					_("Justification (Beneficiary Summary) is required for Emergency demands."),
-					title=_("Cannot submit"),
-				)
-			if not (self.impact_if_not_procured or "").strip():
-				frappe.throw(
-					_("Impact if Not Procured is required for Emergency demands."),
-					title=_("Cannot submit"),
-				)
-			if not (self.emergency_justification or "").strip():
-				frappe.throw(
-					_("Emergency Justification is required for Emergency demands."),
-					title=_("Cannot submit"),
-				)
+		assert_submission_ready(self)
 
 	def _set_demand_id(self):
 		"""Assign deterministic demand_id: DIA-{entity}-{year}-{sequence}."""
@@ -313,6 +267,22 @@ class Demand(Document):
 			frappe.throw(
 				_("Transition from {0} to {1} is not allowed.").format(old_status, new_status),
 				title=_("Invalid status transition"),
+			)
+
+	def _validate_approval_integrity(self):
+		"""L1 — Approved demands with a budget line must carry an active reservation."""
+		if (self.status or "") != "Approved":
+			return
+		if getattr(frappe.flags, "demand_lifecycle_action", None):
+			return
+		if not self.budget_line:
+			return
+		reservation = (self.reservation_status or "None").strip()
+		res_ref = (self.reservation_reference or "").strip()
+		if reservation != "Reserved" or not res_ref:
+			frappe.throw(
+				_("Approved demands must have budget reserved (reservation reference required)."),
+				title=_("Approval integrity"),
 			)
 
 	def _validate_rejection_and_closure_metadata(self):

@@ -8,9 +8,18 @@ from frappe.utils import flt
 from kentender_procurement.procurement_planning.doctype.procurement_package.procurement_package import (
 	recompute_package_estimated_value,
 )
+from kentender_procurement.procurement_planning.pp2_constants import (
+	PKG_EDITABLE_STATUSES,
+	POST_RELEASE_LOCK_MESSAGE,
+)
+from kentender_procurement.procurement_planning.services.package_post_release_lock import (
+	is_post_release_locked,
+)
+from kentender_procurement.procurement_planning.services.pp_governance_codes import (
+	PackagePostReleaseLock,
+)
 
 ALLOWED_DEMAND_STATUSES = frozenset(("Approved", "Planning Ready"))
-PACKAGE_EDITABLE_STATUSES = frozenset(("Draft", "Completed", "Returned"))
 PRIORITY_LEVELS = frozenset(("Low", "Normal", "High", "Critical"))
 
 
@@ -70,12 +79,26 @@ class ProcurementPackageLine(Document):
 	def _validate_parent_package_mutable(self):
 		if not self.package_id:
 			return
-		status = frappe.db.get_value("Procurement Package", self.package_id, "status")
-		if status and status not in PACKAGE_EDITABLE_STATUSES:
+		parent = frappe.db.get_value(
+			"Procurement Package",
+			self.package_id,
+			("status", "locked_after_release"),
+			as_dict=True,
+		)
+		if not parent:
+			return
+		if is_post_release_locked(parent):
+			frappe.throw(
+				_(POST_RELEASE_LOCK_MESSAGE),
+				title=PackagePostReleaseLock.LOCKED_AFTER_RELEASE,
+			)
+		status = (parent.get("status") or "").strip()
+		if status and status not in PKG_EDITABLE_STATUSES:
 			frappe.throw(
 				_(
-					"Package lines can only be edited while the package is Draft, Completed, or Returned. "
-					"They cannot be changed when the package is Submitted, Approved, Ready for Tender, Released to Tender, or Rejected."
+					"Package lines can only be edited while the package is Draft or Returned for Correction. "
+					"They cannot be changed when the package is In Review, Approved, Ready for Release, "
+					"Released to Tender, Consumed, Superseded, or Cancelled."
 				),
 				title=_("Record locked"),
 			)

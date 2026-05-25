@@ -98,15 +98,13 @@
    "in_list_view": 1,
    "label": "Department",
    "options": "Procuring Department",
-   "reqd": 1,
    "search_index": 1
   },
   {
    "fieldname": "required_by_date",
    "fieldtype": "Date",
    "in_list_view": 1,
-   "label": "Required By Date",
-   "reqd": 1
+   "label": "Required By Date"
   },
   {
    "default": "Planned",
@@ -115,7 +113,6 @@
    "in_list_view": 1,
    "label": "Demand Type",
    "options": "Planned\nUnplanned\nEmergency",
-   "reqd": 1,
    "search_index": 1
   },
   {
@@ -124,7 +121,6 @@
    "in_list_view": 1,
    "label": "Procuring Entity",
    "options": "Procuring Entity",
-   "reqd": 1,
    "search_index": 1
   },
   {
@@ -136,8 +132,7 @@
    "fieldname": "request_date",
    "fieldtype": "Date",
    "in_list_view": 1,
-   "label": "Request Date",
-   "reqd": 1
+   "label": "Request Date"
   },
   {
    "default": "Normal",
@@ -145,29 +140,26 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Priority",
-   "options": "Low\nNormal\nHigh\nCritical",
-   "reqd": 1
+   "options": "Low\nNormal\nHigh\nCritical"
   },
   {
    "default": "Goods",
    "fieldname": "requisition_type",
    "fieldtype": "Select",
    "label": "Demand Category",
-   "options": "Goods\nWorks\nServices",
-   "reqd": 1
+   "options": "Goods\nWorks\nServices"
   },
   {
    "fieldname": "requested_by",
    "fieldtype": "Link",
    "label": "Requested By",
    "options": "User",
-   "read_only": 1,
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "section_items",
    "fieldtype": "Section Break",
-   "label": "2. What is being requested"
+   "label": "2. Requested items & value"
   },
   {
    "fieldname": "items",
@@ -186,13 +178,12 @@
    "fieldtype": "Currency",
    "in_list_view": 1,
    "label": "Total requested (from line items)",
-   "read_only": 1,
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "section_justification_delivery",
    "fieldtype": "Section Break",
-   "label": "3. Why / business justification"
+   "label": "3. Justification"
   },
   {
    "fieldname": "beneficiary_summary",
@@ -202,13 +193,12 @@
   {
    "fieldname": "specification_summary",
    "fieldtype": "Text",
-   "label": "What is being requested",
-   "reqd": 1
+   "label": "Scope / requested outcome"
   },
   {
    "fieldname": "section_budget_strategy",
    "fieldtype": "Section Break",
-   "label": "4. Funding & delivery"
+   "label": "4. Linkages and planning context"
   },
   {
    "description": "Active budget lines only. Search matches name or code. After selection, strategy and balances load automatically.",
@@ -218,7 +208,6 @@
    "label": "Budget Line",
    "link_filters": "[[\"Budget Line\", \"is_active\", \"=\", 1]]",
    "options": "Budget Line",
-   "reqd": 1,
    "search_index": 1
   },
   {
@@ -232,7 +221,6 @@
    "label": "Strategic Plan",
    "options": "Strategic Plan",
    "read_only": 1,
-   "reqd": 1,
    "search_index": 1
   },
   {
@@ -241,7 +229,6 @@
    "label": "Program",
    "options": "Strategy Program",
    "read_only": 1,
-   "reqd": 1,
    "search_index": 1
   },
   {
@@ -250,7 +237,6 @@
    "label": "Sub-Program",
    "options": "Sub Program",
    "read_only": 1,
-   "reqd": 1,
    "search_index": 1
   },
   {
@@ -259,7 +245,6 @@
    "label": "Output Indicator",
    "options": "Strategy Objective",
    "read_only": 1,
-   "reqd": 1,
    "search_index": 1
   },
   {
@@ -267,7 +252,6 @@
    "fieldtype": "Link",
    "label": "Performance Target",
    "options": "Strategy Target",
-   "reqd": 1,
    "search_index": 1
   },
   {
@@ -290,8 +274,7 @@
    "fieldname": "reservation_status",
    "fieldtype": "Select",
    "label": "Reservation Status",
-   "options": "None\nPending Check\nReserved\nReleased\nFailed",
-   "reqd": 1
+   "options": "None\nPending Check\nReserved\nReleased\nFailed"
   },
   {
    "fieldname": "reservation_reference",
@@ -318,8 +301,7 @@
   {
    "fieldname": "delivery_location",
    "fieldtype": "Data",
-   "label": "Delivery Location",
-   "reqd": 1
+   "label": "Delivery Location"
   },
   {
    "description": "Optional. Enter only if your department already has an estimated lead time.",
@@ -338,8 +320,7 @@
    "fieldname": "is_exception",
    "fieldtype": "Check",
    "label": "Exception Flag",
-   "read_only": 1,
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "impact_if_not_procured",
@@ -364,7 +345,6 @@
    "in_list_view": 1,
    "label": "Workflow State",
    "options": "Draft\nPending HoD Approval\nPending Finance Approval\nApproved\nPlanning Ready\nRejected\nCancelled",
-   "reqd": 1,
    "search_index": 1
   },
   {
@@ -374,7 +354,6 @@
    "in_list_view": 1,
    "label": "Planning Status",
    "options": "Not Planned\nPartially Planned\nFully Planned\nPlanning Ready",
-   "reqd": 1,
    "search_index": 1
   },
   {
@@ -503,8 +482,7 @@
    "fieldtype": "Link",
    "label": "Created By",
    "options": "User",
-   "read_only": 1,
-   "reqd": 1
+   "read_only": 1
   }
  ],
  "links": [],

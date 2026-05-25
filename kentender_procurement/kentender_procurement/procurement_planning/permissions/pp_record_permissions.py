@@ -3,8 +3,9 @@
 
 """Phase E1 — Row-level visibility + ``has_permission`` for Procurement Plan / Package.
 
-Entity scope uses **User Permission** on **Procuring Entity** (same pattern as Demand).
-Hooks only *deny* where the matrix requires it; DocPerm supplies baseline grants.
+Entity scope uses **User Permission** on **Procuring Entity** plus ``User.kt_procuring_entity``
+(same pattern as Demand / Strategy). Hooks only *deny* where the matrix requires it;
+DocPerm supplies baseline grants.
 
 Auditors without entity User Permissions see **no** plans/packages (strict).
 """
@@ -13,27 +14,21 @@ from __future__ import annotations
 
 import frappe
 
+from kentender_procurement.procurement_planning.permissions import pp_scope
+
 _PP_ROLES = frozenset(
 	(
 		"Procurement Planner",
-		"Procurement Officer",
+		"Planning Reviewer",
 		"Planning Authority",
+		"Procurement Officer",
+		"Tender Manager",
+		"Budget Officer",
 		"Auditor",
 		"Administrator",
 		"System Manager",
 	)
 )
-
-
-def _user_permission_entities(user: str) -> set[str] | None:
-	rows = frappe.get_all(
-		"User Permission",
-		filters={"user": user, "allow": "Procuring Entity"},
-		pluck="for_value",
-	)
-	if not rows:
-		return None
-	return set(rows)
 
 
 def _entity_in_clause(values: set[str], *, table_alias: str, column: str) -> str:
@@ -52,7 +47,7 @@ def get_permission_query_conditions_for_procurement_plan(user: str | None = None
 	if not roles & _PP_ROLES:
 		return ""
 
-	ents = _user_permission_entities(user)
+	ents = pp_scope.get_user_allowed_entities(user)
 	if "Auditor" in roles:
 		if not ents:
 			return "1=0"
@@ -73,7 +68,7 @@ def get_permission_query_conditions_for_procurement_package(user: str | None = N
 	if not roles & _PP_ROLES:
 		return ""
 
-	ents = _user_permission_entities(user)
+	ents = pp_scope.get_user_allowed_entities(user)
 	join = (
 		"exists (select 1 from `tabProcurement Plan` `_pp_plan` where "
 		"`_pp_plan`.name = `tabProcurement Package`.plan_id and {ent_clause})"
@@ -104,9 +99,8 @@ def _entity_read_allowed(user: str, roles: set[str], entity_value: str | None) -
 	"""Return True if read is allowed (hook must return explicit bool for Frappe)."""
 	if user == "Administrator" or "System Manager" in roles:
 		return True
-	ents = _user_permission_entities(user)
-	if ents is not None:
-		return bool(entity_value and entity_value in ents)
+	if pp_scope.get_user_allowed_entities(user) is not None:
+		return pp_scope.entity_in_user_scope(entity_value, user)
 	if "Auditor" in roles:
 		return False
 	return True
@@ -137,9 +131,9 @@ def procurement_plan_has_permission(doc, ptype="read", user=None, **kwargs):
 			return False
 		st = (doc.get("status") or "").strip()
 		if "Planning Authority" in roles:
-			return st in ("Submitted", "Approved")
+			return st in ("In Review", "Approved", "Ready for Release")
 		if "Procurement Planner" in roles:
-			return st == "Draft"
+			return st in ("Draft", "Active")
 		return False
 
 	return True
@@ -167,11 +161,11 @@ def procurement_package_has_permission(doc, ptype="read", user=None, **kwargs):
 			return False
 		st = (doc.get("status") or "").strip()
 		if "Procurement Planner" in roles:
-			return st in ("Draft", "Completed", "Returned")
+			return st in ("Draft", "Returned for Correction")
 		if "Planning Authority" in roles:
-			return st == "Submitted"
+			return st == "In Review"
 		if "Procurement Officer" in roles:
-			return st == "Approved"
+			return st in ("Approved", "Ready for Release")
 		return False
 
 	return True

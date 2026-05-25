@@ -8,15 +8,15 @@ from __future__ import annotations
 import unittest
 from enum import StrEnum
 
-from kentender_procurement.procurement_planning.doctype.procurement_package.procurement_package import (
-	ST_APPROVED,
-	ST_COMPLETED,
-	ST_DRAFT,
-	ST_READY_FOR_TENDER,
-	ST_REJECTED,
-	ST_RELEASED_TO_TENDER,
-	ST_RETURNED,
-	ST_SUBMITTED,
+from kentender_procurement.procurement_planning.pp2_constants import (
+	PKG_APPROVED,
+	PKG_CANCELLED,
+	PKG_CONSUMED,
+	PKG_DRAFT,
+	PKG_IN_REVIEW,
+	PKG_READY_FOR_RELEASE,
+	PKG_RELEASED,
+	PKG_RETURNED,
 )
 
 from kentender_procurement.procurement_lifecycle import (
@@ -72,14 +72,14 @@ class TestR1001MappingGolden(unittest.TestCase):
 
 	def test_procurement_package_statuses(self):
 		cases = {
-			ST_DRAFT: ProcurementJourneyStatusCategory.NOT_STARTED,
-			ST_SUBMITTED: ProcurementJourneyStatusCategory.NEEDS_ACTION,
-			ST_APPROVED: ProcurementJourneyStatusCategory.IN_PROGRESS,
-			ST_READY_FOR_TENDER: ProcurementJourneyStatusCategory.IN_PROGRESS,
-			ST_RELEASED_TO_TENDER: ProcurementJourneyStatusCategory.HANDED_OFF,
-			ST_RETURNED: ProcurementJourneyStatusCategory.RETURNED,
-			ST_REJECTED: ProcurementJourneyStatusCategory.CANCELLED,
-			ST_COMPLETED: ProcurementJourneyStatusCategory.COMPLETED,
+			PKG_DRAFT: ProcurementJourneyStatusCategory.NOT_STARTED,
+			PKG_IN_REVIEW: ProcurementJourneyStatusCategory.NEEDS_ACTION,
+			PKG_APPROVED: ProcurementJourneyStatusCategory.IN_PROGRESS,
+			PKG_READY_FOR_RELEASE: ProcurementJourneyStatusCategory.IN_PROGRESS,
+			PKG_RELEASED: ProcurementJourneyStatusCategory.HANDED_OFF,
+			PKG_RETURNED: ProcurementJourneyStatusCategory.RETURNED,
+			PKG_CANCELLED: ProcurementJourneyStatusCategory.CANCELLED,
+			PKG_CONSUMED: ProcurementJourneyStatusCategory.COMPLETED,
 		}
 		for raw, expected in cases.items():
 			with self.subTest(raw=raw):
@@ -93,7 +93,7 @@ class TestR1001MappingGolden(unittest.TestCase):
 
 	def test_unknown_module_key_raises(self):
 		with self.assertRaises(ValueError):
-			map_raw_to_journey_status_category(module_key="demand_request", raw_status=ST_DRAFT)
+			map_raw_to_journey_status_category(module_key="demand_request", raw_status=PKG_DRAFT)
 
 	def test_unknown_status_raises(self):
 		with self.assertRaises(ValueError):

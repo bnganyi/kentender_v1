@@ -19,10 +19,10 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cstr
 
-from kentender_procurement.procurement_planning.doctype.procurement_package.procurement_package import (
-	ST_APPROVED,
-	ST_READY_FOR_TENDER,
-	ST_RELEASED_TO_TENDER,
+from kentender_procurement.procurement_planning.pp2_constants import (
+	PKG_APPROVED,
+	PKG_READY_FOR_RELEASE,
+	PKG_RELEASED,
 )
 from kentender_procurement.tender_management.security.action_availability.service import (
 	get_action_availability,
@@ -43,9 +43,9 @@ _OBJECT_TYPE = "Procurement Package"
 
 _AUTHORIZED_PACKAGE_STATUSES = frozenset(
 	{
-		ST_APPROVED,
-		ST_READY_FOR_TENDER,
-		ST_RELEASED_TO_TENDER,
+		PKG_APPROVED,
+		PKG_READY_FOR_RELEASE,
+		PKG_RELEASED,
 	}
 )
 

@@ -10,31 +10,32 @@ raises ``ValueError`` so new source states must extend this table explicitly.
 
 from __future__ import annotations
 
-from kentender_procurement.procurement_planning.doctype.procurement_package.procurement_package import (
-	ST_APPROVED,
-	ST_COMPLETED,
-	ST_DRAFT,
-	ST_READY_FOR_TENDER,
-	ST_REJECTED,
-	ST_RELEASED_TO_TENDER,
-	ST_RETURNED,
-	ST_SUBMITTED,
-)
-
 from kentender_procurement.procurement_lifecycle.journey_status_category import ProcurementJourneyStatusCategory
+from kentender_procurement.procurement_planning.pp2_constants import (
+	PKG_APPROVED,
+	PKG_CANCELLED,
+	PKG_CONSUMED,
+	PKG_DRAFT,
+	PKG_IN_REVIEW,
+	PKG_READY_FOR_RELEASE,
+	PKG_RELEASED,
+	PKG_RETURNED,
+	PKG_SUPERSEDED,
+)
 
 # Cursor pack §5.4 example uses machine-style token for source_status.
 _ALIAS_RELEASED_TO_TENDER = "RELEASED_TO_TENDER"
 
 _PROCUREMENT_PACKAGE_STATUS_TO_CATEGORY: dict[str, ProcurementJourneyStatusCategory] = {
-	ST_DRAFT: ProcurementJourneyStatusCategory.NOT_STARTED,
-	ST_SUBMITTED: ProcurementJourneyStatusCategory.NEEDS_ACTION,
-	ST_APPROVED: ProcurementJourneyStatusCategory.IN_PROGRESS,
-	ST_READY_FOR_TENDER: ProcurementJourneyStatusCategory.IN_PROGRESS,
-	ST_RELEASED_TO_TENDER: ProcurementJourneyStatusCategory.HANDED_OFF,
-	ST_RETURNED: ProcurementJourneyStatusCategory.RETURNED,
-	ST_REJECTED: ProcurementJourneyStatusCategory.CANCELLED,
-	ST_COMPLETED: ProcurementJourneyStatusCategory.COMPLETED,
+	PKG_DRAFT: ProcurementJourneyStatusCategory.NOT_STARTED,
+	PKG_IN_REVIEW: ProcurementJourneyStatusCategory.NEEDS_ACTION,
+	PKG_RETURNED: ProcurementJourneyStatusCategory.RETURNED,
+	PKG_APPROVED: ProcurementJourneyStatusCategory.IN_PROGRESS,
+	PKG_READY_FOR_RELEASE: ProcurementJourneyStatusCategory.IN_PROGRESS,
+	PKG_RELEASED: ProcurementJourneyStatusCategory.HANDED_OFF,
+	PKG_CONSUMED: ProcurementJourneyStatusCategory.COMPLETED,
+	PKG_SUPERSEDED: ProcurementJourneyStatusCategory.CANCELLED,
+	PKG_CANCELLED: ProcurementJourneyStatusCategory.CANCELLED,
 	_ALIAS_RELEASED_TO_TENDER: ProcurementJourneyStatusCategory.HANDED_OFF,
 }
 

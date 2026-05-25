@@ -11,7 +11,7 @@ import json
 
 import frappe
 from frappe.tests import IntegrationTestCase
-from frappe.utils import today
+from frappe.utils import now_datetime, today
 
 from kentender_core.seeds._common import ensure_currency_kes, ensure_department, ensure_procuring_entity
 from kentender_procurement.demand_intake.api.queue_list import get_dia_queue_filter_meta, get_dia_queue_list
@@ -143,3 +143,24 @@ class TestDiaQueueListD4(IntegrationTestCase):
 		self.assertTrue(out.get("ok"))
 		applied = out.get("applied_refine") or {}
 		self.assertNotIn("demand_type", applied)
+
+	def test_cancelled_lifecycle_filter(self):
+		if getattr(self, "_skipped_no_demand", False):
+			self.skipTest("Demand DocType not installed")
+		name = self._mk_demand(title="Cancelled D4")
+		frappe.db.set_value(
+			"Demand",
+			name,
+			{
+				"status": "Cancelled",
+				"cancellation_reason": "Test cancel",
+				"cancelled_by": frappe.session.user,
+				"cancelled_at": now_datetime(),
+			},
+			update_modified=False,
+		)
+		out = get_dia_queue_list(work_scope="all", lifecycle_filter="cancelled")
+		self.assertTrue(out.get("ok"))
+		self.assertEqual(out.get("lifecycle_filter"), "cancelled")
+		names = {r.get("name") for r in (out.get("demands") or [])}
+		self.assertIn(name, names)

@@ -1,21 +1,162 @@
-// Demand Intake and Approval workspace — Desk shell (D1): header, KPIs, tabs, queues, filters, master–detail.
+// Demand Intake and Approval workspace — compact lifecycle bar + tabbed detail panels (Phase 0–2).
 
 (function () {
 	const DIA_WS = "Demand Intake and Approval";
+
+	const DETAIL_TABS = [
+		{ id: "overview", label: __("Overview"), testId: "dia-tab-overview" },
+		{ id: "items", label: __("Items & Value"), testId: "dia-tab-items" },
+		{ id: "review", label: __("Review"), testId: "dia-tab-review" },
+		{ id: "planning", label: __("Planning"), testId: "dia-tab-planning" },
+		{ id: "audit", label: __("Audit"), testId: "dia-tab-audit" },
+	];
+
+	const QUEUE_CHIPS = [
+		{ id: "all", label: __("All"), testId: "dia-tab-all", countKey: "total", workScope: "all", lifecycle: "all", group: "scope" },
+		{ id: "mywork", label: __("My Work"), testId: "dia-tab-my-work", countKey: null, workScope: "mywork", lifecycle: "all", group: "scope" },
+		{ id: "draft", label: __("Draft"), testId: "dia-tab-draft", countKey: "draft_count", workScope: "all", lifecycle: "draft", group: "intake" },
+		{
+			id: "submitted",
+			label: __("HoD"),
+			testId: "dia-tab-hod",
+			countKey: "submitted_count",
+			workScope: "all",
+			lifecycle: "submitted",
+			group: "approval",
+		},
+		{
+			id: "under_review",
+			label: __("Finance"),
+			testId: "dia-tab-finance",
+			countKey: "under_review_count",
+			workScope: "all",
+			lifecycle: "under_review",
+			group: "approval",
+		},
+		{
+			id: "approved",
+			label: __("Approved"),
+			testId: "dia-tab-approved",
+			countKey: "approved_count",
+			workScope: "all",
+			lifecycle: "approved",
+			group: "approval",
+		},
+		{
+			id: "planning_ready",
+			label: __("Planning Ready"),
+			testId: "dia-tab-planning-ready",
+			countKey: "planning_ready_count",
+			workScope: "all",
+			lifecycle: "planning_ready",
+			group: "handoff",
+		},
+		{
+			id: "rejected",
+			label: __("Rejected"),
+			testId: "dia-tab-rejected",
+			countKey: "rejected_count",
+			workScope: "all",
+			lifecycle: "rejected",
+			group: "exceptions",
+		},
+		{
+			id: "cancelled",
+			label: __("Cancelled"),
+			testId: "dia-tab-cancelled",
+			countKey: "cancelled_count",
+			workScope: "all",
+			lifecycle: "cancelled",
+			group: "exceptions",
+		},
+		{
+			id: "emergency",
+			label: __("Emergency"),
+			testId: "dia-tab-emergency",
+			countKey: "emergency_count",
+			workScope: "all",
+			lifecycle: "emergency",
+			group: "exceptions",
+		},
+	];
+
+	const QUEUE_CHIP_GROUPS = [
+		{ id: "scope", label: null },
+		{ id: "intake", label: __("Intake") },
+		{ id: "approval", label: __("Approval") },
+		{ id: "handoff", label: __("Handoff") },
+		{ id: "exceptions", label: __("Exceptions") },
+	];
+
+	const QUEUE_CHIP_IDS = {};
+	for (let qi = 0; qi < QUEUE_CHIPS.length; qi++) {
+		QUEUE_CHIP_IDS[QUEUE_CHIPS[qi].id] = true;
+	}
+
+	const QUEUE_TO_LIFECYCLE = {
+		my_drafts: "draft",
+		submitted_by_me: "submitted",
+		pending_hod: "under_review",
+		pending_finance: "under_review",
+		planning_ready: "planning_ready",
+		approved_not_planned: "approved",
+		emergency_approved: "emergency",
+		emergency: "emergency",
+		emergency_fin: "emergency",
+		dia_rejected: "rejected",
+		rejected: "rejected",
+		hod_rejected: "rejected",
+		returned_to_me: "draft",
+		returned_await: "draft",
+		my_approved: "approved",
+		all_approved: "approved",
+		approved_today: "approved",
+		budget_exceptions: "under_review",
+		all_demands: "all",
+		all_dept: "all",
+	};
+
+	const DIA_LANDING_ACTION_TESTID = {
+		open_form: "dia-action-edit",
+		submit_demand: "dia-action-submit",
+		approve_hod: "dia-action-approve-hod",
+		approve_finance: "dia-action-approve-finance",
+		return_from_hod: "dia-action-return",
+		return_from_finance: "dia-action-return",
+		reject_from_hod: "dia-action-reject",
+		reject_from_finance: "dia-action-reject",
+		cancel_demand: "dia-action-cancel",
+		mark_planning_ready: "dia-action-mark-planning-ready",
+		return_approved_to_finance: "dia-action-return-to-finance",
+	};
+
 	let bindScheduled = false;
 	let hooksBound = false;
 	let workspaceDomObserver = null;
 	let pollStarted = false;
-	let activeWorkTab = "mywork";
-	let activeQueueId = null;
+	let activeQueueFilter = "mywork";
+	let activeDetailTab = "overview";
+	let searchQuery = "";
+	let lastPortfolio = null;
 	let lastRoleKey = null;
 	let lastQueueListPayload = null;
 	let selectedDemandName = null;
+	let currentDetailPayload = null;
 	let diaSearchTimer = null;
 	let detailLoadSeq = 0;
 	let diaQueueListReqId = 0;
-	/** v3: single-row queue line + overflow; keep primary for operational queues */
-	const DIA_MAX_INLINE_QUEUES = 4;
+	let explicitQueueFilterRestored = false;
+	let diaPanelsDirty = false;
+	const DIA_WORKBENCH_BUILD = "20260523-flicker4";
+
+	function escapeHtml(s) {
+		if (s == null || s === undefined) return "";
+		return String(s)
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;")
+			.replace(/"/g, "&quot;");
+	}
 
 	function userCanCreateDemand() {
 		return (
@@ -26,13 +167,64 @@
 		);
 	}
 
+	function defaultQueueFilter(roleKey) {
+		if (roleKey === "auditor") {
+			return "all";
+		}
+		return "mywork";
+	}
+
+	function resolveQueueApiParams() {
+		const chip = QUEUE_CHIPS.find(function (c) {
+			return c.id === activeQueueFilter;
+		});
+		if (!chip) {
+			return { work_scope: "mywork", lifecycle_filter: "all" };
+		}
+		return { work_scope: chip.workScope, lifecycle_filter: chip.lifecycle };
+	}
+
+	function migrateQueueFilterFromState(st) {
+		if (!st) {
+			return null;
+		}
+		if (st.queueFilter && QUEUE_CHIP_IDS[st.queueFilter]) {
+			return st.queueFilter;
+		}
+		if (st.queueFilter === "not_yet_planned") {
+			return "approved";
+		}
+		const lifecycle = st.lifecycleFilter ? String(st.lifecycleFilter) : "";
+		const scope = st.workScope ? String(st.workScope) : st.workTab ? String(st.workTab) : "";
+		if (scope === "mywork" && (!lifecycle || lifecycle === "all")) {
+			return "mywork";
+		}
+		if (scope === "all" && (!lifecycle || lifecycle === "all")) {
+			return "all";
+		}
+		if (lifecycle && lifecycle !== "all" && QUEUE_CHIP_IDS[lifecycle]) {
+			return lifecycle;
+		}
+		if (st.queueId && QUEUE_TO_LIFECYCLE[st.queueId]) {
+			const mapped = QUEUE_TO_LIFECYCLE[st.queueId];
+			if (mapped !== "all" && QUEUE_CHIP_IDS[mapped]) {
+				return mapped;
+			}
+		}
+		return null;
+	}
+
 	function saveDiaWorkbenchState() {
 		if (typeof kentender_core === "undefined" || !kentender_core.kt_state) {
 			return;
 		}
+		const api = resolveQueueApiParams();
 		kentender_core.kt_state.save("dia", {
-			workTab: activeWorkTab,
-			queueId: activeQueueId,
+			queueFilter: activeQueueFilter,
+			workScope: api.work_scope,
+			lifecycleFilter: api.lifecycle_filter,
+			detailTab: activeDetailTab,
+			searchQuery: searchQuery,
 			selectedRecord: selectedDemandName,
 		});
 		if (selectedDemandName) {
@@ -41,6 +233,7 @@
 	}
 
 	function restoreDiaWorkbenchState() {
+		explicitQueueFilterRestored = false;
 		if (typeof kentender_core === "undefined" || !kentender_core.kt_state) {
 			return;
 		}
@@ -49,50 +242,51 @@
 			selectedDemandName = stored;
 		}
 		const st = kentender_core.kt_state.restore("dia");
-		if (st) {
-			if (st.workTab) {
-				activeWorkTab = st.workTab;
-			}
-			if (st.queueId) {
-				activeQueueId = st.queueId;
-			}
-			if (!selectedDemandName && st.selectedRecord) {
-				selectedDemandName = st.selectedRecord;
-			}
+		if (!st) {
+			return;
+		}
+		const migrated = migrateQueueFilterFromState(st);
+		if (migrated) {
+			activeQueueFilter = migrated;
+			explicitQueueFilterRestored = true;
+		}
+		if (st.detailTab) {
+			activeDetailTab = st.detailTab;
+		}
+		if (st.searchQuery != null && st.searchQuery !== "") {
+			searchQuery = String(st.searchQuery);
+		}
+		if (!selectedDemandName && st.selectedRecord) {
+			selectedDemandName = st.selectedRecord;
 		}
 	}
 
-	function focusDiaQueueToolbar() {
-		const row = document.getElementById("kt-dia-queue-selector");
-		const pills = document.getElementById("kt-dia-queue-pills");
-		if (row && typeof row.scrollIntoView === "function") {
-			row.scrollIntoView({ block: "nearest", behavior: "smooth" });
+	function focusDiaStatusChips() {
+		const host = document.querySelector('[data-testid="dia-status-chips"]');
+		if (host && typeof host.scrollIntoView === "function") {
+			host.scrollIntoView({ block: "nearest", behavior: "smooth" });
 		}
-		if (!pills) {
-			return;
-		}
-		const t =
-			pills.querySelector("[data-toggle=dropdown]") || pills.querySelector("button[data-dia-queue]");
-		if (t && typeof t.focus === "function") {
-			t.focus();
+		const first = host && host.querySelector(".kt-status-filter");
+		if (first && typeof first.focus === "function") {
+			first.focus();
 		}
 	}
 
 	function diaQueueListScrollHost(listRoot) {
 		const helper = window.KTWorkspaceListSelection;
 		if (helper && typeof helper.listHost === "function") {
-			return helper.listHost(listRoot, ".kt-dia-queue-list");
+			return helper.listHost(listRoot, ".kt-dia-row-list");
 		}
 		if (!listRoot) {
 			return null;
 		}
-		return listRoot.querySelector(".kt-dia-queue-list");
+		return listRoot.querySelector(".kt-dia-row-list");
 	}
 
 	function diaReadQueueListScrollTop(listRoot) {
 		const helper = window.KTWorkspaceListSelection;
 		if (helper && typeof helper.readScrollTop === "function") {
-			return helper.readScrollTop(listRoot, ".kt-dia-queue-list");
+			return helper.readScrollTop(listRoot, ".kt-dia-row-list");
 		}
 		const host = diaQueueListScrollHost(listRoot);
 		return host && typeof host.scrollTop === "number" ? host.scrollTop : 0;
@@ -103,7 +297,7 @@
 		if (helper && typeof helper.restoreScrollTop === "function") {
 			helper.restoreScrollTop(
 				listRoot,
-				".kt-dia-queue-list",
+				".kt-dia-row-list",
 				top,
 				selectedName,
 				"[data-dia-demand]",
@@ -133,6 +327,26 @@
 		if (rowRect.top < listRect.top || rowRect.bottom > listRect.bottom) {
 			sel.scrollIntoView({ block: "nearest" });
 		}
+	}
+
+	function detailPayloadSignature(payload) {
+		if (!payload || !payload.name) {
+			return "";
+		}
+		const a = payload.a || {};
+		const e = payload.e || {};
+		const c = payload.c || {};
+		return [
+			payload.name,
+			a.status || "",
+			a.title || "",
+			a.demand_id || "",
+			e.planning_status || "",
+			e.current_stage || "",
+			String(c.total_amount != null ? c.total_amount : ""),
+			nextStepLabel(payload),
+			String((payload.actions || []).length),
+		].join("#");
 	}
 
 	function queueListSignature(payload) {
@@ -167,7 +381,7 @@
 		if (helper && typeof helper.syncSelection === "function") {
 			helper.syncSelection(
 				listRoot,
-				".kt-dia-queue-list",
+				".kt-dia-row-list",
 				".kt-dia-queue-item[data-dia-demand]",
 				"data-dia-demand",
 				selectedName,
@@ -193,83 +407,6 @@
 		}
 	}
 
-	const TAB_APPROVED_QUEUE_IDS = {
-		requisitioner: ["my_approved"],
-		hod: ["all_dept", "emergency"],
-		finance: ["approved_today"],
-		procurement: ["planning_ready", "approved_not_planned", "emergency_approved", "all_approved"],
-		admin: ["planning_ready", "approved_not_planned", "emergency_approved", "all_approved"],
-		auditor: ["planning_ready", "all_approved"],
-	};
-
-	const TAB_REJECTED_QUEUE_IDS = {
-		requisitioner: ["rejected", "returned_to_me"],
-		hod: ["returned_await", "hod_rejected"],
-		finance: ["budget_exceptions", "dia_rejected"],
-		procurement: ["dia_rejected"],
-		admin: ["dia_rejected"],
-		auditor: ["dia_rejected"],
-	};
-
-	const QUEUES_BY_ROLE = {
-		requisitioner: [
-			{ id: "my_drafts", label: __("My Drafts") },
-			{ id: "submitted_by_me", label: __("Submitted by Me") },
-			{ id: "returned_to_me", label: __("Returned to Me") },
-			{ id: "rejected", label: __("Rejected") },
-			{ id: "my_approved", label: __("My Approved") },
-		],
-		admin: [
-			{ id: "my_drafts", label: __("My Drafts") },
-			{ id: "all_demands", label: __("All Demands") },
-			{ id: "planning_ready", label: __("Planning Ready") },
-			{ id: "approved_not_planned", label: __("Approved Not Yet Planned") },
-			{ id: "emergency_approved", label: __("Emergency Approved") },
-			{ id: "all_approved", label: __("All Approved Demand") },
-			{ id: "dia_rejected", label: __("Rejected demands") },
-		],
-		hod: [
-			{ id: "pending_hod", label: __("Pending HoD Approval") },
-			{ id: "returned_await", label: __("Returned Awaiting Resubmission") },
-			{ id: "emergency", label: __("Emergency Requests") },
-			{ id: "all_dept", label: __("All Department Requests") },
-			{ id: "hod_rejected", label: __("Rejected (department)") },
-		],
-		finance: [
-			{ id: "pending_finance", label: __("Pending Finance Approval") },
-			{ id: "budget_exceptions", label: __("Budget Exceptions") },
-			{ id: "emergency_fin", label: __("Emergency Requests") },
-			{ id: "approved_today", label: __("Approved Today") },
-			{ id: "dia_rejected", label: __("Rejected demands") },
-		],
-		procurement: [
-			{ id: "my_drafts", label: __("My Drafts") },
-			{ id: "all_demands", label: __("All Demands") },
-			{ id: "planning_ready", label: __("Planning Ready") },
-			{ id: "approved_not_planned", label: __("Approved Not Yet Planned") },
-			{ id: "emergency_approved", label: __("Emergency Approved") },
-			{ id: "all_approved", label: __("All Approved Demand") },
-			{ id: "dia_rejected", label: __("Rejected demands") },
-		],
-		auditor: [
-			{ id: "all_demands", label: __("All Demands (Read-only)") },
-			{ id: "pending_hod", label: __("Pending HoD Approval") },
-			{ id: "pending_finance", label: __("Pending Finance Approval") },
-			{ id: "planning_ready", label: __("Planning Ready") },
-			{ id: "all_approved", label: __("All Approved Demand") },
-			{ id: "dia_rejected", label: __("Rejected demands") },
-		],
-	};
-
-	function escapeHtml(s) {
-		if (s == null || s === undefined) return "";
-		return String(s)
-			.replace(/&/g, "&amp;")
-			.replace(/</g, "&lt;")
-			.replace(/>/g, "&gt;")
-			.replace(/"/g, "&quot;");
-	}
-
 	function workspaceNameMatchesDia(name) {
 		if (name == null || name === "") return false;
 		if (name === DIA_WS) return true;
@@ -284,8 +421,6 @@
 	}
 
 	function isDiaWorkspaceRoute() {
-		/* Direct deep links (`/desk/demand-intake-and-approval`) must work even if `frappe.router`
-		is briefly stale as Workspaces init (common in Playwright + cold loads). */
 		try {
 			const loc = window.location;
 			const path = ((loc && (loc.pathname + (loc.search || "") + (loc.hash || ""))) || "").toLowerCase();
@@ -301,7 +436,6 @@
 				if (r[0] === "Workspaces" && r.length >= 2) {
 					const workspaceName = r[1] === "private" && r.length >= 3 ? r[2] : r[1];
 					if (workspaceNameMatchesDia(workspaceName)) return true;
-					/* Another workspace is active — do not use stale URL/hash heuristics (would mount DIA on e.g. Procurement Home). */
 					if (workspaceName) return false;
 				}
 			}
@@ -335,10 +469,15 @@
 		});
 		document.body.classList.remove("kt-dia-shell");
 		bindScheduled = false;
-		activeQueueId = null;
 		lastRoleKey = null;
+		lastPortfolio = null;
 		lastQueueListPayload = null;
 		selectedDemandName = null;
+		currentDetailPayload = null;
+		activeQueueFilter = "mywork";
+		activeDetailTab = "overview";
+		searchQuery = "";
+		explicitQueueFilterRestored = false;
 		if (diaSearchTimer) {
 			clearTimeout(diaSearchTimer);
 			diaSearchTimer = null;
@@ -376,7 +515,89 @@
 		return fallback;
 	}
 
+	function portfolioCount(portfolio, countKey) {
+		const p = portfolio || {};
+		if (!countKey) {
+			return null;
+		}
+		const v = p[countKey];
+		return v != null ? Number(v) : 0;
+	}
+
+	function renderStatusChipsHtml(portfolio) {
+		let html =
+			'<div class="kt-status-filter-row kt-dia-status-filter-row" data-testid="dia-status-filter-row">';
+		let lastGroup = null;
+		for (let i = 0; i < QUEUE_CHIPS.length; i++) {
+			const chip = QUEUE_CHIPS[i];
+			if (chip.group !== lastGroup) {
+				const groupMeta = QUEUE_CHIP_GROUPS.find(function (g) {
+					return g.id === chip.group;
+				});
+				if (lastGroup !== null) {
+					html += '<span class="kt-dia-status-filter-sep" aria-hidden="true"></span>';
+				}
+				if (groupMeta && groupMeta.label) {
+					html +=
+						'<span class="kt-dia-status-filter-sep kt-dia-status-filter-sep--label text-muted small">' +
+						escapeHtml(groupMeta.label) +
+						"</span>";
+				}
+				lastGroup = chip.group;
+			}
+			const on = activeQueueFilter === chip.id;
+			const count = portfolioCount(portfolio, chip.countKey);
+			const isZero = count != null && Number(count) === 0;
+			html +=
+				'<button type="button" class="kt-status-filter kt-dia-status-chip' +
+				(on ? " is-active kt-status-filter-active" : "") +
+				(isZero ? " is-zero" : "") +
+				'" data-kt-dia-queue-filter="' +
+				escapeHtml(chip.id) +
+				'" data-testid="' +
+				escapeHtml(chip.testId) +
+				'" aria-selected="' +
+				(on ? "true" : "false") +
+				'"><span class="kt-status-filter__label">' +
+				escapeHtml(chip.label) +
+				"</span>";
+			if (count != null) {
+				html += ' <span class="kt-status-filter__count">' + escapeHtml(String(count)) + "</span>";
+			}
+			html += "</button>";
+		}
+		html += "</div>";
+		return html;
+	}
+
+	function paintPortfolioChips(portfolio) {
+		lastPortfolio = portfolio || lastPortfolio || {};
+		const host = document.querySelector('[data-testid="dia-status-chips"]');
+		if (!host) {
+			return;
+		}
+		host.innerHTML = renderStatusChipsHtml(lastPortfolio);
+	}
+
+	function removeStaleDiaShellIfNeeded() {
+		const root = document.getElementById("kt-dia-root");
+		if (!root) {
+			return false;
+		}
+		const build = root.getAttribute("data-dia-workbench-build");
+		if (build === DIA_WORKBENCH_BUILD) {
+			return false;
+		}
+		root.remove();
+		bindScheduled = false;
+		currentDetailPayload = null;
+		diaPanelsDirty = false;
+		detailLoadSeq += 1;
+		return true;
+	}
+
 	function injectDiaLandingShell() {
+		removeStaleDiaShellIfNeeded();
 		if (document.getElementById("kt-dia-list-root")) {
 			return { ok: true, inserted: false };
 		}
@@ -386,6 +607,7 @@
 		wrap.id = "kt-dia-root";
 		wrap.className = "kt-dia-injected-shell";
 		wrap.setAttribute("data-testid", "dia-landing-page");
+		wrap.setAttribute("data-dia-workbench-build", DIA_WORKBENCH_BUILD);
 		wrap.innerHTML =
 			'<div class="kt-dia-workspace-header kt-dia-workspace-header--compact mb-1">' +
 			'<div class="kt-dia-header-row">' +
@@ -398,58 +620,25 @@
 			"</p></div>" +
 			'<div class="kt-dia-header-cta" data-testid="dia-header-cta"></div>' +
 			"</div></div>" +
-			'<div class="row g-1 align-items-stretch" data-testid="dia-kpi-row">' +
-			'<div class="col-6 col-lg-3"><div class="kt-dia-kpi-card kt-surface">' +
-			'<div class="kt-dia-kpi-label" data-testid="dia-kpi-0-label">—</div>' +
-			'<div class="kt-dia-kpi-value" data-testid="dia-kpi-0-value">—</div></div></div>' +
-			'<div class="col-6 col-lg-3"><div class="kt-dia-kpi-card kt-surface">' +
-			'<div class="kt-dia-kpi-label" data-testid="dia-kpi-1-label">—</div>' +
-			'<div class="kt-dia-kpi-value" data-testid="dia-kpi-1-value">—</div></div></div>' +
-			'<div class="col-6 col-lg-3"><div class="kt-dia-kpi-card kt-surface">' +
-			'<div class="kt-dia-kpi-label" data-testid="dia-kpi-2-label">—</div>' +
-			'<div class="kt-dia-kpi-value" data-testid="dia-kpi-2-value">—</div></div></div>' +
-			'<div class="col-6 col-lg-3"><div class="kt-dia-kpi-card kt-surface">' +
-			'<div class="kt-dia-kpi-label" data-testid="dia-kpi-3-label">—</div>' +
-			'<div class="kt-dia-kpi-value" data-testid="dia-kpi-3-value">—</div></div></div>' +
-			"</div>" +
-			'<p class="kt-dia-kpi-currency-note text-muted" id="kt-dia-kpi-currency-note" data-testid="dia-kpi-currency-context" hidden></p>' +
-			'<div class="kt-dia-control-bar" data-testid="dia-control-bar">' +
-			'<div class="kt-dia-control-bar__row kt-dia-control-bar__row--tabs" data-testid="dia-control-row-tabs">' +
-			'<div class="kt-dia-work-tabs" role="tablist" id="kt-dia-work-tabs" data-testid="dia-work-tabs">' +
-			'<div class="btn-group btn-group-sm flex-nowrap kt-dia-tab-group" role="group">' +
-			'<button type="button" class="btn btn-default kt-dia-work-tab" data-testid="dia-tab-my-work" data-kt-dia-tab="mywork" role="tab">' +
-			escapeHtml(__("My Work")) +
-			"</button>" +
-			'<button type="button" class="btn btn-default kt-dia-work-tab" data-testid="dia-tab-all" data-kt-dia-tab="all" role="tab">' +
-			escapeHtml(__("All")) +
-			"</button>" +
-			'<button type="button" class="btn btn-default kt-dia-work-tab" data-testid="dia-tab-approved" data-kt-dia-tab="approved" role="tab">' +
-			escapeHtml(__("Approved")) +
-			"</button>" +
-			'<button type="button" class="btn btn-default kt-dia-work-tab" data-testid="dia-tab-rejected" data-kt-dia-tab="rejected" role="tab">' +
-			escapeHtml(__("Rejected")) +
-			"</button></div></div>" +
-			'<div class="kt-dia-search-compact-wrap">' +
-			'<div class="kt-dia-search-compact">' +
+			'<div class="kt-dia-status-chips" data-testid="dia-status-chips"></div>' +
+			'<div class="kt-dia-master-detail kt-dia-master-detail--tight">' +
+			'<div class="kt-dia-col-list">' +
+			'<div class="kt-dia-section kt-surface">' +
+			'<div class="kt-dia-list-head" data-testid="dia-list-head">' +
+			'<div class="kt-dia-list-head__tools">' +
 			'<label class="kt-dia-sr-only" for="kt-dia-search-input">' +
 			escapeHtml(__("Search")) +
-			'</label><input type="search" class="form-control form-control-sm" id="kt-dia-search-input" data-testid="dia-search-input" placeholder="' +
+			'</label><input type="search" class="form-control form-control-sm kt-dia-list-search" id="kt-dia-search-input" data-testid="dia-search" placeholder="' +
 			escapeHtml(__("Demand ID, title, requester, department…")) +
+			'" value="' +
+			escapeHtml(searchQuery) +
 			'" />' +
-			"</div></div></div>" +
-			'<div class="kt-dia-control-bar__row kt-dia-control-bar__row--queues" data-testid="dia-control-row-queues" id="kt-dia-queue-selector">' +
-			'<div class="kt-dia-queue-pills" id="kt-dia-queue-pills" data-testid="dia-queue-pills"></div>' +
-			'<div class="kt-dia-toolbar-queues-right">' +
 			'<button type="button" class="btn btn-default btn-sm kt-dia-filters-icon-btn" data-dia-action="toggle-filters" data-testid="dia-filters-toggle" id="kt-dia-filters-toggle" aria-expanded="false" aria-controls="kt-dia-filters-popover" title="' +
 			escapeHtml(__("Refine (filters)")) +
 			'">' +
 			'<svg class="kt-dia-filters-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M0 1.25h16v1.2H0V1.25zM2.5 6.1h11v1.2h-11V6.1zM4.5 10.8h7v1.2h-7v-1.2z" /></svg>' +
 			'<span class="kt-dia-sr-only">' +
 			escapeHtml(__("Refine (filters)")) +
-			"</span></button>" +
-			'<button type="button" class="kt-dia-scope-hint-btn" id="kt-dia-scope-hint" data-testid="dia-scope-hint" hidden="">' +
-			'<span class="kt-dia-scope-hint-glyph" aria-hidden="true">' +
-			"\u2139" +
 			"</span></button></div></div>" +
 			'<div id="kt-dia-filters-popover" class="kt-dia-filters-popover" data-testid="dia-filters-panel" hidden data-kt-dia-filters="1">' +
 			'<div class="kt-dia-filter-grid">' +
@@ -508,13 +697,7 @@
 			'<button type="button" class="btn btn-default btn-sm" data-dia-action="clear-filters" data-testid="dia-filter-clear">' +
 			escapeHtml(__("Clear")) +
 			"</button></div></div></div>" +
-			'<div class="kt-dia-chip-row" data-testid="dia-active-filter-chips" hidden></div></div>' +
-			'<div class="kt-dia-master-detail kt-dia-master-detail--tight">' +
-			'<div class="kt-dia-col-list">' +
-			'<div class="kt-dia-section kt-surface">' +
-			'<h3 class="kt-dia-section__title" id="kt-dia-queue-list-title" data-testid="dia-list-title">' +
-			escapeHtml(__("My Drafts")) +
-			"</h3>" +
+			'<div class="kt-dia-chip-row" data-testid="dia-active-filter-chips" hidden></div>' +
 			'<div id="kt-dia-list-root" data-testid="dia-list-root"></div></div></div>' +
 			'<div class="kt-dia-col-detail">' +
 			'<div class="kt-dia-section kt-surface">' +
@@ -529,10 +712,38 @@
 		return { ok: true, inserted: true };
 	}
 
+	function openNewDemandForm() {
+		saveDiaWorkbenchState();
+		if (
+			typeof kentender_procurement !== "undefined" &&
+			kentender_procurement.dia_demand_drawer &&
+			typeof kentender_procurement.dia_demand_drawer.openCreate === "function"
+		) {
+			kentender_procurement.dia_demand_drawer.openCreate(
+				function () {
+					refreshDiaPortfolio();
+					loadDiaQueueList();
+					loadDiaDemandDetail();
+				},
+				function () {
+					loadDiaDemandDetail();
+				}
+			);
+			return;
+		}
+		if (typeof kentender_core !== "undefined" && kentender_core.kt_nav) {
+			kentender_core.kt_nav.toForm("dia", null, true);
+			return;
+		}
+		if (typeof frappe !== "undefined" && frappe.new_doc) {
+			frappe.new_doc("Demand");
+		}
+	}
+
 	function closeDiaFiltersPopover() {
 		const p = document.getElementById("kt-dia-filters-popover");
 		const b = document.getElementById("kt-dia-root")
-			? document.querySelector("#kt-dia-root [data-dia-action=\"toggle-filters\"]")
+			? document.querySelector('#kt-dia-root [data-dia-action="toggle-filters"]')
 			: null;
 		if (p) {
 			p.hidden = true;
@@ -553,7 +764,7 @@
 		if (p.contains(t) || (t && t.closest && t.closest("#kt-dia-filters-popover"))) {
 			return;
 		}
-		if (t && t.closest && t.closest("[data-dia-action=\"toggle-filters\"]")) {
+		if (t && t.closest && t.closest('[data-dia-action="toggle-filters"]')) {
 			return;
 		}
 		closeDiaFiltersPopover();
@@ -581,13 +792,12 @@
 			const act = ev.target.closest("[data-dia-action]");
 			if (act && root.contains(act)) {
 				const a = act.getAttribute("data-dia-action");
-				if (a === "empty-new-demand" && userCanCreateDemand() && typeof frappe !== "undefined" && frappe.new_doc) {
-					saveDiaWorkbenchState();
-					frappe.new_doc("Demand");
+				if (a === "empty-new-demand" && userCanCreateDemand()) {
+					openNewDemandForm();
 					return;
 				}
-				if (a === "empty-focus-queues") {
-					focusDiaQueueToolbar();
+				if (a === "empty-focus-filters") {
+					focusDiaStatusChips();
 					return;
 				}
 				if (a === "toggle-filters") {
@@ -623,66 +833,73 @@
 				runDiaDetailPanelAction(dAct);
 				return;
 			}
+			const openForm = ev.target.closest("[data-dia-hero-action=\"open_form\"]");
+			if (openForm && root.contains(openForm)) {
+				runDiaDetailPanelAction(openForm);
+				return;
+			}
 			const demRow = ev.target.closest("[data-dia-demand]");
 			if (demRow && root.contains(demRow) && demRow.getAttribute("data-dia-demand")) {
-				selectedDemandName = demRow.getAttribute("data-dia-demand");
+				const nextName = demRow.getAttribute("data-dia-demand");
+				if (
+					nextName === selectedDemandName &&
+					currentDetailPayload &&
+					currentDetailPayload.name === nextName &&
+					!diaPanelsDirty
+				) {
+					const listRoot = document.getElementById("kt-dia-list-root");
+					if (listRoot) {
+						syncDemandListSelection(listRoot, selectedDemandName, {
+							ensureSelectedVisible: true,
+						});
+					}
+					saveDiaWorkbenchState();
+					return;
+				}
+				selectedDemandName = nextName;
 				const listRoot = document.getElementById("kt-dia-list-root");
 				if (listRoot) {
 					syncDemandListSelection(listRoot, selectedDemandName, {
 						ensureSelectedVisible: true,
 					});
 				}
+				saveDiaWorkbenchState();
 				loadDiaDemandDetail();
 				return;
 			}
-			const tabBtn = ev.target.closest("button[data-kt-dia-tab]");
-			if (tabBtn && root.contains(tabBtn)) {
-				activeWorkTab = tabBtn.getAttribute("data-kt-dia-tab");
-				syncWorkTabButtons();
-				syncActiveQueueForTab(lastRoleKey || "requisitioner");
-				renderQueuePills(lastRoleKey || "requisitioner");
+			const queueChip = ev.target.closest("[data-kt-dia-queue-filter]");
+			if (queueChip && root.contains(queueChip)) {
+				activeQueueFilter = queueChip.getAttribute("data-kt-dia-queue-filter") || "all";
+				if (!QUEUE_CHIP_IDS[activeQueueFilter]) {
+					activeQueueFilter = "all";
+				}
+				explicitQueueFilterRestored = true;
+				paintPortfolioChips(lastPortfolio);
+				saveDiaWorkbenchState();
 				loadDiaQueueList();
 				return;
 			}
-			const qBtn = ev.target.closest("[data-dia-queue]");
-			if (qBtn && root.contains(qBtn)) {
-				if (qBtn.tagName === "A") {
-					ev.preventDefault();
-				}
-				const qid = qBtn.getAttribute("data-dia-queue");
-				if (qid) {
-					activeQueueId = qid;
-					renderQueuePills(lastRoleKey || "requisitioner");
-					loadDiaQueueList();
-				}
-				return;
-			}
-			const kpiCard = ev.target.closest(".kt-dia-kpi-card--clickable");
-			if (kpiCard && root.contains(kpiCard)) {
-				const tab = kpiCard.getAttribute("data-dia-select-tab");
-				const q = kpiCard.getAttribute("data-dia-select-queue");
-				if (tab) activeWorkTab = tab;
-				if (q) activeQueueId = q;
-				syncWorkTabButtons();
-				syncActiveQueueForTab(lastRoleKey || "requisitioner");
-				renderQueuePills(lastRoleKey || "requisitioner");
-				loadDiaQueueList();
+			const detailTabBtn = ev.target.closest("[data-kt-dia-detail-tab]");
+			if (detailTabBtn && root.contains(detailTabBtn)) {
+				switchDetailTab(detailTabBtn.getAttribute("data-kt-dia-detail-tab") || "overview");
 			}
 		});
 		root.addEventListener("input", function (ev) {
 			const t = ev.target;
-			if (!t || !t.getAttribute || t.getAttribute("data-testid") !== "dia-search-input") {
+			if (!t || !t.getAttribute || t.getAttribute("data-testid") !== "dia-search") {
 				return;
 			}
 			if (!root.contains(t)) {
 				return;
 			}
+			searchQuery = t.value ? String(t.value) : "";
 			if (diaSearchTimer) {
 				clearTimeout(diaSearchTimer);
 			}
 			diaSearchTimer = setTimeout(function () {
 				diaSearchTimer = null;
 				renderFilterChips();
+				saveDiaWorkbenchState();
 				loadDiaQueueList();
 			}, 400);
 		});
@@ -695,197 +912,12 @@
 		if (userCanCreateDemand()) {
 			const btn = document.createElement("button");
 			btn.type = "button";
-			btn.className = "btn btn-primary btn-sm";
+			btn.className = "btn btn-primary btn-sm kt-page-action-primary";
 			btn.setAttribute("data-testid", "dia-new-demand-button");
-			btn.textContent = __("New Demand");
-			btn.addEventListener("click", function () {
-				saveDiaWorkbenchState();
-				frappe.new_doc("Demand");
-			});
+			btn.innerHTML = '<span aria-hidden="true">+</span> ' + escapeHtml(__("New Demand"));
+			btn.addEventListener("click", openNewDemandForm);
 			slot.appendChild(btn);
 		}
-	}
-
-	function formatKpiValue(row, _currency) {
-		if (!row) return "—";
-		if (row.format === "currency") {
-			const v = Number(row.value);
-			if (Number.isNaN(v)) return "—";
-			try {
-				return Math.round(v).toLocaleString("en-US", {
-					minimumFractionDigits: 0,
-					maximumFractionDigits: 0,
-				});
-			} catch (e) {
-				return String(v);
-			}
-		}
-		return String(row.value != null ? row.value : "0");
-	}
-
-	function applyKpis(payload) {
-		const kpis = (payload && payload.kpis) || [];
-		const currency = (payload && payload.currency) || "KES";
-		const rowWrap = document.querySelector('[data-testid="dia-kpi-row"]');
-		const curNote = document.getElementById("kt-dia-kpi-currency-note");
-		if (curNote) {
-			const hasCurrency = kpis.some(function (k) {
-				return k && k.format === "currency";
-			});
-			if (hasCurrency) {
-				curNote.textContent = __("All monetary figures in {0}").replace("{0}", currency);
-				curNote.hidden = false;
-			} else {
-				curNote.textContent = "";
-				curNote.hidden = true;
-			}
-		}
-		const cards = rowWrap ? rowWrap.querySelectorAll(".kt-dia-kpi-card") : [];
-		for (let i = 0; i < 4; i++) {
-			const row = kpis[i];
-			const lb = document.querySelector('[data-testid="dia-kpi-' + i + '-label"]');
-			const vl = document.querySelector('[data-testid="dia-kpi-' + i + '-value"]');
-			if (lb) lb.textContent = row && row.label ? String(row.label) : "—";
-			if (vl) vl.textContent = row ? formatKpiValue(row, currency) : "—";
-			const card = cards[i];
-			if (card) {
-				card.removeAttribute("data-testid");
-				if (row && row.testid) {
-					card.setAttribute("data-testid", String(row.testid));
-				}
-				card.classList.remove("kt-dia-kpi-card--clickable");
-				card.removeAttribute("data-dia-select-queue");
-				card.removeAttribute("data-dia-select-tab");
-				card.removeAttribute("role");
-				card.removeAttribute("tabindex");
-				card.removeAttribute("title");
-				if (row && (row.select_queue_id || row.select_work_tab)) {
-					card.classList.add("kt-dia-kpi-card--clickable");
-					if (row.select_queue_id) card.setAttribute("data-dia-select-queue", row.select_queue_id);
-					if (row.select_work_tab) card.setAttribute("data-dia-select-tab", row.select_work_tab);
-					card.setAttribute("role", "button");
-					card.setAttribute("tabindex", "0");
-					card.setAttribute("title", __("Open this queue in the list below."));
-				}
-			}
-		}
-	}
-
-	function queueLabel(roleKey, queueId) {
-		const list = QUEUES_BY_ROLE[roleKey] || QUEUES_BY_ROLE.requisitioner;
-		const hit = list.find(function (q) {
-			return q.id === queueId;
-		});
-		return hit ? hit.label : list[0].label;
-	}
-
-	function queuesVisibleForTab(roleKey, tab) {
-		const base = QUEUES_BY_ROLE[roleKey] || QUEUES_BY_ROLE.requisitioner;
-		if (tab === "mywork" || tab === "all") {
-			return base;
-		}
-		if (tab === "approved") {
-			const ids = TAB_APPROVED_QUEUE_IDS[roleKey];
-			if (!ids || !ids.length) {
-				return base;
-			}
-			return base.filter(function (q) {
-				return ids.indexOf(q.id) !== -1;
-			});
-		}
-		if (tab === "rejected") {
-			const ids = TAB_REJECTED_QUEUE_IDS[roleKey];
-			if (!ids || !ids.length) {
-				return base;
-			}
-			return base.filter(function (q) {
-				return ids.indexOf(q.id) !== -1;
-			});
-		}
-		return base;
-	}
-
-	function syncActiveQueueForTab(roleKey) {
-		const list = queuesVisibleForTab(roleKey, activeWorkTab);
-		if (!list.length) {
-			return;
-		}
-		if (!activeQueueId || !list.some(function (q) { return q.id === activeQueueId; })) {
-			activeQueueId = list[0].id;
-		}
-	}
-
-	function updateDiaScopeHint() {
-		const el = document.getElementById("kt-dia-scope-hint");
-		if (!el) {
-			return;
-		}
-		if (!lastRoleKey) {
-			el.removeAttribute("title");
-			el.setAttribute("aria-label", "");
-			el.hidden = true;
-			return;
-		}
-		const rk = lastRoleKey;
-		const tab = activeWorkTab;
-		const q = activeQueueId || "";
-		let msg = "";
-		if (tab === "mywork") {
-			msg = __("My Work shows drafts, submissions, returns, rejections, and approvals tied to you.");
-		} else if (tab === "all") {
-			msg = __("All shows every queue for your role (not limited to your own requests).");
-		} else if (tab === "approved") {
-			if (rk === "procurement" || rk === "admin" || rk === "auditor") {
-				if (q === "emergency_approved") {
-					msg = __(
-						"Emergency Approved: demands marked Emergency that are already Approved or Planning ready (not rejected)."
-					);
-				} else if (q === "planning_ready") {
-					msg = __("Planning Ready: demands with status Planning ready.");
-				} else if (q === "approved_not_planned") {
-					msg = __("Approved Not Yet Planned: Approved demands still awaiting full planning.");
-				} else if (q === "all_approved") {
-					msg = __("All Approved Demand: Approved or Planning ready in one list.");
-				} else {
-					msg = __("Approved tab: post-approval / planning queues only.");
-				}
-			} else if (rk === "finance") {
-				msg = __("Approved tab: finance-approved views (e.g. approved today).");
-			} else if (rk === "hod") {
-				msg = __("Approved tab: department demands that are already approved or planning-ready.");
-			} else {
-				msg = __("Approved tab: your approved or planning-ready demands.");
-			}
-		} else if (tab === "rejected") {
-			if (rk === "procurement" || rk === "admin" || rk === "auditor") {
-				msg = __(
-					"Rejected tab: only demands with workflow status Rejected. “Emergency Approved” lives under the Approved tab."
-				);
-			} else if (rk === "finance") {
-				if (q === "budget_exceptions") {
-					msg = __("Budget Exceptions: budget reservation checks that failed (not necessarily status Rejected).");
-				} else {
-					msg = __("Rejected demands: workflow status Rejected at finance.");
-				}
-			} else if (rk === "hod") {
-				if (q === "returned_await") {
-					msg = __("Returned: Draft demands sent back for correction (return reason set).");
-				} else {
-					msg = __("Rejected (department): demands with status Rejected in your scope.");
-				}
-			} else {
-				msg = __("Rejected / returned queues for your role.");
-			}
-		}
-		if (!msg) {
-			el.removeAttribute("title");
-			el.setAttribute("aria-label", "");
-			el.hidden = true;
-			return;
-		}
-		el.setAttribute("title", msg);
-		el.setAttribute("aria-label", msg);
-		el.hidden = false;
 	}
 
 	function formatListMoney(value, currency) {
@@ -908,7 +940,6 @@
 		}
 	}
 
-	/** Main queue list: numbers only; currency is in the KPI “All monetary figures in …” line (Layout spec). */
 	function formatDiaQueueListAmount(value) {
 		if (value == null || value === undefined || Number.isNaN(Number(value))) {
 			return "—";
@@ -958,30 +989,16 @@
 		return "kt-dia-badge kt-dia-badge--priority kt-dia-badge--pri-normal";
 	}
 
-	function diaStatusBadgeClass(status) {
+	function diaInlineStatusClass(status) {
 		const s = (status || "").toLowerCase();
-		if (s.indexOf("draft") >= 0) {
-			return "kt-dia-badge kt-dia-badge--status kt-dia-badge--st-draft";
-		}
-		if (s.indexOf("pending") >= 0 && s.indexOf("hod") >= 0) {
-			return "kt-dia-badge kt-dia-badge--status kt-dia-badge--st-pending-hod";
-		}
-		if (s.indexOf("pending") >= 0 && s.indexOf("finance") >= 0) {
-			return "kt-dia-badge kt-dia-badge--status kt-dia-badge--st-pending-fin";
-		}
-		if (s.indexOf("approved") >= 0) {
-			return "kt-dia-badge kt-dia-badge--status kt-dia-badge--st-approved";
-		}
-		if (s.indexOf("planning ready") >= 0) {
-			return "kt-dia-badge kt-dia-badge--status kt-dia-badge--st-planning";
-		}
-		if (s.indexOf("reject") >= 0) {
-			return "kt-dia-badge kt-dia-badge--status kt-dia-badge--st-rejected";
-		}
-		if (s.indexOf("cancel") >= 0) {
-			return "kt-dia-badge kt-dia-badge--status kt-dia-badge--st-cancelled";
-		}
-		return "kt-dia-badge kt-dia-badge--status kt-dia-badge--st-neutral";
+		if (s.indexOf("draft") >= 0) return "kt-dia-inline-status kt-dia-inline-status--draft";
+		if (s.indexOf("pending") >= 0 && s.indexOf("hod") >= 0) return "kt-dia-inline-status kt-dia-inline-status--pending-hod";
+		if (s.indexOf("pending") >= 0 && s.indexOf("finance") >= 0) return "kt-dia-inline-status kt-dia-inline-status--pending-fin";
+		if (s.indexOf("approved") >= 0) return "kt-dia-inline-status kt-dia-inline-status--approved";
+		if (s.indexOf("planning ready") >= 0) return "kt-dia-inline-status kt-dia-inline-status--planning";
+		if (s.indexOf("reject") >= 0) return "kt-dia-inline-status kt-dia-inline-status--rejected";
+		if (s.indexOf("cancel") >= 0) return "kt-dia-inline-status kt-dia-inline-status--cancelled";
+		return "kt-dia-inline-status kt-dia-inline-status--neutral";
 	}
 
 	function diaDemandTypeBadgeClass(dt) {
@@ -1004,42 +1021,452 @@
 		return "";
 	}
 
-	function buildDiaListSecondaryLine(row, roleKey) {
+	function diaDemandIdRowSlug(demandId) {
+		return String(demandId || "row").replace(/[^a-zA-Z0-9_-]/g, "-");
+	}
+
+	function formatDiaListPlanningHint(row) {
+		const st = String(row.status || "").trim();
+		if (st === "Approved" || st === "Planning Ready") {
+			const ps = String(row.planning_status || "").trim();
+			if (!ps || ps === "Not Planned" || ps === "Partially Planned") {
+				return __("Not yet planned");
+			}
+			if (ps === "Planning Ready") {
+				return __("Planning ready");
+			}
+			return ps;
+		}
+		return "";
+	}
+
+	function buildDiaListMetaLine(row) {
 		const parts = [];
-		const who = row.requested_by_label || row.requested_by;
-		if (who) {
-			parts.push("<span>" + escapeHtml(who) + "</span>");
+		if (row.status) {
+			parts.push(String(row.status));
 		}
-		if (row.budget_line_label) {
-			parts.push(
-				"<span>" +
-					escapeHtml(__("Budget line")) +
-					": " +
-					escapeHtml(row.budget_line_label) +
-					"</span>"
-			);
+		const planningHint = formatDiaListPlanningHint(row);
+		if (planningHint) {
+			parts.push(planningHint);
 		}
-		const rs = row.reservation_status;
-		const showRes =
-			rs &&
-			(roleKey === "finance" ||
-				roleKey === "admin" ||
-				roleKey === "procurement" ||
-				roleKey === "auditor" ||
-				String(rs).toLowerCase().indexOf("fail") >= 0);
-		if (showRes) {
-			parts.push(
-				"<span>" + escapeHtml(__("Reservation")) + ": " + escapeHtml(String(rs)) + "</span>"
-			);
+		if (row.requisition_type) {
+			parts.push(String(row.requisition_type));
 		}
-		if (row.is_exception) {
-			parts.push('<span class="kt-dia-queue-item__flag">' + escapeHtml(__("Exception")) + "</span>");
+		if (row.priority_level) {
+			parts.push(String(row.priority_level));
 		}
 		if (!parts.length) {
 			return "";
 		}
-		const sep = ' <span class="kt-dia-queue-item__dot" aria-hidden="true">·</span> ';
-		return '<div class="kt-dia-queue-item__secondary">' + parts.join(sep) + "</div>";
+		return (
+			'<div class="kt-dia-queue-item__meta text-muted small">' +
+			escapeHtml(parts.join(" · ")) +
+			"</div>"
+		);
+	}
+
+	function buildDiaListContextLine(row, currency) {
+		const st = String(row.status || "").trim();
+		const due = formatDiaListDatePlain(row.required_by_date);
+		return (
+			'<div class="kt-dia-queue-item__context text-muted small">' +
+			escapeHtml(formatListMoney(row.total_amount, currency)) +
+			(st !== "Approved" && st !== "Planning Ready" && due
+				? " · " + escapeHtml(__("Required by")) + " " + escapeHtml(due)
+				: "") +
+			"</div>"
+		);
+	}
+
+	function buildDiaListOptionalBadges(row) {
+		const badges = [];
+		if (row.demand_type === "Emergency") {
+			badges.push(
+				'<span class="kt-dia-badge kt-dia-badge--dtype kt-dia-badge--dtype-emergency">' +
+					escapeHtml(__("Emergency")) +
+					"</span>"
+			);
+		}
+		if (row.is_exception) {
+			badges.push(
+				'<span class="kt-dia-badge kt-dia-badge--flag">' + escapeHtml(__("Exception")) + "</span>"
+			);
+		}
+		if (String(row.status || "").trim() === "Planning Ready") {
+			badges.push(
+				'<span class="kt-dia-badge kt-dia-badge--planning-ready">' +
+					escapeHtml(__("Planning Ready")) +
+					"</span>"
+			);
+		}
+		const rs = String(row.reservation_status || "").toLowerCase();
+		if (rs.indexOf("fail") >= 0 || rs.indexOf("block") >= 0) {
+			badges.push(
+				'<span class="kt-dia-badge kt-dia-badge--blocked">' + escapeHtml(__("Blocked")) + "</span>"
+			);
+		}
+		if (!badges.length) {
+			return "";
+		}
+		return '<div class="kt-dia-queue-item__badges">' + badges.join("") + "</div>";
+	}
+
+	function nextStepLabel(payload) {
+		const a = (payload && payload.a) || {};
+		const e = (payload && payload.e) || {};
+		const st = String(a.status || e.status || "").trim();
+		const blockerCount = Number(payload && payload.integrity_blocker_count) || 0;
+		const integrityBlocked = !!(payload && payload.integrity_blocked);
+		if (st === "Draft") {
+			if ((e.return_reason || "").trim()) {
+				return __("Next step: revise and resubmit this demand.");
+			}
+			return __("Next step: complete the demand and submit for approval.");
+		}
+		if (st === "Pending HoD Approval") {
+			return __("Next step: HoD review and approval.");
+		}
+		if (st === "Pending Finance Approval") {
+			return __("Next step: finance validation and budget reservation.");
+		}
+		if (st === "Approved") {
+			if (integrityBlocked && blockerCount > 0) {
+				return __("Next step: resolve {0} planning blocker(s) — Finance action required.", [blockerCount]);
+			}
+			return __("Next step: confirm Planning Ready on the Planning tab.");
+		}
+		if (st === "Planning Ready") {
+			return __("Next step: include in procurement planning.");
+		}
+		if (st === "Rejected") {
+			return __("Next step: review rejection reason and revise if allowed.");
+		}
+		if (st === "Cancelled") {
+			return __("This demand is cancelled.");
+		}
+		return __("Next step: review demand readiness.");
+	}
+
+	function renderPrimaryTabs() {
+		let html = '<div class="kt-primary-tabs kt-dia-detail-tabs" role="tablist">';
+		for (let i = 0; i < DETAIL_TABS.length; i++) {
+			const tab = DETAIL_TABS[i];
+			const on = tab.id === activeDetailTab;
+			html +=
+				'<button type="button" class="kt-primary-tab kt-dia-tab' +
+				(on ? " is-active kt-primary-tab-active" : "") +
+				'" data-kt-dia-detail-tab="' +
+				escapeHtml(tab.id) +
+				'" data-testid="' +
+				escapeHtml(tab.testId) +
+				'" role="tab" aria-selected="' +
+				(on ? "true" : "false") +
+				'">' +
+				escapeHtml(tab.label) +
+				"</button>";
+		}
+		html += "</div>";
+		return html;
+	}
+
+	function renderActiveTabPanelHtml() {
+		const tab =
+			DETAIL_TABS.find(function (row) {
+				return row.id === activeDetailTab;
+			}) || DETAIL_TABS[0];
+		return (
+			'<div class="kt-dia-tab-panel-wrap">' +
+			'<section class="kt-dia-tab-panel is-active" data-kt-dia-panel="' +
+			escapeHtml(tab.id) +
+			'" data-testid="dia-tab-panel-' +
+			escapeHtml(tab.id) +
+			'"><div data-testid="dia-panel-host-' +
+			escapeHtml(tab.id) +
+			'"></div></section></div>'
+		);
+	}
+
+	function renderTabPanels() {
+		return renderActiveTabPanelHtml();
+	}
+
+	function updateDetailTabButtons() {
+		const detailRoot = document.getElementById("kt-dia-detail-root");
+		if (!detailRoot) {
+			return;
+		}
+		detailRoot.querySelectorAll("[data-kt-dia-detail-tab]").forEach(function (btn) {
+			const on = btn.getAttribute("data-kt-dia-detail-tab") === activeDetailTab;
+			btn.classList.toggle("is-active", on);
+			btn.classList.toggle("kt-primary-tab-active", on);
+			btn.setAttribute("aria-selected", on ? "true" : "false");
+		});
+	}
+
+	function prefetchDetailPanelData(payload) {
+		const nm = payload && payload.name;
+		if (!nm) {
+			return;
+		}
+		if (
+			kentender_procurement.dia_review_panel &&
+			typeof kentender_procurement.dia_review_panel.prefetch === "function"
+		) {
+			kentender_procurement.dia_review_panel.prefetch(nm);
+		}
+		if (
+			kentender_procurement.dia_planning_panel &&
+			typeof kentender_procurement.dia_planning_panel.prefetch === "function"
+		) {
+			kentender_procurement.dia_planning_panel.prefetch(nm, payload);
+		}
+		if (
+			kentender_procurement.dia_audit_panel &&
+			typeof kentender_procurement.dia_audit_panel.prefetch === "function"
+		) {
+			kentender_procurement.dia_audit_panel.prefetch(nm);
+		}
+	}
+
+	function paintActiveDetailTabPanel(payload, forceRemount) {
+		const detailRoot = document.getElementById("kt-dia-detail-root");
+		if (!detailRoot || !payload) {
+			return;
+		}
+		const currentPanel = detailRoot.querySelector(".kt-dia-tab-panel.is-active");
+		const currentTabId =
+			currentPanel && currentPanel.getAttribute ? currentPanel.getAttribute("data-kt-dia-panel") : null;
+		let host =
+			currentTabId === activeDetailTab
+				? detailRoot.querySelector('[data-testid="dia-panel-host-' + activeDetailTab + '"]')
+				: null;
+		if (!host) {
+			const existingWrap = detailRoot.querySelector(".kt-dia-tab-panel-wrap");
+			if (existingWrap) {
+				existingWrap.outerHTML = renderActiveTabPanelHtml();
+			}
+			host = detailRoot.querySelector('[data-testid="dia-panel-host-' + activeDetailTab + '"]');
+		}
+		if (host) {
+			mountPanel(activeDetailTab, host, payload, !!forceRemount);
+		}
+	}
+
+	function switchDetailTab(tabId) {
+		activeDetailTab = tabId || "overview";
+		updateDetailTabButtons();
+		if (currentDetailPayload) {
+			paintActiveDetailTabPanel(currentDetailPayload, false);
+		}
+		saveDiaWorkbenchState();
+	}
+
+	function heroOpenFormAction(payload) {
+		const actions = (payload && payload.actions) || [];
+		for (let i = 0; i < actions.length; i++) {
+			const a = actions[i];
+			if (a && a.client_action === "open_form") {
+				const st = String((payload.a && payload.a.status) || "").trim();
+				const label =
+					st === "Draft" || st === "Rejected"
+						? __("Edit Demand")
+						: __("View Demand");
+				return (
+					'<button type="button" class="btn btn-default btn-sm kt-context-action" data-dia-hero-action="open_form" data-dia-detail-action="open_form" data-dia-detail-name="' +
+					escapeHtml(payload.name || "") +
+					'" data-dia-detail-view-only="' +
+					(st === "Draft" || st === "Rejected" ? "0" : "1") +
+					'" data-testid="' +
+					escapeHtml(DIA_LANDING_ACTION_TESTID.open_form) +
+					'">' +
+					escapeHtml(a.label || label) +
+					"</button>"
+				);
+			}
+		}
+		return "";
+	}
+
+	function renderDetailShell(payload) {
+		const a = payload.a || {};
+		const c = payload.c || {};
+		const cur = payload.currency || "KES";
+		const metaParts = [];
+		if (a.demand_id) {
+			metaParts.push(escapeHtml(String(a.demand_id)));
+		}
+		if (a.requesting_department_label || a.requesting_department) {
+			metaParts.push(escapeHtml(String(a.requesting_department_label || a.requesting_department)));
+		}
+		if (c.total_amount != null) {
+			metaParts.push(escapeHtml(formatListMoney(c.total_amount, cur)));
+		}
+		return (
+			'<div class="kt-dia-detail" data-testid="dia-detail-panel" data-dia-detail-for="' +
+			escapeHtml(payload.name || "") +
+			'" data-dia-workbench-build="' +
+			escapeHtml(DIA_WORKBENCH_BUILD) +
+			'">' +
+			'<section class="kt-dia-detail-section kt-surface" data-testid="selected-demand-panel">' +
+			'<header class="kt-dia-detail__hero">' +
+			'<div class="kt-dia-detail__hero-main">' +
+			'<h2 class="kt-dia-detail__title" data-testid="selected-demand-title">' +
+			escapeHtml(a.title || payload.name || "—") +
+			"</h2>" +
+			'<div class="text-muted small" data-testid="selected-demand-meta">' +
+			(metaParts.length ? metaParts.join(" · ") : "—") +
+			"</div>" +
+			'<div class="kt-dia-status-guidance mt-2">' +
+			(a.status
+				? '<span class="' +
+					diaInlineStatusClass(a.status) +
+					'" data-testid="dia-detail-status">' +
+					escapeHtml(a.status) +
+					"</span> "
+				: "") +
+			'<span class="kt-dia-next-step text-muted small" data-testid="dia-next-step">' +
+			escapeHtml(nextStepLabel(payload)) +
+			"</span></div></div>" +
+			'<div class="kt-dia-detail__hero-actions">' +
+			heroOpenFormAction(payload) +
+			"</div></header>" +
+			renderPrimaryTabs() +
+			renderTabPanels() +
+			"</section></div>"
+		);
+	}
+
+	function mountPanel(panelId, host, payload, forceRemount) {
+		if (!host || !payload) {
+			return;
+		}
+		const nm = payload.name || "";
+		if (
+			!forceRemount &&
+			host.getAttribute("data-dia-panel-mounted") === "1" &&
+			host.getAttribute("data-dia-panel-for") === nm &&
+			host.childElementCount > 0
+		) {
+			return;
+		}
+		host.setAttribute("data-dia-panel-mounted", "1");
+		host.setAttribute("data-dia-panel-for", nm);
+		const ctx = {
+			payload: payload,
+			roleKey: lastRoleKey,
+			formatListMoney: formatListMoney,
+		};
+		if (panelId === "overview" && kentender_procurement.dia_overview_panel) {
+			kentender_procurement.dia_overview_panel.mount(host, ctx);
+			return;
+		}
+		if (panelId === "items" && kentender_procurement.dia_items_panel) {
+			kentender_procurement.dia_items_panel.mount(host, ctx);
+			return;
+		}
+		if (panelId === "review" && kentender_procurement.dia_review_panel) {
+			kentender_procurement.dia_review_panel.mount(host, ctx);
+			return;
+		}
+		if (panelId === "planning" && kentender_procurement.dia_planning_panel) {
+			kentender_procurement.dia_planning_panel.mount(host, ctx);
+			return;
+		}
+		if (panelId === "audit" && kentender_procurement.dia_audit_panel) {
+			kentender_procurement.dia_audit_panel.mount(host, ctx);
+			return;
+		}
+		host.innerHTML =
+			'<div class="text-muted small py-2">' + escapeHtml(__("Loading…")) + "</div>";
+	}
+
+	function setTabVisibility() {
+		updateDetailTabButtons();
+	}
+
+	function refreshMountedDetailPanels(payload) {
+		paintActiveDetailTabPanel(payload, true);
+		prefetchDetailPanelData(payload);
+	}
+
+	function updateDetailHeroInPlace(detailRoot, payload) {
+		if (!detailRoot || !payload) {
+			return;
+		}
+		const a = payload.a || {};
+		const c = payload.c || {};
+		const cur = payload.currency || "KES";
+		const titleEl = detailRoot.querySelector('[data-testid="selected-demand-title"]');
+		if (titleEl) {
+			titleEl.textContent = a.title || payload.name || "—";
+		}
+		const metaEl = detailRoot.querySelector('[data-testid="selected-demand-meta"]');
+		if (metaEl) {
+			const metaParts = [];
+			if (a.demand_id) {
+				metaParts.push(String(a.demand_id));
+			}
+			if (a.requesting_department_label || a.requesting_department) {
+				metaParts.push(String(a.requesting_department_label || a.requesting_department));
+			}
+			if (c.total_amount != null) {
+				metaParts.push(formatListMoney(c.total_amount, cur));
+			}
+			metaEl.textContent = metaParts.length ? metaParts.join(" · ") : "—";
+		}
+		const statusEl = detailRoot.querySelector('[data-testid="dia-detail-status"]');
+		if (statusEl && a.status) {
+			statusEl.textContent = a.status;
+			statusEl.className = diaInlineStatusClass(a.status);
+		}
+		const nextEl = detailRoot.querySelector('[data-testid="dia-next-step"]');
+		if (nextEl) {
+			nextEl.textContent = nextStepLabel(payload);
+		}
+	}
+
+	function updateDetailShellInPlace(detailRoot, payload) {
+		if (!detailRoot || !payload) {
+			return;
+		}
+		const panelEl = detailRoot.querySelector('[data-testid="dia-detail-panel"]');
+		if (panelEl) {
+			panelEl.setAttribute("data-dia-detail-for", payload.name || "");
+			panelEl.setAttribute("data-dia-workbench-build", DIA_WORKBENCH_BUILD);
+		}
+		const heroActions = detailRoot.querySelector(".kt-dia-detail__hero-actions");
+		if (heroActions) {
+			heroActions.innerHTML = heroOpenFormAction(payload);
+		}
+		updateDetailHeroInPlace(detailRoot, payload);
+		updateDetailTabButtons();
+	}
+
+	function mountActiveDetailPanel(payload) {
+		paintActiveDetailTabPanel(payload, false);
+		prefetchDetailPanelData(payload);
+	}
+
+	function invalidateDiaPanels(demandName) {
+		diaPanelsDirty = true;
+		if (
+			kentender_procurement.dia_review_panel &&
+			typeof kentender_procurement.dia_review_panel.invalidate === "function"
+		) {
+			kentender_procurement.dia_review_panel.invalidate(demandName);
+		}
+		if (
+			kentender_procurement.dia_planning_panel &&
+			typeof kentender_procurement.dia_planning_panel.invalidate === "function"
+		) {
+			kentender_procurement.dia_planning_panel.invalidate(demandName);
+		}
+		if (
+			kentender_procurement.dia_audit_panel &&
+			typeof kentender_procurement.dia_audit_panel.invalidate === "function"
+		) {
+			kentender_procurement.dia_audit_panel.invalidate(demandName);
+		}
 	}
 
 	function paintDetailEmpty() {
@@ -1047,260 +1474,32 @@
 		if (!detailRoot) {
 			return;
 		}
+		currentDetailPayload = null;
 		detailRoot.innerHTML =
 			'<div class="kt-dia-empty" data-testid="dia-detail-empty">' +
 			"<p>" +
 			escapeHtml(__("Select a demand record to view details and take action.")) +
 			"</p>" +
 			'<p class="small text-muted mb-0">' +
-			escapeHtml(__("Choose a row in the queue list to load Actions plus summary sections A through F.")) +
+			escapeHtml(__("Choose a row in the demand list to load overview, items, review, planning, and audit tabs.")) +
 			"</p>" +
 			"</div>";
 	}
 
-	function diaDetailDash(v) {
-		if (v === null || v === undefined || v === "") {
-			return "—";
-		}
-		return escapeHtml(String(v));
-	}
-
-	function diaDetailSection(title, body, testId) {
-		return (
-			'<section class="kt-dia-detail__section" data-testid="' +
-			testId +
-			'">' +
-			'<h4 class="kt-dia-detail__heading">' +
-			escapeHtml(title) +
-			"</h4>" +
-			body +
-			"</section>"
-		);
-	}
-
-	function diaDetailDlRow(label, valueHtml, ddTestId) {
-		const tid = ddTestId ? ' data-testid="' + escapeHtml(ddTestId) + '"' : "";
-		return "<dt>" + escapeHtml(label) + "</dt><dd" + tid + ">" + valueHtml + "</dd>";
-	}
-
-	function diaDemandIdRowSlug(demandId) {
-		return String(demandId || "row").replace(/[^a-zA-Z0-9_-]/g, "-");
-	}
-
-	/** PLC read model for DIA detail (R5-004); mirrors ``get_demand_planning_status`` payload. */
-	function buildDiaPlanningHandoffContentHtml(d) {
-		if (!d) {
-			return (
-				'<p class="text-muted small mb-0" data-testid="dia-detail-planning-handoff-empty">' +
-				diaDetailDash(__("Unable to load planning handoff data.")) +
-				"</p>"
-			);
-		}
-		if (!d.ok) {
-			const msg =
-				d && d.message !== undefined && d.message !== null && String(d.message).trim()
-					? String(d.message)
-					: __("Unable to load planning handoff data.");
-			return (
-				'<p class="text-muted small mb-0" data-testid="dia-detail-planning-handoff-empty">' +
-				diaDetailDash(msg) +
-				"</p>"
-			);
-		}
-
-		let h = "";
-		if (d.hint) {
-			h +=
-				'<p class="text-muted small mb-2" data-testid="dia-detail-planning-handoff-hint">' +
-				escapeHtml(String(d.hint)) +
-				"</p>";
-		}
-
-		h += '<dl class="kt-dia-detail__dl">';
-		if (d.journey) {
-			const j = d.journey;
-			const jc = escapeHtml(String(j.journey_code || ""));
-			const title = String(j.journey_title || "").trim();
-			const href = escapeHtml(String(j.open_route || "#"));
-			const primary = escapeHtml(title || String(j.journey_code || ""));
-			const mutedCode =
-				title && j.journey_code && title !== String(j.journey_code).trim()
-					? ' <span class="text-muted small">(' + jc + ")</span>"
-					: !title && j.journey_code
-						? ' <span class="text-muted small">(' + jc + ")</span>"
-						: "";
-			const jourVal =
-				'<a href="' +
-				href +
-				'" data-testid="dia-detail-planning-handoff-journey-link"><span data-testid="dia-detail-planning-handoff-journey-title">' +
-				primary +
-				"</span></a>" +
-				mutedCode;
-			h +=
-				diaDetailDlRow(
-					__("Linked procurement journey"),
-					'<span data-testid="dia-detail-planning-handoff-journey">' + jourVal + "</span>"
-				);
-		}
-		h += "</dl>";
-
-		const cert = d.demand_approval_certificate;
-		if (cert && cert.handoff_code) {
-			const certHref = escapeHtml(String(cert.demand_approval_record_route || "#"));
-			const certLabelEsc = escapeHtml(String(cert.demand_approval_record_label || __("Demand Approval Record")));
-			const certCode = cert.demand_approval_record_code ? escapeHtml(String(cert.demand_approval_record_code)) : "";
-			const hCodeEsc = escapeHtml(String(cert.handoff_code || ""));
-			const stEsc = escapeHtml(String(cert.status || ""));
-			const nxt = cert.next_action
-				? '<p class="small text-muted mb-0 mt-1" data-testid="dia-detail-planning-handoff-certificate-next">' +
-					diaDetailDash(cert.next_action) +
-					"</p>"
-				: "";
-			const linkHtml =
-				'<a href="' +
-				certHref +
-				'" data-testid="dia-detail-planning-handoff-certificate-link">' +
-				certLabelEsc +
-				"</a>" +
-				(certCode ? ' <span class="text-muted small">(' + certCode + ")</span>" : "");
-			h +=
-				'<div class="border-top mt-3 pt-2" data-testid="dia-detail-planning-handoff-certificate">' +
-				'<p class="small font-weight-bold mb-1">' +
-				escapeHtml(__("Demand Approval Certificate")) +
-				"</p>" +
-				'<dl class="kt-dia-detail__dl">' +
-				diaDetailDlRow(__("Handoff"), hCodeEsc + ' <span class="text-muted">(' + stEsc + ")</span>") +
-				diaDetailDlRow(__("Record"), linkHtml) +
-				"</dl>" +
-				nxt +
-				"</div>";
-		}
-
-		const incl = d.planning_inclusion;
-		if (incl && incl.handoff_code) {
-			const pcode = incl.target_object_code || incl.plan_code_hint || "";
-			const pcodeTxt = pcode ? escapeHtml(String(pcode)) : "";
-			h +=
-				'<div class="border-top mt-3 pt-2" data-testid="dia-detail-planning-handoff-planning-inclusion">' +
-				'<p class="small font-weight-bold mb-1">' +
-				escapeHtml(__("Planning inclusion")) +
-				"</p>" +
-				'<dl class="kt-dia-detail__dl">' +
-				diaDetailDlRow(
-					__("Handoff"),
-					escapeHtml(String(incl.handoff_code || "")) +
-						' <span class="text-muted">(' +
-						escapeHtml(String(incl.status || "")) +
-						")</span>"
-				) +
-				(pcodeTxt
-					? diaDetailDlRow(
-							__("Procurement plan"),
-							'<span data-testid="dia-detail-planning-handoff-plan-code">' + pcodeTxt + "</span>"
-						)
-					: "") +
-				"</dl>" +
-				"</div>";
-		}
-
-		return h;
-	}
-
-	function loadDiaPlanningHandoffAggregate(demandDocName, seq) {
-		const host = document.getElementById("kt-dia-planning-handoff-body-inner");
-		if (!host) {
+	function paintDetailError(msg) {
+		const detailRoot = document.getElementById("kt-dia-detail-root");
+		if (!detailRoot) {
 			return;
 		}
-		frappe.call({
-			method:
-				"kentender_procurement.procurement_lifecycle.api.journey_api.get_demand_planning_status",
-			args: { demand_name: demandDocName },
-			callback: function (r) {
-				if (seq !== detailLoadSeq || !document.body.contains(host)) {
-					return;
-				}
-				if (r && r.exc) {
-					host.innerHTML =
-						'<p class="text-danger small mb-0" data-testid="dia-detail-planning-handoff-error">' +
-						diaDetailDash(String(r.exc).slice(0, 500)) +
-						"</p>";
-					return;
-				}
-				host.innerHTML = buildDiaPlanningHandoffContentHtml(r && r.message);
-			},
-			error: function (err) {
-				if (seq !== detailLoadSeq || !document.body.contains(host)) {
-					return;
-				}
-				const m =
-					err && err.message !== undefined ? String(err.message) : __("Unable to load planning context.");
-				host.innerHTML =
-					'<p class="text-danger small mb-0" data-testid="dia-detail-planning-handoff-error">' +
-					escapeHtml(m) +
-					"</p>";
-			},
-		});
-	}
-
-	const DIA_LANDING_ACTION_TESTID = {
-		open_form: "dia-action-edit",
-		submit_demand: "dia-action-submit",
-		approve_hod: "dia-action-approve-hod",
-		approve_finance: "dia-action-approve-finance",
-		return_from_hod: "dia-action-return",
-		return_from_finance: "dia-action-return",
-		reject_from_hod: "dia-action-reject",
-		reject_from_finance: "dia-action-reject",
-		cancel_demand: "dia-action-cancel",
-		mark_planning_ready: "dia-action-mark-planning-ready",
-	};
-
-	function buildDiaDetailActionsHtml(actions, nm) {
-		if (!actions || !actions.length) {
-			return '<p class="text-muted small mb-0">' + escapeHtml(__("No actions.")) + "</p>";
-		}
-		let h = '<div class="kt-dia-detail__actions btn-toolbar flex-wrap mb-1">';
-		for (let i = 0; i < actions.length; i++) {
-			const a = actions[i];
-			const base =
-				"btn btn-sm " +
-				(a.danger ? "btn-danger" : a.primary ? "btn-primary" : "btn-default");
-			const tid =
-				a.client_action === "open_form"
-					? DIA_LANDING_ACTION_TESTID.open_form
-					: DIA_LANDING_ACTION_TESTID[a.id] || "dia-detail-action-" + escapeHtml(a.id);
-			if (a.client_action === "open_form") {
-				h +=
-					'<button type="button" class="' +
-					base +
-					'" data-dia-detail-action="open_form" data-dia-detail-name="' +
-					escapeHtml(nm) +
-					'" data-testid="' +
-					escapeHtml(tid) +
-					'">' +
-					escapeHtml(a.label || "") +
-					"</button>";
-			} else {
-				h +=
-					'<button type="button" class="' +
-					base +
-					'" data-dia-detail-action="' +
-					escapeHtml(a.id) +
-					'" data-dia-detail-method="' +
-					escapeHtml(a.method || "") +
-					'" data-dia-detail-reason="' +
-					escapeHtml(a.reason || "") +
-					'" data-dia-detail-name="' +
-					escapeHtml(nm) +
-					'" data-testid="' +
-					escapeHtml(tid) +
-					'">' +
-					escapeHtml(a.label || "") +
-					"</button>";
-			}
-		}
-		h += "</div>";
-		return h;
+		currentDetailPayload = null;
+		const m =
+			msg && (msg.message || msg.error_code)
+				? String(msg.message || msg.error_code)
+				: __("Could not load demand details.");
+		detailRoot.innerHTML =
+			'<div class="kt-dia-detail kt-dia-detail--error" data-testid="dia-detail-error"><p class="text-danger small mb-0">' +
+			escapeHtml(m) +
+			"</p></div>";
 	}
 
 	function runDiaDetailPanelAction(btn) {
@@ -1311,6 +1510,27 @@
 		}
 		if (action === "open_form") {
 			saveDiaWorkbenchState();
+			const viewOnly = btn.getAttribute("data-dia-detail-view-only") === "1";
+			if (
+				typeof kentender_procurement !== "undefined" &&
+				kentender_procurement.dia_demand_drawer &&
+				typeof kentender_procurement.dia_demand_drawer.openEdit === "function"
+			) {
+				kentender_procurement.dia_demand_drawer.openEdit(
+					nm,
+					function () {
+						invalidateDiaPanels(nm);
+						refreshDiaPortfolio();
+						loadDiaQueueList();
+						loadDiaDemandDetail();
+					},
+					function () {
+						loadDiaDemandDetail();
+					},
+					{ viewOnly: viewOnly }
+				);
+				return;
+			}
 			if (typeof kentender_core !== "undefined" && kentender_core.kt_nav) {
 				kentender_core.kt_nav.toForm("dia", nm);
 			} else if (typeof frappe !== "undefined" && frappe.set_route) {
@@ -1323,6 +1543,12 @@
 		if (!method) {
 			return;
 		}
+		function onWorkflowSuccess() {
+			invalidateDiaPanels(nm);
+			refreshDiaPortfolio();
+			loadDiaQueueList();
+			loadDiaDemandDetail();
+		}
 		function callWith(extra) {
 			frappe.call({
 				method: method,
@@ -1332,8 +1558,7 @@
 						return;
 					}
 					frappe.show_alert({ message: __("Updated"), indicator: "green" });
-					loadDiaQueueList();
-					loadDiaDemandDetail();
+					onWorkflowSuccess();
 				},
 				error: function (r) {
 					let msg = __("Request failed");
@@ -1413,279 +1638,6 @@
 		callWith();
 	}
 
-	function buildDiaDetailItemsHtml(cur, dblock) {
-		const rows = (dblock && dblock.rows) || [];
-		const cnt = (dblock && dblock.line_count) || rows.length;
-		if (!rows.length) {
-			return (
-				'<div data-testid="dia-detail-items-summary"><p class="text-muted small mb-0">' +
-				escapeHtml(__("No line items on this demand.")) +
-				"</p></div>"
-			);
-		}
-		let h =
-			'<p class="small text-muted mb-1">' +
-			escapeHtml(__("Lines")) +
-			": " +
-			escapeHtml(String(cnt)) +
-			"</p>";
-		h += '<div class="table-responsive"><table class="table table-sm table-bordered kt-dia-detail-items mb-0">';
-		h +=
-			"<thead><tr>" +
-			"<th>" +
-			escapeHtml(__("Description")) +
-			"</th><th>" +
-			escapeHtml(__("Category")) +
-			"</th><th>" +
-			escapeHtml(__("UOM")) +
-			'</th><th class="text-end">' +
-			escapeHtml(__("Qty")) +
-			'</th><th class="text-end">' +
-			escapeHtml(__("Unit cost")) +
-			'</th><th class="text-end">' +
-			escapeHtml(__("Line total")) +
-			"</th></tr></thead><tbody>";
-		for (let i = 0; i < rows.length; i++) {
-			const r = rows[i];
-			h +=
-				"<tr><td>" +
-				diaDetailDash(r.item_description) +
-				"</td><td>" +
-				diaDetailDash(r.category) +
-				"</td><td>" +
-				diaDetailDash(r.uom) +
-				'</td><td class="text-end">' +
-				diaDetailDash(r.quantity) +
-				'</td><td class="text-end">' +
-				escapeHtml(formatListMoney(r.estimated_unit_cost, cur)) +
-				'</td><td class="text-end">' +
-				escapeHtml(formatListMoney(r.line_total, cur)) +
-				"</td></tr>";
-		}
-		h += "</tbody></table></div>";
-		return '<div data-testid="dia-detail-items-summary">' + h + "</div>";
-	}
-
-	function buildDiaDetailPanelHtml(payload) {
-		const cur = payload.currency || "KES";
-		const a = payload.a || {};
-		const b = payload.b || {};
-		const c = payload.c || {};
-		const dblock = payload.d || {};
-		const e = payload.e || {};
-		const nm = payload.name || "";
-
-		const priC = diaPriorityBadgeClass(a.priority_level);
-		const stC = diaStatusBadgeClass(a.status);
-		const dtC = diaDemandTypeBadgeClass(a.demand_type);
-		const badges =
-			(a.priority_level
-				? '<span data-testid="dia-detail-priority" class="' + priC + '">' + escapeHtml(a.priority_level) + "</span> "
-				: "") +
-			(a.status
-				? '<span data-testid="dia-detail-status" class="' + stC + '">' + escapeHtml(a.status) + "</span> "
-				: "") +
-			(a.demand_type
-				? '<span data-testid="dia-detail-demand-type" class="' + dtC + '">' + escapeHtml(a.demand_type) + "</span>"
-				: "");
-
-		const aBody =
-			'<div class="kt-dia-detail__badges mb-2">' +
-			badges +
-			"</div>" +
-			'<h3 class="kt-dia-detail__title" data-testid="dia-detail-title">' +
-			diaDetailDash(a.title) +
-			"</h3>" +
-			'<p class="text-muted small mb-2">' +
-			escapeHtml(__("Demand ID")) +
-			": " +
-			'<span class="font-monospace">' +
-			diaDetailDash(a.demand_id) +
-			"</span></p>" +
-			'<dl class="kt-dia-detail__dl">' +
-			diaDetailDlRow(
-				__("Department"),
-				diaDetailDash(a.requesting_department_label || a.requesting_department)
-			) +
-			diaDetailDlRow(__("Requester"), diaDetailDash(a.requested_by_label || a.requested_by)) +
-			diaDetailDlRow(
-				__("Entity"),
-				diaDetailDash(a.procuring_entity_label || a.procuring_entity)
-			) +
-			diaDetailDlRow(__("Demand category"), diaDetailDash(a.requisition_type)) +
-			diaDetailDlRow(__("Request date"), diaDetailDash(a.request_date)) +
-			diaDetailDlRow(__("Required by"), diaDetailDash(a.required_by_date)) +
-			"</dl>";
-
-		const bBody =
-			'<dl class="kt-dia-detail__dl">' +
-			diaDetailDlRow(__("Budget line"), diaDetailDash(b.budget_line_label || b.budget_line), "dia-detail-budget-line") +
-			diaDetailDlRow(__("Budget"), diaDetailDash(b.budget_label || b.budget)) +
-			diaDetailDlRow(
-				__("Funding source"),
-				diaDetailDash(b.funding_source_label || b.funding_source)
-			) +
-			diaDetailDlRow(__("Reservation status"), diaDetailDash(b.reservation_status), "dia-detail-reservation-status") +
-			diaDetailDlRow(
-				__("Strategic plan"),
-				diaDetailDash(b.strategic_plan_label || b.strategic_plan),
-				"dia-detail-strategy"
-			) +
-			diaDetailDlRow(__("Program"), diaDetailDash(b.program_label || b.program)) +
-			diaDetailDlRow(__("Sub-program"), diaDetailDash(b.sub_program_label || b.sub_program)) +
-			diaDetailDlRow(
-				__("Output indicator"),
-				diaDetailDash(b.output_indicator_label || b.output_indicator)
-			) +
-			diaDetailDlRow(
-				__("Performance target"),
-				diaDetailDash(b.performance_target_label || b.performance_target)
-			) +
-			"</dl>";
-
-		const amtStr = formatListMoney(c.total_amount, cur);
-		const snap =
-			c.available_budget_at_check != null
-				? escapeHtml(formatListMoney(c.available_budget_at_check, cur))
-				: "—";
-		const cBody =
-			'<dl class="kt-dia-detail__dl">' +
-			diaDetailDlRow(
-				__("Total requested"),
-				'<strong class="kt-dia-detail__amount" data-testid="dia-detail-total-amount">' + escapeHtml(amtStr) + "</strong>"
-			) +
-			diaDetailDlRow(__("Available budget snapshot"), snap) +
-			diaDetailDlRow(
-				__("Reservation ref"),
-				diaDetailDash(c.reservation_reference),
-				"dia-detail-reservation-reference"
-			) +
-			diaDetailDlRow(__("Budget check time"), diaDetailDash(c.budget_check_datetime)) +
-			"</dl>";
-
-		const rejParts = [];
-		if (e.rejection_reason) {
-			rejParts.push(
-				'<p class="small mb-1"><strong>' +
-					escapeHtml(__("Rejection")) +
-					"</strong> — " +
-					diaDetailDash(e.rejection_reason) +
-					"</p>"
-			);
-		}
-		if (e.return_reason) {
-			rejParts.push(
-				'<p class="small mb-1"><strong>' +
-					escapeHtml(__("Return to draft")) +
-					"</strong> — " +
-					diaDetailDash(e.return_reason) +
-					"</p>"
-			);
-		}
-		if (e.cancellation_reason) {
-			rejParts.push(
-				'<p class="small mb-1"><strong>' +
-					escapeHtml(__("Cancellation")) +
-					"</strong> — " +
-					diaDetailDash(e.cancellation_reason) +
-					"</p>"
-			);
-		}
-		let eBody = "";
-		if (e.is_exception) {
-			eBody +=
-				'<p class="small kt-dia-detail__exception mb-2"><strong>' +
-				escapeHtml(__("Exception demand")) +
-				"</strong></p>";
-		}
-		eBody +=
-			'<dl class="kt-dia-detail__dl">' +
-			diaDetailDlRow(__("Current stage"), diaDetailDash(e.current_stage)) +
-			diaDetailDlRow(__("Planning status"), diaDetailDash(e.planning_status), "dia-detail-planning-status") +
-			diaDetailDlRow(__("Submitted by"), diaDetailDash(e.submitted_by_label || e.submitted_by)) +
-			diaDetailDlRow(__("Submitted at"), diaDetailDash(e.submitted_at)) +
-			diaDetailDlRow(
-				__("HoD approved by"),
-				diaDetailDash(e.hod_approved_by_label || e.hod_approved_by)
-			) +
-			diaDetailDlRow(__("HoD approved at"), diaDetailDash(e.hod_approved_at)) +
-			diaDetailDlRow(
-				__("Finance approved by"),
-				diaDetailDash(e.finance_approved_by_label || e.finance_approved_by)
-			) +
-			diaDetailDlRow(__("Finance approved at"), diaDetailDash(e.finance_approved_at)) +
-			diaDetailDlRow(__("Rejected by"), diaDetailDash(e.rejected_by_label || e.rejected_by)) +
-			diaDetailDlRow(__("Rejected at"), diaDetailDash(e.rejected_at)) +
-			diaDetailDlRow(__("Returned by"), diaDetailDash(e.returned_by_label || e.returned_by)) +
-			diaDetailDlRow(__("Returned at"), diaDetailDash(e.returned_at)) +
-			diaDetailDlRow(__("Cancelled by"), diaDetailDash(e.cancelled_by_label || e.cancelled_by)) +
-			diaDetailDlRow(__("Cancelled at"), diaDetailDash(e.cancelled_at)) +
-			"</dl>";
-		const rejBlock = rejParts.join("");
-		if (rejBlock) {
-			eBody += '<div data-testid="dia-detail-rejection-summary">' + rejBlock + "</div>";
-		}
-
-		const dBody = buildDiaDetailItemsHtml(cur, dblock);
-
-		const act = payload.actions || [];
-		const fBody = buildDiaDetailActionsHtml(act, nm);
-		const fTop = diaDetailSection(__("Actions"), fBody, "dia-detail-section-f");
-
-		const planningSubBits = [];
-		if (a.demand_id) {
-			planningSubBits.push(escapeHtml(String(a.demand_id)));
-		}
-		if (a.status) {
-			planningSubBits.push(escapeHtml(String(a.status)));
-		}
-		const planningSub =
-			planningSubBits.length
-				? '<p class="text-muted small mb-2" data-testid="dia-detail-planning-handoff-subtitle">' +
-				  planningSubBits.join(" · ") +
-				  "</p>"
-				: "";
-		const planningBody =
-			planningSub +
-			'<div id="kt-dia-planning-handoff-body-inner" data-testid="dia-detail-planning-handoff-body"><p class="text-muted small mb-0" data-testid="dia-detail-planning-handoff-loading">' +
-			escapeHtml(__("Loading procurement planning context…")) +
-			"</p></div>";
-		const planningSection = diaDetailSection(
-			__("F. Procurement planning handoff"),
-			planningBody,
-			"dia-detail-section-planning-handoff"
-		);
-
-		return (
-			'<div class="kt-dia-detail" data-testid="dia-detail-panel" data-dia-detail-for="' +
-			escapeHtml(nm) +
-			'">' +
-			fTop +
-			diaDetailSection(__("A. Demand summary"), aBody, "dia-detail-section-a") +
-			diaDetailSection(__("B. Budget and strategy"), bBody, "dia-detail-section-b") +
-			diaDetailSection(__("C. Financial summary"), cBody, "dia-detail-section-c") +
-			diaDetailSection(__("D. Items summary"), dBody, "dia-detail-section-d") +
-			diaDetailSection(__("E. Workflow and audit"), eBody, "dia-detail-section-e") +
-			planningSection +
-			"</div>"
-		);
-	}
-
-	function paintDetailError(msg) {
-		const detailRoot = document.getElementById("kt-dia-detail-root");
-		if (!detailRoot) {
-			return;
-		}
-		const m =
-			msg && (msg.message || msg.error_code)
-				? String(msg.message || msg.error_code)
-				: __("Could not load demand details.");
-		detailRoot.innerHTML =
-			'<div class="kt-dia-detail kt-dia-detail--error" data-testid="dia-detail-error"><p class="text-danger small mb-0">' +
-			escapeHtml(m) +
-			"</p></div>";
-	}
-
 	function loadDiaDemandDetail() {
 		const detailRoot = document.getElementById("kt-dia-detail-root");
 		if (!detailRoot) {
@@ -1695,13 +1647,23 @@
 			paintDetailEmpty();
 			return;
 		}
-		detailLoadSeq += 1;
-		const mySeq = detailLoadSeq;
 		const existingPanel = detailRoot.querySelector(".kt-dia-detail[data-dia-detail-for]");
-		const keepVisibleDetail =
+		const hasDetailShell = !!existingPanel;
+		const sameDemand =
 			existingPanel &&
 			existingPanel.getAttribute("data-dia-detail-for") === selectedDemandName;
-		if (!keepVisibleDetail) {
+		if (
+			sameDemand &&
+			!diaPanelsDirty &&
+			currentDetailPayload &&
+			currentDetailPayload.name === selectedDemandName
+		) {
+			setTabVisibility();
+			return;
+		}
+		detailLoadSeq += 1;
+		const mySeq = detailLoadSeq;
+		if (!sameDemand && !hasDetailShell) {
 			detailRoot.innerHTML =
 				'<div class="text-muted small py-3" data-testid="dia-detail-loading">' +
 				escapeHtml(__("Loading details…")) +
@@ -1723,8 +1685,36 @@
 					paintDetailError(resp);
 					return;
 				}
-				detailRoot.innerHTML = buildDiaDetailPanelHtml(resp);
-				loadDiaPlanningHandoffAggregate(selectedDemandName, mySeq);
+				const prevSig =
+					currentDetailPayload && currentDetailPayload.name === selectedDemandName
+						? detailPayloadSignature(currentDetailPayload)
+						: "";
+				const nextSig = detailPayloadSignature(resp);
+				currentDetailPayload = resp;
+				if (sameDemand && !diaPanelsDirty && prevSig && prevSig === nextSig) {
+					setTabVisibility();
+					return;
+				}
+				if (sameDemand && !diaPanelsDirty) {
+					updateDetailHeroInPlace(detailRoot, resp);
+					setTabVisibility();
+					return;
+				}
+				if (sameDemand && diaPanelsDirty) {
+					updateDetailHeroInPlace(detailRoot, resp);
+					refreshMountedDetailPanels(resp);
+					diaPanelsDirty = false;
+					return;
+				}
+				if (!sameDemand && hasDetailShell) {
+					updateDetailShellInPlace(detailRoot, resp);
+					mountActiveDetailPanel(resp);
+					diaPanelsDirty = false;
+					return;
+				}
+				detailRoot.innerHTML = renderDetailShell(resp);
+				mountActiveDetailPanel(resp);
+				diaPanelsDirty = false;
 			},
 			error: function () {
 				if (mySeq !== detailLoadSeq) {
@@ -1752,7 +1742,9 @@
 		const prevScrollTop = diaReadQueueListScrollTop(listRoot);
 		const rows = (payload && payload.demands) || [];
 		if (selectedDemandName && rows.length) {
-			const names = new Set(rows.map(function (r) { return r.name; }));
+			const names = new Set(rows.map(function (r) {
+				return r.name;
+			}));
 			if (!names.has(selectedDemandName)) {
 				selectedDemandName = null;
 				detailLoadSeq += 1;
@@ -1765,7 +1757,7 @@
 		if (!rows.length) {
 			const cap =
 				(payload && payload.empty_caption) ||
-				__("This queue is empty.");
+				__("No demands match the current filters.");
 			const canC = userCanCreateDemand();
 			const newBtn = canC
 				? '<button type="button" class="btn btn-primary btn-sm" data-dia-action="empty-new-demand" data-testid="dia-empty-cta-new">' +
@@ -1773,10 +1765,14 @@
 					"</button>"
 				: "";
 			const switchBtn =
-				'<button type="button" class="btn btn-default btn-sm" data-dia-action="empty-focus-queues" data-testid="dia-empty-cta-queues">' +
-				escapeHtml(__("Switch queue")) +
+				'<button type="button" class="btn btn-default btn-sm" data-dia-action="empty-focus-filters" data-testid="dia-empty-cta-filters">' +
+				escapeHtml(__("Change filters")) +
 				"</button>";
-			const actions = '<div class="kt-dia-empty__actions mt-2 d-flex flex-wrap gap-2 justify-content-center align-items-center">' + newBtn + switchBtn + "</div>";
+			const actions =
+				'<div class="kt-dia-empty__actions mt-2 d-flex flex-wrap gap-2 justify-content-center align-items-center">' +
+				newBtn +
+				switchBtn +
+				"</div>";
 			listRoot.innerHTML =
 				'<div class="kt-dia-empty kt-dia-empty--v3" data-testid="dia-list-empty">' +
 				'<p class="mb-0 text-center">' +
@@ -1786,10 +1782,10 @@
 				"</div>";
 			return;
 		}
-		const roleKey = (payload && payload.role_key) || lastRoleKey || "requisitioner";
+		const currency = (payload && payload.currency) || "KES";
 		let html =
-			'<div class="kt-dia-queue-list" data-testid="dia-list" role="listbox" aria-label="' +
-			escapeHtml(__("Demand queue")) +
+			'<div class="kt-dia-row-list" data-testid="dia-list" role="listbox" aria-label="' +
+			escapeHtml(__("Demand list")) +
 			'">';
 		for (let i = 0; i < rows.length; i++) {
 			const row = rows[i];
@@ -1797,40 +1793,12 @@
 			const active = isSel ? " is-active" : "";
 			const accent = diaDemandRowAccentClass(row.demand_type);
 			const exc = row.is_exception ? " kt-dia-queue-item--exception" : "";
-			const amt = formatDiaQueueListAmount(row.total_amount);
 			const did = row.demand_id || row.name || "";
 			const ttl = row.title || "";
-			const dept = row.requesting_department_label || row.requesting_department || "";
-			const due = formatDiaListDatePlain(row.required_by_date);
-			const dueLabel = due
-				? escapeHtml(__("Required")) + ": " + escapeHtml(due)
-				: escapeHtml(__("Required")) + ": —";
-			const sec = buildDiaListSecondaryLine(row, roleKey);
-			const priC = diaPriorityBadgeClass(row.priority_level);
-			const stC = diaStatusBadgeClass(row.status);
-			const dtC = diaDemandTypeBadgeClass(row.demand_type);
 			const rowTestSlug = diaDemandIdRowSlug(did);
-			const priB = row.priority_level
-				? '<span class="' + priC + '">' + escapeHtml(row.priority_level) + "</span>"
-				: "";
-			const stB = row.status
-				? '<span data-testid="dia-row-status-' +
-					escapeHtml(rowTestSlug) +
-					'" class="' +
-					stC +
-					'">' +
-					escapeHtml(row.status) +
-					"</span>"
-				: "";
-			const dtB = row.demand_type
-				? '<span data-testid="dia-row-type-' +
-					escapeHtml(rowTestSlug) +
-					'" class="' +
-					dtC +
-					'">' +
-					escapeHtml(row.demand_type) +
-					"</span>"
-				: "";
+			const metaLine = buildDiaListMetaLine(row);
+			const contextLine = buildDiaListContextLine(row, currency);
+			const optBadges = buildDiaListOptionalBadges(row);
 			html +=
 				'<div class="kt-dia-queue-item kt-dia-list-row' +
 				active +
@@ -1851,30 +1819,13 @@
 				'">' +
 				escapeHtml(ttl) +
 				"</div>" +
-				(dept
-					? '<div class="kt-dia-queue-item__dept text-muted">' + escapeHtml(dept) + "</div>"
-					: "") +
-				'<div class="kt-dia-queue-item__badges">' +
-				priB +
-				stB +
-				dtB +
-				"</div>" +
-				'<div class="kt-dia-queue-item__amount-row">' +
-				'<span class="kt-dia-queue-item__amount" data-testid="dia-row-amount-' +
-				escapeHtml(rowTestSlug) +
-				'">' +
-				escapeHtml(amt) +
-				"</span>" +
-				'<span class="kt-dia-queue-item__due text-muted small">' +
-				dueLabel +
-				"</span>" +
-				"</div>" +
-				sec +
+				metaLine +
+				contextLine +
+				optBadges +
 				"</div>";
 		}
 		html += "</div>";
 		listRoot.innerHTML = html;
-		// Full list DOM rebuild resets scroll; restore after paint (see diaRestoreQueueListScrollTop).
 		requestAnimationFrame(function () {
 			diaRestoreQueueListScrollTop(listRoot, prevScrollTop, selectedDemandName);
 		});
@@ -2015,7 +1966,8 @@
 				}
 			}
 		);
-		const se = document.querySelector('[data-testid="dia-search-input"]');
+		searchQuery = "";
+		const se = document.querySelector('[data-testid="dia-search"]');
 		if (se) {
 			se.value = "";
 		}
@@ -2023,7 +1975,8 @@
 
 	function clearOneDiaRefineField(key) {
 		if (key === "search") {
-			const se = document.querySelector('[data-testid="dia-search-input"]');
+			searchQuery = "";
+			const se = document.querySelector('[data-testid="dia-search"]');
 			if (se) {
 				se.value = "";
 			}
@@ -2057,8 +2010,7 @@
 			return;
 		}
 		const f = collectRefineFilters();
-		const se = document.querySelector('[data-testid="dia-search-input"]');
-		const q = se && se.value ? String(se.value).trim() : "";
+		const q = String(searchQuery || "").trim();
 		const chips = [];
 		function add(key, label) {
 			chips.push(
@@ -2132,16 +2084,7 @@
 		const myReq = diaQueueListReqId;
 		listRoot.classList.remove("kt-dia-list-root--refreshing");
 		listRoot.removeAttribute("aria-busy");
-		const visible = queuesVisibleForTab(lastRoleKey, activeWorkTab);
-		if (!visible.length) {
-			listRoot.innerHTML =
-				'<div class="kt-dia-empty text-muted small" data-testid="dia-list-no-queues">' +
-				escapeHtml(__("No queues match this tab for your role.")) +
-				"</div>";
-			renderDetailForSelection();
-			return;
-		}
-		const hadQueueListDom = !!listRoot.querySelector(".kt-dia-queue-list");
+		const hadQueueListDom = !!listRoot.querySelector(".kt-dia-row-list");
 		if (hadQueueListDom) {
 			listRoot.classList.add("kt-dia-list-root--refreshing");
 			listRoot.setAttribute("aria-busy", "true");
@@ -2151,15 +2094,15 @@
 				escapeHtml(__("Loading…")) +
 				"</div>";
 		}
-		const searchEl = document.querySelector('[data-testid="dia-search-input"]');
-		const search = searchEl && searchEl.value ? String(searchEl.value).trim() : "";
+		const search = String(searchQuery || "").trim();
 		const rf = collectRefineFilters();
 		const filtersJson = Object.keys(rf).length ? JSON.stringify(rf) : null;
+		const api = resolveQueueApiParams();
 		frappe.call({
 			method: "kentender_procurement.demand_intake.api.queue_list.get_dia_queue_list",
 			args: {
-				work_tab: activeWorkTab,
-				queue_id: activeQueueId,
+				work_scope: api.work_scope,
+				lifecycle_filter: api.lifecycle_filter,
 				limit: 50,
 				start: 0,
 				search: search || null,
@@ -2182,21 +2125,30 @@
 				const prevSig = lastQueueListPayload ? queueListSignature(lastQueueListPayload) : "";
 				const newSig = queueListSignature(p);
 				const demands = (p && p.demands) || [];
-				const nameSet = new Set(demands.map(function (row) { return row.name; }));
+				const nameSet = new Set(
+					demands.map(function (row) {
+						return row.name;
+					})
+				);
 				const sel = selectedDemandName;
-				if (
-					prevSig &&
-					prevSig === newSig &&
-					sel &&
-					nameSet.has(sel)
-				) {
+				if (prevSig && prevSig === newSig && sel && nameSet.has(sel)) {
 					lastQueueListPayload = p;
 					syncDemandListSelection(listRoot, sel);
-					renderDetailForSelection();
 					return;
 				}
 				renderDemandList(p);
-				renderDetailForSelection();
+				if (!selectedDemandName) {
+					/* paintDetailEmpty handled inside renderDemandList when needed */
+				} else if (
+					!currentDetailPayload ||
+					currentDetailPayload.name !== selectedDemandName ||
+					diaPanelsDirty
+				) {
+					renderDetailForSelection();
+				} else {
+					syncDemandListSelection(listRoot, selectedDemandName);
+				}
+				saveDiaWorkbenchState();
 			},
 			error: function () {
 				if (myReq !== diaQueueListReqId) {
@@ -2219,96 +2171,10 @@
 		});
 	}
 
-	function renderQueuePills(roleKey) {
-		const host = document.getElementById("kt-dia-queue-pills");
-		if (!host) return;
-		const list = queuesVisibleForTab(roleKey, activeWorkTab);
-		if (!list.length) {
-			host.innerHTML =
-				'<span class="text-muted small">' + escapeHtml(__("No queues for this tab.")) + "</span>";
-			const titleEl = document.getElementById("kt-dia-queue-list-title");
-			if (titleEl) {
-				titleEl.textContent = __("Demand list");
-			}
-			updateDiaScopeHint();
-			return;
-		}
-		if (!activeQueueId || !list.some(function (q) { return q.id === activeQueueId; })) {
-			activeQueueId = list[0].id;
-		}
-		const inline = list.slice(0, DIA_MAX_INLINE_QUEUES);
-		const overflow = list.slice(DIA_MAX_INLINE_QUEUES);
-		const parts = inline.map(function (q) {
-			const cls =
-				"btn btn-sm kt-dia-queue-pill " + (q.id === activeQueueId ? "btn-primary is-active" : "btn-default");
-			return (
-				'<button type="button" class="' +
-				cls +
-				'" data-dia-queue="' +
-				escapeHtml(q.id) +
-				'" data-testid="dia-queue-' +
-				escapeHtml(q.id) +
-				'">' +
-				escapeHtml(String(q.label)) +
-				"</button>"
-			);
-		});
-		if (overflow.length) {
-			const moreOn = overflow.some(function (q) { return q.id === activeQueueId; });
-			const moreItems = overflow
-				.map(function (q) {
-					const on = q.id === activeQueueId;
-					return (
-						'<li><button type="button" class="kt-dia-queue-more__item' +
-						(on ? " is-active" : "") +
-						'" data-dia-queue="' +
-						escapeHtml(q.id) +
-						'" data-testid="dia-queue-' +
-						escapeHtml(q.id) +
-						'" role="menuitem">' +
-						escapeHtml(String(q.label)) +
-						"</button></li>"
-					);
-				})
-				.join("");
-			parts.push(
-				'<div class="btn-group kt-dia-queue-more' +
-				(moreOn ? " kt-dia-queue-more--open" : "") +
-				'">' +
-				'<button type="button" class="btn btn-sm btn-default dropdown-toggle' +
-				(moreOn ? " is-active" : "") +
-				'" data-toggle="dropdown" data-testid="dia-queue-more-toggle" aria-haspopup="true" aria-expanded="false" aria-label="' +
-				escapeHtml(__("More queues")) +
-				'">' +
-				escapeHtml(__("More")) +
-				' <span class="caret"></span></button>' +
-				'<ul class="dropdown-menu kt-dia-queue-more__menu" role="menu">' +
-				moreItems +
-				"</ul></div>"
-			);
-		}
-		host.innerHTML = parts.join("");
-		const titleEl = document.getElementById("kt-dia-queue-list-title");
-		if (titleEl) titleEl.textContent = String(queueLabel(roleKey, activeQueueId));
-		updateDiaScopeHint();
-	}
-
-	function syncWorkTabButtons() {
-		const wrap = document.getElementById("kt-dia-work-tabs");
-		if (!wrap) return;
-		wrap.querySelectorAll("[data-kt-dia-tab]").forEach(function (btn) {
-			const t = btn.getAttribute("data-kt-dia-tab");
-			const on = t === activeWorkTab;
-			btn.classList.remove("btn-primary");
-			btn.classList.add("btn", "btn-default", "kt-dia-work-tab");
-			btn.classList.toggle("kt-dia-work-tab--active", on);
-			btn.setAttribute("aria-selected", on ? "true" : "false");
-		});
-	}
-
 	function renderLandingBlocked(payload) {
 		lastQueueListPayload = null;
 		selectedDemandName = null;
+		currentDetailPayload = null;
 		const listRoot = document.getElementById("kt-dia-list-root");
 		const detailRoot = document.getElementById("kt-dia-detail-root");
 		const msg = (payload && payload.message) || __("Demand landing data is not available.");
@@ -2343,7 +2209,32 @@
 				escapeHtml(__("Fix the issue above, then reload. No demand row can be selected until the DocType exists.")) +
 				"</div>";
 		}
-		applyKpis({ kpis: [] });
+		paintPortfolioChips((payload && payload.portfolio) || {});
+	}
+
+	function applyAuditorScopeDefault() {
+		if (lastRoleKey === "auditor" && !explicitQueueFilterRestored) {
+			activeQueueFilter = "all";
+		}
+	}
+
+	function refreshDiaPortfolio(done) {
+		frappe.call({
+			method: "kentender_procurement.demand_intake.api.landing.get_dia_landing_shell_data",
+			callback: function (r) {
+				if (r && r.message && r.message.portfolio) {
+					paintPortfolioChips(r.message.portfolio);
+				}
+				if (typeof done === "function") {
+					done(r && r.message);
+				}
+			},
+			error: function () {
+				if (typeof done === "function") {
+					done(null);
+				}
+			},
+		});
 	}
 
 	function loadDiaLandingData() {
@@ -2360,19 +2251,21 @@
 			callback: function (r) {
 				if (!r || !r.message) return;
 				const payload = r.message;
+				lastRoleKey = payload.role_key || "requisitioner";
+				applyAuditorScopeDefault();
+				if (!explicitQueueFilterRestored) {
+					activeQueueFilter = defaultQueueFilter(lastRoleKey);
+				}
 				if (payload.ok === false) {
-					lastRoleKey = payload.role_key || "requisitioner";
-					renderQueuePills(lastRoleKey);
 					renderLandingBlocked(payload);
 					return;
 				}
-				lastRoleKey = payload.role_key || "requisitioner";
-				if (lastRoleKey === "auditor" && activeWorkTab === "mywork") {
-					activeWorkTab = "all";
+				paintPortfolioChips(payload.portfolio || {});
+				const searchEl = document.querySelector('[data-testid="dia-search"]');
+				if (searchEl && searchQuery) {
+					searchEl.value = searchQuery;
 				}
-				applyKpis(payload);
 				loadDiaFilterMeta(function () {
-					renderQueuePills(lastRoleKey);
 					renderFilterChips();
 					loadDiaQueueList();
 				});
@@ -2381,7 +2274,7 @@
 				if (listRoot)
 					listRoot.innerHTML =
 						'<p class="text-danger small">' + escapeHtml(__("Could not load landing data.")) + "</p>";
-				applyKpis({ kpis: [] });
+				paintPortfolioChips({});
 			},
 		});
 	}
@@ -2395,8 +2288,10 @@
 		if (!listRoot || !detailRoot) return;
 		if (inj.inserted) {
 			restoreDiaWorkbenchState();
-			if (!activeWorkTab) activeWorkTab = "mywork";
-			syncWorkTabButtons();
+			if (!activeQueueFilter || !QUEUE_CHIP_IDS[activeQueueFilter]) {
+				activeQueueFilter = defaultQueueFilter(lastRoleKey);
+			}
+			if (!activeDetailTab) activeDetailTab = "overview";
 			loadDiaLandingData();
 		}
 	}
@@ -2463,6 +2358,7 @@
 	}
 
 	function kickDiaWorkspace() {
+		removeStaleDiaShellIfNeeded();
 		bindDiaWorkspaceHooks();
 		ensurePollDiaWorkspace();
 		setTimeout(scheduleDiaWorkspaceBind, 400);

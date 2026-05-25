@@ -130,6 +130,8 @@ def _promote_to_approved(demand_name: str) -> None:
             "hod_approved_at": _SPEC_HOD_APPROVED_AT,
             "finance_approved_by": _U_FIN,
             "finance_approved_at": _SPEC_APPROVED_AT,
+            "reservation_status": "Reserved",
+            "reservation_reference": f"SEED-RES-{demand_name}",
         },
         update_modified=False,
     )

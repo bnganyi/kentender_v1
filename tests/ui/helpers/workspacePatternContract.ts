@@ -28,6 +28,117 @@ export async function expectNoLoadingFlash(
 	await expect(loadingText).toHaveCount(0, { timeout: timeoutMs });
 }
 
+export async function expectNoLoadingTestIds(
+	page: Page,
+	loadingTestIds: string[],
+	timeoutMs = 1500,
+) {
+	for (const testId of loadingTestIds) {
+		await expect(page.getByTestId(testId)).toHaveCount(0, { timeout: timeoutMs });
+	}
+}
+
+export async function expectDetailTabCycleNoLoadingFlash(
+	page: Page,
+	tabs: Array<{ tabTestId: string; panelTestId: string }>,
+	loadingTestIds: string[],
+) {
+	for (const tab of tabs) {
+		await page.getByTestId(tab.tabTestId).click();
+		await expect(page.getByTestId(tab.panelTestId)).toBeVisible({ timeout: 30000 });
+		await expectNoLoadingTestIds(page, loadingTestIds);
+	}
+}
+
+export async function expectRowSwitchKeepsDetailShell(
+	page: Page,
+	options: {
+		rowSelector: string;
+		detailRootSelector: string;
+		detailPanelSelector: string;
+		stableNodeSelector?: string;
+		loadingSelectors?: string[];
+		switchToIndex?: number;
+		waitMs?: number;
+	},
+) {
+	const rowSelector = options.rowSelector;
+	const detailRootSelector = options.detailRootSelector;
+	const detailPanelSelector = options.detailPanelSelector;
+	const stableNodeSelector = options.stableNodeSelector || '';
+	const loadingSelectors = options.loadingSelectors || [];
+	const switchToIndex = options.switchToIndex ?? 1;
+	const waitMs = options.waitMs ?? 350;
+
+	const rows = page.locator(rowSelector);
+	const count = await rows.count();
+	expect(count).toBeGreaterThan(switchToIndex);
+	await rows.first().click({ force: true });
+	await expect(page.locator(detailPanelSelector)).toBeVisible({ timeout: 30_000 });
+
+	await page.evaluate(
+		({ rootSel, panelSel, stableSel, loadingSels }) => {
+			const root = document.querySelector(rootSel);
+			const probe = { loadingSeen: false, panelReplaced: 0, stableNodeReplaced: 0 };
+			const state = window as Window & {
+				__workspaceProbe?: { loadingSeen: boolean; panelReplaced: number; stableNodeReplaced: number };
+				__workspaceProbeStop?: () => void;
+			};
+			state.__workspaceProbe = probe;
+			let currentPanel = root?.querySelector(panelSel) || null;
+			let stableNode = stableSel ? root?.querySelector(stableSel) || null : null;
+			const obs = new MutationObserver(() => {
+				for (const sel of loadingSels) {
+					if (document.querySelector(sel)) {
+						probe.loadingSeen = true;
+					}
+				}
+				const next = root?.querySelector(panelSel) || null;
+				if (currentPanel && next && next !== currentPanel) {
+					probe.panelReplaced += 1;
+					currentPanel = next;
+				}
+				if (stableSel) {
+					const stableNext = root?.querySelector(stableSel) || null;
+					if (stableNode && stableNext && stableNext !== stableNode) {
+						probe.stableNodeReplaced += 1;
+						stableNode = stableNext;
+					}
+				}
+			});
+			if (root) {
+				obs.observe(root, { childList: true, subtree: true });
+			}
+			state.__workspaceProbeStop = () => obs.disconnect();
+		},
+		{
+			rootSel: detailRootSelector,
+			panelSel: detailPanelSelector,
+			stableSel: stableNodeSelector,
+			loadingSels: loadingSelectors,
+		},
+	);
+
+	await rows.nth(switchToIndex).click({ force: true });
+	await page.waitForTimeout(waitMs);
+	const probe = await page.evaluate(() => {
+		const state = window as Window & {
+			__workspaceProbe?: { loadingSeen: boolean; panelReplaced: number; stableNodeReplaced: number };
+			__workspaceProbeStop?: () => void;
+		};
+		const out = state.__workspaceProbe || { loadingSeen: false, panelReplaced: -1, stableNodeReplaced: -1 };
+		if (state.__workspaceProbeStop) {
+			state.__workspaceProbeStop();
+		}
+		return out;
+	});
+	expect(probe.loadingSeen).toBeFalsy();
+	expect(probe.panelReplaced).toBe(0);
+	if (stableNodeSelector) {
+		expect(probe.stableNodeReplaced).toBe(0);
+	}
+}
+
 export async function expectSearchKeepsFocusWhileTyping(search: Locator, text: string) {
 	await search.click();
 	let typed = '';

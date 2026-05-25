@@ -131,9 +131,10 @@ def _badges_for_pkg(pkg: dict, *, risk_level: str) -> dict:
 	return {
 		"high_risk": high,
 		"emergency": bool(cint(pkg.get("is_emergency"))),
-		"submitted": st == "Submitted",
-		"ready": st == "Ready for Tender",
+		"in_review": st == "In Review",
+		"ready": st == "Ready for Release",
 		"released": st == "Released to Tender",
+		"consumed": st == "Consumed by Tender Management",
 	}
 
 
@@ -146,19 +147,18 @@ def _actions_for_workbench(status: str, role_key: str, *, plan_status: str = "")
 	is_authority = rk in ("authority", "admin")
 	is_officer = rk == "officer"
 	is_admin = rk == "admin"
-	can_edit_lines = is_planner and st in ("Draft", "Completed", "Returned")
-	can_release = ps == "Approved"
+	can_edit_lines = is_planner and st in ("Draft", "Returned for Correction")
+	can_release = ps == "Active"
 	return {
 		"edit": can_edit_lines,
 		"add_demand_lines": can_edit_lines,
 		"remove_demand_lines": can_edit_lines,
-		"complete": is_planner and st in ("Draft", "Returned"),
-		"submit": is_planner and st == "Completed",
-		"approve": is_authority and st == "Submitted",
-		"return": is_authority and st == "Submitted",
-		"reject": is_authority and st == "Submitted",
+		"submit": is_planner and st in ("Draft", "Returned for Correction"),
+		"approve": is_authority and st == "In Review",
+		"return": is_authority and st == "In Review",
+		"cancel": is_authority and st == "In Review",
 		"mark_ready": (is_officer or is_authority or is_admin) and st == "Approved",
-		"release": (is_officer or is_authority or is_admin) and st == "Ready for Tender" and can_release,
+		"release": (is_officer or is_authority or is_admin) and st == "Ready for Release" and can_release,
 	}
 
 
@@ -401,7 +401,7 @@ def get_pp_package_detail(package: str | None = None) -> dict:
 	badges = _badges_for_pkg(pkg_dict, risk_level=risk_level)
 	plan_status = frappe.db.get_value("Procurement Plan", doc.plan_id, "status") or ""
 	actions = _actions_for_workbench(doc.status or "", role_key, plan_status=plan_status)
-	release_blocked_by_plan = (doc.status or "") == "Ready for Tender" and plan_status != "Approved"
+	release_blocked_by_plan = (doc.status or "") == "Ready for Release" and plan_status != "Active"
 
 	package_code_hint = str(doc.package_code or "").strip()
 	procurement_journey = None

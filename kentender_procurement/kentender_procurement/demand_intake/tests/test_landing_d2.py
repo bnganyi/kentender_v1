@@ -13,6 +13,7 @@ from frappe.utils import add_days, now_datetime, today
 
 from kentender_core.seeds._common import ensure_currency_kes, ensure_department, ensure_procuring_entity
 from kentender_procurement.demand_intake.api.landing import (
+	_build_portfolio,
 	_count_returned_this_week,
 	get_dia_landing_shell_data,
 )
@@ -85,20 +86,28 @@ class TestLandingD2Kpis(IntegrationTestCase):
 			update_modified=False,
 		)
 
-	def test_admin_payload_has_procurement_kpis(self):
+	def test_admin_payload_has_portfolio_counts(self):
 		if getattr(self, "_skipped_no_demand", False):
 			self.skipTest("Demand DocType not installed")
 		out = get_dia_landing_shell_data()
 		self.assertTrue(out.get("ok"))
 		self.assertEqual(out.get("role_key"), "admin")
-		kpis = out.get("kpis") or []
-		self.assertEqual(len(kpis), 4)
-		ids = [k["id"] for k in kpis]
-		self.assertEqual(ids, ["approved", "planning_ready", "emergency_approved", "total_ready_value"])
-		self.assertEqual(
-			[k.get("testid") for k in kpis],
-			["dia-kpi-my-drafts", "dia-kpi-pending-approval", "dia-kpi-emergency", "dia-kpi-total-value"],
-		)
+		portfolio = out.get("portfolio") or {}
+		expected_keys = {
+			"total",
+			"draft_count",
+			"submitted_count",
+			"under_review_count",
+			"approved_count",
+			"planning_ready_count",
+			"rejected_count",
+			"emergency_count",
+			"not_yet_planned_count",
+			"cancelled_count",
+		}
+		self.assertTrue(expected_keys.issubset(set(portfolio.keys())))
+		built = _build_portfolio("admin", frappe.session.user)
+		self.assertEqual(portfolio.get("draft_count"), built.get("draft_count"))
 
 	def test_requisitioner_rejected_returned_includes_returned_draft(self):
 		if getattr(self, "_skipped_no_demand", False):
@@ -129,8 +138,9 @@ class TestLandingD2Kpis(IntegrationTestCase):
 			out = get_dia_landing_shell_data()
 			self.assertTrue(out.get("ok"))
 			self.assertEqual(out.get("role_key"), "requisitioner")
-			rej_kpi = next(k for k in out["kpis"] if k["id"] == "rejected_returned")
-			self.assertEqual(int(rej_kpi["value"]), 2)
+			portfolio = out.get("portfolio") or {}
+			self.assertGreaterEqual(int(portfolio.get("draft_count") or 0), 2)
+			self.assertGreaterEqual(int(portfolio.get("rejected_count") or 0), 1)
 		finally:
 			frappe.set_user("Administrator")
 			for name in list(self._demand_names):
@@ -151,7 +161,7 @@ class TestLandingD2Kpis(IntegrationTestCase):
 		self._mk_demand(title="Fresh return", return_reason="y", returned_at=now_datetime())
 		self.assertEqual(_count_returned_this_week(), c1 + 1)
 
-	def test_hod_kpi_returned_week_matches_counter(self):
+	def test_hod_portfolio_includes_returned_drafts_in_draft_count(self):
 		if getattr(self, "_skipped_no_demand", False):
 			self.skipTest("Demand DocType not installed")
 		email = f"hod_d2_{frappe.generate_hash(length=4)}@test.local"
@@ -166,14 +176,15 @@ class TestLandingD2Kpis(IntegrationTestCase):
 		)
 		user.insert(ignore_permissions=True)
 		user.add_roles("Department Approver")
-		self._mk_demand(title="HoD KPI row", return_reason="r", returned_at=now_datetime())
+		before = _build_portfolio("hod", user.name).get("draft_count")
+		self._mk_demand(title="HoD portfolio row", return_reason="r", returned_at=now_datetime())
 		try:
 			frappe.set_user(user.name)
 			out = get_dia_landing_shell_data()
 			self.assertTrue(out.get("ok"))
 			self.assertEqual(out.get("role_key"), "hod")
-			wk = next(k for k in out["kpis"] if k["id"] == "returned_week")
-			self.assertEqual(int(wk["value"]), _count_returned_this_week())
+			after = (out.get("portfolio") or {}).get("draft_count")
+			self.assertEqual(int(after), int(before) + 1)
 		finally:
 			frappe.set_user("Administrator")
 			if frappe.db.exists("User", user.name):

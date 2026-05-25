@@ -96,6 +96,47 @@ def _attach_kpi_slot_testids(kpis: list[dict]) -> list[dict]:
 	return kpis
 
 
+def _empty_portfolio() -> dict:
+	return {
+		"total": 0,
+		"draft_count": 0,
+		"submitted_count": 0,
+		"under_review_count": 0,
+		"approved_count": 0,
+		"planning_ready_count": 0,
+		"rejected_count": 0,
+		"emergency_count": 0,
+		"not_yet_planned_count": 0,
+		"cancelled_count": 0,
+	}
+
+
+def _build_portfolio(role_key: str, user: str) -> dict:
+	"""Permission-aware lifecycle counts for compact queue bar (DIA UI refactor)."""
+	del role_key  # counts respect Demand read permissions; role affects UI defaults only
+	del user
+	active = {"status": ["not in", ["Cancelled"]]}
+	return {
+		"total": _count_demands(active),
+		"draft_count": _count_demands({"status": "Draft"}),
+		"submitted_count": _count_demands({"status": "Pending HoD Approval"}),
+		"under_review_count": _count_demands({"status": "Pending Finance Approval"}),
+		"approved_count": _count_demands({"status": "Approved"}),
+		"planning_ready_count": _count_demands({"status": "Planning Ready"}),
+		"rejected_count": _count_demands({"status": "Rejected"}),
+		"emergency_count": _count_demands(
+			{"demand_type": "Emergency", "status": ["not in", ["Cancelled", "Rejected"]]}
+		),
+		"not_yet_planned_count": _count_demands(
+			{
+				"status": "Approved",
+				"planning_status": ["in", ["Not Planned", "Partially Planned"]],
+			}
+		),
+		"cancelled_count": _count_demands({"status": "Cancelled"}),
+	}
+
+
 def _fail_payload(*, error_code: str, message: str, role_key: str = "requisitioner") -> dict:
 	"""Non-throwing envelope so the Desk landing page can show inline help instead of a modal."""
 	return {
@@ -104,7 +145,7 @@ def _fail_payload(*, error_code: str, message: str, role_key: str = "requisition
 		"message": str(message),
 		"role_key": role_key,
 		"currency": "KES",
-		"kpis": [],
+		"portfolio": _empty_portfolio(),
 		"demands": [],
 	}
 
@@ -225,7 +266,7 @@ def _kpis_procurement() -> list[dict]:
 				id="approved",
 				label=_("Approved"),
 				value=_count_demands({"status": "Approved"}),
-				select_queue_id="approved_not_planned",
+				select_queue_id="all_approved",
 				select_work_tab="approved",
 			),
 			_kpi(
@@ -319,19 +360,7 @@ def get_dia_landing_shell_data():
 
 	user = frappe.session.user
 	role_key = resolve_dia_role_key()
-
-	if role_key == "requisitioner":
-		kpis = _kpis_requisitioner(user)
-	elif role_key == "hod":
-		kpis = _kpis_hod()
-	elif role_key == "finance":
-		kpis = _kpis_finance()
-	elif role_key in ("procurement", "admin"):
-		kpis = _kpis_procurement()
-	elif role_key == "auditor":
-		kpis = _kpis_auditor()
-	else:
-		kpis = _kpis_requisitioner(user)
+	portfolio = _build_portfolio(role_key, user)
 
 	currency = "KES"
 	try:
@@ -343,6 +372,6 @@ def get_dia_landing_shell_data():
 		"ok": True,
 		"role_key": role_key,
 		"currency": currency,
-		"kpis": kpis,
+		"portfolio": portfolio,
 		"demands": [],
 	}

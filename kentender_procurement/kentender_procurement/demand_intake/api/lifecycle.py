@@ -119,7 +119,9 @@ def submit_demand(demand_name: str | None = None):
 		doc.return_reason = None
 		doc.returned_by = None
 		doc.returned_at = None
-	doc.validate_submission_gate()
+	from kentender_procurement.demand_intake.services.readiness import assert_submission_ready
+
+	assert_submission_ready(doc)
 	now = now_datetime()
 	doc.status = "Pending HoD Approval"
 	doc.submitted_by = frappe.session.user
@@ -140,6 +142,9 @@ def approve_hod(demand_name: str | None = None):
 	if doc.status != "Pending HoD Approval":
 		frappe.throw(_("Demand is not awaiting HoD approval."))
 	_ensure_not_self_approving(doc)
+	from kentender_procurement.demand_intake.services.readiness import assert_review_approve_ready
+
+	assert_review_approve_ready(doc, action="approve_hod")
 	now = now_datetime()
 	doc.status = "Pending Finance Approval"
 	doc.hod_approved_by = frappe.session.user
@@ -332,7 +337,56 @@ def mark_planning_ready(demand_name: str | None = None):
 	_require_roles(ROLE_PROCUREMENT_PLANNER)
 	if doc.status != "Approved":
 		frappe.throw(_("Only Approved demands can be marked Planning Ready."))
+	from kentender_procurement.demand_intake.services.readiness import assert_planning_ready
+
+	assert_planning_ready(doc)
 	doc.status = "Planning Ready"
 	doc.planning_status = "Planning Ready"
+	_save_doc(doc)
+	return {"name": doc.name, "status": doc.status}
+
+
+@frappe.whitelist()
+def return_approved_to_finance(demand_name: str | None = None, reason: str | None = None):
+	"""Approved → Pending Finance Approval when reservation integrity fails (Phase L1)."""
+	if not demand_name:
+		frappe.throw(_("Demand name is required."))
+	text = _require_reason(reason, _("Return reason"))
+	require_demand_write(demand_name)
+	doc = frappe.get_doc("Demand", demand_name)
+	doc.check_permission("write")
+	_require_roles(ROLE_FINANCE_REVIEWER)
+	if doc.status != "Approved":
+		frappe.throw(_("Only Approved demands can be returned to finance."))
+
+	reservation_id = (doc.reservation_reference or "").strip()
+	if not reservation_id:
+		lookup = get_active_reservation_for_source("Demand", doc.name)
+		if lookup.get("ok"):
+			reservation_id = ((lookup.get("data") or {}).get("reservation_id") or "").strip()
+	if reservation_id:
+		release = release_reservation(
+			reservation_id,
+			reason=text,
+			actor=frappe.session.user,
+		)
+		if not release.get("ok"):
+			err_code = release.get("error_code") or ""
+			if err_code not in ("RESERVATION_NOT_ACTIVE",):
+				frappe.throw(
+					_(release.get("message") or _("Could not release reservation.")),
+					title=_("Return to finance"),
+				)
+		doc.reservation_status = "Released"
+		doc.reservation_reference = None
+
+	doc.status = "Pending Finance Approval"
+	doc.finance_approved_by = None
+	doc.finance_approved_at = None
+	doc.available_budget_at_check = None
+	doc.budget_check_datetime = None
+	doc.return_reason = text
+	doc.returned_by = frappe.session.user
+	doc.returned_at = now_datetime()
 	_save_doc(doc)
 	return {"name": doc.name, "status": doc.status}

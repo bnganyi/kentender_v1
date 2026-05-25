@@ -42,6 +42,18 @@ from kentender_procurement.procurement_planning.services.planning_references imp
 	resolve_procurement_template_name,
 )
 from kentender_procurement.procurement_planning.services.template_application import apply_template_to_demands
+from kentender_procurement.procurement_planning.pp2_constants import (
+	PKG_APPROVED,
+	PKG_CANCELLED,
+	PKG_DRAFT,
+	PKG_EDITABLE_STATUSES,
+	PKG_IN_REVIEW,
+	PKG_READY_FOR_RELEASE,
+	PKG_RELEASED,
+	PKG_RETURNED,
+	PLAN_ACTIVE,
+	PLAN_DRAFT,
+)
 
 
 def _pp_ok() -> bool:
@@ -218,7 +230,7 @@ class TestProcurementPlanningSmokeG1(IntegrationTestCase):
 		if not p1:
 			self.skipTest("no package")
 		d = frappe.get_doc("Procurement Package", p1)
-		if d.status not in ("Draft", "Completed", "Returned"):
+		if d.status not in PKG_EDITABLE_STATUSES:
 			self.skipTest("package not in editable state")
 		d.db_set("method_override_flag", 1, update_modified=False)
 		d.db_set("method_override_reason", None, update_modified=False)
@@ -253,34 +265,26 @@ class TestProcurementPlanningSmokeG1(IntegrationTestCase):
 			frappe.delete_doc("Procurement Package Line", line, force=True, ignore_permissions=True)
 		recompute_package_estimated_value(nm)
 		with self.assertRaises(frappe.ValidationError):
-			workflow.complete_package(nm)
+			workflow.submit_package(nm)
 		_delete_pkg_cascade(nm)
 
 	# —— PP8, PP9, PP10, PP14 (+ PP15) ——
 	def test_g_pp08_to_14_workflow_draft_to_ready(self) -> None:
-		"""One package: Draft → … → Ready. Uses PKG2. PP9: while Submitted, list pending queue."""
+		"""One package: Draft → … → Ready for Release. Uses PKG2. PP9: while In Review, list pending queue."""
 		self._skip()
 		plan = _on_plan(PLAN_CODE)
 		p = _pkg(plan, PKG2_CODE) if plan else None
 		if not p:
 			self.skipTest("no PKG2")
 		st0 = (frappe.db.get_value("Procurement Package", p, "status") or "").strip()
-		if st0 in ("Ready for Tender", "Released to Tender", "Rejected"):
+		if st0 in (PKG_READY_FOR_RELEASE, PKG_RELEASED, PKG_CANCELLED):
 			self.skipTest("PKG2 terminal state; re-run F1 for workflow smoke")
-		# work from current state toward Ready for Tender
 		st = st0
-		if st in ("Draft", "Returned"):
-			workflow.complete_package(p)
+		if st in (PKG_DRAFT, PKG_RETURNED):
+			workflow.submit_package(p)
 			st = (frappe.db.get_value("Procurement Package", p, "status") or "").strip()
-			self.assertEqual(st, "Completed", st)
-			workflow.submit_package(p)
-			self.assertEqual(frappe.db.get_value("Procurement Package", p, "status"), "Submitted")
-			st = "Submitted"
-		if st == "Completed":
-			workflow.submit_package(p)
-			self.assertEqual(frappe.db.get_value("Procurement Package", p, "status"), "Submitted")
-			st = "Submitted"
-		if st == "Submitted":
+			self.assertEqual(st, PKG_IN_REVIEW, st)
+		if st == PKG_IN_REVIEW:
 			out9 = package_list.get_pp_package_list(PLAN_CODE, "pending_approval", 50)
 			self.assertTrue(out9.get("ok"), out9)
 			rows9 = out9.get("rows") or []
@@ -289,11 +293,11 @@ class TestProcurementPlanningSmokeG1(IntegrationTestCase):
 				f"PKG2 {p!r} should appear in pending_approval (PP9), got {rows9!r}",
 			)
 			workflow.approve_package(p)
-			self.assertEqual(frappe.db.get_value("Procurement Package", p, "status"), "Approved")
-		elif st not in ("Approved",):
+			self.assertEqual(frappe.db.get_value("Procurement Package", p, "status"), PKG_APPROVED)
+		elif st not in (PKG_APPROVED,):
 			self.skipTest(f"PKG2 unexpected baseline state {st!r}")
-		workflow.mark_ready_for_tender(p)
-		self.assertEqual(frappe.db.get_value("Procurement Package", p, "status"), "Ready for Tender")
+		workflow.mark_ready_for_release(p)
+		self.assertEqual(frappe.db.get_value("Procurement Package", p, "status"), PKG_READY_FOR_RELEASE)
 
 	def test_g_pp15_mark_ready_rejected_unless_approved(self) -> None:
 		self._skip()
@@ -309,60 +313,53 @@ class TestProcurementPlanningSmokeG1(IntegrationTestCase):
 		if st != "Draft":
 			self.skipTest("no Draft package to assert pre-approval guard (run after fresh F1)")
 		with self.assertRaises(Exception):
-			workflow.mark_ready_for_tender(pa)
+			workflow.mark_ready_for_release(pa)
 
 	# —— PP9 covered in test_g_pp08_to_14 (pending_approval list after submit) ——
 
 	# —— PP11, PP12 (run after test_a0* so PKG1 is still a valid baseline) ——
-	def test_zz_g_pp11_12_return_then_reject(self) -> None:
-		"""After return (Draft), restructure + submit, then reject."""
+	def test_zz_g_pp11_12_return_then_cancel(self) -> None:
+		"""After return (Returned for Correction), re-submit, then cancel."""
 		self._skip()
 		plan = _on_plan(PLAN_CODE)
 		p = _pkg(plan, PKG1_CODE) if plan else None
 		if not p:
 			self.skipTest("no PKG1")
 		st0 = (frappe.db.get_value("Procurement Package", p, "status") or "").strip()
-		if st0 in ("Ready for Tender", "Released to Tender", "Rejected", "Submitted", "Approved"):
-			self.skipTest("PKG1 not in a safe baseline for return/reject test (re-seed or use fresh F1)")
-		# to Submitted
-		if st0 == "Draft":
-			workflow.complete_package(p)
-		if (frappe.db.get_value("Procurement Package", p, "status") or "") == "Completed":
+		if st0 in (PKG_READY_FOR_RELEASE, PKG_RELEASED, PKG_CANCELLED, PKG_IN_REVIEW, PKG_APPROVED):
+			self.skipTest("PKG1 not in a safe baseline for return/cancel test (re-seed or use fresh F1)")
+		if st0 == PKG_DRAFT:
 			workflow.submit_package(p)
-		self.assertEqual(frappe.db.get_value("Procurement Package", p, "status"), "Submitted")
+		self.assertEqual(frappe.db.get_value("Procurement Package", p, "status"), PKG_IN_REVIEW)
 		workflow.return_package(p, reason="G1 return smoke (mandatory).")
-		self.assertEqual(frappe.db.get_value("Procurement Package", p, "status"), "Returned")
-		# back to Submitted for reject
-		workflow.complete_package(p)
+		self.assertEqual(frappe.db.get_value("Procurement Package", p, "status"), PKG_RETURNED)
 		workflow.submit_package(p)
-		workflow.reject_package(p, reason="G1 reject smoke (mandatory).")
-		self.assertEqual(frappe.db.get_value("Procurement Package", p, "status"), "Rejected")
+		self.assertEqual(frappe.db.get_value("Procurement Package", p, "status"), PKG_IN_REVIEW)
+		workflow.cancel_package(p, reason="G1 cancel smoke (mandatory).")
+		self.assertEqual(frappe.db.get_value("Procurement Package", p, "status"), PKG_CANCELLED)
 
 	# —— PP19 ——
-	def test_g_pp19_plan_submit_approve(self) -> None:
-		"""Plan approval requires at least one active package (governance). Use F1 plan if Draft."""
+	def test_g_pp19_plan_activate(self) -> None:
+		"""Plan activation requires at least one active package (governance). Use F1 plan if Draft."""
 		self._skip()
 		plan = _on_plan(PLAN_CODE)
 		if not plan:
 			self.skipTest("F1 plan missing")
 		st = (frappe.db.get_value("Procurement Plan", plan, "status") or "").strip()
-		if st != "Draft":
+		if st != PLAN_DRAFT:
 			self.skipTest(f"F1 plan must be Draft for this test (current {st!r})")
 		pk = frappe.get_all("Procurement Package", filters={"plan_id": plan, "is_active": 1}, pluck="name")
 		if not pk:
-			self.skipTest("F1 plan has no packages; cannot test plan approval")
-		# Strict submit: every active package must already be Approved.
+			self.skipTest("F1 plan has no packages; cannot test plan activation")
 		for pname in pk:
-			frappe.db.set_value("Procurement Package", pname, "status", "Approved", update_modified=False)
+			frappe.db.set_value("Procurement Package", pname, "status", PKG_APPROVED, update_modified=False)
 		frappe.db.commit()
-		workflow.submit_plan(plan)
-		workflow.approve_plan(plan)
-		self.assertEqual((frappe.db.get_value("Procurement Plan", plan, "status") or ""), "Approved")
-		# Leaves PP-MOH-2026 in Approved; re-run F1 seed on dev if you need Draft again.
+		workflow.activate_plan(plan)
+		self.assertEqual((frappe.db.get_value("Procurement Plan", plan, "status") or ""), PLAN_ACTIVE)
 
 	# —— PP18, PP13 (negative) ——
 	def test_g_pp18_planner_cannot_approve(self) -> None:
-		"""Order-independent: use PKG3 and ensure Submitted within this test."""
+		"""Order-independent: use PKG3 and ensure In Review within this test."""
 		self._skip()
 		if not frappe.db.exists("User", "planner@moh.test"):
 			self.skipTest("planner@moh.test not seeded")
@@ -371,14 +368,12 @@ class TestProcurementPlanningSmokeG1(IntegrationTestCase):
 		if not p:
 			self.skipTest("no PKG3")
 		st0 = (frappe.db.get_value("Procurement Package", p, "status") or "").strip()
-		if st0 in ("Ready for Tender", "Released to Tender", "Rejected", "Approved"):
+		if st0 in (PKG_READY_FOR_RELEASE, PKG_RELEASED, PKG_CANCELLED, PKG_APPROVED):
 			self.skipTest("PKG3 not a safe baseline for this negative test; re-seed F1")
-		if st0 == "Draft":
-			workflow.complete_package(p)
-		if (frappe.db.get_value("Procurement Package", p, "status") or "") == "Completed":
+		if st0 == PKG_DRAFT:
 			workflow.submit_package(p)
-		if (frappe.db.get_value("Procurement Package", p, "status") or "") != "Submitted":
-			self.skipTest("PKG3 not Submitted")
+		if (frappe.db.get_value("Procurement Package", p, "status") or "") != PKG_IN_REVIEW:
+			self.skipTest("PKG3 not In Review")
 		frappe.set_user("planner@moh.test")
 		try:
 			with self.assertRaises(Exception):
@@ -391,7 +386,7 @@ class TestProcurementPlanningSmokeG1(IntegrationTestCase):
 		if not frappe.db.exists("User", "planner@moh.test"):
 			self.skipTest("planner user")
 		plan = _on_plan(PLAN_CODE)
-		pa = (frappe.get_all("Procurement Package", filters={"plan_id": plan, "status": "Approved"}, pluck="name", limit=1) or [None])[0]
+		pa = (frappe.get_all("Procurement Package", filters={"plan_id": plan, "status": PKG_APPROVED}, pluck="name", limit=1) or [None])[0]
 		if not pa:
 			self.skipTest("no approved package in DB (PKG2 may be only Ready; run in isolation)")
 		d = frappe.get_doc("Procurement Package", pa)
@@ -405,22 +400,19 @@ class TestProcurementPlanningSmokeG1(IntegrationTestCase):
 			frappe.set_user("Administrator")
 
 	def test_a0_g_workflow_return_requires_non_empty_reason(self) -> None:
-		"""Runs early: validates whitespace-only reason; leaves PKG1 Submitted for other tests."""
+		"""Runs early: validates whitespace-only reason; leaves PKG1 In Review for other tests."""
 		self._skip()
 		plan = _on_plan(PLAN_CODE)
-		# Re-use PKG1 if it is Submitted (e.g. from partial runs), else set up from PKG1 Draft
 		p = _pkg(plan, PKG1_CODE) if plan else None
 		if not p:
 			self.skipTest("no PKG1")
 		st0 = (frappe.db.get_value("Procurement Package", p, "status") or "").strip()
-		if st0 in ("Ready for Tender", "Released to Tender", "Rejected", "Approved"):
+		if st0 in (PKG_READY_FOR_RELEASE, PKG_RELEASED, PKG_CANCELLED, PKG_APPROVED):
 			self.skipTest("PKG1 already advanced")
-		if st0 == "Draft":
-			workflow.complete_package(p)
-		if (frappe.db.get_value("Procurement Package", p, "status") or "") == "Completed":
+		if st0 == PKG_DRAFT:
 			workflow.submit_package(p)
-		if (frappe.db.get_value("Procurement Package", p, "status") or "") != "Submitted":
-			self.skipTest("need Submitted PKG1; avoid ordering conflict with return/reject test")
+		if (frappe.db.get_value("Procurement Package", p, "status") or "") != PKG_IN_REVIEW:
+			self.skipTest("need In Review PKG1; avoid ordering conflict with return/cancel test")
 		with self.assertRaises(Exception):
 			workflow.return_package(p, reason="   ")
 

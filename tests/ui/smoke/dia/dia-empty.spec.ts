@@ -12,9 +12,9 @@ test.describe('DIA empty / landing shell', () => {
 		await loginAsRequisitioner(page);
 		await openDIALanding(page);
 		await expectDiaShellVisible(page);
-		await expect(page.getByTestId('dia-work-tabs')).toBeVisible();
-		await expect(page.getByTestId('dia-control-row-queues')).toBeVisible();
-		await expect(page.getByTestId('dia-kpi-my-drafts')).toBeVisible();
+		await expect(page.getByTestId('dia-status-chips')).toBeVisible();
+		await expect(page.getByTestId('dia-list-head')).toBeVisible();
+		await expect(page.getByTestId('dia-tab-draft')).toBeVisible();
 		const queueSurface = page.getByTestId('dia-list-empty').or(page.getByTestId('dia-list'));
 		await expect(queueSurface.first()).toBeVisible({ timeout: 30_000 });
 	});

@@ -24,8 +24,8 @@ is imported only via ``tender_management.services.std_template_loader.upsert_std
 ``Procurement Template.default_std_template`` is set to the POC code (§17 mapping) before the package.
 
 **Doc 3 §18.1:** After lines and roll-up, the seed advances the plan and package through
-``procurement_planning.api.workflow`` (``complete_package`` → ``submit_package`` → ``approve_package``,
-``submit_plan`` → ``approve_plan``, ``mark_ready_for_tender``, ``release_package_to_tender``). Release uses
+``procurement_planning.api.workflow`` (``submit_package`` → ``approve_package``,
+``activate_plan``, ``mark_ready_for_release``, ``release_package_to_tender``). Release uses
 the hook path into ``release_procurement_package_to_tender`` (no direct tender ``insert`` in seed). Idempotent
 when the package is already ``Released to Tender``.
 
@@ -513,13 +513,10 @@ def _ensure_works_s01_released_to_tender(*, plan_name: str, package_name: str) -
 
 	while True:
 		pkg_st = (frappe.db.get_value("Procurement Package", package_name, "status") or "").strip()
-		if pkg_st in ("Draft", "Returned"):
-			pp_workflow.complete_package(package_name)
-			continue
-		if pkg_st == "Completed":
+		if pkg_st in ("Draft", "Returned for Correction"):
 			pp_workflow.submit_package(package_name)
 			continue
-		if pkg_st == "Submitted":
+		if pkg_st == "In Review":
 			pp_workflow.approve_package(package_name)
 			continue
 		break
@@ -527,35 +524,32 @@ def _ensure_works_s01_released_to_tender(*, plan_name: str, package_name: str) -
 	pkg_st = (frappe.db.get_value("Procurement Package", package_name, "status") or "").strip()
 	if pkg_st != "Approved":
 		frappe.throw(
-			_("WORKS S01 package must reach Approved before plan submit (got {0}).").format(pkg_st or "—"),
+			_("WORKS S01 package must reach Approved before plan activation (got {0}).").format(pkg_st or "—"),
 			title=_("WORKS S01 seed"),
 		)
 
 	while True:
 		plan_st = (frappe.db.get_value("Procurement Plan", plan_name, "status") or "").strip()
-		if plan_st in ("Draft", "Returned"):
-			pp_workflow.submit_plan(plan_name)
-			continue
-		if plan_st == "Submitted":
-			pp_workflow.approve_plan(plan_name)
+		if plan_st == "Draft":
+			pp_workflow.activate_plan(plan_name)
 			continue
 		break
 
 	plan_st = (frappe.db.get_value("Procurement Plan", plan_name, "status") or "").strip()
-	if plan_st != "Approved":
+	if plan_st != "Active":
 		frappe.throw(
-			_("WORKS S01 plan must be Approved before release (got {0}).").format(plan_st or "—"),
+			_("WORKS S01 plan must be Active before release (got {0}).").format(plan_st or "—"),
 			title=_("WORKS S01 seed"),
 		)
 
 	pkg_st = (frappe.db.get_value("Procurement Package", package_name, "status") or "").strip()
 	if pkg_st == "Approved":
-		pp_workflow.mark_ready_for_tender(package_name)
+		pp_workflow.mark_ready_for_release(package_name)
 		pkg_st = (frappe.db.get_value("Procurement Package", package_name, "status") or "").strip()
 
-	if pkg_st != "Ready for Tender":
+	if pkg_st != "Ready for Release":
 		frappe.throw(
-			_("WORKS S01 package must be Ready for Tender before release (got {0}).").format(pkg_st or "—"),
+			_("WORKS S01 package must be Ready for Release before release (got {0}).").format(pkg_st or "—"),
 			title=_("WORKS S01 seed"),
 		)
 

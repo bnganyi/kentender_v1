@@ -13,6 +13,7 @@ from kentender_procurement.demand_intake.api.dia_access import require_demand_re
 from kentender_procurement.demand_intake.api.dia_context import resolve_dia_role_key
 from kentender_procurement.demand_intake.api.landing import _fail_payload
 from kentender_procurement.demand_intake.doctype.demand.demand import STATUSES_FULLY_EDITABLE
+from kentender_procurement.demand_intake.services.readiness import evaluate_approval_integrity
 
 DT = "Demand"
 
@@ -228,7 +229,7 @@ def _role_workflow_actions(doc, role_key: str) -> list[dict]:
 		out.append(
 			_rpc(
 				"mark_planning_ready",
-				_("Mark planning ready"),
+				_("Confirm Planning Ready"),
 				f"{L}mark_planning_ready",
 				primary=True,
 			)
@@ -236,6 +237,20 @@ def _role_workflow_actions(doc, role_key: str) -> list[dict]:
 		if _cancel_allowed_for_current_user(doc):
 			out.append(_cancel_action())
 		return out
+
+	if role_key in ("finance", "admin") and st == "Approved":
+		integrity = evaluate_approval_integrity(doc)
+		if integrity.get("blocked"):
+			out.append(
+				_rpc(
+					"return_approved_to_finance",
+					_("Send back to Finance"),
+					f"{L}return_approved_to_finance",
+					reason="return",
+				)
+			)
+		if role_key == "finance":
+			return out
 
 	return out
 
@@ -396,6 +411,7 @@ def get_dia_demand_detail(name: str | None = None):
 
 	role_key = resolve_dia_role_key()
 	currency = "KES"
+	integrity = evaluate_approval_integrity(doc)
 	try:
 		currency = frappe.db.get_single_value("Global Defaults", "default_currency") or "KES"
 	except Exception:
@@ -498,4 +514,7 @@ def get_dia_demand_detail(name: str | None = None):
 			"is_exception": bool(cint(doc.is_exception)),
 		},
 		"actions": _landing_actions(doc, role_key),
+		"integrity_blocked": bool(integrity.get("blocked")),
+		"integrity_blocker_count": integrity.get("blocker_count") or 0,
+		"planning_ready": bool(not integrity.get("blocked") and doc.status == "Approved"),
 	}

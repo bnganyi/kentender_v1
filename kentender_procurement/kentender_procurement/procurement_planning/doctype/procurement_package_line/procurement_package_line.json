@@ -10,15 +10,24 @@
   "package_id",
   "package_line_code",
   "demand_id",
+  "demand_item_code",
   "budget_line_id",
   "section_amounts",
   "amount",
+  "estimated_unit_cost",
+  "line_title",
+  "line_description",
+  "procurement_category",
+  "unit_of_measure",
   "quantity",
+  "currency",
   "column_context",
   "department",
   "priority",
   "section_state",
-  "is_active"
+  "line_status",
+  "is_active",
+  "is_master_seed"
  ],
  "fields": [
   {
@@ -54,6 +63,12 @@
    "search_index": 1
   },
   {
+   "fieldname": "demand_item_code",
+   "fieldtype": "Data",
+   "label": "Demand Item Code",
+   "search_index": 1
+  },
+  {
    "fieldname": "budget_line_id",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -75,10 +90,41 @@
    "reqd": 1
   },
   {
+   "fieldname": "estimated_unit_cost",
+   "fieldtype": "Currency",
+   "label": "Estimated Unit Cost"
+  },
+  {
+   "fieldname": "line_title",
+   "fieldtype": "Data",
+   "label": "Line Title"
+  },
+  {
+   "fieldname": "line_description",
+   "fieldtype": "Small Text",
+   "label": "Line Description"
+  },
+  {
+   "fieldname": "procurement_category",
+   "fieldtype": "Select",
+   "label": "Procurement Category",
+   "options": "Works\nGoods\nServices\nConsultancy"
+  },
+  {
+   "fieldname": "unit_of_measure",
+   "fieldtype": "Data",
+   "label": "Unit of Measure"
+  },
+  {
    "fieldname": "quantity",
    "fieldtype": "Float",
    "label": "Quantity",
    "non_negative": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Data",
+   "label": "Currency"
   },
   {
    "fieldname": "column_context",
@@ -101,11 +147,25 @@
    "label": "3. State"
   },
   {
+   "default": "Draft",
+   "fieldname": "line_status",
+   "fieldtype": "Select",
+   "label": "Line Status",
+   "options": "Draft\nReleased\nCancelled\nSuperseded",
+   "reqd": 1
+  },
+  {
    "default": "1",
    "fieldname": "is_active",
    "fieldtype": "Check",
    "label": "Is Active",
    "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_master_seed",
+   "fieldtype": "Check",
+   "label": "Is Master Seed"
   }
  ],
  "links": [],

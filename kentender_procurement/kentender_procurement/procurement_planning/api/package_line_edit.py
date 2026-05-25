@@ -13,10 +13,19 @@ from kentender_procurement.procurement_planning.api.landing import (
 	_can_read_planning,
 	resolve_pp_role_key,
 )
-from kentender_procurement.procurement_planning.doctype.procurement_package_line.procurement_package_line import (
-	PACKAGE_EDITABLE_STATUSES,
+from kentender_procurement.procurement_planning.pp2_constants import PKG_DRAFT, PKG_EDITABLE_STATUSES
+from kentender_procurement.procurement_planning.permissions import pp_policy, pp_scope
+from kentender_procurement.procurement_planning.services.planning_audit_constants import (
+	PACKAGE_LINE_CREATED,
+	PACKAGE_LINE_REMOVED,
 )
-from kentender_procurement.procurement_planning.permissions import pp_policy
+from kentender_procurement.procurement_planning.services.planning_audit_service import (
+	record_planning_audit_event,
+)
+from kentender_procurement.procurement_planning.services.package_post_release_lock import (
+	is_post_release_locked,
+	post_release_lock_error,
+)
 
 _LINE_FIELDS = [
 	"name",
@@ -31,8 +40,18 @@ _LINE_FIELDS = [
 ]
 
 
+def _assert_may_edit_lines(doc) -> None:
+	pp_policy.assert_may_edit_package_lines(doc)
+	pp_scope.assert_may_act_on_procurement_package(doc)
+
+
 def _fail(*, code: str, message: str, role_key: str = "auditor") -> dict:
 	return {"ok": False, "error_code": code, "message": str(message), "role_key": role_key, "lines": []}
+
+
+def _post_release_lock_fail(role_key: str) -> dict:
+	lock = post_release_lock_error()
+	return _fail(code=lock["code"], message=lock["message"], role_key=role_key)
 
 
 def _planning_gate() -> tuple[str | None, dict | None]:
@@ -157,8 +176,14 @@ def list_pp_assignable_demands(
 	if err or not doc:
 		return err or _fail(code="NOT_FOUND", message=_("Package not found."), role_key=role_key)
 
+	if is_post_release_locked(doc):
+		return _post_release_lock_fail(role_key)
+
 	try:
-		pp_policy.assert_may_edit_package_lines(doc)
+		_assert_may_edit_lines(doc)
+	except frappe.ValidationError:
+		lock = post_release_lock_error()
+		return _fail(code=lock["code"], message=lock["message"], role_key=role_key)
 	except frappe.PermissionError:
 		return _fail(
 			code="NO_PACKAGE_PERMISSION",
@@ -167,10 +192,10 @@ def list_pp_assignable_demands(
 		)
 
 	st = doc.status or ""
-	if st not in PACKAGE_EDITABLE_STATUSES:
+	if st not in PKG_EDITABLE_STATUSES:
 		return _fail(
 			code="PACKAGE_LOCKED",
-			message=_("Package lines can only be managed while the package is Draft, Completed, or Returned."),
+			message=_("Package lines can only be managed while the package is Draft or Returned for Correction."),
 			role_key=role_key,
 		)
 
@@ -292,7 +317,7 @@ def add_pp_package_line(
 	priority: str | None = None,
 	quantity: float | None = None,
 ):
-	"""Insert one active package line (Draft / Completed / Returned package only)."""
+	"""Insert one active package line (Draft / Returned for Correction package only)."""
 	role_key, gate_err = _planning_gate()
 	if gate_err:
 		return gate_err
@@ -302,8 +327,14 @@ def add_pp_package_line(
 	if err or not doc:
 		return err or _fail(code="NOT_FOUND", message=_("Package not found."), role_key=role_key)
 
+	if is_post_release_locked(doc):
+		return _post_release_lock_fail(role_key)
+
 	try:
-		pp_policy.assert_may_edit_package_lines(doc)
+		_assert_may_edit_lines(doc)
+	except frappe.ValidationError:
+		lock = post_release_lock_error()
+		return _fail(code=lock["code"], message=lock["message"], role_key=role_key)
 	except frappe.PermissionError:
 		return _fail(
 			code="NO_PACKAGE_PERMISSION",
@@ -312,10 +343,10 @@ def add_pp_package_line(
 		)
 
 	st = doc.status or ""
-	if st not in PACKAGE_EDITABLE_STATUSES:
+	if st not in PKG_EDITABLE_STATUSES:
 		return _fail(
 			code="PACKAGE_LOCKED",
-			message=_("Package lines can only be added while the package is Draft, Completed, or Returned."),
+			message=_("Package lines can only be added while the package is Draft or Returned for Correction."),
 			role_key=role_key,
 		)
 
@@ -355,9 +386,20 @@ def add_pp_package_line(
 			"priority": prio,
 			"quantity": qty,
 			"is_active": 1,
+			"line_status": PKG_DRAFT,
 		}
 	)
 	line.insert()
+	line_code = (line.package_line_code or line.name or "").strip()
+	record_planning_audit_event(
+		event_type=PACKAGE_LINE_CREATED,
+		object_type="Procurement Package Line",
+		object_code=line_code or line.name,
+		to_state=doc.status or "",
+		evidence_ref=line.name,
+		journey_code=(doc.journey_code or None),
+		actor=frappe.session.user,
+	)
 	return {"ok": True, "role_key": role_key, "name": line.name, "package": doc.name}
 
 
@@ -381,8 +423,14 @@ def remove_pp_package_line(line_name: str | None = None):
 	if err or not doc:
 		return err or _fail(code="NOT_FOUND", message=_("Package not found."), role_key=role_key)
 
+	if is_post_release_locked(doc):
+		return _post_release_lock_fail(role_key)
+
 	try:
-		pp_policy.assert_may_edit_package_lines(doc)
+		_assert_may_edit_lines(doc)
+	except frappe.ValidationError:
+		lock = post_release_lock_error()
+		return _fail(code=lock["code"], message=lock["message"], role_key=role_key)
 	except frappe.PermissionError:
 		return _fail(
 			code="NO_PACKAGE_PERMISSION",
@@ -391,10 +439,10 @@ def remove_pp_package_line(line_name: str | None = None):
 		)
 
 	st = doc.status or ""
-	if st not in PACKAGE_EDITABLE_STATUSES:
+	if st not in PKG_EDITABLE_STATUSES:
 		return _fail(
 			code="PACKAGE_LOCKED",
-			message=_("Package lines can only be removed while the package is Draft, Completed, or Returned."),
+			message=_("Package lines can only be removed while the package is Draft or Returned for Correction."),
 			role_key=role_key,
 		)
 
@@ -405,6 +453,18 @@ def remove_pp_package_line(line_name: str | None = None):
 	line.check_permission("write")
 	line.is_active = 0
 	line.save()
+
+	line_code = (line.package_line_code or line.name or lname).strip()
+	record_planning_audit_event(
+		event_type=PACKAGE_LINE_REMOVED,
+		object_type="Procurement Package Line",
+		object_code=line_code or lname,
+		from_state="Active",
+		to_state="Inactive",
+		evidence_ref=lname,
+		journey_code=(doc.journey_code or None),
+		actor=frappe.session.user,
+	)
 
 	from kentender_procurement.procurement_planning.doctype.procurement_package.procurement_package import (
 		recompute_package_estimated_value,

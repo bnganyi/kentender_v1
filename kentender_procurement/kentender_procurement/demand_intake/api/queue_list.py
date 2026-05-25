@@ -44,6 +44,7 @@ LIST_FIELDS = [
 	"demand_id",
 	"title",
 	"status",
+	"planning_status",
 	"demand_type",
 	"priority_level",
 	"requisition_type",
@@ -60,6 +61,22 @@ LIST_FIELDS = [
 ]
 
 DT = "Demand"
+
+LIFECYCLE_FILTERS = frozenset(
+	{
+		"all",
+		"draft",
+		"submitted",
+		"under_review",
+		"approved",
+		"planning_ready",
+		"rejected",
+		"emergency",
+		"cancelled",
+	}
+)
+
+WORK_SCOPES = frozenset({"all", "mywork"})
 
 
 def _select_field_options(fieldname: str) -> list[str]:
@@ -414,6 +431,65 @@ def _filters_auditor(*, work_tab: str, queue_id: str) -> dict | None:
 	return None
 
 
+def _mywork_scope_filters(role_key: str, user: str, lifecycle_filter: str) -> dict:
+	"""Scope My Work list to actionable or owned demands."""
+	if role_key == "requisitioner":
+		return {"requested_by": user}
+	if role_key == "hod":
+		if lifecycle_filter in ("all", "draft", "rejected"):
+			return {"requested_by": user}
+		return {"status": "Pending HoD Approval"}
+	if role_key == "finance":
+		if lifecycle_filter in ("all", "draft", "submitted", "rejected"):
+			return {"requested_by": user}
+		return {"status": "Pending Finance Approval"}
+	if role_key in ("procurement", "admin"):
+		if lifecycle_filter in ("all", "approved", "planning_ready", "emergency", "cancelled"):
+			return {}
+		return {"requested_by": user}
+	return {}
+
+
+def _filters_from_lifecycle(
+	role_key: str,
+	work_scope: str,
+	lifecycle_filter: str,
+	user: str,
+) -> dict:
+	"""Build Demand filters from compact lifecycle queue bar selections."""
+	work_scope = (work_scope or "all").strip().lower()
+	if work_scope not in WORK_SCOPES:
+		work_scope = "all"
+	lifecycle_filter = (lifecycle_filter or "all").strip().lower()
+	if lifecycle_filter not in LIFECYCLE_FILTERS:
+		lifecycle_filter = "all"
+
+	filters: dict = {}
+	if lifecycle_filter == "all":
+		filters["status"] = ["not in", ["Cancelled"]]
+	elif lifecycle_filter == "draft":
+		filters["status"] = "Draft"
+	elif lifecycle_filter == "submitted":
+		filters["status"] = "Pending HoD Approval"
+	elif lifecycle_filter == "under_review":
+		filters["status"] = "Pending Finance Approval"
+	elif lifecycle_filter == "approved":
+		filters["status"] = "Approved"
+	elif lifecycle_filter == "planning_ready":
+		filters["status"] = "Planning Ready"
+	elif lifecycle_filter == "rejected":
+		filters["status"] = "Rejected"
+	elif lifecycle_filter == "emergency":
+		filters["demand_type"] = "Emergency"
+		filters["status"] = ["not in", ["Cancelled", "Rejected"]]
+	elif lifecycle_filter == "cancelled":
+		filters["status"] = "Cancelled"
+
+	if work_scope == "mywork":
+		filters.update(_mywork_scope_filters(role_key, user, lifecycle_filter))
+	return filters
+
+
 def _resolve_filters(*, role_key: str, work_tab: str, queue_id: str, user: str) -> dict | None:
 	if work_tab not in ("mywork", "all", "approved", "rejected"):
 		work_tab = "mywork"
@@ -478,6 +554,21 @@ def _enrich_demand_queue_rows(rows: list[dict]) -> None:
 		r["requested_by_label"] = user_map.get(uid, uid or "")
 		if r.get("is_exception") is not None:
 			r["is_exception"] = cint(r.get("is_exception"))
+
+
+def _lifecycle_empty_caption(lifecycle_filter: str) -> str:
+	return {
+		"all": _("No demands match this view."),
+		"draft": _("No draft demands in this view."),
+		"submitted": _("Nothing is awaiting HoD approval."),
+		"under_review": _("Nothing is awaiting finance approval."),
+		"approved": _("No approved demands in this view."),
+		"planning_ready": _("Nothing is planning ready."),
+		"rejected": _("No rejected demands in this view."),
+		"emergency": _("No emergency demands in this view."),
+		"emergency": _("No emergency demands in this queue."),
+		"cancelled": _("No cancelled demands in this queue."),
+	}.get(lifecycle_filter, _("This queue is empty."))
 
 
 def _empty_caption(queue_id: str) -> str:
@@ -556,6 +647,8 @@ def get_dia_queue_filter_meta():
 def get_dia_queue_list(
 	work_tab: str = "mywork",
 	queue_id: str | None = None,
+	work_scope: str | None = None,
+	lifecycle_filter: str | None = None,
 	limit: int = 50,
 	start: int = 0,
 	search: str | None = None,
@@ -597,12 +690,23 @@ def get_dia_queue_list(
 
 	user = frappe.session.user
 	role_key = resolve_dia_role_key()
-	queue_id = _normalize_queue_id(role_key, queue_id)
-	work_tab = (work_tab or "mywork").strip().lower()
-	if work_tab not in ("mywork", "all", "approved", "rejected"):
-		work_tab = "mywork"
-
-	base_filters = _resolve_filters(role_key=role_key, work_tab=work_tab, queue_id=queue_id, user=user)
+	use_lifecycle = lifecycle_filter not in (None, "")
+	normalized_lifecycle = (lifecycle_filter or "all").strip().lower() if use_lifecycle else "all"
+	normalized_scope = (work_scope or "all").strip().lower() if use_lifecycle else "all"
+	if use_lifecycle:
+		if normalized_scope not in WORK_SCOPES:
+			normalized_scope = "all"
+		if normalized_lifecycle not in LIFECYCLE_FILTERS:
+			normalized_lifecycle = "all"
+		base_filters = _filters_from_lifecycle(role_key, normalized_scope, normalized_lifecycle, user)
+		queue_id = normalized_lifecycle
+		work_tab = normalized_scope
+	else:
+		queue_id = _normalize_queue_id(role_key, queue_id)
+		work_tab = (work_tab or "mywork").strip().lower()
+		if work_tab not in ("mywork", "all", "approved", "rejected"):
+			work_tab = "mywork"
+		base_filters = _resolve_filters(role_key=role_key, work_tab=work_tab, queue_id=queue_id, user=user)
 	if base_filters is None:
 		return {
 			"ok": True,
@@ -610,9 +714,15 @@ def get_dia_queue_list(
 			"work_tab": work_tab,
 			"queue_id": queue_id,
 			"queue_label": queue_id,
+			"work_scope": normalized_scope if use_lifecycle else None,
+			"lifecycle_filter": normalized_lifecycle if use_lifecycle else None,
 			"demands": [],
 			"has_more": False,
-			"empty_caption": _("This view does not apply to the selected queue. Pick another queue or tab."),
+			"empty_caption": (
+				_lifecycle_empty_caption(normalized_lifecycle)
+				if use_lifecycle
+				else _("This view does not apply to the selected queue. Pick another queue or tab.")
+			),
 		}
 
 	refine_in: Any = {}
@@ -658,9 +768,15 @@ def get_dia_queue_list(
 		"work_tab": work_tab,
 		"queue_id": queue_id,
 		"queue_label": queue_id,
+		"work_scope": normalized_scope if use_lifecycle else None,
+		"lifecycle_filter": normalized_lifecycle if use_lifecycle else None,
 		"demands": demands,
 		"has_more": has_more,
-		"empty_caption": _empty_caption(queue_id),
+		"empty_caption": (
+			_lifecycle_empty_caption(normalized_lifecycle)
+			if use_lifecycle
+			else _empty_caption(queue_id)
+		),
 		"currency": currency,
 		"applied_refine": refine,
 	}

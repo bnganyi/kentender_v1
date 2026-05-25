@@ -38,8 +38,12 @@ def _fail(*, code: str, message: str, role_key: str = "auditor") -> dict:
 
 
 def _plan_workbench_action_flags(role_key: str, cur: dict | None) -> dict[str, bool]:
-	"""E2 — Plan-level workflow CTAs (Roles matrix §5.1 / §7.2)."""
+	"""E2 — Plan-level workflow CTAs (PP2 plan states)."""
 	out = {
+		"show_activate_plan": False,
+		"show_close_plan": False,
+		"show_cancel_plan": False,
+		# Back-compat keys for v1 workbench until P5 UI refresh.
 		"show_submit_plan": False,
 		"show_approve_plan": False,
 		"show_return_plan": False,
@@ -49,14 +53,15 @@ def _plan_workbench_action_flags(role_key: str, cur: dict | None) -> dict[str, b
 	if not cur:
 		return out
 	st = str(cur.get("status") or "")
-	if role_key in ("planner", "admin") and st in ("Draft", "Returned"):
+	if role_key in ("authority", "admin") and st == "Draft":
+		out["show_activate_plan"] = True
 		out["show_submit_plan"] = True
-	if role_key in ("authority", "admin") and st == "Submitted":
-		out["show_approve_plan"] = True
-		out["show_return_plan"] = True
-		out["show_reject_plan"] = True
-	if role_key in ("authority", "admin") and st == "Approved":
+	if role_key in ("authority", "admin") and st == "Active":
+		out["show_close_plan"] = True
 		out["show_lock_plan"] = True
+	if role_key in ("authority", "admin") and st in ("Draft", "Active"):
+		out["show_cancel_plan"] = True
+		out["show_reject_plan"] = True
 	return out
 
 
@@ -68,10 +73,16 @@ def resolve_pp_role_key(user: str | None = None) -> str | None:
 		return "admin"
 	if "Procurement Planner" in roles:
 		return "planner"
+	if "Planning Reviewer" in roles:
+		return "reviewer"
 	if "Planning Authority" in roles:
 		return "authority"
 	if "Procurement Officer" in roles:
 		return "officer"
+	if "Tender Manager" in roles:
+		return "tender_manager"
+	if "Budget Officer" in roles:
+		return "budget"
 	if "Auditor" in roles:
 		return "auditor"
 	return None
@@ -107,12 +118,12 @@ _Q = {
 	),
 	"structured_packages": _queue_def(
 		"structured_packages",
-		label_en="Completed Packages",
+		label_en="In Review Packages",
 		testid="pp-queue-structured-packages",
 	),
 	"submitted_packages": _queue_def(
 		"submitted_packages",
-		label_en="Submitted Packages",
+		label_en="In Review Packages",
 		testid="pp-queue-submitted-packages",
 	),
 	"high_risk_packages": _queue_def(
@@ -142,7 +153,7 @@ _Q = {
 	),
 	"ready_for_tender": _queue_def(
 		"ready_for_tender",
-		label_en="Ready for Tender",
+		label_en="Ready for Release",
 		testid="pp-queue-ready-for-tender",
 	),
 	"approved_not_handed_off": _queue_def(
@@ -334,8 +345,9 @@ def _high_risk_profile_names() -> list[str]:
 
 
 def _plan_submit_gate(plan_name: str | None) -> dict:
-	"""Strict plan submit (governance): every active package must be Approved."""
-	from kentender_procurement.procurement_planning.services.pp_governance_codes import PlanSubmit
+	"""Plan activation gate (PP2): every active package must be Approved before plan goes Active."""
+	from kentender_procurement.procurement_planning.pp2_constants import PKG_APPROVED
+	from kentender_procurement.procurement_planning.services.pp_governance_codes import PlanActivate
 
 	if not plan_name:
 		return {
@@ -354,22 +366,22 @@ def _plan_submit_gate(plan_name: str | None) -> dict:
 		return {
 			"plan_submit_ready": False,
 			"plan_submit_blockers": [_("Cannot read packages for this plan.")],
-			"plan_submit_blocker_codes": [PlanSubmit.NO_ACTIVE_PACKAGES],
+			"plan_submit_blocker_codes": [PlanActivate.NO_ACTIVE_PACKAGES],
 		}
 	if not rows:
 		return {
 			"plan_submit_ready": False,
-			"plan_submit_blockers": [_("At least one active package is required before submitting the plan.")],
-			"plan_submit_blocker_codes": [PlanSubmit.NO_ACTIVE_PACKAGES],
+			"plan_submit_blockers": [_("At least one active package is required before activating the plan.")],
+			"plan_submit_blocker_codes": [PlanActivate.NO_ACTIVE_PACKAGES],
 		}
 	blockers = []
 	codes = []
 	for r in rows:
 		st = (r.status or "").strip()
-		if st != "Approved":
+		if st != PKG_APPROVED:
 			pc = (r.package_code or r.name or "").strip()
 			blockers.append(_("{0} is {1} (must be Approved).").format(pc or _("Package"), st or _("unknown")))
-			codes.append(PlanSubmit.NOT_ALL_PACKAGES_APPROVED)
+			codes.append(PlanActivate.NOT_ALL_PACKAGES_APPROVED)
 	return {
 		"plan_submit_ready": len(blockers) == 0,
 		"plan_submit_blockers": blockers,
@@ -438,8 +450,8 @@ def _kpis_for_plan(plan_name: str | None, currency: str) -> list[dict]:
 		},
 		{
 			"id": "ready_for_tender",
-			"label": _("Ready for Tender"),
-			"value": cnt({"status": "Ready for Tender"}),
+			"label": _("Ready for Release"),
+			"value": cnt({"status": "Ready for Release"}),
 			"format": "int",
 			"testid": "pp-kpi-ready-for-tender",
 		},

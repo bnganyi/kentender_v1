@@ -125,6 +125,40 @@ Mark any ticket/phase as **Done** only when all checks pass:
 | **I2** | UI/UX alignment review vs UI spec (no code) | **Done** (2026-04-23) — same doc §I2 |
 | **I3** | Module exit checklist ([8. DIA Master Checklist.md](./8.%20DIA%20Master%20Checklist.md)) | **Done** (2026-04-23) — same doc §I3 (F **Partial**: Playwright `test.fixme` backlog) |
 
+### Phase J — UI refactor (Strategy/Budget-aligned workbench)
+
+| Ticket | Description | Status |
+|--------|-------------|--------|
+| **J1** | Compact lifecycle queue bar; portfolio API; search in list head; remove KPI/work-tab/queue-pill layers | **Done** (2026-05-23) |
+| **J2** | Tabbed detail panels (Overview/Items/Review/Planning/Audit); hero header; panel extraction | **Done** (2026-05-23) |
+| **J3** | Staged validation (submission vs planning readiness); review + audit APIs | **Partial** — Phase K1 extends §24 contracts; unit tests pass; MCP submit gate pending in CI |
+| **J4** | Form stepper; draft save rules; context header ribbon; sidebar preservation test | **Partial** — Phase K2/K3 step controller + wide drawer; Playwright drawer specs added |
+| **J5** | `dia-pattern-lock.spec.ts`; Makefile gate; smoke spec updates | **Done** (2026-05-23) |
+
+### Phase K — Guidance §12–31 (draft unblock, staged validation, drawer)
+
+| Ticket | Description | Status |
+|--------|-------------|--------|
+| **K0** | §23.3 + §24.1 title-only draft save (`demand.json`, `readiness.py`, `demand_form.js`, `test_demand_draft_save.py`) | **Done** (2026-05-23) — unit tests pass |
+| **K1** | §24.2–24.5 validation contracts; `review.py` APIs; lifecycle wiring; review/submission unit matrix | **Done** (2026-05-23) — unit tests pass |
+| **K2** | §25 step controller, dynamic asterisks, section renames, Review readiness panel | **Done** (2026-05-23) |
+| **K3** | Wide drawer (`dia_demand_drawer.js`); New/Edit rewired; workspace URL preserved | **Done** (2026-05-23) — Playwright drawer specs |
+| **K4** | §29 planning context by status; §27 audit noise reduction | **Done** (2026-05-23) |
+| **K5** | Playwright regression specs; pattern gate; tracker sync | **Done** (2026-05-23) — 3 DIA specs + 15/19 pattern gate passed |
+
+### Phase L — Workflow resolution and queue clarity ([review doc](./ken_tender_dia_workflow_resolution_and_queue_clarity_review.md))
+
+| Ticket | Description | Status |
+|--------|-------------|--------|
+| **L1** | Approved⇒Reserved invariant; `evaluate_approval_integrity`; state-aware `get_demand_review_data`; `return_approved_to_finance` | **Done** (2026-05-23) — `test_demand_approval_integrity.py` |
+| **L2** | Grouped single-line queue bar; HoD/Finance labels; Cancelled chip; remove Not Yet Planned peer chip; list badges | **Done** (2026-05-23) — landing/queue unit tests updated |
+| **L3** | State-aware Review tab + builder review step; `dia-review-state-aware.spec.ts` | **Done** (2026-05-23) |
+| **L4** | Planning tab blocker table with owner/action; integrity blocked state; return-to-finance action | **Done** (2026-05-23) — planning panel spec updated |
+| **L5** | Blocker-aware hero `nextStepLabel`; detail API integrity fields | **Done** (2026-05-23) |
+| **L6** | Pattern gate; targeted Playwright; MCP browser walkthrough; tracker | **Done** (2026-05-23) — pattern gate + targeted specs |
+
+**Last updated:** 2026-05-23 (Phase L workflow resolution and queue clarity)
+
 ## Progress log (append per batch)
 
 Use after each ticket or batch (template from Master Checklist §19):

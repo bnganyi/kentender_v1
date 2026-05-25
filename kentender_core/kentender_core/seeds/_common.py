@@ -95,6 +95,25 @@ def ensure_user_permission(user: str, entity: str):
 	add_user_entity_permission(user, entity)
 
 
+def ensure_department_permission(user: str, department: str):
+	"""Idempotent User Permission on Procuring Department."""
+	exists = frappe.db.exists(
+		"User Permission",
+		{"user": user, "allow": "Procuring Department", "for_value": department},
+	)
+	if exists:
+		return
+	frappe.get_doc(
+		{
+			"doctype": "User Permission",
+			"user": user,
+			"allow": "Procuring Department",
+			"for_value": department,
+			"apply_to_all_doctypes": 1,
+		}
+	).insert(ignore_permissions=True)
+
+
 def ensure_moh_entity_permission_aliases(user: str, entity_name: str) -> None:
 	"""Grant MOH seed users access to PE-MOH alias used by WORKS master seed."""
 	ensure_user_permission(user, entity_name)

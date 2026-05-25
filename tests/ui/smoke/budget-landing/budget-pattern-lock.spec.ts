@@ -5,6 +5,7 @@ import { openBudgetLanding } from '../../helpers/budgetLanding';
 import {
 	expectNoLoadingFlash,
 	expectPrimaryTabsUseHierarchyContract,
+	expectRowSwitchKeepsDetailShell,
 	expectStatusFiltersUseHierarchyContract,
 } from '../../helpers/workspacePatternContract';
 
@@ -70,6 +71,17 @@ test.describe('Budget workspace pattern lock', () => {
 		const auditPanel = page.getByTestId('budget-tab-panel-audit');
 		await auditTab.click();
 		await expectNoLoadingFlash(auditPanel, page.getByText('Loading audit…'));
+	});
+
+	test('row switch updates detail without shell remount', async ({ page }) => {
+		await loginAsAdministrator(page);
+		await openBudgetLanding(page);
+		await expectRowSwitchKeepsDetailShell(page, {
+			rowSelector: '.kt-budget-row[data-budget]',
+			detailRootSelector: '[data-testid="budget-detail-col"]',
+			detailPanelSelector: '[data-testid="selected-budget-panel"]',
+			loadingSelectors: ['[data-testid="budget-detail-loading"]'],
+		});
 	});
 
 	test('status filters and primary tabs respect hierarchy contracts', async ({ page }) => {

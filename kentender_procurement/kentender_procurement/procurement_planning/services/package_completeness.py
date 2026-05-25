@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Package completeness (governance spec §9) — single place for Draft→Completed / release gates."""
+"""Package completeness (governance spec §9) — single place for Draft→In Review / release gates."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 def get_package_completeness_blockers(doc: "Document") -> list[str]:
-	"""Return human-readable blocker strings; empty means complete enough for Completed / release."""
+	"""Return human-readable blocker strings; empty means complete enough for In Review / release."""
 	blockers: list[str] = []
 	if not doc.get("template_id"):
 		blockers.append(_("Procurement Template is required."))

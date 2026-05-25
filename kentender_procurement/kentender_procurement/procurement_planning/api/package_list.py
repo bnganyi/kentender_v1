@@ -72,24 +72,24 @@ def _queue_filters(queue_id: str, *, plan_id: str) -> dict:
 	if queue_id == "draft_packages":
 		return {**b, "status": "Draft"}
 	if queue_id == "structured_packages":
-		return {**b, "status": "Completed"}
+		return {**b, "status": "In Review"}
 	if queue_id in ("submitted_packages", "pending_approval"):
-		return {**b, "status": "Submitted"}
+		return {**b, "status": "In Review"}
 	if queue_id == "high_risk_packages":
 		return {**b, **_high_risk_filter()}
 	if queue_id == "emergency_packages":
 		return {**b, "is_emergency": 1}
 	if queue_id == "high_risk_escalation":
 		hr = _high_risk_filter()
-		return {**b, "status": "Submitted", **hr}
+		return {**b, "status": "In Review", **hr}
 	if queue_id == "method_override":
 		return {
 			**b,
 			"method_override_flag": 1,
-			"status": ("in", ("Draft", "Completed", "Returned", "Submitted", "Approved")),
+			"status": ("in", ("Draft", "Returned for Correction", "In Review", "Approved")),
 		}
 	if queue_id == "ready_for_tender":
-		return {**b, "status": "Ready for Tender"}
+		return {**b, "status": "Ready for Release"}
 	if queue_id == "approved_not_handed_off":
 		return {**b, "status": "Approved"}
 	return {**b, "name": ("=", "__none__")}
@@ -136,8 +136,8 @@ def _row_dict(
 		"badges": {
 			"high_risk": high,
 			"emergency": cint(pkg.get("is_emergency")),
-			"submitted": st == "Submitted",
-			"ready": st == "Ready for Tender",
+			"in_review": st == "In Review",
+			"ready": st == "Ready for Release",
 		},
 		"procurement_journey": procurement_journey,
 		"planning_release_handoff": planning_release_handoff,

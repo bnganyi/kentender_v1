@@ -7,8 +7,7 @@ import { openDIALanding } from '../../helpers/dia';
 test('Procurement can open Planning Ready queue', async ({ page }) => {
 	await loginAsProcurementPlanner(page);
 	await openDIALanding(page);
-	await page.getByTestId('dia-tab-approved').click();
-	await page.getByTestId('dia-queue-planning_ready').click();
+	await page.getByTestId('dia-tab-planning-ready').click();
 	await expect(page.getByTestId('dia-list-root')).toBeVisible();
 	const row = page.getByTestId('dia-row-DIA-MOH-2026-0005');
 	const has = await row.isVisible({ timeout: 20_000 }).catch(() => false);

@@ -16,6 +16,7 @@ DEPT_PROC = "PROC — Procurement"
 BUSINESS_ROLES = (
 	"Strategy Manager",
 	"Planning Authority",
+	"Planning Reviewer",
 	"Requisitioner",
 	"Procurement Planner",
 	"Procurement Officer",
@@ -28,6 +29,7 @@ BUSINESS_ROLES = (
 SEED_USERS = (
 	("strategy.manager@moh.test", "Strategy Manager MOH", "Strategy Manager", DEPT_CLIN),
 	("planning.authority@moh.test", "Planning Authority MOH", "Planning Authority", DEPT_FIN),
+	("planning.reviewer@moh.test", "Planning Reviewer MOH", "Planning Reviewer", DEPT_PROC),
 	("requisitioner@moh.test", "Requisitioner MOH", "Requisitioner", DEPT_CLIN),
 	("planner@moh.test", "Procurement Planner MOH", "Procurement Planner", DEPT_PROC),
 	("procurement.officer@moh.test", "Procurement Officer MOH", "Procurement Officer", DEPT_PROC),

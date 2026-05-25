@@ -8,6 +8,7 @@
  "field_order": [
   "tab_definition",
   "package_name",
+  "package_description",
   "column_def_code",
   "package_code",
   "column_def_plan",
@@ -43,18 +44,38 @@
   "tab_workflow",
   "status",
   "column_wf_planning",
-  "planning_status",
+  "readiness_status",
   "column_wf_flags",
+  "locked_after_release",
   "is_emergency",
   "is_active",
+  "tab_pp2_traceability",
+  "planning_inclusion_code",
+  "demand_id",
+  "budget_line_id",
+  "procurement_category",
+  "required_std_category",
+  "required_std_type",
+  "required_std_template_version_code",
+  "procuring_entity_code",
+  "fiscal_year",
+  "package_priority",
+  "release_code",
+  "tender_code",
+  "journey_code",
+  "latest_readiness_code",
+  "latest_review_code",
+  "is_master_seed",
   "section_wf_reason",
   "workflow_reason",
   "section_wf_audit",
   "created_by",
+  "prepared_at",
   "column_wf_approval",
   "approved_by",
   "approved_at",
   "released_to_tender_at",
+  "consumed_at",
   "column_wf_reject",
   "rejected_by",
   "rejected_at",
@@ -76,6 +97,11 @@
    "label": "Package Name",
    "reqd": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "package_description",
+   "fieldtype": "Small Text",
+   "label": "Package Description"
   },
   {
    "fieldname": "column_def_code",
@@ -285,12 +311,12 @@
   },
   {
    "default": "Draft",
-   "description": "Ready for Tender = cleared for handoff; Released to Tender = handed off to Tendering.",
+   "description": "PP2 compact package lifecycle.",
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Draft\nCompleted\nSubmitted\nApproved\nReady for Tender\nReleased to Tender\nReturned\nRejected",
+   "options": "Draft\nIn Review\nReturned for Correction\nApproved\nReady for Release\nReleased to Tender\nConsumed by Tender Management\nSuperseded\nCancelled",
    "read_only": 1,
    "reqd": 1,
    "search_index": 1
@@ -300,13 +326,25 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "planning_status",
-   "fieldtype": "Data",
-   "label": "Planning Status"
+   "default": "Not Run",
+   "fieldname": "readiness_status",
+   "fieldtype": "Select",
+   "label": "Readiness Status",
+   "options": "Not Run\nPassed\nFailed\nPassed With Warnings\nStale",
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "fieldname": "column_wf_flags",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "locked_after_release",
+   "fieldtype": "Check",
+   "label": "Locked After Release",
+   "read_only": 1,
+   "reqd": 1
   },
   {
    "default": "0",
@@ -323,13 +361,118 @@
    "reqd": 1
   },
   {
+   "fieldname": "tab_pp2_traceability",
+   "fieldtype": "Tab Break",
+   "label": "PP2 traceability"
+  },
+  {
+   "fieldname": "planning_inclusion_code",
+   "fieldtype": "Data",
+   "label": "Planning Inclusion Code",
+   "search_index": 1
+  },
+  {
+   "fieldname": "demand_id",
+   "fieldtype": "Link",
+   "label": "Source Demand",
+   "options": "Demand",
+   "search_index": 1
+  },
+  {
+   "fieldname": "budget_line_id",
+   "fieldtype": "Link",
+   "label": "Budget Line",
+   "options": "Budget Line",
+   "search_index": 1
+  },
+  {
+   "fieldname": "procurement_category",
+   "fieldtype": "Select",
+   "label": "Procurement Category",
+   "options": "Works\nGoods\nServices\nConsultancy",
+   "search_index": 1
+  },
+  {
+   "fieldname": "required_std_category",
+   "fieldtype": "Data",
+   "label": "Required STD Category"
+  },
+  {
+   "fieldname": "required_std_type",
+   "fieldtype": "Data",
+   "label": "Required STD Type"
+  },
+  {
+   "fieldname": "required_std_template_version_code",
+   "fieldtype": "Data",
+   "label": "Required STD Template Version Code"
+  },
+  {
+   "fieldname": "procuring_entity_code",
+   "fieldtype": "Data",
+   "label": "Procuring Entity Code",
+   "search_index": 1
+  },
+  {
+   "fieldname": "fiscal_year",
+   "fieldtype": "Data",
+   "label": "Fiscal Year",
+   "search_index": 1
+  },
+  {
+   "fieldname": "package_priority",
+   "fieldtype": "Select",
+   "label": "Package Priority",
+   "options": "High\nMedium\nLow"
+  },
+  {
+   "fieldname": "release_code",
+   "fieldtype": "Data",
+   "label": "Planning Release Code",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tender_code",
+   "fieldtype": "Data",
+   "label": "Tender Code",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "journey_code",
+   "fieldtype": "Data",
+   "label": "Journey Code",
+   "search_index": 1
+  },
+  {
+   "fieldname": "latest_readiness_code",
+   "fieldtype": "Link",
+   "label": "Latest Readiness Result",
+   "options": "Package Readiness Result",
+   "read_only": 1
+  },
+  {
+   "fieldname": "latest_review_code",
+   "fieldtype": "Link",
+   "label": "Latest Review Decision",
+   "options": "Package Review Decision",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_master_seed",
+   "fieldtype": "Check",
+   "label": "Is Master Seed"
+  },
+  {
    "fieldname": "section_wf_reason",
    "fieldtype": "Section Break",
    "label": "Workflow notes",
    "collapsible": 1
   },
   {
-   "description": "Required when returning from Submitted, rejecting from Submitted, or reverting Ready for Tender to Draft (Administrator/System Manager).",
+   "description": "Required when returning from In Review, cancelling from In Review, or reverting Ready for Release to Approved (Planning Authority).",
    "fieldname": "workflow_reason",
    "fieldtype": "Long Text",
    "label": "Workflow Reason",
@@ -349,6 +492,12 @@
    "options": "User",
    "read_only": 1,
    "reqd": 1
+  },
+  {
+   "fieldname": "prepared_at",
+   "fieldtype": "Datetime",
+   "label": "Prepared At",
+   "read_only": 1
   },
   {
    "fieldname": "column_wf_approval",
@@ -371,6 +520,12 @@
    "fieldname": "released_to_tender_at",
    "fieldtype": "Datetime",
    "label": "Released to Tender At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "consumed_at",
+   "fieldtype": "Datetime",
+   "label": "Consumed At",
    "read_only": 1
   },
   {
@@ -462,6 +617,30 @@
    "read": 1,
    "report": 1,
    "role": "Procurement Officer",
+   "share": 1,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Tender Manager",
+   "share": 1,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Budget Officer",
    "share": 1,
    "write": 0
   },

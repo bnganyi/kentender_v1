@@ -26,6 +26,15 @@ def pkgrel_handoff_code_from_journey_code(journey_business_code: str) -> str:
 	return f"PKGREL-{suffix}"
 
 
+def pkgconsume_code_from_release_code(release_code: str) -> str:
+	"""``PKGREL-MOH-2026-001`` → ``PKGCONSUME-MOH-2026-001``."""
+	rc = (release_code or "").strip()
+	if not rc:
+		return ""
+	suffix = rc[7:] if rc.upper().startswith("PKGREL-") else rc
+	return f"PKGCONSUME-{suffix}"
+
+
 def _safe_pf_dict(raw: Any) -> dict[str, Any]:
 	if isinstance(raw, dict):
 		return raw
@@ -146,20 +155,25 @@ def summarize_planning_release_handoff_for_package_detail(package_business_code:
 	if not pc or not _can_read_handoff_cards():
 		return None
 
-	from kentender_procurement.procurement_lifecycle.journey_object_lookup import (
-		resolve_journey_code_for_object,
-	)
+	release_code = (frappe.db.get_value("Procurement Package", pc, "release_code") or "").strip()
+	if release_code and frappe.db.exists("Procurement Handoff Card", release_code):
+		handoff_code = release_code
+	else:
+		from kentender_procurement.procurement_lifecycle.journey_object_lookup import (
+			resolve_journey_code_for_object,
+		)
 
-	j_pk = resolve_journey_code_for_object("Procurement Package", pc)
-	if not j_pk:
-		return None
+		j_pk = resolve_journey_code_for_object("Procurement Package", pc)
+		if not j_pk:
+			return None
 
-	journey_business = (
-		frappe.db.get_value("Procurement Journey", j_pk, "journey_code") or ""
-	).strip() or str(j_pk)
-	handoff_code = pkgrel_handoff_code_from_journey_code(journey_business)
-	if not handoff_code:
-		return None
+		journey_business = (
+			frappe.db.get_value("Procurement Journey", j_pk, "journey_code") or ""
+		).strip() or str(j_pk)
+		handoff_code = pkgrel_handoff_code_from_journey_code(journey_business)
+		if not handoff_code:
+			return None
+
 	if not frappe.db.exists("Procurement Handoff Card", handoff_code):
 		return None
 
@@ -192,6 +206,7 @@ def summarize_planning_release_handoff_for_package_detail(package_business_code:
 	if (card.handoff_title or "").strip() != _PLANNING_RELEASE_TITLE:
 		return None
 
+	journey_business = str(card.journey_code or "").strip()
 	pf = _safe_pf_dict(card.get("passed_forward_summary"))
 	ls = _safe_pf_dict(card.get("locked_summary"))
 	tender_bc = str(card.target_object_code or "").strip()
