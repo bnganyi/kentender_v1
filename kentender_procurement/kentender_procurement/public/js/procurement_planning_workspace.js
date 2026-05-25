@@ -1395,6 +1395,10 @@
 	}
 
 	function injectPpLandingShell() {
+		const p5Shell = document.querySelector('[data-testid="pp2-primary-workspace-shell"]');
+		if (p5Shell && document.getElementById("kt-pp-root")) {
+			return { ok: true, inserted: false };
+		}
 		const deniedRoot = document.getElementById("kt-pp-root");
 		if (deniedRoot && deniedRoot.getAttribute("data-pp-access-denied") === "1") {
 			return { ok: false, inserted: false };

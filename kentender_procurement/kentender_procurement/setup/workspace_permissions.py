@@ -79,10 +79,17 @@ _KT_SIDEBAR_NAMES: tuple[str, ...] = (
 # and Frappe never calls ``setup()`` — leaving a stale or empty rail.  Keep each
 # settings DocType on at most one shipped sidebar (the main ``Procurement`` rail).
 _KT_WORKSPACE_TO_SIDEBAR: dict[str, str] = {
-	# Use the main Procurement rail for all three workspace pages so Planning/DIA
-	# never fall back to a stripped sidebar ("Planning module navigation" without
-	# settings links, or "Demand Intake" with only Home + DIA).
+	# Keep Planning surfaces nested under the main Procurement IA shell.
 	"procurement planning": "Procurement",
+	"procurement-planning": "Procurement",
+	"procurement-planning/approved-demands": "Procurement",
+	"approved-demands": "Procurement",
+	"procurement-planning/packages": "Procurement",
+	"packages": "Procurement",
+	"procurement-planning/releases": "Procurement",
+	"releases": "Procurement",
+	"procurement-planning/evidence": "Procurement",
+	"evidence": "Procurement",
 	"demand intake and approval": "Procurement",
 	"procurement home": "Procurement",
 	"my work": "Procurement",
@@ -101,6 +108,7 @@ _KT_WORKSPACE_TO_SIDEBAR: dict[str, str] = {
 	# frequently collapse to reduced app-specific sidebars.
 	"budget": "Procurement",
 	"strategy": "Procurement",
+	"demand": "Procurement",
 }
 
 # Custom desk page + guided form routes → parent sidebar (context-preserving navigation).

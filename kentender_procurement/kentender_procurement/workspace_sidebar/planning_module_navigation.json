@@ -7,7 +7,7 @@
  "items": [
   {
    "child": 0,
-   "collapsible": 1,
+   "collapsible": 0,
    "icon": "buying",
    "indent": 0,
    "keep_closed": 0,
@@ -20,7 +20,7 @@
   {
    "child": 0,
    "collapsible": 0,
-   "icon": "clipboard",
+   "icon": "check",
    "indent": 0,
    "keep_closed": 0,
    "label": "Demand Intake & Approval",

@@ -62,7 +62,14 @@ frappe.provide("kentender_core.module_registry");
 			formDoctype: "Procurement Package",
 			stateKey: "kt_pp_workbench_state",
 			selectKey: "kt_pp_workspace_select",
-			routePrefixes: ["Form/Procurement Package"],
+			routePrefixes: [
+				"procurement-planning",
+				"procurement-planning/approved-demands",
+				"procurement-planning/packages",
+				"procurement-planning/releases",
+				"procurement-planning/evidence",
+				"Form/Procurement Package",
+			],
 			taskLabels: {
 				form: __("Edit Package"),
 			},

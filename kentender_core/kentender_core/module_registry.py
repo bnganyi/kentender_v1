@@ -40,7 +40,14 @@ KT_MODULES: dict[str, dict[str, Any]] = {
 		"form_doctype": "Procurement Package",
 		"state_key": "kt_pp_workbench_state",
 		"select_key": "kt_pp_workspace_select",
-		"route_prefixes": ("Form/Procurement Package",),
+		"route_prefixes": (
+			"procurement-planning",
+			"procurement-planning/approved-demands",
+			"procurement-planning/packages",
+			"procurement-planning/releases",
+			"procurement-planning/evidence",
+			"Form/Procurement Package",
+		),
 	},
 	"ktsm": {
 		"workspace_label": "KTSM Supplier Registry",
@@ -60,11 +67,18 @@ def get_route_sidebar_keys() -> dict[str, str]:
 	"""Map desk route prefix (lower) → sidebar name for boot fast-path."""
 	out: dict[str, str] = {}
 	for mod in KT_MODULES.values():
+		parent = mod.get("sidebar_parent") or _KT_SIDEBAR_PARENT
 		for prefix in mod.get("route_prefixes") or ():
-			out[str(prefix).lower()] = _KT_SIDEBAR_PARENT
+			key = str(prefix).lower()
+			out[key] = parent
+			if "/" in key:
+				out[key.split("/")[0]] = parent
 		builder = mod.get("builder_page")
 		if builder:
-			out[str(builder).lower()] = _KT_SIDEBAR_PARENT
+			out[str(builder).lower()] = parent
+		desk_page = mod.get("desk_page")
+		if desk_page:
+			out[str(desk_page).lower()] = parent
 	return out
 
 

@@ -46,6 +46,12 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		items = bootinfo.get("workspace_sidebar_item") or {}
 		self.assertIn("procurement home", items)
 		self.assertIn("procurement planning", items)
+		planning = items.get("procurement planning") or {}
+		planning_labels = [row.get("label") for row in planning.get("items") or []]
+		self.assertIn("Procurement Home", planning_labels)
+		self.assertIn("Procurement Planning", planning_labels)
+		self.assertIn("Planning Home", planning_labels)
+		self.assertIn("Approved Demands", planning_labels)
 		for key in (
 			"my work",
 			"bid opening",
@@ -150,11 +156,31 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 			payload = items[route_key]
 			self.assertIsInstance(payload, dict)
 			self.assertTrue(len(payload.get("items") or []) > 0)
-			self.assertEqual(
-				payload.get("items"),
-				proc.get("items"),
-				msg=f"Route {route_key!r} should reuse Procurement sidebar rail",
-			)
+		self.assertEqual(
+			payload.get("items"),
+			proc.get("items"),
+			msg=f"Route {route_key!r} should reuse Procurement sidebar rail",
+		)
+
+	def test_bootinfo_includes_procurement_planning_surface_route_keys(self):
+		"""P5-001 — PP2 nested routes must keep main Procurement rail visible."""
+		if not frappe.db.exists("Workspace Sidebar", "Procurement"):
+			self.skipTest("Procurement sidebar not on site")
+		bootinfo: dict = {"workspace_sidebar_item": {}}
+		patch_bootinfo(bootinfo)
+		items = bootinfo.get("workspace_sidebar_item") or {}
+		proc = items.get("procurement") or {}
+		self.assertTrue(len(proc.get("items") or []) > 0)
+		for route_key in (
+			"procurement-planning",
+			"procurement-planning/approved-demands",
+			"procurement-planning/packages",
+			"procurement-planning/releases",
+			"procurement-planning/evidence",
+		):
+			self.assertIn(route_key, items, msg=f"PP2 route {route_key!r} requires boot fast-path key")
+			payload = items[route_key]
+			self.assertEqual(payload.get("items"), proc.get("items"))
 
 	def test_bootinfo_includes_module_fallback_sidebar_keys(self):
 		"""DocType module routes should preserve Procurement rail context."""

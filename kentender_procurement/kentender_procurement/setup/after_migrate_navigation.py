@@ -74,6 +74,10 @@ def reconcile_procurement_navigation_from_exports() -> None:
 	# rail. Remove it if present (see Planning menu restructure doc).
 	if frappe.db.exists("Workspace Sidebar", "Procurement Planning"):
 		frappe.delete_doc("Workspace Sidebar", "Procurement Planning", force=True, ignore_permissions=True)
+	if frappe.db.exists("Page", "pp2-planning"):
+		frappe.delete_doc("Page", "pp2-planning", force=True, ignore_permissions=True)
+	if frappe.db.exists("Workspace", "Procurement Planning"):
+		frappe.db.set_value("Workspace", "Procurement Planning", "is_hidden", 0)
 
 	# Include ``demand_intake`` so the Demand Intake module rail picks up
 	# ``Procurement Home`` / IA labels even when fixtures are skipped.

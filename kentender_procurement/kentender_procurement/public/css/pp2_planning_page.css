@@ -1,0 +1,118 @@
+/* PP2 Procurement Planning desk page shell (P5-001 stub surfaces). */
+.pp2-planning-page {
+	padding: 1rem 1.25rem 1.5rem;
+}
+
+.pp2-planning-page__header {
+	margin-bottom: 1rem;
+	padding-bottom: 0.75rem;
+	border-bottom: 1px solid var(--border-color, #d1d8dd);
+}
+
+body.kt-pp2-shell .page-form {
+	margin: 0;
+}
+
+.pp2-primary-workspace-shell {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 8px 0;
+}
+
+.pp2-primary-workspace-shell__header {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.pp2-primary-workspace-shell__breadcrumb {
+	font-size: 12px;
+}
+
+.pp2-primary-workspace-shell__layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 280px;
+	gap: 12px;
+	align-items: start;
+}
+
+.pp2-primary-workspace-shell__main {
+	min-width: 0;
+}
+
+.pp2-primary-workspace-shell__right {
+	border: 1px solid var(--border-color);
+	border-radius: 8px;
+	padding: 8px;
+	background: var(--fg-color);
+}
+
+.pp2-primary-workspace-shell__toggle {
+	margin-bottom: 8px;
+}
+
+.pp2-primary-workspace-shell[data-right-panel-collapsed="1"] .pp2-primary-workspace-shell__right {
+	width: 140px;
+}
+
+.pp2-primary-workspace-shell[data-right-panel-collapsed="1"] .pp2-primary-workspace-shell__next-action {
+	display: none;
+}
+
+/* P5 sidebar IA visual hierarchy enhancer (native Frappe structure stays source-of-truth). */
+.section-item.kt-pp2-sidebar-parent > .standard-sidebar-item {
+	font-weight: 600;
+}
+
+.section-item.kt-pp2-sidebar-parent .section-break {
+	margin-left: 0 !important;
+}
+
+.section-item.kt-pp2-sidebar-parent .kt-pp2-parent-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--text-color);
+	margin-right: 2px;
+	vertical-align: middle;
+}
+
+.section-item.kt-pp2-sidebar-parent .nested-container {
+	position: relative;
+	margin-left: 10px;
+	padding-left: 8px;
+}
+
+.section-item.kt-pp2-sidebar-parent .nested-container::before {
+	content: "";
+	position: absolute;
+	left: 10px;
+	top: 6px;
+	bottom: 6px;
+	width: 1px;
+	background: var(--border-color);
+}
+
+.section-item.kt-pp2-sidebar-parent .nested-container .item-anchor.kt-pp2-sidebar-child {
+	font-size: 12.5px;
+	font-weight: 500;
+	color: var(--text-muted);
+	padding-left: 6px;
+	margin-left: 4px;
+	border-radius: 6px;
+}
+
+/* Prevent default Frappe child active skin from bleeding into the rail area. */
+.section-item.kt-pp2-sidebar-parent .nested-container .standard-sidebar-item.active-sidebar {
+	background: transparent !important;
+	box-shadow: none !important;
+}
+
+.section-item.kt-pp2-sidebar-parent
+	.nested-container
+	.item-anchor.kt-pp2-sidebar-child.kt-pp2-sidebar-child-active {
+	color: var(--text-color);
+	background: var(--control-bg);
+	font-weight: 600;
+}
