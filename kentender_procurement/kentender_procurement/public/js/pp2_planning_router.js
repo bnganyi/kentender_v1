@@ -5,7 +5,11 @@
 	const RIGHT_PANEL_STATE_KEY = "kt-pp2-right-panel-collapsed";
 	let sidebarObserver = null;
 	let sidebarRefreshQueued = false;
-	let passiveSidebarPollStarted = false;
+	let bootRetryTimer = null;
+	let bootRunToken = 0;
+	let sidebarFastpathPatched = false;
+	let sidebarLookupPatched = false;
+	let sidebarSetupListenerBound = false;
 
 	const SURFACE_LABELS = {
 		"": __("Planning Home"),
@@ -115,39 +119,172 @@
 		}
 	}
 
-	function buildShellHtml(slug) {
-		const surface = surfaceForSlug(slug);
-		return (
-			'<div class="pp2-planning-page kt-pp2-shell" data-testid="' +
-			esc(surface.testId) +
-			'">' +
-			'<div class="pp2-planning-page__header">' +
-			"<h3 class=\"mb-1\">" +
-			esc(surface.title) +
-			"</h3>" +
-			'<p class="text-muted mb-0">' +
-			esc(surface.subtitle) +
-			"</p>" +
-			"</div>" +
-			'<div class="pp2-planning-page__body text-muted small">' +
-			esc(__("Surface content will be implemented in subsequent P5 tickets.")) +
-			"</div>" +
-			"</div>"
-		);
-	}
-
 	function resolveWorkspaceRoot() {
 		return (
 			document.getElementById("kt-pp-root") ||
-			document.querySelector(".kt-pp-injected-shell") ||
-			document.querySelector('[data-testid="pp-landing-page"]')
+			document.querySelector(".kt-pp-injected-shell")
 		);
+	}
+
+	function ensureWorkspaceRoot() {
+		let root = resolveWorkspaceRoot();
+		if (root) return root;
+		const mountPoint =
+			document.querySelector(".layout-main-section .editor-js-container") ||
+			document.querySelector(".layout-main-section") ||
+			document.querySelector(".page-content");
+		if (!mountPoint) return null;
+		root = document.createElement("div");
+		root.id = "kt-pp-root";
+		root.className = "kt-pp-injected-shell";
+		mountPoint.innerHTML = "";
+		mountPoint.appendChild(root);
+		return root;
+	}
+
+	function renderSurfaceShellPlaceholder(root, slug) {
+		if (!root) return;
+		const surface = surfaceForSlug(slug);
+		root.innerHTML =
+			'<section class="pp2-canonical-surface" data-testid="pp2-canonical-surface">' +
+			'<h3 class="h6 mb-1">' +
+			esc(surface.subtitle || __("Procurement Planning")) +
+			"</h3>" +
+			'<p class="text-muted small mb-0">' +
+			esc(__("Choose a planning workspace action from the navigation menu.")) +
+			"</p>" +
+			"</section>";
+	}
+
+	function slugifySidebarKey(value) {
+		const raw = String(value || "").trim();
+		if (!raw) return "";
+		try {
+			if (frappe.router && typeof frappe.router.slug === "function") {
+				return frappe.router.slug(raw);
+			}
+		} catch (e) {
+			/* ignore */
+		}
+		return raw.toLowerCase().replace(/\s+/g, "-");
+	}
+
+	function resolveRouteSidebarPayload() {
+		try {
+			const route = (frappe.get_route && frappe.get_route()) || [];
+			if (!route.length) return null;
+			let entity = "";
+			if (route[0] === "Workspaces") {
+				entity = route[1] === "private" ? route[2] : route[1];
+			} else if (route.length === 1) {
+				entity = route[0];
+			} else {
+				entity = route[1];
+			}
+			const keyRaw = String(entity || "").trim();
+			if (!keyRaw) return null;
+			const bag = (frappe.boot && frappe.boot.workspace_sidebar_item) || {};
+			return bag[keyRaw.toLowerCase()] || bag[slugifySidebarKey(keyRaw)] || null;
+		} catch (e) {
+			return null;
+		}
+	}
+
+	function patchSidebarSingleSegmentFastpath() {
+		if (sidebarFastpathPatched) return;
+		try {
+			if (!frappe.ui || !frappe.ui.Sidebar || !frappe.ui.Sidebar.prototype) {
+				return;
+			}
+			const proto = frappe.ui.Sidebar.prototype;
+			const original = proto.set_workspace_sidebar;
+			if (typeof original !== "function" || original.__ktSingleSegmentFastpathPatched) {
+				sidebarFastpathPatched = true;
+				return;
+			}
+			const patched = function (router) {
+				try {
+					const mapped = resolveRouteSidebarPayload();
+					if (mapped && mapped.label) {
+						this.setup(mapped.label);
+						return;
+					}
+				} catch (e) {
+					/* ignore */
+				}
+				return original.call(this, router);
+			};
+			patched.__ktSingleSegmentFastpathPatched = true;
+			proto.set_workspace_sidebar = patched;
+			sidebarFastpathPatched = true;
+		} catch (e2) {
+			/* ignore */
+		}
+	}
+
+	function patchSidebarLookupBySlug() {
+		if (sidebarLookupPatched) return;
+		try {
+			if (!frappe.ui || !frappe.ui.Sidebar || !frappe.ui.Sidebar.prototype) {
+				return;
+			}
+			const proto = frappe.ui.Sidebar.prototype;
+			const original = proto.get_workspace_sidebars;
+			if (typeof original !== "function" || original.__ktSlugLookupPatched) {
+				sidebarLookupPatched = true;
+				return;
+			}
+			const patched = function (link_to) {
+				const requested = slugifySidebarKey(link_to);
+				let sidebars = [];
+				try {
+					Object.entries(this.all_sidebar_items || {}).forEach(function (pair) {
+						const sidebar = pair[1] || {};
+						const items = sidebar.items || [];
+						const label = sidebar.label || pair[0];
+						for (let i = 0; i < items.length; i += 1) {
+							const itemLink = items[i] && items[i].link_to;
+							if (!itemLink) continue;
+							if (String(itemLink) === String(link_to) || slugifySidebarKey(itemLink) === requested) {
+								sidebars.push(label);
+								break;
+							}
+						}
+					});
+				} catch (e) {
+					/* ignore */
+				}
+				return sidebars;
+			};
+			patched.__ktSlugLookupPatched = true;
+			proto.get_workspace_sidebars = patched;
+			sidebarLookupPatched = true;
+		} catch (e2) {
+			/* ignore */
+		}
+	}
+
+	function pruneDuplicatePrimaryShells(activeShell) {
+		if (!activeShell || !activeShell.parentNode) return;
+		const shells = document.querySelectorAll('[data-testid="pp2-primary-workspace-shell"]');
+		for (let i = 0; i < shells.length; i += 1) {
+			const shell = shells[i];
+			if (shell === activeShell) continue;
+			if (shell.parentNode) {
+				shell.parentNode.removeChild(shell);
+			}
+		}
 	}
 
 	function ensurePrimaryWorkspaceShell(root, slug) {
 		if (!root) return null;
 		const surface = surfaceForSlug(slug);
-		let shell = root.closest('[data-testid="pp2-primary-workspace-shell"]');
+		let shell =
+			root.closest('[data-testid="pp2-primary-workspace-shell"]') ||
+			document.querySelector('[data-testid="pp2-primary-workspace-shell"]');
+		if (shell && !shell.isConnected) {
+			shell = null;
+		}
 		if (!shell) {
 			shell = document.createElement("section");
 			shell.className = "pp2-primary-workspace-shell";
@@ -169,10 +306,18 @@
 			root.parentNode.insertBefore(shell, root);
 		}
 
-		const mainHost = shell.querySelector('[data-testid="pp2-primary-main-host"]');
+		let mainHost = shell.querySelector('[data-testid="pp2-primary-main-host"]');
+		if (!mainHost) {
+			if (shell.parentNode) {
+				shell.parentNode.removeChild(shell);
+			}
+			return ensurePrimaryWorkspaceShell(root, slug);
+		}
+
 		if (mainHost && root.parentNode !== mainHost) {
 			mainHost.appendChild(root);
 		}
+		pruneDuplicatePrimaryShells(shell);
 
 		const breadcrumb = shell.querySelector('[data-testid="pp2-primary-breadcrumb"]');
 		if (breadcrumb) {
@@ -180,7 +325,7 @@
 		}
 		const contextHost = shell.querySelector('[data-testid="pp2-primary-context-host"]');
 		if (contextHost) {
-			contextHost.textContent = __("Primary workspace shell") + " - " + surface.subtitle;
+			contextHost.innerHTML = "";
 		}
 		const nextActionPanel = shell.querySelector('[data-testid="pp2-primary-next-action-panel"]');
 		if (nextActionPanel) {
@@ -188,10 +333,7 @@
 				'<strong class="d-block mb-1">' +
 				esc(__("Next action")) +
 				"</strong>" +
-				esc(__("Continue in ")) +
-				esc(surface.subtitle) +
-				". " +
-				esc(__("Blockers and evidence will appear here as P5 surfaces are completed."));
+				esc(__("Open a planning queue from the sidebar to continue."));
 		}
 
 		const toggle = shell.querySelector('[data-testid="pp2-primary-right-panel-toggle"]');
@@ -232,6 +374,18 @@
 		if (!parent) return false;
 		parent.classList.add("kt-pp2-sidebar-parent");
 		parent.classList.toggle("kt-pp2-sidebar-parent-active", !!parentActive);
+		if (!parentActive) {
+			const nested = parent.querySelector(".nested-container");
+			const dropIcon = parent.querySelector(".drop-icon");
+			const expanded = !!(
+				nested &&
+				window.getComputedStyle(nested).display !== "none" &&
+				nested.querySelector(".item-anchor")
+			);
+			if (expanded && dropIcon && typeof dropIcon.click === "function") {
+				dropIcon.click();
+			}
+		}
 		const sectionBreak = parent.querySelector(".section-break");
 		if (sectionBreak && !sectionBreak.querySelector(".kt-pp2-parent-icon")) {
 			const icon = document.createElement("span");
@@ -277,21 +431,16 @@
 			const targetPath = routeByLabel[label];
 			if (!targetPath) continue;
 			anchor.setAttribute("href", targetPath);
-			anchor.onclick = function (ev) {
-				ev.preventDefault();
-				window.history.pushState({}, "", targetPath);
-				scheduleBoot();
-			};
 		}
 	}
 
 	function queueSidebarRefresh() {
 		if (sidebarRefreshQueued) return;
 		sidebarRefreshQueued = true;
-		window.setTimeout(function () {
+		window.requestAnimationFrame(function () {
 			sidebarRefreshQueued = false;
 			scheduleBoot();
-		}, 40);
+		});
 	}
 
 	function elementTouchesSidebar(el) {
@@ -311,16 +460,20 @@
 					queueSidebarRefresh();
 					return;
 				}
-				for (let j = 0; j < m.addedNodes.length; j += 1) {
-					if (elementTouchesSidebar(m.addedNodes[j])) {
-						queueSidebarRefresh();
-						return;
+				if (m.addedNodes && m.addedNodes.length) {
+					for (let j = 0; j < m.addedNodes.length; j += 1) {
+						if (elementTouchesSidebar(m.addedNodes[j])) {
+							queueSidebarRefresh();
+							return;
+						}
 					}
 				}
-				for (let k = 0; k < m.removedNodes.length; k += 1) {
-					if (elementTouchesSidebar(m.removedNodes[k])) {
-						queueSidebarRefresh();
-						return;
+				if (m.removedNodes && m.removedNodes.length) {
+					for (let k = 0; k < m.removedNodes.length; k += 1) {
+						if (elementTouchesSidebar(m.removedNodes[k])) {
+							queueSidebarRefresh();
+							return;
+						}
 					}
 				}
 			}
@@ -328,13 +481,16 @@
 		sidebarObserver.observe(target, { childList: true, subtree: true });
 	}
 
-	function ensurePassiveSidebarPoll() {
-		if (passiveSidebarPollStarted) return;
-		passiveSidebarPollStarted = true;
-		window.setInterval(function () {
-			if (document.hidden) return;
-			mount();
-		}, 900);
+	function ensureSidebarSetupListener() {
+		if (sidebarSetupListenerBound) return;
+		sidebarSetupListenerBound = true;
+		$(document).on("sidebar_setup.kt_pp2_hierarchy", function () {
+			// Frappe emits sidebar_setup before the new sidebar DOM is fully painted.
+			// Defer one frame so the enhancer can find and decorate the parent node.
+			window.requestAnimationFrame(function () {
+				scheduleBoot();
+			});
+		});
 	}
 
 	function mount() {
@@ -346,34 +502,51 @@
 			document.body.classList.remove("kt-pp2-shell");
 			return hierarchyReady;
 		}
-		const root = resolveWorkspaceRoot();
+		const root = ensureWorkspaceRoot();
 		if (!root) return false;
 		syncSurfaceUrl(slug);
-		ensurePrimaryWorkspaceShell(root, slug);
+		const shell = ensurePrimaryWorkspaceShell(root, slug);
+		if (!shell) return false;
+		const mainHost = shell.querySelector('[data-testid="pp2-primary-main-host"]');
+		if (mainHost) {
+			const children = Array.from(mainHost.children);
+			for (let i = 0; i < children.length; i += 1) {
+				if (children[i] !== root) {
+					mainHost.removeChild(children[i]);
+				}
+			}
+		}
 		const markerId = surfaceForSlug(slug).testId;
 		root.setAttribute("data-testid", markerId);
-		const existingMarker = root.querySelector(".pp2-route-marker");
-		if (existingMarker) existingMarker.remove();
-		const marker = document.createElement("div");
-		marker.className = "pp2-route-marker text-muted small mt-2";
-		marker.textContent = surfaceForSlug(slug).subtitle;
-		root.appendChild(marker);
+		renderSurfaceShellPlaceholder(root, slug);
 		document.body.classList.add("kt-pp2-shell");
 		syncSidebarActive(slug);
 		return true;
 	}
 
 	function scheduleBoot() {
+		patchSidebarSingleSegmentFastpath();
+		patchSidebarLookupBySlug();
 		ensureSidebarObserver();
-		ensurePassiveSidebarPoll();
+		ensureSidebarSetupListener();
+		bootRunToken += 1;
+		const token = bootRunToken;
+		if (bootRetryTimer) {
+			clearTimeout(bootRetryTimer);
+			bootRetryTimer = null;
+		}
 		if (mount()) return;
 		let retries = 0;
-		const timer = setInterval(function () {
+		const retry = function () {
+			if (token !== bootRunToken) return;
 			retries += 1;
-			if (mount() || retries >= 60) {
-				clearInterval(timer);
+			if (mount() || retries >= 10) {
+				bootRetryTimer = null;
+				return;
 			}
-		}, 50);
+			bootRetryTimer = window.setTimeout(retry, 70);
+		};
+		bootRetryTimer = window.setTimeout(retry, 70);
 	}
 
 	$(document).on("page-change", scheduleBoot);
@@ -381,5 +554,7 @@
 	if (frappe.router && frappe.router.on) {
 		frappe.router.on("change", scheduleBoot);
 	}
+	patchSidebarSingleSegmentFastpath();
+	patchSidebarLookupBySlug();
 	scheduleBoot();
 })();
