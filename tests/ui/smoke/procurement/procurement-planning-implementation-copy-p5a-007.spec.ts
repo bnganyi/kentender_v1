@@ -65,6 +65,17 @@ test.describe('P5A-007 Planning implementation copy scan', () => {
 	});
 
 	test('each surface shows business empty state with purpose copy', async ({ page }) => {
+		const surfacePurpose: Record<string, RegExp> = {
+			'/desk/procurement-planning': /Convert approved demand into tender-ready procurement packages/i,
+			'/desk/procurement-planning/approved-demands': /Which approved demands can be planned now/i,
+			'/desk/procurement-planning/plans': /Which plan owns this procurement work/i,
+			'/desk/procurement-planning/packages': /Which packages need work, review, release, or follow-up/i,
+			'/desk/procurement-planning/releases': /Which packages have left Planning, and where did they go/i,
+		};
+		for (const [path, purposePattern] of Object.entries(surfacePurpose)) {
+			await page.goto(`${root}${path}`, { waitUntil: 'domcontentloaded' });
+			await expect(page.getByTestId('pp2-page-purpose')).toHaveText(purposePattern, { timeout: 30000 });
+		}
 		for (const [path, messagePattern] of Object.entries(SURFACE_EMPTY_MESSAGES)) {
 			await page.goto(`${root}${path}`, { waitUntil: 'domcontentloaded' });
 			const emptyState = page.getByTestId('pp2-surface-empty-state');

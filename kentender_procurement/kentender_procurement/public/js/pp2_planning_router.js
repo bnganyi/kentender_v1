@@ -330,45 +330,222 @@
 		return root;
 	}
 
-	const SURFACE_EMPTY_STATES = {
-		"": {
-			purpose: __("Convert approved demand into tender-ready procurement packages."),
-			message: __("No items need your attention right now."),
-		},
-		"approved-demands": {
-			purpose: __("Which approved demands can be planned now?"),
-			message: __("No approved demands match this queue."),
-		},
-		plans: {
-			purpose: __("Which plan owns this procurement work?"),
-			message: __("No procurement plans match this queue."),
-		},
-		packages: {
-			purpose: __("Which packages need work, review, release, or follow-up?"),
-			message: __("No packages match this queue."),
-		},
-		releases: {
-			purpose: __("Which packages have left Planning, and where did they go?"),
-			message: __("No released packages match this queue."),
-		},
+	const SURFACE_PURPOSE = {
+		"": __("Convert approved demand into tender-ready procurement packages."),
+		"approved-demands": __("Which approved demands can be planned now?"),
+		plans: __("Which plan owns this procurement work?"),
+		packages: __("Which packages need work, review, release, or follow-up?"),
+		releases: __("Which packages have left Planning, and where did they go?"),
 	};
+
+	function surfacePurposeForSlug(slug) {
+		const emptyApi =
+			kentender_procurement &&
+			kentender_procurement.PlanningEmptyState &&
+			typeof kentender_procurement.PlanningEmptyState.purposeForSlug === "function"
+				? kentender_procurement.PlanningEmptyState
+				: null;
+		if (emptyApi) return emptyApi.purposeForSlug(slug);
+		const key = slug == null ? "" : String(slug);
+		return SURFACE_PURPOSE[key] || SURFACE_PURPOSE[""];
+	}
 
 	function renderSurfaceEmptyState(root, slug) {
 		if (!root) return;
-		const surface = surfaceForSlug(slug);
-		const copy = SURFACE_EMPTY_STATES[slug || ""] || SURFACE_EMPTY_STATES[""];
+		const emptyApi =
+			kentender_procurement &&
+			kentender_procurement.PlanningEmptyState &&
+			typeof kentender_procurement.PlanningEmptyState.renderForSlug === "function"
+				? kentender_procurement.PlanningEmptyState
+				: null;
 		root.innerHTML =
-			'<section class="pp2-surface-empty-state" data-testid="pp2-surface-empty-state">' +
-			'<h3 class="h6 mb-1">' +
+			'<section class="pp2-surface-empty-state" data-testid="pp2-surface-empty-state"></section>';
+		const wrapper = root.querySelector('[data-testid="pp2-surface-empty-state"]');
+		if (!wrapper) return;
+		if (emptyApi) {
+			emptyApi.renderForSlug(wrapper, slug);
+			return;
+		}
+		wrapper.innerHTML =
+			'<div class="pp2-empty-state" data-testid="pp2-empty-state">' +
+			'<p class="text-muted small mb-0" data-testid="pp2-empty-state-message">' +
+			esc(__("No items need your attention right now.")) +
+			"</p></div>";
+	}
+
+	function mountPlanningPageHeader(contextHost, slug) {
+		if (!contextHost) return;
+		const api =
+			kentender_procurement &&
+			kentender_procurement.PlanningPageHeader &&
+			typeof kentender_procurement.PlanningPageHeader.renderForSlug === "function"
+				? kentender_procurement.PlanningPageHeader
+				: null;
+		if (api) {
+			api.renderForSlug(contextHost, slug);
+			return;
+		}
+		const copy = surfacePurposeForSlug(slug);
+		const surface = surfaceForSlug(slug);
+		contextHost.innerHTML =
+			'<header class="pp2-page-header" data-testid="pp2-page-header">' +
+			'<h2 class="h5 mb-1" data-testid="pp2-page-title">' +
 			esc(surface.subtitle || __("Procurement Planning")) +
-			"</h3>" +
-			'<p class="text-muted small mb-1">' +
-			esc(copy.purpose) +
-			"</p>" +
-			'<p class="text-muted small mb-0" data-testid="pp2-surface-empty-message">' +
-			esc(copy.message) +
-			"</p>" +
-			"</section>";
+			"</h2>" +
+			'<p class="text-muted small mb-0" data-testid="pp2-page-purpose">' +
+			esc(copy) +
+			"</p></header>";
+	}
+
+	function mountPlanningQueueTabs(mainHost, slug) {
+		if (!mainHost) return;
+		let queueHost = mainHost.querySelector('[data-testid="pp2-primary-queue-host"]');
+		if (!queueHost) {
+			queueHost = document.createElement("div");
+			queueHost.className = "pp2-primary-queue-host";
+			queueHost.setAttribute("data-testid", "pp2-primary-queue-host");
+			mainHost.insertBefore(queueHost, mainHost.firstChild);
+		} else if (mainHost.firstChild !== queueHost) {
+			mainHost.insertBefore(queueHost, mainHost.firstChild);
+		}
+		const api =
+			kentender_procurement &&
+			kentender_procurement.PlanningQueueTabs &&
+			typeof kentender_procurement.PlanningQueueTabs.renderForSlug === "function"
+				? kentender_procurement.PlanningQueueTabs
+				: null;
+		if (api) {
+			api.renderForSlug(queueHost, slug);
+			return;
+		}
+		queueHost.innerHTML = "";
+	}
+
+	function mountPlanningAdvancedFilters(mainHost, slug) {
+		if (!mainHost) return;
+		const api =
+			kentender_procurement &&
+			kentender_procurement.PlanningAdvancedFilters &&
+			typeof kentender_procurement.PlanningAdvancedFilters.renderForSlug === "function"
+				? kentender_procurement.PlanningAdvancedFilters
+				: null;
+		let filtersHost = mainHost.querySelector('[data-testid="pp2-primary-filters-host"]');
+		if (!api || !api.isAvailableForSlug(slug)) {
+			if (filtersHost) filtersHost.remove();
+			return;
+		}
+		const queueHost = mainHost.querySelector('[data-testid="pp2-primary-queue-host"]');
+		const workListHost = mainHost.querySelector('[data-testid="pp2-primary-work-list-host"]');
+		if (!filtersHost) {
+			filtersHost = document.createElement("div");
+			filtersHost.className = "pp2-primary-filters-host";
+			filtersHost.setAttribute("data-testid", "pp2-primary-filters-host");
+		}
+		if (workListHost) {
+			mainHost.insertBefore(filtersHost, workListHost);
+		} else if (queueHost && queueHost.nextSibling) {
+			mainHost.insertBefore(filtersHost, queueHost.nextSibling);
+		} else if (queueHost) {
+			if (queueHost.nextSibling) {
+				mainHost.insertBefore(filtersHost, queueHost.nextSibling);
+			} else {
+				mainHost.appendChild(filtersHost);
+			}
+		} else {
+			mainHost.insertBefore(filtersHost, mainHost.firstChild);
+		}
+		api.renderForSlug(filtersHost, slug);
+	}
+
+	function ensureSummaryHost(shell) {
+		if (!shell) return null;
+		const rightPanel = shell.querySelector('[data-testid="pp2-primary-right-panel"]');
+		if (!rightPanel) return null;
+		let summaryHost = rightPanel.querySelector('[data-testid="pp2-primary-summary-host"]');
+		if (!summaryHost) {
+			summaryHost = document.createElement("div");
+			summaryHost.className = "pp2-primary-summary-host";
+			summaryHost.setAttribute("data-testid", "pp2-primary-summary-host");
+			const nextAction = rightPanel.querySelector('[data-testid="pp2-primary-next-action-panel"]');
+			if (nextAction) {
+				rightPanel.insertBefore(summaryHost, nextAction);
+			} else {
+				rightPanel.appendChild(summaryHost);
+			}
+		}
+		return summaryHost;
+	}
+
+	function mountPlanningSelectedSummary(shell, opts) {
+		if (!shell) return;
+		const summaryHost = ensureSummaryHost(shell);
+		if (!summaryHost) return;
+		const api =
+			kentender_procurement &&
+			kentender_procurement.PlanningSelectedSummaryPanel &&
+			typeof kentender_procurement.PlanningSelectedSummaryPanel.renderIdle === "function"
+				? kentender_procurement.PlanningSelectedSummaryPanel
+				: null;
+		if (!api) {
+			summaryHost.innerHTML = "";
+			return;
+		}
+		const o = opts || {};
+		if (o.summary && String(o.summary.title || "").trim()) {
+			api.render(summaryHost, o);
+			return;
+		}
+		api.renderIdle(summaryHost, o);
+	}
+
+	function mountPlanningWorkList(mainHost, slug, shell) {
+		if (!mainHost) return;
+		const queueHost = mainHost.querySelector('[data-testid="pp2-primary-queue-host"]');
+		const filtersHost = mainHost.querySelector('[data-testid="pp2-primary-filters-host"]');
+		const insertAfter = filtersHost || queueHost;
+		let workListHost = mainHost.querySelector('[data-testid="pp2-primary-work-list-host"]');
+		if (!workListHost) {
+			workListHost = document.createElement("div");
+			workListHost.className = "pp2-primary-work-list-host";
+			workListHost.setAttribute("data-testid", "pp2-primary-work-list-host");
+			if (insertAfter && insertAfter.nextSibling) {
+				mainHost.insertBefore(workListHost, insertAfter.nextSibling);
+			} else if (insertAfter) {
+				mainHost.appendChild(workListHost);
+			} else {
+				mainHost.insertBefore(workListHost, mainHost.firstChild);
+			}
+		} else {
+			const desiredNext = insertAfter ? insertAfter.nextSibling : mainHost.firstChild;
+			if (insertAfter && workListHost.previousSibling !== insertAfter) {
+				mainHost.insertBefore(workListHost, desiredNext);
+			} else if (!insertAfter && mainHost.firstChild !== workListHost) {
+				mainHost.insertBefore(workListHost, mainHost.firstChild);
+			}
+		}
+		const api =
+			kentender_procurement &&
+			kentender_procurement.PlanningWorkList &&
+			typeof kentender_procurement.PlanningWorkList.renderForSlug === "function"
+				? kentender_procurement.PlanningWorkList
+				: null;
+		const onSelect = function (_itemId, item) {
+			if (!shell) return;
+			const summaryApi =
+				kentender_procurement &&
+				kentender_procurement.PlanningSelectedSummaryPanel &&
+				typeof kentender_procurement.PlanningSelectedSummaryPanel.summaryFromWorkItem === "function"
+					? kentender_procurement.PlanningSelectedSummaryPanel
+					: null;
+			if (summaryApi && item) {
+				mountPlanningSelectedSummary(shell, { summary: summaryApi.summaryFromWorkItem(item) });
+			}
+		};
+		if (api) {
+			api.renderForSlug(workListHost, slug, { items: [], onSelect: onSelect });
+			return;
+		}
+		workListHost.innerHTML = "";
 	}
 
 	function slugifySidebarKey(value) {
@@ -515,6 +692,7 @@
 				'<div class="pp2-primary-workspace-shell__main" data-testid="pp2-primary-main-host"></div>' +
 				'<aside class="pp2-primary-workspace-shell__right" data-testid="pp2-primary-right-panel">' +
 				'<button type="button" class="btn btn-xs btn-default pp2-primary-workspace-shell__toggle" data-testid="pp2-primary-right-panel-toggle"></button>' +
+				'<div class="pp2-primary-summary-host" data-testid="pp2-primary-summary-host"></div>' +
 				'<div class="pp2-primary-workspace-shell__next-action text-muted small" data-testid="pp2-primary-next-action-panel"></div>' +
 				"</aside>" +
 				"</div>";
@@ -540,7 +718,7 @@
 		}
 		const contextHost = shell.querySelector('[data-testid="pp2-primary-context-host"]');
 		if (contextHost) {
-			contextHost.innerHTML = "";
+			mountPlanningPageHeader(contextHost, slug);
 		}
 		const nextActionPanel = shell.querySelector('[data-testid="pp2-primary-next-action-panel"]');
 		if (nextActionPanel) {
@@ -561,6 +739,8 @@
 			const collapsed = shell.getAttribute("data-right-panel-collapsed") === "1";
 			toggle.textContent = collapsed ? __("Expand panel") : __("Collapse panel");
 		}
+		ensureSummaryHost(shell);
+		mountPlanningSelectedSummary(shell, {});
 
 		return shell;
 	}
@@ -768,11 +948,35 @@
 		});
 	}
 
+	function closePlanningEvidenceDrawer() {
+		const drawerApi =
+			kentender_procurement &&
+			kentender_procurement.PlanningEvidenceDrawer &&
+			typeof kentender_procurement.PlanningEvidenceDrawer.close === "function"
+				? kentender_procurement.PlanningEvidenceDrawer
+				: null;
+		if (drawerApi) {
+			drawerApi.close();
+		}
+	}
+
+	function removePp2PlanningShellIfWrongRoute() {
+		closePlanningEvidenceDrawer();
+		document.querySelectorAll('[data-testid="pp2-primary-workspace-shell"]').forEach(function (el) {
+			el.remove();
+		});
+		document.querySelectorAll("#kt-pp-root, .kt-pp-injected-shell").forEach(function (el) {
+			el.remove();
+		});
+		document.body.classList.remove("kt-pp2-shell");
+	}
+
 	function mount() {
+		closePlanningEvidenceDrawer();
 		const planningRoute = isPlanningWorkspaceRoute();
 		normalizeChildLinkRoutes();
 		if (!planningRoute) {
-			document.body.classList.remove("kt-pp2-shell");
+			removePp2PlanningShellIfWrongRoute();
 			return enhanceSidebarVisualHierarchy("", false);
 		}
 
@@ -810,10 +1014,56 @@
 		if (!shell) return false;
 		const mainHost = shell.querySelector('[data-testid="pp2-primary-main-host"]');
 		if (mainHost) {
+			const queueHost = mainHost.querySelector('[data-testid="pp2-primary-queue-host"]');
+			const filtersHost = mainHost.querySelector('[data-testid="pp2-primary-filters-host"]');
+			const workListHost = mainHost.querySelector('[data-testid="pp2-primary-work-list-host"]');
 			const children = Array.from(mainHost.children);
 			for (let i = 0; i < children.length; i += 1) {
-				if (children[i] !== root) {
+				if (
+					children[i] !== root &&
+					children[i] !== queueHost &&
+					children[i] !== filtersHost &&
+					children[i] !== workListHost
+				) {
 					mainHost.removeChild(children[i]);
+				}
+			}
+			mountPlanningQueueTabs(mainHost, slug);
+			const queueApi =
+				kentender_procurement &&
+				kentender_procurement.PlanningQueueTabs &&
+				typeof kentender_procurement.PlanningQueueTabs.readActiveFromUrl === "function"
+					? kentender_procurement.PlanningQueueTabs
+					: null;
+			if (queueApi) {
+				try {
+					const raw = new URLSearchParams(window.location.search).get("queue");
+					if (raw) {
+						const activeQueue = queueApi.readActiveFromUrl(slug);
+						if (raw !== activeQueue) {
+							queueApi.setQueueUrl(activeQueue);
+						}
+					}
+				} catch (e) {
+					/* ignore */
+				}
+			}
+			mountPlanningAdvancedFilters(mainHost, slug);
+			mountPlanningWorkList(mainHost, slug, shell);
+			const workListApi =
+				kentender_procurement &&
+				kentender_procurement.PlanningWorkList &&
+				typeof kentender_procurement.PlanningWorkList.readSelectedFromUrl === "function"
+					? kentender_procurement.PlanningWorkList
+					: null;
+			if (workListApi) {
+				try {
+					const rawItem = new URLSearchParams(window.location.search).get("item");
+					if (rawItem && !workListApi.readSelectedFromUrl([])) {
+						workListApi.setSelectedUrl("");
+					}
+				} catch (e) {
+					/* ignore */
 				}
 			}
 		}
