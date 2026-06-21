@@ -89,15 +89,198 @@
 		return "";
 	}
 
+	const CANONICAL_PLANNING_SLUGS = {
+		"approved-demands": true,
+		plans: true,
+		packages: true,
+		releases: true,
+	};
+
+	const INTERNAL_PLANNING_LEGACY_SLUGS = {
+		evidence: true,
+		inclusions: true,
+		readiness: true,
+		review: true,
+		lines: true,
+		technical: true,
+		audit: true,
+	};
+
+	const INTERNAL_PLANNING_ACCESS_ROLES = [
+		"Procurement Planner",
+		"Planning Reviewer",
+		"Planning Authority",
+		"Auditor",
+		"Administrator",
+		"System Manager",
+		"Procurement Officer",
+		"Tender Manager",
+		"Budget Officer",
+	];
+
+	const INTERNAL_PLANNING_DENIED_ROLES = ["Supplier"];
+
+	function readUserRoles() {
+		try {
+			if (frappe.boot && frappe.boot.user && frappe.boot.user.roles) {
+				return frappe.boot.user.roles.slice();
+			}
+			if (frappe.user_roles) {
+				return frappe.user_roles.slice();
+			}
+		} catch (e) {
+			/* ignore */
+		}
+		return [];
+	}
+
+	function mayAccessInternalPlanningLegacyRoute() {
+		const roles = readUserRoles();
+		for (let i = 0; i < INTERNAL_PLANNING_DENIED_ROLES.length; i += 1) {
+			if (roles.indexOf(INTERNAL_PLANNING_DENIED_ROLES[i]) === -1) continue;
+			for (let j = 0; j < INTERNAL_PLANNING_ACCESS_ROLES.length; j += 1) {
+				if (roles.indexOf(INTERNAL_PLANNING_ACCESS_ROLES[j]) !== -1) {
+					return true;
+				}
+			}
+			return false;
+		}
+		return true;
+	}
+
+	function parsePlanningPathname(pathname) {
+		const path = String(pathname || "").toLowerCase();
+		const prefix = ROOT_PATH.toLowerCase();
+		if (!path.startsWith(prefix)) return [];
+		const rest = path.slice(prefix.length).replace(/^\/+/, "");
+		if (!rest) return [];
+		return rest.split("/").filter(Boolean);
+	}
+
+	function readPlanningRawSegments(pathname) {
+		const path = String(pathname || "");
+		const prefix = ROOT_PATH.toLowerCase();
+		if (!path.toLowerCase().startsWith(prefix)) return [];
+		const rest = path.slice(ROOT_PATH.length).replace(/^\/+/, "");
+		if (!rest) return [];
+		return rest.split("/").filter(Boolean);
+	}
+
+	function buildPackagesRedirectUrl(packageCode) {
+		const url = new URL(window.location.origin + ROOT_PATH + "/packages");
+		const code = String(packageCode || "").trim();
+		if (code) {
+			url.searchParams.set("package_code", decodeURIComponent(code));
+		}
+		return url.pathname + url.search;
+	}
+
+	function resolvePlanningRoute(pathname) {
+		const segments = parsePlanningPathname(pathname);
+		const rawSegments = readPlanningRawSegments(pathname);
+		if (!segments.length) {
+			return { action: "canonical", slug: "" };
+		}
+
+		const head = segments[0];
+		if (CANONICAL_PLANNING_SLUGS[head] && segments.length === 1) {
+			return { action: "canonical", slug: head };
+		}
+
+		const requiresInternalAccess =
+			INTERNAL_PLANNING_LEGACY_SLUGS[head] ||
+			(head === "packages" && segments.length > 1) ||
+			(head === "plans" && segments.length > 1) ||
+			(head === "releases" && segments.length > 1);
+		if (requiresInternalAccess && !mayAccessInternalPlanningLegacyRoute()) {
+			return { action: "not_found", reason: "denied" };
+		}
+
+		if (head === "evidence") {
+			return {
+				action: "redirect",
+				slug: "packages",
+				redirectUrl: buildPackagesRedirectUrl(rawSegments[1] || ""),
+			};
+		}
+		if (head === "inclusions") {
+			return {
+				action: "redirect",
+				slug: "approved-demands",
+				redirectUrl: `${ROOT_PATH}/approved-demands`,
+			};
+		}
+		if (head === "readiness" || head === "review" || head === "lines" || head === "technical" || head === "audit") {
+			return {
+				action: "redirect",
+				slug: "packages",
+				redirectUrl: `${ROOT_PATH}/packages`,
+			};
+		}
+		if (head === "releases" && segments.length > 1) {
+			return {
+				action: "redirect",
+				slug: "releases",
+				redirectUrl: `${ROOT_PATH}/releases`,
+			};
+		}
+		if (head === "plans" && segments.length > 1) {
+			return {
+				action: "redirect",
+				slug: "plans",
+				redirectUrl: `${ROOT_PATH}/plans`,
+			};
+		}
+		if (head === "packages" && segments.length > 1) {
+			return {
+				action: "redirect",
+				slug: "packages",
+				redirectUrl: buildPackagesRedirectUrl(rawSegments[1] || ""),
+			};
+		}
+
+		if (!CANONICAL_PLANNING_SLUGS[head]) {
+			return { action: "not_found", reason: "unknown" };
+		}
+
+		return { action: "canonical", slug: head };
+	}
+
+	function applyPlanningRouteRedirect(redirectUrl) {
+		const target = String(redirectUrl || "").trim();
+		if (!target) return false;
+		const url = new URL(target, window.location.origin);
+		const next = url.pathname + url.search + url.hash;
+		const curr = window.location.pathname + window.location.search + window.location.hash;
+		if (next === curr) return false;
+		window.history.replaceState({}, "", next);
+		return true;
+	}
+
+	function renderRouteNotFound(root) {
+		if (!root) return;
+		root.innerHTML =
+			'<section class="pp2-route-not-found" data-testid="pp2-route-not-found">' +
+			'<h3 class="h6 mb-1">' +
+			esc(__("Planning page unavailable")) +
+			"</h3>" +
+			'<p class="text-muted small mb-0">' +
+			esc(__("This planning page is not available or you do not have access.")) +
+			"</p>" +
+			"</section>";
+	}
+
 	function surfaceForSlug(slug) {
 		return SURFACES[slug] || SURFACES[""];
 	}
 
 	function readRightPanelCollapsed() {
 		try {
-			return window.localStorage.getItem(RIGHT_PANEL_STATE_KEY) === "1";
+			const raw = window.localStorage.getItem(RIGHT_PANEL_STATE_KEY);
+			if (raw === null) return true;
+			return raw === "1";
 		} catch (e) {
-			return false;
+			return true;
 		}
 	}
 
@@ -109,9 +292,14 @@
 		}
 	}
 
-	function syncSurfaceUrl(slug) {
+	function syncSurfaceUrl(slug, options) {
+		const opts = options || {};
 		const url = new URL(window.location.href);
+		const preserveSearch = opts.preserveSearch !== false;
 		url.pathname = slug ? `${ROOT_PATH}/${slug}` : ROOT_PATH;
+		if (!preserveSearch) {
+			url.search = "";
+		}
 		const next = url.pathname + url.search + url.hash;
 		const curr = window.location.pathname + window.location.search + window.location.hash;
 		if (next !== curr) {
@@ -142,16 +330,43 @@
 		return root;
 	}
 
-	function renderSurfaceShellPlaceholder(root, slug) {
+	const SURFACE_EMPTY_STATES = {
+		"": {
+			purpose: __("Convert approved demand into tender-ready procurement packages."),
+			message: __("No items need your attention right now."),
+		},
+		"approved-demands": {
+			purpose: __("Which approved demands can be planned now?"),
+			message: __("No approved demands match this queue."),
+		},
+		plans: {
+			purpose: __("Which plan owns this procurement work?"),
+			message: __("No procurement plans match this queue."),
+		},
+		packages: {
+			purpose: __("Which packages need work, review, release, or follow-up?"),
+			message: __("No packages match this queue."),
+		},
+		releases: {
+			purpose: __("Which packages have left Planning, and where did they go?"),
+			message: __("No released packages match this queue."),
+		},
+	};
+
+	function renderSurfaceEmptyState(root, slug) {
 		if (!root) return;
 		const surface = surfaceForSlug(slug);
+		const copy = SURFACE_EMPTY_STATES[slug || ""] || SURFACE_EMPTY_STATES[""];
 		root.innerHTML =
-			'<section class="pp2-canonical-surface" data-testid="pp2-canonical-surface">' +
+			'<section class="pp2-surface-empty-state" data-testid="pp2-surface-empty-state">' +
 			'<h3 class="h6 mb-1">' +
 			esc(surface.subtitle || __("Procurement Planning")) +
 			"</h3>" +
-			'<p class="text-muted small mb-0">' +
-			esc(__("Choose a planning workspace action from the navigation menu.")) +
+			'<p class="text-muted small mb-1">' +
+			esc(copy.purpose) +
+			"</p>" +
+			'<p class="text-muted small mb-0" data-testid="pp2-surface-empty-message">' +
+			esc(copy.message) +
 			"</p>" +
 			"</section>";
 	}
@@ -329,11 +544,7 @@
 		}
 		const nextActionPanel = shell.querySelector('[data-testid="pp2-primary-next-action-panel"]');
 		if (nextActionPanel) {
-			nextActionPanel.innerHTML =
-				'<strong class="d-block mb-1">' +
-				esc(__("Next action")) +
-				"</strong>" +
-				esc(__("Open a planning queue from the sidebar to continue."));
+			nextActionPanel.innerHTML = "";
 		}
 
 		const toggle = shell.querySelector('[data-testid="pp2-primary-right-panel-toggle"]');
@@ -415,18 +626,60 @@
 		return true;
 	}
 
+	const FORBIDDEN_PLANNING_NAV_LABELS = {
+		"planning evidence": true,
+		"planning inclusion detail": true,
+		"release package detail": true,
+		"readiness review": true,
+		"review & approval": true,
+		"package lines": true,
+		"technical details": true,
+		"audit trail": true,
+		"planning release package": true,
+		"planning release package view": true,
+		"release to tender review": true,
+		"advanced / technical details": true,
+	};
+
+	const FORBIDDEN_PLANNING_HREF_SUBSTRINGS = [
+		"/procurement-planning/evidence",
+		"/procurement-planning/inclusions",
+		"/procurement-planning/readiness",
+		"/procurement-planning/review",
+		"/procurement-planning/lines",
+		"/procurement-planning/technical",
+		"/procurement-planning/audit",
+		"/procurement-planning/releases/",
+	];
+
+	function planningNestedNavAnchors() {
+		const section = document.querySelector('.section-item[title="Procurement Planning"]');
+		if (!section) return [];
+		const nested = section.querySelector(".nested-container");
+		const scope = nested || section;
+		return Array.from(scope.querySelectorAll(".item-anchor"));
+	}
+
+	function isForbiddenPlanningNavLink(label, href) {
+		const normalizedLabel = String(label || "")
+			.trim()
+			.toLowerCase();
+		const normalizedHref = String(href || "").toLowerCase();
+		if (FORBIDDEN_PLANNING_NAV_LABELS[normalizedLabel]) return true;
+		for (let i = 0; i < FORBIDDEN_PLANNING_HREF_SUBSTRINGS.length; i += 1) {
+			if (normalizedHref.indexOf(FORBIDDEN_PLANNING_HREF_SUBSTRINGS[i]) !== -1) return true;
+		}
+		return false;
+	}
+
 	function pruneForbiddenPlanningNavLinks() {
-		const anchors = document.querySelectorAll(".sidebar-items .item-anchor");
+		const anchors = planningNestedNavAnchors();
 		for (let i = 0; i < anchors.length; i += 1) {
 			const anchor = anchors[i];
 			const labelEl = anchor.querySelector(".sidebar-item-label");
-			const label = String(labelEl ? labelEl.textContent || "" : "")
-				.trim()
-				.toLowerCase();
-			const href = String(anchor.getAttribute("href") || "").toLowerCase();
-			const isEvidenceNav =
-				label === "planning evidence" || href.endsWith("/procurement-planning/evidence");
-			if (!isEvidenceNav) continue;
+			const label = String(labelEl ? labelEl.textContent || "" : "");
+			const href = String(anchor.getAttribute("href") || "");
+			if (!isForbiddenPlanningNavLink(label, href)) continue;
 			const item = anchor.closest(".sidebar-item-container");
 			if (item) {
 				item.remove();
@@ -517,16 +770,42 @@
 
 	function mount() {
 		const planningRoute = isPlanningWorkspaceRoute();
-		const slug = planningRoute ? readSurfaceSlug() : "";
 		normalizeChildLinkRoutes();
-		const hierarchyReady = enhanceSidebarVisualHierarchy(slug, planningRoute);
 		if (!planningRoute) {
 			document.body.classList.remove("kt-pp2-shell");
-			return hierarchyReady;
+			return enhanceSidebarVisualHierarchy("", false);
 		}
+
+		const resolution = resolvePlanningRoute(window.location.pathname);
+		if (resolution.action === "redirect" && applyPlanningRouteRedirect(resolution.redirectUrl)) {
+			window.requestAnimationFrame(function () {
+				scheduleBoot();
+			});
+			return true;
+		}
+
+		const slug =
+			resolution.action === "canonical"
+				? resolution.slug != null
+					? resolution.slug
+					: readSurfaceSlug()
+				: readSurfaceSlug();
+		const hierarchyReady = enhanceSidebarVisualHierarchy(slug, planningRoute);
 		const root = ensureWorkspaceRoot();
 		if (!root) return false;
-		syncSurfaceUrl(slug);
+
+		if (resolution.action === "not_found") {
+			const shell = ensurePrimaryWorkspaceShell(root, "");
+			if (!shell) return false;
+			root.setAttribute("data-testid", "pp2-planning-home");
+			renderRouteNotFound(root);
+			document.body.classList.add("kt-pp2-shell");
+			syncSidebarActive("");
+			return hierarchyReady;
+		}
+
+		const hasDeepLinkQuery = String(window.location.search || "").indexOf("package_code=") !== -1;
+		syncSurfaceUrl(slug, { preserveSearch: slug === "packages" && hasDeepLinkQuery });
 		const shell = ensurePrimaryWorkspaceShell(root, slug);
 		if (!shell) return false;
 		const mainHost = shell.querySelector('[data-testid="pp2-primary-main-host"]');
@@ -540,10 +819,10 @@
 		}
 		const markerId = surfaceForSlug(slug).testId;
 		root.setAttribute("data-testid", markerId);
-		renderSurfaceShellPlaceholder(root, slug);
+		renderSurfaceEmptyState(root, slug);
 		document.body.classList.add("kt-pp2-shell");
 		syncSidebarActive(slug);
-		return true;
+		return hierarchyReady;
 	}
 
 	function scheduleBoot() {

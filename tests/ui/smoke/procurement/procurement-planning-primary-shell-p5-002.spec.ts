@@ -17,24 +17,23 @@ test.describe('P5-002 PrimaryWorkspaceShell', () => {
 	});
 
 	test('renders primary shell frame and right panel toggle', async ({ page }) => {
+		await page.evaluate(() => {
+			window.localStorage.removeItem('kt-pp2-right-panel-collapsed');
+		});
 		await page.goto(`${root}/desk/procurement-planning`, { waitUntil: 'domcontentloaded' });
 		await expect(page.getByTestId('pp2-primary-workspace-shell')).toBeVisible({ timeout: 30000 });
 		await expect(page.getByTestId('pp2-primary-breadcrumb')).toBeVisible();
 		await expect(page.getByTestId('pp2-primary-context-host')).toHaveCount(1);
 		await expect(page.getByTestId('pp2-primary-main-host')).toBeVisible();
 		await expect(page.getByTestId('pp2-primary-right-panel')).toBeVisible();
+		const shell = page.getByTestId('pp2-primary-workspace-shell');
 		const toggle = page.getByTestId('pp2-primary-right-panel-toggle');
 		await expect(toggle).toBeVisible();
+		await expect(shell).toHaveAttribute('data-right-panel-collapsed', '1');
 		await toggle.click();
-		await expect(page.getByTestId('pp2-primary-workspace-shell')).toHaveAttribute(
-			'data-right-panel-collapsed',
-			'1'
-		);
+		await expect(shell).toHaveAttribute('data-right-panel-collapsed', '0');
 		await toggle.click();
-		await expect(page.getByTestId('pp2-primary-workspace-shell')).toHaveAttribute(
-			'data-right-panel-collapsed',
-			'0'
-		);
+		await expect(shell).toHaveAttribute('data-right-panel-collapsed', '1');
 	});
 
 	test('keeps shell chrome stable across all five PP2 routes', async ({ page }) => {
@@ -57,16 +56,19 @@ test.describe('P5-002 PrimaryWorkspaceShell', () => {
 	});
 
 	test('preserves right panel collapsed state across PP2 route switches', async ({ page }) => {
+		await page.evaluate(() => {
+			window.localStorage.removeItem('kt-pp2-right-panel-collapsed');
+		});
 		await page.goto(`${root}/desk/procurement-planning`, { waitUntil: 'domcontentloaded' });
 		const shell = page.getByTestId('pp2-primary-workspace-shell');
 		const toggle = page.getByTestId('pp2-primary-right-panel-toggle');
-		await expect(shell).toHaveAttribute('data-right-panel-collapsed', '0');
-		await toggle.click();
 		await expect(shell).toHaveAttribute('data-right-panel-collapsed', '1');
+		await toggle.click();
+		await expect(shell).toHaveAttribute('data-right-panel-collapsed', '0');
 		await page.goto(`${root}/desk/procurement-planning/packages`, { waitUntil: 'domcontentloaded' });
 		await expect(page.getByTestId('pp2-primary-workspace-shell')).toHaveAttribute(
 			'data-right-panel-collapsed',
-			'1'
+			'0'
 		);
 	});
 

@@ -39,8 +39,14 @@ const PP2_SURFACES = [
 
 const FORBIDDEN_SIDEBAR_LABELS = [
 	'Planning Evidence',
+	'Planning Inclusion Detail',
+	'Release Package Detail',
 	'Readiness Review',
 	'Review & Approval',
+	'Package Lines',
+	'Technical Details',
+	'Audit Trail',
+	'Planning Release Package',
 	'Release to Tender Review',
 	'Planning Release Package View',
 	'Advanced / Technical Details',

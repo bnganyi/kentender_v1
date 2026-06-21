@@ -45,7 +45,7 @@ REQUIRED_STABLE = (
 	"pp2-package-detail-canonical",
 	"pp2-package-workflow",
 	"pp2-package-handoff-stack",
-	"pp2-canonical-surface",
+	"pp2-surface-empty-state",
 	"pp2-canonical-error",
 	"pp-builder-page",
 	"pp-builder-section-demand-lines",

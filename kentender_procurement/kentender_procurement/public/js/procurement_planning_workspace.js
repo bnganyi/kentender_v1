@@ -219,13 +219,19 @@
 			releases: __("Released to Tender"),
 			evidence: __("Planning Evidence"),
 		};
+		const emptyMessages = {
+			"": __("No items need your attention right now."),
+			"approved-demands": __("No approved demands match this queue."),
+			releases: __("No released packages match this queue."),
+			evidence: __("No packages match this queue."),
+		};
 		root.innerHTML =
-			'<section class="pp2-canonical-surface" data-testid="pp2-canonical-surface">' +
+			'<section class="pp2-surface-empty-state" data-testid="pp2-surface-empty-state">' +
 			'<h3 class="h6 mb-1">' +
 			esc(labels[slug || ""] || __("Procurement Planning")) +
 			"</h3>" +
 			'<p class="text-muted small mb-0">' +
-			esc(__("Canonical PP2 rendering is active on this surface.")) +
+			esc(emptyMessages[slug || ""] || __("No items need your attention right now.")) +
 			"</p>" +
 			"</section>";
 	}
