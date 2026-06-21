@@ -129,6 +129,7 @@ def _row_dict(
 		"name": pkg.get("name"),
 		"package_code": pkg.get("package_code") or "",
 		"package_name": pkg.get("package_name") or "",
+		"status": st,
 		"procurement_method": pkg.get("procurement_method") or "",
 		"estimated_value": flt(pkg.get("estimated_value")),
 		"currency": (pkg.get("currency") or "KES").strip() or "KES",

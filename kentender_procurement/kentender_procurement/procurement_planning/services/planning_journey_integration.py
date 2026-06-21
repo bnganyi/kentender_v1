@@ -19,6 +19,7 @@ from kentender_procurement.procurement_planning.package_journey_surfaces import 
 )
 from kentender_procurement.procurement_planning.package_planning_release_display import (
 	pkgrel_handoff_code_from_journey_code,
+	summarize_planning_release_handoff_for_package_detail,
 )
 from kentender_procurement.procurement_planning.permissions import pp_scope
 from kentender_procurement.procurement_planning.services.planning_inclusion_service import (
@@ -178,6 +179,10 @@ def compose_planning_journey_handoff_payload(*, doc, business_code: str) -> dict
 		release_code = pkgrel_handoff_code_from_journey_code(journey_code)
 	release_card = _load_handoff_card_row(release_code) if release_code else None
 	planning_release = _format_planning_release_handoff(release_card)
+	release_display = summarize_planning_release_handoff_for_package_detail(business_code)
+	if planning_release and release_display:
+		planning_release["tender_open_route"] = release_display.get("tender_open_route") or ""
+		planning_release["tender_code"] = release_display.get("tender_code") or ""
 
 	payload: dict[str, Any] = dict(journey or {})
 	payload["planning_steps"] = _load_planning_steps(journey_code)

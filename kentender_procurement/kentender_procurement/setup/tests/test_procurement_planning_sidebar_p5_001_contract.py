@@ -14,13 +14,14 @@ from frappe.tests import IntegrationTestCase
 _EXPECTED_PP2_CHILD_LABELS: tuple[str, ...] = (
 	"Planning Home",
 	"Approved Demands",
+	"Plans",
 	"Packages",
 	"Released to Tender",
-	"Planning Evidence",
 )
 
 _FORBIDDEN_PP2_LABELS: frozenset[str] = frozenset(
 	{
+		"Planning Evidence",
 		"Procurement Plan Detail",
 		"Planning Inclusion Detail",
 		"Readiness Review",
@@ -73,6 +74,25 @@ class TestProcurementPlanningSidebarP5001Contract(IntegrationTestCase):
 			)
 			url = (row.get("url") or "").strip()
 			self.assertTrue(url.startswith("/desk/procurement-planning"))
+
+	def test_nested_planning_child_links_exclude_evidence_route(self):
+		path = os.path.join(frappe.get_app_path("kentender_procurement"), "workspace_sidebar", "procurement.json")
+		with open(path, encoding="utf-8") as f:
+			data = json.load(f)
+		child_rows = [
+			row
+			for row in data.get("items") or []
+			if row.get("type") == "Link" and int(row.get("child") or 0) == 1 and int(row.get("indent") or 0) >= 1
+		]
+		evidence_urls = [
+			(row.get("url") or "").strip()
+			for row in child_rows
+			if "/procurement-planning/evidence" in (row.get("url") or "").strip().lower()
+		]
+		self.assertFalse(
+			evidence_urls,
+			msg=f"Planning Evidence route must not appear in persistent Planning nav: {evidence_urls}",
+		)
 
 	def test_nested_planning_links_exclude_forbidden_labels(self):
 		path = os.path.join(frappe.get_app_path("kentender_procurement"), "workspace_sidebar", "procurement.json")

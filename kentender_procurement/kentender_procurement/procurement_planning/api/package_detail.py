@@ -21,10 +21,14 @@ from kentender_procurement.procurement_planning.package_journey_surfaces import 
 	journey_link_hints_by_package_codes,
 )
 from kentender_procurement.procurement_planning.package_planning_release_display import (
+	pkgconsume_code_from_release_code,
 	summarize_planning_release_handoff_for_package_detail,
 )
 from kentender_procurement.procurement_planning.pp_package_business_readiness import (
 	summarize_pp_package_business_readiness,
+)
+from kentender_procurement.procurement_planning.services.planning_inclusion_service import (
+	get_planning_inclusion,
 )
 
 
@@ -57,6 +61,18 @@ def _as_list(raw: Any, *, max_items: int) -> list:
 	if not isinstance(raw, list):
 		return []
 	return raw[:max_items]
+
+
+def _safe_dict(raw: Any) -> dict[str, Any]:
+	if isinstance(raw, dict):
+		return raw
+	if isinstance(raw, str) and raw.strip():
+		try:
+			parsed = json.loads(raw)
+			return parsed if isinstance(parsed, dict) else {}
+		except json.JSONDecodeError:
+			pass
+	return {}
 
 
 def _normalize_metrics(items: list) -> list[str]:
@@ -162,6 +178,182 @@ def _actions_for_workbench(status: str, role_key: str, *, plan_status: str = "")
 	}
 
 
+def _resolve_demand_label(demand_code: str) -> str:
+	code = (demand_code or "").strip()
+	if not code:
+		return ""
+	row = frappe.db.get_value(
+		"Demand",
+		{"demand_id": code},
+		["demand_id", "title"],
+		as_dict=True,
+	)
+	if not row and frappe.db.exists("Demand", code):
+		row = frappe.db.get_value("Demand", code, ["demand_id", "title"], as_dict=True)
+	if not row:
+		return code
+	title = (row.get("title") or "").strip()
+	business_code = (row.get("demand_id") or code).strip()
+	if title and business_code:
+		return f"{title} ({business_code})"
+	return title or business_code
+
+
+def _resolve_plan_label(plan_code: str) -> str:
+	code = (plan_code or "").strip()
+	if not code:
+		return ""
+	row = frappe.db.get_value(
+		"Procurement Plan",
+		code,
+		["plan_code", "plan_name"],
+		as_dict=True,
+	)
+	if not row:
+		return code
+	plan_name = (row.get("plan_name") or "").strip()
+	business_code = (row.get("plan_code") or code).strip()
+	if plan_name and business_code:
+		return f"{plan_name} ({business_code})"
+	return plan_name or business_code
+
+
+def _resolve_tender_label(tender_code: str) -> str:
+	code = (tender_code or "").strip()
+	if not code:
+		return ""
+	name = frappe.db.get_value("TM2 Tender", {"tender_code": code}, "name")
+	if not name and frappe.db.exists("TM2 Tender", code):
+		name = code
+	if not name:
+		return code
+	title = (frappe.db.get_value("TM2 Tender", name, "tender_title") or "").strip()
+	if title and code:
+		return f"{title} ({code})"
+	return title or code
+
+
+def _summarize_planning_inclusion_handoff(package_doc) -> dict[str, Any] | None:
+	inclusion_code = (package_doc.planning_inclusion_code or "").strip()
+	if not inclusion_code:
+		return None
+	inclusion = get_planning_inclusion(inclusion_code)
+	if not inclusion:
+		return None
+	source_code = str(
+		inclusion.get("source_object_code") or inclusion.get("demand_code") or ""
+	).strip()
+	target_code = str(
+		inclusion.get("target_object_code") or inclusion.get("procurement_plan_code") or ""
+	).strip()
+	return {
+		"handoff_code": str(inclusion.get("handoff_code") or inclusion_code),
+		"title": _("Planning Inclusion Record"),
+		"status": str(inclusion.get("status") or "").strip(),
+		"source_object_type": "Demand",
+		"source_object_code": source_code,
+		"target_object_type": "Procurement Plan",
+		"target_object_code": target_code,
+		"source_label": _resolve_demand_label(source_code),
+		"target_label": _resolve_plan_label(target_code),
+		"locked_summary": _safe_dict(inclusion.get("locked_summary")),
+		"passed_forward_summary": _safe_dict(inclusion.get("passed_forward_summary")),
+	}
+
+
+def _summarize_planning_consumption_handoff(package_doc, planning_release_handoff) -> dict[str, Any] | None:
+	release_code = str((planning_release_handoff or {}).get("handoff_code") or package_doc.release_code or "").strip()
+	if not release_code:
+		return None
+	if not frappe.db.exists("DocType", "Planning Release Consumption Record"):
+		return None
+	rows = frappe.get_all(
+		"Planning Release Consumption Record",
+		filters={"release_code": release_code},
+		fields=[
+			"consumption_code",
+			"consumption_status",
+			"consumed_at",
+			"target_object_code",
+			"target_object_type",
+			"consumed_by",
+		],
+		order_by="consumed_at desc, modified desc",
+		limit=1,
+	)
+	if rows:
+		row = rows[0]
+		tender_code = str(row.get("target_object_code") or package_doc.tender_code or "").strip()
+		return {
+			"consumption_code": str(row.get("consumption_code") or "").strip(),
+			"title": _("Tender Consumption Status"),
+			"status": str(row.get("consumption_status") or "").strip() or "Consumed",
+			"source_object_type": _("Planning Release Package"),
+			"source_object_code": release_code,
+			"target_object_type": str(row.get("target_object_type") or "TM2 Tender").strip(),
+			"target_object_code": tender_code,
+			"source_label": _("Planning release package"),
+			"target_label": _resolve_tender_label(tender_code),
+			"consumed_at": row.get("consumed_at"),
+			"consumed_by": str(row.get("consumed_by") or "").strip(),
+		}
+	if (package_doc.status or "").strip() == "Consumed by Tender Management":
+		tender_code = str(package_doc.tender_code or "").strip()
+		return {
+			"consumption_code": pkgconsume_code_from_release_code(release_code),
+			"title": _("Tender Consumption Status"),
+			"status": "Consumed",
+			"source_object_type": _("Planning Release Package"),
+			"source_object_code": release_code,
+			"target_object_type": "TM2 Tender",
+			"target_object_code": tender_code,
+			"source_label": _("Planning release package"),
+			"target_label": _resolve_tender_label(tender_code),
+			"consumed_at": package_doc.consumed_at,
+			"consumed_by": "",
+		}
+	return None
+
+
+def _enrich_release_handoff(package_doc, release_handoff: dict[str, Any] | None) -> dict[str, Any] | None:
+	if not release_handoff:
+		return None
+	handoff_code = str(release_handoff.get("handoff_code") or "").strip()
+	if not handoff_code or not frappe.db.exists("Procurement Handoff Card", handoff_code):
+		return release_handoff
+	card = frappe.db.get_value(
+		"Procurement Handoff Card",
+		handoff_code,
+		[
+			"source_object_type",
+			"source_object_code",
+			"target_object_type",
+			"target_object_code",
+			"locked_summary",
+			"passed_forward_summary",
+		],
+		as_dict=True,
+	)
+	if not card:
+		return release_handoff
+	target_code = str(card.get("target_object_code") or release_handoff.get("tender_code") or package_doc.tender_code or "").strip()
+	release_handoff = dict(release_handoff)
+	release_handoff.update(
+		{
+			"title": _("Planning Release Package"),
+			"source_object_type": str(card.get("source_object_type") or "Procurement Package"),
+			"source_object_code": str(card.get("source_object_code") or package_doc.package_code or package_doc.name or "").strip(),
+			"target_object_type": str(card.get("target_object_type") or "TM2 Tender"),
+			"target_object_code": target_code,
+			"source_label": (package_doc.package_name or package_doc.package_code or package_doc.name or "").strip(),
+			"target_label": _resolve_tender_label(target_code),
+			"locked_summary": _safe_dict(card.get("locked_summary")),
+			"passed_forward_summary": _safe_dict(card.get("passed_forward_summary")),
+		}
+	)
+	return release_handoff
+
+
 @frappe.whitelist()
 def get_pp_package_detail(package: str | None = None) -> dict:
 	"""Return read-only detail payload for the workbench right panel."""
@@ -188,11 +380,15 @@ def get_pp_package_detail(package: str | None = None) -> dict:
 		)
 
 	if not frappe.db.exists("Procurement Package", pkg_name):
-		return _fail(
-			code="NOT_FOUND",
-			message=_("Package not found."),
-			role_key=role_key,
-		)
+		alt_name = frappe.db.get_value("Procurement Package", {"package_code": pkg_name}, "name")
+		if alt_name:
+			pkg_name = str(alt_name).strip()
+		else:
+			return _fail(
+				code="NOT_FOUND",
+				message=_("Package not found."),
+				role_key=role_key,
+			)
 
 	try:
 		if not frappe.has_permission("Procurement Package", "read", pkg_name):
@@ -411,9 +607,10 @@ def get_pp_package_detail(package: str | None = None) -> dict:
 
 	planning_release_handoff = None
 	if package_code_hint:
-		planning_release_handoff = summarize_planning_release_handoff_for_package_detail(
-			package_code_hint,
-		)
+		planning_release_handoff = summarize_planning_release_handoff_for_package_detail(package_code_hint)
+	planning_release_handoff = _enrich_release_handoff(doc, planning_release_handoff)
+	planning_inclusion_handoff = _summarize_planning_inclusion_handoff(doc)
+	planning_consumption_handoff = _summarize_planning_consumption_handoff(doc, planning_release_handoff)
 
 	business_readiness = summarize_pp_package_business_readiness(doc)
 
@@ -440,7 +637,9 @@ def get_pp_package_detail(package: str | None = None) -> dict:
 		"badges": badges,
 		"actions": actions,
 		"procurement_journey": procurement_journey,
+		"planning_inclusion_handoff": planning_inclusion_handoff,
 		"planning_release_handoff": planning_release_handoff,
+		"planning_consumption_handoff": planning_consumption_handoff,
 		"business_readiness": business_readiness,
 		"definition": {
 			"package_name": doc.package_name or "",

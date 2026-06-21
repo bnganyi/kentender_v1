@@ -1320,11 +1320,23 @@
 		return journeyCodeFromRoute() === expectedCode;
 	}
 
+	function ensureProcurementSidebar() {
+		try {
+			if (frappe.app && frappe.app.sidebar && typeof frappe.app.sidebar.setup === "function") {
+				frappe.app.sidebar.setup("procurement");
+			}
+		} catch (e) {
+			/* ignore */
+		}
+	}
+
 	frappe.pages[PAGE_NAME].on_page_load = function (wrapper) {
+		ensureProcurementSidebar();
 		loadAndRender(wrapper);
 	};
 
 	frappe.pages[PAGE_NAME].on_page_show = function (wrapper) {
+		ensureProcurementSidebar();
 		loadAndRender(wrapper);
 	};
 })();

@@ -6,9 +6,9 @@ const root = process.env.UI_BASE_URL || 'http://127.0.0.1:8000';
 const PP2_SURFACE_PATHS = [
 	'/desk/procurement-planning',
 	'/desk/procurement-planning/approved-demands',
+	'/desk/procurement-planning/plans',
 	'/desk/procurement-planning/packages',
 	'/desk/procurement-planning/releases',
-	'/desk/procurement-planning/evidence',
 ];
 
 test.describe('P5-002 PrimaryWorkspaceShell', () => {

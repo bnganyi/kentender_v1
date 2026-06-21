@@ -43,9 +43,9 @@ KT_MODULES: dict[str, dict[str, Any]] = {
 		"route_prefixes": (
 			"procurement-planning",
 			"procurement-planning/approved-demands",
+			"procurement-planning/plans",
 			"procurement-planning/packages",
 			"procurement-planning/releases",
-			"procurement-planning/evidence",
 			"Form/Procurement Package",
 		),
 	},

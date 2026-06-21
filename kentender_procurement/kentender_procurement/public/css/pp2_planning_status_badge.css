@@ -1,0 +1,103 @@
+.pp2-package-status-strip {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	margin-top: 0.5rem;
+	font-size: var(--text-sm, 0.875rem);
+	color: var(--text-muted, #6c757d);
+}
+
+.pp2-package-status-strip__label {
+	font-weight: 500;
+	color: var(--text-color, #171717);
+}
+
+.pp2-planning-status-badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.125rem 0.5rem;
+	border-radius: 999px;
+	font-size: var(--text-xs, 0.75rem);
+	font-weight: 500;
+	line-height: 1.4;
+	border: 1px solid transparent;
+	white-space: nowrap;
+}
+
+.pp2-planning-status-badge.is-draft {
+	background: var(--gray-100, #f3f4f6);
+	color: var(--gray-700, #374151);
+	border-color: var(--gray-200, #e5e7eb);
+}
+
+.pp2-planning-status-badge.is-in-review {
+	background: var(--blue-50, #eff6ff);
+	color: var(--blue-700, #1d4ed8);
+	border-color: var(--blue-100, #dbeafe);
+}
+
+.pp2-planning-status-badge.is-returned-for-correction {
+	background: var(--orange-50, #fff7ed);
+	color: var(--orange-700, #c2410c);
+	border-color: var(--orange-100, #ffedd5);
+}
+
+.pp2-planning-status-badge.is-approved {
+	background: var(--green-50, #f0fdf4);
+	color: var(--green-700, #15803d);
+	border-color: var(--green-100, #dcfce7);
+}
+
+.pp2-planning-status-badge.is-ready-for-release {
+	background: var(--cyan-50, #ecfeff);
+	color: var(--cyan-700, #0e7490);
+	border-color: var(--cyan-100, #cffafe);
+}
+
+.pp2-planning-status-badge.is-released-to-tender {
+	background: var(--indigo-50, #eef2ff);
+	color: var(--indigo-700, #4338ca);
+	border-color: var(--indigo-100, #e0e7ff);
+}
+
+.pp2-planning-status-badge.is-consumed-by-tm {
+	background: var(--purple-50, #faf5ff);
+	color: var(--purple-700, #7e22ce);
+	border-color: var(--purple-100, #f3e8ff);
+}
+
+.pp2-planning-status-badge.is-superseded {
+	background: var(--gray-100, #f3f4f6);
+	color: var(--gray-600, #4b5563);
+	border-color: var(--gray-200, #e5e7eb);
+}
+
+.pp2-planning-status-badge.is-cancelled {
+	background: var(--red-50, #fef2f2);
+	color: var(--red-700, #b91c1c);
+	border-color: var(--red-100, #fee2e2);
+}
+
+.pp2-planning-status-badge.is-unknown {
+	background: var(--gray-100, #f3f4f6);
+	color: var(--gray-600, #4b5563);
+	border-color: var(--gray-200, #e5e7eb);
+}
+
+.pp2-planning-status-badge.is-demand-ready {
+	background: var(--green-50, #f0fdf4);
+	color: var(--green-700, #15803d);
+	border-color: var(--green-100, #dcfce7);
+}
+
+.pp2-planning-status-badge.is-demand-partial {
+	background: var(--yellow-50, #fefce8);
+	color: var(--yellow-700, #a16207);
+	border-color: var(--yellow-100, #fef9c3);
+}
+
+.pp2-planning-status-badge.is-demand-blocked {
+	background: var(--red-50, #fef2f2);
+	color: var(--red-700, #b91c1c);
+	border-color: var(--red-100, #fee2e2);
+}

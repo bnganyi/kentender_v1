@@ -8,7 +8,246 @@
 (function () {
 	frappe.provide("kentender_procurement");
 
+	function textOrDash(value) {
+		var raw = String(value == null ? "" : value).trim();
+		return raw || "—";
+	}
+
+	function normalizeDeskRoute(routeValue) {
+		var raw = String(routeValue || "").trim();
+		if (!raw) return [];
+		if (raw.indexOf("/desk/") === 0) {
+			raw = raw.slice("/desk/".length);
+		}
+		return raw
+			.split("/")
+			.map(function (part) {
+				return String(part || "").trim();
+			})
+			.filter(Boolean);
+	}
+
+	function pickPlanningStep(payload, requestedStepKey) {
+		var steps = (payload && payload.planning_steps) || [];
+		if (!steps.length) return null;
+		var targetKey = String(requestedStepKey || "").trim();
+		if (!targetKey) return steps[0];
+		for (var i = 0; i < steps.length; i += 1) {
+			if (String(steps[i].step_key || "").trim() === targetKey) {
+				return steps[i];
+			}
+		}
+		return steps[0];
+	}
+
+	function stripTechnicalTokens(value) {
+		var raw = String(value == null ? "" : value).trim();
+		if (!raw) return "";
+		return raw
+			.replace(/\b(?:PLANINCL|PKGREL|PKGCONSUME|PKG|DEM|BUD|OBJ|JRN)-[A-Z0-9-]+\b/g, "")
+			.replace(/\b(?:source_object_code|target_object_code|package_release|technical_refs_json)\b/gi, "")
+			.replace(/\s{2,}/g, " ")
+			.trim();
+	}
+
+	function resolvePp2StateLine(payload) {
+		var packageStatus = String((payload && payload.package_status) || "").trim();
+		var release = (payload && payload.planning_release) || {};
+		var releaseStatus = String(release.status || "").trim().toLowerCase();
+		var releaseConsumed =
+			releaseStatus === "consumed" || String(release.consumed_at || "").trim().length > 0;
+
+		if (packageStatus === "Consumed by Tender Management") {
+			return __("Procurement planned · Continue in Tender Management");
+		}
+		if (packageStatus === "Released to Tender") {
+			if (releaseConsumed) {
+				return __("Procurement planned · Tender Management has consumed the released package");
+			}
+			return __("Released to Tender · Awaiting Tender Management consumption");
+		}
+		if (packageStatus === "Ready for Release") {
+			return __("Ready for release · Release package to Tender Management");
+		}
+		if (packageStatus === "In Review") {
+			return __("Package in review · Waiting for planning approval");
+		}
+		if (packageStatus === "Draft" || packageStatus === "Returned for Correction") {
+			return __("Package draft · Complete package details");
+		}
+		if (packageStatus === "Approved") {
+			return __("Included in plan · Package not created yet");
+		}
+		return __("Procurement planned · No action required in Planning");
+	}
+
+	function syncTechnicalDetailsToggle($details, $summary) {
+		if ($details.prop("open")) {
+			$summary.text(__("Hide technical details"));
+			return;
+		}
+		$summary.text(__("Show technical details"));
+	}
+
+	function renderPp2($host, opts) {
+		var packageCode = String((opts && opts.package_code) || "").trim();
+		var stepKey = String((opts && opts.step_key) || "").trim();
+		$host.empty();
+		if (!packageCode) {
+			$host.append(
+				$("<p>")
+					.addClass("text-muted small mb-0")
+					.attr("data-testid", "pp2-module-journey-missing-params")
+					.text(__("Journey context is unavailable because package_code is missing.")),
+			);
+			return;
+		}
+
+		var requestToken = String(Date.now()) + ":" + String(Math.random()).slice(2);
+		var $card = $('<div class="card plc-module-journey-context-header pp2-module-journey-context-header mb-0">')
+			.attr("data-testid", "pp2-module-journey-context-header")
+			.attr("data-package-code", packageCode)
+			.attr("data-request-token", requestToken);
+		var $body = $('<div class="card-body py-2 px-3">');
+		$body.append(
+			$("<div>")
+				.addClass("text-muted small")
+				.attr("data-testid", "pp2-module-journey-loading")
+				.text(__("Loading planning journey context…")),
+		);
+		$card.append($body);
+		$host.append($card);
+
+		function renderPayload(payload) {
+			if (!$card.closest("body").length) return;
+			if ($card.attr("data-request-token") !== requestToken) return;
+			$body.empty();
+			var journey = (payload && payload.journey) || {};
+			var inclusion = (payload && payload.planning_inclusion) || {};
+			var release = (payload && payload.planning_release) || {};
+			var step = pickPlanningStep(payload || {}, stepKey) || {};
+			var title =
+				stripTechnicalTokens(journey.journey_title || journey.title) ||
+				__("Procurement planning progress");
+			var stateLine = resolvePp2StateLine(payload);
+			var openRoute = String(journey.open_route || "").trim();
+			var tenderOpenRoute = String(release.tender_open_route || "").trim();
+
+			var $titleRow = $('<div class="pp2-module-journey-title-row d-flex flex-wrap align-items-start justify-content-between gap-2">');
+			$titleRow.append(
+				$("<div>")
+					.addClass("fw-semibold plc-module-journey-context-title min-w-0 flex-grow-1")
+					.attr("data-testid", "pp2-module-journey-title")
+					.text(title),
+			);
+
+			var $actions = $('<div class="pp2-module-journey-actions d-flex flex-wrap align-items-center gap-2 flex-shrink-0">');
+			if (tenderOpenRoute) {
+				$actions.append(
+					$('<a href="#" class="btn btn-sm btn-default">')
+						.attr("data-testid", "pp2-module-journey-open-tender")
+						.attr("data-open-route", tenderOpenRoute)
+						.text(__("Open Tender"))
+						.on("click", function (ev) {
+							ev.preventDefault();
+							var deskParts = normalizeDeskRoute(tenderOpenRoute);
+							if (deskParts.length) {
+								frappe.set_route(deskParts);
+							}
+						}),
+				);
+			}
+			$actions.append(
+				$('<a href="#" class="btn btn-sm btn-primary">')
+					.attr("data-testid", "pp2-module-journey-open")
+					.attr("data-open-route", openRoute || "")
+					.text(__("Open Procurement Journey"))
+					.on("click", function (ev) {
+						ev.preventDefault();
+						var deskParts = normalizeDeskRoute(openRoute);
+						if (deskParts.length) {
+							frappe.set_route(deskParts);
+							return;
+						}
+						if (journey.journey_code) {
+							frappe.set_route("plc-procurement-journey", journey.journey_code);
+							return;
+						}
+						frappe.set_route("plc-procurement-journey");
+					}),
+			);
+			$titleRow.append($actions);
+
+			var $stateLine = $("<div>")
+				.addClass("pp2-module-journey-state-line text-muted small mt-1")
+				.attr("data-testid", "pp2-module-journey-state-line")
+				.text(stateLine);
+
+			var $summary = $("<summary>")
+				.addClass("pp2-module-journey-technical-toggle")
+				.attr("data-testid", "pp2-module-journey-technical-toggle")
+				.text(__("Show technical details"));
+			var $technicalDetails = $("<details>")
+				.addClass("pp2-module-journey-technical-details text-muted small mt-1")
+				.attr("data-testid", "pp2-module-journey-technical-details")
+				.append($summary)
+				.append(
+					$("<div>")
+						.addClass("pp2-module-journey-technical-body mt-1")
+						.append(
+							$("<div>").text(__("Technical details")),
+						)
+						.append(
+							$("<div>").text(
+								__("Stage key") +
+									": " +
+									textOrDash(step.step_key) +
+									" | " +
+									__("Journey code") +
+									": " +
+									textOrDash(journey.journey_code) +
+									" | " +
+									__("Inclusion handoff") +
+									": " +
+									textOrDash(inclusion.handoff_code) +
+									" | " +
+									__("Release handoff") +
+									": " +
+									textOrDash(release.handoff_code),
+							),
+						),
+				);
+			$technicalDetails.on("toggle", function () {
+				syncTechnicalDetailsToggle($technicalDetails, $summary);
+			});
+			syncTechnicalDetailsToggle($technicalDetails, $summary);
+
+			$body.append($titleRow, $stateLine, $technicalDetails);
+		}
+
+		frappe.call({
+			method: "kentender_procurement.procurement_planning.api.planning_journey.get_pp_planning_journey_handoffs",
+			args: { package_code: packageCode },
+			freeze: false,
+			callback: function (r) {
+				var payload = (r && r.message) || {};
+				if (r.exc || !payload || payload.ok === false) {
+					renderPayload({});
+					return;
+				}
+				renderPayload(payload);
+			},
+			error: function () {
+				renderPayload({});
+			},
+		});
+	}
+
 	function render($host, opts) {
+		if (opts && opts.variant === "pp2") {
+			renderPp2($host, opts);
+			return;
+		}
 		var ot = String((opts && opts.object_type) || "").trim();
 		var oc = String((opts && opts.object_code) || "").trim();
 		$host.empty();

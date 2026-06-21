@@ -14,3 +14,40 @@
 	font-size: 0.98rem;
 	line-height: 1.35;
 }
+
+.pp2-module-journey-context-header .card-body {
+	padding-top: 0.55rem;
+	padding-bottom: 0.55rem;
+}
+
+.pp2-module-journey-context-header .pp2-module-journey-title-row {
+	gap: 0.5rem;
+}
+
+.pp2-module-journey-context-header .pp2-module-journey-state-line {
+	font-size: 0.84rem;
+	line-height: 1.35;
+	margin-top: 0.25rem;
+}
+
+.pp2-module-journey-context-header .pp2-module-journey-actions {
+	justify-content: flex-end;
+}
+
+.pp2-module-journey-context-header .pp2-module-journey-technical-details {
+	font-size: 0.78rem;
+	line-height: 1.35;
+}
+
+.pp2-module-journey-context-header .pp2-module-journey-technical-toggle {
+	cursor: pointer;
+	list-style: none;
+}
+
+.pp2-module-journey-context-header .pp2-module-journey-technical-toggle::-webkit-details-marker {
+	display: none;
+}
+
+.pp2-module-journey-context-header .pp2-module-journey-technical-body {
+	font-size: 0.78rem;
+}

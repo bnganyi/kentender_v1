@@ -84,24 +84,38 @@ _KT_WORKSPACE_TO_SIDEBAR: dict[str, str] = {
 	"procurement-planning": "Procurement",
 	"procurement-planning/approved-demands": "Procurement",
 	"approved-demands": "Procurement",
+	"procurement-planning/plans": "Procurement",
+	"plans": "Procurement",
 	"procurement-planning/packages": "Procurement",
 	"packages": "Procurement",
 	"procurement-planning/releases": "Procurement",
 	"releases": "Procurement",
-	"procurement-planning/evidence": "Procurement",
-	"evidence": "Procurement",
 	"demand intake and approval": "Procurement",
+	"demand-intake-and-approval": "Procurement",
 	"procurement home": "Procurement",
+	"procurement-home": "Procurement",
+	"procurement journeys": "Procurement",
+	"plc-procurement-journey": "Procurement",
+	"audit event": "Procurement",
+	"audit-event": "Procurement",
 	"my work": "Procurement",
+	"my-work": "Procurement",
 	"bid opening": "Procurement",
+	"bid-opening": "Procurement",
 	"evaluation and award": "Procurement",
+	"evaluation-and-award": "Procurement",
 	"contract management": "Procurement",
+	"contract-management": "Procurement",
 	"ktsm supplier registry": "Procurement",
+	"ktsm-supplier-registry": "Procurement",
 	"governance & configuration": "Procurement",
+	"governance-and-configuration": "Procurement",
 	# Cross-app lifecycle workspaces: keep the Procurement rail when users follow
 	# G0-012 sidebar links (same pattern as DIA / Planning).
 	"strategy management": "Procurement",
+	"strategy-management": "Procurement",
 	"budget management": "Procurement",
+	"budget-management": "Procurement",
 	# Module-level and DocType-level routes fallback to this key path in
 	# frappe/ui/sidebar/sidebar.js when route key disambiguation is missing.
 	# Without these keys, /desk/budget/new-* and /desk/strategic-plan/new-*
@@ -127,6 +141,19 @@ except Exception:
 		"form/procurement package": "Procurement",
 		"form/ktsm supplier profile": "Procurement",
 	}
+
+# Hard-map critical page/doctypes that must always stay on Procurement rail.
+# These are user-facing routes from the Procurement sidebar and should never
+# fall back to Kentender Core/App-sidebars because of route context drift.
+_KT_ROUTE_TO_SIDEBAR.update(
+	{
+		"procurement-home": "Procurement",
+		"plc-procurement-journey": "Procurement",
+		"tender-management-v2": "Procurement",
+		"audit-event": "Procurement",
+		"audit event": "Procurement",
+	}
+)
 
 # G0-012 / R5 sidebar regression: **Strategy Management** and **Budget Management**
 # live in other apps. If those Workspace rows are not ``public`` / are ``is_hidden``,

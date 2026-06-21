@@ -117,6 +117,19 @@
   {
    "child": 1,
    "collapsible": 0,
+   "icon": "list",
+   "indent": 1,
+   "keep_closed": 0,
+   "label": "Plans",
+   "link_to": "Procurement Planning",
+   "link_type": "Workspace",
+   "show_arrow": 0,
+   "type": "Link",
+   "url": "/desk/procurement-planning/plans"
+  },
+  {
+   "child": 1,
+   "collapsible": 0,
    "icon": "package",
    "indent": 1,
    "keep_closed": 0,
@@ -139,19 +152,6 @@
    "show_arrow": 0,
    "type": "Link",
    "url": "/desk/procurement-planning/releases"
-  },
-  {
-   "child": 1,
-   "collapsible": 0,
-   "icon": "list",
-   "indent": 1,
-   "keep_closed": 0,
-   "label": "Planning Evidence",
-   "link_to": "Procurement Planning",
-   "link_type": "Workspace",
-   "show_arrow": 0,
-   "type": "Link",
-   "url": "/desk/procurement-planning/evidence"
   },
   {
    "child": 0,

@@ -65,9 +65,9 @@ frappe.provide("kentender_core.module_registry");
 			routePrefixes: [
 				"procurement-planning",
 				"procurement-planning/approved-demands",
+				"procurement-planning/plans",
 				"procurement-planning/packages",
 				"procurement-planning/releases",
-				"procurement-planning/evidence",
 				"Form/Procurement Package",
 			],
 			taskLabels: {

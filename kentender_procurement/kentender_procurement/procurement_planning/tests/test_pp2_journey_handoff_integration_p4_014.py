@@ -153,6 +153,8 @@ class TestPP2JourneyHandoffIntegrationP4014(IntegrationTestCase):
 		self.assertEqual(release.get("source_object_code"), PKG_CODE)
 		self.assertEqual(release.get("target_object_code"), _TENDER_CODE)
 		self.assertEqual(release.get("status"), "Consumed")
+		self.assertTrue(release.get("tender_open_route"), release)
+		self.assertIn("tm2-tender", release.get("tender_open_route", "").lower())
 
 	def test_003_planincl_linked_to_journey_with_demand_plan_codes(self):
 		"""SEED-TEST-P4-014-003: PLANINCL handoff linked to journey with demand/plan codes."""

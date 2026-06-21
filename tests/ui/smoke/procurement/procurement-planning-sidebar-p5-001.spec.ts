@@ -5,7 +5,9 @@ import { expect, test } from '@playwright/test';
 import { loginAsAdministrator } from '../../helpers/auth';
 import { expectPrimarySidebarItemHighlighted } from '../../helpers/workspacePatternContract';
 
-const root = process.env.UI_BASE_URL || 'http://127.0.0.1:8000';
+const root =
+	(globalThis as { process?: { env?: { UI_BASE_URL?: string } } }).process?.env?.UI_BASE_URL ||
+	'http://127.0.0.1:8000';
 
 const PP2_SURFACES = [
 	{
@@ -19,8 +21,13 @@ const PP2_SURFACES = [
 		path: '/desk/procurement-planning/approved-demands',
 	},
 	{
+		label: 'Plans',
+		testId: 'pp2-plans-page',
+		path: '/desk/procurement-planning/plans',
+	},
+	{
 		label: 'Packages',
-		testId: 'pp2-package-workbench',
+		testId: 'pp2-packages-page',
 		path: '/desk/procurement-planning/packages',
 	},
 	{
@@ -28,14 +35,10 @@ const PP2_SURFACES = [
 		testId: 'pp2-released-to-tender-page',
 		path: '/desk/procurement-planning/releases',
 	},
-	{
-		label: 'Planning Evidence',
-		testId: 'pp2-planning-evidence-index',
-		path: '/desk/procurement-planning/evidence',
-	},
 ] as const;
 
 const FORBIDDEN_SIDEBAR_LABELS = [
+	'Planning Evidence',
 	'Readiness Review',
 	'Review & Approval',
 	'Release to Tender Review',
@@ -50,6 +53,19 @@ async function sidebarLabels(page: import('@playwright/test').Page): Promise<str
 			.map((el) => (el.textContent || '').replace(/\s+/g, ' ').trim())
 			.filter(Boolean);
 	});
+}
+
+async function clickSidebarHref(page: import('@playwright/test').Page, href: string): Promise<void> {
+	await page.waitForFunction((targetHref) => {
+		return !!document.querySelector(`a.item-anchor[href="${targetHref}"]`);
+	}, href);
+	await page.evaluate((targetHref) => {
+		const link = document.querySelector(`a.item-anchor[href="${targetHref}"]`);
+		if (!(link instanceof HTMLAnchorElement)) {
+			throw new Error(`Sidebar link missing: ${targetHref}`);
+		}
+		link.click();
+	}, href);
 }
 
 test.describe('PP2 Planning nested sidebar (P5-001)', () => {
@@ -133,6 +149,75 @@ test.describe('PP2 Planning nested sidebar (P5-001)', () => {
 		await expect(parentSection.locator('.kt-pp2-parent-icon')).toBeVisible({ timeout: 30000 });
 	});
 
+	test('non-PP2 route switch keeps Procurement Planning collapsed', async ({ page }) => {
+		await page.goto(`${root}/desk/procurement-planning`, { waitUntil: 'domcontentloaded' });
+		const parentSection = page.locator('.section-item[title="Procurement Planning"]').first();
+		await parentSection.locator('.drop-icon').first().click();
+		await expect(parentSection.locator('.nested-container .item-anchor').first()).toBeVisible({
+			timeout: 30000,
+		});
+
+		await page.getByRole('link', { name: 'Strategy Alignment' }).first().click();
+		await expect(page).toHaveURL(/\/desk\/strategy-management/);
+		await expect(parentSection.locator('.nested-container .item-anchor').first()).toBeHidden({
+			timeout: 30000,
+		});
+	});
+
+	test('Evidence & Audit then back keeps Procurement rail for Journeys and TM2 surfaces', async ({ page }) => {
+		await page.goto(`${root}/desk/ktsm-supplier-registry`, { waitUntil: 'domcontentloaded' });
+		await clickSidebarHref(page, '/desk/audit-event');
+		await expect(page).toHaveURL(/\/desk\/audit-event/);
+		await page.goBack({ waitUntil: 'domcontentloaded' });
+		await expect(page).toHaveURL(/\/desk\/ktsm-supplier-registry/);
+
+		const assertProcurementRail = async (targetHref: string, targetUrlPattern: RegExp) => {
+			await clickSidebarHref(page, targetHref);
+			await expect(page).toHaveURL(targetUrlPattern);
+			await expect(page.getByRole('link', { name: 'Procurement Home' }).first()).toBeVisible({ timeout: 30000 });
+			await expect(page.getByRole('link', { name: 'Evidence & Audit' }).first()).toBeVisible({ timeout: 30000 });
+			await expect(page.getByRole('link', { name: 'Procurement Journeys' }).first()).toBeVisible({
+				timeout: 30000,
+			});
+			await expect(page.getByRole('link', { name: 'Procurement Home' }).first()).toHaveAttribute(
+				'href',
+				'/desk/procurement-home',
+			);
+			await expect(page.getByRole('link', { name: 'Procurement Journeys' }).first()).toHaveAttribute(
+				'href',
+				'/desk/plc-procurement-journey',
+			);
+		};
+
+		await assertProcurementRail('/desk/plc-procurement-journey', /\/desk\/plc-procurement-journey/);
+		await page.goto(`${root}/desk/ktsm-supplier-registry`, { waitUntil: 'domcontentloaded' });
+		await assertProcurementRail('/desk/tender-management-v2', /\/desk\/tender-management-v2/);
+		await page.goto(`${root}/desk/ktsm-supplier-registry`, { waitUntil: 'domcontentloaded' });
+		await assertProcurementRail('/desk/tender-management-v2', /\/desk\/tender-management-v2/);
+	});
+
+	test('repeated navigation with browser back keeps Procurement rail stable', async ({ page }) => {
+		await page.goto(`${root}/desk/audit-event`, { waitUntil: 'domcontentloaded' });
+		const sequence: Array<{ href: string; url: RegExp }> = [
+			{ href: '/desk/procurement-home', url: /\/desk\/procurement-home/ },
+			{ href: '/desk/plc-procurement-journey', url: /\/desk\/plc-procurement-journey/ },
+			{ href: '/desk/tender-management-v2', url: /\/desk\/tender-management-v2/ },
+			{ href: '/desk/plc-procurement-journey', url: /\/desk\/plc-procurement-journey/ },
+			{ href: '/desk/tender-management-v2', url: /\/desk\/tender-management-v2/ },
+		];
+		for (const step of sequence) {
+			await clickSidebarHref(page, step.href);
+			await expect(page).toHaveURL(step.url);
+			await expect(page.getByRole('link', { name: 'Procurement Home' }).first()).toBeVisible({ timeout: 30000 });
+			await expect(page.getByRole('link', { name: 'Procurement Journeys' }).first()).toBeVisible({
+				timeout: 30000,
+			});
+			await expect(page.getByRole('link', { name: 'Evidence & Audit' }).first()).toBeVisible({ timeout: 30000 });
+			await page.goBack({ waitUntil: 'domcontentloaded' });
+			await expect(page).toHaveURL(/\/desk\/audit-event/);
+		}
+	});
+
 	test('each sidebar item routes to the correct pp2 surface root', async ({ page }) => {
 		for (const surface of PP2_SURFACES) {
 			await page.goto(`${root}${surface.path}`, { waitUntil: 'domcontentloaded' });
@@ -143,9 +228,9 @@ test.describe('PP2 Planning nested sidebar (P5-001)', () => {
 
 	test('hard refresh keeps Planning sidebar populated', async ({ page }) => {
 		await page.goto(`${root}/desk/procurement-planning/packages`, { waitUntil: 'domcontentloaded' });
-		await expect(page.getByTestId('pp2-package-workbench')).toBeVisible({ timeout: 30000 });
+		await expect(page.getByTestId('pp2-packages-page')).toBeVisible({ timeout: 30000 });
 		await page.reload({ waitUntil: 'domcontentloaded' });
-		await expect(page.getByTestId('pp2-package-workbench')).toBeVisible({ timeout: 30000 });
+		await expect(page.getByTestId('pp2-packages-page')).toBeVisible({ timeout: 30000 });
 
 		const bootProbe = await page.evaluate(() => {
 			const f = (window as { frappe?: { app?: { sidebar?: { workspace_sidebar_items?: unknown[] } } } })

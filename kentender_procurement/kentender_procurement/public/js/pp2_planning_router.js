@@ -14,9 +14,9 @@
 	const SURFACE_LABELS = {
 		"": __("Planning Home"),
 		"approved-demands": __("Approved Demands"),
+		plans: __("Plans"),
 		packages: __("Packages"),
 		releases: __("Released to Tender"),
-		evidence: __("Planning Evidence"),
 	};
 
 	const SURFACES = {
@@ -30,8 +30,13 @@
 			title: __("Procurement Planning"),
 			subtitle: __("Approved Demands"),
 		},
+		plans: {
+			testId: "pp2-plans-page",
+			title: __("Procurement Planning"),
+			subtitle: __("Plans"),
+		},
 		packages: {
-			testId: "pp2-package-workbench",
+			testId: "pp2-packages-page",
 			title: __("Procurement Planning"),
 			subtitle: __("Packages"),
 		},
@@ -39,11 +44,6 @@
 			testId: "pp2-released-to-tender-page",
 			title: __("Procurement Planning"),
 			subtitle: __("Released to Tender"),
-		},
-		evidence: {
-			testId: "pp2-planning-evidence-index",
-			title: __("Procurement Planning"),
-			subtitle: __("Planning Evidence"),
 		},
 	};
 
@@ -83,9 +83,9 @@
 	function readSurfaceSlug() {
 		const path = String(window.location.pathname || "").toLowerCase();
 		if (path.endsWith("/approved-demands")) return "approved-demands";
+		if (path.endsWith("/plans")) return "plans";
 		if (path.endsWith("/packages")) return "packages";
 		if (path.endsWith("/releases")) return "releases";
-		if (path.endsWith("/evidence")) return "evidence";
 		return "";
 	}
 
@@ -415,13 +415,35 @@
 		return true;
 	}
 
+	function pruneForbiddenPlanningNavLinks() {
+		const anchors = document.querySelectorAll(".sidebar-items .item-anchor");
+		for (let i = 0; i < anchors.length; i += 1) {
+			const anchor = anchors[i];
+			const labelEl = anchor.querySelector(".sidebar-item-label");
+			const label = String(labelEl ? labelEl.textContent || "" : "")
+				.trim()
+				.toLowerCase();
+			const href = String(anchor.getAttribute("href") || "").toLowerCase();
+			const isEvidenceNav =
+				label === "planning evidence" || href.endsWith("/procurement-planning/evidence");
+			if (!isEvidenceNav) continue;
+			const item = anchor.closest(".sidebar-item-container");
+			if (item) {
+				item.remove();
+			} else {
+				anchor.remove();
+			}
+		}
+	}
+
 	function normalizeChildLinkRoutes() {
+		pruneForbiddenPlanningNavLinks();
 		const routeByLabel = {
 			"planning home": ROOT_PATH,
 			"approved demands": `${ROOT_PATH}/approved-demands`,
+			plans: `${ROOT_PATH}/plans`,
 			packages: `${ROOT_PATH}/packages`,
 			"released to tender": `${ROOT_PATH}/releases`,
-			"planning evidence": `${ROOT_PATH}/evidence`,
 		};
 		const anchors = document.querySelectorAll(".sidebar-items .item-anchor");
 		for (let i = 0; i < anchors.length; i += 1) {

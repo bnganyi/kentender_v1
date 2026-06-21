@@ -54,11 +54,27 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		self.assertIn("Approved Demands", planning_labels)
 		for key in (
 			"my work",
+			"my-work",
+			"procurement journeys",
+			"plc-procurement-journey",
+			"audit event",
+			"audit-event",
 			"bid opening",
+			"bid-opening",
 			"evaluation and award",
+			"evaluation-and-award",
 			"contract management",
+			"contract-management",
 			"strategy management",
+			"strategy-management",
 			"budget management",
+			"budget-management",
+			"procurement home",
+			"procurement-home",
+			"demand intake and approval",
+			"demand-intake-and-approval",
+			"ktsm supplier registry",
+			"ktsm-supplier-registry",
 		):
 			self.assertIn(
 				key,
@@ -147,7 +163,15 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		items = bootinfo.get("workspace_sidebar_item") or {}
 		proc = items.get("procurement") or {}
 		self.assertTrue(len(proc.get("items") or []) > 0, msg="Procurement sidebar baseline required")
-		for route_key in ("strategy-builder", "budget-builder", "form/demand"):
+		for route_key in (
+			"strategy-builder",
+			"budget-builder",
+			"form/demand",
+			"procurement-home",
+			"plc-procurement-journey",
+			"tender-management-v2",
+			"audit-event",
+		):
 			self.assertIn(
 				route_key,
 				items,
@@ -174,13 +198,31 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		for route_key in (
 			"procurement-planning",
 			"procurement-planning/approved-demands",
+			"procurement-planning/plans",
 			"procurement-planning/packages",
 			"procurement-planning/releases",
-			"procurement-planning/evidence",
 		):
 			self.assertIn(route_key, items, msg=f"PP2 route {route_key!r} requires boot fast-path key")
 			payload = items[route_key]
 			self.assertEqual(payload.get("items"), proc.get("items"))
+
+	def test_bootinfo_excludes_procurement_planning_evidence_route_key(self):
+		"""P5A-004 — superseded evidence route must not be an ordinary planning fast-path."""
+		if not frappe.db.exists("Workspace Sidebar", "Procurement"):
+			self.skipTest("Procurement sidebar not on site")
+		bootinfo: dict = {"workspace_sidebar_item": {}}
+		patch_bootinfo(bootinfo)
+		items = bootinfo.get("workspace_sidebar_item") or {}
+		self.assertNotIn(
+			"procurement-planning/evidence",
+			items,
+			msg="Planning Evidence must not be registered as an ordinary planning boot fast-path key",
+		)
+		self.assertNotIn(
+			"evidence",
+			items,
+			msg="Standalone evidence slug must not be registered as an ordinary planning boot fast-path key",
+		)
 
 	def test_bootinfo_includes_module_fallback_sidebar_keys(self):
 		"""DocType module routes should preserve Procurement rail context."""

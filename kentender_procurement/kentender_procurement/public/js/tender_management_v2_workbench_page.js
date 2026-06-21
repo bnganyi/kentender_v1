@@ -4,6 +4,16 @@
 
 	let tm2SearchTimer = null;
 
+	function ensureProcurementSidebar() {
+		try {
+			if (frappe.app && frappe.app.sidebar && typeof frappe.app.sidebar.setup === "function") {
+				frappe.app.sidebar.setup("procurement");
+			}
+		} catch (e) {
+			/* ignore */
+		}
+	}
+
 	const TM2_OUTPUT_FIELD_LABELS = {
 		bundle_output_code: __("Tender document package"),
 		dsm_output_code: __("Supplier submission checklist"),
@@ -3071,13 +3081,16 @@
 	frappe.provide("frappe.pages");
 	frappe.pages["tender-management-v2"] = frappe.pages["tender-management-v2"] || {};
 	frappe.pages["tender-management-v2"].on_page_load = function (wrapper) {
+		ensureProcurementSidebar();
 		mountShell(wrapper);
 	};
 	frappe.pages["tender-management-v2"].on_page_show = function (wrapper) {
+		ensureProcurementSidebar();
 		mountShell(wrapper);
 	};
 
 	function scheduleBoot() {
+		ensureProcurementSidebar();
 		syncTm2ShellBodyClass();
 		if (!is_tm2_route()) {
 			return;
