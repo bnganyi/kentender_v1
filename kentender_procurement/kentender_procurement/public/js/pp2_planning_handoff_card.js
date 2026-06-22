@@ -164,7 +164,7 @@
 		const actionText = String(o.action_text || (kind === "release" ? __("Open Tender") : __("Open"))).trim();
 		const packageCode = String(o.package_code || c.package_code || "").trim();
 		const evidenceHref =
-			"/desk/procurement-planning/evidence" +
+			"/desk/procurement-planning" +
 			(packageCode ? "?package_code=" + encodeURIComponent(packageCode) : "");
 		const mayViewTechnical = resolveMayViewTechnical(o);
 

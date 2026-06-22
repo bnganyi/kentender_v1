@@ -12,10 +12,8 @@
 	let sidebarSetupListenerBound = false;
 
 	const SURFACE_LABELS = {
-		"": __("Planning Home"),
-		"approved-demands": __("Approved Demands"),
-		plans: __("Plans"),
-		packages: __("Packages"),
+		"": __("Workbench"),
+		plans: __("Procurement Plans"),
 		releases: __("Released to Tender"),
 	};
 
@@ -23,22 +21,12 @@
 		"": {
 			testId: "pp2-planning-home",
 			title: __("Procurement Planning"),
-			subtitle: __("Planning Home"),
-		},
-		"approved-demands": {
-			testId: "pp2-approved-demands-page",
-			title: __("Procurement Planning"),
-			subtitle: __("Approved Demands"),
+			subtitle: __("Workbench"),
 		},
 		plans: {
 			testId: "pp2-plans-page",
 			title: __("Procurement Planning"),
-			subtitle: __("Plans"),
-		},
-		packages: {
-			testId: "pp2-packages-page",
-			title: __("Procurement Planning"),
-			subtitle: __("Packages"),
+			subtitle: __("Procurement Plans"),
 		},
 		releases: {
 			testId: "pp2-released-to-tender-page",
@@ -46,6 +34,12 @@
 			subtitle: __("Released to Tender"),
 		},
 	};
+	const APPROVED_DEMANDS_QUEUE_API =
+		"kentender_procurement.procurement_planning.api.approved_demands.get_pp_approved_demands_awaiting_planning";
+	const APPROVED_DEMANDS_DRAWER_API =
+		"kentender_procurement.procurement_planning.api.approved_demands.get_pp_approved_demand_planning_drawer";
+	const approvedDemandFetchTokens = new WeakMap();
+	const approvedDemandSummaryTokens = new WeakMap();
 
 	function esc(s) {
 		return frappe.utils.escape_html(String(s == null ? "" : s));
@@ -82,27 +76,28 @@
 
 	function readSurfaceSlug() {
 		const path = String(window.location.pathname || "").toLowerCase();
-		if (path.endsWith("/approved-demands")) return "approved-demands";
 		if (path.endsWith("/plans")) return "plans";
-		if (path.endsWith("/packages")) return "packages";
 		if (path.endsWith("/releases")) return "releases";
 		return "";
 	}
 
 	const CANONICAL_PLANNING_SLUGS = {
-		"approved-demands": true,
 		plans: true,
-		packages: true,
 		releases: true,
 	};
 
 	const INTERNAL_PLANNING_LEGACY_SLUGS = {
+		"approved-demands": true,
+		packages: true,
+		home: true,
 		evidence: true,
 		inclusions: true,
 		readiness: true,
 		review: true,
 		lines: true,
 		technical: true,
+		"release-package": true,
+		"technical-details": true,
 		audit: true,
 	};
 
@@ -121,6 +116,14 @@
 	const INTERNAL_PLANNING_DENIED_ROLES = ["Supplier"];
 
 	function readUserRoles() {
+		try {
+			const testRoles = window.__kt_pp2_test_roles;
+			if (Array.isArray(testRoles)) {
+				return testRoles.slice();
+			}
+		} catch (e) {
+			/* ignore */
+		}
 		try {
 			if (frappe.boot && frappe.boot.user && frappe.boot.user.roles) {
 				return frappe.boot.user.roles.slice();
@@ -166,8 +169,50 @@
 		return rest.split("/").filter(Boolean);
 	}
 
+	function buildWorkbenchRedirectUrl(query) {
+		const url = new URL(window.location.origin + ROOT_PATH);
+		const q = query || {};
+		Object.keys(q).forEach(function (key) {
+			const value = String(q[key] || "").trim();
+			if (!value) return;
+			url.searchParams.set(key, value);
+		});
+		return url.pathname + url.search;
+	}
+
+	function buildWorkbenchPackageRedirectUrl(packageCode) {
+		const code = String(packageCode || "").trim();
+		const queue = String(new URLSearchParams(window.location.search || "").get("queue") || "").trim();
+		const item = String(new URLSearchParams(window.location.search || "").get("item") || "").trim();
+		const params = {};
+		if (code) {
+			params.package_code = decodeURIComponent(code);
+		}
+		if (queue) {
+			params.queue = queue;
+		}
+		if (item) {
+			params.item = item;
+		}
+		return buildWorkbenchRedirectUrl(params);
+	}
+
+	function buildWorkbenchApprovedDemandsRedirectUrl() {
+		const search = new URLSearchParams(window.location.search || "");
+		const params = {};
+		const queue = String(search.get("queue") || "").trim();
+		const item = String(search.get("item") || "").trim();
+		if (queue) {
+			params.queue = queue;
+		}
+		if (item) {
+			params.item = item;
+		}
+		return buildWorkbenchRedirectUrl(params);
+	}
+
 	function buildPackagesRedirectUrl(packageCode) {
-		const url = new URL(window.location.origin + ROOT_PATH + "/packages");
+		const url = new URL(window.location.origin + ROOT_PATH);
 		const code = String(packageCode || "").trim();
 		if (code) {
 			url.searchParams.set("package_code", decodeURIComponent(code));
@@ -196,25 +241,55 @@
 			return { action: "not_found", reason: "denied" };
 		}
 
+		if (head === "home" && segments.length === 1) {
+			return {
+				action: "redirect",
+				slug: "",
+				redirectUrl: buildWorkbenchRedirectUrl(),
+			};
+		}
+		if (head === "approved-demands" && segments.length === 1) {
+			return {
+				action: "redirect",
+				slug: "",
+				redirectUrl: buildWorkbenchApprovedDemandsRedirectUrl(),
+			};
+		}
+		if (head === "packages" && segments.length === 1) {
+			return {
+				action: "redirect",
+				slug: "",
+				redirectUrl: buildWorkbenchPackageRedirectUrl(),
+			};
+		}
+
 		if (head === "evidence") {
 			return {
 				action: "redirect",
-				slug: "packages",
+				slug: "",
 				redirectUrl: buildPackagesRedirectUrl(rawSegments[1] || ""),
 			};
 		}
 		if (head === "inclusions") {
 			return {
 				action: "redirect",
-				slug: "approved-demands",
-				redirectUrl: `${ROOT_PATH}/approved-demands`,
+				slug: "",
+				redirectUrl: buildWorkbenchApprovedDemandsRedirectUrl(),
 			};
 		}
-		if (head === "readiness" || head === "review" || head === "lines" || head === "technical" || head === "audit") {
+		if (
+			head === "readiness" ||
+			head === "review" ||
+			head === "lines" ||
+			head === "technical" ||
+			head === "technical-details" ||
+			head === "audit" ||
+			head === "release-package"
+		) {
 			return {
 				action: "redirect",
-				slug: "packages",
-				redirectUrl: `${ROOT_PATH}/packages`,
+				slug: "",
+				redirectUrl: buildWorkbenchRedirectUrl(),
 			};
 		}
 		if (head === "releases" && segments.length > 1) {
@@ -234,7 +309,7 @@
 		if (head === "packages" && segments.length > 1) {
 			return {
 				action: "redirect",
-				slug: "packages",
+				slug: "",
 				redirectUrl: buildPackagesRedirectUrl(rawSegments[1] || ""),
 			};
 		}
@@ -265,13 +340,439 @@
 			esc(__("Planning page unavailable")) +
 			"</h3>" +
 			'<p class="text-muted small mb-0">' +
-			esc(__("This planning page is not available or you do not have access.")) +
+			esc(__("You do not have access to this planning information.")) +
 			"</p>" +
 			"</section>";
 	}
 
 	function surfaceForSlug(slug) {
 		return SURFACES[slug] || SURFACES[""];
+	}
+
+	function isPlanningHomeSlug(slug) {
+		return String(slug == null ? "" : slug) === "";
+	}
+
+	function clearWorkbenchHosts(mainHost) {
+		if (!mainHost) return;
+		const testIds = [
+			"pp2-primary-queue-host",
+			"pp2-primary-filters-host",
+			"pp2-primary-work-list-host",
+		];
+		for (let i = 0; i < testIds.length; i += 1) {
+			const el = mainHost.querySelector('[data-testid="' + testIds[i] + '"]');
+			if (el && el.parentNode) {
+				el.parentNode.removeChild(el);
+			}
+		}
+	}
+
+	function formatMoneyValue(value, currency) {
+		const amount = Number(value || 0);
+		const curr = String(currency || "KES").trim() || "KES";
+		const safeAmount = Number.isFinite(amount) ? amount : 0;
+		return safeAmount.toLocaleString() + " " + curr;
+	}
+
+	function approvedDemandEmptyMessage(queueId) {
+		const key = String(queueId || "").trim();
+		if (key === "blocked") {
+			return __("No blocked approved demands match this queue.");
+		}
+		if (key === "already-planned") {
+			return __("No fully planned approved demands match this queue.");
+		}
+		return __("No approved demands match this queue.");
+	}
+
+	function mapApprovedDemandQueueRow(row, queueId) {
+		const data = row || {};
+		const demand = data.demand || {};
+		const demandId = String(demand.id || "").trim();
+		const title = String(demand.name || demand.code || demandId).trim();
+		const category = String(data.category || "").trim();
+		const valueLabel = formatMoneyValue(data.estimated_value, data.currency);
+		const blockerLabel = String((data.blocker_summary && data.blocker_summary.label) || "").trim();
+		const budgetLine = data.budget_line || {};
+		const budgetLinked = String(budgetLine.id || budgetLine.code || "").trim().length > 0;
+		const planningStatus = String(data.planning_status || "").trim() || (String(queueId || "").trim() === "already-planned" ? __("Fully Planned") : __("Ready for Planning"));
+		return {
+			id: demandId,
+			title: title,
+			subtitle: [category, valueLabel].filter(Boolean).join(" · "),
+			category_value: [category, valueLabel].filter(Boolean).join(" · "),
+			funding_status: budgetLinked ? __("Budget linked") : __("Budget not linked"),
+			planning_status: planningStatus,
+			status_label: planningStatus,
+			blocker_label: blockerLabel,
+			blocker_count: Number((data.blocker_summary && data.blocker_summary.count) || 0),
+			raw: data,
+		};
+	}
+
+	function approvedDemandSummaryFacts(item, drawerMessage) {
+		const raw = (item && item.raw) || {};
+		const drawer = drawerMessage || {};
+		const demand = drawer.demand || {};
+		const category = String(demand.category || raw.category || "").trim();
+		const value = formatMoneyValue(
+			demand.estimated_value != null ? demand.estimated_value : raw.estimated_value,
+			demand.currency || raw.currency
+		);
+		return [category, value].filter(Boolean).join(" · ");
+	}
+
+	function approvedDemandSummaryFromDrawer(item, queueId, drawerMessage) {
+		const raw = (item && item.raw) || {};
+		const drawer = drawerMessage || {};
+		const demand = drawer.demand || {};
+		const demandTitle = String(demand.name || (item && item.title) || "").trim();
+		const categoryLabel = String(demand.category || raw.category || "").trim();
+		const valueLabel = formatMoneyValue(
+			demand.estimated_value != null ? demand.estimated_value : raw.estimated_value,
+			demand.currency || raw.currency
+		);
+		const budgetLine = (drawer.budget_context && drawer.budget_context.budget_line) || {};
+		const budgetLinked = String(budgetLine.id || budgetLine.code || "").trim().length > 0;
+		const eligibility = drawer.eligibility || {};
+		const includeAllowed = eligibility.allowed !== false;
+		const blockers = Array.isArray(eligibility.blockers)
+			? eligibility.blockers
+					.map(function (row) {
+						return String((row && row.message) || "").trim();
+					})
+					.filter(Boolean)
+			: [];
+		const demandStatus = String(demand.planning_status || (item && item.planning_status) || "").trim();
+		const fallbackNextAction = String(queueId || "").trim() === "blocked"
+			? __("Resolve blockers before including in plan")
+			: __("Include in plan");
+		const evidenceRoute = String(
+			(drawer.actions && drawer.actions.approval_certificate_route) ||
+				(drawer.evidence && drawer.evidence.view_route) ||
+				""
+		).trim();
+		const demandItems = Array.isArray(drawer.demand_items) ? drawer.demand_items : [];
+		const demandItemCodes = demandItems
+			.map(function (row) {
+				if (!row || typeof row !== "object") return "";
+				return String(row.code || row.demand_item_code || row.item_code || "").trim();
+			})
+			.filter(Boolean);
+		const targetPlan = drawer.target_plan || {};
+		return {
+			context_slug: "approved-demands",
+			demand_code: String(demand.code || (raw.demand && raw.demand.code) || "").trim(),
+			title: demandTitle,
+			status_label: demandStatus,
+			key_facts: [categoryLabel, valueLabel].filter(Boolean).join(" · "),
+			value_label: valueLabel,
+			funding_label: budgetLinked ? __("Budget linked") : __("Budget not linked"),
+			blockers: blockers,
+			blocker_count: blockers.length,
+			include_allowed: includeAllowed,
+			include_blocker_message: blockers[0] || "",
+			demand_item_codes: demandItemCodes,
+			target_plan_code: String(targetPlan.code || targetPlan.id || targetPlan.name || "").trim(),
+			next_action_label: blockers.length ? __("Resolve blockers before including in plan") : fallbackNextAction,
+			primary_action: {
+				label: __("Include in Plan"),
+				action: "include_in_plan",
+				testid: "pp2-include-in-plan-button",
+			},
+			secondary_actions: [
+				{
+					label: __("View Demand"),
+					action: "view_demand",
+					route: evidenceRoute,
+					testid: "pp2-view-demand-button",
+				},
+			],
+			show_evidence_action: true,
+			evidence_testid: "pp2-view-demand-evidence",
+		};
+	}
+
+	function includePlanSuccessSummary(payloadSummary, includeResult) {
+		const summaryData = payloadSummary || {};
+		const result = includeResult || {};
+		const successMessage = __("Demand added to the procurement plan.");
+		return {
+			context_slug: "approved-demands",
+			include_success: true,
+			title: successMessage,
+			include_success_message: successMessage,
+			next_action_label: __("Create package."),
+			primary_action: {
+				label: __("Create Package"),
+				action: "create_package_next",
+				testid: "pp2-create-package-next-action",
+			},
+			secondary_actions: [
+				{
+					label: __("Back to Approved Demands"),
+					action: "back_to_approved_demands",
+					testid: "pp2-back-to-approved-demands",
+				},
+			],
+			show_evidence_action: false,
+			demand_code: String(result.demand_code || summaryData.demand_code || "").trim(),
+		};
+	}
+
+	function renderApprovedDemandSummary(shell, item, queueId) {
+		if (!shell || !item) return;
+		const summaryHost = ensureSummaryHost(shell);
+		if (!summaryHost) return;
+		const demandCode = String((((item || {}).raw || {}).demand || {}).code || "").trim();
+		const token = (approvedDemandSummaryTokens.get(summaryHost) || 0) + 1;
+		approvedDemandSummaryTokens.set(summaryHost, token);
+		const baseSummary = approvedDemandSummaryFromDrawer(item, queueId, {});
+		const openIncludeModal = function (summary) {
+			const includeApi =
+				kentender_procurement &&
+				kentender_procurement.PlanningIncludePlanModal &&
+				typeof kentender_procurement.PlanningIncludePlanModal.open === "function"
+					? kentender_procurement.PlanningIncludePlanModal
+					: null;
+			const summaryData = summary || {};
+			if (!includeApi) {
+				frappe.show_alert({
+					indicator: "orange",
+					message: __("Include in Plan modal is unavailable."),
+				});
+				return;
+			}
+			const launchModal = function (payloadSummary) {
+				const payload = payloadSummary || {};
+				includeApi.open({
+					demand_code: String(payload.demand_code || "").trim(),
+					demand_name: String(payload.title || "").trim(),
+					value_label: String(payload.value_label || "").trim(),
+					funding_label: String(payload.funding_label || "").trim(),
+					target_plan_code: String(payload.target_plan_code || "").trim(),
+					demand_item_codes: Array.isArray(payload.demand_item_codes) ? payload.demand_item_codes : [],
+					include_allowed: payload.include_allowed !== false,
+					blocker_message: String(payload.include_blocker_message || "").trim(),
+					onBlocked: function (message) {
+						const withAlert = Object.assign({}, payload, {
+							include_alert_message: String(message || "").trim(),
+						});
+						mountPlanningSelectedSummary(shell, {
+							summary: withAlert,
+							onPrimaryAction: function () {
+								openIncludeModal(withAlert);
+							},
+							onSecondaryAction: function (action) {
+								const route = String((action && action.route) || "").trim();
+								if (!route) return;
+								window.location.href = route;
+							},
+						});
+					},
+					onSuccess: function (includeResult) {
+						const successSummary = includePlanSuccessSummary(payload, includeResult || {});
+						mountPlanningSelectedSummary(shell, {
+							summary: successSummary,
+							onPrimaryAction: function () {
+								window.location.href = ROOT_PATH + "?queue=needs-review";
+							},
+							onSecondaryAction: function (action) {
+								if (String((action && action.action) || "").trim() !== "back_to_approved_demands") {
+									return;
+								}
+								window.location.href = ROOT_PATH + "?queue=needs-planning";
+							},
+						});
+					},
+				});
+			};
+			const demandCode = String(summaryData.demand_code || "").trim();
+			if (!demandCode) {
+				launchModal(summaryData);
+				return;
+			}
+			frappe.call({
+				method: APPROVED_DEMANDS_DRAWER_API,
+				args: { demand_code: demandCode },
+				callback: function (response) {
+					const message = response && response.message ? response.message : {};
+					if (!message || !message.ok) {
+						launchModal(summaryData);
+						return;
+					}
+					const refreshed = approvedDemandSummaryFromDrawer(item, queueId, message);
+					launchModal(refreshed);
+				},
+				error: function () {
+					launchModal(summaryData);
+				},
+			});
+		};
+		mountPlanningSelectedSummary(shell, {
+			summary: baseSummary,
+			onPrimaryAction: function () {
+				openIncludeModal(baseSummary);
+			},
+			onSecondaryAction: function (action) {
+				const route = String((action && action.route) || "").trim();
+				if (!route) return;
+				window.location.href = route;
+			},
+		});
+		if (!demandCode) return;
+		frappe.call({
+			method: APPROVED_DEMANDS_DRAWER_API,
+			args: { demand_code: demandCode },
+			callback: function (response) {
+				if (approvedDemandSummaryTokens.get(summaryHost) !== token) return;
+				const message = response && response.message ? response.message : {};
+				if (!message || !message.ok) return;
+				mountPlanningSelectedSummary(shell, {
+					summary: approvedDemandSummaryFromDrawer(item, queueId, message),
+					onPrimaryAction: function () {
+						openIncludeModal(approvedDemandSummaryFromDrawer(item, queueId, message));
+					},
+					onSecondaryAction: function (action) {
+						const route = String((action && action.route) || "").trim();
+						if (!route) return;
+						window.location.href = route;
+					},
+				});
+			},
+		});
+	}
+
+	function renderApprovedDemandsQueue(mainHost, shell) {
+		if (!mainHost || !shell) return;
+		const workListHost = mainHost.querySelector('[data-testid="pp2-primary-work-list-host"]');
+		if (!workListHost) return;
+		const queueApi =
+			kentender_procurement &&
+			kentender_procurement.PlanningQueueTabs &&
+			typeof kentender_procurement.PlanningQueueTabs.readActiveFromUrl === "function"
+				? kentender_procurement.PlanningQueueTabs
+				: null;
+		const workListApi =
+			kentender_procurement &&
+			kentender_procurement.PlanningWorkList &&
+			typeof kentender_procurement.PlanningWorkList.renderForSlug === "function"
+				? kentender_procurement.PlanningWorkList
+				: null;
+		if (!queueApi || !workListApi) return;
+		const queueId = queueApi.readActiveFromUrl("approved-demands");
+		const token = (approvedDemandFetchTokens.get(workListHost) || 0) + 1;
+		approvedDemandFetchTokens.set(workListHost, token);
+		workListApi.renderForSlug(workListHost, "approved-demands", {
+			items: [],
+			emptyMessage: __("Loading approved demands..."),
+		});
+
+		frappe.call({
+			method: APPROVED_DEMANDS_QUEUE_API,
+			args: { queue: queueId, start: 0, limit: 50 },
+			callback: function (response) {
+				if (approvedDemandFetchTokens.get(workListHost) !== token) return;
+				const message = response && response.message ? response.message : {};
+				if (!message || !message.ok) {
+					workListApi.renderForSlug(workListHost, "approved-demands", {
+						items: [],
+						emptyMessage: approvedDemandEmptyMessage(queueId),
+					});
+					mountPlanningSelectedSummary(shell, {});
+					return;
+				}
+				const rows = Array.isArray(message.rows) ? message.rows : [];
+				const items = rows.map(function (row) {
+					return mapApprovedDemandQueueRow(row, queueId);
+				});
+				let selectedId = "";
+				if (typeof workListApi.readSelectedFromUrl === "function") {
+					selectedId = workListApi.readSelectedFromUrl(items);
+					try {
+						const rawItem = new URLSearchParams(window.location.search).get("item");
+						if (rawItem && !selectedId && typeof workListApi.setSelectedUrl === "function") {
+							workListApi.setSelectedUrl("");
+						}
+					} catch (e) {
+						/* ignore */
+					}
+				}
+
+				workListApi.renderForSlug(workListHost, "approved-demands", {
+					items: items,
+					selectedId: selectedId,
+					emptyMessage: approvedDemandEmptyMessage(queueId),
+					onSelect: function (_itemId, item) {
+						if (!item) {
+							mountPlanningSelectedSummary(shell, {});
+							return;
+						}
+						renderApprovedDemandSummary(shell, item, queueId);
+					},
+				});
+
+				if (!selectedId) {
+					mountPlanningSelectedSummary(shell, {});
+					return;
+				}
+				let selectedItem = null;
+				for (let i = 0; i < items.length; i += 1) {
+					if (String(items[i].id || "") === String(selectedId || "")) {
+						selectedItem = items[i];
+						break;
+					}
+				}
+				if (!selectedItem) {
+					mountPlanningSelectedSummary(shell, {});
+					return;
+				}
+				renderApprovedDemandSummary(shell, selectedItem, queueId);
+			},
+			error: function () {
+				if (approvedDemandFetchTokens.get(workListHost) !== token) return;
+				workListApi.renderForSlug(workListHost, "approved-demands", {
+					items: [],
+					emptyMessage: approvedDemandEmptyMessage(queueId),
+				});
+				mountPlanningSelectedSummary(shell, {});
+			},
+		});
+	}
+
+	function bindApprovedDemandsQueueRefresh(mainHost, shell) {
+		if (!mainHost || !shell) return;
+		const queueHost = mainHost.querySelector('[data-testid="pp2-primary-queue-host"]');
+		if (!queueHost || queueHost.getAttribute("data-pp2-approved-bound") === "1") return;
+		queueHost.setAttribute("data-pp2-approved-bound", "1");
+		queueHost.addEventListener("click", function (event) {
+			const target = event.target && event.target.closest ? event.target.closest("[data-pp2-queue-id]") : null;
+			if (!target) return;
+			window.setTimeout(function () {
+				renderApprovedDemandsQueue(mainHost, shell);
+			}, 0);
+		});
+	}
+
+	function mountPlanningHome(root) {
+		if (!root) return;
+		const api =
+			kentender_procurement &&
+			kentender_procurement.PlanningHome &&
+			typeof kentender_procurement.PlanningHome.render === "function"
+				? kentender_procurement.PlanningHome
+				: null;
+		if (api) {
+			api.render(root);
+			return;
+		}
+		root.innerHTML =
+			'<article class="pp2-planning-home" data-testid="pp2-planning-home-surface">' +
+			'<div class="pp2-planning-home__body" data-testid="pp2-planning-home-body">' +
+			'<div class="pp2-planning-home__summary-host"></div>' +
+			'<div class="pp2-planning-home__queues" data-testid="pp2-planning-home-queues"></div>' +
+			"</div></article>";
 	}
 
 	function readRightPanelCollapsed() {
@@ -684,6 +1185,7 @@
 			const collapsed = readRightPanelCollapsed();
 			shell.setAttribute("data-right-panel-collapsed", collapsed ? "1" : "0");
 			shell.innerHTML =
+				'<div class="pp2-primary-workspace-shell__marker" data-testid="pp3-procurement-planning-shell" aria-hidden="true"></div>' +
 				'<div class="pp2-primary-workspace-shell__header">' +
 				'<div class="pp2-primary-workspace-shell__breadcrumb text-muted small" data-testid="pp2-primary-breadcrumb"></div>' +
 				'<div class="pp2-primary-workspace-shell__context" data-testid="pp2-primary-context-host"></div>' +
@@ -739,8 +1241,17 @@
 			const collapsed = shell.getAttribute("data-right-panel-collapsed") === "1";
 			toggle.textContent = collapsed ? __("Expand panel") : __("Collapse panel");
 		}
-		ensureSummaryHost(shell);
-		mountPlanningSelectedSummary(shell, {});
+		if (isPlanningHomeSlug(slug)) {
+			const summaryHost = ensureSummaryHost(shell);
+			if (summaryHost) {
+				summaryHost.innerHTML = "";
+			}
+			shell.setAttribute("data-pp2-home-layout", "1");
+		} else {
+			shell.removeAttribute("data-pp2-home-layout");
+			ensureSummaryHost(shell);
+			mountPlanningSelectedSummary(shell, {});
+		}
 
 		return shell;
 	}
@@ -760,22 +1271,27 @@
 		}
 	}
 
+	function collapsePlanningSidebarParent(parent, attempt) {
+		if (!parent || isPlanningWorkspaceRoute()) return;
+		const nested = parent.querySelector(".nested-container");
+		const dropIcon = parent.querySelector(".drop-icon");
+		if (!nested || !dropIcon || typeof dropIcon.click !== "function") return;
+		if (window.getComputedStyle(nested).display === "none") return;
+		dropIcon.click();
+		if ((attempt || 0) < 3) {
+			window.setTimeout(function () {
+				collapsePlanningSidebarParent(parent, (attempt || 0) + 1);
+			}, 60);
+		}
+	}
+
 	function enhanceSidebarVisualHierarchy(slug, parentActive) {
 		const parent = document.querySelector('.section-item[title="Procurement Planning"]');
 		if (!parent) return false;
 		parent.classList.add("kt-pp2-sidebar-parent");
 		parent.classList.toggle("kt-pp2-sidebar-parent-active", !!parentActive);
 		if (!parentActive) {
-			const nested = parent.querySelector(".nested-container");
-			const dropIcon = parent.querySelector(".drop-icon");
-			const expanded = !!(
-				nested &&
-				window.getComputedStyle(nested).display !== "none" &&
-				nested.querySelector(".item-anchor")
-			);
-			if (expanded && dropIcon && typeof dropIcon.click === "function") {
-				dropIcon.click();
-			}
+			collapsePlanningSidebarParent(parent, 0);
 		}
 		const sectionBreak = parent.querySelector(".section-break");
 		if (sectionBreak && !sectionBreak.querySelector(".kt-pp2-parent-icon")) {
@@ -807,6 +1323,8 @@
 	}
 
 	const FORBIDDEN_PLANNING_NAV_LABELS = {
+		"approved demands": true,
+		packages: true,
 		"planning evidence": true,
 		"planning inclusion detail": true,
 		"release package detail": true,
@@ -822,6 +1340,8 @@
 	};
 
 	const FORBIDDEN_PLANNING_HREF_SUBSTRINGS = [
+		"/procurement-planning/approved-demands",
+		"/procurement-planning/packages",
 		"/procurement-planning/evidence",
 		"/procurement-planning/inclusions",
 		"/procurement-planning/readiness",
@@ -871,21 +1391,55 @@
 
 	function normalizeChildLinkRoutes() {
 		pruneForbiddenPlanningNavLinks();
+		const visibleLabelByOriginal = {
+			"planning home": __("Workbench"),
+			plans: __("Procurement Plans"),
+		};
+		const removableLegacyLabels = {
+			"approved demands": true,
+			packages: true,
+			"planning evidence": true,
+		};
 		const routeByLabel = {
+			workbench: ROOT_PATH,
 			"planning home": ROOT_PATH,
-			"approved demands": `${ROOT_PATH}/approved-demands`,
+			"procurement plans": `${ROOT_PATH}/plans`,
 			plans: `${ROOT_PATH}/plans`,
-			packages: `${ROOT_PATH}/packages`,
 			"released to tender": `${ROOT_PATH}/releases`,
 		};
-		const anchors = document.querySelectorAll(".sidebar-items .item-anchor");
+		const testIdByLabel = {
+			workbench: "pp3-nav-workbench",
+			"planning home": "pp3-nav-workbench",
+			"procurement plans": "pp3-nav-procurement-plans",
+			plans: "pp3-nav-procurement-plans",
+			"released to tender": "pp3-nav-released-to-tender",
+		};
+		const anchors = planningNestedNavAnchors();
 		for (let i = 0; i < anchors.length; i += 1) {
 			const anchor = anchors[i];
 			const labelEl = anchor.querySelector(".sidebar-item-label");
-			const label = String(labelEl ? labelEl.textContent || "" : "").trim().toLowerCase();
+			const rawLabel = String(labelEl ? labelEl.textContent || "" : "");
+			const label = rawLabel.trim().toLowerCase();
+			if (removableLegacyLabels[label]) {
+				const item = anchor.closest(".sidebar-item-container");
+				if (item) {
+					item.remove();
+				} else {
+					anchor.remove();
+				}
+				continue;
+			}
+			const relabel = visibleLabelByOriginal[label];
+			if (relabel && labelEl) {
+				labelEl.textContent = relabel;
+			}
 			const targetPath = routeByLabel[label];
 			if (!targetPath) continue;
 			anchor.setAttribute("href", targetPath);
+			const testId = testIdByLabel[label];
+			if (testId) {
+				anchor.setAttribute("data-testid", testId);
+			}
 		}
 	}
 
@@ -1008,12 +1562,29 @@
 			return hierarchyReady;
 		}
 
-		const hasDeepLinkQuery = String(window.location.search || "").indexOf("package_code=") !== -1;
-		syncSurfaceUrl(slug, { preserveSearch: slug === "packages" && hasDeepLinkQuery });
+		const searchParams = new URLSearchParams(window.location.search || "");
+		const hasPackageCode = searchParams.has("package_code");
+		const hasApprovedDemandQuery = searchParams.has("queue") || searchParams.has("item");
+		syncSurfaceUrl(slug, {
+			preserveSearch: slug === "" && (hasPackageCode || hasApprovedDemandQuery),
+		});
 		const shell = ensurePrimaryWorkspaceShell(root, slug);
 		if (!shell) return false;
 		const mainHost = shell.querySelector('[data-testid="pp2-primary-main-host"]');
-		if (mainHost) {
+		const markerId = surfaceForSlug(slug).testId;
+		root.setAttribute("data-testid", markerId);
+		if (isPlanningHomeSlug(slug)) {
+			if (mainHost) {
+				clearWorkbenchHosts(mainHost);
+				const children = Array.from(mainHost.children);
+				for (let i = 0; i < children.length; i += 1) {
+					if (children[i] !== root) {
+						mainHost.removeChild(children[i]);
+					}
+				}
+				mountPlanningHome(root);
+			}
+		} else if (mainHost) {
 			const queueHost = mainHost.querySelector('[data-testid="pp2-primary-queue-host"]');
 			const filtersHost = mainHost.querySelector('[data-testid="pp2-primary-filters-host"]');
 			const workListHost = mainHost.querySelector('[data-testid="pp2-primary-work-list-host"]');
@@ -1050,6 +1621,10 @@
 			}
 			mountPlanningAdvancedFilters(mainHost, slug);
 			mountPlanningWorkList(mainHost, slug, shell);
+			if (slug === "approved-demands") {
+				bindApprovedDemandsQueueRefresh(mainHost, shell);
+				renderApprovedDemandsQueue(mainHost, shell);
+			}
 			const workListApi =
 				kentender_procurement &&
 				kentender_procurement.PlanningWorkList &&
@@ -1066,10 +1641,8 @@
 					/* ignore */
 				}
 			}
+			renderSurfaceEmptyState(root, slug);
 		}
-		const markerId = surfaceForSlug(slug).testId;
-		root.setAttribute("data-testid", markerId);
-		renderSurfaceEmptyState(root, slug);
 		document.body.classList.add("kt-pp2-shell");
 		syncSidebarActive(slug);
 		return hierarchyReady;

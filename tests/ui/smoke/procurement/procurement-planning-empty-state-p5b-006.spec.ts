@@ -8,8 +8,7 @@ const root =
 	(globalThis as { process?: { env?: { UI_BASE_URL?: string } } }).process?.env?.UI_BASE_URL ||
 	'http://127.0.0.1:8000';
 
-const CANONICAL_PATHS = [
-	'/desk/procurement-planning',
+const WORKBENCH_PATHS = [
 	'/desk/procurement-planning/approved-demands',
 	'/desk/procurement-planning/plans',
 	'/desk/procurement-planning/packages',
@@ -17,7 +16,6 @@ const CANONICAL_PATHS = [
 ] as const;
 
 const SURFACE_EMPTY_MESSAGES: Record<string, RegExp> = {
-	'/desk/procurement-planning': /No items need your attention right now/i,
 	'/desk/procurement-planning/approved-demands': /No approved demands match this queue/i,
 	'/desk/procurement-planning/plans': /No procurement plans match this queue/i,
 	'/desk/procurement-planning/packages': /No packages match this queue/i,
@@ -25,7 +23,6 @@ const SURFACE_EMPTY_MESSAGES: Record<string, RegExp> = {
 };
 
 const SURFACE_PURPOSE: Record<string, RegExp> = {
-	'/desk/procurement-planning': /Convert approved demand into tender-ready procurement packages/i,
 	'/desk/procurement-planning/approved-demands': /Which approved demands can be planned now/i,
 	'/desk/procurement-planning/plans': /Which plan owns this procurement work/i,
 	'/desk/procurement-planning/packages': /Which packages need work, review, release, or follow-up/i,
@@ -48,10 +45,10 @@ test.describe('P5B-006 Planning empty state component', () => {
 		});
 	});
 
-	test('renders pp2-empty-state inside pp2-surface-empty-state on each canonical route', async ({
+	test('renders pp2-empty-state inside pp2-surface-empty-state on each workbench route', async ({
 		page,
 	}) => {
-		for (const path of CANONICAL_PATHS) {
+		for (const path of WORKBENCH_PATHS) {
 			await page.goto(`${root}${path}`, { waitUntil: 'domcontentloaded' });
 			const wrapper = page.getByTestId('pp2-surface-empty-state');
 			await expect(wrapper).toBeVisible({ timeout: 30000 });
@@ -69,7 +66,20 @@ test.describe('P5B-006 Planning empty state component', () => {
 		}
 	});
 
-	test('keeps page purpose on header separate from empty message', async ({ page }) => {
+	test('does not render surface empty state on Planning Home', async ({ page }) => {
+		await page.goto(`${root}/desk/procurement-planning`, { waitUntil: 'domcontentloaded' });
+		await expect(page.getByTestId('pp2-planning-home-surface')).toBeVisible({ timeout: 30000 });
+		await expect(page.getByTestId('pp2-surface-empty-state')).toHaveCount(0);
+	});
+
+	test('keeps page purpose on header separate from empty message on workbench routes', async ({
+		page,
+	}) => {
+		await page.goto(`${root}/desk/procurement-planning`, { waitUntil: 'domcontentloaded' });
+		await expect(page.getByTestId('pp2-page-purpose')).toHaveText(
+			/Convert approved demand into tender-ready procurement packages/i,
+			{ timeout: 30000 }
+		);
 		for (const [path, purposePattern] of Object.entries(SURFACE_PURPOSE)) {
 			await page.goto(`${root}${path}`, { waitUntil: 'domcontentloaded' });
 			await expect(page.getByTestId('pp2-page-purpose')).toHaveText(purposePattern, {
@@ -108,8 +118,8 @@ test.describe('P5B-006 Planning empty state component', () => {
 		expect(order!.workList).toBeLessThan(order!.empty);
 	});
 
-	test('canonical routes contain no forbidden implementation copy', async ({ page }) => {
-		for (const path of CANONICAL_PATHS) {
+	test('workbench routes contain no forbidden implementation copy', async ({ page }) => {
+		for (const path of WORKBENCH_PATHS) {
 			await page.goto(`${root}${path}`, { waitUntil: 'domcontentloaded' });
 			await expect(page.getByTestId('pp2-empty-state')).toBeVisible({ timeout: 30000 });
 			const bodyText = await page.locator('body').innerText();

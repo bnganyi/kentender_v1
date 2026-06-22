@@ -8,8 +8,7 @@ const root =
 	(globalThis as { process?: { env?: { UI_BASE_URL?: string } } }).process?.env?.UI_BASE_URL ||
 	'http://127.0.0.1:8000';
 
-const CANONICAL_PATHS = [
-	'/desk/procurement-planning',
+const WORKBENCH_PATHS = [
 	'/desk/procurement-planning/approved-demands',
 	'/desk/procurement-planning/plans',
 	'/desk/procurement-planning/packages',
@@ -50,16 +49,24 @@ test.describe('P5B-003 Planning work list', () => {
 		});
 	});
 
-	test('renders one work list on each canonical surface', async ({ page }) => {
-		for (const path of CANONICAL_PATHS) {
+	test('renders one work list on each workbench surface', async ({ page }) => {
+		for (const path of WORKBENCH_PATHS) {
 			await page.goto(`${root}${path}`, { waitUntil: 'domcontentloaded' });
 			await expect(page.getByTestId('pp2-work-list')).toHaveCount(1, { timeout: 30000 });
 			await expect(page.getByTestId('pp2-work-list')).toBeVisible();
 		}
 	});
 
-	test('shows empty list shell while surface empty message remains', async ({ page }) => {
-		for (const path of CANONICAL_PATHS) {
+	test('does not render work list on Planning Home', async ({ page }) => {
+		await page.goto(`${root}/desk/procurement-planning`, { waitUntil: 'domcontentloaded' });
+		await expect(page.getByTestId('pp2-planning-home-surface')).toBeVisible({ timeout: 30000 });
+		await expect(page.getByTestId('pp2-work-list')).toHaveCount(0);
+	});
+
+	test('shows empty list shell while surface empty message remains on workbench surfaces', async ({
+		page,
+	}) => {
+		for (const path of WORKBENCH_PATHS) {
 			await page.goto(`${root}${path}`, { waitUntil: 'domcontentloaded' });
 			await expect(page.getByTestId('pp2-work-list-empty')).toBeVisible({ timeout: 30000 });
 			await expect(page.getByTestId('pp2-empty-state-message')).toBeVisible();
@@ -153,8 +160,8 @@ test.describe('P5B-003 Planning work list', () => {
 		await expect(page).toHaveURL(/item=pkg-blocked-001/);
 	});
 
-	test('canonical routes contain no forbidden implementation copy', async ({ page }) => {
-		for (const path of CANONICAL_PATHS) {
+	test('workbench routes contain no forbidden implementation copy', async ({ page }) => {
+		for (const path of WORKBENCH_PATHS) {
 			await page.goto(`${root}${path}`, { waitUntil: 'domcontentloaded' });
 			await expect(page.getByTestId('pp2-work-list')).toBeVisible({ timeout: 30000 });
 			const bodyText = await page.locator('body').innerText();

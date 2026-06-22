@@ -13,7 +13,7 @@
 			primaryAction: {
 				label: __("New package from approved demand"),
 				testId: "pp2-page-primary-action",
-				href: ROOT_PATH + "/approved-demands",
+				href: ROOT_PATH + "?queue=needs-planning",
 			},
 		},
 		"approved-demands": {

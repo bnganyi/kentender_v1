@@ -34,8 +34,58 @@
 		);
 	}
 
+	function approvedDemandBlockerHtml(item) {
+		const count = Number(item.blocker_count || 0);
+		if (!count || count < 1) return "";
+		const label = String(item.blocker_label || "").trim() || (count === 1 ? __("1 blocker") : __("{0} blockers", [count]));
+		return (
+			'<div class="pp2-approved-demand-row__blocker text-muted small" data-testid="pp2-approved-demand-row-blocker">' +
+			esc(label) +
+			"</div>"
+		);
+	}
+
+	function approvedDemandRowHtml(item, opts) {
+		const o = opts || {};
+		const id = String(item.id || "").trim();
+		const selectedId = String(o.selectedId || "").trim();
+		const on = !!id && id === selectedId;
+		return (
+			'<button type="button" class="pp2-work-list-row pp2-approved-demand-row' +
+			(on ? " is-active" : "") +
+			'" data-testid="pp2-approved-demand-row" data-pp2-work-item-id="' +
+			esc(id) +
+			'" role="option" aria-selected="' +
+			(on ? "true" : "false") +
+			'">' +
+			'<div class="pp2-approved-demand-row__title" data-testid="pp2-approved-demand-row-title">' +
+			esc(item.title || "") +
+			"</div>" +
+			'<div class="pp2-approved-demand-row__category-value text-muted small" data-testid="pp2-approved-demand-row-category-value">' +
+			esc(item.category_value || item.subtitle || "") +
+			"</div>" +
+			'<div class="pp2-approved-demand-row__funding text-muted small" data-testid="pp2-approved-demand-row-funding-status">' +
+			esc(item.funding_status || "") +
+			"</div>" +
+			'<div class="pp2-approved-demand-row__planning-status" data-testid="pp2-approved-demand-row-planning-status">' +
+			statusHtml({ status_label: item.planning_status || item.status_label }) +
+			"</div>" +
+			approvedDemandBlockerHtml(item) +
+			"</button>"
+		);
+	}
+
+	function rowSelectorForSlug(slug) {
+		return String(slug || "") === "approved-demands"
+			? '[data-testid="pp2-approved-demand-row"]'
+			: '[data-testid="pp2-work-list-row"]';
+	}
+
 	function rowHtml(item, opts) {
 		const o = opts || {};
+		if (String(o.slug || "") === "approved-demands") {
+			return approvedDemandRowHtml(item, o);
+		}
 		const id = String(item.id || "").trim();
 		const selectedId = String(o.selectedId || "").trim();
 		const on = !!id && id === selectedId;
@@ -108,7 +158,7 @@
 		}
 		let rows = "";
 		for (let i = 0; i < items.length; i += 1) {
-			rows += rowHtml(items[i], { selectedId: selectedId });
+			rows += rowHtml(items[i], { selectedId: selectedId, slug: o.slug });
 		}
 		return (
 			'<div class="pp2-work-list" data-testid="pp2-work-list">' +
@@ -160,7 +210,12 @@
 		const items = Array.isArray(o.items) ? o.items : [];
 		const selectedId =
 			o.selectedId != null ? String(o.selectedId) : readSelectedFromUrl(items);
-		target.innerHTML = html({ items: items, selectedId: selectedId, emptyMessage: o.emptyMessage });
+		target.innerHTML = html({
+			items: items,
+			selectedId: selectedId,
+			slug: o.slug,
+			emptyMessage: o.emptyMessage,
+		});
 		bindRows(target, {
 			items: items,
 			selectedId: selectedId,
@@ -172,7 +227,7 @@
 			window.KTWorkspaceListSelection.syncSelection(
 				target,
 				'[data-testid="pp2-work-list-rows"]',
-				'[data-testid="pp2-work-list-row"]',
+				rowSelectorForSlug(o.slug),
 				"data-pp2-work-item-id",
 				selectedId,
 				"is-active"

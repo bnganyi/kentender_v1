@@ -13,7 +13,7 @@ async function clickSidebar(page: import('@playwright/test').Page, label: string
 	await link.click();
 }
 
-test.describe('PP2 shell cross-module containment', () => {
+test.describe('P1-001 shell cross-module containment', () => {
 	test.beforeEach(async ({ page }) => {
 		await loginAsAdministrator(page);
 	});
@@ -21,10 +21,12 @@ test.describe('PP2 shell cross-module containment', () => {
 	test('does not show planning shell on Procurement Home after Planning → DIA → Home', async ({
 		page,
 	}) => {
-		await page.goto(`${root}/desk/procurement-planning/approved-demands`, {
+		await page.goto(`${root}/desk/procurement-planning`, {
 			waitUntil: 'domcontentloaded',
 		});
-		await expect(page.getByTestId('pp2-primary-workspace-shell')).toHaveCount(1, { timeout: 30000 });
+		await expect(page.getByTestId('pp3-procurement-planning-shell')).toHaveCount(1, {
+			timeout: 30000,
+		});
 
 		await clickSidebar(page, 'Demand Intake');
 		await expect(page).toHaveURL(/demand-intake/i, { timeout: 30000 });
@@ -33,8 +35,7 @@ test.describe('PP2 shell cross-module containment', () => {
 		await expect(page).toHaveURL(/procurement-home/i, { timeout: 30000 });
 		await expect(page.getByTestId('ph-landing-page')).toBeVisible({ timeout: 30000 });
 
-		await expect(page.getByTestId('pp2-primary-workspace-shell')).toHaveCount(0);
-		await expect(page.getByTestId('pp2-primary-breadcrumb')).toHaveCount(0);
-		await expect(page.getByTestId('pp2-queue-tabs')).toHaveCount(0);
+		await expect(page.getByTestId('pp3-procurement-planning-shell')).toHaveCount(0);
+		await page.screenshot({ path: 'artifacts/p1-001-shell-cleared-on-home.png', fullPage: true });
 	});
 });

@@ -34,7 +34,6 @@ const FORBIDDEN_IMPLEMENTATION_COPY = [
 ];
 
 const SURFACE_EMPTY_MESSAGES: Record<string, RegExp> = {
-	'/desk/procurement-planning': /No items need your attention right now/i,
 	'/desk/procurement-planning/approved-demands': /No approved demands match this queue/i,
 	'/desk/procurement-planning/plans': /No procurement plans match this queue/i,
 	'/desk/procurement-planning/packages': /No packages match this queue/i,
@@ -64,7 +63,7 @@ test.describe('P5A-007 Planning implementation copy scan', () => {
 		}
 	});
 
-	test('each surface shows business empty state with purpose copy', async ({ page }) => {
+	test('workbench surfaces show business empty state with purpose copy', async ({ page }) => {
 		const surfacePurpose: Record<string, RegExp> = {
 			'/desk/procurement-planning': /Convert approved demand into tender-ready procurement packages/i,
 			'/desk/procurement-planning/approved-demands': /Which approved demands can be planned now/i,
@@ -84,18 +83,36 @@ test.describe('P5A-007 Planning implementation copy scan', () => {
 		}
 	});
 
-	test('right panel is idle without stub next-action copy', async ({ page }) => {
-		for (const path of ['/desk/procurement-planning', '/desk/procurement-planning/packages'] as const) {
-			await page.goto(`${root}${path}`, { waitUntil: 'domcontentloaded' });
-			await expect(page.getByTestId('pp2-primary-workspace-shell')).toBeVisible({ timeout: 30000 });
-			await expect(page.getByTestId('pp2-primary-workspace-shell')).toHaveAttribute(
-				'data-right-panel-collapsed',
-				'1'
-			);
-			const nextAction = page.getByTestId('pp2-primary-next-action-panel');
-			await expect(nextAction).toHaveCount(1);
-			await expect(nextAction).toHaveText('');
-			await expect(nextAction).not.toContainText(/Next action/i);
-		}
+	test('Planning Home shows purpose without workbench empty state', async ({ page }) => {
+		await page.goto(`${root}/desk/procurement-planning`, { waitUntil: 'domcontentloaded' });
+		await expect(page.getByTestId('pp2-page-purpose')).toHaveText(
+			/Convert approved demand into tender-ready procurement packages/i,
+			{ timeout: 30000 }
+		);
+		await expect(page.getByTestId('pp2-planning-home-surface')).toBeVisible();
+		await expect(page.getByTestId('pp2-surface-empty-state')).toHaveCount(0);
+	});
+
+	test('right panel is idle without stub next-action copy on packages', async ({ page }) => {
+		await page.goto(`${root}/desk/procurement-planning/packages`, { waitUntil: 'domcontentloaded' });
+		await expect(page.getByTestId('pp2-primary-workspace-shell')).toBeVisible({ timeout: 30000 });
+		await expect(page.getByTestId('pp2-primary-workspace-shell')).toHaveAttribute(
+			'data-right-panel-collapsed',
+			'1'
+		);
+		const nextAction = page.getByTestId('pp2-primary-next-action-panel');
+		await expect(nextAction).toHaveCount(1);
+		await expect(nextAction).toHaveText('');
+		await expect(nextAction).not.toContainText(/Next action/i);
+	});
+
+	test('Planning Home hides permanent right panel', async ({ page }) => {
+		await page.goto(`${root}/desk/procurement-planning`, { waitUntil: 'domcontentloaded' });
+		await expect(page.getByTestId('pp2-primary-workspace-shell')).toHaveAttribute(
+			'data-pp2-home-layout',
+			'1',
+			{ timeout: 30000 }
+		);
+		await expect(page.getByTestId('pp2-primary-right-panel')).toBeHidden();
 	});
 });

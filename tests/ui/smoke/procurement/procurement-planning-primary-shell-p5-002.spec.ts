@@ -16,11 +16,25 @@ test.describe('P5-002 PrimaryWorkspaceShell', () => {
 		await loginAsAdministrator(page);
 	});
 
-	test('renders primary shell frame and right panel toggle', async ({ page }) => {
+	test('renders primary shell frame on Planning Home without permanent right panel', async ({ page }) => {
 		await page.evaluate(() => {
 			window.localStorage.removeItem('kt-pp2-right-panel-collapsed');
 		});
 		await page.goto(`${root}/desk/procurement-planning`, { waitUntil: 'domcontentloaded' });
+		await expect(page.getByTestId('pp2-primary-workspace-shell')).toBeVisible({ timeout: 30000 });
+		await expect(page.getByTestId('pp2-primary-breadcrumb')).toBeVisible();
+		await expect(page.getByTestId('pp2-primary-context-host')).toHaveCount(1);
+		await expect(page.getByTestId('pp2-primary-main-host')).toBeVisible();
+		await expect(page.getByTestId('pp2-planning-home-surface')).toBeVisible();
+		await expect(page.getByTestId('pp2-primary-right-panel')).toBeHidden();
+		await expect(page.getByTestId('pp2-primary-right-panel-toggle')).toBeHidden();
+	});
+
+	test('renders primary shell frame and right panel toggle on workbench routes', async ({ page }) => {
+		await page.evaluate(() => {
+			window.localStorage.removeItem('kt-pp2-right-panel-collapsed');
+		});
+		await page.goto(`${root}/desk/procurement-planning/packages`, { waitUntil: 'domcontentloaded' });
 		await expect(page.getByTestId('pp2-primary-workspace-shell')).toBeVisible({ timeout: 30000 });
 		await expect(page.getByTestId('pp2-primary-breadcrumb')).toBeVisible();
 		await expect(page.getByTestId('pp2-primary-context-host')).toHaveCount(1);
@@ -41,7 +55,11 @@ test.describe('P5-002 PrimaryWorkspaceShell', () => {
 			await page.goto(`${root}${path}`, { waitUntil: 'domcontentloaded' });
 			await expect(page.getByTestId('pp2-primary-workspace-shell')).toBeVisible({ timeout: 30000 });
 			await expect(page.getByTestId('pp2-primary-breadcrumb')).toBeVisible();
-			await expect(page.getByTestId('pp2-primary-right-panel')).toBeVisible();
+			if (path === '/desk/procurement-planning') {
+				await expect(page.getByTestId('pp2-primary-right-panel')).toBeHidden();
+			} else {
+				await expect(page.getByTestId('pp2-primary-right-panel')).toBeVisible();
+			}
 		}
 	});
 
@@ -55,11 +73,11 @@ test.describe('P5-002 PrimaryWorkspaceShell', () => {
 		}
 	});
 
-	test('preserves right panel collapsed state across PP2 route switches', async ({ page }) => {
+	test('preserves right panel collapsed state across workbench route switches', async ({ page }) => {
 		await page.evaluate(() => {
 			window.localStorage.removeItem('kt-pp2-right-panel-collapsed');
 		});
-		await page.goto(`${root}/desk/procurement-planning`, { waitUntil: 'domcontentloaded' });
+		await page.goto(`${root}/desk/procurement-planning/approved-demands`, { waitUntil: 'domcontentloaded' });
 		const shell = page.getByTestId('pp2-primary-workspace-shell');
 		const toggle = page.getByTestId('pp2-primary-right-panel-toggle');
 		await expect(shell).toHaveAttribute('data-right-panel-collapsed', '1');

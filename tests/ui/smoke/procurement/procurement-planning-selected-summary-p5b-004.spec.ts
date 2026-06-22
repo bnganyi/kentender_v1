@@ -8,8 +8,7 @@ const root =
 	(globalThis as { process?: { env?: { UI_BASE_URL?: string } } }).process?.env?.UI_BASE_URL ||
 	'http://127.0.0.1:8000';
 
-const CANONICAL_PATHS = [
-	'/desk/procurement-planning',
+const WORKBENCH_PATHS = [
 	'/desk/procurement-planning/approved-demands',
 	'/desk/procurement-planning/plans',
 	'/desk/procurement-planning/packages',
@@ -55,8 +54,8 @@ test.describe('P5B-004 Planning selected summary panel', () => {
 		});
 	});
 
-	test('shows idle summary shell on each canonical surface when panel expanded', async ({ page }) => {
-		for (const path of CANONICAL_PATHS) {
+	test('shows idle summary shell on each workbench surface when panel expanded', async ({ page }) => {
+		for (const path of WORKBENCH_PATHS) {
 			await page.goto(`${root}${path}`, { waitUntil: 'domcontentloaded' });
 			await expandRightPanel(page);
 			await expect(page.getByTestId('pp2-selected-summary-panel')).toHaveCount(1);
@@ -67,15 +66,13 @@ test.describe('P5B-004 Planning selected summary panel', () => {
 		}
 	});
 
-	test('keeps legacy next-action panel empty without stub copy', async ({ page }) => {
-		for (const path of ['/desk/procurement-planning', '/desk/procurement-planning/packages'] as const) {
-			await page.goto(`${root}${path}`, { waitUntil: 'domcontentloaded' });
-			await expandRightPanel(page);
-			const nextAction = page.getByTestId('pp2-primary-next-action-panel');
-			await expect(nextAction).toHaveCount(1);
-			await expect(nextAction).toHaveText('');
-			await expect(nextAction).not.toContainText(/Next action/i);
-		}
+	test('keeps legacy next-action panel empty without stub copy on packages', async ({ page }) => {
+		await page.goto(`${root}/desk/procurement-planning/packages`, { waitUntil: 'domcontentloaded' });
+		await expandRightPanel(page);
+		const nextAction = page.getByTestId('pp2-primary-next-action-panel');
+		await expect(nextAction).toHaveCount(1);
+		await expect(nextAction).toHaveText('');
+		await expect(nextAction).not.toContainText(/Next action/i);
 	});
 
 	test('populates summary from fixture row selection on packages route', async ({ page }) => {
@@ -132,10 +129,12 @@ test.describe('P5B-004 Planning selected summary panel', () => {
 	});
 
 	test('canonical routes contain no forbidden implementation copy', async ({ page }) => {
-		for (const path of CANONICAL_PATHS) {
+		for (const path of [...WORKBENCH_PATHS, '/desk/procurement-planning'] as const) {
 			await page.goto(`${root}${path}`, { waitUntil: 'domcontentloaded' });
-			await expandRightPanel(page);
-			await expect(page.getByTestId('pp2-selected-summary-panel')).toBeVisible({ timeout: 30000 });
+			if (path !== '/desk/procurement-planning') {
+				await expandRightPanel(page);
+				await expect(page.getByTestId('pp2-selected-summary-panel')).toBeVisible({ timeout: 30000 });
+			}
 			const bodyText = await page.locator('body').innerText();
 			for (const pattern of FORBIDDEN_IMPLEMENTATION_COPY) {
 				expect(bodyText).not.toMatch(pattern);

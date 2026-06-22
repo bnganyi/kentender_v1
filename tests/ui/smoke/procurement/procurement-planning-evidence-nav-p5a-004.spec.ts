@@ -8,18 +8,16 @@ const root =
 	(globalThis as { process?: { env?: { UI_BASE_URL?: string } } }).process?.env?.UI_BASE_URL ||
 	'http://127.0.0.1:8000';
 
-const PP2_ROUTES = [
+const PP3_ROUTES = [
 	'/desk/procurement-planning',
-	'/desk/procurement-planning/approved-demands',
 	'/desk/procurement-planning/plans',
-	'/desk/procurement-planning/packages',
 	'/desk/procurement-planning/releases',
 ] as const;
 
 async function expandPlanningSubmenu(page: import('@playwright/test').Page): Promise<void> {
 	const parent = page.locator('.section-item[title="Procurement Planning"]').first();
 	await expect(parent).toBeVisible({ timeout: 30000 });
-	const child = page.getByRole('link', { name: 'Planning Home' }).first();
+	const child = page.getByRole('link', { name: 'Workbench' }).first();
 	if (!(await child.isVisible())) {
 		await parent.locator('.drop-icon').click();
 	}
@@ -34,7 +32,7 @@ test.describe('P5A-004 Planning Evidence nav removal', () => {
 	test('PP2-P5-NG-003 — Planning Evidence absent from Planning submenu on all canonical routes', async ({
 		page,
 	}) => {
-		for (const path of PP2_ROUTES) {
+		for (const path of PP3_ROUTES) {
 			await page.goto(`${root}${path}`, { waitUntil: 'domcontentloaded' });
 			await expandPlanningSubmenu(page);
 
@@ -56,7 +54,7 @@ test.describe('P5A-004 Planning Evidence nav removal', () => {
 	});
 
 	test('no planning evidence index surface mounted by default', async ({ page }) => {
-		for (const path of PP2_ROUTES) {
+		for (const path of PP3_ROUTES) {
 			await page.goto(`${root}${path}`, { waitUntil: 'domcontentloaded' });
 			await expect(page.getByTestId('pp2-planning-evidence-index')).toHaveCount(0);
 		}

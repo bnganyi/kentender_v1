@@ -8,17 +8,14 @@ const root =
 	(globalThis as { process?: { env?: { UI_BASE_URL?: string } } }).process?.env?.UI_BASE_URL ||
 	'http://127.0.0.1:8000';
 
+const WORKBENCH_SURFACE_PATHS = [
+	'/desk/procurement-planning/approved-demands',
+	'/desk/procurement-planning/plans',
+	'/desk/procurement-planning/packages',
+	'/desk/procurement-planning/releases',
+] as const;
+
 const SURFACE_QUEUE_CONFIG = [
-	{
-		path: '/desk/procurement-planning',
-		labels: [
-			'Needs Planning',
-			'Needs Review',
-			'Ready to Release',
-			'Released Recently',
-			'Blocked',
-		],
-	},
 	{
 		path: '/desk/procurement-planning/approved-demands',
 		labels: ['Ready to Plan', 'Blocked', 'Already Planned'],
@@ -55,9 +52,9 @@ test.describe('P5B-002 Planning queue tabs', () => {
 		});
 	});
 
-	test('renders one queue tab bar on each canonical surface', async ({ page }) => {
-		for (const surface of SURFACE_QUEUE_CONFIG) {
-			await page.goto(`${root}${surface.path}`, { waitUntil: 'domcontentloaded' });
+	test('renders one queue tab bar on each workbench surface', async ({ page }) => {
+		for (const path of WORKBENCH_SURFACE_PATHS) {
+			await page.goto(`${root}${path}`, { waitUntil: 'domcontentloaded' });
 			await expect(page.getByTestId('pp2-queue-tabs')).toHaveCount(1, { timeout: 30000 });
 			await expect(page.getByTestId('pp2-queue-tabs')).toBeVisible();
 		}
@@ -100,16 +97,17 @@ test.describe('P5B-002 Planning queue tabs', () => {
 		await expect(firstChip).toHaveAttribute('aria-selected', 'false');
 	});
 
-	test('syncs queue selection to URL query param', async ({ page }) => {
+	test('does not render queue tabs on Planning Home', async ({ page }) => {
+		await page.goto(`${root}/desk/procurement-planning`, { waitUntil: 'domcontentloaded' });
+		await expect(page.getByTestId('pp2-planning-home-surface')).toBeVisible({ timeout: 30000 });
+		await expect(page.getByTestId('pp2-queue-tabs')).toHaveCount(0);
+	});
+
+	test('syncs queue selection to URL query param on packages', async ({ page }) => {
 		await page.goto(`${root}/desk/procurement-planning/packages`, { waitUntil: 'domcontentloaded' });
 		await expect(page.getByTestId('pp2-queue-tabs')).toBeVisible({ timeout: 30000 });
 		await queueTabLocator(page, 'needs-review').click();
 		await expect(page).toHaveURL(/queue=needs-review/);
-
-		await page.goto(`${root}/desk/procurement-planning`, { waitUntil: 'domcontentloaded' });
-		await expect(page.getByTestId('pp2-queue-tabs')).toBeVisible({ timeout: 30000 });
-		await queueTabLocator(page, 'blocked').click();
-		await expect(page).toHaveURL(/queue=blocked/);
 	});
 
 	test('renders queue tabs before empty state in main host', async ({ page }) => {

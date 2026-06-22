@@ -41,6 +41,8 @@ const CANONICAL_SURFACES = [
 	},
 ] as const;
 
+const WORKBENCH_SURFACES = CANONICAL_SURFACES.filter((surface) => !surface.hasPrimary);
+
 const FORBIDDEN_IMPLEMENTATION_COPY = [
 	/shell baseline/i,
 	/Choose a planning workspace action/i,
@@ -87,7 +89,7 @@ test.describe('P5B-001 Planning page header', () => {
 	});
 
 	test('empty state shows message only without duplicated title or purpose', async ({ page }) => {
-		for (const surface of CANONICAL_SURFACES) {
+		for (const surface of WORKBENCH_SURFACES) {
 			await page.goto(`${root}${surface.path}`, { waitUntil: 'domcontentloaded' });
 			const emptyState = page.getByTestId('pp2-surface-empty-state');
 			await expect(emptyState).toBeVisible({ timeout: 30000 });
@@ -95,6 +97,12 @@ test.describe('P5B-001 Planning page header', () => {
 			await expect(emptyState.getByTestId('pp2-page-purpose')).toHaveCount(0);
 			await expect(page.getByTestId('pp2-empty-state-message')).toBeVisible();
 		}
+	});
+
+	test('Planning Home does not mount workbench surface empty state', async ({ page }) => {
+		await page.goto(`${root}/desk/procurement-planning`, { waitUntil: 'domcontentloaded' });
+		await expect(page.getByTestId('pp2-planning-home-surface')).toBeVisible({ timeout: 30000 });
+		await expect(page.getByTestId('pp2-surface-empty-state')).toHaveCount(0);
 	});
 
 	test('canonical routes contain no forbidden implementation copy', async ({ page }) => {

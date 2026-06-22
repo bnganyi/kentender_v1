@@ -8,15 +8,15 @@ const root =
 	(globalThis as { process?: { env?: { UI_BASE_URL?: string } } }).process?.env?.UI_BASE_URL ||
 	'http://127.0.0.1:8000';
 
-const PP2_ROUTES = [
+const PP3_ROUTES = [
 	'/desk/procurement-planning',
-	'/desk/procurement-planning/approved-demands',
 	'/desk/procurement-planning/plans',
-	'/desk/procurement-planning/packages',
 	'/desk/procurement-planning/releases',
 ] as const;
 
 const FORBIDDEN_PLANNING_NAV_LABELS = [
+	'Approved Demands',
+	'Packages',
 	'Planning Inclusion Detail',
 	'Release Package Detail',
 	'Readiness Review',
@@ -32,6 +32,8 @@ const FORBIDDEN_PLANNING_NAV_LABELS = [
 ] as const;
 
 const FORBIDDEN_PLANNING_HREF_SUBSTRINGS = [
+	'/procurement-planning/approved-demands',
+	'/procurement-planning/packages',
 	'/procurement-planning/evidence',
 	'/procurement-planning/inclusions',
 	'/procurement-planning/readiness',
@@ -43,17 +45,15 @@ const FORBIDDEN_PLANNING_HREF_SUBSTRINGS = [
 ] as const;
 
 const CANONICAL_PLANNING_CHILD_LABELS = [
-	'Planning Home',
-	'Approved Demands',
-	'Plans',
-	'Packages',
+	'Workbench',
+	'Procurement Plans',
 	'Released to Tender',
 ] as const;
 
 async function expandPlanningSubmenu(page: import('@playwright/test').Page): Promise<void> {
 	const parent = page.locator('.section-item[title="Procurement Planning"]').first();
 	await expect(parent).toBeVisible({ timeout: 30000 });
-	const child = page.getByRole('link', { name: 'Planning Home' }).first();
+	const child = page.getByRole('link', { name: 'Workbench' }).first();
 	if (!(await child.isVisible())) {
 		await parent.locator('.drop-icon').click();
 	}
@@ -72,7 +72,7 @@ test.describe('P5A-005 Planning technical/detail nav removal', () => {
 	test('forbidden technical/detail labels absent from Planning submenu on all canonical routes', async ({
 		page,
 	}) => {
-		for (const path of PP2_ROUTES) {
+		for (const path of PP3_ROUTES) {
 			await page.goto(`${root}${path}`, { waitUntil: 'domcontentloaded' });
 			await expandPlanningSubmenu(page);
 
@@ -94,7 +94,7 @@ test.describe('P5A-005 Planning technical/detail nav removal', () => {
 		}
 	});
 
-	test('Planning nested submenu has exactly five canonical child links', async ({ page }) => {
+	test('Planning nested submenu has exactly three canonical child links', async ({ page }) => {
 		await page.goto(`${root}/desk/procurement-planning`, { waitUntil: 'domcontentloaded' });
 		await expandPlanningSubmenu(page);
 
@@ -107,14 +107,14 @@ test.describe('P5A-005 Planning technical/detail nav removal', () => {
 				.map((el) => (el.textContent || '').replace(/\s+/g, ' ').trim())
 				.filter(Boolean);
 		});
-		expect(childLabels).toHaveLength(5);
+		expect(childLabels).toHaveLength(3);
 		for (const label of CANONICAL_PLANNING_CHILD_LABELS) {
 			expect(childLabels.some((lab) => lab.includes(label))).toBeTruthy();
 		}
 	});
 
 	test('forbidden detail hrefs absent from Planning nested submenu', async ({ page }) => {
-		for (const path of PP2_ROUTES) {
+		for (const path of PP3_ROUTES) {
 			await page.goto(`${root}${path}`, { waitUntil: 'domcontentloaded' });
 			await expandPlanningSubmenu(page);
 

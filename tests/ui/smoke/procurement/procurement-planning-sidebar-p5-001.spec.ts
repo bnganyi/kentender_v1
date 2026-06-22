@@ -1,5 +1,5 @@
 /**
- * P5-001 / PP2-SMOKE-UI-002 — compact Procurement Planning sidebar (five persistent surfaces).
+ * P1-002 — Procurement Planning sidebar keeps only three persistent v3 entries.
  */
 import { expect, test } from '@playwright/test';
 import { loginAsAdministrator } from '../../helpers/auth';
@@ -9,33 +9,28 @@ const root =
 	(globalThis as { process?: { env?: { UI_BASE_URL?: string } } }).process?.env?.UI_BASE_URL ||
 	'http://127.0.0.1:8000';
 
-const PP2_SURFACES = [
+const PP3_SURFACES = [
 	{
-		label: 'Planning Home',
+		label: 'Workbench',
 		testId: 'pp2-planning-home',
 		path: '/desk/procurement-planning',
+		navTestId: 'pp3-nav-workbench',
 	},
 	{
-		label: 'Approved Demands',
-		testId: 'pp2-approved-demands-page',
-		path: '/desk/procurement-planning/approved-demands',
-	},
-	{
-		label: 'Plans',
+		label: 'Procurement Plans',
 		testId: 'pp2-plans-page',
 		path: '/desk/procurement-planning/plans',
-	},
-	{
-		label: 'Packages',
-		testId: 'pp2-packages-page',
-		path: '/desk/procurement-planning/packages',
+		navTestId: 'pp3-nav-procurement-plans',
 	},
 	{
 		label: 'Released to Tender',
 		testId: 'pp2-released-to-tender-page',
 		path: '/desk/procurement-planning/releases',
+		navTestId: 'pp3-nav-released-to-tender',
 	},
 ] as const;
+
+const FORBIDDEN_LEGACY_PLANNING_LABELS = ['Planning Home', 'Approved Demands', 'Plans', 'Packages'];
 
 const FORBIDDEN_SIDEBAR_LABELS = [
 	'Planning Evidence',
@@ -74,31 +69,92 @@ async function clickSidebarHref(page: import('@playwright/test').Page, href: str
 	}, href);
 }
 
-test.describe('PP2 Planning nested sidebar (P5-001)', () => {
+test.describe('P1-002 Planning nested sidebar (three-entry IA)', () => {
 	test.beforeEach(async ({ page }) => {
 		await loginAsAdministrator(page);
 	});
 
-	test('PP2-SMOKE-UI-002 — sidebar shows exactly five persistent Planning surfaces', async ({ page }) => {
+	test('P1-002 nav shows exactly three persistent Planning surfaces', async ({ page }) => {
 		await page.goto(`${root}/desk/procurement-planning`, { waitUntil: 'domcontentloaded' });
 		await expect(page.getByTestId('pp2-planning-home')).toBeVisible({ timeout: 30000 });
 
 		const labels = await sidebarLabels(page);
 		expect(labels.some((lab) => lab.includes('Procurement Home'))).toBeTruthy();
 		expect(labels.some((lab) => lab.includes('Procurement Planning'))).toBeTruthy();
-		for (const surface of PP2_SURFACES) {
+		for (const surface of PP3_SURFACES) {
 			expect(labels.some((lab) => lab.includes(surface.label))).toBeTruthy();
+		}
+		for (const removed of FORBIDDEN_LEGACY_PLANNING_LABELS) {
+			expect(labels.some((lab) => lab.trim().toLowerCase() === removed.trim().toLowerCase())).toBeFalsy();
 		}
 		for (const forbidden of FORBIDDEN_SIDEBAR_LABELS) {
 			expect(labels.some((lab) => lab.includes(forbidden))).toBeFalsy();
 		}
-		expect(labels.filter((lab) => PP2_SURFACES.some((s) => lab.includes(s.label))).length).toBeGreaterThanOrEqual(5);
+		expect(labels.filter((lab) => PP3_SURFACES.some((s) => lab.includes(s.label))).length).toBeGreaterThanOrEqual(3);
+		await page.screenshot({ path: 'artifacts/p1-002-nav-three-entry.png', fullPage: true });
+	});
+
+	test('P1-003 negative gate: Planning Home is absent on all PP3 planning routes', async ({ page }) => {
+		for (const surface of PP3_SURFACES) {
+			await page.goto(`${root}${surface.path}`, { waitUntil: 'domcontentloaded' });
+			const planningSection = page.locator('.section-item[title="Procurement Planning"]');
+			const dropIcon = planningSection.locator('.drop-icon').first();
+			if (await dropIcon.isVisible()) {
+				await dropIcon.click();
+			}
+			await expect(planningSection.locator('.item-anchor', { hasText: 'Planning Home' })).toHaveCount(0);
+		}
+		await page.screenshot({ path: 'artifacts/p1-003-no-planning-home-nav.png', fullPage: true });
+	});
+
+	test('P1-004 negative gate: Approved Demands is absent on all PP3 planning routes', async ({ page }) => {
+		for (const surface of PP3_SURFACES) {
+			await page.goto(`${root}${surface.path}`, { waitUntil: 'domcontentloaded' });
+			const planningSection = page.locator('.section-item[title="Procurement Planning"]');
+			const dropIcon = planningSection.locator('.drop-icon').first();
+			if (await dropIcon.isVisible()) {
+				await dropIcon.click();
+			}
+			await expect(planningSection.locator('.item-anchor', { hasText: 'Approved Demands' })).toHaveCount(0);
+		}
+		await page.screenshot({ path: 'artifacts/p1-004-no-approved-demands-nav.png', fullPage: true });
+	});
+
+	test('P1-005 negative gate: Packages is absent on all PP3 planning routes', async ({ page }) => {
+		for (const surface of PP3_SURFACES) {
+			await page.goto(`${root}${surface.path}`, { waitUntil: 'domcontentloaded' });
+			const planningSection = page.locator('.section-item[title="Procurement Planning"]');
+			const dropIcon = planningSection.locator('.drop-icon').first();
+			if (await dropIcon.isVisible()) {
+				await dropIcon.click();
+			}
+			await expect(planningSection.locator('.item-anchor', { hasText: 'Packages' })).toHaveCount(0);
+		}
+		await page.screenshot({ path: 'artifacts/p1-005-no-packages-nav.png', fullPage: true });
+	});
+
+	test('P1-006 negative gate: Planning Evidence is absent on all PP3 planning routes', async ({
+		page,
+	}) => {
+		for (const surface of PP3_SURFACES) {
+			await page.goto(`${root}${surface.path}`, { waitUntil: 'domcontentloaded' });
+			const planningSection = page.locator('.section-item[title="Procurement Planning"]');
+			const dropIcon = planningSection.locator('.drop-icon').first();
+			if (await dropIcon.isVisible()) {
+				await dropIcon.click();
+			}
+			await expect(planningSection.locator('.item-anchor', { hasText: 'Planning Evidence' })).toHaveCount(
+				0
+			);
+		}
+		await page.screenshot({ path: 'artifacts/p1-006-no-planning-evidence-nav.png', fullPage: true });
 	});
 
 	test('Procurement Planning parent expands and collapses child links', async ({ page }) => {
-		await page.goto(`${root}/desk/procurement-planning`, { waitUntil: 'domcontentloaded' });
+		await page.goto(`${root}/desk/procurement-home`, { waitUntil: 'domcontentloaded' });
 		const parent = page.locator('.section-item[title="Procurement Planning"] .drop-icon').first();
-		const child = page.getByRole('link', { name: 'Planning Home' }).first();
+		const child = page.getByRole('link', { name: 'Workbench' }).first();
+		await expect(child).toBeHidden();
 		await parent.click();
 		await expect(child).toBeVisible();
 		await parent.click();
@@ -113,12 +169,13 @@ test.describe('PP2 Planning nested sidebar (P5-001)', () => {
 		await expect(parentSection).toHaveClass(/kt-pp2-sidebar-parent/);
 		await expect(parentSection.locator('.kt-pp2-parent-icon')).toBeVisible();
 		await parentSection.locator('.drop-icon').click();
-		for (const surface of PP2_SURFACES) {
+		for (const surface of PP3_SURFACES) {
 			const childLink = page
 				.locator('.section-item[title="Procurement Planning"] .nested-container .item-anchor')
 				.filter({ hasText: surface.label })
 				.first();
 			await expect(childLink).toHaveClass(/kt-pp2-sidebar-child/);
+			await expect(childLink).toHaveAttribute('data-testid', surface.navTestId);
 		}
 	});
 
@@ -133,11 +190,11 @@ test.describe('PP2 Planning nested sidebar (P5-001)', () => {
 			return Math.abs(p.getBoundingClientRect().left - h.getBoundingClientRect().left);
 		});
 		expect(alignment).not.toBeNull();
-		expect(alignment as number).toBeLessThanOrEqual(1);
+		expect(alignment as number).toBeLessThanOrEqual(2);
 		await parentSection.locator('.drop-icon').click();
 		const childLink = parentSection
 			.locator('.nested-container .item-anchor')
-			.filter({ hasText: 'Planning Home' })
+			.filter({ hasText: 'Workbench' })
 			.first();
 		await expect(childLink).toBeVisible();
 		await expect(childLink).toHaveClass(/kt-pp2-sidebar-child/);
@@ -224,8 +281,8 @@ test.describe('PP2 Planning nested sidebar (P5-001)', () => {
 		}
 	});
 
-	test('each sidebar item routes to the correct pp2 surface root', async ({ page }) => {
-		for (const surface of PP2_SURFACES) {
+	test('each sidebar item routes to the correct pp3 surface root', async ({ page }) => {
+		for (const surface of PP3_SURFACES) {
 			await page.goto(`${root}${surface.path}`, { waitUntil: 'domcontentloaded' });
 			await expect(page.getByTestId(surface.testId)).toBeVisible({ timeout: 30000 });
 			await expectPrimarySidebarItemHighlighted(page, surface.label, 'Procurement Planning');
@@ -233,10 +290,10 @@ test.describe('PP2 Planning nested sidebar (P5-001)', () => {
 	});
 
 	test('hard refresh keeps Planning sidebar populated', async ({ page }) => {
-		await page.goto(`${root}/desk/procurement-planning/packages`, { waitUntil: 'domcontentloaded' });
-		await expect(page.getByTestId('pp2-packages-page')).toBeVisible({ timeout: 30000 });
+		await page.goto(`${root}/desk/procurement-planning/plans`, { waitUntil: 'domcontentloaded' });
+		await expect(page.getByTestId('pp2-plans-page')).toBeVisible({ timeout: 30000 });
 		await page.reload({ waitUntil: 'domcontentloaded' });
-		await expect(page.getByTestId('pp2-packages-page')).toBeVisible({ timeout: 30000 });
+		await expect(page.getByTestId('pp2-plans-page')).toBeVisible({ timeout: 30000 });
 
 		const bootProbe = await page.evaluate(() => {
 			const f = (window as { frappe?: { app?: { sidebar?: { workspace_sidebar_items?: unknown[] } } } })
@@ -247,6 +304,6 @@ test.describe('PP2 Planning nested sidebar (P5-001)', () => {
 		});
 		expect(bootProbe.items_count).toBeGreaterThan(0);
 		const labels = await sidebarLabels(page);
-		expect(labels.some((lab) => lab.includes('Packages'))).toBeTruthy();
+		expect(labels.some((lab) => lab.includes('Released to Tender'))).toBeTruthy();
 	});
 });

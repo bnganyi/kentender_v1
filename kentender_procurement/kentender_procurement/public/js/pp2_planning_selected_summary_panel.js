@@ -61,6 +61,24 @@
 		};
 	}
 
+	function actionTestIdAttr(testId, fallback) {
+		const value = String(testId || "").trim();
+		if (!value) return fallback;
+		if (value === "pp2-include-in-plan-button") return ' data-testid="pp2-include-in-plan-button"';
+		if (value === "pp2-view-demand-button") return ' data-testid="pp2-view-demand-button"';
+		if (value === "pp2-create-package-next-action") return ' data-testid="pp2-create-package-next-action"';
+		if (value === "pp2-back-to-approved-demands") return ' data-testid="pp2-back-to-approved-demands"';
+		return ' data-testid="' + esc(value) + '"';
+	}
+
+	function evidenceTestIdAttr(summary) {
+		const s = summary || {};
+		const value = String(s.evidence_testid || "").trim();
+		if (value === "pp2-view-demand-evidence") return ' data-testid="pp2-view-demand-evidence"';
+		if (!value) return ' data-testid="pp2-view-evidence-button"';
+		return ' data-testid="' + esc(value) + '"';
+	}
+
 	function actionsHtml(summary) {
 		const s = summary || {};
 		let html = "";
@@ -68,7 +86,10 @@
 		if (primary && primary.label) {
 			html +=
 				'<button type="button" class="btn btn-primary btn-sm pp2-selected-summary-panel__primary"' +
-				' data-testid="pp2-selected-summary-primary-action">' +
+				actionTestIdAttr(primary.testid, ' data-testid="pp2-selected-summary-primary-action"') +
+				' data-pp2-summary-primary-action="' +
+				esc(primary.action || "") +
+				'">' +
 				esc(primary.label) +
 				"</button>";
 		}
@@ -79,19 +100,52 @@
 			if (String(action.action || "") === "open_evidence") continue;
 			html +=
 				'<button type="button" class="btn btn-default btn-sm pp2-selected-summary-panel__secondary"' +
-				' data-testid="pp2-selected-summary-secondary-action">' +
+				actionTestIdAttr(action.testid, ' data-testid="pp2-selected-summary-secondary-action"') +
+				' data-pp2-summary-secondary-index="' +
+				String(i) +
+				'">' +
 				esc(action.label) +
 				"</button>";
 		}
 		if (s.show_evidence_action !== false) {
 			html +=
 				'<button type="button" class="btn btn-default btn-sm pp2-selected-summary-panel__evidence"' +
-				' data-testid="pp2-view-evidence-button">' +
+				evidenceTestIdAttr(summary) +
 				esc(__("View Evidence")) +
 				"</button>";
 		}
 		if (!html) return "";
 		return '<div class="pp2-selected-summary-panel__actions">' + html + "</div>";
+	}
+
+	function includeAlertHtml(summary) {
+		const s = summary || {};
+		const message = String(s.include_alert_message || "").trim();
+		if (!message) return "";
+		return (
+			'<div class="pp2-selected-summary-panel__include-alert alert alert-warning mt-2 mb-0 py-2 px-2" data-testid="pp2-approved-demand-include-alert">' +
+			esc(message) +
+			"</div>"
+		);
+	}
+
+	function includeSuccessHtml(summary) {
+		const s = summary || {};
+		const message = String(s.include_success_message || "").trim();
+		const nextAction = String(s.next_action_label || "").trim();
+		return (
+			'<section class="pp2-include-plan-success" data-testid="pp2-include-plan-success">' +
+			'<div class="pp2-include-plan-success__message" data-testid="pp2-include-plan-success-message">' +
+			esc(message || __("Demand added to the procurement plan.")) +
+			"</div>" +
+			'<div class="pp2-include-plan-success__next small text-muted mt-1 mb-2" data-testid="pp2-include-plan-success-next">' +
+			esc(__("Next")) +
+			": " +
+			esc(nextAction || __("Create package.")) +
+			"</div>" +
+			actionsHtml(summary) +
+			"</section>"
+		);
 	}
 
 	function idleHtml(opts) {
@@ -108,6 +162,13 @@
 	function html(opts) {
 		const o = opts || {};
 		const summary = o.summary || {};
+		if (summary && summary.include_success) {
+			return (
+				'<div data-testid="pp2-approved-demand-summary">' +
+				includeSuccessHtml(summary) +
+				"</div>"
+			);
+		}
 		const title = String(summary.title || "").trim();
 		const keyFacts = String(summary.key_facts || "").trim();
 		const funding = String(summary.funding_label || "").trim();
@@ -145,16 +206,59 @@
 				esc(nextAction) +
 				"</div>";
 		}
-		body += actionsHtml(summary) + "</section>";
+		body += actionsHtml(summary);
+		if (String(summary.context_slug || "").trim() === "approved-demands") {
+			body += includeAlertHtml(summary);
+		}
+		body += "</section>";
+		if (String(summary.context_slug || "").trim() === "approved-demands") {
+			return '<div data-testid="pp2-approved-demand-summary">' + body + "</div>";
+		}
 		return body;
 	}
 
-	function bindActions(host, summary) {
+	function bindActions(host, summary, opts) {
 		if (!host) return;
+		const o = opts || {};
+		const primaryBtn = host.querySelector("[data-pp2-summary-primary-action]");
+		if (primaryBtn && primaryBtn.getAttribute("data-bound") !== "1") {
+			primaryBtn.setAttribute("data-bound", "1");
+			primaryBtn.addEventListener("click", function (event) {
+				if (event && typeof event.preventDefault === "function") {
+					event.preventDefault();
+				}
+				if (typeof o.onPrimaryAction === "function") {
+					o.onPrimaryAction(summary && summary.primary_action ? summary.primary_action : null, summary || {});
+				}
+			});
+		}
+		const secondaryBtns = host.querySelectorAll("[data-pp2-summary-secondary-index]");
+		for (let i = 0; i < secondaryBtns.length; i += 1) {
+			const button = secondaryBtns[i];
+			if (!button || button.getAttribute("data-bound") === "1") continue;
+			button.setAttribute("data-bound", "1");
+			button.addEventListener("click", function (event) {
+				if (event && typeof event.preventDefault === "function") {
+					event.preventDefault();
+				}
+				const idx = Number(button.getAttribute("data-pp2-summary-secondary-index") || -1);
+				const secondaryActions = Array.isArray(summary && summary.secondary_actions)
+					? summary.secondary_actions
+					: [];
+				const action = idx >= 0 ? secondaryActions[idx] || null : null;
+				if (typeof o.onSecondaryAction === "function") {
+					o.onSecondaryAction(action, summary || {});
+				}
+			});
+		}
 		const evidenceBtn = host.querySelector('[data-testid="pp2-view-evidence-button"]');
-		if (evidenceBtn && evidenceBtn.getAttribute("data-bound") !== "1") {
-			evidenceBtn.setAttribute("data-bound", "1");
-			evidenceBtn.addEventListener("click", function (event) {
+		const demandEvidenceBtn = host.querySelector('[data-testid="pp2-view-demand-evidence"]');
+		const evidenceButtons = [evidenceBtn, demandEvidenceBtn];
+		for (let i = 0; i < evidenceButtons.length; i += 1) {
+			const button = evidenceButtons[i];
+			if (!button || button.getAttribute("data-bound") === "1") continue;
+			button.setAttribute("data-bound", "1");
+			button.addEventListener("click", function (event) {
 				if (event && typeof event.preventDefault === "function") {
 					event.preventDefault();
 				}
@@ -181,7 +285,7 @@
 			return;
 		}
 		target.innerHTML = html(o);
-		bindActions(target, o.summary);
+		bindActions(target, o.summary, o);
 		const blockerApi =
 			kentender_procurement &&
 			kentender_procurement.PlanningBlockerSummary &&

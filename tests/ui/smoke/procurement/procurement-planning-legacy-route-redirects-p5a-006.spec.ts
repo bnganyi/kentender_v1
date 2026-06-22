@@ -1,5 +1,5 @@
 /**
- * P5A-006 — Superseded Planning routes redirect safely to canonical destinations.
+ * P1-007 — Legacy Planning routes are retired safely.
  */
 import { expect, test } from '@playwright/test';
 import { loginAsAdministrator } from '../../helpers/auth';
@@ -14,47 +14,62 @@ const REL = 'PKGREL-MOH-2026-001';
 
 const CANONICAL_ROUTES = [
 	'/desk/procurement-planning',
-	'/desk/procurement-planning/approved-demands',
 	'/desk/procurement-planning/plans',
-	'/desk/procurement-planning/packages',
 	'/desk/procurement-planning/releases',
 ] as const;
 
-test.describe('P5A-006 Planning legacy route redirects', () => {
+test.describe('P1-007 Planning route retirement', () => {
 	test.beforeEach(async ({ page }) => {
 		await loginAsAdministrator(page);
 	});
 
-	test('evidence index redirects to packages without evidence surface', async ({ page }) => {
+	test('retired approved-demands route redirects to workbench', async ({ page }) => {
+		await page.goto(`${root}/desk/procurement-planning/approved-demands`, {
+			waitUntil: 'domcontentloaded',
+		});
+		await expect(page.getByTestId('pp2-planning-home')).toBeVisible({ timeout: 30000 });
+		await expect(page).toHaveURL(/\/desk\/procurement-planning(?:\?|$)/);
+		await expect(page.getByTestId('pp2-approved-demands-page')).toHaveCount(0);
+		await page.screenshot({ path: 'artifacts/p1-007-approved-demands-redirect.png', fullPage: true });
+	});
+
+	test('retired packages list route redirects to workbench', async ({ page }) => {
+		await page.goto(`${root}/desk/procurement-planning/packages`, { waitUntil: 'domcontentloaded' });
+		await expect(page.getByTestId('pp2-planning-home')).toBeVisible({ timeout: 30000 });
+		await expect(page).toHaveURL(/\/desk\/procurement-planning(?:\?|$)/);
+		await expect(page.getByTestId('pp2-packages-page')).toHaveCount(0);
+	});
+
+	test('evidence index redirects to workbench without evidence surface', async ({ page }) => {
 		await page.goto(`${root}/desk/procurement-planning/evidence`, { waitUntil: 'domcontentloaded' });
-		await expect(page.getByTestId('pp2-packages-page')).toBeVisible({ timeout: 30000 });
-		await expect(page).toHaveURL(/\/desk\/procurement-planning\/packages(?:\?|$)/);
+		await expect(page.getByTestId('pp2-planning-home')).toBeVisible({ timeout: 30000 });
+		await expect(page).toHaveURL(/\/desk\/procurement-planning(?:\?|$)/);
 		await expect(page.getByTestId('pp2-planning-evidence-index')).toHaveCount(0);
 	});
 
-	test('evidence with package code redirects to packages query deep link', async ({ page }) => {
+	test('evidence with package code redirects to workbench query deep link', async ({ page }) => {
 		await page.goto(`${root}/desk/procurement-planning/evidence/${PKG}`, {
 			waitUntil: 'domcontentloaded',
 		});
-		await expect(page.getByTestId('pp2-packages-page')).toBeVisible({ timeout: 30000 });
+		await expect(page.getByTestId('pp2-planning-home')).toBeVisible({ timeout: 30000 });
 		await expect(page).toHaveURL(new RegExp(`package_code=${PKG}`));
 		await expect(page.getByTestId('pp2-planning-evidence-index')).toHaveCount(0);
 	});
 
-	test('path-style package route normalizes to packages query deep link', async ({ page }) => {
+	test('path-style package route keeps contextual package deep link', async ({ page }) => {
 		await page.goto(`${root}/desk/procurement-planning/packages/${PKG}`, {
 			waitUntil: 'domcontentloaded',
 		});
-		await expect(page.getByTestId('pp2-packages-page')).toBeVisible({ timeout: 30000 });
-		await expect(page).toHaveURL(new RegExp(`/desk/procurement-planning/packages\\?package_code=${PKG}`));
+		await expect(page.getByTestId('pp2-planning-home')).toBeVisible({ timeout: 30000 });
+		await expect(page).toHaveURL(new RegExp(`/desk/procurement-planning\\?package_code=${PKG}`));
 	});
 
-	test('inclusion detail redirects to approved demands', async ({ page }) => {
+	test('inclusion detail redirects to workbench', async ({ page }) => {
 		await page.goto(`${root}/desk/procurement-planning/inclusions/${INCL}`, {
 			waitUntil: 'domcontentloaded',
 		});
-		await expect(page.getByTestId('pp2-approved-demands-page')).toBeVisible({ timeout: 30000 });
-		await expect(page).toHaveURL(/\/desk\/procurement-planning\/approved-demands(?:\?|$)/);
+		await expect(page.getByTestId('pp2-planning-home')).toBeVisible({ timeout: 30000 });
+		await expect(page).toHaveURL(/\/desk\/procurement-planning(?:\?|$)/);
 	});
 
 	test('release detail redirects to releases list', async ({ page }) => {
@@ -65,10 +80,20 @@ test.describe('P5A-006 Planning legacy route redirects', () => {
 		await expect(page).toHaveURL(/\/desk\/procurement-planning\/releases(?:\?|$)/);
 	});
 
-	test('detail surface slug readiness redirects to packages', async ({ page }) => {
+	test('detail surface slug readiness redirects to workbench', async ({ page }) => {
 		await page.goto(`${root}/desk/procurement-planning/readiness`, { waitUntil: 'domcontentloaded' });
-		await expect(page.getByTestId('pp2-packages-page')).toBeVisible({ timeout: 30000 });
-		await expect(page).toHaveURL(/\/desk\/procurement-planning\/packages(?:\?|$)/);
+		await expect(page.getByTestId('pp2-planning-home')).toBeVisible({ timeout: 30000 });
+		await expect(page).toHaveURL(/\/desk\/procurement-planning(?:\?|$)/);
+	});
+
+	test('release-package and technical-details aliases redirect safely', async ({ page }) => {
+		await page.goto(`${root}/desk/procurement-planning/release-package`, { waitUntil: 'domcontentloaded' });
+		await expect(page.getByTestId('pp2-planning-home')).toBeVisible({ timeout: 30000 });
+		await expect(page).toHaveURL(/\/desk\/procurement-planning(?:\?|$)/);
+
+		await page.goto(`${root}/desk/procurement-planning/technical-details`, { waitUntil: 'domcontentloaded' });
+		await expect(page.getByTestId('pp2-planning-home')).toBeVisible({ timeout: 30000 });
+		await expect(page).toHaveURL(/\/desk\/procurement-planning(?:\?|$)/);
 	});
 
 	test('unknown planning slug shows not-found inside shell', async ({ page }) => {
@@ -76,8 +101,25 @@ test.describe('P5A-006 Planning legacy route redirects', () => {
 			waitUntil: 'domcontentloaded',
 		});
 		await expect(page.getByTestId('pp2-route-not-found')).toBeVisible({ timeout: 30000 });
+		await expect(page.getByTestId('pp2-route-not-found')).toContainText(
+			/You do not have access to this planning information\./i,
+		);
 		await expect(page.getByTestId('pp2-primary-workspace-shell')).toBeVisible();
 		await expect(page.getByRole('link', { name: 'Procurement Home' }).first()).toBeVisible();
+		await page.screenshot({ path: 'artifacts/p1-007-legacy-route-not-found.png', fullPage: true });
+	});
+
+	test('unauthorized role receives permission-aware not-found on internal legacy route', async ({ page }) => {
+		await page.addInitScript(() => {
+			(globalThis as unknown as { __kt_pp2_test_roles?: string[] }).__kt_pp2_test_roles = ['Supplier'];
+		});
+		await page.goto(`${root}/desk/procurement-planning/evidence`, {
+			waitUntil: 'domcontentloaded',
+		});
+		await expect(page.getByTestId('pp2-route-not-found')).toBeVisible({ timeout: 30000 });
+		await expect(page.getByTestId('pp2-route-not-found')).toContainText(
+			/You do not have access to this planning information\./i,
+		);
 	});
 
 	test('canonical planning routes remain unchanged', async ({ page }) => {

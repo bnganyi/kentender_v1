@@ -75,15 +75,46 @@ REQUIRED_WORK_LIST_TESTIDS = (
 	"pp2-work-list-row-blocker",
 )
 
+REQUIRED_APPROVED_DEMAND_LIST_TESTIDS = (
+	"pp2-approved-demand-row",
+	"pp2-approved-demand-row-title",
+	"pp2-approved-demand-row-category-value",
+	"pp2-approved-demand-row-funding-status",
+	"pp2-approved-demand-row-planning-status",
+	"pp2-approved-demand-row-blocker",
+)
+
 REQUIRED_SELECTED_SUMMARY_TESTIDS = (
 	"pp2-selected-summary-panel",
 	"pp2-selected-summary-title",
 	"pp2-selected-summary-status",
 	"pp2-selected-summary-facts",
+	"pp2-selected-summary-funding",
 	"pp2-selected-summary-blockers",
 	"pp2-selected-summary-next-action",
 	"pp2-selected-summary-primary-action",
+	"pp2-selected-summary-secondary-action",
 	"pp2-view-evidence-button",
+)
+
+REQUIRED_APPROVED_DEMAND_SUMMARY_TESTIDS = (
+	"pp2-approved-demand-summary",
+	"pp2-include-in-plan-button",
+	"pp2-view-demand-button",
+	"pp2-view-demand-evidence",
+	"pp2-approved-demand-include-alert",
+)
+
+REQUIRED_INCLUDE_PLAN_MODAL_TESTIDS = (
+	"pp2-include-plan-modal",
+	"pp2-target-plan-select",
+	"pp2-confirm-include-plan",
+)
+
+REQUIRED_INCLUDE_PLAN_SUCCESS_TESTIDS = (
+	"pp2-include-plan-success",
+	"pp2-create-package-next-action",
+	"pp2-back-to-approved-demands",
 )
 
 REQUIRED_BLOCKER_SUMMARY_TESTIDS = (
@@ -110,6 +141,27 @@ REQUIRED_EVIDENCE_DRAWER_TESTIDS = (
 	"pp2-evidence-record-list",
 	"pp2-technical-details-toggle",
 	"pp2-technical-details-panel",
+)
+
+REQUIRED_PLANNING_HOME_TESTIDS = (
+	"pp2-planning-home-surface",
+	"pp2-planning-home-body",
+	"pp2-planning-home-queues",
+)
+
+REQUIRED_PLANNING_SUMMARY_TESTIDS = (
+	"pp2-planning-summary",
+)
+
+REQUIRED_PLANNING_HOME_QUEUE_TESTIDS = (
+	"pp2-queue-needs-planning",
+	"pp2-queue-needs-review",
+	"pp2-queue-ready-release",
+	"pp2-queue-released-recently",
+	"pp2-queue-blocked",
+	"pp2-home-item-card",
+	"pp2-home-primary-action",
+	"pp2-home-secondary-action",
 )
 
 
@@ -165,6 +217,17 @@ class TestProcurementPlanningTestIdsG2(UnitTestCase):
 		for tid in REQUIRED_WORK_LIST_TESTIDS:
 			self.assertIn(f'data-testid="{tid}"', source, f"Missing work list testid {tid!r} (P5B-003).")
 
+	def test_g2_approved_demand_list_testids_in_planning_work_list_js(self) -> None:
+		path = _js("js", "pp2_planning_work_list.js")
+		self.assertTrue(path.exists(), msg=f"missing {path}")
+		source = path.read_text(encoding="utf-8", errors="replace")
+		for tid in REQUIRED_APPROVED_DEMAND_LIST_TESTIDS:
+			self.assertIn(
+				f'data-testid="{tid}"',
+				source,
+				f"Missing approved demand row testid {tid!r} (P5C-011).",
+			)
+
 	def test_g2_selected_summary_testids_in_planning_selected_summary_panel_js(self) -> None:
 		path = _js("js", "pp2_planning_selected_summary_panel.js")
 		self.assertTrue(path.exists(), msg=f"missing {path}")
@@ -174,6 +237,41 @@ class TestProcurementPlanningTestIdsG2(UnitTestCase):
 				f'data-testid="{tid}"',
 				source,
 				f"Missing selected summary testid {tid!r} (P5B-004).",
+			)
+		for tid in REQUIRED_APPROVED_DEMAND_SUMMARY_TESTIDS:
+			self.assertIn(
+				f'data-testid="{tid}"',
+				source,
+				f"Missing approved-demand summary testid {tid!r} (P5C-012).",
+			)
+
+	def test_g2_include_plan_modal_testids_in_planning_include_plan_modal_js(self) -> None:
+		path = _js("js", "pp2_planning_include_plan_modal.js")
+		self.assertTrue(path.exists(), msg=f"missing {path}")
+		source = path.read_text(encoding="utf-8", errors="replace")
+		for tid in REQUIRED_INCLUDE_PLAN_MODAL_TESTIDS:
+			literal = f'data-testid="{tid}"'
+			attr_set_double = f'.attr("data-testid", "{tid}")'
+			attr_set_single = f".attr('data-testid', '{tid}')"
+			set_attr_double = f'setAttribute("data-testid", "{tid}")'
+			set_attr_single = f"setAttribute('data-testid', '{tid}')"
+			if literal in source:
+				continue
+			if attr_set_double in source or attr_set_single in source:
+				continue
+			if set_attr_double in source or set_attr_single in source:
+				continue
+			self.fail(f"Missing include-plan modal testid {tid!r} (P5C-013).")
+
+	def test_g2_include_plan_success_testids_in_selected_summary_panel_js(self) -> None:
+		path = _js("js", "pp2_planning_selected_summary_panel.js")
+		self.assertTrue(path.exists(), msg=f"missing {path}")
+		source = path.read_text(encoding="utf-8", errors="replace")
+		for tid in REQUIRED_INCLUDE_PLAN_SUCCESS_TESTIDS:
+			self.assertIn(
+				f'data-testid="{tid}"',
+				source,
+				f"Missing include-plan success testid {tid!r} (P5C-014).",
 			)
 
 	def test_g2_blocker_summary_testids_in_planning_blocker_summary_js(self) -> None:
@@ -218,6 +316,58 @@ class TestProcurementPlanningTestIdsG2(UnitTestCase):
 				f'data-testid="{tid}"',
 				source,
 				f"Missing evidence drawer testid {tid!r} (P5B-008).",
+			)
+
+	def test_g2_planning_home_testids_in_planning_home_js(self) -> None:
+		path = _js("js", "pp2_planning_home.js")
+		self.assertTrue(path.exists(), msg=f"missing {path}")
+		source = path.read_text(encoding="utf-8", errors="replace")
+		for tid in REQUIRED_PLANNING_HOME_TESTIDS:
+			self.assertIn(
+				f'data-testid="{tid}"',
+				source,
+				f"Missing planning home testid {tid!r} (P5C-001).",
+			)
+
+	def test_g2_planning_summary_testids_in_planning_summary_js(self) -> None:
+		path = _js("js", "pp2_planning_summary.js")
+		self.assertTrue(path.exists(), msg=f"missing {path}")
+		source = path.read_text(encoding="utf-8", errors="replace")
+		for tid in REQUIRED_PLANNING_SUMMARY_TESTIDS:
+			self.assertIn(
+				f'data-testid="{tid}"',
+				source,
+				f"Missing planning summary testid {tid!r} (P5C-002).",
+			)
+
+	def test_g2_planning_home_queue_testids_in_planning_home_queue_js(self) -> None:
+		paths = [
+			_js("js", "pp2_planning_home_queue_section.js"),
+			_js("js", "pp2_planning_home_item_card.js"),
+			_js("js", "pp2_planning_home_queues.js"),
+		]
+		merged = ""
+		for path in paths:
+			self.assertTrue(path.exists(), msg=f"missing {path}")
+			merged += path.read_text(encoding="utf-8", errors="replace")
+		for tid in REQUIRED_PLANNING_HOME_QUEUE_TESTIDS:
+			if tid in (
+				"pp2-queue-needs-planning",
+				"pp2-queue-needs-review",
+				"pp2-queue-ready-release",
+				"pp2-queue-released-recently",
+				"pp2-queue-blocked",
+			):
+				self.assertIn(
+					tid,
+					merged,
+					f"Missing planning home queue testid {tid!r} (P5C-003/P5C-004/P5C-005/P5C-006/P5C-007).",
+				)
+				continue
+			self.assertIn(
+				f'data-testid="{tid}"',
+				merged,
+				f"Missing planning home queue testid {tid!r} (P5C-003).",
 			)
 
 

@@ -45,6 +45,11 @@ _ITEM_FIELDS = [
 	"idx",
 ]
 
+READY_TO_PLAN_QUEUE = "ready-to-plan"
+BLOCKED_QUEUE = "blocked"
+ALREADY_PLANNED_QUEUE = "already-planned"
+_SUPPORTED_QUEUE_KEYS = {READY_TO_PLAN_QUEUE, BLOCKED_QUEUE, ALREADY_PLANNED_QUEUE}
+
 
 def _derive_demand_item_code(demand_code: str, line_idx: int) -> str:
 	code = (demand_code or "").strip().upper()
@@ -244,37 +249,102 @@ def _apply_search(rows: list[dict[str, Any]], search_text: str) -> list[dict[str
 	return out
 
 
-def get_approved_demands_awaiting_planning(
-	filters: dict[str, Any] | None,
+def _normalize_queue_key(filters: dict[str, Any]) -> str:
+	queue = str(filters.get("queue") or "").strip().lower()
+	return queue if queue in _SUPPORTED_QUEUE_KEYS else READY_TO_PLAN_QUEUE
+
+
+def _queue_blocker_label(row: dict[str, Any]) -> str:
+	if not _demand_budget_ok(row):
+		return "Missing approved budget link"
+	if _active_package_line_for_demand(row.get("name") or ""):
+		return "Already included in active package"
+	demand_name = row.get("name") or ""
+	demand_code = (row.get("demand_id") or demand_name or "").strip()
+	items = frappe.get_all(
+		"Demand Item",
+		filters={"parent": demand_name, "parenttype": "Demand"},
+		fields=["idx"],
+		order_by="idx asc",
+		limit_page_length=100,
+	)
+	for item in items:
+		item_code = _derive_demand_item_code(demand_code, int(item.get("idx") or 1))
+		if _active_package_line_for_item_code(item_code):
+			return "Already included in active package"
+	return "Demand has planning blockers"
+
+
+def _ready_rows(
+	*,
+	filters: dict[str, Any],
 	actor: str,
-) -> dict[str, Any]:
-	"""Return approved, budget-linked demands eligible for Planning inclusion."""
-	filters = dict(filters or {})
-	actor = (actor or frappe.session.user or "").strip() or frappe.session.user
-	role_key = resolve_pp_role_key(actor) or "auditor"
+	clauses: list[list[Any]],
+) -> list[dict[str, Any]]:
+	demand_rows = frappe.get_all(
+		"Demand",
+		filters=clauses,
+		fields=_QUEUE_DEMAND_FIELDS,
+		order_by="modified desc",
+		limit_page_length=5000,
+	)
+	eligible_rows: list[dict[str, Any]] = []
+	for row in demand_rows:
+		if not pp_scope.entity_in_user_scope(row.get("procuring_entity"), actor):
+			continue
+		if not _demand_passes_queue_eligibility(row):
+			continue
+		eligible_rows.append(_format_row(row))
+	return _apply_search(eligible_rows, str(filters.get("search_text") or ""))
 
-	if not frappe.db.exists("DocType", "Demand"):
-		return {
-			"ok": False,
-			"error_code": "PP_NOT_INSTALLED",
-			"message": "Demand Intake is not installed on this site.",
-			"role_key": role_key,
-			"total": 0,
-			"rows": [],
-			"filters_applied": filters,
-		}
 
-	clauses = _base_demand_filters(filters)
-	allowed_entities = pp_scope.get_user_allowed_entities(actor)
+def _blocked_rows(*, filters: dict[str, Any], actor: str, clauses: list[list[Any]]) -> list[dict[str, Any]]:
+	demand_rows = frappe.get_all(
+		"Demand",
+		filters=clauses,
+		fields=_QUEUE_DEMAND_FIELDS,
+		order_by="modified desc",
+		limit_page_length=5000,
+	)
+	out: list[dict[str, Any]] = []
+	for row in demand_rows:
+		if not pp_scope.entity_in_user_scope(row.get("procuring_entity"), actor):
+			continue
+		status = (row.get("status") or "").strip()
+		if status not in ALLOWED_DEMAND_STATUSES:
+			continue
+		planning_status = (row.get("planning_status") or "").strip()
+		if planning_status == "Fully Planned":
+			continue
+		if _demand_passes_queue_eligibility(row):
+			continue
+		entry = _format_row(row)
+		blocker = _queue_blocker_label(row)
+		entry["planning_status"] = "Blocked"
+		entry["blocker_summary"] = {"count": 1, "label": blocker}
+		out.append(entry)
+	return _apply_search(out, str(filters.get("search_text") or ""))
+
+
+def _already_planned_rows(
+	*,
+	filters: dict[str, Any],
+	actor: str,
+	allowed_entities: set[str] | None,
+) -> list[dict[str, Any]]:
+	clauses: list[list[Any]] = [
+		["status", "in", list(ALLOWED_DEMAND_STATUSES)],
+		["planning_status", "=", "Fully Planned"],
+	]
+	procuring_entity = (filters.get("procuring_entity") or "").strip()
+	if procuring_entity:
+		clauses.append(["procuring_entity", "=", procuring_entity])
+	category = (filters.get("category") or "").strip()
+	if category:
+		clauses.append(["requisition_type", "=", category])
 	if allowed_entities is not None:
 		if not allowed_entities:
-			return {
-				"ok": True,
-				"role_key": role_key,
-				"total": 0,
-				"rows": [],
-				"filters_applied": filters,
-			}
+			return []
 		clauses.append(["procuring_entity", "in", sorted(allowed_entities)])
 
 	demand_rows = frappe.get_all(
@@ -284,18 +354,67 @@ def get_approved_demands_awaiting_planning(
 		order_by="modified desc",
 		limit_page_length=5000,
 	)
-
-	eligible_rows: list[dict[str, Any]] = []
+	out: list[dict[str, Any]] = []
 	for row in demand_rows:
 		if not pp_scope.entity_in_user_scope(row.get("procuring_entity"), actor):
 			continue
-		if not _demand_passes_queue_eligibility(row):
-			continue
-		eligible_rows.append(_format_row(row))
+		entry = _format_row(row)
+		entry["planning_status"] = "Fully Planned"
+		entry["next_action"] = "open_package"
+		out.append(entry)
+	return _apply_search(out, str(filters.get("search_text") or ""))
 
-	formatted = _apply_search(eligible_rows, str(filters.get("search_text") or ""))
+
+def get_approved_demands_for_queue(
+	filters: dict[str, Any] | None,
+	actor: str,
+) -> dict[str, Any]:
+	"""Return approved demands for queue-aware Approved Demands route."""
+	filters = dict(filters or {})
+	actor = (actor or frappe.session.user or "").strip() or frappe.session.user
+	role_key = resolve_pp_role_key(actor) or "auditor"
+	queue_key = _normalize_queue_key(filters)
+	filters["queue"] = queue_key
+
+	if not frappe.db.exists("DocType", "Demand"):
+		return {
+			"ok": False,
+			"error_code": "PP_NOT_INSTALLED",
+			"message": "Demand Intake is not installed on this site.",
+			"role_key": role_key,
+			"queue_key": queue_key,
+			"total": 0,
+			"rows": [],
+			"filters_applied": filters,
+		}
+
+	allowed_entities = pp_scope.get_user_allowed_entities(actor)
+	if allowed_entities is not None and not allowed_entities:
+		return {
+			"ok": True,
+			"role_key": role_key,
+			"queue_key": queue_key,
+			"total": 0,
+			"rows": [],
+			"filters_applied": filters,
+		}
+
+	base_clauses = _base_demand_filters(filters)
+	if allowed_entities is not None:
+		base_clauses.append(["procuring_entity", "in", sorted(allowed_entities)])
+
+	if queue_key == BLOCKED_QUEUE:
+		formatted = _blocked_rows(filters=filters, actor=actor, clauses=base_clauses)
+	elif queue_key == ALREADY_PLANNED_QUEUE:
+		formatted = _already_planned_rows(
+			filters=filters,
+			actor=actor,
+			allowed_entities=allowed_entities,
+		)
+	else:
+		formatted = _ready_rows(filters=filters, actor=actor, clauses=base_clauses)
+
 	total = len(formatted)
-
 	start = max(cint(filters.get("start") or 0), 0)
 	limit = cint(filters.get("limit") or 50)
 	if limit <= 0:
@@ -306,7 +425,18 @@ def get_approved_demands_awaiting_planning(
 	return {
 		"ok": True,
 		"role_key": role_key,
+		"queue_key": queue_key,
 		"total": total,
 		"rows": formatted[start : start + limit],
 		"filters_applied": filters,
 	}
+
+
+def get_approved_demands_awaiting_planning(
+	filters: dict[str, Any] | None,
+	actor: str,
+) -> dict[str, Any]:
+	"""Return approved, budget-linked demands eligible for Planning inclusion."""
+	filters = dict(filters or {})
+	filters["queue"] = READY_TO_PLAN_QUEUE
+	return get_approved_demands_for_queue(filters, actor)

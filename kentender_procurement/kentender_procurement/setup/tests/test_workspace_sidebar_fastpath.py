@@ -50,8 +50,8 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		planning_labels = [row.get("label") for row in planning.get("items") or []]
 		self.assertIn("Procurement Home", planning_labels)
 		self.assertIn("Procurement Planning", planning_labels)
-		self.assertIn("Planning Home", planning_labels)
-		self.assertIn("Approved Demands", planning_labels)
+		self.assertIn("Procurement Plans", planning_labels)
+		self.assertIn("Released to Tender", planning_labels)
 		for key in (
 			"my work",
 			"my-work",
@@ -187,7 +187,7 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		)
 
 	def test_bootinfo_includes_procurement_planning_surface_route_keys(self):
-		"""P5-001 — PP2 nested routes must keep main Procurement rail visible."""
+		"""P1-002 — PP3 nested routes must keep main Procurement rail visible."""
 		if not frappe.db.exists("Workspace Sidebar", "Procurement"):
 			self.skipTest("Procurement sidebar not on site")
 		bootinfo: dict = {"workspace_sidebar_item": {}}
@@ -197,12 +197,10 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		self.assertTrue(len(proc.get("items") or []) > 0)
 		for route_key in (
 			"procurement-planning",
-			"procurement-planning/approved-demands",
 			"procurement-planning/plans",
-			"procurement-planning/packages",
 			"procurement-planning/releases",
 		):
-			self.assertIn(route_key, items, msg=f"PP2 route {route_key!r} requires boot fast-path key")
+			self.assertIn(route_key, items, msg=f"PP3 route {route_key!r} requires boot fast-path key")
 			payload = items[route_key]
 			self.assertEqual(payload.get("items"), proc.get("items"))
 

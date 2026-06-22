@@ -15,6 +15,7 @@ from frappe.utils import cint
 from kentender_procurement.procurement_planning.api.landing import resolve_pp_role_key
 from kentender_procurement.procurement_planning.permissions import pp_api_gates, pp_policy
 from kentender_procurement.procurement_planning.services.approved_demand_queue import (
+	get_approved_demands_for_queue,
 	get_approved_demands_awaiting_planning,
 )
 from kentender_procurement.procurement_planning.services.pp_governance_codes import PlanningPermission
@@ -92,6 +93,7 @@ def _parse_filters(
 	category: str | None = None,
 	planning_status: str | None = None,
 	procuring_entity: str | None = None,
+	queue: str | None = None,
 	start: int | str | None = 0,
 	limit: int | str | None = 50,
 	filters: str | None = None,
@@ -101,6 +103,7 @@ def _parse_filters(
 		"category": (category or "").strip(),
 		"planning_status": (planning_status or "").strip(),
 		"procuring_entity": (procuring_entity or "").strip(),
+		"queue": (queue or "").strip(),
 		"start": max(cint(start or 0), 0),
 		"limit": cint(limit or 50),
 	}
@@ -122,6 +125,7 @@ def get_pp_approved_demands_awaiting_planning(
 	category: str | None = None,
 	planning_status: str | None = None,
 	procuring_entity: str | None = None,
+	queue: str | None = None,
 	start: int | str | None = 0,
 	limit: int | str | None = 50,
 	filters: str | None = None,
@@ -137,10 +141,14 @@ def get_pp_approved_demands_awaiting_planning(
 		category=category,
 		planning_status=planning_status,
 		procuring_entity=procuring_entity,
+		queue=queue,
 		start=start,
 		limit=limit,
 		filters=filters,
 	)
+	queue_key = (parsed_filters.get("queue") or "").strip().lower()
+	if queue_key:
+		return get_approved_demands_for_queue(parsed_filters, frappe.session.user)
 	return get_approved_demands_awaiting_planning(parsed_filters, frappe.session.user)
 
 
