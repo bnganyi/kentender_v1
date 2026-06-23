@@ -22,6 +22,7 @@
 
 	const HOME_QUEUE_MESSAGES = {
 		needs_planning: __("No approved demands need planning."),
+		draft_packages: __("No draft packages are waiting."),
 		needs_review: __("No packages are waiting for review."),
 		ready_to_release: __("No packages are ready for release."),
 		released_recently: __("No packages have been released recently."),

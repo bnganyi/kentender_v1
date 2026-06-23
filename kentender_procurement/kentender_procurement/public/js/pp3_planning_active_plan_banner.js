@@ -124,9 +124,14 @@
 		});
 	}
 
+	function fetchPayload(opts) {
+		return callApi(opts || {});
+	}
+
 	kentender_procurement.PlanningActivePlanBanner = {
 		html: html,
 		render: render,
 		fetchAndRender: fetchAndRender,
+		fetchPayload: fetchPayload,
 	};
 })();

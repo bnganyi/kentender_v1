@@ -8,13 +8,8 @@
 
 	const SURFACE_HEADER_CONFIG = {
 		"": {
-			title: __("Planning Home"),
-			purpose: __("Convert approved demand into tender-ready procurement packages."),
-			primaryAction: {
-				label: __("New package from approved demand"),
-				testId: "pp2-page-primary-action",
-				href: ROOT_PATH + "?queue=needs-planning",
-			},
+			title: __("Workbench"),
+			purpose: __("Focus on active procurement work and move items to release readiness."),
 		},
 		"approved-demands": {
 			title: __("Approved Demands"),

@@ -12,7 +12,7 @@ const root =
 const PP3_SURFACES = [
 	{
 		label: 'Workbench',
-		testId: 'pp2-planning-home',
+		testId: 'pp3-planning-workbench',
 		path: '/desk/procurement-planning',
 		navTestId: 'pp3-nav-workbench',
 	},
@@ -76,7 +76,8 @@ test.describe('P1-002 Planning nested sidebar (three-entry IA)', () => {
 
 	test('P1-002 nav shows exactly three persistent Planning surfaces', async ({ page }) => {
 		await page.goto(`${root}/desk/procurement-planning`, { waitUntil: 'domcontentloaded' });
-		await expect(page.getByTestId('pp2-planning-home')).toBeVisible({ timeout: 30000 });
+		await expect(page.getByTestId('pp3-planning-workbench')).toHaveCount(1);
+		await expect(page.getByTestId('pp3-workbench-queue-tabs')).toBeVisible({ timeout: 30000 });
 
 		const labels = await sidebarLabels(page);
 		expect(labels.some((lab) => lab.includes('Procurement Home'))).toBeTruthy();
@@ -303,7 +304,12 @@ test.describe('P1-002 Planning nested sidebar (three-entry IA)', () => {
 	test('each sidebar item routes to the correct pp3 surface root', async ({ page }) => {
 		for (const surface of PP3_SURFACES) {
 			await page.goto(`${root}${surface.path}`, { waitUntil: 'domcontentloaded' });
-			await expect(page.getByTestId(surface.testId)).toBeVisible({ timeout: 30000 });
+			if (surface.path === '/desk/procurement-planning') {
+				await expect(page.getByTestId(surface.testId)).toHaveCount(1);
+				await expect(page.getByTestId('pp3-workbench-queue-tabs')).toBeVisible({ timeout: 30000 });
+			} else {
+				await expect(page.getByTestId(surface.testId)).toBeVisible({ timeout: 30000 });
+			}
 			await expectPrimarySidebarItemHighlighted(page, surface.label, 'Procurement Planning');
 		}
 	});

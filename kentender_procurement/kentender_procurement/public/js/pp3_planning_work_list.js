@@ -56,6 +56,23 @@
 		return String(item.work_item_id || item.underlying_object_code || item.title || "").trim();
 	}
 
+	const EMPTY_MESSAGE_KEY_BY_QUEUE = {
+		recently_released: "released_recently",
+	};
+
+	function emptyMessageForQueue(queueKey) {
+		const key = normalizeQueueKey(queueKey);
+		const messageKey = EMPTY_MESSAGE_KEY_BY_QUEUE[key] || key;
+		const emptyState =
+			kentender_procurement &&
+			kentender_procurement.PlanningEmptyState &&
+			kentender_procurement.PlanningEmptyState.HOME_QUEUE_MESSAGES;
+		if (emptyState && emptyState[messageKey]) {
+			return emptyState[messageKey];
+		}
+		return __("No planning work items found for this queue.");
+	}
+
 	function rowHtml(item, selectedId) {
 		const id = itemId(item);
 		const active = id && id === selectedId;
@@ -173,6 +190,7 @@
 		const o = opts || {};
 		const queueKey = normalizeQueueKey(o.queue || queueFromUrl());
 		render(host, { items: [], emptyMessage: __("Loading planning work...") });
+		const queueEmptyMessage = emptyMessageForQueue(queueKey);
 		return callWorkbenchItems(queueKey).then(function (payload) {
 			if (renderTokens.get(host) !== token) return;
 			const items = payload && payload.ok && Array.isArray(payload.items) ? payload.items : [];
@@ -180,12 +198,12 @@
 			render(host, {
 				items: items,
 				selectedId: selectedId,
-				emptyMessage: __("No planning work items found for this queue."),
+				emptyMessage: queueEmptyMessage,
 			});
 			bindSelection(host, {
 				items: items,
 				selectedId: selectedId,
-				emptyMessage: __("No planning work items found for this queue."),
+				emptyMessage: queueEmptyMessage,
 				onSelect: o.onSelect,
 			});
 			if (selectedId && typeof o.onSelect === "function") {

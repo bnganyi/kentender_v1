@@ -19,7 +19,7 @@
 
 	const SURFACES = {
 		"": {
-			testId: "pp2-planning-home",
+			testId: "pp3-planning-workbench",
 			title: __("Procurement Planning"),
 			subtitle: __("Workbench"),
 		},
@@ -906,6 +906,86 @@
 			"</p></header>";
 	}
 
+	function clearPlanningWorkUnavailable(mainHost) {
+		if (!mainHost) return;
+		const panel = mainHost.querySelector('[data-testid="pp3-planning-work-unavailable"]');
+		if (panel && panel.parentNode) {
+			panel.parentNode.removeChild(panel);
+		}
+	}
+
+	function mountPlanningWorkUnavailable(mainHost) {
+		if (!mainHost) return;
+		clearWorkbenchHosts(mainHost);
+		clearPlanningWorkUnavailable(mainHost);
+		let panel = mainHost.querySelector('[data-testid="pp3-planning-work-unavailable"]');
+		if (!panel) {
+			panel = document.createElement("section");
+			panel.className = "pp3-planning-work-unavailable";
+			panel.setAttribute("data-testid", "pp3-planning-work-unavailable");
+			mainHost.appendChild(panel);
+		}
+		panel.innerHTML =
+			'<p class="pp3-planning-work-unavailable__message text-muted mb-0">' +
+			esc(__("Planning work is unavailable until an active procurement plan is selected.")) +
+			"</p>";
+	}
+
+	function fetchActivePlanPayload() {
+		const api =
+			kentender_procurement &&
+			kentender_procurement.PlanningActivePlanBanner &&
+			typeof kentender_procurement.PlanningActivePlanBanner.fetchPayload === "function"
+				? kentender_procurement.PlanningActivePlanBanner
+				: null;
+		if (!api) {
+			return Promise.resolve({ has_active_plan: true });
+		}
+		return api.fetchPayload({});
+	}
+
+	function mountPlanningContextWithPayload(contextHost, slug, payload) {
+		if (!contextHost) return;
+		contextHost.innerHTML =
+			'<div class="pp2-primary-context-active-plan" data-testid="pp3-active-plan-host"></div>' +
+			'<div class="pp2-primary-context-page-header" data-testid="pp2-page-header-host"></div>';
+		const activePlanHost = contextHost.querySelector('[data-testid="pp3-active-plan-host"]');
+		const pageHeaderHost = contextHost.querySelector('[data-testid="pp2-page-header-host"]');
+		const bannerApi =
+			kentender_procurement &&
+			kentender_procurement.PlanningActivePlanBanner &&
+			typeof kentender_procurement.PlanningActivePlanBanner.render === "function"
+				? kentender_procurement.PlanningActivePlanBanner
+				: null;
+		if (bannerApi && activePlanHost) {
+			bannerApi.render(activePlanHost, payload || {});
+		} else if (activePlanHost) {
+			activePlanHost.innerHTML = "";
+		}
+		mountPlanningPageHeader(pageHeaderHost, slug);
+	}
+
+	function mountWorkbenchRootWork(mainHost, shell, slug, activePlanPayload) {
+		if (!mainHost || !shell) return;
+		const payload = activePlanPayload || {};
+		const contextHost = shell.querySelector('[data-testid="pp2-primary-context-host"]');
+		if (contextHost) {
+			mountPlanningContextWithPayload(contextHost, slug, payload);
+		}
+		clearWorkbenchHosts(mainHost);
+		clearPlanningWorkUnavailable(mainHost);
+		if (!payload.has_active_plan) {
+			shell.setAttribute("data-pp3-planning-blocked", "1");
+			mountPlanningWorkUnavailable(mainHost);
+			mountPlanningSelectedSummary(shell, { slug: slug });
+			return;
+		}
+		shell.removeAttribute("data-pp3-planning-blocked");
+		mountPlanningQueueTabs(mainHost, slug);
+		mountPlanningWorkList(mainHost, slug, shell);
+		bindWorkbenchQueueRefresh(mainHost, slug, shell);
+	}
+
 	function mountActivePlanBanner(host) {
 		if (!host) return;
 		const api =
@@ -1389,7 +1469,7 @@
 			breadcrumb.textContent = __("Procurement Planning") + " / " + surface.subtitle;
 		}
 		const contextHost = shell.querySelector('[data-testid="pp2-primary-context-host"]');
-		if (contextHost) {
+		if (contextHost && !isPlanningHomeSlug(slug)) {
 			mountPlanningContext(contextHost, slug);
 		}
 		const nextActionPanel = shell.querySelector('[data-testid="pp2-primary-next-action-panel"]');
@@ -1757,7 +1837,7 @@
 		if (resolution.action === "not_found") {
 			const shell = ensurePrimaryWorkspaceShell(root, "");
 			if (!shell) return false;
-			root.setAttribute("data-testid", "pp2-planning-home");
+			root.setAttribute("data-testid", surfaceForSlug("").testId);
 			renderRouteNotFound(root);
 			document.body.classList.add("kt-pp2-shell");
 			syncSidebarActive("");
@@ -1774,7 +1854,11 @@
 		if (!shell) return false;
 		const mainHost = shell.querySelector('[data-testid="pp2-primary-main-host"]');
 		const markerId = surfaceForSlug(slug).testId;
-		root.setAttribute("data-testid", markerId);
+		if (isPlanningHomeSlug(slug)) {
+			root.removeAttribute("data-testid");
+		} else {
+			root.setAttribute("data-testid", markerId);
+		}
 		if (isPlanningHomeSlug(slug)) {
 			if (mainHost) {
 				clearWorkbenchHosts(mainHost);
@@ -1784,10 +1868,16 @@
 						mainHost.removeChild(children[i]);
 					}
 				}
-				mountPlanningHome(root);
-				mountPlanningQueueTabs(mainHost, slug);
-				mountPlanningWorkList(mainHost, slug, shell);
-				bindWorkbenchQueueRefresh(mainHost, slug, shell);
+				root.innerHTML =
+					'<article class="pp3-planning-workbench-surface" data-testid="' +
+					esc(markerId) +
+					'"></article>';
+				mountPlanningWorkUnavailable(mainHost);
+				shell.setAttribute("data-pp3-planning-blocked", "1");
+				fetchActivePlanPayload().then(function (activePlanPayload) {
+					if (!shell.isConnected || !mainHost.isConnected) return;
+					mountWorkbenchRootWork(mainHost, shell, slug, activePlanPayload || {});
+				});
 			}
 		} else if (mainHost) {
 			const queueHost = mainHost.querySelector('[data-testid="pp2-primary-queue-host"]');

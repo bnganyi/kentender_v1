@@ -110,6 +110,14 @@ REQUIRED_PP3_EVIDENCE_DRAWER_TESTIDS = (
 	"pp3-technical-details-code",
 )
 
+REQUIRED_PP3_WORKBENCH_ROUTE_TESTIDS = (
+	"pp3-planning-workbench",
+)
+
+REQUIRED_PP3_NO_ACTIVE_PLAN_GATE_TESTIDS = (
+	"pp3-planning-work-unavailable",
+)
+
 REQUIRED_WORK_LIST_TESTIDS = (
 	"pp2-work-list",
 	"pp2-work-list-row",
@@ -307,6 +315,28 @@ class TestProcurementPlanningTestIdsG2(UnitTestCase):
 				f'data-testid="{tid}"',
 				source,
 				f"Missing PP3 evidence drawer testid {tid!r} (P2-008).",
+			)
+
+	def test_g2_pp3_workbench_route_testids_in_pp2_planning_router_js(self) -> None:
+		path = _js("js", "pp2_planning_router.js")
+		self.assertTrue(path.exists(), msg=f"missing {path}")
+		source = path.read_text(encoding="utf-8", errors="replace")
+		for tid in REQUIRED_PP3_WORKBENCH_ROUTE_TESTIDS:
+			self.assertIn(
+				f'"{tid}"',
+				source,
+				f"Missing PP3 workbench route testid {tid!r} (P3-001).",
+			)
+
+	def test_g2_pp3_no_active_plan_gate_testids_in_pp2_planning_router_js(self) -> None:
+		path = _js("js", "pp2_planning_router.js")
+		self.assertTrue(path.exists(), msg=f"missing {path}")
+		source = path.read_text(encoding="utf-8", errors="replace")
+		for tid in REQUIRED_PP3_NO_ACTIVE_PLAN_GATE_TESTIDS:
+			self.assertIn(
+				f'"{tid}"',
+				source,
+				f"Missing PP3 no-active-plan gate testid {tid!r} (P3-002).",
 			)
 
 	def test_g2_work_list_testids_in_planning_work_list_js(self) -> None:
