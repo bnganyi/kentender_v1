@@ -38,6 +38,14 @@
 		"kentender_procurement.procurement_planning.api.approved_demands.get_pp_approved_demands_awaiting_planning";
 	const APPROVED_DEMANDS_DRAWER_API =
 		"kentender_procurement.procurement_planning.api.approved_demands.get_pp_approved_demand_planning_drawer";
+	const WORKBENCH_QUEUE_BY_UI_QUEUE = {
+		needs_planning: true,
+		draft_packages: true,
+		needs_review: true,
+		ready_to_release: true,
+		blocked: true,
+		recently_released: true,
+	};
 	const approvedDemandFetchTokens = new WeakMap();
 	const approvedDemandSummaryTokens = new WeakMap();
 
@@ -680,7 +688,7 @@
 						items: [],
 						emptyMessage: approvedDemandEmptyMessage(queueId),
 					});
-					mountPlanningSelectedSummary(shell, {});
+					mountPlanningSelectedSummary(shell, { slug: "approved-demands" });
 					return;
 				}
 				const rows = Array.isArray(message.rows) ? message.rows : [];
@@ -706,7 +714,7 @@
 					emptyMessage: approvedDemandEmptyMessage(queueId),
 					onSelect: function (_itemId, item) {
 						if (!item) {
-							mountPlanningSelectedSummary(shell, {});
+							mountPlanningSelectedSummary(shell, { slug: "approved-demands" });
 							return;
 						}
 						renderApprovedDemandSummary(shell, item, queueId);
@@ -714,7 +722,7 @@
 				});
 
 				if (!selectedId) {
-					mountPlanningSelectedSummary(shell, {});
+					mountPlanningSelectedSummary(shell, { slug: "approved-demands" });
 					return;
 				}
 				let selectedItem = null;
@@ -725,7 +733,7 @@
 					}
 				}
 				if (!selectedItem) {
-					mountPlanningSelectedSummary(shell, {});
+					mountPlanningSelectedSummary(shell, { slug: "approved-demands" });
 					return;
 				}
 				renderApprovedDemandSummary(shell, selectedItem, queueId);
@@ -736,7 +744,7 @@
 					items: [],
 					emptyMessage: approvedDemandEmptyMessage(queueId),
 				});
-				mountPlanningSelectedSummary(shell, {});
+				mountPlanningSelectedSummary(shell, { slug: "approved-demands" });
 			},
 		});
 	}
@@ -898,6 +906,32 @@
 			"</p></header>";
 	}
 
+	function mountActivePlanBanner(host) {
+		if (!host) return;
+		const api =
+			kentender_procurement &&
+			kentender_procurement.PlanningActivePlanBanner &&
+			typeof kentender_procurement.PlanningActivePlanBanner.fetchAndRender === "function"
+				? kentender_procurement.PlanningActivePlanBanner
+				: null;
+		if (!api) {
+			host.innerHTML = "";
+			return;
+		}
+		api.fetchAndRender(host, {});
+	}
+
+	function mountPlanningContext(contextHost, slug) {
+		if (!contextHost) return;
+		contextHost.innerHTML =
+			'<div class="pp2-primary-context-active-plan" data-testid="pp3-active-plan-host"></div>' +
+			'<div class="pp2-primary-context-page-header" data-testid="pp2-page-header-host"></div>';
+		const activePlanHost = contextHost.querySelector('[data-testid="pp3-active-plan-host"]');
+		const pageHeaderHost = contextHost.querySelector('[data-testid="pp2-page-header-host"]');
+		mountActivePlanBanner(activePlanHost);
+		mountPlanningPageHeader(pageHeaderHost, slug);
+	}
+
 	function mountPlanningQueueTabs(mainHost, slug) {
 		if (!mainHost) return;
 		let queueHost = mainHost.querySelector('[data-testid="pp2-primary-queue-host"]');
@@ -909,14 +943,85 @@
 		} else if (mainHost.firstChild !== queueHost) {
 			mainHost.insertBefore(queueHost, mainHost.firstChild);
 		}
-		const api =
+		const isWorkbenchRoot = isPlanningHomeSlug(slug);
+		const pp3Api =
+			kentender_procurement &&
+			kentender_procurement.PlanningWorkbenchQueueTabs &&
+			typeof kentender_procurement.PlanningWorkbenchQueueTabs.renderForSlug === "function"
+				? kentender_procurement.PlanningWorkbenchQueueTabs
+				: null;
+		const pp2Api =
 			kentender_procurement &&
 			kentender_procurement.PlanningQueueTabs &&
 			typeof kentender_procurement.PlanningQueueTabs.renderForSlug === "function"
 				? kentender_procurement.PlanningQueueTabs
 				: null;
+		const api = isWorkbenchRoot ? pp3Api : pp2Api;
 		if (api) {
 			api.renderForSlug(queueHost, slug);
+			return;
+		}
+		if (isWorkbenchRoot) {
+			const fallbackQueueKeys = {
+				needs_planning: true,
+				draft_packages: true,
+				needs_review: true,
+				ready_to_release: true,
+				blocked: true,
+				recently_released: true,
+			};
+			let activeQueue = "needs_planning";
+			try {
+				const rawQueue = new URLSearchParams(window.location.search).get("queue");
+				if (rawQueue && fallbackQueueKeys[rawQueue]) {
+					activeQueue = rawQueue;
+				}
+			} catch (e) {
+				/* ignore */
+			}
+			const queueChipHtml = function (queueKey, label, testId) {
+				const active = queueKey === activeQueue;
+				return (
+					'<button type="button" class="btn btn-default btn-sm pp3-workbench-queue-tabs__chip' +
+					(active ? " is-active" : "") +
+					'" data-testid="' +
+					testId +
+					'" data-pp3-queue-key="' +
+					queueKey +
+					'" role="tab" aria-selected="' +
+					(active ? "true" : "false") +
+					'">' +
+					esc(label) +
+					"</button>"
+				);
+			};
+			queueHost.innerHTML =
+				'<nav class="pp3-workbench-queue-tabs" data-testid="pp3-workbench-queue-tabs" role="tablist">' +
+				queueChipHtml("needs_planning", __("Needs Planning"), "pp3-queue-needs-planning") +
+				queueChipHtml("draft_packages", __("Draft Packages"), "pp3-queue-draft-packages") +
+				queueChipHtml("needs_review", __("Needs Review"), "pp3-queue-needs-review") +
+				queueChipHtml("ready_to_release", __("Ready to Release"), "pp3-queue-ready-release") +
+				queueChipHtml("blocked", __("Blocked"), "pp3-queue-blocked") +
+				queueChipHtml("recently_released", __("Recently Released"), "pp3-queue-recently-released") +
+				"</nav>";
+			const fallbackButtons = queueHost.querySelectorAll("[data-pp3-queue-key]");
+			for (let i = 0; i < fallbackButtons.length; i += 1) {
+				const button = fallbackButtons[i];
+				if (button.getAttribute("data-bound") === "1") continue;
+				button.setAttribute("data-bound", "1");
+				button.addEventListener("click", function () {
+					const queueKey = String(button.getAttribute("data-pp3-queue-key") || "").trim();
+					if (!fallbackQueueKeys[queueKey]) return;
+					try {
+						const url = new URL(window.location.href);
+						url.searchParams.set("queue", queueKey);
+						window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+					} catch (e) {
+						/* ignore */
+					}
+					mountPlanningQueueTabs(mainHost, slug);
+				});
+			}
 			return;
 		}
 		queueHost.innerHTML = "";
@@ -981,17 +1086,30 @@
 		if (!shell) return;
 		const summaryHost = ensureSummaryHost(shell);
 		if (!summaryHost) return;
-		const api =
+		const o = opts || {};
+		const summarySlug = String((o.summary && o.summary.context_slug) || "").trim();
+		const resolvedSlug = String(
+			o.slug != null ? o.slug : summarySlug || readSurfaceSlug(),
+		).trim();
+		const isWorkbenchRoot = isPlanningHomeSlug(resolvedSlug);
+		const pp3Api =
 			kentender_procurement &&
-			kentender_procurement.PlanningSelectedSummaryPanel &&
-			typeof kentender_procurement.PlanningSelectedSummaryPanel.renderIdle === "function"
-				? kentender_procurement.PlanningSelectedSummaryPanel
+			kentender_procurement.PlanningWorkbenchSelectedSummary &&
+			typeof kentender_procurement.PlanningWorkbenchSelectedSummary.renderIdle === "function"
+				? kentender_procurement.PlanningWorkbenchSelectedSummary
+				: null;
+		const api =
+			isWorkbenchRoot && pp3Api
+				? pp3Api
+				: kentender_procurement &&
+					kentender_procurement.PlanningSelectedSummaryPanel &&
+					typeof kentender_procurement.PlanningSelectedSummaryPanel.renderIdle === "function"
+					? kentender_procurement.PlanningSelectedSummaryPanel
 				: null;
 		if (!api) {
 			summaryHost.innerHTML = "";
 			return;
 		}
-		const o = opts || {};
 		if (o.summary && String(o.summary.title || "").trim()) {
 			api.render(summaryHost, o);
 			return;
@@ -1024,29 +1142,81 @@
 				mainHost.insertBefore(workListHost, mainHost.firstChild);
 			}
 		}
-		const api =
+		const isWorkbenchRoot = isPlanningHomeSlug(slug);
+		const pp3Api =
+			kentender_procurement &&
+			kentender_procurement.PlanningWorkbenchWorkList &&
+			typeof kentender_procurement.PlanningWorkbenchWorkList.renderForSlug === "function"
+				? kentender_procurement.PlanningWorkbenchWorkList
+				: null;
+		const pp2Api =
 			kentender_procurement &&
 			kentender_procurement.PlanningWorkList &&
 			typeof kentender_procurement.PlanningWorkList.renderForSlug === "function"
 				? kentender_procurement.PlanningWorkList
 				: null;
+		const api = isWorkbenchRoot ? pp3Api : pp2Api;
 		const onSelect = function (_itemId, item) {
 			if (!shell) return;
 			const summaryApi =
-				kentender_procurement &&
-				kentender_procurement.PlanningSelectedSummaryPanel &&
-				typeof kentender_procurement.PlanningSelectedSummaryPanel.summaryFromWorkItem === "function"
-					? kentender_procurement.PlanningSelectedSummaryPanel
+				isWorkbenchRoot
+					? kentender_procurement &&
+						kentender_procurement.PlanningWorkbenchSelectedSummary &&
+						typeof kentender_procurement.PlanningWorkbenchSelectedSummary.summaryFromWorkItem === "function"
+						? kentender_procurement.PlanningWorkbenchSelectedSummary
+						: null
+					: kentender_procurement &&
+						kentender_procurement.PlanningSelectedSummaryPanel &&
+						typeof kentender_procurement.PlanningSelectedSummaryPanel.summaryFromWorkItem === "function"
+						? kentender_procurement.PlanningSelectedSummaryPanel
 					: null;
 			if (summaryApi && item) {
-				mountPlanningSelectedSummary(shell, { summary: summaryApi.summaryFromWorkItem(item) });
+				const summary = summaryApi.summaryFromWorkItem(item);
+				mountPlanningSelectedSummary(shell, {
+					slug: slug,
+					summary: summary,
+					onEvidenceAction: isWorkbenchRoot
+						? function (selectedSummary) {
+							openWorkbenchEvidenceDrawer(selectedSummary || summary);
+						}
+						: null,
+				});
 			}
 		};
 		if (api) {
+			let queueKey = "needs_planning";
+			if (isWorkbenchRoot) {
+				const queueTabsApi =
+					kentender_procurement &&
+					kentender_procurement.PlanningWorkbenchQueueTabs &&
+					typeof kentender_procurement.PlanningWorkbenchQueueTabs.readActiveFromUrl === "function"
+						? kentender_procurement.PlanningWorkbenchQueueTabs
+						: null;
+				if (queueTabsApi) {
+					queueKey = String(queueTabsApi.readActiveFromUrl() || "").trim() || "needs_planning";
+				}
+				if (!WORKBENCH_QUEUE_BY_UI_QUEUE[queueKey]) {
+					queueKey = "needs_planning";
+				}
+				api.renderForSlug(workListHost, slug, { queue: queueKey, onSelect: onSelect });
+				return;
+			}
 			api.renderForSlug(workListHost, slug, { items: [], onSelect: onSelect });
 			return;
 		}
 		workListHost.innerHTML = "";
+	}
+
+	function bindWorkbenchQueueRefresh(mainHost, slug, shell) {
+		if (!mainHost || !isPlanningHomeSlug(slug)) return;
+		const queueHost = mainHost.querySelector('[data-testid="pp2-primary-queue-host"]');
+		if (!queueHost || queueHost.getAttribute("data-pp3-work-list-bound") === "1") return;
+		queueHost.setAttribute("data-pp3-work-list-bound", "1");
+		queueHost.addEventListener("click", function () {
+			window.requestAnimationFrame(function () {
+				mountPlanningWorkList(mainHost, slug, shell);
+			});
+		});
 	}
 
 	function slugifySidebarKey(value) {
@@ -1220,7 +1390,7 @@
 		}
 		const contextHost = shell.querySelector('[data-testid="pp2-primary-context-host"]');
 		if (contextHost) {
-			mountPlanningPageHeader(contextHost, slug);
+			mountPlanningContext(contextHost, slug);
 		}
 		const nextActionPanel = shell.querySelector('[data-testid="pp2-primary-next-action-panel"]');
 		if (nextActionPanel) {
@@ -1242,15 +1412,13 @@
 			toggle.textContent = collapsed ? __("Expand panel") : __("Collapse panel");
 		}
 		if (isPlanningHomeSlug(slug)) {
-			const summaryHost = ensureSummaryHost(shell);
-			if (summaryHost) {
-				summaryHost.innerHTML = "";
-			}
-			shell.setAttribute("data-pp2-home-layout", "1");
+			shell.removeAttribute("data-pp2-home-layout");
+			ensureSummaryHost(shell);
+			mountPlanningSelectedSummary(shell, { slug: slug });
 		} else {
 			shell.removeAttribute("data-pp2-home-layout");
 			ensureSummaryHost(shell);
-			mountPlanningSelectedSummary(shell, {});
+			mountPlanningSelectedSummary(shell, { slug: slug });
 		}
 
 		return shell;
@@ -1318,6 +1486,10 @@
 			const targetLabel = parentActive ? String(SURFACE_LABELS[slug || ""] || "").trim().toLowerCase() : "";
 			const isActive = !!targetLabel && label === targetLabel;
 			anchors[i].classList.toggle("kt-pp2-sidebar-child-active", isActive);
+			const standardItem = anchors[i].querySelector(".standard-sidebar-item");
+			if (standardItem) {
+				standardItem.classList.toggle("active-sidebar", isActive);
+			}
 		}
 		return true;
 	}
@@ -1503,15 +1675,45 @@
 	}
 
 	function closePlanningEvidenceDrawer() {
-		const drawerApi =
+		const pp2DrawerApi =
 			kentender_procurement &&
 			kentender_procurement.PlanningEvidenceDrawer &&
 			typeof kentender_procurement.PlanningEvidenceDrawer.close === "function"
 				? kentender_procurement.PlanningEvidenceDrawer
 				: null;
-		if (drawerApi) {
-			drawerApi.close();
+		if (pp2DrawerApi) {
+			pp2DrawerApi.close();
 		}
+		const pp3DrawerApi =
+			kentender_procurement &&
+			kentender_procurement.PlanningWorkbenchEvidenceDrawer &&
+			typeof kentender_procurement.PlanningWorkbenchEvidenceDrawer.close === "function"
+				? kentender_procurement.PlanningWorkbenchEvidenceDrawer
+				: null;
+		if (pp3DrawerApi) {
+			pp3DrawerApi.close();
+		}
+	}
+
+	function openWorkbenchEvidenceDrawer(summary) {
+		const drawerApi =
+			kentender_procurement &&
+			kentender_procurement.PlanningWorkbenchEvidenceDrawer &&
+			typeof kentender_procurement.PlanningWorkbenchEvidenceDrawer.open === "function"
+				? kentender_procurement.PlanningWorkbenchEvidenceDrawer
+				: null;
+		if (!drawerApi) return;
+		const s = summary || {};
+		const title = String(s.title || "").trim();
+		const packageCode = String(s.packageCode || s.package_code || "").trim();
+		const underlyingObjectType = String(s.underlyingObjectType || s.underlying_object_type || "").trim();
+		const underlyingObjectCode = String(s.underlyingObjectCode || s.underlying_object_code || "").trim();
+		drawerApi.open({
+			title: title,
+			package_code: packageCode,
+			underlying_object_type: underlyingObjectType,
+			underlying_object_code: underlyingObjectCode,
+		});
 	}
 
 	function removePp2PlanningShellIfWrongRoute() {
@@ -1583,6 +1785,9 @@
 					}
 				}
 				mountPlanningHome(root);
+				mountPlanningQueueTabs(mainHost, slug);
+				mountPlanningWorkList(mainHost, slug, shell);
+				bindWorkbenchQueueRefresh(mainHost, slug, shell);
 			}
 		} else if (mainHost) {
 			const queueHost = mainHost.querySelector('[data-testid="pp2-primary-queue-host"]');
@@ -1600,10 +1805,15 @@
 				}
 			}
 			mountPlanningQueueTabs(mainHost, slug);
-			const queueApi =
-				kentender_procurement &&
-				kentender_procurement.PlanningQueueTabs &&
-				typeof kentender_procurement.PlanningQueueTabs.readActiveFromUrl === "function"
+			const queueApi = isPlanningHomeSlug(slug)
+				? kentender_procurement &&
+					kentender_procurement.PlanningWorkbenchQueueTabs &&
+					typeof kentender_procurement.PlanningWorkbenchQueueTabs.readActiveFromUrl === "function"
+					? kentender_procurement.PlanningWorkbenchQueueTabs
+					: null
+				: kentender_procurement &&
+					kentender_procurement.PlanningQueueTabs &&
+					typeof kentender_procurement.PlanningQueueTabs.readActiveFromUrl === "function"
 					? kentender_procurement.PlanningQueueTabs
 					: null;
 			if (queueApi) {

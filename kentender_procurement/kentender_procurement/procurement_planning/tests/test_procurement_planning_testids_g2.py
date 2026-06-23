@@ -61,9 +61,53 @@ REQUIRED_PAGE_HEADER_TESTIDS = (
 	"pp2-page-primary-action",
 )
 
+REQUIRED_ACTIVE_PLAN_BANNER_TESTIDS = (
+	"pp3-active-plan-banner",
+	"pp3-no-active-plan-gate",
+	"pp3-create-plan-button",
+	"pp3-activate-plan-button",
+	"pp3-change-plan-button",
+	"pp3-view-plan-button",
+)
+
 REQUIRED_QUEUE_TABS_TESTIDS = (
 	"pp2-queue-tabs",
 	"pp2-queue-tab-",
+)
+
+REQUIRED_WORKBENCH_QUEUE_TABS_TESTIDS = (
+	"pp3-workbench-queue-tabs",
+	"pp3-queue-needs-planning",
+	"pp3-queue-draft-packages",
+	"pp3-queue-needs-review",
+	"pp3-queue-ready-release",
+	"pp3-queue-blocked",
+	"pp3-queue-recently-released",
+)
+
+REQUIRED_PP3_WORK_LIST_TESTIDS = (
+	"pp3-work-list",
+	"pp3-work-item-row",
+	"pp3-work-item-title",
+	"pp3-work-item-state",
+	"pp3-work-item-next-action",
+)
+
+REQUIRED_PP3_SELECTED_SUMMARY_TESTIDS = (
+	"pp3-selected-work-summary",
+	"pp3-primary-action",
+	"pp3-secondary-actions",
+	"pp3-view-evidence-button",
+)
+
+REQUIRED_PP3_EVIDENCE_DRAWER_TESTIDS = (
+	"pp3-evidence-drawer",
+	"pp3-evidence-title",
+	"pp3-evidence-timeline",
+	"pp3-evidence-record-list",
+	"pp3-technical-details-toggle",
+	"pp3-technical-details-panel",
+	"pp3-technical-details-code",
 )
 
 REQUIRED_WORK_LIST_TESTIDS = (
@@ -203,12 +247,67 @@ class TestProcurementPlanningTestIdsG2(UnitTestCase):
 		for tid in REQUIRED_PAGE_HEADER_TESTIDS:
 			self.assertIn(f'data-testid="{tid}"', source, f"Missing page header testid {tid!r} (P5B-001).")
 
+	def test_g2_active_plan_banner_testids_in_pp3_planning_active_plan_banner_js(self) -> None:
+		path = _js("js", "pp3_planning_active_plan_banner.js")
+		self.assertTrue(path.exists(), msg=f"missing {path}")
+		source = path.read_text(encoding="utf-8", errors="replace")
+		for tid in REQUIRED_ACTIVE_PLAN_BANNER_TESTIDS:
+			self.assertIn(
+				f'data-testid="{tid}"',
+				source,
+				f"Missing ActivePlanBanner testid {tid!r} (P2-004).",
+			)
+
 	def test_g2_queue_tabs_testids_in_planning_queue_tabs_js(self) -> None:
 		path = _js("js", "pp2_planning_queue_tabs.js")
 		self.assertTrue(path.exists(), msg=f"missing {path}")
 		source = path.read_text(encoding="utf-8", errors="replace")
 		self.assertIn('data-testid="pp2-queue-tabs"', source, "Missing queue tabs container testid (P5B-002).")
 		self.assertIn("pp2-queue-tab-", source, "Missing queue tab chip testid prefix (P5B-002).")
+
+	def test_g2_workbench_queue_tabs_testids_in_pp3_planning_workbench_queue_tabs_js(self) -> None:
+		path = _js("js", "pp3_planning_workbench_queue_tabs.js")
+		self.assertTrue(path.exists(), msg=f"missing {path}")
+		source = path.read_text(encoding="utf-8", errors="replace")
+		for tid in REQUIRED_WORKBENCH_QUEUE_TABS_TESTIDS:
+			self.assertIn(
+				f'data-testid="{tid}"',
+				source,
+				f"Missing PP3 workbench queue tab testid {tid!r} (P2-005).",
+			)
+
+	def test_g2_pp3_work_list_testids_in_pp3_planning_work_list_js(self) -> None:
+		path = _js("js", "pp3_planning_work_list.js")
+		self.assertTrue(path.exists(), msg=f"missing {path}")
+		source = path.read_text(encoding="utf-8", errors="replace")
+		for tid in REQUIRED_PP3_WORK_LIST_TESTIDS:
+			self.assertIn(
+				f'data-testid="{tid}"',
+				source,
+				f"Missing PP3 work list testid {tid!r} (P2-006).",
+			)
+
+	def test_g2_pp3_selected_summary_testids_in_pp3_planning_selected_work_summary_js(self) -> None:
+		path = _js("js", "pp3_planning_selected_work_summary.js")
+		self.assertTrue(path.exists(), msg=f"missing {path}")
+		source = path.read_text(encoding="utf-8", errors="replace")
+		for tid in REQUIRED_PP3_SELECTED_SUMMARY_TESTIDS:
+			self.assertIn(
+				f'data-testid="{tid}"',
+				source,
+				f"Missing PP3 selected summary testid {tid!r} (P2-007).",
+			)
+
+	def test_g2_pp3_evidence_drawer_testids_in_pp3_planning_evidence_drawer_js(self) -> None:
+		path = _js("js", "pp3_planning_evidence_drawer.js")
+		self.assertTrue(path.exists(), msg=f"missing {path}")
+		source = path.read_text(encoding="utf-8", errors="replace")
+		for tid in REQUIRED_PP3_EVIDENCE_DRAWER_TESTIDS:
+			self.assertIn(
+				f'data-testid="{tid}"',
+				source,
+				f"Missing PP3 evidence drawer testid {tid!r} (P2-008).",
+			)
 
 	def test_g2_work_list_testids_in_planning_work_list_js(self) -> None:
 		path = _js("js", "pp2_planning_work_list.js")

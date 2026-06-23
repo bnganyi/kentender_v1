@@ -198,6 +198,19 @@ test.describe('P1-002 Planning nested sidebar (three-entry IA)', () => {
 			.first();
 		await expect(childLink).toBeVisible();
 		await expect(childLink).toHaveClass(/kt-pp2-sidebar-child/);
+		await expect(childLink.locator('.sidebar-item-icon').first()).toBeVisible();
+		const childIndentation = await page.evaluate(() => {
+			const parentLabel = document.querySelector(
+				'.section-item[title="Procurement Planning"] .sidebar-item-label'
+			) as HTMLElement | null;
+			const childLabel = document.querySelector(
+				'.section-item[title="Procurement Planning"] .nested-container .item-anchor.kt-pp2-sidebar-child .sidebar-item-label'
+			) as HTMLElement | null;
+			if (!parentLabel || !childLabel) return null;
+			return childLabel.getBoundingClientRect().left - parentLabel.getBoundingClientRect().left;
+		});
+		expect(childIndentation).not.toBeNull();
+		expect(childIndentation as number).toBeGreaterThanOrEqual(10);
 	});
 
 	test('Procurement Planning icon persists across Procurement route switches', async ({ page }) => {
@@ -225,6 +238,12 @@ test.describe('P1-002 Planning nested sidebar (three-entry IA)', () => {
 		await expect(parentSection.locator('.nested-container .item-anchor').first()).toBeHidden({
 			timeout: 30000,
 		});
+		await expect(
+			parentSection.locator('.nested-container .item-anchor.kt-pp2-sidebar-child-active')
+		).toHaveCount(0);
+		await expect(
+			parentSection.locator('.nested-container .standard-sidebar-item.active-sidebar')
+		).toHaveCount(0);
 	});
 
 	test('Evidence & Audit then back keeps Procurement rail for Journeys and TM2 surfaces', async ({ page }) => {
