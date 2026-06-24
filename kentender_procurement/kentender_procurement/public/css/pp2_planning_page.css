@@ -675,3 +675,34 @@ body.pp2-evidence-drawer-open {
 .pp3-plan-summary__value {
 	font-weight: 500;
 }
+
+.pp3-package-detail-surface__body {
+	padding: 0.5rem 0;
+}
+
+.pp3-package-detail__header {
+	border: 1px solid var(--border-color, #d1d8dd);
+	border-radius: var(--border-radius, 8px);
+	padding: 1rem;
+	background: var(--card-bg, #fff);
+	margin-bottom: 0.5rem;
+}
+
+.pp3-package-detail__tabs .nav-link {
+	font-size: var(--text-sm, 0.875rem);
+}
+
+.pp3-package-detail__tabs .nav-link.active {
+	font-weight: 600;
+}
+
+.pp3-package-detail__tab-panel {
+	border: 1px solid var(--border-color, #d1d8dd);
+	border-radius: var(--border-radius, 8px);
+	padding: 1rem;
+	background: var(--card-bg, #fff);
+}
+
+.pp3-package-detail__field + .pp3-package-detail__field {
+	margin-top: 0.25rem;
+}

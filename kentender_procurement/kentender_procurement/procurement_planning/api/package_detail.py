@@ -673,3 +673,35 @@ def get_pp_package_detail(package: str | None = None) -> dict:
 			"planning_status": doc.planning_status or "",
 		},
 	}
+
+
+@frappe.whitelist()
+def get_pp3_package_detail(package: str | None = None) -> dict:
+	"""Return PP3 Package Detail view model for contextual route UI (P6-002+)."""
+	from kentender_procurement.procurement_planning.services.package_detail_view_model import (
+		get_pp3_package_detail_view_model,
+	)
+
+	if not frappe.db.exists("DocType", "Procurement Plan"):
+		return _fail(
+			code="PP_NOT_INSTALLED",
+			message=_("Procurement Planning is not installed on this site (missing DocTypes)."),
+		)
+
+	role_key = resolve_pp_role_key()
+	if not role_key or not _can_read_planning():
+		return _fail(
+			code="PP_ACCESS_DENIED",
+			message=_("You do not have access to the Procurement Planning workbench."),
+			role_key=role_key or "auditor",
+		)
+
+	pkg_name = (package or "").strip()
+	if not pkg_name:
+		return _fail(
+			code="NOT_FOUND",
+			message=_("Package not found."),
+			role_key=role_key,
+		)
+
+	return get_pp3_package_detail_view_model(pkg_name, frappe.session.user)

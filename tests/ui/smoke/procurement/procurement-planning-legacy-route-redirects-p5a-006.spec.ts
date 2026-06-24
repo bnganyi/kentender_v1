@@ -47,21 +47,22 @@ test.describe('P1-007 Planning route retirement', () => {
 		await expect(page.getByTestId('pp2-planning-evidence-index')).toHaveCount(0);
 	});
 
-	test('evidence with package code redirects to workbench query deep link', async ({ page }) => {
+	test('evidence with package code redirects to package detail route', async ({ page }) => {
 		await page.goto(`${root}/desk/procurement-planning/evidence/${PKG}`, {
 			waitUntil: 'domcontentloaded',
 		});
-		await expect(page.getByTestId('pp2-planning-home')).toBeVisible({ timeout: 30000 });
-		await expect(page).toHaveURL(new RegExp(`package_code=${PKG}`));
+		await expect(page.getByTestId('pp3-package-detail')).toBeVisible({ timeout: 30000 });
+		await expect(page).toHaveURL(new RegExp(`/desk/procurement-planning/packages/${PKG}(?:\\?|$)`));
 		await expect(page.getByTestId('pp2-planning-evidence-index')).toHaveCount(0);
 	});
 
-	test('path-style package route keeps contextual package deep link', async ({ page }) => {
+	test('path-style package route opens contextual package detail', async ({ page }) => {
 		await page.goto(`${root}/desk/procurement-planning/packages/${PKG}`, {
 			waitUntil: 'domcontentloaded',
 		});
-		await expect(page.getByTestId('pp2-planning-home')).toBeVisible({ timeout: 30000 });
-		await expect(page).toHaveURL(new RegExp(`/desk/procurement-planning\\?package_code=${PKG}`));
+		await expect(page.getByTestId('pp3-package-detail')).toBeVisible({ timeout: 30000 });
+		await expect(page).toHaveURL(new RegExp(`/desk/procurement-planning/packages/${PKG}(?:\\?|$)`));
+		await expect(page.getByTestId('pp3-workbench-queue-tabs')).toHaveCount(0);
 	});
 
 	test('inclusion detail redirects to workbench', async ({ page }) => {

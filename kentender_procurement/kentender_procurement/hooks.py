@@ -81,6 +81,7 @@ app_include_js = [
 	f"/assets/kentender_procurement/js/pp3_planning_work_list.js?v={_desk_asset_v('public/js/pp3_planning_work_list.js')}",
 	f"/assets/kentender_procurement/js/pp3_planning_plan_list.js?v={_desk_asset_v('public/js/pp3_planning_plan_list.js')}",
 	f"/assets/kentender_procurement/js/pp3_planning_plan_summary.js?v={_desk_asset_v('public/js/pp3_planning_plan_summary.js')}",
+	f"/assets/kentender_procurement/js/pp3_planning_package_detail.js?v={_desk_asset_v('public/js/pp3_planning_package_detail.js')}",
 	f"/assets/kentender_procurement/js/pp3_planning_create_plan_modal.js?v={_desk_asset_v('public/js/pp3_planning_create_plan_modal.js')}",
 	f"/assets/kentender_procurement/js/pp3_planning_selected_work_summary.js?v={_desk_asset_v('public/js/pp3_planning_selected_work_summary.js')}",
 	f"/assets/kentender_procurement/js/pp3_planning_evidence_drawer.js?v={_desk_asset_v('public/js/pp3_planning_evidence_drawer.js')}",

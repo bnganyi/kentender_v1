@@ -33,6 +33,11 @@
 			title: __("Procurement Planning"),
 			subtitle: __("Released to Tender"),
 		},
+		"package-detail": {
+			testId: "pp3-package-detail-surface",
+			title: __("Procurement Planning"),
+			subtitle: __("Package Detail"),
+		},
 	};
 	const APPROVED_DEMANDS_QUEUE_API =
 		"kentender_procurement.procurement_planning.api.approved_demands.get_pp_approved_demands_awaiting_planning";
@@ -223,13 +228,14 @@
 		return buildWorkbenchRedirectUrl(params);
 	}
 
-	function buildPackagesRedirectUrl(packageCode) {
-		const url = new URL(window.location.origin + ROOT_PATH);
+	function buildPackageDetailUrl(packageCode) {
 		const code = String(packageCode || "").trim();
-		if (code) {
-			url.searchParams.set("package_code", decodeURIComponent(code));
-		}
-		return url.pathname + url.search;
+		if (!code) return ROOT_PATH;
+		return `${ROOT_PATH}/packages/${encodeURIComponent(code)}`;
+	}
+
+	function buildPackagesRedirectUrl(packageCode) {
+		return buildPackageDetailUrl(packageCode);
 	}
 
 	function resolvePlanningRoute(pathname) {
@@ -320,9 +326,8 @@
 		}
 		if (head === "packages" && segments.length > 1) {
 			return {
-				action: "redirect",
-				slug: "",
-				redirectUrl: buildPackagesRedirectUrl(rawSegments[1] || ""),
+				action: "package_detail",
+				packageCode: decodeURIComponent(rawSegments[1] || ""),
 			};
 		}
 
@@ -367,6 +372,10 @@
 
 	function isProcurementPlansSlug(slug) {
 		return String(slug || "").trim() === "plans";
+	}
+
+	function isPackageDetailSlug(slug) {
+		return String(slug || "").trim() === "package-detail";
 	}
 
 	function clearWorkbenchHosts(mainHost) {
@@ -1332,6 +1341,8 @@
 		const pageHeaderHost = contextHost.querySelector('[data-testid="pp2-page-header-host"]');
 		if (isProcurementPlansSlug(slug)) {
 			if (activePlanHost) activePlanHost.innerHTML = "";
+		} else if (isPackageDetailSlug(slug)) {
+			if (activePlanHost) activePlanHost.innerHTML = "";
 		} else {
 			mountActivePlanBanner(activePlanHost);
 		}
@@ -1444,6 +1455,35 @@
 						});
 					};
 				}
+			}
+		}
+	}
+
+	function mountPackageDetailSurface(mainHost, packageCode, root) {
+		if (!mainHost) return;
+		clearWorkbenchHosts(mainHost);
+		clearPlanningWorkUnavailable(mainHost);
+		const children = Array.from(mainHost.children);
+		for (let i = 0; i < children.length; i += 1) {
+			if (children[i] !== root) {
+				mainHost.removeChild(children[i]);
+			}
+		}
+		const markerId = surfaceForSlug("package-detail").testId;
+		if (root) {
+			root.innerHTML =
+				'<article class="pp3-package-detail-surface" data-testid="' +
+				esc(markerId) +
+				'"><div class="pp3-package-detail-surface__body" data-testid="pp3-package-detail-host"></div></article>';
+			const bodyHost = root.querySelector('[data-testid="pp3-package-detail-host"]');
+			const detailApi =
+				kentender_procurement &&
+				kentender_procurement.PlanningPackageDetail &&
+				typeof kentender_procurement.PlanningPackageDetail.render === "function"
+					? kentender_procurement.PlanningPackageDetail
+					: null;
+			if (detailApi && bodyHost) {
+				detailApi.render(bodyHost, { packageCode: packageCode });
 			}
 		}
 	}
@@ -2280,6 +2320,25 @@
 			if (!shell) return false;
 			root.setAttribute("data-testid", surfaceForSlug("").testId);
 			renderRouteNotFound(root);
+			document.body.classList.add("kt-pp2-shell");
+			syncSidebarActive("");
+			return hierarchyReady;
+		}
+
+		if (resolution.action === "package_detail") {
+			const packageCode = String(resolution.packageCode || "").trim();
+			const detailSlug = "package-detail";
+			const shell = ensurePrimaryWorkspaceShell(root, detailSlug);
+			if (!shell) return false;
+			const mainHost = shell.querySelector('[data-testid="pp2-primary-main-host"]');
+			root.removeAttribute("data-testid");
+			const summaryHost = shell.querySelector('[data-testid="pp2-primary-summary-host"]');
+			if (summaryHost) {
+				summaryHost.innerHTML = "";
+			}
+			if (mainHost) {
+				mountPackageDetailSurface(mainHost, packageCode, root);
+			}
 			document.body.classList.add("kt-pp2-shell");
 			syncSidebarActive("");
 			return hierarchyReady;

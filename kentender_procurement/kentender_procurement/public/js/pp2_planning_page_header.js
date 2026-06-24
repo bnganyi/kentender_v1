@@ -28,6 +28,10 @@
 			title: __("Packages"),
 			purpose: __("Which packages need work, review, release, or follow-up?"),
 		},
+		"package-detail": {
+			title: __("Package Detail"),
+			purpose: __("Review package status, funding, readiness, and release actions."),
+		},
 		releases: {
 			title: __("Released to Tender"),
 			purpose: __("Which packages have left Planning, and where did they go?"),
