@@ -67,7 +67,7 @@ from kentender_procurement.procurement_lifecycle.handoff_card_service import (
 )
 
 _DEMAND_DESK_ROUTE_PREFIX = "/app/demand"
-_APPROVED_STATUS = "Approved"
+_APPROVED_STATUSES = frozenset(("Approved", "Planning Ready"))
 
 
 def _handoff_code(journey_code: str) -> str:
@@ -187,10 +187,10 @@ def create_demand_approval_certificate(
         )
 
     demand_status = str(demand.get("status") or "")
-    if demand_status != _APPROVED_STATUS:
+    if demand_status not in _APPROVED_STATUSES:
         raise ValueError(
             f"DEMAND_NOT_APPROVED: Demand {dem_code!r} has status {demand_status!r}; "
-            "only Approved demands can produce a handoff certificate."
+            "only Approved or Planning Ready demands can produce a handoff certificate."
         )
 
     demand_frappe_name: str = str(demand["name"])

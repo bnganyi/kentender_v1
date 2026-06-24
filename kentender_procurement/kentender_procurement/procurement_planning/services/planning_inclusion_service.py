@@ -485,6 +485,11 @@ def include_demand_in_procurement_plan(
 	item_codes = _normalize_item_codes(demand_item_codes)
 	actor_user = (actor or frappe.session.user or "").strip() or frappe.session.user
 
+	from kentender_procurement.procurement_lifecycle.demand_journey_bootstrap import (
+		ensure_procurement_journey_for_demand_code,
+	)
+
+	ensure_procurement_journey_for_demand_code(demand_code)
 	_assert_can_include_or_throw(demand_code, item_codes, procurement_plan_code, actor_user)
 	pp_policy.assert_may_include_demand_in_plan()
 	pp_scope.assert_may_act_on_planning_inclusion(demand_code, procurement_plan_code)

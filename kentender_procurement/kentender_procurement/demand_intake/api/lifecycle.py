@@ -234,6 +234,13 @@ def approve_finance(demand_name: str | None = None):
 	doc.finance_approved_by = frappe.session.user
 	doc.finance_approved_at = now
 	_save_doc(doc)
+	business_id = (getattr(doc, "demand_id", None) or "").strip()
+	if business_id:
+		from kentender_procurement.procurement_lifecycle.demand_journey_bootstrap import (
+			ensure_procurement_journey_for_demand_code,
+		)
+
+		ensure_procurement_journey_for_demand_code(business_id)
 	return {"name": doc.name, "status": doc.status}
 
 
