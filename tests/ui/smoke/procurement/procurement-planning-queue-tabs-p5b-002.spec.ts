@@ -10,7 +10,6 @@ const root =
 
 const WORKBENCH_SURFACE_PATHS = [
 	'/desk/procurement-planning/approved-demands',
-	'/desk/procurement-planning/plans',
 	'/desk/procurement-planning/packages',
 	'/desk/procurement-planning/releases',
 ] as const;
@@ -19,10 +18,6 @@ const SURFACE_QUEUE_CONFIG = [
 	{
 		path: '/desk/procurement-planning/approved-demands',
 		labels: ['Ready to Plan', 'Blocked', 'Already Planned'],
-	},
-	{
-		path: '/desk/procurement-planning/plans',
-		labels: ['Active Plans', 'Draft Plans', 'Closed Plans'],
 	},
 	{
 		path: '/desk/procurement-planning/packages',
@@ -97,10 +92,17 @@ test.describe('P5B-002 Planning queue tabs', () => {
 		await expect(firstChip).toHaveAttribute('aria-selected', 'false');
 	});
 
-	test('does not render queue tabs on Planning Home', async ({ page }) => {
+	test('does not render queue tabs on Workbench root', async ({ page }) => {
 		await page.goto(`${root}/desk/procurement-planning`, { waitUntil: 'domcontentloaded' });
-		await expect(page.getByTestId('pp2-planning-home-surface')).toBeVisible({ timeout: 30000 });
+		await expect(page.getByTestId('pp3-planning-workbench')).toHaveCount(1, { timeout: 30000 });
 		await expect(page.getByTestId('pp2-queue-tabs')).toHaveCount(0);
+	});
+
+	test('does not render queue tabs on Procurement Plans setup surface', async ({ page }) => {
+		await page.goto(`${root}/desk/procurement-planning/plans`, { waitUntil: 'domcontentloaded' });
+		await expect(page.getByTestId('pp3-procurement-plans-page')).toHaveCount(1, { timeout: 30000 });
+		await expect(page.getByTestId('pp2-queue-tabs')).toHaveCount(0);
+		await expect(page.getByTestId('pp3-workbench-queue-tabs')).toHaveCount(0);
 	});
 
 	test('syncs queue selection to URL query param on packages', async ({ page }) => {

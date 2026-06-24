@@ -8,9 +8,8 @@ const root =
 	(globalThis as { process?: { env?: { UI_BASE_URL?: string } } }).process?.env?.UI_BASE_URL ||
 	'http://127.0.0.1:8000';
 
-const WORKBENCH_PATHS = [
+const WORKLIST_PATHS = [
 	'/desk/procurement-planning/approved-demands',
-	'/desk/procurement-planning/plans',
 	'/desk/procurement-planning/packages',
 	'/desk/procurement-planning/releases',
 ] as const;
@@ -50,23 +49,29 @@ test.describe('P5B-003 Planning work list', () => {
 	});
 
 	test('renders one work list on each workbench surface', async ({ page }) => {
-		for (const path of WORKBENCH_PATHS) {
+		for (const path of WORKLIST_PATHS) {
 			await page.goto(`${root}${path}`, { waitUntil: 'domcontentloaded' });
 			await expect(page.getByTestId('pp2-work-list')).toHaveCount(1, { timeout: 30000 });
 			await expect(page.getByTestId('pp2-work-list')).toBeVisible();
 		}
 	});
 
-	test('does not render work list on Planning Home', async ({ page }) => {
+	test('does not render work list on Workbench root', async ({ page }) => {
 		await page.goto(`${root}/desk/procurement-planning`, { waitUntil: 'domcontentloaded' });
-		await expect(page.getByTestId('pp2-planning-home-surface')).toBeVisible({ timeout: 30000 });
+		await expect(page.getByTestId('pp3-planning-workbench')).toHaveCount(1, { timeout: 30000 });
+		await expect(page.getByTestId('pp2-work-list')).toHaveCount(0);
+	});
+
+	test('does not render work list on Procurement Plans setup surface', async ({ page }) => {
+		await page.goto(`${root}/desk/procurement-planning/plans`, { waitUntil: 'domcontentloaded' });
+		await expect(page.getByTestId('pp3-procurement-plans-page')).toHaveCount(1, { timeout: 30000 });
 		await expect(page.getByTestId('pp2-work-list')).toHaveCount(0);
 	});
 
 	test('shows empty list shell while surface empty message remains on workbench surfaces', async ({
 		page,
 	}) => {
-		for (const path of WORKBENCH_PATHS) {
+		for (const path of WORKLIST_PATHS) {
 			await page.goto(`${root}${path}`, { waitUntil: 'domcontentloaded' });
 			await expect(page.getByTestId('pp2-work-list-empty')).toBeVisible({ timeout: 30000 });
 			await expect(page.getByTestId('pp2-empty-state-message')).toBeVisible();
@@ -161,7 +166,7 @@ test.describe('P5B-003 Planning work list', () => {
 	});
 
 	test('workbench routes contain no forbidden implementation copy', async ({ page }) => {
-		for (const path of WORKBENCH_PATHS) {
+		for (const path of WORKLIST_PATHS) {
 			await page.goto(`${root}${path}`, { waitUntil: 'domcontentloaded' });
 			await expect(page.getByTestId('pp2-work-list')).toBeVisible({ timeout: 30000 });
 			const bodyText = await page.locator('body').innerText();

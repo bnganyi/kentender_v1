@@ -18,7 +18,7 @@ const PP3_SURFACES = [
 	},
 	{
 		label: 'Procurement Plans',
-		testId: 'pp2-plans-page',
+		testId: 'pp3-procurement-plans-page',
 		path: '/desk/procurement-planning/plans',
 		navTestId: 'pp3-nav-procurement-plans',
 	},
@@ -316,9 +316,9 @@ test.describe('P1-002 Planning nested sidebar (three-entry IA)', () => {
 
 	test('hard refresh keeps Planning sidebar populated', async ({ page }) => {
 		await page.goto(`${root}/desk/procurement-planning/plans`, { waitUntil: 'domcontentloaded' });
-		await expect(page.getByTestId('pp2-plans-page')).toBeVisible({ timeout: 30000 });
+		await expect(page.getByTestId('pp3-procurement-plans-page')).toBeVisible({ timeout: 30000 });
 		await page.reload({ waitUntil: 'domcontentloaded' });
-		await expect(page.getByTestId('pp2-plans-page')).toBeVisible({ timeout: 30000 });
+		await expect(page.getByTestId('pp3-procurement-plans-page')).toBeVisible({ timeout: 30000 });
 
 		const bootProbe = await page.evaluate(() => {
 			const f = (window as { frappe?: { app?: { sidebar?: { workspace_sidebar_items?: unknown[] } } } })

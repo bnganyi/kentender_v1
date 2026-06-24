@@ -6,6 +6,8 @@
 
 	const EVIDENCE_API =
 		"kentender_procurement.procurement_planning.api.evidence_view_model.get_pp_evidence_view_model";
+	const PLAN_EVIDENCE_API =
+		"kentender_procurement.procurement_planning.api.procurement_plans.get_pp_procurement_plan_evidence_view_model";
 	const REQUIRED_TESTID_LITERALS = [
 		'data-testid="pp3-evidence-drawer"',
 		'data-testid="pp3-evidence-title"',
@@ -259,6 +261,23 @@
 		});
 	}
 
+	function fetchPlanEvidence(planId, token) {
+		return new Promise(function (resolve) {
+			frappe.call({
+				method: PLAN_EVIDENCE_API,
+				args: { plan_id: String(planId || "").trim() },
+				callback: function (response) {
+					if (token !== loadToken) return;
+					resolve((response && response.message) || {});
+				},
+				error: function () {
+					if (token !== loadToken) return;
+					resolve({ ok: false });
+				},
+			});
+		});
+	}
+
 	function inferPackageCode(opts) {
 		const o = opts || {};
 		const explicit = String(o.package_code || o.packageCode || "").trim();
@@ -293,6 +312,28 @@
 		if (closeBtn && typeof closeBtn.focus === "function") closeBtn.focus();
 
 		const packageCode = inferPackageCode(o);
+		const planId = String(o.plan_id || o.planId || "").trim();
+		if (planId) {
+			fetchPlanEvidence(planId, token).then(function (payload) {
+				if (token !== loadToken || !isOpen()) return;
+				if (!payload || !payload.ok) {
+					update({
+						title: String(o.title || __("Evidence")).trim(),
+						timeline: [],
+						records: [],
+						technical_details: { may_view_technical: false },
+					});
+					return;
+				}
+				update({
+					title: String(payload.title || o.title || __("Evidence")).trim(),
+					timeline: payload.timeline,
+					records: payload.records,
+					technical_details: payload.technical_details || {},
+				});
+			});
+			return;
+		}
 		if (!packageCode) {
 			update({
 				title: String(o.title || __("Evidence")).trim(),
@@ -326,6 +367,12 @@
 		html: html,
 		render: render,
 		open: open,
+		openForPlan: function (opts) {
+			open({
+				title: (opts && opts.title) || "",
+				plan_id: (opts && opts.plan_id) || "",
+			});
+		},
 		close: close,
 		isOpen: isOpen,
 		ensureRoot: ensureRoot,

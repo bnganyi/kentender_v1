@@ -52,6 +52,31 @@
 		}
 	}
 
+	function packageCodeFromUrl() {
+		try {
+			return String(new URLSearchParams(window.location.search).get("package_code") || "").trim();
+		} catch (e) {
+			return "";
+		}
+	}
+
+	function selectedIdForItems(items, queueKey) {
+		const list = Array.isArray(items) ? items : [];
+		if (!list.length) return "";
+		const packageCode = packageCodeFromUrl();
+		if (packageCode && normalizeQueueKey(queueKey) === "draft_packages") {
+			for (let i = 0; i < list.length; i += 1) {
+				const item = list[i] || {};
+				const underlying = String(item.underlying_object_code || "").trim();
+				const workItemId = String(item.work_item_id || "").trim();
+				if (underlying === packageCode || workItemId === "draft_packages:" + packageCode) {
+					return itemId(item);
+				}
+			}
+		}
+		return itemId(list[0]);
+	}
+
 	function itemId(item) {
 		return String(item.work_item_id || item.underlying_object_code || item.title || "").trim();
 	}
@@ -194,7 +219,7 @@
 		return callWorkbenchItems(queueKey).then(function (payload) {
 			if (renderTokens.get(host) !== token) return;
 			const items = payload && payload.ok && Array.isArray(payload.items) ? payload.items : [];
-			const selectedId = items.length ? itemId(items[0]) : "";
+			const selectedId = selectedIdForItems(items, queueKey);
 			render(host, {
 				items: items,
 				selectedId: selectedId,

@@ -24,7 +24,7 @@
 			subtitle: __("Workbench"),
 		},
 		plans: {
-			testId: "pp2-plans-page",
+			testId: "pp3-procurement-plans-page",
 			title: __("Procurement Planning"),
 			subtitle: __("Procurement Plans"),
 		},
@@ -38,6 +38,10 @@
 		"kentender_procurement.procurement_planning.api.approved_demands.get_pp_approved_demands_awaiting_planning";
 	const APPROVED_DEMANDS_DRAWER_API =
 		"kentender_procurement.procurement_planning.api.approved_demands.get_pp_approved_demand_planning_drawer";
+	const ACTIVE_PLAN_API =
+		"kentender_procurement.procurement_planning.api.active_plan.get_pp_active_plan_view_model";
+	const CREATE_PACKAGE_DRAWER_API =
+		"kentender_procurement.procurement_planning.api.planning_inclusion.get_pp_create_package_modal_drawer";
 	const WORKBENCH_QUEUE_BY_UI_QUEUE = {
 		needs_planning: true,
 		draft_packages: true,
@@ -361,6 +365,10 @@
 		return String(slug == null ? "" : slug) === "";
 	}
 
+	function isProcurementPlansSlug(slug) {
+		return String(slug || "").trim() === "plans";
+	}
+
 	function clearWorkbenchHosts(mainHost) {
 		if (!mainHost) return;
 		const testIds = [
@@ -483,6 +491,7 @@
 			include_blocker_message: blockers[0] || "",
 			demand_item_codes: demandItemCodes,
 			target_plan_code: String(targetPlan.code || targetPlan.id || targetPlan.name || "").trim(),
+			target_plan_name: String(targetPlan.name || "").trim(),
 			next_action_label: blockers.length ? __("Resolve blockers before including in plan") : fallbackNextAction,
 			primary_action: {
 				label: __("Include in Plan"),
@@ -502,31 +511,419 @@
 		};
 	}
 
-	function includePlanSuccessSummary(payloadSummary, includeResult) {
+	function buildWorkbenchOpenPackageUrl(packageCode) {
+		const code = String(packageCode || "").trim();
+		const params = { queue: "draft-packages" };
+		if (code) {
+			params.package_code = decodeURIComponent(code);
+		}
+		return buildWorkbenchRedirectUrl(params);
+	}
+
+	function refreshWorkbenchWorkList(shell, slug, queueKey) {
+		if (!shell || !isPlanningHomeSlug(slug)) return;
+		const mainHost = shell.querySelector('[data-testid="pp2-primary-main-host"]');
+		if (!mainHost) return;
+		const normalizedQueue = String(queueKey || "").trim();
+		if (normalizedQueue) {
+			const queueTabsApi =
+				kentender_procurement &&
+				kentender_procurement.PlanningWorkbenchQueueTabs &&
+				typeof kentender_procurement.PlanningWorkbenchQueueTabs.setQueueUrl === "function"
+					? kentender_procurement.PlanningWorkbenchQueueTabs
+					: null;
+			if (queueTabsApi) {
+				queueTabsApi.setQueueUrl(normalizedQueue);
+				const queueHost = mainHost.querySelector('[data-testid="pp2-primary-queue-host"]');
+				if (queueHost && typeof queueTabsApi.render === "function") {
+					queueTabsApi.render(queueHost, { activeQueue: normalizedQueue });
+				}
+			}
+		}
+		mountPlanningWorkList(mainHost, slug, shell);
+	}
+
+	function createPackageSuccessSummary(payloadSummary, createResult, contextOpts) {
+		const summaryData = payloadSummary || {};
+		const result = createResult || {};
+		const ctx = contextOpts || {};
+		const workbench = ctx.workbench === true;
+		const pkgRow = result.package && typeof result.package === "object" ? result.package : {};
+		const packageCode = String(result.package_code || pkgRow.package_code || "").trim();
+		const packageName = String(pkgRow.package_name || summaryData.title || "").trim();
+		const message = __("Package created.");
+		return {
+			context_slug: workbench ? "workbench" : "approved-demands",
+			create_package_success: true,
+			title: message,
+			create_package_success_message: message,
+			next_action_label: __("Complete readiness and submit for review."),
+			package_code: packageCode,
+			package_name: packageName,
+			primary_action: {
+				label: __("Open Package"),
+				action: "open_package_next",
+				testid: "pp2-open-package-next-action",
+			},
+			secondary_actions: workbench
+				? [
+						{
+							label: __("Back to Workbench"),
+							action: "back_to_workbench",
+							testid: "pp3-back-to-workbench",
+						},
+					]
+				: [
+						{
+							label: __("Back to Approved Demands"),
+							action: "back_to_approved_demands",
+							testid: "pp2-back-to-approved-demands",
+						},
+					],
+			show_evidence_action: false,
+			demand_code: String(result.demand_code || summaryData.demand_code || "").trim(),
+			target_plan_code: String(
+				result.procurement_plan_code || summaryData.target_plan_code || "",
+			).trim(),
+			inclusion_code: String(result.inclusion_code || summaryData.inclusion_code || "").trim(),
+		};
+	}
+
+	function mountCreatePackageSuccessSummary(shell, payloadSummary, createResult, opts) {
+		const o = opts || {};
+		const slug = String(o.slug || readSurfaceSlug() || "").trim();
+		const workbench = isPlanningHomeSlug(slug);
+		const successSummary = createPackageSuccessSummary(payloadSummary, createResult, {
+			workbench: workbench,
+		});
+		mountPlanningSelectedSummary(shell, {
+			summary: successSummary,
+			slug: slug,
+			onPrimaryAction: function (action) {
+				const actionKey = String((action && action.action) || "").trim();
+				if (actionKey !== "open_package_next") return;
+				const packageCode = String(successSummary.package_code || "").trim();
+				if (!packageCode) {
+					frappe.show_alert({
+						indicator: "orange",
+						message: __("Package reference is missing."),
+					});
+					return;
+				}
+				window.location.href = buildWorkbenchOpenPackageUrl(packageCode);
+			},
+			onSecondaryAction: function (action) {
+				const actionKey = String((action && action.action) || "").trim();
+				if (actionKey === "back_to_workbench") {
+					const packageCode = String(successSummary.package_code || "").trim();
+					if (packageCode) {
+						window.location.href = buildWorkbenchOpenPackageUrl(packageCode);
+						return;
+					}
+					refreshWorkbenchWorkList(shell, slug, "draft_packages");
+					return;
+				}
+				if (actionKey === "back_to_approved_demands") {
+					window.location.href = ROOT_PATH + "?queue=needs-planning";
+				}
+			},
+		});
+	}
+
+	function includePlanSuccessSummary(payloadSummary, includeResult, contextOpts) {
 		const summaryData = payloadSummary || {};
 		const result = includeResult || {};
-		const successMessage = __("Demand added to the procurement plan.");
+		const ctx = contextOpts || {};
+		const workbench = ctx.workbench === true;
+		const successMessage = __("Demand added to the active procurement plan.");
+		const legacyMessage = __("Demand added to the procurement plan.");
+		const message = workbench ? successMessage : legacyMessage;
 		return {
-			context_slug: "approved-demands",
+			context_slug: workbench ? "workbench" : "approved-demands",
 			include_success: true,
-			title: successMessage,
-			include_success_message: successMessage,
+			title: message,
+			include_success_message: message,
 			next_action_label: __("Create package."),
 			primary_action: {
 				label: __("Create Package"),
 				action: "create_package_next",
 				testid: "pp2-create-package-next-action",
 			},
-			secondary_actions: [
-				{
-					label: __("Back to Approved Demands"),
-					action: "back_to_approved_demands",
-					testid: "pp2-back-to-approved-demands",
-				},
-			],
+			secondary_actions: workbench
+				? [
+						{
+							label: __("Back to Workbench"),
+							action: "back_to_workbench",
+							testid: "pp3-back-to-workbench",
+						},
+					]
+				: [
+						{
+							label: __("Back to Approved Demands"),
+							action: "back_to_approved_demands",
+							testid: "pp2-back-to-approved-demands",
+						},
+					],
 			show_evidence_action: false,
 			demand_code: String(result.demand_code || summaryData.demand_code || "").trim(),
+			target_plan_code: String(
+				result.procurement_plan_code || summaryData.target_plan_code || "",
+			).trim(),
+			inclusion_code: String(result.inclusion_code || "").trim(),
 		};
+	}
+
+	function openCreatePackageModalForShell(shell, summaryData, opts) {
+		const o = opts || {};
+		const createApi =
+			kentender_procurement &&
+			kentender_procurement.PlanningCreatePackageModal &&
+			typeof kentender_procurement.PlanningCreatePackageModal.open === "function"
+				? kentender_procurement.PlanningCreatePackageModal
+				: null;
+		const payload = summaryData || {};
+		if (!createApi) {
+			frappe.show_alert({
+				indicator: "orange",
+				message: __("Create Package modal is unavailable."),
+			});
+			return;
+		}
+		const launch = function (drawerMessage) {
+			const drawer = drawerMessage || {};
+			if (!drawer.ok) {
+				frappe.show_alert({
+					indicator: "orange",
+					message:
+						String(drawer.message || "").trim() ||
+						__("Create Package context is unavailable."),
+				});
+				return;
+			}
+			createApi.open({
+				demand_name: String(drawer.demand_name || payload.title || "").trim(),
+				active_plan_name: String(drawer.active_plan_name || payload.target_plan_name || "").trim(),
+				category_label: String(drawer.category_label || "").trim(),
+				method_label: String(drawer.method_label || "").trim(),
+				value_label: String(drawer.value_label || payload.value_label || "").trim(),
+				funding_label: String(drawer.funding_label || payload.funding_label || "").trim(),
+				package_title_default: String(drawer.package_title_default || drawer.demand_name || "").trim(),
+				inclusion_code: String(drawer.inclusion_code || payload.inclusion_code || "").trim(),
+				create_allowed: drawer.create_allowed !== false,
+				blocker_code: String(drawer.blocker_code || "").trim(),
+				blocker_message: String(drawer.blocker_message || "").trim(),
+				duplicate_package: drawer.duplicate_package === true,
+				existing_package_name: String(drawer.existing_package_name || "").trim(),
+				existing_package_code: String(drawer.existing_package_code || "").trim(),
+				onSuccess: function (createResult) {
+					if (typeof o.onCreateSuccess === "function") {
+						o.onCreateSuccess(createResult || {});
+						return;
+					}
+					mountCreatePackageSuccessSummary(shell, payload, createResult || {}, {
+						slug: o.slug,
+					});
+				},
+				onOpenExistingPackage: function () {
+					window.location.href = buildWorkbenchOpenPackageUrl(
+						String(drawer.existing_package_code || "").trim(),
+					);
+				},
+			});
+		};
+		frappe.call({
+			method: CREATE_PACKAGE_DRAWER_API,
+			args: {
+				demand_code: String(payload.demand_code || "").trim(),
+				plan_code: String(payload.target_plan_code || "").trim(),
+				inclusion_code: String(payload.inclusion_code || "").trim(),
+			},
+			callback: function (response) {
+				launch((response && response.message) || {});
+			},
+			error: function () {
+				frappe.show_alert({
+					indicator: "orange",
+					message: __("Create Package context could not be loaded."),
+				});
+			},
+		});
+	}
+
+	function mountIncludePlanSuccessSummary(shell, payloadSummary, includeResult, opts) {
+		const o = opts || {};
+		const slug = String(o.slug || readSurfaceSlug() || "").trim();
+		const workbench = isPlanningHomeSlug(slug);
+		const successSummary = includePlanSuccessSummary(payloadSummary, includeResult, {
+			workbench: workbench,
+		});
+		mountPlanningSelectedSummary(shell, {
+			summary: successSummary,
+			slug: slug,
+			onPrimaryAction: function (action) {
+				const actionKey = String((action && action.action) || "").trim();
+				if (actionKey !== "create_package_next") return;
+				if (workbench) {
+					openCreatePackageModalForShell(shell, successSummary, { slug: slug });
+					return;
+				}
+				window.location.href = ROOT_PATH + "/packages";
+			},
+			onSecondaryAction: function (action) {
+				const actionKey = String((action && action.action) || "").trim();
+				if (actionKey === "back_to_workbench") {
+					mountPlanningSelectedSummary(shell, { slug: slug });
+					const mainHost = shell && shell.querySelector
+						? shell.querySelector('[data-testid="pp2-primary-main-host"]')
+						: null;
+					if (mainHost) {
+						mountPlanningWorkList(mainHost, slug, shell);
+					}
+					return;
+				}
+				if (actionKey === "back_to_approved_demands") {
+					window.location.href = ROOT_PATH + "?queue=needs-planning";
+				}
+			},
+		});
+	}
+
+	function openIncludePlanModalForShell(shell, summaryPayload, opts) {
+		const o = opts || {};
+		const includeApi =
+			kentender_procurement &&
+			kentender_procurement.PlanningIncludePlanModal &&
+			typeof kentender_procurement.PlanningIncludePlanModal.open === "function"
+				? kentender_procurement.PlanningIncludePlanModal
+				: null;
+		const summaryData = summaryPayload || {};
+		if (!includeApi) {
+			frappe.show_alert({
+				indicator: "orange",
+				message: __("Include in Plan modal is unavailable."),
+			});
+			return;
+		}
+		includeApi.open({
+			demand_code: String(summaryData.demand_code || "").trim(),
+			demand_name: String(summaryData.title || "").trim(),
+			value_label: String(summaryData.value_label || "").trim(),
+			funding_label: String(summaryData.funding_label || "").trim(),
+			target_plan_code: String(summaryData.target_plan_code || "").trim(),
+			target_plan_name: String(summaryData.target_plan_name || "").trim(),
+			target_plan_locked: o.target_plan_locked === true,
+			demand_item_codes: Array.isArray(summaryData.demand_item_codes) ? summaryData.demand_item_codes : [],
+			include_allowed: summaryData.include_allowed !== false,
+			blocker_message: String(summaryData.include_blocker_message || "").trim(),
+			onBlocked: function (message) {
+				const withAlert = Object.assign({}, summaryData, {
+					include_alert_message: String(message || "").trim(),
+				});
+				mountPlanningSelectedSummary(shell, {
+					summary: withAlert,
+					slug: o.slug,
+					onPrimaryAction: function () {
+						openIncludePlanModalForShell(shell, withAlert, o);
+					},
+					onSecondaryAction: o.onSecondaryAction,
+					onEvidenceAction: o.onEvidenceAction,
+				});
+			},
+			onSuccess: function (includeResult) {
+				if (typeof o.onIncludeSuccess === "function") {
+					o.onIncludeSuccess(includeResult || {}, summaryData);
+					return;
+				}
+				mountIncludePlanSuccessSummary(shell, summaryData, includeResult || {}, o);
+			},
+		});
+	}
+
+	function requestIncludePlanModalForShell(shell, summaryPayload, opts) {
+		const summaryData = summaryPayload || {};
+		const demandCode = String(summaryData.demand_code || "").trim();
+		const launch = function (payload) {
+			openIncludePlanModalForShell(shell, payload, opts);
+		};
+		const fetchDrawer = function (planCode) {
+			if (!demandCode) {
+				launch(summaryData);
+				return;
+			}
+			const args = { demand_code: demandCode };
+			if (planCode) args.plan_code = planCode;
+			frappe.call({
+				method: APPROVED_DEMANDS_DRAWER_API,
+				args: args,
+				callback: function (response) {
+					const message = response && response.message ? response.message : {};
+					if (message && message.ok && typeof opts.refreshSummaryFromDrawer === "function") {
+						launch(opts.refreshSummaryFromDrawer(message) || summaryData);
+						return;
+					}
+					launch(summaryData);
+				},
+				error: function () {
+					launch(summaryData);
+				},
+			});
+		};
+		if (opts.useActivePlanContext) {
+			frappe.call({
+				method: ACTIVE_PLAN_API,
+				args: {},
+				callback: function (response) {
+					const message = response && response.message ? response.message : {};
+					const planCode = message && message.has_active_plan ? String(message.plan_code || "").trim() : "";
+					fetchDrawer(planCode);
+				},
+				error: function () {
+					fetchDrawer("");
+				},
+			});
+			return;
+		}
+		fetchDrawer("");
+	}
+
+	function workbenchPseudoItemFromWorkItem(workItem) {
+		const it = workItem || {};
+		const subtitle = String(it.subtitle || "").trim();
+		const parts = subtitle
+			.split(" · ")
+			.map(function (part) {
+				return String(part || "").trim();
+			})
+			.filter(Boolean);
+		const budgetLinked = /budget linked/i.test(subtitle);
+		let valuePart = "";
+		if (parts.length >= 3) {
+			valuePart = parts[1];
+		} else if (parts.length === 2 && !budgetLinked) {
+			valuePart = parts[1];
+		}
+		return {
+			title: String(it.title || "").trim(),
+			raw: {
+				demand: { code: String(it.underlying_object_code || "").trim() },
+				category: parts[0] || "",
+				estimated_value: valuePart,
+				currency: "KES",
+			},
+		};
+	}
+
+	function openWorkbenchIncludePlanModal(shell, workItem, slug) {
+		const pseudoItem = workbenchPseudoItemFromWorkItem(workItem);
+		const baseSummary = approvedDemandSummaryFromDrawer(pseudoItem, "needs_planning", {});
+		requestIncludePlanModalForShell(shell, baseSummary, {
+			slug: slug,
+			useActivePlanContext: true,
+			target_plan_locked: true,
+			refreshSummaryFromDrawer: function (drawerMessage) {
+				return approvedDemandSummaryFromDrawer(pseudoItem, "needs_planning", drawerMessage || {});
+			},
+		});
 	}
 
 	function renderApprovedDemandSummary(shell, item, queueId) {
@@ -537,97 +934,24 @@
 		const token = (approvedDemandSummaryTokens.get(summaryHost) || 0) + 1;
 		approvedDemandSummaryTokens.set(summaryHost, token);
 		const baseSummary = approvedDemandSummaryFromDrawer(item, queueId, {});
-		const openIncludeModal = function (summary) {
-			const includeApi =
-				kentender_procurement &&
-				kentender_procurement.PlanningIncludePlanModal &&
-				typeof kentender_procurement.PlanningIncludePlanModal.open === "function"
-					? kentender_procurement.PlanningIncludePlanModal
-					: null;
-			const summaryData = summary || {};
-			if (!includeApi) {
-				frappe.show_alert({
-					indicator: "orange",
-					message: __("Include in Plan modal is unavailable."),
-				});
-				return;
-			}
-			const launchModal = function (payloadSummary) {
-				const payload = payloadSummary || {};
-				includeApi.open({
-					demand_code: String(payload.demand_code || "").trim(),
-					demand_name: String(payload.title || "").trim(),
-					value_label: String(payload.value_label || "").trim(),
-					funding_label: String(payload.funding_label || "").trim(),
-					target_plan_code: String(payload.target_plan_code || "").trim(),
-					demand_item_codes: Array.isArray(payload.demand_item_codes) ? payload.demand_item_codes : [],
-					include_allowed: payload.include_allowed !== false,
-					blocker_message: String(payload.include_blocker_message || "").trim(),
-					onBlocked: function (message) {
-						const withAlert = Object.assign({}, payload, {
-							include_alert_message: String(message || "").trim(),
-						});
-						mountPlanningSelectedSummary(shell, {
-							summary: withAlert,
-							onPrimaryAction: function () {
-								openIncludeModal(withAlert);
-							},
-							onSecondaryAction: function (action) {
-								const route = String((action && action.route) || "").trim();
-								if (!route) return;
-								window.location.href = route;
-							},
-						});
-					},
-					onSuccess: function (includeResult) {
-						const successSummary = includePlanSuccessSummary(payload, includeResult || {});
-						mountPlanningSelectedSummary(shell, {
-							summary: successSummary,
-							onPrimaryAction: function () {
-								window.location.href = ROOT_PATH + "?queue=needs-review";
-							},
-							onSecondaryAction: function (action) {
-								if (String((action && action.action) || "").trim() !== "back_to_approved_demands") {
-									return;
-								}
-								window.location.href = ROOT_PATH + "?queue=needs-planning";
-							},
-						});
-					},
-				});
-			};
-			const demandCode = String(summaryData.demand_code || "").trim();
-			if (!demandCode) {
-				launchModal(summaryData);
-				return;
-			}
-			frappe.call({
-				method: APPROVED_DEMANDS_DRAWER_API,
-				args: { demand_code: demandCode },
-				callback: function (response) {
-					const message = response && response.message ? response.message : {};
-					if (!message || !message.ok) {
-						launchModal(summaryData);
-						return;
-					}
-					const refreshed = approvedDemandSummaryFromDrawer(item, queueId, message);
-					launchModal(refreshed);
-				},
-				error: function () {
-					launchModal(summaryData);
-				},
-			});
-		};
-		mountPlanningSelectedSummary(shell, {
-			summary: baseSummary,
-			onPrimaryAction: function () {
-				openIncludeModal(baseSummary);
+		const includeModalOpts = {
+			slug: "approved-demands",
+			refreshSummaryFromDrawer: function (drawerMessage) {
+				return approvedDemandSummaryFromDrawer(item, queueId, drawerMessage || {});
 			},
 			onSecondaryAction: function (action) {
 				const route = String((action && action.route) || "").trim();
 				if (!route) return;
 				window.location.href = route;
 			},
+		};
+		mountPlanningSelectedSummary(shell, {
+			summary: baseSummary,
+			slug: "approved-demands",
+			onPrimaryAction: function () {
+				requestIncludePlanModalForShell(shell, baseSummary, includeModalOpts);
+			},
+			onSecondaryAction: includeModalOpts.onSecondaryAction,
 		});
 		if (!demandCode) return;
 		frappe.call({
@@ -637,16 +961,14 @@
 				if (approvedDemandSummaryTokens.get(summaryHost) !== token) return;
 				const message = response && response.message ? response.message : {};
 				if (!message || !message.ok) return;
+				const refreshedSummary = approvedDemandSummaryFromDrawer(item, queueId, message);
 				mountPlanningSelectedSummary(shell, {
-					summary: approvedDemandSummaryFromDrawer(item, queueId, message),
+					summary: refreshedSummary,
+					slug: "approved-demands",
 					onPrimaryAction: function () {
-						openIncludeModal(approvedDemandSummaryFromDrawer(item, queueId, message));
+						requestIncludePlanModalForShell(shell, refreshedSummary, includeModalOpts);
 					},
-					onSecondaryAction: function (action) {
-						const route = String((action && action.route) || "").trim();
-						if (!route) return;
-						window.location.href = route;
-					},
+					onSecondaryAction: includeModalOpts.onSecondaryAction,
 				});
 			},
 		});
@@ -842,7 +1164,7 @@
 	const SURFACE_PURPOSE = {
 		"": __("Convert approved demand into tender-ready procurement packages."),
 		"approved-demands": __("Which approved demands can be planned now?"),
-		plans: __("Which plan owns this procurement work?"),
+		plans: __("Create, activate, and review procurement plans."),
 		packages: __("Which packages need work, review, release, or follow-up?"),
 		releases: __("Which packages have left Planning, and where did they go?"),
 	};
@@ -1008,8 +1330,122 @@
 			'<div class="pp2-primary-context-page-header" data-testid="pp2-page-header-host"></div>';
 		const activePlanHost = contextHost.querySelector('[data-testid="pp3-active-plan-host"]');
 		const pageHeaderHost = contextHost.querySelector('[data-testid="pp2-page-header-host"]');
-		mountActivePlanBanner(activePlanHost);
+		if (isProcurementPlansSlug(slug)) {
+			if (activePlanHost) activePlanHost.innerHTML = "";
+		} else {
+			mountActivePlanBanner(activePlanHost);
+		}
 		mountPlanningPageHeader(pageHeaderHost, slug);
+	}
+
+	function mountProcurementPlansSurface(mainHost, slug, root) {
+		if (!mainHost) return;
+		clearWorkbenchHosts(mainHost);
+		clearPlanningWorkUnavailable(mainHost);
+		const children = Array.from(mainHost.children);
+		for (let i = 0; i < children.length; i += 1) {
+			if (children[i] !== root) {
+				mainHost.removeChild(children[i]);
+			}
+		}
+		const markerId = surfaceForSlug(slug).testId;
+		if (root) {
+			root.innerHTML =
+				'<article class="pp3-procurement-plans-surface" data-testid="' +
+				esc(markerId) +
+				'"><div class="pp3-procurement-plans-surface__body" data-testid="pp3-procurement-plans-body"></div></article>';
+			const bodyHost = root.querySelector('[data-testid="pp3-procurement-plans-body"]');
+			if (bodyHost) {
+				bodyHost.innerHTML =
+					'<div class="pp3-procurement-plans-layout"><div class="pp3-procurement-plans-layout__list" data-testid="pp3-procurement-plans-list-host"></div><div class="pp3-procurement-plans-layout__summary" data-testid="pp3-procurement-plans-summary-host"></div></div>';
+				const listHost = bodyHost.querySelector('[data-testid="pp3-procurement-plans-list-host"]');
+				const planListApi =
+					kentender_procurement &&
+					kentender_procurement.PlanningPlanList &&
+					typeof kentender_procurement.PlanningPlanList.render === "function"
+						? kentender_procurement.PlanningPlanList
+						: null;
+				if (planListApi && listHost) {
+					const summaryHost = bodyHost.querySelector(
+						'[data-testid="pp3-procurement-plans-summary-host"]',
+					);
+					const summaryApi =
+						kentender_procurement &&
+						kentender_procurement.PlanningPlanSummary &&
+						typeof kentender_procurement.PlanningPlanSummary.render === "function"
+							? kentender_procurement.PlanningPlanSummary
+							: null;
+					function renderSummary(plan) {
+						if (!summaryApi || !summaryHost || !plan) return;
+						summaryApi.render(summaryHost, {
+							plan: plan,
+							onRefresh: function () {
+								if (typeof window.__kt_pp_refresh_procurement_plans === "function") {
+									window.__kt_pp_refresh_procurement_plans();
+								}
+							},
+						});
+					}
+					function selectPlan(plan) {
+						const planId = String((plan && plan.plan_id) || "").trim();
+						if (!planId) return;
+						try {
+							const url = new URL(window.location.href);
+							url.searchParams.set("plan", planId);
+							window.history.replaceState({}, "", url.pathname + url.search);
+						} catch (e) {
+							/* ignore */
+						}
+						renderSummary(plan);
+						const rows = listHost.querySelectorAll('[data-testid="pp3-plan-row"]');
+						for (let i = 0; i < rows.length; i += 1) {
+							const row = rows[i];
+							const active = String(row.getAttribute("data-pp3-plan-id") || "").trim() === planId;
+							row.classList.toggle("is-active", active);
+							row.setAttribute("aria-selected", active ? "true" : "false");
+						}
+					}
+					planListApi.render(listHost, {
+						onSelect: selectPlan,
+						onLoaded: function (_payload, plans) {
+							if (!Array.isArray(plans) || !plans.length) return;
+							let selectedId = "";
+							try {
+								selectedId = String(
+									new URLSearchParams(window.location.search).get("plan") || "",
+								).trim();
+							} catch (e) {
+								selectedId = "";
+							}
+							const match =
+								plans.find(function (row) {
+									return String(row.plan_id || row.plan_code || "").trim() === selectedId;
+								}) || plans[0];
+							if (match) selectPlan(match);
+						},
+						selectedPlanId: (function () {
+							try {
+								return new URLSearchParams(window.location.search).get("plan") || "";
+							} catch (e) {
+								return "";
+							}
+						})(),
+					});
+					window.__kt_pp_refresh_procurement_plans = function () {
+						planListApi.render(listHost, {
+							onSelect: selectPlan,
+							selectedPlanId: (function () {
+								try {
+									return new URLSearchParams(window.location.search).get("plan") || "";
+								} catch (e) {
+									return "";
+								}
+							})(),
+						});
+					};
+				}
+			}
+		}
 	}
 
 	function mountPlanningQueueTabs(mainHost, slug) {
@@ -1255,6 +1691,11 @@
 				mountPlanningSelectedSummary(shell, {
 					slug: slug,
 					summary: summary,
+					onPrimaryAction: function (action) {
+						if (String((action && action.action) || "").trim() === "include_in_plan") {
+							openWorkbenchIncludePlanModal(shell, item, slug);
+						}
+					},
 					onEvidenceAction: isWorkbenchRoot
 						? function (selectedSummary) {
 							openWorkbenchEvidenceDrawer(selectedSummary || summary);
@@ -1854,7 +2295,7 @@
 		if (!shell) return false;
 		const mainHost = shell.querySelector('[data-testid="pp2-primary-main-host"]');
 		const markerId = surfaceForSlug(slug).testId;
-		if (isPlanningHomeSlug(slug)) {
+		if (isPlanningHomeSlug(slug) || isProcurementPlansSlug(slug)) {
 			root.removeAttribute("data-testid");
 		} else {
 			root.setAttribute("data-testid", markerId);
@@ -1878,6 +2319,16 @@
 					if (!shell.isConnected || !mainHost.isConnected) return;
 					mountWorkbenchRootWork(mainHost, shell, slug, activePlanPayload || {});
 				});
+			}
+		} else if (isProcurementPlansSlug(slug)) {
+			if (mainHost) {
+				const children = Array.from(mainHost.children);
+				for (let i = 0; i < children.length; i += 1) {
+					if (children[i] !== root) {
+						mainHost.removeChild(children[i]);
+					}
+				}
+				mountProcurementPlansSurface(mainHost, slug, root);
 			}
 		} else if (mainHost) {
 			const queueHost = mainHost.querySelector('[data-testid="pp2-primary-queue-host"]');

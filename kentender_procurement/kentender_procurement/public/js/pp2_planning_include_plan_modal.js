@@ -50,7 +50,8 @@
 		const demandLabel = String(o.demand_name || o.demand_code || "").trim() || "—";
 		const valueLabel = String(o.value_label || "").trim() || "—";
 		const fundingLabel = String(o.funding_label || "").trim() || "—";
-		return (
+		const activePlanLabel = String(o.target_plan_name || o.target_plan_label || "").trim();
+		let html =
 			'<div class="pp2-include-plan-modal__context" data-testid="pp2-include-plan-modal">' +
 			'<div class="pp2-include-plan-modal__context-row"><span class="text-muted small">' +
 			esc(__("Demand")) +
@@ -66,8 +67,50 @@
 			esc(__("Funding")) +
 			'</span><div class="small" data-testid="pp2-include-plan-funding">' +
 			esc(fundingLabel) +
-			"</div></div></div>"
-		);
+			"</div></div>";
+		if (activePlanLabel) {
+			html +=
+				'<div class="pp2-include-plan-modal__context-row"><span class="text-muted small">' +
+				esc(__("Active plan")) +
+				'</span><div class="small" data-testid="pp2-include-plan-active-plan">' +
+				esc(activePlanLabel) +
+				"</div></div>";
+		}
+		html += "</div>";
+		return html;
+	}
+
+	function buildIncludePlanDialogFields(opts) {
+		const o = opts || {};
+		const locked = o.target_plan_locked === true;
+		const fields = [
+			{
+				fieldtype: "HTML",
+				fieldname: "context",
+				options: businessContextHtml(o),
+			},
+		];
+		if (!locked) {
+			fields.push({
+				fieldtype: "Link",
+				fieldname: "target_plan",
+				label: __("Target plan"),
+				options: "Procurement Plan",
+				reqd: 0,
+				get_query: function () {
+					return {
+						query: PLAN_SEARCH_QUERY,
+					};
+				},
+			});
+		}
+		fields.push({
+			fieldtype: "Data",
+			fieldname: "target_plan_fallback",
+			hidden: 1,
+			default: String(o.target_plan_code || "").trim(),
+		});
+		return fields;
 	}
 
 	function tagTargetPlanField(dialog) {
@@ -98,33 +141,10 @@
 			return { opened: false };
 		}
 		const demandItemCodes = normalizeCodes(o.demand_item_codes);
+		const locked = o.target_plan_locked === true;
 		const dialog = new frappe.ui.Dialog({
-			title: __("Include in Plan"),
-			fields: [
-				{
-					fieldtype: "HTML",
-					fieldname: "context",
-					options: businessContextHtml(o),
-				},
-				{
-					fieldtype: "Link",
-					fieldname: "target_plan",
-					label: __("Target plan"),
-					options: "Procurement Plan",
-					reqd: 0,
-					get_query: function () {
-						return {
-							query: PLAN_SEARCH_QUERY,
-						};
-					},
-				},
-				{
-					fieldtype: "Data",
-					fieldname: "target_plan_fallback",
-					hidden: 1,
-					default: String(o.target_plan_code || "").trim(),
-				},
-			],
+			title: locked ? __("Include in Active Plan") : __("Include in Plan"),
+			fields: buildIncludePlanDialogFields(o),
 			primary_action_label: __("Include in Plan"),
 			primary_action: function (values) {
 				let targetPlan = String((values && values.target_plan) || "").trim();
@@ -185,9 +205,11 @@
 			},
 		});
 		dialog.show();
-		tagTargetPlanField(dialog);
+		if (!locked) {
+			tagTargetPlanField(dialog);
+		}
 		const defaultPlanCode = String(o.target_plan_code || "").trim();
-		if (defaultPlanCode) {
+		if (defaultPlanCode && !locked) {
 			dialog.set_value("target_plan", defaultPlanCode);
 		}
 		const primaryBtn = dialog.get_primary_btn ? dialog.get_primary_btn() : null;

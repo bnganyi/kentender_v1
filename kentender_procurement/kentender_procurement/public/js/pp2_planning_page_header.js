@@ -16,8 +16,13 @@
 			purpose: __("Which approved demands can be planned now?"),
 		},
 		plans: {
-			title: __("Plans"),
-			purpose: __("Which plan owns this procurement work?"),
+			title: __("Procurement Plans"),
+			purpose: __("Create, activate, and review procurement plans."),
+			primaryAction: {
+				label: __("Create Plan"),
+				testId: "pp3-create-plan-button",
+				action: "create_plan",
+			},
 		},
 		packages: {
 			title: __("Packages"),
@@ -47,6 +52,7 @@
 		if (primaryAction && primaryAction.label) {
 			const disabled = primaryAction.disabled ? " disabled" : "";
 			const href = String(primaryAction.href || "").trim();
+			const action = String(primaryAction.action || "").trim();
 			actionsHtml =
 				'<div class="pp2-page-header__actions" data-testid="pp2-page-actions">' +
 				'<button type="button" class="btn btn-primary btn-sm pp2-page-header__primary-action"' +
@@ -54,6 +60,7 @@
 				esc(primaryAction.testId || "pp2-page-primary-action") +
 				'"' +
 				(href ? ' data-pp2-primary-href="' + esc(href) + '"' : "") +
+				(action ? ' data-pp3-action="' + esc(action) + '"' : "") +
 				disabled +
 				">" +
 				esc(primaryAction.label) +
@@ -77,10 +84,28 @@
 
 	function bindPrimaryAction(host) {
 		if (!host) return;
-		const button = host.querySelector('[data-testid="pp2-page-primary-action"]');
+		const button = host.querySelector(
+			'[data-testid="pp2-page-primary-action"], [data-testid="pp3-create-plan-button"]',
+		);
 		if (!button || button.getAttribute("data-bound") === "1") return;
 		button.setAttribute("data-bound", "1");
 		button.addEventListener("click", function () {
+			const action = String(button.getAttribute("data-pp3-action") || "").trim();
+			if (action === "create_plan") {
+				if (
+					kentender_procurement.PlanningCreatePlanModal &&
+					typeof kentender_procurement.PlanningCreatePlanModal.show === "function"
+				) {
+					kentender_procurement.PlanningCreatePlanModal.show({
+						onCreated: function () {
+							if (typeof window.__kt_pp_refresh_procurement_plans === "function") {
+								window.__kt_pp_refresh_procurement_plans();
+							}
+						},
+					});
+				}
+				return;
+			}
 			const href = String(button.getAttribute("data-pp2-primary-href") || "").trim();
 			if (!href) return;
 			try {
@@ -104,7 +129,12 @@
 	}
 
 	function renderForSlug(host, slug) {
-		render(host, configForSlug(slug));
+		const cfg = configForSlug(slug);
+		render(host, {
+			title: cfg.title,
+			purpose: cfg.purpose,
+			primaryAction: cfg.primaryAction || null,
+		});
 	}
 
 	kentender_procurement.PlanningPageHeader = {

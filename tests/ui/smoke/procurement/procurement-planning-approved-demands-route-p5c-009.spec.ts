@@ -59,7 +59,7 @@ test.describe('P1-007 approved-demands retired route', () => {
 
 	test('Approved Demands does not appear as persistent Planning sidebar entry', async ({ page }) => {
 		await page.goto(`${root}/desk/procurement-planning/plans`, { waitUntil: 'domcontentloaded' });
-		await expect(page.getByTestId('pp2-plans-page')).toBeVisible({ timeout: 30000 });
+		await expect(page.getByTestId('pp3-procurement-plans-page')).toBeVisible({ timeout: 30000 });
 		const planningSection = page.locator('.section-item[title="Procurement Planning"]');
 		const approvedDemandsLink = planningSection.locator('.item-anchor', { hasText: 'Approved Demands' });
 		if (!(await approvedDemandsLink.isVisible())) {

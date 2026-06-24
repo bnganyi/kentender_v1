@@ -118,6 +118,25 @@ REQUIRED_PP3_NO_ACTIVE_PLAN_GATE_TESTIDS = (
 	"pp3-planning-work-unavailable",
 )
 
+REQUIRED_PP4_PROCUREMENT_PLANS_ROUTE_TESTIDS = (
+	"pp3-procurement-plans-page",
+)
+
+REQUIRED_PP4_PLAN_LIST_TESTIDS = (
+	"pp3-plan-list",
+	"pp3-plan-row",
+)
+
+REQUIRED_PP4_PLAN_SUMMARY_TESTIDS = (
+	"pp3-plan-summary",
+	"pp3-plan-summary-status",
+	"pp3-plan-summary-fiscal-year",
+	"pp3-plan-summary-demands",
+	"pp3-plan-summary-packages",
+	"pp3-plan-summary-released",
+	"pp3-plan-summary-blockers",
+)
+
 REQUIRED_WORK_LIST_TESTIDS = (
 	"pp2-work-list",
 	"pp2-work-list-row",
@@ -159,6 +178,10 @@ REQUIRED_APPROVED_DEMAND_SUMMARY_TESTIDS = (
 
 REQUIRED_INCLUDE_PLAN_MODAL_TESTIDS = (
 	"pp2-include-plan-modal",
+	"pp2-include-plan-demand",
+	"pp2-include-plan-value",
+	"pp2-include-plan-funding",
+	"pp2-include-plan-active-plan",
 	"pp2-target-plan-select",
 	"pp2-confirm-include-plan",
 )
@@ -167,6 +190,28 @@ REQUIRED_INCLUDE_PLAN_SUCCESS_TESTIDS = (
 	"pp2-include-plan-success",
 	"pp2-create-package-next-action",
 	"pp2-back-to-approved-demands",
+)
+
+REQUIRED_CREATE_PACKAGE_SUCCESS_TESTIDS = (
+	"pp2-create-package-success",
+	"pp2-create-package-success-message",
+	"pp2-create-package-success-next",
+	"pp2-open-package-next-action",
+)
+
+REQUIRED_CREATE_PACKAGE_MODAL_TESTIDS = (
+	"pp2-create-package-modal",
+	"pp2-create-package-demand",
+	"pp2-create-package-active-plan",
+	"pp2-create-package-category",
+	"pp2-create-package-method",
+	"pp2-create-package-value",
+	"pp2-create-package-funding",
+	"pp2-create-package-title-input",
+	"pp2-confirm-create-package",
+	"pp2-create-package-blocker-message",
+	"pp2-create-package-duplicate-dialog",
+	"pp2-open-existing-package",
 )
 
 REQUIRED_BLOCKER_SUMMARY_TESTIDS = (
@@ -339,6 +384,39 @@ class TestProcurementPlanningTestIdsG2(UnitTestCase):
 				f"Missing PP3 no-active-plan gate testid {tid!r} (P3-002).",
 			)
 
+	def test_g2_pp4_procurement_plans_route_testids_in_pp2_planning_router_js(self) -> None:
+		path = _js("js", "pp2_planning_router.js")
+		self.assertTrue(path.exists(), msg=f"missing {path}")
+		source = path.read_text(encoding="utf-8", errors="replace")
+		for tid in REQUIRED_PP4_PROCUREMENT_PLANS_ROUTE_TESTIDS:
+			self.assertIn(
+				f'"{tid}"',
+				source,
+				f"Missing PP4 procurement plans route testid {tid!r} (P4-001).",
+			)
+
+	def test_g2_pp4_plan_list_testids_in_pp3_planning_plan_list_js(self) -> None:
+		path = _js("js", "pp3_planning_plan_list.js")
+		self.assertTrue(path.exists(), msg=f"missing {path}")
+		source = path.read_text(encoding="utf-8", errors="replace")
+		for tid in REQUIRED_PP4_PLAN_LIST_TESTIDS:
+			self.assertIn(
+				f'data-testid="{tid}"',
+				source,
+				f"Missing PP4 plan list testid {tid!r} (P4-002).",
+			)
+
+	def test_g2_pp4_plan_summary_testids_in_pp3_planning_plan_summary_js(self) -> None:
+		path = _js("js", "pp3_planning_plan_summary.js")
+		self.assertTrue(path.exists(), msg=f"missing {path}")
+		source = path.read_text(encoding="utf-8", errors="replace")
+		for tid in REQUIRED_PP4_PLAN_SUMMARY_TESTIDS:
+			self.assertIn(
+				f'data-testid="{tid}"',
+				source,
+				f"Missing PP4 plan summary testid {tid!r} (P4-003).",
+			)
+
 	def test_g2_work_list_testids_in_planning_work_list_js(self) -> None:
 		path = _js("js", "pp2_planning_work_list.js")
 		self.assertTrue(path.exists(), msg=f"missing {path}")
@@ -391,6 +469,31 @@ class TestProcurementPlanningTestIdsG2(UnitTestCase):
 			if set_attr_double in source or set_attr_single in source:
 				continue
 			self.fail(f"Missing include-plan modal testid {tid!r} (P5C-013).")
+
+	def test_g2_create_package_modal_testids_in_planning_create_package_modal_js(self) -> None:
+		path = _js("js", "pp2_planning_create_package_modal.js")
+		self.assertTrue(path.exists(), msg=f"missing {path}")
+		source = path.read_text(encoding="utf-8", errors="replace")
+		for tid in REQUIRED_CREATE_PACKAGE_MODAL_TESTIDS:
+			literal = f'data-testid="{tid}"'
+			attr_set_double = f'.attr("data-testid", "{tid}")'
+			attr_set_single = f".attr('data-testid', '{tid}')"
+			if literal in source:
+				continue
+			if attr_set_double in source or attr_set_single in source:
+				continue
+			self.fail(f"Missing create-package modal testid {tid!r} (P5-005).")
+
+	def test_g2_create_package_success_testids_in_workbench_selected_summary_js(self) -> None:
+		path = _js("js", "pp3_planning_selected_work_summary.js")
+		self.assertTrue(path.exists(), msg=f"missing {path}")
+		source = path.read_text(encoding="utf-8", errors="replace")
+		for tid in REQUIRED_CREATE_PACKAGE_SUCCESS_TESTIDS:
+			self.assertIn(
+				f'data-testid="{tid}"',
+				source,
+				f"Missing create-package success testid {tid!r} (P5-007).",
+			)
 
 	def test_g2_include_plan_success_testids_in_selected_summary_panel_js(self) -> None:
 		path = _js("js", "pp2_planning_selected_summary_panel.js")

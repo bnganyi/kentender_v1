@@ -113,3 +113,45 @@ def create_pp_package_from_planning_inclusion(
 		"role_key": role_key,
 		**out,
 	}
+
+
+@frappe.whitelist()
+def get_pp_create_package_modal_drawer(
+	demand_code: str | None = None,
+	plan_code: str | None = None,
+	inclusion_code: str | None = None,
+	demand_item_codes: str | None = None,
+) -> dict[str, Any]:
+	"""Whitelisted read — Create Package modal business context."""
+	role_key, gate_err = _create_package_gate()
+	if gate_err:
+		return gate_err
+	assert role_key is not None
+
+	from kentender_procurement.procurement_planning.services.create_package_modal_drawer import (
+		get_create_package_modal_drawer,
+	)
+
+	item_codes: list[str] | None = None
+	raw_items = (demand_item_codes or "").strip()
+	if raw_items:
+		try:
+			import json
+
+			parsed = json.loads(raw_items)
+			if isinstance(parsed, list):
+				item_codes = [str(x).strip() for x in parsed if str(x).strip()]
+		except json.JSONDecodeError:
+			item_codes = [raw_items]
+
+	out = get_create_package_modal_drawer(
+		demand_code=(demand_code or "").strip() or None,
+		plan_code=(plan_code or "").strip() or None,
+		inclusion_code=(inclusion_code or "").strip() or None,
+		demand_item_codes=item_codes,
+		actor=frappe.session.user,
+	)
+	if not out.get("ok"):
+		return out
+	out["role_key"] = role_key
+	return out

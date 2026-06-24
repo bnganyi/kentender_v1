@@ -632,3 +632,46 @@ body.pp2-evidence-drawer-open {
 	background: var(--control-bg);
 	font-weight: 600;
 }
+
+.pp3-procurement-plans-layout {
+	display: grid;
+	grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr);
+	gap: 16px;
+	align-items: start;
+}
+
+.pp3-plan-list__row {
+	display: block;
+	width: 100%;
+	text-align: left;
+	border: 1px solid var(--border-color);
+	border-radius: 8px;
+	padding: 12px 14px;
+	margin-bottom: 8px;
+	background: var(--card-bg);
+}
+
+.pp3-plan-list__row.is-active {
+	border-color: var(--primary);
+	box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.pp3-plan-list__title {
+	font-weight: 600;
+	margin-bottom: 4px;
+}
+
+.pp3-plan-summary {
+	border: 1px solid var(--border-color);
+	border-radius: 8px;
+	padding: 14px 16px;
+	background: var(--card-bg);
+}
+
+.pp3-plan-summary__row {
+	margin-bottom: 10px;
+}
+
+.pp3-plan-summary__value {
+	font-weight: 500;
+}

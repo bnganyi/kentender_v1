@@ -305,6 +305,10 @@ def get_package_workbench_rows(
 	scoped: list[dict[str, Any]] = []
 	for pkg in pkgs:
 		entity_code = (pkg.get("procuring_entity_code") or "").strip()
+		if not entity_code:
+			demand_id = (pkg.get("demand_id") or "").strip()
+			if demand_id:
+				entity_code = (frappe.db.get_value("Demand", demand_id, "procuring_entity") or "").strip()
 		if not pp_scope.entity_in_user_scope(entity_code, actor):
 			continue
 		scoped.append(pkg)

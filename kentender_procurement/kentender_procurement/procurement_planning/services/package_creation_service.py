@@ -336,6 +336,20 @@ def _format_package_response(
 	}
 
 
+def _resolve_procuring_entity_code(*, demand_name: str) -> str:
+	"""Business entity code for package scope (falls back to Demand link name)."""
+	name = (demand_name or "").strip()
+	if not name:
+		return ""
+	entity_name = (frappe.db.get_value("Demand", name, "procuring_entity") or "").strip()
+	if not entity_name:
+		return ""
+	if frappe.db.exists("Procuring Entity", entity_name):
+		code = frappe.db.get_value("Procuring Entity", entity_name, "entity_code")
+		return (code or entity_name).strip()
+	return entity_name
+
+
 def _create_package_and_line(
 	*,
 	inclusion: dict[str, Any],
@@ -385,6 +399,7 @@ def _create_package_and_line(
 	)
 	category = _map_procurement_category(demand.get("requisition_type"))
 	amount = flt(demand.get("total_amount"))
+	procuring_entity_code = _resolve_procuring_entity_code(demand_name=demand_name)
 
 	pkg = frappe.get_doc(
 		{
@@ -404,6 +419,7 @@ def _create_package_and_line(
 			"budget_line_id": budget_line_name,
 			"procurement_category": category,
 			"journey_code": journey_code,
+			"procuring_entity_code": procuring_entity_code or None,
 			"risk_profile_id": template.get("risk_profile_id"),
 			"kpi_profile_id": template.get("kpi_profile_id"),
 			"decision_criteria_profile_id": template.get("decision_criteria_profile_id"),

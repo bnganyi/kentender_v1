@@ -67,7 +67,7 @@ test.describe('P5A-007 Planning implementation copy scan', () => {
 		const surfacePurpose: Record<string, RegExp> = {
 			'/desk/procurement-planning': /Convert approved demand into tender-ready procurement packages/i,
 			'/desk/procurement-planning/approved-demands': /Which approved demands can be planned now/i,
-			'/desk/procurement-planning/plans': /Which plan owns this procurement work/i,
+			'/desk/procurement-planning/plans': /Create, activate, and review procurement plans/i,
 			'/desk/procurement-planning/packages': /Which packages need work, review, release, or follow-up/i,
 			'/desk/procurement-planning/releases': /Which packages have left Planning, and where did they go/i,
 		};

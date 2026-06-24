@@ -23,8 +23,8 @@ const CANONICAL_SURFACES = [
 	},
 	{
 		path: '/desk/procurement-planning/plans',
-		title: 'Plans',
-		purpose: /Which plan owns this procurement work/i,
+		title: 'Procurement Plans',
+		purpose: /Create, activate, and review procurement plans/i,
 		hasPrimary: false,
 	},
 	{

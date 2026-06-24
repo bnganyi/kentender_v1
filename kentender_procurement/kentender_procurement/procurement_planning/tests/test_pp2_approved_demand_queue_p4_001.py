@@ -24,8 +24,8 @@ from kentender_procurement.procurement_planning.seeds.works_master_pp2_seed.cons
 	ESTIMATED_VALUE,
 )
 from kentender_procurement.demand_intake.seeds.works_master_demand_seed import DEMAND_TITLE
-from kentender_procurement.procurement_planning.seeds.works_master_pp2_seed.loader import (
-	clear_master_planning_seed,
+from kentender_procurement.procurement_planning.seeds.works_master_pp2_seed.prep import (
+	ensure_works_demand_queue_ready,
 )
 from kentender_procurement.procurement_planning.services.approved_demand_queue import (
 	get_approved_demands_awaiting_planning,
@@ -38,38 +38,6 @@ _PE_NAME = "Ministry of Health"
 
 def _pp_ok() -> bool:
 	return bool(frappe.db.exists("DocType", "Procurement Plan"))
-
-
-def _ensure_works_demand_queue_ready() -> None:
-	"""Reset master planning seed and deactivate orphan lines blocking WORKS demand eligibility."""
-	clear_master_planning_seed()
-	for row in frappe.get_all(
-		"Procurement Package Line",
-		filters={"demand_item_code": DEMAND_ITEM_CODE, "is_active": 1},
-		fields=["name"],
-	):
-		frappe.db.set_value(
-			"Procurement Package Line",
-			row.name,
-			"is_active",
-			0,
-			update_modified=False,
-		)
-	demand_name = frappe.db.get_value("Demand", {"demand_id": DEMAND_CODE}, "name")
-	if demand_name:
-		for row in frappe.get_all(
-			"Procurement Package Line",
-			filters={"demand_id": demand_name, "is_active": 1},
-			fields=["name"],
-		):
-			frappe.db.set_value(
-				"Procurement Package Line",
-				row.name,
-				"is_active",
-				0,
-				update_modified=False,
-			)
-	frappe.db.commit()
 
 
 def _bootstrap_upstream_only() -> None:
@@ -111,13 +79,13 @@ class TestPP2ApprovedDemandQueueP4001(IntegrationTestCase):
 			return
 		frappe.set_user("Administrator")
 		self._cleanup = []
-		_ensure_works_demand_queue_ready()
+		ensure_works_demand_queue_ready()
 
 	def tearDown(self):
 		if getattr(self.__class__, "_skip", True):
 			return
 		frappe.set_user("Administrator")
-		_ensure_works_demand_queue_ready()
+		ensure_works_demand_queue_ready()
 		for doctype, name in reversed(getattr(self, "_cleanup", [])):
 			if frappe.db.exists(doctype, name):
 				frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)

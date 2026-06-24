@@ -89,8 +89,15 @@ def _resolve_active_plan_row(
 	rows = frappe.get_list(
 		"Procurement Plan",
 		filters=filters,
-		fields=["name", "plan_code", "plan_name", "fiscal_year", "procuring_entity"],
-		order_by="modified desc",
+		fields=[
+			"name",
+			"plan_code",
+			"plan_name",
+			"fiscal_year",
+			"procuring_entity",
+			"is_master_seed",
+		],
+		order_by="is_master_seed desc, modified desc",
 		limit_page_length=50,
 	)
 	target_entity = (procuring_entity or "").strip()
@@ -114,12 +121,13 @@ def get_active_plan_view_model(
 	user = _session_user(actor)
 	role_key = resolve_pp_role_key(user) or "auditor"
 	target_fy = _fiscal_year_value(fiscal_year)
-	fy_label = _fiscal_year_label(target_fy)
+	effective_fy = target_fy if target_fy is not None else date.today().year
+	fy_label = _fiscal_year_label(effective_fy)
 	can_change_plan, can_view_plan = _user_flags(user)
 	active = _resolve_active_plan_row(
 		user,
 		procuring_entity=procuring_entity,
-		fiscal_year=target_fy,
+		fiscal_year=effective_fy,
 	)
 	if not active:
 		return {

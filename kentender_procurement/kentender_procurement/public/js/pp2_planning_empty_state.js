@@ -15,7 +15,7 @@
 	const SURFACE_PURPOSE = {
 		"": __("Convert approved demand into tender-ready procurement packages."),
 		"approved-demands": __("Which approved demands can be planned now?"),
-		plans: __("Which plan owns this procurement work?"),
+		plans: __("Create, activate, and review procurement plans."),
 		packages: __("Which packages need work, review, release, or follow-up?"),
 		releases: __("Which packages have left Planning, and where did they go?"),
 	};
