@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""P7-005 / PP2-REG-005 — Journey/Handoff layer cannot override Planning package state."""
+"""PP2-REG-5 / PP2-REG-005 — Journey/Handoff layer cannot override Planning package state."""
 
 from __future__ import annotations
 
@@ -9,13 +9,13 @@ import frappe
 from frappe.tests import IntegrationTestCase
 
 from kentender_procurement.procurement_planning.pp2_constants import PKG_APPROVED
-from kentender_procurement.procurement_planning.tests.pp7_regression_helpers import (
+from kentender_procurement.procurement_planning.tests.pp2_reg_regression_helpers import (
 	require_active_template,
 	run_planning_pipeline_through_release,
 )
 
 
-class TestPP7JourneyHandoffBoundaryP7005(IntegrationTestCase):
+class TestPP7JourneyHandoffBoundaryP2Reg5(IntegrationTestCase):
 	def setUp(self):
 		super().setUp()
 		frappe.set_user("Administrator")
@@ -37,7 +37,7 @@ class TestPP7JourneyHandoffBoundaryP7005(IntegrationTestCase):
 				frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
 		frappe.db.commit()
 
-	def test_pp7_005_handoff_and_journey_mutations_do_not_change_package_status(self) -> None:
+	def test_pp2_reg_005_handoff_and_journey_mutations_do_not_change_package_status(self) -> None:
 		if self._skip:
 			self.skipTest("Procurement Journey not installed")
 		if not require_active_template():

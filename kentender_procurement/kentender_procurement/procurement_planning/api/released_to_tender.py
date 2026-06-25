@@ -17,6 +17,9 @@ from kentender_procurement.procurement_planning.services.released_to_tender_api 
 	get_planning_release_package_context,
 	get_released_to_tender_rows,
 )
+from kentender_procurement.procurement_planning.services.released_to_tender_summary_view_model import (
+	get_released_package_summary,
+)
 
 
 def _list_fail(*, code: str, message: str, role_key: str = "auditor") -> dict[str, Any]:
@@ -138,3 +141,13 @@ def get_pp_planning_release_package(release_code: str | None = None) -> dict[str
 		)
 
 	return get_planning_release_package_context(code, frappe.session.user)
+
+
+@frappe.whitelist()
+def get_pp_released_package_summary(package_code: str | None = None) -> dict[str, Any]:
+	"""Whitelisted PP3 Released package follow-up summary (P7-003+)."""
+	role_key, gate_err = _detail_read_gate()
+	if gate_err:
+		return gate_err
+	assert role_key is not None
+	return get_released_package_summary((package_code or "").strip(), frappe.session.user)

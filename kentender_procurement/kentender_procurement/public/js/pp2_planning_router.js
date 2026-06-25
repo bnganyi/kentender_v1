@@ -29,7 +29,7 @@
 			subtitle: __("Procurement Plans"),
 		},
 		releases: {
-			testId: "pp2-released-to-tender-page",
+			testId: "pp3-released-to-tender-page",
 			title: __("Procurement Planning"),
 			subtitle: __("Released to Tender"),
 		},
@@ -372,6 +372,10 @@
 
 	function isProcurementPlansSlug(slug) {
 		return String(slug || "").trim() === "plans";
+	}
+
+	function isReleasedToTenderSlug(slug) {
+		return String(slug || "").trim() === "releases";
 	}
 
 	function isPackageDetailSlug(slug) {
@@ -1341,7 +1345,7 @@
 		const pageHeaderHost = contextHost.querySelector('[data-testid="pp2-page-header-host"]');
 		if (isProcurementPlansSlug(slug)) {
 			if (activePlanHost) activePlanHost.innerHTML = "";
-		} else if (isPackageDetailSlug(slug)) {
+		} else if (isReleasedToTenderSlug(slug) || isPackageDetailSlug(slug)) {
 			if (activePlanHost) activePlanHost.innerHTML = "";
 		} else {
 			mountActivePlanBanner(activePlanHost);
@@ -1455,6 +1459,91 @@
 						});
 					};
 				}
+			}
+		}
+	}
+
+	function mountReleasedToTenderSurface(mainHost, slug, root) {
+		if (!mainHost) return;
+		clearWorkbenchHosts(mainHost);
+		clearPlanningWorkUnavailable(mainHost);
+		const children = Array.from(mainHost.children);
+		for (let i = 0; i < children.length; i += 1) {
+			if (children[i] !== root) {
+				mainHost.removeChild(children[i]);
+			}
+		}
+		const markerId = surfaceForSlug(slug).testId;
+		if (root) {
+			root.innerHTML =
+				'<article class="pp3-released-to-tender-surface" data-testid="' +
+				esc(markerId) +
+				'"><div class="pp3-released-to-tender-surface__body" data-testid="pp3-released-to-tender-body"></div></article>';
+			const bodyHost = root.querySelector('[data-testid="pp3-released-to-tender-body"]');
+			const listApi =
+				kentender_procurement &&
+				kentender_procurement.PlanningReleasedList &&
+				typeof kentender_procurement.PlanningReleasedList.render === "function"
+					? kentender_procurement.PlanningReleasedList
+					: null;
+			if (listApi && bodyHost) {
+				let selectedCode = "";
+				try {
+					selectedCode = String(
+						new URLSearchParams(window.location.search).get("package") || "",
+					).trim();
+				} catch (e) {
+					selectedCode = "";
+				}
+				function selectRow(row) {
+					const code = String(((row && row.package) || {}).code || "").trim();
+					if (!code) return;
+					try {
+						const url = new URL(window.location.href);
+						url.searchParams.set("package", code);
+						window.history.replaceState({}, "", url.pathname + url.search);
+					} catch (err) {
+						/* ignore */
+					}
+					const rows = bodyHost.querySelectorAll('[data-testid="pp3-released-row"]');
+					for (let i = 0; i < rows.length; i += 1) {
+						const rowEl = rows[i];
+						const active =
+							String(rowEl.getAttribute("data-pp3-package-code") || "").trim() === code;
+						rowEl.classList.toggle("is-active", active);
+						rowEl.setAttribute("aria-selected", active ? "true" : "false");
+					}
+					const summaryHost = bodyHost.querySelector(
+						'[data-testid="pp3-released-summary-host"]',
+					);
+					const summaryApi =
+						kentender_procurement &&
+						kentender_procurement.PlanningReleasedSummary &&
+						typeof kentender_procurement.PlanningReleasedSummary.render === "function"
+							? kentender_procurement.PlanningReleasedSummary
+							: null;
+					if (summaryApi && summaryHost) {
+						summaryApi.render(summaryHost, {
+							packageCode: code,
+							onViewEvidence: function (ctx) {
+								openWorkbenchEvidenceDrawer({
+									title: (ctx && ctx.title) || "",
+									package_code: (ctx && ctx.package_code) || code,
+								});
+							},
+						});
+					}
+				}
+				listApi.render(bodyHost, {
+					selectedPackageCode: selectedCode,
+					onSelect: selectRow,
+					onViewEvidence: function (ctx) {
+						openWorkbenchEvidenceDrawer({
+							title: (ctx && ctx.title) || "",
+							package_code: (ctx && ctx.package_code) || "",
+						});
+					},
+				});
 			}
 		}
 	}
@@ -2354,7 +2443,7 @@
 		if (!shell) return false;
 		const mainHost = shell.querySelector('[data-testid="pp2-primary-main-host"]');
 		const markerId = surfaceForSlug(slug).testId;
-		if (isPlanningHomeSlug(slug) || isProcurementPlansSlug(slug)) {
+		if (isPlanningHomeSlug(slug) || isProcurementPlansSlug(slug) || isReleasedToTenderSlug(slug)) {
 			root.removeAttribute("data-testid");
 		} else {
 			root.setAttribute("data-testid", markerId);
@@ -2388,6 +2477,16 @@
 					}
 				}
 				mountProcurementPlansSurface(mainHost, slug, root);
+			}
+		} else if (isReleasedToTenderSlug(slug)) {
+			if (mainHost) {
+				const children = Array.from(mainHost.children);
+				for (let i = 0; i < children.length; i += 1) {
+					if (children[i] !== root) {
+						mainHost.removeChild(children[i]);
+					}
+				}
+				mountReleasedToTenderSurface(mainHost, slug, root);
 			}
 		} else if (mainHost) {
 			const queueHost = mainHost.querySelector('[data-testid="pp2-primary-queue-host"]');

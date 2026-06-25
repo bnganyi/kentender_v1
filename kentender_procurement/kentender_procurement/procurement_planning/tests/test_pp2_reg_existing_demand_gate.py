@@ -1,14 +1,14 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""P7-006 — Run existing Demand Intake and Approval regression modules."""
+"""PP2-REG-6 — Run existing Demand Intake and Approval regression modules."""
 
 from __future__ import annotations
 
 import frappe
 from frappe.tests import IntegrationTestCase
 
-from kentender_procurement.procurement_planning.tests.pp7_regression_helpers import (
+from kentender_procurement.procurement_planning.tests.pp2_reg_regression_helpers import (
 	assert_module_gate_passes,
 )
 
@@ -20,8 +20,8 @@ _DEMAND_MODULES = [
 ]
 
 
-class TestPP7ExistingDemandTestsP7006(IntegrationTestCase):
-	def test_pp7_006_demand_intake_regression_gate(self) -> None:
+class TestPP7ExistingDemandTestsP2Reg6(IntegrationTestCase):
+	def test_pp2_reg_006_demand_intake_regression_gate(self) -> None:
 		frappe.set_user("Administrator")
 		assert_module_gate_passes(
 			frappe.local.site,

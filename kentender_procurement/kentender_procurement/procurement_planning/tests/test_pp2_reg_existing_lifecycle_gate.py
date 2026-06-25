@@ -8,7 +8,7 @@ from __future__ import annotations
 import frappe
 from frappe.tests import IntegrationTestCase
 
-from kentender_procurement.procurement_planning.tests.pp7_regression_helpers import (
+from kentender_procurement.procurement_planning.tests.pp2_reg_regression_helpers import (
 	assert_module_gate_passes,
 )
 
@@ -21,7 +21,7 @@ _LIFECYCLE_MODULES = [
 
 
 class TestPP7ExistingLifecycleTestsP7010(IntegrationTestCase):
-	def test_pp7_010_lifecycle_regression_gate(self) -> None:
+	def test_pp2_reg_010_lifecycle_regression_gate(self) -> None:
 		frappe.set_user("Administrator")
 		assert_module_gate_passes(
 			frappe.local.site,

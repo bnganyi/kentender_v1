@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""P7-004 / PP2-REG-004 — Planning release does not bypass STD/TM publication controls."""
+"""PP2-REG-4 / PP2-REG-004 — Planning release does not bypass STD/TM publication controls."""
 
 from __future__ import annotations
 
@@ -13,13 +13,13 @@ from frappe.tests import IntegrationTestCase
 from kentender_procurement.procurement_planning.services.package_release_service import (
 	release_package_to_tender_management,
 )
-from kentender_procurement.procurement_planning.tests.pp7_regression_helpers import (
+from kentender_procurement.procurement_planning.tests.pp2_reg_regression_helpers import (
 	require_active_template,
 	run_planning_pipeline_through_release,
 )
 
 
-class TestPP7StdTenderControlsP7004(IntegrationTestCase):
+class TestPP7StdTenderControlsP2Reg4(IntegrationTestCase):
 	def setUp(self):
 		super().setUp()
 		frappe.set_user("Administrator")
@@ -41,7 +41,7 @@ class TestPP7StdTenderControlsP7004(IntegrationTestCase):
 				frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
 		frappe.db.commit()
 
-	def test_pp7_004_release_does_not_publish_tender_or_complete_std_readiness(self) -> None:
+	def test_pp2_reg_004_release_does_not_publish_tender_or_complete_std_readiness(self) -> None:
 		if self._skip:
 			self.skipTest("Procurement Package not installed")
 		if not require_active_template():

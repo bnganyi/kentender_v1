@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""P7-003 / PP2-REG-003 — Tender creation requires valid Planning Release Package."""
+"""PP2-REG-3 / PP2-REG-003 — Tender creation requires valid Planning Release Package."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from kentender_procurement.procurement_planning.package_planning_release_display
 from kentender_procurement.procurement_planning.services.package_release_service import (
 	release_package_to_tender_management,
 )
-from kentender_procurement.procurement_planning.tests.pp7_regression_helpers import (
+from kentender_procurement.procurement_planning.tests.pp2_reg_regression_helpers import (
 	require_active_template,
 	run_planning_pipeline_through_release,
 )
@@ -29,7 +29,7 @@ from kentender_procurement.tender_management.services.create_tender_from_package
 )
 
 
-class TestPP7TenderCreationBoundaryP7003(IntegrationTestCase):
+class TestPP7TenderCreationBoundaryP2Reg3(IntegrationTestCase):
 	def setUp(self):
 		super().setUp()
 		frappe.set_user("Administrator")
@@ -51,7 +51,7 @@ class TestPP7TenderCreationBoundaryP7003(IntegrationTestCase):
 				frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
 		frappe.db.commit()
 
-	def test_pp7_003_unreleased_package_cannot_create_tender(self) -> None:
+	def test_pp2_reg_003_unreleased_package_cannot_create_tender(self) -> None:
 		if self._skip:
 			self.skipTest("Procurement Package not installed")
 		if not require_active_template():
@@ -75,7 +75,7 @@ class TestPP7TenderCreationBoundaryP7003(IntegrationTestCase):
 		self.assertFalse(deny.get("ok"))
 		self.assertEqual(deny.get("denial_code"), DenialCode.PACKAGE_NOT_AUTHORIZED.value)
 
-	def test_pp7_003_release_creates_pkgrel_handoff(self) -> None:
+	def test_pp2_reg_003_release_creates_pkgrel_handoff(self) -> None:
 		if self._skip:
 			self.skipTest("Procurement Package not installed")
 		if not require_active_template():

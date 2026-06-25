@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""P7 cross-module regression — shared snapshots and planning pipeline helpers."""
+"""PP2 cross-module regression — shared snapshots and planning pipeline helpers."""
 
 from __future__ import annotations
 
@@ -391,7 +391,7 @@ def run_planning_pipeline_through_release(
 
 
 def run_bench_test_module(site: str, *, app: str, module: str) -> subprocess.CompletedProcess[str]:
-	"""Run a single Frappe test module via bench (P7-006..010 gates)."""
+	"""Run a single Frappe test module via bench (PP2-REG-6..010 gates)."""
 	return subprocess.run(
 		["bench", "--site", site, "run-tests", "--app", app, "--module", module],
 		cwd="/home/midasuser/frappe-bench",

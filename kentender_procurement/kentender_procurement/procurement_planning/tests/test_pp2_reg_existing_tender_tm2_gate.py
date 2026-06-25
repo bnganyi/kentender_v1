@@ -1,14 +1,14 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""P7-009 — Run existing Tender Management/TM2 regression modules."""
+"""PP2-REG-9 — Run existing Tender Management/TM2 regression modules."""
 
 from __future__ import annotations
 
 import frappe
 from frappe.tests import IntegrationTestCase
 
-from kentender_procurement.procurement_planning.tests.pp7_regression_helpers import (
+from kentender_procurement.procurement_planning.tests.pp2_reg_regression_helpers import (
 	assert_module_gate_passes,
 )
 
@@ -18,8 +18,8 @@ _TM2_MODULES = [
 ]
 
 
-class TestPP7ExistingTenderTm2TestsP7009(IntegrationTestCase):
-	def test_pp7_009_tender_tm2_regression_gate(self) -> None:
+class TestPP7ExistingTenderTm2TestsP2Reg9(IntegrationTestCase):
+	def test_pp2_reg_009_tender_tm2_regression_gate(self) -> None:
 		frappe.set_user("Administrator")
 		assert_module_gate_passes(
 			frappe.local.site,

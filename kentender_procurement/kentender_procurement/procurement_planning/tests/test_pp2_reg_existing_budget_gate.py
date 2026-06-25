@@ -1,14 +1,14 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""P7-007 — Run existing Budget regression modules."""
+"""PP2-REG-7 — Run existing Budget regression modules."""
 
 from __future__ import annotations
 
 import frappe
 from frappe.tests import IntegrationTestCase
 
-from kentender_procurement.procurement_planning.tests.pp7_regression_helpers import (
+from kentender_procurement.procurement_planning.tests.pp2_reg_regression_helpers import (
 	assert_module_gate_passes,
 )
 
@@ -20,8 +20,8 @@ _BUDGET_MODULES = [
 ]
 
 
-class TestPP7ExistingBudgetTestsP7007(IntegrationTestCase):
-	def test_pp7_007_budget_regression_gate(self) -> None:
+class TestPP7ExistingBudgetTestsP2Reg7(IntegrationTestCase):
+	def test_pp2_reg_007_budget_regression_gate(self) -> None:
 		frappe.set_user("Administrator")
 		assert_module_gate_passes(
 			frappe.local.site,
