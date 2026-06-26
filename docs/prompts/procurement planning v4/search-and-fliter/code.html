@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ProcureExpert | Procurement Planning</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .sidebar-width { width: 260px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e0e3e5; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c6c6cd; }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid #e2e8f0;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#2d3133",
+                        "primary-container": "#131b2e",
+                        "outline-variant": "#c6c6cd",
+                        "surface-tint": "#565e74",
+                        "tertiary-fixed-dim": "#6bd8cb",
+                        "secondary": "#0051d5",
+                        "on-tertiary-fixed": "#00201d",
+                        "on-background": "#191c1e",
+                        "on-secondary-fixed-variant": "#003ea8",
+                        "surface-container-highest": "#e0e3e5",
+                        "surface-bright": "#f7f9fb",
+                        "error": "#ba1a1a",
+                        "outline": "#76777d",
+                        "tertiary-fixed": "#89f5e7",
+                        "primary-fixed": "#dae2fd",
+                        "surface-container-lowest": "#ffffff",
+                        "primary": "#000000",
+                        "on-surface": "#191c1e",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#131b2e",
+                        "tertiary": "#000000",
+                        "surface-container": "#eceef0",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-secondary-fixed": "#00174b",
+                        "secondary-container": "#316bf3",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "on-primary-container": "#7c839b",
+                        "surface-container-high": "#e6e8ea",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#45464d",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed-variant": "#005049",
+                        "on-secondary-container": "#fefcff",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed": "#dbe1ff",
+                        "on-tertiary-container": "#0c9488",
+                        "background": "#f7f9fb",
+                        "tertiary-container": "#00201d",
+                        "surface-dim": "#d8dadc",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "on-tertiary": "#ffffff",
+                        "surface": "#f7f9fb",
+                        "primary-fixed-dim": "#bec6e0",
+                        "inverse-primary": "#bec6e0",
+                        "surface-variant": "#e0e3e5",
+                        "surface-container-low": "#f2f4f6",
+                        "on-secondary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "xs": "8px",
+                        "lg": "24px",
+                        "gutter": "20px",
+                        "xl": "32px",
+                        "sidebar-width": "260px",
+                        "sm": "12px",
+                        "panel-width": "380px",
+                        "base": "4px",
+                        "margin-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Hanken Grotesk"],
+                        "body-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "label-md": ["JetBrains Mono"],
+                        "body-lg": ["Inter"],
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-sm": ["Hanken Grotesk"],
+                        "headline-lg": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "body-sm": ["12px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "label-md": ["13px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-sm": ["11px", {"lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-lg": ["30px", {"lineHeight": "38px", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background font-body-md text-on-surface flex overflow-hidden">
+<!-- SideNavBar (Consolidated Navigation) -->
+<aside class="h-screen w-sidebar-width fixed left-0 top-0 bg-surface-bright border-r border-outline-variant flex flex-col py-lg z-50">
+<div class="px-md mb-xl">
+<h1 class="font-headline-sm text-headline-sm font-bold text-on-surface">ProcureExpert</h1>
+<p class="text-on-surface-variant text-body-sm opacity-80">Enterprise Planner</p>
+</div>
+<nav class="flex-1 space-y-base px-xs">
+<!-- Unified Planning Workbench (Active) -->
+<a class="flex items-center gap-md px-md py-sm text-secondary bg-secondary/10 border-r-4 border-secondary transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="clinical_notes" style='font-variation-settings: "FILL" 1;'>clinical_notes</span>
+<span class="font-body-md text-body-md font-semibold">Planning Workbench</span>
+</a>
+<!-- Consolidated Procurement Flow -->
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant transition-colors duration-200 hover:bg-surface-container-high hover:text-on-surface rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="contract_edit">contract_edit</span>
+<span class="font-body-md text-body-md">Release &amp; Execution</span>
+</a>
+<!-- Reporting -->
+<a class="flex items-center gap-md px-md py-sm text-on-surface-variant transition-colors duration-200 hover:bg-surface-container-high hover:text-on-surface rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-body-md text-body-md">Reporting</span>
+</a>
+</nav>
+<div class="px-md mt-auto pt-lg space-y-base">
+<button class="w-full bg-secondary text-on-secondary py-sm px-md rounded-lg font-bold flex items-center justify-center gap-xs mb-lg shadow-sm hover:shadow-md transition-shadow"><span class="material-symbols-outlined text-[18px]">add_box</span><span class="">Create Package</span></button>
+<a class="flex items-center gap-md px-md py-xs text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+<a class="flex items-center gap-md px-md py-xs text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+<span class="font-body-md text-body-md">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-[260px] flex-1 flex flex-col h-screen">
+<!-- TopNavBar -->
+<header class="fixed top-0 right-0 w-[calc(100%-260px)] h-16 bg-surface-bright border-b border-outline-variant flex items-center justify-between px-lg z-40">
+<div class="flex items-center gap-xl flex-1">
+<span class="font-headline-sm text-headline-sm text-on-surface">Planning Workbench</span>
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-lg pl-10 pr-4 py-2 text-body-md focus:ring-2 focus:ring-secondary/20 transition-all" placeholder="Search planning data, packages, or demands..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<button class="p-2 text-on-surface-variant hover:text-secondary transition-all">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-secondary transition-all">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+</button>
+<div class="h-8 w-px bg-outline-variant mx-xs"></div>
+<div class="flex items-center gap-xs cursor-pointer group">
+<span class="material-symbols-outlined text-secondary" data-icon="account_circle">account_circle</span>
+<span class="font-body-md font-semibold group-hover:text-secondary">P. Officer</span>
+</div>
+</div>
+</header>
+<!-- Workbench Body -->
+<div class="mt-16 p-lg overflow-y-auto space-y-lg bg-background">
+<!-- Breadcrumbs & Header -->
+<div class="flex flex-col gap-xs">
+<nav class="flex items-center gap-xs text-on-surface-variant text-label-sm">
+<span class="">Ministry of Health</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="">Annual Planning</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-secondary font-bold">FY 2026/2027 Workbench</span>
+</nav>
+<div class="flex justify-between items-end">
+<div>
+<h2 class="font-headline-lg text-headline-lg">End-to-End Procurement Planning</h2>
+<p class="text-on-surface-variant font-body-md">Manage package creation, validation, and approvals in a unified flow.</p>
+</div>
+<div class="flex gap-md">
+<button class="px-md py-sm bg-surface-container-high hover:bg-surface-container-highest rounded-lg flex items-center gap-xs transition-colors">
+<span class="material-symbols-outlined">ios_share</span>
+<span class="font-label-md">Export Plan</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Summary Stats Bento (Preserved) -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-md">
+<div class="glass-card p-lg rounded-xl flex flex-col justify-between relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+<span class="material-symbols-outlined text-[80px]">account_balance_wallet</span>
+</div>
+<span class="text-on-surface-variant text-label-md uppercase tracking-wider">Total Estimate</span>
+<div class="mt-xs">
+<span class="font-headline-lg text-headline-lg">KES 1.2B</span>
+<div class="flex items-center gap-xs text-emerald-600 text-body-sm font-bold mt-1">
+<span class="material-symbols-outlined text-[16px]">trending_up</span>
+<span class="">+4.2% from FY 25/26</span>
+</div>
+</div>
+</div>
+<div class="glass-card p-lg rounded-xl flex flex-col justify-between relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+<span class="material-symbols-outlined text-[80px]">inventory_2</span>
+</div>
+<span class="text-on-surface-variant text-label-md uppercase tracking-wider">Active Packages</span>
+<div class="mt-xs">
+<span class="font-headline-lg text-headline-lg">08</span>
+<div class="text-on-surface-variant text-body-sm mt-1">Across 4 Departments</div>
+</div>
+</div>
+<div class="glass-card p-lg rounded-xl flex flex-col justify-between relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+<span class="material-symbols-outlined text-[80px]">verified</span>
+</div>
+<span class="text-on-surface-variant text-label-md uppercase tracking-wider">Approval Rate</span>
+<div class="mt-xs">
+<span class="font-headline-lg text-headline-lg">65%</span>
+<div class="w-full bg-surface-container-high h-1.5 rounded-full mt-2 overflow-hidden">
+<div class="bg-secondary h-full" style="width: 65%"></div>
+</div>
+</div>
+</div>
+<div class="glass-card p-lg rounded-xl flex flex-col justify-between relative overflow-hidden group bg-primary-container border-none">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-primary-fixed">
+<span class="material-symbols-outlined text-[80px]">pending_actions</span>
+</div>
+<span class="text-on-primary-container text-label-md uppercase tracking-wider">Pending Action</span>
+<div class="mt-xs">
+<span class="font-headline-lg text-headline-lg text-on-primary">12 Items</span>
+<div class="text-primary-fixed/70 text-body-sm mt-1">Requiring immediate sign-off</div>
+</div>
+</div>
+</div>
+<!-- Unified Flow Controls -->
+<div class="flex items-center justify-between border-b border-outline-variant pb-md">
+<div class="flex gap-md">
+<button class="flex items-center gap-xs px-md py-2 border-b-2 border-secondary text-secondary font-bold">
+<span class="">All Packages</span>
+<span class="bg-secondary/10 px-1.5 py-0.5 rounded text-label-sm">8</span>
+</button>
+<button class="flex items-center gap-xs px-md py-2 text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="">In Creation</span>
+<span class="bg-surface-container-highest px-1.5 py-0.5 rounded text-label-sm">3</span>
+</button>
+<button class="flex items-center gap-xs px-md py-2 text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="">Awaiting Review</span>
+<span class="bg-surface-container-highest px-1.5 py-0.5 rounded text-label-sm">2</span>
+</button>
+<button class="flex items-center gap-xs px-md py-2 text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="">Ready for Release</span>
+<span class="bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded text-label-sm">3</span>
+</button>
+</div>
+<div class="flex items-center gap-md">
+<div class="flex items-center gap-xs text-on-surface-variant bg-surface-container-low px-md py-2 rounded-lg cursor-pointer hover:bg-surface-container-high transition-all bg-secondary/10 text-secondary border border-secondary/20">
+<span class="material-symbols-outlined text-[18px]">filter_list</span>
+<span class="text-body-md">Filters</span>
+</div>
+<div class="flex items-center gap-xs text-on-surface-variant bg-surface-container-low px-md py-2 rounded-lg cursor-pointer hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined text-[18px]">sort</span>
+<span class="text-body-md">Sort: Newest</span>
+</div>
+</div>
+</div>
+<!-- Package Lifecycle Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-lg">
+<!-- Package Card: Approved/Ready for Release -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg flex flex-col gap-md hover:shadow-xl transition-all duration-300 group border-t-4 border-t-emerald-500">
+<div class="flex justify-between items-start">
+<span class="text-label-sm text-secondary bg-secondary/5 px-2 py-1 rounded font-bold uppercase tracking-widest">PKG-MOH-2026-001</span>
+<span class="px-3 py-1 rounded-full text-label-sm bg-emerald-100 text-emerald-800 font-bold">Approved</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm group-hover:text-secondary transition-colors">Medical Supplies Q1</h3>
+<p class="text-on-surface-variant text-body-sm line-clamp-2 mt-1">Ready for tender release. All technical validations and budget approvals completed.</p>
+</div>
+<div class="grid grid-cols-2 gap-md py-md border-y border-dashed border-outline-variant">
+<div>
+<span class="text-label-sm text-on-surface-variant block mb-1">EST. VALUE</span>
+<span class="font-label-md text-on-surface">KES 450,000,000</span>
+</div>
+<div>
+<span class="text-label-sm text-on-surface-variant block mb-1">CONSOLIDATED</span>
+<span class="font-label-md text-on-surface">42 Demands</span>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-label-sm font-bold">
+<span class="">Workflow Progress</span>
+<span class="text-secondary">100% Complete</span>
+</div>
+<div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
+<div class="bg-secondary h-full rounded-full" style="width: 100%"></div>
+</div>
+<div class="flex justify-between text-[10px] text-outline uppercase tracking-tighter">
+<span class="">Selection</span>
+<span class="">Validation</span>
+<span class="">Sign-off</span>
+</div>
+</div>
+<div class="mt-auto pt-md flex gap-md">
+<button class="flex-1 py-2 bg-secondary text-on-secondary hover:bg-secondary/90 rounded font-bold text-body-sm transition-colors flex items-center justify-center gap-xs">
+<span class="">Release to Tender</span>
+<span class="material-symbols-outlined text-[18px]">rocket_launch</span>
+</button>
+<button class="px-3 py-2 bg-surface-container-high text-on-surface rounded hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Package Card: Pending Approval/Ready for Review -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg flex flex-col gap-md hover:shadow-xl transition-all duration-300 group border-t-4 border-t-amber-500">
+<div class="flex justify-between items-start">
+<span class="text-label-sm text-amber-600 bg-amber-50 px-2 py-1 rounded font-bold uppercase tracking-widest">PKG-MOH-2026-002</span>
+<span class="px-3 py-1 rounded-full text-label-sm bg-amber-100 text-amber-800 font-bold">Pending Review</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm group-hover:text-secondary transition-colors">Hospital Equipment Upgrade</h3>
+<p class="text-on-surface-variant text-body-sm line-clamp-2 mt-1">Awaiting validation from the Technical Committee for MRI scanner specs.</p>
+</div>
+<div class="grid grid-cols-2 gap-md py-md border-y border-dashed border-outline-variant">
+<div>
+<span class="text-label-sm text-on-surface-variant block mb-1">EST. VALUE</span>
+<span class="font-label-md text-on-surface">KES 320,500,000</span>
+</div>
+<div>
+<span class="text-label-sm text-on-surface-variant block mb-1">CONSOLIDATED</span>
+<span class="font-label-md text-on-surface">18 Demands</span>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-label-sm font-bold">
+<span class="">Workflow Progress</span>
+<span class="text-amber-600">65% Progress</span>
+</div>
+<div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
+<div class="bg-amber-500 h-full rounded-full" style="width: 65%"></div>
+</div>
+<div class="flex justify-between text-[10px] text-outline uppercase tracking-tighter">
+<span class="text-amber-600 font-bold">Selection</span>
+<span class="text-amber-600 font-bold">Validation</span>
+<span class="">Sign-off</span>
+</div>
+</div>
+<div class="mt-auto pt-md flex gap-md">
+<button class="flex-1 py-2 bg-amber-500 text-white hover:bg-amber-600 rounded font-bold text-body-sm transition-colors">Review Validation</button>
+<button class="px-3 py-2 bg-surface-container-high text-on-surface rounded hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+</div>
+</div>
+<!-- Package Card: Drafting/Selection -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-lg flex flex-col gap-md hover:shadow-xl transition-all duration-300 group border-t-4 border-t-outline-variant">
+<div class="flex justify-between items-start">
+<span class="text-label-sm text-on-surface-variant bg-surface-container-high px-2 py-1 rounded font-bold uppercase tracking-widest">PKG-MOH-2026-003</span>
+<span class="px-3 py-1 rounded-full text-label-sm bg-surface-container-high text-on-surface-variant font-bold">Drafting</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm group-hover:text-secondary transition-colors">IT Infrastructure Phase II</h3>
+<p class="text-on-surface-variant text-body-sm line-clamp-2 mt-1">Initial grouping of server demands. Procurement strategy not yet defined.</p>
+</div>
+<div class="grid grid-cols-2 gap-md py-md border-y border-dashed border-outline-variant">
+<div>
+<span class="text-label-sm text-on-surface-variant block mb-1">EST. VALUE</span>
+<span class="font-label-md text-on-surface">KES 112,000,000</span>
+</div>
+<div>
+<span class="text-label-sm text-on-surface-variant block mb-1">CONSOLIDATED</span>
+<span class="font-label-md text-on-surface">05 Demands</span>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-label-sm font-bold">
+<span class="">Workflow Progress</span>
+<span class="text-outline">15% Progress</span>
+</div>
+<div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
+<div class="bg-outline h-full rounded-full" style="width: 15%"></div>
+</div>
+<div class="flex justify-between text-[10px] text-outline uppercase tracking-tighter">
+<span class="text-on-surface-variant font-bold">Selection</span>
+<span class="">Validation</span>
+<span class="">Sign-off</span>
+</div>
+</div>
+<div class="mt-auto pt-md flex gap-md">
+<button class="flex-1 py-2 bg-surface-container-high hover:bg-surface-container-highest rounded font-bold text-body-sm transition-colors">Continue Selection</button>
+<button class="px-3 py-2 border border-outline-variant text-on-surface-variant rounded hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[20px]">delete_outline</span>
+</button>
+</div>
+</div>
+<!-- Empty State / Add Action -->
+<div class="border-2 border-dashed border-outline-variant rounded-xl p-lg flex flex-col items-center justify-center gap-md text-center group cursor-pointer hover:border-secondary transition-colors">
+<div class="w-16 h-16 rounded-full bg-secondary/10 flex items-center justify-center text-secondary mb-2">
+<span class="material-symbols-outlined text-[32px]">add_task</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm">Create New Package</h3>
+<p class="text-on-surface-variant text-body-sm max-w-[240px] mt-1 mx-auto">Start the planning wizard to consolidate unassigned demands into a strategic package.</p>
+</div>
+<button class="mt-md px-lg py-2.5 bg-secondary text-on-secondary rounded-lg font-bold text-body-md shadow-sm hover:shadow-md transition-all flex items-center gap-xs">
+<span class="">New Planning Run</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<div class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-50 transition-opacity duration-300" id="filter-backdrop"></div><aside class="fixed right-0 top-0 h-screen w-panel-width bg-surface-bright border-l border-outline-variant shadow-xl z-50 flex flex-col transition-transform duration-300" id="filter-sidebar">
+<div class="p-lg border-b border-outline-variant flex items-center justify-between">
+<h2 class="font-headline-sm text-headline-sm">Filters</h2>
+<button class="p-2 hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto p-lg space-y-xl">
+<!-- Search -->
+<div class="space-y-xs">
+<label class="text-label-md font-bold uppercase tracking-wider text-on-surface-variant">Search</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg pl-10 pr-4 py-2 text-body-md focus:ring-2 focus:ring-secondary/20" placeholder="Package title or ID..." type="text"/>
+</div>
+</div>
+<!-- Status -->
+<div class="space-y-xs">
+<label class="text-label-md font-bold uppercase tracking-wider text-on-surface-variant">Status</label>
+<div class="flex flex-wrap gap-xs">
+<button class="px-md py-1.5 rounded-full border border-secondary bg-secondary/10 text-secondary text-body-sm font-semibold">Drafting</button>
+<button class="px-md py-1.5 rounded-full border border-outline-variant hover:border-secondary text-on-surface-variant text-body-sm">Pending Review</button>
+<button class="px-md py-1.5 rounded-full border border-outline-variant hover:border-secondary text-on-surface-variant text-body-sm">Approved</button>
+</div>
+</div>
+<!-- Department -->
+<div class="space-y-xs">
+<label class="text-label-md font-bold uppercase tracking-wider text-on-surface-variant">Department</label>
+<select class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-md py-2 text-body-md focus:ring-2 focus:ring-secondary/20">
+<option>All Departments</option>
+<option>Ministry of Health (MOH)</option>
+<option>IT Infrastructure</option>
+<option>Facilities Management</option>
+</select>
+</div>
+<!-- Value Range -->
+<div class="space-y-xs">
+<label class="text-label-md font-bold uppercase tracking-wider text-on-surface-variant">Estimated Value</label>
+<div class="grid grid-cols-1 gap-xs">
+<label class="flex items-center gap-md p-md border border-outline-variant rounded-lg cursor-pointer hover:bg-surface-container-low">
+<input class="text-secondary focus:ring-secondary" name="value-range" type="radio"/>
+<span class="text-body-md">Under KES 100M</span>
+</label>
+<label class="flex items-center gap-md p-md border border-secondary bg-secondary/5 rounded-lg cursor-pointer">
+<input checked="" class="text-secondary focus:ring-secondary" name="value-range" type="radio"/>
+<span class="text-body-md">KES 100M - 500M</span>
+</label>
+<label class="flex items-center gap-md p-md border border-outline-variant rounded-lg cursor-pointer hover:bg-surface-container-low">
+<input class="text-secondary focus:ring-secondary" name="value-range" type="radio"/>
+<span class="text-body-md">Over KES 500M</span>
+</label>
+</div>
+</div>
+<!-- Date Range -->
+<div class="space-y-xs">
+<label class="text-label-md font-bold uppercase tracking-wider text-on-surface-variant">Created At</label>
+<div class="grid grid-cols-2 gap-md">
+<div class="space-y-1">
+<span class="text-[10px] text-outline uppercase">From</span>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-2 py-1.5 text-body-sm" type="date"/>
+</div>
+<div class="space-y-1">
+<span class="text-[10px] text-outline uppercase">To</span>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-2 py-1.5 text-body-sm" type="date"/>
+</div>
+</div>
+</div>
+</div>
+<div class="p-lg border-t border-outline-variant bg-surface-container-low flex gap-md">
+<button class="flex-1 py-2.5 border border-outline-variant text-on-surface font-bold rounded-lg hover:bg-surface-container-high transition-colors">Clear All</button>
+<button class="flex-1 py-2.5 bg-secondary text-on-secondary font-bold rounded-lg hover:bg-secondary/90 shadow-sm transition-all">Apply Filters</button>
+</div>
+</aside></body></html>
