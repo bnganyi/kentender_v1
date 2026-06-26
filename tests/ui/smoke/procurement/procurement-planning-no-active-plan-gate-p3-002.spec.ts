@@ -73,7 +73,7 @@ test.describe('P3-002 No active plan gate', () => {
 		await expect(page.getByTestId('pp3-primary-action')).toHaveCount(0);
 
 		const mainHost = page.getByTestId('pp2-primary-main-host');
-		await expect(mainHost).not.toContainText('Include in Plan');
+		await expect(mainHost).not.toContainText('Add to Active Plan');
 
 		await page.screenshot({ path: 'artifacts/p3-002-no-active-plan-gate.png', fullPage: true });
 	});

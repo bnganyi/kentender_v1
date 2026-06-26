@@ -9,7 +9,7 @@
 	const SURFACE_HEADER_CONFIG = {
 		"": {
 			title: __("Workbench"),
-			purpose: __("Focus on active procurement work and move items to release readiness."),
+			purpose: __("Plan approved demands into tender-ready procurement packages."),
 		},
 		"approved-demands": {
 			title: __("Approved Demands"),
@@ -47,11 +47,44 @@
 		return SURFACE_HEADER_CONFIG[key] || SURFACE_HEADER_CONFIG[""];
 	}
 
+	function workbenchToolbarHtml() {
+		return (
+			'<div class="pp3-workbench-toolbar" data-testid="pp3-workbench-toolbar">' +
+			'<div class="pp3-workbench-toolbar__left">' +
+			'<h2 class="pp3-workbench-toolbar__title">' +
+			esc(__("Procurement Workbench")) +
+			"</h2>" +
+			'<label class="pp3-workbench-toolbar__search" aria-label="' +
+			esc(__("Search workbench")) +
+			'">' +
+			'<span class="material-symbols-outlined pp3-workbench-toolbar__search-icon" aria-hidden="true">search</span>' +
+			'<input type="search" class="pp3-workbench-toolbar__search-input" data-testid="pp3-workbench-search" placeholder="' +
+			esc(__("Search demands, IDs, or vendors...")) +
+			'" />' +
+			"</label>" +
+			"</div>" +
+			'<div class="pp3-workbench-toolbar__right">' +
+			'<button type="button" class="pp3-workbench-toolbar__icon-button" aria-label="' +
+			esc(__("Notifications")) +
+			'"><span class="material-symbols-outlined" aria-hidden="true">notifications</span><span class="pp3-workbench-toolbar__dot" aria-hidden="true"></span></button>' +
+			'<button type="button" class="pp3-workbench-toolbar__icon-button" aria-label="' +
+			esc(__("History")) +
+			'"><span class="material-symbols-outlined" aria-hidden="true">history</span></button>' +
+			'<span class="pp3-workbench-toolbar__session"><span class="material-symbols-outlined" aria-hidden="true">account_circle</span>' +
+			esc(__("Session: Active")) +
+			"</span>" +
+			"</div>" +
+			"</div>"
+		);
+	}
+
 	function html(opts) {
 		const o = opts || {};
 		const title = String(o.title || "").trim();
 		const purpose = String(o.purpose || "").trim();
 		const primaryAction = o.primaryAction || null;
+		const slug = String(o.slug || "").trim();
+		const isWorkbench = slug === "";
 		let actionsHtml = "";
 		if (primaryAction && primaryAction.label) {
 			const disabled = primaryAction.disabled ? " disabled" : "";
@@ -69,6 +102,21 @@
 				">" +
 				esc(primaryAction.label) +
 				"</button></div>";
+		}
+		if (isWorkbench) {
+			return (
+				'<header class="pp2-page-header pp2-page-header--workbench" data-testid="pp2-page-header">' +
+				workbenchToolbarHtml() +
+				'<div class="pp2-page-header__meta sr-only" aria-hidden="true">' +
+				'<h2 class="h5 pp2-page-header__title mb-1" data-testid="pp2-page-title">' +
+				esc(title || __("Workbench")) +
+				"</h2>" +
+				'<p class="text-muted small pp2-page-header__purpose mb-0" data-testid="pp2-page-purpose">' +
+				esc(purpose || __("Plan approved demands into tender-ready procurement packages.")) +
+				"</p>" +
+				"</div>" +
+				"</header>"
+			);
 		}
 		return (
 			'<header class="pp2-page-header" data-testid="pp2-page-header">' +
@@ -135,6 +183,7 @@
 	function renderForSlug(host, slug) {
 		const cfg = configForSlug(slug);
 		render(host, {
+			slug: slug,
 			title: cfg.title,
 			purpose: cfg.purpose,
 			primaryAction: cfg.primaryAction || null,

@@ -5,12 +5,16 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 import frappe
-from frappe.utils import cint, fmt_money
+from frappe.utils import cint, flt, fmt_money, pretty_date
 
 from kentender_procurement.procurement_planning.api.landing import resolve_pp_role_key
+from kentender_procurement.procurement_planning.services.workbench_demo_scope import (
+	filter_demo_workbench_items,
+)
 from kentender_procurement.procurement_planning.pp2_constants import (
 	PKG_DRAFT,
 	PKG_IN_REVIEW,
@@ -67,7 +71,31 @@ def _session_user(actor: str | None) -> str:
 
 def _money(value: Any, currency: str) -> str:
 	cur = (currency or "KES").strip() or "KES"
-	return fmt_money(value or 0, currency=cur)
+	formatted = fmt_money(flt(value or 0), currency=cur)
+	if cur == "KES":
+		cleaned = re.sub(r"^(Ksh\.?|Sh\.?|KES\.?)\s*", "", str(formatted)).strip()
+		return f"KES {cleaned}"
+	return formatted
+
+
+def _apply_demo_scope(
+	items: list[dict[str, Any]],
+	*,
+	include_test_data: bool,
+) -> tuple[list[dict[str, Any]], int]:
+	filtered = filter_demo_workbench_items(items, include_test_data=include_test_data)
+	return filtered, len(filtered)
+
+
+def _relative_label(raw: Any) -> str:
+	text = str(raw or "").strip()
+	if not text:
+		return ""
+	try:
+		label = str(pretty_date(text, mini=True) or "").strip()
+	except Exception:
+		label = ""
+	return f"Updated {label}" if label else ""
 
 
 def _active_plan_label(actor: str) -> str:
@@ -106,7 +134,13 @@ def _needs_planning_items(rows: list[dict[str, Any]], plan_label: str) -> list[d
 		category = str(row.get("category") or "").strip()
 		value = _money(row.get("estimated_value"), row.get("currency") or "KES")
 		funding = "Budget linked" if str((row.get("budget_line") or {}).get("id") or "").strip() else ""
+		meta_line = " · ".join([s for s in (value,) if s])
 		subtitle = " · ".join([s for s in (category, value, funding) if s])
+		status_detail = (
+			"Funding is linked. No blockers found."
+			if funding
+			else "Budget link is required before planning."
+		)
 		entry = _work_item_base(
 			queue="needs_planning",
 			code=code,
@@ -117,9 +151,27 @@ def _needs_planning_items(rows: list[dict[str, Any]], plan_label: str) -> list[d
 		)
 		entry.update(
 			{
+				"category_label": category,
+				"meta_line": meta_line,
+				"budget_status": funding,
+				"budget_status_label": funding,
+				"status_pill_label": "Planning pending",
+				"status_pill_tone": "demand",
+				"updated_relative": _relative_label(row.get("approval_date") or row.get("modified")),
+				"summary_detail_line": " · ".join(
+					[s for s in ("Approved demand", category, value) if s]
+				),
+				"status_headline": "Ready to plan",
+				"status_detail": status_detail,
+				"next_step_detail": "Add this demand to the active procurement plan.",
+				"list_next_action": "Add to active plan",
 				"blockers": [],
-				"next_action_label": "Include in Plan",
-				"primary_action": {"label": "Include in Plan", "action": "include_in_plan", "target": code},
+				"next_action_label": "Add to Active Plan",
+				"primary_action": {
+					"label": "Add to Active Plan",
+					"action": "include_in_plan",
+					"target": code,
+				},
 				"secondary_actions": [{"label": "View Demand", "action": "view_demand", "target": code}],
 			}
 		)
@@ -150,8 +202,23 @@ def _package_queue_items(rows: list[dict[str, Any]], queue: str, plan_label: str
 		next_action = row.get("next_action") or {}
 		action_key = str(next_action.get("key") or "open_package").strip()
 		label, action = _PACKAGE_ACTION_MAP.get(action_key, _PACKAGE_ACTION_MAP["open_package"])
+		meta_line = " · ".join([s for s in (method, value) if s])
 		entry.update(
 			{
+				"category_label": category,
+				"meta_line": meta_line,
+				"budget_status": "",
+				"budget_status_label": "",
+				"status_pill_label": str(row.get("status") or entry["state_label"]).strip(),
+				"status_pill_tone": "package",
+				"updated_relative": _relative_label(row.get("modified") or row.get("updated_at")),
+				"summary_detail_line": " · ".join(
+					[s for s in ("Procurement package", category, method, value) if s]
+				),
+				"status_headline": str(row.get("status") or entry["state_label"]).strip(),
+				"status_detail": f"Next package action: {label}.",
+				"next_step_detail": f"{label} to move this package forward.",
+				"list_next_action": label,
 				"state_label": str(row.get("status") or entry["state_label"]).strip(),
 				"blockers": [],
 				"next_action_label": label,
@@ -186,8 +253,32 @@ def _blocked_items(rows: list[dict[str, Any]], plan_label: str) -> list[dict[str
 			object_type="approved_demand" if is_demand else "procurement_package",
 			plan_label=plan_label,
 		)
+		meta_line = " · ".join([s for s in (method, value) if s])
 		entry.update(
 			{
+				"category_label": category,
+				"meta_line": meta_line,
+				"budget_status": "",
+				"budget_status_label": "",
+				"status_pill_label": "Blocked",
+				"status_pill_tone": "blocked",
+				"updated_relative": _relative_label(row.get("modified") or row.get("updated_at")),
+				"summary_detail_line": " · ".join(
+					[
+						s
+						for s in (
+							"Approved demand" if is_demand else "Procurement package",
+							category,
+							method,
+							value,
+						)
+						if s
+					]
+				),
+				"status_headline": "Blocked",
+				"status_detail": blocker or "Resolve blockers before continuing.",
+				"next_step_detail": "Resolve the blocker to continue planning.",
+				"list_next_action": "Resolve blocker",
 				"blockers": [{"label": blocker, "code": "BLOCKED"}] if blocker else [],
 				"next_action_label": "Resolve Blocker",
 				"primary_action": {
@@ -223,6 +314,20 @@ def _recently_released_items(rows: list[dict[str, Any]], plan_label: str) -> lis
 		tender_code = str(tender.get("code") or "").strip()
 		entry.update(
 			{
+				"category_label": "Released",
+				"meta_line": subtitle,
+				"budget_status": "",
+				"budget_status_label": "",
+				"status_pill_label": "Released",
+				"status_pill_tone": "released",
+				"updated_relative": _relative_label(row.get("released_at") or row.get("modified")),
+				"summary_detail_line": " · ".join(
+					[s for s in ("Procurement package", subtitle) if s]
+				),
+				"status_headline": "Released",
+				"status_detail": "This package has been released to Tender Management.",
+				"next_step_detail": "Continue follow-up in Tender Management.",
+				"list_next_action": "Continue in Tender Management",
 				"state_label": "Released",
 				"blockers": [],
 				"next_action_label": "Continue in Tender Management",
@@ -244,6 +349,7 @@ def get_workbench_item_view_model(
 	actor: str | None = None,
 	limit: int = 20,
 	start: int = 0,
+	include_test_data: bool = False,
 ) -> dict[str, Any]:
 	"""Return unified PP3 workbench items for a queue."""
 	user = _session_user(actor)
@@ -267,8 +373,9 @@ def get_workbench_item_view_model(
 	plan_label = _active_plan_label(user)
 
 	if queue_key == "needs_planning":
+		fetch_limit = max(safe_limit + safe_start, 500)
 		out = get_approved_demands_awaiting_planning(
-			{"start": safe_start, "limit": safe_limit},
+			{"start": 0, "limit": fetch_limit},
 			user,
 		)
 		if not out.get("ok"):
@@ -285,7 +392,8 @@ def get_workbench_item_view_model(
 			}
 		rows = out.get("rows") or []
 		items = _needs_planning_items(rows, plan_label)
-		total = cint(out.get("total") or len(items))
+		total = len(items)
+		items = items[safe_start : safe_start + safe_limit]
 		return {
 			"ok": True,
 			"queue": queue_key,
@@ -299,11 +407,13 @@ def get_workbench_item_view_model(
 	if queue_key == "blocked":
 		read_limit = max(safe_limit + safe_start, 200)
 		rows, total = _blocked_rows(user, limit=read_limit)
-		items = _blocked_items(rows[safe_start : safe_start + safe_limit], plan_label)
+		items = _blocked_items(rows, plan_label)
+		items, scoped_total = _apply_demo_scope(items, include_test_data=include_test_data)
+		items = items[safe_start : safe_start + safe_limit]
 		return {
 			"ok": True,
 			"queue": queue_key,
-			"total": cint(total),
+			"total": scoped_total,
 			"limit": safe_limit,
 			"start": safe_start,
 			"items": items,
@@ -313,11 +423,13 @@ def get_workbench_item_view_model(
 	if queue_key == "recently_released":
 		read_limit = max(safe_limit + safe_start, 200)
 		rows, total = _released_recently_rows(user, limit=read_limit)
-		items = _recently_released_items(rows[safe_start : safe_start + safe_limit], plan_label)
+		items = _recently_released_items(rows, plan_label)
+		items, scoped_total = _apply_demo_scope(items, include_test_data=include_test_data)
+		items = items[safe_start : safe_start + safe_limit]
 		return {
 			"ok": True,
 			"queue": queue_key,
-			"total": cint(total),
+			"total": scoped_total,
 			"limit": safe_limit,
 			"start": safe_start,
 			"items": items,
@@ -330,7 +442,7 @@ def get_workbench_item_view_model(
 		"ready_release": PKG_READY_FOR_RELEASE,
 	}
 	out = get_package_workbench_rows(
-		{"status": status_map[queue_key], "start": safe_start, "limit": safe_limit},
+		{"status": status_map[queue_key], "start": 0, "limit": max(safe_limit + safe_start, 200)},
 		user,
 	)
 	if not out.get("ok"):
@@ -347,10 +459,12 @@ def get_workbench_item_view_model(
 		}
 	rows = out.get("rows") or []
 	items = _package_queue_items(rows, queue_key, plan_label)
+	items, total = _apply_demo_scope(items, include_test_data=include_test_data)
+	items = items[safe_start : safe_start + safe_limit]
 	return {
 		"ok": True,
 		"queue": queue_key,
-		"total": cint(out.get("total") or len(items)),
+		"total": total,
 		"limit": safe_limit,
 		"start": safe_start,
 		"items": items,

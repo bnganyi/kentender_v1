@@ -22,9 +22,12 @@ const FIXTURE = {
 			title: 'District Hospital Renovation Works',
 			subtitle: 'Works · 98,000,000 KES · Budget linked',
 			state_label: 'Needs planning',
-			next_action_label: 'Include in Plan',
+			list_next_action: 'Add to active plan',
+			next_action_label: 'Add to Active Plan',
+			meta_line: 'Works · KES 98,000,000',
+			budget_status: 'Budget linked',
 			blockers: [],
-			primary_action: { label: 'Include in Plan', action: 'include_in_plan', target: 'DEM-MOH-2026-001' },
+			primary_action: { label: 'Add to Active Plan', action: 'include_in_plan', target: 'DEM-MOH-2026-001' },
 			secondary_actions: [
 				{ label: 'View Demand', action: 'view_demand', target: 'DEM-MOH-2026-001' },
 				{ label: 'View Evidence', action: 'open_evidence', target: 'DEM-MOH-2026-001' },
@@ -49,7 +52,7 @@ test.describe('P3-011 One primary action', () => {
 
 		const primary = summary.getByTestId('pp3-primary-action');
 		await expect(primary).toHaveCount(1);
-		await expect(primary).toHaveText('Include in Plan');
+		await expect(primary).toHaveText('Add to Active Plan');
 		await expect(primary).toHaveClass(/btn-primary/);
 
 		const secondaryButtons = summary.getByTestId('pp3-secondary-actions').locator('button');

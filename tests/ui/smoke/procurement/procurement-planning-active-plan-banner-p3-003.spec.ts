@@ -57,8 +57,8 @@ test.describe('P3-003 Active plan banner', () => {
 
 		const banner = page.getByTestId('pp3-active-plan-banner');
 		await expect(banner).toBeVisible({ timeout: 30000 });
-		await expect(banner).toContainText('Active plan: Ministry of Health Procurement Plan FY 2026/2027');
-		await expect(banner).toContainText('PLAN-MOH-2026');
+		await expect(banner).toContainText('Active Procurement Plan');
+		await expect(banner).toContainText('Ministry of Health Procurement Plan FY 2026/2027');
 		await expect(banner).toContainText('2026/2027');
 		await expect(page.getByTestId('pp3-change-plan-button')).toBeVisible();
 		await expect(page.getByTestId('pp3-view-plan-button')).toBeVisible();

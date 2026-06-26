@@ -63,7 +63,8 @@ test.describe('P5-001 Select WORKS demand (golden path)', () => {
 		await page.goto(`${pp3Root}/desk/procurement-planning`, { waitUntil: 'domcontentloaded' });
 
 		await expect(page.getByTestId('pp3-active-plan-banner')).toBeVisible({ timeout: 30000 });
-		await expect(page.getByTestId('pp3-active-plan-banner')).toContainText('PLAN-MOH-2026');
+		await expect(page.getByTestId('pp3-active-plan-banner')).toContainText('Active Procurement Plan');
+		await expect(page.getByTestId('pp3-active-plan-banner')).toContainText('Ministry of Health Procurement Plan');
 		await expect(page.getByTestId('pp3-active-plan-banner')).toContainText('2026/2027');
 
 		const needsTab = page.getByTestId('pp3-queue-needs-planning');
@@ -80,8 +81,8 @@ test.describe('P5-001 Select WORKS demand (golden path)', () => {
 			.first();
 		await expect(worksRow).toBeVisible({ timeout: 30000 });
 		await expect(worksRow.getByTestId('pp3-work-item-title')).toHaveText(WORKS_DEMAND_TITLE);
-		await expect(worksRow.getByTestId('pp3-work-item-state')).toHaveText('Needs planning');
-		await expect(worksRow.getByTestId('pp3-work-item-next-action')).toHaveText('Include in Plan');
+		await expect(worksRow.getByTestId('pp3-work-item-state')).toHaveText('Planning pending');
+		await expect(worksRow.getByTestId('pp3-work-item-next-action')).toHaveText('Add to active plan');
 		await expect(worksRow).toContainText('Works');
 		await expect(worksRow).toContainText('Budget linked');
 
@@ -96,7 +97,7 @@ test.describe('P5-001 Select WORKS demand (golden path)', () => {
 		const summary = page.getByTestId('pp3-selected-work-summary');
 		await expect(summary).toBeVisible();
 		await expect(summary).toContainText(WORKS_DEMAND_TITLE);
-		await expect(page.getByTestId('pp3-primary-action')).toHaveText('Include in Plan');
+		await expect(page.getByTestId('pp3-primary-action')).toHaveText('Add to Active Plan');
 
 		await page.screenshot({ path: 'artifacts/p5-001-select-works-demand.png', fullPage: true });
 	});

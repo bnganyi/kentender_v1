@@ -82,7 +82,7 @@ test.describe('P5-003 Include in Plan modal content (golden path)', () => {
 		await expect(page.getByTestId('pp2-include-plan-active-plan')).toContainText(ACTIVE_PLAN_TITLE);
 
 		await expect(page.getByTestId('pp2-target-plan-select')).toHaveCount(0);
-		await expect(page.getByRole('dialog')).toContainText('Include in Active Plan');
+		await expect(page.getByRole('dialog')).toContainText('Add to Active Plan');
 		await expect(page.getByTestId('pp2-confirm-include-plan')).toBeVisible();
 
 		const modalText = await modal.innerText();

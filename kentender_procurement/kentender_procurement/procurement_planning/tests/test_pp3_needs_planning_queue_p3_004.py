@@ -78,4 +78,4 @@ class TestPP3NeedsPlanningQueueP3004(UnitTestCase):
 		self.assertIn('"action": "include_in_plan"', source)
 		self.assertIn('object_type="approved_demand"', source)
 		fn_block = source.split("def _needs_planning_items", 1)[1].split("def _package_queue_items", 1)[0]
-		self.assertIn('"Include in Plan"', fn_block)
+		self.assertIn('"Add to Active Plan"', fn_block)

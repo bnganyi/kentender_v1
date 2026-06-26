@@ -32,7 +32,10 @@ const QUEUE_FIXTURES: Record<string, object> = {
 				title: 'District Hospital Renovation Works',
 				subtitle: 'Works · 98,000,000 KES · Budget linked',
 				state_label: 'Needs planning',
-				next_action_label: 'Include in Plan',
+				list_next_action: 'Add to active plan',
+				next_action_label: 'Add to Active Plan',
+				meta_line: 'Works · KES 98,000,000',
+				budget_status: 'Budget linked',
 			},
 		],
 	},
@@ -48,7 +51,9 @@ const QUEUE_FIXTURES: Record<string, object> = {
 				title: 'District Hospital Renovation Works Package',
 				subtitle: 'Works · Open Tender · 98,000,000 KES',
 				state_label: 'Draft package',
+				list_next_action: 'Open Package',
 				next_action_label: 'Open Package',
+				meta_line: 'Works · Open Tender · KES 98,000,000',
 			},
 		],
 	},
@@ -104,7 +109,7 @@ test.describe('P2-006 WorkList', () => {
 		await expect(row).toBeVisible();
 		await expect(row.getByTestId('pp3-work-item-title')).toHaveText('District Hospital Renovation Works');
 		await expect(row.getByTestId('pp3-work-item-state')).toHaveText('Needs planning');
-		await expect(row.getByTestId('pp3-work-item-next-action')).toHaveText('Include in Plan');
+		await expect(row.getByTestId('pp3-work-item-next-action')).toHaveText('Add to active plan');
 		const rowText = await row.innerText();
 		for (const pattern of FORBIDDEN_LEAKAGE) {
 			expect(rowText).not.toMatch(pattern);

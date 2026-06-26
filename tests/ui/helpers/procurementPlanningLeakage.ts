@@ -3,6 +3,8 @@
  */
 export const P5_ORDINARY_FLOW_FORBIDDEN_LEAKAGE: RegExp[] = [
 	/PLANINCL-/i,
+	/PKGREL-/i,
+	/PKGCONSUME-/i,
 	/source_object_code/i,
 	/target_object_code/i,
 	/source object/i,

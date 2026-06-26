@@ -24,6 +24,12 @@
 			title: String(s.title || "").trim(),
 			stateLabel: String(s.status_label || s.state_label || s.stateLabel || "").trim(),
 			facts: String(s.key_facts || s.subtitle || s.facts || "").trim(),
+			summaryDetailLine: String(
+				s.summary_detail_line || s.summaryDetailLine || s.key_facts || s.subtitle || "",
+			).trim(),
+			statusHeadline: String(s.status_headline || s.statusHeadline || s.state_label || "").trim(),
+			statusDetail: String(s.status_detail || s.statusDetail || "").trim(),
+			nextStepDetail: String(s.next_step_detail || s.nextStepDetail || "").trim(),
 			nextAction: String(s.next_action_label || s.nextAction || "").trim(),
 			includeSuccess: s.include_success === true || s.includeSuccess === true,
 			includeSuccessMessage: String(
@@ -64,6 +70,10 @@
 			title: it.title,
 			state_label: it.state_label,
 			subtitle: it.subtitle,
+			summary_detail_line: it.summary_detail_line,
+			status_headline: it.status_headline,
+			status_detail: it.status_detail,
+			next_step_detail: it.next_step_detail,
 			next_action_label: it.next_action_label,
 			underlying_object_type: it.underlying_object_type,
 			underlying_object_code: it.underlying_object_code,
@@ -77,28 +87,18 @@
 
 	function blockersHtml(summary) {
 		const blockers = Array.isArray(summary.blockers) ? summary.blockers : [];
-		if (!blockers.length) {
-			return (
-				'<div class="pp3-selected-work-summary__blockers text-muted small mb-2">' +
-				esc(__("Blockers")) +
-				": " +
-				esc(__("No blockers")) +
-				"</div>"
-			);
-		}
+		if (!blockers.length) return "";
 		const labels = [];
 		for (let i = 0; i < blockers.length; i += 1) {
 			const value = blockers[i];
 			const label = String(value && value.label ? value.label : value || "").trim();
 			if (label) labels.push(label);
 		}
-		const display = labels.length ? labels.join(", ") : __("Has blockers");
+		if (!labels.length) return "";
 		return (
-			'<div class="pp3-selected-work-summary__blockers text-muted small mb-2">' +
-			esc(__("Blockers")) +
-			": " +
-			esc(display) +
-			"</div>"
+			'<p class="pp3-selected-work-summary__blockers text-muted small mb-2">' +
+			esc(labels.join(", ")) +
+			"</p>"
 		);
 	}
 
@@ -109,6 +109,7 @@
 			'<button type="button" class="btn btn-primary btn-sm pp3-selected-work-summary__primary" data-testid="pp3-primary-action" data-pp3-summary-primary-action="' +
 			esc(action.action || "") +
 			'">' +
+			'<span class="material-symbols-outlined pp3-selected-work-summary__primary-icon" aria-hidden="true">add_to_photos</span>' +
 			esc(action.label) +
 			"</button>"
 		);
@@ -223,16 +224,17 @@
 				esc(label) +
 				"</button>";
 		}
+		if (summary.showEvidenceAction) {
+			buttons +=
+				'<button type="button" class="btn btn-default btn-sm pp3-selected-work-summary__evidence" data-testid="pp3-view-evidence-button">' +
+				esc(__("View Evidence")) +
+				"</button>";
+		}
 		if (!buttons) return "";
-		return '<div class="pp3-selected-work-summary__secondary-actions" data-testid="pp3-secondary-actions">' + buttons + "</div>";
-	}
-
-	function evidenceActionHtml(summary) {
-		if (!summary.showEvidenceAction) return "";
 		return (
-			'<button type="button" class="btn btn-default btn-sm pp3-selected-work-summary__evidence" data-testid="pp3-view-evidence-button">' +
-			esc(__("View Evidence")) +
-			"</button>"
+			'<div class="pp3-selected-work-summary__secondary-actions" data-testid="pp3-secondary-actions">' +
+			buttons +
+			"</div>"
 		);
 	}
 
@@ -255,35 +257,68 @@
 			return includeSuccessHtml(summary);
 		}
 		if (!summary.title) return idleHtml();
+		const detailLine = summary.summaryDetailLine || summary.facts;
+		const statusHeadline = summary.statusHeadline || summary.stateLabel;
+		const statusDetail =
+			summary.statusDetail ||
+			(Array.isArray(summary.blockers) && summary.blockers.length
+				? String((summary.blockers[0] && summary.blockers[0].label) || "").trim()
+				: "");
+		const nextStepDetail = summary.nextStepDetail || summary.nextAction;
 		let body =
 			'<section class="pp3-selected-work-summary" data-testid="pp3-selected-work-summary">' +
-			'<h3 class="h6 mb-2">' +
+			'<div class="pp3-selected-work-summary__body">' +
+			'<p class="pp3-selected-work-summary__label">' +
+			esc(__("Selected Work")) +
+			"</p>" +
+			'<h3 class="pp3-selected-work-summary__title">' +
 			esc(summary.title) +
 			"</h3>";
-		if (summary.stateLabel) {
+		if (detailLine) {
 			body +=
-				'<div class="text-muted small mb-1">' +
-				esc(__("State")) +
-				": " +
-				esc(summary.stateLabel) +
-				"</div>";
+				'<p class="pp3-selected-work-summary__detail">' +
+				esc(detailLine) +
+				"</p>";
 		}
-		if (summary.facts) {
-			body += '<div class="text-muted small mb-1">' + esc(summary.facts) + "</div>";
+		if (statusHeadline || statusDetail) {
+			body += '<div class="pp3-selected-work-summary__status">';
+			body +=
+				'<p class="pp3-selected-work-summary__section-label">' +
+				esc(__("Status")) +
+				"</p>";
+			if (statusHeadline) {
+				body +=
+					'<div class="pp3-selected-work-summary__status-headline">' +
+					esc(statusHeadline) +
+					"</div>";
+			}
+			if (statusDetail) {
+				body +=
+					'<p class="pp3-selected-work-summary__status-detail">' +
+					esc(statusDetail) +
+					"</p>";
+			}
+			body += "</div>";
 		}
 		body += blockersHtml(summary);
-		if (summary.nextAction) {
+		if (nextStepDetail) {
+			body += '<div class="pp3-selected-work-summary__next-step">';
 			body +=
-				'<div class="small mb-2">' +
-				esc(__("Next")) +
-				": " +
-				esc(summary.nextAction) +
-				"</div>";
+				'<p class="pp3-selected-work-summary__section-label">' +
+				esc(__("Next step")) +
+				"</p>";
+			body +=
+				'<p class="pp3-selected-work-summary__next-step-detail">' +
+				esc(nextStepDetail) +
+				"</p>";
+			body += "</div>";
 		}
+		body += "</div>";
+		body += '<div class="pp3-selected-work-summary__footer">';
 		body += '<div class="pp3-selected-work-summary__actions">';
 		body += primaryActionHtml(summary);
 		body += secondaryActionsHtml(summary);
-		body += evidenceActionHtml(summary);
+		body += "</div>";
 		body += "</div></section>";
 		return body;
 	}

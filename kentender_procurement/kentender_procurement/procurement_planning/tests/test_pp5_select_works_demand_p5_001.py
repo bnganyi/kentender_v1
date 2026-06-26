@@ -105,7 +105,7 @@ class TestPP5SelectWorksDemandP5001(IntegrationTestCase):
 		self.assertEqual(item.get("title"), DEMAND_TITLE)
 		self.assertEqual(item.get("underlying_object_type"), "approved_demand")
 		self.assertEqual(item.get("queue"), "needs_planning")
-		self.assertEqual(item.get("next_action_label"), "Include in Plan")
+		self.assertEqual(item.get("next_action_label"), "Add to Active Plan")
 		self.assertEqual((item.get("primary_action") or {}).get("action"), "include_in_plan")
 		self.assertTrue(item.get("technical_hidden_by_default"))
 

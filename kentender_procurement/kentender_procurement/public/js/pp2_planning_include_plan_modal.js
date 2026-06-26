@@ -143,9 +143,9 @@
 		const demandItemCodes = normalizeCodes(o.demand_item_codes);
 		const locked = o.target_plan_locked === true;
 		const dialog = new frappe.ui.Dialog({
-			title: locked ? __("Include in Active Plan") : __("Include in Plan"),
+			title: locked ? __("Add to Active Plan") : __("Add to Active Plan"),
 			fields: buildIncludePlanDialogFields(o),
-			primary_action_label: __("Include in Plan"),
+			primary_action_label: __("Add to Active Plan"),
 			primary_action: function (values) {
 				let targetPlan = String((values && values.target_plan) || "").trim();
 				if (!targetPlan && dialog.fields_dict && dialog.fields_dict.target_plan) {
@@ -187,7 +187,7 @@
 								message: safeIncludeFailureMessage(message && message.message),
 								indicator: "orange",
 							});
-							dialog.set_primary_action(__("Include in Plan"), dialog.primary_action);
+							dialog.set_primary_action(__("Add to Active Plan"), dialog.primary_action);
 							return;
 						}
 						frappe.show_alert({
@@ -199,7 +199,7 @@
 						}
 					},
 					error: function () {
-						dialog.set_primary_action(__("Include in Plan"), dialog.primary_action);
+						dialog.set_primary_action(__("Add to Active Plan"), dialog.primary_action);
 					},
 				});
 			},

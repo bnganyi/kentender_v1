@@ -1,0 +1,443 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>ProcureExpert | Workbench</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e0e3e5; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c6c6cd; }
+        .active-inset { box-shadow: inset 2px 0 0 0 #0051d5; }
+        .glass-panel { backdrop-filter: blur(8px); background-color: rgba(255, 255, 255, 0.8); }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#2d3133",
+                        "primary-container": "#131b2e",
+                        "outline-variant": "#c6c6cd",
+                        "surface-tint": "#565e74",
+                        "tertiary-fixed-dim": "#6bd8cb",
+                        "secondary": "#0051d5",
+                        "on-tertiary-fixed": "#00201d",
+                        "on-background": "#191c1e",
+                        "on-secondary-fixed-variant": "#003ea8",
+                        "surface-container-highest": "#e0e3e5",
+                        "surface-bright": "#f7f9fb",
+                        "error": "#ba1a1a",
+                        "outline": "#76777d",
+                        "tertiary-fixed": "#89f5e7",
+                        "primary-fixed": "#dae2fd",
+                        "surface-container-lowest": "#ffffff",
+                        "primary": "#000000",
+                        "on-surface": "#191c1e",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#131b2e",
+                        "tertiary": "#000000",
+                        "surface-container": "#eceef0",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-secondary-fixed": "#00174b",
+                        "secondary-container": "#316bf3",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "on-primary-container": "#7c839b",
+                        "surface-container-high": "#e6e8ea",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#45464d",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed-variant": "#005049",
+                        "on-secondary-container": "#fefcff",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed": "#dbe1ff",
+                        "on-tertiary-container": "#0c9488",
+                        "background": "#f7f9fb",
+                        "tertiary-container": "#00201d",
+                        "surface-dim": "#d8dadc",
+                        "secondary-fixed-dim": "#b4c5ff",
+                        "on-tertiary": "#ffffff",
+                        "surface": "#f7f9fb",
+                        "primary-fixed-dim": "#bec6e0",
+                        "inverse-primary": "#bec6e0",
+                        "surface-variant": "#e0e3e5",
+                        "surface-container-low": "#f2f4f6",
+                        "on-secondary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "xs": "8px",
+                        "lg": "24px",
+                        "gutter": "20px",
+                        "xl": "32px",
+                        "sidebar-width": "260px",
+                        "sm": "12px",
+                        "panel-width": "380px",
+                        "base": "4px",
+                        "margin-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Hanken Grotesk"],
+                        "body-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "label-md": ["JetBrains Mono"],
+                        "body-lg": ["Inter"],
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-sm": ["Hanken Grotesk"],
+                        "headline-lg": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }],
+                        "label-md": ["13px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-lg": ["30px", { "lineHeight": "38px", "fontWeight": "700" }]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background font-body-md text-on-surface selection:bg-secondary-fixed">
+<!-- Global Navigation Shell -->
+<aside class="h-screen w-sidebar-width fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant flex flex-col py-lg z-50">
+<div class="px-md mb-xl">
+<div class="flex items-center gap-xs">
+<div class="w-8 h-8 bg-secondary rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[20px]" data-icon="clinical_notes">clinical_notes</span>
+</div>
+<div>
+<h1 class="font-headline-sm text-headline-sm font-bold text-on-surface leading-none">ProcureExpert</h1>
+<p class="text-[10px] text-on-surface-variant tracking-wider uppercase opacity-80 mt-1">Enterprise Planner</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-sm px-md py-sm text-secondary border-l-4 border-secondary bg-secondary/10 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="clinical_notes">clinical_notes</span>
+<span class="font-body-md text-body-md font-semibold">Workbench</span>
+</a>
+<a class="flex items-center gap-sm px-md py-sm text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="package_2">package_2</span>
+<span class="font-body-md text-body-md">Plan Packages</span>
+</a>
+<a class="flex items-center gap-sm px-md py-sm text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="contract_edit">contract_edit</span>
+<span class="font-body-md text-body-md">Tender Release</span>
+</a>
+<a class="flex items-center gap-sm px-md py-sm text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="rule">rule</span>
+<span class="font-body-md text-body-md">Approvals</span>
+</a>
+<a class="flex items-center gap-sm px-md py-sm text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-body-md text-body-md">Reporting</span>
+</a>
+</nav>
+<div class="px-md mt-auto pt-lg space-y-md">
+
+<div class="pt-md border-t border-outline-variant space-y-1">
+<a class="flex items-center gap-sm py-sm text-on-surface-variant hover:text-on-surface" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+<a class="flex items-center gap-sm py-sm text-on-surface-variant hover:text-on-surface" href="#">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+<span class="font-body-md text-body-md">Support</span>
+</a>
+</div>
+<div class="flex items-center gap-sm pt-sm">
+<img class="w-10 h-10 rounded-full border border-outline-variant bg-surface-container" data-alt="User headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAg1pnWSnOBrOu72zGruFTmAGfpAUr5wxV3EWavuMW2QPC4KpAXbHN8RkJpxgH07LuJVZJoSkdKZpRpcbLyNy-hqMwL8JPiDYQWGxdbau7ExtQNZrs5CCdvrWIEMV2ImwS7tw6-T_NNW6MdyKi58V-Lm7k81zOvIz4P3f9cKvkD5n_XgOi9gCoYeJoRLAEuOXfTZYlWIFPxMaQ5FFlsWf2ZO0QTyDZgwRR-LAzhSXs1zF3yKfRybgtB-fKgVQwN4dBo13YkW2OlF2E">
+<div class="overflow-hidden">
+<p class="text-on-surface text-sm font-semibold truncate">James K. Mwangi</p>
+<p class="text-on-surface-variant text-xs">Principal Officer</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar Mapping -->
+<header class="fixed top-0 right-0 w-[calc(100%-theme(spacing.sidebar-width))] h-16 bg-surface-bright border-b border-outline-variant flex items-center justify-between px-lg z-40">
+<div class="flex items-center gap-lg">
+<h2 class="font-headline-md text-headline-md font-bold text-primary">Procurement Workbench</h2>
+<div class="relative w-80">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-secondary text-body-sm transition-all" placeholder="Search demands, IDs, or vendors..." type="text">
+</div>
+</div>
+<div class="flex items-center gap-md">
+<div class="flex gap-xs border-r border-outline-variant pr-md mr-md">
+<button class="p-2 text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed/30 rounded-full transition-all relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border border-white"></span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-secondary hover:bg-secondary-fixed/30 rounded-full transition-all">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+</button>
+</div>
+<button class="flex items-center gap-xs text-on-surface-variant hover:text-secondary">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+<span class="text-sm font-medium">Session: 4h 12m</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-sidebar-width pt-16 h-screen flex">
+<!-- Center Workspace -->
+<div class="flex-1 overflow-hidden flex flex-col">
+<!-- Work Queues Tabs -->
+<div class="px-lg pt-lg bg-surface-bright"><div class="mb-lg p-lg bg-surface-container-lowest border border-outline-variant rounded-xl flex justify-between items-center"><div class="space-y-1"><p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">ACTIVE PROCUREMENT PLAN</p><h2 class="font-headline-md text-headline-md font-bold text-on-surface">Ministry of Health Procurement Plan FY 2026/2027</h2><div class="flex items-center gap-xs text-on-surface-variant"><span class="material-symbols-outlined text-sm" data-icon="business_center">business_center</span><span class="text-body-sm">Ministry of Health • 2026/2027</span></div></div><div class="flex gap-md"><button class="px-4 py-2 border border-outline text-on-surface-variant rounded font-bold text-sm hover:bg-surface-container transition-all">Change Plan</button><button class="px-4 py-2 border border-outline text-on-surface-variant rounded font-bold text-sm hover:bg-surface-container transition-all">View Plan</button></div></div>
+<div class="flex items-center gap-xl border-b border-outline-variant">
+<button class="px-xs py-md border-b-2 border-secondary text-secondary font-bold flex items-center gap-xs">
+<span class="text-body-md">Needs Planning</span>
+<span class="bg-secondary text-white text-[10px] px-1.5 py-0.5 rounded-full">12</span>
+</button>
+<button class="px-xs py-md border-b-2 border-transparent text-on-surface-variant hover:text-secondary transition-all flex items-center gap-xs">
+<span class="text-body-md">Draft Packages</span>
+<span class="bg-surface-container-highest text-on-surface-variant text-[10px] px-1.5 py-0.5 rounded-full font-bold">4</span>
+</button>
+<button class="px-xs py-md border-b-2 border-transparent text-on-surface-variant hover:text-secondary transition-all flex items-center gap-xs">
+<span class="text-body-md">Needs Review</span>
+<span class="bg-surface-container-highest text-on-surface-variant text-[10px] px-1.5 py-0.5 rounded-full font-bold">2</span>
+</button>
+<button class="px-xs py-md border-b-2 border-transparent text-on-surface-variant hover:text-secondary transition-all">
+<span class="text-body-md">On Hold</span>
+</button>
+<button class="px-xs py-md border-b-2 border-transparent text-on-surface-variant hover:text-secondary transition-all">
+<span class="text-body-md">Archived</span>
+</button>
+</div>
+</div>
+<!-- List Content -->
+<div class="flex-1 overflow-y-auto p-lg bg-surface-container-low">
+<div class="space-y-sm">
+<!-- Demand Row (Selected) -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-md flex items-center gap-lg cursor-pointer hover:shadow-md transition-all active-inset ring-1 ring-secondary/10" onclick="selectRow(this)">
+<div class="flex-1">
+<div class="flex items-center gap-xs mb-1">
+<span class="bg-tertiary-container/10 text-on-tertiary-container px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tight">Infrastructure</span>
+<span class="text-label-sm text-outline">REQ-2024-0089</span>
+</div>
+<h3 class="font-headline-sm text-lg font-bold text-on-surface">District Hospital Renovation - Phase II</h3>
+<div class="flex items-center gap-md mt-2">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-outline text-lg" data-icon="payments">payments</span>
+<span class="font-label-md text-on-secondary-fixed-variant">KES 98,450,000</span>
+</div>
+<div class="flex items-center gap-xs text-on-tertiary-fixed-variant">
+<span class="material-symbols-outlined text-lg" data-icon="link">link</span>
+<span class="text-body-sm font-medium">Budget Linked: FY 24/25 CAPEX</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-end gap-xs">
+<span class="px-3 py-1 bg-secondary-fixed text-on-secondary-fixed text-[11px] font-bold rounded-full">PLANNING_PENDING</span>
+<span class="text-body-sm text-outline">Updated 2h ago</span>
+</div>
+</div>
+<!-- Demand Row -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-md flex items-center gap-lg cursor-pointer hover:shadow-md transition-all" onclick="selectRow(this)">
+<div class="flex-1">
+<div class="flex items-center gap-xs mb-1">
+<span class="bg-secondary-container/10 text-on-secondary-fixed-variant px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tight">Services</span>
+<span class="text-label-sm text-outline">REQ-2024-0104</span>
+</div>
+<h3 class="font-headline-sm text-lg font-bold text-on-surface">Cloud Infrastructure Migration &amp; Security Audit</h3>
+<div class="flex items-center gap-md mt-2">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-outline text-lg" data-icon="payments">payments</span>
+<span class="font-label-md text-on-secondary-fixed-variant">KES 12,200,000</span>
+</div>
+<div class="flex items-center gap-xs text-error">
+<span class="material-symbols-outlined text-lg" data-icon="link_off">link_off</span>
+<span class="text-body-sm font-medium">Budget Unlinked</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-end gap-xs">
+<span class="px-3 py-1 bg-surface-container-highest text-on-surface-variant text-[11px] font-bold rounded-full">DRAFT</span>
+<span class="text-body-sm text-outline">Updated 5h ago</span>
+</div>
+</div>
+<!-- Demand Row -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-md flex items-center gap-lg cursor-pointer hover:shadow-md transition-all" onclick="selectRow(this)">
+<div class="flex-1">
+<div class="flex items-center gap-xs mb-1">
+<span class="bg-tertiary-container/10 text-on-tertiary-container px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tight">Supplies</span>
+<span class="text-label-sm text-outline">REQ-2024-0072</span>
+</div>
+<h3 class="font-headline-sm text-lg font-bold text-on-surface">Specialized Medical Consumables - Bulk Q3</h3>
+<div class="flex items-center gap-md mt-2">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-outline text-lg" data-icon="payments">payments</span>
+<span class="font-label-md text-on-secondary-fixed-variant">KES 34,000,000</span>
+</div>
+<div class="flex items-center gap-xs text-on-tertiary-fixed-variant">
+<span class="material-symbols-outlined text-lg" data-icon="link">link</span>
+<span class="text-body-sm font-medium">Budget Linked: Health OpEx</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-end gap-xs">
+<span class="px-3 py-1 bg-secondary-fixed text-on-secondary-fixed text-[11px] font-bold rounded-full">PLANNING_PENDING</span>
+<span class="text-body-sm text-outline">Updated 1d ago</span>
+</div>
+</div>
+<!-- Summary Grid -->
+<div class="grid grid-cols-2 gap-md pt-md">
+<div class="p-lg bg-primary-container rounded-xl text-on-primary relative overflow-hidden">
+<div class="relative z-10">
+<p class="text-xs font-bold text-primary-fixed uppercase tracking-widest mb-2">Quarterly Outlook</p>
+<p class="font-headline-md text-headline-md mb-4 leading-tight">KES 412M total value pending planning.</p>
+<button class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded font-semibold text-sm transition-all flex items-center gap-xs">
+                                View Summary Report
+                                <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+<div class="absolute -right-4 -bottom-4 opacity-10">
+<span class="material-symbols-outlined text-[160px]" data-icon="monitoring">monitoring</span>
+</div>
+</div>
+<div class="p-lg bg-surface-container-highest rounded-xl border border-outline-variant flex flex-col justify-between">
+<div>
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">Priority Alerts</p>
+<div class="space-y-sm">
+<div class="flex items-start gap-sm">
+<div class="w-1.5 h-1.5 bg-error rounded-full mt-1.5"></div>
+<p class="text-body-sm">3 Demands exceeding 30-day planning window.</p>
+</div>
+<div class="flex items-start gap-sm">
+<div class="w-1.5 h-1.5 bg-secondary rounded-full mt-1.5"></div>
+<p class="text-body-sm">Workflow update: New approval hierarchy for Infrastructure items &gt; 50M.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Side 'Details' Panel -->
+<aside class="w-panel-width h-full bg-surface-container-lowest border-l border-outline-variant flex flex-col z-30 transition-transform duration-300" id="details-panel">
+<div class="p-lg border-b border-outline-variant">
+<div class="flex justify-between items-start mb-md">
+<div>
+<span class="bg-secondary-fixed text-on-secondary-fixed px-2 py-0.5 rounded text-[10px] font-bold">REQ-2024-0089</span>
+<h2 class="font-headline-sm text-xl mt-2 font-extrabold leading-tight">District Hospital Renovation</h2>
+</div>
+<button class="text-outline hover:text-on-surface">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+<div class="flex items-center justify-between mb-sm">
+<span class="text-body-sm text-outline">Requested By</span>
+<span class="font-body-md font-semibold">Min. of Health (Health Infra Unit)</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-body-sm text-outline">Value</span>
+<span class="font-label-md text-secondary font-bold">KES 98.45M</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto p-lg space-y-xl">
+<!-- Lifecycle Status -->
+<div>
+<h4 class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-md">Lifecycle Status</h4>
+<div class="relative pl-6 space-y-lg">
+<div class="absolute left-1.5 top-0 bottom-0 w-0.5 bg-surface-container"></div>
+<div class="relative">
+<div class="absolute -left-6 top-1 w-3 h-3 bg-tertiary-fixed border-2 border-white rounded-full ring-2 ring-tertiary-fixed/20"></div>
+<p class="text-body-md font-bold">Demand Approved</p>
+<p class="text-body-sm text-outline">Jan 12, 2024 • Sarah Chen</p>
+</div>
+<div class="relative">
+<div class="absolute -left-6 top-1 w-3 h-3 bg-secondary border-2 border-white rounded-full animate-pulse"></div>
+<p class="text-body-md font-bold text-secondary">Awaiting Procurement Planning</p>
+<p class="text-body-sm text-outline">Action: Group into Q3 Package</p>
+</div>
+<div class="relative opacity-40">
+<div class="absolute -left-6 top-1 w-3 h-3 bg-surface-container-highest border-2 border-white rounded-full"></div>
+<p class="text-body-md font-bold">Tender Release</p>
+<p class="text-body-sm text-outline">Estimated: Feb 20, 2024</p>
+</div>
+</div>
+</div>
+<!-- Evidence & Documentation -->
+<div>
+<h4 class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-md">Evidence &amp; Documentation</h4>
+<div class="space-y-sm">
+<a class="flex items-center gap-sm p-sm bg-surface-container rounded-lg border border-transparent hover:border-secondary transition-all group" href="#">
+<span class="material-symbols-outlined text-secondary" data-icon="description">description</span>
+<div class="flex-1 overflow-hidden">
+<p class="text-body-sm font-bold truncate">Bill of Quantities_Final_V2.pdf</p>
+<p class="text-[10px] text-outline">3.2 MB • Added yesterday</p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-secondary opacity-0 group-hover:opacity-100 transition-all" data-icon="download">download</span>
+</a>
+<a class="flex items-center gap-sm p-sm bg-surface-container rounded-lg border border-transparent hover:border-secondary transition-all group" href="#">
+<span class="material-symbols-outlined text-on-tertiary-container" data-icon="task_alt">task_alt</span>
+<div class="flex-1 overflow-hidden">
+<p class="text-body-sm font-bold truncate">Technical Specifications Sign-off</p>
+<p class="text-[10px] text-outline">Verified by Director of Infra</p>
+</div>
+<span class="material-symbols-outlined text-outline opacity-100" data-icon="open_in_new">open_in_new</span>
+</a>
+</div>
+</div>
+<!-- Project Location -->
+<div>
+<h4 class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-md">Project Location</h4>
+<div class="w-full h-32 rounded-lg bg-surface-container-highest relative overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover grayscale brightness-90 hover:grayscale-0 transition-all duration-700" data-location="Nairobi" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcdZxGXgAWuK4V61KrLELp2S3p0z0hWe_sR-qwAJPbBCheXe_HmzlEfO7AqVXztuZw02n7tSpqU5PUEb8N9yDAUBCkkI_eJyEs-y611tQI-3BdYXIvmQ2zqQLWKecYDtlgKlGJrd9a-8e_o4Msd4K1HhQQTMukEbFeC8uXqnESn4nqCMWS4DufVBuTlZcy1Bw94OdY3f2SafRXG1LUlPkyoeYtkD6aUseMWLycChURhnVo_W5NJjL82geaypIREz5B9NheXeftLGI">
+<div class="absolute inset-0 bg-secondary/10 pointer-events-none"></div>
+<div class="absolute bottom-2 left-2 px-2 py-1 bg-white/90 backdrop-blur text-[10px] font-bold rounded">
+                        Nairobi North District
+                    </div>
+</div>
+</div>
+</div>
+<!-- Contextual Actions -->
+<div class="p-lg bg-surface-bright border-t border-outline-variant space-y-md">
+<div class="flex gap-md">
+<button class="flex-1 px-4 py-2 border border-outline text-on-surface-variant rounded font-bold text-sm hover:bg-surface-container transition-all">
+                    Request Info
+                </button>
+<button class="flex-1 px-4 py-2 border border-outline text-on-surface-variant rounded font-bold text-sm hover:bg-surface-container transition-all">
+                    Edit Demand
+                </button>
+</div>
+<button class="w-full bg-secondary text-white py-lg rounded-xl font-bold flex items-center justify-center gap-sm hover:shadow-lg hover:shadow-secondary/20 transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined" data-icon="add_to_photos" data-weight="fill">add_to_photos</span>
+                Add to Active Plan
+            </button>
+</div>
+</aside>
+</main>
+<script>
+    function selectRow(el) {
+        document.querySelectorAll('.active-inset').forEach(row => {
+            row.classList.remove('active-inset', 'ring-1', 'ring-secondary/10');
+        });
+        el.classList.add('active-inset', 'ring-1', 'ring-secondary/10');
+        
+        const panel = document.getElementById('details-panel');
+        panel.classList.add('opacity-80');
+        setTimeout(() => panel.classList.remove('opacity-80'), 150);
+    }
+</script>
+
+
+</body></html>

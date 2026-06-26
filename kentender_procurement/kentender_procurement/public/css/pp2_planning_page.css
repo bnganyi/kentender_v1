@@ -141,6 +141,89 @@
 	color: var(--text-color, #1f272e);
 }
 
+.pp3-workbench-section {
+	margin-bottom: 0.75rem;
+}
+
+.pp3-workbench-section__title {
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: var(--text-muted, #748094);
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	margin: 0 0 0.5rem;
+}
+
+.pp3-active-plan-banner {
+	border: 1px solid var(--border-color, #d1d8dd);
+	border-radius: 8px;
+	padding: 12px 14px;
+	background: var(--fg-color, #fff);
+}
+
+.pp3-active-plan-banner__heading {
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: var(--text-muted, #748094);
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	margin: 0 0 0.35rem;
+}
+
+.pp3-active-plan-banner__plan-title {
+	font-size: 1rem;
+	font-weight: 600;
+	color: var(--text-color, #1f272e);
+	margin: 0;
+}
+
+.pp3-active-plan-banner__entity-year {
+	margin: 0;
+}
+
+.pp3-active-plan-banner__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.pp3-selected-work-summary__heading {
+	color: var(--text-muted, #748094);
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	font-size: 0.75rem;
+	font-weight: 600;
+}
+
+.pp3-selected-work-summary__title {
+	color: var(--text-color, #1f272e);
+}
+
+.pp3-selected-work-summary__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-top: 8px;
+}
+
+.pp3-work-list__budget {
+	margin-top: 2px;
+}
+
+.pp2-primary-workspace-shell__toggle {
+	display: block;
+	width: 100%;
+	text-align: right;
+	margin-top: 8px;
+	margin-bottom: 0;
+	padding: 0;
+	font-size: 11px;
+}
+
+.pp2-primary-workspace-shell__toggle:hover {
+	text-decoration: none;
+}
+
 .pp2-primary-work-list-host {
 	margin-bottom: 0.75rem;
 }
@@ -275,10 +358,6 @@ body.kt-pp2-shell .page-form {
 	border-radius: 8px;
 	padding: 8px;
 	background: var(--fg-color);
-}
-
-.pp2-primary-workspace-shell__toggle {
-	margin-bottom: 8px;
 }
 
 .pp2-primary-workspace-shell[data-right-panel-collapsed="1"] .pp2-primary-workspace-shell__right {

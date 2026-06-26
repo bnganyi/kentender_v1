@@ -507,7 +507,7 @@
 			target_plan_name: String(targetPlan.name || "").trim(),
 			next_action_label: blockers.length ? __("Resolve blockers before including in plan") : fallbackNextAction,
 			primary_action: {
-				label: __("Include in Plan"),
+				label: __("Add to Active Plan"),
 				action: "include_in_plan",
 				testid: "pp2-include-in-plan-button",
 			},
@@ -548,7 +548,9 @@
 			if (queueTabsApi) {
 				queueTabsApi.setQueueUrl(normalizedQueue);
 				const queueHost = mainHost.querySelector('[data-testid="pp2-primary-queue-host"]');
-				if (queueHost && typeof queueTabsApi.render === "function") {
+				if (queueHost && typeof queueTabsApi.fetchAndRender === "function") {
+					queueTabsApi.fetchAndRender(queueHost, { activeQueue: normalizedQueue });
+				} else if (queueHost && typeof queueTabsApi.render === "function") {
 					queueTabsApi.render(queueHost, { activeQueue: normalizedQueue });
 				}
 			}
@@ -813,7 +815,7 @@
 		if (!includeApi) {
 			frappe.show_alert({
 				indicator: "orange",
-				message: __("Include in Plan modal is unavailable."),
+				message: __("Add to Active Plan modal is unavailable."),
 			});
 			return;
 		}
@@ -1282,10 +1284,10 @@
 	function mountPlanningContextWithPayload(contextHost, slug, payload) {
 		if (!contextHost) return;
 		contextHost.innerHTML =
-			'<div class="pp2-primary-context-active-plan" data-testid="pp3-active-plan-host"></div>' +
-			'<div class="pp2-primary-context-page-header" data-testid="pp2-page-header-host"></div>';
-		const activePlanHost = contextHost.querySelector('[data-testid="pp3-active-plan-host"]');
+			'<div class="pp2-primary-context-page-header" data-testid="pp2-page-header-host"></div>' +
+			'<div class="pp2-primary-context-active-plan" data-testid="pp3-active-plan-host"></div>';
 		const pageHeaderHost = contextHost.querySelector('[data-testid="pp2-page-header-host"]');
+		const activePlanHost = contextHost.querySelector('[data-testid="pp3-active-plan-host"]');
 		const bannerApi =
 			kentender_procurement &&
 			kentender_procurement.PlanningActivePlanBanner &&
@@ -1339,10 +1341,10 @@
 	function mountPlanningContext(contextHost, slug) {
 		if (!contextHost) return;
 		contextHost.innerHTML =
-			'<div class="pp2-primary-context-active-plan" data-testid="pp3-active-plan-host"></div>' +
-			'<div class="pp2-primary-context-page-header" data-testid="pp2-page-header-host"></div>';
-		const activePlanHost = contextHost.querySelector('[data-testid="pp3-active-plan-host"]');
+			'<div class="pp2-primary-context-page-header" data-testid="pp2-page-header-host"></div>' +
+			'<div class="pp2-primary-context-active-plan" data-testid="pp3-active-plan-host"></div>';
 		const pageHeaderHost = contextHost.querySelector('[data-testid="pp2-page-header-host"]');
+		const activePlanHost = contextHost.querySelector('[data-testid="pp3-active-plan-host"]');
 		if (isProcurementPlansSlug(slug)) {
 			if (activePlanHost) activePlanHost.innerHTML = "";
 		} else if (isReleasedToTenderSlug(slug) || isPackageDetailSlug(slug)) {
@@ -1603,6 +1605,13 @@
 				: null;
 		const api = isWorkbenchRoot ? pp3Api : pp2Api;
 		if (api) {
+			if (
+				isWorkbenchRoot &&
+				typeof kentender_procurement.PlanningWorkbenchQueueTabs.fetchAndRender === "function"
+			) {
+				kentender_procurement.PlanningWorkbenchQueueTabs.fetchAndRender(queueHost, { slug: slug });
+				return;
+			}
 			api.renderForSlug(queueHost, slug);
 			return;
 		}
@@ -2013,9 +2022,15 @@
 				'<div class="pp2-primary-workspace-shell__layout">' +
 				'<div class="pp2-primary-workspace-shell__main" data-testid="pp2-primary-main-host"></div>' +
 				'<aside class="pp2-primary-workspace-shell__right" data-testid="pp2-primary-right-panel">' +
-				'<button type="button" class="btn btn-xs btn-default pp2-primary-workspace-shell__toggle" data-testid="pp2-primary-right-panel-toggle"></button>' +
+				'<div class="pp2-primary-workspace-shell__right-body" data-testid="pp2-primary-right-panel-body">' +
 				'<div class="pp2-primary-summary-host" data-testid="pp2-primary-summary-host"></div>' +
 				'<div class="pp2-primary-workspace-shell__next-action text-muted small" data-testid="pp2-primary-next-action-panel"></div>' +
+				"</div>" +
+				'<div class="pp2-primary-workspace-shell__right-footer" data-testid="pp2-primary-right-panel-footer">' +
+				'<button type="button" class="btn btn-xs btn-link pp2-primary-workspace-shell__toggle text-muted" data-testid="pp2-primary-right-panel-toggle" aria-label="' +
+				esc(__("Collapse panel")) +
+				'"></button>' +
+				"</div>" +
 				"</aside>" +
 				"</div>";
 			root.parentNode.insertBefore(shell, root);
@@ -2032,6 +2047,7 @@
 		if (mainHost && root.parentNode !== mainHost) {
 			mainHost.appendChild(root);
 		}
+		shell.setAttribute("data-surface", String(slug || "workbench").trim() || "workbench");
 		pruneDuplicatePrimaryShells(shell);
 
 		const breadcrumb = shell.querySelector('[data-testid="pp2-primary-breadcrumb"]');
@@ -2055,11 +2071,19 @@
 				shell.setAttribute("data-right-panel-collapsed", collapsed ? "0" : "1");
 				writeRightPanelCollapsed(!collapsed);
 				toggle.textContent = collapsed ? __("Collapse panel") : __("Expand panel");
+				toggle.setAttribute(
+					"aria-label",
+					collapsed ? __("Collapse panel") : __("Expand panel"),
+				);
 			});
 		}
 		if (toggle) {
 			const collapsed = shell.getAttribute("data-right-panel-collapsed") === "1";
 			toggle.textContent = collapsed ? __("Expand panel") : __("Collapse panel");
+			toggle.setAttribute(
+				"aria-label",
+				collapsed ? __("Expand panel") : __("Collapse panel"),
+			);
 		}
 		if (isPlanningHomeSlug(slug)) {
 			shell.removeAttribute("data-pp2-home-layout");

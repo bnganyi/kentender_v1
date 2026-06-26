@@ -39,7 +39,10 @@ const NEEDS_PLANNING_FIXTURE = {
 			title: 'District Hospital Renovation Works',
 			subtitle: 'Works · 98,000,000 KES · Budget linked',
 			state_label: 'Needs planning',
-			next_action_label: 'Include in Plan',
+			list_next_action: 'Add to active plan',
+			next_action_label: 'Add to Active Plan',
+			meta_line: 'Works · KES 98,000,000',
+			budget_status: 'Budget linked',
 			underlying_object_type: 'approved_demand',
 		},
 	],
@@ -95,7 +98,7 @@ test.describe('P3-004 Needs Planning queue', () => {
 		});
 	});
 
-	test('shows approved demands with Include in Plan on default Needs Planning queue', async ({ page }) => {
+	test('shows approved demands with Add to Active Plan on default Needs Planning queue', async ({ page }) => {
 		await mockActivePlan(page);
 		await mockWorkbenchItems(page, NEEDS_PLANNING_FIXTURE);
 		await page.goto(`${root}/desk/procurement-planning`, { waitUntil: 'domcontentloaded' });
@@ -111,7 +114,7 @@ test.describe('P3-004 Needs Planning queue', () => {
 		await expect(row).toBeVisible();
 		await expect(row.getByTestId('pp3-work-item-title')).toHaveText('District Hospital Renovation Works');
 		await expect(row.getByTestId('pp3-work-item-state')).toHaveText('Needs planning');
-		await expect(row.getByTestId('pp3-work-item-next-action')).toHaveText('Include in Plan');
+		await expect(row.getByTestId('pp3-work-item-next-action')).toHaveText('Add to active plan');
 		await expect(row).toContainText('Works');
 		await expect(row).toContainText('Budget linked');
 

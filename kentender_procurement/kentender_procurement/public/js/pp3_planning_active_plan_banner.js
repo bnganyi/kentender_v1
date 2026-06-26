@@ -28,14 +28,14 @@
 		const primaryLabel = String(primary.label || __("Create Plan")).trim();
 		const secondaryLabel = String(secondary.label || __("Activate Existing Plan")).trim();
 		return (
-			'<section class="pp3-active-plan-banner pp3-active-plan-banner--gate" data-testid="pp3-no-active-plan-gate">' +
-			'<p class="pp3-active-plan-banner__title mb-1">' +
+			'<section class="pp3-active-plan-card pp3-active-plan-card--gate" data-testid="pp3-no-active-plan-gate">' +
+			'<p class="pp3-active-plan-card__title mb-1">' +
 			esc(message || fallbackMessage) +
 			"</p>" +
-			'<p class="pp3-active-plan-banner__help text-muted small mb-2">' +
+			'<p class="pp3-active-plan-card__meta text-muted small mb-2">' +
 			esc(__("Create or activate a procurement plan before planning approved demands.")) +
 			"</p>" +
-			'<div class="pp3-active-plan-banner__actions">' +
+			'<div class="pp3-active-plan-card__actions">' +
 			'<button type="button" class="btn btn-sm btn-primary" data-testid="pp3-create-plan-button" data-pp3-action="' +
 			esc(primary.action || "create_plan") +
 			'">' +
@@ -53,24 +53,25 @@
 
 	function buildActiveHtml(payload) {
 		const title = String(payload.plan_title || payload.plan_code || "").trim();
-		const code = String(payload.plan_code || "").trim();
+		const entity = String(payload.procuring_entity || "").trim();
 		const fiscalYear = String(payload.fiscal_year || "").trim();
 		const planLabel = title || __("Procurement Plan");
-		const detailParts = [];
-		if (code && code !== title) detailParts.push(code);
-		if (fiscalYear) detailParts.push(fiscalYear);
-		const details = detailParts.join(" · ");
+		const entityYearParts = [];
+		if (entity) entityYearParts.push(entity);
+		if (fiscalYear) entityYearParts.push(fiscalYear);
+		const entityYear = entityYearParts.join(" · ");
 		const canChange = !!payload.can_change_plan;
 		const canView = !!payload.can_view_plan;
 		return (
-			'<section class="pp3-active-plan-banner pp3-active-plan-banner--active" data-testid="pp3-active-plan-banner">' +
-			'<p class="pp3-active-plan-banner__title mb-1">' +
-			esc(__("Active plan: {0}").replace("{0}", planLabel)) +
+			'<section class="pp3-active-plan-card pp3-active-plan-card--active" data-testid="pp3-active-plan-banner">' +
+			'<p class="pp3-active-plan-card__label">' +
+			esc(__("Active Procurement Plan")) +
 			"</p>" +
-			(details
-				? '<p class="pp3-active-plan-banner__meta text-muted small mb-2">' + esc(details) + "</p>"
-				: "") +
-			'<div class="pp3-active-plan-banner__actions">' +
+			'<div class="pp3-active-plan-card__head">' +
+			'<h2 class="pp3-active-plan-card__title">' +
+			esc(planLabel) +
+			"</h2>" +
+			'<div class="pp3-active-plan-card__actions">' +
 			(canChange
 				? '<button type="button" class="btn btn-sm btn-default" data-testid="pp3-change-plan-button" data-pp3-action="change_plan">' +
 					esc(__("Change Plan")) +
@@ -80,6 +81,13 @@
 				? '<button type="button" class="btn btn-sm btn-default" data-testid="pp3-view-plan-button" data-pp3-action="view_plan">' +
 					esc(__("View Plan")) +
 					"</button>"
+				: "") +
+			"</div>" +
+			"</div>" +
+			(entityYear
+				? '<p class="pp3-active-plan-card__meta text-muted small"><span class="material-symbols-outlined pp3-active-plan-card__meta-icon" aria-hidden="true">business_center</span>' +
+					esc(entityYear) +
+					"</p>"
 				: "") +
 			"</div>" +
 			"</section>"

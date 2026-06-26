@@ -12,7 +12,7 @@ def ensure_p7_010_supplier_user(
 	email: str = "supplier.p7-010@moh.test",
 	password: str = "test",
 ) -> dict[str, str]:
-	"""Create/update supplier login user for P7-010 UI negative test."""
+	"""Create/update supplier login user for P7-010 / P8-010 UI negative tests."""
 	email = (email or "").strip()
 	if not email:
 		raise ValueError("email is required")

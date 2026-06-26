@@ -60,6 +60,7 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/std_library_shell.css?v={_desk_asset_v('public/css/std_library_shell.css')}",
 	f"/assets/kentender_procurement/css/tender_management_v2_workbench.css?v={_desk_asset_v('public/css/tender_management_v2_workbench.css')}",
 	f"/assets/kentender_procurement/css/pp2_planning_page.css?v={_desk_asset_v('public/css/pp2_planning_page.css')}",
+	f"/assets/kentender_procurement/css/pp3_planning_design_system.css?v={_desk_asset_v('public/css/pp3_planning_design_system.css')}",
 ]
 app_include_js = [
 	f"/assets/kentender_procurement/js/pp2_planning_status_badge.js?v={_desk_asset_v('public/js/pp2_planning_status_badge.js')}",

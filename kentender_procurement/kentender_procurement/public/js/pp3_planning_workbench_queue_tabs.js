@@ -4,6 +4,9 @@
 (function () {
 	frappe.provide("kentender_procurement");
 
+	const QUEUE_COUNTS_API =
+		"kentender_procurement.procurement_planning.api.workbench_queue_counts.get_pp_workbench_queue_counts";
+
 	const WORKBENCH_TABS = [
 		{
 			key: "needs_planning",
@@ -44,7 +47,6 @@
 		"released-recently": "recently_released",
 		"draft-packages": "draft_packages",
 	};
-	// Keep explicit literals for G2 static selector guard.
 	const REQUIRED_TESTID_LITERALS = [
 		'data-testid="pp3-workbench-queue-tabs"',
 		'data-testid="pp3-queue-needs-planning"',
@@ -58,8 +60,18 @@
 		/* keep linter happy for static literals */
 	}
 
+	const renderTokens = new WeakMap();
+
 	function esc(value) {
 		return frappe.utils.escape_html(String(value == null ? "" : value));
+	}
+
+	function includeTestDataFromUrl() {
+		try {
+			return new URLSearchParams(window.location.search).get("test_data") === "1";
+		} catch (e) {
+			return false;
+		}
 	}
 
 	function knownQueueKeys() {
@@ -100,10 +112,18 @@
 		}
 	}
 
-	function buttonHtml(tab, active, testIdLiteral) {
+	function countForTab(tab, counts) {
+		const bag = counts && typeof counts === "object" ? counts : {};
+		const value = bag[tab.key];
+		const n = Number(value);
+		return Number.isFinite(n) && n >= 0 ? n : 0;
+	}
+
+	function buttonHtml(tab, active, testIdLiteral, counts) {
 		const selected = tab.key === active;
+		const count = countForTab(tab, counts);
 		return (
-			'<button type="button" class="btn btn-default btn-sm pp3-workbench-queue-tabs__chip' +
+			'<button type="button" class="pp3-workbench-queue-tabs__tab' +
 			(selected ? " is-active" : "") +
 			'" data-testid="' +
 			testIdLiteral +
@@ -113,25 +133,48 @@
 			(selected ? "true" : "false") +
 			'">' +
 			esc(tab.label) +
+			'<span class="pp3-workbench-queue-tabs__count">' +
+			String(count) +
+			"</span>" +
 			"</button>"
 		);
 	}
 
-	function html(activeQueue) {
+	function html(activeQueue, counts) {
 		const active = normalizeQueueKey(activeQueue) || WORKBENCH_TABS[0].key;
 		return (
+			'<section class="pp3-workbench-section pp3-workbench-section--queues">' +
+			'<h3 class="pp3-workbench-section__title">' +
+			esc(__("Work Queues")) +
+			"</h3>" +
 			'<nav class="pp3-workbench-queue-tabs" data-testid="pp3-workbench-queue-tabs" role="tablist">' +
-			buttonHtml(WORKBENCH_TABS[0], active, "pp3-queue-needs-planning") +
-			buttonHtml(WORKBENCH_TABS[1], active, "pp3-queue-draft-packages") +
-			buttonHtml(WORKBENCH_TABS[2], active, "pp3-queue-needs-review") +
-			buttonHtml(WORKBENCH_TABS[3], active, "pp3-queue-ready-release") +
-			buttonHtml(WORKBENCH_TABS[4], active, "pp3-queue-blocked") +
-			buttonHtml(WORKBENCH_TABS[5], active, "pp3-queue-recently-released") +
-			"</nav>"
+			buttonHtml(WORKBENCH_TABS[0], active, "pp3-queue-needs-planning", counts) +
+			buttonHtml(WORKBENCH_TABS[1], active, "pp3-queue-draft-packages", counts) +
+			buttonHtml(WORKBENCH_TABS[2], active, "pp3-queue-needs-review", counts) +
+			buttonHtml(WORKBENCH_TABS[3], active, "pp3-queue-ready-release", counts) +
+			buttonHtml(WORKBENCH_TABS[4], active, "pp3-queue-blocked", counts) +
+			buttonHtml(WORKBENCH_TABS[5], active, "pp3-queue-recently-released", counts) +
+			"</nav></section>"
 		);
 	}
 
-	function bind(host) {
+	function callQueueCounts() {
+		return new Promise(function (resolve) {
+			frappe.call({
+				method: QUEUE_COUNTS_API,
+				args: { include_test_data: includeTestDataFromUrl() ? 1 : 0 },
+				callback: function (response) {
+					const message = (response && response.message) || {};
+					resolve(message.counts || {});
+				},
+				error: function () {
+					resolve({});
+				},
+			});
+		});
+	}
+
+	function bind(host, counts) {
 		const buttons = host.querySelectorAll("[data-pp3-queue-key]");
 		for (let i = 0; i < buttons.length; i += 1) {
 			const button = buttons[i];
@@ -142,7 +185,7 @@
 				const normalized = normalizeQueueKey(queueKey);
 				if (!normalized) return;
 				setQueueUrl(normalized);
-				render(host, { activeQueue: normalized });
+				render(host, { activeQueue: normalized, counts: counts });
 			});
 		}
 	}
@@ -152,22 +195,41 @@
 		const options = opts || {};
 		const activeQueue =
 			options.activeQueue != null ? normalizeQueueKey(options.activeQueue) : readActiveFromUrl();
-		host.innerHTML = html(activeQueue);
-		bind(host);
+		const counts = options.counts || {};
+		host.innerHTML = html(activeQueue, counts);
+		bind(host, counts);
+	}
+
+	function fetchAndRender(host, opts) {
+		if (!host || host.nodeType !== 1) return Promise.resolve();
+		const token = (renderTokens.get(host) || 0) + 1;
+		renderTokens.set(host, token);
+		const options = opts || {};
+		const activeQueue =
+			options.activeQueue != null ? normalizeQueueKey(options.activeQueue) : readActiveFromUrl();
+		host.innerHTML = html(activeQueue, options.counts || {});
+		bind(host, options.counts || {});
+		return callQueueCounts().then(function (counts) {
+			if (renderTokens.get(host) !== token) return;
+			const latestActive =
+				options.activeQueue != null ? normalizeQueueKey(options.activeQueue) : readActiveFromUrl();
+			render(host, { activeQueue: latestActive, counts: counts || {} });
+		});
 	}
 
 	function renderForSlug(host, slug, opts) {
 		if (String(slug || "").trim() !== "") {
 			if (host && host.nodeType === 1) host.innerHTML = "";
-			return;
+			return Promise.resolve();
 		}
-		render(host, opts || {});
+		return fetchAndRender(host, opts || {});
 	}
 
 	kentender_procurement.PlanningWorkbenchQueueTabs = {
 		html: html,
 		render: render,
 		renderForSlug: renderForSlug,
+		fetchAndRender: fetchAndRender,
 		readActiveFromUrl: readActiveFromUrl,
 		setQueueUrl: setQueueUrl,
 	};

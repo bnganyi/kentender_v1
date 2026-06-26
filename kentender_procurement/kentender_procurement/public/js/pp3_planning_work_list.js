@@ -101,6 +101,19 @@
 	function rowHtml(item, selectedId) {
 		const id = itemId(item);
 		const active = id && id === selectedId;
+		const category = String(item.category_label || "").trim();
+		const metaLine = String(item.meta_line || item.subtitle || "").trim();
+		const budgetStatus = String(item.budget_status_label || item.budget_status || "").trim();
+		const listNext = String(item.list_next_action || item.next_action_label || "").trim();
+		const stateLabel = String(item.status_pill_label || item.state_label || "").trim();
+		const statusTone = String(item.status_pill_tone || "").trim().toLowerCase();
+		const updated = String(item.updated_relative || "").trim();
+		let toneClass = "";
+		if (statusTone === "demand") toneClass = " tone-demand";
+		if (statusTone === "package") toneClass = " tone-package";
+		if (statusTone === "blocked") toneClass = " tone-blocked";
+		if (statusTone === "released") toneClass = " tone-released";
+		const metaWithBudget = [metaLine, budgetStatus].filter(Boolean).join(" · ");
 		return (
 			'<button type="button" class="pp3-work-list__row' +
 			(active ? " is-active" : "") +
@@ -109,17 +122,34 @@
 			'" aria-selected="' +
 			(active ? "true" : "false") +
 			'">' +
+			(category
+				? '<div class="pp3-work-list__category"><span class="pp3-work-list__category-pill">' +
+					esc(category) +
+					"</span></div>"
+				: "") +
 			'<div class="pp3-work-list__title" data-testid="pp3-work-item-title">' +
 			esc(item.title || "") +
 			"</div>" +
-			'<div class="pp3-work-list__meta text-muted small">' +
-			esc(item.subtitle || "") +
-			"</div>" +
-			'<div class="pp3-work-list__state" data-testid="pp3-work-item-state">' +
-			esc(item.state_label || "") +
-			"</div>" +
-			'<div class="pp3-work-list__next text-muted small" data-testid="pp3-work-item-next-action">' +
-			esc(item.next_action_label || "") +
+			(metaWithBudget
+				? '<div class="pp3-work-list__meta text-muted small"><span class="material-symbols-outlined pp3-work-list__meta-icon" aria-hidden="true">payments</span>' +
+					esc(metaWithBudget) +
+					"</div>"
+				: "") +
+			'<div class="pp3-work-list__status-wrap">' +
+			(stateLabel
+				? '<span class="pp3-work-list__status-pill' +
+					toneClass +
+					'" aria-hidden="true">' +
+					esc(stateLabel) +
+					"</span>"
+				: "") +
+			(updated ? '<span class="pp3-work-list__updated">' + esc(updated) + "</span>" : "") +
+			'<span class="pp3-work-list__state sr-only" data-testid="pp3-work-item-state">' +
+			esc(stateLabel || "") +
+			"</span>" +
+			'<span class="pp3-work-list__next sr-only" data-testid="pp3-work-item-next-action">' +
+			esc(listNext || "") +
+			"</span>" +
 			"</div>" +
 			"</button>"
 		);
@@ -191,13 +221,26 @@
 		}
 	}
 
+	function includeTestDataFromUrl() {
+		try {
+			return new URLSearchParams(window.location.search).get("test_data") === "1";
+		} catch (e) {
+			return false;
+		}
+	}
+
 	function callWorkbenchItems(queueKey) {
 		const uiQueue = normalizeQueueKey(queueKey);
 		const apiQueue = API_QUEUE_BY_UI_QUEUE[uiQueue] || "needs_planning";
 		return new Promise(function (resolve) {
 			frappe.call({
 				method: WORKBENCH_ITEMS_API,
-				args: { queue: apiQueue, start: 0, limit: 50 },
+				args: {
+					queue: apiQueue,
+					start: 0,
+					limit: 50,
+					include_test_data: includeTestDataFromUrl() ? 1 : 0,
+				},
 				callback: function (response) {
 					resolve((response && response.message) || {});
 				},

@@ -60,7 +60,7 @@ test.describe('P5-002 Include in Plan action (golden path)', () => {
 
 		const includeButton = page.getByTestId('pp3-primary-action');
 		await expect(includeButton).toBeVisible();
-		await expect(includeButton).toHaveText('Include in Plan');
+		await expect(includeButton).toHaveText('Add to Active Plan');
 		await includeButton.click();
 
 		const modal = page.getByTestId('pp2-include-plan-modal');
