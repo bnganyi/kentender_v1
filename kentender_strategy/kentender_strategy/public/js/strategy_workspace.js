@@ -1,125 +1,13 @@
-// Strategy Management workspace — unified master/detail workbench.
-
+// Strategy Management workspace — static design-first workbench (no backend wiring).
 (function () {
 	const WS_LABEL = "Strategy Management";
-	const PLAN_TABS = [
-		{ id: "info", label: __("Plan Info"), testId: "strategy-tab-plan-info" },
-		{ id: "structure", label: __("Structure"), testId: "strategy-tab-structure" },
-		{ id: "review", label: __("Review"), testId: "strategy-tab-review" },
-		{ id: "audit", label: __("Audit"), testId: "strategy-tab-audit" },
-	];
+	let bound = false;
+	let observer = null;
 
-	let bindScheduled = false;
-	let hooksBound = false;
-	let workspaceDomObserver = null;
-	let pollStarted = false;
-	let lastPayload = null;
-	let landingLoadInFlight = false;
-	let selectedPlanName = null;
-	let activeStatusFilter = "all";
-	let planSearchQuery = "";
-	let activePlanTab = "info";
-	let planTabInitialized = false;
-	let planSelectionInitialized = false;
-	let pendingPlanListScrollTop = null;
-	let structurePanelMounted = false;
-	let sidebarSyncTimer = null;
-
-	function saveStrategyWorkbenchState() {
-		if (typeof kentender_core === "undefined" || !kentender_core.kt_state) return;
-		kentender_core.kt_state.save("strategy", {
-			workTab: activePlanTab,
-			selectedRecord: selectedPlanName,
-			statusFilter: activeStatusFilter,
-		});
-		if (selectedPlanName) {
-			kentender_core.kt_state.setSelectedRecord("strategy", selectedPlanName);
-		}
-	}
-
-	function applyInitialWorkbenchState(payload) {
-		if (planSelectionInitialized) return;
-		planSelectionInitialized = true;
-		let storedPlan = null;
-		if (typeof kentender_core !== "undefined" && kentender_core.kt_state) {
-			const st = kentender_core.kt_state.restore("strategy");
-			if (st) {
-				if (st.workTab) activePlanTab = st.workTab;
-				if (st.statusFilter) activeStatusFilter = st.statusFilter;
-			}
-			if (kentender_core.kt_state.consumeSelectedRecord) {
-				storedPlan = kentender_core.kt_state.consumeSelectedRecord("strategy");
-			}
-		}
-		planTabInitialized = true;
-		if (storedPlan && payload && findPlan(payload, storedPlan)) {
-			selectedPlanName = storedPlan;
-		}
-	}
-
-	function ensurePlanTab() {
-		if (!activePlanTab) activePlanTab = "info";
-	}
-
-	function escapeHtml(s) {
-		if (s == null || s === undefined) return "";
-		return String(s)
-			.replace(/&/g, "&amp;")
-			.replace(/</g, "&lt;")
-			.replace(/>/g, "&gt;")
-			.replace(/"/g, "&quot;");
-	}
-
-	function userCanReadStrategicPlan() {
-		try {
-			return (
-				typeof frappe !== "undefined" &&
-				frappe.model &&
-				typeof frappe.model.can_read === "function" &&
-				frappe.model.can_read("Strategic Plan")
-			);
-		} catch (e) {
-			return false;
-		}
-	}
-
-	function userCanCreateStrategicPlan() {
-		try {
-			return (
-				typeof frappe !== "undefined" &&
-				frappe.model &&
-				typeof frappe.model.can_create === "function" &&
-				frappe.model.can_create("Strategic Plan")
-			);
-		} catch (e) {
-			return false;
-		}
-	}
-
-	function userCanWriteStrategicPlan() {
-		try {
-			return (
-				typeof frappe !== "undefined" &&
-				frappe.model &&
-				typeof frappe.model.can_write === "function" &&
-				frappe.model.can_write("Strategic Plan")
-			);
-		} catch (e) {
-			return false;
-		}
-	}
-
-	function workspaceNameMatchesStrategy(name) {
-		if (name == null || name === "") return false;
-		if (name === WS_LABEL) return true;
-		try {
-			if (typeof frappe !== "undefined" && frappe.router && typeof frappe.router.slug === "function") {
-				return frappe.router.slug(String(name)) === frappe.router.slug(WS_LABEL);
-			}
-		} catch (e) {
-			/* ignore */
-		}
-		return String(name).toLowerCase().replace(/\s+/g, "-") === "strategy-management";
+	function slug(v) {
+		return String(v || "")
+			.toLowerCase()
+			.replace(/\s+/g, "-");
 	}
 
 	function isStrategyWorkspaceRoute() {
@@ -127,841 +15,497 @@
 			if (typeof frappe !== "undefined" && frappe.router && Array.isArray(frappe.router.current_route)) {
 				const r = frappe.router.current_route;
 				if (r[0] === "Workspaces" && r.length >= 2) {
-					const workspaceName = r[1] === "private" && r.length >= 3 ? r[2] : r[1];
-					if (workspaceNameMatchesStrategy(workspaceName)) return true;
-					if (workspaceName) return false;
+					const w = r[1] === "private" && r.length >= 3 ? r[2] : r[1];
+					return slug(w) === slug(WS_LABEL);
 				}
 			}
 		} catch (e) {
 			/* ignore */
 		}
 		try {
-			const loc = window.location;
-			const raw = (loc && (loc.pathname + (loc.search || "") + (loc.hash || ""))) || "";
-			const path = decodeURIComponent(String(raw).toLowerCase());
-			if (path.includes("strategy-management") || path.includes("strategy%20management")) return true;
-		} catch (e2) {
-			/* ignore */
-		}
-		try {
-			const route = frappe.get_route() || [];
-			if (route[0] === "Workspaces" && route.length >= 2) {
-				const w = route[1] === "private" && route.length >= 3 ? route[2] : route[1];
-				if (workspaceNameMatchesStrategy(w)) return true;
-				if (w) return false;
-			}
-		} catch (e3) {
+			const href = (window.location && (window.location.pathname + window.location.hash)) || "";
+			return decodeURIComponent(href).toLowerCase().includes("strategy-management");
+		} catch (e) {
 			return false;
 		}
-		return false;
 	}
 
-	function syncStrategyShellClass() {
-		document.body.classList.toggle("kt-strategy-shell", isStrategyWorkspaceRoute());
-	}
-
-	function syncStrategySidebarHighlight() {
-		if (!isStrategyWorkspaceRoute()) return;
-		const items = Array.from(document.querySelectorAll(".standard-sidebar-item"));
-		if (!items.length) return;
-		let primary = null;
-		for (let i = 0; i < items.length; i++) {
-			const item = items[i];
-			const label = String(item.textContent || "").trim().toLowerCase();
-			if (label === "strategy alignment" && !primary) primary = item;
-		}
-		if (!primary) return;
-		for (let i = 0; i < items.length; i++) {
-			const item = items[i];
-			const label = String(item.textContent || "").trim().toLowerCase();
-			if (label === "strategy alignment (full)" || item === primary) {
-				item.classList.remove("active-sidebar");
-			}
-		}
-		primary.classList.add("active-sidebar");
-	}
-
-	function scheduleStrategySidebarHighlightSync() {
-		syncStrategySidebarHighlight();
-		if (sidebarSyncTimer) window.clearTimeout(sidebarSyncTimer);
-		sidebarSyncTimer = window.setTimeout(function () {
-			syncStrategySidebarHighlight();
-		}, 120);
-	}
-
-	function removeStrategyLandingIfWrongRoute() {
-		document.querySelectorAll(".kt-strategy-injected-shell").forEach(function (el) {
-			el.remove();
-		});
-		document.body.classList.remove("kt-strategy-shell");
-		selectedPlanName = null;
-		lastPayload = null;
-		landingLoadInFlight = false;
-		bindScheduled = false;
-		planSelectionInitialized = false;
-		planTabInitialized = false;
-		structurePanelMounted = false;
-	}
-
-	function getVisibleWorkspacesPageRoot() {
-		try {
-			if (typeof frappe !== "undefined" && frappe.container && frappe.container.page) {
-				const p = frappe.container.page;
-				const route = p.getAttribute && p.getAttribute("data-page-route");
-				if (route === "Workspaces" && p.isConnected) return p;
-			}
-		} catch (e) {
-			/* ignore */
-		}
-		return (
+	function resolveMount() {
+		const page =
 			document.getElementById("page-Workspaces") ||
 			document.getElementById("page-workspaces") ||
-			document.querySelector('.page-container[data-page-route="Workspaces"]')
-		);
+			document.querySelector('.page-container[data-page-route="Workspaces"]');
+		if (page) {
+			return (
+				page.querySelector(".layout-main-section .editor-js-container") ||
+				page.querySelector(".editor-js-container") ||
+				page.querySelector(".layout-main-section")
+			);
+		}
+		return document.querySelector(".editor-js-container");
 	}
 
-	function strategyShellPresent() {
-		const root = getVisibleWorkspacesPageRoot();
-		if (!root) return false;
-		return root.querySelector('.kt-strategy-injected-shell[data-testid="strategy-landing-page"]') != null;
+	function staticHierarchyWorkbenchHtml() {
+		return `
+			<div class="kt-strategy-v2-shell" data-testid="strategy-workbench-v2">
+				<div class="kt-strategy-v2-hero">
+					<div class="kt-strategy-v2-breadcrumb" data-testid="strategy-breadcrumb">All Strategic Plans › Ministry of Health 2026-2030</div>
+					<div class="kt-strategy-v2-hero__row">
+						<div>
+							<h2 class="kt-strategy-v2-hero__title" data-testid="strategy-hero-title">Ministry of Health Strategic Plan 2026-2030</h2>
+							<p class="kt-strategy-v2-hero__subtitle" data-testid="strategy-page-intro">Comprehensive modernization of public healthcare infrastructure and digital diagnostics.</p>
+						</div>
+						<div class="kt-strategy-v2-summary__actions">
+							<button type="button" class="kt-strategy-v2-btn kt-strategy-v2-btn--ghost">Export Report</button>
+							<button type="button" class="kt-strategy-v2-btn kt-strategy-v2-btn--primary" data-testid="strategic-plan-create-button">Edit Plan</button>
+						</div>
+					</div>
+				</div>
+
+				<div class="kt-strategy-v2-metrics" data-testid="strategy-metric-overall">
+					<article class="kt-strategy-v2-metric-card">
+						<div class="kt-strategy-v2-metric-head"><span class="kt-strategy-v2-metric-label">Overall Completion</span><span class="material-symbols-outlined">trending_up</span></div>
+						<div class="kt-strategy-v2-metric-value">64%</div>
+						<div class="kt-strategy-v2-progress"><span style="width:64%"></span></div>
+					</article>
+					<article class="kt-strategy-v2-metric-card">
+						<div class="kt-strategy-v2-metric-head"><span class="kt-strategy-v2-metric-label">Active Programs</span><span class="material-symbols-outlined">layers</span></div>
+						<div class="kt-strategy-v2-metric-value">12</div>
+						<div class="kt-strategy-v2-metric-subnote"><span class="material-symbols-outlined">check_circle</span>3 Completed this quarter</div>
+					</article>
+					<article class="kt-strategy-v2-metric-card">
+						<div class="kt-strategy-v2-metric-head"><span class="kt-strategy-v2-metric-label">Critical Risks</span><span class="material-symbols-outlined">warning</span></div>
+						<div class="kt-strategy-v2-metric-value">02</div>
+						<div class="kt-strategy-v2-metric-subnote is-danger">Action required in 'Digital Health'</div>
+					</article>
+					<article class="kt-strategy-v2-metric-card kt-strategy-v2-metric-card--milestone">
+						<div class="kt-strategy-v2-metric-head"><span class="kt-strategy-v2-metric-label">Next Milestone</span><span class="material-symbols-outlined">calendar_today</span></div>
+						<div class="kt-strategy-v2-metric-date">Oct 12, 2024</div>
+						<p class="kt-strategy-v2-metric-note">Procurement Phase II Close</p>
+					</article>
+				</div>
+
+				<section class="kt-strategy-v2-hierarchy" data-testid="strategy-hierarchy-workbench">
+					<header class="kt-strategy-v2-hierarchy__head">
+						<div class="kt-strategy-v2-hierarchy__legend">
+							<h4>Strategic Hierarchy</h4>
+							<div class="kt-strategy-v2-hierarchy__legend-items">
+								<span class="kt-dot is-green"></span><span>On Track</span>
+								<span class="kt-dot is-amber"></span><span>At Risk</span>
+							</div>
+						</div>
+						<div class="kt-strategy-v2-hierarchy__tools">
+							<button type="button"><span class="material-symbols-outlined">unfold_more</span></button>
+							<button type="button"><span class="material-symbols-outlined">filter_list</span></button>
+						</div>
+					</header>
+					<div class="kt-strategy-v2-hierarchy__body">
+						<div class="kt-tree-program">
+							<div class="kt-tree-node kt-tree-node--program">
+								<button type="button" class="kt-tree-expand"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+								<div class="kt-tree-icon"><span class="material-symbols-outlined">vaccines</span></div>
+								<div class="kt-tree-content">
+									<div class="kt-tree-title-row"><span class="kt-tree-code">P1</span><h5>National Immunization Infrastructure Upgrade</h5><span class="kt-pill is-green">Active</span></div>
+									<div class="kt-tree-meta-row"><div class="kt-inline-progress"><div class="kt-progress-track"><span style="width:78%"></span></div><em>78%</em></div><span>4 Objectives · 12 Targets</span></div>
+								</div>
+							</div>
+							<div class="kt-tree-children">
+								<div class="kt-tree-connector-vertical"></div>
+								<div class="kt-tree-branch">
+									<div class="kt-tree-connector-horizontal"></div>
+									<div class="kt-tree-node kt-tree-node--objective">
+										<button type="button" class="kt-tree-expand"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+										<div class="kt-tree-content">
+											<div class="kt-tree-title-row"><span class="kt-tree-code">OBJ 1.1</span><h6>Cold-Chain Storage Modernization (Region A)</h6><span class="kt-pill is-amber">At Risk</span></div>
+											<div class="kt-tree-meta-row"><div class="kt-inline-progress is-amber"><div class="kt-progress-track"><span style="width:45%"></span></div><em>45%</em></div><span>3 Targets</span></div>
+										</div>
+									</div>
+									<div class="kt-tree-targets">
+										<div class="kt-tree-connector-vertical"></div>
+										<div class="kt-tree-target">
+											<div class="kt-tree-connector-horizontal"></div>
+											<div class="kt-tree-target-card is-primary">
+												<div class="kt-tree-target-head"><span>TARGET 1.1.1</span><span>Due: Nov 20, 2024</span></div>
+												<p>Procurement of 50 Ultra-Low Temperature Freezers</p>
+												<div class="kt-tree-target-progress"><div class="kt-progress-track"><span style="width:30%"></span></div><em>15 / 50 Delivered</em></div>
+											</div>
+										</div>
+										<div class="kt-tree-target">
+											<div class="kt-tree-connector-horizontal"></div>
+											<div class="kt-tree-target-card">
+												<div class="kt-tree-target-head"><span>TARGET 1.1.2</span><span>Due: Dec 15, 2024</span></div>
+												<p>Installation and Training across 12 Regional Hubs</p>
+												<div class="kt-tree-target-progress"><div class="kt-progress-track"><span style="width:0%"></span></div><em>0 / 12 Locations</em></div>
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="kt-tree-branch">
+									<div class="kt-tree-connector-horizontal"></div>
+									<div class="kt-tree-node kt-tree-node--objective">
+										<button type="button" class="kt-tree-expand"><span class="material-symbols-outlined">keyboard_arrow_right</span></button>
+										<div class="kt-tree-content">
+											<div class="kt-tree-title-row"><span class="kt-tree-code">OBJ 1.2</span><h6>Mobile Vaccination Fleet Acquisition</h6><span class="kt-pill is-green">On Track</span></div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="kt-tree-program is-collapsed">
+							<div class="kt-tree-node kt-tree-node--program">
+								<button type="button" class="kt-tree-expand"><span class="material-symbols-outlined">keyboard_arrow_right</span></button>
+								<div class="kt-tree-icon"><span class="material-symbols-outlined">clinical_notes</span></div>
+								<div class="kt-tree-content">
+									<div class="kt-tree-title-row"><span class="kt-tree-code">P2</span><h5>Digital Health Records System Rollout</h5><span class="kt-pill is-blue">Draft</span></div>
+									<div class="kt-tree-meta-row"><div class="kt-inline-progress"><div class="kt-progress-track"><span style="width:12%"></span></div><em>12%</em></div><span>2 Objectives · 6 Targets</span></div>
+								</div>
+							</div>
+						</div>
+
+						<button type="button" class="kt-strategy-v2-add-program"><span class="material-symbols-outlined">add_circle</span>Add New Program</button>
+					</div>
+				</section>
+
+				<section class="kt-strategy-v2-lower">
+					<div class="kt-strategy-v2-activity" data-testid="strategy-activity-feed">
+						<h4>Recent Workbench Activity</h4>
+						<ul>
+							<li><span class="kt-activity-icon"><span class="material-symbols-outlined">update</span></span><div class="kt-activity-copy"><strong>Sarah Jenkins</strong><p>updated target <strong>1.1.1</strong></p><small>2 hours ago · Procurement status changed from 'Ordered' to 'Shipped'</small></div></li>
+							<li><span class="kt-activity-icon"><span class="material-symbols-outlined">add</span></span><div class="kt-activity-copy"><strong>Marcus Thorne</strong><p>added Objective <strong>1.3</strong></p><small>Yesterday · New objective for Rural Health Outreach</small></div></li>
+							<li><span class="kt-activity-icon is-alert"><span class="material-symbols-outlined">report</span></span><div class="kt-activity-copy"><strong>System Alert:</strong><p>Delay in shipment for <strong>OBJ 1.1</strong></p><small>3 days ago · Automatic status change to 'At Risk'</small></div></li>
+						</ul>
+					</div>
+					<aside class="kt-strategy-v2-side">
+						<article class="kt-strategy-v2-insights" data-testid="strategy-insights-card">
+							<h4>Insights Engine</h4>
+							<p>AI analysis suggests a potential 12% budget overrun on Program 1 due to global supply chain inflation.</p>
+							<button type="button" class="kt-strategy-v2-btn kt-strategy-v2-btn--light">View Recommendations</button>
+						</article>
+						<article class="kt-strategy-v2-stakeholders">
+							<h4>Stakeholders</h4>
+							<div class="kt-stakeholders-avatars"><span>A</span><span>M</span><span>F</span><span>+8</span></div>
+							<button type="button">Manage Team Access <span class="material-symbols-outlined">arrow_forward</span></button>
+						</article>
+					</aside>
+				</section>
+			</div>
+		`;
 	}
 
-	function resolveWorkspaceEditorMount() {
-		const root = getVisibleWorkspacesPageRoot();
-		if (root) {
-			let esc = root.querySelector(".layout-main-section .editor-js-container");
-			if (!esc) esc = root.querySelector(".editor-js-container");
-			if (!esc) {
-				const lms = root.querySelector(".layout-main-section");
-				if (lms) esc = lms;
+	function staticPortfolioHubHtml() {
+		return `
+			<div class="kt-sph-shell" data-testid="strategy-portfolio-hub">
+				<!-- Sticky Top Bar -->
+				<header class="kt-sph-topbar" data-testid="sph-topbar">
+					<div class="kt-sph-topbar__left">
+						<h2 class="kt-sph-topbar__title">Strategic Alignment</h2>
+						<div class="kt-sph-search-wrap">
+							<span class="material-symbols-outlined kt-sph-search-icon">search</span>
+							<input class="kt-sph-search" placeholder="Search strategies..." type="text" data-testid="sph-search-input">
+						</div>
+					</div>
+					<div class="kt-sph-topbar__right">
+						<button type="button" class="kt-sph-icon-btn"><span class="material-symbols-outlined">notifications</span></button>
+						<button type="button" class="kt-sph-icon-btn"><span class="material-symbols-outlined">history</span></button>
+						<div class="kt-sph-avatar"></div>
+					</div>
+				</header>
+
+				<!-- Main Content -->
+				<main class="kt-sph-main">
+					<!-- Page Header -->
+					<div class="kt-sph-page-header">
+						<div>
+							<nav class="kt-sph-breadcrumb" data-testid="sph-breadcrumb">
+								<span>Portfolio</span>
+								<span class="material-symbols-outlined">chevron_right</span>
+								<span class="kt-sph-breadcrumb__active">Active Plans</span>
+							</nav>
+							<h1 class="kt-sph-page-title" data-testid="sph-page-title">Strategy Management</h1>
+						</div>
+						<div class="kt-sph-page-actions">
+							<button type="button" class="kt-sph-btn kt-sph-btn--outline">Export Portfolio</button>
+							<button type="button" class="kt-sph-btn kt-sph-btn--primary" data-testid="sph-create-plan-btn">
+								<span class="material-symbols-outlined">add</span>Create New Plan
+							</button>
+						</div>
+					</div>
+
+					<!-- Metrics Bento Row -->
+					<div class="kt-sph-metrics" data-testid="sph-metrics-grid">
+						<div class="kt-sph-metric-card">
+							<p class="kt-sph-metric-label">Total Budget</p>
+							<h3 class="kt-sph-metric-value">$1.42B</h3>
+							<p class="kt-sph-metric-sub kt-sph-metric-sub--positive">+4.2% vs Last Period</p>
+						</div>
+						<div class="kt-sph-metric-card">
+							<p class="kt-sph-metric-label">Active Programs</p>
+							<h3 class="kt-sph-metric-value">24</h3>
+							<p class="kt-sph-metric-sub">Across 8 Strategic Plans</p>
+						</div>
+						<div class="kt-sph-metric-card">
+							<p class="kt-sph-metric-label">Success Rate</p>
+							<h3 class="kt-sph-metric-value">92%</h3>
+							<div class="kt-sph-progress-track"><div class="kt-sph-progress-fill" style="width:92%"></div></div>
+						</div>
+						<div class="kt-sph-metric-card">
+							<p class="kt-sph-metric-label">Draft Plans</p>
+							<h3 class="kt-sph-metric-value">3</h3>
+							<p class="kt-sph-metric-sub kt-sph-metric-sub--warn">Awaiting Review</p>
+						</div>
+					</div>
+
+					<!-- Plans Card Grid -->
+					<div class="kt-sph-plans-grid" data-testid="sph-plans-grid">
+
+						<!-- Card 1: Active -->
+						<div class="kt-sph-plan-card" data-testid="sph-plan-card">
+							<div class="kt-sph-card-header">
+								<div>
+									<div class="kt-sph-card-header__row">
+										<span class="kt-sph-chip kt-sph-chip--active">Active</span>
+										<span class="kt-sph-fiscal-year">FY 2024 – 2028</span>
+									</div>
+									<h3 class="kt-sph-card-title">Ministry of Health 2026-2030</h3>
+								</div>
+								<button type="button" class="kt-sph-icon-btn"><span class="material-symbols-outlined">more_vert</span></button>
+							</div>
+							<div class="kt-sph-card-body">
+								<div class="kt-sph-stat">
+									<p class="kt-sph-stat-label">Budget</p>
+									<p class="kt-sph-stat-value">$450M</p>
+								</div>
+								<div class="kt-sph-stat">
+									<p class="kt-sph-stat-label">Programs</p>
+									<p class="kt-sph-stat-value">12</p>
+								</div>
+								<div class="kt-sph-stat">
+									<p class="kt-sph-stat-label">Objectives</p>
+									<p class="kt-sph-stat-value">48</p>
+								</div>
+							</div>
+							<div class="kt-sph-card-footer">
+								<div class="kt-sph-avatar-stack">
+									<span class="kt-sph-avatar kt-sph-avatar--slate-300"></span>
+									<span class="kt-sph-avatar kt-sph-avatar--slate-400"></span>
+									<span class="kt-sph-avatar kt-sph-avatar--slate-500"></span>
+								</div>
+								<a href="#" class="kt-sph-card-cta">View Workbench <span class="material-symbols-outlined">arrow_forward</span></a>
+							</div>
+						</div>
+
+						<!-- Card 2: Draft -->
+						<div class="kt-sph-plan-card" data-testid="sph-plan-card">
+							<div class="kt-sph-card-header">
+								<div>
+									<div class="kt-sph-card-header__row">
+										<span class="kt-sph-chip kt-sph-chip--draft">Draft</span>
+										<span class="kt-sph-fiscal-year">FY 2025 – 2030</span>
+									</div>
+									<h3 class="kt-sph-card-title">Digital Health Roadmap</h3>
+								</div>
+								<button type="button" class="kt-sph-icon-btn"><span class="material-symbols-outlined">more_vert</span></button>
+							</div>
+							<div class="kt-sph-card-body">
+								<div class="kt-sph-stat">
+									<p class="kt-sph-stat-label">Budget</p>
+									<p class="kt-sph-stat-value">$180M</p>
+								</div>
+								<div class="kt-sph-stat">
+									<p class="kt-sph-stat-label">Programs</p>
+									<p class="kt-sph-stat-value">4</p>
+								</div>
+								<div class="kt-sph-stat">
+									<p class="kt-sph-stat-label">Objectives</p>
+									<p class="kt-sph-stat-value">15</p>
+								</div>
+							</div>
+							<div class="kt-sph-card-footer kt-sph-card-footer--draft">
+								<div class="kt-sph-draft-hint">
+									<span class="material-symbols-outlined kt-sph-draft-hint__icon">edit_note</span>
+									<span class="kt-sph-draft-hint__text">Last edited 2 hours ago</span>
+								</div>
+								<a href="#" class="kt-sph-card-cta">Continue Setup <span class="material-symbols-outlined">edit</span></a>
+							</div>
+						</div>
+
+						<!-- Card 3: Active -->
+						<div class="kt-sph-plan-card" data-testid="sph-plan-card">
+							<div class="kt-sph-card-header">
+								<div>
+									<div class="kt-sph-card-header__row">
+										<span class="kt-sph-chip kt-sph-chip--active">Active</span>
+										<span class="kt-sph-fiscal-year">FY 2024 – 2026</span>
+									</div>
+									<h3 class="kt-sph-card-title">Infrastructure Renewal Phase II</h3>
+								</div>
+								<button type="button" class="kt-sph-icon-btn"><span class="material-symbols-outlined">more_vert</span></button>
+							</div>
+							<div class="kt-sph-card-body">
+								<div class="kt-sph-stat">
+									<p class="kt-sph-stat-label">Budget</p>
+									<p class="kt-sph-stat-value">$620M</p>
+								</div>
+								<div class="kt-sph-stat">
+									<p class="kt-sph-stat-label">Programs</p>
+									<p class="kt-sph-stat-value">8</p>
+								</div>
+								<div class="kt-sph-stat">
+									<p class="kt-sph-stat-label">Objectives</p>
+									<p class="kt-sph-stat-value">32</p>
+								</div>
+							</div>
+							<div class="kt-sph-card-footer">
+								<div class="kt-sph-avatar-stack">
+									<span class="kt-sph-avatar kt-sph-avatar--blue-300"></span>
+									<span class="kt-sph-avatar kt-sph-avatar--blue-400"></span>
+								</div>
+								<a href="#" class="kt-sph-card-cta">View Workbench <span class="material-symbols-outlined">arrow_forward</span></a>
+							</div>
+						</div>
+
+						<!-- Empty State: Create New -->
+						<div class="kt-sph-plan-card kt-sph-plan-card--empty" data-testid="sph-create-new-card">
+							<div class="kt-sph-empty-icon-wrap">
+								<span class="material-symbols-outlined">add</span>
+							</div>
+							<h4 class="kt-sph-empty-title">Create New Strategy</h4>
+							<p class="kt-sph-empty-text">Define a new planning horizon and budget lineage</p>
+						</div>
+					</div>
+
+					<!-- Lineage Activity -->
+					<section class="kt-sph-activity-section">
+						<h3 class="kt-sph-section-heading">Lineage Activity</h3>
+						<div class="kt-sph-table-wrap">
+							<table class="kt-sph-table" data-testid="sph-activity-table">
+								<thead>
+									<tr>
+										<th>Time</th>
+										<th>Action</th>
+										<th>Plan</th>
+										<th>User</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td class="kt-sph-td-muted">10:45 AM</td>
+										<td>
+											<div class="kt-sph-action-cell">
+												<span class="kt-sph-dot kt-sph-dot--primary"></span>
+												<span class="kt-sph-action-label">New Objective Added</span>
+											</div>
+										</td>
+										<td>Ministry of Health 2026-2030</td>
+										<td>Sarah Chen</td>
+									</tr>
+									<tr>
+										<td class="kt-sph-td-muted">09:12 AM</td>
+										<td>
+											<div class="kt-sph-action-cell">
+												<span class="kt-sph-dot kt-sph-dot--amber"></span>
+												<span class="kt-sph-action-label">Budget Re-allocated</span>
+											</div>
+										</td>
+										<td>Digital Health Roadmap</td>
+										<td>Marcus Thorne</td>
+									</tr>
+									<tr>
+										<td class="kt-sph-td-muted">Yesterday</td>
+										<td>
+											<div class="kt-sph-action-cell">
+												<span class="kt-sph-dot kt-sph-dot--green"></span>
+												<span class="kt-sph-action-label">Plan Finalized</span>
+											</div>
+										</td>
+										<td>Infrastructure Renewal II</td>
+										<td>Lydia Vance</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</section>
+				</main>
+			</div>
+		`;
+	}
+
+	function renderShell() {
+		if (!isStrategyWorkspaceRoute()) {
+			document.body.classList.remove("kt-strategy-shell");
+			document.querySelectorAll(".kt-strategy-injected-shell").forEach((el) => el.remove());
+			return;
+		}
+		document.body.classList.add("kt-strategy-shell");
+		const mount = resolveMount();
+		if (!mount) return;
+		let shell = mount.querySelector('.kt-strategy-injected-shell[data-testid="strategy-landing-page"]');
+		if (!shell) {
+			shell = document.createElement("div");
+			shell.className = "kt-strategy-injected-shell";
+			shell.setAttribute("data-testid", "strategy-landing-page");
+			const ed = document.getElementById("editorjs");
+			if (ed && mount.contains(ed)) {
+				mount.insertBefore(shell, ed);
+				ed.style.display = "none";
+			} else {
+				mount.insertBefore(shell, mount.firstChild);
 			}
-			if (esc) return esc;
 		}
-		const candidates = document.querySelectorAll(".editor-js-container");
-		let fallback = null;
-		for (let i = 0; i < candidates.length; i++) {
-			const el = candidates[i];
-			if (!el || !el.isConnected) continue;
-			if (!fallback) fallback = el;
-			if (el.getClientRects && el.getClientRects().length > 0) return el;
-		}
-		return fallback;
+		if (shell.getAttribute("data-kt-rendered") === "1") return;
+		shell.innerHTML = staticPortfolioHubHtml();
+		shell.setAttribute("data-kt-rendered", "1");
 	}
 
-	function findPlan(payload, name) {
-		const plans = (payload && payload.plans) || [];
-		for (let i = 0; i < plans.length; i++) {
-			if (plans[i].name === name) return plans[i];
-		}
-		return null;
-	}
-
-	function statusBadgeClass(status) {
-		const s = String(status || "").trim().toLowerCase();
-		if (s === "draft") return "kt-strategy-badge kt-strategy-badge--draft";
-		if (s === "submitted") return "kt-strategy-badge kt-strategy-badge--submitted";
-		if (s === "approved") return "kt-strategy-badge kt-strategy-badge--approved";
-		if (s === "active") return "kt-strategy-badge kt-strategy-badge--active";
-		if (s === "archived") return "kt-strategy-badge kt-strategy-badge--archived";
-		return "kt-strategy-badge";
-	}
-
-	function statusChipCount(portfolio, filterId) {
-		const p = portfolio || {};
-		const id = String(filterId || "all").toLowerCase();
-		if (id === "all") return p.total_plans != null ? p.total_plans : 0;
-		if (id === "draft") return p.draft_count != null ? p.draft_count : 0;
-		if (id === "submitted") return p.submitted_count != null ? p.submitted_count : 0;
-		if (id === "approved") return p.approved_count != null ? p.approved_count : 0;
-		if (id === "active") return p.active_count != null ? p.active_count : 0;
-		if (id === "archived") return p.archived_count != null ? p.archived_count : 0;
-		return 0;
-	}
-
-	function filterPlansByStatus(plans) {
-		const id = String(activeStatusFilter || "all").toLowerCase();
-		if (id === "all") return plans.slice();
-		return plans.filter(function (p) {
-			return String(p.status || "").trim().toLowerCase() === id;
-		});
-	}
-
-	function filterPlansBySearch(plans) {
-		const q = String(planSearchQuery || "")
-			.trim()
-			.toLowerCase();
-		if (!q) return plans.slice();
-		return plans.filter(function (p) {
-			const title = String(p.strategic_plan_name || p.name || "").toLowerCase();
-			return title.indexOf(q) >= 0;
-		});
-	}
-
-	function readinessLabel(selected) {
-		const pc = Number(selected.program_count || 0);
-		const spc = Number(selected.sub_program_count || 0);
-		const ic = Number(selected.indicator_count != null ? selected.indicator_count : selected.objective_count || 0);
-		const tc = Number(selected.target_count || 0);
-		if (pc > 0 && spc > 0 && ic > 0 && tc > 0) return __("Ready for downstream use");
-		return __("Structure incomplete");
-	}
-
-	function renderStatusChips(portfolio) {
-		const chips = [
-			{ id: "all", label: __("All"), testId: "strategy-status-all" },
-			{ id: "draft", label: __("Draft"), testId: "strategy-status-draft" },
-			{ id: "submitted", label: __("Submitted"), testId: "strategy-status-submitted" },
-			{ id: "approved", label: __("Approved"), testId: "strategy-status-approved" },
-			{ id: "active", label: __("Active"), testId: "strategy-status-active" },
-			{ id: "archived", label: __("Archived"), testId: "strategy-status-archived" },
-		];
-		let html =
-			'<div class="kt-strategy-status-chips mb-2" data-testid="strategy-status-chips">' +
-			'<div class="kt-status-filter-row" role="group" aria-label="' +
-			escapeHtml(__("Status Filters")) +
-			'">';
-		for (let i = 0; i < chips.length; i++) {
-			const c = chips[i];
-			const on = activeStatusFilter === c.id;
-			const count = statusChipCount(portfolio, c.id);
-			const isZero = Number(count) === 0;
-			html +=
-				'<button type="button" class="kt-status-filter kt-strategy-status-chip' +
-				(on ? " is-active kt-status-filter-active" : "") +
-				(isZero ? " is-zero" : "") +
-				'" data-kt-strategy-status="' +
-				escapeHtml(c.id) +
-				'" data-testid="' +
-				escapeHtml(c.testId) +
-				'">' +
-				'<span class="kt-status-filter__label">' +
-				escapeHtml(c.label) +
-				'</span> <span class="kt-status-filter__count">' +
-				escapeHtml(String(count)) +
-				"</span></button>";
-		}
-		html += "</div></div>";
-		return html;
-	}
-
-	function renderPlanTabs() {
-		ensurePlanTab();
-		let html =
-			'<div class="kt-strategy-plan-tabs mb-3" role="tablist" data-testid="strategy-plan-tabs">' +
-			'<div class="kt-primary-tabs">';
-		for (let i = 0; i < PLAN_TABS.length; i++) {
-			const tab = PLAN_TABS[i];
-			const on = activePlanTab === tab.id;
-			html +=
-				'<button type="button" class="kt-primary-tab kt-strategy-plan-tab' +
-				(on ? " is-active kt-primary-tab-active" : "") +
-				'" data-kt-strategy-plan-tab="' +
-				escapeHtml(tab.id) +
-				'" data-testid="' +
-				escapeHtml(tab.testId) +
-				'" role="tab" aria-selected="' +
-				(on ? "true" : "false") +
-				'">' +
-				escapeHtml(tab.label) +
-				"</button>";
-		}
-		html += "</div></div>";
-		return html;
-	}
-
-	function renderPlanTabContent(selected) {
-		if (activePlanTab === "structure") {
-			return (
-				'<div class="kt-strategy-tab-panel" data-testid="strategy-tab-panel-structure">' +
-				'<div data-testid="strategy-structure-panel-host"></div>' +
-				"</div>"
-			);
-		}
-		if (activePlanTab === "review") {
-			return (
-				'<div class="kt-strategy-tab-panel" data-testid="strategy-tab-panel-review">' +
-				'<div data-testid="strategy-review-panel-host"></div>' +
-				"</div>"
-			);
-		}
-		if (activePlanTab === "audit") {
-			return (
-				'<div class="kt-strategy-tab-panel" data-testid="strategy-tab-panel-audit">' +
-				'<div data-testid="strategy-audit-panel-host"></div>' +
-				"</div>"
-			);
-		}
-		const entity = selected.procuring_entity || "—";
-		const version = selected.version_no != null ? selected.version_no : "—";
-		return (
-			'<div class="kt-strategy-tab-panel" data-testid="strategy-tab-panel-info">' +
-			'<dl class="row mb-2">' +
-			'<dt class="col-sm-3">' +
-			escapeHtml(__("Entity")) +
-			'</dt><dd class="col-sm-9" data-testid="selected-plan-entity">' +
-			escapeHtml(entity) +
-			"</dd>" +
-			'<dt class="col-sm-3">' +
-			escapeHtml(__("Period")) +
-			"</dt><dd class=\"col-sm-9\">" +
-			escapeHtml(String(selected.start_year || "—")) +
-			" — " +
-			escapeHtml(String(selected.end_year || "—")) +
-			"</dd>" +
-			'<dt class="col-sm-3">' +
-			escapeHtml(__("Version")) +
-			'</dt><dd class="col-sm-9" data-testid="selected-plan-version">' +
-			escapeHtml(String(version)) +
-			"</dd>" +
-			"</dl>" +
-			'<div class="kt-strategy-detail__actions-group"><div class="kt-strategy-detail__actions">' +
-			'<button type="button" class="btn btn-default btn-sm kt-context-action" data-testid="selected-plan-open-builder">' +
-			escapeHtml(__("Manage Structure")) +
-			"</button>" +
-			'<button type="button" class="btn btn-default btn-sm kt-context-action" data-testid="selected-plan-review">' +
-			escapeHtml(__("Review")) +
-			"</button>" +
-			(userCanWriteStrategicPlan()
-				? '<button type="button" class="btn btn-default btn-sm kt-context-action" data-testid="selected-plan-edit-plan">' +
-				  escapeHtml(__("Edit Plan Info")) +
-				  "</button>"
-				: "") +
-			"</div></div>" +
-			"</div>"
-		);
-	}
-
-	function mountStructurePanelIfNeeded(host, planName) {
-		if (activePlanTab !== "structure" || !planName) return;
-		const mount = host.querySelector('[data-testid="strategy-structure-panel-host"]');
-		if (!mount) return;
-		if (typeof kentender_strategy !== "undefined" && kentender_strategy.strategy_structure_panel) {
-			kentender_strategy.strategy_structure_panel.mount(mount, planName);
-			structurePanelMounted = true;
-		} else {
-			mount.innerHTML =
-				'<div class="text-muted small py-2">' + escapeHtml(__("Loading structure editor…")) + "</div>";
-		}
-	}
-
-	function mountReviewPanelIfNeeded(host, selectedPlan) {
-		if (activePlanTab !== "review" || !selectedPlan || !selectedPlan.name) return;
-		const mount = host.querySelector('[data-testid="strategy-review-panel-host"]');
-		if (!mount) return;
-		if (typeof kentender_strategy !== "undefined" && kentender_strategy.strategy_review_panel) {
-			kentender_strategy.strategy_review_panel.mount(mount, selectedPlan.name, selectedPlan);
-		} else {
-			mount.innerHTML =
-				'<div class="text-muted small py-2">' + escapeHtml(__("Loading review panel…")) + "</div>";
-		}
-	}
-
-	function mountAuditPanelIfNeeded(host, planName) {
-		if (activePlanTab !== "audit" || !planName) return;
-		const mount = host.querySelector('[data-testid="strategy-audit-panel-host"]');
-		if (!mount) return;
-		if (typeof kentender_strategy !== "undefined" && kentender_strategy.strategy_audit_panel) {
-			kentender_strategy.strategy_audit_panel.mount(mount, planName);
-		} else {
-			mount.innerHTML =
-				'<div class="text-muted small py-2">' + escapeHtml(__("Loading audit panel…")) + "</div>";
-		}
-	}
-
-	function renderStrategyLandingContent(host, payload) {
-		applyInitialWorkbenchState(payload);
-		ensurePlanTab();
-		const portfolio = (payload && payload.portfolio) || {};
-		const plans = (payload && payload.plans) || [];
-		const filtered = filterPlansBySearch(filterPlansByStatus(plans));
-		const selected =
-			selectedPlanName && plans.length ? findPlan(payload, selectedPlanName) : plans.length ? plans[0] : null;
-		if (plans.length && selected) {
-			selectedPlanName = selected.name;
-		} else if (!plans.length) {
-			selectedPlanName = null;
-		}
-
-		const emptyPlans = plans.length === 0;
-		const emptyFiltered = !emptyPlans && filtered.length === 0;
-
-		let listHtml = "";
-		for (let i = 0; i < filtered.length; i++) {
-			const p = filtered[i];
-			const active = selected && p.name === selected.name ? " is-active" : "";
-			const st = String(p.status || "").toLowerCase();
-			listHtml +=
-				'<button type="button" class="kt-strategy-plan-row' +
-				active +
-				'" data-strategy-plan="' +
-				escapeHtml(p.name) +
-				'" data-testid="strategic-plan-row-' +
-				escapeHtml(p.name) +
-				'">' +
-				'<span class="kt-strategy-plan-row__main">' +
-				'<span class="kt-strategy-plan-row__title" data-testid="strategic-plan-row-title-' +
-				escapeHtml(p.name) +
-				'">' +
-				escapeHtml(p.strategic_plan_name || p.name) +
-				"</span>" +
-				'<span class="kt-strategy-plan-row__meta text-muted">' +
-				escapeHtml(String(p.start_year || "—")) +
-				"–" +
-				escapeHtml(String(p.end_year || "—")) +
-				" · " +
-				'<span class="kt-strategy-inline-status kt-strategy-inline-status--' +
-				escapeHtml(st) +
-				'">' +
-				escapeHtml(p.status || "") +
-				"</span>" +
-				"</span>" +
-				"</span>" +
-				"</button>";
-		}
-
-		let emptyHtml = "";
-		if (emptyPlans) {
-			emptyHtml =
-				'<p class="text-muted small mb-0" data-testid="strategic-plans-empty-state">' +
-				escapeHtml(__("No strategic plans yet. Create one to begin.")) +
-				"</p>";
-		} else if (emptyFiltered) {
-			emptyHtml =
-				'<p class="text-muted small mb-0" data-testid="strategic-plans-filter-empty">' +
-				escapeHtml(__("No plans match the current filter.")) +
-				"</p>";
-		}
-
-		let detailHtml = "";
-		if (!emptyPlans && selected) {
-			const py = String(selected.status || "").toLowerCase();
-			const ic = selected.indicator_count != null ? selected.indicator_count : selected.objective_count;
-			detailHtml =
-				'<div class="kt-strategy-detail-section kt-surface" data-testid="selected-plan-panel">' +
-				'<div class="kt-strategy-detail-overview">' +
-				'<div class="kt-strategy-detail__hero mb-3">' +
-				'<div class="kt-strategy-detail__hero-main">' +
-				'<h3 class="kt-strategy-detail__title mb-1" data-testid="selected-plan-title">' +
-				escapeHtml(selected.strategic_plan_name || selected.name) +
-				"</h3>" +
-				'<div class="text-muted" data-testid="selected-plan-meta">' +
-				escapeHtml(selected.procuring_entity || "—") +
-				" · " +
-				escapeHtml(String(selected.start_year || "—")) +
-				"–" +
-				escapeHtml(String(selected.end_year || "—")) +
-				" · " +
-				escapeHtml(__("Version")) +
-				" " +
-				escapeHtml(String(selected.version_no != null ? selected.version_no : "1")) +
-				"</div>" +
-				'<div class="mt-2">' +
-				'<span class="' +
-				statusBadgeClass(selected.status) +
-				'" data-kt-status="' +
-				escapeHtml(py) +
-				'" data-testid="selected-plan-status">' +
-				escapeHtml(selected.status || "") +
-				"</span> " +
-				'<span class="badge badge-secondary" data-testid="selected-plan-readiness">' +
-				escapeHtml(readinessLabel(selected)) +
-				"</span>" +
-				"</div>" +
-				"</div>" +
-				"</div>" +
-				'<div class="kt-strategy-detail__stats mb-2">' +
-				'<div class="kt-strategy-detail-stat">' +
-				'<div class="kt-strategy-detail-stat__label">' +
-				escapeHtml(__("Programs")) +
-				"</div>" +
-				'<div class="kt-strategy-detail-stat__num" data-testid="selected-plan-program-count">' +
-				escapeHtml(String(selected.program_count != null ? selected.program_count : "0")) +
-				"</div></div>" +
-				'<div class="kt-strategy-detail-stat">' +
-				'<div class="kt-strategy-detail-stat__label">' +
-				escapeHtml(__("Sub-programs")) +
-				"</div>" +
-				'<div class="kt-strategy-detail-stat__num" data-testid="selected-plan-sub-program-count">' +
-				escapeHtml(String(selected.sub_program_count != null ? selected.sub_program_count : "0")) +
-				"</div></div>" +
-				'<div class="kt-strategy-detail-stat">' +
-				'<div class="kt-strategy-detail-stat__label">' +
-				escapeHtml(__("Indicators")) +
-				"</div>" +
-				'<div class="kt-strategy-detail-stat__num" data-testid="selected-plan-indicator-count">' +
-				escapeHtml(String(ic != null ? ic : "0")) +
-				'</div></div>' +
-				'<div class="kt-strategy-detail-stat">' +
-				'<div class="kt-strategy-detail-stat__label">' +
-				escapeHtml(__("Targets")) +
-				"</div>" +
-				'<div class="kt-strategy-detail-stat__num" data-testid="selected-plan-target-count">' +
-				escapeHtml(String(selected.target_count != null ? selected.target_count : "0")) +
-				"</div></div>" +
-				"</div>" +
-				renderPlanTabs() +
-				renderPlanTabContent(selected) +
-				"</div></div>";
-		}
-
-		host.innerHTML =
-			'<div class="kt-strategy-workspace-header kt-strategy-workspace-header--compact mb-3">' +
-			'<div class="d-flex justify-content-between align-items-start flex-wrap gap-2">' +
-			"<div>" +
-			'<p class="text-muted mb-0" data-testid="strategy-page-intro">' +
-			escapeHtml(__("Define strategic plans, programs, indicators, and targets for downstream planning.")) +
-			"</p>" +
-			"</div>" +
-			(userCanCreateStrategicPlan()
-				? '<button type="button" class="btn btn-primary btn-sm kt-strategy-header-create kt-page-action-primary" data-testid="strategic-plan-create-button">' +
-				  '<span aria-hidden="true">+</span> ' +
-				  escapeHtml(__("New Strategic Plan")) +
-				  "</button>"
-				: "") +
-			"</div></div>" +
-			renderStatusChips(portfolio) +
-			'<div class="kt-strategy-master-detail kt-strategy-master-detail--tight">' +
-			'<div class="kt-strategy-col-list">' +
-			'<section class="kt-strategy-section kt-surface kt-strategy-list-section" data-testid="strategic-plans-section">' +
-			'<div class="kt-strategy-plan-list-head">' +
-			'<h2 class="kt-strategy-section__title">' +
-			escapeHtml(__("Strategic Plans")) +
-			"</h2>" +
-			'<input type="search" class="form-control form-control-sm kt-strategy-plan-search" placeholder="' +
-			escapeHtml(__("Search plans…")) +
-			'" data-testid="strategic-plan-search" value="' +
-			escapeHtml(planSearchQuery) +
-			'" />' +
-			"</div>" +
-			(emptyPlans || emptyFiltered
-				? '<div class="kt-strategy-plan-list-empty">' + emptyHtml + "</div>"
-				: '<div class="kt-strategy-plan-list" data-testid="strategic-plan-list">' + listHtml + "</div>") +
-			"</section></div>" +
-			'<div class="kt-strategy-col-detail">' +
-			detailHtml +
-			"</div></div>";
-
-		if (pendingPlanListScrollTop != null) {
-			const listEl = host.querySelector('[data-testid="strategic-plan-list"]');
-			if (listEl) listEl.scrollTop = pendingPlanListScrollTop;
-			pendingPlanListScrollTop = null;
-		}
-
-		if (selected && selected.name) {
-			mountStructurePanelIfNeeded(host, selected.name);
-			mountReviewPanelIfNeeded(host, selected);
-			mountAuditPanelIfNeeded(host, selected.name);
-		}
-		scheduleStrategySidebarHighlightSync();
-	}
-
-	function switchPlanTab(tabId) {
-		activePlanTab = tabId;
-		saveStrategyWorkbenchState();
-		const root = getVisibleWorkspacesPageRoot();
-		const shell =
-			(root && root.querySelector('.kt-strategy-injected-shell[data-testid="strategy-landing-page"]')) ||
-			document.querySelector('.kt-strategy-injected-shell[data-testid="strategy-landing-page"]');
-		if (shell && lastPayload) {
-			const listEl = shell.querySelector('[data-testid="strategic-plan-list"]');
-			pendingPlanListScrollTop = listEl ? listEl.scrollTop : null;
-			renderStrategyLandingContent(shell, lastPayload);
-		}
-	}
-
-	function rerenderLandingPreservingSearchFocus(root) {
-		if (!root || !lastPayload) return;
-		const search = root.querySelector('[data-testid="strategic-plan-search"]');
-		const keepFocus = !!search && document.activeElement === search;
-		let selectionStart = null;
-		let selectionEnd = null;
-		if (keepFocus) {
-			selectionStart = search.selectionStart;
-			selectionEnd = search.selectionEnd;
-		}
-		renderStrategyLandingContent(root, lastPayload);
-		if (!keepFocus) return;
-		const nextSearch = root.querySelector('[data-testid="strategic-plan-search"]');
-		if (!nextSearch) return;
-		nextSearch.focus();
-		try {
-			const max = String(nextSearch.value || "").length;
-			const start =
-				typeof selectionStart === "number" ? Math.max(0, Math.min(selectionStart, max)) : max;
-			const end = typeof selectionEnd === "number" ? Math.max(start, Math.min(selectionEnd, max)) : start;
-			nextSearch.setSelectionRange(start, end);
-		} catch (e) {
-			/* ignore unsupported input selection */
-		}
-	}
-
-	function ensureStrategyDelegatedClicks(root) {
-		if (!root || root.getAttribute("data-kt-strategy-delegated") === "1") return;
-		root.setAttribute("data-kt-strategy-delegated", "1");
-
-		root.addEventListener("input", function (ev) {
+	function bindEvents() {
+		if (bound) return;
+		bound = true;
+		document.addEventListener("click", function (ev) {
 			const t = ev.target;
-			if (t && t.matches && t.matches('[data-testid="strategic-plan-search"]')) {
-				planSearchQuery = t.value || "";
-				rerenderLandingPreservingSearchFocus(root);
-			}
-		});
-
-		root.addEventListener("click", function (ev) {
-			const t = ev.target;
-			if (!t || !t.closest) return;
-
-			const statusChip = t.closest(".kt-strategy-status-chip[data-kt-strategy-status]");
-			if (statusChip) {
-				activeStatusFilter = statusChip.getAttribute("data-kt-strategy-status") || "all";
-				saveStrategyWorkbenchState();
-				if (lastPayload) renderStrategyLandingContent(root, lastPayload);
-				return;
-			}
-
-			const planTab = t.closest(".kt-strategy-plan-tab[data-kt-strategy-plan-tab]");
-			if (planTab) {
-				switchPlanTab(planTab.getAttribute("data-kt-strategy-plan-tab") || "info");
-				return;
-			}
-
-			const row = t.closest(".kt-strategy-plan-row[data-strategy-plan]");
-			if (row) {
-				const next = row.getAttribute("data-strategy-plan");
-				if (next === selectedPlanName) return;
-				const listEl = root.querySelector('[data-testid="strategic-plan-list"]');
-				pendingPlanListScrollTop = listEl ? listEl.scrollTop : null;
-				selectedPlanName = next;
-				saveStrategyWorkbenchState();
-				if (lastPayload) renderStrategyLandingContent(root, lastPayload);
-				return;
-			}
-
-			if (t.closest("[data-testid='strategic-plan-create-button']")) {
-				saveStrategyWorkbenchState();
+			if (!(t && t.closest)) return;
+			if (t.closest('[data-testid="strategic-plan-create-button"]')) {
 				if (typeof kentender_strategy !== "undefined" && kentender_strategy.strategy_plan_drawer) {
-					kentender_strategy.strategy_plan_drawer.openCreate(function (planName) {
-						selectedPlanName = planName;
-						loadStrategyLanding();
-					});
-				} else if (typeof frappe.new_doc === "function") {
-					frappe.new_doc("Strategic Plan");
-				} else {
-					frappe.set_route("Form", "Strategic Plan", "new-strategic-plan");
-				}
-				return;
-			}
-
-			if (t.closest("[data-testid='selected-plan-open-builder']")) {
-				switchPlanTab("structure");
-				return;
-			}
-
-			if (t.closest("[data-testid='selected-plan-review']")) {
-				switchPlanTab("review");
-				return;
-			}
-
-			if (t.closest("[data-testid='selected-plan-edit-plan']")) {
-				const sel = lastPayload && selectedPlanName ? findPlan(lastPayload, selectedPlanName) : null;
-				if (sel && sel.name) {
-					saveStrategyWorkbenchState();
-					if (typeof kentender_strategy !== "undefined" && kentender_strategy.strategy_plan_drawer) {
-						kentender_strategy.strategy_plan_drawer.openEdit(sel.name, function () {
-							loadStrategyLanding();
-						});
-					} else if (typeof kentender_core !== "undefined" && kentender_core.kt_nav) {
-						kentender_core.kt_nav.toForm("strategy", sel.name);
-					} else {
-						frappe.set_route("Form", "Strategic Plan", sel.name);
-					}
-				}
-				return;
-			}
-		});
-	}
-
-	function injectStrategyShell() {
-		if (strategyShellPresent()) return { ok: true, inserted: false };
-		const esc = resolveWorkspaceEditorMount();
-		if (!esc) return { ok: false, inserted: false };
-		const wrap = document.createElement("div");
-		wrap.className = "kt-strategy-injected-shell";
-		wrap.setAttribute("data-testid", "strategy-landing-page");
-		wrap.innerHTML =
-			'<div class="text-muted small py-3">' + escapeHtml(__("Loading strategy workspace…")) + "</div>";
-		const ed = document.getElementById("editorjs");
-		if (ed && esc.contains(ed)) {
-			esc.insertBefore(wrap, ed);
-			ed.style.display = "none";
-		} else {
-			esc.insertBefore(wrap, esc.firstChild);
-		}
-		ensureStrategyDelegatedClicks(wrap);
-		return { ok: true, inserted: true, wrap: wrap };
-	}
-
-	function applyStrategyPayload(payload) {
-		lastPayload = payload || { portfolio: {}, plans: [] };
-		const plans = lastPayload.plans || [];
-		if (plans.length && !selectedPlanName) selectedPlanName = plans[0].name;
-		const root = getVisibleWorkspacesPageRoot();
-		const shell =
-			(root && root.querySelector('.kt-strategy-injected-shell[data-testid="strategy-landing-page"]')) ||
-			document.querySelector('.kt-strategy-injected-shell[data-testid="strategy-landing-page"]');
-		if (!shell) return;
-		renderStrategyLandingContent(shell, lastPayload);
-		ensureStrategyDelegatedClicks(shell);
-	}
-
-	function loadStrategyLanding() {
-		if (!isStrategyWorkspaceRoute()) return;
-		if (landingLoadInFlight) return;
-		landingLoadInFlight = true;
-		frappe.call({
-			method: "kentender_strategy.api.landing.get_strategy_landing_data",
-			callback: function (r) {
-				landingLoadInFlight = false;
-				if (!isStrategyWorkspaceRoute()) return;
-				applyStrategyPayload((r && r.message) || { portfolio: {}, plans: [] });
-			},
-			error: function (r) {
-				landingLoadInFlight = false;
-				if (!isStrategyWorkspaceRoute()) return;
-				document.querySelectorAll(".kt-strategy-injected-shell").forEach(function (el) {
-					el.remove();
-				});
-				const exc = r && (r.exc || r._server_messages || "");
-				const excStr = typeof exc === "string" ? exc : JSON.stringify(exc);
-				if (
-					excStr.indexOf("PermissionError") >= 0 ||
-					excStr.indexOf("Not permitted") >= 0 ||
-					excStr.indexOf("403") >= 0
-				) {
+					kentender_strategy.strategy_plan_drawer.openEdit("one", function () {});
 					return;
 				}
-				const esc = resolveWorkspaceEditorMount();
-				if (!esc) return;
-				const wrap = document.createElement("div");
-				wrap.className = "kt-strategy-injected-shell";
-				wrap.setAttribute("data-testid", "strategy-landing-page");
-				wrap.innerHTML =
-					'<div class="alert alert-danger mb-0">' +
-					escapeHtml(__("Unable to load strategy workspace data.")) +
-					"</div>";
-				const ed = document.getElementById("editorjs");
-				if (ed && esc.contains(ed)) {
-					esc.insertBefore(wrap, ed);
-					ed.style.display = "none";
-				} else {
-					esc.insertBefore(wrap, esc.firstChild);
+				if (typeof frappe !== "undefined" && typeof frappe.new_doc === "function") {
+					frappe.new_doc("Strategic Plan");
 				}
-			},
-		});
-	}
-
-	function tryBindStrategyWorkspace() {
-		if (!isStrategyWorkspaceRoute()) {
-			removeStrategyLandingIfWrongRoute();
-			return;
-		}
-		if (!userCanReadStrategicPlan()) {
-			removeStrategyLandingIfWrongRoute();
-			return;
-		}
-		syncStrategyShellClass();
-		const inj = injectStrategyShell();
-		if (inj && inj.ok && (inj.inserted || !lastPayload)) loadStrategyLanding();
-	}
-
-	function requestBind(delayMs) {
-		if (bindScheduled) return;
-		bindScheduled = true;
-		setTimeout(function () {
-			bindScheduled = false;
-			tryBindStrategyWorkspace();
-		}, delayMs || 0);
-	}
-
-	function scheduleBind() {
-		if (!isStrategyWorkspaceRoute()) {
-			removeStrategyLandingIfWrongRoute();
-			return;
-		}
-		syncStrategyShellClass();
-		scheduleStrategySidebarHighlightSync();
-		if (typeof frappe.after_ajax === "function") {
-			frappe.after_ajax(function () {
-				requestBind(0);
-			});
-		} else {
-			requestBind(0);
-		}
-		requestBind(120);
-		requestBind(450);
-	}
-
-	function ensureDomObserver() {
-		if (workspaceDomObserver || typeof MutationObserver === "undefined") return;
-		const target = document.body || document.documentElement;
-		if (!target) return;
-		workspaceDomObserver = new MutationObserver(function () {
-			if (!isStrategyWorkspaceRoute() || strategyShellPresent()) return;
-			tryBindStrategyWorkspace();
-		});
-		workspaceDomObserver.observe(target, { childList: true, subtree: true });
-	}
-
-	function bindHooks() {
-		if (!hooksBound) {
-			hooksBound = true;
-			if (window.jQuery) {
-				window.jQuery(document).on("page-change", scheduleBind);
-				window.jQuery(document).on("app_ready", scheduleBind);
 			}
-			document.addEventListener("kt-strategy-structure-changed", function () {
-				loadStrategyLanding();
+		});
+		if (window.jQuery) {
+			window.jQuery(document).on("page-change app_ready", renderShell);
+		}
+		if (typeof frappe !== "undefined" && frappe.router && frappe.router.on) {
+			frappe.router.on("change", renderShell);
+		}
+		if (typeof MutationObserver !== "undefined" && !observer) {
+			observer = new MutationObserver(function () {
+				if (!isStrategyWorkspaceRoute()) return;
+				const existing = document.querySelector('.kt-strategy-injected-shell[data-testid="strategy-landing-page"]');
+				if (!existing) renderShell();
 			});
-			document.addEventListener("kt-strategy-workflow-changed", function () {
-				loadStrategyLanding();
-			});
-			if (frappe.router && frappe.router.on) frappe.router.on("change", scheduleBind);
-			ensureDomObserver();
+			observer.observe(document.body || document.documentElement, { childList: true, subtree: true });
 		}
-		syncStrategyShellClass();
-		scheduleBind();
 	}
 
-	function ensurePoll() {
-		if (pollStarted) return;
-		pollStarted = true;
-		function tick() {
-			if (!isStrategyWorkspaceRoute()) removeStrategyLandingIfWrongRoute();
-			else if (!strategyShellPresent()) tryBindStrategyWorkspace();
-			setTimeout(tick, 400);
+	function boot() {
+		bindEvents();
+		renderShell();
+		setTimeout(renderShell, 200);
+		setTimeout(renderShell, 800);
+	}
+
+	function waitForFrappe() {
+		if (typeof window.frappe === "undefined") {
+			setTimeout(waitForFrappe, 20);
+			return;
 		}
-		tick();
+		boot();
+		if (typeof frappe.ready === "function") frappe.ready(boot);
 	}
 
-	function kick() {
-		bindHooks();
-		ensurePoll();
-		setTimeout(scheduleBind, 400);
-	}
-
-	function bootstrap() {
-		function whenFrappeExists() {
-			if (typeof window.frappe === "undefined") {
-				setTimeout(whenFrappeExists, 20);
-				return;
-			}
-			kick();
-			if (typeof frappe.ready === "function") frappe.ready(kick);
-		}
-		whenFrappeExists();
-		window.addEventListener("load", kick);
-		setTimeout(kick, 900);
-	}
-
-	bootstrap();
+	waitForFrappe();
+	window.addEventListener("load", boot);
 })();

@@ -3,47 +3,60 @@ import { test, expect } from '@playwright/test';
 import { loginAsStrategyManager } from '../../helpers/auth';
 import { openStrategyLanding } from '../../helpers/strategyLanding';
 
-/** From seed_strategy_basic / seed spec (MOH). */
-const SEEDED_BASIC_PLAN_TITLE = 'MOH Strategic Plan 2026–2030';
-
 /**
- * Assumes `seed_core_minimal` + `seed_strategy_basic` (or extended) has been applied.
+ * Strategic Portfolio Hub smoke tests.
+ * Static render — no backend seed required.
  */
-test('Strategy landing shows seeded plans when plans exist', async ({ page }) => {
+test('Strategy landing shows portfolio hub shell', async ({ page }) => {
 	await loginAsStrategyManager(page);
 	await openStrategyLanding(page);
 
-	await expect(page.getByTestId('strategic-plan-list')).toBeVisible();
-	await expect(page.getByTestId('strategic-plan-list').getByText(SEEDED_BASIC_PLAN_TITLE)).toBeVisible();
-	await expect(page.getByTestId('strategic-plans-empty-state')).toHaveCount(0);
-	await expect(page.getByTestId('selected-plan-panel')).toBeVisible();
-	await expect(page.getByTestId('selected-plan-title')).toBeVisible();
-	await expect(page.getByTestId('selected-plan-program-count')).toBeVisible();
-	await expect(page.getByTestId('selected-plan-sub-program-count')).toBeVisible();
-	await expect(page.getByTestId('selected-plan-indicator-count')).toBeVisible();
-	await expect(page.getByTestId('selected-plan-target-count')).toBeVisible();
+	await expect(page.getByTestId('strategy-portfolio-hub')).toBeVisible();
+	await expect(page.getByTestId('sph-topbar')).toBeVisible();
+	await expect(page.getByTestId('sph-page-title')).toBeVisible();
+	await expect(page.getByTestId('sph-page-title')).toContainText('Strategy Management');
+	await expect(page.getByTestId('sph-metrics-grid')).toBeVisible();
+	await expect(page.getByTestId('sph-plans-grid')).toBeVisible();
+	await expect(page.getByTestId('sph-activity-table')).toBeVisible();
+	await expect(page.getByTestId('sph-create-new-card')).toBeVisible();
 });
 
-test('Plan rail keeps header separated and uses inline status only', async ({ page }) => {
+test('Strategy portfolio hub shows plan cards with correct data', async ({ page }) => {
 	await loginAsStrategyManager(page);
 	await openStrategyLanding(page);
 
-	const section = page.getByTestId('strategic-plans-section');
-	const railHead = section.locator('.kt-strategy-plan-list-head');
-	await expect(railHead).toBeVisible();
-	await expect(railHead.getByTestId('strategic-plan-search')).toBeVisible();
-	await expect(page.locator('[data-testid^="strategic-plan-row-status-"]')).toHaveCount(0);
+	const planCards = page.getByTestId('sph-plan-card');
+	await expect(planCards).toHaveCount(3);
+
+	await expect(planCards.nth(0)).toContainText('Ministry of Health 2026-2030');
+	await expect(planCards.nth(0)).toContainText('Active');
+	await expect(planCards.nth(0)).toContainText('$450M');
+
+	await expect(planCards.nth(1)).toContainText('Digital Health Roadmap');
+	await expect(planCards.nth(1)).toContainText('Draft');
+
+	await expect(planCards.nth(2)).toContainText('Infrastructure Renewal Phase II');
 });
 
-test('Selected plan shows correct seeded counts for basic plan', async ({ page }) => {
+test('Strategy portfolio hub shows topbar search and metrics', async ({ page }) => {
 	await loginAsStrategyManager(page);
 	await openStrategyLanding(page);
 
-	await page.getByTestId('strategic-plan-list').getByText(SEEDED_BASIC_PLAN_TITLE).click();
+	await expect(page.getByTestId('sph-search-input')).toBeVisible();
+	await expect(page.getByTestId('sph-metrics-grid')).toContainText('Total Budget');
+	await expect(page.getByTestId('sph-metrics-grid')).toContainText('Active Programs');
+	await expect(page.getByTestId('sph-metrics-grid')).toContainText('Success Rate');
+	await expect(page.getByTestId('sph-metrics-grid')).toContainText('Draft Plans');
+	await expect(page.getByTestId('sph-create-plan-btn')).toBeVisible();
+});
 
-	await expect(page.getByTestId('selected-plan-title')).toContainText(SEEDED_BASIC_PLAN_TITLE);
-	await expect(page.getByTestId('selected-plan-program-count')).toContainText('2');
-	await expect(page.getByTestId('selected-plan-sub-program-count')).toContainText('2');
-	await expect(page.getByTestId('selected-plan-indicator-count')).toContainText('3');
-	await expect(page.getByTestId('selected-plan-target-count')).toContainText('4');
+test('Strategy portfolio hub activity table shows lineage entries', async ({ page }) => {
+	await loginAsStrategyManager(page);
+	await openStrategyLanding(page);
+
+	const table = page.getByTestId('sph-activity-table');
+	await expect(table).toContainText('New Objective Added');
+	await expect(table).toContainText('Budget Re-allocated');
+	await expect(table).toContainText('Plan Finalized');
+	await expect(table).toContainText('Sarah Chen');
 });

@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Strategic Procurement - Ministry of Health Strategic Plan</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { font-family: 'Hanken Grotesk', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .tree-line-vertical {
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background-color: #e2e8f0;
+        }
+        .tree-line-horizontal {
+            position: absolute;
+            left: 15px;
+            top: 24px;
+            width: 16px;
+            height: 1px;
+            background-color: #e2e8f0;
+        }
+        .workbench-gradient {
+            background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#c6c6cd",
+                        "on-primary-container": "#7c839b",
+                        "surface-variant": "#e0e3e5",
+                        "secondary-fixed": "#d5e3fd",
+                        "surface-container-high": "#e6e8ea",
+                        "tertiary-container": "#0b1c30",
+                        "on-secondary-container": "#57657b",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "secondary": "#515f74",
+                        "surface-container-low": "#f2f4f6",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "outline": "#76777d",
+                        "surface-tint": "#565e74",
+                        "on-error": "#ffffff",
+                        "on-secondary-fixed": "#0d1c2f",
+                        "inverse-surface": "#2d3133",
+                        "on-surface-variant": "#45464d",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed": "#d3e4fe",
+                        "surface-container": "#eceef0",
+                        "secondary-container": "#d5e3fd",
+                        "on-tertiary-fixed-variant": "#38485d",
+                        "primary-fixed-dim": "#bec6e0",
+                        "on-background": "#191c1e",
+                        "inverse-primary": "#bec6e0",
+                        "on-secondary": "#ffffff",
+                        "surface-bright": "#f7f9fb",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-tertiary-container": "#75859d",
+                        "error": "#ba1a1a",
+                        "primary-fixed": "#dae2fd",
+                        "on-primary-fixed": "#131b2e",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "on-surface": "#191c1e",
+                        "tertiary": "#000000",
+                        "background": "#f7f9fb",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "surface": "#f7f9fb",
+                        "on-primary": "#ffffff",
+                        "primary": "#000000",
+                        "error-container": "#ffdad6",
+                        "primary-container": "#131b2e",
+                        "surface-dim": "#d8dadc",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed-dim": "#b7c8e1"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "hierarchy-indent": "32px",
+                        "lg": "24px",
+                        "xs": "4px",
+                        "sm": "8px",
+                        "unit": "4px",
+                        "container-padding": "24px",
+                        "xl": "32px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["Hanken Grotesk"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "headline-xl": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "headline-md": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "label-sm": ["11px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-xl": ["30px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-surface">
+<!-- SIDE NAV BAR -->
+<aside class="fixed left-0 top-0 h-full w-[280px] border-r border-outline-variant bg-surface-container-lowest flex flex-col z-50">
+<div class="px-lg py-xl">
+<div class="flex items-center gap-sm mb-xl">
+<div class="w-10 h-10 bg-primary flex items-center justify-center rounded">
+<span class="material-symbols-outlined text-on-primary">strategy</span>
+</div>
+<div>
+<h1 class="text-headline-md font-headline-md font-bold text-primary">Procurement</h1>
+<p class="text-label-sm text-on-surface-variant">Strategic Workbench</p>
+</div>
+</div>
+<nav class="space-y-xs">
+<!-- Strategy Active -->
+<a class="flex items-center gap-md px-md py-sm bg-secondary-container text-on-secondary-container rounded-lg font-bold" href="#">
+<span class="material-symbols-outlined" data-icon="strategy">strategy</span>
+<span class="text-label-md">Strategy</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-secondary hover:text-primary hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="event_note">event_note</span>
+<span class="text-label-md">Planning</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-secondary hover:text-primary hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="gavel">gavel</span>
+<span class="text-label-md">Tenders</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-secondary hover:text-primary hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="text-label-md">Analytics</span>
+</a>
+</nav>
+</div>
+<div class="mt-auto border-t border-outline-variant p-md">
+<button class="w-full bg-primary text-on-primary font-bold py-md px-lg rounded flex items-center justify-center gap-sm mb-lg shadow-sm">
+<span class="material-symbols-outlined">add</span>
+<span class="text-label-md">New Strategic Plan</span>
+</button>
+<nav class="space-y-xs">
+<a class="flex items-center gap-md px-md py-sm text-secondary hover:text-primary hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="text-label-md">Settings</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-secondary hover:text-primary hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="text-label-md">Help</span>
+</a>
+</nav>
+</div>
+</aside>
+<!-- TOP APP BAR -->
+<header class="flex justify-between items-center w-full px-lg py-md h-16 ml-[280px] max-w-[calc(100%-280px)] sticky top-0 bg-surface border-b border-outline-variant z-40">
+<div class="flex items-center gap-xl">
+<span class="text-headline-md font-headline-md font-black text-primary">Strategic Procurement</span>
+<div class="relative w-80">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-lg text-body-md focus:ring-1 focus:ring-primary" placeholder="Search strategy tree..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-lg">
+<nav class="hidden lg:flex items-center gap-lg mr-lg">
+<a class="text-primary font-bold border-b-2 border-primary pb-1 text-label-md" href="#">Dashboard</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors text-label-md" href="#">Programs</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors text-label-md" href="#">Objectives</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors text-label-md" href="#">Targets</a>
+</nav>
+<div class="flex items-center gap-md">
+<button class="p-2 hover:bg-surface-container-low rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 hover:bg-surface-container-low rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a corporate procurement executive in a brightly lit, modern architectural office setting. High-key lighting highlights the minimalist clean lines of the environment, dominated by a sophisticated palette of white, slate, and navy blue. The executive wears a sharp, charcoal gray blazer, looking directly into the camera with a confident, authoritative expression." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDA_uk4PLCeZRF6PfqtPDBqQNiNnyQSIGRlIJhCRf0stBechcKhDsB-1OCoe4jdyy7glepihra7ldbVBDC7ZsBxIrd7mrVisJt6P3rj9Be1hlAkf6MeGyePVfpn-P-dmdUtMv7gxxJivL1D_I6kvf1M9Ur2tt-cHezTyF5KUV-LP2RS3DpZA77d3TpmppakbQq-fy3FzvLIY4D-NXdWhf0eKQ1yp9WPYo97e6f7UCrUzrBJ0hcNaVlz-JmscvjZUbEDFpFx281Hy5Y"/>
+</div>
+</div>
+</div>
+</header>
+<!-- MAIN CONTENT -->
+<main class="ml-[280px] p-lg workbench-gradient min-h-screen">
+<!-- Breadcrumbs & Header -->
+<div class="mb-lg">
+<div class="flex items-center gap-xs text-on-surface-variant text-label-sm mb-sm">
+<span>All Strategic Plans</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-primary font-bold">Ministry of Health 2026-2030</span>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<h2 class="text-headline-xl font-headline-xl text-primary">Ministry of Health Strategic Plan 2026-2030</h2>
+<p class="text-body-md text-on-surface-variant mt-xs">Comprehensive modernization of public healthcare infrastructure and digital diagnostics.</p>
+</div>
+<div class="flex gap-md">
+<button class="px-lg py-sm border border-outline text-primary rounded font-bold text-label-md hover:bg-surface-container-low">Export Report</button>
+<button class="px-lg py-sm bg-primary text-on-primary rounded font-bold text-label-md">Edit Plan</button>
+</div>
+</div>
+</div>
+<!-- Metrics Overview (Bento Style) -->
+<div class="grid grid-cols-4 gap-lg mb-xl">
+<div class="col-span-1 bg-surface-container-lowest border border-outline-variant p-lg rounded">
+<div class="flex justify-between items-start mb-md">
+<span class="text-label-md text-on-surface-variant uppercase tracking-wider">Overall Completion</span>
+<span class="material-symbols-outlined text-primary" data-icon="trending_up">trending_up</span>
+</div>
+<div class="text-headline-xl font-black mb-sm">64%</div>
+<div class="w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="bg-primary h-full" style="width: 64%"></div>
+</div>
+</div>
+<div class="col-span-1 bg-surface-container-lowest border border-outline-variant p-lg rounded">
+<div class="flex justify-between items-start mb-md">
+<span class="text-label-md text-on-surface-variant uppercase tracking-wider">Active Programs</span>
+<span class="material-symbols-outlined text-on-secondary-container" data-icon="layers">layers</span>
+</div>
+<div class="text-headline-xl font-black mb-sm">12</div>
+<div class="flex items-center gap-xs text-label-sm text-on-secondary-container">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span>3 Completed this quarter</span>
+</div>
+</div>
+<div class="col-span-1 bg-surface-container-lowest border border-outline-variant p-lg rounded">
+<div class="flex justify-between items-start mb-md">
+<span class="text-label-md text-on-surface-variant uppercase tracking-wider">Critical Risks</span>
+<span class="material-symbols-outlined text-error" data-icon="warning">warning</span>
+</div>
+<div class="text-headline-xl font-black mb-sm">02</div>
+<div class="flex items-center gap-xs text-label-sm text-error">
+<span>Action required in 'Digital Health'</span>
+</div>
+</div>
+<div class="col-span-1 bg-surface-container-lowest border border-outline-variant p-lg rounded relative overflow-hidden">
+<div class="absolute inset-0 opacity-10 bg-cover bg-center" data-alt="A sophisticated data visualization background featuring abstract connecting nodes and subtle glowing lines in deep navy and soft white. The style is ultra-modern and corporate, representing connectivity and strategic planning. The composition is clean with a professional high-fidelity finish, perfectly matching the workbench aesthetic." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB2HAMF9_nmHOTxummWik5nfLVe2U_4wwObeBtyJWPTJK0chPyS6Bzkyixv8lkgGrRdNnlNgekx4eOxFDNrlKeS9S3oTxszbbL3vi_cb8K0o5D66-1LpJYdqjnRzDygrWXErt8pNfgojCE6ARlLojUl3toP0VKaEyR0-vA0UvDRmTL9d24rmm0BLzrieUIZ3Xdh2NkJrWiobBgzrofFXx3_3F8y2mbkz8FFvQiiiGkl5jGpZQeIBnaqMFlyH8ezcb1_xWF1cSwchsA')"></div>
+<div class="relative z-10">
+<div class="flex justify-between items-start mb-md">
+<span class="text-label-md text-on-surface-variant uppercase tracking-wider">Next Milestone</span>
+<span class="material-symbols-outlined text-primary" data-icon="calendar_today">calendar_today</span>
+</div>
+<div class="text-headline-md font-bold mb-xs">Oct 12, 2024</div>
+<p class="text-label-sm text-on-surface-variant">Procurement Phase II Close</p>
+</div>
+</div>
+</div>
+<!-- HIERARCHICAL TREE WORKBENCH -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded shadow-sm overflow-hidden mb-xl">
+<div class="bg-surface-container-low px-lg py-md border-b border-outline-variant flex justify-between items-center">
+<div class="flex gap-lg">
+<h3 class="text-label-md font-bold text-primary uppercase">Strategic Hierarchy</h3>
+<div class="flex items-center gap-sm">
+<span class="w-3 h-3 rounded-full bg-green-500"></span>
+<span class="text-label-sm text-on-surface-variant">On Track</span>
+<span class="w-3 h-3 rounded-full bg-amber-500 ml-md"></span>
+<span class="text-label-sm text-on-surface-variant">At Risk</span>
+</div>
+</div>
+<div class="flex gap-sm">
+<button class="p-2 hover:bg-surface-container-high rounded" title="Expand All">
+<span class="material-symbols-outlined">unfold_more</span>
+</button>
+<button class="p-2 hover:bg-surface-container-high rounded" title="Filter Tree">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+</div>
+</div>
+<!-- THE TREE -->
+<div class="p-lg">
+<!-- Program Level 1 -->
+<div class="mb-lg">
+<!-- PROGRAM CARD -->
+<div class="group flex items-center gap-md border border-outline-variant bg-white p-md rounded shadow-sm hover:border-primary transition-all mb-xs relative">
+<button class="p-1 hover:bg-surface-container-low rounded">
+<span class="material-symbols-outlined">keyboard_arrow_down</span>
+</button>
+<div class="w-10 h-10 bg-secondary-fixed flex items-center justify-center rounded">
+<span class="material-symbols-outlined text-on-secondary-fixed">vaccines</span>
+</div>
+<div class="flex-grow">
+<div class="flex items-center gap-md">
+<span class="text-label-sm font-bold text-on-surface-variant">P1</span>
+<h4 class="text-body-lg font-bold text-primary">National Immunization Infrastructure Upgrade</h4>
+<span class="bg-green-100 text-green-800 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">Active</span>
+</div>
+<div class="flex items-center gap-lg mt-1">
+<div class="flex items-center gap-sm w-48">
+<div class="w-full h-1.5 bg-surface-container-low rounded-full">
+<div class="bg-primary h-full" style="width: 78%"></div>
+</div>
+<span class="text-[11px] font-bold">78%</span>
+</div>
+<span class="text-label-sm text-on-surface-variant">4 Objectives · 12 Targets</span>
+</div>
+</div>
+<div class="flex items-center gap-sm opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="px-md py-1 border border-outline text-primary text-label-sm rounded hover:bg-surface-container-low flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">add</span> Objective
+                            </button>
+<button class="p-2 text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- OBJECTIVES (Level 2 Nested) -->
+<div class="ml-hierarchy-indent relative">
+<div class="tree-line-vertical"></div>
+<!-- Objective 1.1 -->
+<div class="relative py-2">
+<div class="tree-line-horizontal"></div>
+<div class="group flex items-center gap-md ml-lg border border-outline-variant bg-surface-container-lowest p-sm rounded hover:bg-surface-bright transition-all mb-xs">
+<button class="p-1 hover:bg-surface-container-low rounded">
+<span class="material-symbols-outlined">keyboard_arrow_down</span>
+</button>
+<div class="flex-grow">
+<div class="flex items-center gap-md">
+<span class="text-label-sm font-bold text-on-surface-variant">OBJ 1.1</span>
+<h5 class="text-body-md font-bold text-primary">Cold-Chain Storage Modernization (Region A)</h5>
+<span class="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">At Risk</span>
+</div>
+<div class="flex items-center gap-lg mt-1">
+<div class="flex items-center gap-sm w-32">
+<div class="w-full h-1 bg-surface-container-low rounded-full">
+<div class="bg-amber-500 h-full" style="width: 45%"></div>
+</div>
+<span class="text-[10px] font-bold">45%</span>
+</div>
+<span class="text-label-sm text-on-surface-variant">3 Targets</span>
+</div>
+</div>
+<div class="flex items-center gap-sm opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="px-sm py-1 border border-outline text-primary text-label-sm rounded hover:bg-surface-container-low flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]">add</span> Target
+                                    </button>
+</div>
+</div>
+<!-- TARGETS (Level 3 Nested) -->
+<div class="ml-hierarchy-indent relative">
+<div class="tree-line-vertical"></div>
+<!-- Target 1.1.1 -->
+<div class="relative py-1">
+<div class="tree-line-horizontal"></div>
+<div class="flex items-center gap-md ml-lg bg-surface-container-low px-md py-sm rounded-lg border-l-4 border-primary">
+<div class="flex-grow">
+<div class="flex justify-between">
+<span class="text-label-sm font-bold text-on-surface-variant">TARGET 1.1.1</span>
+<span class="text-label-sm text-on-surface-variant">Due: Nov 20, 2024</span>
+</div>
+<p class="text-body-md text-primary font-medium">Procurement of 50 Ultra-Low Temperature Freezers</p>
+<div class="mt-2 flex items-center justify-between">
+<div class="w-2/3 h-1.5 bg-surface-container-high rounded-full">
+<div class="bg-primary h-full" style="width: 30%"></div>
+</div>
+<span class="text-label-sm font-black">15 / 50 Delivered</span>
+</div>
+</div>
+<button class="p-2 hover:bg-white rounded">
+<span class="material-symbols-outlined">edit_note</span>
+</button>
+</div>
+</div>
+<!-- Target 1.1.2 -->
+<div class="relative py-1">
+<div class="tree-line-horizontal"></div>
+<div class="flex items-center gap-md ml-lg bg-surface-container-low px-md py-sm rounded-lg border-l-4 border-outline-variant">
+<div class="flex-grow">
+<div class="flex justify-between">
+<span class="text-label-sm font-bold text-on-surface-variant">TARGET 1.1.2</span>
+<span class="text-label-sm text-on-surface-variant">Due: Dec 15, 2024</span>
+</div>
+<p class="text-body-md text-primary font-medium">Installation and Training across 12 Regional Hubs</p>
+<div class="mt-2 flex items-center justify-between">
+<div class="w-2/3 h-1.5 bg-surface-container-high rounded-full">
+<div class="bg-outline-variant h-full" style="width: 0%"></div>
+</div>
+<span class="text-label-sm font-black">0 / 12 Locations</span>
+</div>
+</div>
+<button class="p-2 hover:bg-white rounded">
+<span class="material-symbols-outlined">edit_note</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Objective 1.2 -->
+<div class="relative py-2">
+<div class="tree-line-horizontal"></div>
+<div class="group flex items-center gap-md ml-lg border border-outline-variant bg-surface-container-lowest p-sm rounded hover:bg-surface-bright transition-all">
+<button class="p-1 hover:bg-surface-container-low rounded">
+<span class="material-symbols-outlined">keyboard_arrow_right</span>
+</button>
+<div class="flex-grow">
+<div class="flex items-center gap-md">
+<span class="text-label-sm font-bold text-on-surface-variant">OBJ 1.2</span>
+<h5 class="text-body-md font-bold text-primary">Mobile Vaccination Fleet Acquisition</h5>
+<span class="bg-green-100 text-green-800 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">On Track</span>
+</div>
+</div>
+<div class="flex items-center gap-sm opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="px-sm py-1 border border-outline text-primary text-label-sm rounded hover:bg-surface-container-low flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]">add</span> Target
+                                    </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Program Level 2 -->
+<div>
+<div class="group flex items-center gap-md border border-outline-variant bg-white p-md rounded shadow-sm hover:border-primary transition-all relative">
+<button class="p-1 hover:bg-surface-container-low rounded">
+<span class="material-symbols-outlined">keyboard_arrow_right</span>
+</button>
+<div class="w-10 h-10 bg-secondary-fixed flex items-center justify-center rounded">
+<span class="material-symbols-outlined text-on-secondary-fixed">clinical_notes</span>
+</div>
+<div class="flex-grow">
+<div class="flex items-center gap-md">
+<span class="text-label-sm font-bold text-on-surface-variant">P2</span>
+<h4 class="text-body-lg font-bold text-primary">Digital Health Records System Rollout</h4>
+<span class="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">Draft</span>
+</div>
+<div class="flex items-center gap-lg mt-1">
+<div class="flex items-center gap-sm w-48">
+<div class="w-full h-1.5 bg-surface-container-low rounded-full">
+<div class="bg-primary h-full" style="width: 12%"></div>
+</div>
+<span class="text-[11px] font-bold">12%</span>
+</div>
+<span class="text-label-sm text-on-surface-variant">2 Objectives · 6 Targets</span>
+</div>
+</div>
+<div class="flex items-center gap-sm opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="px-md py-1 border border-outline text-primary text-label-sm rounded hover:bg-surface-container-low flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">add</span> Objective
+                            </button>
+<button class="p-2 text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Add Program Button -->
+<button class="mt-lg w-full py-md border-2 border-dashed border-outline-variant rounded-lg text-on-surface-variant hover:text-primary hover:border-primary hover:bg-white transition-all flex items-center justify-center gap-sm font-bold text-label-md">
+<span class="material-symbols-outlined">add_circle</span>
+                    Add New Program
+                </button>
+</div>
+</div>
+<!-- Sidebar / Context Panel -->
+<div class="grid grid-cols-12 gap-lg">
+<div class="col-span-8">
+<!-- Activity Feed -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-lg">
+<h3 class="text-label-md font-bold text-primary uppercase mb-lg">Recent Workbench Activity</h3>
+<div class="space-y-lg">
+<div class="flex gap-md">
+<div class="relative">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[18px]">update</span>
+</div>
+<div class="absolute top-8 left-4 w-px h-full bg-outline-variant"></div>
+</div>
+<div>
+<p class="text-body-md text-primary"><span class="font-bold">Sarah Jenkins</span> updated target <span class="text-secondary font-bold">1.1.1</span></p>
+<p class="text-label-sm text-on-surface-variant">2 hours ago · Procurement status changed from 'Ordered' to 'Shipped'</p>
+</div>
+</div>
+<div class="flex gap-md">
+<div class="relative">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[18px]">add</span>
+</div>
+<div class="absolute top-8 left-4 w-px h-full bg-outline-variant"></div>
+</div>
+<div>
+<p class="text-body-md text-primary"><span class="font-bold">Marcus Thorne</span> added Objective <span class="text-secondary font-bold">1.3</span></p>
+<p class="text-label-sm text-on-surface-variant">Yesterday · New objective for Rural Health Outreach</p>
+</div>
+</div>
+<div class="flex gap-md">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-error text-[18px]">report</span>
+</div>
+<div>
+<p class="text-body-md text-primary"><span class="font-bold">System Alert:</span> Delay in shipment for <span class="text-error font-bold">OBJ 1.1</span></p>
+<p class="text-label-sm text-on-surface-variant">3 days ago · Automatic status change to 'At Risk'</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Side Cards -->
+<div class="col-span-4 space-y-lg">
+<div class="bg-primary text-on-primary p-lg rounded relative overflow-hidden">
+
+<div class="relative z-10">
+<h4 class="text-headline-md font-bold mb-md">Insights Engine</h4>
+<p class="text-body-md opacity-90 mb-lg">AI analysis suggests a potential 12% budget overrun on Program 1 due to global supply chain inflation.</p>
+<button class="w-full py-sm bg-white text-primary rounded font-bold text-label-md">View Recommendations</button>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-lg rounded">
+<h3 class="text-label-md font-bold text-primary uppercase mb-lg">Stakeholders</h3>
+<div class="flex -space-x-2 mb-md">
+<div class="w-10 h-10 rounded-full border-2 border-white bg-slate-200 overflow-hidden" title="Director">
+<img class="w-full h-full object-cover" data-alt="Close up portrait of an elegant woman with short black hair and glasses, wearing a professional navy blue suit. Bright daylight studio lighting, clean professional aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuARO_tTWKTMZtIxBIaqhjFTy_OUKQs_g0bXZhP3CumE9F7lM2oOzWiOAIO5OCqWOVJ89uGATe8W1fwqUlhbA7FpieL9G2kFojAUjjIVz8Y5Vmf_y7rqONnO_nZub3IaFfD-q--JYvIvF6Woox94fiEIsfLZR_2bzKVYFisqtoXVV4_yFKTtme2oovMjwO1U3AwheW56j_LPGA2HG3uP1Y5lpNCEvDn13xdKHRXWvIBP5p5nqPyhtooV19phi_tZdSPzsrlbJqvObvk"/>
+</div>
+<div class="w-10 h-10 rounded-full border-2 border-white bg-slate-300 overflow-hidden" title="Operations Lead">
+<img class="w-full h-full object-cover" data-alt="Middle-aged man with a professional smile, salt and pepper beard, wearing a crisp white dress shirt. Modern corporate photography style, bright high-key background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDE6x9WMd-vVTqmkrM_hnXC3GJbON9gqQGYg72xkEBSXiE55P-lTS7W3rR-nYNekFWYejAocNwTj3U5sFIX3Mla7RqA69S7NDlI49hopTGBn7eLDodNujtyfeD0-0rWEY6ajUfgfImWHRSBvKH8K__KzWn1sfpOcoCgXBap6hbxW8H0U62t44mGG96ciPPho6cY-El_1nniqLID1xePooF4nD1Or4fYkX4sfB2vdq4a7KZrKKdftyaz4hbxZjNikb_9T-niISAUpvI"/>
+</div>
+<div class="w-10 h-10 rounded-full border-2 border-white bg-slate-400 overflow-hidden" title="Finance Head">
+<img class="w-full h-full object-cover" data-alt="Young professional woman with curly hair wearing a gray tailored blazer. Soft office background, high quality commercial lighting, minimalist corporate look." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAom0_eu0IkjlIl22u0NzHqa2h5E8WExEGjrYCJ5SVLxtpQ3zaoo-YqudDOg8qIDbKsa_TMeF90SQPDT0D92jn6-zY-7C_MKZUv6Tcn3L9bs4YD8BKohBYaFbltGPGFYMftvQL7gx0Rt4QE8riRYrSwwtI-iIp48U7MqRmnCHRq6-jiS3zyQ6LoZpWUfhSNSvAVNYPqk3Knapn9PECJCYAg_trRPa58g5OOHSpMVvaH1Q2aEnydcAwG52GA9aljj1TzBsOA9S-LQZQ"/>
+</div>
+<div class="w-10 h-10 rounded-full border-2 border-white bg-secondary-container flex items-center justify-center text-on-secondary-container text-label-sm font-bold">+8</div>
+</div>
+<button class="text-primary font-bold text-label-md flex items-center gap-xs hover:underline">
+                        Manage Team Access <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- FLOATING ACTION BUTTON (Suppressed per rule because we are in a Detail/Workbench view, but keeping the "Add Program" in the content flow) -->
+<script>
+        // Micro-interactions for tree nodes
+        document.querySelectorAll('.group button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Simple collapse logic could go here
+                const icon = btn.querySelector('.material-symbols-outlined');
+                if (icon) {
+                    if (icon.textContent === 'keyboard_arrow_down') {
+                        icon.textContent = 'keyboard_arrow_right';
+                    } else if (icon.textContent === 'keyboard_arrow_right') {
+                        icon.textContent = 'keyboard_arrow_down';
+                    }
+                }
+            });
+        });
+    </script>
+</body></html>
