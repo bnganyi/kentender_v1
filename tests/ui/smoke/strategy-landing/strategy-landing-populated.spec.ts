@@ -55,15 +55,15 @@ test('Strategy portfolio hub search filters plan cards', async ({ page }) => {
 
 	const search = page.getByTestId('sph-search-input');
 	await expect(search).toBeVisible();
-	await search.fill('zzznomatch');
 
-	/* All real plan cards should be faded (opacity reduced) */
-	const cards = page.getByTestId('sph-plan-card');
-	const count = await cards.count();
-	if (count > 0) {
-		const opacity = await cards.first().evaluate((el) => window.getComputedStyle(el).opacity);
-		expect(parseFloat(opacity)).toBeLessThan(1);
-	}
+	/* Typing a term that matches nothing should leave only the empty-state card */
+	await search.fill('zzznomatch');
+	await expect(page.getByTestId('sph-plan-card')).toHaveCount(0);
+	await expect(page.getByTestId('sph-create-new-card')).toBeVisible();
+
+	/* Clearing restores all cards */
+	await search.fill('');
+	await expect(page.getByTestId('sph-plan-card').first()).toBeVisible();
 });
 
 test('Strategy portfolio hub shows create-new card always', async ({ page }) => {

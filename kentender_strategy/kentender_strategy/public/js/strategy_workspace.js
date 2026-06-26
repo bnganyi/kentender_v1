@@ -438,15 +438,17 @@
 		const grid = shell.querySelector("[data-sph-plans]");
 		if (!input || !grid) return;
 		input.addEventListener("input", function () {
-			const term = (this.value || "").toLowerCase();
-			const cards = grid.querySelectorAll("[data-plan-name]");
-			cards.forEach(function (card) {
-				const name = decodeURIComponent(card.getAttribute("data-plan-name") || "").toLowerCase();
-				const title = (card.querySelector(".kt-sph-card-title") || {}).textContent || "";
-				const match = !term || name.includes(term) || title.toLowerCase().includes(term);
-				card.style.opacity = match ? "1" : "0.35";
-				card.style.transform = match ? "" : "scale(0.98)";
-			});
+			const term = (this.value || "").toLowerCase().trim();
+			const matched = term
+				? allPlans.filter(function (p) {
+						const title = (p.strategic_plan_name || p.name || "").toLowerCase();
+						const status = (p.status || "").toLowerCase();
+						const fy =
+							p.start_year && p.end_year ? `${p.start_year} ${p.end_year}` : "";
+						return title.includes(term) || status.includes(term) || fy.includes(term);
+				  })
+				: allPlans;
+			grid.innerHTML = matched.map(planCardHtml).join("") + emptyStateCardHtml();
 		});
 	}
 

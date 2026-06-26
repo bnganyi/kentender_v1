@@ -1744,8 +1744,9 @@ div.kt-strategy-injected-shell {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	background: #fff;
+	background: #fff !important;
 	border-bottom: 1px solid #c6c6cd;
+	box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
 	padding: 0 24px;
 	height: 56px;
 }
@@ -1984,7 +1985,7 @@ div.kt-strategy-injected-shell {
 /* Plans card grid */
 .kt-sph-plans-grid {
 	display: grid;
-	grid-template-columns: repeat(2, 1fr);
+	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 	gap: 16px;
 	margin-bottom: 32px;
 }
@@ -1995,6 +1996,7 @@ div.kt-strategy-injected-shell {
 	border-radius: 8px;
 	display: flex;
 	flex-direction: column;
+	max-width: 520px;
 	transition: border-color 0.2s, transform 0.2s;
 }
 
@@ -2005,7 +2007,7 @@ div.kt-strategy-injected-shell {
 
 /* Card header band */
 .kt-sph-card-header {
-	padding: 16px;
+	padding: 12px 14px;
 	border-bottom: 1px solid #c6c6cd;
 	background: #f2f4f6;
 	border-radius: 8px 8px 0 0;
@@ -2073,10 +2075,10 @@ div.kt-strategy-injected-shell {
 
 /* Card body (3-col stats) */
 .kt-sph-card-body {
-	padding: 16px;
+	padding: 12px 14px;
 	display: grid;
 	grid-template-columns: repeat(3, 1fr);
-	gap: 16px;
+	gap: 12px;
 }
 
 .kt-sph-stat-label {
@@ -2097,7 +2099,7 @@ div.kt-strategy-injected-shell {
 
 /* Card footer */
 .kt-sph-card-footer {
-	padding: 12px 16px;
+	padding: 10px 14px;
 	background: #f2f4f6;
 	border-radius: 0 0 8px 8px;
 	display: flex;
