@@ -2056,6 +2056,21 @@ div.kt-strategy-injected-shell {
 	color: #92400e;
 }
 
+.kt-sph-chip--submitted {
+	background: #dbeafe;
+	color: #1e40af;
+}
+
+.kt-sph-chip--approved {
+	background: #ede9fe;
+	color: #5b21b6;
+}
+
+.kt-sph-chip--archived {
+	background: #f1f5f9;
+	color: #475569;
+}
+
 /* Card body (3-col stats) */
 .kt-sph-card-body {
 	padding: 16px;
@@ -2280,6 +2295,19 @@ div.kt-strategy-injected-shell {
 
 .kt-sph-action-label {
 	font-weight: 700;
+}
+
+/* Loading / skeleton / error states */
+.kt-sph-skeleton-row,
+.kt-sph-loading-cell,
+.kt-sph-error-row {
+	font-size: 13px;
+	color: #76777d;
+	padding: 24px 16px;
+}
+
+.kt-sph-error-row {
+	color: #ba1a1a;
 }
 
 /* =========================================================

@@ -1,4 +1,4 @@
-// Strategy Management workspace — static design-first workbench (no backend wiring).
+// Strategy Management workspace — Portfolio Hub with live backend wiring.
 (function () {
 	const WS_LABEL = "Strategy Management";
 	let bound = false;
@@ -193,10 +193,10 @@
 		`;
 	}
 
-	function staticPortfolioHubHtml() {
+	/* ── Portfolio Hub shell skeleton (rendered immediately on mount) ── */
+	function portfolioHubShellHtml() {
 		return `
 			<div class="kt-sph-shell" data-testid="strategy-portfolio-hub">
-				<!-- Sticky Top Bar -->
 				<header class="kt-sph-topbar" data-testid="sph-topbar">
 					<div class="kt-sph-topbar__left">
 						<h2 class="kt-sph-topbar__title">Strategic Alignment</h2>
@@ -212,9 +212,7 @@
 					</div>
 				</header>
 
-				<!-- Main Content -->
 				<main class="kt-sph-main">
-					<!-- Page Header -->
 					<div class="kt-sph-page-header">
 						<div>
 							<nav class="kt-sph-breadcrumb" data-testid="sph-breadcrumb">
@@ -232,196 +230,23 @@
 						</div>
 					</div>
 
-					<!-- Metrics Bento Row -->
-					<div class="kt-sph-metrics" data-testid="sph-metrics-grid">
-						<div class="kt-sph-metric-card">
-							<p class="kt-sph-metric-label">Total Budget</p>
-							<h3 class="kt-sph-metric-value">$1.42B</h3>
-							<p class="kt-sph-metric-sub kt-sph-metric-sub--positive">+4.2% vs Last Period</p>
-						</div>
-						<div class="kt-sph-metric-card">
-							<p class="kt-sph-metric-label">Active Programs</p>
-							<h3 class="kt-sph-metric-value">24</h3>
-							<p class="kt-sph-metric-sub">Across 8 Strategic Plans</p>
-						</div>
-						<div class="kt-sph-metric-card">
-							<p class="kt-sph-metric-label">Success Rate</p>
-							<h3 class="kt-sph-metric-value">92%</h3>
-							<div class="kt-sph-progress-track"><div class="kt-sph-progress-fill" style="width:92%"></div></div>
-						</div>
-						<div class="kt-sph-metric-card">
-							<p class="kt-sph-metric-label">Draft Plans</p>
-							<h3 class="kt-sph-metric-value">3</h3>
-							<p class="kt-sph-metric-sub kt-sph-metric-sub--warn">Awaiting Review</p>
-						</div>
+					<div class="kt-sph-metrics" data-testid="sph-metrics-grid" data-sph-metrics>
+						${skeletonKpiHtml()}
 					</div>
 
-					<!-- Plans Card Grid -->
-					<div class="kt-sph-plans-grid" data-testid="sph-plans-grid">
-
-						<!-- Card 1: Active -->
-						<div class="kt-sph-plan-card" data-testid="sph-plan-card">
-							<div class="kt-sph-card-header">
-								<div>
-									<div class="kt-sph-card-header__row">
-										<span class="kt-sph-chip kt-sph-chip--active">Active</span>
-										<span class="kt-sph-fiscal-year">FY 2024 – 2028</span>
-									</div>
-									<h3 class="kt-sph-card-title">Ministry of Health 2026-2030</h3>
-								</div>
-								<button type="button" class="kt-sph-icon-btn"><span class="material-symbols-outlined">more_vert</span></button>
-							</div>
-							<div class="kt-sph-card-body">
-								<div class="kt-sph-stat">
-									<p class="kt-sph-stat-label">Budget</p>
-									<p class="kt-sph-stat-value">$450M</p>
-								</div>
-								<div class="kt-sph-stat">
-									<p class="kt-sph-stat-label">Programs</p>
-									<p class="kt-sph-stat-value">12</p>
-								</div>
-								<div class="kt-sph-stat">
-									<p class="kt-sph-stat-label">Objectives</p>
-									<p class="kt-sph-stat-value">48</p>
-								</div>
-							</div>
-							<div class="kt-sph-card-footer">
-								<div class="kt-sph-avatar-stack">
-									<span class="kt-sph-avatar kt-sph-avatar--slate-300"></span>
-									<span class="kt-sph-avatar kt-sph-avatar--slate-400"></span>
-									<span class="kt-sph-avatar kt-sph-avatar--slate-500"></span>
-								</div>
-								<a href="#" class="kt-sph-card-cta">View Workbench <span class="material-symbols-outlined">arrow_forward</span></a>
-							</div>
-						</div>
-
-						<!-- Card 2: Draft -->
-						<div class="kt-sph-plan-card" data-testid="sph-plan-card">
-							<div class="kt-sph-card-header">
-								<div>
-									<div class="kt-sph-card-header__row">
-										<span class="kt-sph-chip kt-sph-chip--draft">Draft</span>
-										<span class="kt-sph-fiscal-year">FY 2025 – 2030</span>
-									</div>
-									<h3 class="kt-sph-card-title">Digital Health Roadmap</h3>
-								</div>
-								<button type="button" class="kt-sph-icon-btn"><span class="material-symbols-outlined">more_vert</span></button>
-							</div>
-							<div class="kt-sph-card-body">
-								<div class="kt-sph-stat">
-									<p class="kt-sph-stat-label">Budget</p>
-									<p class="kt-sph-stat-value">$180M</p>
-								</div>
-								<div class="kt-sph-stat">
-									<p class="kt-sph-stat-label">Programs</p>
-									<p class="kt-sph-stat-value">4</p>
-								</div>
-								<div class="kt-sph-stat">
-									<p class="kt-sph-stat-label">Objectives</p>
-									<p class="kt-sph-stat-value">15</p>
-								</div>
-							</div>
-							<div class="kt-sph-card-footer kt-sph-card-footer--draft">
-								<div class="kt-sph-draft-hint">
-									<span class="material-symbols-outlined kt-sph-draft-hint__icon">edit_note</span>
-									<span class="kt-sph-draft-hint__text">Last edited 2 hours ago</span>
-								</div>
-								<a href="#" class="kt-sph-card-cta">Continue Setup <span class="material-symbols-outlined">edit</span></a>
-							</div>
-						</div>
-
-						<!-- Card 3: Active -->
-						<div class="kt-sph-plan-card" data-testid="sph-plan-card">
-							<div class="kt-sph-card-header">
-								<div>
-									<div class="kt-sph-card-header__row">
-										<span class="kt-sph-chip kt-sph-chip--active">Active</span>
-										<span class="kt-sph-fiscal-year">FY 2024 – 2026</span>
-									</div>
-									<h3 class="kt-sph-card-title">Infrastructure Renewal Phase II</h3>
-								</div>
-								<button type="button" class="kt-sph-icon-btn"><span class="material-symbols-outlined">more_vert</span></button>
-							</div>
-							<div class="kt-sph-card-body">
-								<div class="kt-sph-stat">
-									<p class="kt-sph-stat-label">Budget</p>
-									<p class="kt-sph-stat-value">$620M</p>
-								</div>
-								<div class="kt-sph-stat">
-									<p class="kt-sph-stat-label">Programs</p>
-									<p class="kt-sph-stat-value">8</p>
-								</div>
-								<div class="kt-sph-stat">
-									<p class="kt-sph-stat-label">Objectives</p>
-									<p class="kt-sph-stat-value">32</p>
-								</div>
-							</div>
-							<div class="kt-sph-card-footer">
-								<div class="kt-sph-avatar-stack">
-									<span class="kt-sph-avatar kt-sph-avatar--blue-300"></span>
-									<span class="kt-sph-avatar kt-sph-avatar--blue-400"></span>
-								</div>
-								<a href="#" class="kt-sph-card-cta">View Workbench <span class="material-symbols-outlined">arrow_forward</span></a>
-							</div>
-						</div>
-
-						<!-- Empty State: Create New -->
-						<div class="kt-sph-plan-card kt-sph-plan-card--empty" data-testid="sph-create-new-card">
-							<div class="kt-sph-empty-icon-wrap">
-								<span class="material-symbols-outlined">add</span>
-							</div>
-							<h4 class="kt-sph-empty-title">Create New Strategy</h4>
-							<p class="kt-sph-empty-text">Define a new planning horizon and budget lineage</p>
-						</div>
+					<div class="kt-sph-plans-grid" data-testid="sph-plans-grid" data-sph-plans>
+						${skeletonCardsHtml()}
 					</div>
 
-					<!-- Lineage Activity -->
 					<section class="kt-sph-activity-section">
 						<h3 class="kt-sph-section-heading">Lineage Activity</h3>
 						<div class="kt-sph-table-wrap">
-							<table class="kt-sph-table" data-testid="sph-activity-table">
+							<table class="kt-sph-table" data-testid="sph-activity-table" data-sph-activity>
 								<thead>
-									<tr>
-										<th>Time</th>
-										<th>Action</th>
-										<th>Plan</th>
-										<th>User</th>
-									</tr>
+									<tr><th>Time</th><th>Action</th><th>Plan</th><th>User</th></tr>
 								</thead>
-								<tbody>
-									<tr>
-										<td class="kt-sph-td-muted">10:45 AM</td>
-										<td>
-											<div class="kt-sph-action-cell">
-												<span class="kt-sph-dot kt-sph-dot--primary"></span>
-												<span class="kt-sph-action-label">New Objective Added</span>
-											</div>
-										</td>
-										<td>Ministry of Health 2026-2030</td>
-										<td>Sarah Chen</td>
-									</tr>
-									<tr>
-										<td class="kt-sph-td-muted">09:12 AM</td>
-										<td>
-											<div class="kt-sph-action-cell">
-												<span class="kt-sph-dot kt-sph-dot--amber"></span>
-												<span class="kt-sph-action-label">Budget Re-allocated</span>
-											</div>
-										</td>
-										<td>Digital Health Roadmap</td>
-										<td>Marcus Thorne</td>
-									</tr>
-									<tr>
-										<td class="kt-sph-td-muted">Yesterday</td>
-										<td>
-											<div class="kt-sph-action-cell">
-												<span class="kt-sph-dot kt-sph-dot--green"></span>
-												<span class="kt-sph-action-label">Plan Finalized</span>
-											</div>
-										</td>
-										<td>Infrastructure Renewal II</td>
-										<td>Lydia Vance</td>
-									</tr>
+								<tbody data-sph-activity-body>
+									<tr><td colspan="4" class="kt-sph-td-muted kt-sph-loading-cell">Loading activity…</td></tr>
 								</tbody>
 							</table>
 						</div>
@@ -429,6 +254,219 @@
 				</main>
 			</div>
 		`;
+	}
+
+	function skeletonKpiHtml() {
+		return [
+			{ label: "Total Budget", value: "—", sub: "Pending field configuration", subClass: "" },
+			{ label: "Active Programs", value: "—", sub: "Loading…", subClass: "" },
+			{ label: "Success Rate", value: "—", sub: "", subClass: "" },
+			{ label: "Draft Plans", value: "—", sub: "Loading…", subClass: "kt-sph-metric-sub--warn" },
+		]
+			.map(
+				(k) => `
+			<div class="kt-sph-metric-card">
+				<p class="kt-sph-metric-label">${k.label}</p>
+				<h3 class="kt-sph-metric-value">${k.value}</h3>
+				${k.sub ? `<p class="kt-sph-metric-sub ${k.subClass}">${k.sub}</p>` : ""}
+			</div>`
+			)
+			.join("");
+	}
+
+	function skeletonCardsHtml() {
+		return `<div class="kt-sph-skeleton-row">Loading plans…</div>`;
+	}
+
+	/* ── Status helpers ── */
+	function chipClass(status) {
+		const map = {
+			Active: "kt-sph-chip--active",
+			Draft: "kt-sph-chip--draft",
+			Submitted: "kt-sph-chip--submitted",
+			Approved: "kt-sph-chip--approved",
+			Archived: "kt-sph-chip--archived",
+		};
+		return map[status] || "kt-sph-chip--draft";
+	}
+
+	function prettyTime(isoStr) {
+		if (!isoStr) return "";
+		try {
+			if (typeof frappe !== "undefined" && frappe.datetime && frappe.datetime.prettyDate) {
+				return frappe.datetime.prettyDate(isoStr);
+			}
+			const d = new Date(isoStr.replace(" ", "T"));
+			const diff = Date.now() - d.getTime();
+			const mins = Math.floor(diff / 60000);
+			if (mins < 2) return "just now";
+			if (mins < 60) return `${mins}m ago`;
+			const hrs = Math.floor(mins / 60);
+			if (hrs < 24) return `${hrs}h ago`;
+			const days = Math.floor(hrs / 24);
+			if (days === 1) return "Yesterday";
+			return `${days} days ago`;
+		} catch (_) {
+			return isoStr;
+		}
+	}
+
+	/* ── Plan card HTML builder ── */
+	function planCardHtml(plan) {
+		const title = plan.strategic_plan_name || plan.name;
+		const status = plan.status || "Draft";
+		const fyLabel = plan.start_year && plan.end_year ? `FY ${plan.start_year} – ${plan.end_year}` : "";
+		const programs = plan.program_count != null ? plan.program_count : "—";
+		const objectives = plan.objective_count != null ? plan.objective_count : "—";
+		const isDraft = status === "Draft" || status === "Submitted";
+		const modifiedStr = prettyTime(plan.modified);
+
+		const footer = isDraft
+			? `<div class="kt-sph-draft-hint">
+					<span class="material-symbols-outlined kt-sph-draft-hint__icon">edit_note</span>
+					<span class="kt-sph-draft-hint__text">Last edited ${modifiedStr}</span>
+				</div>
+				<a href="#" class="kt-sph-card-cta" data-plan="${encodeURIComponent(plan.name)}">Continue Setup <span class="material-symbols-outlined">edit</span></a>`
+			: `<div class="kt-sph-avatar-stack">
+					<span class="kt-sph-avatar kt-sph-avatar--slate-300"></span>
+					<span class="kt-sph-avatar kt-sph-avatar--slate-400"></span>
+				</div>
+				<a href="#" class="kt-sph-card-cta" data-plan="${encodeURIComponent(plan.name)}">View Workbench <span class="material-symbols-outlined">arrow_forward</span></a>`;
+
+		return `
+			<div class="kt-sph-plan-card" data-testid="sph-plan-card" data-plan-name="${encodeURIComponent(plan.name)}">
+				<div class="kt-sph-card-header">
+					<div>
+						<div class="kt-sph-card-header__row">
+							<span class="kt-sph-chip ${chipClass(status)}">${status}</span>
+							${fyLabel ? `<span class="kt-sph-fiscal-year">${fyLabel}</span>` : ""}
+						</div>
+						<h3 class="kt-sph-card-title">${title}</h3>
+					</div>
+					<button type="button" class="kt-sph-icon-btn"><span class="material-symbols-outlined">more_vert</span></button>
+				</div>
+				<div class="kt-sph-card-body">
+					<div class="kt-sph-stat">
+						<p class="kt-sph-stat-label">Budget</p>
+						<p class="kt-sph-stat-value">—</p>
+					</div>
+					<div class="kt-sph-stat">
+						<p class="kt-sph-stat-label">Programs</p>
+						<p class="kt-sph-stat-value">${programs}</p>
+					</div>
+					<div class="kt-sph-stat">
+						<p class="kt-sph-stat-label">Objectives</p>
+						<p class="kt-sph-stat-value">${objectives}</p>
+					</div>
+				</div>
+				<div class="kt-sph-card-footer${isDraft ? " kt-sph-card-footer--draft" : ""}">
+					${footer}
+				</div>
+			</div>`;
+	}
+
+	function emptyStateCardHtml() {
+		return `
+			<div class="kt-sph-plan-card kt-sph-plan-card--empty" data-testid="sph-create-new-card">
+				<div class="kt-sph-empty-icon-wrap">
+					<span class="material-symbols-outlined">add</span>
+				</div>
+				<h4 class="kt-sph-empty-title">Create New Strategy</h4>
+				<p class="kt-sph-empty-text">Define a new planning horizon and budget lineage</p>
+			</div>`;
+	}
+
+	/* ── DOM patch helpers ── */
+	function applyPortfolioData(shell, payload) {
+		const portfolio = payload.portfolio || {};
+		const plans = Array.isArray(payload.plans) ? payload.plans : [];
+
+		/* KPI cards */
+		const metricsEl = shell.querySelector("[data-sph-metrics]");
+		if (metricsEl) {
+			const activeCount = portfolio.active_count || 0;
+			const draftCount = portfolio.draft_count || 0;
+			const totalPlans = portfolio.total_plans || 0;
+			const totalPrograms = portfolio.total_programs || 0;
+			metricsEl.innerHTML = `
+				<div class="kt-sph-metric-card">
+					<p class="kt-sph-metric-label">Total Budget</p>
+					<h3 class="kt-sph-metric-value">—</h3>
+					<p class="kt-sph-metric-sub">Pending field configuration</p>
+				</div>
+				<div class="kt-sph-metric-card">
+					<p class="kt-sph-metric-label">Active Programs</p>
+					<h3 class="kt-sph-metric-value">${totalPrograms}</h3>
+					<p class="kt-sph-metric-sub">Across ${activeCount} Active Plan${activeCount !== 1 ? "s" : ""}</p>
+				</div>
+				<div class="kt-sph-metric-card">
+					<p class="kt-sph-metric-label">Success Rate</p>
+					<h3 class="kt-sph-metric-value">—</h3>
+					<p class="kt-sph-metric-sub">Pending target completion data</p>
+				</div>
+				<div class="kt-sph-metric-card">
+					<p class="kt-sph-metric-label">Draft Plans</p>
+					<h3 class="kt-sph-metric-value">${draftCount}</h3>
+					<p class="kt-sph-metric-sub kt-sph-metric-sub--warn">${draftCount > 0 ? "Awaiting Review" : `${totalPlans} plan${totalPlans !== 1 ? "s" : ""} total`}</p>
+				</div>`;
+		}
+
+		/* Plan cards */
+		const plansEl = shell.querySelector("[data-sph-plans]");
+		if (plansEl) {
+			const cardsHtml = plans.map((p) => planCardHtml(p)).join("");
+			plansEl.innerHTML = cardsHtml + emptyStateCardHtml();
+		}
+
+		/* Activity table body — keep static rows for now (deferred to B7) */
+		const activityBody = shell.querySelector("[data-sph-activity-body]");
+		if (activityBody) {
+			activityBody.innerHTML = `
+				<tr>
+					<td class="kt-sph-td-muted">—</td>
+					<td><div class="kt-sph-action-cell"><span class="kt-sph-dot kt-sph-dot--primary"></span><span class="kt-sph-action-label">Activity feed pending wiring</span></div></td>
+					<td>—</td><td>—</td>
+				</tr>`;
+		}
+
+		/* Client-side search */
+		wireSearch(shell, plans);
+	}
+
+	function wireSearch(shell, allPlans) {
+		const input = shell.querySelector("[data-testid='sph-search-input']");
+		const grid = shell.querySelector("[data-sph-plans]");
+		if (!input || !grid) return;
+		input.addEventListener("input", function () {
+			const term = (this.value || "").toLowerCase();
+			const cards = grid.querySelectorAll("[data-plan-name]");
+			cards.forEach(function (card) {
+				const name = decodeURIComponent(card.getAttribute("data-plan-name") || "").toLowerCase();
+				const title = (card.querySelector(".kt-sph-card-title") || {}).textContent || "";
+				const match = !term || name.includes(term) || title.toLowerCase().includes(term);
+				card.style.opacity = match ? "1" : "0.35";
+				card.style.transform = match ? "" : "scale(0.98)";
+			});
+		});
+	}
+
+	/* ── API call ── */
+	function loadPortfolioHub(shell) {
+		if (typeof frappe === "undefined" || typeof frappe.call !== "function") return;
+		frappe.call({
+			method: "kentender_strategy.api.landing.get_strategy_landing_data",
+			callback: function (r) {
+				if (r && r.message) {
+					applyPortfolioData(shell, r.message);
+				}
+			},
+			error: function () {
+				const plansEl = shell.querySelector("[data-sph-plans]");
+				if (plansEl) {
+					plansEl.innerHTML = `<div class="kt-sph-error-row">Could not load plans. Please refresh.</div>` + emptyStateCardHtml();
+				}
+			},
+		});
 	}
 
 	function renderShell() {
@@ -454,8 +492,9 @@
 			}
 		}
 		if (shell.getAttribute("data-kt-rendered") === "1") return;
-		shell.innerHTML = staticPortfolioHubHtml();
+		shell.innerHTML = portfolioHubShellHtml();
 		shell.setAttribute("data-kt-rendered", "1");
+		loadPortfolioHub(shell);
 	}
 
 	function bindEvents() {
@@ -464,14 +503,12 @@
 		document.addEventListener("click", function (ev) {
 			const t = ev.target;
 			if (!(t && t.closest)) return;
-			if (t.closest('[data-testid="strategic-plan-create-button"]')) {
-				if (typeof kentender_strategy !== "undefined" && kentender_strategy.strategy_plan_drawer) {
-					kentender_strategy.strategy_plan_drawer.openEdit("one", function () {});
-					return;
-				}
+			/* Create New Plan button */
+			if (t.closest('[data-testid="sph-create-plan-btn"]') || t.closest('[data-testid="sph-create-new-card"]')) {
 				if (typeof frappe !== "undefined" && typeof frappe.new_doc === "function") {
 					frappe.new_doc("Strategic Plan");
 				}
+				return;
 			}
 		});
 		if (window.jQuery) {
