@@ -37,6 +37,12 @@
 		"kentender_procurement.procurement_planning.api.active_plan.get_pp_active_plan_view_model";
 	const CREATE_PACKAGE_DRAWER_API =
 		"kentender_procurement.procurement_planning.api.planning_inclusion.get_pp_create_package_modal_drawer";
+	const PP_LANDING_SHELL_API =
+		"kentender_procurement.procurement_planning.api.landing.get_pp_landing_shell_data";
+	const WORKBENCH_QUEUE_COUNTS_API =
+		"kentender_procurement.procurement_planning.api.workbench_queue_counts.get_pp_workbench_queue_counts";
+	const WORKBENCH_ITEM_VIEW_MODEL_API =
+		"kentender_procurement.procurement_planning.api.workbench_item.get_pp_workbench_item_view_model";
 	const WORKBENCH_QUEUE_BY_UI_QUEUE = {
 		needs_planning: true,
 		draft_packages: true,
@@ -47,6 +53,42 @@
 	};
 	const approvedDemandFetchTokens = new WeakMap();
 	const approvedDemandSummaryTokens = new WeakMap();
+	const pp4PackageFetchTokens = new WeakMap();
+	const pp4KpiPayloadByRoot = new WeakMap();
+	const pp4QueueCountsByRoot = new WeakMap();
+	const pp4MountSignatureByRoot = new WeakMap();
+	const pp4PackageItemsByRoot = new WeakMap();
+	const pp4QueueItemsByRoot = new WeakMap();
+	const pp4SearchTermByRoot = new WeakMap();
+	const pp4SortModeByRoot = new WeakMap();
+	const pp4SortMenuOpenByRoot = new WeakMap();
+	const pp4FilterDrawerOpenByRoot = new WeakMap();
+	const pp4FilterDraftByRoot = new WeakMap();
+	const pp4FilterAppliedByRoot = new WeakMap();
+	const PP4_TAB_TO_QUEUE = {
+		"all-packages": "all-packages",
+		"in-creation": "draft_packages",
+		"awaiting-review": "needs_review",
+		"ready-for-release": "ready_release",
+	};
+	const PP4_ALL_PACKAGES_QUEUES = ["draft_packages", "needs_review", "ready_release"];
+	const PP4_SORT_MODES = [
+		{ key: "newest", label: "Newest" },
+		{ key: "value_high_low", label: "Value High-Low" },
+		{ key: "value_low_high", label: "Value Low-High" },
+	];
+	const PP4_DEPARTMENT_ALL = "all_departments";
+	const PP4_VALUE_RANGE_ALL = "all";
+	const PP4_STATUS_FILTERS = [
+		{ key: "in_creation", label: "In Creation" },
+		{ key: "awaiting_review", label: "Awaiting Review" },
+		{ key: "ready_for_release", label: "Ready for Release" },
+	];
+	const PP4_VALUE_RANGES = [
+		{ key: "under_kes_100m", label: "Under KES 100M" },
+		{ key: "kes_100m_500m", label: "KES 100M - 500M" },
+		{ key: "over_kes_500m", label: "Over KES 500M" },
+	];
 
 	function esc(s) {
 		return frappe.utils.escape_html(String(s == null ? "" : s));
@@ -65,7 +107,7 @@
 			"</h1>" +
 			'<label class="pp4-search" data-testid="pp4-topbar-search">' +
 			'<span class="material-symbols-outlined pp4-search__icon" aria-hidden="true">search</span>' +
-			'<input class="pp4-search__input" type="text" value="" placeholder="' +
+			'<input class="pp4-search__input" data-testid="pp4-search-input" type="text" value="" placeholder="' +
 			esc(__("Search planning data, packages, or demands...")) +
 			'" />' +
 			"</label>" +
@@ -89,21 +131,26 @@
 			'<button class="pp4-hero__action" type="button" data-testid="pp4-export-plan"><span class="material-symbols-outlined">ios_share</span>Export Plan</button>' +
 			"</div>" +
 			'<section class="pp4-stats-grid" data-testid="pp4-stats-grid">' +
-			'<article class="pp4-stat-card"><span class="pp4-stat-card__bg material-symbols-outlined">account_balance_wallet</span><p class="pp4-stat-card__label">Total Estimate</p><h3 class="pp4-stat-card__value">KES 1.2B</h3><p class="pp4-stat-card__hint pp4-stat-card__hint--positive"><span class="material-symbols-outlined">trending_up</span>+4.2% from FY 25/26</p></article>' +
-			'<article class="pp4-stat-card"><span class="pp4-stat-card__bg material-symbols-outlined">inventory_2</span><p class="pp4-stat-card__label">Active Packages</p><h3 class="pp4-stat-card__value">08</h3><p class="pp4-stat-card__hint">Across 4 Departments</p></article>' +
-			'<article class="pp4-stat-card"><span class="pp4-stat-card__bg material-symbols-outlined">verified</span><p class="pp4-stat-card__label">Approval Rate</p><h3 class="pp4-stat-card__value">65%</h3><div class="pp4-stat-card__meter"><span style="width:65%"></span></div></article>' +
-			'<article class="pp4-stat-card pp4-stat-card--dark"><span class="pp4-stat-card__bg material-symbols-outlined">pending_actions</span><p class="pp4-stat-card__label">Pending Action</p><h3 class="pp4-stat-card__value">12 Items</h3><p class="pp4-stat-card__hint">Requiring immediate sign-off</p></article>' +
+			'<article class="pp4-stat-card"><span class="pp4-stat-card__bg material-symbols-outlined">account_balance_wallet</span><p class="pp4-stat-card__label">Total Estimate</p><h3 class="pp4-stat-card__value" data-testid="pp4-kpi-total-estimate-value">KES 1.2B</h3><p class="pp4-stat-card__hint pp4-stat-card__hint--positive"><span class="material-symbols-outlined">trending_up</span>+4.2% from FY 25/26</p></article>' +
+			'<article class="pp4-stat-card"><span class="pp4-stat-card__bg material-symbols-outlined">inventory_2</span><p class="pp4-stat-card__label">Active Packages</p><h3 class="pp4-stat-card__value" data-testid="pp4-kpi-active-packages-value">08</h3><p class="pp4-stat-card__hint">Across 4 Departments</p></article>' +
+			'<article class="pp4-stat-card"><span class="pp4-stat-card__bg material-symbols-outlined">verified</span><p class="pp4-stat-card__label">Approval Rate</p><h3 class="pp4-stat-card__value" data-testid="pp4-kpi-approval-rate-value">65%</h3><div class="pp4-stat-card__meter"><span data-testid="pp4-kpi-approval-rate-meter" style="width:65%"></span></div></article>' +
+			'<article class="pp4-stat-card pp4-stat-card--dark"><span class="pp4-stat-card__bg material-symbols-outlined">pending_actions</span><p class="pp4-stat-card__label">Pending Action</p><h3 class="pp4-stat-card__value" data-testid="pp4-kpi-pending-action-value">12 Items</h3><p class="pp4-stat-card__hint">Requiring immediate sign-off</p></article>' +
 			"</section>" +
 			'<section class="pp4-work-queue-tabs" data-testid="pp4-work-queue-tabs">' +
 			'<div class="pp4-work-queue-tabs__left">' +
-			'<button class="pp4-tab is-active" type="button" data-testid="pp4-tab-all-packages">All Packages <span class="pp4-tab__count">8</span></button>' +
-			'<button class="pp4-tab" type="button" data-testid="pp4-tab-in-creation">In Creation <span class="pp4-tab__count">3</span></button>' +
-			'<button class="pp4-tab" type="button" data-testid="pp4-tab-awaiting-review">Awaiting Review <span class="pp4-tab__count">2</span></button>' +
-			'<button class="pp4-tab" type="button" data-testid="pp4-tab-ready-for-release">Ready for Release <span class="pp4-tab__count">3</span></button>' +
+			'<button class="pp4-tab is-active" type="button" data-testid="pp4-tab-all-packages">All Packages <span class="pp4-tab__count" data-testid="pp4-count-all-packages">0</span></button>' +
+			'<button class="pp4-tab" type="button" data-testid="pp4-tab-in-creation">In Creation <span class="pp4-tab__count" data-testid="pp4-count-in-creation">0</span></button>' +
+			'<button class="pp4-tab" type="button" data-testid="pp4-tab-awaiting-review">Awaiting Review <span class="pp4-tab__count" data-testid="pp4-count-awaiting-review">0</span></button>' +
+			'<button class="pp4-tab" type="button" data-testid="pp4-tab-ready-for-release">Ready for Release <span class="pp4-tab__count" data-testid="pp4-count-ready-for-release">0</span></button>' +
 			"</div>" +
 			'<div class="pp4-work-queue-tabs__right">' +
-			'<button class="pp4-filter-btn" type="button" data-testid="pp4-filters">Filters</button>' +
-			'<button class="pp4-filter-btn" type="button" data-testid="pp4-sort">Sort: Newest</button>' +
+			'<button class="pp4-filter-btn" type="button" data-testid="pp4-filters"><span class="material-symbols-outlined">filter_list</span><span data-testid="pp4-filters-label">Filters</span></button>' +
+			'<div class="pp4-sort-host"><button class="pp4-filter-btn" type="button" data-testid="pp4-sort"><span class="material-symbols-outlined">sort</span><span data-testid="pp4-sort-label">Sort: Newest</span></button>' +
+			'<div class="pp4-sort-menu" data-testid="pp4-sort-menu" hidden>' +
+			'<button class="pp4-sort-menu__option" type="button" data-testid="pp4-sort-option-newest">Newest</button>' +
+			'<button class="pp4-sort-menu__option" type="button" data-testid="pp4-sort-option-value-high-low">Value High-Low</button>' +
+			'<button class="pp4-sort-menu__option" type="button" data-testid="pp4-sort-option-value-low-high">Value Low-High</button>' +
+			"</div></div>" +
 			"</div>" +
 			"</section>" +
 			'<section class="pp4-package-grid" data-testid="pp4-package-grid">' +
@@ -138,8 +185,1043 @@
 			'<button class="pp4-package-card__primary" type="button" data-testid="pp4-new-planning-run">New Planning Run <span class="material-symbols-outlined">arrow_forward</span></button>' +
 			"</article>" +
 			"</section>" +
+			'<div class="pp4-filter-backdrop" data-testid="pp4-filter-backdrop" hidden></div>' +
+			'<aside class="pp4-filter-drawer" data-testid="pp4-filter-drawer" hidden>' +
+			'<header class="pp4-filter-drawer__header"><h3>Filters</h3><button class="pp4-filter-drawer__close" type="button" data-testid="pp4-filter-close"><span class="material-symbols-outlined">close</span></button></header>' +
+			'<div class="pp4-filter-drawer__body">' +
+			'<section class="pp4-filter-section"><label class="pp4-filter-section__label">Search</label><label class="pp4-filter-search"><span class="material-symbols-outlined">search</span><input data-testid="pp4-filter-search" type="text" placeholder="Package title or ID..." /></label></section>' +
+			'<section class="pp4-filter-section"><p class="pp4-filter-section__label">Status</p><div class="pp4-filter-status-group">' +
+			'<button class="pp4-filter-chip" type="button" data-testid="pp4-filter-status-in-creation">In Creation</button>' +
+			'<button class="pp4-filter-chip" type="button" data-testid="pp4-filter-status-awaiting-review">Awaiting Review</button>' +
+			'<button class="pp4-filter-chip" type="button" data-testid="pp4-filter-status-ready-for-release">Ready for Release</button>' +
+			"</div></section>" +
+			'<section class="pp4-filter-section"><label class="pp4-filter-section__label" for="pp4-filter-department">Department</label><select id="pp4-filter-department" data-testid="pp4-filter-department"></select></section>' +
+			'<section class="pp4-filter-section"><p class="pp4-filter-section__label">Estimated Value</p><div class="pp4-filter-radio-list">' +
+			'<label class="pp4-filter-radio" data-testid="pp4-filter-value-range-under-kes-100m"><input type="radio" name="pp4-filter-value-range" value="under_kes_100m" /><span>Under KES 100M</span></label>' +
+			'<label class="pp4-filter-radio" data-testid="pp4-filter-value-range-kes-100m-500m"><input type="radio" name="pp4-filter-value-range" value="kes_100m_500m" /><span>KES 100M - 500M</span></label>' +
+			'<label class="pp4-filter-radio" data-testid="pp4-filter-value-range-over-kes-500m"><input type="radio" name="pp4-filter-value-range" value="over_kes_500m" /><span>Over KES 500M</span></label>' +
+			"</div></section>" +
+			'<section class="pp4-filter-section"><p class="pp4-filter-section__label">Created At</p><div class="pp4-filter-date-grid"><label><span>From</span><input data-testid="pp4-filter-created-from" type="date" /></label><label><span>To</span><input data-testid="pp4-filter-created-to" type="date" /></label></div></section>' +
+			"</div>" +
+			'<footer class="pp4-filter-drawer__footer"><button type="button" data-testid="pp4-filter-clear-all">Clear All</button><button type="button" data-testid="pp4-filter-apply">Apply Filters</button></footer>' +
+			"</aside>" +
 			"</div>" +
 			"</section>";
+	}
+
+	function renderPP4QueueCounts(root, counts) {
+		if (!root || !counts || typeof counts !== "object") return;
+		pp4QueueCountsByRoot.set(root, counts);
+		const safeCount = function (key) {
+			const value = Number(counts[key] || 0);
+			return Number.isFinite(value) && value > 0 ? value : 0;
+		};
+		const inCreation = safeCount("draft_packages");
+		const awaitingReview = safeCount("needs_review");
+		const readyForRelease = safeCount("ready_to_release");
+		const allPackages = inCreation + awaitingReview + readyForRelease;
+		const setCount = function (testId, value) {
+			const node = root.querySelector('[data-testid="' + testId + '"]');
+			if (!node) return;
+			node.textContent = String(value);
+		};
+		setCount("pp4-count-all-packages", allPackages);
+		setCount("pp4-count-in-creation", inCreation);
+		setCount("pp4-count-awaiting-review", awaitingReview);
+		setCount("pp4-count-ready-for-release", readyForRelease);
+		renderPP4PendingActionKpi(root, counts);
+		renderPP4KpisFromState(root);
+	}
+
+	function pp4SetTabBadgeCounts(root, inCreation, awaitingReview, readyForRelease) {
+		if (!root) return;
+		const allPackages = Math.max(0, inCreation) + Math.max(0, awaitingReview) + Math.max(0, readyForRelease);
+		const setCount = function (testId, value) {
+			const node = root.querySelector('[data-testid="' + testId + '"]');
+			if (!node) return;
+			node.textContent = String(Math.max(0, Number(value || 0)));
+		};
+		setCount("pp4-count-all-packages", allPackages);
+		setCount("pp4-count-in-creation", inCreation);
+		setCount("pp4-count-awaiting-review", awaitingReview);
+		setCount("pp4-count-ready-for-release", readyForRelease);
+	}
+
+	function pp4KpiNode(root, testId) {
+		if (!root) return null;
+		return root.querySelector('[data-testid="' + testId + '"]');
+	}
+
+	function pp4SetKpiText(root, testId, value) {
+		const node = pp4KpiNode(root, testId);
+		if (!node) return;
+		node.textContent = String(value == null ? "" : value);
+	}
+
+	function pp4CompactKes(value) {
+		const n = Number(value || 0);
+		if (!Number.isFinite(n) || n <= 0) return "KES 0";
+		const abs = Math.abs(n);
+		if (abs >= 1000000000) {
+			return "KES " + (abs / 1000000000).toFixed(1).replace(/\.0$/, "") + "B";
+		}
+		if (abs >= 1000000) {
+			return "KES " + (abs / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
+		}
+		return "KES " + abs.toLocaleString();
+	}
+
+	function renderPP4PendingActionKpi(root, counts) {
+		const c = counts && typeof counts === "object" ? counts : {};
+		const needsReview = Number(c.needs_review || 0);
+		const readyForRelease = Number(c.ready_to_release || 0);
+		const pendingAction = (Number.isFinite(needsReview) ? needsReview : 0) + (Number.isFinite(readyForRelease) ? readyForRelease : 0);
+		pp4SetKpiText(root, "pp4-kpi-pending-action-value", String(Math.max(0, pendingAction)) + " Items");
+	}
+
+	function pp4ReadNumericKpi(byId, key) {
+		const value = Number((byId[key] && byId[key].value) || 0);
+		return Number.isFinite(value) ? Math.max(0, value) : 0;
+	}
+
+	function renderPP4KpisFromState(root) {
+		if (!root) return;
+		const payload = pp4KpiPayloadByRoot.get(root) || null;
+		if (!payload || payload.ok === false) return;
+		const kpis = Array.isArray(payload.kpis) ? payload.kpis : [];
+		const byId = {};
+		for (let i = 0; i < kpis.length; i += 1) {
+			const row = kpis[i] || {};
+			const id = String(row.id || "").trim();
+			if (!id) continue;
+			byId[id] = row;
+		}
+		const queueCounts = pp4QueueCountsByRoot.get(root) || null;
+		const safeTotalPackages = pp4ReadNumericKpi(byId, "total_packages");
+		const safeTotalValue = pp4ReadNumericKpi(byId, "total_planned_value");
+		const safeApproved = pp4ReadNumericKpi(byId, "approved_packages");
+		const safeReadyForTender = pp4ReadNumericKpi(byId, "ready_for_tender");
+		let activePackages = safeTotalPackages;
+		if (queueCounts && typeof queueCounts === "object") {
+			const inCreation = Number(queueCounts.draft_packages || 0);
+			const awaitingReview = Number(queueCounts.needs_review || 0);
+			const readyForRelease = Number(queueCounts.ready_to_release || 0);
+			const queueActive =
+				(Number.isFinite(inCreation) ? Math.max(0, inCreation) : 0) +
+				(Number.isFinite(awaitingReview) ? Math.max(0, awaitingReview) : 0) +
+				(Number.isFinite(readyForRelease) ? Math.max(0, readyForRelease) : 0);
+			if (queueActive > 0) activePackages = queueActive;
+		}
+		const effectiveApproved = safeApproved + safeReadyForTender;
+		const approvalRate = activePackages > 0 ? Math.round((effectiveApproved / activePackages) * 100) : 0;
+		const boundedApprovalRate = Math.max(0, Math.min(100, approvalRate));
+		pp4SetKpiText(root, "pp4-kpi-total-estimate-value", pp4CompactKes(safeTotalValue));
+		pp4SetKpiText(root, "pp4-kpi-active-packages-value", String(activePackages));
+		pp4SetKpiText(root, "pp4-kpi-approval-rate-value", String(boundedApprovalRate) + "%");
+		const meter = pp4KpiNode(root, "pp4-kpi-approval-rate-meter");
+		if (meter) {
+			meter.style.width = String(boundedApprovalRate) + "%";
+		}
+	}
+
+	function renderPP4Kpis(root, payload) {
+		if (!root || !payload || payload.ok === false) return;
+		pp4KpiPayloadByRoot.set(root, payload);
+		renderPP4KpisFromState(root);
+	}
+
+	function fetchAndRenderPP4Kpis(root) {
+		if (!root || !frappe || typeof frappe.call !== "function") return;
+		frappe.call({
+			method: PP_LANDING_SHELL_API,
+			args: {},
+			callback: function (response) {
+				const message = (response && response.message) || {};
+				renderPP4Kpis(root, message);
+			},
+		});
+	}
+
+	function fetchAndRenderPP4QueueCounts(root) {
+		if (!root || !frappe || typeof frappe.call !== "function") return;
+		frappe.call({
+			method: WORKBENCH_QUEUE_COUNTS_API,
+			args: {},
+			callback: function (response) {
+				const message = (response && response.message) || {};
+				if (!message || message.ok === false) return;
+				renderPP4QueueCounts(root, message.counts || {});
+			},
+		});
+	}
+
+	function pp4StatusToneClass(statusLabel) {
+		const status = String(statusLabel || "").toLowerCase();
+		if (status.indexOf("review") >= 0) return "pp4-package-card--review";
+		if (status.indexOf("draft") >= 0) return "pp4-package-card--draft";
+		if (status.indexOf("ready") >= 0 || status.indexOf("approved") >= 0) {
+			return "pp4-package-card--approved";
+		}
+		return "pp4-package-card--draft";
+	}
+
+	function pp4ExtractValueLabel(item) {
+		const hay = String((item && (item.meta_line || item.subtitle || item.summary_detail_line)) || "");
+		const matched = hay.match(/KES\s+[0-9,]+(?:\.[0-9]+)?/i);
+		return matched ? matched[0].toUpperCase() : "KES 0";
+	}
+
+	function pp4ProgressModel(item) {
+		const data = item && typeof item === "object" ? item : {};
+		const statusHay = String(
+			data.status_pill_label || data.state_label || data.status_headline || "",
+		).toLowerCase();
+		if (
+			statusHay.indexOf("ready for release") >= 0 ||
+			statusHay.indexOf("approved") >= 0 ||
+			statusHay.indexOf("released") >= 0
+		) {
+			return {
+				percent: 100,
+				label: "100% Complete",
+				selection: true,
+				validation: true,
+				signoff: true,
+			};
+		}
+		if (statusHay.indexOf("review") >= 0 || statusHay.indexOf("validation") >= 0) {
+			return {
+				percent: 65,
+				label: "65% Progress",
+				selection: true,
+				validation: true,
+				signoff: false,
+			};
+		}
+		return {
+			percent: 15,
+			label: "15% Progress",
+			selection: true,
+			validation: false,
+			signoff: false,
+		};
+	}
+
+	function pp4CardHtmlForItem(item) {
+		const data = item && typeof item === "object" ? item : {};
+		const code = esc(String(data.underlying_object_code || "").trim());
+		const title = esc(String(data.title || "").trim() || __("Untitled Package"));
+		const status = esc(String(data.status_pill_label || data.state_label || "").trim() || __("Draft"));
+		const desc = esc(
+			String(
+				data.package_description ||
+					(data.package && data.package.description) ||
+					data.status_detail ||
+					data.next_step_detail ||
+					data.subtitle ||
+					"",
+			)
+				.trim()
+				.slice(0, 180),
+		);
+		const valueLabel = esc(pp4ExtractValueLabel(data));
+		const consolidatedDemandCount = Number(data.consolidated_demand_count || 0);
+		const consolidatedLabel = esc(
+			Number.isFinite(consolidatedDemandCount) && consolidatedDemandCount > 0
+				? String(consolidatedDemandCount) + " Demands"
+				: "0 Demands",
+		);
+		const progress = pp4ProgressModel(data);
+		const actionLabel = esc(
+			String((data.primary_action && data.primary_action.label) || data.next_action_label || __("Open Package")).trim(),
+		);
+		const actionKey = esc(
+			String((data.primary_action && data.primary_action.action) || "open_package").trim(),
+		);
+		const actionTarget = esc(
+			String(
+				(data.primary_action && data.primary_action.target) || data.underlying_object_code || "",
+			).trim(),
+		);
+		const packageCode = esc(String(data.underlying_object_code || "").trim());
+		const tenderTarget = esc(String(((data.tender && data.tender.code) || "")).trim());
+		const secondaryActions = Array.isArray(data.secondary_actions) ? data.secondary_actions : [];
+		const secondary = secondaryActions.length ? secondaryActions[0] || {} : {};
+		const secondaryActionKey = esc(String(secondary.action || "view_package").trim());
+		const secondaryActionTarget = esc(
+			String(secondary.target || data.underlying_object_code || "").trim(),
+		);
+		return (
+			'<article class="pp4-package-card ' +
+			pp4StatusToneClass(status) +
+			'" data-testid="pp4-package-card">' +
+			'<div class="pp4-package-card__header"><span class="pp4-package-card__code" data-testid="pp4-package-code">' +
+			code +
+			'</span><span class="pp4-package-card__status" data-testid="pp4-package-status-chip">' +
+			status +
+			"</span></div>" +
+			'<h3 class="pp4-package-card__title">' +
+			title +
+			"</h3>" +
+			'<p class="pp4-package-card__desc">' +
+			desc +
+			"</p>" +
+			'<div class="pp4-package-card__meta"><span>EST. VALUE<br><strong class="pp4-meta-value">' +
+			valueLabel +
+			'</strong></span><span>CONSOLIDATED<br><strong class="pp4-meta-value">' +
+			consolidatedLabel +
+			"</strong></span></div>" +
+			'<div class="pp4-package-card__workflow"><p class="pp4-package-card__progress" data-testid="pp4-package-workflow-progress"><span>Workflow Progress</span><strong>' +
+			esc(progress.label) +
+			'</strong></p><div class="pp4-progress"><span style="width:' +
+			esc(String(progress.percent)) +
+			'%"></span></div><p class="pp4-stage-row"><span class="' +
+			(progress.selection ? "is-active" : "") +
+			'">Selection</span><span class="' +
+			(progress.validation ? "is-active" : "") +
+			'">Validation</span><span class="' +
+			(progress.signoff ? "is-active" : "") +
+			'">Sign-off</span></p></div>' +
+			'<div class="pp4-package-card__actions"><button class="pp4-package-card__primary" type="button" data-testid="pp4-package-primary-action" data-pp4-action="' +
+			actionKey +
+			'" data-pp4-target="' +
+			actionTarget +
+			'" data-pp4-package-code="' +
+			packageCode +
+			'" data-pp4-tender-code="' +
+			tenderTarget +
+			'">' +
+			actionLabel +
+			"</button><button class=\"pp4-package-card__icon-btn\" type=\"button\" data-testid=\"pp4-package-secondary-action\" data-pp4-action=\"" +
+			secondaryActionKey +
+			'" data-pp4-target="' +
+			secondaryActionTarget +
+			'" data-pp4-package-code="' +
+			packageCode +
+			'" data-pp4-tender-code="' +
+			tenderTarget +
+			"\"><span class=\"material-symbols-outlined\">more_vert</span></button></div>" +
+			"</article>"
+		);
+	}
+
+	function pp4CreatePackageCardHtml() {
+		return (
+			'<article class="pp4-package-card pp4-package-card--create" data-testid="pp4-create-package-card">' +
+			'<div class="pp4-package-card__create-icon"><span class="material-symbols-outlined">add_task</span></div>' +
+			'<h3 class="pp4-package-card__title">Create New Package</h3>' +
+			'<p class="pp4-package-card__desc">Start the planning wizard to consolidate unassigned demands into a strategic package.</p>' +
+			'<button class="pp4-package-card__primary" type="button" data-testid="pp4-new-planning-run">New Planning Run <span class="material-symbols-outlined">arrow_forward</span></button>' +
+			"</article>"
+		);
+	}
+
+	function pp4SearchHaystack(item) {
+		const data = item && typeof item === "object" ? item : {};
+		const fields = [
+			data.underlying_object_code,
+			data.title,
+			data.package_description,
+			data.status_detail,
+			data.state_label,
+			data.status_pill_label,
+			data.meta_line,
+			data.subtitle,
+			data.next_step_detail,
+		];
+		return fields
+			.map(function (v) {
+				return String(v || "").toLowerCase();
+			})
+			.join(" ");
+	}
+
+	function pp4ValueNumber(item) {
+		const normalized = String(pp4ExtractValueLabel(item) || "")
+			.replace(/[^0-9.]/g, "")
+			.trim();
+		const value = Number(normalized || 0);
+		return Number.isFinite(value) ? value : 0;
+	}
+
+	function pp4SortModeMeta(key) {
+		for (let i = 0; i < PP4_SORT_MODES.length; i += 1) {
+			if (PP4_SORT_MODES[i].key === key) return PP4_SORT_MODES[i];
+		}
+		return PP4_SORT_MODES[0];
+	}
+
+	function pp4DefaultFilterState() {
+		return {
+			search: "",
+			status: "",
+			department: PP4_DEPARTMENT_ALL,
+			value_range: PP4_VALUE_RANGE_ALL,
+			created_from: "",
+			created_to: "",
+		};
+	}
+
+	function pp4CloneFilterState(state) {
+		const src = state && typeof state === "object" ? state : pp4DefaultFilterState();
+		return {
+			search: String(src.search || ""),
+			status: String(src.status || ""),
+			department: String(src.department || PP4_DEPARTMENT_ALL),
+			value_range: String(src.value_range || PP4_VALUE_RANGE_ALL),
+			created_from: String(src.created_from || ""),
+			created_to: String(src.created_to || ""),
+		};
+	}
+
+	function pp4StatusFilterKey(item) {
+		const data = item && typeof item === "object" ? item : {};
+		const statusHay = String(data.status_pill_label || data.state_label || "").toLowerCase();
+		if (statusHay.indexOf("review") >= 0 || statusHay.indexOf("validation") >= 0) return "awaiting_review";
+		if (statusHay.indexOf("ready") >= 0 || statusHay.indexOf("approved") >= 0) return "ready_for_release";
+		return "in_creation";
+	}
+
+	function pp4DepartmentValue(item) {
+		const data = item && typeof item === "object" ? item : {};
+		return String(
+			data.department_label || data.department || data.procuring_entity_label || data.procuring_entity || "",
+		).trim();
+	}
+
+	function pp4CreatedDateValue(item) {
+		const data = item && typeof item === "object" ? item : {};
+		const raw = String(data.created_on || data.creation || data.modified || "").trim();
+		if (!raw) return "";
+		const m = raw.match(/\d{4}-\d{2}-\d{2}/);
+		return m ? m[0] : "";
+	}
+
+	function pp4ValueRangeMatches(value, rangeKey) {
+		if (rangeKey === PP4_VALUE_RANGE_ALL || !rangeKey) return true;
+		const n = Number(value || 0);
+		if (!Number.isFinite(n)) return false;
+		if (rangeKey === "under_kes_100m") return n < 100000000;
+		if (rangeKey === "kes_100m_500m") return n >= 100000000 && n <= 500000000;
+		if (rangeKey === "over_kes_500m") return n > 500000000;
+		return true;
+	}
+
+	function pp4HasActiveAppliedFilters(filters) {
+		const f = filters && typeof filters === "object" ? filters : pp4DefaultFilterState();
+		return Boolean(
+			String(f.search || "").trim() ||
+				String(f.status || "").trim() ||
+				(String(f.department || PP4_DEPARTMENT_ALL) !== PP4_DEPARTMENT_ALL &&
+					String(f.department || "").trim()) ||
+				(String(f.value_range || PP4_VALUE_RANGE_ALL) !== PP4_VALUE_RANGE_ALL &&
+					String(f.value_range || "").trim()) ||
+				String(f.created_from || "").trim() ||
+				String(f.created_to || "").trim(),
+		);
+	}
+
+	function pp4ItemMatchesDrawerFilters(item, filters) {
+		const data = item && typeof item === "object" ? item : {};
+		const f = filters && typeof filters === "object" ? filters : pp4DefaultFilterState();
+		const drawerTerm = String(f.search || "")
+			.toLowerCase()
+			.trim();
+		if (drawerTerm && pp4SearchHaystack(data).indexOf(drawerTerm) === -1) return false;
+		if (f.status && pp4StatusFilterKey(data) !== f.status) return false;
+		const dept = String(pp4DepartmentValue(data) || "").toLowerCase();
+		if (
+			f.department &&
+			f.department !== PP4_DEPARTMENT_ALL &&
+			dept &&
+			dept !== String(f.department || "").toLowerCase()
+		) {
+			return false;
+		}
+		if (
+			f.department &&
+			f.department !== PP4_DEPARTMENT_ALL &&
+			!dept &&
+			String(f.department || "").trim()
+		) {
+			return false;
+		}
+		if (!pp4ValueRangeMatches(pp4ValueNumber(data), String(f.value_range || PP4_VALUE_RANGE_ALL))) {
+			return false;
+		}
+		const created = pp4CreatedDateValue(data);
+		const from = String(f.created_from || "").trim();
+		const to = String(f.created_to || "").trim();
+		if (from && created && created < from) return false;
+		if (to && created && created > to) return false;
+		if ((from || to) && !created) return false;
+		return true;
+	}
+
+	function renderPP4TabCountsForCurrentFilters(root) {
+		if (!root) return;
+		const applied = pp4FilterAppliedByRoot.get(root) || pp4DefaultFilterState();
+		const topSearchTerm = String(pp4SearchTermByRoot.get(root) || "")
+			.toLowerCase()
+			.trim();
+		const hasDynamicFiltering = pp4HasActiveAppliedFilters(applied) || Boolean(topSearchTerm);
+		if (!hasDynamicFiltering) {
+			const counts = pp4QueueCountsByRoot.get(root) || {};
+			const inCreation = Number(counts.draft_packages || 0);
+			const awaitingReview = Number(counts.needs_review || 0);
+			const readyForRelease = Number(counts.ready_to_release || 0);
+			pp4SetTabBadgeCounts(root, inCreation, awaitingReview, readyForRelease);
+			return;
+		}
+		const byQueue = pp4QueueItemsByRoot.get(root) || {};
+		const queues = {
+			draft_packages: Array.isArray(byQueue.draft_packages) ? byQueue.draft_packages : [],
+			needs_review: Array.isArray(byQueue.needs_review) ? byQueue.needs_review : [],
+			ready_release: Array.isArray(byQueue.ready_release) ? byQueue.ready_release : [],
+		};
+		const countFor = function (rows) {
+			let c = 0;
+			for (let i = 0; i < rows.length; i += 1) {
+				const row = rows[i];
+				if (topSearchTerm && pp4SearchHaystack(row).indexOf(topSearchTerm) === -1) continue;
+				if (!pp4ItemMatchesDrawerFilters(row, applied)) continue;
+				c += 1;
+			}
+			return c;
+		};
+		pp4SetTabBadgeCounts(
+			root,
+			countFor(queues.draft_packages),
+			countFor(queues.needs_review),
+			countFor(queues.ready_release),
+		);
+	}
+
+	function pp4AvailableDepartments(rows) {
+		const options = [
+			"Ministry of Health (MOH)",
+			"IT Infrastructure",
+			"Facilities Management",
+		];
+		const seen = {};
+		const all = [];
+		for (let i = 0; i < options.length; i += 1) {
+			const label = String(options[i] || "").trim();
+			if (!label) continue;
+			const key = label.toLowerCase();
+			if (seen[key]) continue;
+			seen[key] = true;
+			all.push(label);
+		}
+		for (let j = 0; j < rows.length; j += 1) {
+			const label = String(pp4DepartmentValue(rows[j]) || "").trim();
+			if (!label) continue;
+			const key = label.toLowerCase();
+			if (seen[key]) continue;
+			seen[key] = true;
+			all.push(label);
+		}
+		return all;
+	}
+
+	function renderPP4ControlLabels(root) {
+		if (!root) return;
+		const sortLabel = root.querySelector('[data-testid="pp4-sort-label"]');
+		const filterLabel = root.querySelector('[data-testid="pp4-filters-label"]');
+		const filterButton = root.querySelector('[data-testid="pp4-filters"]');
+		const sortMode = pp4SortModeMeta(String(pp4SortModeByRoot.get(root) || "newest"));
+		const applied = pp4FilterAppliedByRoot.get(root) || pp4DefaultFilterState();
+		if (sortLabel) {
+			sortLabel.textContent = "Sort: " + sortMode.label;
+		}
+		if (filterLabel) {
+			filterLabel.textContent = "Filters";
+		}
+		if (filterButton) {
+			filterButton.classList.toggle("is-active", pp4HasActiveAppliedFilters(applied));
+		}
+	}
+
+	function renderPP4SortMenuState(root) {
+		if (!root) return;
+		const menu = root.querySelector('[data-testid="pp4-sort-menu"]');
+		if (!menu) return;
+		const open = pp4SortMenuOpenByRoot.get(root) === true;
+		menu.hidden = !open;
+		const selected = String(pp4SortModeByRoot.get(root) || "newest");
+		const options = menu.querySelectorAll(".pp4-sort-menu__option");
+		for (let i = 0; i < options.length; i += 1) {
+			const opt = options[i];
+			if (!opt) continue;
+			const testId = String(opt.getAttribute("data-testid") || "");
+			const selectedForOption =
+				(selected === "newest" && testId === "pp4-sort-option-newest") ||
+				(selected === "value_high_low" && testId === "pp4-sort-option-value-high-low") ||
+				(selected === "value_low_high" && testId === "pp4-sort-option-value-low-high");
+			opt.classList.toggle("is-selected", selectedForOption);
+		}
+	}
+
+	function renderPP4FilterDrawerState(root) {
+		if (!root) return;
+		const backdrop = root.querySelector('[data-testid="pp4-filter-backdrop"]');
+		const drawer = root.querySelector('[data-testid="pp4-filter-drawer"]');
+		const open = pp4FilterDrawerOpenByRoot.get(root) === true;
+		if (backdrop) backdrop.hidden = !open;
+		if (drawer) drawer.hidden = !open;
+		const draft = pp4FilterDraftByRoot.get(root) || pp4DefaultFilterState();
+		const searchInput = root.querySelector('[data-testid="pp4-filter-search"]');
+		const departmentSelect = root.querySelector('[data-testid="pp4-filter-department"]');
+		const createdFrom = root.querySelector('[data-testid="pp4-filter-created-from"]');
+		const createdTo = root.querySelector('[data-testid="pp4-filter-created-to"]');
+		if (searchInput) searchInput.value = String(draft.search || "");
+		if (createdFrom) createdFrom.value = String(draft.created_from || "");
+		if (createdTo) createdTo.value = String(draft.created_to || "");
+		if (departmentSelect) {
+			const rows = Array.isArray(pp4PackageItemsByRoot.get(root)) ? pp4PackageItemsByRoot.get(root) : [];
+			const departments = pp4AvailableDepartments(rows);
+			const options = ['<option value="' + PP4_DEPARTMENT_ALL + '">All Departments</option>'];
+			for (let i = 0; i < departments.length; i += 1) {
+				const label = departments[i];
+				options.push('<option value="' + esc(label) + '">' + esc(label) + "</option>");
+			}
+			departmentSelect.innerHTML = options.join("");
+			departmentSelect.value = String(draft.department || PP4_DEPARTMENT_ALL);
+		}
+		for (let i = 0; i < PP4_STATUS_FILTERS.length; i += 1) {
+			const status = PP4_STATUS_FILTERS[i];
+			const chip = root.querySelector(
+				'[data-testid="pp4-filter-status-' + status.key.replace(/_/g, "-") + '"]',
+			);
+			if (!chip) continue;
+			chip.classList.toggle("is-active", String(draft.status || "") === status.key);
+		}
+		const radios = root.querySelectorAll('input[name="pp4-filter-value-range"]');
+		for (let j = 0; j < radios.length; j += 1) {
+			const radio = radios[j];
+			radio.checked = String(radio.value || "") === String(draft.value_range || PP4_VALUE_RANGE_ALL);
+		}
+	}
+
+	function renderPP4PackageCardsFromState(root) {
+		if (!root) return;
+		const grid = root.querySelector('[data-testid="pp4-package-grid"]');
+		if (!grid) return;
+		const rows = Array.isArray(pp4PackageItemsByRoot.get(root)) ? pp4PackageItemsByRoot.get(root) : [];
+		const appliedFilters = pp4FilterAppliedByRoot.get(root) || pp4DefaultFilterState();
+		const sortKey = String(pp4SortModeByRoot.get(root) || "newest").trim() || "newest";
+		const term = String(pp4SearchTermByRoot.get(root) || "")
+			.toLowerCase()
+			.trim();
+		const filteredRows = rows.filter(function (row) {
+			if (term && pp4SearchHaystack(row).indexOf(term) === -1) return false;
+			return pp4ItemMatchesDrawerFilters(row, appliedFilters);
+		});
+		const visibleRows = filteredRows.slice();
+		if (sortKey === "value_high_low") {
+			visibleRows.sort(function (a, b) {
+				return pp4ValueNumber(b) - pp4ValueNumber(a);
+			});
+		} else if (sortKey === "value_low_high") {
+			visibleRows.sort(function (a, b) {
+				return pp4ValueNumber(a) - pp4ValueNumber(b);
+			});
+		}
+		renderPP4ControlLabels(root);
+		renderPP4SortMenuState(root);
+		renderPP4FilterDrawerState(root);
+		renderPP4TabCountsForCurrentFilters(root);
+		const cards = [];
+		for (let i = 0; i < visibleRows.length; i += 1) {
+			cards.push(pp4CardHtmlForItem(visibleRows[i]));
+		}
+		if (!cards.length) {
+			cards.push(
+				'<article class="pp4-package-card pp4-package-card--draft" data-testid="pp4-package-card">' +
+					'<h3 class="pp4-package-card__title">' +
+					esc(__("No packages found")) +
+					"</h3>" +
+					'<p class="pp4-package-card__desc">' +
+					esc(
+						term || pp4HasActiveAppliedFilters(appliedFilters)
+							? __("No packages match your search.")
+							: __("There are no packages for this tab yet."),
+					) +
+					"</p>" +
+					"</article>",
+			);
+		}
+		cards.push(pp4CreatePackageCardHtml());
+		grid.innerHTML = cards.join("");
+		bindPP4CardActions(root);
+	}
+
+	function renderPP4PackageCards(root, items) {
+		if (!root) return;
+		pp4PackageItemsByRoot.set(root, Array.isArray(items) ? items : []);
+		renderPP4PackageCardsFromState(root);
+	}
+
+	function buildPp4OpenTenderUrl(tenderCode) {
+		const code = String(tenderCode || "").trim();
+		if (!code) return "";
+		return "/desk/tm2-tender/" + encodeURIComponent(code);
+	}
+
+	function handlePp4CardAction(action, target, packageCode, tenderCode) {
+		if (action === "open_tender" || action === "view_tender") {
+			const tenderUrl = buildPp4OpenTenderUrl(target || tenderCode);
+			if (tenderUrl) {
+				window.location.href = tenderUrl;
+				return;
+			}
+		}
+		const openPackageActions = {
+			open_package: true,
+			view_package: true,
+			complete_package: true,
+			review_package: true,
+			mark_ready_for_release: true,
+			release_to_tender: true,
+			view_release: true,
+			"": true,
+		};
+		if (openPackageActions[action]) {
+			const code = target || packageCode;
+			if (code) {
+				window.location.href = buildWorkbenchOpenPackageUrl(code);
+			}
+		}
+	}
+
+	function handlePp4PrimaryCardAction(button) {
+		if (!button) return;
+		const action = String(button.getAttribute("data-pp4-action") || "").trim();
+		const target = String(button.getAttribute("data-pp4-target") || "").trim();
+		const packageCode = String(button.getAttribute("data-pp4-package-code") || "").trim();
+		const tenderCode = String(button.getAttribute("data-pp4-tender-code") || "").trim();
+		handlePp4CardAction(action, target, packageCode, tenderCode);
+	}
+
+	function handlePp4SecondaryCardAction(button) {
+		if (!button) return;
+		const action = String(button.getAttribute("data-pp4-action") || "").trim();
+		const target = String(button.getAttribute("data-pp4-target") || "").trim();
+		const packageCode = String(button.getAttribute("data-pp4-package-code") || "").trim();
+		const tenderCode = String(button.getAttribute("data-pp4-tender-code") || "").trim();
+		handlePp4CardAction(action, target, packageCode, tenderCode);
+	}
+
+	function bindPP4CardActions(root) {
+		if (!root) return;
+		const buttons = root.querySelectorAll('[data-testid="pp4-package-primary-action"]');
+		for (let i = 0; i < buttons.length; i += 1) {
+			const btn = buttons[i];
+			if (!btn || btn.getAttribute("data-pp4-bound") === "1") continue;
+			btn.setAttribute("data-pp4-bound", "1");
+			btn.addEventListener("click", function () {
+				handlePp4PrimaryCardAction(btn);
+			});
+		}
+		const secondaryButtons = root.querySelectorAll('[data-testid="pp4-package-secondary-action"]');
+		for (let j = 0; j < secondaryButtons.length; j += 1) {
+			const btn = secondaryButtons[j];
+			if (!btn || btn.getAttribute("data-pp4-bound") === "1") continue;
+			btn.setAttribute("data-pp4-bound", "1");
+			btn.addEventListener("click", function () {
+				handlePp4SecondaryCardAction(btn);
+			});
+		}
+	}
+
+	function fetchPP4ItemsForQueue(queueKey, onDone) {
+		if (!frappe || typeof frappe.call !== "function") {
+			onDone([]);
+			return;
+		}
+		frappe.call({
+			method: WORKBENCH_ITEM_VIEW_MODEL_API,
+			args: {
+				queue: queueKey,
+				limit: 24,
+				start: 0,
+			},
+			callback: function (response) {
+				const message = (response && response.message) || {};
+				if (!message || message.ok === false) {
+					onDone([]);
+					return;
+				}
+				onDone(Array.isArray(message.items) ? message.items : []);
+			},
+			error: function () {
+				onDone([]);
+			},
+		});
+	}
+
+	function fetchAndRenderPP4PackageCards(root, tabKey) {
+		if (!root) return;
+		const token = (pp4PackageFetchTokens.get(root) || 0) + 1;
+		pp4PackageFetchTokens.set(root, token);
+		const resolvedTab = String(tabKey || "all-packages").trim() || "all-packages";
+		const queueKey = PP4_TAB_TO_QUEUE[resolvedTab] || "all-packages";
+		if (queueKey !== "all-packages") {
+			fetchPP4ItemsForQueue(queueKey, function (items) {
+				if ((pp4PackageFetchTokens.get(root) || 0) !== token) return;
+				const byQueue = pp4QueueItemsByRoot.get(root) || {};
+				byQueue[queueKey] = Array.isArray(items) ? items.slice() : [];
+				pp4QueueItemsByRoot.set(root, byQueue);
+				renderPP4PackageCards(root, items);
+			});
+			return;
+		}
+		const collected = [];
+		const seenByCode = {};
+		const byQueue = {};
+		let pending = PP4_ALL_PACKAGES_QUEUES.length;
+		for (let i = 0; i < PP4_ALL_PACKAGES_QUEUES.length; i += 1) {
+			const queue = PP4_ALL_PACKAGES_QUEUES[i];
+			fetchPP4ItemsForQueue(queue, function (items) {
+				if ((pp4PackageFetchTokens.get(root) || 0) !== token) return;
+				byQueue[queue] = Array.isArray(items) ? items.slice() : [];
+				for (let j = 0; j < items.length; j += 1) {
+					const row = items[j];
+					const code = String((row && row.underlying_object_code) || "").trim();
+					if (code && seenByCode[code]) continue;
+					if (code) seenByCode[code] = true;
+					collected.push(row);
+				}
+				pending -= 1;
+				if (pending <= 0) {
+					pp4QueueItemsByRoot.set(root, byQueue);
+					renderPP4PackageCards(root, collected);
+				}
+			});
+		}
+	}
+
+	function setPP4ActiveTab(root, tabKey) {
+		if (!root) return;
+		const buttons = [
+			{ testId: "pp4-tab-all-packages", key: "all-packages" },
+			{ testId: "pp4-tab-in-creation", key: "in-creation" },
+			{ testId: "pp4-tab-awaiting-review", key: "awaiting-review" },
+			{ testId: "pp4-tab-ready-for-release", key: "ready-for-release" },
+		];
+		for (let i = 0; i < buttons.length; i += 1) {
+			const cfg = buttons[i];
+			const node = root.querySelector('[data-testid="' + cfg.testId + '"]');
+			if (!node) continue;
+			const active = cfg.key === tabKey;
+			node.classList.toggle("is-active", active);
+			node.setAttribute("aria-selected", active ? "true" : "false");
+		}
+	}
+
+	function bindPP4TabPackageList(root) {
+		if (!root) return;
+		const tabBindings = [
+			{ testId: "pp4-tab-all-packages", key: "all-packages" },
+			{ testId: "pp4-tab-in-creation", key: "in-creation" },
+			{ testId: "pp4-tab-awaiting-review", key: "awaiting-review" },
+			{ testId: "pp4-tab-ready-for-release", key: "ready-for-release" },
+		];
+		for (let i = 0; i < tabBindings.length; i += 1) {
+			const cfg = tabBindings[i];
+			const node = root.querySelector('[data-testid="' + cfg.testId + '"]');
+			if (!node) continue;
+			if (node.getAttribute("data-pp4-tab-bound") === "1") continue;
+			node.setAttribute("data-pp4-tab-bound", "1");
+			node.addEventListener("click", function () {
+				setPP4ActiveTab(root, cfg.key);
+				fetchAndRenderPP4PackageCards(root, cfg.key);
+			});
+		}
+	}
+
+	function bindPP4Search(root) {
+		if (!root) return;
+		const input = root.querySelector('[data-testid="pp4-search-input"]');
+		if (!input) return;
+		if (input.getAttribute("data-pp4-search-bound") === "1") return;
+		input.setAttribute("data-pp4-search-bound", "1");
+		if (!pp4SearchTermByRoot.has(root)) {
+			pp4SearchTermByRoot.set(root, "");
+		}
+		input.addEventListener("input", function () {
+			pp4SearchTermByRoot.set(root, String(input.value || ""));
+			renderPP4PackageCardsFromState(root);
+		});
+	}
+
+	function bindPP4SortAndFilters(root) {
+		if (!root) return;
+		const sortButton = root.querySelector('[data-testid="pp4-sort"]');
+		const filterButton = root.querySelector('[data-testid="pp4-filters"]');
+		const sortMenu = root.querySelector('[data-testid="pp4-sort-menu"]');
+		const backdrop = root.querySelector('[data-testid="pp4-filter-backdrop"]');
+		const closeDrawerBtn = root.querySelector('[data-testid="pp4-filter-close"]');
+		const filterSearch = root.querySelector('[data-testid="pp4-filter-search"]');
+		const statusInCreation = root.querySelector('[data-testid="pp4-filter-status-in-creation"]');
+		const statusAwaitingReview = root.querySelector('[data-testid="pp4-filter-status-awaiting-review"]');
+		const statusReadyForRelease = root.querySelector('[data-testid="pp4-filter-status-ready-for-release"]');
+		const department = root.querySelector('[data-testid="pp4-filter-department"]');
+		const createdFrom = root.querySelector('[data-testid="pp4-filter-created-from"]');
+		const createdTo = root.querySelector('[data-testid="pp4-filter-created-to"]');
+		const applyButton = root.querySelector('[data-testid="pp4-filter-apply"]');
+		const clearAllButton = root.querySelector('[data-testid="pp4-filter-clear-all"]');
+		renderPP4ControlLabels(root);
+		if (sortButton && sortButton.getAttribute("data-pp4-sort-bound") !== "1") {
+			sortButton.setAttribute("data-pp4-sort-bound", "1");
+			sortButton.addEventListener("click", function () {
+				pp4SortMenuOpenByRoot.set(root, !(pp4SortMenuOpenByRoot.get(root) === true));
+				renderPP4PackageCardsFromState(root);
+			});
+		}
+		if (sortMenu && sortMenu.getAttribute("data-pp4-sort-options-bound") !== "1") {
+			sortMenu.setAttribute("data-pp4-sort-options-bound", "1");
+			const bindSortOption = function (testId, sortKey) {
+				const node = root.querySelector('[data-testid="' + testId + '"]');
+				if (!node) return;
+				node.addEventListener("click", function () {
+					pp4SortModeByRoot.set(root, sortKey);
+					pp4SortMenuOpenByRoot.set(root, false);
+					renderPP4PackageCardsFromState(root);
+				});
+			};
+			bindSortOption("pp4-sort-option-newest", "newest");
+			bindSortOption("pp4-sort-option-value-high-low", "value_high_low");
+			bindSortOption("pp4-sort-option-value-low-high", "value_low_high");
+		}
+		if (filterButton && filterButton.getAttribute("data-pp4-filter-bound") !== "1") {
+			filterButton.setAttribute("data-pp4-filter-bound", "1");
+			filterButton.addEventListener("click", function () {
+				pp4SortMenuOpenByRoot.set(root, false);
+				const applied = pp4FilterAppliedByRoot.get(root) || pp4DefaultFilterState();
+				pp4FilterDraftByRoot.set(root, pp4CloneFilterState(applied));
+				pp4FilterDrawerOpenByRoot.set(root, true);
+				renderPP4FilterDrawerState(root);
+				renderPP4SortMenuState(root);
+			});
+		}
+		if (backdrop && backdrop.getAttribute("data-pp4-filter-backdrop-bound") !== "1") {
+			backdrop.setAttribute("data-pp4-filter-backdrop-bound", "1");
+			backdrop.addEventListener("click", function () {
+				pp4FilterDrawerOpenByRoot.set(root, false);
+				pp4FilterDraftByRoot.set(
+					root,
+					pp4CloneFilterState(pp4FilterAppliedByRoot.get(root) || pp4DefaultFilterState()),
+				);
+				renderPP4FilterDrawerState(root);
+			});
+		}
+		if (closeDrawerBtn && closeDrawerBtn.getAttribute("data-pp4-filter-close-bound") !== "1") {
+			closeDrawerBtn.setAttribute("data-pp4-filter-close-bound", "1");
+			closeDrawerBtn.addEventListener("click", function () {
+				pp4FilterDrawerOpenByRoot.set(root, false);
+				pp4FilterDraftByRoot.set(
+					root,
+					pp4CloneFilterState(pp4FilterAppliedByRoot.get(root) || pp4DefaultFilterState()),
+				);
+				renderPP4FilterDrawerState(root);
+			});
+		}
+		const updateDraft = function (updater) {
+			const current = pp4CloneFilterState(pp4FilterDraftByRoot.get(root) || pp4DefaultFilterState());
+			updater(current);
+			pp4FilterDraftByRoot.set(root, current);
+			renderPP4FilterDrawerState(root);
+		};
+		if (filterSearch && filterSearch.getAttribute("data-pp4-filter-search-bound") !== "1") {
+			filterSearch.setAttribute("data-pp4-filter-search-bound", "1");
+			filterSearch.addEventListener("input", function () {
+				updateDraft(function (next) {
+					next.search = String(filterSearch.value || "");
+				});
+			});
+		}
+		const bindStatus = function (node, key) {
+			if (!node || node.getAttribute("data-pp4-filter-status-bound") === "1") return;
+			node.setAttribute("data-pp4-filter-status-bound", "1");
+			node.addEventListener("click", function () {
+				updateDraft(function (next) {
+					next.status = key;
+				});
+			});
+		};
+		bindStatus(statusInCreation, "in_creation");
+		bindStatus(statusAwaitingReview, "awaiting_review");
+		bindStatus(statusReadyForRelease, "ready_for_release");
+		if (department && department.getAttribute("data-pp4-filter-department-bound") !== "1") {
+			department.setAttribute("data-pp4-filter-department-bound", "1");
+			department.addEventListener("change", function () {
+				updateDraft(function (next) {
+					next.department = String(department.value || PP4_DEPARTMENT_ALL);
+				});
+			});
+		}
+		const rangeRadios = root.querySelectorAll('input[name="pp4-filter-value-range"]');
+		for (let i = 0; i < rangeRadios.length; i += 1) {
+			const radio = rangeRadios[i];
+			if (!radio || radio.getAttribute("data-pp4-filter-range-bound") === "1") continue;
+			radio.setAttribute("data-pp4-filter-range-bound", "1");
+			radio.addEventListener("change", function () {
+				if (!radio.checked) return;
+				updateDraft(function (next) {
+					next.value_range = String(radio.value || PP4_VALUE_RANGE_ALL);
+				});
+			});
+		}
+		if (createdFrom && createdFrom.getAttribute("data-pp4-filter-created-from-bound") !== "1") {
+			createdFrom.setAttribute("data-pp4-filter-created-from-bound", "1");
+			createdFrom.addEventListener("change", function () {
+				updateDraft(function (next) {
+					next.created_from = String(createdFrom.value || "");
+				});
+			});
+		}
+		if (createdTo && createdTo.getAttribute("data-pp4-filter-created-to-bound") !== "1") {
+			createdTo.setAttribute("data-pp4-filter-created-to-bound", "1");
+			createdTo.addEventListener("change", function () {
+				updateDraft(function (next) {
+					next.created_to = String(createdTo.value || "");
+				});
+			});
+		}
+		if (applyButton && applyButton.getAttribute("data-pp4-filter-apply-bound") !== "1") {
+			applyButton.setAttribute("data-pp4-filter-apply-bound", "1");
+			applyButton.addEventListener("click", function () {
+				pp4FilterAppliedByRoot.set(
+					root,
+					pp4CloneFilterState(pp4FilterDraftByRoot.get(root) || pp4DefaultFilterState()),
+				);
+				pp4FilterDrawerOpenByRoot.set(root, false);
+				renderPP4PackageCardsFromState(root);
+			});
+		}
+		if (clearAllButton && clearAllButton.getAttribute("data-pp4-filter-clear-bound") !== "1") {
+			clearAllButton.setAttribute("data-pp4-filter-clear-bound", "1");
+			clearAllButton.addEventListener("click", function () {
+				const defaults = pp4DefaultFilterState();
+				pp4FilterDraftByRoot.set(root, pp4CloneFilterState(defaults));
+				pp4FilterAppliedByRoot.set(root, pp4CloneFilterState(defaults));
+				pp4FilterDrawerOpenByRoot.set(root, false);
+				renderPP4PackageCardsFromState(root);
+			});
+		}
+		if (document && !document.__pp4SortDismissBound) {
+			document.__pp4SortDismissBound = true;
+			document.addEventListener("click", function (ev) {
+				if (!root || !root.contains(ev.target)) return;
+				const host = root.querySelector(".pp4-sort-host");
+				if (host && host.contains(ev.target)) return;
+				if (pp4SortMenuOpenByRoot.get(root) === true) {
+					pp4SortMenuOpenByRoot.set(root, false);
+					renderPP4SortMenuState(root);
+				}
+			});
+		}
 	}
 
 	function workspaceNameMatches(name) {
@@ -2500,6 +3582,7 @@
 		const hierarchyReady = enhanceSidebarVisualHierarchy(slug, planningRoute);
 		const root = ensureWorkspaceRoot();
 		if (!root) return false;
+		const routeSignature = String(window.location.pathname || "") + "|" + String(window.location.search || "");
 
 		if (resolution.action === "not_found") {
 			renderRouteNotFound(root);
@@ -2518,7 +3601,32 @@
 		document.querySelectorAll('[data-testid="pp2-primary-workspace-shell"]').forEach(function (el) {
 			el.remove();
 		});
+		const alreadyMounted = root.getAttribute("data-pp4-mounted") === "1";
+		const lastSignature = pp4MountSignatureByRoot.get(root) || "";
+		if (alreadyMounted && lastSignature === routeSignature) {
+			document.body.classList.remove("kt-pp2-shell");
+			document.body.classList.add("kt-pp4-shell");
+			syncSidebarActive("");
+			return hierarchyReady;
+		}
 		renderPlanningWorkbenchV4(root);
+		root.setAttribute("data-pp4-mounted", "1");
+		pp4MountSignatureByRoot.set(root, routeSignature);
+		pp4PackageItemsByRoot.set(root, []);
+		pp4QueueItemsByRoot.set(root, {});
+		pp4SearchTermByRoot.set(root, "");
+		pp4SortModeByRoot.set(root, "newest");
+		pp4SortMenuOpenByRoot.set(root, false);
+		pp4FilterDrawerOpenByRoot.set(root, false);
+		pp4FilterDraftByRoot.set(root, pp4DefaultFilterState());
+		pp4FilterAppliedByRoot.set(root, pp4DefaultFilterState());
+		bindPP4TabPackageList(root);
+		bindPP4Search(root);
+		bindPP4SortAndFilters(root);
+		setPP4ActiveTab(root, "all-packages");
+		fetchAndRenderPP4Kpis(root);
+		fetchAndRenderPP4QueueCounts(root);
+		fetchAndRenderPP4PackageCards(root, "all-packages");
 		document.body.classList.remove("kt-pp2-shell");
 		document.body.classList.add("kt-pp4-shell");
 		syncSidebarActive("");

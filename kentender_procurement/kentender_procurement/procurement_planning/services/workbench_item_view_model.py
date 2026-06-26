@@ -187,6 +187,7 @@ def _package_queue_items(rows: list[dict[str, Any]], queue: str, plan_label: str
 		if not code:
 			continue
 		title = str(pkg.get("name") or code).strip()
+		package_description = str(pkg.get("description") or "").strip()
 		category = str(row.get("category") or "").strip()
 		method = str(row.get("method") or "").strip()
 		value = _money(row.get("estimated_value"), row.get("currency") or "KES")
@@ -203,6 +204,7 @@ def _package_queue_items(rows: list[dict[str, Any]], queue: str, plan_label: str
 		action_key = str(next_action.get("key") or "open_package").strip()
 		label, action = _PACKAGE_ACTION_MAP.get(action_key, _PACKAGE_ACTION_MAP["open_package"])
 		meta_line = " · ".join([s for s in (method, value) if s])
+		status_detail = package_description or f"Next package action: {label}."
 		entry.update(
 			{
 				"category_label": category,
@@ -216,7 +218,8 @@ def _package_queue_items(rows: list[dict[str, Any]], queue: str, plan_label: str
 					[s for s in ("Procurement package", category, method, value) if s]
 				),
 				"status_headline": str(row.get("status") or entry["state_label"]).strip(),
-				"status_detail": f"Next package action: {label}.",
+				"status_detail": status_detail,
+				"package_description": package_description,
 				"next_step_detail": f"{label} to move this package forward.",
 				"list_next_action": label,
 				"state_label": str(row.get("status") or entry["state_label"]).strip(),
@@ -224,6 +227,13 @@ def _package_queue_items(rows: list[dict[str, Any]], queue: str, plan_label: str
 				"next_action_label": label,
 				"primary_action": {"label": label, "action": action, "target": code},
 				"secondary_actions": [{"label": "View Package", "action": "view_package", "target": code}],
+				"consolidated_demand_count": cint(row.get("consolidated_demand_count") or 0),
+				"department_label": str(
+					row.get("procuring_entity_label")
+					or row.get("procuring_entity_code")
+					or "",
+				).strip(),
+				"created_on": str(row.get("created_on") or row.get("updated_at") or "").strip(),
 			}
 		)
 		items.append(entry)

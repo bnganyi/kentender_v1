@@ -39,6 +39,7 @@ _PACKAGE_FIELDS = [
 	"name",
 	"package_code",
 	"package_name",
+	"package_description",
 	"status",
 	"readiness_status",
 	"latest_readiness_code",
@@ -52,6 +53,8 @@ _PACKAGE_FIELDS = [
 	"procuring_entity_code",
 	"fiscal_year",
 	"plan_id",
+	"creation",
+	"modified",
 ]
 
 _NEXT_ACTION_LABELS: dict[str, str] = {
@@ -222,6 +225,30 @@ def _plan_status_for(pkg: dict[str, Any], plan_status_cache: dict[str, str]) -> 
 	return plan_status_cache[plan_id]
 
 
+def _active_demand_count_by_package(package_codes: list[str]) -> dict[str, int]:
+	if not package_codes:
+		return {}
+	placeholder = ", ".join(["%s"] * len(package_codes))
+	rows = frappe.db.sql(
+		f"""
+		SELECT package_id, COUNT(DISTINCT demand_id) AS demand_count
+		FROM `tabProcurement Package Line`
+		WHERE ifnull(is_active, 1) = 1
+		  AND package_id IN ({placeholder})
+		GROUP BY package_id
+		""",
+		tuple(package_codes),
+		as_dict=True,
+	)
+	out: dict[str, int] = {}
+	for row in rows:
+		pkg = str(row.get("package_id") or "").strip()
+		if not pkg:
+			continue
+		out[pkg] = cint(row.get("demand_count") or 0)
+	return out
+
+
 def _format_row(
 	pkg: dict[str, Any],
 	*,
@@ -229,6 +256,7 @@ def _format_row(
 	journey: dict[str, Any] | None,
 	planning_release_handoff: dict[str, Any] | None,
 	plan_status: str,
+	consolidated_demand_count: int = 0,
 ) -> dict[str, Any]:
 	package_code = (pkg.get("package_code") or pkg.get("name") or "").strip()
 	status = (pkg.get("status") or "").strip()
@@ -238,6 +266,7 @@ def _format_row(
 			"id": pkg.get("name") or "",
 			"code": package_code,
 			"name": (pkg.get("package_name") or package_code).strip(),
+			"description": (pkg.get("package_description") or "").strip(),
 		},
 		"status": status,
 		"workbench_group": pkg_workbench_group(status),
@@ -259,6 +288,10 @@ def _format_row(
 			plan_status=plan_status,
 			handoff=planning_release_handoff,
 		),
+		"consolidated_demand_count": cint(consolidated_demand_count or 0),
+		"procuring_entity_label": str(pkg.get("procuring_entity_code") or "").strip(),
+		"created_on": str(pkg.get("creation") or "").strip(),
+		"updated_at": str(pkg.get("modified") or "").strip(),
 	}
 
 
@@ -318,6 +351,7 @@ def get_package_workbench_rows(
 	]
 	journey_by_pkg = journey_link_hints_by_package_codes(package_codes)
 	release_by_pkg = batch_planning_release_handoff_hints_for_packages(package_codes, journey_by_pkg)
+	demand_count_by_pkg = _active_demand_count_by_package(package_codes)
 	plan_status_cache: dict[str, str] = {}
 
 	formatted: list[dict[str, Any]] = []
@@ -331,6 +365,7 @@ def get_package_workbench_rows(
 				journey=journey_by_pkg.get(package_code),
 				planning_release_handoff=release_by_pkg.get(package_code),
 				plan_status=plan_status,
+				consolidated_demand_count=demand_count_by_pkg.get(package_code, 0),
 			)
 		)
 
