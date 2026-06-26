@@ -59,6 +59,9 @@
 				: Array.isArray(s.secondaryActions)
 					? s.secondaryActions
 					: [],
+			targetPlanName: String(
+				s.target_plan_name || s.targetPlanName || s.active_plan_name || "",
+			).trim(),
 			showEvidenceAction:
 				s.show_evidence_action !== false && s.showEvidenceAction !== false,
 		};
@@ -169,7 +172,61 @@
 	}
 
 	function includeSuccessActionsHtml(summary) {
-		return successActionsHtml(summary, "");
+		let html = successActionsHtml(summary, "");
+		if (!summary.showEvidenceAction) {
+			return html;
+		}
+		const evidenceBtn =
+			'<button type="button" class="btn btn-default btn-sm pp3-selected-work-summary__evidence" data-testid="pp3-view-evidence-button">' +
+			esc(__("View Evidence")) +
+			"</button>";
+		if (!html) {
+			return (
+				'<div class="pp3-selected-work-summary__actions" data-testid="pp3-secondary-actions">' +
+				evidenceBtn +
+				"</div>"
+			);
+		}
+		return html.replace(/<\/div>\s*$/, evidenceBtn + "</div>");
+	}
+
+	function includeSuccessHtml(summary) {
+		const headline = String(summary.statusHeadline || __("Added to active plan")).trim();
+		const planName = String(summary.targetPlanName || "").trim();
+		const nextStep = String(
+			summary.nextStepDetail ||
+				summary.nextAction ||
+				__("Create a procurement package for this demand."),
+		).trim();
+		return (
+			'<section class="pp3-selected-work-summary pp2-include-plan-success" data-testid="pp3-selected-work-summary">' +
+			'<div class="pp2-include-plan-success" data-testid="pp2-include-plan-success">' +
+			'<div class="pp3-selected-work-summary__body">' +
+			'<p class="pp3-selected-work-summary__label">' +
+			esc(headline) +
+			"</p>" +
+			'<p class="pp3-selected-work-summary__intro text-muted small mb-1">' +
+			esc(__("This demand has been added to:")) +
+			"</p>" +
+			(planName
+				? '<h3 class="pp3-selected-work-summary__title pp2-include-plan-success__message" data-testid="pp2-include-plan-success-message">' +
+					esc(planName) +
+					"</h3>"
+				: '<div class="pp2-include-plan-success__message" data-testid="pp2-include-plan-success-message">' +
+					esc(summary.includeSuccessMessage || __("Demand added to the active procurement plan.")) +
+					"</div>") +
+			'<div class="pp3-selected-work-summary__next-step">' +
+			'<p class="pp3-selected-work-summary__section-label">' +
+			esc(__("Next step")) +
+			"</p>" +
+			'<p class="pp3-selected-work-summary__next-step-detail pp2-include-plan-success__next" data-testid="pp2-include-plan-success-next">' +
+			esc(nextStep) +
+			"</p>" +
+			"</div></div>" +
+			'<div class="pp3-selected-work-summary__footer">' +
+			includeSuccessActionsHtml(summary) +
+			"</div></div></section>"
+		);
 	}
 
 	function createPackageSuccessHtml(summary) {
@@ -187,25 +244,6 @@
 			esc(nextAction || __("Complete readiness and submit for review.")) +
 			"</div>" +
 			successActionsHtml(summary, "pp2-open-package-next-action") +
-			"</div></section>"
-		);
-	}
-
-	function includeSuccessHtml(summary) {
-		const message = String(summary.includeSuccessMessage || summary.title || "").trim();
-		const nextAction = String(summary.nextAction || "").trim();
-		return (
-			'<section class="pp3-selected-work-summary pp2-include-plan-success" data-testid="pp3-selected-work-summary">' +
-			'<div class="pp2-include-plan-success" data-testid="pp2-include-plan-success">' +
-			'<div class="pp2-include-plan-success__message" data-testid="pp2-include-plan-success-message">' +
-			esc(message || __("Demand added to the active procurement plan.")) +
-			"</div>" +
-			'<div class="pp2-include-plan-success__next small text-muted mt-1 mb-2" data-testid="pp2-include-plan-success-next">' +
-			esc(__("Next")) +
-			": " +
-			esc(nextAction || __("Create package.")) +
-			"</div>" +
-			includeSuccessActionsHtml(summary) +
 			"</div></section>"
 		);
 	}

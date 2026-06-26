@@ -274,8 +274,15 @@
 				emptyMessage: queueEmptyMessage,
 				onSelect: o.onSelect,
 			});
-			if (selectedId && typeof o.onSelect === "function") {
-				o.onSelect(selectedId, items[0]);
+			if (selectedId && typeof o.onSelect === "function" && o.suppressAutoSelect !== true) {
+				let selectedItem = null;
+				for (let j = 0; j < items.length; j += 1) {
+					if (itemId(items[j]) === selectedId) {
+						selectedItem = items[j];
+						break;
+					}
+				}
+				o.onSelect(selectedId, selectedItem || items[0]);
 			}
 		});
 	}

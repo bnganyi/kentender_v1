@@ -17,6 +17,7 @@ from kentender_procurement.procurement_planning.services.planning_inclusion_serv
 	_active_package_line_for_demand,
 	_active_package_line_for_item_code,
 	_demand_budget_ok,
+	demand_has_unpackaged_planning_inclusion,
 )
 
 _QUEUE_DEMAND_FIELDS = [
@@ -118,6 +119,8 @@ def _demand_passes_queue_eligibility(row: dict[str, Any]) -> bool:
 		return False
 
 	demand_code = (row.get("demand_id") or demand_name or "").strip()
+	if demand_has_unpackaged_planning_inclusion(demand_code):
+		return False
 	for item in items:
 		item_code = _derive_demand_item_code(demand_code, int(item.get("idx") or 1))
 		if _active_package_line_for_item_code(item_code):
@@ -294,6 +297,9 @@ def _ready_rows(
 			continue
 		if not _demand_passes_queue_eligibility(row):
 			continue
+		demand_code = (row.get("demand_id") or row.get("name") or "").strip()
+		if demand_has_unpackaged_planning_inclusion(demand_code):
+			continue
 		eligible_rows.append(_format_row(row))
 	return _apply_search(eligible_rows, str(filters.get("search_text") or ""))
 
@@ -317,6 +323,9 @@ def _blocked_rows(*, filters: dict[str, Any], actor: str, clauses: list[list[Any
 		if planning_status == "Fully Planned":
 			continue
 		if _demand_passes_queue_eligibility(row):
+			continue
+		demand_code = (row.get("demand_id") or row.get("name") or "").strip()
+		if demand_has_unpackaged_planning_inclusion(demand_code):
 			continue
 		entry = _format_row(row)
 		blocker = _queue_blocker_label(row)

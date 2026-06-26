@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""P1-002 / PP3 nav IA — Procurement rail nested Planning contract."""
+"""P1-002 / PP4 nav IA — single Planning Workbench entry contract."""
 
 from __future__ import annotations
 
@@ -11,11 +11,7 @@ import os
 import frappe
 from frappe.tests import IntegrationTestCase
 
-_EXPECTED_PP3_CHILD_LABELS: tuple[str, ...] = (
-	"Workbench",
-	"Procurement Plans",
-	"Released to Tender",
-)
+_EXPECTED_PLANNING_LABEL = "Planning Workbench"
 
 _FORBIDDEN_PP2_LABELS: frozenset[str] = frozenset(
 	{
@@ -40,13 +36,7 @@ _FORBIDDEN_PP2_LABELS: frozenset[str] = frozenset(
 	}
 )
 
-_ALLOWED_PP3_CHILD_URLS: frozenset[str] = frozenset(
-	{
-		"/desk/procurement-planning",
-		"/desk/procurement-planning/plans",
-		"/desk/procurement-planning/releases",
-	}
-)
+_ALLOWED_PLANNING_URL = "/desk/procurement-planning"
 
 _FORBIDDEN_PP2_CHILD_URL_SUBSTRINGS: tuple[str, ...] = (
 	"/procurement-planning/approved-demands",
@@ -62,7 +52,7 @@ _FORBIDDEN_PP2_CHILD_URL_SUBSTRINGS: tuple[str, ...] = (
 
 
 class TestProcurementPlanningSidebarP5001Contract(IntegrationTestCase):
-	def test_procurement_sidebar_has_nested_planning_parent_and_three_children(self):
+	def test_procurement_sidebar_has_single_planning_workbench_link(self):
 		path = os.path.join(
 			frappe.get_app_path("kentender_procurement"),
 			"workspace_sidebar",
@@ -72,47 +62,34 @@ class TestProcurementPlanningSidebarP5001Contract(IntegrationTestCase):
 		with open(path, encoding="utf-8") as f:
 			data = json.load(f)
 		items = data.get("items") or []
-		pp_parent = None
-		for row in items:
-			if row.get("type") == "Section Break" and row.get("label") == "Procurement Planning":
-				pp_parent = row
-				break
-		self.assertIsNotNone(pp_parent, msg="Procurement rail must include Procurement Planning parent.")
-		self.assertTrue(int(pp_parent.get("collapsible") or 0) == 1)
-		self.assertTrue(int(pp_parent.get("show_arrow") or 0) == 0)
-
-		child_rows = [
+		planning_rows = [
 			row
 			for row in items
-			if row.get("type") == "Link" and int(row.get("child") or 0) == 1 and int(row.get("indent") or 0) >= 1
+			if row.get("type") == "Link" and (row.get("label") or "") == _EXPECTED_PLANNING_LABEL
 		]
-		labels = tuple(row.get("label") or "" for row in child_rows)
 		self.assertEqual(
-			labels,
-			_EXPECTED_PP3_CHILD_LABELS,
-			msg="Procurement Planning parent must expose exactly three child surface links.",
+			len(planning_rows),
+			1,
+			msg="Procurement rail must expose exactly one Planning Workbench link.",
 		)
-		for row in child_rows:
-			self.assertEqual(
-				(row.get("link_to") or "").strip(),
-				"Procurement Planning",
-				msg=f"Nested link {row.get('label')!r} must stay in Procurement Planning workspace shell.",
-			)
-			url = (row.get("url") or "").strip()
-			self.assertTrue(url.startswith("/desk/procurement-planning"))
+		row = planning_rows[0]
+		self.assertEqual((row.get("link_to") or "").strip(), "Procurement Planning")
+		self.assertEqual((row.get("url") or "").strip(), _ALLOWED_PLANNING_URL)
+		self.assertEqual(int(row.get("child") or 0), 0)
+		self.assertEqual(int(row.get("indent") or 0), 0)
 
-	def test_nested_planning_child_links_exclude_evidence_route(self):
+	def test_planning_workbench_link_excludes_evidence_route(self):
 		path = os.path.join(frappe.get_app_path("kentender_procurement"), "workspace_sidebar", "procurement.json")
 		with open(path, encoding="utf-8") as f:
 			data = json.load(f)
-		child_rows = [
+		planning_rows = [
 			row
 			for row in data.get("items") or []
-			if row.get("type") == "Link" and int(row.get("child") or 0) == 1 and int(row.get("indent") or 0) >= 1
+			if row.get("type") == "Link" and (row.get("label") or "") == _EXPECTED_PLANNING_LABEL
 		]
 		evidence_urls = [
 			(row.get("url") or "").strip()
-			for row in child_rows
+			for row in planning_rows
 			if "/procurement-planning/evidence" in (row.get("url") or "").strip().lower()
 		]
 		self.assertFalse(
@@ -120,22 +97,18 @@ class TestProcurementPlanningSidebarP5001Contract(IntegrationTestCase):
 			msg=f"Planning Evidence route must not appear in persistent Planning nav: {evidence_urls}",
 		)
 
-	def test_nested_planning_child_links_use_only_canonical_urls(self):
+	def test_planning_workbench_link_uses_only_root_canonical_url(self):
 		path = os.path.join(frappe.get_app_path("kentender_procurement"), "workspace_sidebar", "procurement.json")
 		with open(path, encoding="utf-8") as f:
 			data = json.load(f)
-		child_rows = [
+		planning_rows = [
 			row
 			for row in data.get("items") or []
-			if row.get("type") == "Link" and int(row.get("child") or 0) == 1 and int(row.get("indent") or 0) >= 1
+			if row.get("type") == "Link" and (row.get("label") or "") == _EXPECTED_PLANNING_LABEL
 		]
-		urls = [(row.get("url") or "").strip() for row in child_rows]
+		urls = [(row.get("url") or "").strip() for row in planning_rows]
 		for url in urls:
-			self.assertIn(
-				url,
-				_ALLOWED_PP3_CHILD_URLS,
-				msg=f"Planning child link must use canonical surface URL, got {url!r}",
-			)
+			self.assertEqual(url, _ALLOWED_PLANNING_URL)
 		for url in urls:
 			lower = url.lower()
 			for forbidden in _FORBIDDEN_PP2_CHILD_URL_SUBSTRINGS:
@@ -145,14 +118,14 @@ class TestProcurementPlanningSidebarP5001Contract(IntegrationTestCase):
 					msg=f"Forbidden detail route substring {forbidden!r} in Planning nav URL {url!r}",
 				)
 
-	def test_nested_planning_links_exclude_forbidden_labels(self):
+	def test_planning_workbench_link_excludes_forbidden_labels(self):
 		path = os.path.join(frappe.get_app_path("kentender_procurement"), "workspace_sidebar", "procurement.json")
 		with open(path, encoding="utf-8") as f:
 			data = json.load(f)
 		labels = {
 			row.get("label") or ""
 			for row in data.get("items") or []
-			if row.get("type") == "Link" and int(row.get("child") or 0) == 1 and int(row.get("indent") or 0) >= 1
+			if row.get("type") == "Link" and (row.get("url") or "").strip().startswith("/desk/procurement-planning")
 		}
 		forbidden = labels & _FORBIDDEN_PP2_LABELS
 		self.assertFalse(
@@ -171,10 +144,11 @@ class TestProcurementPlanningSidebarP5001Contract(IntegrationTestCase):
 		pp_links = [
 			row
 			for row in data.get("items") or []
-			if row.get("type") == "Section Break" and row.get("label") == "Procurement Planning"
+			if row.get("type") == "Link" and row.get("label") == _EXPECTED_PLANNING_LABEL
 		]
 		self.assertEqual(len(pp_links), 1)
-		self.assertTrue(int(pp_links[0].get("collapsible") or 0) == 1)
+		self.assertEqual((pp_links[0].get("link_to") or "").strip(), "Procurement Planning")
+		self.assertEqual((pp_links[0].get("url") or "").strip(), _ALLOWED_PLANNING_URL)
 
 	def test_pp2_planning_router_has_no_forbidden_implementation_copy(self):
 		import re
@@ -286,17 +260,8 @@ class TestProcurementPlanningSidebarP5001Contract(IntegrationTestCase):
 			hrefs_block.group("body"),
 			msg="Planning Evidence route must be explicitly forbidden as ordinary persistent Planning nav href (P1-006).",
 		)
-		removable_block = re.search(
-			r"const\s+removableLegacyLabels\s*=\s*\{(?P<body>.*?)\}\s*;",
-			source,
-			re.DOTALL,
-		)
-		self.assertIsNotNone(
-			removable_block,
-			msg="removableLegacyLabels block missing in pp2_planning_router.js",
-		)
 		self.assertIn(
-			'"planning evidence": true',
-			removable_block.group("body"),
-			msg="Planning Evidence should be hard-pruned in removableLegacyLabels for stale sidebar payloads (P1-006).",
+			"isForbiddenPlanningNavLink",
+			source,
+			msg="Router must keep stale sidebar guard function for planning evidence links.",
 		)

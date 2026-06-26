@@ -16,16 +16,19 @@ test.describe('P3-001 Workbench route', () => {
 		});
 	});
 
-	test('root route renders PP3 Workbench and hides legacy Planning Home surface', async ({ page }) => {
+	test('root route renders PP4 Workbench with high-fidelity regions', async ({ page }) => {
 		await page.goto(`${root}/desk/procurement-planning`, { waitUntil: 'domcontentloaded' });
 
-		await expect(page.getByTestId('pp3-planning-workbench')).toHaveCount(1);
-		await expect(page.getByTestId('pp2-planning-home-surface')).toHaveCount(0);
-		await expect(page.getByTestId('pp2-planning-home-queues')).toHaveCount(0);
-		await expect(page.getByTestId('pp3-workbench-queue-tabs')).toBeVisible();
-		await expect(page.getByTestId('pp3-work-list')).toBeVisible();
-		await expect(page.getByTestId('pp3-selected-work-summary')).toBeVisible();
-		await expect(page.getByTestId('pp2-page-title')).toHaveText('Workbench');
+		await expect(page.getByTestId('pp4-workbench')).toHaveCount(1);
+		await expect(page.getByTestId('pp4-topbar')).toBeVisible();
+		await expect(page.getByTestId('pp4-breadcrumbs')).toBeVisible();
+		await expect(page.getByTestId('pp4-stats-grid')).toBeVisible();
+		await expect(page.getByTestId('pp4-work-queue-tabs')).toBeVisible();
+		await expect(page.getByTestId('pp4-package-grid')).toBeVisible();
+		await expect(page.getByTestId('pp4-create-package-card')).toBeVisible();
+		await expect(page.getByTestId('pp4-topbar-search')).toBeVisible();
+		await expect(page.getByText('End-to-End Procurement Planning')).toBeVisible();
+		await expect(page.getByText('PKG-MOH-2026-001')).toBeVisible();
 
 		await page.screenshot({ path: 'artifacts/p3-001-workbench-route.png', fullPage: true });
 	});

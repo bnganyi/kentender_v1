@@ -81,6 +81,7 @@ sites/*/site_config_backup.json
 # Windows
 Thumbs.db
 desktop.ini
+*:Zone.Identifier
 
 ##############################
 # IDEs / Editors

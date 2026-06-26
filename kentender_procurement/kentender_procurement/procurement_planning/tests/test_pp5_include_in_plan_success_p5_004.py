@@ -21,6 +21,9 @@ from kentender_procurement.procurement_planning.seeds.works_master_pp2_seed.cons
 	DEMAND_ITEM_CODE,
 	PLAN_CODE,
 )
+from kentender_procurement.procurement_planning.services.workbench_item_view_model import (
+	get_workbench_item_view_model,
+)
 
 
 def _pkg_public(*parts: str) -> Path:
@@ -36,14 +39,20 @@ class TestPP5IncludeInPlanSuccessP5004Contract(UnitTestCase):
 		self.assertIn("create_package_next", source)
 		self.assertIn("pp2-create-package-next-action", source)
 
-	def test_router_workbench_success_uses_back_to_workbench(self) -> None:
+	def test_router_workbench_success_offers_view_demand_and_evidence(self) -> None:
 		path = _pkg_public("js", "pp2_planning_router.js")
 		source = path.read_text(encoding="utf-8", errors="replace")
 		fn_block = source.split("function includePlanSuccessSummary", 1)[1].split(
 			"function mountIncludePlanSuccessSummary", 1
 		)[0]
-		self.assertIn("back_to_workbench", fn_block)
-		self.assertIn('__("Back to Workbench")', fn_block)
+		self.assertIn("view_demand", fn_block)
+		self.assertIn('__("View Demand")', fn_block)
+		self.assertIn("show_evidence_action", fn_block)
+		mount_block = source.split("function mountIncludePlanSuccessSummary", 1)[1].split(
+			"function openIncludePlanModalForShell", 1
+		)[0]
+		self.assertIn("refreshWorkbenchWorkList", mount_block)
+		self.assertIn("suppressAutoSelect", mount_block)
 
 	def test_workbench_selected_summary_renders_include_success(self) -> None:
 		path = _pkg_public("js", "pp3_planning_selected_work_summary.js")
@@ -85,3 +94,29 @@ class TestPP5IncludeInPlanSuccessP5004Include(IntegrationTestCase):
 		self.assertEqual(out.get("demand_code"), DEMAND_CODE)
 		self.assertEqual(out.get("procurement_plan_code"), PLAN_CODE)
 		self.assertTrue(str(out.get("inclusion_code") or "").strip())
+
+	def test_works_demand_leaves_needs_planning_after_include(self) -> None:
+		"""PP5-004-BE-002: included demand leaves Needs Planning before package creation."""
+		if self._skip:
+			self.skipTest("Procurement Planning DocTypes not installed")
+
+		include_out = include_pp_demand_in_procurement_plan(
+			demand_code=DEMAND_CODE,
+			procurement_plan_code=PLAN_CODE,
+			demand_item_codes=f'["{DEMAND_ITEM_CODE}"]',
+		)
+		self.assertTrue(include_out.get("ok"), include_out)
+
+		queue_out = get_workbench_item_view_model(
+			queue="needs_planning",
+			actor="Administrator",
+			limit=200,
+			start=0,
+		)
+		self.assertTrue(queue_out.get("ok"), queue_out)
+		for item in queue_out.get("items") or []:
+			self.assertNotEqual(
+				str(item.get("underlying_object_code") or "").strip(),
+				DEMAND_CODE,
+				"Demand must leave Needs Planning after plan inclusion.",
+			)

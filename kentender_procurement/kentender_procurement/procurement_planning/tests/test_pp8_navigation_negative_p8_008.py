@@ -16,13 +16,7 @@ from kentender_procurement.procurement_planning.tests.pp8_gate_constants import 
 	P8_FORBIDDEN_NAV_HREF_SUBSTRINGS,
 )
 
-_ALLOWED_PP3_CHILD_URLS = frozenset(
-	{
-		"/desk/procurement-planning",
-		"/desk/procurement-planning/plans",
-		"/desk/procurement-planning/releases",
-	}
-)
+_ALLOWED_PP4_URLS = frozenset({"/desk/procurement-planning"})
 
 _LEGACY_NAV_LABELS_IN_QUEUE_TABS = (
 	"Planning Home",
@@ -37,19 +31,19 @@ class TestPP8NavigationNegativeP8008(UnitTestCase):
 		path = Path(frappe.get_app_path("kentender_procurement")) / "public" / "js" / "pp2_planning_router.js"
 		return path.read_text(encoding="utf-8", errors="replace")
 
-	def test_pp8_008_sidebar_has_only_three_pp3_child_links(self) -> None:
+	def test_pp8_008_sidebar_has_single_planning_workbench_link(self) -> None:
 		path = Path(frappe.get_app_path("kentender_procurement")) / "workspace_sidebar" / "procurement.json"
 		data = json.loads(path.read_text(encoding="utf-8"))
-		child_rows = [
+		rows = [
 			row
 			for row in data.get("items") or []
-			if row.get("type") == "Link" and int(row.get("child") or 0) == 1 and int(row.get("indent") or 0) >= 1
+			if row.get("type") == "Link" and (row.get("label") or "") == "Planning Workbench"
 		]
-		labels = tuple(row.get("label") or "" for row in child_rows)
-		self.assertEqual(labels, ("Workbench", "Procurement Plans", "Released to Tender"))
-		urls = [(row.get("url") or "").strip() for row in child_rows]
+		labels = tuple(row.get("label") or "" for row in rows)
+		self.assertEqual(labels, ("Planning Workbench",))
+		urls = [(row.get("url") or "").strip() for row in rows]
 		for url in urls:
-			self.assertIn(url, _ALLOWED_PP3_CHILD_URLS)
+			self.assertIn(url, _ALLOWED_PP4_URLS)
 
 	def test_pp8_008_router_forbids_legacy_nav_labels_and_hrefs(self) -> None:
 		source = self._router_source()
@@ -73,6 +67,6 @@ class TestPP8NavigationNegativeP8008(UnitTestCase):
 
 	def test_pp8_008_legacy_top_level_routes_redirect_to_workbench(self) -> None:
 		source = self._router_source()
-		for legacy in ("approved-demands", "packages", "home"):
+		for legacy in ("approved-demands", "packages", "home", "plans", "releases"):
 			self.assertIn(f'head === "{legacy}"', source, msg=f"missing redirect guard for {legacy}")
 			self.assertIn('action: "redirect"', source)

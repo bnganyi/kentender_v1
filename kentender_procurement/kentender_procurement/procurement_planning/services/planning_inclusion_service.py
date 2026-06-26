@@ -144,6 +144,41 @@ def _technical_refs_item_codes(raw: Any) -> list[str]:
 	return []
 
 
+def demand_has_unpackaged_planning_inclusion(demand_code: str) -> bool:
+	"""True when demand has active planning inclusion not yet linked to a package."""
+	demand_code = (demand_code or "").strip()
+	if not demand_code:
+		return False
+	rows = frappe.get_all(
+		"Procurement Handoff Card",
+		filters={
+			"handoff_title": _PLANNING_INCLUSION_TITLE,
+			"source_object_code": demand_code,
+			"status": ["not in", list(_TERMINAL_INCLUSION_STATUSES)],
+		},
+		fields=["handoff_code"],
+		order_by="creation desc",
+		limit=20,
+	)
+	for row in rows:
+		code = (row.get("handoff_code") or "").strip()
+		if not code:
+			continue
+		inclusion = get_planning_inclusion(code)
+		if not inclusion:
+			continue
+		if (inclusion.get("created_package_code") or "").strip():
+			continue
+		if frappe.db.get_value(
+			"Procurement Package",
+			{"planning_inclusion_code": code, "is_active": 1},
+			"name",
+		):
+			continue
+		return True
+	return False
+
+
 def _find_existing_inclusion(
 	demand_code: str,
 	plan_code: str,

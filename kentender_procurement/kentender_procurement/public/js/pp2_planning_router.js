@@ -12,26 +12,16 @@
 	let sidebarSetupListenerBound = false;
 
 	const SURFACE_LABELS = {
-		"": __("Workbench"),
-		plans: __("Procurement Plans"),
-		releases: __("Released to Tender"),
+		"": __("Planning Workbench"),
+		plans: __("Planning Workbench"),
+		releases: __("Planning Workbench"),
 	};
 
 	const SURFACES = {
 		"": {
-			testId: "pp3-planning-workbench",
-			title: __("Procurement Planning"),
-			subtitle: __("Workbench"),
-		},
-		plans: {
-			testId: "pp3-procurement-plans-page",
-			title: __("Procurement Planning"),
-			subtitle: __("Procurement Plans"),
-		},
-		releases: {
-			testId: "pp3-released-to-tender-page",
-			title: __("Procurement Planning"),
-			subtitle: __("Released to Tender"),
+			testId: "pp4-workbench",
+			title: __("Planning Workbench"),
+			subtitle: __("Planning Workbench"),
 		},
 		"package-detail": {
 			testId: "pp3-package-detail-surface",
@@ -60,6 +50,96 @@
 
 	function esc(s) {
 		return frappe.utils.escape_html(String(s == null ? "" : s));
+	}
+
+	function renderPlanningWorkbenchV4(root) {
+		if (!root) return;
+		root.setAttribute("data-testid", "pp4-workbench-root");
+		root.className = "kt-pp-injected-shell pp4-workbench-root";
+		root.innerHTML =
+			'<section class="pp4-workbench" data-testid="pp4-workbench">' +
+			'<header class="pp4-topbar" data-testid="pp4-topbar">' +
+			'<div class="pp4-topbar__left">' +
+			'<h1 class="pp4-topbar__title">' +
+			esc(__("Planning Workbench")) +
+			"</h1>" +
+			'<label class="pp4-search" data-testid="pp4-topbar-search">' +
+			'<span class="material-symbols-outlined pp4-search__icon" aria-hidden="true">search</span>' +
+			'<input class="pp4-search__input" type="text" value="" placeholder="' +
+			esc(__("Search planning data, packages, or demands...")) +
+			'" />' +
+			"</label>" +
+			"</div>" +
+			'<div class="pp4-topbar__right">' +
+			'<button class="pp4-icon-btn" type="button" data-testid="pp4-topbar-notifications"><span class="material-symbols-outlined">notifications</span></button>' +
+			'<button class="pp4-icon-btn" type="button" data-testid="pp4-topbar-history"><span class="material-symbols-outlined">history</span></button>' +
+			'<span class="pp4-divider" aria-hidden="true"></span>' +
+			'<span class="pp4-user" data-testid="pp4-topbar-user"><span class="material-symbols-outlined">account_circle</span> P. Officer</span>' +
+			"</div>" +
+			"</header>" +
+			'<div class="pp4-body">' +
+			'<nav class="pp4-breadcrumbs" data-testid="pp4-breadcrumbs">' +
+			"<span>Ministry of Health</span><span>›</span><span>Annual Planning</span><span>›</span><span>FY 2026/2027 Workbench</span>" +
+			"</nav>" +
+			'<div class="pp4-hero">' +
+			'<div class="pp4-hero__copy">' +
+			'<h2 class="pp4-hero__title">End-to-End Procurement Planning</h2>' +
+			'<p class="pp4-hero__subtitle">Manage package creation, validation, and approvals in a unified flow.</p>' +
+			"</div>" +
+			'<button class="pp4-hero__action" type="button" data-testid="pp4-export-plan"><span class="material-symbols-outlined">ios_share</span>Export Plan</button>' +
+			"</div>" +
+			'<section class="pp4-stats-grid" data-testid="pp4-stats-grid">' +
+			'<article class="pp4-stat-card"><span class="pp4-stat-card__bg material-symbols-outlined">account_balance_wallet</span><p class="pp4-stat-card__label">Total Estimate</p><h3 class="pp4-stat-card__value">KES 1.2B</h3><p class="pp4-stat-card__hint pp4-stat-card__hint--positive"><span class="material-symbols-outlined">trending_up</span>+4.2% from FY 25/26</p></article>' +
+			'<article class="pp4-stat-card"><span class="pp4-stat-card__bg material-symbols-outlined">inventory_2</span><p class="pp4-stat-card__label">Active Packages</p><h3 class="pp4-stat-card__value">08</h3><p class="pp4-stat-card__hint">Across 4 Departments</p></article>' +
+			'<article class="pp4-stat-card"><span class="pp4-stat-card__bg material-symbols-outlined">verified</span><p class="pp4-stat-card__label">Approval Rate</p><h3 class="pp4-stat-card__value">65%</h3><div class="pp4-stat-card__meter"><span style="width:65%"></span></div></article>' +
+			'<article class="pp4-stat-card pp4-stat-card--dark"><span class="pp4-stat-card__bg material-symbols-outlined">pending_actions</span><p class="pp4-stat-card__label">Pending Action</p><h3 class="pp4-stat-card__value">12 Items</h3><p class="pp4-stat-card__hint">Requiring immediate sign-off</p></article>' +
+			"</section>" +
+			'<section class="pp4-work-queue-tabs" data-testid="pp4-work-queue-tabs">' +
+			'<div class="pp4-work-queue-tabs__left">' +
+			'<button class="pp4-tab is-active" type="button" data-testid="pp4-tab-all-packages">All Packages <span class="pp4-tab__count">8</span></button>' +
+			'<button class="pp4-tab" type="button" data-testid="pp4-tab-in-creation">In Creation <span class="pp4-tab__count">3</span></button>' +
+			'<button class="pp4-tab" type="button" data-testid="pp4-tab-awaiting-review">Awaiting Review <span class="pp4-tab__count">2</span></button>' +
+			'<button class="pp4-tab" type="button" data-testid="pp4-tab-ready-for-release">Ready for Release <span class="pp4-tab__count">3</span></button>' +
+			"</div>" +
+			'<div class="pp4-work-queue-tabs__right">' +
+			'<button class="pp4-filter-btn" type="button" data-testid="pp4-filters">Filters</button>' +
+			'<button class="pp4-filter-btn" type="button" data-testid="pp4-sort">Sort: Newest</button>' +
+			"</div>" +
+			"</section>" +
+			'<section class="pp4-package-grid" data-testid="pp4-package-grid">' +
+			'<article class="pp4-package-card pp4-package-card--approved" data-testid="pp4-package-card">' +
+			'<div class="pp4-package-card__header"><span class="pp4-package-card__code" data-testid="pp4-package-code">PKG-MOH-2026-001</span><span class="pp4-package-card__status" data-testid="pp4-package-status-chip">Approved</span></div>' +
+			'<h3 class="pp4-package-card__title">Medical Supplies Q1</h3>' +
+			'<p class="pp4-package-card__desc">Ready for tender release. All technical validations and budget approvals completed.</p>' +
+			'<div class="pp4-package-card__meta"><span>EST. VALUE<br><strong class="pp4-meta-value">KES 450,000,000</strong></span><span>CONSOLIDATED<br><strong class="pp4-meta-value">42 Demands</strong></span></div>' +
+			'<div class="pp4-package-card__workflow"><p class="pp4-package-card__progress" data-testid="pp4-package-workflow-progress"><span>Workflow Progress</span><strong>100% Complete</strong></p><div class="pp4-progress"><span style="width:100%"></span></div><p class="pp4-stage-row"><span class="is-active">Selection</span><span class="is-active">Validation</span><span class="is-active">Sign-off</span></p></div>' +
+			'<div class="pp4-package-card__actions"><button class="pp4-package-card__primary" type="button" data-testid="pp4-package-primary-action">Release to Tender <span class="material-symbols-outlined">rocket_launch</span></button><button class="pp4-package-card__icon-btn" type="button"><span class="material-symbols-outlined">more_vert</span></button></div>' +
+			"</article>" +
+			'<article class="pp4-package-card pp4-package-card--review" data-testid="pp4-package-card">' +
+			'<div class="pp4-package-card__header"><span class="pp4-package-card__code" data-testid="pp4-package-code">PKG-MOH-2026-002</span><span class="pp4-package-card__status" data-testid="pp4-package-status-chip">Pending Review</span></div>' +
+			'<h3 class="pp4-package-card__title">Hospital Equipment Upgrade</h3>' +
+			'<p class="pp4-package-card__desc">Awaiting validation from the Technical Committee for MRI scanner specs.</p>' +
+			'<div class="pp4-package-card__meta"><span>EST. VALUE<br><strong class="pp4-meta-value">KES 320,500,000</strong></span><span>CONSOLIDATED<br><strong class="pp4-meta-value">18 Demands</strong></span></div>' +
+			'<div class="pp4-package-card__workflow"><p class="pp4-package-card__progress" data-testid="pp4-package-workflow-progress"><span>Workflow Progress</span><strong>65% Progress</strong></p><div class="pp4-progress"><span style="width:65%"></span></div><p class="pp4-stage-row"><span class="is-active">Selection</span><span class="is-active">Validation</span><span>Sign-off</span></p></div>' +
+			'<div class="pp4-package-card__actions"><button class="pp4-package-card__primary" type="button" data-testid="pp4-package-primary-action">Review Validation</button><button class="pp4-package-card__icon-btn" type="button"><span class="material-symbols-outlined">edit</span></button></div>' +
+			"</article>" +
+			'<article class="pp4-package-card pp4-package-card--draft" data-testid="pp4-package-card">' +
+			'<div class="pp4-package-card__header"><span class="pp4-package-card__code" data-testid="pp4-package-code">PKG-MOH-2026-003</span><span class="pp4-package-card__status" data-testid="pp4-package-status-chip">Drafting</span></div>' +
+			'<h3 class="pp4-package-card__title">IT Infrastructure Phase II</h3>' +
+			'<p class="pp4-package-card__desc">Initial grouping of server demands. Procurement strategy not yet defined.</p>' +
+			'<div class="pp4-package-card__meta"><span>EST. VALUE<br><strong class="pp4-meta-value">KES 112,000,000</strong></span><span>CONSOLIDATED<br><strong class="pp4-meta-value">05 Demands</strong></span></div>' +
+			'<div class="pp4-package-card__workflow"><p class="pp4-package-card__progress" data-testid="pp4-package-workflow-progress"><span>Workflow Progress</span><strong>15% Progress</strong></p><div class="pp4-progress"><span style="width:15%"></span></div><p class="pp4-stage-row"><span class="is-active">Selection</span><span>Validation</span><span>Sign-off</span></p></div>' +
+			'<div class="pp4-package-card__actions"><button class="pp4-package-card__primary" type="button" data-testid="pp4-package-primary-action">Continue Selection</button><button class="pp4-package-card__icon-btn" type="button"><span class="material-symbols-outlined">delete_outline</span></button></div>' +
+			"</article>" +
+			'<article class="pp4-package-card pp4-package-card--create" data-testid="pp4-create-package-card">' +
+			'<div class="pp4-package-card__create-icon"><span class="material-symbols-outlined">add_task</span></div>' +
+			'<h3 class="pp4-package-card__title">Create New Package</h3>' +
+			'<p class="pp4-package-card__desc">Start the planning wizard to consolidate unassigned demands into a strategic package.</p>' +
+			'<button class="pp4-package-card__primary" type="button" data-testid="pp4-new-planning-run">New Planning Run <span class="material-symbols-outlined">arrow_forward</span></button>' +
+			"</article>" +
+			"</section>" +
+			"</div>" +
+			"</section>";
 	}
 
 	function workspaceNameMatches(name) {
@@ -247,7 +327,11 @@
 
 		const head = segments[0];
 		if (CANONICAL_PLANNING_SLUGS[head] && segments.length === 1) {
-			return { action: "canonical", slug: head };
+			return {
+				action: "redirect",
+				slug: "",
+				redirectUrl: buildWorkbenchRedirectUrl(),
+			};
 		}
 
 		const requiresInternalAccess =
@@ -326,8 +410,9 @@
 		}
 		if (head === "packages" && segments.length > 1) {
 			return {
-				action: "package_detail",
-				packageCode: decodeURIComponent(rawSegments[1] || ""),
+				action: "redirect",
+				slug: "",
+				redirectUrl: buildWorkbenchPackageRedirectUrl(rawSegments[1] || ""),
 			};
 		}
 
@@ -533,11 +618,12 @@
 		return buildWorkbenchRedirectUrl(params);
 	}
 
-	function refreshWorkbenchWorkList(shell, slug, queueKey) {
+	function refreshWorkbenchWorkList(shell, slug, queueKey, refreshOpts) {
 		if (!shell || !isPlanningHomeSlug(slug)) return;
 		const mainHost = shell.querySelector('[data-testid="pp2-primary-main-host"]');
 		if (!mainHost) return;
 		const normalizedQueue = String(queueKey || "").trim();
+		const ro = refreshOpts || {};
 		if (normalizedQueue) {
 			const queueTabsApi =
 				kentender_procurement &&
@@ -554,6 +640,20 @@
 					queueTabsApi.render(queueHost, { activeQueue: normalizedQueue });
 				}
 			}
+		}
+		const workListHost = mainHost.querySelector('[data-testid="pp2-primary-work-list-host"]');
+		const workListApi =
+			kentender_procurement &&
+			kentender_procurement.PlanningWorkbenchWorkList &&
+			typeof kentender_procurement.PlanningWorkbenchWorkList.fetchAndRender === "function"
+				? kentender_procurement.PlanningWorkbenchWorkList
+				: null;
+		if (workListHost && workListApi && ro.suppressAutoSelect === true) {
+			workListApi.fetchAndRender(workListHost, {
+				queue: normalizedQueue || "needs_planning",
+				suppressAutoSelect: true,
+			});
+			return;
 		}
 		mountPlanningWorkList(mainHost, slug, shell);
 	}
@@ -650,15 +750,25 @@
 		const result = includeResult || {};
 		const ctx = contextOpts || {};
 		const workbench = ctx.workbench === true;
-		const successMessage = __("Demand added to the active procurement plan.");
+		const planName = String(summaryData.target_plan_name || summaryData.active_plan_name || "").trim();
+		const demandCode = String(result.demand_code || summaryData.demand_code || "").trim();
 		const legacyMessage = __("Demand added to the procurement plan.");
-		const message = workbench ? successMessage : legacyMessage;
+		const message = workbench
+			? planName
+				? __("This demand has been added to:") + " " + planName
+				: __("Demand added to the active procurement plan.")
+			: legacyMessage;
 		return {
 			context_slug: workbench ? "workbench" : "approved-demands",
 			include_success: true,
-			title: message,
+			title: String(summaryData.title || "").trim(),
 			include_success_message: message,
-			next_action_label: __("Create package."),
+			status_headline: workbench ? __("Added to active plan") : "",
+			target_plan_name: planName,
+			next_step_detail: workbench
+				? __("Create a procurement package for this demand.")
+				: "",
+			next_action_label: __("Create Package"),
 			primary_action: {
 				label: __("Create Package"),
 				action: "create_package_next",
@@ -667,9 +777,9 @@
 			secondary_actions: workbench
 				? [
 						{
-							label: __("Back to Workbench"),
-							action: "back_to_workbench",
-							testid: "pp3-back-to-workbench",
+							label: __("View Demand"),
+							action: "view_demand",
+							testid: "pp3-view-demand-button",
 						},
 					]
 				: [
@@ -679,8 +789,10 @@
 							testid: "pp2-back-to-approved-demands",
 						},
 					],
-			show_evidence_action: false,
-			demand_code: String(result.demand_code || summaryData.demand_code || "").trim(),
+			show_evidence_action: workbench,
+			underlying_object_type: "approved_demand",
+			underlying_object_code: demandCode,
+			demand_code: demandCode,
 			target_plan_code: String(
 				result.procurement_plan_code || summaryData.target_plan_code || "",
 			).trim(),
@@ -786,6 +898,26 @@
 			},
 			onSecondaryAction: function (action) {
 				const actionKey = String((action && action.action) || "").trim();
+				if (actionKey === "view_demand") {
+					const demandCode = String(successSummary.demand_code || "").trim();
+					if (!demandCode) return;
+					frappe.call({
+						method: APPROVED_DEMANDS_DRAWER_API,
+						args: { demand_code: demandCode },
+						callback: function (response) {
+							const message = (response && response.message) || {};
+							const route = String(
+								(message.actions && message.actions.approval_certificate_route) ||
+									(message.evidence && message.evidence.view_route) ||
+									"",
+							).trim();
+							if (route) {
+								window.location.href = route;
+							}
+						},
+					});
+					return;
+				}
 				if (actionKey === "back_to_workbench") {
 					mountPlanningSelectedSummary(shell, { slug: slug });
 					const mainHost = shell && shell.querySelector
@@ -800,7 +932,23 @@
 					window.location.href = ROOT_PATH + "?queue=needs-planning";
 				}
 			},
+			onEvidenceAction: function () {
+				openWorkbenchEvidenceDrawer({
+					title: String(successSummary.title || payloadSummary.title || "").trim(),
+					underlying_object_type: "approved_demand",
+					underlying_object_code: String(successSummary.demand_code || "").trim(),
+				});
+			},
 		});
+		if (workbench) {
+			const queueKey =
+				kentender_procurement &&
+				kentender_procurement.PlanningWorkbenchWorkList &&
+				typeof kentender_procurement.PlanningWorkbenchWorkList.queueFromUrl === "function"
+					? kentender_procurement.PlanningWorkbenchWorkList.queueFromUrl()
+					: "needs_planning";
+			refreshWorkbenchWorkList(shell, slug, queueKey, { suppressAutoSelect: true });
+		}
 	}
 
 	function openIncludePlanModalForShell(shell, summaryPayload, opts) {
@@ -2128,44 +2276,7 @@
 	}
 
 	function enhanceSidebarVisualHierarchy(slug, parentActive) {
-		const parent = document.querySelector('.section-item[title="Procurement Planning"]');
-		if (!parent) return false;
-		parent.classList.add("kt-pp2-sidebar-parent");
-		parent.classList.toggle("kt-pp2-sidebar-parent-active", !!parentActive);
-		if (!parentActive) {
-			collapsePlanningSidebarParent(parent, 0);
-		}
-		const sectionBreak = parent.querySelector(".section-break");
-		if (sectionBreak && !sectionBreak.querySelector(".kt-pp2-parent-icon")) {
-			const icon = document.createElement("span");
-			icon.className = "kt-pp2-parent-icon sidebar-item-icon text-ink-gray-7";
-			let iconHtml = "";
-			try {
-				if (frappe.utils && typeof frappe.utils.icon === "function") {
-					iconHtml = frappe.utils.icon("kanban", "sm");
-				}
-			} catch (e) {
-				/* ignore */
-			}
-			icon.innerHTML = iconHtml || '<span aria-hidden="true">▦</span>';
-			sectionBreak.insertBefore(icon, sectionBreak.firstChild);
-		}
-		const anchors = parent.querySelectorAll(".nested-container .item-anchor");
-		for (let i = 0; i < anchors.length; i += 1) {
-			anchors[i].classList.add("kt-pp2-sidebar-child");
-			const labelEl = anchors[i].querySelector(".sidebar-item-label");
-			const label = String(labelEl ? labelEl.textContent || "" : "")
-				.trim()
-				.toLowerCase();
-			const targetLabel = parentActive ? String(SURFACE_LABELS[slug || ""] || "").trim().toLowerCase() : "";
-			const isActive = !!targetLabel && label === targetLabel;
-			anchors[i].classList.toggle("kt-pp2-sidebar-child-active", isActive);
-			const standardItem = anchors[i].querySelector(".standard-sidebar-item");
-			if (standardItem) {
-				standardItem.classList.toggle("active-sidebar", isActive);
-			}
-		}
-		return true;
+		return false;
 	}
 
 	const FORBIDDEN_PLANNING_NAV_LABELS = {
@@ -2199,11 +2310,7 @@
 	];
 
 	function planningNestedNavAnchors() {
-		const section = document.querySelector('.section-item[title="Procurement Planning"]');
-		if (!section) return [];
-		const nested = section.querySelector(".nested-container");
-		const scope = nested || section;
-		return Array.from(scope.querySelectorAll(".item-anchor"));
+		return Array.from(document.querySelectorAll(".item-anchor"));
 	}
 
 	function isForbiddenPlanningNavLink(label, href) {
@@ -2237,55 +2344,20 @@
 
 	function normalizeChildLinkRoutes() {
 		pruneForbiddenPlanningNavLinks();
-		const visibleLabelByOriginal = {
-			"planning home": __("Workbench"),
-			plans: __("Procurement Plans"),
-		};
-		const removableLegacyLabels = {
-			"approved demands": true,
-			packages: true,
-			"planning evidence": true,
-		};
-		const routeByLabel = {
-			workbench: ROOT_PATH,
-			"planning home": ROOT_PATH,
-			"procurement plans": `${ROOT_PATH}/plans`,
-			plans: `${ROOT_PATH}/plans`,
-			"released to tender": `${ROOT_PATH}/releases`,
-		};
-		const testIdByLabel = {
-			workbench: "pp3-nav-workbench",
-			"planning home": "pp3-nav-workbench",
-			"procurement plans": "pp3-nav-procurement-plans",
-			plans: "pp3-nav-procurement-plans",
-			"released to tender": "pp3-nav-released-to-tender",
-		};
 		const anchors = planningNestedNavAnchors();
 		for (let i = 0; i < anchors.length; i += 1) {
 			const anchor = anchors[i];
+			if (!(anchor instanceof HTMLAnchorElement)) continue;
 			const labelEl = anchor.querySelector(".sidebar-item-label");
-			const rawLabel = String(labelEl ? labelEl.textContent || "" : "");
-			const label = rawLabel.trim().toLowerCase();
-			if (removableLegacyLabels[label]) {
-				const item = anchor.closest(".sidebar-item-container");
-				if (item) {
-					item.remove();
-				} else {
-					anchor.remove();
-				}
+			const rawLabel = String(labelEl ? labelEl.textContent || "" : "").trim().toLowerCase();
+			if (rawLabel !== "planning workbench" && rawLabel !== "procurement planning" && rawLabel !== "workbench") {
 				continue;
 			}
-			const relabel = visibleLabelByOriginal[label];
-			if (relabel && labelEl) {
-				labelEl.textContent = relabel;
+			if (labelEl) {
+				labelEl.textContent = __("Planning Workbench");
 			}
-			const targetPath = routeByLabel[label];
-			if (!targetPath) continue;
-			anchor.setAttribute("href", targetPath);
-			const testId = testIdByLabel[label];
-			if (testId) {
-				anchor.setAttribute("data-testid", testId);
-			}
+			anchor.setAttribute("href", ROOT_PATH);
+			anchor.setAttribute("data-testid", "pp4-nav-planning-workbench");
 		}
 	}
 
@@ -2399,6 +2471,7 @@
 			el.remove();
 		});
 		document.body.classList.remove("kt-pp2-shell");
+		document.body.classList.remove("kt-pp4-shell");
 	}
 
 	function mount() {
@@ -2429,30 +2502,9 @@
 		if (!root) return false;
 
 		if (resolution.action === "not_found") {
-			const shell = ensurePrimaryWorkspaceShell(root, "");
-			if (!shell) return false;
-			root.setAttribute("data-testid", surfaceForSlug("").testId);
 			renderRouteNotFound(root);
-			document.body.classList.add("kt-pp2-shell");
-			syncSidebarActive("");
-			return hierarchyReady;
-		}
-
-		if (resolution.action === "package_detail") {
-			const packageCode = String(resolution.packageCode || "").trim();
-			const detailSlug = "package-detail";
-			const shell = ensurePrimaryWorkspaceShell(root, detailSlug);
-			if (!shell) return false;
-			const mainHost = shell.querySelector('[data-testid="pp2-primary-main-host"]');
-			root.removeAttribute("data-testid");
-			const summaryHost = shell.querySelector('[data-testid="pp2-primary-summary-host"]');
-			if (summaryHost) {
-				summaryHost.innerHTML = "";
-			}
-			if (mainHost) {
-				mountPackageDetailSurface(mainHost, packageCode, root);
-			}
-			document.body.classList.add("kt-pp2-shell");
+			document.body.classList.remove("kt-pp2-shell");
+			document.body.classList.add("kt-pp4-shell");
 			syncSidebarActive("");
 			return hierarchyReady;
 		}
@@ -2463,121 +2515,13 @@
 		syncSurfaceUrl(slug, {
 			preserveSearch: slug === "" && (hasPackageCode || hasApprovedDemandQuery),
 		});
-		const shell = ensurePrimaryWorkspaceShell(root, slug);
-		if (!shell) return false;
-		const mainHost = shell.querySelector('[data-testid="pp2-primary-main-host"]');
-		const markerId = surfaceForSlug(slug).testId;
-		if (isPlanningHomeSlug(slug) || isProcurementPlansSlug(slug) || isReleasedToTenderSlug(slug)) {
-			root.removeAttribute("data-testid");
-		} else {
-			root.setAttribute("data-testid", markerId);
-		}
-		if (isPlanningHomeSlug(slug)) {
-			if (mainHost) {
-				clearWorkbenchHosts(mainHost);
-				const children = Array.from(mainHost.children);
-				for (let i = 0; i < children.length; i += 1) {
-					if (children[i] !== root) {
-						mainHost.removeChild(children[i]);
-					}
-				}
-				root.innerHTML =
-					'<article class="pp3-planning-workbench-surface" data-testid="' +
-					esc(markerId) +
-					'"></article>';
-				mountPlanningWorkUnavailable(mainHost);
-				shell.setAttribute("data-pp3-planning-blocked", "1");
-				fetchActivePlanPayload().then(function (activePlanPayload) {
-					if (!shell.isConnected || !mainHost.isConnected) return;
-					mountWorkbenchRootWork(mainHost, shell, slug, activePlanPayload || {});
-				});
-			}
-		} else if (isProcurementPlansSlug(slug)) {
-			if (mainHost) {
-				const children = Array.from(mainHost.children);
-				for (let i = 0; i < children.length; i += 1) {
-					if (children[i] !== root) {
-						mainHost.removeChild(children[i]);
-					}
-				}
-				mountProcurementPlansSurface(mainHost, slug, root);
-			}
-		} else if (isReleasedToTenderSlug(slug)) {
-			if (mainHost) {
-				const children = Array.from(mainHost.children);
-				for (let i = 0; i < children.length; i += 1) {
-					if (children[i] !== root) {
-						mainHost.removeChild(children[i]);
-					}
-				}
-				mountReleasedToTenderSurface(mainHost, slug, root);
-			}
-		} else if (mainHost) {
-			const queueHost = mainHost.querySelector('[data-testid="pp2-primary-queue-host"]');
-			const filtersHost = mainHost.querySelector('[data-testid="pp2-primary-filters-host"]');
-			const workListHost = mainHost.querySelector('[data-testid="pp2-primary-work-list-host"]');
-			const children = Array.from(mainHost.children);
-			for (let i = 0; i < children.length; i += 1) {
-				if (
-					children[i] !== root &&
-					children[i] !== queueHost &&
-					children[i] !== filtersHost &&
-					children[i] !== workListHost
-				) {
-					mainHost.removeChild(children[i]);
-				}
-			}
-			mountPlanningQueueTabs(mainHost, slug);
-			const queueApi = isPlanningHomeSlug(slug)
-				? kentender_procurement &&
-					kentender_procurement.PlanningWorkbenchQueueTabs &&
-					typeof kentender_procurement.PlanningWorkbenchQueueTabs.readActiveFromUrl === "function"
-					? kentender_procurement.PlanningWorkbenchQueueTabs
-					: null
-				: kentender_procurement &&
-					kentender_procurement.PlanningQueueTabs &&
-					typeof kentender_procurement.PlanningQueueTabs.readActiveFromUrl === "function"
-					? kentender_procurement.PlanningQueueTabs
-					: null;
-			if (queueApi) {
-				try {
-					const raw = new URLSearchParams(window.location.search).get("queue");
-					if (raw) {
-						const activeQueue = queueApi.readActiveFromUrl(slug);
-						if (raw !== activeQueue) {
-							queueApi.setQueueUrl(activeQueue);
-						}
-					}
-				} catch (e) {
-					/* ignore */
-				}
-			}
-			mountPlanningAdvancedFilters(mainHost, slug);
-			mountPlanningWorkList(mainHost, slug, shell);
-			if (slug === "approved-demands") {
-				bindApprovedDemandsQueueRefresh(mainHost, shell);
-				renderApprovedDemandsQueue(mainHost, shell);
-			}
-			const workListApi =
-				kentender_procurement &&
-				kentender_procurement.PlanningWorkList &&
-				typeof kentender_procurement.PlanningWorkList.readSelectedFromUrl === "function"
-					? kentender_procurement.PlanningWorkList
-					: null;
-			if (workListApi) {
-				try {
-					const rawItem = new URLSearchParams(window.location.search).get("item");
-					if (rawItem && !workListApi.readSelectedFromUrl([])) {
-						workListApi.setSelectedUrl("");
-					}
-				} catch (e) {
-					/* ignore */
-				}
-			}
-			renderSurfaceEmptyState(root, slug);
-		}
-		document.body.classList.add("kt-pp2-shell");
-		syncSidebarActive(slug);
+		document.querySelectorAll('[data-testid="pp2-primary-workspace-shell"]').forEach(function (el) {
+			el.remove();
+		});
+		renderPlanningWorkbenchV4(root);
+		document.body.classList.remove("kt-pp2-shell");
+		document.body.classList.add("kt-pp4-shell");
+		syncSidebarActive("");
 		return hierarchyReady;
 	}
 

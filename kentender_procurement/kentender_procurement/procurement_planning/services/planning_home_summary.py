@@ -36,6 +36,7 @@ from kentender_procurement.procurement_planning.services.approved_demand_queue i
 from kentender_procurement.procurement_planning.services.planning_inclusion_service import (
 	ALLOWED_DEMAND_STATUSES,
 	_demand_budget_ok,
+	demand_has_unpackaged_planning_inclusion,
 )
 
 PLANNING_HOME_SUMMARY_KEYS = (
@@ -150,6 +151,9 @@ def _count_blocked_demands(actor: str) -> int:
 		if status not in ALLOWED_DEMAND_STATUSES:
 			continue
 		if _demand_passes_queue_eligibility(row):
+			continue
+		demand_code = (row.get("demand_id") or row.get("name") or "").strip()
+		if demand_has_unpackaged_planning_inclusion(demand_code):
 			continue
 		if not _demand_budget_ok(row):
 			count += 1

@@ -68,10 +68,17 @@ test.describe('P5-004 Include in Plan success (golden path)', () => {
 
 		const success = page.getByTestId('pp2-include-plan-success');
 		await expect(success).toBeVisible({ timeout: 30000 });
-		await expect(success).toContainText('Demand added to the active procurement plan.');
-		await expect(success).toContainText('Next: Create package.');
+		await expect(success).toContainText('Added to active plan');
+		await expect(success).toContainText('This demand has been added to:');
+		await expect(success).toContainText('Create a procurement package for this demand.');
 		await expect(page.getByTestId('pp2-create-package-next-action')).toBeVisible();
-		await expect(page.getByTestId('pp3-back-to-workbench')).toBeVisible();
+		await expect(page.getByTestId('pp3-view-demand-button')).toBeVisible();
+		await expect(page.getByTestId('pp3-view-evidence-button')).toBeVisible();
+
+		const worksRowAfter = page
+			.getByTestId('pp3-work-item-row')
+			.filter({ has: page.getByTestId('pp3-work-item-title').filter({ hasText: WORKS_DEMAND_TITLE }) });
+		await expect(worksRowAfter).toHaveCount(0, { timeout: 30000 });
 
 		const successText = await success.innerText();
 		for (const pattern of FORBIDDEN_LEAKAGE) {
