@@ -496,8 +496,9 @@ body.kt-bgt-shell .layout-main-section {
 /* ── Section heading ─────────────────────────────────────────────────────── */
 .kt-bgt-section-hdr {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: 12px;
   margin-bottom: 12px;
 }
 
@@ -511,9 +512,11 @@ body.kt-bgt-shell .layout-main-section {
 
 .kt-bgt-filter-wrap {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   color: #424751;
+  flex-shrink: 0;
+  max-width: 480px;
 }
 
 .kt-bgt-filter-label {
@@ -521,6 +524,8 @@ body.kt-bgt-shell .layout-main-section {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  padding-top: 4px;
+  white-space: nowrap;
 }
 
 /* W1-03: filter chip buttons (replaces select) */
