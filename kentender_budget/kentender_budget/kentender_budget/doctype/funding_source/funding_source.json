@@ -6,7 +6,10 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "title"
+  "title",
+  "source_code",
+  "source_type",
+  "is_active"
  ],
  "fields": [
   {
@@ -16,10 +19,29 @@
    "label": "Title",
    "reqd": 1,
    "unique": 1
+  },
+  {
+   "fieldname": "source_code",
+   "fieldtype": "Data",
+   "label": "Source Code",
+   "unique": 1,
+   "description": "Short identifier (e.g. GOU-EXCHEQUER, USAID-GRANT-2026)."
+  },
+  {
+   "fieldname": "source_type",
+   "fieldtype": "Select",
+   "label": "Source Type",
+   "options": "\nExchequer\nDonor\nGrant\nLoan\nOwn Revenue\nOther"
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "default": "1",
+   "label": "Is Active"
   }
  ],
  "links": [],
- "modified": "2026-04-21 12:00:00.000000",
+ "modified": "2026-06-27 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kentender Budget",
  "name": "Funding Source",
@@ -41,5 +63,7 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "track_changes": 1
+ "track_changes": 1,
+ "title_field": "title",
+ "search_fields": "title,source_code"
 }

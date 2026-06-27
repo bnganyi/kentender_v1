@@ -59,6 +59,8 @@ def _line_can_hard_delete(
 		return False
 	if flt(row.get("amount_reserved")) > 1e-9:
 		return False
+	if flt(row.get("amount_committed") or 0) > 1e-9:
+		frappe.throw(_("{0} has committed spend and cannot be removed.").format(row.budget_line_code))
 	if flt(row.get("amount_consumed") or 0) > 1e-9:
 		return False
 	if active_res > 0:
@@ -119,6 +121,7 @@ def _get_builder_payload(budget_name: str, lines_filter: str = "active"):
 			"budget_line_name",
 			"amount_allocated",
 			"amount_reserved",
+			"amount_committed",
 			"amount_consumed",
 			"amount_available",
 			"is_active",
@@ -214,6 +217,7 @@ def _get_builder_payload(budget_name: str, lines_filter: str = "active"):
 			"budget_line_name": row.budget_line_name,
 			"amount_allocated": allocated,
 			"amount_reserved": reserved,
+			"amount_committed": flt(row.amount_committed or 0),
 			"amount_consumed": consumed,
 			"amount_available": available,
 			"is_active": int(row.is_active or 0),
@@ -249,6 +253,7 @@ def _get_builder_payload(budget_name: str, lines_filter: str = "active"):
 		fields=[
 			"amount_allocated",
 			"amount_reserved",
+			"amount_committed",
 			"amount_consumed",
 			"amount_available",
 		],

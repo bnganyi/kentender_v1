@@ -8,9 +8,9 @@
  "field_order": [
   "section_details",
   "budget_name",
+  "column_break_main",
   "procuring_entity",
   "fiscal_year",
-  "column_break_main",
   "strategic_plan",
   "currency",
   "total_budget_amount",
@@ -31,9 +31,14 @@
   "supersedes_budget",
   "section_notes",
   "notes",
+  "section_governance",
+  "budget_owner",
+  "column_governance",
+  "effective_date",
+  "closing_date",
   "section_meta",
-  "created_by",
   "column_break_meta",
+  "created_by",
   "order_index"
  ],
  "fields": [
@@ -104,7 +109,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Draft\nSubmitted\nApproved\nRejected",
+   "options": "Draft\nSubmitted\nApproved\nActive\nClosed\nRevised\nRejected",
    "reqd": 1,
    "search_index": 1
   },
@@ -197,6 +202,34 @@
    "label": "Notes"
   },
   {
+   "fieldname": "section_governance",
+   "fieldtype": "Section Break",
+   "label": "Governance",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "budget_owner",
+   "fieldtype": "Data",
+   "label": "Budget Owner",
+   "description": "Name or designation of the person responsible for this budget."
+  },
+  {
+   "fieldname": "column_governance",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "effective_date",
+   "fieldtype": "Date",
+   "label": "Effective Date",
+   "description": "Date from which this budget is active."
+  },
+  {
+   "fieldname": "closing_date",
+   "fieldtype": "Date",
+   "label": "Closing Date",
+   "description": "Date after which no further transactions are permitted."
+  },
+  {
    "fieldname": "section_meta",
    "fieldtype": "Section Break",
    "label": "Metadata"
@@ -269,5 +302,6 @@
  "sort_order": "DESC",
  "states": [],
  "title_field": "budget_name",
- "track_changes": 1
+ "track_changes": 1,
+ "modified": "2026-06-27 12:00:00.000000"
 }

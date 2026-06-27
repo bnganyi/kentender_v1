@@ -9,13 +9,24 @@ from kentender_budget.services.budget_permissions import (
 )
 
 # B5.1 / B5.9 — approval workflow (see docs/prompts/budget/8.Budget-Approval-Flow.md, 8.a)
-VALID_BUDGET_STATUSES = frozenset(("Draft", "Submitted", "Approved", "Rejected"))
+# v2 domain expansion: Active, Closed, Revised added (Budget Domain Revision.md)
+VALID_BUDGET_STATUSES = frozenset((
+	"Draft", "Submitted", "Approved", "Active",
+	"Closed", "Revised", "Rejected",
+))
 ALLOWED_STATUS_TRANSITIONS = frozenset(
 	(
-		("Draft", "Submitted"),
-		("Submitted", "Approved"),
-		("Submitted", "Rejected"),
-		("Rejected", "Submitted"),
+		("Draft",      "Submitted"),
+		("Submitted",  "Approved"),
+		("Submitted",  "Rejected"),
+		("Rejected",   "Submitted"),
+		# v2 lifecycle transitions
+		("Approved",   "Active"),
+		("Approved",   "Revised"),
+		("Active",     "Closed"),
+		("Active",     "Revised"),
+		("Revised",    "Submitted"),
+		("Revised",    "Active"),
 	)
 )
 
@@ -48,7 +59,7 @@ class Budget(Document):
 			self.status = "Draft"
 		if self.status not in VALID_BUDGET_STATUSES:
 			frappe.throw(
-				_("Status must be one of Draft, Submitted, Approved, or Rejected."),
+				_("Status must be one of: {0}.").format(", ".join(sorted(VALID_BUDGET_STATUSES))),
 				title=_("Invalid status"),
 			)
 		if self.is_new():
@@ -67,7 +78,7 @@ class Budget(Document):
 		if (previous, self.status) not in ALLOWED_STATUS_TRANSITIONS:
 			frappe.throw(
 				_(
-					"Cannot change Budget status from {0} to {1}. Allowed: Draft → Submitted; Submitted → Approved or Rejected; Rejected → Submitted."
+					"Cannot change Budget status from {0} to {1}."
 				).format(previous, self.status),
 				title=_("Invalid status transition"),
 			)

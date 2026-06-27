@@ -27,6 +27,13 @@
   "released_at",
   "released_by",
   "release_reason",
+  "section_commitment",
+  "commitment_amount",
+  "column_commitment",
+  "converted_at",
+  "converted_by",
+  "commitment_source_doctype",
+  "commitment_source_docname",
   "notes"
  ],
  "fields": [
@@ -123,7 +130,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Active\nReleased\nCancelled",
+   "options": "Active\nReleased\nConverted\nCancelled",
    "reqd": 1,
    "search_index": 1
   },
@@ -187,13 +194,58 @@
    "read_only": 1
   },
   {
+   "fieldname": "section_commitment",
+   "fieldtype": "Section Break",
+   "label": "Commitment (on award / contract)",
+   "collapsible": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "commitment_amount",
+   "fieldtype": "Currency",
+   "label": "Commitment Amount",
+   "options": "currency",
+   "non_negative": 1,
+   "description": "Actual contract/award value when this reservation is converted to a commitment."
+  },
+  {
+   "fieldname": "column_commitment",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "converted_at",
+   "fieldtype": "Datetime",
+   "label": "Converted At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "converted_by",
+   "fieldtype": "Link",
+   "label": "Converted By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "commitment_source_doctype",
+   "fieldtype": "Data",
+   "label": "Commitment Source DocType",
+   "description": "e.g. Purchase Order, Contract",
+   "read_only": 1
+  },
+  {
+   "fieldname": "commitment_source_docname",
+   "fieldtype": "Data",
+   "label": "Commitment Source Document",
+   "read_only": 1
+  },
+  {
    "fieldname": "notes",
    "fieldtype": "Text",
    "label": "Notes"
   }
  ],
  "links": [],
- "modified": "2026-04-21 12:00:00.000000",
+ "modified": "2026-06-27 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kentender Budget",
  "name": "Budget Reservation",

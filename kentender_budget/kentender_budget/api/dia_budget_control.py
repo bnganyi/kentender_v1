@@ -22,12 +22,18 @@ def _error(error_code: str, message: str) -> dict:
 	return {"ok": False, "error_code": error_code, "message": str(message)}
 
 
-def _line_financials(bl_doc) -> tuple[float, float, float, float]:
+def _line_financials(bl_doc) -> tuple[float, float, float, float, float]:
+	"""Return (allocated, reserved, committed, consumed, available).
+
+	Formula (per Budget Domain Revision):
+	  available = allocated − reserved − committed − consumed
+	"""
 	alloc = flt(bl_doc.amount_allocated)
-	res = flt(bl_doc.amount_reserved)
-	con = flt(bl_doc.amount_consumed or 0)
-	avail = flt(alloc - res - con)
-	return alloc, res, con, avail
+	res   = flt(bl_doc.amount_reserved)
+	com   = flt(getattr(bl_doc, "amount_committed", None) or 0)
+	con   = flt(bl_doc.amount_consumed or 0)
+	avail = flt(alloc - res - com - con)
+	return alloc, res, com, con, avail
 
 
 def _get_line_doc_or_error(budget_line_id: str | None):
@@ -46,7 +52,7 @@ def get_budget_line_context(budget_line_id: str | None = None):
 		return err
 	if not bl.is_active:
 		return _error("BUDGET_LINE_INACTIVE", _("Budget Line is not active (BL-015)."))
-	alloc, res, con, avail = _line_financials(bl)
+	alloc, res, com, con, avail = _line_financials(bl)
 	return _success(
 		{
 			"budget_line_id": bl.name,
@@ -117,6 +123,7 @@ def get_budget_line_context(budget_line_id: str | None = None):
 			else "",
 			"amount_allocated": alloc,
 			"amount_reserved": res,
+			"amount_committed": com,
 			"amount_consumed": con,
 			"amount_available": avail,
 			"is_active": bool(bl.is_active),
@@ -136,7 +143,7 @@ def check_available_budget(budget_line_id: str | None = None, amount: float | No
 		return err
 	if not bl.is_active:
 		return _error("BUDGET_LINE_INACTIVE", _("Budget Line is not active."))
-	_alloc, _res, _con, avail = _line_financials(bl)
+	_alloc, _res, _com, _con, avail = _line_financials(bl)
 	shortfall = flt(max(0.0, amt - avail))
 	return _success(
 		{
@@ -159,12 +166,13 @@ def get_available_budget(budget_line_id: str | None = None):
 		return err
 	if not bl.is_active:
 		return _error("BUDGET_LINE_INACTIVE", _("Budget Line is not active."))
-	alloc, res, con, avail = _line_financials(bl)
+	alloc, res, com, con, avail = _line_financials(bl)
 	return _success(
 		{
 			"budget_line_id": bl.name,
 			"amount_allocated": alloc,
 			"amount_reserved": res,
+			"amount_committed": com,
 			"amount_consumed": con,
 			"amount_available": avail,
 			"currency": bl.currency,
@@ -197,7 +205,7 @@ def create_reservation(
 		return err
 	if not bl.is_active:
 		return _error("BUDGET_LINE_INACTIVE", _("Budget Line is not active."))
-	_alloc, _res, _con, avail = _line_financials(bl)
+	_alloc, _res, _com, _con, avail = _line_financials(bl)
 	active_exists = frappe.db.exists(
 		"Budget Reservation",
 		{"source_doctype": source_doctype, "source_docname": source_docname, "status": "Active"},
@@ -311,7 +319,7 @@ def release_reservation(reservation_id: str | None = None, reason: str | None = 
 		frappe.log_error(frappe.get_traceback(), "release_reservation_failed")
 		return _error("RESERVATION_RELEASE_FAILED", _("Reservation release failed."))
 
-	_alloc, _res, _con, avail_after = _line_financials(bl)
+	_alloc, _res, _com, _con, avail_after = _line_financials(bl)
 	return _success(
 		{
 			"reservation_id": res.reservation_id,

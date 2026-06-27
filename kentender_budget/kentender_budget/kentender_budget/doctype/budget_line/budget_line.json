@@ -11,6 +11,7 @@
   "budget_line_name",
   "column_identity",
   "is_active",
+  "line_status",
   "section_removal",
   "removed_at",
   "removed_by",
@@ -22,11 +23,16 @@
   "section_amounts",
   "amount_allocated",
   "amount_reserved",
+  "amount_committed",
   "amount_consumed",
   "amount_available",
   "section_currency",
   "currency",
   "funding_source",
+  "section_classification",
+  "economic_classification",
+  "column_classification",
+  "department",
   "section_strategy",
   "strategic_plan",
   "program",
@@ -66,6 +72,15 @@
    "fieldtype": "Check",
    "in_list_view": 1,
    "label": "Is Active",
+   "reqd": 1
+  },
+  {
+   "default": "Active",
+   "fieldname": "line_status",
+   "fieldtype": "Select",
+   "in_list_view": 0,
+   "label": "Line Status",
+   "options": "Active\nExhausted\nSuspended",
    "reqd": 1
   },
   {
@@ -148,6 +163,15 @@
   },
   {
    "default": "0",
+   "fieldname": "amount_committed",
+   "fieldtype": "Currency",
+   "label": "Amount Committed",
+   "non_negative": 1,
+   "options": "currency",
+   "description": "Budget locked by award or contract. Service-controlled."
+  },
+  {
+   "default": "0",
    "fieldname": "amount_consumed",
    "fieldtype": "Currency",
    "label": "Amount Consumed",
@@ -178,6 +202,27 @@
    "fieldtype": "Link",
    "label": "Funding Source",
    "options": "Funding Source"
+  },
+  {
+   "fieldname": "section_classification",
+   "fieldtype": "Section Break",
+   "label": "Classification",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "economic_classification",
+   "fieldtype": "Select",
+   "label": "Economic Classification",
+   "options": "\nWorks\nGoods\nServices\nConsultancy\nNon-Consultancy Services\nOther"
+  },
+  {
+   "fieldname": "column_classification",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Data",
+   "label": "Department / Cost Centre"
   },
   {
    "fieldname": "section_strategy",
@@ -228,7 +273,7 @@
   }
  ],
  "links": [],
- "modified": "2026-04-21 12:00:00.000000",
+ "modified": "2026-06-27 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kentender Budget",
  "name": "Budget Line",

@@ -37,26 +37,34 @@ class BudgetLine(Document):
 			return
 		if getattr(frappe.flags, "budget_control_service_write", False):
 			return
-		if not self.has_value_changed("amount_reserved") and not self.has_value_changed("amount_consumed"):
+		changed = (
+			self.has_value_changed("amount_reserved")
+			or self.has_value_changed("amount_committed")
+			or self.has_value_changed("amount_consumed")
+		)
+		if not changed:
 			return
 		frappe.throw(
-			_("Reserved and consumed balances are service-controlled and cannot be edited directly."),
+			_("Reserved, committed, and consumed balances are service-controlled and cannot be edited directly."),
 			title=_("Budget Line"),
 		)
 
 	def _validate_amounts_bl001_to_004(self):
 		alloc = flt(self.amount_allocated)
-		res = flt(self.amount_reserved)
-		con = flt(self.amount_consumed or 0)
+		res   = flt(self.amount_reserved)
+		com   = flt(self.amount_committed or 0)
+		con   = flt(self.amount_consumed or 0)
 		if alloc < 0:
 			frappe.throw(_("Amount allocated must be zero or greater (BL-001)."), title=_("Budget Line"))
 		if res < 0:
 			frappe.throw(_("Amount reserved must be zero or greater (BL-002)."), title=_("Budget Line"))
+		if com < 0:
+			frappe.throw(_("Amount committed must be zero or greater (BL-002b)."), title=_("Budget Line"))
 		if con < 0:
 			frappe.throw(_("Amount consumed must be zero or greater (BL-003)."), title=_("Budget Line"))
-		if res + con > alloc + 1e-9:
+		if res + com + con > alloc + 1e-9:
 			frappe.throw(
-				_("Reserved plus consumed cannot exceed allocated (BL-004)."),
+				_("Reserved plus committed plus consumed cannot exceed allocated (BL-004)."),
 				title=_("Budget Line"),
 			)
 
@@ -139,9 +147,11 @@ class BudgetLine(Document):
 
 	def _recompute_amount_available(self):
 		alloc = flt(self.amount_allocated)
-		res = flt(self.amount_reserved)
-		con = flt(self.amount_consumed or 0)
-		self.amount_available = flt(alloc - res - con)
+		res   = flt(self.amount_reserved)
+		com   = flt(self.amount_committed or 0)
+		con   = flt(self.amount_consumed or 0)
+		# Available = Allocated − Reserved − Committed − Actual Spend
+		self.amount_available = flt(alloc - res - com - con)
 
 	def _generate_budget_line_code(self) -> str:
 		year = cint(self.fiscal_year) if self.fiscal_year is not None else cint(frappe.utils.now_datetime().year)
