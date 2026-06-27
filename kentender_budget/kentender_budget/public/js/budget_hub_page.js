@@ -443,7 +443,9 @@
 		};
 		set("kt-bgt-kpi-available", _fmtFull(portfolio.available_sum));
 		set("kt-bgt-kpi-reserved",  _fmtFull(portfolio.reserved_sum));
-		set("kt-bgt-kpi-committed", _fmtFull(portfolio.committed_sum));
+		// W1-02: committed is a Phase 2 field (contract commitments not yet wired);
+		// show a neutral dash until convert_to_commitment flows are active in UI.
+		set("kt-bgt-kpi-committed", "\u2013");
 		set("kt-bgt-kpi-pending",   String(portfolio.pending_approval_count || 0));
 	}
 

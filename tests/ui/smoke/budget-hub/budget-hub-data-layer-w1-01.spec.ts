@@ -40,9 +40,10 @@ test('Budget Hub KPI cards populate with live numbers after API load', async ({ 
 	const reserved = page.getByTestId('kt-bgt-kpi-reserved');
 	await expect(reserved).not.toHaveText('—');
 
-	// Committed
+	// Committed — W1-02: shows en-dash as Phase 2 placeholder
 	const committed = page.getByTestId('kt-bgt-kpi-committed');
-	await expect(committed).not.toHaveText('—');
+	await expect(committed).toHaveText('–');
+	await expect(committed).not.toHaveClass(/kt-bgt-kpi--loading/);
 
 	// Pending Approvals — numeric (may be 0 but must not be dash)
 	const pending = page.getByTestId('kt-bgt-kpi-pending');

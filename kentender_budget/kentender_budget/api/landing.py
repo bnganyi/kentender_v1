@@ -102,14 +102,19 @@ def get_budget_landing_data():
 	allocated_sum = sum(
 		flt(line_by_budget.get(b.name, {}).get("allocated_amount")) for b in budgets
 	)
+	# W1-02: portfolio KPI sums are scoped to Approved/Active budgets only
+	_approved_active = frozenset(("Approved", "Active"))
 	reserved_sum = sum(
-		flt(line_by_budget.get(b.name, {}).get("reserved_amount")) for b in budgets
+		flt(line_by_budget.get(b.name, {}).get("reserved_amount"))
+		for b in budgets if b.get("status") in _approved_active
 	)
 	committed_sum = sum(
-		flt(line_by_budget.get(b.name, {}).get("committed_amount")) for b in budgets
+		flt(line_by_budget.get(b.name, {}).get("committed_amount"))
+		for b in budgets if b.get("status") in _approved_active
 	)
 	available_sum = sum(
-		flt(line_by_budget.get(b.name, {}).get("available_amount")) for b in budgets
+		flt(line_by_budget.get(b.name, {}).get("available_amount"))
+		for b in budgets if b.get("status") in _approved_active
 	)
 	allocation_pct = (allocated_sum / total_budget_sum * 100.0) if total_budget_sum else 0.0
 
