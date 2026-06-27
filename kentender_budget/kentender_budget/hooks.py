@@ -34,9 +34,9 @@ required_apps = ["kentender_core", "kentender_strategy"]
 # Includes in <head>
 # ------------------
 
-# Single CSS bundle for the budget workbench (budget-builder page only)
+# Single CSS bundle for the budget workbench (budget-hub page only)
 app_include_css = [
-	f"/assets/kentender_budget/css/budget_builder_page.css?v={_asset_version('public/css/budget_builder_page.css')}",
+	f"/assets/kentender_budget/css/budget_hub_page.css?v={_asset_version('public/css/budget_hub_page.css')}",
 ]
 
 app_include_js = [
@@ -55,7 +55,7 @@ app_include_js = [
 # webform_include_css = {"doctype": "public/css/doctype.css"}
 
 # include js in page
-page_js = {"budget-builder": "public/js/budget_builder_page.js"}
+page_js = {"budget-hub": "public/js/budget_hub_page.js"}
 
 # include js in doctype views
 # doctype_js = {}
@@ -291,7 +291,7 @@ fixtures = [
 	},
 	{
 		"dt": "Page",
-		"filters": [["name", "in", ["budget-builder"]]],
+		"filters": [["name", "in", ["budget-hub"]]],
 	},
 	{
 		"dt": "Workspace Sidebar",

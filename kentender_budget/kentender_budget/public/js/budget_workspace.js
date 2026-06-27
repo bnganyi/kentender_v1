@@ -7,8 +7,8 @@
 
 	function _maybeRedirect() {
 		const route = frappe.get_route() || [];
-		if (route[0] === "budget-management") {
-			frappe.set_route("budget-builder");
+		if (route[0] === "Workspaces" && route[1] === "Budget Management") {
+			frappe.set_route("budget-hub");
 		}
 	}
 
