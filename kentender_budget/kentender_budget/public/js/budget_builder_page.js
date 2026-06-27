@@ -520,7 +520,7 @@
 
 	function _fmt(val) {
 		if (val === null || val === undefined) return "—";
-		return frappe.utils.fmt_money(val, false, "KES");
+		return format_currency(val, "KES", 0);
 	}
 
 	function _fmtShort(val) {
