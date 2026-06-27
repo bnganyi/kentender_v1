@@ -1,0 +1,284 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>KenTender | Budget Hub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#f7f9fb",
+                        "on-secondary": "#ffffff",
+                        "surface-container-high": "#e6e8ea",
+                        "on-primary": "#ffffff",
+                        "secondary-container": "#00a2fd",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "surface-container-highest": "#e0e3e5",
+                        "primary-fixed-dim": "#abc7ff",
+                        "on-tertiary-container": "#adbed7",
+                        "on-secondary-container": "#003558",
+                        "tertiary-fixed-dim": "#b7c8e1",
+                        "tertiary-fixed": "#d3e4fe",
+                        "outline-variant": "#c2c6d3",
+                        "surface-container": "#eceef0",
+                        "secondary-fixed-dim": "#98cbff",
+                        "secondary": "#00629d",
+                        "surface-dim": "#d8dadc",
+                        "status-reserved": "#F59E0B",
+                        "surface-tint": "#255dad",
+                        "surface-container-low": "#f2f4f6",
+                        "primary": "#00346f",
+                        "error": "#ba1a1a",
+                        "status-available": "#10B981",
+                        "on-primary-fixed-variant": "#00458f",
+                        "on-primary-fixed": "#001b3f",
+                        "on-secondary-fixed-variant": "#004a77",
+                        "tertiary": "#26364b",
+                        "on-background": "#191c1e",
+                        "outline": "#737783",
+                        "on-secondary-fixed": "#001d33",
+                        "on-surface": "#191c1e",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-primary": "#abc7ff",
+                        "error-container": "#ffdad6",
+                        "primary-container": "#004a99",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-container": "#9bbdff",
+                        "status-exhausted": "#EF4444",
+                        "inverse-surface": "#2d3133",
+                        "border-subtle": "#E2E8F0",
+                        "tertiary-container": "#3d4d62",
+                        "on-error-container": "#93000a",
+                        "surface-bright": "#f7f9fb",
+                        "surface-variant": "#e0e3e5",
+                        "on-surface-variant": "#424751",
+                        "primary-fixed": "#d7e2ff",
+                        "on-tertiary-fixed-variant": "#38485d",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-error": "#ffffff",
+                        "background": "#f7f9fb",
+                        "data-block-bg": "#FFFFFF",
+                        "status-committed": "#6366F1",
+                        "secondary-fixed": "#cfe5ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-gap": "24px",
+                        "container-padding": "16px",
+                        "unit": "4px",
+                        "gutter": "12px",
+                        "card-padding": "20px"
+                    },
+                    "fontFamily": {
+                        "data-mono": ["JetBrains Mono"],
+                        "body-lg": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg": ["Manrope"],
+                        "headline-lg-mobile": ["Manrope"],
+                        "headline-sm": ["Manrope"],
+                        "headline-md": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "headline-md": ["22px", {"lineHeight": "30px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md selection:bg-secondary-container">
+<div class="flex min-h-screen">
+<!-- SIDE NAVIGATION SHELL -->
+<aside class="fixed left-0 top-0 h-screen flex flex-col p-4 z-40 bg-surface-container-low dark:bg-on-background border-r border-border-subtle dark:border-outline-variant w-64 hidden md:flex">
+<div class="px-4 py-6 mb-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 bg-secondary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: &quot;FILL&quot; 1;">hub</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm font-extrabold text-secondary dark:text-secondary-fixed">KenTender</h2>
+<p class="text-[10px] font-label-caps text-on-surface-variant uppercase">Financial Catalyst</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="group flex items-center gap-3 px-4 py-3 mb-1 bg-secondary-container text-on-secondary-container dark:bg-secondary dark:text-on-secondary font-semibold rounded-lg hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-body-md text-body-md">Budget</span>
+</a>
+<a class="group flex items-center gap-3 px-4 py-3 mb-1 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-tertiary-container rounded-lg hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">shopping_cart</span>
+<span class="font-body-md text-body-md">Demand</span>
+</a>
+<a class="group flex items-center gap-3 px-4 py-3 mb-1 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-tertiary-container rounded-lg hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">event_note</span>
+<span class="font-body-md text-body-md">Planning</span>
+</a>
+<a class="group flex items-center gap-3 px-4 py-3 mb-1 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-tertiary-container rounded-lg hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">insights</span>
+<span class="font-body-md text-body-md">Strategy</span>
+</a>
+</nav>
+<div class="pt-4 border-t border-border-subtle mt-4">
+<button class="w-full bg-primary text-on-primary py-3 px-4 rounded-lg font-bold flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all">
+<span class="material-symbols-outlined">add</span>
+                New Request
+            </button>
+</div>
+<div class="mt-auto pt-6 space-y-1">
+<a class="group flex items-center gap-3 px-4 py-3 mb-1 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">archive</span>
+<span class="font-body-md text-body-md">Archive</span>
+</a>
+<a class="group flex items-center gap-3 px-4 py-3 mb-1 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+<span class="font-body-md text-body-md">Support</span>
+</a>
+</div>
+</aside>
+<!-- MAIN WRAPPER -->
+<div class="flex-1 md:ml-64 flex flex-col min-h-screen">
+<!-- TOP NAVIGATION BAR (Integrated Style from IMAGE_7) -->
+<header class="bg-surface-bright flex justify-between items-center w-full px-8 h-16 sticky top-0 z-50 border-b border-border-subtle">
+<div class="flex items-center flex-1 flex-shrink-0 gap-4">
+<h2 class="font-headline-sm text-headline-sm font-bold text-primary whitespace-nowrap">Budget Management</h2>
+<div class="flex items-center bg-surface-container-low rounded-lg px-3 py-1.5 w-full max-w-md border border-outline-variant/30">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px] mr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-full p-0 h-8" placeholder="Search budgets, demands..." type="text">
+</div>
+</div>
+<div class="flex items-center gap-1.5 ml-4">
+<button class="p-2 rounded-full hover:bg-surface-container-low transition-colors text-on-surface-variant relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-error rounded-full"></span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-container-low transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">history</span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-container-low transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="flex items-center gap-3 ml-2 pl-4 border-l border-border-subtle cursor-pointer group">
+<div class="text-right hidden lg:block">
+<p class="font-bold text-sm text-primary leading-none">James Mwangi</p>
+<p class="text-[10px] text-on-surface-variant font-label-caps mt-0.5 uppercase tracking-wider">Procurement Lead</p>
+</div>
+<div class="w-8 h-8 rounded-full border border-primary-container overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA76G5jx6F-WgEvwwX1xAI58Cdl-ApuuYihpVoqycKKHkJyvbubyeZ_VrCIWcfF5Z5QlJd7HqLj-FnxeOXhZAQF5zWYqsCnxmkeHnSipd0s_7o1UeIj5bVzfoEYZba-V3mHNuSOgCAJ31CkN1ny2GmB7NqwoR5QgTpdTQ6gDqo3HRoYsKc1ybDLXvVb8RoWQpc8MiU4c9T58D5bIaXUxAZCEUTMmAdmEaDbKD0t5PVgUEv6NIv5d99QGWmXoTcFNKVQer8BlYRWlW4">
+</div>
+</div>
+</div>
+</header>
+<!-- MAIN CONTENT CANVAS -->
+<main class="flex-1 p-container-padding md:p-8 bg-surface">
+<div class="max-w-7xl mx-auto space-y-section-gap">
+<!-- TITLE STRIP / BREADCRUMB AREA -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border-subtle pb-6">
+<div><nav class="flex items-center gap-2 text-[10px] font-label-caps text-on-surface-variant uppercase tracking-widest mb-2"><span class="">Portfolio</span><span class="material-symbols-outlined text-[12px]">chevron_right</span><span class="text-secondary font-bold">Active Budgets</span></nav><h1 class="text-headline-lg font-headline-lg text-primary">Budget Hub</h1><p class="text-body-md text-on-surface-variant mt-1">Financial control layer for FY 2026/27. Manage envelopes, track reservations, and ensure strategic alignment across all procuring entities.</p></div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 border border-outline-variant text-primary font-bold rounded-lg hover:bg-surface-container-low transition-colors text-sm">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                            Export Report
+                        </button>
+<button class="flex items-center gap-2 px-6 py-2 bg-primary text-white font-bold rounded-lg hover:opacity-90 transition-opacity shadow-lg shadow-primary/20 text-sm">
+<span class="material-symbols-outlined text-[18px]">add_box</span>
+                            Create Budget
+                        </button>
+</div>
+</div>
+<!-- SUMMARY CARDS (BENTO STYLE) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter"><div class="bg-data-block-bg p-card-padding rounded-xl border border-border-subtle flex flex-col justify-between group hover:border-secondary transition-colors cursor-default"><div class="flex justify-between items-start"><span class="p-2 bg-status-available/10 rounded-lg"><span class="material-symbols-outlined text-status-available">account_balance_wallet</span></span><span class="text-xs font-bold text-status-available bg-status-available/10 px-2 py-0.5 rounded-full">+12.5%</span></div><div class="mt-4"><p class="text-label-caps font-label-caps text-on-surface-variant uppercase">Available Balance (KES)</p><h3 class="text-headline-md font-headline-md font-extrabold text-primary mt-1 font-data-mono">4,120,450,000</h3></div><p class="text-[11px] text-on-surface-variant mt-3 border-t border-border-subtle pt-2">Unallocated funding envelope</p></div><div class="bg-data-block-bg p-card-padding rounded-xl border border-border-subtle flex flex-col justify-between group hover:border-status-reserved transition-colors cursor-default"><div class="flex justify-between items-start"><span class="p-2 bg-status-reserved/10 rounded-lg"><span class="material-symbols-outlined text-status-reserved">lock_clock</span></span></div><div class="mt-4"><p class="text-label-caps font-label-caps text-on-surface-variant uppercase">Total Reserved</p><h3 class="text-headline-md font-headline-md font-extrabold text-primary mt-1 font-data-mono">842,100,500</h3></div><p class="text-[11px] text-on-surface-variant mt-3 border-t border-border-subtle pt-2">Held for approved demands</p></div><div class="bg-data-block-bg p-card-padding rounded-xl border border-border-subtle flex flex-col justify-between group hover:border-status-committed transition-colors cursor-default"><div class="flex justify-between items-start"><span class="p-2 bg-status-committed/10 rounded-lg"><span class="material-symbols-outlined text-status-committed">verified</span></span></div><div class="mt-4"><p class="text-label-caps font-label-caps text-on-surface-variant uppercase">Total Committed</p><h3 class="text-headline-md font-headline-md font-extrabold text-primary mt-1 font-data-mono">2,250,900,000</h3></div><p class="text-[11px] text-on-surface-variant mt-3 border-t border-border-subtle pt-2">Locked in active contracts</p></div><div class="bg-data-block-bg p-card-padding rounded-xl border border-border-subtle flex flex-col justify-between group hover:border-primary transition-colors cursor-default"><div class="flex justify-between items-start"><span class="p-2 bg-primary/10 rounded-lg"><span class="material-symbols-outlined text-primary">rate_review</span></span><div class="w-2 h-2 bg-error rounded-full animate-pulse"></div></div><div class="mt-4"><p class="text-label-caps font-label-caps text-on-surface-variant uppercase">Pending Approvals</p><h3 class="text-headline-md font-headline-md font-extrabold text-primary mt-1 font-data-mono">14</h3></div><p class="text-[11px] text-on-surface-variant mt-3 border-t border-border-subtle pt-2">Requires executive signature</p></div></div>
+<!-- CRITICAL GUARDRAILS -->
+<section class="space-y-4"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-error" style="font-variation-settings: &quot;FILL&quot; 1;">warning</span><h2 class="font-headline-sm text-headline-sm text-primary">Critical Guardrails</h2></div><div class="grid grid-cols-1 md:grid-cols-2 gap-gutter"><div class="bg-error-container/20 border-l-4 border-error p-4 rounded-r-xl flex items-center gap-4"><div class="flex-shrink-0 w-12 h-12 bg-error-container rounded-full flex items-center justify-center"><span class="material-symbols-outlined text-on-error-container">priority_high</span></div><div><h4 class="font-bold text-on-error-container">Low Balance: Infrastructure Expansion</h4><p class="text-body-md text-on-surface-variant">Available funds below 15% threshold for Category A works. Planned tender release blocked.</p></div><button class="ml-auto text-on-error-container hover:underline font-bold text-sm">Review</button></div><div class="bg-surface-container-high/50 border-l-4 border-status-reserved p-4 rounded-r-xl flex items-center gap-4"><div class="flex-shrink-0 w-12 h-12 bg-status-reserved/20 rounded-full flex items-center justify-center"><span class="material-symbols-outlined text-status-reserved">link_off</span></div><div><h4 class="font-bold text-on-surface">Funding Exception: Unlinked Strategy</h4><p class="text-body-md text-on-surface-variant">4 Budget lines lack mapping to Strategic Pillar 3. Audit compliance risk detected.</p></div><button class="ml-auto text-primary hover:underline font-bold text-sm">Fix Link</button></div></div></section>
+<!-- ACTIVE BUDGETS & MOVEMENTS -->
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-section-gap">
+<!-- ACTIVE BUDGETS TABLE -->
+<div class="xl:col-span-2 space-y-4">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-sm text-headline-sm text-primary">Active Budget Envelopes</h2>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="text-xs uppercase font-label-caps">Filter by:</span>
+<select class="bg-transparent border-none text-sm font-bold focus:ring-0 cursor-pointer">
+<option>All Entities</option>
+<option>Health</option>
+<option>Education</option>
+</select>
+</div>
+</div>
+<div class="bg-data-block-bg rounded-xl border border-border-subtle overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-border-subtle">
+<th class="px-6 py-4 text-label-caps font-label-caps text-on-surface-variant uppercase">Entity / Budget Name</th>
+<th class="px-6 py-4 text-label-caps font-label-caps text-on-surface-variant uppercase">Consumption</th>
+<th class="px-6 py-4 text-label-caps font-label-caps text-on-surface-variant uppercase">Available (KES)</th>
+<th class="px-6 py-4 text-label-caps font-label-caps text-on-surface-variant uppercase">Status</th>
+<th class="px-6 py-4 text-label-caps font-label-caps text-on-surface-variant uppercase">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-subtle"><tr class="hover:bg-surface-container-low transition-colors group"><td class="px-6 py-5"><div class="font-bold text-primary">Ministry of Health FY 2026/27</div><div class="text-[11px] text-on-surface-variant">Primary: Health Infrastructure Renovation</div></td><td class="px-6 py-5 w-48"><div class="flex items-center gap-2 mb-1"><span class="text-[11px] font-data-mono">68%</span><div class="flex-1 h-2 bg-surface-container-highest rounded-full overflow-hidden flex"><div class="h-full bg-status-committed" style="width: 45%"></div><div class="h-full bg-status-reserved" style="width: 23%"></div></div></div><div class="flex gap-2 text-[10px] text-on-surface-variant"><span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-status-committed"></span> Commit</span><span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-status-reserved"></span> Reserve</span></div></td><td class="px-6 py-5 font-data-mono font-bold text-on-surface">1,240.5M</td><td class="px-6 py-5"><span class="px-2 py-1 rounded bg-status-available/10 text-status-available text-[11px] font-bold uppercase tracking-tight">Healthy</span></td><td class="px-6 py-5"><button class="text-secondary hover:bg-secondary-container/10 p-2 rounded-lg transition-all"><span class="material-symbols-outlined">edit_square</span></button></td></tr><tr class="hover:bg-surface-container-low transition-colors group"><td class="px-6 py-5"><div class="font-bold text-primary">Dept. of Education (Capitation)</div><div class="text-[11px] text-on-surface-variant">Strategy: Digital Learning Initiative</div></td><td class="px-6 py-5 w-48"><div class="flex items-center gap-2 mb-1"><span class="text-[11px] font-data-mono">92%</span><div class="flex-1 h-2 bg-surface-container-highest rounded-full overflow-hidden flex"><div class="h-full bg-status-committed" style="width: 80%"></div><div class="h-full bg-status-reserved" style="width: 12%"></div></div></div><div class="flex gap-2 text-[10px] text-on-surface-variant"><span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-status-committed"></span> Commit</span><span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-status-reserved"></span> Reserve</span></div></td><td class="px-6 py-5 font-data-mono font-bold text-on-surface">45.2M</td><td class="px-6 py-5"><span class="px-2 py-1 rounded bg-status-reserved/10 text-status-reserved text-[11px] font-bold uppercase tracking-tight">Reviewing</span></td><td class="px-6 py-5"><button class="text-secondary hover:bg-secondary-container/10 p-2 rounded-lg transition-all"><span class="material-symbols-outlined">edit_square</span></button></td></tr><tr class="hover:bg-surface-container-low transition-colors group"><td class="px-6 py-5"><div class="font-bold text-primary">State Dept for Transport</div><div class="text-[11px] text-on-surface-variant">Strategy: Rural Access Roads</div></td><td class="px-6 py-5 w-48"><div class="flex items-center gap-2 mb-1"><span class="text-[11px] font-data-mono">15%</span><div class="flex-1 h-2 bg-surface-container-highest rounded-full overflow-hidden flex"><div class="h-full bg-status-committed" style="width: 10%"></div><div class="h-full bg-status-reserved" style="width: 5%"></div></div></div></td><td class="px-6 py-5 font-data-mono font-bold text-on-surface">2,850.0M</td><td class="px-6 py-5"><span class="px-2 py-1 rounded bg-status-available/10 text-status-available text-[11px] font-bold uppercase tracking-tight">Healthy</span></td><td class="px-6 py-5"><button class="text-secondary hover:bg-secondary-container/10 p-2 rounded-lg transition-all"><span class="material-symbols-outlined">edit_square</span></button></td></tr></tbody>
+</table>
+</div>
+</div>
+<!-- RECENT BUDGET MOVEMENTS -->
+<aside class="space-y-4"><div class="flex items-center justify-between"><h2 class="font-headline-sm text-headline-sm text-primary">Recent Movements</h2><button class="text-secondary text-xs font-bold hover:underline">View All</button></div><div class="bg-data-block-bg rounded-xl border border-border-subtle p-card-padding"><div class="space-y-6 relative before:content-[''] before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-surface-container-high"><div class="relative pl-8"><span class="absolute left-0 top-0 w-6 h-6 bg-status-available/20 rounded-full flex items-center justify-center z-10 border-2 border-white"><span class="material-symbols-outlined text-[14px] text-status-available" style="font-variation-settings: &quot;FILL&quot; 1;">add</span></span><div><p class="text-body-md font-bold text-primary">Budget Allocation</p><p class="text-xs text-on-surface-variant">KES 50,000,000 allocated to MoH Lab Equipping Programme.</p><div class="flex items-center gap-2 mt-1 text-[10px] text-on-surface-variant font-data-mono"><span class="material-symbols-outlined text-[12px]">schedule</span> 2 hours ago • REF: BK-9021</div></div></div><div class="relative pl-8"><span class="absolute left-0 top-0 w-6 h-6 bg-status-reserved/20 rounded-full flex items-center justify-center z-10 border-2 border-white"><span class="material-symbols-outlined text-[14px] text-status-reserved" style="font-variation-settings: &quot;FILL&quot; 1;">lock</span></span><div><p class="text-body-md font-bold text-primary">Funds Reserved</p><p class="text-xs text-on-surface-variant">KES 12,400,000 held for Tender #2026/045 (School Books).</p><div class="flex items-center gap-2 mt-1 text-[10px] text-on-surface-variant font-data-mono"><span class="material-symbols-outlined text-[12px]">schedule</span> 5 hours ago • REF: RS-4410</div></div></div><div class="relative pl-8"><span class="absolute left-0 top-0 w-6 h-6 bg-primary/20 rounded-full flex items-center justify-center z-10 border-2 border-white"><span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings: &quot;FILL&quot; 1;">task_alt</span></span><div><p class="text-body-md font-bold text-primary">Revision Approved</p><p class="text-xs text-on-surface-variant">Transport Dept. budget version 2.4 activated by PS Finance.</p><div class="flex items-center gap-2 mt-1 text-[10px] text-on-surface-variant font-data-mono"><span class="material-symbols-outlined text-[12px]">schedule</span> Yesterday • REF: RV-0112</div></div></div><div class="relative pl-8 opacity-60"><span class="absolute left-0 top-0 w-6 h-6 bg-outline-variant/20 rounded-full flex items-center justify-center z-10 border-2 border-white"><span class="material-symbols-outlined text-[14px] text-on-surface-variant">undo</span></span><div><p class="text-body-md font-bold text-primary">Reservation Released</p><p class="text-xs text-on-surface-variant">KES 2,000,000 surplus returned from cancelled demand DM-44.</p><div class="flex items-center gap-2 mt-1 text-[10px] text-on-surface-variant font-data-mono"><span class="material-symbols-outlined text-[12px]">schedule</span> 2 days ago • REF: RL-8821</div></div></div></div></div><div class="bg-primary overflow-hidden rounded-xl h-48 relative flex items-end p-6 group"><div class="relative z-10"><h4 class="text-on-primary font-bold text-lg leading-tight">Strategic Alignment Score</h4><div class="flex items-center gap-2 mt-2"><span class="text-3xl font-extrabold text-white font-data-mono">94%</span><span class="text-[10px] text-on-primary/80 uppercase font-bold tracking-widest bg-white/10 px-2 py-1 rounded">Optimal</span></div><p class="text-on-primary/70 text-xs mt-2">All active spending correlates with Vision 2030 objectives.</p></div></div></aside>
+</div>
+<!-- ANALYTICS PREVIEW SECTION -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+<div class="bg-data-block-bg rounded-xl border border-border-subtle p-card-padding"><div class="flex items-center justify-between mb-6"><h3 class="font-headline-sm text-headline-sm text-primary">Funding Source Distribution</h3><span class="material-symbols-outlined text-on-surface-variant cursor-pointer">more_horiz</span></div><div class="flex items-center gap-8"><div class="relative w-32 h-32 flex-shrink-0"><svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36"><circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#e0e3e5" stroke-width="3"></circle><circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#00346f" stroke-dasharray="70 30" stroke-dashoffset="0" stroke-width="3"></circle><circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#00629d" stroke-dasharray="20 80" stroke-dashoffset="-70" stroke-width="3"></circle><circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#F59E0B" stroke-dasharray="10 90" stroke-dashoffset="-90" stroke-width="3"></circle></svg><div class="absolute inset-0 flex items-center justify-center flex-col"><span class="text-xs font-bold">Total</span><span class="text-[10px] text-on-surface-variant">FY 26/27</span></div></div><div class="flex-1 grid grid-cols-1 gap-2"><div class="flex items-center justify-between"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-primary"></span><span class="text-sm">Exchequer</span></div><span class="font-data-mono text-sm font-bold">70%</span></div><div class="flex items-center justify-between"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-secondary"></span><span class="text-sm">External Grants</span></div><span class="font-data-mono text-sm font-bold">20%</span></div><div class="flex items-center justify-between"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-status-reserved"></span><span class="text-sm">Internal Revenue</span></div><span class="font-data-mono text-sm font-bold">10%</span></div></div></div></div>
+<div class="bg-data-block-bg rounded-xl border border-border-subtle p-card-padding"><div class="flex items-center justify-between mb-6"><h3 class="font-headline-sm text-headline-sm text-primary">Consumption Velocity</h3><span class="material-symbols-outlined text-on-surface-variant cursor-pointer">more_horiz</span></div><div class="space-y-4"><div class="flex justify-between items-end h-32 gap-1 pb-2"><div class="bg-primary/20 w-full rounded-t" style="height: 40%"></div><div class="bg-primary/30 w-full rounded-t" style="height: 55%"></div><div class="bg-primary/40 w-full rounded-t" style="height: 45%"></div><div class="bg-primary/50 w-full rounded-t" style="height: 70%"></div><div class="bg-primary/60 w-full rounded-t" style="height: 65%"></div><div class="bg-primary/80 w-full rounded-t" style="height: 85%"></div><div class="bg-primary w-full rounded-t" style="height: 95%"></div></div><div class="flex justify-between text-[10px] text-on-surface-variant font-label-caps uppercase"><span class="">Jul</span><span class="">Aug</span><span class="">Sep</span><span class="">Oct</span><span class="">Nov</span><span class="">Dec</span><span class="font-bold text-primary">Jan</span></div><p class="text-[11px] text-on-surface-variant pt-2 border-t border-border-subtle">Spending velocity increased by 18% in Q3 due to infrastructure awards.</p></div></div>
+</div>
+</div>
+</main>
+</div>
+</div>
+<!-- MOBILE NAVIGATION -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-border-subtle flex justify-around py-3 z-50 glass-effect">
+<a class="flex flex-col items-center gap-1 text-secondary font-bold" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="text-[10px]">Budget</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined">shopping_cart</span>
+<span class="text-[10px]">Demand</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px]">Profile</span>
+</a>
+</nav>
+<script>
+    console.log("KenTender Budget Hub Initialized");
+</script>
+
+
+</body></html>
