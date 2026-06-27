@@ -1,0 +1,358 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Strategic Procurement - Add Objective</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container": "#eceef0",
+                    "on-secondary-fixed": "#0d1c2f",
+                    "on-background": "#191c1e",
+                    "on-surface-variant": "#45464d",
+                    "outline": "#76777d",
+                    "inverse-on-surface": "#eff1f3",
+                    "tertiary-container": "#0b1c30",
+                    "inverse-surface": "#2d3133",
+                    "primary-fixed": "#dae2fd",
+                    "on-primary-fixed": "#131b2e",
+                    "outline-variant": "#c6c6cd",
+                    "tertiary-fixed": "#d3e4fe",
+                    "on-tertiary-fixed-variant": "#38485d",
+                    "on-secondary-container": "#57657b",
+                    "surface-container-low": "#f2f4f6",
+                    "background": "#f7f9fb",
+                    "surface-tint": "#565e74",
+                    "on-primary-fixed-variant": "#3f465c",
+                    "secondary-fixed-dim": "#b9c7e0",
+                    "on-tertiary-fixed": "#0b1c30",
+                    "surface-container-highest": "#e0e3e5",
+                    "on-secondary": "#ffffff",
+                    "surface-dim": "#d8dadc",
+                    "on-tertiary-container": "#75859d",
+                    "surface": "#f7f9fb",
+                    "surface-bright": "#f7f9fb",
+                    "secondary": "#515f74",
+                    "on-primary-container": "#7c839b",
+                    "on-secondary-fixed-variant": "#3a485c",
+                    "on-error-container": "#93000a",
+                    "on-primary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-error": "#ffffff",
+                    "surface-variant": "#e0e3e5",
+                    "primary": "#000000",
+                    "surface-container-lowest": "#ffffff",
+                    "error": "#ba1a1a",
+                    "surface-container-high": "#e6e8ea",
+                    "secondary-fixed": "#d5e3fd",
+                    "secondary-container": "#d5e3fd",
+                    "on-tertiary": "#ffffff",
+                    "tertiary": "#000000",
+                    "tertiary-fixed-dim": "#b7c8e1",
+                    "primary-fixed-dim": "#bec6e0",
+                    "on-surface": "#191c1e",
+                    "inverse-primary": "#bec6e0"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "md": "16px",
+                    "xs": "4px",
+                    "sm": "8px",
+                    "container-padding": "24px",
+                    "hierarchy-indent": "32px",
+                    "xl": "32px",
+                    "lg": "24px",
+                    "unit": "4px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Hanken Grotesk"],
+                    "headline-lg": ["Hanken Grotesk"],
+                    "label-sm": ["Hanken Grotesk"],
+                    "body-md": ["Hanken Grotesk"],
+                    "headline-xl": ["Hanken Grotesk"],
+                    "headline-md": ["Hanken Grotesk"],
+                    "label-md": ["Hanken Grotesk"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-xl": ["30px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            font-family: 'Hanken Grotesk', sans-serif;
+            background-color: #f8fafc;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for professional workbench feel */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .modal-overlay {
+            background-color: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="text-on-background overflow-hidden">
+<!-- Global App Shell Layout -->
+<div class="flex h-screen w-full">
+<!-- SideNavBar (Predicted Anchor) -->
+<aside class="fixed left-0 top-0 h-full w-[280px] border-r border-outline-variant bg-surface-container-lowest flex flex-col z-30">
+<div class="p-lg">
+<div class="text-headline-md font-headline-md font-bold text-primary flex items-center gap-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_tree</span>
+                    Procurement
+                </div>
+<div class="text-label-md font-label-md text-on-surface-variant mt-xs tracking-wider">Strategic Workbench</div>
+</div>
+<nav class="flex-1 px-md space-y-xs">
+<a class="flex items-center gap-md px-md py-sm bg-secondary-container text-on-secondary-container rounded-lg font-bold" href="#">
+<span class="material-symbols-outlined">strategy</span>
+<span class="text-label-md font-label-md">Strategy</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-secondary hover:text-primary hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined">event_note</span>
+<span class="text-label-md font-label-md">Planning</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-secondary hover:text-primary hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined">gavel</span>
+<span class="text-label-md font-label-md">Tenders</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-secondary hover:text-primary hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-label-md font-label-md">Analytics</span>
+</a>
+</nav>
+<div class="mt-auto p-md border-t border-outline-variant">
+<button class="w-full bg-primary text-on-primary py-sm rounded px-md text-label-md font-label-md flex items-center justify-center gap-sm hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                    New Strategic Plan
+                </button>
+<div class="mt-md space-y-xs">
+<a class="flex items-center gap-md px-md py-sm text-secondary hover:text-primary hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-label-md font-label-md">Settings</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-secondary hover:text-primary hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="text-label-md font-label-md">Help</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 ml-[280px] h-full flex flex-col relative overflow-hidden">
+<!-- TopAppBar (Predicted Anchor) -->
+<header class="flex justify-between items-center w-full px-lg py-md h-16 sticky top-0 z-40 bg-surface border-b border-outline-variant">
+<div class="flex items-center gap-xl">
+<h1 class="text-headline-md font-headline-md font-black text-primary">Strategic Procurement</h1>
+<div class="flex gap-lg items-center">
+<a class="text-on-surface-variant hover:text-on-surface transition-colors text-label-md font-label-md" href="#">Dashboard</a>
+<a class="text-primary font-bold border-b-2 border-primary pb-1 text-label-md font-label-md" href="#">Programs</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors text-label-md font-label-md" href="#">Objectives</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors text-label-md font-label-md" href="#">Targets</a>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<div class="bg-surface-container-low px-md py-sm rounded flex items-center gap-sm">
+<span class="material-symbols-outlined text-outline">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md placeholder-outline-variant w-48" placeholder="Search strategy..." type="text">
+</div>
+<button class="p-sm hover:bg-surface-container-low rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-sm hover:bg-surface-container-low rounded-full transition-colors">
+<span class="material-symbols-outlined">history</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary-fixed overflow-hidden flex items-center justify-center">
+<img class="w-full h-full object-cover" data-alt="A professional high-resolution headshot of a corporate procurement executive in business attire. The person is smiling warmly, set against a blurred minimalist office background with soft cinematic lighting. The image maintains a clean, modern aesthetic with a focus on professional clarity and trustworthiness." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgbO4VyW8GkwDvTT33UDuCuWnr9Gc8vZhrQ1oMh2duwA57BOHJo5bPG_DFa6kT1UJZw4eyb0cB9pY8j6wRkfMSXHP4XBJ0m2kn4-QoCIPicXElGdUzROL40m616pGsdoaIY5jv5GZfPl_VfzvNGiV4ESE_Ci5uHdqIgKNGxEl0CxjIvjJgMeqGnKYm4BpbeL3eiZsiFjuvYiabvANBPKjhDge9wVPQWIuxy9APamNV5c-mx8VFK1rPteIjEhehc1vLke1IHfE3rz8">
+</div>
+</div>
+</header>
+<!-- Background Content (Dimmed Screen Mockup) -->
+<section class="p-xl flex-1 overflow-y-auto">
+<div class="max-w-6xl mx-auto opacity-40 select-none pointer-events-none">
+<div class="flex items-center gap-sm text-label-md text-secondary mb-md">
+<span>Strategy 2024-2026</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="font-bold text-primary">National Immunization Infrastructure Upgrade</span>
+</div>
+<div class="mb-xl">
+<h2 class="text-headline-xl font-headline-xl mb-xs">National Immunization Infrastructure Upgrade</h2>
+<p class="text-body-lg text-on-surface-variant max-w-3xl">Comprehensive modernization of cold-chain storage and distribution networks across 14 regional hubs to ensure vaccine integrity and delivery efficiency.</p>
+</div>
+<div class="grid grid-cols-12 gap-lg">
+<!-- Example Program Card -->
+<div class="col-span-8 space-y-md">
+<div class="bg-white border border-outline-variant rounded p-lg">
+<div class="flex justify-between items-start mb-md">
+<div>
+<div class="flex gap-sm items-center mb-xs">
+<span class="bg-green-100 text-green-800 text-[10px] font-bold px-sm py-[2px] rounded-full uppercase tracking-tighter">Active</span>
+<span class="text-label-md text-on-surface-variant">ID: OBJ-9912</span>
+</div>
+<h3 class="text-headline-md font-headline-md">Cold-Chain Storage Expansion</h3>
+</div>
+<button class="text-outline hover:text-primary"><span class="material-symbols-outlined">more_horiz</span></button>
+</div>
+<div class="h-2 bg-surface-container rounded-full mb-md overflow-hidden">
+<div class="h-full bg-primary w-2/3"></div>
+</div>
+<div class="flex justify-between text-label-md">
+<span class="text-on-surface-variant">65% Progress</span>
+<span class="text-primary font-bold">14 / 21 Hubs</span>
+</div>
+</div>
+<div class="bg-white border border-outline-variant rounded p-lg">
+<h3 class="text-headline-md font-headline-md mb-md">Last Activity</h3>
+<div class="space-y-md">
+<div class="flex gap-md">
+<div class="w-1 bg-tertiary rounded-full"></div>
+<div>
+<p class="text-body-md font-bold">Procurement Tender Published</p>
+<p class="text-label-md text-on-surface-variant">Today at 10:24 AM by Sarah Chen</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="col-span-4 space-y-md">
+<div class="bg-white border border-outline-variant rounded p-lg">
+<h3 class="text-label-md font-label-md uppercase tracking-widest text-outline mb-md">Key Personnel</h3>
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 bg-secondary-fixed rounded-full"></div>
+<div>
+<p class="text-body-md font-bold">Marcus Thorne</p>
+<p class="text-label-sm text-on-surface-variant">Program Director</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Modal Overlay -->
+<div class="absolute inset-0 z-50 flex items-center justify-center modal-overlay p-md">
+<!-- New Strategic Objective Modal -->
+<div class="bg-surface-container-lowest w-full max-w-[640px] border border-outline-variant rounded-lg shadow-xl animate-in fade-in zoom-in duration-300 flex flex-col">
+<!-- Header -->
+<div class="px-lg py-md border-b border-outline-variant flex items-center justify-between bg-surface-container-low/50">
+<div class="flex items-center gap-sm">
+<div class="w-8 h-8 rounded bg-primary text-on-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">add_box</span>
+</div>
+<h2 class="text-headline-md font-headline-md">New Strategic Objective</h2>
+</div>
+<button class="p-sm hover:bg-surface-container-high rounded-full transition-colors text-outline">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Modal Body -->
+<form class="p-lg space-y-lg overflow-y-auto max-h-[716px]">
+<!-- Parent Program (Read-only) -->
+<div class="space-y-sm">
+<label class="text-label-md font-label-md text-on-surface-variant block">PARENT PROGRAM</label>
+<div class="bg-surface-container-low border border-outline-variant px-md py-sm rounded flex items-center justify-between group">
+<span class="text-body-md font-medium text-secondary">National Immunization Infrastructure Upgrade</span>
+<span class="material-symbols-outlined text-outline text-[18px]">lock</span>
+</div>
+</div>
+<!-- Objective Title -->
+<div class="space-y-sm">
+<label class="text-label-md font-label-md text-on-surface-variant block uppercase" for="title">Objective Title</label>
+<input class="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary px-md py-sm rounded text-body-md placeholder:text-outline-variant transition-all" id="title" placeholder="e.g., Optimize Last-Mile Delivery Efficiency" type="text">
+</div>
+<!-- Category -->
+<div class="space-y-sm">
+<label class="text-label-md font-label-md text-on-surface-variant block uppercase" for="category">Category</label>
+<select class="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary px-md py-sm rounded text-body-md appearance-none" id="category">
+<option disabled="" selected="" value="">Select category...</option>
+<option value="financial">Financial</option>
+<option value="operational">Operational</option>
+<option value="esg">ESG</option>
+<option value="compliance">Compliance</option>
+</select>
+</div>
+<!-- Description -->
+<div class="space-y-sm">
+<label class="text-label-md font-label-md text-on-surface-variant block uppercase" for="description">Description</label>
+<textarea class="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary px-md py-sm rounded text-body-md placeholder:text-outline-variant transition-all" id="description" placeholder="Detail the specific strategic intent and measurable impact..." rows="4"></textarea>
+</div>
+<!-- Lead Coordinator -->
+<div class="space-y-sm">
+<label class="text-label-md font-label-md text-on-surface-variant block uppercase" for="coordinator">Lead Coordinator</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline">person_search</span>
+<input class="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary pl-12 pr-md py-sm rounded text-body-md placeholder:text-outline-variant transition-all" id="coordinator" placeholder="Search by name or department..." type="text">
+</div>
+</div>
+</form>
+<!-- Footer Actions -->
+<div class="px-lg py-md border-t border-outline-variant flex items-center justify-end gap-md">
+<button class="px-lg py-sm text-label-md font-label-md text-secondary hover:text-primary hover:bg-surface-container-low rounded transition-colors">
+                            Cancel
+                        </button>
+<button class="px-xl py-sm bg-primary text-on-primary text-label-md font-label-md rounded hover:opacity-90 transition-opacity shadow-sm">
+                            Add Objective
+                        </button>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Micro-interaction Scripts -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Close modal functionality
+            const closeBtn = document.querySelector('button .material-symbols-outlined:contains("close")')?.parentElement;
+            const cancelBtn = document.querySelector('button:contains("Cancel")');
+            
+            // Focus first input
+            setTimeout(() => {
+                document.getElementById('title')?.focus();
+            }, 500);
+        });
+
+        // Small helper for specific text matching in buttons
+        window.addEventListener('load', () => {
+           const btns = document.querySelectorAll('button');
+           btns.forEach(btn => {
+               if(btn.textContent.trim() === 'Cancel') {
+                   btn.addEventListener('click', () => {
+                       document.querySelector('.modal-overlay').style.display = 'none';
+                   });
+               }
+           });
+        });
+    </script>
+</body></html>

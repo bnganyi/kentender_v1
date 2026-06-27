@@ -1962,6 +1962,12 @@ div.kt-strategy-injected-shell {
 	font-weight: 700;
 }
 
+.kt-sph-metric-sub--coverage {
+	color: #6b7280;
+	font-size: 11px;
+	margin-top: 2px;
+}
+
 .kt-sph-metric-sub--warn {
 	color: #92400e;
 	font-weight: 700;
@@ -1994,6 +2000,7 @@ div.kt-strategy-injected-shell {
 	background: #fff;
 	border: 1px solid #c6c6cd;
 	border-radius: 8px;
+	cursor: pointer;
 	display: flex;
 	flex-direction: column;
 	max-width: 520px;
@@ -2294,6 +2301,7 @@ div.kt-strategy-injected-shell {
 .kt-sph-dot--primary { background: #000; }
 .kt-sph-dot--amber   { background: #f59e0b; }
 .kt-sph-dot--green   { background: #22c55e; }
+.kt-sph-dot--slate   { background: #94a3b8; }
 
 .kt-sph-action-label {
 	font-weight: 700;

@@ -15,9 +15,36 @@ def after_migrate():
 	)
 	if os.path.exists(page_path) and not frappe.db.exists("Page", "strategy-builder"):
 		import_file_by_path(page_path)
+	_ensure_strategy_builder_roles()
 	_sync_strategy_management_workspace()
 	_sync_strategy_desktop_icon()
 	_backfill_strategic_plan_required_fields()
+
+
+def _ensure_strategy_builder_roles():
+	"""Guarantee Strategy Manager and Planning Authority can access the Strategy Builder page."""
+	if not frappe.db.exists("Page", "strategy-builder"):
+		return
+	existing = {
+		r.role
+		for r in frappe.get_all(
+			"Has Role",
+			filters={"parent": "strategy-builder", "parenttype": "Page"},
+			fields=["role"],
+		)
+	}
+	for role in ("Strategy Manager", "Planning Authority"):
+		if role not in existing and frappe.db.exists("Role", role):
+			frappe.db.sql(
+				"""INSERT IGNORE INTO `tabHas Role`
+				   (name, creation, modified, modified_by, owner,
+				    docstatus, idx, role, parent, parentfield, parenttype)
+				   VALUES (CONCAT('strategy-builder-', %(role)s, '-', UUID()),
+				           NOW(), NOW(), 'Administrator', 'Administrator',
+				           0, 0, %(role)s, 'strategy-builder', 'roles', 'Page')""",
+				{"role": role},
+			)
+	frappe.db.commit()
 
 
 def _sync_strategy_management_workspace():

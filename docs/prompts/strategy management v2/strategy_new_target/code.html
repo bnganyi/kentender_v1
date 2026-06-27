@@ -1,0 +1,326 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Add New Target | Strategic Procurement Workbench</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container": "#eceef0",
+                        "on-secondary-fixed": "#0d1c2f",
+                        "on-background": "#191c1e",
+                        "on-surface-variant": "#45464d",
+                        "outline": "#76777d",
+                        "inverse-on-surface": "#eff1f3",
+                        "tertiary-container": "#0b1c30",
+                        "inverse-surface": "#2d3133",
+                        "primary-fixed": "#dae2fd",
+                        "on-primary-fixed": "#131b2e",
+                        "outline-variant": "#c6c6cd",
+                        "tertiary-fixed": "#d3e4fe",
+                        "on-tertiary-fixed-variant": "#38485d",
+                        "on-secondary-container": "#57657b",
+                        "surface-container-low": "#f2f4f6",
+                        "background": "#f7f9fb",
+                        "surface-tint": "#565e74",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-secondary": "#ffffff",
+                        "surface-dim": "#d8dadc",
+                        "on-tertiary-container": "#75859d",
+                        "surface": "#f7f9fb",
+                        "surface-bright": "#f7f9fb",
+                        "secondary": "#515f74",
+                        "on-primary-container": "#7c839b",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "on-error-container": "#93000a",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-error": "#ffffff",
+                        "surface-variant": "#e0e3e5",
+                        "primary": "#000000",
+                        "surface-container-lowest": "#ffffff",
+                        "error": "#ba1a1a",
+                        "surface-container-high": "#e6e8ea",
+                        "secondary-fixed": "#d5e3fd",
+                        "secondary-container": "#d5e3fd",
+                        "on-tertiary": "#ffffff",
+                        "tertiary": "#000000",
+                        "tertiary-fixed-dim": "#b7c8e1",
+                        "primary-fixed-dim": "#bec6e0",
+                        "on-surface": "#191c1e",
+                        "inverse-primary": "#bec6e0"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "xs": "4px",
+                        "sm": "8px",
+                        "container-padding": "24px",
+                        "hierarchy-indent": "32px",
+                        "xl": "32px",
+                        "lg": "24px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Hanken Grotesk"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "label-sm": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"],
+                        "headline-xl": ["Hanken Grotesk"],
+                        "headline-md": ["Hanken Grotesk"],
+                        "label-md": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-xl": ["30px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Hanken Grotesk', sans-serif;
+            background-color: #f8fafc;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+        }
+        /* Custom scrollbar for better workbench aesthetics */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    </style>
+</head>
+<body class="text-on-background selection:bg-secondary-fixed">
+<!-- Global App Shell (SideNav & TopAppBar) -->
+<aside class="fixed left-0 top-0 h-full w-[280px] border-r border-outline-variant bg-surface-container-lowest flex flex-col z-50">
+<!-- Brand Header -->
+<div class="px-lg py-xl">
+<div class="flex items-center gap-sm mb-xs">
+<span class="material-symbols-outlined text-primary text-[32px]">strategy</span>
+<h1 class="text-headline-md font-headline-md font-bold text-primary">Procurement</h1>
+</div>
+<p class="text-label-md font-label-md text-on-surface-variant uppercase tracking-widest">Strategic Workbench</p>
+</div>
+<!-- Primary Navigation -->
+<nav class="flex-1 px-md space-y-xs">
+<!-- Active Tab: Strategy -->
+<a class="flex items-center gap-md px-md py-sm bg-secondary-container text-on-secondary-container rounded-lg font-bold transition-all duration-200 opacity-80 scale-[0.99]" href="#">
+<span class="material-symbols-outlined">strategy</span>
+<span class="text-label-md font-label-md">Strategy</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-secondary hover:text-primary hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined">event_note</span>
+<span class="text-label-md font-label-md">Planning</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-secondary hover:text-primary hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined">gavel</span>
+<span class="text-label-md font-label-md">Tenders</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-secondary hover:text-primary hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-label-md font-label-md">Analytics</span>
+</a>
+</nav>
+<!-- CTA & Footer -->
+<div class="p-md mt-auto">
+<button class="w-full bg-primary text-on-primary py-sm rounded-lg font-bold flex items-center justify-center gap-sm mb-lg hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span>New Strategic Plan</span>
+</button>
+<div class="space-y-xs">
+<a class="flex items-center gap-md px-md py-sm text-secondary hover:text-primary hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-label-md font-label-md">Settings</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm text-secondary hover:text-primary hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="text-label-md font-label-md">Help</span>
+</a>
+</div>
+</div>
+</aside>
+<header class="fixed top-0 right-0 w-[calc(100%-280px)] h-16 bg-surface border-b border-outline-variant flex justify-between items-center px-lg z-40">
+<div class="flex items-center gap-xl">
+<h2 class="text-headline-md font-headline-md font-black text-primary">Strategic Procurement</h2>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
+<input class="bg-surface-container-low border-none rounded-full pl-10 pr-md py-xs text-body-md w-64 focus:ring-1 focus:ring-primary" placeholder="Search objectives..." type="text">
+</div>
+</div>
+<nav class="hidden md:flex items-center gap-lg">
+<a class="text-primary font-bold border-b-2 border-primary pb-1 text-label-md font-label-md" href="#">Dashboard</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors text-label-md font-label-md" href="#">Programs</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors text-label-md font-label-md" href="#">Objectives</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors text-label-md font-label-md" href="#">Targets</a>
+</nav>
+<div class="flex items-center gap-md">
+<button class="p-xs hover:bg-surface-container-low rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-xs hover:bg-surface-container-low rounded-full transition-colors">
+<span class="material-symbols-outlined">history</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a corporate procurement executive, clean lighting, blurred office background, high resolution digital photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDleS5CdFOXSW18o6z2S2RtCBOhNxry00lBlirds040FIYJkgCMtIimbA-Vxy4RKpcFajtNKoWqF78b6QEwo44KquIsW_Miwm_JhyMRIVawKQNirrLsgfLcdjPWv9M-mCr1fnNTfjX5UiNEPlinKuhF6Ft69Y2Wi0Pw2ay6uHmk1DMlwMuGKBYaomO4lp4ngcr7-v2ZaEMMJSnJLonyEsEm9U9ideZneFCN0aHQeJPbB6kYcwbPFYs19k14N7vI4_ZOJCfEEbGNswo">
+</div>
+</div>
+</header>
+<!-- Main Content Canvas (Background behind modal) -->
+<main class="ml-[280px] pt-16 min-h-screen p-lg">
+<div class="max-w-5xl mx-auto space-y-lg">
+<!-- Breadcrumbs -->
+<nav class="flex items-center gap-xs text-label-md font-label-md text-on-surface-variant">
+<span>Strategic Plans</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span>Supply Chain Resilience 2024</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-primary font-bold">Objectives</span>
+</nav>
+<header class="flex justify-between items-end">
+<div>
+<h3 class="text-headline-xl font-headline-xl text-primary">Objective Details</h3>
+<p class="text-body-lg font-body-lg text-on-surface-variant">Cold-Chain Storage Modernization (Region A)</p>
+</div>
+<div class="flex gap-sm">
+<button class="px-md py-sm border border-outline-variant rounded bg-surface hover:bg-surface-container-low text-label-md font-label-md flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">edit</span> Edit Objective
+                    </button>
+</div>
+</header>
+<!-- Objective Dashboard (Background visual) -->
+<div class="grid grid-cols-3 gap-lg">
+<div class="bg-surface-container-lowest border border-outline-variant p-lg rounded-lg">
+<p class="text-label-md font-label-md text-on-surface-variant mb-xs">STATUS</p>
+<div class="flex items-center gap-sm">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+<span class="text-headline-md font-headline-md">On Track</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-lg rounded-lg">
+<p class="text-label-md font-label-md text-on-surface-variant mb-xs">COMPLETION</p>
+<span class="text-headline-md font-headline-md">64%</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-lg rounded-lg">
+<p class="text-label-md font-label-md text-on-surface-variant mb-xs">BUDGET UTILIZATION</p>
+<span class="text-headline-md font-headline-md">$1.2M / $2.0M</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Task Modal Overlay -->
+<div class="fixed inset-0 z-[100] flex items-center justify-center p-md" id="modal-overlay">
+<!-- Backdrop -->
+<div class="absolute inset-0 bg-[#0f172a] bg-opacity-40 backdrop-blur-sm"></div>
+<!-- Modal Container -->
+<div class="relative bg-surface-container-lowest w-full max-w-lg rounded shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+<!-- Header -->
+<div class="px-lg py-md border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+<h3 class="text-headline-md font-headline-md text-primary">New Target / KPI</h3>
+<button class="p-xs hover:bg-surface-container-high rounded transition-colors text-on-surface-variant" onclick="closeModal()">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Form Body -->
+<form class="p-lg space-y-md">
+<!-- Read-only Parent -->
+<div class="space-y-xs">
+<label class="text-label-md font-label-md text-on-surface-variant uppercase tracking-tight">Parent Objective</label>
+<div class="flex items-center gap-sm px-md py-sm bg-surface-container-low text-secondary border border-outline-variant rounded cursor-not-allowed">
+<span class="material-symbols-outlined text-[18px]">account_tree</span>
+<span class="text-body-md font-body-md">Cold-Chain Storage Modernization (Region A)</span>
+</div>
+</div>
+<!-- Metric Name -->
+<div class="space-y-xs">
+<label class="text-label-md font-label-md text-on-surface-variant uppercase tracking-tight" for="metric-name">Metric Name</label>
+<input class="w-full bg-[#f1f5f9] border-none focus:ring-1 focus:ring-primary px-md py-sm text-body-md rounded" id="metric-name" placeholder="e.g. Temperature Stability Variance" type="text">
+</div>
+<!-- Unit & Target Values (Grid) -->
+<div class="grid grid-cols-2 gap-md">
+<div class="space-y-xs">
+<label class="text-label-md font-label-md text-on-surface-variant uppercase tracking-tight" for="uom">Unit of Measure</label>
+<select class="w-full bg-[#f1f5f9] border-none focus:ring-1 focus:ring-primary px-md py-sm text-body-md rounded appearance-none cursor-pointer" id="uom">
+<option value="percent">%</option>
+<option value="usd">USD</option>
+<option value="count">Count</option>
+<option value="days">Days</option>
+</select>
+</div>
+<div class="space-y-xs">
+<label class="text-label-md font-label-md text-on-surface-variant uppercase tracking-tight" for="target-date">Target Date</label>
+<input class="w-full bg-[#f1f5f9] border-none focus:ring-1 focus:ring-primary px-md py-sm text-body-md rounded cursor-pointer" id="target-date" type="date">
+</div>
+</div>
+<div class="grid grid-cols-2 gap-md">
+<div class="space-y-xs">
+<label class="text-label-md font-label-md text-on-surface-variant uppercase tracking-tight" for="baseline-value">Baseline Value</label>
+<input class="w-full bg-[#f1f5f9] border-none focus:ring-1 focus:ring-primary px-md py-sm text-body-md rounded" id="baseline-value" placeholder="0.00" type="number">
+</div>
+<div class="space-y-xs">
+<label class="text-label-md font-label-md text-on-surface-variant uppercase tracking-tight" for="target-value">Target Value</label>
+<input class="w-full bg-[#f1f5f9] border-none focus:ring-1 focus:ring-primary px-md py-sm text-body-md rounded" id="target-value" placeholder="0.00" type="number">
+</div>
+</div>
+<!-- Guidance Note -->
+<div class="p-sm bg-tertiary-fixed/10 border-l-4 border-tertiary-fixed flex gap-sm items-start">
+<span class="material-symbols-outlined text-on-tertiary-fixed-variant text-[20px]">info</span>
+<p class="text-label-sm font-label-sm text-on-tertiary-fixed-variant">This target will be tracked weekly until the target date. Ensure the baseline reflects the current audited state.</p>
+</div>
+</form>
+<!-- Footer Actions -->
+<div class="px-lg py-md border-t border-outline-variant bg-surface flex justify-end gap-md">
+<button class="px-lg py-sm text-on-surface-variant hover:text-primary font-bold text-label-md font-label-md transition-colors" onclick="closeModal()">
+                    Cancel
+                </button>
+<button class="px-lg py-sm bg-[#0f172a] text-white rounded font-bold text-label-md font-label-md shadow hover:bg-[#1e293b] transition-all active:scale-95">
+                    Add Target
+                </button>
+</div>
+</div>
+</div>
+<script>
+        function closeModal() {
+            const modal = document.getElementById('modal-overlay');
+            modal.style.opacity = '0';
+            modal.style.pointerEvents = 'none';
+            modal.querySelector('div:last-child').classList.remove('zoom-in');
+            modal.querySelector('div:last-child').classList.add('zoom-out', 'scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+        }
+
+        // Micro-interaction for input focus
+        document.querySelectorAll('input, select').forEach(element => {
+            element.addEventListener('focus', () => {
+                element.parentElement.querySelector('label').style.color = '#000000';
+            });
+            element.addEventListener('blur', () => {
+                element.parentElement.querySelector('label').style.color = '';
+            });
+        });
+    </script>
+</body></html>

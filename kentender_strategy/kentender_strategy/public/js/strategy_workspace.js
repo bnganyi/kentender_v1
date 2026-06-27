@@ -47,150 +47,373 @@
 
 	function staticHierarchyWorkbenchHtml() {
 		return `
-			<div class="kt-strategy-v2-shell" data-testid="strategy-workbench-v2">
-				<div class="kt-strategy-v2-hero">
-					<div class="kt-strategy-v2-breadcrumb" data-testid="strategy-breadcrumb">All Strategic Plans › Ministry of Health 2026-2030</div>
-					<div class="kt-strategy-v2-hero__row">
-						<div>
-							<h2 class="kt-strategy-v2-hero__title" data-testid="strategy-hero-title">Ministry of Health Strategic Plan 2026-2030</h2>
-							<p class="kt-strategy-v2-hero__subtitle" data-testid="strategy-page-intro">Comprehensive modernization of public healthcare infrastructure and digital diagnostics.</p>
-						</div>
-						<div class="kt-strategy-v2-summary__actions">
-							<button type="button" class="kt-strategy-v2-btn kt-strategy-v2-btn--ghost">Export Report</button>
-							<button type="button" class="kt-strategy-v2-btn kt-strategy-v2-btn--primary" data-testid="strategic-plan-create-button">Edit Plan</button>
-						</div>
-					</div>
-				</div>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;900&display=swap">
+<style>
+/* ── Strategic Workbench skin – scoped to .kt-swb ── */
+.kt-swb,.kt-swb *,.kt-swb *::before,.kt-swb *::after{box-sizing:border-box;margin:0;padding:0}
+.kt-swb{font-family:'Hanken Grotesk',-apple-system,BlinkMacSystemFont,sans-serif;color:#191c1e}
+/* breadcrumb */
+.kt-swb-crumb{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:500;line-height:14px;color:#45464d;margin-bottom:8px;flex-wrap:wrap}
+.kt-swb-crumb a{display:flex;align-items:center;gap:4px;color:#45464d;text-decoration:none;margin-right:16px}
+.kt-swb-crumb a:hover{color:#000}
+.kt-swb-crumb a .material-symbols-outlined{font-size:14px}
+.kt-swb-crumb-sep{color:#c6c6cd;margin-right:16px}
+.kt-swb-crumb-current{color:#000;font-weight:700}
+/* page header */
+.kt-swb-page-hdr{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:24px}
+.kt-swb-page-title{font-size:30px;line-height:36px;letter-spacing:-0.02em;font-weight:700;color:#000}
+.kt-swb-page-sub{font-size:14px;line-height:20px;color:#45464d;margin-top:4px}
+.kt-swb-hdr-actions{display:flex;gap:16px;flex-shrink:0}
+.kt-swb-btn-outline{padding:8px 24px;border:1px solid #76777d;color:#000;border-radius:4px;font-weight:700;font-size:12px;letter-spacing:.05em;background:transparent;cursor:pointer;font-family:inherit;line-height:16px}
+.kt-swb-btn-outline:hover{background:#f2f4f6}
+.kt-swb-btn-primary{padding:8px 24px;background:#000;color:#fff;border:none;border-radius:4px;font-weight:700;font-size:12px;letter-spacing:.05em;cursor:pointer;font-family:inherit;line-height:16px}
+/* KPI grid */
+.kt-swb-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-bottom:32px}
+.kt-swb-kpi{background:#fff;border:1px solid #c6c6cd;padding:24px;border-radius:4px}
+.kt-swb-kpi-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+.kt-swb-kpi-label{font-size:12px;font-weight:600;letter-spacing:.05em;color:#45464d;text-transform:uppercase;line-height:16px}
+.kt-swb-kpi-head .material-symbols-outlined{font-size:24px}
+.kt-swb-icon-def{color:#000}
+.kt-swb-icon-sec{color:#57657b}
+.kt-swb-icon-err{color:#ba1a1a}
+.kt-swb-kpi-val{font-size:30px;line-height:36px;letter-spacing:-0.02em;font-weight:900;margin-bottom:8px}
+.kt-swb-kpi-bar{width:100%;height:8px;background:#e6e8ea;border-radius:9999px;overflow:hidden}
+.kt-swb-kpi-bar-fill{height:100%;background:#000;border-radius:9999px}
+.kt-swb-kpi-sub{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:500;line-height:14px;color:#57657b}
+.kt-swb-kpi-sub .material-symbols-outlined{font-size:14px}
+.kt-swb-kpi-err{font-size:11px;font-weight:500;line-height:14px;color:#ba1a1a}
+.kt-swb-kpi-date{font-size:20px;line-height:28px;font-weight:700;margin-bottom:4px}
+.kt-swb-kpi-note{font-size:11px;font-weight:500;line-height:14px;color:#45464d}
+.kt-swb-kpi--milestone{position:relative;overflow:hidden}
+.kt-swb-kpi-bg{position:absolute;inset:0;opacity:.1;background:radial-gradient(circle at 70% 50%,#0f172a 0%,transparent 70%)}
+.kt-swb-kpi-inner{position:relative;z-index:1}
+/* hierarchy section */
+.kt-swb-hier{background:#fff;border:1px solid #c6c6cd;border-radius:4px;box-shadow:0 1px 2px rgba(0,0,0,.05);overflow:hidden;margin-bottom:32px}
+.kt-swb-hier-hdr{background:#f2f4f6;padding:16px 24px;border-bottom:1px solid #c6c6cd;display:flex;justify-content:space-between;align-items:center}
+.kt-swb-hier-legend{display:flex;align-items:center;gap:24px}
+.kt-swb-hier-title{font-size:12px;font-weight:700;letter-spacing:.05em;color:#000;text-transform:uppercase}
+.kt-swb-legend-items{display:flex;align-items:center;gap:8px}
+.kt-swb-dot{width:12px;height:12px;border-radius:9999px;display:inline-block;flex-shrink:0}
+.kt-swb-dot-green{background:#22c55e}
+.kt-swb-dot-amber{background:#f59e0b;margin-left:16px}
+.kt-swb-legend-lbl{font-size:11px;font-weight:500;line-height:14px;color:#45464d}
+.kt-swb-hier-ctrl{display:flex;align-items:center;gap:8px}
+.kt-swb-search-wrap{position:relative;width:256px;margin-right:16px}
+.kt-swb-search-wrap .material-symbols-outlined{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#45464d;font-size:18px;pointer-events:none}
+.kt-swb-search-wrap input{width:100%;padding:4px 16px 4px 40px;background:#fff;border:1px solid #c6c6cd;border-radius:4px;font-size:11px;font-family:inherit;outline:none;line-height:16px}
+.kt-swb-search-wrap input:focus{border-color:#000;box-shadow:0 0 0 1px #000}
+.kt-swb-btn-add-prog{padding:4px 16px;background:#000;color:#fff;font-size:11px;font-weight:700;letter-spacing:.05em;border:none;border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:4px;margin-right:16px;font-family:inherit}
+.kt-swb-btn-add-prog .material-symbols-outlined{font-size:16px}
+.kt-swb-btn-add-prog:hover{opacity:.9}
+.kt-swb-icon-btn{padding:8px;background:transparent;border:none;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.kt-swb-icon-btn:hover{background:#e6e8ea}
+.kt-swb-icon-btn .material-symbols-outlined{font-size:24px;display:block}
+.kt-swb-tree-body{padding:24px}
+/* program row */
+.kt-swb-prog-wrap{margin-bottom:24px}
+.kt-swb-prog-row{display:flex;align-items:center;gap:16px;border:1px solid #c6c6cd;background:#fff;padding:16px;border-radius:4px;box-shadow:0 1px 2px rgba(0,0,0,.05);transition:border-color .15s;margin-bottom:4px}
+.kt-swb-prog-row:hover{border-color:#000}
+.kt-swb-prog-icon{width:40px;height:40px;background:#d5e3fd;display:flex;align-items:center;justify-content:center;border-radius:4px;flex-shrink:0}
+.kt-swb-prog-icon .material-symbols-outlined{color:#0d1c2f;font-size:24px}
+.kt-swb-prog-body{flex:1;min-width:0}
+.kt-swb-prog-title-row,.kt-swb-obj-title-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.kt-swb-node-code{font-size:11px;font-weight:700;color:#45464d;line-height:14px}
+.kt-swb-prog-name{font-size:16px;line-height:24px;font-weight:700;color:#000}
+.kt-swb-prog-meta,.kt-swb-obj-meta{display:flex;align-items:center;gap:24px;margin-top:4px}
+.kt-swb-pbar-wrap{display:flex;align-items:center;gap:8px}
+.kt-swb-pbar-wrap--prog{width:192px}
+.kt-swb-pbar-wrap--obj{width:128px}
+.kt-swb-pbar-track{flex:1;background:#f2f4f6;border-radius:9999px;overflow:hidden}
+.kt-swb-pbar-track--prog{height:6px}
+.kt-swb-pbar-track--obj{height:4px}
+.kt-swb-pbar-fill{height:100%;background:#000;border-radius:9999px}
+.kt-swb-pbar-fill--amber{background:#f59e0b}
+.kt-swb-pbar-pct{font-size:11px;font-weight:700;color:#191c1e}
+.kt-swb-meta-txt{font-size:11px;font-weight:500;color:#45464d;line-height:14px}
+.kt-swb-row-actions{display:flex;align-items:center;gap:8px}
+/* expand button */
+.kt-swb-expand{padding:4px;background:transparent;border:none;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.kt-swb-expand:hover{background:#f2f4f6}
+.kt-swb-expand .material-symbols-outlined{font-size:24px;display:block}
+/* secondary action buttons in rows */
+.kt-swb-btn-sm{padding:4px 16px;border:1px solid #76777d;color:#000;font-size:11px;font-weight:700;border-radius:4px;background:transparent;cursor:pointer;display:flex;align-items:center;gap:4px;font-family:inherit;line-height:14px}
+.kt-swb-btn-sm:hover{background:#f2f4f6}
+.kt-swb-btn-sm .material-symbols-outlined{font-size:16px}
+.kt-swb-btn-xs{padding:4px 8px;border:1px solid #76777d;color:#000;font-size:11px;font-weight:700;border-radius:4px;background:transparent;cursor:pointer;display:flex;align-items:center;gap:4px;font-family:inherit;line-height:14px}
+.kt-swb-btn-xs:hover{background:#f2f4f6}
+.kt-swb-btn-xs .material-symbols-outlined{font-size:14px}
+.kt-swb-btn-more{padding:8px;background:transparent;border:none;cursor:pointer;color:#45464d;display:flex;align-items:center;justify-content:center}
+.kt-swb-btn-more:hover{color:#000}
+.kt-swb-btn-more .material-symbols-outlined{font-size:24px;display:block}
+/* status pills */
+.kt-swb-pill{font-size:10px;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:9999px;line-height:14px;white-space:nowrap}
+.kt-swb-pill--green{background:#dcfce7;color:#166534}
+.kt-swb-pill--amber{background:#fef3c7;color:#92400e}
+.kt-swb-pill--blue{background:#dbeafe;color:#1e40af}
+/* tree connectors + objective indent */
+.kt-swb-children{margin-left:32px;position:relative}
+.kt-swb-tree-v{position:absolute;left:15px;top:0;bottom:0;width:1px;background:#e2e8f0}
+.kt-swb-branch{position:relative;padding:8px 0}
+.kt-swb-tree-h{position:absolute;left:15px;top:24px;width:16px;height:1px;background:#e2e8f0}
+.kt-swb-obj-row{display:flex;align-items:center;gap:16px;margin-left:24px;border:1px solid #c6c6cd;background:#fff;padding:8px;border-radius:4px;transition:background .15s;margin-bottom:4px}
+.kt-swb-obj-row:hover{background:#f7f9fb}
+.kt-swb-obj-body{flex:1;min-width:0}
+.kt-swb-obj-name{font-size:14px;line-height:20px;font-weight:700;color:#000}
+.kt-swb-obj-fill{height:100%;border-radius:9999px}
+.kt-swb-obj-fill--amber{background:#f59e0b}
+.kt-swb-obj-fill--green{background:#22c55e}
+/* target indent */
+.kt-swb-targets{margin-left:32px;position:relative}
+.kt-swb-tgt-branch{position:relative;padding:4px 0}
+.kt-swb-tgt-row{display:flex;align-items:flex-start;gap:12px;margin-left:24px;background:#f2f4f6;padding:12px 16px;border-radius:8px;border-left:4px solid #000;margin-bottom:4px;cursor:pointer;transition:background .12s}
+.kt-swb-tgt-row:hover{background:#e8edf4}
+.kt-swb-tgt-body{flex:1;min-width:0}
+.kt-swb-tgt-head{display:flex;justify-content:space-between;margin-bottom:2px}
+.kt-swb-tgt-code{font-size:11px;font-weight:700;color:#45464d;line-height:14px}
+.kt-swb-tgt-due{font-size:11px;font-weight:500;color:#45464d;line-height:14px}
+.kt-swb-tgt-title{font-size:14px;line-height:20px;font-weight:500;color:#000;margin-bottom:8px}
+.kt-swb-tgt-progress{display:flex;align-items:center;justify-content:space-between}
+.kt-swb-tgt-track{width:66.66%;height:6px;background:#e6e8ea;border-radius:9999px;overflow:hidden}
+.kt-swb-tgt-fill{height:100%;background:#000;border-radius:9999px}
+.kt-swb-tgt-count{font-size:11px;font-weight:900;color:#000}
+.kt-swb-btn-edit{padding:6px;background:transparent;border:none;cursor:pointer;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.kt-swb-btn-edit:hover{background:#d4dce8}
+.kt-swb-btn-edit .material-symbols-outlined{font-size:20px;display:block;color:#45464d}
+/* add program dashed btn */
+.kt-swb-add-prog{margin-top:24px;width:100%;padding:16px;border:2px dashed #c6c6cd;border-radius:8px;color:#45464d;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:700;font-size:12px;letter-spacing:.05em;font-family:inherit;transition:all .15s}
+.kt-swb-add-prog:hover{color:#000;border-color:#000;background:#fff}
+.kt-swb-add-prog .material-symbols-outlined{font-size:24px}
+/* selected node */
+.kt-swb-prog-row.kt-swb-selected{border-color:#000!important;background:#f0f4ff!important}
+.kt-swb-obj-row.kt-swb-selected{border-color:#000!important;background:#f0f4ff!important}
+.kt-swb-tgt-row.kt-swb-selected{background:#e8edf4!important;border-left-color:#5e64ff!important}
+/* hover on interactive rows */
+.kt-swb-prog-row{cursor:pointer}.kt-swb-obj-row{cursor:pointer}
+/* inline add row */
+.kt-swb-add-row{opacity:.7;transition:opacity .12s}
+.kt-swb-add-row:hover{opacity:1}
+/* empty tree */
+.kt-swb-empty-tree{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;text-align:center;color:#45464d}
+/* bottom grid */
+.kt-swb-bottom{display:grid;grid-template-columns:repeat(12,1fr);gap:24px}
+.kt-swb-activity-col{grid-column:span 8}
+.kt-swb-side-col{grid-column:span 4;display:flex;flex-direction:column;gap:24px}
+/* activity feed */
+.kt-swb-feed{background:#fff;border:1px solid #c6c6cd;border-radius:4px;padding:24px}
+.kt-swb-feed h3{font-size:12px;font-weight:700;letter-spacing:.05em;color:#000;text-transform:uppercase;margin-bottom:24px}
+.kt-swb-feed-list{display:flex;flex-direction:column;gap:24px}
+.kt-swb-feed-item{display:flex;gap:16px}
+.kt-swb-feed-icon-wrap{position:relative;flex-shrink:0}
+.kt-swb-feed-icon{width:32px;height:32px;border-radius:9999px;background:#e6e8ea;display:flex;align-items:center;justify-content:center}
+.kt-swb-feed-icon .material-symbols-outlined{font-size:18px;color:#000}
+.kt-swb-feed-icon.is-err .material-symbols-outlined{color:#ba1a1a}
+.kt-swb-feed-line{position:absolute;top:32px;left:16px;width:1px;height:100%;background:#c6c6cd}
+.kt-swb-feed-copy p{font-size:14px;line-height:20px;color:#000}
+.kt-swb-feed-copy small{font-size:11px;font-weight:500;line-height:14px;color:#45464d;display:block;margin-top:2px}
+.kt-swb-feed-copy strong{font-weight:700}
+.kt-swb-feed-copy .ref{color:#515f74;font-weight:700}
+.kt-swb-feed-copy .err{color:#ba1a1a;font-weight:700}
+/* feed header row */
+.kt-swb-feed-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.kt-swb-feed-hdr h3{margin-bottom:0}
+.kt-swb-feed-refresh{background:transparent;border:none;cursor:pointer;color:#45464d;display:flex;align-items:center;padding:4px;border-radius:4px}
+.kt-swb-feed-refresh:hover{background:#f2f4f6;color:#000}
+.kt-swb-feed-refresh .material-symbols-outlined{font-size:18px}
+/* loading state */
+.kt-swb-feed-loading{display:flex;align-items:center;gap:8px;padding:24px 0;color:#45464d;font-size:13px}
+.kt-swb-feed-empty{padding:24px 0;color:#45464d;font-size:13px;font-style:italic}
+@keyframes kt-spin{to{transform:rotate(360deg)}}
+/* insights card */
+.kt-swb-insights{background:#000;color:#fff;padding:24px;border-radius:4px;position:relative}
+.kt-swb-insights h4{font-size:20px;line-height:28px;font-weight:700;margin-bottom:16px;color:#fff}
+.kt-swb-insights p{font-size:14px;line-height:20px;opacity:.9;margin-bottom:24px;color:#fff}
+.kt-swb-btn-light{width:100%;padding:8px;background:#fff;color:#000;border:none;border-radius:4px;font-weight:700;font-size:12px;letter-spacing:.05em;cursor:pointer;font-family:inherit}
+.kt-swb-btn-light:disabled{opacity:.5;cursor:not-allowed}
+/* placeholder badge */
+.kt-swb-placeholder-badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:9999px;background:rgba(255,255,255,.15);color:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.3);margin-bottom:12px}
+.kt-swb-placeholder-badge--dark{background:#f2f4f6;color:#45464d;border-color:#c6c6cd}
+/* stakeholders card */
+.kt-swb-stk{background:#fff;border:1px solid #c6c6cd;border-radius:4px;padding:24px;margin-top:16px}
+.kt-swb-stk-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.kt-swb-stk-hdr h3{margin-bottom:0}
+.kt-swb-avatars{display:flex;margin-bottom:12px}
+.kt-swb-avatar{width:40px;height:40px;border-radius:9999px;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;margin-left:-8px;flex-shrink:0}
+.kt-swb-avatar:first-child{margin-left:0}
+.kt-swb-av-1{background:#cbd5e1;color:#334155}
+.kt-swb-av-2{background:#94a3b8;color:#fff}
+.kt-swb-av-3{background:#64748b;color:#fff}
+.kt-swb-av-4{background:#d5e3fd;color:#57657b}
+.kt-swb-stk-note{font-size:12px;color:#45464d;margin:0}
+.kt-swb-btn-link{background:transparent;border:none;color:#000;font-weight:700;font-size:12px;letter-spacing:.05em;cursor:pointer;display:flex;align-items:center;gap:4px;font-family:inherit;padding:0}
+.kt-swb-btn-link:hover{text-decoration:underline}
+.kt-swb-btn-link .material-symbols-outlined{font-size:18px}
+</style>
+<!-- ── Sticky topbar (identical to Strategy Management landing) ── -->
+<header class="kt-sph-topbar" data-testid="swb-topbar" style="border-radius:0">
+  <div class="kt-sph-topbar__left">
+    <h2 class="kt-sph-topbar__title">Strategic Alignment</h2>
+  </div>
+  <div class="kt-sph-topbar__right">
+    <button type="button" class="kt-sph-icon-btn" title="Notifications"><span class="material-symbols-outlined">notifications</span></button>
+    <button type="button" class="kt-sph-icon-btn" title="Recent"><span class="material-symbols-outlined">history</span></button>
+    <div class="kt-sph-avatar"></div>
+  </div>
+</header>
+<div class="kt-swb" data-testid="strategy-workbench-v2" style="padding:32px 32px 48px">
 
-				<div class="kt-strategy-v2-metrics" data-testid="strategy-metric-overall">
-					<article class="kt-strategy-v2-metric-card">
-						<div class="kt-strategy-v2-metric-head"><span class="kt-strategy-v2-metric-label">Overall Completion</span><span class="material-symbols-outlined">trending_up</span></div>
-						<div class="kt-strategy-v2-metric-value">64%</div>
-						<div class="kt-strategy-v2-progress"><span style="width:64%"></span></div>
-					</article>
-					<article class="kt-strategy-v2-metric-card">
-						<div class="kt-strategy-v2-metric-head"><span class="kt-strategy-v2-metric-label">Active Programs</span><span class="material-symbols-outlined">layers</span></div>
-						<div class="kt-strategy-v2-metric-value">12</div>
-						<div class="kt-strategy-v2-metric-subnote"><span class="material-symbols-outlined">check_circle</span>3 Completed this quarter</div>
-					</article>
-					<article class="kt-strategy-v2-metric-card">
-						<div class="kt-strategy-v2-metric-head"><span class="kt-strategy-v2-metric-label">Critical Risks</span><span class="material-symbols-outlined">warning</span></div>
-						<div class="kt-strategy-v2-metric-value">02</div>
-						<div class="kt-strategy-v2-metric-subnote is-danger">Action required in 'Digital Health'</div>
-					</article>
-					<article class="kt-strategy-v2-metric-card kt-strategy-v2-metric-card--milestone">
-						<div class="kt-strategy-v2-metric-head"><span class="kt-strategy-v2-metric-label">Next Milestone</span><span class="material-symbols-outlined">calendar_today</span></div>
-						<div class="kt-strategy-v2-metric-date">Oct 12, 2024</div>
-						<p class="kt-strategy-v2-metric-note">Procurement Phase II Close</p>
-					</article>
-				</div>
+  <!-- Breadcrumb + Header -->
+  <div style="margin-bottom:24px">
+    <div class="kt-swb-crumb">
+      <a href="#" data-swb="back-link">
+        <span class="material-symbols-outlined">arrow_back</span>
+        <span style="font-weight:500">Back to Strategy Hub</span>
+      </a>
+      <span class="kt-swb-crumb-sep">|</span>
+      <span data-swb="crumb-entity">All Strategic Plans</span>
+      <span class="material-symbols-outlined" style="font-size:14px">chevron_right</span>
+      <span class="kt-swb-crumb-current" data-swb="crumb-plan">Loading…</span>
+    </div>
+    <div class="kt-swb-page-hdr">
+      <div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px">
+          <h2 class="kt-swb-page-title" data-swb="page-title" style="margin-bottom:0">Loading…</h2>
+          <span class="kt-swb-pill kt-swb-pill--blue" data-swb="status-chip" data-testid="strategy-plan-status">Draft</span>
+        </div>
+        <p class="kt-swb-page-sub" data-swb="page-sub"></p>
+      </div>
+      <div class="kt-swb-hdr-actions">
+        <button type="button" class="kt-swb-btn-outline">Export Report</button>
+        <span data-swb="workflow-actions" data-testid="swb-workflow-actions" style="display:inline-flex;gap:8px;align-items:center"></span>
+        <button type="button" class="kt-swb-btn-primary" data-swb="edit-plan-btn">Edit Plan</button>
+      </div>
+    </div>
+  </div>
 
-				<section class="kt-strategy-v2-hierarchy" data-testid="strategy-hierarchy-workbench">
-					<header class="kt-strategy-v2-hierarchy__head">
-						<div class="kt-strategy-v2-hierarchy__legend">
-							<h4>Strategic Hierarchy</h4>
-							<div class="kt-strategy-v2-hierarchy__legend-items">
-								<span class="kt-dot is-green"></span><span>On Track</span>
-								<span class="kt-dot is-amber"></span><span>At Risk</span>
-							</div>
-						</div>
-						<div class="kt-strategy-v2-hierarchy__tools">
-							<button type="button"><span class="material-symbols-outlined">unfold_more</span></button>
-							<button type="button"><span class="material-symbols-outlined">filter_list</span></button>
-						</div>
-					</header>
-					<div class="kt-strategy-v2-hierarchy__body">
-						<div class="kt-tree-program">
-							<div class="kt-tree-node kt-tree-node--program">
-								<button type="button" class="kt-tree-expand"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
-								<div class="kt-tree-icon"><span class="material-symbols-outlined">vaccines</span></div>
-								<div class="kt-tree-content">
-									<div class="kt-tree-title-row"><span class="kt-tree-code">P1</span><h5>National Immunization Infrastructure Upgrade</h5><span class="kt-pill is-green">Active</span></div>
-									<div class="kt-tree-meta-row"><div class="kt-inline-progress"><div class="kt-progress-track"><span style="width:78%"></span></div><em>78%</em></div><span>4 Objectives · 12 Targets</span></div>
-								</div>
-							</div>
-							<div class="kt-tree-children">
-								<div class="kt-tree-connector-vertical"></div>
-								<div class="kt-tree-branch">
-									<div class="kt-tree-connector-horizontal"></div>
-									<div class="kt-tree-node kt-tree-node--objective">
-										<button type="button" class="kt-tree-expand"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
-										<div class="kt-tree-content">
-											<div class="kt-tree-title-row"><span class="kt-tree-code">OBJ 1.1</span><h6>Cold-Chain Storage Modernization (Region A)</h6><span class="kt-pill is-amber">At Risk</span></div>
-											<div class="kt-tree-meta-row"><div class="kt-inline-progress is-amber"><div class="kt-progress-track"><span style="width:45%"></span></div><em>45%</em></div><span>3 Targets</span></div>
-										</div>
-									</div>
-									<div class="kt-tree-targets">
-										<div class="kt-tree-connector-vertical"></div>
-										<div class="kt-tree-target">
-											<div class="kt-tree-connector-horizontal"></div>
-											<div class="kt-tree-target-card is-primary">
-												<div class="kt-tree-target-head"><span>TARGET 1.1.1</span><span>Due: Nov 20, 2024</span></div>
-												<p>Procurement of 50 Ultra-Low Temperature Freezers</p>
-												<div class="kt-tree-target-progress"><div class="kt-progress-track"><span style="width:30%"></span></div><em>15 / 50 Delivered</em></div>
-											</div>
-										</div>
-										<div class="kt-tree-target">
-											<div class="kt-tree-connector-horizontal"></div>
-											<div class="kt-tree-target-card">
-												<div class="kt-tree-target-head"><span>TARGET 1.1.2</span><span>Due: Dec 15, 2024</span></div>
-												<p>Installation and Training across 12 Regional Hubs</p>
-												<div class="kt-tree-target-progress"><div class="kt-progress-track"><span style="width:0%"></span></div><em>0 / 12 Locations</em></div>
-											</div>
-										</div>
-									</div>
-								</div>
-								<div class="kt-tree-branch">
-									<div class="kt-tree-connector-horizontal"></div>
-									<div class="kt-tree-node kt-tree-node--objective">
-										<button type="button" class="kt-tree-expand"><span class="material-symbols-outlined">keyboard_arrow_right</span></button>
-										<div class="kt-tree-content">
-											<div class="kt-tree-title-row"><span class="kt-tree-code">OBJ 1.2</span><h6>Mobile Vaccination Fleet Acquisition</h6><span class="kt-pill is-green">On Track</span></div>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
+  <!-- KPI Bento -->
+  <div class="kt-swb-kpis">
+    <div class="kt-swb-kpi">
+      <div class="kt-swb-kpi-head">
+        <span class="kt-swb-kpi-label">Overall Completion</span>
+        <span class="material-symbols-outlined kt-swb-icon-def">trending_up</span>
+      </div>
+      <div class="kt-swb-kpi-val" data-swb="kpi-completion-val">—</div>
+      <div class="kt-swb-kpi-bar"><div class="kt-swb-kpi-bar-fill" data-swb="kpi-completion-bar" style="width:0%"></div></div>
+      <div class="kt-swb-kpi-sub" data-swb="kpi-completion-sub" style="margin-top:6px">
+        <span class="material-symbols-outlined">data_thresholding</span>
+        <span>Loading…</span>
+      </div>
+    </div>
+    <div class="kt-swb-kpi">
+      <div class="kt-swb-kpi-head">
+        <span class="kt-swb-kpi-label">Programs</span>
+        <span class="material-symbols-outlined kt-swb-icon-sec">layers</span>
+      </div>
+      <div class="kt-swb-kpi-val" data-swb="kpi-programs-val">—</div>
+      <div class="kt-swb-kpi-sub" data-swb="kpi-programs-sub">
+        <span class="material-symbols-outlined">hub</span>
+        <span>Loading…</span>
+      </div>
+    </div>
+    <div class="kt-swb-kpi">
+      <div class="kt-swb-kpi-head">
+        <span class="kt-swb-kpi-label">Indicators</span>
+        <span class="material-symbols-outlined kt-swb-icon-sec">track_changes</span>
+      </div>
+      <div class="kt-swb-kpi-val" data-swb="kpi-indicators-val">—</div>
+      <div class="kt-swb-kpi-sub" data-swb="kpi-indicators-sub">
+        <span class="material-symbols-outlined">flag</span>
+        <span>Loading…</span>
+      </div>
+    </div>
+    <div class="kt-swb-kpi kt-swb-kpi--milestone">
+      <div class="kt-swb-kpi-bg"></div>
+      <div class="kt-swb-kpi-inner">
+        <div class="kt-swb-kpi-head">
+          <span class="kt-swb-kpi-label">Next Milestone</span>
+          <span class="material-symbols-outlined kt-swb-icon-def">calendar_today</span>
+        </div>
+        <div class="kt-swb-kpi-date" data-swb="kpi-milestone-date">—</div>
+        <p class="kt-swb-kpi-note" data-swb="kpi-milestone-note">Loading…</p>
+      </div>
+    </div>
+  </div>
 
-						<div class="kt-tree-program is-collapsed">
-							<div class="kt-tree-node kt-tree-node--program">
-								<button type="button" class="kt-tree-expand"><span class="material-symbols-outlined">keyboard_arrow_right</span></button>
-								<div class="kt-tree-icon"><span class="material-symbols-outlined">clinical_notes</span></div>
-								<div class="kt-tree-content">
-									<div class="kt-tree-title-row"><span class="kt-tree-code">P2</span><h5>Digital Health Records System Rollout</h5><span class="kt-pill is-blue">Draft</span></div>
-									<div class="kt-tree-meta-row"><div class="kt-inline-progress"><div class="kt-progress-track"><span style="width:12%"></span></div><em>12%</em></div><span>2 Objectives · 6 Targets</span></div>
-								</div>
-							</div>
-						</div>
+  <!-- Readiness bar -->
+  <div data-swb="readiness-bar" data-testid="swb-readiness-bar" style="margin-bottom:16px"></div>
 
-						<button type="button" class="kt-strategy-v2-add-program"><span class="material-symbols-outlined">add_circle</span>Add New Program</button>
-					</div>
-				</section>
+  <!-- Hierarchy Workbench -->
+  <div class="kt-swb-hier">
+    <div class="kt-swb-hier-hdr">
+      <div class="kt-swb-hier-legend">
+        <h3 class="kt-swb-hier-title">Strategic Hierarchy</h3>
+        <div class="kt-swb-legend-items">
+          <span class="kt-swb-dot kt-swb-dot-green"></span>
+          <span class="kt-swb-legend-lbl">On Track</span>
+          <span class="kt-swb-dot kt-swb-dot-amber"></span>
+          <span class="kt-swb-legend-lbl">At Risk</span>
+        </div>
+      </div>
+      <div class="kt-swb-hier-ctrl">
+        <div class="kt-swb-search-wrap">
+          <span class="material-symbols-outlined">search</span>
+          <input type="text" placeholder="Search strategy tree..." data-testid="swb-tree-search">
+        </div>
+        <button type="button" class="kt-swb-btn-add-prog" data-testid="swb-add-program-btn">
+          <span class="material-symbols-outlined">add</span> Program
+        </button>
+        <button type="button" class="kt-swb-icon-btn" title="Expand / Collapse All" data-testid="swb-expand-all-btn" data-expanded="false">
+          <span class="material-symbols-outlined">unfold_more</span>
+        </button>
+        <button type="button" class="kt-swb-icon-btn" title="Filter Tree">
+          <span class="material-symbols-outlined">filter_list</span>
+        </button>
+      </div>
+    </div>
+    <div class="kt-swb-tree-body" data-testid="swb-tree-body" style="padding:24px">
+      <div style="color:#57657b;font-size:13px">Loading hierarchy…</div>
+    </div>
+  </div>
 
-				<section class="kt-strategy-v2-lower">
-					<div class="kt-strategy-v2-activity" data-testid="strategy-activity-feed">
-						<h4>Recent Workbench Activity</h4>
-						<ul>
-							<li><span class="kt-activity-icon"><span class="material-symbols-outlined">update</span></span><div class="kt-activity-copy"><strong>Sarah Jenkins</strong><p>updated target <strong>1.1.1</strong></p><small>2 hours ago · Procurement status changed from 'Ordered' to 'Shipped'</small></div></li>
-							<li><span class="kt-activity-icon"><span class="material-symbols-outlined">add</span></span><div class="kt-activity-copy"><strong>Marcus Thorne</strong><p>added Objective <strong>1.3</strong></p><small>Yesterday · New objective for Rural Health Outreach</small></div></li>
-							<li><span class="kt-activity-icon is-alert"><span class="material-symbols-outlined">report</span></span><div class="kt-activity-copy"><strong>System Alert:</strong><p>Delay in shipment for <strong>OBJ 1.1</strong></p><small>3 days ago · Automatic status change to 'At Risk'</small></div></li>
-						</ul>
-					</div>
-					<aside class="kt-strategy-v2-side">
-						<article class="kt-strategy-v2-insights" data-testid="strategy-insights-card">
-							<h4>Insights Engine</h4>
-							<p>AI analysis suggests a potential 12% budget overrun on Program 1 due to global supply chain inflation.</p>
-							<button type="button" class="kt-strategy-v2-btn kt-strategy-v2-btn--light">View Recommendations</button>
-						</article>
-						<article class="kt-strategy-v2-stakeholders">
-							<h4>Stakeholders</h4>
-							<div class="kt-stakeholders-avatars"><span>A</span><span>M</span><span>F</span><span>+8</span></div>
-							<button type="button">Manage Team Access <span class="material-symbols-outlined">arrow_forward</span></button>
-						</article>
-					</aside>
-				</section>
-			</div>
-		`;
+  <!-- Bottom: Activity + Side -->
+  <div class="kt-swb-bottom">
+    <div class="kt-swb-activity-col">
+      <div class="kt-swb-feed" data-testid="swb-activity-feed">
+        <div class="kt-swb-feed-hdr">
+          <h3>Recent Activity</h3>
+          <button type="button" class="kt-swb-feed-refresh" data-testid="swb-activity-refresh" title="Refresh">
+            <span class="material-symbols-outlined">refresh</span>
+          </button>
+        </div>
+        <div class="kt-swb-feed-list" data-testid="swb-activity-list">
+          <div class="kt-swb-feed-loading" data-testid="swb-activity-loading">
+            <span class="material-symbols-outlined" style="font-size:18px;opacity:.4;animation:kt-spin 1s linear infinite">progress_activity</span>
+            <span>Loading activity&hellip;</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="kt-swb-side-col">
+      <div class="kt-swb-insights" data-testid="swb-insights-card">
+        <div class="kt-swb-placeholder-badge">Coming Soon</div>
+        <h4>Insights Engine</h4>
+        <p>AI-powered analysis of plan health, budget risk, and delivery trends will appear here.</p>
+        <button type="button" class="kt-swb-btn-light" disabled>View Recommendations</button>
+      </div>
+      <div class="kt-swb-stk" data-testid="swb-stakeholders-card">
+        <div class="kt-swb-stk-hdr">
+          <h3>Stakeholders</h3>
+          <span class="kt-swb-placeholder-badge kt-swb-placeholder-badge--dark">Coming Soon</span>
+        </div>
+        <div class="kt-swb-avatars">
+          <div class="kt-swb-avatar kt-swb-av-1" title="Plan Owner">—</div>
+        </div>
+        <p class="kt-swb-stk-note">Stakeholder management will be available in the next release.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+`;
 	}
 
 	/* ── Portfolio Hub shell skeleton (rendered immediately on mount) ── */
@@ -258,9 +481,9 @@
 
 	function skeletonKpiHtml() {
 		return [
-			{ label: "Total Budget", value: "—", sub: "Pending field configuration", subClass: "" },
+			{ label: "Total Budget", value: "—", sub: "Loading…", subClass: "" },
 			{ label: "Active Programs", value: "—", sub: "Loading…", subClass: "" },
-			{ label: "Success Rate", value: "—", sub: "", subClass: "" },
+			{ label: "Success Rate", value: "—", sub: "Loading…", subClass: "" },
 			{ label: "Draft Plans", value: "—", sub: "Loading…", subClass: "kt-sph-metric-sub--warn" },
 		]
 			.map(
@@ -311,6 +534,14 @@
 		}
 	}
 
+	function fmtBudget(val) {
+		if (!val || val === 0) return "—";
+		if (val >= 1e9) return (val / 1e9).toFixed(1) + "B";
+		if (val >= 1e6) return (val / 1e6).toFixed(1) + "M";
+		if (val >= 1e3) return (val / 1e3).toFixed(1) + "K";
+		return String(Math.round(val));
+	}
+
 	/* ── Plan card HTML builder ── */
 	function planCardHtml(plan) {
 		const title = plan.strategic_plan_name || plan.name;
@@ -318,6 +549,7 @@
 		const fyLabel = plan.start_year && plan.end_year ? `FY ${plan.start_year} – ${plan.end_year}` : "";
 		const programs = plan.program_count != null ? plan.program_count : "—";
 		const objectives = plan.objective_count != null ? plan.objective_count : "—";
+		const budget = plan.total_budget != null ? plan.total_budget : 0;
 		const isDraft = status === "Draft" || status === "Submitted";
 		const modifiedStr = prettyTime(plan.modified);
 
@@ -326,12 +558,12 @@
 					<span class="material-symbols-outlined kt-sph-draft-hint__icon">edit_note</span>
 					<span class="kt-sph-draft-hint__text">Last edited ${modifiedStr}</span>
 				</div>
-				<a href="#" class="kt-sph-card-cta" data-plan="${encodeURIComponent(plan.name)}">Continue Setup <span class="material-symbols-outlined">edit</span></a>`
+				<a href="#" class="kt-sph-card-cta" data-testid="sph-plan-cta" data-plan="${encodeURIComponent(plan.name)}">Continue Setup <span class="material-symbols-outlined">edit</span></a>`
 			: `<div class="kt-sph-avatar-stack">
 					<span class="kt-sph-avatar kt-sph-avatar--slate-300"></span>
 					<span class="kt-sph-avatar kt-sph-avatar--slate-400"></span>
 				</div>
-				<a href="#" class="kt-sph-card-cta" data-plan="${encodeURIComponent(plan.name)}">View Workbench <span class="material-symbols-outlined">arrow_forward</span></a>`;
+				<a href="#" class="kt-sph-card-cta" data-testid="sph-plan-cta" data-plan="${encodeURIComponent(plan.name)}">View Workbench <span class="material-symbols-outlined">arrow_forward</span></a>`;
 
 		return `
 			<div class="kt-sph-plan-card" data-testid="sph-plan-card" data-plan-name="${encodeURIComponent(plan.name)}">
@@ -346,10 +578,10 @@
 					<button type="button" class="kt-sph-icon-btn"><span class="material-symbols-outlined">more_vert</span></button>
 				</div>
 				<div class="kt-sph-card-body">
-					<div class="kt-sph-stat">
-						<p class="kt-sph-stat-label">Budget</p>
-						<p class="kt-sph-stat-value">—</p>
-					</div>
+				<div class="kt-sph-stat">
+					<p class="kt-sph-stat-label">Budget</p>
+					<p class="kt-sph-stat-value">${fmtBudget(budget)}</p>
+				</div>
 					<div class="kt-sph-stat">
 						<p class="kt-sph-stat-label">Programs</p>
 						<p class="kt-sph-stat-value">${programs}</p>
@@ -388,11 +620,14 @@
 			const draftCount = portfolio.draft_count || 0;
 			const totalPlans = portfolio.total_plans || 0;
 			const totalPrograms = portfolio.total_programs || 0;
+			const totalBudget = portfolio.total_budget || 0;
+			const successRate = portfolio.success_rate || 0;
+			const dataCoverage = portfolio.data_coverage || 0;
 			metricsEl.innerHTML = `
 				<div class="kt-sph-metric-card">
 					<p class="kt-sph-metric-label">Total Budget</p>
-					<h3 class="kt-sph-metric-value">—</h3>
-					<p class="kt-sph-metric-sub">Pending field configuration</p>
+					<h3 class="kt-sph-metric-value">${fmtBudget(totalBudget)}</h3>
+					<p class="kt-sph-metric-sub">${totalBudget ? "Sum of linked demands" : "No linked demands yet"}</p>
 				</div>
 				<div class="kt-sph-metric-card">
 					<p class="kt-sph-metric-label">Active Programs</p>
@@ -401,10 +636,10 @@
 				</div>
 				<div class="kt-sph-metric-card">
 					<p class="kt-sph-metric-label">Success Rate</p>
-					<h3 class="kt-sph-metric-value">—</h3>
-					<p class="kt-sph-metric-sub">Pending target completion data</p>
-				</div>
-				<div class="kt-sph-metric-card">
+					<h3 class="kt-sph-metric-value">${successRate ? successRate + "%" : "—"}</h3>
+					<p class="kt-sph-metric-sub">${successRate ? "Weighted achievement across active plans" : "No KPI targets with actuals yet"}</p>
+					${dataCoverage ? `<p class="kt-sph-metric-sub kt-sph-metric-sub--coverage">Data coverage: ${dataCoverage}%</p>` : ""}
+				</div>				<div class="kt-sph-metric-card">
 					<p class="kt-sph-metric-label">Draft Plans</p>
 					<h3 class="kt-sph-metric-value">${draftCount}</h3>
 					<p class="kt-sph-metric-sub kt-sph-metric-sub--warn">${draftCount > 0 ? "Awaiting Review" : `${totalPlans} plan${totalPlans !== 1 ? "s" : ""} total`}</p>
@@ -418,15 +653,10 @@
 			plansEl.innerHTML = cardsHtml + emptyStateCardHtml();
 		}
 
-		/* Activity table body — keep static rows for now (deferred to B7) */
+		/* Activity table body — populated by parallel loadPortfolioActivity call */
 		const activityBody = shell.querySelector("[data-sph-activity-body]");
 		if (activityBody) {
-			activityBody.innerHTML = `
-				<tr>
-					<td class="kt-sph-td-muted">—</td>
-					<td><div class="kt-sph-action-cell"><span class="kt-sph-dot kt-sph-dot--primary"></span><span class="kt-sph-action-label">Activity feed pending wiring</span></div></td>
-					<td>—</td><td>—</td>
-				</tr>`;
+			activityBody.innerHTML = `<tr><td colspan="4" class="kt-sph-td-muted kt-sph-loading-cell">Loading activity…</td></tr>`;
 		}
 
 		/* Client-side search */
@@ -471,6 +701,45 @@
 		});
 	}
 
+	/* ── Activity helpers ── */
+	function activityRowHtml(item) {
+		const dot = item.dot_class || "slate";
+		const label = item.action || "Updated";
+		const plan = item.plan_name || "—";
+		const user = item.user || "—";
+		const time = prettyTime(item.time);
+		return `<tr>
+			<td class="kt-sph-td-muted">${time}</td>
+			<td><div class="kt-sph-action-cell"><span class="kt-sph-dot kt-sph-dot--${dot}"></span><span class="kt-sph-action-label">${label}</span></div></td>
+			<td>${plan}</td>
+			<td class="kt-sph-td-muted">${user}</td>
+		</tr>`;
+	}
+
+	function loadPortfolioActivity(shell) {
+		if (typeof frappe === "undefined" || typeof frappe.call !== "function") return;
+		frappe.call({
+			method: "kentender_strategy.api.landing.get_portfolio_activity",
+			args: { limit: 20 },
+			callback: function (r) {
+				const activityBody = shell.querySelector("[data-sph-activity-body]");
+				if (!activityBody) return;
+				const rows = Array.isArray(r && r.message) ? r.message : [];
+				if (rows.length === 0) {
+					activityBody.innerHTML = `<tr><td colspan="4" class="kt-sph-td-muted">No activity recorded yet.</td></tr>`;
+					return;
+				}
+				activityBody.innerHTML = rows.map(activityRowHtml).join("");
+			},
+			error: function () {
+				const activityBody = shell.querySelector("[data-sph-activity-body]");
+				if (activityBody) {
+					activityBody.innerHTML = `<tr><td colspan="4" class="kt-sph-td-muted">Could not load activity.</td></tr>`;
+				}
+			},
+		});
+	}
+
 	function renderShell() {
 		if (!isStrategyWorkspaceRoute()) {
 			document.body.classList.remove("kt-strategy-shell");
@@ -497,6 +766,14 @@
 		shell.innerHTML = portfolioHubShellHtml();
 		shell.setAttribute("data-kt-rendered", "1");
 		loadPortfolioHub(shell);
+		loadPortfolioActivity(shell);
+	}
+
+	function openPlanWorkbench(planName) {
+		if (!planName) return;
+		if (typeof frappe !== "undefined" && typeof frappe.set_route === "function") {
+			frappe.set_route("strategy-builder", planName);
+		}
 	}
 
 	function bindEvents() {
@@ -505,11 +782,30 @@
 		document.addEventListener("click", function (ev) {
 			const t = ev.target;
 			if (!(t && t.closest)) return;
+
 			/* Create New Plan button */
 			if (t.closest('[data-testid="sph-create-plan-btn"]') || t.closest('[data-testid="sph-create-new-card"]')) {
 				if (typeof frappe !== "undefined" && typeof frappe.new_doc === "function") {
 					frappe.new_doc("Strategic Plan");
 				}
+				return;
+			}
+
+			/* Plan card CTA (View Workbench / Continue Setup) */
+			const ctaEl = t.closest('[data-testid="sph-plan-cta"]');
+			if (ctaEl) {
+				ev.preventDefault();
+				const planName = decodeURIComponent(ctaEl.getAttribute("data-plan") || "");
+				openPlanWorkbench(planName);
+				return;
+			}
+
+			/* Clicking anywhere on the plan card body (not the ⋮ menu) navigates to the workbench */
+			const cardEl = t.closest('[data-testid="sph-plan-card"]');
+			if (cardEl && !t.closest(".kt-sph-icon-btn")) {
+				ev.preventDefault();
+				const planName = decodeURIComponent(cardEl.getAttribute("data-plan-name") || "");
+				openPlanWorkbench(planName);
 				return;
 			}
 		});
@@ -544,6 +840,9 @@
 		boot();
 		if (typeof frappe.ready === "function") frappe.ready(boot);
 	}
+
+	/* Expose the workbench HTML builder globally so the strategy-builder page can use it */
+	window._ktStaticWorkbenchHtml = staticHierarchyWorkbenchHtml;
 
 	waitForFrappe();
 	window.addEventListener("load", boot);

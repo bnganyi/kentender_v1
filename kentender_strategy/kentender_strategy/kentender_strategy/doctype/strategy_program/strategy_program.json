@@ -10,7 +10,8 @@
   "program_title",
   "program_code",
   "description",
-  "order_index"
+  "order_index",
+  "weight"
  ],
  "fields": [
   {
@@ -46,6 +47,14 @@
    "label": "Order Index",
    "non_negative": 1,
    "reqd": 1
+  },
+  {
+   "default": "1.0",
+   "fieldname": "weight",
+   "fieldtype": "Float",
+   "label": "Programme Weight",
+   "non_negative": 1,
+   "description": "Relative weight for weighted success score roll-up."
   }
  ],
  "links": [],

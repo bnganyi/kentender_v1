@@ -16,6 +16,7 @@
   "order_index",
   "section_measurement",
   "measurement_type",
+  "measurement_direction",
   "section_target_value",
   "target_value_numeric",
   "target_value_text",
@@ -27,7 +28,12 @@
   "section_baseline",
   "baseline_value_numeric",
   "baseline_value_text",
-  "baseline_year"
+  "baseline_year",
+  "section_actual",
+  "actual_value_numeric",
+  "actual_is_complete",
+  "section_weighting",
+  "weight"
  ],
  "fields": [
   {
@@ -101,6 +107,14 @@
    "reqd": 1
   },
   {
+   "default": "Higher is Better",
+   "fieldname": "measurement_direction",
+   "fieldtype": "Select",
+   "label": "Measurement Direction",
+   "options": "Higher is Better\nLower is Better",
+   "description": "For Numeric and Currency types only. Milestone and Boolean use is_complete; Percentage uses actual value directly."
+  },
+  {
    "fieldname": "section_target_value",
    "fieldtype": "Section Break",
    "label": "Target value"
@@ -161,6 +175,37 @@
    "fieldname": "baseline_year",
    "fieldtype": "Int",
    "label": "Baseline Year"
+  },
+  {
+   "fieldname": "section_actual",
+   "fieldtype": "Section Break",
+   "label": "Actual Performance"
+  },
+  {
+   "fieldname": "actual_value_numeric",
+   "fieldtype": "Float",
+   "label": "Actual Value",
+   "description": "Reported/achieved value. Used with target_value_numeric to compute KPI score."
+  },
+  {
+   "default": "0",
+   "fieldname": "actual_is_complete",
+   "fieldtype": "Check",
+   "label": "Achieved (Milestone / Boolean)",
+   "description": "Set to 1 when a Milestone or Boolean target has been accomplished."
+  },
+  {
+   "fieldname": "section_weighting",
+   "fieldtype": "Section Break",
+   "label": "Weighting"
+  },
+  {
+   "default": "1.0",
+   "fieldname": "weight",
+   "fieldtype": "Float",
+   "label": "KPI Weight",
+   "non_negative": 1,
+   "description": "Relative weight for weighted success score roll-up. Default 1 = equal weight."
   }
  ],
  "links": [],

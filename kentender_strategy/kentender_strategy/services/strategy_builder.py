@@ -41,6 +41,9 @@ def build_tree(plan_name: str) -> dict:
 				"order_index": p.order_index or 0,
 				"doctype_ref": "Strategy Program",
 				"code": p.program_code or "",
+				# Explicit ancestry fields — simplify frontend lookups
+				"program": p.name,
+				"sub_program": "",
 			}
 		)
 		sub_programs = frappe.db.get_all(
@@ -60,6 +63,8 @@ def build_tree(plan_name: str) -> dict:
 					"order_index": 0,
 					"doctype_ref": "Sub Program",
 					"code": sp.sub_program_code or "",
+					"program": p.name,
+					"sub_program": sp.name,
 				}
 			)
 			objectives = frappe.db.get_all(
@@ -79,6 +84,8 @@ def build_tree(plan_name: str) -> dict:
 						"order_index": o.order_index or 0,
 						"doctype_ref": "Strategy Objective",
 						"code": o.objective_code or "",
+						"program": p.name,
+						"sub_program": sp.name,
 					}
 				)
 				targets = frappe.db.get_all(
@@ -91,12 +98,16 @@ def build_tree(plan_name: str) -> dict:
 						"order_index",
 						"target_code",
 						"measurement_type",
+						"measurement_direction",
 						"target_period_type",
 						"target_year",
 						"target_due_date",
 						"target_value_numeric",
 						"target_value_text",
 						"target_unit",
+						"actual_value_numeric",
+						"actual_is_complete",
+						"weight",
 						"baseline_value_numeric",
 						"baseline_value_text",
 						"baseline_year",
@@ -114,16 +125,22 @@ def build_tree(plan_name: str) -> dict:
 							"order_index": t.order_index or 0,
 							"doctype_ref": "Strategy Target",
 							"code": t.target_code or "",
+							"program": p.name,
+							"sub_program": sp.name,
 							"measurement_type": t.measurement_type,
 							"target_period_type": t.target_period_type,
 							"target_year": t.target_year,
 							"target_due_date": t.target_due_date,
-							"target_value_numeric": t.target_value_numeric,
-							"target_value_text": t.target_value_text,
-							"target_unit": t.target_unit or "",
-							"baseline_value_numeric": t.baseline_value_numeric,
-							"baseline_value_text": t.baseline_value_text,
-							"baseline_year": t.baseline_year,
+						"target_value_numeric": t.target_value_numeric,
+						"target_value_text": t.target_value_text,
+						"target_unit": t.target_unit or "",
+						"actual_value_numeric": t.actual_value_numeric,
+						"actual_is_complete": int(t.actual_is_complete or 0),
+						"measurement_direction": t.measurement_direction or "Higher is Better",
+						"weight": float(t.weight or 1.0),
+						"baseline_value_numeric": t.baseline_value_numeric,
+						"baseline_value_text": t.baseline_value_text,
+						"baseline_year": t.baseline_year,
 						}
 					)
 
@@ -438,3 +455,12 @@ def delete_node(node_name: str) -> None:
 		frappe.delete_doc("Strategy Target", node_name)
 		return
 	frappe.throw(_("Strategy node not found."), frappe.DoesNotExistError)
+
+
+def update_plan(plan_name: str, data: dict) -> None:
+	doc = get_plan_or_throw(plan_name)
+	if data.get("plan_title"):
+		doc.plan_title = data["plan_title"]
+	if "description" in data:
+		doc.description = data.get("description") or ""
+	doc.save()

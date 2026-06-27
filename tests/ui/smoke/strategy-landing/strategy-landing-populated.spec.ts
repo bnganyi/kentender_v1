@@ -19,6 +19,15 @@ test('Strategy landing shows portfolio hub shell', async ({ page }) => {
 	await expect(page.getByTestId('sph-plans-grid')).toBeVisible();
 	await expect(page.getByTestId('sph-activity-table')).toBeVisible();
 	await expect(page.getByTestId('sph-create-new-card')).toBeVisible();
+
+	/* Activity table must populate with live rows — not the stub text */
+	const activityTable = page.getByTestId('sph-activity-table');
+	await expect(activityTable).not.toContainText('Activity feed pending wiring', { timeout: 20_000 });
+	await expect(activityTable).not.toContainText('Loading activity', { timeout: 20_000 });
+	/* At least one row with a recognisable action label */
+	const firstRow = activityTable.locator('tbody tr').first();
+	await expect(firstRow).toBeVisible({ timeout: 15_000 });
+	await expect(firstRow.locator('.kt-sph-action-label')).not.toBeEmpty();
 });
 
 test('Strategy portfolio hub KPI cards render with live data labels', async ({ page }) => {
@@ -30,6 +39,15 @@ test('Strategy portfolio hub KPI cards render with live data labels', async ({ p
 	await expect(metrics).toContainText('Active Programs');
 	await expect(metrics).toContainText('Success Rate');
 	await expect(metrics).toContainText('Draft Plans');
+
+	/* Total Budget must not show the old stub text — it is now either a value or "No linked demands yet" */
+	await expect(metrics).not.toContainText('Pending field configuration');
+	/* Success Rate: new weighted-hierarchy label must appear, not old demand-approval stub */
+	await expect(metrics).not.toContainText('Pending target completion data', { timeout: 15_000 });
+	await expect(metrics).not.toContainText('Of linked demands approved', { timeout: 15_000 });
+	await expect(metrics).toContainText('Weighted achievement across active plans', { timeout: 15_000 });
+	/* Data coverage sub-text rendered alongside the success rate card */
+	await expect(metrics).toContainText('Data coverage:', { timeout: 15_000 });
 });
 
 test('Strategy portfolio hub plan cards load from API', async ({ page }) => {
@@ -44,6 +62,11 @@ test('Strategy portfolio hub plan cards load from API', async ({ page }) => {
 	await expect(firstCard.locator('.kt-sph-card-title')).not.toBeEmpty();
 	await expect(firstCard.locator('.kt-sph-chip')).toBeVisible();
 	await expect(firstCard.locator('.kt-sph-stat')).toHaveCount(3);
+
+	/* Budget stat must show a live value or "—" (not a placeholder/stub text) */
+	const budgetStat = firstCard.locator('.kt-sph-stat').first();
+	await expect(budgetStat).toContainText('Budget');
+	await expect(budgetStat).not.toContainText('Pending');
 });
 
 test('Strategy portfolio hub search filters plan cards', async ({ page }) => {

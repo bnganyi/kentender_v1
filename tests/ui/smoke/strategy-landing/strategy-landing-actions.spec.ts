@@ -3,39 +3,58 @@ import { test, expect } from '@playwright/test';
 import { loginAsAdministrator, loginAsStrategyManager } from '../../helpers/auth';
 import { openStrategyLanding } from '../../helpers/strategyLanding';
 
-test('Manage Structure opens Structure tab in workspace', async ({ page }) => {
-	test.skip(true, 'Requires per-plan workbench (selected-plan-open-builder) — pending workbench rewire');
-	await loginAsAdministrator(page);
-	await openStrategyLanding(page);
-
-	await page.getByTestId('selected-plan-open-builder').click();
-
-	await expect(page).toHaveURL(/strategy-management/);
-	await expect(page.getByTestId('strategy-tab-panel-structure')).toBeVisible({ timeout: 60_000 });
-	await expect(page.getByTestId('strategy-structure-panel')).toBeVisible({ timeout: 30_000 });
-});
-
-test('Edit Plan Info opens drawer', async ({ page }) => {
-	test.skip(true, 'Requires per-plan workbench (selected-plan-edit-plan) — pending workbench rewire');
+test('Plan card CTA navigates to strategy workbench for the selected plan', async ({ page }) => {
 	await loginAsStrategyManager(page);
 	await openStrategyLanding(page);
 
-	await page.getByTestId('selected-plan-edit-plan').click();
+	/* Wait for a real plan card to appear */
+	const firstCard = page.getByTestId('sph-plan-card').first();
+	await expect(firstCard).toBeVisible({ timeout: 15_000 });
 
-	await expect(page.getByRole('heading', { name: /Edit Plan Info/i })).toBeVisible({ timeout: 15_000 });
-	await expect(page).toHaveURL(/strategy-management/);
+	/* Click the CTA button (View Workbench / Continue Setup) */
+	const cta = firstCard.getByTestId('sph-plan-cta');
+	await expect(cta).toBeVisible();
+	const planName = await firstCard.getAttribute('data-plan-name');
+
+	await cta.click();
+
+	/* Should navigate to the strategy-builder page */
+	await expect(page).toHaveURL(/strategy-builder/, { timeout: 15_000 });
+
+	/* The strategy builder shell must render — not a blank page */
+	await expect(page.getByTestId('strategy-builder-page')).toBeVisible({ timeout: 20_000 });
+
+	/* The route should contain the plan name */
+	if (planName) {
+		const decoded = decodeURIComponent(planName);
+		await expect(page).toHaveURL(new RegExp(encodeURIComponent(decoded).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), { timeout: 5_000 });
+	}
 });
 
-test('New Strategic Plan opens create drawer', async ({ page }) => {
-	test.skip(true, 'Create button action requires backend wiring — pending');
+test('Clicking anywhere on a plan card body navigates to strategy workbench', async ({ page }) => {
 	await loginAsStrategyManager(page);
 	await openStrategyLanding(page);
 
-	/* Portfolio Hub: button is sph-create-plan-btn */
+	const firstCard = page.getByTestId('sph-plan-card').first();
+	await expect(firstCard).toBeVisible({ timeout: 15_000 });
+
+	/* Click the card title (not the ⋮ button) */
+	const cardTitle = firstCard.locator('.kt-sph-card-title').first();
+	await cardTitle.click();
+
+	await expect(page).toHaveURL(/strategy-builder/, { timeout: 15_000 });
+	/* Builder shell renders — not blank */
+	await expect(page.getByTestId('strategy-builder-page')).toBeVisible({ timeout: 20_000 });
+});
+
+test('New Strategic Plan opens create form', async ({ page }) => {
+	await loginAsStrategyManager(page);
+	await openStrategyLanding(page);
+
 	await page.getByTestId('sph-create-plan-btn').click();
 
-	await expect(page.getByRole('heading', { name: /New Strategic Plan/i })).toBeVisible({ timeout: 15_000 });
-	await expect(page).toHaveURL(/strategy-management/);
+	/* frappe.new_doc navigates to the Strategic Plan form URL — Frappe slugifies the doctype name */
+	await expect(page).toHaveURL(/strategic-plan\/new-strategic-plan/, { timeout: 15_000 });
 });
 
 test('Search keeps focus while typing', async ({ page }) => {
@@ -53,7 +72,7 @@ test('Search keeps focus while typing', async ({ page }) => {
 });
 
 test('Detail tab switch preserves list scroll position', async ({ page }) => {
-	test.skip(true, 'Requires per-plan workbench tabs — pending workbench rewire');
+	test.skip(true, 'Requires per-plan workbench tabs — future workbench wiring');
 	await loginAsStrategyManager(page);
 	await openStrategyLanding(page);
 
