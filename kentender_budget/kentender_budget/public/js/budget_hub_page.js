@@ -33,13 +33,19 @@
 		return Math.round(n).toLocaleString("en-KE");
 	}
 
-	/** Compact million/billion — for table cells */
+	/** Compact million/billion — kept for internal use */
 	function _fmtCompact(n) {
 		if (n === null || n === undefined || isNaN(n)) return "—";
 		if (Math.abs(n) >= 1e9) return (n / 1e9).toFixed(2) + "B";
 		if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(1) + "M";
 		if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(1) + "K";
 		return Math.round(n).toLocaleString("en-KE");
+	}
+
+	/** KES + full toLocaleString — for table available cells (W1-03) */
+	function _fmtKES(n) {
+		if (n === null || n === undefined || isNaN(n)) return "—";
+		return "KES\u00a0" + Math.round(n).toLocaleString("en-KE");
 	}
 
 	/** Percentage rounded to 1 dp */
@@ -56,22 +62,25 @@
 		return name.substring(0, 2).toUpperCase();
 	}
 
-	// ── Health chip class ─────────────────────────────────────────────────────
+	// ── Health chip (W1-03 client-side derivation) ───────────────────────────
+	// Approved/Active: available/total ratio.  Other statuses use doc status.
 
-	const _CHIP_CLASS = {
-		healthy:   "kt-bgt-chip--healthy",
-		reviewing: "kt-bgt-chip--reviewing",
-		critical:  "kt-bgt-chip--critical",
-		draft:     "kt-bgt-chip--draft",
-		rejected:  "kt-bgt-chip--rejected",
-	};
-	const _CHIP_LABEL = {
-		healthy:   "Healthy",
-		reviewing: "Reviewing",
-		critical:  "Critical",
-		draft:     "Draft",
-		rejected:  "Rejected",
-	};
+	function _deriveChip(bud) {
+		const status = bud.status || "Draft";
+		if (status === "Draft")     return { cls: "kt-bgt-chip--draft",     lbl: "Draft" };
+		if (status === "Submitted") return { cls: "kt-bgt-chip--reviewing", lbl: "Reviewing" };
+		if (status === "Rejected")  return { cls: "kt-bgt-chip--rejected",  lbl: "Rejected" };
+		// Approved / Active
+		const total = bud.total_budget_amount || 0;
+		const avail = bud.available_amount;
+		if (avail === null || avail === undefined || total <= 0) {
+			return { cls: "kt-bgt-chip--healthy", lbl: "Healthy" };
+		}
+		const ratio = avail / total;
+		if (ratio <= 0)   return { cls: "kt-bgt-chip--critical",  lbl: "Exhausted" };
+		if (ratio < 0.10) return { cls: "kt-bgt-chip--reviewing", lbl: "Reviewing" };
+		return { cls: "kt-bgt-chip--healthy", lbl: "Healthy" };
+	}
 
 	// ── Static shell HTML ─────────────────────────────────────────────────────
 	function _html() {
@@ -230,19 +239,19 @@
         <div>
           <div class="kt-bgt-section-hdr">
             <h2 class="kt-bgt-section-title">Active Budget Envelopes</h2>
-            <div class="kt-bgt-filter-wrap">
+            <div class="kt-bgt-filter-wrap" data-testid="kt-bgt-entity-filter-wrap" style="display:none">
               <span class="kt-bgt-filter-label">Filter by:</span>
-              <select class="kt-bgt-filter-select" data-testid="kt-bgt-entity-filter">
-                <option value="">All Entities</option>
-              </select>
+              <div class="kt-bgt-filter-chips" data-testid="kt-bgt-entity-filter">
+                <button class="kt-bgt-filter-chip kt-bgt-filter-chip--active" data-entity="" type="button">All</button>
+              </div>
             </div>
           </div>
           <div class="kt-bgt-table-wrap">
             <table class="kt-bgt-table">
               <thead>
                 <tr>
-                  <th>Entity / Budget Name</th>
-                  <th>Consumption</th>
+                  <th>Budget Name</th>
+                  <th>Allocation</th>
                   <th>Available (KES)</th>
                   <th>Status</th>
                   <th>Actions</th>
@@ -450,38 +459,34 @@
 	}
 
 	function _buildBudgetRow(bud) {
-		const chip     = _CHIP_CLASS[bud.health_status] || "kt-bgt-chip--draft";
-		const chipLbl  = _CHIP_LABEL[bud.health_status] || bud.status || "—";
-		const pct      = Math.min(100, Math.round(bud.consumption_pct || 0));
-		const comPct   = Math.min(100, Math.round(bud.committed_pct  || 0));
-		const resPct   = Math.min(100, Math.round(bud.reserved_pct   || 0));
-		const entityLbl = bud.procuring_entity_name || bud.budget_name || "—";
-		const subLbl   = bud.strategic_plan_title
-			? "Strategy: " + bud.strategic_plan_title
-			: bud.budget_name || "";
-		const legend = (comPct > 0 || resPct > 0)
-			? `<div class="kt-bgt-bar-legend">
-				<span><span class="kt-bgt-dot" style="background:#6366F1"></span>Commit</span>
-				<span><span class="kt-bgt-dot" style="background:#F59E0B"></span>Reserve</span>
-			  </div>` : "";
+		const chip    = _deriveChip(bud);
+		// W1-03: allocation_pct = allocated ÷ total, label "Allocated"
+		const allocPct = Math.min(100, Math.round(bud.allocation_pct || 0));
+		// Primary line: budget_name; secondary: fiscal_year + strategic plan
+		const primaryLbl = bud.budget_name || bud.name || "—";
+		const subParts = [];
+		if (bud.fiscal_year)          subParts.push(bud.fiscal_year);
+		if (bud.strategic_plan_title) subParts.push(bud.strategic_plan_title);
+		const subLbl = subParts.join(" \u00b7 ");
 
 		return `<tr data-budget-name="${bud.name}">
   <td>
-    <div class="kt-bgt-budget-name">${entityLbl}</div>
-    <div class="kt-bgt-budget-sub">${subLbl}</div>
+    <div class="kt-bgt-budget-name">${primaryLbl}</div>
+    ${subLbl ? `<div class="kt-bgt-budget-sub">${subLbl}</div>` : ""}
   </td>
   <td style="width:192px">
     <div class="kt-bgt-bar-row">
-      <span class="kt-bgt-bar-pct">${pct}%</span>
+      <span class="kt-bgt-bar-pct">${allocPct}%</span>
       <div class="kt-bgt-bar-track">
-        <div class="kt-bgt-bar-committed" style="width:${comPct}%"></div>
-        <div class="kt-bgt-bar-reserved"  style="width:${resPct}%"></div>
+        <div class="kt-bgt-bar-allocated" style="width:${allocPct}%"></div>
       </div>
     </div>
-    ${legend}
+    <div class="kt-bgt-bar-legend">
+      <span><span class="kt-bgt-dot" style="background:#00346f"></span>Allocated</span>
+    </div>
   </td>
-  <td><span class="kt-bgt-avail-value">${_fmtCompact(bud.available_amount)}</span></td>
-  <td><span class="kt-bgt-chip ${chip}">${chipLbl}</span></td>
+  <td><span class="kt-bgt-avail-value">${_fmtKES(bud.available_amount)}</span></td>
+  <td><span class="kt-bgt-chip ${chip.cls}">${chip.lbl}</span></td>
   <td>
     <button class="kt-bgt-table-action" type="button" title="Open ${bud.budget_name || ""}">
       <span class="material-symbols-outlined">edit_square</span>
@@ -499,31 +504,51 @@
 		}
 		tbody.innerHTML = budgets.map(_buildBudgetRow).join("");
 
-		// Populate entity filter dropdown with unique entity names
-		const select = wrapper.querySelector("[data-testid='kt-bgt-entity-filter']");
-		if (select) {
-			const seen = new Set();
-			budgets.forEach(b => {
-				const label = b.procuring_entity_name || b.budget_name;
-				if (label && !seen.has(label)) {
-					seen.add(label);
-					const opt = document.createElement("option");
-					opt.value  = b.procuring_entity || label;
-					opt.textContent = label;
-					select.appendChild(opt);
-				}
-			});
-			select.addEventListener("change", () => {
-				const val = select.value;
-				tbody.querySelectorAll("tr[data-budget-name]").forEach(tr => {
-					if (!val) { tr.style.display = ""; return; }
-					const bName = tr.dataset.budgetName;
-					const match = budgets.find(b => b.name === bName);
-					tr.style.display = (match && (match.procuring_entity === val || match.budget_name === val))
-						? "" : "none";
+		// W1-03: entity filter chips — show only if procuring_entity data exists
+		const filterWrap = wrapper.querySelector("[data-testid='kt-bgt-entity-filter-wrap']");
+		const chipsEl    = wrapper.querySelector("[data-testid='kt-bgt-entity-filter']");
+		if (!filterWrap || !chipsEl) return;
+
+		const entities = [];
+		const seen = new Set();
+		budgets.forEach(b => {
+			if (b.procuring_entity && !seen.has(b.procuring_entity)) {
+				seen.add(b.procuring_entity);
+				entities.push({
+					id: b.procuring_entity,
+					label: b.procuring_entity_name || b.procuring_entity,
 				});
-			});
+			}
+		});
+
+		if (!entities.length) {
+			filterWrap.style.display = "none";
+			return;
 		}
+
+		filterWrap.style.display = "";
+		entities.forEach(e => {
+			const btn = document.createElement("button");
+			btn.className = "kt-bgt-filter-chip";
+			btn.type = "button";
+			btn.dataset.entity = e.id;
+			btn.textContent = e.label;
+			chipsEl.appendChild(btn);
+		});
+
+		chipsEl.addEventListener("click", ev => {
+			const chip = ev.target.closest(".kt-bgt-filter-chip");
+			if (!chip) return;
+			chipsEl.querySelectorAll(".kt-bgt-filter-chip")
+				.forEach(c => c.classList.remove("kt-bgt-filter-chip--active"));
+			chip.classList.add("kt-bgt-filter-chip--active");
+			const val = chip.dataset.entity;
+			tbody.querySelectorAll("tr[data-budget-name]").forEach(tr => {
+				if (!val) { tr.style.display = ""; return; }
+				const match = budgets.find(b => b.name === tr.dataset.budgetName);
+				tr.style.display = (match && match.procuring_entity === val) ? "" : "none";
+			});
+		});
 	}
 
 	function _populateError(wrapper, msg) {

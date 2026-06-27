@@ -66,7 +66,7 @@ test('Budget Hub table renders at least one budget row', async ({ page }) => {
 	await expect(rows.first()).toBeVisible({ timeout: 15_000 });
 });
 
-test('Budget Hub table row has consumption bar and status chip', async ({ page }) => {
+test('Budget Hub table row has allocation bar, KES amount, and status chip', async ({ page }) => {
 	await loginAsAdministrator(page);
 	await openBudgetHub(page);
 
@@ -74,16 +74,33 @@ test('Budget Hub table row has consumption bar and status chip', async ({ page }
 	const firstRow = tbody.locator('tr[data-budget-name]').first();
 	await expect(firstRow).toBeVisible({ timeout: 15_000 });
 
-	// Consumption bar percentage
+	// W1-03: allocation bar percentage (n%)
 	await expect(firstRow.locator('.kt-bgt-bar-pct')).toBeVisible();
 	const pctText = await firstRow.locator('.kt-bgt-bar-pct').textContent();
 	expect(pctText).toMatch(/\d+%/);
 
-	// Available amount cell
+	// W1-03: allocation bar segment (single blue bar)
+	await expect(firstRow.locator('.kt-bgt-bar-allocated')).toBeVisible();
+
+	// W1-03: available amount formatted as "KES <number>"
 	await expect(firstRow.locator('.kt-bgt-avail-value')).toBeVisible();
 	const availText = await firstRow.locator('.kt-bgt-avail-value').textContent();
-	expect(availText?.trim().length).toBeGreaterThan(0);
+	expect(availText?.trim()).toMatch(/^KES[\s\u00a0]/);
 
-	// Status chip
+	// Status chip present
 	await expect(firstRow.locator('.kt-bgt-chip')).toBeVisible();
+});
+
+test('Budget Hub table row shows budget_name and fiscal_year', async ({ page }) => {
+	await loginAsAdministrator(page);
+	await openBudgetHub(page);
+
+	const tbody = page.getByTestId('kt-bgt-budget-tbody');
+	const firstRow = tbody.locator('tr[data-budget-name]').first();
+	await expect(firstRow).toBeVisible({ timeout: 15_000 });
+
+	// W1-03: primary cell has .kt-bgt-budget-name (non-empty)
+	const namEl = firstRow.locator('.kt-bgt-budget-name');
+	await expect(namEl).toBeVisible();
+	expect((await namEl.textContent())?.trim().length).toBeGreaterThan(0);
 });
