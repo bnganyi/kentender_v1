@@ -1,5 +1,5 @@
 /* global frappe */
-// ── Budget Hub page — static, pixel-faithful to code.html ──────────────────
+// ── Budget Hub page — live data wired to get_budget_landing_data ────────────
 (function () {
 	"use strict";
 
@@ -25,7 +25,55 @@
 		}
 	}
 
-	// ── Static HTML — exact faithful translation of code.html ────────────────
+	// ── Number formatting ─────────────────────────────────────────────────────
+
+	/** Full KES with commas — for KPI cards */
+	function _fmtFull(n) {
+		if (n === null || n === undefined || isNaN(n)) return "—";
+		return Math.round(n).toLocaleString("en-KE");
+	}
+
+	/** Compact million/billion — for table cells */
+	function _fmtCompact(n) {
+		if (n === null || n === undefined || isNaN(n)) return "—";
+		if (Math.abs(n) >= 1e9) return (n / 1e9).toFixed(2) + "B";
+		if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(1) + "M";
+		if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(1) + "K";
+		return Math.round(n).toLocaleString("en-KE");
+	}
+
+	/** Percentage rounded to 1 dp */
+	function _fmtPct(n) {
+		if (n === null || n === undefined || isNaN(n)) return "0%";
+		return Math.round(n) + "%";
+	}
+
+	/** Build initials from a display name (or user email) */
+	function _initials(name) {
+		if (!name) return "?";
+		const parts = name.trim().split(/\s+/);
+		if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+		return name.substring(0, 2).toUpperCase();
+	}
+
+	// ── Health chip class ─────────────────────────────────────────────────────
+
+	const _CHIP_CLASS = {
+		healthy:   "kt-bgt-chip--healthy",
+		reviewing: "kt-bgt-chip--reviewing",
+		critical:  "kt-bgt-chip--critical",
+		draft:     "kt-bgt-chip--draft",
+		rejected:  "kt-bgt-chip--rejected",
+	};
+	const _CHIP_LABEL = {
+		healthy:   "Healthy",
+		reviewing: "Reviewing",
+		critical:  "Critical",
+		draft:     "Draft",
+		rejected:  "Rejected",
+	};
+
+	// ── Static shell HTML ─────────────────────────────────────────────────────
 	function _html() {
 		return `
 <div class="kt-bgt-workbench" data-testid="kt-bgt-workbench">
@@ -52,10 +100,10 @@
       </button>
       <div class="kt-bgt-topbar__user">
         <div class="kt-bgt-topbar__user-text">
-          <p class="kt-bgt-topbar__user-name">James Mwangi</p>
-          <p class="kt-bgt-topbar__user-role">Procurement Lead</p>
+          <p class="kt-bgt-topbar__user-name" data-testid="kt-bgt-user-name">—</p>
+          <p class="kt-bgt-topbar__user-role" data-testid="kt-bgt-user-role">—</p>
         </div>
-        <div class="kt-bgt-topbar__avatar">JM</div>
+        <div class="kt-bgt-topbar__avatar" data-testid="kt-bgt-user-avatar">—</div>
       </div>
     </div>
   </header>
@@ -88,18 +136,17 @@
       </div>
 
       <!-- ── KPI CARDS ─────────────────────────────────────────────────────── -->
-      <div class="kt-bgt-kpis">
+      <div class="kt-bgt-kpis" data-testid="kt-bgt-kpis">
 
         <div class="kt-bgt-kpi-card" style="border-color:#E2E8F0" onmouseenter="this.style.borderColor='#00629d'" onmouseleave="this.style.borderColor='#E2E8F0'">
           <div class="kt-bgt-kpi-card__top">
             <span class="kt-bgt-kpi-icon" style="background:rgba(16,185,129,0.1)">
               <span class="material-symbols-outlined" style="color:#10B981">account_balance_wallet</span>
             </span>
-            <span class="kt-bgt-kpi-badge" style="background:rgba(16,185,129,0.1);color:#10B981">+12.5%</span>
           </div>
           <div>
             <p class="kt-bgt-kpi-label">Available Balance (KES)</p>
-            <h3 class="kt-bgt-kpi-value">4,120,450,000</h3>
+            <h3 class="kt-bgt-kpi-value kt-bgt-kpi--loading" data-testid="kt-bgt-kpi-available">—</h3>
           </div>
           <p class="kt-bgt-kpi-footer">Unallocated funding envelope</p>
         </div>
@@ -112,7 +159,7 @@
           </div>
           <div>
             <p class="kt-bgt-kpi-label">Total Reserved</p>
-            <h3 class="kt-bgt-kpi-value">842,100,500</h3>
+            <h3 class="kt-bgt-kpi-value kt-bgt-kpi--loading" data-testid="kt-bgt-kpi-reserved">—</h3>
           </div>
           <p class="kt-bgt-kpi-footer">Held for approved demands</p>
         </div>
@@ -125,7 +172,7 @@
           </div>
           <div>
             <p class="kt-bgt-kpi-label">Total Committed</p>
-            <h3 class="kt-bgt-kpi-value">2,250,900,000</h3>
+            <h3 class="kt-bgt-kpi-value kt-bgt-kpi--loading" data-testid="kt-bgt-kpi-committed">—</h3>
           </div>
           <p class="kt-bgt-kpi-footer">Locked in active contracts</p>
         </div>
@@ -139,7 +186,7 @@
           </div>
           <div>
             <p class="kt-bgt-kpi-label">Pending Approvals</p>
-            <h3 class="kt-bgt-kpi-value">14</h3>
+            <h3 class="kt-bgt-kpi-value kt-bgt-kpi--loading" data-testid="kt-bgt-kpi-pending">—</h3>
           </div>
           <p class="kt-bgt-kpi-footer">Requires executive signature</p>
         </div>
@@ -185,10 +232,8 @@
             <h2 class="kt-bgt-section-title">Active Budget Envelopes</h2>
             <div class="kt-bgt-filter-wrap">
               <span class="kt-bgt-filter-label">Filter by:</span>
-              <select class="kt-bgt-filter-select">
-                <option>All Entities</option>
-                <option>Health</option>
-                <option>Education</option>
+              <select class="kt-bgt-filter-select" data-testid="kt-bgt-entity-filter">
+                <option value="">All Entities</option>
               </select>
             </div>
           </div>
@@ -203,81 +248,8 @@
                   <th>Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td>
-                    <div class="kt-bgt-budget-name">Ministry of Health FY 2026/27</div>
-                    <div class="kt-bgt-budget-sub">Primary: Health Infrastructure Renovation</div>
-                  </td>
-                  <td style="width:192px">
-                    <div class="kt-bgt-bar-row">
-                      <span class="kt-bgt-bar-pct">68%</span>
-                      <div class="kt-bgt-bar-track">
-                        <div class="kt-bgt-bar-committed" style="width:45%"></div>
-                        <div class="kt-bgt-bar-reserved"  style="width:23%"></div>
-                      </div>
-                    </div>
-                    <div class="kt-bgt-bar-legend">
-                      <span><span class="kt-bgt-dot" style="background:#6366F1"></span>Commit</span>
-                      <span><span class="kt-bgt-dot" style="background:#F59E0B"></span>Reserve</span>
-                    </div>
-                  </td>
-                  <td><span class="kt-bgt-avail-value">1,240.5M</span></td>
-                  <td><span class="kt-bgt-chip kt-bgt-chip--healthy">Healthy</span></td>
-                  <td>
-                    <button class="kt-bgt-table-action" type="button">
-                      <span class="material-symbols-outlined">edit_square</span>
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="kt-bgt-budget-name">Dept. of Education (Capitation)</div>
-                    <div class="kt-bgt-budget-sub">Strategy: Digital Learning Initiative</div>
-                  </td>
-                  <td>
-                    <div class="kt-bgt-bar-row">
-                      <span class="kt-bgt-bar-pct">92%</span>
-                      <div class="kt-bgt-bar-track">
-                        <div class="kt-bgt-bar-committed" style="width:80%"></div>
-                        <div class="kt-bgt-bar-reserved"  style="width:12%"></div>
-                      </div>
-                    </div>
-                    <div class="kt-bgt-bar-legend">
-                      <span><span class="kt-bgt-dot" style="background:#6366F1"></span>Commit</span>
-                      <span><span class="kt-bgt-dot" style="background:#F59E0B"></span>Reserve</span>
-                    </div>
-                  </td>
-                  <td><span class="kt-bgt-avail-value">45.2M</span></td>
-                  <td><span class="kt-bgt-chip kt-bgt-chip--reviewing">Reviewing</span></td>
-                  <td>
-                    <button class="kt-bgt-table-action" type="button">
-                      <span class="material-symbols-outlined">edit_square</span>
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="kt-bgt-budget-name">State Dept for Transport</div>
-                    <div class="kt-bgt-budget-sub">Strategy: Rural Access Roads</div>
-                  </td>
-                  <td>
-                    <div class="kt-bgt-bar-row">
-                      <span class="kt-bgt-bar-pct">15%</span>
-                      <div class="kt-bgt-bar-track">
-                        <div class="kt-bgt-bar-committed" style="width:10%"></div>
-                        <div class="kt-bgt-bar-reserved"  style="width:5%"></div>
-                      </div>
-                    </div>
-                  </td>
-                  <td><span class="kt-bgt-avail-value">2,850.0M</span></td>
-                  <td><span class="kt-bgt-chip kt-bgt-chip--healthy">Healthy</span></td>
-                  <td>
-                    <button class="kt-bgt-table-action" type="button">
-                      <span class="material-symbols-outlined">edit_square</span>
-                    </button>
-                  </td>
-                </tr>
+              <tbody data-testid="kt-bgt-budget-tbody">
+                <tr><td colspan="5" class="kt-bgt-table-loading">Loading budgets…</td></tr>
               </tbody>
             </table>
           </div>
@@ -447,8 +419,149 @@
 </div>`;
 	}
 
-	// ── Mount the page ────────────────────────────────────────────────────────
-	// wrapper is the raw #page-budget-hub div (page_js page — no layout-main-section)
+	// ── DOM population ────────────────────────────────────────────────────────
+
+	function _populateUser(wrapper) {
+		const info = frappe.boot && frappe.boot.user_info &&
+		             frappe.boot.user_info[frappe.session.user];
+		const fullName = (info && info.fullname) || frappe.session.user || "User";
+		const roleEl   = wrapper.querySelector("[data-testid='kt-bgt-user-role']");
+		const nameEl   = wrapper.querySelector("[data-testid='kt-bgt-user-name']");
+		const avatarEl = wrapper.querySelector("[data-testid='kt-bgt-user-avatar']");
+		if (nameEl)   nameEl.textContent  = fullName;
+		if (avatarEl) avatarEl.textContent = _initials(fullName);
+		if (roleEl)   roleEl.textContent  = "Budget Officer";
+	}
+
+	function _populateKPIs(wrapper, portfolio) {
+		const set = (testid, val) => {
+			const el = wrapper.querySelector(`[data-testid='${testid}']`);
+			if (el) {
+				el.textContent = val;
+				el.classList.remove("kt-bgt-kpi--loading");
+			}
+		};
+		set("kt-bgt-kpi-available", _fmtFull(portfolio.available_sum));
+		set("kt-bgt-kpi-reserved",  _fmtFull(portfolio.reserved_sum));
+		set("kt-bgt-kpi-committed", _fmtFull(portfolio.committed_sum));
+		set("kt-bgt-kpi-pending",   String(portfolio.pending_approval_count || 0));
+	}
+
+	function _buildBudgetRow(bud) {
+		const chip     = _CHIP_CLASS[bud.health_status] || "kt-bgt-chip--draft";
+		const chipLbl  = _CHIP_LABEL[bud.health_status] || bud.status || "—";
+		const pct      = Math.min(100, Math.round(bud.consumption_pct || 0));
+		const comPct   = Math.min(100, Math.round(bud.committed_pct  || 0));
+		const resPct   = Math.min(100, Math.round(bud.reserved_pct   || 0));
+		const entityLbl = bud.procuring_entity_name || bud.budget_name || "—";
+		const subLbl   = bud.strategic_plan_title
+			? "Strategy: " + bud.strategic_plan_title
+			: bud.budget_name || "";
+		const legend = (comPct > 0 || resPct > 0)
+			? `<div class="kt-bgt-bar-legend">
+				<span><span class="kt-bgt-dot" style="background:#6366F1"></span>Commit</span>
+				<span><span class="kt-bgt-dot" style="background:#F59E0B"></span>Reserve</span>
+			  </div>` : "";
+
+		return `<tr data-budget-name="${bud.name}">
+  <td>
+    <div class="kt-bgt-budget-name">${entityLbl}</div>
+    <div class="kt-bgt-budget-sub">${subLbl}</div>
+  </td>
+  <td style="width:192px">
+    <div class="kt-bgt-bar-row">
+      <span class="kt-bgt-bar-pct">${pct}%</span>
+      <div class="kt-bgt-bar-track">
+        <div class="kt-bgt-bar-committed" style="width:${comPct}%"></div>
+        <div class="kt-bgt-bar-reserved"  style="width:${resPct}%"></div>
+      </div>
+    </div>
+    ${legend}
+  </td>
+  <td><span class="kt-bgt-avail-value">${_fmtCompact(bud.available_amount)}</span></td>
+  <td><span class="kt-bgt-chip ${chip}">${chipLbl}</span></td>
+  <td>
+    <button class="kt-bgt-table-action" type="button" title="Open ${bud.budget_name || ""}">
+      <span class="material-symbols-outlined">edit_square</span>
+    </button>
+  </td>
+</tr>`;
+	}
+
+	function _populateTable(wrapper, budgets) {
+		const tbody = wrapper.querySelector("[data-testid='kt-bgt-budget-tbody']");
+		if (!tbody) return;
+		if (!budgets || !budgets.length) {
+			tbody.innerHTML = `<tr><td colspan="5" class="kt-bgt-table-empty">No budgets found.</td></tr>`;
+			return;
+		}
+		tbody.innerHTML = budgets.map(_buildBudgetRow).join("");
+
+		// Populate entity filter dropdown with unique entity names
+		const select = wrapper.querySelector("[data-testid='kt-bgt-entity-filter']");
+		if (select) {
+			const seen = new Set();
+			budgets.forEach(b => {
+				const label = b.procuring_entity_name || b.budget_name;
+				if (label && !seen.has(label)) {
+					seen.add(label);
+					const opt = document.createElement("option");
+					opt.value  = b.procuring_entity || label;
+					opt.textContent = label;
+					select.appendChild(opt);
+				}
+			});
+			select.addEventListener("change", () => {
+				const val = select.value;
+				tbody.querySelectorAll("tr[data-budget-name]").forEach(tr => {
+					if (!val) { tr.style.display = ""; return; }
+					const bName = tr.dataset.budgetName;
+					const match = budgets.find(b => b.name === bName);
+					tr.style.display = (match && (match.procuring_entity === val || match.budget_name === val))
+						? "" : "none";
+				});
+			});
+		}
+	}
+
+	function _populateError(wrapper, msg) {
+		const tbody = wrapper.querySelector("[data-testid='kt-bgt-budget-tbody']");
+		if (tbody) {
+			tbody.innerHTML = `<tr><td colspan="5" class="kt-bgt-table-error">
+				<span class="material-symbols-outlined">error</span> Failed to load budget data: ${msg}
+			</td></tr>`;
+		}
+		["kt-bgt-kpi-available","kt-bgt-kpi-reserved","kt-bgt-kpi-committed","kt-bgt-kpi-pending"]
+			.forEach(id => {
+				const el = wrapper.querySelector(`[data-testid='${id}']`);
+				if (el) { el.textContent = "—"; el.classList.remove("kt-bgt-kpi--loading"); }
+			});
+	}
+
+	// ── Data loader ───────────────────────────────────────────────────────────
+
+	function _loadData(wrapper) {
+		frappe.call({
+			method: "kentender_budget.api.landing.get_budget_landing_data",
+			freeze: false,
+			callback: function (r) {
+				if (r && r.message) {
+					const data = r.message;
+					_populateKPIs(wrapper, data.portfolio || {});
+					_populateTable(wrapper, data.budgets || []);
+				} else {
+					_populateError(wrapper, "Empty response from server.");
+				}
+			},
+			error: function (err) {
+				const msg = (err && err.message) ? err.message : "Server error.";
+				_populateError(wrapper, msg);
+			},
+		});
+	}
+
+	// ── Mount ─────────────────────────────────────────────────────────────────
+	// wrapper is the raw #page-budget-hub div (page_js page)
 	function _mount(wrapper) {
 		_ensureFonts();
 		if (!wrapper) return;
@@ -462,16 +575,13 @@
 	};
 
 	frappe.pages["budget-hub"].on_page_show = function (wrapper) {
-		// Apply shell class so CSS hides Frappe's page-head
 		document.body.classList.add("kt-bgt-shell");
-
-		// Re-establish the Budget Management sidebar on every show
 		if (frappe.app && frappe.app.sidebar) {
 			frappe.app.sidebar.setup("Budget Management");
 		}
-
-		// Ensure content is mounted (in case on_page_load missed the DOM)
 		_mount(wrapper);
+		_populateUser(wrapper);
+		_loadData(wrapper);
 	};
 
 	frappe.pages["budget-hub"].on_page_hide = function () {

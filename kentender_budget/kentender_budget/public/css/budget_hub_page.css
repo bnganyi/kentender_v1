@@ -663,6 +663,28 @@ body.kt-bgt-shell .layout-main-section {
 .kt-bgt-chip--reviewing{ background: rgba(245,158,11,0.1); color: #F59E0B; }
 .kt-bgt-chip--active   { background: rgba(99,102,241,0.1);  color: #6366F1; }
 .kt-bgt-chip--closed   { background: rgba(115,119,131,0.1); color: #737783; }
+.kt-bgt-chip--critical { background: rgba(147,0,10,0.1);   color: #93000a; }
+.kt-bgt-chip--draft    { background: rgba(0,52,111,0.1);   color: #00346f; }
+.kt-bgt-chip--rejected { background: rgba(147,0,10,0.08);  color: #93000a; }
+
+/* KPI loading dash */
+.kt-bgt-kpi--loading { color: #b0b8c4; }
+
+/* Table empty / loading / error states */
+.kt-bgt-table-loading,
+.kt-bgt-table-empty,
+.kt-bgt-table-error {
+  padding: 24px 16px;
+  text-align: center;
+  color: #737783;
+  font-size: 13px;
+}
+.kt-bgt-table-error { color: #93000a; }
+.kt-bgt-table-error .material-symbols-outlined {
+  font-size: 16px;
+  vertical-align: -3px;
+  margin-right: 4px;
+}
 
 .kt-bgt-table-action {
   background: none;

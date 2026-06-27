@@ -3,10 +3,12 @@
 
 import frappe
 from frappe.tests import IntegrationTestCase
+from frappe.utils import flt
 
 from kentender_budget.api.builder import get_budget_builder_data
 from kentender_budget.api.landing import get_budget_landing_data
 from kentender_budget.api.review import get_budget_review_data
+from kentender_core.seeds._common import ensure_currency_kes, ensure_procuring_entity
 
 
 class TestBudgetLandingAPI(IntegrationTestCase):
@@ -29,6 +31,38 @@ class TestBudgetLandingAPI(IntegrationTestCase):
 			"allocation_pct",
 		):
 			self.assertIn(key, p)
+
+	def test_portfolio_includes_financial_sums(self):
+		"""W1-01: portfolio must expose reserved_sum, committed_sum, available_sum."""
+		frappe.set_user("Administrator")
+		out = get_budget_landing_data()
+		p = out["portfolio"]
+		for key in ("reserved_sum", "committed_sum", "available_sum"):
+			self.assertIn(key, p, f"portfolio missing '{key}'")
+		# All three must be non-negative floats
+		self.assertGreaterEqual(flt(p["reserved_sum"]), 0.0)
+		self.assertGreaterEqual(flt(p["committed_sum"]), 0.0)
+		self.assertGreaterEqual(flt(p["available_sum"]), 0.0)
+
+	def test_budget_rows_include_financial_fields(self):
+		"""W1-01: per-budget rows must have committed_amount, consumption_pct, health_status."""
+		frappe.set_user("Administrator")
+		out = get_budget_landing_data()
+		for row in out.get("budgets") or []:
+			for key in ("committed_amount", "consumption_pct", "health_status",
+			            "procuring_entity_name"):
+				self.assertIn(key, row, f"budget row missing '{key}'")
+			# consumption_pct in [0, 100]
+			pct = flt(row["consumption_pct"])
+			self.assertGreaterEqual(pct, 0.0)
+			self.assertLessEqual(pct, 100.0 + 1e-6)
+
+	def test_budget_rows_committed_amount_non_negative(self):
+		"""W1-01: committed_amount must be ≥ 0 for all rows."""
+		frappe.set_user("Administrator")
+		out = get_budget_landing_data()
+		for row in out.get("budgets") or []:
+			self.assertGreaterEqual(flt(row["committed_amount"]), 0.0)
 
 	def test_landing_budget_rows_include_strategic_plan_title(self):
 		frappe.set_user("Administrator")
