@@ -241,9 +241,9 @@
             <h2 class="kt-bgt-section-title">Active Budget Envelopes</h2>
             <div class="kt-bgt-filter-wrap" data-testid="kt-bgt-entity-filter-wrap" style="display:none">
               <span class="kt-bgt-filter-label">Filter by:</span>
-              <div class="kt-bgt-filter-chips" data-testid="kt-bgt-entity-filter">
-                <button class="kt-bgt-filter-chip kt-bgt-filter-chip--active" data-entity="" type="button">All</button>
-              </div>
+              <select class="kt-bgt-filter-select" data-testid="kt-bgt-entity-filter">
+                <option value="">All Entities</option>
+              </select>
             </div>
           </div>
           <div class="kt-bgt-table-wrap">
@@ -504,45 +504,30 @@
 		}
 		tbody.innerHTML = budgets.map(_buildBudgetRow).join("");
 
-		// W1-03: entity filter chips — show only if procuring_entity data exists
+		// Entity filter dropdown — show only if procuring_entity data exists
 		const filterWrap = wrapper.querySelector("[data-testid='kt-bgt-entity-filter-wrap']");
-		const chipsEl    = wrapper.querySelector("[data-testid='kt-bgt-entity-filter']");
-		if (!filterWrap || !chipsEl) return;
+		const select     = wrapper.querySelector("[data-testid='kt-bgt-entity-filter']");
+		if (!filterWrap || !select) return;
 
-		const entities = [];
 		const seen = new Set();
 		budgets.forEach(b => {
 			if (b.procuring_entity && !seen.has(b.procuring_entity)) {
 				seen.add(b.procuring_entity);
-				entities.push({
-					id: b.procuring_entity,
-					label: b.procuring_entity_name || b.procuring_entity,
-				});
+				const opt = document.createElement("option");
+				opt.value = b.procuring_entity;
+				opt.textContent = b.procuring_entity_name || b.procuring_entity;
+				select.appendChild(opt);
 			}
 		});
 
-		if (!entities.length) {
+		if (!seen.size) {
 			filterWrap.style.display = "none";
 			return;
 		}
 
 		filterWrap.style.display = "";
-		entities.forEach(e => {
-			const btn = document.createElement("button");
-			btn.className = "kt-bgt-filter-chip";
-			btn.type = "button";
-			btn.dataset.entity = e.id;
-			btn.textContent = e.label;
-			chipsEl.appendChild(btn);
-		});
-
-		chipsEl.addEventListener("click", ev => {
-			const chip = ev.target.closest(".kt-bgt-filter-chip");
-			if (!chip) return;
-			chipsEl.querySelectorAll(".kt-bgt-filter-chip")
-				.forEach(c => c.classList.remove("kt-bgt-filter-chip--active"));
-			chip.classList.add("kt-bgt-filter-chip--active");
-			const val = chip.dataset.entity;
+		select.addEventListener("change", () => {
+			const val = select.value;
 			tbody.querySelectorAll("tr[data-budget-name]").forEach(tr => {
 				if (!val) { tr.style.display = ""; return; }
 				const match = budgets.find(b => b.name === tr.dataset.budgetName);

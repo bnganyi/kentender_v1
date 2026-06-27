@@ -496,9 +496,8 @@ body.kt-bgt-shell .layout-main-section {
 /* ── Section heading ─────────────────────────────────────────────────────── */
 .kt-bgt-section-hdr {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 12px;
   margin-bottom: 12px;
 }
 
@@ -512,11 +511,9 @@ body.kt-bgt-shell .layout-main-section {
 
 .kt-bgt-filter-wrap {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
   color: #424751;
-  flex-shrink: 0;
-  max-width: 480px;
 }
 
 .kt-bgt-filter-label {
@@ -524,45 +521,9 @@ body.kt-bgt-shell .layout-main-section {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  padding-top: 4px;
   white-space: nowrap;
 }
 
-/* W1-03: filter chip buttons (replaces select) */
-.kt-bgt-filter-chips {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.kt-bgt-filter-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 10px;
-  border-radius: 9999px;
-  border: 1px solid #E2E8F0;
-  background: transparent;
-  font-size: 12px;
-  font-weight: 600;
-  color: #424751;
-  cursor: pointer;
-  transition: background 0.1s, border-color 0.1s, color 0.1s;
-}
-
-.kt-bgt-filter-chip:hover {
-  background: #f2f4f6;
-  border-color: #00629d;
-  color: #00346f;
-}
-
-.kt-bgt-filter-chip--active {
-  background: rgba(0,52,111,0.08);
-  border-color: #00346f;
-  color: #00346f;
-}
-
-/* Legacy select — kept for graceful fallback */
 .kt-bgt-filter-select {
   background: transparent;
   border: none;
