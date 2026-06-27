@@ -63,11 +63,19 @@ class TestDemandLifecycleBudget(IntegrationTestCase):
 			}
 		)
 		self.program.insert(ignore_permissions=True)
+		self.sub = frappe.get_doc(
+			{
+				"doctype": "Sub Program",
+				"program": self.program.name,
+				"title": f"Sub-DLCB-{h}",
+			}
+		)
+		self.sub.insert(ignore_permissions=True)
 		self.objective = frappe.get_doc(
 			{
 				"doctype": "Strategy Objective",
 				"strategic_plan": self.plan.name,
-				"program": self.program.name,
+				"sub_program": self.sub.name,
 				"objective_title": f"O-DLCB-{h}",
 				"order_index": 1,
 			}
@@ -89,14 +97,6 @@ class TestDemandLifecycleBudget(IntegrationTestCase):
 			}
 		)
 		self.target.insert(ignore_permissions=True)
-		self.sub = frappe.get_doc(
-			{
-				"doctype": "Sub Program",
-				"program": self.program.name,
-				"title": f"Sub-DLCB-{h}",
-			}
-		)
-		self.sub.insert(ignore_permissions=True)
 		self.budget = frappe.get_doc(
 			{
 				"doctype": "Budget",
@@ -184,6 +184,7 @@ class TestDemandLifecycleBudget(IntegrationTestCase):
 			{
 				"doctype": "Demand",
 				"title": f"DLCB demand {frappe.generate_hash(length=4)}",
+				"beneficiary_summary": "Test beneficiary justification for DLCB demand reservation flow.",
 				"specification_summary": "DLCB test demand — requested goods for budget reservation flow.",
 				"delivery_location": "Nairobi",
 				"requested_by": self._req_email,
@@ -191,6 +192,9 @@ class TestDemandLifecycleBudget(IntegrationTestCase):
 				"requesting_department": self.dept,
 				"request_date": today(),
 				"required_by_date": today(),
+				"demand_type": "Planned",
+				"requisition_type": "Goods",
+				"priority_level": "Normal",
 				"budget_line": self.bl.name,
 				"items": [
 					{

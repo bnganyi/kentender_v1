@@ -3,6 +3,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, flt
 
+from kentender_budget.services.budget_guards import assert_budget_total_reduction_safe
 from kentender_budget.services.budget_permissions import (
 	assert_allowed_transition_roles,
 	enforce_budget_submitted_approved_immutability,
@@ -46,6 +47,7 @@ class Budget(Document):
 		self._validate_required_links()
 		self._validate_fiscal_year()
 		self._validate_total_amount()
+		self._validate_revision_guard()
 		self._validate_entity_plan_alignment()
 		self._validate_supersedes()
 		self._validate_version_uniqueness()
@@ -112,6 +114,27 @@ class Budget(Document):
 	def _validate_total_amount(self):
 		if self.total_budget_amount is not None and flt(self.total_budget_amount) < 0:
 			frappe.throw(_("Total Budget Amount cannot be negative."))
+
+	def _validate_revision_guard(self):
+		"""Block total_budget_amount reductions below active line obligations.
+
+		Only runs on updates to non-new, non-Draft budgets that have existing
+		lines.  New inserts and Draft saves skip this check to avoid blocking
+		the budget creation flow.
+		"""
+		if self.is_new():
+			return
+		if self.status in ("Draft", "Rejected"):
+			return
+		if self.total_budget_amount is None:
+			return
+		# Only fire when total_budget_amount is actually being reduced.
+		prev_total = frappe.db.get_value("Budget", self.name, "total_budget_amount")
+		if prev_total is None:
+			return
+		if flt(self.total_budget_amount) >= flt(prev_total) - 1e-9:
+			return
+		assert_budget_total_reduction_safe(self.name, flt(self.total_budget_amount))
 
 	def _validate_entity_plan_alignment(self):
 		plan_entity = frappe.db.get_value("Strategic Plan", self.strategic_plan, "procuring_entity")

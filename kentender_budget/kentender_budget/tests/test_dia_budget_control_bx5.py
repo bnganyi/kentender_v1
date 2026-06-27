@@ -50,11 +50,19 @@ class TestDiaBudgetControlBX5(IntegrationTestCase):
 			}
 		)
 		self.program.insert(ignore_permissions=True)
+		self.sub = frappe.get_doc(
+			{
+				"doctype": "Sub Program",
+				"program": self.program.name,
+				"title": f"Sub-BX5-{h}",
+			}
+		)
+		self.sub.insert(ignore_permissions=True)
 		self.objective = frappe.get_doc(
 			{
 				"doctype": "Strategy Objective",
 				"strategic_plan": self.plan.name,
-				"program": self.program.name,
+				"sub_program": self.sub.name,
 				"objective_title": f"O-BX5-{h}",
 				"order_index": 1,
 			}
@@ -76,14 +84,6 @@ class TestDiaBudgetControlBX5(IntegrationTestCase):
 			}
 		)
 		self.target.insert(ignore_permissions=True)
-		self.sub = frappe.get_doc(
-			{
-				"doctype": "Sub Program",
-				"program": self.program.name,
-				"title": f"Sub-BX5-{h}",
-			}
-		)
-		self.sub.insert(ignore_permissions=True)
 		self.budget = frappe.get_doc(
 			{
 				"doctype": "Budget",

@@ -45,11 +45,19 @@ class TestBudgetLineRemoval(IntegrationTestCase):
 			}
 		)
 		self.program.insert(ignore_permissions=True)
+		self.sub = frappe.get_doc(
+			{
+				"doctype": "Sub Program",
+				"program": self.program.name,
+				"title": f"Sub-BLRM-{h}",
+			}
+		)
+		self.sub.insert(ignore_permissions=True)
 		self.objective = frappe.get_doc(
 			{
 				"doctype": "Strategy Objective",
 				"strategic_plan": self.plan.name,
-				"program": self.program.name,
+				"sub_program": self.sub.name,
 				"objective_title": f"O-BLRM-{h}",
 				"order_index": 1,
 			}
@@ -71,14 +79,6 @@ class TestBudgetLineRemoval(IntegrationTestCase):
 			}
 		)
 		self.target.insert(ignore_permissions=True)
-		self.sub = frappe.get_doc(
-			{
-				"doctype": "Sub Program",
-				"program": self.program.name,
-				"title": f"Sub-BLRM-{h}",
-			}
-		)
-		self.sub.insert(ignore_permissions=True)
 		self.budget = frappe.get_doc(
 			{
 				"doctype": "Budget",
