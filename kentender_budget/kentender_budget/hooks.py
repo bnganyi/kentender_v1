@@ -34,19 +34,9 @@ required_apps = ["kentender_core", "kentender_strategy"]
 # Includes in <head>
 # ------------------
 
-# include js, css files in header of desk.html
+# Single CSS bundle for the budget workbench (budget-builder page only)
 app_include_css = [
-	f"/assets/kentender_budget/css/budget_workspace.css?v={_asset_version('public/css/budget_workspace.css')}",
 	f"/assets/kentender_budget/css/budget_builder_page.css?v={_asset_version('public/css/budget_builder_page.css')}",
-]
-app_include_js = [
-	f"/assets/kentender_budget/js/budget_allocation_drawer.js?v={_asset_version('public/js/budget_allocation_drawer.js')}",
-	f"/assets/kentender_budget/js/budget_metadata_drawer.js?v={_asset_version('public/js/budget_metadata_drawer.js')}",
-	f"/assets/kentender_budget/js/budget_summary_panel.js?v={_asset_version('public/js/budget_summary_panel.js')}",
-	f"/assets/kentender_budget/js/budget_allocations_panel.js?v={_asset_version('public/js/budget_allocations_panel.js')}",
-	f"/assets/kentender_budget/js/budget_review_panel.js?v={_asset_version('public/js/budget_review_panel.js')}",
-	f"/assets/kentender_budget/js/budget_audit_panel.js?v={_asset_version('public/js/budget_audit_panel.js')}",
-	f"/assets/kentender_budget/js/budget_workspace.js?v={_asset_version('public/js/budget_workspace.js')}",
 ]
 
 # include js, css files in header of web template
@@ -64,10 +54,7 @@ app_include_js = [
 page_js = {"budget-builder": "public/js/budget_builder_page.js"}
 
 # include js in doctype views
-doctype_js = {
-	"Budget": "public/js/budget.js",
-	"Budget Line": "public/js/budget_line_procurement_use_panel.js",
-}
+# doctype_js = {}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
