@@ -255,31 +255,14 @@
       </div>
 
       <!-- ── CRITICAL GUARDRAILS ────────────────────────────────────────────── -->
-      <section>
+      <section data-testid="kt-bgt-guardrails-section">
         <div class="kt-bgt-guardrails__heading">
           <span class="material-symbols-outlined">warning</span>
           <h2>Critical Guardrails</h2>
         </div>
-        <div class="kt-bgt-guardrails-grid">
-          <div class="kt-bgt-guardrail kt-bgt-guardrail--error">
-            <div class="kt-bgt-guardrail__icon-wrap" style="background:rgba(255,218,214,1)">
-              <span class="material-symbols-outlined" style="color:#93000a">priority_high</span>
-            </div>
-            <div>
-              <h4 class="kt-bgt-guardrail__title" style="color:#93000a">Low Balance: Infrastructure Expansion</h4>
-              <p class="kt-bgt-guardrail__desc">Available funds below 15% threshold for Category A works. Planned tender release blocked.</p>
-            </div>
-            <button class="kt-bgt-guardrail__action" style="color:#93000a">Review</button>
-          </div>
-          <div class="kt-bgt-guardrail kt-bgt-guardrail--warning">
-            <div class="kt-bgt-guardrail__icon-wrap" style="background:rgba(245,158,11,0.2)">
-              <span class="material-symbols-outlined" style="color:#F59E0B">link_off</span>
-            </div>
-            <div>
-              <h4 class="kt-bgt-guardrail__title" style="color:#191c1e">Funding Exception: Unlinked Strategy</h4>
-              <p class="kt-bgt-guardrail__desc">4 Budget lines lack mapping to Strategic Pillar 3. Audit compliance risk detected.</p>
-            </div>
-            <button class="kt-bgt-guardrail__action" style="color:#00346f">Fix Link</button>
+        <div class="kt-bgt-guardrails-grid" data-testid="kt-bgt-guardrails-grid">
+          <div class="kt-bgt-guardrails-loading">
+            <span class="material-symbols-outlined">pending</span> Checking guardrails…
           </div>
         </div>
       </section>
@@ -570,6 +553,52 @@
 			});
 	}
 
+	// ── Critical Guardrails (W3-02) ──────────────────────────────────────────
+
+	const _GUARDRAIL_STYLE = {
+		error:   { bg: "rgba(255,218,214,1)",  color: "#93000a", actColor: "#93000a" },
+		warning: { bg: "rgba(245,158,11,0.2)", color: "#F59E0B", actColor: "#00346f" },
+	};
+
+	const _GUARDRAIL_ICON = {
+		low_balance:       "priority_high",
+		unlinked_strategy: "link_off",
+		expiry:            "event_busy",
+	};
+
+	function _buildGuardrailCard(g) {
+		const style    = _GUARDRAIL_STYLE[g.severity] || _GUARDRAIL_STYLE.warning;
+		const icon     = _GUARDRAIL_ICON[g.check_type] || "warning";
+		const modCls   = `kt-bgt-guardrail--${g.severity}`;
+		const titleClr = g.severity === "error" ? style.color : "#191c1e";
+		return `<div class="kt-bgt-guardrail ${modCls}">
+  <div class="kt-bgt-guardrail__icon-wrap" style="background:${style.bg}">
+    <span class="material-symbols-outlined" style="color:${style.color}">${icon}</span>
+  </div>
+  <div>
+    <h4 class="kt-bgt-guardrail__title" style="color:${titleClr}">${g.title}</h4>
+    <p class="kt-bgt-guardrail__desc">${g.description}</p>
+  </div>
+  <button class="kt-bgt-guardrail__action" style="color:${style.actColor}"
+          type="button">${g.action_label}</button>
+</div>`;
+	}
+
+	function _populateGuardrails(wrapper, guardrails) {
+		const section = wrapper.querySelector("[data-testid='kt-bgt-guardrails-section']");
+		const grid    = wrapper.querySelector("[data-testid='kt-bgt-guardrails-grid']");
+		if (!section || !grid) return;
+
+		if (!guardrails || !guardrails.length) {
+			// Hide entire panel when no active guardrails
+			section.style.display = "none";
+			return;
+		}
+
+		section.style.display = "";
+		grid.innerHTML = guardrails.map(_buildGuardrailCard).join("");
+	}
+
 	// ── Data loaders ──────────────────────────────────────────────────────────
 
 	function _loadData(wrapper) {
@@ -606,6 +635,19 @@
 		});
 	}
 
+	/** W3-02: Load critical guardrail checks; hides panel when none active. */
+	function _loadGuardrails(wrapper) {
+		frappe.call({
+			method: "kentender_budget.api.guardrails.compute_budget_guardrails",
+			freeze: false,
+			callback: function (r) {
+				if (r && r.message) {
+					_populateGuardrails(wrapper, r.message.guardrails || []);
+				}
+			},
+		});
+	}
+
 	// ── Mount ─────────────────────────────────────────────────────────────────
 	// wrapper is the raw #page-budget-hub div (page_js page)
 	function _mount(wrapper) {
@@ -629,6 +671,7 @@
 		_populateUser(wrapper);
 		_loadData(wrapper);
 		_loadMovements(wrapper);
+		_loadGuardrails(wrapper);
 	};
 
 	frappe.pages["budget-hub"].on_page_hide = function () {
