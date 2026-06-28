@@ -639,6 +639,12 @@ body.kt-bgt-shell .layout-main-section {
   color: #424751;
 }
 
+.kt-bgt-bar-legend--empty {
+  font-size: 10px;
+  color: #b0b8c4;
+  font-style: italic;
+}
+
 .kt-bgt-bar-legend span {
   display: flex;
   align-items: center;

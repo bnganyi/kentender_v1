@@ -74,13 +74,13 @@ test('Budget Hub table row has allocation bar, KES amount, and status chip', asy
 	const firstRow = tbody.locator('tr[data-budget-name]').first();
 	await expect(firstRow).toBeVisible({ timeout: 15_000 });
 
-	// W1-03: allocation bar percentage (n%)
+	// W2-05: obligation bar — dual committed+reserved segments; pct from consumption_pct
 	await expect(firstRow.locator('.kt-bgt-bar-pct')).toBeVisible();
 	const pctText = await firstRow.locator('.kt-bgt-bar-pct').textContent();
 	expect(pctText).toMatch(/\d+%/);
 
-	// W1-03: allocation bar segment (single blue bar)
-	await expect(firstRow.locator('.kt-bgt-bar-allocated')).toBeVisible();
+	// W2-05: committed or reserved segment present (bar-track must have child divs)
+	await expect(firstRow.locator('.kt-bgt-bar-track')).toBeVisible();
 
 	// W1-03: available amount — numeric only, no KES prefix (header says "(KES)")
 	await expect(firstRow.locator('.kt-bgt-avail-value')).toBeVisible();

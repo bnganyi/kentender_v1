@@ -255,7 +255,7 @@
               <thead>
                 <tr>
                   <th>Budget Name</th>
-                  <th>Allocation</th>
+                  <th>Obligation</th>
                   <th>Available (KES)</th>
                   <th>Status</th>
                   <th></th>
@@ -463,15 +463,25 @@
 	}
 
 	function _buildBudgetRow(bud) {
-		const chip    = _deriveChip(bud);
-		// W1-03: allocation_pct = allocated ÷ total, label "Allocated"
-		const allocPct = Math.min(100, Math.round(bud.allocation_pct || 0));
-		// Primary line: budget_name; secondary: fiscal_year + strategic plan
+		const chip = _deriveChip(bud);
+		// W2-05: real obligation bar — committed_pct + reserved_pct dual segments
+		const consPct = Math.min(100, Math.round(bud.consumption_pct || 0));
+		const comPct  = Math.min(100, Math.round(bud.committed_pct   || 0));
+		const resPct  = Math.min(100, Math.round(bud.reserved_pct    || 0));
+		const hasOblig = comPct > 0 || resPct > 0;
+
 		const primaryLbl = bud.budget_name || bud.name || "—";
 		const subParts = [];
 		if (bud.fiscal_year)          subParts.push(bud.fiscal_year);
 		if (bud.strategic_plan_title) subParts.push(bud.strategic_plan_title);
 		const subLbl = subParts.join(" \u00b7 ");
+
+		const barLegend = hasOblig
+			? `<div class="kt-bgt-bar-legend">
+				<span><span class="kt-bgt-dot" style="background:#6366F1"></span>Committed</span>
+				<span><span class="kt-bgt-dot" style="background:#F59E0B"></span>Reserved</span>
+			   </div>`
+			: `<div class="kt-bgt-bar-legend kt-bgt-bar-legend--empty">No obligations</div>`;
 
 		return `<tr data-budget-name="${bud.name}">
   <td>
@@ -480,14 +490,13 @@
   </td>
   <td>
     <div class="kt-bgt-bar-row">
-      <span class="kt-bgt-bar-pct">${allocPct}%</span>
+      <span class="kt-bgt-bar-pct">${consPct}%</span>
       <div class="kt-bgt-bar-track">
-        <div class="kt-bgt-bar-allocated" style="width:${allocPct}%"></div>
+        <div class="kt-bgt-bar-committed" style="width:${comPct}%"></div>
+        <div class="kt-bgt-bar-reserved"  style="width:${resPct}%"></div>
       </div>
     </div>
-    <div class="kt-bgt-bar-legend">
-      <span><span class="kt-bgt-dot" style="background:#00346f"></span>Allocated</span>
-    </div>
+    ${barLegend}
   </td>
   <td><span class="kt-bgt-avail-value">${_fmtFull(bud.available_amount)}</span></td>
   <td><span class="kt-bgt-chip ${chip.cls}">${chip.lbl}</span></td>
@@ -518,7 +527,8 @@
 			if (b.procuring_entity && !seen.has(b.procuring_entity)) {
 				seen.add(b.procuring_entity);
 				const opt = document.createElement("option");
-				opt.value = b.procuring_entity;
+				// W2-05: use entity_code as value for a stable business key
+				opt.value = b.procuring_entity_code || b.procuring_entity;
 				opt.textContent = b.procuring_entity_name || b.procuring_entity;
 				select.appendChild(opt);
 			}
@@ -535,7 +545,12 @@
 			tbody.querySelectorAll("tr[data-budget-name]").forEach(tr => {
 				if (!val) { tr.style.display = ""; return; }
 				const match = budgets.find(b => b.name === tr.dataset.budgetName);
-				tr.style.display = (match && match.procuring_entity === val) ? "" : "none";
+				// Match on entity_code (W2-05); fall back to internal name for
+				// budgets where entity_code was not populated
+				tr.style.display = (match && (
+					(match.procuring_entity_code && match.procuring_entity_code === val) ||
+					match.procuring_entity === val
+				)) ? "" : "none";
 			});
 		});
 	}
