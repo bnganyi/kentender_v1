@@ -125,21 +125,22 @@ def get_budget_movements(limit: int = 10) -> dict:
 		})
 
 	# ── 3. Budget allocations (version 1 approved) ────────────────────────────
+	# Use COALESCE(approved_at, modified) so budgets promoted via set_value
+	# (which leaves approved_at NULL) still appear as timeline events.
 	alloc_rows = frappe.db.sql(
 		"""
 		SELECT
-			b.name,
-			b.budget_name,
-			b.total_budget_amount,
-			b.approved_at  AS ts,
-			b.procuring_entity,
-			pe.entity_name
+		    b.name,
+		    b.budget_name,
+		    b.total_budget_amount,
+		    COALESCE(b.approved_at, b.modified) AS ts,
+		    b.procuring_entity,
+		    pe.entity_name
 		FROM `tabBudget` b
 		LEFT JOIN `tabProcuring Entity` pe ON pe.name = b.procuring_entity
 		WHERE b.status IN ('Approved', 'Active')
 		  AND b.version_no = 1
-		  AND b.approved_at IS NOT NULL
-		ORDER BY b.approved_at DESC
+		ORDER BY ts DESC
 		LIMIT %(limit)s
 		""",
 		{"limit": limit},
@@ -165,18 +166,17 @@ def get_budget_movements(limit: int = 10) -> dict:
 	rev_rows = frappe.db.sql(
 		"""
 		SELECT
-			b.name,
-			b.budget_name,
-			b.version_no,
-			b.total_budget_amount,
-			b.approved_at  AS ts,
-			b.procuring_entity,
-			pe.entity_name
+		    b.name,
+		    b.budget_name,
+		    b.version_no,
+		    b.total_budget_amount,
+		    COALESCE(b.approved_at, b.modified) AS ts,
+		    b.procuring_entity,
+		    pe.entity_name
 		FROM `tabBudget` b
 		LEFT JOIN `tabProcuring Entity` pe ON pe.name = b.procuring_entity
 		WHERE b.version_no > 1
-		  AND b.approved_at IS NOT NULL
-		ORDER BY b.approved_at DESC
+		ORDER BY ts DESC
 		LIMIT %(limit)s
 		""",
 		{"limit": limit},
