@@ -250,10 +250,10 @@
             <table class="kt-bgt-table">
               <colgroup>
                 <col><!-- Budget Name: takes all remaining space -->
-                <col style="width:172px"><!-- Allocation bar -->
-                <col style="width:148px"><!-- Available (KES) -->
-                <col style="width:108px"><!-- Status -->
-                <col style="width:52px"><!-- Actions -->
+                <col style="width:168px"><!-- Allocation bar -->
+                <col style="width:140px"><!-- Available (KES) -->
+                <col style="width:104px"><!-- Status -->
+                <col style="width:48px"><!-- Actions -->
               </colgroup>
               <thead>
                 <tr>

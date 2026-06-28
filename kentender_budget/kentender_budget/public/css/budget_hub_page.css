@@ -567,7 +567,7 @@ body.kt-bgt-shell .layout-main-section {
 }
 
 .kt-bgt-table th {
-  padding: 16px 24px;
+  padding: 14px 16px;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -583,7 +583,13 @@ body.kt-bgt-shell .layout-main-section {
 .kt-bgt-table tbody tr:last-child { border-bottom: none; }
 .kt-bgt-table tbody tr:hover { background: #f2f4f6; }
 
-.kt-bgt-table td { padding: 20px 24px; vertical-align: top; }
+.kt-bgt-table td { padding: 18px 16px; vertical-align: top; }
+/* Actions column — centred icon, minimal horizontal padding */
+.kt-bgt-table td:last-child {
+  padding: 16px 8px;
+  vertical-align: middle;
+  text-align: center;
+}
 
 .kt-bgt-budget-name {
   font-weight: 700;
