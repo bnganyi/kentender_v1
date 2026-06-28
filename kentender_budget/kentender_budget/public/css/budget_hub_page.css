@@ -766,6 +766,21 @@ body.kt-bgt-shell .layout-main-section {
 
 .kt-bgt-tl-item--faded { opacity: 0.6; }
 
+.kt-bgt-tl-loading,
+.kt-bgt-tl-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--kt-bgt-muted, #737783);
+  font-size: 13px;
+  padding: 12px 0;
+}
+.kt-bgt-tl-loading .material-symbols-outlined,
+.kt-bgt-tl-empty .material-symbols-outlined {
+  font-size: 16px;
+  opacity: 0.6;
+}
+
 .kt-bgt-tl-dot {
   position: absolute;
   left: 0;

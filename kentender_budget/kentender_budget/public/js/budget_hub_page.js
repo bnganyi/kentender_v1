@@ -62,6 +62,61 @@
 		return name.substring(0, 2).toUpperCase();
 	}
 
+	// ── Relative timestamp ────────────────────────────────────────────────────
+	/** Convert a Frappe UTC datetime string to a human-readable "N ago" label. */
+	function _timeAgo(tsStr) {
+		if (!tsStr) return "";
+		// Frappe stores datetimes as UTC "YYYY-MM-DD HH:MM:SS"; parse as UTC.
+		const ts = new Date(String(tsStr).replace(" ", "T") + "Z");
+		if (isNaN(ts.getTime())) return tsStr;
+		const diffMs  = Date.now() - ts.getTime();
+		const diffMin = Math.floor(diffMs / 60000);
+		const diffHr  = Math.floor(diffMs / 3600000);
+		const diffDay = Math.floor(diffMs / 86400000);
+		if (diffMin <  1)  return "just now";
+		if (diffMin < 60)  return diffMin + "m ago";
+		if (diffHr  < 24)  return diffHr  + "h ago";
+		if (diffDay === 1) return "Yesterday";
+		return diffDay + " days ago";
+	}
+
+	// ── Movement timeline — icon / colour per event_type (W3-01) ─────────────
+	const _MOV_STYLE = {
+		allocation:  { bg: "rgba(16,185,129,0.2)",  color: "#10B981" },
+		reservation: { bg: "rgba(245,158,11,0.2)",  color: "#F59E0B" },
+		release:     { bg: "rgba(194,198,211,0.2)", color: "#737783" },
+		revision:    { bg: "rgba(0,52,111,0.2)",    color: "#00346f" },
+	};
+
+	function _buildMovRow(ev) {
+		const style   = _MOV_STYLE[ev.event_type] || _MOV_STYLE.revision;
+		const fadedCls = ev.event_type === "release" ? " kt-bgt-tl-item--faded" : "";
+		const metaRef  = ev.ref ? ` &bull; REF: ${ev.ref}` : "";
+		return `<div class="kt-bgt-tl-item${fadedCls}">
+  <span class="kt-bgt-tl-dot" style="background:${style.bg}">
+    <span class="material-symbols-outlined" style="color:${style.color}">${ev.icon || "schedule"}</span>
+  </span>
+  <div>
+    <p class="kt-bgt-tl-title">${ev.title}</p>
+    <p class="kt-bgt-tl-desc">${ev.desc}</p>
+    <div class="kt-bgt-tl-meta">
+      <span class="material-symbols-outlined">schedule</span>
+      ${_timeAgo(ev.ts)}${metaRef}
+    </div>
+  </div>
+</div>`;
+	}
+
+	function _populateTimeline(wrapper, movements) {
+		const tl = wrapper.querySelector("[data-testid='kt-bgt-timeline']");
+		if (!tl) return;
+		if (!movements || !movements.length) {
+			tl.innerHTML = `<div class="kt-bgt-tl-empty">No recent movements.</div>`;
+			return;
+		}
+		tl.innerHTML = movements.map(_buildMovRow).join("");
+	}
+
 	// ── Health chip — maps canonical server-side health_status (W2-03) ─────────
 	// Server computes: exhausted / reviewing / healthy (Approved/Active),
 	//                  submitted / draft / rejected (workflow states).
@@ -275,64 +330,10 @@
             <button class="kt-bgt-view-all" type="button">View All</button>
           </div>
           <div class="kt-bgt-movements-card">
-            <div class="kt-bgt-timeline">
-
-              <div class="kt-bgt-tl-item">
-                <span class="kt-bgt-tl-dot" style="background:rgba(16,185,129,0.2)">
-                  <span class="material-symbols-outlined" style="color:#10B981">add</span>
-                </span>
-                <div>
-                  <p class="kt-bgt-tl-title">Budget Allocation</p>
-                  <p class="kt-bgt-tl-desc">KES 50,000,000 allocated to MoH Lab Equipping Programme.</p>
-                  <div class="kt-bgt-tl-meta">
-                    <span class="material-symbols-outlined">schedule</span>
-                    2 hours ago &bull; REF: BK-9021
-                  </div>
-                </div>
+            <div class="kt-bgt-timeline" data-testid="kt-bgt-timeline">
+              <div class="kt-bgt-tl-loading">
+                <span class="material-symbols-outlined">pending</span> Loading movements…
               </div>
-
-              <div class="kt-bgt-tl-item">
-                <span class="kt-bgt-tl-dot" style="background:rgba(245,158,11,0.2)">
-                  <span class="material-symbols-outlined" style="color:#F59E0B">lock</span>
-                </span>
-                <div>
-                  <p class="kt-bgt-tl-title">Funds Reserved</p>
-                  <p class="kt-bgt-tl-desc">KES 12,400,000 held for Tender #2026/045 (School Books).</p>
-                  <div class="kt-bgt-tl-meta">
-                    <span class="material-symbols-outlined">schedule</span>
-                    5 hours ago &bull; REF: RS-4410
-                  </div>
-                </div>
-              </div>
-
-              <div class="kt-bgt-tl-item">
-                <span class="kt-bgt-tl-dot" style="background:rgba(0,52,111,0.2)">
-                  <span class="material-symbols-outlined" style="color:#00346f">task_alt</span>
-                </span>
-                <div>
-                  <p class="kt-bgt-tl-title">Revision Approved</p>
-                  <p class="kt-bgt-tl-desc">Transport Dept. budget version 2.4 activated by PS Finance.</p>
-                  <div class="kt-bgt-tl-meta">
-                    <span class="material-symbols-outlined">schedule</span>
-                    Yesterday &bull; REF: RV-0112
-                  </div>
-                </div>
-              </div>
-
-              <div class="kt-bgt-tl-item kt-bgt-tl-item--faded">
-                <span class="kt-bgt-tl-dot" style="background:rgba(194,198,211,0.2)">
-                  <span class="material-symbols-outlined" style="color:#737783">undo</span>
-                </span>
-                <div>
-                  <p class="kt-bgt-tl-title">Reservation Released</p>
-                  <p class="kt-bgt-tl-desc">KES 2,000,000 surplus returned from cancelled demand DM-44.</p>
-                  <div class="kt-bgt-tl-meta">
-                    <span class="material-symbols-outlined">schedule</span>
-                    2 days ago &bull; REF: RL-8821
-                  </div>
-                </div>
-              </div>
-
             </div>
           </div>
 
@@ -569,7 +570,7 @@
 			});
 	}
 
-	// ── Data loader ───────────────────────────────────────────────────────────
+	// ── Data loaders ──────────────────────────────────────────────────────────
 
 	function _loadData(wrapper) {
 		frappe.call({
@@ -587,6 +588,20 @@
 			error: function (err) {
 				const msg = (err && err.message) ? err.message : "Server error.";
 				_populateError(wrapper, msg);
+			},
+		});
+	}
+
+	/** W3-01: Load recent budget movements for the timeline panel. */
+	function _loadMovements(wrapper) {
+		frappe.call({
+			method: "kentender_budget.api.movements.get_budget_movements",
+			args: { limit: 10 },
+			freeze: false,
+			callback: function (r) {
+				if (r && r.message) {
+					_populateTimeline(wrapper, r.message.movements || []);
+				}
 			},
 		});
 	}
@@ -613,6 +628,7 @@
 		_mount(wrapper);
 		_populateUser(wrapper);
 		_loadData(wrapper);
+		_loadMovements(wrapper);
 	};
 
 	frappe.pages["budget-hub"].on_page_hide = function () {
