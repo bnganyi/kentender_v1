@@ -55,6 +55,7 @@ def get_budget_landing_data():
 				"allocated_sum": 0.0,
 				"reserved_sum": 0.0,
 				"committed_sum": 0.0,
+				"consumed_sum": 0.0,
 				"available_sum": 0.0,
 				"allocation_pct": 0.0,
 			},
@@ -110,6 +111,10 @@ def get_budget_landing_data():
 	)
 	committed_sum = sum(
 		flt(line_by_budget.get(b.name, {}).get("committed_amount"))
+		for b in budgets if b.get("status") in _approved_active
+	)
+	consumed_sum = sum(
+		flt(line_by_budget.get(b.name, {}).get("consumed_amount"))
 		for b in budgets if b.get("status") in _approved_active
 	)
 	available_sum = sum(
@@ -244,6 +249,7 @@ def get_budget_landing_data():
 			"allocated_sum": allocated_sum,
 			"reserved_sum": reserved_sum,
 			"committed_sum": committed_sum,
+			"consumed_sum": consumed_sum,
 			"available_sum": available_sum,
 			"allocation_pct": allocation_pct,
 		},
