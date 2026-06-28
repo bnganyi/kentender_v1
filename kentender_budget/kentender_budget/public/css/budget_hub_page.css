@@ -772,7 +772,7 @@ body.kt-bgt-shell .layout-main-section {
 }
 
 /* Hide the connector when there are no real timeline items */
-.kt-bgt-timeline:not(:has(.kt-bgt-tl-item))::before {
+.kt-bgt-timeline--empty::before {
   display: none;
 }
 
