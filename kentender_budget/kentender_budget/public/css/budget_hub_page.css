@@ -585,8 +585,9 @@ body.kt-bgt-shell .layout-main-section {
 
 .kt-bgt-table td { padding: 18px 16px; vertical-align: top; }
 /* Actions column — centred icon, minimal horizontal padding */
-.kt-bgt-table td:last-child {
-  padding: 16px 8px;
+.kt-bgt-table td:last-child,
+.kt-bgt-table th:last-child {
+  padding: 14px 8px;
   vertical-align: middle;
   text-align: center;
 }

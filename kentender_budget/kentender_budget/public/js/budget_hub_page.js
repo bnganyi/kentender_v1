@@ -249,11 +249,11 @@
           <div class="kt-bgt-table-wrap">
             <table class="kt-bgt-table">
               <colgroup>
-                <col><!-- Budget Name: takes all remaining space -->
-                <col style="width:168px"><!-- Allocation bar -->
-                <col style="width:140px"><!-- Available (KES) -->
-                <col style="width:104px"><!-- Status -->
-                <col style="width:48px"><!-- Actions -->
+                <col style="width:25%"><!-- Budget Name -->
+                <col style="width:27%"><!-- Allocation bar -->
+                <col style="width:22%"><!-- Available (KES) -->
+                <col style="width:16%"><!-- Status -->
+                <col style="width:10%"><!-- Actions -->
               </colgroup>
               <thead>
                 <tr>
@@ -261,7 +261,7 @@
                   <th>Allocation</th>
                   <th>Available (KES)</th>
                   <th>Status</th>
-                  <th>Actions</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody data-testid="kt-bgt-budget-tbody">
