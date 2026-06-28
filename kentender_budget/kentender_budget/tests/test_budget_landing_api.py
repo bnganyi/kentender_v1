@@ -65,6 +65,17 @@ class TestBudgetLandingAPI(IntegrationTestCase):
 		for row in out.get("budgets") or []:
 			self.assertGreaterEqual(flt(row["consumed_amount"]), 0.0)
 
+	def test_budget_rows_include_procuring_entity_code(self):
+		"""W2-02: each row must include procuring_entity_name and procuring_entity_code."""
+		frappe.set_user("Administrator")
+		out = get_budget_landing_data()
+		for row in out.get("budgets") or []:
+			self.assertIn("procuring_entity_name", row)
+			self.assertIn("procuring_entity_code", row)
+			# Both must be strings (empty string is fine when entity not set)
+			self.assertIsInstance(row["procuring_entity_name"], str)
+			self.assertIsInstance(row["procuring_entity_code"], str)
+
 	def test_budget_rows_committed_amount_non_negative(self):
 		"""W1-01: committed_amount must be ≥ 0 for all rows."""
 		frappe.set_user("Administrator")

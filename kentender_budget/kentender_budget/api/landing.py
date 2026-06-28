@@ -136,14 +136,16 @@ def get_budget_landing_data():
 
 	entity_names_set = {b.get("procuring_entity") for b in budgets if b.get("procuring_entity")}
 	entity_names: dict[str, str] = {}
+	entity_codes: dict[str, str] = {}
 	if entity_names_set:
 		for row in frappe.get_all(
 			"Procuring Entity",
 			filters={"name": ["in", list(entity_names_set)]},
-			fields=["name", "entity_name"],
+			fields=["name", "entity_name", "entity_code"],
 			limit=5000,
 		):
 			entity_names[row.name] = (row.entity_name or row.name or "").strip()
+			entity_codes[row.name] = (row.entity_code or "").strip()
 
 	user_ids = set()
 	for b in budgets:
@@ -205,9 +207,10 @@ def get_budget_landing_data():
 				or b.get("strategic_plan"),
 				"currency": b.currency,
 				"total_budget_amount": total,
-				"procuring_entity": b.get("procuring_entity"),
-				"procuring_entity_name": entity_names.get(b.get("procuring_entity"))
-				or b.get("procuring_entity") or "",
+			"procuring_entity": b.get("procuring_entity"),
+			"procuring_entity_name": entity_names.get(b.get("procuring_entity"))
+			or b.get("procuring_entity") or "",
+			"procuring_entity_code": entity_codes.get(b.get("procuring_entity")) or "",
 				"owner": b.get("owner"),
 				"created_by": b.get("created_by"),
 				"rejection_reason": b.get("rejection_reason"),
