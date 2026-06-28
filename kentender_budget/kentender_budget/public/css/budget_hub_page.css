@@ -558,6 +558,7 @@ body.kt-bgt-shell .layout-main-section {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
+  table-layout: fixed;
 }
 
 .kt-bgt-table thead tr {
@@ -649,6 +650,7 @@ body.kt-bgt-shell .layout-main-section {
   font-size: 14px;
   font-weight: 700;
   color: #191c1e;
+  white-space: nowrap;
 }
 
 /* Status chips */
@@ -660,6 +662,7 @@ body.kt-bgt-shell .layout-main-section {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 .kt-bgt-chip--healthy   { background: rgba(16,185,129,0.1);  color: #10B981; }

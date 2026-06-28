@@ -82,10 +82,10 @@ test('Budget Hub table row has allocation bar, KES amount, and status chip', asy
 	// W1-03: allocation bar segment (single blue bar)
 	await expect(firstRow.locator('.kt-bgt-bar-allocated')).toBeVisible();
 
-	// W1-03: available amount formatted as "KES <number>"
+	// W1-03: available amount — numeric only, no KES prefix (header says "(KES)")
 	await expect(firstRow.locator('.kt-bgt-avail-value')).toBeVisible();
 	const availText = await firstRow.locator('.kt-bgt-avail-value').textContent();
-	expect(availText?.trim()).toMatch(/^KES[\s\u00a0]/);
+	expect(availText?.trim()).toMatch(/^\d[\d,]+$/);
 
 	// Status chip present
 	await expect(firstRow.locator('.kt-bgt-chip')).toBeVisible();

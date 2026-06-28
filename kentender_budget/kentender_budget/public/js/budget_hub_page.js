@@ -248,6 +248,13 @@
           </div>
           <div class="kt-bgt-table-wrap">
             <table class="kt-bgt-table">
+              <colgroup>
+                <col><!-- Budget Name: takes all remaining space -->
+                <col style="width:172px"><!-- Allocation bar -->
+                <col style="width:148px"><!-- Available (KES) -->
+                <col style="width:108px"><!-- Status -->
+                <col style="width:52px"><!-- Actions -->
+              </colgroup>
               <thead>
                 <tr>
                   <th>Budget Name</th>
@@ -474,7 +481,7 @@
     <div class="kt-bgt-budget-name">${primaryLbl}</div>
     ${subLbl ? `<div class="kt-bgt-budget-sub">${subLbl}</div>` : ""}
   </td>
-  <td style="width:192px">
+  <td>
     <div class="kt-bgt-bar-row">
       <span class="kt-bgt-bar-pct">${allocPct}%</span>
       <div class="kt-bgt-bar-track">
@@ -485,7 +492,7 @@
       <span><span class="kt-bgt-dot" style="background:#00346f"></span>Allocated</span>
     </div>
   </td>
-  <td><span class="kt-bgt-avail-value">${_fmtKES(bud.available_amount)}</span></td>
+  <td><span class="kt-bgt-avail-value">${_fmtFull(bud.available_amount)}</span></td>
   <td><span class="kt-bgt-chip ${chip.cls}">${chip.lbl}</span></td>
   <td>
     <button class="kt-bgt-table-action" type="button" title="Open ${bud.budget_name || ""}">
