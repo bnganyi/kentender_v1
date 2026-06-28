@@ -62,24 +62,21 @@
 		return name.substring(0, 2).toUpperCase();
 	}
 
-	// ── Health chip (W1-03 client-side derivation) ───────────────────────────
-	// Approved/Active: available/total ratio.  Other statuses use doc status.
+	// ── Health chip — maps canonical server-side health_status (W2-03) ─────────
+	// Server computes: exhausted / reviewing / healthy (Approved/Active),
+	//                  submitted / draft / rejected (workflow states).
+
+	const _CHIP = {
+		healthy:   { cls: "kt-bgt-chip--healthy",   lbl: "Healthy" },
+		reviewing: { cls: "kt-bgt-chip--reviewing", lbl: "Reviewing" },
+		exhausted: { cls: "kt-bgt-chip--critical",  lbl: "Exhausted" },
+		submitted: { cls: "kt-bgt-chip--reviewing", lbl: "Reviewing" },
+		draft:     { cls: "kt-bgt-chip--draft",     lbl: "Draft" },
+		rejected:  { cls: "kt-bgt-chip--rejected",  lbl: "Rejected" },
+	};
 
 	function _deriveChip(bud) {
-		const status = bud.status || "Draft";
-		if (status === "Draft")     return { cls: "kt-bgt-chip--draft",     lbl: "Draft" };
-		if (status === "Submitted") return { cls: "kt-bgt-chip--reviewing", lbl: "Reviewing" };
-		if (status === "Rejected")  return { cls: "kt-bgt-chip--rejected",  lbl: "Rejected" };
-		// Approved / Active
-		const total = bud.total_budget_amount || 0;
-		const avail = bud.available_amount;
-		if (avail === null || avail === undefined || total <= 0) {
-			return { cls: "kt-bgt-chip--healthy", lbl: "Healthy" };
-		}
-		const ratio = avail / total;
-		if (ratio <= 0)   return { cls: "kt-bgt-chip--critical",  lbl: "Exhausted" };
-		if (ratio < 0.10) return { cls: "kt-bgt-chip--reviewing", lbl: "Reviewing" };
-		return { cls: "kt-bgt-chip--healthy", lbl: "Healthy" };
+		return _CHIP[bud.health_status] || _CHIP.draft;
 	}
 
 	// ── Static shell HTML ─────────────────────────────────────────────────────

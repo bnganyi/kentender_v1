@@ -76,6 +76,30 @@ class TestBudgetLandingAPI(IntegrationTestCase):
 			self.assertIsInstance(row["procuring_entity_name"], str)
 			self.assertIsInstance(row["procuring_entity_code"], str)
 
+	def test_health_status_uses_avail_pct_thresholds(self):
+		"""W2-03: health_status must be one of the canonical values; Approved/Active
+		rows must derive from available÷allocated ratio (<8 exhausted, 8-20 reviewing,
+		>20 healthy)."""
+		_valid = {"healthy", "reviewing", "exhausted", "submitted", "draft", "rejected"}
+		frappe.set_user("Administrator")
+		out = get_budget_landing_data()
+		for row in out.get("budgets") or []:
+			self.assertIn(row.get("health_status"), _valid,
+				f"unexpected health_status '{row.get('health_status')}'")
+			# For Approved/Active rows, verify threshold logic
+			if row.get("status") in ("Approved", "Active"):
+				avail_pct = flt(row.get("avail_pct", 100.0))
+				hs = row["health_status"]
+				if avail_pct < 8.0:
+					self.assertEqual(hs, "exhausted",
+						f"avail_pct={avail_pct:.1f}% expected exhausted, got {hs}")
+				elif avail_pct <= 20.0:
+					self.assertEqual(hs, "reviewing",
+						f"avail_pct={avail_pct:.1f}% expected reviewing, got {hs}")
+				else:
+					self.assertEqual(hs, "healthy",
+						f"avail_pct={avail_pct:.1f}% expected healthy, got {hs}")
+
 	def test_budget_rows_committed_amount_non_negative(self):
 		"""W1-01: committed_amount must be ≥ 0 for all rows."""
 		frappe.set_user("Administrator")

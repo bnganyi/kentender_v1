@@ -180,17 +180,23 @@ def get_budget_landing_data():
 		consumption_pct = (obligated / allocated_amount * 100.0) if allocated_amount else 0.0
 		consumption_pct = min(100.0, consumption_pct)
 
-		# Derive health status for Approved/Active budgets
+		# W2-03: health_status — available ÷ allocated ratio with defined thresholds.
+		# Thresholds: < 8% → exhausted, 8–20% → reviewing, > 20% → healthy.
+		# Non-Approved/Active statuses use their workflow state.
 		status = b.get("status") or "Draft"
 		if status in ("Approved", "Active"):
-			if consumption_pct >= 90:
-				health_status = "critical"
-			elif consumption_pct >= 75:
+			if allocated_amount > 0:
+				avail_pct = available_amount / allocated_amount * 100.0
+			else:
+				avail_pct = 100.0  # no lines yet → treat as fully available
+			if avail_pct < 8.0:
+				health_status = "exhausted"
+			elif avail_pct <= 20.0:
 				health_status = "reviewing"
 			else:
 				health_status = "healthy"
 		elif status == "Submitted":
-			health_status = "reviewing"
+			health_status = "submitted"
 		elif status == "Rejected":
 			health_status = "rejected"
 		else:
@@ -228,11 +234,12 @@ def get_budget_landing_data():
 				"consumed_amount": consumed_amount,
 				"available_amount": available_amount,
 				"remaining_amount": max(0.0, total - allocated_amount),
-				"allocation_pct": (allocated_amount / total * 100.0) if total else 0.0,
-				"consumption_pct": consumption_pct,
-				"committed_pct": (committed_amount / allocated_amount * 100.0) if allocated_amount else 0.0,
-				"reserved_pct": (reserved_amount / allocated_amount * 100.0) if allocated_amount else 0.0,
-				"health_status": health_status,
+			"allocation_pct": (allocated_amount / total * 100.0) if total else 0.0,
+			"consumption_pct": consumption_pct,
+			"avail_pct": (available_amount / allocated_amount * 100.0) if allocated_amount else 100.0,
+			"committed_pct": (committed_amount / allocated_amount * 100.0) if allocated_amount else 0.0,
+			"reserved_pct": (reserved_amount / allocated_amount * 100.0) if allocated_amount else 0.0,
+			"health_status": health_status,
 				"budget_line_total": budget_line_total,
 				"budget_lines_allocated": budget_lines_allocated,
 				"budget_lines_unallocated": budget_lines_unallocated,
