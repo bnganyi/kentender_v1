@@ -953,6 +953,15 @@ body.kt-bgt-shell .layout-main-section {
   gap: 32px;
 }
 
+.kt-bgt-donut-loading,
+.kt-bgt-donut-empty {
+  font-size: 13px;
+  color: #737783;
+  padding: 16px 0;
+  cursor: default;
+  user-select: none;
+}
+
 .kt-bgt-donut {
   position: relative;
   width: 128px;

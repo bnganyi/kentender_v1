@@ -339,46 +339,12 @@
       <div class="kt-bgt-analytics-grid">
 
         <!-- Funding Source Distribution -->
-        <div class="kt-bgt-analytics-card">
+        <div class="kt-bgt-analytics-card" data-testid="kt-bgt-funding-card">
           <div class="kt-bgt-analytics-card__hdr">
             <h3 class="kt-bgt-analytics-card__title">Funding Source Distribution</h3>
-            <button class="kt-bgt-analytics-card__more" type="button">
-              <span class="material-symbols-outlined">more_horiz</span>
-            </button>
           </div>
-          <div class="kt-bgt-donut-wrap">
-            <div class="kt-bgt-donut">
-              <svg viewBox="0 0 36 36">
-                <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="#e0e3e5" stroke-width="3"/>
-                <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="#00346f" stroke-width="3" stroke-dasharray="70 30" stroke-dashoffset="0"/>
-                <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="#00629d" stroke-width="3" stroke-dasharray="20 80" stroke-dashoffset="-70"/>
-                <circle cx="18" cy="18" r="15.915" fill="transparent" stroke="#F59E0B" stroke-width="3" stroke-dasharray="10 90" stroke-dashoffset="-90"/>
-              </svg>
-              <div class="kt-bgt-donut__center">
-                <span class="kt-bgt-donut__total-label">Total</span>
-                <span class="kt-bgt-donut__total-sub">FY 26/27</span>
-              </div>
-            </div>
-            <div class="kt-bgt-donut-legend">
-              <div class="kt-bgt-legend-row">
-                <div class="kt-bgt-legend-row__left">
-                  <span class="kt-bgt-dot" style="background:#00346f"></span>Exchequer
-                </div>
-                <span class="kt-bgt-legend-row__val">70%</span>
-              </div>
-              <div class="kt-bgt-legend-row">
-                <div class="kt-bgt-legend-row__left">
-                  <span class="kt-bgt-dot" style="background:#00629d"></span>External Grants
-                </div>
-                <span class="kt-bgt-legend-row__val">20%</span>
-              </div>
-              <div class="kt-bgt-legend-row">
-                <div class="kt-bgt-legend-row__left">
-                  <span class="kt-bgt-dot" style="background:#F59E0B"></span>Internal Revenue
-                </div>
-                <span class="kt-bgt-legend-row__val">10%</span>
-              </div>
-            </div>
+          <div class="kt-bgt-donut-wrap" data-testid="kt-bgt-funding-donut-wrap">
+            <div class="kt-bgt-donut-loading">Loading…</div>
           </div>
         </div>
 
@@ -599,6 +565,97 @@
 		grid.innerHTML = guardrails.map(_buildGuardrailCard).join("");
 	}
 
+	// ── Funding Source Distribution (W3-03) ──────────────────────────────────
+
+	/** Source-type → colour palette. */
+	const _FUND_COLORS = {
+		"Exchequer":    "#00346f",
+		"Donor":        "#00629d",
+		"Grant":        "#26364b",
+		"Loan":         "#6366F1",
+		"Own Revenue":  "#F59E0B",
+		"Other":        "#737783",
+		"Unclassified": "#c2c6d3",
+	};
+
+	/** Return a colour for a source type, cycling through a fallback palette. */
+	function _fundColor(sourceType, idx) {
+		if (_FUND_COLORS[sourceType]) return _FUND_COLORS[sourceType];
+		const fallback = ["#00629d","#26364b","#6366F1","#F59E0B","#737783","#c2c6d3"];
+		return fallback[idx % fallback.length];
+	}
+
+	/** Compact number formatter: 1 500 000 → "1.5M", 500 000 → "500K". */
+	function _compactKES(n) {
+		if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1).replace(/\.0$/, "") + "B";
+		if (n >= 1_000_000)     return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+		if (n >= 1_000)         return (n / 1_000).toFixed(0) + "K";
+		return n.toLocaleString();
+	}
+
+	/**
+	 * Build SVG donut from an array of segments.
+	 * r = 15.915 → circumference ≈ 100 so pct values map directly to dash lengths.
+	 * The SVG element has CSS `transform: rotate(-90deg)` which positions the start
+	 * at 12 o'clock, so dashOffset accumulates negatively from 0.
+	 */
+	function _buildDonutSVG(segments) {
+		const R = 15.915;
+		let offset = 0;
+		const circles = segments.map((s, i) => {
+			const color = _fundColor(s.source_type, i);
+			const pct   = s.pct;
+			const el = `<circle cx="18" cy="18" r="${R}" fill="transparent"
+  stroke="${color}" stroke-width="3"
+  stroke-dasharray="${pct} ${100 - pct}"
+  stroke-dashoffset="${-offset}"/>`;
+			offset += pct;
+			return el;
+		});
+		return `<svg viewBox="0 0 36 36" aria-hidden="true">
+  <circle cx="18" cy="18" r="${R}" fill="transparent" stroke="#e0e3e5" stroke-width="3"/>
+  ${circles.join("\n  ")}
+</svg>`;
+	}
+
+	/** Build legend rows from segments. */
+	function _buildDonutLegend(segments) {
+		return segments.map((s, i) => {
+			const color = _fundColor(s.source_type, i);
+			return `<div class="kt-bgt-legend-row">
+  <div class="kt-bgt-legend-row__left">
+    <span class="kt-bgt-dot" style="background:${color}"></span>${s.source_type}
+  </div>
+  <span class="kt-bgt-legend-row__val">${s.pct}%</span>
+</div>`;
+		}).join("");
+	}
+
+	/** Replace the donut-wrap loading state with live SVG + legend. */
+	function _populateFundingDonut(wrapper, data) {
+		const wrap = wrapper.querySelector("[data-testid='kt-bgt-funding-donut-wrap']");
+		if (!wrap) return;
+
+		const { segments = [], total = 0 } = data;
+
+		if (!segments.length) {
+			wrap.innerHTML = `<p class="kt-bgt-donut-empty">No active budget lines.</p>`;
+			return;
+		}
+
+		wrap.innerHTML = `
+<div class="kt-bgt-donut" data-testid="kt-bgt-funding-donut">
+  ${_buildDonutSVG(segments)}
+  <div class="kt-bgt-donut__center">
+    <span class="kt-bgt-donut__total-label">${_compactKES(total)}</span>
+    <span class="kt-bgt-donut__total-sub">KES total</span>
+  </div>
+</div>
+<div class="kt-bgt-donut-legend" data-testid="kt-bgt-funding-legend">
+  ${_buildDonutLegend(segments)}
+</div>`;
+	}
+
 	// ── Data loaders ──────────────────────────────────────────────────────────
 
 	function _loadData(wrapper) {
@@ -648,6 +705,19 @@
 		});
 	}
 
+	/** W3-03: Load funding source distribution; renders live SVG donut. */
+	function _loadFundingSources(wrapper) {
+		frappe.call({
+			method: "kentender_budget.api.funding_sources.get_funding_source_distribution",
+			freeze: false,
+			callback: function (r) {
+				if (r && r.message) {
+					_populateFundingDonut(wrapper, r.message);
+				}
+			},
+		});
+	}
+
 	// ── Mount ─────────────────────────────────────────────────────────────────
 	// wrapper is the raw #page-budget-hub div (page_js page)
 	function _mount(wrapper) {
@@ -672,6 +742,7 @@
 		_loadData(wrapper);
 		_loadMovements(wrapper);
 		_loadGuardrails(wrapper);
+		_loadFundingSources(wrapper);
 	};
 
 	frappe.pages["budget-hub"].on_page_hide = function () {
