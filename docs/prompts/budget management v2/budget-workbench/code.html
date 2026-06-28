@@ -1,0 +1,314 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Budget Workbench | KenTender</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=Manrope:wght@600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline-variant": "#c2c6d3",
+                    "surface-bright": "#f7f9fb",
+                    "status-committed": "#6366F1",
+                    "tertiary-fixed": "#d3e4fe",
+                    "surface-container-low": "#f2f4f6",
+                    "on-error": "#ffffff",
+                    "surface": "#f7f9fb",
+                    "on-secondary-fixed-variant": "#004a77",
+                    "surface-dim": "#d8dadc",
+                    "data-block-bg": "#FFFFFF",
+                    "tertiary-fixed-dim": "#b7c8e1",
+                    "on-primary-fixed-variant": "#00458f",
+                    "primary-fixed": "#d7e2ff",
+                    "inverse-primary": "#abc7ff",
+                    "on-tertiary-container": "#adbed7",
+                    "on-secondary-fixed": "#001d33",
+                    "on-error-container": "#93000a",
+                    "on-secondary": "#ffffff",
+                    "surface-container-highest": "#e0e3e5",
+                    "surface-container-high": "#e6e8ea",
+                    "on-background": "#191c1e",
+                    "error-container": "#ffdad6",
+                    "status-exhausted": "#EF4444",
+                    "inverse-on-surface": "#eff1f3",
+                    "status-available": "#10B981",
+                    "on-secondary-container": "#003558",
+                    "secondary-fixed": "#cfe5ff",
+                    "tertiary-container": "#3d4d62",
+                    "on-primary": "#ffffff",
+                    "secondary-container": "#00a2fd",
+                    "secondary": "#00629d",
+                    "on-primary-fixed": "#001b3f",
+                    "on-primary-container": "#9bbdff",
+                    "border-subtle": "#E2E8F0",
+                    "on-tertiary-fixed": "#0b1c30",
+                    "surface-container": "#eceef0",
+                    "surface-tint": "#255dad",
+                    "error": "#ba1a1a",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-fixed-dim": "#abc7ff",
+                    "primary": "#00346f",
+                    "status-reserved": "#F59E0B",
+                    "on-tertiary": "#ffffff",
+                    "tertiary": "#26364b",
+                    "primary-container": "#004a99",
+                    "on-surface": "#191c1e",
+                    "background": "#f7f9fb",
+                    "outline": "#737783",
+                    "on-tertiary-fixed-variant": "#38485d",
+                    "surface-variant": "#e0e3e5",
+                    "inverse-surface": "#2d3133",
+                    "secondary-fixed-dim": "#98cbff",
+                    "on-surface-variant": "#424751"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "section-gap": "24px",
+                    "container-padding": "16px",
+                    "unit": "4px",
+                    "gutter": "12px",
+                    "card-padding": "20px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Manrope"],
+                    "headline-lg": ["Manrope"],
+                    "data-mono": ["JetBrains Mono"],
+                    "body-md": ["Inter"],
+                    "headline-sm": ["Manrope"],
+                    "body-lg": ["Inter"],
+                    "label-caps": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+                    "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { @apply bg-background text-on-surface font-body-md text-body-md; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-outline-variant rounded-full; }
+        .budget-card-active { @apply ring-2 ring-primary bg-primary/5 border-primary; }
+    </style>
+</head>
+<body class="overflow-hidden h-screen flex">
+<!-- Sidebar Navigation -->
+<aside class="h-full w-64 bg-surface-container-low border-r border-border-subtle flex flex-col py-6 px-4 shrink-0">
+<div class="mb-10 px-2">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">KenTender</h1>
+<p class="font-label-caps text-label-caps text-on-surface-variant opacity-70">eProcurement Suite</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container text-on-secondary-container rounded-lg font-bold scale-[0.98]" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-label-caps text-label-caps">Budget</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span>
+<span class="font-label-caps text-label-caps">Demand</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="event_note">event_note</span>
+<span class="font-label-caps text-label-caps">Planning</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="query_stats">query_stats</span>
+<span class="font-label-caps text-label-caps">Strategy</span>
+</a>
+</nav>
+<div class="mt-auto space-y-1 pt-6 border-t border-border-subtle">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-caps text-label-caps">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="font-label-caps text-label-caps">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Wrapper -->
+<div class="flex-1 flex flex-col min-w-0">
+<!-- Top Navigation -->
+<header class="h-16 bg-surface border-b border-border-subtle flex justify-between items-center px-container-padding shrink-0"><div class="flex items-center flex-1 flex-shrink-0 gap-4"><h2 class="font-headline-sm text-headline-sm font-bold text-primary whitespace-nowrap">Budget Management</h2><div class="flex items-center bg-surface-container-low rounded-lg px-3 py-1.5 w-full max-w-md border border-outline-variant/30"><span class="material-symbols-outlined text-on-surface-variant text-[20px] mr-2">search</span><input class="bg-transparent border-none focus:ring-0 text-body-md w-full p-0 h-8" placeholder="Search budgets, demands..." type="text"></div></div><div class="flex items-center gap-1.5 ml-4"><button class="p-2 rounded-full hover:bg-surface-container-low transition-colors text-on-surface-variant relative"><span class="material-symbols-outlined">notifications</span><span class="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-error rounded-full"></span></button><button class="p-2 rounded-full hover:bg-surface-container-low transition-colors text-on-surface-variant"><span class="material-symbols-outlined">history</span></button><button class="p-2 rounded-full hover:bg-surface-container-low transition-colors text-on-surface-variant"><span class="material-symbols-outlined">help</span></button><div class="flex items-center gap-3 ml-2 pl-4 border-l border-border-subtle cursor-pointer group"><div class="text-right hidden lg:block"><p class="font-bold text-sm text-primary leading-none">Sarah Wambui</p><p class="text-[10px] text-on-surface-variant font-label-caps mt-0.5 uppercase tracking-wider">Senior Budget Officer</p></div><div class="w-8 h-8 rounded-full border border-primary-container overflow-hidden"><img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBISo_7wkHNiVH1sIsNwE3L0LJUwyU2DjH0n1sREpEieoVmlmWWpR9qFMHeV6fDdtZVGlSjronActdY9cCmLpHP8iOX4Mi7doMnc9NTsAvbGQ8S7BXt4J3PZ32fAX_p00rg8oFMSlp5wYE8g8UlQnEABCdGFg1aT4py5LOOqZ3oqkZFITF3erHTgxzeWFwd-zwrIXKD8ZRAOOWIDOcjm5CvnGDGdm6g4lKll4f0ZYCz54PJwGV6GJ7G4urlP3_-x6xSuTgSU11Cg2w"></div></div></div></header>
+<!-- Scrollable Content Area -->
+<main class="flex-1 overflow-hidden flex flex-col bg-surface">
+<!-- Zone 1: Top Zone (Budget Identity & Financial Summary) -->
+<section class="bg-surface-container-lowest border-b border-border-subtle p-8 shrink-0">
+<div class="flex justify-between items-start mb-8">
+<div>
+<div class="flex items-center gap-3 mb-1">
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Ministry of Health FY 2026/2027 Budget</h2>
+<span class="px-2 py-0.5 rounded-full bg-status-available/10 text-status-available text-[11px] font-bold uppercase tracking-wider flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-status-available"></span> Active
+                        </span>
+</div>
+<p class="text-body-md text-on-surface-variant">Procuring Entity: <span class="font-semibold text-on-surface">Ministry of Health</span> • Fiscal Year: <span class="font-semibold text-on-surface">2026/2027</span> • Currency: <span class="font-semibold text-on-surface">KES</span></p>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 border border-border-subtle rounded-lg text-body-md font-bold hover:bg-surface-container-low flex items-center gap-2 transition-all">
+<span class="material-symbols-outlined text-[20px]" data-icon="edit_square">edit_square</span> Revise Budget
+                    </button>
+<button class="px-4 py-2 border border-border-subtle rounded-lg text-body-md font-bold hover:bg-surface-container-low flex items-center gap-2 transition-all">
+<span class="material-symbols-outlined text-[20px]" data-icon="cancel">cancel</span> Close Budget
+                    </button>
+<button class="px-4 py-2 bg-primary text-on-primary rounded-lg text-body-md font-bold shadow-md hover:shadow-lg flex items-center gap-2 transition-all">
+<span class="material-symbols-outlined text-[20px]" data-icon="visibility">visibility</span> View Evidence
+                    </button>
+</div>
+</div>
+<!-- Financial Summary Cards -->
+<div class="grid grid-cols-4 gap-6">
+<div class="bg-surface border border-border-subtle p-5 rounded-xl">
+<p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Approved Budget</p>
+<p class="font-data-mono text-headline-md text-on-surface">KES 250,000,000</p>
+</div>
+<div class="bg-surface border border-border-subtle p-5 rounded-xl">
+<p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Available Balance</p>
+<p class="font-data-mono text-headline-md text-status-available">KES 72,000,000</p>
+</div>
+<div class="bg-surface border border-border-subtle p-5 rounded-xl">
+<p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Reserved Amount</p>
+<p class="font-data-mono text-headline-md text-status-reserved">KES 98,000,000</p>
+</div>
+<div class="bg-surface border border-border-subtle p-5 rounded-xl">
+<p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Committed Amount</p>
+<p class="font-data-mono text-headline-md text-status-committed">KES 80,000,000</p>
+</div>
+</div>
+</section>
+<!-- Lower Two Zones Container -->
+<div class="flex-1 flex overflow-hidden">
+<!-- Zone 2: Middle-Left Zone (Budget Lines Section) -->
+<section class="flex-1 flex flex-col border-r border-border-subtle bg-surface-container-lowest">
+<!-- Toolbar -->
+<div class="p-6 border-b border-border-subtle flex items-center justify-between gap-4"><div class="flex items-center gap-3"><h3 class="font-headline-sm text-headline-sm text-primary">Budget Lines</h3></div><div class="flex gap-2"><button class="px-4 py-2 bg-surface-container-high border border-border-subtle rounded-lg text-body-md font-bold flex items-center gap-2 hover:bg-surface-container-highest transition-colors"><span class="material-symbols-outlined text-[18px]">filter_list</span> All Lines</button><button class="px-4 py-2 bg-primary text-on-primary rounded-lg text-body-md font-bold hover:opacity-90 flex items-center gap-2 transition-all shadow-sm"><span class="material-symbols-outlined text-[18px]">add</span> Add Budget Line</button></div></div>
+<!-- Budget Line Cards List -->
+<div class="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+<!-- Card 1 (Active/Selected) -->
+<div class="border border-primary bg-primary/5 rounded-xl p-5 shadow-sm transition-all cursor-pointer ring-2 ring-primary"><div class="flex justify-between items-start mb-3"><div><h4 class="font-bold text-lg text-primary">Health Infrastructure Renovation</h4><div class="flex flex-wrap gap-x-4 gap-y-1 mt-1"><p class="text-[11px] text-on-surface-variant"><span class="font-bold uppercase text-[9px] tracking-tighter">Dept:</span> Health Services</p><p class="text-[11px] text-on-surface-variant"><span class="font-bold uppercase text-[9px] tracking-tighter">Type:</span> Works • Exchequer</p></div><p class="text-[11px] text-on-surface-variant mt-1">Linked to Strategic Objective: <span class="text-on-surface font-medium">Improve hospital assets</span></p></div><span class="px-2 py-0.5 rounded bg-status-available text-on-primary text-[10px] font-bold uppercase tracking-wider">Active</span></div><div class="grid grid-cols-5 gap-2 mb-4 bg-white/50 p-3 rounded-lg border border-border-subtle"><div class="text-center border-r border-border-subtle px-1"><p class="text-[9px] uppercase font-bold text-on-surface-variant">Approved</p><p class="font-data-mono text-[13px]">100,000,000</p></div><div class="text-center border-r border-border-subtle px-1"><p class="text-[9px] uppercase font-bold text-on-surface-variant">Reserved</p><p class="font-data-mono text-[13px] text-status-reserved">98,000,000</p></div><div class="text-center border-r border-border-subtle px-1"><p class="text-[9px] uppercase font-bold text-on-surface-variant">Committed</p><p class="font-data-mono text-[13px]">0</p></div><div class="text-center border-r border-border-subtle px-1"><p class="text-[9px] uppercase font-bold text-on-surface-variant">Actual</p><p class="font-data-mono text-[13px]">0</p></div><div class="text-center px-1"><p class="text-[9px] uppercase font-bold text-on-surface-variant">Available</p><p class="font-data-mono text-[13px] text-status-available">2,000,000</p></div></div><div class="flex gap-2"><button class="text-[12px] font-bold text-primary px-3 py-1.5 border border-primary/20 rounded-md hover:bg-primary/10">Open Line</button><button class="text-[12px] font-bold text-primary px-3 py-1.5 border border-primary/20 rounded-md hover:bg-primary/10">Reserve Funds</button><button class="text-[12px] font-bold text-primary px-3 py-1.5 bg-primary/10 rounded-md">View Linked Artefacts</button></div></div>
+<!-- Card 2 -->
+<div class="border border-border-subtle bg-surface-container-low rounded-xl p-5 hover:border-outline-variant transition-all cursor-pointer"><div class="flex justify-between items-start mb-3"><div><h4 class="font-bold text-lg text-on-surface">Medical Equipment Supply</h4><div class="flex flex-wrap gap-x-4 gap-y-1 mt-1"><p class="text-[11px] text-on-surface-variant"><span class="font-bold uppercase text-[9px] tracking-tighter">Dept:</span> Clinical Services</p><p class="text-[11px] text-on-surface-variant"><span class="font-bold uppercase text-[9px] tracking-tighter">Type:</span> Goods • Exchequer</p></div><p class="text-[11px] text-on-surface-variant mt-1">Linked to Strategic Objective: <span class="text-on-surface font-medium">Improve clinical capacity</span></p></div><span class="px-2 py-0.5 rounded bg-status-committed text-on-primary text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">Fully committed</span></div><div class="grid grid-cols-5 gap-2 mb-4 bg-surface-container-lowest/50 p-3 rounded-lg border border-border-subtle"><div class="text-center border-r border-border-subtle px-1"><p class="text-[9px] uppercase font-bold text-on-surface-variant">Approved</p><p class="font-data-mono text-[13px]">80,000,000</p></div><div class="text-center border-r border-border-subtle px-1"><p class="text-[9px] uppercase font-bold text-on-surface-variant">Reserved</p><p class="font-data-mono text-[13px]">0</p></div><div class="text-center border-r border-border-subtle px-1"><p class="text-[9px] uppercase font-bold text-on-surface-variant">Committed</p><p class="font-data-mono text-[13px] text-status-committed">80,000,000</p></div><div class="text-center border-r border-border-subtle px-1"><p class="text-[9px] uppercase font-bold text-on-surface-variant">Actual</p><p class="font-data-mono text-[13px]">25,000,000</p></div><div class="text-center px-1"><p class="text-[9px] uppercase font-bold text-on-surface-variant">Available</p><p class="font-data-mono text-[13px]">0</p></div></div><div class="flex gap-2"><button class="text-[12px] font-bold text-on-surface-variant px-3 py-1.5 border border-border-subtle rounded-md hover:bg-surface-container-high">Open Line</button><button class="text-[12px] font-bold text-on-surface-variant px-3 py-1.5 border border-border-subtle rounded-md hover:bg-surface-container-high">View Linked Artefacts</button></div></div>
+</div>
+</section>
+<!-- Zone 3: Right Pane Zone (Associated Artefacts) -->
+<section class="w-96 bg-surface flex flex-col border-l border-border-subtle shrink-0">
+<div class="p-6 border-b border-border-subtle flex items-center justify-between bg-surface-container-low bg-surface-bright">
+<h3 class="font-headline-sm text-headline-sm">Associated Artefacts</h3>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="close">close</span>
+</div>
+<div class="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+<!-- Selected Line Context -->
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Budget Line</p>
+<p class="font-bold text-on-surface">Health Infrastructure Renovation</p>
+</div>
+<!-- Strategy -->
+<div>
+<div class="flex items-center justify-between mb-2">
+<p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Strategy</p>
+<button class="text-[11px] font-bold text-primary flex items-center gap-1">Open Strategy <span class="material-symbols-outlined text-[14px]" data-icon="open_in_new">open_in_new</span></button>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded-lg border border-border-subtle shadow-sm">
+<p class="font-semibold text-body-md">Health Infrastructure Improvement</p>
+<p class="text-[12px] text-on-surface-variant mt-1 leading-relaxed">Objective: Improve county hospital infrastructure to meet Level 5 standards.</p>
+</div>
+</div>
+<!-- Demands -->
+<div>
+<div class="flex items-center justify-between mb-2">
+<p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Linked Demands (3)</p>
+<button class="text-[11px] font-bold text-primary">View all</button>
+</div>
+<div class="space-y-2">
+<div class="p-3 bg-surface-container-lowest rounded-lg border border-border-subtle shadow-sm">
+<p class="text-[13px] font-bold">1. District Hospital Renovation Works</p>
+<div class="flex items-center justify-between mt-2">
+<span class="text-[11px] px-1.5 py-0.5 bg-status-reserved/10 text-status-reserved rounded">Budget reserved</span>
+<span class="text-[12px] font-data-mono">98,000,000</span>
+</div>
+<button class="w-full mt-3 py-1.5 border border-border-subtle text-[11px] font-bold rounded hover:bg-surface-container-low">Open Demand</button>
+</div>
+</div>
+</div>
+<!-- Packages -->
+<div>
+<div class="flex items-center justify-between mb-2">
+<p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Linked Packages (2)</p>
+<button class="text-[11px] font-bold text-primary">View packages</button>
+</div>
+<div class="space-y-2">
+<div class="p-3 bg-surface-container-lowest rounded-lg border border-border-subtle shadow-sm">
+<p class="text-[13px] font-bold">1. District Hospital Renovation Works</p>
+<div class="flex items-center justify-between mt-2">
+<span class="text-[11px] px-1.5 py-0.5 bg-status-available/10 text-status-available rounded">Ready to Release</span>
+<span class="text-[12px] font-data-mono">98,000,000</span>
+</div>
+<button class="w-full mt-3 py-1.5 border border-border-subtle text-[11px] font-bold rounded hover:bg-surface-container-low">Open Package</button>
+</div>
+</div>
+</div>
+<!-- Tenders & Contracts (Empty States) -->
+<div class="grid grid-cols-2 gap-4">
+<div>
+<p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">Tenders</p>
+<p class="text-[12px] italic text-on-surface-variant">None yet</p>
+</div>
+<div>
+<p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-2">Contracts</p>
+<p class="text-[12px] italic text-on-surface-variant">None yet</p>
+</div>
+</div>
+<!-- Budget Movements -->
+<div>
+<p class="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest mb-3">Budget Movements</p>
+<div class="space-y-4 relative before:content-[''] before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-0.5 before:bg-border-subtle">
+<div class="relative pl-8">
+<div class="absolute left-0 top-1 w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center">
+<div class="w-2 h-2 bg-primary rounded-full"></div>
+</div>
+<p class="text-[12px] font-bold">KES 100,000,000 allocated</p>
+<p class="text-[11px] text-on-surface-variant">Initial budget approval • Jul 01, 2026</p>
+</div>
+<div class="relative pl-8">
+<div class="absolute left-0 top-1 w-6 h-6 bg-status-reserved/10 rounded-full flex items-center justify-center">
+<div class="w-2 h-2 bg-status-reserved rounded-full"></div>
+</div>
+<p class="text-[12px] font-bold">KES 98,000,000 reserved</p>
+<p class="text-[11px] text-on-surface-variant">Reserved for District Hospital Renovation • Aug 14, 2026</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+<script>
+    // Micro-interactions and UI simulation
+    document.querySelectorAll('button, .table-row-hover, .border-border-subtle').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.classList.add('scale-[0.995]');
+            setTimeout(() => this.classList.remove('scale-[0.995]'), 100);
+        });
+    });
+</script>
+</body></html>

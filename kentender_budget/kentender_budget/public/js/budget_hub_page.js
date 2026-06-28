@@ -496,6 +496,15 @@
 		}
 		tbody.innerHTML = budgets.map(_buildBudgetRow).join("");
 
+		// Navigate to workbench when the action button is clicked
+		tbody.addEventListener("click", function (e) {
+			const btn = e.target.closest(".kt-bgt-table-action");
+			if (!btn) return;
+			const row = btn.closest("tr[data-budget-name]");
+			if (!row) return;
+			frappe.set_route("budget-workbench", row.dataset.budgetName);
+		});
+
 		// Entity filter dropdown — show only if procuring_entity data exists
 		const filterWrap = wrapper.querySelector("[data-testid='kt-bgt-entity-filter-wrap']");
 		const select     = wrapper.querySelector("[data-testid='kt-bgt-entity-filter']");
@@ -833,9 +842,13 @@
 
 	frappe.pages["budget-hub"].on_page_show = function (wrapper) {
 		document.body.classList.add("kt-bgt-shell");
-		if (frappe.app && frappe.app.sidebar) {
-			frappe.app.sidebar.setup("Budget Management");
-		}
+		// Defer sidebar setup to next tick so Frappe's own reset (for non-workspace pages)
+		// completes first, then we restore the correct workspace navigation.
+		setTimeout(function () {
+			if (frappe.app && frappe.app.sidebar && typeof frappe.app.sidebar.setup === "function") {
+				frappe.app.sidebar.setup("Budget Management");
+			}
+		}, 0);
 		_mount(wrapper);
 		_populateUser(wrapper);
 		_loadData(wrapper);

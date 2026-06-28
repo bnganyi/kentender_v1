@@ -101,6 +101,10 @@ def _get_builder_payload(budget_name: str, lines_filter: str = "active"):
 			"rejection_reason",
 			"rejected_by",
 			"rejected_at",
+			"procuring_entity",
+			"fiscal_year",
+			"closing_date",
+			"effective_date",
 		],
 		as_dict=True,
 	)
@@ -134,6 +138,9 @@ def _get_builder_payload(budget_name: str, lines_filter: str = "active"):
 			"output_indicator",
 			"performance_target",
 			"notes",
+			"department",
+			"economic_classification",
+			"line_status",
 		],
 		order_by="budget_line_code asc, modified asc",
 		limit=5000,
@@ -241,6 +248,9 @@ def _get_builder_payload(budget_name: str, lines_filter: str = "active"):
 			"performance_target_label": target_labels.get(row.performance_target, row.performance_target),
 			"performance_target_code": target_codes.get(row.performance_target, ""),
 			"notes": row.notes or "",
+			"department": row.get("department") or "",
+			"economic_classification": row.get("economic_classification") or "",
+			"line_status": row.get("line_status") or "",
 		}
 		row_dict["can_remove"] = _line_can_soft_remove(budget_status, row_dict, demand_n, active_res)
 		row_dict["can_hard_delete"] = _line_can_hard_delete(budget_status, row_dict, demand_n, active_res, total_res)
@@ -262,6 +272,7 @@ def _get_builder_payload(budget_name: str, lines_filter: str = "active"):
 	total_budget = flt(budget.total_budget_amount)
 	allocated_sum = sum(flt(r.get("amount_allocated")) for r in all_active)
 	reserved_sum = sum(flt(r.get("amount_reserved")) for r in all_active)
+	committed_sum = sum(flt(r.get("amount_committed")) for r in all_active)
 	available_sum = sum(flt(r.get("amount_available")) for r in all_active)
 	line_total_active = len(all_active)
 	lines_allocated_active = sum(1 for r in all_active if flt(r.get("amount_allocated")) > 0)
@@ -286,12 +297,17 @@ def _get_builder_payload(budget_name: str, lines_filter: str = "active"):
 			"rejection_reason": budget.get("rejection_reason"),
 			"rejected_by": budget.get("rejected_by"),
 			"rejected_at": budget.get("rejected_at"),
+			"procuring_entity": budget.get("procuring_entity"),
+			"fiscal_year": budget.get("fiscal_year"),
+			"closing_date": budget.get("closing_date"),
+			"effective_date": budget.get("effective_date"),
 		},
 		"totals": {
 			"total_budget_amount": total_budget,
 			"allocated_sum": allocated_sum,
 			"remaining_amount": remaining_amount,
 			"reserved_sum": reserved_sum,
+			"committed_sum": committed_sum,
 			"available_sum": available_sum,
 			"line_total": line_total_active,
 			"lines_allocated": lines_allocated_active,
