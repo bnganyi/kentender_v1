@@ -355,29 +355,12 @@
         </div>
 
         <!-- Consumption Velocity -->
-        <div class="kt-bgt-analytics-card">
+        <div class="kt-bgt-analytics-card" data-testid="kt-bgt-velocity-card">
           <div class="kt-bgt-analytics-card__hdr">
             <h3 class="kt-bgt-analytics-card__title">Consumption Velocity</h3>
-            <button class="kt-bgt-analytics-card__more" type="button">
-              <span class="material-symbols-outlined">more_horiz</span>
-            </button>
           </div>
-          <div class="kt-bgt-bar-chart">
-            <div class="kt-bgt-bar-chart__bars">
-              <div class="kt-bgt-bar-chart__bar" style="height:40%;background:rgba(0,52,111,0.2)"></div>
-              <div class="kt-bgt-bar-chart__bar" style="height:55%;background:rgba(0,52,111,0.3)"></div>
-              <div class="kt-bgt-bar-chart__bar" style="height:45%;background:rgba(0,52,111,0.4)"></div>
-              <div class="kt-bgt-bar-chart__bar" style="height:70%;background:rgba(0,52,111,0.5)"></div>
-              <div class="kt-bgt-bar-chart__bar" style="height:65%;background:rgba(0,52,111,0.6)"></div>
-              <div class="kt-bgt-bar-chart__bar" style="height:85%;background:rgba(0,52,111,0.8)"></div>
-              <div class="kt-bgt-bar-chart__bar" style="height:95%;background:#00346f"></div>
-            </div>
-            <div class="kt-bgt-bar-chart__labels">
-              <span>Jul</span><span>Aug</span><span>Sep</span>
-              <span>Oct</span><span>Nov</span><span>Dec</span>
-              <span>Jan</span>
-            </div>
-            <p class="kt-bgt-bar-chart__note">Spending velocity increased by 18% in Q3 due to infrastructure awards.</p>
+          <div class="kt-bgt-bar-chart" data-testid="kt-bgt-velocity-chart">
+            <div class="kt-bgt-velocity-loading">Loading velocity…</div>
           </div>
         </div>
 
@@ -702,6 +685,64 @@
 </div>`;
 	}
 
+	// ── Consumption Velocity (W3-07) ─────────────────────────────────────────
+
+	/**
+	 * Build the bar chart HTML from velocity API response.
+	 * Bars are coloured from light → dark blue (oldest → newest), with the
+	 * last bar always rendered in full #00346f to match the design.
+	 */
+	function _populateVelocity(wrapper, data) {
+		const chart = wrapper.querySelector("[data-testid='kt-bgt-velocity-chart']");
+		if (!chart) return;
+
+		const { months = [], trend_note = "", data_source = "none" } = data;
+
+		if (!months.length || data_source === "none") {
+			chart.innerHTML = `
+<div class="kt-bgt-bar-chart__bars" data-testid="kt-bgt-velocity-bars">
+  ${Array(7).fill(0).map(() =>
+    `<div class="kt-bgt-bar-chart__bar" style="height:4%"></div>`
+  ).join("")}
+</div>
+<div class="kt-bgt-bar-chart__labels" data-testid="kt-bgt-velocity-labels">
+  ${Array(7).fill("").map((_, i) => {
+    const d = new Date(); d.setMonth(d.getMonth() - (6 - i));
+    return `<span>${d.toLocaleString("default",{month:"short"}).toUpperCase()}</span>`;
+  }).join("")}
+</div>
+<p class="kt-bgt-bar-chart__note" data-testid="kt-bgt-velocity-note"
+   style="cursor:default;user-select:none">
+  No reservation activity recorded yet.
+</p>`;
+			return;
+		}
+
+		const last = months.length - 1;
+		// Colour ramp: rgba opacity scales with position
+		const bars = months.map((m, i) => {
+			const isLast  = i === last;
+			const opacity = isLast ? 1 : 0.2 + (i / last) * 0.6;
+			const bg = isLast ? "#00346f" : `rgba(0,52,111,${opacity.toFixed(2)})`;
+			const minH = 4; // minimum visible height even for 0-amount bars
+			const h = Math.max(minH, m.pct);
+			return `<div class="kt-bgt-bar-chart__bar"
+  style="height:${h}%;background:${bg}"
+  title="${m.label} ${m.year}: KES ${m.amount.toLocaleString()}"></div>`;
+		}).join("");
+
+		const labels = months.map((m, i) => {
+			const cls = i === last ? "" : "";
+			return `<span>${m.label}</span>`;
+		}).join("");
+
+		chart.innerHTML = `
+<div class="kt-bgt-bar-chart__bars" data-testid="kt-bgt-velocity-bars">${bars}</div>
+<div class="kt-bgt-bar-chart__labels" data-testid="kt-bgt-velocity-labels">${labels}</div>
+<p class="kt-bgt-bar-chart__note" data-testid="kt-bgt-velocity-note"
+   style="cursor:default;user-select:none">${trend_note}</p>`;
+	}
+
 	// ── Data loaders ──────────────────────────────────────────────────────────
 
 	function _loadData(wrapper) {
@@ -764,7 +805,19 @@
 		});
 	}
 
-	// ── Mount ─────────────────────────────────────────────────────────────────
+	/** W3-07: Load consumption velocity; renders live bar chart. */
+	function _loadVelocity(wrapper) {
+		frappe.call({
+			method: "kentender_budget.api.velocity.get_consumption_velocity",
+			args: { months: 7 },
+			freeze: false,
+			callback: function (r) {
+				if (r && r.message) {
+					_populateVelocity(wrapper, r.message);
+				}
+			},
+		});
+	}
 	// wrapper is the raw #page-budget-hub div (page_js page)
 	function _mount(wrapper) {
 		_ensureFonts();
@@ -789,6 +842,7 @@
 		_loadMovements(wrapper);
 		_loadGuardrails(wrapper);
 		_loadFundingSources(wrapper);
+		_loadVelocity(wrapper);
 	};
 
 	frappe.pages["budget-hub"].on_page_hide = function () {

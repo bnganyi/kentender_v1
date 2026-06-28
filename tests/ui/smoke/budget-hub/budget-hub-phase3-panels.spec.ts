@@ -205,4 +205,36 @@ test.describe('Budget Hub — Phase 3 panels (W3-06)', () => {
 			await expect(badge).toHaveClass(/kt-bgt-alignment-badge--poor/);
 		}
 	});
+
+	test('Consumption Velocity chart renders bars and a trend note (W3-07)', async ({ page }) => {
+		await loginAsAdministrator(page);
+		await openBudgetHub(page);
+
+		const chart = page.getByTestId('kt-bgt-velocity-chart');
+		await expect(chart).toBeVisible({ timeout: 15_000 });
+
+		// Wait for loading placeholder to be replaced
+		await page.waitForFunction(
+			() => document.querySelector('.kt-bgt-velocity-loading') === null,
+			undefined,
+			{ timeout: 15_000 },
+		);
+
+		// Bars container must be present with 7 bar divs
+		const barsWrap = page.getByTestId('kt-bgt-velocity-bars');
+		await expect(barsWrap).toBeVisible();
+		const bars = barsWrap.locator('.kt-bgt-bar-chart__bar');
+		expect(await bars.count()).toBe(7);
+
+		// Labels must be present with 7 labels
+		const labels = page.getByTestId('kt-bgt-velocity-labels');
+		await expect(labels).toBeVisible();
+		expect(await labels.locator('span').count()).toBe(7);
+
+		// Trend note must be a non-empty string
+		const note = page.getByTestId('kt-bgt-velocity-note');
+		await expect(note).toBeVisible();
+		const noteText = (await note.textContent()) ?? '';
+		expect(noteText.trim().length).toBeGreaterThan(0);
+	});
 });

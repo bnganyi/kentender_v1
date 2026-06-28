@@ -1041,6 +1041,14 @@ body.kt-bgt-shell .layout-main-section {
   gap: 16px;
 }
 
+.kt-bgt-velocity-loading {
+  font-size: 13px;
+  color: #737783;
+  padding: 16px 0;
+  cursor: default;
+  user-select: none;
+}
+
 .kt-bgt-bar-chart__bars {
   display: flex;
   justify-content: space-between;
