@@ -771,6 +771,11 @@ body.kt-bgt-shell .layout-main-section {
   background: #e6e8ea;
 }
 
+/* Hide the connector when there are no real timeline items */
+.kt-bgt-timeline:not(:has(.kt-bgt-tl-item))::before {
+  display: none;
+}
+
 .kt-bgt-tl-item {
   display: flex;
   gap: 12px;
