@@ -789,6 +789,8 @@ body.kt-bgt-shell .layout-main-section {
   color: var(--kt-bgt-muted, #737783);
   font-size: 13px;
   padding: 12px 0;
+  cursor: default;
+  user-select: none;
 }
 .kt-bgt-tl-loading .material-symbols-outlined,
 .kt-bgt-tl-empty .material-symbols-outlined {
