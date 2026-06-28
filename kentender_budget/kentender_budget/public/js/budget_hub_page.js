@@ -325,10 +325,13 @@
             <div class="kt-bgt-alignment-card__content">
               <h4 class="kt-bgt-alignment-card__label">Strategic Alignment Score</h4>
               <div class="kt-bgt-alignment-card__score-row">
-                <span class="kt-bgt-alignment-card__score">94%</span>
-                <span class="kt-bgt-alignment-card__badge">Optimal</span>
+                <span class="kt-bgt-alignment-card__score kt-bgt-kpi--loading"
+                      data-testid="kt-bgt-alignment-score">—</span>
+                <span class="kt-bgt-alignment-card__badge"
+                      data-testid="kt-bgt-alignment-badge"></span>
               </div>
-              <p class="kt-bgt-alignment-card__sub">All active spending correlates with Vision 2030 objectives.</p>
+              <p class="kt-bgt-alignment-card__sub"
+                 data-testid="kt-bgt-alignment-sub">Checking alignment…</p>
             </div>
           </div>
         </div>
@@ -410,6 +413,31 @@
 		// show a neutral dash until convert_to_commitment flows are active in UI.
 		set("kt-bgt-kpi-committed", "\u2013");
 		set("kt-bgt-kpi-pending",   String(portfolio.pending_approval_count || 0));
+
+		// W3-04: Strategic Alignment Score
+		const pct = portfolio.alignment_score_pct;
+		if (pct !== undefined && pct !== null) {
+			const badge = pct >= 90 ? "Optimal"
+			            : pct >= 70 ? "Good"
+			            : pct >= 50 ? "Fair"
+			            :             "Poor";
+			const sub   = pct >= 90
+			            ? "All active spending correlates with strategic objectives."
+			            : pct >= 70
+			            ? "Most active lines are linked to a strategic objective."
+			            : pct >= 50
+			            ? "Over half of active lines are strategically linked."
+			            : "Many active lines are missing a sub-programme link.";
+			set("kt-bgt-alignment-score", pct.toFixed(1) + "%");
+			set("kt-bgt-alignment-badge", badge);
+			set("kt-bgt-alignment-sub",   sub);
+
+			const badgeEl = wrapper.querySelector("[data-testid='kt-bgt-alignment-badge']");
+			if (badgeEl) {
+				badgeEl.className = "kt-bgt-alignment-card__badge kt-bgt-alignment-badge--"
+				                  + badge.toLowerCase();
+			}
+		}
 	}
 
 	function _buildBudgetRow(bud) {

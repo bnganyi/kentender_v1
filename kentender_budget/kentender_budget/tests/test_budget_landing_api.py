@@ -301,3 +301,120 @@ class TestHealthStatusEdgeCases(IntegrationTestCase):
 		bud = _make_health_budget(allocated=1_000_000, status="Submitted")
 		row = _health_row(bud.name)
 		self.assertEqual(row.get("health_status"), "submitted")
+
+
+# ── Alignment score helpers ────────────────────────────────────────────────────
+
+def _make_alignment_budget(
+	*,
+	with_sub_program: bool = True,
+) -> str:
+	"""Return a Budget Line name whose strategy hierarchy depth is controlled by
+	*with_sub_program*: True → plan + program + sub_program all populated;
+	False → plan + program only (sub_program NULL).
+	"""
+	ensure_currency_kes()
+	h = frappe.generate_hash(length=6)
+	entity = ensure_procuring_entity(f"AL-{h}", f"Alignment Test {h}")
+
+	plan = frappe.get_doc({
+		"doctype": "Strategic Plan",
+		"strategic_plan_name": f"Plan-AL-{h}",
+		"procuring_entity": entity,
+		"start_year": 2026, "end_year": 2030,
+		"status": "Draft", "version_no": 1, "is_current_version": 1,
+	}).insert(ignore_permissions=True)
+
+	prog = frappe.get_doc({
+		"doctype": "Strategy Program",
+		"strategic_plan": plan.name,
+		"program_title": f"Prog-AL-{h}",
+		"order_index": 1,
+	}).insert(ignore_permissions=True)
+
+	sub = None
+	if with_sub_program:
+		sub = frappe.get_doc({
+			"doctype": "Sub Program",
+			"strategic_plan": plan.name,
+			"program": prog.name,
+			"title": f"SubProg-AL-{h}",
+		}).insert(ignore_permissions=True)
+
+	bud = frappe.get_doc({
+		"doctype": "Budget",
+		"budget_name": f"BUD-AL-{h}",
+		"procuring_entity": entity,
+		"fiscal_year": 2026,
+		"strategic_plan": plan.name,
+		"currency": "KES",
+		"total_budget_amount": 1_000_000.0,
+		"version_no": 1,
+		"is_current_version": 1,
+		"order_index": 0,
+	}).insert(ignore_permissions=True)
+	frappe.db.set_value("Budget", bud.name, "status", "Approved")
+
+	line_data = {
+		"doctype": "Budget Line",
+		"budget_line_code": f"BL-AL-{h}",
+		"budget_line_name": f"AL Line {h}",
+		"budget": bud.name,
+		"procuring_entity": entity,
+		"fiscal_year": 2026,
+		"amount_allocated": 1_000_000.0,
+		"currency": "KES",
+		"is_active": 1,
+		"strategic_plan": plan.name,
+		"program": prog.name,
+	}
+	if sub:
+		line_data["sub_program"] = sub.name
+
+	line = frappe.get_doc(line_data).insert(ignore_permissions=True)
+	return line.name
+
+
+# ── W3-04: Strategic Alignment Score tests ────────────────────────────────────
+
+class TestAlignmentScore(IntegrationTestCase):
+	"""portfolio.alignment_score_pct — presence, range, and computation logic."""
+
+	def setUp(self):
+		frappe.set_user("Administrator")
+
+	def test_alignment_score_pct_present_in_portfolio(self):
+		"""API must return alignment_score_pct inside the portfolio dict."""
+		out = get_budget_landing_data()
+		self.assertIn("alignment_score_pct", out["portfolio"])
+
+	def test_alignment_score_pct_is_float(self):
+		out = get_budget_landing_data()
+		score = out["portfolio"]["alignment_score_pct"]
+		self.assertIsInstance(score, float)
+
+	def test_alignment_score_in_valid_range(self):
+		"""Score must be a percentage between 0.0 and 100.0 (inclusive)."""
+		out = get_budget_landing_data()
+		score = out["portfolio"]["alignment_score_pct"]
+		self.assertGreaterEqual(score, 0.0)
+		self.assertLessEqual(score, 100.0)
+
+	def test_fully_aligned_line_raises_score(self):
+		"""A line with plan + program + sub_program must contribute to aligned count."""
+		_make_alignment_budget(with_sub_program=True)
+		out = get_budget_landing_data()
+		# At least some aligned lines exist → score must be > 0
+		self.assertGreater(out["portfolio"]["alignment_score_pct"], 0.0)
+
+	def test_partial_hierarchy_line_not_counted_as_aligned(self):
+		"""A line with plan + program but no sub_program must NOT be aligned."""
+		# Create one partial and one full, then compare counts
+		_make_alignment_budget(with_sub_program=False)  # partial — should NOT be aligned
+		_make_alignment_budget(with_sub_program=True)   # full — should be aligned
+		out = get_budget_landing_data()
+		score = out["portfolio"]["alignment_score_pct"]
+		# With at least one unaligned line score must be < 100
+		self.assertLess(score, 100.0)
+		# With at least one aligned line score must be > 0
+		self.assertGreater(score, 0.0)

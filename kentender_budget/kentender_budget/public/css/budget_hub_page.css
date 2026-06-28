@@ -895,6 +895,12 @@ body.kt-bgt-shell .layout-main-section {
   border-radius: 4px;
 }
 
+/* Alignment badge colour variants (set via JS) */
+.kt-bgt-alignment-badge--optimal { background: rgba(16,185,129,0.3); color: #fff; }
+.kt-bgt-alignment-badge--good    { background: rgba(99,102,241,0.3); color: #fff; }
+.kt-bgt-alignment-badge--fair    { background: rgba(245,158,11,0.3); color: #fff; }
+.kt-bgt-alignment-badge--poor    { background: rgba(239,68,68,0.3);  color: #fff; }
+
 .kt-bgt-alignment-card__sub {
   font-size: 12px;
   color: rgba(255,255,255,0.7);

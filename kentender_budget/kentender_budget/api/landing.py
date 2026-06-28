@@ -58,6 +58,7 @@ def get_budget_landing_data():
 				"consumed_sum": 0.0,
 				"available_sum": 0.0,
 				"allocation_pct": 0.0,
+				"alignment_score_pct": 0.0,
 			},
 			"budgets": [],
 		}
@@ -103,6 +104,29 @@ def get_budget_landing_data():
 	for row in primary_line_rows:
 		if row.budget not in primary_line_by_budget:
 			primary_line_by_budget[row.budget] = row.budget_line_name or ""
+
+	# W3-04: Portfolio alignment score — active lines with full hierarchy
+	# (plan + program + sub_program all non-null) ÷ total active lines.
+	alignment_row = frappe.db.sql(
+		"""
+		SELECT
+		    COUNT(*)                                                        AS total_active,
+		    SUM(CASE
+		            WHEN strategic_plan IS NOT NULL AND strategic_plan != ''
+		             AND program        IS NOT NULL AND program        != ''
+		             AND sub_program    IS NOT NULL AND sub_program    != ''
+		            THEN 1 ELSE 0
+		        END)                                                        AS fully_aligned
+		FROM `tabBudget Line`
+		WHERE is_active = 1
+		""",
+		as_dict=True,
+	)
+	_alr = alignment_row[0] if alignment_row else {}
+	_total_al   = int(_alr.get("total_active", 0) or 0)
+	_aligned_al = int(_alr.get("fully_aligned", 0) or 0)
+	alignment_score_pct = round((_aligned_al / _total_al) * 100.0, 1) if _total_al else 0.0
+
 
 	active_count = sum(1 for b in budgets if b.get("status") == "Approved")
 	draft_count = sum(1 for b in budgets if b.get("status") == "Draft")
@@ -282,6 +306,7 @@ def get_budget_landing_data():
 			"consumed_sum": consumed_sum,
 			"available_sum": available_sum,
 			"allocation_pct": allocation_pct,
+			"alignment_score_pct": alignment_score_pct,
 		},
 		"budgets": out_budgets,
 	}
