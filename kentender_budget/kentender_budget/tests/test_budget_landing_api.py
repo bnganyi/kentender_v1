@@ -144,3 +144,160 @@ class TestBudgetLandingAPI(IntegrationTestCase):
 		builder = get_budget_builder_data(budget, lines_filter="active")
 		self.assertEqual(review.get("budget", {}).get("name"), builder.get("budget", {}).get("name"))
 		self.assertEqual(len(review.get("budget_lines") or []), len(builder.get("budget_lines") or []))
+
+
+# ── W2-06: health_status threshold and edge case tests ────────────────────────
+
+def _make_health_budget(
+	allocated: float,
+	reserved: float = 0.0,
+	committed: float = 0.0,
+	consumed: float = 0.0,
+	*,
+	status: str = "Approved",
+):
+	"""Create a minimal Approved/Draft Budget + Budget Line for health_status testing.
+	Returns the Budget doc (already status-promoted via set_value).
+	No tearDown needed — IntegrationTestCase rolls back the transaction.
+	"""
+	ensure_currency_kes()
+	h = frappe.generate_hash(length=6)
+	entity = ensure_procuring_entity(f"HL-{h}", f"Health Test {h}")
+	plan = frappe.get_doc({
+		"doctype": "Strategic Plan",
+		"strategic_plan_name": f"Plan-HL-{h}",
+		"procuring_entity": entity,
+		"start_year": 2026,
+		"end_year": 2030,
+		"status": "Draft",
+		"version_no": 1,
+		"is_current_version": 1,
+	}).insert(ignore_permissions=True)
+	prog = frappe.get_doc({
+		"doctype": "Strategy Program",
+		"strategic_plan": plan.name,
+		"program_title": f"Prog-HL-{h}",
+		"order_index": 1,
+	}).insert(ignore_permissions=True)
+	bud = frappe.get_doc({
+		"doctype": "Budget",
+		"budget_name": f"BUD-HL-{h}",
+		"procuring_entity": entity,
+		"fiscal_year": 2026,
+		"strategic_plan": plan.name,
+		"currency": "KES",
+		"total_budget_amount": allocated or 1_000_000,
+		"version_no": 1,
+		"is_current_version": 1,
+		"order_index": 0,
+	}).insert(ignore_permissions=True)
+
+	if allocated > 0:
+		frappe.get_doc({
+			"doctype": "Budget Line",
+			"budget_line_code": f"BL-HL-{h}",
+			"budget_line_name": f"Health Line {h}",
+			"budget": bud.name,
+			"procuring_entity": entity,
+			"fiscal_year": 2026,
+			"amount_allocated": allocated,
+			"amount_reserved": reserved,
+			"amount_committed": committed,
+			"amount_consumed": consumed,
+			"currency": "KES",
+			"strategic_plan": plan.name,
+			"program": prog.name,
+			"is_active": 1,
+		}).insert(ignore_permissions=True)
+
+	frappe.db.set_value("Budget", bud.name, "status", status)
+	return bud
+
+
+def _health_row(bname: str) -> dict:
+	frappe.set_user("Administrator")
+	out = get_budget_landing_data()
+	return next((r for r in out["budgets"] if r["name"] == bname), {})
+
+
+class TestHealthStatusEdgeCases(IntegrationTestCase):
+	"""W2-06 — health_status threshold and edge-case coverage.
+
+	Thresholds (available ÷ allocated × 100):
+	  < 8%        → exhausted
+	  8% ≤ x ≤ 20% → reviewing
+	  > 20%       → healthy
+
+	Edge cases:
+	  allocated = 0      → avail_pct defaults to 100 → healthy
+	  available = 0      → avail_pct = 0 → exhausted
+	  Draft status       → health_status = "draft" regardless of amounts
+	"""
+
+	def test_healthy_above_20_pct(self):
+		"""avail = 500 000 / 1 000 000 = 50% → healthy."""
+		bud = _make_health_budget(allocated=1_000_000, reserved=500_000)
+		row = _health_row(bud.name)
+		self.assertAlmostEqual(flt(row.get("avail_pct")), 50.0, places=1)
+		self.assertEqual(row.get("health_status"), "healthy")
+
+	def test_reviewing_at_12_pct(self):
+		"""avail = 120 000 / 1 000 000 = 12% (8–20%) → reviewing."""
+		bud = _make_health_budget(allocated=1_000_000, reserved=880_000)
+		row = _health_row(bud.name)
+		self.assertAlmostEqual(flt(row.get("avail_pct")), 12.0, places=1)
+		self.assertEqual(row.get("health_status"), "reviewing")
+
+	def test_exhausted_at_3_pct(self):
+		"""avail = 30 000 / 1 000 000 = 3% (< 8%) → exhausted."""
+		bud = _make_health_budget(allocated=1_000_000, reserved=970_000)
+		row = _health_row(bud.name)
+		self.assertAlmostEqual(flt(row.get("avail_pct")), 3.0, places=1)
+		self.assertEqual(row.get("health_status"), "exhausted")
+
+	def test_boundary_exactly_8_pct_is_reviewing(self):
+		"""avail = 80 000 / 1 000 000 = exactly 8% → reviewing (inclusive lower bound)."""
+		bud = _make_health_budget(allocated=1_000_000, reserved=920_000)
+		row = _health_row(bud.name)
+		self.assertAlmostEqual(flt(row.get("avail_pct")), 8.0, places=1)
+		self.assertEqual(row.get("health_status"), "reviewing")
+
+	def test_boundary_exactly_20_pct_is_reviewing(self):
+		"""avail = 200 000 / 1 000 000 = exactly 20% → reviewing (inclusive upper bound)."""
+		bud = _make_health_budget(allocated=1_000_000, reserved=800_000)
+		row = _health_row(bud.name)
+		self.assertAlmostEqual(flt(row.get("avail_pct")), 20.0, places=1)
+		self.assertEqual(row.get("health_status"), "reviewing")
+
+	def test_just_above_20_pct_is_healthy(self):
+		"""avail = 201 000 / 1 000 000 = 20.1% → healthy (just above reviewing ceiling)."""
+		bud = _make_health_budget(allocated=1_000_000, reserved=799_000)
+		row = _health_row(bud.name)
+		self.assertGreater(flt(row.get("avail_pct")), 20.0)
+		self.assertEqual(row.get("health_status"), "healthy")
+
+	def test_edge_all_consumed_is_exhausted(self):
+		"""Edge: amount_available = 0 (fully obligated) → avail_pct = 0 → exhausted."""
+		bud = _make_health_budget(allocated=1_000_000, consumed=1_000_000)
+		row = _health_row(bud.name)
+		self.assertAlmostEqual(flt(row.get("avail_pct")), 0.0, places=1)
+		self.assertEqual(row.get("health_status"), "exhausted")
+
+	def test_edge_zero_allocated_is_healthy(self):
+		"""Edge: no Budget Lines (allocated = 0) → avail_pct defaults to 100 → healthy."""
+		bud = _make_health_budget(allocated=0)
+		row = _health_row(bud.name)
+		self.assertAlmostEqual(flt(row.get("avail_pct")), 100.0, places=1)
+		self.assertEqual(row.get("health_status"), "healthy")
+
+	def test_draft_status_ignores_financial_amounts(self):
+		"""Draft budgets always return health_status='draft' regardless of available amount."""
+		bud = _make_health_budget(allocated=1_000_000, reserved=990_000, status="Draft")
+		row = _health_row(bud.name)
+		self.assertEqual(row.get("health_status"), "draft")
+
+	def test_submitted_status_returns_submitted(self):
+		"""Submitted budgets return health_status='submitted' (pending review)."""
+		bud = _make_health_budget(allocated=1_000_000, status="Submitted")
+		row = _health_row(bud.name)
+		self.assertEqual(row.get("health_status"), "submitted")
