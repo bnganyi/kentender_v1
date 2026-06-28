@@ -111,11 +111,9 @@
 		const tl = wrapper.querySelector("[data-testid='kt-bgt-timeline']");
 		if (!tl) return;
 		if (!movements || !movements.length) {
-			tl.classList.add("kt-bgt-timeline--empty");
 			tl.innerHTML = `<div class="kt-bgt-tl-empty">No recent movements.</div>`;
 			return;
 		}
-		tl.classList.remove("kt-bgt-timeline--empty");
 		tl.innerHTML = movements.map(_buildMovRow).join("");
 	}
 
@@ -315,7 +313,7 @@
             <button class="kt-bgt-view-all" type="button">View All</button>
           </div>
           <div class="kt-bgt-movements-card">
-            <div class="kt-bgt-timeline kt-bgt-timeline--empty" data-testid="kt-bgt-timeline">
+            <div class="kt-bgt-timeline" data-testid="kt-bgt-timeline">
               <div class="kt-bgt-tl-loading">
                 <span class="material-symbols-outlined">pending</span> Loading movements…
               </div>

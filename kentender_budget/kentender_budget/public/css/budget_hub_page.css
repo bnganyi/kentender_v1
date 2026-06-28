@@ -761,19 +761,15 @@ body.kt-bgt-shell .layout-main-section {
   position: relative;
 }
 
-.kt-bgt-timeline::before {
+/* Connector drawn only between real items — never when timeline is empty */
+.kt-bgt-tl-item + .kt-bgt-tl-item::after {
   content: '';
   position: absolute;
   left: 11px;
-  top: 8px;
-  bottom: 8px;
+  top: -24px;   /* spans the gap between adjacent items */
+  height: 24px;
   width: 2px;
   background: #e6e8ea;
-}
-
-/* Hide the connector when there are no real timeline items */
-.kt-bgt-timeline--empty::before {
-  display: none;
 }
 
 .kt-bgt-tl-item {
