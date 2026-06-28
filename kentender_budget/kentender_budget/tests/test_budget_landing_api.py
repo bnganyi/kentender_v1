@@ -107,7 +107,21 @@ class TestBudgetLandingAPI(IntegrationTestCase):
 		for row in out.get("budgets") or []:
 			self.assertGreaterEqual(flt(row["committed_amount"]), 0.0)
 
+	def test_budget_rows_include_primary_line_name(self):
+		"""W2-04: each row must include primary_line_name (string, may be empty
+		if no allocated lines exist)."""
+		frappe.set_user("Administrator")
+		out = get_budget_landing_data()
+		for row in out.get("budgets") or []:
+			self.assertIn("primary_line_name", row,
+				"budget row missing 'primary_line_name'")
+			self.assertIsInstance(row["primary_line_name"], str)
+
 	def test_landing_budget_rows_include_strategic_plan_title(self):
+		frappe.set_user("Administrator")
+		out = get_budget_landing_data()
+		for row in out.get("budgets") or []:
+			self.assertIn("strategic_plan_title", row)
 		frappe.set_user("Administrator")
 		out = get_budget_landing_data()
 		for row in out.get("budgets") or []:

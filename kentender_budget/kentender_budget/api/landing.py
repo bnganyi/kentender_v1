@@ -85,6 +85,25 @@ def get_budget_landing_data():
 	)
 	line_by_budget = {r.budget: r for r in line_rows}
 
+	# W2-04: highest-allocated active Budget Line name per budget (for table subtitle)
+	primary_line_rows = frappe.db.sql(
+		"""
+		SELECT budget, budget_line_name, amount_allocated
+		FROM `tabBudget Line`
+		WHERE budget IN %(names)s
+			AND IFNULL(`is_active`, 1) = 1
+			AND amount_allocated > 0
+		ORDER BY budget, amount_allocated DESC
+		""",
+		{"names": tuple(names)},
+		as_dict=True,
+	)
+	# Take the first (highest) row per budget — ORDER BY already sorted DESC
+	primary_line_by_budget: dict[str, str] = {}
+	for row in primary_line_rows:
+		if row.budget not in primary_line_by_budget:
+			primary_line_by_budget[row.budget] = row.budget_line_name or ""
+
 	active_count = sum(1 for b in budgets if b.get("status") == "Approved")
 	draft_count = sum(1 for b in budgets if b.get("status") == "Draft")
 	submitted_count = sum(1 for b in budgets if b.get("status") == "Submitted")
@@ -240,9 +259,10 @@ def get_budget_landing_data():
 			"committed_pct": (committed_amount / allocated_amount * 100.0) if allocated_amount else 0.0,
 			"reserved_pct": (reserved_amount / allocated_amount * 100.0) if allocated_amount else 0.0,
 			"health_status": health_status,
-				"budget_line_total": budget_line_total,
-				"budget_lines_allocated": budget_lines_allocated,
-				"budget_lines_unallocated": budget_lines_unallocated,
+			"budget_line_total": budget_line_total,
+			"budget_lines_allocated": budget_lines_allocated,
+			"budget_lines_unallocated": budget_lines_unallocated,
+			"primary_line_name": primary_line_by_budget.get(b.name, ""),
 			}
 		)
 
