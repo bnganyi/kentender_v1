@@ -355,6 +355,20 @@ body.kt-bgt-shell .layout-main-section {
   border-radius: 9999px;
 }
 
+/* W3-05: Trend delta badge — appears top-right of financial KPI cards */
+.kt-bgt-kpi-delta {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  white-space: nowrap;
+  cursor: default;
+  user-select: none;
+}
+.kt-bgt-delta--up   { background: rgba(16,185,129,0.12); color: #059669; }
+.kt-bgt-delta--down { background: rgba(239,68,68,0.12);  color: #dc2626; }
+.kt-bgt-delta--flat { background: rgba(113,119,130,0.12); color: #424751; }
+
 .kt-bgt-kpi-pulse {
   width: 8px;
   height: 8px;

@@ -204,6 +204,7 @@
             <span class="kt-bgt-kpi-icon" style="background:rgba(16,185,129,0.1)">
               <span class="material-symbols-outlined" style="color:#10B981">account_balance_wallet</span>
             </span>
+            <span class="kt-bgt-kpi-delta" data-testid="kt-bgt-kpi-delta-available" style="display:none"></span>
           </div>
           <div>
             <p class="kt-bgt-kpi-label">Available Balance (KES)</p>
@@ -217,6 +218,7 @@
             <span class="kt-bgt-kpi-icon" style="background:rgba(245,158,11,0.1)">
               <span class="material-symbols-outlined" style="color:#F59E0B">lock_clock</span>
             </span>
+            <span class="kt-bgt-kpi-delta" data-testid="kt-bgt-kpi-delta-reserved" style="display:none"></span>
           </div>
           <div>
             <p class="kt-bgt-kpi-label">Total Reserved</p>
@@ -230,6 +232,7 @@
             <span class="kt-bgt-kpi-icon" style="background:rgba(99,102,241,0.1)">
               <span class="material-symbols-outlined" style="color:#6366F1">verified</span>
             </span>
+            <span class="kt-bgt-kpi-delta" data-testid="kt-bgt-kpi-delta-committed" style="display:none"></span>
           </div>
           <div>
             <p class="kt-bgt-kpi-label">Total Committed</p>
@@ -438,6 +441,21 @@
 				                  + badge.toLowerCase();
 			}
 		}
+
+		// W3-05: Trend delta badges on financial KPI cards
+		function _setDelta(testid, deltaPct) {
+			const el = wrapper.querySelector(`[data-testid='${testid}']`);
+			if (!el || deltaPct === null || deltaPct === undefined) return;
+			const sign  = deltaPct > 0 ? "+" : "";
+			const arrow = deltaPct > 0 ? "▲" : deltaPct < 0 ? "▼" : "→";
+			const mod   = deltaPct > 0 ? "up" : deltaPct < 0 ? "down" : "flat";
+			el.className   = `kt-bgt-kpi-delta kt-bgt-delta--${mod}`;
+			el.textContent = `${arrow} ${sign}${deltaPct.toFixed(1)}%`;
+			el.style.display = "";
+		}
+		_setDelta("kt-bgt-kpi-delta-available", portfolio.delta_available_pct);
+		_setDelta("kt-bgt-kpi-delta-reserved",  portfolio.delta_reserved_pct);
+		_setDelta("kt-bgt-kpi-delta-committed", portfolio.delta_committed_pct);
 	}
 
 	function _buildBudgetRow(bud) {

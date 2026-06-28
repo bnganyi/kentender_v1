@@ -418,3 +418,159 @@ class TestAlignmentScore(IntegrationTestCase):
 		self.assertLess(score, 100.0)
 		# With at least one aligned line score must be > 0
 		self.assertGreater(score, 0.0)
+
+
+# ── Previous-period delta helpers ─────────────────────────────────────────────
+
+def _make_budget_for_fy(fy: int, available: float = 500_000.0, reserved: float = 100_000.0) -> str:
+	"""Create a minimal Budget + active Budget Line for a specific fiscal year.
+
+	Returns the Budget Line name.  Uses ``frappe.db.set_value`` to bypass
+	Budget validation that enforces the current FY, allowing us to create
+	test data for a past FY inside the integration test transaction.
+	"""
+	ensure_currency_kes()
+	h = frappe.generate_hash(length=6)
+	entity = ensure_procuring_entity(f"DL-{h}", f"Delta Test {h}")
+
+	plan = frappe.get_doc({
+		"doctype": "Strategic Plan",
+		"strategic_plan_name": f"Plan-DL-{h}",
+		"procuring_entity": entity,
+		"start_year": fy, "end_year": fy + 4,
+		"status": "Draft", "version_no": 1, "is_current_version": 1,
+	}).insert(ignore_permissions=True)
+
+	prog = frappe.get_doc({
+		"doctype": "Strategy Program",
+		"strategic_plan": plan.name,
+		"program_title": f"Prog-DL-{h}",
+		"order_index": 1,
+	}).insert(ignore_permissions=True)
+
+	bud = frappe.get_doc({
+		"doctype": "Budget",
+		"budget_name": f"BUD-DL-{h}",
+		"procuring_entity": entity,
+		"fiscal_year": fy,
+		"strategic_plan": plan.name,
+		"currency": "KES",
+		"total_budget_amount": available + reserved,
+		"version_no": 1,
+		"is_current_version": 1,
+		"order_index": 0,
+	}).insert(ignore_permissions=True)
+	frappe.db.set_value("Budget", bud.name, "status", "Approved")
+
+	line = frappe.get_doc({
+		"doctype": "Budget Line",
+		"budget_line_code": f"BL-DL-{h}",
+		"budget_line_name": f"Delta Line {h}",
+		"budget": bud.name,
+		"procuring_entity": entity,
+		"fiscal_year": fy,
+		"amount_allocated": available + reserved,
+		"amount_reserved": reserved,
+		"amount_available": available,
+		"currency": "KES",
+		"is_active": 1,
+		"strategic_plan": plan.name,
+		"program": prog.name,
+	}).insert(ignore_permissions=True)
+
+	return line.name
+
+
+# ── W3-05: Trend delta badges tests ───────────────────────────────────────────
+
+class TestPreviousPeriodDeltas(IntegrationTestCase):
+	"""portfolio previous-period fields and delta percentages."""
+
+	def setUp(self):
+		frappe.set_user("Administrator")
+
+	# ── Shape ──────────────────────────────────────────────────────────────────
+
+	def test_delta_fields_present_in_portfolio(self):
+		"""All eight W3-05 fields must be present in the portfolio dict."""
+		out = get_budget_landing_data()
+		p = out["portfolio"]
+		for field in (
+			"previous_fy",
+			"previous_period_available",
+			"previous_period_reserved",
+			"previous_period_committed",
+			"previous_period_consumed",
+			"delta_available_pct",
+			"delta_reserved_pct",
+			"delta_committed_pct",
+		):
+			self.assertIn(field, p, msg=f"Missing field: {field}")
+
+	def test_delta_fields_are_none_when_no_previous_fy_data(self):
+		"""When the DB has no lines for (current_fy − 1), all deltas must be None."""
+		out = get_budget_landing_data()
+		p = out["portfolio"]
+		current_fy = p.get("previous_fy")
+		# Only assert None when previous_fy is None (no prev data found)
+		if current_fy is None:
+			self.assertIsNone(p["delta_available_pct"])
+			self.assertIsNone(p["delta_reserved_pct"])
+			self.assertIsNone(p["delta_committed_pct"])
+
+	# ── Computation ────────────────────────────────────────────────────────────
+
+	def test_delta_computed_when_two_fy_lines_exist(self):
+		"""When lines exist for both current_fy and current_fy−1, deltas are floats."""
+		# Find current FY from live data
+		out0 = get_budget_landing_data()
+		current_fy = max(
+			(b["fiscal_year"] for b in out0["budgets"] if b.get("fiscal_year")),
+			default=2026,
+		)
+		prev_fy = current_fy - 1
+
+		# Create a line for the previous FY
+		_make_budget_for_fy(prev_fy, available=500_000.0, reserved=100_000.0)
+
+		out = get_budget_landing_data()
+		p = out["portfolio"]
+
+		# previous_fy must now be set
+		self.assertEqual(p["previous_fy"], prev_fy)
+		# delta_available_pct must be a float (could be any sign)
+		self.assertIsInstance(p["delta_available_pct"], float)
+
+	def test_delta_direction_when_current_exceeds_previous(self):
+		"""When current available > previous, delta_available_pct must be positive."""
+		out0 = get_budget_landing_data()
+		current_fy = max(
+			(b["fiscal_year"] for b in out0["budgets"] if b.get("fiscal_year")),
+			default=2026,
+		)
+		prev_fy = current_fy - 1
+
+		# Previous period with very small available — current sum will exceed it
+		_make_budget_for_fy(prev_fy, available=1.0, reserved=0.0)
+
+		out = get_budget_landing_data()
+		p = out["portfolio"]
+		# current available_sum > 1.0 → delta > 0
+		if p["previous_period_available"] is not None and p["previous_period_available"] > 0:
+			self.assertGreater(p["delta_available_pct"], 0.0)
+
+	def test_previous_period_values_match_prev_fy_lines(self):
+		"""previous_period_available must reflect the inserted previous-FY line."""
+		out0 = get_budget_landing_data()
+		current_fy = max(
+			(b["fiscal_year"] for b in out0["budgets"] if b.get("fiscal_year")),
+			default=2026,
+		)
+		prev_fy = current_fy - 1
+
+		_make_budget_for_fy(prev_fy, available=750_000.0, reserved=250_000.0)
+
+		out = get_budget_landing_data()
+		p = out["portfolio"]
+		# At minimum the 750k we inserted must be included in previous_period_available
+		self.assertGreaterEqual(p["previous_period_available"], 750_000.0)

@@ -59,6 +59,14 @@ def get_budget_landing_data():
 				"available_sum": 0.0,
 				"allocation_pct": 0.0,
 				"alignment_score_pct": 0.0,
+				"previous_fy": None,
+				"previous_period_available": None,
+				"previous_period_reserved": None,
+				"previous_period_committed": None,
+				"previous_period_consumed": None,
+				"delta_available_pct": None,
+				"delta_reserved_pct": None,
+				"delta_committed_pct": None,
 			},
 			"budgets": [],
 		}
@@ -165,6 +173,53 @@ def get_budget_landing_data():
 		for b in budgets if b.get("status") in _approved_active
 	)
 	allocation_pct = (allocated_sum / total_budget_sum * 100.0) if total_budget_sum else 0.0
+
+	# W3-05: Previous-period (FY − 1) aggregates for trend delta badges.
+	# Determine current FY from the loaded budgets; stub all delta fields with
+	# None when no matching lines exist for the prior year.
+	_current_fy = max((b.get("fiscal_year") or 0) for b in budgets) if budgets else 0
+	_prev_fy = _current_fy - 1 if _current_fy else None
+
+	previous_fy              = None
+	previous_period_available = None
+	previous_period_reserved  = None
+	previous_period_committed = None
+	previous_period_consumed  = None
+	delta_available_pct  = None
+	delta_reserved_pct   = None
+	delta_committed_pct  = None
+
+	if _prev_fy:
+		_prev_rows = frappe.db.sql(
+			"""
+			SELECT
+			    COUNT(*)                                AS line_count,
+			    SUM(amount_available)                   AS available_sum,
+			    SUM(amount_reserved)                    AS reserved_sum,
+			    SUM(COALESCE(amount_committed, 0))      AS committed_sum,
+			    SUM(COALESCE(amount_consumed,  0))      AS consumed_sum
+			FROM `tabBudget Line`
+			WHERE fiscal_year = %s
+			  AND is_active    = 1
+			""",
+			(_prev_fy,),
+			as_dict=True,
+		)
+		_pr = _prev_rows[0] if _prev_rows else {}
+		if (_pr.get("line_count") or 0) > 0:
+			previous_fy               = _prev_fy
+			previous_period_available = float(_pr.get("available_sum") or 0)
+			previous_period_reserved  = float(_pr.get("reserved_sum")  or 0)
+			previous_period_committed = float(_pr.get("committed_sum") or 0)
+			previous_period_consumed  = float(_pr.get("consumed_sum")  or 0)
+
+			def _delta_pct(curr, prev_v):
+				return round((curr - prev_v) / prev_v * 100.0, 1) if prev_v else None
+
+			delta_available_pct = _delta_pct(available_sum, previous_period_available)
+			delta_reserved_pct  = _delta_pct(reserved_sum,  previous_period_reserved)
+			delta_committed_pct = _delta_pct(committed_sum, previous_period_committed)
+
 
 	plan_names = {b.strategic_plan for b in budgets if b.get("strategic_plan")}
 	plan_titles: dict[str, str] = {}
@@ -307,6 +362,14 @@ def get_budget_landing_data():
 			"available_sum": available_sum,
 			"allocation_pct": allocation_pct,
 			"alignment_score_pct": alignment_score_pct,
+			"previous_fy": previous_fy,
+			"previous_period_available": previous_period_available,
+			"previous_period_reserved": previous_period_reserved,
+			"previous_period_committed": previous_period_committed,
+			"previous_period_consumed": previous_period_consumed,
+			"delta_available_pct": delta_available_pct,
+			"delta_reserved_pct": delta_reserved_pct,
+			"delta_committed_pct": delta_committed_pct,
 		},
 		"budgets": out_budgets,
 	}
