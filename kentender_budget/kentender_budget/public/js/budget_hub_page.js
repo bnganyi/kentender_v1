@@ -128,6 +128,7 @@
 		submitted: { cls: "kt-bgt-chip--reviewing", lbl: "Reviewing" },
 		draft:     { cls: "kt-bgt-chip--draft",     lbl: "Draft" },
 		rejected:  { cls: "kt-bgt-chip--rejected",  lbl: "Rejected" },
+		cancelled: { cls: "kt-bgt-chip--cancelled", lbl: "Cancelled" },
 	};
 
 	function _deriveChip(bud) {
@@ -311,19 +312,8 @@
 
         <!-- Recent Movements -->
         <div class="kt-bgt-movements-panel">
-          <div class="kt-bgt-section-hdr">
-            <h2 class="kt-bgt-section-title">Recent Movements</h2>
-            <button class="kt-bgt-view-all" type="button">View All</button>
-          </div>
-          <div class="kt-bgt-movements-card">
-            <div class="kt-bgt-timeline" data-testid="kt-bgt-timeline">
-              <div class="kt-bgt-tl-loading">
-                <span class="material-symbols-outlined">pending</span> Loading movements…
-              </div>
-            </div>
-          </div>
 
-          <!-- Strategic Alignment Score -->
+          <!-- Strategic Alignment Score — pinned at top -->
           <div class="kt-bgt-alignment-card">
             <div class="kt-bgt-alignment-card__content">
               <h4 class="kt-bgt-alignment-card__label">Strategic Alignment Score</h4>
@@ -335,6 +325,18 @@
               </div>
               <p class="kt-bgt-alignment-card__sub"
                  data-testid="kt-bgt-alignment-sub">Checking alignment…</p>
+            </div>
+          </div>
+
+          <div class="kt-bgt-section-hdr">
+            <h2 class="kt-bgt-section-title">Recent Movements</h2>
+            <button class="kt-bgt-view-all" type="button" data-testid="kt-bgt-movements-view-all">View All</button>
+          </div>
+          <div class="kt-bgt-movements-card">
+            <div class="kt-bgt-timeline" data-testid="kt-bgt-timeline">
+              <div class="kt-bgt-tl-loading">
+                <span class="material-symbols-outlined">pending</span> Loading movements…
+              </div>
             </div>
           </div>
         </div>
@@ -775,14 +777,18 @@
 	}
 
 	/** W3-01: Load recent budget movements for the timeline panel. */
+	// Store full movement list at module level so "View All" drawer can reuse it.
+	let _allMovements = [];
+
 	function _loadMovements(wrapper) {
 		frappe.call({
 			method: "kentender_budget.api.movements.get_budget_movements",
-			args: { limit: 10 },
+			args: { limit: 20 },
 			freeze: false,
 			callback: function (r) {
 				if (r && r.message) {
-					_populateTimeline(wrapper, r.message.movements || []);
+					_allMovements = r.message.movements || [];
+					_populateTimeline(wrapper, _allMovements.slice(0, 3));
 				}
 			},
 		});
@@ -1089,6 +1095,61 @@
 		});
 	}
 
+	// ── Movements "View All" drawer ──────────────────────────────────────────
+
+	function _openMovementsDrawer() {
+		// Remove any existing drawer
+		var existing = document.getElementById("kt-bgt-mov-drawer");
+		if (existing) existing.parentNode.removeChild(existing);
+
+		var items = _allMovements.length
+			? _allMovements.map(_buildMovRow).join("")
+			: `<div class="kt-bgt-tl-empty">No movements recorded yet.</div>`;
+
+		var drawerHtml = `
+		<div id="kt-bgt-mov-drawer" style="
+			position:fixed;top:0;right:0;bottom:0;z-index:10000;
+			display:flex;align-items:stretch;">
+			<div id="kt-bgt-mov-backdrop" style="
+				position:fixed;top:0;left:0;right:0;bottom:0;
+				background:rgba(15,23,42,0.35);backdrop-filter:blur(3px);"></div>
+			<div style="
+				position:relative;width:420px;max-width:100vw;
+				background:#fff;display:flex;flex-direction:column;
+				box-shadow:-8px 0 32px rgba(0,0,0,.18);
+				margin-left:auto;z-index:1;">
+				<!-- Header -->
+				<div style="
+					padding:16px 20px;border-bottom:1px solid #e4e6ed;
+					background:#f2f4f6;display:flex;align-items:center;justify-content:space-between;">
+					<span style="font-size:16px;font-weight:700;font-family:'Manrope',sans-serif;color:#191c1e;">
+						All Budget Movements
+					</span>
+					<button id="kt-bgt-mov-close" aria-label="Close"
+						style="padding:4px;background:transparent;border:none;cursor:pointer;
+						       color:#45464d;display:flex;align-items:center;border-radius:4px;">
+						<span class="material-symbols-outlined" style="font-size:20px">close</span>
+					</button>
+				</div>
+				<!-- Body -->
+				<div style="flex:1;overflow-y:auto;padding:16px 20px;">
+					<div class="kt-bgt-timeline">${items}</div>
+				</div>
+			</div>
+		</div>`;
+
+		var el = document.createElement("div");
+		el.innerHTML = drawerHtml;
+		var drawer = el.firstElementChild;
+		document.body.appendChild(drawer);
+
+		function _close() {
+			if (drawer.parentNode) drawer.parentNode.removeChild(drawer);
+		}
+		drawer.querySelector("#kt-bgt-mov-backdrop").addEventListener("click", _close);
+		drawer.querySelector("#kt-bgt-mov-close").addEventListener("click", _close);
+	}
+
 	// wrapper is the raw #page-budget-hub div (page_js page)
 	function _mount(wrapper) {
 		_ensureFonts();
@@ -1102,6 +1163,12 @@
 				_showCreateBudgetDialog();
 			});
 		}
+
+		wrapper.addEventListener("click", function (e) {
+			if (e.target.closest("[data-testid='kt-bgt-movements-view-all']")) {
+				_openMovementsDrawer();
+			}
+		});
 	}
 
 	// ── Frappe page registration ──────────────────────────────────────────────

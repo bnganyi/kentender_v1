@@ -32,6 +32,9 @@
 	// Simple module-level array — only one workbench is ever mounted at a time.
 	let _lines = [];
 
+	// Currently active status filter for Zone 2. "all" = no filter.
+	let _lineFilter = "all";
+
 	// Budget header payload from the last successful _loadBuilderData call.
 	// Used by the modal to filter Programme options by strategic_plan.
 	let _budgetData = null;
@@ -335,14 +338,10 @@
 		const list = wrapper.querySelector("[data-testid='kt-wbench-lines-list']");
 		if (!list) return;
 
-		if (!_lines.length) {
-			list.innerHTML = '<p class="kt-wbench-lines-empty">No active budget lines.</p>';
-			return;
-		}
-
-	list.innerHTML = _lines.map(function (line, i) {
-		return _buildLineCard(line, i === 0, i);
-	}).join("");
+		// Reset filter to "all" on fresh data load so pills stay coherent.
+		_lineFilter = "all";
+		_refreshFilterPills(wrapper);
+		_applyLineFilter(wrapper);
 
 		// Auto-select first line: clear artefacts panel ready for W5-07 click handler
 		const artBody = wrapper.querySelector("[data-testid='kt-wbench-artefacts-body']");
@@ -357,6 +356,61 @@
 		if (list) {
 			list.innerHTML = '<p class="kt-wbench-lines-empty" style="color:var(--ktw-error)">Could not load budget lines.</p>';
 		}
+	}
+
+	// ── Zone 2 filter pills ───────────────────────────────────────────────────
+
+	// Re-render visible cards from the in-memory _lines store.
+	function _applyLineFilter(wrapper) {
+		const filter = _lineFilter;
+		const visible = filter === "all"
+			? _lines
+			: _lines.filter(function (l) {
+				return (l.line_status || "Draft").toLowerCase() === filter.toLowerCase();
+			  });
+
+		const list = wrapper.querySelector("[data-testid='kt-wbench-lines-list']");
+		if (!list) return;
+
+		if (!visible.length) {
+			const label = filter === "all" ? "No budget lines." : `No lines with status "${filter}".`;
+			list.innerHTML = `<p class="kt-wbench-lines-empty">${label}</p>`;
+			return;
+		}
+		list.innerHTML = visible.map(function (line, i) {
+			return _buildLineCard(line, i === 0, line.idx);
+		}).join("");
+	}
+
+	// Rebuild the pill bar to show one pill per distinct status present in _lines,
+	// plus the "All Lines" pill. Updates active highlight from _lineFilter.
+	function _refreshFilterPills(wrapper) {
+		const container = wrapper.querySelector("[data-testid='kt-wbench-filter-pills']");
+		if (!container) return;
+
+		const statuses = [];
+		_lines.forEach(function (l) {
+			const s = l.line_status || "Draft";
+			if (!statuses.includes(s)) statuses.push(s);
+		});
+
+		// "All" pill always first; only show status pills if >1 status exists
+		const pills = [{ value: "all", label: "All Lines", icon: "filter_list" }];
+		if (statuses.length > 1) {
+			statuses.forEach(function (s) {
+				pills.push({ value: s, label: s, icon: null });
+			});
+		}
+
+		container.innerHTML = pills.map(function (p) {
+			const isActive = _lineFilter === p.value;
+			const activeCls = isActive ? " kt-wbench-filter-pill--active" : "";
+			const icon = p.icon
+				? `<span class="material-symbols-outlined">${p.icon}</span>`
+				: "";
+			return `<button class="kt-wbench-filter-pill${activeCls}"
+				data-filter="${p.value}" data-testid="kt-wbench-filter-${p.value.toLowerCase()}">${icon}${p.label}</button>`;
+		}).join("");
 	}
 
 	// Single API call that populates both Zone 1 and Zone 2.
@@ -402,12 +456,12 @@
 
 	function _buildLineCard(line, isActive, idx) {
 		const activeCls = isActive ? "kt-wbench-line-card--active" : "";
-	const activeBtn = isActive
-		? `<button class="kt-wbench-line-btn" data-line-act="open-line" data-line-idx="${idx}" data-testid="kt-wbench-btn-open-line">Open Line</button>
-		   <button class="kt-wbench-line-btn">Reserve Funds</button>
-		   <button class="kt-wbench-line-btn kt-wbench-line-btn--highlight">View Linked Artefacts</button>`
-		: `<button class="kt-wbench-line-btn" data-line-act="open-line" data-line-idx="${idx}" data-testid="kt-wbench-btn-open-line">Open Line</button>
-		   <button class="kt-wbench-line-btn">View Linked Artefacts</button>`;
+		const lineStatus = (line.line_status || "Draft").toLowerCase();
+		const canReserve = lineStatus === "active";
+
+		const btns = `<button class="kt-wbench-line-btn" data-line-act="open-line" data-line-idx="${idx}" data-testid="kt-wbench-btn-open-line">Open Line</button>
+		   ${canReserve ? `<button class="kt-wbench-line-btn">Reserve Funds</button>` : ""}
+		   <button class="kt-wbench-line-btn${isActive ? " kt-wbench-line-btn--highlight" : ""}">View Linked Artefacts</button>`;
 
 		const reserved  = line.amount_reserved  || 0;
 		const committed = line.amount_committed  || 0;
@@ -459,7 +513,7 @@
 				</div>
 			</div>
 			<div class="kt-wbench-line-actions">
-				${activeBtn}
+				${btns}
 			</div>
 		</div>`;
 	}
@@ -732,10 +786,12 @@
 			<div class="kt-wbench-lines-toolbar">
 				<h3 class="kt-wbench-lines-title">Budget Lines</h3>
 				<div class="kt-wbench-toolbar-actions">
-					<button class="kt-wbench-btn-filter">
-						<span class="material-symbols-outlined">filter_list</span>
-						All Lines
-					</button>
+					<div class="kt-wbench-filter-pills" data-testid="kt-wbench-filter-pills">
+						<button class="kt-wbench-filter-pill kt-wbench-filter-pill--active"
+							data-filter="all" data-testid="kt-wbench-filter-all">
+							<span class="material-symbols-outlined">filter_list</span>All Lines
+						</button>
+					</div>
 					<button class="kt-wbench-btn-add" data-testid="kt-wbench-btn-add">
 						<span class="material-symbols-outlined">add</span>
 						Add Budget Line
@@ -947,6 +1003,15 @@
 		wrapper.addEventListener("click", function (e) {
 			if (!e.target.closest("[data-wbench='edit-budget-btn']")) return;
 			if (_budgetData) _showEditBudgetModal(_budgetData);
+		});
+
+		// Filter pills — client-side filter on already-loaded _lines
+		wrapper.addEventListener("click", function (e) {
+			const pill = e.target.closest("[data-filter]");
+			if (!pill) return;
+			_lineFilter = pill.dataset.filter || "all";
+			_refreshFilterPills(wrapper);
+			_applyLineFilter(wrapper);
 		});
 
 		// ── Revision workflow action buttons ─────────────────────────────────

@@ -297,6 +297,8 @@ def get_budget_landing_data():
 			health_status = "submitted"
 		elif status == "Rejected":
 			health_status = "rejected"
+		elif status == "Cancelled":
+			health_status = "cancelled"
 		else:
 			health_status = "draft"
 

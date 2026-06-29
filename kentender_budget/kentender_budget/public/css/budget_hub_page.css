@@ -714,6 +714,7 @@ body.kt-bgt-shell .layout-main-section {
 .kt-bgt-chip--exhausted { background: rgba(147,0,10,0.18);   color: #93000a; font-style: italic; }
 .kt-bgt-chip--draft     { background: rgba(0,52,111,0.1);    color: #00346f; }
 .kt-bgt-chip--rejected  { background: rgba(147,0,10,0.08);   color: #93000a; }
+.kt-bgt-chip--cancelled { background: rgba(69,70,77,0.1);    color: #45464d; }
 
 /* KPI loading dash */
 .kt-bgt-kpi--loading { color: #b0b8c4; }

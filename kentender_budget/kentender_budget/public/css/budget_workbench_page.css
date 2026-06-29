@@ -328,6 +328,43 @@ body.kt-wbench-shell .appframe-toolbar {
 .kt-wbench-btn-filter:hover { background: var(--ktw-surface-highest); }
 .kt-wbench-btn-filter .material-symbols-outlined { font-size: 16px; }
 
+/* ── Filter pill group ─────────────────────────────────────────────────── */
+.kt-wbench-filter-pills {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+.kt-wbench-filter-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 6px 14px;
+	background: var(--ktw-surface-high);
+	border: 1px solid var(--ktw-border-subtle);
+	border-radius: 20px;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--ktw-on-surface-muted);
+	cursor: pointer;
+	transition: background 0.12s, color 0.12s, border-color 0.12s;
+	white-space: nowrap;
+}
+.kt-wbench-filter-pill:hover {
+	background: var(--ktw-surface-highest);
+	color: var(--ktw-on-surface);
+}
+.kt-wbench-filter-pill--active {
+	background: #0f172a;
+	border-color: #0f172a;
+	color: #fff;
+}
+.kt-wbench-filter-pill--active:hover {
+	background: #1e293b;
+	border-color: #1e293b;
+	color: #fff;
+}
+.kt-wbench-filter-pill .material-symbols-outlined { font-size: 14px; }
+
 .kt-wbench-btn-add {
 	display: inline-flex;
 	align-items: center;
