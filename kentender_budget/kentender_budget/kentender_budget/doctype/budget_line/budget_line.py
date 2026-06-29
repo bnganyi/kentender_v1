@@ -62,9 +62,12 @@ class BudgetLine(Document):
 			frappe.throw(_("Amount committed must be zero or greater (BL-002b)."), title=_("Budget Line"))
 		if con < 0:
 			frappe.throw(_("Amount consumed must be zero or greater (BL-003)."), title=_("Budget Line"))
-		if res + com + con > alloc + 1e-9:
+		# BL-004: reserved + committed cannot exceed allocated.
+		# Consumed (actual spend) is bounded within committed; it is tracked separately
+		# and not deducted from available balance (per procurement-control model §7).
+		if res + com > alloc + 1e-9:
 			frappe.throw(
-				_("Reserved plus committed plus consumed cannot exceed allocated (BL-004)."),
+				_("Reserved plus committed cannot exceed allocated (BL-004)."),
 				title=_("Budget Line"),
 			)
 
@@ -149,9 +152,10 @@ class BudgetLine(Document):
 		alloc = flt(self.amount_allocated)
 		res   = flt(self.amount_reserved)
 		com   = flt(self.amount_committed or 0)
-		con   = flt(self.amount_consumed or 0)
-		# Available = Allocated − Reserved − Committed − Actual Spend
-		self.amount_available = flt(alloc - res - com - con)
+		# Available = Allocated − Reserved − Committed (procurement-control model §7).
+		# amount_consumed (actual spend) is tracked separately and NOT deducted here;
+		# it is bounded within committed via Committed Balance = Committed − Actual Spend.
+		self.amount_available = flt(alloc - res - com)
 
 	def _generate_budget_line_code(self) -> str:
 		year = cint(self.fiscal_year) if self.fiscal_year is not None else cint(frappe.utils.now_datetime().year)

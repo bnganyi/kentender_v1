@@ -11,9 +11,10 @@ from kentender_budget.services.budget_permissions import (
 
 # B5.1 / B5.9 — approval workflow (see docs/prompts/budget/8.Budget-Approval-Flow.md, 8.a)
 # v2 domain expansion: Active, Closed, Revised added (Budget Domain Revision.md)
+# Revision workflow: Cancelled added for withdrawn revisions
 VALID_BUDGET_STATUSES = frozenset((
 	"Draft", "Submitted", "Approved", "Active",
-	"Closed", "Revised", "Rejected",
+	"Closed", "Revised", "Rejected", "Cancelled",
 ))
 ALLOWED_STATUS_TRANSITIONS = frozenset(
 	(
@@ -28,6 +29,10 @@ ALLOWED_STATUS_TRANSITIONS = frozenset(
 		("Active",     "Revised"),
 		("Revised",    "Submitted"),
 		("Revised",    "Active"),
+		# Revision workflow transitions
+		("Submitted",  "Draft"),      # Return revision for correction
+		("Draft",      "Cancelled"),  # Cancel revision before submission
+		("Submitted",  "Active"),     # Approve revision (combined approve+apply)
 	)
 )
 
@@ -155,12 +160,13 @@ class Budget(Document):
 			frappe.throw(_("Supersedes Budget must belong to the same Procuring Entity (BUD-008)."))
 
 	def _validate_version_uniqueness(self):
-		"""BUD-009: (procuring_entity, fiscal_year, version_no, strategic_plan) unique."""
+		"""BUD-009: (procuring_entity, fiscal_year, version_no, strategic_plan) unique among non-cancelled budgets."""
 		filters = {
 			"procuring_entity": self.procuring_entity,
 			"fiscal_year": self.fiscal_year,
 			"version_no": self.version_no,
 			"strategic_plan": self.strategic_plan,
+			"status": ["not in", ["Cancelled"]],
 		}
 		existing = frappe.get_all("Budget", filters=filters, pluck="name")
 		others = [n for n in existing if n != self.name]

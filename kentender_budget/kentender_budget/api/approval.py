@@ -57,3 +57,47 @@ def reject_budget(budget_name: str | None = None, rejection_reason: str | None =
 	doc.rejected_at = now_datetime()
 	doc.save()
 	return {"name": doc.name, "status": doc.status}
+
+
+@frappe.whitelist()
+def activate_budget(budget_name: str | None = None):
+	"""Approved → Active. Finance / Budget Authority activates the approved envelope."""
+	if not budget_name:
+		frappe.throw(_("Budget name is required."))
+	doc = frappe.get_doc("Budget", budget_name)
+	doc.check_permission("write")
+	if doc.status != "Approved":
+		frappe.throw(_("Only Approved budgets can be activated."))
+	doc.status = "Active"
+	doc.save()
+	return {"name": doc.name, "status": doc.status}
+
+
+@frappe.whitelist()
+def update_budget(
+	budget_name: str | None = None,
+	budget_display_name: str | None = None,
+	fiscal_year: int | None = None,
+	currency: str | None = None,
+	effective_date: str | None = None,
+	closing_date: str | None = None,
+) -> dict:
+	"""Update editable header fields on a Draft or Rejected budget."""
+	if not budget_name:
+		frappe.throw(_("Budget name is required."))
+	doc = frappe.get_doc("Budget", budget_name)
+	doc.check_permission("write")
+	if doc.status not in ("Draft", "Rejected"):
+		frappe.throw(_("Only Draft or Rejected budgets can be edited."))
+	if budget_display_name is not None:
+		if not (budget_display_name or "").strip():
+			frappe.throw(_("Budget Name cannot be blank."))
+		doc.budget_name = budget_display_name.strip()
+	if fiscal_year is not None:
+		doc.fiscal_year = int(fiscal_year)
+	if currency is not None:
+		doc.currency = currency
+	doc.effective_date = effective_date or None
+	doc.closing_date = closing_date or None
+	doc.save()
+	return {"name": doc.name, "budget_name": doc.budget_name, "status": doc.status}

@@ -109,7 +109,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Draft\nSubmitted\nApproved\nActive\nClosed\nRevised\nRejected",
+   "options": "Draft\nSubmitted\nApproved\nActive\nClosed\nRevised\nRejected\nCancelled",
    "reqd": 1,
    "search_index": 1
   },

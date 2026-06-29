@@ -4,15 +4,16 @@ from frappe.utils import cint, flt, now_datetime
 
 
 def _assert_budget_editable_for_builder(budget_doc):
+	"""Only Draft and Rejected budgets allow direct line mutations. Active budgets must go through a revision."""
 	status = (budget_doc.status or "Draft").strip()
-	if status in ("Submitted", "Approved"):
-		frappe.throw(_("This budget is locked and cannot be edited from Budget Builder."))
+	if status not in ("Draft", "Rejected"):
+		frappe.throw(_("This budget is locked. Use a revision to make changes."))
 
 
 def _budget_status_blocks_removal(status: str | None) -> bool:
-	"""Approved or Submitted budgets cannot remove or delete lines from the builder."""
+	"""Only Draft budgets allow line removal from the builder."""
 	st = (status or "Draft").strip()
-	return st in ("Approved", "Submitted")
+	return st not in ("Draft",)
 
 
 def _line_reference_counts(budget_line_name: str) -> tuple[int, int, int]:
@@ -87,6 +88,25 @@ def _lines_list_filters(lines_filter: str) -> dict | None:
 	return {"is_active": 1}
 
 
+def _compute_line_status(budget_status: str, is_active: int, allocated: float, available: float) -> str:
+	"""Derive a Budget Line's display status from its parent budget's workflow state and its own balance."""
+	if not int(is_active or 0):
+		return "Removed"
+	bstatus = (budget_status or "Draft").strip()
+	if bstatus in ("Draft", "Submitted", "Rejected"):
+		return "Draft"
+	if bstatus == "Approved":
+		return "Approved"
+	if bstatus == "Revised":
+		return "Revised"
+	if bstatus == "Cancelled":
+		return "Cancelled"
+	# Budget is Active (or any live approved state)
+	if allocated > 0 and available <= 0:
+		return "Exhausted"
+	return "Active"
+
+
 def _get_builder_payload(budget_name: str, lines_filter: str = "active"):
 	budget = frappe.db.get_value(
 		"Budget",
@@ -105,6 +125,9 @@ def _get_builder_payload(budget_name: str, lines_filter: str = "active"):
 			"fiscal_year",
 			"closing_date",
 			"effective_date",
+			"supersedes_budget",
+			"version_no",
+			"is_current_version",
 		],
 		as_dict=True,
 	)
@@ -247,11 +270,11 @@ def _get_builder_payload(budget_name: str, lines_filter: str = "active"):
 			"performance_target": row.performance_target,
 			"performance_target_label": target_labels.get(row.performance_target, row.performance_target),
 			"performance_target_code": target_codes.get(row.performance_target, ""),
-			"notes": row.notes or "",
-			"department": row.get("department") or "",
-			"economic_classification": row.get("economic_classification") or "",
-			"line_status": row.get("line_status") or "",
-		}
+		"notes": row.notes or "",
+		"department": row.get("department") or "",
+		"economic_classification": row.get("economic_classification") or "",
+		"line_status": _compute_line_status(budget_status, row.is_active, allocated, available),
+	}
 		row_dict["can_remove"] = _line_can_soft_remove(budget_status, row_dict, demand_n, active_res)
 		row_dict["can_hard_delete"] = _line_can_hard_delete(budget_status, row_dict, demand_n, active_res, total_res)
 		budget_lines.append(row_dict)
@@ -301,6 +324,9 @@ def _get_builder_payload(budget_name: str, lines_filter: str = "active"):
 			"fiscal_year": budget.get("fiscal_year"),
 			"closing_date": budget.get("closing_date"),
 			"effective_date": budget.get("effective_date"),
+			"supersedes_budget": budget.get("supersedes_budget"),
+			"version_no": budget.get("version_no"),
+			"is_current_version": budget.get("is_current_version"),
 		},
 		"totals": {
 			"total_budget_amount": total_budget,
@@ -344,6 +370,8 @@ def upsert_budget_line(
 	is_active: int | None = 1,
 	budget_line_id: str | None = None,
 	lines_filter: str | None = "active",
+	economic_classification: str | None = None,
+	department: str | None = None,
 ):
 	if not budget_name:
 		frappe.throw(_("Budget is required."))
@@ -383,6 +411,10 @@ def upsert_budget_line(
 	line_doc.notes = notes or ""
 	line_doc.is_active = 1 if cint(is_active) else 0
 	line_doc.strategic_plan = budget_doc.strategic_plan
+	if economic_classification is not None:
+		line_doc.economic_classification = economic_classification
+	if department is not None:
+		line_doc.department = department
 	line_doc.save(ignore_permissions=False)
 	return _get_builder_payload(budget_name, lines_filter=lines_filter or "active")
 
@@ -461,3 +493,40 @@ def delete_budget_line_permanent(budget_name: str, budget_line_id: str, lines_fi
 		frappe.flags.budget_line_force_delete = False
 
 	return _get_builder_payload(budget_name, lines_filter=lines_filter or "active")
+
+
+@frappe.whitelist()
+def create_budget(
+	budget_name: str,
+	procuring_entity: str,
+	fiscal_year: int,
+	strategic_plan: str | None = None,
+	currency: str = "KES",
+	effective_date: str | None = None,
+	closing_date: str | None = None,
+) -> dict:
+	"""Create a new Draft Budget and return its name so the caller can navigate to the workbench."""
+	if not budget_name:
+		frappe.throw(_("Budget Name is required."))
+	if not procuring_entity:
+		frappe.throw(_("Procuring Entity is required."))
+	if not fiscal_year:
+		frappe.throw(_("Fiscal Year is required."))
+
+	if not frappe.has_permission("Budget", "create"):
+		frappe.throw(_("You do not have permission to create a Budget."), frappe.PermissionError)
+
+	doc = frappe.new_doc("Budget")
+	doc.budget_name = budget_name.strip()
+	doc.procuring_entity = procuring_entity
+	doc.fiscal_year = cint(fiscal_year)
+	doc.strategic_plan = strategic_plan or None
+	doc.currency = currency or "KES"
+	doc.effective_date = effective_date or None
+	doc.closing_date = closing_date or None
+	doc.status = "Draft"
+	doc.version_no = 1
+	doc.is_current_version = 1
+	doc.insert(ignore_permissions=False)
+
+	return {"name": doc.name, "budget_name": doc.budget_name}

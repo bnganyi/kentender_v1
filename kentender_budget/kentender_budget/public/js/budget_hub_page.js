@@ -189,7 +189,7 @@
             <span class="material-symbols-outlined">download</span>
             Export Report
           </button>
-          <button class="kt-bgt-btn-primary" type="button">
+          <button class="kt-bgt-btn-primary" type="button" data-testid="kt-bgt-btn-create">
             <span class="material-symbols-outlined">add_box</span>
             Create Budget
           </button>
@@ -827,12 +827,281 @@
 			},
 		});
 	}
+	/** Open the Create Budget dialog, call API, then navigate to the new workbench. */
+	function _showCreateBudgetDialog() {
+		function esc(s) {
+			var div = document.createElement("div");
+			div.textContent = s == null ? "" : String(s);
+			return div.innerHTML;
+		}
+
+		var FIELD_WRAP  = "display:flex;flex-direction:column;";
+		var LBL_STYLE   = "display:block;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#45464d;margin-bottom:6px;font-family:'Inter',sans-serif;";
+		var INPUT_STYLE = "width:100%;background:#f1f5f9;border:1px solid transparent;border-radius:4px;padding:8px 12px;font-size:13px;font-family:'Inter',sans-serif;color:#191c1e;outline:none;box-sizing:border-box;";
+		var ERR_STYLE   = "font-size:11px;color:#ba1a1a;margin-top:4px;display:none;";
+
+		var curYear = new Date().getFullYear();
+
+		var bodyHtml = `
+			<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+				<div class="kt-bgt-create-field" style="${FIELD_WRAP}" data-field="budget_name">
+					<label style="${LBL_STYLE}" for="ktcb_budget_name">Budget Name <span style="color:#ba1a1a">*</span></label>
+					<input id="ktcb_budget_name" name="budget_name" type="text"
+						style="${INPUT_STYLE}" placeholder="e.g. BUDGET-MOH-HEALTH-2027">
+					<span style="${ERR_STYLE}" data-err="budget_name"></span>
+				</div>
+				<div class="kt-bgt-create-field" style="${FIELD_WRAP}" data-field="fiscal_year">
+					<label style="${LBL_STYLE}" for="ktcb_fiscal_year">Fiscal Year <span style="color:#ba1a1a">*</span></label>
+					<input id="ktcb_fiscal_year" name="fiscal_year" type="number" min="2000" max="2099" step="1"
+						style="${INPUT_STYLE}" value="${curYear}">
+					<span style="${ERR_STYLE}" data-err="fiscal_year"></span>
+				</div>
+			</div>
+			<div class="kt-bgt-create-field" style="${FIELD_WRAP}" data-field="procuring_entity">
+				<label style="${LBL_STYLE}" for="ktcb_procuring_entity">Procuring Entity <span style="color:#ba1a1a">*</span></label>
+				<select id="ktcb_procuring_entity" name="procuring_entity" style="${INPUT_STYLE}">
+					<option value="" disabled selected>Loading…</option>
+				</select>
+				<span style="${ERR_STYLE}" data-err="procuring_entity"></span>
+			</div>
+			<div class="kt-bgt-create-field" style="${FIELD_WRAP}" data-field="strategic_plan">
+				<label style="${LBL_STYLE}" for="ktcb_strategic_plan">Strategic Plan <span style="color:#ba1a1a">*</span></label>
+				<select id="ktcb_strategic_plan" name="strategic_plan" style="${INPUT_STYLE}" disabled>
+					<option value="">— Select Procuring Entity first —</option>
+				</select>
+				<span style="${ERR_STYLE}" data-err="strategic_plan"></span>
+			</div>
+			<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+				<div class="kt-bgt-create-field" style="${FIELD_WRAP}" data-field="currency">
+					<label style="${LBL_STYLE}" for="ktcb_currency">Currency</label>
+					<select id="ktcb_currency" name="currency" style="${INPUT_STYLE}">
+						<option value="KES" selected>KES</option>
+						<option value="USD">USD</option>
+						<option value="EUR">EUR</option>
+						<option value="GBP">GBP</option>
+					</select>
+				</div>
+				<div></div>
+			</div>
+			<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+				<div class="kt-bgt-create-field" style="${FIELD_WRAP}" data-field="effective_date">
+					<label style="${LBL_STYLE}" for="ktcb_effective_date">Effective Date</label>
+					<input id="ktcb_effective_date" name="effective_date" type="date" style="${INPUT_STYLE}">
+				</div>
+				<div class="kt-bgt-create-field" style="${FIELD_WRAP}" data-field="closing_date">
+					<label style="${LBL_STYLE}" for="ktcb_closing_date">Closing Date</label>
+					<input id="ktcb_closing_date" name="closing_date" type="date" style="${INPUT_STYLE}">
+				</div>
+			</div>
+		`;
+
+		var OVERLAY_STYLE =
+			"position:fixed;top:0;right:0;bottom:0;left:0;z-index:9999;" +
+			"display:flex;align-items:center;justify-content:center;padding:16px;";
+		var BACKDROP_STYLE =
+			"position:absolute;top:0;right:0;bottom:0;left:0;" +
+			"background:rgba(15,23,42,0.4);backdrop-filter:blur(4px);";
+		var BOX_STYLE =
+			"position:relative;background:#fff;width:100%;max-width:540px;" +
+			"border-radius:4px;box-shadow:0 25px 50px rgba(0,0,0,.25);overflow:hidden;";
+
+		var html = `
+		<div class="kt-wbench-modal-overlay" style="${OVERLAY_STYLE}" data-testid="kt-bgt-create-modal-overlay">
+			<div class="kt-wbench-modal-backdrop" style="${BACKDROP_STYLE}" data-testid="kt-bgt-create-modal-backdrop"></div>
+			<div class="kt-wbench-modal-box" style="${BOX_STYLE}" role="dialog" aria-modal="true" aria-labelledby="ktcb-title">
+				<div class="kt-wbench-modal-hdr" style="padding:16px 24px;border-bottom:1px solid #c6c6cd;background:#f2f4f6;display:flex;justify-content:space-between;align-items:center;">
+					<span id="ktcb-title"
+						style="font-size:18px;line-height:26px;font-weight:600;color:#000;font-family:'Manrope',sans-serif;">Create Budget</span>
+					<button class="kt-bgt-create-close" aria-label="Close"
+						style="padding:4px;background:transparent;border:none;border-radius:4px;cursor:pointer;color:#45464d;display:flex;align-items:center;">
+						<span class="material-symbols-outlined" style="font-size:20px">close</span>
+					</button>
+				</div>
+				<div class="kt-wbench-modal-body"
+					style="padding:24px;display:flex;flex-direction:column;gap:16px;max-height:calc(80vh - 130px);overflow-y:auto;">
+					<div data-role="kt-bgt-create-api-error"
+						style="display:none;align-items:flex-start;gap:10px;padding:10px 14px;
+						       background:#fff8f7;border:1px solid #f5c2bb;border-radius:4px;
+						       font-size:13px;color:#ba1a1a;line-height:1.45;">
+						<span class="material-symbols-outlined" style="font-size:16px;flex-shrink:0;margin-top:1px">error</span>
+						<span data-role="kt-bgt-create-api-error-msg"></span>
+					</div>
+					${bodyHtml}
+				</div>
+				<div class="kt-wbench-modal-ftr"
+					style="padding:16px 24px;border-top:1px solid #c6c6cd;background:#fff;display:flex;justify-content:flex-end;align-items:center;gap:16px;">
+					<button class="kt-bgt-create-cancel"
+						style="padding:8px 20px;background:transparent;border:none;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.05em;color:#45464d;font-family:'Inter',sans-serif;">Cancel</button>
+					<button class="kt-bgt-create-submit" data-testid="kt-bgt-create-submit"
+						style="padding:8px 24px;background:#0f172a;color:#fff;border:none;border-radius:4px;font-size:12px;font-weight:700;letter-spacing:.05em;cursor:pointer;font-family:'Inter',sans-serif;">
+						Create Budget
+					</button>
+				</div>
+			</div>
+		</div>`;
+
+		var el = document.createElement("div");
+		el.innerHTML = html;
+		var overlay = el.firstElementChild;
+		document.body.appendChild(overlay);
+
+		var peSelect  = overlay.querySelector("[name='procuring_entity']");
+		var spSelect  = overlay.querySelector("[name='strategic_plan']");
+		var submitBtn = overlay.querySelector(".kt-bgt-create-submit");
+
+		function _close() {
+			if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+		}
+
+		function _showErr(name, msg) {
+			var span = overlay.querySelector("[data-err='" + name + "']");
+			if (!span) return;
+			span.textContent = msg;
+			span.style.display = msg ? "block" : "none";
+		}
+
+		function _clearErrs() {
+			overlay.querySelectorAll("[data-err]").forEach(function (s) {
+				s.textContent = "";
+				s.style.display = "none";
+			});
+		}
+
+		function _setSubmitting(busy) {
+			submitBtn.disabled = busy;
+			submitBtn.textContent = busy ? "Creating…" : "Create Budget";
+		}
+
+		function _showInlineError(msg) {
+			var banner = overlay.querySelector("[data-role='kt-bgt-create-api-error']");
+			var msgEl  = overlay.querySelector("[data-role='kt-bgt-create-api-error-msg']");
+			if (!banner || !msgEl) return;
+			msgEl.textContent = msg;
+			banner.style.display = "flex";
+			banner.scrollIntoView({ behavior: "smooth", block: "nearest" });
+		}
+
+		function _clearInlineError() {
+			var banner = overlay.querySelector("[data-role='kt-bgt-create-api-error']");
+			if (banner) banner.style.display = "none";
+		}
+
+		// ── Load Procuring Entities ───────────────────────────────────────────
+		frappe.db.get_list("Procuring Entity", {
+			fields: ["name", "entity_name", "entity_code"],
+			limit: 500,
+			order_by: "entity_name asc",
+		}).then(function (rows) {
+			peSelect.innerHTML =
+				`<option value="" disabled selected>— Select Entity —</option>` +
+				rows.map(function (r) {
+					var label = r.entity_name || r.name;
+					if (r.entity_code) label += " (" + r.entity_code + ")";
+					return `<option value="${esc(r.name)}">${esc(label)}</option>`;
+				}).join("");
+		});
+
+		// ── Cascade: when Procuring Entity changes, reload Strategic Plans ────
+		peSelect.addEventListener("change", function () {
+			var pe = peSelect.value;
+			spSelect.innerHTML = `<option value="" disabled selected>Loading…</option>`;
+			spSelect.disabled = true;
+			_showErr("strategic_plan", "");
+			if (!pe) return;
+
+			frappe.db.get_list("Strategic Plan", {
+				filters: { procuring_entity: pe },
+				fields: ["name", "strategic_plan_name"],
+				limit: 200,
+				order_by: "strategic_plan_name asc",
+			}).then(function (rows) {
+				if (!rows || !rows.length) {
+					spSelect.innerHTML = `<option value="">No plans for this entity</option>`;
+					spSelect.disabled = true;
+					return;
+				}
+				spSelect.innerHTML =
+					`<option value="" disabled selected>— Select Strategic Plan —</option>` +
+					rows.map(function (r) {
+						var label = r.strategic_plan_name || r.name;
+						return `<option value="${esc(r.name)}">${esc(label)}</option>`;
+					}).join("");
+				spSelect.disabled = false;
+			});
+		});
+
+		// ── Close handlers ────────────────────────────────────────────────────
+		overlay.querySelector(".kt-bgt-create-close").addEventListener("click", _close);
+		overlay.querySelector(".kt-bgt-create-cancel").addEventListener("click", _close);
+		overlay.querySelector("[data-testid='kt-bgt-create-modal-backdrop']")
+			.addEventListener("click", _close);
+
+		// ── Submit ────────────────────────────────────────────────────────────
+		submitBtn.addEventListener("click", function () {
+			_clearErrs();
+			_clearInlineError();
+			var budgetName = (overlay.querySelector("[name='budget_name']").value || "").trim();
+			var fiscalYear = overlay.querySelector("[name='fiscal_year']").value;
+			var pe         = peSelect.value;
+			var sp         = spSelect.value;
+			var currency   = overlay.querySelector("[name='currency']").value;
+			var effDate    = overlay.querySelector("[name='effective_date']").value || null;
+			var closeDate  = overlay.querySelector("[name='closing_date']").value || null;
+
+			var valid = true;
+			if (!budgetName) { _showErr("budget_name", "Budget Name is required."); valid = false; }
+			if (!fiscalYear) { _showErr("fiscal_year", "Fiscal Year is required."); valid = false; }
+			if (!pe)         { _showErr("procuring_entity", "Procuring Entity is required."); valid = false; }
+			if (!sp)         { _showErr("strategic_plan", "Strategic Plan is required."); valid = false; }
+			if (!valid) return;
+
+			_setSubmitting(true);
+			frappe.call({
+				method: "kentender_budget.api.builder.create_budget",
+				args: {
+					budget_name:      budgetName,
+					procuring_entity: pe,
+					fiscal_year:      parseInt(fiscalYear, 10),
+					strategic_plan:   sp,
+					currency:         currency || "KES",
+					effective_date:   effDate,
+					closing_date:     closeDate,
+				},
+				always_callback: true,
+				callback: function (r) {
+					if (r && r.message && r.message.name) {
+						_close();
+						frappe.set_route("budget-workbench", r.message.name);
+					}
+				},
+				error: function (r) {
+					_setSubmitting(false);
+					var raw = (r && r.responseJSON && r.responseJSON.exception)
+					          || (r && r.message)
+					          || (r && r.exception)
+					          || "Could not create budget.";
+					// Strip Python traceback — keep only the last meaningful line
+					var lines = String(raw).split("\n").map(function (l) { return l.trim(); }).filter(Boolean);
+					var msg = lines[lines.length - 1] || raw;
+					_showInlineError(msg);
+				},
+			});
+		});
+	}
+
 	// wrapper is the raw #page-budget-hub div (page_js page)
 	function _mount(wrapper) {
 		_ensureFonts();
 		if (!wrapper) return;
 		if (wrapper.querySelector(".kt-bgt-workbench")) return; // already mounted
 		wrapper.innerHTML = _html();
+
+		var createBtn = wrapper.querySelector("[data-testid='kt-bgt-btn-create']");
+		if (createBtn) {
+			createBtn.addEventListener("click", function () {
+				_showCreateBudgetDialog();
+			});
+		}
 	}
 
 	// ── Frappe page registration ──────────────────────────────────────────────

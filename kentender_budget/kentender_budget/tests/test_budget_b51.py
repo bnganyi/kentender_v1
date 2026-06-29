@@ -109,6 +109,7 @@ class TestBudgetB51(IntegrationTestCase):
 			b.save(ignore_permissions=True)
 
 	def test_invalid_transition_submitted_to_draft(self):
+		"""Submitted → Draft is now valid (revision return workflow) — transition is allowed."""
 		b = self._budget_doc()
 		b.insert(ignore_permissions=True)
 		b.reload()
@@ -116,8 +117,10 @@ class TestBudgetB51(IntegrationTestCase):
 		b.save(ignore_permissions=True)
 		b.reload()
 		b.status = "Draft"
-		with self.assertRaises(ValidationError):
-			b.save(ignore_permissions=True)
+		# Since revision workflow added Submitted → Draft as a valid transition this must not raise
+		b.save(ignore_permissions=True)
+		b.reload()
+		self.assertEqual(b.status, "Draft")
 
 	def test_invalid_transition_approved_to_submitted(self):
 		b = self._budget_doc()

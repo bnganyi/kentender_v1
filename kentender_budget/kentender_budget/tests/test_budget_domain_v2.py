@@ -122,21 +122,24 @@ class TestBudgetDomainV2(IntegrationTestCase):
 		finally:
 			frappe.flags.budget_control_service_write = False
 
-	# ── A5: Updated balance formula ───────────────────────────────────────────
+	# ── A5: Updated balance formula (procurement-control model §7) ───────────────
+	# Available = Allocated − Reserved − Committed
+	# amount_consumed (actual spend) is tracked but NOT deducted from Available.
 
-	def test_a5_available_formula_excludes_commitment(self):
-		"""available = allocated − reserved − committed − consumed."""
+	def test_a5_available_excludes_consumed_from_balance(self):
+		"""available = allocated − reserved − committed (consumed NOT deducted per §7)."""
 		frappe.flags.budget_control_service_write = True
 		try:
 			self.line.amount_reserved  = 200_000
 			self.line.amount_committed = 300_000
-			self.line.amount_consumed  = 100_000
+			self.line.amount_consumed  = 100_000  # consumed tracked but not in available
 			self.line.save(ignore_permissions=True)
 		finally:
 			frappe.flags.budget_control_service_write = False
 
 		self.line.reload()
-		expected = 1_000_000 - 200_000 - 300_000 - 100_000  # = 400_000
+		# expected = 1,000,000 − 200,000 − 300,000 = 500,000 (consumed does NOT reduce available)
+		expected = 1_000_000 - 200_000 - 300_000
 		self.assertAlmostEqual(flt(self.line.amount_available), expected, places=2)
 
 	def test_a5_available_zero_when_fully_committed_and_reserved(self):
@@ -153,17 +156,33 @@ class TestBudgetDomainV2(IntegrationTestCase):
 		self.line.reload()
 		self.assertAlmostEqual(flt(self.line.amount_available), 0, places=2)
 
-	def test_a5_validation_rejects_reserved_plus_committed_plus_consumed_exceeds_allocated(self):
-		"""BL-004 fires when reserved + committed + consumed > allocated."""
+	def test_a5_validation_rejects_reserved_plus_committed_exceeds_allocated(self):
+		"""BL-004 fires when reserved + committed > allocated (consumed no longer in guard)."""
 		frappe.flags.budget_control_service_write = True
 		try:
-			self.line.amount_reserved  = 500_000
-			self.line.amount_committed = 400_000
-			self.line.amount_consumed  = 200_000   # total = 1,100,000 > 1,000,000
+			self.line.amount_reserved  = 600_000
+			self.line.amount_committed = 500_000   # total = 1,100,000 > 1,000,000
+			self.line.amount_consumed  = 0
 			with self.assertRaises(ValidationError):
 				self.line.save(ignore_permissions=True)
 		finally:
 			frappe.flags.budget_control_service_write = False
+
+	def test_a5_consumed_alone_does_not_trigger_bl004(self):
+		"""consumed within commitment range no longer triggers BL-004."""
+		frappe.flags.budget_control_service_write = True
+		try:
+			self.line.amount_reserved  = 0
+			self.line.amount_committed = 600_000
+			self.line.amount_consumed  = 400_000   # consumed < committed — valid
+			# must not raise
+			self.line.save(ignore_permissions=True)
+		finally:
+			frappe.flags.budget_control_service_write = False
+
+		self.line.reload()
+		# available = 1,000,000 − 0 − 600,000 = 400,000
+		self.assertAlmostEqual(flt(self.line.amount_available), 400_000, places=2)
 
 	def test_a5_committed_alone_cannot_exceed_allocated(self):
 		"""Committed > allocated triggers BL-004."""

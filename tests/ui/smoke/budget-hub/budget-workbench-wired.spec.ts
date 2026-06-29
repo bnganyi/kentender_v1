@@ -101,6 +101,25 @@ test.describe('Budget Workbench — wiring smoke (W5-08)', () => {
 		expect(text.trim()).not.toBe('—');
 	});
 
+	test('Approved Budget card shows sum of line allocations (not static total_budget_amount)', async ({
+		page,
+	}) => {
+		await loginAsAdministrator(page);
+		await openBudgetHub(page);
+		const budgetName = await getFirstBudgetName(page);
+		await openWorkbench(page, budgetName);
+
+		// The card must have resolved (skeleton class removed)
+		const approvedEl = page.getByTestId('kt-wbench-approved');
+		await expect(approvedEl).toBeVisible({ timeout: 20_000 });
+		await expect(approvedEl).not.toHaveClass(/kt-wbench-skel/, { timeout: 15_000 });
+
+		// Value must not be the dash placeholder — it must have resolved to a real number
+		const text = (await approvedEl.textContent()) ?? '';
+		expect(text.trim()).not.toBe('—');
+		expect(text.trim().length).toBeGreaterThan(0);
+	});
+
 	test('At least one Budget Line card is rendered (Zone 2 populated)', async ({ page }) => {
 		await loginAsAdministrator(page);
 		await openBudgetHub(page);

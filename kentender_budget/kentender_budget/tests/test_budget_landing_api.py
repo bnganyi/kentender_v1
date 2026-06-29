@@ -277,11 +277,14 @@ class TestHealthStatusEdgeCases(IntegrationTestCase):
 		self.assertEqual(row.get("health_status"), "healthy")
 
 	def test_edge_all_consumed_is_exhausted(self):
-		"""Edge: amount_available = 0 (fully obligated) → avail_pct = 0 → exhausted."""
+		"""Edge: amount_consumed = allocated but reserved=committed=0 → available = allocated (100%).
+		Consumed alone does not reduce available balance (formula: available = allocated - reserved - committed).
+		"""
 		bud = _make_health_budget(allocated=1_000_000, consumed=1_000_000)
 		row = _health_row(bud.name)
-		self.assertAlmostEqual(flt(row.get("avail_pct")), 0.0, places=1)
-		self.assertEqual(row.get("health_status"), "exhausted")
+		# With new formula, available = allocated - 0 - 0 = allocated → 100%
+		self.assertAlmostEqual(flt(row.get("avail_pct")), 100.0, places=1)
+		self.assertEqual(row.get("health_status"), "healthy")
 
 	def test_edge_zero_allocated_is_healthy(self):
 		"""Edge: no Budget Lines (allocated = 0) → avail_pct defaults to 100 → healthy."""

@@ -78,8 +78,24 @@ def enforce_budget_submitted_approved_immutability(doc) -> None:
 		and prev.get("status") == "Submitted"
 		and doc.get("status") == "Rejected"
 	)
+	returning = (
+		stored == "Submitted"
+		and prev.get("status") == "Submitted"
+		and doc.get("status") == "Draft"
+	)
+	approving = (
+		stored == "Submitted"
+		and prev.get("status") == "Submitted"
+		and doc.get("status") in ("Approved", "Active")
+	)
 	allowed_on_submitted_to_rejected = frozenset(
 		("status", "rejection_reason", "rejected_by", "rejected_at")
+	)
+	allowed_on_submitted_to_draft = frozenset(
+		("status", "rejection_reason", "rejected_by", "rejected_at")
+	)
+	allowed_on_approve = frozenset(
+		("status", "approved_by", "approved_at", "total_budget_amount", "is_current_version")
 	)
 	for field in doc.meta.get_valid_columns():
 		if field in ignore:
@@ -89,8 +105,12 @@ def enforce_budget_submitted_approved_immutability(doc) -> None:
 			continue
 		if rejecting and field in allowed_on_submitted_to_rejected:
 			continue
+		if returning and field in allowed_on_submitted_to_draft:
+			continue
+		if approving and field in allowed_on_approve:
+			continue
 		if field == "status":
-			if stored == "Submitted" and old_v == "Submitted" and new_v == "Approved":
+			if stored == "Submitted" and old_v == "Submitted" and new_v in ("Approved", "Active"):
 				continue
 			frappe.throw(
 				_("This budget is locked; its status cannot be changed in this way."),
