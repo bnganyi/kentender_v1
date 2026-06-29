@@ -63,6 +63,7 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/pp3_planning_design_system.css?v={_desk_asset_v('public/css/pp3_planning_design_system.css')}",
 ]
 app_include_js = [
+	f"/assets/kentender_procurement/js/demand_workspace.js?v={_desk_asset_v('public/js/demand_workspace.js')}",
 	f"/assets/kentender_procurement/js/pp2_planning_status_badge.js?v={_desk_asset_v('public/js/pp2_planning_status_badge.js')}",
 	f"/assets/kentender_procurement/js/pp2_planning_handoff_card.js?v={_desk_asset_v('public/js/pp2_planning_handoff_card.js')}",
 	f"/assets/kentender_procurement/js/module_journey_context_header.js?v={_desk_asset_v('public/js/module_journey_context_header.js')}",
