@@ -1,0 +1,510 @@
+/* ── DIA Demand Hub — design tokens ─────────────────────────────────────── */
+:root {
+  --dia-surface:         #f7f9fb;
+  --dia-surface-low:     #f2f4f6;
+  --dia-surface-high:    #e6e8ea;
+  --dia-surface-highest: #e0e3e5;
+  --dia-border:          #e2e8f0;
+  --dia-border-subtle:   #c2c6d3;
+  --dia-on-surface:      #191c1e;
+  --dia-on-muted:        #424751;
+  --dia-on-faint:        #737783;
+  --dia-primary:         #00346f;
+  --dia-primary-dark:    #001b3f;
+  --dia-secondary:       #00629d;
+  --dia-error:           #ba1a1a;
+
+  /* status colours */
+  --dia-clr-draft:       #64748b;
+  --dia-clr-submitted:   #0ea5e9;
+  --dia-clr-dept:        #8b5cf6;
+  --dia-clr-funding:     #f59e0b;
+  --dia-clr-final:       #10b981;
+  --dia-clr-approved:    #00346f;
+  --dia-clr-rejected:    #ba1a1a;
+  --dia-clr-cancelled:   #737783;
+}
+
+/* ── Shell override (hide Frappe's default page padding/chrome) ──────────── */
+body.kt-dia-shell .page-head,
+body.kt-dia-shell .page-body > .container {
+  padding: 0 !important;
+  max-width: 100% !important;
+}
+body.kt-dia-shell .frappe-app > .container,
+body.kt-dia-shell .layout-main-section-wrapper {
+  padding: 0 !important;
+}
+
+/* ── Root layout ─────────────────────────────────────────────────────────── */
+.kt-dia-hub {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--dia-surface);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Top bar ─────────────────────────────────────────────────────────────── */
+.kt-dia-topbar {
+  background: #fff;
+  border-bottom: 1px solid var(--dia-border);
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+.kt-dia-topbar__title {
+  font-family: 'Manrope', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--dia-on-surface);
+  letter-spacing: -0.01em;
+  flex: 1;
+}
+.kt-dia-topbar__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--dia-surface-low);
+  border: 1px solid var(--dia-border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  width: 260px;
+}
+.kt-dia-topbar__search input {
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  color: var(--dia-on-surface);
+  outline: none;
+  width: 100%;
+}
+.kt-dia-topbar__search .material-symbols-outlined {
+  font-size: 16px;
+  color: var(--dia-on-faint);
+  flex-shrink: 0;
+}
+.kt-dia-topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Primary action button ───────────────────────────────────────────────── */
+.kt-dia-btn-new {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  background: var(--dia-primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  cursor: pointer;
+  transition: background .12s;
+}
+.kt-dia-btn-new:hover { background: var(--dia-primary-dark); }
+.kt-dia-btn-new .material-symbols-outlined { font-size: 18px; }
+
+/* ── Main content area ───────────────────────────────────────────────────── */
+.kt-dia-main {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  flex: 1;
+}
+
+/* ── KPI strip ───────────────────────────────────────────────────────────── */
+.kt-dia-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.kt-dia-kpi-card {
+  background: #fff;
+  border: 1px solid var(--dia-border);
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  overflow: hidden;
+}
+.kt-dia-kpi-card--active {
+  border-left: 3px solid var(--dia-primary);
+}
+.kt-dia-kpi-card__label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--dia-on-faint);
+}
+.kt-dia-kpi-card__count {
+  font-family: 'Manrope', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--dia-on-surface);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.kt-dia-kpi-card__count em {
+  font-size: 13px;
+  font-weight: 600;
+  font-style: normal;
+  color: var(--dia-on-muted);
+  margin-left: 4px;
+}
+.kt-dia-kpi-card__meta {
+  font-size: 11px;
+  color: var(--dia-on-faint);
+  margin-top: 2px;
+}
+.kt-dia-kpi-card__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  margin-top: 4px;
+  width: fit-content;
+}
+.kt-dia-kpi-card__badge--warn {
+  background: rgba(245,158,11,.12);
+  color: #b45309;
+}
+.kt-dia-kpi-card__badge--ok {
+  background: rgba(16,185,129,.12);
+  color: #065f46;
+}
+.kt-dia-kpi-card__badge--info {
+  background: rgba(0,52,111,.1);
+  color: var(--dia-primary);
+}
+.kt-dia-kpi-bar {
+  height: 3px;
+  background: var(--dia-border);
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.kt-dia-kpi-bar__fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--dia-primary);
+}
+.kt-dia-kpi-card__icon {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  color: var(--dia-border-subtle);
+}
+.kt-dia-kpi-card__icon .material-symbols-outlined { font-size: 28px; }
+
+/* ── Section header ──────────────────────────────────────────────────────── */
+.kt-dia-section-hdr {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.kt-dia-section-title {
+  font-family: 'Manrope', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--dia-on-surface);
+}
+.kt-dia-section-sub {
+  font-size: 12px;
+  color: var(--dia-on-faint);
+  margin-left: 8px;
+}
+.kt-dia-section-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Filter / Export buttons ─────────────────────────────────────────────── */
+.kt-dia-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #fff;
+  border: 1px solid var(--dia-border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dia-on-muted);
+  cursor: pointer;
+  transition: background .1s;
+}
+.kt-dia-btn-ghost:hover { background: var(--dia-surface-low); }
+.kt-dia-btn-ghost .material-symbols-outlined { font-size: 15px; }
+
+/* ── Demand table card ───────────────────────────────────────────────────── */
+.kt-dia-table-card {
+  background: #fff;
+  border: 1px solid var(--dia-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.kt-dia-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.kt-dia-table thead th {
+  background: var(--dia-surface-low);
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--dia-on-faint);
+  border-bottom: 1px solid var(--dia-border);
+  white-space: nowrap;
+}
+.kt-dia-table tbody tr {
+  border-bottom: 1px solid var(--dia-border);
+  transition: background .1s;
+  cursor: pointer;
+}
+.kt-dia-table tbody tr:last-child { border-bottom: none; }
+.kt-dia-table tbody tr:hover { background: var(--dia-surface-low); }
+.kt-dia-table td {
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--dia-on-surface);
+  vertical-align: middle;
+}
+.kt-dia-table__title {
+  font-weight: 600;
+  color: var(--dia-primary);
+}
+.kt-dia-table__title:hover { text-decoration: underline; }
+.kt-dia-table__ref {
+  font-size: 11px;
+  color: var(--dia-on-faint);
+  margin-top: 2px;
+}
+.kt-dia-table__dept {
+  color: var(--dia-on-muted);
+}
+.kt-dia-table__amount {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.kt-dia-table__action {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: var(--dia-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.kt-dia-table__action:hover { text-decoration: underline; }
+
+/* ── Status chips ────────────────────────────────────────────────────────── */
+.kt-dia-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.kt-dia-chip--draft      { background: rgba(100,116,139,.1); color: #334155; }
+.kt-dia-chip--submitted  { background: rgba(14,165,233,.12); color: #0369a1; }
+.kt-dia-chip--dept       { background: rgba(139,92,246,.12); color: #6d28d9; }
+.kt-dia-chip--funding    { background: rgba(245,158,11,.12); color: #b45309; }
+.kt-dia-chip--final      { background: rgba(16,185,129,.12); color: #065f46; }
+.kt-dia-chip--approved   { background: rgba(0,52,111,.1);    color: var(--dia-primary); }
+.kt-dia-chip--rejected   { background: rgba(186,26,26,.08);  color: var(--dia-error); }
+.kt-dia-chip--cancelled  { background: rgba(115,119,131,.1); color: #45464d; }
+.kt-dia-chip--planning   { background: rgba(0,98,157,.12);   color: var(--dia-secondary); }
+
+/* ── Table pagination strip ──────────────────────────────────────────────── */
+.kt-dia-table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-top: 1px solid var(--dia-border);
+  font-size: 12px;
+  color: var(--dia-on-faint);
+}
+.kt-dia-pagination {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.kt-dia-page-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--dia-border);
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dia-on-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .1s;
+}
+.kt-dia-page-btn:hover { background: var(--dia-surface-low); }
+.kt-dia-page-btn--active {
+  background: var(--dia-primary);
+  border-color: var(--dia-primary);
+  color: #fff;
+}
+.kt-dia-page-btn .material-symbols-outlined { font-size: 14px; }
+
+/* ── Bottom analytics grid ───────────────────────────────────────────────── */
+.kt-dia-analytics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.kt-dia-analytics-card {
+  background: #fff;
+  border: 1px solid var(--dia-border);
+  border-radius: 8px;
+  padding: 20px;
+}
+.kt-dia-analytics-card__title {
+  font-family: 'Manrope', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dia-on-surface);
+  margin-bottom: 16px;
+}
+.kt-dia-analytics-card__sub {
+  font-size: 11px;
+  color: var(--dia-on-faint);
+  margin-top: 2px;
+}
+
+/* ── Budget Consumption bar chart ───────────────────────────────────────── */
+.kt-dia-bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  height: 120px;
+  padding-bottom: 4px;
+}
+.kt-dia-bar-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+.kt-dia-bar-group__bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 100px;
+}
+.kt-dia-bar {
+  width: 20px;
+  border-radius: 3px 3px 0 0;
+  transition: opacity .15s;
+}
+.kt-dia-bar:hover { opacity: .8; }
+.kt-dia-bar--health  { background: #00346f; }
+.kt-dia-bar--infra   { background: #7c9bc7; }
+.kt-dia-bar--ict     { background: #10b981; }
+.kt-dia-bar--admin   { background: #f59e0b; }
+.kt-dia-bar-group__label {
+  font-size: 10px;
+  color: var(--dia-on-faint);
+  text-align: center;
+}
+.kt-dia-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+.kt-dia-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--dia-on-muted);
+}
+.kt-dia-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Strategic Goal Match card ───────────────────────────────────────────── */
+.kt-dia-goal-card {
+  background: var(--dia-primary);
+  color: #fff;
+  border-radius: 8px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+  min-height: 180px;
+}
+.kt-dia-goal-card__icon .material-symbols-outlined {
+  font-size: 36px;
+  opacity: .7;
+}
+.kt-dia-goal-card__title {
+  font-family: 'Manrope', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+}
+.kt-dia-goal-card__pct {
+  font-family: 'Manrope', sans-serif;
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.kt-dia-goal-card__desc {
+  font-size: 12px;
+  opacity: .8;
+  max-width: 260px;
+  line-height: 1.5;
+}
+.kt-dia-goal-card__btn {
+  margin-top: 8px;
+  padding: 8px 20px;
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.35);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  cursor: pointer;
+  transition: background .12s;
+}
+.kt-dia-goal-card__btn:hover { background: rgba(255,255,255,.25); }
