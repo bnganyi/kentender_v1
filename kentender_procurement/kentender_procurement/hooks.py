@@ -48,7 +48,6 @@ required_apps = ["kentender_core", "kentender_strategy", "kentender_budget"]
 
 # include js, css files in header of desk.html
 app_include_css = [
-	f"/assets/kentender_procurement/css/demand_intake_workspace.css?v={_desk_asset_v('public/css/demand_intake_workspace.css')}",
 	f"/assets/kentender_procurement/css/procurement_home_workspace.css?v={_desk_asset_v('public/css/procurement_home_workspace.css')}",
 	f"/assets/kentender_procurement/css/procurement_journey_page.css?v={_desk_asset_v('public/css/procurement_journey_page.css')}",
 	f"/assets/kentender_procurement/css/module_journey_context_header.css?v={_desk_asset_v('public/css/module_journey_context_header.css')}",
@@ -69,13 +68,6 @@ app_include_js = [
 	f"/assets/kentender_procurement/js/business_readiness_summary.js?v={_desk_asset_v('public/js/business_readiness_summary.js')}",
 	f"/assets/kentender_procurement/js/tm2_tender_handoff_panel.js?v={_desk_asset_v('public/js/tm2_tender_handoff_panel.js')}",
 	f"/assets/kentender_procurement/js/workspace_list_selection_utils.js?v={_desk_asset_v('public/js/workspace_list_selection_utils.js')}",
-	f"/assets/kentender_procurement/js/dia_overview_panel.js?v={_desk_asset_v('public/js/dia_overview_panel.js')}",
-	f"/assets/kentender_procurement/js/dia_items_panel.js?v={_desk_asset_v('public/js/dia_items_panel.js')}",
-	f"/assets/kentender_procurement/js/dia_review_panel.js?v={_desk_asset_v('public/js/dia_review_panel.js')}",
-	f"/assets/kentender_procurement/js/dia_planning_panel.js?v={_desk_asset_v('public/js/dia_planning_panel.js')}",
-	f"/assets/kentender_procurement/js/dia_audit_panel.js?v={_desk_asset_v('public/js/dia_audit_panel.js')}",
-	f"/assets/kentender_procurement/js/dia_demand_drawer.js?v={_desk_asset_v('public/js/dia_demand_drawer.js')}",
-	f"/assets/kentender_procurement/js/demand_intake_workspace.js?v={_desk_asset_v('public/js/demand_intake_workspace.js')}",
 	f"/assets/kentender_procurement/js/pp_template_selector.js?v={_desk_asset_v('public/js/pp_template_selector.js')}",
 	f"/assets/kentender_procurement/js/pp3_planning_active_plan_banner.js?v={_desk_asset_v('public/js/pp3_planning_active_plan_banner.js')}",
 	f"/assets/kentender_procurement/js/pp3_planning_workbench_queue_tabs.js?v={_desk_asset_v('public/js/pp3_planning_workbench_queue_tabs.js')}",
@@ -128,7 +120,6 @@ website_route_rules = [
 
 # include js in doctype views
 doctype_js = {
-	"Demand": "public/js/demand_form.js",
 	"Procurement Package": "public/js/procurement_package.js",
 }
 
