@@ -17,6 +17,12 @@ body.kt-bgt-shell .layout-main-section {
   background: #f7f9fb;
 }
 
+/* ── Hub-specific override — the hub is a scrollable page, not a clamped panel */
+body.kt-bgt-shell .kt-bgt-workbench {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
 /* ── Workbench shell ─────────────────────────────────────────────────────── */
 .kt-bgt-workbench {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
