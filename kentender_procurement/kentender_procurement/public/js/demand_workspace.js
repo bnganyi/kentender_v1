@@ -33,6 +33,12 @@
 	function _onRouteChange() {
 		_maybeRedirect();
 		_ensureSidebar();
+		// Guard: remove the DIA shell class whenever we are NOT on the demand-hub
+		// page. This defends against on_page_hide timing gaps that could leave the
+		// class on the body and corrupt layout on Budget Hub / Planning Workbench.
+		if (!_isDemandRoute()) {
+			document.body.classList.remove("kt-dia-shell");
+		}
 	}
 
 	function _boot() {
