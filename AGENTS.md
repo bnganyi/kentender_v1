@@ -95,3 +95,15 @@ For Frappe-managed artifacts:
 - Do not handwrite framework scaffolds from scratch
 
 If command execution is slow or unavailable: output the exact WSL command, stop after proposing the command, do not simulate the scaffold by creating files manually.
+
+## Seed & data-quality scripts
+
+One-shot idempotent seed scripts live in `kentender_budget/kentender_budget/seed/`.
+Run via: `bench --site kentender.midas.com execute kentender_budget.seed.<module>.run`
+
+**FK integrity rule (W6-12):** After any seed run that creates `Budget Line` records,
+validate strategy FK chains with `fix_dangling_strategy_refs.run`.  A Budget Line
+pointing to a phantom `program`, `sub_program`, `output_indicator`, or
+`performance_target` will silently return raw IDs in the artefacts panel.  Always
+seed strategy hierarchy (Strategic Plan → Program → Sub Program → Objective → Target)
+before seeding Budget Lines that reference it.
