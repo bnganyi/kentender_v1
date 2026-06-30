@@ -147,7 +147,7 @@
    "fieldname": "requisition_type",
    "fieldtype": "Select",
    "label": "Demand Category",
-   "options": "Goods\nWorks\nServices"
+   "options": "Goods\nWorks\nServices\nConsultancy"
   },
   {
    "fieldname": "requested_by",

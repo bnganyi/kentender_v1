@@ -50,6 +50,7 @@ required_apps = ["kentender_core", "kentender_strategy", "kentender_budget"]
 app_include_css = [
 	f"/assets/kentender_procurement/css/demand_hub_page.css?v={_desk_asset_v('public/css/demand_hub_page.css')}",
 	f"/assets/kentender_procurement/css/demand_workbench_page.css?v={_desk_asset_v('public/css/demand_workbench_page.css')}",
+	f"/assets/kentender_procurement/css/create_demand_page.css?v={_desk_asset_v('public/css/create_demand_page.css')}",
 	f"/assets/kentender_procurement/css/procurement_home_workspace.css?v={_desk_asset_v('public/css/procurement_home_workspace.css')}",
 	f"/assets/kentender_procurement/css/procurement_journey_page.css?v={_desk_asset_v('public/css/procurement_journey_page.css')}",
 	f"/assets/kentender_procurement/css/module_journey_context_header.css?v={_desk_asset_v('public/css/module_journey_context_header.css')}",
@@ -130,6 +131,7 @@ doctype_js = {
 page_js = {
 	"demand-hub": "public/js/demand_hub_page.js",
 	"demand-workbench": "public/js/demand_workbench_page.js",
+	"create-demand": "public/js/create_demand_page.js",
 	"plc-procurement-journey": "public/js/procurement_journey_page.js",
 	"plc-module-journey-context": "public/js/plc_module_journey_context_page.js",
 	"tender-management-v2": "public/js/tender_management_v2_workbench_page.js",
