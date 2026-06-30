@@ -1073,6 +1073,39 @@
     }
   }
 
+  // ── Load existing Draft demand into wizard state ─────────────────────────
+  function _loadDraft(wrapper, demandName) {
+    frappe.call({
+      method: "frappe.client.get",
+      args: { doctype: "Demand", name: demandName },
+      callback: function (r) {
+        var d = r && r.message;
+        if (!d) { frappe.msgprint({ title: "Not Found", message: "Demand not found.", indicator: "red" }); return; }
+        if (d.status !== "Draft" && d.status !== "Rejected") {
+          frappe.msgprint({ title: "Cannot Edit", message: "Only Draft or Rejected demands can be edited in the wizard.", indicator: "orange" });
+          return;
+        }
+        _state.demandName = d.name;
+        _state.form1.title = d.title || "";
+        _state.form1.dept = d.requesting_department || "";
+        _state.form1.entity = d.procuring_entity || "";
+        _state.form1.category = d.requisition_type || "";
+        _state.form1.priority = (d.priority_level || "").toLowerCase() === "high";
+        _state.form1.justification = d.beneficiary_summary || d.specification_summary || "";
+        _state.form1.requiredBy = d.required_by_date || "";
+        _state.items = (d.demand_items || []).map(function (it) {
+          return { desc: it.item_description || "", qty: it.quantity || 0, unitPrice: it.estimated_unit_cost || 0 };
+        });
+        _state.step = 1;
+        _render(wrapper);
+        _loadMeta(wrapper);
+      },
+      error: function () {
+        frappe.msgprint({ title: "Error", message: "Could not load demand for editing.", indicator: "red" });
+      },
+    });
+  }
+
   // ── Reset wizard state for a fresh create flow ───────────────────────────
   function _resetState() {
     _state.step = 1;
@@ -1097,10 +1130,20 @@
   frappe.pages["create-demand"].on_page_show = function (wrapper) {
     _ensureFonts();
     _state._wrapper = wrapper;
-    _resetState();
-    _render(wrapper);
-    // Fire-and-forget meta load; dropdowns update in-place when responses arrive
-    _loadMeta(wrapper);
+    // If a demand name is passed as a route param (e.g. from workbench Edit Demand),
+    // load that draft for editing instead of starting a fresh wizard.
+    var route = frappe.get_route ? frappe.get_route() : [];
+    var editName = (route && route.length > 1) ? route[1] : null;
+    if (editName) {
+      _resetState();
+      _render(wrapper); // show loading shell immediately
+      _loadDraft(wrapper, editName);
+    } else {
+      _resetState();
+      _render(wrapper);
+      // Fire-and-forget meta load; dropdowns update in-place when responses arrive
+      _loadMeta(wrapper);
+    }
   };
 
   frappe.pages["create-demand"].on_page_hide = function () {

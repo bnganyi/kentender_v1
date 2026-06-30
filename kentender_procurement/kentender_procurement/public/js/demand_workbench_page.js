@@ -350,7 +350,7 @@
       '<div class="kt-wbx-card" style="padding:0;overflow:hidden;">' +
         '<div class="kt-wbx-section-head">' +
           '<span class="kt-wbx-section-title">' + _ico("list_alt") + 'Demand Items (' + rows.length + ')</span>' +
-          (isEditable ? '<button class="kt-wbx-add-item-btn" data-action="open_form" data-edit="1">' + _ico("add") + 'Add Item</button>' : '') +
+          (isEditable ? '<button class="kt-wbx-add-item-btn" data-action="edit_wizard" data-edit="1">' + _ico("add") + 'Add Item</button>' : '') +
         '</div>' +
         '<table class="kt-wbx-items-table">' +
           '<thead><tr><th>Description</th><th>Qty / Scope</th><th>Total Estimate</th></tr></thead>' +
@@ -556,9 +556,21 @@
       var reasonType = btn.getAttribute("data-reason");
       var clientAction = btn.getAttribute("data-client");
 
-      // open_form / Add Item
+      // open_form — route editable (Draft/Rejected) demands back to the
+      // Create Demand wizard; do NOT open the raw Frappe DocType form.
+      // Non-editable "View demand" is redundant (user is already in the
+      // workbench) so it is a no-op.
       if (action === "open_form" || clientAction === "open_form") {
-        frappe.set_route("Form", "Demand", name);
+        var isEdit = btn.getAttribute("data-edit") === "1";
+        if (isEdit && frappe.set_route) {
+          frappe.set_route("create-demand", name);
+        }
+        return;
+      }
+
+      // edit_wizard — "Add Item" button routes to Create Demand wizard step 2
+      if (action === "edit_wizard") {
+        if (frappe.set_route) frappe.set_route("create-demand", name);
         return;
       }
 
