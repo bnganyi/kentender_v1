@@ -21,6 +21,9 @@ body.kt-bgt-shell .layout-main-section {
 body.kt-bgt-shell .kt-bgt-workbench {
   max-height: none !important;
   overflow: visible !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 /* ── Workbench shell ─────────────────────────────────────────────────────── */

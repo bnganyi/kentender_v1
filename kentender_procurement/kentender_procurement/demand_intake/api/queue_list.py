@@ -718,6 +718,7 @@ def get_dia_queue_list(
 			"lifecycle_filter": normalized_lifecycle if use_lifecycle else None,
 			"demands": [],
 			"has_more": False,
+			"total_count": 0,
 			"empty_caption": (
 				_lifecycle_empty_caption(normalized_lifecycle)
 				if use_lifecycle
@@ -751,6 +752,17 @@ def get_dia_queue_list(
 	if has_more:
 		demands = demands[:limit]
 
+	# Count query for pagination display (uses same filters/or_filters, no limit)
+	count_kw: dict[str, Any] = {
+		"doctype": DT,
+		"filters": flist,
+		"fields": ["name"],
+		"limit_page_length": 0,
+	}
+	if or_filters:
+		count_kw["or_filters"] = or_filters
+	total_count = len(frappe.get_list(**count_kw))
+
 	_enrich_demand_queue_rows(demands)
 	for d in demands:
 		if d.get("total_amount") is not None:
@@ -772,6 +784,7 @@ def get_dia_queue_list(
 		"lifecycle_filter": normalized_lifecycle if use_lifecycle else None,
 		"demands": demands,
 		"has_more": has_more,
+		"total_count": total_count,
 		"empty_caption": (
 			_lifecycle_empty_caption(normalized_lifecycle)
 			if use_lifecycle

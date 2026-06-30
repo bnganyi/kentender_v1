@@ -137,6 +137,49 @@ def _build_portfolio(role_key: str, user: str) -> dict:
 	}
 
 
+_ACTIVE_STATUSES = ["not in", ["Cancelled"]]
+
+_REQUISITION_TYPES = ("Goods", "Works", "Services")
+
+
+def _compute_alignment_for_entity(entity: str) -> int:
+	"""Return % of active demands for *entity* that have a strategic_plan set.
+
+	Used by tests for isolated, predictable assertions.  Returns an int 0–100.
+	"""
+	total = _count_demands({"procuring_entity": entity, "status": _ACTIVE_STATUSES})
+	if not total:
+		return 0
+	linked = _count_demands(
+		{
+			"procuring_entity": entity,
+			"status": _ACTIVE_STATUSES,
+			"strategic_plan": ("!=", ""),
+		}
+	)
+	return round(linked / total * 100)
+
+
+def compute_strategic_alignment_pct() -> int:
+	"""Return % of all active demands (global) that have a strategic_plan set.
+
+	Used by the hub landing response.  Returns an int 0–100.
+	"""
+	total = _count_demands({"status": _ACTIVE_STATUSES})
+	if not total:
+		return 0
+	linked = _count_demands({"status": _ACTIVE_STATUSES, "strategic_plan": ("!=", "")})
+	return round(linked / total * 100)
+
+
+def _build_category_breakdown() -> dict:
+	"""Return a dict of requisition_type → count of active demands for the hub analytics chart."""
+	return {
+		rtype: _count_demands({"status": _ACTIVE_STATUSES, "requisition_type": rtype})
+		for rtype in _REQUISITION_TYPES
+	}
+
+
 def _fail_payload(*, error_code: str, message: str, role_key: str = "requisitioner") -> dict:
 	"""Non-throwing envelope so the Desk landing page can show inline help instead of a modal."""
 	return {
@@ -146,6 +189,8 @@ def _fail_payload(*, error_code: str, message: str, role_key: str = "requisition
 		"role_key": role_key,
 		"currency": "KES",
 		"portfolio": _empty_portfolio(),
+		"alignment_pct": 0,
+		"category_breakdown": {rtype: 0 for rtype in _REQUISITION_TYPES},
 		"demands": [],
 	}
 
@@ -373,5 +418,7 @@ def get_dia_landing_shell_data():
 		"role_key": role_key,
 		"currency": currency,
 		"portfolio": portfolio,
+		"alignment_pct": compute_strategic_alignment_pct(),
+		"category_breakdown": _build_category_breakdown(),
 		"demands": [],
 	}

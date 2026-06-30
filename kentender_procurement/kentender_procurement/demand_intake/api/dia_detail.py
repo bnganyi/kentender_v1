@@ -454,6 +454,8 @@ def get_dia_demand_detail(name: str | None = None):
 			"procuring_entity_label": ent_l,
 			"request_date": _date_str(doc.request_date),
 			"required_by_date": _date_str(doc.required_by_date),
+			"beneficiary_summary": doc.beneficiary_summary or None,
+			"specification_summary": doc.specification_summary or None,
 		},
 		"b": {
 			"budget_line": doc.budget_line,
@@ -517,4 +519,41 @@ def get_dia_demand_detail(name: str | None = None):
 		"integrity_blocked": bool(integrity.get("blocked")),
 		"integrity_blocker_count": integrity.get("blocker_count") or 0,
 		"planning_ready": bool(not integrity.get("blocked") and doc.status == "Approved"),
+	}
+
+
+@frappe.whitelist()
+def get_demand_attachments(demand_name: str | None = None):
+	"""Return public file attachments for a Demand document."""
+	if not demand_name or not str(demand_name).strip():
+		return {"ok": False, "error_code": "MISSING_NAME", "attachments": []}
+	demand_name = str(demand_name).strip()
+	if not frappe.db.exists(DT, demand_name):
+		return {"ok": False, "error_code": "NOT_FOUND", "attachments": []}
+	try:
+		require_demand_read(demand_name)
+	except frappe.PermissionError:
+		return {"ok": False, "error_code": "NO_READ_PERMISSION", "attachments": []}
+
+	files = frappe.get_list(
+		"File",
+		filters={
+			"attached_to_doctype": DT,
+			"attached_to_name": demand_name,
+			"is_private": 0,
+		},
+		fields=["file_name", "file_url", "file_size", "description"],
+		order_by="creation asc",
+	)
+	return {
+		"ok": True,
+		"attachments": [
+			{
+				"name": f.get("file_name") or "",
+				"url": f.get("file_url") or "",
+				"size": f.get("file_size") or 0,
+				"category": (f.get("description") or "").strip(),
+			}
+			for f in files
+		],
 	}

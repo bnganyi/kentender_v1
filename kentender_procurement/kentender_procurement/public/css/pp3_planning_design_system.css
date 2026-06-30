@@ -632,13 +632,13 @@ body.kt-pp4-shell .layout-main-section .container.page-body {
 body.kt-pp4-shell .pp4-workbench {
 	background: #f7f9fb;
 	color: #191c1e;
-	border: 1px solid #c6c6cd;
-	border-radius: 12px;
-	overflow: hidden;
+	border: none;
+	border-radius: 0;
+	overflow: visible;
 	display: flex;
 	flex-direction: column;
-	max-height: calc(100vh - 86px);
-	box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+	max-height: none;
+	box-shadow: none;
 }
 
 body.kt-pp4-shell .pp4-topbar {

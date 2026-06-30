@@ -113,6 +113,8 @@ class TestDiaDetailD6(IntegrationTestCase):
 			a = out.get("a") or {}
 			self.assertEqual(a.get("title"), "Detail panel seed")
 			self.assertIn("Dept D6", a.get("requesting_department_label") or "")
+			self.assertIn("beneficiary_summary", a)
+			self.assertIn("specification_summary", a)
 			acts = out.get("actions") or []
 			self.assertGreaterEqual(len(acts), 1)
 			ids = {x.get("id") for x in acts}
@@ -122,3 +124,30 @@ class TestDiaDetailD6(IntegrationTestCase):
 			frappe.set_user("Administrator")
 			if frappe.db.exists("User", user.name):
 				frappe.delete_doc("User", user.name, force=True, ignore_permissions=True)
+
+	def test_attachments_missing_name(self):
+		if getattr(self, "_skipped_no_demand", False):
+			self.skipTest("Demand DocType not installed")
+		from kentender_procurement.demand_intake.api.dia_detail import get_demand_attachments
+		out = get_demand_attachments("")
+		self.assertFalse(out.get("ok"))
+		self.assertEqual(out.get("error_code"), "MISSING_NAME")
+
+	def test_attachments_not_found(self):
+		if getattr(self, "_skipped_no_demand", False):
+			self.skipTest("Demand DocType not installed")
+		from kentender_procurement.demand_intake.api.dia_detail import get_demand_attachments
+		out = get_demand_attachments("nonexistent-xyz-999")
+		self.assertFalse(out.get("ok"))
+		self.assertEqual(out.get("error_code"), "NOT_FOUND")
+
+	def test_attachments_empty_list(self):
+		"""Demand with no files returns ok=True and an empty list."""
+		if getattr(self, "_skipped_no_demand", False):
+			self.skipTest("Demand DocType not installed")
+		from kentender_procurement.demand_intake.api.dia_detail import get_demand_attachments
+		name = self._mk_demand(title="Attach test demand")
+		out = get_demand_attachments(name)
+		self.assertTrue(out.get("ok"))
+		self.assertIsInstance(out.get("attachments"), list)
+		self.assertEqual(len(out["attachments"]), 0)
