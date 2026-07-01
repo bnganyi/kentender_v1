@@ -20,6 +20,7 @@ from frappe import _
 from frappe.utils import today
 
 from kentender_procurement.demand_intake.api.dia_access import require_dia_workspace_user
+from kentender_core.procuring_entity_canonical import normalize_procuring_entity
 
 
 def _parse_items(items_json: str | None, requisition_type: str | None) -> list[dict]:
@@ -102,7 +103,7 @@ def save_demand_draft(
     if requisition_type:
         doc.requisition_type = requisition_type
     if procuring_entity:
-        doc.procuring_entity = procuring_entity
+        doc.procuring_entity = normalize_procuring_entity(procuring_entity)
     if required_by_date:
         doc.required_by_date = required_by_date
     if priority_level:
@@ -165,7 +166,7 @@ def _update_existing_draft(
     if requisition_type is not None:
         doc.requisition_type = requisition_type
     if procuring_entity is not None:
-        doc.procuring_entity = procuring_entity
+        doc.procuring_entity = normalize_procuring_entity(procuring_entity)
     if required_by_date is not None:
         doc.required_by_date = required_by_date
     if priority_level is not None:

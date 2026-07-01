@@ -115,10 +115,11 @@ def ensure_department_permission(user: str, department: str):
 
 
 def ensure_moh_entity_permission_aliases(user: str, entity_name: str) -> None:
-	"""Grant MOH seed users access to PE-MOH alias used by WORKS master seed."""
-	ensure_user_permission(user, entity_name)
-	if entity_name == C.ENTITY_MOH and frappe.db.exists("Procuring Entity", "PE-MOH"):
-		ensure_user_permission(user, "PE-MOH")
+	"""Grant User Permission for the canonical MOH entity (PE-MOH)."""
+	from kentender_core.procuring_entity_canonical import normalize_procuring_entity
+
+	canonical = normalize_procuring_entity(entity_name) or entity_name
+	ensure_user_permission(user, canonical)
 
 
 def upsert_seed_user(
@@ -171,4 +172,6 @@ def upsert_seed_user(
 
 
 def get_moh_entity_name() -> str:
-	return C.ENTITY_MOH
+	from kentender_core.procuring_entity_canonical import moh_entity_docname
+
+	return moh_entity_docname()

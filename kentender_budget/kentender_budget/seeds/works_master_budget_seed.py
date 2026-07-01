@@ -256,9 +256,13 @@ def _ensure_budget_line(
     """Return (budget_line_doc_name, created). BUD-MOH-INFRA-2026-001."""
     if frappe.db.exists("Budget Line", BUDGET_LINE_CODE):
         # Already present. Verify status (is_active); backfill sub_program for DIA joins.
+        # Also relink budget if the parent Budget record has been recreated.
         active = frappe.db.get_value("Budget Line", BUDGET_LINE_CODE, "is_active")
         if not active:
             frappe.db.set_value("Budget Line", BUDGET_LINE_CODE, "is_active", 1)
+        current_budget = frappe.db.get_value("Budget Line", BUDGET_LINE_CODE, "budget")
+        if current_budget != budget_name and frappe.db.exists("Budget", budget_name):
+            frappe.db.set_value("Budget Line", BUDGET_LINE_CODE, "budget", budget_name, update_modified=False)
         bl_program = frappe.db.get_value("Budget Line", BUDGET_LINE_CODE, "program")
         bl_sub = frappe.db.get_value("Budget Line", BUDGET_LINE_CODE, "sub_program")
         if bl_program and not bl_sub:

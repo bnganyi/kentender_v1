@@ -190,6 +190,10 @@ def _ensure_budget(pe_name: str, plan_name: str, cfg: dict) -> tuple[str, bool]:
 def _ensure_budget_line(pe_name: str, plan_name: str, budget_doc: str,
                         program_name: str, funding_source: str, cfg: dict) -> tuple[str, bool]:
     if frappe.db.exists("Budget Line", cfg["line_code"]):
+        # Relink to the canonical budget if it was recreated under a new doc name
+        current_budget = frappe.db.get_value("Budget Line", cfg["line_code"], "budget")
+        if current_budget != budget_doc and frappe.db.exists("Budget", budget_doc):
+            frappe.db.set_value("Budget Line", cfg["line_code"], "budget", budget_doc, update_modified=False)
         return cfg["line_code"], False
 
     _ensure_currency_kes()

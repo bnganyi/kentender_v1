@@ -700,9 +700,12 @@
       },
       callback: function (r) {
         if (r && r.message) {
-          _state.procuringEntities = (r.message || []).map(function (x) {
-            return x.name;
-          });
+          _state.procuringEntities = (r.message || [])
+            .map(function (x) { return x.name; })
+            .filter(function (name) {
+              // Hide deprecated MOH row when canonical PE-MOH exists.
+              return !(name === "MOH" && (r.message || []).some(function (x) { return x.name === "PE-MOH"; }));
+            });
           var sel = wrapper.querySelector("#kt-cd-entity");
           if (sel) {
             var cur = sel.value;

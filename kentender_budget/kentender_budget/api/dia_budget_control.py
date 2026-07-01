@@ -267,3 +267,102 @@ def list_reservations_for_budget_line(budget_line_id: str | None = None):
 		limit=200,
 	)
 	return _success({"budget_line_id": budget_line_id, "reservations": rows}, _("Reservation history loaded"))
+
+
+@frappe.whitelist()
+def search_budget_lines(query: str | None = None, budget_id: str | None = None, procuring_entity: str | None = None, limit: int = 10):
+	"""Search active Budget Lines by name or code for the Finance Reviewer picker.
+	Optionally filter by budget_id and/or procuring_entity for the 2-step cascade picker."""
+	q = (query or "").strip()
+	bid = (budget_id or "").strip()
+	pe = (procuring_entity or "").strip()
+
+	filters: dict = {"is_active": 1}
+	if bid:
+		filters["budget"] = bid
+	if pe:
+		filters["procuring_entity"] = pe
+
+	if q:
+		rows = frappe.db.get_all(
+			"Budget Line",
+			fields=["name", "budget_line_code", "budget_line_name", "amount_allocated",
+					"amount_reserved", "amount_committed", "amount_consumed"],
+			filters=filters,
+			or_filters=[
+				["budget_line_name", "like", f"%{q}%"],
+				["budget_line_code", "like", f"%{q}%"],
+			],
+			order_by="budget_line_name asc",
+			limit=int(limit),
+		)
+	else:
+		rows = frappe.db.get_all(
+			"Budget Line",
+			fields=["name", "budget_line_code", "budget_line_name", "amount_allocated",
+					"amount_reserved", "amount_committed", "amount_consumed"],
+			filters=filters,
+			order_by="budget_line_name asc",
+			limit=int(limit),
+		)
+
+	# Compute available for each line
+	for r in rows:
+		r["amount_available"] = (
+			flt(r.get("amount_allocated")) - flt(r.get("amount_reserved"))
+			- flt(r.get("amount_committed")) - flt(r.get("amount_consumed"))
+		)
+	return {"ok": True, "results": rows}
+
+
+@frappe.whitelist()
+def get_budgets_for_picker(query: str | None = None, procuring_entity: str | None = None, limit: int = 20):
+	"""Return budgets that have at least one active Budget Line, for the cascade picker.
+	Filtered to the demand's procuring entity when provided."""
+	q = (query or "").strip()
+	pe = (procuring_entity or "").strip()
+
+	line_filters: dict = {"is_active": 1}
+	if pe:
+		line_filters["procuring_entity"] = pe
+
+	having_lines = frappe.db.get_all("Budget Line", filters=line_filters, pluck="budget")
+	budget_ids = list(set(having_lines))
+	if not budget_ids:
+		return {"ok": True, "results": []}
+
+	filters: dict = {"name": ["in", budget_ids]}
+	if pe:
+		filters["procuring_entity"] = pe
+	if q:
+		rows = frappe.db.get_all(
+			"Budget",
+			fields=["name", "budget_name", "fiscal_year", "status", "procuring_entity"],
+			filters=filters,
+			or_filters=[["budget_name", "like", f"%{q}%"]],
+			order_by="fiscal_year desc, budget_name asc",
+			limit=int(limit),
+		)
+	else:
+		rows = frappe.db.get_all(
+			"Budget",
+			fields=["name", "budget_name", "fiscal_year", "status", "procuring_entity"],
+			filters=filters,
+			order_by="fiscal_year desc, budget_name asc",
+			limit=int(limit),
+		)
+
+	pe_names = list({r["procuring_entity"] for r in rows if r.get("procuring_entity")})
+	if pe_names:
+		pe_map = {
+			r["name"]: r["entity_name"]
+			for r in frappe.db.get_all(
+				"Procuring Entity",
+				filters={"name": ["in", pe_names]},
+				fields=["name", "entity_name"],
+			)
+		}
+		for r in rows:
+			r["entity_name"] = pe_map.get(r["procuring_entity"], r["procuring_entity"])
+
+	return {"ok": True, "results": rows}

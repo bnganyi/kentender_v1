@@ -387,13 +387,25 @@ def return_approved_to_finance(demand_name: str | None = None, reason: str | Non
 		doc.reservation_status = "Released"
 		doc.reservation_reference = None
 
-	doc.status = "Pending Finance Approval"
-	doc.finance_approved_by = None
-	doc.finance_approved_at = None
-	doc.available_budget_at_check = None
-	doc.budget_check_datetime = None
-	doc.return_reason = text
-	doc.returned_by = frappe.session.user
-	doc.returned_at = now_datetime()
 	_save_doc(doc)
 	return {"name": doc.name, "status": doc.status}
+
+
+@frappe.whitelist()
+def set_budget_line(demand_name: str | None = None, budget_line: str | None = None):
+	"""Finance Reviewer links a Budget Line to a demand awaiting finance approval."""
+	if not demand_name:
+		frappe.throw(_("Demand name is required."))
+	if not (budget_line or "").strip():
+		frappe.throw(_("Budget Line is required."))
+	require_demand_write(demand_name)
+	doc = frappe.get_doc("Demand", demand_name)
+	doc.check_permission("write")
+	_require_roles(ROLE_FINANCE_REVIEWER)
+	if doc.status != "Pending Finance Approval":
+		frappe.throw(_("Budget Line can only be linked while the demand is awaiting finance approval."))
+	if not frappe.db.exists("Budget Line", budget_line):
+		frappe.throw(_("Budget Line '{0}' does not exist.").format(budget_line))
+	doc.budget_line = budget_line
+	_save_doc(doc)
+	return {"name": doc.name, "status": doc.status, "budget_line": doc.budget_line}

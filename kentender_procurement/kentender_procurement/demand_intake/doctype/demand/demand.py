@@ -61,6 +61,7 @@ _SKIP_FIELD_TYPES = frozenset(
 class Demand(Document):
 	def validate(self):
 		self._set_audit_defaults()
+		self._normalize_procuring_entity()
 		self._sync_is_exception_from_demand_type()
 		if self.budget_line:
 			self._apply_budget_line_strategy()
@@ -98,6 +99,13 @@ class Demand(Document):
 			self.is_exception = 1
 		else:
 			self.is_exception = 0
+
+	def _normalize_procuring_entity(self):
+		from kentender_core.procuring_entity_canonical import normalize_procuring_entity
+
+		normalized = normalize_procuring_entity(self.procuring_entity)
+		if normalized:
+			self.procuring_entity = normalized
 
 	def _apply_budget_line_strategy(self):
 		"""C1 — derive budget/strategy fields from Budget Line via Budget services only."""

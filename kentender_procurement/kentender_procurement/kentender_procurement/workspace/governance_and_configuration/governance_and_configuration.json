@@ -88,6 +88,21 @@
   },
   {
    "role": "STD Technical Inspector"
+  },
+  {
+   "role": "Department Approver"
+  },
+  {
+   "role": "Finance Reviewer"
+  },
+  {
+   "role": "Requisitioner"
+  },
+  {
+   "role": "Procurement Planner"
+  },
+  {
+   "role": "Auditor"
   }
  ],
  "sequence_id": 35.0,

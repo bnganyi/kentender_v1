@@ -75,6 +75,15 @@
   },
   {
    "role": "KenTender Compliance Officer"
+  },
+  {
+   "role": "Department Approver"
+  },
+  {
+   "role": "Finance Reviewer"
+  },
+  {
+   "role": "Requisitioner"
   }
  ],
  "sequence_id": 12.0,

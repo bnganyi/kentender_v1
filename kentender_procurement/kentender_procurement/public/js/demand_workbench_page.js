@@ -68,6 +68,408 @@
     return b + " B";
   }
 
+  // ── Dialog helpers ───────────────────────────────────────────────────────
+  /**
+   * _showConfirmDialog(opts, onConfirm)
+   * opts: { icon, iconClass, title, subtitle, desc, contextRows, alertText,
+   *         confirmLabel, confirmClass, cancelLabel }
+   */
+  function _showConfirmDialog(opts, onConfirm) {
+    var backdrop = document.createElement("div");
+    backdrop.className = "kt-wbx-dlg-backdrop";
+
+    var contextHtml = "";
+    if (opts.contextRows && opts.contextRows.length) {
+      contextHtml = '<div class="kt-wbx-dlg-context">';
+      opts.contextRows.forEach(function(r) {
+        contextHtml +=
+          '<div class="kt-wbx-dlg-ctx-row">' +
+            '<span class="kt-wbx-dlg-ctx-label">' + _esc(r.label) + '</span>' +
+            '<span class="kt-wbx-dlg-ctx-value' + (r.amount ? ' kt-wbx-dlg-ctx-value--amount' : '') + '">' + _esc(r.value) + '</span>' +
+          '</div>';
+      });
+      contextHtml += '</div>';
+    }
+
+    var alertHtml = opts.alertText
+      ? '<div class="kt-wbx-dlg-alert">' +
+          '<span class="material-symbols-outlined">info</span>' +
+          '<span>' + _esc(opts.alertText) + '</span>' +
+        '</div>'
+      : "";
+
+    backdrop.innerHTML =
+      '<div class="kt-wbx-dlg" role="dialog" aria-modal="true">' +
+        '<div class="kt-wbx-dlg-header">' +
+          '<div class="kt-wbx-dlg-icon ' + (opts.iconClass || 'kt-wbx-dlg-icon--primary') + '">' +
+            '<span class="material-symbols-outlined" style="font-variation-settings:\'FILL\' 1">' + (opts.icon || 'help') + '</span>' +
+          '</div>' +
+          '<div class="kt-wbx-dlg-title-wrap">' +
+            '<div class="kt-wbx-dlg-title">' + _esc(opts.title || 'Confirm') + '</div>' +
+            (opts.subtitle ? '<div class="kt-wbx-dlg-subtitle">' + _esc(opts.subtitle) + '</div>' : '') +
+          '</div>' +
+          '<button class="kt-wbx-dlg-close" aria-label="Close">' +
+            '<span class="material-symbols-outlined">close</span>' +
+          '</button>' +
+        '</div>' +
+        '<div class="kt-wbx-dlg-body">' +
+          (opts.desc ? '<div class="kt-wbx-dlg-desc">' + opts.desc + '</div>' : '') +
+          contextHtml +
+          alertHtml +
+        '</div>' +
+        '<div class="kt-wbx-dlg-footer">' +
+          '<button class="kt-wbx-dlg-btn kt-wbx-dlg-btn--cancel">' + _esc(opts.cancelLabel || 'Cancel') + '</button>' +
+          '<button class="kt-wbx-dlg-btn ' + (opts.confirmClass || 'kt-wbx-dlg-btn--primary') + '">' +
+            (opts.confirmIcon ? '<span class="material-symbols-outlined">' + opts.confirmIcon + '</span>' : '') +
+            _esc(opts.confirmLabel || 'Confirm') +
+          '</button>' +
+        '</div>' +
+      '</div>';
+
+    function _close() { if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop); }
+
+    backdrop.querySelector(".kt-wbx-dlg-close").addEventListener("click", _close);
+    backdrop.querySelector(".kt-wbx-dlg-btn--cancel").addEventListener("click", _close);
+    backdrop.querySelector(".kt-wbx-dlg-btn:last-child").addEventListener("click", function() {
+      _close();
+      onConfirm();
+    });
+    backdrop.addEventListener("click", function(e) { if (e.target === backdrop) _close(); });
+    document.addEventListener("keydown", function _esc_key(e) {
+      if (e.key === "Escape") { _close(); document.removeEventListener("keydown", _esc_key); }
+    });
+
+    document.body.appendChild(backdrop);
+    setTimeout(function() {
+      var btn = backdrop.querySelector(".kt-wbx-dlg-btn:last-child");
+      if (btn) btn.focus();
+    }, 50);
+  }
+
+  /**
+   * _showPromptDialog(opts, onConfirm)
+   * opts: { icon, iconClass, title, subtitle, desc, contextRows,
+   *         fieldLabel, fieldPlaceholder, confirmLabel, confirmClass, cancelLabel,
+   *         isDanger }
+   * onConfirm(value) — called with trimmed textarea value
+   */
+  function _showPromptDialog(opts, onConfirm) {
+    var backdrop = document.createElement("div");
+    backdrop.className = "kt-wbx-dlg-backdrop";
+
+    var contextHtml = "";
+    if (opts.contextRows && opts.contextRows.length) {
+      contextHtml = '<div class="kt-wbx-dlg-context">';
+      opts.contextRows.forEach(function(r) {
+        contextHtml +=
+          '<div class="kt-wbx-dlg-ctx-row">' +
+            '<span class="kt-wbx-dlg-ctx-label">' + _esc(r.label) + '</span>' +
+            '<span class="kt-wbx-dlg-ctx-value">' + _esc(r.value) + '</span>' +
+          '</div>';
+      });
+      contextHtml += '</div>';
+    }
+
+    backdrop.innerHTML =
+      '<div class="kt-wbx-dlg" role="dialog" aria-modal="true">' +
+        '<div class="kt-wbx-dlg-header">' +
+          '<div class="kt-wbx-dlg-icon ' + (opts.iconClass || 'kt-wbx-dlg-icon--primary') + '">' +
+            '<span class="material-symbols-outlined" style="font-variation-settings:\'FILL\' 1">' + (opts.icon || 'edit_note') + '</span>' +
+          '</div>' +
+          '<div class="kt-wbx-dlg-title-wrap">' +
+            '<div class="kt-wbx-dlg-title">' + _esc(opts.title || 'Provide details') + '</div>' +
+            (opts.subtitle ? '<div class="kt-wbx-dlg-subtitle">' + _esc(opts.subtitle) + '</div>' : '') +
+          '</div>' +
+          '<button class="kt-wbx-dlg-close" aria-label="Close">' +
+            '<span class="material-symbols-outlined">close</span>' +
+          '</button>' +
+        '</div>' +
+        '<div class="kt-wbx-dlg-body">' +
+          (opts.desc ? '<div class="kt-wbx-dlg-desc">' + opts.desc + '</div>' : '') +
+          contextHtml +
+          '<div class="kt-wbx-dlg-field">' +
+            '<label class="kt-wbx-dlg-label">' + _esc(opts.fieldLabel || 'Reason') + '<span class="kt-wbx-dlg-req">*</span></label>' +
+            '<textarea class="kt-wbx-dlg-textarea" placeholder="' + _esc(opts.fieldPlaceholder || 'Enter reason…') + '"></textarea>' +
+            '<span class="kt-wbx-dlg-field-err">Please provide a reason before proceeding.</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="kt-wbx-dlg-footer">' +
+          '<button class="kt-wbx-dlg-btn kt-wbx-dlg-btn--cancel">' + _esc(opts.cancelLabel || 'Cancel') + '</button>' +
+          '<button class="kt-wbx-dlg-btn ' + (opts.confirmClass || 'kt-wbx-dlg-btn--primary') + '">' +
+            (opts.confirmIcon ? '<span class="material-symbols-outlined">' + opts.confirmIcon + '</span>' : '') +
+            _esc(opts.confirmLabel || 'Submit') +
+          '</button>' +
+        '</div>' +
+      '</div>';
+
+    var textarea  = backdrop.querySelector(".kt-wbx-dlg-textarea");
+    var errEl     = backdrop.querySelector(".kt-wbx-dlg-field-err");
+    var submitBtn = backdrop.querySelector(".kt-wbx-dlg-footer .kt-wbx-dlg-btn:last-child");
+
+    function _close() { if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop); }
+
+    backdrop.querySelector(".kt-wbx-dlg-close").addEventListener("click", _close);
+    backdrop.querySelector(".kt-wbx-dlg-btn--cancel").addEventListener("click", _close);
+    backdrop.addEventListener("click", function(e) { if (e.target === backdrop) _close(); });
+    document.addEventListener("keydown", function _esc_key(e) {
+      if (e.key === "Escape") { _close(); document.removeEventListener("keydown", _esc_key); }
+    });
+
+    textarea.addEventListener("input", function() {
+      if (textarea.value.trim()) {
+        textarea.classList.remove("is-error");
+        errEl.classList.remove("is-visible");
+      }
+    });
+
+    submitBtn.addEventListener("click", function() {
+      var val = textarea.value.trim();
+      if (!val) {
+        textarea.classList.add("is-error");
+        errEl.classList.add("is-visible");
+        textarea.focus();
+        return;
+      }
+      _close();
+      onConfirm(val);
+    });
+
+    document.body.appendChild(backdrop);
+    setTimeout(function() { textarea.focus(); }, 50);
+  }
+
+  /**
+   * _showBudgetLinePicker(demandName, currentLine, onSaved)
+   * A search-as-you-type dialog for selecting and saving a Budget Line.
+   */
+  function _showBudgetLinePicker(demandName, currentLine, onSaved) {
+    var BL_API  = "kentender_budget.api.dia_budget_control.search_budget_lines";
+    var BUD_API = "kentender_budget.api.dia_budget_control.get_budgets_for_picker";
+    var SET_API = "kentender_procurement.demand_intake.api.lifecycle.set_budget_line";
+
+    // Scope picker to the demand's own procuring entity to prevent cross-entity mismatches
+    var _pe = (_state.detail && _state.detail.a && _state.detail.a.procuring_entity)
+              ? _state.detail.a.procuring_entity : null;
+
+    var backdrop = document.createElement("div");
+    backdrop.className = "kt-wbx-dlg-backdrop";
+
+    var _step = 1;
+    var _selectedBudget = null;   // { name, budget_name, fiscal_year, entity_name }
+    var _selectedLineId = null;
+    var _searchTimer   = null;
+
+    function _fmtKes(n) {
+      var v = parseFloat(n);
+      if (isNaN(v)) return "\u2014";
+      if (v >= 1e9) return "KES " + (v / 1e9).toFixed(1) + "B";
+      if (v >= 1e6) return "KES " + (v / 1e6).toFixed(1) + "M";
+      return "KES " + v.toLocaleString("en-KE", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+
+    // ── Shared shell ──────────────────────────────────────────────────────
+    backdrop.innerHTML =
+      '<div class="kt-wbx-dlg" role="dialog" aria-modal="true" style="max-width:500px">' +
+        '<div class="kt-wbx-dlg-header">' +
+          '<div class="kt-wbx-dlg-icon kt-wbx-dlg-icon--primary kt-wbx-blp-icon">' +
+            '<span class="material-symbols-outlined" style="font-variation-settings:\'FILL\' 1">account_balance_wallet</span>' +
+          '</div>' +
+          '<div class="kt-wbx-dlg-title-wrap">' +
+            '<div class="kt-wbx-dlg-title kt-wbx-blp-title">Select Budget</div>' +
+            '<div class="kt-wbx-dlg-subtitle kt-wbx-blp-subtitle">Step 1 of 2 — Choose the budget envelope</div>' +
+          '</div>' +
+          '<button class="kt-wbx-dlg-close" aria-label="Close">' +
+            '<span class="material-symbols-outlined">close</span>' +
+          '</button>' +
+        '</div>' +
+        '<div class="kt-wbx-dlg-body" style="gap:10px">' +
+          '<div class="kt-wbx-bl-search-wrap">' +
+            '<span class="material-symbols-outlined kt-wbx-bl-search-icon">search</span>' +
+            '<input type="text" class="kt-wbx-bl-search-input kt-wbx-blp-search" placeholder="Search budgets…" autocomplete="off">' +
+          '</div>' +
+          '<div class="kt-wbx-bl-results kt-wbx-blp-results"></div>' +
+        '</div>' +
+        '<div class="kt-wbx-dlg-footer">' +
+          '<button class="kt-wbx-dlg-btn kt-wbx-dlg-btn--cancel kt-wbx-blp-back">Cancel</button>' +
+          '<button class="kt-wbx-dlg-btn kt-wbx-dlg-btn--primary kt-wbx-blp-next" disabled>' +
+            'Next <span class="material-symbols-outlined">arrow_forward</span>' +
+          '</button>' +
+        '</div>' +
+      '</div>';
+
+    var titleEl    = backdrop.querySelector(".kt-wbx-blp-title");
+    var subtitleEl = backdrop.querySelector(".kt-wbx-blp-subtitle");
+    var searchEl   = backdrop.querySelector(".kt-wbx-blp-search");
+    var resultsEl  = backdrop.querySelector(".kt-wbx-blp-results");
+    var backBtn    = backdrop.querySelector(".kt-wbx-blp-back");
+    var nextBtn    = backdrop.querySelector(".kt-wbx-blp-next");
+
+    function _close() { if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop); }
+
+    // ── Step 1: Budget list ───────────────────────────────────────────────
+    function _renderBudgets(rows) {
+      if (!rows || !rows.length) {
+        resultsEl.innerHTML = '<div class="kt-wbx-bl-empty">No budgets found.</div>';
+        return;
+      }
+      resultsEl.innerHTML = rows.map(function(r) {
+        var sel = (_selectedBudget && r.name === _selectedBudget.name) ? " kt-wbx-bl-item--selected" : "";
+        return (
+          '<button class="kt-wbx-bl-item kt-wbx-bl-item--budget' + sel + '" data-bud-id="' + _esc(r.name) + '" data-bud-json="' + _esc(JSON.stringify(r)) + '">' +
+            '<div class="kt-wbx-bl-item-name">' + _esc(r.budget_name || r.name) + '</div>' +
+            '<div class="kt-wbx-bl-item-meta">' +
+              '<span>' + _esc(r.entity_name || r.procuring_entity || "") + '</span>' +
+              (r.fiscal_year ? '<span>FY ' + _esc(String(r.fiscal_year)) + '</span>' : '') +
+              '<span class="kt-wbx-bl-item-status kt-wbx-bl-item-status--' + _esc((r.status || "").toLowerCase()) + '">' + _esc(r.status || "") + '</span>' +
+            '</div>' +
+          '</button>'
+        );
+      }).join("");
+    }
+
+    function _fetchBudgets(q) {
+      resultsEl.innerHTML = '<div class="kt-wbx-bl-loading"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px">hourglass_top</span> Loading…</div>';
+      frappe.call({
+        method: BUD_API,
+        args: { query: q, procuring_entity: _pe, limit: 15 },
+        callback: function(r) {
+          _renderBudgets((r && r.message && r.message.results) ? r.message.results : []);
+        },
+      });
+    }
+
+    // ── Step 2: Budget Line list ──────────────────────────────────────────
+    function _renderLines(rows) {
+      if (!rows || !rows.length) {
+        resultsEl.innerHTML = '<div class="kt-wbx-bl-empty">No active budget lines in this budget.</div>';
+        return;
+      }
+      resultsEl.innerHTML = rows.map(function(r) {
+        var avail = parseFloat(r.amount_available) || 0;
+        var availCls = avail > 0 ? " kt-wbx-bl-avail--ok" : " kt-wbx-bl-avail--low";
+        var sel = (r.name === _selectedLineId) ? " kt-wbx-bl-item--selected" : "";
+        return (
+          '<button class="kt-wbx-bl-item' + sel + '" data-bl-id="' + _esc(r.name) + '">' +
+            '<div class="kt-wbx-bl-item-name">' + _esc(r.budget_line_name || r.name) + '</div>' +
+            '<div class="kt-wbx-bl-item-meta">' +
+              '<span>' + _esc(r.budget_line_code || r.name) + '</span>' +
+              '<span class="kt-wbx-bl-avail' + availCls + '">Available: ' + _esc(_fmtKes(avail)) + '</span>' +
+            '</div>' +
+          '</button>'
+        );
+      }).join("");
+    }
+
+    function _fetchLines(q) {
+      resultsEl.innerHTML = '<div class="kt-wbx-bl-loading"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:-3px">hourglass_top</span> Loading…</div>';
+      frappe.call({
+        method: BL_API,
+        args: { query: q, budget_id: _selectedBudget ? _selectedBudget.name : null, procuring_entity: _pe, limit: 20 },
+        callback: function(r) {
+          _renderLines((r && r.message && r.message.results) ? r.message.results : []);
+        },
+      });
+    }
+
+    // ── Navigation ────────────────────────────────────────────────────────
+    function _goStep1() {
+      _step = 1;
+      _selectedLineId = null;
+      titleEl.textContent = "Select Budget";
+      subtitleEl.textContent = "Step 1 of 2 \u2014 Choose the budget envelope";
+      searchEl.value = "";
+      searchEl.placeholder = "Search budgets\u2026";
+      backBtn.textContent = "Cancel";
+      nextBtn.innerHTML = 'Next <span class="material-symbols-outlined">arrow_forward</span>';
+      nextBtn.disabled = !_selectedBudget;
+      nextBtn.className = "kt-wbx-dlg-btn kt-wbx-dlg-btn--primary kt-wbx-blp-next";
+      _fetchBudgets("");
+      setTimeout(function() { searchEl.focus(); }, 30);
+    }
+
+    function _goStep2() {
+      _step = 2;
+      titleEl.textContent = "Select Budget Line";
+      subtitleEl.textContent = "Step 2 of 2 \u2014 " + (_selectedBudget ? _esc(_selectedBudget.budget_name) : "");
+      searchEl.value = "";
+      searchEl.placeholder = "Search lines\u2026";
+      backBtn.innerHTML = '<span class="material-symbols-outlined">arrow_back</span> Back';
+      nextBtn.innerHTML = '<span class="material-symbols-outlined">link</span> Save Budget Line';
+      nextBtn.disabled = true;
+      nextBtn.className = "kt-wbx-dlg-btn kt-wbx-dlg-btn--success kt-wbx-blp-next";
+      _fetchLines("");
+      setTimeout(function() { searchEl.focus(); }, 30);
+    }
+
+    // ── Events ────────────────────────────────────────────────────────────
+    searchEl.addEventListener("input", function() {
+      clearTimeout(_searchTimer);
+      _searchTimer = setTimeout(function() {
+        if (_step === 1) _fetchBudgets(searchEl.value.trim());
+        else _fetchLines(searchEl.value.trim());
+      }, 280);
+    });
+
+    resultsEl.addEventListener("click", function(e) {
+      if (_step === 1) {
+        var item = e.target.closest("[data-bud-id]");
+        if (!item) return;
+        try { _selectedBudget = JSON.parse(item.getAttribute("data-bud-json")); } catch (x) {}
+        nextBtn.disabled = false;
+        resultsEl.querySelectorAll("[data-bud-id]").forEach(function(el) {
+          el.classList.toggle("kt-wbx-bl-item--selected", el.getAttribute("data-bud-id") === _selectedBudget.name);
+        });
+      } else {
+        var item2 = e.target.closest("[data-bl-id]");
+        if (!item2) return;
+        _selectedLineId = item2.getAttribute("data-bl-id");
+        nextBtn.disabled = false;
+        resultsEl.querySelectorAll("[data-bl-id]").forEach(function(el) {
+          el.classList.toggle("kt-wbx-bl-item--selected", el.getAttribute("data-bl-id") === _selectedLineId);
+        });
+      }
+    });
+
+    backBtn.addEventListener("click", function() {
+      if (_step === 2) _goStep1();
+      else _close();
+    });
+
+    nextBtn.addEventListener("click", function() {
+      if (_step === 1) {
+        if (_selectedBudget) _goStep2();
+      } else {
+        if (!_selectedLineId) return;
+        nextBtn.disabled = true;
+        frappe.call({
+          method: SET_API,
+          args: { demand_name: demandName, budget_line: _selectedLineId },
+          callback: function() {
+            _close();
+            if (onSaved) onSaved(_selectedLineId);
+          },
+          error: function(r) {
+            nextBtn.disabled = false;
+            frappe.msgprint({
+              title: "Could not save",
+              message: (r && r.message) ? r.message : "An error occurred.",
+              indicator: "red",
+            });
+          },
+        });
+      }
+    });
+
+    backdrop.querySelector(".kt-wbx-dlg-close").addEventListener("click", _close);
+    backdrop.addEventListener("click", function(e) { if (e.target === backdrop) _close(); });
+    document.addEventListener("keydown", function _esc_key(e) {
+      if (e.key === "Escape") { _close(); document.removeEventListener("keydown", _esc_key); }
+    });
+
+    document.body.appendChild(backdrop);
+    _goStep1();
+  }
+
   // ── Badge helpers ────────────────────────────────────────────────────────
   var _STATUS_BADGE = {
     "Draft":                      { cls: "kt-wbx-badge--draft",    lbl: "Draft" },
@@ -416,6 +818,29 @@
     var allocated = parseFloat(c.available_budget_at_check) || 0;
     var demanded  = parseFloat(c.total_amount) || 0;
     var pct = (allocated + demanded) > 0 ? Math.round(demanded / (allocated + demanded) * 100) : 90;
+
+    // Budget Line row: show a "Link" action for Finance Reviewers when demand awaits finance approval
+    var isPendingFinance = (a.status === "Pending Finance Approval");
+    var budgetLineValue  = b.budget_line_label || b.budget_line;
+    var budgetLineRowHtml;
+    if (isPendingFinance) {
+      budgetLineRowHtml =
+        '<div class="kt-wbx-strategy-item-label">Budget Line</div>' +
+        '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+          '<div class="kt-wbx-strategy-item-value">' +
+            (budgetLineValue ? _esc(budgetLineValue) : '<span style="color:var(--wbx-on-faint);font-style:italic">Not linked</span>') +
+          '</div>' +
+          '<button class="kt-wbx-budget-link-btn" data-action="link_budget_line" title="Link budget line">' +
+            '<span class="material-symbols-outlined">link</span>' +
+            (budgetLineValue ? 'Change' : 'Link') +
+          '</button>' +
+        '</div>';
+    } else {
+      budgetLineRowHtml =
+        '<div class="kt-wbx-strategy-item-label">Budget Line</div>' +
+        '<div class="kt-wbx-strategy-item-value">' + _esc(budgetLineValue || "\u2014") + '</div>';
+    }
+
     var stratSection =
       '<div class="kt-wbx-strategy">' +
         '<div class="kt-wbx-strategy-head">Linked Strategic Context</div>' +
@@ -430,10 +855,7 @@
           '</div>' +
           '<div class="kt-wbx-strategy-row">' +
             '<div class="kt-wbx-strategy-icon">' + _ico("account_balance_wallet") + '</div>' +
-            '<div>' +
-              '<div class="kt-wbx-strategy-item-label">Budget Line</div>' +
-              '<div class="kt-wbx-strategy-item-value">' + _esc(b.budget_line_label || b.budget_line || "\u2014") + '</div>' +
-            '</div>' +
+            '<div style="min-width:0;flex:1">' + budgetLineRowHtml + '</div>' +
           '</div>' +
           '<div class="kt-wbx-funding-block">' +
             '<div class="kt-wbx-funding-row">' +
@@ -581,17 +1003,54 @@
           return;
         }
 
+        // link_budget_line — Finance Reviewer links a budget line
+        if (action === "link_budget_line") {
+          var lbl = (_state.detail && _state.detail.b) ? _state.detail.b.budget_line : null;
+          _showBudgetLinePicker(name, lbl, function() { _reload(); });
+          return;
+        }
+
         // Banner actions without a dedicated button method
         if (action === "return_approved_to_finance") {
-          frappe.prompt(
-            [{ label: "Reason", fieldname: "reason", fieldtype: "Small Text", reqd: 1 }],
-            function(vals) { _callLifecycle(L + "return_approved_to_finance", { demand_name: name, reason: vals.reason }); },
-            "Send back to Finance", "Submit"
-          );
+          var ratfDetail = _state.detail || {};
+          var ratfA = ratfDetail.a || {};
+          _showPromptDialog({
+            icon: "reply",
+            iconClass: "kt-wbx-dlg-icon--warning",
+            title: "Send Back to Finance",
+            subtitle: "Return for budget re-review",
+            desc: "Describe why this demand needs to be returned to the Finance Officer before it can be approved.",
+            contextRows: [
+              { label: "Demand", value: ratfA.title || name },
+              { label: "Reference", value: name },
+            ],
+            fieldLabel: "Reason for return",
+            fieldPlaceholder: "e.g. Budget allocation needs correction…",
+            confirmLabel: "Send Back",
+            confirmClass: "kt-wbx-dlg-btn--primary",
+            confirmIcon: "reply",
+          }, function(val) {
+            _callLifecycle(L + "return_approved_to_finance", { demand_name: name, reason: val });
+          });
           return;
         }
         if (action === "mark_planning_ready") {
-          frappe.confirm("Confirm this demand is ready for planning?", function() {
+          var mprDetail = _state.detail || {};
+          var mprA = mprDetail.a || {};
+          _showConfirmDialog({
+            icon: "checklist",
+            iconClass: "kt-wbx-dlg-icon--success",
+            title: "Mark as Planning Ready",
+            subtitle: "Advance to procurement planning",
+            desc: "Confirm this demand has passed departmental review and is ready to be incorporated into the procurement plan.",
+            contextRows: [
+              { label: "Demand", value: mprA.title || name },
+              { label: "Reference", value: name },
+            ],
+            confirmLabel: "Mark Ready",
+            confirmClass: "kt-wbx-dlg-btn--success",
+            confirmIcon: "task_alt",
+          }, function() {
             _callLifecycle(L + "mark_planning_ready", { demand_name: name });
           });
           return;
@@ -601,36 +1060,124 @@
 
         // Prompt-based actions
         if (reasonType === "return") {
-          frappe.prompt(
-            [{ label: "Reason for return", fieldname: "reason", fieldtype: "Small Text", reqd: 1 }],
-            function(vals) { _callLifecycle(method, { demand_name: name, reason: vals.reason }, _reload); },
-            "Return for Correction", "Submit"
-          );
+          var retDetail = _state.detail || {};
+          var retA = retDetail.a || {};
+          _showPromptDialog({
+            icon: "undo",
+            iconClass: "kt-wbx-dlg-icon--warning",
+            title: "Return for Correction",
+            subtitle: "Send demand back to the requester",
+            desc: "Explain what needs to be corrected. The requester will see this reason and can resubmit after making changes.",
+            contextRows: [
+              { label: "Demand", value: retA.title || name },
+              { label: "Reference", value: name },
+            ],
+            fieldLabel: "Reason for return",
+            fieldPlaceholder: "e.g. Items list needs updating…",
+            confirmLabel: "Return",
+            confirmClass: "kt-wbx-dlg-btn--primary",
+            confirmIcon: "undo",
+          }, function(val) {
+            _callLifecycle(method, { demand_name: name, reason: val }, _reload);
+          });
           return;
         }
         if (reasonType === "rejection") {
-          frappe.prompt(
-            [{ label: "Rejection reason", fieldname: "reason", fieldtype: "Small Text", reqd: 1 }],
-            function(vals) { _callLifecycle(method, { demand_name: name, rejection_reason: vals.reason }, _reload); },
-            "Reject Demand", "Reject"
-          );
+          var rejDetail = _state.detail || {};
+          var rejA = rejDetail.a || {};
+          _showPromptDialog({
+            icon: "cancel",
+            iconClass: "kt-wbx-dlg-icon--danger",
+            title: "Reject Demand",
+            subtitle: "Permanently reject this demand",
+            desc: "Provide a clear rejection reason. The requester will be notified and the demand will be closed.",
+            contextRows: [
+              { label: "Demand", value: rejA.title || name },
+              { label: "Reference", value: name },
+            ],
+            fieldLabel: "Rejection reason",
+            fieldPlaceholder: "e.g. Out of scope for this financial year…",
+            confirmLabel: "Reject",
+            confirmClass: "kt-wbx-dlg-btn--danger",
+            confirmIcon: "cancel",
+          }, function(val) {
+            _callLifecycle(method, { demand_name: name, rejection_reason: val }, _reload);
+          });
           return;
         }
         if (reasonType === "cancellation") {
-          frappe.prompt(
-            [{ label: "Cancellation reason", fieldname: "reason", fieldtype: "Small Text", reqd: 1 }],
-            function(vals) { _callLifecycle(method, { demand_name: name, reason: vals.reason }, _reload); },
-            "Cancel Demand", "Confirm"
-          );
+          var canDetail = _state.detail || {};
+          var canA = canDetail.a || {};
+          _showPromptDialog({
+            icon: "block",
+            iconClass: "kt-wbx-dlg-icon--danger",
+            title: "Cancel Demand",
+            subtitle: "Cancel this demand",
+            desc: "State the reason this demand is being cancelled. This action cannot be undone.",
+            contextRows: [
+              { label: "Demand", value: canA.title || name },
+              { label: "Reference", value: name },
+            ],
+            fieldLabel: "Cancellation reason",
+            fieldPlaceholder: "e.g. Requirements have changed…",
+            confirmLabel: "Cancel Demand",
+            confirmClass: "kt-wbx-dlg-btn--danger",
+            confirmIcon: "block",
+          }, function(val) {
+            _callLifecycle(method, { demand_name: name, reason: val }, _reload);
+          });
           return;
         }
 
         // Confirm-based actions
         if (action === "approve_finance") {
-          frappe.confirm(
-            "Approve this demand and reserve the budget?",
-            function() { _callLifecycle(method, { demand_name: name }, _reload); }
-          );
+          var afDetail = _state.detail || {};
+          var afA = afDetail.a || {};
+          var afB = afDetail.b || {};
+          var afC = afDetail.c || {};
+          var afCur = afDetail.currency || "KES";
+
+          // Guard: budget line must be linked before approval
+          if (!afB.budget_line) {
+            _showConfirmDialog({
+              icon: "account_balance_wallet",
+              iconClass: "kt-wbx-dlg-icon--warning",
+              title: "Budget Line Required",
+              subtitle: "Cannot approve without a budget line",
+              desc: "A Budget Line must be linked to this demand before you can approve and reserve funds. Please link a budget line first.",
+              contextRows: [
+                { label: "Demand", value: afA.title || name },
+                { label: "Reference", value: name },
+              ],
+              confirmLabel: "Link Budget Line",
+              confirmClass: "kt-wbx-dlg-btn--primary",
+              confirmIcon: "link",
+              cancelLabel: "Dismiss",
+            }, function() {
+              _showBudgetLinePicker(name, null, function() { _reload(); });
+            });
+            return;
+          }
+
+          _showConfirmDialog({
+            icon: "savings",
+            iconClass: "kt-wbx-dlg-icon--success",
+            title: "Approve & Reserve Budget",
+            subtitle: "Finance approval",
+            desc: "Approving this demand will lock a budget reservation for the estimated amount. The funds will be earmarked until the demand is fulfilled or cancelled.",
+            contextRows: [
+              { label: "Demand", value: afA.title || name },
+              { label: "Reference", value: name },
+              { label: "Budget Line", value: afB.budget_line_label || afB.budget_line },
+              { label: "Amount", value: _fmt(afC.total_amount, afCur), amount: true },
+            ],
+            alertText: "Once approved, the reserved funds will reduce available budget until this demand is closed.",
+            confirmLabel: "Approve & Reserve",
+            confirmClass: "kt-wbx-dlg-btn--success",
+            confirmIcon: "lock",
+          }, function() {
+            _callLifecycle(method, { demand_name: name }, _reload);
+          });
           return;
         }
 
