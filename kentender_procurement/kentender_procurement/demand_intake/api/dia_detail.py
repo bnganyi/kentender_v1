@@ -277,6 +277,20 @@ def _form_header_actions(doc, role_key: str) -> list[dict]:
 	return [a for a in _landing_actions(doc, role_key) if a.get("id") != "open_form"]
 
 
+def _workbench_actions(doc, role_key: str) -> list[dict]:
+	"""Workbench detail panel toolbar.
+
+	Keeps *open_form* only when it is an **edit** action (Draft / Rejected),
+	so that "Edit Demand" appears for editable demands.  Drops the non-edit
+	"View demand" variant because the user is already viewing the demand in
+	the workbench.
+	"""
+	return [
+		a for a in _landing_actions(doc, role_key)
+		if not (a.get("id") == "open_form" and not a.get("edit"))
+	]
+
+
 def _basic_items_editable_for_status(status: str | None) -> bool:
 	"""B3 / E3 — Basic Request + Items match server edit lock (Draft, Rejected only)."""
 	return bool(status) and status in STATUSES_FULLY_EDITABLE
@@ -515,7 +529,7 @@ def get_dia_demand_detail(name: str | None = None):
 			"cancellation_reason": doc.cancellation_reason or None,
 			"is_exception": bool(cint(doc.is_exception)),
 		},
-		"actions": _landing_actions(doc, role_key),
+		"actions": _workbench_actions(doc, role_key),
 		"integrity_blocked": bool(integrity.get("blocked")),
 		"integrity_blocker_count": integrity.get("blocker_count") or 0,
 		"planning_ready": bool(not integrity.get("blocked") and doc.status == "Approved"),

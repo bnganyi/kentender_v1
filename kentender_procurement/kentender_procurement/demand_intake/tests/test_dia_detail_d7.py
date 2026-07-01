@@ -158,3 +158,75 @@ class TestDiaDetailD7(IntegrationTestCase):
 			frappe.set_user("Administrator")
 			if frappe.db.exists("User", user.name):
 				frappe.delete_doc("User", user.name, force=True, ignore_permissions=True)
+
+	# ── Regression: workbench_actions — open_form visibility ──────────────────
+
+	def test_workbench_actions_draft_includes_open_form_as_edit(self):
+		"""Draft demands: _workbench_actions must include open_form with edit=True.
+
+		Regression guard: previously get_dia_demand_detail used _form_header_actions
+		(which always strips open_form) so the Edit Demand button never appeared in
+		the workbench for Draft demands.
+		"""
+		if getattr(self, "_skipped_no_demand", False):
+			self.skipTest("Demand DocType not installed")
+		from kentender_procurement.demand_intake.api.dia_detail import _workbench_actions
+
+		name = self._mk_demand(status="Draft")
+		doc = frappe.get_doc("Demand", name)
+		actions = _workbench_actions(doc, "admin")
+		ids = [a.get("id") for a in actions]
+		self.assertIn("open_form", ids, "Edit Demand button must appear for Draft in workbench")
+		open_form_action = next(a for a in actions if a["id"] == "open_form")
+		self.assertTrue(open_form_action.get("edit"), "open_form.edit must be True for Draft demand")
+		self.assertEqual(open_form_action.get("label"), "Edit Demand")
+
+	def test_workbench_actions_submitted_excludes_open_form(self):
+		"""Submitted demands: _workbench_actions must NOT include open_form.
+
+		Regression guard: 'View demand' button was shown in the workbench for
+		non-editable demands (e.g. Pending HoD Approval).  Since the user is already
+		looking at the demand in the workbench the button was a no-op and confusing.
+		"""
+		if getattr(self, "_skipped_no_demand", False):
+			self.skipTest("Demand DocType not installed")
+		from kentender_procurement.demand_intake.api.dia_detail import _workbench_actions
+
+		name = self._mk_demand(status="Draft")
+		frappe.db.set_value("Demand", name, "status", "Pending HoD Approval", update_modified=False)
+		doc = frappe.get_doc("Demand", name)
+		actions = _workbench_actions(doc, "admin")
+		ids = [a.get("id") for a in actions]
+		self.assertNotIn(
+			"open_form",
+			ids,
+			"View demand button must NOT appear for non-editable demands in workbench",
+		)
+
+	def test_get_dia_demand_detail_draft_actions_include_edit_button(self):
+		"""End-to-end: get_dia_demand_detail for a Draft demand returns open_form=edit.
+
+		Regression guard for the fix in get_dia_demand_detail that switched from
+		_landing_actions (showed 'View demand' for all) to _workbench_actions
+		(correct: show 'Edit Demand' for editable, hide 'View demand' for submitted).
+		"""
+		if getattr(self, "_skipped_no_demand", False):
+			self.skipTest("Demand DocType not installed")
+		name = self._mk_demand(status="Draft")
+		out = get_dia_demand_detail(name)
+		self.assertTrue(out.get("ok"))
+		ids = [a.get("id") for a in (out.get("actions") or [])]
+		self.assertIn("open_form", ids, "Edit Demand must be in workbench actions for Draft")
+		open_form_action = next(a for a in out["actions"] if a["id"] == "open_form")
+		self.assertTrue(open_form_action.get("edit"))
+
+	def test_get_dia_demand_detail_hod_pending_actions_exclude_open_form(self):
+		"""End-to-end: get_dia_demand_detail for Pending HoD Approval excludes open_form."""
+		if getattr(self, "_skipped_no_demand", False):
+			self.skipTest("Demand DocType not installed")
+		name = self._mk_demand(status="Draft")
+		frappe.db.set_value("Demand", name, "status", "Pending HoD Approval", update_modified=False)
+		out = get_dia_demand_detail(name)
+		self.assertTrue(out.get("ok"))
+		ids = [a.get("id") for a in (out.get("actions") or [])]
+		self.assertNotIn("open_form", ids, "View demand must NOT appear for Pending HoD Approval in workbench")
