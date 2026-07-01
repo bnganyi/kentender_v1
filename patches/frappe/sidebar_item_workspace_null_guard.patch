@@ -1,0 +1,14 @@
+--- a/apps/frappe/frappe/public/js/frappe/ui/sidebar/sidebar_item.js
++++ b/apps/frappe/frappe/public/js/frappe/ui/sidebar/sidebar_item.js
+@@ -32,6 +32,10 @@
+ 
+ 				path = frappe.utils.generate_route(args);
+ 			} else if (this.item.link_type == "Workspace") {
+ 				let workspaces = frappe.workspaces[frappe.router.slug(this.item.link_to)];
++				if (!workspaces) {
++					// workspace not accessible to this user — skip silently
++					return path;
++				}
+ 				if (workspaces.public) {
+ 					path = "/desk/" + frappe.router.slug(this.item.link_to);
+ 				} else {
