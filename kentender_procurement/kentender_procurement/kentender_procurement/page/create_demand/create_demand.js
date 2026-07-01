@@ -42,6 +42,9 @@
     submitting: false,
     // Submission readiness from backend
     readiness: null,
+    // Inline validation errors (field-id → message for step 1; string for step 2)
+    step1Errors: {},
+    step2Error: null,
     // Live meta for dropdowns
     departments: [],
     procuringEntities: [],
@@ -178,10 +181,12 @@
                 // title (full width)
                 '<div class="kt-cd-full-col">' +
                   '<label class="kt-cd-field-label">Demand Title <span style="color:var(--kt-red,#ef4444)">*</span></label>' +
-                  '<input class="kt-cd-input" type="text" id="kt-cd-title"' +
+                  '<input class="kt-cd-input' + (_state.step1Errors.title ? " kt-cd-input--error" : "") + '" type="text" id="kt-cd-title"' +
                     ' placeholder="e.g., Annual Hospital Infrastructure Renovation - Block B"' +
                     ' value="' + _esc(_state.form1.title) + '"/>' +
-                  '<p class="kt-cd-input-hint">Enter a clear, descriptive name for audit and planning purposes.</p>' +
+                  (_state.step1Errors.title
+                    ? '<p class="kt-cd-field-error">' + _ico("error") + _esc(_state.step1Errors.title) + "</p>"
+                    : '<p class="kt-cd-input-hint">Enter a clear, descriptive name for audit and planning purposes.</p>') +
                 "</div>" +
 
                 // department
@@ -209,20 +214,25 @@
                 // procuring entity
                 '<div>' +
                   '<label class="kt-cd-field-label">Procuring Entity <span style="color:var(--kt-red,#ef4444)">*</span></label>' +
-                  '<div class="kt-cd-select-wrap">' +
+                  '<div class="kt-cd-select-wrap' + (_state.step1Errors.entity ? " kt-cd-select-wrap--error" : "") + '">' +
                     '<select class="kt-cd-select" id="kt-cd-entity">' +
                       _entityOptions() +
                     "</select>" +
                     _ico("expand_more") +
                   "</div>" +
+                  (_state.step1Errors.entity
+                    ? '<p class="kt-cd-field-error">' + _ico("error") + _esc(_state.step1Errors.entity) + "</p>"
+                    : "") +
                 "</div>" +
 
                 // required by date
                 '<div>' +
                   '<label class="kt-cd-field-label">Required By Date <span style="color:var(--kt-red,#ef4444)">*</span></label>' +
-                  '<input class="kt-cd-input" type="date" id="kt-cd-required-by"' +
+                  '<input class="kt-cd-input' + (_state.step1Errors.requiredBy ? " kt-cd-input--error" : "") + '" type="date" id="kt-cd-required-by"' +
                     ' value="' + _esc(_state.form1.requiredBy) + '"/>' +
-                  '<p class="kt-cd-input-hint">When does your department need this procured by?</p>' +
+                  (_state.step1Errors.requiredBy
+                    ? '<p class="kt-cd-field-error">' + _ico("error") + _esc(_state.step1Errors.requiredBy) + "</p>"
+                    : '<p class="kt-cd-input-hint">When does your department need this procured by?</p>') +
                 "</div>" +
 
               "</div>" +
@@ -326,6 +336,9 @@
               _ico("add") + "Add New Row" +
             "</button>" +
           "</div>" +
+          (_state.step2Error
+            ? '<div class="kt-cd-step2-error">' + _ico("error") + '<span>' + _esc(_state.step2Error) + '</span></div>'
+            : "") +
           '<div class="kt-cd-table-wrap">' +
             '<table class="kt-cd-items-table">' +
               "<thead><tr>" +
@@ -719,6 +732,34 @@
         _state.form1.priority = toggle.checked;
       });
     }
+    // Clear inline errors as the user corrects each field
+    var titleEl = wrapper.querySelector("#kt-cd-title");
+    if (titleEl) {
+      titleEl.addEventListener("input", function () {
+        if (_state.step1Errors.title && titleEl.value.trim()) {
+          delete _state.step1Errors.title;
+          _render(wrapper);
+        }
+      });
+    }
+    var entityEl = wrapper.querySelector("#kt-cd-entity");
+    if (entityEl) {
+      entityEl.addEventListener("change", function () {
+        if (_state.step1Errors.entity && entityEl.value) {
+          delete _state.step1Errors.entity;
+          _render(wrapper);
+        }
+      });
+    }
+    var rbyEl = wrapper.querySelector("#kt-cd-required-by");
+    if (rbyEl) {
+      rbyEl.addEventListener("change", function () {
+        if (_state.step1Errors.requiredBy && rbyEl.value) {
+          delete _state.step1Errors.requiredBy;
+          _render(wrapper);
+        }
+      });
+    }
     // discard
     var discard = wrapper.querySelector("#kt-cd-discard");
     if (discard) {
@@ -744,31 +785,23 @@
         var entity = entityEl ? entityEl.value : "";
         var requiredBy = rbyEl ? rbyEl.value : "";
 
-        if (!title) {
-          if (titleEl) titleEl.focus();
-          frappe.msgprint({
-            title: "Required",
-            message: "Please enter a Demand Title.",
-            indicator: "orange",
-          });
+        // Collect all errors at once — no modal dialogs
+        var errs = {};
+        if (!title) errs.title = "Demand title is required.";
+        if (!entity) errs.entity = "Please select a procuring entity.";
+        if (!requiredBy) errs.requiredBy = "Required by date must be set.";
+
+        if (Object.keys(errs).length) {
+          _state.step1Errors = errs;
+          _render(wrapper);
+          // Focus the first errored field
+          var firstErrField = wrapper.querySelector(
+            errs.title ? "#kt-cd-title" : errs.entity ? "#kt-cd-entity" : "#kt-cd-required-by"
+          );
+          if (firstErrField) firstErrField.focus();
           return;
         }
-        if (!entity) {
-          frappe.msgprint({
-            title: "Required",
-            message: "Please select a Procuring Entity.",
-            indicator: "orange",
-          });
-          return;
-        }
-        if (!requiredBy) {
-          frappe.msgprint({
-            title: "Required",
-            message: "Please select a Required By Date.",
-            indicator: "orange",
-          });
-          return;
-        }
+        _state.step1Errors = {};
 
         // Persist form values in state
         _state.form1.title = title;
@@ -885,6 +918,7 @@
     var addBtn = wrapper.querySelector("#kt-cd-add-row");
     if (addBtn) {
       addBtn.addEventListener("click", function () {
+        _state.step2Error = null; // clear error as soon as user starts adding
         var nd = wrapper.querySelector("#kt-cd-new-desc");
         if (nd) nd.focus();
       });
@@ -905,21 +939,16 @@
       next.addEventListener("click", function () {
         if (_state.saving) return;
         if (!_state.items.length) {
-          frappe.msgprint({
-            title: "Items Required",
-            message: "Please add at least one item before proceeding.",
-            indicator: "orange",
-          });
+          _state.step2Error = "Add at least one item before proceeding.";
+          _render(wrapper);
           return;
         }
         if (!_state.demandName) {
-          frappe.msgprint({
-            title: "Error",
-            message: "Demand reference missing. Please go back to Step 1.",
-            indicator: "red",
-          });
+          _state.step2Error = "Demand reference missing — please go back to Step 1.";
+          _render(wrapper);
           return;
         }
+        _state.step2Error = null;
 
         _state.saving = true;
         _render(wrapper);
@@ -1119,6 +1148,8 @@
     _state.saving = false;
     _state.submitting = false;
     _state.readiness = null;
+    _state.step1Errors = {};
+    _state.step2Error = null;
   }
 
   // ── Frappe page registration ─────────────────────────────────────────────

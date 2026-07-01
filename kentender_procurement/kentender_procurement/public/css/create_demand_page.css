@@ -260,6 +260,51 @@
   color: var(--cd-outline);
   font-style: italic;
 }
+
+/* ── Inline field validation errors ───────────────────────────────────────── */
+.kt-cd-field-error {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--kt-red, #ef4444);
+  animation: kt-cd-err-in 0.15s ease;
+}
+.kt-cd-field-error .material-symbols-outlined { font-size: 14px; flex-shrink: 0; }
+@keyframes kt-cd-err-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.kt-cd-input--error {
+  border-color: var(--kt-red, #ef4444) !important;
+  background: #fff5f5 !important;
+}
+.kt-cd-input--error:focus {
+  box-shadow: 0 0 0 3px rgba(239,68,68,0.15) !important;
+}
+.kt-cd-select-wrap--error .kt-cd-select {
+  border-color: var(--kt-red, #ef4444) !important;
+  background: #fff5f5 !important;
+}
+
+/* Step 2 items-level error banner */
+.kt-cd-step2-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--kt-red, #ef4444);
+  animation: kt-cd-err-in 0.15s ease;
+}
+.kt-cd-step2-error .material-symbols-outlined { font-size: 18px; flex-shrink: 0; }
 .kt-cd-select {
   appearance: none;
   padding-right: 36px;
