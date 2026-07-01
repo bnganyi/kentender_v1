@@ -411,9 +411,9 @@
         var icon = c.ok ? _ico("check_circle") : _ico("cancel");
         var color = c.ok ? "var(--kt-green,#10B981)" : "var(--kt-red,#ef4444)";
         return (
-          '<div class="kt-cd-funding-row" style="gap:8px;align-items:center">' +
-            '<span style="color:' + color + ';display:flex">' + icon + "</span>" +
-            "<span>" + _esc(c.label || c.id) + "</span>" +
+          '<div class="kt-cd-readiness-item">' +
+            '<span class="kt-cd-readiness-icon" style="color:' + color + '">' + icon + "</span>" +
+            '<span class="kt-cd-readiness-label">' + _esc(c.label || c.id) + "</span>" +
           "</div>"
         );
       })
