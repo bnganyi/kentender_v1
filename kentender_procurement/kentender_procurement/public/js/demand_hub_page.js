@@ -33,7 +33,9 @@
 		limit:            10,
 		lifecycleFilter:  "all",
 		search:           "",
-		filters:          {},
+		filters:          {},      // applied filters (sent to API)
+		filterDraft:      {},      // in-drawer working copy (not yet applied)
+		filterDrawerOpen: false,
 		loading:          false,
 		canCreate:        true,
 	};
@@ -213,24 +215,59 @@
         '<button class="kt-dia-lc-chip" data-lc="rejected" data-testid="kt-dia-chip-rejected">Rejected</button>' +
       '</div>' +
 
-      // H7: Filter panel (collapsed by default)
-      '<div class="kt-dia-filter-panel" data-testid="kt-dia-filter-panel" style="display:none">' +
-        '<div class="kt-dia-filter-panel__fields">' +
-          '<select class="kt-dia-filter-select" data-filter="demand_type" data-testid="kt-dia-filter-type">' +
-            '<option value="">All Types</option>' +
-          '</select>' +
-          '<select class="kt-dia-filter-select" data-filter="requisition_type" data-testid="kt-dia-filter-category">' +
-            '<option value="">All Categories</option>' +
-          '</select>' +
-          '<select class="kt-dia-filter-select" data-filter="requesting_department" data-testid="kt-dia-filter-dept">' +
-            '<option value="">All Departments</option>' +
-          '</select>' +
+      // H7: Filter drawer (right-side slide-over, hidden by default)
+      '<div class="kt-dia-fd-backdrop" data-testid="kt-dia-fd-backdrop" hidden></div>' +
+      '<aside class="kt-dia-fd-drawer" data-testid="kt-dia-fd-drawer" hidden>' +
+        '<header class="kt-dia-fd-drawer__header">' +
+          '<h3>Filters</h3>' +
+          '<button class="kt-dia-fd-drawer__close" type="button" data-testid="kt-dia-fd-close">' +
+            '<span class="material-symbols-outlined">close</span>' +
+          '</button>' +
+        '</header>' +
+        '<div class="kt-dia-fd-drawer__body">' +
+          '<section class="kt-dia-fd-section">' +
+            '<label class="kt-dia-fd-label">Search</label>' +
+            '<label class="kt-dia-fd-search">' +
+              '<span class="material-symbols-outlined">search</span>' +
+              '<input data-testid="kt-dia-fd-search" type="text" placeholder="Demand title or ID..." />' +
+            '</label>' +
+          '</section>' +
+          '<section class="kt-dia-fd-section">' +
+            '<p class="kt-dia-fd-label">Status</p>' +
+            '<div class="kt-dia-fd-chip-group">' +
+              '<button class="kt-dia-fd-chip" type="button" data-testid="kt-dia-fd-status-draft">Draft</button>' +
+              '<button class="kt-dia-fd-chip" type="button" data-testid="kt-dia-fd-status-hod">HoD Review</button>' +
+              '<button class="kt-dia-fd-chip" type="button" data-testid="kt-dia-fd-status-finance">Finance Review</button>' +
+              '<button class="kt-dia-fd-chip" type="button" data-testid="kt-dia-fd-status-approved">Approved</button>' +
+              '<button class="kt-dia-fd-chip" type="button" data-testid="kt-dia-fd-status-planning">Planning Ready</button>' +
+              '<button class="kt-dia-fd-chip" type="button" data-testid="kt-dia-fd-status-rejected">Rejected</button>' +
+            '</div>' +
+          '</section>' +
+          '<section class="kt-dia-fd-section">' +
+            '<label class="kt-dia-fd-label" for="kt-dia-fd-dept">Department</label>' +
+            '<select id="kt-dia-fd-dept" data-testid="kt-dia-fd-dept"><option value="">All Departments</option></select>' +
+          '</section>' +
+          '<section class="kt-dia-fd-section">' +
+            '<label class="kt-dia-fd-label" for="kt-dia-fd-type">Demand Type</label>' +
+            '<select id="kt-dia-fd-type" data-testid="kt-dia-fd-type"><option value="">All Types</option></select>' +
+          '</section>' +
+          '<section class="kt-dia-fd-section">' +
+            '<label class="kt-dia-fd-label" for="kt-dia-fd-cat">Procurement Category</label>' +
+            '<select id="kt-dia-fd-cat" data-testid="kt-dia-fd-cat"><option value="">All Categories</option></select>' +
+          '</section>' +
+          '<section class="kt-dia-fd-section">' +
+            '<p class="kt-dia-fd-label">Created</p>' +
+            '<div class="kt-dia-fd-date-grid">' +
+              '<label><span>From</span><input data-testid="kt-dia-fd-from" type="date" /></label>' +
+              '<label><span>To</span><input data-testid="kt-dia-fd-to" type="date" /></label>' +
+            '</div>' +
+          '</section>' +
         '</div>' +
-        '<div class="kt-dia-filter-panel__actions">' +
-          '<button class="kt-dia-btn-ghost" data-action="apply-filters" data-testid="kt-dia-filter-apply">Apply</button>' +
-          '<button class="kt-dia-btn-ghost kt-dia-btn-ghost--muted" data-action="clear-filters" data-testid="kt-dia-filter-clear">Clear</button>' +
-        '</div>' +
-      '</div>' +
+        '<footer class="kt-dia-fd-drawer__footer">' +
+          '<button type="button" data-testid="kt-dia-fd-clear-all">Clear All</button>' +
+          '<button type="button" data-testid="kt-dia-fd-apply">Apply Filters</button>' +
+        '</footer>' +
+      '</aside>' +
 
       '<div class="kt-dia-table-scroll">' +
         '<table class="kt-dia-table" data-testid="kt-dia-table">' +
@@ -325,6 +362,7 @@
 		if (wrapper.querySelector(".kt-dia-hub")) return; // already mounted
 		wrapper.innerHTML = _html();
 		_bindEvents(wrapper);
+		_bindFilterDrawer();
 	}
 
 	// ── H8: Skeleton rows ─────────────────────────────────────────────────────
@@ -481,8 +519,21 @@
 			args.lifecycle_filter = _state.lifecycleFilter;
 		}
 		if (_state.search) args.search = _state.search;
-		if (Object.keys(_state.filters).length) {
-			args.filters = JSON.stringify(_state.filters);
+		if (_fdHasActive(_state.filters)) {
+			// Map frontend filter keys → backend refine keys
+			var f = _state.filters;
+			var apiFilters = {};
+			if (f.status)        apiFilters.status                  = f.status;
+			if (f.dept)          apiFilters.requesting_department    = f.dept;
+			if (f.demand_type)   apiFilters.demand_type              = f.demand_type;
+			if (f.category)      apiFilters.requisition_type         = f.category;
+			if (f.created_from)  apiFilters.date_from                = f.created_from;
+			if (f.created_to)    apiFilters.date_to                  = f.created_to;
+			// search inside the drawer is combined with the top-bar search term
+			if (f.search && !_state.search) args.search = f.search;
+			if (Object.keys(apiFilters).length) {
+				args.filters = JSON.stringify(apiFilters);
+			}
 		}
 		frappe.call({
 			method: "kentender_procurement.demand_intake.api.queue_list.get_dia_queue_list",
@@ -514,7 +565,7 @@
 		});
 	}
 
-	// ── H7: Filter meta (loaded once, cached) ────────────────────────────────
+	// ── H7: Filter drawer ─────────────────────────────────────────────────────
 	var _filterMeta = null;
 
 	function _loadFilterMeta(cb) {
@@ -531,77 +582,186 @@
 		});
 	}
 
-	function _populateFilterPanel(meta) {
-		var typeEl  = document.querySelector('[data-filter="demand_type"]');
-		var catEl   = document.querySelector('[data-filter="requisition_type"]');
-		var deptEl  = document.querySelector('[data-filter="requesting_department"]');
-		if (!typeEl || !catEl || !deptEl) return;
-
-		function _opts(items, labelKey) {
-			return (items || []).map(function (v) {
-				var val   = typeof v === "string" ? v : v.value;
-				var label = typeof v === "string" ? v : (v.label || v.value);
-				return '<option value="' + val + '">' + label + "</option>";
-			}).join("");
-		}
-		typeEl.innerHTML = '<option value="">All Types</option>' + _opts(meta.demand_types || []);
-		catEl.innerHTML  = '<option value="">All Categories</option>' + _opts(meta.requisition_types || []);
-		deptEl.innerHTML = '<option value="">All Departments</option>' + _opts(meta.departments || []);
-
-		// Restore current filter selections
-		typeEl.value = _state.filters.demand_type || "";
-		catEl.value  = _state.filters.requisition_type || "";
-		deptEl.value = _state.filters.requesting_department || "";
+	function _fdClone(f) {
+		return JSON.parse(JSON.stringify(f || {}));
 	}
 
-	function _toggleFilterPanel() {
-		var panel = document.querySelector('[data-testid="kt-dia-filter-panel"]');
-		if (!panel) return;
-		var open = panel.style.display !== "none";
-		if (open) {
-			panel.style.display = "none";
+	function _fdHasActive(f) {
+		return !!(f.search || f.status || f.dept || f.demand_type || f.category || f.created_from || f.created_to);
+	}
+
+	function _fdActiveCount(f) {
+		return [f.search, f.status, f.dept, f.demand_type, f.category, f.created_from, f.created_to]
+			.filter(Boolean).length;
+	}
+
+	function _renderFilterDrawerState() {
+		var backdrop = document.querySelector('[data-testid="kt-dia-fd-backdrop"]');
+		var drawer   = document.querySelector('[data-testid="kt-dia-fd-drawer"]');
+		if (!backdrop || !drawer) return;
+		if (_state.filterDrawerOpen) {
+			backdrop.removeAttribute("hidden");
+			drawer.removeAttribute("hidden");
 		} else {
-			panel.style.display = "";
-			_loadFilterMeta(_populateFilterPanel);
+			backdrop.setAttribute("hidden", "");
+			drawer.setAttribute("hidden", "");
 		}
+		var draft = _state.filterDraft;
+		// Search
+		var searchEl = drawer.querySelector('[data-testid="kt-dia-fd-search"]');
+		if (searchEl && searchEl !== document.activeElement) searchEl.value = draft.search || "";
+		// Status chips
+		var chipMap = {
+			"kt-dia-fd-status-draft":    "draft",
+			"kt-dia-fd-status-hod":      "submitted",
+			"kt-dia-fd-status-finance":  "under_review",
+			"kt-dia-fd-status-approved": "approved",
+			"kt-dia-fd-status-planning": "planning_ready",
+			"kt-dia-fd-status-rejected": "rejected",
+		};
+		Object.keys(chipMap).forEach(function (testId) {
+			var btn = drawer.querySelector('[data-testid="' + testId + '"]');
+			if (btn) btn.classList.toggle("is-active", draft.status === chipMap[testId]);
+		});
+		// Dept / type / category
+		var deptEl = drawer.querySelector('[data-testid="kt-dia-fd-dept"]');
+		var typeEl = drawer.querySelector('[data-testid="kt-dia-fd-type"]');
+		var catEl  = drawer.querySelector('[data-testid="kt-dia-fd-cat"]');
+		if (deptEl) deptEl.value = draft.dept || "";
+		if (typeEl) typeEl.value = draft.demand_type || "";
+		if (catEl)  catEl.value  = draft.category || "";
+		// Dates
+		var fromEl = drawer.querySelector('[data-testid="kt-dia-fd-from"]');
+		var toEl   = drawer.querySelector('[data-testid="kt-dia-fd-to"]');
+		if (fromEl) fromEl.value = draft.created_from || "";
+		if (toEl)   toEl.value   = draft.created_to || "";
+		// Filter button badge
+		_updateFilterBadge();
+	}
+
+	function _populateFilterDrawerOptions(meta) {
+		var drawer = document.querySelector('[data-testid="kt-dia-fd-drawer"]');
+		if (!drawer) return;
+		function _opts(items, allLabel) {
+			return '<option value="">' + allLabel + "</option>" +
+				(items || []).map(function (v) {
+					var val   = typeof v === "string" ? v : v.value;
+					var label = typeof v === "string" ? v : (v.label || v.value);
+					return '<option value="' + val + '">' + label + "</option>";
+				}).join("");
+		}
+		var deptEl = drawer.querySelector('[data-testid="kt-dia-fd-dept"]');
+		var typeEl = drawer.querySelector('[data-testid="kt-dia-fd-type"]');
+		var catEl  = drawer.querySelector('[data-testid="kt-dia-fd-cat"]');
+		if (deptEl) deptEl.innerHTML = _opts(meta.departments || [], "All Departments");
+		if (typeEl) typeEl.innerHTML = _opts(meta.demand_types || [], "All Types");
+		if (catEl)  catEl.innerHTML  = _opts(meta.requisition_types || [], "All Categories");
+		_renderFilterDrawerState();
+	}
+
+	function _openFilterDrawer() {
+		_state.filterDraft = _fdClone(_state.filters);
+		_state.filterDrawerOpen = true;
+		_renderFilterDrawerState();
+		_loadFilterMeta(_populateFilterDrawerOptions);
+	}
+
+	function _closeFilterDrawer(restoreDraft) {
+		if (restoreDraft) _state.filterDraft = _fdClone(_state.filters);
+		_state.filterDrawerOpen = false;
+		_renderFilterDrawerState();
+	}
+
+	function _updateDraft(updater) {
+		var next = _fdClone(_state.filterDraft);
+		updater(next);
+		_state.filterDraft = next;
+		_renderFilterDrawerState();
 	}
 
 	function _applyFilters() {
-		var typeEl  = document.querySelector('[data-filter="demand_type"]');
-		var catEl   = document.querySelector('[data-filter="requisition_type"]');
-		var deptEl  = document.querySelector('[data-filter="requesting_department"]');
-		var filters = {};
-		if (typeEl  && typeEl.value)  filters.demand_type            = typeEl.value;
-		if (catEl   && catEl.value)   filters.requisition_type       = catEl.value;
-		if (deptEl  && deptEl.value)  filters.requesting_department  = deptEl.value;
-		_state.filters = filters;
+		_state.filters = _fdClone(_state.filterDraft);
+		_closeFilterDrawer(false);
 		_updateFilterBadge();
-		_toggleFilterPanel();
 		_loadDemands(true);
 	}
 
 	function _clearFilters() {
 		_state.filters = {};
+		_state.filterDraft = {};
+		_closeFilterDrawer(false);
 		_updateFilterBadge();
-		// Reset selects
-		var panel = document.querySelector('[data-testid="kt-dia-filter-panel"]');
-		if (panel) {
-			panel.querySelectorAll("select").forEach(function (s) { s.value = ""; });
-		}
-		_toggleFilterPanel();
 		_loadDemands(true);
 	}
 
 	function _updateFilterBadge() {
-		var count = Object.keys(_state.filters).length;
+		var count = _fdActiveCount(_state.filters);
 		var badge = document.querySelector('[data-testid="kt-dia-filter-badge"]');
-		if (!badge) return;
-		if (count > 0) {
-			badge.textContent = String(count);
-			badge.style.display = "inline-flex";
-		} else {
-			badge.style.display = "none";
+		var btn   = document.querySelector('[data-testid="kt-dia-btn-filter"]');
+		if (badge) {
+			if (count > 0) {
+				badge.textContent = String(count);
+				badge.style.display = "inline-flex";
+			} else {
+				badge.style.display = "none";
+			}
 		}
+		if (btn) btn.classList.toggle("is-active", count > 0);
+	}
+
+	function _bindFilterDrawer() {
+		var backdrop = document.querySelector('[data-testid="kt-dia-fd-backdrop"]');
+		var closeBtn  = document.querySelector('[data-testid="kt-dia-fd-close"]');
+		var applyBtn  = document.querySelector('[data-testid="kt-dia-fd-apply"]');
+		var clearBtn  = document.querySelector('[data-testid="kt-dia-fd-clear-all"]');
+		var searchEl  = document.querySelector('[data-testid="kt-dia-fd-search"]');
+		var deptEl    = document.querySelector('[data-testid="kt-dia-fd-dept"]');
+		var typeEl    = document.querySelector('[data-testid="kt-dia-fd-type"]');
+		var catEl     = document.querySelector('[data-testid="kt-dia-fd-cat"]');
+		var fromEl    = document.querySelector('[data-testid="kt-dia-fd-from"]');
+		var toEl      = document.querySelector('[data-testid="kt-dia-fd-to"]');
+
+		if (backdrop) backdrop.addEventListener("click", function () { _closeFilterDrawer(true); });
+		if (closeBtn) closeBtn.addEventListener("click", function () { _closeFilterDrawer(true); });
+		if (applyBtn) applyBtn.addEventListener("click", _applyFilters);
+		if (clearBtn) clearBtn.addEventListener("click", _clearFilters);
+
+		if (searchEl) searchEl.addEventListener("input", function () {
+			_updateDraft(function (d) { d.search = searchEl.value || ""; });
+		});
+		if (deptEl) deptEl.addEventListener("change", function () {
+			_updateDraft(function (d) { d.dept = deptEl.value || ""; });
+		});
+		if (typeEl) typeEl.addEventListener("change", function () {
+			_updateDraft(function (d) { d.demand_type = typeEl.value || ""; });
+		});
+		if (catEl) catEl.addEventListener("change", function () {
+			_updateDraft(function (d) { d.category = catEl.value || ""; });
+		});
+		if (fromEl) fromEl.addEventListener("change", function () {
+			_updateDraft(function (d) { d.created_from = fromEl.value || ""; });
+		});
+		if (toEl) toEl.addEventListener("change", function () {
+			_updateDraft(function (d) { d.created_to = toEl.value || ""; });
+		});
+
+		// Status chips
+		var chipMap = {
+			"kt-dia-fd-status-draft":    "draft",
+			"kt-dia-fd-status-hod":      "submitted",
+			"kt-dia-fd-status-finance":  "under_review",
+			"kt-dia-fd-status-approved": "approved",
+			"kt-dia-fd-status-planning": "planning_ready",
+			"kt-dia-fd-status-rejected": "rejected",
+		};
+		Object.keys(chipMap).forEach(function (testId) {
+			var btn = document.querySelector('[data-testid="' + testId + '"]');
+			if (!btn) return;
+			btn.addEventListener("click", function () {
+				var val = chipMap[testId];
+				_updateDraft(function (d) { d.status = (d.status === val) ? "" : val; });
+			});
+		});
 	}
 
 	// ── H12: Consumption chart ───────────────────────────────────────────────
@@ -761,19 +921,9 @@
 				return;
 			}
 
-			// H7: Toggle filter panel
+			// H7: Open filter drawer
 			if (e.target.closest('[data-testid="kt-dia-btn-filter"]')) {
-				_toggleFilterPanel();
-				return;
-			}
-
-			// H7: Apply / clear filters
-			if (e.target.closest('[data-action="apply-filters"]')) {
-				_applyFilters();
-				return;
-			}
-			if (e.target.closest('[data-action="clear-filters"]')) {
-				_clearFilters();
+				_openFilterDrawer();
 				return;
 			}
 
