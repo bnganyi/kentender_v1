@@ -732,13 +732,16 @@
         _state.form1.priority = toggle.checked;
       });
     }
-    // Clear inline errors as the user corrects each field
+    // Clear inline errors as the user corrects each field — direct DOM, no full re-render
+    // (a full _render call here would wipe any unsaved values from the DOM back to _state.form1)
     var titleEl = wrapper.querySelector("#kt-cd-title");
     if (titleEl) {
       titleEl.addEventListener("input", function () {
         if (_state.step1Errors.title && titleEl.value.trim()) {
           delete _state.step1Errors.title;
-          _render(wrapper);
+          titleEl.classList.remove("kt-cd-input--error");
+          var errP = titleEl.parentNode && titleEl.parentNode.querySelector(".kt-cd-field-error");
+          if (errP) errP.remove();
         }
       });
     }
@@ -747,7 +750,12 @@
       entityEl.addEventListener("change", function () {
         if (_state.step1Errors.entity && entityEl.value) {
           delete _state.step1Errors.entity;
-          _render(wrapper);
+          var wrap = entityEl.closest(".kt-cd-select-wrap");
+          if (wrap) {
+            wrap.classList.remove("kt-cd-select-wrap--error");
+            var errP = wrap.parentNode && wrap.parentNode.querySelector(".kt-cd-field-error");
+            if (errP) errP.remove();
+          }
         }
       });
     }
@@ -756,7 +764,9 @@
       rbyEl.addEventListener("change", function () {
         if (_state.step1Errors.requiredBy && rbyEl.value) {
           delete _state.step1Errors.requiredBy;
-          _render(wrapper);
+          rbyEl.classList.remove("kt-cd-input--error");
+          var errP = rbyEl.parentNode && rbyEl.parentNode.querySelector(".kt-cd-field-error");
+          if (errP) errP.remove();
         }
       });
     }
