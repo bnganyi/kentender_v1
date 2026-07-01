@@ -746,9 +746,9 @@
 				return;
 			}
 
-			// H10: New Demand (section button or FAB)
+			// H10: New Demand (section button or FAB) → route to Create Demand wizard
 			if (e.target.closest("[data-dia='new-demand']")) {
-				frappe.new_doc("Demand");
+				frappe.set_route("create-demand");
 				return;
 			}
 

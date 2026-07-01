@@ -290,7 +290,7 @@
 			if (!btn) return;
 			const act = btn.getAttribute("data-ph-action");
 			if (act === "new-demand") {
-				frappe.new_doc("Demand");
+				frappe.set_route("create-demand");
 			} else if (act === "open-dia") {
 				navigateToWorkspace("Demand Intake and Approval");
 			} else if (act === "open-pp") {
