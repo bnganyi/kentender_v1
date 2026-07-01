@@ -514,7 +514,6 @@
 
   // ── W5: Bind events ──────────────────────────────────────────────────────
   function _bindEvents(wrapper, detail) {
-    var name = _state.name;
     var L = "kentender_procurement.demand_intake.api.lifecycle.";
 
     function _reload() {
@@ -548,91 +547,100 @@
       });
     }
 
-    wrapper.addEventListener("click", function(e) {
-      var btn = e.target.closest("[data-action]");
-      if (!btn) return;
-      var action = btn.getAttribute("data-action");
-      var method = btn.getAttribute("data-method");
-      var reasonType = btn.getAttribute("data-reason");
-      var clientAction = btn.getAttribute("data-client");
+    // Guard: only bind the click listener once per wrapper instance.
+    // _bindEvents is called on every demand load, so without this guard
+    // multiple stale listeners accumulate and fire stale captured names.
+    if (!wrapper.dataset.wbxEventsBound) {
+      wrapper.dataset.wbxEventsBound = "1";
 
-      // open_form — route editable (Draft/Rejected) demands back to the
-      // Create Demand wizard; do NOT open the raw Frappe DocType form.
-      // Non-editable "View demand" is redundant (user is already in the
-      // workbench) so it is a no-op.
-      if (action === "open_form" || clientAction === "open_form") {
-        var isEdit = btn.getAttribute("data-edit") === "1";
-        if (isEdit && frappe.set_route) {
-          frappe.set_route("create-demand", name);
+      wrapper.addEventListener("click", function(e) {
+        // Always read _state.name at click time — never from a captured closure.
+        var name = _state.name;
+        var btn = e.target.closest("[data-action]");
+        if (!btn) return;
+        var action = btn.getAttribute("data-action");
+        var method = btn.getAttribute("data-method");
+        var reasonType = btn.getAttribute("data-reason");
+        var clientAction = btn.getAttribute("data-client");
+
+        // open_form — route editable (Draft/Rejected) demands back to the
+        // Create Demand wizard; do NOT open the raw Frappe DocType form.
+        // Non-editable "View demand" is redundant (user is already in the
+        // workbench) so it is a no-op.
+        if (action === "open_form" || clientAction === "open_form") {
+          var isEdit = btn.getAttribute("data-edit") === "1";
+          if (isEdit && frappe.set_route) {
+            frappe.set_route("create-demand", name);
+          }
+          return;
         }
-        return;
-      }
 
-      // edit_wizard — "Add Item" button routes to Create Demand wizard step 2
-      if (action === "edit_wizard") {
-        if (frappe.set_route) frappe.set_route("create-demand", name);
-        return;
-      }
+        // edit_wizard — "Add Item" button routes to Create Demand wizard step 2
+        if (action === "edit_wizard") {
+          if (frappe.set_route) frappe.set_route("create-demand", name);
+          return;
+        }
 
-      // Banner actions without a dedicated button method
-      if (action === "return_approved_to_finance") {
-        frappe.prompt(
-          [{ label: "Reason", fieldname: "reason", fieldtype: "Small Text", reqd: 1 }],
-          function(vals) { _callLifecycle(L + "return_approved_to_finance", { demand_name: name, reason: vals.reason }); },
-          "Send back to Finance", "Submit"
-        );
-        return;
-      }
-      if (action === "mark_planning_ready") {
-        frappe.confirm("Confirm this demand is ready for planning?", function() {
-          _callLifecycle(L + "mark_planning_ready", { demand_name: name });
-        });
-        return;
-      }
+        // Banner actions without a dedicated button method
+        if (action === "return_approved_to_finance") {
+          frappe.prompt(
+            [{ label: "Reason", fieldname: "reason", fieldtype: "Small Text", reqd: 1 }],
+            function(vals) { _callLifecycle(L + "return_approved_to_finance", { demand_name: name, reason: vals.reason }); },
+            "Send back to Finance", "Submit"
+          );
+          return;
+        }
+        if (action === "mark_planning_ready") {
+          frappe.confirm("Confirm this demand is ready for planning?", function() {
+            _callLifecycle(L + "mark_planning_ready", { demand_name: name });
+          });
+          return;
+        }
 
-      if (!method) return;
+        if (!method) return;
 
-      // Prompt-based actions
-      if (reasonType === "return") {
-        frappe.prompt(
-          [{ label: "Reason for return", fieldname: "reason", fieldtype: "Small Text", reqd: 1 }],
-          function(vals) { _callLifecycle(method, { demand_name: name, reason: vals.reason }, _reload); },
-          "Return for Correction", "Submit"
-        );
-        return;
-      }
-      if (reasonType === "rejection") {
-        frappe.prompt(
-          [{ label: "Rejection reason", fieldname: "reason", fieldtype: "Small Text", reqd: 1 }],
-          function(vals) { _callLifecycle(method, { demand_name: name, rejection_reason: vals.reason }, _reload); },
-          "Reject Demand", "Reject"
-        );
-        return;
-      }
-      if (reasonType === "cancellation") {
-        frappe.prompt(
-          [{ label: "Cancellation reason", fieldname: "reason", fieldtype: "Small Text", reqd: 1 }],
-          function(vals) { _callLifecycle(method, { demand_name: name, reason: vals.reason }, _reload); },
-          "Cancel Demand", "Confirm"
-        );
-        return;
-      }
+        // Prompt-based actions
+        if (reasonType === "return") {
+          frappe.prompt(
+            [{ label: "Reason for return", fieldname: "reason", fieldtype: "Small Text", reqd: 1 }],
+            function(vals) { _callLifecycle(method, { demand_name: name, reason: vals.reason }, _reload); },
+            "Return for Correction", "Submit"
+          );
+          return;
+        }
+        if (reasonType === "rejection") {
+          frappe.prompt(
+            [{ label: "Rejection reason", fieldname: "reason", fieldtype: "Small Text", reqd: 1 }],
+            function(vals) { _callLifecycle(method, { demand_name: name, rejection_reason: vals.reason }, _reload); },
+            "Reject Demand", "Reject"
+          );
+          return;
+        }
+        if (reasonType === "cancellation") {
+          frappe.prompt(
+            [{ label: "Cancellation reason", fieldname: "reason", fieldtype: "Small Text", reqd: 1 }],
+            function(vals) { _callLifecycle(method, { demand_name: name, reason: vals.reason }, _reload); },
+            "Cancel Demand", "Confirm"
+          );
+          return;
+        }
 
-      // Confirm-based actions
-      if (action === "approve_finance") {
-        frappe.confirm(
-          "Approve this demand and reserve the budget?",
-          function() { _callLifecycle(method, { demand_name: name }, _reload); }
-        );
-        return;
-      }
+        // Confirm-based actions
+        if (action === "approve_finance") {
+          frappe.confirm(
+            "Approve this demand and reserve the budget?",
+            function() { _callLifecycle(method, { demand_name: name }, _reload); }
+          );
+          return;
+        }
 
-      // Direct actions (submit, approve_hod)
-      _callLifecycle(method, { demand_name: name }, _reload);
-    });
+        // Direct actions (submit, approve_hod)
+        _callLifecycle(method, { demand_name: name }, _reload);
+      });
 
-    var backBtn = wrapper.querySelector("#kt-wbx-back-btn");
-    if (backBtn) backBtn.addEventListener("click", function() { frappe.set_route("demand-hub"); });
+      var backBtn = wrapper.querySelector("#kt-wbx-back-btn");
+      if (backBtn) backBtn.addEventListener("click", function() { frappe.set_route("demand-hub"); });
+    }
   }
 
   // ── W8: Robust route parsing ─────────────────────────────────────────────
