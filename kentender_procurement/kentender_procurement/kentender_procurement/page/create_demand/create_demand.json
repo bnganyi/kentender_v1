@@ -16,6 +16,8 @@
   {"role": "Requisitioner"},
   {"role": "Department Approver"},
   {"role": "Finance Reviewer"},
+  {"role": "Procurement Planner"},
+  {"role": "Auditor"},
   {"role": "Procurement Officer"}
  ],
  "script": null,
