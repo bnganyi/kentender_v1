@@ -84,12 +84,12 @@
    "icon": "kanban",
    "indent": 0,
    "keep_closed": 0,
-   "label": "Planning Workbench",
+   "label": "Planning",
    "link_to": "Procurement Planning",
    "link_type": "Workspace",
    "show_arrow": 0,
    "type": "Link",
-   "url": "/desk/procurement-planning"
+   "url": "/desk/planning-hub"
   },
   {
    "child": 0,
@@ -314,7 +314,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-06-30 22:03:05.936443",
+ "modified": "2026-07-02 19:08:17.680034",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "Procurement",

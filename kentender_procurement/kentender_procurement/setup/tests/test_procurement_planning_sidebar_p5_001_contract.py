@@ -11,7 +11,7 @@ import os
 import frappe
 from frappe.tests import IntegrationTestCase
 
-_EXPECTED_PLANNING_LABEL = "Planning Workbench"
+_EXPECTED_PLANNING_LABEL = "Planning"
 
 _FORBIDDEN_PP2_LABELS: frozenset[str] = frozenset(
 	{
@@ -36,7 +36,7 @@ _FORBIDDEN_PP2_LABELS: frozenset[str] = frozenset(
 	}
 )
 
-_ALLOWED_PLANNING_URL = "/desk/procurement-planning"
+_ALLOWED_PLANNING_URL = "/desk/planning-hub"
 
 _FORBIDDEN_PP2_CHILD_URL_SUBSTRINGS: tuple[str, ...] = (
 	"/procurement-planning/approved-demands",
@@ -125,7 +125,7 @@ class TestProcurementPlanningSidebarP5001Contract(IntegrationTestCase):
 		labels = {
 			row.get("label") or ""
 			for row in data.get("items") or []
-			if row.get("type") == "Link" and (row.get("url") or "").strip().startswith("/desk/procurement-planning")
+			if row.get("type") == "Link" and (row.get("url") or "").strip().startswith("/desk/planning-hub")
 		}
 		forbidden = labels & _FORBIDDEN_PP2_LABELS
 		self.assertFalse(

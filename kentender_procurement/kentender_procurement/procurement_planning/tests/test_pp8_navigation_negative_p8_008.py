@@ -16,7 +16,7 @@ from kentender_procurement.procurement_planning.tests.pp8_gate_constants import 
 	P8_FORBIDDEN_NAV_HREF_SUBSTRINGS,
 )
 
-_ALLOWED_PP4_URLS = frozenset({"/desk/procurement-planning"})
+_ALLOWED_PP4_URLS = frozenset({"/desk/planning-hub"})
 
 _LEGACY_NAV_LABELS_IN_QUEUE_TABS = (
 	"Planning Home",
@@ -37,10 +37,10 @@ class TestPP8NavigationNegativeP8008(UnitTestCase):
 		rows = [
 			row
 			for row in data.get("items") or []
-			if row.get("type") == "Link" and (row.get("label") or "") == "Planning Workbench"
+			if row.get("type") == "Link" and (row.get("label") or "") == "Planning"
 		]
 		labels = tuple(row.get("label") or "" for row in rows)
-		self.assertEqual(labels, ("Planning Workbench",))
+		self.assertEqual(labels, ("Planning",))
 		urls = [(row.get("url") or "").strip() for row in rows]
 		for url in urls:
 			self.assertIn(url, _ALLOWED_PP4_URLS)

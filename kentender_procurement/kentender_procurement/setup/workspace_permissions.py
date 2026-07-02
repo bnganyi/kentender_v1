@@ -82,6 +82,7 @@ _KT_WORKSPACE_TO_SIDEBAR: dict[str, str] = {
 	# Keep Planning surfaces nested under the main Procurement IA shell.
 	"procurement planning": "Procurement",
 	"procurement-planning": "Procurement",
+	"planning-hub": "Procurement",
 	"procurement-planning/approved-demands": "Procurement",
 	"approved-demands": "Procurement",
 	"procurement-planning/plans": "Procurement",

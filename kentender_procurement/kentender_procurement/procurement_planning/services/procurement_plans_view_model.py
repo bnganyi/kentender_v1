@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from frappe.utils import cint
+from frappe.utils import cint, flt
 
 from kentender_procurement.procurement_planning.api.landing import (
 	_plan_workbench_action_flags,
@@ -20,9 +20,13 @@ from kentender_procurement.procurement_planning.pp2_constants import (
 	PKG_RELEASED,
 	PKG_RETURNED,
 	PLAN_ACTIVE,
+	PLAN_CANCELLED,
+	PLAN_CLOSED,
+	PLAN_SUPERSEDED,
 	READINESS_FAILED,
 )
 from kentender_procurement.procurement_planning.services.active_plan_view_model import (
+	_entity_label,
 	_fiscal_year_label,
 )
 
@@ -124,6 +128,30 @@ def _status_label(status: str | None, *, is_active: int | bool) -> str:
 	return value or "Draft"
 
 
+def _entity_ref(entity_code: str | None) -> dict[str, str]:
+	code = (entity_code or "").strip()
+	name = _entity_label(code) if code else ""
+	return {"id": code, "code": code, "name": name or code}
+
+
+def _status_tone(status: str | None, *, is_active: int | bool) -> str:
+	value = (status or "").strip()
+	if value == PLAN_ACTIVE and cint(is_active):
+		return "success"
+	if value == "Draft":
+		return "warning"
+	if value == PLAN_SUPERSEDED:
+		return "works"
+	return "neutral"
+
+
+def _row_action(status: str | None, *, is_active: int | bool) -> str:
+	value = (status or "").strip()
+	if value in (PLAN_CLOSED, PLAN_CANCELLED, PLAN_SUPERSEDED):
+		return "archive"
+	return "open"
+
+
 def _plan_row(row: dict[str, Any]) -> dict[str, Any]:
 	plan_code = (row.get("plan_code") or row.get("name") or "").strip()
 	title = (row.get("plan_name") or plan_code).strip()
@@ -146,6 +174,104 @@ def _plan_row(row: dict[str, Any]) -> dict[str, Any]:
 			released=released,
 		),
 		"is_active_plan": status == PLAN_ACTIVE and is_active == 1,
+	}
+
+
+def _hub_ledger_row(row: dict[str, Any]) -> dict[str, Any]:
+	"""Hub ledger row with reference entity, value, badge tone, and row action."""
+	base = _plan_row(row)
+	plan_code = (base.get("plan_code") or "").strip()
+	entity_code = (row.get("procuring_entity") or "").strip()
+	status = (row.get("status") or "").strip()
+	is_active = cint(row.get("is_active"))
+	currency = (row.get("currency") or "KES").strip() or "KES"
+	total_value = flt(row.get("total_planned_value") or 0)
+	row_action = _row_action(status, is_active=is_active)
+	return {
+		**base,
+		"id": plan_code,
+		"code": plan_code,
+		"name": base.get("title") or plan_code,
+		"entity": _entity_ref(entity_code),
+		"entity_name": _entity_label(entity_code),
+		"status_tone": _status_tone(status, is_active=is_active),
+		"currency": currency,
+		"total_value": total_value,
+		"row_action": row_action,
+		"is_archived": row_action == "archive",
+	}
+
+
+def _fetch_scoped_plan_rows(*, actor: str) -> list[dict[str, Any]]:
+	user = _session_user(actor)
+	if not frappe.db.exists("DocType", "Procurement Plan"):
+		return []
+	try:
+		rows = frappe.get_list(
+			"Procurement Plan",
+			fields=[
+				"name",
+				"plan_code",
+				"plan_name",
+				"fiscal_year",
+				"procuring_entity",
+				"status",
+				"is_active",
+				"currency",
+				"total_planned_value",
+			],
+			order_by="is_active desc, modified desc",
+			limit_page_length=500,
+		)
+	except frappe.PermissionError:
+		return []
+	out: list[dict[str, Any]] = []
+	for row in rows:
+		entity = (row.get("procuring_entity") or "").strip()
+		if not pp_scope.entity_in_user_scope(entity, user):
+			continue
+		out.append(row)
+	return out
+
+
+def get_planning_hub_plans_page(
+	*,
+	actor: str | None = None,
+	search: str | None = None,
+	start: int = 0,
+	limit: int = 20,
+) -> dict[str, Any]:
+	"""Return paginated hub ledger rows for the Planning Hub."""
+	user = _session_user(actor)
+	role_key = resolve_pp_role_key(user) or "auditor"
+	rows = [_hub_ledger_row(row) for row in _fetch_scoped_plan_rows(actor=user)]
+	query = (search or "").strip().lower()
+	if query:
+		filtered: list[dict[str, Any]] = []
+		for row in rows:
+			blob = " ".join(
+				[
+					str(row.get("name") or ""),
+					str(row.get("code") or ""),
+					str((row.get("entity") or {}).get("name") or ""),
+					str(row.get("fiscal_year") or ""),
+					str(row.get("status_label") or ""),
+				]
+			).lower()
+			if query in blob:
+				filtered.append(row)
+		rows = filtered
+	total = len(rows)
+	start_i = max(int(start or 0), 0)
+	limit_i = max(int(limit or 20), 1)
+	page_rows = rows[start_i : start_i + limit_i]
+	return {
+		"ok": True,
+		"role_key": role_key,
+		"total": total,
+		"start": start_i,
+		"limit": limit_i,
+		"rows": page_rows,
 	}
 
 

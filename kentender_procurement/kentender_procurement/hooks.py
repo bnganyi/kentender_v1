@@ -49,6 +49,7 @@ required_apps = ["kentender_core", "kentender_strategy", "kentender_budget"]
 # include js, css files in header of desk.html
 app_include_css = [
 	f"/assets/kentender_procurement/css/demand_hub_page.css?v={_desk_asset_v('public/css/demand_hub_page.css')}",
+	f"/assets/kentender_procurement/css/planning_hub_page.css?v={_desk_asset_v('public/css/planning_hub_page.css')}",
 	f"/assets/kentender_procurement/css/demand_workbench_page.css?v={_desk_asset_v('public/css/demand_workbench_page.css')}",
 	f"/assets/kentender_procurement/css/create_demand_page.css?v={_desk_asset_v('public/css/create_demand_page.css')}",
 	f"/assets/kentender_procurement/css/procurement_home_workspace.css?v={_desk_asset_v('public/css/procurement_home_workspace.css')}",
@@ -66,6 +67,7 @@ app_include_css = [
 ]
 app_include_js = [
 	f"/assets/kentender_procurement/js/demand_workspace.js?v={_desk_asset_v('public/js/demand_workspace.js')}",
+	f"/assets/kentender_procurement/js/planning_workspace.js?v={_desk_asset_v('public/js/planning_workspace.js')}",
 	f"/assets/kentender_procurement/js/pp2_planning_status_badge.js?v={_desk_asset_v('public/js/pp2_planning_status_badge.js')}",
 	f"/assets/kentender_procurement/js/pp2_planning_handoff_card.js?v={_desk_asset_v('public/js/pp2_planning_handoff_card.js')}",
 	f"/assets/kentender_procurement/js/module_journey_context_header.js?v={_desk_asset_v('public/js/module_journey_context_header.js')}",
@@ -130,6 +132,7 @@ doctype_js = {
 # Never append ?v= to page_js values — Frappe resolves them as disk paths (meta.py get_code_files_via_hooks).
 page_js = {
 	"demand-hub": "public/js/demand_hub_page.js",
+	"planning-hub": "public/js/planning_hub_page.js",
 	"demand-workbench": "public/js/demand_workbench_page.js",
 	"create-demand": "public/js/create_demand_page.js",
 	"plc-procurement-journey": "public/js/procurement_journey_page.js",
