@@ -317,29 +317,18 @@
 </div>
 </div>
 <!-- GLOBAL FOOTER -->
-<!-- FLOATING SELECTION TOOLBAR (Restored from SCREEN_16) -->
+<!-- FLOATING SELECTION TOOLBAR (Restored from SCREEN_16; markup ported verbatim
+     from the companion "2. Needs planning - selection" design, which is the
+     source of truth for this element — the default screen only ever shipped
+     this placeholder comment. Starts hidden since nothing is selected yet;
+     kentender_procurement/public/js/pp2_planning_router.js (W5) drives visibility,
+     the live count/total, and the three action buttons for dynamically
+     rendered rows — the static inline script below only ever knew about the
+     four hardcoded mock rows, so it is not reused. -->
+<div class="fixed bottom-28 left-1/2 -translate-x-1/2 transform transition-all duration-500 ease-out z-50" id="selection-toolbar" style="opacity: 0; transform: translate(-50%, 40px); pointer-events: none;">
+<div class="bg-surface-container-lowest text-primary px-8 py-4 rounded-full shadow-2xl flex items-center gap-8 border border-outline-variant/50 backdrop-blur-md"><div class="flex items-center gap-4"><div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary font-bold shadow-sm">0</div><div class="flex flex-col"><span class="font-label-md text-label-md text-primary">Demands Selected</span><span class="font-body-sm text-body-sm text-on-surface-variant">Est. Total: KES 0</span></div></div><div class="h-10 w-px bg-outline-variant"></div><div class="flex gap-3"><button class="flex items-center gap-2 px-5 py-2 bg-surface-container-low hover:bg-surface-container-high transition-colors rounded-full font-label-md text-label-md text-primary border border-outline-variant"><span class="material-symbols-outlined text-[20px]">add_task</span> Add to Active Plan</button><button class="flex items-center gap-2 px-6 py-2 bg-primary hover:opacity-90 transition-opacity rounded-full font-label-md text-label-md text-on-primary shadow-md"><span class="material-symbols-outlined text-[20px]">inventory</span> Create Package</button><button class="flex items-center justify-center w-10 h-10 hover:bg-surface-container-low rounded-full transition-colors text-on-surface-variant"><span class="material-symbols-outlined text-[20px]">close</span></button></div></div>
+</div>
 </main>
-<script>
-    // Selection toolbar logic
-    const toolbar = document.getElementById('selection-toolbar');
-    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-    
-    function updateToolbar() {
-        const checkedCount = Array.from(checkboxes).filter(cb => cb.checked && !cb.closest('th')).length;
-        if (checkedCount > 0) {
-            toolbar.style.opacity = '1';
-            toolbar.style.transform = 'translate(-50%, 0)';
-            toolbar.style.pointerEvents = 'auto';
-        } else {
-            toolbar.style.opacity = '0';
-            toolbar.style.transform = 'translate(-50%, 40px)';
-            toolbar.style.pointerEvents = 'none';
-        }
-    }
-    
-    checkboxes.forEach(cb => cb.addEventListener('change', updateToolbar));
-    updateToolbar(); // Initialize state
-</script>
 
 
 

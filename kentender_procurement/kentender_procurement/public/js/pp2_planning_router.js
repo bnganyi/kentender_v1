@@ -43,6 +43,10 @@
 		"kentender_procurement.procurement_planning.api.workbench_queue_counts.get_pp_workbench_queue_counts";
 	const WORKBENCH_ITEM_VIEW_MODEL_API =
 		"kentender_procurement.procurement_planning.api.workbench_item.get_pp_workbench_item_view_model";
+	const INCLUDE_DEMAND_IN_PLAN_API =
+		"kentender_procurement.procurement_planning.api.approved_demands.include_pp_demand_in_procurement_plan";
+	const CREATE_PACKAGE_FROM_INCLUSION_API =
+		"kentender_procurement.procurement_planning.api.planning_inclusion.create_pp_package_from_planning_inclusion";
 	const WORKBENCH_QUEUE_BY_UI_QUEUE = {
 		needs_planning: true,
 		draft_packages: true,
@@ -218,6 +222,619 @@
 			'<section class="pp4-workbench" data-testid="pp4-workbench">' +
 			'<iframe class="pp4-workbench-design-iframe" data-testid="pp4-workbench-design-iframe" src="/assets/kentender_procurement/workbench_design/needs_planning_default.html" title="Planning Workbench Needs Planning Default"></iframe>' +
 			"</section>";
+	}
+
+	function withWorkbenchIframeDocument(root, callback) {
+		if (!root || typeof callback !== "function") return;
+		const iframe = root.querySelector('[data-testid="pp4-workbench-design-iframe"]');
+		if (!iframe) return;
+		let invoked = false;
+		const tryInvoke = function () {
+			if (invoked) return true;
+			let doc = null;
+			try {
+				doc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
+			} catch (e) {
+				doc = null;
+			}
+			// A freshly-created iframe's transient about:blank document also reports
+			// readyState "complete" with an empty <body>, which races the real
+			// navigation when this is invoked synchronously (before the browser has
+			// started loading `src`). Require an actual rendered child to avoid
+			// mistaking that placeholder for the loaded design document.
+			if (!doc || doc.readyState !== "complete" || !doc.body || !doc.body.firstElementChild) return false;
+			invoked = true;
+			callback(doc);
+			return true;
+		};
+		if (tryInvoke()) return;
+		iframe.addEventListener("load", tryInvoke, { once: true });
+	}
+
+	function applyWorkbenchActivePlanCard(doc, payload) {
+		if (!doc) return;
+		const data = payload || {};
+		const card = doc.querySelector(".bg-primary-container.border-primary-container");
+		if (!card) return;
+		const nonIconSpans = Array.prototype.filter.call(card.querySelectorAll("span"), function (el) {
+			return !el.classList.contains("material-symbols-outlined");
+		});
+		if (nonIconSpans[0]) {
+			nonIconSpans[0].textContent = data.status_label || "Active";
+		}
+		const titleEl = card.querySelector(".font-headline-lg");
+		if (titleEl) {
+			titleEl.textContent = data.plan_title || "";
+		}
+		const metaEl = card.querySelector(".mt-4.text-white.font-body-sm");
+		if (metaEl) {
+			const iconEl = metaEl.querySelector(".material-symbols-outlined");
+			const fy = String(data.fiscal_year || "").trim();
+			metaEl.textContent = "";
+			if (iconEl) metaEl.appendChild(iconEl);
+			metaEl.appendChild(doc.createTextNode(fy ? __("FY {0}", [fy]) : ""));
+		}
+	}
+
+	function redirectWorkbenchToPlanningHubForNoActivePlan(payload) {
+		const data = payload || {};
+		frappe.show_alert({
+			indicator: "orange",
+			message:
+				String(data.message || "").trim() ||
+				__("No active procurement plan exists. Create or activate a plan to continue."),
+		});
+		window.location.href = "/desk/planning-hub";
+	}
+
+	function fetchAndApplyWorkbenchActivePlanContext(root) {
+		if (!root) return;
+		frappe.call({
+			method: ACTIVE_PLAN_API,
+			freeze: false,
+			args: {},
+			callback: function (response) {
+				const payload = (response && response.message) || {};
+				if (!payload.has_active_plan) {
+					redirectWorkbenchToPlanningHubForNoActivePlan(payload);
+					return;
+				}
+				workbenchActivePlanCodeByRoot.set(root, String(payload.plan_code || "").trim());
+				withWorkbenchIframeDocument(root, function (doc) {
+					applyWorkbenchActivePlanCard(doc, payload);
+				});
+			},
+		});
+	}
+
+	// W3 — Queue Tabs + Counts. Order matches the design's tab bar left-to-right.
+	// Only the first four tabs render a "(NN)" count in the design; Blocked and
+	// Released are plain-text tabs with no count badge, so those two are left
+	// untouched to avoid introducing markup the design does not have.
+	const WORKBENCH_QUEUE_TAB_ORDER = [
+		{ uiQueue: "needs_planning", label: "Needs Planning", showCount: true },
+		{ uiQueue: "draft_packages", label: "In Creation", showCount: true },
+		{ uiQueue: "needs_review", label: "Awaiting Review", showCount: true },
+		{ uiQueue: "ready_to_release", label: "Ready for Release", showCount: true },
+		{ uiQueue: "blocked", label: "Blocked", showCount: false },
+		{ uiQueue: "recently_released", label: "Released", showCount: false },
+	];
+	const WORKBENCH_QUEUE_TAB_ACTIVE_CLASSES = [
+		"text-primary",
+		"font-bold",
+		"border-b-2",
+		"border-primary",
+		"bg-surface-container-lowest",
+	];
+	const WORKBENCH_QUEUE_TAB_INACTIVE_CLASSES = ["text-on-surface-variant", "hover:bg-surface-container-high", "transition-colors"];
+
+	function workbenchQueueTabButtons(doc) {
+		if (!doc) return [];
+		const bar = doc.querySelector(".scrollbar-hide");
+		if (!bar) return [];
+		return Array.prototype.slice.call(bar.querySelectorAll(":scope > button"));
+	}
+
+	function setWorkbenchQueueTabActiveState(btn, isActive) {
+		if (!btn) return;
+		const toRemove = isActive ? WORKBENCH_QUEUE_TAB_INACTIVE_CLASSES : WORKBENCH_QUEUE_TAB_ACTIVE_CLASSES;
+		const toAdd = isActive ? WORKBENCH_QUEUE_TAB_ACTIVE_CLASSES : WORKBENCH_QUEUE_TAB_INACTIVE_CLASSES;
+		toRemove.forEach(function (cls) {
+			btn.classList.remove(cls);
+		});
+		toAdd.forEach(function (cls) {
+			btn.classList.add(cls);
+		});
+	}
+
+	function applyWorkbenchQueueActiveTab(doc, activeUiQueue) {
+		const buttons = workbenchQueueTabButtons(doc);
+		if (!buttons.length) return;
+		WORKBENCH_QUEUE_TAB_ORDER.forEach(function (tab, index) {
+			setWorkbenchQueueTabActiveState(buttons[index], tab.uiQueue === activeUiQueue);
+		});
+	}
+
+	function applyWorkbenchQueueTabCounts(doc, counts) {
+		const buttons = workbenchQueueTabButtons(doc);
+		if (!buttons.length) return;
+		const data = counts || {};
+		WORKBENCH_QUEUE_TAB_ORDER.forEach(function (tab, index) {
+			if (!tab.showCount) return;
+			const btn = buttons[index];
+			if (!btn) return;
+			const raw = Number(data[tab.uiQueue] || 0);
+			const safeCount = Number.isFinite(raw) && raw > 0 ? raw : 0;
+			btn.textContent = tab.label + " (" + String(safeCount).padStart(2, "0") + ")";
+		});
+	}
+
+	function bindWorkbenchQueueTabs(root, doc) {
+		const buttons = workbenchQueueTabButtons(doc);
+		if (!buttons.length) return;
+		buttons.forEach(function (btn, index) {
+			const tab = WORKBENCH_QUEUE_TAB_ORDER[index];
+			if (!tab || !btn || btn.getAttribute("data-pp4-wq-bound") === "1") return;
+			btn.setAttribute("data-pp4-wq-bound", "1");
+			btn.addEventListener("click", function () {
+				const current = readWorkbenchStateFromUrl();
+				if (current.queue === tab.uiQueue) return;
+				writeWorkbenchStateToUrl({ queue: tab.uiQueue, page: 1 });
+				applyWorkbenchQueueActiveTab(doc, tab.uiQueue);
+			});
+		});
+	}
+
+	function fetchAndApplyWorkbenchQueueCounts(root) {
+		if (!root) return;
+		frappe.call({
+			method: WORKBENCH_QUEUE_COUNTS_API,
+			freeze: false,
+			args: {},
+			callback: function (response) {
+				const payload = (response && response.message) || {};
+				if (!payload || payload.ok === false) return;
+				withWorkbenchIframeDocument(root, function (doc) {
+					applyWorkbenchQueueTabCounts(doc, payload.counts || {});
+				});
+			},
+		});
+	}
+
+	function initializeWorkbenchQueueTabs(root) {
+		if (!root) return;
+		withWorkbenchIframeDocument(root, function (doc) {
+			applyWorkbenchQueueActiveTab(doc, readWorkbenchStateFromUrl().queue);
+			bindWorkbenchQueueTabs(root, doc);
+		});
+		fetchAndApplyWorkbenchQueueCounts(root);
+	}
+
+	// W4 — Needs Planning List (Primary Screen). Binds the design's own static
+	// table rows/footer to live `get_pp_approved_demands_awaiting_planning`
+	// data. Only the "Needs Planning" (default) queue has a pixel design today,
+	// so this always renders that dataset regardless of the active tab — the
+	// same accepted limitation already documented for W3 (per-queue list
+	// rendering lands with W6/W7/W8, once those queue screens are designed).
+	const WORKBENCH_NEEDS_PLANNING_PAGE_SIZE = 10;
+	const WORKBENCH_CATEGORY_TONE_BY_VALUE = {
+		goods: "cat-goods",
+		works: "cat-works",
+		services: "cat-services",
+		consultancy: "cat-consultancy",
+	};
+	const workbenchNeedsPlanningRowTemplateByRoot = new WeakMap();
+	const workbenchActivePlanCodeByRoot = new WeakMap();
+	const workbenchNeedsPlanningRowDataByRoot = new WeakMap();
+	const workbenchNeedsPlanningSelectionByRoot = new WeakMap();
+
+	function workbenchNeedsPlanningTableBody(doc) {
+		return doc ? doc.querySelector("table tbody") : null;
+	}
+
+	function workbenchNeedsPlanningFooterEls(doc) {
+		if (!doc) return null;
+		const footer = doc.querySelector("footer");
+		if (!footer) return null;
+		// `footer.children[1]` (not `querySelector("div:nth-child(2)")`, which
+		// would also match the nested "rows per page" dropdown div — its own
+		// 2nd child — since :nth-child is scoped to each element's own parent).
+		const summaryGroup = footer.children[1];
+		if (!summaryGroup) return null;
+		const summaryEl = summaryGroup.querySelector("span");
+		const buttons = Array.prototype.slice.call(summaryGroup.querySelectorAll("button"));
+		if (!summaryEl || buttons.length < 2) return null;
+		return { summaryEl: summaryEl, prevBtn: buttons[0], nextBtn: buttons[buttons.length - 1] };
+	}
+
+	function workbenchDemandFormRoute(demandId) {
+		return String(demandId || "").trim();
+	}
+
+	function buildWorkbenchNeedsPlanningRow(template, doc, row) {
+		const tr = template.cloneNode(true);
+		const data = row || {};
+		const demand = data.demand || {};
+		const demandId = workbenchDemandFormRoute(demand.id);
+		tr.setAttribute("data-demand-id", demandId);
+
+		const cells = tr.querySelectorAll("td");
+		const checkbox = cells[0] ? cells[0].querySelector('input[type="checkbox"]') : null;
+		if (checkbox) checkbox.checked = false;
+
+		const links = cells[1] ? cells[1].querySelectorAll("a") : [];
+		const titleLink = links[0];
+		const refLink = links[1];
+		const href = demandId ? "/app/demand/" + encodeURIComponent(demandId) : "#";
+		if (titleLink) {
+			const icon = titleLink.querySelector(".material-symbols-outlined");
+			titleLink.textContent = "";
+			titleLink.appendChild(doc.createTextNode(String(demand.name || demand.code || "").trim() + " "));
+			if (icon) titleLink.appendChild(icon);
+			titleLink.setAttribute("href", href);
+		}
+		if (refLink) {
+			refLink.textContent = String(demand.code || "").trim();
+			refLink.setAttribute("href", href);
+		}
+
+		const deptEl = cells[2] ? cells[2].querySelector("span") : null;
+		if (deptEl) deptEl.textContent = String(data.department || "").trim() || "\u2014";
+
+		const categoryBadge = cells[3] ? cells[3].querySelector("span") : null;
+		if (categoryBadge) {
+			const categoryValue = String(data.category || "").trim();
+			const tone = WORKBENCH_CATEGORY_TONE_BY_VALUE[categoryValue.toLowerCase()] || "cat-goods";
+			categoryBadge.className =
+				"px-2.5 py-1 rounded-full bg-" + tone + "/10 text-" + tone + " font-label-sm font-semibold flex items-center gap-1 w-fit";
+			const dot = categoryBadge.querySelector("span");
+			if (dot) dot.className = "w-1.5 h-1.5 rounded-full bg-" + tone;
+			while (categoryBadge.lastChild && categoryBadge.lastChild !== dot) {
+				categoryBadge.removeChild(categoryBadge.lastChild);
+			}
+			categoryBadge.appendChild(doc.createTextNode(" " + (categoryValue || "\u2014")));
+		}
+
+		const valueSpans = cells[4] ? cells[4].querySelectorAll("span") : [];
+		if (valueSpans[0]) valueSpans[0].textContent = String(data.currency || "KES").trim();
+		if (valueSpans[1]) {
+			const amount = Number(data.estimated_value || 0);
+			valueSpans[1].textContent = (Number.isFinite(amount) ? Math.round(amount) : 0).toLocaleString("en-US");
+		}
+
+		const budgetLine = data.budget_line || {};
+		const budgetLinked = String(budgetLine.id || budgetLine.code || "").trim().length > 0;
+		const budgetWrap = cells[5] ? cells[5].querySelector("div") : null;
+		if (budgetWrap) {
+			const budgetIcon = budgetWrap.querySelector(".material-symbols-outlined");
+			const budgetLabel = budgetWrap.querySelector("span:last-child");
+			budgetWrap.className = "flex items-center gap-2 font-label-md " + (budgetLinked ? "text-status-success" : "text-status-warning");
+			if (budgetIcon) budgetIcon.textContent = budgetLinked ? "verified" : "lock_clock";
+			if (budgetLabel) budgetLabel.textContent = budgetLinked ? __("LINKED") : __("UNLINKED");
+		}
+
+		tr.addEventListener("click", function (event) {
+			if (event.target && event.target.closest('input[type="checkbox"]')) return;
+			if (!demandId) return;
+			event.preventDefault();
+			frappe.set_route("demand-workbench", demandId);
+		});
+
+		return tr;
+	}
+
+	function renderWorkbenchNeedsPlanningRows(root, doc, payload) {
+		const tbody = workbenchNeedsPlanningTableBody(doc);
+		if (!tbody) return;
+		const template = workbenchNeedsPlanningRowTemplateByRoot.get(root);
+		if (!template) return;
+		while (tbody.firstChild) {
+			tbody.removeChild(tbody.firstChild);
+		}
+		const rows = payload && payload.ok !== false && Array.isArray(payload.rows) ? payload.rows : [];
+		const rowDataByDemandId = {};
+		rows.forEach(function (row) {
+			tbody.appendChild(buildWorkbenchNeedsPlanningRow(template, doc, row));
+			const demand = (row && row.demand) || {};
+			const demandId = workbenchDemandFormRoute(demand.id);
+			if (demandId) {
+				rowDataByDemandId[demandId] = {
+					code: demand.id,
+					estimated_value: Number(row.estimated_value || 0),
+					currency: String(row.currency || "KES").trim() || "KES",
+				};
+			}
+		});
+		workbenchNeedsPlanningRowDataByRoot.set(root, rowDataByDemandId);
+		// Selection is page/list-scoped: a fresh render (page change or a
+		// completed action) always starts from no selection, since the newly
+		// cloned checkboxes are unchecked anyway.
+		workbenchNeedsPlanningSelectionByRoot.set(root, new Map());
+		workbenchUpdateSelectionToolbar(root, doc);
+
+		const footerEls = workbenchNeedsPlanningFooterEls(doc);
+		if (!footerEls) return;
+		const total = Number((payload && payload.total) || 0);
+		const state = readWorkbenchStateFromUrl();
+		const page = Math.max(1, Number(state.page) || 1);
+		const start = (page - 1) * WORKBENCH_NEEDS_PLANNING_PAGE_SIZE;
+		const from = total === 0 ? 0 : start + 1;
+		const to = Math.min(start + rows.length, total);
+		footerEls.summaryEl.textContent = __("{0} to {1} of {2}", [from, to, total]);
+		footerEls.prevBtn.disabled = page <= 1;
+		footerEls.nextBtn.disabled = start + rows.length >= total;
+	}
+
+	// W5 — Needs Planning Actions. Drives the floating selection toolbar
+	// (ported verbatim from the "2. Needs planning - selection" design) with
+	// real selected-row state, and wires its two bulk actions against the
+	// live planning-inclusion APIs. "View Demand" is already covered by the
+	// W4 row click (-> demand-workbench), so there is no separate action here.
+	function workbenchSelectionToolbarEls(doc) {
+		if (!doc) return null;
+		const toolbar = doc.getElementById("selection-toolbar");
+		if (!toolbar) return null;
+		const countEl = toolbar.querySelector(".w-10.h-10.rounded-full.bg-primary");
+		const totalEl = toolbar.querySelector(".font-body-sm.text-on-surface-variant");
+		const buttons = Array.prototype.slice.call(toolbar.querySelectorAll("button"));
+		if (!countEl || !totalEl || buttons.length < 3) return null;
+		return {
+			toolbar: toolbar,
+			countEl: countEl,
+			totalEl: totalEl,
+			addToPlanBtn: buttons[0],
+			createPackageBtn: buttons[1],
+			closeBtn: buttons[2],
+		};
+	}
+
+	function workbenchUpdateSelectionToolbar(root, doc) {
+		const els = workbenchSelectionToolbarEls(doc);
+		if (!els) return;
+		const selection = workbenchNeedsPlanningSelectionByRoot.get(root);
+		const items = selection ? Array.from(selection.values()) : [];
+		if (!items.length) {
+			els.toolbar.style.opacity = "0";
+			els.toolbar.style.transform = "translate(-50%, 40px)";
+			els.toolbar.style.pointerEvents = "none";
+			return;
+		}
+		const total = items.reduce(function (sum, item) {
+			return sum + (Number(item.estimated_value) || 0);
+		}, 0);
+		const currency = (items[0] && items[0].currency) || "KES";
+		els.countEl.textContent = String(items.length);
+		els.totalEl.textContent = __("Est. Total: {0} {1}", [currency, Math.round(total).toLocaleString("en-US")]);
+		els.toolbar.style.opacity = "1";
+		els.toolbar.style.transform = "translate(-50%, 0)";
+		els.toolbar.style.pointerEvents = "auto";
+	}
+
+	function workbenchClearNeedsPlanningSelection(root, doc) {
+		workbenchNeedsPlanningSelectionByRoot.set(root, new Map());
+		const tbody = workbenchNeedsPlanningTableBody(doc);
+		if (tbody) {
+			Array.prototype.forEach.call(tbody.querySelectorAll('input[type="checkbox"]'), function (cb) {
+				cb.checked = false;
+			});
+		}
+		workbenchUpdateSelectionToolbar(root, doc);
+	}
+
+	function bindWorkbenchNeedsPlanningRowSelection(root, doc) {
+		const tbody = workbenchNeedsPlanningTableBody(doc);
+		if (!tbody || tbody.getAttribute("data-pp4-np-selection-bound") === "1") return;
+		tbody.setAttribute("data-pp4-np-selection-bound", "1");
+		tbody.addEventListener("change", function (event) {
+			const checkbox = event.target && event.target.closest ? event.target.closest('input[type="checkbox"]') : null;
+			if (!checkbox) return;
+			const tr = checkbox.closest("tr");
+			const demandId = tr ? tr.getAttribute("data-demand-id") : "";
+			if (!demandId) return;
+			const selection = workbenchNeedsPlanningSelectionByRoot.get(root) || new Map();
+			workbenchNeedsPlanningSelectionByRoot.set(root, selection);
+			if (checkbox.checked) {
+				const rowData = (workbenchNeedsPlanningRowDataByRoot.get(root) || {})[demandId];
+				selection.set(demandId, rowData || { code: demandId, estimated_value: 0, currency: "KES" });
+			} else {
+				selection.delete(demandId);
+			}
+			workbenchUpdateSelectionToolbar(root, doc);
+		});
+	}
+
+	function workbenchCallSequential(items, callFn, onDone) {
+		const results = [];
+		let i = 0;
+		function next() {
+			if (i >= items.length) {
+				onDone(results);
+				return;
+			}
+			const item = items[i];
+			i += 1;
+			callFn(item, function (result) {
+				results.push(result);
+				next();
+			});
+		}
+		next();
+	}
+
+	function workbenchReportSelectionActionOutcome(results, successMessage, failureMessage) {
+		const okResults = results.filter(function (r) {
+			return r && r.ok;
+		});
+		const failResults = results.filter(function (r) {
+			return !(r && r.ok);
+		});
+		if (okResults.length) {
+			frappe.show_alert({ indicator: "green", message: successMessage(okResults.length) });
+		}
+		if (failResults.length) {
+			const firstMessage = String((failResults[0] && failResults[0].message) || "").trim();
+			frappe.show_alert({
+				indicator: "red",
+				message: firstMessage || failureMessage(failResults.length),
+			});
+		}
+	}
+
+	function workbenchAddSelectedDemandsToActivePlan(root, doc) {
+		const selection = workbenchNeedsPlanningSelectionByRoot.get(root);
+		const items = selection ? Array.from(selection.values()) : [];
+		if (!items.length) return;
+		const planCode = workbenchActivePlanCodeByRoot.get(root);
+		if (!planCode) {
+			frappe.show_alert({ indicator: "red", message: __("No active procurement plan found.") });
+			return;
+		}
+		workbenchCallSequential(
+			items,
+			function (item, done) {
+				frappe.call({
+					method: INCLUDE_DEMAND_IN_PLAN_API,
+					args: { demand_code: item.code, procurement_plan_code: planCode, demand_item_codes: "[]" },
+					callback: function (response) {
+						done((response && response.message) || { ok: false });
+					},
+				});
+			},
+			function (results) {
+				workbenchReportSelectionActionOutcome(
+					results,
+					function (n) {
+						return __("{0} demand(s) added to the active plan.", [n]);
+					},
+					function (n) {
+						return __("{0} demand(s) could not be added to the active plan.", [n]);
+					}
+				);
+				fetchAndRenderWorkbenchNeedsPlanningList(root, doc);
+				fetchAndApplyWorkbenchQueueCounts(root);
+			}
+		);
+	}
+
+	function workbenchCreatePackagesFromSelectedDemands(root, doc) {
+		const selection = workbenchNeedsPlanningSelectionByRoot.get(root);
+		const items = selection ? Array.from(selection.values()) : [];
+		if (!items.length) return;
+		const planCode = workbenchActivePlanCodeByRoot.get(root);
+		if (!planCode) {
+			frappe.show_alert({ indicator: "red", message: __("No active procurement plan found.") });
+			return;
+		}
+		workbenchCallSequential(
+			items,
+			function (item, done) {
+				frappe.call({
+					method: INCLUDE_DEMAND_IN_PLAN_API,
+					args: { demand_code: item.code, procurement_plan_code: planCode, demand_item_codes: "[]" },
+					callback: function (includeResponse) {
+						const includeResult = (includeResponse && includeResponse.message) || {};
+						if (!includeResult.ok || !includeResult.inclusion_code) {
+							done(includeResult);
+							return;
+						}
+						frappe.call({
+							method: CREATE_PACKAGE_FROM_INCLUSION_API,
+							args: { inclusion_code: includeResult.inclusion_code },
+							callback: function (createResponse) {
+								done((createResponse && createResponse.message) || { ok: false });
+							},
+						});
+					},
+				});
+			},
+			function (results) {
+				workbenchReportSelectionActionOutcome(
+					results,
+					function (n) {
+						return __("{0} package(s) created.", [n]);
+					},
+					function (n) {
+						return __("{0} demand(s) could not be packaged.", [n]);
+					}
+				);
+				fetchAndRenderWorkbenchNeedsPlanningList(root, doc);
+				fetchAndApplyWorkbenchQueueCounts(root);
+			}
+		);
+	}
+
+	function bindWorkbenchSelectionToolbarActions(root, doc) {
+		const els = workbenchSelectionToolbarEls(doc);
+		if (!els || els.toolbar.getAttribute("data-pp4-np-toolbar-bound") === "1") return;
+		els.toolbar.setAttribute("data-pp4-np-toolbar-bound", "1");
+		els.closeBtn.addEventListener("click", function () {
+			workbenchClearNeedsPlanningSelection(root, doc);
+		});
+		els.addToPlanBtn.addEventListener("click", function () {
+			workbenchAddSelectedDemandsToActivePlan(root, doc);
+		});
+		els.createPackageBtn.addEventListener("click", function () {
+			workbenchCreatePackagesFromSelectedDemands(root, doc);
+		});
+	}
+
+	function fetchAndRenderWorkbenchNeedsPlanningList(root, doc) {
+		if (!root || !doc) return;
+		const state = readWorkbenchStateFromUrl();
+		const page = Math.max(1, Number(state.page) || 1);
+		frappe.call({
+			method: APPROVED_DEMANDS_QUEUE_API,
+			freeze: false,
+			args: {
+				start: (page - 1) * WORKBENCH_NEEDS_PLANNING_PAGE_SIZE,
+				limit: WORKBENCH_NEEDS_PLANNING_PAGE_SIZE,
+			},
+			callback: function (response) {
+				const payload = (response && response.message) || {};
+				renderWorkbenchNeedsPlanningRows(root, doc, payload);
+			},
+		});
+	}
+
+	function bindWorkbenchNeedsPlanningPagination(root, doc) {
+		const footerEls = workbenchNeedsPlanningFooterEls(doc);
+		if (!footerEls || footerEls.prevBtn.getAttribute("data-pp4-np-page-bound") === "1") return;
+		footerEls.prevBtn.setAttribute("data-pp4-np-page-bound", "1");
+		footerEls.nextBtn.setAttribute("data-pp4-np-page-bound", "1");
+		// The design's own "next" button never had a `disabled:opacity-30`
+		// variant (the mock kept it permanently enabled-looking); add the same
+		// utility its "prev" sibling already uses so real disabled state reads
+		// consistently once both buttons are data-driven.
+		if (String(footerEls.nextBtn.className || "").indexOf("disabled:opacity-30") === -1) {
+			footerEls.nextBtn.className = footerEls.nextBtn.className + " disabled:opacity-30";
+		}
+		footerEls.prevBtn.addEventListener("click", function () {
+			if (footerEls.prevBtn.disabled) return;
+			const state = readWorkbenchStateFromUrl();
+			writeWorkbenchStateToUrl({ page: Math.max(1, Number(state.page) - 1) });
+			fetchAndRenderWorkbenchNeedsPlanningList(root, doc);
+		});
+		footerEls.nextBtn.addEventListener("click", function () {
+			if (footerEls.nextBtn.disabled) return;
+			const state = readWorkbenchStateFromUrl();
+			writeWorkbenchStateToUrl({ page: Number(state.page) + 1 });
+			fetchAndRenderWorkbenchNeedsPlanningList(root, doc);
+		});
+	}
+
+	function initializeWorkbenchNeedsPlanningList(root) {
+		if (!root) return;
+		withWorkbenchIframeDocument(root, function (doc) {
+			if (!workbenchNeedsPlanningRowTemplateByRoot.has(root)) {
+				const tbody = workbenchNeedsPlanningTableBody(doc);
+				const firstRow = tbody ? tbody.querySelector("tr") : null;
+				if (firstRow) workbenchNeedsPlanningRowTemplateByRoot.set(root, firstRow.cloneNode(true));
+			}
+			bindWorkbenchNeedsPlanningPagination(root, doc);
+			bindWorkbenchNeedsPlanningRowSelection(root, doc);
+			bindWorkbenchSelectionToolbarActions(root, doc);
+			fetchAndRenderWorkbenchNeedsPlanningList(root, doc);
+		});
 	}
 
 	function renderPP4QueueCounts(root, counts) {
@@ -3640,7 +4257,12 @@
 		pp4FilterDrawerOpenByRoot.set(root, false);
 		pp4FilterDraftByRoot.set(root, pp4DefaultFilterState());
 		pp4FilterAppliedByRoot.set(root, pp4DefaultFilterState());
-		// Design pass only: keep this screen static (no backend wiring yet).
+		// W2: active-plan context + gate. W3: queue tab counts + active-tab affordance.
+		// W4: Needs Planning list binding. Remaining per-queue lists (W6/W7/W8)
+		// land once those queue screens have a pixel design.
+		fetchAndApplyWorkbenchActivePlanContext(root);
+		initializeWorkbenchQueueTabs(root);
+		initializeWorkbenchNeedsPlanningList(root);
 		document.body.classList.remove("kt-pp2-shell");
 		document.body.classList.add("kt-pp4-shell");
 		syncSidebarActive("");
