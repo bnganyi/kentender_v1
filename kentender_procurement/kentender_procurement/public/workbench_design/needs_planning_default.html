@@ -1,0 +1,347 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Procurement Planning Workbench | ProcurementHub</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Hanken+Grotesk:wght@600;700;800&amp;display=swap" rel="stylesheet">
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "on-secondary-fixed-variant": "#00497e",
+                "surface-tint": "#3a5f94",
+                "surface-dim": "#d8dadc",
+                "on-tertiary": "#ffffff",
+                "surface-container": "#eceef0",
+                "outline": "#737780",
+                "surface-variant": "#e0e3e5",
+                "on-primary": "#ffffff",
+                "secondary": "#0061a5",
+                "on-primary-container": "#799dd6",
+                "cat-works": "#8B5CF6",
+                "primary-fixed-dim": "#a7c8ff",
+                "tertiary-fixed": "#ffdbca",
+                "cat-consultancy": "#06B6D4",
+                "status-error": "#EF4444",
+                "on-tertiary-fixed-variant": "#723610",
+                "on-tertiary-fixed": "#341100",
+                "surface-bright": "#f7f9fb",
+                "primary-fixed": "#d5e3ff",
+                "on-secondary": "#ffffff",
+                "cat-services": "#EC4899",
+                "tertiary": "#381300",
+                "tertiary-fixed-dim": "#ffb690",
+                "tertiary-container": "#592300",
+                "on-primary-fixed": "#001b3c",
+                "surface-container-low": "#f2f4f6",
+                "inverse-surface": "#2d3133",
+                "inverse-on-surface": "#eff1f3",
+                "error": "#ba1a1a",
+                "on-surface": "#191c1e",
+                "secondary-fixed-dim": "#9fcaff",
+                "secondary-container": "#0095f8",
+                "on-secondary-container": "#002b4e",
+                "on-error-container": "#93000a",
+                "background": "#f7f9fb",
+                "status-neutral": "#64748B",
+                "on-primary-fixed-variant": "#1f477b",
+                "secondary-fixed": "#d2e4ff",
+                "on-background": "#191c1e",
+                "on-surface-variant": "#43474f",
+                "surface-container-lowest": "#ffffff",
+                "on-tertiary-container": "#d8885c",
+                "inverse-primary": "#a7c8ff",
+                "cat-goods": "#6366F1",
+                "on-error": "#ffffff",
+                "error-container": "#ffdad6",
+                "surface": "#f7f9fb",
+                "primary": "#001e40",
+                "surface-container-high": "#e6e8ea",
+                "status-warning": "#F59E0B",
+                "outline-variant": "#c3c6d1",
+                "on-secondary-fixed": "#001d36",
+                "surface-container-highest": "#e0e3e5",
+                "primary-container": "#003366",
+                "status-success": "#10B981"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+            },
+            "spacing": {
+                "workbench-gutter": "24px",
+                "stack-gap-md": "16px",
+                "stack-gap-sm": "8px",
+                "container-max-width": "1440px",
+                "card-padding": "20px"
+            },
+            "fontFamily": {
+                "display-hero": ["Hanken Grotesk"],
+                "label-md": ["Inter"],
+                "body-md": ["Inter"],
+                "headline-md": ["Hanken Grotesk"],
+                "body-sm": ["Inter"],
+                "headline-lg": ["Hanken Grotesk"],
+                "body-lg": ["Inter"],
+                "label-sm": ["Inter"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body {
+            background-color: #f7f9fb;
+            color: #191c1e;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="font-body-md overflow-hidden h-screen flex">
+<!-- SIDE NAVIGATION BAR removed for Desk embedding: Frappe Desk already provides
+     left-hand module navigation, so the design's own duplicate app nav sidebar
+     is suppressed here. Kept out of the pristine design source; this deviation
+     applies only to the deployed/embedded copy. -->
+<!-- MAIN CONTENT AREA -->
+<main class="flex-1 flex flex-col h-screen overflow-hidden bg-background relative">
+<!-- TOP NAV BAR (Updated for consistency with SCREEN_40) -->
+<header class="w-full h-16 bg-surface-container-lowest border-b border-outline-variant shadow-sm sticky top-0 z-40">
+<div class="flex justify-between items-center h-full px-workbench-gutter max-w-container-max-width mx-auto">
+<div class="flex items-center gap-8">
+<h1 class="font-headline-lg text-headline-lg font-bold text-primary">Planning Hub</h1>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center bg-surface-container-low px-3 py-1.5 rounded-full border border-outline-variant">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-sm w-48 ml-2" placeholder="Search workbench..." type="text">
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant">
+<button class="material-symbols-outlined p-2 hover:bg-surface-container-low rounded-full transition-colors">notifications</button>
+<button class="material-symbols-outlined p-2 hover:bg-surface-container-low rounded-full transition-colors">help</button>
+<button class="material-symbols-outlined p-2 hover:bg-surface-container-low rounded-full transition-colors">settings</button>
+</div>
+<div class="flex items-center gap-3 pl-4 border-l border-outline-variant cursor-pointer">
+<div class="text-right">
+<p class="font-label-md text-primary leading-none">Jane Doe</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-wider">Chief Procurement Officer</p>
+</div>
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xs overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Jane Doe profile picture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBUo7Sle2jLHz6PJ5mQGMleQEuKppFQtQicY292nWGHiS9_0vfCJk6WEmpxtghw8cF62DqAQfhQZIzPjEADJZjKMPmzMtt7PW2jRQ5_pukrLe8svfB1O7KyjcoExgz-47r3BRcWkYaz9RlxGUnL_m4v32Nh_EXQIYZo3f2adpsFNAARBOjs5PmOOKDexpXglrmue9WBud10ncWFRUAx9VWQ2PfElVYdKr6ofq7d007CZhgykjifcNNe">
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- DASHBOARD SCROLLABLE CONTENT -->
+<div class="flex-1 overflow-y-auto custom-scrollbar pb-32">
+<div class="max-w-container-max-width mx-auto p-workbench-gutter space-y-4">
+<!-- Page Header (consistent with SCREEN_40) -->
+<div class="flex items-center justify-between">
+<div>
+<div class="flex items-center gap-2 text-secondary cursor-pointer">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+<span class="font-label-md text-label-md">Back to Hub</span>
+</div>
+<h2 class="font-display-hero text-display-hero text-primary">Planning Workbench</h2>
+</div>
+<div class="flex gap-4">
+<button class="px-6 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg font-label-md text-label-md text-primary hover:bg-surface-container-low transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">download</span> Export PDF
+                    </button>
+<button class="px-6 py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:opacity-90 transition-opacity flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span> Create New Package
+                    </button>
+</div>
+</div>
+<!-- KPI CARDS (consistent with SCREEN_40) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Total Planned Value -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm relative overflow-hidden group hover:shadow-md transition-all p-4">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-primary-fixed-dim rounded-lg text-primary">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<span class="text-status-success font-label-md text-label-md bg-status-success/10 px-2 py-0.5 rounded-full">+12.4%</span>
+</div>
+<div class="text-on-surface-variant font-label-md text-label-md uppercase tracking-wider mb-1">Total Planned Value</div>
+<div class="font-display-hero text-display-hero text-primary">KES 4.28B</div>
+<div class="mt-4 text-body-sm text-on-surface-variant">Across all active planning cycles</div>
+</div>
+<!-- Approved Demands -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm relative overflow-hidden group hover:shadow-md transition-all p-4">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-secondary-fixed-dim rounded-lg text-secondary">
+<span class="material-symbols-outlined">fact_check</span>
+</div>
+<span class="text-status-neutral font-label-md text-label-md bg-status-neutral/10 px-2 py-0.5 rounded-full">Steady</span>
+</div>
+<div class="text-on-surface-variant font-label-md text-label-md uppercase tracking-wider mb-1">Approved Demands</div>
+<div class="font-display-hero text-display-hero text-primary">142</div>
+<div class="mt-4 text-body-sm text-on-surface-variant">Ready for packaging and processing</div>
+</div>
+<!-- Active Plan -->
+<div class="bg-primary-container rounded-xl border border-primary-container shadow-sm relative group hover:shadow-md transition-all p-4">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-on-primary-container/20 rounded-lg text-on-primary-container">
+<span class="material-symbols-outlined">assignment</span>
+</div>
+<span class="text-white font-label-md text-label-md bg-white/20 px-2 py-0.5 rounded-full">Ready</span>
+</div>
+<div class="text-on-primary-container font-label-md text-label-md uppercase tracking-wider mb-1 opacity-90">Active Plan</div>
+<div class="font-headline-lg text-headline-lg text-white mb-1">Ministry of Health FY 2026/27</div>
+<div class="flex items-center gap-2 mt-4 text-white font-body-sm opacity-90"><span class="material-symbols-outlined text-sm">calendar_today</span>Starts July 2026</div>
+</div>
+</div>
+<!-- TABS & TABLE SECTION -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
+<!-- Tab Header (updated counts/active state) -->
+<div class="flex border-b border-outline-variant bg-surface-container-low/50 overflow-x-auto scrollbar-hide gap-2">
+<button class="font-label-md text-label-md text-primary font-bold border-b-2 border-primary whitespace-nowrap bg-surface-container-lowest py-2.5 px-4">
+                            Needs Planning (24)
+                        </button>
+<button class="font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high transition-colors whitespace-nowrap py-2.5 px-4">
+                            In Creation (12)
+                        </button>
+<button class="font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high transition-colors whitespace-nowrap py-2.5 px-4">
+                            Awaiting Review (08)
+                        </button>
+<button class="font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high transition-colors whitespace-nowrap py-2.5 px-4">
+                            Ready for Release (05)
+                        </button>
+<button class="font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high transition-colors whitespace-nowrap py-2.5 px-4">
+                            Blocked
+                        </button>
+<button class="font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high transition-colors whitespace-nowrap py-2.5 px-4">
+                            Released
+                        </button>
+</div>
+<!-- Filter Bar -->
+<div class="p-4 flex items-center bg-surface-container-lowest border-b border-outline-variant/50 justify-end gap-2">
+<div class="flex gap-2">
+<button class="flex items-center gap-2 px-3 py-1.5 border border-outline-variant rounded-lg font-body-sm text-on-surface-variant hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-sm">filter_list</span> Filter
+                    </button>
+<button class="flex items-center gap-2 px-3 py-1.5 border border-outline-variant rounded-lg font-body-sm text-on-surface-variant hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-sm">sort</span> Sort
+                    </button>
+</div>
+
+</div>
+<!-- Table (Restored Columns from SCREEN_16) -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse table-fixed">
+<thead>
+<tr class="bg-surface-container text-on-surface-variant border-b border-outline-variant"><th class="px-4 py-4 w-12 text-center"><input class="rounded border-outline-variant text-primary focus:ring-primary transition-all" type="checkbox"></th><th class="px-3 py-4 font-label-md text-label-md uppercase tracking-wider w-[30%]">Demand Title &amp; Ref</th><th class="px-3 py-4 font-label-md text-label-md uppercase tracking-wider w-[18%]">Department</th><th class="px-3 py-4 font-label-md text-label-md uppercase tracking-wider w-[17%]">Category</th><th class="px-3 py-4 font-label-md text-label-md uppercase tracking-wider w-[20%]">Est. Value</th><th class="px-3 py-4 font-label-md text-label-md uppercase tracking-wider w-[15%]">Budget Status</th></tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/30">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors cursor-pointer group"><td class="text-center px-3 py-3"><input class="rounded border-outline-variant text-primary focus:ring-primary transition-all" type="checkbox"></td><td class="px-3 py-3"><div class="flex flex-col cursor-pointer group/link"><a class="font-body-md font-bold text-primary hover:underline group-hover/link:text-secondary transition-colors flex items-center gap-1" href="#">Specialized Cancer Equipment <span class="material-symbols-outlined text-sm opacity-0 group-hover/link:opacity-100 transition-opacity">open_in_new</span></a><a class="font-label-sm text-on-surface-variant hover:underline uppercase text-[10px]" href="#">DEM-2026-MOH-082</a></div></td><td class="px-3 py-3"><span class="font-body-sm text-on-surface">Oncology Unit</span></td><td class="px-3 py-3"><span class="px-2.5 py-1 rounded-full bg-cat-goods/10 text-cat-goods font-label-sm font-semibold flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-cat-goods"></span> Goods</span></td><td class="px-3 py-3"><div class="flex flex-col"><span class="font-label-sm text-on-surface-variant text-[10px] uppercase">KES</span><span class="font-body-md font-bold text-primary">850,000,000</span></div></td><td class="px-3 py-3"><div class="flex items-center gap-2 text-status-success font-label-md"><span class="material-symbols-outlined text-[18px]">verified</span><span class="font-bold">LINKED</span></div></td></tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors cursor-pointer group"><td class="text-center px-3 py-3"><input class="rounded border-outline-variant text-primary focus:ring-primary transition-all" type="checkbox"></td><td class="px-3 py-3"><div class="flex flex-col cursor-pointer group/link"><a class="font-body-md font-bold text-primary hover:underline group-hover/link:text-secondary transition-colors flex items-center gap-1" href="#">Regional Cold Chain Expansion <span class="material-symbols-outlined text-sm opacity-0 group-hover/link:opacity-100 transition-opacity">open_in_new</span></a><a class="font-label-sm text-on-surface-variant hover:underline uppercase text-[10px]" href="#">DEM-2026-MOH-114</a></div></td><td class="px-3 py-3"><span class="font-body-sm text-on-surface">Immunization Div.</span></td><td class="px-3 py-3"><span class="px-2.5 py-1 rounded-full bg-cat-works/10 text-cat-works font-label-sm font-semibold flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-cat-works"></span> Infrastructure</span></td><td class="px-3 py-3"><div class="flex flex-col"><span class="font-label-sm text-on-surface-variant text-[10px] uppercase">KES</span><span class="font-body-md font-bold text-primary">240,000,000</span></div></td><td class="px-3 py-3"><div class="flex items-center gap-2 text-status-warning font-label-md"><span class="material-symbols-outlined text-[18px]">lock_clock</span><span class="font-bold">RESERVED</span></div></td></tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors cursor-pointer group"><td class="text-center px-3 py-3"><input class="rounded border-outline-variant text-primary focus:ring-primary transition-all" type="checkbox"></td><td class="px-3 py-3"><div class="flex flex-col cursor-pointer group/link"><a class="font-body-md font-bold text-primary hover:underline group-hover/link:text-secondary transition-colors flex items-center gap-1" href="#">Biomedical Waste Management <span class="material-symbols-outlined text-sm opacity-0 group-hover/link:opacity-100 transition-opacity">open_in_new</span></a><a class="font-label-sm text-on-surface-variant hover:underline uppercase text-[10px]" href="#">DEM-2026-MOH-045</a></div></td><td class="px-3 py-3"><span class="font-body-sm text-on-surface">Public Health</span></td><td class="px-3 py-3"><span class="px-2.5 py-1 rounded-full bg-cat-services/10 text-cat-services font-label-sm font-semibold flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-cat-services"></span> Services</span></td><td class="px-3 py-3"><div class="flex flex-col"><span class="font-label-sm text-on-surface-variant text-[10px] uppercase">KES</span><span class="font-body-md font-bold text-primary">112,000,000</span></div></td><td class="px-3 py-3"><div class="flex items-center gap-2 text-status-success font-label-md"><span class="material-symbols-outlined text-[18px]">verified</span><span class="font-bold">LINKED</span></div></td></tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors cursor-pointer group"><td class="text-center px-3 py-3"><input class="rounded border-outline-variant text-primary focus:ring-primary transition-all" type="checkbox"></td><td class="px-3 py-3"><div class="flex flex-col cursor-pointer group/link"><a class="font-body-md font-bold text-primary hover:underline group-hover/link:text-secondary transition-colors flex items-center gap-1" href="#">Annual Lab Reagent Supply <span class="material-symbols-outlined text-sm opacity-0 group-hover/link:opacity-100 transition-opacity">open_in_new</span></a><a class="font-label-sm text-on-surface-variant hover:underline uppercase text-[10px]" href="#">DEM-2026-MOH-201</a></div></td><td class="px-3 py-3"><span class="font-body-sm text-on-surface">Diagnostics Dept.</span></td><td class="px-3 py-3"><span class="px-2.5 py-1 rounded-full bg-cat-goods/10 text-cat-goods font-label-sm font-semibold flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-cat-goods"></span> Consumables</span></td><td class="px-3 py-3"><div class="flex flex-col"><span class="font-label-sm text-on-surface-variant text-[10px] uppercase">KES</span><span class="font-body-md font-bold text-primary">1,100,000,000</span></div></td><td class="px-3 py-3"><div class="flex items-center gap-2 text-status-success font-label-md"><span class="material-symbols-outlined text-[18px]">verified</span><span class="font-bold">LINKED</span></div></td></tr>
+</tbody>
+</table>
+</div>
+<!-- Footer / Pagination -->
+<footer class="flex justify-between items-center w-full px-6 py-4 bg-surface-container border-t border-outline-variant gap-4"><div class="flex items-center gap-2"><span class="font-body-sm text-on-surface-variant">Rows per page:</span><div class="relative flex items-center bg-surface-container-lowest border border-outline-variant rounded px-2 py-1 cursor-pointer hover:bg-surface-container-high transition-colors"><span class="font-label-md text-primary mr-1">10</span><span class="material-symbols-outlined text-[18px] text-on-surface-variant">arrow_drop_down</span></div></div><div class="flex items-center gap-6"><span class="font-body-sm text-on-surface-variant">1 to 4 of 24</span><div class="flex items-center gap-2"><button class="p-2 border border-outline-variant rounded-lg text-on-surface-variant disabled:opacity-30 transition-colors hover:bg-surface-container-high" disabled=""><span class="material-symbols-outlined">chevron_left</span></button><button class="w-8 h-8 flex items-center justify-center bg-primary text-white rounded-lg font-label-md">1</button><button class="w-8 h-8 flex items-center justify-center hover:bg-surface-container-high rounded-lg font-label-md text-on-surface-variant transition-colors">2</button><button class="w-8 h-8 flex items-center justify-center hover:bg-surface-container-high rounded-lg font-label-md text-on-surface-variant transition-colors">3</button><button class="p-2 border border-outline-variant rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined">chevron_right</span></button></div></div></footer>
+</div>
+<!-- BOTTOM PANELS -->
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-8 pb-12">
+<!-- Strategic Alignment (3 cols) -->
+<div class="lg:col-span-3 bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm h-full">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-headline-md text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">verified_user</span> Strategic Alignment
+                        </h3>
+<span class="px-3 py-1 bg-status-success/10 text-status-success rounded font-label-sm font-bold uppercase tracking-wide">High Alignment</span>
+</div>
+<p class="font-body-md text-on-surface-variant mb-6">Current demand selection aligns 94% with Vision 2030 Health Modernization goals for the FY 2026/27 cycle.</p>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<span class="font-label-md">Public Health Resilience</span>
+<span class="font-bold text-primary">KES 1.8B</span>
+</div>
+<div class="w-full bg-surface-container-low h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[85%]"></div>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-label-md">Infrastructure Expansion</span>
+<span class="font-bold text-primary">KES 1.2B</span>
+</div>
+<div class="w-full bg-surface-container-low h-2 rounded-full overflow-hidden">
+<div class="bg-secondary-container h-full w-[60%]"></div>
+</div>
+</div>
+</div>
+<!-- Insights (1 col) -->
+<div class="lg:col-span-1 bg-primary-container p-6 rounded-xl text-on-primary-container h-full flex flex-col justify-between">
+<div>
+<span class="material-symbols-outlined text-3xl mb-2">analytics</span>
+<h4 class="font-headline-md mb-2">Workbench Insights</h4>
+<p class="font-body-sm opacity-80 leading-relaxed mb-4">You have 24 demands awaiting planning. Laboratory consumables show high risk of seasonal delays.</p>
+<div class="space-y-3 opacity-90">
+<div class="flex items-start gap-2">
+<span class="material-symbols-outlined text-status-warning text-sm mt-0.5">timer</span>
+<p class="text-[11px]">3 high-value demands pending &gt; 14 days</p>
+</div>
+</div>
+</div>
+<button class="w-full mt-6 py-2 border border-on-primary-container/30 rounded-lg font-label-md hover:bg-white/10 transition-colors active:scale-95">
+                        View Full Report
+                    </button>
+</div>
+</div>
+</div>
+</div>
+<!-- GLOBAL FOOTER -->
+<!-- FLOATING SELECTION TOOLBAR (Restored from SCREEN_16) -->
+</main>
+<script>
+    // Selection toolbar logic
+    const toolbar = document.getElementById('selection-toolbar');
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    
+    function updateToolbar() {
+        const checkedCount = Array.from(checkboxes).filter(cb => cb.checked && !cb.closest('th')).length;
+        if (checkedCount > 0) {
+            toolbar.style.opacity = '1';
+            toolbar.style.transform = 'translate(-50%, 0)';
+            toolbar.style.pointerEvents = 'auto';
+        } else {
+            toolbar.style.opacity = '0';
+            toolbar.style.transform = 'translate(-50%, 40px)';
+            toolbar.style.pointerEvents = 'none';
+        }
+    }
+    
+    checkboxes.forEach(cb => cb.addEventListener('change', updateToolbar));
+    updateToolbar(); // Initialize state
+</script>
+
+
+
+
+</body></html>

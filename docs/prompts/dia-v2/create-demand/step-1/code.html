@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KenTender DIA - New Demand Intake</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=Manrope:wght@600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#f7f9fb",
+                        "secondary": "#00629d",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "on-secondary-container": "#003558",
+                        "outline": "#737783",
+                        "surface-container-low": "#f2f4f6",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-surface-variant": "#424751",
+                        "tertiary": "#26364b",
+                        "on-tertiary-container": "#adbed7",
+                        "on-error-container": "#93000a",
+                        "data-block-bg": "#FFFFFF",
+                        "on-tertiary-fixed-variant": "#38485d",
+                        "error": "#ba1a1a",
+                        "surface-tint": "#255dad",
+                        "primary": "#00346f",
+                        "status-exhausted": "#EF4444",
+                        "on-secondary": "#ffffff",
+                        "status-committed": "#6366F1",
+                        "tertiary-fixed": "#d3e4fe",
+                        "status-available": "#10B981",
+                        "inverse-on-surface": "#eff1f3",
+                        "tertiary-container": "#3d4d62",
+                        "inverse-primary": "#abc7ff",
+                        "surface-container-low": "#f2f4f6",
+                        "on-primary-fixed-variant": "#00458f",
+                        "surface-variant": "#e0e3e5",
+                        "surface-dim": "#d8dadc",
+                        "on-secondary-fixed": "#001d33",
+                        "status-reserved": "#F59E0B",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#d7e2ff",
+                        "on-background": "#191c1e",
+                        "on-primary-fixed": "#001b3f",
+                        "secondary-fixed": "#cfe5ff",
+                        "outline-variant": "#c2c6d3",
+                        "on-error": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "inverse-surface": "#2d3133",
+                        "secondary-container": "#00a2fd",
+                        "tertiary-fixed-dim": "#b7c8e1",
+                        "background": "#f7f9fb",
+                        "surface": "#f7f9fb",
+                        "primary-fixed-dim": "#abc7ff",
+                        "primary-container": "#004a99",
+                        "secondary-fixed-dim": "#98cbff",
+                        "surface-container": "#eceef0",
+                        "on-primary-container": "#9bbdff",
+                        "border-subtle": "#E2E8F0",
+                        "on-surface": "#191c1e",
+                        "on-secondary-fixed-variant": "#004a77"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-gap": "24px",
+                        "unit": "4px",
+                        "container-padding": "16px",
+                        "card-padding": "20px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "data-mono": ["JetBrains Mono"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Manrope"],
+                        "label-caps": ["Inter"],
+                        "headline-sm": ["Manrope"],
+                        "headline-lg": ["Manrope"],
+                        "body-md": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .step-active { border-color: #00346f; color: #00346f; }
+        .step-inactive { border-color: #c2c6d3; color: #737783; }
+        
+        /* Glassmorphism subtle overlay */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        /* Custom Toggle Switch Styling */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #00346f;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #00346f;
+        }
+    </style>
+</head>
+<body class="bg-surface-bright text-on-surface font-body-md min-h-screen flex">
+<!-- Sidebar (Shared Component Style Logic) -->
+<aside class="hidden md:flex fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-outline-variant flex-col p-4 gap-4 z-50">
+<div class="flex items-center gap-3 px-2 py-4">
+<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm font-black text-primary">Procurement DIA</h2>
+<p class="text-[10px] uppercase tracking-widest text-outline font-bold">Strategic Sourcing</p>
+</div>
+</div>
+<button class="w-full py-3 px-4 bg-primary text-on-primary rounded-lg font-bold flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all">
+<span class="material-symbols-outlined">add</span>
+            New Demand
+        </button>
+<nav class="flex-1 flex flex-col gap-1 mt-4">
+<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container text-on-secondary-container font-bold rounded-lg transition-transform translate-x-1" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-caps text-label-caps">HUB</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-caps text-label-caps">WORKBENCH</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="font-label-caps text-label-caps">BUDGET REVIEWS</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-caps text-label-caps">ANALYTICS</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-outline-variant pt-4 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-caps text-label-caps">SETTINGS</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+<span class="font-label-caps text-label-caps">SUPPORT</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 md:ml-64 flex flex-col min-h-screen">
+<!-- TopAppBar (Shared Component Style Logic) -->
+<header class="sticky top-0 z-40 bg-surface-bright flex justify-between items-center px-container-padding h-16 w-full border-b border-outline-variant">
+<div class="flex items-center gap-4">
+<span class="md:hidden material-symbols-outlined text-primary">menu</span>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">KenTender DIA</h1>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden lg:flex items-center bg-surface-container px-4 py-2 rounded-full gap-2 w-64 border border-outline-variant">
+<span class="material-symbols-outlined text-outline">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-full" placeholder="Search demands..." type="text"/>
+</div>
+<div class="flex items-center gap-4 text-primary">
+<button class="material-symbols-outlined hover:bg-surface-container-high p-2 rounded-full transition-colors">notifications</button>
+<button class="material-symbols-outlined hover:bg-surface-container-high p-2 rounded-full transition-colors">help_outline</button>
+<div class="flex items-center gap-2 pl-2 border-l border-outline-variant">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-primary font-bold text-xs">JD</div>
+<span class="hidden sm:inline font-bold text-sm">John Dept.</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Page Canvas -->
+<div class="flex-1 p-6 lg:p-12 max-w-5xl mx-auto w-full">
+<!-- Contextual Header -->
+<div class="mb-section-gap">
+<nav class="flex items-center gap-2 text-outline text-xs font-bold mb-2 uppercase tracking-widest">
+<span>Workbench</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="text-primary">Create New Demand</span>
+</nav>
+<h2 class="font-headline-lg text-headline-lg text-primary">Initiate Demand Request</h2>
+<p class="text-on-surface-variant max-w-2xl mt-2">Formalize your department's needs. Provide clear context to help Finance and Procurement reviewers understand the strategic value of this request.</p>
+</div>
+<!-- Stepper -->
+<div class="mb-12 relative">
+<div class="flex justify-between items-center max-w-3xl mx-auto">
+<!-- Step 1 -->
+<div class="flex flex-col items-center gap-3 z-10">
+<div class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold ring-4 ring-primary-fixed shadow-lg">
+                            1
+                        </div>
+<span class="font-label-caps text-label-caps text-primary">DESCRIBE NEED</span>
+</div>
+<!-- Line -->
+<div class="flex-1 h-[2px] bg-outline-variant mx-4 -mt-8"></div>
+<!-- Step 2 -->
+<div class="flex flex-col items-center gap-3 z-10 opacity-50">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest text-outline flex items-center justify-center font-bold border border-outline-variant">
+                            2
+                        </div>
+<span class="font-label-caps text-label-caps text-outline">ADD ITEMS</span>
+</div>
+<!-- Line -->
+<div class="flex-1 h-[2px] bg-outline-variant mx-4 -mt-8"></div>
+<!-- Step 3 -->
+<div class="flex flex-col items-center gap-3 z-10 opacity-50">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest text-outline flex items-center justify-center font-bold border border-outline-variant">
+                            3
+                        </div>
+<span class="font-label-caps text-label-caps text-outline">REVIEW &amp; SUBMIT</span>
+</div>
+</div>
+</div>
+<!-- Wizard Card (Data Block) -->
+<div class="bg-data-block-bg border border-border-subtle rounded-xl overflow-hidden shadow-sm">
+<!-- Card Header -->
+<div class="bg-surface-container-low px-card-padding py-4 border-b border-border-subtle flex items-center justify-between">
+<h3 class="font-headline-sm text-headline-sm text-tertiary">Step 1: Primary Need Details</h3>
+<div class="flex items-center gap-2 text-status-available text-xs font-bold bg-white px-3 py-1 rounded-full border border-status-available/20">
+<span class="w-2 h-2 rounded-full bg-status-available animate-pulse"></span>
+                        DRAFT AUTO-SAVED
+                    </div>
+</div>
+<!-- Form Body -->
+<div class="p-card-padding lg:p-8">
+<form class="space-y-8">
+<!-- Grid for 2-column inputs -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<!-- Demand Title -->
+<div class="md:col-span-2">
+<label class="block font-label-caps text-label-caps text-outline mb-2">DEMAND TITLE</label>
+<input class="w-full border border-outline-variant rounded-lg p-3 text-body-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all" placeholder="e.g., Annual Hospital Infrastructure Renovation - Block B" type="text"/>
+<p class="mt-1 text-xs text-outline italic">Enter a clear, descriptive name for audit and planning purposes.</p>
+</div>
+<!-- Department -->
+<div>
+<label class="block font-label-caps text-label-caps text-outline mb-2">REQUESTING DEPARTMENT</label>
+<div class="relative">
+<select class="w-full appearance-none border border-outline-variant rounded-lg p-3 pr-10 text-body-md focus:ring-2 focus:ring-primary focus:border-primary bg-white">
+<option>Health &amp; Clinical Services</option>
+<option>Public Works &amp; Infrastructure</option>
+<option>Education &amp; Human Resources</option>
+<option>Finance &amp; Economic Planning</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-3 pointer-events-none text-outline">expand_more</span>
+</div>
+</div>
+<!-- Category -->
+<div>
+<label class="block font-label-caps text-label-caps text-outline mb-2">PROCUREMENT CATEGORY</label>
+<div class="relative">
+<select class="w-full appearance-none border border-outline-variant rounded-lg p-3 pr-10 text-body-md focus:ring-2 focus:ring-primary focus:border-primary bg-white">
+<option disabled="" selected="">Select Category...</option>
+<option>Goods</option>
+<option>Works</option>
+<option>Services</option>
+<option>Consultancy</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-3 pointer-events-none text-outline">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Priority Toggle & Info -->
+<div class="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-surface-container-low rounded-xl border border-outline-variant/30">
+<div class="flex-1">
+<h4 class="font-bold text-tertiary">Mark as High Priority?</h4>
+<p class="text-sm text-outline">Emergency or High-priority demands require additional justification and may trigger expedited approval paths.</p>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-xs font-bold text-outline uppercase tracking-wider">Normal</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-status-exhausted"></div>
+</label>
+<span class="text-xs font-bold text-status-exhausted uppercase tracking-wider">High</span>
+</div>
+</div>
+<!-- Justification -->
+<div>
+<label class="block font-label-caps text-label-caps text-outline mb-2">BUSINESS JUSTIFICATION</label>
+<textarea class="w-full border border-outline-variant rounded-lg p-3 text-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all" placeholder="Detail why this procurement is necessary. Reference specific departmental targets, strategic needs, or current deficiencies..." rows="5"></textarea>
+<div class="mt-2 flex justify-between items-center text-[10px] font-bold text-outline">
+<span class="uppercase tracking-widest">MINIMUM 100 CHARACTERS RECOMMENDED</span>
+<span>0 / 2000</span>
+</div>
+</div>
+</form>
+</div>
+<!-- Card Footer Actions -->
+<div class="bg-surface-container px-card-padding py-6 border-t border-border-subtle flex items-center justify-between">
+<button class="flex items-center gap-2 px-6 py-3 text-on-surface-variant font-bold hover:bg-surface-container-highest rounded-lg transition-colors">
+<span class="material-symbols-outlined">close</span>
+                        Discard Draft
+                    </button>
+<button class="flex items-center gap-3 px-10 py-3 bg-primary text-on-primary font-bold rounded-lg hover:opacity-90 active:scale-95 transition-all shadow-md group">
+                        Next: Add Items
+                        <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Decorative Asset - Background -->
+<div class="mt-12 p-8 bg-gradient-to-br from-primary-fixed to-surface-bright rounded-2xl flex flex-col md:flex-row items-center gap-8 border border-primary/10 overflow-hidden relative">
+<div class="absolute -right-10 -top-10 opacity-10">
+<span class="material-symbols-outlined text-[200px]" style="font-variation-settings: 'FILL' 1;">description</span>
+</div>
+<div class="relative z-10 flex-1">
+<h5 class="font-headline-sm text-headline-sm text-primary mb-2">Guidance: Describing the Need</h5>
+<p class="text-on-surface-variant text-sm leading-relaxed">The Department Approver needs to understand the "Why" before they look at the "What". Ensure your justification aligns with the current fiscal year's strategic goals. You don't need to worry about budget lines yet—Finance will handle the coding in the next phase.</p>
+</div>
+<div class="relative z-10">
+<div class="w-48 h-32 rounded-lg overflow-hidden shadow-xl border-4 border-white">
+<div class="w-full h-full bg-cover bg-center" data-alt="A clean, professional photograph of a modern office environment with blurred people working in the background, featuring high-key natural lighting and a soft color palette of whites, light grays, and corporate blues. The scene conveys a sense of organized productivity and professional decision-making within a government or corporate headquarters setting." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAvxK3jf1JCahegAY8N4AsAvk-vPHT4eummk4U1CtZ8R-1fEHkrtxtl_D1NqHzjmi86ozBRpigjZMi-ZdfcTKxmz4PmVcjdFhOCHJjGS_olduZUb1vGIx-q3m1LnGup5c1u1oNcB2Izafu7IrQR0jSqmIWjADDcHDm3pqPb5CykjRmFvQOusMNy8LGHIXT3Kg8-dzFWACk7T0n1VufLXZfThjdVmGDYGHWxxVmEyyr4Mp4SqHDJHx327Yul-uIryK-iuSY99IRAyLk')"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sticky Footer for Mobile (Navigation Shell Logic) -->
+<div class="md:hidden sticky bottom-0 w-full bg-surface-container-lowest border-t border-outline-variant px-container-padding py-3 flex justify-around items-center z-50">
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="text-[10px] font-bold">HUB</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-outline">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="text-[10px] font-bold">BENCH</span>
+</button>
+<button class="w-12 h-12 -mt-10 bg-primary text-on-primary rounded-full shadow-lg flex items-center justify-center">
+<span class="material-symbols-outlined">add</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-outline">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="text-[10px] font-bold">BUDGET</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-outline">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-[10px] font-bold">STATS</span>
+</button>
+</div>
+</main>
+<!-- Micro-interaction Scripts -->
+<script>
+        // Simple interactions for the wizard UI
+        document.querySelectorAll('input, select, textarea').forEach(el => {
+            el.addEventListener('focus', () => {
+                // Focus styling handled by Tailwind classes, but could add JS hooks here
+            });
+        });
+
+        // Toggle state simulation
+        const toggle = document.querySelector('input[type="checkbox"]');
+        toggle?.addEventListener('change', (e) => {
+            if(e.target.checked) {
+                console.log("High Priority marked");
+                // Could trigger a visual warning/alert here
+            }
+        });
+
+        // Next button "loading" simulation
+        const nextBtn = document.querySelector('button.group');
+        nextBtn?.addEventListener('click', (e) => {
+            e.preventDefault();
+            const originalText = nextBtn.innerHTML;
+            nextBtn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> Saving...`;
+            nextBtn.disabled = true;
+            setTimeout(() => {
+                nextBtn.innerHTML = originalText;
+                nextBtn.disabled = false;
+                // In a real app, transition to Step 2
+            }, 1000);
+        });
+    </script>
+</body></html>

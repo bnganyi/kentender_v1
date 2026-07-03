@@ -189,3 +189,79 @@ class TestPP3WorkbenchItemViewModelP2002(IntegrationTestCase):
 		)
 		api_out = get_pp_workbench_item_view_model(queue="needs_planning", limit=5, start=0)
 		self.assertEqual(service_out, api_out)
+
+	def _first_non_empty_queue(self) -> tuple[str, list[dict]]:
+		for queue in _SUPPORTED_QUEUES:
+			out = get_workbench_item_view_model(queue=queue, actor="Administrator", limit=200, start=0)
+			if out.get("ok") and (out.get("items") or []):
+				return queue, out.get("items") or []
+		return "", []
+
+	def test_server_side_search_filter(self) -> None:
+		if self._skip:
+			self.skipTest("Procurement Planning not installed")
+		queue, items = self._first_non_empty_queue()
+		if not queue:
+			self.skipTest("No queue items available to validate search filter")
+		needle = str(items[0].get("underlying_object_code") or items[0].get("title") or "").strip()[:10]
+		if not needle:
+			self.skipTest("No searchable text in queue item")
+		out = get_workbench_item_view_model(
+			queue=queue,
+			actor="Administrator",
+			limit=200,
+			start=0,
+			search=needle,
+		)
+		self.assertTrue(out.get("ok"), msg=out)
+		self.assertGreaterEqual(out.get("total") or 0, 1)
+		for item in out.get("items") or []:
+			blob = " ".join(
+				[
+					str(item.get("title") or ""),
+					str(item.get("subtitle") or ""),
+					str(item.get("underlying_object_code") or ""),
+				]
+			).lower()
+			self.assertIn(needle.lower(), blob)
+
+	def test_server_side_sort_value_high_low(self) -> None:
+		if self._skip:
+			self.skipTest("Procurement Planning not installed")
+		queue, _items = self._first_non_empty_queue()
+		if not queue:
+			self.skipTest("No queue items available to validate sorting")
+		out = get_workbench_item_view_model(
+			queue=queue,
+			actor="Administrator",
+			limit=200,
+			start=0,
+			sort="value_high_low",
+		)
+		self.assertTrue(out.get("ok"), msg=out)
+		values = [float(item.get("estimated_value_number") or 0) for item in (out.get("items") or [])]
+		self.assertEqual(values, sorted(values, reverse=True))
+
+	def test_api_matches_service_output_with_query_args(self) -> None:
+		if self._skip:
+			self.skipTest("Procurement Planning not installed")
+		queue, items = self._first_non_empty_queue()
+		if not queue:
+			self.skipTest("No queue items available to validate API parity")
+		needle = str(items[0].get("title") or items[0].get("underlying_object_code") or "").strip()[:8]
+		service_out = get_workbench_item_view_model(
+			queue=queue,
+			actor="Administrator",
+			limit=20,
+			start=0,
+			search=needle,
+			sort="newest",
+		)
+		api_out = get_pp_workbench_item_view_model(
+			queue=queue,
+			limit=20,
+			start=0,
+			search=needle,
+			sort="newest",
+		)
+		self.assertEqual(service_out, api_out)

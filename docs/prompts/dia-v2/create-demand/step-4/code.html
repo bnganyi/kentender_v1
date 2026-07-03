@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Demand Submitted Successfully | KenTender DIA</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-background": "#191c1e",
+                        "on-primary-container": "#9bbdff",
+                        "data-block-bg": "#FFFFFF",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#004a99",
+                        "on-secondary-fixed": "#001d33",
+                        "surface-bright": "#f7f9fb",
+                        "tertiary": "#26364b",
+                        "tertiary-fixed-dim": "#b7c8e1",
+                        "status-committed": "#6366F1",
+                        "primary-fixed": "#d7e2ff",
+                        "on-tertiary-container": "#adbed7",
+                        "background": "#f7f9fb",
+                        "tertiary-container": "#3d4d62",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-secondary-container": "#003558",
+                        "on-surface-variant": "#424751",
+                        "surface-dim": "#d8dadc",
+                        "on-secondary-fixed-variant": "#004a77",
+                        "outline": "#737783",
+                        "surface-tint": "#255dad",
+                        "error": "#ba1a1a",
+                        "surface": "#f7f9fb",
+                        "primary": "#00346f",
+                        "surface-container-high": "#e6e8ea",
+                        "on-tertiary-fixed-variant": "#38485d",
+                        "on-primary-fixed": "#001b3f",
+                        "on-tertiary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#abc7ff",
+                        "on-primary-fixed-variant": "#00458f",
+                        "inverse-on-surface": "#eff1f3",
+                        "border-subtle": "#E2E8F0",
+                        "on-primary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface-variant": "#e0e3e5",
+                        "status-exhausted": "#EF4444",
+                        "inverse-surface": "#2d3133",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "inverse-primary": "#abc7ff",
+                        "surface-container": "#eceef0",
+                        "secondary-fixed-dim": "#98cbff",
+                        "secondary-container": "#00a2fd",
+                        "on-secondary": "#ffffff",
+                        "surface-container-low": "#f2f4f6",
+                        "status-available": "#10B981",
+                        "status-reserved": "#F59E0B",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#cfe5ff",
+                        "secondary": "#00629d",
+                        "outline-variant": "#c2c6d3",
+                        "on-surface": "#191c1e",
+                        "tertiary-fixed": "#d3e4fe"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-gap": "24px",
+                        "gutter": "12px",
+                        "container-padding": "16px",
+                        "card-padding": "20px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-sm": ["Manrope"],
+                        "data-mono": ["JetBrains Mono"],
+                        "headline-md": ["Manrope"],
+                        "headline-lg": ["Manrope"],
+                        "body-lg": ["Inter"],
+                        "headline-lg-mobile": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                        "headline-md": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+                        "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .success-float {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .confetti-slow {
+            animation: fall 10s linear infinite;
+        }
+        @keyframes fall {
+            to { transform: translateY(100vh) rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col overflow-x-hidden">
+<!-- Subtle Background Elements -->
+<div class="fixed inset-0 pointer-events-none opacity-20 overflow-hidden">
+<div class="absolute -top-24 -right-24 w-96 h-96 bg-secondary-container blur-[100px] rounded-full"></div>
+<div class="absolute top-1/2 -left-24 w-64 h-64 bg-primary-fixed-dim blur-[80px] rounded-full"></div>
+</div>
+<!-- Top Navigation Anchor (Shared Component Mapping) -->
+<header class="bg-surface-bright dark:bg-inverse-surface border-b border-outline-variant dark:border-outline flex justify-between items-center px-container-padding h-16 w-full relative z-10">
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">KenTender DIA</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-high transition-colors p-2 rounded-lg" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-high transition-colors p-2 rounded-lg" data-icon="help_outline">help_outline</button>
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-xs">
+                JD
+            </div>
+</div>
+</header>
+<main class="flex-grow flex items-center justify-center p-container-padding relative z-10">
+<div class="max-w-2xl w-full">
+<!-- Success Block -->
+<div class="bg-data-block-bg border border-border-subtle rounded-xl p-10 md:p-16 shadow-sm text-center relative overflow-hidden group">
+<!-- Animated Success Icon Wrapper -->
+<div class="mb-8 relative inline-block">
+<div class="absolute inset-0 bg-status-available opacity-20 blur-xl rounded-full scale-150 animate-pulse"></div>
+<div class="relative w-24 h-24 md:w-32 md:h-32 bg-status-available rounded-full flex items-center justify-center shadow-lg success-float">
+<span class="material-symbols-outlined text-white text-6xl md:text-7xl" style="font-variation-settings: 'wght' 700;">check_circle</span>
+</div>
+</div>
+<!-- Text Content -->
+<div class="space-y-4 mb-10">
+<h1 class="font-headline-lg text-headline-lg md:text-headline-lg text-on-background">Demand Submitted Successfully</h1>
+<p class="text-on-surface-variant text-body-lg max-w-md mx-auto">
+                        Your demand <span class="font-data-mono text-primary font-bold bg-primary-fixed px-2 py-0.5 rounded">Ref: DM-2024-0892</span> has been sent to the Department Approver for review.
+                    </p>
+</div>
+<!-- Strategic Summary Data Block -->
+<div class="bg-surface-container-low rounded-lg p-6 mb-10 text-left border border-outline-variant/30 transition-all hover:border-primary/30">
+<div class="flex justify-between items-center mb-4">
+<span class="font-label-caps text-label-caps text-outline uppercase">Next Milestone</span>
+<span class="px-3 py-1 bg-status-reserved/10 text-status-reserved rounded-full font-label-caps text-[10px] uppercase border border-status-reserved/20">Pending Approval</span>
+</div>
+<div class="flex items-start gap-4">
+<div class="w-1 bg-status-committed self-stretch rounded-full"></div>
+<div class="flex-grow">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-1">Financial Guardrail Check</h3>
+<p class="text-body-md text-on-surface-variant">Strategic sourcing review will commence within 24 hours.</p>
+</div>
+</div>
+</div>
+<!-- Action Bar -->
+<div class="flex flex-col md:flex-row gap-4 justify-center">
+<button class="bg-primary text-on-primary px-8 py-4 rounded-lg font-bold flex items-center justify-center gap-2 transition-all active:scale-95 hover:shadow-lg" onclick="window.location.reload()">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                        Go to Demand Hub
+                    </button>
+<button class="border border-outline-variant text-primary px-8 py-4 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-surface-container-high transition-all active:scale-95">
+<span class="material-symbols-outlined" data-icon="print">print</span>
+                        Print Summary
+                    </button>
+</div>
+</div>
+<!-- Contextual Footer Movement Timeline (Subtle) -->
+<div class="mt-section-gap grid grid-cols-1 md:grid-cols-3 gap-gutter opacity-80">
+<div class="flex items-center gap-3 p-4">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-sm" data-icon="history">history</span>
+</div>
+<div>
+<p class="font-label-caps text-[10px] text-outline uppercase">Timestamp</p>
+<p class="font-data-mono text-xs">Aug 24, 14:32</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-4">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-sm" data-icon="account_tree">account_tree</span>
+</div>
+<div>
+<p class="font-label-caps text-[10px] text-outline uppercase">Route</p>
+<p class="font-data-mono text-xs">HQ-FIN-APP-01</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-4">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-sm" data-icon="security">security</span>
+</div>
+<div>
+<p class="font-label-caps text-[10px] text-outline uppercase">Audit Hash</p>
+<p class="font-data-mono text-xs">8f2a...c91d</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Visual Polish: Floating Particles Layer -->
+<div class="fixed inset-0 pointer-events-none z-0" id="particle-container"></div>
+<script>
+        // Micro-interaction: Particle generation for success feel
+        function createParticles() {
+            const container = document.getElementById('particle-container');
+            const colors = ['#00346f', '#10B981', '#00a2fd'];
+            
+            for(let i = 0; i < 20; i++) {
+                const p = document.createElement('div');
+                const size = Math.random() * 8 + 4;
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                p.style.width = `${size}px`;
+                p.style.height = `${size}px`;
+                p.style.backgroundColor = color;
+                p.style.position = 'absolute';
+                p.style.left = `${Math.random() * 100}vw`;
+                p.style.top = '-20px';
+                p.style.borderRadius = '50%';
+                p.style.opacity = '0.3';
+                p.className = 'confetti-slow';
+                p.style.animationDelay = `${Math.random() * 5}s`;
+                p.style.animationDuration = `${Math.random() * 5 + 5}s`;
+                
+                container.appendChild(p);
+            }
+        }
+        createParticles();
+
+        // Responsive active state management (Hypothetically for TopBar if items were there)
+        document.querySelectorAll('nav a').forEach(el => {
+            el.addEventListener('click', () => {
+                document.querySelectorAll('nav a').forEach(nav => nav.classList.remove('font-bold', 'border-b-2'));
+                el.classList.add('font-bold', 'border-b-2');
+            });
+        });
+    </script>
+</body></html>

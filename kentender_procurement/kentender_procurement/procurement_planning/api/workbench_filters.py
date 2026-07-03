@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""P2-002 — Unified Workbench item view-model API."""
+"""PP3 workbench filters metadata API."""
 
 from __future__ import annotations
 
@@ -11,10 +11,9 @@ import frappe
 from frappe import _
 from frappe.utils import cint
 
-from kentender_procurement.procurement_planning.api.landing import resolve_pp_role_key
 from kentender_procurement.procurement_planning.permissions import pp_api_gates
-from kentender_procurement.procurement_planning.services.workbench_item_view_model import (
-	get_workbench_item_view_model,
+from kentender_procurement.procurement_planning.services.workbench_filter_metadata import (
+	get_workbench_filter_metadata,
 )
 
 
@@ -26,27 +25,17 @@ def _fail(*, code: str, message: str, role_key: str = "auditor") -> dict[str, An
 		"role_key": role_key,
 		"queue": "",
 		"total": 0,
-		"limit": 0,
-		"start": 0,
-		"items": [],
+		"facets": {},
 	}
 
 
 @frappe.whitelist()
-def get_pp_workbench_item_view_model(
+def get_pp_workbench_filter_metadata(
 	queue: str,
-	limit: int = 20,
-	start: int = 0,
 	include_test_data: int = 0,
 	search: str | None = None,
-	department: str | None = None,
-	category: str | None = None,
-	value_range: str | None = None,
-	created_from: str | None = None,
-	created_to: str | None = None,
-	sort: str | None = None,
 ) -> dict[str, Any]:
-	"""Return canonical PP3 workbench items for one queue."""
+	"""Return queue-scoped filter options/counts for the workbench toolbar."""
 	role_key, denied = pp_api_gates.planning_api_read_gate(
 		pp_api_gates.PLANNING_QUEUE_READ,
 		message=_("You do not have access to Procurement Planning workbench queues."),
@@ -60,17 +49,9 @@ def get_pp_workbench_item_view_model(
 		return denied
 	if role_key:
 		pass
-	return get_workbench_item_view_model(
+	return get_workbench_filter_metadata(
 		queue=queue,
 		actor=frappe.session.user,
-		limit=limit,
-		start=start,
 		include_test_data=bool(cint(include_test_data or 0)),
 		search=search,
-		department=department,
-		category=category,
-		value_range=value_range,
-		created_from=created_from,
-		created_to=created_to,
-		sort=sort,
 	)

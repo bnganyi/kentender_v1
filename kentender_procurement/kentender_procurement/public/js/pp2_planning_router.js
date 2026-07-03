@@ -89,9 +89,125 @@
 		{ key: "kes_100m_500m", label: "KES 100M - 500M" },
 		{ key: "over_kes_500m", label: "Over KES 500M" },
 	];
+	const WORKBENCH_STATE_QUERY_KEYS = [
+		"queue",
+		"item",
+		"plan",
+		"search",
+		"department",
+		"category",
+		"value_range",
+		"created_from",
+		"created_to",
+		"sort",
+		"page",
+	];
+	const WORKBENCH_ALLOWED_QUEUES = {
+		needs_planning: true,
+		draft_packages: true,
+		needs_review: true,
+		ready_to_release: true,
+		blocked: true,
+		recently_released: true,
+		"all-packages": true,
+	};
+	const WORKBENCH_QUEUE_ALIASES = {
+		"needs-planning": "needs_planning",
+		"draft-packages": "draft_packages",
+		"needs-review": "needs_review",
+		"ready-to-release": "ready_to_release",
+		"released-recently": "recently_released",
+	};
+	const WORKBENCH_SORT_OPTIONS = {
+		newest: true,
+		oldest: true,
+		value_high_low: true,
+		value_low_high: true,
+		title_asc: true,
+		title_desc: true,
+	};
 
 	function esc(s) {
 		return frappe.utils.escape_html(String(s == null ? "" : s));
+	}
+
+	function normalizeWorkbenchQueueValue(rawValue) {
+		const raw = String(rawValue || "").trim();
+		if (!raw) return "needs_planning";
+		const mapped = WORKBENCH_QUEUE_ALIASES[raw] || raw;
+		return WORKBENCH_ALLOWED_QUEUES[mapped] ? mapped : "needs_planning";
+	}
+
+	function normalizePositiveIntValue(rawValue, fallback) {
+		const n = Number(rawValue);
+		if (!Number.isFinite(n) || n < 1) return String(fallback || 1);
+		return String(Math.floor(n));
+	}
+
+	function readWorkbenchStateFromUrl(urlLike) {
+		const url = urlLike ? new URL(urlLike, window.location.origin) : new URL(window.location.href);
+		const search = url.searchParams;
+		const state = {
+			queue: normalizeWorkbenchQueueValue(search.get("queue")),
+			item: String(search.get("item") || "").trim(),
+			plan: String(search.get("plan") || "").trim(),
+			search: String(search.get("search") || "").trim(),
+			department: String(search.get("department") || "").trim(),
+			category: String(search.get("category") || "").trim(),
+			value_range: String(search.get("value_range") || "").trim(),
+			created_from: String(search.get("created_from") || "").trim(),
+			created_to: String(search.get("created_to") || "").trim(),
+			sort: String(search.get("sort") || "").trim(),
+			page: normalizePositiveIntValue(search.get("page"), 1),
+		};
+		if (!WORKBENCH_SORT_OPTIONS[state.sort]) {
+			state.sort = "newest";
+		}
+		return state;
+	}
+
+	function hasWorkbenchStateQuery(searchParams) {
+		const params = searchParams || new URLSearchParams(window.location.search || "");
+		for (let i = 0; i < WORKBENCH_STATE_QUERY_KEYS.length; i += 1) {
+			if (params.has(WORKBENCH_STATE_QUERY_KEYS[i])) return true;
+		}
+		return false;
+	}
+
+	function writeWorkbenchStateToUrl(partialState, options) {
+		const opts = options || {};
+		const url = new URL(window.location.href);
+		const current = readWorkbenchStateFromUrl(url.toString());
+		const next = Object.assign({}, current, partialState || {});
+		next.queue = normalizeWorkbenchQueueValue(next.queue);
+		next.page = normalizePositiveIntValue(next.page, 1);
+		next.sort = WORKBENCH_SORT_OPTIONS[String(next.sort || "").trim()] ? String(next.sort || "").trim() : "newest";
+		WORKBENCH_STATE_QUERY_KEYS.forEach(function (key) {
+			const value = String(next[key] || "").trim();
+			if (!value) {
+				url.searchParams.delete(key);
+				return;
+			}
+			url.searchParams.set(key, value);
+		});
+		const target = url.pathname + url.search + url.hash;
+		if (opts.replace !== false) {
+			window.history.replaceState({}, "", target);
+		} else {
+			window.history.pushState({}, "", target);
+		}
+		return next;
+	}
+
+	function canonicalizeWorkbenchStateQuery() {
+		if (!isPlanningWorkspaceRoute()) return;
+		if (readSurfaceSlug() !== "") return;
+		const params = new URLSearchParams(window.location.search || "");
+		if (!hasWorkbenchStateQuery(params)) return;
+		const currentUrl = window.location.pathname + window.location.search + window.location.hash;
+		writeWorkbenchStateToUrl({}, { replace: true });
+		const nextUrl = window.location.pathname + window.location.search + window.location.hash;
+		return nextUrl !== currentUrl;
 	}
 
 	function renderPlanningWorkbenchV4(root) {
@@ -100,112 +216,7 @@
 		root.className = "kt-pp-injected-shell pp4-workbench-root";
 		root.innerHTML =
 			'<section class="pp4-workbench" data-testid="pp4-workbench">' +
-			'<header class="pp4-topbar" data-testid="pp4-topbar">' +
-			'<div class="pp4-topbar__left">' +
-			'<h1 class="pp4-topbar__title">' +
-			esc(__("Planning Workbench")) +
-			"</h1>" +
-			'<label class="pp4-search" data-testid="pp4-topbar-search">' +
-			'<span class="material-symbols-outlined pp4-search__icon" aria-hidden="true">search</span>' +
-			'<input class="pp4-search__input" data-testid="pp4-search-input" type="text" value="" placeholder="' +
-			esc(__("Search planning data, packages, or demands...")) +
-			'" />' +
-			"</label>" +
-			"</div>" +
-			'<div class="pp4-topbar__right">' +
-			'<button class="pp4-icon-btn" type="button" data-testid="pp4-topbar-notifications"><span class="material-symbols-outlined">notifications</span></button>' +
-			'<button class="pp4-icon-btn" type="button" data-testid="pp4-topbar-history"><span class="material-symbols-outlined">history</span></button>' +
-			'<span class="pp4-divider" aria-hidden="true"></span>' +
-			'<span class="pp4-user" data-testid="pp4-topbar-user"><span class="material-symbols-outlined">account_circle</span> P. Officer</span>' +
-			"</div>" +
-			"</header>" +
-			'<div class="pp4-body">' +
-			'<nav class="pp4-breadcrumbs" data-testid="pp4-breadcrumbs">' +
-			"<span>Ministry of Health</span><span>›</span><span>Annual Planning</span><span>›</span><span>FY 2026/2027 Workbench</span>" +
-			"</nav>" +
-			'<div class="pp4-hero">' +
-			'<div class="pp4-hero__copy">' +
-			'<h2 class="pp4-hero__title">End-to-End Procurement Planning</h2>' +
-			'<p class="pp4-hero__subtitle">Manage package creation, validation, and approvals in a unified flow.</p>' +
-			"</div>" +
-			'<button class="pp4-hero__action" type="button" data-testid="pp4-export-plan"><span class="material-symbols-outlined">ios_share</span>Export Plan</button>' +
-			"</div>" +
-			'<section class="pp4-stats-grid" data-testid="pp4-stats-grid">' +
-			'<article class="pp4-stat-card"><span class="pp4-stat-card__bg material-symbols-outlined">account_balance_wallet</span><p class="pp4-stat-card__label">Total Estimate</p><h3 class="pp4-stat-card__value" data-testid="pp4-kpi-total-estimate-value">KES 1.2B</h3><p class="pp4-stat-card__hint pp4-stat-card__hint--positive"><span class="material-symbols-outlined">trending_up</span>+4.2% from FY 25/26</p></article>' +
-			'<article class="pp4-stat-card"><span class="pp4-stat-card__bg material-symbols-outlined">inventory_2</span><p class="pp4-stat-card__label">Active Packages</p><h3 class="pp4-stat-card__value" data-testid="pp4-kpi-active-packages-value">08</h3><p class="pp4-stat-card__hint">Across 4 Departments</p></article>' +
-			'<article class="pp4-stat-card"><span class="pp4-stat-card__bg material-symbols-outlined">verified</span><p class="pp4-stat-card__label">Approval Rate</p><h3 class="pp4-stat-card__value" data-testid="pp4-kpi-approval-rate-value">65%</h3><div class="pp4-stat-card__meter"><span data-testid="pp4-kpi-approval-rate-meter" style="width:65%"></span></div></article>' +
-			'<article class="pp4-stat-card pp4-stat-card--dark"><span class="pp4-stat-card__bg material-symbols-outlined">pending_actions</span><p class="pp4-stat-card__label">Pending Action</p><h3 class="pp4-stat-card__value" data-testid="pp4-kpi-pending-action-value">12 Items</h3><p class="pp4-stat-card__hint">Requiring immediate sign-off</p></article>' +
-			"</section>" +
-			'<section class="pp4-work-queue-tabs" data-testid="pp4-work-queue-tabs">' +
-			'<div class="pp4-work-queue-tabs__left">' +
-			'<button class="pp4-tab is-active" type="button" data-testid="pp4-tab-all-packages">All Packages <span class="pp4-tab__count" data-testid="pp4-count-all-packages">0</span></button>' +
-			'<button class="pp4-tab" type="button" data-testid="pp4-tab-in-creation">In Creation <span class="pp4-tab__count" data-testid="pp4-count-in-creation">0</span></button>' +
-			'<button class="pp4-tab" type="button" data-testid="pp4-tab-awaiting-review">Awaiting Review <span class="pp4-tab__count" data-testid="pp4-count-awaiting-review">0</span></button>' +
-			'<button class="pp4-tab" type="button" data-testid="pp4-tab-ready-for-release">Ready for Release <span class="pp4-tab__count" data-testid="pp4-count-ready-for-release">0</span></button>' +
-			"</div>" +
-			'<div class="pp4-work-queue-tabs__right">' +
-			'<button class="pp4-filter-btn" type="button" data-testid="pp4-filters"><span class="material-symbols-outlined">filter_list</span><span data-testid="pp4-filters-label">Filters</span></button>' +
-			'<div class="pp4-sort-host"><button class="pp4-filter-btn" type="button" data-testid="pp4-sort"><span class="material-symbols-outlined">sort</span><span data-testid="pp4-sort-label">Sort: Newest</span></button>' +
-			'<div class="pp4-sort-menu" data-testid="pp4-sort-menu" hidden>' +
-			'<button class="pp4-sort-menu__option" type="button" data-testid="pp4-sort-option-newest">Newest</button>' +
-			'<button class="pp4-sort-menu__option" type="button" data-testid="pp4-sort-option-value-high-low">Value High-Low</button>' +
-			'<button class="pp4-sort-menu__option" type="button" data-testid="pp4-sort-option-value-low-high">Value Low-High</button>' +
-			"</div></div>" +
-			"</div>" +
-			"</section>" +
-			'<section class="pp4-package-grid" data-testid="pp4-package-grid">' +
-			'<article class="pp4-package-card pp4-package-card--approved" data-testid="pp4-package-card">' +
-			'<div class="pp4-package-card__header"><span class="pp4-package-card__code" data-testid="pp4-package-code">PKG-MOH-2026-001</span><span class="pp4-package-card__status" data-testid="pp4-package-status-chip">Approved</span></div>' +
-			'<h3 class="pp4-package-card__title">Medical Supplies Q1</h3>' +
-			'<p class="pp4-package-card__desc">Ready for tender release. All technical validations and budget approvals completed.</p>' +
-			'<div class="pp4-package-card__meta"><span>EST. VALUE<br><strong class="pp4-meta-value">KES 450,000,000</strong></span><span>CONSOLIDATED<br><strong class="pp4-meta-value">42 Demands</strong></span></div>' +
-			'<div class="pp4-package-card__workflow"><p class="pp4-package-card__progress" data-testid="pp4-package-workflow-progress"><span>Workflow Progress</span><strong>100% Complete</strong></p><div class="pp4-progress"><span style="width:100%"></span></div><p class="pp4-stage-row"><span class="is-active">Selection</span><span class="is-active">Validation</span><span class="is-active">Sign-off</span></p></div>' +
-			'<div class="pp4-package-card__actions"><button class="pp4-package-card__primary" type="button" data-testid="pp4-package-primary-action">Release to Tender <span class="material-symbols-outlined">rocket_launch</span></button><button class="pp4-package-card__icon-btn" type="button"><span class="material-symbols-outlined">more_vert</span></button></div>' +
-			"</article>" +
-			'<article class="pp4-package-card pp4-package-card--review" data-testid="pp4-package-card">' +
-			'<div class="pp4-package-card__header"><span class="pp4-package-card__code" data-testid="pp4-package-code">PKG-MOH-2026-002</span><span class="pp4-package-card__status" data-testid="pp4-package-status-chip">Pending Review</span></div>' +
-			'<h3 class="pp4-package-card__title">Hospital Equipment Upgrade</h3>' +
-			'<p class="pp4-package-card__desc">Awaiting validation from the Technical Committee for MRI scanner specs.</p>' +
-			'<div class="pp4-package-card__meta"><span>EST. VALUE<br><strong class="pp4-meta-value">KES 320,500,000</strong></span><span>CONSOLIDATED<br><strong class="pp4-meta-value">18 Demands</strong></span></div>' +
-			'<div class="pp4-package-card__workflow"><p class="pp4-package-card__progress" data-testid="pp4-package-workflow-progress"><span>Workflow Progress</span><strong>65% Progress</strong></p><div class="pp4-progress"><span style="width:65%"></span></div><p class="pp4-stage-row"><span class="is-active">Selection</span><span class="is-active">Validation</span><span>Sign-off</span></p></div>' +
-			'<div class="pp4-package-card__actions"><button class="pp4-package-card__primary" type="button" data-testid="pp4-package-primary-action">Review Validation</button><button class="pp4-package-card__icon-btn" type="button"><span class="material-symbols-outlined">edit</span></button></div>' +
-			"</article>" +
-			'<article class="pp4-package-card pp4-package-card--draft" data-testid="pp4-package-card">' +
-			'<div class="pp4-package-card__header"><span class="pp4-package-card__code" data-testid="pp4-package-code">PKG-MOH-2026-003</span><span class="pp4-package-card__status" data-testid="pp4-package-status-chip">Drafting</span></div>' +
-			'<h3 class="pp4-package-card__title">IT Infrastructure Phase II</h3>' +
-			'<p class="pp4-package-card__desc">Initial grouping of server demands. Procurement strategy not yet defined.</p>' +
-			'<div class="pp4-package-card__meta"><span>EST. VALUE<br><strong class="pp4-meta-value">KES 112,000,000</strong></span><span>CONSOLIDATED<br><strong class="pp4-meta-value">05 Demands</strong></span></div>' +
-			'<div class="pp4-package-card__workflow"><p class="pp4-package-card__progress" data-testid="pp4-package-workflow-progress"><span>Workflow Progress</span><strong>15% Progress</strong></p><div class="pp4-progress"><span style="width:15%"></span></div><p class="pp4-stage-row"><span class="is-active">Selection</span><span>Validation</span><span>Sign-off</span></p></div>' +
-			'<div class="pp4-package-card__actions"><button class="pp4-package-card__primary" type="button" data-testid="pp4-package-primary-action">Continue Selection</button><button class="pp4-package-card__icon-btn" type="button"><span class="material-symbols-outlined">delete_outline</span></button></div>' +
-			"</article>" +
-			'<article class="pp4-package-card pp4-package-card--create" data-testid="pp4-create-package-card">' +
-			'<div class="pp4-package-card__create-icon"><span class="material-symbols-outlined">add_task</span></div>' +
-			'<h3 class="pp4-package-card__title">Create New Package</h3>' +
-			'<p class="pp4-package-card__desc">Start the planning wizard to consolidate unassigned demands into a strategic package.</p>' +
-			'<button class="pp4-package-card__primary" type="button" data-testid="pp4-new-planning-run">New Planning Run <span class="material-symbols-outlined">arrow_forward</span></button>' +
-			"</article>" +
-			"</section>" +
-			'<div class="pp4-filter-backdrop" data-testid="pp4-filter-backdrop" hidden></div>' +
-			'<aside class="pp4-filter-drawer" data-testid="pp4-filter-drawer" hidden>' +
-			'<header class="pp4-filter-drawer__header"><h3>Filters</h3><button class="pp4-filter-drawer__close" type="button" data-testid="pp4-filter-close"><span class="material-symbols-outlined">close</span></button></header>' +
-			'<div class="pp4-filter-drawer__body">' +
-			'<section class="pp4-filter-section"><label class="pp4-filter-section__label">Search</label><label class="pp4-filter-search"><span class="material-symbols-outlined">search</span><input data-testid="pp4-filter-search" type="text" placeholder="Package title or ID..." /></label></section>' +
-			'<section class="pp4-filter-section"><p class="pp4-filter-section__label">Status</p><div class="pp4-filter-status-group">' +
-			'<button class="pp4-filter-chip" type="button" data-testid="pp4-filter-status-in-creation">In Creation</button>' +
-			'<button class="pp4-filter-chip" type="button" data-testid="pp4-filter-status-awaiting-review">Awaiting Review</button>' +
-			'<button class="pp4-filter-chip" type="button" data-testid="pp4-filter-status-ready-for-release">Ready for Release</button>' +
-			"</div></section>" +
-			'<section class="pp4-filter-section"><label class="pp4-filter-section__label" for="pp4-filter-department">Department</label><select id="pp4-filter-department" data-testid="pp4-filter-department"></select></section>' +
-			'<section class="pp4-filter-section"><p class="pp4-filter-section__label">Estimated Value</p><div class="pp4-filter-radio-list">' +
-			'<label class="pp4-filter-radio" data-testid="pp4-filter-value-range-under-kes-100m"><input type="radio" name="pp4-filter-value-range" value="under_kes_100m" /><span>Under KES 100M</span></label>' +
-			'<label class="pp4-filter-radio" data-testid="pp4-filter-value-range-kes-100m-500m"><input type="radio" name="pp4-filter-value-range" value="kes_100m_500m" /><span>KES 100M - 500M</span></label>' +
-			'<label class="pp4-filter-radio" data-testid="pp4-filter-value-range-over-kes-500m"><input type="radio" name="pp4-filter-value-range" value="over_kes_500m" /><span>Over KES 500M</span></label>' +
-			"</div></section>" +
-			'<section class="pp4-filter-section"><p class="pp4-filter-section__label">Created At</p><div class="pp4-filter-date-grid"><label><span>From</span><input data-testid="pp4-filter-created-from" type="date" /></label><label><span>To</span><input data-testid="pp4-filter-created-to" type="date" /></label></div></section>' +
-			"</div>" +
-			'<footer class="pp4-filter-drawer__footer"><button type="button" data-testid="pp4-filter-clear-all">Clear All</button><button type="button" data-testid="pp4-filter-apply">Apply Filters</button></footer>' +
-			"</aside>" +
-			"</div>" +
+			'<iframe class="pp4-workbench-design-iframe" data-testid="pp4-workbench-design-iframe" src="/assets/kentender_procurement/workbench_design/needs_planning_default.html" title="Planning Workbench Needs Planning Default"></iframe>' +
 			"</section>";
 	}
 
@@ -1352,8 +1363,13 @@
 		const url = new URL(window.location.origin + ROOT_PATH);
 		const q = query || {};
 		Object.keys(q).forEach(function (key) {
-			const value = String(q[key] || "").trim();
+			let value = String(q[key] || "").trim();
 			if (!value) return;
+			if (key === "queue") value = normalizeWorkbenchQueueValue(value);
+			if (key === "page") value = normalizePositiveIntValue(value, 1);
+			if (key === "sort") {
+				value = WORKBENCH_SORT_OPTIONS[value] ? value : "newest";
+			}
 			url.searchParams.set(key, value);
 		});
 		return url.pathname + url.search;
@@ -1361,8 +1377,9 @@
 
 	function buildWorkbenchPackageRedirectUrl(packageCode) {
 		const code = String(packageCode || "").trim();
-		const queue = String(new URLSearchParams(window.location.search || "").get("queue") || "").trim();
-		const item = String(new URLSearchParams(window.location.search || "").get("item") || "").trim();
+		const state = readWorkbenchStateFromUrl();
+		const queue = String(state.queue || "").trim();
+		const item = String(state.item || "").trim();
 		const params = {};
 		if (code) {
 			params.package_code = decodeURIComponent(code);
@@ -1377,10 +1394,10 @@
 	}
 
 	function buildWorkbenchApprovedDemandsRedirectUrl() {
-		const search = new URLSearchParams(window.location.search || "");
+		const state = readWorkbenchStateFromUrl();
 		const params = {};
-		const queue = String(search.get("queue") || "").trim();
-		const item = String(search.get("item") || "").trim();
+		const queue = String(state.queue || "").trim();
+		const item = String(state.item || "").trim();
 		if (queue) {
 			params.queue = queue;
 		}
@@ -3582,7 +3599,6 @@
 		const hierarchyReady = enhanceSidebarVisualHierarchy(slug, planningRoute);
 		const root = ensureWorkspaceRoot();
 		if (!root) return false;
-		const routeSignature = String(window.location.pathname || "") + "|" + String(window.location.search || "");
 
 		if (resolution.action === "not_found") {
 			renderRouteNotFound(root);
@@ -3594,10 +3610,14 @@
 
 		const searchParams = new URLSearchParams(window.location.search || "");
 		const hasPackageCode = searchParams.has("package_code");
+		const hasWorkbenchState = hasWorkbenchStateQuery(searchParams);
 		const hasApprovedDemandQuery = searchParams.has("queue") || searchParams.has("item");
+		const hasPlanCode = searchParams.has("plan");
 		syncSurfaceUrl(slug, {
-			preserveSearch: slug === "" && (hasPackageCode || hasApprovedDemandQuery),
+			preserveSearch: slug === "" && (hasPackageCode || hasWorkbenchState || hasApprovedDemandQuery || hasPlanCode),
 		});
+		canonicalizeWorkbenchStateQuery();
+		const routeSignature = String(window.location.pathname || "") + "|" + String(window.location.search || "");
 		document.querySelectorAll('[data-testid="pp2-primary-workspace-shell"]').forEach(function (el) {
 			el.remove();
 		});
@@ -3620,13 +3640,7 @@
 		pp4FilterDrawerOpenByRoot.set(root, false);
 		pp4FilterDraftByRoot.set(root, pp4DefaultFilterState());
 		pp4FilterAppliedByRoot.set(root, pp4DefaultFilterState());
-		bindPP4TabPackageList(root);
-		bindPP4Search(root);
-		bindPP4SortAndFilters(root);
-		setPP4ActiveTab(root, "all-packages");
-		fetchAndRenderPP4Kpis(root);
-		fetchAndRenderPP4QueueCounts(root);
-		fetchAndRenderPP4PackageCards(root, "all-packages");
+		// Design pass only: keep this screen static (no backend wiring yet).
 		document.body.classList.remove("kt-pp2-shell");
 		document.body.classList.add("kt-pp4-shell");
 		syncSidebarActive("");

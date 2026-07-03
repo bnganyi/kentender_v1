@@ -25,9 +25,9 @@ class TestPP3WorkbenchRouteP3001(UnitTestCase):
 		self.assertTrue(path.exists(), msg=f"missing {path}")
 		source = path.read_text(encoding="utf-8", errors="replace")
 		self.assertIn(
-			'testId: "pp3-planning-workbench"',
+			'testId: "pp4-workbench"',
 			source,
-			"Root Planning surface must be tagged as PP3 Workbench (P3-001).",
+			"Root Planning surface must be tagged as PP4 Workbench (P3-001).",
 		)
 
 	def test_root_route_does_not_mount_legacy_planning_home(self) -> None:

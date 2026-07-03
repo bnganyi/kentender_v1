@@ -9,7 +9,7 @@ import re
 from typing import Any
 
 import frappe
-from frappe.utils import cint, flt, fmt_money, pretty_date
+from frappe.utils import cint, flt, fmt_money, getdate, pretty_date
 
 from kentender_procurement.procurement_planning.api.landing import resolve_pp_role_key
 from kentender_procurement.procurement_planning.services.workbench_demo_scope import (
@@ -87,6 +87,110 @@ def _apply_demo_scope(
 	return filtered, len(filtered)
 
 
+def _text(value: Any) -> str:
+	return str(value or "").strip()
+
+
+def _lower(value: Any) -> str:
+	return _text(value).lower()
+
+
+def _to_date(value: Any):
+	text = _text(value)
+	if not text:
+		return None
+	try:
+		return getdate(text)
+	except Exception:
+		return None
+
+
+def _value_range_matches(range_key: str, amount: float) -> bool:
+	key = _lower(range_key)
+	value = flt(amount or 0)
+	if key in ("", "all", "all_values"):
+		return True
+	if key in ("under_kes_100m", "under_100m"):
+		return value < 100_000_000
+	if key in ("kes_100m_500m", "100m_500m"):
+		return 100_000_000 <= value <= 500_000_000
+	if key in ("over_kes_500m", "over_500m"):
+		return value > 500_000_000
+	return True
+
+
+def _apply_query_filters(
+	items: list[dict[str, Any]],
+	*,
+	search: str | None = None,
+	department: str | None = None,
+	category: str | None = None,
+	value_range: str | None = None,
+	created_from: str | None = None,
+	created_to: str | None = None,
+) -> list[dict[str, Any]]:
+	search_q = _lower(search)
+	dept_q = _lower(department)
+	category_q = _lower(category)
+	date_from = _to_date(created_from)
+	date_to = _to_date(created_to)
+
+	filtered: list[dict[str, Any]] = []
+	for item in items:
+		if search_q:
+			blob = " ".join(
+				[
+					_text(item.get("title")),
+					_text(item.get("subtitle")),
+					_text(item.get("underlying_object_code")),
+					_text(item.get("category_label")),
+					_text(item.get("department_label")),
+					_text(item.get("status_pill_label")),
+					_text(item.get("budget_status_label")),
+				]
+			).lower()
+			if search_q not in blob:
+				continue
+		if dept_q and dept_q not in _lower(item.get("department_label")):
+			continue
+		if category_q and category_q not in _lower(item.get("category_label")):
+			continue
+		if not _value_range_matches(str(value_range or ""), flt(item.get("estimated_value_number") or 0)):
+			continue
+
+		item_date = _to_date(item.get("created_on"))
+		if date_from and item_date and item_date < date_from:
+			continue
+		if date_to and item_date and item_date > date_to:
+			continue
+		filtered.append(item)
+	return filtered
+
+
+def _apply_sort(items: list[dict[str, Any]], sort: str | None) -> list[dict[str, Any]]:
+	sort_key = _lower(sort)
+	if not sort_key or sort_key == "newest":
+		return sorted(
+			items,
+			key=lambda row: (_to_date(row.get("created_on")) is None, _to_date(row.get("created_on"))),
+			reverse=True,
+		)
+	if sort_key == "oldest":
+		return sorted(
+			items,
+			key=lambda row: (_to_date(row.get("created_on")) is None, _to_date(row.get("created_on"))),
+		)
+	if sort_key in ("value_high_low", "value_desc"):
+		return sorted(items, key=lambda row: flt(row.get("estimated_value_number") or 0), reverse=True)
+	if sort_key in ("value_low_high", "value_asc"):
+		return sorted(items, key=lambda row: flt(row.get("estimated_value_number") or 0))
+	if sort_key in ("title_asc", "name_asc"):
+		return sorted(items, key=lambda row: _lower(row.get("title")))
+	if sort_key in ("title_desc", "name_desc"):
+		return sorted(items, key=lambda row: _lower(row.get("title")), reverse=True)
+	return items
+
+
 def _relative_label(raw: Any) -> str:
 	text = str(raw or "").strip()
 	if not text:
@@ -153,6 +257,13 @@ def _needs_planning_items(rows: list[dict[str, Any]], plan_label: str) -> list[d
 			{
 				"category_label": category,
 				"meta_line": meta_line,
+				"estimated_value_number": flt(row.get("estimated_value") or 0),
+				"department_label": _text(
+					(row.get("requesting_department") or {}).get("name")
+					or (row.get("requesting_department") or {}).get("id")
+					or (row.get("requesting_department") or {}).get("code")
+				),
+				"created_on": _text(row.get("approval_date") or row.get("modified") or row.get("created_on")),
 				"budget_status": funding,
 				"budget_status_label": funding,
 				"status_pill_label": "Planning pending",
@@ -209,6 +320,7 @@ def _package_queue_items(rows: list[dict[str, Any]], queue: str, plan_label: str
 			{
 				"category_label": category,
 				"meta_line": meta_line,
+				"estimated_value_number": flt(row.get("estimated_value") or 0),
 				"budget_status": "",
 				"budget_status_label": "",
 				"status_pill_label": str(row.get("status") or entry["state_label"]).strip(),
@@ -268,6 +380,13 @@ def _blocked_items(rows: list[dict[str, Any]], plan_label: str) -> list[dict[str
 			{
 				"category_label": category,
 				"meta_line": meta_line,
+				"estimated_value_number": flt(row.get("estimated_value") or 0),
+				"department_label": _text(
+					row.get("procuring_entity_label")
+					or row.get("procuring_entity_code")
+					or ""
+				),
+				"created_on": _text(row.get("updated_at") or row.get("modified") or row.get("blocked_at")),
 				"budget_status": "",
 				"budget_status_label": "",
 				"status_pill_label": "Blocked",
@@ -326,6 +445,13 @@ def _recently_released_items(rows: list[dict[str, Any]], plan_label: str) -> lis
 			{
 				"category_label": "Released",
 				"meta_line": subtitle,
+				"estimated_value_number": flt(row.get("estimated_value") or pkg.get("estimated_value") or 0),
+				"department_label": _text(
+					row.get("procuring_entity_label")
+					or row.get("procuring_entity_code")
+					or ""
+				),
+				"created_on": _text(row.get("released_at") or row.get("modified")),
 				"budget_status": "",
 				"budget_status_label": "",
 				"status_pill_label": "Released",
@@ -360,6 +486,13 @@ def get_workbench_item_view_model(
 	limit: int = 20,
 	start: int = 0,
 	include_test_data: bool = False,
+	search: str | None = None,
+	department: str | None = None,
+	category: str | None = None,
+	value_range: str | None = None,
+	created_from: str | None = None,
+	created_to: str | None = None,
+	sort: str | None = None,
 ) -> dict[str, Any]:
 	"""Return unified PP3 workbench items for a queue."""
 	user = _session_user(actor)
@@ -379,11 +512,21 @@ def get_workbench_item_view_model(
 
 	safe_start = max(cint(start or 0), 0)
 	safe_limit = max(cint(limit or 20), 1)
+	has_query_filters = any(
+		[
+			_text(search),
+			_text(department),
+			_text(category),
+			_text(value_range),
+			_text(created_from),
+			_text(created_to),
+		]
+	)
 	role_key = resolve_pp_role_key(user) or "auditor"
 	plan_label = _active_plan_label(user)
 
 	if queue_key == "needs_planning":
-		fetch_limit = max(safe_limit + safe_start, 500)
+		fetch_limit = max(safe_limit + safe_start, 1000 if has_query_filters or _text(sort) else 500)
 		out = get_approved_demands_awaiting_planning(
 			{"start": 0, "limit": fetch_limit},
 			user,
@@ -402,6 +545,16 @@ def get_workbench_item_view_model(
 			}
 		rows = out.get("rows") or []
 		items = _needs_planning_items(rows, plan_label)
+		items = _apply_query_filters(
+			items,
+			search=search,
+			department=department,
+			category=category,
+			value_range=value_range,
+			created_from=created_from,
+			created_to=created_to,
+		)
+		items = _apply_sort(items, sort)
 		total = len(items)
 		items = items[safe_start : safe_start + safe_limit]
 		return {
@@ -415,10 +568,21 @@ def get_workbench_item_view_model(
 		}
 
 	if queue_key == "blocked":
-		read_limit = max(safe_limit + safe_start, 200)
+		read_limit = max(safe_limit + safe_start, 1000 if has_query_filters or _text(sort) else 200)
 		rows, total = _blocked_rows(user, limit=read_limit)
 		items = _blocked_items(rows, plan_label)
 		items, scoped_total = _apply_demo_scope(items, include_test_data=include_test_data)
+		items = _apply_query_filters(
+			items,
+			search=search,
+			department=department,
+			category=category,
+			value_range=value_range,
+			created_from=created_from,
+			created_to=created_to,
+		)
+		items = _apply_sort(items, sort)
+		scoped_total = len(items)
 		items = items[safe_start : safe_start + safe_limit]
 		return {
 			"ok": True,
@@ -431,10 +595,21 @@ def get_workbench_item_view_model(
 		}
 
 	if queue_key == "recently_released":
-		read_limit = max(safe_limit + safe_start, 200)
+		read_limit = max(safe_limit + safe_start, 1000 if has_query_filters or _text(sort) else 200)
 		rows, total = _released_recently_rows(user, limit=read_limit)
 		items = _recently_released_items(rows, plan_label)
 		items, scoped_total = _apply_demo_scope(items, include_test_data=include_test_data)
+		items = _apply_query_filters(
+			items,
+			search=search,
+			department=department,
+			category=category,
+			value_range=value_range,
+			created_from=created_from,
+			created_to=created_to,
+		)
+		items = _apply_sort(items, sort)
+		scoped_total = len(items)
 		items = items[safe_start : safe_start + safe_limit]
 		return {
 			"ok": True,
@@ -452,7 +627,11 @@ def get_workbench_item_view_model(
 		"ready_release": PKG_READY_FOR_RELEASE,
 	}
 	out = get_package_workbench_rows(
-		{"status": status_map[queue_key], "start": 0, "limit": max(safe_limit + safe_start, 200)},
+		{
+			"status": status_map[queue_key],
+			"start": 0,
+			"limit": max(safe_limit + safe_start, 1000 if has_query_filters or _text(sort) else 200),
+		},
 		user,
 	)
 	if not out.get("ok"):
@@ -470,6 +649,17 @@ def get_workbench_item_view_model(
 	rows = out.get("rows") or []
 	items = _package_queue_items(rows, queue_key, plan_label)
 	items, total = _apply_demo_scope(items, include_test_data=include_test_data)
+	items = _apply_query_filters(
+		items,
+		search=search,
+		department=department,
+		category=category,
+		value_range=value_range,
+		created_from=created_from,
+		created_to=created_to,
+	)
+	items = _apply_sort(items, sort)
+	total = len(items)
 	items = items[safe_start : safe_start + safe_limit]
 	return {
 		"ok": True,
