@@ -102,6 +102,26 @@ class TestPP4WorkbenchNeedsPlanningActionsW5Source(UnitTestCase):
 		fn = self._fn_block("function fetchAndApplyWorkbenchActivePlanContext(root) {")
 		self.assertIn("workbenchActivePlanCodeByRoot.set(root,", fn)
 
+	def test_row_data_uses_business_demand_code_not_internal_id_for_api_calls(self) -> None:
+		"""Regression guard: `demand.id` is the internal Frappe name (used only
+		as the DOM/selection key), while `demand.code` is the business code the
+		planning-inclusion APIs (`include_pp_demand_in_procurement_plan`,
+		`create_pp_package_from_planning_inclusion`) actually key journeys and
+		inclusions on. Passing `demand.id` through as `demand_code` previously
+		caused every real "Add to Active Plan" / "Create Package" call to fail
+		with a "Journey code could not be resolved" error, because the journey
+		bootstrap creates journeys keyed by the business code while the include
+		flow was looking them up by the internal id instead."""
+		# Note: this function contains a `while` loop at the same indentation
+		# as the function body, so the generic single-tab-closing-brace split
+		# used elsewhere in this file would truncate too early — bound on the
+		# next function's signature instead.
+		fn = self.source.split("function renderWorkbenchNeedsPlanningRows(root, doc, payload) {", 1)[1].split(
+			"\n\tfunction fetchAndRenderWorkbenchNeedsPlanningList", 1
+		)[0]
+		self.assertIn("code: demand.code || demand.id", fn)
+		self.assertNotIn("code: demand.id,", fn)
+
 	def test_selection_map_values_are_read_with_array_from_not_slice_call(self) -> None:
 		"""Regression guard: `Array.prototype.slice.call(map.values())` silently
 		returns `[]` because a Map iterator has no `.length` — it is not

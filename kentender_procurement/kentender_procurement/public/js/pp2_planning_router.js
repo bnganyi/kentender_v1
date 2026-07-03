@@ -539,7 +539,9 @@
 			const demandId = workbenchDemandFormRoute(demand.id);
 			if (demandId) {
 				rowDataByDemandId[demandId] = {
-					code: demand.id,
+					// `demand.id` is the internal Frappe name (used only as the DOM/selection
+					// key above); the planning-inclusion APIs expect the business `demand.code`.
+					code: demand.code || demand.id,
 					estimated_value: Number(row.estimated_value || 0),
 					currency: String(row.currency || "KES").trim() || "KES",
 				};
