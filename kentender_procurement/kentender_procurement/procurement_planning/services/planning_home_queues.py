@@ -496,6 +496,7 @@ def _blocked_package_rows(actor: str) -> list[dict[str, Any]]:
 				"estimated_value": flt(row.get("estimated_value")),
 				"currency": (row.get("currency") or "KES").strip() or "KES",
 				"blocker_message": blocker,
+				"status": status,
 				"modified": row.get("modified"),
 			}
 		)

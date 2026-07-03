@@ -19,6 +19,11 @@ from kentender_procurement.procurement_planning.pp2_constants import (
 	PKG_DRAFT,
 	PKG_IN_REVIEW,
 	PKG_READY_FOR_RELEASE,
+	READINESS_FAILED,
+	READINESS_NOT_RUN,
+	READINESS_PASSED,
+	READINESS_PASSED_WARNINGS,
+	READINESS_STALE,
 )
 from kentender_procurement.procurement_planning.services.active_plan_view_model import (
 	get_active_plan_view_model,
@@ -52,6 +57,18 @@ _QUEUE_STATE_LABELS = {
 	"ready_release": "Ready to release",
 	"blocked": "Blocked",
 	"recently_released": "Released recently",
+}
+
+# Awaiting Review / Ready for Release designs render a "Readiness" pill
+# whose tone is a small, fixed vocabulary (success/error/warning/neutral) —
+# map the package's own real `readiness_status` to that tone instead of the
+# per-UI-queue hardcoded value the first pass of this table used.
+_READINESS_TONE_MAP = {
+	READINESS_PASSED: "success",
+	READINESS_FAILED: "error",
+	READINESS_PASSED_WARNINGS: "warning",
+	READINESS_STALE: "neutral",
+	READINESS_NOT_RUN: "neutral",
 }
 
 _PACKAGE_ACTION_MAP = {
@@ -316,8 +333,13 @@ def _package_queue_items(rows: list[dict[str, Any]], queue: str, plan_label: str
 		label, action = _PACKAGE_ACTION_MAP.get(action_key, _PACKAGE_ACTION_MAP["open_package"])
 		meta_line = " · ".join([s for s in (method, value) if s])
 		status_detail = package_description or f"Next package action: {label}."
+		readiness_status = str(row.get("readiness_status") or READINESS_NOT_RUN).strip() or READINESS_NOT_RUN
 		entry.update(
 			{
+				"underlying_object_id": str(pkg.get("id") or "").strip(),
+				"currency": str(row.get("currency") or "KES").strip() or "KES",
+				"readiness_status": readiness_status,
+				"readiness_tone": _READINESS_TONE_MAP.get(readiness_status, "neutral"),
 				"category_label": category,
 				"meta_line": meta_line,
 				"estimated_value_number": flt(row.get("estimated_value") or 0),
@@ -376,8 +398,15 @@ def _blocked_items(rows: list[dict[str, Any]], plan_label: str) -> list[dict[str
 			plan_label=plan_label,
 		)
 		meta_line = " · ".join([s for s in (method, value) if s])
+		# Blocked demand rows have no package review-status concept at all
+		# (they never entered package review); package rows carry their own
+		# coarse `status` (Draft/In Review/etc.) — no granular sub-stage
+		# concept exists yet (flagged gap, same as review-release queues).
+		review_status_label = "" if is_demand else str(row.get("status") or "").strip()
 		entry.update(
 			{
+				"underlying_object_id": str(ref.get("id") or "").strip(),
+				"review_status_label": review_status_label,
 				"category_label": category,
 				"meta_line": meta_line,
 				"estimated_value_number": flt(row.get("estimated_value") or 0),
@@ -441,8 +470,13 @@ def _recently_released_items(rows: list[dict[str, Any]], plan_label: str) -> lis
 			plan_label=plan_label,
 		)
 		tender_code = str(tender.get("code") or "").strip()
+		# No granular tender-status concept exists yet (would need to read the
+		# actual Tender doctype); best-effort coarse label until that lands.
+		tender_status_label = "Tender Created" if tender_code else (str(row.get("status") or "").strip() or "Released")
 		entry.update(
 			{
+				"underlying_object_id": str(pkg.get("id") or "").strip(),
+				"tender_status_label": tender_status_label,
 				"category_label": "Released",
 				"meta_line": subtitle,
 				"estimated_value_number": flt(row.get("estimated_value") or pkg.get("estimated_value") or 0),

@@ -57,42 +57,7 @@
 	};
 	const approvedDemandFetchTokens = new WeakMap();
 	const approvedDemandSummaryTokens = new WeakMap();
-	const pp4PackageFetchTokens = new WeakMap();
-	const pp4KpiPayloadByRoot = new WeakMap();
-	const pp4QueueCountsByRoot = new WeakMap();
 	const pp4MountSignatureByRoot = new WeakMap();
-	const pp4PackageItemsByRoot = new WeakMap();
-	const pp4QueueItemsByRoot = new WeakMap();
-	const pp4SearchTermByRoot = new WeakMap();
-	const pp4SortModeByRoot = new WeakMap();
-	const pp4SortMenuOpenByRoot = new WeakMap();
-	const pp4FilterDrawerOpenByRoot = new WeakMap();
-	const pp4FilterDraftByRoot = new WeakMap();
-	const pp4FilterAppliedByRoot = new WeakMap();
-	const PP4_TAB_TO_QUEUE = {
-		"all-packages": "all-packages",
-		"in-creation": "draft_packages",
-		"awaiting-review": "needs_review",
-		"ready-for-release": "ready_release",
-	};
-	const PP4_ALL_PACKAGES_QUEUES = ["draft_packages", "needs_review", "ready_release"];
-	const PP4_SORT_MODES = [
-		{ key: "newest", label: "Newest" },
-		{ key: "value_high_low", label: "Value High-Low" },
-		{ key: "value_low_high", label: "Value Low-High" },
-	];
-	const PP4_DEPARTMENT_ALL = "all_departments";
-	const PP4_VALUE_RANGE_ALL = "all";
-	const PP4_STATUS_FILTERS = [
-		{ key: "in_creation", label: "In Creation" },
-		{ key: "awaiting_review", label: "Awaiting Review" },
-		{ key: "ready_for_release", label: "Ready for Release" },
-	];
-	const PP4_VALUE_RANGES = [
-		{ key: "under_kes_100m", label: "Under KES 100M" },
-		{ key: "kes_100m_500m", label: "KES 100M - 500M" },
-		{ key: "over_kes_500m", label: "Over KES 500M" },
-	];
 	const WORKBENCH_STATE_QUERY_KEYS = [
 		"queue",
 		"item",
@@ -308,15 +273,16 @@
 	}
 
 	// W3 — Queue Tabs + Counts. Order matches the design's tab bar left-to-right.
-	// Only the first four tabs render a "(NN)" count in the design; Blocked and
-	// Released are plain-text tabs with no count badge, so those two are left
-	// untouched to avoid introducing markup the design does not have.
+	// The "6. Blocked" design shows a count badge ("Blocked (12)") on its own
+	// tab, so that one is real per-pixel-fidelity (backed by the existing
+	// `get_pp_workbench_queue_counts` data); Released stays plain-text (bare
+	// "Released" across every screen, including its own).
 	const WORKBENCH_QUEUE_TAB_ORDER = [
 		{ uiQueue: "needs_planning", label: "Needs Planning", showCount: true },
 		{ uiQueue: "draft_packages", label: "In Creation", showCount: true },
 		{ uiQueue: "needs_review", label: "Awaiting Review", showCount: true },
 		{ uiQueue: "ready_to_release", label: "Ready for Release", showCount: true },
-		{ uiQueue: "blocked", label: "Blocked", showCount: false },
+		{ uiQueue: "blocked", label: "Blocked", showCount: true },
 		{ uiQueue: "recently_released", label: "Released", showCount: false },
 	];
 	const WORKBENCH_QUEUE_TAB_ACTIVE_CLASSES = [
@@ -379,11 +345,16 @@
 			btn.addEventListener("click", function () {
 				const current = readWorkbenchStateFromUrl();
 				if (current.queue === tab.uiQueue) return;
-				writeWorkbenchStateToUrl({ queue: tab.uiQueue, page: 1 });
-				applyWorkbenchQueueActiveTab(doc, tab.uiQueue);
-			});
+			writeWorkbenchStateToUrl({ queue: tab.uiQueue, page: 1 });
+			applyWorkbenchQueueActiveTab(doc, tab.uiQueue);
+			applyWorkbenchQueueTableVisibility(doc, tab.uiQueue);
+			applyWorkbenchInsightsVariant(doc, tab.uiQueue);
+			if (Object.prototype.hasOwnProperty.call(WORKBENCH_PACKAGE_UI_QUEUE_TO_API_QUEUE, tab.uiQueue)) {
+				fetchAndRenderWorkbenchPackageQueueList(root, doc, tab.uiQueue);
+			}
 		});
-	}
+	});
+}
 
 	function fetchAndApplyWorkbenchQueueCounts(root) {
 		if (!root) return;
@@ -404,7 +375,10 @@
 	function initializeWorkbenchQueueTabs(root) {
 		if (!root) return;
 		withWorkbenchIframeDocument(root, function (doc) {
-			applyWorkbenchQueueActiveTab(doc, readWorkbenchStateFromUrl().queue);
+			const activeUiQueue = readWorkbenchStateFromUrl().queue;
+			applyWorkbenchQueueActiveTab(doc, activeUiQueue);
+			applyWorkbenchQueueTableVisibility(doc, activeUiQueue);
+			applyWorkbenchInsightsVariant(doc, activeUiQueue);
 			bindWorkbenchQueueTabs(root, doc);
 		});
 		fetchAndApplyWorkbenchQueueCounts(root);
@@ -417,24 +391,78 @@
 	// same accepted limitation already documented for W3 (per-queue list
 	// rendering lands with W6/W7/W8, once those queue screens are designed).
 	const WORKBENCH_NEEDS_PLANNING_PAGE_SIZE = 10;
+	const WORKBENCH_NEEDS_PLANNING_TABLE_SECTION_TESTID = "pp4-workbench-needs-planning-table-section";
+	const WORKBENCH_PACKAGE_TABLE_SECTION_TESTID = "pp4-workbench-package-table-section";
 	const WORKBENCH_CATEGORY_TONE_BY_VALUE = {
 		goods: "cat-goods",
 		works: "cat-works",
 		services: "cat-services",
 		consultancy: "cat-consultancy",
 	};
+
+	// Shared across every row builder (Needs Planning + all 5 package-queue
+	// tables) so the dot+pill category chip stays visually identical
+	// everywhere, rather than each builder reimplementing its own class
+	// string. `badgeEl` is expected to already contain the dot `<span>`
+	// (ported verbatim from Needs Planning's own markup into every table).
+	function applyWorkbenchCategoryChip(doc, badgeEl, categoryValue) {
+		if (!badgeEl) return;
+		const value = String(categoryValue || "").trim();
+		const tone = WORKBENCH_CATEGORY_TONE_BY_VALUE[value.toLowerCase()] || "cat-goods";
+		badgeEl.className =
+			"px-2.5 py-1 rounded-full bg-" + tone + "/10 text-" + tone + " font-label-sm font-semibold flex items-center gap-1 w-fit";
+		const dot = badgeEl.querySelector("span");
+		if (dot) dot.className = "w-1.5 h-1.5 rounded-full bg-" + tone;
+		while (badgeEl.lastChild && badgeEl.lastChild !== dot) {
+			badgeEl.removeChild(badgeEl.lastChild);
+		}
+		badgeEl.appendChild(doc.createTextNode(" " + (value || "\u2014")));
+	}
+
+	// No design mockup shows an empty state for any table, so this row is
+	// fabricated (not ported) from tokens already used elsewhere in this
+	// file. `colspan` is read from the table's own `<thead>` rather than
+	// hardcoded, since every table has a different column count.
+	function appendWorkbenchEmptyStateRow(doc, tbody, message) {
+		if (!doc || !tbody) return;
+		const table = tbody.closest("table");
+		const headerRow = table ? table.querySelector("thead tr") : null;
+		const colspan = headerRow ? headerRow.children.length : 1;
+		const td = doc.createElement("td");
+		td.setAttribute("colspan", String(colspan));
+		td.className = "py-16 text-center";
+		const wrap = doc.createElement("div");
+		wrap.className = "flex flex-col items-center gap-2 text-on-surface-variant";
+		const icon = doc.createElement("span");
+		icon.className = "material-symbols-outlined text-[32px]";
+		icon.textContent = "inbox";
+		const label = doc.createElement("span");
+		label.className = "font-body-sm";
+		label.textContent = message;
+		wrap.appendChild(icon);
+		wrap.appendChild(label);
+		td.appendChild(wrap);
+		const tr = doc.createElement("tr");
+		tr.setAttribute("data-testid", "pp4-workbench-empty-row");
+		tr.appendChild(td);
+		tbody.appendChild(tr);
+	}
 	const workbenchNeedsPlanningRowTemplateByRoot = new WeakMap();
 	const workbenchActivePlanCodeByRoot = new WeakMap();
 	const workbenchNeedsPlanningRowDataByRoot = new WeakMap();
 	const workbenchNeedsPlanningSelectionByRoot = new WeakMap();
 
+	// W6 added a second table+footer pair (package queues) to the same
+	// document, so table/footer lookups must be scoped to their own
+	// toggleable section rather than relying on document-order "first match".
 	function workbenchNeedsPlanningTableBody(doc) {
-		return doc ? doc.querySelector("table tbody") : null;
+		const section = doc ? doc.querySelector('[data-testid="' + WORKBENCH_NEEDS_PLANNING_TABLE_SECTION_TESTID + '"]') : null;
+		return section ? section.querySelector("table tbody") : null;
 	}
 
 	function workbenchNeedsPlanningFooterEls(doc) {
-		if (!doc) return null;
-		const footer = doc.querySelector("footer");
+		const section = doc ? doc.querySelector('[data-testid="' + WORKBENCH_NEEDS_PLANNING_TABLE_SECTION_TESTID + '"]') : null;
+		const footer = section ? section.querySelector("footer") : null;
 		if (!footer) return null;
 		// `footer.children[1]` (not `querySelector("div:nth-child(2)")`, which
 		// would also match the nested "rows per page" dropdown div — its own
@@ -482,18 +510,7 @@
 		if (deptEl) deptEl.textContent = String(data.department || "").trim() || "\u2014";
 
 		const categoryBadge = cells[3] ? cells[3].querySelector("span") : null;
-		if (categoryBadge) {
-			const categoryValue = String(data.category || "").trim();
-			const tone = WORKBENCH_CATEGORY_TONE_BY_VALUE[categoryValue.toLowerCase()] || "cat-goods";
-			categoryBadge.className =
-				"px-2.5 py-1 rounded-full bg-" + tone + "/10 text-" + tone + " font-label-sm font-semibold flex items-center gap-1 w-fit";
-			const dot = categoryBadge.querySelector("span");
-			if (dot) dot.className = "w-1.5 h-1.5 rounded-full bg-" + tone;
-			while (categoryBadge.lastChild && categoryBadge.lastChild !== dot) {
-				categoryBadge.removeChild(categoryBadge.lastChild);
-			}
-			categoryBadge.appendChild(doc.createTextNode(" " + (categoryValue || "\u2014")));
-		}
+		applyWorkbenchCategoryChip(doc, categoryBadge, data.category);
 
 		const valueSpans = cells[4] ? cells[4].querySelectorAll("span") : [];
 		if (valueSpans[0]) valueSpans[0].textContent = String(data.currency || "KES").trim();
@@ -547,6 +564,9 @@
 				};
 			}
 		});
+		if (!rows.length) {
+			appendWorkbenchEmptyStateRow(doc, tbody, __("No demands need planning right now."));
+		}
 		workbenchNeedsPlanningRowDataByRoot.set(root, rowDataByDemandId);
 		// Selection is page/list-scoped: a fresh render (page change or a
 		// completed action) always starts from no selection, since the newly
@@ -839,1019 +859,464 @@
 		});
 	}
 
-	function renderPP4QueueCounts(root, counts) {
-		if (!root || !counts || typeof counts !== "object") return;
-		pp4QueueCountsByRoot.set(root, counts);
-		const safeCount = function (key) {
-			const value = Number(counts[key] || 0);
-			return Number.isFinite(value) && value > 0 ? value : 0;
-		};
-		const inCreation = safeCount("draft_packages");
-		const awaitingReview = safeCount("needs_review");
-		const readyForRelease = safeCount("ready_to_release");
-		const allPackages = inCreation + awaitingReview + readyForRelease;
-		const setCount = function (testId, value) {
-			const node = root.querySelector('[data-testid="' + testId + '"]');
-			if (!node) return;
-			node.textContent = String(value);
-		};
-		setCount("pp4-count-all-packages", allPackages);
-		setCount("pp4-count-in-creation", inCreation);
-		setCount("pp4-count-awaiting-review", awaitingReview);
-		setCount("pp4-count-ready-for-release", readyForRelease);
-		renderPP4PendingActionKpi(root, counts);
-		renderPP4KpisFromState(root);
+	// W6 — In Creation / Awaiting Review / Ready for Release Lists.
+	// (Remaining-queues pass, W7/W8): every non-Needs-Planning queue now has
+	// its own real pixel design and its own table shape. In Creation keeps
+	// its original table; Awaiting Review + Ready for Release share one
+	// table (confirmed byte-identical in the source designs); Blocked and
+	// Released each have their own. `WORKBENCH_QUEUE_GROUPS` is the single
+	// source of truth mapping each uiQueue to the DOM section it renders
+	// into and the row-builder function that clones that section's own
+	// pristine `<tr>` — never freehand-built markup, mirroring the W4
+	// discipline for Needs Planning.
+	const WORKBENCH_PACKAGE_QUEUE_PAGE_SIZE = 10;
+	const WORKBENCH_PACKAGE_UI_QUEUE_TO_API_QUEUE = {
+		draft_packages: "draft_packages",
+		needs_review: "needs_review",
+		ready_to_release: "ready_release",
+		blocked: "blocked",
+		recently_released: "recently_released",
+	};
+	const WORKBENCH_REVIEW_RELEASE_TABLE_SECTION_TESTID = "pp4-workbench-review-release-table-section";
+	const WORKBENCH_BLOCKED_TABLE_SECTION_TESTID = "pp4-workbench-blocked-table-section";
+	const WORKBENCH_RELEASED_TABLE_SECTION_TESTID = "pp4-workbench-released-table-section";
+	// Every distinct table section across the 5 non-Needs-Planning queues
+	// (Awaiting Review + Ready for Release share one, so this is 4 entries
+	// for 5 queues) — used to lazily capture one row template per section
+	// and to bind/toggle each section's own footer independently.
+	const WORKBENCH_QUEUE_GROUP_SECTION_TESTIDS = [
+		WORKBENCH_PACKAGE_TABLE_SECTION_TESTID,
+		WORKBENCH_REVIEW_RELEASE_TABLE_SECTION_TESTID,
+		WORKBENCH_BLOCKED_TABLE_SECTION_TESTID,
+		WORKBENCH_RELEASED_TABLE_SECTION_TESTID,
+	];
+	// Maps the package's own real `readiness_status` (also reused as-is for
+	// Blocked's fixed "error" tone) to a small, fixed icon vocabulary —
+	// replaces the fake per-uiQueue sample values the first pass of the
+	// In Creation table used.
+	const WORKBENCH_READINESS_ICON_BY_TONE = {
+		success: "check_circle",
+		error: "error",
+		warning: "warning",
+		neutral: "pending",
+	};
+	const workbenchPackageQueueRowTemplateByRoot = new WeakMap();
+
+	function workbenchPackageQueueTableBody(doc, sectionTestId) {
+		const section = doc ? doc.querySelector('[data-testid="' + (sectionTestId || WORKBENCH_PACKAGE_TABLE_SECTION_TESTID) + '"]') : null;
+		return section ? section.querySelector("table tbody") : null;
 	}
 
-	function pp4SetTabBadgeCounts(root, inCreation, awaitingReview, readyForRelease) {
-		if (!root) return;
-		const allPackages = Math.max(0, inCreation) + Math.max(0, awaitingReview) + Math.max(0, readyForRelease);
-		const setCount = function (testId, value) {
-			const node = root.querySelector('[data-testid="' + testId + '"]');
-			if (!node) return;
-			node.textContent = String(Math.max(0, Number(value || 0)));
-		};
-		setCount("pp4-count-all-packages", allPackages);
-		setCount("pp4-count-in-creation", inCreation);
-		setCount("pp4-count-awaiting-review", awaitingReview);
-		setCount("pp4-count-ready-for-release", readyForRelease);
+	function workbenchPackageQueueFooterEls(doc, sectionTestId) {
+		const section = doc ? doc.querySelector('[data-testid="' + (sectionTestId || WORKBENCH_PACKAGE_TABLE_SECTION_TESTID) + '"]') : null;
+		const footer = section ? section.querySelector("footer") : null;
+		if (!footer) return null;
+		const summaryGroup = footer.children[1];
+		if (!summaryGroup) return null;
+		const summaryEl = summaryGroup.querySelector("span");
+		const buttons = Array.prototype.slice.call(summaryGroup.querySelectorAll("button"));
+		if (!summaryEl || buttons.length < 2) return null;
+		return { summaryEl: summaryEl, prevBtn: buttons[0], nextBtn: buttons[buttons.length - 1] };
 	}
 
-	function pp4KpiNode(root, testId) {
-		if (!root) return null;
-		return root.querySelector('[data-testid="' + testId + '"]');
-	}
+	const WORKBENCH_QUEUE_GROUP_SECTION_TESTID_BY_UI_QUEUE = {
+		draft_packages: WORKBENCH_PACKAGE_TABLE_SECTION_TESTID,
+		needs_review: WORKBENCH_REVIEW_RELEASE_TABLE_SECTION_TESTID,
+		ready_to_release: WORKBENCH_REVIEW_RELEASE_TABLE_SECTION_TESTID,
+		blocked: WORKBENCH_BLOCKED_TABLE_SECTION_TESTID,
+		recently_released: WORKBENCH_RELEASED_TABLE_SECTION_TESTID,
+	};
 
-	function pp4SetKpiText(root, testId, value) {
-		const node = pp4KpiNode(root, testId);
-		if (!node) return;
-		node.textContent = String(value == null ? "" : value);
-	}
-
-	function pp4CompactKes(value) {
-		const n = Number(value || 0);
-		if (!Number.isFinite(n) || n <= 0) return "KES 0";
-		const abs = Math.abs(n);
-		if (abs >= 1000000000) {
-			return "KES " + (abs / 1000000000).toFixed(1).replace(/\.0$/, "") + "B";
-		}
-		if (abs >= 1000000) {
-			return "KES " + (abs / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
-		}
-		return "KES " + abs.toLocaleString();
-	}
-
-	function renderPP4PendingActionKpi(root, counts) {
-		const c = counts && typeof counts === "object" ? counts : {};
-		const needsReview = Number(c.needs_review || 0);
-		const readyForRelease = Number(c.ready_to_release || 0);
-		const pendingAction = (Number.isFinite(needsReview) ? needsReview : 0) + (Number.isFinite(readyForRelease) ? readyForRelease : 0);
-		pp4SetKpiText(root, "pp4-kpi-pending-action-value", String(Math.max(0, pendingAction)) + " Items");
-	}
-
-	function pp4ReadNumericKpi(byId, key) {
-		const value = Number((byId[key] && byId[key].value) || 0);
-		return Number.isFinite(value) ? Math.max(0, value) : 0;
-	}
-
-	function renderPP4KpisFromState(root) {
-		if (!root) return;
-		const payload = pp4KpiPayloadByRoot.get(root) || null;
-		if (!payload || payload.ok === false) return;
-		const kpis = Array.isArray(payload.kpis) ? payload.kpis : [];
-		const byId = {};
-		for (let i = 0; i < kpis.length; i += 1) {
-			const row = kpis[i] || {};
-			const id = String(row.id || "").trim();
-			if (!id) continue;
-			byId[id] = row;
-		}
-		const queueCounts = pp4QueueCountsByRoot.get(root) || null;
-		const safeTotalPackages = pp4ReadNumericKpi(byId, "total_packages");
-		const safeTotalValue = pp4ReadNumericKpi(byId, "total_planned_value");
-		const safeApproved = pp4ReadNumericKpi(byId, "approved_packages");
-		const safeReadyForTender = pp4ReadNumericKpi(byId, "ready_for_tender");
-		let activePackages = safeTotalPackages;
-		if (queueCounts && typeof queueCounts === "object") {
-			const inCreation = Number(queueCounts.draft_packages || 0);
-			const awaitingReview = Number(queueCounts.needs_review || 0);
-			const readyForRelease = Number(queueCounts.ready_to_release || 0);
-			const queueActive =
-				(Number.isFinite(inCreation) ? Math.max(0, inCreation) : 0) +
-				(Number.isFinite(awaitingReview) ? Math.max(0, awaitingReview) : 0) +
-				(Number.isFinite(readyForRelease) ? Math.max(0, readyForRelease) : 0);
-			if (queueActive > 0) activePackages = queueActive;
-		}
-		const effectiveApproved = safeApproved + safeReadyForTender;
-		const approvalRate = activePackages > 0 ? Math.round((effectiveApproved / activePackages) * 100) : 0;
-		const boundedApprovalRate = Math.max(0, Math.min(100, approvalRate));
-		pp4SetKpiText(root, "pp4-kpi-total-estimate-value", pp4CompactKes(safeTotalValue));
-		pp4SetKpiText(root, "pp4-kpi-active-packages-value", String(activePackages));
-		pp4SetKpiText(root, "pp4-kpi-approval-rate-value", String(boundedApprovalRate) + "%");
-		const meter = pp4KpiNode(root, "pp4-kpi-approval-rate-meter");
-		if (meter) {
-			meter.style.width = String(boundedApprovalRate) + "%";
-		}
-	}
-
-	function renderPP4Kpis(root, payload) {
-		if (!root || !payload || payload.ok === false) return;
-		pp4KpiPayloadByRoot.set(root, payload);
-		renderPP4KpisFromState(root);
-	}
-
-	function fetchAndRenderPP4Kpis(root) {
-		if (!root || !frappe || typeof frappe.call !== "function") return;
-		frappe.call({
-			method: PP_LANDING_SHELL_API,
-			args: {},
-			callback: function (response) {
-				const message = (response && response.message) || {};
-				renderPP4Kpis(root, message);
-			},
+	function applyWorkbenchQueueTableVisibility(doc, activeUiQueue) {
+		if (!doc) return;
+		const needsSection = doc.querySelector('[data-testid="' + WORKBENCH_NEEDS_PLANNING_TABLE_SECTION_TESTID + '"]');
+		const packageSection = doc.querySelector('[data-testid="' + WORKBENCH_PACKAGE_TABLE_SECTION_TESTID + '"]');
+		const activeSectionTestId = WORKBENCH_QUEUE_GROUP_SECTION_TESTID_BY_UI_QUEUE[activeUiQueue] || "";
+		if (needsSection) needsSection.hidden = activeUiQueue !== "needs_planning";
+		if (packageSection) packageSection.hidden = activeSectionTestId !== WORKBENCH_PACKAGE_TABLE_SECTION_TESTID;
+		WORKBENCH_QUEUE_GROUP_SECTION_TESTIDS.forEach(function (sectionTestId) {
+			if (sectionTestId === WORKBENCH_PACKAGE_TABLE_SECTION_TESTID) return;
+			const section = doc.querySelector('[data-testid="' + sectionTestId + '"]');
+			if (section) section.hidden = sectionTestId !== activeSectionTestId;
 		});
 	}
 
-	function fetchAndRenderPP4QueueCounts(root) {
-		if (!root || !frappe || typeof frappe.call !== "function") return;
-		frappe.call({
-			method: WORKBENCH_QUEUE_COUNTS_API,
-			args: {},
-			callback: function (response) {
-				const message = (response && response.message) || {};
-				if (!message || message.ok === false) return;
-				renderPP4QueueCounts(root, message.counts || {});
-			},
+	// W7/W8: the "Workbench Insights" heading stays static text for every
+	// queue (per direction); only these two insight-items blocks toggle.
+	const WORKBENCH_INSIGHTS_DEFAULT_TESTID = "pp4-workbench-insights-default";
+	const WORKBENCH_INSIGHTS_RELEASED_TESTID = "pp4-workbench-insights-released";
+
+	function applyWorkbenchInsightsVariant(doc, activeUiQueue) {
+		if (!doc) return;
+		const defaultEl = doc.querySelector('[data-testid="' + WORKBENCH_INSIGHTS_DEFAULT_TESTID + '"]');
+		const releasedEl = doc.querySelector('[data-testid="' + WORKBENCH_INSIGHTS_RELEASED_TESTID + '"]');
+		const isReleased = activeUiQueue === "recently_released";
+		if (defaultEl) defaultEl.hidden = isReleased;
+		if (releasedEl) releasedEl.hidden = !isReleased;
+	}
+
+	// Abbreviates a KES amount to the design's "1.4B"/"450M"/"12.5M" style
+	// (Needs Planning's full "850,000,000" notation is a different column
+	// on a different table, left untouched by this helper).
+	function workbenchAbbreviateMoney(value) {
+		const amount = Number(value) || 0;
+		const sign = amount < 0 ? "-" : "";
+		const abs = Math.abs(amount);
+		function trimmed(divided) {
+			const fixed = divided.toFixed(1);
+			return fixed.endsWith(".0") ? fixed.slice(0, -2) : fixed;
+		}
+		if (abs >= 1e9) return sign + trimmed(abs / 1e9) + "B";
+		if (abs >= 1e6) return sign + trimmed(abs / 1e6) + "M";
+		if (abs >= 1e3) return sign + trimmed(abs / 1e3) + "K";
+		return sign + String(Math.round(abs));
+	}
+
+	function buildWorkbenchPackageQueueRow(template, doc, item, uiQueue) {
+		const tr = template.cloneNode(true);
+		const data = item || {};
+		const packageId = String(data.underlying_object_id || "").trim();
+		tr.setAttribute("data-package-id", packageId);
+
+		const cells = tr.querySelectorAll("td");
+		const titleCell = cells[0];
+		const titleLink = titleCell ? titleCell.querySelector("a") : null;
+		const refEl = titleCell ? titleCell.querySelector("p") : null;
+		const href = packageId ? "/app/procurement-package/" + encodeURIComponent(packageId) : "#";
+		if (titleLink) {
+			titleLink.textContent = String(data.title || "").trim();
+			titleLink.setAttribute("href", href);
+		}
+		if (refEl) {
+			refEl.textContent = __("REF: {0}", [String(data.underlying_object_code || "").trim()]);
+		}
+
+		const linkedDemandsEl = cells[1] ? cells[1].querySelector("span") : null;
+		if (linkedDemandsEl) {
+			const demandCount = Number(data.consolidated_demand_count);
+			linkedDemandsEl.textContent = String(Number.isFinite(demandCount) ? Math.round(demandCount) : 0);
+		}
+
+		const categoryBadge = cells[2] ? cells[2].querySelector("span") : null;
+		applyWorkbenchCategoryChip(doc, categoryBadge, data.category_label);
+
+		const valueSpans = cells[3] ? cells[3].querySelectorAll("span") : [];
+		if (valueSpans[0]) valueSpans[0].textContent = String(data.currency || "KES").trim();
+		if (valueSpans[1]) valueSpans[1].textContent = workbenchAbbreviateMoney(data.estimated_value_number);
+
+		const readinessWrap = cells[4] ? cells[4].querySelector("div") : null;
+		applyWorkbenchPackagePillReadiness(readinessWrap, data.readiness_tone, String(data.readiness_status || "").trim());
+
+		tr.addEventListener("click", function () {
+			if (!packageId) return;
+			frappe.set_route("procurement-package", packageId);
 		});
+
+		return tr;
 	}
 
-	function pp4StatusToneClass(statusLabel) {
-		const status = String(statusLabel || "").toLowerCase();
-		if (status.indexOf("review") >= 0) return "pp4-package-card--review";
-		if (status.indexOf("draft") >= 0) return "pp4-package-card--draft";
-		if (status.indexOf("ready") >= 0 || status.indexOf("approved") >= 0) {
-			return "pp4-package-card--approved";
+	// Fills the same "rounded-full w-fit" pill style used by the In
+	// Creation table's own Readiness column (icon + label share one
+	// tinted background), with the package's real readiness fields.
+	function applyWorkbenchPackagePillReadiness(wrapEl, tone, label) {
+		if (!wrapEl) return;
+		const safeTone = WORKBENCH_READINESS_ICON_BY_TONE[tone] ? tone : "neutral";
+		const icon = wrapEl.querySelector(".material-symbols-outlined");
+		const labelEl = wrapEl.querySelector("span:last-child");
+		wrapEl.className = "flex items-center gap-2 px-3 py-1 bg-status-" + safeTone + "/10 text-status-" + safeTone + " rounded-full w-fit";
+		if (icon) icon.textContent = WORKBENCH_READINESS_ICON_BY_TONE[safeTone];
+		if (labelEl) labelEl.textContent = label;
+	}
+
+	// Fills the stacked icon-over-pill style used by Awaiting Review /
+	// Ready for Release's Readiness column and Blocked's Blocker Reason
+	// column (same DOM shape in both designs: icon has no background,
+	// only the label span is tinted).
+	function applyWorkbenchStackedStatusPill(wrapEl, tone, label) {
+		if (!wrapEl) return;
+		const safeTone = WORKBENCH_READINESS_ICON_BY_TONE[tone] ? tone : "neutral";
+		const icon = wrapEl.querySelector(".material-symbols-outlined");
+		const labelEl = wrapEl.querySelector("span:last-child");
+		if (icon) {
+			icon.className = "material-symbols-outlined text-status-" + safeTone + " text-[20px]";
+			icon.textContent = WORKBENCH_READINESS_ICON_BY_TONE[safeTone];
 		}
-		return "pp4-package-card--draft";
-	}
-
-	function pp4ExtractValueLabel(item) {
-		const hay = String((item && (item.meta_line || item.subtitle || item.summary_detail_line)) || "");
-		const matched = hay.match(/KES\s+[0-9,]+(?:\.[0-9]+)?/i);
-		return matched ? matched[0].toUpperCase() : "KES 0";
-	}
-
-	function pp4ProgressModel(item) {
-		const data = item && typeof item === "object" ? item : {};
-		const statusHay = String(
-			data.status_pill_label || data.state_label || data.status_headline || "",
-		).toLowerCase();
-		if (
-			statusHay.indexOf("ready for release") >= 0 ||
-			statusHay.indexOf("approved") >= 0 ||
-			statusHay.indexOf("released") >= 0
-		) {
-			return {
-				percent: 100,
-				label: "100% Complete",
-				selection: true,
-				validation: true,
-				signoff: true,
-			};
-		}
-		if (statusHay.indexOf("review") >= 0 || statusHay.indexOf("validation") >= 0) {
-			return {
-				percent: 65,
-				label: "65% Progress",
-				selection: true,
-				validation: true,
-				signoff: false,
-			};
-		}
-		return {
-			percent: 15,
-			label: "15% Progress",
-			selection: true,
-			validation: false,
-			signoff: false,
-		};
-	}
-
-	function pp4CardHtmlForItem(item) {
-		const data = item && typeof item === "object" ? item : {};
-		const code = esc(String(data.underlying_object_code || "").trim());
-		const title = esc(String(data.title || "").trim() || __("Untitled Package"));
-		const status = esc(String(data.status_pill_label || data.state_label || "").trim() || __("Draft"));
-		const desc = esc(
-			String(
-				data.package_description ||
-					(data.package && data.package.description) ||
-					data.status_detail ||
-					data.next_step_detail ||
-					data.subtitle ||
-					"",
-			)
-				.trim()
-				.slice(0, 180),
-		);
-		const valueLabel = esc(pp4ExtractValueLabel(data));
-		const consolidatedDemandCount = Number(data.consolidated_demand_count || 0);
-		const consolidatedLabel = esc(
-			Number.isFinite(consolidatedDemandCount) && consolidatedDemandCount > 0
-				? String(consolidatedDemandCount) + " Demands"
-				: "0 Demands",
-		);
-		const progress = pp4ProgressModel(data);
-		const actionLabel = esc(
-			String((data.primary_action && data.primary_action.label) || data.next_action_label || __("Open Package")).trim(),
-		);
-		const actionKey = esc(
-			String((data.primary_action && data.primary_action.action) || "open_package").trim(),
-		);
-		const actionTarget = esc(
-			String(
-				(data.primary_action && data.primary_action.target) || data.underlying_object_code || "",
-			).trim(),
-		);
-		const packageCode = esc(String(data.underlying_object_code || "").trim());
-		const tenderTarget = esc(String(((data.tender && data.tender.code) || "")).trim());
-		const secondaryActions = Array.isArray(data.secondary_actions) ? data.secondary_actions : [];
-		const secondary = secondaryActions.length ? secondaryActions[0] || {} : {};
-		const secondaryActionKey = esc(String(secondary.action || "view_package").trim());
-		const secondaryActionTarget = esc(
-			String(secondary.target || data.underlying_object_code || "").trim(),
-		);
-		return (
-			'<article class="pp4-package-card ' +
-			pp4StatusToneClass(status) +
-			'" data-testid="pp4-package-card">' +
-			'<div class="pp4-package-card__header"><span class="pp4-package-card__code" data-testid="pp4-package-code">' +
-			code +
-			'</span><span class="pp4-package-card__status" data-testid="pp4-package-status-chip">' +
-			status +
-			"</span></div>" +
-			'<h3 class="pp4-package-card__title">' +
-			title +
-			"</h3>" +
-			'<p class="pp4-package-card__desc">' +
-			desc +
-			"</p>" +
-			'<div class="pp4-package-card__meta"><span>EST. VALUE<br><strong class="pp4-meta-value">' +
-			valueLabel +
-			'</strong></span><span>CONSOLIDATED<br><strong class="pp4-meta-value">' +
-			consolidatedLabel +
-			"</strong></span></div>" +
-			'<div class="pp4-package-card__workflow"><p class="pp4-package-card__progress" data-testid="pp4-package-workflow-progress"><span>Workflow Progress</span><strong>' +
-			esc(progress.label) +
-			'</strong></p><div class="pp4-progress"><span style="width:' +
-			esc(String(progress.percent)) +
-			'%"></span></div><p class="pp4-stage-row"><span class="' +
-			(progress.selection ? "is-active" : "") +
-			'">Selection</span><span class="' +
-			(progress.validation ? "is-active" : "") +
-			'">Validation</span><span class="' +
-			(progress.signoff ? "is-active" : "") +
-			'">Sign-off</span></p></div>' +
-			'<div class="pp4-package-card__actions"><button class="pp4-package-card__primary" type="button" data-testid="pp4-package-primary-action" data-pp4-action="' +
-			actionKey +
-			'" data-pp4-target="' +
-			actionTarget +
-			'" data-pp4-package-code="' +
-			packageCode +
-			'" data-pp4-tender-code="' +
-			tenderTarget +
-			'">' +
-			actionLabel +
-			"</button><button class=\"pp4-package-card__icon-btn\" type=\"button\" data-testid=\"pp4-package-secondary-action\" data-pp4-action=\"" +
-			secondaryActionKey +
-			'" data-pp4-target="' +
-			secondaryActionTarget +
-			'" data-pp4-package-code="' +
-			packageCode +
-			'" data-pp4-tender-code="' +
-			tenderTarget +
-			"\"><span class=\"material-symbols-outlined\">more_vert</span></button></div>" +
-			"</article>"
-		);
-	}
-
-	function pp4CreatePackageCardHtml() {
-		return (
-			'<article class="pp4-package-card pp4-package-card--create" data-testid="pp4-create-package-card">' +
-			'<div class="pp4-package-card__create-icon"><span class="material-symbols-outlined">add_task</span></div>' +
-			'<h3 class="pp4-package-card__title">Create New Package</h3>' +
-			'<p class="pp4-package-card__desc">Start the planning wizard to consolidate unassigned demands into a strategic package.</p>' +
-			'<button class="pp4-package-card__primary" type="button" data-testid="pp4-new-planning-run">New Planning Run <span class="material-symbols-outlined">arrow_forward</span></button>' +
-			"</article>"
-		);
-	}
-
-	function pp4SearchHaystack(item) {
-		const data = item && typeof item === "object" ? item : {};
-		const fields = [
-			data.underlying_object_code,
-			data.title,
-			data.package_description,
-			data.status_detail,
-			data.state_label,
-			data.status_pill_label,
-			data.meta_line,
-			data.subtitle,
-			data.next_step_detail,
-		];
-		return fields
-			.map(function (v) {
-				return String(v || "").toLowerCase();
-			})
-			.join(" ");
-	}
-
-	function pp4ValueNumber(item) {
-		const normalized = String(pp4ExtractValueLabel(item) || "")
-			.replace(/[^0-9.]/g, "")
-			.trim();
-		const value = Number(normalized || 0);
-		return Number.isFinite(value) ? value : 0;
-	}
-
-	function pp4SortModeMeta(key) {
-		for (let i = 0; i < PP4_SORT_MODES.length; i += 1) {
-			if (PP4_SORT_MODES[i].key === key) return PP4_SORT_MODES[i];
-		}
-		return PP4_SORT_MODES[0];
-	}
-
-	function pp4DefaultFilterState() {
-		return {
-			search: "",
-			status: "",
-			department: PP4_DEPARTMENT_ALL,
-			value_range: PP4_VALUE_RANGE_ALL,
-			created_from: "",
-			created_to: "",
-		};
-	}
-
-	function pp4CloneFilterState(state) {
-		const src = state && typeof state === "object" ? state : pp4DefaultFilterState();
-		return {
-			search: String(src.search || ""),
-			status: String(src.status || ""),
-			department: String(src.department || PP4_DEPARTMENT_ALL),
-			value_range: String(src.value_range || PP4_VALUE_RANGE_ALL),
-			created_from: String(src.created_from || ""),
-			created_to: String(src.created_to || ""),
-		};
-	}
-
-	function pp4StatusFilterKey(item) {
-		const data = item && typeof item === "object" ? item : {};
-		const statusHay = String(data.status_pill_label || data.state_label || "").toLowerCase();
-		if (statusHay.indexOf("review") >= 0 || statusHay.indexOf("validation") >= 0) return "awaiting_review";
-		if (statusHay.indexOf("ready") >= 0 || statusHay.indexOf("approved") >= 0) return "ready_for_release";
-		return "in_creation";
-	}
-
-	function pp4DepartmentValue(item) {
-		const data = item && typeof item === "object" ? item : {};
-		return String(
-			data.department_label || data.department || data.procuring_entity_label || data.procuring_entity || "",
-		).trim();
-	}
-
-	function pp4CreatedDateValue(item) {
-		const data = item && typeof item === "object" ? item : {};
-		const raw = String(data.created_on || data.creation || data.modified || "").trim();
-		if (!raw) return "";
-		const m = raw.match(/\d{4}-\d{2}-\d{2}/);
-		return m ? m[0] : "";
-	}
-
-	function pp4ValueRangeMatches(value, rangeKey) {
-		if (rangeKey === PP4_VALUE_RANGE_ALL || !rangeKey) return true;
-		const n = Number(value || 0);
-		if (!Number.isFinite(n)) return false;
-		if (rangeKey === "under_kes_100m") return n < 100000000;
-		if (rangeKey === "kes_100m_500m") return n >= 100000000 && n <= 500000000;
-		if (rangeKey === "over_kes_500m") return n > 500000000;
-		return true;
-	}
-
-	function pp4HasActiveAppliedFilters(filters) {
-		const f = filters && typeof filters === "object" ? filters : pp4DefaultFilterState();
-		return Boolean(
-			String(f.search || "").trim() ||
-				String(f.status || "").trim() ||
-				(String(f.department || PP4_DEPARTMENT_ALL) !== PP4_DEPARTMENT_ALL &&
-					String(f.department || "").trim()) ||
-				(String(f.value_range || PP4_VALUE_RANGE_ALL) !== PP4_VALUE_RANGE_ALL &&
-					String(f.value_range || "").trim()) ||
-				String(f.created_from || "").trim() ||
-				String(f.created_to || "").trim(),
-		);
-	}
-
-	function pp4ItemMatchesDrawerFilters(item, filters) {
-		const data = item && typeof item === "object" ? item : {};
-		const f = filters && typeof filters === "object" ? filters : pp4DefaultFilterState();
-		const drawerTerm = String(f.search || "")
-			.toLowerCase()
-			.trim();
-		if (drawerTerm && pp4SearchHaystack(data).indexOf(drawerTerm) === -1) return false;
-		if (f.status && pp4StatusFilterKey(data) !== f.status) return false;
-		const dept = String(pp4DepartmentValue(data) || "").toLowerCase();
-		if (
-			f.department &&
-			f.department !== PP4_DEPARTMENT_ALL &&
-			dept &&
-			dept !== String(f.department || "").toLowerCase()
-		) {
-			return false;
-		}
-		if (
-			f.department &&
-			f.department !== PP4_DEPARTMENT_ALL &&
-			!dept &&
-			String(f.department || "").trim()
-		) {
-			return false;
-		}
-		if (!pp4ValueRangeMatches(pp4ValueNumber(data), String(f.value_range || PP4_VALUE_RANGE_ALL))) {
-			return false;
-		}
-		const created = pp4CreatedDateValue(data);
-		const from = String(f.created_from || "").trim();
-		const to = String(f.created_to || "").trim();
-		if (from && created && created < from) return false;
-		if (to && created && created > to) return false;
-		if ((from || to) && !created) return false;
-		return true;
-	}
-
-	function renderPP4TabCountsForCurrentFilters(root) {
-		if (!root) return;
-		const applied = pp4FilterAppliedByRoot.get(root) || pp4DefaultFilterState();
-		const topSearchTerm = String(pp4SearchTermByRoot.get(root) || "")
-			.toLowerCase()
-			.trim();
-		const hasDynamicFiltering = pp4HasActiveAppliedFilters(applied) || Boolean(topSearchTerm);
-		if (!hasDynamicFiltering) {
-			const counts = pp4QueueCountsByRoot.get(root) || {};
-			const inCreation = Number(counts.draft_packages || 0);
-			const awaitingReview = Number(counts.needs_review || 0);
-			const readyForRelease = Number(counts.ready_to_release || 0);
-			pp4SetTabBadgeCounts(root, inCreation, awaitingReview, readyForRelease);
-			return;
-		}
-		const byQueue = pp4QueueItemsByRoot.get(root) || {};
-		const queues = {
-			draft_packages: Array.isArray(byQueue.draft_packages) ? byQueue.draft_packages : [],
-			needs_review: Array.isArray(byQueue.needs_review) ? byQueue.needs_review : [],
-			ready_release: Array.isArray(byQueue.ready_release) ? byQueue.ready_release : [],
-		};
-		const countFor = function (rows) {
-			let c = 0;
-			for (let i = 0; i < rows.length; i += 1) {
-				const row = rows[i];
-				if (topSearchTerm && pp4SearchHaystack(row).indexOf(topSearchTerm) === -1) continue;
-				if (!pp4ItemMatchesDrawerFilters(row, applied)) continue;
-				c += 1;
-			}
-			return c;
-		};
-		pp4SetTabBadgeCounts(
-			root,
-			countFor(queues.draft_packages),
-			countFor(queues.needs_review),
-			countFor(queues.ready_release),
-		);
-	}
-
-	function pp4AvailableDepartments(rows) {
-		const options = [
-			"Ministry of Health (MOH)",
-			"IT Infrastructure",
-			"Facilities Management",
-		];
-		const seen = {};
-		const all = [];
-		for (let i = 0; i < options.length; i += 1) {
-			const label = String(options[i] || "").trim();
-			if (!label) continue;
-			const key = label.toLowerCase();
-			if (seen[key]) continue;
-			seen[key] = true;
-			all.push(label);
-		}
-		for (let j = 0; j < rows.length; j += 1) {
-			const label = String(pp4DepartmentValue(rows[j]) || "").trim();
-			if (!label) continue;
-			const key = label.toLowerCase();
-			if (seen[key]) continue;
-			seen[key] = true;
-			all.push(label);
-		}
-		return all;
-	}
-
-	function renderPP4ControlLabels(root) {
-		if (!root) return;
-		const sortLabel = root.querySelector('[data-testid="pp4-sort-label"]');
-		const filterLabel = root.querySelector('[data-testid="pp4-filters-label"]');
-		const filterButton = root.querySelector('[data-testid="pp4-filters"]');
-		const sortMode = pp4SortModeMeta(String(pp4SortModeByRoot.get(root) || "newest"));
-		const applied = pp4FilterAppliedByRoot.get(root) || pp4DefaultFilterState();
-		if (sortLabel) {
-			sortLabel.textContent = "Sort: " + sortMode.label;
-		}
-		if (filterLabel) {
-			filterLabel.textContent = "Filters";
-		}
-		if (filterButton) {
-			filterButton.classList.toggle("is-active", pp4HasActiveAppliedFilters(applied));
+		if (labelEl) {
+			labelEl.className = "bg-status-" + safeTone + "/10 text-status-" + safeTone + " font-label-md text-label-md px-2 py-0.5 rounded";
+			labelEl.textContent = label;
 		}
 	}
 
-	function renderPP4SortMenuState(root) {
-		if (!root) return;
-		const menu = root.querySelector('[data-testid="pp4-sort-menu"]');
-		if (!menu) return;
-		const open = pp4SortMenuOpenByRoot.get(root) === true;
-		menu.hidden = !open;
-		const selected = String(pp4SortModeByRoot.get(root) || "newest");
-		const options = menu.querySelectorAll(".pp4-sort-menu__option");
-		for (let i = 0; i < options.length; i += 1) {
-			const opt = options[i];
-			if (!opt) continue;
-			const testId = String(opt.getAttribute("data-testid") || "");
-			const selectedForOption =
-				(selected === "newest" && testId === "pp4-sort-option-newest") ||
-				(selected === "value_high_low" && testId === "pp4-sort-option-value-high-low") ||
-				(selected === "value_low_high" && testId === "pp4-sort-option-value-low-high");
-			opt.classList.toggle("is-selected", selectedForOption);
-		}
-	}
+	// Awaiting Review + Ready for Release table (6 columns: Title & Ref,
+	// Linked, Category, Est. Value, Review Status, Readiness). The title is
+	// a real `<a>` (Needs-Planning-style, no separate "Actions" column) but
+	// navigation is still bound to the whole row, same as the other new
+	// row builders.
+	function buildWorkbenchReviewReleaseRow(template, doc, item) {
+		const tr = template.cloneNode(true);
+		const data = item || {};
+		const packageId = String(data.underlying_object_id || "").trim();
+		tr.setAttribute("data-package-id", packageId);
 
-	function renderPP4FilterDrawerState(root) {
-		if (!root) return;
-		const backdrop = root.querySelector('[data-testid="pp4-filter-backdrop"]');
-		const drawer = root.querySelector('[data-testid="pp4-filter-drawer"]');
-		const open = pp4FilterDrawerOpenByRoot.get(root) === true;
-		if (backdrop) backdrop.hidden = !open;
-		if (drawer) drawer.hidden = !open;
-		const draft = pp4FilterDraftByRoot.get(root) || pp4DefaultFilterState();
-		const searchInput = root.querySelector('[data-testid="pp4-filter-search"]');
-		const departmentSelect = root.querySelector('[data-testid="pp4-filter-department"]');
-		const createdFrom = root.querySelector('[data-testid="pp4-filter-created-from"]');
-		const createdTo = root.querySelector('[data-testid="pp4-filter-created-to"]');
-		if (searchInput) searchInput.value = String(draft.search || "");
-		if (createdFrom) createdFrom.value = String(draft.created_from || "");
-		if (createdTo) createdTo.value = String(draft.created_to || "");
-		if (departmentSelect) {
-			const rows = Array.isArray(pp4PackageItemsByRoot.get(root)) ? pp4PackageItemsByRoot.get(root) : [];
-			const departments = pp4AvailableDepartments(rows);
-			const options = ['<option value="' + PP4_DEPARTMENT_ALL + '">All Departments</option>'];
-			for (let i = 0; i < departments.length; i += 1) {
-				const label = departments[i];
-				options.push('<option value="' + esc(label) + '">' + esc(label) + "</option>");
-			}
-			departmentSelect.innerHTML = options.join("");
-			departmentSelect.value = String(draft.department || PP4_DEPARTMENT_ALL);
+		const cells = tr.querySelectorAll("td");
+		const titleLink = cells[0] ? cells[0].querySelector("a") : null;
+		const refEl = cells[0] ? cells[0].querySelector("span") : null;
+		const href = packageId ? "/app/procurement-package/" + encodeURIComponent(packageId) : "#";
+		if (titleLink) {
+			titleLink.textContent = String(data.title || "").trim();
+			titleLink.setAttribute("href", href);
 		}
-		for (let i = 0; i < PP4_STATUS_FILTERS.length; i += 1) {
-			const status = PP4_STATUS_FILTERS[i];
-			const chip = root.querySelector(
-				'[data-testid="pp4-filter-status-' + status.key.replace(/_/g, "-") + '"]',
-			);
-			if (!chip) continue;
-			chip.classList.toggle("is-active", String(draft.status || "") === status.key);
-		}
-		const radios = root.querySelectorAll('input[name="pp4-filter-value-range"]');
-		for (let j = 0; j < radios.length; j += 1) {
-			const radio = radios[j];
-			radio.checked = String(radio.value || "") === String(draft.value_range || PP4_VALUE_RANGE_ALL);
-		}
-	}
+		if (refEl) refEl.textContent = __("REF: {0}", [String(data.underlying_object_code || "").trim()]);
 
-	function renderPP4PackageCardsFromState(root) {
-		if (!root) return;
-		const grid = root.querySelector('[data-testid="pp4-package-grid"]');
-		if (!grid) return;
-		const rows = Array.isArray(pp4PackageItemsByRoot.get(root)) ? pp4PackageItemsByRoot.get(root) : [];
-		const appliedFilters = pp4FilterAppliedByRoot.get(root) || pp4DefaultFilterState();
-		const sortKey = String(pp4SortModeByRoot.get(root) || "newest").trim() || "newest";
-		const term = String(pp4SearchTermByRoot.get(root) || "")
-			.toLowerCase()
-			.trim();
-		const filteredRows = rows.filter(function (row) {
-			if (term && pp4SearchHaystack(row).indexOf(term) === -1) return false;
-			return pp4ItemMatchesDrawerFilters(row, appliedFilters);
+		const linkedSpans = cells[1] ? cells[1].querySelectorAll("span") : [];
+		const linkedCountEl = linkedSpans[linkedSpans.length - 1];
+		if (linkedCountEl) {
+			const demandCount = Number(data.consolidated_demand_count);
+			linkedCountEl.textContent = String(Number.isFinite(demandCount) ? Math.round(demandCount) : 0);
+		}
+
+		const categoryBadge = cells[2] ? cells[2].querySelector("span") : null;
+		applyWorkbenchCategoryChip(doc, categoryBadge, data.category_label);
+
+		const valueEl = cells[3] ? cells[3].querySelector("span") : null;
+		if (valueEl) valueEl.textContent = String(data.currency || "KES").trim() + " " + workbenchAbbreviateMoney(data.estimated_value_number);
+
+		// Granular sub-stage review labels shown in the design (e.g.
+		// "Technical Review"/"Budget Clearance") have no backing concept
+		// yet — bound to the coarse package status instead (flagged gap,
+		// see WORKBENCH_WIRING_TRACKER.md).
+		const reviewStatusEl = cells[4] ? cells[4].querySelector("span") : null;
+		if (reviewStatusEl) reviewStatusEl.textContent = String(data.status_pill_label || "").trim() || "\u2014";
+
+		const readinessWrap = cells[5] ? cells[5].querySelector("div") : null;
+		applyWorkbenchStackedStatusPill(readinessWrap, data.readiness_tone, String(data.readiness_status || "").trim());
+
+		tr.addEventListener("click", function () {
+			if (!packageId) return;
+			frappe.set_route("procurement-package", packageId);
 		});
-		const visibleRows = filteredRows.slice();
-		if (sortKey === "value_high_low") {
-			visibleRows.sort(function (a, b) {
-				return pp4ValueNumber(b) - pp4ValueNumber(a);
-			});
-		} else if (sortKey === "value_low_high") {
-			visibleRows.sort(function (a, b) {
-				return pp4ValueNumber(a) - pp4ValueNumber(b);
-			});
-		}
-		renderPP4ControlLabels(root);
-		renderPP4SortMenuState(root);
-		renderPP4FilterDrawerState(root);
-		renderPP4TabCountsForCurrentFilters(root);
-		const cards = [];
-		for (let i = 0; i < visibleRows.length; i += 1) {
-			cards.push(pp4CardHtmlForItem(visibleRows[i]));
-		}
-		if (!cards.length) {
-			cards.push(
-				'<article class="pp4-package-card pp4-package-card--draft" data-testid="pp4-package-card">' +
-					'<h3 class="pp4-package-card__title">' +
-					esc(__("No packages found")) +
-					"</h3>" +
-					'<p class="pp4-package-card__desc">' +
-					esc(
-						term || pp4HasActiveAppliedFilters(appliedFilters)
-							? __("No packages match your search.")
-							: __("There are no packages for this tab yet."),
-					) +
-					"</p>" +
-					"</article>",
-			);
-		}
-		cards.push(pp4CreatePackageCardHtml());
-		grid.innerHTML = cards.join("");
-		bindPP4CardActions(root);
+
+		return tr;
 	}
 
-	function renderPP4PackageCards(root, items) {
-		if (!root) return;
-		pp4PackageItemsByRoot.set(root, Array.isArray(items) ? items : []);
-		renderPP4PackageCardsFromState(root);
-	}
+	// Blocked table (6 columns: Title & Ref, Linked, Category, Est. Value,
+	// Review Status, Blocker Reason). The title is a real `<a>`
+	// (Needs-Planning-style, no separate "Actions" column). Rows can be a
+	// blocked demand or a blocked package (`underlying_object_type`), so
+	// both the row click and the title `href` branch to the matching Desk
+	// surface for each.
+	function buildWorkbenchBlockedRow(template, doc, item) {
+		const tr = template.cloneNode(true);
+		const data = item || {};
+		const targetId = String(data.underlying_object_id || "").trim();
+		const isBlockedDemand = data.underlying_object_type === "approved_demand";
+		tr.setAttribute("data-package-id", targetId);
 
-	function buildPp4OpenTenderUrl(tenderCode) {
-		const code = String(tenderCode || "").trim();
-		if (!code) return "";
-		return "/desk/tm2-tender/" + encodeURIComponent(code);
-	}
+		const cells = tr.querySelectorAll("td");
+		const titleLink = cells[0] ? cells[0].querySelector("a") : null;
+		const refEl = cells[0] ? cells[0].querySelector("span") : null;
+		const href = targetId
+			? (isBlockedDemand ? "/app/demand/" : "/app/procurement-package/") + encodeURIComponent(targetId)
+			: "#";
+		if (titleLink) {
+			titleLink.textContent = String(data.title || "").trim();
+			titleLink.setAttribute("href", href);
+		}
+		if (refEl) refEl.textContent = __("REF: {0}", [String(data.underlying_object_code || "").trim()]);
 
-	function handlePp4CardAction(action, target, packageCode, tenderCode) {
-		if (action === "open_tender" || action === "view_tender") {
-			const tenderUrl = buildPp4OpenTenderUrl(target || tenderCode);
-			if (tenderUrl) {
-				window.location.href = tenderUrl;
-				return;
+		const linkedSpans = cells[1] ? cells[1].querySelectorAll("span") : [];
+		const linkedCountEl = linkedSpans[linkedSpans.length - 1];
+		if (linkedCountEl) {
+			const demandCount = Number(data.consolidated_demand_count);
+			linkedCountEl.textContent = String(Number.isFinite(demandCount) ? Math.round(demandCount) : 0);
+		}
+
+		const categoryBadge = cells[2] ? cells[2].querySelector("span") : null;
+		applyWorkbenchCategoryChip(doc, categoryBadge, data.category_label);
+
+		const valueEl = cells[3] ? cells[3].querySelector("span") : null;
+		if (valueEl) valueEl.textContent = String(data.currency || "KES").trim() + " " + workbenchAbbreviateMoney(data.estimated_value_number);
+
+		const reviewStatusEl = cells[4] ? cells[4].querySelector("span") : null;
+		if (reviewStatusEl) reviewStatusEl.textContent = String(data.review_status_label || "").trim() || "\u2014";
+
+		// No real per-blocker severity classification exists yet (flagged
+		// gap) — every row uses one fixed "error" tone, matching the
+		// design's own first sample row.
+		const blockerWrap = cells[5] ? cells[5].querySelector("div") : null;
+		applyWorkbenchStackedStatusPill(blockerWrap, "error", String(data.status_detail || "").trim() || "\u2014");
+
+		tr.addEventListener("click", function () {
+			if (!targetId) return;
+			if (isBlockedDemand) {
+				frappe.set_route("demand-workbench", targetId);
+			} else {
+				frappe.set_route("procurement-package", targetId);
 			}
-		}
-		const openPackageActions = {
-			open_package: true,
-			view_package: true,
-			complete_package: true,
-			review_package: true,
-			mark_ready_for_release: true,
-			release_to_tender: true,
-			view_release: true,
-			"": true,
-		};
-		if (openPackageActions[action]) {
-			const code = target || packageCode;
-			if (code) {
-				window.location.href = buildWorkbenchOpenPackageUrl(code);
-			}
-		}
+		});
+
+		return tr;
 	}
 
-	function handlePp4PrimaryCardAction(button) {
-		if (!button) return;
-		const action = String(button.getAttribute("data-pp4-action") || "").trim();
-		const target = String(button.getAttribute("data-pp4-target") || "").trim();
-		const packageCode = String(button.getAttribute("data-pp4-package-code") || "").trim();
-		const tenderCode = String(button.getAttribute("data-pp4-tender-code") || "").trim();
-		handlePp4CardAction(action, target, packageCode, tenderCode);
+	// Released table (5 columns: Title & Ref, Linked, Category, Est. Value,
+	// Tender Status). Title is a real `<a>` link, same pattern as In
+	// Creation.
+	function buildWorkbenchReleasedRow(template, doc, item) {
+		const tr = template.cloneNode(true);
+		const data = item || {};
+		const packageId = String(data.underlying_object_id || "").trim();
+		tr.setAttribute("data-package-id", packageId);
+
+		const cells = tr.querySelectorAll("td");
+		const titleCell = cells[0];
+		const titleLink = titleCell ? titleCell.querySelector("a") : null;
+		const refEl = titleCell ? titleCell.querySelector("span") : null;
+		const href = packageId ? "/app/procurement-package/" + encodeURIComponent(packageId) : "#";
+		if (titleLink) {
+			titleLink.textContent = String(data.title || "").trim();
+			titleLink.setAttribute("href", href);
+		}
+		if (refEl) refEl.textContent = __("REF: {0}", [String(data.underlying_object_code || "").trim()]);
+
+		const linkedSpans = cells[1] ? cells[1].querySelectorAll("span") : [];
+		const linkedCountEl = linkedSpans[linkedSpans.length - 1];
+		if (linkedCountEl) {
+			const demandCount = Number(data.consolidated_demand_count);
+			linkedCountEl.textContent = String(Number.isFinite(demandCount) ? Math.round(demandCount) : 0);
+		}
+
+		const categoryBadge = cells[2] ? cells[2].querySelector("span") : null;
+		applyWorkbenchCategoryChip(doc, categoryBadge, data.category_label);
+
+		const valueEl = cells[3] ? cells[3].querySelector("span") : null;
+		if (valueEl) valueEl.textContent = String(data.currency || "KES").trim() + " " + workbenchAbbreviateMoney(data.estimated_value_number);
+
+		// No granular tender-status concept exists yet (flagged gap) —
+		// "Tender Created" (real: tender_code present) gets the design's
+		// success tone; any other coarse fallback text reuses the design's
+		// own secondary/neutral tone (its "Published" sample row).
+		const tenderStatusEl = cells[4] ? cells[4].querySelector("span") : null;
+		if (tenderStatusEl) {
+			const label = String(data.tender_status_label || "").trim() || "\u2014";
+			const isCreated = label === "Tender Created";
+			tenderStatusEl.className = isCreated
+				? "bg-status-success/10 text-status-success font-label-md text-label-md px-3 py-1 rounded uppercase tracking-tighter"
+				: "bg-secondary-container/10 text-secondary font-label-md text-label-md px-3 py-1 rounded uppercase tracking-tighter";
+			tenderStatusEl.textContent = label;
+		}
+
+		tr.addEventListener("click", function () {
+			if (!packageId) return;
+			frappe.set_route("procurement-package", packageId);
+		});
+
+		return tr;
 	}
 
-	function handlePp4SecondaryCardAction(button) {
-		if (!button) return;
-		const action = String(button.getAttribute("data-pp4-action") || "").trim();
-		const target = String(button.getAttribute("data-pp4-target") || "").trim();
-		const packageCode = String(button.getAttribute("data-pp4-package-code") || "").trim();
-		const tenderCode = String(button.getAttribute("data-pp4-tender-code") || "").trim();
-		handlePp4CardAction(action, target, packageCode, tenderCode);
+	// Single source of truth: which DOM section + row-builder function each
+	// non-Needs-Planning uiQueue renders through (its API queue value comes
+	// from `WORKBENCH_PACKAGE_UI_QUEUE_TO_API_QUEUE` above).
+	const WORKBENCH_QUEUE_GROUPS = {
+		draft_packages: { sectionTestId: WORKBENCH_PACKAGE_TABLE_SECTION_TESTID, rowBuilder: buildWorkbenchPackageQueueRow },
+		needs_review: { sectionTestId: WORKBENCH_REVIEW_RELEASE_TABLE_SECTION_TESTID, rowBuilder: buildWorkbenchReviewReleaseRow },
+		ready_to_release: { sectionTestId: WORKBENCH_REVIEW_RELEASE_TABLE_SECTION_TESTID, rowBuilder: buildWorkbenchReviewReleaseRow },
+		blocked: { sectionTestId: WORKBENCH_BLOCKED_TABLE_SECTION_TESTID, rowBuilder: buildWorkbenchBlockedRow },
+		recently_released: { sectionTestId: WORKBENCH_RELEASED_TABLE_SECTION_TESTID, rowBuilder: buildWorkbenchReleasedRow },
+	};
+
+	function renderWorkbenchPackageQueueRows(root, doc, uiQueue, payload) {
+		const group = WORKBENCH_QUEUE_GROUPS[uiQueue];
+		if (!group) return;
+		const tbody = workbenchPackageQueueTableBody(doc, group.sectionTestId);
+		if (!tbody) return;
+		const templates = workbenchPackageQueueRowTemplateByRoot.get(root) || {};
+		const template = templates[group.sectionTestId];
+		if (!template) return;
+		while (tbody.firstChild) {
+			tbody.removeChild(tbody.firstChild);
+		}
+		const items = payload && payload.ok !== false && Array.isArray(payload.items) ? payload.items : [];
+		items.forEach(function (item) {
+			tbody.appendChild(group.rowBuilder(template, doc, item, uiQueue));
+		});
+		if (!items.length) {
+			appendWorkbenchEmptyStateRow(doc, tbody, __("No packages in this queue right now."));
+		}
+
+		const footerEls = workbenchPackageQueueFooterEls(doc, group.sectionTestId);
+		if (!footerEls) return;
+		const total = Number((payload && payload.total) || 0);
+		const state = readWorkbenchStateFromUrl();
+		const page = Math.max(1, Number(state.page) || 1);
+		const start = (page - 1) * WORKBENCH_PACKAGE_QUEUE_PAGE_SIZE;
+		const from = total === 0 ? 0 : start + 1;
+		const to = Math.min(start + items.length, total);
+		footerEls.summaryEl.textContent = __("{0} to {1} of {2}", [from, to, total]);
+		footerEls.prevBtn.disabled = page <= 1;
+		footerEls.nextBtn.disabled = start + items.length >= total;
 	}
 
-	function bindPP4CardActions(root) {
-		if (!root) return;
-		const buttons = root.querySelectorAll('[data-testid="pp4-package-primary-action"]');
-		for (let i = 0; i < buttons.length; i += 1) {
-			const btn = buttons[i];
-			if (!btn || btn.getAttribute("data-pp4-bound") === "1") continue;
-			btn.setAttribute("data-pp4-bound", "1");
-			btn.addEventListener("click", function () {
-				handlePp4PrimaryCardAction(btn);
-			});
-		}
-		const secondaryButtons = root.querySelectorAll('[data-testid="pp4-package-secondary-action"]');
-		for (let j = 0; j < secondaryButtons.length; j += 1) {
-			const btn = secondaryButtons[j];
-			if (!btn || btn.getAttribute("data-pp4-bound") === "1") continue;
-			btn.setAttribute("data-pp4-bound", "1");
-			btn.addEventListener("click", function () {
-				handlePp4SecondaryCardAction(btn);
-			});
-		}
-	}
-
-	function fetchPP4ItemsForQueue(queueKey, onDone) {
-		if (!frappe || typeof frappe.call !== "function") {
-			onDone([]);
-			return;
-		}
+	function fetchAndRenderWorkbenchPackageQueueList(root, doc, uiQueue) {
+		if (!root || !doc) return;
+		const apiQueue = WORKBENCH_PACKAGE_UI_QUEUE_TO_API_QUEUE[uiQueue];
+		if (!apiQueue) return;
+		const state = readWorkbenchStateFromUrl();
+		const page = Math.max(1, Number(state.page) || 1);
 		frappe.call({
 			method: WORKBENCH_ITEM_VIEW_MODEL_API,
+			freeze: false,
 			args: {
-				queue: queueKey,
-				limit: 24,
-				start: 0,
+				queue: apiQueue,
+				start: (page - 1) * WORKBENCH_PACKAGE_QUEUE_PAGE_SIZE,
+				limit: WORKBENCH_PACKAGE_QUEUE_PAGE_SIZE,
 			},
 			callback: function (response) {
-				const message = (response && response.message) || {};
-				if (!message || message.ok === false) {
-					onDone([]);
-					return;
-				}
-				onDone(Array.isArray(message.items) ? message.items : []);
-			},
-			error: function () {
-				onDone([]);
+				const payload = (response && response.message) || {};
+				renderWorkbenchPackageQueueRows(root, doc, uiQueue, payload);
 			},
 		});
 	}
 
-	function fetchAndRenderPP4PackageCards(root, tabKey) {
-		if (!root) return;
-		const token = (pp4PackageFetchTokens.get(root) || 0) + 1;
-		pp4PackageFetchTokens.set(root, token);
-		const resolvedTab = String(tabKey || "all-packages").trim() || "all-packages";
-		const queueKey = PP4_TAB_TO_QUEUE[resolvedTab] || "all-packages";
-		if (queueKey !== "all-packages") {
-			fetchPP4ItemsForQueue(queueKey, function (items) {
-				if ((pp4PackageFetchTokens.get(root) || 0) !== token) return;
-				const byQueue = pp4QueueItemsByRoot.get(root) || {};
-				byQueue[queueKey] = Array.isArray(items) ? items.slice() : [];
-				pp4QueueItemsByRoot.set(root, byQueue);
-				renderPP4PackageCards(root, items);
+	function bindWorkbenchPackageQueuePagination(root, doc) {
+		WORKBENCH_QUEUE_GROUP_SECTION_TESTIDS.forEach(function (sectionTestId) {
+			const footerEls = workbenchPackageQueueFooterEls(doc, sectionTestId);
+			if (!footerEls || footerEls.prevBtn.getAttribute("data-pp4-pkg-page-bound") === "1") return;
+			footerEls.prevBtn.setAttribute("data-pp4-pkg-page-bound", "1");
+			footerEls.nextBtn.setAttribute("data-pp4-pkg-page-bound", "1");
+			footerEls.prevBtn.addEventListener("click", function () {
+				if (footerEls.prevBtn.disabled) return;
+				const state = readWorkbenchStateFromUrl();
+				writeWorkbenchStateToUrl({ page: Math.max(1, Number(state.page) - 1) });
+				fetchAndRenderWorkbenchPackageQueueList(root, doc, readWorkbenchStateFromUrl().queue);
 			});
-			return;
-		}
-		const collected = [];
-		const seenByCode = {};
-		const byQueue = {};
-		let pending = PP4_ALL_PACKAGES_QUEUES.length;
-		for (let i = 0; i < PP4_ALL_PACKAGES_QUEUES.length; i += 1) {
-			const queue = PP4_ALL_PACKAGES_QUEUES[i];
-			fetchPP4ItemsForQueue(queue, function (items) {
-				if ((pp4PackageFetchTokens.get(root) || 0) !== token) return;
-				byQueue[queue] = Array.isArray(items) ? items.slice() : [];
-				for (let j = 0; j < items.length; j += 1) {
-					const row = items[j];
-					const code = String((row && row.underlying_object_code) || "").trim();
-					if (code && seenByCode[code]) continue;
-					if (code) seenByCode[code] = true;
-					collected.push(row);
-				}
-				pending -= 1;
-				if (pending <= 0) {
-					pp4QueueItemsByRoot.set(root, byQueue);
-					renderPP4PackageCards(root, collected);
-				}
+			footerEls.nextBtn.addEventListener("click", function () {
+				if (footerEls.nextBtn.disabled) return;
+				const state = readWorkbenchStateFromUrl();
+				writeWorkbenchStateToUrl({ page: Number(state.page) + 1 });
+				fetchAndRenderWorkbenchPackageQueueList(root, doc, readWorkbenchStateFromUrl().queue);
 			});
-		}
-	}
-
-	function setPP4ActiveTab(root, tabKey) {
-		if (!root) return;
-		const buttons = [
-			{ testId: "pp4-tab-all-packages", key: "all-packages" },
-			{ testId: "pp4-tab-in-creation", key: "in-creation" },
-			{ testId: "pp4-tab-awaiting-review", key: "awaiting-review" },
-			{ testId: "pp4-tab-ready-for-release", key: "ready-for-release" },
-		];
-		for (let i = 0; i < buttons.length; i += 1) {
-			const cfg = buttons[i];
-			const node = root.querySelector('[data-testid="' + cfg.testId + '"]');
-			if (!node) continue;
-			const active = cfg.key === tabKey;
-			node.classList.toggle("is-active", active);
-			node.setAttribute("aria-selected", active ? "true" : "false");
-		}
-	}
-
-	function bindPP4TabPackageList(root) {
-		if (!root) return;
-		const tabBindings = [
-			{ testId: "pp4-tab-all-packages", key: "all-packages" },
-			{ testId: "pp4-tab-in-creation", key: "in-creation" },
-			{ testId: "pp4-tab-awaiting-review", key: "awaiting-review" },
-			{ testId: "pp4-tab-ready-for-release", key: "ready-for-release" },
-		];
-		for (let i = 0; i < tabBindings.length; i += 1) {
-			const cfg = tabBindings[i];
-			const node = root.querySelector('[data-testid="' + cfg.testId + '"]');
-			if (!node) continue;
-			if (node.getAttribute("data-pp4-tab-bound") === "1") continue;
-			node.setAttribute("data-pp4-tab-bound", "1");
-			node.addEventListener("click", function () {
-				setPP4ActiveTab(root, cfg.key);
-				fetchAndRenderPP4PackageCards(root, cfg.key);
-			});
-		}
-	}
-
-	function bindPP4Search(root) {
-		if (!root) return;
-		const input = root.querySelector('[data-testid="pp4-search-input"]');
-		if (!input) return;
-		if (input.getAttribute("data-pp4-search-bound") === "1") return;
-		input.setAttribute("data-pp4-search-bound", "1");
-		if (!pp4SearchTermByRoot.has(root)) {
-			pp4SearchTermByRoot.set(root, "");
-		}
-		input.addEventListener("input", function () {
-			pp4SearchTermByRoot.set(root, String(input.value || ""));
-			renderPP4PackageCardsFromState(root);
 		});
 	}
 
-	function bindPP4SortAndFilters(root) {
+	function initializeWorkbenchPackageQueueList(root) {
 		if (!root) return;
-		const sortButton = root.querySelector('[data-testid="pp4-sort"]');
-		const filterButton = root.querySelector('[data-testid="pp4-filters"]');
-		const sortMenu = root.querySelector('[data-testid="pp4-sort-menu"]');
-		const backdrop = root.querySelector('[data-testid="pp4-filter-backdrop"]');
-		const closeDrawerBtn = root.querySelector('[data-testid="pp4-filter-close"]');
-		const filterSearch = root.querySelector('[data-testid="pp4-filter-search"]');
-		const statusInCreation = root.querySelector('[data-testid="pp4-filter-status-in-creation"]');
-		const statusAwaitingReview = root.querySelector('[data-testid="pp4-filter-status-awaiting-review"]');
-		const statusReadyForRelease = root.querySelector('[data-testid="pp4-filter-status-ready-for-release"]');
-		const department = root.querySelector('[data-testid="pp4-filter-department"]');
-		const createdFrom = root.querySelector('[data-testid="pp4-filter-created-from"]');
-		const createdTo = root.querySelector('[data-testid="pp4-filter-created-to"]');
-		const applyButton = root.querySelector('[data-testid="pp4-filter-apply"]');
-		const clearAllButton = root.querySelector('[data-testid="pp4-filter-clear-all"]');
-		renderPP4ControlLabels(root);
-		if (sortButton && sortButton.getAttribute("data-pp4-sort-bound") !== "1") {
-			sortButton.setAttribute("data-pp4-sort-bound", "1");
-			sortButton.addEventListener("click", function () {
-				pp4SortMenuOpenByRoot.set(root, !(pp4SortMenuOpenByRoot.get(root) === true));
-				renderPP4PackageCardsFromState(root);
+		withWorkbenchIframeDocument(root, function (doc) {
+			if (!workbenchPackageQueueRowTemplateByRoot.has(root)) {
+				workbenchPackageQueueRowTemplateByRoot.set(root, {});
+			}
+			const templates = workbenchPackageQueueRowTemplateByRoot.get(root);
+			WORKBENCH_QUEUE_GROUP_SECTION_TESTIDS.forEach(function (sectionTestId) {
+				if (templates[sectionTestId]) return;
+				const tbody = workbenchPackageQueueTableBody(doc, sectionTestId);
+				const firstRow = tbody ? tbody.querySelector("tr") : null;
+				if (firstRow) templates[sectionTestId] = firstRow.cloneNode(true);
 			});
-		}
-		if (sortMenu && sortMenu.getAttribute("data-pp4-sort-options-bound") !== "1") {
-			sortMenu.setAttribute("data-pp4-sort-options-bound", "1");
-			const bindSortOption = function (testId, sortKey) {
-				const node = root.querySelector('[data-testid="' + testId + '"]');
-				if (!node) return;
-				node.addEventListener("click", function () {
-					pp4SortModeByRoot.set(root, sortKey);
-					pp4SortMenuOpenByRoot.set(root, false);
-					renderPP4PackageCardsFromState(root);
-				});
-			};
-			bindSortOption("pp4-sort-option-newest", "newest");
-			bindSortOption("pp4-sort-option-value-high-low", "value_high_low");
-			bindSortOption("pp4-sort-option-value-low-high", "value_low_high");
-		}
-		if (filterButton && filterButton.getAttribute("data-pp4-filter-bound") !== "1") {
-			filterButton.setAttribute("data-pp4-filter-bound", "1");
-			filterButton.addEventListener("click", function () {
-				pp4SortMenuOpenByRoot.set(root, false);
-				const applied = pp4FilterAppliedByRoot.get(root) || pp4DefaultFilterState();
-				pp4FilterDraftByRoot.set(root, pp4CloneFilterState(applied));
-				pp4FilterDrawerOpenByRoot.set(root, true);
-				renderPP4FilterDrawerState(root);
-				renderPP4SortMenuState(root);
-			});
-		}
-		if (backdrop && backdrop.getAttribute("data-pp4-filter-backdrop-bound") !== "1") {
-			backdrop.setAttribute("data-pp4-filter-backdrop-bound", "1");
-			backdrop.addEventListener("click", function () {
-				pp4FilterDrawerOpenByRoot.set(root, false);
-				pp4FilterDraftByRoot.set(
-					root,
-					pp4CloneFilterState(pp4FilterAppliedByRoot.get(root) || pp4DefaultFilterState()),
-				);
-				renderPP4FilterDrawerState(root);
-			});
-		}
-		if (closeDrawerBtn && closeDrawerBtn.getAttribute("data-pp4-filter-close-bound") !== "1") {
-			closeDrawerBtn.setAttribute("data-pp4-filter-close-bound", "1");
-			closeDrawerBtn.addEventListener("click", function () {
-				pp4FilterDrawerOpenByRoot.set(root, false);
-				pp4FilterDraftByRoot.set(
-					root,
-					pp4CloneFilterState(pp4FilterAppliedByRoot.get(root) || pp4DefaultFilterState()),
-				);
-				renderPP4FilterDrawerState(root);
-			});
-		}
-		const updateDraft = function (updater) {
-			const current = pp4CloneFilterState(pp4FilterDraftByRoot.get(root) || pp4DefaultFilterState());
-			updater(current);
-			pp4FilterDraftByRoot.set(root, current);
-			renderPP4FilterDrawerState(root);
-		};
-		if (filterSearch && filterSearch.getAttribute("data-pp4-filter-search-bound") !== "1") {
-			filterSearch.setAttribute("data-pp4-filter-search-bound", "1");
-			filterSearch.addEventListener("input", function () {
-				updateDraft(function (next) {
-					next.search = String(filterSearch.value || "");
-				});
-			});
-		}
-		const bindStatus = function (node, key) {
-			if (!node || node.getAttribute("data-pp4-filter-status-bound") === "1") return;
-			node.setAttribute("data-pp4-filter-status-bound", "1");
-			node.addEventListener("click", function () {
-				updateDraft(function (next) {
-					next.status = key;
-				});
-			});
-		};
-		bindStatus(statusInCreation, "in_creation");
-		bindStatus(statusAwaitingReview, "awaiting_review");
-		bindStatus(statusReadyForRelease, "ready_for_release");
-		if (department && department.getAttribute("data-pp4-filter-department-bound") !== "1") {
-			department.setAttribute("data-pp4-filter-department-bound", "1");
-			department.addEventListener("change", function () {
-				updateDraft(function (next) {
-					next.department = String(department.value || PP4_DEPARTMENT_ALL);
-				});
-			});
-		}
-		const rangeRadios = root.querySelectorAll('input[name="pp4-filter-value-range"]');
-		for (let i = 0; i < rangeRadios.length; i += 1) {
-			const radio = rangeRadios[i];
-			if (!radio || radio.getAttribute("data-pp4-filter-range-bound") === "1") continue;
-			radio.setAttribute("data-pp4-filter-range-bound", "1");
-			radio.addEventListener("change", function () {
-				if (!radio.checked) return;
-				updateDraft(function (next) {
-					next.value_range = String(radio.value || PP4_VALUE_RANGE_ALL);
-				});
-			});
-		}
-		if (createdFrom && createdFrom.getAttribute("data-pp4-filter-created-from-bound") !== "1") {
-			createdFrom.setAttribute("data-pp4-filter-created-from-bound", "1");
-			createdFrom.addEventListener("change", function () {
-				updateDraft(function (next) {
-					next.created_from = String(createdFrom.value || "");
-				});
-			});
-		}
-		if (createdTo && createdTo.getAttribute("data-pp4-filter-created-to-bound") !== "1") {
-			createdTo.setAttribute("data-pp4-filter-created-to-bound", "1");
-			createdTo.addEventListener("change", function () {
-				updateDraft(function (next) {
-					next.created_to = String(createdTo.value || "");
-				});
-			});
-		}
-		if (applyButton && applyButton.getAttribute("data-pp4-filter-apply-bound") !== "1") {
-			applyButton.setAttribute("data-pp4-filter-apply-bound", "1");
-			applyButton.addEventListener("click", function () {
-				pp4FilterAppliedByRoot.set(
-					root,
-					pp4CloneFilterState(pp4FilterDraftByRoot.get(root) || pp4DefaultFilterState()),
-				);
-				pp4FilterDrawerOpenByRoot.set(root, false);
-				renderPP4PackageCardsFromState(root);
-			});
-		}
-		if (clearAllButton && clearAllButton.getAttribute("data-pp4-filter-clear-bound") !== "1") {
-			clearAllButton.setAttribute("data-pp4-filter-clear-bound", "1");
-			clearAllButton.addEventListener("click", function () {
-				const defaults = pp4DefaultFilterState();
-				pp4FilterDraftByRoot.set(root, pp4CloneFilterState(defaults));
-				pp4FilterAppliedByRoot.set(root, pp4CloneFilterState(defaults));
-				pp4FilterDrawerOpenByRoot.set(root, false);
-				renderPP4PackageCardsFromState(root);
-			});
-		}
-		if (document && !document.__pp4SortDismissBound) {
-			document.__pp4SortDismissBound = true;
-			document.addEventListener("click", function (ev) {
-				if (!root || !root.contains(ev.target)) return;
-				const host = root.querySelector(".pp4-sort-host");
-				if (host && host.contains(ev.target)) return;
-				if (pp4SortMenuOpenByRoot.get(root) === true) {
-					pp4SortMenuOpenByRoot.set(root, false);
-					renderPP4SortMenuState(root);
-				}
-			});
-		}
+			bindWorkbenchPackageQueuePagination(root, doc);
+			const activeUiQueue = readWorkbenchStateFromUrl().queue;
+			if (Object.prototype.hasOwnProperty.call(WORKBENCH_PACKAGE_UI_QUEUE_TO_API_QUEUE, activeUiQueue)) {
+				fetchAndRenderWorkbenchPackageQueueList(root, doc, activeUiQueue);
+			}
+		});
 	}
 
 	function workspaceNameMatches(name) {
@@ -4251,20 +3716,14 @@
 		renderPlanningWorkbenchV4(root);
 		root.setAttribute("data-pp4-mounted", "1");
 		pp4MountSignatureByRoot.set(root, routeSignature);
-		pp4PackageItemsByRoot.set(root, []);
-		pp4QueueItemsByRoot.set(root, {});
-		pp4SearchTermByRoot.set(root, "");
-		pp4SortModeByRoot.set(root, "newest");
-		pp4SortMenuOpenByRoot.set(root, false);
-		pp4FilterDrawerOpenByRoot.set(root, false);
-		pp4FilterDraftByRoot.set(root, pp4DefaultFilterState());
-		pp4FilterAppliedByRoot.set(root, pp4DefaultFilterState());
 		// W2: active-plan context + gate. W3: queue tab counts + active-tab affordance.
-		// W4: Needs Planning list binding. Remaining per-queue lists (W6/W7/W8)
-		// land once those queue screens have a pixel design.
+		// W4/W5: Needs Planning list + selection binding. W6: package queue
+		// lists (In Creation / Awaiting Review / Ready for Release). Blocked
+		// and Released queues (W7/W8) still await a pixel design.
 		fetchAndApplyWorkbenchActivePlanContext(root);
 		initializeWorkbenchQueueTabs(root);
 		initializeWorkbenchNeedsPlanningList(root);
+		initializeWorkbenchPackageQueueList(root);
 		document.body.classList.remove("kt-pp2-shell");
 		document.body.classList.add("kt-pp4-shell");
 		syncSidebarActive("");

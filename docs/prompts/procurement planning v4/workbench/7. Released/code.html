@@ -1,0 +1,326 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Released - ProcurementHub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Hanken+Grotesk:wght@600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#9fcaff",
+                        "on-error": "#ffffff",
+                        "background": "#f7f9fb",
+                        "surface-variant": "#e0e3e5",
+                        "error": "#ba1a1a",
+                        "error-container": "#ffdad6",
+                        "inverse-primary": "#a7c8ff",
+                        "on-tertiary-container": "#d8885c",
+                        "on-primary-fixed": "#001b3c",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#003366",
+                        "surface-container-low": "#f2f4f6",
+                        "inverse-surface": "#2d3133",
+                        "on-primary-container": "#799dd6",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-error-container": "#93000a",
+                        "status-success": "#10B981",
+                        "on-surface-variant": "#43474f",
+                        "status-warning": "#F59E0B",
+                        "outline-variant": "#c3c6d1",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed": "#341100",
+                        "tertiary-fixed": "#ffdbca",
+                        "outline": "#737780",
+                        "primary-fixed": "#d5e3ff",
+                        "on-tertiary-fixed-variant": "#723610",
+                        "on-secondary": "#ffffff",
+                        "secondary-container": "#0095f8",
+                        "on-secondary-fixed-variant": "#00497e",
+                        "cat-works": "#8B5CF6",
+                        "surface-dim": "#d8dadc",
+                        "cat-consultancy": "#06B6D4",
+                        "on-primary-fixed-variant": "#1f477b",
+                        "surface-bright": "#f7f9fb",
+                        "on-primary": "#ffffff",
+                        "on-background": "#191c1e",
+                        "primary": "#001e40",
+                        "surface": "#f7f9fb",
+                        "tertiary-container": "#592300",
+                        "surface-container-high": "#e6e8ea",
+                        "secondary-fixed": "#d2e4ff",
+                        "tertiary-fixed-dim": "#ffb690",
+                        "tertiary": "#381300",
+                        "status-neutral": "#64748B",
+                        "secondary": "#0061a5",
+                        "cat-goods": "#6366F1",
+                        "primary-fixed-dim": "#a7c8ff",
+                        "surface-tint": "#3a5f94",
+                        "on-secondary-container": "#002b4e",
+                        "on-surface": "#191c1e",
+                        "status-error": "#EF4444",
+                        "surface-container": "#eceef0",
+                        "on-secondary-fixed": "#001d36",
+                        "cat-services": "#EC4899"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-max-width": "1440px",
+                        "stack-gap-md": "16px",
+                        "workbench-gutter": "24px",
+                        "stack-gap-sm": "8px",
+                        "card-padding": "20px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "display-hero": ["Hanken Grotesk"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "display-hero-mobile": ["Hanken Grotesk"],
+                        "headline-md": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "display-hero": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "display-hero-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #f7f9fb;
+            color: #191c1e;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-tab-indicator {
+            border-bottom: 2px solid #0095f8;
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md overflow-x-hidden">
+<!-- Sidebar (Shared Component Style) -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface border-r border-outline-variant flex flex-col py-6 z-50">
+<div class="px-6 mb-8">
+<h1 class="font-headline-md text-headline-md text-primary">Global Procurement</h1>
+<p class="font-label-md text-label-md text-on-surface-variant opacity-70">Enterprise Division</p>
+</div>
+<nav class="flex-1 flex flex-col gap-1">
+<div class="px-4 py-2 flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high transition-all cursor-pointer">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">Planning Hub</span>
+</div>
+<!-- ACTIVE: Workbench -->
+<div class="px-4 py-2 flex items-center gap-3 text-primary font-bold border-r-2 border-primary bg-surface-container-high transition-all cursor-pointer">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md text-label-md">Workbench</span>
+</div>
+<div class="px-4 py-2 flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high transition-all cursor-pointer">
+<span class="material-symbols-outlined">fact_check</span>
+<span class="font-label-md text-label-md">Approved Demands</span>
+</div>
+<div class="px-4 py-2 flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high transition-all cursor-pointer">
+<span class="material-symbols-outlined">package_2</span>
+<span class="font-label-md text-label-md">Packages</span>
+</div>
+<div class="px-4 py-2 flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high transition-all cursor-pointer">
+<span class="material-symbols-outlined">rate_review</span>
+<span class="font-label-md text-label-md">Reviews</span>
+</div>
+<div class="px-4 py-2 flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high transition-all cursor-pointer">
+<span class="material-symbols-outlined">send</span>
+<span class="font-label-md text-label-md">Releases</span>
+</div>
+</nav>
+<div class="mt-auto flex flex-col gap-1 border-t border-outline-variant pt-4">
+<div class="px-4 py-2 flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high transition-all cursor-pointer">
+<span class="material-symbols-outlined">support_agent</span>
+<span class="font-label-md text-label-md">Support</span>
+</div>
+<div class="px-4 py-2 flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high transition-all cursor-pointer">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="font-label-md text-label-md">User Manual</span>
+</div>
+</div>
+</aside>
+<!-- Main Wrapper -->
+<div class="ml-64 min-h-screen flex flex-col">
+<!-- TopAppBar (Shared Component Style) -->
+<header class="w-full h-16 bg-surface-container-lowest border-b border-outline-variant shadow-sm sticky top-0 z-40">
+<div class="flex justify-between items-center h-full px-workbench-gutter max-w-container-max-width mx-auto">
+<div class="flex items-center gap-6">
+<span class="font-headline-lg text-headline-lg font-bold text-primary">Planning Hub</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant p-2 hover:bg-surface-container-low rounded-full transition-colors">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant p-2 hover:bg-surface-container-low rounded-full transition-colors">help</button>
+<button class="material-symbols-outlined text-on-surface-variant p-2 hover:bg-surface-container-low rounded-full transition-colors">settings</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant ml-2">
+<img class="w-full h-full object-cover" data-alt="Corporate headshot of a professional female procurement officer with a neutral expression, clean lighting, and a soft blurred office background, matching a high-end enterprise management system aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCD8sSGiWD5-xpb7wPwLFUqfScbd-IWYbwKNAex7174aED7_ehgso38R6IIR3zn2QLk24KQg3Lnja9duxTfgy3PJZ9PaNjbbXViNLqgUmAi1TeysOKfkkluvMIzE7ZvEP3Xtg57d7I3WRIWm1x9E_pRJeGq0A68cgPHd7TrGf7caBPfB-DuhZ590qRHibdtLkY0AsGRYcb6miA_Ep_mvmaxka6ociOW9nYyXbzMiBPaMyJz8rVXOC4N">
+</div>
+</div>
+</div>
+</header>
+<!-- Content Area -->
+<main class="flex-1 w-full max-w-container-max-width mx-auto px-workbench-gutter py-8 space-y-8">
+<!-- Page Header -->
+<div class="flex items-center justify-between">
+<div>
+<div class="flex items-center gap-2 text-secondary mb-1 cursor-pointer">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+<span class="font-label-md text-label-md">Back to Dashboard</span>
+</div>
+<h2 class="font-display-hero text-display-hero text-primary">Planning Workbench</h2>
+</div>
+<div class="flex gap-4">
+<button class="px-6 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg font-label-md text-label-md text-primary hover:bg-surface-container-low transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">download</span> Export PDF
+                    </button>
+<button class="px-6 py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:opacity-90 transition-opacity flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span> Create New Package
+                    </button>
+</div>
+</div>
+<!-- KPI Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-workbench-gutter">
+<div class="bg-surface-container-lowest border border-outline-variant p-card-padding rounded-xl shadow-sm flex items-center gap-4">
+<div class="w-12 h-12 bg-primary-container text-on-primary-container rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Total Planned Value</p>
+<p class="font-headline-lg text-headline-lg text-primary">KES 4.28B</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-card-padding rounded-xl shadow-sm flex items-center gap-4">
+<div class="w-12 h-12 bg-secondary-fixed text-on-secondary-fixed rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined">rule</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Approved Demands</p>
+<p class="font-headline-lg text-headline-lg text-primary">142</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-card-padding rounded-xl shadow-sm flex items-center gap-4 relative overflow-hidden">
+<!-- Subtle faded background icon -->
+<span class="material-symbols-outlined absolute -right-4 -bottom-4 text-[100px] text-surface-container-high opacity-40">assignment</span>
+<div class="w-12 h-12 bg-surface-container-high text-on-surface-variant rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined">description</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Active Plan</p>
+<p class="font-headline-lg text-headline-lg text-primary">FY 2026/2027</p>
+</div>
+</div>
+</div>
+<!-- Workbench Tabs & Table -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden">
+<!-- Navigation Tabs -->
+<div class="flex border-b border-outline-variant overflow-x-auto no-scrollbar w-full"><button class="px-6 py-4 font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors whitespace-nowrap">Needs Planning (24)</button><button class="px-6 py-4 font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors whitespace-nowrap">In Creation (12)</button><button class="px-6 py-4 font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors whitespace-nowrap">Awaiting Review (08)</button><button class="px-6 py-4 font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors whitespace-nowrap">Ready for Release (05)</button><button class="px-6 py-4 font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors whitespace-nowrap">Blocked</button><button class="px-6 py-4 font-label-md text-label-md text-secondary border-b-2 border-secondary font-bold whitespace-nowrap">Released</button></div><div class="p-4 flex items-center bg-surface-container-lowest border-b border-outline-variant/50 justify-between gap-2"><div class="relative w-80"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span><input class="w-full pl-10 pr-4 py-1.5 bg-surface-container-low border-none rounded-lg font-body-md text-body-md focus:ring-1 focus:ring-primary" placeholder="Search packages..." type="text"></div><div class="flex gap-2"><button class="flex items-center gap-2 px-3 py-1.5 border border-outline-variant rounded-lg font-body-sm text-on-surface-variant hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined text-sm">filter_list</span> Filter</button><button class="flex items-center gap-2 px-3 py-1.5 border border-outline-variant rounded-lg font-body-sm text-on-surface-variant hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined text-sm">sort</span> Sort</button></div></div>
+<!-- Main Table -->
+<div class="overflow-x-auto w-full no-scrollbar">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant"><th class="py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider pl-6 pr-2">Package Title &amp; Ref</th><th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-center">Linked</th><th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-center">Category</th><th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-center">Est. Value</th><th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-center">Tender Status</th></tr>
+</thead>
+<tbody class="divide-y divide-outline-variant"><tr class="hover:bg-surface-container-lowest transition-colors group"><td class="py-6 pl-6 pr-2"><div class="flex flex-col"><a class="font-bold text-primary hover:text-secondary transition-colors" href="#">MOH/GDS/010 - Medical Supplies</a><span class="font-label-md text-label-md text-secondary">REF: PKG-2026-0091</span></div></td><td class="px-6 py-6 text-center"><div class="inline-flex items-center gap-2 text-on-surface-variant bg-surface-container-low px-3 py-1 rounded-full"><span class="material-symbols-outlined text-[16px]">link</span><span class="font-label-md text-label-md">5</span></div></td><td class="px-6 py-6 text-center"><span class="bg-cat-goods/10 text-cat-goods font-label-md text-label-md px-3 py-1 rounded uppercase tracking-tighter">GOODS</span></td><td class="px-6 py-6 text-center"><span class="font-bold text-primary">KES 850M</span></td><td class="px-6 py-6 text-center"><span class="bg-status-success/10 text-status-success font-label-md text-label-md px-3 py-1 rounded uppercase tracking-tighter">Tender Created</span></td></tr><tr class="hover:bg-surface-container-lowest transition-colors group"><td class="py-6 pl-6 pr-2"><div class="flex flex-col"><a class="font-bold text-primary hover:text-secondary transition-colors" href="#">MOH/WKS/008 - Clinic Expansion</a><span class="font-label-md text-label-md text-secondary">REF: PKG-2026-0044</span></div></td><td class="px-6 py-6 text-center"><div class="inline-flex items-center gap-2 text-on-surface-variant bg-surface-container-low px-3 py-1 rounded-full"><span class="material-symbols-outlined text-[16px]">link</span><span class="font-label-md text-label-md">1</span></div></td><td class="px-6 py-6 text-center"><span class="bg-cat-works/10 text-cat-works font-label-md text-label-md px-3 py-1 rounded uppercase tracking-tighter">WORKS</span></td><td class="px-6 py-6 text-center"><span class="font-bold text-primary">KES 1.2B</span></td><td class="px-6 py-6 text-center"><span class="bg-secondary-container/10 text-secondary font-label-md text-label-md px-3 py-1 rounded uppercase tracking-tighter">Published</span></td></tr><tr class="hover:bg-surface-container-lowest transition-colors group"><td class="py-6 pl-6 pr-2"><div class="flex flex-col"><a class="font-bold text-primary hover:text-secondary transition-colors" href="#">MOH/CNS/015 - Logistics Audit</a><span class="font-label-md text-label-md text-secondary">REF: PKG-2026-0012</span></div></td><td class="px-6 py-6 text-center"><div class="inline-flex items-center gap-2 text-on-surface-variant bg-surface-container-low px-3 py-1 rounded-full"><span class="material-symbols-outlined text-[16px]">link</span><span class="font-label-md text-label-md">2</span></div></td><td class="px-6 py-6 text-center"><span class="bg-cat-consultancy/10 text-cat-consultancy font-label-md text-label-md px-3 py-1 rounded uppercase tracking-tighter">CONSULTANCY</span></td><td class="px-6 py-6 text-center"><span class="font-bold text-primary">KES 45M</span></td><td class="px-6 py-6 text-center"><span class="bg-status-success/10 text-status-success font-label-md text-label-md px-3 py-1 rounded uppercase tracking-tighter">Tender Created</span></td></tr></tbody>
+</table>
+</div>
+<!-- Table Footer / Pagination -->
+<div class="px-6 py-4 flex items-center justify-between border-t border-outline-variant bg-surface-container-lowest"><div class="flex items-center gap-2"><span class="font-body-sm text-on-surface-variant">Rows per page:</span><div class="relative flex items-center bg-surface-container-lowest border border-outline-variant rounded px-2 py-1 cursor-pointer hover:bg-surface-container-high transition-colors"><span class="font-label-md text-primary mr-1">10</span><span class="material-symbols-outlined text-[18px] text-on-surface-variant">arrow_drop_down</span></div></div><div class="flex items-center gap-6"><span class="font-body-sm text-on-surface-variant">1 to 3 of 8</span><div class="flex items-center gap-2"><button class="p-2 border border-outline-variant rounded-lg text-on-surface-variant disabled:opacity-30 transition-colors hover:bg-surface-container-high" disabled=""><span class="material-symbols-outlined">chevron_left</span></button><button class="w-8 h-8 flex items-center justify-center bg-primary text-white rounded-lg font-label-md">1</button><button class="w-8 h-8 flex items-center justify-center hover:bg-surface-container-high rounded-lg font-label-md text-on-surface-variant transition-colors">2</button><button class="p-2 border border-outline-variant rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined">chevron_right</span></button></div></div></div>
+</div>
+<!-- Bottom Section: Strategic Alignment & Workbench Insights -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-workbench-gutter">
+<!-- Strategic Alignment -->
+<div class="bg-surface-container-lowest border border-outline-variant p-card-padding rounded-xl shadow-sm">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-headline-md text-headline-md text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">verified_user</span> Strategic Alignment
+                        </h3>
+<span class="font-label-md text-label-md text-status-success bg-status-success/10 px-2 py-0.5 rounded">High Alignment</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6">Current package selection aligns 94% with Vision 2030 Health Modernization goals for the Q3 planning cycle.</p>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md">Public Health Resilience</span>
+<span class="font-bold text-primary">KES 1.8B</span>
+</div>
+<div class="w-full bg-surface-container-low h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[85%]"></div>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md">Infrastructure Expansion</span>
+<span class="font-bold text-primary">KES 1.2B</span>
+</div>
+<div class="w-full bg-surface-container-low h-2 rounded-full overflow-hidden">
+<div class="bg-secondary-container h-full w-[60%]"></div>
+</div>
+</div>
+</div>
+<!-- Workbench Insights -->
+<div class="bg-surface-container-lowest border border-outline-variant p-card-padding rounded-xl shadow-sm">
+<h3 class="font-headline-md text-headline-md text-primary flex items-center gap-2 mb-4"><span class="material-symbols-outlined text-secondary">trending_up</span> Released Insights</h3>
+<div class="space-y-4"><div class="flex items-start gap-4 p-3 bg-surface-container-low rounded-lg"><div class="w-8 h-8 rounded-full bg-status-success/10 text-status-success flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[20px]">speed</span></div><div><p class="font-label-md text-label-md font-bold text-primary">Handover Efficiency</p><p class="font-body-sm text-body-sm text-on-surface-variant">Tender Creation Velocity has increased by 15% this quarter. Handover Efficiency is at an all-time high of 98% for released packages.</p></div></div><div class="flex items-start gap-4 p-3 bg-surface-container-low rounded-lg"><div class="w-8 h-8 rounded-full bg-status-success/10 text-status-success flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[20px]">check_circle</span></div><div><p class="font-label-md text-label-md font-bold text-primary">Weekly Release Volume</p><p class="font-body-sm text-body-sm text-on-surface-variant">8 packages released this week.</p></div></div></div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="mt-auto border-t border-outline-variant bg-surface-container-lowest py-6 px-workbench-gutter">
+<div class="max-w-container-max-width mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+<p class="font-body-sm text-body-sm text-on-surface-variant opacity-70">© 2026 KenTender Procurement Control System. All Rights Reserved.</p>
+<div class="flex items-center gap-6">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-secondary transition-colors" href="#">User Guide</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-secondary transition-colors" href="#">Policy Documentation</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-secondary transition-colors" href="#">Support</a>
+</div>
+</div>
+</footer>
+</div>
+<!-- Micro-interactions Script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Hover effect for table rows
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                row.addEventListener('mouseenter', () => {
+                    row.querySelector('.material-symbols-outlined.text-status-success')?.classList.add('animate-bounce');
+                    setTimeout(() => {
+                        row.querySelector('.material-symbols-outlined.text-status-success')?.classList.remove('animate-bounce');
+                    }, 1000);
+                });
+            });
+
+            // Smooth scaling for buttons on click
+            const buttons = document.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.addEventListener('mousedown', () => btn.style.transform = 'scale(0.96)');
+                btn.addEventListener('mouseup', () => btn.style.transform = 'scale(1)');
+                btn.addEventListener('mouseleave', () => btn.style.transform = 'scale(1)');
+            });
+        });
+    </script>
+
+
+</body></html>

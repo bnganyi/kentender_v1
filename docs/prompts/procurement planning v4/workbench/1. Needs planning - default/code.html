@@ -306,53 +306,69 @@
 </div>
 <!-- Footer / Pagination -->
 <footer class="flex justify-between items-center w-full px-6 py-4 bg-surface-container border-t border-outline-variant gap-4"><div class="flex items-center gap-2"><span class="font-body-sm text-on-surface-variant">Rows per page:</span><div class="relative flex items-center bg-surface-container-lowest border border-outline-variant rounded px-2 py-1 cursor-pointer hover:bg-surface-container-high transition-colors"><span class="font-label-md text-primary mr-1">10</span><span class="material-symbols-outlined text-[18px] text-on-surface-variant">arrow_drop_down</span></div></div><div class="flex items-center gap-6"><span class="font-body-sm text-on-surface-variant">1 to 4 of 24</span><div class="flex items-center gap-2"><button class="p-2 border border-outline-variant rounded-lg text-on-surface-variant disabled:opacity-30 transition-colors hover:bg-surface-container-high" disabled=""><span class="material-symbols-outlined">chevron_left</span></button><button class="w-8 h-8 flex items-center justify-center bg-primary text-white rounded-lg font-label-md">1</button><button class="w-8 h-8 flex items-center justify-center hover:bg-surface-container-high rounded-lg font-label-md text-on-surface-variant transition-colors">2</button><button class="w-8 h-8 flex items-center justify-center hover:bg-surface-container-high rounded-lg font-label-md text-on-surface-variant transition-colors">3</button><button class="p-2 border border-outline-variant rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined">chevron_right</span></button></div></div></footer>
+</div><div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pb-12">
+  <!-- Strategic Alignment Card -->
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="font-headline-md text-primary flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">verified_user</span> Strategic Alignment
+      </h3>
+      <span class="px-3 py-1 bg-status-success/10 text-status-success rounded font-label-sm font-bold uppercase tracking-wide">High Alignment</span>
+    </div>
+    <p class="font-body-md text-on-surface-variant mb-6">Current package selection aligns 94% with Vision 2030 Health Modernization goals for the Q3 planning cycle.</p>
+    <div class="space-y-4">
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="font-label-md text-on-surface">Public Health Resilience</span>
+          <span class="font-bold text-primary">KES 1.8B</span>
+        </div>
+        <div class="w-full bg-surface-container-low h-2 rounded-full overflow-hidden">
+          <div class="bg-primary h-full w-[85%]"></div>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="font-label-md text-on-surface">Infrastructure Expansion</span>
+          <span class="font-bold text-primary">KES 1.2B</span>
+        </div>
+        <div class="w-full bg-surface-container-low h-2 rounded-full overflow-hidden">
+          <div class="bg-secondary-container h-full w-[60%]"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Workbench Insights Card -->
+  <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
+    <h3 class="font-headline-md text-primary flex items-center gap-2 mb-6">
+      <span class="material-symbols-outlined text-secondary">analytics</span> Workbench Insights
+    </h3>
+    <div class="space-y-4">
+      <!-- Review Lag Alert -->
+      <div class="flex gap-4 p-4 bg-surface-container-low rounded-lg">
+        <div class="w-10 h-10 rounded-full bg-status-warning/10 flex items-center justify-center flex-shrink-0">
+          <span class="material-symbols-outlined text-status-warning">timer</span>
+        </div>
+        <div>
+          <h4 class="font-label-md text-primary">Review Lag Detected</h4>
+          <p class="text-body-sm text-on-surface-variant">2 packages have been in "Awaiting Review" for over 48 hours. Approval speed is down 12% from last week.</p>
+        </div>
+      </div>
+      <!-- Optimization Alert -->
+      <div class="flex gap-4 p-4 bg-surface-container-low rounded-lg">
+        <div class="w-10 h-10 rounded-full bg-status-success/10 flex items-center justify-center flex-shrink-0">
+          <span class="material-symbols-outlined text-status-success">lightbulb</span>
+        </div>
+        <div>
+          <h4 class="font-label-md text-primary">Optimization Opportunity</h4>
+          <p class="text-body-sm text-on-surface-variant">Grouping 'MOH/GDS/010' with future laboratory demands could reduce shipping costs by KES 4.2M.</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 <!-- BOTTOM PANELS -->
-<div class="grid grid-cols-1 lg:grid-cols-4 gap-8 pb-12">
-<!-- Strategic Alignment (3 cols) -->
-<div class="lg:col-span-3 bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm h-full">
-<div class="flex items-center justify-between mb-6">
-<h3 class="font-headline-md text-primary flex items-center gap-2">
-<span class="material-symbols-outlined text-secondary">verified_user</span> Strategic Alignment
-                        </h3>
-<span class="px-3 py-1 bg-status-success/10 text-status-success rounded font-label-sm font-bold uppercase tracking-wide">High Alignment</span>
-</div>
-<p class="font-body-md text-on-surface-variant mb-6">Current demand selection aligns 94% with Vision 2030 Health Modernization goals for the FY 2026/27 cycle.</p>
-<div class="space-y-4">
-<div class="flex items-center justify-between">
-<span class="font-label-md">Public Health Resilience</span>
-<span class="font-bold text-primary">KES 1.8B</span>
-</div>
-<div class="w-full bg-surface-container-low h-2 rounded-full overflow-hidden">
-<div class="bg-primary h-full w-[85%]"></div>
-</div>
-<div class="flex items-center justify-between">
-<span class="font-label-md">Infrastructure Expansion</span>
-<span class="font-bold text-primary">KES 1.2B</span>
-</div>
-<div class="w-full bg-surface-container-low h-2 rounded-full overflow-hidden">
-<div class="bg-secondary-container h-full w-[60%]"></div>
-</div>
-</div>
-</div>
-<!-- Insights (1 col) -->
-<div class="lg:col-span-1 bg-primary-container p-6 rounded-xl text-on-primary-container h-full flex flex-col justify-between">
-<div>
-<span class="material-symbols-outlined text-3xl mb-2">analytics</span>
-<h4 class="font-headline-md mb-2">Workbench Insights</h4>
-<p class="font-body-sm opacity-80 leading-relaxed mb-4">You have 24 demands awaiting planning. Laboratory consumables show high risk of seasonal delays.</p>
-<div class="space-y-3 opacity-90">
-<div class="flex items-start gap-2">
-<span class="material-symbols-outlined text-status-warning text-sm mt-0.5">timer</span>
-<p class="text-[11px]">3 high-value demands pending &gt; 14 days</p>
-</div>
-</div>
-</div>
-<button class="w-full mt-6 py-2 border border-on-primary-container/30 rounded-lg font-label-md hover:bg-white/10 transition-colors active:scale-95">
-                        View Full Report
-                    </button>
-</div>
-</div>
+
 </div>
 </div>
 <!-- GLOBAL FOOTER -->
@@ -379,6 +395,8 @@
     checkboxes.forEach(cb => cb.addEventListener('change', updateToolbar));
     updateToolbar(); // Initialize state
 </script>
+
+
 
 
 

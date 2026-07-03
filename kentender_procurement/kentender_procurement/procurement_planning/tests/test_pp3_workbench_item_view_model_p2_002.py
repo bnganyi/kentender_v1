@@ -15,6 +15,7 @@ from kentender_core.seeds._common import ensure_currency_kes, ensure_department
 from kentender_procurement.procurement_planning.api.workbench_item import (
 	get_pp_workbench_item_view_model,
 )
+from kentender_procurement.procurement_planning.pp2_constants import READINESS_VALID_STATUSES
 from kentender_procurement.procurement_planning.services.workbench_item_view_model import (
 	get_workbench_item_view_model,
 )
@@ -43,6 +44,10 @@ _REQUIRED_ITEM_FIELDS = (
 	"secondary_actions",
 	"technical_hidden_by_default",
 )
+
+_PACKAGE_QUEUES = ("draft_packages", "needs_review", "ready_release")
+
+_VALID_READINESS_TONES = frozenset(("success", "error", "warning", "neutral"))
 
 
 def _pp_ok() -> bool:
@@ -196,6 +201,111 @@ class TestPP3WorkbenchItemViewModelP2002(IntegrationTestCase):
 			if out.get("ok") and (out.get("items") or []):
 				return queue, out.get("items") or []
 		return "", []
+
+	def _first_non_empty_package_queue(self) -> tuple[str, list[dict]]:
+		for queue in _PACKAGE_QUEUES:
+			out = get_workbench_item_view_model(queue=queue, actor="Administrator", limit=200, start=0)
+			if out.get("ok") and (out.get("items") or []):
+				return queue, out.get("items") or []
+		return "", []
+
+	def _first_non_empty_recently_released(self) -> list[dict]:
+		out = get_workbench_item_view_model(
+			queue="recently_released", actor="Administrator", limit=200, start=0
+		)
+		if out.get("ok"):
+			return out.get("items") or []
+		return []
+
+	def test_package_queue_item_contract_fields(self) -> None:
+		"""W6 — package rows need the internal Frappe name (not just the
+		business code) for safe Desk-form navigation, and the raw currency
+		code (the design renders it split from the abbreviated value), so
+		both must be present and non-empty on every package-queue item."""
+		if self._skip:
+			self.skipTest("Procurement Planning not installed")
+		queue, items = self._first_non_empty_package_queue()
+		if not queue:
+			self.skipTest("No package queue items available to validate W6 contract fields")
+		for field in _REQUIRED_ITEM_FIELDS:
+			self.assertIn(field, items[0])
+		for item in items:
+			self.assertTrue(
+				str(item.get("underlying_object_id") or "").strip(),
+				msg=f"{queue} item missing underlying_object_id: {item}",
+			)
+			self.assertTrue(
+				str(item.get("currency") or "").strip(),
+				msg=f"{queue} item missing currency: {item}",
+			)
+
+	def test_package_queue_readiness_fields_are_real_not_hardcoded(self) -> None:
+		"""The remaining-queues pass (Awaiting Review / Ready for Release designs)
+		renders a real "Readiness" pill sourced from the package's own
+		`readiness_status` — previously the router hardcoded a fake tone per
+		UI queue. Every package-queue item must carry a valid raw readiness
+		status plus a mapped, valid presentation tone."""
+		if self._skip:
+			self.skipTest("Procurement Planning not installed")
+		queue, items = self._first_non_empty_package_queue()
+		if not queue:
+			self.skipTest("No package queue items available to validate readiness fields")
+		for item in items:
+			self.assertIn(
+				item.get("readiness_status"),
+				READINESS_VALID_STATUSES,
+				msg=f"{queue} item has invalid readiness_status: {item}",
+			)
+			self.assertIn(
+				item.get("readiness_tone"),
+				_VALID_READINESS_TONES,
+				msg=f"{queue} item has invalid readiness_tone: {item}",
+			)
+
+	def test_recently_released_item_contract_fields(self) -> None:
+		"""Released rows now render a real clickable title (like In Creation),
+		so the internal Frappe name is required for safe routing, plus a
+		coarse tender-status label for the design's "Tender Status" column."""
+		if self._skip:
+			self.skipTest("Procurement Planning not installed")
+		items = self._first_non_empty_recently_released()
+		if not items:
+			self.skipTest("No recently_released items available to validate contract fields")
+		for field in _REQUIRED_ITEM_FIELDS:
+			self.assertIn(field, items[0])
+		for item in items:
+			self.assertTrue(
+				str(item.get("underlying_object_id") or "").strip(),
+				msg=f"recently_released item missing underlying_object_id: {item}",
+			)
+			self.assertTrue(
+				str(item.get("tender_status_label") or "").strip(),
+				msg=f"recently_released item missing tender_status_label: {item}",
+			)
+
+	def test_blocked_item_contract_fields(self) -> None:
+		"""Blocked rows now render a real "Blocker Reason" pill and a
+		whole-row click (like the other package-shape queues), so every
+		blocked item needs the internal Frappe name regardless of whether
+		it's a blocked demand or a blocked package."""
+		if self._skip:
+			self.skipTest("Procurement Planning not installed")
+		out = get_workbench_item_view_model(queue="blocked", actor="Administrator", limit=200, start=0)
+		self.assertTrue(out.get("ok"), msg=out)
+		items = out.get("items") or []
+		if not items:
+			self.skipTest("No blocked items available to validate contract fields")
+		for field in _REQUIRED_ITEM_FIELDS:
+			self.assertIn(field, items[0])
+		for item in items:
+			self.assertTrue(
+				str(item.get("underlying_object_id") or "").strip(),
+				msg=f"blocked item missing underlying_object_id: {item}",
+			)
+			self.assertTrue(
+				str(item.get("status_detail") or "").strip(),
+				msg=f"blocked item missing status_detail (Blocker Reason source): {item}",
+			)
 
 	def test_server_side_search_filter(self) -> None:
 		if self._skip:

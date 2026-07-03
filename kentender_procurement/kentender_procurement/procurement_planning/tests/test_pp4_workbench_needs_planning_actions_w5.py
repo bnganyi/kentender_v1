@@ -139,10 +139,16 @@ class TestPP4WorkbenchNeedsPlanningActionsW5Source(UnitTestCase):
 
 	def test_no_new_view_demand_action_duplicates_w4_row_click(self) -> None:
 		"""W5 explicitly reuses the W4 row-click navigation for "View Demand"
-		rather than adding a second action — pin that no second
-		`frappe.set_route("demand-workbench", ...)` call site was added."""
+		rather than adding a second action — pin that no *W5 selection-toolbar*
+		`frappe.set_route("demand-workbench", ...)` call site was added.
+
+		The remaining-queues pass (W7) legitimately introduces a second,
+		unrelated call site: the Blocked queue's row builder routes a blocked
+		*demand* row to `demand-workbench` (vs. a blocked *package* row, which
+		routes to `procurement-package`) — this is queue-shape branching, not
+		a duplicate of W4/W5's needs-planning row click."""
 		matches = self.source.count('frappe.set_route("demand-workbench"')
-		self.assertEqual(matches, 1)
+		self.assertEqual(matches, 2)
 
 
 class TestPP4WorkbenchNeedsPlanningActionsW5FieldContract(IntegrationTestCase):
