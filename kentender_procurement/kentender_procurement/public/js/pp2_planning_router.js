@@ -70,7 +70,10 @@
 		"created_to",
 		"sort",
 		"page",
+		"page_size",
 	];
+	const WORKBENCH_PAGE_SIZE_OPTIONS = [10, 25, 50];
+	const WORKBENCH_DEFAULT_PAGE_SIZE = 10;
 	const WORKBENCH_ALLOWED_QUEUES = {
 		needs_planning: true,
 		draft_packages: true,
@@ -113,6 +116,11 @@
 		return String(Math.floor(n));
 	}
 
+	function normalizeWorkbenchPageSizeValue(rawValue) {
+		const n = Number(rawValue);
+		return WORKBENCH_PAGE_SIZE_OPTIONS.indexOf(n) !== -1 ? n : WORKBENCH_DEFAULT_PAGE_SIZE;
+	}
+
 	function readWorkbenchStateFromUrl(urlLike) {
 		const url = urlLike ? new URL(urlLike, window.location.origin) : new URL(window.location.href);
 		const search = url.searchParams;
@@ -128,6 +136,7 @@
 			created_to: String(search.get("created_to") || "").trim(),
 			sort: String(search.get("sort") || "").trim(),
 			page: normalizePositiveIntValue(search.get("page"), 1),
+			page_size: normalizeWorkbenchPageSizeValue(search.get("page_size")),
 		};
 		if (!WORKBENCH_SORT_OPTIONS[state.sort]) {
 			state.sort = "newest";
@@ -150,6 +159,7 @@
 		const next = Object.assign({}, current, partialState || {});
 		next.queue = normalizeWorkbenchQueueValue(next.queue);
 		next.page = normalizePositiveIntValue(next.page, 1);
+		next.page_size = normalizeWorkbenchPageSizeValue(next.page_size);
 		next.sort = WORKBENCH_SORT_OPTIONS[String(next.sort || "").trim()] ? String(next.sort || "").trim() : "newest";
 		WORKBENCH_STATE_QUERY_KEYS.forEach(function (key) {
 			const value = String(next[key] || "").trim();
@@ -250,6 +260,278 @@
 				__("No active procurement plan exists. Create or activate a plan to continue."),
 		});
 		window.location.href = "/desk/planning-hub";
+	}
+
+	// "Back to Hub" ships in the design as a plain `<div>` (no href/route) —
+	// wire it to the same destination the no-active-plan gate already
+	// redirects to, matching the existing `window.location.href` pattern
+	// used by `redirectWorkbenchToPlanningHubForNoActivePlan`.
+	function initializeWorkbenchBackToHubLink(root) {
+		if (!root) return;
+		withWorkbenchIframeDocument(root, function (doc) {
+			const link = doc.querySelector(".text-secondary.cursor-pointer");
+			if (!link || link.getAttribute("data-pp4-back-to-hub-bound") === "1") return;
+			link.setAttribute("data-pp4-back-to-hub-bound", "1");
+			link.addEventListener("click", function (event) {
+				event.preventDefault();
+				window.location.href = "/desk/planning-hub";
+			});
+		});
+	}
+
+	// W10 — Filter drawer + Sort menu, ported in spirit from
+	// `demand_hub_page.js`'s DIA filter drawer (draft/applied two-layer
+	// state, `Apply`/`Clear All`, badge count on the Filter button) but
+	// wired through this router's own URL-state model instead of an
+	// internal `_state` object, since every other workbench control
+	// (page/page_size/queue) already round-trips through the URL.
+	const WORKBENCH_FILTER_META_API =
+		"kentender_procurement.procurement_planning.api.workbench_item.get_pp_workbench_filter_meta";
+	const WORKBENCH_SORT_LABELS = {
+		newest: __("Newest first"),
+		oldest: __("Oldest first"),
+		value_high_low: __("Value: High to Low"),
+		value_low_high: __("Value: Low to High"),
+		title_asc: __("Title: A to Z"),
+		title_desc: __("Title: Z to A"),
+	};
+	// The meta API's `sort_options` use `value_desc`/`value_asc`; the
+	// router's own URL-state vocabulary (and backend `_apply_sort`/
+	// `_apply_demand_sort`) accept both spellings, but state normalization
+	// only recognizes the `value_high_low`/`value_low_high` forms — map
+	// the meta response onto those so the Sort menu and URL state agree.
+	const WORKBENCH_SORT_VALUE_ALIASES = {
+		value_desc: "value_high_low",
+		value_asc: "value_low_high",
+	};
+	let workbenchFilterMetaCache = null;
+
+	function fetchWorkbenchFilterMeta(callback) {
+		if (workbenchFilterMetaCache) {
+			callback(workbenchFilterMetaCache);
+			return;
+		}
+		frappe.call({
+			method: WORKBENCH_FILTER_META_API,
+			freeze: false,
+			callback: function (response) {
+				const payload = (response && response.message) || {};
+				if (payload.ok) workbenchFilterMetaCache = payload;
+				callback(payload.ok ? payload : { departments: [], categories: [], value_ranges: [], sort_options: [] });
+			},
+		});
+	}
+
+	function workbenchFilterDrawerEls(doc) {
+		return {
+			backdrop: doc.querySelector('[data-testid="pp4-workbench-filter-backdrop"]'),
+			drawer: doc.querySelector('[data-testid="pp4-workbench-filter-drawer"]'),
+			closeBtn: doc.querySelector('[data-testid="pp4-workbench-filter-close"]'),
+			filterBtn: doc.querySelector('[data-testid="pp4-workbench-filter-btn"]'),
+			filterBadge: doc.querySelector('[data-testid="pp4-workbench-filter-badge"]'),
+			searchEl: doc.querySelector('[data-testid="pp4-workbench-filter-search"]'),
+			departmentEl: doc.querySelector('[data-testid="pp4-workbench-filter-department"]'),
+			categoryEl: doc.querySelector('[data-testid="pp4-workbench-filter-category"]'),
+			valueRangeEl: doc.querySelector('[data-testid="pp4-workbench-filter-value-range"]'),
+			createdFromEl: doc.querySelector('[data-testid="pp4-workbench-filter-created-from"]'),
+			createdToEl: doc.querySelector('[data-testid="pp4-workbench-filter-created-to"]'),
+			clearBtn: doc.querySelector('[data-testid="pp4-workbench-filter-clear"]'),
+			applyBtn: doc.querySelector('[data-testid="pp4-workbench-filter-apply"]'),
+			sortBtn: doc.querySelector('[data-testid="pp4-workbench-sort-btn"]'),
+			sortMenu: doc.querySelector('[data-testid="pp4-workbench-sort-menu"]'),
+		};
+	}
+
+	function refetchActiveWorkbenchQueueList(root, doc) {
+		const uiQueue = readWorkbenchStateFromUrl().queue;
+		if (uiQueue === "needs_planning") {
+			fetchAndRenderWorkbenchNeedsPlanningList(root, doc);
+			return;
+		}
+		fetchAndRenderWorkbenchPackageQueueList(root, doc, uiQueue);
+	}
+
+	function workbenchActiveFilterCount(state) {
+		return [state.search, state.department, state.category, state.value_range, state.created_from, state.created_to]
+			.filter(function (v) {
+				return String(v || "").trim();
+			}).length;
+	}
+
+	function syncWorkbenchFilterBadge(doc) {
+		const els = workbenchFilterDrawerEls(doc);
+		if (!els.filterBadge || !els.filterBtn) return;
+		const count = workbenchActiveFilterCount(readWorkbenchStateFromUrl());
+		if (count > 0) {
+			els.filterBadge.textContent = String(count);
+			els.filterBadge.classList.remove("hidden");
+			els.filterBadge.classList.add("flex");
+			els.filterBtn.classList.add("border-primary", "text-primary");
+		} else {
+			els.filterBadge.classList.add("hidden");
+			els.filterBadge.classList.remove("flex");
+			els.filterBtn.classList.remove("border-primary", "text-primary");
+		}
+	}
+
+	function syncWorkbenchFilterDrawerInputsFromState(doc) {
+		const els = workbenchFilterDrawerEls(doc);
+		const state = readWorkbenchStateFromUrl();
+		if (els.searchEl && els.searchEl !== doc.activeElement) els.searchEl.value = state.search || "";
+		if (els.departmentEl) els.departmentEl.value = state.department || "";
+		if (els.categoryEl) els.categoryEl.value = state.category || "";
+		if (els.valueRangeEl) els.valueRangeEl.value = state.value_range || "";
+		if (els.createdFromEl) els.createdFromEl.value = state.created_from || "";
+		if (els.createdToEl) els.createdToEl.value = state.created_to || "";
+	}
+
+	function populateWorkbenchFilterDrawerOptions(doc, meta) {
+		const els = workbenchFilterDrawerEls(doc);
+		function opts(items, allLabel) {
+			return (
+				'<option value="">' + esc(allLabel) + "</option>" +
+				(items || [])
+					.map(function (item) {
+						return '<option value="' + esc(item.value) + '">' + esc(item.label || item.value) + "</option>";
+					})
+					.join("")
+			);
+		}
+		if (els.departmentEl) els.departmentEl.innerHTML = opts(meta.departments, __("All Departments"));
+		if (els.categoryEl) els.categoryEl.innerHTML = opts(meta.categories, __("All Categories"));
+		if (els.valueRangeEl) els.valueRangeEl.innerHTML = opts(meta.value_ranges, __("All Values"));
+		syncWorkbenchFilterDrawerInputsFromState(doc);
+	}
+
+	// Same Tailwind-vs-`[hidden]` specificity pitfall as the pagination page
+	// slots (`flex`/`fixed` utilities on the drawer/backdrop themselves have
+	// equal specificity to `[hidden]`, so the attribute alone is silently
+	// overridden) — always pair the attribute with an inline `display`
+	// override, which wins regardless of stylesheet ordering.
+	function setWorkbenchHiddenState(el, isHidden) {
+		if (!el) return;
+		if (isHidden) {
+			el.setAttribute("hidden", "");
+			el.style.display = "none";
+		} else {
+			el.removeAttribute("hidden");
+			el.style.display = "";
+		}
+	}
+
+	function openWorkbenchFilterDrawer(doc) {
+		const els = workbenchFilterDrawerEls(doc);
+		if (!els.backdrop || !els.drawer) return;
+		syncWorkbenchFilterDrawerInputsFromState(doc);
+		setWorkbenchHiddenState(els.backdrop, false);
+		setWorkbenchHiddenState(els.drawer, false);
+		fetchWorkbenchFilterMeta(function (meta) {
+			populateWorkbenchFilterDrawerOptions(doc, meta);
+		});
+	}
+
+	function closeWorkbenchFilterDrawer(doc) {
+		const els = workbenchFilterDrawerEls(doc);
+		if (!els.backdrop || !els.drawer) return;
+		setWorkbenchHiddenState(els.backdrop, true);
+		setWorkbenchHiddenState(els.drawer, true);
+	}
+
+	function initializeWorkbenchFilterDrawer(root) {
+		if (!root) return;
+		withWorkbenchIframeDocument(root, function (doc) {
+			const els = workbenchFilterDrawerEls(doc);
+			if (!els.filterBtn || els.filterBtn.getAttribute("data-pp4-filter-bound") === "1") {
+				syncWorkbenchFilterBadge(doc);
+				return;
+			}
+			els.filterBtn.setAttribute("data-pp4-filter-bound", "1");
+			els.filterBtn.addEventListener("click", function () {
+				openWorkbenchFilterDrawer(doc);
+			});
+			if (els.closeBtn) els.closeBtn.addEventListener("click", function () { closeWorkbenchFilterDrawer(doc); });
+			if (els.backdrop) els.backdrop.addEventListener("click", function () { closeWorkbenchFilterDrawer(doc); });
+			if (els.applyBtn) {
+				els.applyBtn.addEventListener("click", function () {
+					writeWorkbenchStateToUrl({
+						search: els.searchEl ? els.searchEl.value : "",
+						department: els.departmentEl ? els.departmentEl.value : "",
+						category: els.categoryEl ? els.categoryEl.value : "",
+						value_range: els.valueRangeEl ? els.valueRangeEl.value : "",
+						created_from: els.createdFromEl ? els.createdFromEl.value : "",
+						created_to: els.createdToEl ? els.createdToEl.value : "",
+						page: 1,
+					});
+					closeWorkbenchFilterDrawer(doc);
+					syncWorkbenchFilterBadge(doc);
+					refetchActiveWorkbenchQueueList(root, doc);
+				});
+			}
+			if (els.clearBtn) {
+				els.clearBtn.addEventListener("click", function () {
+					writeWorkbenchStateToUrl({
+						search: "",
+						department: "",
+						category: "",
+						value_range: "",
+						created_from: "",
+						created_to: "",
+						page: 1,
+					});
+					syncWorkbenchFilterDrawerInputsFromState(doc);
+					closeWorkbenchFilterDrawer(doc);
+					syncWorkbenchFilterBadge(doc);
+					refetchActiveWorkbenchQueueList(root, doc);
+				});
+			}
+			syncWorkbenchFilterBadge(doc);
+
+			// Sort — a small popover menu (design ships "Sort" as an inert
+			// button with no open-menu mockup, so this popover is fabricated
+			// the same way the rows-per-page menu is), sourced from the same
+			// meta endpoint's `sort_options`.
+			if (els.sortBtn && els.sortMenu) {
+				els.sortBtn.addEventListener("click", function (event) {
+					event.stopPropagation();
+					const isHidden = els.sortMenu.hasAttribute("hidden");
+					setWorkbenchHiddenState(els.sortMenu, true);
+					if (!isHidden) return;
+					fetchWorkbenchFilterMeta(function (meta) {
+						const state = readWorkbenchStateFromUrl();
+						const options = (meta.sort_options && meta.sort_options.length)
+							? meta.sort_options
+							: Object.keys(WORKBENCH_SORT_LABELS).map(function (value) {
+								return { value: value, label: WORKBENCH_SORT_LABELS[value] };
+							});
+						els.sortMenu.innerHTML = options
+							.map(function (opt) {
+								const normalized = WORKBENCH_SORT_VALUE_ALIASES[opt.value] || opt.value;
+								const active = normalized === state.sort;
+								return (
+									'<button type="button" data-pp4-sort-value="' + esc(normalized) + '" class="w-full text-left px-4 py-2 font-body-sm ' +
+									(active ? "text-primary font-bold bg-surface-container-low" : "text-on-surface-variant hover:bg-surface-container-low") +
+									' transition-colors">' + esc(opt.label || normalized) + "</button>"
+								);
+							})
+							.join("");
+						setWorkbenchHiddenState(els.sortMenu, false);
+					});
+				});
+				els.sortMenu.addEventListener("click", function (event) {
+					const btn = event.target.closest("[data-pp4-sort-value]");
+					if (!btn) return;
+					setWorkbenchHiddenState(els.sortMenu, true);
+					writeWorkbenchStateToUrl({ sort: btn.getAttribute("data-pp4-sort-value"), page: 1 });
+					refetchActiveWorkbenchQueueList(root, doc);
+				});
+				if (!doc.__pp4SortMenuOutsideClickBound) {
+					doc.__pp4SortMenuOutsideClickBound = true;
+					doc.addEventListener("click", function () {
+						setWorkbenchHiddenState(els.sortMenu, true);
+					});
+				}
+			}
+		});
 	}
 
 	function fetchAndApplyWorkbenchActivePlanContext(root) {
@@ -447,6 +729,148 @@
 		tr.appendChild(td);
 		tbody.appendChild(tr);
 	}
+
+	// "Rows per page" is `footer.children[0]` (the summary/pagination group
+	// used above is `footer.children[1]`) — its own `<div class="relative ...">`
+	// trigger + the `<span class="font-label-md ...">` that shows the current
+	// page size, ported verbatim from Needs Planning into every table's
+	// footer during the earlier UI-consistency pass.
+	function workbenchRowsPerPageEls(footer) {
+		const group = footer ? footer.children[0] : null;
+		const trigger = group ? group.querySelector(".relative") : null;
+		const valueEl = trigger ? trigger.querySelector("span.font-label-md") : null;
+		if (!trigger || !valueEl) return null;
+		return { trigger: trigger, valueEl: valueEl };
+	}
+
+	// The design ships the "Rows per page" control as inert decoration (a
+	// `<div>`, not a `<select>`) — no mockup shows its open-menu state, so
+	// this small options popover is fabricated (not ported) the same way the
+	// empty-state row is, reusing the trigger's own already-`relative`
+	// positioning so it needs no extra wrapper markup.
+	function ensureWorkbenchPageSizeMenu(trigger) {
+		let menu = trigger.querySelector('[data-pp4-page-size-menu="1"]');
+		if (menu) return menu;
+		const doc = trigger.ownerDocument;
+		menu = doc.createElement("div");
+		menu.setAttribute("data-pp4-page-size-menu", "1");
+		menu.setAttribute("hidden", "");
+		menu.className =
+			"absolute bottom-full left-0 mb-1 bg-surface-container-lowest border border-outline-variant rounded shadow-md py-1 z-10 min-w-[64px]";
+		WORKBENCH_PAGE_SIZE_OPTIONS.forEach(function (size) {
+			const option = doc.createElement("button");
+			option.type = "button";
+			option.setAttribute("data-pp4-page-size-option", String(size));
+			option.className = "block w-full text-left px-3 py-1.5 font-label-md text-on-surface hover:bg-surface-container-high transition-colors";
+			option.textContent = String(size);
+			menu.appendChild(option);
+		});
+		trigger.appendChild(menu);
+		return menu;
+	}
+
+	function closeAllWorkbenchPageSizeMenus(doc) {
+		if (!doc) return;
+		doc.querySelectorAll('[data-pp4-page-size-menu="1"]').forEach(function (menu) {
+			menu.setAttribute("hidden", "");
+		});
+	}
+
+	// Binds the trigger (idempotent) and keeps the displayed value in sync
+	// with the real page-size state on every render.
+	function applyWorkbenchRowsPerPageControl(footerEls, pageSize, onPageSizeChange) {
+		if (!footerEls || !footerEls.pageSizeTrigger || !footerEls.pageSizeValueEl) return;
+		const trigger = footerEls.pageSizeTrigger;
+		const doc = trigger.ownerDocument;
+		footerEls.pageSizeValueEl.textContent = String(pageSize);
+		const menu = ensureWorkbenchPageSizeMenu(trigger);
+		if (trigger.getAttribute("data-pp4-page-size-bound") === "1") return;
+		trigger.setAttribute("data-pp4-page-size-bound", "1");
+		trigger.addEventListener("click", function (event) {
+			event.stopPropagation();
+			const isHidden = menu.hasAttribute("hidden");
+			closeAllWorkbenchPageSizeMenus(doc);
+			if (isHidden) menu.removeAttribute("hidden");
+		});
+		menu.addEventListener("click", function (event) {
+			const optionBtn = event.target.closest("[data-pp4-page-size-option]");
+			if (!optionBtn) return;
+			event.stopPropagation();
+			menu.setAttribute("hidden", "");
+			const size = Number(optionBtn.getAttribute("data-pp4-page-size-option"));
+			if (Number.isFinite(size) && typeof onPageSizeChange === "function") onPageSizeChange(size);
+		});
+		if (!doc.__pp4PageSizeOutsideClickBound) {
+			doc.__pp4PageSizeOutsideClickBound = true;
+			doc.addEventListener("click", function () {
+				closeAllWorkbenchPageSizeMenus(doc);
+			});
+		}
+	}
+
+	const WORKBENCH_PAGE_BTN_ACTIVE_CLASS = "w-8 h-8 flex items-center justify-center bg-primary text-white rounded-lg font-label-md";
+	const WORKBENCH_PAGE_BTN_INACTIVE_CLASS =
+		"w-8 h-8 flex items-center justify-center hover:bg-surface-container-high rounded-lg font-label-md text-on-surface-variant transition-colors";
+
+	// Shared by both footer flavors (Needs Planning + the 5 package-queue
+	// tables) so the "1 to N of M" summary, prev/next disabled state, and the
+	// design's 3 numbered page-slot buttons all stay driven by the same real
+	// pagination math everywhere. The 3 numbered buttons are the design's own
+	// static markup (never fabricated) — this only ever mutates their
+	// textContent/class/hidden attribute and (de)activates a click binding,
+	// sliding a window of real page numbers through the fixed slot count so
+	// the total-pages count is never just decorative "1 2 3" regardless of
+	// how many rows actually exist.
+	function applyWorkbenchPaginationFooter(footerEls, opts) {
+		if (!footerEls) return;
+		const options = opts || {};
+		const pageSize = Math.max(1, Number(options.pageSize) || 1);
+		const total = Math.max(0, Number(options.total) || 0);
+		const totalPages = Math.max(1, Math.ceil(total / pageSize));
+		const page = Math.min(Math.max(1, Number(options.page) || 1), totalPages);
+		const start = (page - 1) * pageSize;
+		const from = total === 0 ? 0 : start + 1;
+		const to = Math.min(start + Number(options.rowsRendered || 0), total);
+		footerEls.summaryEl.textContent = __("{0} to {1} of {2}", [from, to, total]);
+		footerEls.prevBtn.disabled = page <= 1;
+		footerEls.nextBtn.disabled = page >= totalPages;
+		applyWorkbenchRowsPerPageControl(footerEls, pageSize, options.onPageSizeChange);
+
+		const slots = footerEls.pageBtns || [];
+		const slotCount = slots.length;
+		if (!slotCount) return;
+		let windowStart = 1;
+		if (totalPages > slotCount) {
+			windowStart = Math.min(Math.max(1, page - Math.floor(slotCount / 2)), totalPages - slotCount + 1);
+		}
+		slots.forEach(function (btn, idx) {
+			const pageNumber = windowStart + idx;
+			if (pageNumber > totalPages) {
+				// `hidden` alone loses to the button's own Tailwind `flex`
+				// utility class (same specificity, utility declared later in
+				// the generated stylesheet), so force it with an inline
+				// style too — inline styles always win regardless of
+				// stylesheet ordering.
+				btn.setAttribute("hidden", "");
+				btn.style.display = "none";
+				return;
+			}
+			btn.removeAttribute("hidden");
+			btn.style.display = "";
+			btn.textContent = String(pageNumber);
+			btn.className = pageNumber === page ? WORKBENCH_PAGE_BTN_ACTIVE_CLASS : WORKBENCH_PAGE_BTN_INACTIVE_CLASS;
+			btn.setAttribute("data-pp4-page-number", String(pageNumber));
+			if (btn.getAttribute("data-pp4-page-btn-bound") === "1") return;
+			btn.setAttribute("data-pp4-page-btn-bound", "1");
+			btn.addEventListener("click", function () {
+				const target = Number(btn.getAttribute("data-pp4-page-number"));
+				if (Number.isFinite(target) && typeof options.onPageChange === "function") {
+					options.onPageChange(target);
+				}
+			});
+		});
+	}
+
 	const workbenchNeedsPlanningRowTemplateByRoot = new WeakMap();
 	const workbenchActivePlanCodeByRoot = new WeakMap();
 	const workbenchNeedsPlanningRowDataByRoot = new WeakMap();
@@ -472,7 +896,15 @@
 		const summaryEl = summaryGroup.querySelector("span");
 		const buttons = Array.prototype.slice.call(summaryGroup.querySelectorAll("button"));
 		if (!summaryEl || buttons.length < 2) return null;
-		return { summaryEl: summaryEl, prevBtn: buttons[0], nextBtn: buttons[buttons.length - 1] };
+		const pageSizeEls = workbenchRowsPerPageEls(footer);
+		return {
+			summaryEl: summaryEl,
+			prevBtn: buttons[0],
+			nextBtn: buttons[buttons.length - 1],
+			pageBtns: buttons.slice(1, buttons.length - 1),
+			pageSizeTrigger: pageSizeEls ? pageSizeEls.trigger : null,
+			pageSizeValueEl: pageSizeEls ? pageSizeEls.valueEl : null,
+		};
 	}
 
 	function workbenchDemandFormRoute(demandId) {
@@ -578,13 +1010,20 @@
 		if (!footerEls) return;
 		const total = Number((payload && payload.total) || 0);
 		const state = readWorkbenchStateFromUrl();
-		const page = Math.max(1, Number(state.page) || 1);
-		const start = (page - 1) * WORKBENCH_NEEDS_PLANNING_PAGE_SIZE;
-		const from = total === 0 ? 0 : start + 1;
-		const to = Math.min(start + rows.length, total);
-		footerEls.summaryEl.textContent = __("{0} to {1} of {2}", [from, to, total]);
-		footerEls.prevBtn.disabled = page <= 1;
-		footerEls.nextBtn.disabled = start + rows.length >= total;
+		applyWorkbenchPaginationFooter(footerEls, {
+			page: state.page,
+			pageSize: state.page_size,
+			total: total,
+			rowsRendered: rows.length,
+			onPageChange: function (targetPage) {
+				writeWorkbenchStateToUrl({ page: targetPage });
+				fetchAndRenderWorkbenchNeedsPlanningList(root, doc);
+			},
+			onPageSizeChange: function (size) {
+				writeWorkbenchStateToUrl({ page_size: size, page: 1 });
+				fetchAndRenderWorkbenchNeedsPlanningList(root, doc);
+			},
+		});
 	}
 
 	// W5 — Needs Planning Actions. Drives the floating selection toolbar
@@ -738,6 +1177,12 @@
 		);
 	}
 
+	// PW11 — the bulk "Create Package" toolbar action first adds every
+	// selected demand to the active plan (same call as "Add to Plan"), then
+	// opens the Package Creation Wizard pre-selected with the resulting
+	// inclusions instead of silently auto-creating one package per demand —
+	// the wizard is the single canonical create-package path (see the
+	// Package Wizard tracker's entry-point-replacement scope decision).
 	function workbenchCreatePackagesFromSelectedDemands(root, doc) {
 		const selection = workbenchNeedsPlanningSelectionByRoot.get(root);
 		const items = selection ? Array.from(selection.values()) : [];
@@ -754,35 +1199,72 @@
 					method: INCLUDE_DEMAND_IN_PLAN_API,
 					args: { demand_code: item.code, procurement_plan_code: planCode, demand_item_codes: "[]" },
 					callback: function (includeResponse) {
-						const includeResult = (includeResponse && includeResponse.message) || {};
-						if (!includeResult.ok || !includeResult.inclusion_code) {
-							done(includeResult);
-							return;
-						}
-						frappe.call({
-							method: CREATE_PACKAGE_FROM_INCLUSION_API,
-							args: { inclusion_code: includeResult.inclusion_code },
-							callback: function (createResponse) {
-								done((createResponse && createResponse.message) || { ok: false });
-							},
-						});
+						done((includeResponse && includeResponse.message) || { ok: false });
 					},
 				});
 			},
 			function (results) {
+				const inclusionCodes = results
+					.filter(function (r) {
+						return r && r.ok && r.inclusion_code;
+					})
+					.map(function (r) {
+						return r.inclusion_code;
+					});
 				workbenchReportSelectionActionOutcome(
 					results,
 					function (n) {
-						return __("{0} package(s) created.", [n]);
+						return __("{0} demand(s) added to the active plan.", [n]);
 					},
 					function (n) {
-						return __("{0} demand(s) could not be packaged.", [n]);
+						return __("{0} demand(s) could not be added to the active plan.", [n]);
 					}
 				);
+				workbenchClearNeedsPlanningSelection(root, doc);
 				fetchAndRenderWorkbenchNeedsPlanningList(root, doc);
 				fetchAndApplyWorkbenchQueueCounts(root);
+				if (!inclusionCodes.length) return;
+				openPlanningPackageWizard(root, doc, {
+					plan_code: planCode,
+					initial_demand_rows: inclusionCodes.map(function (code) {
+						return { inclusion_code: code };
+					}),
+				});
 			}
 		);
+	}
+
+	// Shared launcher for the Package Creation Wizard — every "Create
+	// Package" trigger on the Workbench routes through this (PW11).
+	function openPlanningPackageWizard(root, doc, opts) {
+		const wizardApi =
+			kentender_procurement &&
+			kentender_procurement.PlanningPackageWizard &&
+			typeof kentender_procurement.PlanningPackageWizard.open === "function"
+				? kentender_procurement.PlanningPackageWizard
+				: null;
+		if (!wizardApi) {
+			frappe.show_alert({ indicator: "orange", message: __("Create Package wizard is unavailable.") });
+			return;
+		}
+		const o = opts || {};
+		wizardApi.open({
+			plan_code: o.plan_code,
+			plan_name: o.plan_name,
+			initial_demand_rows: o.initial_demand_rows,
+			onSuccess: function (result) {
+				const packageCode = String((result && result.package_code) || "").trim();
+				if ((result && result.action) === "open_package" && packageCode) {
+					window.location.href = buildWorkbenchOpenPackageUrl(packageCode);
+					return;
+				}
+				fetchAndRenderWorkbenchPackageQueueList(root, doc, "draft_packages");
+				fetchAndApplyWorkbenchQueueCounts(root);
+			},
+			onCancel: function () {
+				/* No server draft — nothing to clean up on cancel. */
+			},
+		});
 	}
 
 	function bindWorkbenchSelectionToolbarActions(root, doc) {
@@ -800,17 +1282,43 @@
 		});
 	}
 
+	// W10 — every filter-drawer/sort field maps 1:1 onto a named kwarg the
+	// backend already accepts (`get_pp_approved_demands_awaiting_planning`
+	// and `get_pp_workbench_item_view_model` both gained parity support),
+	// so both fetch functions below simply forward whatever's already
+	// parsed into URL state — no per-field translation needed.
+	function workbenchQueryFilterArgs(state) {
+		const args = {};
+		if (state.search) args.search_text = state.search;
+		if (state.department) args.department = state.department;
+		if (state.category) args.category = state.category;
+		if (state.value_range) args.value_range = state.value_range;
+		if (state.created_from) args.created_from = state.created_from;
+		if (state.created_to) args.created_to = state.created_to;
+		if (state.sort) args.sort = state.sort;
+		return args;
+	}
+
 	function fetchAndRenderWorkbenchNeedsPlanningList(root, doc) {
 		if (!root || !doc) return;
 		const state = readWorkbenchStateFromUrl();
 		const page = Math.max(1, Number(state.page) || 1);
+		const pageSize = Number(state.page_size) || WORKBENCH_NEEDS_PLANNING_PAGE_SIZE;
+		const filterArgs = workbenchQueryFilterArgs(state);
+		// `get_pp_approved_demands_awaiting_planning` takes `search`
+		// (top-level named kwarg on the *view-model* API) as `search_text`,
+		// but its own drawer-refinement fields (department/value_range/
+		// created range/sort) use the exact same names as the unified API.
 		frappe.call({
 			method: APPROVED_DEMANDS_QUEUE_API,
 			freeze: false,
-			args: {
-				start: (page - 1) * WORKBENCH_NEEDS_PLANNING_PAGE_SIZE,
-				limit: WORKBENCH_NEEDS_PLANNING_PAGE_SIZE,
-			},
+			args: Object.assign(
+				{
+					start: (page - 1) * pageSize,
+					limit: pageSize,
+				},
+				filterArgs
+			),
 			callback: function (response) {
 				const payload = (response && response.message) || {};
 				renderWorkbenchNeedsPlanningRows(root, doc, payload);
@@ -916,7 +1424,15 @@
 		const summaryEl = summaryGroup.querySelector("span");
 		const buttons = Array.prototype.slice.call(summaryGroup.querySelectorAll("button"));
 		if (!summaryEl || buttons.length < 2) return null;
-		return { summaryEl: summaryEl, prevBtn: buttons[0], nextBtn: buttons[buttons.length - 1] };
+		const pageSizeEls = workbenchRowsPerPageEls(footer);
+		return {
+			summaryEl: summaryEl,
+			prevBtn: buttons[0],
+			nextBtn: buttons[buttons.length - 1],
+			pageBtns: buttons.slice(1, buttons.length - 1),
+			pageSizeTrigger: pageSizeEls ? pageSizeEls.trigger : null,
+			pageSizeValueEl: pageSizeEls ? pageSizeEls.valueEl : null,
+		};
 	}
 
 	const WORKBENCH_QUEUE_GROUP_SECTION_TESTID_BY_UI_QUEUE = {
@@ -972,23 +1488,45 @@
 		return sign + String(Math.round(abs));
 	}
 
-	function buildWorkbenchPackageQueueRow(template, doc, item, uiQueue) {
+	// Demands "Added to Active Plan" but not yet packaged have no
+	// `Procurement Package` doc, so they carry `is_placeholder`/
+	// `inclusion_code` instead of a real `underlying_object_id` — same
+	// column shape as a real draft package row, but clicking one opens the
+	// Package Creation Wizard pre-selected with the existing inclusion
+	// (PW11) instead of routing to a package form that doesn't exist yet.
+	function workbenchCreatePackageFromInclusionRow(root, doc, inclusionCode) {
+		if (!inclusionCode) return;
+		const planCode = workbenchActivePlanCodeByRoot.get(root);
+		openPlanningPackageWizard(root, doc, {
+			plan_code: planCode,
+			initial_demand_rows: [{ inclusion_code: inclusionCode }],
+		});
+	}
+
+	function buildWorkbenchPackageQueueRow(template, doc, item, uiQueue, root) {
 		const tr = template.cloneNode(true);
 		const data = item || {};
+		const isPlaceholder = Boolean(data.is_placeholder);
 		const packageId = String(data.underlying_object_id || "").trim();
+		const inclusionCode = String(data.inclusion_code || "").trim();
 		tr.setAttribute("data-package-id", packageId);
+		if (isPlaceholder) tr.setAttribute("data-inclusion-code", inclusionCode);
 
 		const cells = tr.querySelectorAll("td");
-		const titleCell = cells[0];
-		const titleLink = titleCell ? titleCell.querySelector("a") : null;
-		const refEl = titleCell ? titleCell.querySelector("p") : null;
+		const titleLinks = cells[0] ? cells[0].querySelectorAll("a") : [];
+		const titleLink = titleLinks[0];
+		const refLink = titleLinks[1];
 		const href = packageId ? "/app/procurement-package/" + encodeURIComponent(packageId) : "#";
 		if (titleLink) {
-			titleLink.textContent = String(data.title || "").trim();
+			const icon = titleLink.querySelector(".material-symbols-outlined");
+			titleLink.textContent = "";
+			titleLink.appendChild(doc.createTextNode(String(data.title || "").trim() + " "));
+			if (icon) titleLink.appendChild(icon);
 			titleLink.setAttribute("href", href);
 		}
-		if (refEl) {
-			refEl.textContent = __("REF: {0}", [String(data.underlying_object_code || "").trim()]);
+		if (refLink) {
+			refLink.textContent = String(data.underlying_object_code || "").trim();
+			refLink.setAttribute("href", href);
 		}
 
 		const linkedDemandsEl = cells[1] ? cells[1].querySelector("span") : null;
@@ -1007,7 +1545,12 @@
 		const readinessWrap = cells[4] ? cells[4].querySelector("div") : null;
 		applyWorkbenchPackagePillReadiness(readinessWrap, data.readiness_tone, String(data.readiness_status || "").trim());
 
-		tr.addEventListener("click", function () {
+		tr.addEventListener("click", function (event) {
+			event.preventDefault();
+			if (isPlaceholder) {
+				workbenchCreatePackageFromInclusionRow(root, doc, inclusionCode);
+				return;
+			}
 			if (!packageId) return;
 			frappe.set_route("procurement-package", packageId);
 		});
@@ -1059,14 +1602,21 @@
 		tr.setAttribute("data-package-id", packageId);
 
 		const cells = tr.querySelectorAll("td");
-		const titleLink = cells[0] ? cells[0].querySelector("a") : null;
-		const refEl = cells[0] ? cells[0].querySelector("span") : null;
+		const titleLinks = cells[0] ? cells[0].querySelectorAll("a") : [];
+		const titleLink = titleLinks[0];
+		const refLink = titleLinks[1];
 		const href = packageId ? "/app/procurement-package/" + encodeURIComponent(packageId) : "#";
 		if (titleLink) {
-			titleLink.textContent = String(data.title || "").trim();
+			const icon = titleLink.querySelector(".material-symbols-outlined");
+			titleLink.textContent = "";
+			titleLink.appendChild(doc.createTextNode(String(data.title || "").trim() + " "));
+			if (icon) titleLink.appendChild(icon);
 			titleLink.setAttribute("href", href);
 		}
-		if (refEl) refEl.textContent = __("REF: {0}", [String(data.underlying_object_code || "").trim()]);
+		if (refLink) {
+			refLink.textContent = String(data.underlying_object_code || "").trim();
+			refLink.setAttribute("href", href);
+		}
 
 		const linkedSpans = cells[1] ? cells[1].querySelectorAll("span") : [];
 		const linkedCountEl = linkedSpans[linkedSpans.length - 1];
@@ -1091,8 +1641,9 @@
 		const readinessWrap = cells[5] ? cells[5].querySelector("div") : null;
 		applyWorkbenchStackedStatusPill(readinessWrap, data.readiness_tone, String(data.readiness_status || "").trim());
 
-		tr.addEventListener("click", function () {
+		tr.addEventListener("click", function (event) {
 			if (!packageId) return;
+			event.preventDefault();
 			frappe.set_route("procurement-package", packageId);
 		});
 
@@ -1113,16 +1664,23 @@
 		tr.setAttribute("data-package-id", targetId);
 
 		const cells = tr.querySelectorAll("td");
-		const titleLink = cells[0] ? cells[0].querySelector("a") : null;
-		const refEl = cells[0] ? cells[0].querySelector("span") : null;
+		const titleLinks = cells[0] ? cells[0].querySelectorAll("a") : [];
+		const titleLink = titleLinks[0];
+		const refLink = titleLinks[1];
 		const href = targetId
 			? (isBlockedDemand ? "/app/demand/" : "/app/procurement-package/") + encodeURIComponent(targetId)
 			: "#";
 		if (titleLink) {
-			titleLink.textContent = String(data.title || "").trim();
+			const icon = titleLink.querySelector(".material-symbols-outlined");
+			titleLink.textContent = "";
+			titleLink.appendChild(doc.createTextNode(String(data.title || "").trim() + " "));
+			if (icon) titleLink.appendChild(icon);
 			titleLink.setAttribute("href", href);
 		}
-		if (refEl) refEl.textContent = __("REF: {0}", [String(data.underlying_object_code || "").trim()]);
+		if (refLink) {
+			refLink.textContent = String(data.underlying_object_code || "").trim();
+			refLink.setAttribute("href", href);
+		}
 
 		const linkedSpans = cells[1] ? cells[1].querySelectorAll("span") : [];
 		const linkedCountEl = linkedSpans[linkedSpans.length - 1];
@@ -1146,8 +1704,9 @@
 		const blockerWrap = cells[5] ? cells[5].querySelector("div") : null;
 		applyWorkbenchStackedStatusPill(blockerWrap, "error", String(data.status_detail || "").trim() || "\u2014");
 
-		tr.addEventListener("click", function () {
+		tr.addEventListener("click", function (event) {
 			if (!targetId) return;
+			event.preventDefault();
 			if (isBlockedDemand) {
 				frappe.set_route("demand-workbench", targetId);
 			} else {
@@ -1168,15 +1727,21 @@
 		tr.setAttribute("data-package-id", packageId);
 
 		const cells = tr.querySelectorAll("td");
-		const titleCell = cells[0];
-		const titleLink = titleCell ? titleCell.querySelector("a") : null;
-		const refEl = titleCell ? titleCell.querySelector("span") : null;
+		const titleLinks = cells[0] ? cells[0].querySelectorAll("a") : [];
+		const titleLink = titleLinks[0];
+		const refLink = titleLinks[1];
 		const href = packageId ? "/app/procurement-package/" + encodeURIComponent(packageId) : "#";
 		if (titleLink) {
-			titleLink.textContent = String(data.title || "").trim();
+			const icon = titleLink.querySelector(".material-symbols-outlined");
+			titleLink.textContent = "";
+			titleLink.appendChild(doc.createTextNode(String(data.title || "").trim() + " "));
+			if (icon) titleLink.appendChild(icon);
 			titleLink.setAttribute("href", href);
 		}
-		if (refEl) refEl.textContent = __("REF: {0}", [String(data.underlying_object_code || "").trim()]);
+		if (refLink) {
+			refLink.textContent = String(data.underlying_object_code || "").trim();
+			refLink.setAttribute("href", href);
+		}
 
 		const linkedSpans = cells[1] ? cells[1].querySelectorAll("span") : [];
 		const linkedCountEl = linkedSpans[linkedSpans.length - 1];
@@ -1205,8 +1770,9 @@
 			tenderStatusEl.textContent = label;
 		}
 
-		tr.addEventListener("click", function () {
+		tr.addEventListener("click", function (event) {
 			if (!packageId) return;
+			event.preventDefault();
 			frappe.set_route("procurement-package", packageId);
 		});
 
@@ -1237,7 +1803,7 @@
 		}
 		const items = payload && payload.ok !== false && Array.isArray(payload.items) ? payload.items : [];
 		items.forEach(function (item) {
-			tbody.appendChild(group.rowBuilder(template, doc, item, uiQueue));
+			tbody.appendChild(group.rowBuilder(template, doc, item, uiQueue, root));
 		});
 		if (!items.length) {
 			appendWorkbenchEmptyStateRow(doc, tbody, __("No packages in this queue right now."));
@@ -1247,13 +1813,20 @@
 		if (!footerEls) return;
 		const total = Number((payload && payload.total) || 0);
 		const state = readWorkbenchStateFromUrl();
-		const page = Math.max(1, Number(state.page) || 1);
-		const start = (page - 1) * WORKBENCH_PACKAGE_QUEUE_PAGE_SIZE;
-		const from = total === 0 ? 0 : start + 1;
-		const to = Math.min(start + items.length, total);
-		footerEls.summaryEl.textContent = __("{0} to {1} of {2}", [from, to, total]);
-		footerEls.prevBtn.disabled = page <= 1;
-		footerEls.nextBtn.disabled = start + items.length >= total;
+		applyWorkbenchPaginationFooter(footerEls, {
+			page: state.page,
+			pageSize: state.page_size,
+			total: total,
+			rowsRendered: items.length,
+			onPageChange: function (targetPage) {
+				writeWorkbenchStateToUrl({ page: targetPage });
+				fetchAndRenderWorkbenchPackageQueueList(root, doc, readWorkbenchStateFromUrl().queue);
+			},
+			onPageSizeChange: function (size) {
+				writeWorkbenchStateToUrl({ page_size: size, page: 1 });
+				fetchAndRenderWorkbenchPackageQueueList(root, doc, readWorkbenchStateFromUrl().queue);
+			},
+		});
 	}
 
 	function fetchAndRenderWorkbenchPackageQueueList(root, doc, uiQueue) {
@@ -1262,14 +1835,26 @@
 		if (!apiQueue) return;
 		const state = readWorkbenchStateFromUrl();
 		const page = Math.max(1, Number(state.page) || 1);
+		const pageSize = Number(state.page_size) || WORKBENCH_PACKAGE_QUEUE_PAGE_SIZE;
+		const filterArgs = {};
+		if (state.search) filterArgs.search = state.search;
+		if (state.department) filterArgs.department = state.department;
+		if (state.category) filterArgs.category = state.category;
+		if (state.value_range) filterArgs.value_range = state.value_range;
+		if (state.created_from) filterArgs.created_from = state.created_from;
+		if (state.created_to) filterArgs.created_to = state.created_to;
+		if (state.sort) filterArgs.sort = state.sort;
 		frappe.call({
 			method: WORKBENCH_ITEM_VIEW_MODEL_API,
 			freeze: false,
-			args: {
-				queue: apiQueue,
-				start: (page - 1) * WORKBENCH_PACKAGE_QUEUE_PAGE_SIZE,
-				limit: WORKBENCH_PACKAGE_QUEUE_PAGE_SIZE,
-			},
+			args: Object.assign(
+				{
+					queue: apiQueue,
+					start: (page - 1) * pageSize,
+					limit: pageSize,
+				},
+				filterArgs
+			),
 			callback: function (response) {
 				const payload = (response && response.message) || {};
 				renderWorkbenchPackageQueueRows(root, doc, uiQueue, payload);
@@ -1983,19 +2568,25 @@
 		};
 	}
 
+	// PW11 — routes into the Package Creation Wizard instead of the retired
+	// single-field modal. The drawer pre-flight call is kept: it still
+	// surfaces the "duplicate package already exists" / "not ready" blocker
+	// dialogs before the wizard ever opens (the wizard's own Step 1
+	// eligibility list simply omits already-packaged inclusions, which
+	// would otherwise silently drop this business-readable detail).
 	function openCreatePackageModalForShell(shell, summaryData, opts) {
 		const o = opts || {};
-		const createApi =
-			kentender_procurement &&
-			kentender_procurement.PlanningCreatePackageModal &&
-			typeof kentender_procurement.PlanningCreatePackageModal.open === "function"
-				? kentender_procurement.PlanningCreatePackageModal
-				: null;
 		const payload = summaryData || {};
-		if (!createApi) {
+		const wizardApi =
+			kentender_procurement &&
+			kentender_procurement.PlanningPackageWizard &&
+			typeof kentender_procurement.PlanningPackageWizard.open === "function"
+				? kentender_procurement.PlanningPackageWizard
+				: null;
+		if (!wizardApi) {
 			frappe.show_alert({
 				indicator: "orange",
-				message: __("Create Package modal is unavailable."),
+				message: __("Create Package wizard is unavailable."),
 			});
 			return;
 		}
@@ -2010,34 +2601,68 @@
 				});
 				return;
 			}
-			createApi.open({
-				demand_name: String(drawer.demand_name || payload.title || "").trim(),
-				active_plan_name: String(drawer.active_plan_name || payload.target_plan_name || "").trim(),
-				category_label: String(drawer.category_label || "").trim(),
-				method_label: String(drawer.method_label || "").trim(),
-				value_label: String(drawer.value_label || payload.value_label || "").trim(),
-				funding_label: String(drawer.funding_label || payload.funding_label || "").trim(),
-				package_title_default: String(drawer.package_title_default || drawer.demand_name || "").trim(),
-				inclusion_code: String(drawer.inclusion_code || payload.inclusion_code || "").trim(),
-				create_allowed: drawer.create_allowed !== false,
-				blocker_code: String(drawer.blocker_code || "").trim(),
-				blocker_message: String(drawer.blocker_message || "").trim(),
-				duplicate_package: drawer.duplicate_package === true,
-				existing_package_name: String(drawer.existing_package_name || "").trim(),
-				existing_package_code: String(drawer.existing_package_code || "").trim(),
+			if (drawer.create_allowed === false) {
+				if (drawer.duplicate_package) {
+					const existingCode = String(drawer.existing_package_code || "").trim();
+					frappe.msgprint({
+						title: __("Package already exists"),
+						indicator: "orange",
+						message:
+							'<div data-testid="pp2-create-package-duplicate-dialog">' +
+							'<p data-testid="pp2-create-package-blocker-message">' +
+							frappe.utils.escape_html(
+								String(drawer.blocker_message || "").trim() ||
+									__(
+										"A procurement package already exists for this included demand. Open the existing package to continue."
+									)
+							) +
+							"</p></div>",
+						primary_action: existingCode
+							? {
+									label: __("Open Package"),
+									action: function () {
+										window.location.href = buildWorkbenchOpenPackageUrl(existingCode);
+									},
+								}
+							: undefined,
+					});
+					return;
+				}
+				frappe.msgprint({
+					title: __("Unable to create package"),
+					indicator: "orange",
+					message:
+						'<div data-testid="pp2-create-package-blocker-message">' +
+						frappe.utils.escape_html(
+							String(drawer.blocker_message || "").trim() ||
+								__("This demand is not ready for package creation.")
+						) +
+						"</div>",
+				});
+				return;
+			}
+			wizardApi.open({
+				plan_code: String(payload.target_plan_code || "").trim(),
+				plan_name: String(drawer.active_plan_name || payload.target_plan_name || "").trim(),
+				initial_demand_rows: [
+					{ inclusion_code: String(drawer.inclusion_code || payload.inclusion_code || "").trim() },
+				],
 				onSuccess: function (createResult) {
 					if (typeof o.onCreateSuccess === "function") {
 						o.onCreateSuccess(createResult || {});
+						return;
+					}
+					const packageCode = String((createResult && createResult.package_code) || "").trim();
+					if ((createResult && createResult.action) === "open_package" && packageCode) {
+						window.location.href = buildWorkbenchOpenPackageUrl(packageCode);
 						return;
 					}
 					mountCreatePackageSuccessSummary(shell, payload, createResult || {}, {
 						slug: o.slug,
 					});
 				},
-				onOpenExistingPackage: function () {
-					window.location.href = buildWorkbenchOpenPackageUrl(
-						String(drawer.existing_package_code || "").trim(),
-					);
+				onCancel: function () {
+					/* No server draft — nothing to clean up on cancel. */
 				},
 			});
 		};
@@ -3721,6 +4346,8 @@
 		// lists (In Creation / Awaiting Review / Ready for Release). Blocked
 		// and Released queues (W7/W8) still await a pixel design.
 		fetchAndApplyWorkbenchActivePlanContext(root);
+		initializeWorkbenchBackToHubLink(root);
+		initializeWorkbenchFilterDrawer(root);
 		initializeWorkbenchQueueTabs(root);
 		initializeWorkbenchNeedsPlanningList(root);
 		initializeWorkbenchPackageQueueList(root);

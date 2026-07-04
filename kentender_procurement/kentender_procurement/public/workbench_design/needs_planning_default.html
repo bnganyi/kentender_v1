@@ -238,15 +238,69 @@
 <!-- Filter Bar -->
 <div class="p-4 flex items-center bg-surface-container-lowest border-b border-outline-variant/50 justify-end gap-2">
 <div class="flex gap-2">
-<button class="flex items-center gap-2 px-3 py-1.5 border border-outline-variant rounded-lg font-body-sm text-on-surface-variant hover:bg-surface-container-low transition-colors">
+<button data-testid="pp4-workbench-filter-btn" class="relative flex items-center gap-2 px-3 py-1.5 border border-outline-variant rounded-lg font-body-sm text-on-surface-variant hover:bg-surface-container-low transition-colors">
 <span class="material-symbols-outlined text-sm">filter_list</span> Filter
+<span data-testid="pp4-workbench-filter-badge" class="hidden absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-primary text-white text-[10px] leading-4 font-bold items-center justify-center">0</span>
                     </button>
-<button class="flex items-center gap-2 px-3 py-1.5 border border-outline-variant rounded-lg font-body-sm text-on-surface-variant hover:bg-surface-container-low transition-colors">
+<div class="relative">
+<button data-testid="pp4-workbench-sort-btn" class="flex items-center gap-2 px-3 py-1.5 border border-outline-variant rounded-lg font-body-sm text-on-surface-variant hover:bg-surface-container-low transition-colors">
 <span class="material-symbols-outlined text-sm">sort</span> Sort
                     </button>
+<div data-testid="pp4-workbench-sort-menu" hidden="" style="display:none" class="absolute right-0 top-full mt-1 w-44 bg-surface-container-lowest border border-outline-variant rounded-lg shadow-lg py-1 z-30"></div>
+</div>
 </div>
 
 </div>
+<!-- W10 — Filter drawer (right-side slide-over), DIA-style philosophy
+     ported into this design system's own Tailwind vocabulary rather than
+     DIA's kt-dia-* BEM classes. Shared by all 6 queue tabs; only ever one
+     copy exists per iframe since exactly one queue table is visible at a
+     time. -->
+<div data-testid="pp4-workbench-filter-backdrop" hidden="" style="display:none" class="fixed inset-0 bg-black/30 z-40"></div>
+<aside data-testid="pp4-workbench-filter-drawer" hidden="" style="display:none" class="fixed top-0 right-0 h-full w-full max-w-[360px] bg-surface-container-lowest border-l border-outline-variant shadow-xl z-50 flex flex-col">
+<header class="flex items-center justify-between px-6 py-5 border-b border-outline-variant">
+<h3 class="font-headline-lg text-headline-lg text-primary">Filters</h3>
+<button data-testid="pp4-workbench-filter-close" type="button" class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low rounded-full p-1 transition-colors">close</button>
+</header>
+<div class="flex-1 overflow-y-auto custom-scrollbar px-6 py-5 space-y-6">
+<section>
+<label class="block font-label-md text-label-md uppercase tracking-wider text-on-surface-variant mb-2">Search</label>
+<label class="flex items-center gap-2 bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">search</span>
+<input data-testid="pp4-workbench-filter-search" type="text" placeholder="Title or reference..." class="bg-transparent border-none focus:ring-0 text-body-sm w-full p-0">
+</label>
+</section>
+<section>
+<label class="block font-label-md text-label-md uppercase tracking-wider text-on-surface-variant mb-2" for="pp4-workbench-filter-department">Department</label>
+<select id="pp4-workbench-filter-department" data-testid="pp4-workbench-filter-department" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm bg-surface-container-lowest text-primary"><option value="">All Departments</option></select>
+</section>
+<section>
+<label class="block font-label-md text-label-md uppercase tracking-wider text-on-surface-variant mb-2" for="pp4-workbench-filter-category">Procurement Category</label>
+<select id="pp4-workbench-filter-category" data-testid="pp4-workbench-filter-category" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm bg-surface-container-lowest text-primary"><option value="">All Categories</option></select>
+</section>
+<section>
+<label class="block font-label-md text-label-md uppercase tracking-wider text-on-surface-variant mb-2" for="pp4-workbench-filter-value-range">Estimated Value</label>
+<select id="pp4-workbench-filter-value-range" data-testid="pp4-workbench-filter-value-range" class="w-full border border-outline-variant rounded-lg px-3 py-2 text-body-sm bg-surface-container-lowest text-primary"><option value="">All Values</option></select>
+</section>
+<section>
+<p class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant mb-2">Created</p>
+<div class="grid grid-cols-2 gap-3">
+<label class="block">
+<span class="block text-body-sm text-on-surface-variant mb-1">From</span>
+<input data-testid="pp4-workbench-filter-created-from" type="date" class="w-full border border-outline-variant rounded-lg px-2 py-1.5 text-body-sm bg-surface-container-lowest text-primary">
+</label>
+<label class="block">
+<span class="block text-body-sm text-on-surface-variant mb-1">To</span>
+<input data-testid="pp4-workbench-filter-created-to" type="date" class="w-full border border-outline-variant rounded-lg px-2 py-1.5 text-body-sm bg-surface-container-lowest text-primary">
+</label>
+</div>
+</section>
+</div>
+<footer class="flex items-center justify-between gap-3 px-6 py-4 border-t border-outline-variant">
+<button data-testid="pp4-workbench-filter-clear" type="button" class="px-4 py-2 rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors">Clear All</button>
+<button data-testid="pp4-workbench-filter-apply" type="button" class="px-6 py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:opacity-90 transition-opacity">Apply Filters</button>
+</footer>
+</aside>
 <!-- Table (Restored Columns from SCREEN_16) -->
 <!-- W6: the table region now toggles between the Needs Planning demand
      table below and the package-row table (ported verbatim from the
@@ -278,17 +332,19 @@
      share this one table, ported verbatim from the "3. In creation"
      design. Hidden by default since Needs Planning is the initial tab. -->
 <div data-testid="pp4-workbench-package-table-section" hidden="">
-<table class="workbench-table w-full text-left border-collapse">
+<div class="overflow-x-auto">
+<table class="workbench-table w-full text-left border-collapse min-w-[900px]">
 <thead class="bg-surface-container-low border-b border-outline-variant"><tr><th class="py-3 px-6 font-label-md text-on-surface-variant uppercase tracking-wider">Package Title &amp; Ref</th><th class="py-3 px-4 font-label-md text-on-surface-variant uppercase tracking-wider text-center">Linked Demands</th><th class="py-3 px-4 font-label-md text-on-surface-variant uppercase tracking-wider">Category</th><th class="py-3 px-4 font-label-md text-on-surface-variant uppercase tracking-wider">Est. Value</th><th class="py-3 px-6 font-label-md text-on-surface-variant uppercase tracking-wider">Readiness</th></tr></thead>
 <tbody class="divide-y divide-outline-variant">
 <!-- Row 1 -->
-<tr class="hover:bg-surface-container-lowest transition-colors group"><td class="py-4 px-6"><a class="font-body-md font-bold text-primary hover:text-secondary hover:underline transition-colors block truncate max-w-[300px]" href="#">MOH/GDS/001 - Diagnostic Tools</a><p class="font-label-sm text-on-surface-variant mt-0.5">REF: PKG-2026-0041</p></td><td class="py-4 px-4 text-center"><span class="font-body-sm font-bold">3</span></td><td class="py-4 px-4"><span class="px-2.5 py-1 rounded-full bg-cat-goods/10 text-cat-goods font-label-sm font-semibold flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-cat-goods"></span> Goods</span></td><td class="py-4 px-4"><div class="flex flex-col"><span class="text-[10px] text-on-surface-variant font-bold uppercase">KES</span><span class="font-headline-md text-primary">1.4B</span></div></td><td class="py-4 px-6"><div class="flex items-center gap-2 px-3 py-1 bg-status-warning/10 text-status-warning rounded-full w-fit"><span class="material-symbols-outlined text-sm">hourglass_empty</span><span class="font-label-md font-bold text-xs">In Progress</span></div></td></tr>
+<tr class="hover:bg-surface-container-lowest transition-colors group"><td class="py-4 px-6"><div class="flex flex-col cursor-pointer group/link"><a class="font-body-md font-bold text-primary hover:underline group-hover/link:text-secondary transition-colors flex items-center gap-1" href="#">MOH/GDS/001 - Diagnostic Tools <span class="material-symbols-outlined text-sm opacity-0 group-hover/link:opacity-100 transition-opacity">open_in_new</span></a><a class="font-label-sm text-on-surface-variant hover:underline uppercase text-[10px]" href="#">PKG-2026-0041</a></div></td><td class="py-4 px-4 text-center"><span class="font-body-sm font-bold">3</span></td><td class="py-4 px-4"><span class="px-2.5 py-1 rounded-full bg-cat-goods/10 text-cat-goods font-label-sm font-semibold flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-cat-goods"></span> Goods</span></td><td class="py-4 px-4"><div class="flex flex-col"><span class="text-[10px] text-on-surface-variant font-bold uppercase">KES</span><span class="font-headline-md text-primary">1.4B</span></div></td><td class="py-4 px-6"><div class="flex items-center gap-2 px-3 py-1 bg-status-warning/10 text-status-warning rounded-full w-fit"><span class="material-symbols-outlined text-sm">hourglass_empty</span><span class="font-label-md font-bold text-xs">In Progress</span></div></td></tr>
 <!-- Row 2 -->
-<tr class="hover:bg-surface-container-lowest transition-colors group"><td class="py-4 px-6"><a class="font-body-md font-bold text-primary hover:text-secondary hover:underline transition-colors block truncate max-w-[300px]" href="#">MOH/WKS/005 - Hospital Renovation</a><p class="font-label-sm text-on-surface-variant mt-0.5">REF: PKG-2026-0098</p></td><td class="py-4 px-4 text-center"><span class="font-body-sm font-bold">1</span></td><td class="py-4 px-4"><span class="px-2.5 py-1 rounded-full bg-cat-works/10 text-cat-works font-label-sm font-semibold flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-cat-works"></span> Works</span></td><td class="py-4 px-4"><div class="flex flex-col"><span class="text-[10px] text-on-surface-variant font-bold uppercase">KES</span><span class="font-headline-md text-primary">450M</span></div></td><td class="py-4 px-6"><div class="flex items-center gap-2 px-3 py-1 bg-status-neutral/10 text-status-neutral rounded-full w-fit"><span class="material-symbols-outlined text-sm">rule</span><span class="font-label-md font-bold text-xs">Pending Checks</span></div></td></tr>
+<tr class="hover:bg-surface-container-lowest transition-colors group"><td class="py-4 px-6"><div class="flex flex-col cursor-pointer group/link"><a class="font-body-md font-bold text-primary hover:underline group-hover/link:text-secondary transition-colors flex items-center gap-1" href="#">MOH/WKS/005 - Hospital Renovation <span class="material-symbols-outlined text-sm opacity-0 group-hover/link:opacity-100 transition-opacity">open_in_new</span></a><a class="font-label-sm text-on-surface-variant hover:underline uppercase text-[10px]" href="#">PKG-2026-0098</a></div></td><td class="py-4 px-4 text-center"><span class="font-body-sm font-bold">1</span></td><td class="py-4 px-4"><span class="px-2.5 py-1 rounded-full bg-cat-works/10 text-cat-works font-label-sm font-semibold flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-cat-works"></span> Works</span></td><td class="py-4 px-4"><div class="flex flex-col"><span class="text-[10px] text-on-surface-variant font-bold uppercase">KES</span><span class="font-headline-md text-primary">450M</span></div></td><td class="py-4 px-6"><div class="flex items-center gap-2 px-3 py-1 bg-status-neutral/10 text-status-neutral rounded-full w-fit"><span class="material-symbols-outlined text-sm">rule</span><span class="font-label-md font-bold text-xs">Pending Checks</span></div></td></tr>
 <!-- Row 3 -->
-<tr class="hover:bg-surface-container-lowest transition-colors group"><td class="py-4 px-6"><a class="font-body-md font-bold text-primary hover:text-secondary hover:underline transition-colors block truncate max-w-[300px]" href="#">MOH/CNS/012 - Health Policy Audit</a><p class="font-label-sm text-on-surface-variant mt-0.5">REF: PKG-2026-0012</p></td><td class="py-4 px-4 text-center"><span class="font-body-sm font-bold">2</span></td><td class="py-4 px-4"><span class="px-2.5 py-1 rounded-full bg-cat-consultancy/10 text-cat-consultancy font-label-sm font-semibold flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-cat-consultancy"></span> Consultancy</span></td><td class="py-4 px-4"><div class="flex flex-col"><span class="text-[10px] text-on-surface-variant font-bold uppercase">KES</span><span class="font-headline-md text-primary">12.5M</span></div></td><td class="py-4 px-6"><div class="flex items-center gap-2 px-3 py-1 bg-status-success/10 text-status-success rounded-full w-fit"><span class="material-symbols-outlined text-sm">check_circle</span><span class="font-label-md font-bold text-xs">Passed</span></div></td></tr>
+<tr class="hover:bg-surface-container-lowest transition-colors group"><td class="py-4 px-6"><div class="flex flex-col cursor-pointer group/link"><a class="font-body-md font-bold text-primary hover:underline group-hover/link:text-secondary transition-colors flex items-center gap-1" href="#">MOH/CNS/012 - Health Policy Audit <span class="material-symbols-outlined text-sm opacity-0 group-hover/link:opacity-100 transition-opacity">open_in_new</span></a><a class="font-label-sm text-on-surface-variant hover:underline uppercase text-[10px]" href="#">PKG-2026-0012</a></div></td><td class="py-4 px-4 text-center"><span class="font-body-sm font-bold">2</span></td><td class="py-4 px-4"><span class="px-2.5 py-1 rounded-full bg-cat-consultancy/10 text-cat-consultancy font-label-sm font-semibold flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-cat-consultancy"></span> Consultancy</span></td><td class="py-4 px-4"><div class="flex flex-col"><span class="text-[10px] text-on-surface-variant font-bold uppercase">KES</span><span class="font-headline-md text-primary">12.5M</span></div></td><td class="py-4 px-6"><div class="flex items-center gap-2 px-3 py-1 bg-status-success/10 text-status-success rounded-full w-fit"><span class="material-symbols-outlined text-sm">check_circle</span><span class="font-label-md font-bold text-xs">Passed</span></div></td></tr>
 </tbody>
 </table>
+</div>
 <footer class="flex justify-between items-center w-full px-6 py-4 bg-surface-container border-t border-outline-variant"><div class="flex items-center gap-2"><span class="font-body-sm text-on-surface-variant">Rows per page:</span><div class="relative flex items-center bg-surface-container-lowest border border-outline-variant rounded px-2 py-1 cursor-pointer hover:bg-surface-container-high transition-colors"><span class="font-label-md text-primary mr-1">10</span><span class="material-symbols-outlined text-[18px] text-on-surface-variant">arrow_drop_down</span></div></div><div class="flex items-center gap-6"><span class="font-body-sm text-on-surface-variant">1 to 3 of 12</span><div class="flex items-center gap-2"><button class="p-2 border border-outline-variant rounded-lg text-on-surface-variant disabled:opacity-30 transition-colors hover:bg-surface-container-high" disabled=""><span class="material-symbols-outlined">chevron_left</span></button><button class="w-8 h-8 flex items-center justify-center bg-primary text-white rounded-lg font-label-md">1</button><button class="w-8 h-8 flex items-center justify-center hover:bg-surface-container-high rounded-lg font-label-md text-on-surface-variant transition-colors">2</button><button class="w-8 h-8 flex items-center justify-center hover:bg-surface-container-high rounded-lg font-label-md text-on-surface-variant transition-colors">3</button><button class="p-2 border border-outline-variant rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined">chevron_right</span></button></div></div></footer>
 </div>
 <!-- W7/W8 (remaining-queues pass) -- Awaiting Review + Ready for Release share
@@ -299,6 +355,7 @@
      re-ported per design -- each reuses the identical shared footer/pagination
      markup already used by the sections above. -->
 <div data-testid="pp4-workbench-review-release-table-section" hidden="">
+<div class="overflow-x-auto">
 <table class="w-full text-left border-collapse min-w-[1100px]">
 <thead>
 <tr class="bg-surface-container-low border-b border-outline-variant">
@@ -313,9 +370,9 @@
 <!-- Row 1 -->
 <tr class="hover:bg-surface-container-lowest transition-colors group">
 <td class="px-6 py-6">
-<div class="flex flex-col">
-<a class="font-body-md font-bold text-primary hover:text-secondary hover:underline transition-colors" href="#">MOH/GDS/010 - Medical Supplies</a>
-<span class="font-label-md text-label-md text-secondary">REF: PKG-2026-0091</span>
+<div class="flex flex-col cursor-pointer group/link">
+<a class="font-body-md font-bold text-primary hover:underline group-hover/link:text-secondary transition-colors flex items-center gap-1" href="#">MOH/GDS/010 - Medical Supplies <span class="material-symbols-outlined text-sm opacity-0 group-hover/link:opacity-100 transition-opacity">open_in_new</span></a>
+<a class="font-label-sm text-on-surface-variant hover:underline uppercase text-[10px]" href="#">PKG-2026-0091</a>
 </div>
 </td>
 <td class="px-6 py-6 text-center">
@@ -340,9 +397,9 @@
 <!-- Row 2 -->
 <tr class="hover:bg-surface-container-lowest transition-colors group">
 <td class="px-6 py-6">
-<div class="flex flex-col">
-<a class="font-body-md font-bold text-primary hover:text-secondary hover:underline transition-colors" href="#">MOH/WKS/008 - Clinic Expansion</a>
-<span class="font-label-md text-label-md text-secondary">REF: PKG-2026-0044</span>
+<div class="flex flex-col cursor-pointer group/link">
+<a class="font-body-md font-bold text-primary hover:underline group-hover/link:text-secondary transition-colors flex items-center gap-1" href="#">MOH/WKS/008 - Clinic Expansion <span class="material-symbols-outlined text-sm opacity-0 group-hover/link:opacity-100 transition-opacity">open_in_new</span></a>
+<a class="font-label-sm text-on-surface-variant hover:underline uppercase text-[10px]" href="#">PKG-2026-0044</a>
 </div>
 </td>
 <td class="px-6 py-6 text-center">
@@ -367,9 +424,9 @@
 <!-- Row 3 -->
 <tr class="hover:bg-surface-container-lowest transition-colors group">
 <td class="px-6 py-6">
-<div class="flex flex-col">
-<a class="font-body-md font-bold text-primary hover:text-secondary hover:underline transition-colors" href="#">MOH/CNS/015 - Logistics Audit</a>
-<span class="font-label-md text-label-md text-secondary">REF: PKG-2026-0012</span>
+<div class="flex flex-col cursor-pointer group/link">
+<a class="font-body-md font-bold text-primary hover:underline group-hover/link:text-secondary transition-colors flex items-center gap-1" href="#">MOH/CNS/015 - Logistics Audit <span class="material-symbols-outlined text-sm opacity-0 group-hover/link:opacity-100 transition-opacity">open_in_new</span></a>
+<a class="font-label-sm text-on-surface-variant hover:underline uppercase text-[10px]" href="#">PKG-2026-0012</a>
 </div>
 </td>
 <td class="px-6 py-6 text-center">
@@ -393,9 +450,11 @@
 </tr>
 </tbody>
 </table>
+</div>
 <footer class="flex justify-between items-center w-full px-6 py-4 bg-surface-container border-t border-outline-variant"><div class="flex items-center gap-2"><span class="font-body-sm text-on-surface-variant">Rows per page:</span><div class="relative flex items-center bg-surface-container-lowest border border-outline-variant rounded px-2 py-1 cursor-pointer hover:bg-surface-container-high transition-colors"><span class="font-label-md text-primary mr-1">10</span><span class="material-symbols-outlined text-[18px] text-on-surface-variant">arrow_drop_down</span></div></div><div class="flex items-center gap-6"><span class="font-body-sm text-on-surface-variant">1 to 3 of 12</span><div class="flex items-center gap-2"><button class="p-2 border border-outline-variant rounded-lg text-on-surface-variant disabled:opacity-30 transition-colors hover:bg-surface-container-high" disabled=""><span class="material-symbols-outlined">chevron_left</span></button><button class="w-8 h-8 flex items-center justify-center bg-primary text-white rounded-lg font-label-md">1</button><button class="w-8 h-8 flex items-center justify-center hover:bg-surface-container-high rounded-lg font-label-md text-on-surface-variant transition-colors">2</button><button class="w-8 h-8 flex items-center justify-center hover:bg-surface-container-high rounded-lg font-label-md text-on-surface-variant transition-colors">3</button><button class="p-2 border border-outline-variant rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined">chevron_right</span></button></div></div></footer>
 </div>
 <div data-testid="pp4-workbench-blocked-table-section" hidden="">
+<div class="overflow-x-auto">
 <table class="w-full text-left border-collapse min-w-[1100px]">
 <thead>
 <tr class="bg-surface-container-low border-b border-outline-variant">
@@ -410,9 +469,9 @@
 <!-- Row 1 -->
 <tr class="hover:bg-surface-container-lowest transition-colors group">
 <td class="px-6 py-6">
-<div class="flex flex-col">
-<a class="font-body-md font-bold text-primary hover:text-secondary hover:underline transition-colors" href="#">MOH/GDS/010 - Medical Supplies</a>
-<span class="font-label-md text-label-md text-secondary">REF: PKG-2026-0091</span>
+<div class="flex flex-col cursor-pointer group/link">
+<a class="font-body-md font-bold text-primary hover:underline group-hover/link:text-secondary transition-colors flex items-center gap-1" href="#">MOH/GDS/010 - Medical Supplies <span class="material-symbols-outlined text-sm opacity-0 group-hover/link:opacity-100 transition-opacity">open_in_new</span></a>
+<a class="font-label-sm text-on-surface-variant hover:underline uppercase text-[10px]" href="#">PKG-2026-0091</a>
 </div>
 </td>
 <td class="px-6 py-6 text-center">
@@ -432,9 +491,9 @@
 <!-- Row 2 -->
 <tr class="hover:bg-surface-container-lowest transition-colors group">
 <td class="px-6 py-6">
-<div class="flex flex-col">
-<a class="font-body-md font-bold text-primary hover:text-secondary hover:underline transition-colors" href="#">MOH/WKS/008 - Clinic Expansion</a>
-<span class="font-label-md text-label-md text-secondary">REF: PKG-2026-0044</span>
+<div class="flex flex-col cursor-pointer group/link">
+<a class="font-body-md font-bold text-primary hover:underline group-hover/link:text-secondary transition-colors flex items-center gap-1" href="#">MOH/WKS/008 - Clinic Expansion <span class="material-symbols-outlined text-sm opacity-0 group-hover/link:opacity-100 transition-opacity">open_in_new</span></a>
+<a class="font-label-sm text-on-surface-variant hover:underline uppercase text-[10px]" href="#">PKG-2026-0044</a>
 </div>
 </td>
 <td class="px-6 py-6 text-center">
@@ -454,9 +513,9 @@
 <!-- Row 3 -->
 <tr class="hover:bg-surface-container-lowest transition-colors group">
 <td class="px-6 py-6">
-<div class="flex flex-col">
-<a class="font-body-md font-bold text-primary hover:text-secondary hover:underline transition-colors" href="#">MOH/CNS/015 - Logistics Audit</a>
-<span class="font-label-md text-label-md text-secondary">REF: PKG-2026-0012</span>
+<div class="flex flex-col cursor-pointer group/link">
+<a class="font-body-md font-bold text-primary hover:underline group-hover/link:text-secondary transition-colors flex items-center gap-1" href="#">MOH/CNS/015 - Logistics Audit <span class="material-symbols-outlined text-sm opacity-0 group-hover/link:opacity-100 transition-opacity">open_in_new</span></a>
+<a class="font-label-sm text-on-surface-variant hover:underline uppercase text-[10px]" href="#">PKG-2026-0012</a>
 </div>
 </td>
 <td class="px-6 py-6 text-center">
@@ -475,15 +534,18 @@
 </tr>
 </tbody>
 </table>
+</div>
 <footer class="flex justify-between items-center w-full px-6 py-4 bg-surface-container border-t border-outline-variant"><div class="flex items-center gap-2"><span class="font-body-sm text-on-surface-variant">Rows per page:</span><div class="relative flex items-center bg-surface-container-lowest border border-outline-variant rounded px-2 py-1 cursor-pointer hover:bg-surface-container-high transition-colors"><span class="font-label-md text-primary mr-1">10</span><span class="material-symbols-outlined text-[18px] text-on-surface-variant">arrow_drop_down</span></div></div><div class="flex items-center gap-6"><span class="font-body-sm text-on-surface-variant">1 to 3 of 12</span><div class="flex items-center gap-2"><button class="p-2 border border-outline-variant rounded-lg text-on-surface-variant disabled:opacity-30 transition-colors hover:bg-surface-container-high" disabled=""><span class="material-symbols-outlined">chevron_left</span></button><button class="w-8 h-8 flex items-center justify-center bg-primary text-white rounded-lg font-label-md">1</button><button class="w-8 h-8 flex items-center justify-center hover:bg-surface-container-high rounded-lg font-label-md text-on-surface-variant transition-colors">2</button><button class="w-8 h-8 flex items-center justify-center hover:bg-surface-container-high rounded-lg font-label-md text-on-surface-variant transition-colors">3</button><button class="p-2 border border-outline-variant rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined">chevron_right</span></button></div></div></footer>
 </div>
 <div data-testid="pp4-workbench-released-table-section" hidden="">
-<table class="w-full text-left border-collapse">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse min-w-[900px]">
 <thead>
 <tr class="bg-surface-container-low border-b border-outline-variant"><th class="py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider pl-6 pr-2">Package Title &amp; Ref</th><th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-center">Linked</th><th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-center">Category</th><th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-center">Est. Value</th><th class="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-center">Tender Status</th></tr>
 </thead>
-<tbody class="divide-y divide-outline-variant"><tr class="hover:bg-surface-container-lowest transition-colors group"><td class="py-6 pl-6 pr-2"><div class="flex flex-col"><a class="font-body-md font-bold text-primary hover:text-secondary hover:underline transition-colors" href="#">MOH/GDS/010 - Medical Supplies</a><span class="font-label-md text-label-md text-secondary">REF: PKG-2026-0091</span></div></td><td class="px-6 py-6 text-center"><div class="inline-flex items-center gap-2 text-on-surface-variant bg-surface-container-low px-3 py-1 rounded-full"><span class="material-symbols-outlined text-[16px]">link</span><span class="font-label-md text-label-md">5</span></div></td><td class="px-6 py-6 text-center"><div class="flex justify-center"><span class="px-2.5 py-1 rounded-full bg-cat-goods/10 text-cat-goods font-label-sm font-semibold flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-cat-goods"></span> Goods</span></div></td><td class="px-6 py-6 text-center"><span class="font-bold text-primary">KES 850M</span></td><td class="px-6 py-6 text-center"><span class="bg-status-success/10 text-status-success font-label-md text-label-md px-3 py-1 rounded uppercase tracking-tighter">Tender Created</span></td></tr><tr class="hover:bg-surface-container-lowest transition-colors group"><td class="py-6 pl-6 pr-2"><div class="flex flex-col"><a class="font-body-md font-bold text-primary hover:text-secondary hover:underline transition-colors" href="#">MOH/WKS/008 - Clinic Expansion</a><span class="font-label-md text-label-md text-secondary">REF: PKG-2026-0044</span></div></td><td class="px-6 py-6 text-center"><div class="inline-flex items-center gap-2 text-on-surface-variant bg-surface-container-low px-3 py-1 rounded-full"><span class="material-symbols-outlined text-[16px]">link</span><span class="font-label-md text-label-md">1</span></div></td><td class="px-6 py-6 text-center"><div class="flex justify-center"><span class="px-2.5 py-1 rounded-full bg-cat-works/10 text-cat-works font-label-sm font-semibold flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-cat-works"></span> Works</span></div></td><td class="px-6 py-6 text-center"><span class="font-bold text-primary">KES 1.2B</span></td><td class="px-6 py-6 text-center"><span class="bg-secondary-container/10 text-secondary font-label-md text-label-md px-3 py-1 rounded uppercase tracking-tighter">Published</span></td></tr><tr class="hover:bg-surface-container-lowest transition-colors group"><td class="py-6 pl-6 pr-2"><div class="flex flex-col"><a class="font-body-md font-bold text-primary hover:text-secondary hover:underline transition-colors" href="#">MOH/CNS/015 - Logistics Audit</a><span class="font-label-md text-label-md text-secondary">REF: PKG-2026-0012</span></div></td><td class="px-6 py-6 text-center"><div class="inline-flex items-center gap-2 text-on-surface-variant bg-surface-container-low px-3 py-1 rounded-full"><span class="material-symbols-outlined text-[16px]">link</span><span class="font-label-md text-label-md">2</span></div></td><td class="px-6 py-6 text-center"><div class="flex justify-center"><span class="px-2.5 py-1 rounded-full bg-cat-consultancy/10 text-cat-consultancy font-label-sm font-semibold flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-cat-consultancy"></span> Consultancy</span></div></td><td class="px-6 py-6 text-center"><span class="font-bold text-primary">KES 45M</span></td><td class="px-6 py-6 text-center"><span class="bg-status-success/10 text-status-success font-label-md text-label-md px-3 py-1 rounded uppercase tracking-tighter">Tender Created</span></td></tr></tbody>
+<tbody class="divide-y divide-outline-variant"><tr class="hover:bg-surface-container-lowest transition-colors group"><td class="py-6 pl-6 pr-2"><div class="flex flex-col cursor-pointer group/link"><a class="font-body-md font-bold text-primary hover:underline group-hover/link:text-secondary transition-colors flex items-center gap-1" href="#">MOH/GDS/010 - Medical Supplies <span class="material-symbols-outlined text-sm opacity-0 group-hover/link:opacity-100 transition-opacity">open_in_new</span></a><a class="font-label-sm text-on-surface-variant hover:underline uppercase text-[10px]" href="#">PKG-2026-0091</a></div></td><td class="px-6 py-6 text-center"><div class="inline-flex items-center gap-2 text-on-surface-variant bg-surface-container-low px-3 py-1 rounded-full"><span class="material-symbols-outlined text-[16px]">link</span><span class="font-label-md text-label-md">5</span></div></td><td class="px-6 py-6 text-center"><div class="flex justify-center"><span class="px-2.5 py-1 rounded-full bg-cat-goods/10 text-cat-goods font-label-sm font-semibold flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-cat-goods"></span> Goods</span></div></td><td class="px-6 py-6 text-center"><span class="font-bold text-primary">KES 850M</span></td><td class="px-6 py-6 text-center"><span class="bg-status-success/10 text-status-success font-label-md text-label-md px-3 py-1 rounded uppercase tracking-tighter">Tender Created</span></td></tr><tr class="hover:bg-surface-container-lowest transition-colors group"><td class="py-6 pl-6 pr-2"><div class="flex flex-col cursor-pointer group/link"><a class="font-body-md font-bold text-primary hover:underline group-hover/link:text-secondary transition-colors flex items-center gap-1" href="#">MOH/WKS/008 - Clinic Expansion <span class="material-symbols-outlined text-sm opacity-0 group-hover/link:opacity-100 transition-opacity">open_in_new</span></a><a class="font-label-sm text-on-surface-variant hover:underline uppercase text-[10px]" href="#">PKG-2026-0044</a></div></td><td class="px-6 py-6 text-center"><div class="inline-flex items-center gap-2 text-on-surface-variant bg-surface-container-low px-3 py-1 rounded-full"><span class="material-symbols-outlined text-[16px]">link</span><span class="font-label-md text-label-md">1</span></div></td><td class="px-6 py-6 text-center"><div class="flex justify-center"><span class="px-2.5 py-1 rounded-full bg-cat-works/10 text-cat-works font-label-sm font-semibold flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-cat-works"></span> Works</span></div></td><td class="px-6 py-6 text-center"><span class="font-bold text-primary">KES 1.2B</span></td><td class="px-6 py-6 text-center"><span class="bg-secondary-container/10 text-secondary font-label-md text-label-md px-3 py-1 rounded uppercase tracking-tighter">Published</span></td></tr><tr class="hover:bg-surface-container-lowest transition-colors group"><td class="py-6 pl-6 pr-2"><div class="flex flex-col cursor-pointer group/link"><a class="font-body-md font-bold text-primary hover:underline group-hover/link:text-secondary transition-colors flex items-center gap-1" href="#">MOH/CNS/015 - Logistics Audit <span class="material-symbols-outlined text-sm opacity-0 group-hover/link:opacity-100 transition-opacity">open_in_new</span></a><a class="font-label-sm text-on-surface-variant hover:underline uppercase text-[10px]" href="#">PKG-2026-0012</a></div></td><td class="px-6 py-6 text-center"><div class="inline-flex items-center gap-2 text-on-surface-variant bg-surface-container-low px-3 py-1 rounded-full"><span class="material-symbols-outlined text-[16px]">link</span><span class="font-label-md text-label-md">2</span></div></td><td class="px-6 py-6 text-center"><div class="flex justify-center"><span class="px-2.5 py-1 rounded-full bg-cat-consultancy/10 text-cat-consultancy font-label-sm font-semibold flex items-center gap-1 w-fit"><span class="w-1.5 h-1.5 rounded-full bg-cat-consultancy"></span> Consultancy</span></div></td><td class="px-6 py-6 text-center"><span class="font-bold text-primary">KES 45M</span></td><td class="px-6 py-6 text-center"><span class="bg-status-success/10 text-status-success font-label-md text-label-md px-3 py-1 rounded uppercase tracking-tighter">Tender Created</span></td></tr></tbody>
 </table>
+</div>
 <footer class="flex justify-between items-center w-full px-6 py-4 bg-surface-container border-t border-outline-variant"><div class="flex items-center gap-2"><span class="font-body-sm text-on-surface-variant">Rows per page:</span><div class="relative flex items-center bg-surface-container-lowest border border-outline-variant rounded px-2 py-1 cursor-pointer hover:bg-surface-container-high transition-colors"><span class="font-label-md text-primary mr-1">10</span><span class="material-symbols-outlined text-[18px] text-on-surface-variant">arrow_drop_down</span></div></div><div class="flex items-center gap-6"><span class="font-body-sm text-on-surface-variant">1 to 3 of 12</span><div class="flex items-center gap-2"><button class="p-2 border border-outline-variant rounded-lg text-on-surface-variant disabled:opacity-30 transition-colors hover:bg-surface-container-high" disabled=""><span class="material-symbols-outlined">chevron_left</span></button><button class="w-8 h-8 flex items-center justify-center bg-primary text-white rounded-lg font-label-md">1</button><button class="w-8 h-8 flex items-center justify-center hover:bg-surface-container-high rounded-lg font-label-md text-on-surface-variant transition-colors">2</button><button class="w-8 h-8 flex items-center justify-center hover:bg-surface-container-high rounded-lg font-label-md text-on-surface-variant transition-colors">3</button><button class="p-2 border border-outline-variant rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined">chevron_right</span></button></div></div></footer>
 </div>
 </div><div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pb-12">

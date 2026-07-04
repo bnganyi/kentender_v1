@@ -96,6 +96,7 @@ app_include_js = [
 	f"/assets/kentender_procurement/js/pp2_planning_selected_summary_panel.js?v={_desk_asset_v('public/js/pp2_planning_selected_summary_panel.js')}",
 	f"/assets/kentender_procurement/js/pp2_planning_include_plan_modal.js?v={_desk_asset_v('public/js/pp2_planning_include_plan_modal.js')}",
 	f"/assets/kentender_procurement/js/pp2_planning_create_package_modal.js?v={_desk_asset_v('public/js/pp2_planning_create_package_modal.js')}",
+	f"/assets/kentender_procurement/js/pp2_planning_package_wizard.js?v={_desk_asset_v('public/js/pp2_planning_package_wizard.js')}",
 	f"/assets/kentender_procurement/js/pp2_planning_summary.js?v={_desk_asset_v('public/js/pp2_planning_summary.js')}",
 	f"/assets/kentender_procurement/js/pp2_planning_home_item_card.js?v={_desk_asset_v('public/js/pp2_planning_home_item_card.js')}",
 	f"/assets/kentender_procurement/js/pp2_planning_home_queue_section.js?v={_desk_asset_v('public/js/pp2_planning_home_queue_section.js')}",

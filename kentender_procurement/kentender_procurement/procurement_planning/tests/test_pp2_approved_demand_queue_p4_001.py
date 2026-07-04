@@ -175,6 +175,14 @@ class TestPP2ApprovedDemandQueueP4001(IntegrationTestCase):
 		self.assertEqual(demand.get("code"), DEMAND_CODE)
 		self.assertEqual(demand.get("name"), DEMAND_TITLE)
 		self.assertTrue(row.get("department"))
+		# Regression guard: `department` must be the human-readable
+		# `Procuring Department.department_name`, never the Link field's
+		# raw internal hash id (autoname="hash", e.g. "mkr2055b6p").
+		demand_name = frappe.db.get_value("Demand", {"demand_id": DEMAND_CODE}, "name")
+		dept_id = frappe.db.get_value("Demand", demand_name, "requesting_department")
+		self.assertNotEqual(row.get("department"), dept_id)
+		expected_dept_name = frappe.db.get_value("Procuring Department", dept_id, "department_name")
+		self.assertEqual(row.get("department"), expected_dept_name)
 		self.assertEqual(row.get("category"), "Works")
 		self.assertEqual(flt(row.get("estimated_value")), flt(ESTIMATED_VALUE))
 		self.assertEqual(row.get("currency"), "KES")
@@ -244,6 +252,103 @@ class TestPP2ApprovedDemandQueueP4001(IntegrationTestCase):
 		out = get_pp_approved_demands_awaiting_planning(search_text=DEMAND_CODE)
 		self.assertTrue(out.get("ok"), out)
 		self.assertIsNotNone(_find_row(out.get("rows") or [], DEMAND_CODE))
+
+	def _mk_approved_demand(self, *, demand_id: str) -> str:
+		"""Create via the Draft->Approved doctype workflow is not exercised
+		here (see test_003's same pattern) — insert as Draft, then bypass
+		the status-transition guard with a direct db write, matching the
+		existing fixtures' approach for "already approved" test rows."""
+		self._mk_demand(demand_id=demand_id, status="Draft")
+		demand_name = frappe.db.get_value("Demand", {"demand_id": demand_id}, "name")
+		frappe.db.set_value("Demand", demand_name, "status", "Approved", update_modified=False)
+		frappe.db.commit()
+		return demand_name
+
+	def test_007_department_filter_matches_department_name(self):
+		"""W10 — the Needs Planning queue's `department` filter matches the
+		human `Procuring Department.department_name`, never a raw hash id,
+		exactly mirroring the other 5 workbench queues' behaviour."""
+		if self._skip:
+			self.skipTest("Procurement Planning DocTypes not installed")
+
+		demand_id = f"DEM-QUEUE-DEPT-{frappe.generate_hash(length=6)}"
+		demand_name = self._mk_approved_demand(demand_id=demand_id)
+		dept_id = frappe.db.get_value("Demand", demand_name, "requesting_department")
+		dept_name = frappe.db.get_value("Procuring Department", dept_id, "department_name")
+		self.assertTrue(dept_name)
+
+		out = get_approved_demands_awaiting_planning({"department": dept_name}, "Administrator")
+		self.assertTrue(out.get("ok"), out)
+		self.assertIsNotNone(_find_row(out.get("rows") or [], demand_id))
+
+		miss = get_approved_demands_awaiting_planning(
+			{"department": f"no-such-department-{frappe.generate_hash(length=6)}"}, "Administrator"
+		)
+		self.assertTrue(miss.get("ok"), miss)
+		self.assertIsNone(_find_row(miss.get("rows") or [], demand_id))
+
+	def test_008_value_range_filter(self):
+		"""W10 — `value_range` buckets match `workbench_item_view_model`'s
+		under_100m / 100m_500m / over_500m semantics."""
+		if self._skip:
+			self.skipTest("Procurement Planning DocTypes not installed")
+
+		demand_id = f"DEM-QUEUE-VALRNG-{frappe.generate_hash(length=6)}"
+		demand_name = self._mk_approved_demand(demand_id=demand_id)
+		frappe.db.set_value("Demand", demand_name, "total_amount", 600_000_000, update_modified=False)
+		frappe.db.commit()
+
+		hit = get_approved_demands_awaiting_planning({"value_range": "over_500m"}, "Administrator")
+		self.assertTrue(hit.get("ok"), hit)
+		self.assertIsNotNone(_find_row(hit.get("rows") or [], demand_id))
+
+		miss = get_approved_demands_awaiting_planning({"value_range": "under_100m"}, "Administrator")
+		self.assertTrue(miss.get("ok"), miss)
+		self.assertIsNone(_find_row(miss.get("rows") or [], demand_id))
+
+	def test_009_sort_by_value_desc(self):
+		"""W10 — `sort=value_desc` orders queue rows by estimated value,
+		highest first."""
+		if self._skip:
+			self.skipTest("Procurement Planning DocTypes not installed")
+
+		low_id = f"DEM-QUEUE-SORTLOW-{frappe.generate_hash(length=6)}"
+		high_id = f"DEM-QUEUE-SORTHIGH-{frappe.generate_hash(length=6)}"
+		low_name = self._mk_approved_demand(demand_id=low_id)
+		high_name = self._mk_approved_demand(demand_id=high_id)
+		frappe.db.set_value("Demand", low_name, "total_amount", 1_000, update_modified=False)
+		frappe.db.set_value("Demand", high_name, "total_amount", 900_000_000, update_modified=False)
+		frappe.db.commit()
+
+		out = get_approved_demands_awaiting_planning({"sort": "value_desc"}, "Administrator")
+		self.assertTrue(out.get("ok"), out)
+		codes = [(row.get("demand") or {}).get("code") for row in out.get("rows") or []]
+		self.assertIn(high_id, codes)
+		self.assertIn(low_id, codes)
+		self.assertLess(codes.index(high_id), codes.index(low_id))
+
+	def test_010_created_range_filter(self):
+		"""W10 — `created_from`/`created_to` filter on the demand's finance
+		approval date (`approval_date` on the formatted row)."""
+		if self._skip:
+			self.skipTest("Procurement Planning DocTypes not installed")
+
+		demand_id = f"DEM-QUEUE-CREATED-{frappe.generate_hash(length=6)}"
+		demand_name = self._mk_approved_demand(demand_id=demand_id)
+		frappe.db.set_value("Demand", demand_name, "finance_approved_at", "2026-05-15", update_modified=False)
+		frappe.db.commit()
+
+		hit = get_approved_demands_awaiting_planning(
+			{"created_from": "2026-05-01", "created_to": "2026-05-31"}, "Administrator"
+		)
+		self.assertTrue(hit.get("ok"), hit)
+		self.assertIsNotNone(_find_row(hit.get("rows") or [], demand_id))
+
+		miss = get_approved_demands_awaiting_planning(
+			{"created_from": "2026-06-01", "created_to": "2026-06-30"}, "Administrator"
+		)
+		self.assertTrue(miss.get("ok"), miss)
+		self.assertIsNone(_find_row(miss.get("rows") or [], demand_id))
 
 	def test_006_guest_and_officer_denied(self):
 		"""SEED-TEST-P4-001-006: Guest and Procurement Officer receive PP_ACCESS_DENIED."""

@@ -34,6 +34,9 @@ from kentender_procurement.procurement_planning.services.approved_demand_queue i
 from kentender_procurement.procurement_planning.services.package_workbench import (
 	get_package_workbench_rows,
 )
+from kentender_procurement.procurement_planning.services.planning_inclusion_service import (
+	list_unpackaged_planning_inclusions,
+)
 from kentender_procurement.procurement_planning.services.planning_home_queues import (
 	_blocked_rows,
 	_released_recently_rows,
@@ -230,6 +233,13 @@ def _active_plan_label(actor: str) -> str:
 	return title or code
 
 
+def _active_plan_code(actor: str) -> str:
+	vm = get_active_plan_view_model(actor=actor)
+	if not vm.get("has_active_plan"):
+		return ""
+	return str(vm.get("plan_code") or "").strip()
+
+
 def _work_item_base(*, queue: str, code: str, title: str, subtitle: str, object_type: str, plan_label: str) -> dict[str, Any]:
 	return {
 		"work_item_id": f"{queue}:{code}",
@@ -301,6 +311,77 @@ def _needs_planning_items(rows: list[dict[str, Any]], plan_label: str) -> list[d
 					"target": code,
 				},
 				"secondary_actions": [{"label": "View Demand", "action": "view_demand", "target": code}],
+			}
+		)
+		items.append(entry)
+	return items
+
+
+# "In Creation" (draft_packages) is the only queue that also needs to show
+# demands "Added to Active Plan" (see Operational Flow §9.4) that have no
+# `Procurement Package` yet — otherwise they're unfindable anywhere on the
+# Workbench once Needs Planning excludes them. These placeholder rows share
+# the exact In Creation column shape (title/ref, linked demands, category,
+# value, "readiness" slot) but `is_placeholder=True` + `inclusion_code` tell
+# the frontend to render a "Create Package" action instead of a real
+# readiness pill, and to call `create_pp_package_from_planning_inclusion`
+# directly on click instead of routing to a (non-existent) package form.
+def _unpackaged_inclusion_items(rows: list[dict[str, Any]], plan_label: str) -> list[dict[str, Any]]:
+	items: list[dict[str, Any]] = []
+	for row in rows:
+		inclusion_code = str(row.get("inclusion_code") or "").strip()
+		demand_code = str(row.get("demand_code") or "").strip()
+		if not inclusion_code or not demand_code:
+			continue
+		title = str(row.get("title") or demand_code).strip()
+		category = str(row.get("category") or "").strip()
+		value = _money(row.get("estimated_value"), row.get("currency") or "KES")
+		subtitle = " · ".join([s for s in (category, value) if s])
+		entry = _work_item_base(
+			queue="draft_packages",
+			code=inclusion_code,
+			title=title,
+			subtitle=subtitle,
+			object_type="planning_inclusion",
+			plan_label=plan_label,
+		)
+		entry.update(
+			{
+				"is_placeholder": True,
+				"inclusion_code": inclusion_code,
+				"demand_code": demand_code,
+				"underlying_object_id": "",
+				"underlying_object_code": demand_code,
+				"currency": str(row.get("currency") or "KES").strip() or "KES",
+				"readiness_status": "Create Package",
+				"readiness_tone": "neutral",
+				"category_label": category,
+				"meta_line": value,
+				"estimated_value_number": flt(row.get("estimated_value") or 0),
+				"budget_status": "",
+				"budget_status_label": "",
+				"status_pill_label": "Added to Active Plan",
+				"status_pill_tone": "package",
+				"updated_relative": _relative_label(row.get("created_on")),
+				"summary_detail_line": " · ".join(
+					[s for s in ("Added to active plan", category, value) if s]
+				),
+				"status_headline": "Added to Active Plan",
+				"status_detail": "This demand is in the active plan and needs a package.",
+				"package_description": "",
+				"next_step_detail": "Create a package to move this demand forward.",
+				"list_next_action": "Create Package",
+				"consolidated_demand_count": 1,
+				"blockers": [],
+				"next_action_label": "Create Package",
+				"primary_action": {
+					"label": "Create Package",
+					"action": "create_package_from_inclusion",
+					"target": inclusion_code,
+				},
+				"secondary_actions": [{"label": "View Demand", "action": "view_demand", "target": demand_code}],
+				"department_label": str(row.get("department_label") or "").strip(),
+				"created_on": str(row.get("created_on") or "").strip(),
 			}
 		)
 		items.append(entry)
@@ -682,6 +763,11 @@ def get_workbench_item_view_model(
 		}
 	rows = out.get("rows") or []
 	items = _package_queue_items(rows, queue_key, plan_label)
+	if queue_key == "draft_packages":
+		plan_code = _active_plan_code(user)
+		if plan_code:
+			inclusion_rows = list_unpackaged_planning_inclusions(plan_code)
+			items = _unpackaged_inclusion_items(inclusion_rows, plan_label) + items
 	items, total = _apply_demo_scope(items, include_test_data=include_test_data)
 	items = _apply_query_filters(
 		items,

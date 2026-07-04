@@ -24,6 +24,8 @@
   "column_context",
   "department",
   "priority",
+  "lot_group",
+  "delivery_location",
   "section_state",
   "line_status",
   "is_active",
@@ -135,17 +137,28 @@
    "fieldtype": "Data",
    "label": "Department"
   },
-  {
-   "fieldname": "priority",
-   "fieldtype": "Select",
-   "label": "Priority",
-   "options": "Low\nNormal\nHigh\nCritical"
-  },
-  {
-   "fieldname": "section_state",
-   "fieldtype": "Section Break",
-   "label": "3. State"
-  },
+ {
+  "fieldname": "priority",
+  "fieldtype": "Select",
+  "label": "Priority",
+  "options": "Low\nNormal\nHigh\nCritical"
+ },
+ {
+  "description": "Optional lot label. Lines sharing a lot group are packaged/tendered together (Package Wizard \u00a79.6 grouping, not splitting).",
+  "fieldname": "lot_group",
+  "fieldtype": "Data",
+  "label": "Lot Group"
+ },
+ {
+  "fieldname": "delivery_location",
+  "fieldtype": "Data",
+  "label": "Delivery Location"
+ },
+ {
+  "fieldname": "section_state",
+  "fieldtype": "Section Break",
+  "label": "3. State"
+ },
   {
    "default": "Draft",
    "fieldname": "line_status",

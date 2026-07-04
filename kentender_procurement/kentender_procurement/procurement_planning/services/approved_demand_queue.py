@@ -182,6 +182,19 @@ def load_demand_items_for_drawer(demand_name: str, demand_code: str) -> list[dic
 	return out
 
 
+def _department_label(department_id: str | None) -> str:
+	"""Resolve a `requesting_department` Link id to its display name.
+
+	`Demand.requesting_department` is a Link to `Procuring Department`, whose
+	`name` is a random hash (autoname="hash") — never a value fit for
+	end-user display. Only `department_name` is presentable.
+	"""
+	dept_id = (department_id or "").strip()
+	if not dept_id:
+		return ""
+	return (frappe.db.get_value("Procuring Department", dept_id, "department_name") or "").strip()
+
+
 def _budget_line_ref(budget_line_name: str | None) -> dict[str, str]:
 	bl_name = (budget_line_name or "").strip()
 	if not bl_name or not frappe.db.exists("Budget Line", bl_name):
@@ -215,7 +228,7 @@ def _format_row(row: dict[str, Any]) -> dict[str, Any]:
 			"code": demand_code,
 			"name": (row.get("title") or demand_code).strip(),
 		},
-		"department": (row.get("requesting_department") or "").strip(),
+		"department": _department_label(row.get("requesting_department")),
 		"category": category,
 		"estimated_value": flt(row.get("total_amount")),
 		"currency": "KES",
@@ -229,6 +242,94 @@ def _format_row(row: dict[str, Any]) -> dict[str, Any]:
 		"blocker_summary": None,
 		"next_action": "include_in_plan",
 	}
+
+
+def _value_range_matches(range_key: str, amount: float) -> bool:
+	"""Mirrors `workbench_item_view_model._value_range_matches` so the Needs
+	Planning queue's value-range filter behaves identically to the other 5
+	workbench queues (same bucket keys, same semantics)."""
+	key = (range_key or "").strip().lower()
+	value = flt(amount or 0)
+	if key in ("", "all", "all_values"):
+		return True
+	if key in ("under_kes_100m", "under_100m"):
+		return value < 100_000_000
+	if key in ("kes_100m_500m", "100m_500m"):
+		return 100_000_000 <= value <= 500_000_000
+	if key in ("over_kes_500m", "over_500m"):
+		return value > 500_000_000
+	return True
+
+
+def _to_date_or_none(value: Any):
+	text = str(value or "").strip()
+	if not text:
+		return None
+	try:
+		return getdate(text)
+	except Exception:
+		return None
+
+
+def _apply_extra_filters(
+	rows: list[dict[str, Any]],
+	*,
+	department: str | None = None,
+	value_range: str | None = None,
+	created_from: str | None = None,
+	created_to: str | None = None,
+) -> list[dict[str, Any]]:
+	"""Department/value-range/created-range refinements — additive to
+	`_apply_search`, kept separate since they operate on already-formatted
+	rows (post `_format_row`) rather than raw Demand fields."""
+	dept_q = (department or "").strip().lower()
+	date_from = _to_date_or_none(created_from)
+	date_to = _to_date_or_none(created_to)
+	if not (dept_q or value_range or date_from or date_to):
+		return rows
+	out: list[dict[str, Any]] = []
+	for row in rows:
+		if dept_q and dept_q not in str(row.get("department") or "").strip().lower():
+			continue
+		if not _value_range_matches(str(value_range or ""), row.get("estimated_value")):
+			continue
+		row_date = _to_date_or_none(row.get("approval_date"))
+		if date_from and row_date and row_date < date_from:
+			continue
+		if date_to and row_date and row_date > date_to:
+			continue
+		out.append(row)
+	return out
+
+
+def _apply_demand_sort(rows: list[dict[str, Any]], sort: str | None) -> list[dict[str, Any]]:
+	"""Mirrors `workbench_item_view_model._apply_sort` for parity across all
+	6 workbench queues."""
+	sort_key = (sort or "").strip().lower()
+	if not sort_key or sort_key == "newest":
+		return sorted(
+			rows,
+			key=lambda row: (_to_date_or_none(row.get("approval_date")) is None, _to_date_or_none(row.get("approval_date"))),
+			reverse=True,
+		)
+	if sort_key == "oldest":
+		return sorted(
+			rows,
+			key=lambda row: (_to_date_or_none(row.get("approval_date")) is None, _to_date_or_none(row.get("approval_date"))),
+		)
+	if sort_key in ("value_high_low", "value_desc"):
+		return sorted(rows, key=lambda row: flt(row.get("estimated_value") or 0), reverse=True)
+	if sort_key in ("value_low_high", "value_asc"):
+		return sorted(rows, key=lambda row: flt(row.get("estimated_value") or 0))
+	if sort_key in ("title_asc", "name_asc"):
+		return sorted(rows, key=lambda row: str((row.get("demand") or {}).get("name") or "").strip().lower())
+	if sort_key in ("title_desc", "name_desc"):
+		return sorted(
+			rows,
+			key=lambda row: str((row.get("demand") or {}).get("name") or "").strip().lower(),
+			reverse=True,
+		)
+	return rows
 
 
 def _apply_search(rows: list[dict[str, Any]], search_text: str) -> list[dict[str, Any]]:
@@ -422,6 +523,15 @@ def get_approved_demands_for_queue(
 		)
 	else:
 		formatted = _ready_rows(filters=filters, actor=actor, clauses=base_clauses)
+
+	formatted = _apply_extra_filters(
+		formatted,
+		department=filters.get("department"),
+		value_range=filters.get("value_range"),
+		created_from=filters.get("created_from"),
+		created_to=filters.get("created_to"),
+	)
+	formatted = _apply_demand_sort(formatted, filters.get("sort"))
 
 	total = len(formatted)
 	start = max(cint(filters.get("start") or 0), 0)

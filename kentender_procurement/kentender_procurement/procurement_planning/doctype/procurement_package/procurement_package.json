@@ -15,6 +15,10 @@
   "plan_id",
   "column_def_tpl",
   "template_id",
+  "section_def_owner",
+  "package_owner",
+  "column_def_owner",
+  "target_release_date",
   "tab_template_method",
   "procurement_method",
   "column_tm_contract",
@@ -144,11 +148,34 @@
    "reqd": 1,
    "search_index": 1
   },
-  {
-   "fieldname": "tab_template_method",
-   "fieldtype": "Tab Break",
-   "label": "2. Template and method"
-  },
+ {
+  "fieldname": "section_def_owner",
+  "fieldtype": "Section Break",
+  "label": "Ownership and schedule"
+ },
+ {
+  "description": "Planner responsible for this package. Wizard defaults to the current user.",
+  "fieldname": "package_owner",
+  "fieldtype": "Link",
+  "label": "Package Owner",
+  "options": "User",
+  "search_index": 1
+ },
+ {
+  "fieldname": "column_def_owner",
+  "fieldtype": "Column Break"
+ },
+ {
+  "description": "Intended package release/tendering timing (planning schedule only, not a commitment).",
+  "fieldname": "target_release_date",
+  "fieldtype": "Date",
+  "label": "Target Release Date"
+ },
+ {
+  "fieldname": "tab_template_method",
+  "fieldtype": "Tab Break",
+  "label": "2. Template and method"
+ },
   {
    "fieldname": "procurement_method",
    "fieldtype": "Select",
@@ -419,12 +446,13 @@
    "label": "Fiscal Year",
    "search_index": 1
   },
-  {
-   "fieldname": "package_priority",
-   "fieldtype": "Select",
-   "label": "Package Priority",
-   "options": "High\nMedium\nLow"
-  },
+ {
+  "description": "Normal/High/Emergency per Package Creation Wizard spec. Legacy High/Medium/Low rows are backfilled by a data patch (Medium/Low -> Normal).",
+  "fieldname": "package_priority",
+  "fieldtype": "Select",
+  "label": "Package Priority",
+  "options": "Normal\nHigh\nEmergency"
+ },
   {
    "fieldname": "release_code",
    "fieldtype": "Data",

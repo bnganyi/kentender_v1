@@ -82,11 +82,18 @@ class TestPP4WorkbenchNeedsPlanningActionsW5Source(UnitTestCase):
 		self.assertIn("workbenchActivePlanCodeByRoot.get(root)", fn)
 		self.assertIn("method: INCLUDE_DEMAND_IN_PLAN_API", fn)
 
-	def test_create_package_ensures_inclusion_before_creating(self) -> None:
+	def test_create_package_ensures_inclusion_then_opens_wizard(self) -> None:
+		"""PW11 — the bulk toolbar action includes every selected demand,
+		then opens the Package Creation Wizard pre-selected with the
+		resulting inclusions instead of auto-creating one package per
+		demand (the wizard is now the single canonical create-package
+		path; see the Package Wizard tracker's entry-point-replacement
+		scope decision)."""
 		fn = self._fn_block("function workbenchCreatePackagesFromSelectedDemands(root, doc) {")
 		self.assertIn("method: INCLUDE_DEMAND_IN_PLAN_API", fn)
-		self.assertIn("method: CREATE_PACKAGE_FROM_INCLUSION_API", fn)
-		self.assertIn("includeResult.inclusion_code", fn)
+		self.assertIn("openPlanningPackageWizard(root, doc,", fn)
+		self.assertIn("r.inclusion_code", fn)
+		self.assertNotIn("method: CREATE_PACKAGE_FROM_INCLUSION_API", fn)
 
 	def test_selection_actions_refresh_list_and_counts_after_completion(self) -> None:
 		for fn_signature in (

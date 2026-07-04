@@ -97,6 +97,11 @@ def _parse_filters(
 	start: int | str | None = 0,
 	limit: int | str | None = 50,
 	filters: str | None = None,
+	department: str | None = None,
+	value_range: str | None = None,
+	created_from: str | None = None,
+	created_to: str | None = None,
+	sort: str | None = None,
 ) -> dict[str, Any]:
 	out: dict[str, Any] = {
 		"search_text": (search_text or "").strip(),
@@ -106,6 +111,13 @@ def _parse_filters(
 		"queue": (queue or "").strip(),
 		"start": max(cint(start or 0), 0),
 		"limit": cint(limit or 50),
+		# W10 — filter-drawer refinements (PP4 parity with the other 5
+		# workbench queues, applied post-fetch in approved_demand_queue.py).
+		"department": (department or "").strip(),
+		"value_range": (value_range or "").strip(),
+		"created_from": (created_from or "").strip(),
+		"created_to": (created_to or "").strip(),
+		"sort": (sort or "").strip(),
 	}
 	if filters:
 		try:
@@ -129,6 +141,11 @@ def get_pp_approved_demands_awaiting_planning(
 	start: int | str | None = 0,
 	limit: int | str | None = 50,
 	filters: str | None = None,
+	department: str | None = None,
+	value_range: str | None = None,
+	created_from: str | None = None,
+	created_to: str | None = None,
+	sort: str | None = None,
 ) -> dict[str, Any]:
 	"""Whitelisted Planning queue — approved demands awaiting inclusion."""
 	role_key, gate_err = _planning_gate()
@@ -145,6 +162,11 @@ def get_pp_approved_demands_awaiting_planning(
 		start=start,
 		limit=limit,
 		filters=filters,
+		department=department,
+		value_range=value_range,
+		created_from=created_from,
+		created_to=created_to,
+		sort=sort,
 	)
 	queue_key = (parsed_filters.get("queue") or "").strip().lower()
 	if queue_key:

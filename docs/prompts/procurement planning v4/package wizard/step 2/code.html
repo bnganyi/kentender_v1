@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Configure Package - Procurement Planning Workbench</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Hanken+Grotesk:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-surface": "#191c1e",
+                    "on-error": "#ffffff",
+                    "on-surface-variant": "#44474e",
+                    "primary-fixed-dim": "#afc8f2",
+                    "surface-variant": "#e0e3e5",
+                    "surface-container-high": "#e6e8ea",
+                    "secondary-container": "#73b5fe",
+                    "error-container": "#ffdad6",
+                    "tertiary-fixed-dim": "#fdb793",
+                    "inverse-primary": "#afc8f2",
+                    "status-neutral": "#64748B",
+                    "on-tertiary-fixed-variant": "#6a3a20",
+                    "on-secondary-fixed-variant": "#00497e",
+                    "outline": "#74777f",
+                    "background": "#f7f9fb",
+                    "on-primary": "#ffffff",
+                    "surface-container-highest": "#e0e3e5",
+                    "primary": "#000511",
+                    "on-secondary-container": "#004578",
+                    "status-error": "#EF4444",
+                    "primary-fixed": "#d5e3ff",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-on-surface": "#eff1f3",
+                    "tertiary-container": "#381300",
+                    "cat-consultancy": "#06B6D4",
+                    "tertiary": "#0e0200",
+                    "on-primary-fixed": "#001b3b",
+                    "inverse-surface": "#2d3133",
+                    "surface-container": "#eceef0",
+                    "secondary-fixed": "#d2e4ff",
+                    "status-warning": "#F59E0B",
+                    "on-secondary-fixed": "#001d36",
+                    "outline-variant": "#c4c6cf",
+                    "status-success": "#10B981",
+                    "surface-container-low": "#f2f4f6",
+                    "surface-tint": "#485f84",
+                    "on-primary-container": "#6f87ae",
+                    "primary-container": "#001e40",
+                    "on-secondary": "#ffffff",
+                    "cat-works": "#8B5CF6",
+                    "tertiary-fixed": "#ffdbcb",
+                    "cat-services": "#EC4899",
+                    "on-tertiary-fixed": "#341100",
+                    "on-background": "#191c1e",
+                    "surface-bright": "#f7f9fb",
+                    "surface-dim": "#d8dadc",
+                    "secondary-fixed-dim": "#9fcaff",
+                    "on-primary-fixed-variant": "#2f476b",
+                    "on-tertiary": "#ffffff",
+                    "secondary": "#0061a5",
+                    "cat-goods": "#6366F1",
+                    "surface": "#f7f9fb",
+                    "on-tertiary-container": "#b47858",
+                    "on-error-container": "#93000a",
+                    "error": "#ba1a1a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "stack-gap-sm": "8px",
+                    "sidebar-width": "256px",
+                    "container-max-width": "1440px",
+                    "card-padding": "20px",
+                    "header-height": "64px",
+                    "stack-gap-md": "16px",
+                    "workbench-gutter": "24px"
+            },
+            "fontFamily": {
+                    "display-hero": ["Hanken Grotesk"],
+                    "label-md": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-lg": ["Hanken Grotesk"],
+                    "body-sm": ["Inter"],
+                    "headline-md": ["Hanken Grotesk"],
+                    "body-md": ["Inter"],
+                    "display-hero-mobile": ["Hanken Grotesk"]
+            },
+            "fontSize": {
+                    "display-hero": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "display-hero-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body {
+            background-color: #f7f9fb;
+            color: #191c1e;
+        }
+        .workbench-container {
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .stepper-active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #000511;
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full h-[64px] bg-surface shadow-sm z-50">
+<div class="flex items-center justify-between px-workbench-gutter w-full max-w-container-max-width mx-auto h-full">
+<div class="flex items-center gap-6">
+<span class="font-headline-md text-headline-md font-bold text-primary">Procurement Planning Workbench</span>
+<nav class="hidden md:flex gap-6 h-full items-center">
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="font-body-md text-body-md text-primary border-b-2 border-primary pb-1" href="#">Plans</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Analytics</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Archive</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-all">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-all">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a government official in a sharp navy blue suit, set against a blurred clean office background. The lighting is soft and natural, emphasizing a trustworthy and authoritative persona. The image follows a high-end corporate aesthetic with subtle cool tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDtrHCdmqcR569GqI5hGltJHN18SX-VPad9ODtdmVxsHtu-piz-20t3Q9XP1YnrARQLl-C_F7zxIm11aIo3ldfUqSCVSC1XCSWSJlBaKkkRls19uNw9zakOo9vEaZikKdF-ZNl1_1h4b75SOxrfm-B8vXo8il_WILXecrSADivXEuAWi-noN9Bs5nB4hCJ1jKU92d0vnkY3sOY8_QnDhvEK4Ypym0bz2xI2x8ly3x-axaVxJsm6UZWk"/>
+</div>
+</div>
+</div>
+</header>
+<!-- SideNavBar (Suppressed for focused wizard flow as per "Semantic Shell" Mandate: Task-Focused) -->
+<!-- Main Content Area -->
+<main class="pt-[64px] pb-[80px] workbench-container px-workbench-gutter">
+<!-- Wizard Header & Stepper -->
+<div class="py-8">
+<div class="flex flex-col gap-6">
+<div>
+<h1 class="font-display-hero text-display-hero text-primary mb-2">Create Procurement Package</h1>
+<p class="text-on-surface-variant font-body-lg text-body-lg">Package Wizard • Step 2 of 3</p>
+</div>
+<!-- Stepper Component -->
+<div class="flex items-center w-full max-w-4xl">
+<div class="flex items-center text-status-success font-label-md text-label-md">
+<span class="material-symbols-outlined mr-2" style='font-variation-settings: "FILL" 1;'>check_circle</span>
+                        1. Select Demands
+                    </div>
+<div class="flex-grow h-px bg-outline-variant mx-4"></div>
+<div class="flex items-center text-primary font-label-md text-label-md font-bold relative pb-1">
+<span class="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-[10px] mr-2">2</span>
+                        2. Configure Package
+                        <div class="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary"></div>
+</div>
+<div class="flex-grow h-px bg-outline-variant mx-4 opacity-30"></div>
+<div class="flex items-center text-on-surface-variant font-label-md text-label-md opacity-50">
+<span class="w-6 h-6 rounded-full border border-outline-variant flex items-center justify-center text-[10px] mr-2">3</span>
+                        3. Review and Create
+                    </div>
+</div>
+</div>
+</div>
+<!-- Grid Layout: 2 Columns -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-workbench-gutter items-start">
+<!-- Main Area (Left: 8 Columns) -->
+<div class="lg:col-span-8 flex flex-col gap-6">
+<!-- Section 1: Package Identity -->
+<section class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant p-card-padding">
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-primary" data-icon="inventory">inventory</span>
+<h2 class="font-headline-md text-headline-md text-primary">Package Identity</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-on-surface-variant">Package Title</label>
+<input class="bg-surface-container-low border-none rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary text-primary font-body-md text-body-md w-full" type="text" value="Specialized Oncology Medical Equipment"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-on-surface-variant">Owner / Lead Procurement Officer</label>
+<div class="flex items-center gap-3 bg-surface-container-low px-4 py-2.5 rounded-lg border border-outline-variant border-opacity-20">
+<div class="w-8 h-8 rounded-full bg-primary-fixed text-primary flex items-center justify-center font-bold text-xs">SM</div>
+<span class="font-body-md text-body-md font-semibold text-primary">Dr. Silas Mwangi</span>
+</div>
+</div>
+<div class="flex flex-col gap-2 md:col-span-2">
+<label class="font-label-md text-label-md text-on-surface-variant">Package Description</label>
+<textarea class="bg-surface-container-low border-none rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary text-primary font-body-md text-body-md w-full h-32" placeholder="Enter detailed description of the procurement package..."></textarea>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-on-surface-variant">Target Release Date</label>
+<input class="bg-surface-container-low border-none rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary text-primary font-body-md text-body-md w-full" type="date"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-on-surface-variant">Package Priority</label>
+<select class="bg-surface-container-low border-none rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary text-primary font-body-md text-body-md w-full">
+<option value="normal">Normal</option>
+<option value="high">High</option>
+<option value="emergency">Emergency</option>
+</select>
+</div></div>
+</section>
+<!-- Section 2: Category and Method -->
+<section class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant p-card-padding">
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-primary" data-icon="settings_suggest">settings_suggest</span>
+<h2 class="font-headline-md text-headline-md text-primary">Category &amp; Procurement Method</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="space-y-4">
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Procurement Category</label>
+<div class="inline-flex items-center gap-2 px-3 py-1.5 bg-cat-goods/10 text-cat-goods rounded-full w-fit font-label-md text-label-md">
+<span class="material-symbols-outlined text-sm" data-icon="shopping_bag">shopping_bag</span>
+                                    GOODS
+                                </div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Selected Method</label>
+<div class="bg-surface-container border border-outline-variant p-4 rounded-lg">
+<div class="flex justify-between items-center mb-1">
+<span class="font-body-md text-body-md font-bold text-primary">Open Tender</span>
+<span class="material-symbols-outlined text-status-success" data-icon="verified" style='font-variation-settings: "FILL" 1;'>verified</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Recommended: Package value requires open competitive process for compliance.</p>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl border border-dashed border-outline flex flex-col items-center justify-center text-center opacity-70">
+<span class="material-symbols-outlined text-4xl mb-2 text-on-surface-variant" data-icon="gavel">gavel</span>
+<p class="font-label-sm text-label-sm">Method assigned automatically based on Public Procurement Guidelines</p>
+</div>
+</div>
+</section>
+<!-- Section 3: Lines and Lots -->
+<section class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant overflow-hidden">
+<div class="p-card-padding border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="list_alt">list_alt</span>
+<h2 class="font-headline-md text-headline-md text-primary">Lines &amp; Lot Allocation</h2>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest border-b border-outline-variant"><th class="px-6 py-3 font-semibold">Line Title</th>
+<th class="px-6 py-3 font-semibold">Source Demand Item</th>
+<th class="px-6 py-3 font-semibold">Quantity</th>
+<th class="px-6 py-3 font-semibold text-right">Est. Unit Cost (KES)</th>
+<th class="px-6 py-3 font-semibold text-right">Total Est. (KES)</th>
+<th class="px-6 py-3 font-semibold text-center">Action</th></tr>
+</thead>
+<tbody class="font-body-md text-body-md text-primary divide-y divide-outline-variant"><tr class="hover:bg-surface-container transition-colors">
+<td class="px-6 py-4 font-bold">Diagnostic Imaging Set - Lot 1</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="font-semibold">Diagnostic Imaging Set</span>
+<span class="text-xs text-on-surface-variant">ID: DEM-2026-0045</span>
+</div>
+</td>
+<td class="px-6 py-4">12 Units</td>
+<td class="px-6 py-4 text-right">45,000,000</td>
+<td class="px-6 py-4 text-right font-semibold">540,000,000</td>
+<td class="px-6 py-4 text-center">
+<button class="p-1 hover:bg-error-container hover:text-error rounded transition-all">
+<span class="material-symbols-outlined" data-icon="delete">delete</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="px-6 py-4 font-bold">Lab Reagents - Lot 1</td>
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="font-semibold">Lab Reagent Batch</span>
+<span class="text-xs text-on-surface-variant">ID: DEM-2026-0089</span>
+</div>
+</td>
+<td class="px-6 py-4">500 Kits</td>
+<td class="px-6 py-4 text-right">1,100,000</td>
+<td class="px-6 py-4 text-right font-semibold">550,000,000</td>
+<td class="px-6 py-4 text-center">
+<button class="p-1 hover:bg-error-container hover:text-error rounded transition-all">
+<span class="material-symbols-outlined" data-icon="delete">delete</span>
+</button>
+</td>
+</tr></tbody>
+</table>
+</div>
+</section>
+</div>
+<!-- Right Pane: Summary (4 Columns) -->
+<aside class="lg:col-span-4 sticky top-[88px] flex flex-col gap-6">
+<div class="bg-primary text-white p-card-padding rounded-xl shadow-lg relative overflow-hidden">
+<!-- Subtle background decoration -->
+<div class="absolute top-0 right-0 w-32 h-32 bg-secondary/10 -mr-16 -mt-16 rounded-full"></div>
+<h3 class="font-label-md text-label-md text-primary-fixed-dim mb-4 uppercase tracking-widest">Package Summary</h3>
+<div class="space-y-6">
+<div>
+<span class="text-on-primary-container font-label-sm text-label-sm block mb-1">TOTAL ESTIMATED VALUE</span>
+<div class="flex items-baseline gap-2">
+<span class="text-primary-fixed-dim font-headline-md">KES</span>
+<span class="text-3xl font-bold font-display-hero">1.09B</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 border-t border-white/10 pt-6">
+<div>
+<span class="text-on-primary-container font-label-sm text-label-sm block mb-1">FUNDING STATUS</span>
+<div class="flex items-center gap-1.5 text-status-success">
+<span class="material-symbols-outlined text-sm" data-icon="lock" style='font-variation-settings: "FILL" 1;'>lock</span>
+<span class="font-bold">Reserved</span>
+</div>
+</div>
+<div>
+<span class="text-on-primary-container font-label-sm text-label-sm block mb-1">TOTAL LINES</span>
+<span class="font-bold">02 Items</span>
+</div>
+</div>
+<div class="bg-white/5 p-4 rounded-lg border border-white/10">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-secondary-fixed-dim" data-icon="info">info</span>
+<p class="text-xs leading-relaxed text-on-primary-container">
+                                    This package represents 12.5% of the Ministry's current Quarterly Budget for Goods.
+                                </p>
+</div>
+</div>
+</div>
+</div><section class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant p-6">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary" data-icon="payments">payments</span>
+<h2 class="font-label-md text-label-md text-primary font-bold uppercase tracking-widest">Funding Details</h2>
+</div>
+<div class="space-y-4">
+<div class="flex flex-col gap-1">
+<span class="text-[10px] text-on-surface-variant uppercase tracking-wider">Budget Line</span>
+<span class="font-body-sm font-semibold text-primary">Health Infrastructure Renovation</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-[10px] text-on-surface-variant uppercase tracking-wider">Reserved Amount</span>
+<span class="font-body-sm font-semibold text-primary">KES 1.09B</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-[10px] text-on-surface-variant uppercase tracking-wider">Package Estimated Value</span>
+<span class="font-body-sm font-semibold text-primary">KES 1,090,000,000</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-[10px] text-on-surface-variant uppercase tracking-wider">Funding Status</span>
+<div class="flex items-center gap-1.5 text-status-success">
+<span class="material-symbols-outlined text-sm" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-bold text-xs">Funding Reserved</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Guidance Card -->
+<div class="bg-surface-container-low border border-outline-variant p-6 rounded-xl">
+<h4 class="font-label-md text-label-md text-primary font-bold mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="lightbulb">lightbulb</span>
+                        Configuration Tips
+                    </h4>
+<ul class="space-y-3 font-body-sm text-body-sm text-on-surface-variant">
+<li class="flex gap-2">
+<span class="text-primary font-bold">•</span>
+                            Ensure the Package Title is descriptive for the tender document.
+                        </li>
+<li class="flex gap-2">
+<span class="text-primary font-bold">•</span>
+                            You can group items into separate Lots in the next step to encourage SME participation.
+                        </li>
+</ul>
+</div>
+</aside>
+</div>
+</main>
+<!-- Footer Action Bar -->
+<footer class="fixed bottom-0 w-full h-[80px] bg-surface shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] border-t border-outline-variant z-50">
+<div class="flex items-center justify-between px-workbench-gutter w-full max-w-container-max-width mx-auto h-full">
+<button class="px-6 py-2.5 rounded-lg border border-outline text-on-surface-variant hover:bg-surface-container transition-all font-label-md text-label-md active:scale-[0.96]">
+                Cancel
+            </button>
+<div class="flex gap-4">
+<button class="px-6 py-2.5 rounded-lg border border-primary text-primary hover:bg-surface-container transition-all font-label-md text-label-md flex items-center gap-2 active:scale-[0.96]">
+<span class="material-symbols-outlined text-sm" data-icon="arrow_back">arrow_back</span>
+                    Back
+                </button>
+<button class="px-8 py-2.5 rounded-lg bg-primary text-white hover:opacity-90 transition-all font-label-md text-label-md flex items-center gap-2 shadow-md active:scale-[0.96]">
+                    Next: Review &amp; Create
+                    <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+</footer>
+<script>
+        // Simple micro-interaction for the next button
+        const nextBtn = document.querySelector('button:contains("Next")');
+        if(nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                nextBtn.innerHTML = '<span class="material-symbols-outlined animate-spin" data-icon="sync">sync</span> Processing...';
+                setTimeout(() => {
+                    alert('Moving to Step 3: Review and Create');
+                    window.location.reload();
+                }, 1000);
+            });
+        }
+
+        // Custom selector helper for the demo logic
+        document.querySelectorAll('button').forEach(btn => {
+            if (btn.innerText.includes('Next')) {
+                btn.addEventListener('click', () => {
+                    btn.classList.add('opacity-70');
+                    btn.innerHTML = 'Processing...';
+                });
+            }
+        });
+    </script>
+</body></html>

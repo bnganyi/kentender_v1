@@ -144,6 +144,25 @@ def _technical_refs_item_codes(raw: Any) -> list[str]:
 	return []
 
 
+def _inclusion_is_unpackaged(handoff_code: str) -> dict[str, Any] | None:
+	"""Return the inclusion dict if `handoff_code` has no package yet, else None."""
+	code = (handoff_code or "").strip()
+	if not code:
+		return None
+	inclusion = get_planning_inclusion(code)
+	if not inclusion:
+		return None
+	if (inclusion.get("created_package_code") or "").strip():
+		return None
+	if frappe.db.get_value(
+		"Procurement Package",
+		{"planning_inclusion_code": code, "is_active": 1},
+		"name",
+	):
+		return None
+	return inclusion
+
+
 def demand_has_unpackaged_planning_inclusion(demand_code: str) -> bool:
 	"""True when demand has active planning inclusion not yet linked to a package."""
 	demand_code = (demand_code or "").strip()
@@ -161,22 +180,67 @@ def demand_has_unpackaged_planning_inclusion(demand_code: str) -> bool:
 		limit=20,
 	)
 	for row in rows:
-		code = (row.get("handoff_code") or "").strip()
-		if not code:
-			continue
-		inclusion = get_planning_inclusion(code)
+		if _inclusion_is_unpackaged(row.get("handoff_code") or ""):
+			return True
+	return False
+
+
+def _inclusion_department_label(demand_code: str) -> str:
+	demand_code = (demand_code or "").strip()
+	if not demand_code:
+		return ""
+	dept_id = frappe.db.get_value("Demand", {"demand_id": demand_code}, "requesting_department")
+	if not dept_id:
+		dept_id = frappe.db.get_value("Demand", demand_code, "requesting_department")
+	if not dept_id:
+		return ""
+	return (frappe.db.get_value("Procuring Department", dept_id, "department_name") or "").strip()
+
+
+def list_unpackaged_planning_inclusions(plan_code: str) -> list[dict[str, Any]]:
+	"""Demands "Added to Active Plan" under `plan_code` with no package yet.
+
+	Fills the UX gap where a demand is deliberately excluded from Needs
+	Planning the moment it gains an active Planning Inclusion (see
+	`demand_has_unpackaged_planning_inclusion` / Operational Flow doc §9.4 —
+	"must no longer appear as if it still needs planning") but has no
+	`Procurement Package` yet either, so it would otherwise be unfindable on
+	the Workbench. Powers placeholder rows in the "In Creation" queue.
+	"""
+	plan_code = (plan_code or "").strip()
+	if not plan_code:
+		return []
+	rows = frappe.get_all(
+		"Procurement Handoff Card",
+		filters={
+			"handoff_title": _PLANNING_INCLUSION_TITLE,
+			"target_object_code": plan_code,
+			"status": ["not in", list(_TERMINAL_INCLUSION_STATUSES)],
+		},
+		fields=["handoff_code", "creation"],
+		order_by="creation desc",
+		limit=500,
+	)
+	out: list[dict[str, Any]] = []
+	for row in rows:
+		inclusion = _inclusion_is_unpackaged(row.get("handoff_code") or "")
 		if not inclusion:
 			continue
-		if (inclusion.get("created_package_code") or "").strip():
-			continue
-		if frappe.db.get_value(
-			"Procurement Package",
-			{"planning_inclusion_code": code, "is_active": 1},
-			"name",
-		):
-			continue
-		return True
-	return False
+		demand_code = (inclusion.get("demand_code") or "").strip()
+		passed_forward = inclusion.get("passed_forward_summary") or {}
+		out.append(
+			{
+				"inclusion_code": inclusion.get("handoff_code") or "",
+				"demand_code": demand_code,
+				"title": (passed_forward.get("package_candidate") or demand_code or "").strip(),
+				"category": (passed_forward.get("category") or "").strip(),
+				"estimated_value": flt(passed_forward.get("estimated_value") or 0),
+				"currency": (passed_forward.get("currency") or "KES").strip() or "KES",
+				"department_label": _inclusion_department_label(demand_code),
+				"created_on": str(row.get("creation") or ""),
+			}
+		)
+	return out
 
 
 def _find_existing_inclusion(
@@ -317,14 +381,45 @@ def _plan_evidence_link(plan_code: str) -> dict[str, str]:
 	}
 
 
-def _inclusion_handoff_code(plan_code: str, seq: str = "001") -> str:
-	"""Derive PLANINCL code from plan code (PP-MOH-2026 → PLANINCL-MOH-2026-001)."""
+def _inclusion_code_prefix(plan_code: str) -> str:
 	parts = [p for p in (plan_code or "").strip().upper().split("-") if p]
 	if len(parts) >= 3 and parts[0] == "PP":
-		return f"PLANINCL-{parts[1]}-{parts[2]}-{seq}"
+		return f"PLANINCL-{parts[1]}-{parts[2]}-"
 	entity = parts[1] if len(parts) > 1 else "GEN"
 	year = parts[2] if len(parts) > 2 else "0000"
-	return f"PLANINCL-{entity}-{year}-{seq}"
+	return f"PLANINCL-{entity}-{year}-"
+
+
+def _next_inclusion_seq(plan_code: str) -> str:
+	"""Next free 3-digit sequence for `plan_code`'s PLANINCL prefix.
+
+	A plan's active procurement inclusion is not limited to a single demand
+	(the Package Creation Wizard's multi-demand packaging, PW2/PW6, needs
+	several concurrent Planning Inclusions per plan) — a fixed "001" here
+	would silently upsert/overwrite an earlier demand's handoff card
+	(`create_or_update_handoff_card` is a by-code upsert), which corrupts
+	traceability. Scans existing codes for the prefix and returns max+1;
+	starts at "001" when the plan has none yet (backward compatible with
+	every pre-existing single-inclusion-per-plan test/seed).
+	"""
+	prefix = _inclusion_code_prefix(plan_code)
+	existing_codes = frappe.get_all(
+		"Procurement Handoff Card",
+		filters={"handoff_code": ["like", f"{prefix}%"]},
+		pluck="handoff_code",
+	)
+	max_seq = 0
+	for code in existing_codes:
+		suffix = (code or "")[len(prefix) :]
+		if suffix.isdigit():
+			max_seq = max(max_seq, int(suffix))
+	return f"{max_seq + 1:03d}"
+
+
+def _inclusion_handoff_code(plan_code: str, seq: str | None = None) -> str:
+	"""Derive PLANINCL code from plan code (PP-MOH-2026 → PLANINCL-MOH-2026-NNN)."""
+	resolved_seq = (seq or "").strip() or _next_inclusion_seq(plan_code)
+	return f"{_inclusion_code_prefix(plan_code)}{resolved_seq}"
 
 
 def _resolve_journey_code(demand_code: str) -> str | None:

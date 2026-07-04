@@ -115,6 +115,7 @@ def _resolve_template_for_demand(demand_name: str) -> dict[str, Any] | None:
 			"decision_criteria_profile_id",
 			"vendor_management_profile_id",
 			"applicable_requisition_types",
+			"procurement_cycle_days",
 		],
 		order_by="modified desc",
 	)
@@ -350,56 +351,90 @@ def _resolve_procuring_entity_code(*, demand_name: str) -> str:
 	return entity_name
 
 
-def _create_package_and_line(
-	*,
-	inclusion: dict[str, Any],
-	actor: str,
-) -> dict[str, Any]:
-	inclusion_code = (inclusion.get("inclusion_code") or "").strip()
-	demand_code = (inclusion.get("demand_code") or "").strip()
-	plan_code = (inclusion.get("procurement_plan_code") or "").strip()
-	budget_line_code = (inclusion.get("budget_line_code") or "").strip()
-	item_codes = _normalize_item_codes(inclusion.get("demand_item_codes"))
-	journey_code = (inclusion.get("journey_code") or "").strip()
-
-	demand_name = resolve_demand_name(demand_code)
-	demand = frappe.db.get_value(
+def _demand_fields_for_package(demand_name: str) -> dict[str, Any]:
+	return frappe.db.get_value(
 		"Demand",
 		demand_name,
 		("title", "requisition_type", "total_amount", "budget_line", "requesting_department", "priority_level"),
 		as_dict=True,
 	) or {}
-	budget_line_name = _resolve_budget_line_name(budget_line_code) or demand.get("budget_line")
-	if not budget_line_name:
-		frappe.throw(_("Budget line could not be resolved."), title=DemandInclusion.BUDGET_MISSING)
 
-	template = _resolve_template_for_demand(demand_name)
+
+def create_package_with_lines(
+	*,
+	inclusions: list[dict[str, Any]],
+	actor: str,
+	package_overrides: dict[str, Any] | None = None,
+	line_overrides_by_inclusion: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+	"""Create one `Procurement Package` with one `Procurement Package Line`
+	per inclusion — the single canonical creation primitive shared by the
+	legacy one-demand path (`create_package_from_planning_inclusion`) and
+	the Package Creation Wizard's multi-demand packaging (PW6,
+	`package_wizard_service.create_package_from_wizard`).
+
+	The first inclusion is "primary" for plan/template/journey/procuring-
+	entity defaults (the wizard's compatibility check already enforces
+	same-entity/fiscal-year/category before this is called for >1 demand).
+	`package_overrides` may set package_name/description/owner/priority/
+	target_release_date/method override+reason at the package level.
+	`line_overrides_by_inclusion` (keyed by inclusion_code) may set
+	lot_group/delivery_location/line_title per line.
+	"""
+	if not inclusions:
+		frappe.throw(
+			_("At least one planning inclusion is required to create a package."),
+			title=PackageFromInclusion.INCLUSION_NOT_FOUND,
+		)
+	overrides = package_overrides or {}
+	line_overrides_by_inclusion = line_overrides_by_inclusion or {}
+
+	primary = inclusions[0]
+	primary_inclusion_code = (primary.get("inclusion_code") or "").strip()
+	primary_demand_code = (primary.get("demand_code") or "").strip()
+	plan_code = (primary.get("procurement_plan_code") or "").strip()
+	journey_code = (primary.get("journey_code") or "").strip()
+
+	primary_demand_name = resolve_demand_name(primary_demand_code)
+	primary_demand = _demand_fields_for_package(primary_demand_name)
+
+	template = _resolve_template_for_demand(primary_demand_name)
 	if not _template_usable(template):
 		frappe.throw(
 			_("No active procurement template is available for this demand."),
 			title=PackageFromInclusion.TEMPLATE_MISSING,
 		)
 
-	plan = frappe.db.get_value(
-		"Procurement Plan",
-		plan_code,
-		("name", "currency"),
-		as_dict=True,
-	)
+	plan = frappe.db.get_value("Procurement Plan", plan_code, ("name", "currency"), as_dict=True)
 	if not plan:
 		frappe.throw(_("Procurement Plan not found."), title=DemandInclusion.PLAN_INACTIVE)
 
-	passed = inclusion.get("passed_forward_summary") or {}
+	primary_budget_line_code = (primary.get("budget_line_code") or "").strip()
+	primary_budget_line_name = _resolve_budget_line_name(primary_budget_line_code) or primary_demand.get(
+		"budget_line"
+	)
+	if not primary_budget_line_name:
+		frappe.throw(_("Budget line could not be resolved."), title=DemandInclusion.BUDGET_MISSING)
+
+	passed = primary.get("passed_forward_summary") or {}
 	if not isinstance(passed, dict):
 		passed = {}
 	package_name = (
-		(demand.get("title") or "").strip()
+		(overrides.get("package_name") or "").strip()
+		or (primary_demand.get("title") or "").strip()
 		or (passed.get("package_candidate") or "").strip()
-		or demand_code
+		or primary_demand_code
 	)
-	category = _map_procurement_category(demand.get("requisition_type"))
-	amount = flt(demand.get("total_amount"))
-	procuring_entity_code = _resolve_procuring_entity_code(demand_name=demand_name)
+	category = _map_procurement_category(primary_demand.get("requisition_type"))
+	procuring_entity_code = _resolve_procuring_entity_code(demand_name=primary_demand_name)
+
+	method_override_flag = 1 if overrides.get("method_override_flag") else 0
+	procurement_method = (
+		(overrides.get("procurement_method") or "").strip() or (template.get("default_method") or "Open Tender")
+		if method_override_flag
+		else (template.get("default_method") or "Open Tender")
+	)
+	package_priority = (overrides.get("package_priority") or "Normal").strip() or "Normal"
 
 	pkg = frappe.get_doc(
 		{
@@ -407,19 +442,24 @@ def _create_package_and_line(
 			"plan_id": plan.name,
 			"template_id": template["name"],
 			"package_name": package_name,
-			"procurement_method": template.get("default_method") or "Open Tender",
+			"package_description": (overrides.get("package_description") or "").strip() or None,
+			"procurement_method": procurement_method,
 			"contract_type": template.get("default_contract_type") or "Fixed Price",
 			"currency": (plan.currency or "KES").strip(),
 			"status": PKG_DRAFT,
 			"is_active": 1,
-			"method_override_flag": 0,
-			"is_emergency": 0,
-			"planning_inclusion_code": inclusion_code,
-			"demand_id": demand_name,
-			"budget_line_id": budget_line_name,
+			"method_override_flag": method_override_flag,
+			"method_override_reason": (overrides.get("method_override_reason") or "").strip() or None,
+			"is_emergency": 1 if package_priority == "Emergency" else 0,
+			"planning_inclusion_code": primary_inclusion_code,
+			"demand_id": primary_demand_name,
+			"budget_line_id": primary_budget_line_name,
 			"procurement_category": category,
 			"journey_code": journey_code,
 			"procuring_entity_code": procuring_entity_code or None,
+			"package_owner": (overrides.get("package_owner") or "").strip() or actor or None,
+			"target_release_date": overrides.get("target_release_date") or None,
+			"package_priority": package_priority,
 			"risk_profile_id": template.get("risk_profile_id"),
 			"kpi_profile_id": template.get("kpi_profile_id"),
 			"decision_criteria_profile_id": template.get("decision_criteria_profile_id"),
@@ -430,55 +470,100 @@ def _create_package_and_line(
 	pkg.insert(ignore_permissions=True)
 	package_code = pkg.package_code or pkg.name
 
-	line_code = _package_line_code(package_code)
+	line_codes: list[str] = []
+	demand_codes: list[str] = []
+	inclusion_codes: list[str] = []
 	frappe.flags.skip_package_line_rollup = True
 	try:
-		line = frappe.get_doc(
-			{
-				"doctype": "Procurement Package Line",
-				"package_id": package_code,
-				"package_line_code": line_code,
-				"demand_id": demand_name,
-				"budget_line_id": budget_line_name,
-				"demand_item_code": item_codes[0] if item_codes else None,
-				"amount": amount,
-				"quantity": 1.0,
-				"line_title": package_name,
-				"procurement_category": category,
-				"department": demand.get("requesting_department"),
-				"priority": demand.get("priority_level") or "Normal",
-				"line_status": PKG_DRAFT,
-				"is_active": 1,
-			}
-		)
-		line.insert(ignore_permissions=True)
+		for seq_idx, inclusion in enumerate(inclusions, start=1):
+			inclusion_code = (inclusion.get("inclusion_code") or "").strip()
+			demand_code = (inclusion.get("demand_code") or "").strip()
+			demand_name = resolve_demand_name(demand_code)
+			demand = (
+				primary_demand
+				if demand_name == primary_demand_name
+				else _demand_fields_for_package(demand_name)
+			)
+			budget_line_code = (inclusion.get("budget_line_code") or "").strip()
+			budget_line_name = _resolve_budget_line_name(budget_line_code) or demand.get("budget_line")
+			if not budget_line_name:
+				frappe.throw(
+					_("Budget line could not be resolved for one of the selected demands."),
+					title=DemandInclusion.BUDGET_MISSING,
+				)
+			item_codes = _normalize_item_codes(inclusion.get("demand_item_codes"))
+			line_overrides = line_overrides_by_inclusion.get(inclusion_code) or {}
+			line_code = _package_line_code(package_code, seq=f"{seq_idx:03d}")
+			line = frappe.get_doc(
+				{
+					"doctype": "Procurement Package Line",
+					"package_id": package_code,
+					"package_line_code": line_code,
+					"demand_id": demand_name,
+					"budget_line_id": budget_line_name,
+					"demand_item_code": item_codes[0] if item_codes else None,
+					"amount": flt(demand.get("total_amount")),
+					"quantity": 1.0,
+					"line_title": (line_overrides.get("line_title") or "").strip() or (demand.get("title") or package_name),
+					"procurement_category": _map_procurement_category(demand.get("requisition_type")),
+					"department": demand.get("requesting_department"),
+					"priority": demand.get("priority_level") or "Normal",
+					"lot_group": (line_overrides.get("lot_group") or "").strip() or None,
+					"delivery_location": (line_overrides.get("delivery_location") or "").strip() or None,
+					"line_status": PKG_DRAFT,
+					"is_active": 1,
+				}
+			)
+			line.insert(ignore_permissions=True)
+			line_codes.append(line_code)
+			demand_codes.append(demand_code)
+			inclusion_codes.append(inclusion_code)
 	finally:
 		frappe.flags.pop("skip_package_line_rollup", None)
 
 	recompute_package_estimated_value(package_code)
-	_mark_inclusion_packaged(inclusion_code, package_code)
+	for inclusion_code in inclusion_codes:
+		_mark_inclusion_packaged(inclusion_code, package_code)
 	record_planning_audit_event(
 		event_type="Package Created",
 		object_type="Procurement Package",
 		object_code=package_code,
 		to_state=PKG_DRAFT,
-		evidence_ref=inclusion_code,
+		evidence_ref=primary_inclusion_code,
 		journey_code=journey_code or None,
 		actor=actor,
 	)
-	record_planning_audit_event(
-		event_type="Package Line Created",
-		object_type="Procurement Package Line",
-		object_code=line_code,
-		to_state=PKG_DRAFT,
-		evidence_ref=package_code,
-		journey_code=journey_code or None,
-		actor=actor,
-	)
+	for line_code in line_codes:
+		record_planning_audit_event(
+			event_type="Package Line Created",
+			object_type="Procurement Package Line",
+			object_code=line_code,
+			to_state=PKG_DRAFT,
+			evidence_ref=package_code,
+			journey_code=journey_code or None,
+			actor=actor,
+		)
+	return {
+		"package_code": package_code,
+		"package_line_codes": line_codes,
+		"demand_codes": demand_codes,
+		"inclusion_codes": inclusion_codes,
+	}
+
+
+def _create_package_and_line(
+	*,
+	inclusion: dict[str, Any],
+	actor: str,
+) -> dict[str, Any]:
+	inclusion_code = (inclusion.get("inclusion_code") or "").strip()
+	demand_code = (inclusion.get("demand_code") or "").strip()
+	budget_line_code = (inclusion.get("budget_line_code") or "").strip()
+	result = create_package_with_lines(inclusions=[inclusion], actor=actor)
 	return _format_package_response(
 		action="created",
 		inclusion_code=inclusion_code,
-		package_code=package_code,
+		package_code=result["package_code"],
 		demand_code=demand_code,
 		budget_line_code=budget_line_code,
 	)

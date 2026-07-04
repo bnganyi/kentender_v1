@@ -53,12 +53,17 @@ class TestPP5CreatePackageModalP5005Contract(UnitTestCase):
 		):
 			self.assertIn(tid, source)
 
-	def test_router_wires_create_package_modal_launcher(self) -> None:
+	def test_router_wires_create_package_wizard_launcher(self) -> None:
+		"""PW11 — `openCreatePackageModalForShell` still runs the P5-005
+		drawer pre-flight (blocker/duplicate-package detection), but now
+		launches the Package Creation Wizard instead of the retired
+		single-field `PlanningCreatePackageModal` dialog."""
 		path = _pkg_public("js", "pp2_planning_router.js")
 		source = path.read_text(encoding="utf-8", errors="replace")
 		self.assertIn("function openCreatePackageModalForShell", source)
 		self.assertIn("CREATE_PACKAGE_DRAWER_API", source)
-		self.assertIn("PlanningCreatePackageModal.open", source)
+		self.assertIn("PlanningPackageWizard.open", source)
+		self.assertNotIn("PlanningCreatePackageModal.open", source)
 		success_block = source.split("function mountIncludePlanSuccessSummary", 1)[1].split(
 			"function openIncludePlanModalForShell", 1
 		)[0]

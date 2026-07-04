@@ -74,3 +74,65 @@ def get_pp_workbench_item_view_model(
 		created_to=created_to,
 		sort=sort,
 	)
+
+
+# W10 — filter-drawer option lists (department names, category values, value
+# ranges, sort keys), ported in spirit from
+# `demand_intake.api.queue_list.get_dia_queue_filter_meta` per the "use the
+# DIA implementation" direction: same shape (list of {value, label}), same
+# never-expose-raw-ids rule — `value` here is always the display text itself
+# (department name / category), never a Procuring Department hash id, since
+# every workbench queue's `department_label`/`category_label` filter match is
+# a case-insensitive substring match against that same display text.
+@frappe.whitelist()
+def get_pp_workbench_filter_meta() -> dict[str, Any]:
+	"""Read-only option lists for the workbench Filter drawer and Sort menu."""
+	role_key, denied = pp_api_gates.planning_api_read_gate(
+		pp_api_gates.PLANNING_QUEUE_READ,
+		message=_("You do not have access to Procurement Planning workbench queues."),
+		fail=_fail,
+		installed_doctype="Procurement Plan",
+		require_planning_read=True,
+		require_demand_read=False,
+		require_package_read=False,
+	)
+	if denied:
+		return {"ok": False, "error_code": denied.get("error_code"), "message": denied.get("message")}
+
+	departments: list[dict[str, str]] = []
+	if frappe.db.exists("DocType", "Procuring Department"):
+		rows = frappe.get_all(
+			"Procuring Department",
+			fields=["department_name"],
+			filters={"department_name": ["is", "set"]},
+			order_by="department_name asc",
+			limit_page_length=400,
+		)
+		seen: set[str] = set()
+		for row in rows:
+			label = str(row.get("department_name") or "").strip()
+			if label and label not in seen:
+				seen.add(label)
+				departments.append({"value": label, "label": label})
+
+	categories = [{"value": c, "label": c} for c in ("Works", "Goods", "Services", "Consultancy")]
+	value_ranges = [
+		{"value": "under_100m", "label": "Under KES 100M"},
+		{"value": "100m_500m", "label": "KES 100M \u2013 500M"},
+		{"value": "over_500m", "label": "Over KES 500M"},
+	]
+	sort_options = [
+		{"value": "newest", "label": "Newest first"},
+		{"value": "oldest", "label": "Oldest first"},
+		{"value": "value_desc", "label": "Value: High to Low"},
+		{"value": "value_asc", "label": "Value: Low to High"},
+		{"value": "title_asc", "label": "Title: A to Z"},
+		{"value": "title_desc", "label": "Title: Z to A"},
+	]
+	return {
+		"ok": True,
+		"departments": departments,
+		"categories": categories,
+		"value_ranges": value_ranges,
+		"sort_options": sort_options,
+	}

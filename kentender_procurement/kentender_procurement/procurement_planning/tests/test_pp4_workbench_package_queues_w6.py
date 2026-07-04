@@ -80,7 +80,7 @@ class TestPP4WorkbenchPackageQueuesW6Source(UnitTestCase):
 		self.assertIn("queue: apiQueue", fn)
 
 	def test_row_builder_clones_design_template_and_does_not_fabricate_markup(self) -> None:
-		fn = self._fn_block("function buildWorkbenchPackageQueueRow(template, doc, item, uiQueue) {")
+		fn = self._fn_block("function buildWorkbenchPackageQueueRow(template, doc, item, uiQueue, root) {")
 		self.assertIn("template.cloneNode(true)", fn)
 		self.assertNotIn(".innerHTML", fn)
 		self.assertNotIn("document.createElement", fn)
@@ -94,17 +94,34 @@ class TestPP4WorkbenchPackageQueuesW6Source(UnitTestCase):
 		"""W5 already fixed this exact class of bug for demand rows
 		(`demand.id` vs `demand.code`); package rows must use the internal
 		Frappe name for Desk-form routing, not the business code."""
-		fn = self._fn_block("function buildWorkbenchPackageQueueRow(template, doc, item, uiQueue) {")
+		fn = self._fn_block("function buildWorkbenchPackageQueueRow(template, doc, item, uiQueue, root) {")
 		self.assertIn("data.underlying_object_id", fn)
 		self.assertIn('frappe.set_route("procurement-package", packageId)', fn)
 		self.assertNotIn("data.underlying_object_code", fn.split('setAttribute("data-package-id"', 1)[0])
+
+	def test_placeholder_row_opens_wizard_instead_of_routing(self) -> None:
+		"""Demands "Added to Active Plan" but not yet packaged have no
+		`Procurement Package` doc to route to (`is_placeholder`/
+		`inclusion_code` instead of a real `underlying_object_id`) — closes
+		the gap where such a demand would otherwise be unfindable anywhere
+		on the Workbench once Needs Planning excludes it. Clicking the row
+		must open the Package Creation Wizard pre-selected with the
+		existing inclusion (PW11) rather than `frappe.set_route` or the
+		retired single-call auto-create."""
+		fn = self._fn_block("function buildWorkbenchPackageQueueRow(template, doc, item, uiQueue, root) {")
+		self.assertIn("data.is_placeholder", fn)
+		self.assertIn("workbenchCreatePackageFromInclusionRow(root, doc, inclusionCode)", fn)
+		create_fn = self._fn_block("function workbenchCreatePackageFromInclusionRow(root, doc, inclusionCode) {")
+		self.assertIn("openPlanningPackageWizard(root, doc,", create_fn)
+		self.assertIn("inclusion_code: inclusionCode", create_fn)
+		self.assertNotIn("method: CREATE_PACKAGE_FROM_INCLUSION_API", create_fn)
 
 	def test_category_tone_map_is_reused_not_duplicated(self) -> None:
 		"""UI-consistency pass: the category tone lookup now lives in one
 		shared `applyWorkbenchCategoryChip` helper (used by every row
 		builder), not duplicated inline per row builder."""
 		self.assertIn("WORKBENCH_CATEGORY_TONE_BY_VALUE[value.toLowerCase()]", self.source)
-		fn = self._fn_block("function buildWorkbenchPackageQueueRow(template, doc, item, uiQueue) {")
+		fn = self._fn_block("function buildWorkbenchPackageQueueRow(template, doc, item, uiQueue, root) {")
 		self.assertIn("applyWorkbenchCategoryChip(doc, categoryBadge, data.category_label)", fn)
 
 	def test_readiness_pill_uses_the_packages_own_real_readiness_fields(self) -> None:
@@ -114,7 +131,7 @@ class TestPP4WorkbenchPackageQueuesW6Source(UnitTestCase):
 		read the package's own real `readiness_status`/`readiness_tone`
 		fields instead."""
 		self.assertNotIn("WORKBENCH_PACKAGE_READINESS_BY_UI_QUEUE", self.source)
-		fn = self._fn_block("function buildWorkbenchPackageQueueRow(template, doc, item, uiQueue) {")
+		fn = self._fn_block("function buildWorkbenchPackageQueueRow(template, doc, item, uiQueue, root) {")
 		self.assertIn("applyWorkbenchPackagePillReadiness(readinessWrap, data.readiness_tone, ", fn)
 
 	def test_money_abbreviation_helper_matches_design_notation(self) -> None:
