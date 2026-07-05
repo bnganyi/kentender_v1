@@ -3,6 +3,9 @@
 	const WORKSPACE_NAME = "Procurement Planning";
 	const ROOT_PATH = "/desk/procurement-planning";
 	const RIGHT_PANEL_STATE_KEY = "kt-pp2-right-panel-collapsed";
+	// Single-use route handoff read by `create_package_wizard_page.js` on
+	// `on_page_show` — must match its HANDOFF_KEY constant verbatim.
+	const PP_WIZARD_HANDOFF_KEY = "kt_pw_wizard_handoff_v1";
 	let sidebarObserver = null;
 	let sidebarRefreshQueued = false;
 	let bootRetryTimer = null;
@@ -275,6 +278,36 @@
 			link.addEventListener("click", function (event) {
 				event.preventDefault();
 				window.location.href = "/desk/planning-hub";
+			});
+		});
+	}
+
+	// Post-launch fix — the header's own "+ Create New Package" toolbar
+	// button ships in the design with no id/data-testid/route (it was
+	// missed by the PW11 entry-point-replacement sweep, which only
+	// covered the selection-toolbar action and the "In Creation"
+	// placeholder-row action). It must open the same canonical Package
+	// Creation Wizard as every other Create Package entry point, just
+	// with no demands pre-selected (Step 1 shows the full eligible list
+	// for manual selection). Matches the "Back to Hub" pattern above:
+	// find by content, bind once via a runtime-only guard attribute.
+	function initializeWorkbenchCreateNewPackageButton(root) {
+		if (!root) return;
+		withWorkbenchIframeDocument(root, function (doc) {
+			const btn = Array.prototype.filter
+				.call(doc.querySelectorAll("button"), function (el) {
+					return el.textContent.indexOf("Create New Package") !== -1;
+				})[0];
+			if (!btn || btn.getAttribute("data-pp4-create-package-bound") === "1") return;
+			btn.setAttribute("data-pp4-create-package-bound", "1");
+			btn.addEventListener("click", function (event) {
+				event.preventDefault();
+				const planCode = workbenchActivePlanCodeByRoot.get(root);
+				if (!planCode) {
+					frappe.show_alert({ indicator: "red", message: __("No active procurement plan found.") });
+					return;
+				}
+				openPlanningPackageWizard(root, doc, { plan_code: planCode });
 			});
 		});
 	}
@@ -1236,35 +1269,35 @@
 
 	// Shared launcher for the Package Creation Wizard — every "Create
 	// Package" trigger on the Workbench routes through this (PW11).
+	//
+	// The wizard is a dedicated Desk Page (`create-package-wizard`), not a
+	// Dialog, so there is no in-place open()/onSuccess()/onCancel() call —
+	// control simply navigates away. Pre-selection is handed off via a
+	// single-use sessionStorage entry the wizard page consumes on
+	// `on_page_show` (see `create_package_wizard_page.js`). Since the
+	// wizard is a full navigation, "success" naturally lands back on this
+	// Workbench route through the wizard's own "Back to Workbench"/"Open
+	// Package" actions rather than a callback here.
 	function openPlanningPackageWizard(root, doc, opts) {
-		const wizardApi =
-			kentender_procurement &&
-			kentender_procurement.PlanningPackageWizard &&
-			typeof kentender_procurement.PlanningPackageWizard.open === "function"
-				? kentender_procurement.PlanningPackageWizard
-				: null;
-		if (!wizardApi) {
-			frappe.show_alert({ indicator: "orange", message: __("Create Package wizard is unavailable.") });
-			return;
-		}
 		const o = opts || {};
-		wizardApi.open({
-			plan_code: o.plan_code,
-			plan_name: o.plan_name,
-			initial_demand_rows: o.initial_demand_rows,
-			onSuccess: function (result) {
-				const packageCode = String((result && result.package_code) || "").trim();
-				if ((result && result.action) === "open_package" && packageCode) {
-					window.location.href = buildWorkbenchOpenPackageUrl(packageCode);
-					return;
-				}
-				fetchAndRenderWorkbenchPackageQueueList(root, doc, "draft_packages");
-				fetchAndApplyWorkbenchQueueCounts(root);
-			},
-			onCancel: function () {
-				/* No server draft — nothing to clean up on cancel. */
-			},
-		});
+		const inclusionCodes = (o.initial_demand_rows || [])
+			.map(function (row) {
+				return row && row.inclusion_code;
+			})
+			.filter(Boolean);
+		try {
+			window.sessionStorage.setItem(
+				PP_WIZARD_HANDOFF_KEY,
+				JSON.stringify({
+					plan_code: o.plan_code || "",
+					plan_name: o.plan_name || "",
+					initial_inclusion_codes: inclusionCodes,
+				})
+			);
+		} catch (e) {
+			/* sessionStorage unavailable — wizard falls back to manual Step 1 selection */
+		}
+		frappe.set_route("create-package-wizard");
 	}
 
 	function bindWorkbenchSelectionToolbarActions(root, doc) {
@@ -2574,22 +2607,8 @@
 	// dialogs before the wizard ever opens (the wizard's own Step 1
 	// eligibility list simply omits already-packaged inclusions, which
 	// would otherwise silently drop this business-readable detail).
-	function openCreatePackageModalForShell(shell, summaryData, opts) {
-		const o = opts || {};
+	function openCreatePackageModalForShell(shell, summaryData) {
 		const payload = summaryData || {};
-		const wizardApi =
-			kentender_procurement &&
-			kentender_procurement.PlanningPackageWizard &&
-			typeof kentender_procurement.PlanningPackageWizard.open === "function"
-				? kentender_procurement.PlanningPackageWizard
-				: null;
-		if (!wizardApi) {
-			frappe.show_alert({
-				indicator: "orange",
-				message: __("Create Package wizard is unavailable."),
-			});
-			return;
-		}
 		const launch = function (drawerMessage) {
 			const drawer = drawerMessage || {};
 			if (!drawer.ok) {
@@ -2641,29 +2660,16 @@
 				});
 				return;
 			}
-			wizardApi.open({
+			// Wizard is now a full-page navigation (see `openPlanningPackageWizard`
+			// above) — there is no in-place onSuccess/onCancel callback anymore;
+			// the wizard's own Step 4 ("Open Package"/"Back to Workbench")
+			// handles the post-create journey once control leaves this shell.
+			openPlanningPackageWizard(null, null, {
 				plan_code: String(payload.target_plan_code || "").trim(),
 				plan_name: String(drawer.active_plan_name || payload.target_plan_name || "").trim(),
 				initial_demand_rows: [
 					{ inclusion_code: String(drawer.inclusion_code || payload.inclusion_code || "").trim() },
 				],
-				onSuccess: function (createResult) {
-					if (typeof o.onCreateSuccess === "function") {
-						o.onCreateSuccess(createResult || {});
-						return;
-					}
-					const packageCode = String((createResult && createResult.package_code) || "").trim();
-					if ((createResult && createResult.action) === "open_package" && packageCode) {
-						window.location.href = buildWorkbenchOpenPackageUrl(packageCode);
-						return;
-					}
-					mountCreatePackageSuccessSummary(shell, payload, createResult || {}, {
-						slug: o.slug,
-					});
-				},
-				onCancel: function () {
-					/* No server draft — nothing to clean up on cancel. */
-				},
 			});
 		};
 		frappe.call({
@@ -4347,6 +4353,7 @@
 		// and Released queues (W7/W8) still await a pixel design.
 		fetchAndApplyWorkbenchActivePlanContext(root);
 		initializeWorkbenchBackToHubLink(root);
+		initializeWorkbenchCreateNewPackageButton(root);
 		initializeWorkbenchFilterDrawer(root);
 		initializeWorkbenchQueueTabs(root);
 		initializeWorkbenchNeedsPlanningList(root);
