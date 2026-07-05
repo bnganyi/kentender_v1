@@ -76,3 +76,16 @@ class TestPP6PackageDetailRouteP6001(UnitTestCase):
 			"kt-pd-footer",
 		):
 			self.assertIn(tid, source, msg=f"missing {tid} (P6-001)")
+
+	def test_back_to_workbench_uses_workbench_deep_link_not_hub_redirect(self) -> None:
+		path = _package_detail_path()
+		source = path.read_text(encoding="utf-8", errors="replace")
+		self.assertIn("function _buildWorkbenchBackUrl", source)
+		self.assertIn("/desk/procurement-planning", source)
+		self.assertIn('url.searchParams.set("queue"', source)
+		self.assertIn('url.searchParams.set("package_code"', source)
+		back_block = source.split('if (action === "back_workbench")', 1)[1].split(
+			'if (action === "view_evidence")', 1
+		)[0]
+		self.assertIn("window.location.href = _buildWorkbenchBackUrl", back_block)
+		self.assertNotIn('frappe.set_route("procurement-planning")', back_block)

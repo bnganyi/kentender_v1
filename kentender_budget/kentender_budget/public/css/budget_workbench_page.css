@@ -51,10 +51,10 @@
 	--ktw-shadow-sm:            0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
 	--ktw-shadow-md:            0 4px 6px rgba(0,0,0,.06), 0 2px 4px rgba(0,0,0,.06);
 
-	/* typography */
-	--ktw-font-headline:        'Manrope', system-ui, sans-serif;
-	--ktw-font-body:            'Inter', system-ui, sans-serif;
-	--ktw-font-mono:            'JetBrains Mono', 'Consolas', monospace;
+	/* typography — Workbench Typography v1.0 (kentender_core kt_workbench_typography.css) */
+	--ktw-font-headline: var(--kt-wb-font-headline);
+	--ktw-font-body: var(--kt-wb-font-body);
+	--ktw-font-mono: var(--kt-wb-font-mono);
 }
 
 /* ── Body shell class (added when workbench is active) ─────────────────── */
@@ -70,8 +70,8 @@ body.kt-wbench-shell .appframe-toolbar {
 	height: calc(100vh - 60px);   /* 60px = Frappe toolbar */
 	overflow: hidden;
 	background: var(--ktw-surface);
-	font-family: var(--ktw-font-body);
-	font-size: 14px;
+	font-family: var(--kt-wb-font-body);
+	font-size: var(--kt-wb-font-body-size);
 	color: var(--ktw-on-surface);
 }
 
@@ -135,10 +135,10 @@ body.kt-wbench-shell .appframe-toolbar {
 }
 
 .kt-wbench-title {
-	font-family: var(--ktw-font-headline);
-	font-size: 24px;
-	font-weight: 700;
-	line-height: 32px;
+	font-family: var(--kt-wb-font-headline);
+	font-size: var(--kt-wb-title-size);
+	font-weight: var(--kt-wb-title-weight);
+	line-height: var(--kt-wb-title-line-height);
 	letter-spacing: -0.02em;
 	color: var(--ktw-on-surface);
 	margin: 0;
@@ -254,7 +254,7 @@ body.kt-wbench-shell .appframe-toolbar {
 	padding: 18px 20px;
 }
 .kt-wbench-summary-card-label {
-	font-size: 10px;
+	font-size: var(--kt-wb-label-sm-size);
 	font-weight: 700;
 	text-transform: uppercase;
 	letter-spacing: 0.1em;
@@ -262,10 +262,10 @@ body.kt-wbench-shell .appframe-toolbar {
 	margin: 0 0 6px;
 }
 .kt-wbench-summary-card-value {
-	font-family: var(--ktw-font-mono);
-	font-size: 20px;
-	font-weight: 600;
-	line-height: 1.2;
+	font-family: var(--kt-wb-font-mono);
+	font-size: var(--kt-wb-metric-size);
+	font-weight: var(--kt-wb-metric-weight);
+	line-height: var(--kt-wb-metric-line-height);
 	margin: 0;
 }
 .kt-wbench-summary-card-value--available { color: var(--ktw-status-available); }
@@ -300,9 +300,10 @@ body.kt-wbench-shell .appframe-toolbar {
 	gap: 12px;
 }
 .kt-wbench-lines-title {
-	font-family: var(--ktw-font-headline);
-	font-size: 16px;
-	font-weight: 700;
+	font-family: var(--kt-wb-font-headline);
+	font-size: var(--kt-wb-section-size);
+	line-height: var(--kt-wb-section-line-height);
+	font-weight: var(--kt-wb-section-weight);
 	color: var(--ktw-primary);
 	margin: 0;
 }
@@ -425,8 +426,9 @@ body.kt-wbench-shell .appframe-toolbar {
 	gap: 8px;
 }
 .kt-wbench-line-name {
-	font-size: 15px;
-	font-weight: 700;
+	font-size: var(--kt-wb-item-title-size);
+	line-height: var(--kt-wb-item-title-line-height);
+	font-weight: var(--kt-wb-item-title-weight);
 	color: var(--ktw-primary);
 	margin: 0 0 4px;
 }
@@ -581,9 +583,10 @@ body.kt-wbench-shell .appframe-toolbar {
 	flex-shrink: 0;
 }
 .kt-wbench-artefacts-title {
-	font-family: var(--ktw-font-headline);
-	font-size: 15px;
-	font-weight: 700;
+	font-family: var(--kt-wb-font-headline);
+	font-size: var(--kt-wb-item-title-size);
+	line-height: var(--kt-wb-item-title-line-height);
+	font-weight: var(--kt-wb-item-title-weight);
 	margin: 0;
 	color: var(--ktw-on-surface);
 }

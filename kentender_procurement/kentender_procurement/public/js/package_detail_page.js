@@ -98,6 +98,34 @@
 		});
 	}
 
+	var WORKBENCH_ROOT = "/desk/procurement-planning";
+	var WORKBENCH_QUEUE_BY_PKG_STATUS = {
+		Draft: "draft_packages",
+		"In Review": "needs_review",
+		"Returned for Correction": "draft_packages",
+		Approved: "ready_to_release",
+		"Ready for Release": "ready_to_release",
+		"Released to Tender": "recently_released",
+		"Consumed by Tender Management": "recently_released",
+	};
+
+	function _workbenchQueueForStatus(status) {
+		var st = String(status || "").trim();
+		return WORKBENCH_QUEUE_BY_PKG_STATUS[st] || "draft_packages";
+	}
+
+	function _buildWorkbenchBackUrl(detail) {
+		var d = detail || {};
+		var url = new URL(window.location.origin + WORKBENCH_ROOT);
+		var code = String(d.package_code || _state.packageCode || "").trim();
+		var queue = _workbenchQueueForStatus(d.package_status);
+		url.searchParams.set("queue", queue);
+		if (code) {
+			url.searchParams.set("package_code", code);
+		}
+		return url.pathname + url.search;
+	}
+
 	function _ensureFonts() {
 		if (document.getElementById("kt-pd-fonts")) return;
 		var link = document.createElement("link");
@@ -817,7 +845,7 @@
 			return _call(RELEASE_API, { package_code: code });
 		}
 		if (action === "back_workbench") {
-			frappe.set_route("procurement-planning");
+			window.location.href = _buildWorkbenchBackUrl(_state.detail);
 			return Promise.resolve({ navigated: true });
 		}
 		if (action === "view_evidence") {

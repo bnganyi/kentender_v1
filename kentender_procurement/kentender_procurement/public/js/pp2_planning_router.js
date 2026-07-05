@@ -198,7 +198,7 @@
 		root.className = "kt-pp-injected-shell pp4-workbench-root";
 		root.innerHTML =
 			'<section class="pp4-workbench" data-testid="pp4-workbench">' +
-			'<iframe class="pp4-workbench-design-iframe" data-testid="pp4-workbench-design-iframe" src="/assets/kentender_procurement/workbench_design/needs_planning_default.html" title="Planning Workbench Needs Planning Default"></iframe>' +
+			'<iframe class="pp4-workbench-design-iframe" data-testid="pp4-workbench-design-iframe" src="/assets/kentender_procurement/workbench_design/needs_planning_default.html?v=wb-typo-v1" title="Planning Workbench Needs Planning Default"></iframe>' +
 			"</section>";
 	}
 

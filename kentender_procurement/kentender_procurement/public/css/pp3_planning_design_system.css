@@ -146,9 +146,9 @@ body.kt-pp2-shell .pp3-workbench-toolbar__left {
 body.kt-pp2-shell .pp3-workbench-toolbar__title {
 	margin: 0;
 	font-family: var(--pp3-font-headline);
-	font-size: 38px;
-	line-height: 46px;
-	font-weight: 700;
+	font-size: var(--kt-wb-title-size);
+	line-height: var(--kt-wb-title-line-height);
+	font-weight: var(--kt-wb-title-weight);
 	color: var(--pp3-text);
 	letter-spacing: -0.01em;
 	white-space: nowrap;
@@ -388,9 +388,9 @@ body.kt-pp2-shell .pp3-work-list__row {
 
 body.kt-pp2-shell .pp3-work-list__title {
 	margin: 0;
-	font-size: 20px;
-	line-height: 28px;
-	font-weight: 700;
+	font-size: var(--kt-wb-item-title-size);
+	line-height: var(--kt-wb-item-title-line-height);
+	font-weight: var(--kt-wb-item-title-weight);
 	color: var(--pp3-text);
 }
 
@@ -564,9 +564,9 @@ body.kt-pp2-shell .pp3-selected-work-summary__evidence {
 
 body.kt-pp2-shell .pp3-selected-work-summary__title {
 	margin: 0;
-	font-size: 20px;
-	line-height: 28px;
-	font-weight: 700;
+	font-size: var(--kt-wb-item-title-size);
+	line-height: var(--kt-wb-item-title-line-height);
+	font-weight: var(--kt-wb-item-title-weight);
 }
 
 body.kt-pp2-shell .pp3-selected-work-summary__status-headline,
@@ -758,9 +758,9 @@ body.kt-pp4-shell .pp4-hero {
 body.kt-pp4-shell .pp4-hero__title {
 	margin: 0;
 	font-family: "Hanken Grotesk", "Inter", sans-serif;
-	font-size: 30px;
-	line-height: 38px;
-	font-weight: 700;
+	font-size: var(--kt-wb-title-size);
+	line-height: var(--kt-wb-title-line-height);
+	font-weight: var(--kt-wb-title-weight);
 }
 
 body.kt-pp4-shell .pp4-hero__subtitle {
@@ -822,8 +822,9 @@ body.kt-pp4-shell .pp4-stat-card--dark .pp4-stat-card__value {
 body.kt-pp4-shell .pp4-stat-card__value {
 	margin: 10px 0 4px;
 	font-family: "Hanken Grotesk", "Inter", sans-serif;
-	font-size: 28px;
-	line-height: 34px;
+	font-size: var(--kt-wb-metric-size);
+	line-height: var(--kt-wb-metric-line-height);
+	font-weight: var(--kt-wb-metric-weight);
 }
 
 body.kt-pp4-shell .pp4-stat-card__hint {
@@ -1007,8 +1008,8 @@ body.kt-pp4-shell .pp4-filter-drawer__header {
 body.kt-pp4-shell .pp4-filter-drawer__header h3 {
 	margin: 0;
 	font-family: "Hanken Grotesk", "Inter", sans-serif;
-	font-size: 28px;
-	line-height: 34px;
+	font-size: var(--kt-wb-section-size);
+	line-height: var(--kt-wb-section-line-height);
 }
 
 body.kt-pp4-shell .pp4-filter-drawer__close {
@@ -1248,9 +1249,9 @@ body.kt-pp4-shell .pp4-package-card--draft .pp4-package-card__status {
 body.kt-pp4-shell .pp4-package-card__title {
 	margin: 0;
 	font-family: "Hanken Grotesk", "Inter", sans-serif;
-	font-size: 20px;
-	line-height: 28px;
-	font-weight: 700;
+	font-size: var(--kt-wb-section-size);
+	line-height: var(--kt-wb-section-line-height);
+	font-weight: var(--kt-wb-section-weight);
 }
 
 body.kt-pp4-shell .pp4-package-card__desc {
@@ -1541,9 +1542,9 @@ body.kt-pp4-shell .pp4-np-back {
 
 body.kt-pp4-shell .pp4-np-title {
 	font-family: "Hanken Grotesk", Inter, sans-serif;
-	font-size: 32px;
-	line-height: 40px;
-	font-weight: 700;
+	font-size: var(--kt-wb-title-size);
+	line-height: var(--kt-wb-title-line-height);
+	font-weight: var(--kt-wb-title-weight);
 	color: #001e40;
 	margin: 0;
 }
@@ -1607,9 +1608,9 @@ body.kt-pp4-shell .pp4-np-kpi--dark .pp4-np-kpi__label {
 body.kt-pp4-shell .pp4-np-kpi__value {
 	margin-top: 4px;
 	font-family: "Hanken Grotesk", Inter, sans-serif;
-	font-size: 24px;
-	line-height: 30px;
-	font-weight: 700;
+	font-size: var(--kt-wb-metric-size);
+	line-height: var(--kt-wb-metric-line-height);
+	font-weight: var(--kt-wb-metric-weight);
 	color: #001e40;
 }
 
@@ -1695,7 +1696,7 @@ body.kt-pp4-shell .pp4-np-panel {
 body.kt-pp4-shell .pp4-np-panel h3 {
 	margin: 0 0 8px 0;
 	font-family: "Hanken Grotesk", Inter, sans-serif;
-	font-size: 20px;
+	font-size: var(--kt-wb-section-size);
 	color: #001e40;
 }
 

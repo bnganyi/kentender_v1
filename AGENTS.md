@@ -28,6 +28,7 @@ Any instruction with "DO NOT" or "NEVER" automatically overrides all rules (`11-
 - `apps/kentender_v1/` is the **container repo** (docs, Makefile, scripts). Frappe **apps** are `kentender_*` folders inside it.
 - Bench sees each app via **symlinks** under `apps/` (see `make -C apps/kentender_v1 symlinks` and [mono-repo-v2.md](docs/architecture/mono-repo-v2.md)).
 - Run `bench` from the bench root (`/home/midasuser/frappe-bench`). **Asset builds (`bench build`, yarn in apps):** use **`./scripts/bench-with-node.sh`** only — **never** plain `bench build` (Cursor/agent `PATH` often injects Node 20; Frappe requires Node ≥24). See bench root **`AGENTS.md`** and **`.cursor/rules/frappe-bench-node.mdc`**.
+- **Workbench Desk typography:** use `--kt-wb-*` tokens per [KenTender Workbench Typography v1.0.md](docs/prompts/architecture/Kentender%20Workbench%20Typography%20v1.0.md) and **`.cursor/rules/kentender-workbench-typography-harmony.mdc`** when editing `public/css`, workbench iframe HTML, or `DESIGN.md` typography.
 - **Frappe core patches** (bench-local `apps/frappe`, not in this repo): tracked under [`patches/frappe/`](patches/frappe/). Apply with [`scripts/apply-frappe-patches.sh`](scripts/apply-frappe-patches.sh), then `./scripts/bench-with-node.sh build --app frappe`.
 
 ## Final app set (v3)

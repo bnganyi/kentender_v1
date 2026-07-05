@@ -140,6 +140,10 @@ The typography system balances the modern, sharp personality of **Hanken Grotesk
 - **Labels:** Small caps and increased letter-spacing are used for metadata and field headers (e.g., "PROCURING ENTITY") to distinguish them from the actual data values.
 - **Status Badges:** Text within badges uses `label-md` for maximum visibility at small sizes.
 
+### Deployed typography (operational scale)
+
+Pixel mockups export `display-hero` at 32px for design-tool fidelity. **Deployed operational workbench** surfaces use [KenTender Workbench Typography v1.0](../../../architecture/Kentender%20Workbench%20Typography%20v1.0.md) via CSS harmonization (24px page title, 20px KPI values). Detail/identity headers may retain 32px (`--kt-wb-identity`).
+
 ## Layout & Spacing
 The layout follows a **Fixed Grid** philosophy for the main content area to maintain a structured "Workbench" feel, centered on a 1440px max-width container.
 

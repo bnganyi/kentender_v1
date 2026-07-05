@@ -78,6 +78,47 @@ Covered by rewritten/extended tests in `test_pp4_workbench_static_layout_guard.p
 `test_pp4_workbench_remaining_queues_w7_w8.py`; live-validated across all 6
 tabs via Playwright.
 
+## Typography harmonization pass (Budget-aligned operational scale)
+
+After live comparison with Budget & Funding workbench, Planning Workbench
+typography was harmonized to **KenTender Workbench Typography v1.0**
+(`docs/prompts/architecture/Kentender Workbench Typography v1.0.md`) — the
+same operational scale as `budget_workbench_page.css` (24px page title,
+20px KPI values, 15px list titles, 14px table links).
+
+Implementation (CSS-only supersession of PP4 mockup hero sizes; HTML
+structure guards unchanged):
+
+- Shared tokens: `kentender_core/public/css/kt_workbench_typography.css`
+  (global `app_include_css`).
+- Planning overrides: `pp4_workbench_typography_harmony.css` + remapped
+  selectors in `pp3_planning_design_system.css`.
+- PP4 iframe: `needs_planning_default.html` links both stylesheets in
+  `<head>` (parent Desk CSS does not cascade into the iframe).
+- Detail/review pages (Package Detail identity header) keep `--kt-wb-identity`
+  (32px) — not applied to workbench KPI strip.
+
+Regression: `test_workbench_typography_contract.py`,
+`test_pp4_workbench_typography_harmony.py`. Cursor rule:
+`.cursor/rules/kentender-workbench-typography-harmony.mdc`.
+
+Phase 2 (Hub, Package Detail sidebar, Package Wizard) shipped in the same
+programme — see **Phase 2 typography harmonization** below.
+
+## Phase 2 typography harmonization (Hub, Detail, Wizard)
+
+Applied **KenTender Workbench Typography v1.0** tokens to remaining Procurement
+surfaces (CSS-only; no HTML structure changes):
+
+| Surface | CSS | Changes |
+|---------|-----|---------|
+| Planning Hub | `planning_hub_page.css` | Hero/header titles → `--kt-wb-title-size`; stat values → `--kt-wb-metric-size` |
+| Package Detail | `package_detail_page.css` | Record title keeps `--kt-wb-identity-size`; card titles → section scale; sidebar/bento metrics → metric scale |
+| Package Wizard | `create_package_wizard_page.css` | Step/success titles → title scale; summary hero → metric scale |
+
+PP4 workbench `DESIGN.md` files note operational vs mockup typography.
+Regression: `test_procurement_typography_phase2_harmony.py`.
+
 ## UI tightening + bug-fix pass (post-W10)
 
 A follow-up pass fixed six UI/wiring defects surfaced during live use, plus

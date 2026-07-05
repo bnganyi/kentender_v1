@@ -165,10 +165,10 @@ body.kt-pph-shell .layout-main-section-wrapper { padding: 0 !important; }
   border-bottom: 1px solid rgba(195, 198, 209, 0.5);
 }
 .kt-pph-header__title {
-  font-family: 'Hanken Grotesk', sans-serif;
-  font-size: 24px;
-  line-height: 32px;
-  font-weight: 700;
+  font-family: var(--kt-wb-font-headline);
+  font-size: var(--kt-wb-title-size);
+  line-height: var(--kt-wb-title-line-height);
+  font-weight: var(--kt-wb-title-weight);
   letter-spacing: -0.02em;
   color: var(--pph-primary);
   margin: 0;
@@ -328,10 +328,10 @@ body.kt-pph-shell .layout-main-section-wrapper { padding: 0 !important; }
 .kt-pph-tag--tier .material-symbols-outlined { color: var(--pph-primary); }
 
 .kt-pph-hero__title {
-  font-family: 'Hanken Grotesk', sans-serif;
-  font-size: 28px;
-  line-height: 1.15;
-  font-weight: 700;
+  font-family: var(--kt-wb-font-headline);
+  font-size: var(--kt-wb-title-size);
+  line-height: var(--kt-wb-title-line-height);
+  font-weight: var(--kt-wb-title-weight);
   color: var(--pph-primary);
   margin: 0 0 8px;
 }
@@ -376,10 +376,10 @@ body.kt-pph-shell .layout-main-section-wrapper { padding: 0 !important; }
 }
 .kt-pph-stat__label--error { color: var(--pph-status-error); font-weight: 600; }
 .kt-pph-stat__value {
-  font-family: 'Hanken Grotesk', sans-serif;
-  font-size: 24px;
-  line-height: 1.1;
-  font-weight: 700;
+  font-family: var(--kt-wb-font-headline);
+  font-size: var(--kt-wb-metric-size);
+  line-height: var(--kt-wb-metric-line-height);
+  font-weight: var(--kt-wb-metric-weight);
   letter-spacing: -0.01em;
   margin: 0;
 }

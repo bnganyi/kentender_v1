@@ -1,0 +1,67 @@
+/* KenTender Workbench Typography v1.0 — shared operational scale
+   Canon: docs/prompts/architecture/Kentender Workbench Typography v1.0.md
+   Reference: kentender_budget/public/css/budget_workbench_page.css */
+
+:root {
+	--kt-wb-font-body: "Inter", system-ui, sans-serif;
+	--kt-wb-font-headline: "Manrope", "Hanken Grotesk", system-ui, sans-serif;
+	--kt-wb-font-mono: "JetBrains Mono", "Consolas", ui-monospace, monospace;
+
+	--kt-wb-font-body-size: 14px;
+	--kt-wb-title-size: 24px;
+	--kt-wb-title-line-height: 32px;
+	--kt-wb-title-weight: 700;
+	--kt-wb-metric-size: 20px;
+	--kt-wb-metric-line-height: 26px;
+	--kt-wb-metric-weight: 600;
+	--kt-wb-section-size: 16px;
+	--kt-wb-section-line-height: 24px;
+	--kt-wb-section-weight: 700;
+	--kt-wb-item-title-size: 15px;
+	--kt-wb-item-title-line-height: 22px;
+	--kt-wb-item-title-weight: 700;
+	--kt-wb-table-size: 13px;
+	--kt-wb-table-line-height: 18px;
+	--kt-wb-label-size: 11px;
+	--kt-wb-label-sm-size: 10px;
+	--kt-wb-identity-size: 32px;
+	--kt-wb-identity-line-height: 40px;
+	--kt-wb-identity-weight: 700;
+}
+
+.kt-wb-title {
+	font-family: var(--kt-wb-font-headline);
+	font-size: var(--kt-wb-title-size);
+	line-height: var(--kt-wb-title-line-height);
+	font-weight: var(--kt-wb-title-weight);
+	letter-spacing: -0.02em;
+}
+
+.kt-wb-metric {
+	font-family: var(--kt-wb-font-headline);
+	font-size: var(--kt-wb-metric-size);
+	line-height: var(--kt-wb-metric-line-height);
+	font-weight: var(--kt-wb-metric-weight);
+}
+
+.kt-wb-section-title {
+	font-family: var(--kt-wb-font-headline);
+	font-size: var(--kt-wb-section-size);
+	line-height: var(--kt-wb-section-line-height);
+	font-weight: var(--kt-wb-section-weight);
+}
+
+.kt-wb-item-title {
+	font-family: var(--kt-wb-font-body);
+	font-size: var(--kt-wb-item-title-size);
+	line-height: var(--kt-wb-item-title-line-height);
+	font-weight: var(--kt-wb-item-title-weight);
+}
+
+.kt-wb-identity {
+	font-family: var(--kt-wb-font-headline);
+	font-size: var(--kt-wb-identity-size);
+	line-height: var(--kt-wb-identity-line-height);
+	font-weight: var(--kt-wb-identity-weight);
+	letter-spacing: -0.02em;
+}

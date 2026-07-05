@@ -60,7 +60,15 @@
 .kt-pw-canvas h1, .kt-pw-canvas h2, .kt-pw-canvas h3 { font-family: 'Hanken Grotesk', sans-serif; margin: 0; }
 
 /* ── Header ──────────────────────────────────────────────────────────────── */
-.kt-pw-title { font-size: 28px; font-weight: 700; color: var(--pw-primary); letter-spacing: -0.02em; margin-bottom: 4px; }
+.kt-pw-title {
+  font-family: var(--kt-wb-font-headline);
+  font-size: var(--kt-wb-title-size);
+  line-height: var(--kt-wb-title-line-height);
+  font-weight: var(--kt-wb-title-weight);
+  color: var(--pw-primary);
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
 .kt-pw-subtitle { color: var(--pw-on-muted); font-size: 14px; margin-bottom: 24px; }
 
 /* ── Stepper ─────────────────────────────────────────────────────────────── */
@@ -168,7 +176,13 @@
 .kt-pw-summary-panel-dark .kt-pw-summary-row-label { color: rgba(255,255,255,0.65); }
 .kt-pw-summary-panel-dark .kt-pw-summary-row-value { color: #fff; }
 .kt-pw-summary-panel-dark .kt-pw-summary-row { border-bottom-color: rgba(255,255,255,0.12); }
-.kt-pw-summary-hero { font-size: 30px; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+.kt-pw-summary-hero {
+  font-family: var(--kt-wb-font-headline);
+  font-size: var(--kt-wb-metric-size);
+  line-height: var(--kt-wb-metric-line-height);
+  font-weight: var(--kt-wb-metric-weight);
+  margin-bottom: 4px;
+}
 .kt-pw-summary-hero-label { font-size: 11px; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.05em; }
 .kt-pw-tip-card { background: var(--pw-surface-high); border: 1px solid var(--pw-outline-v); border-radius: var(--pw-radius-xl); padding: 16px; display: flex; gap: 10px; font-size: 13px; color: var(--pw-on-muted); }
 .kt-pw-tip-card .material-symbols-outlined { color: var(--pw-primary); }
@@ -215,7 +229,14 @@
 .kt-pw-success-wrap { max-width: 720px; margin: 40px auto; text-align: center; }
 .kt-pw-success-icon { width: 80px; height: 80px; border-radius: 50%; background: rgba(16,185,129,0.1); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
 .kt-pw-success-icon .material-symbols-outlined { font-size: 44px; color: var(--pw-success); }
-.kt-pw-success-title { font-size: 26px; font-weight: 700; color: var(--pw-primary); margin-bottom: 10px; }
+.kt-pw-success-title {
+  font-family: var(--kt-wb-font-headline);
+  font-size: var(--kt-wb-title-size);
+  line-height: var(--kt-wb-title-line-height);
+  font-weight: var(--kt-wb-title-weight);
+  color: var(--pw-primary);
+  margin-bottom: 10px;
+}
 .kt-pw-success-sub { color: var(--pw-on-muted); font-size: 14px; margin-bottom: 28px; }
 .kt-pw-success-card { background: var(--pw-surface); border: 1px solid var(--pw-outline-v); border-radius: var(--pw-radius-xl); padding: 24px; margin-bottom: 24px; text-align: left; }
 .kt-pw-success-card-head { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 16px; }

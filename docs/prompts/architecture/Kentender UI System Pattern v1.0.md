@@ -290,7 +290,7 @@ Budget Management / Budget Builder
 **Required consistency across modules:**
 
 -   spacing scale
--   typography hierarchy
+-   typography hierarchy — **normative scale:** [KenTender Workbench Typography v1.0.md](./KenTender%20Workbench%20Typography%20v1.0.md) (operational workbench surfaces use `--kt-wb-*` tokens; detail/review pages may use `--kt-wb-identity` for the record title only)
 -   card style
 -   button style
 -   badge style

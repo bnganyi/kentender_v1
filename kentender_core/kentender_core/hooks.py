@@ -38,6 +38,7 @@ app_license = "mit"
 app_include_css = [
 	"/assets/kentender_core/css/kentender_desk_builder_layout.css",
 	f"/assets/kentender_core/css/kt_module_shell.css?v={_asset_version('public/css/kt_module_shell.css')}",
+	f"/assets/kentender_core/css/kt_workbench_typography.css?v={_asset_version('public/css/kt_workbench_typography.css')}",
 ]
 app_include_js = [
 	f"/assets/kentender_core/js/kt_module_registry.js?v={_asset_version('public/js/kt_module_registry.js')}",
