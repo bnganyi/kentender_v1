@@ -35,16 +35,13 @@ class TestPP6PackageReadinessP6008Source(UnitTestCase):
 			Path(__file__).resolve().parents[2]
 			/ "public"
 			/ "js"
-			/ "pp3_planning_package_detail.js"
+			/ "package_detail_page.js"
 		)
 		source = path.read_text(encoding="utf-8", errors="replace")
 		for tid in (
-			"pp3-package-readiness-panel",
-			"pp3-package-readiness-summary",
-			"pp3-package-readiness-checks",
-			"pp3-package-readiness-run",
-			"pp3-package-readiness-blockers",
-			"pp3-package-readiness-resolve",
+			"kt-pd-panel-readiness",
+			"kt-pd-readiness-checks",
+			"kt-pd-run-readiness",
 		):
 			self.assertIn(tid, source, msg=f"missing {tid} (P6-008/P6-009)")
 

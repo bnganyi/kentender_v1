@@ -1540,16 +1540,16 @@
 		const tr = template.cloneNode(true);
 		const data = item || {};
 		const isPlaceholder = Boolean(data.is_placeholder);
-		const packageId = String(data.underlying_object_id || "").trim();
+		const packageCode = workbenchPackageRouteCode(data);
 		const inclusionCode = String(data.inclusion_code || "").trim();
-		tr.setAttribute("data-package-id", packageId);
+		tr.setAttribute("data-package-id", packageCode);
 		if (isPlaceholder) tr.setAttribute("data-inclusion-code", inclusionCode);
 
 		const cells = tr.querySelectorAll("td");
 		const titleLinks = cells[0] ? cells[0].querySelectorAll("a") : [];
 		const titleLink = titleLinks[0];
 		const refLink = titleLinks[1];
-		const href = packageId ? "/app/procurement-package/" + encodeURIComponent(packageId) : "#";
+		const href = packageCode ? buildPackageDetailUrl(packageCode) : "#";
 		if (titleLink) {
 			const icon = titleLink.querySelector(".material-symbols-outlined");
 			titleLink.textContent = "";
@@ -1584,8 +1584,8 @@
 				workbenchCreatePackageFromInclusionRow(root, doc, inclusionCode);
 				return;
 			}
-			if (!packageId) return;
-			frappe.set_route("procurement-package", packageId);
+			if (!packageCode) return;
+			navigateToPackageDetailPage(packageCode);
 		});
 
 		return tr;
@@ -1631,14 +1631,14 @@
 	function buildWorkbenchReviewReleaseRow(template, doc, item) {
 		const tr = template.cloneNode(true);
 		const data = item || {};
-		const packageId = String(data.underlying_object_id || "").trim();
-		tr.setAttribute("data-package-id", packageId);
+		const packageCode = workbenchPackageRouteCode(data);
+		tr.setAttribute("data-package-id", packageCode);
 
 		const cells = tr.querySelectorAll("td");
 		const titleLinks = cells[0] ? cells[0].querySelectorAll("a") : [];
 		const titleLink = titleLinks[0];
 		const refLink = titleLinks[1];
-		const href = packageId ? "/app/procurement-package/" + encodeURIComponent(packageId) : "#";
+		const href = packageCode ? buildPackageDetailUrl(packageCode) : "#";
 		if (titleLink) {
 			const icon = titleLink.querySelector(".material-symbols-outlined");
 			titleLink.textContent = "";
@@ -1675,9 +1675,9 @@
 		applyWorkbenchStackedStatusPill(readinessWrap, data.readiness_tone, String(data.readiness_status || "").trim());
 
 		tr.addEventListener("click", function (event) {
-			if (!packageId) return;
+			if (!packageCode) return;
 			event.preventDefault();
-			frappe.set_route("procurement-package", packageId);
+			navigateToPackageDetailPage(packageCode);
 		});
 
 		return tr;
@@ -1693,6 +1693,7 @@
 		const tr = template.cloneNode(true);
 		const data = item || {};
 		const targetId = String(data.underlying_object_id || "").trim();
+		const targetCode = workbenchPackageRouteCode(data);
 		const isBlockedDemand = data.underlying_object_type === "approved_demand";
 		tr.setAttribute("data-package-id", targetId);
 
@@ -1701,7 +1702,9 @@
 		const titleLink = titleLinks[0];
 		const refLink = titleLinks[1];
 		const href = targetId
-			? (isBlockedDemand ? "/app/demand/" : "/app/procurement-package/") + encodeURIComponent(targetId)
+			? isBlockedDemand
+				? "/app/demand/" + encodeURIComponent(targetId)
+				: buildPackageDetailUrl(targetCode || targetId)
 			: "#";
 		if (titleLink) {
 			const icon = titleLink.querySelector(".material-symbols-outlined");
@@ -1743,7 +1746,7 @@
 			if (isBlockedDemand) {
 				frappe.set_route("demand-workbench", targetId);
 			} else {
-				frappe.set_route("procurement-package", targetId);
+				navigateToPackageDetailPage(targetCode || targetId);
 			}
 		});
 
@@ -1756,14 +1759,14 @@
 	function buildWorkbenchReleasedRow(template, doc, item) {
 		const tr = template.cloneNode(true);
 		const data = item || {};
-		const packageId = String(data.underlying_object_id || "").trim();
-		tr.setAttribute("data-package-id", packageId);
+		const packageCode = workbenchPackageRouteCode(data);
+		tr.setAttribute("data-package-id", packageCode);
 
 		const cells = tr.querySelectorAll("td");
 		const titleLinks = cells[0] ? cells[0].querySelectorAll("a") : [];
 		const titleLink = titleLinks[0];
 		const refLink = titleLinks[1];
-		const href = packageId ? "/app/procurement-package/" + encodeURIComponent(packageId) : "#";
+		const href = packageCode ? buildPackageDetailUrl(packageCode) : "#";
 		if (titleLink) {
 			const icon = titleLink.querySelector(".material-symbols-outlined");
 			titleLink.textContent = "";
@@ -1804,9 +1807,9 @@
 		}
 
 		tr.addEventListener("click", function (event) {
-			if (!packageId) return;
+			if (!packageCode) return;
 			event.preventDefault();
-			frappe.set_route("procurement-package", packageId);
+			navigateToPackageDetailPage(packageCode);
 		});
 
 		return tr;
@@ -2079,6 +2082,9 @@
 
 	function buildWorkbenchPackageRedirectUrl(packageCode) {
 		const code = String(packageCode || "").trim();
+		if (code) {
+			return buildPackageDetailUrl(code);
+		}
 		const state = readWorkbenchStateFromUrl();
 		const queue = String(state.queue || "").trim();
 		const item = String(state.item || "").trim();
@@ -2112,7 +2118,26 @@
 	function buildPackageDetailUrl(packageCode) {
 		const code = String(packageCode || "").trim();
 		if (!code) return ROOT_PATH;
-		return `${ROOT_PATH}/packages/${encodeURIComponent(code)}`;
+		return `/app/package-detail/${encodeURIComponent(code)}`;
+	}
+
+	function workbenchPackageRouteCode(data) {
+		const row = data || {};
+		return String(row.underlying_object_code || row.underlying_object_id || "").trim();
+	}
+
+	function navigateToPackageDetailPage(packageCode) {
+		const code = String(packageCode || "").trim();
+		if (!code) return;
+		if (
+			kentender_procurement &&
+			typeof kentender_procurement.openPackageDetailPage === "function"
+		) {
+			kentender_procurement.openPackageDetailPage(code);
+			return;
+		}
+		frappe.route_options = { package: code };
+		frappe.set_route("package-detail", code);
 	}
 
 	function buildPackagesRedirectUrl(packageCode) {
@@ -2213,7 +2238,7 @@
 			return {
 				action: "redirect",
 				slug: "",
-				redirectUrl: buildWorkbenchPackageRedirectUrl(rawSegments[1] || ""),
+				redirectUrl: buildPackageDetailUrl(rawSegments[1] || ""),
 			};
 		}
 
@@ -3513,32 +3538,7 @@
 	}
 
 	function mountPackageDetailSurface(mainHost, packageCode, root) {
-		if (!mainHost) return;
-		clearWorkbenchHosts(mainHost);
-		clearPlanningWorkUnavailable(mainHost);
-		const children = Array.from(mainHost.children);
-		for (let i = 0; i < children.length; i += 1) {
-			if (children[i] !== root) {
-				mainHost.removeChild(children[i]);
-			}
-		}
-		const markerId = surfaceForSlug("package-detail").testId;
-		if (root) {
-			root.innerHTML =
-				'<article class="pp3-package-detail-surface" data-testid="' +
-				esc(markerId) +
-				'"><div class="pp3-package-detail-surface__body" data-testid="pp3-package-detail-host"></div></article>';
-			const bodyHost = root.querySelector('[data-testid="pp3-package-detail-host"]');
-			const detailApi =
-				kentender_procurement &&
-				kentender_procurement.PlanningPackageDetail &&
-				typeof kentender_procurement.PlanningPackageDetail.render === "function"
-					? kentender_procurement.PlanningPackageDetail
-					: null;
-			if (detailApi && bodyHost) {
-				detailApi.render(bodyHost, { packageCode: packageCode });
-			}
-		}
+		navigateToPackageDetailPage(packageCode);
 	}
 
 	function mountPlanningQueueTabs(mainHost, slug) {

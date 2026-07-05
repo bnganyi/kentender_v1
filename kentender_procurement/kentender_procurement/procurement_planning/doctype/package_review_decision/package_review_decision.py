@@ -7,10 +7,10 @@ from frappe.model.document import Document
 
 class PackageReviewDecision(Document):
 	def validate(self):
-		if self.decision_type in ("Returned for Correction", "Cancelled") and not (
+		if self.decision_type in ("Returned for Correction", "Cancelled", "Clarification Requested") and not (
 			self.decision_reason or ""
 		).strip():
-			frappe.throw(frappe._("Decision reason is required for return or cancellation."))
+			frappe.throw(frappe._("Decision reason is required for return, cancellation, or clarification."))
 		if self.decision_type == "Returned for Correction" and not (
 			self.required_correction or ""
 		).strip():

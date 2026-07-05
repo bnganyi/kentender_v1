@@ -49,6 +49,7 @@ from kentender_procurement.procurement_planning.services.package_review_api impo
 )
 from kentender_procurement.procurement_planning.services.package_review_service import (
 	can_submit_package_for_review,
+	list_package_review_decisions,
 )
 from kentender_procurement.procurement_planning.services.package_workbench import (
 	_tender_ref,
@@ -375,6 +376,7 @@ def _release_tab_pp3(
 	release_may: dict[str, Any],
 	approve_ok: bool,
 	tender_ref: dict[str, str] | None,
+	readiness_checks: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
 	st = (status or "").strip()
 	readiness_ok = (readiness_tab.get("readiness_status") or "") in (
@@ -392,22 +394,66 @@ def _release_tab_pp3(
 		if msg and msg not in blockers:
 			blockers.append(msg)
 
+	checks = readiness_checks or []
+	checklist = [{"label": c.get("label") or "", "ok": bool(c.get("ok"))} for c in checks]
+	passed = sum(1 for c in checklist if c.get("ok"))
+	total = len(checklist)
+	checklist_summary = (
+		_("{0} of {1} checks passed").format(passed, total) if total else ""
+	)
+	value_method = {
+		"package_total_label": _value_label(doc.estimated_value, doc.currency),
+		"method_label": (doc.procurement_method or "").strip() or "—",
+	}
+
 	released = st in (PKG_RELEASED, PKG_CONSUMED) or bool(release_raw)
 	if released:
 		tender = tender_ref or {}
 		return {
 			"released": True,
 			"ready_label": _("Yes"),
-			"headline": _("Package released to Tender Management."),
-			"subheadline": _("Tender created."),
+			"headline": _("Package Successfully Released"),
+			"subheadline": _("Tender created and handoff complete."),
 			"next_action_label": _("Continue in Tender Management."),
 			"blockers": [],
-			"protected_values": [],
-			"sent_values": [],
+			"protected_values": list(_PROTECTED_AFTER_RELEASE),
+			"sent_values": list(_SENT_TO_TM),
 			"warning": "",
 			"may_release": False,
 			"tender_open_route": (release_raw or {}).get("tender_open_route") or "",
 			"tender_label": tender.get("name") or "",
+			"readiness_checklist": checklist,
+			"checklist_summary_label": checklist_summary,
+			"approved_pending_readiness": False,
+			"handoff": {
+				"package_value_label": value_method["package_total_label"],
+				"method_label": value_method["method_label"],
+				"tender_label": tender.get("name") or tender.get("code") or "—",
+			},
+			**value_method,
+		}
+
+	if st == PKG_APPROVED:
+		return {
+			"released": False,
+			"ready_label": _("Pending readiness"),
+			"headline": _("Approved — Awaiting Readiness Pass"),
+			"subheadline": _(
+				"Review is complete. Run readiness checks to mark this package ready for release."
+			),
+			"next_action_label": _("Run Readiness Checks"),
+			"blockers": blockers,
+			"protected_values": list(_PROTECTED_AFTER_RELEASE),
+			"sent_values": list(_SENT_TO_TM),
+			"warning": "",
+			"may_release": False,
+			"tender_open_route": "",
+			"tender_label": "",
+			"readiness_checklist": checklist,
+			"checklist_summary_label": checklist_summary,
+			"approved_pending_readiness": True,
+			"handoff": {},
+			**value_method,
 		}
 
 	ready = readiness_ok and review_ok and release_may.get("allowed")
@@ -427,6 +473,200 @@ def _release_tab_pp3(
 		"may_release": bool(release_may.get("allowed")),
 		"tender_open_route": "",
 		"tender_label": "",
+		"readiness_checklist": checklist,
+		"checklist_summary_label": checklist_summary,
+		"approved_pending_readiness": False,
+		"handoff": {},
+		**value_method,
+	}
+
+
+def _display_status_pill(status: str, readiness_status: str) -> str:
+	st = (status or "").strip()
+	rs = (readiness_status or "").strip()
+	if st == PKG_DRAFT:
+		return _("IN CREATION")
+	if st == PKG_IN_REVIEW:
+		return _("AWAITING REVIEW")
+	if st == PKG_APPROVED:
+		return _("APPROVED")
+	if st == PKG_READY_FOR_RELEASE:
+		return _("READY FOR RELEASE")
+	if st in (PKG_RELEASED, PKG_CONSUMED):
+		return _("RELEASED")
+	if st == PKG_RETURNED or rs in (READINESS_FAILED, "Blocked"):
+		return _("BLOCKED")
+	return _status_label(st).upper()
+
+
+def _default_tab_for_status(status: str) -> str:
+	st = (status or "").strip()
+	if st == PKG_IN_REVIEW:
+		return "review"
+	if st in (PKG_READY_FOR_RELEASE, PKG_RELEASED, PKG_CONSUMED, PKG_APPROVED):
+		return "release"
+	return "overview"
+
+
+def _blocker_banner(
+	doc,
+	*,
+	status: str,
+	blockers: list[str],
+	readiness_status: str,
+	workflow_reason: str,
+) -> dict[str, Any]:
+	st = (status or "").strip()
+	rs = (readiness_status or "").strip()
+	visible = bool(blockers) or st == PKG_RETURNED or rs in (READINESS_FAILED, "Blocked")
+	if not visible:
+		return {"visible": False}
+
+	title = _("Blocker Alert")
+	message = ""
+	severity = "warning"
+	kind = "generic"
+
+	if st == PKG_RETURNED:
+		kind = "returned"
+		title = _("Blocker Alert: Returned for Correction")
+		message = (workflow_reason or "").strip() or (blockers[0] if blockers else "")
+		severity = "critical"
+	elif rs in (READINESS_FAILED, "Blocked") or any(
+		"readiness" in str(b).lower() or "funding" in str(b).lower() for b in blockers
+	):
+		if any("fund" in str(b).lower() for b in blockers):
+			kind = "funding"
+			title = _("Blocker Alert: Insufficient Funding")
+		else:
+			kind = "readiness"
+			title = _("Blocker Alert: Readiness Checks Failed")
+		message = "; ".join(blockers) if blockers else _("Readiness checks have not passed.")
+		severity = "critical"
+	else:
+		message = "; ".join(blockers) if blockers else _("This package is blocked.")
+
+	return {
+		"visible": True,
+		"kind": kind,
+		"title": title,
+		"message": message,
+		"severity": severity,
+	}
+
+
+def _owner_label(owner_id: str | None) -> str:
+	owner = (owner_id or "").strip()
+	if not owner:
+		return "—"
+	if frappe.db.exists("User", owner):
+		return (frappe.db.get_value("User", owner, "full_name") or owner).strip()
+	return owner
+
+
+def _package_identity_block(doc, demand_ref: dict[str, str], plan_ref: dict[str, str]) -> dict[str, Any]:
+	return {
+		"description": (doc.package_description or "").strip(),
+		"category_label": (doc.procurement_category or doc.contract_type or "").strip(),
+		"method_label": (doc.procurement_method or "").strip(),
+		"target_release_date": doc.target_release_date,
+		"owner_label": _owner_label(doc.package_owner),
+		"priority_label": (doc.package_priority or "Normal").strip(),
+		"estimated_value_label": _value_label(doc.estimated_value, doc.currency),
+		"plan_label": _active_plan_label(plan_ref),
+		"demand_label": demand_ref.get("name") or demand_ref.get("code") or "—",
+	}
+
+
+def _included_demands_block(
+	doc, demand_ref: dict[str, str], lines: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+	if not demand_ref.get("code") and not demand_ref.get("name"):
+		return []
+	line_count = len(lines)
+	total = _value_label(doc.estimated_value, doc.currency)
+	return [
+		{
+			"code": demand_ref.get("code") or "",
+			"name": demand_ref.get("name") or demand_ref.get("code") or "",
+			"line_count_label": _("{0} Items Requested").format(line_count),
+			"value_label": total,
+		}
+	]
+
+
+def _package_lines_table(lines: list[dict[str, Any]], currency: str) -> list[dict[str, Any]]:
+	out: list[dict[str, Any]] = []
+	for ln in lines:
+		package_line = ln.get("package_line") or {}
+		demand_item = ln.get("demand_item") or {}
+		out.append(
+			{
+				"title": package_line.get("name") or package_line.get("code") or "—",
+				"source_item_code": demand_item.get("code") or "—",
+				"quantity_label": str(ln.get("quantity") or "—"),
+				"value_label": _value_label(ln.get("amount"), currency),
+			}
+		)
+	return out
+
+
+def _sidebar_summary(doc, lines: list[dict[str, Any]], budget_line: dict[str, Any]) -> dict[str, Any]:
+	funding_ok = bool(budget_line.get("id") or budget_line.get("code"))
+	return {
+		"total_value_label": _value_label(doc.estimated_value, doc.currency),
+		"funding_status_label": _("Reserved") if funding_ok else _("Not linked"),
+		"funding_ok": funding_ok,
+		"line_count": len(lines),
+	}
+
+
+def _sidebar_activity(decision_history: list[dict[str, Any]]) -> list[dict[str, str]]:
+	out: list[dict[str, str]] = []
+	for row in decision_history or []:
+		title = str(row.get("decision_type") or "").strip()
+		if not title:
+			continue
+		meta_parts = [
+			str(row.get("decided_by_label") or row.get("decided_by") or "").strip(),
+			str(row.get("decided_at") or "").strip(),
+		]
+		meta = " • ".join(part for part in meta_parts if part)
+		out.append({"title": title, "meta": meta or "—"})
+		if len(out) >= 5:
+			break
+	return out
+
+
+def _sidebar_context(
+	*,
+	doc,
+	status: str,
+	blocker_banner: dict[str, Any],
+	decision_history: list[dict[str, Any]],
+) -> dict[str, Any]:
+	st = (status or "").strip()
+	banner = blocker_banner or {}
+	kind = str(banner.get("kind") or "").strip()
+	is_blocked = bool(banner.get("visible")) and (
+		st == PKG_RETURNED or kind in ("funding", "readiness", "returned")
+	)
+	last_reviewer = "—"
+	for row in decision_history or []:
+		label = str(row.get("decided_by_label") or row.get("decided_by") or "").strip()
+		if label:
+			last_reviewer = label
+			break
+	severity = str(banner.get("severity") or "").strip()
+	return {
+		"mode": "blocked" if is_blocked else "default",
+		"is_locked": is_blocked or st == PKG_IN_REVIEW,
+		"status_title": _("Locked for Editing") if is_blocked else "",
+		"severity_label": _("Critical") if severity == "critical" else _("Warning"),
+		"blocker_kind": kind,
+		"owner_label": _owner_label(doc.package_owner),
+		"last_reviewer_label": last_reviewer,
+		"show_funding_actions": kind == "funding",
 	}
 
 
@@ -512,6 +752,8 @@ def get_pp3_package_detail_view_model(package_code: str, actor: str) -> dict[str
 	submit_guard = can_submit_package_for_review(business_code, actor)
 	approve_may = _may_approve(doc, actor, business_code)
 	return_may = _may_return(doc, actor)
+	clarify_may = {"allowed": bool(actions.get("clarify"))}
+	decision_history = list_package_review_decisions(business_code)
 	tender_ref = _tender_ref(doc.tender_code, handoff=release_tab_raw)
 	review_status_label = _review_status_label(status, latest_review)
 
@@ -579,6 +821,13 @@ def get_pp3_package_detail_view_model(package_code: str, actor: str) -> dict[str
 		"may_submit": bool(submit_guard.get("allowed") and actions.get("submit")),
 		"may_approve": bool(approve_may.get("allowed") and actions.get("approve")),
 		"may_return": bool(return_may.get("allowed") and actions.get("return")),
+		"may_clarify": bool(clarify_may.get("allowed")),
+		"decision_history": decision_history,
+		"clarifications": [
+			row
+			for row in decision_history
+			if (row.get("decision_type") or "") == "Clarification Requested"
+		],
 		"guidance": _(
 			"Package is ready to submit when lines, funding, and readiness checks pass."
 		),
@@ -593,13 +842,38 @@ def get_pp3_package_detail_view_model(package_code: str, actor: str) -> dict[str
 		release_may=release_may,
 		approve_ok=review_status_label == _("Approved"),
 		tender_ref=tender_ref,
+		readiness_checks=readiness_checks,
+	)
+
+	blocker_banner = _blocker_banner(
+		doc,
+		status=status,
+		blockers=blockers,
+		readiness_status=readiness_tab.get("readiness_status") or "",
+		workflow_reason=doc.workflow_reason or "",
 	)
 
 	return {
 		"ok": True,
 		"role_key": role_key,
 		"package_code": business_code,
+		"package_docname": doc.name,
 		"package_name": header["title"],
+		"package_status": status,
+		"display_status_pill": _display_status_pill(status, readiness_tab.get("readiness_status") or ""),
+		"default_tab": _default_tab_for_status(status),
+		"blocker_banner": blocker_banner,
+		"sidebar_context": _sidebar_context(
+			doc=doc,
+			status=status,
+			blocker_banner=blocker_banner,
+			decision_history=decision_history,
+		),
+		"sidebar_activity": _sidebar_activity(decision_history),
+		"package_identity": _package_identity_block(doc, demand_ref, plan_ref),
+		"included_demands": _included_demands_block(doc, demand_ref, lines),
+		"package_lines": _package_lines_table(lines, (doc.currency or "KES").strip() or "KES"),
+		"sidebar_summary": _sidebar_summary(doc, lines, budget_line),
 		"header": header,
 		"primary_action": primary,
 		"show_view_evidence": True,

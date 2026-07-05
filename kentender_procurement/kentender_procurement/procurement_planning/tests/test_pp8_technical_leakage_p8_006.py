@@ -36,7 +36,7 @@ _PP3_PUBLIC_JS = (
 	"pp3_planning_selected_work_summary.js",
 	"pp3_planning_released_list.js",
 	"pp3_planning_release_summary.js",
-	"pp3_planning_package_detail.js",
+	"package_detail_page.js",
 	"pp2_planning_include_plan_modal.js",
 	"pp2_planning_create_package_modal.js",
 )

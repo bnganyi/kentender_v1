@@ -319,6 +319,15 @@ untouched since it's a larger, different surface not covered by the W6
 cleanup decision — needs its own explicit decision (remove vs. wire up)
 before touching it.
 
+**Resolved (2026-07-05):** decision made — **rebuild fresh**, not wire up
+the orphaned surface as-is. See
+`../package details/PACKAGE_DETAIL_WIRING_TRACKER.md` (new, canonical
+tracker for the package detail page). That tracker also **supersedes** the
+title-link routing described in W6/W7/W8 above (title links **now**
+route to `/app/package-detail/<package_code>` via PD9, not the raw desk
+form). The orphaned `pp3_planning_package_detail.js` and its `P6-*`/`P8-*`
+Playwright specs are retired as part of that tracker's PD1.
+
 ## API Enhancement Backlog (targeted)
 
 - **E1 — Workbench query contract expansion**: ✅ **Closed by W10.**

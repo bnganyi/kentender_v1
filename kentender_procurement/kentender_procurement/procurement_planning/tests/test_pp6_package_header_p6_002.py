@@ -34,16 +34,14 @@ def _pp_ok() -> bool:
 
 class TestPP6PackageHeaderP6002Source(UnitTestCase):
 	def test_package_detail_component_exposes_header_testids(self) -> None:
-		path = _pkg_public("js", "pp3_planning_package_detail.js")
+		path = _pkg_public("js", "package_detail_page.js")
 		self.assertTrue(path.exists(), msg=f"missing {path}")
 		source = path.read_text(encoding="utf-8", errors="replace")
 		for tid in (
-			"pp3-package-header",
-			"pp3-package-active-plan",
-			"pp3-package-funding",
-			"pp3-package-blockers",
-			"pp3-package-next-action",
-			"pp3-package-primary-action",
+			"kt-pd-header",
+			"kt-pd-title",
+			"kt-pd-status-pill",
+			"kt-pd-blocker-banner",
 		):
 			self.assertIn(tid, source, msg=f"missing {tid} (P6-002)")
 		self.assertIn("get_pp3_package_detail", source)

@@ -733,10 +733,10 @@
 
   // ── STEP 4 — Success ─────────────────────────────────────────────────────
   function _openPackageUrl(packageCode) {
-    var q = new URLSearchParams();
-    q.set("queue", "draft-packages");
-    if (packageCode) q.set("package_code", packageCode);
-    return "/desk/procurement-planning?" + q.toString();
+    var code = String(packageCode || "").trim();
+    return code
+      ? "/app/package-detail/" + encodeURIComponent(code)
+      : "/desk/procurement-planning?queue=draft_packages";
   }
 
   function _renderStep4() {

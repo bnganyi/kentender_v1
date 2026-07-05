@@ -332,6 +332,21 @@ def return_package(
 
 
 @frappe.whitelist()
+def request_clarification(package_id: str | None = None, message: str | None = None):
+	"""In Review — record clarification request without changing package status."""
+	from kentender_procurement.procurement_planning.services.package_review_service import (
+		request_clarification_on_package,
+	)
+
+	package_id = _require_id(package_id, _("Procurement Package"))
+	message = _require_reason(message, _("Clarification message"))
+	doc = _load_package_read(package_id)
+	pp_policy.assert_may_run_package_workflow("return_package", doc)
+	out = request_clarification_on_package(package_id, message, frappe.session.user)
+	return {"name": out.get("package_code") or package_id, "status": out.get("status")}
+
+
+@frappe.whitelist()
 def cancel_package(package_id: str | None = None, reason: str | None = None):
 	"""In Review → Cancelled."""
 	package_id = _require_id(package_id, _("Procurement Package"))

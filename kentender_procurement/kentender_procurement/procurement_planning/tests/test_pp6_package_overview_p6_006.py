@@ -38,17 +38,13 @@ class TestPP6PackageOverviewP6006Source(UnitTestCase):
 			Path(__file__).resolve().parents[2]
 			/ "public"
 			/ "js"
-			/ "pp3_planning_package_detail.js"
+			/ "package_detail_page.js"
 		)
 		source = path.read_text(encoding="utf-8", errors="replace")
 		for tid in (
-			"pp3-package-overview-panel",
-			"pp3-package-overview-source-demand",
-			"pp3-package-overview-purpose",
-			"pp3-package-overview-status",
-			"pp3-package-overview-funding",
-			"pp3-package-overview-blockers",
-			"pp3-package-overview-next-action",
+			"kt-pd-panel-overview",
+			"kt-pd-included-demand",
+			"kt-pd-lines-table",
 		):
 			self.assertIn(tid, source, msg=f"missing {tid} (P6-006)")
 

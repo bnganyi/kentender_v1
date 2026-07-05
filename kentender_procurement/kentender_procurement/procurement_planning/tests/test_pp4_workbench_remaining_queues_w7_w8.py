@@ -97,18 +97,18 @@ class TestPP4WorkbenchRemainingQueuesW7W8Source(UnitTestCase):
 		self.assertIn("group.rowBuilder(template, doc, item, uiQueue)", fn)
 		self.assertNotIn(".innerHTML", fn)
 
-	def test_review_release_row_builder_clones_template_and_navigates_by_internal_id(self) -> None:
+	def test_review_release_row_builder_clones_template_and_navigates_to_package_detail(self) -> None:
 		"""UI-consistency pass: the title is now a real `<a>` (Needs-Planning
-		style, no separate "Actions" column) — the row builder must bind its
-		`href` the same way the other title-as-link builders do."""
+		style, no separate "Actions" column) — package rows route to the
+		dedicated package-detail page (PD9)."""
 		fn = self._fn_block("function buildWorkbenchReviewReleaseRow(template, doc, item) {")
 		self.assertIn("template.cloneNode(true)", fn)
 		self.assertNotIn(".innerHTML", fn)
 		self.assertNotIn("document.createElement", fn)
-		self.assertIn("data.underlying_object_id", fn)
+		self.assertIn("workbenchPackageRouteCode(data)", fn)
 		self.assertIn('cells[0].querySelector("a")', fn)
 		self.assertIn('titleLink.setAttribute("href", href)', fn)
-		self.assertIn('frappe.set_route("procurement-package", packageId)', fn)
+		self.assertIn("navigateToPackageDetailPage(packageCode)", fn)
 		self.assertIn("applyWorkbenchCategoryChip(doc, categoryBadge,", fn)
 		self.assertIn("applyWorkbenchStackedStatusPill(readinessWrap, data.readiness_tone,", fn)
 
@@ -128,9 +128,9 @@ class TestPP4WorkbenchRemainingQueuesW7W8Source(UnitTestCase):
 		self.assertIn('cells[0].querySelector("a")', fn)
 		self.assertIn('titleLink.setAttribute("href", href)', fn)
 		self.assertIn('"/app/demand/"', fn)
-		self.assertIn('"/app/procurement-package/"', fn)
+		self.assertIn("buildPackageDetailUrl(targetCode || targetId)", fn)
 		self.assertIn('frappe.set_route("demand-workbench", targetId)', fn)
-		self.assertIn('frappe.set_route("procurement-package", targetId)', fn)
+		self.assertIn("navigateToPackageDetailPage(targetCode || targetId)", fn)
 		self.assertIn("applyWorkbenchCategoryChip(doc, categoryBadge,", fn)
 		self.assertIn('applyWorkbenchStackedStatusPill(blockerWrap, "error",', fn)
 
@@ -143,9 +143,9 @@ class TestPP4WorkbenchRemainingQueuesW7W8Source(UnitTestCase):
 		self.assertIn("template.cloneNode(true)", fn)
 		self.assertNotIn(".innerHTML", fn)
 		self.assertNotIn("document.createElement", fn)
-		self.assertIn("data.underlying_object_id", fn)
+		self.assertIn("workbenchPackageRouteCode(data)", fn)
 		self.assertIn("titleLink.setAttribute(\"href\", href)", fn)
-		self.assertIn('frappe.set_route("procurement-package", packageId)', fn)
+		self.assertIn("navigateToPackageDetailPage(packageCode)", fn)
 		self.assertIn("applyWorkbenchCategoryChip(doc, categoryBadge,", fn)
 		self.assertIn("data.tender_status_label", fn)
 

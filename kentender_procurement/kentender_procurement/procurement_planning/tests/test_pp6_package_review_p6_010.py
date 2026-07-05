@@ -25,15 +25,16 @@ class TestPP6PackageReviewP6010Source(UnitTestCase):
 			Path(__file__).resolve().parents[2]
 			/ "public"
 			/ "js"
-			/ "pp3_planning_package_detail.js"
+			/ "package_detail_page.js"
 		)
 		source = path.read_text(encoding="utf-8", errors="replace")
 		for tid in (
-			"pp3-package-review-panel",
-			"pp3-package-review-status",
-			"pp3-package-review-submit",
-			"pp3-package-review-approve",
-			"pp3-package-review-return",
+			"kt-pd-panel-review",
+			"kt-pd-review-summary",
+			"kt-pd-decision-history-row",
+			"kt-pd-approve",
+			"kt-pd-return",
+			"kt-pd-clarify",
 		):
 			self.assertIn(tid, source, msg=f"missing {tid} (P6-010)")
 

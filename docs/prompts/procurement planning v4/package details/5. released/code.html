@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Package Details - Released | Procurement Workbench</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-container": "#6f87ae",
+                    "on-surface-variant": "#44474e",
+                    "on-secondary-container": "#004578",
+                    "on-tertiary-fixed": "#341100",
+                    "on-primary-fixed-variant": "#2f476b",
+                    "outline": "#74777f",
+                    "cat-works": "#8B5CF6",
+                    "surface-variant": "#e0e3e5",
+                    "status-error": "#EF4444",
+                    "on-background": "#191c1e",
+                    "secondary-fixed": "#d2e4ff",
+                    "primary": "#000511",
+                    "surface-bright": "#f7f9fb",
+                    "background": "#f7f9fb",
+                    "on-secondary": "#ffffff",
+                    "surface-container-highest": "#e0e3e5",
+                    "inverse-on-surface": "#eff1f3",
+                    "cat-goods": "#6366F1",
+                    "surface": "#f7f9fb",
+                    "error-container": "#ffdad6",
+                    "surface-container-high": "#e6e8ea",
+                    "primary-fixed": "#d5e3ff",
+                    "on-error-container": "#93000a",
+                    "surface-container-lowest": "#ffffff",
+                    "status-success": "#10B981",
+                    "tertiary": "#0e0200",
+                    "cat-services": "#EC4899",
+                    "surface-container-low": "#f2f4f6",
+                    "tertiary-fixed": "#ffdbcb",
+                    "surface-tint": "#485f84",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-container": "#b47858",
+                    "inverse-primary": "#afc8f2",
+                    "surface-dim": "#d8dadc",
+                    "status-warning": "#F59E0B",
+                    "surface-container": "#eceef0",
+                    "secondary": "#0061a5",
+                    "on-secondary-fixed-variant": "#00497e",
+                    "secondary-fixed-dim": "#9fcaff",
+                    "primary-container": "#001e40",
+                    "cat-consultancy": "#06B6D4",
+                    "inverse-surface": "#2d3133",
+                    "error": "#ba1a1a",
+                    "tertiary-fixed-dim": "#fdb793",
+                    "outline-variant": "#c4c6cf",
+                    "on-secondary-fixed": "#001d36",
+                    "status-neutral": "#64748B",
+                    "secondary-container": "#73b5fe",
+                    "on-tertiary-fixed-variant": "#6a3a20",
+                    "on-primary": "#ffffff",
+                    "on-error": "#ffffff",
+                    "on-primary-fixed": "#001b3b",
+                    "on-surface": "#191c1e",
+                    "primary-fixed-dim": "#afc8f2",
+                    "tertiary-container": "#381300"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "workbench-gutter": "24px",
+                    "stack-gap-sm": "8px",
+                    "header-height": "64px",
+                    "sidebar-width": "256px",
+                    "stack-gap-md": "16px",
+                    "card-padding": "20px",
+                    "container-max-width": "1440px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Hanken Grotesk"],
+                    "body-sm": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Hanken Grotesk"],
+                    "display-hero": ["Hanken Grotesk"],
+                    "label-md": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "display-hero": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body {
+            background-color: #f7f9fb;
+            font-family: 'Inter', sans-serif;
+            color: #191c1e;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-surface-container-lowest dark:bg-surface-container-low flex justify-between items-center w-full px-workbench-gutter h-16 sticky top-0 z-50 border-b border-outline-variant dark:border-outline shadow-sm dark:shadow-none">
+<div class="flex items-center gap-stack-gap-md">
+<span class="font-headline-md text-headline-md font-bold text-primary">Procurement Workbench</span>
+<div class="h-8 w-px bg-outline-variant mx-2"></div>
+<div class="flex items-center gap-2 bg-surface-container-low px-3 py-1.5 rounded-lg border border-outline-variant">
+<span class="material-symbols-outlined text-primary text-[20px]">search</span>
+<input class="bg-transparent border-none focus:ring-0 font-body-md text-body-md w-64" placeholder="Search procurement data..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-stack-gap-md">
+<button class="p-2 hover:bg-surface-container-high rounded-full transition-colors material-symbols-outlined text-on-surface-variant">notifications</button>
+<button class="p-2 hover:bg-surface-container-high rounded-full transition-colors material-symbols-outlined text-on-surface-variant">help</button>
+<div class="flex items-center gap-2 pl-4 ml-4 border-l border-outline-variant">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-primary font-bold">JD</div>
+<div class="hidden lg:block text-left">
+<p class="font-label-md text-label-md leading-none">James Doe</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Director, MOH</p>
+</div>
+</div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-0 h-full flex flex-col pt-20 pb-8 z-40 bg-surface-container-low dark:bg-surface-dim border-r border-outline-variant w-64 transition-all">
+<div class="px-6 mb-8">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white">shield_person</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm font-bold text-primary">Enterprise</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Planning &amp; Strategy</p>
+</div>
+</div>
+<button class="mt-8 w-full bg-primary text-white font-label-md text-label-md py-3 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                    New Plan
+                </button>
+</div>
+<div class="flex-1 space-y-1 px-3">
+<div class="flex items-center gap-stack-gap-sm px-4 py-3 cursor-pointer text-on-surface-variant hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">Planning Hub</span>
+</div>
+<div class="flex items-center gap-stack-gap-sm px-4 py-3 cursor-pointer text-on-surface-variant hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md text-label-md">Workbench</span>
+</div>
+<div class="flex items-center gap-stack-gap-sm px-4 py-3 cursor-pointer text-on-surface-variant hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined">fact_check</span>
+<span class="font-label-md text-label-md">Approved Demands</span>
+</div>
+<!-- ACTIVE NAV -->
+<div class="flex items-center gap-stack-gap-sm px-4 py-3 cursor-pointer bg-secondary-container dark:bg-primary-container text-on-secondary-container dark:text-on-primary-container font-semibold rounded-lg">
+<span class="material-symbols-outlined">package_2</span>
+<span class="font-label-md text-label-md">Packages</span>
+</div>
+<div class="flex items-center gap-stack-gap-sm px-4 py-3 cursor-pointer text-on-surface-variant hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined">rate_review</span>
+<span class="font-label-md text-label-md">Reviews</span>
+</div>
+<div class="flex items-center gap-stack-gap-sm px-4 py-3 cursor-pointer text-on-surface-variant hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined">send</span>
+<span class="font-label-md text-label-md">Releases</span>
+</div>
+</div>
+<div class="px-3 border-t border-outline-variant pt-4 space-y-1">
+<div class="flex items-center gap-stack-gap-sm px-4 py-3 cursor-pointer text-on-surface-variant hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</div>
+<div class="flex items-center gap-stack-gap-sm px-4 py-3 cursor-pointer text-on-surface-variant hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-md text-label-md">Logout</span>
+</div>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="ml-64 flex-1 flex flex-col overflow-y-auto">
+<!-- Page Header Area -->
+<div class="px-workbench-gutter py-8 bg-surface-container-lowest border-b border-outline-variant">
+<div class="max-w-container-max-width mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div>
+<div class="flex items-center gap-3 mb-2">
+<h1 class="font-headline-lg text-headline-lg text-primary">Specialized Oncology Medical Equipment</h1>
+<span class="bg-status-success/10 text-status-success px-3 py-1 rounded-full font-label-md text-label-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                RELEASED
+                            </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-2">
+<span class="font-bold">PKG-2026-MOH-042</span>
+<span class="text-outline-variant">•</span>
+<span>Ministry of Health</span>
+<span class="text-outline-variant">•</span>
+<span>Fiscal Year 2025/26</span>
+</p>
+</div>
+<div class="flex gap-stack-gap-md">
+<button class="px-4 py-2 border border-outline text-on-surface-variant font-label-md text-label-md rounded-lg hover:bg-surface-container-low transition-all">
+                            Download Summary
+                        </button>
+<button class="px-4 py-2 bg-primary text-white font-label-md text-label-md rounded-lg hover:opacity-90 active:scale-95 transition-all">
+                            Package Logs
+                        </button>
+</div>
+</div>
+<!-- Detail Tabs -->
+<div class="max-w-container-max-width mx-auto mt-8 flex gap-8">
+<button class="pb-3 font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all">Overview</button>
+<button class="pb-3 font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all">Items (12)</button>
+<button class="pb-3 font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all">Documents (5)</button>
+<button class="pb-3 font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all">Review</button>
+<button class="pb-3 font-label-md text-label-md text-on-surface-variant hover:text-primary transition-all">Timeline</button>
+<button class="pb-3 font-label-md text-label-md text-primary font-bold border-b-2 border-primary">Release</button>
+</div>
+</div>
+<!-- Content Grid -->
+<div class="px-workbench-gutter py-8 max-w-container-max-width mx-auto w-full flex flex-col lg:flex-row gap-workbench-gutter">
+<!-- Left: Main Release Content -->
+<div class="flex-1 space-y-workbench-gutter">
+<!-- Success Banner -->
+<div class="bg-status-success/5 border border-status-success/20 p-6 rounded-xl flex gap-4">
+<div class="w-12 h-12 bg-status-success/10 rounded-full flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-status-success text-3xl">task_alt</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-primary">Package Successfully Released</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">This package has been released to Tender Management. Planning and approval phase is now complete and locked for editing.</p>
+</div>
+</div>
+<!-- Bento Summary Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-outline-variant/30 col-span-2">
+<h4 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-4">Financial Handoff</h4>
+<div class="flex items-baseline gap-2">
+<span class="font-display-hero text-display-hero text-primary">KES 1.09B</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Estimated Value</span>
+</div>
+<div class="mt-6 grid grid-cols-2 gap-4 border-t border-outline-variant pt-6">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Procurement Method</p>
+<p class="font-headline-sm text-headline-sm text-primary mt-1">Open Tender</p>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Funding Source</p>
+<p class="font-headline-sm text-headline-sm text-primary mt-1">Dev. Budget (FY25/26)</p>
+</div>
+</div>
+</div>
+<div class="bg-primary-container p-6 rounded-xl flex flex-col justify-between">
+<h4 class="font-label-md text-label-md text-primary-fixed uppercase tracking-wider">Asset Package</h4>
+<div class="space-y-4">
+<div class="flex justify-between items-center text-primary-fixed">
+<span class="font-body-md text-body-md">Line Items</span>
+<span class="font-headline-sm text-headline-sm">12</span>
+</div>
+<div class="flex justify-between items-center text-primary-fixed">
+<span class="font-body-md text-body-md">Tech. Specs</span>
+<span class="font-headline-sm text-headline-sm">5</span>
+</div>
+<div class="flex justify-between items-center text-primary-fixed">
+<span class="font-body-md text-body-md">Compliance Docs</span>
+<span class="font-headline-sm text-headline-sm">3</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Project Impact Area Card -->
+<div class="group relative overflow-hidden bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 flex flex-col md:flex-row items-stretch cursor-pointer hover:shadow-md transition-shadow">
+<div class="md:w-64 h-48 md:h-auto bg-surface-container-high relative">
+<img class="w-full h-full object-cover" data-alt="A modern, high-tech architectural visualization of a National Cancer Center building. The design features sleek glass panels, clean white lines, and lush green landscaping. Sunlight glints off the reflective surfaces in a bright, optimistic light-mode atmosphere. The perspective is from a wide-angle street level, conveying scale and institutional importance." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBMJHM9lOtwos2DhOIo9SPMAzw9ISfEGJIO76LJNUoE4rr8kPxGEu7S6gtptJaIYwzHAEFc_LE9_X2Ucy-6dzFj7uavQ1ef4G1WSIZxd61ewG85uL07Usz6WfGHpsQiAVyNsOzq6WdBao40G4Dv9wl8fuByudfWg_1Nocl_A3X-J6c84SJLxg07WS-c58FwmGDjhf4ffRou0ySUZs0ao0swLtSCIHZdzV3LCG2uT6HAhNLkNrQCvG4"/>
+<div class="absolute inset-0 bg-primary/20 group-hover:bg-primary/10 transition-colors"></div>
+</div>
+<div class="p-8 flex-1 flex flex-col justify-center">
+<div class="flex items-center gap-2 text-secondary mb-2">
+<span class="material-symbols-outlined text-[18px]">location_on</span>
+<span class="font-label-md text-label-md uppercase tracking-widest">Impact Location</span>
+</div>
+<h3 class="font-headline-lg text-headline-lg text-primary mb-2">National Cancer Center - Phase II</h3>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-lg">Primary beneficiary for the specialized equipment package. Strategic infrastructure project aimed at expanding diagnostic capacity across the central region.</p>
+<div class="mt-4 flex gap-4">
+<span class="flex items-center gap-1 font-label-md text-label-md text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">domain</span>
+                                    Healthcare
+                                </span>
+<span class="flex items-center gap-1 font-label-md text-label-md text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">group</span>
+                                    2.5M Beneficiaries
+                                </span>
+</div>
+</div>
+<div class="absolute right-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-primary text-4xl">arrow_forward</span>
+</div>
+</div>
+</div>
+<!-- Right: Status Sidebar -->
+<aside class="w-full lg:w-80 space-y-6">
+<!-- Tender Link Section -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 p-6 rounded-xl shadow-sm">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-status-success">link</span>
+<h4 class="font-label-md text-label-md text-primary font-bold uppercase tracking-wider">Tender Link</h4>
+</div>
+<div class="bg-status-success/5 border border-status-success/10 p-3 rounded-lg mb-4">
+<p class="font-label-sm text-label-sm text-status-success font-semibold">Tender Created Successfully</p>
+</div>
+<div class="mb-6">
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-1">Tender Reference</p>
+<p class="font-body-lg text-body-lg font-bold text-primary">TND-2026-MOH-042-01</p>
+</div>
+<button class="w-full bg-primary text-white font-label-md text-label-md py-3 rounded-lg hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2">
+                            Open in Tender Management
+                            <span class="material-symbols-outlined text-[18px]">open_in_new</span>
+</button>
+</div>
+<!-- Release Evidence Section -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 p-6 rounded-xl shadow-sm">
+<h4 class="font-label-md text-label-md text-primary font-bold uppercase tracking-wider mb-4">Release Evidence</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-4">Verified digital certificate confirming the authorized transfer of procurement artifacts.</p>
+<button class="w-full border border-outline text-on-surface-variant font-label-md text-label-md py-2.5 rounded-lg hover:bg-surface-container-low transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+                            View Release Certificate
+                        </button>
+</div>
+<!-- Recent Activity Section -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 p-6 rounded-xl shadow-sm">
+<h4 class="font-label-md text-label-md text-primary font-bold uppercase tracking-wider mb-4">Recent Activity</h4>
+<div class="relative pl-6 space-y-6 before:content-[''] before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-px before:bg-outline-variant">
+<div class="relative">
+<div class="absolute -left-[23px] top-1 w-2.5 h-2.5 rounded-full bg-status-success"></div>
+<p class="font-label-md text-label-md text-primary font-bold">Package Released</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">to Tender Management</p>
+<p class="font-label-sm text-label-sm text-outline mt-1 italic">Today, 10:42 AM</p>
+</div>
+<div class="relative opacity-60">
+<div class="absolute -left-[23px] top-1 w-2.5 h-2.5 rounded-full bg-outline"></div>
+<p class="font-label-md text-label-md text-on-surface-variant">Final Approval</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Cabinet Secretary, MOH</p>
+<p class="font-label-sm text-label-sm text-outline mt-1 italic">Oct 24, 2024</p>
+</div>
+<div class="relative opacity-60">
+<div class="absolute -left-[23px] top-1 w-2.5 h-2.5 rounded-full bg-outline"></div>
+<p class="font-label-md text-label-md text-on-surface-variant">Package Locked</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">System Automated</p>
+<p class="font-label-sm text-label-sm text-outline mt-1 italic">Oct 24, 2024</p>
+</div>
+</div>
+</div>
+</aside>
+</div>
+<!-- Footer -->
+<footer class="flex justify-between items-center w-full px-workbench-gutter py-6 mt-auto bg-surface-container-lowest border-t border-outline-variant">
+<p class="font-body-sm text-body-sm text-on-surface-variant">© 2024 Procurement Management System. All rights reserved.</p>
+<div class="flex gap-stack-gap-md">
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">User Guide</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Policy Documentation</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Support</a>
+</div>
+</footer>
+</main>
+</div>
+<!-- Micro-interaction Scripts -->
+<script>
+        // Simple hover effect for "Impact Area" card
+        const card = document.querySelector('.group');
+        if(card) {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-2px)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0px)';
+            });
+        }
+
+        // Button Ripple Effect simulation
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('mousedown', function(e) {
+                this.classList.add('opacity-80');
+                setTimeout(() => this.classList.remove('opacity-80'), 150);
+            });
+        });
+    </script>
+</body></html>

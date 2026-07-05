@@ -113,6 +113,13 @@ def format_package_review_tab(doc, package_code: str) -> dict[str, Any]:
 
 
 def _may_approve(doc, actor: str, package_code: str) -> dict[str, Any]:
+	status = (doc.status or "").strip()
+	if status != PKG_IN_REVIEW:
+		return {
+			"allowed": False,
+			"error_code": PackageReviewDecision.INVALID_STATE,
+			"message": "Package must be In Review to approve.",
+		}
 	guard = can_record_package_review_decision(
 		package_code, {"decision": "Approved"}, actor
 	)
@@ -126,7 +133,7 @@ def _may_approve(doc, actor: str, package_code: str) -> dict[str, Any]:
 		}
 	try:
 		pp_policy.assert_may_record_review_decision(doc)
-	except frappe.PermissionError as exc:
+	except (frappe.PermissionError, frappe.ValidationError) as exc:
 		error_code = getattr(exc, "title", None) or PlanningPermission.NOT_PERMITTED
 		return {
 			"allowed": False,

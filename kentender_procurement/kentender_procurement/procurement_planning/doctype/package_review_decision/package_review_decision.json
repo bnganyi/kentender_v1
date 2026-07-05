@@ -43,7 +43,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Decision Type",
-   "options": "Submitted for Review\nApproved\nReturned for Correction\nCancelled\nRelease Authorized\nSuperseded",
+   "options": "Submitted for Review\nApproved\nReturned for Correction\nClarification Requested\nCancelled\nRelease Authorized\nSuperseded",
    "reqd": 1,
    "search_index": 1
   },

@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Package Details | Procurement Planning Workbench</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Hanken+Grotesk:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#c4c6cf",
+                        "primary-fixed-dim": "#afc8f2",
+                        "on-surface-variant": "#44474e",
+                        "on-error-container": "#93000a",
+                        "on-background": "#191c1e",
+                        "on-primary-container": "#6f87ae",
+                        "primary": "#000511",
+                        "tertiary-fixed-dim": "#fdb793",
+                        "on-surface": "#191c1e",
+                        "cat-services": "#EC4899",
+                        "surface-container-highest": "#e0e3e5",
+                        "primary-fixed": "#d5e3ff",
+                        "error": "#ba1a1a",
+                        "inverse-surface": "#2d3133",
+                        "surface-tint": "#485f84",
+                        "on-primary-fixed": "#001b3b",
+                        "on-primary-fixed-variant": "#2f476b",
+                        "inverse-primary": "#afc8f2",
+                        "outline": "#74777f",
+                        "tertiary": "#0e0200",
+                        "on-error": "#ffffff",
+                        "secondary-container": "#73b5fe",
+                        "surface-bright": "#f7f9fb",
+                        "surface-variant": "#e0e3e5",
+                        "tertiary-fixed": "#ffdbcb",
+                        "secondary": "#0061a5",
+                        "cat-works": "#8B5CF6",
+                        "status-neutral": "#64748B",
+                        "status-success": "#10B981",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-high": "#e6e8ea",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed": "#d2e4ff",
+                        "surface-dim": "#d8dadc",
+                        "on-secondary-container": "#004578",
+                        "surface-container-low": "#f2f4f6",
+                        "cat-consultancy": "#06B6D4",
+                        "status-error": "#EF4444",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-primary": "#ffffff",
+                        "surface": "#f7f9fb",
+                        "background": "#f7f9fb",
+                        "status-warning": "#F59E0B",
+                        "cat-goods": "#6366F1",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed": "#341100",
+                        "surface-container": "#eceef0",
+                        "on-secondary-fixed-variant": "#00497e",
+                        "on-tertiary-fixed-variant": "#6a3a20",
+                        "error-container": "#ffdad6",
+                        "tertiary-container": "#381300",
+                        "on-tertiary-container": "#b47858",
+                        "on-secondary-fixed": "#001d36",
+                        "secondary-fixed-dim": "#9fcaff",
+                        "primary-container": "#001e40"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "stack-gap-md": "16px",
+                        "header-height": "64px",
+                        "workbench-gutter": "24px",
+                        "card-padding": "20px",
+                        "stack-gap-sm": "8px",
+                        "sidebar-width": "256px",
+                        "container-max-width": "1440px"
+                    },
+                    "fontFamily": {
+                        "display-hero": ["Hanken Grotesk"],
+                        "body-sm": ["Inter"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "label-sm": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display-hero-mobile": ["Hanken Grotesk"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "display-hero": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "display-hero-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .workbench-grid {
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr 320px;
+            min-height: 100vh;
+        }
+        .main-canvas {
+            margin-top: 64px;
+            margin-left: 256px;
+            margin-right: 320px;
+            padding-bottom: 80px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full h-[64px] bg-surface dark:bg-on-surface shadow-sm z-50 flex items-center justify-between px-workbench-gutter max-w-container-max-width mx-auto left-0 right-0">
+<div class="flex items-center gap-8">
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">Procurement Planning Workbench</span>
+<div class="hidden md:flex gap-6">
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors" href="#">Dashboard</a>
+<a class="font-body-md text-body-md text-primary dark:text-primary-fixed-dim border-b-2 border-primary dark:border-primary-fixed-dim pb-1" href="#">Plans</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors" href="#">Analytics</a>
+<a class="font-body-md text-body-md text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors" href="#">Archive</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-all">notifications</button>
+<button class="material-symbols-outlined p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-all">help</button>
+<button class="material-symbols-outlined p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-all">settings</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="Corporate headshot of a senior procurement officer with a professional and focused expression, set against a blurred modern office background with soft neutral lighting and cool tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBU91924vCkdbcSNTo5wQ0Nl3XijWXL8IjW6wr5xiDea54PXBDZL_NuEbkipKccf40zSH4xbZ2jnu1gnYsfK2PmFUHw-UTA6fhsWz2D188xfIR3loyYr3XaygxFrQhnHwA-4P0ihQYgJGgXF7yrnaC11eCYaBuNwSOcuyULVRPiUbvJ6tjl_oE0OHXNWCsCLsoRHv0IHBADqYmqjtC3YYJQv4vJ_viuwMJ_fGtfF3WQC23MYLSdamjz"/>
+</div>
+</div>
+</nav>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-[64px] w-sidebar-width h-[calc(100vh-64px)] bg-surface dark:bg-on-surface flex flex-col border-r border-outline-variant dark:border-outline z-40">
+<div class="p-6 border-b border-outline-variant flex items-center gap-3">
+<div class="w-10 h-10 bg-primary text-white flex items-center justify-center rounded-lg">
+<span class="material-symbols-outlined">health_and_safety</span>
+</div>
+<div>
+<p class="font-headline-sm text-headline-sm font-bold text-on-surface">Ministry of Health</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">FY 2026/2027</p>
+</div>
+</div>
+<nav class="flex-1 py-4 overflow-y-auto">
+<div class="px-3 mb-2">
+<button class="w-full bg-primary text-on-primary py-3 px-4 rounded-xl font-label-md flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                    New Plan
+                </button>
+</div>
+<a class="flex items-center gap-3 px-6 py-3 font-label-md text-on-surface-variant hover:bg-surface-container dark:hover:bg-surface-variant transition-all duration-200" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+                Annual Plans
+            </a>
+<a class="flex items-center gap-3 px-6 py-3 font-label-md text-on-surface-variant hover:bg-surface-container dark:hover:bg-surface-variant transition-all duration-200" href="#">
+<span class="material-symbols-outlined">list_alt</span>
+                Demand Tracking
+            </a>
+<a class="flex items-center gap-3 px-6 py-3 font-label-md bg-surface-container-high dark:bg-surface-container-highest border-r-2 border-primary dark:border-primary-fixed-dim text-primary dark:text-primary-fixed-dim font-bold" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+                Package Wizard
+            </a>
+<a class="flex items-center gap-3 px-6 py-3 font-label-md text-on-surface-variant hover:bg-surface-container dark:hover:bg-surface-variant transition-all duration-200" href="#">
+<span class="material-symbols-outlined">fact_check</span>
+                Approvals
+            </a>
+<a class="flex items-center gap-3 px-6 py-3 font-label-md text-on-surface-variant hover:bg-surface-container dark:hover:bg-surface-variant transition-all duration-200" href="#">
+<span class="material-symbols-outlined">bar_chart</span>
+                Reporting
+            </a>
+</nav>
+<div class="p-4 border-t border-outline-variant">
+<a class="flex items-center gap-3 px-4 py-2 font-label-sm text-on-surface-variant hover:underline transition-all" href="#">
+<span class="material-symbols-outlined text-[18px]">contact_support</span>
+                Support
+            </a>
+<a class="flex items-center gap-3 px-4 py-2 font-label-sm text-on-surface-variant hover:underline transition-all text-error" href="#">
+<span class="material-symbols-outlined text-[18px]">logout</span>
+                Sign Out
+            </a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="main-canvas p-workbench-gutter">
+<!-- Header Section -->
+<header class="mb-8 flex flex-col gap-4">
+<nav class="flex items-center gap-2 text-on-surface-variant font-label-sm">
+<span>Plans</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span>Medical Equipment</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-on-surface">PKG-2026-MOH-042</span>
+</nav>
+<div class="flex items-start justify-between">
+<div class="flex flex-col gap-1">
+<h1 class="font-display-hero text-display-hero text-primary">Specialized Oncology Medical Equipment</h1>
+<div class="flex items-center gap-3 mt-1">
+<span class="font-label-md text-label-md bg-surface-container-high px-3 py-1 rounded-full border border-outline-variant uppercase tracking-wider">PKG-2026-MOH-042</span>
+<span class="flex items-center gap-1.5 px-3 py-1 bg-error-container text-on-error-container font-label-md rounded-full border border-error/20">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">block</span>
+                            BLOCKED
+                        </span>
+</div>
+</div>
+</div>
+</header>
+<!-- Tabs Container -->
+<div class="border-b border-outline-variant mb-6">
+<div class="flex gap-8">
+<button class="pb-4 border-b-2 border-primary text-primary font-label-md px-1">Overview</button>
+<button class="pb-4 text-on-surface-variant font-label-md px-1 hover:text-primary transition-colors">Lines &amp; Funding</button>
+<button class="pb-4 text-on-surface-variant font-label-md px-1 hover:text-primary transition-colors">Readiness</button>
+<button class="pb-4 text-on-surface-variant font-label-md px-1 hover:text-primary transition-colors">Review</button>
+<button class="pb-4 text-on-surface-variant font-label-md px-1 hover:text-primary transition-colors">Release</button>
+</div>
+</div>
+<!-- Tab Content: Overview -->
+<div class="flex flex-col gap-8">
+<!-- CRITICAL: Blocker Alert Section -->
+<section class="bg-error-container/40 border-l-4 border-error p-6 rounded-r-xl shadow-sm">
+<div class="flex gap-4">
+<div class="text-error mt-0.5">
+<span class="material-symbols-outlined text-[32px]" style="font-variation-settings: 'FILL' 1;">error</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-error-container mb-2">Blocker Alert: Insufficient Funding</h3>
+<p class="font-body-lg text-body-lg text-on-error-container leading-relaxed">
+                            This procurement package is currently <span class="font-bold">locked</span>. The aggregate package value of KES 250M exceeds the currently reserved budget line (Code: HLTH-ONC-26) by <span class="font-bold text-error">KES 50M</span>.
+                        </p>
+<div class="mt-4 flex items-center gap-4">
+<button class="bg-error text-on-error px-4 py-2 rounded-lg font-label-md hover:bg-error/90 transition-all active:scale-95">Request Budget Uplift</button>
+<button class="text-on-error-container font-label-md underline underline-offset-4 hover:opacity-80">View Detailed Gap Analysis</button>
+</div>
+</div>
+</div>
+</section>
+<div class="grid grid-cols-1 gap-8">
+<!-- Package Identity Card -->
+<div class="bg-surface-container-lowest border border-outline-variant p-card-padding rounded-xl shadow-sm">
+<div class="flex items-center justify-between mb-6">
+<h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">info</span>
+                            Package Identity
+                        </h2>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-12">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Procurement Method</p>
+<p class="font-body-md text-body-md text-on-surface font-semibold">International Open Tender</p>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Category</p>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-cat-goods/10 text-cat-goods border border-cat-goods/20">GOODS</span>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Estimated Value</p>
+<p class="font-body-md text-body-md text-on-surface font-semibold">KES 250,000,000.00</p>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Lead Department</p>
+<p class="font-body-md text-body-md text-on-surface font-semibold">Department of Specialized Medicine</p>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Priority Level</p>
+<span class="text-status-warning font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">priority_high</span>
+                                High (Urgent)
+                            </span>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Target Release Date</p>
+<p class="font-body-md text-body-md text-on-surface font-semibold">October 15, 2026</p>
+</div>
+</div>
+</div>
+<!-- Included Demands Table Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden">
+<div class="p-card-padding flex items-center justify-between border-b border-outline-variant bg-surface-container-low">
+<h2 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">shopping_cart</span>
+                            Included Demands
+                        </h2>
+<span class="bg-primary text-on-primary text-[11px] px-2 py-0.5 rounded-full font-bold">4 ITEMS</span>
+</div>
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low border-b border-outline-variant">
+<tr>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase text-[11px]">Demand Ref</th>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase text-[11px]">Description</th>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase text-[11px]">Quantity</th>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase text-[11px]">Est. Cost</th>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase text-[11px]">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/30">
+<tr class="hover:bg-surface-container transition-colors">
+<td class="px-6 py-4 font-body-md font-semibold text-primary">DMD-8821</td>
+<td class="px-6 py-4 font-body-md text-on-surface">Linear Accelerator System - Model XZ</td>
+<td class="px-6 py-4 font-body-md text-on-surface">2 Units</td>
+<td class="px-6 py-4 font-body-md text-on-surface">KES 120.0M</td>
+<td class="px-6 py-4"><span class="px-2 py-1 bg-status-success/10 text-status-success text-[11px] font-bold rounded">VERIFIED</span></td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="px-6 py-4 font-body-md font-semibold text-primary">DMD-8822</td>
+<td class="px-6 py-4 font-body-md text-on-surface">CT Simulation Suite (Wide Bore)</td>
+<td class="px-6 py-4 font-body-md text-on-surface">1 Unit</td>
+<td class="px-6 py-4 font-body-md text-on-surface">KES 60.0M</td>
+<td class="px-6 py-4"><span class="px-2 py-1 bg-status-success/10 text-status-success text-[11px] font-bold rounded">VERIFIED</span></td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="px-6 py-4 font-body-md font-semibold text-primary">DMD-8823</td>
+<td class="px-6 py-4 font-body-md text-on-surface">Brachytherapy Remote Afterloader</td>
+<td class="px-6 py-4 font-body-md text-on-surface">2 Units</td>
+<td class="px-6 py-4 font-body-md text-on-surface">KES 45.0M</td>
+<td class="px-6 py-4"><span class="px-2 py-1 bg-status-warning/10 text-status-warning text-[11px] font-bold rounded">REVIEW REQ</span></td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="px-6 py-4 font-body-md font-semibold text-primary">DMD-8824</td>
+<td class="px-6 py-4 font-body-md text-on-surface">Dosimetry &amp; QA Phantoms Set</td>
+<td class="px-6 py-4 font-body-md text-on-surface">3 Sets</td>
+<td class="px-6 py-4 font-body-md text-on-surface">KES 25.0M</td>
+<td class="px-6 py-4"><span class="px-2 py-1 bg-status-success/10 text-status-success text-[11px] font-bold rounded">VERIFIED</span></td>
+</tr>
+</tbody>
+</table>
+<div class="p-4 bg-surface-container-low text-right">
+<p class="font-body-md text-on-surface-variant">Total Package Value: <span class="font-bold text-primary">KES 250,000,000.00</span></p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Right Sidebar: Workflow and Status -->
+<aside class="fixed right-0 top-[64px] w-[320px] h-[calc(100vh-64px)] bg-surface-container-low border-l border-outline-variant z-40 p-6 flex flex-col gap-8 overflow-y-auto">
+<!-- Status Information -->
+<section>
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest mb-4">Status Information</h3>
+<div class="bg-surface-container-highest/50 p-4 rounded-xl border border-outline-variant">
+<div class="flex items-center gap-2 text-error font-bold mb-2">
+<span class="material-symbols-outlined">lock</span>
+                    Locked for Editing
+                </div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+                    This package has been automatically locked because it contains a critical blocker. No further modifications can be made until the funding gap is resolved.
+                </p>
+<div class="mt-4 pt-4 border-t border-outline-variant">
+<div class="flex justify-between text-[11px] text-on-surface-variant font-bold uppercase mb-2">
+<span>Blocker Severity</span>
+<span class="text-error">Critical</span>
+</div>
+<div class="w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="w-full h-full bg-error"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Workflow Actions -->
+<section>
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest mb-4">Workflow Actions</h3>
+<div class="flex flex-col gap-3">
+<button class="w-full bg-secondary text-on-secondary py-3 px-4 rounded-xl font-label-md flex items-center justify-center gap-2 hover:bg-secondary/90 active:scale-[0.96] transition-all">
+<span class="material-symbols-outlined text-[20px]">task_alt</span>
+                    Resolve Blockers
+                </button>
+<button class="w-full bg-surface-container-lowest text-secondary border border-secondary py-3 px-4 rounded-xl font-label-md flex items-center justify-center gap-2 hover:bg-secondary/5 active:scale-[0.96] transition-all">
+<span class="material-symbols-outlined text-[20px]">analytics</span>
+                    View Funding Analysis
+                </button>
+<button class="w-full text-on-surface-variant py-2 px-4 rounded-xl font-label-md flex items-center justify-center gap-2 hover:bg-surface-container transition-all">
+<span class="material-symbols-outlined text-[20px]">history</span>
+                    View Block History
+                </button>
+</div>
+</section>
+<!-- Assigned Contacts -->
+<section>
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest mb-4">Assigned Contacts</h3>
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3 p-3 bg-surface-container-lowest rounded-xl border border-outline-variant">
+<img class="w-10 h-10 rounded-full bg-surface-container shadow-sm" data-alt="A focused female finance analyst in a professional setting, looking directly into the camera with a competent expression, wearing professional attire in a bright, modern corporate environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzqca7wAA0MGKxDV22gFChzEbEdI_4EaTSz7hIid2FghpQ7smpD2FV-D0DVkHJyaZazdYSV0HKCBfkwSn8YIJdRXYGdq3bb9Fxbv1orcgGKN0qOZ4pY18-rscUeqqMJCSMJKjPFZkGCyDyUvfYNVEmtp2pM_wDsnCBXJ1vpAEGVSQwbFe6pUt-qLtSrO7wTxUG3Oi0DSYoJWR_ob0mRgkkUJ0O6A4274rA7jt3RLbJlNXuheZgtDJK"/>
+<div class="flex-1 min-w-0">
+<p class="font-body-md font-bold text-primary truncate">Sarah Okelo</p>
+<p class="font-label-sm text-on-surface-variant truncate">Finance Analyst (MOH)</p>
+</div>
+<button class="material-symbols-outlined text-secondary">chat_bubble</button>
+</div>
+<div class="flex items-center gap-3 p-3 bg-surface-container-lowest rounded-xl border border-outline-variant">
+<img class="w-10 h-10 rounded-full bg-surface-container shadow-sm" data-alt="A male senior procurement strategist with an authoritative and experienced presence, posed in a clean and minimal executive office space with natural sunlight and professional corporate styling." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXgCqjEa0OMt7UVDtRUWfRXN-AbqnMlX_2FuP4_adsbAtF4abylcjLWdG8oNKevstas23BpnOvv1Hhu3Om5WGc2hD2cPbq1KMA4v_9cn3_jbUUrQt0Ap4GI9CbR2LqB9MKDaWs8j9g2l-bZDhWpOAJOFfYdMdT6ZEcAE2sIUfmCI1bYb6HICixx7um-mghrzxI31RgHPo3UHA80g_UQcgmropmsjqIJU7SBJfI6cZ3Ubwct0t1ksDo"/>
+<div class="flex-1 min-w-0">
+<p class="font-body-md font-bold text-primary truncate">David Kipchoge</p>
+<p class="font-label-sm text-on-surface-variant truncate">Lead Planner</p>
+</div>
+<button class="material-symbols-outlined text-secondary">chat_bubble</button>
+</div>
+</div>
+</section>
+</aside>
+<!-- Footer -->
+<footer class="fixed bottom-0 right-0 w-[calc(100%-256px)] h-16 bg-surface-container-low dark:bg-surface-container-lowest border-t border-outline-variant dark:border-outline flex items-center justify-between px-workbench-gutter z-50">
+<div class="flex items-center gap-4">
+<span class="font-label-md text-label-md font-bold text-primary dark:text-primary-fixed-dim">© 2024 Institutional Procurement System</span>
+</div>
+<div class="flex items-center gap-6">
+<a class="font-label-sm text-label-sm text-on-surface-variant dark:text-surface-variant hover:underline opacity-80 hover:opacity-100 transition-all" href="#">Privacy Policy</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant dark:text-surface-variant hover:underline opacity-80 hover:opacity-100 transition-all" href="#">Terms of Service</a>
+<a class="font-label-sm text-label-sm text-primary dark:text-primary-fixed-dim font-semibold hover:underline opacity-80 hover:opacity-100 transition-all" href="#">Audit Log</a>
+</div>
+</footer>
+<script>
+        // Micro-interaction for primary button
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('mousedown', () => {
+                button.classList.add('scale-95');
+            });
+            button.addEventListener('mouseup', () => {
+                button.classList.remove('scale-95');
+            });
+        });
+    </script>
+</body></html>

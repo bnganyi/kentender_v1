@@ -39,20 +39,13 @@ class TestPP6PackageReleaseP6011Source(UnitTestCase):
 			Path(__file__).resolve().parents[2]
 			/ "public"
 			/ "js"
-			/ "pp3_planning_package_detail.js"
+			/ "package_detail_page.js"
 		)
 		source = path.read_text(encoding="utf-8", errors="replace")
 		for tid in (
-			"pp3-package-release-panel",
-			"pp3-package-release-ready",
-			"pp3-package-release-protected",
-			"pp3-package-release-sent",
-			"pp3-package-release-warning",
-			"pp3-package-release-action",
-			"pp3-package-release-blockers",
-			"pp3-package-release-go-readiness",
-			"pp3-package-release-go-review",
-			"pp3-package-release-open-tender",
+			"kt-pd-panel-release",
+			"kt-pd-release-action",
+			"kt-pd-open-tender",
 		):
 			self.assertIn(tid, source, msg=f"missing {tid} (P6-011+)")
 		self.assertNotIn("pp2-planning-handoff-stack", source)

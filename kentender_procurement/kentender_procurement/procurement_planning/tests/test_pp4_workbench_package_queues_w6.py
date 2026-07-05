@@ -90,14 +90,14 @@ class TestPP4WorkbenchPackageQueuesW6Source(UnitTestCase):
 		self.assertIn("workbenchPackageQueueRowTemplateByRoot.has(root)", fn)
 		self.assertIn("firstRow.cloneNode(true)", fn)
 
-	def test_row_click_navigates_using_internal_id_not_business_code(self) -> None:
-		"""W5 already fixed this exact class of bug for demand rows
-		(`demand.id` vs `demand.code`); package rows must use the internal
-		Frappe name for Desk-form routing, not the business code."""
+	def test_row_click_navigates_to_package_detail_using_business_code(self) -> None:
+		"""Package title links route to the dedicated package-detail page
+		using the business package code (PD9), not the raw desk form."""
 		fn = self._fn_block("function buildWorkbenchPackageQueueRow(template, doc, item, uiQueue, root) {")
-		self.assertIn("data.underlying_object_id", fn)
-		self.assertIn('frappe.set_route("procurement-package", packageId)', fn)
-		self.assertNotIn("data.underlying_object_code", fn.split('setAttribute("data-package-id"', 1)[0])
+		self.assertIn("workbenchPackageRouteCode(data)", fn)
+		self.assertIn("navigateToPackageDetailPage(packageCode)", fn)
+		self.assertIn("buildPackageDetailUrl(packageCode)", fn)
+		self.assertNotIn('frappe.set_route("procurement-package"', fn)
 
 	def test_placeholder_row_opens_wizard_instead_of_routing(self) -> None:
 		"""Demands "Added to Active Plan" but not yet packaged have no
@@ -186,7 +186,7 @@ class TestPP4WorkbenchPackageQueuesW6Source(UnitTestCase):
 		self.assertIn("if (!rows.length) {", fn)
 		self.assertIn("appendWorkbenchEmptyStateRow(doc, tbody,", fn)
 
-	def test_package_detail_surface_left_untouched(self) -> None:
-		"""Out of scope for this pass: the orphaned `package-detail` surface
-		is flagged for a future cleanup decision, not removed here."""
-		self.assertIn("function mountPackageDetailSurface(mainHost, packageCode, root) {", self.source)
+	def test_package_detail_surface_redirects_to_dedicated_page(self) -> None:
+		"""PD9: legacy mount helper now delegates to the package-detail page."""
+		fn = self._fn_block("function mountPackageDetailSurface(mainHost, packageCode, root) {")
+		self.assertIn("navigateToPackageDetailPage(packageCode)", fn)

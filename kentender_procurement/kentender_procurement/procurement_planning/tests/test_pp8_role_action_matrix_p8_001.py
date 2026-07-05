@@ -24,7 +24,7 @@ from kentender_procurement.procurement_planning.services.workbench_item_view_mod
 )
 
 _PLANNER = "planner@moh.test"
-_REVIEWER = "reviewer@moh.test"
+_REVIEWER = "planning.reviewer@moh.test"
 
 
 class TestPP8RoleActionMatrixP8001(IntegrationTestCase):

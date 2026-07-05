@@ -23,7 +23,7 @@ _PP3_JS_ASSETS = (
 	"pp3_planning_selected_work_summary.js",
 	"pp3_planning_released_list.js",
 	"pp3_planning_release_summary.js",
-	"pp3_planning_package_detail.js",
+	"package_detail_page.js",
 	"pp3_planning_evidence_drawer.js",
 )
 

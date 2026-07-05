@@ -40,6 +40,22 @@
 		return out;
 	}
 
+	function filterTimelineRows(timeline, filter) {
+		const rows = Array.isArray(timeline) ? timeline : [];
+		if (String(filter || "").trim() !== "blocker") {
+			return rows;
+		}
+		return rows.filter(function (row) {
+			const item = row || {};
+			const status = String(item.status || "").toLowerCase();
+			const label = String(item.label || item || "").toLowerCase();
+			return (
+				status === "blocked" ||
+				/return|block|fail|fund|readiness|correction|clarif/.test(label)
+			);
+		});
+	}
+
 	function toRecordLabels(records) {
 		const rows = Array.isArray(records) ? records : [];
 		const out = [];
@@ -356,7 +372,7 @@
 			}
 			update({
 				title: String(payload.title || o.title || __("Evidence")).trim(),
-				timeline: payload.timeline,
+				timeline: filterTimelineRows(payload.timeline, o.filter),
 				records: payload.records,
 				technical_details: payload.technical_details || {},
 			});
@@ -367,6 +383,13 @@
 		html: html,
 		render: render,
 		open: open,
+		openForPackage: function (opts) {
+			open({
+				package_code: (opts && opts.package_code) || "",
+				title: (opts && opts.title) || __("Evidence"),
+				filter: (opts && opts.filter) || "",
+			});
+		},
 		openForPlan: function (opts) {
 			open({
 				title: (opts && opts.title) || "",
@@ -377,4 +400,6 @@
 		isOpen: isOpen,
 		ensureRoot: ensureRoot,
 	};
+	kentender_procurement.PlanningEvidenceDrawer =
+		kentender_procurement.PlanningWorkbenchEvidenceDrawer;
 })();

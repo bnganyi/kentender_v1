@@ -86,12 +86,9 @@ test.describe('P8-001 Role/state action matrix', () => {
 	});
 
 	test('draft package detail hides release action for planner', async ({ page }) => {
-		await page.goto(`${pp3Root}/desk/procurement-planning/packages/${PKG_CODE}`, {
-			waitUntil: 'domcontentloaded',
-		});
-		await expect(page.getByTestId('pp3-package-detail')).toHaveCount(1, { timeout: 30000 });
-		await expect(page.getByTestId('pp3-package-release-action')).toHaveCount(0);
-		await page.screenshot({ path: 'artifacts/p8-001-draft-no-release-action.png', fullPage: true });
+		await page.goto(`/app/package-detail/${PKG_CODE}`, { waitUntil: 'domcontentloaded' });
+		await expect(page.getByTestId('kt-pd-detail')).toBeVisible({ timeout: 30000 });
+		await expect(page.getByTestId('kt-pd-release-action')).toHaveCount(0);
 	});
 
 	test.afterAll(() => {
@@ -110,7 +107,6 @@ test.describe('P8-002 No active plan enforcement', () => {
 		await expect(page.getByTestId('pp3-planning-work-unavailable')).toBeVisible({ timeout: 30000 });
 		await expect(page.getByTestId('pp3-primary-action')).toHaveCount(0);
 		await expect(page.locator('body')).not.toContainText('Add to Active Plan');
-		await page.screenshot({ path: 'artifacts/p8-002-no-active-plan-gate.png', fullPage: true });
 	});
 });
 
@@ -129,7 +125,6 @@ test.describe('P8-006 Technical leakage scan', () => {
 			expect(bodyText).not.toMatch(pattern);
 		}
 		assertNoOrdinaryFlowLeakage(bodyText, 'releases surface');
-		await page.screenshot({ path: 'artifacts/p8-006-no-technical-leakage.png', fullPage: true });
 	});
 });
 
@@ -167,7 +162,6 @@ test.describe('P8-008 Navigation negative test', () => {
 		for (const pattern of P8_FORBIDDEN_NAV_LABELS) {
 			expect(bodyText).not.toMatch(pattern);
 		}
-		await page.screenshot({ path: 'artifacts/p8-008-no-legacy-nav.png', fullPage: true });
 	});
 });
 
@@ -217,6 +211,5 @@ test.describe('P8-010 Supplier confidentiality', () => {
 		await page.goto(`${pp3Root}/desk/procurement-planning`, { waitUntil: 'domcontentloaded' });
 		await expect(page.getByRole('heading', { name: 'Not Permitted' })).toBeVisible({ timeout: 30000 });
 		await expect(page.getByTestId('pp3-evidence-drawer')).toHaveCount(0);
-		await page.screenshot({ path: 'artifacts/p8-010-supplier-denied.png', fullPage: true });
 	});
 });

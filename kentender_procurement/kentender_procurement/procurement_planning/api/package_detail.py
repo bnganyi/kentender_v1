@@ -16,6 +16,7 @@ from kentender_procurement.procurement_planning.api.landing import (
 	_can_read_planning,
 	resolve_pp_role_key,
 )
+from kentender_procurement.procurement_planning.permissions import pp_api_gates
 from kentender_procurement.procurement_planning.api.package_list import _template_names_for
 from kentender_procurement.procurement_planning.package_journey_surfaces import (
 	journey_link_hints_by_package_codes,
@@ -160,6 +161,7 @@ def _actions_for_workbench(status: str, role_key: str, *, plan_status: str = "")
 	ps = (plan_status or "").strip()
 	rk = role_key or ""
 	is_planner = rk in ("planner", "admin")
+	is_reviewer = rk in ("reviewer", "authority", "admin")
 	is_authority = rk in ("authority", "admin")
 	is_officer = rk == "officer"
 	is_admin = rk == "admin"
@@ -170,8 +172,9 @@ def _actions_for_workbench(status: str, role_key: str, *, plan_status: str = "")
 		"add_demand_lines": can_edit_lines,
 		"remove_demand_lines": can_edit_lines,
 		"submit": is_planner and st in ("Draft", "Returned for Correction"),
-		"approve": is_authority and st == "In Review",
-		"return": is_authority and st == "In Review",
+		"approve": is_reviewer and st == "In Review",
+		"return": is_reviewer and st == "In Review",
+		"clarify": is_reviewer and st == "In Review",
 		"cancel": is_authority and st == "In Review",
 		"mark_ready": (is_officer or is_authority or is_admin) and st == "Approved",
 		"release": (is_officer or is_authority or is_admin) and st == "Ready for Release" and can_release,
@@ -682,26 +685,30 @@ def get_pp3_package_detail(package: str | None = None) -> dict:
 		get_pp3_package_detail_view_model,
 	)
 
-	if not frappe.db.exists("DocType", "Procurement Plan"):
+	if not frappe.db.exists("DocType", "Procurement Package"):
 		return _fail(
 			code="PP_NOT_INSTALLED",
 			message=_("Procurement Planning is not installed on this site (missing DocTypes)."),
 		)
 
-	role_key = resolve_pp_role_key()
-	if not role_key or not _can_read_planning():
-		return _fail(
-			code="PP_ACCESS_DENIED",
-			message=_("You do not have access to the Procurement Planning workbench."),
-			role_key=role_key or "auditor",
-		)
+	role_key, denied = pp_api_gates.planning_api_read_gate(
+		pp_api_gates.PLANNING_PACKAGE_READ,
+		message=_("You do not have access to the Procurement Planning workbench."),
+		fail=_fail,
+		installed_doctype="Procurement Package",
+		require_planning_read=False,
+		require_demand_read=False,
+		require_package_read=False,
+	)
+	if denied:
+		return denied
 
 	pkg_name = (package or "").strip()
 	if not pkg_name:
 		return _fail(
 			code="NOT_FOUND",
 			message=_("Package not found."),
-			role_key=role_key,
+			role_key=role_key or resolve_pp_role_key() or "auditor",
 		)
 
 	return get_pp3_package_detail_view_model(pkg_name, frappe.session.user)

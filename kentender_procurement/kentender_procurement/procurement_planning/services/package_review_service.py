@@ -39,6 +39,7 @@ _SUBMIT_ALLOWED_STATUSES = frozenset((PKG_DRAFT, PKG_RETURNED))
 _DECISION_SUBMITTED = "Submitted for Review"
 _DECISION_APPROVED = "Approved"
 _DECISION_RETURNED = "Returned for Correction"
+_DECISION_CLARIFICATION = "Clarification Requested"
 _REVIEW_DECISION_TYPES = frozenset((_DECISION_APPROVED, _DECISION_RETURNED))
 _VALUE_TOLERANCE = 0.01
 
@@ -776,3 +777,159 @@ def record_package_review_decision(
 		from_state=from_state,
 		to_state=to_state,
 	)
+
+
+def can_request_clarification_on_package(package_code: str, message: str, actor: str) -> dict[str, Any]:
+	"""Read-only guard — whether a clarification request may be recorded (no status change)."""
+	blockers: list[dict[str, str]] = []
+	package_code = (package_code or "").strip()
+	text = (message or "").strip()
+	if not text:
+		blockers.append(
+			_blocker(
+				PackageReviewDecision.RETURN_REASON_REQUIRED,
+				_("Clarification message is required."),
+			)
+		)
+	if not package_code or not frappe.db.exists("Procurement Package", package_code):
+		blockers.append(
+			_blocker(
+				PackageReviewDecision.PACKAGE_NOT_FOUND,
+				_("Procurement package was not found."),
+			)
+		)
+		return {"allowed": False, "blockers": blockers}
+	pkg = frappe.db.get_value(
+		"Procurement Package",
+		package_code,
+		("status", "locked_after_release"),
+		as_dict=True,
+	) or {}
+	if (pkg.get("status") or "").strip() != PKG_IN_REVIEW:
+		blockers.append(
+			_blocker(
+				PackageReviewDecision.INVALID_STATE,
+				_("Package must be In Review to request clarification."),
+			)
+		)
+	if bool(cint(pkg.get("locked_after_release"))):
+		blockers.append(
+			_blocker(
+				PackageReviewDecision.LOCKED_AFTER_RELEASE,
+				_("Package is locked after release and cannot be reviewed."),
+			)
+		)
+	return {"allowed": not blockers, "blockers": blockers}
+
+
+def request_clarification_on_package(
+	package_code: str, message: str, actor: str
+) -> dict[str, Any]:
+	"""Record a clarification request while keeping the package In Review."""
+	package_code = (package_code or "").strip()
+	actor_user = (actor or frappe.session.user or "Administrator").strip()
+	text = (message or "").strip()
+	guard = can_request_clarification_on_package(package_code, text, actor_user)
+	if not guard.get("allowed"):
+		blockers = guard.get("blockers") or []
+		first = blockers[0] if blockers else {}
+		frappe.throw(
+			first.get("message") or _("Clarification cannot be recorded."),
+			title=first.get("code") or PackageReviewDecision.INVALID_STATE,
+			exc=frappe.ValidationError,
+		)
+	if frappe.db.exists("Procurement Package", package_code):
+		pp_policy.assert_may_record_review_decision(
+			frappe.get_doc("Procurement Package", package_code)
+		)
+		pp_scope.assert_may_act_on_procurement_package(package_code)
+	from_state = PKG_IN_REVIEW
+	review_code = _create_review_decision(
+		package_code=package_code,
+		decision_type=_DECISION_CLARIFICATION,
+		from_state=from_state,
+		to_state=from_state,
+		actor=actor_user,
+		decision_reason=text,
+	)
+	frappe.db.set_value(
+		"Procurement Package",
+		package_code,
+		"latest_review_code",
+		review_code,
+		update_modified=True,
+	)
+	journey_code = frappe.db.get_value("Procurement Package", package_code, "journey_code")
+	record_planning_audit_event(
+		event_type="Package Clarification Requested",
+		object_type="Procurement Package",
+		object_code=package_code,
+		from_state=from_state,
+		to_state=from_state,
+		reason=text,
+		evidence_ref=review_code,
+		journey_code=journey_code,
+		actor=actor_user,
+	)
+	owner = frappe.db.get_value("Procurement Package", package_code, "package_owner") or ""
+	if owner and owner != actor_user:
+		try:
+			frappe.get_doc(
+				{
+					"doctype": "Notification Log",
+					"subject": _("Clarification requested on package {0}").format(package_code),
+					"email_content": text,
+					"for_user": owner,
+					"type": "Alert",
+					"document_type": "Procurement Package",
+					"document_name": package_code,
+				}
+			).insert(ignore_permissions=True)
+		except Exception:
+			pass
+	return {
+		"ok": True,
+		"action": "created",
+		"review_decision_code": review_code,
+		"package_code": package_code,
+		"from_state": from_state,
+		"to_state": from_state,
+		"status": from_state,
+		"review": _get_review_decision(review_code),
+	}
+
+
+def list_package_review_decisions(package_code: str, *, limit: int = 20) -> list[dict[str, Any]]:
+	"""Return recent review decisions for display in the Package Detail review panel."""
+	code = (package_code or "").strip()
+	if not code:
+		return []
+	rows = frappe.get_all(
+		"Package Review Decision",
+		filters={"package_code": code},
+		fields=[
+			"review_decision_code",
+			"decision_type",
+			"decided_by",
+			"decided_at",
+			"from_state",
+			"to_state",
+			"decision_reason",
+			"required_correction",
+		],
+		order_by="decided_at desc, modified desc",
+		limit_page_length=limit,
+	)
+	out: list[dict[str, Any]] = []
+	for row in rows:
+		formatted = _format_review_row(row)
+		if not formatted:
+			continue
+		user_label = formatted.get("decided_by") or ""
+		if user_label and frappe.db.exists("User", user_label):
+			full_name = frappe.db.get_value("User", user_label, "full_name") or user_label
+			formatted["decided_by_label"] = full_name
+		else:
+			formatted["decided_by_label"] = user_label
+		out.append(formatted)
+	return out
