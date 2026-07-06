@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Contract Terms - STD Configurator</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=Manrope:wght@600;700;800&amp;family=JetBrains+Mono:wght@500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Manrope:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-highest": "#e2e2e8",
+                    "on-surface-variant": "#434750",
+                    "on-background": "#1a1b20",
+                    "outline-variant": "#c3c6d1",
+                    "on-secondary-fixed-variant": "#004a78",
+                    "inverse-primary": "#abc7ff",
+                    "surface-container-low": "#f4f3f9",
+                    "error": "#ba1a1a",
+                    "primary-fixed-dim": "#abc7ff",
+                    "on-secondary-container": "#004c7c",
+                    "inverse-on-surface": "#f1f0f6",
+                    "tertiary": "#102135",
+                    "outline": "#737781",
+                    "status-exhausted": "#EF4444",
+                    "secondary-fixed": "#cfe5ff",
+                    "on-primary-container": "#7b9ee0",
+                    "surface": "#f9f9fe",
+                    "on-secondary": "#ffffff",
+                    "secondary-container": "#7bbeff",
+                    "border-subtle": "#E2E8F0",
+                    "surface-bright": "#f9f9fe",
+                    "status-reserved": "#F59E0B",
+                    "on-error": "#ffffff",
+                    "background": "#f9f9fe",
+                    "on-error-container": "#93000a",
+                    "secondary": "#01629d",
+                    "on-secondary-fixed": "#001d34",
+                    "on-tertiary": "#ffffff",
+                    "surface-container-high": "#e8e7ed",
+                    "on-primary": "#ffffff",
+                    "surface-variant": "#e2e2e8",
+                    "on-surface": "#1a1b20",
+                    "surface-container-lowest": "#ffffff",
+                    "status-committed": "#6366F1",
+                    "tertiary-fixed": "#d3e4ff",
+                    "on-tertiary-fixed": "#0b1c30",
+                    "on-tertiary-fixed-variant": "#38485e",
+                    "on-primary-fixed": "#001b3f",
+                    "primary": "#001f48",
+                    "tertiary-container": "#26364b",
+                    "surface-dim": "#dad9df",
+                    "status-available": "#10B981",
+                    "data-block-bg": "#FFFFFF",
+                    "primary-fixed": "#d7e2ff",
+                    "tertiary-fixed-dim": "#b7c8e2",
+                    "on-primary-fixed-variant": "#1d4681",
+                    "surface-container": "#eeedf3",
+                    "surface-tint": "#395e9b",
+                    "secondary-fixed-dim": "#99cbff",
+                    "primary-container": "#00346f",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-container": "#8f9fb8",
+                    "inverse-surface": "#2f3035"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "unit": "4px",
+                    "gutter": "12px",
+                    "card-padding": "20px",
+                    "container-padding": "16px",
+                    "section-gap": "24px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Manrope"],
+                    "data-mono": ["JetBrains Mono"],
+                    "body-lg": ["Inter"],
+                    "label-caps": ["Inter"],
+                    "headline-sm": ["Manrope"],
+                    "body-md": ["Inter"],
+                    "headline-md": ["Manrope"]
+            },
+            "fontSize": {
+                    "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-md": ["22px", {"lineHeight": "30px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c3c6d1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #737781; }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen">
+<!-- Top Toolbar (Derived from TopNavBar logic) -->
+<header class="sticky top-0 z-50 bg-surface-container-lowest border-b border-outline-variant px-container-padding h-16 flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-8">
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary">STD Configurator</h1>
+<div class="relative w-80">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border border-outline-variant rounded-lg text-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none" placeholder="Search templates..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="h-8 w-[1px] bg-outline-variant mx-2"></div>
+<div class="flex items-center gap-3 pl-2">
+<div class="text-right hidden sm:block">
+<p class="font-label-caps text-label-caps text-on-surface">ADMIN USER</p>
+<p class="text-[10px] text-on-surface-variant">Procurement Lead</p>
+</div>
+<img class="w-10 h-10 rounded-full border-2 border-primary-fixed" data-alt="A professional headshot of a corporate procurement executive in a crisp white shirt against a neutral architectural background. The lighting is soft and professional, emphasizing a modern light-mode aesthetic with clean lines and a focused expression." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1q1z1sZ89g3qH2-ObQ6FyrSPDdh0veMoiuVOLVH9Xh5BeYcbCFlbL1X2R_RgwBtC2y8ac46xHUkjkBifpK7L7zA-1OXlhMFr_H9PD_iMG0rFcj-1GRoSHt5ChIVoMKGdLyaKwP714CcnwPJPfDldf83Jh1k776-RWsZcdAYOuv-Qf77I8amEyBz8v_g9XOcOMrTtU4dRxipcGSEMnR-bW7-oUUnN65nRhmCDczwXUaj-oT_UUksM"/>
+</div>
+</div>
+</header>
+<!-- Sub-header (Navigation & Global Actions) -->
+<div class="bg-surface-container-low px-container-padding py-4 flex items-center justify-between border-b border-outline-variant">
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 text-primary font-bold hover:underline transition-all">
+<span class="material-symbols-outlined">arrow_back</span>
+<span class="font-headline-sm text-headline-sm">STD Configurator</span>
+</button>
+<div class="h-6 w-[1px] bg-outline-variant"></div>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant tracking-widest">GLOBAL CONFIGURATION MODULE</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-4 py-2 text-primary border border-primary hover:bg-primary/5 font-bold rounded-lg transition-all scale-95 active:scale-100">Cancel Draft</button>
+<button class="px-4 py-2 bg-secondary-container text-on-secondary-container hover:bg-secondary-container/80 font-bold rounded-lg transition-all scale-95 active:scale-100">Save Draft</button>
+<button class="px-6 py-2 bg-primary text-on-primary hover:bg-primary-container rounded-lg font-bold transition-all scale-95 active:scale-100 shadow-md">Submit for Review</button>
+</div>
+</div>
+<!-- Configurator Tab Navigation -->
+<nav class="bg-surface-container-lowest px-container-padding overflow-x-auto border-b border-outline-variant">
+<div class="flex gap-8">
+<a class="py-4 text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-all border-b-2 border-transparent" href="#">OVERVIEW</a>
+<a class="py-4 text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-all border-b-2 border-transparent" href="#">APPLICABILITY</a>
+<a class="py-4 text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-all border-b-2 border-transparent" href="#">TENDER FIELDS</a>
+<a class="py-4 text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-all border-b-2 border-transparent" href="#">SUPPLIER REQ</a>
+<a class="py-4 text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-all border-b-2 border-transparent" href="#">FORMS &amp; ATTACHMENTS</a>
+<a class="py-4 text-on-surface-variant font-label-caps text-label-caps hover:text-primary transition-all border-b-2 border-transparent" href="#">EVALUATION SETUP</a>
+<a class="py-4 text-primary font-bold border-b-2 border-primary font-label-caps text-label-caps" href="#">CONTRACT TERMS</a>
+</div>
+</nav>
+<main class="max-w-[1440px] mx-auto p-section-gap">
+<!-- Header Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-card-padding mb-6 flex justify-between items-start">
+<div>
+<div class="flex items-center gap-3 mb-1">
+<h2 class="font-headline-lg text-headline-lg text-primary">Standard Tender Document for Building Works</h2>
+<span class="bg-primary-fixed text-on-primary-fixed px-3 py-1 rounded-full font-data-mono text-[12px] tracking-tighter">DRAFT V2.4</span>
+</div>
+<p class="text-on-surface-variant max-w-3xl font-body-lg">Define the contractual terms and financial guardrails that carry forward into the award and contract management phase.</p>
+</div>
+<div class="bg-secondary-fixed p-4 rounded-lg border border-outline-variant">
+<span class="material-symbols-outlined text-primary scale-125 mb-2 block">gavel</span>
+<p class="font-label-caps text-[10px] text-on-secondary-fixed-variant">STATUS</p>
+<p class="font-bold text-primary">In Configuration</p>
+</div>
+</div>
+<!-- Governing Contract Selector -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-card-padding mb-6">
+<label class="font-headline-sm text-headline-sm mb-4 block text-primary">Governing Contract Form</label>
+<div class="relative max-w-md">
+<select class="w-full pl-4 pr-10 py-3 bg-surface border border-outline-variant rounded-lg text-body-lg appearance-none focus:ring-2 focus:ring-primary focus:border-primary">
+<option>FIDIC Red Book (Building and Engineering Works)</option>
+<option>Public Works Contract (Standard Version)</option>
+<option>NEC4 Engineering and Construction Contract</option>
+<option>Design and Build (Lump Sum) Contract</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">expand_more</span>
+</div>
+<p class="mt-3 text-on-surface-variant text-body-md italic">This selection will automatically pre-populate mandatory legal clauses and standard conditions.</p>
+</div>
+<!-- Terms Matrix -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden mb-section-gap shadow-sm">
+<div class="px-card-padding py-4 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+<h3 class="font-headline-sm text-headline-sm text-primary">Contract Terms &amp; Conditions</h3>
+<button class="flex items-center gap-2 px-3 py-1.5 bg-primary text-on-primary rounded hover:bg-primary-container transition-all">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span class="font-label-caps text-label-caps">ADD CUSTOM TERM</span>
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-high border-b border-outline-variant">
+<th class="px-card-padding py-4 font-label-caps text-label-caps text-on-surface-variant">Term Name</th><th class="px-4 py-4 font-label-caps text-label-caps text-on-surface-variant">Clause Reference</th>
+<th class="px-4 py-4 font-label-caps text-label-caps text-on-surface-variant">Type</th>
+<th class="px-4 py-4 font-label-caps text-label-caps text-on-surface-variant">Required</th>
+<th class="px-4 py-4 font-label-caps text-label-caps text-on-surface-variant">Default Value</th>
+<th class="px-4 py-4 font-label-caps text-label-caps text-on-surface-variant">Tender-Level Override Allowed</th><th class="px-4 py-4 font-label-caps text-label-caps text-on-surface-variant">Approval Required for Change</th>
+<th class="px-4 py-4 font-label-caps text-label-caps text-on-surface-variant">Carries to Contract</th><th class="px-4 py-4 font-label-caps text-label-caps text-on-surface-variant">Visible to Supplier</th><th class="px-card-padding py-4 text-right font-label-caps text-label-caps text-on-surface-variant">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Performance Security -->
+<tr class="hover:bg-surface transition-colors">
+<td class="px-card-padding py-4 font-bold text-primary">Performance Security</td><td class="px-4 py-4 font-data-mono text-data-mono text-on-surface-variant">FIDIC Red Book Clause 4.2</td>
+<td class="px-4 py-4">
+<span class="bg-secondary-fixed text-on-secondary-fixed text-[12px] px-2 py-0.5 rounded border border-secondary-fixed-dim">Financial</span>
+</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2 text-status-available">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+<span class="font-body-md font-bold">Yes</span>
+</div>
+</td>
+<td class="px-4 py-4 font-data-mono text-data-mono">10% of Contract Price</td>
+<td class="px-4 py-4">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</td><td class="px-4 py-4"><span class="bg-secondary-fixed text-on-secondary-fixed text-[12px] px-2 py-0.5 rounded border border-secondary-fixed-dim font-bold">Yes</span></td>
+<td class="px-4 py-4"><div class="flex items-center gap-2 text-status-available"><span class="material-symbols-outlined text-[20px]">check_circle</span><span class="font-body-md font-bold">Yes</span></div></td><td class="px-4 py-4"><div class="flex items-center gap-2 text-status-available"><span class="material-symbols-outlined text-[20px]">check_circle</span><span class="font-body-md font-bold">Yes</span></div></td><td class="px-card-padding py-4 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">settings</span></button>
+</td>
+</tr>
+<!-- Advance Payment -->
+<tr class="hover:bg-surface transition-colors">
+<td class="px-card-padding py-4 font-bold text-primary">Advance Payment</td><td class="px-4 py-4 font-data-mono text-data-mono text-on-surface-variant">FIDIC Red Book Clause 14.2</td>
+<td class="px-4 py-4">
+<span class="bg-secondary-fixed text-on-secondary-fixed text-[12px] px-2 py-0.5 rounded border border-secondary-fixed-dim">Financial</span>
+</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2 text-status-reserved">
+<span class="material-symbols-outlined text-[20px]">help</span>
+<span class="font-body-md font-bold">Conditional</span>
+</div>
+</td>
+<td class="px-4 py-4 font-data-mono text-data-mono">Up to 20%</td>
+<td class="px-4 py-4">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</td><td class="px-4 py-4"><span class="bg-secondary-fixed text-on-secondary-fixed text-[12px] px-2 py-0.5 rounded border border-secondary-fixed-dim font-bold">Yes</span></td>
+<td class="px-4 py-4"><div class="flex items-center gap-2 text-status-reserved"><span class="material-symbols-outlined text-[20px]">help</span><span class="font-body-md font-bold">Conditional</span></div></td><td class="px-4 py-4"><div class="flex items-center gap-2 text-status-available"><span class="material-symbols-outlined text-[20px]">check_circle</span><span class="font-body-md font-bold">Yes</span></div></td><td class="px-card-padding py-4 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">settings</span></button>
+</td>
+</tr>
+<!-- Retention Money -->
+<tr class="hover:bg-surface transition-colors">
+<td class="px-card-padding py-4 font-bold text-primary">Retention Money</td><td class="px-4 py-4 font-data-mono text-data-mono text-on-surface-variant">FIDIC Red Book Clause 14.3</td>
+<td class="px-4 py-4">
+<span class="bg-secondary-fixed text-on-secondary-fixed text-[12px] px-2 py-0.5 rounded border border-secondary-fixed-dim">Financial</span>
+</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2 text-status-available">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+<span class="font-body-md font-bold">Yes</span>
+</div>
+</td>
+<td class="px-4 py-4 font-data-mono text-data-mono">5% of interim payments</td>
+<td class="px-4 py-4">
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</td><td class="px-4 py-4 text-on-surface-variant italic">N/A</td>
+<td class="px-4 py-4"><div class="flex items-center gap-2 text-status-available"><span class="material-symbols-outlined text-[20px]">check_circle</span><span class="font-body-md font-bold">Yes</span></div></td><td class="px-4 py-4"><span class="bg-secondary-fixed text-on-secondary-fixed text-[12px] px-2 py-0.5 rounded border border-secondary-fixed-dim font-bold">Summary Only</span></td><td class="px-card-padding py-4 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">settings</span></button>
+</td>
+</tr>
+<!-- Liquidated Damages -->
+<tr class="hover:bg-surface transition-colors">
+<td class="px-card-padding py-4 font-bold text-primary">Liquidated Damages</td><td class="px-4 py-4 font-data-mono text-data-mono text-on-surface-variant">FIDIC Red Book Clause 8.7</td>
+<td class="px-4 py-4">
+<span class="bg-tertiary-fixed text-on-tertiary-fixed text-[12px] px-2 py-0.5 rounded border border-tertiary-fixed-dim">Performance</span>
+</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2 text-status-available">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+<span class="font-body-md font-bold">Yes</span>
+</div>
+</td>
+<td class="px-4 py-4 font-data-mono text-data-mono">0.1% per day</td>
+<td class="px-4 py-4">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</td><td class="px-4 py-4"><span class="bg-secondary-fixed text-on-secondary-fixed text-[12px] px-2 py-0.5 rounded border border-secondary-fixed-dim font-bold">Yes</span></td>
+<td class="px-4 py-4"><div class="flex items-center gap-2 text-status-available"><span class="material-symbols-outlined text-[20px]">check_circle</span><span class="font-body-md font-bold">Yes</span></div></td><td class="px-4 py-4"><div class="flex items-center gap-2 text-status-available"><span class="material-symbols-outlined text-[20px]">check_circle</span><span class="font-body-md font-bold">Yes</span></div></td><td class="px-card-padding py-4 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">settings</span></button>
+</td>
+</tr>
+<!-- Defects Liability -->
+<tr class="hover:bg-surface transition-colors">
+<td class="px-card-padding py-4 font-bold text-primary">Defects Liability Period</td><td class="px-4 py-4 font-data-mono text-data-mono text-on-surface-variant">FIDIC Red Book Clause 11.1</td>
+<td class="px-4 py-4">
+<span class="bg-outline-variant/30 text-on-surface text-[12px] px-2 py-0.5 rounded border border-outline-variant">Legal</span>
+</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2 text-status-available">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+<span class="font-body-md font-bold">Yes</span>
+</div>
+</td>
+<td class="px-4 py-4 font-data-mono text-data-mono">12 months</td>
+<td class="px-4 py-4">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</td><td class="px-4 py-4"><span class="bg-secondary-fixed text-on-secondary-fixed text-[12px] px-2 py-0.5 rounded border border-secondary-fixed-dim font-bold">Yes</span></td>
+<td class="px-4 py-4"><div class="flex items-center gap-2 text-status-available"><span class="material-symbols-outlined text-[20px]">check_circle</span><span class="font-body-md font-bold">Yes</span></div></td><td class="px-4 py-4"><div class="flex items-center gap-2 text-status-available"><span class="material-symbols-outlined text-[20px]">check_circle</span><span class="font-body-md font-bold">Yes</span></div></td><td class="px-card-padding py-4 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">settings</span></button>
+</td>
+</tr>
+<!-- Insurance -->
+<tr class="hover:bg-surface transition-colors">
+<td class="px-card-padding py-4 font-bold text-primary">Insurance Requirements</td><td class="px-4 py-4 font-data-mono text-data-mono text-on-surface-variant">FIDIC Red Book Clause 18.1</td>
+<td class="px-4 py-4">
+<span class="bg-outline-variant/30 text-on-surface text-[12px] px-2 py-0.5 rounded border border-outline-variant">Legal</span>
+</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2 text-status-available">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+<span class="font-body-md font-bold">Yes</span>
+</div>
+</td>
+<td class="px-4 py-4 font-data-mono text-data-mono">Professional Indemnity + CAR</td>
+<td class="px-4 py-4">
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</td><td class="px-4 py-4 text-on-surface-variant italic">N/A</td>
+<td class="px-4 py-4"><div class="flex items-center gap-2 text-status-available"><span class="material-symbols-outlined text-[20px]">check_circle</span><span class="font-body-md font-bold">Yes</span></div></td><td class="px-4 py-4"><span class="bg-outline-variant/30 text-on-surface text-[12px] px-2 py-0.5 rounded border border-outline-variant font-bold">After Award</span></td><td class="px-card-padding py-4 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">settings</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div><div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden mb-6 shadow-sm">
+<div class="px-card-padding py-4 border-b border-outline-variant bg-surface-container-low">
+<h3 class="font-headline-sm text-headline-sm text-primary">Readiness Checklist</h3>
+</div>
+<div class="p-card-padding">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-status-available">check_circle</span>
+<span class="text-body-md">Governing contract form selected</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-status-available">check_circle</span>
+<span class="text-body-md">All mandatory terms configured</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-status-available">check_circle</span>
+<span class="text-body-md">Required terms have default values</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-status-available">check_circle</span>
+<span class="text-body-md">Override rules are defined</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-status-available">check_circle</span>
+<span class="text-body-md">Approval rules are defined for editable terms</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-status-reserved">warning</span>
+<span class="text-body-md">Clause references exist where required</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-status-available">check_circle</span>
+<span class="text-body-md">Carry-forward terms are mapped to Contract Management</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-status-available">check_circle</span>
+<span class="text-body-md">No internal-only terms are marked supplier-visible</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-status-reserved">warning</span>
+<span class="text-body-md">No required contract form attachment is missing</span>
+</div>
+</div>
+</div>
+<div class="px-card-padding py-3 bg-status-reserved/10 border-t border-status-reserved/20 flex items-center gap-3">
+<span class="material-symbols-outlined text-status-reserved">error</span>
+<span class="font-bold text-status-reserved">Contract Terms: 2 issues to resolve</span>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="flex items-center justify-between mt-12 pt-8 border-t border-outline-variant">
+<button class="flex items-center gap-2 px-6 py-3 border border-primary text-primary hover:bg-primary/5 rounded-lg font-bold transition-all">
+<span class="material-symbols-outlined">chevron_left</span>
+<span class="">Back: Evaluation Setup</span>
+</button>
+<div class="flex items-center gap-4">
+<button class="px-6 py-3 bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest rounded-lg font-bold transition-all">
+                    Preview Document
+                </button>
+<button class="flex items-center gap-2 px-8 py-3 bg-primary text-on-primary hover:bg-primary-container rounded-lg font-bold shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0">
+<span class="">Finish: View Summary</span>
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</main>
+<!-- Ambient Interaction Overlay (Optional Micro-interaction) -->
+<div class="fixed bottom-6 left-1/2 -translate-x-1/2 flex flex-col gap-2 z-[60]" id="toast-container"></div>
+<script>
+        // Micro-interaction for the checkboxes/switches to show a toast
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const toast = document.createElement('div');
+                toast.className = "bg-primary text-on-primary px-4 py-2 rounded-lg shadow-xl flex items-center gap-3 animate-bounce";
+                toast.innerHTML = `
+                    <span class="material-symbols-outlined text-[20px]">info</span>
+                    <span class="font-body-md font-bold">Field permission updated successfully</span>
+                `;
+                document.getElementById('toast-container').appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+            });
+        });
+    </script>
+</body></html>

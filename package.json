@@ -15,6 +15,7 @@
     "test:ui:smoke:works-hardening-wh012": "playwright test tests/ui/smoke/procurement/works-hardening-desk-wh012.spec.ts",
     "test:ui:smoke:std-lib-0600": "playwright test tests/ui/smoke/procurement/std-library-pack-smoke-0600.spec.ts",
     "test:ui:smoke:std-lib-0610": "playwright test tests/ui/smoke/procurement/std-library-a11y-0610.spec.ts",
+    "test:ui:smoke:std-config-gate": "playwright test tests/ui/smoke/std-config/std-library-catalogue.spec.ts tests/ui/smoke/std-config/std-configurator-tabs.spec.ts tests/ui/smoke/std-config/std-library-import.spec.ts tests/ui/smoke/std-config/std-config-data-binding.spec.ts",
     "test:ui:smoke:std-1600": "playwright test tests/ui/smoke/procurement/ui-smoke-std-1600.spec.ts",
     "test:ui:smoke:rel-1610": "playwright test tests/ui/smoke/procurement/ui-smoke-rel-1610.spec.ts && vitest run frontend/src/modules/std-engine/tender-configuration/pages/ReleaseToTenderPage.spec.tsx",
     "test:ui:smoke:officer-1620": "vitest run frontend/src/modules/std-engine/smoke/ui-smoke-officer-1620.spec.tsx",

@@ -1,0 +1,27 @@
+/* STD Config design tokens — mapped from pack DESIGN.md / mockup code.html */
+
+:root {
+	--kt-std-primary: #00346f;
+	--kt-std-on-primary: #ffffff;
+	--kt-std-primary-container: #00346f;
+	--kt-std-secondary: #01629d;
+	--kt-std-secondary-container: #7bbeff;
+	--kt-std-on-secondary-container: #004c7c;
+	--kt-std-surface: #f9f9fe;
+	--kt-std-surface-low: #f4f3f9;
+	--kt-std-surface-lowest: #ffffff;
+	--kt-std-surface-high: #e8e7ed;
+	--kt-std-on-surface: #1a1b20;
+	--kt-std-on-surface-variant: #434750;
+	--kt-std-outline: #737781;
+	--kt-std-outline-variant: #c3c6d1;
+	--kt-std-border-subtle: #e2e8f0;
+	--kt-std-status-available: #10b981;
+	--kt-std-status-reserved: #f59e0b;
+	--kt-std-status-exhausted: #ef4444;
+	--kt-std-status-committed: #6366f1;
+	--kt-std-font-body: "Inter", system-ui, sans-serif;
+	--kt-std-font-headline: "Manrope", "Inter", system-ui, sans-serif;
+	--kt-std-font-mono: "JetBrains Mono", ui-monospace, monospace;
+	--kt-std-shadow-sm: 0 1px 2px rgba(26, 27, 32, 0.06);
+}

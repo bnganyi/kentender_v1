@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>STD Configurator - Tender Fields</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=Manrope:wght@600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "on-background": "#1a1b20",
+                "secondary-fixed": "#cfe5ff",
+                "surface-variant": "#e2e2e8",
+                "primary": "#001f48",
+                "on-secondary-container": "#004c7c",
+                "on-tertiary-fixed": "#0b1c30",
+                "on-primary-container": "#7b9ee0",
+                "on-surface-variant": "#434750",
+                "outline": "#737781",
+                "on-primary-fixed-variant": "#1d4681",
+                "surface-container-high": "#e8e7ed",
+                "status-committed": "#6366F1",
+                "inverse-on-surface": "#f1f0f6",
+                "surface": "#f9f9fe",
+                "error-container": "#ffdad6",
+                "primary-fixed": "#d7e2ff",
+                "on-error-container": "#93000a",
+                "border-subtle": "#E2E8F0",
+                "background": "#f9f9fe",
+                "status-available": "#10B981",
+                "surface-bright": "#f9f9fe",
+                "on-secondary": "#ffffff",
+                "surface-container-highest": "#e2e2e8",
+                "surface-container": "#eeedf3",
+                "secondary": "#01629d",
+                "on-secondary-fixed-variant": "#004a78",
+                "primary-container": "#00346f",
+                "inverse-surface": "#2f3035",
+                "secondary-fixed-dim": "#99cbff",
+                "tertiary": "#102135",
+                "surface-container-low": "#f4f3f9",
+                "tertiary-fixed": "#d3e4ff",
+                "surface-container-lowest": "#ffffff",
+                "data-block-bg": "#FFFFFF",
+                "inverse-primary": "#abc7ff",
+                "surface-dim": "#dad9df",
+                "status-reserved": "#F59E0B",
+                "surface-tint": "#395e9b",
+                "on-tertiary": "#ffffff",
+                "on-tertiary-container": "#8f9fb8",
+                "on-primary-fixed": "#001b3f",
+                "on-error": "#ffffff",
+                "tertiary-container": "#26364b",
+                "on-surface": "#1a1b20",
+                "primary-fixed-dim": "#abc7ff",
+                "error": "#ba1a1a",
+                "status-exhausted": "#EF4444",
+                "secondary-container": "#7bbeff",
+                "on-tertiary-fixed-variant": "#38485e",
+                "on-primary": "#ffffff",
+                "tertiary-fixed-dim": "#b7c8e2",
+                "outline-variant": "#c3c6d1",
+                "on-secondary-fixed": "#001d34"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+            },
+            "spacing": {
+                "container-padding": "16px",
+                "gutter": "12px",
+                "unit": "4px",
+                "section-gap": "24px",
+                "card-padding": "20px"
+            },
+            "fontFamily": {
+                "label-caps": ["Inter"],
+                "headline-sm": ["Manrope"],
+                "body-lg": ["Inter"],
+                "headline-md": ["Manrope"],
+                "headline-lg": ["Manrope"],
+                "body-md": ["Inter"],
+                "data-mono": ["JetBrains Mono"],
+                "headline-lg-mobile": ["Manrope"]
+            },
+            "fontSize": {
+                "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                "headline-md": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+                "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+            line-height: 1;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md">
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-tertiary dark:bg-tertiary-container flex flex-col h-full py-spacing-section-gap z-50">
+<div class="px-6 mb-10">
+<h1 class="font-headline-md text-headline-md font-bold text-on-tertiary dark:text-on-tertiary-container">STD Manager</h1>
+<p class="font-label-caps text-label-caps text-on-tertiary/60">Procurement Portal</p>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Active: STD Library (Mapped to Library in prompt) -->
+<a class="flex items-center px-6 py-3 text-on-tertiary/70 dark:text-on-tertiary-container/70 font-body-md hover:bg-tertiary-container hover:text-on-tertiary transition-colors duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-3">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center px-6 py-3 text-primary-fixed-dim font-bold border-l-4 border-primary-fixed-dim bg-tertiary-container/50 transition-colors duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-3">folder_managed</span>
+<span>STD Library</span>
+</a>
+<a class="flex items-center px-6 py-3 text-on-tertiary/70 dark:text-on-tertiary-container/70 font-body-md hover:bg-tertiary-container hover:text-on-tertiary transition-colors duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-3">account_tree</span>
+<span>Workflow Templates</span>
+</a>
+<a class="flex items-center px-6 py-3 text-on-tertiary/70 dark:text-on-tertiary-container/70 font-body-md hover:bg-tertiary-container hover:text-on-tertiary transition-colors duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-3">history_edu</span>
+<span>Audit Logs</span>
+</a>
+<a class="flex items-center px-6 py-3 text-on-tertiary/70 dark:text-on-tertiary-container/70 font-body-md hover:bg-tertiary-container hover:text-on-tertiary transition-colors duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-3">gavel</span>
+<span>Governance</span>
+</a>
+<a class="flex items-center px-6 py-3 text-on-tertiary/70 dark:text-on-tertiary-container/70 font-body-md hover:bg-tertiary-container hover:text-on-tertiary transition-colors duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-3">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+<div class="mt-auto px-6 space-y-1">
+<a class="flex items-center py-3 text-on-tertiary/70 hover:text-on-tertiary transition-colors" href="#">
+<span class="material-symbols-outlined mr-3">help</span>
+<span>Support</span>
+</a>
+<a class="flex items-center py-3 text-on-tertiary/70 hover:text-on-tertiary transition-colors" href="#">
+<span class="material-symbols-outlined mr-3">logout</span>
+<span>Logout</span>
+</a>
+</div>
+</aside>
+<!-- TopNavBar -->
+<header class="docked full-width top-0 sticky z-40 bg-surface-container-lowest dark:bg-surface-container-low border-b border-outline-variant dark:border-outline flex justify-between items-center w-full pl-72 pr-container-padding h-16">
+<div class="flex items-center gap-4">
+<h2 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-on-surface">STD Configurator</h2>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-all scale-95 active:scale-100">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-all scale-95 active:scale-100">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+</div>
+<div class="h-8 w-px bg-outline-variant"></div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<p class="font-label-caps text-[10px] text-on-surface font-bold uppercase tracking-wider">Administrator</p>
+<p class="text-[10px] text-on-surface-variant font-medium uppercase">STD Configuration</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm">
+                    AD
+                </div>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="pl-64 pt-6 pb-24 bg-surface min-h-screen">
+<div class="max-w-[1400px] mx-auto px-container-padding">
+<!-- Document Header -->
+<div class="flex justify-between items-start mb-6">
+<div>
+<nav class="flex text-xs text-on-surface-variant mb-2 gap-2">
+<span>Library</span>
+<span>/</span>
+<span>Standard Tender Document</span>
+</nav>
+<div class="flex items-center gap-4">
+<h1 class="font-headline-lg text-headline-lg text-primary">Standard Tender Document for Building Works</h1>
+<span class="px-3 py-1 bg-surface-container-highest text-on-surface-variant rounded-lg font-label-caps text-[10px] tracking-widest border border-outline-variant">DRAFT</span>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 border border-outline-variant rounded-lg font-label-caps text-primary hover:bg-surface-container transition-colors">
+                        Clone Template
+                    </button>
+<button class="px-4 py-2 bg-primary text-on-primary rounded-lg font-label-caps hover:bg-primary-container transition-colors">
+                        Add New Field
+                    </button>
+</div>
+</div>
+<!-- Sub-Navigation -->
+<div class="border-b border-outline-variant mb-section-gap overflow-x-auto hide-scrollbar">
+<div class="flex gap-8 min-w-max">
+<a class="font-label-caps text-on-surface-variant/80 pb-3 hover:text-primary transition-all" href="#">Overview</a>
+<a class="font-label-caps text-on-surface-variant/80 pb-3 hover:text-primary transition-all" href="#">Applicability</a>
+<a class="font-label-caps text-primary dark:text-primary-fixed font-bold border-b-2 border-primary pb-3" href="#">Tender Fields</a>
+<a class="font-label-caps text-on-surface-variant/80 pb-3 hover:text-primary transition-all" href="#">Supplier Req</a>
+<a class="font-label-caps text-on-surface-variant/80 pb-3 hover:text-primary transition-all" href="#">Forms &amp; Attachments</a>
+<a class="font-label-caps text-on-surface-variant/80 pb-3 hover:text-primary transition-all" href="#">Evaluation Setup</a>
+<a class="font-label-caps text-on-surface-variant/80 pb-3 hover:text-primary transition-all" href="#">Contract Terms</a>
+<a class="font-label-caps text-on-surface-variant/80 pb-3 hover:text-primary transition-all" href="#">Rules &amp; Validations</a>
+<a class="font-label-caps text-on-surface-variant/80 pb-3 hover:text-primary transition-all" href="#">Preview</a>
+<a class="font-label-caps text-on-surface-variant/80 pb-3 hover:text-primary transition-all" href="#">Approval</a>
+</div>
+</div>
+<!-- Field Builder Interface -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-section-gap">
+<!-- Main Fields Table -->
+<div class="lg:col-span-12">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden">
+<div class="px-card-padding py-4 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+<h3 class="font-headline-sm text-headline-sm text-primary">Standard Tender Fields</h3>
+<div class="flex gap-2">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="pl-10 pr-4 py-1.5 text-xs rounded-lg border border-outline-variant bg-surface focus:ring-1 focus:ring-primary focus:border-primary outline-none" placeholder="Search fields..." type="text"/>
+</div>
+<button class="p-1.5 border border-outline-variant rounded-lg hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-sm">filter_list</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="px-card-padding py-3 font-label-caps text-on-surface-variant border-b border-outline-variant">Label</th>
+<th class="px-card-padding py-3 font-label-caps text-on-surface-variant border-b border-outline-variant">Field Type</th>
+<th class="px-card-padding py-3 font-label-caps text-on-surface-variant border-b border-outline-variant">Required</th>
+<th class="px-card-padding py-3 font-label-caps text-on-surface-variant border-b border-outline-variant">Default Value</th>
+<th class="px-card-padding py-3 font-label-caps text-on-surface-variant border-b border-outline-variant">Appears In</th><th class="px-card-padding py-3 font-label-caps text-on-surface-variant border-b border-outline-variant">Default Source</th><th class="px-card-padding py-3 font-label-caps text-on-surface-variant border-b border-outline-variant text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant"><!-- Tender Identity Group -->
+<tr class="bg-surface-container-low/30">
+<td class="px-card-padding py-2 border-b border-outline-variant" colspan="7">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">label</span>
+<span class="font-label-caps text-primary text-[11px] uppercase tracking-wider">Tender Identity</span>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group" onclick="const drawer = document.getElementById('field-detail-drawer'); drawer.classList.remove('opacity-0', 'pointer-events-none'); drawer.firstElementChild.nextElementSibling.classList.remove('translate-x-full');">
+<td class="px-card-padding py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline cursor-move">drag_indicator</span>
+<span class="font-bold text-on-surface">Tender Title</span>
+</div>
+</td>
+<td class="px-card-padding py-4"><span class="px-2 py-1 bg-secondary-fixed text-on-secondary-fixed-variant rounded-md font-data-mono text-[11px] uppercase">Text</span></td>
+<td class="px-card-padding py-4"><span class="px-2 py-0.5 bg-primary text-on-primary rounded-full text-[10px] font-bold uppercase tracking-wider">Always Required</span></td>
+<td class="px-card-padding py-4 text-on-surface-variant italic text-xs">—</td>
+<td class="px-card-padding py-4 text-on-surface-variant text-xs font-body-md">Supplier Portal, Tender Notice, Bid Submission</td><td class="px-card-padding py-4 text-on-surface-variant text-xs">Inherited from Planning Package</td><td class="px-card-padding py-4 text-right">
+<div class="flex justify-end gap-2 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 hover:bg-surface-container-high rounded-lg text-secondary" onclick="event.stopPropagation(); const drawer = document.getElementById('field-detail-drawer'); drawer.classList.remove('opacity-0', 'pointer-events-none'); drawer.firstElementChild.nextElementSibling.classList.remove('translate-x-full');"><span class="material-symbols-outlined text-sm">edit</span></button>
+<div class="flex items-center gap-1 text-on-surface-variant/70 px-2 py-1 bg-surface-container rounded-md"><span class="material-symbols-outlined text-xs">lock</span><span class="text-[10px] font-bold uppercase tracking-tighter">System Field</span></div>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group" onclick="const drawer = document.getElementById('field-detail-drawer'); drawer.classList.remove('opacity-0', 'pointer-events-none'); drawer.firstElementChild.nextElementSibling.classList.remove('translate-x-full');">
+<td class="px-card-padding py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline cursor-move">drag_indicator</span>
+<span class="font-bold text-on-surface">Tender Reference</span>
+</div>
+</td>
+<td class="px-card-padding py-4"><span class="px-2 py-1 bg-secondary-fixed text-on-secondary-fixed-variant rounded-md font-data-mono text-[11px] uppercase">Text</span></td>
+<td class="px-card-padding py-4"><span class="px-2 py-0.5 bg-secondary-container text-on-secondary-container rounded-full text-[10px] font-bold uppercase tracking-wider">System Generated</span></td>
+<td class="px-card-padding py-4 text-on-surface-variant font-data-mono text-xs">AUTO_GEN</td>
+<td class="px-card-padding py-4 text-on-surface-variant text-xs font-body-md">Supplier Portal, Tender Notice, Bid Submission</td><td class="px-card-padding py-4 text-on-surface-variant text-xs">Auto-generated</td><td class="px-card-padding py-4 text-right">
+<div class="flex justify-end gap-2 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 hover:bg-surface-container-high rounded-lg text-secondary" onclick="event.stopPropagation(); const drawer = document.getElementById('field-detail-drawer'); drawer.classList.remove('opacity-0', 'pointer-events-none'); drawer.firstElementChild.nextElementSibling.classList.remove('translate-x-full');"><span class="material-symbols-outlined text-sm">edit</span></button>
+<div class="flex items-center gap-1 text-on-surface-variant/70 px-2 py-1 bg-surface-container rounded-md"><span class="material-symbols-outlined text-xs">lock</span><span class="text-[10px] font-bold uppercase tracking-tighter">System Field</span></div>
+</div>
+</td>
+</tr>
+<!-- Tender Timetable Group -->
+<tr class="bg-surface-container-low/30">
+<td class="px-card-padding py-2 border-b border-outline-variant" colspan="7">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">schedule</span>
+<span class="font-label-caps text-primary text-[11px] uppercase tracking-wider">Tender Timetable</span>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group" onclick="const drawer = document.getElementById('field-detail-drawer'); drawer.classList.remove('opacity-0', 'pointer-events-none'); drawer.firstElementChild.nextElementSibling.classList.remove('translate-x-full');">
+<td class="px-card-padding py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline cursor-move">drag_indicator</span>
+<span class="font-bold text-on-surface">Submission Deadline</span>
+</div>
+</td>
+<td class="px-card-padding py-4"><span class="px-2 py-1 bg-tertiary-fixed text-on-tertiary-fixed-variant rounded-md font-data-mono text-[11px] uppercase">Date/Time</span></td>
+<td class="px-card-padding py-4"><span class="px-2 py-0.5 bg-primary text-on-primary rounded-full text-[10px] font-bold uppercase tracking-wider">Always Required</span></td>
+<td class="px-card-padding py-4 text-on-surface-variant italic text-xs">—</td>
+<td class="px-card-padding py-4 text-on-surface-variant text-xs font-body-md">Supplier Portal, Tender Notice, Bid Submission</td><td class="px-card-padding py-4 text-on-surface-variant text-xs">Manual</td><td class="px-card-padding py-4 text-right">
+<div class="flex justify-end gap-2 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 hover:bg-surface-container-high rounded-lg text-secondary" onclick="event.stopPropagation(); const drawer = document.getElementById('field-detail-drawer'); drawer.classList.remove('opacity-0', 'pointer-events-none'); drawer.firstElementChild.nextElementSibling.classList.remove('translate-x-full');"><span class="material-symbols-outlined text-sm">edit</span></button>
+<div class="flex items-center gap-1 text-on-surface-variant/70 px-2 py-1 bg-surface-container rounded-md"><span class="material-symbols-outlined text-xs">lock</span><span class="text-[10px] font-bold uppercase tracking-tighter">System Field</span></div>
+</div>
+</td>
+</tr><tr class="bg-surface-container-low/10">
+<td class="px-card-padding py-2" colspan="7">
+<button class="flex items-center gap-2 text-primary hover:text-secondary transition-colors font-medium text-xs">
+<span class="material-symbols-outlined text-sm">add_circle</span>
+Add Field to Tender Timetable
+</button>
+</td>
+</tr>
+<!-- Bid Security Group -->
+<tr class="bg-surface-container-low/30">
+<td class="px-card-padding py-2 border-b border-outline-variant" colspan="7">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">verified_user</span>
+<span class="font-label-caps text-primary text-[11px] uppercase tracking-wider">Bid Security</span>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group" onclick="const drawer = document.getElementById('field-detail-drawer'); drawer.classList.remove('opacity-0', 'pointer-events-none'); drawer.firstElementChild.nextElementSibling.classList.remove('translate-x-full');">
+<td class="px-card-padding py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline cursor-move">drag_indicator</span>
+<span class="font-bold text-on-surface">Bid Security Amount</span>
+</div>
+</td>
+<td class="px-card-padding py-4"><span class="px-2 py-1 bg-status-available/20 text-status-available rounded-md font-data-mono text-[11px] uppercase">Money</span></td>
+<td class="px-card-padding py-4"><span class="px-2 py-0.5 bg-status-reserved/20 text-status-reserved rounded-full text-[10px] font-bold uppercase tracking-wider">Conditionally Required</span></td>
+<td class="px-card-padding py-4 text-on-surface-variant font-data-mono text-xs">0.00</td>
+<td class="px-card-padding py-4 text-on-surface-variant text-xs font-body-md">Supplier Portal, Tender Document, Submission Validation</td><td class="px-card-padding py-4 text-on-surface-variant text-xs">Manual</td><td class="px-card-padding py-4 text-right">
+<div class="flex justify-end gap-2 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 hover:bg-surface-container-high rounded-lg text-secondary" onclick="event.stopPropagation(); const drawer = document.getElementById('field-detail-drawer'); drawer.classList.remove('opacity-0', 'pointer-events-none'); drawer.firstElementChild.nextElementSibling.classList.remove('translate-x-full');"><span class="material-symbols-outlined text-sm">edit</span></button>
+<div class="flex items-center gap-1 text-on-surface-variant/70 px-2 py-1 bg-surface-container rounded-md"><span class="material-symbols-outlined text-xs">lock</span><span class="text-[10px] font-bold uppercase tracking-tighter">System Field</span></div>
+</div>
+</td>
+</tr><tr class="bg-surface-container-low/10">
+<td class="px-card-padding py-2" colspan="7">
+<button class="flex items-center gap-2 text-primary hover:text-secondary transition-colors font-medium text-xs">
+<span class="material-symbols-outlined text-sm">add_circle</span>
+Add Field to Bid Security
+</button>
+</td>
+</tr>
+<!-- Site Visit / Pre-Bid Meeting Group (Empty) -->
+<tr class="bg-surface-container-low/30">
+<td class="px-card-padding py-2 border-b border-outline-variant" colspan="7">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">groups</span>
+<span class="font-label-caps text-primary text-[11px] uppercase tracking-wider">Site Visit / Pre-Bid Meeting</span>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group" onclick="const drawer = document.getElementById('field-detail-drawer'); drawer.classList.remove('opacity-0', 'pointer-events-none'); drawer.firstElementChild.nextElementSibling.classList.remove('translate-x-full');">
+<td class="px-card-padding py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline cursor-move">drag_indicator</span>
+<span class="font-bold text-on-surface">Site Visit Date</span>
+</div>
+</td>
+<td class="px-card-padding py-4"><span class="px-2 py-1 bg-tertiary-fixed text-on-tertiary-fixed-variant rounded-md font-data-mono text-[11px] uppercase">Date</span></td>
+<td class="px-card-padding py-4"><span class="px-2 py-0.5 bg-surface-container text-on-surface-variant/70 rounded-full text-[10px] font-bold uppercase tracking-wider">Optional</span></td>
+<td class="px-card-padding py-4 text-on-surface-variant italic text-xs">—</td>
+<td class="px-card-padding py-4 text-on-surface-variant text-xs font-body-md">Supplier Portal, Tender Notice</td><td class="px-card-padding py-4 text-on-surface-variant text-xs">Manual</td><td class="px-card-padding py-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 hover:bg-surface-container-high rounded-lg text-secondary" onclick="event.stopPropagation(); const drawer = document.getElementById('field-detail-drawer'); drawer.classList.remove('opacity-0', 'pointer-events-none'); drawer.firstElementChild.nextElementSibling.classList.remove('translate-x-full');"><span class="material-symbols-outlined text-sm">edit</span></button>
+<button class="p-1.5 hover:bg-error-container/50 rounded-lg text-error"><span class="material-symbols-outlined text-sm">delete</span></button>
+</div>
+</td>
+</tr><tr class="bg-surface-container-low/10">
+<td class="px-card-padding py-2" colspan="7">
+<button class="flex items-center gap-2 text-primary hover:text-secondary transition-colors font-medium text-xs">
+<span class="material-symbols-outlined text-sm">add_circle</span>
+Add Field to Site Visit / Pre-Bid Meeting
+</button>
+</td>
+</tr>
+<!-- Clarifications Group (Placeholder) -->
+<tr class="bg-surface-container-low/30">
+<td class="px-card-padding py-2 border-b border-outline-variant" colspan="7">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">question_answer</span>
+<span class="font-label-caps text-primary text-[11px] uppercase tracking-wider">Clarifications</span>
+</div>
+</td>
+</tr>
+<!-- Lots Group (Placeholder) -->
+<tr class="bg-surface-container-low/30">
+<td class="px-card-padding py-2 border-b border-outline-variant" colspan="7">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">layers</span>
+<span class="font-label-caps text-primary text-[11px] uppercase tracking-wider">Lots</span>
+</div>
+</td>
+</tr>
+<!-- Delivery / Completion Group -->
+<tr class="bg-surface-container-low/30">
+<td class="px-card-padding py-2 border-b border-outline-variant" colspan="7">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">local_shipping</span>
+<span class="font-label-caps text-primary text-[11px] uppercase tracking-wider">Delivery / Completion</span>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group" onclick="const drawer = document.getElementById('field-detail-drawer'); drawer.classList.remove('opacity-0', 'pointer-events-none'); drawer.firstElementChild.nextElementSibling.classList.remove('translate-x-full');">
+<td class="px-card-padding py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline cursor-move">drag_indicator</span>
+<span class="font-bold text-on-surface">Completion Period</span>
+</div>
+</td>
+<td class="px-card-padding py-4">
+<div class="flex items-center gap-2">
+<span class="px-2 py-1 bg-status-committed/20 text-status-committed rounded-md font-data-mono text-[11px] uppercase">Number</span>
+<span class="text-[10px] text-on-surface-variant">/ Days</span>
+</div>
+</td>
+<td class="px-card-padding py-4"><span class="px-2 py-0.5 bg-primary text-on-primary rounded-full text-[10px] font-bold uppercase tracking-wider">Always Required</span></td>
+<td class="px-card-padding py-4 text-on-surface-variant font-data-mono text-xs">90 days</td>
+<td class="px-card-padding py-4 text-on-surface-variant text-xs font-body-md">Tender Document, Contract</td><td class="px-card-padding py-4 text-on-surface-variant text-xs">Manual</td><td class="px-card-padding py-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 hover:bg-surface-container-high rounded-lg text-secondary" onclick="event.stopPropagation(); const drawer = document.getElementById('field-detail-drawer'); drawer.classList.remove('opacity-0', 'pointer-events-none'); drawer.firstElementChild.nextElementSibling.classList.remove('translate-x-full');"><span class="material-symbols-outlined text-sm">edit</span></button>
+<button class="p-1.5 hover:bg-error-container/50 rounded-lg text-error"><span class="material-symbols-outlined text-sm">delete</span></button>
+</div>
+</td>
+</tr>
+<!-- Contract Conditions Group (Placeholder) -->
+<tr class="bg-surface-container-low/30">
+<td class="px-card-padding py-2 border-b border-outline-variant" colspan="7">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">description</span>
+<span class="font-label-caps text-primary text-[11px] uppercase tracking-wider">Contract Conditions</span>
+</div>
+</td>
+</tr>
+<!-- Contacts Group (Placeholder) -->
+<tr class="bg-surface-container-low/30">
+<td class="px-card-padding py-2 border-b border-outline-variant" colspan="7">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">contact_page</span>
+<span class="font-label-caps text-primary text-[11px] uppercase tracking-wider">Contacts</span>
+</div>
+</td>
+</tr></tbody>
+</table>
+</div>
+<div class="px-card-padding py-6 bg-surface-container-low/30 border-t border-outline-variant">
+<button class="w-full py-3 border border-dashed border-outline-variant rounded-lg text-on-surface-variant hover:border-primary hover:text-primary hover:bg-surface-container transition-all flex items-center justify-center gap-2 font-medium text-sm group">
+<span class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">add</span>
+Add Field Here
+</button>
+</div>
+</div>
+</div>
+<!-- Guidance/Bento Cards -->
+<div class="lg:col-span-12 grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<div class="bg-surface-container-lowest p-card-padding rounded-xl border border-outline-variant">
+<div class="w-10 h-10 rounded-lg bg-primary-container/20 text-primary flex items-center justify-center mb-4">
+<span class="material-symbols-outlined">rule</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm mb-2">Validation Rules</h4>
+<p class="text-xs text-on-surface-variant">Fields marked as 'Required' will trigger system alerts if left blank by procurement officers during procurement creation.</p>
+</div>
+<div class="bg-surface-container-lowest p-card-padding rounded-xl border border-outline-variant">
+<div class="w-10 h-10 rounded-lg bg-status-available/20 text-status-available flex items-center justify-center mb-4">
+<span class="material-symbols-outlined">dataset</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm mb-2">Data Integrity</h4>
+<p class="text-xs text-on-surface-variant">Field types ensure data is captured in a structured format suitable for the automated Technical JSON generation.</p>
+</div>
+<div class="bg-surface-container-lowest p-card-padding rounded-xl border border-outline-variant">
+<div class="w-10 h-10 rounded-lg bg-status-reserved/20 text-status-reserved flex items-center justify-center mb-4">
+<span class="material-symbols-outlined">preview</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm mb-2">Interactive Preview</h4>
+<p class="text-xs text-on-surface-variant">Use the 'Preview' tab to see how these fields will appear to the end-user in the procurement portal interface.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Action Bar -->
+<footer class="fixed bottom-0 left-64 right-0 bg-surface-container-lowest border-t border-outline-variant py-4 px-container-padding flex justify-between items-center z-40 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+<div class="flex items-center gap-4">
+<button class="px-6 py-2 rounded-lg text-error hover:bg-error-container transition-colors font-label-caps">
+                Cancel Draft
+            </button>
+<div class="h-6 w-px bg-outline-variant"></div>
+<p class="text-xs text-on-surface-variant">Last autosaved at 14:32 PM</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-6 py-2 border border-outline-variant rounded-lg text-primary hover:bg-surface-container transition-colors font-label-caps">
+                Save Draft
+            </button>
+<button class="px-6 py-2 border border-outline-variant rounded-lg text-primary hover:bg-surface-container transition-colors font-label-caps flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">visibility</span>
+                Preview
+            </button>
+<button class="px-8 py-2 bg-primary text-on-primary rounded-lg font-bold hover:bg-primary-container transition-colors shadow-lg shadow-primary/20 font-label-caps">
+                Submit for Review
+            </button>
+</div>
+</footer>
+<script>
+        // Simple Micro-interaction for drag and drop simulation
+        document.querySelectorAll('tr').forEach(row => {
+            row.addEventListener('mousedown', (e) => {
+                if(e.target.closest('.cursor-move')) {
+                    row.classList.add('bg-surface-container-high', 'scale-[0.99]', 'transition-all');
+                }
+            });
+            document.addEventListener('mouseup', () => {
+                row.classList.remove('bg-surface-container-high', 'scale-[0.99]');
+            });
+        });
+
+        // Hover animation for buttons
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(btn => {
+            btn.addEventListener('mouseenter', () => {
+                btn.classList.add('transition-transform', 'duration-150');
+            });
+        });
+    </script>
+<div class="fixed inset-0 z-50 flex justify-end transition-opacity duration-300 opacity-0 pointer-events-none" id="field-detail-drawer">
+<div class="absolute inset-0 bg-on-background/20 backdrop-blur-sm"></div>
+<div class="relative w-full max-w-md bg-surface-container-lowest h-full shadow-lg flex flex-col translate-x-full transition-transform duration-300">
+<div class="px-6 py-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<h3 class="font-headline-sm text-headline-sm text-primary">Field Details</h3>
+<button class="p-2 hover:bg-surface-container-high rounded-full transition-colors" onclick="document.getElementById('field-detail-drawer').classList.add('opacity-0', 'pointer-events-none'); document.getElementById('field-detail-drawer').firstElementChild.nextElementSibling.classList.add('translate-x-full');">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto p-6 space-y-6 hide-scrollbar">
+<div class="space-y-1.5">
+<label class="font-label-caps text-[11px] text-on-surface-variant uppercase">Field Label</label>
+<input class="w-full px-3 py-2 rounded-lg border border-outline-variant focus:ring-1 focus:ring-primary outline-none text-sm" type="text" value="Tender Title"/>
+</div>
+<div class="space-y-1.5">
+<label class="font-label-caps text-[11px] text-on-surface-variant uppercase">Field Key / System Name</label>
+<input class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-low text-on-surface-variant text-sm cursor-not-allowed" readonly="" type="text" value="tender_title"/>
+<p class="text-[10px] text-on-surface-variant/70">System identifier used for data mapping.</p>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-1.5">
+<label class="font-label-caps text-[11px] text-on-surface-variant uppercase">Field Type</label>
+<select class="w-full px-3 py-2 rounded-lg border border-outline-variant focus:ring-1 focus:ring-primary outline-none text-sm bg-surface">
+<option>Text</option>
+<option>Number</option>
+<option>Date</option>
+<option>Money</option>
+</select>
+</div>
+<div class="space-y-1.5">
+<label class="font-label-caps text-[11px] text-on-surface-variant uppercase">Required Rule</label>
+<select class="w-full px-3 py-2 rounded-lg border border-outline-variant focus:ring-1 focus:ring-primary outline-none text-sm bg-surface">
+<option>Yes</option>
+<option>No</option>
+</select>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="font-label-caps text-[11px] text-on-surface-variant uppercase">Default Value</label>
+<input class="w-full px-3 py-2 rounded-lg border border-outline-variant focus:ring-1 focus:ring-primary outline-none text-sm" placeholder="Enter default value..." type="text"/>
+</div>
+<div class="space-y-1.5">
+<label class="font-label-caps text-[11px] text-on-surface-variant uppercase">Help Text</label>
+<textarea class="w-full px-3 py-2 rounded-lg border border-outline-variant focus:ring-1 focus:ring-primary outline-none text-sm h-20" placeholder="Instructions for the user..."></textarea>
+</div>
+<div class="space-y-1.5">
+<label class="font-label-caps text-[11px] text-on-surface-variant uppercase">Validation Rule</label>
+<textarea class="w-full px-3 py-2 rounded-lg border border-outline-variant focus:ring-1 focus:ring-primary outline-none text-sm font-data-mono text-xs" placeholder="e.g. regex:/^[a-zA-Z0-9 ]+$/"></textarea>
+</div>
+<div class="space-y-1.5">
+<label class="font-label-caps text-[11px] text-on-surface-variant uppercase">Visibility Rule</label>
+<textarea class="w-full px-3 py-2 rounded-lg border border-outline-variant focus:ring-1 focus:ring-primary outline-none text-sm font-data-mono text-xs" placeholder="e.g. show_if:tender_type=open"></textarea>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-1.5">
+<label class="font-label-caps text-[11px] text-on-surface-variant uppercase">Section</label>
+<select class="w-full px-3 py-2 rounded-lg border border-outline-variant focus:ring-1 focus:ring-primary outline-none text-sm bg-surface">
+<option>Tender Identity</option>
+<option>Tender Timetable</option>
+<option>Bid Security</option>
+</select>
+</div>
+<div class="space-y-1.5">
+<label class="font-label-caps text-[11px] text-on-surface-variant uppercase">Display Order</label>
+<input class="w-full px-3 py-2 rounded-lg border border-outline-variant focus:ring-1 focus:ring-primary outline-none text-sm" type="number" value="1"/>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="font-label-caps text-[11px] text-on-surface-variant uppercase">Source</label>
+<input class="w-full px-3 py-2 rounded-lg border border-outline-variant focus:ring-1 focus:ring-primary outline-none text-sm" placeholder="Manual Input / API Endpoint" type="text"/>
+</div>
+<div class="flex items-center gap-3 py-2">
+<input class="w-4 h-4 text-primary border-outline-variant rounded focus:ring-primary" id="used-in-preview" type="checkbox"/>
+<label class="text-sm text-on-surface" for="used-in-preview">Used In Preview</label>
+</div>
+</div>
+<div class="p-6 border-t border-outline-variant bg-surface-container-low flex gap-3">
+<button class="flex-1 py-2.5 bg-primary text-on-primary rounded-lg font-bold font-label-caps hover:bg-primary-container transition-colors" onclick="document.getElementById('field-detail-drawer').classList.add('opacity-0', 'pointer-events-none'); document.getElementById('field-detail-drawer').firstElementChild.nextElementSibling.classList.add('translate-x-full');">Save Changes</button>
+<button class="flex-1 py-2.5 border border-outline-variant rounded-lg text-on-surface-variant font-label-caps hover:bg-surface-container transition-colors" onclick="document.getElementById('field-detail-drawer').classList.add('opacity-0', 'pointer-events-none'); document.getElementById('field-detail-drawer').firstElementChild.nextElementSibling.classList.add('translate-x-full');">Cancel</button>
+</div>
+</div>
+</div></body></html>

@@ -1,0 +1,463 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>KenTender - STD Library</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9f9fe;
+        }
+        .sidebar-item-active {
+            background-color: #7bbeff; /* secondary-container */
+            color: #004c7c; /* on-secondary-container */
+            font-weight: 700;
+        }
+        /* Custom scrollbar for data-heavy views */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c3c6d1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #737781;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-surface-variant": "#434750",
+                      "status-committed": "#6366F1",
+                      "secondary-fixed-dim": "#99cbff",
+                      "outline-variant": "#c3c6d1",
+                      "on-primary-container": "#7b9ee0",
+                      "on-primary": "#ffffff",
+                      "on-secondary-container": "#004c7c",
+                      "on-tertiary-fixed": "#0b1c30",
+                      "surface-container-highest": "#e2e2e8",
+                      "surface-container-low": "#f4f3f9",
+                      "primary-fixed-dim": "#abc7ff",
+                      "on-tertiary-container": "#8f9fb8",
+                      "tertiary-fixed-dim": "#b7c8e2",
+                      "primary-container": "#00346f",
+                      "border-subtle": "#E2E8F0",
+                      "status-available": "#10B981",
+                      "on-primary-fixed": "#001b3f",
+                      "inverse-surface": "#2f3035",
+                      "secondary-container": "#7bbeff",
+                      "secondary": "#01629d",
+                      "error-container": "#ffdad6",
+                      "on-tertiary": "#ffffff",
+                      "on-background": "#1a1b20",
+                      "on-primary-fixed-variant": "#1d4681",
+                      "primary": "#001f48",
+                      "inverse-primary": "#abc7ff",
+                      "on-tertiary-fixed-variant": "#38485e",
+                      "data-block-bg": "#FFFFFF",
+                      "tertiary-container": "#26364b",
+                      "on-surface": "#1a1b20",
+                      "background": "#f9f9fe",
+                      "surface-tint": "#395e9b",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-container-high": "#e8e7ed",
+                      "tertiary": "#102135",
+                      "on-secondary-fixed-variant": "#004a78",
+                      "primary-fixed": "#d7e2ff",
+                      "error": "#ba1a1a",
+                      "on-secondary-fixed": "#001d34",
+                      "on-error": "#ffffff",
+                      "status-exhausted": "#EF4444",
+                      "surface": "#f9f9fe",
+                      "on-error-container": "#93000a",
+                      "tertiary-fixed": "#d3e4ff",
+                      "outline": "#737781",
+                      "on-secondary": "#ffffff",
+                      "inverse-on-surface": "#f1f0f6",
+                      "surface-variant": "#e2e2e8",
+                      "surface-dim": "#dad9df",
+                      "secondary-fixed": "#cfe5ff",
+                      "surface-container": "#eeedf3",
+                      "surface-bright": "#f9f9fe",
+                      "status-reserved": "#F59E0B"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "section-gap": "24px",
+                      "card-padding": "20px",
+                      "unit": "4px",
+                      "gutter": "12px",
+                      "container-padding": "16px"
+              },
+              "fontFamily": {
+                      "label-caps": ["Inter"],
+                      "body-md": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "headline-lg-mobile": ["Manrope"],
+                      "headline-sm": ["Manrope"],
+                      "headline-md": ["Manrope"],
+                      "headline-lg": ["Manrope"],
+                      "data-mono": ["JetBrains Mono"]
+              },
+              "fontSize": {
+                      "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                      "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                      "headline-md": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+                      "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface">
+<!-- Sidebar Navigation Shell -->
+<aside class="w-64 h-screen fixed left-0 top-0 bg-surface-container dark:bg-tertiary flex flex-col py-6 px-4 z-50">
+<div class="mb-10 px-2 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary" data-icon="shield_person">shield_person</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">ProAdmin</h1>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Enterprise Portal</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant transition-colors duration-200 hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-body-md text-body-md">Dashboard</span>
+</a>
+<!-- Active Tab: STD Library -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary font-bold transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="library_books">library_books</span>
+<span class="font-body-md text-body-md">STD Library</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant transition-colors duration-200 hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined" data-icon="account_tree">account_tree</span>
+<span class="font-body-md text-body-md">Workflow Templates</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant transition-colors duration-200 hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined" data-icon="store">store</span>
+<span class="font-body-md text-body-md">Vendors</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant transition-colors duration-200 hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-body-md text-body-md">Contracts</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant transition-colors duration-200 hover:bg-surface-container-high mt-4" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</nav>
+<div class="pt-6 border-t border-outline-variant">
+<div class="flex items-center gap-3 px-2">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a middle-aged male procurement administrator wearing a sleek navy blue suit and glasses. He has a warm, confident expression. The background is a soft-focus corporate office environment with cool blue and white tones. The lighting is bright and systematic, conveying reliability and professional authority." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvJVqq_rtmfov_kU_UfON9lzgRKW9ZabF8y8hiJAFLLQG6ZRV35u0o_vVGkg2KEaCmB9IaJaUdn2FO8DbCAz3PFEqVH3Vp3E9wWX0APjJH5uccYmKfyN2-uogq5pln6V5AxVA3MpYrq8esaSXMkLnUuX0YsrCXVGIwcaF-fxdIQ80eZuX08zg2-eyS-yOuVJGPh5N962cIN8ZpvEDKrlTUMSfA_xRsYnttjb0WGUzBMP-5eiaJZ2g">
+</div>
+<div class="overflow-hidden">
+<p class="font-bold text-sm truncate">James Korir</p>
+<p class="text-xs text-on-surface-variant truncate">Procurement Admin</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Top Navigation Shell -->
+<header class="fixed top-0 right-0 left-64 h-16 dark:bg-surface-dim border-b border-outline-variant dark:border-outline flex justify-between items-center px-6 z-40 bg-surface-bright"><div class="flex items-center gap-4">
+  <h2 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-primary-fixed">STD Library</h2>
+</div>
+
+<div class="flex items-center gap-6">
+  <div class="flex items-center gap-2 text-on-surface-variant">
+    <button class="p-2 hover:bg-surface-container-high rounded-full"><span class="material-symbols-outlined" data-icon="notifications">notifications</span></button>
+    <button class="p-2 hover:bg-surface-container-high rounded-full"><span class="material-symbols-outlined" data-icon="history">history</span></button>
+    <button class="p-2 hover:bg-surface-container-high rounded-full"><span class="material-symbols-outlined" data-icon="help_outline">help_outline</span></button>
+  </div>
+  <div class="h-10 w-px bg-outline-variant mx-2"></div>
+  <div class="flex items-center gap-3">
+    <div class="text-right">
+      <p class="font-bold text-sm text-primary leading-none">Administrator</p>
+      <p class="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mt-1">PROCUREMENT ADMIN</p>
+    </div>
+    <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary font-bold text-sm">
+      AD
+    </div>
+  </div>
+</div></header>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-24 px-8 pb-12">
+<!-- Header Section -->
+<div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<p class="text-primary font-bold text-xs uppercase tracking-widest mb-1">KenTender Procurement System</p>
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-2">Standard Tender Documents</h1>
+<p class="text-on-surface-variant max-w-2xl">Manage approved Standard Tender Documents, active versions, applicability rules, supplier requirements, and readiness templates used during tender preparation.</p>
+</div>
+</div>
+<!-- KPI & Compliance Section (Bento Grid Style) -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+  <!-- Total Documents -->
+  <div class="grid grid-cols-2 gap-4">
+    <!-- Card 1: Total STDs -->
+    <div class="bg-surface-container-low border-t-2 border-t-primary border-x border-b border-border-subtle p-4 rounded-xl shadow-sm flex flex-col justify-center transition-all hover:shadow-md">
+      <h3 class="text-on-surface-variant font-label-caps text-xs mb-2">Total STDs</h3>
+      <p class="font-data-mono text-2xl text-primary font-bold">42</p>
+    </div>
+    <!-- Card 2: Active Versions -->
+    <div class="bg-surface-container-low border-t-2 border-t-primary border-x border-b border-border-subtle p-4 rounded-xl shadow-sm flex flex-col justify-center transition-all hover:shadow-md">
+      <h3 class="text-on-surface-variant font-label-caps text-xs mb-2">Active Versions</h3>
+      <p class="font-data-mono text-2xl text-primary font-bold">38</p>
+    </div>
+    <!-- Card 3: Pending Approval -->
+    <div class="bg-surface-container-low border-t-2 border-t-primary border-x border-b border-border-subtle p-4 rounded-xl shadow-sm flex flex-col justify-center transition-all hover:shadow-md">
+      <h3 class="text-on-surface-variant font-label-caps text-xs mb-2">Pending Approval</h3>
+      <p class="font-data-mono text-2xl text-status-reserved font-bold">2</p>
+    </div>
+    <!-- Card 4: Due for Review -->
+    <div class="bg-surface-container-low border-t-2 border-t-primary border-x border-b border-border-subtle p-4 rounded-xl shadow-sm flex flex-col justify-center transition-all hover:shadow-md">
+      <h3 class="text-on-surface-variant font-label-caps text-xs mb-2">Due for Review</h3>
+      <p class="font-data-mono text-2xl text-status-reserved font-bold">4</p>
+    </div>
+  </div>
+  <!-- Active Versions -->
+  <div class="bg-surface-container-lowest border border-primary/20 p-6 rounded-xl shadow-lg flex flex-col justify-center relative overflow-hidden">
+    <div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+    <div class="flex items-center gap-2 mb-4">
+      <span class="material-symbols-outlined text-primary font-bold" data-icon="verified">verified</span>
+      <h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">STD Library Health</h3>
+    </div>
+    <ul class="space-y-3">
+      <li class="flex items-start gap-2 text-sm">
+        <span class="material-symbols-outlined text-status-available text-lg font-bold" data-icon="check_circle">check_circle</span>
+        <span class="text-on-surface-variant"><strong class="font-data-mono text-status-available text-base">0</strong> unauthorized STD versions in active tender setup</span>
+      </li>
+      <li class="flex items-start gap-2 text-sm">
+        <span class="material-symbols-outlined text-status-reserved text-lg font-bold" data-icon="pending">pending</span>
+        <span class="text-on-surface-variant"><strong class="font-data-mono text-status-reserved text-base">2</strong> versions pending approval</span>
+      </li>
+      <li class="flex items-start gap-2 text-sm">
+        <span class="material-symbols-outlined text-status-exhausted text-lg font-bold" data-icon="event_busy">event_busy</span>
+        <span class="text-on-surface-variant"><strong class="font-data-mono text-on-surface-variant text-base">4</strong> versions due for review</span>
+      </li>
+      <li class="flex items-start gap-2 text-sm">
+        <span class="material-symbols-outlined text-outline text-lg font-bold" data-icon="history">history</span>
+        <span class="text-on-surface-variant"><strong class="font-data-mono text-on-surface-variant text-base">6</strong> retired/superseded versions referenced by historical tenders</span>
+      </li>
+    </ul>
+  </div>
+</div>
+<!-- Filter & Search Bar -->
+<div class="bg-surface-container-lowest border border-border-subtle p-4 rounded-xl shadow-sm mb-6 flex flex-wrap gap-4 items-center"><div class="flex-1 relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-all" placeholder="Search STDs..." type="text">
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors text-sm font-semibold">
+<span class="material-symbols-outlined text-lg" data-icon="filter_list">filter_list</span>
+Filter
+</button>
+<button class="bg-primary text-on-primary px-4 py-2 rounded-lg flex items-center gap-2 font-bold text-sm hover:shadow-md transition-all">
+<span class="material-symbols-outlined text-lg" data-icon="add">add</span>
+Create STD
+</button>
+</div></div>
+<!-- STD Data Table -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-xl shadow-sm overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container border-b border-outline-variant">
+<th class="px-6 py-4 font-label-caps text-on-surface-variant uppercase tracking-wider">STD Title</th>
+<th class="px-6 py-4 font-label-caps text-on-surface-variant uppercase tracking-wider">Category</th>
+<th class="px-6 py-4 font-label-caps text-on-surface-variant uppercase tracking-wider">Method</th>
+
+<th class="px-6 py-4 font-label-caps text-on-surface-variant uppercase tracking-wider">Status</th>
+
+<th class="px-6 py-4 font-label-caps text-on-surface-variant text-right uppercase tracking-wider w-32">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Row 1 -->
+<tr class="hover:bg-background transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="description">description</span>
+<div>
+<p class="font-bold text-on-surface group-hover:text-primary transition-colors">Standard Tender Document for Building Works</p>
+<p class="text-xs text-on-surface-variant">ID: STD-W-001</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="bg-surface-container-high px-2 py-1 rounded text-xs font-semibold text-on-surface-variant">Works</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm">Open Tender</span>
+</td>
+
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1 bg-status-available/10 text-status-available px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+<span class="w-2 h-2 rounded-full bg-status-available"></span> Active
+                                </span>
+</td>
+
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2"><button class="px-4 py-1.5 text-xs font-bold bg-primary text-on-primary rounded-lg hover:shadow-md transition-all">View Configuration</button><button class="p-1.5 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors"><span class="material-symbols-outlined">more_vert</span></button></div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-background transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="local_shipping">local_shipping</span>
+<div>
+<p class="font-bold text-on-surface group-hover:text-primary transition-colors">Supply &amp; Delivery of General Goods</p>
+<p class="text-xs text-on-surface-variant">ID: STD-G-002</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="bg-surface-container-high px-2 py-1 rounded text-xs font-semibold text-on-surface-variant">Goods</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm">RFQ</span>
+</td>
+
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1 bg-status-available/10 text-status-available px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+<span class="w-2 h-2 rounded-full bg-status-available"></span> Active
+                                </span>
+</td>
+
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2"><button class="px-4 py-1.5 text-xs font-bold bg-primary text-on-primary rounded-lg hover:shadow-md transition-all">View Configuration</button><button class="p-1.5 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors"><span class="material-symbols-outlined">more_vert</span></button></div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-background transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="psychology">psychology</span>
+<div>
+<p class="font-bold text-on-surface group-hover:text-primary transition-colors">Framework for Consultancy Services</p>
+<p class="text-xs text-on-surface-variant">ID: STD-S-005</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="bg-surface-container-high px-2 py-1 rounded text-xs font-semibold text-on-surface-variant">Consultancy</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm">Restricted</span>
+</td>
+
+<td class="px-6 py-4"><span class="inline-flex items-center gap-1 bg-status-committed/10 text-status-committed px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wider"><span class="w-2 h-2 rounded-full bg-status-committed"></span> Submitted</span></td>
+
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2"><button class="px-4 py-1.5 text-xs font-bold bg-surface-container-high text-on-surface rounded-lg hover:bg-outline-variant transition-colors">Open</button><button class="px-4 py-1.5 text-xs font-bold bg-primary text-on-primary rounded-lg hover:shadow-md transition-all">Review</button><button class="p-1.5 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors"><span class="material-symbols-outlined">more_vert</span></button></div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-background transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="cleaning_services">cleaning_services</span>
+<div>
+<p class="font-bold text-on-surface group-hover:text-primary transition-colors">Maintenance &amp; Facility Services</p>
+<p class="text-xs text-on-surface-variant">ID: STD-S-003</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="bg-surface-container-high px-2 py-1 rounded text-xs font-semibold text-on-surface-variant">Services</span>
+</td>
+<td class="px-6 py-4">
+<span class="text-sm">Open Tender</span>
+</td>
+
+<td class="px-6 py-4"><span class="inline-flex items-center gap-1 bg-status-available/10 text-status-available px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wider"><span class="w-2 h-2 rounded-full bg-status-available"></span> Approved</span></td>
+
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2"><button class="px-4 py-1.5 text-xs font-bold bg-surface-container-high text-on-surface rounded-lg hover:bg-outline-variant transition-colors">Open</button><button class="px-4 py-1.5 text-xs font-bold bg-primary text-on-primary rounded-lg hover:shadow-md transition-all">Activate</button><button class="p-1.5 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors"><span class="material-symbols-outlined">more_vert</span></button></div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-6 py-4 border-t border-outline-variant flex items-center justify-between bg-surface-container-low">
+<p class="text-sm text-on-surface-variant">Showing <span class="font-bold text-on-surface">1 - 4</span> of 42 results</p>
+<div class="flex items-center gap-3 mr-4">
+  <span class="text-sm text-on-surface-variant">Rows per page</span>
+  <div class="relative">
+    <select class="appearance-none bg-surface-container-lowest border border-outline-variant rounded-lg pl-3 pr-8 py-1 text-sm font-semibold focus:ring-2 focus:ring-primary focus:border-primary transition-all cursor-pointer">
+      <option value="10">10</option>
+      <option value="25">25</option>
+      <option value="50">50</option>
+      <option value="100">100</option>
+    </select>
+    <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-lg" data-icon="expand_more">expand_more</span>
+  </div>
+</div><div class="flex items-center gap-2">
+<button class="p-2 rounded-lg border border-outline-variant disabled:opacity-50 hover:bg-background" disabled="">
+<span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span>
+</button>
+<button class="px-3 py-1 rounded-lg bg-primary text-on-primary font-bold text-sm">1</button>
+<button class="px-3 py-1 rounded-lg hover:bg-background text-sm">2</button>
+<button class="px-3 py-1 rounded-lg hover:bg-background text-sm">3</button>
+<span class="px-2">...</span>
+<button class="px-3 py-1 rounded-lg hover:bg-background text-sm">11</button>
+<button class="p-2 rounded-lg border border-outline-variant hover:bg-background">
+<span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating Action Button -->
+
+<script>
+        // Simple Micro-interactions
+        document.querySelectorAll('tr').forEach(row => {
+            row.addEventListener('mouseenter', () => {
+                // Potential hover logic if needed
+            });
+        });
+
+        // Search highlight mock
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('input', (e) => {
+            if(e.target.value.length > 2) {
+                // Logic to filter rows would go here
+            }
+        });
+    </script>
+
+
+</body></html>

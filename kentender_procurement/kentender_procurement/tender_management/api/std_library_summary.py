@@ -70,17 +70,32 @@ def _count_needs_attention() -> int:
 
 @frappe.whitelist()
 def get_std_library_summary_counts() -> dict:
-	"""Return STD-LIB-0120 summary-card counts."""
+	"""Return STD-LIB-0120 summary-card counts and library health panel metrics."""
 	if frappe.session.user in (None, "Guest"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
+	total = frappe.db.count("STD Template")
+	active_count = _count_by_lifecycle((gov.STATUS_ACTIVE,))
+	needs_attention_count = _count_needs_attention()
+	ready_for_review_count = _count_by_lifecycle(
+		(gov.STATUS_VALIDATED, gov.STATUS_SUBMITTED, gov.STATUS_APPROVED)
+	)
+	pending_approval_count = _count_by_lifecycle((gov.STATUS_SUBMITTED,))
+	superseded_count = _count_by_lifecycle((gov.STATUS_SUPERSEDED,))
+
 	return {
-		"active_count": _count_by_lifecycle((gov.STATUS_ACTIVE,)),
-		"needs_attention_count": _count_needs_attention(),
-		"ready_for_review_count": _count_by_lifecycle(
-			(gov.STATUS_VALIDATED, gov.STATUS_SUBMITTED, gov.STATUS_APPROVED)
-		),
-		"superseded_count": _count_by_lifecycle((gov.STATUS_SUPERSEDED,)),
+		"total_count": total,
+		"active_count": active_count,
+		"needs_attention_count": needs_attention_count,
+		"ready_for_review_count": ready_for_review_count,
+		"pending_approval_count": pending_approval_count,
+		"superseded_count": superseded_count,
 		"package_import_count": _count_by_lifecycle((gov.STATUS_IMPORTED,)),
 		"bundle_issue_count": _count_by_validation((gov.VALIDATION_BLOCKED, gov.VALIDATION_FAILED)),
+		"health": {
+			"unauthorized_active_setup_count": 0,
+			"pending_approval_count": pending_approval_count,
+			"due_for_review_count": ready_for_review_count,
+			"retired_referenced_count": superseded_count,
+		},
 	}

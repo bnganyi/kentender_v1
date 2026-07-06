@@ -33,6 +33,7 @@ _FILTER_FIELDS = (
 	"latest_validation_status",
 	"status_changed_at",
 	"modified",
+	"owner",
 	"allowed_for_tender_creation",
 )
 _ACTION_ROLES: dict[str, tuple[str, ...]] = {
@@ -893,6 +894,13 @@ def get_std_library_templates(
 		raw_version = str(row.get("template_code") or name or "").strip()
 		version_code = raw_version or name
 		used_count = 1 if name in used_names else 0
+		methods = _supported_methods(method)
+		method_label = methods[0] if methods else (method or "")
+		owner_id = str(row.get("owner") or "").strip()
+		owner_label = owner_id
+		if owner_id:
+			owner_label = frappe.db.get_value("User", owner_id, "full_name") or owner_id
+		active_version_label = str(row.get("template_version") or "").strip() or _("Revision not set")
 		out.append(
 			{
 				"name": name,
@@ -912,14 +920,18 @@ def get_std_library_templates(
 			{
 				"version_code": version_code,
 				"title": str(row.get("template_title") or version_code),
-				"revision_label": str(row.get("template_version") or "").strip() or _("Revision not set"),
+				"revision_label": active_version_label,
+				"active_version_label": active_version_label,
 				"status": _status_label(lc),
 				"procurement_category": proc_cat,
-				"supported_methods": _supported_methods(method),
+				"procurement_method": method_label,
+				"supported_methods": methods,
 				"source_authority": authority,
+				"owner": owner_label,
 				"validation_status": _validation_label(vs),
 				"bundle_preview_status": bundle_state,
 				"used_by_tender_count": used_count,
+				"usage_count": used_count,
 				"supersession_status": _supersession_status(lc),
 				"action_availability": _action_availability(row, user_roles),
 			}

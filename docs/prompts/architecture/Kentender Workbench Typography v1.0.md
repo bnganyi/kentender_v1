@@ -63,10 +63,23 @@ colors, spacing, and shadows unchanged. No visual change expected.
 
 Regression: `kentender_budget/tests/test_budget_workbench_typography_phase3.py`.
 
+## Phase 4 — STD Config v2 (shipped)
+
+| Surface | CSS file | Changes |
+|---------|----------|---------|
+| STD Library | `std_library_page.css` + `std_config_shared.css` spacing tokens | Page title 24px, KPI 20px, table 13px, tighter card/table padding |
+| STD Configurator | `std_configurator_*.css` | Must follow same token map (see cursor rule) |
+
+Regression: `kentender_procurement/tender_management/tests/test_std_config_typography.py`.
+
+Cursor rule: `.cursor/rules/kentender-std-config-workbench-density.mdc`.
+
+Mockup packs under `docs/prompts/std config/*/code.html` retain hero export sizes for design tools; **deployed** STD Config UI uses operational scale (structure from mockup, typography from v1.0).
+
 ## Enforcement
 
 - Cursor rule: `.cursor/rules/kentender-workbench-typography-harmony.mdc`
-- Unit tests: `kentender_core/tests/test_workbench_typography_contract.py`, `test_pp4_workbench_typography_harmony.py`, `test_procurement_typography_phase2_harmony.py`, `kentender_budget/tests/test_budget_workbench_typography_phase3.py`
+- Unit tests: `kentender_core/tests/test_workbench_typography_contract.py`, `test_pp4_workbench_typography_harmony.py`, `test_procurement_typography_phase2_harmony.py`, `kentender_budget/tests/test_budget_workbench_typography_phase3.py`, `kentender_procurement/tender_management/tests/test_std_config_typography.py`
 - UX: Playwright/MCP visual check when changing workbench CSS
 
 ## Related docs

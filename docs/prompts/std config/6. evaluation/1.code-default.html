@@ -1,0 +1,636 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Evaluation Setup | ProcureFlow STD Configurator</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-fixed-dim": "#99cbff",
+                    "on-primary-fixed": "#001b3f",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-fixed": "#d7e2ff",
+                    "on-surface-variant": "#434750",
+                    "on-secondary-fixed": "#001d34",
+                    "data-block-bg": "#FFFFFF",
+                    "tertiary-fixed-dim": "#b7c8e2",
+                    "on-primary-container": "#7b9ee0",
+                    "status-available": "#10B981",
+                    "tertiary-container": "#26364b",
+                    "on-error-container": "#93000a",
+                    "surface-container-highest": "#e2e2e8",
+                    "secondary": "#01629d",
+                    "inverse-on-surface": "#f1f0f6",
+                    "surface-variant": "#e2e2e8",
+                    "outline": "#737781",
+                    "on-tertiary-container": "#8f9fb8",
+                    "on-tertiary-fixed-variant": "#38485e",
+                    "surface": "#f9f9fe",
+                    "status-exhausted": "#EF4444",
+                    "surface-bright": "#f9f9fe",
+                    "status-committed": "#6366F1",
+                    "surface-container-low": "#f4f3f9",
+                    "outline-variant": "#c3c6d1",
+                    "on-tertiary": "#ffffff",
+                    "inverse-surface": "#2f3035",
+                    "on-surface": "#1a1b20",
+                    "surface-container-high": "#e8e7ed",
+                    "on-secondary": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "surface-container": "#eeedf3",
+                    "secondary-fixed": "#cfe5ff",
+                    "primary-container": "#00346f",
+                    "inverse-primary": "#abc7ff",
+                    "tertiary-fixed": "#d3e4ff",
+                    "primary-fixed-dim": "#abc7ff",
+                    "on-background": "#1a1b20",
+                    "on-secondary-fixed-variant": "#004a78",
+                    "border-subtle": "#E2E8F0",
+                    "error": "#ba1a1a",
+                    "primary": "#001f48",
+                    "on-error": "#ffffff",
+                    "surface-dim": "#dad9df",
+                    "status-reserved": "#F59E0B",
+                    "on-secondary-container": "#004c7c",
+                    "secondary-container": "#7bbeff",
+                    "on-tertiary-fixed": "#0b1c30",
+                    "surface-tint": "#395e9b",
+                    "tertiary": "#102135",
+                    "on-primary-fixed-variant": "#1d4681",
+                    "error-container": "#ffdad6",
+                    "background": "#f9f9fe"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "unit": "4px",
+                    "container-padding": "16px",
+                    "gutter": "12px",
+                    "section-gap": "24px",
+                    "card-padding": "20px"
+            },
+            "fontFamily": {
+                    "label-caps": ["Inter"],
+                    "headline-md": ["Manrope"],
+                    "headline-sm": ["Manrope"],
+                    "headline-lg": ["Manrope"],
+                    "body-md": ["Inter"],
+                    "data-mono": ["JetBrains Mono"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "headline-md": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+                    "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .stage-card:hover .drag-handle { opacity: 1; }
+        .drag-handle { opacity: 0.3; transition: opacity 0.2s; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c3c6d1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md selection:bg-secondary-container">
+<!-- TopNavBar (Large) -->
+<header class="bg-surface-container-lowest dark:bg-surface-dim border-b border-outline-variant flex justify-between items-center w-full px-container-padding h-16 fixed top-0 z-50">
+<div class="flex items-center gap-8"><div class="flex items-center gap-8"><span class="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary">STD Configurator</span><div class="relative hidden md:block"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant">search</span><input type="text" placeholder="Search templates..." class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-sm w-64 focus:ring-1 focus:ring-primary"></div></div></div>
+<div class="flex items-center gap-4">
+<div class="flex gap-2">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low transition-colors rounded-full">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low transition-colors rounded-full">
+<span class="material-symbols-outlined">history</span>
+</button>
+</div>
+<div class="h-8 w-[1px] bg-outline-variant mx-2"></div>
+<div class="flex items-center gap-3">
+<div class="text-right hidden sm:block">
+<p class="font-label-caps text-label-caps text-on-surface">Administrator</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-tighter">STD Configuration</p>
+</div>
+<img class="w-10 h-10 rounded-full border border-outline-variant object-cover" data-alt="A professional headshot of a corporate administrator in a modern office setting. The lighting is soft and professional, emphasizing a high-end corporate environment with neutral tones and a clean, blurred background. The subject is wearing a sharp, dark business suit, reflecting authority and precision." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKnFMiAEvx-fxkrJE3KGgZBqUThCtF7j7Iyq7-o3whx-O4nZlPIKTKBv54RvoRVxJZew4ZJSxCDXRf_ufSHBLgQDlB3DnjIn4QANOP7Ns7tcz4-I_bk5b2JuMSTDg_iCqmW3LECQh_9yqji9WfORe0FyS_pvkKtI2nHm9MGY-nRt2SENHwFz4AiGNcGo1YrE_05-t_UoVBlLJy9xJ1EVinrCSW9VqG8IUc3p_2ETfMJdYVd6NvNCA">
+</div>
+</div>
+</header>
+<div class="flex pt-16 min-h-screen">
+<!-- SideNavBar -->
+<aside class="hidden lg:flex flex-col h-[calc(100vh-64px)] w-64 bg-surface-container-low dark:bg-surface-container border-r border-outline-variant fixed left-0 p-4 space-y-2">
+<div class="mb-6 px-2">
+<div class="flex items-center gap-3 mb-1">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: &quot;FILL&quot; 1;">account_tree</span>
+<span class="font-headline-sm text-headline-sm font-bold text-primary">e-Procurement</span>
+</div>
+<p class="text-on-surface-variant font-label-caps text-[10px] ml-9">STD CONFIGURATOR</p>
+</div>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="">Overview</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-secondary-container text-on-secondary-container font-semibold rounded-lg" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">folder_open</span>
+<span class="">Library</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">account_tree</span>
+<span class="">Workflow</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="">Vendors</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="">Contracts</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="">Reports</span>
+</a>
+<div class="mt-auto pt-4 border-t border-outline-variant space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+<span class="">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 lg:ml-64 bg-surface min-h-full">
+<!-- Contextual Toolbar -->
+<div class="bg-surface-container-lowest border-b border-outline-variant px-8 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-surface-container-low rounded-full">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div>
+<h1 class="font-headline-sm text-headline-sm text-primary">STD Configurator</h1>
+<p class="text-on-surface-variant text-xs font-label-caps uppercase tracking-widest">Global Configuration Module</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-4 py-2 text-error border border-error rounded-lg hover:bg-error-container transition-colors font-semibold text-sm">Cancel Draft</button>
+<button class="px-4 py-2 text-secondary border border-secondary rounded-lg hover:bg-secondary-fixed-dim transition-colors font-semibold text-sm">Save Draft</button>
+<button class="px-6 py-2 bg-primary text-on-primary rounded-lg hover:opacity-90 transition-all shadow-sm font-semibold text-sm">Submit for Review</button>
+</div>
+</div>
+<!-- Tabs Navigation (Small) -->
+<div class="bg-surface dark:bg-surface-dim border-b border-outline-variant px-8 pt-4 overflow-x-auto flex space-x-8 scrollbar-hide">
+<a class="text-outline hover:text-primary transition-colors pb-2 whitespace-nowrap font-label-caps text-label-caps" href="#">OVERVIEW</a>
+<a class="text-outline hover:text-primary transition-colors pb-2 whitespace-nowrap font-label-caps text-label-caps" href="#">APPLICABILITY</a>
+<a class="text-outline hover:text-primary transition-colors pb-2 whitespace-nowrap font-label-caps text-label-caps" href="#">TENDER FIELDS</a>
+<a class="text-outline hover:text-primary transition-colors pb-2 whitespace-nowrap font-label-caps text-label-caps" href="#">SUPPLIER REQ</a>
+<a class="text-outline hover:text-primary transition-colors pb-2 whitespace-nowrap font-label-caps text-label-caps" href="#">FORMS &amp; ATTACHMENTS</a>
+<a class="text-primary border-b-2 border-primary font-bold pb-2 whitespace-nowrap font-label-caps text-label-caps" href="#">EVALUATION SETUP</a>
+<a class="text-outline hover:text-primary transition-colors pb-2 whitespace-nowrap font-label-caps text-label-caps" href="#">CONTRACT TERMS</a>
+</div>
+<!-- Content Area -->
+<div class="p-8 max-w-6xl mx-auto space-y-8">
+<!-- Document Header -->
+<div class="flex items-start justify-between bg-surface-container-lowest p-6 rounded-xl border border-border-subtle shadow-sm">
+<div class="space-y-2">
+<div class="flex items-center gap-3">
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Standard Tender Document for Building Works</h2>
+<span class="px-3 py-1 bg-secondary-fixed text-on-secondary-fixed text-[10px] font-bold rounded-full border border-secondary-fixed-dim">DRAFT V2.4</span>
+</div>
+<p class="text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">info</span>
+                            Define the logical sequence and criteria for evaluating supplier bids.
+                        </p>
+</div>
+<div class="text-right">
+<p class="text-on-surface-variant font-label-caps text-[10px]">LAST UPDATED</p>
+<p class="font-data-mono text-on-surface">OCT 24, 2023 · 14:30</p>
+</div>
+</div>
+<!-- Bento Grid: Summary & Stats -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-border-subtle shadow-sm mb-6">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps text-outline uppercase">Governing Evaluation Basis</label>
+<p class="text-xs text-on-surface-variant">Select the primary methodology that governs the entire evaluation workflow.</p>
+</div>
+<div class="relative min-w-[320px]">
+<select class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 text-sm font-medium text-on-surface focus:border-primary focus:ring-1 focus:ring-primary appearance-none cursor-pointer">
+<option selected="" value="weighted_aggregate">Weighted Aggregate</option>
+<option value="lowest_evaluated">Lowest Evaluated Responsive Bid</option>
+<option value="qcbs">Quality and Cost Based Selection</option>
+<option value="qbs">Quality Based Selection</option>
+<option value="pass_fail_ranking">Pass/Fail Technical then Financial Ranking</option>
+<option value="framework">Framework Qualification</option>
+</select>
+<div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline">
+<span class="material-symbols-outlined">unfold_more</span>
+</div>
+</div>
+</div>
+</div><div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="md:col-span-1 bg-primary-container p-6 rounded-xl border border-primary text-on-primary-container flex flex-col justify-between">
+<div>
+<p class="font-label-caps text-xs opacity-80 mb-1">TOTAL STAGES</p>
+<h3 class="text-4xl font-extrabold text-white">04</h3>
+</div>
+<div class="mt-4 flex items-center gap-2 text-sm">
+<span class="material-symbols-outlined">check_circle</span>
+<span class="">Logic flow validated</span>
+</div>
+</div>
+<div class="md:col-span-2 bg-surface-container-lowest p-6 rounded-xl border border-border-subtle shadow-sm grid grid-cols-2 gap-8">
+<div>
+<p class="font-label-caps text-label-caps text-outline mb-4">EVALUATION STRUCTURE</p>
+<div class="space-y-2">
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">Evaluation Method Summary</p>
+<ul class="space-y-1.5">
+<li class="flex justify-between items-center text-sm">
+<span class="text-on-surface-variant">Preliminary:</span>
+<span class="font-semibold text-primary">Pass / Fail</span>
+</li>
+<li class="flex justify-between items-center text-sm">
+<span class="text-on-surface-variant">Technical:</span>
+<span class="font-semibold text-primary">Scored, minimum 75%</span>
+</li>
+<li class="flex justify-between items-center text-sm">
+<span class="text-on-surface-variant">Financial:</span>
+<span class="font-semibold text-primary">Lowest evaluated responsive bid</span>
+</li>
+<li class="flex justify-between items-center text-sm">
+<span class="text-on-surface-variant">Post-Qualification:</span>
+<span class="font-semibold text-primary">Pass / Fail</span>
+</li>
+</ul>
+</div>
+</div>
+<div class="border-l border-outline-variant pl-8 flex flex-col justify-center">
+<p class="font-label-caps text-label-caps text-outline mb-2">EVALUATION STRUCTURE</p>
+<h4 class="font-headline-sm text-on-surface">Weighted Aggregate</h4>
+<p class="text-xs text-on-surface-variant mt-1 leading-relaxed">Scoring model: Configured by selected STD and procurement method.</p><p class="text-xs text-on-surface-variant mt-1 leading-relaxed">Technical scoring applies only where this STD requires weighted technical evaluation.</p>
+</div>
+</div>
+</div>
+<!-- Evaluation Stages -->
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<h3 class="font-headline-sm text-primary flex items-center gap-2">
+<span class="material-symbols-outlined">playlist_add_check</span>
+                            Sequence of Evaluation Stages
+                        </h3>
+<button class="flex items-center gap-2 px-4 py-2 bg-secondary-container text-on-secondary-container rounded-lg hover:brightness-95 transition-all text-sm font-semibold">
+<span class="material-symbols-outlined text-sm">add</span>
+                            Add New Stage
+                        </button>
+</div><div class="bg-status-available/10 border border-status-available/20 rounded-xl p-4 flex items-center justify-between mb-4">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-status-available/20 flex items-center justify-center text-status-available">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-sm text-primary">Rule Conflict Check</h4>
+<p class="text-xs text-on-surface-variant">No conflicting active STD found for:</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex flex-wrap gap-2">
+<span class="bg-white/50 px-2 py-1 rounded border border-outline-variant/30 text-[10px] font-label-caps text-on-surface-variant uppercase tracking-wider">Works</span>
+<span class="bg-white/50 px-2 py-1 rounded border border-outline-variant/30 text-[10px] font-label-caps text-on-surface-variant uppercase tracking-wider">Open Tender</span>
+<span class="bg-white/50 px-2 py-1 rounded border border-outline-variant/30 text-[10px] font-label-caps text-on-surface-variant uppercase tracking-wider">Building Works</span>
+<span class="bg-white/50 px-2 py-1 rounded border border-outline-variant/30 text-[10px] font-label-caps text-on-surface-variant uppercase tracking-wider">All Entities</span>
+<span class="bg-white/50 px-2 py-1 rounded border border-outline-variant/30 text-[10px] font-data-mono text-primary">KES &gt; 6,000,000</span>
+</div>
+</div>
+</div><div class="bg-surface-container-lowest border border-border-subtle rounded-xl p-4 flex items-center justify-between mb-6 shadow-sm">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-status-available/10 flex items-center justify-center text-status-available">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-sm text-primary">Evaluation Setup: Ready</h4>
+<p class="text-xs text-on-surface-variant">All readiness checks passed. Configuration is valid for submission.</p>
+</div>
+</div>
+<div class="flex items-center gap-2 text-outline">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+</div>
+</div>
+<!-- Stage List -->
+<div class="space-y-4">
+<!-- Stage 1 -->
+<div class="stage-card bg-surface-container-lowest border border-border-subtle rounded-xl p-6 shadow-sm hover:border-secondary transition-all" style="transform: translateY(0px);">
+<div class="flex gap-6">
+<div class="flex flex-col items-center">
+<div class="drag-handle cursor-grab active:cursor-grabbing mb-2">
+<span class="material-symbols-outlined text-outline">drag_indicator</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center font-bold text-primary text-sm">1</div>
+<div class="w-[2px] flex-1 bg-outline-variant my-2"></div>
+</div>
+<div class="flex-1 space-y-6">
+<div class="flex justify-between items-start">
+<div>
+<h4 class="font-headline-sm text-on-surface">Preliminary Evaluation</h4>
+<p class="text-body-md text-on-surface-variant">Mandatory verification of administrative compliance and statutory documents.</p>
+</div>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-status-available/10 text-status-available text-[10px] font-bold rounded-full border border-status-available/20">PASS / FAIL</span>
+<button class="text-outline hover:text-on-surface"><span class="material-symbols-outlined">settings</span></button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-outline-variant">
+<div>
+<label class="font-label-caps text-[10px] text-outline block mb-2 uppercase">Required Documents</label>
+<div class="flex flex-wrap gap-2"><span class="bg-surface-container text-on-surface-variant text-[11px] px-2 py-1 rounded border border-outline-variant flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">link</span> Certificate of Inc. — pass/fail</span><span class="bg-surface-container text-on-surface-variant text-[11px] px-2 py-1 rounded border border-outline-variant flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">link</span> Tax Compliance — pass/fail</span></div>
+</div>
+<div>
+<label class="font-label-caps text-[10px] text-outline block mb-2 uppercase">Minimum Compliance</label>
+<p class="text-body-md font-medium">100% Mandatory</p>
+</div>
+<div class="flex items-center justify-end gap-3">
+<span class="text-xs text-on-surface-variant font-medium">Carry Forward to Tech</span>
+<button class="w-10 h-5 bg-status-available rounded-full relative p-0.5 transition-colors">
+<div class="w-4 h-4 bg-white rounded-full absolute right-0.5"></div>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Stage 2 -->
+<div class="stage-card bg-surface-container-lowest border border-border-subtle rounded-xl p-6 shadow-sm hover:border-secondary transition-all" style="transform: translateY(0px);">
+<div class="flex gap-6">
+<div class="flex flex-col items-center">
+<div class="drag-handle cursor-grab active:cursor-grabbing mb-2">
+<span class="material-symbols-outlined text-outline">drag_indicator</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center font-bold text-primary text-sm">2</div>
+<div class="w-[2px] flex-1 bg-outline-variant my-2"></div>
+</div>
+<div class="flex-1 space-y-6">
+<div class="flex justify-between items-start">
+<div>
+<h4 class="font-headline-sm text-on-surface">Technical Evaluation</h4>
+<p class="text-body-md text-on-surface-variant">Assessment of capacity, methodology, and technical personnel qualifications.</p>
+</div>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-secondary-container/20 text-secondary text-[10px] font-bold rounded-full border border-secondary/20">SCORED SYSTEM</span>
+<button class="text-outline hover:text-on-surface"><span class="material-symbols-outlined">settings</span></button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-outline-variant">
+<div>
+<label class="font-label-caps text-[10px] text-outline block mb-2 uppercase">Linked Requirements</label>
+<div class="flex flex-wrap gap-2"><span class="bg-surface-container text-on-surface-variant text-[11px] px-2 py-1 rounded border border-outline-variant flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">link</span> Tech Proposal — scored</span><span class="bg-surface-container text-on-surface-variant text-[11px] px-2 py-1 rounded border border-outline-variant flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">link</span> CVs of Staff — scored</span></div>
+</div>
+<div>
+<label class="font-label-caps text-[10px] text-outline block mb-2 uppercase">Passmark Threshold</label>
+<div class="flex items-center gap-2">
+<span class="font-data-mono text-lg text-primary">75.0%</span>
+<span class="text-xs text-on-surface-variant">Min. score required</span>
+</div>
+</div>
+<div class="flex items-center justify-end gap-3">
+<span class="text-xs text-on-surface-variant font-medium">Carry Forward to Financial</span>
+<button class="w-10 h-5 bg-status-available rounded-full relative p-0.5 transition-colors">
+<div class="w-4 h-4 bg-white rounded-full absolute right-0.5"></div>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Stage 3 -->
+<div class="stage-card bg-surface-container-lowest border border-border-subtle rounded-xl p-6 shadow-sm hover:border-secondary transition-all" style="transform: translateY(0px);">
+<div class="flex gap-6">
+<div class="flex flex-col items-center">
+<div class="drag-handle cursor-grab active:cursor-grabbing mb-2">
+<span class="material-symbols-outlined text-outline">drag_indicator</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center font-bold text-primary text-sm">3</div>
+<div class="w-[2px] flex-1 bg-outline-variant my-2"></div>
+</div>
+<div class="flex-1 space-y-6">
+<div class="flex justify-between items-start">
+<div>
+<h4 class="font-headline-sm text-on-surface">Financial Evaluation</h4>
+<p class="text-body-md text-on-surface-variant">Arithmetic checks, tax compliance verification, and price schedule analysis.</p>
+</div>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-status-available/10 text-status-available text-[10px] font-bold rounded-full border border-status-available/20">PASS / FAIL</span>
+<button class="text-outline hover:text-on-surface"><span class="material-symbols-outlined">settings</span></button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-outline-variant">
+<div>
+<label class="font-label-caps text-[10px] text-outline block mb-2 uppercase">Linked Requirements</label>
+<div class="flex flex-wrap gap-2"><span class="bg-surface-container text-on-surface-variant text-[11px] px-2 py-1 rounded border border-outline-variant flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">link</span> Bill of Quantities — financial evaluation</span></div>
+</div>
+<div>
+<label class="font-label-caps text-[10px] text-outline block mb-2 uppercase">Evaluation Type</label>
+<p class="text-body-md font-medium">Lowest Evaluated Responsive Bid</p>
+</div>
+<div class="flex items-center justify-end gap-3">
+<span class="text-xs text-on-surface-variant font-medium">Carry Forward to Post-Qual</span>
+<button class="w-10 h-5 bg-status-available rounded-full relative p-0.5 transition-colors">
+<div class="w-4 h-4 bg-white rounded-full absolute right-0.5"></div>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Navigation -->
+<div class="flex items-center justify-between pt-8 border-t border-outline-variant mt-12">
+<button class="flex items-center gap-2 px-6 py-3 border border-outline text-on-surface-variant rounded-lg hover:bg-surface-container-low transition-all font-semibold">
+<span class="material-symbols-outlined">arrow_back</span>
+                        Back: Forms &amp; Attachments
+                    </button>
+<div class="flex items-center gap-4">
+<p class="text-xs text-on-surface-variant italic">Section 6 of 7 completed</p>
+<button class="flex items-center gap-2 px-8 py-3 bg-primary text-on-primary rounded-lg hover:opacity-90 shadow-md transition-all font-bold group">
+                            Next: Contract Terms
+                            <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Spacer for floating bar if needed -->
+<div class="h-12"></div>
+</main>
+</div>
+<!-- Micro-interaction Scripts -->
+<script>
+        document.querySelectorAll('.stage-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.classList.add('shadow-md');
+                card.style.transform = 'translateY(-2px)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.classList.remove('shadow-md');
+                card.style.transform = 'translateY(0)';
+            });
+        });
+
+        // Simulated toggle behavior
+        document.querySelectorAll('button.relative').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const circle = toggle.querySelector('div');
+                if (toggle.classList.contains('bg-status-available')) {
+                    toggle.classList.replace('bg-status-available', 'bg-outline-variant');
+                    circle.classList.replace('right-0.5', 'left-0.5');
+                } else {
+                    toggle.classList.replace('bg-outline-variant', 'bg-status-available');
+                    circle.classList.replace('left-0.5', 'right-0.5');
+                }
+            });
+        });
+    </script>
+<div class="fixed inset-0 z-[100] hidden" id="stage-detail-drawer">
+<div class="absolute inset-0 bg-on-surface/40 backdrop-blur-sm transition-opacity" onclick="document.getElementById('stage-detail-drawer').classList.add('hidden')"></div>
+<div class="absolute right-0 top-0 h-full w-full max-w-md bg-surface shadow-2xl flex flex-col transition-transform">
+<div class="p-6 border-b border-outline-variant flex items-center justify-between bg-surface-container-lowest">
+<div>
+<h2 class="font-headline-sm text-primary">Stage Configuration</h2>
+<p class="text-xs text-on-surface-variant uppercase tracking-widest font-label-caps">Detailed Rules &amp; Parameters</p>
+</div>
+<button class="p-2 hover:bg-surface-container-low rounded-full text-outline" onclick="document.getElementById('stage-detail-drawer').classList.add('hidden')">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto p-6 space-y-6">
+<div class="grid grid-cols-1 gap-4">
+<div class="space-y-1.5">
+<label class="text-[10px] font-label-caps text-outline uppercase">Stage Name</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm" type="text" value="Technical Evaluation">
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-1.5">
+<label class="text-[10px] font-label-caps text-outline uppercase">Stage Type</label>
+<select class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm">
+<option>Technical</option>
+<option>Financial</option>
+<option>Preliminary</option>
+</select>
+</div>
+<div class="space-y-1.5">
+<label class="text-[10px] font-label-caps text-outline uppercase">Sequence</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm" type="number" value="2">
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="text-[10px] font-label-caps text-outline uppercase">Evaluation Method</label>
+<div class="flex gap-4">
+<label class="flex items-center gap-2 text-sm cursor-pointer">
+<input checked="" class="text-primary focus:ring-primary" name="eval_method" type="radio"> Pass/Fail
+            </label>
+<label class="flex items-center gap-2 text-sm cursor-pointer">
+<input class="text-primary focus:ring-primary" name="eval_method" type="radio"> Scored
+            </label>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="text-[10px] font-label-caps text-outline uppercase">Linked Supplier Requirements</label>
+<div class="p-3 bg-surface-container-low border border-outline-variant rounded-lg space-y-2">
+<div class="flex items-center justify-between text-xs">
+<span class="">Technical Proposal</span>
+<span class="material-symbols-outlined text-sm text-outline">close</span>
+</div>
+<button class="text-primary text-xs font-bold flex items-center gap-1">+ Add Requirement</button>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="text-[10px] font-label-caps text-outline uppercase">Required Documents</label>
+<textarea class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm h-20">CVs of Key Staff, Methodology Statement, Equipment List</textarea>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-1.5">
+<label class="text-[10px] font-label-caps text-outline uppercase">Min Score / Pass Rule</label>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm" type="text" value="75%">
+</div>
+<div class="space-y-1.5">
+<label class="text-[10px] font-label-caps text-outline uppercase">Disqualification Rule</label>
+<select class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm">
+<option>Hard Stop</option>
+<option>Warning Only</option>
+</select>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="text-[10px] font-label-caps text-outline uppercase">Carry Forward Rule</label>
+<p class="text-xs text-on-surface-variant">Only bidders passing this stage proceed to Financial Evaluation.</p>
+</div><div class="space-y-4 pt-4 border-t border-outline-variant">
+<div class="space-y-1.5">
+<label class="text-[10px] font-label-caps text-outline uppercase">Disqualification / Responsiveness Rules</label>
+<div class="space-y-3">
+<div>
+<label class="text-[10px] font-label-caps text-outline-variant uppercase block mb-1">Failure Result</label>
+<select class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary">
+<option>Disqualify bidder</option>
+<option selected="">Mark non-responsive</option>
+<option>Continue with warning</option>
+<option>Manual review required</option>
+</select>
+</div>
+<div class="p-3 bg-secondary-container/10 border border-secondary/20 rounded-lg">
+<p class="text-xs text-on-surface-variant leading-relaxed">
+<span class="font-bold text-secondary">Summary:</span> Preliminary Evaluation → Failure Result: Mark bid non-responsive and stop further evaluation.
+        </p>
+</div>
+</div>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="text-[10px] font-label-caps text-outline uppercase">Evaluator Instructions</label>
+<textarea class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm h-24" placeholder="Enter instructions for the evaluation committee..."></textarea>
+</div>
+<div class="flex items-center justify-between py-2 border-t border-outline-variant">
+<span class="text-sm font-medium">Supplier Visibility</span>
+<button class="w-10 h-5 bg-status-available rounded-full relative p-0.5">
+<div class="w-4 h-4 bg-white rounded-full absolute right-0.5"></div>
+</button>
+</div>
+<div class="flex items-center justify-between py-2 border-t border-outline-variant">
+<span class="text-sm font-medium">Approval Required</span>
+<button class="w-10 h-5 bg-outline-variant rounded-full relative p-0.5">
+<div class="w-4 h-4 bg-white rounded-full absolute left-0.5"></div>
+</button>
+</div>
+<div class="space-y-1.5">
+<label class="text-[10px] font-label-caps text-outline uppercase">Evaluation Output</label>
+<p class="text-xs font-data-mono bg-surface-container-highest p-2 rounded">JSON_SCORE_MATRIX_V1</p>
+</div>
+</div>
+</div>
+<div class="p-6 border-t border-outline-variant bg-surface-container-lowest flex gap-3">
+<button class="flex-1 py-2.5 border border-outline text-on-surface-variant rounded-lg font-semibold text-sm" onclick="document.getElementById('stage-detail-drawer').classList.add('hidden')">Cancel</button>
+<button class="flex-1 py-2.5 bg-primary text-on-primary rounded-lg font-semibold text-sm shadow-sm">Save Changes</button>
+</div>
+</div>
+</div>
+
+
+</body></html>

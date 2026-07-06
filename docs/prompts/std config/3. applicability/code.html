@@ -1,0 +1,508 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Applicability - STD Configurator</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary": "#001f48",
+                    "secondary-fixed": "#cfe5ff",
+                    "on-background": "#1a1b20",
+                    "surface-variant": "#e2e2e8",
+                    "outline": "#737781",
+                    "on-primary-fixed-variant": "#1d4681",
+                    "on-tertiary-fixed": "#0b1c30",
+                    "on-secondary-container": "#004c7c",
+                    "on-surface-variant": "#434750",
+                    "on-primary-container": "#7b9ee0",
+                    "primary-fixed": "#d7e2ff",
+                    "on-error-container": "#93000a",
+                    "border-subtle": "#E2E8F0",
+                    "surface-container-high": "#e8e7ed",
+                    "status-committed": "#6366F1",
+                    "surface": "#f9f9fe",
+                    "error-container": "#ffdad6",
+                    "inverse-on-surface": "#f1f0f6",
+                    "surface-container-highest": "#e2e2e8",
+                    "on-secondary": "#ffffff",
+                    "status-available": "#10B981",
+                    "background": "#f9f9fe",
+                    "surface-bright": "#f9f9fe",
+                    "inverse-surface": "#2f3035",
+                    "primary-container": "#00346f",
+                    "secondary-fixed-dim": "#99cbff",
+                    "surface-container": "#eeedf3",
+                    "secondary": "#01629d",
+                    "on-secondary-fixed-variant": "#004a78",
+                    "inverse-primary": "#abc7ff",
+                    "surface-dim": "#dad9df",
+                    "status-reserved": "#F59E0B",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-container": "#8f9fb8",
+                    "surface-tint": "#395e9b",
+                    "surface-container-low": "#f4f3f9",
+                    "tertiary-fixed": "#d3e4ff",
+                    "tertiary": "#102135",
+                    "data-block-bg": "#FFFFFF",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-container": "#26364b",
+                    "on-surface": "#1a1b20",
+                    "primary-fixed-dim": "#abc7ff",
+                    "on-primary-fixed": "#001b3f",
+                    "on-error": "#ffffff",
+                    "secondary-container": "#7bbeff",
+                    "on-tertiary-fixed-variant": "#38485e",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed-dim": "#b7c8e2",
+                    "outline-variant": "#c3c6d1",
+                    "on-secondary-fixed": "#001d34",
+                    "status-exhausted": "#EF4444",
+                    "error": "#ba1a1a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-padding": "16px",
+                    "gutter": "12px",
+                    "unit": "4px",
+                    "section-gap": "24px",
+                    "card-padding": "20px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Manrope"],
+                    "headline-lg": ["Manrope"],
+                    "body-md": ["Inter"],
+                    "label-caps": ["Inter"],
+                    "headline-sm": ["Manrope"],
+                    "body-lg": ["Inter"],
+                    "headline-lg-mobile": ["Manrope"],
+                    "data-mono": ["JetBrains Mono"]
+            },
+            "fontSize": {
+                    "headline-md": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+                    "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #f9f9fe;
+            color: #1a1b20;
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+<!-- SideNavBar -->
+<aside class="flex flex-col h-full p-4 space-y-2 bg-surface-container-low border-r border-outline-variant w-64 shrink-0 hidden md:flex">
+<div class="flex items-center space-x-3 mb-8 px-2">
+<div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+<div>
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary leading-tight">e-Procurement</h1>
+<p class="text-[10px] uppercase tracking-wider text-outline">STD Configurator</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center space-x-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all group" href="#">
+<span class="material-symbols-outlined text-outline group-hover:text-primary">dashboard</span>
+<span class="font-body-md text-body-md">Overview</span>
+</a>
+<a class="flex items-center space-x-3 p-3 bg-secondary-container text-on-secondary-container font-semibold rounded-lg" href="#">
+<span class="material-symbols-outlined">folder_open</span>
+<span class="font-body-md text-body-md">Library</span>
+</a>
+<a class="flex items-center space-x-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all group" href="#">
+<span class="material-symbols-outlined text-outline group-hover:text-primary">account_tree</span>
+<span class="font-body-md text-body-md">Workflow</span>
+</a>
+<a class="flex items-center space-x-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all group" href="#">
+<span class="material-symbols-outlined text-outline group-hover:text-primary">groups</span>
+<span class="font-body-md text-body-md">Vendors</span>
+</a>
+<a class="flex items-center space-x-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all group" href="#">
+<span class="material-symbols-outlined text-outline group-hover:text-primary">description</span>
+<span class="font-body-md text-body-md">Contracts</span>
+</a>
+<a class="flex items-center space-x-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all group" href="#">
+<span class="material-symbols-outlined text-outline group-hover:text-primary">analytics</span>
+<span class="font-body-md text-body-md">Reports</span>
+</a>
+</nav>
+<div class="pt-4 border-t border-outline-variant space-y-1">
+<a class="flex items-center space-x-3 p-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all group" href="#">
+<span class="material-symbols-outlined text-outline group-hover:text-primary">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</div>
+</aside>
+<!-- Main Workspace -->
+<main class="flex-1 flex flex-col min-w-0 bg-surface overflow-hidden">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center w-full px-container-padding h-16 bg-surface-container-lowest border-b border-outline-variant shrink-0">
+<div class="flex items-center space-x-4">
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary">STD Configurator</h1>
+</div>
+<div class="flex items-center space-x-4">
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low rounded-full">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low rounded-full">
+<span class="material-symbols-outlined">history</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low rounded-full">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="flex items-center space-x-3 pl-4 border-l border-outline-variant">
+<div class="text-right hidden sm:block">
+<div class="text-on-background font-bold text-xs uppercase">Administrator</div>
+<div class="text-outline text-[10px] uppercase font-semibold">STD Configuration</div>
+</div>
+<div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm">AD</div>
+</div>
+</div>
+</header>
+<!-- Sub-Header / Stepper Tabs -->
+<div class="bg-surface-bright z-10 px-8 pt-8 space-y-6 shrink-0">
+<nav class="flex items-center space-x-2 text-outline font-label-caps text-label-caps">
+<a class="hover:text-primary transition-colors" href="#">STD LIBRARY</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-on-surface-variant font-bold">CONFIGURATOR</span>
+</nav>
+<div class="space-y-2">
+<div class="flex items-center space-x-3">
+<h2 class="font-headline-lg text-headline-lg text-primary">Standard Tender Document for Building Works</h2>
+<span class="px-2.5 py-0.5 rounded-full bg-surface-container-highest text-outline font-label-caps text-[10px] border border-outline-variant font-bold tracking-wider">DRAFT</span>
+</div>
+<p class="text-on-surface-variant font-body-md text-body-md max-w-2xl leading-relaxed">Configure the structural definitions and rules for the building works standard document. This version will serve as the master template for all entity-level procurement.</p>
+</div>
+<div class="sticky top-0 bg-surface-bright z-10 -mx-8 px-8">
+<div class="flex space-x-8 overflow-x-auto bg-surface-container-lowest border-b border-outline-variant no-scrollbar px-4">
+<a class="text-outline py-4 font-label-caps text-label-caps whitespace-nowrap hover:text-primary transition-colors" href="#">OVERVIEW</a>
+<a class="text-primary border-b-2 border-primary font-bold py-4 font-label-caps text-label-caps whitespace-nowrap" href="#">APPLICABILITY</a>
+<a class="text-outline py-4 font-label-caps text-label-caps whitespace-nowrap hover:text-primary transition-colors" href="#">TENDER FIELDS</a>
+<a class="text-outline py-4 font-label-caps text-label-caps whitespace-nowrap hover:text-primary transition-colors" href="#">SUPPLIER REQ</a>
+<a class="text-outline py-4 font-label-caps text-label-caps whitespace-nowrap hover:text-primary transition-colors" href="#">FORMS &amp; ATTACHMENTS</a>
+<a class="text-outline py-4 font-label-caps text-label-caps whitespace-nowrap hover:text-primary transition-colors" href="#">EVALUATION SETUP</a>
+<a class="text-outline py-4 font-label-caps text-label-caps whitespace-nowrap hover:text-primary transition-colors" href="#">CONTRACT TERMS</a>
+<a class="text-outline py-4 font-label-caps text-label-caps whitespace-nowrap hover:text-primary transition-colors" href="#">RULES &amp; VALIDATIONS</a>
+<a class="text-outline py-4 font-label-caps text-label-caps whitespace-nowrap hover:text-primary transition-colors" href="#">PREVIEW</a>
+</div>
+</div>
+</div>
+<!-- Content Canvas -->
+<div class="flex-1 overflow-y-auto bg-surface-bright p-8 pb-32">
+<div class="max-w-5xl mx-auto space-y-section-gap">
+<!-- Summary Header -->
+<div class="bg-primary p-6 rounded-xl text-on-primary shadow-sm relative overflow-hidden">
+<div class="absolute right-0 top-0 opacity-10 pointer-events-none">
+<span class="material-symbols-outlined text-[120px]">verified_user</span>
+</div>
+<h3 class="font-headline-md text-headline-md mb-2">Applicability Rules</h3>
+<div class="flex items-center space-x-2 text-primary-fixed-dim bg-primary-container/30 w-fit px-4 py-2 rounded-lg border border-primary-fixed-dim/20">
+<span class="material-symbols-outlined text-sm">info</span>
+<p class="font-body-md text-body-md">Applies to: <span class="font-semibold text-white">Works · Open Tender · Building Works · All Entities · KES above threshold</span></p>
+</div>
+</div>
+<!-- Conflict Check -->
+<div class="bg-surface-container-low border border-outline-variant p-4 rounded-xl flex items-start justify-between group">
+<div class="space-y-2">
+<div class="flex items-center gap-2 text-primary font-bold text-label-caps uppercase tracking-wider">
+<span class="material-symbols-outlined text-[18px]">rule_settings</span>
+                            Rule Conflict Check
+                        </div>
+<div class="space-y-1">
+<p class="text-on-surface-variant font-body-md">No conflicting active STD found for:</p>
+<p class="font-data-mono text-data-mono text-primary bg-white/50 px-2 py-1 rounded border border-outline-variant/30 w-fit">
+                                Works · Open Tender · Building Works · All Entities · KES above 6,000,000
+                            </p>
+</div>
+</div>
+<button class="text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">content_copy</span>
+</button>
+</div>
+<!-- Test Applicability -->
+<section class="bg-surface-container-low border border-outline-variant p-6 rounded-xl shadow-sm">
+<div class="flex items-center justify-between mb-6">
+<h4 class="font-headline-sm text-headline-sm text-primary flex items-center">
+<span class="material-symbols-outlined mr-2">science</span> Test Applicability
+                        </h4>
+<span class="px-3 py-1 bg-status-available/10 text-status-available text-label-caps rounded-full border border-status-available/20 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">check_circle</span> This STD applies.
+                        </span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+<div class="space-y-1">
+<p class="text-label-caps font-label-caps text-outline">Package Category</p>
+<p class="text-body-md font-semibold text-on-surface">Works</p>
+</div>
+<div class="space-y-1">
+<p class="text-label-caps font-label-caps text-outline">Method</p>
+<p class="text-body-md font-semibold text-on-surface">Open Tender</p>
+</div>
+<div class="space-y-1">
+<p class="text-label-caps font-label-caps text-outline">Subtype</p>
+<p class="text-body-md font-semibold text-on-surface">Building Works</p>
+</div>
+<div class="space-y-1">
+<p class="text-label-caps font-label-caps text-outline">Entity</p>
+<p class="text-body-md font-semibold text-on-surface">Ministry of Health</p>
+</div>
+<div class="space-y-1">
+<p class="text-label-caps font-label-caps text-outline">Value</p>
+<p class="text-data-mono font-data-mono text-primary">KES 98,000,000</p>
+</div>
+<div class="space-y-1">
+<p class="text-label-caps font-label-caps text-outline">Funding Source</p>
+<p class="text-body-md font-semibold text-on-surface">GoK</p>
+</div>
+<div class="sm:col-span-2 lg:col-span-2 flex items-end justify-end">
+<button class="text-primary font-bold text-body-md hover:underline flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">refresh</span>
+                                Run New Test
+                            </button>
+</div>
+</div>
+</section>
+<!-- Form Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Left Column -->
+<div class="md:col-span-8 space-y-gutter">
+<!-- Primary Classification -->
+<section class="bg-surface-container-lowest border border-outline-variant p-card-padding rounded-xl shadow-sm">
+<h4 class="font-headline-sm text-headline-sm text-primary mb-6 flex items-center">
+<span class="material-symbols-outlined mr-2">category</span> Primary Classification
+                            </h4>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-section-gap">
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps text-outline">Procurement Category</label>
+<select class="w-full h-12 px-4 rounded-lg border-outline-variant focus:border-primary focus:ring-primary bg-surface transition-all font-body-md">
+<option>Works</option>
+<option>Goods</option>
+<option>Consultancy Services</option>
+<option>Non-Consultancy Services</option>
+</select>
+</div>
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps text-outline">Procurement Method</label>
+<select class="w-full h-12 px-4 rounded-lg border-outline-variant focus:border-primary focus:ring-primary bg-surface transition-all font-body-md">
+<option>Open Tender</option>
+<option>Request for Quotation</option>
+<option>Restricted Tender</option>
+<option>Direct Procurement</option>
+</select>
+</div>
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps text-outline">Contract Type</label>
+<select class="w-full h-12 px-4 rounded-lg border-outline-variant focus:border-primary focus:ring-primary bg-surface transition-all font-body-md">
+<option>Works Contract</option>
+<option>Service Level Agreement</option>
+<option>Framework Agreement</option>
+</select>
+</div>
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps text-outline">Works Subtype</label>
+<select class="w-full h-12 px-4 rounded-lg border-outline-variant focus:border-primary focus:ring-primary bg-surface transition-all font-body-md">
+<option>Building Works</option>
+<option>Civil Engineering</option>
+<option>Electrical Installations</option>
+<option>Plumbing &amp; Mechanical</option>
+</select>
+</div>
+</div>
+</section>
+<!-- Entity & Funding Scope (Enhanced) -->
+<section class="bg-surface-container-lowest border border-outline-variant p-card-padding rounded-xl shadow-sm">
+<h4 class="font-headline-sm text-headline-sm text-primary mb-6 flex items-center">
+<span class="material-symbols-outlined mr-2">corporate_fare</span> Entity &amp; Funding Scope
+                            </h4>
+<div class="space-y-section-gap">
+<div class="space-y-4">
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps text-outline">Entity Scope</label>
+<div class="flex flex-wrap gap-2 pt-2">
+<button class="px-4 py-2 border border-outline-variant text-on-surface-variant rounded-full font-label-caps text-label-caps hover:bg-surface-container-high transition-all">All Entities</button>
+<button class="px-4 py-2 bg-secondary-container text-on-secondary-container rounded-full font-label-caps text-label-caps border border-secondary transition-all">Specific MDA</button>
+<button class="px-4 py-2 border border-outline-variant text-on-surface-variant rounded-full font-label-caps text-label-caps hover:bg-surface-container-high transition-all">Counties Only</button>
+<button class="px-4 py-2 border border-outline-variant text-on-surface-variant rounded-full font-label-caps text-label-caps hover:bg-surface-container-high transition-all">State Corporations</button>
+</div>
+</div>
+<!-- Conditional Multi-select for Specific MDA -->
+<div class="space-y-2 p-4 bg-surface-container-low rounded-lg border border-outline-variant/30">
+<label class="font-label-caps text-label-caps text-outline">Select Procuring Entities</label>
+<div class="min-h-[48px] w-full p-2 rounded-lg border border-outline-variant bg-surface flex flex-wrap gap-2 items-center">
+<div class="flex items-center gap-1.5 px-3 py-1 bg-primary-fixed text-on-primary-fixed rounded-md text-body-md font-medium">
+                                                Ministry of Health
+                                                <button class="material-symbols-outlined text-sm hover:text-error">close</button>
+</div>
+<div class="flex items-center gap-1.5 px-3 py-1 bg-primary-fixed text-on-primary-fixed rounded-md text-body-md font-medium">
+                                                Ministry of Education
+                                                <button class="material-symbols-outlined text-sm hover:text-error">close</button>
+</div>
+<input class="border-none focus:ring-0 bg-transparent flex-1 min-w-[120px] font-body-md" placeholder="Search and add entities..." type="text">
+</div>
+</div>
+</div>
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps text-outline">Funding Source</label>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+<label class="flex items-center gap-3 p-3 rounded-lg border border-outline-variant bg-surface hover:bg-surface-container-low cursor-pointer transition-all">
+<input checked="" class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox">
+<span class="font-body-md text-on-surface">GoK / Exchequer</span>
+</label>
+<label class="flex items-center gap-3 p-3 rounded-lg border border-outline-variant bg-surface hover:bg-surface-container-low cursor-pointer transition-all">
+<input checked="" class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox">
+<span class="font-body-md text-on-surface">Internal Revenue</span>
+</label>
+<label class="flex items-center gap-3 p-3 rounded-lg border border-outline-variant bg-surface hover:bg-surface-container-low cursor-pointer transition-all">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox">
+<span class="font-body-md text-on-surface">Donor Funded</span>
+</label>
+<label class="flex items-center gap-3 p-3 rounded-lg border border-outline-variant bg-surface hover:bg-surface-container-low cursor-pointer transition-all">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox">
+<span class="font-body-md text-on-surface">Mixed Funding</span>
+</label>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Financial Limits -->
+<div class="md:col-span-4 space-y-gutter">
+<section class="bg-surface-container-lowest border border-outline-variant p-card-padding rounded-xl shadow-sm h-full">
+<h4 class="font-headline-sm text-headline-sm text-primary mb-6 flex items-center">
+<span class="material-symbols-outlined mr-2">payments</span> Financial Limits
+                            </h4>
+<div class="space-y-section-gap">
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps text-outline">Currency</label>
+<div class="font-data-mono text-data-mono p-3 bg-surface-container-low rounded-lg text-primary flex items-center">
+<span class="material-symbols-outlined text-sm mr-2">money</span> KES - Kenya Shilling
+                                    </div>
+</div>
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps text-outline">Threshold Basis</label>
+<div class="font-body-md text-on-surface p-3 bg-surface-container-low rounded-lg border border-outline-variant/30 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">gavel</span> Open Tender threshold for Works
+                                    </div>
+</div>
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps text-outline">Minimum Package Value</label>
+<div class="relative">
+<input class="w-full h-12 px-4 rounded-lg border-outline-variant bg-surface-container-low font-data-mono text-data-mono text-primary cursor-default" readonly="" type="text" value="KES 6,000,000 and above">
+<span class="absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-primary text-sm">lock</span>
+</div>
+<p class="text-[11px] text-outline italic mt-1">Derived from regulation threshold table</p>
+</div>
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps text-outline">Maximum Package Value</label>
+<div class="relative">
+<input class="w-full h-12 px-4 rounded-lg border-outline-variant bg-surface-container-low font-data-mono text-data-mono text-primary cursor-default" readonly="" type="text" value="No upper limit">
+<span class="absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-primary text-sm">all_inclusive</span>
+</div>
+</div>
+<div class="pt-4 border-t border-outline-variant">
+<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-xl">
+<div>
+<p class="font-headline-sm text-headline-sm text-primary leading-tight">Lot Support</p>
+<p class="text-[11px] text-outline">Allow multi-lot bidding</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox">
+<div class="w-11 h-6 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+<section class="bg-surface-container-low border border-outline-variant p-8 rounded-xl shadow-sm space-y-6">
+<div class="flex items-center justify-between">
+<h4 class="font-headline-sm text-headline-sm text-primary flex items-center">
+<span class="material-symbols-outlined mr-2">visibility</span> Applies To Preview
+    </h4>
+<button class="text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">content_copy</span>
+</button>
+</div>
+<div class="space-y-4">
+<p class="font-body-md text-on-surface-variant font-medium">This STD will apply to:</p>
+<ul class="space-y-2">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-status-available text-[18px] mt-0.5">check_circle</span>
+<span class="font-body-md text-on-surface">Works procurement using Open Tender</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-status-available text-[18px] mt-0.5">check_circle</span>
+<span class="font-body-md text-on-surface">Building Works subtype</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-status-available text-[18px] mt-0.5">check_circle</span>
+<span class="font-body-md text-on-surface">All procuring entities</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-status-available text-[18px] mt-0.5">check_circle</span>
+<span class="font-body-md text-on-surface">GoK-funded or internal revenue-funded tenders</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-status-available text-[18px] mt-0.5">check_circle</span>
+<span class="font-body-md text-on-surface">Package value from KES 6,000,000 upward</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-status-available text-[18px] mt-0.5">check_circle</span>
+<span class="font-body-md text-on-surface">Lot bidding allowed</span>
+</li>
+</ul>
+</div>
+<p class="text-xs text-outline italic pt-4 border-t border-outline-variant/30">This reinforces that the configuration is understandable and correctly mapped to regulatory requirements.</p>
+</section></div>
+</div>
+<!-- Sticky Footer -->
+<footer class="absolute bottom-0 left-0 right-0 h-20 bg-surface-container-lowest border-t border-outline-variant px-container-padding flex items-center justify-between z-20">
+<button class="px-6 py-2.5 text-primary font-bold hover:bg-surface-container-high transition-colors rounded-lg flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">delete_sweep</span>Cancel Draft
+            </button>
+<div class="flex items-center space-x-4">
+<button class="px-6 py-2.5 border border-outline text-on-surface-variant font-bold hover:bg-surface-container transition-colors rounded-lg">Save Draft</button>
+<button class="px-6 py-2.5 border border-outline text-on-surface-variant font-bold hover:bg-surface-container transition-colors rounded-lg flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">visibility</span>Preview
+                </button>
+<button class="px-8 py-2.5 bg-primary text-on-primary font-bold hover:opacity-90 transition-opacity rounded-lg shadow-md flex items-center gap-2">
+                    Submit for Review<span class="material-symbols-outlined text-[20px]">send</span>
+</button>
+</div>
+</footer>
+</main>
+</body></html>

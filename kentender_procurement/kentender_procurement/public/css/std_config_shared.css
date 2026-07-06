@@ -1,0 +1,74 @@
+/* STD Config UI — shared design tokens (Layers 1–2)
+   Typography: Workbench Typography v1.0 (--kt-wb-* from kentender_core)
+   Colors: Budget Catalyst palette from std config pack DESIGN.md */
+
+:root {
+	--kt-std-surface: #f7f9fb;
+	--kt-std-surface-bright: #f7f9fb;
+	--kt-std-surface-low: #f2f4f6;
+	--kt-std-surface-container: #eceef0;
+	--kt-std-surface-high: #e6e8ea;
+	--kt-std-surface-highest: #e0e3e5;
+	--kt-std-surface-lowest: #ffffff;
+
+	--kt-std-on-surface: #191c1e;
+	--kt-std-on-surface-variant: #424751;
+	--kt-std-outline: #737783;
+	--kt-std-outline-variant: #c2c6d3;
+
+	--kt-std-primary: #00346f;
+	--kt-std-primary-container: #004a99;
+	--kt-std-on-primary: #ffffff;
+	--kt-std-secondary: #00629d;
+	--kt-std-secondary-container: #7bbeff;
+	--kt-std-on-secondary-container: #004c7c;
+
+	--kt-std-status-available: #10b981;
+	--kt-std-status-reserved: #f59e0b;
+	--kt-std-status-committed: #6366f1;
+	--kt-std-status-exhausted: #ef4444;
+	--kt-std-error: #ba1a1a;
+
+	--kt-std-border-subtle: #e2e8f0;
+	--kt-std-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+
+	/* typography aliases — Workbench Typography v1.0 */
+	--kt-std-font-headline: var(--kt-wb-font-headline);
+	--kt-std-font-body: var(--kt-wb-font-body);
+	--kt-std-font-mono: var(--kt-wb-font-mono);
+
+	/* operational density — Budget / Planning hub aligned (see Typography v1.0 Phase 4) */
+	--kt-std-section-gap: 24px;
+	--kt-std-stack-gap-md: 16px;
+	--kt-std-stack-gap-sm: 12px;
+	--kt-std-card-padding: 12px 14px;
+	--kt-std-body-padding: 20px 24px 32px;
+	--kt-std-topbar-height: 56px;
+	--kt-std-topbar-padding-x: 24px;
+	--kt-std-table-cell-padding: 10px 14px;
+	--kt-std-filter-bar-padding: 12px 14px;
+}
+
+body.kt-std-lib-shell .page-head,
+body.kt-std-cfg-shell .page-head {
+	display: none !important;
+}
+
+body.kt-std-lib-shell .page-body > .container,
+body.kt-std-lib-shell .frappe-app > .container,
+body.kt-std-cfg-shell .page-body > .container,
+body.kt-std-cfg-shell .frappe-app > .container {
+	padding: 0 !important;
+	max-width: 100% !important;
+}
+
+body.kt-std-lib-shell .layout-main-section-wrapper,
+body.kt-std-cfg-shell .layout-main-section-wrapper {
+	padding: 0 !important;
+}
+
+.material-symbols-outlined.kt-std-icon {
+	font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+	vertical-align: middle;
+	line-height: 1;
+}

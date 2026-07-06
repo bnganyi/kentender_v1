@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en" style=""><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"/><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-container": "#00346f",
+                      "primary": "#001f48",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary-container": "#004c7c",
+                      "error": "#ba1a1a",
+                      "background": "#f9f9fe",
+                      "on-surface-variant": "#434750",
+                      "surface-container": "#eeedf3",
+                      "on-error": "#ffffff",
+                      "outline": "#737781",
+                      "secondary": "#01629d",
+                      "on-secondary-fixed-variant": "#004a78",
+                      "data-block-bg": "#FFFFFF",
+                      "tertiary": "#102135",
+                      "on-surface": "#1a1b20",
+                      "surface": "#f9f9fe",
+                      "inverse-primary": "#abc7ff",
+                      "surface-container-highest": "#e2e2e8",
+                      "on-error-container": "#93000a",
+                      "secondary-fixed-dim": "#99cbff",
+                      "surface-tint": "#395e9b",
+                      "tertiary-fixed": "#d3e4ff",
+                      "tertiary-container": "#26364b",
+                      "secondary-container": "#7bbeff",
+                      "primary-fixed": "#d7e2ff",
+                      "on-primary-fixed": "#001b3f",
+                      "on-background": "#1a1b20",
+                      "inverse-surface": "#2f3035",
+                      "surface-container-high": "#e8e7ed",
+                      "inverse-on-surface": "#f1f0f6",
+                      "tertiary-fixed-dim": "#b7c8e2",
+                      "surface-dim": "#dad9df",
+                      "secondary-fixed": "#cfe5ff",
+                      "status-available": "#10B981",
+                      "outline-variant": "#c3c6d1",
+                      "on-secondary": "#ffffff",
+                      "error-container": "#ffdad6",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-container-low": "#f4f3f9",
+                      "on-secondary-fixed": "#001d34",
+                      "status-exhausted": "#EF4444",
+                      "on-primary-fixed-variant": "#1d4681",
+                      "on-tertiary-fixed": "#0b1c30",
+                      "on-primary-container": "#7b9ee0",
+                      "on-primary": "#ffffff",
+                      "on-tertiary-fixed-variant": "#38485e",
+                      "surface-variant": "#e2e2e8",
+                      "status-committed": "#6366F1",
+                      "primary-fixed-dim": "#abc7ff",
+                      "on-tertiary-container": "#8f9fb8",
+                      "border-subtle": "#E2E8F0",
+                      "surface-bright": "#f9f9fe",
+                      "status-reserved": "#F59E0B"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "12px",
+                      "container-padding": "16px",
+                      "card-padding": "20px",
+                      "section-gap": "24px",
+                      "unit": "4px"
+              },
+              "fontFamily": {
+                      "headline-sm": ["Manrope"],
+                      "headline-md": ["Manrope"],
+                      "headline-lg": ["Manrope"],
+                      "body-md": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "label-caps": ["Inter"],
+                      "headline-lg-mobile": ["Manrope"],
+                      "data-mono": ["JetBrains Mono"]
+              },
+              "fontSize": {
+                      "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                      "headline-md": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+                      "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                      "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}]
+              }
+            },
+          },
+        }
+    }catch(_e){}</script></head><body class="bg-background text-on-background font-body-md text-body-md overflow-hidden">
+<div class="flex h-screen w-full">
+<!-- Module Sidebar (ProAdmin Logo) -->
+<aside class="hidden md:flex flex-col h-full w-64 bg-surface-container-low border-r border-outline-variant p-4 space-y-2 z-20">
+<div class="flex items-center space-x-3 px-2 py-4 mb-4">
+<div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined" data-original-icon="account_balance">account_balance</span>
+</div>
+<div>
+<div class="font-headline-sm text-headline-sm font-bold text-primary">ProAdmin</div>
+<div class="text-[11px] uppercase tracking-wider text-outline font-bold">STD Configurator</div>
+</div>
+</div>
+<button class="w-full py-3 px-4 bg-primary text-on-primary rounded-lg font-semibold flex items-center justify-center space-x-2 shadow-sm hover:opacity-90 transition-opacity mb-6">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span class="">New Document</span>
+</button>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center space-x-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="">Overview</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-2.5 bg-secondary-container text-on-secondary-container font-semibold rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">folder_open</span>
+<span class="">Library</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">account_tree</span>
+<span class="">Workflow</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="">Vendors</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="">Contracts</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="">Reports</span>
+</a>
+</nav>
+<div class="pt-4 border-t border-outline-variant space-y-1">
+<a class="flex items-center space-x-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="">Settings</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+<span class="">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col h-full overflow-hidden">
+<!-- Global Top Bar (Kentender Logo) -->
+<header class="h-16 flex justify-between items-center w-full px-container-padding bg-surface-container-lowest border-b border-outline-variant z-10">
+<div class="flex items-center space-x-4">
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary">STD Configurator</h1>
+</div>
+<div class="flex items-center space-x-4">
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low rounded-full">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low rounded-full">
+<span class="material-symbols-outlined">history</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low rounded-full">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="flex items-center space-x-3 pl-4 border-l border-outline-variant">
+<div class="text-right hidden sm:block">
+<div class="text-on-background font-bold text-xs uppercase">Administrator</div>
+<div class="text-outline text-[10px] uppercase font-semibold">STD Configuration</div>
+</div>
+<div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm">
+                        AD
+                    </div>
+</div>
+</div>
+</header>
+<!-- Content Area -->
+<div class="flex-1 overflow-y-auto bg-surface-bright">
+<div class="max-w-6xl mx-auto p-8 space-y-6">
+<!-- Breadcrumbs -->
+<nav class="flex items-center space-x-2 text-outline font-label-caps text-label-caps">
+<a class="hover:text-primary transition-colors" href="#">STD LIBRARY</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-on-surface-variant font-bold">CONFIGURATOR</span>
+</nav>
+<!-- Page Title -->
+<div class="space-y-2">
+<div class="flex items-center space-x-3">
+<h2 class="font-headline-lg text-headline-lg text-primary">Standard Tender Document for Building Works</h2>
+<span class="px-2.5 py-0.5 rounded-full bg-surface-container-highest text-outline font-label-caps text-[10px] border border-outline-variant font-bold tracking-wider">DRAFT</span>
+</div>
+<p class="text-on-surface-variant font-body-md text-body-md max-w-2xl leading-relaxed">
+                        Configure the structural definitions and rules for the building works standard document. This version will serve as the master template for all entity-level procurement.
+                    </p>
+</div>
+<!-- Configurator Tabs -->
+<div class="sticky top-0 bg-surface-bright z-10 -mx-8 px-8">
+<div class="flex space-x-8 overflow-x-auto bg-surface-container-lowest border-b border-outline-variant no-scrollbar px-4">
+<a class="text-primary border-b-2 border-primary font-bold py-4 font-label-caps text-label-caps whitespace-nowrap" href="#">OVERVIEW</a>
+<a class="text-outline py-4 font-label-caps text-label-caps whitespace-nowrap hover:text-primary transition-colors" href="#">APPLICABILITY</a>
+<a class="text-outline py-4 font-label-caps text-label-caps whitespace-nowrap hover:text-primary transition-colors" href="#">TENDER FIELDS</a>
+<a class="text-outline py-4 font-label-caps text-label-caps whitespace-nowrap hover:text-primary transition-colors" href="#">SUPPLIER REQ</a>
+<a class="text-outline py-4 font-label-caps text-label-caps whitespace-nowrap hover:text-primary transition-colors" href="#">FORMS &amp; ATTACHMENTS</a>
+<a class="text-outline py-4 font-label-caps text-label-caps whitespace-nowrap hover:text-primary transition-colors" href="#">EVALUATION SETUP</a>
+<a class="text-outline py-4 font-label-caps text-label-caps whitespace-nowrap hover:text-primary transition-colors" href="#">CONTRACT TERMS</a>
+<a class="text-outline py-4 font-label-caps text-label-caps whitespace-nowrap hover:text-primary transition-colors" href="#">RULES &amp; VALIDATIONS</a>
+<a class="text-outline py-4 font-label-caps text-label-caps whitespace-nowrap hover:text-primary transition-colors" href="#">PREVIEW</a>
+<a class="text-outline py-4 font-label-caps text-label-caps whitespace-nowrap hover:text-primary transition-colors" href="#">APPROVAL</a>
+<a class="text-outline py-4 font-label-caps text-label-caps whitespace-nowrap hover:text-primary transition-colors" href="#">TECHNICAL JSON</a>
+</div>
+</div>
+<!-- Data Block: Document Identity -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-sm overflow-hidden">
+<div class="p-card-padding border-b border-outline-variant bg-surface-container-low/50 flex items-center justify-between">
+<h3 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px] text-secondary">info</span>
+                            Document Identity
+                        </h3>
+<span class="font-data-mono text-data-mono text-xs text-outline px-2 py-1 bg-surface-container rounded border border-outline-variant/30">REF: STD-WORKS-2024-001</span>
+</div>
+<div class="p-card-padding">
+<form class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- STD Title (Full Width) -->
+<div class="col-span-1 md:col-span-2 lg:col-span-3 space-y-1.5">
+<label class="font-label-caps text-label-caps text-on-surface-variant font-bold">STD TITLE</label>
+<input class="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none" type="text" value="Standard Tender Document for Building Works"/>
+</div>
+<!-- Document Family -->
+<div class="space-y-1.5">
+<label class="font-label-caps text-label-caps text-on-surface-variant font-bold">DOCUMENT FAMILY</label>
+<div class="relative">
+<select class="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none appearance-none font-medium">
+<option selected="">Works</option>
+<option>Goods</option>
+<option>Services</option>
+<option>Consultancy</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
+</div>
+</div>
+<!-- Category -->
+<div class="space-y-1.5">
+<label class="font-label-caps text-label-caps text-on-surface-variant font-bold">PROCUREMENT CATEGORY</label>
+<div class="relative">
+<select class="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none appearance-none font-medium"><option selected="">Works</option><option>Goods</option><option>Services</option><option>Consultancy</option></select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
+</div>
+</div><div class="col-span-1 md:col-span-2 lg:col-span-3 space-y-3 pt-2"><label class="font-label-caps text-label-caps text-on-surface-variant font-bold">FUNDING SOURCE</label><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"><label class="flex items-center space-x-3 cursor-pointer group"><div class="relative flex items-center justify-center"><input checked="" class="peer appearance-none w-5 h-5 border border-outline-variant rounded bg-white checked:bg-primary checked:border-primary transition-all" type="checkbox"/><span class="material-symbols-outlined absolute text-white text-[16px] opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none">check</span></div><span class="text-body-md text-on-surface group-hover:text-primary transition-colors">GoK / Exchequer</span></label><label class="flex items-center space-x-3 cursor-pointer group"><div class="relative flex items-center justify-center"><input checked="" class="peer appearance-none w-5 h-5 border border-outline-variant rounded bg-white checked:bg-primary checked:border-primary transition-all" type="checkbox"/><span class="material-symbols-outlined absolute text-white text-[16px] opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none">check</span></div><span class="text-body-md text-on-surface group-hover:text-primary transition-colors">Internal Revenue</span></label><label class="flex items-center space-x-3 cursor-pointer group"><div class="relative flex items-center justify-center"><input class="peer appearance-none w-5 h-5 border border-outline-variant rounded bg-white checked:bg-primary checked:border-primary transition-all" type="checkbox"/><span class="material-symbols-outlined absolute text-white text-[16px] opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none">check</span></div><span class="text-body-md text-on-surface group-hover:text-primary transition-colors">Donor Funded</span></label><label class="flex items-center space-x-3 cursor-pointer group"><div class="relative flex items-center justify-center"><input class="peer appearance-none w-5 h-5 border border-outline-variant rounded bg-white checked:bg-primary checked:border-primary transition-all" type="checkbox"/><span class="material-symbols-outlined absolute text-white text-[16px] opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none">check</span></div><span class="text-body-md text-on-surface group-hover:text-primary transition-colors">Mixed Funding</span></label></div></div>
+<!-- Procurement Method -->
+<div class="space-y-1.5">
+<label class="font-label-caps text-label-caps text-on-surface-variant font-bold">PROCUREMENT METHOD</label>
+<div class="relative">
+<select class="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none appearance-none font-medium">
+<option selected="">Open Tender</option>
+<option>RFQ</option>
+<option>Restricted Tender</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
+</div>
+</div>
+<!-- Version Label -->
+<div class="space-y-1.5">
+<label class="font-label-caps text-label-caps text-on-surface-variant font-bold">VERSION LABEL</label>
+<div class="flex">
+<span class="px-3 py-2.5 bg-surface-container-high border border-r-0 border-outline-variant rounded-l-lg font-data-mono text-data-mono text-outline">v</span>
+<input class="w-full px-4 py-2.5 rounded-r-lg border border-outline-variant bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none font-data-mono" type="text" value="2.1"/>
+</div>
+</div>
+<!-- Effective Date -->
+<div class="space-y-1.5">
+<label class="font-label-caps text-label-caps text-on-surface-variant font-bold">EFFECTIVE DATE</label>
+<div class="relative">
+<input class="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none font-medium" type="date" value="2024-06-01"/>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-outline">calendar_today</span>
+</div>
+</div>
+<!-- Owner -->
+<div class="space-y-1.5">
+<label class="font-label-caps text-label-caps text-on-surface-variant font-bold">OWNER</label>
+<input class="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none font-medium" type="text" value="Procurement Governance Unit"/>
+</div>
+<!-- Status -->
+<div class="space-y-1.5">
+<label class="font-label-caps text-label-caps text-on-surface-variant font-bold">STATUS</label>
+<div class="flex items-center space-x-2 h-[42px] px-4 rounded-lg bg-surface-container border border-outline-variant">
+<span class="w-2.5 h-2.5 rounded-full bg-status-reserved"></span>
+<span class="font-bold text-on-surface">Draft</span>
+</div>
+</div>
+<!-- Change Summary -->
+<div class="col-span-1 md:col-span-2 lg:col-span-3 space-y-1.5 pt-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant font-bold">CHANGE SUMMARY / REVISION NOTES</label>
+<textarea class="w-full px-4 py-3 rounded-lg border border-outline-variant bg-white focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none resize-none leading-relaxed" placeholder="Briefly describe the updates in this version..." rows="4">Structural updates to Section III (Evaluation) to include environmental sustainability scoring as per the new Green Procurement Framework.</textarea>
+</div>
+</form>
+</div>
+</div>
+<!-- Guidance Section -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-4">
+<div class="lg:col-span-1 bg-primary-container p-6 rounded-lg text-on-primary-container flex flex-col justify-between relative overflow-hidden h-44">
+<div class="relative z-10">
+<div class="font-headline-sm text-headline-sm mb-1 text-white">Configuration Progress</div>
+<div class="text-on-primary-container text-sm opacity-90 text-blue-100">Overview &amp; Identity 100% complete</div>
+</div>
+<div class="relative z-10 w-full bg-white/20 h-2 rounded-full mt-4">
+<div class="bg-secondary-container h-full rounded-full" style="width: 15%"></div>
+</div>
+<div class="relative z-10 text-[10px] font-bold uppercase tracking-widest opacity-70 text-white">Section 1 of 11 Sections</div>
+<!-- Abstract decoration -->
+<div class="absolute -bottom-8 -right-8 w-32 h-32 bg-secondary/20 rounded-full blur-3xl"></div>
+</div>
+<div class="lg:col-span-2 bg-secondary/5 border border-secondary/20 p-6 rounded-lg flex items-start gap-4">
+<div class="bg-secondary text-on-secondary p-3 rounded-lg shrink-0">
+<span class="material-symbols-outlined">lightbulb</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-secondary mb-1">Expert Tip: Version Control</h4>
+<p class="text-body-md text-on-secondary-container/80 leading-relaxed">
+                                Use logical versioning (v2.1) to track minor updates. Significant structural changes to evaluation criteria or document sections should typically trigger a major version update (e.g., v3.0) to maintain audit trails.
+                            </p>
+</div>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="space-y-4">
+<div class="flex items-center gap-2">
+<h4 class="font-headline-sm text-headline-sm text-primary">Applies To Preview</h4>
+<span class="text-on-surface-variant text-sm opacity-70">(Generated based on current rules)</span>
+</div>
+<div class="bg-surface-container-low border border-outline-variant/50 rounded-xl p-6 relative group">
+<div class="absolute top-4 right-4 text-outline hover:text-primary cursor-pointer transition-colors">
+<span class="material-symbols-outlined text-[20px]">content_copy</span>
+</div>
+<div class="space-y-4">
+<p class="text-on-surface font-medium">This STD will apply to:</p>
+<ul class="space-y-2 text-on-surface-variant font-data-mono text-sm">
+<li class="flex items-start gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary mt-2 shrink-0"></span>
+<span>Works procurement using Open Tender</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary mt-2 shrink-0"></span>
+<span>Building Works subtype</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary mt-2 shrink-0"></span>
+<span>All procuring entities</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary mt-2 shrink-0"></span>
+<span>GoK-funded or internal revenue-funded tenders</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary mt-2 shrink-0"></span>
+<span>Package value from KES 6,000,000 upward</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary mt-2 shrink-0"></span>
+<span>Lot bidding allowed</span>
+</li>
+</ul>
+</div>
+</div>
+<p class="text-sm text-on-surface-variant italic opacity-80">This reinforces that the configuration is understandable.</p>
+</div><div class="flex items-center justify-between pt-8 border-t border-outline-variant">
+<button class="px-6 py-2.5 text-primary font-bold hover:bg-surface-container-high transition-colors rounded-lg flex items-center gap-2"><span class="material-symbols-outlined text-[20px]">delete_sweep</span>Cancel Draft</button>
+<div class="flex items-center space-x-4"><button class="px-6 py-2.5 border border-outline text-on-surface-variant font-bold hover:bg-surface-container transition-colors rounded-lg">Save Draft</button><button class="px-6 py-2.5 border border-outline text-on-surface-variant font-bold hover:bg-surface-container transition-colors rounded-lg flex items-center gap-2"><span class="material-symbols-outlined text-[20px]">visibility</span>Preview</button><button class="px-8 py-2.5 bg-primary text-on-primary font-bold hover:opacity-90 transition-opacity rounded-lg shadow-md flex items-center gap-2">Submit for Review<span class="material-symbols-outlined text-[20px]">send</span></button></div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Micro-interaction Script -->
+<script>
+    document.querySelectorAll('a, button').forEach(el => {
+        el.addEventListener('click', (e) => {
+            const rect = el.getBoundingClientRect();
+            const ripple = document.createElement('div');
+            ripple.style.position = 'fixed';
+            ripple.style.left = `${rect.left + rect.width/2}px`;
+            ripple.style.top = `${rect.top + rect.height/2}px`;
+            ripple.style.width = '1px';
+            ripple.style.height = '1px';
+            ripple.style.backgroundColor = 'rgba(0,0,0,0.05)';
+            ripple.style.borderRadius = '50%';
+            ripple.style.pointerEvents = 'none';
+            ripple.style.zIndex = '9999';
+            ripple.style.transform = 'translate(-50%, -50%) scale(0)';
+            ripple.style.transition = 'transform 0.4s ease-out, opacity 0.4s ease-out';
+            document.body.appendChild(ripple);
+            
+            requestAnimationFrame(() => {
+                ripple.style.transform = 'translate(-50%, -50%) scale(150)';
+                ripple.style.opacity = '0';
+            });
+            
+            setTimeout(() => ripple.remove(), 400);
+        });
+    });
+</script>
+</body></html>
