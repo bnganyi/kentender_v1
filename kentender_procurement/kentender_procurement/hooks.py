@@ -62,16 +62,12 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/tm2_tender_handoff_panel.css?v={_desk_asset_v('public/css/tm2_tender_handoff_panel.css')}",
 	f"/assets/kentender_procurement/css/business_readiness_summary.css?v={_desk_asset_v('public/css/business_readiness_summary.css')}",
 	f"/assets/kentender_procurement/css/procurement_package.css?v={_desk_asset_v('public/css/procurement_package.css')}",
-	f"/assets/kentender_procurement/css/std_library_shell.css?v={_desk_asset_v('public/css/std_library_shell.css')}",
-	f"/assets/kentender_procurement/css/std_config_shared.css?v={_desk_asset_v('public/css/std_config_shared.css')}",
-	f"/assets/kentender_procurement/css/std_config/tokens.css?v={_desk_asset_v('public/css/std_config/tokens.css')}",
-	f"/assets/kentender_procurement/css/std_library_page.css?v={_desk_asset_v('public/css/std_library_page.css')}",
-	f"/assets/kentender_procurement/css/std_configurator_page.css?v={_desk_asset_v('public/css/std_configurator_page.css')}",
-	f"/assets/kentender_procurement/css/std_configurator_components.css?v={_desk_asset_v('public/css/std_configurator_components.css')}",
-	f"/assets/kentender_procurement/css/std_configurator_mockup.css?v={_desk_asset_v('public/css/std_configurator_mockup.css')}",
 	f"/assets/kentender_procurement/css/tender_management_v2_workbench.css?v={_desk_asset_v('public/css/tender_management_v2_workbench.css')}",
 	f"/assets/kentender_procurement/css/pp2_planning_page.css?v={_desk_asset_v('public/css/pp2_planning_page.css')}",
 	f"/assets/kentender_procurement/css/pp3_planning_design_system.css?v={_desk_asset_v('public/css/pp3_planning_design_system.css')}",
+	f"/assets/kentender_procurement/css/std_prod_std_library_page.css?v={_desk_asset_v('public/css/std_prod_std_library_page.css')}",
+	f"/assets/kentender_procurement/css/std_prod_std_family_detail_page.css?v={_desk_asset_v('public/css/std_prod_std_family_detail_page.css')}",
+	f"/assets/kentender_procurement/css/std_prod_std_version_detail_page.css?v={_desk_asset_v('public/css/std_prod_std_version_detail_page.css')}",
 	f"/assets/kentender_procurement/css/pp4_workbench_typography_harmony.css?v={_desk_asset_v('public/css/pp4_workbench_typography_harmony.css')}",
 ]
 app_include_js = [
@@ -112,9 +108,6 @@ app_include_js = [
 	f"/assets/kentender_procurement/js/pp2_planning_router.js?v={_desk_asset_v('public/js/pp2_planning_router.js')}",
 	f"/assets/kentender_procurement/js/procurement_home_workspace.js?v={_desk_asset_v('public/js/procurement_home_workspace.js')}",
 	f"/assets/kentender_procurement/js/tm2_workbench_lifecycle.js?v={_desk_asset_v('public/js/tm2_workbench_lifecycle.js')}",
-	f"/assets/kentender_procurement/js/std_engine_desk_boot.js?v={_desk_asset_v('public/js/std_engine_desk_boot.js')}",
-	f"/assets/kentender_procurement/js/std_config/std_config_shared.js?v={_desk_asset_v('public/js/std_config/std_config_shared.js')}",
-	f"/assets/kentender_procurement/js/std_config_workspace.js?v={_desk_asset_v('public/js/std_config_workspace.js')}",
 ]
 
 # include js, css files in header of web template
@@ -150,28 +143,10 @@ page_js = {
 	"plc-procurement-journey": "public/js/procurement_journey_page.js",
 	"plc-module-journey-context": "public/js/plc_module_journey_context_page.js",
 	"tender-management-v2": "public/js/tender_management_v2_workbench_page.js",
-	"std-engine": [
-		"public/js/std_config/std_config_shared.js",
-		"public/js/std_engine_redirect_page.js",
-	],
-	"std-library": [
-		"public/js/std_config/std_config_shared.js",
-		"public/js/std_library/import_wizard_data.js",
-		"public/js/std_library/std_library_api.js",
-		"public/js/std_library/std_library_user_messages.js",
-		"public/js/std_library/std_library_import_wizard_shell.js",
-		"public/js/std_config/std_library_import_page.js",
-		"public/js/std_config/std_library_page.js",
-	],
-	"std-configurator": [
-		"public/js/std_config/std_config_shared.js",
-		"public/js/std_config/std_configurator_api.js",
-		"public/js/std_config/std_configurator_shared_ui.js",
-		"public/js/std_config/std_configurator_shell.js",
-		"public/js/std_config/std_configurator_tab_renderers.js",
-		"public/js/std_config/configurator/tab_registry.js",
-		"public/js/std_config/std_configurator_page.js",
-	],
+	"std-library": "public/js/std_prod_std_library_page.js",
+	"std-family-detail": "public/js/std_prod_std_family_detail_page.js",
+	"std-version-detail": "public/js/std_prod_std_version_detail_page.js",
+	"std-module-retired": "public/js/std_module_retired_page.js",
 }
 
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
@@ -388,13 +363,10 @@ has_permission = {
 
 after_migrate = [
 	"kentender_procurement.setup.after_migrate_navigation.run",
-	"kentender_procurement.tender_management.seeds.std_template_governance_roles.run_after_migrate",
-	"kentender_procurement.tender_management.seeds.std_template_governance_seed.run_after_migrate",
 ]
 
 boot_session = [
 	"kentender_procurement.setup.workspace_permissions.patch_bootinfo",
-	"kentender_procurement.tender_management.services.std_config_ui_feature.expose_std_config_ui_boot",
 ]
 
 # Optional hooks for downstream tendering implementations (v2+). Each path: dotted ``callable(payload: dict)``.

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>STD Library | KenTender STD Engine</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#737783",
+                        "on-error": "#ffffff",
+                        "on-tertiary-container": "#8f9fb8",
+                        "surface-container-low": "#f4f3f9",
+                        "outline-variant": "#c3c6d1",
+                        "primary-fixed": "#d7e2ff",
+                        "secondary-container": "#7bbeff",
+                        "surface-dim": "#dad9df",
+                        "tertiary-fixed-dim": "#b7c8e2",
+                        "tertiary-fixed": "#d3e4ff",
+                        "on-secondary-fixed-variant": "#004a78",
+                        "on-primary-fixed-variant": "#1d4681",
+                        "surface-container-lowest": "#ffffff",
+                        "surface": "#f7f9fb",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#abc7ff",
+                        "on-secondary-fixed": "#001d34",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "inverse-surface": "#2f3035",
+                        "status-exhausted": "#EF4444",
+                        "status-reserved": "#F59E0B",
+                        "secondary-fixed": "#cfe5ff",
+                        "surface-container-highest": "#e2e2e8",
+                        "on-tertiary-fixed-variant": "#38485e",
+                        "on-tertiary": "#ffffff",
+                        "on-surface": "#1a1b20",
+                        "surface-container-high": "#e8e7ed",
+                        "on-surface-variant": "#434750",
+                        "secondary-fixed-dim": "#99cbff",
+                        "on-primary": "#ffffff",
+                        "background": "#f9f9fe",
+                        "inverse-primary": "#abc7ff",
+                        "surface-bright": "#f9f9fe",
+                        "status-committed": "#6366F1",
+                        "surface-container": "#eeedf3",
+                        "status-available": "#10B981",
+                        "on-secondary-container": "#004c7c",
+                        "secondary": "#01629d",
+                        "surface-tint": "#395e9b",
+                        "on-background": "#1a1b20",
+                        "border-subtle": "#E2E8F0",
+                        "data-block-bg": "#FFFFFF",
+                        "primary-container": "#00346f",
+                        "primary": "#001f48",
+                        "error": "#ba1a1a",
+                        "inverse-on-surface": "#f1f0f6",
+                        "on-secondary": "#ffffff",
+                        "surface-variant": "#e2e2e8",
+                        "on-primary-container": "#7b9ee0",
+                        "tertiary": "#26364b",
+                        "tertiary-container": "#26364b",
+                        "on-primary-fixed": "#001b3f"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "card-padding": "20px",
+                        "container-padding": "16px",
+                        "section-gap": "24px",
+                        "gutter": "12px",
+                        "margin-desktop": "32px",
+                        "container-max": "1440px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["Public Sans"],
+                        "data-mono": ["JetBrains Mono"],
+                        "headline-md": ["Public Sans"],
+                        "body-lg": ["Public Sans"],
+                        "label-caps": ["Public Sans"],
+                        "body-md": ["Public Sans"],
+                        "headline-lg": ["Public Sans"],
+                        "display-lg": ["Public Sans"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                        "headline-md": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-lg": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Public Sans', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .scrolling-touch { -webkit-overflow-scrolling: touch; }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 flex items-center justify-between px-margin-desktop h-16 max-w-container-max mx-auto bg-surface-container-lowest border-b border-outline-variant">
+<div class="flex items-center gap-gutter">
+<span class="font-headline-sm text-headline-sm font-bold text-primary">STD Library</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined p-2 hover:bg-surface-container-low transition-colors duration-200 rounded-full text-on-surface-variant">notifications</button>
+<button class="material-symbols-outlined p-2 hover:bg-surface-container-low transition-colors duration-200 rounded-full text-on-surface-variant">help</button>
+<button class="material-symbols-outlined p-2 hover:bg-surface-container-low transition-colors duration-200 rounded-full text-on-surface-variant">settings</button>
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xs">AD</div>
+</div>
+</nav>
+<main class="mt-16 min-h-screen max-w-container-max mx-auto px-margin-desktop py-8">
+<!-- Page Header -->
+<header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-gutter mb-8">
+<div class="max-w-3xl">
+<h1 class="font-display-lg text-headline-lg text-primary">Standard Tender Documents</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Manage official STD families, active versions, validation status, applicability, source traceability, and lifecycle governance.</p>
+</div>
+<div class="flex gap-3">
+<button class="bg-surface-container-lowest border border-outline-variant px-4 py-2 text-primary font-label-caps text-label-caps hover:bg-surface-container-low transition-colors flex items-center gap-2 rounded">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                    Create STD Family
+                </button>
+<button class="bg-primary text-white px-4 py-2 font-label-caps text-label-caps hover:opacity-90 transition-opacity flex items-center gap-2 rounded">
+<span class="material-symbols-outlined text-[18px]">upload</span>
+                    Import STD Package
+                </button>
+</div>
+</header>
+<!-- KPI Grid & Compliance Summary -->
+<div class="grid grid-cols-12 gap-gutter mb-8">
+<!-- KPI Cards -->
+<div class="col-span-12 lg:col-span-8 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+<div class="bg-surface-container-lowest border border-outline-variant p-4 flex flex-col justify-between h-32 rounded">
+<span class="font-label-caps text-label-caps text-on-surface-variant">STD FAMILIES</span>
+<div class="flex items-baseline gap-2">
+<span class="font-headline-md text-headline-md text-primary">42</span>
+<span class="text-[10px] text-status-available font-bold">+2 New</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-4 flex flex-col justify-between h-32 rounded">
+<span class="font-label-caps text-label-caps text-on-surface-variant">ACTIVE VERSIONS</span>
+<span class="font-headline-md text-headline-md text-primary">38</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-4 flex flex-col justify-between h-32 rounded">
+<span class="font-label-caps text-label-caps text-on-surface-variant">IN REVIEW</span>
+<span class="font-headline-md text-headline-md text-primary">12</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-4 flex flex-col justify-between h-32 rounded">
+<span class="font-label-caps text-label-caps text-on-surface-variant">DUE / OVERDUE</span>
+<div class="flex items-baseline gap-2">
+<span class="font-headline-md text-headline-md text-error">5</span>
+<span class="material-symbols-outlined text-error text-[18px]">warning</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-4 flex flex-col justify-between h-32 md:col-span-1 col-span-2 rounded">
+<span class="font-label-caps text-label-caps text-on-surface-variant">BLOCKERS</span>
+<span class="font-headline-md text-headline-md text-error">3</span>
+</div>
+</div>
+<!-- Library Health & Compliance -->
+<div class="col-span-12 lg:col-span-4 bg-surface-container-low border border-outline-variant p-4 rounded">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-label-caps text-label-caps text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+                        LIBRARY HEALTH &amp; COMPLIANCE
+                    </h3>
+<button class="text-primary font-label-caps text-label-caps hover:underline">Full Report</button>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center text-body-sm text-body-md">
+<span class="text-on-surface-variant">Unauthorized active versions</span>
+<span class="font-bold text-error">0</span>
+</div>
+<div class="flex justify-between items-center text-body-sm text-body-md">
+<span class="text-on-surface-variant">Pending approvals</span>
+<span class="font-bold text-primary">8</span>
+</div>
+<div class="flex justify-between items-center text-body-sm text-body-md">
+<span class="text-on-surface-variant">Due for review (30d)</span>
+<span class="font-bold text-primary">4</span>
+</div>
+<div class="flex justify-between items-center text-body-sm text-body-md">
+<span class="text-on-surface-variant">Superseded in active tenders</span>
+<span class="font-bold text-secondary">2</span>
+</div>
+<div class="flex justify-between items-center text-body-sm text-body-md">
+<span class="text-on-surface-variant">Blocked drafts</span>
+<span class="font-bold text-error">3</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Search & Filters -->
+<section class="bg-surface-container-lowest border border-outline-variant p-gutter mb-6 rounded">
+<div class="flex justify-between items-center gap-4">
+<div class="relative flex-1 max-w-xl">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
+<input class="w-full pl-10 pr-4 py-2 border border-outline-variant rounded text-body-md focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-surface-bright" placeholder="Search by title, family, version..." type="text"/>
+</div>
+<button class="flex items-center gap-2 px-4 py-2 border border-outline-variant rounded hover:bg-surface-container-low transition-colors font-label-caps text-label-caps text-primary bg-surface-container-lowest" onclick="document.getElementById('filter-drawer').classList.remove('translate-x-full')">
+<span class="material-symbols-outlined text-[20px]">filter_list</span>Filters
+                </button>
+</div>
+</section>
+<!-- Version-Aware Table -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded overflow-hidden">
+<div class="overflow-x-auto scrolling-touch relative">
+<table class="w-full text-left border-collapse min-w-[1200px]">
+<thead class="bg-surface-container border-b border-outline-variant">
+<tr>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">STD Title</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Family Code</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Active / Current Version</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Category</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Procurement Method(s)</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Applicability</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Lifecycle State</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Source Authority</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Next Review</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Usage</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Validation</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Row 1: White -->
+<tr class="hover:bg-primary-fixed transition-colors group bg-surface-container-lowest">
+<td class="px-4 py-3"><div class="font-bold text-body-md text-primary">STD for IT Infrastructure</div><div class="text-[11px] text-on-surface-variant font-body-md">Server &amp; Network Hardware</div></td>
+<td class="px-4 py-3 font-data-mono text-data-mono">KE-PPRA-IT</td>
+<td class="px-4 py-3"><span class="bg-primary text-white text-[10px] px-2 py-0.5 font-bold rounded">2022-04 (Active)</span></td>
+<td class="px-4 py-3 text-body-md">Information Technology</td>
+<td class="px-4 py-3 text-body-md">Open National</td>
+<td class="px-4 py-3 text-body-md">All MDAs</td>
+<td class="px-4 py-3"><span class="bg-status-available/10 text-status-available text-[10px] px-2 py-0.5 font-bold border border-status-available/20 rounded">ACTIVE</span></td>
+<td class="px-4 py-3 text-body-md">PPRA</td>
+<td class="px-4 py-3 text-body-md">2025-06-15</td>
+<td class="px-4 py-3 text-body-md font-data-mono">245</td>
+<td class="px-4 py-3"><div class="flex items-center gap-1 text-status-available text-[10px] font-bold"><span class="material-symbols-outlined text-[14px]">check_circle</span> VALID</div></td>
+<td class="px-4 py-3 text-right group-hover:bg-primary-fixed"><div class="flex items-center justify-end gap-2"><button class="text-primary font-label-caps text-label-caps hover:underline">Open</button><button class="material-symbols-outlined text-on-surface-variant hover:text-primary p-1 rounded-full hover:bg-surface-container">more_vert</button></div></td>
+</tr>
+<!-- Row 2: Subtle blue-grey tint -->
+<tr class="bg-surface-container-low hover:bg-primary-fixed transition-colors group">
+<td class="px-4 py-3"><div class="font-bold text-body-md text-primary">Standard Goods Framework</div><div class="text-[11px] text-on-surface-variant font-body-md">Medical Supplies</div></td>
+<td class="px-4 py-3 font-data-mono text-data-mono">KE-PPRA-MED</td>
+<td class="px-4 py-3"><span class="bg-primary text-white text-[10px] px-2 py-0.5 font-bold rounded">2021-10 (Active)</span></td>
+<td class="px-4 py-3 text-body-md">Goods</td>
+<td class="px-4 py-3 text-body-md">Restricted</td>
+<td class="px-4 py-3 text-body-md">Health Sector</td>
+<td class="px-4 py-3"><span class="bg-status-available/10 text-status-available text-[10px] px-2 py-0.5 font-bold border border-status-available/20 rounded">ACTIVE</span></td>
+<td class="px-4 py-3 text-body-md">PPRA</td>
+<td class="px-4 py-3 text-body-md text-error font-bold italic">Overdue since 2024-05-01</td>
+<td class="px-4 py-3 text-body-md font-data-mono">452</td>
+<td class="px-4 py-3"><div class="flex items-center gap-1 text-status-reserved text-[10px] font-bold"><span class="material-symbols-outlined text-[14px]">warning</span> 2 WARNINGS</div></td>
+<td class="px-4 py-3 text-right group-hover:bg-primary-fixed"><div class="flex items-center justify-end gap-2"><button class="text-primary font-label-caps text-label-caps hover:underline">View Version</button><button class="material-symbols-outlined text-on-surface-variant hover:text-primary p-1 rounded-full hover:bg-surface-container">more_vert</button></div></td>
+</tr>
+<!-- Row 3: White -->
+<tr class="hover:bg-primary-fixed transition-colors group bg-surface-container-lowest">
+<td class="px-4 py-3"><div class="font-bold text-body-md text-primary">Standard Works Contract</div><div class="text-[11px] text-on-surface-variant font-body-md">Major Infrastructure Projects</div></td>
+<td class="px-4 py-3 font-data-mono text-data-mono">KE-PPRA-WORKS</td>
+<td class="px-4 py-3"><span class="bg-primary text-white text-[10px] px-2 py-0.5 font-bold rounded">2023-11 (Active)</span></td>
+<td class="px-4 py-3 text-body-md">Works</td>
+<td class="px-4 py-3 text-body-md">Open International</td>
+<td class="px-4 py-3 text-body-md">State Agencies</td>
+<td class="px-4 py-3"><span class="bg-status-available/10 text-status-available text-[10px] px-2 py-0.5 font-bold border border-status-available/20 rounded">ACTIVE</span></td>
+<td class="px-4 py-3 text-body-md">PPRA</td>
+<td class="px-4 py-3 text-body-md">2026-11-20</td>
+<td class="px-4 py-3 text-body-md font-data-mono">112</td>
+<td class="px-4 py-3"><div class="flex items-center gap-1 text-status-available text-[10px] font-bold"><span class="material-symbols-outlined text-[14px]">check_circle</span> VALID</div></td>
+<td class="px-4 py-3 text-right group-hover:bg-primary-fixed"><div class="flex items-center justify-end gap-2"><button class="text-primary font-label-caps text-label-caps hover:underline">Open</button><button class="material-symbols-outlined text-on-surface-variant hover:text-primary p-1 rounded-full hover:bg-surface-container">more_vert</button></div></td>
+</tr>
+<!-- Row 4: Subtle blue-grey tint -->
+<tr class="bg-surface-container-low hover:bg-primary-fixed transition-colors group">
+<td class="px-4 py-3"><div class="font-bold text-body-md text-primary">Consultancy Services STD</div><div class="text-[11px] text-on-surface-variant font-body-md">Individual Consultants</div></td>
+<td class="px-4 py-3 font-data-mono text-data-mono">KE-PPRA-SERV</td>
+<td class="px-4 py-3"><span class="bg-surface-container-highest text-on-surface-variant text-[10px] px-2 py-0.5 font-bold rounded">v2.0-Draft</span></td>
+<td class="px-4 py-3 text-body-md">Services</td>
+<td class="px-4 py-3 text-body-md">QCBS / QBS</td>
+<td class="px-4 py-3 text-body-md">All MDAs</td>
+<td class="px-4 py-3"><span class="bg-surface-container-highest text-secondary text-[10px] px-2 py-0.5 font-bold border border-outline-variant rounded">LEGAL_REVIEW</span></td>
+<td class="px-4 py-3 text-body-md">Legal Dept</td>
+<td class="px-4 py-3 text-body-md">-</td>
+<td class="px-4 py-3 text-body-md font-data-mono">0</td>
+<td class="px-4 py-3"><div class="flex items-center gap-1 text-error text-[10px] font-bold"><span class="material-symbols-outlined text-[14px]">block</span> 1 BLOCKER</div></td>
+<td class="px-4 py-3 text-right group-hover:bg-primary-fixed"><div class="flex items-center justify-end gap-2"><button class="text-primary font-label-caps text-label-caps hover:underline">Open</button><button class="material-symbols-outlined text-on-surface-variant hover:text-primary p-1 rounded-full hover:bg-surface-container">more_vert</button></div></td>
+</tr>
+<!-- Row 5: White -->
+<tr class="hover:bg-primary-fixed transition-colors group bg-surface-container-lowest">
+<td class="px-4 py-3"><div class="font-bold text-body-md text-primary">Framework for Office Supplies</div><div class="text-[11px] text-on-surface-variant font-body-md">Stationery &amp; Consumables</div></td>
+<td class="px-4 py-3 font-data-mono text-data-mono">KE-PPRA-GEN</td>
+<td class="px-4 py-3"><span class="bg-primary text-white text-[10px] px-2 py-0.5 font-bold rounded">2020-01 (Active)</span></td>
+<td class="px-4 py-3 text-body-md">Goods</td>
+<td class="px-4 py-3 text-body-md">Framework Agreement</td>
+<td class="px-4 py-3 text-body-md">County Govts</td>
+<td class="px-4 py-3"><span class="bg-status-available/10 text-status-available text-[10px] px-2 py-0.5 font-bold border border-status-available/20 rounded">ACTIVE</span></td>
+<td class="px-4 py-3 text-body-md">PPRA</td>
+<td class="px-4 py-3 text-body-md text-error font-bold italic">Overdue since 2024-01-15</td>
+<td class="px-4 py-3 text-body-md font-data-mono">890</td>
+<td class="px-4 py-3"><div class="flex items-center gap-1 text-status-reserved text-[10px] font-bold"><span class="material-symbols-outlined text-[14px]">warning</span> 3 WARNINGS</div></td>
+<td class="px-4 py-3 text-right group-hover:bg-primary-fixed"><div class="flex items-center justify-end gap-2"><button class="text-primary font-label-caps text-label-caps hover:underline">Open</button><button class="material-symbols-outlined text-on-surface-variant hover:text-primary p-1 rounded-full hover:bg-surface-container">more_vert</button></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-4 py-3 bg-surface-container-low border-t border-outline-variant flex items-center justify-between">
+<span class="text-body-md text-on-surface-variant">Showing <span class="font-bold">1-10</span> of <span class="font-bold">42</span> families</span>
+<div class="flex gap-1">
+<div class="flex items-center gap-2 mr-4">
+<span class="text-body-md text-on-surface-variant">Rows per page:</span>
+<select class="bg-transparent border border-outline-variant rounded text-body-md font-bold px-1 py-0.5 focus:ring-1 focus:ring-primary outline-none">
+<option>10</option>
+<option>25</option>
+<option>50</option>
+<option>100</option>
+</select>
+</div>
+<button class="p-1 hover:bg-surface-container-high transition-colors rounded disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="px-3 py-1 bg-primary text-white text-body-md font-bold rounded">1</button>
+<button class="px-3 py-1 hover:bg-surface-container-high text-body-md font-bold rounded">2</button>
+<button class="px-3 py-1 hover:bg-surface-container-high text-body-md font-bold rounded">3</button>
+<button class="px-3 py-1 hover:bg-surface-container-high text-body-md font-bold rounded">4</button>
+<button class="p-1 hover:bg-surface-container-high transition-colors rounded">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Filter Drawer -->
+<div class="fixed inset-y-0 right-0 w-80 bg-surface-container-lowest shadow-xl z-[60] transform translate-x-full transition-transform duration-300 border-l border-outline-variant flex flex-col" id="filter-drawer">
+<div class="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-bright">
+<h2 class="font-headline-sm text-headline-sm text-primary">Filters</h2>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary" onclick="document.getElementById('filter-drawer').classList.add('translate-x-full')">close</button>
+</div>
+<div class="flex-1 overflow-y-auto p-4 space-y-6">
+<div class="space-y-2">
+<div class="flex justify-between items-center mb-2">
+<label class="font-label-caps text-label-caps text-primary uppercase tracking-wider">Category</label>
+<button class="text-[10px] font-label-caps text-primary hover:underline uppercase">Clear</button>
+</div>
+<select class="w-full border border-outline-variant rounded text-body-md py-2 px-3 focus:ring-1 focus:ring-primary outline-none bg-surface-bright">
+<option>All Categories</option>
+<option>Information Technology</option>
+<option>Works</option>
+<option>Goods</option>
+<option>Services</option>
+</select>
+</div>
+<div class="pt-6 border-t border-outline-variant space-y-2">
+<div class="flex justify-between items-center mb-2">
+<label class="font-label-caps text-label-caps text-primary uppercase tracking-wider">Lifecycle State</label>
+<button class="text-[10px] font-label-caps text-primary hover:underline uppercase">Clear</button>
+</div>
+<select class="w-full border border-outline-variant rounded text-body-md py-2 px-3 focus:ring-1 focus:ring-primary outline-none bg-surface-bright">
+<option>All States</option>
+<option>DRAFT</option>
+<option>STRUCTURING</option>
+<option>INTERNAL_REVIEW</option>
+<option>LEGAL_REVIEW</option>
+<option>PROCUREMENT_REVIEW</option>
+<option>APPROVED</option>
+<option>ACTIVE</option>
+<option>SUSPENDED</option>
+<option>SUPERSEDED</option>
+<option>ARCHIVED</option>
+</select>
+</div>
+<div class="pt-6 border-t border-outline-variant space-y-4">
+<div class="flex justify-between items-center mb-2">
+<label class="font-label-caps text-label-caps text-primary uppercase tracking-wider">Status &amp; Flags</label>
+<button class="text-[10px] font-label-caps text-primary hover:underline uppercase">Clear</button>
+</div>
+<div class="space-y-3">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="rounded border-outline-variant text-primary h-4 w-4 focus:ring-primary" type="checkbox"/>
+<span class="text-body-md text-on-surface-variant group-hover:text-primary transition-colors">Validation status</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="rounded border-outline-variant text-primary h-4 w-4 focus:ring-primary" type="checkbox"/>
+<span class="text-body-md text-on-surface-variant group-hover:text-primary transition-colors">Applicability</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="rounded border-outline-variant text-primary h-4 w-4 focus:ring-primary" type="checkbox"/>
+<span class="text-body-md text-on-surface-variant group-hover:text-primary transition-colors">Used in tenders</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="rounded border-outline-variant text-primary h-4 w-4 focus:ring-primary" type="checkbox"/>
+<span class="text-body-md text-on-surface-variant group-hover:text-primary transition-colors">Superseded/archived</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="rounded border-outline-variant text-primary h-4 w-4 focus:ring-primary" type="checkbox"/>
+<span class="text-body-md text-on-surface-variant group-hover:text-primary transition-colors">Review overdue</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="rounded border-outline-variant text-primary h-4 w-4 focus:ring-primary" type="checkbox"/>
+<span class="text-body-md text-on-surface-variant group-hover:text-primary transition-colors">Activation blocked</span>
+</label>
+</div>
+</div>
+</div>
+<div class="p-4 border-t border-outline-variant flex gap-3 bg-surface-bright">
+<button class="flex-1 py-2 bg-primary text-white font-label-caps text-label-caps rounded">Apply Filters</button>
+<button class="flex-1 py-2 border border-outline-variant text-primary font-label-caps text-label-caps rounded">Reset</button>
+</div>
+</div>
+<script>
+        // Micro-interaction for menu buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('mousedown', () => btn.classList.add('opacity-80'));
+            btn.addEventListener('mouseup', () => btn.classList.remove('opacity-80'));
+            btn.addEventListener('mouseleave', () => btn.classList.remove('opacity-80'));
+        });
+
+        // Simulating the 'More' menu interaction
+        document.querySelectorAll('table tr button.material-symbols-outlined').forEach(btn => {
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                console.log('Action menu triggered for row');
+            }
+        });
+    </script>
+</body></html>

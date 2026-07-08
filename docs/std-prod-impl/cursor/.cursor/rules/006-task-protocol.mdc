@@ -1,0 +1,53 @@
+---
+description: Cursor task execution protocol for KenTender work
+alwaysApply: true
+---
+
+# Cursor Task Execution Protocol
+
+Use this protocol for implementation tasks.
+
+## Planning phase
+
+When asked to implement a task, first produce a plan if the prompt requests planning or if the task touches governance, lifecycle, storage, permissions, import/export, rendering, published artifacts, or contracts.
+
+The plan must include:
+
+1. Files expected to change.
+2. Interfaces, classes, services, functions, endpoints, or schemas to add/change.
+3. Tests to add/change.
+4. Data migrations or seed updates required.
+5. Risks, blockers, or ambiguities.
+6. Governance and immutability impact.
+7. Confirmation that scope is bounded.
+
+Do not edit files until the user approves the plan when the prompt says to plan first.
+
+## Implementation phase
+
+During implementation:
+
+- Stay inside the approved scope.
+- Do not make unrelated refactors.
+- Prefer small, explicit commits/changesets if the workflow supports them.
+- Keep generated code and hand-written code clearly separated where applicable.
+- Keep STD-family-specific logic out of generic engine code unless implemented through configured schemas/rules/plugins.
+
+## Verification phase
+
+After implementation, review your own work against acceptance criteria.
+
+Report:
+
+1. What changed.
+2. Files modified.
+3. Tests added or updated.
+4. Commands run.
+5. Results of checks.
+6. Any assumptions.
+7. Any unresolved issues.
+8. Follow-up tasks created.
+
+## Scope escalation
+
+If a task requires changing broader architecture, state-transition rules, domain model boundaries, or security assumptions, stop and ask before proceeding.

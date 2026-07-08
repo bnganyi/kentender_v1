@@ -1,0 +1,79 @@
+---
+description: Procurement governance, approvals, immutability, and legal traceability rules
+alwaysApply: true
+---
+
+# Procurement Governance Rules
+
+The system is government-facing and must preserve legal defensibility, auditability, source traceability, and approval discipline.
+
+## Non-negotiable governance rules
+
+- Active STD versions are immutable.
+- Published generated tender bundles are immutable.
+- Used STD versions cannot be deleted.
+- Only approved STD versions may become active.
+- Only active STD versions may be bound to new tenders.
+- Superseded STD versions must remain readable for tenders that already used them.
+- Post-publication tender changes must be handled through addendum/supersession, not direct mutation.
+- Locked ITT/GCC sections cannot be edited by tender users.
+- TDS and SCC are controlled configuration surfaces, not free-form clause override areas.
+- Any master-template change after activation must create a new version or follow an approved correction workflow.
+
+## Required lifecycle behavior
+
+STD Template Version lifecycle must be enforced by service-layer transition validators and persistence-layer constraints where possible.
+
+Typical lifecycle:
+
+- DRAFT
+- STRUCTURING
+- INTERNAL_REVIEW
+- LEGAL_REVIEW
+- PROCUREMENT_REVIEW
+- APPROVED
+- ACTIVE
+- SUSPENDED
+- SUPERSEDED
+- ARCHIVED
+
+Tender STD Configuration lifecycle must also be enforced:
+
+- NOT_STARTED
+- IN_CONFIGURATION
+- VALIDATION_FAILED
+- READY_FOR_REVIEW
+- PROCUREMENT_REVIEW
+- APPROVED_FOR_TENDER_CREATION
+- BOUND_TO_TENDER
+- PUBLISHED
+- ADDENDUM_REQUIRED
+- SUPERSEDED_BY_ADDENDUM
+
+## Approval and state-transition design
+
+Before implementing any feature that changes status, approval, publication, activation, supersession, archive, binding, or addendum behavior, verify:
+
+1. Who is allowed to perform the transition.
+2. What prior state is required.
+3. What validations must pass.
+4. What audit event is emitted.
+5. Whether the action mutates immutable records.
+6. Whether generated artifacts require a new hash.
+7. Whether source traceability is affected.
+
+Do not create bypass endpoints, admin shortcuts, fixtures, scripts, or migrations that can activate, publish, supersede, or archive records without the same governance checks unless the operation is explicitly marked as a controlled migration with audit evidence.
+
+## Legal-source traceability
+
+Every clause, parameter, rule, form, render block, and generated artifact should be traceable to:
+
+- STD source document
+- STD source version
+- Section reference
+- Page/anchor reference where available
+- Extracted text hash where applicable
+- Import package version
+- Review/approval event
+
+If source trace data is missing, mark the object as incomplete and not activatable.

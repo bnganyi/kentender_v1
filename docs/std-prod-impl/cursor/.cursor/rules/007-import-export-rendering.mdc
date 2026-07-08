@@ -1,0 +1,78 @@
+---
+description: STD package import/export and rendering rules
+alwaysApply: true
+---
+
+# STD Package Import, Export, and Rendering Rules
+
+The package system must be deterministic, auditable, and activation-gated.
+
+## Package principles
+
+An STD package is an import/export representation of a template version. It is not the production runtime database.
+
+Every package import must:
+
+- Validate manifest.
+- Validate package schema version.
+- Validate file presence.
+- Validate JSON syntax and schema.
+- Validate checksums.
+- Validate stable IDs.
+- Validate references.
+- Validate lifecycle status.
+- Validate source trace completeness.
+- Validate activation blockers.
+- Emit import audit events.
+- Produce a dry-run report before destructive or authoritative import where applicable.
+
+## Draft-only packages
+
+Packages marked as draft, skeleton, calibration, or not-activatable must never become ACTIVE through import.
+
+The IT seed package v0.2 is draft/import-test material only unless a later approved package explicitly removes activation blockers after review.
+
+## Source trace and hashes
+
+Do not mark an STD package activatable unless required source trace and hash evidence exist:
+
+- Source document hash
+- Package checksum
+- Clause text hash where clause text is authoritative
+- Section/source anchors
+- Rule source anchors where legal/procurement rules are extracted from the STD
+- Render block identity and output hash for generated artifacts
+
+## Rendering rules
+
+Rendering must be deterministic.
+
+Generated documents must preserve:
+
+- Locked clause text
+- Section order
+- Legal numbering where applicable
+- TDS/SCC parameter substitutions
+- Requirement tables
+- Form schemas
+- Price schedules
+- Evaluation criteria
+- Contract carry-forward fields
+
+Published render outputs must be immutable and hashed.
+
+Do not render from ad hoc user text when the content is supposed to come from an approved STD template, controlled parameter, or structured requirement schema.
+
+## Addendum rendering
+
+Post-publication changes must generate addendum/supersession records identifying:
+
+- Affected sections
+- Affected clauses
+- Affected forms
+- Affected requirements
+- Affected price schedules
+- Affected evaluation criteria
+- Affected contract carry-forward fields
+- Previous artifact hash
+- Superseding artifact hash

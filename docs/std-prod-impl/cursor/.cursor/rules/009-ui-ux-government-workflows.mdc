@@ -1,0 +1,74 @@
+---
+description: UI/UX rules for controlled government procurement workflows
+alwaysApply: false
+---
+
+# UI/UX Rules for Government Procurement Workflows
+
+Apply this rule when implementing user interfaces, screens, forms, wizards, review queues, preview pages, validation panels, or publication flows.
+
+## UI principles
+
+The UI must guide users through controlled configuration. It must not expose legal template editing as ordinary form editing.
+
+Use wizard and review flows for:
+
+- Tender identity
+- Procurement method and participation
+- Dates, clarifications, and meetings
+- Tender security or equivalent instrument
+- Lots, alternatives, reservations, and preference settings
+- Requirements authoring
+- Technical specification authoring
+- Implementation schedule
+- System inventory
+- Price schedule setup
+- Evaluation criteria
+- Qualification requirements
+- Contract/SCC parameters
+- Forms and evidence
+- Validation
+- Preview
+- Approval
+- Publication
+
+## Locked content behavior
+
+For locked sections:
+
+- Show read-only preview.
+- Explain that the section is controlled by the active STD version.
+- Do not show edit controls.
+- Direct users to TDS/SCC or approved configuration surfaces for permitted changes.
+
+## Validation UX
+
+Validation findings must be clear and actionable:
+
+- BLOCKER
+- ERROR
+- WARNING
+- INFO
+
+For each finding show:
+
+- Affected section/field.
+- Rule violated.
+- Required correction.
+- Whether publication is blocked.
+- Link to the relevant wizard step.
+
+## Review and approval UX
+
+Approval screens must show:
+
+- Current lifecycle state.
+- Pending action.
+- Required role.
+- Validation summary.
+- Source STD version.
+- Generated preview hash where available.
+- Prior approvals/rejections.
+- Required comments for rejection or exceptional decisions.
+
+Do not allow approval actions from list screens without enough context to make a legally defensible decision.

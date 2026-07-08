@@ -1,0 +1,85 @@
+---
+description: Testing and smoke-contract requirements for STD Engine tasks
+alwaysApply: true
+---
+
+# Testing and Smoke Contracts
+
+A task is incomplete unless it includes appropriate tests or explicitly explains why no test can be added.
+
+## Required test categories
+
+Use the strongest applicable category:
+
+- Unit tests
+- Integration tests
+- Migration tests
+- Permission tests
+- State-transition tests
+- Import dry-run tests
+- Validation-rule tests
+- Render snapshot tests
+- Hash/checksum tests
+- Addendum/supersession tests
+- Smoke-contract tests
+
+## Critical smoke contracts
+
+Maintain and expand tests for these behaviors:
+
+- Draft STD package can import into DRAFT/STRUCTURING state.
+- Draft STD package cannot be activated.
+- Only APPROVED STD versions can become ACTIVE.
+- ACTIVE STD versions cannot be edited.
+- ACTIVE STD versions cannot be deleted.
+- Used STD versions cannot be deleted.
+- Superseded STD versions remain readable.
+- Tender cannot bind to DRAFT or STRUCTURING STD version.
+- Tender can bind only to ACTIVE STD version.
+- Published generated tender bundle cannot be mutated.
+- Addendum must create a new superseding generated artifact or affected-section replacement.
+- Locked ITT/GCC clauses cannot be edited from tender configuration.
+- Missing source anchor blocks activation where source trace is mandatory.
+- Missing clause hash blocks activation where clause hashing is mandatory.
+- Calibration fixture cannot be imported as a master STD package.
+- NSSF ERP tender data remains tender-instance/calibration data, not master template data.
+
+## Test design
+
+For every validator, include:
+
+- Valid case
+- Invalid case
+- Boundary case
+- Permission-denied case where applicable
+- Immutable-state case where applicable
+
+For every import job, include:
+
+- Valid package structure
+- Missing file
+- Invalid JSON/schema
+- Bad reference
+- Duplicate stable ID
+- Checksum mismatch
+- Draft-only activation blocker
+
+For every renderer, include:
+
+- Deterministic render output
+- Missing parameter failure
+- Locked text preservation
+- Hash generation
+- Published artifact immutability
+
+## Completion reporting
+
+At the end of a task, report:
+
+- Tests added
+- Checks run
+- Results
+- Known failures
+- Follow-up tasks
+
+Never claim that tests pass unless they were actually executed or clearly state that execution was not available.

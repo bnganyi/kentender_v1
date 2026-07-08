@@ -1,0 +1,37 @@
+/* STD prod Phase 1 — Official STD Library Desk shell (iframe only). */
+
+body.std-prod-std-library-shell .page-head,
+body.std-prod-std-library-shell .layout-main-section .page-head,
+body.std-prod-std-library-shell .page-head-content,
+body.std-prod-std-library-shell .page-head-actions {
+	display: none !important;
+}
+
+body.std-prod-std-library-shell .page-body > .container,
+body.std-prod-std-library-shell .frappe-app > .container {
+	padding: 0 !important;
+	max-width: 100% !important;
+}
+
+body.std-prod-std-library-shell .layout-main-section-wrapper {
+	padding: 0;
+}
+
+body.std-prod-std-library-shell .layout-main-section {
+	padding: 0;
+}
+
+body.std-prod-std-library-shell .std-prod-std-library-root,
+body.std-prod-std-library-shell .std-prod-std-library-shell {
+	display: block;
+	width: 100%;
+	min-height: calc(100vh - 48px);
+}
+
+body.std-prod-std-library-shell .std-prod-std-library-iframe {
+	display: block;
+	width: 100%;
+	height: calc(100vh - 48px);
+	border: 0;
+	background: #faf9fd;
+}

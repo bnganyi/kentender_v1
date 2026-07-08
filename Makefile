@@ -103,15 +103,15 @@ ui-workspace-pattern-gate:
 		tests/ui/smoke/dia-landing/dia-pattern-lock.spec.ts
 
 ui-std-config-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npm run test:ui:smoke:std-config-gate
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.tender_management.tests.test_std_config_typography \
-		--module kentender_procurement.tender_management.tests.test_std_config_foundation \
-		--module kentender_procurement.tender_management.tests.test_std_config_library_page \
-		--module kentender_procurement.tender_management.tests.test_std_config_library_layout_guard \
-		--module kentender_procurement.tender_management.tests.test_std_configurator_page_shell \
-		--module kentender_procurement.tender_management.tests.test_std_configurator_layout_guard \
-		--module kentender_procurement.tender_management.tests.test_std_configurator_section_contract
+	@echo "STD Module POC archived (2026-07). Use: make verify-std-archived && npm run test:ui:smoke:std-module-retired"
+	@exit 1
+
+verify-std-archived:
+	chmod +x $(BENCH_ROOT)/apps/kentender_v1/scripts/verify-std-archived.sh
+	$(BENCH_ROOT)/apps/kentender_v1/scripts/verify-std-archived.sh
+
+ui-std-module-retired-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npm run test:ui:smoke:std-module-retired
 
 tm2-v1-contamination-audit:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \

@@ -104,7 +104,7 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		)
 
 	def test_procurement_sidebar_one_workspace_row_for_governance(self):
-		"""Official STD Library should target std-engine page while governance workspace stays reachable."""
+		"""Official STD Library should target std-library page while governance workspace stays reachable."""
 		if not frappe.db.exists("Workspace Sidebar", "Procurement"):
 			self.skipTest("Procurement Workspace Sidebar not on site")
 		doc = frappe.get_doc("Workspace Sidebar", "Procurement")
@@ -116,14 +116,15 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 			and r.link_to == "Governance & Configuration"
 		]
 		self.assertEqual(len(ws_links), 1)
-		page_std_engine = [
+		page_std_library = [
 			r
 			for r in doc.items
 			if r.type == "Link"
 			and (r.link_type or "").lower() == "page"
-			and r.link_to == "std-engine"
+			and r.link_to == "std-library"
+			and r.label == "Official STD Library"
 		]
-		self.assertEqual(len(page_std_engine), 1)
+		self.assertEqual(len(page_std_library), 1)
 
 	def test_procurement_boot_sidebar_includes_strategy_alignment_and_budget_links(self):
 		"""Regression: G0-012 primary rail must list Strategy Alignment + Budget before DIA."""

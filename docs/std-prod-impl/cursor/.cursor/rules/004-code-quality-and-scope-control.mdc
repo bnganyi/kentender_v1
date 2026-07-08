@@ -1,0 +1,64 @@
+---
+description: Code quality, scope control, and implementation discipline
+alwaysApply: true
+---
+
+# Code Quality and Scope Control
+
+Work in small, reviewable vertical slices. Do not broaden scope during implementation.
+
+## Task discipline
+
+For each implementation task:
+
+1. Read only the relevant context documents and source files.
+2. Produce a plan when requested before editing files.
+3. Modify only files required for the task.
+4. Add or update tests.
+5. Run relevant checks where available.
+6. Update `docs/MODULE_STATUS.md` when module status changes.
+7. Stop after completing the bounded task.
+
+## Forbidden behavior
+
+Do not:
+
+- Implement multiple unrelated tickets in one pass.
+- Make opportunistic refactors outside the task scope.
+- Rewrite large modules without being asked.
+- Replace domain-specific governance with generic CRUD behavior.
+- Use mock success paths that bypass real validation.
+- Leave TODOs in critical governance, immutability, audit, source trace, or security code without explicitly reporting them.
+- Mark incomplete features as complete.
+- Hide failing tests.
+- Claim tests were run when they were not.
+
+## Coding expectations
+
+Prefer:
+
+- Small services with explicit names.
+- Deterministic validators.
+- Clear error types and messages.
+- Idempotent import operations where practical.
+- Explicit state-transition functions.
+- Version-aware reads and writes.
+- Audit event emission inside authoritative service operations.
+- Tests for both positive and negative paths.
+
+## Error handling
+
+Errors must distinguish:
+
+- Validation failure
+- Permission failure
+- Invalid lifecycle transition
+- Immutable record mutation attempt
+- Source trace incompleteness
+- Import package defect
+- Referential integrity defect
+- Render failure
+- Hash/checksum mismatch
+- Activation blocker
+
+Do not collapse all failures into generic exceptions.

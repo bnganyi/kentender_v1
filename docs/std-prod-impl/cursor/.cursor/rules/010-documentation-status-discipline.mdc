@@ -1,0 +1,68 @@
+---
+description: Documentation and status-update discipline
+alwaysApply: true
+---
+
+# Documentation and Status Discipline
+
+Keep the documentation set synchronized with implementation.
+
+## Required status file
+
+Maintain:
+
+- `docs/MODULE_STATUS.md`
+
+Update it when a task changes:
+
+- Models
+- Migrations
+- Services
+- APIs
+- UI screens
+- Import/export behavior
+- Validation behavior
+- Rendering behavior
+- Governance/state transitions
+- Permissions
+- Tests
+- Known blockers
+
+## Required decision log
+
+For architectural decisions, update:
+
+- `docs/DECISION_LOG.md`
+
+Record:
+
+- Decision
+- Reason
+- Alternatives considered
+- Consequences
+- Date
+- Related task ID
+
+## Documentation hierarchy
+
+Do not scatter core project truth across random comments or temporary notes.
+
+Use:
+
+- `docs/PROJECT_INDEX.md` for navigation.
+- `docs/IMPLEMENTATION_SEQUENCE.md` for build order.
+- `docs/MODULE_STATUS.md` for current status.
+- `docs/DECISION_LOG.md` for durable decisions.
+- Module folders for PRDs, domain models, governance, API/service contracts, implementation packs, and smoke contracts.
+
+## Completion reporting
+
+At the end of each task, summarize:
+
+- What changed.
+- What was tested.
+- What remains.
+- Whether module status changed.
+- Any follow-up tasks.
+
+Do not leave the user guessing about task completeness.

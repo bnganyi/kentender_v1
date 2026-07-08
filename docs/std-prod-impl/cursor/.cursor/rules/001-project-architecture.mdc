@@ -1,0 +1,72 @@
+---
+description: KenTender STD Engine architecture guardrails
+alwaysApply: true
+---
+
+# KenTender STD Engine Architecture Guardrails
+
+This repository implements the KenTender Standard Tender Document Engine and related procurement workflows.
+
+## Architectural hierarchy
+
+The platform must preserve this hierarchy:
+
+1. Official STD source document
+2. STD Template Family
+3. STD Template Version
+4. STD sections, clauses, parameters, rules, forms, render blocks, and schemas
+5. Tender-specific STD configuration instance
+6. Generated tender document bundle
+7. Supplier response
+8. Evaluation record
+9. Contract formation and carry-forward records
+
+Tender Management must consume STD Engine outputs. Tender Management must not independently recreate locked clauses, legal rules, eligibility rules, evaluation logic, forms, or contract carry-forward fields that belong to the STD Engine.
+
+## Generalization requirement
+
+The STD Engine must support multiple STD families. Do not hard-code behavior for only the Information Technology STD, Works STD, Goods STD, Services STD, or any single tender.
+
+Permitted pattern:
+
+- Generic STD Engine model/service/rule/render behavior.
+- STD-family-specific seed package, parameters, forms, requirements, and validation rules.
+- Tender-specific configuration values bound to one active STD version.
+
+Forbidden pattern:
+
+- `if std_type == "IT"` logic inside core lifecycle, source trace, approval, audit, import, or rendering infrastructure unless implemented through an explicit plugin/extension registry.
+- Treating the NSSF ERP tender or any actual tender as a master STD.
+- Storing the complete production STD as one opaque JSON blob without normalized lifecycle, governance, audit, trace, and queryable records.
+
+## Implementation sequence
+
+Follow this order unless explicitly instructed otherwise:
+
+1. STD Engine Core
+2. STD package import/export
+3. IT STD package import and validation
+4. IT Tender Configuration Wizard
+5. Supplier response integration
+6. Evaluation integration
+7. Contract formation integration
+
+Do not implement wizard features before the corresponding core STD Engine services exist.
+
+## Required module boundaries
+
+Keep these concerns separate:
+
+- Template/version lifecycle
+- Source document traceability
+- Section and clause registry
+- Parameter schema and configuration values
+- Rule validation engine
+- Form schema engine
+- Requirement composer
+- Price schedule engine
+- Render engine
+- Approval/governance workflow
+- Tender binding
+- Addendum/supersession
+- Audit/hash evidence

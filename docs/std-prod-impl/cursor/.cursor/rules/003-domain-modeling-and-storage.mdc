@@ -1,0 +1,90 @@
+---
+description: Domain modeling and data storage rules for STD Engine implementation
+alwaysApply: true
+---
+
+# Domain Modeling and Data Storage Rules
+
+The production system must use normalized, auditable, queryable records. JSON packages are import/export artifacts, not the primary source of runtime truth.
+
+## Storage principles
+
+Use a hybrid model:
+
+- Relational/domain records for identity, lifecycle, relationships, governance, audit, permissions, and search.
+- JSON schema fields for complex parameter constraints, form-field schemas, validation expressions, render metadata, and requirement structures.
+- Immutable content blobs or content records for locked legal text, rendered artifacts, and source snapshots.
+- Hashes for source files, clause text, package contents, rendered bundles, and published artifacts.
+- Event logs for import, review, approval, activation, use, publication, addendum, supersession, and archive actions.
+
+## Core entity groups
+
+Keep these groups explicit:
+
+- STD Template Family
+- STD Template Version
+- STD Source Document
+- STD Source Anchor
+- STD Section
+- STD Clause
+- STD Parameter
+- STD Parameter Option
+- STD Rule
+- STD Form Schema
+- STD Form Field
+- STD Evidence Requirement
+- STD Requirement Schema
+- STD Price Schedule Schema
+- STD Evaluation Schema
+- STD Contract Schema
+- STD Render Block
+- STD Approval Event
+- STD Audit Event
+- STD Package Import Job
+- Tender STD Instance
+- Tender STD Configuration Value
+- Tender STD Validation Finding
+- Tender Generated Bundle
+- Tender Addendum Impact
+
+## Mutability classification
+
+Every section, clause, parameter, form, requirement, price schedule, render block, and generated artifact must have a mutability classification where relevant.
+
+Common classifications:
+
+- LOCKED
+- PARAMETERIZED
+- CONTROLLED_CONFIG
+- PE_AUTHORED_CONTROLLED
+- BIDDER_RESPONSE
+- SYSTEM_GENERATED
+- CONTRACT_CARRY_FORWARD
+- REFERENCE_ONLY
+
+Do not use a generic editable text field for legally controlled content.
+
+## Import/export package behavior
+
+Import packages may contain JSON files, but after import they must resolve into domain records with:
+
+- Stable IDs
+- Version references
+- Parent-child relationships
+- Source anchors
+- Validation status
+- Hashes
+- Audit events
+
+Do not implement runtime behavior that depends on parsing a monolithic package JSON on every request.
+
+## Database migration discipline
+
+When changing persistence models:
+
+- Add migrations.
+- Preserve existing data.
+- Add indexes for frequently queried lifecycle, version, family, section, source, and tender-binding fields.
+- Add uniqueness constraints where required by the domain model.
+- Enforce immutability through service checks and database constraints/triggers where feasible.
+- Do not silently rename or drop fields that are part of audit, source trace, lifecycle, or hash evidence.

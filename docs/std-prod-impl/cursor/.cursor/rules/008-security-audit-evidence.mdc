@@ -1,0 +1,81 @@
+---
+description: Security, audit, and evidentiary integrity requirements
+alwaysApply: true
+---
+
+# Security, Audit, and Evidentiary Integrity
+
+This system must support government-grade audit trails and defensible procurement records.
+
+## Audit requirements
+
+Every authoritative action must emit an audit event where applicable:
+
+- Source document upload/registration
+- Package import dry run
+- Package import commit
+- Validation execution
+- Review submission
+- Review approval/rejection
+- Version activation
+- Version suspension
+- Version supersession
+- Version archive
+- Tender binding
+- Configuration update
+- Generated bundle creation
+- Publication
+- Addendum creation
+- Supersession
+- Contract carry-forward generation
+- Permission-sensitive access
+
+Audit events should include:
+
+- Actor
+- Role/context
+- Timestamp
+- Entity type
+- Entity ID
+- Previous state where relevant
+- New state where relevant
+- Reason/comment where required
+- Request/correlation ID where available
+- Hash/checksum where relevant
+
+## Security principles
+
+- Use least privilege.
+- Protect approval, activation, publication, addendum, archive, and deletion actions.
+- Do not expose internal IDs when stable public IDs or references should be used.
+- Do not allow tender users to edit locked STD legal content.
+- Do not allow calibration fixtures to be imported as official templates.
+- Do not create hidden admin bypasses.
+- Do not log secrets, credentials, tokens, private keys, or sensitive integration data.
+
+## Evidence preservation
+
+Preserve evidence for:
+
+- Which STD version was used by a tender.
+- Which source document supported the STD version.
+- Which parameters were configured.
+- Which validations passed or failed.
+- Which generated document was published.
+- Which addendum superseded which content.
+- Which contract terms were carried forward from tender/award.
+
+## Deletion rules
+
+Prefer soft delete or archival for legally relevant records.
+
+Never hard-delete:
+
+- Active STD versions
+- Used STD versions
+- Published generated bundles
+- Approval events
+- Audit events
+- Source documents used by activated templates
+- Tender bindings
+- Addendum/supersession records

@@ -38,14 +38,11 @@ def _apply_sidebar_export(data: dict) -> None:
 		return
 	name = data.get("name") or title
 	if frappe.db.exists("Workspace Sidebar", name):
-		doc = frappe.get_doc("Workspace Sidebar", name)
-	else:
-		alt = frappe.get_all("Workspace Sidebar", filters={"title": title}, pluck="name", limit=1)
-		if alt:
-			doc = frappe.get_doc("Workspace Sidebar", alt[0])
-		else:
-			doc = frappe.new_doc("Workspace Sidebar")
-			doc.title = title
+		frappe.delete_doc("Workspace Sidebar", name, force=True, ignore_permissions=True)
+	doc = frappe.new_doc("Workspace Sidebar")
+	doc.title = title
+	if data.get("name"):
+		doc.name = data["name"]
 
 	skip = {"items", "docstatus", "__islocal"}
 	for key, val in data.items():
@@ -62,10 +59,7 @@ def _apply_sidebar_export(data: dict) -> None:
 		doc.append("items", clean)
 
 	doc.flags.ignore_permissions = True
-	if doc.is_new():
-		doc.insert()
-	else:
-		doc.save()
+	doc.insert()
 
 
 def reconcile_procurement_navigation_from_exports() -> None:
