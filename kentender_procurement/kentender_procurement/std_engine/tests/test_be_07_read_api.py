@@ -89,41 +89,75 @@ class TestBe07SchemaReadApi(IntegrationTestCase):
 	def test_parameter_detail(self) -> None:
 		parameter_key = frappe.get_all(
 			"STD Parameter",
-			filters={"package_id": CANONICAL_PACKAGE_ID},
+			filters={
+				"package_id": CANONICAL_PACKAGE_ID,
+				"title": "Address for clarifications",
+			},
 			pluck="name",
 			limit=1,
 		)[0]
 		out = get_std_parameter(parameter_key)
 		_assert_envelope(self, out)
 		self.assertEqual(out["data"]["id"], parameter_key)
-		self.assertTrue(out["data"]["code"])
-		self.assertTrue(out["data"]["name"])
+		self.assertEqual(out["data"]["code"], "tds.clarification_address")
+		self.assertEqual(out["data"]["name"], "Address for clarifications")
+		self.assertEqual(out["data"]["fieldType"], "LONG_TEXT")
+		self.assertTrue(out["data"]["required"])
+		self.assertEqual(out["data"]["sectionTitle"], "Section II - Tender Data Sheet")
 
 	def test_rule_detail(self) -> None:
 		rule_key = frappe.get_all(
 			"STD Rule",
-			filters={"package_id": CANONICAL_PACKAGE_ID},
+			filters={
+				"package_id": CANONICAL_PACKAGE_ID,
+				"title": "Clarification deadline must fall before tender submission deadline.",
+			},
 			pluck="name",
 			limit=1,
 		)[0]
 		out = get_std_rule(rule_key)
 		_assert_envelope(self, out)
 		self.assertEqual(out["data"]["id"], rule_key)
+		self.assertEqual(out["data"]["code"], "tds.clarification_deadline_before_submission")
+		self.assertEqual(
+			out["data"]["name"],
+			"Clarification deadline must fall before tender submission deadline.",
+		)
+		self.assertEqual(out["data"]["ruleType"], "VALIDATION")
+		self.assertEqual(out["data"]["severity"], "BLOCKER")
+		self.assertTrue(out["data"]["affectedParameterKeys"])
 
 	def test_form_detail_includes_fields(self) -> None:
 		form_key = frappe.get_all(
 			"STD Form Schema",
-			filters={"package_id": CANONICAL_PACKAGE_ID},
+			filters={
+				"package_id": CANONICAL_PACKAGE_ID,
+				"title": "Certificate of Independent Tender Determination",
+			},
 			pluck="name",
 			limit=1,
 		)[0]
 		out = get_std_form(form_key)
 		_assert_envelope(self, out)
 		self.assertEqual(out["data"]["id"], form_key)
+		self.assertEqual(out["data"]["code"], "CERTIFICATE_INDEPENDENT_TENDER_DETERMINATION")
+		self.assertEqual(out["data"]["name"], "Certificate of Independent Tender Determination")
+		self.assertEqual(out["data"]["respondentType"], "TENDERER")
 		self.assertGreater(len(out["data"]["formFields"]), 0)
 		field = out["data"]["formFields"][0]
 		for key in ("id", "code", "name", "fieldType"):
 			self.assertIn(key, field)
+		self.assertEqual(field["code"], "DECLARANT_NAME")
+
+	def test_rule_list_returns_business_codes(self) -> None:
+		out = get_std_version_rules(CANONICAL_PACKAGE_ID)
+		_assert_envelope(self, out)
+		sample = next(
+			item
+			for item in out["data"]["rules"]
+			if item["code"] == "tds.clarification_deadline_before_submission"
+		)
+		self.assertNotIn("KE-PPRA-IT-2022-04.rule.", sample["code"])
 
 	def test_not_found_envelopes(self) -> None:
 		missing = get_std_parameter("DOES-NOT-EXIST")

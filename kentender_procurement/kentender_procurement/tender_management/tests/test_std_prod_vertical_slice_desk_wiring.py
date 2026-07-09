@@ -34,6 +34,11 @@ class TestBe09StdProdEngine(UnitTestCase):
 		self.assertIn("get_std_families", source)
 		self.assertIn("get_std_version_validation_report", source)
 		self.assertIn("get_std_version_audit_log", source)
+		self.assertIn("button_contains_label", source)
+		self.assertIn("std-source-doc", source)
+		self.assertIn("__stdProdSectionsState", source)
+		self.assertIn("std-prod-clause-title", source)
+		self.assertIn("should_refresh_on_show", source)
 		self.assertIn('type: "GET"', source)
 		self.assertIn("data-std-package-id", source)
 

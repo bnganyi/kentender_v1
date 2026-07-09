@@ -101,6 +101,21 @@
 		root.frappe.set_route(route);
 	}
 
+	function reveal_iframe_frame(doc) {
+		var frame = doc && doc.defaultView && doc.defaultView.frameElement;
+		if (frame) {
+			frame.style.opacity = "1";
+		}
+	}
+
+	function prepare_iframe_frame(iframe) {
+		if (!iframe) {
+			return;
+		}
+		iframe.style.opacity = "0";
+		iframe.style.transition = "opacity 120ms ease-in";
+	}
+
 	function mark_hydrated(doc, ctx) {
 		if (!doc || !doc.body) {
 			return;
@@ -108,6 +123,118 @@
 		doc.body.setAttribute("data-std-prod-hydrated", "1");
 		doc.body.setAttribute("data-std-package-id", ctx.package_id || "");
 		doc.body.setAttribute("data-std-family-code", ctx.family_code || "");
+		reveal_iframe_frame(doc);
+	}
+
+	function install_hydration_gate(doc) {
+		if (!doc || !doc.head || doc.getElementById("std-prod-hydration-gate")) {
+			return;
+		}
+		var style = doc.createElement("style");
+		style.id = "std-prod-hydration-gate";
+		style.textContent =
+			'body:not([data-std-prod-hydrated="1"]):not([data-std-prod-hydrated="error"]) > main,' +
+			'body:not([data-std-prod-hydrated="1"]):not([data-std-prod-hydrated="error"]) main {' +
+			"visibility: hidden !important;" +
+			"}" +
+			"body.std-prod-header-harmonized > main," +
+			"body.std-prod-header-harmonized main.mt-16," +
+			"body.std-prod-header-harmonized main.mt-14," +
+			"body.std-prod-header-harmonized main.pt-20 {" +
+			"margin-top: 0 !important;" +
+			"padding-top: 0 !important;" +
+			"}";
+		doc.head.appendChild(style);
+	}
+
+	function mark_hydration_failed(doc) {
+		if (!doc || !doc.body) {
+			return;
+		}
+		doc.body.setAttribute("data-std-prod-hydrated", "error");
+		reveal_iframe_frame(doc);
+	}
+
+	var STD_PROD_BRAND_LABEL = "STD Engine";
+	var STD_PROD_DEFAULT_UTILITY_HTML =
+		'<button class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant" type="button">' +
+		'<span class="material-symbols-outlined">notifications</span></button>' +
+		'<button class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant" type="button">' +
+		'<span class="material-symbols-outlined">help</span></button>' +
+		'<button class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant" type="button">' +
+		'<span class="material-symbols-outlined">settings</span></button>' +
+		'<div class="h-8 w-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-xs">AD</div>';
+
+	function find_top_app_bar(doc) {
+		var selectors = [
+			"body > header",
+			"body > nav",
+			"header.sticky",
+			"header.fixed",
+			"nav.fixed",
+			"header",
+			"nav",
+		];
+		for (var i = 0; i < selectors.length; i++) {
+			var node = doc.querySelector(selectors[i]);
+			if (node && !node.closest("main, aside, footer")) {
+				return node;
+			}
+		}
+		return null;
+	}
+
+	function extract_utility_cluster(bar) {
+		if (!bar) {
+			return null;
+		}
+		var children = Array.from(bar.children);
+		for (var i = children.length - 1; i >= 0; i--) {
+			var child = children[i];
+			if (child.querySelector("button, .material-symbols-outlined, input")) {
+				return child;
+			}
+		}
+		return null;
+	}
+
+	function hydrate_page_header(doc, page_title) {
+		if (!doc || !doc.body) {
+			return;
+		}
+		var title = String(page_title || "").trim();
+		if (!title) {
+			return;
+		}
+		var bar = find_top_app_bar(doc);
+		if (!bar || !bar.parentNode) {
+			return;
+		}
+		var utility = extract_utility_cluster(bar);
+		var utility_html = utility ? utility.innerHTML : STD_PROD_DEFAULT_UTILITY_HTML;
+		var header = doc.createElement("header");
+		header.className =
+			"std-prod-page-header bg-surface-bright dark:bg-surface-dim border-b border-outline-variant flex justify-between items-center w-full px-6 h-16 sticky top-0 z-50";
+		header.setAttribute("data-testid", "std-prod-page-header");
+		header.innerHTML =
+			'<div class="flex items-center gap-4">' +
+			'<span class="std-prod-brand font-headline-sm text-headline-sm font-extrabold text-primary">' +
+			frappe.utils.escape_html(STD_PROD_BRAND_LABEL) +
+			"</span>" +
+			'<div class="w-px h-6 bg-outline-variant"></div>' +
+			'<h1 class="std-prod-page-title font-headline-sm text-headline-sm text-primary">' +
+			frappe.utils.escape_html(title) +
+			"</h1>" +
+			"</div>" +
+			'<div class="flex items-center gap-3 std-prod-page-header-utility">' +
+			utility_html +
+			"</div>";
+		bar.parentNode.replaceChild(header, bar);
+		doc.body.classList.add("std-prod-header-harmonized");
+		doc.querySelectorAll("main").forEach(function (main) {
+			main.classList.remove("mt-16", "mt-14", "pt-20");
+		});
+		doc.title = title + " | " + STD_PROD_BRAND_LABEL;
 	}
 
 	function replace_mock_identities(doc, ctx) {
@@ -271,6 +398,25 @@
 		});
 	}
 
+	function sync_pager_ellipsis(doc, total_pages) {
+		doc.querySelectorAll("nav span, .flex.items-center.px-4 span, .flex.items-center.gap-1 span").forEach(
+			function (node) {
+				if ((node.textContent || "").trim() !== "...") {
+					return;
+				}
+				node.style.display = total_pages > 1 ? "" : "none";
+			}
+		);
+	}
+
+	function widen_table_footer_page_size_select(doc) {
+		doc.querySelectorAll(
+			"div.border-t select, .border-t.border-outline-variant select, table + div select, table ~ div select"
+		).forEach(function (select) {
+			select.classList.add("min-w-12", "w-12", "shrink-0", "pr-1");
+		});
+	}
+
 	function sync_pager_nav_buttons(doc, total_pages) {
 		var nav_icons = {
 			first_page: true,
@@ -345,7 +491,9 @@
 
 		sync_page_of_labels(doc, Math.max(total_pages, 1));
 		sync_numbered_page_buttons(doc, total_pages);
+		sync_pager_ellipsis(doc, total_pages);
 		sync_pager_nav_buttons(doc, total_pages);
+		widen_table_footer_page_size_select(doc);
 	}
 
 	function disable_governance_actions(doc) {
@@ -425,24 +573,280 @@
 		hydrate_table_footer(doc, data.count || params.length);
 	}
 
+	function set_labeled_field(doc, label, value, options) {
+		options = options || {};
+		var target_label = String(label || "").trim().toLowerCase();
+		var nodes = doc.querySelectorAll("section.bento-item p.text-on-surface-variant");
+		for (var i = 0; i < nodes.length; i += 1) {
+			var node = nodes[i];
+			if ((node.textContent || "").trim().toLowerCase() !== target_label) {
+				continue;
+			}
+			var value_node = node.nextElementSibling;
+			if (!value_node) {
+				continue;
+			}
+			if (options.html) {
+				value_node.innerHTML = value;
+			} else {
+				value_node.textContent = value == null || value === "" ? "—" : String(value);
+			}
+			return true;
+		}
+		return false;
+	}
+
+	function find_bento_section(doc, heading) {
+		var sections = doc.querySelectorAll("section.bento-item");
+		for (var i = 0; i < sections.length; i += 1) {
+			var header = sections[i].querySelector("h3");
+			if (header && (header.textContent || "").trim() === heading) {
+				return sections[i];
+			}
+		}
+		return null;
+	}
+
+	function business_code_from_key(key, marker) {
+		if (!key) {
+			return "";
+		}
+		var marker_index = String(key).indexOf(marker);
+		if (marker_index >= 0) {
+			return String(key).slice(marker_index + marker.length);
+		}
+		var parts = String(key).split(".");
+		return parts[parts.length - 1] || String(key);
+	}
+
+	function set_detail_label_value(doc, label, value, options) {
+		options = options || {};
+		var target_label = String(label || "").trim().toLowerCase();
+		var labels = doc.querySelectorAll("label");
+		for (var i = 0; i < labels.length; i += 1) {
+			var node = labels[i];
+			if ((node.textContent || "").trim().toLowerCase() !== target_label) {
+				continue;
+			}
+			var value_node = node.nextElementSibling;
+			if (!value_node) {
+				continue;
+			}
+			if (options.html) {
+				value_node.innerHTML = value;
+			} else {
+				value_node.textContent = value == null || value === "" ? "—" : String(value);
+			}
+			return true;
+		}
+		return false;
+	}
+
+	function find_card_section(doc, heading) {
+		var headers = doc.querySelectorAll("h3");
+		for (var i = 0; i < headers.length; i += 1) {
+			if ((headers[i].textContent || "").trim() !== heading) {
+				continue;
+			}
+			var section = headers[i].closest(".bg-white, section");
+			if (section) {
+				return section;
+			}
+		}
+		return null;
+	}
+
 	function hydrate_parameter(doc, payload, ctx) {
 		var data = payload.data || {};
+		var metadata = data.metadata || {};
+		var package_context = payload.packageContext || {};
+		var business_code = data.code || metadata.parameter_key || "";
+		var display_name = data.name || metadata.display_label || business_code || "Parameter";
+		var lifecycle = package_context.lifecycleState || "DRAFT";
+
+		var breadcrumb = doc.querySelector("nav span.text-primary.font-medium");
+		if (breadcrumb) {
+			breadcrumb.textContent = business_code;
+			breadcrumb.setAttribute("data-testid", "std-prod-parameter-breadcrumb");
+		}
 		var title = doc.querySelector("h1.font-headline-lg");
 		if (title) {
 			title.innerHTML =
-				frappe.utils.escape_html(data.name || data.code || "Parameter") +
+				frappe.utils.escape_html(display_name) +
 				' <span class="text-on-surface-variant font-normal"> (' +
-				frappe.utils.escape_html(data.code || data.id || "") +
+				frappe.utils.escape_html(business_code) +
 				")</span>";
+			title.setAttribute("data-testid", "std-prod-parameter-title");
 		}
-		doc.querySelectorAll("nav span.text-primary.font-medium").forEach(function (node) {
-			node.textContent = data.code || data.id || "";
-		});
-		doc.querySelectorAll("p.font-data-mono, .font-data-mono").forEach(function (node) {
-			if ((node.textContent || "").indexOf("PKG-") === 0) {
-				node.textContent = ctx.package_id;
+
+		var badges = doc.querySelector(".flex.items-center.gap-3.mt-2");
+		if (badges) {
+			var badge_bits = [];
+			if (data.groupLabel) {
+				badge_bits.push(
+					'<span class="bg-surface-container-high text-on-surface-variant px-3 py-1 rounded-full text-[12px] font-semibold">Group: ' +
+						frappe.utils.escape_html(data.groupLabel) +
+						"</span>",
+				);
 			}
-		});
+			if (data.sectionTitle) {
+				badge_bits.push(
+					'<span class="bg-surface-container-high text-on-surface-variant px-3 py-1 rounded-full text-[12px] font-semibold">Section: ' +
+						frappe.utils.escape_html(data.sectionTitle) +
+						"</span>",
+				);
+			}
+			if (data.fieldType) {
+				badge_bits.push(
+					'<span class="bg-surface-container-high text-on-surface-variant px-3 py-1 rounded-full text-[12px] font-semibold">Type: ' +
+						frappe.utils.escape_html(data.fieldType) +
+						"</span>",
+				);
+			}
+			badges.innerHTML = badge_bits.join(
+				'<span class="w-1 h-1 rounded-full bg-outline-variant"></span>',
+			);
+		}
+
+		set_labeled_field(doc, "STD Version", ctx.package_id);
+		set_labeled_field(doc, "Lifecycle State", lifecycle);
+		set_labeled_field(doc, "Package ID", ctx.package_id);
+		set_labeled_field(
+			doc,
+			"Parameter Status",
+			data.validationStatus || data.extractionStatus || "—",
+		);
+		set_labeled_field(doc, "Data Type", data.fieldType || "—");
+		set_labeled_field(doc, "Requiredness", data.required ? "MANDATORY" : "OPTIONAL");
+		set_labeled_field(
+			doc,
+			"Allowed Values",
+			data.optionSetKey
+				? "Option set: " + data.optionSetKey
+				: "No predefined list. Value entered according to field type constraints.",
+		);
+		set_labeled_field(
+			doc,
+			"Conditional Display Rules",
+			data.sectionTitle ? "Visible in " + data.sectionTitle : "Always visible in configured sections.",
+		);
+		set_labeled_field(
+			doc,
+			"Render Binding",
+			(data.renderBindings || []).length ? (data.renderBindings || []).join(", ") : "None",
+		);
+		set_labeled_field(
+			doc,
+			"Rule Binding",
+			(data.validationRuleKeys || []).length
+				? (data.validationRuleKeys || []).join(", ")
+				: "None",
+		);
+
+		var usage_section = find_bento_section(doc, "USAGE MAP");
+		var usage_container = usage_section && usage_section.querySelector(".divide-y");
+		if (usage_container) {
+			var usage_items = [];
+			(data.renderBindings || []).forEach(function (binding_key) {
+				usage_items.push({
+					icon: "layers",
+					title: binding_key,
+					subtitle: "Render binding",
+				});
+			});
+			(data.validationRuleKeys || []).forEach(function (rule_key) {
+				usage_items.push({
+					icon: "rule",
+					title: rule_key,
+					subtitle: "Validation rule",
+				});
+			});
+			if (!usage_items.length) {
+				usage_container.innerHTML =
+					'<div class="p-card-padding text-on-surface-variant italic text-[13px]">No render blocks or validation rules are bound to this parameter yet.</div>';
+			} else {
+				usage_container.innerHTML = usage_items
+					.map(function (item) {
+						return (
+							'<div class="p-card-padding flex items-center justify-between hover:bg-surface-container-low transition-colors">' +
+							'<div class="flex items-center gap-4"><span class="material-symbols-outlined text-primary">' +
+							item.icon +
+							'</span><div><p class="font-semibold text-[13px]">' +
+							frappe.utils.escape_html(item.title) +
+							'</p><p class="text-[11px] text-on-surface-variant uppercase">' +
+							frappe.utils.escape_html(item.subtitle) +
+							"</p></div></div></div>"
+						);
+					})
+					.join("");
+			}
+		}
+
+		var validation_section = find_bento_section(doc, "VALIDATION RULES");
+		var validation_body = validation_section && validation_section.querySelector("tbody");
+		if (validation_body) {
+			var rule_keys = data.validationRuleKeys || [];
+			if (!rule_keys.length) {
+				validation_body.innerHTML =
+					'<tr><td class="px-card-padding py-4 text-on-surface-variant italic" colspan="5">No validation rules are bound to this parameter.</td></tr>';
+			} else {
+				validation_body.innerHTML = rule_keys
+					.map(function (rule_key) {
+						return (
+							"<tr><td class='px-card-padding py-4 font-semibold text-[13px]'>" +
+							frappe.utils.escape_html(rule_key) +
+							"</td><td class='px-card-padding py-4 font-data-mono text-[12px]'>—</td><td class='px-card-padding py-4 text-[13px]'>VALIDATION_RUN</td><td class='px-card-padding py-4'>—</td><td class='px-card-padding py-4 text-right'>—</td></tr>"
+						);
+					})
+					.join("");
+			}
+		}
+
+		var options_section = find_bento_section(doc, "OPTIONS & DEFAULTS");
+		if (options_section) {
+			var default_node = options_section.querySelector(".font-data-mono.text-\\[13px\\]");
+			if (default_node) {
+				default_node.textContent =
+					data.defaultValue == null || data.defaultValue === ""
+						? "NULL (Input Required)"
+						: String(data.defaultValue);
+			}
+			options_section.querySelectorAll("p.text-on-surface-variant.italic").forEach(function (node) {
+				if ((node.textContent || "").indexOf("No predefined list") >= 0) {
+					node.textContent = data.optionSetKey
+						? "Controlled by option set " + data.optionSetKey + "."
+						: "No predefined list. Value entered according to field type constraints.";
+				}
+			});
+		}
+
+		var trace_section = find_bento_section(doc, "SOURCE TRACEABILITY");
+		if (trace_section) {
+			set_labeled_field(
+				doc,
+				"Source STD Section/Page/Anchor",
+				data.sectionTitle || data.sourceAnchorKey || data.sourceAnchorId || "—",
+			);
+			var hash_panel = trace_section.querySelector(".font-data-mono.text-\\[12px\\].text-tertiary");
+			if (hash_panel) {
+				hash_panel.textContent =
+					data.description ||
+					"Source text hash and verbatim extraction are pending for this parameter in Milestone 1.";
+			}
+		}
+
+		var audit_section = find_bento_section(doc, "AUDIT HISTORY");
+		if (audit_section) {
+			var audit_body = audit_section.querySelector(".space-y-8");
+			if (audit_body) {
+				audit_body.innerHTML =
+					'<div class="text-on-surface-variant italic text-[13px]">Parameter-level audit events are not exposed in the Milestone 1 read model.</div>';
+			}
+		}
+
+		if (doc.body) {
+			doc.body.setAttribute("data-std-parameter-key", data.id || ctx.parameter_key || "");
+		}
 	}
 
 	function hydrate_rules(doc, payload, ctx) {
@@ -458,13 +862,171 @@
 
 	function hydrate_rule(doc, payload, ctx) {
 		var data = payload.data || {};
-		var title = doc.querySelector("h1");
-		if (title) {
-			title.textContent = (data.name || data.code || "Rule") + " (" + (data.code || data.id || "") + ")";
+		var metadata = data.metadata || {};
+		var package_context = payload.packageContext || {};
+		var business_code = data.code || metadata.rule_key || "";
+		var display_name = data.name || business_code || "Rule";
+		var lifecycle = package_context.lifecycleState || "DRAFT";
+
+		var breadcrumb = doc.querySelector("nav span.font-semibold.text-on-surface");
+		if (breadcrumb) {
+			breadcrumb.textContent = business_code;
+			breadcrumb.setAttribute("data-testid", "std-prod-rule-breadcrumb");
 		}
-		var desc = doc.querySelector("section p, .font-body-md");
-		if (desc && data.description) {
-			desc.textContent = data.description;
+		var title = doc.querySelector("h1.text-headline-lg.font-headline-lg");
+		if (title) {
+			title.innerHTML =
+				frappe.utils.escape_html(display_name) +
+				' <span class="text-on-surface-variant font-normal">(' +
+				frappe.utils.escape_html(business_code) +
+				")</span>";
+			title.setAttribute("data-testid", "std-prod-rule-title");
+		}
+
+		doc.querySelectorAll("span.text-body-md.font-semibold").forEach(function (node) {
+			var label = node.previousElementSibling;
+			if (!label) {
+				return;
+			}
+			var label_text = (label.textContent || "").trim().toUpperCase();
+			if (label_text === "FAMILY") {
+				node.textContent = ctx.family_code || package_context.familyCode || "—";
+			} else if (label_text === "VERSION") {
+				node.textContent = ctx.package_id || package_context.packageId || "—";
+			} else if (label_text === "PACKAGE ID") {
+				node.textContent = ctx.package_id || package_context.packageId || "—";
+			} else if (label_text === "LIFECYCLE") {
+				node.textContent = lifecycle;
+			}
+		});
+
+		doc.querySelectorAll("span.flex.items-center.gap-1\\.5").forEach(function (badge) {
+			var text = (badge.textContent || "").trim();
+			if (text.indexOf("Rule Type:") >= 0) {
+				badge.innerHTML =
+					'<span class="material-symbols-outlined text-[14px]">rule</span> Rule Type: ' +
+					frappe.utils.escape_html(data.ruleType || "—");
+				badge.setAttribute("data-testid", "std-prod-rule-type");
+			} else if (text.indexOf("Severity:") >= 0) {
+				badge.innerHTML =
+					'<span class="material-symbols-outlined text-[14px]">block</span> Severity: ' +
+					frappe.utils.escape_html(data.severity || "—");
+				badge.setAttribute("data-testid", "std-prod-rule-severity");
+			} else if (text.indexOf("Status:") >= 0) {
+				badge.innerHTML =
+					'<span class="material-symbols-outlined text-[14px]" style=\'font-variation-settings: "FILL" 1;\'>check_circle</span> Status: ' +
+					frappe.utils.escape_html(data.validationStatus || "—");
+			}
+		});
+
+		set_detail_label_value(doc, "Rule Name", display_name);
+		set_detail_label_value(doc, "Key identifier", business_code);
+		set_detail_label_value(
+			doc,
+			"Description",
+			data.description || data.message || "No description recorded for this rule.",
+		);
+		var expression_node = doc.querySelector(
+			".bg-primary-container\\/10.p-4.rounded.border.font-data-mono, .bg-primary-container\\/10.p-4.rounded.border"
+		);
+		if (expression_node) {
+			expression_node.textContent = data.expression
+				? String(data.expression)
+				: "Expression is evaluated by service rule logic in Milestone 1 (no inline expression stored).";
+		}
+		set_detail_label_value(doc, "Error Message", data.message || "—");
+		set_detail_label_value(
+			doc,
+			"Plain-Language Explanation",
+			data.description || data.message || "—",
+		);
+		set_detail_label_value(
+			doc,
+			"Suggested Fix",
+			data.message
+				? "Resolve the validation issue described in the error message before publication."
+				: "—",
+			{ html: true },
+		);
+
+		var trigger_scope = find_card_section(doc, "Trigger & Scope");
+		if (trigger_scope) {
+			var stage_badge = trigger_scope.querySelector("span.uppercase.tracking-wider");
+			if (stage_badge) {
+				stage_badge.textContent = data.lifecycleStage || "VALIDATION_RUN";
+			}
+			var scope_badges = trigger_scope.querySelectorAll("span.uppercase.tracking-wider");
+			if (scope_badges.length > 1) {
+				scope_badges[1].textContent = metadata.version_code || ctx.package_id || "—";
+			}
+			var affected_container = trigger_scope.querySelector(".space-y-2");
+			if (affected_container) {
+				var affected_keys = data.affectedParameterKeys || [];
+				if (!affected_keys.length) {
+					affected_container.innerHTML =
+						'<div class="text-on-surface-variant italic text-[13px]">No affected parameters are linked to this rule yet.</div>';
+				} else {
+					affected_container.innerHTML = affected_keys
+						.map(function (parameter_key) {
+							var parameter_code = business_code_from_key(parameter_key, ".parameter.");
+							return (
+								'<div class="flex justify-between items-center p-2 bg-surface-container-low rounded">' +
+								'<span class="text-[11px] font-label-caps text-outline">Parameter</span>' +
+								'<span class="font-data-mono text-xs text-secondary">' +
+								frappe.utils.escape_html(parameter_code) +
+								"</span></div>"
+							);
+						})
+						.join("");
+				}
+			}
+			set_detail_label_value(
+				doc,
+				"Execution Context",
+				data.blockingOnPublish ? "Blocking on publish" : "Advisory validation",
+			);
+		}
+
+		var trace_section = find_card_section(doc, "Source Traceability");
+		if (trace_section) {
+			set_detail_label_value(
+				doc,
+				"Source Document",
+				(ctx.package_id || "—") + " / Official IT STD Source PDF",
+			);
+			set_detail_label_value(doc, "Legal Basis", data.sourceAnchorKey || data.sourceAnchorId || "—");
+			set_detail_label_value(doc, "Paragraph/Anchor", data.sourceAnchorId || "—");
+			var hash_panel = trace_section.querySelector(".font-data-mono.text-\\[11px\\]");
+			if (hash_panel) {
+				hash_panel.textContent =
+					"Source text hash is not exposed in the Milestone 1 read model.";
+			}
+		}
+
+		var test_section = find_card_section(doc, "Verification & Test Cases");
+		if (test_section) {
+			var test_body = test_section.querySelector("tbody");
+			if (test_body) {
+				test_body.innerHTML =
+					'<tr><td class="px-container-padding py-3 text-on-surface-variant italic" colspan="5">Automated verification cases are not exposed in the Milestone 1 read model.</td></tr>';
+			}
+			var test_footer = test_section.querySelector(".text-label-caps.font-label-caps.text-on-surface-variant");
+			if (test_footer) {
+				test_footer.textContent = "Showing 0 of 0 Test Cases";
+			}
+		}
+
+		var history_section = find_card_section(doc, "Execution History");
+		if (history_section) {
+			var history_body = history_section.querySelector("tbody");
+			if (history_body) {
+				history_body.innerHTML =
+					'<tr><td class="px-container-padding py-3 text-on-surface-variant italic" colspan="5">Rule execution history is not exposed in the Milestone 1 read model.</td></tr>';
+			}
+		}
+
+		if (doc.body) {
+			doc.body.setAttribute("data-std-rule-key", data.id || ctx.rule_key || "");
 		}
 	}
 
@@ -494,30 +1056,121 @@
 
 	function hydrate_form(doc, payload, ctx) {
 		var data = payload.data || {};
-		var title = doc.querySelector("h1");
-		if (title) {
-			title.textContent = (data.name || data.code || "Form") + " — Field Builder";
-		}
+		var metadata = data.metadata || {};
+		var package_context = payload.packageContext || {};
+		var business_code = data.code || metadata.form_code || "";
+		var display_name = data.name || metadata.display_title || business_code || "Form";
 		var fields = data.formFields || [];
+		var lifecycle = package_context.lifecycleState || "DRAFT";
+
+		var header_title = doc.querySelector("header h1");
+		if (header_title) {
+			header_title.textContent = display_name;
+			header_title.setAttribute("data-testid", "std-prod-form-title");
+		}
+
+		doc.querySelectorAll("div.flex.gap-1").forEach(function (row) {
+			var label_node = row.querySelector("span.opacity-60");
+			var value_node = label_node && label_node.nextElementSibling;
+			if (!label_node || !value_node) {
+				return;
+			}
+			var label_text = (label_node.textContent || "").trim();
+			if (label_text === "Family:") {
+				value_node.textContent = ctx.family_code || package_context.familyCode || "—";
+			} else if (label_text === "Version:") {
+				value_node.textContent = ctx.package_id || package_context.packageId || "—";
+			} else if (label_text === "Package:") {
+				value_node.textContent = ctx.package_id || package_context.packageId || "—";
+			}
+		});
+
+		doc.querySelectorAll("label.text-label-caps").forEach(function (label) {
+			var value_node = label.nextElementSibling;
+			if (!value_node) {
+				return;
+			}
+			var label_text = (label.textContent || "").trim();
+			if (label_text === "Form Code") {
+				value_node.textContent = business_code;
+				value_node.setAttribute("data-testid", "std-prod-form-code");
+			} else if (label_text === "Title") {
+				value_node.textContent = display_name;
+			} else if (label_text === "Respondent") {
+				value_node.textContent = data.respondentType || metadata.respondent_type || "—";
+			} else if (label_text === "Workflow Stage") {
+				value_node.textContent = data.stage || metadata.stage || "—";
+			} else if (label_text === "Requirement Level") {
+				value_node.textContent = data.validationStatus || "—";
+			} else if (label_text === "Source File") {
+				value_node.textContent = (ctx.package_id || "—") + " / Official IT STD Source PDF";
+			} else if (label_text === "Section/Page/Para") {
+				value_node.textContent = data.sourceAnchorId || data.sourceAnchorKey || "—";
+			} else if (label_text === "Source Anchor") {
+				value_node.textContent = data.sourceAnchorKey || data.sourceAnchorId || "—";
+			}
+		});
+
+		doc.querySelectorAll("span.text-label-caps.font-label-caps.text-outline").forEach(function (label) {
+			var stat_card = label.closest(".bg-white");
+			if (!stat_card) {
+				return;
+			}
+			var count_node = stat_card.querySelector("span.text-3xl");
+			if (!count_node) {
+				return;
+			}
+			var label_text = (label.textContent || "").trim();
+			if (label_text === "Total Fields") {
+				count_node.textContent = String(fields.length);
+			} else if (label_text === "Evidence Reqs") {
+				count_node.textContent = "0";
+			} else if (label_text === "Activation Rules") {
+				count_node.textContent = String((metadata.activation_rule_keys || []).length);
+			} else if (label_text === "Carry-Forward") {
+				count_node.textContent = "0";
+			}
+		});
+
 		var tbody = doc.querySelector("table tbody");
-		if (tbody && fields.length) {
-			tbody.innerHTML = fields
-				.map(function (field) {
-					return (
-						"<tr><td class='px-4 py-3 font-data-mono'>" +
-						frappe.utils.escape_html(field.code || field.id) +
-						"</td><td class='px-4 py-3'>" +
-						frappe.utils.escape_html(field.name || "") +
-						"</td><td class='px-4 py-3'>" +
-						frappe.utils.escape_html(field.fieldType || "") +
-						"</td><td class='px-4 py-3'>" +
-						(field.isRequired ? "Required" : "Optional") +
-						"</td></tr>"
-					);
-				})
-				.join("");
+		if (tbody) {
+			if (!fields.length) {
+				tbody.innerHTML =
+					'<tr><td class="px-4 py-3 text-on-surface-variant italic" colspan="10">No fields are defined for this form yet.</td></tr>';
+			} else {
+				tbody.innerHTML = fields
+					.map(function (field) {
+						var schema = field.schema || {};
+						var validation_rules = schema.validation_rule_keys || [];
+						return (
+							"<tr class='hover:bg-surface-container-low transition-colors group'>" +
+							"<td class='px-4 py-3 data-cell-mono text-primary font-semibold'>" +
+							frappe.utils.escape_html(field.code || field.id) +
+							"</td><td class='px-4 py-3 text-body-md'>" +
+							frappe.utils.escape_html(field.name || "") +
+							"</td><td class='px-4 py-3'><span class='px-2 py-0.5 bg-surface-container-highest rounded text-[11px] font-bold'>" +
+							frappe.utils.escape_html(field.fieldType || "") +
+							"</span></td><td class='px-4 py-3'>" +
+							(field.isRequired ? "Required" : "Optional") +
+							"</td><td class='px-4 py-3 text-body-md text-on-surface-variant max-w-xs truncate'>" +
+							frappe.utils.escape_html(schema.display_label || field.name || "—") +
+							"</td><td class='px-4 py-3 data-cell-mono text-xs text-secondary'>" +
+							frappe.utils.escape_html(
+								validation_rules.length ? validation_rules.join(", ") : "—",
+							) +
+							"</td><td class='px-4 py-3 text-outline'>—</td><td class='px-4 py-3 text-outline'>—</td><td class='px-4 py-3 text-outline'>" +
+							frappe.utils.escape_html(schema.source_anchor_key || data.sourceAnchorId || "—") +
+							"</td><td class='px-4 py-3 text-right'>—</td></tr>"
+						);
+					})
+					.join("");
+			}
 		}
 		hydrate_table_footer(doc, fields.length);
+
+		if (doc.body) {
+			doc.body.setAttribute("data-std-form-key", data.id || ctx.form_key || "");
+		}
 	}
 
 	function hydrate_requirements(doc, payload, ctx) {
@@ -579,9 +1232,60 @@
 		hydrate_table_footer(doc, data.count || blocks.length);
 	}
 
+	function hydrate_usage_kpis(doc, kpis) {
+		if (!kpis) {
+			return;
+		}
+		function set_usage_kpi_card(label, value, options) {
+			doc.querySelectorAll(".font-label-caps, .text-label-caps").forEach(function (node) {
+				if ((node.textContent || "").trim() !== label) {
+					return;
+				}
+				var card = node.closest(".bg-white");
+				if (!card) {
+					return;
+				}
+				var headline = card.querySelector(".font-headline-lg, .text-headline-lg");
+				if (headline) {
+					headline.textContent = String(value);
+					if (label === "OPEN ADDENDA") {
+						headline.classList.toggle("text-status-exhausted", Number(value) > 0);
+						headline.classList.toggle("text-primary", Number(value) <= 0);
+					}
+				}
+				var value_row = card.querySelector(".flex.items-baseline.gap-2");
+				if (value_row) {
+					var badge = value_row.querySelector("span.text-xs.font-bold");
+					if (badge) {
+						if (options && options.badge) {
+							badge.textContent = options.badge;
+							badge.style.display = "";
+						} else {
+							badge.style.display = "none";
+						}
+					}
+				}
+			});
+		}
+		set_usage_kpi_card("TOTAL TENDERS BOUND (ALL VERSIONS)", kpis.totalTendersBoundAllVersions || 0, {
+			badge: kpis.trendPercent != null ? "+" + kpis.trendPercent + "%" : null,
+		});
+		set_usage_kpi_card("ACTIVE TENDERS (THIS VERSION)", kpis.activeTendersThisVersion || 0, {
+			badge:
+				kpis.activeTendersThisVersion > 0 && kpis.activeStabilityBadge
+					? kpis.activeStabilityBadge
+					: null,
+		});
+		set_usage_kpi_card("HISTORICAL RECORDS", kpis.historicalRecords || 0);
+		set_usage_kpi_card("OPEN ADDENDA", kpis.openAddenda || 0, {
+			badge: kpis.openAddendaActionRequired ? "Action Req" : null,
+		});
+	}
+
 	function hydrate_usage(doc, payload, ctx) {
 		var data = payload.data || {};
 		var bindings = data.bindings || [];
+		hydrate_usage_kpis(doc, data.usageKpis);
 		var tbody = doc.querySelector("table tbody");
 		if (!tbody) {
 			hydrate_table_footer(doc, data.count || 0);
@@ -798,9 +1502,102 @@
 		}
 	}
 
+	function hydrate_family_kpis(doc, kpis, usage) {
+		if (!kpis) {
+			return;
+		}
+		function set_family_kpi_card(label, value, options) {
+			doc.querySelectorAll(".font-label-caps, .text-label-caps").forEach(function (node) {
+				if ((node.textContent || "").trim() !== label) {
+					return;
+				}
+				var card = node.parentElement;
+				if (!card) {
+					return;
+				}
+				var headline = card.querySelector(".font-headline-md, .text-headline-md");
+				if (headline) {
+					headline.textContent = String(value);
+				}
+				if (options && options.badge) {
+					var badge = card.querySelector(".bg-primary-fixed, .text-primary-container");
+					if (badge) {
+						badge.textContent = options.badge;
+					}
+				}
+				if (options && options.subtext) {
+					var subtext = card.querySelector(".font-body-sm, .text-body-sm");
+					if (subtext) {
+						subtext.textContent = options.subtext;
+					}
+				}
+				if (label === "TENDERS USING FAMILY") {
+					var trend_wrap = card.querySelector(
+						".flex.items-end.justify-between > .flex.items-center, .flex.items-end.justify-between > div.gap-1"
+					);
+					if (trend_wrap) {
+						if (options && options.trendPercent != null) {
+							var trend_label = trend_wrap.querySelector(".font-label-caps, .text-label-caps");
+							if (trend_label) {
+								trend_label.textContent = "+" + options.trendPercent + "%";
+							}
+							trend_wrap.style.display = "";
+						} else {
+							trend_wrap.style.display = "none";
+						}
+					}
+				}
+				if (label === "PENDING REVIEW" && headline) {
+					headline.classList.toggle("text-error", Number(value) > 0);
+				}
+			});
+		}
+		set_family_kpi_card("ACTIVE VERSION", kpis.activeVersionLabel || "—", {
+			badge: kpis.activeVersionBadge || "DRAFT",
+		});
+		set_family_kpi_card("TOTAL VERSIONS", kpis.totalVersions || 0, {
+			subtext: "Across " + (kpis.releaseCycles || 0) + " cycles",
+		});
+		set_family_kpi_card("TENDERS USING FAMILY", kpis.tendersUsingFamily || 0, {
+			trendPercent: kpis.trendPercent,
+		});
+		set_family_kpi_card("PENDING REVIEW", kpis.pendingReview || 0);
+
+		if (!usage) {
+			return;
+		}
+		var usage_rows = {
+			"Active Tenders": usage.activeTenders,
+			"Binding Rate":
+				usage.bindingRatePercent != null ? String(usage.bindingRatePercent) + "%" : "—",
+			"Avg. Cycle": usage.avgCycleDays != null ? String(usage.avgCycleDays) + " Days" : "—",
+		};
+		doc.querySelectorAll("h4").forEach(function (heading) {
+			if ((heading.textContent || "").trim() !== "USAGE INSIGHTS") {
+				return;
+			}
+			var panel = heading.parentElement;
+			if (!panel) {
+				return;
+			}
+			panel.querySelectorAll(".space-y-4 > div, .space-y-4 > .flex").forEach(function (row) {
+				var label_span = row.querySelector("span.text-body-sm, span");
+				var value_span = row.querySelector(".font-bold");
+				if (!label_span || !value_span) {
+					return;
+				}
+				var label = (label_span.textContent || "").trim();
+				if (Object.prototype.hasOwnProperty.call(usage_rows, label)) {
+					value_span.textContent = String(usage_rows[label]);
+				}
+			});
+		});
+	}
+
 	function hydrate_family(doc, payload, ctx) {
 		var data = payload.data || {};
 		var versions = data.versions || [];
+		hydrate_family_kpis(doc, data.familyKpis, data.usageInsights);
 		var version = versions[0];
 		doc.querySelectorAll("h1, h2, .font-display-lg").forEach(function (node) {
 			if ((node.textContent || "").indexOf("KE-PPRA-IT") >= 0) {
@@ -912,37 +1709,75 @@
 				node.textContent = String(clauses.length);
 			}
 		});
-		var tree = doc.querySelector(".tree-container");
-		if (tree) {
-			tree.innerHTML = sections
-				.map(function (section, index) {
-					return (
-						'<div class="p-2 rounded ' +
-						(index === 0 ? "bg-primary/5 text-primary border-l-2 border-primary" : "hover:bg-surface-container-low text-on-surface-variant") +
-						' text-body-md flex items-center gap-2 cursor-pointer std-prod-section-row" data-section-id="' +
-						frappe.utils.escape_html(section.id) +
-						'"><span class="material-symbols-outlined text-[16px]">description</span>' +
-						frappe.utils.escape_html(section.name || section.code) +
-						"</div>"
-					);
-				})
-				.join("");
+
+		function section_row_classes(selected) {
+			return (
+				"p-2 rounded " +
+				(selected
+					? "bg-primary/5 text-primary border-l-2 border-primary"
+					: "hover:bg-surface-container-low text-on-surface-variant") +
+				" text-body-md flex items-center gap-2 cursor-pointer std-prod-section-row"
+			);
 		}
-		var clause_panel = doc.querySelector("table.w-full tbody");
-		if (clause_panel && clauses.length) {
-			clause_panel.innerHTML = clauses
-				.slice(0, 15)
+
+		function find_section(section_id) {
+			for (var i = 0; i < sections.length; i += 1) {
+				if (sections[i].id === section_id) {
+					return sections[i];
+				}
+			}
+			return sections[0] || null;
+		}
+
+		function section_clauses(section_id) {
+			return clauses.filter(function (clause) {
+				return clause.sectionId === section_id;
+			});
+		}
+
+		function update_clause_header(section) {
+			var header_wrap = doc.querySelector(".flex-1 .bg-surface-container-low .flex.items-center.gap-4");
+			if (!header_wrap || !section) {
+				return;
+			}
+			var title_node = header_wrap.querySelector("h4");
+			var subtitle_node = header_wrap.querySelector("span.text-body-md");
+			if (title_node) {
+				title_node.setAttribute("data-testid", "std-prod-clause-map-header");
+				title_node.textContent = "Clause Map: " + (section.name || section.code || section.id);
+			}
+			if (subtitle_node) {
+				subtitle_node.setAttribute("data-testid", "std-prod-clause-map-subtitle");
+				subtitle_node.textContent =
+					(section.code || "") +
+					(section.clauseCount != null ? " · " + String(section.clauseCount) + " clauses" : "");
+			}
+		}
+
+		function render_clause_rows(section_id) {
+			var clause_panel = doc.querySelector("table.w-full tbody");
+			if (!clause_panel) {
+				return;
+			}
+			var rows = section_clauses(section_id);
+			if (!rows.length) {
+				clause_panel.innerHTML =
+					"<tr><td class='px-4 py-6 text-on-surface-variant' colspan='11'>No clauses mapped for this section.</td></tr>";
+				hydrate_table_footer(doc, 0);
+				return;
+			}
+			clause_panel.innerHTML = rows
 				.map(function (clause) {
 					return (
-						"<tr class='std-prod-clause-row hover:bg-surface-container-low cursor-pointer' data-clause-id='" +
+						"<tr class='std-prod-clause-row zebra-stripe border-b border-outline-variant/30 hover:bg-secondary/5 transition-colors group cursor-pointer' data-clause-id='" +
 						frappe.utils.escape_html(clause.id) +
 						"'><td class='px-4 py-3 font-data-mono'>" +
 						frappe.utils.escape_html(clause.code || clause.id) +
-						"</td><td class='px-4 py-3'>" +
+						"</td><td class='px-4 py-3 font-semibold'>" +
 						frappe.utils.escape_html(clause.name || clause.id) +
-						"</td><td class='px-4 py-3'>" +
-						frappe.utils.escape_html(clause.sectionId || "") +
-						"</td></tr>"
+						"</td><td class='px-4 py-3 text-on-surface-variant'>—</td><td class='px-4 py-3 text-on-surface-variant'>—</td><td class='px-4 py-3 text-on-surface-variant'>" +
+						frappe.utils.escape_html(clause.sourceAnchorId || "—") +
+						"</td><td class='px-4 py-3 text-on-surface-variant'>—</td><td class='px-4 py-3 text-on-surface-variant'>—</td><td class='px-4 py-3 text-on-surface-variant'>—</td><td class='px-4 py-3 text-on-surface-variant'>—</td><td class='px-4 py-3 text-on-surface-variant'>—</td><td class='px-4 py-3 text-right'><button class='text-primary font-bold hover:underline std-prod-clause-open'>Open</button></td></tr>"
 					);
 				})
 				.join("");
@@ -955,27 +1790,159 @@
 					});
 				});
 			});
+			hydrate_table_footer(doc, rows.length);
 		}
-		hydrate_table_footer(doc, clauses.length);
+
+		function render_section_tree(selected_section_id) {
+			var tree = doc.querySelector(".tree-container");
+			if (!tree) {
+				return;
+			}
+			tree.innerHTML = sections
+				.map(function (section) {
+					var selected = section.id === selected_section_id;
+					return (
+						'<div class="' +
+						section_row_classes(selected) +
+						'" data-testid="std-prod-section-row" data-section-id="' +
+						frappe.utils.escape_html(section.id) +
+						'"><span class="material-symbols-outlined text-[16px]">description</span>' +
+						frappe.utils.escape_html(section.name || section.code) +
+						"</div>"
+					);
+				})
+				.join("");
+			tree.querySelectorAll(".std-prod-section-row").forEach(function (row) {
+				row.addEventListener("click", function (event) {
+					event.preventDefault();
+					event.stopPropagation();
+					select_section(row.getAttribute("data-section-id"));
+				});
+			});
+		}
+
+		function select_section(section_id) {
+			var section = find_section(section_id);
+			if (!section) {
+				return;
+			}
+			doc.__stdProdSelectedSectionId = section.id;
+			render_section_tree(section.id);
+			update_clause_header(section);
+			render_clause_rows(section.id);
+		}
+
+		doc.__stdProdSectionsState = {
+			sections: sections,
+			clauses: clauses,
+			selectSection: select_section,
+		};
+
+		var initial_section_id = sections.length ? sections[0].id : "";
+		if (initial_section_id) {
+			select_section(initial_section_id);
+		}
 	}
 
 	function hydrate_clause(doc, payload, ctx) {
 		var data = payload.data || {};
-		var title = doc.querySelector("h1.font-headline-lg");
-		if (title) {
-			title.textContent = data.name || data.code || "Clause Detail";
-		}
-		var badge = doc.querySelector("span.bg-primary.text-on-primary.text-\\[10px\\]");
+		var metadata = data.metadata || {};
+		var business_code = data.code || metadata.clause_code || "";
+		var clause_name = data.name || metadata.display_title || business_code || "Clause Detail";
+		var section_label = data.sectionTitle || "";
+
+		var identity_section = doc.querySelector("section.bg-white.border.border-border-subtle.rounded-lg.p-6");
+		var badge = identity_section && identity_section.querySelector("span.bg-primary.text-on-primary");
 		if (badge) {
-			badge.textContent = data.code || data.id || "";
+			badge.textContent = business_code;
+			badge.setAttribute("data-testid", "std-prod-clause-code");
 		}
-		var desc = title && title.parentElement && title.parentElement.querySelector("p");
+		var section_node =
+			identity_section &&
+			identity_section.querySelector("span.text-on-surface-variant.font-label-caps");
+		if (section_node) {
+			section_node.textContent = section_label;
+			section_node.setAttribute("data-testid", "std-prod-clause-section");
+		}
+		var title = identity_section && identity_section.querySelector("h1.font-headline-lg");
+		if (title) {
+			title.textContent = clause_name;
+			title.setAttribute("data-testid", "std-prod-clause-title");
+		}
+		var desc = identity_section && identity_section.querySelector("p.text-on-surface-variant.font-body-md");
 		if (desc) {
-			desc.textContent = data.description || "";
+			desc.textContent =
+				data.description ||
+				data.textStatus ||
+				data.validationStatus ||
+				"Clause metadata loaded from STD package.";
 		}
-		var legal = doc.querySelector("section .font-body-md, section p.font-body-md");
-		if (legal && data.clauseText) {
-			legal.textContent = data.clauseText;
+
+		doc.querySelectorAll("span.font-data-mono").forEach(function (node) {
+			var label = (node.textContent || "").trim();
+			if (label.indexOf("UUID:") === 0) {
+				node.textContent = business_code ? "Clause: " + business_code : "Clause";
+				node.setAttribute("data-testid", "std-prod-clause-ref");
+			}
+		});
+
+		var legal_panel = doc.querySelector("section .p-6.bg-slate-50");
+		if (legal_panel) {
+			legal_panel.setAttribute("data-testid", "std-prod-clause-legal-text");
+			var clause_text = (data.clauseText || "").trim();
+			if (clause_text) {
+				legal_panel.innerHTML =
+					"<p class='mb-4 whitespace-pre-wrap'>" + frappe.utils.escape_html(clause_text) + "</p>";
+			} else {
+				legal_panel.innerHTML =
+					"<p class='text-on-surface-variant italic'>" +
+					frappe.utils.escape_html(
+						"Full legal text is not yet extracted for this clause in Milestone 1. Showing title and traceability metadata only.",
+					) +
+					"</p><p class='mt-4 font-semibold text-on-surface'>" +
+					frappe.utils.escape_html(clause_name) +
+					"</p>";
+			}
+		}
+
+		var traceability_panel = doc.querySelector("section .bg-primary-container.text-on-primary-container");
+		if (traceability_panel) {
+			var trace_root = traceability_panel.parentElement;
+			if (trace_root) {
+				trace_root.querySelectorAll("div.flex.items-center.justify-between").forEach(function (row) {
+					var label_node = row.querySelector("span.text-xs.text-on-surface-variant");
+					var value_node = row.querySelector("span.text-xs.font-bold, span.text-xs.font-data-mono");
+					if (!label_node || !value_node) {
+						return;
+					}
+					var label = (label_node.textContent || "").trim();
+					if (label === "Source Anchor") {
+						value_node.textContent = business_code || data.sourceAnchorId || "—";
+					}
+					if (label === "Source Document") {
+						value_node.textContent =
+							(ctx.package_id || "") + " / Official IT STD Source PDF";
+					}
+					if (label === "Verification Level") {
+						value_node.textContent = data.mutabilityType
+							? String(data.mutabilityType).replace(/_/g, " ")
+							: value_node.textContent;
+					}
+				});
+			}
+		}
+
+		var render_preview_body = doc.querySelector("section .p-8.bg-white.m-4.border");
+		if (render_preview_body) {
+			render_preview_body.innerHTML =
+				"<div class='max-w-[650px] mx-auto text-on-surface-variant italic text-sm'>" +
+				frappe.utils.escape_html(
+					"Render preview is not available until full clause text and render blocks are wired for this clause.",
+				) +
+				"</div>";
+		}
+		if (doc.body) {
+			doc.body.setAttribute("data-std-clause-key", data.id || ctx.clause_key || "");
 		}
 	}
 
@@ -1332,6 +2299,23 @@
 		}
 	}
 
+	function normalize_control_text(value) {
+		return String(value || "").replace(/\s+/g, " ").trim();
+	}
+
+	function closest_button_text(target) {
+		var btn = target && target.closest ? target.closest("button") : null;
+		return btn ? normalize_control_text(btn.textContent) : "";
+	}
+
+	function button_contains_label(target, label) {
+		var needle = normalize_control_text(label);
+		if (!needle) {
+			return false;
+		}
+		return closest_button_text(target).indexOf(needle) >= 0;
+	}
+
 	function wire_navigation_doc(screen, doc, ctx) {
 		if (!doc || !doc.body || doc.body.dataset.stdProdNavScreen === screen) {
 			return;
@@ -1374,31 +2358,34 @@
 				}
 
 				if (screen === "version") {
-					if (target.tagName === "BUTTON" && (text === "View Audit Trail" || text === "Full Audit Log")) {
+					if (
+						button_contains_label(target, "View Audit Trail") ||
+						button_contains_label(target, "Full Audit Log")
+					) {
 						event.preventDefault();
 						event.stopPropagation();
 						navigate("std-audit-log", ctx);
 						return;
 					}
-					if (target.tagName === "BUTTON" && text === "View Usage") {
+					if (button_contains_label(target, "View Usage")) {
 						event.preventDefault();
 						event.stopPropagation();
 						navigate("std-usage-and-tender-bindings", ctx);
 						return;
 					}
-					if (text === "Validation") {
+					if (button_contains_label(target, "Validation")) {
 						event.preventDefault();
 						event.stopPropagation();
 						navigate("std-validation-report", ctx);
 						return;
 					}
-					if (text === "Traceability") {
+					if (button_contains_label(target, "Traceability")) {
 						event.preventDefault();
 						event.stopPropagation();
 						navigate("std-source-doc", ctx);
 						return;
 					}
-					if (text === "Supersede") {
+					if (button_contains_label(target, "Supersede")) {
 						event.preventDefault();
 						event.stopPropagation();
 						navigate("std-version-diff-and-supersession", ctx);
@@ -1495,19 +2482,30 @@
 				}
 
 				if (screen === "sections") {
+					var section_row =
+						event.target && event.target.closest
+							? event.target.closest(".std-prod-section-row")
+							: null;
+					if (section_row && doc.__stdProdSectionsState) {
+						event.preventDefault();
+						event.stopPropagation();
+						doc.__stdProdSectionsState.selectSection(section_row.getAttribute("data-section-id"));
+						return;
+					}
 					var sections_btn = target.closest("button");
 					if (!sections_btn) {
 						return;
 					}
-					if (text.indexOf("SOURCE TRACEABILITY") >= 0) {
+					var sections_text = normalize_control_text(sections_btn.textContent);
+					if (sections_text.indexOf("SOURCE TRACEABILITY") >= 0) {
 						event.preventDefault();
 						event.stopPropagation();
 						navigate("std-source-doc", ctx);
-					} else if (text.indexOf("VIEW VALIDATION") >= 0) {
+					} else if (sections_text.indexOf("VIEW VALIDATION") >= 0) {
 						event.preventDefault();
 						event.stopPropagation();
 						navigate("std-validation-report", ctx);
-					} else if (text.indexOf("AUDIT TRAIL") >= 0) {
+					} else if (sections_text.indexOf("AUDIT TRAIL") >= 0) {
 						event.preventDefault();
 						event.stopPropagation();
 						navigate("std-audit-log", ctx);
@@ -1518,14 +2516,44 @@
 		);
 	}
 
-	function hydrate_iframe(screen, iframe, ctx) {
+	function should_refresh_on_show(screen, iframe, fresh_ctx) {
+		if (!iframe || ["clause", "parameter", "rule", "form"].indexOf(screen) === -1) {
+			return false;
+		}
+		var doc = iframe.contentDocument;
+		if (!doc || !doc.body || doc.body.getAttribute("data-std-prod-hydrated") !== "1") {
+			return false;
+		}
+		if (screen === "clause") {
+			var last_clause_key = doc.body.getAttribute("data-std-clause-key") || "";
+			var next_clause_key = fresh_ctx.clause_key || "";
+			return Boolean(next_clause_key) && last_clause_key !== next_clause_key;
+		}
+		if (screen === "parameter") {
+			var last_parameter_key = doc.body.getAttribute("data-std-parameter-key") || "";
+			var next_parameter_key = fresh_ctx.parameter_key || "";
+			return Boolean(next_parameter_key) && last_parameter_key !== next_parameter_key;
+		}
+		if (screen === "rule") {
+			var last_rule_key = doc.body.getAttribute("data-std-rule-key") || "";
+			var next_rule_key = fresh_ctx.rule_key || "";
+			return Boolean(next_rule_key) && last_rule_key !== next_rule_key;
+		}
+		var last_form_key = doc.body.getAttribute("data-std-form-key") || "";
+		var next_form_key = fresh_ctx.form_key || "";
+		return Boolean(next_form_key) && last_form_key !== next_form_key;
+	}
+
+	function hydrate_iframe(screen, iframe, ctx, page_title) {
 		var doc = iframe.contentDocument;
 		if (!doc) {
 			return;
 		}
+		install_hydration_gate(doc);
 		fetch_screen_data(screen, ctx)
 			.then(function (results) {
 				replace_mock_identities(doc, ctx);
+				hydrate_page_header(doc, page_title);
 				apply_read_only_banner(doc, ctx);
 				disable_governance_actions(doc);
 				var hydrator = HYDRATORS[screen];
@@ -1536,6 +2564,8 @@
 				mark_hydrated(doc, ctx);
 			})
 			.catch(function (err) {
+				hydrate_page_header(doc, page_title);
+				mark_hydration_failed(doc);
 				frappe.msgprint({
 					title: __("STD read API failed"),
 					indicator: "red",
@@ -1579,9 +2609,10 @@
 
 		var iframe = root.querySelector("iframe");
 		var ctx = get_context();
+		prepare_iframe_frame(iframe);
 		wire_navigation(config.screen, iframe, ctx);
 		function run_hydration() {
-			hydrate_iframe(config.screen, iframe, ctx);
+			hydrate_iframe(config.screen, iframe, ctx, config.title);
 		}
 		iframe.addEventListener("load", run_hydration);
 		try {
@@ -1595,6 +2626,10 @@
 		frappe.pages[config.page].on_page_show = function () {
 			document.body.classList.add(shell_class);
 			preserve_procurement_sidebar();
+			var fresh_ctx = get_context();
+			if (should_refresh_on_show(config.screen, iframe, fresh_ctx)) {
+				hydrate_iframe(config.screen, iframe, fresh_ctx, config.title);
+			}
 		};
 		frappe.pages[config.page].on_page_hide = function () {
 			document.body.classList.remove(shell_class);
@@ -1613,6 +2648,8 @@
 	kentender.std_prod.install_route_conflict_guard = install_route_conflict_guard;
 	kentender.std_prod.preserve_procurement_sidebar = preserve_procurement_sidebar;
 	kentender.std_prod.hydrate_table_footer = hydrate_table_footer;
+	kentender.std_prod.install_hydration_gate = install_hydration_gate;
+	kentender.std_prod.hydrate_page_header = hydrate_page_header;
 
 	install_route_conflict_guard();
 	$(document).on("app_ready", claim_page_routes_over_doctype_conflicts);

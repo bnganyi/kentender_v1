@@ -17,6 +17,7 @@ from kentender_procurement.std_engine.services.envelope import (
 )
 from kentender_procurement.std_engine.services.import_run_service import get_import_run_payload
 from kentender_procurement.std_engine.services.read_service import _load_version, _parse_metadata
+from kentender_procurement.std_engine.services.usage_kpi_service import build_usage_kpi_summary
 from kentender_procurement.std_engine.validation.validation_engine import get_validation_summary
 
 VERSION_DIFF_STUB_REASON = "SINGLE_VERSION_ONLY"
@@ -124,6 +125,7 @@ def get_std_version_usage_bindings(package_id: str) -> dict[str, Any]:
 		data={
 			"bindings": [_map_usage_binding(row) for row in rows],
 			"count": len(rows),
+			"usageKpis": build_usage_kpi_summary(version),
 		},
 		package_context=build_package_context(version),
 		package_id=package_id,

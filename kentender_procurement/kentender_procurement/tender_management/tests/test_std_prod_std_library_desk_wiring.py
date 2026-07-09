@@ -52,7 +52,12 @@ class TestStdProdStdLibraryDeskWiring(UnitTestCase):
 		source = open(path, encoding="utf-8").read()
 		self.assertIn("hydrate_library_kpis", source)
 		self.assertIn("hydrate_table_footer", source)
-		self.assertIn("libraryKpis", source)
+		self.assertIn("hydrate_family_kpis", source)
+		self.assertIn("familyKpis", source)
+		self.assertIn("install_hydration_gate", source)
+		self.assertIn("sync_pager_ellipsis", source)
+		self.assertIn("hydrate_page_header", source)
+		self.assertIn("prepare_iframe_frame", source)
 		self.assertIn("libraryHealth", source)
 		self.assertIn("STD FAMILIES", source)
 

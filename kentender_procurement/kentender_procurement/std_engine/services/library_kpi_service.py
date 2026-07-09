@@ -10,6 +10,8 @@ from typing import Any
 
 import frappe
 
+from kentender_procurement.std_engine.constants import FIXTURE_SOURCE_SMOKE_TEST_EXPECTATION
+
 REVIEW_LIFECYCLE_STATES = (
 	"STRUCTURING",
 	"INTERNAL_REVIEW",
@@ -22,6 +24,33 @@ DUE_OVERDUE_LIFECYCLE_STATES = (
 	"PROCUREMENT_REVIEW",
 )
 PENDING_APPROVAL_STATES = ("PROCUREMENT_REVIEW", "APPROVED")
+
+
+def count_distinct_real_tender_bindings(
+	*,
+	family_code: str | None = None,
+	package_ids: list[str] | None = None,
+) -> int:
+	"""Count distinct tenders bound to STD packages — excludes smoke-test fixture rows."""
+	conditions = [
+		"IFNULL(tender_ref, '') != ''",
+		"(fixture_source IS NULL OR fixture_source != %s)",
+	]
+	values: list[Any] = [FIXTURE_SOURCE_SMOKE_TEST_EXPECTATION]
+	if family_code:
+		conditions.append("family_code = %s")
+		values.append(family_code)
+	if package_ids:
+		placeholders = ", ".join(["%s"] * len(package_ids))
+		conditions.append(f"package_id IN ({placeholders})")
+		values.extend(package_ids)
+	where_clause = " AND ".join(conditions)
+	row = frappe.db.sql(
+		f"SELECT COUNT(DISTINCT tender_ref) AS cnt FROM `tabSTD Usage Binding` WHERE {where_clause}",
+		tuple(values),
+		as_dict=True,
+	)
+	return int((row or [{}])[0].get("cnt") or 0)
 
 
 def _distinct_blocked_package_ids() -> set[str]:
@@ -66,10 +95,7 @@ def _count_superseded_in_active_tenders() -> int:
 	)
 	if not superseded_packages:
 		return 0
-	return frappe.db.count(
-		"STD Usage Binding",
-		{"package_id": ("in", superseded_packages)},
-	)
+	return count_distinct_real_tender_bindings(package_ids=superseded_packages)
 
 
 def build_library_kpi_summary() -> dict[str, Any]:

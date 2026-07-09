@@ -88,6 +88,22 @@ class TestBe06ReadApiEnvelope(IntegrationTestCase):
 		self.assertFalse(version["activationAllowed"])
 		self.assertEqual(version["uiMode"], UI_MODE_READ_ONLY_INSPECTION)
 
+	def test_get_std_family_returns_family_kpi_summary(self) -> None:
+		out = get_std_family(CANONICAL_FAMILY_CODE)
+		kpis = out["data"]["familyKpis"]
+		usage = out["data"]["usageInsights"]
+		self.assertEqual(kpis["totalVersions"], 1)
+		self.assertEqual(kpis["releaseCycles"], 1)
+		self.assertEqual(kpis["activeVersionBadge"], "DRAFT")
+		self.assertEqual(kpis["pendingReview"], 0)
+		self.assertEqual(kpis["tendersUsingFamily"], 0)
+		self.assertEqual(usage["activeTenders"], 0)
+		self.assertEqual(usage["bindingRatePercent"], 0.0)
+		self.assertEqual(
+			frappe.db.count("STD Usage Binding", {"family_code": CANONICAL_FAMILY_CODE}),
+			3,
+		)
+
 	def test_get_std_version_returns_integrity_fields(self) -> None:
 		out = get_std_version(CANONICAL_PACKAGE_ID)
 		_assert_envelope(self, out)
@@ -119,23 +135,40 @@ class TestBe06ReadApiEnvelope(IntegrationTestCase):
 		self.assertEqual(len(out["data"]["sections"]), 14)
 		self.assertEqual(len(out["data"]["clauses"]), 93)
 		section = out["data"]["sections"][0]
-		for key in ("id", "code", "name"):
+		for key in ("id", "code", "name", "sortOrder"):
 			with self.subTest(section_field=key):
 				self.assertIn(key, section)
+		self.assertEqual(section["code"], "COVER")
+		self.assertEqual(section["name"], "Cover / title identity page")
+		self.assertEqual(out["data"]["sections"][1]["code"], "INVITATION")
+		self.assertEqual(out["data"]["sections"][2]["code"], "ITT")
 
 	def test_get_std_clause_detail(self) -> None:
 		clause_key = frappe.get_all(
 			"STD Clause",
-			filters={"package_id": CANONICAL_PACKAGE_ID},
+			filters={"package_id": CANONICAL_PACKAGE_ID, "title": "Fraud and Corruption"},
 			pluck="name",
 			limit=1,
 		)[0]
 		out = get_std_clause(clause_key)
 		_assert_envelope(self, out)
 		self.assertEqual(out["data"]["id"], clause_key)
-		self.assertTrue(out["data"]["code"])
-		self.assertTrue(out["data"]["name"])
+		self.assertEqual(out["data"]["code"], "GCC 6")
+		self.assertEqual(out["data"]["name"], "Fraud and Corruption")
+		self.assertEqual(out["data"]["sectionTitle"], "Section X - General Conditions of Contract")
+		self.assertEqual(out["data"]["mutabilityType"], "LOCKED_LEGAL_TEXT")
 		self.assertEqual(out["packageContext"]["packageId"], CANONICAL_PACKAGE_ID)
+
+		other_key = frappe.get_all(
+			"STD Clause",
+			filters={"package_id": CANONICAL_PACKAGE_ID, "title": "Contract and Interpretation"},
+			pluck="name",
+			limit=1,
+		)[0]
+		other = get_std_clause(other_key)
+		_assert_envelope(self, other)
+		self.assertEqual(other["data"]["code"], "GCC 1")
+		self.assertNotEqual(other["data"]["name"], out["data"]["name"])
 
 	def test_not_found_envelopes(self) -> None:
 		missing_version = get_std_version("DOES-NOT-EXIST")

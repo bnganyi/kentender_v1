@@ -42,6 +42,9 @@ class TestBe11StdProdGovernanceDeskWiring(UnitTestCase):
 		for screen in ("usage", "importReview", "versionDiff", "review"):
 			with self.subTest(screen=screen):
 				self.assertIn('"' + screen + '"', source)
+		self.assertIn("hydrate_usage_kpis", source)
+		self.assertIn("usageKpis", source)
+		self.assertIn("hydrate_page_header", source)
 
 	def test_governance_pages_js_uses_guarded_registration(self) -> None:
 		path = os.path.join(

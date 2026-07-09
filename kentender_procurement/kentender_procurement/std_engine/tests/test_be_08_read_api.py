@@ -81,6 +81,12 @@ class TestBe08GovernanceReadApi(IntegrationTestCase):
 		_assert_envelope(self, out)
 		self.assertEqual(out["data"]["count"], 3)
 		self.assertEqual(len(out["data"]["bindings"]), 3)
+		kpis = out["data"]["usageKpis"]
+		self.assertEqual(kpis["totalTendersBoundAllVersions"], 0)
+		self.assertEqual(kpis["activeTendersThisVersion"], 0)
+		self.assertEqual(kpis["historicalRecords"], 0)
+		self.assertEqual(kpis["openAddenda"], 0)
+		self.assertEqual(kpis["activeStabilityBadge"], "Draft")
 		for binding in out["data"]["bindings"]:
 			self.assertEqual(binding["fixtureSource"], FIXTURE_SOURCE_SMOKE_TEST_EXPECTATION)
 			for field in ("id", "code", "name"):

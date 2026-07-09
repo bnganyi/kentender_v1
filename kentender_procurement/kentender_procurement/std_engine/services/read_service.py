@@ -15,6 +15,9 @@ from kentender_procurement.std_engine.services.envelope import (
 	build_package_context,
 	build_read_envelope,
 )
+from kentender_procurement.std_engine.services.family_kpi_service import (
+	build_family_kpi_summary,
+)
 from kentender_procurement.std_engine.services.library_kpi_service import (
 	build_library_kpi_summary,
 )
@@ -91,6 +94,7 @@ def get_std_family(family_code: str) -> dict[str, Any]:
 		order_by="modified desc",
 	)
 	package_context = build_package_context(versions[0]) if versions else None
+	family_summary = build_family_kpi_summary(code, versions)
 	return build_read_envelope(
 		data={
 			"familyCode": family.family_code,
@@ -111,6 +115,8 @@ def get_std_family(family_code: str) -> dict[str, Any]:
 				}
 				for row in versions
 			],
+			"familyKpis": family_summary["kpis"],
+			"usageInsights": family_summary["usage"],
 		},
 		package_context=package_context,
 		package_id=versions[0].package_id if versions else None,
@@ -227,44 +233,76 @@ def get_std_version_sections(package_id: str) -> dict[str, Any]:
 			"section_number",
 			"parent_section",
 			"source_anchor",
+			"metadata_json",
 		],
-		order_by="section_number asc, title asc",
 	)
 	clauses = frappe.get_all(
 		"STD Clause",
 		filters={"package_id": package_id},
-		fields=["name", "clause_key", "object_key", "title", "section", "source_anchor"],
-		order_by="title asc",
+		fields=[
+			"name",
+			"clause_key",
+			"object_key",
+			"title",
+			"section",
+			"source_anchor",
+			"metadata_json",
+		],
 	)
 	clause_counts: dict[str, int] = {}
 	for clause in clauses:
 		section_id = clause.section or ""
 		clause_counts[section_id] = clause_counts.get(section_id, 0) + 1
 
+	section_items: list[dict[str, Any]] = []
+	for row in sections:
+		metadata = _parse_metadata(row.metadata_json)
+		section_items.append(
+			{
+				"id": row.section_key,
+				"code": row.section_number or row.object_key,
+				"name": row.title,
+				"parentSectionId": row.parent_section,
+				"sourceAnchorId": row.source_anchor,
+				"clauseCount": clause_counts.get(row.name, 0),
+				"sortOrder": metadata.get("canonical_order"),
+				"partCode": metadata.get("part_code"),
+			}
+		)
+	section_items.sort(
+		key=lambda item: (
+			item.get("sortOrder") if item.get("sortOrder") is not None else 9999,
+			item.get("name") or "",
+		)
+	)
+
+	clause_items: list[dict[str, Any]] = []
+	for row in clauses:
+		metadata = _parse_metadata(row.metadata_json)
+		clause_items.append(
+			{
+				"id": row.clause_key,
+				"code": metadata.get("clause_code") or row.object_key,
+				"name": row.title,
+				"sectionId": row.section,
+				"sourceAnchorId": row.source_anchor,
+				"sortOrder": metadata.get("canonical_order"),
+			}
+		)
+	clause_items.sort(
+		key=lambda item: (
+			item.get("sectionId") or "",
+			item.get("sortOrder") if item.get("sortOrder") is not None else 9999,
+			item.get("code") or "",
+			item.get("name") or "",
+		)
+	)
+
 	package_context = build_package_context(version)
 	return build_read_envelope(
 		data={
-			"sections": [
-				{
-					"id": row.section_key,
-					"code": row.section_number or row.object_key,
-					"name": row.title,
-					"parentSectionId": row.parent_section,
-					"sourceAnchorId": row.source_anchor,
-					"clauseCount": clause_counts.get(row.name, 0),
-				}
-				for row in sections
-			],
-			"clauses": [
-				{
-					"id": row.clause_key,
-					"code": row.object_key,
-					"name": row.title,
-					"sectionId": row.section,
-					"sourceAnchorId": row.source_anchor,
-				}
-				for row in clauses
-			],
+			"sections": section_items,
+			"clauses": clause_items,
 		},
 		package_context=package_context,
 		package_id=package_id,
@@ -282,17 +320,23 @@ def get_std_clause(clause_key: str) -> dict[str, Any]:
 		return build_error_envelope("STD_VERSION_NOT_FOUND", f"STD version not found: {clause.package_id}")
 
 	metadata = _parse_metadata(clause.metadata_json)
+	section_title = (
+		frappe.db.get_value("STD Section", clause.section, "title") if clause.section else None
+	)
 	package_context = build_package_context(version)
 	return build_read_envelope(
 		data={
 			"id": clause.clause_key,
-			"code": clause.object_key,
-			"name": clause.title,
+			"code": metadata.get("clause_code") or clause.object_key,
+			"name": clause.title or metadata.get("display_title"),
 			"sectionId": clause.section,
+			"sectionTitle": section_title,
 			"description": clause.description,
 			"validationStatus": clause.validation_status,
 			"sourceAnchorId": clause.source_anchor,
 			"clauseText": clause.clause_text,
+			"mutabilityType": metadata.get("mutability_type"),
+			"textStatus": metadata.get("text_status"),
 			"metadata": metadata,
 		},
 		package_context=package_context,
