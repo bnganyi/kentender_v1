@@ -31,6 +31,49 @@
 		"Render Blocks": "std-render-blocks",
 	};
 
+	// Frappe router registers DocType slugs before custom Pages; these collide.
+	var PROCUREMENT_SIDEBAR_KEY = "Procurement";
+
+	function preserve_procurement_sidebar() {
+		if (frappe.app && frappe.app.sidebar && typeof frappe.app.sidebar.setup === "function") {
+			frappe.app.sidebar.setup(PROCUREMENT_SIDEBAR_KEY);
+		}
+	}
+
+	var DOCTYPE_ROUTE_CONFLICT_PAGES = [
+		"std-price-schedule-schema",
+		"std-evaluation-schema",
+	];
+
+	function claim_page_routes_over_doctype_conflicts() {
+		if (!frappe.router || !frappe.router.routes) {
+			return;
+		}
+		DOCTYPE_ROUTE_CONFLICT_PAGES.forEach(function (slug) {
+			if (frappe.router.routes[slug]) {
+				delete frappe.router.routes[slug];
+			}
+		});
+	}
+
+	function install_route_conflict_guard() {
+		if (!frappe.router || frappe.router.__std_prod_route_guard) {
+			return;
+		}
+		frappe.router.__std_prod_route_guard = true;
+		var originalSetup = frappe.router.setup.bind(frappe.router);
+		frappe.router.setup = function () {
+			originalSetup();
+			claim_page_routes_over_doctype_conflicts();
+		};
+		var originalParse = frappe.router.parse.bind(frappe.router);
+		frappe.router.parse = async function (route) {
+			claim_page_routes_over_doctype_conflicts();
+			return originalParse(route);
+		};
+		claim_page_routes_over_doctype_conflicts();
+	}
+
 	function get_context() {
 		var root = window.parent && window.parent.frappe ? window.parent : window;
 		var opts = root.frappe.route_options || {};
@@ -115,6 +158,196 @@
 		return rows[0] || null;
 	}
 
+	function detect_table_page_size(doc, fallback) {
+		var select = doc.querySelector(
+			".border-t select, .bg-surface-container-low select, .bg-surface-container-high select, table + div select, table ~ div select"
+		);
+		if (select && select.options && select.options.length) {
+			var parsed = parseInt(
+				select.options[select.selectedIndex].textContent ||
+					select.options[0].textContent ||
+					"",
+				10
+			);
+			if (!isNaN(parsed) && parsed > 0) {
+				return parsed;
+			}
+		}
+		return fallback || 10;
+	}
+
+	function update_showing_label(node, start, end, total) {
+		if (!node) {
+			return false;
+		}
+		var spans = Array.from(node.querySelectorAll(":scope > span"));
+		if (
+			spans.length >= 4 &&
+			(spans[0].textContent || "").trim() === "Showing" &&
+			(spans[2].textContent || "").trim() === "of"
+		) {
+			spans[1].textContent = start + "-" + end;
+			spans[3].textContent = String(total);
+			return true;
+		}
+		var raw = (node.textContent || "").trim();
+		if (raw.indexOf("Showing") !== 0) {
+			return false;
+		}
+		var suffix_match = raw.match(/of\s+[\d,]+\s*(.*)$/i);
+		var suffix = suffix_match ? suffix_match[1].trim() : "";
+		if (node.querySelector("span.font-bold, span.text-primary.font-bold")) {
+			var bold_class = "font-bold";
+			if (node.querySelector("span.text-primary.font-bold")) {
+				bold_class = "font-bold text-primary";
+			}
+			var html =
+				"Showing <span class='" +
+				bold_class +
+				"'>" +
+				start +
+				"-" +
+				end +
+				"</span> of <span class='" +
+				bold_class +
+				"'>" +
+				total +
+				"</span>";
+			if (suffix) {
+				html += " " + suffix;
+			}
+			node.innerHTML = html;
+			return true;
+		}
+		var plain = "Showing " + start + "-" + end + " of " + total;
+		if (suffix) {
+			plain += " " + suffix;
+		}
+		node.textContent = plain;
+		return true;
+	}
+
+	function sync_page_of_labels(doc, total_pages) {
+		doc.querySelectorAll("span, div").forEach(function (node) {
+			var text = (node.textContent || "").trim();
+			if (/^PAGE\s+\d+\s+OF\s+\d+/i.test(text)) {
+				node.textContent = "PAGE 1 OF " + total_pages;
+				return;
+			}
+			if (/^\d+\s+OF\s+\d+$/i.test(text)) {
+				node.textContent = "1 OF " + total_pages;
+			}
+		});
+		doc.querySelectorAll("div.flex.items-center.px-2, div.flex.items-center.gap-4").forEach(function (node) {
+			var text = (node.textContent || "").trim();
+			if (text.indexOf("PAGE") === 0 && text.indexOf("OF") > 0) {
+				var page_spans = node.querySelectorAll("span");
+				if (page_spans.length >= 2) {
+					page_spans[page_spans.length - 1].textContent = String(total_pages);
+				}
+			}
+		});
+	}
+
+	function sync_numbered_page_buttons(doc, total_pages) {
+		doc.querySelectorAll("button").forEach(function (btn) {
+			var label = (btn.textContent || "").trim();
+			if (!/^\d+$/.test(label)) {
+				return;
+			}
+			var page_num = parseInt(label, 10);
+			if (page_num <= total_pages) {
+				btn.style.display = "";
+				btn.disabled = false;
+				btn.removeAttribute("disabled");
+				if (page_num === 1) {
+					btn.classList.add("bg-primary", "text-white");
+				} else {
+					btn.classList.remove("bg-primary", "text-white");
+				}
+			} else {
+				btn.style.display = "none";
+			}
+		});
+	}
+
+	function sync_pager_nav_buttons(doc, total_pages) {
+		var nav_icons = {
+			first_page: true,
+			chevron_left: true,
+			chevron_right: true,
+			last_page: true,
+		};
+		doc.querySelectorAll("button").forEach(function (btn) {
+			var icon = btn.querySelector(".material-symbols-outlined");
+			if (!icon) {
+				return;
+			}
+			var icon_name = (icon.textContent || "").trim();
+			if (!nav_icons[icon_name]) {
+				return;
+			}
+			var disable =
+				total_pages <= 1 ||
+				icon_name === "first_page" ||
+				icon_name === "chevron_left";
+			btn.disabled = disable;
+			if (disable) {
+				btn.setAttribute("disabled", "");
+				btn.style.opacity = "0.3";
+				btn.classList.add("disabled:opacity-30");
+			} else {
+				btn.removeAttribute("disabled");
+				btn.style.opacity = "";
+			}
+		});
+	}
+
+	function is_table_footer_showing_node(node) {
+		if (!node || node.querySelector("button, select, .material-symbols-outlined")) {
+			return false;
+		}
+		var text = (node.textContent || "").trim();
+		if (text.indexOf("Showing") !== 0) {
+			return false;
+		}
+		var tag = (node.tagName || "").toUpperCase();
+		return tag === "SPAN" || tag === "P" || tag === "DIV";
+	}
+
+	function hydrate_table_footer(doc, total, page_size) {
+		var count = total || 0;
+		var pageSize = page_size || detect_table_page_size(doc, 10);
+		var start = count > 0 ? 1 : 0;
+		var end = count > 0 ? Math.min(pageSize, count) : 0;
+		var total_pages = count > 0 ? Math.ceil(count / pageSize) : 0;
+
+		var showing_nodes = [];
+		doc.querySelectorAll("span, p, div").forEach(function (node) {
+			if (!is_table_footer_showing_node(node)) {
+				return;
+			}
+			var dominated = showing_nodes.some(function (seen) {
+				return seen !== node && seen.contains(node);
+			});
+			if (!dominated) {
+				showing_nodes.push(node);
+			}
+		});
+		showing_nodes.forEach(function (node) {
+			var has_child_showing = showing_nodes.some(function (other) {
+				return other !== node && node.contains(other);
+			});
+			if (!has_child_showing) {
+				update_showing_label(node, start, end, count);
+			}
+		});
+
+		sync_page_of_labels(doc, Math.max(total_pages, 1));
+		sync_numbered_page_buttons(doc, total_pages);
+		sync_pager_nav_buttons(doc, total_pages);
+	}
+
 	function disable_governance_actions(doc) {
 		doc.querySelectorAll("button").forEach(function (btn) {
 			var text = (btn.textContent || "").trim();
@@ -189,6 +422,7 @@
 				})
 				.join("");
 		}
+		hydrate_table_footer(doc, data.count || params.length);
 	}
 
 	function hydrate_parameter(doc, payload, ctx) {
@@ -219,6 +453,7 @@
 		if (tbody && rules.length) {
 			tbody.innerHTML = render_identity_rows(rules.slice(0, 60), "std-prod-rule-row", "data-rule-key");
 		}
+		hydrate_table_footer(doc, data.count || rules.length);
 	}
 
 	function hydrate_rule(doc, payload, ctx) {
@@ -254,6 +489,7 @@
 				})
 				.join("");
 		}
+		hydrate_table_footer(doc, data.count || forms.length);
 	}
 
 	function hydrate_form(doc, payload, ctx) {
@@ -281,6 +517,7 @@
 				})
 				.join("");
 		}
+		hydrate_table_footer(doc, fields.length);
 	}
 
 	function hydrate_requirements(doc, payload, ctx) {
@@ -291,6 +528,7 @@
 		if (tbody && items.length) {
 			tbody.innerHTML = render_identity_rows(items, "std-prod-req-row", "data-requirement-key");
 		}
+		hydrate_table_footer(doc, data.count || items.length);
 	}
 
 	function hydrate_price_schedules(doc, payload, ctx) {
@@ -301,6 +539,7 @@
 		if (tbody && items.length) {
 			tbody.innerHTML = render_identity_rows(items, "std-prod-price-row", "data-price-key");
 		}
+		hydrate_table_footer(doc, data.count || items.length);
 	}
 
 	function hydrate_evaluation(doc, payload, ctx) {
@@ -313,6 +552,7 @@
 			}
 		});
 		update_headline_counters(doc, "Criteria", data.count || schemas.length);
+		hydrate_table_footer(doc, data.count || schemas.length);
 	}
 
 	function hydrate_render_blocks(doc, payload, ctx) {
@@ -336,6 +576,7 @@
 				})
 				.join("");
 		}
+		hydrate_table_footer(doc, data.count || blocks.length);
 	}
 
 	function hydrate_usage(doc, payload, ctx) {
@@ -343,11 +584,13 @@
 		var bindings = data.bindings || [];
 		var tbody = doc.querySelector("table tbody");
 		if (!tbody) {
+			hydrate_table_footer(doc, data.count || 0);
 			return;
 		}
 		if (!bindings.length) {
 			tbody.innerHTML =
 				"<tr><td colspan='8' class='px-4 py-6 text-on-surface-variant'>No usage bindings for this package.</td></tr>";
+			hydrate_table_footer(doc, data.count || 0);
 			return;
 		}
 		tbody.innerHTML = bindings
@@ -367,6 +610,7 @@
 				);
 			})
 			.join("");
+		hydrate_table_footer(doc, data.count || bindings.length);
 	}
 
 	function hydrate_import_review(doc, payload, ctx) {
@@ -387,6 +631,7 @@
 				frappe.utils.escape_html(run.package_sha256 || "—") +
 				"</td></tr>";
 		}
+		hydrate_table_footer(doc, 1);
 	}
 
 	function hydrate_version_diff(doc, payload, ctx) {
@@ -409,6 +654,8 @@
 				panel.insertAdjacentHTML("afterbegin", notice);
 			}
 		}
+		var diff_count = (data.changes && data.changes.length) || (data.compareAvailable ? 1 : 0);
+		hydrate_table_footer(doc, diff_count);
 	}
 
 	function hydrate_review(doc, results, ctx) {
@@ -436,8 +683,72 @@
 		return MODULE_ROW_ROUTES[row_label] || null;
 	}
 
+	function hydrate_library_kpis(doc, kpis, health) {
+		if (!kpis) {
+			return;
+		}
+		function set_kpi_card(label, value, delta) {
+			doc.querySelectorAll(".font-label-caps").forEach(function (node) {
+				if ((node.textContent || "").trim() !== label) {
+					return;
+				}
+				var card = node.parentElement;
+				if (!card) {
+					return;
+				}
+				var headline = card.querySelector(".font-headline-md");
+				if (headline) {
+					headline.textContent = String(value);
+				}
+				if (label === "STD FAMILIES") {
+					var delta_node = card.querySelector(".text-status-available");
+					if (delta_node) {
+						if (delta > 0) {
+							delta_node.textContent = "+" + delta + " New";
+							delta_node.style.display = "";
+						} else {
+							delta_node.style.display = "none";
+						}
+					}
+				}
+			});
+		}
+		set_kpi_card("STD FAMILIES", kpis.stdFamilies || 0, kpis.newFamilies || 0);
+		set_kpi_card("ACTIVE VERSIONS", kpis.activeVersions || 0);
+		set_kpi_card("IN REVIEW", kpis.inReview || 0);
+		set_kpi_card("DUE / OVERDUE", kpis.dueOverdue || 0);
+		set_kpi_card("BLOCKERS", kpis.blockers || 0);
+
+		if (!health) {
+			return;
+		}
+		var health_rows = {
+			"Unauthorized active versions": health.unauthorizedActiveVersions,
+			"Pending approvals": health.pendingApprovals,
+			"Due for review (30d)": health.dueForReview30d,
+			"Superseded in active tenders": health.supersededInActiveTenders,
+			"Blocked drafts": health.blockedDrafts,
+		};
+		doc.querySelectorAll(".space-y-2 > div").forEach(function (row) {
+			var label_span = row.querySelector(".text-on-surface-variant");
+			var value_span = row.querySelector(".font-bold");
+			if (!label_span || !value_span) {
+				return;
+			}
+			var label = (label_span.textContent || "").trim();
+			if (Object.prototype.hasOwnProperty.call(health_rows, label)) {
+				value_span.textContent = String(health_rows[label]);
+			}
+		});
+	}
+
 	function hydrate_library(doc, payload, ctx) {
-		var families = (payload.data && payload.data.families) || [];
+		var data = payload.data || {};
+		var families = data.families || [];
+		var kpis = data.libraryKpis || {};
+		var total_families = kpis.stdFamilies || families.length;
+		hydrate_library_kpis(doc, kpis, data.libraryHealth);
+		hydrate_table_footer(doc, total_families);
 		var family = families[0];
 		if (!family) {
 			return;
@@ -497,8 +808,9 @@
 			}
 		});
 		var tbody = doc.querySelector("table tbody");
-		var row = hide_extra_rows(tbody, 1);
+		var row = hide_extra_rows(tbody, versions.length || 1);
 		if (!row || !version) {
+			hydrate_table_footer(doc, versions.length);
 			return;
 		}
 		var cells = row.querySelectorAll("td");
@@ -523,6 +835,7 @@
 					" Blockers</span></div>";
 			}
 		}
+		hydrate_table_footer(doc, versions.length);
 	}
 
 	function hydrate_version(doc, version_payload, ctx) {
@@ -582,6 +895,7 @@
 				})
 				.join("");
 		}
+		hydrate_table_footer(doc, anchors.length);
 	}
 
 	function hydrate_sections(doc, payload, ctx) {
@@ -642,6 +956,7 @@
 				});
 			});
 		}
+		hydrate_table_footer(doc, clauses.length);
 	}
 
 	function hydrate_clause(doc, payload, ctx) {
@@ -704,6 +1019,7 @@
 				})
 				.join("");
 		}
+		hydrate_table_footer(doc, data.count || findings.length);
 	}
 
 	function hydrate_audit(doc, payload, ctx) {
@@ -715,6 +1031,7 @@
 		if (!events.length) {
 			tbody.innerHTML =
 				"<tr><td colspan='10' class='px-4 py-6 text-on-surface-variant'>No audit events recorded for this package.</td></tr>";
+			hydrate_table_footer(doc, (payload.pagination && payload.pagination.total) || 0);
 			return;
 		}
 		tbody.innerHTML = events
@@ -734,6 +1051,7 @@
 				);
 			})
 			.join("");
+		hydrate_table_footer(doc, (payload.pagination && payload.pagination.total) || events.length);
 	}
 
 	var HYDRATORS = {
@@ -1232,6 +1550,7 @@
 			title: config.title,
 			single_column: true,
 		});
+		preserve_procurement_sidebar();
 		var shell_class = config.shell_class;
 		document.body.classList.add(shell_class);
 
@@ -1275,6 +1594,7 @@
 
 		frappe.pages[config.page].on_page_show = function () {
 			document.body.classList.add(shell_class);
+			preserve_procurement_sidebar();
 		};
 		frappe.pages[config.page].on_page_hide = function () {
 			document.body.classList.remove(shell_class);
@@ -1288,4 +1608,12 @@
 	kentender.std_prod.navigate = navigate;
 	kentender.std_prod.mount_page = mount_page;
 	kentender.std_prod.hydrate_iframe = hydrate_iframe;
+	kentender.std_prod.claim_page_routes_over_doctype_conflicts =
+		claim_page_routes_over_doctype_conflicts;
+	kentender.std_prod.install_route_conflict_guard = install_route_conflict_guard;
+	kentender.std_prod.preserve_procurement_sidebar = preserve_procurement_sidebar;
+	kentender.std_prod.hydrate_table_footer = hydrate_table_footer;
+
+	install_route_conflict_guard();
+	$(document).on("app_ready", claim_page_routes_over_doctype_conflicts);
 })();

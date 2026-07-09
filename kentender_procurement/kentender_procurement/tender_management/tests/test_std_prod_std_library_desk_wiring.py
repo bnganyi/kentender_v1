@@ -42,6 +42,20 @@ class TestStdProdStdLibraryDeskWiring(UnitTestCase):
 		self.assertIn('testid: "std-prod-std-library"', source)
 		self.assertIn("kentender.std_prod.mount_page", source)
 
+	def test_engine_hydrates_library_kpi_section(self) -> None:
+		path = os.path.join(
+			frappe.get_app_path("kentender_procurement"),
+			"public",
+			"js",
+			"std_prod_engine.js",
+		)
+		source = open(path, encoding="utf-8").read()
+		self.assertIn("hydrate_library_kpis", source)
+		self.assertIn("hydrate_table_footer", source)
+		self.assertIn("libraryKpis", source)
+		self.assertIn("libraryHealth", source)
+		self.assertIn("STD FAMILIES", source)
+
 	def test_std_library_page_css_hides_frappe_page_head(self) -> None:
 		path = os.path.join(
 			frappe.get_app_path("kentender_procurement"),

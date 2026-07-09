@@ -156,6 +156,35 @@ _KT_ROUTE_TO_SIDEBAR.update(
 	}
 )
 
+# STD prod iframe Desk pages — keep parent Procurement rail (not STD Engine module sidebar).
+_STD_PROD_PAGE_ROUTE_KEYS = (
+	"std-library",
+	"std-family-detail",
+	"std-version-detail",
+	"std-source-doc",
+	"std-section-clauses",
+	"std-clause-detail",
+	"std-validation-report",
+	"std-audit-log",
+	"std-parameter-dictionary",
+	"std-parameter-detail",
+	"std-rule-dictionary",
+	"std-rule-detail",
+	"std-form-schema-manager",
+	"std-form-detail-field-builder",
+	"std-requirement-schema-manager",
+	"std-price-schedule-schema",
+	"std-evaluation-schema",
+	"std-render-blocks",
+	"std-review-and-approval",
+	"std-usage-and-tender-bindings",
+	"std-import-package-review",
+	"std-version-diff-and-supersession",
+	"std-module-retired",
+)
+for _route_key in _STD_PROD_PAGE_ROUTE_KEYS:
+	_KT_ROUTE_TO_SIDEBAR[_route_key] = "Procurement"
+
 # G0-012 / R5 sidebar regression: **Strategy Management** and **Budget Management**
 # live in other apps. If those Workspace rows are not ``public`` / are ``is_hidden``,
 # ``allowed_workspaces`` drops them and the primary-rail links **Strategy Alignment**

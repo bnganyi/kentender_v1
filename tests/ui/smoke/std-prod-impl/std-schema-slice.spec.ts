@@ -74,4 +74,32 @@ test.describe("STD prod schema slice API hydration", () => {
 		});
 		await expect(iframe.locator(".std-prod-req-row").first()).toBeVisible();
 	});
+
+	test("price schedule schema loads prod iframe not doctype list", async ({ page }) => {
+		await page.goto("/desk/std-price-schedule-schema");
+		await expect(page.locator('[data-testid="std-prod-std-price-schedule-schema-iframe"]')).toBeVisible({
+			timeout: 30_000,
+		});
+		await expect(page.locator(".list-row-container, .list-row")).toHaveCount(0);
+		const iframe = page.frameLocator('[data-testid="std-prod-std-price-schedule-schema-iframe"]');
+		await expect(iframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await expect(iframe.locator("body")).toHaveAttribute(
+			"data-std-package-id",
+			CANONICAL_PACKAGE_ID,
+		);
+	});
+
+	test("evaluation schema loads prod iframe not doctype list", async ({ page }) => {
+		await page.goto("/desk/std-evaluation-schema");
+		await expect(page.locator('[data-testid="std-prod-std-evaluation-schema-iframe"]')).toBeVisible({
+			timeout: 30_000,
+		});
+		await expect(page.locator(".list-row-container, .list-row")).toHaveCount(0);
+		const iframe = page.frameLocator('[data-testid="std-prod-std-evaluation-schema-iframe"]');
+		await expect(iframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+	});
 });

@@ -15,6 +15,9 @@ from kentender_procurement.std_engine.services.envelope import (
 	build_package_context,
 	build_read_envelope,
 )
+from kentender_procurement.std_engine.services.library_kpi_service import (
+	build_library_kpi_summary,
+)
 
 
 def get_std_families() -> dict[str, Any]:
@@ -54,7 +57,15 @@ def get_std_families() -> dict[str, Any]:
 				"latestPackageId": latest.package_id if latest else None,
 			}
 		)
-	return build_read_envelope(data={"families": items}, package_context=package_context)
+	library_summary = build_library_kpi_summary()
+	return build_read_envelope(
+		data={
+			"families": items,
+			"libraryKpis": library_summary["kpis"],
+			"libraryHealth": library_summary["health"],
+		},
+		package_context=package_context,
+	)
 
 
 def get_std_family(family_code: str) -> dict[str, Any]:

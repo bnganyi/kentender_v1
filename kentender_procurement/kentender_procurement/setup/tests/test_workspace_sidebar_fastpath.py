@@ -205,6 +205,37 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 			payload = items[route_key]
 			self.assertEqual(payload.get("items"), proc.get("items"))
 
+	def test_bootinfo_includes_std_prod_page_route_keys(self):
+		"""STD prod iframe Desk pages must keep the Procurement rail on hard refresh."""
+		if not frappe.db.exists("Workspace Sidebar", "Procurement"):
+			self.skipTest("Procurement sidebar not on site")
+		bootinfo: dict = {"workspace_sidebar_item": {}}
+		patch_bootinfo(bootinfo)
+		items = bootinfo.get("workspace_sidebar_item") or {}
+		proc = items.get("procurement") or {}
+		self.assertTrue(len(proc.get("items") or []) > 0)
+		for route_key in (
+			"std-library",
+			"std-family-detail",
+			"std-version-detail",
+			"std-parameter-dictionary",
+			"std-price-schedule-schema",
+			"std-evaluation-schema",
+			"std-review-and-approval",
+			"std-import-package-review",
+		):
+			self.assertIn(
+				route_key,
+				items,
+				msg=f"STD prod route {route_key!r} requires boot sidebar fast-path key",
+			)
+			payload = items[route_key]
+			self.assertEqual(
+				payload.get("items"),
+				proc.get("items"),
+				msg=f"STD prod route {route_key!r} should reuse Procurement sidebar rail",
+			)
+
 	def test_bootinfo_excludes_procurement_planning_evidence_route_key(self):
 		"""P5A-004 — superseded evidence route must not be an ordinary planning fast-path."""
 		if not frappe.db.exists("Workspace Sidebar", "Procurement"):

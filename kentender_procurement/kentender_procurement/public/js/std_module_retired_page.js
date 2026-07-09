@@ -7,6 +7,19 @@
 			title: __("STD Module Retired"),
 			single_column: true,
 		});
+		if (
+			window.kentender &&
+			kentender.std_prod &&
+			typeof kentender.std_prod.preserve_procurement_sidebar === "function"
+		) {
+			kentender.std_prod.preserve_procurement_sidebar();
+		} else if (
+			frappe.app &&
+			frappe.app.sidebar &&
+			typeof frappe.app.sidebar.setup === "function"
+		) {
+			frappe.app.sidebar.setup("Procurement");
+		}
 
 		var archive_path =
 			"apps/kentender_v1/archive/std-module-poc-retired-2026-07/README.md";

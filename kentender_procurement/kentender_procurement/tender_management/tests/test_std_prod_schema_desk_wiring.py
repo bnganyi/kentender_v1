@@ -66,6 +66,19 @@ class TestBe10StdProdSchemaDeskWiring(UnitTestCase):
 			with self.subTest(screen=screen):
 				self.assertIn('"' + screen + '"', source)
 
+	def test_engine_claims_doctype_conflicting_page_routes(self) -> None:
+		source = open(_ENGINE_PATH, encoding="utf-8").read()
+		self.assertIn("install_route_conflict_guard", source)
+		self.assertIn("claim_page_routes_over_doctype_conflicts", source)
+		self.assertIn("std-price-schedule-schema", source)
+		self.assertIn("std-evaluation-schema", source)
+
+	def test_engine_preserves_procurement_sidebar_on_mount(self) -> None:
+		source = open(_ENGINE_PATH, encoding="utf-8").read()
+		self.assertIn("preserve_procurement_sidebar", source)
+		self.assertIn('frappe.app.sidebar.setup(PROCUREMENT_SIDEBAR_KEY)', source)
+		self.assertIn("on_page_show", source)
+
 	def test_schema_pages_js_uses_guarded_registration(self) -> None:
 		path = os.path.join(
 			frappe.get_app_path("kentender_procurement"),

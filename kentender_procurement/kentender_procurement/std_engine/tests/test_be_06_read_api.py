@@ -67,6 +67,16 @@ class TestBe06ReadApiEnvelope(IntegrationTestCase):
 		self.assertIsNotNone(out["packageContext"])
 		self.assertGreater(out["validationSummary"]["blockers"], 0)
 
+	def test_get_std_families_returns_library_kpi_summary(self) -> None:
+		out = get_std_families()
+		kpis = out["data"]["libraryKpis"]
+		health = out["data"]["libraryHealth"]
+		self.assertEqual(kpis["stdFamilies"], 1)
+		self.assertEqual(kpis["activeVersions"], 0)
+		self.assertGreaterEqual(kpis["blockers"], 1)
+		self.assertGreaterEqual(health["blockedDrafts"], 1)
+		self.assertEqual(health["unauthorizedActiveVersions"], 0)
+
 	def test_get_std_family_returns_version_list(self) -> None:
 		out = get_std_family(CANONICAL_FAMILY_CODE)
 		_assert_envelope(self, out)
