@@ -33,9 +33,8 @@ class TestStdProdStdFamilyDetailDeskWiring(UnitTestCase):
 			"/assets/kentender_procurement/std_prod_impl/std_family_detail.html",
 			source,
 		)
-		self.assertIn('data-testid="std-prod-std-family-detail-iframe"', source)
-		self.assertIn("on_page_hide", source)
-		self.assertNotIn("frappe.call", source)
+		self.assertIn('testid: "std-prod-std-family-detail"', source)
+		self.assertIn("kentender.std_prod.mount_page", source)
 
 	def test_std_family_detail_page_css_hides_frappe_page_head(self) -> None:
 		path = os.path.join(
@@ -49,16 +48,17 @@ class TestStdProdStdFamilyDetailDeskWiring(UnitTestCase):
 		self.assertIn("display: none !important", source)
 
 	def test_std_library_page_js_wires_open_action_to_family_detail_route(self) -> None:
-		path = os.path.join(
-			frappe.get_app_path("kentender_procurement"),
-			"public",
-			"js",
-			"std_prod_std_library_page.js",
-		)
-		source = open(path, encoding="utf-8").read()
-		self.assertIn("wire_std_library_open_actions", source)
-		self.assertIn('(btn.textContent || "").trim() === "Open"', source)
-		self.assertIn('frappe.set_route("std-family-detail")', source)
+		engine = open(
+			os.path.join(
+				frappe.get_app_path("kentender_procurement"),
+				"public",
+				"js",
+				"std_prod_engine.js",
+			),
+			encoding="utf-8",
+		).read()
+		self.assertIn('(btn.textContent || "").trim() === "Open"', engine)
+		self.assertIn('navigate("std-family-detail"', engine)
 
 
 class TestStdProdStdFamilyDetailDeskWiringSite(IntegrationTestCase):

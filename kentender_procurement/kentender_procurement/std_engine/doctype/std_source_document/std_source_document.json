@@ -1,0 +1,118 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:source_document_key",
+ "creation": "2026-07-09 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "package_id",
+  "family_code",
+  "version_code",
+  "source_document_key",
+  "filename",
+  "source_hash",
+  "file_path",
+  "source_role",
+  "page_count",
+  "metadata_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "package_id",
+   "fieldtype": "Link",
+   "label": "Package",
+   "options": "STD Version",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "family_code",
+   "fieldtype": "Link",
+   "label": "Family Code",
+   "options": "STD Family",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "version_code",
+   "fieldtype": "Data",
+   "label": "Version Code",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "source_document_key",
+   "fieldtype": "Data",
+   "label": "Source Document Key",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "filename",
+   "fieldtype": "Data",
+   "label": "Filename",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_hash",
+   "fieldtype": "Data",
+   "label": "Source Hash",
+   "reqd": 1
+  },
+  {
+   "fieldname": "file_path",
+   "fieldtype": "Data",
+   "label": "File Path"
+  },
+  {
+   "fieldname": "source_role",
+   "fieldtype": "Data",
+   "label": "Source Role"
+  },
+  {
+   "fieldname": "page_count",
+   "fieldtype": "Int",
+   "label": "Page Count"
+  },
+  {
+   "fieldname": "metadata_json",
+   "fieldtype": "Code",
+   "label": "Metadata JSON",
+   "options": "JSON"
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-09 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "STD Engine",
+ "name": "STD Source Document",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1
+  },
+  {
+   "role": "Auditor",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "delete": 0,
+   "report": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -38,6 +38,14 @@ Deploy twenty-two design `code.html` files as verbatim static assets. Screens 13
 | UI-05 | Library Open → Family Detail | — | Frappe Page `std-family-detail` + iframe wiring | `test_std_prod_std_family_detail_desk_wiring` | `std-library-open-family-detail.spec.ts` | Done | 5/5 unit+integration; Playwright 1/1 OK |
 | UI-06 | Family version actions → Version Detail | — | Frappe Page `std-version-detail` + iframe wiring | `test_std_prod_std_version_detail_desk_wiring` | `std-family-open-version-detail.spec.ts` | Done | 5/5 unit+integration; Playwright 2/2 OK |
 
+## Phase 3 — Desk API wiring (BE-09 / BE-10 / BE-11)
+
+| ID | Screen group | Desk routes | Backend tests | Playwright | Status | Evidence |
+|---|---|---|---|---|---|---|
+| UI-API-09 | Vertical slice (04–06, 17, 22) | `std-source-doc`, `std-section-clauses`, `std-clause-detail`, `std-validation-report`, `std-audit-log` | `test_std_prod_vertical_slice_desk_wiring` 5/5 | `std-vertical-slice.spec.ts` | Done | 5/5 pass incl. version→parameter dictionary + usage nav |
+| UI-API-10 | Schema screens (07–16) | `std-parameter-dictionary` … `std-render-blocks` (10 routes) | `test_std_prod_schema_desk_wiring` 6/6 | `std-schema-slice.spec.ts` | Done | 4/4 pass; `data-std-prod-hydrated` + canonical `KE-PPRA-IT-2022-04` |
+| UI-API-11 | Governance placeholders (18–21) | `std-review-and-approval`, `std-usage-and-tender-bindings`, `std-import-package-review`, `std-version-diff-and-supersession` | `test_std_prod_governance_desk_wiring` 6/6 | `std-governance-slice.spec.ts` | Done | 4/4 pass; `SINGLE_VERSION_ONLY` stub + `SMOKE_TEST_EXPECTATION` fixture source |
+
 ## Exit criteria (Phase 1)
 
 1. Deployed HTML byte-identical to design `code.html` (EOF newline normalization only)
@@ -59,6 +67,8 @@ Deploy twenty-two design `code.html` files as verbatim static assets. Screens 13
 - **Official STD Library:** `http://127.0.0.1:8000/app/std-library`
 - **STD Family Detail:** `http://127.0.0.1:8000/app/std-family-detail`
 - **STD Version Detail:** `http://127.0.0.1:8000/app/std-version-detail`
+- **Parameter Dictionary:** `http://127.0.0.1:8000/app/std-parameter-dictionary`
+- **Usage and Tender Bindings:** `http://127.0.0.1:8000/app/std-usage-and-tender-bindings`
 
 ## Preview URLs
 

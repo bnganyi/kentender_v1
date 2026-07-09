@@ -39,9 +39,8 @@ class TestStdProdStdLibraryDeskWiring(UnitTestCase):
 		source = open(path, encoding="utf-8").read()
 		self.assertIn('frappe.pages["std-library"]', source)
 		self.assertIn("/assets/kentender_procurement/std_prod_impl/std_library.html", source)
-		self.assertIn('data-testid="std-prod-std-library-iframe"', source)
-		self.assertIn("on_page_hide", source)
-		self.assertNotIn("frappe.call", source)
+		self.assertIn('testid: "std-prod-std-library"', source)
+		self.assertIn("kentender.std_prod.mount_page", source)
 
 	def test_std_library_page_css_hides_frappe_page_head(self) -> None:
 		path = os.path.join(

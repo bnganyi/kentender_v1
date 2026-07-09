@@ -1,0 +1,111 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:import_run_key",
+ "creation": "2026-07-09 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "import_run_key",
+  "package_id",
+  "run_mode",
+  "target_state",
+  "status",
+  "package_sha256",
+  "manifest_hash",
+  "source_document_hash",
+  "report_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "import_run_key",
+   "fieldtype": "Data",
+   "label": "Import Run Key",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "package_id",
+   "fieldtype": "Link",
+   "label": "Package",
+   "options": "STD Version",
+   "search_index": 1
+  },
+  {
+   "fieldname": "run_mode",
+   "fieldtype": "Select",
+   "label": "Run Mode",
+   "options": "DRY_RUN\nCOMMIT",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "target_state",
+   "fieldtype": "Select",
+   "label": "Target State",
+   "options": "DRAFT\nSTRUCTURING\nINTERNAL_REVIEW\nLEGAL_REVIEW\nPROCUREMENT_REVIEW\nAPPROVED\nACTIVE\nSUPERSEDED\nARCHIVED",
+   "reqd": 1,
+   "default": "DRAFT"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Data",
+   "label": "Status",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "package_sha256",
+   "fieldtype": "Data",
+   "label": "Package SHA-256"
+  },
+  {
+   "fieldname": "manifest_hash",
+   "fieldtype": "Data",
+   "label": "Manifest Hash"
+  },
+  {
+   "fieldname": "source_document_hash",
+   "fieldtype": "Data",
+   "label": "Source Document Hash"
+  },
+  {
+   "fieldname": "report_json",
+   "fieldtype": "Code",
+   "label": "Report JSON",
+   "options": "JSON"
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-09 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "STD Engine",
+ "name": "STD Import Run",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1
+  },
+  {
+   "role": "Auditor",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "delete": 0,
+   "report": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

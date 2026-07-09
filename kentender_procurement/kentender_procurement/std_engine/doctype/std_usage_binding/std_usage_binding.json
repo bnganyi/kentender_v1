@@ -1,0 +1,104 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:binding_key",
+ "creation": "2026-07-09 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "package_id",
+  "family_code",
+  "version_code",
+  "binding_key",
+  "fixture_source",
+  "tender_ref",
+  "binding_status",
+  "metadata_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "package_id",
+   "fieldtype": "Link",
+   "label": "Package",
+   "options": "STD Version",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "family_code",
+   "fieldtype": "Link",
+   "label": "Family Code",
+   "options": "STD Family",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "version_code",
+   "fieldtype": "Data",
+   "label": "Version Code",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "binding_key",
+   "fieldtype": "Data",
+   "label": "Binding Key",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "fixture_source",
+   "fieldtype": "Data",
+   "label": "Fixture Source"
+  },
+  {
+   "fieldname": "tender_ref",
+   "fieldtype": "Data",
+   "label": "Tender Ref"
+  },
+  {
+   "fieldname": "binding_status",
+   "fieldtype": "Data",
+   "label": "Binding Status"
+  },
+  {
+   "fieldname": "metadata_json",
+   "fieldtype": "Code",
+   "label": "Metadata JSON",
+   "options": "JSON"
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-09 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "STD Engine",
+ "name": "STD Usage Binding",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1
+  },
+  {
+   "role": "Auditor",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "delete": 0,
+   "report": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

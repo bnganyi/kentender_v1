@@ -1,0 +1,128 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:finding_key",
+ "creation": "2026-07-09 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "package_id",
+  "finding_key",
+  "validation_run",
+  "severity",
+  "finding_code",
+  "object_type",
+  "object_id",
+  "description",
+  "suggested_fix",
+  "lifecycle_gate",
+  "status"
+ ],
+ "fields": [
+  {
+   "fieldname": "package_id",
+   "fieldtype": "Link",
+   "label": "Package",
+   "options": "STD Version",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "finding_key",
+   "fieldtype": "Data",
+   "label": "Finding Key",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "validation_run",
+   "fieldtype": "Link",
+   "label": "Validation Run",
+   "options": "STD Validation Run",
+   "reqd": 1
+  },
+  {
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "label": "Severity",
+   "options": "BLOCKER\nWARNING\nINFO",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "finding_code",
+   "fieldtype": "Data",
+   "label": "Finding Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "object_type",
+   "fieldtype": "Data",
+   "label": "Object Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "object_id",
+   "fieldtype": "Data",
+   "label": "Object ID",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Long Text",
+   "label": "Description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "suggested_fix",
+   "fieldtype": "Long Text",
+   "label": "Suggested Fix"
+  },
+  {
+   "fieldname": "lifecycle_gate",
+   "fieldtype": "Data",
+   "label": "Lifecycle Gate",
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "OPEN\nASSIGNED\nREMEDIATED_IN_DRAFT\nWAIVED_WITH_APPROVAL\nRESOLVED",
+   "reqd": 1,
+   "default": "OPEN"
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-09 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "STD Engine",
+ "name": "STD Validation Finding",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1
+  },
+  {
+   "role": "Auditor",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "delete": 0,
+   "report": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

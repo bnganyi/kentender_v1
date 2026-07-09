@@ -1,0 +1,31 @@
+# Copyright (c) 2026, KenTender and contributors
+# For license information, please see license.txt
+
+"""STD Engine Milestone 1 constants — lifecycle, UI mode, canonical seed identity."""
+
+from __future__ import annotations
+
+FRAPPE_MODULE = "STD Engine"
+
+CANONICAL_FAMILY_CODE = "KE-PPRA-IT"
+CANONICAL_PACKAGE_ID = "KE-PPRA-IT-2022-04"
+CANONICAL_VERSION_CODE = "KE-PPRA-IT-2022-04"
+
+COMMIT_TARGET_STATE_M1 = "DRAFT"
+UI_MODE_READ_ONLY_INSPECTION = "READ_ONLY_INSPECTION"
+
+FIXTURE_SOURCE_SMOKE_TEST_EXPECTATION = "SMOKE_TEST_EXPECTATION"
+
+LIFECYCLE_STATES: tuple[str, ...] = (
+	"DRAFT",
+	"STRUCTURING",
+	"INTERNAL_REVIEW",
+	"LEGAL_REVIEW",
+	"PROCUREMENT_REVIEW",
+	"APPROVED",
+	"ACTIVE",
+	"SUPERSEDED",
+	"ARCHIVED",
+)
+
+PACKAGE_QUALITY_RECONCILED_DRAFT = "RECONCILED_DRAFT_NOT_ACTIVATABLE"

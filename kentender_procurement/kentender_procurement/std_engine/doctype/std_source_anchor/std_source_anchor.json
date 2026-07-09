@@ -1,0 +1,124 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:anchor_key",
+ "creation": "2026-07-09 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "package_id",
+  "family_code",
+  "version_code",
+  "anchor_key",
+  "source_document",
+  "section_ref",
+  "clause_ref",
+  "page_from",
+  "page_to",
+  "anchor_hash",
+  "metadata_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "package_id",
+   "fieldtype": "Link",
+   "label": "Package",
+   "options": "STD Version",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "family_code",
+   "fieldtype": "Link",
+   "label": "Family Code",
+   "options": "STD Family",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "version_code",
+   "fieldtype": "Data",
+   "label": "Version Code",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "anchor_key",
+   "fieldtype": "Data",
+   "label": "Anchor Key",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "source_document",
+   "fieldtype": "Link",
+   "label": "Source Document",
+   "options": "STD Source Document",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_ref",
+   "fieldtype": "Data",
+   "label": "Section Ref"
+  },
+  {
+   "fieldname": "clause_ref",
+   "fieldtype": "Data",
+   "label": "Clause Ref"
+  },
+  {
+   "fieldname": "page_from",
+   "fieldtype": "Int",
+   "label": "Page From"
+  },
+  {
+   "fieldname": "page_to",
+   "fieldtype": "Int",
+   "label": "Page To"
+  },
+  {
+   "fieldname": "anchor_hash",
+   "fieldtype": "Data",
+   "label": "Anchor Hash"
+  },
+  {
+   "fieldname": "metadata_json",
+   "fieldtype": "Code",
+   "label": "Metadata JSON",
+   "options": "JSON"
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-09 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "STD Engine",
+ "name": "STD Source Anchor",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1
+  },
+  {
+   "role": "Auditor",
+   "read": 1,
+   "write": 0,
+   "create": 0,
+   "delete": 0,
+   "report": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
