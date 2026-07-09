@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Form Detail &amp; Field Builder | KenTender STD Engine</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed-variant": "#38485e",
+                        "surface-container": "#eeedf3",
+                        "tertiary-fixed-dim": "#b7c8e2",
+                        "secondary-fixed": "#cfe5ff",
+                        "status-committed": "#6366F1",
+                        "on-surface": "#1a1b20",
+                        "surface-dim": "#dad9df",
+                        "secondary-fixed-dim": "#99cbff",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#001b3f",
+                        "status-exhausted": "#EF4444",
+                        "surface-container-high": "#e8e7ed",
+                        "inverse-primary": "#abc7ff",
+                        "primary-fixed-dim": "#abc7ff",
+                        "on-secondary-fixed-variant": "#004a78",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-on-surface": "#f1f0f6",
+                        "on-error": "#ffffff",
+                        "primary": "#001f48",
+                        "tertiary": "#26364b",
+                        "error": "#ba1a1a",
+                        "surface": "#f7f9fb",
+                        "border-subtle": "#E2E8F0",
+                        "surface-tint": "#395e9b",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed-variant": "#1d4681",
+                        "on-primary-container": "#7b9ee0",
+                        "inverse-surface": "#2f3035",
+                        "tertiary-fixed": "#d3e4ff",
+                        "surface-container-highest": "#e2e2e8",
+                        "data-block-bg": "#FFFFFF",
+                        "status-reserved": "#F59E0B",
+                        "outline-variant": "#c3c6d1",
+                        "on-secondary-container": "#004c7c",
+                        "on-secondary": "#ffffff",
+                        "background": "#f9f9fe",
+                        "tertiary-container": "#26364b",
+                        "secondary": "#01629d",
+                        "primary-container": "#00346f",
+                        "status-available": "#10B981",
+                        "primary-fixed": "#d7e2ff",
+                        "on-secondary-fixed": "#001d34",
+                        "secondary-container": "#7bbeff",
+                        "surface-container-low": "#f4f3f9",
+                        "on-background": "#1a1b20",
+                        "on-surface-variant": "#434750",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "surface-bright": "#f9f9fe",
+                        "outline": "#737783",
+                        "surface-variant": "#e2e2e8",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-container": "#8f9fb8"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "12px",
+                        "container-padding": "16px",
+                        "unit": "4px",
+                        "section-gap": "24px",
+                        "card-padding": "20px"
+                    },
+                    "fontFamily": {
+                        "data-mono": ["JetBrains Mono"],
+                        "body-lg": ["Public Sans"],
+                        "label-caps": ["Public Sans"],
+                        "headline-md": ["Public Sans"],
+                        "headline-lg": ["Public Sans"],
+                        "body-md": ["Public Sans"],
+                        "headline-sm": ["Public Sans"]
+                    },
+                    "fontSize": {
+                        "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "headline-md": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+                        "headline-lg": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #c3c6d1; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #737783; }
+        
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 12px;
+        }
+        
+        .status-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .data-cell-mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-surface-container-lowest text-primary flex justify-between items-center w-full px-container-padding h-14 border-b border-outline-variant z-50">
+<div class="flex items-center gap-4">
+<span class="text-headline-sm font-headline-sm font-bold tracking-tight">KenTender STD Engine</span>
+<div class="h-6 w-px bg-outline-variant mx-2"></div>
+<h1 class="text-headline-sm font-headline-sm font-medium text-primary">Technical Proposal Submission</h1>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative group">
+<input class="bg-surface-container border border-outline-variant rounded-full px-4 py-1.5 text-sm w-64 focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all text-on-surface" placeholder="Search components..." type="text"/>
+<span class="material-symbols-outlined absolute right-3 top-1.5 text-outline scale-75">search</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="w-10 h-10 flex items-center justify-center hover:bg-surface-container transition-colors rounded-full text-primary"><span class="material-symbols-outlined">notifications</span></button>
+<button class="w-10 h-10 flex items-center justify-center hover:bg-surface-container transition-colors rounded-full text-primary"><span class="material-symbols-outlined">help</span></button>
+<button class="w-10 h-10 flex items-center justify-center hover:bg-surface-container transition-colors rounded-full text-primary"><span class="material-symbols-outlined">settings</span></button>
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold text-xs ml-2">JD</div>
+</div>
+</div>
+</header>
+<!-- Governance Banner -->
+<div class="bg-surface-container-high border-b border-outline-variant px-container-padding py-2 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-status-reserved scale-90" style="font-variation-settings: 'FILL' 1;">lock</span>
+<span class="text-label-caps font-label-caps text-on-surface-variant">ACTIVE VERSION — READ ONLY. Changes require a new draft version.</span>
+</div>
+<div class="flex items-center gap-6 text-xs text-on-surface-variant font-medium">
+<div class="flex gap-1"><span class="opacity-60">Family:</span> <span class="font-data-mono">KE-PPRA-IT</span></div>
+<div class="flex gap-1"><span class="opacity-60">Version:</span> <span class="font-data-mono">2024-04</span></div>
+<div class="flex gap-1"><span class="opacity-60">Package:</span> <span class="font-data-mono">KE-PPRA-IT-2024-04</span></div>
+</div>
+</div>
+<!-- Main Content Canvas -->
+<main class="flex-grow p-section-gap overflow-y-auto">
+<div class="max-w-[1600px] mx-auto space-y-gutter">
+<!-- Metadata and Stats Grid -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Identity Panel -->
+<div class="col-span-12 lg:col-span-8 bg-white border border-border-subtle rounded-lg shadow-sm flex flex-col">
+<div class="px-card-padding py-3 bg-surface-container-low border-b border-border-subtle rounded-t-lg flex justify-between items-center">
+<span class="text-label-caps font-label-caps text-on-surface-variant">Form Identity &amp; Metadata</span>
+<div class="flex gap-2">
+<span class="status-badge bg-status-available/10 text-status-available border border-status-available/30">ACTIVE</span>
+<span class="status-badge bg-primary/10 text-primary border border-primary/30">LATEST</span>
+</div>
+</div>
+<div class="p-card-padding grid grid-cols-3 gap-6">
+<div class="space-y-1">
+<label class="text-label-caps font-label-caps text-outline block">Form Code</label>
+<span class="text-headline-sm font-data-mono text-primary">FORM-TECH-01</span>
+</div>
+<div class="space-y-1">
+<label class="text-label-caps font-label-caps text-outline block">Title</label>
+<span class="text-body-lg font-bold">Technical Proposal Submission</span>
+</div>
+<div class="space-y-1">
+<label class="text-label-caps font-label-caps text-outline block">Respondent</label>
+<span class="text-body-lg flex items-center gap-1"><span class="material-symbols-outlined text-sm">person</span> Tenderer</span>
+</div>
+<div class="space-y-1">
+<label class="text-label-caps font-label-caps text-outline block">Workflow Stage</label>
+<span class="text-body-md font-medium text-secondary">Submission Stage</span>
+</div>
+<div class="space-y-1">
+<label class="text-label-caps font-label-caps text-outline block">Requirement Level</label>
+<span class="status-badge bg-error-container text-on-error-container inline-block">REQUIRED</span>
+</div>
+<div class="col-span-3 mt-4 p-4 bg-surface-container-low border border-outline-variant rounded-lg">
+<div class="flex justify-between items-center mb-3">
+<span class="text-label-caps font-label-caps text-on-surface-variant">Full Source Traceability</span>
+<span class="status-badge bg-status-available/10 text-status-available border border-status-available/30">Verified</span>
+</div>
+<div class="grid grid-cols-4 gap-4">
+<div class="space-y-1">
+<label class="text-[10px] font-label-caps text-outline uppercase">Source File</label>
+<p class="text-xs font-medium truncate">KE-PPRA-IT-2024-01 / Official IT STD Source PDF</p>
+</div>
+<div class="space-y-1">
+<label class="text-[10px] font-label-caps text-outline uppercase">Section/Page/Para</label>
+<p class="text-xs font-medium">#sec-tech-01, Pg. 12</p>
+</div>
+<div class="space-y-1">
+<label class="text-[10px] font-label-caps text-outline uppercase">Text Hash (SHA256)</label>
+<p class="text-[10px] font-data-mono truncate">8f3e...a12b</p>
+</div>
+<div class="space-y-1">
+<label class="text-[10px] font-label-caps text-outline uppercase">Source Anchor</label>
+<p class="text-xs font-medium text-primary">#anchor-tech-01</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Summary Stats -->
+<div class="col-span-12 lg:col-span-4 grid grid-cols-2 gap-gutter">
+<div class="bg-white border border-border-subtle rounded-lg p-card-padding flex flex-col justify-center items-center text-center shadow-sm">
+<span class="text-3xl font-data-mono text-primary mb-1">12</span>
+<span class="text-label-caps font-label-caps text-outline">Total Fields</span>
+</div>
+<div class="bg-white border border-border-subtle rounded-lg p-card-padding flex flex-col justify-center items-center text-center shadow-sm">
+<span class="text-3xl font-data-mono text-primary mb-1">04</span>
+<span class="text-label-caps font-label-caps text-outline">Evidence Reqs</span>
+</div>
+<div class="bg-white border border-border-subtle rounded-lg p-card-padding flex flex-col justify-center items-center text-center shadow-sm">
+<span class="text-3xl font-data-mono text-status-committed mb-1">01</span>
+<span class="text-label-caps font-label-caps text-outline">Activation Rules</span>
+</div>
+<div class="bg-white border border-border-subtle rounded-lg p-card-padding flex flex-col justify-center items-center text-center shadow-sm">
+<span class="text-3xl font-data-mono text-secondary mb-1">02</span>
+<span class="text-label-caps font-label-caps text-outline">Carry-Forward</span>
+</div>
+</div>
+</div>
+<!-- Field Builder Table -->
+<div class="bg-white border border-border-subtle rounded-lg shadow-sm flex flex-col overflow-hidden">
+<div class="px-card-padding py-3 bg-surface-container-low border-b border-border-subtle flex justify-between items-center">
+<div class="flex items-center gap-4">
+<h2 class="text-headline-sm font-headline-sm">Field Configuration</h2>
+<div class="h-4 w-px bg-outline-variant"></div>
+<div class="flex items-center gap-2">
+<button class="text-xs flex items-center gap-1 px-2 py-1 rounded bg-white border border-outline-variant hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-sm">filter_list</span> Filter</button>
+<button class="text-xs flex items-center gap-1 px-2 py-1 rounded bg-white border border-outline-variant hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-sm">download</span> Export</button>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-xs italic text-outline">Drafting disabled in Active mode</span>
+<button class="px-4 py-1.5 bg-primary text-on-primary rounded text-sm font-bold hover:bg-primary/90 transition-all shadow-sm">Create Draft Version</button>
+</div>
+</div>
+<div class="overflow-x-auto custom-scrollbar">
+<table class="w-full text-left border-collapse min-w-[1200px]">
+<thead>
+<tr class="bg-surface-container border-b border-outline-variant"><th class="px-4 py-3 text-label-caps font-label-caps text-outline">Field Key</th>
+<th class="px-4 py-3 text-label-caps font-label-caps text-outline">Label</th>
+<th class="px-4 py-3 text-label-caps font-label-caps text-outline">Data Type</th>
+<th class="px-4 py-3 text-label-caps font-label-caps text-outline">Req</th>
+<th class="px-4 py-3 text-label-caps font-label-caps text-outline">Help Text</th>
+<th class="px-4 py-3 text-label-caps font-label-caps text-outline">Validation</th>
+<th class="px-4 py-3 text-label-caps font-label-caps text-outline">Evidence Link</th>
+<th class="px-4 py-3 text-label-caps font-label-caps text-outline">Carry-Fwd Target</th>
+<th class="px-4 py-3 text-label-caps font-label-caps text-outline">Source Anchor</th>
+<th class="px-4 py-3 text-label-caps font-label-caps text-outline text-right">Actions</th></tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-4 py-3 data-cell-mono text-primary font-semibold">tender_ref_id</td>
+<td class="px-4 py-3 text-body-md">Tender Reference ID</td>
+<td class="px-4 py-3"><span class="px-2 py-0.5 bg-surface-container-highest rounded text-[11px] font-bold">STRING (UUID)</span></td>
+<td class="px-4 py-3"><span class="material-symbols-outlined text-status-exhausted scale-90" style="font-variation-settings: 'FILL' 1;">check_circle</span></td>
+<td class="px-4 py-3 text-body-md text-on-surface-variant max-w-xs truncate">Unique ID from tender notice</td>
+<td class="px-4 py-3 data-cell-mono text-xs text-secondary">#reg-exp-01</td>
+<td class="px-4 py-3 text-outline">—</td>
+<td class="px-4 py-3 text-outline">—</td>
+<td class="px-4 py-3 text-right">
+<div class="flex justify-end gap-1"><button class="p-1.5 hover:bg-primary/10 rounded text-primary" title="Open"><span class="material-symbols-outlined text-lg">open_in_new</span></button>
+<button class="p-1.5 hover:bg-primary/10 rounded text-primary" title="View Usage"><span class="material-symbols-outlined text-lg">analytics</span></button>
+<button class="p-1.5 hover:bg-primary/10 rounded text-primary" title="View Rules"><span class="material-symbols-outlined text-lg">rule</span></button>
+<button class="p-1.5 hover:bg-primary/10 rounded text-primary" title="View Source"><span class="material-symbols-outlined text-lg">source</span></button></div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-4 py-3 data-cell-mono text-primary font-semibold">submission_date</td>
+<td class="px-4 py-3 text-body-md">Submission Date/Time</td>
+<td class="px-4 py-3"><span class="px-2 py-0.5 bg-surface-container-highest rounded text-[11px] font-bold">DATETIME</span></td>
+<td class="px-4 py-3"><span class="material-symbols-outlined text-status-exhausted scale-90" style="font-variation-settings: 'FILL' 1;">check_circle</span></td>
+<td class="px-4 py-3 text-body-md text-on-surface-variant max-w-xs truncate">Date of digital signature</td>
+<td class="px-4 py-3 data-cell-mono text-xs text-secondary">#date-past</td>
+<td class="px-4 py-3 text-outline">—</td>
+<td class="px-4 py-3 text-secondary font-medium flex items-center gap-1">#audit-log-04</td>
+<td class="px-4 py-3 text-right">
+<div class="flex justify-end gap-1">
+<button class="p-1.5 hover:bg-primary/10 rounded text-primary transition-all"><span class="material-symbols-outlined text-lg">visibility</span></button>
+<button class="p-1.5 hover:bg-primary/10 rounded text-primary transition-all"><span class="material-symbols-outlined text-lg">history</span></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-4 py-3 data-cell-mono text-primary font-semibold">financial_capacity_statement</td>
+<td class="px-4 py-3 text-body-md">Financial Capacity</td>
+<td class="px-4 py-3"><span class="px-2 py-0.5 bg-surface-container-highest rounded text-[11px] font-bold">FILE</span></td>
+<td class="px-4 py-3"><span class="material-symbols-outlined text-status-exhausted scale-90" style="font-variation-settings: 'FILL' 1;">check_circle</span></td>
+<td class="px-4 py-3 text-body-md text-on-surface-variant max-w-xs truncate">Upload signed statement</td>
+<td class="px-4 py-3 data-cell-mono text-xs text-secondary">#max-size-10mb</td>
+<td class="px-4 py-3 text-status-committed flex items-center gap-1 font-bold">YES</td>
+<td class="px-4 py-3 text-secondary font-medium flex items-center gap-1">#evaluation-matrix</td>
+<td class="px-4 py-3 text-right">
+<div class="flex justify-end gap-1">
+<button class="p-1.5 hover:bg-primary/10 rounded text-primary transition-all"><span class="material-symbols-outlined text-lg">visibility</span></button>
+<button class="p-1.5 hover:bg-primary/10 rounded text-primary transition-all"><span class="material-symbols-outlined text-lg">history</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Footer Pagination -->
+<div class="px-card-padding py-3 bg-surface-container border-t border-outline-variant flex justify-between items-center text-sm">
+<span class="text-on-surface-variant">Showing 1-10 of 12 fields</span>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="text-xs text-outline">Rows per page:</span>
+<select class="bg-white border border-outline-variant rounded px-2 py-1 text-xs focus:outline-none">
+<option>10</option>
+<option>25</option>
+<option>50</option>
+</select>
+</div>
+<div class="flex items-center gap-1">
+<button class="p-1 hover:bg-white rounded transition-colors disabled:opacity-30" disabled=""><span class="material-symbols-outlined text-xl">first_page</span></button>
+<button class="p-1 hover:bg-white rounded transition-colors disabled:opacity-30" disabled=""><span class="material-symbols-outlined text-xl">chevron_left</span></button>
+<div class="flex gap-1 px-2">
+<span class="w-7 h-7 bg-primary text-on-primary flex items-center justify-center rounded font-bold text-xs">1</span>
+<span class="w-7 h-7 hover:bg-white flex items-center justify-center rounded text-xs cursor-pointer">2</span>
+</div>
+<button class="p-1 hover:bg-white rounded transition-colors"><span class="material-symbols-outlined text-xl">chevron_right</span></button>
+<button class="p-1 hover:bg-white rounded transition-colors"><span class="material-symbols-outlined text-xl">last_page</span></button>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Panels: Secondary Info -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Evidence & Rules -->
+<div class="col-span-12 md:col-span-4 space-y-gutter"><div class="bg-white border border-border-subtle rounded-lg shadow-sm flex flex-col">
+<div class="px-4 py-2 bg-surface-container-low border-b border-border-subtle rounded-t-lg">
+<span class="text-label-caps font-label-caps text-on-surface-variant">Form Validation Summary</span>
+</div>
+<div class="p-4 space-y-2">
+<div class="flex items-center gap-2 text-xs text-status-available font-medium">
+<span class="material-symbols-outlined text-sm">check_circle</span> All evidence bindings valid
+    </div>
+<div class="flex items-center gap-2 text-xs text-outline font-medium">
+<span class="material-symbols-outlined text-sm">info</span> 0 blockers, 0 warnings
+    </div>
+</div>
+</div>
+<div class="bg-white border border-border-subtle rounded-lg shadow-sm flex flex-col">
+<div class="px-4 py-2 bg-surface-container-low border-b border-border-subtle rounded-t-lg">
+<span class="text-label-caps font-label-caps text-on-surface-variant">Recent Audit Events</span>
+</div>
+<div class="p-4 space-y-3">
+<div class="border-l-2 border-primary/20 pl-3 space-y-1">
+<p class="text-xs font-bold">Schema Activated</p>
+<p class="text-[10px] text-outline font-data-mono">2024-04-12 | hash:9f2e...11</p>
+</div>
+<div class="border-l-2 border-primary/20 pl-3 space-y-1">
+<p class="text-xs font-bold">Source Verification</p>
+<p class="text-[10px] text-outline font-data-mono">2024-04-10 | hash:3a1b...cc</p>
+</div>
+</div>
+</div>
+<div class="bg-white border border-border-subtle rounded-lg shadow-sm flex flex-col">
+<div class="px-4 py-2 bg-surface-container-low border-b border-border-subtle rounded-t-lg">
+<span class="text-label-caps font-label-caps text-on-surface-variant">Evidence Requirements</span>
+</div>
+<div class="p-4 space-y-3">
+<div class="flex items-start gap-3 p-2 bg-surface-container-lowest border border-border-subtle rounded">
+<span class="material-symbols-outlined text-status-committed text-sm mt-0.5">verified_user</span>
+<div>
+<p class="text-sm font-bold">Notarized Compliance Affidavit</p>
+<p class="text-[11px] text-outline">System Code: EVD-NOTARY-01</p>
+</div>
+</div>
+<div class="flex items-start gap-3 p-2 bg-surface-container-lowest border border-border-subtle rounded">
+<span class="material-symbols-outlined text-status-committed text-sm mt-0.5">verified_user</span>
+<div>
+<p class="text-sm font-bold">Tax Compliance Certificate</p>
+<p class="text-[11px] text-outline">System Code: EVD-TAX-04</p>
+</div>
+</div>
+<button class="w-full py-2 text-xs text-primary font-bold hover:bg-primary/5 transition-colors border border-dashed border-primary/20 rounded">View All 4 Requirements</button>
+</div>
+</div>
+<div class="bg-white border border-border-subtle rounded-lg shadow-sm flex flex-col">
+<div class="px-4 py-2 bg-surface-container-low border-b border-border-subtle rounded-t-lg">
+<span class="text-label-caps font-label-caps text-on-surface-variant">Activation Rules</span>
+</div>
+<div class="p-4">
+<div class="flex items-center gap-2 p-2 bg-secondary-fixed text-on-secondary-fixed rounded text-xs font-medium">
+<span class="material-symbols-outlined text-sm">bolt</span>
+                                On Tenderer Invite → Render Form
+                            </div>
+</div>
+</div>
+</div>
+<!-- Preview Panel -->
+<div class="col-span-12 md:col-span-8 bg-white border border-border-subtle rounded-lg shadow-sm flex flex-col h-full">
+<div class="px-4 py-2 bg-surface-container-low border-b border-border-subtle rounded-t-lg flex justify-between items-center">
+<span class="text-label-caps font-label-caps text-on-surface-variant">Render Preview (Responsive)</span>
+<div class="flex gap-1">
+<button class="p-1 hover:bg-surface-container rounded transition-colors text-primary"><span class="material-symbols-outlined text-sm">laptop</span></button>
+<button class="p-1 hover:bg-surface-container rounded transition-colors text-outline"><span class="material-symbols-outlined text-sm">tablet</span></button>
+<button class="p-1 hover:bg-surface-container rounded transition-colors text-outline"><span class="material-symbols-outlined text-sm">smartphone</span></button>
+</div>
+<div class="flex items-center gap-3 ml-auto mr-4">
+<div class="flex flex-col items-end">
+<span class="text-[9px] font-data-mono text-outline">#rb-tech-prop-01</span>
+<span class="text-[9px] font-data-mono text-outline">hash:e3b0...c4f2</span>
+</div>
+<span class="status-badge bg-status-available/10 text-status-available text-[9px] border border-status-available/30">Validated</span>
+</div></div>
+<div class="flex-grow p-8 flex flex-col items-center justify-center bg-surface-container-lowest/50 relative overflow-hidden min-h-[300px]">
+<!-- Background Pattern -->
+<div class="absolute inset-0 opacity-[0.03] pointer-events-none" style="background-image: radial-gradient(#001f48 1px, transparent 1px); background-size: 20px 20px;"></div>
+<div class="w-full max-w-md bg-white border border-border-subtle shadow-lg rounded-lg p-6 space-y-4">
+<div class="space-y-1">
+<h4 class="font-bold text-lg">Technical Proposal</h4>
+<p class="text-xs text-outline">Submission for KE-PPRA-IT-2024-04</p>
+</div>
+<div class="space-y-3">
+<div class="space-y-1">
+<label class="text-xs font-bold block">Tender Reference ID <span class="text-error">*</span></label>
+<input class="w-full border-outline-variant rounded px-3 py-2 text-sm bg-surface-container-low cursor-not-allowed" readonly="" type="text" value="REF-992-K82"/>
+</div>
+<div class="space-y-1">
+<label class="text-xs font-bold block">Submission Date/Time <span class="text-error">*</span></label>
+<input class="w-full border-outline-variant rounded px-3 py-2 text-sm bg-surface-container-low cursor-not-allowed" readonly="" type="text" value="2024-05-20 14:30:00"/>
+</div>
+<div class="p-4 border-2 border-dashed border-outline-variant rounded-lg text-center bg-surface-container-low">
+<span class="material-symbols-outlined text-outline">cloud_upload</span>
+<p class="text-xs text-outline mt-1 font-medium">Financial Capacity Statement Required</p>
+</div>
+</div>
+<button class="w-full py-2 bg-primary/20 text-primary font-bold rounded cursor-not-allowed text-sm">Submit Form</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<script>
+        // Micro-interaction for hover states and transitions
+        document.querySelectorAll('button:not([disabled])').forEach(btn => {
+            btn.addEventListener('mousedown', () => {
+                btn.style.transform = 'scale(0.98)';
+            });
+            btn.addEventListener('mouseup', () => {
+                btn.style.transform = 'scale(1)';
+            });
+        });
+    </script>
+</body></html>

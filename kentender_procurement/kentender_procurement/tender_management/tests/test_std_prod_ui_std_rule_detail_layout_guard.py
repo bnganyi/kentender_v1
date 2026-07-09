@@ -1,0 +1,36 @@
+# Copyright (c) 2026, KenTender and contributors
+# For license information, please see license.txt
+
+"""STD prod UI layout guard — Rule Detail screen."""
+
+from __future__ import annotations
+
+from frappe.tests import UnitTestCase
+
+from kentender_procurement.tender_management.tests.std_prod_ui_layout_guard_util import (
+	assert_verbatim_deploy,
+	deployed_asset_path,
+	design_source_path,
+	read_text,
+)
+
+
+class TestStdProdUiStdRuleDetailLayoutGuard(UnitTestCase):
+	"""Deployed std_rule_detail.html must match ui/10. Rule-Detail/code.html verbatim."""
+
+	def test_deployed_rule_detail_matches_design_verbatim(self) -> None:
+		assert_verbatim_deploy(
+			design_source_path("10. Rule-Detail"),
+			deployed_asset_path("std_rule_detail.html"),
+		)
+
+	def test_rule_detail_preserves_title_and_key_regions(self) -> None:
+		deployed = read_text(deployed_asset_path("std_rule_detail.html"))
+		self.assertIn("<title>Rule Detail | STD Engine</title>", deployed)
+		self.assertIn("RULE-VAL-REF-01", deployed)
+		self.assertIn("Rule Definition", deployed)
+		self.assertIn("Execution History", deployed)
+
+	def test_rule_detail_preserves_button_click_script(self) -> None:
+		deployed = read_text(deployed_asset_path("std_rule_detail.html"))
+		self.assertIn("btn.addEventListener('click'", deployed)

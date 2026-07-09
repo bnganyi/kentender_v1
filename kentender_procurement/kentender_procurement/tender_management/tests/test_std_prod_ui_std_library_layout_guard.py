@@ -20,7 +20,7 @@ class TestStdProdUiStdLibraryLayoutGuard(UnitTestCase):
 
 	def test_deployed_library_matches_design_verbatim(self) -> None:
 		assert_verbatim_deploy(
-			design_source_path("1. std-lib"),
+			design_source_path("01. std-lib"),
 			deployed_asset_path("std_library.html"),
 		)
 

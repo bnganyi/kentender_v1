@@ -20,7 +20,7 @@ class TestStdProdUiStdVersionDetailLayoutGuard(UnitTestCase):
 
 	def test_deployed_version_detail_matches_design_verbatim(self) -> None:
 		assert_verbatim_deploy(
-			design_source_path("3. std-version-detail"),
+			design_source_path("03. std-version-detail"),
 			deployed_asset_path("std_version_detail.html"),
 		)
 

@@ -1,19 +1,28 @@
 # STD Engine Production UI — Implementation Tracker
 
-**Phase:** 2 — Minimal Desk wiring (STD Library)  
+**Phase:** 1b — Additional static screens (source doc, section/clause map, clause detail)  
 **Module pack:** `apps/kentender_v1/docs/std-prod-impl/ui/`
 
 ## Goal
 
-Phase 1: deploy three design `code.html` files as verbatim static assets. Phase 2: Desk iframe pages and minimal navigation between library and family detail — no backend APIs yet.
+Deploy twelve design `code.html` files as verbatim static assets (screens 07–12 added). Desk wiring deferred.
 
 ## Tracker
 
 | ID | Screen | Design source | Deployed asset | Layout guard | Playwright | Status | Evidence |
 |---|---|---|---|---|---|---|---|
-| UI-01 | STD Library | `ui/1. std-lib/code.html` | `std_library.html` | `test_std_prod_ui_std_library_layout_guard` | `static-screens.spec.ts` (library) | Done | Design refresh 2026-07-08; 3/3 unit; Playwright OK |
-| UI-02 | STD Family Detail | `ui/2. std-family-detail/code.html` | `std_family_detail.html` | `test_std_prod_ui_std_family_detail_layout_guard` | `static-screens.spec.ts` (family) | Done | Design refresh 2026-07-08; 3/3 unit; Playwright OK |
-| UI-03 | STD Version Detail | `ui/3. std-version-detail/code.html` | `std_version_detail.html` | `test_std_prod_ui_std_version_detail_layout_guard` | `static-screens.spec.ts` (version) | Done | Design refresh 2026-07-08; 3/3 unit; Playwright OK |
+| UI-01 | STD Library | `ui/01. std-lib/code.html` | `std_library.html` | `test_std_prod_ui_std_library_layout_guard` | `static-screens.spec.ts` (library) | Done | Design refresh 2026-07-08; 3/3 unit; Playwright OK |
+| UI-02 | STD Family Detail | `ui/02. std-family-detail/code.html` | `std_family_detail.html` | `test_std_prod_ui_std_family_detail_layout_guard` | `static-screens.spec.ts` (family) | Done | Design refresh 2026-07-08; 3/3 unit; Playwright OK |
+| UI-03 | STD Version Detail | `ui/03. std-version-detail/code.html` | `std_version_detail.html` | `test_std_prod_ui_std_version_detail_layout_guard` | `static-screens.spec.ts` (version) | Done | Design refresh 2026-07-08; 3/3 unit; Playwright OK |
+| UI-07 | Source Document & Traceability | `ui/04. source-doc/code.html` | `std_source_doc.html` | `test_std_prod_ui_std_source_doc_layout_guard` | `static-screens.spec.ts` (source doc) | Done | 3/3 unit; Playwright OK |
+| UI-08 | Section and Clause Map | `ui/05. section-clauses/code.html` | `std_section_clauses.html` | `test_std_prod_ui_std_section_clauses_layout_guard` | `static-screens.spec.ts` (section clauses) | Done | 3/3 unit; Playwright OK |
+| UI-09 | Clause Detail | `ui/06. clause-detail/code.html` | `std_clause_detail.html` | `test_std_prod_ui_std_clause_detail_layout_guard` | `static-screens.spec.ts` (clause detail) | Done | 3/3 unit; Playwright OK |
+| UI-10 | Parameter Dictionary | `ui/07. parameter-dictionary/code.html` | `std_parameter_dictionary.html` | `test_std_prod_ui_std_parameter_dictionary_layout_guard` | `static-screens.spec.ts` (parameter dictionary) | Done | 3/3 unit; Playwright OK |
+| UI-11 | Parameter Detail | `ui/08. parameter-detail/code.html` | `std_parameter_detail.html` | `test_std_prod_ui_std_parameter_detail_layout_guard` | `static-screens.spec.ts` (parameter detail) | Done | 3/3 unit; Playwright OK |
+| UI-12 | Rule Dictionary | `ui/09. Rule-Dictionary/code.html` | `std_rule_dictionary.html` | `test_std_prod_ui_std_rule_dictionary_layout_guard` | `static-screens.spec.ts` (rule dictionary) | Done | 3/3 unit; Playwright OK |
+| UI-13 | Rule Detail | `ui/10. Rule-Detail/code.html` | `std_rule_detail.html` | `test_std_prod_ui_std_rule_detail_layout_guard` | `static-screens.spec.ts` (rule detail) | Done | 3/3 unit; Playwright OK |
+| UI-14 | Form Schema Manager | `ui/11. Form Schema Manager/code.html` | `std_form_schema_manager.html` | `test_std_prod_ui_std_form_schema_manager_layout_guard` | `static-screens.spec.ts` (form schema manager) | Done | 3/3 unit; Playwright OK |
+| UI-15 | Form Detail & Field Builder | `ui/12. Form Detail & Field Builder/code.html` | `std_form_detail_field_builder.html` | `test_std_prod_ui_std_form_detail_field_builder_layout_guard` | `static-screens.spec.ts` (form detail) | Done | 3/3 unit; Playwright OK |
 | UI-00 | Preview index | — | `index.html` | — | `static-screens.spec.ts` (index) | Done | Playwright index smoke OK |
 | UI-04 | STD Library Desk wiring | — | Frappe Page `std-library` + iframe shell | `test_std_prod_std_library_desk_wiring` | `std-library-desk-wiring.spec.ts` | Done | 6/6 unit+integration; Playwright 4/4 OK |
 | UI-05 | Library Open → Family Detail | — | Frappe Page `std-family-detail` + iframe wiring | `test_std_prod_std_family_detail_desk_wiring` | `std-library-open-family-detail.spec.ts` | Done | 5/5 unit+integration; Playwright 1/1 OK |
@@ -47,3 +56,12 @@ Phase 1: deploy three design `code.html` files as verbatim static assets. Phase 
 - Library: `.../std_library.html`
 - Family detail: `.../std_family_detail.html`
 - Version detail: `.../std_version_detail.html`
+- Source document: `.../std_source_doc.html`
+- Section and clause map: `.../std_section_clauses.html`
+- Clause detail: `.../std_clause_detail.html`
+- Parameter dictionary: `.../std_parameter_dictionary.html`
+- Parameter detail: `.../std_parameter_detail.html`
+- Rule dictionary: `.../std_rule_dictionary.html`
+- Rule detail: `.../std_rule_detail.html`
+- Form schema manager: `.../std_form_schema_manager.html`
+- Form detail & field builder: `.../std_form_detail_field_builder.html`

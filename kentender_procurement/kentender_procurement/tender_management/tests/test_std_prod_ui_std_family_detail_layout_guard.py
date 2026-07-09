@@ -20,7 +20,7 @@ class TestStdProdUiStdFamilyDetailLayoutGuard(UnitTestCase):
 
 	def test_deployed_family_detail_matches_design_verbatim(self) -> None:
 		assert_verbatim_deploy(
-			design_source_path("2. std-family-detail"),
+			design_source_path("02. std-family-detail"),
 			deployed_asset_path("std_family_detail.html"),
 		)
 

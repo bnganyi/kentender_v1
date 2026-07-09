@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Rule Detail | STD Engine</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Public Sans & JetBrains Mono -->
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body {
+            font-family: 'Public Sans', sans-serif;
+            background-color: #f7f9fb;
+        }
+        .data-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Custom scrollbar for high-density feel */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c3c6d1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #737783;
+        }
+    </style>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#e2e2e8",
+                        "on-secondary-container": "#004c7c",
+                        "inverse-on-surface": "#f1f0f6",
+                        "on-error-container": "#93000a",
+                        "surface-container-high": "#e8e7ed",
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#395e9b",
+                        "on-primary-container": "#7b9ee0",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "secondary-container": "#7bbeff",
+                        "primary-container": "#00346f",
+                        "primary": "#001f48",
+                        "tertiary": "#26364b",
+                        "on-primary-fixed-variant": "#1d4681",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-highest": "#e2e2e8",
+                        "outline": "#737783",
+                        "status-reserved": "#F59E0B",
+                        "secondary": "#01629d",
+                        "surface-container": "#eeedf3",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#2f3035",
+                        "status-exhausted": "#EF4444",
+                        "status-available": "#10B981",
+                        "on-surface": "#1a1b20",
+                        "on-secondary-fixed": "#001d34",
+                        "primary-fixed": "#d7e2ff",
+                        "on-primary": "#ffffff",
+                        "outline-variant": "#c3c6d1",
+                        "inverse-primary": "#abc7ff",
+                        "secondary-fixed": "#cfe5ff",
+                        "on-tertiary-fixed-variant": "#38485e",
+                        "tertiary-fixed": "#d3e4ff",
+                        "surface-dim": "#dad9df",
+                        "background": "#f9f9fe",
+                        "on-surface-variant": "#434750",
+                        "border-subtle": "#E2E8F0",
+                        "on-secondary": "#ffffff",
+                        "on-background": "#1a1b20",
+                        "data-block-bg": "#FFFFFF",
+                        "tertiary-container": "#26364b",
+                        "primary-fixed-dim": "#abc7ff",
+                        "surface-bright": "#f9f9fe",
+                        "status-committed": "#6366F1",
+                        "surface-container-low": "#f4f3f9",
+                        "secondary-fixed-dim": "#99cbff",
+                        "on-tertiary-container": "#8f9fb8",
+                        "on-primary-fixed": "#001b3f",
+                        "error-container": "#ffdad6",
+                        "surface": "#f7f9fb",
+                        "tertiary-fixed-dim": "#b7c8e2",
+                        "on-secondary-fixed-variant": "#004a78",
+                        "error": "#ba1a1a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "section-gap": "24px",
+                        "card-padding": "20px",
+                        "gutter": "12px",
+                        "container-padding": "16px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Public Sans"],
+                        "headline-md": ["Public Sans"],
+                        "body-lg": ["Public Sans"],
+                        "label-caps": ["Public Sans"],
+                        "data-mono": ["JetBrains Mono"],
+                        "headline-sm": ["Public Sans"],
+                        "headline-lg": ["Public Sans"]
+                    },
+                    "fontSize": {
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-md": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                        "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "headline-lg": ["28px", {"lineHeight": "36px", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface">
+<!-- TopNavBar -->
+<header class="bg-surface-container-lowest flex justify-between items-center w-full px-section-gap h-16 border-b border-outline-variant fixed top-0 z-50"><div class="flex items-center gap-6"><div class="font-headline-sm text-headline-sm font-bold text-primary">Rule Detail</div></div><div class="flex items-center gap-4"><div class="relative mr-2"><input class="bg-surface-container-low border border-outline-variant rounded-full px-4 py-1.5 text-body-md w-64 focus:outline-none focus:border-primary" placeholder="Search rules, objects, or IDs..." type="text"/></div><button class="p-2 hover:bg-surface-container-low transition-colors rounded-full text-on-surface-variant"><span class="material-symbols-outlined">notifications</span></button><button class="p-2 hover:bg-surface-container-low transition-colors rounded-full text-on-surface-variant"><span class="material-symbols-outlined">help</span></button><button class="p-2 hover:bg-surface-container-low transition-colors rounded-full text-on-surface-variant"><span class="material-symbols-outlined">settings</span></button><div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-xs border border-outline-variant">AD</div></div></header>
+<main class="pt-24 pb-12 px-section-gap max-w-[1440px] mx-auto">
+<!-- Breadcrumbs -->
+<nav class="flex items-center gap-2 mb-6 text-on-surface-variant font-body-md text-body-md">
+<a class="hover:text-primary underline decoration-transparent hover:decoration-primary transition-all" href="#">STD Library</a>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<a class="hover:text-primary transition-colors" href="#">KE-PPRA-IT-2024-01</a>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<a class="hover:text-primary transition-colors" href="#">Rule Dictionary</a>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="font-semibold text-on-surface">RULE-VAL-REF-01</span>
+</nav>
+<!-- Page Header & Action Bar -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+<div class="space-y-2">
+<h1 class="text-headline-lg font-headline-lg text-primary">String Length Check (RULE-VAL-REF-01)</h1>
+<div class="flex flex-wrap gap-3 items-center"><div class="flex gap-3 mr-4 pr-4 border-r border-outline-variant"><div class="flex flex-col"><span class="text-[10px] font-label-caps text-outline uppercase">Family</span><span class="text-body-md font-semibold">KE-PPRA-IT</span></div><div class="flex flex-col"><span class="text-[10px] font-label-caps text-outline uppercase">Version</span><span class="text-body-md font-semibold">2022-04</span></div><div class="flex flex-col"><span class="text-[10px] font-label-caps text-outline uppercase">Package ID</span><span class="text-body-md font-semibold">KE-PPRA-IT-2022-04</span></div><div class="flex flex-col"><span class="text-[10px] font-label-caps text-outline uppercase">Lifecycle</span><span class="text-status-available font-bold">ACTIVE</span></div></div>
+<span class="flex items-center gap-1.5 px-2.5 py-1 bg-surface-container-high text-on-surface-variant rounded-full text-label-caps font-label-caps"><span class="material-symbols-outlined text-[14px]">rule</span> Rule Type: Validation</span>
+<span class="flex items-center gap-1.5 px-2.5 py-1 bg-error-container text-on-error-container rounded-full text-label-caps font-label-caps">
+<span class="material-symbols-outlined text-[14px]">block</span> Severity: BLOCKER
+                    </span>
+<span class="flex items-center gap-1.5 px-2.5 py-1 bg-status-available/10 text-status-available rounded-full text-label-caps font-label-caps border border-status-available/20">
+<span class="material-symbols-outlined text-[14px]" style='font-variation-settings: "FILL" 1;'>check_circle</span> Status: ACTIVE
+                    </span>
+</div>
+</div>
+<div class="flex flex-wrap gap-2"><button class="bg-surface-container-lowest border border-outline-variant text-primary px-4 py-2 rounded font-label-caps text-[11px] hover:bg-surface-container-low transition-all flex items-center gap-2"><span class="material-symbols-outlined text-[18px]">code</span> View Source</button><button class="bg-surface-container-lowest border border-outline-variant text-primary px-4 py-2 rounded font-label-caps text-[11px] hover:bg-surface-container-low transition-all flex items-center gap-2"><span class="material-symbols-outlined text-[18px]">play_arrow</span> Run Test</button><button class="bg-surface-container-lowest border border-outline-variant text-primary px-4 py-2 rounded font-label-caps text-[11px] hover:bg-surface-container-low transition-all flex items-center gap-2"><span class="material-symbols-outlined text-[18px]">compare_arrows</span> Compare Versions</button><button class="bg-primary text-white px-4 py-2 rounded font-label-caps text-[11px] hover:bg-primary/90 transition-all flex items-center gap-2 shadow-sm"><span class="material-symbols-outlined text-[18px]">edit_square</span> Create Draft Change Request</button></div>
+</div>
+<!-- Read Only Banner -->
+<div class="bg-surface-container-low border border-outline-variant p-4 rounded-lg flex items-center gap-3 mb-8 text-on-surface-variant font-body-md text-body-md">
+<span class="material-symbols-outlined text-primary">info</span>
+<span class=""><strong>ACTIVE VERSION — READ ONLY.</strong> Changes to this rule are locked in the current STD context. Amendments require the creation of a new draft version.</span>
+</div>
+<!-- Content Grid (Bento Style) -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Rule Definition -->
+<div class="md:col-span-8 bg-white border border-border-subtle rounded-lg overflow-hidden shadow-sm">
+<div class="bg-surface-container-low px-container-padding py-3 border-b border-border-subtle flex justify-between items-center">
+<h3 class="font-label-caps text-label-caps text-on-surface">Rule Definition</h3>
+<span class="text-[10px] bg-primary text-white px-2 py-0.5 rounded font-bold">V 1.0.4</span>
+</div>
+<div class="p-card-padding grid grid-cols-2 gap-x-gutter gap-y-6">
+<div class="col-span-2 md:col-span-1">
+<label class="block text-label-caps font-label-caps text-on-surface-variant mb-1">Rule Name</label>
+<p class="font-body-md text-body-md text-on-surface">String Length Validation - Tender Reference</p>
+</div>
+<div class="col-span-2 md:col-span-1">
+<label class="block text-label-caps font-label-caps text-on-surface-variant mb-1">Key identifier</label>
+<p class="font-data-mono text-data-mono text-primary">RULE-VAL-REF-01</p>
+</div>
+<div class="col-span-2">
+<label class="block text-label-caps font-label-caps text-on-surface-variant mb-1">Description</label>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed">Ensures that the tender reference ID adheres to the mandatory Kenyan procurement standard for IT projects, specifically requiring a length between 12 and 32 characters to accommodate regional and agency identifiers.</p>
+</div>
+<div class="col-span-2">
+<label class="block text-label-caps font-label-caps text-on-surface-variant mb-1">Logic Expression</label>
+<div class="bg-primary-container/10 p-4 rounded border border-primary-container/20 font-data-mono text-data-mono text-on-primary-fixed-variant overflow-x-auto">
+                            assert(length(tender_ref_id) &gt;= 12 &amp;&amp; length(tender_ref_id) &lt;= 32);
+                        </div>
+</div>
+<div class="col-span-2">
+<label class="block text-label-caps font-label-caps text-on-surface-variant mb-1">Error Message</label>
+<p class="font-body-md text-body-md text-error italic">"The Tender Reference ID must be between 12 and 32 characters in length."</p>
+</div>
+<div class="col-span-2"><label class="block text-label-caps font-label-caps text-on-surface-variant mb-1">Plain-Language Explanation</label><p class="font-body-md text-body-md text-on-surface leading-relaxed">Ensures that the tender reference ID adheres to the mandatory Kenyan procurement standard for IT projects, specifically requiring a length between 12 and 32 characters to accommodate regional and agency identifiers.</p></div><div class="col-span-2"><label class="block text-label-caps font-label-caps text-on-surface-variant mb-1">Suggested Fix</label><div class="bg-status-available/10 p-3 rounded border border-status-available/20 text-body-md text-on-surface"><p>The user must provide a tender reference ID that matches the IT-specific naming convention (e.g., <code class="font-data-mono text-primary">KE-PPRA-IT-XXXX</code>).</p></div></div></div>
+</div>
+<!-- Trigger & Scope -->
+<div class="md:col-span-4 bg-white border border-border-subtle rounded-lg overflow-hidden shadow-sm">
+<div class="bg-surface-container-low px-container-padding py-3 border-b border-border-subtle">
+<h3 class="font-label-caps text-label-caps text-on-surface">Trigger &amp; Scope</h3>
+</div>
+<div class="p-card-padding space-y-6">
+<div>
+<label class="block text-label-caps font-label-caps text-on-surface-variant mb-1">Trigger Stage</label>
+<span class="inline-flex items-center px-2 py-1 bg-secondary-fixed text-on-secondary-fixed rounded text-xs font-bold uppercase tracking-wider">VALIDATION_RUN</span>
+</div>
+<div>
+<label class="block text-label-caps font-label-caps text-on-surface-variant mb-1">Scope</label>
+<span class="inline-flex items-center px-2 py-1 bg-tertiary-fixed text-on-tertiary-fixed rounded text-xs font-bold uppercase tracking-wider">ITT (Instructions To Tenderers)</span>
+</div>
+<div><label class="block text-label-caps font-label-caps text-on-surface-variant mb-2">Affected Objects</label><div class="space-y-2"><div class="flex justify-between items-center p-2 bg-surface-container-low rounded"><span class="text-[11px] font-label-caps text-outline">Parameter</span><span class="font-data-mono text-xs text-secondary">tender_ref_id</span></div><div class="flex justify-between items-center p-2 bg-surface-container-low rounded"><span class="text-[11px] font-label-caps text-outline">Form</span><span class="text-xs">ITT Section 1</span></div><div class="flex justify-between items-center p-2 bg-surface-container-low rounded"><span class="text-[11px] font-label-caps text-outline">Render Block</span><span class="text-xs">ITT_DOC_GEN</span></div><div class="flex justify-between items-center p-2 bg-surface-container-low rounded"><span class="text-[11px] font-label-caps text-outline">Publication Gate</span><span class="text-xs font-bold text-status-available">TRUE</span></div></div></div>
+<div class="pt-4 border-t border-outline-variant">
+<label class="block text-label-caps font-label-caps text-on-surface-variant mb-1">Execution Context</label>
+<p class="text-body-md font-body-md text-on-surface">Synchronous, Pre-Submission</p>
+</div>
+</div>
+</div>
+<!-- Source Traceability -->
+<div class="md:col-span-12 bg-white border border-border-subtle rounded-lg overflow-hidden shadow-sm">
+<div class="bg-surface-container-low px-container-padding py-3 border-b border-border-subtle">
+<h3 class="font-label-caps text-label-caps text-on-surface">Source Traceability</h3>
+</div>
+<div class="p-card-padding grid grid-cols-1 md:grid-cols-4 gap-gutter">
+<div>
+<label class="block text-label-caps font-label-caps text-on-surface-variant mb-1">Source Document</label>
+<div class="flex items-center gap-2 text-primary font-body-md font-semibold"><span class="material-symbols-outlined">menu_book</span> KE-PPRA-IT-2024-01 / Official IT STD Source PDF</div>
+</div>
+<div>
+<label class="block text-label-caps font-label-caps text-on-surface-variant mb-1">Legal Basis</label>
+<p class="text-body-md font-body-md">PPD Act Sec 74, Sub (b)</p>
+</div>
+<div>
+<label class="block text-label-caps font-label-caps text-on-surface-variant mb-1">Paragraph/Anchor</label>
+<p class="text-body-md font-body-md text-on-surface">Pg 42, Para 3, Line 12</p>
+</div>
+<div>
+<label class="block text-label-caps font-label-caps text-on-surface-variant mb-1">Text Hash (SHA-256)</label>
+<p class="font-data-mono text-[11px] truncate bg-surface-container-low px-2 py-1 rounded" title="0x7f83b21c9...e042">0x7f83b21c9a1d5e042...88df</p>
+</div>
+</div>
+</div>
+<!-- Test Cases Table -->
+<div class="md:col-span-12 bg-white border border-border-subtle rounded-lg overflow-hidden shadow-sm">
+<div class="bg-surface-container-low px-container-padding py-3 border-b border-border-subtle flex justify-between items-center">
+<h3 class="font-label-caps text-label-caps text-on-surface">Verification &amp; Test Cases</h3>
+<div class="flex items-center gap-4 text-[12px] font-semibold text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-status-available"></span> 4 Passed</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-status-exhausted"></span> 0 Failed</span>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container font-label-caps text-label-caps text-on-surface-variant border-b border-outline-variant">
+<tr>
+<th class="px-container-padding py-3">Case ID</th>
+<th class="px-container-padding py-3">Input Data</th>
+<th class="px-container-padding py-3">Expected Result</th>
+<th class="px-container-padding py-3">Actual Result</th>
+<th class="px-container-padding py-3">Coverage Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant font-body-md text-body-md">
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-container-padding py-3 font-data-mono">TC-01</td>
+<td class="px-container-padding py-3 font-data-mono text-on-surface-variant">"KE-PPRA-IT-01"</td>
+<td class="px-container-padding py-3 text-status-available">PASS</td>
+<td class="px-container-padding py-3 text-status-available">PASS</td>
+<td class="px-container-padding py-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-status-available/10 text-status-available rounded text-[11px] font-bold">COVERED</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-container-padding py-3 font-data-mono">TC-02</td>
+<td class="px-container-padding py-3 font-data-mono text-on-surface-variant">"SHORT"</td>
+<td class="px-container-padding py-3 text-error">FAIL (L:5)</td>
+<td class="px-container-padding py-3 text-error">FAIL (L:5)</td>
+<td class="px-container-padding py-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-status-available/10 text-status-available rounded text-[11px] font-bold">COVERED</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-container-padding py-3 font-data-mono">TC-03</td>
+<td class="px-container-padding py-3 font-data-mono text-on-surface-variant">"VERY-LONG-TENDER-ID-THAT-EXCEEDS-LIMIT"</td>
+<td class="px-container-padding py-3 text-error">FAIL (L:38)</td>
+<td class="px-container-padding py-3 text-error">FAIL (L:38)</td>
+<td class="px-container-padding py-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-status-available/10 text-status-available rounded text-[11px] font-bold">COVERED</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Three-part footer pattern -->
+<div class="bg-surface-container-low px-container-padding py-4 border-t border-border-subtle grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+<div class="text-label-caps font-label-caps text-on-surface-variant flex items-center gap-4">
+<span class="">Showing 3 of 3 Test Cases</span>
+</div>
+<div class="flex justify-center">
+<div class="flex gap-1">
+<button class="w-8 h-8 flex items-center justify-center border border-outline-variant rounded hover:bg-white disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center bg-primary text-white rounded font-label-caps text-label-caps">1</button>
+<button class="w-8 h-8 flex items-center justify-center border border-outline-variant rounded hover:bg-white disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+<div class="flex justify-end items-center gap-4">
+<span class="text-label-caps font-label-caps text-on-surface-variant">Last Test Run: 2024-11-05 09:12 AM</span>
+<button class="text-primary hover:underline font-label-caps text-label-caps flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">download</span> Export Report
+                         </button>
+</div>
+</div>
+</div>
+<!-- Audit History Timeline -->
+<div class="md:col-span-12 bg-white border border-border-subtle rounded-lg overflow-hidden shadow-sm"><div class="bg-surface-container-low px-container-padding py-3 border-b border-border-subtle flex justify-between items-center"><h3 class="font-label-caps text-label-caps text-on-surface">Execution History</h3><button class="text-primary text-[11px] font-label-caps flex items-center gap-1 hover:underline"><span class="material-symbols-outlined text-[16px]">history</span> View Full Audit Trail</button></div><div class="overflow-x-auto"><table class="w-full text-left border-collapse"><thead class="bg-surface-container font-label-caps text-label-caps text-on-surface-variant border-b border-outline-variant"><tr class="text-[11px]"><th class="px-container-padding py-2">Run ID</th><th class="px-container-padding py-2">Result</th><th class="px-container-padding py-2">Actor</th><th class="px-container-padding py-2">Timestamp</th><th class="px-container-padding py-2">Audit Hash</th></tr></thead><tbody class="divide-y divide-outline-variant font-body-md text-body-md"><tr class="hover:bg-surface-container-low transition-colors"><td class="px-container-padding py-3 font-data-mono text-primary">RUN-8842</td><td class="px-container-padding py-3"><span class="text-status-available font-bold">PASS</span></td><td class="px-container-padding py-3">SYSTEM (CRON)</td><td class="px-container-padding py-3">2024-11-05 09:12 AM</td><td class="px-container-padding py-3 font-data-mono text-[10px] text-outline">#EV-992-AB</td></tr><tr class="hover:bg-surface-container-low transition-colors"><td class="px-container-padding py-3 font-data-mono text-primary">RUN-8791</td><td class="px-container-padding py-3"><span class="text-status-available font-bold">PASS</span></td><td class="px-container-padding py-3">ADMIN-001</td><td class="px-container-padding py-3">2024-11-04 02:30 PM</td><td class="px-container-padding py-3 font-data-mono text-[10px] text-outline">#EV-881-XY</td></tr></tbody></table></div></div>
+</div>
+</main>
+<!-- Footer -->
+<!-- Simple Interactivity for Demo -->
+<script>
+        document.querySelectorAll('button:not([disabled])').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const label = btn.innerText.split('\n').pop() || 'Action';
+                console.log(`Action triggered: ${label.trim()}`);
+                // Visual feedback
+                const originalBg = btn.style.backgroundColor;
+                btn.classList.add('opacity-50');
+                setTimeout(() => btn.classList.remove('opacity-50'), 150);
+            });
+        });
+    </script>
+</body></html>
