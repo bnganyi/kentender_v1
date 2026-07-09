@@ -1,0 +1,356 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Requirement Schema Manager - KenTender Bureau</title>
+<!-- Google Fonts: Public Sans for UI, JetBrains Mono for data -->
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-bright": "#f9f9fe",
+                    "surface-container": "#eceef0",
+                    "surface-container-highest": "#e2e2e8",
+                    "secondary-fixed": "#cfe5ff",
+                    "on-tertiary-fixed-variant": "#38485e",
+                    "surface-container-high": "#e8e7ed",
+                    "background": "#f9f9fe",
+                    "on-secondary-container": "#004c7c",
+                    "surface-variant": "#e2e2e8",
+                    "on-surface": "#1a1b20",
+                    "on-primary": "#ffffff",
+                    "surface-tint": "#395e9b",
+                    "status-available": "#10B981",
+                    "primary-container": "#00346f",
+                    "inverse-surface": "#2f3035",
+                    "on-tertiary": "#ffffff",
+                    "status-exhausted": "#EF4444",
+                    "secondary-container": "#7bbeff",
+                    "border-subtle": "#E2E8F0",
+                    "primary-fixed-dim": "#abc7ff",
+                    "error": "#ba1a1a",
+                    "status-committed": "#6366F1",
+                    "surface-container-low": "#f4f3f9",
+                    "on-tertiary-container": "#8f9fb8",
+                    "inverse-on-surface": "#f1f0f6",
+                    "on-surface-variant": "#434750",
+                    "primary": "#001f48",
+                    "outline": "#737783",
+                    "on-error": "#ffffff",
+                    "outline-variant": "#c3c6d1",
+                    "on-secondary": "#ffffff",
+                    "secondary-fixed-dim": "#99cbff",
+                    "on-secondary-fixed-variant": "#004a78",
+                    "surface-dim": "#dad9df",
+                    "primary-fixed": "#d7e2ff",
+                    "surface": "#f7f9fb",
+                    "tertiary": "#26364b",
+                    "on-primary-container": "#7b9ee0",
+                    "tertiary-fixed-dim": "#b7c8e2",
+                    "on-secondary-fixed": "#001d34",
+                    "on-primary-fixed-variant": "#1d4681",
+                    "error-container": "#ffdad6",
+                    "data-block-bg": "#FFFFFF",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-container": "#26364b",
+                    "secondary": "#01629d",
+                    "inverse-primary": "#abc7ff",
+                    "on-primary-fixed": "#001b3f",
+                    "status-reserved": "#F59E0B",
+                    "tertiary-fixed": "#d3e4ff",
+                    "on-tertiary-fixed": "#0b1c30",
+                    "on-background": "#1a1b20",
+                    "on-error-container": "#93000a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "unit": "4px",
+                    "section-gap": "24px",
+                    "gutter": "12px",
+                    "container-padding": "16px",
+                    "card-padding": "20px"
+            },
+            "fontFamily": {
+                    "label-caps": ["Public Sans"],
+                    "body-md": ["Public Sans"],
+                    "headline-lg": ["Public Sans"],
+                    "headline-sm": ["Public Sans"],
+                    "data-mono": ["JetBrains Mono"],
+                    "headline-md": ["Public Sans"],
+                    "body-lg": ["Public Sans"]
+            },
+            "fontSize": {
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-lg": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                    "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                    "headline-md": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Public Sans', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #c3c6d1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-surface-bright text-on-surface" style="opacity: 1; transition: opacity 0.5s ease-out;">
+<!-- Top Navigation Bar -->
+<header class="bg-surface-container-lowest dark:bg-surface-container-lowest border-b border-subtle dark:border-outline-variant flex justify-between items-center w-full px-section-gap h-16 sticky top-0 z-50">
+<div class="flex items-center gap-gutter"><div class="flex flex-col"></div>
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">KenTender STD Engine</span>
+<div class="h-6 w-[1px] bg-outline-variant mx-2"></div>
+<h1 class="font-headline-sm text-headline-sm text-on-surface">Requirement Schema Manager</h1>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center bg-surface-container-low px-3 py-1.5 rounded border border-outline-variant">
+<span class="material-symbols-outlined text-outline mr-2 text-[20px]">search</span>
+<input class="bg-transparent border-none focus:ring-0 p-0 text-body-md w-48" placeholder="Search schema..." type="text">
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 hover:bg-surface-container-low transition-colors rounded text-on-surface-variant">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 hover:bg-surface-container-low transition-colors rounded text-on-surface-variant">
+<span class="material-symbols-outlined">history</span>
+</button>
+<button class="p-2 hover:bg-surface-container-low transition-colors rounded text-on-surface-variant">
+<span class="material-symbols-outlined">help</span>
+</button>
+<button class="p-2 hover:bg-surface-container-low transition-colors rounded text-on-surface-variant">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<div class="ml-2 flex items-center gap-3 pl-4 border-l border-outline-variant">
+<div class="text-right">
+<p class="font-label-caps text-label-caps text-on-surface">Administrator</p>
+<p class="text-[10px] text-on-surface-variant font-medium">SYS_ADMIN_01</p>
+</div>
+<div class="w-8 h-8 rounded bg-primary text-on-primary flex items-center justify-center font-bold text-xs">AD</div>
+</div>
+</div>
+</header><div class="bg-surface-container-low border-b border-subtle px-section-gap py-2 flex flex-wrap gap-6 items-center"><div class="flex gap-2 items-center"><span class="text-[10px] font-label-caps text-on-surface-variant uppercase">Family:</span><span class="text-xs font-bold text-on-surface">KE-PPRA-IT</span></div><div class="flex gap-2 items-center"><span class="text-[10px] font-label-caps text-on-surface-variant uppercase">Version:</span><span class="text-xs font-bold text-on-surface">2024-04</span></div><div class="flex gap-2 items-center"><span class="text-[10px] font-label-caps text-on-surface-variant uppercase">Package:</span><span class="text-xs font-bold text-on-surface">KE-PPRA-IT-2024-04</span></div><div class="flex gap-2 items-center"><span class="text-[10px] font-label-caps text-on-surface-variant uppercase">Lifecycle:</span><span class="bg-status-available/10 text-status-available px-2 py-0.5 rounded text-[10px] font-bold">ACTIVE</span></div></div>
+<!-- System Banner -->
+<div class="bg-primary text-on-primary px-section-gap py-2 flex items-center justify-center gap-2 text-center">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: &quot;FILL&quot; 1;">lock</span>
+<span class="font-label-caps text-label-caps tracking-widest">ACTIVE VERSION — READ ONLY</span>
+<p class="text-[12px] opacity-80 font-medium">ACTIVE VERSION — READ ONLY. Changes require a new draft version, review, approval, and supersession.</p>
+</div>
+<main class="max-w-[1600px] mx-auto px-section-gap py-section-gap space-y-section-gap">
+<!-- KPI Metrics Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<div class="bg-surface-container-lowest border border-subtle p-card-padding rounded shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-2">
+<p class="font-label-caps text-label-caps text-on-surface-variant">Total Categories</p>
+<span class="material-symbols-outlined text-primary">category</span>
+</div>
+<div class="flex items-baseline gap-2">
+<p class="font-headline-lg text-headline-lg text-primary">12</p>
+<span class="text-status-available text-xs font-bold flex items-center">
+<span class="material-symbols-outlined text-[14px]">arrow_upward</span> 2 new
+                    </span>
+</div>
+<p class="text-xs text-on-surface-variant mt-2">Active in current procurement cycle</p>
+</div>
+<div class="bg-surface-container-lowest border border-subtle p-card-padding rounded shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-2">
+<p class="font-label-caps text-label-caps text-on-surface-variant">Compliance Types</p>
+<span class="material-symbols-outlined text-primary">verified_user</span>
+</div>
+<div class="flex items-baseline gap-2">
+<p class="font-headline-lg text-headline-lg text-primary">08</p>
+<p class="text-xs text-on-surface-variant">Framework Defined</p>
+</div>
+<p class="text-xs text-on-surface-variant mt-2">Global regulatory standards mapped</p>
+</div>
+<div class="bg-surface-container-lowest border border-subtle p-card-padding rounded shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-2">
+<p class="font-label-caps text-label-caps text-on-surface-variant">Evaluation Links</p>
+<span class="material-symbols-outlined text-primary">link</span>
+</div>
+<div class="flex items-baseline gap-2">
+<p class="font-headline-lg text-headline-lg text-primary">84%</p>
+<span class="text-status-committed text-xs font-bold">LOCKED</span>
+</div>
+<p class="text-xs text-on-surface-variant mt-2">Scoring criteria associations complete</p>
+</div>
+<div class="bg-surface-container-lowest border border-subtle p-card-padding rounded shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-2">
+<p class="font-label-caps text-label-caps text-on-surface-variant">Contract Bindings</p>
+<span class="material-symbols-outlined text-primary">description</span>
+</div>
+<div class="flex items-baseline gap-2">
+<p class="font-headline-lg text-headline-lg text-primary">15</p>
+<p class="text-xs text-on-surface-variant">Clauses</p>
+</div>
+<p class="text-xs text-on-surface-variant mt-2">Auto-generated contract sections</p>
+</div>
+</section>
+<!-- Main Data Table -->
+<section class="bg-surface-container-lowest border border-subtle rounded overflow-hidden">
+<div class="bg-surface-container-low px-container-padding py-3 border-b border-subtle flex justify-between items-center">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Requirement Categories</h3>
+<div class="flex gap-2"><div class="flex items-center bg-surface-container-lowest px-3 py-1 rounded border border-outline-variant mr-2"><span class="material-symbols-outlined text-outline text-[18px] mr-2">search</span><input class="bg-transparent border-none focus:ring-0 p-0 text-xs w-64" placeholder="Search categories, types, anchors..." type="text"></div>
+<button class="bg-surface-container-lowest border border-outline-variant px-3 py-1.5 rounded text-label-caps font-label-caps text-primary hover:bg-surface-container-high transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">filter_list</span> Filter
+                    </button>
+<button class="bg-surface-container-lowest border border-outline-variant px-3 py-1.5 rounded text-label-caps font-label-caps text-primary hover:bg-surface-container-high transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">download</span> Export
+                    </button>
+</div>
+</div>
+<div class="overflow-x-auto custom-scrollbar">
+<table class="w-full border-collapse">
+<thead><tr class="bg-surface-container text-on-surface-variant border-b border-outline-variant"><th class="px-container-padding py-3 text-left font-label-caps text-label-caps uppercase">Category</th><th class="px-container-padding py-3 text-left font-label-caps text-label-caps uppercase">Requirement Class</th><th class="px-container-padding py-3 text-left font-label-caps text-label-caps uppercase">Requirement Type</th><th class="px-container-padding py-3 text-left font-label-caps text-label-caps uppercase text-center">Required / Optional</th><th class="px-container-padding py-3 text-left font-label-caps text-label-caps uppercase">Response Required</th><th class="px-container-padding py-3 text-left font-label-caps text-label-caps uppercase">Compliance Response Type</th><th class="px-container-padding py-3 text-left font-label-caps text-label-caps uppercase">Evaluation Linkage</th><th class="px-container-padding py-3 text-left font-label-caps text-label-caps uppercase">Contract Carry-Forward</th><th class="px-container-padding py-3 text-left font-label-caps text-label-caps uppercase">Source Anchor</th><th class="px-container-padding py-3 text-left font-label-caps text-label-caps uppercase">Validation Status</th><th class="px-container-padding py-3 text-right font-label-caps text-label-caps uppercase">Actions</th></tr></thead>
+<tbody class="divide-y divide-outline-variant"><tr class="hover:bg-surface-container-low transition-colors group"><td class="px-container-padding py-4 font-medium text-body-md text-on-surface">Functional Requirements</td><td class="px-container-padding py-4"><span class="bg-surface-container px-2 py-0.5 rounded text-[10px] font-bold">TECHNICAL_REQUIREMENT</span></td><td class="px-container-padding py-4 text-body-md">Technical Spec</td><td class="px-container-padding py-4 text-center"><span class="bg-primary-fixed text-on-primary-fixed-variant px-2 py-0.5 rounded-full text-[11px] font-bold">REQUIRED</span></td><td class="px-container-padding py-4 text-body-md">Narrative + Doc</td><td class="px-container-padding py-4 text-body-md">FILE</td><td class="px-container-padding py-4 font-data-mono text-data-mono text-secondary">EVAL-001-TECH</td><td class="px-container-padding py-4 text-center"><span class="material-symbols-outlined text-status-available" style="font-variation-settings: &quot;FILL&quot; 1;">check_circle</span></td><td class="px-container-padding py-4 text-body-md text-on-surface-variant">APPX_B_SEC4</td><td class="px-container-padding py-4"><div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-status-available"></span><span class="text-body-md">VALID</span></div></td><td class="px-container-padding py-4 text-right"><button class="text-primary font-label-caps text-[11px] hover:underline">VIEW SOURCE</button></td></tr><tr class="hover:bg-surface-container-low transition-colors group"><td class="px-container-padding py-4 font-medium text-body-md text-on-surface">Technology Specifications</td><td class="px-container-padding py-4"><span class="bg-surface-container px-2 py-0.5 rounded text-[10px] font-bold">TECHNICAL_REQUIREMENT</span></td><td class="px-container-padding py-4 text-body-md">Hardware Spec</td><td class="px-container-padding py-4 text-center"><span class="bg-primary-fixed text-on-primary-fixed-variant px-2 py-0.5 rounded-full text-[11px] font-bold">REQUIRED</span></td><td class="px-container-padding py-4 text-body-md">Compliance Matrix</td><td class="px-container-padding py-4 text-body-md">COMPLIANCE_MATRIX</td><td class="px-container-padding py-4 font-data-mono text-data-mono text-secondary">EVAL-015-HW</td><td class="px-container-padding py-4 text-center"><span class="material-symbols-outlined text-status-available" style="font-variation-settings: &quot;FILL&quot; 1;">check_circle</span></td><td class="px-container-padding py-4 text-body-md text-on-surface-variant">SEC_5_P12</td><td class="px-container-padding py-4"><div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-status-reserved"></span><span class="text-body-md">WARNING</span></div></td><td class="px-container-padding py-4 text-right"><button class="text-primary font-label-caps text-[11px] hover:underline">VIEW SOURCE</button></td></tr></tbody>
+</table>
+</div>
+<div class="bg-surface-container-low px-container-padding py-3 flex flex-col md:flex-row justify-between items-center gap-4">
+<div class="text-body-md text-on-surface-variant">
+                    Showing 1-9 of 09 records
+                </div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 text-body-md text-on-surface-variant">
+<span class="">Rows per page:</span>
+<select class="bg-transparent border-none focus:ring-0 text-on-surface font-bold">
+<option>10</option>
+<option>25</option>
+<option>50</option>
+</select>
+</div>
+<div class="flex gap-1">
+<button class="p-1 rounded hover:bg-surface-container-high transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<div class="flex items-center justify-center w-8 h-8 rounded bg-primary text-on-primary text-sm font-bold">1</div>
+<button class="p-1 rounded hover:bg-surface-container-high transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Summary Panels -->
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-section-gap">
+<!-- Evaluation Linkage Model -->
+<div class="bg-surface-container-lowest border border-subtle rounded flex flex-col h-full">
+<div class="bg-surface-container-low px-container-padding py-3 border-b border-subtle flex justify-between items-center">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Evaluation Linkage Model</h3>
+<button class="text-primary hover:underline font-label-caps text-label-caps">VIEW MAP</button>
+</div>
+<div class="p-card-padding flex-1">
+<div class="space-y-4">
+<div class="flex items-start gap-3 p-3 bg-surface-container-low rounded border-l-4 border-primary">
+<span class="material-symbols-outlined text-primary mt-0.5">insights</span>
+<div>
+<p class="font-bold text-body-md text-on-surface">Scoring Distribution</p>
+<p class="text-xs text-on-surface-variant">Current weightings: Technical (60%), Financial (30%), ESG (10%)</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="border border-outline-variant p-3 rounded">
+<p class="font-label-caps text-[10px] text-on-surface-variant uppercase mb-1">Directly Linked</p>
+<p class="font-headline-md text-headline-md text-primary">07 <span class="text-sm font-normal text-on-surface-variant">Categories</span></p>
+</div>
+<div class="border border-outline-variant p-3 rounded">
+<p class="font-label-caps text-[10px] text-on-surface-variant uppercase mb-1">Pass/Fail Only</p>
+<p class="font-headline-md text-headline-md text-primary">02 <span class="text-sm font-normal text-on-surface-variant">Categories</span></p>
+</div>
+</div>
+<div class="text-xs text-on-surface-variant italic">
+                            * System auto-syncs category status with Evaluation Matrix EVAL-09X. Last updated: 14:02 UTC.
+                        </div>
+</div>
+</div>
+</div>
+<!-- Contract Carry-Forward -->
+<div class="bg-surface-container-lowest border border-subtle rounded flex flex-col h-full">
+<div class="bg-surface-container-low px-container-padding py-3 border-b border-subtle flex justify-between items-center">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Contract Carry-Forward</h3>
+<button class="text-primary hover:underline font-label-caps text-label-caps">MANAGE CLAUSES</button>
+</div>
+<div class="p-card-padding flex-1">
+<div class="space-y-3">
+<div class="flex justify-between items-center pb-2 border-b border-outline-variant">
+<span class="text-body-md text-on-surface">Technical Attachment A</span>
+<span class="font-data-mono text-data-mono text-[12px] bg-surface-container px-2 py-1 rounded">ACTIVE</span>
+</div>
+<div class="flex justify-between items-center pb-2 border-b border-outline-variant">
+<span class="text-body-md text-on-surface">SLA Performance Annex</span>
+<span class="font-data-mono text-data-mono text-[12px] bg-surface-container px-2 py-1 rounded">ACTIVE</span>
+</div>
+<div class="flex justify-between items-center pb-2 border-b border-outline-variant">
+<span class="text-body-md text-on-surface">Data Protection Agreement</span>
+<span class="font-data-mono text-data-mono text-[12px] bg-surface-container px-2 py-1 rounded">PENDING</span>
+</div>
+<div class="flex justify-between items-center pb-2">
+<span class="text-body-md text-on-surface">Service Delivery Matrix</span>
+<span class="font-data-mono text-data-mono text-[12px] bg-surface-container px-2 py-1 rounded">LOCKED</span>
+</div>
+<p class="text-[12px] bg-secondary-fixed text-on-secondary-fixed-variant p-2 rounded mt-2 border border-secondary">
+<span class="font-bold">NOTE:</span> 5 categories are currently set for automatic inclusion in Final Contract generation.
+                        </p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-low dark:bg-surface-container-low border-t border-subtle dark:border-outline-variant flex flex-col md:flex-row justify-between items-center w-full px-section-gap py-card-padding mt-section-gap">
+<div class="mb-4 md:mb-0">
+<span class="font-label-caps text-label-caps text-primary tracking-widest">KENTENDER PROCUREMENT SYSTEMS</span>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">© 2024. Audit-ready environment. Version 4.2.1-Bureau</p>
+</div>
+<div class="flex flex-wrap justify-center gap-6">
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#">Privacy Policy</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#">Terms of Service</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#">System Status</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors cursor-pointer font-bold border-l border-outline-variant pl-6" href="#">Security Audit</a>
+</div>
+</footer>
+<!-- Interactive Layer for Row Selection Effects -->
+<script>
+        document.querySelectorAll('tbody tr').forEach(row => {
+            row.addEventListener('click', () => {
+                // Clear other selections
+                document.querySelectorAll('tbody tr').forEach(r => {
+                    r.classList.remove('bg-primary-fixed', 'dark:bg-primary-fixed');
+                });
+                // Toggle current selection
+                row.classList.add('bg-primary-fixed');
+                row.style.transition = 'background-color 0.2s ease-in-out';
+            });
+        });
+
+        // Atmospheric Micro-Interaction: Simple Fade In on Page Load
+        window.addEventListener('DOMContentLoaded', () => {
+            document.body.style.opacity = '0';
+            document.body.style.transition = 'opacity 0.5s ease-out';
+            requestAnimationFrame(() => {
+                document.body.style.opacity = '1';
+            });
+        });
+    </script>
+
+
+</body></html>

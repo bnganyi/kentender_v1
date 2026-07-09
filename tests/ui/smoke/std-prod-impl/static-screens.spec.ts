@@ -18,6 +18,16 @@ test.describe("STD prod static screens — preview index", () => {
 		await expect(page.getByRole("link", { name: "Rule Detail" })).toBeVisible();
 		await expect(page.getByRole("link", { name: "Form Schema Manager" })).toBeVisible();
 		await expect(page.getByRole("link", { name: "Form Detail & Field Builder" })).toBeVisible();
+		await expect(page.getByRole("link", { name: "Requirement Schema Manager" })).toBeVisible();
+		await expect(page.getByRole("link", { name: "Price Schedule Schema" })).toBeVisible();
+		await expect(page.getByRole("link", { name: "Evaluation Schema" })).toBeVisible();
+		await expect(page.getByRole("link", { name: "Render Blocks" })).toBeVisible();
+		await expect(page.getByRole("link", { name: "Validation Report" })).toBeVisible();
+		await expect(page.getByRole("link", { name: "Review and Approval" })).toBeVisible();
+		await expect(page.getByRole("link", { name: "Usage and Tender Bindings" })).toBeVisible();
+		await expect(page.getByRole("link", { name: "Import Package Review" })).toBeVisible();
+		await expect(page.getByRole("link", { name: "Version Diff and Supersession" })).toBeVisible();
+		await expect(page.getByRole("link", { name: "Audit Log" })).toBeVisible();
 	});
 });
 
@@ -142,5 +152,102 @@ test.describe("STD prod static screens — form detail field builder", () => {
 		await expect(page).toHaveTitle(/Form Detail & Field Builder/);
 		await expect(page.getByRole("heading", { name: "Technical Proposal Submission" })).toBeVisible();
 		await expect(page.getByRole("heading", { name: "Field Configuration" })).toBeVisible();
+	});
+});
+
+test.describe("STD prod static screens — requirement schema manager", () => {
+	test("requirement schema manager screen renders design regions", async ({ page }) => {
+		await page.goto(`${ASSET_BASE}/std_requirement_schema_manager.html`);
+		await expect(page).toHaveTitle(/Requirement Schema Manager/);
+		await expect(page.getByRole("heading", { name: "Requirement Schema Manager" })).toBeVisible();
+		await expect(page.getByRole("heading", { name: "Requirement Categories" })).toBeVisible();
+		await expect(page.getByRole("heading", { name: "Evaluation Linkage Model" })).toBeVisible();
+	});
+});
+
+test.describe("STD prod static screens — price schedule schema", () => {
+	test("price schedule schema screen renders design regions", async ({ page }) => {
+		await page.goto(`${ASSET_BASE}/std_price_schedule_schema.html`);
+		await expect(page).toHaveTitle(/Price Schedule Schema/);
+		await expect(page.getByRole("heading", { name: "Price Schedule Master Definition" })).toBeVisible();
+		await expect(page.getByRole("heading", { name: "System Integrity Log" })).toBeVisible();
+		await expect(page.getByRole("heading", { name: "REVISION CONTEXT" })).toBeVisible();
+	});
+});
+
+test.describe("STD prod static screens — evaluation schema", () => {
+	test("evaluation schema screen renders design regions", async ({ page }) => {
+		await page.goto(`${ASSET_BASE}/std_evaluation_schema.html`);
+		await expect(page).toHaveTitle(/Evaluation Schema/);
+		await expect(page.getByText("TOTAL CRITERIA", { exact: true })).toBeVisible();
+		await expect(page.getByText("Evaluation Schema").first()).toBeVisible();
+	});
+});
+
+test.describe("STD prod static screens — render blocks", () => {
+	test("render blocks screen renders design regions", async ({ page }) => {
+		await page.goto(`${ASSET_BASE}/std_render_blocks.html`);
+		await expect(page).toHaveTitle(/Render Blocks/);
+		await expect(page.getByRole("heading", { name: "Render Blocks" })).toBeVisible();
+		await expect(page.getByText("TOTAL RENDER BLOCKS", { exact: true })).toBeVisible();
+		await expect(page.getByText("RB-001")).toBeVisible();
+	});
+});
+
+test.describe("STD prod static screens — validation report", () => {
+	test("validation report screen renders design regions", async ({ page }) => {
+		await page.goto(`${ASSET_BASE}/std_validation_report.html`);
+		await expect(page).toHaveTitle(/Validation Report/);
+		await expect(page.getByRole("heading", { name: "Validation Report" })).toBeVisible();
+		await expect(page.getByRole("heading", { name: "Standard Validation Audit" })).toBeVisible();
+	});
+});
+
+test.describe("STD prod static screens — review and approval", () => {
+	test("review and approval screen renders design regions", async ({ page }) => {
+		await page.goto(`${ASSET_BASE}/std_review_and_approval.html`);
+		await expect(page).toHaveTitle(/Review and Approval/);
+		await expect(page.getByRole("heading", { name: "Review and Approval" })).toBeVisible();
+		await expect(page.getByText("REVIEW STAGE TIMELINE")).toBeVisible();
+		await expect(page.getByText("ENHANCED DECISION PANEL")).toBeVisible();
+	});
+});
+
+test.describe("STD prod static screens — usage and tender bindings", () => {
+	test("usage and tender bindings screen renders design regions", async ({ page }) => {
+		await page.goto(`${ASSET_BASE}/std_usage_and_tender_bindings.html`);
+		await expect(page).toHaveTitle(/Usage and Tender Bindings/);
+		await expect(page.getByRole("heading", { name: "Usage and Tender Bindings" })).toBeVisible();
+		await expect(page.getByText("TENDER BINDINGS REGISTRY")).toBeVisible();
+		await expect(page.getByText("ACTIVE TENDERS (THIS VERSION)")).toBeVisible();
+	});
+});
+
+test.describe("STD prod static screens — import package review", () => {
+	test("import package review screen renders design regions", async ({ page }) => {
+		await page.goto(`${ASSET_BASE}/std_import_package_review.html`);
+		await expect(page).toHaveTitle(/Import Package Review/);
+		await expect(page.getByRole("heading", { name: "Import Package Review" })).toBeVisible();
+		await expect(page.getByRole("heading", { name: "Upload Standardized Package" })).toBeVisible();
+		await expect(page.getByText("EXPANDED PACKAGE MANIFEST")).toBeVisible();
+	});
+});
+
+test.describe("STD prod static screens — version diff and supersession", () => {
+	test("version diff and supersession screen renders design regions", async ({ page }) => {
+		await page.goto(`${ASSET_BASE}/std_version_diff_and_supersession.html`);
+		await expect(page).toHaveTitle(/Version Diff and Supersession/);
+		await expect(page.getByRole("heading", { name: "Supersession Decision" })).toBeVisible();
+		await expect(page.getByText("Version Diff and Supersession").first()).toBeVisible();
+	});
+});
+
+test.describe("STD prod static screens — audit log", () => {
+	test("audit log screen renders design regions", async ({ page }) => {
+		await page.goto(`${ASSET_BASE}/std_audit_log.html`);
+		await expect(page).toHaveTitle(/Audit Log/);
+		await expect(page.getByRole("heading", { name: "Audit Log" })).toBeVisible();
+		await expect(page.getByText("Audit Events")).toBeVisible();
+		await expect(page.getByRole("heading", { name: "Immutable Integrity Hash Verification" })).toBeVisible();
 	});
 });

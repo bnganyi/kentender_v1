@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Usage and Tender Bindings | KenTender STD Engine</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-container": "#7bbeff",
+                        "tertiary": "#26364b",
+                        "on-surface": "#1a1b20",
+                        "on-tertiary-fixed-variant": "#38485e",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "surface": "#f7f9fb",
+                        "secondary": "#01629d",
+                        "surface-dim": "#dad9df",
+                        "surface-bright": "#f9f9fe",
+                        "on-secondary-fixed-variant": "#004a78",
+                        "on-error": "#ffffff",
+                        "surface-container-highest": "#e2e2e8",
+                        "surface-container-high": "#e8e7ed",
+                        "status-exhausted": "#EF4444",
+                        "tertiary-container": "#26364b",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "primary-fixed-dim": "#abc7ff",
+                        "primary": "#001f48",
+                        "on-primary-fixed-variant": "#1d4681",
+                        "border-subtle": "#E2E8F0",
+                        "inverse-on-surface": "#f1f0f6",
+                        "surface-variant": "#e2e2e8",
+                        "status-reserved": "#F59E0B",
+                        "on-tertiary-container": "#8f9fb8",
+                        "on-secondary-fixed": "#001d34",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#99cbff",
+                        "surface-tint": "#395e9b",
+                        "tertiary-fixed-dim": "#b7c8e2",
+                        "on-background": "#1a1b20",
+                        "on-secondary-container": "#004c7c",
+                        "surface-container-low": "#f4f3f9",
+                        "background": "#f9f9fe",
+                        "error": "#ba1a1a",
+                        "outline": "#737783",
+                        "on-surface-variant": "#434750",
+                        "surface-container": "#eceef0",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#d7e2ff",
+                        "primary-container": "#00346f",
+                        "on-primary-container": "#7b9ee0",
+                        "status-available": "#10B981",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "inverse-surface": "#2f3035",
+                        "on-primary-fixed": "#001b3f",
+                        "inverse-primary": "#abc7ff",
+                        "data-block-bg": "#FFFFFF",
+                        "secondary-fixed": "#cfe5ff",
+                        "outline-variant": "#c3c6d1",
+                        "status-committed": "#6366F1",
+                        "tertiary-fixed": "#d3e4ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "12px",
+                        "card-padding": "20px",
+                        "section-gap": "24px",
+                        "unit": "4px",
+                        "container-padding": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Public Sans"],
+                        "data-mono": ["JetBrains Mono"],
+                        "body-md": ["Public Sans"],
+                        "headline-lg": ["Public Sans"],
+                        "body-lg": ["Public Sans"],
+                        "label-caps": ["Public Sans"],
+                        "headline-sm": ["Public Sans"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+                        "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-lg": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #f7f9fb;
+            color: #1a1b20;
+            font-family: 'Public Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .data-table-container {
+            scrollbar-width: thin;
+            scrollbar-color: #c3c6d1 transparent;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+<!-- TopNavBar -->
+<header class="bg-surface-bright dark:bg-surface-dim border-b border-outline-variant flex justify-between items-center w-full px-6 h-16 sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<span class="font-headline-sm text-headline-sm font-extrabold text-primary">KenTender STD Engine</span>
+</div>
+<div class="absolute left-1/2 -translate-x-1/2 -top-1 flex flex-col items-center w-max"><nav class="flex items-center gap-2 text-[10px] font-label-caps text-outline mt-2"><span class="hover:text-primary cursor-pointer">STD Library</span><span class="material-symbols-outlined text-[12px]">chevron_right</span><span class="hover:text-primary cursor-pointer">KE-PPRA-IT</span><span class="material-symbols-outlined text-[12px]">chevron_right</span><span class="hover:text-primary cursor-pointer">KE-PPRA-IT-2024-04</span><span class="material-symbols-outlined text-[12px]">chevron_right</span><span class="text-primary font-bold">Usage / Tender Bindings</span></nav></div><h1 class="font-headline-md text-headline-md text-primary absolute left-1/2 -translate-x-1/2">Usage and Tender Bindings</h1><div class="absolute left-1/2 -translate-x-1/2 top-11 flex items-center gap-4 bg-surface-container-low px-3 py-1 rounded-full border border-outline-variant/30"><div class="flex items-center gap-1.5"><span class="text-[10px] font-label-caps text-outline">FAMILY</span><span class="text-[11px] font-bold text-primary">KE-PPRA-IT</span></div><div class="w-px h-3 bg-outline-variant"></div><div class="flex items-center gap-1.5"><span class="text-[10px] font-label-caps text-outline">VERSION</span><span class="text-[11px] font-bold text-primary">2024-04</span></div><div class="w-px h-3 bg-outline-variant"></div><div class="flex items-center gap-1.5"><span class="text-[10px] font-label-caps text-outline">PACKAGE</span><span class="text-[11px] font-bold text-primary">KE-PPRA-IT-2024-04</span></div><div class="w-px h-3 bg-outline-variant"></div><div class="flex items-center gap-1.5"><span class="text-[10px] font-label-caps text-outline">LIFECYCLE</span><span class="bg-status-available/10 text-status-available px-1.5 rounded text-[10px] font-bold">ACTIVE</span></div><div class="w-px h-3 bg-outline-variant"></div><div class="flex items-center gap-1.5"><span class="text-[10px] font-label-caps text-outline">SUPERSESSION</span><span class="text-[11px] font-bold text-on-surface-variant">NONE</span></div></div>
+<div class="flex items-center gap-3">
+<button class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-container transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-xs">
+                AD
+            </div>
+</div>
+</header>
+<main class="flex-1 px-6 py-6 max-w-[1600px] mx-auto w-full">
+<!-- KPI Summary Section -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-section-gap">
+<!-- Total Tenders Bound -->
+<div class="bg-white border border-border-subtle p-card-padding rounded shadow-sm">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-caps text-label-caps text-on-surface-variant">TOTAL TENDERS BOUND (ALL VERSIONS)</span>
+<span class="material-symbols-outlined text-primary opacity-20" data-icon="link">link</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-headline-lg text-headline-lg text-primary">1,248</span>
+<span class="text-status-available text-xs font-bold">+12%</span>
+</div>
+<p class="text-on-surface-variant font-body-md text-body-md mt-1 italic opacity-70">Cumulative engine output</p>
+</div>
+<!-- Active Tenders -->
+<div class="bg-white border border-border-subtle p-card-padding rounded shadow-sm">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-caps text-label-caps text-on-surface-variant">ACTIVE TENDERS (THIS VERSION)</span>
+<span class="material-symbols-outlined text-secondary opacity-20" data-icon="pending_actions">pending_actions</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-headline-lg text-headline-lg text-primary">312</span>
+<span class="text-status-reserved text-xs font-bold">Stable</span>
+</div>
+<p class="text-on-surface-variant font-body-md text-body-md mt-1 italic opacity-70">Currently open for bidding</p>
+</div>
+<!-- Historical Tenders -->
+<div class="bg-white border border-border-subtle p-card-padding rounded shadow-sm">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-caps text-label-caps text-on-surface-variant">HISTORICAL RECORDS</span>
+<span class="material-symbols-outlined text-tertiary opacity-20" data-icon="history">history</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-headline-lg text-headline-lg text-primary">936</span>
+</div>
+<p class="text-on-surface-variant font-body-md text-body-md mt-1 italic opacity-70">Archived and evaluated</p>
+</div>
+<!-- Open Addenda -->
+<div class="bg-white border border-border-subtle p-card-padding rounded shadow-sm">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-caps text-label-caps text-on-surface-variant">OPEN ADDENDA</span>
+<span class="material-symbols-outlined text-status-exhausted opacity-20" data-icon="emergency_home">emergency_home</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-headline-lg text-headline-lg text-status-exhausted">14</span>
+<span class="text-status-exhausted text-xs font-bold">Action Req</span>
+</div>
+<p class="text-on-surface-variant font-body-md text-body-md mt-1 italic opacity-70">Pending version reconciliation</p>
+</div>
+</section>
+<!-- Main Content Area: Table and Sidebar Panels -->
+<div class="flex flex-col lg:flex-row gap-6">
+<!-- Table Section (Bento Column 1) -->
+<div class="flex-grow lg:w-2/3 flex flex-col bg-white border border-border-subtle rounded shadow-sm overflow-hidden">
+<div class="bg-surface-container-low px-4 py-3 border-b border-outline-variant flex justify-between items-center">
+<h2 class="font-label-caps text-label-caps text-primary">TENDER BINDINGS REGISTRY</h2>
+<div class="flex gap-2"><div class="relative flex items-center"><span class="material-symbols-outlined absolute left-2 text-sm text-outline">search</span><input class="pl-8 pr-3 py-1.5 text-xs border border-outline-variant rounded bg-white focus:ring-1 focus:ring-primary w-64" placeholder="Search ID, Title, Entity, Hash..." type="text"/></div>
+<button class="bg-white border border-outline-variant px-3 py-1.5 text-xs font-bold flex items-center gap-1 hover:bg-surface-container transition-colors rounded">
+<span class="material-symbols-outlined text-sm" data-icon="filter_list">filter_list</span> FILTER
+                        </button>
+<button class="bg-primary text-white px-3 py-1.5 text-xs font-bold flex items-center gap-1 hover:opacity-90 transition-opacity rounded">
+<span class="material-symbols-outlined text-sm" data-icon="download">download</span> EXPORT REGISTRY
+                        </button>
+</div>
+</div>
+<div class="overflow-x-auto data-table-container">
+<table class="w-full border-collapse">
+<thead><tr class="bg-surface-container text-left border-b border-outline-variant"><th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase">Tender ID</th><th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase">Tender Title</th><th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase">Procuring Entity</th><th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase">Bound STD Version / Package ID</th><th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase">Binding Date</th><th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase">Tender Status</th><th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase">Published Bundle Hash</th><th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase">Addendum Status</th><th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase">Supersession Impact</th><th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase">Actions</th></tr></thead>
+<tbody class="font-body-md text-body-md"><tr class="border-b border-outline-variant hover:bg-surface-container-low transition-colors"><td class="px-4 py-4 font-data-mono text-data-mono text-secondary">KT-2024-001</td><td class="px-4 py-4 font-bold text-primary max-w-xs truncate">National Road Expansion Project Phase IV</td><td class="px-4 py-4">Kenya National Highways Authority</td><td class="px-4 py-4 text-xs font-bold">KE-PPRA-IT-2024-04</td><td class="px-4 py-4 text-xs">2024-05-12</td><td class="px-4 py-4"><span class="bg-status-available/10 text-status-available border border-status-available/20 px-2 py-0.5 rounded-full text-[11px] font-bold">ACTIVE</span></td><td class="px-4 py-4"><code class="font-data-mono text-[11px] bg-surface-container-low px-1.5 py-0.5 rounded">0x8f2d...4e1a</code></td><td class="px-4 py-4 text-xs font-bold text-on-surface-variant">NONE</td><td class="px-4 py-4 text-xs text-status-available font-bold">STABLE</td><td class="px-4 py-4"><div class="grid grid-cols-2 gap-x-4 gap-y-1"><button class="text-primary hover:underline font-bold text-[9px] uppercase text-left">Open Binding</button><button class="text-secondary hover:underline font-bold text-[9px] uppercase text-left">View Gen Bundle</button><button class="text-secondary hover:underline font-bold text-[9px] uppercase text-left">View Pub Hash</button><button class="text-status-reserved hover:underline font-bold text-[9px] uppercase text-left">View Impact</button><button class="text-outline hover:underline font-bold text-[9px] uppercase text-left">Audit Trail</button><button class="text-primary hover:underline font-bold text-[9px] uppercase text-left">Export Report</button></div></td></tr><tr class="border-b border-outline-variant hover:bg-surface-container-low transition-colors"><td class="px-4 py-4 font-data-mono text-data-mono text-secondary">KT-2024-005</td><td class="px-4 py-4 font-bold text-primary max-w-xs truncate">Digital Infrastructure Upgrade: Tier 3 Data Center</td><td class="px-4 py-4">ICT Authority</td><td class="px-4 py-4 text-xs font-bold">KE-PPRA-IT-2024-04</td><td class="px-4 py-4 text-xs">2024-05-15</td><td class="px-4 py-4"><span class="bg-status-reserved/10 text-status-reserved border border-status-reserved/20 px-2 py-0.5 rounded-full text-[11px] font-bold">ADDENDUM</span></td><td class="px-4 py-4"><code class="font-data-mono text-[11px] bg-surface-container-low px-1.5 py-0.5 rounded">0x3a4b...9c22</code></td><td class="px-4 py-4 text-xs font-bold text-status-reserved">PENDING</td><td class="px-4 py-4 text-xs text-status-reserved font-bold">IMPACTED</td><td class="px-4 py-4"><div class="grid grid-cols-2 gap-x-4 gap-y-1"><button class="text-primary hover:underline font-bold text-[9px] uppercase text-left">Open Binding</button><button class="text-secondary hover:underline font-bold text-[9px] uppercase text-left">View Gen Bundle</button><button class="text-secondary hover:underline font-bold text-[9px] uppercase text-left">View Pub Hash</button><button class="text-status-reserved hover:underline font-bold text-[9px] uppercase text-left">View Impact</button><button class="text-outline hover:underline font-bold text-[9px] uppercase text-left">Audit Trail</button><button class="text-primary hover:underline font-bold text-[9px] uppercase text-left">Export Report</button></div></td></tr><tr class="border-b border-outline-variant hover:bg-surface-container-low transition-colors"><td class="px-4 py-4 font-data-mono text-data-mono text-secondary">KT-2024-012</td><td class="px-4 py-4 font-bold text-primary max-w-xs truncate">Smart City Traffic Management System</td><td class="px-4 py-4">Ministry of Transport</td><td class="px-4 py-4 text-xs font-bold">KE-PPRA-IT-2024-04</td><td class="px-4 py-4 text-xs">2024-05-20</td><td class="px-4 py-4"><span class="bg-status-available/10 text-status-available border border-status-available/20 px-2 py-0.5 rounded-full text-[11px] font-bold">ACTIVE</span></td><td class="px-4 py-4"><code class="font-data-mono text-[11px] bg-surface-container-low px-1.5 py-0.5 rounded">0x1c9e...7f3d</code></td><td class="px-4 py-4 text-xs font-bold text-on-surface-variant">NONE</td><td class="px-4 py-4 text-xs text-status-available font-bold">STABLE</td><td class="px-4 py-4"><div class="grid grid-cols-2 gap-x-4 gap-y-1"><button class="text-primary hover:underline font-bold text-[9px] uppercase text-left">Open Binding</button><button class="text-secondary hover:underline font-bold text-[9px] uppercase text-left">View Gen Bundle</button><button class="text-secondary hover:underline font-bold text-[9px] uppercase text-left">View Pub Hash</button><button class="text-status-reserved hover:underline font-bold text-[9px] uppercase text-left">View Impact</button><button class="text-outline hover:underline font-bold text-[9px] uppercase text-left">Audit Trail</button><button class="text-primary hover:underline font-bold text-[9px] uppercase text-left">Export Report</button></div></td></tr><tr class="border-b border-outline-variant hover:bg-surface-container-low transition-colors"><td class="px-4 py-4 font-data-mono text-data-mono text-secondary">KT-2024-018</td><td class="px-4 py-4 font-bold text-primary max-w-xs truncate">National Health Information Exchange</td><td class="px-4 py-4">Ministry of Health</td><td class="px-4 py-4 text-xs font-bold">KE-PPRA-IT-2024-04</td><td class="px-4 py-4 text-xs">2024-05-22</td><td class="px-4 py-4"><span class="bg-status-available/10 text-status-available border border-status-available/20 px-2 py-0.5 rounded-full text-[11px] font-bold">ACTIVE</span></td><td class="px-4 py-4"><code class="font-data-mono text-[11px] bg-surface-container-low px-1.5 py-0.5 rounded">0x5d2a...1b8c</code></td><td class="px-4 py-4 text-xs font-bold text-on-surface-variant">NONE</td><td class="px-4 py-4 text-xs text-status-available font-bold">STABLE</td><td class="px-4 py-4"><div class="grid grid-cols-2 gap-x-4 gap-y-1"><button class="text-primary hover:underline font-bold text-[9px] uppercase text-left">Open Binding</button><button class="text-secondary hover:underline font-bold text-[9px] uppercase text-left">View Gen Bundle</button><button class="text-secondary hover:underline font-bold text-[9px] uppercase text-left">View Pub Hash</button><button class="text-status-reserved hover:underline font-bold text-[9px] uppercase text-left">View Impact</button><button class="text-outline hover:underline font-bold text-[9px] uppercase text-left">Audit Trail</button><button class="text-primary hover:underline font-bold text-[9px] uppercase text-left">Export Report</button></div></td></tr><tr class="border-b border-outline-variant hover:bg-surface-container-low transition-colors"><td class="px-4 py-4 font-data-mono text-data-mono text-secondary">KT-2024-025</td><td class="px-4 py-4 font-bold text-primary max-w-xs truncate">E-Government Portal Expansion</td><td class="px-4 py-4">ICT Authority</td><td class="px-4 py-4 text-xs font-bold">KE-PPRA-IT-2024-04</td><td class="px-4 py-4 text-xs">2024-05-28</td><td class="px-4 py-4"><span class="bg-status-reserved/10 text-status-reserved border border-status-reserved/20 px-2 py-0.5 rounded-full text-[11px] font-bold">ADDENDUM</span></td><td class="px-4 py-4"><code class="font-data-mono text-[11px] bg-surface-container-low px-1.5 py-0.5 rounded">0x9f4c...2e1a</code></td><td class="px-4 py-4 text-xs font-bold text-status-reserved">PENDING</td><td class="px-4 py-4 text-xs text-status-reserved font-bold">IMPACTED</td><td class="px-4 py-4"><div class="grid grid-cols-2 gap-x-4 gap-y-1"><button class="text-primary hover:underline font-bold text-[9px] uppercase text-left">Open Binding</button><button class="text-secondary hover:underline font-bold text-[9px] uppercase text-left">View Gen Bundle</button><button class="text-secondary hover:underline font-bold text-[9px] uppercase text-left">View Pub Hash</button><button class="text-status-reserved hover:underline font-bold text-[9px] uppercase text-left">View Impact</button><button class="text-outline hover:underline font-bold text-[9px] uppercase text-left">Audit Trail</button><button class="text-primary hover:underline font-bold text-[9px] uppercase text-left">Export Report</button></div></td></tr><tr class="border-b border-outline-variant hover:bg-surface-container-low transition-colors"><td class="px-4 py-4 font-data-mono text-data-mono text-secondary">KT-2024-031</td><td class="px-4 py-4 font-bold text-primary max-w-xs truncate">Rural Electrification Phase VII</td><td class="px-4 py-4">Kenya Power</td><td class="px-4 py-4 text-xs font-bold">KE-PPRA-IT-2024-04</td><td class="px-4 py-4 text-xs">2024-06-02</td><td class="px-4 py-4"><span class="bg-status-available/10 text-status-available border border-status-available/20 px-2 py-0.5 rounded-full text-[11px] font-bold">ACTIVE</span></td><td class="px-4 py-4"><code class="font-data-mono text-[11px] bg-surface-container-low px-1.5 py-0.5 rounded">0x2b8d...6a4f</code></td><td class="px-4 py-4 text-xs font-bold text-on-surface-variant">NONE</td><td class="px-4 py-4 text-xs text-status-available font-bold">STABLE</td><td class="px-4 py-4"><div class="grid grid-cols-2 gap-x-4 gap-y-1"><button class="text-primary hover:underline font-bold text-[9px] uppercase text-left">Open Binding</button><button class="text-secondary hover:underline font-bold text-[9px] uppercase text-left">View Gen Bundle</button><button class="text-secondary hover:underline font-bold text-[9px] uppercase text-left">View Pub Hash</button><button class="text-status-reserved hover:underline font-bold text-[9px] uppercase text-left">View Impact</button><button class="text-outline hover:underline font-bold text-[9px] uppercase text-left">Audit Trail</button><button class="text-primary hover:underline font-bold text-[9px] uppercase text-left">Export Report</button></div></td></tr></tbody>
+</table>
+</div>
+<!-- Table Footer -->
+<div class="px-4 py-3 bg-white border-t border-outline-variant flex flex-col sm:flex-row justify-between items-center gap-4">
+<span class="text-on-surface-variant font-body-md text-body-md">Showing 1-10 of 1,248 bindings</span>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="text-on-surface-variant font-label-caps text-label-caps">ROWS PER PAGE</span>
+<select class="bg-surface-container-low border border-outline-variant rounded px-2 py-1 text-xs font-bold focus:ring-primary">
+<option>10</option>
+<option>25</option>
+<option>50</option>
+<option>100</option>
+</select>
+</div>
+<nav class="flex items-center gap-1">
+<button class="p-1 hover:bg-surface-container transition-colors rounded text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="first_page">first_page</span>
+</button>
+<button class="p-1 hover:bg-surface-container transition-colors rounded text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span>
+</button>
+<div class="flex items-center px-2">
+<button class="w-8 h-8 flex items-center justify-center bg-primary text-white rounded font-bold text-xs">1</button>
+<button class="w-8 h-8 flex items-center justify-center hover:bg-surface-container rounded font-bold text-xs">2</button>
+<button class="w-8 h-8 flex items-center justify-center hover:bg-surface-container rounded font-bold text-xs">3</button>
+<span class="px-1 text-on-surface-variant">...</span>
+<button class="w-8 h-8 flex items-center justify-center hover:bg-surface-container rounded font-bold text-xs">125</button>
+</div>
+<button class="p-1 hover:bg-surface-container transition-colors rounded text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+</button>
+<button class="p-1 hover:bg-surface-container transition-colors rounded text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="last_page">last_page</span>
+</button>
+</nav>
+</div>
+</div>
+</div>
+<!-- Sidebar Panels (Bento Column 2) -->
+<aside class="lg:w-1/3 flex flex-col gap-6">
+<!-- Generated Artifact Summary -->
+<div class="bg-white border border-border-subtle rounded shadow-sm overflow-hidden">
+<div class="bg-surface-container-low px-4 py-3 border-b border-outline-variant">
+<h2 class="font-label-caps text-label-caps text-primary flex items-center gap-2"><span class="material-symbols-outlined text-sm">verified</span> STD VERSION ARTIFACT SUMMARY</h2>
+</div>
+<div class="p-card-padding flex flex-col gap-4">
+<div class="flex flex-col gap-2">
+<div class="flex justify-between text-xs font-bold text-on-surface-variant">
+<span class="">INTEGRITY CHECK</span>
+<span class="text-status-available">VERIFIED</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-status-available w-[100%]"></div>
+</div>
+</div>
+<div class="p-3 bg-surface-container-low border border-outline-variant rounded flex flex-col gap-1.5"><div class="flex flex-col gap-1.5 mb-3"><span class="text-[10px] font-bold text-on-surface-variant">BUNDLE INTEGRITY HASH</span><code class="font-data-mono text-[11px] text-primary break-all">f7a2d4c6e8b0a9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4</code></div><div class="flex flex-col gap-1.5"><span class="text-[10px] font-bold text-on-surface-variant">AUDIT EVENT HASH</span><code class="font-data-mono text-[11px] text-secondary break-all">0x99bb22ff...e8b0a9f8</code></div></div>
+<ul class="text-body-md font-body-md space-y-3">
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-status-available text-lg" data-icon="check_circle">check_circle</span>
+<div>
+<span class="font-bold block">Standard Template V3.2</span>
+<span class="text-xs text-on-surface-variant">Immutable template reference locked.</span>
+</div>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-status-available text-lg" data-icon="check_circle">check_circle</span>
+<div>
+<span class="font-bold block">Digital Signature (CA)</span>
+<span class="text-xs text-on-surface-variant">Procuring entity root key authenticated.</span>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<!-- Supersession/Addendum Impact -->
+<div class="bg-white border border-border-subtle rounded shadow-sm overflow-hidden">
+<div class="bg-surface-container-low px-4 py-3 border-b border-outline-variant">
+<h2 class="font-label-caps text-label-caps text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="warning">warning</span>
+                            SUPERSESSION IMPACT
+                        </h2>
+</div>
+<div class="p-card-padding bg-tertiary/5">
+<div class="flex gap-3 mb-4">
+<div class="p-2 bg-status-reserved/10 rounded">
+<span class="material-symbols-outlined text-status-reserved" data-icon="priority_high">priority_high</span>
+</div>
+<div>
+<h3 class="font-bold text-primary">Active Version Restrictions</h3>
+<p class="text-xs text-on-surface-variant leading-relaxed">Bindings using <span class="font-bold">KE-PPRA-IT-2024-04</span> are impacted if object <span class="font-bold text-primary">[TC-OBJ-99]</span> is superseded by package <span class="font-bold">KE-PPRA-IT-2024-05-REV</span>.</p>
+</div>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-center text-xs border-b border-outline-variant/30 pb-2">
+<span class="text-on-surface-variant">Total Affected Tenders</span>
+<span class="font-bold text-primary">28</span>
+</div>
+<div class="flex justify-between items-center text-xs border-b border-outline-variant/30 pb-2">
+<span class="text-on-surface-variant">Urgent Remediation</span>
+<span class="font-bold text-status-exhausted">04</span>
+</div>
+<div class="flex justify-between items-center text-xs">
+<span class="text-on-surface-variant">Scheduled Updates</span>
+<span class="font-bold text-secondary">09/11/2024</span>
+</div>
+</div>
+<button class="w-full mt-6 py-2 border border-primary text-primary font-bold text-xs hover:bg-primary hover:text-white transition-all rounded uppercase tracking-wider">
+                            Review Version Mapping
+                        </button>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- Footer -->
+<script>
+        // Micro-interaction for hash copying
+        document.querySelectorAll('button[data-icon="content_copy"]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const icon = this;
+                const original = icon.innerText;
+                icon.innerText = 'done';
+                icon.classList.add('text-status-available');
+                setTimeout(() => {
+                    icon.innerText = original;
+                    icon.classList.remove('text-status-available');
+                }, 1500);
+            });
+        });
+
+        // Simple row highlight logic
+        document.querySelectorAll('tbody tr').forEach(row => {
+            row.addEventListener('click', () => {
+                document.querySelectorAll('tbody tr').forEach(r => r.classList.remove('bg-primary/5'));
+                row.classList.add('bg-primary/5');
+            });
+        });
+    </script>
+</body></html>
