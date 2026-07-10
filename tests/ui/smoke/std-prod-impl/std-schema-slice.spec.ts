@@ -371,12 +371,56 @@ test.describe("STD prod schema slice API hydration", () => {
 		await expect(iframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
 			timeout: 30_000,
 		});
+		await expect(iframe.locator("body")).toHaveClass(/std-prod-schema-list/);
 		const firstRow = iframe.locator(".std-prod-render-row").first();
 		await expect(firstRow).toBeVisible();
+		const columnCount = await firstRow.evaluate((row) => row.querySelectorAll("td").length);
+		expect(columnCount).toBe(10);
+		await expect(firstRow.locator('[title="Open Render Block"]')).toBeVisible();
 		const code = (await firstRow.locator("td").first().innerText()).trim();
 		expect(code.length).toBeGreaterThan(0);
 		expect(code).not.toMatch(/KE-PPRA-IT-2022-04\.render_block\./);
 		await expect(iframe.getByText("KE-PPRA-IT-2022-04.render_block.")).toHaveCount(0);
+	});
+
+	test("render blocks open action navigates to section clause map", async ({ page }) => {
+		await page.goto("/desk/std-render-blocks");
+		const iframe = page.frameLocator('[data-testid="std-prod-std-render-blocks-iframe"]');
+		await expect(iframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await showAllTableRows(iframe);
+		const firstRow = iframe.locator(".std-prod-render-row").first();
+		await firstRow.locator('[title="Open Render Block"]').click();
+		await expect(page).toHaveURL(/\/desk\/std-section-clause-map/, { timeout: 30_000 });
+	});
+
+	test("form open action navigates to field builder", async ({ page }) => {
+		await page.goto("/desk/std-form-schema-manager");
+		const iframe = page.frameLocator('[data-testid="std-prod-std-form-schema-manager-iframe"]');
+		await expect(iframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await showAllTableRows(iframe);
+		const targetRow = iframe.locator(".std-prod-form-row").filter({
+			has: iframe.locator("td").first().getByText("IT-FORM-003", { exact: true }),
+		});
+		await expect(targetRow.locator('[title="Open Form"]')).toBeVisible();
+		await targetRow.locator('[title="Open Form"]').click();
+		await expect(page).toHaveURL(/\/desk\/std-form-detail-field-builder/, { timeout: 30_000 });
+	});
+
+	test("price schedule open action navigates to section clause map", async ({ page }) => {
+		await page.goto("/desk/std-price-schedule-schema");
+		const iframe = page.frameLocator('[data-testid="std-prod-std-price-schedule-schema-iframe"]');
+		await expect(iframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		const grandSummaryRow = iframe.locator(".std-prod-price-row").filter({
+			has: iframe.locator("td").first().getByText("GS-001", { exact: true }),
+		});
+		await grandSummaryRow.locator('[title="Open Schedule"]').click();
+		await expect(page).toHaveURL(/\/desk\/std-section-clause-map/, { timeout: 30_000 });
 	});
 
 	test("requirement schema manager preserves design table columns after hydration", async ({ page }) => {

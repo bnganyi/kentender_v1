@@ -470,6 +470,10 @@
 			"margin-top: 0 !important;" +
 			"padding-top: 0 !important;" +
 			"}" +
+			"body.std-prod-header-harmonized nav[data-std-prod-breadcrumb='1'] {" +
+			"padding-top: 0.375rem !important;" +
+			"padding-bottom: 0.375rem !important;" +
+			"}" +
 			"body.std-prod-header-harmonized header.std-prod-page-header {" +
 			"margin-bottom: 0 !important;" +
 			"}" +
@@ -477,6 +481,21 @@
 			"body.std-prod-header-harmonized header.std-prod-page-header + section {" +
 			"position: static !important;" +
 			"top: auto !important;" +
+			"margin-top: 0 !important;" +
+			"}" +
+			"body.std-prod-header-harmonized.std-prod-schema-list > main," +
+			"body.std-prod-header-harmonized.std-prod-schema-list main {" +
+			"padding-top: 0.75rem !important;" +
+			"}" +
+			"body.std-prod-header-harmonized.std-prod-schema-list main > section:first-of-type {" +
+			"margin-top: 0 !important;" +
+			"}" +
+			".std-prod-schema-actions {" +
+			"opacity: 1 !important;" +
+			"visibility: visible !important;" +
+			"}" +
+			".std-prod-schema-actions-cell {" +
+			"min-width: 7.5rem;" +
 			"}" +
 			".std-prod-table-scroll-host {" +
 			"overflow-x: auto;" +
@@ -1201,6 +1220,38 @@
 		}
 	}
 
+	function schema_actions_wrapper_html(inner_html) {
+		return (
+			'<div class="std-prod-schema-actions flex justify-end items-center gap-1 flex-nowrap">' +
+			inner_html +
+			"</div>"
+		);
+	}
+
+	function set_actions_cell(row, index, inner_html) {
+		var cell = row_cell(row, index);
+		if (!cell) {
+			return;
+		}
+		cell.className = "px-4 py-3 text-right std-prod-schema-actions-cell whitespace-nowrap align-middle";
+		cell.innerHTML = schema_actions_wrapper_html(inner_html);
+	}
+
+	function compact_schema_list_chrome(doc) {
+		if (!doc || !doc.body) {
+			return;
+		}
+		doc.body.classList.add("std-prod-schema-list");
+		var main = doc.querySelector("main");
+		if (!main) {
+			return;
+		}
+		var kpi_section = main.querySelector("section.grid");
+		if (kpi_section) {
+			kpi_section.style.display = "none";
+		}
+	}
+
 	function format_field_type_label(field_type) {
 		if (!field_type) {
 			return "—";
@@ -1296,7 +1347,7 @@
 				"</span>",
 		);
 		set_row_cell_html(row, 11, format_status_chip(item.validationStatus));
-		set_row_cell_html(row, 12, parameter_row_actions_html());
+		set_actions_cell(row, 12, parameter_row_actions_html());
 	}
 
 	function severity_chip_html(severity) {
@@ -1377,7 +1428,7 @@
 		set_row_cell_text(row, 7, item.sourceBasis || "—");
 		set_row_cell_html(row, 8, test_coverage_chip_html(item.testCoverage));
 		set_row_cell_html(row, 9, format_status_chip(item.isActive === false ? "INACTIVE" : "ACTIVE"));
-		set_row_cell_html(row, 10, rule_row_actions_html());
+		set_actions_cell(row, 10, rule_row_actions_html());
 	}
 
 	function render_design_rows(doc, tbody, items, cache_key, fill_fn, limit) {
@@ -1438,6 +1489,7 @@
 		var tbody = doc.querySelector("table tbody");
 		render_design_rows(doc, tbody, params, "__stdProdParamRowTemplate", fill_parameter_row, 200);
 		hydrate_table_footer(doc, data.count || params.length, null, tbody);
+		compact_schema_list_chrome(doc);
 	}
 
 	function set_labeled_field(doc, label, value, options) {
@@ -1812,6 +1864,7 @@
 		var tbody = doc.querySelector("table tbody");
 		render_design_rows(doc, tbody, rules, "__stdProdRuleRowTemplate", fill_rule_row, 200);
 		hydrate_table_footer(doc, data.count || rules.length, null, tbody);
+		compact_schema_list_chrome(doc);
 	}
 
 	function hydrate_rule(doc, payload, ctx) {
@@ -1988,11 +2041,9 @@
 
 	function form_row_actions_html() {
 		return (
-			'<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">' +
-			'<button class="p-1.5 text-primary hover:bg-primary-fixed rounded transition-colors" title="Open Form"><span class="material-symbols-outlined text-[20px]">open_in_new</span></button>' +
+			'<button class="p-1.5 text-primary hover:bg-primary-fixed rounded transition-colors" title="Open Form" data-std-prod-schema-action="open"><span class="material-symbols-outlined text-[20px]">open_in_new</span></button>' +
 			'<button class="p-1.5 text-secondary hover:bg-secondary-fixed rounded transition-colors" title="Preview Form"><span class="material-symbols-outlined text-[20px]">visibility</span></button>' +
-			'<button class="p-1.5 text-tertiary hover:bg-tertiary-fixed rounded transition-colors" title="Export Schema"><span class="material-symbols-outlined text-[20px]">download</span></button>' +
-			"</div>"
+			'<button class="p-1.5 text-tertiary hover:bg-tertiary-fixed rounded transition-colors" title="Export Schema"><span class="material-symbols-outlined text-[20px]">download</span></button>'
 		);
 	}
 
@@ -2034,20 +2085,18 @@
 			'<span class="font-data-mono text-[12px]">' + frappe.utils.escape_html(item.sourceAnchorId || "—") + "</span>",
 		);
 		set_row_cell_html(row, 9, format_status_chip(item.validationStatus || "ACTIVE"));
-		set_row_cell_html(row, 10, form_row_actions_html());
+		set_actions_cell(row, 10, form_row_actions_html());
 	}
 
 	function render_block_row_actions_html() {
 		return (
-			'<div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">' +
-			'<button class="p-1.5 hover:bg-surface-container-highest rounded transition-colors" title="Open Render Block"><span class="material-symbols-outlined text-on-surface-variant text-[20px]">open_in_new</span></button>' +
+			'<button class="p-1.5 hover:bg-surface-container-highest rounded transition-colors" title="Open Render Block" data-std-prod-schema-action="open"><span class="material-symbols-outlined text-on-surface-variant text-[20px]">open_in_new</span></button>' +
 			'<button class="p-1.5 hover:bg-surface-container-highest rounded transition-colors" title="Preview Output"><span class="material-symbols-outlined text-on-surface-variant text-[20px]">visibility</span></button>' +
 			'<button class="p-1.5 hover:bg-surface-container-highest rounded transition-colors" title="View Data Bindings"><span class="material-symbols-outlined text-on-surface-variant text-[20px]">link</span></button>' +
-			'<button class="p-1.5 hover:bg-surface-container-highest rounded transition-colors" title="View Source Section"><span class="material-symbols-outlined text-on-surface-variant text-[20px]">anchor</span></button>' +
+			'<button class="p-1.5 hover:bg-surface-container-highest rounded transition-colors" title="View Source Section" data-std-prod-schema-action="source"><span class="material-symbols-outlined text-on-surface-variant text-[20px]">anchor</span></button>' +
 			'<button class="p-1.5 hover:bg-surface-container-highest rounded transition-colors" title="View Render Test"><span class="material-symbols-outlined text-on-surface-variant text-[20px]">assignment_turned_in</span></button>' +
 			'<button class="p-1.5 hover:bg-surface-container-highest rounded transition-colors" title="Export Render Profile"><span class="material-symbols-outlined text-on-surface-variant text-[20px]">download</span></button>' +
-			'<button class="p-1.5 hover:bg-surface-container-highest rounded transition-colors" title="Create Draft Version"><span class="material-symbols-outlined text-on-surface-variant text-[20px]">edit_square</span></button>' +
-			"</div>"
+			'<button class="p-1.5 hover:bg-surface-container-highest rounded transition-colors" title="Create Draft Version"><span class="material-symbols-outlined text-on-surface-variant text-[20px]">edit_square</span></button>'
 		);
 	}
 
@@ -2082,6 +2131,7 @@
 		}
 		row.className = "hover:bg-surface-container-low transition-colors std-prod-render-row cursor-pointer group";
 		row.setAttribute("data-render-block-key", item.id || "");
+		row.setAttribute("data-render-block-code", item.code || "");
 		set_row_cell_html(
 			row,
 			0,
@@ -2115,7 +2165,7 @@
 				frappe.utils.escape_html(item.lifecycleState || "ACTIVE") +
 				"</span>",
 		);
-		set_row_cell_html(row, 9, render_block_row_actions_html());
+		set_actions_cell(row, 9, render_block_row_actions_html());
 	}
 
 	function hydrate_forms(doc, payload, ctx) {
@@ -2127,6 +2177,7 @@
 		var tbody = doc.querySelector("table tbody");
 		render_design_rows(doc, tbody, forms, "__stdProdFormRowTemplate", fill_form_row, 200);
 		hydrate_table_footer(doc, data.count || forms.length, null, tbody);
+		compact_schema_list_chrome(doc);
 	}
 
 	function hydrate_form(doc, payload, ctx) {
@@ -2261,6 +2312,7 @@
 		var tbody = doc.querySelector("table tbody");
 		render_design_rows(doc, tbody, items, "__stdProdRequirementRowTemplate", fill_requirement_row, 200);
 		hydrate_table_footer(doc, data.count || items.length, null, tbody);
+		compact_schema_list_chrome(doc);
 	}
 
 	function requirement_required_chip_html(required) {
@@ -2302,7 +2354,7 @@
 
 	function requirement_row_actions_html() {
 		return (
-			'<button class="text-primary font-label-caps text-[11px] hover:underline">VIEW SOURCE</button>'
+			'<button class="text-primary font-label-caps text-[11px] hover:underline" data-std-prod-schema-action="source">VIEW SOURCE</button>'
 		);
 	}
 
@@ -2354,22 +2406,16 @@
 				"</span>",
 		);
 		set_row_cell_html(row, 9, requirement_validation_badge_html(item.validationStatus));
-		set_row_cell_html(row, 10, requirement_row_actions_html());
-		var actions_cell = row_cell(row, 10);
-		if (actions_cell) {
-			actions_cell.className = "px-container-padding py-4 text-right";
-		}
+		set_actions_cell(row, 10, requirement_row_actions_html());
 	}
 
 	function price_schedule_row_actions_html() {
 		return (
-			'<div class="flex justify-end gap-1">' +
-			'<button class="p-1 hover:text-primary" title="Open Schedule"><span class="material-symbols-outlined text-[20px]">open_in_new</span></button>' +
+			'<button class="p-1 hover:text-primary" title="Open Schedule" data-std-prod-schema-action="open"><span class="material-symbols-outlined text-[20px]">open_in_new</span></button>' +
 			'<button class="p-1 hover:text-primary" title="View Line Schema"><span class="material-symbols-outlined text-[20px]">schema</span></button>' +
 			'<button class="p-1 hover:text-primary" title="View Formula"><span class="material-symbols-outlined text-[20px]">functions</span></button>' +
 			'<button class="p-1 hover:text-primary" title="Preview Price Form"><span class="material-symbols-outlined text-[20px]">visibility</span></button>' +
-			'<button class="p-1 hover:text-primary" title="View Source"><span class="material-symbols-outlined text-[20px]">history_edu</span></button>' +
-			"</div>"
+			'<button class="p-1 hover:text-primary" title="View Source" data-std-prod-schema-action="source"><span class="material-symbols-outlined text-[20px]">history_edu</span></button>'
 		);
 	}
 
@@ -2419,6 +2465,7 @@
 		}
 		row.className = "hover:bg-surface-container-low transition-colors std-prod-price-row cursor-pointer";
 		row.setAttribute("data-price-key", item.id || "");
+		row.setAttribute("data-price-code", item.code || "");
 		set_row_cell_html(
 			row,
 			0,
@@ -2455,7 +2502,7 @@
 		);
 		set_row_cell_html(row, 11, price_validation_badge_html(item.validationStatus));
 		set_row_cell_html(row, 12, price_lifecycle_badge_html(item.lifecycleState));
-		set_row_cell_html(row, 13, price_schedule_row_actions_html());
+		set_actions_cell(row, 13, price_schedule_row_actions_html());
 	}
 
 	function hydrate_price_schedules(doc, payload, ctx) {
@@ -2477,6 +2524,36 @@
 		var tbody = doc.querySelector("table tbody");
 		render_design_rows(doc, tbody, items, "__stdProdPriceRowTemplate", fill_price_schedule_row, 200);
 		hydrate_table_footer(doc, data.count || items.length, null, tbody);
+		compact_schema_list_chrome(doc);
+	}
+
+	function evaluation_row_actions_html() {
+		return (
+			'<button class="text-primary font-label-caps text-[11px] hover:underline" title="View Source" data-std-prod-schema-action="source">VIEW SOURCE</button>'
+		);
+	}
+
+	function fill_evaluation_row(row, item) {
+		if (!row || !item) {
+			return;
+		}
+		row.className = "hover:bg-surface-container-low transition-colors std-prod-eval-row cursor-pointer";
+		row.setAttribute("data-eval-key", item.id || "");
+		set_row_cell_html(
+			row,
+			0,
+			'<span class="font-data-mono text-primary">' + frappe.utils.escape_html(item.code || item.id) + "</span>",
+		);
+		set_row_cell_text(row, 1, item.name || "—");
+		set_row_cell_text(row, 2, "—");
+		set_row_cell_text(row, 3, "—");
+		set_row_cell_text(row, 4, "—");
+		set_row_cell_text(row, 5, "—");
+		set_row_cell_text(row, 6, "—");
+		set_row_cell_text(row, 7, "—");
+		set_row_cell_text(row, 8, "—");
+		set_row_cell_html(row, 9, format_status_chip(item.validationStatus || "ACTIVE"));
+		set_actions_cell(row, 10, evaluation_row_actions_html());
 	}
 
 	function hydrate_evaluation(doc, payload, ctx) {
@@ -2492,7 +2569,9 @@
 		});
 		update_headline_counters(doc, "Criteria", data.count || schemas.length);
 		var tbody = doc.querySelector("table tbody");
+		render_design_rows(doc, tbody, schemas, "__stdProdEvalRowTemplate", fill_evaluation_row, 200);
 		hydrate_table_footer(doc, data.count || schemas.length, null, tbody);
+		compact_schema_list_chrome(doc);
 	}
 
 	function hydrate_render_blocks(doc, payload, ctx) {
@@ -2504,6 +2583,7 @@
 		var tbody = doc.querySelector("table tbody");
 		render_design_rows(doc, tbody, blocks, "__stdProdRenderRowTemplate", fill_render_block_row, 200);
 		hydrate_table_footer(doc, data.count || blocks.length, null, tbody);
+		compact_schema_list_chrome(doc);
 	}
 
 	function hydrate_usage_kpis(doc, kpis) {
@@ -3870,6 +3950,31 @@
 		return closest_button_text(target).indexOf(needle) >= 0;
 	}
 
+	function navigate_schema_source(ctx) {
+		navigate("std-source-doc", ctx);
+	}
+
+	function navigate_schema_section_map(ctx, map_focus) {
+		navigate("std-section-clause-map", {
+			package_id: ctx.package_id,
+			family_code: ctx.family_code,
+			version_code: ctx.version_code || "",
+			lifecycle_state: ctx.lifecycle_state || "",
+			map_focus: map_focus || "",
+		});
+	}
+
+	function open_form_detail_from_row(form_row, ctx) {
+		if (!form_row) {
+			return;
+		}
+		navigate("std-form-detail-field-builder", {
+			package_id: ctx.package_id,
+			family_code: ctx.family_code,
+			form_key: form_row.getAttribute("data-form-key"),
+		});
+	}
+
 	function wire_navigation_doc(screen, doc, ctx) {
 		if (!doc || !doc.body || doc.body.dataset.stdProdNavScreen === screen) {
 			return;
@@ -4008,6 +4113,18 @@
 						});
 						return;
 					}
+					if (target.closest('[title="View Source"]')) {
+						event.preventDefault();
+						event.stopPropagation();
+						navigate_schema_source(ctx);
+						return;
+					}
+					if (target.closest('[title="View Usage"]')) {
+						event.preventDefault();
+						event.stopPropagation();
+						navigate("std-usage-and-tender-bindings", ctx);
+						return;
+					}
 					var open_btn = target.closest('[title="Open"]');
 					if (open_btn) {
 						var open_row = open_btn.closest(".std-prod-param-row");
@@ -4050,6 +4167,12 @@
 						}
 						return;
 					}
+					if (target.closest('[title="View Source"]')) {
+						event.preventDefault();
+						event.stopPropagation();
+						navigate_schema_source(ctx);
+						return;
+					}
 					var rule_row = target.closest(".std-prod-rule-row");
 					if (rule_row) {
 						event.preventDefault();
@@ -4064,15 +4187,113 @@
 				}
 
 				if (screen === "forms") {
+					if (target.closest('[title="Open Form"]')) {
+						var open_form_row = target.closest(".std-prod-form-row");
+						event.preventDefault();
+						event.stopPropagation();
+						open_form_detail_from_row(open_form_row, ctx);
+						return;
+					}
 					var form_row = target.closest(".std-prod-form-row");
 					if (form_row) {
 						event.preventDefault();
 						event.stopPropagation();
-						navigate("std-form-detail-field-builder", {
-							package_id: ctx.package_id,
-							family_code: ctx.family_code,
-							form_key: form_row.getAttribute("data-form-key"),
-						});
+						open_form_detail_from_row(form_row, ctx);
+					}
+					return;
+				}
+
+				if (screen === "renderBlocks") {
+					if (target.closest('[title="Open Render Block"]')) {
+						var open_render_row = target.closest(".std-prod-render-row");
+						event.preventDefault();
+						event.stopPropagation();
+						navigate_schema_section_map(
+							ctx,
+							open_render_row ? open_render_row.getAttribute("data-render-block-code") : "",
+						);
+						return;
+					}
+					if (target.closest('[title="View Source Section"]')) {
+						event.preventDefault();
+						event.stopPropagation();
+						navigate_schema_source(ctx);
+						return;
+					}
+					if (target.closest('[title="View Data Bindings"]')) {
+						event.preventDefault();
+						event.stopPropagation();
+						navigate("std-parameter-dictionary", ctx);
+						return;
+					}
+					var render_row = target.closest(".std-prod-render-row");
+					if (
+						render_row &&
+						!target.closest(
+							'button[title="Export Render Profile"], button[title="Create Draft Version"]',
+						)
+					) {
+						event.preventDefault();
+						event.stopPropagation();
+						navigate_schema_section_map(ctx, render_row.getAttribute("data-render-block-code"));
+					}
+					return;
+				}
+
+				if (screen === "requirements") {
+					if (button_contains_label(target, "VIEW SOURCE") || target.closest('[data-std-prod-schema-action="source"]')) {
+						event.preventDefault();
+						event.stopPropagation();
+						navigate_schema_source(ctx);
+						return;
+					}
+					var req_row = target.closest(".std-prod-req-row");
+					if (req_row) {
+						event.preventDefault();
+						event.stopPropagation();
+						navigate_schema_source(ctx);
+					}
+					return;
+				}
+
+				if (screen === "priceSchedules") {
+					if (target.closest('[title="Open Schedule"]')) {
+						var open_price_row = target.closest(".std-prod-price-row");
+						event.preventDefault();
+						event.stopPropagation();
+						navigate_schema_section_map(
+							ctx,
+							open_price_row ? open_price_row.getAttribute("data-price-code") : "",
+						);
+						return;
+					}
+					if (target.closest('[title="View Source"]')) {
+						event.preventDefault();
+						event.stopPropagation();
+						navigate_schema_source(ctx);
+						return;
+					}
+					var price_row = target.closest(".std-prod-price-row");
+					if (price_row) {
+						event.preventDefault();
+						event.stopPropagation();
+						navigate_schema_section_map(ctx, price_row.getAttribute("data-price-code"));
+					}
+					return;
+				}
+
+				if (screen === "evaluation") {
+					if (button_contains_label(target, "VIEW SOURCE") || target.closest('[data-std-prod-schema-action="source"]')) {
+						event.preventDefault();
+						event.stopPropagation();
+						navigate_schema_source(ctx);
+						return;
+					}
+					var eval_row = target.closest(".std-prod-eval-row");
+					if (eval_row) {
+						event.preventDefault();
+						event.stopPropagation();
+						navigate_schema_source(ctx);
 					}
 					return;
 				}
