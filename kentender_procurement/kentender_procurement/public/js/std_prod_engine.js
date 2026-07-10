@@ -18,9 +18,13 @@
 	var MODULE_ROW_ROUTES = {
 		"Sections & Containers": "std-section-clauses",
 		"Standard Clauses": "std-section-clauses",
-		"Parameters & Rules": "std-parameter-dictionary",
+		"Parameter Dictionary": "std-parameter-dictionary",
+		"Rule Dictionary": "std-rule-dictionary",
 		"Requirements Schema": "std-requirement-schema-manager",
 		"Price Schedule Schema": "std-price-schedule-schema",
+		"Form Schema Manager": "std-form-schema-manager",
+		"Evaluation Schema": "std-evaluation-schema",
+		"Render Blocks": "std-render-blocks",
 	};
 
 	var SCHEMA_CROSS_LINKS = {
@@ -80,12 +84,83 @@
 		return {
 			family_code: opts.family_code || DEFAULT_FAMILY,
 			package_id: opts.package_id || DEFAULT_PACKAGE,
+			version_code: opts.version_code || "",
+			lifecycle_state: opts.lifecycle_state || "",
 			clause_key: opts.clause_key || "",
 			parameter_key: opts.parameter_key || "",
+			filter_parameter_key: opts.filter_parameter_key || "",
 			rule_key: opts.rule_key || "",
 			form_key: opts.form_key || "",
 			import_run_key: opts.import_run_key || "",
 		};
+	}
+
+	function sync_context_from_package_context(package_context, ctx) {
+		if (!package_context) {
+			return ctx;
+		}
+		var next = Object.assign({}, ctx || get_context());
+		if (package_context.familyCode) {
+			next.family_code = package_context.familyCode;
+		}
+		if (package_context.packageId) {
+			next.package_id = package_context.packageId;
+		}
+		if (package_context.versionCode) {
+			next.version_code = package_context.versionCode;
+		}
+		if (package_context.lifecycleState) {
+			next.lifecycle_state = package_context.lifecycleState;
+		}
+		set_context(next);
+		return next;
+	}
+
+	function hydrate_breadcrumb_trail(doc, ctx, leafLabel) {
+		var nav = doc.querySelector("nav[data-std-prod-breadcrumb]");
+		if (!nav) {
+			return;
+		}
+		var family = frappe.utils.escape_html(ctx.family_code || DEFAULT_FAMILY);
+		var package_id = frappe.utils.escape_html(ctx.package_id || DEFAULT_PACKAGE);
+		var leaf = frappe.utils.escape_html(leafLabel || "");
+		nav.innerHTML =
+			'<a class="hover:text-primary transition-colors std-prod-breadcrumb-link" href="#" data-std-breadcrumb-target="std-library">STD Library</a>' +
+			'<span class="material-symbols-outlined text-[14px]">chevron_right</span>' +
+			'<a class="hover:text-primary transition-colors std-prod-breadcrumb-link" href="#" data-std-breadcrumb-target="std-family-detail" data-std-breadcrumb-family="' +
+			family +
+			'">' +
+			family +
+			"</a>" +
+			'<span class="material-symbols-outlined text-[14px]">chevron_right</span>' +
+			'<a class="hover:text-primary transition-colors std-prod-breadcrumb-link" href="#" data-std-breadcrumb-target="std-version-detail" data-std-breadcrumb-family="' +
+			family +
+			'" data-std-breadcrumb-package="' +
+			package_id +
+			'">' +
+			package_id +
+			"</a>" +
+			'<span class="material-symbols-outlined text-[14px]">chevron_right</span>' +
+			'<span class="text-primary">' +
+			leaf +
+			"</span>";
+	}
+
+	function resolve_breadcrumb_navigation(target, ctx) {
+		if (!target) {
+			return null;
+		}
+		var route = target.getAttribute("data-std-breadcrumb-target");
+		if (!route) {
+			return null;
+		}
+		var next_ctx = {
+			family_code: target.getAttribute("data-std-breadcrumb-family") || ctx.family_code,
+			package_id: target.getAttribute("data-std-breadcrumb-package") || ctx.package_id,
+			version_code: ctx.version_code,
+			lifecycle_state: ctx.lifecycle_state,
+		};
+		return { route: route, ctx: next_ctx };
 	}
 
 	function set_context(ctx) {
@@ -126,6 +201,67 @@
 		reveal_iframe_frame(doc);
 	}
 
+	var LAYOUT_OFFSET_CLASSES = [
+		"mt-16",
+		"mt-14",
+		"pt-16",
+		"pt-20",
+		"pt-24",
+		"pt-32",
+		"pt-section-gap",
+	];
+
+	function normalize_page_layout(doc) {
+		if (!doc || !doc.body) {
+			return;
+		}
+		doc.body.classList.add("std-prod-header-harmonized");
+		doc.querySelectorAll("main").forEach(function (main) {
+			LAYOUT_OFFSET_CLASSES.forEach(function (token) {
+				main.classList.remove(token);
+			});
+		});
+		doc.querySelectorAll("body > header + div, body > header + section").forEach(function (node) {
+			if (!node || node.tagName === "MAIN") {
+				return;
+			}
+			unfix_layout_chrome(node);
+		});
+		doc.querySelectorAll("div.fixed, section.fixed").forEach(function (node) {
+			if (!node || node.closest("main, #clause-detail-drawer")) {
+				return;
+			}
+			var cls = node.className || "";
+			if (cls.indexOf("top-16") >= 0 || cls.indexOf("top-14") >= 0) {
+				unfix_layout_chrome(node);
+			}
+		});
+		doc.querySelectorAll(".sticky.top-16, .sticky.top-14").forEach(function (node) {
+			if (node.closest("main, #clause-detail-drawer")) {
+				return;
+			}
+			unfix_layout_chrome(node);
+		});
+	}
+
+	function unfix_layout_chrome(node) {
+		if (!node || !node.classList) {
+			return;
+		}
+		node.classList.remove(
+			"fixed",
+			"sticky",
+			"top-0",
+			"top-14",
+			"top-16",
+			"left-0",
+			"right-0",
+			"z-40",
+			"z-50",
+		);
+		node.classList.add("w-full");
+	}
+
 	function install_hydration_gate(doc) {
 		if (!doc || !doc.head || doc.getElementById("std-prod-hydration-gate")) {
 			return;
@@ -138,11 +274,17 @@
 			"visibility: hidden !important;" +
 			"}" +
 			"body.std-prod-header-harmonized > main," +
-			"body.std-prod-header-harmonized main.mt-16," +
-			"body.std-prod-header-harmonized main.mt-14," +
-			"body.std-prod-header-harmonized main.pt-20 {" +
+			"body.std-prod-header-harmonized main {" +
 			"margin-top: 0 !important;" +
 			"padding-top: 0 !important;" +
+			"}" +
+			"body.std-prod-header-harmonized header.std-prod-page-header {" +
+			"margin-bottom: 0 !important;" +
+			"}" +
+			"body.std-prod-header-harmonized header.std-prod-page-header + div," +
+			"body.std-prod-header-harmonized header.std-prod-page-header + section {" +
+			"position: static !important;" +
+			"top: auto !important;" +
 			"}";
 		doc.head.appendChild(style);
 	}
@@ -230,10 +372,7 @@
 			utility_html +
 			"</div>";
 		bar.parentNode.replaceChild(header, bar);
-		doc.body.classList.add("std-prod-header-harmonized");
-		doc.querySelectorAll("main").forEach(function (main) {
-			main.classList.remove("mt-16", "mt-14", "pt-20");
-		});
+		normalize_page_layout(doc);
 		doc.title = title + " | " + STD_PROD_BRAND_LABEL;
 	}
 
@@ -515,11 +654,248 @@
 	}
 
 	function update_headline_counters(doc, label, value) {
-		doc.querySelectorAll(".text-headline-md, .font-headline-md").forEach(function (node) {
-			var parent_text = node.parentElement ? node.parentElement.textContent || "" : "";
-			if (parent_text.indexOf(label) >= 0) {
-				node.textContent = String(value);
-			}
+		doc
+			.querySelectorAll(".text-headline-md, .font-headline-md, .text-headline-lg, .font-headline-lg")
+			.forEach(function (node) {
+				var parent_text = node.parentElement ? node.parentElement.textContent || "" : "";
+				if (parent_text.indexOf(label) >= 0) {
+					node.textContent = String(value);
+				}
+			});
+	}
+
+	function capture_row_template(doc, tbody, cache_key) {
+		if (!tbody || doc[cache_key]) {
+			return;
+		}
+		var sample = tbody.querySelector("tr");
+		if (sample) {
+			doc[cache_key] = sample.cloneNode(true);
+		}
+	}
+
+	function row_cell(row, index) {
+		if (!row || !row.cells) {
+			return null;
+		}
+		return row.cells[index] || null;
+	}
+
+	function set_row_cell_text(row, index, text) {
+		var cell = row_cell(row, index);
+		if (cell) {
+			cell.textContent = text == null || text === "" ? "—" : String(text);
+		}
+	}
+
+	function set_row_cell_html(row, index, html) {
+		var cell = row_cell(row, index);
+		if (cell) {
+			cell.innerHTML = html;
+		}
+	}
+
+	function format_field_type_label(field_type) {
+		if (!field_type) {
+			return "—";
+		}
+		return String(field_type).replace(/_/g, " ");
+	}
+
+	function format_requiredness_chip(required) {
+		if (required) {
+			return (
+				'<span class="px-2 py-0.5 bg-status-committed/10 text-status-committed rounded-sm text-[10px] font-bold">MANDATORY</span>'
+			);
+		}
+		return (
+			'<span class="px-2 py-0.5 bg-outline-variant/20 text-on-surface-variant rounded-sm text-[10px] font-bold">OPTIONAL</span>'
+		);
+	}
+
+	function format_validation_rules_cell(count) {
+		if (!count) {
+			return (
+				'<div class="flex items-center gap-1 text-on-surface-variant"><span class="material-symbols-outlined text-base">info</span>' +
+				'<span class="text-xs font-medium">None</span></div>'
+			);
+		}
+		return (
+			'<div class="flex items-center gap-1 text-status-available"><span class="material-symbols-outlined text-base">check_circle</span>' +
+			'<span class="text-xs font-medium">' +
+			String(count) +
+			" Rules</span></div>"
+		);
+	}
+
+	function format_status_chip(status) {
+		var normalized = String(status || "ACTIVE").toUpperCase();
+		return (
+			'<span class="flex items-center gap-1.5 text-status-available text-xs font-bold uppercase">' +
+			'<span class="w-1.5 h-1.5 rounded-full bg-status-available"></span>' +
+			frappe.utils.escape_html(normalized) +
+			"</span>"
+		);
+	}
+
+	function parameter_row_actions_html() {
+		return (
+			'<button class="p-1 hover:text-primary" title="Open"><span class="material-symbols-outlined text-lg">visibility</span></button>' +
+			'<button class="p-1 hover:text-primary" title="View Usage"><span class="material-symbols-outlined text-lg">account_tree</span></button>' +
+			'<button class="p-1 hover:text-primary" title="View Rules"><span class="material-symbols-outlined text-lg">rule</span></button>' +
+			'<button class="p-1 hover:text-primary" title="View Source"><span class="material-symbols-outlined text-lg">code</span></button>' +
+			'<button class="p-1 hover:text-primary" title="Compare Previous Version"><span class="material-symbols-outlined text-lg">history</span></button>'
+		);
+	}
+
+	function fill_parameter_row(row, item) {
+		if (!row || !item) {
+			return;
+		}
+		row.className = "bureau-table-row transition-colors std-prod-param-row cursor-pointer";
+		row.setAttribute("data-parameter-key", item.id || "");
+		set_row_cell_text(row, 0, item.code || item.id);
+		var key_cell = row_cell(row, 0);
+		if (key_cell) {
+			key_cell.className = "px-4 py-4 parameter-key text-primary font-medium";
+		}
+		set_row_cell_text(row, 1, item.name || "");
+		set_row_cell_html(
+			row,
+			2,
+			item.fieldType
+				? '<span class="px-2 py-0.5 bg-surface-container text-on-surface-variant rounded-full text-xs font-medium">' +
+						frappe.utils.escape_html(format_field_type_label(item.fieldType)) +
+						"</span>"
+				: "—",
+		);
+		set_row_cell_text(row, 3, item.sectionTitle || "—");
+		set_row_cell_text(row, 4, item.appliesTo || "—");
+		set_row_cell_html(row, 5, format_requiredness_chip(item.required));
+		var default_text =
+			item.defaultValue != null && item.defaultValue !== ""
+				? String(item.defaultValue)
+				: item.optionSetKey
+					? "Option set: " + item.optionSetKey
+					: "—";
+		set_row_cell_html(row, 6, '<span class="text-xs text-on-surface-variant">' + frappe.utils.escape_html(default_text) + "</span>");
+		set_row_cell_html(row, 7, format_validation_rules_cell(item.validationRuleCount || 0));
+		set_row_cell_text(row, 8, "—");
+		set_row_cell_text(row, 9, item.renderBindingCount ? String(item.renderBindingCount) + " Blocks" : "—");
+		set_row_cell_html(
+			row,
+			10,
+			'<span class="font-mono text-[10px] text-on-surface-variant">' +
+				frappe.utils.escape_html(item.sourceAnchorId || "—") +
+				"</span>",
+		);
+		set_row_cell_html(row, 11, format_status_chip(item.validationStatus));
+		set_row_cell_html(row, 12, parameter_row_actions_html());
+	}
+
+	function severity_chip_html(severity) {
+		var sev = String(severity || "INFO").toUpperCase();
+		if (sev === "BLOCKER") {
+			return (
+				'<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-error-container text-on-error-container font-label-caps text-[10px] font-bold uppercase">' +
+				'<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: \'FILL\' 1;">error</span>BLOCKER</span>'
+			);
+		}
+		if (sev === "WARNING") {
+			return (
+				'<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-high text-status-reserved font-label-caps text-[10px] font-bold uppercase">' +
+				'<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: \'FILL\' 1;">warning</span>WARNING</span>'
+			);
+		}
+		return (
+			'<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-caps text-[10px] font-bold uppercase">' +
+			'<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: \'FILL\' 1;">info</span>INFO</span>'
+		);
+	}
+
+	function rule_type_chip_html(rule_type) {
+		return (
+			'<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-label-caps text-[10px] uppercase">' +
+			frappe.utils.escape_html(String(rule_type || "Validation")) +
+			"</span>"
+		);
+	}
+
+	function test_coverage_chip_html(coverage) {
+		var label = String(coverage || "—");
+		if (label.toLowerCase() === "covered" || label.toLowerCase() === "passed") {
+			return (
+				'<span class="px-2 py-0.5 rounded bg-status-available/10 text-status-available font-label-caps text-[10px] font-bold uppercase">Covered</span>'
+			);
+		}
+		if (label === "—") {
+			return "—";
+		}
+		return (
+			'<span class="px-2 py-0.5 rounded bg-outline/10 text-on-surface-variant font-label-caps text-[10px] font-bold uppercase">' +
+			frappe.utils.escape_html(label) +
+			"</span>"
+		);
+	}
+
+	function rule_row_actions_html() {
+		return (
+			'<div class="flex items-center justify-end gap-1">' +
+			'<button class="p-1.5 rounded hover:bg-surface-container text-primary transition-all" title="Open Rule"><span class="material-symbols-outlined text-[20px]">open_in_new</span></button>' +
+			'<button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant" title="View Affected Objects"><span class="material-symbols-outlined text-[20px]">hub</span></button>' +
+			'<button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant" title="View Source"><span class="material-symbols-outlined text-[20px]">code</span></button>' +
+			'<button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant" title="View Test Coverage"><span class="material-symbols-outlined text-[20px]">fact_check</span></button>' +
+			'<button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant" title="Export Rule Catalog"><span class="material-symbols-outlined text-[20px]">download</span></button>' +
+			'<button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant" title="Create Draft Version"><span class="material-symbols-outlined text-[20px]">edit_document</span></button>' +
+			"</div>"
+		);
+	}
+
+	function fill_rule_row(row, item) {
+		if (!row || !item) {
+			return;
+		}
+		row.className = "hover:bg-surface-container-low/50 transition-colors std-prod-rule-row cursor-pointer";
+		row.setAttribute("data-rule-key", item.id || "");
+		set_row_cell_html(row, 0, '<span class="font-data-mono text-data-mono text-primary">' + frappe.utils.escape_html(item.code || item.id) + "</span>");
+		set_row_cell_html(
+			row,
+			1,
+			'<span class="font-body-md text-body-md font-semibold text-on-surface">' + frappe.utils.escape_html(item.name || "") + "</span>",
+		);
+		set_row_cell_html(row, 2, rule_type_chip_html(item.ruleType));
+		set_row_cell_html(row, 3, severity_chip_html(item.severity));
+		set_row_cell_text(row, 4, item.scope || "—");
+		set_row_cell_html(row, 5, '<span class="font-data-mono text-[12px] text-on-surface-variant">' + frappe.utils.escape_html(item.lifecycleStage || "—") + "</span>");
+		set_row_cell_html(row, 6, '<span class="font-data-mono text-[12px]">' + frappe.utils.escape_html(item.affectedObject || "—") + "</span>");
+		set_row_cell_text(row, 7, item.sourceBasis || "—");
+		set_row_cell_html(row, 8, test_coverage_chip_html(item.testCoverage));
+		set_row_cell_html(row, 9, format_status_chip(item.isActive === false ? "INACTIVE" : "ACTIVE"));
+		set_row_cell_html(row, 10, rule_row_actions_html());
+	}
+
+	function render_design_rows(doc, tbody, items, cache_key, fill_fn, limit) {
+		if (!tbody) {
+			return;
+		}
+		capture_row_template(doc, tbody, cache_key);
+		var template = doc[cache_key];
+		if (!template) {
+			return;
+		}
+		var rows = (items || []).slice(0, limit || 60);
+		if (!rows.length) {
+			tbody.innerHTML =
+				'<tr><td class="px-4 py-6 text-on-surface-variant" colspan="' +
+				template.cells.length +
+				'">No records for this package.</td></tr>';
+			return;
+		}
+		tbody.innerHTML = "";
+		rows.forEach(function (item) {
+			var row = template.cloneNode(true);
+			fill_fn(row, item);
+			tbody.appendChild(row);
 		});
 	}
 
@@ -550,26 +926,11 @@
 	function hydrate_parameters(doc, payload, ctx) {
 		var data = payload.data || {};
 		var params = data.parameters || [];
-		update_headline_counters(doc, "Total Parameters", data.count || params.length);
+		ctx = sync_context_from_package_context(payload.packageContext, ctx);
+		hydrate_breadcrumb_trail(doc, ctx, "Parameter Dictionary");
+		update_headline_counters(doc, "TOTAL PARAMETERS", data.count || params.length);
 		var tbody = doc.querySelector("table tbody");
-		if (tbody && params.length) {
-			tbody.innerHTML = params
-				.slice(0, 60)
-				.map(function (item) {
-					return (
-						"<tr class='bureau-table-row transition-colors std-prod-param-row cursor-pointer' data-parameter-key='" +
-						frappe.utils.escape_html(item.id) +
-						"'><td class='px-4 py-4 parameter-key text-primary font-medium'>" +
-						frappe.utils.escape_html(item.code || item.id) +
-						"</td><td class='px-4 py-4'>" +
-						frappe.utils.escape_html(item.name || "") +
-						"</td><td class='px-4 py-4'>—</td><td class='px-4 py-4'>—</td><td class='px-4 py-4'>—</td><td class='px-4 py-4'>—</td><td class='px-4 py-4'>—</td><td class='px-4 py-4'>" +
-						frappe.utils.escape_html(item.validationStatus || "—") +
-						"</td><td class='px-4 py-4'>—</td><td class='px-4 py-4'>—</td><td class='px-4 py-4 font-mono text-[10px]'>—</td></tr>"
-					);
-				})
-				.join("");
-		}
+		render_design_rows(doc, tbody, params, "__stdProdParamRowTemplate", fill_parameter_row, 60);
 		hydrate_table_footer(doc, data.count || params.length);
 	}
 
@@ -807,25 +1168,35 @@
 		var validation_section = find_bento_section(doc, "VALIDATION RULES");
 		var validation_body = validation_section && validation_section.querySelector("tbody");
 		if (validation_body) {
+			capture_row_template(doc, validation_body, "__stdProdParamRuleRowTemplate");
+			var rule_template = doc.__stdProdParamRuleRowTemplate;
 			if (!validation_rules.length) {
 				validation_body.innerHTML =
 					'<tr><td class="px-card-padding py-4 text-on-surface-variant italic" colspan="5">No validation rules are bound to this parameter.</td></tr>';
-			} else {
-				validation_body.innerHTML = validation_rules
-					.map(function (rule) {
-						return (
-							"<tr><td class='px-card-padding py-4 font-semibold text-[13px]'>" +
-							frappe.utils.escape_html(rule.code || rule.name || rule.id) +
-							"</td><td class='px-card-padding py-4 font-data-mono text-[12px]'>" +
-							frappe.utils.escape_html(rule.severity || "—") +
-							"</td><td class='px-card-padding py-4 text-[13px]'>" +
-							frappe.utils.escape_html(rule.ruleType || "VALIDATION") +
-							"</td><td class='px-card-padding py-4'>" +
-							frappe.utils.escape_html(rule.lifecycleStage || "—") +
-							"</td><td class='px-card-padding py-4 text-right'>—</td></tr>"
-						);
-					})
-					.join("");
+			} else if (rule_template) {
+				validation_body.innerHTML = "";
+				validation_rules.forEach(function (rule) {
+					var row = rule_template.cloneNode(true);
+					var cells = row.cells || [];
+					if (cells[0]) {
+						cells[0].textContent = rule.code || rule.name || rule.id || "—";
+						cells[0].className = "px-card-padding py-4 font-semibold text-[13px]";
+					}
+					if (cells[1]) {
+						cells[1].innerHTML = severity_chip_html(rule.severity);
+					}
+					if (cells[2]) {
+						cells[2].textContent = rule.ruleType || "VALIDATION";
+					}
+					if (cells[3]) {
+						cells[3].textContent = rule.lifecycleStage || "—";
+					}
+					if (cells[4]) {
+						cells[4].className = "px-card-padding py-4 text-right";
+						cells[4].innerHTML = "—";
+					}
+					validation_body.appendChild(row);
+				});
 			}
 		}
 
@@ -879,11 +1250,60 @@
 	function hydrate_rules(doc, payload, ctx) {
 		var data = payload.data || {};
 		var rules = data.rules || [];
-		update_headline_counters(doc, "Total Rules", data.count || rules.length);
-		var tbody = doc.querySelector("table tbody");
-		if (tbody && rules.length) {
-			tbody.innerHTML = render_identity_rows(rules.slice(0, 60), "std-prod-rule-row", "data-rule-key");
+		ctx = sync_context_from_package_context(payload.packageContext, ctx);
+		hydrate_breadcrumb_trail(doc, ctx, "Rule Dictionary");
+		var filter_key = ctx.filter_parameter_key || data.filterParameterKey || "";
+		var summary = data.summary || {};
+		var blocker_count = summary.blockerRules;
+		var warning_count = summary.warningRules;
+		var active_count = summary.activeRules;
+		if (blocker_count == null || warning_count == null || active_count == null) {
+			blocker_count = 0;
+			warning_count = 0;
+			active_count = 0;
+			rules.forEach(function (rule) {
+				var severity = String(rule.severity || "").toUpperCase();
+				if (severity === "BLOCKER") {
+					blocker_count += 1;
+				} else if (severity === "WARNING") {
+					warning_count += 1;
+				}
+				if (rule.isActive !== false) {
+					active_count += 1;
+				}
+			});
 		}
+		update_headline_counters(doc, "Total Rules", summary.total != null ? summary.total : data.count || rules.length);
+		update_headline_counters(doc, "Blocker Rules", blocker_count);
+		update_headline_counters(doc, "Warning Rules", warning_count);
+		update_headline_counters(doc, "Active Rules", active_count);
+		if (filter_key && doc.body) {
+			doc.body.setAttribute("data-std-filter-parameter-key", filter_key);
+			var filter_banner = doc.querySelector("[data-std-prod-rule-filter-banner]");
+			if (!filter_banner) {
+				var main = doc.querySelector("main");
+				var anchor = main && main.querySelector("nav");
+				if (main && anchor) {
+					filter_banner = doc.createElement("div");
+					filter_banner.setAttribute("data-std-prod-rule-filter-banner", "1");
+					filter_banner.className =
+						"mb-4 p-3 bg-primary-container/10 border border-primary/20 rounded-lg text-sm text-primary";
+					anchor.parentNode.insertBefore(filter_banner, anchor.nextSibling);
+				}
+			}
+			if (filter_banner) {
+				filter_banner.textContent =
+					"Showing validation rules linked to parameter " + filter_key + ". Open Rule Dictionary from Version Detail for the full catalogue.";
+			}
+		} else if (doc.body) {
+			doc.body.removeAttribute("data-std-filter-parameter-key");
+			var existing_banner = doc.querySelector("[data-std-prod-rule-filter-banner]");
+			if (existing_banner) {
+				existing_banner.remove();
+			}
+		}
+		var tbody = doc.querySelector("table tbody");
+		render_design_rows(doc, tbody, rules, "__stdProdRuleRowTemplate", fill_rule_row, 60);
 		hydrate_table_footer(doc, data.count || rules.length);
 	}
 
@@ -1060,6 +1480,8 @@
 	function hydrate_forms(doc, payload, ctx) {
 		var data = payload.data || {};
 		var forms = data.forms || [];
+		ctx = sync_context_from_package_context(payload.packageContext, ctx);
+		hydrate_breadcrumb_trail(doc, ctx, "Form Schema Manager");
 		update_headline_counters(doc, "Total Forms", data.count || forms.length);
 		var tbody = doc.querySelector("table tbody");
 		if (tbody && forms.length) {
@@ -1085,10 +1507,43 @@
 		var data = payload.data || {};
 		var metadata = data.metadata || {};
 		var package_context = payload.packageContext || {};
+		ctx = sync_context_from_package_context(package_context, ctx);
 		var business_code = data.code || metadata.form_code || "";
 		var display_name = data.name || metadata.display_title || business_code || "Form";
 		var fields = data.formFields || [];
 		var lifecycle = package_context.lifecycleState || "DRAFT";
+		var nav = doc.querySelector("nav[data-std-prod-breadcrumb]");
+		if (nav) {
+			var family = frappe.utils.escape_html(ctx.family_code || DEFAULT_FAMILY);
+			var package_id = frappe.utils.escape_html(ctx.package_id || DEFAULT_PACKAGE);
+			var leaf = frappe.utils.escape_html(display_name);
+			nav.innerHTML =
+				'<a class="hover:text-primary transition-colors std-prod-breadcrumb-link" href="#" data-std-breadcrumb-target="std-library">STD Library</a>' +
+				'<span class="material-symbols-outlined text-[14px]">chevron_right</span>' +
+				'<a class="hover:text-primary transition-colors std-prod-breadcrumb-link" href="#" data-std-breadcrumb-target="std-family-detail" data-std-breadcrumb-family="' +
+				family +
+				'">' +
+				family +
+				"</a>" +
+				'<span class="material-symbols-outlined text-[14px]">chevron_right</span>' +
+				'<a class="hover:text-primary transition-colors std-prod-breadcrumb-link" href="#" data-std-breadcrumb-target="std-version-detail" data-std-breadcrumb-family="' +
+				family +
+				'" data-std-breadcrumb-package="' +
+				package_id +
+				'">' +
+				package_id +
+				"</a>" +
+				'<span class="material-symbols-outlined text-[14px]">chevron_right</span>' +
+				'<a class="hover:text-primary transition-colors std-prod-breadcrumb-link" href="#" data-std-breadcrumb-target="std-form-schema-manager" data-std-breadcrumb-family="' +
+				family +
+				'" data-std-breadcrumb-package="' +
+				package_id +
+				'">Form Schema Manager</a>' +
+				'<span class="material-symbols-outlined text-[14px]">chevron_right</span>' +
+				'<span class="text-primary">' +
+				leaf +
+				"</span>";
+		}
 
 		var header_title = doc.querySelector("header h1");
 		if (header_title) {
@@ -1203,6 +1658,8 @@
 	function hydrate_requirements(doc, payload, ctx) {
 		var data = payload.data || {};
 		var items = data.requirements || [];
+		ctx = sync_context_from_package_context(payload.packageContext, ctx);
+		hydrate_breadcrumb_trail(doc, ctx, "Requirement Schema");
 		update_headline_counters(doc, "Requirement", data.count || items.length);
 		var tbody = doc.querySelector("table tbody");
 		if (tbody && items.length) {
@@ -1214,6 +1671,8 @@
 	function hydrate_price_schedules(doc, payload, ctx) {
 		var data = payload.data || {};
 		var items = data.priceSchedules || [];
+		ctx = sync_context_from_package_context(payload.packageContext, ctx);
+		hydrate_breadcrumb_trail(doc, ctx, "Price Schedule Schema");
 		update_headline_counters(doc, "Price Schedule", data.count || items.length);
 		var tbody = doc.querySelector("table tbody");
 		if (tbody && items.length) {
@@ -1226,6 +1685,8 @@
 		var data = payload.data || {};
 		var schemas = data.schemas || [];
 		var schema = schemas[0] || {};
+		ctx = sync_context_from_package_context(payload.packageContext, ctx);
+		hydrate_breadcrumb_trail(doc, ctx, "Evaluation Schema");
 		doc.querySelectorAll("h1, .font-headline-sm").forEach(function (node) {
 			if ((node.textContent || "").indexOf("Evaluation Schema") >= 0 && schema.name) {
 				node.textContent = schema.name;
@@ -1238,6 +1699,8 @@
 	function hydrate_render_blocks(doc, payload, ctx) {
 		var data = payload.data || {};
 		var blocks = data.renderBlocks || [];
+		ctx = sync_context_from_package_context(payload.packageContext, ctx);
+		hydrate_breadcrumb_trail(doc, ctx, "Render Blocks");
 		update_headline_counters(doc, "Render Block", data.count || blocks.length);
 		var tbody = doc.querySelector("table tbody");
 		if (tbody && blocks.length) {
@@ -1480,53 +1943,44 @@
 		var total_families = kpis.stdFamilies || families.length;
 		hydrate_library_kpis(doc, kpis, data.libraryHealth);
 		hydrate_table_footer(doc, total_families);
-		var family = families[0];
-		if (!family) {
-			return;
-		}
 		var tbody = doc.querySelector("table tbody");
-		var row = hide_extra_rows(tbody, 1);
-		if (!row) {
+		if (!tbody || !families.length) {
 			return;
 		}
-		var cells = row.querySelectorAll("td");
-		if (cells[0]) {
-			cells[0].innerHTML =
-				'<div class="font-bold text-body-md text-primary">' +
-				frappe.utils.escape_html(family.familyName || family.familyCode) +
-				'</div><div class="text-[11px] text-on-surface-variant font-body-md">' +
-				frappe.utils.escape_html(family.familyCode) +
-				"</div>";
-		}
-		if (cells[1]) {
-			cells[1].textContent = family.familyCode;
-		}
-		if (cells[2]) {
-			cells[2].innerHTML =
-				'<span class="bg-surface-container-highest text-secondary text-[10px] px-2 py-0.5 font-bold rounded">' +
-				frappe.utils.escape_html(family.latestPackageId || ctx.package_id) +
-				" (DRAFT)</span>";
-		}
-		if (cells[6]) {
-			cells[6].innerHTML =
-				'<span class="bg-surface-container-highest text-secondary text-[10px] px-2 py-0.5 font-bold border border-outline-variant rounded">DRAFT</span>';
-		}
-		var summary = payload.validationSummary || {};
-		if (cells[10]) {
-			var blockers = summary.blockers || 0;
-			var warnings = summary.warnings || 0;
-			if (blockers > 0) {
-				cells[10].innerHTML =
-					'<div class="flex items-center gap-1 text-error text-[10px] font-bold"><span class="material-symbols-outlined text-[14px]">error</span> ' +
-					blockers +
-					" BLOCKERS</div>";
-			} else if (warnings > 0) {
-				cells[10].innerHTML =
-					'<div class="flex items-center gap-1 text-status-reserved text-[10px] font-bold"><span class="material-symbols-outlined text-[14px]">warning</span> ' +
-					warnings +
-					" WARNINGS</div>";
+		var rows = Array.from(tbody.querySelectorAll("tr"));
+		families.slice(0, rows.length).forEach(function (family, index) {
+			var row = rows[index];
+			if (!row) {
+				return;
 			}
-		}
+			row.setAttribute("data-family-code", family.familyCode || "");
+			row.setAttribute("data-package-id", family.latestPackageId || "");
+			row.setAttribute("data-version-count", String(family.versionCount || 0));
+			row.style.display = "";
+			var cells = row.querySelectorAll("td");
+			if (cells[0]) {
+				cells[0].innerHTML =
+					'<div class="font-bold text-body-md text-primary">' +
+					frappe.utils.escape_html(family.familyName || family.familyCode) +
+					'</div><div class="text-[11px] text-on-surface-variant font-body-md">' +
+					frappe.utils.escape_html(family.familyCode) +
+					"</div>";
+			}
+			if (cells[1]) {
+				cells[1].textContent = family.familyCode;
+			}
+			if (cells[2] && family.latestPackageId) {
+				cells[2].innerHTML =
+					'<span class="bg-surface-container-highest text-secondary text-[10px] px-2 py-0.5 font-bold rounded">' +
+					frappe.utils.escape_html(family.latestPackageId) +
+					"</span>";
+			}
+		});
+		rows.forEach(function (row, index) {
+			if (index >= families.length) {
+				row.style.display = "none";
+			}
+		});
 	}
 
 	function hydrate_family_kpis(doc, kpis, usage) {
@@ -2343,7 +2797,10 @@
 			});
 		}
 		if (screen === "rules") {
-			return call_read("get_std_version_rules", { package_id: package_id }).then(function (r) {
+			return call_read("get_std_version_rules", {
+				package_id: package_id,
+				parameter_key: ctx.filter_parameter_key || "",
+			}).then(function (r) {
 				return { rules: r.message };
 			});
 		}
@@ -2489,11 +2946,25 @@
 				var text = (target.textContent || "").trim();
 
 				if (screen === "library") {
-					var open_btn = target.closest("button");
-					if (open_btn && text === "Open") {
-						event.preventDefault();
-						event.stopPropagation();
-						navigate("std-family-detail", ctx);
+					var library_row = target.closest("tr[data-family-code]");
+					var library_btn = target.closest("button");
+					if (library_btn && library_row) {
+						var btn_text = (library_btn.textContent || "").trim();
+						if (btn_text === "Open" || btn_text === "View Version" || btn_text.indexOf("Open / View Version") === 0) {
+							event.preventDefault();
+							event.stopPropagation();
+							var family_code = library_row.getAttribute("data-family-code") || ctx.family_code;
+							var package_id = library_row.getAttribute("data-package-id") || ctx.package_id;
+							var version_count = parseInt(library_row.getAttribute("data-version-count") || "0", 10);
+							if (btn_text === "View Version" || (version_count === 1 && package_id)) {
+								navigate("std-version-detail", {
+									family_code: family_code,
+									package_id: package_id,
+								});
+							} else {
+								navigate("std-family-detail", { family_code: family_code });
+							}
+						}
 					}
 					return;
 				}
@@ -2516,6 +2987,16 @@
 				}
 
 				if (screen === "version") {
+					var workspace_btn = target.closest("[data-std-workspace-route]");
+					if (workspace_btn) {
+						var workspace_route = workspace_btn.getAttribute("data-std-workspace-route");
+						if (workspace_route) {
+							event.preventDefault();
+							event.stopPropagation();
+							navigate(workspace_route, ctx);
+							return;
+						}
+					}
 					if (
 						button_contains_label(target, "View Audit Trail") ||
 						button_contains_label(target, "Full Audit Log")
@@ -2570,6 +3051,32 @@
 				}
 
 				if (screen === "parameters") {
+					var view_rules_btn = target.closest('[title="View Rules"]');
+					if (view_rules_btn) {
+						var rules_row = view_rules_btn.closest(".std-prod-param-row");
+						event.preventDefault();
+						event.stopPropagation();
+						navigate("std-rule-dictionary", {
+							package_id: ctx.package_id,
+							family_code: ctx.family_code,
+							filter_parameter_key: rules_row ? rules_row.getAttribute("data-parameter-key") : "",
+						});
+						return;
+					}
+					var open_btn = target.closest('[title="Open"]');
+					if (open_btn) {
+						var open_row = open_btn.closest(".std-prod-param-row");
+						if (open_row) {
+							event.preventDefault();
+							event.stopPropagation();
+							navigate("std-parameter-detail", {
+								package_id: ctx.package_id,
+								family_code: ctx.family_code,
+								parameter_key: open_row.getAttribute("data-parameter-key"),
+							});
+						}
+						return;
+					}
 					var param_row = target.closest(".std-prod-param-row");
 					if (param_row) {
 						event.preventDefault();
@@ -2579,31 +3086,25 @@
 							family_code: ctx.family_code,
 							parameter_key: param_row.getAttribute("data-parameter-key"),
 						});
-						return;
-					}
-					var open_btn = target.closest("button");
-					if (open_btn && (text === "Open" || open_btn.querySelector(".material-symbols-outlined"))) {
-						var row = open_btn.closest(".std-prod-param-row");
-						if (row) {
-							event.preventDefault();
-							event.stopPropagation();
-							navigate("std-parameter-detail", {
-								package_id: ctx.package_id,
-								family_code: ctx.family_code,
-								parameter_key: row.getAttribute("data-parameter-key"),
-							});
-						}
-						return;
-					}
-					if (text.indexOf("Rule Dictionary") >= 0 || target.closest('[title="View Rules"]')) {
-						event.preventDefault();
-						event.stopPropagation();
-						navigate("std-rule-dictionary", ctx);
 					}
 					return;
 				}
 
 				if (screen === "rules") {
+					var open_rule_btn = target.closest('[title="Open Rule"]');
+					if (open_rule_btn) {
+						var open_rule_row = open_rule_btn.closest(".std-prod-rule-row");
+						if (open_rule_row) {
+							event.preventDefault();
+							event.stopPropagation();
+							navigate("std-rule-detail", {
+								package_id: ctx.package_id,
+								family_code: ctx.family_code,
+								rule_key: open_rule_row.getAttribute("data-rule-key"),
+							});
+						}
+						return;
+					}
 					var rule_row = target.closest(".std-prod-rule-row");
 					if (rule_row) {
 						event.preventDefault();
@@ -2615,6 +3116,50 @@
 						});
 					}
 					return;
+				}
+
+				if (screen === "rule") {
+					var rule_dict_crumb = target.closest("a");
+					if (rule_dict_crumb && (rule_dict_crumb.textContent || "").trim() === "Rule Dictionary") {
+						event.preventDefault();
+						event.stopPropagation();
+						navigate("std-rule-dictionary", {
+							package_id: ctx.package_id,
+							family_code: ctx.family_code,
+							filter_parameter_key: "",
+						});
+					}
+					return;
+				}
+
+				if (screen === "form") {
+					var form_mgr_crumb = target.closest("a, .std-prod-breadcrumb-link");
+					if (form_mgr_crumb && (form_mgr_crumb.textContent || "").trim() === "Form Schema Manager") {
+						event.preventDefault();
+						event.stopPropagation();
+						var form_breadcrumb_nav = resolve_breadcrumb_navigation(form_mgr_crumb, ctx);
+						navigate(
+							form_breadcrumb_nav ? form_breadcrumb_nav.route : "std-form-schema-manager",
+							form_breadcrumb_nav ? form_breadcrumb_nav.ctx : {
+								package_id: ctx.package_id,
+								family_code: ctx.family_code,
+								version_code: ctx.version_code,
+								lifecycle_state: ctx.lifecycle_state,
+							},
+						);
+					}
+					return;
+				}
+
+				var breadcrumb_link = target.closest(".std-prod-breadcrumb-link");
+				if (breadcrumb_link) {
+					var breadcrumb_nav = resolve_breadcrumb_navigation(breadcrumb_link, ctx);
+					if (breadcrumb_nav) {
+						event.preventDefault();
+						event.stopPropagation();
+						navigate(breadcrumb_nav.route, breadcrumb_nav.ctx);
+						return;
+					}
 				}
 
 				if (screen === "forms") {
@@ -2675,12 +3220,17 @@
 	}
 
 	function should_refresh_on_show(screen, iframe, fresh_ctx) {
-		if (!iframe || ["clause", "parameter", "rule", "form"].indexOf(screen) === -1) {
+		if (!iframe || ["clause", "parameter", "rule", "form", "rules"].indexOf(screen) === -1) {
 			return false;
 		}
 		var doc = iframe.contentDocument;
 		if (!doc || !doc.body || doc.body.getAttribute("data-std-prod-hydrated") !== "1") {
 			return false;
+		}
+		if (screen === "rules") {
+			var last_filter = doc.body.getAttribute("data-std-filter-parameter-key") || "";
+			var next_filter = fresh_ctx.filter_parameter_key || "";
+			return last_filter !== next_filter;
 		}
 		if (screen === "clause") {
 			var last_clause_key = doc.body.getAttribute("data-std-clause-key") || "";
@@ -2711,6 +3261,22 @@
 		fetch_screen_data(screen, ctx)
 			.then(function (results) {
 				replace_mock_identities(doc, ctx);
+				var payload = results.version || results.rules || results.forms || results.evaluation || results.renderBlocks;
+				if (payload && payload.packageContext) {
+					ctx = sync_context_from_package_context(payload.packageContext, ctx);
+				} else if (results.parameters && results.parameters.packageContext) {
+					ctx = sync_context_from_package_context(results.parameters.packageContext, ctx);
+				} else if (results.parameter && results.parameter.packageContext) {
+					ctx = sync_context_from_package_context(results.parameter.packageContext, ctx);
+				} else if (results.rule && results.rule.packageContext) {
+					ctx = sync_context_from_package_context(results.rule.packageContext, ctx);
+				} else if (results.form && results.form.packageContext) {
+					ctx = sync_context_from_package_context(results.form.packageContext, ctx);
+				} else if (results.requirements && results.requirements.packageContext) {
+					ctx = sync_context_from_package_context(results.requirements.packageContext, ctx);
+				} else if (results.priceSchedules && results.priceSchedules.packageContext) {
+					ctx = sync_context_from_package_context(results.priceSchedules.packageContext, ctx);
+				}
 				hydrate_page_header(doc, page_title);
 				apply_read_only_banner(doc, ctx);
 				disable_governance_actions(doc);
@@ -2808,6 +3374,7 @@
 	kentender.std_prod.hydrate_table_footer = hydrate_table_footer;
 	kentender.std_prod.install_hydration_gate = install_hydration_gate;
 	kentender.std_prod.hydrate_page_header = hydrate_page_header;
+	kentender.std_prod.normalize_page_layout = normalize_page_layout;
 
 	install_route_conflict_guard();
 	$(document).on("app_ready", claim_page_routes_over_doctype_conflicts);

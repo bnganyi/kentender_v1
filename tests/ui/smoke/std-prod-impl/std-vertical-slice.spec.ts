@@ -32,6 +32,50 @@ test.describe("STD prod vertical slice API hydration", () => {
 		await expect(header.getByText("KenTender", { exact: true })).toHaveCount(0);
 	});
 
+	test("version detail removes compensatory top offset after header harmonization", async ({ page }) => {
+		await page.goto("/desk/std-version-detail");
+		const iframe = page.frameLocator('[data-testid="std-prod-std-version-detail-iframe"]');
+		await expect(iframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await expect(iframe.locator("body")).toHaveClass(/std-prod-header-harmonized/);
+		const mainPaddingTop = await iframe.locator("main").evaluate((el) => {
+			return window.getComputedStyle(el).paddingTop;
+		});
+		expect(mainPaddingTop).toBe("0px");
+		const chromeGap = await iframe.locator('[data-testid="std-prod-page-header"]').evaluate((header) => {
+			const rect = header.getBoundingClientRect();
+			const next = header.nextElementSibling;
+			if (!next) {
+				return 999;
+			}
+			return next.getBoundingClientRect().top - rect.bottom;
+		});
+		expect(chromeGap).toBeLessThan(4);
+	});
+
+	test("validation report keeps activation banner flush under harmonized header", async ({ page }) => {
+		await page.goto("/desk/std-validation-report");
+		const iframe = page.frameLocator('[data-testid="std-prod-std-validation-report-iframe"]');
+		await expect(iframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await expect(iframe.locator("body")).toHaveClass(/std-prod-header-harmonized/);
+		const mainPaddingTop = await iframe.locator("main").evaluate((el) => {
+			return window.getComputedStyle(el).paddingTop;
+		});
+		expect(mainPaddingTop).toBe("0px");
+		const chromeGap = await iframe.locator('[data-testid="std-prod-page-header"]').evaluate((header) => {
+			const rect = header.getBoundingClientRect();
+			const next = header.nextElementSibling;
+			if (!next) {
+				return 999;
+			}
+			return next.getBoundingClientRect().top - rect.bottom;
+		});
+		expect(chromeGap).toBeLessThan(4);
+	});
+
 	test("library iframe hydrates canonical package identity from read API", async ({ page }) => {
 		await page.goto("/desk/std-library");
 		const iframe = page.frameLocator('[data-testid="std-prod-std-library-iframe"]');
@@ -102,20 +146,20 @@ test.describe("STD prod vertical slice API hydration", () => {
 		await expect(iframe.locator("#std-prod-hydration-gate")).toHaveCount(1);
 	});
 
-	test("library Open navigates to family detail with API context", async ({ page }) => {
+	test("library Open navigates to version detail when family has single version", async ({ page }) => {
 		await page.goto("/desk/std-library");
 		const libraryIframe = page.frameLocator('[data-testid="std-prod-std-library-iframe"]');
 		await expect(libraryIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
 			timeout: 30_000,
 		});
 		await libraryIframe.getByRole("button", { name: "Open" }).first().click();
-		await expect(page).toHaveURL(/\/desk\/std-family-detail/, { timeout: 30_000 });
+		await expect(page).toHaveURL(/\/desk\/std-version-detail/, { timeout: 30_000 });
 
-		const familyIframe = page.frameLocator('[data-testid="std-prod-std-family-detail-iframe"]');
-		await expect(familyIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+		const versionIframe = page.frameLocator('[data-testid="std-prod-std-version-detail-iframe"]');
+		await expect(versionIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
 			timeout: 30_000,
 		});
-		await expect(familyIframe.getByText(CANONICAL_PACKAGE_ID).first()).toBeVisible();
+		await expect(versionIframe.getByText(CANONICAL_PACKAGE_ID).first()).toBeVisible();
 	});
 
 	test("STD navigation keeps Procurement sidebar rail visible", async ({ page }) => {
@@ -125,7 +169,9 @@ test.describe("STD prod vertical slice API hydration", () => {
 			timeout: 30_000,
 		});
 		await libraryIframe.getByRole("button", { name: "Open" }).first().click();
-		await expect(page).toHaveURL(/\/desk\/std-family-detail/, { timeout: 30_000 });
+		await expect(page).toHaveURL(/\/desk\/std-version-detail/, {
+			timeout: 30_000,
+		});
 
 		await expect(page.getByRole("link", { name: "Procurement Home", exact: true })).toBeVisible();
 		await expect(page.getByRole("link", { name: "Planning", exact: true })).toBeVisible();
@@ -176,7 +222,11 @@ test.describe("STD prod vertical slice API hydration", () => {
 		await expect(versionIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
 			timeout: 30_000,
 		});
-		await versionIframe.getByRole("button", { name: "Traceability" }).click();
+		await versionIframe
+			.locator("section")
+			.filter({ hasText: "Governance & Lifecycle Actions" })
+			.getByRole("button", { name: "Traceability" })
+			.click();
 		await expect(page).toHaveURL(/\/desk\/std-source-doc/, { timeout: 30_000 });
 		const sourceIframe = page.frameLocator('[data-testid="std-prod-std-source-doc-iframe"]');
 		await expect(sourceIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
@@ -287,7 +337,7 @@ test.describe("STD prod vertical slice API hydration", () => {
 			timeout: 30_000,
 		});
 
-		await versionIframe.getByText("Parameters & Rules").click();
+		await versionIframe.locator("table tbody tr").filter({ hasText: "Parameter Dictionary" }).click();
 		await expect(page).toHaveURL(/\/desk\/std-parameter-dictionary/, { timeout: 30_000 });
 		const paramIframe = page.frameLocator('[data-testid="std-prod-std-parameter-dictionary-iframe"]');
 		await expect(paramIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
@@ -299,7 +349,19 @@ test.describe("STD prod vertical slice API hydration", () => {
 		await expect(versionIframe2.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
 			timeout: 30_000,
 		});
-		await versionIframe2.getByRole("button", { name: "View Usage" }).click();
+		await versionIframe2.locator("table tbody tr").filter({ hasText: "Rule Dictionary" }).click();
+		await expect(page).toHaveURL(/\/desk\/std-rule-dictionary/, { timeout: 30_000 });
+		const rulesIframe = page.frameLocator('[data-testid="std-prod-std-rule-dictionary-iframe"]');
+		await expect(rulesIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+
+		await page.goto("/desk/std-version-detail");
+		const versionIframe3 = page.frameLocator('[data-testid="std-prod-std-version-detail-iframe"]');
+		await expect(versionIframe3.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await versionIframe3.getByRole("button", { name: "View Usage" }).click();
 		await expect(page).toHaveURL(/\/desk\/std-usage-and-tender-bindings/, { timeout: 30_000 });
 	});
 
@@ -309,11 +371,46 @@ test.describe("STD prod vertical slice API hydration", () => {
 		await expect(versionIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
 			timeout: 30_000,
 		});
-		await versionIframe.getByText("Price Schedule Schema").click();
+		await versionIframe.locator("table tbody tr").filter({ hasText: "Price Schedule Schema" }).click();
 		await expect(page).toHaveURL(/\/desk\/std-price-schedule-schema/, { timeout: 30_000 });
 		await expect(page.locator('[data-testid="std-prod-std-price-schedule-schema-iframe"]')).toBeVisible({
 			timeout: 30_000,
 		});
 		await expect(page.locator(".list-row-container, .list-row")).toHaveCount(0);
+	});
+
+	test("version detail workspace opens form evaluation and render blocks", async ({ page }) => {
+		await page.goto("/desk/std-version-detail");
+		const versionIframe = page.frameLocator('[data-testid="std-prod-std-version-detail-iframe"]');
+		await expect(versionIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await expect(versionIframe.locator('[data-testid="std-version-workspace"]')).toBeVisible();
+
+		await versionIframe
+			.locator('[data-std-workspace-route="std-form-schema-manager"]')
+			.click();
+		await expect(page).toHaveURL(/\/desk\/std-form-schema-manager/, { timeout: 30_000 });
+		const formIframe = page.frameLocator('[data-testid="std-prod-std-form-schema-manager-iframe"]');
+		await expect(formIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await expect(formIframe.locator("nav[data-std-prod-breadcrumb]")).toContainText("KE-PPRA-IT-2022-04");
+
+		await page.goto("/desk/std-version-detail");
+		const versionIframe2 = page.frameLocator('[data-testid="std-prod-std-version-detail-iframe"]');
+		await expect(versionIframe2.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await versionIframe2.locator('[data-std-workspace-route="std-evaluation-schema"]').click();
+		await expect(page).toHaveURL(/\/desk\/std-evaluation-schema/, { timeout: 30_000 });
+
+		await page.goto("/desk/std-version-detail");
+		const versionIframe3 = page.frameLocator('[data-testid="std-prod-std-version-detail-iframe"]');
+		await expect(versionIframe3.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await versionIframe3.locator('[data-std-workspace-route="std-render-blocks"]').click();
+		await expect(page).toHaveURL(/\/desk\/std-render-blocks/, { timeout: 30_000 });
 	});
 });

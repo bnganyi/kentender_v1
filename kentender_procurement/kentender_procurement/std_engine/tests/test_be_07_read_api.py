@@ -184,6 +184,71 @@ class TestBe07SchemaReadApi(IntegrationTestCase):
 		)
 		self.assertNotIn("KE-PPRA-IT-2022-04.rule.", sample["code"])
 
+	def test_parameter_list_includes_schema_fields(self) -> None:
+		out = get_std_version_parameters(CANONICAL_PACKAGE_ID)
+		_assert_envelope(self, out)
+		sample = next(
+			item for item in out["data"]["parameters"] if item["code"] == "tds.clarification_address"
+		)
+		for field in (
+			"fieldType",
+			"sectionTitle",
+			"required",
+			"validationRuleCount",
+			"renderBindingCount",
+		):
+			with self.subTest(field=field):
+				self.assertIn(field, sample)
+		self.assertEqual(sample["fieldType"], "LONG_TEXT")
+		self.assertTrue(sample["required"])
+
+	def test_rule_list_includes_schema_fields(self) -> None:
+		out = get_std_version_rules(CANONICAL_PACKAGE_ID)
+		_assert_envelope(self, out)
+		sample = next(
+			item
+			for item in out["data"]["rules"]
+			if item["code"] == "tds.clarification_deadline_before_submission"
+		)
+		for field in ("ruleType", "severity", "affectedObject", "lifecycleStage", "isActive"):
+			with self.subTest(field=field):
+				self.assertIn(field, sample)
+		self.assertEqual(sample["ruleType"], "VALIDATION")
+		self.assertEqual(sample["severity"], "BLOCKER")
+		self.assertTrue(sample["isActive"])
+
+	def test_rule_list_returns_summary_kpis(self) -> None:
+		out = get_std_version_rules(CANONICAL_PACKAGE_ID)
+		_assert_envelope(self, out)
+		summary = out["data"]["summary"]
+		for field in ("total", "blockerRules", "warningRules", "infoRules", "activeRules"):
+			with self.subTest(field=field):
+				self.assertIn(field, summary)
+		self.assertEqual(summary["total"], out["data"]["count"])
+		self.assertEqual(summary["total"], SCHEMA_COUNTS["rules"])
+		self.assertEqual(summary["blockerRules"], 19)
+		self.assertEqual(summary["warningRules"], 3)
+		self.assertEqual(summary["activeRules"], SCHEMA_COUNTS["rules"])
+		self.assertGreater(out["validationSummary"]["blockers"], 0)
+
+	def test_rule_list_filters_by_parameter_key(self) -> None:
+		parameter_key = frappe.get_all(
+			"STD Parameter",
+			filters={
+				"package_id": CANONICAL_PACKAGE_ID,
+				"title": "Clarification deadline before submission",
+			},
+			pluck="name",
+			limit=1,
+		)[0]
+		filtered = get_std_version_rules(CANONICAL_PACKAGE_ID, parameter_key=parameter_key)
+		full = get_std_version_rules(CANONICAL_PACKAGE_ID)
+		_assert_envelope(self, filtered)
+		self.assertGreater(filtered["data"]["count"], 0)
+		self.assertLess(filtered["data"]["count"], full["data"]["count"])
+		self.assertEqual(filtered["data"]["count"], filtered["data"]["summary"]["total"])
+		self.assertLess(filtered["data"]["summary"]["total"], full["data"]["summary"]["total"])
+
 	def test_not_found_envelopes(self) -> None:
 		missing = get_std_parameter("DOES-NOT-EXIST")
 		self.assertEqual(missing["error_code"], "STD_PARAMETER_NOT_FOUND")

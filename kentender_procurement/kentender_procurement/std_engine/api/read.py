@@ -67,9 +67,9 @@ def get_std_parameter(parameter_key: str) -> dict[str, Any]:
 
 
 @frappe.whitelist(methods=["GET"])
-def get_std_version_rules(package_id: str) -> dict[str, Any]:
+def get_std_version_rules(package_id: str, parameter_key: str | None = None) -> dict[str, Any]:
 	frappe.only_for(READ_ROLES)
-	return schema_read_service.get_std_version_rules(package_id)
+	return schema_read_service.get_std_version_rules(package_id, parameter_key=parameter_key)
 
 
 @frappe.whitelist(methods=["GET"])

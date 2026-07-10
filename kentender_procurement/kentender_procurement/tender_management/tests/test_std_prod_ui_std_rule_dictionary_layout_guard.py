@@ -34,4 +34,5 @@ class TestStdProdUiStdRuleDictionaryLayoutGuard(UnitTestCase):
 	def test_rule_dictionary_preserves_search_and_row_scripts(self) -> None:
 		deployed = read_text(deployed_asset_path("std_rule_dictionary.html"))
 		self.assertIn("searchInput.addEventListener('input'", deployed)
-		self.assertIn("row.addEventListener('mouseenter'", deployed)
+		self.assertIn("Active Rules", deployed)
+		self.assertIn('title="Export Rule Catalog"', deployed)

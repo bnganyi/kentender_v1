@@ -66,6 +66,19 @@ class TestBe10StdProdSchemaDeskWiring(UnitTestCase):
 			with self.subTest(screen=screen):
 				self.assertIn('"' + screen + '"', source)
 
+	def test_engine_registers_version_workspace_and_module_routes(self) -> None:
+		source = open(_ENGINE_PATH, encoding="utf-8").read()
+		for label in (
+			"Form Schema Manager",
+			"Evaluation Schema",
+			"Render Blocks",
+		):
+			with self.subTest(label=label):
+				self.assertIn('"' + label + '": "std-', source)
+		self.assertIn("data-std-workspace-route", source)
+		self.assertIn("hydrate_breadcrumb_trail", source)
+		self.assertIn("version_code", source)
+
 	def test_engine_claims_doctype_conflicting_page_routes(self) -> None:
 		source = open(_ENGINE_PATH, encoding="utf-8").read()
 		self.assertIn("install_route_conflict_guard", source)

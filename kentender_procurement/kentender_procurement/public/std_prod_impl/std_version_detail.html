@@ -317,8 +317,18 @@
 </tr>
 <tr class="zebra-row hover:bg-surface-container-low transition-colors">
 <td class="px-4 py-4">
-<div class="font-body-md font-semibold text-primary">Parameters &amp; Rules</div>
-<div class="text-[10px] text-on-surface-variant font-data-mono">PRM-RULE-v1.4</div>
+<div class="font-body-md font-semibold text-primary">Parameter Dictionary</div>
+<div class="text-[10px] text-on-surface-variant font-data-mono">PRM-DICT-v1.4</div>
+</td>
+<td class="px-4"><span class="badge-active">ACTIVE</span></td>
+<td class="px-4"><span class="text-status-available font-data-mono text-xs font-semibold">Verified</span></td>
+<td class="px-4"><span class="text-status-available font-data-mono text-xs font-bold">PASSED</span></td>
+<td class="px-4 text-right"><button class="text-secondary hover:text-primary"><span class="material-symbols-outlined text-[20px]">visibility</span></button></td>
+</tr>
+<tr class="zebra-row hover:bg-surface-container-low transition-colors">
+<td class="px-4 py-4">
+<div class="font-body-md font-semibold text-primary">Rule Dictionary</div>
+<div class="text-[10px] text-on-surface-variant font-data-mono">RULE-DICT-v1.4</div>
 </td>
 <td class="px-4"><span class="badge-active">ACTIVE</span></td>
 <td class="px-4"><span class="text-status-available font-data-mono text-xs font-semibold">Verified</span></td>
@@ -345,8 +355,102 @@
 <td class="px-4"><span class="text-status-available font-data-mono text-xs font-bold">PASSED</span></td>
 <td class="px-4 text-right"><button class="text-secondary hover:text-primary"><span class="material-symbols-outlined text-[20px]">visibility</span></button></td>
 </tr>
+<tr class="zebra-row hover:bg-surface-container-low transition-colors">
+<td class="px-4 py-4">
+<div class="font-body-md font-semibold text-primary">Form Schema Manager</div>
+<div class="text-[10px] text-on-surface-variant font-data-mono">FORM-SCH-v1.2</div>
+</td>
+<td class="px-4"><span class="badge-active">ACTIVE</span></td>
+<td class="px-4"><span class="text-status-available font-data-mono text-xs font-semibold">Verified</span></td>
+<td class="px-4"><span class="text-status-available font-data-mono text-xs font-bold">PASSED</span></td>
+<td class="px-4 text-right"><button class="text-secondary hover:text-primary"><span class="material-symbols-outlined text-[20px]">visibility</span></button></td>
+</tr>
+<tr class="zebra-row hover:bg-surface-container-low transition-colors">
+<td class="px-4 py-4">
+<div class="font-body-md font-semibold text-primary">Evaluation Schema</div>
+<div class="text-[10px] text-on-surface-variant font-data-mono">EVAL-SCH-v1.0</div>
+</td>
+<td class="px-4"><span class="badge-active">ACTIVE</span></td>
+<td class="px-4"><span class="text-status-available font-data-mono text-xs font-semibold">Verified</span></td>
+<td class="px-4"><span class="text-status-available font-data-mono text-xs font-bold">PASSED</span></td>
+<td class="px-4 text-right"><button class="text-secondary hover:text-primary"><span class="material-symbols-outlined text-[20px]">visibility</span></button></td>
+</tr>
+<tr class="zebra-row hover:bg-surface-container-low transition-colors">
+<td class="px-4 py-4">
+<div class="font-body-md font-semibold text-primary">Render Blocks</div>
+<div class="text-[10px] text-on-surface-variant font-data-mono">RENDER-BLK-v1.1</div>
+</td>
+<td class="px-4"><span class="badge-active">ACTIVE</span></td>
+<td class="px-4"><span class="text-status-available font-data-mono text-xs font-semibold">Verified</span></td>
+<td class="px-4"><span class="text-status-available font-data-mono text-xs font-bold">PASSED</span></td>
+<td class="px-4 text-right"><button class="text-secondary hover:text-primary"><span class="material-symbols-outlined text-[20px]">visibility</span></button></td>
+</tr>
 </tbody>
 </table>
+</div>
+</section>
+<!-- Version Workspace -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm" data-testid="std-version-workspace">
+<div class="p-4 border-b border-outline-variant bg-surface-container-lowest">
+<h3 class="font-label-caps text-[11px] uppercase text-primary font-bold">Version Workspace</h3>
+<p class="text-[11px] text-on-surface-variant mt-1">Open version-scoped configuration, validation, and governance screens.</p>
+</div>
+<div class="p-4 space-y-4">
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+<div class="border border-outline-variant rounded-lg p-4 bg-surface-container-low/30">
+<h4 class="font-label-caps text-[10px] uppercase text-secondary font-bold mb-3">Source &amp; Structure</h4>
+<div class="flex flex-col gap-2">
+<button class="text-left text-body-sm font-semibold text-primary hover:underline" data-std-workspace-route="std-source-doc" data-std-workspace-label="Source Traceability">Source Traceability</button>
+<button class="text-left text-body-sm font-semibold text-primary hover:underline" data-std-workspace-route="std-section-clauses" data-std-workspace-label="Section / Clause Map">Section / Clause Map</button>
+</div>
+</div>
+<div class="border border-outline-variant rounded-lg p-4 bg-surface-container-low/30">
+<h4 class="font-label-caps text-[10px] uppercase text-secondary font-bold mb-3">Configuration Schema</h4>
+<div class="flex flex-col gap-2">
+<button class="text-left text-body-sm font-semibold text-primary hover:underline" data-std-workspace-route="std-parameter-dictionary" data-std-workspace-label="Parameter Dictionary">Parameter Dictionary</button>
+<button class="text-left text-body-sm font-semibold text-primary hover:underline" data-std-workspace-route="std-requirement-schema-manager" data-std-workspace-label="Requirement Schema">Requirement Schema</button>
+<button class="text-left text-body-sm font-semibold text-primary hover:underline" data-std-workspace-route="std-price-schedule-schema" data-std-workspace-label="Price Schedule Schema">Price Schedule Schema</button>
+</div>
+</div>
+<div class="border border-outline-variant rounded-lg p-4 bg-surface-container-low/30">
+<h4 class="font-label-caps text-[10px] uppercase text-secondary font-bold mb-3">Forms &amp; Responses</h4>
+<div class="flex flex-col gap-2">
+<button class="text-left text-body-sm font-semibold text-primary hover:underline" data-std-workspace-route="std-form-schema-manager" data-std-workspace-label="Form Schema Manager">Form Schema Manager</button>
+</div>
+</div>
+<div class="border border-outline-variant rounded-lg p-4 bg-surface-container-low/30">
+<h4 class="font-label-caps text-[10px] uppercase text-secondary font-bold mb-3">Rules &amp; Validation</h4>
+<div class="flex flex-col gap-2">
+<button class="text-left text-body-sm font-semibold text-primary hover:underline" data-std-workspace-route="std-rule-dictionary" data-std-workspace-label="Rule Dictionary">Rule Dictionary</button>
+<button class="text-left text-body-sm font-semibold text-primary hover:underline" data-std-workspace-route="std-validation-report" data-std-workspace-label="Validation Report">Validation Report</button>
+</div>
+</div>
+<div class="border border-outline-variant rounded-lg p-4 bg-surface-container-low/30">
+<h4 class="font-label-caps text-[10px] uppercase text-secondary font-bold mb-3">Evaluation</h4>
+<div class="flex flex-col gap-2">
+<button class="text-left text-body-sm font-semibold text-primary hover:underline" data-std-workspace-route="std-evaluation-schema" data-std-workspace-label="Evaluation Schema">Evaluation Schema</button>
+</div>
+</div>
+<div class="border border-outline-variant rounded-lg p-4 bg-surface-container-low/30">
+<h4 class="font-label-caps text-[10px] uppercase text-secondary font-bold mb-3">Rendering &amp; Output</h4>
+<div class="flex flex-col gap-2">
+<button class="text-left text-body-sm font-semibold text-primary hover:underline" data-std-workspace-route="std-render-blocks" data-std-workspace-label="Render Blocks">Render Blocks</button>
+</div>
+</div>
+<div class="border border-outline-variant rounded-lg p-4 bg-surface-container-low/30">
+<h4 class="font-label-caps text-[10px] uppercase text-secondary font-bold mb-3">Governance</h4>
+<div class="flex flex-col gap-2">
+<button class="text-left text-body-sm font-semibold text-primary hover:underline" data-std-workspace-route="std-audit-log" data-std-workspace-label="Audit Log">Audit Log</button>
+<button class="text-left text-body-sm font-semibold text-primary hover:underline" data-std-workspace-route="std-version-diff-and-supersession" data-std-workspace-label="Version Diff">Version Diff / Supersession</button>
+</div>
+</div>
+<div class="border border-outline-variant rounded-lg p-4 bg-surface-container-low/30">
+<h4 class="font-label-caps text-[10px] uppercase text-secondary font-bold mb-3">Usage</h4>
+<div class="flex flex-col gap-2">
+<button class="text-left text-body-sm font-semibold text-primary hover:underline" data-std-workspace-route="std-usage-and-tender-bindings" data-std-workspace-label="Usage / Tender Bindings">Usage / Tender Bindings</button>
+</div>
+</div>
+</div>
 </div>
 </section>
 <!-- Recent Audit Events -->

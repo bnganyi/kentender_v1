@@ -45,6 +45,7 @@ class TestBe11StdProdGovernanceDeskWiring(UnitTestCase):
 		self.assertIn("hydrate_usage_kpis", source)
 		self.assertIn("usageKpis", source)
 		self.assertIn("hydrate_page_header", source)
+		self.assertIn("normalize_page_layout", source)
 
 	def test_governance_pages_js_uses_guarded_registration(self) -> None:
 		path = os.path.join(

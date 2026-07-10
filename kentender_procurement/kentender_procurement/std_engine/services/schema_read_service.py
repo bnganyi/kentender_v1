@@ -131,6 +131,92 @@ def _resolve_render_binding_summaries(binding_keys: list[str]) -> list[dict[str,
 	return summaries
 
 
+def _parameter_list_item(row: frappe._dict) -> dict[str, Any]:
+	metadata = _parse_metadata(row.metadata_json)
+	section_key = metadata.get("applies_to_section_key")
+	section_title = (
+		frappe.db.get_value("STD Section", section_key, "title") if section_key else None
+	)
+	group_key = metadata.get("group_key") or ""
+	group_label = group_key.split(".parameter_group.", 1)[-1] if group_key else None
+	validation_rule_keys = metadata.get("validation_rule_keys") or []
+	render_binding_keys = metadata.get("render_binding_keys") or []
+	applies_to = metadata.get("applies_to") or section_title or "—"
+	if section_title and applies_to == "—":
+		applies_to = section_title
+	return {
+		**_identity_summary(row, id_field="parameter_key"),
+		"code": _parameter_business_code(row.parameter_key, row.object_key),
+		"fieldType": metadata.get("field_type"),
+		"sectionTitle": section_title,
+		"appliesTo": applies_to,
+		"required": bool(metadata.get("required")),
+		"defaultValue": metadata.get("default_value"),
+		"optionSetKey": metadata.get("option_set_key"),
+		"validationRuleCount": len(validation_rule_keys),
+		"renderBindingCount": len(render_binding_keys),
+		"groupLabel": group_label,
+	}
+
+
+def _rule_is_catalog_active(metadata: dict[str, Any]) -> bool:
+	if metadata.get("enabled") is False or metadata.get("active") is False:
+		return False
+	status = str(metadata.get("catalog_status") or metadata.get("rule_status") or "").strip().upper()
+	if status in {"INACTIVE", "DISABLED", "RETIRED", "ARCHIVED"}:
+		return False
+	return True
+
+
+def _build_rule_list_summary(items: list[dict[str, Any]]) -> dict[str, int]:
+	summary = {
+		"total": len(items),
+		"blockerRules": 0,
+		"warningRules": 0,
+		"infoRules": 0,
+		"activeRules": 0,
+	}
+	for item in items:
+		severity = str(item.get("severity") or "").upper()
+		if severity == "BLOCKER":
+			summary["blockerRules"] += 1
+		elif severity == "WARNING":
+			summary["warningRules"] += 1
+		elif severity == "INFO":
+			summary["infoRules"] += 1
+		if item.get("isActive"):
+			summary["activeRules"] += 1
+	return summary
+
+
+def _rule_list_item(row: frappe._dict) -> dict[str, Any]:
+	metadata = _parse_metadata(row.metadata_json)
+	affected_keys = metadata.get("affected_parameter_keys") or []
+	affected_object = affected_keys[0] if affected_keys else metadata.get("affected_object_key") or "—"
+	if affected_keys:
+		affected_object = _parameter_business_code(affected_keys[0], "") or affected_keys[0]
+	return {
+		**_identity_summary(row, id_field="rule_key"),
+		"code": _rule_business_code(row.rule_key, row.object_key),
+		"ruleType": metadata.get("rule_type"),
+		"severity": metadata.get("severity"),
+		"scope": metadata.get("scope") or metadata.get("applies_to_section_key") or "—",
+		"lifecycleStage": metadata.get("lifecycle_stage"),
+		"affectedObject": affected_object,
+		"affectedParameterKeys": affected_keys,
+		"sourceBasis": metadata.get("source_anchor_key") or row.source_anchor or "—",
+		"testCoverage": metadata.get("test_coverage") or "—",
+		"isActive": _rule_is_catalog_active(metadata),
+	}
+
+
+def _rule_matches_parameter(metadata: dict[str, Any], parameter_key: str) -> bool:
+	if not parameter_key:
+		return True
+	affected_keys = metadata.get("affected_parameter_keys") or []
+	return parameter_key in affected_keys
+
+
 def get_std_version_parameters(package_id: str) -> dict[str, Any]:
 	version, error = _require_version(package_id)
 	if error:
@@ -139,18 +225,12 @@ def get_std_version_parameters(package_id: str) -> dict[str, Any]:
 	rows = frappe.get_all(
 		"STD Parameter",
 		filters={"package_id": package_id},
-		fields=["parameter_key", "object_key", "title", "validation_status", "source_anchor"],
+		fields=["parameter_key", "object_key", "title", "validation_status", "source_anchor", "metadata_json"],
 		order_by="title asc",
 	)
 	return build_read_envelope(
 		data={
-			"parameters": [
-				{
-					**_identity_summary(row, id_field="parameter_key"),
-					"code": _parameter_business_code(row.parameter_key, row.object_key),
-				}
-				for row in rows
-			],
+			"parameters": [_parameter_list_item(row) for row in rows],
 			"count": len(rows),
 		},
 		package_context=build_package_context(version),
@@ -158,7 +238,7 @@ def get_std_version_parameters(package_id: str) -> dict[str, Any]:
 	)
 
 
-def get_std_version_rules(package_id: str) -> dict[str, Any]:
+def get_std_version_rules(package_id: str, parameter_key: str | None = None) -> dict[str, Any]:
 	version, error = _require_version(package_id)
 	if error:
 		return error
@@ -166,19 +246,23 @@ def get_std_version_rules(package_id: str) -> dict[str, Any]:
 	rows = frappe.get_all(
 		"STD Rule",
 		filters={"package_id": package_id},
-		fields=["rule_key", "object_key", "title", "validation_status", "source_anchor"],
+		fields=["rule_key", "object_key", "title", "validation_status", "source_anchor", "metadata_json"],
 		order_by="title asc",
 	)
+	filter_key = (parameter_key or "").strip()
+	items: list[dict[str, Any]] = []
+	for row in rows:
+		metadata = _parse_metadata(row.metadata_json)
+		if filter_key and not _rule_matches_parameter(metadata, filter_key):
+			continue
+		items.append(_rule_list_item(row))
+	summary = _build_rule_list_summary(items)
 	return build_read_envelope(
 		data={
-			"rules": [
-				{
-					**_identity_summary(row, id_field="rule_key"),
-					"code": _rule_business_code(row.rule_key, row.object_key),
-				}
-				for row in rows
-			],
-			"count": len(rows),
+			"rules": items,
+			"count": summary["total"],
+			"summary": summary,
+			"filterParameterKey": filter_key or None,
 		},
 		package_context=build_package_context(version),
 		package_id=package_id,

@@ -34,6 +34,59 @@ test.describe("STD prod schema slice API hydration", () => {
 		await expect(iframe.getByText(/2024-04/)).toHaveCount(0);
 	});
 
+	test("parameter dictionary preserves design table columns after hydration", async ({ page }) => {
+		await page.goto("/desk/std-parameter-dictionary");
+		const iframe = page.frameLocator('[data-testid="std-prod-std-parameter-dictionary-iframe"]');
+		await expect(iframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await expect(iframe.locator("thead")).toContainText("PARAMETER KEY");
+		await expect(iframe.locator("thead")).toContainText("VALIDATION RULES");
+		await expect(iframe.locator("thead")).toContainText("ACTIONS");
+		const firstRow = iframe.locator(".std-prod-param-row").first();
+		await expect(firstRow.locator('[title="View Rules"]')).toBeVisible();
+		await expect(firstRow.locator('[title="Open"]')).toBeVisible();
+		const columnCount = await firstRow.evaluate((row) => row.querySelectorAll("td").length);
+		expect(columnCount).toBe(13);
+	});
+
+	test("rule dictionary preserves design table columns after hydration", async ({ page }) => {
+		await page.goto("/desk/std-rule-dictionary");
+		const iframe = page.frameLocator('[data-testid="std-prod-std-rule-dictionary-iframe"]');
+		await expect(iframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await expect(iframe.locator("thead")).toContainText("RULE KEY");
+		await expect(iframe.locator("thead")).toContainText("SEVERITY");
+		await expect(iframe.locator("thead")).toContainText("ACTIONS");
+		const firstRow = iframe.locator(".std-prod-rule-row").first();
+		await expect(firstRow.locator('[title="Open Rule"]')).toBeVisible();
+		const columnCount = await firstRow.evaluate((row) => row.querySelectorAll("td").length);
+		expect(columnCount).toBe(11);
+	});
+
+	test("parameter view rules opens filtered rule dictionary", async ({ page }) => {
+		await page.goto("/desk/std-parameter-dictionary");
+		const dictIframe = page.frameLocator('[data-testid="std-prod-std-parameter-dictionary-iframe"]');
+		await expect(dictIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		const targetRow = dictIframe
+			.locator(".std-prod-param-row")
+			.filter({ hasText: "Clarification deadline before submission" });
+		await targetRow.locator('[title="View Rules"]').click();
+		await expect(page).toHaveURL(/\/desk\/std-rule-dictionary/, { timeout: 30_000 });
+
+		const rulesIframe = page.frameLocator('[data-testid="std-prod-std-rule-dictionary-iframe"]');
+		await expect(rulesIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await expect(rulesIframe.locator("[data-std-prod-rule-filter-banner]")).toBeVisible();
+		const ruleCount = await rulesIframe.locator(".std-prod-rule-row").count();
+		expect(ruleCount).toBeGreaterThan(0);
+		expect(ruleCount).toBeLessThan(22);
+	});
+
 	test("parameter row navigates to parameter detail", async ({ page }) => {
 		await page.goto("/desk/std-parameter-dictionary");
 		const dictIframe = page.frameLocator('[data-testid="std-prod-std-parameter-dictionary-iframe"]');
@@ -71,6 +124,7 @@ test.describe("STD prod schema slice API hydration", () => {
 		await expect(ruleIframe.locator(".std-prod-rule-row").first()).toBeVisible();
 		await expect(ruleIframe.getByText("RULE-VAL-REF-01")).toHaveCount(0);
 		await expect(ruleIframe.getByText("tender_ref_id")).toHaveCount(0);
+		await expect(ruleIframe.locator("nav[data-std-prod-breadcrumb]")).toContainText("KE-PPRA-IT-2022-04");
 
 		await page.goto("/desk/std-form-schema-manager");
 		const formIframe = page.frameLocator('[data-testid="std-prod-std-form-schema-manager-iframe"]');
@@ -79,6 +133,44 @@ test.describe("STD prod schema slice API hydration", () => {
 		});
 		await expect(formIframe.locator(".std-prod-form-row").first()).toBeVisible();
 		await expect(formIframe.getByText("FORM-TECH-01")).toHaveCount(0);
+		await expect(formIframe.locator("nav[data-std-prod-breadcrumb]")).toContainText("Form Schema Manager");
+	});
+
+	test("form detail breadcrumb returns to form schema manager", async ({ page }) => {
+		await page.goto("/desk/std-form-schema-manager");
+		const dictIframe = page.frameLocator('[data-testid="std-prod-std-form-schema-manager-iframe"]');
+		await expect(dictIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await dictIframe.locator(".std-prod-form-row").first().click();
+		await expect(page).toHaveURL(/\/desk\/std-form-detail-field-builder/, { timeout: 30_000 });
+
+		const detailIframe = page.frameLocator('[data-testid="std-prod-std-form-detail-field-builder-iframe"]');
+		await expect(detailIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await detailIframe.getByRole("link", { name: "Form Schema Manager" }).click();
+		await expect(page).toHaveURL(/\/desk\/std-form-schema-manager/, { timeout: 30_000 });
+	});
+
+	test("rule detail breadcrumb returns to rule dictionary", async ({ page }) => {
+		await page.goto("/desk/std-rule-dictionary");
+		const dictIframe = page.frameLocator('[data-testid="std-prod-std-rule-dictionary-iframe"]');
+		await expect(dictIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await dictIframe
+			.locator(".std-prod-rule-row")
+			.filter({ hasText: "Clarification deadline must fall before tender submission deadline." })
+			.click();
+		await expect(page).toHaveURL(/\/desk\/std-rule-detail/, { timeout: 30_000 });
+
+		const detailIframe = page.frameLocator('[data-testid="std-prod-std-rule-detail-iframe"]');
+		await expect(detailIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await detailIframe.getByRole("link", { name: "Rule Dictionary" }).click();
+		await expect(page).toHaveURL(/\/desk\/std-rule-dictionary/, { timeout: 30_000 });
 	});
 
 	test("rule row navigates to hydrated rule detail", async ({ page }) => {

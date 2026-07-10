@@ -29,6 +29,8 @@ class TestStdProdUiStdVersionDetailLayoutGuard(UnitTestCase):
 		self.assertIn("<title>STD Version Detail | KenTender STD Engine</title>", deployed)
 		self.assertIn("ACTIVE VERSION — READ ONLY", deployed)
 		self.assertIn("Module Integrity Status", deployed)
+		self.assertIn("Version Workspace", deployed)
+		self.assertIn("Form Schema Manager", deployed)
 		self.assertIn("Operational Integrity", deployed)
 		self.assertIn("KE-PPRA-IT-2024-01", deployed)
 
