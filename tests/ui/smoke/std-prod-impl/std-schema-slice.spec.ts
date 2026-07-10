@@ -140,6 +140,40 @@ test.describe("STD prod schema slice API hydration", () => {
 		await expect(detailIframe.locator("table tbody tr").first()).toContainText("Declarant name");
 	});
 
+	test("parameter with validation rules shows business rule codes", async ({ page }) => {
+		await page.goto("/desk/std-parameter-dictionary");
+		const dictIframe = page.frameLocator('[data-testid="std-prod-std-parameter-dictionary-iframe"]');
+		await expect(dictIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await dictIframe
+			.locator(".std-prod-param-row")
+			.filter({ hasText: "Clarification deadline" })
+			.first()
+			.click();
+		await expect(page).toHaveURL(/\/desk\/std-parameter-detail/, { timeout: 30_000 });
+
+		const detailIframe = page.frameLocator('[data-testid="std-prod-std-parameter-detail-iframe"]');
+		await expect(detailIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await expect(
+			detailIframe.getByRole("cell", { name: "tds.clarification_deadline_before_submission" }),
+		).toBeVisible();
+		await expect(detailIframe.getByText("KE-PPRA-IT-2022-04.rule.")).toHaveCount(0);
+		await expect(detailIframe.getByText("BLOCKER")).toBeVisible();
+	});
+
+	test("render blocks dictionary shows business block codes", async ({ page }) => {
+		await page.goto("/desk/std-render-blocks");
+		const iframe = page.frameLocator('[data-testid="std-prod-std-render-blocks-iframe"]');
+		await expect(iframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await expect(iframe.getByText("gcc", { exact: true })).toBeVisible();
+		await expect(iframe.getByText("KE-PPRA-IT-2022-04.render_block.")).toHaveCount(0);
+	});
+
 	test("requirement schema manager hydrates list-only schema rows", async ({ page }) => {
 		await page.goto("/desk/std-requirement-schema-manager");
 		const iframe = page.frameLocator('[data-testid="std-prod-std-requirement-schema-manager-iframe"]');

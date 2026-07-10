@@ -323,6 +323,8 @@ def get_std_clause(clause_key: str) -> dict[str, Any]:
 	section_title = (
 		frappe.db.get_value("STD Section", clause.section, "title") if clause.section else None
 	)
+	section_key = metadata.get("section_key") or clause.section
+	render_block = _lookup_render_block_for_section(clause.package_id, section_key)
 	package_context = build_package_context(version)
 	return build_read_envelope(
 		data={
@@ -330,6 +332,7 @@ def get_std_clause(clause_key: str) -> dict[str, Any]:
 			"code": metadata.get("clause_code") or clause.object_key,
 			"name": clause.title or metadata.get("display_title"),
 			"sectionId": clause.section,
+			"sectionKey": section_key,
 			"sectionTitle": section_title,
 			"description": clause.description,
 			"validationStatus": clause.validation_status,
@@ -337,6 +340,8 @@ def get_std_clause(clause_key: str) -> dict[str, Any]:
 			"clauseText": clause.clause_text,
 			"mutabilityType": metadata.get("mutability_type"),
 			"textStatus": metadata.get("text_status"),
+			"renderRequired": bool(metadata.get("render_required")),
+			"renderBlock": render_block,
 			"metadata": metadata,
 		},
 		package_context=package_context,
@@ -359,3 +364,36 @@ def _parse_metadata(raw: str | None) -> dict[str, Any]:
 	except json.JSONDecodeError:
 		return {}
 	return parsed if isinstance(parsed, dict) else {}
+
+
+def _render_block_business_code(render_block_key: str, object_key: str) -> str:
+	for value in (object_key, render_block_key):
+		if not value:
+			continue
+		for marker in (".render_block.", ".render."):
+			if marker in value:
+				return value.split(marker, 1)[1]
+	return object_key or render_block_key
+
+
+def _lookup_render_block_for_section(
+	package_id: str, section_key: str | None
+) -> dict[str, Any] | None:
+	if not section_key:
+		return None
+	section_suffix = section_key.split(".section.", 1)[-1]
+	rows = frappe.get_all(
+		"STD Render Block",
+		filters={"package_id": package_id},
+		fields=["render_block_key", "object_key", "title", "validation_status"],
+	)
+	for row in rows:
+		block_suffix = row.render_block_key.split(".render_block.", 1)[-1]
+		if block_suffix == section_suffix:
+			return {
+				"id": row.render_block_key,
+				"code": _render_block_business_code(row.render_block_key, row.object_key),
+				"name": row.title,
+				"validationStatus": row.validation_status,
+			}
+	return None

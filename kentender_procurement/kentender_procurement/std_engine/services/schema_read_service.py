@@ -37,6 +37,100 @@ def _rule_business_code(rule_key: str, object_key: str) -> str:
 	return object_key or rule_key
 
 
+def _render_block_business_code(render_block_key: str, object_key: str) -> str:
+	for value in (object_key, render_block_key):
+		if not value:
+			continue
+		for marker in (".render_block.", ".render."):
+			if marker in value:
+				return value.split(marker, 1)[1]
+	return object_key or render_block_key
+
+
+def _resolve_rule_summaries(rule_keys: list[str]) -> list[dict[str, Any]]:
+	summaries: list[dict[str, Any]] = []
+	for rule_key in rule_keys:
+		lookup = (rule_key or "").strip()
+		if not lookup:
+			continue
+		if not frappe.db.exists("STD Rule", lookup):
+			summaries.append(
+				{
+					"id": lookup,
+					"code": _rule_business_code(lookup, ""),
+					"name": lookup,
+				}
+			)
+			continue
+		row = frappe.db.get_value(
+			"STD Rule",
+			lookup,
+			["rule_key", "object_key", "title", "metadata_json"],
+			as_dict=True,
+		)
+		metadata = _parse_metadata(row.metadata_json)
+		summaries.append(
+			{
+				"id": row.rule_key,
+				"code": _rule_business_code(row.rule_key, row.object_key),
+				"name": row.title,
+				"severity": metadata.get("severity"),
+				"ruleType": metadata.get("rule_type"),
+				"lifecycleStage": metadata.get("lifecycle_stage"),
+			}
+		)
+	return summaries
+
+
+def _resolve_render_binding_summaries(binding_keys: list[str]) -> list[dict[str, Any]]:
+	summaries: list[dict[str, Any]] = []
+	for binding_key in binding_keys:
+		lookup = (binding_key or "").strip()
+		if not lookup:
+			continue
+		normalized = lookup.replace(".render.", ".render_block.", 1)
+		if frappe.db.exists("STD Render Block", normalized):
+			row = frappe.db.get_value(
+				"STD Render Block",
+				normalized,
+				["render_block_key", "object_key", "title", "validation_status"],
+				as_dict=True,
+			)
+			summaries.append(
+				{
+					"id": row.render_block_key,
+					"code": _render_block_business_code(row.render_block_key, row.object_key),
+					"name": row.title,
+					"validationStatus": row.validation_status,
+				}
+			)
+			continue
+		if frappe.db.exists("STD Render Block", lookup):
+			row = frappe.db.get_value(
+				"STD Render Block",
+				lookup,
+				["render_block_key", "object_key", "title", "validation_status"],
+				as_dict=True,
+			)
+			summaries.append(
+				{
+					"id": row.render_block_key,
+					"code": _render_block_business_code(row.render_block_key, row.object_key),
+					"name": row.title,
+					"validationStatus": row.validation_status,
+				}
+			)
+			continue
+		summaries.append(
+			{
+				"id": lookup,
+				"code": _render_block_business_code(lookup, ""),
+				"name": lookup,
+			}
+		)
+	return summaries
+
+
 def get_std_version_parameters(package_id: str) -> dict[str, Any]:
 	version, error = _require_version(package_id)
 	if error:
@@ -145,6 +239,10 @@ def get_std_parameter(parameter_key: str) -> dict[str, Any]:
 	)
 	group_key = metadata.get("group_key") or ""
 	group_label = group_key.split(".parameter_group.", 1)[-1] if group_key else None
+	validation_rule_keys = metadata.get("validation_rule_keys") or []
+	render_binding_keys = metadata.get("render_binding_keys") or []
+	validation_rules = _resolve_rule_summaries(validation_rule_keys)
+	render_binding_items = _resolve_render_binding_summaries(render_binding_keys)
 	return build_read_envelope(
 		data={
 			"id": doc.parameter_key,
@@ -161,8 +259,10 @@ def get_std_parameter(parameter_key: str) -> dict[str, Any]:
 			"groupLabel": group_label,
 			"sectionKey": section_key,
 			"sectionTitle": section_title,
-			"renderBindings": metadata.get("render_binding_keys") or [],
-			"validationRuleKeys": metadata.get("validation_rule_keys") or [],
+			"renderBindings": render_binding_keys,
+			"renderBindingItems": render_binding_items,
+			"validationRuleKeys": validation_rule_keys,
+			"validationRules": validation_rules,
 			"sourceAnchorKey": metadata.get("source_anchor_key") or doc.source_anchor,
 			"extractionStatus": metadata.get("extraction_status"),
 			"metadata": metadata,
@@ -326,12 +426,19 @@ def get_std_version_render_blocks(package_id: str) -> dict[str, Any]:
 		fields=["render_block_key", "object_key", "title", "validation_status", "source_anchor"],
 		order_by="title asc",
 	)
-	return _version_list_envelope(
-		version,
-		package_id,
-		list_key="renderBlocks",
-		rows=rows,
-		id_field="render_block_key",
+	return build_read_envelope(
+		data={
+			"renderBlocks": [
+				{
+					**_identity_summary(row, id_field="render_block_key"),
+					"code": _render_block_business_code(row.render_block_key, row.object_key),
+				}
+				for row in rows
+			],
+			"count": len(rows),
+		},
+		package_context=build_package_context(version),
+		package_id=package_id,
 	)
 
 

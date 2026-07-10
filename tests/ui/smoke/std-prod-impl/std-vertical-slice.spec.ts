@@ -234,6 +234,12 @@ test.describe("STD prod vertical slice API hydration", () => {
 		await expect(clauseIframe.locator('[data-testid="std-prod-clause-legal-text"]')).not.toContainText(
 			"3.1 A Tenderer may be a firm",
 		);
+		await expect(clauseIframe.getByText("ConflictOfInterestCheck")).toHaveCount(0);
+		await expect(clauseIframe.getByText("RB-ITT-3.1-V2.4")).toHaveCount(0);
+		await expect(clauseIframe.locator('[data-testid="std-prod-clause-render-block"]').first()).toContainText("gcc");
+		await expect(clauseIframe.locator('[data-testid="std-prod-clause-render-preview"]')).toContainText(
+			"TITLE EXTRACTED FULL TEXT HASH PENDING",
+		);
 
 		await page.goto("/desk/std-section-clauses");
 		await expect(sectionsIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {

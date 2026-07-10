@@ -157,6 +157,8 @@ class TestBe06ReadApiEnvelope(IntegrationTestCase):
 		self.assertEqual(out["data"]["name"], "Fraud and Corruption")
 		self.assertEqual(out["data"]["sectionTitle"], "Section X - General Conditions of Contract")
 		self.assertEqual(out["data"]["mutabilityType"], "LOCKED_LEGAL_TEXT")
+		self.assertEqual(out["data"]["renderBlock"]["code"], "gcc")
+		self.assertEqual(out["data"]["renderBlock"]["name"], "Section X - General Conditions of Contract")
 		self.assertEqual(out["packageContext"]["packageId"], CANONICAL_PACKAGE_ID)
 
 		other_key = frappe.get_all(

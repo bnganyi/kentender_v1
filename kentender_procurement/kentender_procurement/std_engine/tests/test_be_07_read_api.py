@@ -105,6 +105,31 @@ class TestBe07SchemaReadApi(IntegrationTestCase):
 		self.assertTrue(out["data"]["required"])
 		self.assertEqual(out["data"]["sectionTitle"], "Section II - Tender Data Sheet")
 
+	def test_parameter_detail_resolves_validation_rule_business_codes(self) -> None:
+		parameter_key = frappe.get_all(
+			"STD Parameter",
+			filters={
+				"package_id": CANONICAL_PACKAGE_ID,
+				"title": "Clarification deadline before submission",
+			},
+			pluck="name",
+			limit=1,
+		)[0]
+		out = get_std_parameter(parameter_key)
+		_assert_envelope(self, out)
+		self.assertEqual(len(out["data"]["validationRules"]), 1)
+		rule = out["data"]["validationRules"][0]
+		self.assertEqual(rule["code"], "tds.clarification_deadline_before_submission")
+		self.assertEqual(rule["severity"], "BLOCKER")
+		self.assertNotIn("KE-PPRA-IT-2022-04.rule.", rule["code"])
+
+	def test_render_block_list_returns_business_codes(self) -> None:
+		out = get_std_version_render_blocks(CANONICAL_PACKAGE_ID)
+		_assert_envelope(self, out)
+		sample = next(item for item in out["data"]["renderBlocks"] if item["code"] == "gcc")
+		self.assertEqual(sample["name"], "Section X - General Conditions of Contract")
+		self.assertNotIn("KE-PPRA-IT-2022-04.render_block.", sample["code"])
+
 	def test_rule_detail(self) -> None:
 		rule_key = frappe.get_all(
 			"STD Rule",

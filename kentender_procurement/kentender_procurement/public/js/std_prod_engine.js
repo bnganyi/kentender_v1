@@ -663,6 +663,26 @@
 		var business_code = data.code || metadata.parameter_key || "";
 		var display_name = data.name || metadata.display_label || business_code || "Parameter";
 		var lifecycle = package_context.lifecycleState || "DRAFT";
+		var validation_rules = data.validationRules || [];
+		var render_bindings = data.renderBindingItems || [];
+		if (!validation_rules.length && (data.validationRuleKeys || []).length) {
+			validation_rules = (data.validationRuleKeys || []).map(function (rule_key) {
+				return {
+					id: rule_key,
+					code: business_code_from_key(rule_key, ".rule."),
+					name: business_code_from_key(rule_key, ".rule."),
+				};
+			});
+		}
+		if (!render_bindings.length && (data.renderBindings || []).length) {
+			render_bindings = (data.renderBindings || []).map(function (binding_key) {
+				var code = business_code_from_key(binding_key, ".render_block.");
+				if (code === binding_key) {
+					code = business_code_from_key(binding_key, ".render.");
+				}
+				return { id: binding_key, code: code, name: code };
+			});
+		}
 
 		var breadcrumb = doc.querySelector("nav span.text-primary.font-medium");
 		if (breadcrumb) {
@@ -733,13 +753,15 @@
 		set_labeled_field(
 			doc,
 			"Render Binding",
-			(data.renderBindings || []).length ? (data.renderBindings || []).join(", ") : "None",
+			render_bindings.length
+				? render_bindings.map(function (item) { return item.code || item.name; }).join(", ")
+				: "None",
 		);
 		set_labeled_field(
 			doc,
 			"Rule Binding",
-			(data.validationRuleKeys || []).length
-				? (data.validationRuleKeys || []).join(", ")
+			validation_rules.length
+				? validation_rules.map(function (item) { return item.code || item.name; }).join(", ")
 				: "None",
 		);
 
@@ -747,18 +769,18 @@
 		var usage_container = usage_section && usage_section.querySelector(".divide-y");
 		if (usage_container) {
 			var usage_items = [];
-			(data.renderBindings || []).forEach(function (binding_key) {
+			render_bindings.forEach(function (binding) {
 				usage_items.push({
 					icon: "layers",
-					title: binding_key,
-					subtitle: "Render binding",
+					title: binding.code || binding.name || binding.id,
+					subtitle: binding.name || "Render binding",
 				});
 			});
-			(data.validationRuleKeys || []).forEach(function (rule_key) {
+			validation_rules.forEach(function (rule) {
 				usage_items.push({
 					icon: "rule",
-					title: rule_key,
-					subtitle: "Validation rule",
+					title: rule.code || rule.name || rule.id,
+					subtitle: rule.name || "Validation rule",
 				});
 			});
 			if (!usage_items.length) {
@@ -785,17 +807,22 @@
 		var validation_section = find_bento_section(doc, "VALIDATION RULES");
 		var validation_body = validation_section && validation_section.querySelector("tbody");
 		if (validation_body) {
-			var rule_keys = data.validationRuleKeys || [];
-			if (!rule_keys.length) {
+			if (!validation_rules.length) {
 				validation_body.innerHTML =
 					'<tr><td class="px-card-padding py-4 text-on-surface-variant italic" colspan="5">No validation rules are bound to this parameter.</td></tr>';
 			} else {
-				validation_body.innerHTML = rule_keys
-					.map(function (rule_key) {
+				validation_body.innerHTML = validation_rules
+					.map(function (rule) {
 						return (
 							"<tr><td class='px-card-padding py-4 font-semibold text-[13px]'>" +
-							frappe.utils.escape_html(rule_key) +
-							"</td><td class='px-card-padding py-4 font-data-mono text-[12px]'>—</td><td class='px-card-padding py-4 text-[13px]'>VALIDATION_RUN</td><td class='px-card-padding py-4'>—</td><td class='px-card-padding py-4 text-right'>—</td></tr>"
+							frappe.utils.escape_html(rule.code || rule.name || rule.id) +
+							"</td><td class='px-card-padding py-4 font-data-mono text-[12px]'>" +
+							frappe.utils.escape_html(rule.severity || "—") +
+							"</td><td class='px-card-padding py-4 text-[13px]'>" +
+							frappe.utils.escape_html(rule.ruleType || "VALIDATION") +
+							"</td><td class='px-card-padding py-4'>" +
+							frappe.utils.escape_html(rule.lifecycleStage || "—") +
+							"</td><td class='px-card-padding py-4 text-right'>—</td></tr>"
 						);
 					})
 					.join("");
@@ -1844,12 +1871,28 @@
 		}
 	}
 
+	function find_clause_panel(doc, heading) {
+		var headers = doc.querySelectorAll("h2.font-label-bold, h3.font-label-bold");
+		for (var i = 0; i < headers.length; i += 1) {
+			if ((headers[i].textContent || "").indexOf(heading) < 0) {
+				continue;
+			}
+			var section = headers[i].closest("section");
+			if (section) {
+				return section;
+			}
+		}
+		return null;
+	}
+
 	function hydrate_clause(doc, payload, ctx) {
 		var data = payload.data || {};
 		var metadata = data.metadata || {};
 		var business_code = data.code || metadata.clause_code || "";
 		var clause_name = data.name || metadata.display_title || business_code || "Clause Detail";
 		var section_label = data.sectionTitle || "";
+		var render_block = data.renderBlock || null;
+		var text_status = data.textStatus || metadata.text_status || "";
 
 		var identity_section = doc.querySelector("section.bg-white.border.border-border-subtle.rounded-lg.p-6");
 		var badge = identity_section && identity_section.querySelector("span.bg-primary.text-on-primary");
@@ -1873,11 +1916,27 @@
 		if (desc) {
 			desc.textContent =
 				data.description ||
-				data.textStatus ||
+				text_status.replace(/_/g, " ") ||
 				data.validationStatus ||
 				"Clause metadata loaded from STD package.";
 		}
 
+		doc.querySelectorAll("span.font-data-mono.text-on-surface-variant, span.font-data-mono").forEach(function (node) {
+			var text = (node.textContent || "").trim();
+			if (text.indexOf("Render Block:") >= 0) {
+				node.textContent = render_block
+					? "Render Block: " + (render_block.code || render_block.name)
+					: "Render Block: pending template binding";
+			}
+			if (text.indexOf("Policy:") >= 0 && data.mutabilityType) {
+				node.textContent = "Policy: " + String(data.mutabilityType).replace(/_/g, " ");
+			}
+			if (text.indexOf("ID: RB-ITT") === 0 || text === "RB-ITT-3.1-V2.4") {
+				node.textContent = render_block
+					? render_block.code || render_block.name || render_block.id
+					: "No render block mapped";
+			}
+		});
 		doc.querySelectorAll("span.font-data-mono").forEach(function (node) {
 			var label = (node.textContent || "").trim();
 			if (label.indexOf("UUID:") === 0) {
@@ -1885,6 +1944,20 @@
 				node.setAttribute("data-testid", "std-prod-clause-ref");
 			}
 		});
+
+		var legal_section = find_clause_panel(doc, "Legal Source Text");
+		if (legal_section) {
+			legal_section.querySelectorAll("span.font-data-mono").forEach(function (node) {
+				if ((node.textContent || "").indexOf("SHA-256:") === 0) {
+					node.textContent = "SHA-256: pending extraction";
+				}
+			});
+			var legal_footer = legal_section.querySelector(".px-6.py-3.bg-surface");
+			if (legal_footer) {
+				legal_footer.innerHTML =
+					'<div class="text-xs text-on-surface-variant italic">Source page references and verification stamps are not exposed in the Milestone 1 read model.</div>';
+			}
+		}
 
 		var legal_panel = doc.querySelector("section .p-6.bg-slate-50");
 		if (legal_panel) {
@@ -1928,18 +2001,103 @@
 							? String(data.mutabilityType).replace(/_/g, " ")
 							: value_node.textContent;
 					}
+					if (label === "Source Page") {
+						value_node.textContent = data.sourceAnchorId || "—";
+					}
+					if (label === "Source File") {
+						value_node.textContent = (ctx.package_id || "") + " / Official IT STD Source PDF";
+					}
+					if (label === "Last Verified By") {
+						value_node.textContent = "Not exposed in Milestone 1 read model";
+					}
 				});
 			}
 		}
 
-		var render_preview_body = doc.querySelector("section .p-8.bg-white.m-4.border");
+		var parameters_panel = find_clause_panel(doc, "Embedded Parameters");
+		if (parameters_panel) {
+			var parameters_container = parameters_panel.querySelector(".divide-y");
+			if (parameters_container) {
+				parameters_container.innerHTML =
+					'<div class="p-4 text-on-surface-variant italic text-xs">Clause-level parameter bindings are not exposed in the Milestone 1 read model.</div>';
+			}
+		}
+
+		var rules_panel = find_clause_panel(doc, "Linked Validation Rules");
+		if (rules_panel) {
+			var rules_container = rules_panel.querySelector(".divide-y");
+			if (rules_container) {
+				rules_container.innerHTML =
+					'<div class="p-4 text-on-surface-variant italic text-xs">Clause-level validation rule bindings are not exposed in the Milestone 1 read model.</div>';
+			}
+		}
+
+		var render_preview_section = find_clause_panel(doc, "Final Document Render Preview");
+		if (!render_preview_section) {
+			var preview_body = doc.querySelector("section .p-8.bg-white.m-4.border");
+			render_preview_section = preview_body && preview_body.closest("section");
+		}
+		if (render_preview_section) {
+			var render_badges = render_preview_section.querySelector(".flex.items-center.gap-2");
+			if (render_badges) {
+				if (render_block) {
+					render_badges.innerHTML =
+						'<span class="text-[10px] font-data-mono bg-surface text-on-surface-variant border border-outline-variant px-2 py-0.5 rounded" data-testid="std-prod-clause-render-block">' +
+						frappe.utils.escape_html(render_block.code || render_block.name || render_block.id) +
+						'</span><span class="text-[10px] bg-surface-container-high text-on-surface-variant px-2 py-0.5 rounded font-bold uppercase">' +
+						frappe.utils.escape_html(render_block.validationStatus || "PENDING") +
+						"</span>";
+				} else {
+					render_badges.innerHTML =
+						'<span class="text-[10px] font-data-mono bg-surface text-on-surface-variant border border-outline-variant px-2 py-0.5 rounded">No render block mapped</span>';
+				}
+			}
+		}
+
+		var render_preview_body = render_preview_section && render_preview_section.querySelector(".p-8.bg-white.m-4.border");
 		if (render_preview_body) {
-			render_preview_body.innerHTML =
-				"<div class='max-w-[650px] mx-auto text-on-surface-variant italic text-sm'>" +
-				frappe.utils.escape_html(
-					"Render preview is not available until full clause text and render blocks are wired for this clause.",
-				) +
-				"</div>";
+			render_preview_body.setAttribute("data-testid", "std-prod-clause-render-preview");
+			var clause_text = (data.clauseText || "").trim();
+			if (clause_text) {
+				render_preview_body.innerHTML =
+					"<div class='max-w-[650px] mx-auto'><p class='font-bold mb-4'>" +
+					frappe.utils.escape_html(clause_name) +
+					"</p><p class='text-sm leading-6 whitespace-pre-wrap'>" +
+					frappe.utils.escape_html(clause_text) +
+					"</p></div>";
+			} else {
+				render_preview_body.innerHTML =
+					"<div class='max-w-[650px] mx-auto space-y-3'><p class='font-bold'>" +
+					frappe.utils.escape_html(clause_name) +
+					"</p><p class='text-on-surface-variant italic text-sm'>" +
+					frappe.utils.escape_html(
+						text_status
+							? "Render preview unavailable: " + text_status.replace(/_/g, " ") + "."
+							: "Render preview unavailable until full clause text is extracted.",
+					) +
+					"</p>" +
+					(render_block
+						? "<p class='text-xs text-on-surface-variant'>Linked render block: <span class='font-data-mono'>" +
+							frappe.utils.escape_html(render_block.code || render_block.name) +
+							"</span> (" +
+							frappe.utils.escape_html(render_block.validationStatus || "PENDING") +
+							")</p>"
+						: "") +
+					"</div>";
+			}
+		}
+
+		var audit_panel = find_clause_panel(doc, "Audit History");
+		if (audit_panel) {
+			var audit_timeline = audit_panel.querySelector(".relative.space-y-6, .space-y-6");
+			if (audit_timeline) {
+				audit_timeline.innerHTML =
+					'<div class="text-on-surface-variant italic text-xs">Clause-level audit events are not exposed in the Milestone 1 read model.</div>';
+			}
+			var audit_count = audit_panel.querySelector("span.text-\\[10px\\].uppercase");
+			if (audit_count) {
+				audit_count.textContent = "0 Events";
+			}
 		}
 		if (doc.body) {
 			doc.body.setAttribute("data-std-clause-key", data.id || ctx.clause_key || "");
