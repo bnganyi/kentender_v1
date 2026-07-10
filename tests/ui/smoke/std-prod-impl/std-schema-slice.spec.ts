@@ -1,6 +1,7 @@
 import { execSync } from "node:child_process";
 import { test, expect } from "@playwright/test";
 import { loginAsAdministrator } from "../../helpers/auth";
+import { expectStdProdPageLoads } from "../../helpers/stdProdNavigation";
 
 const CANONICAL_PACKAGE_ID = "KE-PPRA-IT-2022-04";
 const PARAM_TDS_013 = "KE-PPRA-IT-2022-04.parameter.tds.013";
@@ -392,7 +393,10 @@ test.describe("STD prod schema slice API hydration", () => {
 		await showAllTableRows(iframe);
 		const firstRow = iframe.locator(".std-prod-render-row").first();
 		await firstRow.locator('[title="Open Render Block"]').click();
-		await expect(page).toHaveURL(/\/desk\/std-section-clause-map/, { timeout: 30_000 });
+		await expectStdProdPageLoads(page, {
+			route: "std-section-clauses",
+			testid: "std-prod-std-section-clauses",
+		});
 	});
 
 	test("form open action navigates to field builder", async ({ page }) => {
@@ -407,7 +411,10 @@ test.describe("STD prod schema slice API hydration", () => {
 		});
 		await expect(targetRow.locator('[title="Open Form"]')).toBeVisible();
 		await targetRow.locator('[title="Open Form"]').click();
-		await expect(page).toHaveURL(/\/desk\/std-form-detail-field-builder/, { timeout: 30_000 });
+		await expectStdProdPageLoads(page, {
+			route: "std-form-detail-field-builder",
+			testid: "std-prod-std-form-detail-field-builder",
+		});
 	});
 
 	test("price schedule open action navigates to section clause map", async ({ page }) => {
@@ -420,7 +427,55 @@ test.describe("STD prod schema slice API hydration", () => {
 			has: iframe.locator("td").first().getByText("GS-001", { exact: true }),
 		});
 		await grandSummaryRow.locator('[title="Open Schedule"]').click();
-		await expect(page).toHaveURL(/\/desk\/std-section-clause-map/, { timeout: 30_000 });
+		await expectStdProdPageLoads(page, {
+			route: "std-section-clauses",
+			testid: "std-prod-std-section-clauses",
+		});
+	});
+
+	test("schema table secondary actions navigate to registered pages", async ({ page }) => {
+		const cases = [
+			{
+				startRoute: "/desk/std-parameter-dictionary",
+				iframeTestid: "std-prod-std-parameter-dictionary",
+				rowSelector: ".std-prod-param-row",
+				actionTitle: "View Source",
+				expectRoute: "std-source-doc",
+				expectTestid: "std-prod-std-source-doc",
+			},
+			{
+				startRoute: "/desk/std-price-schedule-schema",
+				iframeTestid: "std-prod-std-price-schedule-schema",
+				rowSelector: ".std-prod-price-row",
+				actionTitle: "View Source",
+				expectRoute: "std-source-doc",
+				expectTestid: "std-prod-std-source-doc",
+			},
+			{
+				startRoute: "/desk/std-render-blocks",
+				iframeTestid: "std-prod-std-render-blocks",
+				rowSelector: ".std-prod-render-row",
+				actionTitle: "View Source Section",
+				expectRoute: "std-source-doc",
+				expectTestid: "std-prod-std-source-doc",
+			},
+		] as const;
+
+		for (const scenario of cases) {
+			await page.goto(scenario.startRoute);
+			const iframe = page.frameLocator(`[data-testid="${scenario.iframeTestid}-iframe"]`);
+			await expect(iframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+				timeout: 30_000,
+			});
+			await showAllTableRows(iframe);
+			const row = iframe.locator(scenario.rowSelector).first();
+			await expect(row.locator(`[title="${scenario.actionTitle}"]`)).toBeVisible();
+			await row.locator(`[title="${scenario.actionTitle}"]`).click();
+			await expectStdProdPageLoads(page, {
+				route: scenario.expectRoute,
+				testid: scenario.expectTestid,
+			});
+		}
 	});
 
 	test("requirement schema manager preserves design table columns after hydration", async ({ page }) => {

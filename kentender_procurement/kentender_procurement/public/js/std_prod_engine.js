@@ -32,6 +32,53 @@
 		"Standard Clauses": "clauses",
 	};
 
+	// Canonical Desk page slugs for STD prod navigation (must match hooks.page_js + Page records).
+	var STD_PROD_REGISTERED_ROUTES = [
+		"std-library",
+		"std-family-detail",
+		"std-version-detail",
+		"std-source-doc",
+		"std-section-clauses",
+		"std-clause-detail",
+		"std-validation-report",
+		"std-audit-log",
+		"std-parameter-dictionary",
+		"std-parameter-detail",
+		"std-rule-dictionary",
+		"std-rule-detail",
+		"std-form-schema-manager",
+		"std-form-detail-field-builder",
+		"std-requirement-schema-manager",
+		"std-price-schedule-schema",
+		"std-evaluation-schema",
+		"std-render-blocks",
+		"std-review-and-approval",
+		"std-usage-and-tender-bindings",
+		"std-import-package-review",
+		"std-version-diff-and-supersession",
+	];
+
+	var STD_PROD_ROUTE_ALIASES = {
+		"std-section-clause-map": "std-section-clauses",
+	};
+
+	var SCHEMA_ACTION_TITLE_ROUTES = {
+		"View Source": "std-source-doc",
+		"View Source Section": "std-source-doc",
+		"View Usage": "std-usage-and-tender-bindings",
+		"View Rules": "std-rule-dictionary",
+		"View Data Bindings": "std-parameter-dictionary",
+		"View Render Test": "std-validation-report",
+		"View Affected Objects": "std-parameter-dictionary",
+		"View Test Coverage": "std-validation-report",
+		"View Line Schema": "std-source-doc",
+		"View Formula": "std-source-doc",
+		"Preview Price Form": "std-source-doc",
+		"Compare Previous Version": "std-version-diff-and-supersession",
+		"Preview Output": "std-section-clauses",
+		"Preview Form": "std-form-detail-field-builder",
+	};
+
 	var SCHEMA_CROSS_LINKS = {
 		"Parameter Dictionary": "std-parameter-dictionary",
 		"Rule Dictionary": "std-rule-dictionary",
@@ -360,12 +407,34 @@
 		root.frappe.route_options = Object.assign({}, root.frappe.route_options || {}, ctx || {});
 	}
 
+	function resolve_std_route(route) {
+		var normalized = String(route || "").trim();
+		if (!normalized) {
+			return "";
+		}
+		return STD_PROD_ROUTE_ALIASES[normalized] || normalized;
+	}
+
+	function is_registered_std_route(route) {
+		var resolved = resolve_std_route(route);
+		return STD_PROD_REGISTERED_ROUTES.indexOf(resolved) !== -1;
+	}
+
 	function navigate(route, ctx) {
+		var resolved = resolve_std_route(route);
+		if (!is_registered_std_route(resolved)) {
+			frappe.msgprint({
+				title: __("Navigation failed"),
+				indicator: "red",
+				message: __("Unknown STD page route: {0}", [route || ""]),
+			});
+			return;
+		}
 		var root = window.parent && window.parent.frappe ? window.parent : window;
 		if (ctx) {
 			set_context(ctx);
 		}
-		root.frappe.set_route(route);
+		root.frappe.set_route(resolved);
 	}
 
 	function reveal_iframe_frame(doc) {
@@ -3955,13 +4024,94 @@
 	}
 
 	function navigate_schema_section_map(ctx, map_focus) {
-		navigate("std-section-clause-map", {
+		navigate("std-section-clauses", {
 			package_id: ctx.package_id,
 			family_code: ctx.family_code,
 			version_code: ctx.version_code || "",
 			lifecycle_state: ctx.lifecycle_state || "",
 			map_focus: map_focus || "",
 		});
+	}
+
+	function navigate_schema_action_by_title(title, ctx, row_ctx) {
+		var route = SCHEMA_ACTION_TITLE_ROUTES[title];
+		if (!route) {
+			return false;
+		}
+		var next_ctx = Object.assign({}, ctx || get_context(), row_ctx || {});
+		if (route === "std-rule-dictionary" && next_ctx.parameter_key) {
+			next_ctx.filter_parameter_key = next_ctx.parameter_key;
+			delete next_ctx.parameter_key;
+		}
+		navigate(route, next_ctx);
+		return true;
+	}
+
+	function schema_row_context_from_element(row, ctx) {
+		if (!row) {
+			return ctx || get_context();
+		}
+		return Object.assign({}, ctx || get_context(), {
+			parameter_key: row.getAttribute("data-parameter-key") || "",
+			rule_key: row.getAttribute("data-rule-key") || "",
+			form_key: row.getAttribute("data-form-key") || "",
+			render_block_code: row.getAttribute("data-render-block-code") || "",
+			price_code: row.getAttribute("data-price-code") || "",
+			map_focus: row.getAttribute("data-render-block-code") || row.getAttribute("data-price-code") || "",
+		});
+	}
+
+	function handle_schema_action_button(screen, target, event, ctx) {
+		var button = target.closest("button[title]");
+		if (!button) {
+			return false;
+		}
+		var title = (button.getAttribute("title") || "").trim();
+		if (!title) {
+			return false;
+		}
+		var row =
+			target.closest(
+				".std-prod-param-row, .std-prod-rule-row, .std-prod-form-row, .std-prod-render-row, .std-prod-req-row, .std-prod-price-row, .std-prod-eval-row",
+			) || null;
+		var row_ctx = schema_row_context_from_element(row, ctx);
+
+		if (title === "Open") {
+			event.preventDefault();
+			event.stopPropagation();
+			navigate("std-parameter-detail", row_ctx);
+			return true;
+		}
+		if (title === "Open Rule") {
+			event.preventDefault();
+			event.stopPropagation();
+			navigate("std-rule-detail", row_ctx);
+			return true;
+		}
+		if (title === "Open Form" || title === "Preview Form") {
+			event.preventDefault();
+			event.stopPropagation();
+			open_form_detail_from_row(row, row_ctx);
+			return true;
+		}
+		if (title === "Open Render Block" || title === "Preview Output") {
+			event.preventDefault();
+			event.stopPropagation();
+			navigate_schema_section_map(row_ctx, row_ctx.render_block_code || "");
+			return true;
+		}
+		if (title === "Open Schedule") {
+			event.preventDefault();
+			event.stopPropagation();
+			navigate_schema_section_map(row_ctx, row_ctx.price_code || "");
+			return true;
+		}
+		if (navigate_schema_action_by_title(title, ctx, row_ctx)) {
+			event.preventDefault();
+			event.stopPropagation();
+			return true;
+		}
+		return false;
 	}
 
 	function open_form_detail_from_row(form_row, ctx) {
@@ -4100,200 +4250,97 @@
 					return;
 				}
 
-				if (screen === "parameters") {
-					var view_rules_btn = target.closest('[title="View Rules"]');
-					if (view_rules_btn) {
-						var rules_row = view_rules_btn.closest(".std-prod-param-row");
-						event.preventDefault();
-						event.stopPropagation();
-						navigate("std-rule-dictionary", {
-							package_id: ctx.package_id,
-							family_code: ctx.family_code,
-							filter_parameter_key: rules_row ? rules_row.getAttribute("data-parameter-key") : "",
-						});
-						return;
-					}
-					if (target.closest('[title="View Source"]')) {
-						event.preventDefault();
-						event.stopPropagation();
-						navigate_schema_source(ctx);
-						return;
-					}
-					if (target.closest('[title="View Usage"]')) {
-						event.preventDefault();
-						event.stopPropagation();
-						navigate("std-usage-and-tender-bindings", ctx);
-						return;
-					}
-					var open_btn = target.closest('[title="Open"]');
-					if (open_btn) {
-						var open_row = open_btn.closest(".std-prod-param-row");
-						if (open_row) {
-							event.preventDefault();
-							event.stopPropagation();
-							navigate("std-parameter-detail", {
-								package_id: ctx.package_id,
-								family_code: ctx.family_code,
-								parameter_key: open_row.getAttribute("data-parameter-key"),
-							});
-						}
-						return;
-					}
-					var param_row = target.closest(".std-prod-param-row");
-					if (param_row) {
-						event.preventDefault();
-						event.stopPropagation();
-						navigate("std-parameter-detail", {
-							package_id: ctx.package_id,
-							family_code: ctx.family_code,
-							parameter_key: param_row.getAttribute("data-parameter-key"),
-						});
-					}
-					return;
-				}
-
-				if (screen === "rules") {
-					var open_rule_btn = target.closest('[title="Open Rule"]');
-					if (open_rule_btn) {
-						var open_rule_row = open_rule_btn.closest(".std-prod-rule-row");
-						if (open_rule_row) {
-							event.preventDefault();
-							event.stopPropagation();
-							navigate("std-rule-detail", {
-								package_id: ctx.package_id,
-								family_code: ctx.family_code,
-								rule_key: open_rule_row.getAttribute("data-rule-key"),
-							});
-						}
-						return;
-					}
-					if (target.closest('[title="View Source"]')) {
-						event.preventDefault();
-						event.stopPropagation();
-						navigate_schema_source(ctx);
-						return;
-					}
-					var rule_row = target.closest(".std-prod-rule-row");
-					if (rule_row) {
-						event.preventDefault();
-						event.stopPropagation();
-						navigate("std-rule-detail", {
-							package_id: ctx.package_id,
-							family_code: ctx.family_code,
-							rule_key: rule_row.getAttribute("data-rule-key"),
-						});
-					}
-					return;
-				}
-
-				if (screen === "forms") {
-					if (target.closest('[title="Open Form"]')) {
-						var open_form_row = target.closest(".std-prod-form-row");
-						event.preventDefault();
-						event.stopPropagation();
-						open_form_detail_from_row(open_form_row, ctx);
-						return;
-					}
-					var form_row = target.closest(".std-prod-form-row");
-					if (form_row) {
-						event.preventDefault();
-						event.stopPropagation();
-						open_form_detail_from_row(form_row, ctx);
-					}
-					return;
-				}
-
-				if (screen === "renderBlocks") {
-					if (target.closest('[title="Open Render Block"]')) {
-						var open_render_row = target.closest(".std-prod-render-row");
-						event.preventDefault();
-						event.stopPropagation();
-						navigate_schema_section_map(
-							ctx,
-							open_render_row ? open_render_row.getAttribute("data-render-block-code") : "",
-						);
-						return;
-					}
-					if (target.closest('[title="View Source Section"]')) {
-						event.preventDefault();
-						event.stopPropagation();
-						navigate_schema_source(ctx);
-						return;
-					}
-					if (target.closest('[title="View Data Bindings"]')) {
-						event.preventDefault();
-						event.stopPropagation();
-						navigate("std-parameter-dictionary", ctx);
-						return;
-					}
-					var render_row = target.closest(".std-prod-render-row");
+				if (
+					[
+						"parameters",
+						"rules",
+						"forms",
+						"renderBlocks",
+						"requirements",
+						"priceSchedules",
+						"evaluation",
+					].indexOf(screen) !== -1
+				) {
 					if (
-						render_row &&
-						!target.closest(
-							'button[title="Export Render Profile"], button[title="Create Draft Version"]',
-						)
+						button_contains_label(target, "VIEW SOURCE") ||
+						target.closest('[data-std-prod-schema-action="source"]')
 					) {
 						event.preventDefault();
 						event.stopPropagation();
-						navigate_schema_section_map(ctx, render_row.getAttribute("data-render-block-code"));
-					}
-					return;
-				}
-
-				if (screen === "requirements") {
-					if (button_contains_label(target, "VIEW SOURCE") || target.closest('[data-std-prod-schema-action="source"]')) {
-						event.preventDefault();
-						event.stopPropagation();
 						navigate_schema_source(ctx);
 						return;
 					}
-					var req_row = target.closest(".std-prod-req-row");
-					if (req_row) {
-						event.preventDefault();
-						event.stopPropagation();
-						navigate_schema_source(ctx);
-					}
-					return;
-				}
-
-				if (screen === "priceSchedules") {
-					if (target.closest('[title="Open Schedule"]')) {
-						var open_price_row = target.closest(".std-prod-price-row");
-						event.preventDefault();
-						event.stopPropagation();
-						navigate_schema_section_map(
-							ctx,
-							open_price_row ? open_price_row.getAttribute("data-price-code") : "",
-						);
+					if (handle_schema_action_button(screen, target, event, ctx)) {
 						return;
 					}
-					if (target.closest('[title="View Source"]')) {
-						event.preventDefault();
-						event.stopPropagation();
-						navigate_schema_source(ctx);
+					if (screen === "parameters") {
+						var param_row = target.closest(".std-prod-param-row");
+						if (param_row) {
+							event.preventDefault();
+							event.stopPropagation();
+							navigate("std-parameter-detail", schema_row_context_from_element(param_row, ctx));
+						}
 						return;
 					}
-					var price_row = target.closest(".std-prod-price-row");
-					if (price_row) {
-						event.preventDefault();
-						event.stopPropagation();
-						navigate_schema_section_map(ctx, price_row.getAttribute("data-price-code"));
-					}
-					return;
-				}
-
-				if (screen === "evaluation") {
-					if (button_contains_label(target, "VIEW SOURCE") || target.closest('[data-std-prod-schema-action="source"]')) {
-						event.preventDefault();
-						event.stopPropagation();
-						navigate_schema_source(ctx);
+					if (screen === "rules") {
+						var rule_row = target.closest(".std-prod-rule-row");
+						if (rule_row) {
+							event.preventDefault();
+							event.stopPropagation();
+							navigate("std-rule-detail", schema_row_context_from_element(rule_row, ctx));
+						}
 						return;
 					}
-					var eval_row = target.closest(".std-prod-eval-row");
-					if (eval_row) {
-						event.preventDefault();
-						event.stopPropagation();
-						navigate_schema_source(ctx);
+					if (screen === "forms") {
+						var form_row = target.closest(".std-prod-form-row");
+						if (form_row) {
+							event.preventDefault();
+							event.stopPropagation();
+							open_form_detail_from_row(form_row, schema_row_context_from_element(form_row, ctx));
+						}
+						return;
+					}
+					if (screen === "renderBlocks") {
+						var render_row = target.closest(".std-prod-render-row");
+						if (
+							render_row &&
+							!target.closest(
+								'button[title="Export Render Profile"], button[title="Create Draft Version"]',
+							)
+						) {
+							event.preventDefault();
+							event.stopPropagation();
+							var render_ctx = schema_row_context_from_element(render_row, ctx);
+							navigate_schema_section_map(render_ctx, render_ctx.render_block_code || "");
+						}
+						return;
+					}
+					if (screen === "requirements") {
+						var req_row = target.closest(".std-prod-req-row");
+						if (req_row) {
+							event.preventDefault();
+							event.stopPropagation();
+							navigate_schema_source(ctx);
+						}
+						return;
+					}
+					if (screen === "priceSchedules") {
+						var price_row = target.closest(".std-prod-price-row");
+						if (price_row) {
+							event.preventDefault();
+							event.stopPropagation();
+							var price_ctx = schema_row_context_from_element(price_row, ctx);
+							navigate_schema_section_map(price_ctx, price_ctx.price_code || "");
+						}
+						return;
+					}
+					if (screen === "evaluation") {
+						var eval_row = target.closest(".std-prod-eval-row");
+						if (eval_row) {
+							event.preventDefault();
+							event.stopPropagation();
+							navigate_schema_source(ctx);
+						}
 					}
 					return;
 				}
@@ -4487,6 +4534,8 @@
 	kentender.std_prod.get_context = get_context;
 	kentender.std_prod.set_context = set_context;
 	kentender.std_prod.navigate = navigate;
+	kentender.std_prod.resolve_std_route = resolve_std_route;
+	kentender.std_prod.STD_PROD_REGISTERED_ROUTES = STD_PROD_REGISTERED_ROUTES;
 	kentender.std_prod.mount_page = mount_page;
 	kentender.std_prod.hydrate_iframe = hydrate_iframe;
 	kentender.std_prod.claim_page_routes_over_doctype_conflicts =
