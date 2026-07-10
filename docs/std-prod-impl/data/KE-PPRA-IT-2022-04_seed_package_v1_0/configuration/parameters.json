@@ -1,0 +1,2838 @@
+{
+  "records": [
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.001",
+      "parameter_code": "IT-TDS-001",
+      "display_label": "Request for Tenders reference number",
+      "field_type": "TEXT",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_001",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 1.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 1,
+      "engine_note": "Render into TDS and issued document identity.",
+      "validation_rule_keys": [
+        "KE-PPRA-IT-2022-04.rule.tds.validation_001"
+      ]
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.002",
+      "parameter_code": "IT-TDS-002",
+      "display_label": "Procuring Entity legal name",
+      "field_type": "ENTITY_REFERENCE_/_TEXT",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_002",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 1.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 2,
+      "engine_note": "Used across invitation, TDS, SCC, forms, and contract.",
+      "validation_rule_keys": [
+        "KE-PPRA-IT-2022-04.rule.tds.validation_002"
+      ]
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.003",
+      "parameter_code": "IT-TDS-003",
+      "display_label": "Name of ITT / tender name",
+      "field_type": "TEXT",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_003",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 1.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 3,
+      "engine_note": "Used in cover, invitation, TDS, forms, contract.",
+      "validation_rule_keys": [
+        "KE-PPRA-IT-2022-04.rule.tds.validation_003"
+      ]
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.004",
+      "parameter_code": "IT-TDS-004",
+      "display_label": "Number and identification of lots/contracts",
+      "field_type": "STRUCTURED_LIST",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_004",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 1.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 4,
+      "engine_note": "Drives lot pricing, evaluation, award and contract generation.",
+      "validation_rule_keys": [
+        "KE-PPRA-IT-2022-04.rule.tds.validation_004"
+      ]
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.005",
+      "parameter_code": "IT-TDS-005",
+      "display_label": "E-procurement system enabled",
+      "field_type": "BOOLEAN",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_005",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 2.3(a)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 5,
+      "engine_note": "Activates e-procurement fields and electronic submission/opening rules.",
+      "validation_rule_keys": [
+        "KE-PPRA-IT-2022-04.rule.tds.validation_005"
+      ]
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.006",
+      "parameter_code": "IT-TDS-006",
+      "display_label": "E-procurement system name",
+      "field_type": "TEXT",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_006",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 2.3(a)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 6,
+      "engine_note": "Rendered in TDS.",
+      "validation_rule_keys": [
+        "KE-PPRA-IT-2022-04.rule.tds.validation_006"
+      ]
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.007",
+      "parameter_code": "IT-TDS-007",
+      "display_label": "E-procurement URL/link",
+      "field_type": "URL",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_007",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 2.3(a)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 7,
+      "engine_note": "Rendered in TDS and bidder instructions.",
+      "validation_rule_keys": [
+        "KE-PPRA-IT-2022-04.rule.tds.validation_007"
+      ]
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.008",
+      "parameter_code": "IT-TDS-008",
+      "display_label": "E-procurement process aspects",
+      "field_type": "MULTI-SELECT",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_008",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 2.3(a)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 8,
+      "engine_note": "Must align with submission/opening electronic procedure fields.",
+      "validation_rule_keys": [
+        "KE-PPRA-IT-2022-04.rule.tds.validation_008"
+      ]
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.009",
+      "parameter_code": "IT-TDS-009",
+      "display_label": "Firms that provided consulting services",
+      "field_type": "STRUCTURED_LIST",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_009",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 3.3",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 9,
+      "engine_note": "Feeds conflict-of-interest checks and unfair advantage disclosures.",
+      "validation_rule_keys": [
+        "KE-PPRA-IT-2022-04.rule.tds.validation_009"
+      ]
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.010",
+      "parameter_code": "IT-TDS-010",
+      "display_label": "Maximum number of JV members",
+      "field_type": "INTEGER",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_010",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 4.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 10,
+      "engine_note": "Used in eligibility validation.",
+      "validation_rule_keys": [
+        "KE-PPRA-IT-2022-04.rule.tds.validation_010"
+      ]
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.011",
+      "parameter_code": "IT-TDS-011",
+      "display_label": "Additional registration requirement",
+      "field_type": "TEXT_/_CONTROLLED_REGISTER",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_011",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 4.9",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 11,
+      "engine_note": "Generates eligibility evidence requirement if completed.",
+      "validation_rule_keys": [
+        "KE-PPRA-IT-2022-04.rule.tds.validation_011"
+      ]
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.012",
+      "parameter_code": "IT-TDS-012",
+      "display_label": "Clarification contact attention",
+      "field_type": "TEXT",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_012",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 8.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 12,
+      "engine_note": "Renders in TDS and clarification instructions.",
+      "validation_rule_keys": [
+        "KE-PPRA-IT-2022-04.rule.tds.validation_012"
+      ]
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.013",
+      "parameter_code": "IT-TDS-013",
+      "display_label": "Clarification street address",
+      "field_type": "ADDRESS",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_013",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 8.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 13,
+      "engine_note": "Renders in TDS.",
+      "validation_rule_keys": [
+        "KE-PPRA-IT-2022-04.rule.tds.validation_013"
+      ]
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.014",
+      "parameter_code": "IT-TDS-014",
+      "display_label": "Clarification floor/room",
+      "field_type": "TEXT",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_014",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 8.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 14,
+      "engine_note": "Renders in TDS.",
+      "validation_rule_keys": [
+        "KE-PPRA-IT-2022-04.rule.tds.validation_014"
+      ]
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.015",
+      "parameter_code": "IT-TDS-015",
+      "display_label": "Clarification city",
+      "field_type": "TEXT",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_015",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 8.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 15,
+      "engine_note": "Renders in TDS.",
+      "validation_rule_keys": [
+        "KE-PPRA-IT-2022-04.rule.tds.validation_015"
+      ]
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.016",
+      "parameter_code": "IT-TDS-016",
+      "display_label": "Clarification ZIP/postal code",
+      "field_type": "TEXT",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_016",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 8.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 16,
+      "engine_note": "Renders in TDS.",
+      "validation_rule_keys": [
+        "KE-PPRA-IT-2022-04.rule.tds.validation_016"
+      ]
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.017",
+      "parameter_code": "IT-TDS-017",
+      "display_label": "Clarification country",
+      "field_type": "COUNTRY",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_017",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 8.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 17,
+      "engine_note": "Renders in TDS.",
+      "validation_rule_keys": [
+        "KE-PPRA-IT-2022-04.rule.tds.validation_017"
+      ]
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.018",
+      "parameter_code": "IT-TDS-018",
+      "display_label": "Clarification telephone",
+      "field_type": "PHONE",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_018",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 8.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 18,
+      "engine_note": "Renders if provided.",
+      "validation_rule_keys": [
+        "KE-PPRA-IT-2022-04.rule.tds.validation_018"
+      ]
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.019",
+      "parameter_code": "IT-TDS-019",
+      "display_label": "Clarification fax",
+      "field_type": "PHONE",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_019",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 8.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 19,
+      "engine_note": "Renders if provided.",
+      "validation_rule_keys": [
+        "KE-PPRA-IT-2022-04.rule.tds.validation_019"
+      ]
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.020",
+      "parameter_code": "IT-TDS-020",
+      "display_label": "Clarification email",
+      "field_type": "EMAIL",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_020",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 8.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 20,
+      "engine_note": "Renders in TDS; used for notices.",
+      "validation_rule_keys": [
+        "KE-PPRA-IT-2022-04.rule.tds.validation_020"
+      ]
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.021",
+      "parameter_code": "IT-TDS-021",
+      "display_label": "Clarification request deadline offset",
+      "field_type": "DURATION_/_DATE",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_021",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 8.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 21,
+      "engine_note": "Must precede submission deadline.",
+      "validation_rule_keys": [
+        "KE-PPRA-IT-2022-04.rule.tds.validation_021"
+      ]
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.022",
+      "parameter_code": "IT-TDS-022",
+      "display_label": "Procurement publication web page",
+      "field_type": "URL",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_022",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 8.2",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 22,
+      "engine_note": "Used for clarification/addenda publishing.",
+      "validation_rule_keys": [
+        "KE-PPRA-IT-2022-04.rule.tds.validation_022"
+      ]
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.023",
+      "parameter_code": "IT-TDS-023",
+      "display_label": "Pre-tender meeting will take place",
+      "field_type": "BOOLEAN",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_023",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 8.4",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 23,
+      "engine_note": "If true, date/time/place required.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.024",
+      "parameter_code": "IT-TDS-024",
+      "display_label": "Pre-tender meeting date",
+      "field_type": "DATE",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_024",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 8.4",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 24,
+      "engine_note": "Must be before clarification deadline/submission deadline.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.025",
+      "parameter_code": "IT-TDS-025",
+      "display_label": "Pre-tender meeting time",
+      "field_type": "TIME",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_025",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 8.4",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 25,
+      "engine_note": "Renders in TDS.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.026",
+      "parameter_code": "IT-TDS-026",
+      "display_label": "Pre-tender meeting place",
+      "field_type": "LOCATION",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_026",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 8.4",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 26,
+      "engine_note": "Renders in TDS.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.027",
+      "parameter_code": "IT-TDS-027",
+      "display_label": "Procuring Entity-organized site visit",
+      "field_type": "BOOLEAN",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_027",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 8.4",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 27,
+      "engine_note": "If true, site visit details must be captured.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.028",
+      "parameter_code": "IT-TDS-028",
+      "display_label": "Site visit details",
+      "field_type": "STRUCTURED_LOCATION/DATE/TIME",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_028",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 8.4",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 28,
+      "engine_note": "Rendered in TDS and bidder instructions.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.029",
+      "parameter_code": "IT-TDS-029",
+      "display_label": "Website where clarification response is published",
+      "field_type": "URL",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_029",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 9.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 29,
+      "engine_note": "Must be consistent with publication web page/e-procurement settings.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.030",
+      "parameter_code": "IT-TDS-030",
+      "display_label": "Additional documents required with tender",
+      "field_type": "STRUCTURED_LIST",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_030",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 13.1(k)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 30,
+      "engine_note": "Generates supplier submission checklist and evidence requirements.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.031",
+      "parameter_code": "IT-TDS-031",
+      "display_label": "Alternative tenders status",
+      "field_type": "ENUM",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_031",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 15.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 31,
+      "engine_note": "Controls alternative tender submission and evaluation paths.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.032",
+      "parameter_code": "IT-TDS-032",
+      "display_label": "Alternatives to time schedule permitted",
+      "field_type": "BOOLEAN",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_032",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 15.2",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 32,
+      "engine_note": "Requires evaluation method in Section III.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.033",
+      "parameter_code": "IT-TDS-033",
+      "display_label": "Alternative technical solutions permitted",
+      "field_type": "BOOLEAN",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_033",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 15.4",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 33,
+      "engine_note": "Requires specified parts and evaluation method.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.034",
+      "parameter_code": "IT-TDS-034",
+      "display_label": "Parts permitting alternative technical solutions",
+      "field_type": "STRUCTURED_LIST",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_034",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 15.4",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 34,
+      "engine_note": "Must reference Technical Requirements items/subsystems.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.035",
+      "parameter_code": "IT-TDS-035",
+      "display_label": "Prequalification undertaken",
+      "field_type": "BOOLEAN",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_035",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 17.2",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 35,
+      "engine_note": "Activates prequalification consistency checks.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.036",
+      "parameter_code": "IT-TDS-036",
+      "display_label": "Preliminary Project Plan topics",
+      "field_type": "MULTI-SELECT_/_STRUCTURED_LIST",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_036",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 18.2(a)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 36,
+      "engine_note": "Drives supplier technical proposal checklist.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.037",
+      "parameter_code": "IT-TDS-037",
+      "display_label": "Mandatory brand/model limited items",
+      "field_type": "STRUCTURED_LIST",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_037",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 18.3",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 37,
+      "engine_note": "Legal/procurement review recommended; anti-restrictive risk flag.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.038",
+      "parameter_code": "IT-TDS-038",
+      "display_label": "Tenderer must tender recurrent cost items",
+      "field_type": "BOOLEAN",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_038",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 19.2",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 38,
+      "engine_note": "Activates recurrent cost tables and post-warranty service configuration.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.039",
+      "parameter_code": "IT-TDS-039",
+      "display_label": "Tenderer must tender separate recurrent cost contracts not in main contract",
+      "field_type": "BOOLEAN",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_039",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 19.2(a)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 39,
+      "engine_note": "Drives recurrent-cost tendering model.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.040",
+      "parameter_code": "IT-TDS-040",
+      "display_label": "Incoterms edition",
+      "field_type": "TEXT_/_CONTROLLED_LIST",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_040",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 19.5",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 40,
+      "engine_note": "Use current approved edition list if platform maintains one.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.041",
+      "parameter_code": "IT-TDS-041",
+      "display_label": "Named place of destination",
+      "field_type": "LOCATION",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_041",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 19.5(a)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 41,
+      "engine_note": "Must align with project sites.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.042",
+      "parameter_code": "IT-TDS-042",
+      "display_label": "Named final destination / project site",
+      "field_type": "LOCATION",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_042",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 19.6",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 42,
+      "engine_note": "Used in logistics, risk, installation, contract.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.043",
+      "parameter_code": "IT-TDS-043",
+      "display_label": "Modification to ITT 17.8 service pricing",
+      "field_type": "TEXT_/_CONTROLLED_CLAUSE",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_043",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 19.8",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 43,
+      "engine_note": "Legal/procurement review required if modified.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.044",
+      "parameter_code": "IT-TDS-044",
+      "display_label": "Tender prices subject to adjustment",
+      "field_type": "BOOLEAN",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_044",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 19.9",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 44,
+      "engine_note": "If true, adjustment factors required.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.045",
+      "parameter_code": "IT-TDS-045",
+      "display_label": "Local currency price adjustment factor",
+      "field_type": "FORMULA_/_TEXT",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_045",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 19.9",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 45,
+      "engine_note": "Must pass formula review.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.046",
+      "parameter_code": "IT-TDS-046",
+      "display_label": "Foreign currency price adjustment factor",
+      "field_type": "FORMULA_/_TEXT",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_046",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 19.9",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 46,
+      "engine_note": "Must pass formula review.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.047",
+      "parameter_code": "IT-TDS-047",
+      "display_label": "Tenderer required to quote Kenya-currency portion",
+      "field_type": "BOOLEAN",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_047",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 20.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 47,
+      "engine_note": "Tied to currency/payment setup.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.048",
+      "parameter_code": "IT-TDS-048",
+      "display_label": "Tender validity period in days",
+      "field_type": "INTEGER",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_048",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 21.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 48,
+      "engine_note": "Must align with invitation and forms.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.049",
+      "parameter_code": "IT-TDS-049",
+      "display_label": "Tender Security required",
+      "field_type": "BOOLEAN",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_049",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 22.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 49,
+      "engine_note": "Activates security form/evidence.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.050",
+      "parameter_code": "IT-TDS-050",
+      "display_label": "Tender-Securing Declaration required",
+      "field_type": "BOOLEAN",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_050",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 22.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 50,
+      "engine_note": "Activates declaration form.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.051",
+      "parameter_code": "IT-TDS-051",
+      "display_label": "Tender Security amount and currency",
+      "field_type": "MONEY",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_051",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 22.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 51,
+      "engine_note": "Amount should not exceed permitted statutory/STD threshold.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.052",
+      "parameter_code": "IT-TDS-052",
+      "display_label": "Other acceptable securities",
+      "field_type": "STRUCTURED_LIST",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_052",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 22.3(v)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 52,
+      "engine_note": "Controls evidence validation.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.053",
+      "parameter_code": "IT-TDS-053",
+      "display_label": "Number of tender copies",
+      "field_type": "INTEGER",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_053",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 23.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 53,
+      "engine_note": "Renders in TDS and submission instructions.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.054",
+      "parameter_code": "IT-TDS-054",
+      "display_label": "Documentation proving signatory authority",
+      "field_type": "TEXT_/_EVIDENCE_LIST",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_054",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 23.3",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 54,
+      "engine_note": "Generates supplier checklist.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.055",
+      "parameter_code": "IT-TDS-055",
+      "display_label": "Tender submission attention/contact",
+      "field_type": "TEXT",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_055",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 25.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 55,
+      "engine_note": "Renders in submission address.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.056",
+      "parameter_code": "IT-TDS-056",
+      "display_label": "Tender submission street address",
+      "field_type": "ADDRESS",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_056",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 25.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 56,
+      "engine_note": "Renders in TDS.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.057",
+      "parameter_code": "IT-TDS-057",
+      "display_label": "Tender submission floor/room",
+      "field_type": "TEXT",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_057",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 25.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 57,
+      "engine_note": "Renders if provided.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.058",
+      "parameter_code": "IT-TDS-058",
+      "display_label": "Tender submission city",
+      "field_type": "TEXT",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_058",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 25.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 58,
+      "engine_note": "Renders in TDS.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.059",
+      "parameter_code": "IT-TDS-059",
+      "display_label": "Tender submission country",
+      "field_type": "COUNTRY",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_059",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 25.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 59,
+      "engine_note": "Renders in TDS.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.060",
+      "parameter_code": "IT-TDS-060",
+      "display_label": "Tender submission deadline date",
+      "field_type": "DATE",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_060",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 25.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 60,
+      "engine_note": "Drives publication countdown and late tender validation.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.061",
+      "parameter_code": "IT-TDS-061",
+      "display_label": "Tender submission deadline time",
+      "field_type": "TIME",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_061",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 25.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 61,
+      "engine_note": "Used with deadline date.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.062",
+      "parameter_code": "IT-TDS-062",
+      "display_label": "Electronic tender submission allowed",
+      "field_type": "BOOLEAN",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_062",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 25.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 62,
+      "engine_note": "Requires e-submission procedures if true.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.063",
+      "parameter_code": "IT-TDS-063",
+      "display_label": "Electronic tender submission procedures",
+      "field_type": "LONG_TEXT",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_063",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 25.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 63,
+      "engine_note": "Rendered in TDS.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.064",
+      "parameter_code": "IT-TDS-064",
+      "display_label": "Tender opening street address",
+      "field_type": "ADDRESS",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_064",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 28.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 64,
+      "engine_note": "May equal submission address.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.065",
+      "parameter_code": "IT-TDS-065",
+      "display_label": "Tender opening floor/room",
+      "field_type": "TEXT",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_065",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 28.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 65,
+      "engine_note": "Renders if provided.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.066",
+      "parameter_code": "IT-TDS-066",
+      "display_label": "Tender opening city",
+      "field_type": "TEXT",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_066",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 28.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 66,
+      "engine_note": "Renders in TDS.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.067",
+      "parameter_code": "IT-TDS-067",
+      "display_label": "Tender opening country",
+      "field_type": "COUNTRY",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_067",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 28.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 67,
+      "engine_note": "Renders in TDS.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.068",
+      "parameter_code": "IT-TDS-068",
+      "display_label": "Tender opening date",
+      "field_type": "DATE",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_068",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 28.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 68,
+      "engine_note": "Usually immediately after deadline.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.069",
+      "parameter_code": "IT-TDS-069",
+      "display_label": "Tender opening time",
+      "field_type": "TIME",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_069",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 28.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 69,
+      "engine_note": "Renders in TDS.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.070",
+      "parameter_code": "IT-TDS-070",
+      "display_label": "Electronic tender opening procedures",
+      "field_type": "LONG_TEXT",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_070",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 28.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 70,
+      "engine_note": "Renders in TDS.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.071",
+      "parameter_code": "IT-TDS-071",
+      "display_label": "Number of PE representatives initialing Form of Tender and Price Schedules",
+      "field_type": "INTEGER",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_071",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 28.6",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 71,
+      "engine_note": "Renders in tender opening instructions.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.072",
+      "parameter_code": "IT-TDS-072",
+      "display_label": "Missing item adjustment basis",
+      "field_type": "ENUM",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_072",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 33.3",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 72,
+      "engine_note": "Drives financial evaluation adjustment logic.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.073",
+      "parameter_code": "IT-TDS-073",
+      "display_label": "Single evaluation currency",
+      "field_type": "CURRENCY",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_073",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 35.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 73,
+      "engine_note": "Used in price conversion.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.074",
+      "parameter_code": "IT-TDS-074",
+      "display_label": "Currency used for comparison",
+      "field_type": "CURRENCY",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_074",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 35.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 74,
+      "engine_note": "Usually KES for local evaluation.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.075",
+      "parameter_code": "IT-TDS-075",
+      "display_label": "Source of exchange rate",
+      "field_type": "TEXT_/_CONTROLLED_SOURCE",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_075",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 35.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 75,
+      "engine_note": "Example source may be Central Bank of Kenya.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.076",
+      "parameter_code": "IT-TDS-076",
+      "display_label": "Exchange rate date/time",
+      "field_type": "DATETIME",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_076",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 35.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 76,
+      "engine_note": "Must be specified before tender opening/evaluation.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.077",
+      "parameter_code": "IT-TDS-077",
+      "display_label": "Margin of preference applies",
+      "field_type": "BOOLEAN",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_077",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 36.2",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 77,
+      "engine_note": "Must be consistent with tender method and legal threshold.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.078",
+      "parameter_code": "IT-TDS-078",
+      "display_label": "Reservation group",
+      "field_type": "ENUM_/_STRUCTURED",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_078",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 36.4",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 78,
+      "engine_note": "No more than one reservation group unless law/STD permits.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.079",
+      "parameter_code": "IT-TDS-079",
+      "display_label": "Tenderers may quote separate prices for lots/subsystems/slices",
+      "field_type": "BOOLEAN",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_079",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 40.2(b)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 79,
+      "engine_note": "Drives lot evaluation and award logic.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.080",
+      "parameter_code": "IT-TDS-080",
+      "display_label": "Conditional multi-lot discounts considered",
+      "field_type": "BOOLEAN",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_080",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 40.2(b)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 80,
+      "engine_note": "For rated criteria, default warning: do not consider to avoid complexity.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.081",
+      "parameter_code": "IT-TDS-081",
+      "display_label": "Additional post-qualification tests/performance benchmarks",
+      "field_type": "STRUCTURED_LIST",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_081",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 44.3",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 81,
+      "engine_note": "Drives demonstration/reference site/performance testing.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.082",
+      "parameter_code": "IT-TDS-082",
+      "display_label": "Award basis uses rated criteria",
+      "field_type": "ENUM",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_082",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 46.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 82,
+      "engine_note": "Must align with Section III evaluation schema.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.083",
+      "parameter_code": "IT-TDS-083",
+      "display_label": "Maximum quantity increase percentage",
+      "field_type": "PERCENTAGE",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_083",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 47.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 83,
+      "engine_note": "Controls award variation rule.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.084",
+      "parameter_code": "IT-TDS-084",
+      "display_label": "Maximum quantity decrease percentage",
+      "field_type": "PERCENTAGE",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_084",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 47.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 84,
+      "engine_note": "Controls award variation rule.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.085",
+      "parameter_code": "IT-TDS-085",
+      "display_label": "Items subject to quantity increase/decrease",
+      "field_type": "STRUCTURED_LIST",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_085",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 47.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 85,
+      "engine_note": "Must reference system inventory/price schedule items.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.086",
+      "parameter_code": "IT-TDS-086",
+      "display_label": "Proposed adjudicator",
+      "field_type": "PERSON_/_TEXT",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_086",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 50.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 86,
+      "engine_note": "If no adjudicator, legal review recommended for complex IT procurements.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.087",
+      "parameter_code": "IT-TDS-087",
+      "display_label": "Proposed adjudicator hourly fee",
+      "field_type": "MONEY",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_087",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 50.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 87,
+      "engine_note": "Used in contract agreement appendix.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.088",
+      "parameter_code": "IT-TDS-088",
+      "display_label": "Procurement complaint recipient attention",
+      "field_type": "TEXT",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_088",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 51.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 88,
+      "engine_note": "Renders in complaint procedure.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.089",
+      "parameter_code": "IT-TDS-089",
+      "display_label": "Complaint recipient title/position",
+      "field_type": "TEXT",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_089",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 51.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 89,
+      "engine_note": "Renders in complaint procedure.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.090",
+      "parameter_code": "IT-TDS-090",
+      "display_label": "Complaint recipient procuring entity",
+      "field_type": "ENTITY/TEXT",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_090",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 51.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 90,
+      "engine_note": "Renders in complaint procedure.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.tds.091",
+      "parameter_code": "IT-TDS-091",
+      "display_label": "Complaint recipient email address",
+      "field_type": "EMAIL",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.tds.it_tds_091",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.tds_general"
+      ],
+      "source_reference": "ITT 51.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 91,
+      "engine_note": "Renders in complaint procedure.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.001",
+      "parameter_code": "IT-SCC-001",
+      "display_label": "Procuring Entity legal name",
+      "field_type": "ENTITY_REFERENCE_/_TEXT",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_001",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 1.1(b)(i)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 1,
+      "engine_note": "Render into SCC and contract agreement.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.002",
+      "parameter_code": "IT-SCC-002",
+      "display_label": "Project Manager name/title",
+      "field_type": "PERSON_/_TEXT",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_002",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 1.1(b)(ii)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 2,
+      "engine_note": "Used for notices, approvals, project governance.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.003",
+      "parameter_code": "IT-SCC-003",
+      "display_label": "Fixed contract period end date",
+      "field_type": "DATE_/_TEXT",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_003",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 1.1(e)(ix)/(x)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 3,
+      "engine_note": "Review flag because source numbering appears inconsistent.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.004",
+      "parameter_code": "IT-SCC-004",
+      "display_label": "Post-Warranty Services Period",
+      "field_type": "DURATION_MONTHS",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_004",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 1.1(e)(xii)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 4,
+      "engine_note": "Drives recurrent cost tables and contract duration.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.005",
+      "parameter_code": "IT-SCC-005",
+      "display_label": "Project Manager notice address",
+      "field_type": "ADDRESS/CONTACT",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_005",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 4.3",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 5,
+      "engine_note": "Used in contract notices.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.006",
+      "parameter_code": "IT-SCC-006",
+      "display_label": "Procuring Entity fallback notice address",
+      "field_type": "ADDRESS/CONTACT",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_006",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 4.3",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 6,
+      "engine_note": "Used if Project Manager notice route fails or is not applicable.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.007",
+      "parameter_code": "IT-SCC-007",
+      "display_label": "EDI standards/protocols/addresses/procedures",
+      "field_type": "STRUCTURED_TECHNICAL_TEXT",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_007",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 4.3",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 7,
+      "engine_note": "Must align with e-procurement/e-notice capability.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.008",
+      "parameter_code": "IT-SCC-008",
+      "display_label": "Recurrent cost items included in contract",
+      "field_type": "STRUCTURED_LIST",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_008",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 7.3",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 8,
+      "engine_note": "Must cross-reference recurrent cost table and technical requirements.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.009",
+      "parameter_code": "IT-SCC-009",
+      "display_label": "Spare parts supply obligation period",
+      "field_type": "DURATION_YEARS",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_009",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 7.3",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 9,
+      "engine_note": "Usually low priority for modern IT but valid for hardware-heavy systems.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.010",
+      "parameter_code": "IT-SCC-010",
+      "display_label": "Spare parts list / reference",
+      "field_type": "STRUCTURED_LIST",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_010",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 7.3",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 10,
+      "engine_note": "May reference spare parts price schedule.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.011",
+      "parameter_code": "IT-SCC-011",
+      "display_label": "Commencement period after effective date",
+      "field_type": "INTEGER_DAYS",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_011",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 8.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 11,
+      "engine_note": "Drives contract implementation schedule.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.012",
+      "parameter_code": "IT-SCC-012",
+      "display_label": "Contract price adjustment applicability",
+      "field_type": "ENUM",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_012",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 11.2",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 12,
+      "engine_note": "If applicable, formula/index fields required.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.013",
+      "parameter_code": "IT-SCC-013",
+      "display_label": "Contract price adjustment formula/index",
+      "field_type": "FORMULA_/_STRUCTURED_TEXT",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_013",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 11.2",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 13,
+      "engine_note": "Legal/procurement/finance review required.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.014",
+      "parameter_code": "IT-SCC-014",
+      "display_label": "Payment schedule category model",
+      "field_type": "STRUCTURED_SCHEDULE",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_014",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 12.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 14,
+      "engine_note": "Feeds contract, invoice, acceptance, and payment module.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.015",
+      "parameter_code": "IT-SCC-015",
+      "display_label": "Advance payment percentage",
+      "field_type": "PERCENTAGE",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_015",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 12.1(a)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 15,
+      "engine_note": "If > 0, advance payment security required.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.016",
+      "parameter_code": "IT-SCC-016",
+      "display_label": "Goods/materials delivery payment percentage",
+      "field_type": "PERCENTAGE",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_016",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 12.1(b)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 16,
+      "engine_note": "Applies to Information Technologies, Materials, and other Goods except custom software/materials.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.017",
+      "parameter_code": "IT-SCC-017",
+      "display_label": "Goods/materials installation payment percentage",
+      "field_type": "PERCENTAGE",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_017",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 12.1(b)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 17,
+      "engine_note": "Requires installation milestone.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.018",
+      "parameter_code": "IT-SCC-018",
+      "display_label": "Goods/materials operational acceptance payment percentage",
+      "field_type": "PERCENTAGE",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_018",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 12.1(b)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 18,
+      "engine_note": "Requires acceptance certificate.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.019",
+      "parameter_code": "IT-SCC-019",
+      "display_label": "Custom software/materials installation payment percentage",
+      "field_type": "PERCENTAGE",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_019",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 12.1(c)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 19,
+      "engine_note": "For custom software and custom materials.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.020",
+      "parameter_code": "IT-SCC-020",
+      "display_label": "Custom software/materials operational acceptance payment percentage",
+      "field_type": "PERCENTAGE",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_020",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 12.1(c)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 20,
+      "engine_note": "Requires acceptance certificate.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.021",
+      "parameter_code": "IT-SCC-021",
+      "display_label": "Services other than training payment percentage",
+      "field_type": "PERCENTAGE",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_021",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 12.1(d)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 21,
+      "engine_note": "Can be milestone-based for data conversion/migration/digitization.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.022",
+      "parameter_code": "IT-SCC-022",
+      "display_label": "Training start payment percentage",
+      "field_type": "PERCENTAGE",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_022",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 12.1(e)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 22,
+      "engine_note": "Requires training plan.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.023",
+      "parameter_code": "IT-SCC-023",
+      "display_label": "Training performed payment percentage",
+      "field_type": "PERCENTAGE",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_023",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 12.1(e)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 23,
+      "engine_note": "Requires accepted invoices/training evidence.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.024",
+      "parameter_code": "IT-SCC-024",
+      "display_label": "Complete system integration final payment percentage",
+      "field_type": "PERCENTAGE",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_024",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 12.1(f)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 24,
+      "engine_note": "Required where integrated whole-system acceptance applies.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.025",
+      "parameter_code": "IT-SCC-025",
+      "display_label": "Recurrent cost payment timing",
+      "field_type": "ENUM_/_SCHEDULE",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_025",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 12.1(g)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 25,
+      "engine_note": "Required if recurrent costs included.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.026",
+      "parameter_code": "IT-SCC-026",
+      "display_label": "Interest rate for delayed payments",
+      "field_type": "PERCENTAGE",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_026",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 12.3",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 26,
+      "engine_note": "Finance/legal review.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.027",
+      "parameter_code": "IT-SCC-027",
+      "display_label": "Exchange rate source for local payment conversion",
+      "field_type": "TEXT_/_CONTROLLED_SOURCE",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_027",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 12.4",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 27,
+      "engine_note": "Align with TDS currency conversion source where applicable.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.028",
+      "parameter_code": "IT-SCC-028",
+      "display_label": "Performance security currency",
+      "field_type": "CURRENCY",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_028",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 13.3.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 28,
+      "engine_note": "Used in performance security form.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.029",
+      "parameter_code": "IT-SCC-029",
+      "display_label": "Performance security percentage",
+      "field_type": "PERCENTAGE",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_029",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 13.3.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 29,
+      "engine_note": "Hard/warning rule depending policy.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.030",
+      "parameter_code": "IT-SCC-030",
+      "display_label": "Reduced performance security percentage during warranty",
+      "field_type": "PERCENTAGE",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_030",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 13.3.4",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 30,
+      "engine_note": "Required if reduction is used.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.031",
+      "parameter_code": "IT-SCC-031",
+      "display_label": "Copyright rights conveyed to successors/group entities",
+      "field_type": "TEXT_/_STRUCTURED_RIGHTS",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_031",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 15.3",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 31,
+      "engine_note": "Legal review required if completed.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.032",
+      "parameter_code": "IT-SCC-032",
+      "display_label": "Custom software/materials IPR allocation model",
+      "field_type": "ENUM_/_LEGAL_TEXT",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_032",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 15.4",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 32,
+      "engine_note": "Legal drafting required; cannot be casual free text.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.033",
+      "parameter_code": "IT-SCC-033",
+      "display_label": "Custom software exploitation restrictions",
+      "field_type": "STRUCTURED_LEGAL_TERMS",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_033",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 15.4",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 33,
+      "engine_note": "Required if supplier or PE commercial exploitation rights are defined.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.034",
+      "parameter_code": "IT-SCC-034",
+      "display_label": "Software escrow required",
+      "field_type": "BOOLEAN",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_034",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 15.5",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 34,
+      "engine_note": "If true, escrow terms required.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.035",
+      "parameter_code": "IT-SCC-035",
+      "display_label": "Escrow agent / jurisdiction / release events",
+      "field_type": "STRUCTURED_LEGAL_TERMS",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_035",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 15.5",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 35,
+      "engine_note": "Release events, update obligation, fees, verification, confidentiality.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.036",
+      "parameter_code": "IT-SCC-036",
+      "display_label": "Software usage limitations",
+      "field_type": "STRUCTURED_LIMITS",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_036",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 16.1(a)(iv)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 36,
+      "engine_note": "Must not contradict requirements; additional fees preferred over absolute blocking where growth likely.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.037",
+      "parameter_code": "IT-SCC-037",
+      "display_label": "Permitted user/sublicensee entity restrictions",
+      "field_type": "STRUCTURED_LIST",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_037",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 16.1(b)(vi)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 37,
+      "engine_note": "Legal review.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.038",
+      "parameter_code": "IT-SCC-038",
+      "display_label": "Business group entities bound to license terms",
+      "field_type": "STRUCTURED_LIST",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_038",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 16.1(b)(vii)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 38,
+      "engine_note": "Contract appendix may be required.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.039",
+      "parameter_code": "IT-SCC-039",
+      "display_label": "Software audit conditions",
+      "field_type": "STRUCTURED_TERMS",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_039",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 16.2",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 39,
+      "engine_note": "Legal review.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.040",
+      "parameter_code": "IT-SCC-040",
+      "display_label": "Confidentiality exemptions",
+      "field_type": "STRUCTURED_LIST",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_040",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 17.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 40,
+      "engine_note": "Legal review.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.041",
+      "parameter_code": "IT-SCC-041",
+      "display_label": "PE Project Manager additional powers/limitations",
+      "field_type": "TEXT_/_STRUCTURED_AUTHORITY",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_041",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 18.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 41,
+      "engine_note": "Contract administration settings.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.042",
+      "parameter_code": "IT-SCC-042",
+      "display_label": "Supplier Representative additional powers/limitations",
+      "field_type": "TEXT_/_STRUCTURED_AUTHORITY",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_042",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 18.2.2",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 42,
+      "engine_note": "Contract appendix integration.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.043",
+      "parameter_code": "IT-SCC-043",
+      "display_label": "Required Project Plan chapters",
+      "field_type": "MULTI-SELECT_/_STRUCTURED_LIST",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_043",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 19.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 43,
+      "engine_note": "Must cross-reference technical requirements.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.044",
+      "parameter_code": "IT-SCC-044",
+      "display_label": "Required periodic reports",
+      "field_type": "MULTI-SELECT_/_STRUCTURED_LIST",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_044",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 19.6",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 44,
+      "engine_note": "Drives contract deliverable schedule.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.045",
+      "parameter_code": "IT-SCC-045",
+      "display_label": "Controlling technical documents requiring approval",
+      "field_type": "STRUCTURED_LIST",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_045",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 21.3.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 45,
+      "engine_note": "Blocks downstream work until approval where configured.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.046",
+      "parameter_code": "IT-SCC-046",
+      "display_label": "Product upgrade special terms",
+      "field_type": "TEXT_/_STRUCTURED",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_046",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 23.4",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 46,
+      "engine_note": "Defines new versions/releases/updates obligations.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.047",
+      "parameter_code": "IT-SCC-047",
+      "display_label": "Inspection and test special arrangements",
+      "field_type": "STRUCTURED_TERMS",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_047",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 25",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 47,
+      "engine_note": "Technical/legal review.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.048",
+      "parameter_code": "IT-SCC-048",
+      "display_label": "Operational acceptance test specification reference",
+      "field_type": "STRUCTURED_REFERENCE",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_048",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 27.2.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 48,
+      "engine_note": "Critical blocker before publication.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.049",
+      "parameter_code": "IT-SCC-049",
+      "display_label": "Liquidated damages rate for delay",
+      "field_type": "PERCENTAGE_/_PERIOD",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_049",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 28.2",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 49,
+      "engine_note": "Required if operational acceptance time guarantee enforced.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.050",
+      "parameter_code": "IT-SCC-050",
+      "display_label": "Liquidated damages cap",
+      "field_type": "PERCENTAGE",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_050",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 28.2",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 50,
+      "engine_note": "Required if LD rate specified.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.051",
+      "parameter_code": "IT-SCC-051",
+      "display_label": "Intermediate milestone LDs",
+      "field_type": "STRUCTURED_LIST",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_051",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 28.3",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 51,
+      "engine_note": "Use only where implementation schedule precisely defines milestones.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.052",
+      "parameter_code": "IT-SCC-052",
+      "display_label": "Defect liability exceptions/limitations",
+      "field_type": "STRUCTURED_LEGAL_TERMS",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_052",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 29.1",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 52,
+      "engine_note": "Must not undermine critical system reliability.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.053",
+      "parameter_code": "IT-SCC-053",
+      "display_label": "Warranty period and excluded/included support services",
+      "field_type": "DURATION_/_STRUCTURED_LIST",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_053",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 29.4",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 53,
+      "engine_note": "Drives warranty and recurrent cost model.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.054",
+      "parameter_code": "IT-SCC-054",
+      "display_label": "Defect response times by severity/category",
+      "field_type": "STRUCTURED_SLA",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_054",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 29.10",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 54,
+      "engine_note": "Drives warranty support obligations.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.055",
+      "parameter_code": "IT-SCC-055",
+      "display_label": "Functional guarantee special requirements",
+      "field_type": "STRUCTURED_TEST/REQUIREMENT",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_055",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 30",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 55,
+      "engine_note": "Must reference technical requirements.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.056",
+      "parameter_code": "IT-SCC-056",
+      "display_label": "Third-party liability insurance amount",
+      "field_type": "MONEY",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_056",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 37.1(c)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 56,
+      "engine_note": "Used in contract compliance checklist.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.057",
+      "parameter_code": "IT-SCC-057",
+      "display_label": "Third-party liability deductible limit",
+      "field_type": "MONEY",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_057",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 37.1(c)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 57,
+      "engine_note": "Contract compliance.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.058",
+      "parameter_code": "IT-SCC-058",
+      "display_label": "Insured parties",
+      "field_type": "STRUCTURED_LIST",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_058",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 37.1(c)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 58,
+      "engine_note": "Contract compliance.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.059",
+      "parameter_code": "IT-SCC-059",
+      "display_label": "Insurance coverage period",
+      "field_type": "DATE/DURATION",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_059",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 37.1(c)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 59,
+      "engine_note": "Contract compliance.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.060",
+      "parameter_code": "IT-SCC-060",
+      "display_label": "Worker compensation / employer liability insurance requirements",
+      "field_type": "STRUCTURED_LEGAL_TERMS",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_060",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 37.1(e)",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 60,
+      "engine_note": "Legal review.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.061",
+      "parameter_code": "IT-SCC-061",
+      "display_label": "Supplier share of accepted value engineering savings",
+      "field_type": "PERCENTAGE",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_061",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 39.4.3",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 61,
+      "engine_note": "Applies only when value engineering produces contract price reduction.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.062",
+      "parameter_code": "IT-SCC-062",
+      "display_label": "Adjudicator appointing authority",
+      "field_type": "ORGANIZATION_/_TEXT",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_062",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 43.1.4",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 62,
+      "engine_note": "Contract dispute setup.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.063",
+      "parameter_code": "IT-SCC-063",
+      "display_label": "Arbitration rules for foreign supplier",
+      "field_type": "ENUM",
+      "required": false,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_063",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 43.2.3",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 63,
+      "engine_note": "Required where foreign supplier scenario applies.",
+      "validation_rule_keys": []
+    },
+    {
+      "parameter_key": "KE-PPRA-IT-2022-04.parameter.scc.064",
+      "parameter_code": "IT-SCC-064",
+      "display_label": "Arbitration basis for Kenyan supplier",
+      "field_type": "TEXT_/_CONTROLLED_LEGAL_REFERENCE",
+      "required": true,
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "source_anchor_key": "KE-PPRA-IT-2022-04.anchor.scc.it_scc_064",
+      "render_binding_keys": [
+        "KE-PPRA-IT-2022-04.render.scc_contract"
+      ],
+      "source_reference": "GCC 43.2.3",
+      "extraction_status": "EXTRACTED",
+      "verification_status": "RENDER_BOUND",
+      "ordinal": 64,
+      "engine_note": "Render in SCC.",
+      "validation_rule_keys": []
+    }
+  ]
+}

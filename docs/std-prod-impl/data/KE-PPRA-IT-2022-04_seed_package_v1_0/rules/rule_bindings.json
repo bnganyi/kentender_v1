@@ -1,0 +1,158 @@
+{
+  "records": [
+    {
+      "binding_key": "KE-PPRA-IT-2022-04.rule_binding.it_r_tds_001",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_001",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "binding_key": "KE-PPRA-IT-2022-04.rule_binding.it_r_tds_002",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_002",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "binding_key": "KE-PPRA-IT-2022-04.rule_binding.it_r_tds_003",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_003",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "binding_key": "KE-PPRA-IT-2022-04.rule_binding.it_r_tds_004",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_004",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "binding_key": "KE-PPRA-IT-2022-04.rule_binding.it_r_tds_005",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_005",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "binding_key": "KE-PPRA-IT-2022-04.rule_binding.it_r_tds_006",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_006",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "binding_key": "KE-PPRA-IT-2022-04.rule_binding.it_r_tds_007",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_007",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "binding_key": "KE-PPRA-IT-2022-04.rule_binding.it_r_tds_008",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_008",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "binding_key": "KE-PPRA-IT-2022-04.rule_binding.it_r_tds_009",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_009",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "binding_key": "KE-PPRA-IT-2022-04.rule_binding.it_r_tds_010",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_010",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "binding_key": "KE-PPRA-IT-2022-04.rule_binding.it_r_tds_011",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_011",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "binding_key": "KE-PPRA-IT-2022-04.rule_binding.it_r_tds_012",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_012",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "binding_key": "KE-PPRA-IT-2022-04.rule_binding.it_r_tds_013",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_013",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "binding_key": "KE-PPRA-IT-2022-04.rule_binding.it_r_tds_014",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_014",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "binding_key": "KE-PPRA-IT-2022-04.rule_binding.it_r_tds_015",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_015",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "binding_key": "KE-PPRA-IT-2022-04.rule_binding.it_r_tds_016",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_016",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "binding_key": "KE-PPRA-IT-2022-04.rule_binding.it_r_tds_017",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_017",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "binding_key": "KE-PPRA-IT-2022-04.rule_binding.it_r_tds_018",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_018",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "binding_key": "KE-PPRA-IT-2022-04.rule_binding.it_r_tds_019",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_019",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "binding_key": "KE-PPRA-IT-2022-04.rule_binding.it_r_tds_020",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_020",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "binding_key": "KE-PPRA-IT-2022-04.rule_binding.it_r_tds_021",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_021",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "binding_key": "KE-PPRA-IT-2022-04.rule_binding.it_r_tds_022",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_022",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "extraction_status": "EXTRACTED"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+"""Canonical identity for KE-PPRA-IT-2022-04 v1_0 extraction."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+PACKAGE_CODE = "KE-PPRA-IT-2022-04"
+FAMILY_CODE = "KE-PPRA-IT"
+VERSION_CODE = "KE-PPRA-IT-2022-04"
+PACKAGE_ROOT_NAME = "KE-PPRA-IT-2022-04_seed_package_v1_0"
+ZIP_FILENAME = "KE-PPRA-IT-2022-04_Seed_Package_v1_0.zip"
+PDF_FILENAME = "DOC 10. STD FOR PROCUREMENT OF INFORMATION TECHNOLOGY.pdf"
+SOURCE_DOCUMENT_KEY = "DOC-10-IT-STD-2022-04"
+SCHEMA_VERSION = "1.0.0"
+PACKAGE_QUALITY = "FULL_EXTRACTION_CANDIDATE"
+
+KENTENDER_V1_ROOT = Path(__file__).resolve().parents[2]
+DOCS_STD_PROD = KENTENDER_V1_ROOT / "docs" / "std-prod"
+DATA_DIR = KENTENDER_V1_ROOT / "docs" / "std-prod-impl" / "data"
+WORK_DIR = DATA_DIR / PACKAGE_ROOT_NAME

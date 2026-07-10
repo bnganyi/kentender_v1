@@ -1,0 +1,28 @@
+{
+  "package_code": "KE-PPRA-IT-2022-04",
+  "family_code": "KE-PPRA-IT",
+  "version_code": "KE-PPRA-IT-2022-04",
+  "schema_version": "1.0.0",
+  "authority": "PPRA",
+  "source_document": "DOC 10. STD FOR PROCUREMENT OF INFORMATION TECHNOLOGY",
+  "package_quality": "FULL_EXTRACTION_CANDIDATE",
+  "activation_allowed": false,
+  "import_allowed_states": [
+    "DRAFT",
+    "STRUCTURING"
+  ],
+  "contains_fixture_data": true,
+  "fixture_data_import_policy": "DO_NOT_IMPORT_BY_DEFAULT",
+  "extraction_passes_applied": [
+    "Pass_1",
+    "Pass_2",
+    "Pass_3",
+    "Pass_4",
+    "Pass_5"
+  ],
+  "generated_at": "2026-07-10T14:39:53.553144+00:00",
+  "activation_blockers": [
+    "LEGAL_REVIEW_PENDING",
+    "FORMAL_PROCUREMENT_REVIEW_PENDING"
+  ]
+}

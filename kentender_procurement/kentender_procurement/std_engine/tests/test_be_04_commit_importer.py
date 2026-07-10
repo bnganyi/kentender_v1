@@ -18,13 +18,14 @@ from kentender_procurement.std_engine.constants import (
 	CANONICAL_PACKAGE_ID,
 	CANONICAL_VERSION_CODE,
 	COMMIT_TARGET_STATE_M1,
-	PACKAGE_QUALITY_RECONCILED_DRAFT,
+	PACKAGE_QUALITY_FULL_EXTRACTION,
 	UI_MODE_READ_ONLY_INSPECTION,
 )
 from kentender_procurement.std_engine.package_import.commit_importer import (
 	CommitImporter,
 	CommitImporterError,
 )
+from kentender_procurement.std_engine.package_import.draft_cleanup import _clear_form_field_children
 from kentender_procurement.std_engine.package_import.hash_utils import compute_file_sha256
 from kentender_procurement.std_engine.paths import default_official_pdf_path, default_seed_zip_path
 
@@ -32,17 +33,17 @@ CANONICAL_RECORD_COUNTS = {
 	"families": 1,
 	"versions": 1,
 	"sourceDocuments": 1,
-	"anchors": 19,
-	"sections": 14,
-	"clauses": 93,
-	"parameters": 51,
+	"anchors": 270,
+	"sections": 21,
+	"clauses": 94,
+	"parameters": 155,
 	"rules": 22,
-	"forms": 18,
-	"formFields": 34,
+	"forms": 25,
+	"formFields": 75,
 	"requirements": 1,
 	"priceSchedules": 6,
 	"evaluationSchemas": 1,
-	"renderBlocks": 14,
+	"renderBlocks": 17,
 	"usageBindings": 3,
 }
 
@@ -68,6 +69,7 @@ PACKAGE_LINKED_DOCTYPES = (
 
 def clear_canonical_package_state() -> None:
 	package_id = CANONICAL_PACKAGE_ID
+	_clear_form_field_children(package_id)
 	for doctype in PACKAGE_LINKED_DOCTYPES:
 		frappe.db.delete(doctype, {"package_id": package_id})
 	frappe.db.delete("STD Import Run", {"package_id": package_id})
@@ -98,12 +100,12 @@ class TestBe04CommitImporterCanonical(IntegrationTestCase):
 		self.assertEqual(version.lifecycle_state, COMMIT_TARGET_STATE_M1)
 		self.assertEqual(int(version.activation_allowed or 0), 0)
 		self.assertEqual(version.ui_mode, UI_MODE_READ_ONLY_INSPECTION)
-		self.assertEqual(version.package_quality, PACKAGE_QUALITY_RECONCILED_DRAFT)
+		self.assertEqual(version.package_quality, PACKAGE_QUALITY_FULL_EXTRACTION)
 		self.assertEqual(version.package_sha256, compute_file_sha256(default_seed_zip_path()))
 
-		self.assertEqual(frappe.db.count("STD Section", {"package_id": CANONICAL_PACKAGE_ID}), 14)
-		self.assertEqual(frappe.db.count("STD Clause", {"package_id": CANONICAL_PACKAGE_ID}), 93)
-		self.assertEqual(frappe.db.count("STD Source Anchor", {"package_id": CANONICAL_PACKAGE_ID}), 19)
+		self.assertEqual(frappe.db.count("STD Section", {"package_id": CANONICAL_PACKAGE_ID}), 21)
+		self.assertEqual(frappe.db.count("STD Clause", {"package_id": CANONICAL_PACKAGE_ID}), 94)
+		self.assertEqual(frappe.db.count("STD Source Anchor", {"package_id": CANONICAL_PACKAGE_ID}), 270)
 		self.assertEqual(report["records_committed"], CANONICAL_RECORD_COUNTS)
 
 	def test_registers_official_pdf_not_nssf_fixture(self) -> None:
@@ -175,7 +177,7 @@ class TestBe04CommitImporterFailures(IntegrationTestCase):
 			with self.assertRaises(CommitImporterError):
 				CommitImporter(out, default_official_pdf_path()).run()
 
-	def test_hash_conflict_raises(self) -> None:
+	def test_hash_conflict_raises_when_replace_disabled(self) -> None:
 		if not frappe.db.exists("STD Family", CANONICAL_FAMILY_CODE):
 			frappe.get_doc(
 				{
@@ -198,7 +200,7 @@ class TestBe04CommitImporterFailures(IntegrationTestCase):
 		).insert(ignore_permissions=True)
 		frappe.db.commit()
 		with self.assertRaises(CommitImporterError):
-			CommitImporter(default_seed_zip_path(), default_official_pdf_path()).run()
+			CommitImporter(default_seed_zip_path(), default_official_pdf_path(), replace_draft=False).run()
 
 	def test_active_version_protection_raises(self) -> None:
 		if not frappe.db.exists("STD Family", CANONICAL_FAMILY_CODE):

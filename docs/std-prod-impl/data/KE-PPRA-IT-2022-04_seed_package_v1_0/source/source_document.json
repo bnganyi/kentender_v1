@@ -1,0 +1,15 @@
+{
+  "records": [
+    {
+      "source_document_key": "DOC-10-IT-STD-2022-04",
+      "filename": "DOC 10. STD FOR PROCUREMENT OF INFORMATION TECHNOLOGY.pdf",
+      "role": "LEGAL_MASTER_SOURCE",
+      "authority": "PPRA",
+      "document_code": "DOC-10",
+      "version_label": "April 2022 update",
+      "page_count": 181,
+      "import_policy": "IMPORT",
+      "traceability_mode": "source_exact"
+    }
+  ]
+}

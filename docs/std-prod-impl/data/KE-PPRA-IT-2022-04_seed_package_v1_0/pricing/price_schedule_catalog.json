@@ -1,0 +1,52 @@
+{
+  "records": [
+    {
+      "price_schedule_key": "KE-PPRA-IT-2022-04.price_schedule.table_01",
+      "price_schedule_schema_key": "KE-PPRA-IT-2022-04.price_schedule.table_01",
+      "display_title": "Grand Summary Cost Table",
+      "schedule_code": "IT-PRICE-01",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.inventory",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "price_schedule_key": "KE-PPRA-IT-2022-04.price_schedule.table_02",
+      "price_schedule_schema_key": "KE-PPRA-IT-2022-04.price_schedule.table_02",
+      "display_title": "Supply and Installation Cost Summary",
+      "schedule_code": "IT-PRICE-02",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.inventory",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "price_schedule_key": "KE-PPRA-IT-2022-04.price_schedule.table_03",
+      "price_schedule_schema_key": "KE-PPRA-IT-2022-04.price_schedule.table_03",
+      "display_title": "Recurrent Cost Summary",
+      "schedule_code": "IT-PRICE-03",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.inventory",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "price_schedule_key": "KE-PPRA-IT-2022-04.price_schedule.table_04",
+      "price_schedule_schema_key": "KE-PPRA-IT-2022-04.price_schedule.table_04",
+      "display_title": "Supply and Installation Cost Sub-Table",
+      "schedule_code": "IT-PRICE-04",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.inventory",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "price_schedule_key": "KE-PPRA-IT-2022-04.price_schedule.table_05",
+      "price_schedule_schema_key": "KE-PPRA-IT-2022-04.price_schedule.table_05",
+      "display_title": "Recurrent Cost Sub-Table",
+      "schedule_code": "IT-PRICE-05",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.inventory",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "price_schedule_key": "KE-PPRA-IT-2022-04.price_schedule.table_06",
+      "price_schedule_schema_key": "KE-PPRA-IT-2022-04.price_schedule.table_06",
+      "display_title": "Country of Origin Code Table",
+      "schedule_code": "IT-PRICE-06",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.inventory",
+      "extraction_status": "EXTRACTED"
+    }
+  ]
+}

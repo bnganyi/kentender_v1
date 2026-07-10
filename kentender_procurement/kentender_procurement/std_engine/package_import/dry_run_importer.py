@@ -34,9 +34,12 @@ class DryRunImporter:
 		self,
 		zip_path: str | Path | None = None,
 		pdf_path: str | Path | None = None,
+		*,
+		replace_draft: bool = True,
 	) -> None:
 		self.zip_path = Path(zip_path or default_seed_zip_path())
 		self.pdf_path = Path(pdf_path or default_official_pdf_path())
+		self.replace_draft = replace_draft
 
 	def run(self) -> dict[str, Any]:
 		self._validate_pdf_path()
@@ -53,6 +56,7 @@ class DryRunImporter:
 			inspection,
 			package_sha256=package_sha256,
 			optional_payloads=optional_payloads,
+			replace_draft=self.replace_draft,
 		)
 		return build_dry_run_report(
 			inspection=inspection,

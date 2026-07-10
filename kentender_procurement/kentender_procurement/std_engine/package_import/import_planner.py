@@ -40,6 +40,7 @@ def build_insert_plan(
 	*,
 	package_sha256: str,
 	optional_payloads: dict[str, Any] | None = None,
+	replace_draft: bool = False,
 ) -> InsertPlan:
 	optional_payloads = optional_payloads or {}
 	record_counts = _build_record_counts(inspection, optional_payloads)
@@ -47,7 +48,7 @@ def build_insert_plan(
 	warnings.extend(_collect_skipped_source_document_warnings(inspection))
 
 	blockers: list[str] = []
-	version_conflict = _resolve_version_conflict(inspection.package_id, package_sha256)
+	version_conflict = _resolve_version_conflict(inspection.package_id, package_sha256, replace_draft=replace_draft)
 	if version_conflict == "HASH_CONFLICT":
 		blockers.append(
 			f"STD Version {inspection.package_id} already exists with a different package_sha256"
@@ -65,7 +66,6 @@ def build_insert_plan(
 
 	_add_insert_actions(plan, record_counts, version_conflict == "HASH_CONFLICT")
 	return plan
-
 
 def load_optional_payloads(
 	zip_path: str | Path,
@@ -152,7 +152,7 @@ def _collect_anchor_warnings(inspection: PackageInspectionResult) -> list[str]:
 	return warnings
 
 
-def _resolve_version_conflict(package_id: str, package_sha256: str) -> str | None:
+def _resolve_version_conflict(package_id: str, package_sha256: str, *, replace_draft: bool = False) -> str | None:
 	if not package_id:
 		return None
 	if not frappe.db.exists("STD Version", package_id):
@@ -160,6 +160,10 @@ def _resolve_version_conflict(package_id: str, package_sha256: str) -> str | Non
 	existing_hash = frappe.db.get_value("STD Version", package_id, "package_sha256") or ""
 	if existing_hash == package_sha256:
 		return "IDEMPOTENT_SKIP"
+	if replace_draft:
+		lifecycle_state = frappe.db.get_value("STD Version", package_id, "lifecycle_state")
+		if lifecycle_state == "DRAFT":
+			return "REPLACE_DRAFT"
 	return "HASH_CONFLICT"
 
 

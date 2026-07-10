@@ -1,0 +1,11 @@
+{
+  "records": [
+    {
+      "contract_schema_key": "KE-PPRA-IT-2022-04.contract_schema.output",
+      "display_title": "Contract Output Schema",
+      "schema_type": "GENERATED_CONTRACT",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.contract_forms",
+      "extraction_status": "EXTRACTED"
+    }
+  ]
+}

@@ -34,17 +34,17 @@ CANONICAL_RECORD_COUNTS = {
 	"families": 1,
 	"versions": 1,
 	"sourceDocuments": 1,
-	"anchors": 19,
-	"sections": 14,
-	"clauses": 93,
-	"parameters": 51,
+	"anchors": 270,
+	"sections": 21,
+	"clauses": 94,
+	"parameters": 155,
 	"rules": 22,
-	"forms": 18,
-	"formFields": 34,
+	"forms": 25,
+	"formFields": 75,
 	"requirements": 1,
 	"priceSchedules": 6,
 	"evaluationSchemas": 1,
-	"renderBlocks": 14,
+	"renderBlocks": 17,
 	"usageBindings": 3,
 }
 
@@ -119,9 +119,7 @@ class TestBe03DryRunImporterCanonical(UnitTestCase):
 	def test_nssf_source_document_skipped_in_counts(self) -> None:
 		report = self.importer.run()
 		self.assertEqual(report["record_counts"]["sourceDocuments"], 1)
-		self.assertTrue(
-			any("DO_NOT_IMPORT" in w or "nssf" in w.lower() for w in report["validation_warnings"])
-		)
+		self.assertEqual(report["skipped_paths"], [])
 
 
 class TestBe03DryRunImporterFailures(UnitTestCase):
@@ -144,14 +142,14 @@ class TestBe03DryRunImporterFailures(UnitTestCase):
 
 	def test_checksum_failure_blocks_import(self) -> None:
 		source = default_seed_zip_path()
-		root = "KE-PPRA-IT-2022-04_seed_package_v0_2/"
+		root = "KE-PPRA-IT-2022-04_seed_package_v1_0/"
 		with tempfile.TemporaryDirectory() as tmp:
 			out = Path(tmp) / "bad-checksum.zip"
 			with zipfile.ZipFile(source, "r") as zin, zipfile.ZipFile(out, "w") as zout:
 				for info in zin.infolist():
 					data = zin.read(info.filename)
-					if info.filename == root + "manifest.json":
-						data = b"{}\n"
+					if info.filename == root + "checksums.json":
+						data = b'{"algorithm":"SHA-256","files":{"manifest.json":"deadbeef"}}\n'
 					zout.writestr(info, data)
 			report = DryRunImporter(out, default_official_pdf_path()).run()
 			self.assertEqual(report["checksum_status"], "FAILED")
@@ -159,7 +157,7 @@ class TestBe03DryRunImporterFailures(UnitTestCase):
 
 	def test_missing_anchor_reference_adds_warning(self) -> None:
 		source = default_seed_zip_path()
-		root = "KE-PPRA-IT-2022-04_seed_package_v0_2/"
+		root = "KE-PPRA-IT-2022-04_seed_package_v1_0/"
 		with tempfile.TemporaryDirectory() as tmp:
 			out = Path(tmp) / "bad-anchor.zip"
 			with zipfile.ZipFile(source, "r") as zin, zipfile.ZipFile(out, "w") as zout:
@@ -198,9 +196,9 @@ class TestBe03DryRunBenchEntry(IntegrationTestCase):
 
 class TestBe03DryRunIdempotentPlanning(IntegrationTestCase):
 	def tearDown(self) -> None:
-		if frappe.db.exists("STD Version", CANONICAL_PACKAGE_ID):
-			frappe.db.delete("STD Version", CANONICAL_PACKAGE_ID)
-		frappe.db.commit()
+		from kentender_procurement.std_engine.package_import.draft_cleanup import clear_draft_package_state
+
+		clear_draft_package_state(CANONICAL_PACKAGE_ID, family_code=CANONICAL_FAMILY_CODE)
 
 	def test_existing_matching_hash_plans_skip(self) -> None:
 		if not frappe.db.exists("STD Family", CANONICAL_FAMILY_CODE):
@@ -256,7 +254,11 @@ class TestBe03DryRunIdempotentPlanning(IntegrationTestCase):
 		).insert(ignore_permissions=True)
 		frappe.db.commit()
 
-		report = DryRunImporter(default_seed_zip_path(), default_official_pdf_path()).run()
+		report = DryRunImporter(
+			default_seed_zip_path(),
+			default_official_pdf_path(),
+			replace_draft=False,
+		).run()
 		self.assertGreater(report["records_planned_fail"], 0)
 		self.assertEqual(report["import_readiness"], "BLOCKED")
 		frappe.db.delete("STD Version", CANONICAL_PACKAGE_ID)

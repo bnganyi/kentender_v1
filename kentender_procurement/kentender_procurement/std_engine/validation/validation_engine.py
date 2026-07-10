@@ -27,11 +27,30 @@ from kentender_procurement.std_engine.validation.validators.source_traceability 
 	SourceTraceabilityValidator,
 )
 
+from kentender_procurement.std_engine.validation.validators.clause_text_hash import (
+	ClauseTextHashValidator,
+)
+from kentender_procurement.std_engine.validation.validators.parameter_render_binding import (
+	ParameterRenderBindingValidator,
+)
+from kentender_procurement.std_engine.validation.validators.placeholder_extraction import (
+	PlaceholderExtractionValidator,
+)
+from kentender_procurement.std_engine.validation.validators.tender_instance_readiness import (
+	EvaluationCriteriaValidator,
+	TenderInstanceReadinessValidator,
+)
+
 DEFAULT_VALIDATORS = (
 	ActivationBlockersValidator(),
 	PackageIntegrityValidator(),
 	SourceTraceabilityValidator(),
 	ClauseCoverageValidator(),
+	ClauseTextHashValidator(),
+	PlaceholderExtractionValidator(),
+	ParameterRenderBindingValidator(),
+	EvaluationCriteriaValidator(),
+	TenderInstanceReadinessValidator(),
 )
 
 

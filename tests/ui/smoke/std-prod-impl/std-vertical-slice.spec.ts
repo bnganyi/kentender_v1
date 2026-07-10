@@ -245,17 +245,17 @@ test.describe("STD prod vertical slice API hydration", () => {
 		});
 
 		const sectionRows = sectionsIframe.locator('[data-testid="std-prod-section-row"]');
-		await expect(sectionRows.first()).toContainText("Cover / title identity page");
-		await expect(sectionRows.nth(1)).toContainText("Invitation to Tender");
-		await expect(sectionRows.nth(2)).toContainText("Instructions to Tenderers");
+		await expect(sectionRows.first()).toContainText("Cover Page");
+		await expect(sectionRows.nth(1)).toContainText("Table of Contents");
+		await expect(sectionRows.nth(2)).toContainText("Preface");
 
 		await expect(sectionsIframe.locator('[data-testid="std-prod-clause-map-header"]')).toContainText(
-			"Cover / title identity page",
+			"Cover Page",
 		);
 
-		await sectionRows.filter({ hasText: "General Conditions of Contract" }).click();
+		await sectionRows.filter({ hasText: "Section X - General Conditions of Contract" }).click();
 		await expect(sectionsIframe.locator('[data-testid="std-prod-clause-map-header"]')).toContainText(
-			"General Conditions of Contract",
+			"Section X - General Conditions of Contract",
 		);
 		await expect(sectionsIframe.locator(".std-prod-clause-row").first()).toContainText("GCC");
 	});
@@ -268,7 +268,7 @@ test.describe("STD prod vertical slice API hydration", () => {
 		});
 		await sectionsIframe
 			.locator(".std-prod-section-row")
-			.filter({ hasText: "General Conditions of Contract" })
+			.filter({ hasText: "Section X - General Conditions of Contract" })
 			.click();
 		await sectionsIframe.locator(".std-prod-clause-row").filter({ hasText: "Fraud and Corruption" }).click();
 		await expect(page).toHaveURL(/\/desk\/std-clause-detail/, { timeout: 30_000 });
@@ -280,14 +280,22 @@ test.describe("STD prod vertical slice API hydration", () => {
 		await expect(clauseIframe.locator('[data-testid="std-prod-clause-title"]')).toContainText(
 			"Fraud and Corruption",
 		);
-		await expect(clauseIframe.locator('[data-testid="std-prod-clause-code"]')).toContainText("GCC 6");
+		await expect(clauseIframe.locator('[data-testid="std-prod-clause-code"]')).toContainText("GCC-006");
+		await expect(clauseIframe.locator('[data-testid="std-prod-clause-legal-text"]')).toContainText(
+			"Fraud and Corruption",
+		);
 		await expect(clauseIframe.locator('[data-testid="std-prod-clause-legal-text"]')).not.toContainText(
-			"3.1 A Tenderer may be a firm",
+			"not yet extracted",
+		);
+		await expect(clauseIframe.locator('[data-testid="std-prod-clause-legal-text"]')).not.toContainText(
+			"pending extraction",
 		);
 		await expect(clauseIframe.getByText("ConflictOfInterestCheck")).toHaveCount(0);
 		await expect(clauseIframe.getByText("RB-ITT-3.1-V2.4")).toHaveCount(0);
-		await expect(clauseIframe.locator('[data-testid="std-prod-clause-render-block"]').first()).toContainText("gcc");
-		await expect(clauseIframe.locator('[data-testid="std-prod-clause-render-preview"]')).toContainText(
+		await expect(clauseIframe.locator('[data-testid="std-prod-clause-legal-text"]')).toContainText(
+			"extracted from the official source",
+		);
+		await expect(clauseIframe.locator('[data-testid="std-prod-clause-render-preview"]')).not.toContainText(
 			"TITLE EXTRACTED FULL TEXT HASH PENDING",
 		);
 
@@ -297,17 +305,18 @@ test.describe("STD prod vertical slice API hydration", () => {
 		});
 		await sectionsIframe
 			.locator(".std-prod-section-row")
-			.filter({ hasText: "General Conditions of Contract" })
+			.filter({ hasText: "Section X - General Conditions of Contract" })
 			.click();
 		await sectionsIframe
 			.locator(".std-prod-clause-row")
-			.filter({ hasText: "Contract and Interpretation" })
+			.filter({ hasText: "Definitions" })
+			.first()
 			.click();
 		await expect(page).toHaveURL(/\/desk\/std-clause-detail/, { timeout: 30_000 });
 		await expect(clauseIframe.locator('[data-testid="std-prod-clause-title"]')).toContainText(
-			"Contract and Interpretation",
+			"Definitions",
 		);
-		await expect(clauseIframe.locator('[data-testid="std-prod-clause-code"]')).toContainText("GCC 1");
+		await expect(clauseIframe.locator('[data-testid="std-prod-clause-code"]')).toContainText("GCC-001");
 	});
 
 	test("section clause map Source Traceability opens source document page", async ({ page }) => {
@@ -377,6 +386,45 @@ test.describe("STD prod vertical slice API hydration", () => {
 			timeout: 30_000,
 		});
 		await expect(page.locator(".list-row-container, .list-row")).toHaveCount(0);
+	});
+
+	test("version detail integrity rows deep-link section tree vs clause inventory", async ({ page }) => {
+		await page.goto("/desk/std-version-detail");
+		const versionIframe = page.frameLocator('[data-testid="std-prod-std-version-detail-iframe"]');
+		await expect(versionIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+
+		await versionIframe.locator("table tbody tr").filter({ hasText: "Sections & Containers" }).click();
+		await expect(page).toHaveURL(/\/desk\/std-section-clauses/, { timeout: 30_000 });
+		const sectionsIframe = page.frameLocator('[data-testid="std-prod-std-section-clauses-iframe"]');
+		await expect(sectionsIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await expect(sectionsIframe.locator("body")).toHaveAttribute("data-std-prod-map-focus", "sections");
+		await expect(sectionsIframe.locator('[data-testid="std-prod-clause-map-header"]')).toContainText(
+			"Cover Page",
+		);
+
+		await page.goto("/desk/std-version-detail");
+		const versionIframe2 = page.frameLocator('[data-testid="std-prod-std-version-detail-iframe"]');
+		await expect(versionIframe2.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await versionIframe2.locator("table tbody tr").filter({ hasText: "Standard Clauses" }).click();
+		await expect(page).toHaveURL(/\/desk\/std-section-clauses/, { timeout: 30_000 });
+		const clausesIframe = page.frameLocator('[data-testid="std-prod-std-section-clauses-iframe"]');
+		await expect(clausesIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await expect(clausesIframe.locator("body")).toHaveAttribute("data-std-prod-map-focus", "clauses");
+		await expect(clausesIframe.locator('[data-testid="std-prod-clause-map-header"]')).toContainText(
+			"Clause Inventory",
+		);
+		await expect(clausesIframe.locator('[data-testid="std-prod-clause-map-subtitle"]')).toContainText(
+			/clauses across all sections/,
+		);
+		await expect(clausesIframe.locator(".std-prod-clause-row")).toHaveCount(94);
 	});
 
 	test("version detail workspace opens form evaluation and render blocks", async ({ page }) => {

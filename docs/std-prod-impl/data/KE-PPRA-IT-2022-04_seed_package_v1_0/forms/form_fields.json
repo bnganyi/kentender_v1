@@ -1,0 +1,754 @@
+{
+  "records": [
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_001.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_001",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_001.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_001.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_001",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_001.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_001.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_001",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_001.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_002.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_002",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_002.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_002.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_002",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_002.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_002.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_002",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_002.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_003.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_003",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_003.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_003.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_003",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_003.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_003.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_003",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_003.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_004.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_004",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_004.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_004.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_004",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_004.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_004.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_004",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_004.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_005.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_005",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_005.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_005.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_005",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_005.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_005.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_005",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_005.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_006.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_006",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_006.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_006.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_006",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_006.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_006.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_006",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_006.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_007.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_007",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_007.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_007.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_007",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_007.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_007.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_007",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_007.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_008.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_008",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_008.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_008.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_008",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_008.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_008.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_008",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_008.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_009.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_009",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_009.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_009.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_009",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_009.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_009.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_009",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_009.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_010.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_010",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_010.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_010.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_010",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_010.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_010.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_010",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_010.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_011.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_011",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_011.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_011.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_011",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_011.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_011.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_011",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_011.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_012.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_012",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_012.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_012.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_012",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_012.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_012.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_012",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_012.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_013.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_013",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_013.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_013.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_013",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_013.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_013.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_013",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_013.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_014.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_014",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_014.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_014.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_014",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_014.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_014.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_014",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_014.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_015.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_015",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_015.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_015.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_015",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_015.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_015.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_015",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_015.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_016.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_016",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_016.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_016.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_016",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_016.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_016.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_016",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_016.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_017.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_017",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_017.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_017.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_017",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_017.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_017.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_017",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_017.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_018.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_018",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_018.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_018.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_018",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_018.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_018.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_018",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_018.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_019.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_019",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_019.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_019.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_019",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_019.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_019.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_019",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_019.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_020.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_020",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_020.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_020.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_020",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_020.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_020.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_020",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_020.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_021.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_021",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_021.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_021.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_021",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_021.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_021.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_021",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_021.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_022.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_022",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_022.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_022.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_022",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_022.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_022.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_022",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_022.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_023.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_023",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_023.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_023.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_023",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_023.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_023.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_023",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_023.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_024.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_024",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_024.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_024.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_024",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_024.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_024.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_024",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_024.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_025.reference",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_025",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_025.main",
+      "field_label": "Reference",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 1,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_025.legal_name",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_025",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_025.main",
+      "field_label": "Legal Name",
+      "field_type": "TEXT",
+      "required": true,
+      "ordinal": 2,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "field_key": "KE-PPRA-IT-2022-04.form_field.it_form_025.signature",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_025",
+      "form_section_key": "KE-PPRA-IT-2022-04.form_section.it_form_025.main",
+      "field_label": "Authorized Signature",
+      "field_type": "SIGNATURE",
+      "required": true,
+      "ordinal": 3,
+      "extraction_status": "EXTRACTED"
+    }
+  ]
+}

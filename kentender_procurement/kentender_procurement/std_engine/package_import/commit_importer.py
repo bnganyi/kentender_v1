@@ -35,15 +35,18 @@ class CommitImporter:
 		self,
 		zip_path: str | Path | None = None,
 		pdf_path: str | Path | None = None,
+		*,
+		replace_draft: bool = True,
 	) -> None:
 		self.zip_path = Path(zip_path or default_seed_zip_path())
 		self.pdf_path = Path(pdf_path or default_official_pdf_path())
+		self.replace_draft = replace_draft
 
 	def run(self) -> dict[str, Any]:
 		if not self.pdf_path.is_file():
 			raise CommitImporterError(f"Official source PDF not found: {self.pdf_path}")
 
-		dry_report = DryRunImporter(self.zip_path, self.pdf_path).run()
+		dry_report = DryRunImporter(self.zip_path, self.pdf_path, replace_draft=self.replace_draft).run()
 		if dry_report["import_readiness"] == "BLOCKED":
 			raise CommitImporterError(
 				"Package import is blocked: " + "; ".join(dry_report.get("validation_blockers") or ["unknown blocker"])
@@ -52,6 +55,11 @@ class CommitImporter:
 		package_id = dry_report["package_id"]
 		package_sha256 = dry_report["package_sha256"]
 		self._guard_active_version(package_id)
+
+		if self._should_replace_draft(package_id, package_sha256):
+			from kentender_procurement.std_engine.package_import.draft_cleanup import clear_draft_package_state
+
+			clear_draft_package_state(package_id, family_code=dry_report.get("family_code"))
 
 		if self._is_idempotent(package_id, package_sha256):
 			return self._build_idempotent_report(dry_report)
@@ -96,6 +104,15 @@ class CommitImporter:
 		lifecycle_state = frappe.db.get_value("STD Version", package_id, "lifecycle_state")
 		if lifecycle_state == "ACTIVE":
 			raise CommitImporterError(f"Cannot import over ACTIVE STD Version: {package_id}")
+
+	def _should_replace_draft(self, package_id: str, package_sha256: str) -> bool:
+		if not self.replace_draft or not frappe.db.exists("STD Version", package_id):
+			return False
+		existing_hash = frappe.db.get_value("STD Version", package_id, "package_sha256") or ""
+		if existing_hash == package_sha256:
+			return False
+		lifecycle_state = frappe.db.get_value("STD Version", package_id, "lifecycle_state")
+		return lifecycle_state == "DRAFT"
 
 	def _is_idempotent(self, package_id: str, package_sha256: str) -> bool:
 		if not frappe.db.exists("STD Version", package_id):

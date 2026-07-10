@@ -71,7 +71,9 @@ def map_version_record(
 		"is_immutable": 0,
 		"package_sha256": package_sha256,
 		"manifest_hash": manifest_hash,
-		"package_quality": manifest.get("quality_status") or PACKAGE_QUALITY_RECONCILED_DRAFT,
+		"package_quality": manifest.get("package_quality")
+		or manifest.get("quality_status")
+		or PACKAGE_QUALITY_RECONCILED_DRAFT,
 		"validation_status": "OPEN",
 		"source_authority": record.get("source_authority"),
 		"metadata_json": metadata_json(record),
@@ -136,6 +138,7 @@ def map_section_record(record: dict[str, Any], ctx: PackageContext) -> dict[str,
 
 
 def map_clause_record(record: dict[str, Any], ctx: PackageContext) -> dict[str, Any]:
+	full_text = record.get("full_clause_text") or record.get("clause_text") or ""
 	doc = {
 		"doctype": "STD Clause",
 		"package_id": ctx.package_id,
@@ -144,8 +147,10 @@ def map_clause_record(record: dict[str, Any], ctx: PackageContext) -> dict[str, 
 		"clause_key": record["clause_key"],
 		"section": record["section_key"],
 		"object_key": record.get("clause_code") or record["clause_key"],
-		"title": record.get("display_title"),
-		"validation_status": record.get("text_status") or record.get("extraction_pass"),
+		"title": record.get("display_title") or record.get("clause_title"),
+		"clause_text": full_text,
+		"content_hash": record.get("normalized_text_hash") or record.get("content_hash"),
+		"validation_status": record.get("text_status") or record.get("extraction_status") or record.get("extraction_pass"),
 		"metadata_json": metadata_json(record),
 	}
 	if record.get("source_anchor_key"):
@@ -223,10 +228,10 @@ def map_form_record(
 		{
 			"doctype": "STD Form Field",
 			"field_key": field["field_key"],
-			"field_label": field.get("display_label") or field["field_key"],
+			"field_label": field.get("field_label") or field.get("display_label") or field["field_key"],
 			"field_type": field.get("field_type") or "text",
 			"is_required": int(bool(field.get("required"))),
-			"display_order": field.get("display_order"),
+			"display_order": field.get("ordinal") or field.get("display_order"),
 			"field_schema_json": metadata_json(field),
 		}
 		for field in form_fields

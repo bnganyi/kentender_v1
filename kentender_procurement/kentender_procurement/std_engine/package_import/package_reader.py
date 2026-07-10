@@ -14,6 +14,7 @@ from typing import Any
 from kentender_procurement.std_engine.package_import.checksum_verifier import ChecksumFailure, verify_package_checksums
 from kentender_procurement.std_engine.package_import.manifest_validator import validate_manifest
 from kentender_procurement.std_engine.package_import.package_contract import (
+	OPTIONAL_PAYLOAD_PATH_BY_KEY,
 	OPTIONAL_WHEN_PRESENT,
 	PAYLOAD_PATH_BY_KEY,
 	REQUIRED_ANY_IMPORT,
@@ -128,7 +129,7 @@ def _detect_package_root(zf: zipfile.ZipFile) -> str:
 	# Prefer canonical seed package root; ignore calibration/fixture manifests.
 	manifest_paths.sort(
 		key=lambda p: (
-			0 if "seed_package_v0_2" in p else 1,
+			0 if "seed_package_v1_0" in p else 1 if "seed_package_v0_2" in p else 2,
 			1 if "/fixtures/" in p else 0,
 			p,
 		)
@@ -173,7 +174,7 @@ def _parse_payloads(
 	files_listed: list[str],
 ) -> dict[str, Any]:
 	payloads: dict[str, Any] = {}
-	for key, relative_path in PAYLOAD_PATH_BY_KEY.items():
+	for key, relative_path in {**PAYLOAD_PATH_BY_KEY, **OPTIONAL_PAYLOAD_PATH_BY_KEY}.items():
 		if relative_path not in files_listed:
 			continue
 		payloads[key] = _read_json(zf, package_root, relative_path)

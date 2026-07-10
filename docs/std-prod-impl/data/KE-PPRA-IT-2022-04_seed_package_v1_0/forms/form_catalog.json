@@ -1,0 +1,229 @@
+{
+  "records": [
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_001",
+      "form_code": "IT-FORM-001",
+      "display_title": "Form of Tender",
+      "respondent_type": "Tenderer",
+      "tender_stage": "37-39",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_002",
+      "form_code": "IT-FORM-002",
+      "display_title": "Tenderer's Eligibility - Confidential Business Questionnaire",
+      "respondent_type": "Tenderer",
+      "tender_stage": "40-42",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_003",
+      "form_code": "IT-FORM-003",
+      "display_title": "Certificate of Independent Tender Determination",
+      "respondent_type": "Tenderer",
+      "tender_stage": "43",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_004",
+      "form_code": "IT-FORM-004",
+      "display_title": "Self-Declaration Form",
+      "respondent_type": "Tenderer",
+      "tender_stage": "44-46",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_005",
+      "form_code": "IT-FORM-005",
+      "display_title": "Appendix 1 - Fraud and Corruption",
+      "respondent_type": "Tenderer / information",
+      "tender_stage": "47-48",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_006",
+      "form_code": "IT-FORM-006",
+      "display_title": "Grand Summary Cost Table",
+      "respondent_type": "Tenderer",
+      "tender_stage": "50",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_007",
+      "form_code": "IT-FORM-007",
+      "display_title": "Supply and Installation Cost Summary Table",
+      "respondent_type": "Tenderer",
+      "tender_stage": "50",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_008",
+      "form_code": "IT-FORM-008",
+      "display_title": "Recurrent Cost Summary Table",
+      "respondent_type": "Tenderer",
+      "tender_stage": "51",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_009",
+      "form_code": "IT-FORM-009",
+      "display_title": "Supply and Installation Cost Sub-Table",
+      "respondent_type": "Tenderer",
+      "tender_stage": "52",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_010",
+      "form_code": "IT-FORM-010",
+      "display_title": "Recurrent Cost Sub-Table",
+      "respondent_type": "Tenderer",
+      "tender_stage": "53",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_011",
+      "form_code": "IT-FORM-011",
+      "display_title": "Country of Origin Code Table",
+      "respondent_type": "Tenderer",
+      "tender_stage": "54",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_012",
+      "form_code": "IT-FORM-012",
+      "display_title": "Foreign Tenderers 40% Rule",
+      "respondent_type": "Foreign tenderer",
+      "tender_stage": "55",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_013",
+      "form_code": "IT-FORM-013",
+      "display_title": "Form ELI-1 Tenderer Information Form",
+      "respondent_type": "Tenderer",
+      "tender_stage": "56",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_014",
+      "form_code": "IT-FORM-014",
+      "display_title": "Form ELI-1 Tenderer's JV Members Information Form",
+      "respondent_type": "JV member",
+      "tender_stage": "57",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_015",
+      "form_code": "IT-FORM-015",
+      "display_title": "Form CON-1 Historical Contract Non-Performance and Pending Litigation",
+      "respondent_type": "Tenderer / JV member",
+      "tender_stage": "58",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_016",
+      "form_code": "IT-FORM-016",
+      "display_title": "Form EXP-1 Experience - General Experience",
+      "respondent_type": "Tenderer",
+      "tender_stage": "59",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_017",
+      "form_code": "IT-FORM-017",
+      "display_title": "Form EXP-2 Specific Experience",
+      "respondent_type": "Tenderer",
+      "tender_stage": "60",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_018",
+      "form_code": "IT-FORM-018",
+      "display_title": "Form EXP-2 cont. Specific Experience",
+      "respondent_type": "Tenderer",
+      "tender_stage": "60",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_019",
+      "form_code": "IT-FORM-019",
+      "display_title": "Form CCC-1 Current Contract Commitments / Work in Progress",
+      "respondent_type": "Tenderer",
+      "tender_stage": "61",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_020",
+      "form_code": "IT-FORM-020",
+      "display_title": "Form FIN-1 Financial Situation",
+      "respondent_type": "Tenderer",
+      "tender_stage": "61",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_021",
+      "form_code": "IT-FORM-021",
+      "display_title": "Form FIN-2 Average Annual Turnover",
+      "respondent_type": "Tenderer",
+      "tender_stage": "62",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_022",
+      "form_code": "IT-FORM-022",
+      "display_title": "Form F-3 Financial Resources",
+      "respondent_type": "Tenderer",
+      "tender_stage": "62",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_023",
+      "form_code": "IT-FORM-023",
+      "display_title": "Personnel Capabilities",
+      "respondent_type": "Tenderer",
+      "tender_stage": "62",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_024",
+      "form_code": "IT-FORM-024",
+      "display_title": "Intellectual Property Forms",
+      "respondent_type": "Tenderer",
+      "tender_stage": "63-65",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_025",
+      "form_code": "IT-FORM-025",
+      "display_title": "Conformance of Information System Materials",
+      "respondent_type": "Tenderer",
+      "tender_stage": "66-70",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "extraction_status": "EXTRACTED"
+    }
+  ]
+}

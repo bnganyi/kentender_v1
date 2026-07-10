@@ -77,6 +77,8 @@ class TestBe10StdProdSchemaDeskWiring(UnitTestCase):
 				self.assertIn('"' + label + '": "std-', source)
 		self.assertIn("data-std-workspace-route", source)
 		self.assertIn("hydrate_breadcrumb_trail", source)
+		self.assertIn("ensure_breadcrumb_nav", source)
+		self.assertIn('setAttribute("data-testid", "std-prod-breadcrumb")', source)
 		self.assertIn("version_code", source)
 
 	def test_engine_claims_doctype_conflicting_page_routes(self) -> None:

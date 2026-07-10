@@ -103,7 +103,7 @@ M1 commits only `DRAFT`. Other states are reserved for later workflow milestones
 | **BE-09** | UI wiring (vertical slice) | Screens 01–06, 17, 22 via iframe JS → read APIs; static HTML unchanged | BE-06, BE-08 | Playwright | Done | `std_prod_engine.js` + page shells; `test_std_prod_vertical_slice_desk_wiring.py` 5/5; `std-vertical-slice.spec.ts` 4/4 pass on `kentender.midas.com` |
 | **BE-10** | UI wiring (schemas) | Screens 07–16 | BE-07, BE-09 | Playwright | Done | `std_prod_schema_pages.js` + engine hydrators; `test_std_prod_schema_desk_wiring.py` 6/6; `std-schema-slice.spec.ts` 4/4 pass |
 | **BE-11** | UI wiring (placeholders) | 18 Review (composite read); 19 Usage (seeded fixtures); 20 Import Review (dry-run report); **21 Version Diff (single-version stub)** | BE-08, BE-10 | Playwright | Done | `std_prod_governance_pages.js` + engine hydrators; `test_std_prod_governance_desk_wiring.py` 6/6; `std-governance-slice.spec.ts` 4/4 pass; `std-vertical-slice.spec.ts` 5/5 pass |
-| **BE-12** | Smoke contracts | Package/family/version DRAFT; PDF registered; sections/clauses; findings; audit; no ACTIVE mutation | BE-04–BE-08 | `STD-SMOKE-BE-*` | Pending | — |
+| **BE-12** | Smoke contracts | Package/family/version DRAFT; PDF registered; sections/clauses; findings; audit; no ACTIVE mutation | BE-04–BE-08 | `STD-SMOKE-001..015` via `test_be_12_smoke_contracts` | Done | 15/15 integration on `kentender.midas.com`; v1_0 package `FULL_EXTRACTION_CANDIDATE` |
 | **BE-DOC** | Tracker docs | This file + `IMPORT_WIRING_PLAN.md` + `MILESTONE_1_VERTICAL_SLICE.md` + `BE-00_REPO_AUDIT.md` committed | — | — | In progress | Tracker trio + audit report written; git commit pending |
 
 ## API ↔ UI map (summary)

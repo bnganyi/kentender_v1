@@ -29,14 +29,19 @@ from kentender_procurement.std_engine.tests.test_be_04_commit_importer import (
 )
 
 SCHEMA_COUNTS = {
-	"parameters": 51,
+	"parameters": 155,
 	"rules": 22,
-	"forms": 18,
+	"forms": 25,
 	"requirements": 1,
 	"priceSchedules": 6,
 	"schemas": 1,
-	"renderBlocks": 14,
+	"renderBlocks": 17,
 }
+
+PARAM_TDS_013 = "KE-PPRA-IT-2022-04.parameter.tds.013"
+PARAM_TDS_021 = "KE-PPRA-IT-2022-04.parameter.tds.021"
+FORM_IT_003 = "KE-PPRA-IT-2022-04.form.it_form_003"
+RULE_TDS_021 = "KE-PPRA-IT-2022-04.rule.tds.validation_021"
 
 
 def _assert_envelope(test_case: IntegrationTestCase, payload: dict) -> None:
@@ -87,39 +92,21 @@ class TestBe07SchemaReadApi(IntegrationTestCase):
 		self.assertEqual(len(out["data"]["schemas"]), 1)
 
 	def test_parameter_detail(self) -> None:
-		parameter_key = frappe.get_all(
-			"STD Parameter",
-			filters={
-				"package_id": CANONICAL_PACKAGE_ID,
-				"title": "Address for clarifications",
-			},
-			pluck="name",
-			limit=1,
-		)[0]
-		out = get_std_parameter(parameter_key)
+		out = get_std_parameter(PARAM_TDS_013)
 		_assert_envelope(self, out)
-		self.assertEqual(out["data"]["id"], parameter_key)
-		self.assertEqual(out["data"]["code"], "tds.clarification_address")
-		self.assertEqual(out["data"]["name"], "Address for clarifications")
-		self.assertEqual(out["data"]["fieldType"], "LONG_TEXT")
+		self.assertEqual(out["data"]["id"], PARAM_TDS_013)
+		self.assertEqual(out["data"]["code"], "tds.013")
+		self.assertEqual(out["data"]["name"], "Clarification street address")
+		self.assertEqual(out["data"]["fieldType"], "ADDRESS")
 		self.assertTrue(out["data"]["required"])
 		self.assertEqual(out["data"]["sectionTitle"], "Section II - Tender Data Sheet")
 
 	def test_parameter_detail_resolves_validation_rule_business_codes(self) -> None:
-		parameter_key = frappe.get_all(
-			"STD Parameter",
-			filters={
-				"package_id": CANONICAL_PACKAGE_ID,
-				"title": "Clarification deadline before submission",
-			},
-			pluck="name",
-			limit=1,
-		)[0]
-		out = get_std_parameter(parameter_key)
+		out = get_std_parameter(PARAM_TDS_021)
 		_assert_envelope(self, out)
 		self.assertEqual(len(out["data"]["validationRules"]), 1)
 		rule = out["data"]["validationRules"][0]
-		self.assertEqual(rule["code"], "tds.clarification_deadline_before_submission")
+		self.assertEqual(rule["code"], "tds.validation_021")
 		self.assertEqual(rule["severity"], "BLOCKER")
 		self.assertNotIn("KE-PPRA-IT-2022-04.rule.", rule["code"])
 
@@ -131,65 +118,42 @@ class TestBe07SchemaReadApi(IntegrationTestCase):
 		self.assertNotIn("KE-PPRA-IT-2022-04.render_block.", sample["code"])
 
 	def test_rule_detail(self) -> None:
-		rule_key = frappe.get_all(
-			"STD Rule",
-			filters={
-				"package_id": CANONICAL_PACKAGE_ID,
-				"title": "Clarification deadline must fall before tender submission deadline.",
-			},
-			pluck="name",
-			limit=1,
-		)[0]
-		out = get_std_rule(rule_key)
+		out = get_std_rule(RULE_TDS_021)
 		_assert_envelope(self, out)
-		self.assertEqual(out["data"]["id"], rule_key)
-		self.assertEqual(out["data"]["code"], "tds.clarification_deadline_before_submission")
+		self.assertEqual(out["data"]["id"], RULE_TDS_021)
+		self.assertEqual(out["data"]["code"], "tds.validation_021")
 		self.assertEqual(
 			out["data"]["name"],
-			"Clarification deadline must fall before tender submission deadline.",
+			"Clarification request deadline offset must be populated before tender publication.",
 		)
 		self.assertEqual(out["data"]["ruleType"], "VALIDATION")
 		self.assertEqual(out["data"]["severity"], "BLOCKER")
 		self.assertTrue(out["data"]["affectedParameterKeys"])
 
 	def test_form_detail_includes_fields(self) -> None:
-		form_key = frappe.get_all(
-			"STD Form Schema",
-			filters={
-				"package_id": CANONICAL_PACKAGE_ID,
-				"title": "Certificate of Independent Tender Determination",
-			},
-			pluck="name",
-			limit=1,
-		)[0]
-		out = get_std_form(form_key)
+		out = get_std_form(FORM_IT_003)
 		_assert_envelope(self, out)
-		self.assertEqual(out["data"]["id"], form_key)
-		self.assertEqual(out["data"]["code"], "CERTIFICATE_INDEPENDENT_TENDER_DETERMINATION")
+		self.assertEqual(out["data"]["id"], FORM_IT_003)
+		self.assertEqual(out["data"]["code"], "IT-FORM-003")
 		self.assertEqual(out["data"]["name"], "Certificate of Independent Tender Determination")
-		self.assertEqual(out["data"]["respondentType"], "TENDERER")
+		self.assertEqual(out["data"]["respondentType"], "Tenderer")
 		self.assertGreater(len(out["data"]["formFields"]), 0)
 		field = out["data"]["formFields"][0]
 		for key in ("id", "code", "name", "fieldType"):
 			self.assertIn(key, field)
-		self.assertEqual(field["code"], "DECLARANT_NAME")
+		self.assertEqual(field["code"], "reference")
+		self.assertEqual(field["name"], "Reference")
 
 	def test_rule_list_returns_business_codes(self) -> None:
 		out = get_std_version_rules(CANONICAL_PACKAGE_ID)
 		_assert_envelope(self, out)
-		sample = next(
-			item
-			for item in out["data"]["rules"]
-			if item["code"] == "tds.clarification_deadline_before_submission"
-		)
+		sample = next(item for item in out["data"]["rules"] if item["code"] == "tds.validation_021")
 		self.assertNotIn("KE-PPRA-IT-2022-04.rule.", sample["code"])
 
 	def test_parameter_list_includes_schema_fields(self) -> None:
 		out = get_std_version_parameters(CANONICAL_PACKAGE_ID)
 		_assert_envelope(self, out)
-		sample = next(
-			item for item in out["data"]["parameters"] if item["code"] == "tds.clarification_address"
-		)
+		sample = next(item for item in out["data"]["parameters"] if item["code"] == "tds.013")
 		for field in (
 			"fieldType",
 			"sectionTitle",
@@ -199,17 +163,14 @@ class TestBe07SchemaReadApi(IntegrationTestCase):
 		):
 			with self.subTest(field=field):
 				self.assertIn(field, sample)
-		self.assertEqual(sample["fieldType"], "LONG_TEXT")
+		self.assertEqual(sample["fieldType"], "ADDRESS")
 		self.assertTrue(sample["required"])
+		self.assertEqual(sample["validationRuleCount"], 1)
 
 	def test_rule_list_includes_schema_fields(self) -> None:
 		out = get_std_version_rules(CANONICAL_PACKAGE_ID)
 		_assert_envelope(self, out)
-		sample = next(
-			item
-			for item in out["data"]["rules"]
-			if item["code"] == "tds.clarification_deadline_before_submission"
-		)
+		sample = next(item for item in out["data"]["rules"] if item["code"] == "tds.validation_021")
 		for field in ("ruleType", "severity", "affectedObject", "lifecycleStage", "isActive"):
 			with self.subTest(field=field):
 				self.assertIn(field, sample)
@@ -226,28 +187,80 @@ class TestBe07SchemaReadApi(IntegrationTestCase):
 				self.assertIn(field, summary)
 		self.assertEqual(summary["total"], out["data"]["count"])
 		self.assertEqual(summary["total"], SCHEMA_COUNTS["rules"])
-		self.assertEqual(summary["blockerRules"], 19)
-		self.assertEqual(summary["warningRules"], 3)
+		self.assertEqual(summary["blockerRules"], 22)
+		self.assertEqual(summary["warningRules"], 0)
 		self.assertEqual(summary["activeRules"], SCHEMA_COUNTS["rules"])
 		self.assertGreater(out["validationSummary"]["blockers"], 0)
 
 	def test_rule_list_filters_by_parameter_key(self) -> None:
-		parameter_key = frappe.get_all(
-			"STD Parameter",
-			filters={
-				"package_id": CANONICAL_PACKAGE_ID,
-				"title": "Clarification deadline before submission",
-			},
-			pluck="name",
-			limit=1,
-		)[0]
-		filtered = get_std_version_rules(CANONICAL_PACKAGE_ID, parameter_key=parameter_key)
+		filtered = get_std_version_rules(CANONICAL_PACKAGE_ID, parameter_key=PARAM_TDS_021)
 		full = get_std_version_rules(CANONICAL_PACKAGE_ID)
 		_assert_envelope(self, filtered)
-		self.assertGreater(filtered["data"]["count"], 0)
+		self.assertEqual(filtered["data"]["count"], 1)
 		self.assertLess(filtered["data"]["count"], full["data"]["count"])
 		self.assertEqual(filtered["data"]["count"], filtered["data"]["summary"]["total"])
 		self.assertLess(filtered["data"]["summary"]["total"], full["data"]["summary"]["total"])
+
+	def test_price_schedule_list_returns_design_row_fields(self) -> None:
+		out = get_std_version_price_schedules(CANONICAL_PACKAGE_ID)
+		_assert_envelope(self, out)
+		self.assertEqual(out["data"]["count"], SCHEMA_COUNTS["priceSchedules"])
+		summary = out["data"]["summary"]
+		self.assertEqual(summary["priceSchedules"], SCHEMA_COUNTS["priceSchedules"])
+		self.assertGreaterEqual(summary["totalSummaries"], 2)
+		codes = {item["code"] for item in out["data"]["priceSchedules"]}
+		self.assertIn("GS-001", codes)
+		self.assertIn("COO-001", codes)
+		grand_summary = next(item for item in out["data"]["priceSchedules"] if item["code"] == "GS-001")
+		for field in (
+			"pricingBasis",
+			"currencyPolicy",
+			"taxPolicy",
+			"recurrentCost",
+			"formulaRule",
+			"evalLinkage",
+			"contractCarry",
+			"validationStatus",
+			"lifecycleState",
+		):
+			with self.subTest(field=field):
+				self.assertIn(field, grand_summary)
+				self.assertTrue(grand_summary[field])
+		self.assertIn("required", grand_summary)
+		self.assertIn("sourceAnchorId", grand_summary)
+
+	def test_form_list_returns_design_row_fields(self) -> None:
+		out = get_std_version_forms(CANONICAL_PACKAGE_ID)
+		_assert_envelope(self, out)
+		self.assertEqual(out["data"]["count"], SCHEMA_COUNTS["forms"])
+		item = out["data"]["forms"][0]
+		for field in (
+			"respondentType",
+			"stage",
+			"fieldCount",
+			"evidenceCount",
+			"activationRules",
+			"sourceAnchorId",
+		):
+			with self.subTest(field=field):
+				self.assertIn(field, item)
+
+	def test_requirement_list_returns_design_row_fields(self) -> None:
+		out = get_std_version_requirements(CANONICAL_PACKAGE_ID)
+		_assert_envelope(self, out)
+		self.assertEqual(out["data"]["count"], SCHEMA_COUNTS["requirements"])
+		item = out["data"]["requirements"][0]
+		for field in (
+			"category",
+			"requirementClass",
+			"requirementType",
+			"responseRequired",
+			"complianceResponseType",
+			"evalLinkage",
+			"contractCarryForward",
+		):
+			with self.subTest(field=field):
+				self.assertIn(field, item)
 
 	def test_not_found_envelopes(self) -> None:
 		missing = get_std_parameter("DOES-NOT-EXIST")

@@ -1,0 +1,312 @@
+{
+  "records": [
+    {
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_001",
+      "rule_code": "IT-R-TDS-001",
+      "rule_type": "VALIDATION",
+      "severity": "BLOCKER",
+      "lifecycle_stage": "TENDER_CONFIGURATION",
+      "message": "Request for Tenders reference number must be populated before tender publication.",
+      "affected_parameter_keys": [
+        "KE-PPRA-IT-2022-04.parameter.tds.001"
+      ],
+      "extraction_status": "EXTRACTED",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds"
+    },
+    {
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_002",
+      "rule_code": "IT-R-TDS-002",
+      "rule_type": "VALIDATION",
+      "severity": "BLOCKER",
+      "lifecycle_stage": "TENDER_CONFIGURATION",
+      "message": "Procuring Entity legal name must be populated before tender publication.",
+      "affected_parameter_keys": [
+        "KE-PPRA-IT-2022-04.parameter.tds.002"
+      ],
+      "extraction_status": "EXTRACTED",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds"
+    },
+    {
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_003",
+      "rule_code": "IT-R-TDS-003",
+      "rule_type": "VALIDATION",
+      "severity": "BLOCKER",
+      "lifecycle_stage": "TENDER_CONFIGURATION",
+      "message": "Name of ITT / tender name must be populated before tender publication.",
+      "affected_parameter_keys": [
+        "KE-PPRA-IT-2022-04.parameter.tds.003"
+      ],
+      "extraction_status": "EXTRACTED",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds"
+    },
+    {
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_004",
+      "rule_code": "IT-R-TDS-004",
+      "rule_type": "VALIDATION",
+      "severity": "BLOCKER",
+      "lifecycle_stage": "TENDER_CONFIGURATION",
+      "message": "Number and identification of lots/contracts must be populated before tender publication.",
+      "affected_parameter_keys": [
+        "KE-PPRA-IT-2022-04.parameter.tds.004"
+      ],
+      "extraction_status": "EXTRACTED",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds"
+    },
+    {
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_005",
+      "rule_code": "IT-R-TDS-005",
+      "rule_type": "VALIDATION",
+      "severity": "BLOCKER",
+      "lifecycle_stage": "TENDER_CONFIGURATION",
+      "message": "E-procurement system enabled must be populated before tender publication.",
+      "affected_parameter_keys": [
+        "KE-PPRA-IT-2022-04.parameter.tds.005"
+      ],
+      "extraction_status": "EXTRACTED",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds"
+    },
+    {
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_006",
+      "rule_code": "IT-R-TDS-006",
+      "rule_type": "VALIDATION",
+      "severity": "BLOCKER",
+      "lifecycle_stage": "TENDER_CONFIGURATION",
+      "message": "E-procurement system name must be populated before tender publication.",
+      "affected_parameter_keys": [
+        "KE-PPRA-IT-2022-04.parameter.tds.006"
+      ],
+      "extraction_status": "EXTRACTED",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds"
+    },
+    {
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_007",
+      "rule_code": "IT-R-TDS-007",
+      "rule_type": "VALIDATION",
+      "severity": "BLOCKER",
+      "lifecycle_stage": "TENDER_CONFIGURATION",
+      "message": "E-procurement URL/link must be populated before tender publication.",
+      "affected_parameter_keys": [
+        "KE-PPRA-IT-2022-04.parameter.tds.007"
+      ],
+      "extraction_status": "EXTRACTED",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds"
+    },
+    {
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_008",
+      "rule_code": "IT-R-TDS-008",
+      "rule_type": "VALIDATION",
+      "severity": "BLOCKER",
+      "lifecycle_stage": "TENDER_CONFIGURATION",
+      "message": "E-procurement process aspects must be populated before tender publication.",
+      "affected_parameter_keys": [
+        "KE-PPRA-IT-2022-04.parameter.tds.008"
+      ],
+      "extraction_status": "EXTRACTED",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds"
+    },
+    {
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_009",
+      "rule_code": "IT-R-TDS-009",
+      "rule_type": "VALIDATION",
+      "severity": "BLOCKER",
+      "lifecycle_stage": "TENDER_CONFIGURATION",
+      "message": "Firms that provided consulting services must be populated before tender publication.",
+      "affected_parameter_keys": [
+        "KE-PPRA-IT-2022-04.parameter.tds.009"
+      ],
+      "extraction_status": "EXTRACTED",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds"
+    },
+    {
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_010",
+      "rule_code": "IT-R-TDS-010",
+      "rule_type": "VALIDATION",
+      "severity": "BLOCKER",
+      "lifecycle_stage": "TENDER_CONFIGURATION",
+      "message": "Maximum number of JV members must be populated before tender publication.",
+      "affected_parameter_keys": [
+        "KE-PPRA-IT-2022-04.parameter.tds.010"
+      ],
+      "extraction_status": "EXTRACTED",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds"
+    },
+    {
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_011",
+      "rule_code": "IT-R-TDS-011",
+      "rule_type": "VALIDATION",
+      "severity": "BLOCKER",
+      "lifecycle_stage": "TENDER_CONFIGURATION",
+      "message": "Additional registration requirement must be populated before tender publication.",
+      "affected_parameter_keys": [
+        "KE-PPRA-IT-2022-04.parameter.tds.011"
+      ],
+      "extraction_status": "EXTRACTED",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds"
+    },
+    {
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_012",
+      "rule_code": "IT-R-TDS-012",
+      "rule_type": "VALIDATION",
+      "severity": "BLOCKER",
+      "lifecycle_stage": "TENDER_CONFIGURATION",
+      "message": "Clarification contact attention must be populated before tender publication.",
+      "affected_parameter_keys": [
+        "KE-PPRA-IT-2022-04.parameter.tds.012"
+      ],
+      "extraction_status": "EXTRACTED",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds"
+    },
+    {
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_013",
+      "rule_code": "IT-R-TDS-013",
+      "rule_type": "VALIDATION",
+      "severity": "BLOCKER",
+      "lifecycle_stage": "TENDER_CONFIGURATION",
+      "message": "Clarification street address must be populated before tender publication.",
+      "affected_parameter_keys": [
+        "KE-PPRA-IT-2022-04.parameter.tds.013"
+      ],
+      "extraction_status": "EXTRACTED",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds"
+    },
+    {
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_014",
+      "rule_code": "IT-R-TDS-014",
+      "rule_type": "VALIDATION",
+      "severity": "BLOCKER",
+      "lifecycle_stage": "TENDER_CONFIGURATION",
+      "message": "Clarification floor/room must be populated before tender publication.",
+      "affected_parameter_keys": [
+        "KE-PPRA-IT-2022-04.parameter.tds.014"
+      ],
+      "extraction_status": "EXTRACTED",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds"
+    },
+    {
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_015",
+      "rule_code": "IT-R-TDS-015",
+      "rule_type": "VALIDATION",
+      "severity": "BLOCKER",
+      "lifecycle_stage": "TENDER_CONFIGURATION",
+      "message": "Clarification city must be populated before tender publication.",
+      "affected_parameter_keys": [
+        "KE-PPRA-IT-2022-04.parameter.tds.015"
+      ],
+      "extraction_status": "EXTRACTED",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds"
+    },
+    {
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_016",
+      "rule_code": "IT-R-TDS-016",
+      "rule_type": "VALIDATION",
+      "severity": "BLOCKER",
+      "lifecycle_stage": "TENDER_CONFIGURATION",
+      "message": "Clarification ZIP/postal code must be populated before tender publication.",
+      "affected_parameter_keys": [
+        "KE-PPRA-IT-2022-04.parameter.tds.016"
+      ],
+      "extraction_status": "EXTRACTED",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds"
+    },
+    {
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_017",
+      "rule_code": "IT-R-TDS-017",
+      "rule_type": "VALIDATION",
+      "severity": "BLOCKER",
+      "lifecycle_stage": "TENDER_CONFIGURATION",
+      "message": "Clarification country must be populated before tender publication.",
+      "affected_parameter_keys": [
+        "KE-PPRA-IT-2022-04.parameter.tds.017"
+      ],
+      "extraction_status": "EXTRACTED",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds"
+    },
+    {
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_018",
+      "rule_code": "IT-R-TDS-018",
+      "rule_type": "VALIDATION",
+      "severity": "BLOCKER",
+      "lifecycle_stage": "TENDER_CONFIGURATION",
+      "message": "Clarification telephone must be populated before tender publication.",
+      "affected_parameter_keys": [
+        "KE-PPRA-IT-2022-04.parameter.tds.018"
+      ],
+      "extraction_status": "EXTRACTED",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds"
+    },
+    {
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_019",
+      "rule_code": "IT-R-TDS-019",
+      "rule_type": "VALIDATION",
+      "severity": "BLOCKER",
+      "lifecycle_stage": "TENDER_CONFIGURATION",
+      "message": "Clarification fax must be populated before tender publication.",
+      "affected_parameter_keys": [
+        "KE-PPRA-IT-2022-04.parameter.tds.019"
+      ],
+      "extraction_status": "EXTRACTED",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds"
+    },
+    {
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_020",
+      "rule_code": "IT-R-TDS-020",
+      "rule_type": "VALIDATION",
+      "severity": "BLOCKER",
+      "lifecycle_stage": "TENDER_CONFIGURATION",
+      "message": "Clarification email must be populated before tender publication.",
+      "affected_parameter_keys": [
+        "KE-PPRA-IT-2022-04.parameter.tds.020"
+      ],
+      "extraction_status": "EXTRACTED",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds"
+    },
+    {
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_021",
+      "rule_code": "IT-R-TDS-021",
+      "rule_type": "VALIDATION",
+      "severity": "BLOCKER",
+      "lifecycle_stage": "TENDER_CONFIGURATION",
+      "message": "Clarification request deadline offset must be populated before tender publication.",
+      "affected_parameter_keys": [
+        "KE-PPRA-IT-2022-04.parameter.tds.021"
+      ],
+      "extraction_status": "EXTRACTED",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds"
+    },
+    {
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_022",
+      "rule_code": "IT-R-TDS-022",
+      "rule_type": "VALIDATION",
+      "severity": "BLOCKER",
+      "lifecycle_stage": "TENDER_CONFIGURATION",
+      "message": "Procurement publication web page must be populated before tender publication.",
+      "affected_parameter_keys": [
+        "KE-PPRA-IT-2022-04.parameter.tds.022"
+      ],
+      "extraction_status": "EXTRACTED",
+      "scope_type": "SECTION",
+      "section_key": "KE-PPRA-IT-2022-04.section.tds"
+    }
+  ]
+}
