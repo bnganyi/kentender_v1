@@ -1,0 +1,140 @@
+{
+  "records": [
+    {
+      "render_block_key": "KE-PPRA-IT-2022-04.render.issue_page",
+      "display_title": "Issued Tender Start Page",
+      "block_code": "R-ISSUE_PAGE",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.issue_page",
+      "template_status": "EXTRACTED",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "render_block_key": "KE-PPRA-IT-2022-04.render.invitation",
+      "display_title": "Invitation to Tender",
+      "block_code": "R-INVITATION",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.invitation",
+      "template_status": "EXTRACTED",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "render_block_key": "KE-PPRA-IT-2022-04.render.part1",
+      "display_title": "Part 1 - Tendering Procedures",
+      "block_code": "R-PART1",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.part1",
+      "template_status": "EXTRACTED",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "render_block_key": "KE-PPRA-IT-2022-04.render.itt",
+      "display_title": "Section I - Instructions to Tenderers",
+      "block_code": "R-ITT",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.itt",
+      "template_status": "EXTRACTED",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "render_block_key": "KE-PPRA-IT-2022-04.render.tds",
+      "display_title": "Section II - Tender Data Sheet",
+      "block_code": "R-TDS",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tds",
+      "template_status": "EXTRACTED",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "render_block_key": "KE-PPRA-IT-2022-04.render.eval",
+      "display_title": "Section III - Evaluation and Qualification Criteria",
+      "block_code": "R-EVAL",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.eval",
+      "template_status": "EXTRACTED",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "render_block_key": "KE-PPRA-IT-2022-04.render.forms",
+      "display_title": "Section IV - Tendering Forms",
+      "block_code": "R-FORMS",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.forms",
+      "template_status": "EXTRACTED",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "render_block_key": "KE-PPRA-IT-2022-04.render.part2",
+      "display_title": "Part 2 - Procuring Entity Requirements",
+      "block_code": "R-PART2",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.part2",
+      "template_status": "EXTRACTED",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "render_block_key": "KE-PPRA-IT-2022-04.render.req",
+      "display_title": "Section V - Requirements of the Information System",
+      "block_code": "R-REQ",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.req",
+      "template_status": "EXTRACTED",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "render_block_key": "KE-PPRA-IT-2022-04.render.part3",
+      "display_title": "Part 3 - Contract",
+      "block_code": "R-PART3",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.part3",
+      "template_status": "EXTRACTED",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "render_block_key": "KE-PPRA-IT-2022-04.render.gcc",
+      "display_title": "Section X - General Conditions of Contract",
+      "block_code": "R-GCC",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.gcc",
+      "template_status": "EXTRACTED",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "render_block_key": "KE-PPRA-IT-2022-04.render.scc",
+      "display_title": "Section XI - Special Conditions of Contract",
+      "block_code": "R-SCC",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.scc",
+      "template_status": "EXTRACTED",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "render_block_key": "KE-PPRA-IT-2022-04.render.contract_forms",
+      "display_title": "Section XIII - Contract Forms",
+      "block_code": "R-CONTRACT_FORMS",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.contract_forms",
+      "template_status": "EXTRACTED",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "render_block_key": "KE-PPRA-IT-2022-04.render.tech",
+      "display_title": "Section VI - Technical Requirements",
+      "block_code": "R-TECH",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.tech",
+      "template_status": "EXTRACTED",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "render_block_key": "KE-PPRA-IT-2022-04.render.impl",
+      "display_title": "Section VII - Implementation Schedule",
+      "block_code": "R-IMPL",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.impl",
+      "template_status": "EXTRACTED",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "render_block_key": "KE-PPRA-IT-2022-04.render.inventory",
+      "display_title": "Section VIII - System Inventory Tables",
+      "block_code": "R-INVENTORY",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.inventory",
+      "template_status": "EXTRACTED",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "render_block_key": "KE-PPRA-IT-2022-04.render.background",
+      "display_title": "Section IX - Background Materials",
+      "block_code": "R-BACKGROUND",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.background",
+      "template_status": "EXTRACTED",
+      "extraction_status": "EXTRACTED"
+    }
+  ]
+}

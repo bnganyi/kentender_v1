@@ -41,12 +41,25 @@ from kentender_procurement.std_engine.validation.validators.tender_instance_read
 	TenderInstanceReadinessValidator,
 )
 
+from kentender_procurement.std_engine.validation.validators.legal_review_gate import (
+	LegalReviewGateValidator,
+)
+from kentender_procurement.std_engine.validation.validators.pass_register_reconciliation import (
+	PassRegisterReconciliationValidator,
+)
+from kentender_procurement.std_engine.validation.validators.verbatim_source import (
+	VerbatimSourceValidator,
+)
+
 DEFAULT_VALIDATORS = (
 	ActivationBlockersValidator(),
 	PackageIntegrityValidator(),
 	SourceTraceabilityValidator(),
 	ClauseCoverageValidator(),
 	ClauseTextHashValidator(),
+	VerbatimSourceValidator(),
+	PassRegisterReconciliationValidator(),
+	LegalReviewGateValidator(),
 	PlaceholderExtractionValidator(),
 	ParameterRenderBindingValidator(),
 	EvaluationCriteriaValidator(),

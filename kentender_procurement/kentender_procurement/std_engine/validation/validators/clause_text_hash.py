@@ -13,9 +13,25 @@ from kentender_procurement.std_engine.validation.validators.context import Valid
 PLACEHOLDER_MARKERS = (
 	"PLACEHOLDER",
 	"TITLE_EXTRACTED",
-	"PENDING",
 	"TODO",
 )
+
+EXACT_PLACEHOLDER_STATUSES = {
+	"PENDING",
+	"PENDING_EXTRACTION",
+	"EXTRACTION_PENDING",
+}
+
+
+def _status_has_placeholder_marker(status: str) -> bool:
+	normalized = (status or "").upper().strip()
+	if not normalized:
+		return False
+	if normalized in EXACT_PLACEHOLDER_STATUSES:
+		return True
+	if normalized == "PENDING_LEGAL_REVIEW":
+		return False
+	return any(marker in normalized for marker in PLACEHOLDER_MARKERS)
 
 
 class ClauseTextHashValidator:
@@ -95,7 +111,7 @@ class ClauseTextHashValidator:
 				)
 			)
 
-		if any(marker in status for marker in PLACEHOLDER_MARKERS):
+		if _status_has_placeholder_marker(status):
 			findings.append(
 				ValidationFindingSpec(
 					finding_code="EXTRACTION_PLACEHOLDER",

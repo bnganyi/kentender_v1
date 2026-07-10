@@ -566,18 +566,80 @@
 			".std-prod-schema-actions-cell {" +
 			"min-width: 7.5rem;" +
 			"}" +
+			".std-prod-table-surface {" +
+			"max-width: 100%;" +
+			"}" +
 			".std-prod-table-scroll-host {" +
+			"display: block;" +
+			"width: 100%;" +
+			"max-width: 100%;" +
 			"overflow-x: auto;" +
+			"overflow-y: visible;" +
+			"position: relative;" +
+			"-webkit-overflow-scrolling: touch;" +
+			"scrollbar-width: thin;" +
+			"scrollbar-color: #737783 #eeedf3;" +
+			"}" +
+			".std-prod-table-scroll-host::-webkit-scrollbar {" +
+			"height: 12px;" +
+			"width: 12px;" +
+			"}" +
+			".std-prod-table-scroll-host::-webkit-scrollbar-thumb," +
+			".std-prod-table-hscroll-rail::-webkit-scrollbar-thumb {" +
+			"background: #737783;" +
+			"border-radius: 6px;" +
+			"}" +
+			".std-prod-table-hscroll-rail.std-prod-table-hscroll-rail--viewport {" +
+			"position: fixed;" +
+			"left: 0;" +
+			"right: 0;" +
+			"bottom: 0;" +
+			"z-index: 60;" +
+			"display: none;" +
+			"overflow-x: auto;" +
+			"overflow-y: hidden;" +
+			"height: 14px;" +
+			"min-height: 14px;" +
+			"max-height: 14px;" +
+			"border-top: 1px solid #e2e8f0;" +
+			"background: #eeedf3;" +
 			"-webkit-overflow-scrolling: touch;" +
 			"scrollbar-gutter: stable;" +
-			"overscroll-behavior-x: contain;" +
+			"scrollbar-width: thin;" +
+			"scrollbar-color: #737783 #eeedf3;" +
 			"}" +
-			"main section .std-prod-table-scroll-host {" +
+			".std-prod-table-hscroll-rail.std-prod-table-hscroll-rail--viewport.std-prod-table-hscroll-rail--active {" +
+			"display: block;" +
+			"}" +
+			".std-prod-table-hscroll-rail::-webkit-scrollbar {" +
+			"height: 12px;" +
+			"}" +
+			".std-prod-table-hscroll-rail-inner {" +
+			"height: 1px;" +
+			"pointer-events: none;" +
+			"}" +
+			".std-prod-table-scroll-host table {" +
+			"width: max-content;" +
+			"min-width: 100%;" +
+			"}" +
+			".std-prod-table-scroll-host table thead th {" +
 			"position: sticky;" +
-			"bottom: 0;" +
-			"z-index: 15;" +
-			"background: #ffffff;" +
-			"box-shadow: 0 -1px 0 #e2e8f0;" +
+			"top: 0;" +
+			"z-index: 6;" +
+			"background: #eeedf3;" +
+			"box-shadow: inset 0 -1px 0 #e2e8f0;" +
+			"}" +
+			".std-prod-table-scroll-host.std-prod-table-scroll-host--no-sticky-head table thead th {" +
+			"position: static;" +
+			"box-shadow: none;" +
+			"}" +
+			".std-prod-table-scroll-host table tbody {" +
+			"position: relative;" +
+			"z-index: 7;" +
+			"}" +
+			".std-prod-table-footer," +
+			"[data-std-prod-table-footer='1'] {" +
+			"flex-shrink: 0;" +
 			"}" +
 			"[data-std-prod-page-size] {" +
 			"min-width: 4.5rem;" +
@@ -800,15 +862,199 @@
 			section: section,
 			scrollHost: scroll_host,
 			footer: footer,
+			surfaceRoot: null,
 		};
+	}
+
+	function resolve_table_surface_root(surface) {
+		if (!surface || !surface.scrollHost) {
+			return null;
+		}
+		if (surface.surfaceRoot) {
+			return surface.surfaceRoot;
+		}
+		var scroll_host = surface.scrollHost;
+		var footer = surface.footer;
+		if (surface.section && surface.section.contains(scroll_host)) {
+			surface.section.classList.add("std-prod-table-surface");
+			surface.section.setAttribute("data-std-prod-table-surface", "1");
+			surface.surfaceRoot = surface.section;
+			return surface.surfaceRoot;
+		}
+		if (footer && footer.parentElement === scroll_host.parentElement) {
+			var parent = scroll_host.parentElement;
+			if (parent && parent.classList.contains("std-prod-table-surface")) {
+				surface.surfaceRoot = parent;
+				return surface.surfaceRoot;
+			}
+			if (parent && !parent.__stdProdTableSurfaceWrapped) {
+				var wrapper = scroll_host.ownerDocument.createElement("div");
+				wrapper.className = "std-prod-table-surface";
+				wrapper.setAttribute("data-std-prod-table-surface", "1");
+				parent.insertBefore(wrapper, scroll_host);
+				wrapper.appendChild(scroll_host);
+				wrapper.appendChild(footer);
+				parent.__stdProdTableSurfaceWrapped = true;
+				surface.surfaceRoot = wrapper;
+				return surface.surfaceRoot;
+			}
+		}
+		var host_parent = scroll_host.parentElement;
+		if (host_parent) {
+			host_parent.classList.add("std-prod-table-surface");
+			host_parent.setAttribute("data-std-prod-table-surface", "1");
+			surface.surfaceRoot = host_parent;
+			return surface.surfaceRoot;
+		}
+		return null;
+	}
+
+	function get_hscroll_rail_manager(doc) {
+		if (!doc.__stdProdHscrollRailManager) {
+			doc.__stdProdHscrollRailManager = {
+				hosts: [],
+				rail: null,
+				inner: null,
+				activeHost: null,
+				syncing: false,
+				bound: false,
+			};
+		}
+		return doc.__stdProdHscrollRailManager;
+	}
+
+	function refresh_hscroll_rail(doc) {
+		var manager = get_hscroll_rail_manager(doc);
+		if (!manager.rail || !manager.hosts.length) {
+			return;
+		}
+		var view = doc.defaultView;
+		if (!view) {
+			return;
+		}
+		var view_height = view.innerHeight || doc.documentElement.clientHeight || 0;
+		var best = null;
+		var best_visible = 0;
+		manager.hosts.forEach(function (host) {
+			var rect = host.getBoundingClientRect();
+			var visible = Math.min(rect.bottom, view_height) - Math.max(rect.top, 0);
+			if (visible > best_visible) {
+				best_visible = visible;
+				best = host;
+			}
+		});
+		manager.activeHost = best_visible > 0 ? best : null;
+		if (!manager.activeHost) {
+			manager.rail.classList.remove("std-prod-table-hscroll-rail--active");
+			return;
+		}
+		var scroll_host = manager.activeHost;
+		var overflowing = scroll_host.scrollWidth > scroll_host.clientWidth + 1;
+		manager.rail.classList.toggle("std-prod-table-hscroll-rail--active", overflowing);
+		if (!overflowing) {
+			return;
+		}
+		manager.inner.style.width = scroll_host.scrollWidth + "px";
+		if (!manager.syncing) {
+			manager.syncing = true;
+			manager.rail.scrollLeft = scroll_host.scrollLeft;
+			manager.syncing = false;
+		}
+	}
+
+	function ensure_viewport_hscroll_rail(doc) {
+		var manager = get_hscroll_rail_manager(doc);
+		if (manager.rail) {
+			return manager.rail;
+		}
+		var rail = doc.createElement("div");
+		rail.className = "std-prod-table-hscroll-rail std-prod-table-hscroll-rail--viewport";
+		rail.setAttribute("data-std-prod-table-hscroll-rail", "1");
+		var inner = doc.createElement("div");
+		inner.className = "std-prod-table-hscroll-rail-inner";
+		rail.appendChild(inner);
+		doc.body.appendChild(rail);
+		manager.rail = rail;
+		manager.inner = inner;
+		rail.addEventListener(
+			"scroll",
+			function () {
+				if (manager.syncing || !manager.activeHost) {
+					return;
+				}
+				manager.syncing = true;
+				manager.activeHost.scrollLeft = rail.scrollLeft;
+				manager.syncing = false;
+			},
+			{ passive: true }
+		);
+		if (!manager.bound && doc.defaultView) {
+			manager.bound = true;
+			var refresh = function () {
+				refresh_hscroll_rail(doc);
+			};
+			doc.defaultView.addEventListener("scroll", refresh, { passive: true });
+			doc.defaultView.addEventListener("resize", refresh, { passive: true });
+		}
+		return rail;
+	}
+
+	function register_hscroll_host(doc, scroll_host, table) {
+		if (!scroll_host || scroll_host.getAttribute("data-std-prod-hscroll-registered") === "1") {
+			return;
+		}
+		scroll_host.setAttribute("data-std-prod-hscroll-registered", "1");
+		var manager = get_hscroll_rail_manager(doc);
+		if (manager.hosts.indexOf(scroll_host) < 0) {
+			manager.hosts.push(scroll_host);
+		}
+		ensure_viewport_hscroll_rail(doc);
+		scroll_host.addEventListener(
+			"scroll",
+			function () {
+				if (manager.activeHost !== scroll_host || manager.syncing || !manager.rail) {
+					return;
+				}
+				manager.syncing = true;
+				manager.rail.scrollLeft = scroll_host.scrollLeft;
+				manager.syncing = false;
+			},
+			{ passive: true }
+		);
+		if (typeof ResizeObserver === "function") {
+			var resize_observer = new ResizeObserver(function () {
+				refresh_hscroll_rail(doc);
+			});
+			resize_observer.observe(scroll_host);
+			if (table) {
+				resize_observer.observe(table);
+			}
+		}
+		refresh_hscroll_rail(doc);
 	}
 
 	function enhance_table_scroll_ux(doc, surface) {
 		surface = surface || resolve_table_surface(doc);
 		if (!surface.scrollHost || surface.scrollHost.classList.contains("std-prod-scroll-wired")) {
-			return;
+			return surface;
 		}
 		surface.scrollHost.classList.add("std-prod-scroll-wired", "std-prod-table-scroll-host");
+		surface.scrollHost.setAttribute("data-std-prod-table-scroll-host", "1");
+		if (!doc.body.classList.contains("std-prod-schema-list")) {
+			surface.scrollHost.classList.add("std-prod-table-scroll-host--no-sticky-head");
+		}
+		if (surface.table && surface.table.classList) {
+			surface.table.classList.remove("w-full");
+		}
+		if (surface.footer) {
+			surface.footer.classList.add("std-prod-table-footer");
+			if (!surface.footer.getAttribute("data-std-prod-table-footer")) {
+				surface.footer.setAttribute("data-std-prod-table-footer", "1");
+			}
+		}
+		resolve_table_surface_root(surface);
+		register_hscroll_host(doc, surface.scrollHost, surface.table);
+		return surface;
 	}
 
 	function should_paginate_tbody(tbody) {
@@ -1156,6 +1402,7 @@
 					state.pageSize,
 					state.page
 				);
+				refresh_hscroll_rail(doc);
 			});
 		}
 
@@ -1315,7 +1562,7 @@
 		if (!main) {
 			return;
 		}
-		var kpi_section = main.querySelector("section.grid");
+		var kpi_section = main.querySelector("section.grid, div.grid.grid-cols-1, div.grid.grid-cols-2");
 		if (kpi_section) {
 			kpi_section.style.display = "none";
 		}
@@ -1724,7 +1971,7 @@
 		set_labeled_field(
 			doc,
 			"Parameter Status",
-			data.validationStatus || data.extractionStatus || "—",
+			data.verificationStatus || data.validationStatus || data.extractionStatus || "—",
 		);
 		set_labeled_field(doc, "Data Type", data.fieldType || "—");
 		set_labeled_field(doc, "Requiredness", data.required ? "MANDATORY" : "OPTIONAL");
@@ -1856,9 +2103,16 @@
 			);
 			var hash_panel = trace_section.querySelector(".font-data-mono.text-\\[12px\\].text-tertiary");
 			if (hash_panel) {
-				hash_panel.textContent =
-					data.description ||
-					"Source text hash and verbatim extraction are pending for this parameter in Milestone 1.";
+				var hash_value = data.normalizedTextHash || metadata.normalized_text_hash || "";
+				var source_text = data.sourceText || metadata.source_text || "";
+				if (hash_value) {
+					hash_panel.textContent = "SHA-256: " + hash_value;
+				} else if (source_text) {
+					hash_panel.textContent = source_text.slice(0, 240);
+				} else {
+					hash_panel.textContent =
+						"Source text hash and verbatim extraction are pending for this parameter in Milestone 1.";
+				}
 			}
 		}
 
@@ -3487,6 +3741,11 @@
 		var legal_section = find_clause_panel(doc, "Legal Source Text");
 		if (legal_section) {
 			var hash_value = data.normalizedTextHash || (data.metadata && data.metadata.normalized_text_hash) || "";
+			var verification_status =
+				data.verificationStatus ||
+				(data.metadata && data.metadata.verification_status) ||
+				data.validationStatus ||
+				"";
 			legal_section.querySelectorAll("span.font-data-mono").forEach(function (node) {
 				if ((node.textContent || "").indexOf("SHA-256:") === 0) {
 					node.textContent = hash_value ? "SHA-256: " + hash_value : "SHA-256: unavailable";
@@ -3494,8 +3753,23 @@
 			});
 			var legal_footer = legal_section.querySelector(".px-6.py-3.bg-surface");
 			if (legal_footer) {
+				var page_start = data.sourcePageStart || (data.metadata && data.metadata.source_page_start);
+				var page_end = data.sourcePageEnd || (data.metadata && data.metadata.source_page_end);
+				var page_ref =
+					page_start && page_end && page_start !== page_end
+						? "Pages " + page_start + "–" + page_end
+						: page_start
+							? "Page " + page_start
+							: "Page reference unavailable";
 				legal_footer.innerHTML =
-					'<div class="text-xs text-on-surface-variant italic">Source page references and verification stamps are not exposed in the Milestone 1 read model.</div>';
+					'<div class="text-xs text-on-surface-variant">' +
+					frappe.utils.escape_html(page_ref) +
+					" · Verification: " +
+					frappe.utils.escape_html(String(verification_status || "PENDING").replace(/_/g, " ")) +
+					(data.clauseTextSource === "PDF_VERBATIM"
+						? " · Source: PDF verbatim"
+						: "") +
+					"</div>";
 			}
 		}
 
@@ -3660,6 +3934,19 @@
 			}
 		});
 		var run = data.validationRun || {};
+		var legal_gate_count = (data.findings || []).filter(function (finding) {
+			return (finding.code || finding.findingCode || "") === "LEGAL_REVIEW_PENDING";
+		}).length;
+		if (legal_gate_count) {
+			var banner = doc.querySelector(".bg-error-container, .bg-warning-container, [data-testid='std-prod-activation-banner']");
+			if (banner) {
+				banner.setAttribute("data-testid", "std-prod-activation-banner");
+				banner.innerHTML =
+					'<div class="text-sm font-semibold">Activation blocked — legal review pending for ' +
+					String(legal_gate_count) +
+					" verbatim object(s).</div>";
+			}
+		}
 		doc.querySelectorAll(".font-data-mono").forEach(function (node) {
 			if ((node.textContent || "").indexOf("VR-") === 0 && run.runKey) {
 				node.textContent = run.runKey;
@@ -4126,13 +4413,20 @@
 	}
 
 	function wire_navigation_doc(screen, doc, ctx) {
-		if (!doc || !doc.body || doc.body.dataset.stdProdNavScreen === screen) {
+		if (!doc || !doc.body) {
 			return;
 		}
+		doc.__stdProdNavCtx = Object.assign({}, ctx || get_context());
 		doc.body.dataset.stdProdNavScreen = screen;
+		if (doc.body.dataset.stdProdNavWired === "1") {
+			return;
+		}
+		doc.body.dataset.stdProdNavWired = "1";
 		doc.body.addEventListener(
 			"click",
 			function (event) {
+				var active_ctx = doc.__stdProdNavCtx || get_context();
+				var ctx = active_ctx;
 				var target = event.target && event.target.closest ? event.target.closest("button, a, tr, span") : null;
 				if (!target) {
 					return;
@@ -4141,7 +4435,7 @@
 
 				var breadcrumb_link = target.closest(".std-prod-breadcrumb-link");
 				if (breadcrumb_link) {
-					var breadcrumb_nav = resolve_breadcrumb_navigation(breadcrumb_link, ctx);
+					var breadcrumb_nav = resolve_breadcrumb_navigation(breadcrumb_link, active_ctx);
 					if (breadcrumb_nav) {
 						event.preventDefault();
 						event.stopPropagation();

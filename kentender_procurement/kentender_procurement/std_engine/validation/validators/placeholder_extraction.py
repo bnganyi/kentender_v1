@@ -10,7 +10,9 @@ import json
 import frappe
 
 from kentender_procurement.std_engine.validation.finding_spec import ValidationFindingSpec
-from kentender_procurement.std_engine.validation.validators.clause_text_hash import PLACEHOLDER_MARKERS
+from kentender_procurement.std_engine.validation.validators.clause_text_hash import (
+	_status_has_placeholder_marker,
+)
 from kentender_procurement.std_engine.validation.validators.context import ValidationContext
 
 
@@ -50,7 +52,7 @@ class PlaceholderExtractionValidator:
 			value = str(record.get(field) or "").upper()
 			if not value:
 				continue
-			if any(marker in value for marker in PLACEHOLDER_MARKERS):
+			if _status_has_placeholder_marker(value):
 				findings.append(
 					ValidationFindingSpec(
 						finding_code="EXTRACTION_PLACEHOLDER",

@@ -5,10 +5,30 @@ import { loginAsAdministrator } from "../../helpers/auth";
 const CANONICAL_PACKAGE_ID = "KE-PPRA-IT-2022-04";
 
 function ensureCanonicalStdImport() {
+	const zipPath =
+		"/home/midasuser/frappe-bench/apps/kentender_v1/docs/std-prod-impl/data/KE-PPRA-IT-2022-04_Seed_Package_v1_1.zip";
 	execSync(
-		"cd /home/midasuser/frappe-bench && bench --site kentender.midas.com execute kentender_procurement.std_engine.package_import.commit.run",
+		`cd /home/midasuser/frappe-bench && bench --site kentender.midas.com execute kentender_procurement.std_engine.package_import.commit.run --kwargs '${JSON.stringify({ zip_path: zipPath })}'`,
 		{ stdio: "ignore" },
 	);
+}
+
+async function clickLibraryOpenButton(
+	iframe: ReturnType<import("@playwright/test").Page["frameLocator"]>,
+) {
+	const openButton = iframe.getByRole("button", { name: "Open" }).first();
+	const scrollHost = iframe.locator('[data-std-prod-table-scroll-host="1"]');
+	if ((await scrollHost.count()) > 0) {
+		await scrollHost.evaluate(() => {
+			const openBtn = Array.from(document.querySelectorAll("button")).find(
+				(btn) => (btn.textContent || "").trim() === "Open",
+			);
+			if (openBtn) {
+				openBtn.scrollIntoView({ block: "nearest", inline: "end" });
+			}
+		});
+	}
+	await openButton.click({ force: true });
 }
 
 test.describe("STD prod vertical slice API hydration", () => {
@@ -109,6 +129,44 @@ test.describe("STD prod vertical slice API hydration", () => {
 		await expect(iframe.getByText("Unauthorized active versions").locator("..").getByText("0", { exact: true })).toBeVisible();
 	});
 
+	test("library table exposes horizontal scroll inside viewport-bounded pane", async ({ page }) => {
+		await page.goto("/desk/std-library");
+		const iframe = page.frameLocator('[data-testid="std-prod-std-library-iframe"]');
+		await expect(iframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await expect(iframe.locator("body.std-prod-table-viewport")).toHaveCount(0);
+		await expect(iframe.locator('[data-std-prod-table-scroll-host="1"]')).toBeVisible();
+		const scrollHost = iframe.locator('[data-std-prod-table-scroll-host="1"]');
+		const rail = iframe.locator(
+			'[data-std-prod-table-hscroll-rail="1"].std-prod-table-hscroll-rail--viewport.std-prod-table-hscroll-rail--active',
+		);
+		await expect(rail).toBeVisible();
+		const metrics = await scrollHost.evaluate((el) => {
+			const table = el.querySelector("table");
+			const styles = window.getComputedStyle(el);
+			return {
+				overflowX: styles.overflowX,
+				overflowY: styles.overflowY,
+				scrollWidth: el.scrollWidth,
+				clientWidth: el.clientWidth,
+				scrollHeight: el.scrollHeight,
+				clientHeight: el.clientHeight,
+				tableScrollWidth: table ? table.scrollWidth : 0,
+			};
+		});
+		expect(metrics.overflowX).toMatch(/auto|scroll/);
+		expect(["visible", "auto"]).toContain(metrics.overflowY);
+		expect(metrics.scrollHeight).toBeLessThanOrEqual(metrics.clientHeight + 2);
+		expect(Math.max(metrics.scrollWidth, metrics.tableScrollWidth)).toBeGreaterThan(
+			metrics.clientWidth,
+		);
+		await rail.evaluate((el) => {
+			el.scrollLeft = 240;
+		});
+		expect(await scrollHost.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);
+	});
+
 	test("family detail table footer reflects version count", async ({ page }) => {
 		await page.goto("/desk/std-family-detail");
 		const iframe = page.frameLocator('[data-testid="std-prod-std-family-detail-iframe"]');
@@ -152,7 +210,7 @@ test.describe("STD prod vertical slice API hydration", () => {
 		await expect(libraryIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
 			timeout: 30_000,
 		});
-		await libraryIframe.getByRole("button", { name: "Open" }).first().click();
+		await clickLibraryOpenButton(libraryIframe);
 		await expect(page).toHaveURL(/\/desk\/std-version-detail/, { timeout: 30_000 });
 
 		const versionIframe = page.frameLocator('[data-testid="std-prod-std-version-detail-iframe"]');
@@ -168,7 +226,7 @@ test.describe("STD prod vertical slice API hydration", () => {
 		await expect(libraryIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
 			timeout: 30_000,
 		});
-		await libraryIframe.getByRole("button", { name: "Open" }).first().click();
+		await clickLibraryOpenButton(libraryIframe);
 		await expect(page).toHaveURL(/\/desk\/std-version-detail/, {
 			timeout: 30_000,
 		});
@@ -460,5 +518,57 @@ test.describe("STD prod vertical slice API hydration", () => {
 		});
 		await versionIframe3.locator('[data-std-workspace-route="std-render-blocks"]').click();
 		await expect(page).toHaveURL(/\/desk\/std-render-blocks/, { timeout: 30_000 });
+	});
+
+	test("clause detail shows verbatim hash and page references", async ({ page }) => {
+		await page.goto("/desk/std-section-clauses");
+		const sectionsIframe = page.frameLocator('[data-testid="std-prod-std-section-clauses-iframe"]');
+		await expect(sectionsIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await sectionsIframe
+			.locator(".std-prod-section-row")
+			.filter({ hasText: "Section X - General Conditions of Contract" })
+			.click();
+		await sectionsIframe.locator(".std-prod-clause-row").filter({ hasText: "Fraud and Corruption" }).click();
+		const clauseIframe = page.frameLocator('[data-testid="std-prod-std-clause-detail-iframe"]');
+		await expect(clauseIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await expect(clauseIframe.getByText(/SHA-256:/)).toBeVisible();
+		await expect(clauseIframe.getByText("SHA-256: unavailable")).toHaveCount(0);
+		await expect(clauseIframe.getByText(/Page(s)? \d+/)).toBeVisible();
+		await expect(clauseIframe.getByText(/Verification:/i)).toBeVisible();
+	});
+
+	test("validation report surfaces legal review gate banner", async ({ page }) => {
+		await page.goto("/desk/std-validation-report");
+		const iframe = page.frameLocator('[data-testid="std-prod-std-validation-report-iframe"]');
+		await expect(iframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await expect(iframe.getByText(/LEGAL_REVIEW_PENDING|legal review pending/i).first()).toBeVisible();
+	});
+
+	test("parameter detail shows extracted source hash for TDS-013", async ({ page }) => {
+		await page.goto("/desk/std-library");
+		await page.evaluate(() => {
+			// @ts-ignore
+			frappe.route_options = {
+				package_id: "KE-PPRA-IT-2022-04",
+				parameter_key: "KE-PPRA-IT-2022-04.parameter.tds.013",
+			};
+			// @ts-ignore
+			frappe.set_route("std-parameter-detail");
+		});
+		await expect(page).toHaveURL(/\/desk\/std-parameter-detail/, { timeout: 30_000 });
+		const paramIframe = page.frameLocator('[data-testid="std-prod-std-parameter-detail-iframe"]');
+		await expect(paramIframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await expect(
+			paramIframe.getByText("Source text hash and verbatim extraction are pending"),
+		).toHaveCount(0);
+		await expect(paramIframe.getByText(/SHA-256: 714153/)).toBeVisible();
 	});
 });

@@ -1,0 +1,10 @@
+{
+  "records": [
+    {
+      "expectation_key": "KE-PPRA-IT-2022-04.validation_expectation.no_placeholders",
+      "finding_code": "EXTRACTION_PLACEHOLDER",
+      "max_blockers": 0,
+      "extraction_status": "EXTRACTED"
+    }
+  ]
+}

@@ -129,7 +129,7 @@ def _detect_package_root(zf: zipfile.ZipFile) -> str:
 	# Prefer canonical seed package root; ignore calibration/fixture manifests.
 	manifest_paths.sort(
 		key=lambda p: (
-			0 if "seed_package_v1_0" in p else 1 if "seed_package_v0_2" in p else 2,
+			0 if "seed_package_v1_1" in p else 1 if "seed_package_v1_0" in p else 2 if "seed_package_v0_2" in p else 3,
 			1 if "/fixtures/" in p else 0,
 			p,
 		)

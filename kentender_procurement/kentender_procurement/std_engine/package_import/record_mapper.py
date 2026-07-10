@@ -109,10 +109,12 @@ def map_source_anchor_record(record: dict[str, Any], ctx: PackageContext) -> dic
 		"version_code": ctx.version_code,
 		"anchor_key": record["source_anchor_key"],
 		"source_document": record["source_document_key"],
-		"section_ref": record.get("section_code"),
-		"clause_ref": record.get("anchor_code"),
-		"page_from": record.get("official_print_page_start"),
-		"page_to": record.get("official_print_page_end"),
+		"section_ref": record.get("source_section_ref") or record.get("section_code"),
+		"clause_ref": record.get("source_clause_ref") or record.get("anchor_code"),
+		"page_from": record.get("source_page_start") or record.get("official_print_page_start"),
+		"page_to": record.get("source_page_end") or record.get("official_print_page_end"),
+		"anchor_hash": record.get("normalized_text_hash") or record.get("anchor_hash"),
+		"validation_status": record.get("verification_status") or record.get("extraction_status"),
 		"metadata_json": metadata_json(record),
 	}
 
@@ -150,7 +152,10 @@ def map_clause_record(record: dict[str, Any], ctx: PackageContext) -> dict[str, 
 		"title": record.get("display_title") or record.get("clause_title"),
 		"clause_text": full_text,
 		"content_hash": record.get("normalized_text_hash") or record.get("content_hash"),
-		"validation_status": record.get("text_status") or record.get("extraction_status") or record.get("extraction_pass"),
+		"validation_status": record.get("verification_status")
+		or record.get("text_status")
+		or record.get("extraction_status")
+		or record.get("extraction_pass"),
 		"metadata_json": metadata_json(record),
 	}
 	if record.get("source_anchor_key"):
@@ -186,15 +191,19 @@ def map_identity_record(
 
 
 def map_parameter_record(record: dict[str, Any], ctx: PackageContext) -> dict[str, Any]:
-	return map_identity_record(
+	doc = map_identity_record(
 		record,
 		ctx,
 		doctype="STD Parameter",
 		key_field="parameter_key",
 		record_key="parameter_key",
 		title_field="display_label",
-		status_field="extraction_status",
+		status_field="verification_status",
 	)
+	doc["content_hash"] = record.get("normalized_text_hash") or record.get("content_hash")
+	if not doc.get("validation_status"):
+		doc["validation_status"] = record.get("extraction_status")
+	return doc
 
 
 def map_rule_record(record: dict[str, Any], ctx: PackageContext) -> dict[str, Any]:

@@ -1,0 +1,74 @@
+{
+  "records": [
+    {
+      "test_case_key": "KE-PPRA-IT-2022-04.rule_test.it_r_tds_001",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_001",
+      "expected_result": "BLOCK",
+      "description": "Missing value for Request for Tenders reference number must be populated before tender publication.",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "test_case_key": "KE-PPRA-IT-2022-04.rule_test.it_r_tds_002",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_002",
+      "expected_result": "BLOCK",
+      "description": "Missing value for Procuring Entity legal name must be populated before tender publication.",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "test_case_key": "KE-PPRA-IT-2022-04.rule_test.it_r_tds_003",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_003",
+      "expected_result": "BLOCK",
+      "description": "Missing value for Name of ITT / tender name must be populated before tender publication.",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "test_case_key": "KE-PPRA-IT-2022-04.rule_test.it_r_tds_004",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_004",
+      "expected_result": "BLOCK",
+      "description": "Missing value for Number and identification of lots/contracts must be populated before tender publication.",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "test_case_key": "KE-PPRA-IT-2022-04.rule_test.it_r_tds_005",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_005",
+      "expected_result": "BLOCK",
+      "description": "Missing value for E-procurement system enabled must be populated before tender publication.",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "test_case_key": "KE-PPRA-IT-2022-04.rule_test.it_r_tds_006",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_006",
+      "expected_result": "BLOCK",
+      "description": "Missing value for E-procurement system name must be populated before tender publication.",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "test_case_key": "KE-PPRA-IT-2022-04.rule_test.it_r_tds_007",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_007",
+      "expected_result": "BLOCK",
+      "description": "Missing value for E-procurement URL/link must be populated before tender publication.",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "test_case_key": "KE-PPRA-IT-2022-04.rule_test.it_r_tds_008",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_008",
+      "expected_result": "BLOCK",
+      "description": "Missing value for E-procurement process aspects must be populated before tender publication.",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "test_case_key": "KE-PPRA-IT-2022-04.rule_test.it_r_tds_009",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_009",
+      "expected_result": "BLOCK",
+      "description": "Missing value for Firms that provided consulting services must be populated before tender publication.",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "test_case_key": "KE-PPRA-IT-2022-04.rule_test.it_r_tds_010",
+      "rule_key": "KE-PPRA-IT-2022-04.rule.tds.validation_010",
+      "expected_result": "BLOCK",
+      "description": "Missing value for Maximum number of JV members must be populated before tender publication.",
+      "extraction_status": "EXTRACTED"
+    }
+  ]
+}

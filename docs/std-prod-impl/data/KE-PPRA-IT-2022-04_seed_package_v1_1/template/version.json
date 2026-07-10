@@ -1,0 +1,15 @@
+{
+  "records": [
+    {
+      "package_id": "KE-PPRA-IT-2022-04",
+      "family_code": "KE-PPRA-IT",
+      "version_code": "KE-PPRA-IT-2022-04",
+      "lifecycle_state": "DRAFT",
+      "activation_allowed": false,
+      "package_quality": "FULL_EXTRACTION_CANDIDATE",
+      "ui_mode": "READ_ONLY_INSPECTION",
+      "authority": "PPRA",
+      "source_document_key": "DOC-10-IT-STD-2022-04"
+    }
+  ]
+}

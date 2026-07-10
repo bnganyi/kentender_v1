@@ -17,13 +17,18 @@ from scripts.std_extraction.constants import (
 	FAMILY_CODE,
 	PACKAGE_CODE,
 	PACKAGE_QUALITY,
+	PACKAGE_QUALITY_V1_1,
 	PACKAGE_ROOT_NAME,
+	PACKAGE_ROOT_NAME_V1_1,
 	PDF_FILENAME,
 	SCHEMA_VERSION,
+	SCHEMA_VERSION_V1_1,
 	SOURCE_DOCUMENT_KEY,
 	VERSION_CODE,
 	WORK_DIR,
+	WORK_DIR_V1_1,
 	ZIP_FILENAME,
+	ZIP_FILENAME_V1_1,
 )
 from scripts.std_extraction.hash_utils import normalize_text, sha256_file, sha256_text
 from scripts.std_extraction.parse_passes import (
@@ -34,6 +39,9 @@ from scripts.std_extraction.parse_passes import (
 	load_scc_parameters,
 	load_tds_parameters,
 )
+from scripts.std_extraction.verbatim.extract_clauses import extract_verbatim_clauses, verbatim_clause_to_package_record
+from scripts.std_extraction.verbatim.extract_parameters import extract_verbatim_parameters, verbatim_parameter_to_package_fields
+from scripts.std_extraction.verbatim.reconcile_verbatim import build_reconciliation, write_reconciliation_report
 
 
 def _key(*parts: str) -> str:
@@ -703,6 +711,196 @@ def build_package() -> dict[str, int]:
 	}
 
 
+def build_manifest_v1_1(reconciliation: dict) -> dict:
+	extraction_blockers = [
+		row["finding_code"]
+		for row in reconciliation.get("findings", [])
+		if row.get("severity") == "BLOCKER"
+		and row.get("finding_code")
+		in {"CLAUSE_TEXT_MISSING", "PARAMETER_SOURCE_TEXT_MISSING", "EXTRACTION_LOW_CONFIDENCE"}
+	]
+	blockers = ["LEGAL_REVIEW_PENDING"]
+	if extraction_blockers:
+		blockers.append("VERBATIM_RECONCILIATION_PENDING")
+	return {
+		"package_code": PACKAGE_CODE,
+		"family_code": FAMILY_CODE,
+		"version_code": VERSION_CODE,
+		"schema_version": SCHEMA_VERSION_V1_1,
+		"authority": "PPRA",
+		"source_document": "DOC 10. STD FOR PROCUREMENT OF INFORMATION TECHNOLOGY",
+		"package_quality": PACKAGE_QUALITY_V1_1,
+		"activation_allowed": False,
+		"import_allowed_states": ["DRAFT", "STRUCTURING"],
+		"contains_fixture_data": True,
+		"fixture_data_import_policy": "DO_NOT_IMPORT_BY_DEFAULT",
+		"extraction_passes_applied": [
+			"Pass_1",
+			"Pass_2",
+			"Pass_3",
+			"Pass_4",
+			"Pass_5",
+			"Verbatim_V1_1",
+		],
+		"generated_at": datetime.now(timezone.utc).isoformat(),
+		"activation_blockers": blockers,
+		"verbatim_reconciliation_summary": reconciliation.get("summary"),
+	}
+
+
+def build_source_document_v1_1(pdf_path: Path) -> dict:
+	payload = build_source_document()
+	record = payload["records"][0]
+	record["source_file_sha256"] = sha256_file(pdf_path)
+	record["page_count"] = 183
+	return payload
+
+
+def build_verbatim_clauses() -> list[dict]:
+	records: list[dict] = []
+	for clause in extract_verbatim_clauses():
+		section_slug = "itt" if clause.section == "ITT" else "gcc"
+		slug = re.sub(r"[^a-z0-9]+", "_", clause.display_title.lower()).strip("_")
+		clause_key = _key("clause", section_slug, f"{clause.clause_code.lower().replace('-', '_')}_{slug}")
+		anchor_key = _key("anchor", section_slug, clause.clause_code.lower().replace("-", "_"))
+		records.append(
+			verbatim_clause_to_package_record(
+				clause,
+				clause_key=clause_key,
+				section_key=_key("section", section_slug),
+				anchor_key=anchor_key,
+				source_document_id=SOURCE_DOCUMENT_KEY,
+			)
+		)
+	return records
+
+
+def build_verbatim_parameters(rules: list[dict] | None = None) -> list[dict]:
+	verbatim_by_code = {row.parameter_code: row for row in extract_verbatim_parameters()}
+	records = build_parameters(rules)
+	for record in records:
+		param = verbatim_by_code.get(record["parameter_code"])
+		if not param:
+			continue
+		record.update(verbatim_parameter_to_package_fields(param))
+		record["verification_status"] = param.verification_status
+	return records
+
+
+def build_source_anchors_v1_1(sections: list[dict], clauses: list[dict], parameters: list[dict]) -> list[dict]:
+	anchors = build_source_anchors(sections, clauses, parameters)
+	for anchor in anchors:
+		if anchor.get("anchor_type") == "CLAUSE":
+			anchor["verification_status"] = "PENDING_LEGAL_REVIEW"
+			anchor["paragraph_start_hint"] = None
+			anchor["paragraph_end_hint"] = None
+		if anchor.get("anchor_type") == "PARAMETER":
+			anchor["verification_status"] = "PENDING_LEGAL_REVIEW"
+			matching = next(
+				(row for row in parameters if row.get("source_anchor_key") == anchor["source_anchor_key"]),
+				None,
+			)
+			if matching:
+				anchor["source_text_hash"] = matching.get("source_text_hash")
+				anchor["normalized_text_hash"] = matching.get("normalized_text_hash")
+				anchor["source_page_start"] = matching.get("source_page_start")
+				anchor["source_page_end"] = matching.get("source_page_end")
+	return anchors
+
+
+def build_smoke_tests_v1_1() -> list[dict]:
+	test_ids = [f"STD-SMOKE-{index:03d}" for index in range(1, 21)]
+	return [
+		{
+			"smoke_test_key": _key("smoke", test_id.lower().replace("-", "_")),
+			"test_id": test_id,
+			"expected_result": "PASS",
+			"extraction_status": "EXTRACTED",
+		}
+		for test_id in test_ids
+	]
+
+
+def build_package_v1_1() -> dict[str, int | str]:
+	if WORK_DIR_V1_1.exists():
+		shutil.rmtree(WORK_DIR_V1_1)
+	WORK_DIR_V1_1.mkdir(parents=True, exist_ok=True)
+
+	sections = build_sections()
+	clauses = build_verbatim_clauses()
+	rules = build_rules()
+	parameters = build_verbatim_parameters(rules)
+	forms, form_fields, form_sections = build_forms()
+	render_blocks = build_render_blocks(sections)
+	source_anchors = build_source_anchors_v1_1(sections, clauses, parameters)
+	reconciliation = build_reconciliation()
+	write_reconciliation_report(reconciliation, WORK_DIR_V1_1)
+
+	pdf_path = DATA_DIR / PDF_FILENAME
+	if not pdf_path.exists():
+		raise FileNotFoundError(f"Official PDF missing: {pdf_path}")
+
+	writes = {
+		"manifest.json": build_manifest_v1_1(reconciliation),
+		"template/family.json": build_family(),
+		"template/version.json": build_version(),
+		"source/source_document.json": build_source_document_v1_1(pdf_path),
+		"template/sections.json": _records(sections),
+		"template/clauses.json": _records(clauses),
+		"template/clause_fragments.json": _records(build_clause_fragments(clauses)),
+		"source/source_anchors.json": _records(source_anchors),
+		"configuration/parameters.json": _records(parameters),
+		"rules/rule_catalog.json": _records(rules),
+		"rules/rule_bindings.json": _records(build_rule_bindings(rules)),
+		"rules/rule_test_cases.json": _records(build_rule_test_cases(rules)),
+		"forms/form_catalog.json": _records(forms),
+		"forms/form_fields.json": _records(form_fields),
+		"forms/form_sections.json": _records(form_sections),
+		"forms/evidence_requirements.json": _records(build_evidence_requirements(forms)),
+		"requirements/requirement_schema.json": _records(build_requirements()),
+		"pricing/price_schedule_catalog.json": _records(build_price_schedules()),
+		"evaluation/evaluation_schema.json": _records(build_evaluation()),
+		"contract/contract_schema.json": _records(build_contract_schema()),
+		"rendering/render_blocks.json": _records(render_blocks),
+		"tests/smoke_tests.json": _records(build_smoke_tests_v1_1()),
+		"tests/sample_tender_instances.json": _records(build_sample_tender_instances()),
+		"tests/validation_expectations.json": _records(build_validation_expectations()),
+		"tests/tender_binding_smoke_tests.json": _records(build_tender_binding_smoke_tests()),
+		"tests/verbatim_reconciliation.json": reconciliation,
+	}
+	for relative, payload in writes.items():
+		_write_json(WORK_DIR_V1_1 / relative, payload)
+
+	checksums = build_checksums(WORK_DIR_V1_1)
+	_write_json(WORK_DIR_V1_1 / "checksums.json", checksums)
+
+	zip_path = DATA_DIR / ZIP_FILENAME_V1_1
+	with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+		for path in sorted(WORK_DIR_V1_1.rglob("*")):
+			if path.is_file():
+				archive_name = f"{PACKAGE_ROOT_NAME_V1_1}/{path.relative_to(WORK_DIR_V1_1).as_posix()}"
+				zf.write(path, archive_name)
+		zf.write(pdf_path, f"{PACKAGE_ROOT_NAME_V1_1}/source/{PDF_FILENAME}")
+
+	return {
+		"sections": len(sections),
+		"clauses": len(clauses),
+		"anchors": len(source_anchors),
+		"parameters": len(parameters),
+		"rules": len(rules),
+		"forms": len(forms),
+		"form_fields": len(form_fields),
+		"render_blocks": len(render_blocks),
+		"zip": str(zip_path),
+		"reconciliation_blockers": reconciliation["summary"]["blockers"],
+	}
+
+
 if __name__ == "__main__":
-	counts = build_package()
-	print(json.dumps({"status": "built", "counts": counts, "zip": str(DATA_DIR / ZIP_FILENAME)}, indent=2))
+	import sys
+
+	if len(sys.argv) > 1 and sys.argv[1] == "v1_1":
+		counts = build_package_v1_1()
+	else:
+		counts = build_package()
+	print(json.dumps({"status": "built", "counts": counts}, indent=2))

@@ -47,16 +47,36 @@ async function clickParameterRow(
 	iframe: ReturnType<import("@playwright/test").Page["frameLocator"]>,
 	parameterKey: string,
 ) {
+	await showAllTableRows(iframe);
 	const row = await revealTableRow(iframe, `[data-parameter-key="${parameterKey}"]`);
-	await row.click({ force: true });
+	const scrollHost = iframe.locator('[data-std-prod-table-scroll-host="1"]');
+	if ((await scrollHost.count()) > 0) {
+		await scrollHost.evaluate((host, key) => {
+			const target = host.querySelector(`[data-parameter-key="${key}"]`);
+			if (target) {
+				target.scrollIntoView({ block: "center", inline: "nearest" });
+			}
+		}, parameterKey);
+	}
+	await row.click();
 }
 
 async function clickParameterViewRules(
 	iframe: ReturnType<import("@playwright/test").Page["frameLocator"]>,
 	parameterKey: string,
 ) {
+	await showAllTableRows(iframe);
 	const row = await revealTableRow(iframe, `[data-parameter-key="${parameterKey}"]`);
-	await row.locator('[title="View Rules"]').click({ force: true });
+	const scrollHost = iframe.locator('[data-std-prod-table-scroll-host="1"]');
+	if ((await scrollHost.count()) > 0) {
+		await scrollHost.evaluate((host, key) => {
+			const target = host.querySelector(`[data-parameter-key="${key}"]`);
+			if (target) {
+				target.scrollIntoView({ block: "center", inline: "nearest" });
+			}
+		}, parameterKey);
+	}
+	await row.locator('[title="View Rules"]').click();
 }
 
 async function clickFormRow(
@@ -211,9 +231,30 @@ test.describe("STD prod schema slice API hydration", () => {
 			timeout: 30_000,
 		});
 		await expect(iframe.locator('[data-std-prod-table-footer]')).toContainText("Showing 1-6 of 6");
+		const scrollHost = iframe.locator('[data-std-prod-table-scroll-host="1"]');
+		const beforeMetrics = await scrollHost.evaluate((el) => ({
+			overflowY: window.getComputedStyle(el).overflowY,
+			scrollHeight: el.scrollHeight,
+			clientHeight: el.clientHeight,
+			visibleRows: el.querySelectorAll("tbody tr").length,
+		}));
+		expect(beforeMetrics.overflowY).toMatch(/visible|auto/);
+		expect(beforeMetrics.scrollHeight).toBeLessThanOrEqual(beforeMetrics.clientHeight + 2);
+		expect(beforeMetrics.visibleRows).toBe(6);
 		await iframe.locator('[data-std-prod-page-size]').selectOption("25");
 		await expect(iframe.locator('[data-std-prod-table-footer]')).toContainText("Showing 1-6 of 6");
 		await expect(iframe.locator(".std-prod-price-row")).toHaveCount(6);
+		const afterMetrics = await scrollHost.evaluate((el) => ({
+			overflowY: window.getComputedStyle(el).overflowY,
+			scrollHeight: el.scrollHeight,
+			clientHeight: el.clientHeight,
+			displayedRows: Array.from(el.querySelectorAll("tbody tr")).filter(
+				(row) => window.getComputedStyle(row).display !== "none",
+			).length,
+		}));
+		expect(afterMetrics.overflowY).toMatch(/visible|auto/);
+		expect(afterMetrics.scrollHeight).toBeLessThanOrEqual(afterMetrics.clientHeight + 2);
+		expect(afterMetrics.displayedRows).toBe(6);
 	});
 
 	test("parameter detail breadcrumb returns to parameter dictionary", async ({ page }) => {
@@ -476,6 +517,46 @@ test.describe("STD prod schema slice API hydration", () => {
 				testid: scenario.expectTestid,
 			});
 		}
+	});
+
+	test("schema table horizontal scroll stays reachable via viewport-fixed rail", async ({ page }) => {
+		await page.goto("/desk/std-parameter-dictionary");
+		const iframe = page.frameLocator('[data-testid="std-prod-std-parameter-dictionary-iframe"]');
+		await expect(iframe.locator("body")).toHaveAttribute("data-std-prod-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await expect(iframe.locator("body.std-prod-table-viewport")).toHaveCount(0);
+		await expect(iframe.locator('[data-std-prod-table-surface="1"]')).toBeVisible();
+		const scrollHost = iframe.locator('[data-std-prod-table-scroll-host="1"]');
+		const rail = iframe.locator(
+			'[data-std-prod-table-hscroll-rail="1"].std-prod-table-hscroll-rail--viewport.std-prod-table-hscroll-rail--active',
+		);
+		await expect(scrollHost).toBeVisible();
+		await expect(rail).toBeVisible();
+
+		const metrics = await scrollHost.evaluate((el) => ({
+			overflowX: window.getComputedStyle(el).overflowX,
+			overflowY: window.getComputedStyle(el).overflowY,
+			scrollWidth: el.scrollWidth,
+			clientWidth: el.clientWidth,
+			scrollHeight: el.scrollHeight,
+			clientHeight: el.clientHeight,
+		}));
+		expect(metrics.overflowX).toMatch(/auto|scroll/);
+		expect(["visible", "auto"]).toContain(metrics.overflowY);
+		expect(metrics.scrollWidth).toBeGreaterThan(metrics.clientWidth);
+		expect(metrics.scrollHeight).toBeLessThanOrEqual(metrics.clientHeight + 2);
+
+		await iframe.locator("body").evaluate(() => {
+			window.scrollTo(0, Math.max(0, document.body.scrollHeight / 2));
+		});
+		await expect(rail).toBeVisible();
+
+		await rail.evaluate((el) => {
+			el.scrollLeft = 160;
+		});
+		const scrollLeft = await scrollHost.evaluate((el) => el.scrollLeft);
+		expect(scrollLeft).toBeGreaterThan(0);
 	});
 
 	test("requirement schema manager preserves design table columns after hydration", async ({ page }) => {

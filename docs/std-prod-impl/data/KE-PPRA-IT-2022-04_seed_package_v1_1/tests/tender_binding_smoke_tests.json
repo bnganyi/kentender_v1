@@ -1,0 +1,22 @@
+{
+  "records": [
+    {
+      "test_key": "KE-PPRA-IT-2022-04.tender_binding.baseline_identity",
+      "display_title": "Baseline tender identity binding",
+      "tender_ref": "SAMPLE-IT-TENDER-001",
+      "expected_result": "READ_ONLY_FIXTURE"
+    },
+    {
+      "test_key": "KE-PPRA-IT-2022-04.tender_binding.tds_parameters",
+      "display_title": "TDS parameter binding fixture",
+      "category": "TDS",
+      "expected_result": "READ_ONLY_FIXTURE"
+    },
+    {
+      "test_key": "KE-PPRA-IT-2022-04.tender_binding.evaluation_criteria",
+      "display_title": "Evaluation criteria binding fixture",
+      "category": "EVALUATION",
+      "expected_result": "READ_ONLY_FIXTURE"
+    }
+  ]
+}

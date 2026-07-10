@@ -1,0 +1,33 @@
+{
+  "algorithm": "SHA-256",
+  "files": {
+    "KE-PPRA-IT-2022-04_Verbatim_Reconciliation_Report_v1_1.md": "6f1ea48f26f380d3f364366df414c5d27a556fc28c80c323e089ad64a06da5fe",
+    "configuration/parameters.json": "3acdc107c7816288e44aa97e02870a500eb75b7329c8a180916505520a7f8c3c",
+    "contract/contract_schema.json": "b1d0a18898d256482b88fc61ece3970f4c7710158ff991846ee6a6c5fa313f3c",
+    "evaluation/evaluation_schema.json": "bc89369319af2ff96cbdf64c9ca6ff787d19581540c087eb65c1fa57332ef88d",
+    "forms/evidence_requirements.json": "604e5045dea8d7490c01ef870752c16a019799b595512ef70ddb3b076248202e",
+    "forms/form_catalog.json": "a9f1f36b6f917356e352905747ab8f0d57c19d6e19b3f0cc70050439426d93b9",
+    "forms/form_fields.json": "2959ee31dcb685bad46d689668adacbde962450048ddb2dca2691d1f26380b62",
+    "forms/form_sections.json": "3c2d7752ab68695ab203d421f27dc666eb32c992d683327e9451a3fda7ef92c1",
+    "manifest.json": "17f85ae477e87247b1081a2751ab44d2ab12b6b2bb6d643f23e41eb8ad7aebe9",
+    "pricing/price_schedule_catalog.json": "66754b2e73e96c6c366782e3f7d0f4a0c443dfe5d37112714c78642ed64943e5",
+    "rendering/render_blocks.json": "c00951d19fe8e81ee8b6f14e432dd2751ee07ffbccee63eec64d90c35f641eb3",
+    "requirements/requirement_schema.json": "151861d6ff35b0d9bab39d4cf67d6d952532dadfa259b4462533f5de2beb19ec",
+    "rules/rule_bindings.json": "21c221dda26bca846b8e75bda561adf324ab5768ee2292a473936a99b425c69c",
+    "rules/rule_catalog.json": "0139ed737f1b9e8720e42306468da413a3ecb60578128b21e5356e657bc40832",
+    "rules/rule_test_cases.json": "094ba37247e418fe5cc6da445f50e9998537c68e9b811c380df09552d5b41d31",
+    "source/source_anchors.json": "1212279a55f03e80471bec75b44497bcbcb39db22c60d8ac4d29fd2a5517a105",
+    "source/source_document.json": "5f71ebd9c3414ce3ddf697e1da8583386868573f01f671666f84d2686a26bb53",
+    "template/clause_fragments.json": "67d492ad8a9b26f71418e4b478c88b4cf69d59725eefda3e377fee2206f8763d",
+    "template/clauses.json": "8d242acc9acabbb2a3fb333cee6eb23c8a0a37b3e3a63b18f7687e90c5a5c947",
+    "template/family.json": "fbb724b69714202070966952c0c006d9929309ca156e41a110dd8235cb2c72f8",
+    "template/sections.json": "eb391a8a81af6334592295652c9aa7455d8011d874c9bd54f1c114221f40e2cb",
+    "template/version.json": "20f1af5f018748e75a362aad785740abc6fd4b94506f33bd3207aaf1ca6293c8",
+    "tests/sample_tender_instances.json": "720da49d4beffe57f98d574db53e63f2118d2b172d723561e49e5cdf7e9f116b",
+    "tests/smoke_tests.json": "f291925ca11f49045a0e42680374336e714218a48b3b54f1b24688a682143739",
+    "tests/tender_binding_smoke_tests.json": "31b1b37c50264f92bf3e6d5e4c78b67f148d6fd2a5fa0cb8fea4fdd3c09bdd00",
+    "tests/validation_expectations.json": "07308420121d309cb185f40626a27c34317c55a6149dd46ebd7fa85e65d8c5a8",
+    "tests/verbatim_reconciliation.json": "e23a522678bbbeabab335a7279735a8175738a132954fe7dde01f41172142767",
+    "verbatim_reconciliation.json": "e23a522678bbbeabab335a7279735a8175738a132954fe7dde01f41172142767"
+  }
+}

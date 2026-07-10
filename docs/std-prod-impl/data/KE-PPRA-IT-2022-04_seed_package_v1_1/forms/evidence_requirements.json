@@ -1,0 +1,74 @@
+{
+  "records": [
+    {
+      "evidence_requirement_key": "KE-PPRA-IT-2022-04.evidence.it_form_001",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_001",
+      "display_title": "Evidence for Form of Tender",
+      "required": true,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "evidence_requirement_key": "KE-PPRA-IT-2022-04.evidence.it_form_002",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_002",
+      "display_title": "Evidence for Tenderer's Eligibility - Confidential Business Questionnaire",
+      "required": true,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "evidence_requirement_key": "KE-PPRA-IT-2022-04.evidence.it_form_003",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_003",
+      "display_title": "Evidence for Certificate of Independent Tender Determination",
+      "required": true,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "evidence_requirement_key": "KE-PPRA-IT-2022-04.evidence.it_form_004",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_004",
+      "display_title": "Evidence for Self-Declaration Form",
+      "required": true,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "evidence_requirement_key": "KE-PPRA-IT-2022-04.evidence.it_form_005",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_005",
+      "display_title": "Evidence for Appendix 1 - Fraud and Corruption",
+      "required": true,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "evidence_requirement_key": "KE-PPRA-IT-2022-04.evidence.it_form_006",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_006",
+      "display_title": "Evidence for Grand Summary Cost Table",
+      "required": true,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "evidence_requirement_key": "KE-PPRA-IT-2022-04.evidence.it_form_007",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_007",
+      "display_title": "Evidence for Supply and Installation Cost Summary Table",
+      "required": true,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "evidence_requirement_key": "KE-PPRA-IT-2022-04.evidence.it_form_008",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_008",
+      "display_title": "Evidence for Recurrent Cost Summary Table",
+      "required": true,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "evidence_requirement_key": "KE-PPRA-IT-2022-04.evidence.it_form_009",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_009",
+      "display_title": "Evidence for Supply and Installation Cost Sub-Table",
+      "required": true,
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "evidence_requirement_key": "KE-PPRA-IT-2022-04.evidence.it_form_010",
+      "form_key": "KE-PPRA-IT-2022-04.form.it_form_010",
+      "display_title": "Evidence for Recurrent Cost Sub-Table",
+      "required": true,
+      "extraction_status": "EXTRACTED"
+    }
+  ]
+}

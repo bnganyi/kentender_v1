@@ -1,0 +1,37 @@
+{
+  "records": [
+    {
+      "evaluation_schema_key": "KE-PPRA-IT-2022-04.evaluation_schema.main",
+      "display_title": "Evaluation and Qualification Criteria",
+      "schema_type": "CONTROLLED_EVALUATION",
+      "applies_to_section_key": "KE-PPRA-IT-2022-04.section.eval",
+      "criteria": [
+        {
+          "criterion_code": "IT-EVAL-001",
+          "title": "Responsiveness",
+          "weight": 0,
+          "stage": "RESPONSIVENESS"
+        },
+        {
+          "criterion_code": "IT-EVAL-002",
+          "title": "Technical Evaluation",
+          "weight": 70,
+          "stage": "TECHNICAL"
+        },
+        {
+          "criterion_code": "IT-EVAL-003",
+          "title": "Financial Evaluation",
+          "weight": 30,
+          "stage": "FINANCIAL"
+        },
+        {
+          "criterion_code": "IT-EVAL-004",
+          "title": "Qualification",
+          "weight": 0,
+          "stage": "QUALIFICATION"
+        }
+      ],
+      "extraction_status": "EXTRACTED"
+    }
+  ]
+}

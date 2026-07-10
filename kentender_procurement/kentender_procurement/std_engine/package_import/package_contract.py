@@ -41,6 +41,7 @@ OPTIONAL_WHEN_PRESENT: tuple[str, ...] = (
 	"tests/smoke_tests.json",
 	"tests/sample_tender_instances.json",
 	"tests/validation_expectations.json",
+	"tests/verbatim_reconciliation.json",
 )
 
 SKIPPED_PREFIXES: tuple[str, ...] = (
@@ -85,6 +86,7 @@ OPTIONAL_PAYLOAD_PATH_BY_KEY: dict[str, str] = {
 	"smoke_tests": "tests/smoke_tests.json",
 	"sample_tender_instances": "tests/sample_tender_instances.json",
 	"validation_expectations": "tests/validation_expectations.json",
+	"verbatim_reconciliation": "tests/verbatim_reconciliation.json",
 }
 
 RECORD_COUNT_KEYS: tuple[str, ...] = (

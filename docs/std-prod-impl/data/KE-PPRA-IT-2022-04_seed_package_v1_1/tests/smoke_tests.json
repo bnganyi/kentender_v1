@@ -1,0 +1,124 @@
+{
+  "records": [
+    {
+      "smoke_test_key": "KE-PPRA-IT-2022-04.smoke.std_smoke_001",
+      "test_id": "STD-SMOKE-001",
+      "expected_result": "PASS",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "smoke_test_key": "KE-PPRA-IT-2022-04.smoke.std_smoke_002",
+      "test_id": "STD-SMOKE-002",
+      "expected_result": "PASS",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "smoke_test_key": "KE-PPRA-IT-2022-04.smoke.std_smoke_003",
+      "test_id": "STD-SMOKE-003",
+      "expected_result": "PASS",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "smoke_test_key": "KE-PPRA-IT-2022-04.smoke.std_smoke_004",
+      "test_id": "STD-SMOKE-004",
+      "expected_result": "PASS",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "smoke_test_key": "KE-PPRA-IT-2022-04.smoke.std_smoke_005",
+      "test_id": "STD-SMOKE-005",
+      "expected_result": "PASS",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "smoke_test_key": "KE-PPRA-IT-2022-04.smoke.std_smoke_006",
+      "test_id": "STD-SMOKE-006",
+      "expected_result": "PASS",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "smoke_test_key": "KE-PPRA-IT-2022-04.smoke.std_smoke_007",
+      "test_id": "STD-SMOKE-007",
+      "expected_result": "PASS",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "smoke_test_key": "KE-PPRA-IT-2022-04.smoke.std_smoke_008",
+      "test_id": "STD-SMOKE-008",
+      "expected_result": "PASS",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "smoke_test_key": "KE-PPRA-IT-2022-04.smoke.std_smoke_009",
+      "test_id": "STD-SMOKE-009",
+      "expected_result": "PASS",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "smoke_test_key": "KE-PPRA-IT-2022-04.smoke.std_smoke_010",
+      "test_id": "STD-SMOKE-010",
+      "expected_result": "PASS",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "smoke_test_key": "KE-PPRA-IT-2022-04.smoke.std_smoke_011",
+      "test_id": "STD-SMOKE-011",
+      "expected_result": "PASS",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "smoke_test_key": "KE-PPRA-IT-2022-04.smoke.std_smoke_012",
+      "test_id": "STD-SMOKE-012",
+      "expected_result": "PASS",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "smoke_test_key": "KE-PPRA-IT-2022-04.smoke.std_smoke_013",
+      "test_id": "STD-SMOKE-013",
+      "expected_result": "PASS",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "smoke_test_key": "KE-PPRA-IT-2022-04.smoke.std_smoke_014",
+      "test_id": "STD-SMOKE-014",
+      "expected_result": "PASS",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "smoke_test_key": "KE-PPRA-IT-2022-04.smoke.std_smoke_015",
+      "test_id": "STD-SMOKE-015",
+      "expected_result": "PASS",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "smoke_test_key": "KE-PPRA-IT-2022-04.smoke.std_smoke_016",
+      "test_id": "STD-SMOKE-016",
+      "expected_result": "PASS",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "smoke_test_key": "KE-PPRA-IT-2022-04.smoke.std_smoke_017",
+      "test_id": "STD-SMOKE-017",
+      "expected_result": "PASS",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "smoke_test_key": "KE-PPRA-IT-2022-04.smoke.std_smoke_018",
+      "test_id": "STD-SMOKE-018",
+      "expected_result": "PASS",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "smoke_test_key": "KE-PPRA-IT-2022-04.smoke.std_smoke_019",
+      "test_id": "STD-SMOKE-019",
+      "expected_result": "PASS",
+      "extraction_status": "EXTRACTED"
+    },
+    {
+      "smoke_test_key": "KE-PPRA-IT-2022-04.smoke.std_smoke_020",
+      "test_id": "STD-SMOKE-020",
+      "expected_result": "PASS",
+      "extraction_status": "EXTRACTED"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "records": [
+    {
+      "instance_key": "KE-PPRA-IT-2022-04.sample_tender.it_baseline",
+      "display_title": "Baseline IT Tender Instance",
+      "tender_name": "Sample Information System Procurement",
+      "procuring_entity_name": "Sample Procuring Entity",
+      "status": "DRAFT",
+      "requirement_set_key": "KE-PPRA-IT-2022-04.requirement_schema.information_system",
+      "extraction_status": "EXTRACTED"
+    }
+  ]
+}
