@@ -29,7 +29,7 @@ from kentender_procurement.demand_intake.seeds.works_master_demand_seed import D
 from kentender_procurement.procurement_lifecycle.seeds.purge_plc_outside_works_master_registry import (
 	purge_procurement_lifecycle_plc_outside_works_master_registry,
 )
-from kentender_procurement.procurement_planning.seeds.works_master_planning_seed import (
+from kentender_procurement.procurement_planning.seeds.works_master_pp2_seed.constants import (
 	PKG_CODE,
 	PLAN_CODE,
 )

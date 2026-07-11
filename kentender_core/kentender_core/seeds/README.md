@@ -24,6 +24,36 @@ bench --site <site> execute kentender_core.seeds.reset_strategy_seed.run
 bench --site <site> execute kentender_core.seeds.reset_core_seed.run
 ```
 
+## Stable platform seed (Works + IT STD)
+
+Canonical MOH dev/UAT dataset covering **Strategy**, **Budget**, **DIA (Demand)**, **Planning**, and **IT STD v1_1** import.
+
+```bash
+# Load (idempotent upsert)
+bench --site <site> execute kentender_core.seeds.seed_stable_platform.run
+
+# Delete stable pack rows then regenerate
+bench --site <site> execute kentender_core.seeds.seed_stable_platform.run --kwargs '{"reset": true}'
+
+# Clear only (no reload)
+bench --site <site> execute kentender_core.seeds.clear_stable_platform.run
+
+# Validate without loading
+bench --site <site> execute kentender_core.seeds.seed_stable_platform.validate
+```
+
+From `apps/kentender_v1`: `make seed-stable-platform SITE=kentender.midas.com` and `make seed-stable-platform-reset SITE=kentender.midas.com`.
+
+Scenarios:
+
+| Track | Business codes | Module |
+|---|---|---|
+| Works renovation | `DEM-MOH-2026-001`, `PLAN-MOH-2026`, `PKG-MOH-2026-001` | Strategy → Budget → DIA → PP2 Planning |
+| IT HMIS upgrade | `DEM-MOH-2026-002`, `PLANINCL-MOH-2026-002`, `PKG-MOH-2026-002` | Strategy/Budget/DIA/Planning supplement |
+| IT STD library | `KE-PPRA-IT-2022-04` (v1_1 zip) | STD Engine import (DRAFT) |
+
+Default PP2 checkpoint: `PACKAGE_DRAFT` (override with `planning_checkpoint` kwarg; higher checkpoints require TM handoff modules).
+
 Optional dry run (strategy reset only lists plans that would be removed):
 
 ```bash
