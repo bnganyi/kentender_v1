@@ -171,7 +171,7 @@ def clear_stable_platform_seed(
 ) -> dict[str, Any]:
 	"""Delete stable platform seed rows so they can be regenerated.
 
-	:param purge_non_master: Remove Playwright/smoke rows outside the WORKS master registry.
+	:param purge_non_master: Remove Playwright/smoke rows outside the stable platform registry.
 	:param clear_it_std: Remove DRAFT IT STD package rows (never deletes ACTIVE).
 	:param skip_guard: Allow clear outside dev/test (used by tests).
 	"""
@@ -202,11 +202,9 @@ def clear_stable_platform_seed(
 
 	purge = None
 	if purge_non_master:
-		from kentender_procurement.procurement_lifecycle.seeds.purge_non_works_master_seed import (
-			purge_non_works_master_seed,
-		)
+		from kentender_core.seeds.stable_platform_seed.purge import purge_non_stable_platform_seed
 
-		purge = purge_non_works_master_seed(dry_run=False)
+		purge = purge_non_stable_platform_seed(dry_run=False)
 
 	frappe.db.commit()
 	return {

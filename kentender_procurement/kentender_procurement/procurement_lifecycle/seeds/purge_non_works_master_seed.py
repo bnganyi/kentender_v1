@@ -109,7 +109,17 @@ def _purge_procurement_packages(*, dry_run: bool) -> list[str]:
 		removed.append(row["name"])
 		if dry_run:
 			continue
-		frappe.db.delete("Procurement Package Line", {"parent": row["name"]})
+		for line_name in frappe.get_all(
+			"Procurement Package Line",
+			filters={"package_id": row["name"]},
+			pluck="name",
+		):
+			frappe.flags.skip_package_line_rollup = True
+			try:
+				if frappe.db.exists("Procurement Package Line", line_name):
+					frappe.delete_doc("Procurement Package Line", line_name, force=True, ignore_permissions=True)
+			finally:
+				frappe.flags.pop("skip_package_line_rollup", None)
 		if frappe.db.exists("Procurement Package", row["name"]):
 			frappe.delete_doc("Procurement Package", row["name"], force=True, ignore_permissions=True)
 	return removed
