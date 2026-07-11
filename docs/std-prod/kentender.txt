@@ -1,0 +1,42 @@
+Commands for seeding:
+
+Load (idempotent upsert):
+
+cd /home/midasuser/frappe-bench
+bench --site kentender.midas.com execute kentender_core.seeds.seed_stable_platform.run
+Delete stable pack data, then regenerate:
+
+bench --site kentender.midas.com execute kentender_core.seeds.seed_stable_platform.run \
+  --kwargs '{"reset": True}'
+Clear only (no reload):
+
+bench --site kentender.midas.com execute kentender_core.seeds.clear_stable_platform.run
+Validate:
+
+bench --site kentender.midas.com execute kentender_core.seeds.seed_stable_platform.validate
+Makefile shortcuts (from apps/kentender_v1):
+
+
+make seed-stable-platform SITE=kentender.midas.com
+make seed-stable-platform-reset SITE=kentender.midas.com
+make seed-stable-platform-validate SITE=kentender.midas.com
+
+
+Implementation layout
+Orchestrator: kentender_core/seeds/stable_platform_seed/ (load.py, clear.py, validate.py)
+IT supplements: it_strategy.py, it_budget.py, it_demand.py, it_planning.py, std_it.py
+Entry points: kentender_core/seeds/seed_stable_platform.py, clear_stable_platform.py
+Docs: kentender_core/seeds/README.md
+Default PP2 checkpoint is PACKAGE_DRAFT (package + method decision). You can raise it with planning_checkpoint — checkpoints above PACKAGE_DRAFT need TM handoff modules that were archived with the STD POC.
+
+
+bench --site kentender.midas.com run-tests --app kentender_core \
+  --module kentender_core.tests.test_stable_platform_seed
+# OK (3 tests)
+
+
+Notes
+reset=True clears Works + IT stable rows, PP2 planning, and IT STD DRAFT, then reloads everything.
+purge_non_master is off by default (the legacy purge script has a Procurement Package Line SQL issue). Pass purge_non_master: True if you want to sweep non-master smoke rows.
+A thin std_template_engine.py shim (hash_config only) was added so planning seeds work after the STD POC archive.
+
