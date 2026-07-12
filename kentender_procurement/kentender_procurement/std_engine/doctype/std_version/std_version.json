@@ -71,7 +71,7 @@
    "fieldname": "ui_mode",
    "fieldtype": "Select",
    "label": "UI Mode",
-   "options": "READ_ONLY_INSPECTION\nEDITABLE_DRAFT",
+   "options": "READ_ONLY_INSPECTION\nEDITABLE_DRAFT\nACTIVE_TEMPLATE",
    "default": "READ_ONLY_INSPECTION",
    "reqd": 1
   },

@@ -56,3 +56,22 @@ def clear_draft_package_state(package_id: str, *, family_code: str | None = None
 		if remaining_versions == 0 and frappe.db.exists("STD Family", family_code):
 			frappe.db.delete("STD Family", family_code)
 	frappe.db.commit()
+
+
+def force_reset_package_state_for_tests(package_id: str, *, family_code: str | None = None) -> None:
+	"""Test-only reset that demotes ACTIVE versions before draft cleanup."""
+	if not frappe.in_test and not getattr(frappe.conf, "developer_mode", False):
+		raise ValueError("force_reset_package_state_for_tests is allowed only in tests/dev.")
+	if frappe.db.exists("STD Version", package_id):
+		frappe.db.set_value(
+			"STD Version",
+			package_id,
+			{
+				"lifecycle_state": "DRAFT",
+				"is_immutable": 0,
+				"activation_allowed": 0,
+				"ui_mode": "READ_ONLY_INSPECTION",
+			},
+			update_modified=False,
+		)
+	clear_draft_package_state(package_id, family_code=family_code)

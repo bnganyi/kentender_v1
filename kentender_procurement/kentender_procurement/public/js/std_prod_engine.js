@@ -1490,7 +1490,40 @@
 				btn.style.pointerEvents = "none";
 				btn.style.opacity = "0.55";
 				btn.setAttribute("aria-disabled", "true");
+				btn.removeAttribute("data-std-activation-ready");
 			}
+		});
+	}
+
+	function apply_activation_readiness(doc, ctx) {
+		if (!doc || !ctx || !ctx.package_id) {
+			return;
+		}
+		frappe.call({
+			method: "kentender_procurement.std_engine.api.governance_api.get_activation_readiness",
+			type: "GET",
+			args: { package_id: ctx.package_id },
+			callback: function (r) {
+				var readiness = (r.message && r.message.data) || {};
+				doc.querySelectorAll("button").forEach(function (btn) {
+					if ((btn.textContent || "").trim() !== "Activate Version") {
+						return;
+					}
+					if (readiness.activationAllowed || readiness.lifecycleState === "ACTIVE") {
+						btn.style.pointerEvents = "";
+						btn.style.opacity = "";
+						btn.removeAttribute("aria-disabled");
+						btn.setAttribute("data-std-activation-ready", "1");
+					}
+				});
+				var banner = doc.querySelector("[data-testid='std-prod-activation-banner']");
+				if (banner && readiness.blockers && readiness.blockers.length) {
+					banner.innerHTML =
+						'<div class="text-sm font-semibold">Activation blocked — ' +
+						String(readiness.blockers.length) +
+						" readiness gate(s) remain.</div>";
+				}
+			},
 		});
 	}
 
@@ -3068,6 +3101,7 @@
 			}
 		});
 		disable_governance_actions(doc);
+		apply_activation_readiness(doc, ctx);
 	}
 
 	function resolve_module_route(row_label) {
@@ -4096,6 +4130,8 @@
 		},
 		review: function (doc, results, ctx) {
 			hydrate_review(doc, results, ctx);
+			disable_governance_actions(doc);
+			apply_activation_readiness(doc, ctx);
 		},
 	};
 
@@ -4743,6 +4779,7 @@
 				hydrate_page_header(doc, page_title);
 				apply_read_only_banner(doc, ctx);
 				disable_governance_actions(doc);
+				apply_activation_readiness(doc, ctx);
 				var hydrator = HYDRATORS[screen];
 				if (hydrator) {
 					hydrator(doc, results, ctx);

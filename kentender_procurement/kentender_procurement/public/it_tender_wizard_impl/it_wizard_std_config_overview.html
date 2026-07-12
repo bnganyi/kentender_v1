@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en" style=""><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;family=Manrope:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#f9f9fe",
+                        "inverse-on-surface": "#f1f0f6",
+                        "on-background": "#1a1b20",
+                        "on-secondary-fixed": "#001d34",
+                        "on-tertiary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed": "#001b3f",
+                        "primary-fixed-dim": "#abc7ff",
+                        "secondary": "#01629d",
+                        "on-surface": "#1a1b20",
+                        "tertiary-fixed": "#d3e4ff",
+                        "surface-variant": "#e2e2e8",
+                        "surface-container": "#eceef0",
+                        "background": "#f9f9fe",
+                        "surface-tint": "#395e9b",
+                        "tertiary-container": "#26364b",
+                        "surface-container-low": "#f4f3f9",
+                        "tertiary": "#102135",
+                        "primary-fixed": "#d7e2ff",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-container": "#8f9fb8",
+                        "inverse-primary": "#abc7ff",
+                        "status-exhausted": "#EF4444",
+                        "outline": "#737781",
+                        "status-reserved": "#F59E0B",
+                        "secondary-container": "#7bbeff",
+                        "on-surface-variant": "#434750",
+                        "status-committed": "#6366F1",
+                        "status-available": "#10B981",
+                        "on-error": "#ffffff",
+                        "surface-container-highest": "#e2e2e8",
+                        "primary-container": "#00346f",
+                        "on-secondary-container": "#004c7c",
+                        "surface-dim": "#dad9df",
+                        "primary": "#001f48",
+                        "on-primary-fixed-variant": "#1d4681",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "border-subtle": "#E2E8F0",
+                        "secondary-fixed": "#cfe5ff",
+                        "inverse-surface": "#2f3035",
+                        "surface-container-high": "#e8e7ed",
+                        "surface": "#f9f9fe",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed-dim": "#b7c8e2",
+                        "secondary-fixed-dim": "#99cbff",
+                        "on-tertiary-fixed-variant": "#38485e",
+                        "on-primary-container": "#7b9ee0",
+                        "outline-variant": "#c3c6d1",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed-variant": "#004a78",
+                        "on-tertiary-fixed": "#0b1c30"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-gap": "24px",
+                        "unit": "4px",
+                        "card-padding": "20px",
+                        "gutter": "12px",
+                        "container-padding": "16px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "headline-sm": ["Manrope"],
+                        "body-md": ["Inter"],
+                        "headline-lg-mobile": ["Manrope"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Manrope"],
+                        "headline-md": ["Manrope"],
+                        "data-mono": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["22px", { "lineHeight": "30px", "fontWeight": "600" }],
+                        "data-mono": ["14px", { "lineHeight": "20px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    }catch(_e){}</script></head><body class="bg-background text-on-background font-body-md flex h-screen overflow-hidden">
+<!-- Main Layout -->
+<div class="flex-1 flex flex-col w-full bg-surface-container-low">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface-container-lowest border-b border-border-subtle h-16 flex justify-between items-center px-4 md:px-8">
+<div class="flex items-center gap-6"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center text-primary-fixed"><span class="material-symbols-outlined">account_balance</span></div></div><div class="font-headline-sm text-headline-sm text-on-surface-variant">Tender STD Configuration Overview</div></div>
+<div class="flex items-center gap-6"><button class="relative text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors"><span class="material-symbols-outlined">notifications</span><span class="absolute top-1 right-1 w-2 h-2 bg-status-exhausted rounded-full border-2 border-white"></span></button><div class="flex items-center gap-3 cursor-pointer"><div class="text-right hidden sm:block"><p class="font-label-caps text-label-caps text-on-surface-variant">MINISTRY OF FINANCE</p><p class="font-body-md text-body-md font-bold">Admin User</p></div><div class="w-10 h-10 bg-surface-container-high rounded-full border border-outline-variant flex items-center justify-center overflow-hidden"><img alt="User profile avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDq3ybEtroEJ-8rxWrddKBAG57ZGidvrkOtOb__VgGvdE4lz8ei_Dg8TVim6htFRnYhyH9FfgxrZILfpYacNQIR6n45h0vsg8m2tW5pJ4txX6Uij7seWHA0UmHGhn6iowSdKgzWd4KgkS6a78xRmKC19riCwPOX-Lk2KN_jP-CH-Qay2Z9gwCpDNX-Q8JyRf3huK25uygs5paRnP45LVu1aKvbhuj3uN0nESNGnhQK-b01CPwiTJBI2"/></div></div></div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 mt-16 flex overflow-hidden">
+<!-- Center Canvas -->
+<div class="flex-1 overflow-y-auto p-section-gap scroll-hidden max-w-[1600px] mx-auto w-full flex">
+<div class="flex-1 pr-6 pb-24">
+<!-- Context Header -->
+<div class="bg-surface-container-lowest rounded-lg border border-border-subtle p-card-padding mb-section-gap shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-primary mb-1">Data Center Hardware Refresh</h1>
+<div class="flex items-center gap-3 font-data-mono text-data-mono text-on-surface-variant">
+<span class="bg-surface-container px-2 py-1 rounded text-primary-container font-semibold">TNT/024/2024</span>
+<span class="">•</span>
+<span class="">CONF-99283</span>
+</div>
+</div>
+<div class="text-right">
+<div class="flex items-center justify-end gap-3 mb-2">
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-error-container text-on-error-container font-label-caps text-label-caps uppercase">
+<span class="material-symbols-outlined text-sm">block</span>
+                                        1 Blocker
+                                    </div>
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-status-reserved/10 text-status-reserved font-label-caps text-label-caps uppercase border border-status-reserved/20">
+<span class="material-symbols-outlined text-sm">warning</span>
+                                        2 Warnings
+                                    </div>
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-caps text-label-caps uppercase">
+<span class="material-symbols-outlined text-sm">edit_note</span>
+                                        IN_CONFIGURATION
+                                    </div>
+</div>
+<div class="flex items-center gap-2 justify-end">
+<div class="w-32 h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-status-committed progress-bar-fill w-[65%]"></div>
+</div>
+<span class="font-data-mono text-data-mono text-status-committed font-bold">65%</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-4 gap-4 mt-6 pt-4 border-t border-border-subtle">
+<div>
+<div class="font-label-caps text-label-caps text-outline uppercase mb-1">Planning Package Ref</div>
+<div class="font-data-mono text-data-mono text-on-surface">PP-ICT-2024-009</div>
+</div>
+<div>
+<div class="font-label-caps text-label-caps text-outline uppercase mb-1">Procuring Entity</div>
+<div class="font-body-md text-body-md text-on-surface font-medium">Ministry of Finance</div>
+</div>
+<div>
+<div class="font-label-caps text-label-caps text-outline uppercase mb-1">Procurement Method</div>
+<div class="font-body-md text-body-md text-on-surface font-medium">Open National Tender</div>
+</div>
+<div>
+<div class="font-label-caps text-label-caps text-outline uppercase mb-1">STD Package</div>
+<div class="font-data-mono text-data-mono text-on-surface bg-surface-container inline-block px-1.5 rounded">KE-PPRA-IT-2022-04</div>
+</div>
+</div>
+</div>
+<!-- Wizard Steps Grid -->
+<h2 class="font-headline-sm text-headline-sm text-primary mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined">grid_view</span> Configuration Steps
+                    </h2>
+<div class="grid grid-cols-3 gap-4 pb-8">
+<!-- Card 1: Tender Profile -->
+<div class="bg-surface-container-lowest rounded-lg border border-border-subtle p-4 hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full border-l-4 border-l-status-available">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-headline-sm text-[16px] text-on-surface font-semibold">Tender Profile</h3>
+<span class="material-symbols-outlined text-status-available">check_circle</span>
+</div>
+<div class="font-data-mono text-xs text-on-surface-variant mb-2 bg-surface-container-low inline-block px-2 py-1 rounded w-fit">12/12 fields complete</div>
+<div class="font-body-md text-xs text-outline mb-4">0 Blockers, 0 Warnings</div>
+<div class="mt-auto pt-4 flex justify-between items-center border-t border-border-subtle">
+<div class="flex items-center gap-1.5">
+<img class="w-5 h-5 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2AGhytkav2Ah6BA4421R32Kq9Mmq7WPgmfMsyWJsMQ7jyUvvTfpsnTCta6EWCK7Uz9GmliI1Gu_g90eFv1RcFBjV392lAQbvKyNyT3I7RPDhqkvUE7xlZlNjjje3DE5if8jdH0b9seBJqMEY59PEBvwwrq2bRhddNQzlXn27ogeSsapJHoKDmAVFjWTstwEG04e00edFEQGhboJXO4D8M5hExYnSUVBlgnie3sKvgVCks76_Ix0h3"/>
+<span class="font-label-caps text-[10px] text-outline">Procurement Officer</span>
+</div>
+<button class="text-primary font-label-caps text-label-caps hover:underline uppercase">Review</button>
+</div>
+</div>
+<!-- Card 2: Tender Data Sheet -->
+<div class="bg-surface-container-lowest rounded-lg border border-border-subtle p-4 hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full border-l-4 border-l-status-available">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-headline-sm text-[16px] text-on-surface font-semibold">Tender Data Sheet</h3>
+<span class="material-symbols-outlined text-status-available">check_circle</span>
+</div>
+<div class="font-data-mono text-xs text-on-surface-variant mb-2 bg-surface-container-low inline-block px-2 py-1 rounded w-fit">24/24 fields complete</div>
+<div class="font-body-md text-xs text-outline mb-4">0 Blockers, 0 Warnings</div>
+<div class="mt-auto pt-4 flex justify-between items-center border-t border-border-subtle">
+<div class="flex items-center gap-1.5">
+<img class="w-5 h-5 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMCtpkGQHorSlVJRCdvs01b5Whi4FoXyGXR26sJAYuLnU12yP95TE8M8W2HhLs6LlHZ90LEKTME3QlvXY-P9_t32uP9Kj8Vn80NB-zBPHqlR0MVVevMCPqL9SH3iMEFx1VwzEPi93DDn0EHcJLkv7TUXInApO2Ey5d1MQTvA_HvbiT5HaeKy9l0neg1uWOBCWF5pIYdvXexGGRZdnK1j5CgDYtQwtvgk3DAtEkQxFnyRUf5hZlAvjr"/>
+<span class="font-label-caps text-[10px] text-outline">Procurement Officer</span>
+</div>
+<button class="text-primary font-label-caps text-label-caps hover:underline uppercase">Review</button>
+</div>
+</div>
+<!-- Card 3: IT Requirements -->
+<div class="bg-surface-container-lowest rounded-lg border border-border-subtle p-4 hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full border-l-4 border-l-status-committed ring-2 ring-status-committed ring-offset-2">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-headline-sm text-[16px] text-on-surface font-semibold">IT Requirements</h3>
+<span class="material-symbols-outlined text-status-committed">pending</span>
+</div>
+<div class="font-data-mono text-xs text-on-surface-variant mb-2 bg-surface-container-low inline-block px-2 py-1 rounded w-fit">8/15 fields complete</div>
+<div class="flex items-center gap-1 text-xs text-status-reserved bg-status-reserved/10 px-2 py-0.5 rounded-full w-fit mb-4">
+<span class="material-symbols-outlined text-[14px]">warning</span> 1 Warning
+                            </div>
+<div class="mt-auto pt-4 flex justify-between items-center border-t border-border-subtle">
+<div class="flex items-center gap-1.5">
+<img class="w-5 h-5 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFLOcbVSFHD4G6ODBXshoEM7rpYeo5LbWMUHTp95almzRQo0XSBx3BNh1_qmaeQXK6jtdJlodae7rbyecwI0GijkcV7suh45gHRaa_e0elOX-4Lz3CMCPCjJLM8cszlzSrHMhWKlkdnAOAiDB54dSfThrNanskmEF2U4Znq-2nTdRaK_by2DTq6pZjqQriczyWf7iueFhOe0_sp4_cDNSMluRjQzkDvE4XuHUqeffvgn3vu-UWlghw"/>
+<span class="font-label-caps text-[10px] text-outline">Technical Owner</span>
+</div>
+<button class="bg-primary text-on-primary px-3 py-1 rounded font-label-caps text-label-caps hover:bg-primary-container transition-colors uppercase">Continue</button>
+</div>
+</div>
+<!-- Card 4: Implementation Schedule -->
+<div class="bg-surface-container-lowest rounded-lg border border-border-subtle p-4 hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full border-l-4 border-l-outline-variant">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-headline-sm text-[16px] text-on-surface font-semibold text-outline">Implementation Schedule</h3>
+<span class="material-symbols-outlined text-outline-variant">radio_button_unchecked</span>
+</div>
+<div class="font-data-mono text-xs text-outline mb-2 bg-surface-container-low inline-block px-2 py-1 rounded w-fit">0/5 fields complete</div>
+<div class="font-body-md text-xs text-outline mb-4">0 Blockers, 0 Warnings</div>
+<div class="mt-auto pt-4 flex justify-between items-center border-t border-border-subtle">
+<div class="flex items-center gap-1.5 opacity-50">
+<img class="w-5 h-5 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDs-3D0sskcX7NYoiFmcbTSSmTrirgD9JC11_Q8TR7nt2Wp7CXST6LMygW4RZISly5oDnvlTRHHMtBFwk-ZMAagTahEUW9NbRpWTiha_arCxPmZ3FBMWaPo3GIdOOu3CCrPVYgSfM9Gb6eGh6iuANKeA2z_QwZgGFZAOTervlxyn69vaSYeK1jvdpN__bXiR38k_ebtFJX8OnREf4TM8ELO-fJDGkF2dHmJxGQ35NAbG87Z5n28SL-0"/>
+<span class="font-label-caps text-[10px] text-outline">Technical Owner</span>
+</div>
+<button class="text-outline font-label-caps text-label-caps hover:text-primary uppercase">Start</button>
+</div>
+</div>
+<!-- Card 5: System Inventory -->
+<div class="bg-surface-container-lowest rounded-lg border border-border-subtle p-4 hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full border-l-4 border-l-outline-variant">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-headline-sm text-[16px] text-on-surface font-semibold text-outline">System Inventory</h3>
+<span class="material-symbols-outlined text-outline-variant">radio_button_unchecked</span>
+</div>
+<div class="font-data-mono text-xs text-outline mb-2 bg-surface-container-low inline-block px-2 py-1 rounded w-fit">0/10 fields complete</div>
+<div class="font-body-md text-xs text-outline mb-4">0 Blockers, 0 Warnings</div>
+<div class="mt-auto pt-4 flex justify-between items-center border-t border-border-subtle">
+<div class="flex items-center gap-1.5 opacity-50">
+<img class="w-5 h-5 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_NOUf88ex2sym_w_-VCNzsBdoft9wV4r1n0B_ytUMvBiVJaE5ZW8uRISMiycr9tQHli6ScAvC1fL435lu3vD3CMid4BrVK7WMfFwu7VCyOcjd5zlHYOk7dHDrTgzY82OVFrKH5GY0AiUK2K9Atrom4WlGHaFGUOr9rX6nvczMtz3xwLnTAyPRvzjDQVGDWcCuHBV3Myof5SH0WVFg9D7uViMIsSRXEZ9oB_-yI_w9JuvLx23f0IJ2"/>
+<span class="font-label-caps text-[10px] text-outline">Technical Owner</span>
+</div>
+<button class="text-outline font-label-caps text-label-caps hover:text-primary uppercase">Start</button>
+</div>
+</div>
+<!-- Card 6: Price Schedule -->
+<div class="bg-surface-container-lowest rounded-lg border border-border-subtle p-4 hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full border-l-4 border-l-status-exhausted">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-headline-sm text-[16px] text-on-surface font-semibold">Price Schedule</h3>
+<span class="material-symbols-outlined text-status-exhausted">error</span>
+</div>
+<div class="font-data-mono text-xs text-on-surface-variant mb-2 bg-surface-container-low inline-block px-2 py-1 rounded w-fit">4/8 fields complete</div>
+<div class="flex items-center gap-1 text-xs text-error bg-error-container px-2 py-0.5 rounded-full w-fit mb-4 font-medium">
+<span class="material-symbols-outlined text-[14px]">block</span> 1 Blocker
+                            </div>
+<div class="mt-auto pt-4 flex justify-between items-center border-t border-border-subtle">
+<div class="flex items-center gap-1.5">
+<img class="w-5 h-5 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuWPeoQTMxGHdH5g00h79xVjSa50GzD31-8AETbXuyrrAQqNWZyI8R7geXP1Iz9WEE5vqUCT15fj4zxgvE09E9qchRkKJc4jexxVHGlv4VS2WKbLaFCOVd9ixsUNLnbHDfTuKNGMGWgNRE0dmAT6u9JqchC3sKvdhIKZCIjs097ZDgY919esvRFQdUuGfKLJwdYReBXTj0K9jDM6wI9ZWZhOkz6sEZvOzf_fdvSw8Fayd7jLsz8pOX"/>
+<span class="font-label-caps text-[10px] text-outline">Procurement Officer</span>
+</div>
+<button class="text-error font-label-caps text-label-caps hover:underline uppercase">Fix Issues</button>
+</div>
+</div>
+<!-- Card 7: Evaluation Setup -->
+<div class="bg-surface-container-lowest rounded-lg border border-border-subtle p-4 hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full border-l-4 border-l-outline-variant">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-headline-sm text-[16px] text-on-surface font-semibold text-outline">Evaluation Setup</h3>
+<span class="material-symbols-outlined text-outline-variant">radio_button_unchecked</span>
+</div>
+<div class="font-data-mono text-xs text-outline mb-2 bg-surface-container-low inline-block px-2 py-1 rounded w-fit">0/6 fields complete</div>
+<div class="font-body-md text-xs text-outline mb-4">0 Blockers, 0 Warnings</div>
+<div class="mt-auto pt-4 flex justify-between items-center border-t border-border-subtle">
+<div class="flex items-center gap-1.5 opacity-50">
+<img class="w-5 h-5 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQmEStty8RFAB1e4-QXhK_BdJ8vH__A0Y9EfclXOsIOSvkFfAzvU8-Waw5LJmY2GezMi5DNlXkmrGapL5-xotlaMnWq4XiWy-zAhzMKhoSYe4ZjI1kiIW_0dTuKhY-HUrqMPsYahcX-BKRRzd0raa2IM1AA7HQo0AF11lPxCRwpiI8H5qRByxhW5KevbIolSqItNeBWy3dgFSrOSfV-hLW0B9vp0x59DfZpFNA3psKYjdXhct8pYWr"/>
+<span class="font-label-caps text-[10px] text-outline">Procurement Officer</span>
+</div>
+<button class="text-outline font-label-caps text-label-caps hover:text-primary uppercase">Start</button>
+</div>
+</div>
+<!-- Card 8: Forms & Evidence -->
+<div class="bg-surface-container-lowest rounded-lg border border-border-subtle p-4 hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full border-l-4 border-l-outline-variant">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-headline-sm text-[16px] text-on-surface font-semibold text-outline">Forms &amp; Evidence</h3>
+<span class="material-symbols-outlined text-outline-variant">radio_button_unchecked</span>
+</div>
+<div class="font-data-mono text-xs text-outline mb-2 bg-surface-container-low inline-block px-2 py-1 rounded w-fit">0/4 fields complete</div>
+<div class="font-body-md text-xs text-outline mb-4">0 Blockers, 0 Warnings</div>
+<div class="mt-auto pt-4 flex justify-between items-center border-t border-border-subtle">
+<div class="flex items-center gap-1.5 opacity-50">
+<img class="w-5 h-5 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQmEStty8RFAB1e4-QXhK_BdJ8vH__A0Y9EfclXOsIOSvkFfAzvU8-Waw5LJmY2GezMi5DNlXkmrGapL5-xotlaMnWq4XiWy-zAhzMKhoSYe4ZjI1kiIW_0dTuKhY-HUrqMPsYahcX-BKRRzd0raa2IM1AA7HQo0AF11lPxCRwpiI8H5qRByxhW5KevbIolSqItNeBWy3dgFSrOSfV-hLW0B9vp0x59DfZpFNA3psKYjdXhct8pYWr"/>
+<span class="font-label-caps text-[10px] text-outline">Procurement Officer</span>
+</div>
+<button class="text-outline font-label-caps text-label-caps hover:text-primary uppercase">Start</button>
+</div>
+</div>
+<!-- Card 9: SCC / Contract Carry-Forward -->
+<div class="bg-surface-container-lowest rounded-lg border border-border-subtle p-4 hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full border-l-4 border-l-outline-variant">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-headline-sm text-[16px] text-on-surface font-semibold text-outline">SCC / Contract Carry-Forward</h3>
+<span class="material-symbols-outlined text-outline-variant">radio_button_unchecked</span>
+</div>
+<div class="font-data-mono text-xs text-outline mb-2 bg-surface-container-low inline-block px-2 py-1 rounded w-fit">0/7 fields complete</div>
+<div class="font-body-md text-xs text-outline mb-4">0 Blockers, 0 Warnings</div>
+<div class="mt-auto pt-4 flex justify-between items-center border-t border-border-subtle">
+<div class="flex items-center gap-1.5 opacity-50">
+<img class="w-5 h-5 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQmEStty8RFAB1e4-QXhK_BdJ8vH__A0Y9EfclXOsIOSvkFfAzvU8-Waw5LJmY2GezMi5DNlXkmrGapL5-xotlaMnWq4XiWy-zAhzMKhoSYe4ZjI1kiIW_0dTuKhY-HUrqMPsYahcX-BKRRzd0raa2IM1AA7HQo0AF11lPxCRwpiI8H5qRByxhW5KevbIolSqItNeBWy3dgFSrOSfV-hLW0B9vp0x59DfZpFNA3psKYjdXhct8pYWr"/>
+<span class="font-label-caps text-[10px] text-outline">Procurement Officer</span>
+</div>
+<button class="text-outline font-label-caps text-label-caps hover:text-primary uppercase">Start</button>
+</div>
+</div>
+<!-- Card 10: Validation -->
+<div class="bg-surface-container-lowest rounded-lg border border-border-subtle p-4 opacity-75 grayscale cursor-not-allowed flex flex-col h-full border-l-4 border-l-outline-variant">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-headline-sm text-[16px] text-outline font-semibold">Validation</h3>
+<span class="material-symbols-outlined text-outline-variant">lock</span>
+</div>
+<div class="font-body-md text-xs text-outline mb-4">Requires previous steps</div>
+<div class="mt-auto pt-4 border-t border-border-subtle">
+<span class="font-label-caps text-[10px] text-outline">System Auto-Run</span>
+</div>
+</div>
+<!-- Card 11: Review & Approval -->
+<div class="bg-surface-container-lowest rounded-lg border border-border-subtle p-4 opacity-75 grayscale cursor-not-allowed flex flex-col h-full border-l-4 border-l-outline-variant">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-headline-sm text-[16px] text-outline font-semibold">Review &amp; Approval</h3>
+<span class="material-symbols-outlined text-outline-variant">lock</span>
+</div>
+<div class="font-body-md text-xs text-outline mb-4">Requires previous steps</div>
+<div class="mt-auto pt-4 border-t border-border-subtle">
+<span class="font-label-caps text-[10px] text-outline">System Workflow</span>
+</div>
+</div>
+<!-- Card 12: Render Preview -->
+<div class="bg-surface-container-lowest rounded-lg border border-border-subtle p-4 opacity-75 grayscale cursor-not-allowed flex flex-col h-full border-l-4 border-l-outline-variant">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-headline-sm text-[16px] text-outline font-semibold">Render Preview</h3>
+<span class="material-symbols-outlined text-outline-variant">lock</span>
+</div>
+<div class="font-body-md text-xs text-outline mb-4">Requires previous steps</div>
+<div class="mt-auto pt-4 border-t border-border-subtle">
+<span class="font-label-caps text-[10px] text-outline">System Auto-Run</span>
+</div>
+</div>
+<!-- Card 13: Publication Readiness -->
+<div class="bg-surface-container-lowest rounded-lg border border-border-subtle p-4 opacity-75 grayscale cursor-not-allowed flex flex-col h-full border-l-4 border-l-outline-variant">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-headline-sm text-[16px] text-outline font-semibold">Publication Readiness</h3>
+<span class="material-symbols-outlined text-outline-variant">lock</span>
+</div>
+<div class="font-body-md text-xs text-outline mb-4">Requires previous steps</div>
+<div class="mt-auto pt-4 border-t border-border-subtle">
+<span class="font-label-caps text-[10px] text-outline">System Auto-Run</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Governance Panel -->
+<aside class="w-80 bg-surface-container-lowest border border-border-subtle dark:border-outline-variant rounded-lg flex flex-col flex-shrink-0 z-20 h-fit mb-24">
+<div class="p-4 border-b border-border-subtle flex items-center gap-2 bg-surface rounded-t-lg">
+<span class="material-symbols-outlined text-primary">policy</span>
+<h2 class="font-headline-sm text-[16px] text-primary">Governance &amp; Audit</h2>
+</div>
+<div class="p-4 flex flex-col gap-6">
+<div>
+<h4 class="font-label-caps text-label-caps text-outline uppercase mb-2">Next Required Action</h4>
+<div class="bg-primary/5 border border-primary/20 rounded-md p-3">
+<div class="font-body-md text-body-md font-semibold text-primary mb-1">Complete IT Requirements</div>
+<button class="text-primary font-label-caps text-label-caps flex items-center gap-1 hover:underline uppercase mt-2">
+                                    Go to step <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+<div class="border-t border-border-subtle pt-4">
+<h4 class="font-label-caps text-label-caps text-outline uppercase mb-3">Current Ownership</h4>
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full border border-border-subtle" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDd324wW5Gdx0QvLxjFW_Sdk8ZxHueRaq6POyUE1lmTehbWtSBR7x563DujQxhAptvSfpURh3gwSao-3FmQZZMcgPfCds-M4XHCfN8CqiDbc-ERqRy1odLC-SLS29aJ8xC-lz3Gz87hi95s0WqiU-GAf0eq9BaKptm-ZP-cpygECmVdobPqgsbZPcjV7WecVStq4pzd0Y0lDPvim1J02nfmtsD7F7NQkIQblxHuWrtDPCFdPpO3S9Yl"/>
+<div>
+<div class="font-body-md text-body-md font-medium text-on-surface">Sarah M.</div>
+<div class="font-data-mono text-xs text-on-surface-variant">Procurement Officer</div>
+</div>
+</div>
+</div>
+<div class="border-t border-border-subtle pt-4">
+<h4 class="font-label-caps text-label-caps text-outline uppercase mb-3">Compliance Context</h4>
+<ul class="flex flex-col gap-3 font-body-md text-[13px] text-on-surface">
+<li class="flex justify-between">
+<span class="text-on-surface-variant">Review Track</span>
+<span class="font-medium text-right">Technical Review</span>
+</li>
+<li class="flex justify-between items-center">
+<span class="text-on-surface-variant">STD Binding</span>
+<span class="font-data-mono bg-surface-container px-1.5 py-0.5 rounded text-xs">KE-PPRA-IT-2022-04</span>
+</li>
+<li class="flex justify-between items-center">
+<span class="text-on-surface-variant">Package Hash</span>
+<span class="font-data-mono text-xs text-outline">a8f2c9e1...</span>
+</li>
+<li class="flex justify-between items-center">
+<span class="text-on-surface-variant">Source Trace</span>
+<span class="font-data-mono bg-status-available/10 text-status-available px-1.5 py-0.5 rounded text-xs">Available</span>
+</li>
+</ul>
+</div>
+<div class="border-t border-border-subtle pt-4">
+<h4 class="font-label-caps text-label-caps text-outline uppercase mb-3">Validation Status</h4>
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between p-2 rounded bg-error-container text-on-error-container border border-error/20">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">block</span>
+<span class="font-medium text-sm">1 Blocker</span>
+</div>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-status-reserved/10 text-status-reserved border border-status-reserved/20">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">warning</span>
+<span class="font-medium text-sm">2 Warnings</span>
+</div>
+</div>
+<div class="font-data-mono text-[11px] text-outline mt-1 text-right">Last Run: 2024-10-12 14:22</div>
+</div>
+</div>
+<div class="border-t border-border-subtle pt-4 mb-4">
+<h4 class="font-label-caps text-label-caps text-outline uppercase mb-3">Audit Snapshot</h4>
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-body-md text-sm text-on-surface-variant">Recorded Events</span>
+<span class="font-data-mono font-medium text-on-surface bg-surface-container-high px-2 py-0.5 rounded">18</span>
+</div>
+<div class="font-data-mono text-[10px] text-outline mt-1 break-words">
+                                    Last event: VALIDATION_RUN_COMPLETED
+                                </div>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- Bottom Actions Bar -->
+<div class="bg-surface-container-lowest border-t border-border-subtle p-4 flex justify-between items-center fixed bottom-0 w-full z-30 h-16 px-4 md:px-8">
+<div class="flex items-center gap-3">
+<button class="text-on-surface-variant hover:text-primary font-label-caps text-label-caps px-4 py-2 rounded hover:bg-surface-container-low transition-colors uppercase">View Audit Trail</button>
+</div>
+<div class="flex items-center gap-3">
+<button class="text-on-surface-variant border border-outline-variant hover:bg-surface-container-low font-label-caps text-label-caps px-4 py-2 rounded transition-colors uppercase">Save Draft</button>
+<button class="text-secondary border border-secondary hover:bg-secondary-container hover:text-on-secondary-container font-label-caps text-label-caps px-4 py-2 rounded transition-colors uppercase">Preview Tender</button>
+<button class="bg-secondary text-on-secondary hover:bg-secondary/90 font-label-caps text-label-caps px-4 py-2 rounded transition-colors uppercase flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">rule</span>
+                    Run Validation
+                </button>
+<button class="bg-surface-container-highest text-outline cursor-not-allowed font-label-caps text-label-caps px-4 py-2 rounded uppercase flex items-center gap-2" disabled="" title="Validation blockers exist">
+                    Submit for Review
+                </button>
+</div>
+</div>
+</div>
+</body></html>

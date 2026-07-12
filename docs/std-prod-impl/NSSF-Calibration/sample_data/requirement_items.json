@@ -1,0 +1,16 @@
+{
+  "records": [
+    {
+      "requirement_code": "REQ-ERP-CORE",
+      "title": "Integrated ERP core modules",
+      "requirement_type": "FUNCTIONAL",
+      "governance_flags": ["PRODUCT_SPECIFIC"]
+    },
+    {
+      "requirement_code": "REQ-CLOUD-HOSTING",
+      "title": "Cloud hosting and disaster recovery",
+      "requirement_type": "TECHNICAL",
+      "governance_flags": ["CLOUD_PLATFORM_SPECIFIC"]
+    }
+  ]
+}

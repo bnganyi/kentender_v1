@@ -24,7 +24,9 @@ ENVELOPE_KEYS = (
 )
 
 
-def build_package_context(version: dict[str, Any] | frappe._dict) -> dict[str, Any]:
+def build_package_context(version: dict[str, Any] | frappe._dict | str) -> dict[str, Any]:
+	if isinstance(version, str):
+		version = frappe.get_doc("STD Version", version).as_dict()
 	lifecycle_state = version.get("lifecycle_state") or ""
 	ui_mode = version.get("ui_mode") or UI_MODE_READ_ONLY_INSPECTION
 	activation_allowed = bool(int(version.get("activation_allowed") or 0))

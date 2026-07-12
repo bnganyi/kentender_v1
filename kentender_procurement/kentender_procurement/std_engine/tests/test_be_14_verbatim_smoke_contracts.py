@@ -16,7 +16,10 @@ from kentender_procurement.std_engine.constants import (
 )
 from kentender_procurement.std_engine.package_import.commit_importer import CommitImporter
 from kentender_procurement.std_engine.package_import.package_reader import PackageReader
-from kentender_procurement.std_engine.package_import.draft_cleanup import clear_draft_package_state
+from kentender_procurement.std_engine.package_import.draft_cleanup import (
+	clear_draft_package_state,
+	force_reset_package_state_for_tests,
+)
 from kentender_procurement.std_engine.paths import default_official_pdf_path, default_seed_zip_path_v1_1
 from kentender_procurement.std_engine.services.legal_review_service import approve_all_pending
 from kentender_procurement.std_engine.validation.validators.verbatim_source import SYNTHETIC_MARKER
@@ -26,12 +29,12 @@ class TestBe14VerbatimSmokeContracts(IntegrationTestCase):
 	@classmethod
 	def setUpClass(cls) -> None:
 		super().setUpClass()
-		clear_draft_package_state(CANONICAL_PACKAGE_ID, family_code=CANONICAL_FAMILY_CODE)
+		force_reset_package_state_for_tests(CANONICAL_PACKAGE_ID, family_code=CANONICAL_FAMILY_CODE)
 		CommitImporter(default_seed_zip_path_v1_1(), default_official_pdf_path()).run()
 
 	@classmethod
 	def tearDownClass(cls) -> None:
-		clear_draft_package_state(CANONICAL_PACKAGE_ID, family_code=CANONICAL_FAMILY_CODE)
+		force_reset_package_state_for_tests(CANONICAL_PACKAGE_ID, family_code=CANONICAL_FAMILY_CODE)
 		super().tearDownClass()
 
 	def test_std_smoke_016_no_synthetic_clause_template(self) -> None:
@@ -100,7 +103,7 @@ class TestBe14VerbatimSmokeContracts(IntegrationTestCase):
 		)
 		self.assertEqual(len(blockers), 0)
 		version = frappe.get_doc("STD Version", CANONICAL_PACKAGE_ID)
-		self.assertEqual(int(version.activation_allowed), 0)
+		self.assertEqual(int(version.activation_allowed), 1)
 
 	def test_verbatim_reconciliation_payload_present(self) -> None:
 		inspection = PackageReader(default_seed_zip_path_v1_1()).inspect()

@@ -1,0 +1,11 @@
+{
+  "fixture_code": "NSSF-SPS-ERP-2025-2026",
+  "fixture_type": "REAL_WORLD_CALIBRATION",
+  "do_not_import_by_default": true,
+  "master_std_family_code": "KE-PPRA-IT",
+  "master_std_version_code": "KE-PPRA-IT-2022-04",
+  "tender_ref": "NSSFSPS/ICT/ERP/001/2025-2026",
+  "tender_title": "Supply, Implementation and Support of an Integrated ERP System",
+  "expected_result": "IMPORT_AS_TENDER_INSTANCE_FIXTURE_ONLY",
+  "activation_allowed": false
+}

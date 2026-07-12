@@ -15,7 +15,10 @@ from kentender_procurement.std_engine.constants import (
 	PACKAGE_QUALITY_FULL_EXTRACTION,
 )
 from kentender_procurement.std_engine.package_import.commit_importer import CommitImporter
-from kentender_procurement.std_engine.package_import.draft_cleanup import clear_draft_package_state
+from kentender_procurement.std_engine.package_import.draft_cleanup import (
+	clear_draft_package_state,
+	force_reset_package_state_for_tests,
+)
 from kentender_procurement.std_engine.package_import.hash_utils import compute_file_sha256
 from kentender_procurement.std_engine.paths import default_official_pdf_path, default_seed_zip_path
 from kentender_procurement.std_engine.validation.validation_engine import get_validation_summary
@@ -36,12 +39,12 @@ class TestBe12SmokeContracts(IntegrationTestCase):
 	@classmethod
 	def setUpClass(cls) -> None:
 		super().setUpClass()
-		clear_draft_package_state(CANONICAL_PACKAGE_ID, family_code=CANONICAL_FAMILY_CODE)
+		force_reset_package_state_for_tests(CANONICAL_PACKAGE_ID, family_code=CANONICAL_FAMILY_CODE)
 		CommitImporter(default_seed_zip_path(), default_official_pdf_path()).run()
 
 	@classmethod
 	def tearDownClass(cls) -> None:
-		clear_draft_package_state(CANONICAL_PACKAGE_ID, family_code=CANONICAL_FAMILY_CODE)
+		force_reset_package_state_for_tests(CANONICAL_PACKAGE_ID, family_code=CANONICAL_FAMILY_CODE)
 		super().tearDownClass()
 
 	def test_std_smoke_001_imports_as_draft(self) -> None:

@@ -1,0 +1,20 @@
+{
+  "records": [
+    {
+      "parameter_code": "TDS-01",
+      "value": "NSSF - Social Security House, Nairobi"
+    },
+    {
+      "parameter_code": "TDS-04",
+      "value": "NSSFSPS/ICT/ERP/001/2025-2026"
+    },
+    {
+      "parameter_code": "TDS-11.1",
+      "value": "Open International Competitive Bidding"
+    },
+    {
+      "parameter_code": "SCC-01",
+      "value": "NSSF - Social Security House, Nairobi"
+    }
+  ]
+}

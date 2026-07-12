@@ -91,6 +91,9 @@ def approve_verbatim_objects(
 	):
 		frappe.db.set_value("STD Validation Finding", finding, "status", "RESOLVED", update_modified=False)
 	result = ValidationEngine().run_for_package(package_id)
+	from kentender_procurement.std_engine.services.activation_readiness_service import sync_activation_flags
+
+	sync_activation_flags(package_id)
 	return {
 		"package_id": package_id,
 		"approved_clauses": approved_clauses,

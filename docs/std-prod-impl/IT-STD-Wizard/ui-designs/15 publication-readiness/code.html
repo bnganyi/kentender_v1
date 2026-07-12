@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en" style=""><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary-container": "#7bbeff",
+                      "primary-container": "#00346f",
+                      "on-secondary-fixed": "#001d34",
+                      "background": "#f9f9fe",
+                      "on-primary-container": "#7b9ee0",
+                      "surface-dim": "#d8dadc",
+                      "primary": "#001f48",
+                      "on-secondary-fixed-variant": "#004a78",
+                      "inverse-primary": "#abc7ff",
+                      "secondary-fixed-dim": "#99cbff",
+                      "on-primary": "#ffffff",
+                      "status-available": "#10B981",
+                      "on-primary-fixed": "#001b3f",
+                      "on-background": "#1a1b20",
+                      "on-error-container": "#93000a",
+                      "surface-variant": "#e2e2e8",
+                      "on-primary-fixed-variant": "#1d4681",
+                      "on-surface-variant": "#424751",
+                      "inverse-surface": "#2f3035",
+                      "on-secondary": "#ffffff",
+                      "surface-container-low": "#f4f3f9",
+                      "surface-container-high": "#e8e7ed",
+                      "on-tertiary": "#ffffff",
+                      "status-reserved": "#F59E0B",
+                      "on-tertiary-fixed": "#0b1c30",
+                      "surface-container-highest": "#e2e2e8",
+                      "error": "#ba1a1a",
+                      "surface-container": "#eeedf3",
+                      "on-tertiary-container": "#8f9fb8",
+                      "status-committed": "#6366F1",
+                      "primary-fixed": "#d7e2ff",
+                      "border-subtle": "#E2E8F0",
+                      "on-error": "#ffffff",
+                      "secondary": "#01629d",
+                      "surface": "#f9f9fe",
+                      "tertiary": "#102135",
+                      "error-container": "#ffdad6",
+                      "on-tertiary-fixed-variant": "#38485e",
+                      "tertiary-fixed-dim": "#b7c8e2",
+                      "inverse-on-surface": "#f1f0f6",
+                      "surface-bright": "#f9f9fe",
+                      "outline-variant": "#c3c6d1",
+                      "status-exhausted": "#EF4444",
+                      "on-secondary-container": "#004c7c",
+                      "secondary-fixed": "#cfe5ff",
+                      "on-surface": "#1a1b20",
+                      "primary-fixed-dim": "#abc7ff",
+                      "tertiary-container": "#26364b",
+                      "tertiary-fixed": "#d3e4ff",
+                      "surface-tint": "#395e9b",
+                      "outline": "#737781",
+                      "surface-container-lowest": "#ffffff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "container-padding": "16px",
+                      "card-padding": "20px",
+                      "unit": "4px",
+                      "section-gap": "24px",
+                      "gutter": "12px"
+              },
+              "fontFamily": {
+                      "headline-lg-mobile": [
+                              "Manrope"
+                      ],
+                      "headline-md": [
+                              "Manrope"
+                      ],
+                      "headline-sm": [
+                              "Manrope"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Manrope"
+                      ],
+                      "data-mono": [
+                              "JetBrains Mono"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-md": [
+                              "22px",
+                              {
+                                      "lineHeight": "30px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-sm": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-lg": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "data-mono": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "500"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      }catch(_e){}</script><meta charset="utf-8"/></head><body class="bg-background text-on-background font-body-md min-h-screen flex flex-col pb-24">
+<!-- TopAppBar -->
+<header class="bg-surface-container-lowest border-b border-border-subtle flex justify-between items-center px-container-padding w-full h-16 shrink-0 sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<span class="font-headline-sm text-headline-sm font-bold text-primary">Publication Readiness</span>
+</div>
+<div class="flex items-center gap-4 text-primary">
+<span class="material-symbols-outlined cursor-pointer hover:bg-surface-container-low p-2 rounded-full transition-colors" data-original-icon="notifications">notifications</span>
+<span class="material-symbols-outlined cursor-pointer hover:bg-surface-container-low p-2 rounded-full transition-colors" data-original-icon="help_outline">help_outline</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden border border-border-subtle">
+<img alt="User profile photo" class="w-full h-full object-cover" data-alt="A small circular avatar image showing a professional, corporate-style portrait of an adult in a well-lit office setting. The aesthetic is clean, neutral, and consistent with a modern enterprise light-mode interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIz5u6XDiGrGk4JDJp4wlKpUsn7w7R8r37-6hO48KTRhYiigRjmwAD3rAhNoTDE4X6zW4TXB0w6r_Nv4zC-wFU83GxnbrV_G7EGzTAiWSfR26dr84JydkMgTEkAXXgNJsmKNoZ41nDTRTfSefcFPU2vI7bVI89Jn6plPA2Ar2boDTh2CdFe09qs9gK49H5ISlvzLVtDylAcRTraG91qCK23DtjJKOA4PIRtYnRx3BUrh4Qe1xUM2Ku"/>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-grow flex flex-col p-container-padding md:p-[24px] gap-section-gap max-w-[1600px] mx-auto w-full">
+<!-- Context Header -->
+<section class="bg-surface-container-lowest p-card-padding rounded-lg border border-border-subtle flex flex-wrap gap-6 items-center shadow-sm"><div class="flex flex-col"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Tender Ref</span><span class="font-data-mono text-data-mono text-primary">TNT/024/2024</span></div><div class="w-px h-10 bg-border-subtle hidden md:block"></div><div class="flex flex-col"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Tender Title</span><span class="font-data-mono text-data-mono text-primary">Data Center Hardware Refresh</span></div><div class="w-px h-10 bg-border-subtle hidden md:block"></div><div class="flex flex-col"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Planning Package Ref</span><span class="font-data-mono text-data-mono text-primary">PP-ICT-2024-009</span></div><div class="w-px h-10 bg-border-subtle hidden md:block"></div><div class="flex flex-col"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Procuring Entity</span><span class="font-data-mono text-data-mono text-primary">Ministry of Finance</span></div><div class="w-px h-10 bg-border-subtle hidden md:block"></div><div class="flex flex-col"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Procurement Method</span><span class="font-data-mono text-data-mono text-primary">Open National Tender</span></div><div class="w-px h-10 bg-border-subtle hidden md:block"></div><div class="flex flex-col"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Wizard State</span><span class="font-data-mono text-data-mono text-primary">PREVIEW_CONFIRMED</span></div><div class="w-px h-10 bg-border-subtle hidden md:block"></div><div class="flex flex-col"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Preview Status</span><span class="font-data-mono text-data-mono text-primary">Confirmed</span></div><div class="w-px h-10 bg-border-subtle hidden md:block"></div><div class="flex flex-col"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Readiness Status</span><span class="font-data-mono text-data-mono text-status-reserved">Pending Confirmation</span></div></section>
+<!-- Summary Cards Strip -->
+<section class="grid grid-cols-2 md:grid-cols-6 gap-gutter">
+<div class="bg-surface-container-lowest p-card-padding rounded-lg border border-border-subtle flex flex-col gap-2 items-center justify-center text-center">
+<span class="material-symbols-outlined text-status-available text-2xl">check_circle</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Validation</span>
+<span class="font-body-md text-body-md text-on-surface font-medium">Passed</span>
+</div>
+<div class="bg-surface-container-lowest p-card-padding rounded-lg border border-border-subtle flex flex-col gap-2 items-center justify-center text-center">
+<span class="material-symbols-outlined text-secondary text-2xl">verified_user</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Review Approval</span>
+<span class="font-body-md text-body-md text-on-surface font-medium">Approved</span>
+</div>
+<div class="bg-surface-container-lowest p-card-padding rounded-lg border border-border-subtle flex flex-col gap-2 items-center justify-center text-center">
+<span class="material-symbols-outlined text-secondary text-2xl">fact_check</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Final Preview</span>
+<span class="font-body-md text-body-md text-on-surface font-medium">Confirmed</span>
+</div>
+<div class="bg-surface-container-lowest p-card-padding rounded-lg border border-border-subtle flex flex-col gap-2 items-center justify-center text-center">
+<span class="material-symbols-outlined text-status-available text-2xl">inventory_2</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Tender Package</span>
+<span class="font-body-md text-body-md text-on-surface font-medium">Complete</span>
+</div>
+<div class="bg-surface-container-lowest p-card-padding rounded-lg border border-border-subtle flex flex-col gap-2 items-center justify-center text-center">
+<span class="material-symbols-outlined text-status-available text-2xl">list_alt</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Pub. Metadata</span>
+<span class="font-body-md text-body-md text-on-surface font-medium">Complete</span>
+</div>
+<div class="bg-surface-container-lowest p-card-padding rounded-lg border-2 border-status-reserved flex flex-col gap-2 items-center justify-center text-center">
+<span class="material-symbols-outlined text-status-reserved text-2xl">pending_actions</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Readiness Status</span>
+<span class="font-body-md text-body-md text-status-reserved font-bold">Pending Confirmation</span>
+</div>
+</section>
+<!-- Three Column Workspace -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-section-gap">
+<!-- Left-->
+<div class="lg:col-span-8 flex flex-col gap-section-gap">
+<!-- Readiness Checklist Table -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg overflow-hidden">
+<div class="p-card-padding border-b border-border-subtle bg-surface-container-low">
+<h2 class="font-headline-md text-headline-md text-primary">Readiness Checklist</h2>
+</div>
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-border-subtle bg-surface-container-lowest">
+<th class="p-4 font-label-caps text-label-caps text-on-surface-variant uppercase font-semibold">Check</th>
+<th class="p-4 font-label-caps text-label-caps text-on-surface-variant uppercase font-semibold">Source</th>
+<th class="p-4 font-label-caps text-label-caps text-on-surface-variant uppercase font-semibold">Status</th>
+<th class="p-4 font-label-caps text-label-caps text-on-surface-variant uppercase font-semibold">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-subtle font-body-md text-body-md text-on-surface"><tr class="hover:bg-surface-container-lowest transition-colors"><td class="p-4 flex items-center gap-2"><span class="material-symbols-outlined text-status-available text-lg" style="font-variation-settings: 'FILL' 1;">check_circle</span> Validation passed</td><td class="p-4 text-on-surface-variant">System</td><td class="p-4"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#ecfdf5] text-status-available border border-[#a7f3d0]">Passed</span></td><td class="p-4"><a class="text-secondary hover:underline font-medium" href="#">View Log</a></td></tr><tr class="hover:bg-surface-container-lowest transition-colors bg-surface-bright"><td class="p-4 flex items-center gap-2"><span class="material-symbols-outlined text-status-available text-lg" style="font-variation-settings: 'FILL' 1;">check_circle</span> Review approval completed</td><td class="p-4 text-on-surface-variant">Workflow</td><td class="p-4"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#ecfdf5] text-status-available border border-[#a7f3d0]">Passed</span></td><td class="p-4"><span class="text-outline-variant italic">N/A</span></td></tr><tr class="hover:bg-surface-container-lowest transition-colors"><td class="p-4 flex items-center gap-2"><span class="material-symbols-outlined text-status-available text-lg" style="font-variation-settings: 'FILL' 1;">check_circle</span> Final preview confirmed</td><td class="p-4 text-on-surface-variant">User Action</td><td class="p-4"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#ecfdf5] text-status-available border border-[#a7f3d0]">Passed</span></td><td class="p-4"><span class="text-outline-variant italic">N/A</span></td></tr><tr class="hover:bg-surface-container-lowest transition-colors bg-surface-bright"><td class="p-4 flex items-center gap-2"><span class="material-symbols-outlined text-status-available text-lg" style="font-variation-settings: 'FILL' 1;">check_circle</span> Tender document package complete</td><td class="p-4 text-on-surface-variant">Document Gen</td><td class="p-4"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#ecfdf5] text-status-available border border-[#a7f3d0]">Passed</span></td><td class="p-4"><a class="text-secondary hover:underline font-medium" href="#">Inspect</a></td></tr><tr class="hover:bg-surface-container-lowest transition-colors"><td class="p-4 flex items-center gap-2"><span class="material-symbols-outlined text-status-available text-lg" style="font-variation-settings: 'FILL' 1;">check_circle</span> Tender dates confirmed</td><td class="p-4 text-on-surface-variant">TDS</td><td class="p-4"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#ecfdf5] text-status-available border border-[#a7f3d0]">Passed</span></td><td class="p-4"><span class="text-outline-variant italic">N/A</span></td></tr><tr class="hover:bg-surface-container-lowest transition-colors bg-surface-bright"><td class="p-4 flex items-center gap-2"><span class="material-symbols-outlined text-status-available text-lg" style="font-variation-settings: 'FILL' 1;">check_circle</span> Submission deadline confirmed</td><td class="p-4 text-on-surface-variant">TDS</td><td class="p-4"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#ecfdf5] text-status-available border border-[#a7f3d0]">Passed</span></td><td class="p-4"><span class="text-outline-variant italic">N/A</span></td></tr><tr class="hover:bg-surface-container-lowest transition-colors"><td class="p-4 flex items-center gap-2"><span class="material-symbols-outlined text-status-available text-lg" style="font-variation-settings: 'FILL' 1;">check_circle</span> Clarification deadline confirmed</td><td class="p-4 text-on-surface-variant">TDS</td><td class="p-4"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#ecfdf5] text-status-available border border-[#a7f3d0]">Passed</span></td><td class="p-4"><span class="text-outline-variant italic">N/A</span></td></tr><tr class="hover:bg-surface-container-lowest transition-colors bg-surface-bright"><td class="p-4 flex items-center gap-2"><span class="material-symbols-outlined text-status-available text-lg" style="font-variation-settings: 'FILL' 1;">check_circle</span> Publication notice metadata complete</td><td class="p-4 text-on-surface-variant">Tender Management</td><td class="p-4"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#ecfdf5] text-status-available border border-[#a7f3d0]">Passed</span></td><td class="p-4"><span class="text-outline-variant italic">N/A</span></td></tr><tr class="hover:bg-surface-container-lowest transition-colors"><td class="p-4 flex items-center gap-2"><span class="material-symbols-outlined text-status-available text-lg" style="font-variation-settings: 'FILL' 1;">check_circle</span> Bidder response forms available</td><td class="p-4 text-on-surface-variant">Form Gen</td><td class="p-4"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#ecfdf5] text-status-available border border-[#a7f3d0]">Passed</span></td><td class="p-4"><span class="text-outline-variant italic">N/A</span></td></tr><tr class="hover:bg-surface-container-lowest transition-colors bg-surface-bright"><td class="p-4 flex items-center gap-2"><span class="material-symbols-outlined text-status-available text-lg" style="font-variation-settings: 'FILL' 1;">check_circle</span> Price schedule included</td><td class="p-4 text-on-surface-variant">Price Builder</td><td class="p-4"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#ecfdf5] text-status-available border border-[#a7f3d0]">Passed</span></td><td class="p-4"><span class="text-outline-variant italic">N/A</span></td></tr><tr class="hover:bg-surface-container-lowest transition-colors"><td class="p-4 flex items-center gap-2"><span class="material-symbols-outlined text-status-available text-lg" style="font-variation-settings: 'FILL' 1;">check_circle</span> Evaluation criteria included</td><td class="p-4 text-on-surface-variant">Evaluation Setup</td><td class="p-4"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#ecfdf5] text-status-available border border-[#a7f3d0]">Passed</span></td><td class="p-4"><span class="text-outline-variant italic">N/A</span></td></tr><tr class="hover:bg-surface-container-lowest transition-colors bg-surface-bright"><td class="p-4 flex items-center gap-2"><span class="material-symbols-outlined text-status-available text-lg" style="font-variation-settings: 'FILL' 1;">check_circle</span> SCC / contract schedules included</td><td class="p-4 text-on-surface-variant">SCC Config</td><td class="p-4"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#ecfdf5] text-status-available border border-[#a7f3d0]">Passed</span></td><td class="p-4"><span class="text-outline-variant italic">N/A</span></td></tr><tr class="hover:bg-surface-container-lowest transition-colors"><td class="p-4 flex items-center gap-2"><span class="material-symbols-outlined text-status-available text-lg" style="font-variation-settings: 'FILL' 1;">check_circle</span> Required attachments included</td><td class="p-4 text-on-surface-variant">Forms &amp; Evidence</td><td class="p-4"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#ecfdf5] text-status-available border border-[#a7f3d0]">Passed</span></td><td class="p-4"><span class="text-outline-variant italic">N/A</span></td></tr><tr class="hover:bg-surface-container-lowest transition-colors bg-surface-bright"><td class="p-4 flex items-center gap-2"><span class="material-symbols-outlined text-status-available text-lg" style="font-variation-settings: 'FILL' 1;">check_circle</span> Publication copy has no preview watermark</td><td class="p-4 text-on-surface-variant">Render Engine</td><td class="p-4"><span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#ecfdf5] text-status-available border border-[#a7f3d0]">Passed</span></td><td class="p-4"><span class="text-outline-variant italic">N/A</span></td></tr></tbody>
+</table>
+</div>
+<!-- Bento Grid for Package & Metadata -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Publication Package Contents -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg p-card-padding flex flex-col gap-4">
+<h3 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant">folder_zip</span>
+                            Publication Package
+                        </h3>
+<div class="flex flex-col gap-3 font-body-md text-body-md"><div class="flex justify-between items-center py-2 border-b border-border-subtle"><span class="text-on-surface">Rendered Tender Document</span><span class="bg-surface-container-low text-on-surface-variant px-2 py-1 rounded text-xs font-medium border border-border-subtle">Included</span></div><div class="flex justify-between items-center py-2 border-b border-border-subtle"><span class="text-on-surface">Tender Data Sheet</span><span class="bg-surface-container-low text-on-surface-variant px-2 py-1 rounded text-xs font-medium border border-border-subtle">Included</span></div><div class="flex justify-between items-center py-2 border-b border-border-subtle"><span class="text-on-surface">IT Requirements Annex</span><span class="bg-surface-container-low text-on-surface-variant px-2 py-1 rounded text-xs font-medium border border-border-subtle">Included</span></div><div class="flex justify-between items-center py-2 border-b border-border-subtle"><span class="text-on-surface">Implementation Schedule</span><span class="bg-surface-container-low text-on-surface-variant px-2 py-1 rounded text-xs font-medium border border-border-subtle">Included</span></div><div class="flex justify-between items-center py-2 border-b border-border-subtle"><span class="text-on-surface">System Inventory Summary</span><span class="bg-surface-container-low text-on-surface-variant px-2 py-1 rounded text-xs font-medium border border-border-subtle">Included</span></div><div class="flex justify-between items-center py-2 border-b border-border-subtle"><span class="text-on-surface">Price Schedule</span><span class="bg-surface-container-low text-on-surface-variant px-2 py-1 rounded text-xs font-medium border border-border-subtle">Included</span></div><div class="flex justify-between items-center py-2 border-b border-border-subtle"><span class="text-on-surface">Evaluation Criteria</span><span class="bg-surface-container-low text-on-surface-variant px-2 py-1 rounded text-xs font-medium border border-border-subtle">Included</span></div><div class="flex justify-between items-center py-2 border-b border-border-subtle"><span class="text-on-surface">Forms &amp; Evidence Checklist</span><span class="bg-surface-container-low text-on-surface-variant px-2 py-1 rounded text-xs font-medium border border-border-subtle">Included</span></div><div class="flex justify-between items-center py-2 border-b border-border-subtle"><span class="text-on-surface">SCC / Contract Schedules</span><span class="bg-surface-container-low text-on-surface-variant px-2 py-1 rounded text-xs font-medium border border-border-subtle">Included</span></div><div class="flex justify-between items-center py-2 border-b border-border-subtle"><span class="text-on-surface">Publication Notice Metadata</span><span class="bg-surface-container-low text-on-surface-variant px-2 py-1 rounded text-xs font-medium border border-border-subtle">Included</span></div><div class="flex justify-between items-center py-2"><span class="text-on-surface">Bidder Response Schema</span><span class="bg-surface-container-low text-on-surface-variant px-2 py-1 rounded text-xs font-medium border border-border-subtle">Included</span></div></div>
+</div>
+<!-- Release Metadata Section -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg p-card-padding flex flex-col gap-4">
+<h3 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant">info</span>
+                            Release Metadata
+                        </h3>
+<div class="grid grid-cols-1 gap-4 font-body-md text-body-md"><div class="flex flex-col"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase flex items-center justify-between">Proposed Publication Date <span class="text-[10px] bg-surface-container px-1 rounded text-outline">Tender Data Sheet</span></span><span class="font-data-mono text-data-mono text-on-surface mt-1">2024-11-15</span></div><div class="flex flex-col"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase flex items-center justify-between">Submission Deadline <span class="text-[10px] bg-surface-container px-1 rounded text-outline">Tender Data Sheet</span></span><span class="font-data-mono text-data-mono text-on-surface mt-1">2024-12-15 14:00 EAT</span></div><div class="flex flex-col"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase flex items-center justify-between">Clarification Deadline <span class="text-[10px] bg-surface-container px-1 rounded text-outline">Tender Data Sheet</span></span><span class="font-data-mono text-data-mono text-on-surface mt-1">2024-12-01 17:00 EAT</span></div><div class="flex flex-col"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase flex items-center justify-between">Tender Opening Date <span class="text-[10px] bg-surface-container px-1 rounded text-outline">Tender Data Sheet</span></span><span class="font-data-mono text-data-mono text-on-surface mt-1">2024-12-15 14:30 EAT</span></div><div class="flex flex-col"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase flex items-center justify-between">Bid Submission Channel <span class="text-[10px] bg-surface-container px-1 rounded text-outline">Tender Management</span></span><span class="font-body-md text-body-md text-on-surface mt-1">Online Portal</span></div><div class="flex flex-col"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase flex items-center justify-between">Bid Opening Method <span class="text-[10px] bg-surface-container px-1 rounded text-outline">Tender Management</span></span><span class="font-body-md text-body-md text-on-surface mt-1">Public Opening (Virtual)</span></div><div class="flex flex-col"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase flex items-center justify-between">Publication Portal <span class="text-[10px] bg-surface-container px-1 rounded text-outline">Tender Management</span></span><span class="font-body-md text-body-md text-on-surface mt-1">National Procurement Portal</span></div><div class="flex flex-col"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase flex items-center justify-between">Contact Officer <span class="text-[10px] bg-surface-container px-1 rounded text-outline">Tender Management</span></span><span class="font-body-md text-body-md text-on-surface mt-1">Head of Procurement</span></div></div>
+</div>
+</div>
+</div>
+<!-- Right Column (Spans 4 columns) -->
+<div class="lg:col-span-4 flex flex-col gap-section-gap">
+<!-- Handoff Card (Center Concept placed in right column for flow) -->
+<div class="bg-gradient-to-br from-surface-container-lowest to-surface-container-low border border-border-subtle rounded-xl p-6 flex flex-col gap-6 shadow-sm relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+<span class="material-symbols-outlined text-8xl" style="font-variation-settings: 'FILL' 1;">send</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-primary">Handoff Summary</h3>
+<div class="flex flex-col gap-4">
+<div class="bg-surface-container-lowest p-3 rounded border border-border-subtle flex items-center justify-between">
+<span class="font-body-sm text-on-surface-variant">Handoff Target:</span>
+<span class="font-body-md font-semibold text-primary">Tender Management</span>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded border border-border-subtle flex items-center justify-between">
+<span class="font-body-sm text-on-surface-variant">Package Status:</span>
+<span class="font-body-md font-semibold text-status-available flex items-center gap-1"><span class="material-symbols-outlined text-sm">check_circle</span> Ready for Handoff</span>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded border border-border-subtle flex items-center justify-between">
+<span class="font-body-sm text-on-surface-variant">Next Owner:</span>
+<span class="font-body-md font-semibold text-on-surface">Publication Officer</span>
+</div>
+</div>
+<div class="bg-[#eff6ff] text-[#1e40af] p-4 rounded-lg border border-[#bfdbfe] text-sm"><p class="font-body-sm flex items-start gap-2"><span class="material-symbols-outlined text-base mt-0.5">info</span>This wizard will mark the Tender STD Configuration as publication-ready and hand the approved rendered package to Tender Management. Publication, bidder notification, and portal release are handled in the Tender Management publication workflow.</p></div>
+</div>
+<!-- Guidance Panel -->
+<div class="bg-surface-container-low border border-border-subtle rounded-xl p-6 flex flex-col gap-4">
+<h3 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2 border-b border-border-subtle pb-2">
+<span class="material-symbols-outlined">gavel</span>
+                        Publication Guidance
+                    </h3>
+<ul class="flex flex-col gap-3 font-body-sm text-on-surface mt-2"><li class="flex justify-between items-center"><span class="text-on-surface-variant">Readiness Status:</span><span class="font-medium text-status-reserved">Pending</span></li><li class="flex justify-between items-center"><span class="text-on-surface-variant">Blocking Items:</span><span class="font-data-mono font-medium">0</span></li><li class="flex justify-between items-center"><span class="text-on-surface-variant">Items Needing Review:</span><span class="font-data-mono font-medium">0</span></li><li class="flex justify-between items-center"><span class="text-on-surface-variant">Final Preview Status:</span><span class="font-medium text-status-available">Confirmed</span></li><li class="flex justify-between items-center"><span class="text-on-surface-variant">Publication Package Status:</span><span class="font-medium text-status-available">Complete</span></li><li class="flex justify-between items-center border-t border-border-subtle pt-3 mt-1"><span class="font-semibold text-on-surface">Can Mark Publication Ready:</span><span class="font-semibold text-status-available">Yes</span></li></ul>
+<p class="text-xs text-on-surface-variant italic mt-4 leading-relaxed">
+                        Assurance Note: Publication Readiness confirms that the configured and approved tender package is ready for the publication workflow. It does not by itself publish the tender or notify bidders.
+                    </p>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar / Action Bar -->
+<footer class="fixed bottom-0 left-0 w-full z-50 flex justify-between items-center px-container-padding py-3 bg-surface-container-lowest border-t border-border-subtle shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+<div class="flex gap-4">
+<button class="flex items-center justify-center text-on-surface-variant border border-outline-variant hover:bg-surface-container-low rounded-lg px-4 py-2 font-label-caps text-label-caps uppercase transition-colors gap-2">
+<span class="material-symbols-outlined text-sm">arrow_back</span>
+                Return for Correction
+            </button>
+<button class="flex items-center justify-center text-secondary border border-secondary hover:bg-secondary-fixed rounded-lg px-4 py-2 font-label-caps text-label-caps uppercase transition-colors gap-2">
+<span class="material-symbols-outlined text-sm">visibility</span>
+                View Final Preview
+            </button>
+<button class="flex items-center justify-center text-secondary border border-secondary hover:bg-secondary-fixed rounded-lg px-4 py-2 font-label-caps text-label-caps uppercase transition-colors gap-2 hidden md:flex">
+<span class="material-symbols-outlined text-sm">download</span>
+                Download Package
+            </button>
+</div>
+<div>
+<button class="flex items-center justify-center bg-primary text-on-primary hover:brightness-110 rounded-lg px-6 py-2 font-label-caps text-label-caps uppercase transition-all duration-150 active:scale-95 shadow-sm gap-2">
+<span class="material-symbols-outlined text-sm">task_alt</span>
+                Mark as Publication Ready
+            </button>
+</div>
+</footer>
+</body></html>

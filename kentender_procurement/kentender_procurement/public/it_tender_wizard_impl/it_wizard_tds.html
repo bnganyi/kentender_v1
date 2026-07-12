@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en" style=""><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=Manrope:wght@600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"/><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#abc7ff",
+                        "surface-container-high": "#e8e7ed",
+                        "primary": "#001f48",
+                        "on-primary": "#ffffff",
+                        "surface-container": "#eceef0",
+                        "surface-dim": "#dad9df",
+                        "surface": "#f9f9fe",
+                        "inverse-on-surface": "#f1f0f6",
+                        "on-primary-fixed": "#001b3f",
+                        "status-available": "#10B981",
+                        "secondary-fixed": "#cfe5ff",
+                        "inverse-primary": "#abc7ff",
+                        "status-reserved": "#F59E0B",
+                        "tertiary": "#102135",
+                        "on-error": "#ffffff",
+                        "surface-variant": "#e2e2e8",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-bright": "#f9f9fe",
+                        "secondary-container": "#7bbeff",
+                        "status-committed": "#6366F1",
+                        "on-tertiary-fixed-variant": "#38485e",
+                        "on-tertiary-container": "#8f9fb8",
+                        "on-surface-variant": "#424751",
+                        "on-surface": "#1a1b20",
+                        "surface-tint": "#395e9b",
+                        "tertiary-fixed": "#d3e4ff",
+                        "secondary-fixed-dim": "#99cbff",
+                        "border-subtle": "#E2E8F0",
+                        "surface-container-highest": "#e2e2e8",
+                        "secondary": "#01629d",
+                        "on-primary-container": "#7b9ee0",
+                        "background": "#f9f9fe",
+                        "on-secondary-container": "#004c7c",
+                        "status-exhausted": "#EF4444",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#00346f",
+                        "on-secondary": "#ffffff",
+                        "outline": "#737781",
+                        "on-error-container": "#93000a",
+                        "tertiary-container": "#26364b",
+                        "on-primary-fixed-variant": "#1d4681",
+                        "error-container": "#ffdad6",
+                        "error": "#ba1a1a",
+                        "on-background": "#1a1b20",
+                        "on-secondary-fixed": "#001d34",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "surface-container-low": "#f4f3f9",
+                        "on-secondary-fixed-variant": "#004a78",
+                        "tertiary-fixed-dim": "#b7c8e2",
+                        "inverse-surface": "#2f3035",
+                        "outline-variant": "#c3c6d1",
+                        "primary-fixed": "#d7e2ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "section-gap": "24px",
+                        "container-padding": "16px",
+                        "unit": "4px",
+                        "card-padding": "20px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Manrope"],
+                        "data-mono": ["JetBrains Mono"],
+                        "label-caps": ["Inter"],
+                        "headline-sm": ["Manrope"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Manrope"],
+                        "headline-md": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["22px", {"lineHeight": "30px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    }catch(_e){}</script><meta charset="utf-8"/></head><body class="font-body-md text-body-md overflow-x-hidden bg-surface-container-low">
+<!-- TopAppBar -->
+<header class="bg-surface-container-lowest border-b border-border-subtle docked full-width top-0 z-50 flex flex-col w-full sticky">
+<div class="flex justify-between items-center px-container-padding h-16 w-full border-b border-border-subtle">
+<div class="flex items-center gap-gutter">
+<div class="w-10 h-10 bg-primary rounded flex items-center justify-center">
+<img class="w-8 h-8 object-contain" data-alt="Official national emblem of Kenya featuring the coat of arms with lions and shield, rendered in a crisp vector style for a professional government procurement portal." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBeUYfpjasxFYJ-5Q8v2VCn5oYO-F1T7qjPtF9kKshSe1h2iCg8Nw8nH1C0urVQKBvUFCfwe2vZD3mlrZ3ibyHkKEepxblGXGFL4hBBBe7xV3rVLQE4W3C9stL5DyOZR-UFG6mxt-jPX-nw7VPYY8r9UzGIXY1H8GxNToZHFk-ohnDd9zyoyuOgzs471xYbTSEjlPosW7dZ4MchyUI9L-jc2YHHw5oFdjMrzW49tEw1hbRKZW8y8P3n"/>
+</div>
+<div class="flex flex-col ml-2">
+<h2 class="text-headline-sm font-headline-sm font-bold text-primary leading-tight">Tender Data Sheet</h2>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-3 border-l pl-6 border-border-subtle">
+<div class="flex flex-col items-end mr-2">
+<span class="font-bold text-on-surface">J. Kamau</span>
+<span class="text-[11px] text-on-surface-variant">Procurement Officer</span>
+</div>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="Professional corporate headshot of a Kenyan procurement executive in formal business attire, studio lighting, clean gray background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuANzVArjqssrv81OGcOioRB2pvwifA9B9nMIuHPXbr_W-GxyXt128bPHLwMAwByUwbWNSFpaZ4JjWMb_gxqdt6GizJi2cY-ADK2aRYHVcUd4y-fAsx8dKth6Ck8eU7l0-BCYT2alo770_9LNOzABE5tBWMExhtPfXzrZKN5XAzKydHhB8L5MNaxULaxCUpO9ZdS9G8nu61Tu2GeUi9350XUecI56gXltfyJVWjRjNR2CdtFms5_zPRx"/>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">help_outline</span>
+</div>
+</div>
+</div>
+<!-- Context Bar -->
+<section class="bg-surface-container px-6 py-4 grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-4 border-b border-border-subtle">
+<div class="flex flex-col">
+<span class="text-label-caps text-on-surface-variant opacity-70">Tender Ref</span>
+<span class="font-bold text-on-surface truncate">KNICTA/T/04/2023-2024</span>
+</div>
+<div class="flex flex-col lg:col-span-1">
+<span class="text-label-caps text-on-surface-variant opacity-70">Tender Title</span>
+<span class="font-bold text-on-surface truncate">Data Center Refresh</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-caps text-on-surface-variant opacity-70">Planning Package Ref</span>
+<span class="font-bold text-on-surface truncate">PP-ICT-2024-009</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-caps text-on-surface-variant opacity-70">Procuring Entity</span>
+<span class="font-bold text-on-surface truncate">Ministry of Finance</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-caps text-on-surface-variant opacity-70">Method</span>
+<span class="font-bold text-on-surface truncate text-secondary">Open National Tender</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-caps text-on-surface-variant opacity-70">Wizard State</span>
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-status-reserved"></span>
+<span class="font-bold text-on-surface truncate">In Configuration</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="text-label-caps text-on-surface-variant opacity-70">Validation Summary</span>
+<span class="font-bold text-on-surface">1 Blocker / 2 Warnings</span>
+</div>
+</section>
+</header>
+<!-- Main Content Layout -->
+<main class="flex w-full min-h-[calc(100vh-120px)] pb-24 max-w-7xl mx-auto px-container-padding">
+<!-- Left Spacing (Simulating Centered Form in Narrower Column) -->
+<div class="flex-grow flex flex-col pr-gutter py-section-gap">
+<div class="w-full space-y-6">
+<!-- Form Section 1: Identity -->
+<section class="bg-surface-container-lowest border border-border-subtle rounded-xl p-card-padding">
+<div class="flex items-center gap-2 mb-gutter">
+<span class="material-symbols-outlined text-primary">business</span>
+<h2 class="font-headline-sm text-headline-sm text-primary">1. Tender Identity</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<div class="space-y-1">
+<div class="flex justify-between items-end">
+<label class="font-label-caps text-label-caps text-on-surface-variant block uppercase">Procuring Entity Address <span class="text-error">*</span></label>
+<span class="text-[10px] text-on-surface-variant">Source: Tender Shell</span>
+</div>
+<input class="w-full bg-surface-container-low border-outline-variant rounded-md p-2 font-body-md form-input-focus" type="text" value="Ministry of Finance, P.O. Box 30007-00100, Nairobi"/>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between items-end">
+<label class="font-label-caps text-label-caps text-on-surface-variant block uppercase">Tender Ref <span class="text-error">*</span></label>
+<span class="text-[10px] text-on-surface-variant">Source: Tender Shell</span>
+</div>
+<input class="w-full bg-surface-container-low border-outline-variant rounded-md p-2 font-data-mono text-data-mono form-input-focus" type="text" value="KNICTA/T/04/2023-2024"/>
+</div>
+<div class="md:col-span-2 space-y-1">
+<div class="flex justify-between items-end">
+<label class="font-label-caps text-label-caps text-on-surface-variant block uppercase">Tender Name <span class="text-error">*</span></label>
+<span class="text-[10px] text-on-surface-variant">Source: Tender Shell</span>
+</div>
+<input class="w-full bg-surface-container-lowest border-outline-variant border-2 rounded-md p-2 font-body-md form-input-focus" placeholder="e.g. Supply and Installation of Data Center Servers" type="text" value="Data Center Hardware Refresh"/>
+</div>
+</div>
+</section>
+<!-- Form Section 2: Eligibility -->
+<section class="bg-surface-container-lowest border border-border-subtle rounded-xl p-card-padding">
+<div class="flex items-center gap-2 mb-gutter">
+<span class="material-symbols-outlined text-primary">verified_user</span>
+<h2 class="font-headline-sm text-headline-sm text-primary">2. Eligibility &amp; Participation</h2>
+</div>
+<div class="space-y-gutter">
+<div class="flex items-center justify-between p-3 rounded-lg bg-surface-container-low">
+<div>
+<span class="font-body-md font-semibold text-on-surface">Alternative tenders allowed?</span>
+<p class="text-[12px] text-on-surface-variant">Standard IT Default: No</p>
+</div>
+<select class="bg-surface-container-lowest border-outline-variant rounded-md text-body-md">
+<option>No</option>
+<option>Yes</option>
+</select>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<div class="space-y-1">
+<div class="flex justify-between items-end">
+<label class="font-label-caps text-label-caps text-on-surface-variant block uppercase">JV Members Cap</label>
+<span class="text-[10px] text-on-surface-variant">Source: STD Default</span>
+</div>
+<input class="w-full bg-surface-container-lowest border-outline-variant rounded-md p-2 font-body-md form-input-focus" type="number" value="3"/>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between items-end">
+<label class="font-label-caps text-label-caps text-on-surface-variant block uppercase">Local Sourcing Preference</label>
+<span class="text-[10px] text-on-surface-variant">Source: Configuration</span>
+</div>
+<select class="w-full bg-surface-container-lowest border-outline-variant rounded-md p-2 font-body-md">
+<option>Apply 15% Margin of Preference</option>
+<option>No Local Preference</option>
+</select>
+</div>
+</div>
+</div>
+</section>
+<!-- Form Section 3: Dates -->
+<section class="bg-surface-container-lowest border border-border-subtle rounded-xl p-card-padding">
+<div class="flex items-center gap-2 mb-gutter">
+<span class="material-symbols-outlined text-primary">calendar_today</span>
+<h2 class="font-headline-sm text-headline-sm text-primary">3. Dates &amp; Communication</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<div class="space-y-1">
+<div class="flex justify-between items-end">
+<label class="font-label-caps text-label-caps text-on-surface-variant block uppercase">Submission Deadline <span class="text-error">*</span></label>
+</div>
+<input class="w-full bg-error-container/20 border-error border-2 rounded-md p-2 font-data-mono text-data-mono form-input-focus" type="datetime-local"/>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between items-end">
+<label class="font-label-caps text-label-caps text-on-surface-variant block uppercase">Opening Date/Time</label>
+</div>
+<input class="w-full bg-surface-container-lowest border-outline-variant rounded-md p-2 font-data-mono text-data-mono form-input-focus" type="datetime-local"/>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between items-end">
+<label class="font-label-caps text-label-caps text-on-surface-variant block uppercase">Clarification Contact</label>
+</div>
+<input class="w-full bg-surface-container-lowest border-outline-variant rounded-md p-2 font-body-md form-input-focus" placeholder="Email or Portal Handle" type="text"/>
+</div>
+</div>
+</section>
+<!-- Form Section 4: Submission Rules -->
+<section class="bg-surface-container-lowest border border-border-subtle rounded-xl p-card-padding">
+<div class="flex items-center gap-2 mb-gutter">
+<span class="material-symbols-outlined text-primary">rule</span>
+<h2 class="font-headline-sm text-headline-sm text-primary">4. Submission Rules</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<div class="space-y-1">
+<div class="flex justify-between items-end">
+<label class="font-label-caps text-label-caps text-on-surface-variant block uppercase">Submission Method</label>
+<span class="text-[10px] text-on-surface-variant">Source: Tender Shell</span>
+</div>
+<div class="flex gap-4 p-2 bg-surface-container-low rounded-md">
+<label class="flex items-center gap-2 cursor-pointer">
+<input checked="" class="text-primary rounded" type="checkbox"/>
+<span class="">Electronic</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer opacity-50">
+<input class="text-primary rounded" disabled="" type="checkbox"/>
+<span class="">Physical</span>
+</label>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between items-end">
+<label class="font-label-caps text-label-caps text-on-surface-variant block uppercase">Envelope Marking</label>
+<span class="text-[10px] text-on-surface-variant">Source: System</span>
+</div>
+<input class="w-full bg-surface-container-high border-outline-variant rounded-md p-2 font-data-mono text-data-mono cursor-not-allowed" readonly="" type="text" value="ELECTRONIC_ONLY"/>
+</div>
+<div class="md:col-span-2 p-3 bg-tertiary-container text-on-tertiary-container rounded-lg flex items-start gap-3">
+<span class="material-symbols-outlined text-secondary-container">info</span>
+<span class="text-[13px]">Tender document serialization/page numbering is required where applicable.</span>
+</div>
+</div>
+</section>
+<!-- Form Section 5: Securities -->
+<section class="bg-surface-container-lowest border border-border-subtle rounded-xl p-card-padding">
+<div class="flex items-center gap-2 mb-gutter">
+<span class="material-symbols-outlined text-primary">account_balance_wallet</span>
+<h2 class="font-headline-sm text-headline-sm text-primary">5. Securities &amp; Guarantees</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<div class="space-y-1">
+<div class="flex justify-between items-end">
+<label class="font-label-caps text-label-caps text-on-surface-variant block uppercase">Security Amount (KES) <span class="text-status-reserved">*</span></label>
+</div>
+<input class="w-full bg-surface-container-lowest border-status-reserved border-2 rounded-md p-2 font-data-mono text-data-mono form-input-focus" placeholder="e.g. 500,000" type="text"/>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between items-end">
+<label class="font-label-caps text-label-caps text-on-surface-variant block uppercase">Validity (Days)</label>
+</div>
+<input class="w-full bg-surface-container-lowest border-outline-variant rounded-md p-2 font-body-md form-input-focus" type="number" value="120"/>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between items-end">
+<label class="font-label-caps text-label-caps text-on-surface-variant block uppercase">Issuer Type</label>
+</div>
+<select class="w-full bg-surface-container-lowest border-outline-variant rounded-md p-2 font-body-md">
+<option>Commercial Bank</option>
+<option>Insurance Company</option>
+<option>Sacco Society</option>
+</select>
+</div>
+</div>
+</section>
+<!-- Navigation Links -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter pt-4">
+<button class="flex items-center justify-between p-4 bg-surface-container-lowest border border-border-subtle rounded-xl hover:bg-surface-container transition-colors text-left group">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined">settings_suggest</span>
+</div>
+<div>
+<h4 class="font-bold text-primary">Related Step: Evaluation Setup</h4>
+<p class="text-[12px] text-on-surface-variant">Define technical and financial scoring</p>
+</div>
+</div>
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">chevron_right</span>
+</button>
+<button class="flex items-center justify-between p-4 bg-surface-container-lowest border border-border-subtle rounded-xl hover:bg-surface-container transition-colors text-left group">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-tertiary-container rounded-lg flex items-center justify-center text-on-tertiary-container">
+<span class="material-symbols-outlined">description</span>
+</div>
+<div>
+<h4 class="font-bold text-primary">Related Step: SCC Configuration</h4>
+<p class="text-[12px] text-on-surface-variant">SCC / Contract Parameters Preview</p>
+</div>
+</div>
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform" data-original-icon="chevron">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- SideNavBar / Guidance Panel -->
+<aside class="w-80 flex-shrink-0 border-l border-border-subtle pl-gutter py-section-gap hidden lg:block">
+<div class="sticky top-40 space-y-6">
+<div class="bg-surface-container-lowest border border-border-subtle rounded-xl p-4">
+<h3 class="font-bold text-primary mb-3 text-headline-sm">TDS Completion</h3>
+<div class="w-full bg-surface-container-highest rounded-full h-2.5 mb-2">
+<div class="bg-primary h-2.5 rounded-full" style="width: 53%"></div>
+</div>
+<p class="text-[13px] text-on-surface-variant mb-4">8/15 fields complete</p>
+<h4 class="text-[12px] font-bold text-on-surface-variant uppercase tracking-wide mb-2">Missing Required Fields</h4>
+<ul class="space-y-2 text-[13px] text-on-surface">
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-[16px] text-error mt-0.5">error</span>
+<span>Submission Deadline</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-[16px] text-status-reserved mt-0.5">warning</span>
+<span>Tender Security Amount</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-[16px] text-status-reserved mt-0.5">warning</span>
+<span>Opening Date/Time</span>
+</li>
+</ul>
+</div>
+<div class="bg-surface-container-lowest border border-border-subtle rounded-xl p-4">
+<h3 class="font-bold text-primary mb-2">Next Recommended Step</h3>
+<button class="w-full flex items-center justify-between bg-surface-container hover:bg-surface-container-high transition-colors p-3 rounded-lg border border-border-subtle text-left group">
+<div>
+<span class="block text-[14px] font-bold text-on-surface">Continue to IT Requirements</span>
+</div>
+<span class="material-symbols-outlined text-primary group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+<div class="bg-surface-container p-4 rounded-xl border border-border-subtle text-[12px] text-on-surface-variant">
+<div class="flex items-center gap-2 font-bold mb-1 text-on-surface">
+<span class="material-symbols-outlined text-[16px]">gavel</span>
+            Legal Note
+        </div>
+        Standard ITT/GCC text is locked and cannot be edited here. Only procurement-specific configuration is permitted.
+    </div>
+</div>
+</aside>
+</main>
+<!-- -->
+<footer class="fixed bottom-0 left-0 w-full z-50 flex justify-end gap-gutter p-card-padding bg-surface-container-lowest border-t border-border-subtle dark:border-outline-variant">
+<button class="flex items-center justify-center text-secondary border border-secondary rounded-lg px-6 py-2 font-label-caps text-label-caps hover:bg-surface-container transition-all active:scale-95 duration-150 bg-surface-container-lowest">
+<span class="material-symbols-outlined mr-2">save</span>
+            Save TDS
+        </button>
+<button class="flex items-center justify-center text-secondary border border-secondary rounded-lg px-6 py-2 font-label-caps text-label-caps hover:bg-surface-container transition-all active:scale-95 duration-150 bg-surface-container-lowest">
+<span class="material-symbols-outlined mr-2">rule</span>
+            Run Validation
+        </button>
+<button class="flex items-center justify-center bg-outline text-on-primary rounded-lg px-6 py-2 font-label-caps text-label-caps cursor-not-allowed opacity-70">
+            Continue to IT Requirements
+            <span class="material-symbols-outlined ml-2">arrow_forward</span>
+</button>
+<button class="flex items-center justify-center text-primary font-bold px-4 py-2 text-[14px] hover:bg-surface-container-low transition-colors rounded-lg underline">
+            View Details
+        </button>
+</footer>
+<script>
+        // Simple micro-interaction for blocker alert
+        const nextBtn = document.querySelector('button.bg-outline');
+        const blockerAlert = document.querySelector('.bg-error-container\\/20');
+        
+        blockerAlert.addEventListener('click', () => {
+            blockerAlert.classList.add('animate-bounce');
+            setTimeout(() => blockerAlert.classList.remove('animate-bounce'), 1000);
+        });
+
+        // Simulating the 'Locked' nature of read-only fields
+        document.querySelectorAll('input[readonly]').forEach(input => {
+            input.addEventListener('click', () => {
+                input.classList.add('bg-error-container/10');
+                setTimeout(() => input.classList.remove('bg-error-container/10'), 300);
+            });
+        });
+    </script>
+</body></html>

@@ -6,7 +6,7 @@ BENCH_ROOT := /home/midasuser/frappe-bench
 KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency
 INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency
 
-.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate std-verbatim-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate
+.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate std-verbatim-gate std-step1-gate nssf-calibration-gate it-wizard-static-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate
 
 help:
 	@echo "Targets:"
@@ -32,6 +32,9 @@ help:
 	@echo "  make ui-smoke — Phase La: npm run test:ui:smoke (needs Node, running site, apps/kentender_v1/.env.ui)"
 	@echo "  make ui-workspace-pattern-gate — workspace contract tests (selection, scroll, anti-flicker)"
 	@echo "  make std-verbatim-gate SITE=$(SITE) — BE-14 verbatim extraction + smoke contracts"
+	@echo "  make std-step1-gate SITE=$(SITE) — BE-15 Step 1 activation/consumption/render smoke"
+	@echo "  make nssf-calibration-gate SITE=$(SITE) — CAL-NSSF golden proof gate"
+	@echo "  make it-wizard-static-gate SITE=$(SITE) — IT Wizard Phase 1 static layout guards (45 tests)"
 	@echo "  make seed-stable-platform SITE=$(SITE) — load MOH stable platform seed (Works + IT STD)"
 	@echo "  make seed-stable-platform-reset SITE=$(SITE) — clear + reload stable platform seed"
 	@echo "  make seed-stable-platform-validate SITE=$(SITE) — validate stable platform seed only"
@@ -150,6 +153,63 @@ std-verbatim-gate:
 		--module kentender_procurement.std_engine.tests.test_record_mapper_verbatim_fields
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.std_engine.tests.test_be_14_verbatim_smoke_contracts
+
+std-step1-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.std_engine.tests.test_be_12_smoke_contracts
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.std_engine.tests.test_be_14_verbatim_smoke_contracts
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption
+
+nssf-calibration-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption \
+		--test kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption.TestBe15Step1ActivationConsumption.test_cal_nssf_001_fixture_import_without_master_mutation
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption \
+		--test kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption.TestBe15Step1ActivationConsumption.test_cal_nssf_002_golden_bind
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption \
+		--test kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption.TestBe15Step1ActivationConsumption.test_cal_nssf_003_tds_values_validate_against_fixture
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption \
+		--test kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption.TestBe15Step1ActivationConsumption.test_cal_nssf_012_render_uses_official_locked_text
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption \
+		--test kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption.TestBe15Step1ActivationConsumption.test_cal_nssf_013_fixture_activation_blocked
+
+it-wizard-static-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_ui_dashboard_layout_guard
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_ui_std_config_overview_layout_guard
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_ui_tender_profile_layout_guard
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_ui_tds_layout_guard
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_ui_it_requirements_layout_guard
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_ui_implementation_schedule_layout_guard
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_ui_system_inventory_layout_guard
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_ui_price_schedule_layout_guard
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_ui_evaluation_setup_layout_guard
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_ui_forms_and_evidence_layout_guard
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_ui_scc_layout_guard
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_ui_validation_report_layout_guard
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_ui_review_and_approval_layout_guard
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_ui_render_preview_layout_guard
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_ui_publication_readiness_layout_guard
 
 seed-stable-platform:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.seed_stable_platform.run

@@ -153,9 +153,22 @@ class ValidationEngine:
 			).insert(ignore_permissions=True)
 
 		persisted: list[dict[str, Any]] = []
+		active_keys = {spec.finding_key(package_id) for spec in specs}
 		for spec in specs:
 			finding_key = spec.finding_key(package_id)
 			if frappe.db.exists("STD Validation Finding", finding_key):
+				frappe.db.set_value(
+					"STD Validation Finding",
+					finding_key,
+					{
+						"severity": spec.severity,
+						"description": spec.description,
+						"suggested_fix": spec.suggested_fix,
+						"lifecycle_gate": spec.lifecycle_gate,
+						"status": "OPEN",
+					},
+					update_modified=False,
+				)
 				persisted.append(_finding_row(finding_key))
 				continue
 			doc = frappe.get_doc(
@@ -177,6 +190,14 @@ class ValidationEngine:
 			doc.insert(ignore_permissions=True)
 			persisted.append(_finding_row(finding_key))
 
+		for stale in frappe.get_all(
+			"STD Validation Finding",
+			filters={"package_id": package_id, "status": "OPEN"},
+			pluck="name",
+		):
+			if stale not in active_keys:
+				frappe.db.set_value("STD Validation Finding", stale, "status", "RESOLVED", update_modified=False)
+
 		summary = _summary_from_database(package_id)
 		frappe.db.set_value(
 			"STD Validation Run",
@@ -194,6 +215,11 @@ class ValidationEngine:
 				_resolve_version_validation_status(summary),
 				update_modified=False,
 			)
+			from kentender_procurement.std_engine.services.activation_readiness_service import (
+				sync_activation_flags,
+			)
+
+			sync_activation_flags(package_id)
 
 		return ValidationRunResult(
 			package_id=package_id,
@@ -236,7 +262,7 @@ def get_validation_summary(package_id: str) -> dict[str, int]:
 def _summary_from_database(package_id: str) -> dict[str, int]:
 	rows = frappe.get_all(
 		"STD Validation Finding",
-		filters={"package_id": package_id},
+		filters={"package_id": package_id, "status": "OPEN"},
 		fields=["severity"],
 	)
 	summary = {"blockers": 0, "warnings": 0, "info": 0}
