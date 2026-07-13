@@ -1,0 +1,97 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-07-13 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "tender_std_instance",
+  "snapshot_at",
+  "wizard_state",
+  "blocking_findings_count",
+  "warning_findings_count",
+  "completed_steps",
+  "total_steps",
+  "snapshot_payload_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "tender_std_instance",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Tender STD Instance",
+   "options": "Tender STD Instance",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "snapshot_at",
+   "fieldtype": "Datetime",
+   "label": "Snapshot At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "wizard_state",
+   "fieldtype": "Data",
+   "label": "Wizard State",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "blocking_findings_count",
+   "fieldtype": "Int",
+   "label": "Blocking Findings Count"
+  },
+  {
+   "default": "0",
+   "fieldname": "warning_findings_count",
+   "fieldtype": "Int",
+   "label": "Warning Findings Count"
+  },
+  {
+   "default": "0",
+   "fieldname": "completed_steps",
+   "fieldtype": "Int",
+   "label": "Completed Steps"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_steps",
+   "fieldtype": "Int",
+   "label": "Total Steps"
+  },
+  {
+   "fieldname": "snapshot_payload_json",
+   "fieldtype": "Code",
+   "label": "Snapshot Payload JSON",
+   "options": "JSON"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-07-13 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "IT Tender Wizard",
+ "name": "Wizard Progress Snapshot",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "IT Tender Drafter",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

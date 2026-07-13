@@ -1,0 +1,221 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:instance_code",
+ "creation": "2026-07-13 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "instance_code",
+  "instance_title",
+  "wizard_state",
+  "std_version",
+  "std_package_code",
+  "package_hash",
+  "procuring_entity_id",
+  "procuring_entity_name",
+  "procurement_plan_item_id",
+  "planning_package_code",
+  "planning_package_name",
+  "procurement_method_code",
+  "procurement_method_name",
+  "bound_tender_id",
+  "initiation_source",
+  "current_validation_status",
+  "completion_percent",
+  "current_step_code",
+  "current_step_name",
+  "due_at",
+  "owner_user",
+  "section_break_audit",
+  "metadata_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "instance_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Instance Code",
+   "reqd": 1,
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "instance_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Instance Title",
+   "reqd": 1
+  },
+  {
+   "default": "DRAFT",
+   "fieldname": "wizard_state",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Wizard State",
+   "options": "DRAFT\nIN_CONFIGURATION\nVALIDATION_FAILED\nREADY_FOR_REVIEW\nRETURNED_FOR_CORRECTION\nPROCUREMENT_REVIEW\nTECHNICAL_REVIEW\nLEGAL_REVIEW\nAPPROVED_FOR_TENDER_CREATION\nBOUND_TO_TENDER\nPUBLISHED\nADDENDUM_REQUIRED\nSUPERSEDED_BY_ADDENDUM\nCANCELLED",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "std_version",
+   "fieldtype": "Link",
+   "label": "STD Version",
+   "options": "STD Version",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "std_package_code",
+   "fieldtype": "Data",
+   "label": "STD Package Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "package_hash",
+   "fieldtype": "Data",
+   "label": "Package Hash"
+  },
+  {
+   "fieldname": "procuring_entity_id",
+   "fieldtype": "Data",
+   "label": "Procuring Entity ID",
+   "search_index": 1
+  },
+  {
+   "fieldname": "procuring_entity_name",
+   "fieldtype": "Data",
+   "label": "Procuring Entity Name"
+  },
+  {
+   "fieldname": "procurement_plan_item_id",
+   "fieldtype": "Data",
+   "label": "Procurement Plan Item ID"
+  },
+  {
+   "fieldname": "planning_package_code",
+   "fieldtype": "Data",
+   "label": "Planning Package Code"
+  },
+  {
+   "fieldname": "planning_package_name",
+   "fieldtype": "Data",
+   "label": "Planning Package Name"
+  },
+  {
+   "fieldname": "procurement_method_code",
+   "fieldtype": "Data",
+   "label": "Procurement Method Code"
+  },
+  {
+   "fieldname": "procurement_method_name",
+   "fieldtype": "Data",
+   "label": "Procurement Method Name"
+  },
+  {
+   "fieldname": "bound_tender_id",
+   "fieldtype": "Data",
+   "label": "Bound Tender ID",
+   "search_index": 1
+  },
+  {
+   "default": "DASHBOARD_CREATED",
+   "fieldname": "initiation_source",
+   "fieldtype": "Select",
+   "label": "Initiation Source",
+   "options": "PLANNING_INITIATED\nDASHBOARD_CREATED"
+  },
+  {
+   "default": "NOT_RUN",
+   "fieldname": "current_validation_status",
+   "fieldtype": "Select",
+   "label": "Current Validation Status",
+   "options": "NOT_RUN\nPASSED\nPASSED_WITH_WARNINGS\nFAILED\nERROR"
+  },
+  {
+   "default": "0",
+   "fieldname": "completion_percent",
+   "fieldtype": "Int",
+   "label": "Completion Percent"
+  },
+  {
+   "fieldname": "current_step_code",
+   "fieldtype": "Data",
+   "label": "Current Step Code"
+  },
+  {
+   "fieldname": "current_step_name",
+   "fieldtype": "Data",
+   "label": "Current Step Name"
+  },
+  {
+   "fieldname": "due_at",
+   "fieldtype": "Date",
+   "label": "Due At"
+  },
+  {
+   "fieldname": "owner_user",
+   "fieldtype": "Link",
+   "label": "Owner User",
+   "options": "User"
+  },
+  {
+   "fieldname": "section_break_audit",
+   "fieldtype": "Section Break",
+   "label": "Metadata"
+  },
+  {
+   "fieldname": "metadata_json",
+   "fieldtype": "Code",
+   "label": "Metadata JSON",
+   "options": "JSON"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-07-13 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "IT Tender Wizard",
+ "name": "Tender STD Instance",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "IT Tender Drafter",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Officer",
+   "share": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

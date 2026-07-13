@@ -1,0 +1,129 @@
+# Copyright (c) 2026, KenTender and contributors
+# For license information, please see license.txt
+
+"""ITW-BE-DASH-002/004 — Instance API contracts."""
+
+from __future__ import annotations
+
+import frappe
+from frappe.tests import IntegrationTestCase
+
+from kentender_procurement.it_tender_wizard.api.instance_api import (
+	create_configuration_api,
+	delete_draft_configuration_api,
+	list_configurations_api,
+)
+from kentender_procurement.it_tender_wizard.enums import wizard_states as ws
+from kentender_procurement.patches.it_wizard_dashboard_seed import (
+	ROLE_NAME,
+	seed_dashboard_sample_instances,
+)
+from kentender_procurement.std_engine.constants import CANONICAL_PACKAGE_ID
+from kentender_procurement.std_engine.package_import.commit_importer import CommitImporter
+from kentender_procurement.std_engine.package_import.draft_cleanup import force_reset_package_state_for_tests
+from kentender_procurement.std_engine.paths import default_official_pdf_path, default_seed_zip_path_v1_1
+from kentender_procurement.std_engine.services.activation_readiness_service import sync_activation_flags
+from kentender_procurement.std_engine.services.activation_service import activate_version
+from kentender_procurement.std_engine.services.legal_review_service import approve_all_pending
+
+
+class TestInstanceApi(IntegrationTestCase):
+	@classmethod
+	def setUpClass(cls) -> None:
+		super().setUpClass()
+		force_reset_package_state_for_tests(CANONICAL_PACKAGE_ID, family_code="KE-PPRA-IT")
+		CommitImporter(default_seed_zip_path_v1_1(), default_official_pdf_path()).run()
+		approve_all_pending(CANONICAL_PACKAGE_ID)
+		sync_activation_flags(CANONICAL_PACKAGE_ID)
+		activate_version(CANONICAL_PACKAGE_ID)
+		if not frappe.db.exists("Role", ROLE_NAME):
+			frappe.get_doc({"doctype": "Role", "role_name": ROLE_NAME}).insert(ignore_permissions=True)
+		seed_dashboard_sample_instances()
+		frappe.set_user("Administrator")
+
+	def test_list_filters_and_pagination(self) -> None:
+		payload = list_configurations_api(state=ws.IN_CONFIGURATION, page=1, page_size=10)
+		self.assertTrue(payload["success"])
+		data = payload["data"]
+		self.assertGreaterEqual(data["total"], 1)
+		self.assertTrue(any(item["code"] == "ITCFG-DASH-SEED-001" for item in data["items"]))
+
+	def test_list_q_filter(self) -> None:
+		payload = list_configurations_api(q="Data Center", page=1, page_size=25)
+		self.assertTrue(payload["success"])
+		data = payload["data"]
+		self.assertEqual(data["total"], 1)
+		self.assertEqual(data["items"][0]["code"], "ITCFG-DASH-SEED-001")
+
+	def test_list_entity_filter(self) -> None:
+		payload = list_configurations_api(procurement_entity_id="PE-MIN-ICT", page=1, page_size=25)
+		self.assertTrue(payload["success"])
+		data = payload["data"]
+		self.assertGreaterEqual(data["total"], 1)
+		self.assertTrue(any(item["code"] == "ITCFG-DASH-SEED-002" for item in data["items"]))
+
+	def test_list_method_filter(self) -> None:
+		payload = list_configurations_api(procurement_method_code="RFP", page=1, page_size=25)
+		self.assertTrue(payload["success"])
+		data = payload["data"]
+		self.assertGreaterEqual(data["total"], 1)
+		self.assertTrue(any(item["code"] == "ITCFG-DASH-SEED-002" for item in data["items"]))
+
+	def test_list_states_filter(self) -> None:
+		payload = list_configurations_api(
+			states=f"{ws.VALIDATION_FAILED},{ws.RETURNED_FOR_CORRECTION}",
+			page=1,
+			page_size=25,
+		)
+		self.assertTrue(payload["success"])
+		data = payload["data"]
+		codes = {item["code"] for item in data["items"]}
+		self.assertIn("ITCFG-DASH-SEED-002", codes)
+		self.assertIn("ITCFG-DASH-SEED-004", codes)
+		self.assertNotIn("ITCFG-DASH-SEED-001", codes)
+
+	def test_list_overdue_only_filter(self) -> None:
+		payload = list_configurations_api(overdue_only=1, page=1, page_size=25)
+		self.assertTrue(payload["success"])
+		data = payload["data"]
+		self.assertGreaterEqual(data["total"], 1)
+		self.assertTrue(any(item["code"] == "ITCFG-DASH-SEED-004" for item in data["items"]))
+
+	def test_list_pagination_page_four(self) -> None:
+		all_payload = list_configurations_api(page=1, page_size=100)
+		total = all_payload["data"]["total"]
+		if total < 31:
+			self.skipTest("Need at least 31 configurations to validate page-4 window.")
+		payload = list_configurations_api(page=4, page_size=10)
+		self.assertTrue(payload["success"])
+		data = payload["data"]
+		self.assertEqual(data["page"], 4)
+		self.assertEqual(data["page_size"], 10)
+		expected_count = min(10, max(0, total - 30))
+		self.assertEqual(len(data["items"]), expected_count)
+
+	def test_create_api_returns_envelope(self) -> None:
+		payload = create_configuration_api(
+			std_template_version_id=CANONICAL_PACKAGE_ID,
+			title="API Created Config",
+			procuring_entity_id="PE-API-001",
+		)
+		self.assertTrue(payload["success"])
+		self.assertTrue(payload["data"]["summary"]["configuration_id"].startswith("ITCFG-"))
+		self.assertIsNotNone(payload.get("audit_event_id"))
+
+	def test_delete_draft_api(self) -> None:
+		created = create_configuration_api(
+			std_template_version_id=CANONICAL_PACKAGE_ID,
+			title="API Delete Config",
+		)
+		code = created["data"]["summary"]["configuration_id"]
+		deleted = delete_draft_configuration_api(code)
+		self.assertTrue(deleted["success"])
+		self.assertFalse(frappe.db.exists("Tender STD Instance", {"instance_code": code}))
+
+	def test_permission_denied_for_guest(self) -> None:
+		frappe.set_user("Guest")
+		with self.assertRaises(frappe.PermissionError):
+			list_configurations_api()
+		frappe.set_user("Administrator")

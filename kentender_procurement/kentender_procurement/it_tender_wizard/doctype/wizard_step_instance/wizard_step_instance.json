@@ -1,0 +1,80 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-07-13 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "tender_std_instance",
+  "step_code",
+  "step_order",
+  "step_title",
+  "status"
+ ],
+ "fields": [
+  {
+   "fieldname": "tender_std_instance",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Tender STD Instance",
+   "options": "Tender STD Instance",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "step_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Step Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "step_order",
+   "fieldtype": "Int",
+   "label": "Step Order",
+   "reqd": 1
+  },
+  {
+   "fieldname": "step_title",
+   "fieldtype": "Data",
+   "label": "Step Title",
+   "reqd": 1
+  },
+  {
+   "default": "INCOMPLETE",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "INCOMPLETE\nIN_PROGRESS\nCOMPLETE\nNOT_AVAILABLE",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-07-13 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "IT Tender Wizard",
+ "name": "Wizard Step Instance",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "IT Tender Drafter",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

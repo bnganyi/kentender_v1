@@ -1,0 +1,37 @@
+/* IT Wizard — Tender Configuration Dashboard Desk shell (iframe only). */
+
+body.it-wizard-dashboard-shell .page-head,
+body.it-wizard-dashboard-shell .layout-main-section .page-head,
+body.it-wizard-dashboard-shell .page-head-content,
+body.it-wizard-dashboard-shell .page-head-actions {
+	display: none !important;
+}
+
+body.it-wizard-dashboard-shell .page-body > .container,
+body.it-wizard-dashboard-shell .frappe-app > .container {
+	padding: 0 !important;
+	max-width: 100% !important;
+}
+
+body.it-wizard-dashboard-shell .layout-main-section-wrapper {
+	padding: 0;
+}
+
+body.it-wizard-dashboard-shell .layout-main-section {
+	padding: 0;
+}
+
+body.it-wizard-dashboard-shell .it-wizard-dashboard-root,
+body.it-wizard-dashboard-shell .it-wizard-dashboard-shell {
+	display: block;
+	width: 100%;
+	min-height: calc(100vh - 48px);
+}
+
+body.it-wizard-dashboard-shell .it-wizard-dashboard-iframe {
+	display: block;
+	width: 100%;
+	height: calc(100vh - 48px);
+	border: 0;
+	background: #f7f9fb;
+}

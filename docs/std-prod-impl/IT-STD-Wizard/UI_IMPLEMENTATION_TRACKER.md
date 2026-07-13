@@ -14,7 +14,7 @@ Done looks like: 15 HTML files + `index.html`, 45/45 layout-guard unit tests gre
 
 | ID | Screen | Design source | Deployed asset | Layout guard | Playwright | Status | Evidence |
 |---|---|---|---|---|---|---|---|
-| ITW-01 | Tender Configuration Dashboard | `01 dashboard/code.html` | `it_wizard_dashboard.html` | `test_it_wizard_ui_dashboard_layout_guard` | `static-screens.spec.ts` (dashboard) | Done | ITW-LG-01 (3/3); PW-ITW-01 |
+| ITW-01 | Tender Configuration Dashboard | `01 dashboard/code.html` | `it_wizard_dashboard.html` | `test_it_wizard_ui_dashboard_layout_guard` | `dashboard-desk-wiring.spec.ts` | Done | ITW-LG-01 (3/3); ITW-BE-DASH-001..004; ITW-DESK-DASH-001/002; ITW-NAV-001/002; PW-ITW-DASH-01 |
 | ITW-02 | Tender STD Configuration Overview | `02 std-config-overview/code.html` | `it_wizard_std_config_overview.html` | `test_it_wizard_ui_std_config_overview_layout_guard` | `static-screens.spec.ts` (overview) | Done | ITW-LG-02 (3/3); PW-ITW-02 |
 | ITW-03 | Tender Profile | `03 tender-profile/code.html` | `it_wizard_tender_profile.html` | `test_it_wizard_ui_tender_profile_layout_guard` | `static-screens.spec.ts` (profile) | Done | ITW-LG-03 (3/3); PW-ITW-03 |
 | ITW-04 | Tender Data Sheet (TDS) | `04 tds/code.html` | `it_wizard_tds.html` | `test_it_wizard_ui_tds_layout_guard` | `static-screens.spec.ts` (tds) | Done | ITW-LG-04 (3/3); PW-ITW-04 |
@@ -37,6 +37,11 @@ Done looks like: 15 HTML files + `index.html`, 45/45 layout-guard unit tests gre
 |---|---|---|
 | ITW-16 | Addendum Impact | Implementation Pack §14.2 #19 — design TBD |
 | ITW-17 | Audit & Hash Evidence | Implementation Pack §14.2 #20 — design TBD |
+
+## Backend wiring (ITW-01 dashboard slice)
+
+- DocTypes, services, whitelisted APIs, Desk iframe hydration, Procurement sidebar link (Tender Management cluster)
+- Gate: `make it-wizard-dashboard-gate SITE=kentender.midas.com`
 
 ## Exit criteria (Phase 1)
 

@@ -594,6 +594,24 @@
 			</div>`;
 		}
 
+		const boundVersion = String(bind.std_template_version_code || "").trim();
+		const bindingStatus = String(bind.binding_status || "").trim().toLowerCase();
+		const hasBoundStd =
+			Boolean(boundVersion) &&
+			(bindingStatus.indexOf("bound") >= 0 || bindingStatus.indexOf("active") >= 0);
+		const tenderCode = String(msg.tender_code || "").trim();
+		const planItemId = String((msg.overview || {}).procurement_plan_item_id || "").trim();
+		const launchHtml = hasBoundStd
+			? `<div class="mb-3" data-testid="tm2-it-wizard-handoff-block">
+				<button type="button" class="btn btn-primary btn-sm" data-testid="tm2-launch-it-std-configuration"
+					data-tender-code="${esc(tenderCode)}"
+					data-std-version-id="${esc(boundVersion)}"
+					data-plan-item-id="${esc(planItemId)}">
+					${esc(__("Launch IT STD Configuration"))}
+				</button>
+			</div>`
+			: "";
+
 		const viewLabels = {
 			dsm: __("View supplier submission checklist"),
 			dom: __("View opening register rules"),
@@ -627,6 +645,7 @@
 
 		$p.html(
 			`<div data-testid="tm2-preparation-readiness-queue-host" class="mb-3 tm2-readiness-work-queue"></div>
+			${launchHtml}
 			<details class="mb-2" data-testid="tm2-preparation-legal-basis">
 				<summary class="small font-weight-bold text-muted">${esc(__("Legal basis / Advanced"))}</summary>
 				<div class="pt-2">
@@ -696,6 +715,16 @@
 					`<p class="mb-0 small"><strong>${esc(String(map[tid] || tid))}:</strong> <span class="text-monospace">${esc(code)}</span></p>`,
 				indicator: "blue",
 			});
+		});
+
+		$p.off("click.tm2itwiz").on("click.tm2itwiz", "[data-testid='tm2-launch-it-std-configuration']", function (ev) {
+			ev.preventDefault();
+			const $b = $(this);
+			launch_it_std_configuration(
+				$b.attr("data-tender-code") || "",
+				$b.attr("data-std-version-id") || "",
+				$b.attr("data-plan-item-id") || "",
+			);
 		});
 	}
 
@@ -3120,4 +3149,21 @@
 		frappe.router.on("change", scheduleBoot);
 	}
 	scheduleBoot();
+
+	function launch_it_std_configuration(tender_id, std_version_id, plan_item_id) {
+		frappe.route_options = frappe.route_options || {};
+		if (tender_id) {
+			frappe.route_options.tender_id = tender_id;
+		}
+		if (std_version_id) {
+			frappe.route_options.std_version_id = std_version_id;
+		}
+		if (plan_item_id) {
+			frappe.route_options.plan_item_id = plan_item_id;
+		}
+		frappe.set_route("it-tender-configuration-dashboard");
+	}
+
+	frappe.provide("kentender.tm2");
+	kentender.tm2.launch_it_std_configuration = launch_it_std_configuration;
 })();
