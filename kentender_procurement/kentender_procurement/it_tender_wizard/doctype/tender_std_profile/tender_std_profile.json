@@ -1,0 +1,142 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-07-13 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "tender_std_instance",
+  "tender_name",
+  "contract_description",
+  "clarification_contact_email",
+  "lotting_strategy",
+  "reservation_applies",
+  "reserved_group_code",
+  "tender_security_applicability",
+  "alternative_tenders_allowed",
+  "jv_allowed",
+  "pre_tender_meeting_required",
+  "language_code",
+  "currency_code"
+ ],
+ "fields": [
+  {
+   "fieldname": "tender_std_instance",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Tender STD Instance",
+   "options": "Tender STD Instance",
+   "reqd": 1,
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "tender_name",
+   "fieldtype": "Data",
+   "label": "Tender Name"
+  },
+  {
+   "fieldname": "contract_description",
+   "fieldtype": "Small Text",
+   "label": "Contract Description"
+  },
+  {
+   "fieldname": "clarification_contact_email",
+   "fieldtype": "Data",
+   "label": "Clarification Contact Email",
+   "options": "Email"
+  },
+  {
+   "default": "SINGLE_LOT",
+   "fieldname": "lotting_strategy",
+   "fieldtype": "Select",
+   "label": "Lotting Strategy",
+   "options": "SINGLE_LOT\nMULTIPLE_LOTS\nBULK"
+  },
+  {
+   "default": "0",
+   "fieldname": "reservation_applies",
+   "fieldtype": "Check",
+   "label": "Reservation Applies"
+  },
+  {
+   "fieldname": "reserved_group_code",
+   "fieldtype": "Select",
+   "label": "Reserved Group Code",
+   "options": "\nAGPO\nNONE"
+  },
+  {
+   "fieldname": "tender_security_applicability",
+   "fieldtype": "Select",
+   "label": "Tender Security Applicability",
+   "options": "\nTENDER_SECURING_DECLARATION\nBANK_GUARANTEE\nCASH_DEPOSIT\nNONE"
+  },
+  {
+   "default": "0",
+   "fieldname": "alternative_tenders_allowed",
+   "fieldtype": "Check",
+   "label": "Alternative Tenders Allowed"
+  },
+  {
+   "default": "0",
+   "fieldname": "jv_allowed",
+   "fieldtype": "Check",
+   "label": "Joint Ventures Allowed"
+  },
+  {
+   "default": "0",
+   "fieldname": "pre_tender_meeting_required",
+   "fieldtype": "Check",
+   "label": "Pre-Tender Meeting Required"
+  },
+  {
+   "default": "en",
+   "fieldname": "language_code",
+   "fieldtype": "Data",
+   "label": "Language Code",
+   "read_only": 1
+  },
+  {
+   "default": "KES",
+   "fieldname": "currency_code",
+   "fieldtype": "Data",
+   "label": "Currency Code",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-07-13 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "IT Tender Wizard",
+ "name": "Tender STD Profile",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "IT Tender Drafter",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Procurement Officer",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

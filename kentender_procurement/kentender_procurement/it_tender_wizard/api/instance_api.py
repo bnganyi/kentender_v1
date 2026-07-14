@@ -17,6 +17,11 @@ from kentender_procurement.it_tender_wizard.services.wizard_instance_service imp
 	get_configuration_summary,
 	list_configurations,
 )
+from kentender_procurement.it_tender_wizard.services.wizard_tds_service import get_tds, save_tds
+from kentender_procurement.it_tender_wizard.services.wizard_tender_profile_service import (
+	get_tender_profile,
+	save_tender_profile,
+)
 
 
 @frappe.whitelist()
@@ -58,6 +63,32 @@ def create_configuration_api(**kwargs) -> dict[str, Any]:
 @frappe.whitelist()
 def get_configuration_summary_api(configuration_id: str) -> dict[str, Any]:
 	return success_envelope(get_configuration_summary(configuration_id))
+
+
+@frappe.whitelist()
+def get_tender_profile_api(configuration_id: str) -> dict[str, Any]:
+	return success_envelope(get_tender_profile(configuration_id))
+
+
+@frappe.whitelist()
+def save_tender_profile_api(configuration_id: str, profile_json: str | None = None, **kwargs) -> dict[str, Any]:
+	payload = kwargs
+	if profile_json:
+		payload = frappe.parse_json(profile_json) or {}
+	return success_envelope(save_tender_profile(configuration_id, payload))
+
+
+@frappe.whitelist()
+def get_tds_api(configuration_id: str) -> dict[str, Any]:
+	return success_envelope(get_tds(configuration_id))
+
+
+@frappe.whitelist()
+def save_tds_api(configuration_id: str, tds_json: str | None = None, **kwargs) -> dict[str, Any]:
+	payload = kwargs
+	if tds_json:
+		payload = frappe.parse_json(tds_json) or {}
+	return success_envelope(save_tds(configuration_id, payload))
 
 
 @frappe.whitelist()

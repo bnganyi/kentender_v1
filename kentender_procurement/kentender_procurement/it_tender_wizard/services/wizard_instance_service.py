@@ -211,8 +211,11 @@ def create_configuration(payload: dict[str, Any]) -> dict[str, Any]:
 
 def get_configuration_summary(configuration_id: str) -> dict[str, Any]:
 	assert_permission(PERM_VIEW)
-	doc = _get_instance(configuration_id)
-	return serialize_summary(doc)
+	from kentender_procurement.it_tender_wizard.services.wizard_overview_service import (
+		build_configuration_overview,
+	)
+
+	return build_configuration_overview(configuration_id)
 
 
 def list_configurations(

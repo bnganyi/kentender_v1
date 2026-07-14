@@ -97,6 +97,26 @@ class TestItWizardNavigationContract(UnitTestCase):
 		self.assertIn("tender_id", source)
 		self.assertIn("std_version_id", source)
 		self.assertIn("plan_item_id", source)
+		self.assertIn("configuration_id", source)
+
+	def test_it_wizard_engine_registers_overview_route(self) -> None:
+		path = os.path.join(
+			frappe.get_app_path("kentender_procurement"),
+			"public",
+			"js",
+			"it_wizard_engine.js",
+		)
+		source = open(path, encoding="utf-8").read()
+		self.assertIn("ITW_REGISTERED_ROUTES", source)
+		self.assertIn("it-tender-configuration-overview", source)
+		self.assertIn("it-tender-configuration-tender-profile", source)
+		self.assertIn("it-tender-configuration-tds", source)
+		self.assertIn("navigate", source)
+		self.assertIn("it-tender-configuration-overview", source)
+		self.assertIn("STEP_ROUTE_MAP", source)
+		self.assertIn('TDS: "it-tender-configuration-tds"', source)
+		self.assertIn("sync_configuration_id_to_url", source)
+		self.assertIn("clear_configuration_id_from_url", source)
 
 
 class TestItWizardNavigationContractSite(IntegrationTestCase):

@@ -216,14 +216,29 @@ it-wizard-dashboard-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.it_tender_wizard.tests.test_wizard_instance_service
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_wizard_overview_service
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.it_tender_wizard.tests.test_instance_api
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.it_tender_wizard.tests.test_dashboard_kpi_service
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_wizard_tender_profile_service
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_wizard_tds_service
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_tds_desk_wiring
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_tender_profile_desk_wiring
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_dashboard_desk_wiring
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_overview_desk_wiring
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_navigation_contract
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test tests/ui/smoke/it-std-wizard/dashboard-desk-wiring.spec.ts
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test tests/ui/smoke/it-std-wizard/overview-desk-wiring.spec.ts
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test tests/ui/smoke/it-std-wizard/tender-profile-desk-wiring.spec.ts
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test tests/ui/smoke/it-std-wizard/tds-desk-wiring.spec.ts
 
 seed-stable-platform:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.seed_stable_platform.run

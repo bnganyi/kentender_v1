@@ -11,7 +11,12 @@ from frappe.tests import IntegrationTestCase
 from kentender_procurement.it_tender_wizard.api.instance_api import (
 	create_configuration_api,
 	delete_draft_configuration_api,
+	get_configuration_summary_api,
+	get_tds_api,
+	get_tender_profile_api,
 	list_configurations_api,
+	save_tds_api,
+	save_tender_profile_api,
 )
 from kentender_procurement.it_tender_wizard.enums import wizard_states as ws
 from kentender_procurement.patches.it_wizard_dashboard_seed import (
@@ -126,4 +131,94 @@ class TestInstanceApi(IntegrationTestCase):
 		frappe.set_user("Guest")
 		with self.assertRaises(frappe.PermissionError):
 			list_configurations_api()
+		frappe.set_user("Administrator")
+
+	def test_get_configuration_summary_api_returns_overview_payload(self) -> None:
+		payload = get_configuration_summary_api("ITCFG-DASH-SEED-001")
+		self.assertTrue(payload["success"])
+		data = payload["data"]
+		self.assertEqual(data["configuration_id"], "ITCFG-DASH-SEED-001")
+		self.assertEqual(data["state_label"], "In configuration")
+		self.assertIn("wizard_steps", data)
+		self.assertEqual(len(data["wizard_steps"]), 13)
+		self.assertIn("validation", data)
+		self.assertIn("governance", data)
+		self.assertEqual(data["planning_package"]["code"], "PP-ICT-2024-009")
+
+	def test_get_configuration_summary_denied_for_guest(self) -> None:
+		frappe.set_user("Guest")
+		with self.assertRaises(frappe.PermissionError):
+			get_configuration_summary_api("ITCFG-DASH-SEED-001")
+		frappe.set_user("Administrator")
+
+	def test_get_tender_profile_api_returns_envelope(self) -> None:
+		payload = get_tender_profile_api("ITCFG-DASH-SEED-001")
+		self.assertTrue(payload["success"])
+		data = payload["data"]
+		self.assertEqual(data["configuration_id"], "ITCFG-DASH-SEED-001")
+		self.assertIn("profile", data)
+		self.assertIn("completion", data)
+
+	def test_save_tender_profile_api_persists(self) -> None:
+		payload = save_tender_profile_api(
+			"ITCFG-DASH-SEED-001",
+			frappe.as_json(
+				{
+					"tender_name": "API Saved Profile Title",
+					"contract_description": "Saved via API.",
+					"lotting_strategy": "SINGLE_LOT",
+					"reservation_applies": 0,
+					"tender_security_applicability": "NONE",
+					"clarification_contact_email": "api@treasury.go.ke",
+					"alternative_tenders_allowed": 0,
+					"jv_allowed": 1,
+					"pre_tender_meeting_required": 1,
+				}
+			),
+		)
+		self.assertTrue(payload["success"])
+		self.assertEqual(payload["data"]["profile"]["tender_name"], "API Saved Profile Title")
+
+	def test_get_tender_profile_denied_for_guest(self) -> None:
+		frappe.set_user("Guest")
+		with self.assertRaises(frappe.PermissionError):
+			get_tender_profile_api("ITCFG-DASH-SEED-001")
+		frappe.set_user("Administrator")
+
+	def test_get_tds_api_returns_envelope(self) -> None:
+		payload = get_tds_api("ITCFG-DASH-SEED-001")
+		self.assertTrue(payload["success"])
+		data = payload["data"]
+		self.assertEqual(data["configuration_id"], "ITCFG-DASH-SEED-001")
+		self.assertIn("values", data)
+		self.assertIn("completion", data)
+
+	def test_save_tds_api_persists(self) -> None:
+		payload = save_tds_api(
+			"ITCFG-DASH-SEED-001",
+			frappe.as_json(
+				{
+					"procuring_entity_address": "National Treasury, P.O. Box 30007-00100, Nairobi",
+					"tender_number": "API-TDS-REF-001",
+					"tender_name": "API Saved TDS Title",
+					"alternative_tenders_allowed": "NO",
+					"jv_max_members": 3,
+					"local_sourcing_preference": "MARGIN_15",
+					"submission_deadline_at": "2026-08-15 17:00:00",
+					"opening_at": "2026-08-16 10:00:00",
+					"clarification_contact_email": "api@treasury.go.ke",
+					"electronic_tenders_allowed": 1,
+					"tender_security_amount": 500000,
+					"tender_validity_days": 120,
+					"security_issuer_type": "COMMERCIAL_BANK",
+				}
+			),
+		)
+		self.assertTrue(payload["success"])
+		self.assertEqual(payload["data"]["values"]["tender_number"], "API-TDS-REF-001")
+
+	def test_get_tds_denied_for_guest(self) -> None:
+		frappe.set_user("Guest")
+		with self.assertRaises(frappe.PermissionError):
+			get_tds_api("ITCFG-DASH-SEED-001")
 		frappe.set_user("Administrator")

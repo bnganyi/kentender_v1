@@ -11,6 +11,9 @@ from datetime import timedelta
 import frappe
 
 from kentender_procurement.it_tender_wizard.enums import wizard_states as ws
+from kentender_procurement.it_tender_wizard.services.wizard_progress_service import (
+	generate_steps_for_instance,
+)
 from kentender_procurement.std_engine.constants import CANONICAL_PACKAGE_ID
 
 ROLE_NAME = "IT Tender Drafter"
@@ -59,8 +62,8 @@ SAMPLE_INSTANCES = (
 		"procurement_method_code": "OPEN_NATIONAL",
 		"procurement_method_name": "Open Tender",
 		"completion_percent": 100,
-		"current_step_code": "EVALUATION_SETUP",
-		"current_step_name": "Evaluation Setup",
+		"current_step_code": "REVIEW_AND_APPROVAL",
+		"current_step_name": "Review and Approval",
 		"blocking_findings_count": 0,
 		"warning_findings_count": 0,
 	},
@@ -84,6 +87,197 @@ SAMPLE_INSTANCES = (
 )
 
 
+SEED_001_STEP_STATUSES = {
+	"TENDER_IDENTITY": "COMPLETE",
+	"STD_CONFIG_OVERVIEW": "COMPLETE",
+	"TENDER_PROFILE": "COMPLETE",
+	"TDS": "IN_PROGRESS",
+	"IMPLEMENTATION_SCHEDULE": "COMPLETE",
+	"SYSTEM_INVENTORY": "COMPLETE",
+	"PRICE_SCHEDULE": "COMPLETE",
+	"EVALUATION_SETUP": "COMPLETE",
+	"FORMS_AND_EVIDENCE": "COMPLETE",
+	"IT_REQUIREMENTS": "IN_PROGRESS",
+}
+
+SEED_003_STEP_STATUSES = {
+	"TENDER_IDENTITY": "COMPLETE",
+	"STD_CONFIG_OVERVIEW": "COMPLETE",
+	"TENDER_PROFILE": "COMPLETE",
+	"TDS": "COMPLETE",
+	"IT_REQUIREMENTS": "COMPLETE",
+	"IMPLEMENTATION_SCHEDULE": "COMPLETE",
+	"SYSTEM_INVENTORY": "COMPLETE",
+	"PRICE_SCHEDULE": "COMPLETE",
+	"EVALUATION_SETUP": "COMPLETE",
+	"FORMS_AND_EVIDENCE": "COMPLETE",
+	"SCC": "COMPLETE",
+}
+
+SEED_001_PROFILE = {
+	"tender_name": "Supply and Commissioning of Data Center Hardware Refresh 2024",
+	"contract_description": (
+		"Complete overhaul of the existing blade server architecture, including storage arrays "
+		"and high-capacity network switches at the Treasury Main Site."
+	),
+	"lotting_strategy": "SINGLE_LOT",
+	"reservation_applies": 1,
+	"reserved_group_code": "AGPO",
+	"tender_security_applicability": "",
+	"clarification_contact_email": "",
+	"alternative_tenders_allowed": 0,
+	"jv_allowed": 1,
+	"pre_tender_meeting_required": 1,
+}
+
+SEED_003_PROFILE = {
+	"tender_name": "School Management System Upgrade 2024",
+	"contract_description": "Upgrade and integration of school MIS modules across county education offices.",
+	"lotting_strategy": "SINGLE_LOT",
+	"reservation_applies": 0,
+	"reserved_group_code": "NONE",
+	"tender_security_applicability": "TENDER_SECURING_DECLARATION",
+	"clarification_contact_email": "procurement@education.go.ke",
+	"alternative_tenders_allowed": 0,
+	"jv_allowed": 1,
+	"pre_tender_meeting_required": 1,
+}
+
+SEED_001_TDS = {
+	"procuring_entity_address": "National Treasury, P.O. Box 30007-00100, Nairobi",
+	"tender_number": "NT/T/ICT/2024-009",
+	"tender_name": "Supply and Commissioning of Data Center Hardware Refresh 2024",
+	"alternative_tenders_allowed": "NO",
+	"jv_max_members": 3,
+	"local_sourcing_preference": "MARGIN_15",
+	"electronic_tenders_allowed": 1,
+	"envelope_marking": "ELECTRONIC_ONLY",
+}
+
+SEED_003_TDS = {
+	"procuring_entity_address": "Ministry of Education, P.O. Box 30040-00100, Nairobi",
+	"tender_number": "MOE/T/MIS/2024-211",
+	"tender_name": "School Management System Upgrade 2024",
+	"alternative_tenders_allowed": "NO",
+	"jv_max_members": 5,
+	"local_sourcing_preference": "NONE",
+	"submission_deadline_at": "2026-09-01 17:00:00",
+	"opening_at": "2026-09-02 10:00:00",
+	"clarification_contact_email": "procurement@education.go.ke",
+	"electronic_tenders_allowed": 1,
+	"envelope_marking": "ELECTRONIC_ONLY",
+	"tender_security_amount": 250000,
+	"tender_validity_days": 90,
+	"security_issuer_type": "COMMERCIAL_BANK",
+}
+
+
+def _dedupe_step_instances(instance_name: str) -> None:
+	rows = frappe.get_all(
+		"Wizard Step Instance",
+		filters={"tender_std_instance": instance_name},
+		fields=["name", "step_code", "status", "step_order", "modified", "creation"],
+		order_by="step_order asc, creation asc",
+	)
+	grouped: dict[str, list[dict]] = {}
+	for row in rows:
+		code = (row.get("step_code") or "").strip()
+		if not code:
+			continue
+		grouped.setdefault(code, []).append(row)
+	priority = {"COMPLETE": 4, "IN_PROGRESS": 3, "INCOMPLETE": 2, "NOT_AVAILABLE": 1}
+	for step_rows in grouped.values():
+		if len(step_rows) <= 1:
+			continue
+		keeper = max(
+			step_rows,
+			key=lambda row: (
+				priority.get((row.get("status") or "INCOMPLETE").strip(), 0),
+				row.get("modified") or row.get("creation") or "",
+			),
+		)
+		for row in step_rows:
+			if row["name"] != keeper["name"]:
+				frappe.delete_doc("Wizard Step Instance", row["name"], ignore_permissions=True)
+
+
+def _ensure_overview_steps(instance_name: str, sample: dict) -> None:
+	_dedupe_step_instances(instance_name)
+	existing = frappe.db.count("Wizard Step Instance", {"tender_std_instance": instance_name})
+	if not existing:
+		generate_steps_for_instance(instance_name)
+
+	status_map = sample.get("step_statuses") or {}
+	if sample["instance_code"] == "ITCFG-DASH-SEED-001":
+		status_map = {**SEED_001_STEP_STATUSES, **status_map}
+	if sample["instance_code"] == "ITCFG-DASH-SEED-003":
+		status_map = {**SEED_003_STEP_STATUSES, **status_map}
+
+	for step_code, status in status_map.items():
+		step_names = frappe.get_all(
+			"Wizard Step Instance",
+			{"tender_std_instance": instance_name, "step_code": step_code},
+			pluck="name",
+		)
+		for step_name in step_names:
+			frappe.db.set_value("Wizard Step Instance", step_name, "status", status)
+	_dedupe_step_instances(instance_name)
+
+
+def _ensure_tds(instance_name: str, sample: dict) -> None:
+	tds_map = sample.get("tds") or {}
+	if sample["instance_code"] == "ITCFG-DASH-SEED-001":
+		tds_map = {**SEED_001_TDS, **tds_map}
+	if sample["instance_code"] == "ITCFG-DASH-SEED-003":
+		tds_map = {**SEED_003_TDS, **tds_map}
+	if not tds_map:
+		return
+	existing = frappe.db.get_value("Tender STD TDS", {"tender_std_instance": instance_name})
+	if existing:
+		doc = frappe.get_doc("Tender STD TDS", existing)
+	else:
+		doc = frappe.get_doc(
+			{
+				"doctype": "Tender STD TDS",
+				"tender_std_instance": instance_name,
+				"alternative_tenders_allowed": "NO",
+				"envelope_marking": "ELECTRONIC_ONLY",
+			}
+		)
+	doc.update(tds_map)
+	if doc.get("name"):
+		doc.save(ignore_permissions=True)
+	else:
+		doc.insert(ignore_permissions=True)
+
+
+def _ensure_profile(instance_name: str, sample: dict) -> None:
+	profile_map = sample.get("profile") or {}
+	if sample["instance_code"] == "ITCFG-DASH-SEED-001":
+		profile_map = {**SEED_001_PROFILE, **profile_map}
+	if sample["instance_code"] == "ITCFG-DASH-SEED-003":
+		profile_map = {**SEED_003_PROFILE, **profile_map}
+	if not profile_map:
+		return
+	existing = frappe.db.get_value("Tender STD Profile", {"tender_std_instance": instance_name})
+	if existing:
+		doc = frappe.get_doc("Tender STD Profile", existing)
+	else:
+		doc = frappe.get_doc(
+			{
+				"doctype": "Tender STD Profile",
+				"tender_std_instance": instance_name,
+				"language_code": "en",
+				"currency_code": "KES",
+			}
+		)
+	doc.update(profile_map)
+	if doc.get("name"):
+		doc.save(ignore_permissions=True)
+	else:
+		doc.insert(ignore_permissions=True)
+
+
 def ensure_it_tender_drafter_role() -> None:
 	if not frappe.db.exists("Role", ROLE_NAME):
 		frappe.get_doc({"doctype": "Role", "role_name": ROLE_NAME}).insert(ignore_permissions=True)
@@ -102,7 +296,23 @@ def seed_dashboard_sample_instances() -> None:
 	std_version = _resolve_std_version_id()
 	package_hash = frappe.db.get_value("STD Version", std_version, "package_sha256")
 	for sample in SAMPLE_INSTANCES:
-		if frappe.db.exists("Tender STD Instance", {"instance_code": sample["instance_code"]}):
+		existing_name = frappe.db.get_value(
+			"Tender STD Instance",
+			{"instance_code": sample["instance_code"]},
+		)
+		if existing_name:
+			_ensure_overview_steps(existing_name, sample)
+			_ensure_profile(existing_name, sample)
+			_ensure_tds(existing_name, sample)
+			frappe.db.set_value(
+				"Tender STD Instance",
+				existing_name,
+				{
+					"current_step_code": sample["current_step_code"],
+					"current_step_name": sample["current_step_name"],
+					"completion_percent": sample["completion_percent"],
+				},
+			)
 			continue
 		due_at = None
 		if sample.get("due_at_days_ago"):
@@ -149,6 +359,9 @@ def seed_dashboard_sample_instances() -> None:
 				"snapshot_payload_json": json.dumps({"seed": True}),
 			}
 		).insert(ignore_permissions=True)
+		_ensure_overview_steps(doc.name, sample)
+		_ensure_profile(doc.name, sample)
+		_ensure_tds(doc.name, sample)
 
 
 def execute() -> None:

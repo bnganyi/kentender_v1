@@ -1,0 +1,37 @@
+/* IT Wizard — Tender Data Sheet Desk shell (iframe only). */
+
+body.it-wizard-tds-shell .page-head,
+body.it-wizard-tds-shell .layout-main-section .page-head,
+body.it-wizard-tds-shell .page-head-content,
+body.it-wizard-tds-shell .page-head-actions {
+	display: none !important;
+}
+
+body.it-wizard-tds-shell .page-body > .container,
+body.it-wizard-tds-shell .frappe-app > .container {
+	padding: 0 !important;
+	max-width: 100% !important;
+}
+
+body.it-wizard-tds-shell .layout-main-section-wrapper {
+	padding: 0;
+}
+
+body.it-wizard-tds-shell .layout-main-section {
+	padding: 0;
+}
+
+body.it-wizard-tds-shell .it-wizard-tds-root,
+body.it-wizard-tds-shell .it-wizard-tds-shell {
+	display: block;
+	width: 100%;
+	min-height: calc(100vh - 48px);
+}
+
+body.it-wizard-tds-shell .it-wizard-tds-iframe {
+	display: block;
+	width: 100%;
+	height: calc(100vh - 48px);
+	border: 0;
+	background: #f7f9fb;
+}

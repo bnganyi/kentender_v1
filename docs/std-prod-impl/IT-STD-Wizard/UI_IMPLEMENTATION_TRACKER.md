@@ -15,9 +15,9 @@ Done looks like: 15 HTML files + `index.html`, 45/45 layout-guard unit tests gre
 | ID | Screen | Design source | Deployed asset | Layout guard | Playwright | Status | Evidence |
 |---|---|---|---|---|---|---|---|
 | ITW-01 | Tender Configuration Dashboard | `01 dashboard/code.html` | `it_wizard_dashboard.html` | `test_it_wizard_ui_dashboard_layout_guard` | `dashboard-desk-wiring.spec.ts` | Done | ITW-LG-01 (3/3); ITW-BE-DASH-001..004; ITW-DESK-DASH-001/002; ITW-NAV-001/002; PW-ITW-DASH-01 |
-| ITW-02 | Tender STD Configuration Overview | `02 std-config-overview/code.html` | `it_wizard_std_config_overview.html` | `test_it_wizard_ui_std_config_overview_layout_guard` | `static-screens.spec.ts` (overview) | Done | ITW-LG-02 (3/3); PW-ITW-02 |
-| ITW-03 | Tender Profile | `03 tender-profile/code.html` | `it_wizard_tender_profile.html` | `test_it_wizard_ui_tender_profile_layout_guard` | `static-screens.spec.ts` (profile) | Done | ITW-LG-03 (3/3); PW-ITW-03 |
-| ITW-04 | Tender Data Sheet (TDS) | `04 tds/code.html` | `it_wizard_tds.html` | `test_it_wizard_ui_tds_layout_guard` | `static-screens.spec.ts` (tds) | Done | ITW-LG-04 (3/3); PW-ITW-04 |
+| ITW-02 | Tender STD Configuration Overview | `02 std-config-overview/code.html` | `it_wizard_std_config_overview.html` | `test_it_wizard_ui_std_config_overview_layout_guard` | `overview-desk-wiring.spec.ts` | Done | ITW-LG-02 (3/3); ITW-BE-OVERVIEW-001; ITW-DESK-OVERVIEW-001/002; PW-ITW-OVERVIEW-01 |
+| ITW-03 | Tender Profile | `03 tender-profile/code.html` | `it_wizard_tender_profile.html` | `test_it_wizard_ui_tender_profile_layout_guard` | `tender-profile-desk-wiring.spec.ts` | Done | ITW-LG-03 (3/3); ITW-BE-PROFILE-001; ITW-DESK-PROFILE-001/002; PW-ITW-PROFILE-01 |
+| ITW-04 | Tender Data Sheet (TDS) | `04 tds/code.html` | `it_wizard_tds.html` | `test_it_wizard_ui_tds_layout_guard` | `tds-desk-wiring.spec.ts` | Done | ITW-LG-04 (3/3); ITW-BE-TDS-001; ITW-DESK-TDS-001/002; PW-ITW-TDS-01 |
 | ITW-05 | IT Requirements | `05 it-requirements/code.html` | `it_wizard_it_requirements.html` | `test_it_wizard_ui_it_requirements_layout_guard` | `static-screens.spec.ts` (requirements) | Done | ITW-LG-05 (3/3); PW-ITW-05 |
 | ITW-06 | Implementation Schedule | `06 implementation-schedule/code.html` | `it_wizard_implementation_schedule.html` | `test_it_wizard_ui_implementation_schedule_layout_guard` | `static-screens.spec.ts` (schedule) | Done | ITW-LG-06 (3/3); PW-ITW-06 |
 | ITW-07 | System Inventory | `07 system-inventory/code.html` | `it_wizard_system_inventory.html` | `test_it_wizard_ui_system_inventory_layout_guard` | `static-screens.spec.ts` (inventory) | Done | ITW-LG-07 (3/3); PW-ITW-07 |
@@ -42,6 +42,29 @@ Done looks like: 15 HTML files + `index.html`, 45/45 layout-guard unit tests gre
 
 - DocTypes, services, whitelisted APIs, Desk iframe hydration, Procurement sidebar link (Tender Management cluster)
 - Gate: `make it-wizard-dashboard-gate SITE=kentender.midas.com`
+
+## Backend wiring (ITW-02 overview slice)
+
+- Enriched `get_configuration_summary_api` with `wizard_steps`, validation, governance, and reference triplets via `wizard_overview_service`
+- Desk route `/desk/it-tender-configuration-overview`; dashboard **Continue** navigates with `configuration_id`
+- Overview iframe hydrator rebuilds header, 13-step grid, and governance panel from API (no mock enum residue)
+- Gate evidence: `test_wizard_overview_service`, `test_it_wizard_overview_desk_wiring`, `overview-desk-wiring.spec.ts` (3/3) — 2026-07-13
+
+## Backend wiring (ITW-03 tender profile slice)
+
+- Consolidated `Tender STD Profile` DocType (1:1 with instance; interim until S3-001 model split)
+- `get_tender_profile_api` / `save_tender_profile_api` via `wizard_tender_profile_service`
+- Desk route `/desk/it-tender-configuration-tender-profile`; overview **Tender Profile** step navigates with `configuration_id`
+- Profile iframe hydrator: context header, form fields, sidebar completion, STD binding panel; **Save Profile** persists
+- Gate evidence: `test_wizard_tender_profile_service` (5/5), `test_it_wizard_tender_profile_desk_wiring`, `tender-profile-desk-wiring.spec.ts` (3/3) — 2026-07-13
+
+## Backend wiring (ITW-04 TDS slice)
+
+- Consolidated `Tender STD TDS` DocType (1:1 with instance; interim until S3-006 STD Core dynamic schema adapter)
+- `get_tds_api` / `save_tds_api` via `wizard_tds_service`; 15-field completion, date-order validation (`SMOKE-WIZ-004`)
+- Desk route `/desk/it-tender-configuration-tds`; overview **TDS** step + profile **Continue to Tender Data Sheet** navigate with `configuration_id`
+- TDS iframe hydrator: context header, 5 form sections, sidebar completion, footer actions; **Save TDS** persists; fixture scripts stripped at runtime
+- Gate evidence: `test_wizard_tds_service` (8/8), `test_it_wizard_tds_desk_wiring`, `tds-desk-wiring.spec.ts` (9/9) — 2026-07-14
 
 ## Exit criteria (Phase 1)
 

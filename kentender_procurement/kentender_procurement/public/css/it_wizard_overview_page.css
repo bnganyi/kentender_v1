@@ -1,0 +1,37 @@
+/* IT Wizard — Tender STD Configuration Overview Desk shell (iframe only). */
+
+body.it-wizard-overview-shell .page-head,
+body.it-wizard-overview-shell .layout-main-section .page-head,
+body.it-wizard-overview-shell .page-head-content,
+body.it-wizard-overview-shell .page-head-actions {
+	display: none !important;
+}
+
+body.it-wizard-overview-shell .page-body > .container,
+body.it-wizard-overview-shell .frappe-app > .container {
+	padding: 0 !important;
+	max-width: 100% !important;
+}
+
+body.it-wizard-overview-shell .layout-main-section-wrapper {
+	padding: 0;
+}
+
+body.it-wizard-overview-shell .layout-main-section {
+	padding: 0;
+}
+
+body.it-wizard-overview-shell .it-wizard-overview-root,
+body.it-wizard-overview-shell .it-wizard-overview-shell {
+	display: block;
+	width: 100%;
+	min-height: calc(100vh - 48px);
+}
+
+body.it-wizard-overview-shell .it-wizard-overview-iframe {
+	display: block;
+	width: 100%;
+	height: calc(100vh - 48px);
+	border: 0;
+	background: #f7f9fb;
+}

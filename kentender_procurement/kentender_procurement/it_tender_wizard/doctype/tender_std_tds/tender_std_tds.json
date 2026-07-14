@@ -1,0 +1,149 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-07-14 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "tender_std_instance",
+  "procuring_entity_address",
+  "tender_number",
+  "tender_name",
+  "alternative_tenders_allowed",
+  "jv_max_members",
+  "local_sourcing_preference",
+  "submission_deadline_at",
+  "opening_at",
+  "clarification_contact_email",
+  "electronic_tenders_allowed",
+  "envelope_marking",
+  "tender_security_amount",
+  "tender_validity_days",
+  "security_issuer_type"
+ ],
+ "fields": [
+  {
+   "fieldname": "tender_std_instance",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Tender STD Instance",
+   "options": "Tender STD Instance",
+   "reqd": 1,
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "procuring_entity_address",
+   "fieldtype": "Small Text",
+   "label": "Procuring Entity Address"
+  },
+  {
+   "fieldname": "tender_number",
+   "fieldtype": "Data",
+   "label": "Tender Number"
+  },
+  {
+   "fieldname": "tender_name",
+   "fieldtype": "Data",
+   "label": "Tender Name"
+  },
+  {
+   "default": "NO",
+   "fieldname": "alternative_tenders_allowed",
+   "fieldtype": "Select",
+   "label": "Alternative Tenders Allowed",
+   "options": "YES\nNO"
+  },
+  {
+   "fieldname": "jv_max_members",
+   "fieldtype": "Int",
+   "label": "JV Members Cap"
+  },
+  {
+   "fieldname": "local_sourcing_preference",
+   "fieldtype": "Select",
+   "label": "Local Sourcing Preference",
+   "options": "\nMARGIN_15\nNONE"
+  },
+  {
+   "fieldname": "submission_deadline_at",
+   "fieldtype": "Datetime",
+   "label": "Submission Deadline"
+  },
+  {
+   "fieldname": "opening_at",
+   "fieldtype": "Datetime",
+   "label": "Opening Date/Time"
+  },
+  {
+   "fieldname": "clarification_contact_email",
+   "fieldtype": "Data",
+   "label": "Clarification Contact Email",
+   "options": "Email"
+  },
+  {
+   "default": "0",
+   "fieldname": "electronic_tenders_allowed",
+   "fieldtype": "Check",
+   "label": "Electronic Tenders Allowed"
+  },
+  {
+   "default": "ELECTRONIC_ONLY",
+   "fieldname": "envelope_marking",
+   "fieldtype": "Data",
+   "label": "Envelope Marking",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tender_security_amount",
+   "fieldtype": "Currency",
+   "label": "Tender Security Amount"
+  },
+  {
+   "fieldname": "tender_validity_days",
+   "fieldtype": "Int",
+   "label": "Tender Validity Days"
+  },
+  {
+   "fieldname": "security_issuer_type",
+   "fieldtype": "Select",
+   "label": "Security Issuer Type",
+   "options": "\nCOMMERCIAL_BANK\nINSURANCE_COMPANY\nSACCO_SOCIETY"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-07-14 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "IT Tender Wizard",
+ "name": "Tender STD TDS",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "IT Tender Drafter",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Procurement Officer",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

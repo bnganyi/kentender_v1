@@ -71,6 +71,9 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/std_prod_vertical_slice_pages.css?v={_desk_asset_v('public/css/std_prod_vertical_slice_pages.css')}",
 	f"/assets/kentender_procurement/css/pp4_workbench_typography_harmony.css?v={_desk_asset_v('public/css/pp4_workbench_typography_harmony.css')}",
 	f"/assets/kentender_procurement/css/it_wizard_dashboard_page.css?v={_desk_asset_v('public/css/it_wizard_dashboard_page.css')}",
+	f"/assets/kentender_procurement/css/it_wizard_overview_page.css?v={_desk_asset_v('public/css/it_wizard_overview_page.css')}",
+	f"/assets/kentender_procurement/css/it_wizard_tender_profile_page.css?v={_desk_asset_v('public/css/it_wizard_tender_profile_page.css')}",
+	f"/assets/kentender_procurement/css/it_wizard_tds_page.css?v={_desk_asset_v('public/css/it_wizard_tds_page.css')}",
 ]
 app_include_js = [
 	f"/assets/kentender_procurement/js/demand_workspace.js?v={_desk_asset_v('public/js/demand_workspace.js')}",
@@ -148,6 +151,9 @@ page_js = {
 	"plc-module-journey-context": "public/js/plc_module_journey_context_page.js",
 	"tender-management-v2": "public/js/tender_management_v2_workbench_page.js",
 	"it-tender-configuration-dashboard": "public/js/it_wizard_dashboard_page.js",
+	"it-tender-configuration-overview": "public/js/it_wizard_overview_page.js",
+	"it-tender-configuration-tender-profile": "public/js/it_wizard_tender_profile_page.js",
+	"it-tender-configuration-tds": "public/js/it_wizard_tds_page.js",
 	"std-library": "public/js/std_prod_std_library_page.js",
 	"std-family-detail": "public/js/std_prod_std_family_detail_page.js",
 	"std-version-detail": "public/js/std_prod_std_version_detail_page.js",

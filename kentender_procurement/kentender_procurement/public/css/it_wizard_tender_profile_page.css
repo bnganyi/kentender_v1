@@ -1,0 +1,37 @@
+/* IT Wizard — Tender Profile Desk shell (iframe only). */
+
+body.it-wizard-tender-profile-shell .page-head,
+body.it-wizard-tender-profile-shell .layout-main-section .page-head,
+body.it-wizard-tender-profile-shell .page-head-content,
+body.it-wizard-tender-profile-shell .page-head-actions {
+	display: none !important;
+}
+
+body.it-wizard-tender-profile-shell .page-body > .container,
+body.it-wizard-tender-profile-shell .frappe-app > .container {
+	padding: 0 !important;
+	max-width: 100% !important;
+}
+
+body.it-wizard-tender-profile-shell .layout-main-section-wrapper {
+	padding: 0;
+}
+
+body.it-wizard-tender-profile-shell .layout-main-section {
+	padding: 0;
+}
+
+body.it-wizard-tender-profile-shell .it-wizard-tender-profile-root,
+body.it-wizard-tender-profile-shell .it-wizard-tender-profile-shell {
+	display: block;
+	width: 100%;
+	min-height: calc(100vh - 48px);
+}
+
+body.it-wizard-tender-profile-shell .it-wizard-tender-profile-iframe {
+	display: block;
+	width: 100%;
+	height: calc(100vh - 48px);
+	border: 0;
+	background: #f7f9fb;
+}
