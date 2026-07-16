@@ -1,0 +1,75 @@
+name: IT Wizard gates
+
+on:
+  pull_request:
+    paths:
+      - "kentender_procurement/**/it_tender_wizard/**"
+      - "kentender_procurement/**/public/it_tender_wizard_impl/**"
+      - "kentender_procurement/**/public/js/it_wizard*.js"
+      - "tests/ui/smoke/it-std-wizard/**"
+      - "tests/ui/helpers/itWizardDesk.ts"
+      - "docs/std-prod-impl/IT-STD-Wizard/**"
+      - "docs/std-prod-impl/IT-STD-Wizard-v2/**"
+      - "Makefile"
+      - "scripts/it-wizard-changed-gates.sh"
+      - "scripts/run-it-wizard-changed-gates.sh"
+      - ".github/workflows/it-wizard-gates.yml"
+  schedule:
+    # Nightly full wiring regression (requires self-hosted runner with Frappe bench).
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  gate-plan:
+    name: Plan changed gates
+    runs-on: ubuntu-latest
+    outputs:
+      gates: ${{ steps.plan.outputs.gates }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Resolve changed gate targets
+        id: plan
+        run: |
+          BASE="origin/${{ github.base_ref || 'master' }}"
+          if ! git rev-parse --verify "$BASE" >/dev/null 2>&1; then
+            BASE="HEAD~1"
+          fi
+          GATES="$(bash scripts/it-wizard-changed-gates.sh "$BASE" || true)"
+          echo "gates=$GATES" >> "$GITHUB_OUTPUT"
+          {
+            echo "## IT Wizard gate plan"
+            if [[ -z "$GATES" ]]; then
+              echo "No screen gates matched; PR path filter only."
+            else
+              echo "Fast gates: \`$GATES\`"
+              echo ""
+              echo "Local run: \`make -C apps/kentender_v1 -f Makefile \$(bash scripts/it-wizard-changed-gates.sh)\`"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  fast-gates:
+    name: Run changed gates (bench)
+    needs: gate-plan
+    if: github.event_name == 'pull_request' && needs.gate-plan.outputs.gates != ''
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run path-filtered gates
+        env:
+          SITE: kentender.midas.com
+          BENCH_ROOT: /home/midasuser/frappe-bench
+        run: bash scripts/run-it-wizard-changed-gates.sh "origin/${{ github.base_ref || 'master' }}"
+
+  nightly-wiring-regression:
+    name: Nightly ITW-01..06 wiring regression
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - name: Full wiring regression gate
+        env:
+          SITE: kentender.midas.com
+          BENCH_ROOT: /home/midasuser/frappe-bench
+        run: make it-wizard-wiring-regression-gate SITE=kentender.midas.com

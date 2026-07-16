@@ -58,6 +58,7 @@ Done looks like: 15 HTML files + `index.html`, 45/45 layout-guard unit tests gre
 - Enriched `get_configuration_summary_api` with `wizard_steps`, validation, governance, and reference triplets via `wizard_overview_service`
 - Desk route `/desk/it-tender-configuration-overview`; dashboard **Continue** navigates with `configuration_id`
 - Overview iframe hydrator rebuilds header, 13-step grid, and governance panel from API (no mock enum residue)
+- Gate: `make it-wizard-screen-02-gate SITE=kentender.midas.com` (full ITW-01..06: `make it-wizard-wiring-regression-gate`)
 - Gate evidence: `test_wizard_overview_service`, `test_it_wizard_overview_desk_wiring`, `overview-desk-wiring.spec.ts` (3/3) — 2026-07-13
 
 ## Backend wiring (ITW-03 tender profile slice)

@@ -1,0 +1,51 @@
+---
+description: IT Tender Configuration Wizard — per-screen test gates, no Playwright bench setup, no full regression during single-screen work.
+alwaysApply: false
+---
+
+# IT Wizard test gate discipline
+
+Apply when touching **`it_tender_wizard/`**, **`tests/ui/smoke/it-std-wizard/`**, **`IT-STD-Wizard-v2/screen-*`**, or **`make it-wizard-*`**.
+
+## Single-screen iteration (default)
+
+1. Run **only** the screen gate for the screen you are changing:
+   - ITW-01 dashboard → `make it-wizard-screen-01-gate SITE=kentender.midas.com`
+   - ITW-02 overview → `make it-wizard-screen-02-gate SITE=kentender.midas.com`
+2. **Never** run `make it-wizard-wiring-regression-gate` during single-screen implementation loops.
+3. Use `make it-wizard-wiring-regression-gate` only for **pre-release / merge / nightly CI**.
+
+## Playwright forbidden patterns
+
+- **No `execSync` / `bench execute` / STD re-import in Playwright** (`beforeAll`, `beforeEach`, or helpers). Site fixtures: `it_wizard_dashboard_seed` patch + stable platform seed.
+- **No `ensureActiveStdForCreate()`-style hooks** in specs.
+- **One login per spec file**: `test.describe.serial` + shared `page` in `beforeAll` (see `dashboard-desk-wiring.spec.ts`).
+- **4–6 contract tests per screen** — do not duplicate grep/layout-guard assertions with 60s Playwright timeouts.
+- Makefile gates run Playwright with **`--retries=0`**.
+
+## Test layering (no duplication)
+
+| Layer | Owns |
+|-------|------|
+| Layout guard | Verbatim v2 `code.html`, key regions |
+| Desk wiring (UnitTestCase) | Hooks, engine symbols, sidebar exports |
+| Service/integration | Business rules, API envelopes |
+| Playwright | User-visible journeys only (hydrate, navigate, create, filter) |
+
+Do **not** append Screen N modules to Screen 01's Makefile gate. Add `it-wizard-screen-NN-gate` instead.
+
+## Adding a new v2 screen gate
+
+Mirror `it-wizard-screen-01-gate` in `apps/kentender_v1/Makefile`:
+
+1. Layout guard module for that screen
+2. Screen-scoped service test module(s)
+3. Screen-scoped desk wiring grep module
+4. One Playwright spec (`--retries=0`)
+5. Path patterns in `scripts/it-wizard-changed-gates.sh`
+6. Tracker row gate line in `UI_IMPLEMENTATION_TRACKER.md`
+
+## CI
+
+- PR fast path: `scripts/run-it-wizard-changed-gates.sh` (path-filtered screen gates)
+- Nightly: `make it-wizard-wiring-regression-gate`
