@@ -298,8 +298,8 @@ Implement the linked delivery/commercial model: phases, milestones, acceptance e
 | S5-003 | Implement milestone dependency cycle detection. | P0 | 4 | S5-002 | Cycles are blocked with clear finding paths. |
 | S5-004 | Implement `AcceptanceEventService`. | P0 | 4 | S5-001 | Acceptance events bind to milestones and contract carry-forward records. |
 | S5-005 | Implement `MilestonePaymentBindingService`. | P1 | 4 | S5-002 | Payment milestone totals validate against configured rules. |
-| S5-006 | Create models for system inventory groups and items. | P0 | 6 | S4 complete | Inventory items support supply/install and recurrent cost categories. |
-| S5-007 | Implement `SystemInventoryService`. | P0 | 5 | S5-006 | Inventory items validate quantity, unit, category, and price-template bindings. |
+| S5-006 | Create models for system inventory groups and items. | P0 | 6 | S4 complete | Inventory items support supply/install and recurrent cost categories. **Matrix override:** technical-disclosure categories for ITW-07; commercial categories belong to Price Schedule (ITW-08). |
+| S5-007 | Implement `SystemInventoryService`. | P0 | 5 | S5-006 | Inventory items validate quantity, unit, category, and price-template bindings. **Matrix override (ITW-OWN-DOC-05):** ITW-07 validates technical fields + pricing policy only; quantity/unit/price-template bindings are acceptance criteria for S5-008/S5-009 (Price Schedule), not System Inventory UI. |
 | S5-008 | Create models for price schedule setup, price lines, recurrent cost periods, tax treatment, and summary lines. | P0 | 8 | S5-006 | Price line templates can bind to inventory and requirements where configured. |
 | S5-009 | Implement `PriceScheduleService`. | P0 | 6 | S5-008 | Supply/install and recurrent costs are captured and summarized deterministically. |
 | S5-010 | API endpoints for schedule, acceptance, inventory, and price setup. | P1 | 10 | S5-002 through S5-009 | APIs return validation findings and summary totals. |

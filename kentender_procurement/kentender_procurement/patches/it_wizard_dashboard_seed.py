@@ -251,6 +251,114 @@ def _ensure_tds(instance_name: str, sample: dict) -> None:
 		doc.insert(ignore_permissions=True)
 
 
+def _ensure_implementation_schedule(instance_name: str, sample: dict) -> None:
+	from kentender_procurement.it_tender_wizard.services.wizard_implementation_schedule_service import (
+		_ensure_schedule_doc,
+	)
+
+	seed_complete = sample["instance_code"] == "ITCFG-DASH-SEED-003"
+	existing = frappe.db.get_value(
+		"Tender STD Implementation Schedule",
+		{"tender_std_instance": instance_name},
+	)
+	if existing:
+		frappe.delete_doc("Tender STD Implementation Schedule", existing, force=True)
+	_ensure_schedule_doc(instance_name, seed_complete=seed_complete)
+
+
+def _ensure_requirements(instance_name: str, sample: dict) -> None:
+	from kentender_procurement.it_tender_wizard.services.wizard_it_requirements_service import (
+		_ensure_requirements_doc,
+	)
+
+	seed_complete = sample["instance_code"] == "ITCFG-DASH-SEED-003"
+	existing = frappe.db.get_value("Tender STD IT Requirements", {"tender_std_instance": instance_name})
+	if existing:
+		frappe.delete_doc("Tender STD IT Requirements", existing, force=True)
+	_ensure_requirements_doc(instance_name, seed_complete=seed_complete)
+
+
+def _ensure_system_inventory(instance_name: str, sample: dict) -> None:
+	from kentender_procurement.it_tender_wizard.services.wizard_system_inventory_service import (
+		_ensure_inventory_doc,
+	)
+
+	seed_complete = sample["instance_code"] == "ITCFG-DASH-SEED-003"
+	_ensure_inventory_doc(instance_name, seed_complete=seed_complete)
+
+
+def _ensure_price_schedule(instance_name: str, sample: dict) -> None:
+	from kentender_procurement.it_tender_wizard.services.wizard_price_schedule_service import (
+		_ensure_price_schedule_doc,
+	)
+
+	seed_complete = sample["instance_code"] == "ITCFG-DASH-SEED-003"
+	_ensure_price_schedule_doc(instance_name, seed_complete=seed_complete)
+
+
+def _ensure_evaluation_setup(instance_name: str, sample: dict) -> None:
+	from kentender_procurement.it_tender_wizard.services.wizard_evaluation_setup_service import (
+		_ensure_evaluation_setup_doc,
+	)
+
+	seed_complete = sample["instance_code"] == "ITCFG-DASH-SEED-003"
+	_ensure_evaluation_setup_doc(instance_name, seed_complete=seed_complete)
+
+
+def _ensure_forms_evidence(instance_name: str, sample: dict) -> None:
+	from kentender_procurement.it_tender_wizard.services.wizard_forms_evidence_service import (
+		_ensure_forms_evidence_doc,
+	)
+
+	seed_complete = sample["instance_code"] == "ITCFG-DASH-SEED-003"
+	_ensure_forms_evidence_doc(instance_name, seed_complete=seed_complete)
+
+
+def _ensure_scc(instance_name: str, sample: dict) -> None:
+	from kentender_procurement.it_tender_wizard.services.wizard_scc_service import (
+		_ensure_scc_doc,
+	)
+
+	seed_complete = sample["instance_code"] == "ITCFG-DASH-SEED-003"
+	_ensure_scc_doc(instance_name, seed_complete=seed_complete)
+
+
+def _ensure_validation_report(instance_name: str, sample: dict) -> None:
+	from kentender_procurement.it_tender_wizard.services.wizard_validation_report_service import (
+		_ensure_validation_report_doc,
+	)
+
+	seed_complete = sample["instance_code"] == "ITCFG-DASH-SEED-003"
+	_ensure_validation_report_doc(instance_name, seed_complete=seed_complete)
+
+
+def _ensure_review(instance_name: str, sample: dict) -> None:
+	from kentender_procurement.it_tender_wizard.services.wizard_review_service import (
+		_ensure_review_doc,
+	)
+
+	seed_complete = sample["instance_code"] == "ITCFG-DASH-SEED-003"
+	_ensure_review_doc(instance_name, seed_complete=seed_complete)
+
+
+def _ensure_render_preview(instance_name: str, sample: dict) -> None:
+	from kentender_procurement.it_tender_wizard.services.wizard_render_preview_service import (
+		_ensure_render_preview_doc,
+	)
+
+	seed_complete = sample["instance_code"] == "ITCFG-DASH-SEED-003"
+	_ensure_render_preview_doc(instance_name, seed_complete=seed_complete)
+
+
+def _ensure_publication_readiness(instance_name: str, sample: dict) -> None:
+	from kentender_procurement.it_tender_wizard.services.wizard_publication_readiness_service import (
+		_ensure_publication_readiness_doc,
+	)
+
+	seed_complete = sample["instance_code"] == "ITCFG-DASH-SEED-003"
+	_ensure_publication_readiness_doc(instance_name, seed_complete=seed_complete)
+
+
 def _ensure_profile(instance_name: str, sample: dict) -> None:
 	profile_map = sample.get("profile") or {}
 	if sample["instance_code"] == "ITCFG-DASH-SEED-001":
@@ -304,6 +412,17 @@ def seed_dashboard_sample_instances() -> None:
 			_ensure_overview_steps(existing_name, sample)
 			_ensure_profile(existing_name, sample)
 			_ensure_tds(existing_name, sample)
+			_ensure_requirements(existing_name, sample)
+			_ensure_implementation_schedule(existing_name, sample)
+			_ensure_system_inventory(existing_name, sample)
+			_ensure_price_schedule(existing_name, sample)
+			_ensure_evaluation_setup(existing_name, sample)
+			_ensure_forms_evidence(existing_name, sample)
+			_ensure_scc(existing_name, sample)
+			_ensure_validation_report(existing_name, sample)
+			_ensure_review(existing_name, sample)
+			_ensure_render_preview(existing_name, sample)
+			_ensure_publication_readiness(existing_name, sample)
 			frappe.db.set_value(
 				"Tender STD Instance",
 				existing_name,
@@ -362,6 +481,17 @@ def seed_dashboard_sample_instances() -> None:
 		_ensure_overview_steps(doc.name, sample)
 		_ensure_profile(doc.name, sample)
 		_ensure_tds(doc.name, sample)
+		_ensure_requirements(doc.name, sample)
+		_ensure_implementation_schedule(doc.name, sample)
+		_ensure_system_inventory(doc.name, sample)
+		_ensure_price_schedule(doc.name, sample)
+		_ensure_evaluation_setup(doc.name, sample)
+		_ensure_forms_evidence(doc.name, sample)
+		_ensure_scc(doc.name, sample)
+		_ensure_validation_report(doc.name, sample)
+		_ensure_review(doc.name, sample)
+		_ensure_render_preview(doc.name, sample)
+		_ensure_publication_readiness(doc.name, sample)
 
 
 def execute() -> None:

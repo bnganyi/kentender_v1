@@ -10,11 +10,27 @@ from frappe import _
 
 from kentender_procurement.it_tender_wizard.enums import wizard_states as ws
 
+EDITABLE_CONFIGURATION_STATES = {
+	ws.DRAFT,
+	ws.IN_CONFIGURATION,
+	ws.VALIDATION_FAILED,
+	ws.RETURNED_FOR_CORRECTION,
+}
+
 
 def assert_deletable(state: str) -> None:
 	if (state or "").strip() not in ws.DELETABLE_STATES:
 		frappe.throw(
 			_("Only DRAFT configurations may be deleted."),
+			title="ITW_STATE_CONFLICT",
+			exc=frappe.ValidationError,
+		)
+
+
+def assert_configuration_editable(state: str) -> None:
+	if (state or "").strip() not in EDITABLE_CONFIGURATION_STATES:
+		frappe.throw(
+			_("Configuration content cannot be edited in state {0}.").format(state or "(unknown)"),
 			title="ITW_STATE_CONFLICT",
 			exc=frappe.ValidationError,
 		)

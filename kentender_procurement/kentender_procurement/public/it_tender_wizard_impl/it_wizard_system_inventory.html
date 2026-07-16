@@ -115,7 +115,7 @@
         }
     </style>
 </head>
-<body class="bg-background text-on-surface min-h-screen flex flex-col">
+<body class="bg-background text-on-surface min-h-screen flex flex-col" data-itw-inv-screen="1">
 <!-- TopAppBar -->
 <header class="bg-surface-container-lowest border-b border-border-subtle fixed top-0 w-full z-50 h-16 flex justify-between items-center px-card-padding">
 <div class="flex items-center gap-3">
@@ -139,26 +139,26 @@
 </div>
 </header>
 <!-- Context Header Strip -->
-<div class="mt-16 bg-surface-container-low border-b border-border-subtle py-4 px-card-padding grid grid-cols-7 gap-6">
+<div class="mt-16 bg-surface-container-low border-b border-border-subtle py-4 px-card-padding grid grid-cols-7 gap-6" data-itw-inv-context="1">
 <div class="flex flex-col">
 <span class="font-label-caps text-label-caps text-on-surface-variant mb-1">Tender Ref</span>
-<span class="font-data-mono text-data-mono text-primary">TNT/024/2024</span>
+<span class="font-data-mono text-data-mono text-primary">—</span>
 </div>
 <div class="flex flex-col">
 <span class="font-label-caps text-label-caps text-on-surface-variant mb-1">Tender Title</span>
-<span class="font-body-md text-body-md font-medium">Data Center Hardware Refresh</span>
+<span class="font-body-md text-body-md font-medium">—</span>
 </div>
 <div class="flex flex-col">
 <span class="font-label-caps text-label-caps text-on-surface-variant mb-1">Planning Package Ref</span>
-<span class="font-body-md text-body-md font-medium">PP-ICT-2024-009</span>
+<span class="font-body-md text-body-md font-medium">—</span>
 </div>
 <div class="flex flex-col">
 <span class="font-label-caps text-label-caps text-on-surface-variant mb-1">Procuring Entity</span>
-<span class="font-body-md text-body-md font-medium">Ministry of Finance</span>
+<span class="font-body-md text-body-md font-medium">—</span>
 </div>
 <div class="flex flex-col">
 <span class="font-label-caps text-label-caps text-on-surface-variant mb-1">Procurement Method</span>
-<span class="font-body-md text-body-md font-medium">Open National Tender</span>
+<span class="font-body-md text-body-md font-medium">—</span>
 </div>
 <div class="flex flex-col">
 <span class="font-label-caps text-label-caps text-on-surface-variant mb-1">Wizard State</span>
@@ -168,7 +168,7 @@
 <span class="font-label-caps text-label-caps text-on-surface-variant mb-1">Validation</span>
 <div class="flex items-center gap-3">
 <span class="text-status-available flex items-center gap-1 font-bold text-xs"><span class="material-symbols-outlined text-sm">check_circle</span> 0 Blockers</span>
-<span class="text-status-reserved flex items-center gap-1 font-bold text-xs"><span class="material-symbols-outlined text-sm">warning</span> 2 Warnings</span>
+<span class="text-status-reserved flex items-center gap-1 font-bold text-xs"><span class="material-symbols-outlined text-sm">warning</span> 0 Warnings</span>
 </div>
 </div>
 </div>
@@ -177,24 +177,24 @@
 <!-- Left: Inventory Builder -->
 <section class="flex-1 overflow-y-auto p-card-padding space-y-section-gap pb-32">
 <!-- Category Tabs / Navigation -->
-<div class="flex gap-2 border-b border-border-subtle pb-2 overflow-x-auto">
-<button class="px-4 py-2 bg-primary text-white rounded-md text-body-md font-medium whitespace-nowrap">Systems in Scope</button>
-<button class="px-4 py-2 text-on-surface-variant hover:bg-surface-container rounded-md text-body-md transition-colors whitespace-nowrap">Infrastructure Environment</button>
-<button class="px-4 py-2 text-on-surface-variant hover:bg-surface-container rounded-md text-body-md transition-colors whitespace-nowrap">User &amp; Location Scope</button>
-<button class="px-4 py-2 text-on-surface-variant hover:bg-surface-container rounded-md text-body-md transition-colors whitespace-nowrap">Integration Points</button>
-<button class="px-4 py-2 text-on-surface-variant hover:bg-surface-container rounded-md text-body-md transition-colors whitespace-nowrap">Data Migration Scope</button>
-<button class="px-4 py-2 text-on-surface-variant hover:bg-surface-container rounded-md text-body-md transition-colors whitespace-nowrap">Licensing &amp; Support Context</button>
-<button class="px-4 py-2 text-on-surface-variant hover:bg-surface-container rounded-md text-body-md transition-colors whitespace-nowrap">Security &amp; Access Context</button>
-<button class="px-4 py-2 text-on-surface-variant hover:bg-surface-container rounded-md text-body-md transition-colors whitespace-nowrap">Out-of-Scope Items</button>
+<div class="flex gap-2 border-b border-border-subtle pb-2 overflow-x-auto" data-itw-inv-categories="1">
+<button class="px-4 py-2 bg-primary text-white rounded-md text-body-md font-medium whitespace-nowrap" data-itw-inv-category="SYSTEMS_IN_SCOPE" type="button">Systems in Scope</button>
+<button class="px-4 py-2 text-on-surface-variant hover:bg-surface-container rounded-md text-body-md transition-colors whitespace-nowrap" data-itw-inv-category="INFRASTRUCTURE_ENVIRONMENT" type="button">Infrastructure Environment</button>
+<button class="px-4 py-2 text-on-surface-variant hover:bg-surface-container rounded-md text-body-md transition-colors whitespace-nowrap" data-itw-inv-category="USER_LOCATION_SCOPE" type="button">User &amp; Location Scope</button>
+<button class="px-4 py-2 text-on-surface-variant hover:bg-surface-container rounded-md text-body-md transition-colors whitespace-nowrap" data-itw-inv-category="INTEGRATION_POINTS" type="button">Integration Points</button>
+<button class="px-4 py-2 text-on-surface-variant hover:bg-surface-container rounded-md text-body-md transition-colors whitespace-nowrap" data-itw-inv-category="DATA_MIGRATION_SCOPE" type="button">Data Migration Scope</button>
+<button class="px-4 py-2 text-on-surface-variant hover:bg-surface-container rounded-md text-body-md transition-colors whitespace-nowrap" data-itw-inv-category="LICENSING_SUPPORT_CONTEXT" type="button">Licensing &amp; Support Context</button>
+<button class="px-4 py-2 text-on-surface-variant hover:bg-surface-container rounded-md text-body-md transition-colors whitespace-nowrap" data-itw-inv-category="SECURITY_ACCESS_CONTEXT" type="button">Security &amp; Access Context</button>
+<button class="px-4 py-2 text-on-surface-variant hover:bg-surface-container rounded-md text-body-md transition-colors whitespace-nowrap" data-itw-inv-category="OUT_OF_SCOPE_ITEMS" type="button">Out-of-Scope Items</button>
 </div>
 <!-- Table Block -->
-<div class="bg-surface-container-lowest rounded-xl border border-border-subtle overflow-hidden">
+<div class="bg-surface-container-lowest rounded-xl border border-border-subtle overflow-hidden" data-itw-inv-table-host="1">
 <div class="p-4 border-b border-border-subtle flex justify-between items-center bg-surface-bright">
 <h3 class="font-headline-sm text-headline-sm text-primary">Systems &amp; Inventory Items</h3>
 <div class="flex gap-2">
 <div class="relative">
 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
-<input class="pl-9 pr-4 py-2 bg-surface-container rounded-md border-none text-body-md focus:ring-1 focus:ring-primary w-64" placeholder="Search inventory..." type="text"/>
+<input class="pl-9 pr-4 py-2 bg-surface-container rounded-md border-none text-body-md focus:ring-1 focus:ring-primary w-64" data-itw-inv-search="1" placeholder="Search inventory..." type="search"/>
 </div>
 <button class="flex items-center gap-2 px-3 py-2 border border-outline-variant rounded-md text-body-md hover:bg-surface-container transition-colors">
 <span class="material-symbols-outlined text-sm">filter_list</span>
@@ -210,132 +210,19 @@
 <th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant">Scope</th>
 <th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant">Required Action</th>
 <th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant">Bidder Consideration</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant">Price Schedule Link</th>
 <th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant">Status</th>
 <th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant text-right">Actions</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-border-subtle">
-<tr class="hover:bg-surface-container-low transition-colors group">
-<td class="px-4 py-4">
-<p class="font-body-md font-semibold text-on-surface">Core Finance System</p>
-<p class="text-xs text-on-surface-variant">v4.2 Production ERP</p><span class="mt-1 inline-flex items-center px-1.5 py-0.5 rounded-full bg-status-reserved/10 text-status-reserved text-[9px] font-bold uppercase tracking-tighter border border-status-reserved/20">Review for bidder disclosure</span>
-</td>
-<td class="px-4 py-4">
-<span class="text-body-md">Business Application</span>
-</td>
-<td class="px-4 py-4">
-<span class="px-2 py-1 rounded bg-primary-fixed text-on-primary-fixed text-[10px] font-bold">In Scope</span>
-</td>
-<td class="px-4 py-4">
-<div class="flex flex-col">
-<span class="text-body-md font-medium">Migrate</span>
-<span class="text-[10px] text-on-surface-variant uppercase tracking-tighter">Full Data Transfer</span>
-</div>
-</td>
-<td class="px-4 py-4 max-w-xs">
-<p class="text-xs text-on-surface-variant truncate">API integration required for real-time ledger updates...</p>
-</td>
-<td class="px-4 py-4">
-<span class="flex items-center gap-1.5 text-status-available text-xs font-bold">
-<span class="w-1.5 h-1.5 rounded-full bg-status-available"></span>
-                                    Complete
-                                </span>
-</td>
-<td class="px-4 py-4 text-right">
-<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">edit</span></button>
-</td>
-</tr>
-<tr class="hover:bg-surface-container-low transition-colors">
-<td class="px-4 py-4">
-<p class="font-body-md font-semibold text-on-surface">Legacy Asset Database</p>
-<p class="text-xs text-on-surface-variant">SQL Server 2012</p>
-</td>
-<td class="px-4 py-4">
-<span class="text-body-md">Data Set</span>
-</td>
-<td class="px-4 py-4">
-<span class="px-2 py-1 rounded bg-primary-fixed text-on-primary-fixed text-[10px] font-bold">In Scope</span>
-</td>
-<td class="px-4 py-4">
-<div class="flex flex-col">
-<span class="text-body-md font-medium">Migrate</span>
-<span class="text-[10px] text-on-surface-variant uppercase tracking-tighter">Schema Mapping Required</span>
-</div>
-</td>
-<td class="px-4 py-4 max-w-xs">
-<p class="text-xs text-on-surface-variant">Approx. 250,000 records</p>
-</td>
-<td class="px-4 py-4">
-<span class="flex items-center gap-1.5 text-status-reserved text-xs font-bold">
-<span class="w-1.5 h-1.5 rounded-full bg-status-reserved animate-pulse"></span>
-                                    Needs Review
-                                </span>
-</td>
-<td class="px-4 py-4 text-right">
-<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">edit</span></button>
-</td>
-</tr>
-<tr class="hover:bg-surface-container-low transition-colors">
-<td class="px-4 py-4">
-<p class="font-body-md font-semibold text-on-surface">Local Area Network</p>
-<p class="text-xs text-on-surface-variant">Ministry HQ Infrastructure</p>
-</td>
-<td class="px-4 py-4">
-<span class="text-body-md">Infrastructure</span>
-</td>
-<td class="px-4 py-4">
-<span class="px-2 py-1 rounded bg-surface-container-highest text-on-surface-variant text-[10px] font-bold">Reference Only</span>
-</td>
-<td class="px-4 py-4">
-<div class="flex flex-col">
-<span class="text-body-md font-medium">Support</span>
-<span class="text-[10px] text-on-surface-variant uppercase tracking-tighter">Connectivity Check</span>
-</div>
-</td>
-<td class="px-4 py-4 max-w-xs">
-<p class="text-xs text-on-surface-variant">Ensure low latency for terminal services</p>
-</td>
-<td class="px-4 py-4">
-<span class="flex items-center gap-1.5 text-status-available text-xs font-bold">
-<span class="w-1.5 h-1.5 rounded-full bg-status-available"></span>
-                                    Complete
-                                </span>
-</td>
-<td class="px-4 py-4 text-right">
-<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">edit</span></button>
-</td>
-</tr>
-<tr class="hover:bg-surface-container-low transition-colors">
-<td class="px-4 py-4">
-<p class="font-body-md font-semibold text-on-surface">External Backup Storage</p>
-<p class="text-xs text-on-surface-variant">Tape Drive Array</p>
-</td>
-<td class="px-4 py-4">
-<span class="text-body-md">Hardware</span>
-</td>
-<td class="px-4 py-4">
-<span class="px-2 py-1 rounded bg-error-container text-on-error-container text-[10px] font-bold">Out of Scope</span>
-</td>
-<td class="px-4 py-4">
-<div class="flex flex-col"><span class="text-body-md font-medium">No bidder action</span><span class="text-[10px] text-on-surface-variant uppercase tracking-tighter">Reference only</span></div>
-</td>
-<td class="px-4 py-4 max-w-xs">
-<p class="text-xs text-on-surface-variant">No bidder action required</p>
-</td>
-<td class="px-4 py-4">
-<span class="flex items-center gap-1.5 text-status-available text-xs font-bold">
-<span class="w-1.5 h-1.5 rounded-full bg-status-available"></span>
-                                    Complete
-                                </span>
-</td>
-<td class="px-4 py-4 text-right">
-<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">edit</span></button>
-</td>
+<tbody class="divide-y divide-border-subtle" data-itw-inv-table-body="1">
+<tr>
+<td class="px-4 py-8 text-center text-on-surface-variant" colspan="8">No inventory items in this category.</td>
 </tr>
 </tbody>
 </table>
 <div class="px-4 py-3 bg-surface-container-low border-t border-border-subtle flex justify-between items-center">
-<span class="text-xs text-on-surface-variant">Showing 4 of 10 items</span>
+<span class="text-xs text-on-surface-variant" data-itw-inv-table-count="1">Showing 0 items</span>
 <div class="flex gap-1">
 <button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant hover:bg-surface-container transition-colors disabled:opacity-50"><span class="material-symbols-outlined text-sm">chevron_left</span></button>
 <button class="w-8 h-8 flex items-center justify-center rounded bg-primary text-white text-xs font-bold">1</button>
@@ -344,68 +231,63 @@
 </div>
 </div>
 </div>
-<!-- Bento Grid Section for additional categories summary -->
+<!-- Bento Grid Section for additional categories summary (source-backed or Not configured) -->
 <div class="grid grid-cols-3 gap-6">
-<div class="glass-panel p-card-padding rounded-xl col-span-2">
+<div class="glass-panel p-card-padding rounded-xl col-span-2" data-itw-inv-summary-host="USER_LOCATION_SCOPE">
 <h4 class="font-headline-sm text-headline-sm text-primary mb-4 flex items-center gap-2">
 <span class="material-symbols-outlined">location_on</span>
                         User &amp; Location Scope Summary
                     </h4>
-<div class="grid grid-cols-2 gap-4">
-<div class="p-3 bg-surface-container rounded-lg border border-border-subtle">
-<p class="font-label-caps text-[10px] text-on-surface-variant mb-1">Primary HQ</p>
-<p class="font-body-md font-bold">2,500 Concurrent Users</p>
-</div>
-<div class="p-3 bg-surface-container rounded-lg border border-border-subtle">
-<p class="font-label-caps text-[10px] text-on-surface-variant mb-1">Regional Branches</p>
-<p class="font-body-md font-bold">42 Locations (East/West)</p>
-</div>
-<div class="p-3 bg-surface-container rounded-lg border border-border-subtle">
-<p class="font-label-caps text-[10px] text-on-surface-variant mb-1">Mobile Field Staff</p>
-<p class="font-body-md font-bold">180 VPN Managed Devices</p><span class="mt-1 inline-flex items-center px-1.5 py-0.5 rounded-full bg-status-reserved/10 text-status-reserved text-[9px] font-bold uppercase tracking-tighter border border-status-reserved/20">Review for bidder disclosure</span>
-</div>
-<div class="p-3 bg-surface-container rounded-lg border border-border-subtle">
-<p class="font-label-caps text-[10px] text-on-surface-variant mb-1">External Partners</p>
-<p class="font-body-md font-bold">Access via Portal only</p>
+<div class="grid grid-cols-2 gap-4" data-itw-inv-summary-cards="1">
+<div class="p-3 bg-surface-container rounded-lg border border-border-subtle" data-itw-inv-summary-card="1">
+<p class="font-label-caps text-[10px] text-on-surface-variant mb-1" data-itw-inv-summary-title="1">User &amp; Location Scope</p>
+<p class="font-body-md font-bold" data-itw-inv-summary-value="1">Not configured</p>
+<p class="text-[10px] text-on-surface-variant mt-2" data-itw-inv-source="1">Source: Not configured</p>
+<button class="mt-2 text-[10px] font-bold uppercase tracking-widest text-primary" data-itw-inv-edit-source="USER_LOCATION_SCOPE" type="button">Edit</button>
 </div>
 </div>
 </div>
-<div class="glass-panel p-card-padding rounded-xl flex flex-col justify-between">
+<div class="glass-panel p-card-padding rounded-xl flex flex-col justify-between" data-itw-inv-security-host="1">
 <div>
 <h4 class="font-headline-sm text-headline-sm text-primary mb-4 flex items-center gap-2">
 <span class="material-symbols-outlined">security</span>
-                            Security Profile
+                            Security &amp; Access Context
                         </h4>
-<div class="space-y-3">
+<div class="space-y-3" data-itw-inv-security-cards="1">
+<div class="flex justify-between items-center text-body-md">
+<span class="text-on-surface-variant">Item</span>
+<span class="font-bold text-primary" data-itw-inv-security-value="title">Not configured</span>
+</div>
 <div class="flex justify-between items-center text-body-md">
 <span class="text-on-surface-variant">Classification</span>
-<span class="font-bold text-primary">Confidential</span>
+<span class="font-bold text-primary" data-itw-inv-security-value="classification">Not configured</span>
 </div>
 <div class="flex justify-between items-center text-body-md">
-<span class="text-on-surface-variant">Access Logic</span>
-<span class="font-bold text-primary">RBAC / MFA</span>
+<span class="text-on-surface-variant">Required action</span>
+<span class="font-bold text-primary" data-itw-inv-security-value="required_action">Not configured</span>
 </div>
 <div class="flex justify-between items-center text-body-md">
-<span class="text-on-surface-variant">Data Residency</span>
-<span class="font-bold text-primary">On-Premise</span>
+<span class="text-on-surface-variant">Bidder consideration</span>
+<span class="font-bold text-primary" data-itw-inv-security-value="bidder_consideration">Not configured</span>
 </div>
 </div>
+<p class="text-[10px] text-on-surface-variant mt-3" data-itw-inv-source="1">Source: Not configured</p>
 </div>
-<button class="mt-4 w-full py-2 border border-primary text-primary rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-primary-container hover:text-on-primary-container transition-all">Review Disclosure Guidance</button>
+<button class="mt-4 w-full py-2 border border-primary text-primary rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-primary-container hover:text-on-primary-container transition-all" data-itw-inv-edit-source="SECURITY_ACCESS_CONTEXT" type="button">Edit</button>
 </div>
 </div>
 </section>
 <!-- Right: Guidance Panel -->
-<aside class="w-80 bg-surface-container-low border-l border-border-subtle p-card-padding flex flex-col gap-section-gap overflow-y-auto">
+<aside class="w-80 bg-surface-container-low border-l border-border-subtle p-card-padding flex flex-col gap-section-gap overflow-y-auto" data-itw-inv-guidance="1">
 <div class="space-y-4">
 <h3 class="font-headline-sm text-headline-sm text-primary">Inventory Status</h3>
 <div class="space-y-3">
 <div class="flex justify-between items-end">
 <span class="text-xs text-on-surface-variant">Inventory Completion</span>
-<span class="font-data-mono text-data-mono text-primary">7/10 Items</span>
+<span class="font-data-mono text-data-mono text-primary" data-itw-inv-completion-label="1">0/0 Items</span>
 </div>
 <div class="w-full bg-surface-container-highest rounded-full h-1.5 overflow-hidden">
-<div class="bg-primary h-full rounded-full" style="width: 70%"></div>
+<div class="bg-primary h-full rounded-full" data-itw-inv-completion-bar="1" style="width: 0%"></div>
 </div>
 </div>
 <div class="space-y-2 pt-2">
@@ -413,28 +295,28 @@
 <span class="material-symbols-outlined text-outline text-xl">list_alt</span>
 <div>
 <p class="text-xs text-on-surface-variant">Missing Scope Decisions</p>
-<p class="font-bold text-body-md">2 Pending</p>
+<p class="font-bold text-body-md" data-itw-inv-gap="needs_review">0 Pending</p>
 </div>
 </div>
 <div class="flex items-center gap-3 p-3 bg-surface-container-lowest rounded-lg border border-border-subtle">
 <span class="material-symbols-outlined text-outline text-xl">swap_horiz</span>
 <div>
 <p class="text-xs text-on-surface-variant">Migration Gaps</p>
-<p class="font-bold text-body-md">1 Identified</p>
+<p class="font-bold text-body-md" data-itw-inv-gap="migration">0 Identified</p>
 </div>
 </div>
 <div class="flex items-center gap-3 p-3 bg-surface-container-lowest rounded-lg border border-border-subtle">
 <span class="material-symbols-outlined text-outline text-xl">hub</span>
 <div>
 <p class="text-xs text-on-surface-variant">Integration Gaps</p>
-<p class="font-bold text-body-md">2 Required</p>
+<p class="font-bold text-body-md" data-itw-inv-gap="integration">0 Required</p>
 </div>
 </div>
-<div class="flex items-center gap-3 p-3 bg-surface-container-lowest rounded-lg border-status-reserved bg-status-reserved/5">
+<div class="flex items-center gap-3 p-3 bg-surface-container-lowest rounded-lg border border-status-reserved bg-status-reserved/5">
 <span class="material-symbols-outlined text-status-reserved text-xl">warning</span>
 <div>
 <p class="text-xs text-on-surface-variant">Sensitive Disclosure</p>
-<p class="font-bold text-body-md text-status-reserved">1 Warning</p>
+<p class="font-bold text-body-md text-status-reserved" data-itw-inv-gap="sensitive">0 Warning</p>
 </div>
 </div>
 </div>
@@ -454,13 +336,13 @@
 </aside>
 </main>
 <!-- Bottom Action Bar -->
-<footer class="fixed bottom-0 w-full h-16 bg-surface-container-lowest border-t border-border-subtle flex justify-between items-center px-card-padding z-50">
+<footer class="fixed bottom-0 w-full h-16 bg-surface-container-lowest border-t border-border-subtle flex justify-between items-center px-card-padding z-50" data-itw-inv-actions="1">
 <div class="flex gap-2">
-<button class="px-4 py-2 text-primary font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-surface-container rounded-md transition-all">
+<button class="px-4 py-2 text-primary font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-surface-container rounded-md transition-all" data-itw-inv-save="1" type="button">
 <span class="material-symbols-outlined text-sm">save</span>
                 Save Inventory
             </button>
-<button class="px-4 py-2 text-primary font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-surface-container rounded-md transition-all">
+<button class="px-4 py-2 text-primary font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-surface-container rounded-md transition-all" data-itw-inv-add="1" type="button">
 <span class="material-symbols-outlined text-sm">add_circle</span>
                 Add Inventory Item
             </button>
@@ -474,57 +356,64 @@
                 Run Validation
             </button>
 <div class="flex flex-col items-end">
-<button class="px-8 py-2 bg-primary text-white font-bold text-xs uppercase tracking-widest rounded-md hover:opacity-90 active:scale-95 transition-all flex items-center gap-2 shadow-md">
+<button aria-disabled="true" class="px-8 py-2 bg-primary text-white font-bold text-xs uppercase tracking-widest rounded-md hover:opacity-90 active:scale-95 transition-all flex items-center gap-2 shadow-md opacity-55 cursor-not-allowed" data-itw-inv-continue="1" disabled type="button">
                     Continue to Price Schedule
                     <span class="material-symbols-outlined text-sm">arrow_forward</span>
 </button>
-<p class="text-[10px] text-status-reserved mt-1 font-bold">Warnings remain</p>
+<p class="text-[10px] text-on-surface-variant mt-1 font-bold">Not configured</p>
 </div>
 </div>
 </footer>
 <!-- Detail Drawer Overlay (Simulated) -->
-<div class="fixed inset-y-0 right-0 w-[450px] bg-surface-container-lowest shadow-2xl z-[100] transform translate-x-full transition-transform duration-300 border-l border-border-subtle flex flex-col hidden" id="detail-drawer">
+<div aria-hidden="true" class="fixed inset-y-0 right-0 w-[450px] bg-surface-container-lowest shadow-2xl z-[100] transform translate-x-full transition-transform duration-300 border-l border-border-subtle flex flex-col" data-itw-inv-drawer="1" data-itw-inv-drawer-hidden="1" id="detail-drawer">
 <div class="p-6 border-b border-border-subtle flex justify-between items-center bg-surface-bright">
 <h2 class="font-headline-sm text-headline-sm text-primary">Edit Inventory Item</h2>
-<button class="p-2 hover:bg-surface-container rounded-full transition-colors" onclick="toggleDrawer()">
+<button class="p-2 hover:bg-surface-container rounded-full transition-colors" data-itw-inv-drawer-close="1" type="button">
 <span class="material-symbols-outlined">close</span>
 </button>
 </div>
 <div class="flex-1 overflow-y-auto p-6 space-y-6">
 <div class="space-y-2">
 <label class="font-label-caps text-label-caps text-on-surface-variant">Inventory item name</label>
-<input class="w-full bg-surface-container border-none rounded-md p-3 font-body-md focus:ring-2 focus:ring-primary" type="text" value="Core Finance System"/>
+<input class="w-full bg-surface-container border-none rounded-md p-3 font-body-md focus:ring-2 focus:ring-primary" data-itw-inv-field="title" type="text"/>
 </div>
 <div class="grid grid-cols-2 gap-4">
 <div class="space-y-2">
 <label class="font-label-caps text-label-caps text-on-surface-variant">Category</label>
-<select class="w-full bg-surface-container border-none rounded-md p-3 font-body-md">
-<option>Business Application</option>
-<option>Infrastructure</option>
-<option>Data Set</option>
+<select class="w-full bg-surface-container border-none rounded-md p-3 font-body-md" data-itw-inv-field="category">
+<option value="SYSTEMS_IN_SCOPE">Systems in Scope</option>
+<option value="INFRASTRUCTURE_ENVIRONMENT">Infrastructure Environment</option>
+<option value="USER_LOCATION_SCOPE">User &amp; Location Scope</option>
+<option value="INTEGRATION_POINTS">Integration Points</option>
+<option value="DATA_MIGRATION_SCOPE">Data Migration Scope</option>
+<option value="LICENSING_SUPPORT_CONTEXT">Licensing &amp; Support Context</option>
+<option value="SECURITY_ACCESS_CONTEXT">Security &amp; Access Context</option>
+<option value="OUT_OF_SCOPE_ITEMS">Out-of-Scope Items</option>
 </select>
 </div>
 <div class="space-y-2">
 <label class="font-label-caps text-label-caps text-on-surface-variant">Scope</label>
-<select class="w-full bg-surface-container border-none rounded-md p-3 font-body-md">
-<option>In Scope</option>
-<option>Out of Scope</option>
-<option>Reference Only</option>
+<select class="w-full bg-surface-container border-none rounded-md p-3 font-body-md" data-itw-inv-field="scope_status">
+<option value="IN_SCOPE">In Scope</option>
+<option value="OUT_OF_SCOPE">Out of Scope</option>
+<option value="REFERENCE_ONLY">Reference Only</option>
 </select>
 </div>
 </div>
 <div class="space-y-2">
 <label class="font-label-caps text-label-caps text-on-surface-variant">Required action</label>
-<select class="w-full bg-surface-container border-none rounded-md p-3 font-body-md">
-<option>Migrate</option>
-<option>Integrate</option>
-<option>Replace</option>
-<option>Support</option>
+<select class="w-full bg-surface-container border-none rounded-md p-3 font-body-md" data-itw-inv-field="required_action">
+<option value="MIGRATE">Migrate</option>
+<option value="INTEGRATE">Integrate</option>
+<option value="REPLACE">Replace</option>
+<option value="SUPPORT">Support</option>
+<option value="DISCLOSE">Disclose</option>
+<option value="NO_BIDDER_ACTION">No Bidder Action</option>
 </select>
 </div>
-<div class="grid grid-cols-2 gap-4"><div class="space-y-2"><label class="font-label-caps text-label-caps text-on-surface-variant">Data volume</label><input class="w-full bg-surface-container border-none rounded-md p-3 font-body-md" placeholder="e.g. 500GB" type="text"/></div><div class="space-y-2"><label class="font-label-caps text-label-caps text-on-surface-variant">Integration required?</label><select class="w-full bg-surface-container border-none rounded-md p-3 font-body-md"><option>No</option><option>Yes - API</option><option>Yes - Batch</option></select></div></div><div class="grid grid-cols-2 gap-4"><div class="space-y-2"><label class="font-label-caps text-label-caps text-on-surface-variant">Confidentiality level</label><select class="w-full bg-surface-container border-none rounded-md p-3 font-body-md"><option>Public</option><option>Internal</option><option>Confidential</option><option>Secret</option></select></div><div class="space-y-2"><label class="font-label-caps text-label-caps text-on-surface-variant">Related IT Requirement</label><input class="w-full bg-surface-container border-none rounded-md p-3 font-body-md" placeholder="Ref #" type="text"/></div></div><div class="space-y-2"><label class="font-label-caps text-label-caps text-on-surface-variant">Carry forward to delivery obligations</label><select class="w-full bg-surface-container border-none rounded-md p-3 font-body-md"><option>No</option><option>Yes</option></select></div><div class="space-y-2">
+<div class="grid grid-cols-2 gap-4"><div class="space-y-2"><label class="font-label-caps text-label-caps text-on-surface-variant">Data volume context</label><input class="w-full bg-surface-container border-none rounded-md p-3 font-body-md" data-itw-inv-field="data_volume" placeholder="e.g. 500GB" type="text"/></div><div class="space-y-2"><label class="font-label-caps text-label-caps text-on-surface-variant">Integration required?</label><select class="w-full bg-surface-container border-none rounded-md p-3 font-body-md" data-itw-inv-field="integration_requirement"><option value="NONE">No</option><option value="API">Yes - API</option><option value="BATCH">Yes - Batch</option><option value="FILE_TRANSFER">Yes - File Transfer</option><option value="OTHER">Other</option></select></div></div><div class="grid grid-cols-2 gap-4"><div class="space-y-2"><label class="font-label-caps text-label-caps text-on-surface-variant">Confidentiality level</label><select class="w-full bg-surface-container border-none rounded-md p-3 font-body-md" data-itw-inv-field="confidentiality_level"><option value="PUBLIC">Public</option><option value="INTERNAL">Internal</option><option value="CONFIDENTIAL">Confidential</option><option value="SECRET">Secret</option></select></div><div class="space-y-2"><label class="font-label-caps text-label-caps text-on-surface-variant">Related IT Requirement</label><select class="w-full bg-surface-container border-none rounded-md p-3 font-body-md" data-itw-inv-field="requirement_ref"><option value="">Not linked</option></select></div></div><div class="grid grid-cols-2 gap-4"><div class="space-y-2"><label class="font-label-caps text-label-caps text-on-surface-variant">Implementation Phase</label><select class="w-full bg-surface-container border-none rounded-md p-3 font-body-md" data-itw-inv-field="schedule_ref"><option value="">Not linked</option></select></div><div class="space-y-2"><label class="font-label-caps text-label-caps text-on-surface-variant">Price Schedule Link</label><div aria-readonly="true" class="w-full bg-surface-container-low rounded-md p-3 font-body-md font-semibold text-on-surface-variant" data-itw-inv-price-link="1">Not Priced</div></div></div><div class="space-y-2"><label class="font-label-caps text-label-caps text-on-surface-variant">Carry forward to delivery obligations</label><select class="w-full bg-surface-container border-none rounded-md p-3 font-body-md" data-itw-inv-field="contract_carry_forward"><option value="0">No</option><option value="1">Yes</option></select></div><div class="space-y-2">
 <label class="font-label-caps text-label-caps text-on-surface-variant">Bidder-facing description</label>
-<textarea class="w-full bg-surface-container border-none rounded-md p-3 font-body-md focus:ring-2 focus:ring-primary" placeholder="Describe what the bidder needs to account for..." rows="4"></textarea>
+<textarea class="w-full bg-surface-container border-none rounded-md p-3 font-body-md focus:ring-2 focus:ring-primary" data-itw-inv-field="bidder_consideration" placeholder="Describe what the bidder needs to account for..." rows="4"></textarea>
 <p class="text-[10px] text-on-tertiary-fixed-variant italic">Important: Ensure descriptions are safe and do not disclose sensitive technical details.</p>
 </div>
 <div class="p-4 bg-status-reserved/10 border border-status-reserved rounded-lg flex gap-3">
@@ -533,25 +422,8 @@
 </div>
 </div>
 <div class="p-6 border-t border-border-subtle bg-surface-bright flex gap-3">
-<button class="flex-1 py-3 bg-primary text-white font-bold rounded-lg uppercase tracking-widest shadow-md">Update Item</button>
-<button class="px-6 py-3 border border-outline-variant font-bold rounded-lg uppercase tracking-widest" onclick="toggleDrawer()">Cancel</button>
+<button class="flex-1 py-3 bg-primary text-white font-bold rounded-lg uppercase tracking-widest shadow-md" data-itw-inv-update="1" type="button">Update Item</button>
+<button class="px-6 py-3 border border-outline-variant font-bold rounded-lg uppercase tracking-widest" data-itw-inv-drawer-cancel="1" type="button">Cancel</button>
 </div>
 </div>
-<script>
-        function toggleDrawer() {
-            const drawer = document.getElementById('detail-drawer');
-            if (drawer.classList.contains('hidden')) {
-                drawer.classList.remove('hidden');
-                setTimeout(() => drawer.classList.remove('translate-x-full'), 10);
-            } else {
-                drawer.classList.add('translate-x-full');
-                setTimeout(() => drawer.classList.add('hidden'), 300);
-            }
-        }
-
-        // Mock interaction for edit buttons
-        document.querySelectorAll('table button').forEach(btn => {
-            btn.onclick = toggleDrawer;
-        });
-    </script>
 </body></html>

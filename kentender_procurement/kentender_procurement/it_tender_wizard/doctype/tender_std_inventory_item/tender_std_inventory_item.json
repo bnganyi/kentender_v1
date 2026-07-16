@@ -1,0 +1,166 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-07-15 20:30:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_code",
+  "category",
+  "title",
+  "description",
+  "scope_status",
+  "required_action",
+  "bidder_consideration",
+  "technical_details",
+  "data_volume",
+  "integration_requirement",
+  "confidentiality_level",
+  "bidder_disclosure_required",
+  "review_status",
+  "review_notes",
+  "pricing_policy",
+  "requirement_refs_json",
+  "schedule_refs_json",
+  "contract_carry_forward",
+  "display_order"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Code",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Category",
+   "options": "SYSTEMS_IN_SCOPE\nINFRASTRUCTURE_ENVIRONMENT\nUSER_LOCATION_SCOPE\nINTEGRATION_POINTS\nDATA_MIGRATION_SCOPE\nLICENSING_SUPPORT_CONTEXT\nSECURITY_ACCESS_CONTEXT\nOUT_OF_SCOPE_ITEMS",
+   "reqd": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description",
+   "reqd": 1
+  },
+  {
+   "default": "IN_SCOPE",
+   "fieldname": "scope_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Scope Status",
+   "options": "IN_SCOPE\nREFERENCE_ONLY\nOUT_OF_SCOPE",
+   "reqd": 1
+  },
+  {
+   "fieldname": "required_action",
+   "fieldtype": "Data",
+   "label": "Required Action",
+   "reqd": 1
+  },
+  {
+   "fieldname": "bidder_consideration",
+   "fieldtype": "Small Text",
+   "label": "Bidder Consideration"
+  },
+  {
+   "fieldname": "technical_details",
+   "fieldtype": "Small Text",
+   "label": "Technical Details"
+  },
+  {
+   "fieldname": "data_volume",
+   "fieldtype": "Data",
+   "label": "Data Volume"
+  },
+  {
+   "fieldname": "integration_requirement",
+   "fieldtype": "Select",
+   "label": "Integration Requirement",
+   "options": "\nNONE\nAPI\nBATCH\nFILE_TRANSFER\nOTHER"
+  },
+  {
+   "default": "INTERNAL",
+   "fieldname": "confidentiality_level",
+   "fieldtype": "Select",
+   "label": "Confidentiality Level",
+   "options": "PUBLIC\nINTERNAL\nCONFIDENTIAL\nSECRET",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "bidder_disclosure_required",
+   "fieldtype": "Check",
+   "label": "Bidder Disclosure Required"
+  },
+  {
+   "default": "DRAFT",
+   "fieldname": "review_status",
+   "fieldtype": "Select",
+   "label": "Review Status",
+   "options": "DRAFT\nNEEDS_REVIEW\nAPPROVED\nRETURNED",
+   "reqd": 1
+  },
+  {
+   "fieldname": "review_notes",
+   "fieldtype": "Small Text",
+   "label": "Review Notes"
+  },
+  {
+   "default": "NOT_PRICED",
+   "fieldname": "pricing_policy",
+   "fieldtype": "Select",
+   "label": "Pricing Policy",
+   "options": "REQUIRED\nOPTIONAL\nNOT_PRICED",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "requirement_refs_json",
+   "fieldtype": "Small Text",
+   "label": "Requirement References JSON"
+  },
+  {
+   "fieldname": "schedule_refs_json",
+   "fieldtype": "Small Text",
+   "label": "Schedule References JSON"
+  },
+  {
+   "default": "0",
+   "fieldname": "contract_carry_forward",
+   "fieldtype": "Check",
+   "label": "Contract Carry Forward"
+  },
+  {
+   "default": "0",
+   "fieldname": "display_order",
+   "fieldtype": "Int",
+   "label": "Display Order"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-07-15 20:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "IT Tender Wizard",
+ "name": "Tender STD Inventory Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

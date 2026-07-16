@@ -108,7 +108,7 @@
 <div class="flex items-center gap-3">
 <div class="text-right hidden sm:block">
 <p class="font-bold text-on-surface text-body-md leading-tight">Admin User</p>
-<p class="text-on-surface-variant text-label-caps uppercase text-[10px]">Ministry of Finance</p>
+<p class="text-on-surface-variant text-label-caps uppercase text-[10px]">—</p>
 </div>
 <div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center text-primary font-bold border border-primary-fixed-dim">
                     AU
@@ -124,34 +124,34 @@
 <section class="bg-surface-container px-6 py-4 grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-4 border-b border-subtle">
 <div class="flex flex-col">
 <span class="text-label-caps text-on-surface-variant opacity-70">Tender Ref</span>
-<span class="font-bold text-on-surface truncate">TNT/024/2024</span>
+<span class="font-bold text-on-surface truncate">—</span>
 </div>
 <div class="flex flex-col lg:col-span-1">
 <span class="text-label-caps text-on-surface-variant opacity-70">Tender Title</span>
-<span class="font-bold text-on-surface truncate">Data Center Refresh</span>
+<span class="font-bold text-on-surface truncate">—</span>
 </div>
 <div class="flex flex-col">
 <span class="text-label-caps text-on-surface-variant opacity-70">Planning Ref</span>
-<span class="font-bold text-on-surface truncate">PP-ICT-2024-009</span>
+<span class="font-bold text-on-surface truncate">—</span>
 </div>
 <div class="flex flex-col">
 <span class="text-label-caps text-on-surface-variant opacity-70">Procuring Entity</span>
-<span class="font-bold text-on-surface truncate">Ministry of Finance</span>
+<span class="font-bold text-on-surface truncate">—</span>
 </div>
 <div class="flex flex-col">
 <span class="text-label-caps text-on-surface-variant opacity-70">Procurement Method</span>
-<span class="font-bold text-on-surface truncate text-secondary">Open National</span>
+<span class="font-bold text-on-surface truncate text-secondary">—</span>
 </div>
 <div class="flex flex-col">
 <span class="text-label-caps text-on-surface-variant opacity-70">Wizard State</span>
 <div class="flex items-center gap-1.5">
 <span class="w-2 h-2 rounded-full bg-status-reserved"></span>
-<span class="font-bold text-on-surface truncate">In Configuration</span>
+<span class="font-bold text-on-surface truncate">Not configured</span>
 </div>
 </div>
 <div class="flex flex-col">
 <span class="text-label-caps text-on-surface-variant opacity-70">Validation Summary</span>
-<span class="font-bold text-on-surface">0 Blockers / 2 Warnings</span>
+<span class="font-bold text-on-surface">0 Blockers / 0 Warnings</span>
 </div>
 </section>
 <!-- Form and Guidance Layout -->
@@ -170,18 +170,18 @@
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6"><!-- Tender Display Title -->
 <div class="md:col-span-2">
   <label class="block text-label-caps text-on-surface-variant mb-2">Tender Display Title</label>
-  <input class="w-full bg-surface-container-low border-border-subtle rounded-lg p-3 focus:ring-primary focus:border-primary" type="text" value="Supply and Commissioning of Data Center Hardware Refresh 2024">
+  <input class="w-full bg-surface-container-low border-border-subtle rounded-lg p-3 focus:ring-primary focus:border-primary" type="text" value="" placeholder="Not configured">
 </div>
 <!-- Tender Description -->
 <div class="md:col-span-2">
   <label class="block text-label-caps text-on-surface-variant mb-2">Tender Description / Scope Summary</label>
-  <textarea class="w-full bg-surface-container-low border-border-subtle rounded-lg p-3 focus:ring-primary focus:border-primary" rows="3">Complete overhaul of the existing blade server architecture, including storage arrays and high-capacity network switches at the Treasury Main Site.</textarea>
+  <textarea class="w-full bg-surface-container-low border-border-subtle rounded-lg p-3 focus:ring-primary focus:border-primary" rows="3"></textarea>
 </div>
 <!-- Lot Structure -->
 <div>
   <label class="block text-label-caps text-on-surface-variant mb-2">Lot Structure</label>
   <select class="w-full bg-surface-container-low border-border-subtle rounded-lg p-3 focus:ring-primary focus:border-primary">
-    <option>Single Lot (Unsplit)</option>
+    <option selected="">Not configured</option>
     <option>Multiple Lots (Phased)</option>
     <option>Bulk Procurement</option>
   </select>
@@ -190,24 +190,23 @@
 <div>
   <label class="block text-label-caps text-on-surface-variant mb-2">Reserved Procurement Setting</label>
   <select class="w-full bg-surface-container-low border-border-subtle rounded-lg p-3 focus:ring-primary focus:border-primary font-medium text-status-reserved">
-    <option>Youth, Women &amp; PWD (AGPO)</option>
+    <option selected="">Not configured</option>
     <option>None (Open for All)</option>
   </select>
 </div>
 <!-- Tender Security -->
 <div>
   <label class="block text-label-caps text-on-surface-variant mb-2">Tender Security Applicability</label>
-  <select class="w-full bg-surface-container-low border-border-subtle rounded-lg p-3 focus:ring-primary focus:border-primary">
-    <option>Tender Securing Declaration (AGPO)</option>
-    <option>Bank Guarantee</option>
-    <option>Cash Deposit</option>
-    <option>None Required</option>
-  </select>
+  <input class="w-full bg-surface-container border-border-subtle rounded-lg p-3 text-on-surface-variant" disabled="" readonly="" type="text" value="Not configured" data-itw-field="tender_security_applicability" data-itw-owned-elsewhere="1">
+  <p class="text-[10px] text-on-surface-variant italic mt-1" data-itw-owned-elsewhere-source="1">Source: Tender Data Sheet</p>
+  <button class="mt-2 text-primary font-body-md text-[12px] hover:underline" data-itw-edit-in-owner="1" type="button">Edit in Tender Data Sheet</button>
 </div>
 <!-- Clarification Contact -->
 <div>
   <label class="block text-label-caps text-on-surface-variant mb-2">Clarification Contact Email</label>
-  <input class="w-full bg-surface-container-low border-border-subtle rounded-lg p-3 focus:ring-primary focus:border-primary" type="email" value="procurement@finance.go.ke">
+  <input class="w-full bg-surface-container border-border-subtle rounded-lg p-3 text-on-surface-variant" disabled="" readonly="" type="text" value="Not configured" data-itw-field="clarification_contact_email" data-itw-owned-elsewhere="1">
+  <p class="text-[10px] text-on-surface-variant italic mt-1" data-itw-owned-elsewhere-source="1">Source: Tender Data Sheet</p>
+  <button class="mt-2 text-primary font-body-md text-[12px] hover:underline" data-itw-edit-in-owner="1" type="button">Edit in Tender Data Sheet</button>
 </div>
 <!-- Toggles Grouped for Balance -->
 <div class="md:col-span-2 bg-surface-container-low p-4 rounded-lg grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -218,27 +217,29 @@
     <span class="text-body-md text-on-surface-variant">Alternative Tenders</span>
   </div>
   <div class="flex items-center justify-between md:justify-start gap-3">
-    <button class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-secondary" role="switch">
-      <span class="translate-x-5 pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+    <button class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-surface-container-highest" role="switch">
+      <span class="translate-x-0 pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
     </button>
-    <span class="text-body-md text-on-surface">Joint Ventures</span>
+    <span class="text-body-md text-on-surface-variant">Joint Ventures</span>
   </div>
   <div class="flex items-center justify-between md:justify-start gap-3">
-    <button class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-secondary" role="switch">
-      <span class="translate-x-5 pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+    <button class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-surface-container-highest" role="switch">
+      <span class="translate-x-0 pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
     </button>
-    <span class="text-body-md text-on-surface">Pre-tender Meeting</span>
+    <span class="text-body-md text-on-surface-variant">Pre-tender Meeting</span>
   </div>
 </div>
 <!-- Submission Language & Currency -->
 <div class="grid grid-cols-2 gap-4 md:col-span-2">
   <div>
     <label class="block text-label-caps text-on-surface-variant mb-2">Submission Language</label>
-    <input class="w-full bg-surface-container border-border-subtle rounded-lg p-3 text-on-surface-variant" disabled="" type="text" value="English">
+    <input class="w-full bg-surface-container border-border-subtle rounded-lg p-3 text-on-surface-variant" disabled="" readonly="" type="text" value="Not configured" data-itw-field="language_code" data-itw-owned-elsewhere="1">
+    <p class="text-[10px] text-on-surface-variant italic mt-1" data-itw-owned-elsewhere-source="1">Source: Tender Data Sheet</p>
   </div>
   <div>
     <label class="block text-label-caps text-on-surface-variant mb-2">Currency</label>
-    <input class="w-full bg-surface-container border-border-subtle rounded-lg p-3 text-on-surface-variant font-data-mono" disabled="" type="text" value="KES">
+    <input class="w-full bg-surface-container border-border-subtle rounded-lg p-3 text-on-surface-variant font-data-mono" disabled="" readonly="" type="text" value="Not configured" data-itw-field="currency_code" data-itw-owned-elsewhere="1">
+    <p class="text-[10px] text-on-surface-variant italic mt-1" data-itw-owned-elsewhere-source="1">Source: Tender Data Sheet</p>
   </div>
 </div></div>
 </div>
@@ -250,8 +251,8 @@
 <div class="flex-1">
 <h4 class="font-headline-sm text-headline-sm text-on-secondary-fixed mb-1">Standard Tender Document Binding</h4>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1">
-<p class="text-body-md text-on-secondary-fixed-variant"><strong class="text-on-secondary-fixed">Using:</strong> IT Standard Tender Document, April 2022</p>
-<p class="text-body-md text-on-secondary-fixed-variant"><strong class="text-on-secondary-fixed">STD Package:</strong> KE-PPRA-IT-2022-04</p>
+<p class="text-body-md text-on-secondary-fixed-variant"><strong class="text-on-secondary-fixed">Using:</strong> Not configured</p>
+<p class="text-body-md text-on-secondary-fixed-variant"><strong class="text-on-secondary-fixed">STD Package:</strong> Not configured</p>
 <p class="text-body-md text-on-secondary-fixed-variant"><strong class="text-on-secondary-fixed">Binding status:</strong> Locked to this tender configuration</p>
 </div>
 <button class="mt-3 text-secondary font-bold text-body-md hover:underline flex items-center gap-1 transition-all">
@@ -272,10 +273,10 @@
     <div class="mb-4">
       <div class="flex justify-between items-center mb-2">
         <span class="text-body-md text-on-surface-variant">Required fields complete</span>
-        <span class="font-data-mono font-bold text-primary">8/11</span>
+        <span class="font-data-mono font-bold text-primary">0/0</span>
       </div>
       <div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
-        <div class="bg-primary h-full w-[72%]"></div>
+        <div class="bg-primary h-full w-[0%]"></div>
       </div>
     </div>
     <div class="space-y-3">
@@ -315,7 +316,7 @@
           <span class="material-symbols-outlined text-status-reserved">warning</span>
           <span class="text-body-md font-medium">Warnings</span>
         </div>
-        <span class="font-bold text-on-surface">2</span>
+        <span class="font-bold text-on-surface">0</span>
       </div>
     </div>
   </div>

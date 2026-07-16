@@ -1,0 +1,102 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-07-15 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "phase_code",
+  "milestone_code",
+  "milestone_type",
+  "title",
+  "display_order",
+  "deliverables_json",
+  "acceptance_criteria_text",
+  "evidence_required_json",
+  "dependency_milestone_codes_json",
+  "acceptance_required",
+  "payment_binding_key"
+ ],
+ "fields": [
+  {
+   "fieldname": "phase_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Phase Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "milestone_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Milestone Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "milestone_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Milestone Type",
+   "options": "\nCONTRACT_SIGNING\nKICKOFF\nSCOPING_REQUIREMENTS\nDESIGN_CONFIGURATION\nDATA_MIGRATION\nINTEGRATION\nTESTING\nTRAINING\nGO_LIVE\nOPERATIONAL_ACCEPTANCE\nPOST_IMPLEMENTATION_SUPPORT\nWARRANTY_END",
+   "reqd": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "display_order",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Display Order",
+   "reqd": 1
+  },
+  {
+   "fieldname": "deliverables_json",
+   "fieldtype": "Small Text",
+   "label": "Deliverables JSON"
+  },
+  {
+   "fieldname": "acceptance_criteria_text",
+   "fieldtype": "Small Text",
+   "label": "Acceptance Criteria Text"
+  },
+  {
+   "fieldname": "evidence_required_json",
+   "fieldtype": "Small Text",
+   "label": "Evidence Required JSON"
+  },
+  {
+   "fieldname": "dependency_milestone_codes_json",
+   "fieldtype": "Small Text",
+   "label": "Dependency Milestone Codes JSON"
+  },
+  {
+   "default": "0",
+   "fieldname": "acceptance_required",
+   "fieldtype": "Check",
+   "label": "Acceptance Required"
+  },
+  {
+   "fieldname": "payment_binding_key",
+   "fieldtype": "Data",
+   "label": "Payment Binding Key"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-07-15 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "IT Tender Wizard",
+ "name": "Tender STD Schedule Milestone Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

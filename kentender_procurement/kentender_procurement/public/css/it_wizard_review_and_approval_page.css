@@ -1,0 +1,32 @@
+/* IT Wizard — Review and Approval Desk shell (iframe only). */
+
+body.it-wizard-review-and-approval-shell .page-head,
+body.it-wizard-review-and-approval-shell .layout-main-section .page-head,
+body.it-wizard-review-and-approval-shell .page-head-content,
+body.it-wizard-review-and-approval-shell .page-head-actions {
+	display: none !important;
+}
+
+body.it-wizard-review-and-approval-shell .page-body > .container,
+body.it-wizard-review-and-approval-shell .frappe-app > .container {
+	padding: 0 !important;
+	max-width: none !important;
+}
+
+body.it-wizard-review-and-approval-shell .layout-main-section-wrapper,
+body.it-wizard-review-and-approval-shell .layout-main-section {
+	padding: 0;
+}
+
+body.it-wizard-review-and-approval-shell .it-wizard-review-and-approval-root,
+body.it-wizard-review-and-approval-shell .it-wizard-review-and-approval-shell {
+	height: calc(100vh - var(--navbar-height, 48px));
+	min-height: calc(100vh - var(--navbar-height, 48px));
+}
+
+body.it-wizard-review-and-approval-shell .it-wizard-review-and-approval-iframe {
+	width: 100%;
+	height: 100%;
+	border: 0;
+	display: block;
+}

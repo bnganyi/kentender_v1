@@ -47,6 +47,19 @@ test.describe("IT Wizard Tender Data Sheet Desk wiring", () => {
 		);
 	});
 
+	test("TDS Continue to IT Requirements navigates with configuration_id", async ({ page }) => {
+		await page.goto(`${TDS_ROUTE}?configuration_id=${SEED_CODE}`);
+		const tdsIframe = page.frameLocator('[data-testid="it-wizard-tds-iframe"]');
+		await expect(tdsIframe.locator("body")).toHaveAttribute("data-it-wizard-hydrated", "1", {
+			timeout: 30_000,
+		});
+		await tdsIframe.locator("[data-itw-tds-actions]").getByRole("button", { name: /Continue to IT Requirements/i }).click();
+		await expect(page).toHaveURL(
+			new RegExp(`/desk/it-tender-configuration-it-requirements.*configuration_id=${SEED_CODE}`),
+			{ timeout: 15_000 },
+		);
+	});
+
 	test("direct TDS route without configuration_id redirects to dashboard", async ({ page }) => {
 		await page.goto(TDS_ROUTE);
 		await expect(page).toHaveURL(/\/desk\/it-tender-configuration-dashboard/, { timeout: 15_000 });

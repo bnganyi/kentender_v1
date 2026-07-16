@@ -26,10 +26,22 @@ class TestItWizardUiItRequirementsLayoutGuard(UnitTestCase):
 
 	def test_preserves_key_regions(self) -> None:
 		deployed = read_text(deployed_asset_path("it_wizard_it_requirements.html"))
-		self.assertIn("IT Requirements Definition", deployed)
+		self.assertIn("Requirements Guidance", deployed)
+		self.assertIn("Define clear bidder-facing IT requirements", deployed)
 		self.assertIn("3.0 Technical Requirements", deployed)
-		self.assertIn("Configuration Stats", deployed)
+		self.assertIn("data-itw-req-drawer-hidden", deployed)
+		self.assertIn("data-itw-req-guidance", deployed)
 		self.assertIn("Continue to Implementation Schedule", deployed)
+		self.assertIn("Bidder Evidence", deployed)
+		self.assertIn("Acceptance Criteria", deployed)
+
+	def test_forbidden_evaluation_form_labels_absent(self) -> None:
+		deployed = read_text(deployed_asset_path("it_wizard_it_requirements.html"))
+		self.assertNotIn("Evidence Set", deployed)
+		self.assertNotIn("Acceptance Set", deployed)
+		self.assertNotIn("Scored (15%)", deployed)
+		self.assertNotIn("Configuration Stats", deployed)
+		self.assertNotIn("technical specifications for bidder evaluation", deployed)
 
 	def test_preserves_inline_script_or_config(self) -> None:
 		deployed = read_text(deployed_asset_path("it_wizard_it_requirements.html"))

@@ -66,6 +66,17 @@ Follow the implementation pack exactly.
 The wizard must be a controlled configuration surface, not a legal document editor.
 It must consume active STD package definitions from the STD Engine Core and must not duplicate or mutate master STD content.
 
+Before any screen UI or Desk wiring work, load and obey:
+- 99 IT_Tender_Wizard_Screen_Ownership_Matrix.md (field ownership / editability / source presentation)
+- 98 IT_Tender_Wizard_Screen_Ownership_Correction_Plan.md
+- Screen_Ownership_Implementation_Tracker.md
+
+The Ownership Matrix is the correction layer over PRD, Domain, API, Governance, Pack, Sprint backlog, and design HTML when they conflict on which screen owns a field.
+Do not show magical, hardcoded, or unexplained template values.
+If a value has no configured source, show "Not configured".
+If another screen owns a field, show it read-only with source label, owning screen, and Edit in [owning screen].
+Do not start ITW-08+ Desk wiring until make it-wizard-ownership-gate is green and the matching ITW-OWN-* precondition is Ready/Done.
+
 Implement tender-specific configuration records, wizard steps, requirements, implementation schedule, system inventory, price setup, evaluation configuration, SCC values, validation runs, review/approval workflow, preview generation, publication bundle handoff, and addendum impact analysis.
 
 Do not hard-code NSSF ERP tender behavior.

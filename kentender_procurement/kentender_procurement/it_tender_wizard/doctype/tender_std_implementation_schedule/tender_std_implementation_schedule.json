@@ -1,0 +1,129 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-07-15 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "tender_std_instance",
+  "implementation_model",
+  "selected_phase_code",
+  "total_duration_label",
+  "single_turnkey_duration_label",
+  "single_turnkey_delivery_trigger",
+  "single_turnkey_key_deliverables",
+  "single_turnkey_acceptance_criteria",
+  "single_turnkey_evidence_required",
+  "single_turnkey_carry_forward_decision",
+  "phases",
+  "milestones"
+ ],
+ "fields": [
+  {
+   "fieldname": "tender_std_instance",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Tender STD Instance",
+   "options": "Tender STD Instance",
+   "reqd": 1,
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "default": "PHASED",
+   "fieldname": "implementation_model",
+   "fieldtype": "Select",
+   "label": "Implementation Model",
+   "options": "PHASED\nSINGLE_TURNKEY",
+   "reqd": 1
+  },
+  {
+   "fieldname": "selected_phase_code",
+   "fieldtype": "Data",
+   "label": "Selected Phase Code"
+  },
+  {
+   "fieldname": "total_duration_label",
+   "fieldtype": "Data",
+   "label": "Total Duration Label"
+  },
+  {
+   "fieldname": "single_turnkey_duration_label",
+   "fieldtype": "Data",
+   "label": "Single Turnkey Expected Delivery Duration"
+  },
+  {
+   "fieldname": "single_turnkey_delivery_trigger",
+   "fieldtype": "Small Text",
+   "label": "Single Turnkey Delivery Trigger"
+  },
+  {
+   "fieldname": "single_turnkey_key_deliverables",
+   "fieldtype": "Small Text",
+   "label": "Single Turnkey Key Deliverables"
+  },
+  {
+   "fieldname": "single_turnkey_acceptance_criteria",
+   "fieldtype": "Small Text",
+   "label": "Single Turnkey Unified Acceptance Criteria"
+  },
+  {
+   "fieldname": "single_turnkey_evidence_required",
+   "fieldtype": "Small Text",
+   "label": "Single Turnkey Evidence Required"
+  },
+  {
+   "fieldname": "single_turnkey_carry_forward_decision",
+   "fieldtype": "Select",
+   "label": "Single Turnkey Carry Forward Decision",
+   "options": "\nYES\nNO"
+  },
+  {
+   "fieldname": "phases",
+   "fieldtype": "Table",
+   "label": "Phases",
+   "options": "Tender STD Schedule Phase Item"
+  },
+  {
+   "fieldname": "milestones",
+   "fieldtype": "Table",
+   "label": "Milestones",
+   "options": "Tender STD Schedule Milestone Item"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-07-15 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "IT Tender Wizard",
+ "name": "Tender STD Implementation Schedule",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "IT Tender Drafter",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Procurement Officer",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

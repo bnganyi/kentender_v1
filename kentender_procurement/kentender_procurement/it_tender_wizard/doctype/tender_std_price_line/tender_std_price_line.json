@@ -1,0 +1,126 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-07-16 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "line_code",
+  "title",
+  "pricing_basis",
+  "quantity",
+  "unit_of_measure",
+  "tax_treatment",
+  "evaluated_price_included",
+  "bidder_instruction",
+  "inventory_item_code",
+  "requirement_ref",
+  "schedule_ref",
+  "mandatory_optional",
+  "review_status",
+  "display_order"
+ ],
+ "fields": [
+  {
+   "fieldname": "line_code",
+   "fieldtype": "Data",
+   "label": "Line Code",
+   "in_list_view": 1,
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "in_list_view": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "pricing_basis",
+   "fieldtype": "Select",
+   "label": "Pricing Basis",
+   "options": "SUPPLY\nINSTALL\nRECURRENT\nOTHER",
+   "in_list_view": 1,
+   "reqd": 1,
+   "default": "SUPPLY"
+  },
+  {
+   "fieldname": "quantity",
+   "fieldtype": "Float",
+   "label": "Quantity",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "unit_of_measure",
+   "fieldtype": "Data",
+   "label": "Unit Of Measure"
+  },
+  {
+   "fieldname": "tax_treatment",
+   "fieldtype": "Data",
+   "label": "Tax Treatment"
+  },
+  {
+   "fieldname": "evaluated_price_included",
+   "fieldtype": "Check",
+   "label": "Evaluated Price Included",
+   "default": "0"
+  },
+  {
+   "fieldname": "bidder_instruction",
+   "fieldtype": "Small Text",
+   "label": "Bidder Instruction"
+  },
+  {
+   "fieldname": "inventory_item_code",
+   "fieldtype": "Data",
+   "label": "Inventory Item Code"
+  },
+  {
+   "fieldname": "requirement_ref",
+   "fieldtype": "Data",
+   "label": "Requirement Ref"
+  },
+  {
+   "fieldname": "schedule_ref",
+   "fieldtype": "Data",
+   "label": "Schedule Ref"
+  },
+  {
+   "fieldname": "mandatory_optional",
+   "fieldtype": "Select",
+   "label": "Mandatory Optional",
+   "options": "MANDATORY\nOPTIONAL",
+   "default": "MANDATORY",
+   "reqd": 1
+  },
+  {
+   "fieldname": "review_status",
+   "fieldtype": "Select",
+   "label": "Review Status",
+   "options": "DRAFT\nNEEDS_REVIEW\nAPPROVED\nRETURNED",
+   "default": "DRAFT",
+   "reqd": 1
+  },
+  {
+   "fieldname": "display_order",
+   "fieldtype": "Int",
+   "label": "Display Order",
+   "default": "0"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-07-16 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "IT Tender Wizard",
+ "name": "Tender STD Price Line",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -439,6 +439,8 @@ The system must distinguish background information from binding supplier obligat
 
 ### 13.8 IT Requirements Composer
 
+> **Ownership Matrix override (`99` / ITW-OWN-DOC-01):** UI treatment is Mandatory / Evaluation-linked / Informational. Score marks and percentages are owned only by Evaluation Setup. Do not present “Scored (15%)”, “Evidence Set”, or “Acceptance Set” on this screen.
+
 The requirements composer must create structured supplier obligations, not loose prose.
 
 It must support requirement categories including:
@@ -524,6 +526,8 @@ The wizard must support:
 For IT procurements, implementation schedule must link to requirements, price schedule, acceptance certificates, and payment milestones.
 
 ### 13.11 System Inventory
+
+> **Ownership Matrix override (`99` / ITW-OWN-DOC-01):** System Inventory is the technical-disclosure inventory (eight scope categories). Quantity, unit, tax, evaluated-price inclusion, and commercial price structure are owned by Price Schedule. Inventory may show only a read-only Price Schedule Link policy (Required / Optional / Not Priced). Summary blocks must be source-backed or show Not configured.
 
 The wizard must support the official IT STD inventory distinction:
 

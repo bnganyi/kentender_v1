@@ -1,0 +1,33 @@
+{
+ "content": null,
+ "doctype": "Page",
+ "idx": 0,
+ "module": "Kentender Procurement",
+ "name": "it-tender-configuration-system-inventory",
+ "page_name": "it-tender-configuration-system-inventory",
+ "roles": [
+  {
+   "role": "Administrator"
+  },
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "IT Tender Drafter"
+  },
+  {
+   "role": "Procurement Officer"
+  },
+  {
+   "role": "Procurement Planner"
+  },
+  {
+   "role": "Planning Authority"
+  }
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "System Inventory"
+}

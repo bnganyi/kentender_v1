@@ -1,0 +1,109 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-07-15 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "phase_code",
+  "title",
+  "description",
+  "display_order",
+  "duration_label",
+  "start_trigger",
+  "key_deliverable_summary",
+  "acceptance_label",
+  "status",
+  "requires_acceptance_certificate",
+  "payment_linked",
+  "carry_forward_to_contract"
+ ],
+ "fields": [
+  {
+   "fieldname": "phase_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Phase Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "display_order",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Display Order",
+   "reqd": 1
+  },
+  {
+   "fieldname": "duration_label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Duration Label"
+  },
+  {
+   "fieldname": "start_trigger",
+   "fieldtype": "Data",
+   "label": "Start Trigger"
+  },
+  {
+   "fieldname": "key_deliverable_summary",
+   "fieldtype": "Small Text",
+   "label": "Key Deliverable Summary"
+  },
+  {
+   "fieldname": "acceptance_label",
+   "fieldtype": "Data",
+   "label": "Acceptance Label"
+  },
+  {
+   "default": "INCOMPLETE",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "INCOMPLETE\nIN_PROGRESS\nCOMPLETE\nNEEDS_REVIEW"
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_acceptance_certificate",
+   "fieldtype": "Check",
+   "label": "Requires Acceptance Certificate"
+  },
+  {
+   "default": "0",
+   "fieldname": "payment_linked",
+   "fieldtype": "Check",
+   "label": "Payment Linked"
+  },
+  {
+   "default": "1",
+   "fieldname": "carry_forward_to_contract",
+   "fieldtype": "Check",
+   "label": "Carry Forward To Contract"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-07-15 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "IT Tender Wizard",
+ "name": "Tender STD Schedule Phase Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

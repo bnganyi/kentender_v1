@@ -741,6 +741,8 @@ POST /api/procurement/std-it-wizard/configurations/{configuration_id}/implementa
 
 ## 10.6 System Inventory APIs
 
+> **Ownership Matrix override (`99` / ITW-OWN-DOC-03):** Canonical Desk APIs are `get_system_inventory_api` / `save_system_inventory_api`. Payloads are eight-category technical-disclosure DTOs without commercial quantity/unit/rate/tax fields. Price Schedule Link is a read-only policy (`REQUIRED` / `OPTIONAL` / `NOT_PRICED`). Evaluation-binding score marks are not returned on requirement rows as UI labels.
+
 ### 10.6.1 Get System Inventory
 
 ```http

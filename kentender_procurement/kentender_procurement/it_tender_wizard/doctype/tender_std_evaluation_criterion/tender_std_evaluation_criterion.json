@@ -1,0 +1,83 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-07-16 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "criterion_code",
+  "title",
+  "criterion_type",
+  "weight_marks",
+  "pass_mark",
+  "linked_requirement_code",
+  "evidence_instruction",
+  "display_order"
+ ],
+ "fields": [
+  {
+   "fieldname": "criterion_code",
+   "fieldtype": "Data",
+   "label": "Criterion Code",
+   "in_list_view": 1,
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "in_list_view": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "criterion_type",
+   "fieldtype": "Select",
+   "label": "Criterion Type",
+   "options": "MANDATORY\nSCORED\nINFORMATIONAL",
+   "in_list_view": 1,
+   "reqd": 1,
+   "default": "SCORED"
+  },
+  {
+   "fieldname": "weight_marks",
+   "fieldtype": "Float",
+   "label": "Weight Marks",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "pass_mark",
+   "fieldtype": "Float",
+   "label": "Pass Mark"
+  },
+  {
+   "fieldname": "linked_requirement_code",
+   "fieldtype": "Data",
+   "label": "Linked Requirement Code"
+  },
+  {
+   "fieldname": "evidence_instruction",
+   "fieldtype": "Small Text",
+   "label": "Evidence Instruction"
+  },
+  {
+   "fieldname": "display_order",
+   "fieldtype": "Int",
+   "label": "Display Order",
+   "default": "0"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-07-16 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "IT Tender Wizard",
+ "name": "Tender STD Evaluation Criterion",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

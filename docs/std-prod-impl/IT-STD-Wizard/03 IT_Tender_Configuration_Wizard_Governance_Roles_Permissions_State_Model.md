@@ -790,6 +790,8 @@ Controlled text fields require:
 
 ### 14.1 Requirements Composer Rules
 
+> **Ownership Matrix override (`99` / ITW-OWN-DOC-04):** Interpret “scored requirement” as Evaluation-linked treatment with a criterion link. Score marks/weights are validated on Evaluation Setup (`ITEVAL-*`), not entered on the Requirements screen.
+
 | Rule ID | Rule | Severity |
 |---|---|---|
 | `ITREQ-001` | Every requirement must have a unique requirement ID. | Blocker |
@@ -812,6 +814,8 @@ Controlled text fields require:
 | `ITSCH-006` | Warranty commencement must link to acceptance or phase acceptance. | Blocker |
 
 ### 14.3 System Inventory Rules
+
+> **Ownership Matrix override (`99` / ITW-OWN-DOC-04):** ITINV-002/003/004 commercial quantity, recurrence, and price-line validity are enforced on Price Schedule (`ITPRICE-*`). System Inventory enforces unique codes, technical category/scope completeness, disclosure/review, and Price Schedule Link policy only.
 
 | Rule ID | Rule | Severity |
 |---|---|---|

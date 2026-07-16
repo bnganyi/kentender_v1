@@ -21,6 +21,8 @@ from kentender_procurement.it_tender_wizard.api.instance_api import (
 from kentender_procurement.it_tender_wizard.enums import wizard_states as ws
 from kentender_procurement.patches.it_wizard_dashboard_seed import (
 	ROLE_NAME,
+	_ensure_implementation_schedule,
+	_ensure_requirements,
 	seed_dashboard_sample_instances,
 )
 from kentender_procurement.std_engine.constants import CANONICAL_PACKAGE_ID
@@ -221,4 +223,134 @@ class TestInstanceApi(IntegrationTestCase):
 		frappe.set_user("Guest")
 		with self.assertRaises(frappe.PermissionError):
 			get_tds_api("ITCFG-DASH-SEED-001")
+		frappe.set_user("Administrator")
+
+	def test_get_it_requirements_api_returns_envelope(self) -> None:
+		from kentender_procurement.it_tender_wizard.api.instance_api import get_it_requirements_api
+
+		payload = get_it_requirements_api("ITCFG-DASH-SEED-001")
+		self.assertTrue(payload["success"])
+		data = payload["data"]
+		self.assertEqual(data["configuration_id"], "ITCFG-DASH-SEED-001")
+		self.assertIn("sections", data)
+		self.assertIn("completion", data)
+
+	def test_save_it_requirements_api_persists(self) -> None:
+		from kentender_procurement.it_tender_wizard.api.instance_api import (
+			get_it_requirements_api,
+			save_it_requirements_api,
+		)
+
+		_ensure_requirements("ITCFG-DASH-SEED-001", {"instance_code": "ITCFG-DASH-SEED-001"})
+		payload = save_it_requirements_api(
+			"ITCFG-DASH-SEED-001",
+			frappe.as_json(
+				{
+					"selected_item_id": "3.2",
+					"selected_item": {
+						"requirement_code": "3.2",
+						"description": "API saved requirements description for storage capacity.",
+						"evaluation_binding": "technical_solution_proposal",
+					},
+				}
+			),
+		)
+		self.assertTrue(payload["success"])
+		saved = next(
+			row
+			for section in payload["data"]["sections"]
+			for row in section["items"]
+			if row["requirement_code"] == "3.2"
+		)
+		self.assertIn("API saved requirements description", saved["description"])
+
+	def test_get_it_requirements_denied_for_guest(self) -> None:
+		from kentender_procurement.it_tender_wizard.api.instance_api import get_it_requirements_api
+
+		frappe.set_user("Guest")
+		with self.assertRaises(frappe.PermissionError):
+			get_it_requirements_api("ITCFG-DASH-SEED-001")
+		frappe.set_user("Administrator")
+
+	def test_get_implementation_schedule_api_returns_envelope(self) -> None:
+		from kentender_procurement.it_tender_wizard.api.instance_api import get_implementation_schedule_api
+
+		payload = get_implementation_schedule_api("ITCFG-DASH-SEED-001")
+		self.assertTrue(payload["success"])
+		data = payload["data"]
+		self.assertEqual(data["configuration_id"], "ITCFG-DASH-SEED-001")
+		self.assertIn("phases", data)
+		self.assertIn("completion", data)
+		self.assertTrue(any(phase.get("milestones") for phase in data["phases"]))
+
+	def test_save_implementation_schedule_api_persists(self) -> None:
+		from kentender_procurement.it_tender_wizard.api.instance_api import (
+			get_implementation_schedule_api,
+			save_implementation_schedule_api,
+		)
+
+		_ensure_implementation_schedule("ITCFG-DASH-SEED-001", {"instance_code": "ITCFG-DASH-SEED-001"})
+		payload = save_implementation_schedule_api(
+			"ITCFG-DASH-SEED-001",
+			frappe.as_json(
+				{
+					"selected_phase_id": "PHASE_3",
+					"selected_phase": {
+						"phase_code": "PHASE_3",
+						"key_deliverable_summary": "API saved operational acceptance deliverables.",
+						"description": "API saved phase 3 description.",
+					},
+				}
+			),
+		)
+		self.assertTrue(payload["success"])
+		saved = next(row for row in payload["data"]["phases"] if row["phase_code"] == "PHASE_3")
+		self.assertIn("API saved operational acceptance", saved["key_deliverable_summary"])
+
+	def test_get_implementation_schedule_denied_for_guest(self) -> None:
+		from kentender_procurement.it_tender_wizard.api.instance_api import get_implementation_schedule_api
+
+		frappe.set_user("Guest")
+		with self.assertRaises(frappe.PermissionError):
+			get_implementation_schedule_api("ITCFG-DASH-SEED-001")
+		frappe.set_user("Administrator")
+
+	def test_get_system_inventory_api_returns_grouped_envelope(self) -> None:
+		from kentender_procurement.it_tender_wizard.api.instance_api import get_system_inventory_api
+
+		payload = get_system_inventory_api("ITCFG-DASH-SEED-001")
+		self.assertTrue(payload["success"])
+		self.assertEqual(payload["data"]["configuration_id"], "ITCFG-DASH-SEED-001")
+		self.assertEqual(len(payload["data"]["categories"]), 8)
+
+	def test_save_system_inventory_api_upserts_selected_item(self) -> None:
+		from kentender_procurement.it_tender_wizard.api.instance_api import save_system_inventory_api
+
+		payload = save_system_inventory_api(
+			"ITCFG-DASH-SEED-001",
+			frappe.as_json(
+				{
+					"selected_item_id": "SYS-CORE-ERP",
+					"selected_item": {
+						"item_code": "SYS-CORE-ERP",
+						"bidder_consideration": "API-updated technical disclosure guidance.",
+					},
+				}
+			),
+		)
+		self.assertTrue(payload["success"])
+		item = next(
+			item
+			for category in payload["data"]["categories"]
+			for item in category["items"]
+			if item["item_code"] == "SYS-CORE-ERP"
+		)
+		self.assertEqual(item["bidder_consideration"], "API-updated technical disclosure guidance.")
+
+	def test_get_system_inventory_denied_for_guest(self) -> None:
+		from kentender_procurement.it_tender_wizard.api.instance_api import get_system_inventory_api
+
+		frappe.set_user("Guest")
+		with self.assertRaises(frappe.PermissionError):
+			get_system_inventory_api("ITCFG-DASH-SEED-001")
 		frappe.set_user("Administrator")

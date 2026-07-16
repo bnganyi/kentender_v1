@@ -1183,6 +1183,8 @@ Payment percentages must sum to 100% where the payment model is percentage-based
 
 ## 8.23 `ITSystemInventoryTable`
 
+> **Ownership Matrix override (`99` / ITW-OWN-DOC-02):** Commercial quantity/unit/evaluated-price fields on inventory items are owned by the Price Schedule binding model (ITW-08). ITW-07 persists technical-disclosure items only; `quantity` / `unit_of_measure` on this entity are not edited on the System Inventory screen. Requirement score marks remain on Evaluation criteria, not `ITRequirementItem` UI.
+
 ### Purpose
 
 Stores system inventory table metadata for supply/install and recurrent cost items.

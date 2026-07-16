@@ -1,0 +1,32 @@
+/* IT Wizard — Render Preview Desk shell (iframe only). */
+
+body.it-wizard-render-preview-shell .page-head,
+body.it-wizard-render-preview-shell .layout-main-section .page-head,
+body.it-wizard-render-preview-shell .page-head-content,
+body.it-wizard-render-preview-shell .page-head-actions {
+	display: none !important;
+}
+
+body.it-wizard-render-preview-shell .page-body > .container,
+body.it-wizard-render-preview-shell .frappe-app > .container {
+	padding: 0 !important;
+	max-width: none !important;
+}
+
+body.it-wizard-render-preview-shell .layout-main-section-wrapper,
+body.it-wizard-render-preview-shell .layout-main-section {
+	padding: 0;
+}
+
+body.it-wizard-render-preview-shell .it-wizard-render-preview-root,
+body.it-wizard-render-preview-shell .it-wizard-render-preview-shell {
+	height: calc(100vh - var(--navbar-height, 48px));
+	min-height: calc(100vh - var(--navbar-height, 48px));
+}
+
+body.it-wizard-render-preview-shell .it-wizard-render-preview-iframe {
+	width: 100%;
+	height: 100%;
+	border: 0;
+	display: block;
+}

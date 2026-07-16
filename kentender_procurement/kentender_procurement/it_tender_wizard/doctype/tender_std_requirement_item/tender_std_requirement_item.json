@@ -1,0 +1,155 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-07-14 16:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "requirement_code",
+  "title",
+  "description",
+  "section_key",
+  "category",
+  "requirement_type",
+  "priority",
+  "supplier_response_required",
+  "evidence_required",
+  "evidence_level",
+  "evidence_instruction",
+  "response_format",
+  "bidder_instruction",
+  "acceptance_criteria",
+  "evaluation_binding",
+  "contract_carry_forward",
+  "template_locked",
+  "field_sources_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "requirement_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Requirement Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "section_key",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Section Key",
+   "reqd": 1
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Category",
+   "options": "\nHardware\nSoftware\nIntegration\nSecurity\nImplementation\nSupport\nData Migration"
+  },
+  {
+   "fieldname": "requirement_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Requirement Type",
+   "options": "\nFUNCTIONAL\nARCHITECTURAL\nPERFORMANCE\nSECURITY\nSERVICE",
+   "reqd": 1
+  },
+  {
+   "default": "MANDATORY",
+   "fieldname": "priority",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Priority",
+   "options": "MANDATORY\nDESIRABLE\nSCORED\nINFORMATIONAL",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "supplier_response_required",
+   "fieldtype": "Check",
+   "label": "Supplier Response Required"
+  },
+  {
+   "default": "1",
+   "fieldname": "evidence_required",
+   "fieldtype": "Check",
+   "label": "Evidence Required"
+  },
+  {
+   "default": "REQUIRED",
+   "fieldname": "evidence_level",
+   "fieldtype": "Select",
+   "label": "Evidence Level",
+   "options": "REQUIRED\nOPTIONAL\nNOT_REQUIRED"
+  },
+  {
+   "fieldname": "evidence_instruction",
+   "fieldtype": "Small Text",
+   "label": "Evidence Instruction"
+  },
+  {
+   "default": "YES_NO",
+   "fieldname": "response_format",
+   "fieldtype": "Select",
+   "label": "Response Format",
+   "options": "\nYES_NO\nNUMERIC\nDOCUMENT_EVIDENCE\nNARRATIVE\nCOMPLIANCE_MATRIX\nUPLOAD\nNOT_REQUIRED"
+  },
+  {
+   "fieldname": "bidder_instruction",
+   "fieldtype": "Small Text",
+   "label": "Bidder Instruction"
+  },
+  {
+   "fieldname": "acceptance_criteria",
+   "fieldtype": "Small Text",
+   "label": "Acceptance Criteria"
+  },
+  {
+   "fieldname": "evaluation_binding",
+   "fieldtype": "Small Text",
+   "label": "Evaluation Binding"
+  },
+  {
+   "default": "0",
+   "fieldname": "contract_carry_forward",
+   "fieldtype": "Check",
+   "label": "Contract Carry Forward"
+  },
+  {
+   "default": "0",
+   "fieldname": "template_locked",
+   "fieldtype": "Check",
+   "label": "Template Locked"
+  },
+  {
+   "fieldname": "field_sources_json",
+   "fieldtype": "Small Text",
+   "label": "Field Sources JSON"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-07-14 20:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "IT Tender Wizard",
+ "name": "Tender STD Requirement Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
