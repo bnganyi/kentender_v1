@@ -15,7 +15,9 @@ from kentender_procurement.it_tender_wizard.services.wizard_instance_service imp
 	create_configuration,
 	delete_draft_configuration,
 	get_configuration_summary,
+	get_create_configuration_context,
 	list_configurations,
+	list_eligible_tender_shells,
 )
 from kentender_procurement.it_tender_wizard.services.wizard_tds_service import get_tds, save_tds
 from kentender_procurement.it_tender_wizard.services.wizard_implementation_schedule_service import (
@@ -95,6 +97,26 @@ def list_configurations_api(
 @frappe.whitelist()
 def get_dashboard_summary(procurement_entity_id: str | None = None) -> dict[str, Any]:
 	return success_envelope(build_dashboard_summary(procurement_entity_id=procurement_entity_id))
+
+
+@frappe.whitelist()
+def list_eligible_tender_shells_api() -> dict[str, Any]:
+	return success_envelope({"items": list_eligible_tender_shells()})
+
+
+@frappe.whitelist()
+def get_create_configuration_context_api(
+	tender_id: str | None = None,
+	std_version_id: str | None = None,
+	plan_item_id: str | None = None,
+) -> dict[str, Any]:
+	return success_envelope(
+		get_create_configuration_context(
+			tender_id=tender_id,
+			std_version_id=std_version_id,
+			plan_item_id=plan_item_id,
+		)
+	)
 
 
 @frappe.whitelist()

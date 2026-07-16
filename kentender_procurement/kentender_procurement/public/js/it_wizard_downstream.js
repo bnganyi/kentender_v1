@@ -123,6 +123,43 @@
 		return null;
 	}
 
+	var PRICE_BASIS_LABELS = {
+		SUPPLY: __("Supply / Unit Price"),
+		INSTALL: __("Installation"),
+		RECURRENT: __("Recurrent / Annual Rate"),
+		OTHER: __("Other"),
+	};
+
+	var PRICE_SECTION_LABELS = {
+		SUPPLY: __("Goods / Equipment"),
+		INSTALL: __("Implementation Services"),
+		RECURRENT: __("Support & Warranty"),
+		OTHER: __("Optional Items"),
+	};
+
+	var PRICE_TAX_LABELS = {
+		STANDARD_VAT: __("Inclusive of VAT"),
+		EXCLUSIVE_VAT: __("Exclusive of VAT"),
+		ZERO_RATED: __("Zero Rated"),
+	};
+
+	function price_status_chip(status) {
+		var label = status || "DRAFT";
+		var tone =
+			label === "APPROVED"
+				? "bg-status-available/10 text-status-available"
+				: label === "NEEDS_REVIEW"
+					? "bg-status-reserved/10 text-status-reserved"
+					: "bg-surface-container text-on-surface-variant";
+		return (
+			'<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold ' +
+			tone +
+			'">' +
+			frappe.utils.escape_html(label) +
+			"</span>"
+		);
+	}
+
 	function build_price_rows(items) {
 		if (!items || !items.length) {
 			return (
@@ -134,43 +171,204 @@
 		return items
 			.map(function (item) {
 				var code = item.line_code || item.line_id || "";
+				var basis = item.pricing_basis || "";
+				var qtyLabel =
+					item.quantity != null
+						? String(item.quantity) +
+							(item.unit_of_measure ? " " + item.unit_of_measure : "")
+						: "—";
+				var mandatory = (item.mandatory_optional || "MANDATORY").toUpperCase();
+				var mandatoryChip =
+					mandatory === "OPTIONAL"
+						? '<span class="inline-flex items-center px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant text-[10px] font-bold uppercase">Optional</span>'
+						: '<span class="inline-flex items-center px-2 py-0.5 rounded bg-primary-container text-on-primary-container text-[10px] font-bold uppercase">Mandatory</span>';
 				return (
-					'<tr data-itw-row="1" data-itw-code="' +
+					'<tr class="hover:bg-surface-container-low transition-colors cursor-pointer" data-itw-row="1" data-itw-code="' +
 					frappe.utils.escape_html(code) +
 					'">' +
-					'<td class="p-4"><p class="font-semibold">' +
+					'<td class="p-4"><p class="text-body-md font-semibold text-primary">' +
 					frappe.utils.escape_html(item.title || code) +
-					'</p><p class="text-xs text-on-surface-variant">' +
+					'</p><p class="text-xs text-on-surface-variant font-data-mono">' +
 					frappe.utils.escape_html(code) +
 					"</p></td>" +
-					'<td class="p-4">' +
-					frappe.utils.escape_html(item.inventory_item_code || "—") +
+					'<td class="p-4 text-body-md">' +
+					frappe.utils.escape_html(PRICE_SECTION_LABELS[basis] || "—") +
 					"</td>" +
-					'<td class="p-4">' +
-					frappe.utils.escape_html(item.pricing_basis || "—") +
+					'<td class="p-4 text-body-md">' +
+					frappe.utils.escape_html(PRICE_BASIS_LABELS[basis] || basis || "—") +
 					"</td>" +
-					'<td class="p-4">' +
-					frappe.utils.escape_html(
-						String(item.quantity != null ? item.quantity : "—") +
-							" " +
-							(item.unit_of_measure || ""),
-					) +
+					'<td class="p-4 text-body-md font-data-mono">' +
+					frappe.utils.escape_html(qtyLabel) +
 					"</td>" +
 					'<td class="p-4 text-center">' +
-					frappe.utils.escape_html(item.mandatory_optional || "—") +
+					mandatoryChip +
 					"</td>" +
-					'<td class="p-4 max-w-xs">' +
+					'<td class="p-4 text-body-md text-on-surface-variant max-w-xs truncate">' +
 					frappe.utils.escape_html(item.bidder_instruction || "—") +
 					"</td>" +
 					'<td class="p-4">' +
-					frappe.utils.escape_html(item.review_status || "—") +
+					price_status_chip(item.review_status) +
 					"</td>" +
-					'<td class="p-4 text-right"><button type="button" class="text-primary text-xs font-bold" data-itw-edit="1">' +
+					'<td class="p-4 text-right"><button type="button" class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" data-itw-edit="1" aria-label="' +
 					__("Edit") +
-					"</button></td></tr>"
+					'">edit</button></td></tr>'
 				);
 			})
 			.join("");
+	}
+
+	function price_drawer(doc) {
+		return doc.querySelector("[data-itw-price-drawer]") || doc.getElementById("item-drawer");
+	}
+
+	function open_price_drawer(doc) {
+		var drawer = price_drawer(doc);
+		if (!drawer) {
+			return;
+		}
+		drawer.classList.remove("translate-x-full");
+		drawer.setAttribute("data-itw-price-drawer-open", "1");
+		drawer.setAttribute("aria-hidden", "false");
+	}
+
+	function close_price_drawer(doc) {
+		var drawer = price_drawer(doc);
+		if (!drawer) {
+			return;
+		}
+		drawer.classList.add("translate-x-full");
+		drawer.setAttribute("data-itw-price-drawer-open", "0");
+		drawer.setAttribute("aria-hidden", "true");
+		drawer.removeAttribute("data-itw-editing-code");
+	}
+
+	function set_price_field(doc, field, value) {
+		var node = doc.querySelector('[data-itw-price-field="' + field + '"]');
+		if (!node) {
+			return;
+		}
+		if (node.getAttribute("data-itw-price-toggle") === "1") {
+			var on = !!value;
+			if (field === "mandatory_optional") {
+				on = String(value || "MANDATORY").toUpperCase() !== "OPTIONAL";
+				node.setAttribute("data-itw-price-value", on ? "MANDATORY" : "OPTIONAL");
+				var label = doc.querySelector("[data-itw-price-mandatory-label]");
+				if (label) {
+					label.textContent = on ? "MANDATORY" : "OPTIONAL";
+				}
+			} else {
+				node.setAttribute("data-itw-price-value", on ? "1" : "0");
+			}
+			node.textContent = on ? "toggle_on" : "toggle_off";
+			return;
+		}
+		if (node.tagName === "INPUT" || node.tagName === "TEXTAREA" || node.tagName === "SELECT") {
+			node.value = value == null ? "" : String(value);
+			return;
+		}
+		node.textContent = value == null || value === "" ? "—" : String(value);
+	}
+
+	function get_price_field(doc, field) {
+		var node = doc.querySelector('[data-itw-price-field="' + field + '"]');
+		if (!node) {
+			return "";
+		}
+		if (node.getAttribute("data-itw-price-toggle") === "1") {
+			return node.getAttribute("data-itw-price-value") || "";
+		}
+		if (node.tagName === "INPUT" || node.tagName === "TEXTAREA" || node.tagName === "SELECT") {
+			return node.value;
+		}
+		return (node.textContent || "").trim();
+	}
+
+	function hydrate_price_ref_source(doc, field, linked, ownerLabel) {
+		var source = doc.querySelector('[data-itw-price-source="' + field + '"]');
+		if (!source) {
+			return;
+		}
+		if (linked) {
+			source.textContent = __("Source: {0} ({1})", [ownerLabel, linked]);
+		} else {
+			source.textContent = __("Reference: {0}", [ownerLabel]);
+		}
+	}
+
+	function hydrate_price_drawer(doc, item, ctxData) {
+		item = item || {};
+		var drawer = price_drawer(doc);
+		if (!drawer) {
+			return;
+		}
+		drawer.setAttribute("data-itw-editing-code", item.line_code || "");
+		set_price_field(doc, "line_code", item.line_code || __("New price line"));
+		set_price_field(doc, "title", item.title || "");
+		set_price_field(doc, "pricing_basis", item.pricing_basis || "SUPPLY");
+		set_price_field(doc, "quantity", item.quantity != null ? item.quantity : "");
+		set_price_field(doc, "unit_of_measure", item.unit_of_measure || "");
+		set_price_field(doc, "mandatory_optional", item.mandatory_optional || "MANDATORY");
+		set_price_field(
+			doc,
+			"currency_code",
+			(ctxData && ctxData.currency_code) || item.currency_code || "",
+		);
+		set_price_field(doc, "tax_treatment", item.tax_treatment || "STANDARD_VAT");
+		set_price_field(doc, "bidder_instruction", item.bidder_instruction || "");
+		set_price_field(doc, "inventory_item_code", item.inventory_item_code || "");
+		set_price_field(doc, "requirement_ref", item.requirement_ref || "");
+		set_price_field(doc, "schedule_ref", item.schedule_ref || "");
+		set_price_field(doc, "evaluated_price_included", !!item.evaluated_price_included);
+		hydrate_price_ref_source(
+			doc,
+			"currency_code",
+			(ctxData && ctxData.currency_code) || "",
+			__("Tender Profile"),
+		);
+		hydrate_price_ref_source(
+			doc,
+			"inventory_item_code",
+			item.inventory_item_code || "",
+			__("System Inventory"),
+		);
+		hydrate_price_ref_source(
+			doc,
+			"requirement_ref",
+			item.requirement_ref || "",
+			__("IT Requirements"),
+		);
+		hydrate_price_ref_source(
+			doc,
+			"schedule_ref",
+			item.schedule_ref || "",
+			__("Implementation Schedule"),
+		);
+	}
+
+	function collect_price_drawer_values(doc) {
+		var mandatory = get_price_field(doc, "mandatory_optional") || "MANDATORY";
+		var evaluated = get_price_field(doc, "evaluated_price_included");
+		var qtyRaw = get_price_field(doc, "quantity");
+		return {
+			line_code: (get_price_field(doc, "line_code") || "").replace(/^—$/, "").trim(),
+			title: (get_price_field(doc, "title") || "").trim(),
+			pricing_basis: get_price_field(doc, "pricing_basis") || "SUPPLY",
+			quantity: qtyRaw === "" ? 0 : parseFloat(qtyRaw),
+			unit_of_measure: (get_price_field(doc, "unit_of_measure") || "").trim(),
+			mandatory_optional: String(mandatory).toUpperCase() === "OPTIONAL" ? "OPTIONAL" : "MANDATORY",
+			tax_treatment: get_price_field(doc, "tax_treatment") || "STANDARD_VAT",
+			bidder_instruction: (get_price_field(doc, "bidder_instruction") || "").trim(),
+			inventory_item_code: (get_price_field(doc, "inventory_item_code") || "").trim().toUpperCase(),
+			requirement_ref: (get_price_field(doc, "requirement_ref") || "").trim(),
+			schedule_ref: (get_price_field(doc, "schedule_ref") || "").trim(),
+			evaluated_price_included: evaluated === "1" || evaluated === 1 || evaluated === true ? 1 : 0,
+		};
+	}
+
+	function find_price_item(items, code) {
+		return (items || []).find(function (candidate) {
+			return (candidate.line_code || candidate.line_id) === code;
+		});
 	}
 
 	function build_eval_rows(items) {
@@ -388,7 +586,7 @@
 				key: "price_schedule",
 				items: "items",
 				next: "it-tender-configuration-evaluation-setup",
-				continueText: "CONTINUE TO EVALUATION",
+				continueText: "CONTINUE TO EVALUATION SETUP",
 				saveText: "SAVE PRICE SCHEDULE",
 				addText: "ADD PRICE ITEM",
 				empty: __("Not configured — no price items defined."),
@@ -550,6 +748,9 @@
 		caches[screen] = data || {};
 		fill_context_strip(doc, data || {});
 		update_completion(doc, (data && data.completion) || {});
+		if (screen === "price_schedule") {
+			close_price_drawer(doc);
+		}
 		var host = find_main_tbody(doc);
 		var items = (data && data[cfg.items]) || [];
 		if (cfg.checklist) {
@@ -579,9 +780,190 @@
 		wire_downstream(doc, screen, ctx);
 	}
 
-	function wire_downstream(doc, screen, ctx) {
+	function wire_price_schedule(doc, ctx) {
+		var screen = "price_schedule";
 		var cfg = screen_config(screen);
 		if (!cfg || doc.body.getAttribute("data-itw-downstream-wired-" + screen) === "1") {
+			return;
+		}
+		doc.body.setAttribute("data-itw-downstream-wired-" + screen, "1");
+
+		function persist(extra) {
+			var payload = Object.assign({}, caches[screen] || {}, extra || {});
+			return frappe
+				.call({
+					method:
+						"kentender_procurement.it_tender_wizard.api.instance_api." + cfg.save,
+					args: {
+						configuration_id: ctx.configuration_id,
+						price_schedule_json: JSON.stringify(payload),
+					},
+					freeze: true,
+					freeze_message: __("Saving…"),
+				})
+				.then(function (result) {
+					var data = envelope_data(result);
+					caches[screen] = data;
+					apply_downstream(doc, screen, data, ctx);
+					frappe.show_alert({ message: __("Saved"), indicator: "green" });
+					return data;
+				});
+		}
+
+		function open_item(item, isNew) {
+			caches[screen] = caches[screen] || {};
+			caches[screen][cfg.items] = caches[screen][cfg.items] || [];
+			if (isNew) {
+				var draft = Object.assign(cfg.newItem(), item || {});
+				hydrate_price_drawer(doc, draft, caches[screen]);
+				var drawer = price_drawer(doc);
+				if (drawer) {
+					drawer.setAttribute("data-itw-editing-code", draft.line_code || "");
+					drawer.setAttribute("data-itw-price-is-new", "1");
+				}
+			} else {
+				hydrate_price_drawer(doc, item, caches[screen]);
+				var existingDrawer = price_drawer(doc);
+				if (existingDrawer) {
+					existingDrawer.removeAttribute("data-itw-price-is-new");
+				}
+			}
+			open_price_drawer(doc);
+		}
+
+		doc.addEventListener("click", function (event) {
+			if (event.target.closest("[data-itw-price-drawer-close], [data-itw-price-drawer-cancel]")) {
+				event.preventDefault();
+				close_price_drawer(doc);
+				return;
+			}
+			var toggle = event.target.closest("[data-itw-price-toggle]");
+			if (toggle) {
+				event.preventDefault();
+				var field = toggle.getAttribute("data-itw-price-field");
+				if (field === "mandatory_optional") {
+					var next =
+						(toggle.getAttribute("data-itw-price-value") || "MANDATORY") === "MANDATORY"
+							? "OPTIONAL"
+							: "MANDATORY";
+					set_price_field(doc, "mandatory_optional", next);
+				} else if (field === "evaluated_price_included") {
+					var on = toggle.getAttribute("data-itw-price-value") === "1";
+					set_price_field(doc, "evaluated_price_included", !on);
+				}
+				return;
+			}
+			if (event.target.closest("[data-itw-price-drawer-save]")) {
+				event.preventDefault();
+				var values = collect_price_drawer_values(doc);
+				var items = (caches[screen][cfg.items] = caches[screen][cfg.items] || []);
+				var drawerNode = price_drawer(doc);
+				var editingCode =
+					(drawerNode && drawerNode.getAttribute("data-itw-editing-code")) || values.line_code;
+				var isNew = drawerNode && drawerNode.getAttribute("data-itw-price-is-new") === "1";
+				var existing = find_price_item(items, editingCode);
+				if (existing && !isNew) {
+					Object.assign(existing, values, {
+						line_code: existing.line_code,
+						review_status: existing.review_status || "DRAFT",
+						display_order: existing.display_order || items.indexOf(existing) + 1,
+					});
+				} else {
+					var created = Object.assign(cfg.newItem(), values);
+					if (!created.line_code || created.line_code === __("New price line")) {
+						created.line_code = "PL-NEW-" + String(Date.now()).slice(-6);
+					}
+					items.push(created);
+				}
+				close_price_drawer(doc);
+				apply_downstream(doc, screen, caches[screen], ctx);
+				return;
+			}
+			if (event.target.closest("[data-itw-price-add]")) {
+				event.preventDefault();
+				open_item(cfg.newItem(), true);
+				return;
+			}
+			if (event.target.closest("[data-itw-price-template]")) {
+				event.preventDefault();
+				frappe.show_alert({
+					message: __("IT price template import will be available in a later slice."),
+					indicator: "blue",
+				});
+				return;
+			}
+			var editBtn = event.target.closest("[data-itw-edit]");
+			var row = event.target.closest("[data-itw-row]");
+			if (editBtn || row) {
+				event.preventDefault();
+				var code = (row || editBtn.closest("[data-itw-row]")).getAttribute("data-itw-code");
+				var item = find_price_item((caches[screen] && caches[screen][cfg.items]) || [], code);
+				if (item) {
+					open_item(item, false);
+				}
+			}
+		});
+
+		var saveBtn = button_by_text(doc, cfg.saveText || "SAVE PRICE SCHEDULE");
+		if (saveBtn) {
+			saveBtn.addEventListener("click", function (event) {
+				event.preventDefault();
+				persist({});
+			});
+		}
+		var addBtn = button_by_text(doc, "ADD PRICE ITEM");
+		if (addBtn) {
+			addBtn.addEventListener("click", function (event) {
+				event.preventDefault();
+				open_item(cfg.newItem(), true);
+			});
+		}
+		var templateBtn = button_by_text(doc, "USE STANDARD IT PRICE TEMPLATE");
+		if (templateBtn) {
+			templateBtn.addEventListener("click", function (event) {
+				event.preventDefault();
+				frappe.show_alert({
+					message: __("IT price template import will be available in a later slice."),
+					indicator: "blue",
+				});
+			});
+		}
+		var continueBtn = button_by_text(doc, cfg.continueText || "CONTINUE TO EVALUATION");
+		if (continueBtn) {
+			continueBtn.disabled = false;
+			continueBtn.classList.remove("opacity-55", "cursor-not-allowed");
+			continueBtn.removeAttribute("aria-disabled");
+			continueBtn.addEventListener("click", function (event) {
+				event.preventDefault();
+				persist({})
+					.then(function () {
+						if (cfg.next && kentender.it_wizard.navigate) {
+							kentender.it_wizard.navigate(cfg.next, {
+								configuration_id: ctx.configuration_id,
+							});
+						}
+					})
+					.catch(function () {
+						if (cfg.next && kentender.it_wizard.navigate) {
+							kentender.it_wizard.navigate(cfg.next, {
+								configuration_id: ctx.configuration_id,
+							});
+						}
+					});
+			});
+		}
+	}
+
+	function wire_downstream(doc, screen, ctx) {
+		var cfg = screen_config(screen);
+		if (!cfg) {
+			return;
+		}
+		if (screen === "price_schedule") {
+			wire_price_schedule(doc, ctx);
+			return;
+		}
+		if (doc.body.getAttribute("data-itw-downstream-wired-" + screen) === "1") {
 			return;
 		}
 		doc.body.setAttribute("data-itw-downstream-wired-" + screen, "1");

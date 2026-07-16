@@ -12,7 +12,11 @@ from typing import Any
 import frappe
 
 from kentender_procurement.it_tender_wizard.enums import wizard_states as ws
-from kentender_procurement.it_tender_wizard.services.std_core_adapter import resolve_std_version
+from kentender_procurement.it_tender_wizard.services.std_core_adapter import (
+	get_active_it_std_version_id,
+	resolve_std_version,
+)
+from kentender_procurement.std_engine.constants import CANONICAL_PACKAGE_ID
 from kentender_procurement.it_tender_wizard.services.wizard_audit_service import record_event
 from kentender_procurement.it_tender_wizard.services.wizard_permission_service import (
 	PERM_CREATE,
@@ -66,6 +70,20 @@ def _validation_status_label(status: str, blockers: int, warnings: int) -> str:
 	return status or "NOT_RUN"
 
 
+def resolve_next_action(state: str, blockers: int) -> tuple[str, str]:
+	"""Map wizard state to Screen 01 next-action codes/labels."""
+	state = (state or "").strip()
+	if state == ws.VALIDATION_FAILED or blockers > 0:
+		return "fix_blockers", "Fix Blockers"
+	if state == ws.READY_FOR_REVIEW:
+		return "submit_for_review", "Submit for Review"
+	if state == ws.APPROVED_FOR_TENDER_CREATION:
+		return "open_preview", "Open Preview"
+	if state in (ws.BOUND_TO_TENDER, ws.PUBLISHED):
+		return "open_in_tm", "Open in Tender Management"
+	return "continue_setup", "Continue Setup"
+
+
 def serialize_list_item(doc) -> dict[str, Any]:
 	blockers = int(frappe.db.get_value(
 		"Wizard Progress Snapshot",
@@ -81,10 +99,22 @@ def serialize_list_item(doc) -> dict[str, Any]:
 	) or 0)
 	owner_name = frappe.db.get_value("User", doc.owner_user, "full_name") if doc.owner_user else None
 	overdue = bool(doc.due_at and doc.due_at < date.today() and doc.wizard_state in ws.OVERDUE_ELIGIBLE_STATES)
+	next_action, next_action_label = resolve_next_action(doc.wizard_state, blockers)
+	last_updated = None
+	if doc.modified:
+		last_updated = (
+			doc.modified.strftime("%Y-%m-%d %H:%M")
+			if hasattr(doc.modified, "strftime")
+			else str(doc.modified)
+		)
 	return {
 		"id": doc.name,
+		"configuration_id": doc.instance_code,
 		"code": doc.instance_code,
 		"name": doc.instance_title,
+		"tender_ref": doc.instance_code,
+		"tender_title": doc.instance_title,
+		"planning_package_ref": doc.planning_package_code or "",
 		"planning_package": _reference_triplet(
 			doc.procurement_plan_item_id,
 			doc.planning_package_code,
@@ -95,25 +125,36 @@ def serialize_list_item(doc) -> dict[str, Any]:
 			doc.procuring_entity_id,
 			doc.procuring_entity_name,
 		),
+		"procuring_entity_name": doc.procuring_entity_name or "",
 		"method": _reference_triplet(
 			doc.procurement_method_code,
 			doc.procurement_method_code,
 			doc.procurement_method_name,
 		),
+		"procurement_method_label": doc.procurement_method_name or "",
 		"state": doc.wizard_state,
+		"wizard_state": doc.wizard_state,
 		"state_label": ws.state_label(doc.wizard_state),
+		"wizard_state_label": ws.state_label(doc.wizard_state),
 		"validation": {
 			"status": _validation_status_label(doc.current_validation_status, blockers, warnings),
 			"blockers": blockers,
 			"warnings": warnings,
 		},
+		"blocker_count": blockers,
+		"warning_count": warnings,
 		"completion_percent": int(doc.completion_percent or 0),
+		"progress_percent": int(doc.completion_percent or 0),
 		"current_step": {
 			"code": doc.current_step_code,
 			"name": doc.current_step_name,
 		},
 		"owner": {"id": doc.owner_user, "name": owner_name or doc.owner_user},
-		"last_updated": str(doc.modified.date()) if doc.modified else None,
+		"owner_name": owner_name or doc.owner_user or "",
+		"last_updated": last_updated,
+		"last_updated_at": last_updated,
+		"next_action": next_action,
+		"next_action_label": next_action_label,
 		"overdue": overdue,
 	}
 
@@ -133,6 +174,98 @@ def serialize_summary(doc) -> dict[str, Any]:
 		"initiation_source": doc.initiation_source,
 		"created_at": str(doc.creation),
 		"updated_at": str(doc.modified),
+	}
+
+
+# Synthetic tender shells for dashboard create when Procurement Tender rows are absent.
+_DASHBOARD_SHELL_FIXTURES: tuple[dict[str, str], ...] = (
+	{
+		"id": "SHELL-ITW-SERVER-001",
+		"code": "SHELL-ITW-SERVER-001",
+		"name": "Server Procurement",
+		"planning_package_ref": "PP-ICT-SHELL-010",
+		"procuring_entity_id": "PE-NATIONAL-TREASURY",
+		"procuring_entity_name": "National Treasury",
+		"procurement_method_code": "OPEN_NATIONAL",
+		"procurement_method_label": "Open Tender",
+	},
+	{
+		"id": "SHELL-ITW-CLOUD-001",
+		"code": "SHELL-ITW-CLOUD-001",
+		"name": "Cloud Migration",
+		"planning_package_ref": "PP-ICT-SHELL-090",
+		"procuring_entity_id": "PE-MIN-ICT",
+		"procuring_entity_name": "Ministry of ICT",
+		"procurement_method_code": "RFP",
+		"procurement_method_label": "RFP",
+	},
+)
+
+
+def list_eligible_tender_shells() -> list[dict[str, Any]]:
+	"""Return tender shells eligible for Start Configuration (Screen 01 create modal)."""
+	assert_permission(PERM_VIEW)
+	shells: list[dict[str, Any]] = []
+	if frappe.db.exists("DocType", "Procurement Tender"):
+		try:
+			rows = frappe.get_all(
+				"Procurement Tender",
+				fields=["name"],
+				order_by="modified desc",
+				limit_page_length=50,
+			)
+			for row in rows:
+				code = (row.name or "").strip()
+				if not code:
+					continue
+				shells.append(
+					{
+						"id": row.name,
+						"code": code,
+						"name": code,
+						"planning_package_ref": "",
+						"procuring_entity_id": "",
+						"procuring_entity_name": "",
+						"procurement_method_code": "",
+						"procurement_method_label": "",
+					}
+				)
+		except Exception:
+			shells = []
+	if not shells:
+		shells = [dict(item) for item in _DASHBOARD_SHELL_FIXTURES]
+	return shells
+
+
+def get_create_configuration_context(
+	*,
+	tender_id: str | None = None,
+	std_version_id: str | None = None,
+	plan_item_id: str | None = None,
+) -> dict[str, Any]:
+	"""Payload for Screen 01 create modal: shells + active STD package."""
+	assert_permission(PERM_VIEW)
+	active_id = (std_version_id or "").strip() or get_active_it_std_version_id() or CANONICAL_PACKAGE_ID
+	std_meta: dict[str, Any] = {}
+	try:
+		std_meta = resolve_std_version(active_id)
+	except Exception:
+		std_meta = {
+			"package_id": active_id,
+			"version_label": active_id,
+			"version_code": active_id,
+		}
+	shells = list_eligible_tender_shells()
+	preselect = (tender_id or "").strip()
+	return {
+		"shells": shells,
+		"active_std_package": {
+			"id": std_meta.get("package_id") or active_id,
+			"code": std_meta.get("version_code") or active_id,
+			"name": std_meta.get("version_label") or std_meta.get("package_id") or active_id,
+		},
+		"preselect_tender_id": preselect,
+		"plan_item_id": (plan_item_id or "").strip(),
 	}
 
 

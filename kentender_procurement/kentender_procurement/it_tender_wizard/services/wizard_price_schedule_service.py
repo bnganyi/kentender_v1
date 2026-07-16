@@ -92,6 +92,14 @@ def _overview_context(configuration_id: str, instance_name: str, overview: dict[
 		)
 		or ""
 	).strip()
+	currency_code = (
+		frappe.db.get_value(
+			"Tender STD Profile",
+			{"tender_std_instance": instance_name},
+			"currency_code",
+		)
+		or ""
+	).strip()
 	return {
 		"configuration_id": configuration_id,
 		"tender_number": tender_number,
@@ -101,6 +109,7 @@ def _overview_context(configuration_id: str, instance_name: str, overview: dict[
 		"planning_package": _public_reference(overview.get("planning_package")),
 		"procuring_entity": _public_reference(overview.get("procuring_entity")),
 		"method": _public_reference(overview.get("method")),
+		"currency_code": currency_code,
 		"validation": {"blockers": blockers, "warnings": warnings},
 	}
 

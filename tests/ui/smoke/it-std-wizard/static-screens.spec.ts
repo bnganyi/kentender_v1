@@ -17,7 +17,7 @@ test.describe("IT Wizard static screens — preview index", () => {
 test.describe("IT Wizard static screens — dashboard", () => {
 	test("dashboard renders design regions", async ({ page }) => {
 		await page.goto(`${ASSET_BASE}/it_wizard_dashboard.html`);
-		await expect(page.getByText("Tender Configuration Dashboard").first()).toBeVisible();
+		await expect(page.getByText("IT Tender Configurations").first()).toBeVisible();
 		await expect(page.getByRole("button", { name: /Create Tender Configuration/i })).toBeVisible();
 	});
 });

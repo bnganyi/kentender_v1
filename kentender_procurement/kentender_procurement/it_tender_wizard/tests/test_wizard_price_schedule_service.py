@@ -44,6 +44,7 @@ class TestWizardPriceScheduleService(IntegrationTestCase):
 		self.assertEqual(STEP_CODE, "PRICE_SCHEDULE")
 		self.assertIn("planning_package", payload)
 		self.assertEqual(set(payload["planning_package"]), {"code", "name"})
+		self.assertIn("currency_code", payload)
 		self.assertTrue(payload["items"])
 		for item in payload["items"]:
 			self.assertEqual(item["line_id"], item["line_code"])

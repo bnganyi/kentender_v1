@@ -207,7 +207,7 @@
 <th class="p-4 text-label-caps font-label-caps text-on-surface-variant uppercase text-right">Actions</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-subtle">
+<tbody class="divide-y divide-subtle" data-itw-table-body="1">
 <tr><td class="p-8 text-center text-on-surface-variant" colspan="8">Not configured — no price items defined.</td></tr>
 </tbody>
 </table>
@@ -215,14 +215,14 @@
 </div>
 <!-- Empty space for expansion -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
-<div class="bg-surface-container-lowest p-card-padding rounded-xl border border-subtle border-dashed flex flex-col items-center justify-center py-12 gap-3 text-center opacity-70 hover:opacity-100 transition-opacity cursor-pointer">
+<div class="bg-surface-container-lowest p-card-padding rounded-xl border border-subtle border-dashed flex flex-col items-center justify-center py-12 gap-3 text-center opacity-70 hover:opacity-100 transition-opacity cursor-pointer" data-itw-price-add="1" role="button" tabindex="0">
 <span class="material-symbols-outlined text-4xl text-primary">add_circle</span>
 <div>
 <p class="text-headline-sm font-headline-sm text-primary">Add Price Item</p>
 <p class="text-body-md text-on-surface-variant">Define new requirement for bidder pricing</p>
 </div>
 </div>
-<div class="bg-surface-container-lowest p-card-padding rounded-xl border border-subtle border-dashed flex flex-col items-center justify-center py-12 gap-3 text-center opacity-70 hover:opacity-100 transition-opacity cursor-pointer">
+<div class="bg-surface-container-lowest p-card-padding rounded-xl border border-subtle border-dashed flex flex-col items-center justify-center py-12 gap-3 text-center opacity-70 hover:opacity-100 transition-opacity cursor-pointer" data-itw-price-template="1" role="button" tabindex="0">
 <span class="material-symbols-outlined text-4xl text-primary">auto_awesome_motion</span>
 <div>
 <p class="text-headline-sm font-headline-sm text-primary">Use IT Template</p>
@@ -311,100 +311,97 @@
 </div>
 </div>
 </footer>
-<!-- Details Drawer (Hidden by default) -->
-<div class="fixed inset-y-0 right-0 w-full md:w-[480px] bg-surface shadow-2xl z-[60] transform transition-transform duration-300 border-l border-subtle" id="item-drawer">
-<div class="h-full flex flex-col"><div class="px-6 py-4 border-b border-subtle flex items-center justify-between bg-surface-container-lowest">
+<!-- Details Drawer (closed until a price line is selected) -->
+<aside class="fixed inset-y-0 right-0 w-full md:w-[480px] bg-surface shadow-2xl z-[60] transform transition-transform duration-300 border-l border-subtle translate-x-full" id="item-drawer" data-itw-price-drawer="1" data-itw-price-drawer-open="0" aria-hidden="true">
+<div class="h-full flex flex-col">
+<div class="px-6 py-4 border-b border-subtle flex items-center justify-between bg-surface-container-lowest">
+<div>
 <h2 class="text-headline-sm font-headline-sm text-primary">Price Item Detail</h2>
-<button class="material-symbols-outlined p-2 hover:bg-surface-container rounded-full" onclick="toggleDrawer()">close</button>
+<p class="text-[11px] text-on-surface-variant font-data-mono mt-0.5" data-itw-price-field="line_code">—</p>
+</div>
+<button class="material-symbols-outlined p-2 hover:bg-surface-container rounded-full" data-itw-price-drawer-close="1" type="button">close</button>
 </div>
 <div class="flex-grow overflow-y-auto p-6 space-y-6">
 <div class="space-y-4">
-<div>
-<label class="block text-label-caps font-label-caps text-on-surface-variant uppercase mb-1.5">Price item name</label><span class="text-[10px] text-on-surface-variant">Source: Not configured</span>
-<input class="w-full bg-surface-container-low border-subtle rounded-lg p-3 text-body-md focus:ring-primary focus:border-primary" type="text" value=""/>
+<div data-itw-price-owned="1">
+<label class="block text-label-caps font-label-caps text-on-surface-variant uppercase mb-1.5">Price item name</label>
+<input class="w-full bg-surface-container-low border-subtle rounded-lg p-3 text-body-md focus:ring-primary focus:border-primary" data-itw-price-field="title" type="text" value=""/>
 </div>
-<div>
-<label class="block text-label-caps font-label-caps text-on-surface-variant uppercase mb-1.5">Section</label><span class="text-[10px] text-on-surface-variant">Source: Not configured</span>
-<select class="w-full bg-surface-container-low border-subtle rounded-lg p-3 text-body-md focus:ring-primary focus:border-primary">
-<option selected="">Goods / Equipment</option>
-<option>Software &amp; Licensing</option>
-<option>Implementation Services</option>
+<div data-itw-price-owned="1">
+<label class="block text-label-caps font-label-caps text-on-surface-variant uppercase mb-1.5">Pricing Basis</label>
+<select class="w-full bg-surface-container-low border-subtle rounded-lg p-3 text-body-md focus:ring-primary focus:border-primary" data-itw-price-field="pricing_basis">
+<option value="SUPPLY">Supply / Unit Price</option>
+<option value="INSTALL">Installation</option>
+<option value="RECURRENT">Recurrent / Annual Rate</option>
+<option value="OTHER">Other</option>
 </select>
 </div>
 <div class="grid grid-cols-2 gap-4">
-<div>
-<label class="block text-label-caps font-label-caps text-on-surface-variant uppercase mb-1.5">Pricing Basis</label><span class="text-[10px] text-on-surface-variant">Source: Not configured</span>
-<select class="w-full bg-surface-container-low border-subtle rounded-lg p-3 text-body-md">
-<option selected="">Unit Price</option>
-<option>Annual Rate</option>
-<option>Hourly Rate</option>
-</select>
+<div data-itw-price-owned="1">
+<label class="block text-label-caps font-label-caps text-on-surface-variant uppercase mb-1.5">Quantity</label>
+<input class="w-full bg-surface-container-low border-subtle rounded-lg p-3 text-body-md" data-itw-price-field="quantity" type="number" min="0" step="any" value=""/>
 </div>
-<div>
-<label class="block text-label-caps font-label-caps text-on-surface-variant uppercase mb-1.5">Quantity / Duration</label><span class="text-[10px] text-on-surface-variant">Source: Not configured</span>
-<input class="w-full bg-surface-container-low border-subtle rounded-lg p-3 text-body-md" type="text" value=""/>
+<div data-itw-price-owned="1">
+<label class="block text-label-caps font-label-caps text-on-surface-variant uppercase mb-1.5">Unit</label>
+<input class="w-full bg-surface-container-low border-subtle rounded-lg p-3 text-body-md" data-itw-price-field="unit_of_measure" type="text" value=""/>
 </div>
 </div>
-<div class="flex items-center justify-between p-3 bg-surface-container-low rounded-lg">
+<div class="flex items-center justify-between p-3 bg-surface-container-low rounded-lg" data-itw-price-owned="1">
 <span class="text-body-md font-medium">Mandatory or Optional</span>
 <div class="flex items-center gap-2">
-<span class="text-xs font-bold text-primary">MANDATORY</span>
-<span class="material-symbols-outlined text-primary" data-weight="fill">toggle_on</span>
+<span class="text-xs font-bold text-primary" data-itw-price-mandatory-label="1">MANDATORY</span>
+<button class="material-symbols-outlined text-primary" data-itw-price-field="mandatory_optional" data-itw-price-toggle="1" data-weight="fill" type="button">toggle_on</button>
 </div>
 </div>
 <div class="grid grid-cols-2 gap-4">
-<div>
-<label class="block text-label-caps font-label-caps text-on-surface-variant uppercase mb-1.5">Currency</label><span class="text-[10px] text-on-surface-variant">Source: Not configured</span>
-<input class="w-full bg-surface-container-low border-subtle rounded-lg p-3 text-body-md opacity-70" readonly="" type="text" value="Not configured"/>
+<div data-itw-price-ref="currency">
+<label class="block text-label-caps font-label-caps text-on-surface-variant uppercase mb-1.5">Currency</label>
+<input class="w-full bg-surface-container-low border-subtle rounded-lg p-3 text-body-md opacity-70" data-itw-price-field="currency_code" readonly="" type="text" value=""/>
+<p class="text-[10px] text-on-surface-variant italic mt-1" data-itw-price-source="currency_code">Source: Tender Profile</p>
 </div>
-<div>
-<label class="block text-label-caps font-label-caps text-on-surface-variant uppercase mb-1.5">Tax Treatment</label><span class="text-[10px] text-on-surface-variant">Source: Not configured</span>
-<select class="w-full bg-surface-container-low border-subtle rounded-lg p-3 text-body-md">
-<option selected="">Inclusive of VAT</option>
-<option>Exclusive of VAT</option>
-<option>Zero Rated</option>
+<div data-itw-price-owned="1">
+<label class="block text-label-caps font-label-caps text-on-surface-variant uppercase mb-1.5">Tax Treatment</label>
+<select class="w-full bg-surface-container-low border-subtle rounded-lg p-3 text-body-md" data-itw-price-field="tax_treatment">
+<option value="STANDARD_VAT">Inclusive of VAT</option>
+<option value="EXCLUSIVE_VAT">Exclusive of VAT</option>
+<option value="ZERO_RATED">Zero Rated</option>
 </select>
 </div>
 </div>
-<div>
-<label class="block text-label-caps font-label-caps text-on-surface-variant uppercase mb-1.5">Bidder instruction</label><span class="text-[10px] text-on-surface-variant">Source: Not configured</span>
-<textarea class="w-full bg-surface-container-low border-subtle rounded-lg p-3 text-body-md" rows="3"></textarea>
+<div data-itw-price-owned="1">
+<label class="block text-label-caps font-label-caps text-on-surface-variant uppercase mb-1.5">Bidder instruction</label>
+<textarea class="w-full bg-surface-container-low border-subtle rounded-lg p-3 text-body-md" data-itw-price-field="bidder_instruction" rows="3"></textarea>
 </div>
 <div class="space-y-3">
-<div>
-<label class="block text-label-caps font-label-caps text-on-surface-variant uppercase mb-1.5">Linked Requirement</label><span class="text-[10px] text-on-surface-variant">Source: Not configured</span>
-<select class="w-full bg-surface-container-low border-subtle rounded-lg p-3 text-body-md">
-<option selected="">[IT-REQ-001] Server Infrastructure</option>
-</select>
+<div data-itw-price-ref="inventory">
+<label class="block text-label-caps font-label-caps text-on-surface-variant uppercase mb-1.5">Linked Inventory Item</label>
+<input class="w-full bg-surface-container-low border-subtle rounded-lg p-3 text-body-md" data-itw-price-field="inventory_item_code" type="text" value=""/>
+<p class="text-[10px] text-on-surface-variant italic mt-1" data-itw-price-source="inventory_item_code">Reference: System Inventory</p>
 </div>
-<div>
-<label class="block text-label-caps font-label-caps text-on-surface-variant uppercase mb-1.5">Linked Implementation Phase</label><span class="text-[10px] text-on-surface-variant">Source: Not configured</span>
-<select class="w-full bg-surface-container-low border-subtle rounded-lg p-3 text-body-md">
-<option selected="">Phase 2: Hardware Procurement</option>
-</select>
+<div data-itw-price-ref="requirement">
+<label class="block text-label-caps font-label-caps text-on-surface-variant uppercase mb-1.5">Linked Requirement</label>
+<input class="w-full bg-surface-container-low border-subtle rounded-lg p-3 text-body-md" data-itw-price-field="requirement_ref" type="text" value=""/>
+<p class="text-[10px] text-on-surface-variant italic mt-1" data-itw-price-source="requirement_ref">Reference: IT Requirements</p>
+</div>
+<div data-itw-price-ref="schedule">
+<label class="block text-label-caps font-label-caps text-on-surface-variant uppercase mb-1.5">Linked Implementation Phase</label>
+<input class="w-full bg-surface-container-low border-subtle rounded-lg p-3 text-body-md" data-itw-price-field="schedule_ref" type="text" value=""/>
+<p class="text-[10px] text-on-surface-variant italic mt-1" data-itw-price-source="schedule_ref">Reference: Implementation Schedule</p>
 </div>
 </div>
-<div class="flex items-center justify-between p-3 bg-surface-container-low rounded-lg">
+<div class="flex items-center justify-between p-3 bg-surface-container-low rounded-lg" data-itw-price-owned="1">
 <span class="text-body-md font-medium">Included in Evaluated Price</span>
-<span class="material-symbols-outlined text-primary" data-weight="fill">toggle_on</span>
+<button class="material-symbols-outlined text-primary" data-itw-price-field="evaluated_price_included" data-itw-price-toggle="1" data-weight="fill" type="button">toggle_on</button>
 </div>
 </div>
 </div>
 <div class="p-6 border-t border-subtle bg-surface-container-low flex justify-end gap-3">
-<button class="px-4 py-2 text-on-surface-variant font-medium" onclick="toggleDrawer()">Cancel</button>
-<button class="bg-primary text-on-primary px-6 py-2 rounded-lg font-bold">Save Changes</button>
-</div></div>
+<button class="px-4 py-2 text-on-surface-variant font-medium" data-itw-price-drawer-cancel="1" type="button">Cancel</button>
+<button class="bg-primary text-on-primary px-6 py-2 rounded-lg font-bold" data-itw-price-drawer-save="1" type="button">Save Changes</button>
 </div>
+</div>
+</aside>
 <script>
-        function toggleDrawer() {
-            const drawer = document.getElementById('item-drawer');
-            drawer.classList.toggle('translate-x-full');
-        }
-
-        // Mock interaction: clicking any row opens the drawer
-        document.querySelectorAll('tbody tr').forEach(row => {
-            row.addEventListener('click', () => toggleDrawer());
-            row.style.cursor = 'pointer';
-        });
+        // Drawer open/close and row binding are owned by Desk hydration (it_wizard_downstream.js).
     </script>
 </body></html>

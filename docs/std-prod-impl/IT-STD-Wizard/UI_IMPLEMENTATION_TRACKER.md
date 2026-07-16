@@ -51,7 +51,7 @@ Done looks like: 15 HTML files + `index.html`, 45/45 layout-guard unit tests gre
 ## Backend wiring (ITW-01 dashboard slice)
 
 - DocTypes, services, whitelisted APIs, Desk iframe hydration, Procurement sidebar link (Tender Management cluster)
-- Gate: `make it-wizard-dashboard-gate SITE=kentender.midas.com`
+- Gate: `make it-wizard-screen-01-gate SITE=kentender.midas.com` (full ITW-01..06: `make it-wizard-wiring-regression-gate`)
 
 ## Backend wiring (ITW-02 overview slice)
 

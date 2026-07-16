@@ -10,20 +10,23 @@
 	var STATE_FILTER_MAP = {
 		"In Configuration": "IN_CONFIGURATION",
 		"Ready for Review": "READY_FOR_REVIEW",
+		"Needs Action": "VALIDATION_FAILED",
 		"Validation Failed": "VALIDATION_FAILED",
+		"Returned for Correction": "RETURNED_FOR_CORRECTION",
 		Returned: "RETURNED_FOR_CORRECTION",
 	};
 
 	var STATUS_FILTER_OPTIONS = [
 		{ value: "IN_CONFIGURATION", label: "In Configuration" },
-		{ value: "VALIDATION_FAILED", label: "Validation Failed" },
+		{ value: "VALIDATION_FAILED", label: "Needs Action" },
 		{ value: "READY_FOR_REVIEW", label: "Ready for Review" },
-		{ value: "RETURNED_FOR_CORRECTION", label: "Returned" },
+		{ value: "RETURNED_FOR_CORRECTION", label: "Returned for Correction" },
 	];
 
 	var ENTITY_FILTER_MAP = {
 		"Ministry of ICT": "PE-MIN-ICT",
 		Treasury: "PE-NATIONAL-TREASURY",
+		"National Treasury": "PE-NATIONAL-TREASURY",
 	};
 
 	var METHOD_FILTER_MAP = {
@@ -44,12 +47,13 @@
 
 	var KPI_LABELS = {
 		in_configuration: "In Configuration",
-		validation_failed: "Validation Failed",
+		needs_action: "Needs Action",
 		ready_for_review: "Ready for Review",
-		returned: "Returned",
 		publication_ready: "Publication Ready",
-		overdue_actions: "Overdue Actions",
 	};
+
+	// TODO(Screen-02): re-wire post-create navigation when Overview ownership/wiring is finalized.
+	var CREATE_NEXT_ROUTE = "it-tender-configuration-overview";
 
 	function call_api(method, args) {
 		return frappe.call({
@@ -462,13 +466,64 @@
 			}
 		});
 		bar.querySelectorAll("button").forEach(function (btn) {
-			if ((btn.textContent || "").indexOf("More Filters") >= 0) {
+			var text = (btn.textContent || "").trim();
+			if (text.indexOf("More Filters") >= 0 || text === "Filters" || text.indexOf("Filters") === 0) {
 				btn.setAttribute("data-itw-open-filter-drawer", "1");
+				btn.removeAttribute("onclick");
 			}
 		});
+		var chipHost = bar.querySelector(".flex.flex-wrap.gap-2");
+		if (chipHost) {
+			chipHost.setAttribute("data-itw-filter-chips", "1");
+			chipHost.innerHTML = "";
+		}
+	}
+
+	function ensure_advanced_filters_drawer(doc) {
+		if (doc.getElementById("filters-drawer")) {
+			return;
+		}
+		var drawer = doc.createElement("div");
+		drawer.id = "filters-drawer";
+		drawer.setAttribute("aria-modal", "true");
+		drawer.setAttribute("role", "dialog");
+		drawer.className = "fixed inset-0 z-[100] hidden";
+		drawer.innerHTML =
+			'<div class="absolute inset-0 bg-black bg-opacity-50 transition-opacity" data-itw-drawer-action="close"></div>' +
+			'<div class="absolute right-0 top-0 h-full w-full max-w-md bg-surface-white shadow-xl flex flex-col">' +
+			'<div class="p-6 border-b border-outline-variant flex justify-between items-center">' +
+			'<h2 class="font-headline-sm text-headline-sm text-primary">Advanced Filters</h2>' +
+			'<button type="button" class="p-2 hover:bg-surface-container rounded-full" data-itw-drawer-action="close">' +
+			'<span class="material-symbols-outlined">close</span></button></div>' +
+			'<div class="flex-grow overflow-y-auto p-6 space-y-6">' +
+			'<div class="space-y-4"><h3 class="font-headline-sm text-sm text-primary uppercase tracking-wider">Procurement Identity</h3>' +
+			'<div class="space-y-1"><label class="font-label-caps text-[11px] text-on-surface-variant">Category</label>' +
+			'<div class="grid grid-cols-2 gap-2">' +
+			'<label class="flex items-center gap-2 p-2 border border-outline-variant rounded"><input type="checkbox" class="rounded"><span class="text-xs">Goods</span></label>' +
+			'<label class="flex items-center gap-2 p-2 border border-outline-variant rounded"><input type="checkbox" class="rounded"><span class="text-xs">Works</span></label>' +
+			"</div></div>" +
+			'<div class="space-y-1"><label class="font-label-caps text-[11px] text-on-surface-variant">Method</label>' +
+			'<select class="w-full bg-surface border border-outline-variant px-3 py-2 rounded font-body-md text-sm">' +
+			"<option>All Methods</option><option>Open Tender</option><option>RFP</option></select></div>" +
+			'<div class="space-y-1"><label class="font-label-caps text-[11px] text-on-surface-variant">STD Package</label>' +
+			'<select class="w-full bg-surface border border-outline-variant px-3 py-2 rounded font-body-md text-sm">' +
+			"<option>All Packages</option></select></div></div>" +
+			'<div class="space-y-4"><h3 class="font-headline-sm text-sm text-primary uppercase tracking-wider">Status &amp; Governance</h3>' +
+			'<label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" class="rounded">' +
+			'<span class="font-body-md text-sm">Due This Week</span></label>' +
+			'<label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" class="rounded">' +
+			'<span class="font-body-md text-sm">Needs Action</span></label>' +
+			'<label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" class="rounded">' +
+			'<span class="font-body-md text-sm">Returned for Correction</span></label></div></div>' +
+			'<div class="p-6 border-t border-outline-variant bg-surface-container-low flex gap-4">' +
+			'<button type="button" class="flex-grow py-2 border border-primary text-primary rounded-lg font-medium">Clear All</button>' +
+			'<button type="button" class="flex-grow py-2 bg-primary text-on-primary rounded-lg font-medium">Apply Filters</button>' +
+			"</div></div>";
+		doc.body.appendChild(drawer);
 	}
 
 	function enhance_dashboard_filter_drawer(doc) {
+		ensure_advanced_filters_drawer(doc);
 		var drawer = doc.getElementById("filters-drawer");
 		if (!drawer) {
 			return;
@@ -489,7 +544,7 @@
 				input.setAttribute("data-itw-drawer-filter", "due_this_week");
 			} else if (text.indexOf("Returned") >= 0) {
 				input.setAttribute("data-itw-drawer-filter", "returned");
-			} else if (text.indexOf("Validation Failed") >= 0) {
+			} else if (text.indexOf("Needs Action") >= 0 || text.indexOf("Validation Failed") >= 0) {
 				input.setAttribute("data-itw-drawer-filter", "validation_failed");
 			} else {
 				input.setAttribute("data-itw-drawer-stub", "1");
@@ -507,7 +562,7 @@
 				btn.setAttribute("data-itw-drawer-action", "clear");
 			} else if (text === "Apply Filters") {
 				btn.setAttribute("data-itw-drawer-action", "apply");
-			} else if ((btn.textContent || "").indexOf("close") >= 0 || btn.querySelector(".material-symbols-outlined")) {
+			} else if (btn.querySelector(".material-symbols-outlined")) {
 				var icon = btn.querySelector(".material-symbols-outlined");
 				if (icon && (icon.textContent || "").trim() === "close") {
 					btn.setAttribute("data-itw-drawer-action", "close");
@@ -613,6 +668,10 @@
 		if (!footer) {
 			return null;
 		}
+		var existing = footer.querySelector("[data-itw-pager-pages]");
+		if (existing) {
+			return existing;
+		}
 		var blocks = footer.querySelectorAll(".flex.items-center.gap-6");
 		for (var i = 0; i < blocks.length; i++) {
 			var outer = blocks[i].querySelector(".flex.items-center.gap-1");
@@ -626,6 +685,37 @@
 					return child;
 				}
 			}
+			// v2 footer: numbered buttons sit beside chevrons — carve out a pages host.
+			var doc = footer.ownerDocument;
+			var host = doc.createElement("div");
+			host.className = "flex items-center gap-1";
+			host.setAttribute("data-itw-pager-pages", "1");
+			Array.from(children).forEach(function (childNode) {
+				var icon = childNode.querySelector
+					? childNode.querySelector(".material-symbols-outlined")
+					: null;
+				var iconText = icon ? (icon.textContent || "").trim() : "";
+				if (iconText !== "chevron_left" && iconText !== "chevron_right") {
+					childNode.remove();
+				}
+			});
+			var leftChevron = null;
+			Array.from(outer.children).forEach(function (childNode) {
+				var icon = childNode.querySelector
+					? childNode.querySelector(".material-symbols-outlined")
+					: null;
+				if (icon && (icon.textContent || "").trim() === "chevron_left") {
+					leftChevron = childNode;
+				}
+			});
+			if (leftChevron && leftChevron.nextSibling) {
+				outer.insertBefore(host, leftChevron.nextSibling);
+			} else if (leftChevron) {
+				outer.appendChild(host);
+			} else {
+				outer.insertBefore(host, outer.firstChild);
+			}
+			return host;
 		}
 		return null;
 	}
@@ -834,81 +924,102 @@
 		return "bg-indigo-committed bg-opacity-10 text-indigo-committed";
 	}
 
+	function issues_cell_html(blockers, warnings) {
+		if (blockers > 0) {
+			return (
+				'<span class="text-xs text-rose-exhausted font-bold">' +
+				blockers +
+				" " +
+				__("Blockers") +
+				"</span>"
+			);
+		}
+		if (warnings > 0) {
+			return (
+				'<span class="text-xs text-amber-reserved font-bold">' +
+				warnings +
+				" " +
+				__("Warnings") +
+				"</span>"
+			);
+		}
+		return '<span class="text-xs text-emerald-available font-bold">' + __("Passed") + "</span>";
+	}
+
+	function next_action_button_class(action) {
+		if (action === "fix_blockers" || action === "open_preview") {
+			return "px-3 py-1 border border-primary text-primary rounded text-xs font-bold hover:bg-surface";
+		}
+		return "px-3 py-1 bg-primary text-on-primary rounded text-xs font-bold hover:opacity-90";
+	}
+
 	function build_row_html(item) {
 		var planning = item.planning_package || {};
 		var pe = item.procuring_entity || {};
 		var method = item.method || {};
 		var step = item.current_step || {};
 		var validation = item.validation || {};
-		var owner = item.owner || {};
-		var blockers = validation.blockers || 0;
-		var warnings = validation.warnings || 0;
-		var validationLine =
-			blockers > 0
-				? blockers + " " + __("Blockers")
-				: blockers + " " + __("Blockers") + " / " + warnings + " " + __("Warnings");
-		var validationClass =
-			blockers > 0 ? "text-rose-exhausted" : warnings > 0 ? "text-amber-reserved" : "text-emerald-available";
-		var dueClass = item.overdue ? "text-rose-exhausted" : "text-on-surface-variant";
-		var borderClass =
-			item.state === "VALIDATION_FAILED"
-				? "border-l-4 border-rose-exhausted"
-				: item.state === "RETURNED_FOR_CORRECTION"
-					? "border-l-4 border-amber-reserved"
-					: "";
-		var continueLabel = item.state === "VALIDATION_FAILED" ? __("View Findings") : __("Continue");
+		var blockers = item.blocker_count != null ? item.blocker_count : validation.blockers || 0;
+		var warnings = item.warning_count != null ? item.warning_count : validation.warnings || 0;
+		var action = item.next_action || "continue_setup";
+		var actionLabel = item.next_action_label || __("Continue Setup");
+		var planningRef =
+			item.planning_package_ref || planning.code || planning.name || "";
 		return (
-			'<tr class="' +
-			borderClass +
-			'" data-configuration-id="' +
-			frappe.utils.escape_html(item.code || "") +
+			'<tr data-configuration-id="' +
+			frappe.utils.escape_html(item.code || item.configuration_id || "") +
+			'" data-itw-next-action="' +
+			frappe.utils.escape_html(action) +
 			'">' +
-			'<td class="px-4 py-4"><div class="font-data-mono text-data-mono text-primary mb-1">' +
-			frappe.utils.escape_html(item.code || "") +
-			'</div><div class="font-body-md text-body-md font-medium text-on-surface mb-1">' +
-			frappe.utils.escape_html(item.name || "") +
-			'</div><div class="font-data-mono text-[12px] text-on-surface-variant">' +
-			__("Planning Package") +
-			": " +
-			frappe.utils.escape_html(planning.code || planning.name || __("—")) +
-			"</div></td>" +
-			'<td class="px-4 py-4 font-body-md text-body-md text-on-surface-variant">' +
-			format_entity_reference(pe) +
+			'<td class="px-4 py-4">' +
+			'<div class="font-data-mono text-data-mono text-primary">' +
+			frappe.utils.escape_html(item.tender_ref || item.code || "") +
+			"</div>" +
+			'<div class="font-body-md font-bold text-on-surface">' +
+			frappe.utils.escape_html(item.tender_title || item.name || "") +
+			"</div>" +
+			(planningRef
+				? '<div class="text-[11px] text-on-surface-variant">' +
+					frappe.utils.escape_html(planningRef) +
+					"</div>"
+				: "") +
 			"</td>" +
-			'<td class="px-4 py-4 font-body-md text-body-md text-on-surface-variant">' +
-			format_method_reference(method) +
+			'<td class="px-4 py-4 text-on-surface-variant">' +
+			(item.procuring_entity_name
+				? frappe.utils.escape_html(item.procuring_entity_name)
+				: format_entity_reference(pe)) +
 			"</td>" +
-			'<td class="px-4 py-4"><div class="mb-2"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ' +
-			state_badge_class(item.state) +
+			'<td class="px-4 py-4 text-on-surface-variant">' +
+			(item.procurement_method_label
+				? frappe.utils.escape_html(item.procurement_method_label)
+				: format_method_reference(method)) +
+			"</td>" +
+			'<td class="px-4 py-4"><span class="inline-flex px-2 py-0.5 rounded-full text-xs font-bold ' +
+			state_badge_class(item.state || item.wizard_state) +
 			'">' +
-			frappe.utils.escape_html(item.state_label || item.state || "") +
-			'</span></div><div class="text-xs font-medium ' +
-			validationClass +
-			'">' +
-			frappe.utils.escape_html(validationLine) +
-			"</div></td>" +
-			'<td class="px-4 py-4"><div class="flex items-center gap-3 mb-1"><span class="font-data-mono text-[12px] text-on-surface-variant">' +
-			String(item.completion_percent || 0) +
-			'%</span></div><div class="font-body-md text-body-md text-on-surface-variant">' +
-			__("Current Step") +
+			frappe.utils.escape_html(item.state_label || item.wizard_state_label || item.state || "") +
+			"</span></td>" +
+			'<td class="px-4 py-4">' +
+			'<div class="font-data-mono text-xs mb-1">' +
+			String(item.progress_percent != null ? item.progress_percent : item.completion_percent || 0) +
+			"%</div>" +
+			'<div class="text-[11px] text-on-surface-variant">' +
+			__("Step") +
 			": " +
 			frappe.utils.escape_html(step.name || step.code || __("—")) +
 			"</div></td>" +
-			'<td class="px-4 py-4"><div class="font-body-md text-body-md mb-1">' +
-			frappe.utils.escape_html(owner.name || __("—")) +
-			'</div><div class="font-body-md text-body-md text-on-surface-variant">' +
-			__("Technical Review") +
-			"</div></td>" +
-			'<td class="px-4 py-4 font-data-mono text-data-mono ' +
-			dueClass +
-			'">' +
-			frappe.utils.escape_html(item.last_updated || __("—")) +
-			(item.overdue ? ' <span class="material-symbols-outlined text-[14px] align-middle">warning</span>' : "") +
+			'<td class="px-4 py-4">' +
+			issues_cell_html(blockers, warnings) +
 			"</td>" +
-			'<td class="px-4 py-4 text-right"><div class="flex items-center justify-end gap-2">' +
-			'<button type="button" class="px-3 py-1 bg-primary text-on-primary rounded text-xs font-medium hover:opacity-90" data-itw-action="continue">' +
-			frappe.utils.escape_html(continueLabel) +
-			"</button></div></td></tr>"
+			'<td class="px-4 py-4">' +
+			'<button type="button" class="' +
+			next_action_button_class(action) +
+			'" data-itw-action="continue">' +
+			frappe.utils.escape_html(actionLabel) +
+			"</button></td>" +
+			'<td class="px-4 py-4 text-right font-data-mono text-xs text-on-surface-variant">' +
+			frappe.utils.escape_html(item.last_updated_at || item.last_updated || __("—")) +
+			"</td></tr>"
 		);
 	}
 
@@ -1006,8 +1117,11 @@
 		footer.setAttribute("data-itw-current-page", String(currentPage));
 		footer.setAttribute("data-itw-page-size-active", String(pageSize));
 		var summary =
+			footer.querySelector("[data-itw-pager-showing]") ||
 			footer.querySelector(".font-body-md.text-body-md.text-on-surface-variant") ||
-			footer.querySelector(".font-body-md.text-on-surface-variant");
+			footer.querySelector(".font-body-md.text-on-surface-variant") ||
+			footer.querySelector("span.text-body-md") ||
+			footer.querySelector("span.text-on-surface-variant");
 		if (summary) {
 			summary.setAttribute("data-itw-pager-showing", "1");
 			summary.innerHTML =
@@ -1016,7 +1130,7 @@
 				start +
 				"-" +
 				end +
-				'</span> ' +
+				"</span> " +
 				__("of") +
 				' <span class="font-bold text-on-surface">' +
 				count +
@@ -1118,13 +1232,83 @@
 	function disable_stub_actions(doc) {
 		doc.querySelectorAll("button").forEach(function (btn) {
 			var text = (btn.textContent || "").trim();
-			if (text.indexOf("Export Dashboard Report") >= 0 || text.indexOf("View Audit Logs") >= 0) {
+			if (
+				text.indexOf("Export Dashboard Report") >= 0 ||
+				text.indexOf("View Audit Logs") >= 0 ||
+				text.indexOf("Export Report") >= 0 ||
+				text.indexOf("Audit Logs") >= 0
+			) {
 				btn.disabled = true;
 				btn.style.opacity = "0.55";
 				btn.style.pointerEvents = "none";
 				btn.setAttribute("aria-disabled", "true");
 			}
 		});
+	}
+
+	function sync_filter_chips(doc, filters) {
+		var host = doc.querySelector("[data-itw-filter-chips]");
+		if (!host) {
+			return;
+		}
+		var chips = [];
+		var active = filters || {};
+		if (active.states) {
+			String(active.states)
+				.split(",")
+				.forEach(function (code) {
+					code = (code || "").trim();
+					if (!code) {
+						return;
+					}
+					var label = code;
+					STATUS_FILTER_OPTIONS.forEach(function (opt) {
+						if (opt.value === code) {
+							label = opt.label;
+						}
+					});
+					chips.push({ key: "states:" + code, label: __("Status") + ": " + label });
+				});
+		} else if (active.state) {
+			var stateLabel = active.state;
+			STATUS_FILTER_OPTIONS.forEach(function (opt) {
+				if (opt.value === active.state) {
+					stateLabel = opt.label;
+				}
+			});
+			chips.push({ key: "state", label: __("Status") + ": " + stateLabel });
+		}
+		if (active.procurement_method_code) {
+			var methodLabel = active.procurement_method_code;
+			Object.keys(METHOD_FILTER_MAP).forEach(function (name) {
+				if (METHOD_FILTER_MAP[name] === active.procurement_method_code) {
+					methodLabel = name;
+				}
+			});
+			chips.push({ key: "method", label: __("Method") + ": " + methodLabel });
+		}
+		if (active.procurement_entity_id) {
+			chips.push({
+				key: "entity",
+				label: __("Entity") + ": " + active.procurement_entity_id,
+			});
+		}
+		if (active.overdue_only) {
+			chips.push({ key: "overdue", label: __("Due This Week") });
+		}
+		host.innerHTML = chips
+			.map(function (chip) {
+				return (
+					'<span class="px-3 py-1 bg-primary-container text-on-primary-container rounded-full text-xs font-bold flex items-center gap-1" data-itw-filter-chip="' +
+					frappe.utils.escape_html(chip.key) +
+					'">' +
+					frappe.utils.escape_html(chip.label) +
+					' <span class="material-symbols-outlined text-[14px] cursor-pointer" data-itw-chip-remove="' +
+					frappe.utils.escape_html(chip.key) +
+					'">close</span></span>'
+				);
+			})
+			.join("");
 	}
 
 	function get_active_filters(doc) {
@@ -1282,7 +1466,7 @@
 				event.preventDefault();
 				reset_dashboard_filter_ui(doc);
 				close_filter_drawer(doc);
-				reload({
+				var cleared = {
 					page: 1,
 					q: "",
 					state: "",
@@ -1290,7 +1474,9 @@
 					procurement_entity_id: "",
 					procurement_method_code: "",
 					overdue_only: false,
-				});
+				};
+				sync_filter_chips(doc, cleared);
+				reload(cleared);
 				return;
 			}
 			if (action === "apply") {
@@ -1305,16 +1491,16 @@
 					}
 				}
 				close_filter_drawer(doc);
-				reload(
-					Object.assign(
-						{
-							page: 1,
-							state: "",
-							overdue_only: false,
-						},
-						drawerFilters,
-					),
+				var nextFilters = Object.assign(
+					{
+						page: 1,
+						state: "",
+						overdue_only: false,
+					},
+					drawerFilters,
 				);
+				sync_filter_chips(doc, nextFilters);
+				reload(nextFilters);
 			}
 		});
 	}
@@ -5434,12 +5620,14 @@
 			var summary = (payload.summary && payload.summary.data) || {};
 			var list = (payload.list && payload.list.data) || {};
 			var items = list.items || [];
+			var activeFilters = filters || { page: 1, page_size: 25 };
 			hydrate_filter_selects(doc, summary.filter_options || {});
 			hydrate_dashboard_kpis(doc, summary.kpis || {}, summary.today_deltas || {});
 			hydrate_dashboard_table(doc, items, ctx.configuration_id || "");
 			hydrate_dashboard_pager(doc, list.page || 1, list.page_size || 25, list.total || 0);
 			disable_stub_actions(doc);
-			wire_dashboard_interactions(doc, ctx, filters || { page: 1, page_size: 25 });
+			sync_filter_chips(doc, activeFilters);
+			wire_dashboard_interactions(doc, ctx, activeFilters);
 		},
 		std_config_overview: function (doc, payload, ctx) {
 			var data = (payload.overview && payload.overview.data) || {};
@@ -5499,60 +5687,239 @@
 		});
 	}
 
-	function open_create_dialog(ctx, on_success) {
-		var fields = [
-			{
-				fieldname: "title",
-				label: __("Configuration title"),
-				fieldtype: "Data",
-				reqd: 1,
-				default: ctx.tender_id ? __("IT Tender Configuration for {0}", [ctx.tender_id]) : "",
-			},
-			{
-				fieldname: "std_template_version_id",
-				label: __("STD template version"),
-				fieldtype: "Data",
-				reqd: 1,
-				default: ctx.std_version_id || "",
-			},
-			{
-				fieldname: "procuring_entity_id",
-				label: __("Procuring entity"),
-				fieldtype: "Data",
-			},
-		];
-		var dialog = new frappe.ui.Dialog({
-			title: __("Create Tender Configuration"),
-			fields: fields,
-			primary_action_label: __("Create"),
-			primary_action: function () {
-				var values = dialog.get_values();
-				if (!values) {
+	function ensure_create_modal_actions(doc) {
+		var modal = doc.getElementById("create-modal");
+		if (!modal) {
+			return null;
+		}
+		modal.querySelectorAll("select").forEach(function (sel, index) {
+			if (index === 0 && !sel.getAttribute("data-itw-create-shell")) {
+				sel.setAttribute("data-itw-create-shell", "1");
+			}
+			if (index === 1 && !sel.getAttribute("data-itw-create-std")) {
+				sel.setAttribute("data-itw-create-std", "1");
+			}
+		});
+		var stdSelect = modal.querySelector("[data-itw-create-std]");
+		if (!stdSelect) {
+			var selects = modal.querySelectorAll("select");
+			if (selects.length > 1) {
+				selects[1].setAttribute("data-itw-create-std", "1");
+				stdSelect = selects[1];
+			}
+		}
+		var labels = modal.querySelectorAll("label");
+		labels.forEach(function (label) {
+			var text = (label.textContent || "").trim();
+			var field = label.parentElement;
+			if (!field) {
+				return;
+			}
+			var input = field.querySelector("input");
+			if (!input) {
+				return;
+			}
+			if (text.indexOf("Planning Package") >= 0) {
+				input.setAttribute("data-itw-create-planning", "1");
+			} else if (text.indexOf("Procuring Entity") >= 0) {
+				input.setAttribute("data-itw-create-entity", "1");
+			} else if (text.indexOf("Procurement Method") >= 0) {
+				input.setAttribute("data-itw-create-method", "1");
+			}
+		});
+		modal.querySelectorAll("button").forEach(function (btn) {
+			var icon = btn.querySelector(".material-symbols-outlined");
+			if (icon && (icon.textContent || "").trim() === "close") {
+				btn.setAttribute("data-itw-create-close", "1");
+				btn.removeAttribute("onclick");
+			}
+		});
+		var backdrop = modal.firstElementChild;
+		if (backdrop && backdrop !== modal.querySelector(".absolute.top-1\\/2")) {
+			backdrop.setAttribute("data-itw-create-close", "1");
+			backdrop.removeAttribute("onclick");
+		}
+		if (!modal.querySelector("[data-itw-create-start]")) {
+			var panel = modal.querySelector(".absolute.top-1\\/2") || modal.lastElementChild;
+			var body = panel ? panel.querySelector(".p-6.space-y-4") || panel : null;
+			if (body) {
+				var actions = doc.createElement("div");
+				actions.className = "flex justify-end gap-3 pt-2";
+				actions.innerHTML =
+					'<button type="button" class="px-4 py-2 border border-outline-variant rounded font-body-md" data-itw-create-close="1">' +
+					__("Cancel") +
+					"</button>" +
+					'<button type="button" class="px-4 py-2 bg-primary text-on-primary rounded font-body-md font-bold" data-itw-create-start="1">' +
+					__("Start Configuration") +
+					"</button>";
+				body.appendChild(actions);
+			}
+		}
+		return modal;
+	}
+
+	function close_create_modal(doc) {
+		var modal = doc.getElementById("create-modal");
+		if (modal) {
+			modal.classList.add("hidden");
+		}
+	}
+
+	function open_create_modal(doc, ctx, on_success) {
+		var modal = ensure_create_modal_actions(doc);
+		if (!modal) {
+			frappe.show_alert({
+				message: __("Create modal is unavailable on this screen."),
+				indicator: "red",
+			});
+			return;
+		}
+		modal.classList.remove("hidden");
+		call_api("get_create_configuration_context_api", {
+			tender_id: ctx.tender_id || undefined,
+			std_version_id: ctx.std_version_id || undefined,
+			plan_item_id: ctx.plan_item_id || undefined,
+		}).then(function (r) {
+			var data = (r && r.message && r.message.data) || {};
+			var shells = data.shells || [];
+			var std = data.active_std_package || {};
+			var shellSelect = modal.querySelector("[data-itw-create-shell]");
+			if (shellSelect) {
+				var html =
+					'<option value="">' +
+					frappe.utils.escape_html(__("Select an active tender shell...")) +
+					"</option>";
+				shells.forEach(function (shell) {
+					html +=
+						'<option value="' +
+						frappe.utils.escape_html(shell.id || shell.code || "") +
+						'" data-code="' +
+						frappe.utils.escape_html(shell.code || "") +
+						'" data-name="' +
+						frappe.utils.escape_html(shell.name || "") +
+						'" data-planning="' +
+						frappe.utils.escape_html(shell.planning_package_ref || "") +
+						'" data-entity-id="' +
+						frappe.utils.escape_html(shell.procuring_entity_id || "") +
+						'" data-entity-name="' +
+						frappe.utils.escape_html(shell.procuring_entity_name || "") +
+						'" data-method-code="' +
+						frappe.utils.escape_html(shell.procurement_method_code || "") +
+						'" data-method-label="' +
+						frappe.utils.escape_html(shell.procurement_method_label || "") +
+						'">' +
+						frappe.utils.escape_html(
+							(shell.code || "") + (shell.name ? " - " + shell.name : ""),
+						) +
+						"</option>";
+				});
+				shellSelect.innerHTML = html;
+				if (data.preselect_tender_id) {
+					shellSelect.value = data.preselect_tender_id;
+					if (shellSelect.value !== data.preselect_tender_id && shells.length) {
+						shellSelect.selectedIndex = 1;
+					}
+				}
+				shellSelect.dispatchEvent(new Event("change"));
+			}
+			var stdSelect = modal.querySelector("[data-itw-create-std]");
+			if (stdSelect) {
+				stdSelect.innerHTML =
+					'<option value="' +
+					frappe.utils.escape_html(std.id || "") +
+					'">' +
+					frappe.utils.escape_html(std.name || std.code || std.id || "") +
+					"</option>";
+				stdSelect.disabled = true;
+			}
+			modal.setAttribute("data-itw-create-std-id", std.id || "");
+			modal.setAttribute("data-itw-create-plan-item", data.plan_item_id || ctx.plan_item_id || "");
+			if (typeof on_success === "function") {
+				modal._itwCreateOnSuccess = on_success;
+			}
+		});
+	}
+
+	function apply_shell_selection(modal) {
+		var shellSelect = modal.querySelector("[data-itw-create-shell]");
+		if (!shellSelect) {
+			return;
+		}
+		var option = shellSelect.options[shellSelect.selectedIndex];
+		var planning = modal.querySelector("[data-itw-create-planning]");
+		var entity = modal.querySelector("[data-itw-create-entity]");
+		var method = modal.querySelector("[data-itw-create-method]");
+		if (planning) {
+			planning.value = option && option.value ? option.getAttribute("data-planning") || "" : "";
+		}
+		if (entity) {
+			entity.value = option && option.value ? option.getAttribute("data-entity-name") || "" : "";
+		}
+		if (method) {
+			method.value = option && option.value ? option.getAttribute("data-method-label") || "" : "";
+		}
+	}
+
+	function start_configuration_from_modal(doc, ctx, modal) {
+		var shellSelect = modal.querySelector("[data-itw-create-shell]");
+		var option = shellSelect ? shellSelect.options[shellSelect.selectedIndex] : null;
+		if (!option || !option.value) {
+			frappe.show_alert({
+				message: __("Select a tender shell to start configuration."),
+				indicator: "orange",
+			});
+			return;
+		}
+		var stdId =
+			modal.getAttribute("data-itw-create-std-id") ||
+			ctx.std_version_id ||
+			"";
+		if (!stdId) {
+			frappe.show_alert({
+				message: __("Active IT STD package is required."),
+				indicator: "red",
+			});
+			return;
+		}
+		var title =
+			(option.getAttribute("data-name") || option.getAttribute("data-code") || "").trim() ||
+			__("IT Tender Configuration");
+		var args = {
+			title: title,
+			std_template_version_id: stdId,
+			tender_id: option.value,
+			procuring_entity_id: option.getAttribute("data-entity-id") || undefined,
+			procuring_entity_name: option.getAttribute("data-entity-name") || undefined,
+			procurement_method_code: option.getAttribute("data-method-code") || undefined,
+			procurement_method_name: option.getAttribute("data-method-label") || undefined,
+			planning_package_code: option.getAttribute("data-planning") || undefined,
+			procurement_plan_item_id:
+				modal.getAttribute("data-itw-create-plan-item") || ctx.plan_item_id || undefined,
+		};
+		frappe.call({
+			method: API + ".create_configuration_api",
+			args: args,
+			callback: function (r) {
+				if (r.exc) {
 					return;
 				}
-				dialog.hide();
-				frappe.call({
-					method: API + ".create_configuration_api",
-					args: Object.assign({}, values, {
-						tender_id: ctx.tender_id || undefined,
-						procurement_plan_item_id: ctx.plan_item_id || undefined,
-					}),
-					callback: function (r) {
-						if (r.exc) {
-							return;
-						}
-						frappe.show_alert({
-							message: __("Configuration created"),
-							indicator: "green",
-						});
-						if (typeof on_success === "function") {
-							on_success(r.message || {});
-						}
-					},
+				var payload = (r.message && r.message.data) || r.message || {};
+				var summary = payload.summary || {};
+				var configuration_id = summary.configuration_id || "";
+				close_create_modal(doc);
+				frappe.show_alert({
+					message: __("Configuration created"),
+					indicator: "green",
 				});
+				if (typeof modal._itwCreateOnSuccess === "function") {
+					modal._itwCreateOnSuccess(payload);
+				}
+				// TODO(Screen-02): re-wire when Configuration Overview ownership/wiring is finalized.
+				if (configuration_id) {
+					navigate(CREATE_NEXT_ROUTE, { configuration_id: configuration_id });
+				}
 			},
 		});
-		dialog.show();
 	}
 
 	function wire_dashboard_interactions(doc, ctx, filters) {
@@ -5563,6 +5930,7 @@
 			return;
 		}
 		doc.body.setAttribute("data-itw-wired", "1");
+		ensure_create_modal_actions(doc);
 
 		function reload(extra) {
 			var base = get_active_filters(doc) || filters || { page: 1, page_size: 25 };
@@ -5570,6 +5938,7 @@
 				Object.assign({}, base, read_dashboard_filters(doc), extra || {}),
 			);
 			set_active_filters(doc, next);
+			sync_filter_chips(doc, next);
 			fetch_screen_data("dashboard", ctx, next).then(function (payload) {
 				HYDRATORS.dashboard(doc, payload, ctx, next);
 			});
@@ -5604,21 +5973,69 @@
 		doc.querySelectorAll("button").forEach(function (btn) {
 			var text = (btn.textContent || "").trim();
 			if (text.indexOf("Create Tender Configuration") >= 0) {
+				btn.removeAttribute("onclick");
 				btn.addEventListener("click", function (event) {
 					event.preventDefault();
-					open_create_dialog(ctx, function () {
-						reload({ page: 1 });
-					});
+					event.stopPropagation();
+					open_create_modal(doc, ctx);
 				});
 			}
 		});
 
-		wire_dashboard_pagination(doc, ctx, filters, reload);
-		wire_filter_drawer(doc, reload);
+		doc.addEventListener(
+			"change",
+			function (event) {
+				if (event.target && event.target.getAttribute("data-itw-create-shell") === "1") {
+					apply_shell_selection(doc.getElementById("create-modal"));
+				}
+			},
+			true,
+		);
 
 		doc.addEventListener(
 			"click",
 			function (event) {
+				var closeBtn = event.target.closest("[data-itw-create-close]");
+				if (closeBtn) {
+					event.preventDefault();
+					close_create_modal(doc);
+					return;
+				}
+				var startBtn = event.target.closest("[data-itw-create-start]");
+				if (startBtn) {
+					event.preventDefault();
+					start_configuration_from_modal(doc, ctx, doc.getElementById("create-modal"));
+					return;
+				}
+				var chipRemove = event.target.closest("[data-itw-chip-remove]");
+				if (chipRemove) {
+					event.preventDefault();
+					var key = chipRemove.getAttribute("data-itw-chip-remove") || "";
+					var next = Object.assign({}, get_active_filters(doc) || {});
+					if (key.indexOf("states:") === 0) {
+						var code = key.split(":")[1];
+						var states = String(next.states || "")
+							.split(",")
+							.filter(function (item) {
+								return item && item !== code;
+							});
+						next.states = states.join(",");
+						if (!next.states) {
+							delete next.states;
+						}
+					} else if (key === "state") {
+						delete next.state;
+						delete next.states;
+					} else if (key === "method") {
+						delete next.procurement_method_code;
+					} else if (key === "entity") {
+						delete next.procurement_entity_id;
+					} else if (key === "overdue") {
+						delete next.overdue_only;
+					}
+					reload(Object.assign({ page: 1 }, next));
+					return;
+				}
 				var target = event.target.closest("[data-itw-action='continue']");
 				if (!target) {
 					return;
@@ -5629,10 +6046,32 @@
 				if (!configuration_id) {
 					return;
 				}
-				navigate("it-tender-configuration-overview", { configuration_id: configuration_id });
+				var action = row.getAttribute("data-itw-next-action") || "continue_setup";
+				if (action === "fix_blockers") {
+					navigate("it-tender-configuration-validation-report", {
+						configuration_id: configuration_id,
+					});
+					return;
+				}
+				if (action === "open_preview") {
+					navigate("it-tender-configuration-render-preview", {
+						configuration_id: configuration_id,
+					});
+					return;
+				}
+				if (action === "open_in_tm") {
+					// Stub: Tender Management handoff route is outside ITW_REGISTERED_ROUTES.
+					navigate(CREATE_NEXT_ROUTE, { configuration_id: configuration_id });
+					return;
+				}
+				navigate(CREATE_NEXT_ROUTE, { configuration_id: configuration_id });
 			},
 			true,
 		);
+
+		wire_dashboard_pagination(doc, ctx, filters, reload);
+		wire_filter_drawer(doc, reload);
+		sync_filter_chips(doc, get_active_filters(doc) || filters || {});
 	}
 
 	function hydrate_iframe(screen, iframe, ctx, page_title) {
@@ -5695,7 +6134,7 @@
 					(ctx.tender_id || "") + "|" + (ctx.std_version_id || "") + "|" + (ctx.plan_item_id || "");
 				if (ctx.tender_id && ctx.std_version_id && !planningHandoffKeys[handoffKey]) {
 					planningHandoffKeys[handoffKey] = true;
-					open_create_dialog(ctx, function () {
+					open_create_modal(doc, ctx, function () {
 						fetch_screen_data("dashboard", ctx, filters).then(function (fresh) {
 							if (!hydration_token_active(iframe, hydrationToken)) {
 								return;

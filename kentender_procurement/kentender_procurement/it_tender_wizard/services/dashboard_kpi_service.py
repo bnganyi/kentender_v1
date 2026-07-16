@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Dashboard KPI aggregation."""
+"""Dashboard KPI aggregation — Screen 01 v2 four-card contract."""
 
 from __future__ import annotations
 
@@ -15,16 +15,17 @@ from kentender_procurement.it_tender_wizard.services.wizard_permission_service i
 
 DASHBOARD_STATUS_FILTERS: tuple[tuple[str, str], ...] = (
 	(ws.IN_CONFIGURATION, "In Configuration"),
-	(ws.VALIDATION_FAILED, "Validation Failed"),
+	(ws.VALIDATION_FAILED, "Needs Action"),
 	(ws.READY_FOR_REVIEW, "Ready for Review"),
-	(ws.RETURNED_FOR_CORRECTION, "Returned"),
+	(ws.RETURNED_FOR_CORRECTION, "Returned for Correction"),
 )
+
+KPI_NEEDS_ACTION_STATES = ws.KPI_VALIDATION_FAILED | ws.KPI_RETURNED
 
 _KPI_STATE_MAP: tuple[tuple[str, frozenset[str]], ...] = (
 	("in_configuration", ws.KPI_IN_CONFIGURATION),
-	("validation_failed", ws.KPI_VALIDATION_FAILED),
+	("needs_action", frozenset(KPI_NEEDS_ACTION_STATES)),
 	("ready_for_review", ws.KPI_READY_FOR_REVIEW),
-	("returned", ws.KPI_RETURNED),
 	("publication_ready", ws.KPI_PUBLICATION_READY),
 )
 
@@ -83,11 +84,9 @@ def build_dashboard_summary(*, procurement_entity_id: str | None = None) -> dict
 	today = date.today()
 	kpis = {
 		"in_configuration": 0,
-		"validation_failed": 0,
+		"needs_action": 0,
 		"ready_for_review": 0,
-		"returned": 0,
 		"publication_ready": 0,
-		"overdue_actions": 0,
 	}
 	today_deltas = {key: 0 for key in kpis}
 	for row in rows:
@@ -98,10 +97,6 @@ def build_dashboard_summary(*, procurement_entity_id: str | None = None) -> dict
 				kpis[kpi_key] += 1
 				if modified_on == today:
 					today_deltas[kpi_key] += 1
-		if row.due_at and row.due_at < today and state in ws.OVERDUE_ELIGIBLE_STATES:
-			kpis["overdue_actions"] += 1
-			if modified_on == today:
-				today_deltas["overdue_actions"] += 1
 	return {
 		"kpis": kpis,
 		"today_deltas": today_deltas,

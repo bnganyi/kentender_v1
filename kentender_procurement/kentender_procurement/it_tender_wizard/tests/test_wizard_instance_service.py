@@ -13,6 +13,9 @@ from kentender_procurement.it_tender_wizard.services.wizard_instance_service imp
 	assert_instance_std_version_immutable,
 	create_configuration,
 	delete_draft_configuration,
+	get_create_configuration_context,
+	resolve_next_action,
+	serialize_list_item,
 )
 from kentender_procurement.std_engine.constants import CANONICAL_PACKAGE_ID
 from kentender_procurement.std_engine.package_import.commit_importer import CommitImporter
@@ -91,3 +94,37 @@ class TestWizardInstanceService(IntegrationTestCase):
 			}
 		)
 		self.assertEqual(result["summary"]["initiation_source"], ws.INITIATION_PLANNING)
+
+	def test_resolve_next_action_screen_01_labels(self) -> None:
+		self.assertEqual(resolve_next_action(ws.IN_CONFIGURATION, 0)[1], "Continue Setup")
+		self.assertEqual(resolve_next_action(ws.VALIDATION_FAILED, 0)[1], "Fix Blockers")
+		self.assertEqual(resolve_next_action(ws.IN_CONFIGURATION, 2)[1], "Fix Blockers")
+		self.assertEqual(resolve_next_action(ws.READY_FOR_REVIEW, 0)[1], "Submit for Review")
+		self.assertEqual(resolve_next_action(ws.APPROVED_FOR_TENDER_CREATION, 0)[1], "Open Preview")
+		self.assertEqual(resolve_next_action(ws.BOUND_TO_TENDER, 0)[1], "Open in Tender Management")
+
+	def test_serialize_list_item_includes_next_action_and_issues(self) -> None:
+		result = create_configuration(
+			{
+				"std_template_version_id": CANONICAL_PACKAGE_ID,
+				"title": "List Serialize Next Action",
+			}
+		)
+		name = frappe.db.get_value(
+			"Tender STD Instance",
+			{"instance_code": result["summary"]["configuration_id"]},
+			"name",
+		)
+		doc = frappe.get_doc("Tender STD Instance", name)
+		doc.wizard_state = ws.IN_CONFIGURATION
+		doc.save(ignore_permissions=True)
+		item = serialize_list_item(doc)
+		self.assertEqual(item["next_action_label"], "Continue Setup")
+		self.assertIn("blocker_count", item)
+		self.assertIn("warning_count", item)
+		self.assertEqual(item["wizard_state_label"], "In configuration")
+
+	def test_create_configuration_context_includes_shells_and_active_std(self) -> None:
+		ctx = get_create_configuration_context()
+		self.assertTrue(ctx["shells"])
+		self.assertEqual(ctx["active_std_package"]["id"], CANONICAL_PACKAGE_ID)

@@ -20,7 +20,7 @@ test.describe("IT Wizard STD Configuration Overview Desk wiring", () => {
 		await expect(dashIframe.getByText(SEED_TITLE)).toBeVisible({ timeout: 30_000 });
 		const seedRow = dashIframe.locator(`tr[data-configuration-id="${SEED_CODE}"]`);
 		await expect(seedRow).toBeVisible();
-		await seedRow.getByRole("button", { name: /^Continue$/i }).click();
+		await seedRow.getByRole("button", { name: /^Continue Setup$/i }).click();
 		await expect(page).toHaveURL(/\/desk\/it-tender-configuration-overview/, { timeout: 15_000 });
 
 		const overviewIframe = page.frameLocator('[data-testid="it-wizard-overview-iframe"]');
@@ -62,7 +62,7 @@ test.describe("IT Wizard STD Configuration Overview Desk wiring", () => {
 			timeout: 30_000,
 		});
 		const seedRow = dashIframe.locator(`tr[data-configuration-id="${SEED_CODE}"]`);
-		await seedRow.getByRole("button", { name: /^Continue$/i }).click();
+		await seedRow.getByRole("button", { name: /^Continue Setup$/i }).click();
 		await expect(page).toHaveURL(/\/desk\/it-tender-configuration-overview/, { timeout: 15_000 });
 		await expect(page).toHaveURL(new RegExp(`configuration_id=${SEED_CODE}`), { timeout: 15_000 });
 

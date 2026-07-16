@@ -28,6 +28,23 @@ def design_source_path(ui_folder: str) -> Path:
 	)
 
 
+def design_source_path_v2_screen(screen_folder: str) -> Path:
+	"""IT-STD-Wizard-v2 screen artefacts (e.g. screen-01/code.html)."""
+	return (
+		_kentender_v1_root()
+		/ "docs"
+		/ "std-prod-impl"
+		/ "IT-STD-Wizard-v2"
+		/ screen_folder
+		/ "code.html"
+	)
+
+
+def dashboard_design_source_path() -> Path:
+	"""Screen 01 dashboard design lives under IT-STD-Wizard-v2."""
+	return design_source_path_v2_screen("screen-01")
+
+
 def deployed_asset_path(filename: str) -> Path:
 	return _procurement_public_root() / "it_tender_wizard_impl" / filename
 

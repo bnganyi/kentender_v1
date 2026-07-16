@@ -128,13 +128,30 @@ def assert_requirements_ownership_html(html: str, *, context: str = "it requirem
 	assert_none_present(html, REQUIREMENTS_FORBIDDEN_LABELS, context=context)
 
 
+def assert_price_schedule_ownership_html(html: str, *, context: str = "price schedule") -> None:
+	"""Owned price fields must not carry Not configured source chrome (Matrix 99)."""
+	assert "Source: Not configured" not in html, (
+		f"{context}: owned Price Schedule fields must not use Source: Not configured"
+	)
+	assert 'data-itw-price-drawer="1"' in html, f"{context}: missing price drawer hook"
+	assert 'data-itw-price-owned="1"' in html, f"{context}: missing owned-field markers"
+	assert "Reference: System Inventory" in html, f"{context}: missing inventory reference chrome"
+	assert "Source: Tender Profile" in html, f"{context}: currency must cite Tender Profile"
+	assert "translate-x-full" in html, f"{context}: drawer must start closed"
+
+
 def assert_cross_screen_ownership_html(html: str, *, context: str) -> None:
 	assert_none_present(html, CROSS_SCREEN_FORBIDDEN_MAGICAL_PATTERNS, context=context)
 	assert_none_present(html, REQUIREMENTS_FORBIDDEN_LABELS, context=context)
+	if "itw-price-drawer" in html or "Price Item Detail" in html:
+		assert_price_schedule_ownership_html(html, context=context)
 
 
 def iter_screen_html_paths(kentender_v1_root: Path) -> list[tuple[str, Path, Path]]:
 	design_root = kentender_v1_root / "docs" / "std-prod-impl" / "IT-STD-Wizard" / "ui-designs"
+	v2_dashboard = (
+		kentender_v1_root / "docs" / "std-prod-impl" / "IT-STD-Wizard-v2" / "screen-01" / "code.html"
+	)
 	deploy_root = (
 		kentender_v1_root
 		/ "kentender_procurement"
@@ -144,10 +161,15 @@ def iter_screen_html_paths(kentender_v1_root: Path) -> list[tuple[str, Path, Pat
 	)
 	rows: list[tuple[str, Path, Path]] = []
 	for design_dir, deploy_name in SCREEN_ASSET_PAIRS:
+		design_path = (
+			v2_dashboard
+			if design_dir == "01 dashboard"
+			else design_root / design_dir / "code.html"
+		)
 		rows.append(
 			(
 				design_dir,
-				design_root / design_dir / "code.html",
+				design_path,
 				deploy_root / deploy_name,
 			)
 		)

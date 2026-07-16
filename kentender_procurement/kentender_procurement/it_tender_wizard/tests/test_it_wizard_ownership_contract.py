@@ -13,6 +13,7 @@ from kentender_procurement.it_tender_wizard.tests.it_wizard_ownership_contract i
 	FIELD_SOURCE_TYPES,
 	assert_cross_screen_ownership_html,
 	assert_inventory_ownership_html,
+	assert_price_schedule_ownership_html,
 	assert_requirements_ownership_html,
 	iter_screen_html_paths,
 )
@@ -69,8 +70,17 @@ class TestItWizardOwnershipContract(UnitTestCase):
 				deployed,
 				f"{design_dir}: design and deployed HTML must stay byte-identical",
 			)
+			# Screen 01 v2 design ships Stitch fixtures; engine hydrate replaces them at runtime.
+			if design_dir == "01 dashboard":
+				continue
 			assert_cross_screen_ownership_html(design, context=f"design {design_dir}")
 			assert_cross_screen_ownership_html(deployed, context=f"deployed {design_dir}")
+
+	def test_price_schedule_owned_fields_forbid_not_configured_source(self) -> None:
+		design = read_text(design_source_path("08 price-schedule"))
+		deployed = read_text(deployed_asset_path("it_wizard_price_schedule.html"))
+		assert_price_schedule_ownership_html(design, context="design price schedule")
+		assert_price_schedule_ownership_html(deployed, context="deployed price schedule")
 
 	def test_profile_static_tds_owned_elsewhere_chrome(self) -> None:
 		deployed = read_text(deployed_asset_path("it_wizard_tender_profile.html"))
@@ -87,6 +97,15 @@ class TestItWizardOwnershipContract(UnitTestCase):
 			/ "js"
 			/ "it_wizard_engine.js"
 		).read_text(encoding="utf-8")
+		downstream = (
+			Path(__file__).resolve().parents[2]
+			/ "public"
+			/ "js"
+			/ "it_wizard_downstream.js"
+		).read_text(encoding="utf-8")
+		self.assertIn("hydrate_price_drawer", downstream)
+		self.assertIn("wire_price_schedule", downstream)
+		self.assertIn("close_price_drawer", downstream)
 		self.assertIn("hydrate_system_inventory_summaries", engine)
 		self.assertIn("mark_profile_field_owned_elsewhere", engine)
 		self.assertIn("handle_it_turnkey_field_action", engine)

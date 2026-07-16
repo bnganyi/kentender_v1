@@ -6,7 +6,7 @@ BENCH_ROOT := /home/midasuser/frappe-bench
 KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency
 INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency
 
-.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate std-verbatim-gate std-step1-gate nssf-calibration-gate it-wizard-static-gate it-wizard-dashboard-gate it-wizard-ownership-gate it-wizard-downstream-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate
+.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate std-verbatim-gate std-step1-gate nssf-calibration-gate it-wizard-static-gate it-wizard-screen-01-gate it-wizard-dashboard-gate it-wizard-wiring-regression-gate it-wizard-ownership-gate it-wizard-downstream-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate
 
 help:
 	@echo "Targets:"
@@ -35,7 +35,9 @@ help:
 	@echo "  make std-step1-gate SITE=$(SITE) — BE-15 Step 1 activation/consumption/render smoke"
 	@echo "  make nssf-calibration-gate SITE=$(SITE) — CAL-NSSF golden proof gate"
 	@echo "  make it-wizard-static-gate SITE=$(SITE) — IT Wizard Phase 1 static layout guards (45 tests)"
-	@echo "  make it-wizard-dashboard-gate SITE=$(SITE) — ITW-01 dashboard backend + desk wiring gate"
+	@echo "  make it-wizard-screen-01-gate SITE=$(SITE) — ITW-01 only (~3 min): layout + dashboard BE + PW dashboard"
+	@echo "  make it-wizard-dashboard-gate SITE=$(SITE) — alias for it-wizard-screen-01-gate"
+	@echo "  make it-wizard-wiring-regression-gate SITE=$(SITE) — ITW-01..06 full wiring regression (pre-release)"
 	@echo "  make it-wizard-ownership-gate SITE=$(SITE) — Screen Ownership Matrix gate (required before ITW-08 wiring)"
 	@echo "  make it-wizard-downstream-gate SITE=$(SITE) — ITW-08–15 Desk wiring gate (price→publication)"
 	@echo "  make seed-stable-platform SITE=$(SITE) — load MOH stable platform seed (Works + IT STD)"
@@ -214,15 +216,26 @@ it-wizard-static-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_ui_publication_readiness_layout_guard
 
-it-wizard-dashboard-gate:
+it-wizard-screen-01-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_ui_dashboard_layout_guard
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_dashboard_kpi_service
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.it_tender_wizard.tests.test_wizard_instance_service
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_dashboard_desk_wiring
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_navigation_contract
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test tests/ui/smoke/it-std-wizard/dashboard-desk-wiring.spec.ts --retries=0
+
+it-wizard-dashboard-gate: it-wizard-screen-01-gate
+
+it-wizard-wiring-regression-gate: it-wizard-screen-01-gate
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.it_tender_wizard.tests.test_wizard_overview_service
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.it_tender_wizard.tests.test_instance_api
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.it_tender_wizard.tests.test_dashboard_kpi_service
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.it_tender_wizard.tests.test_wizard_tender_profile_service
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
@@ -240,12 +253,7 @@ it-wizard-dashboard-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_tender_profile_desk_wiring
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_dashboard_desk_wiring
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_overview_desk_wiring
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_navigation_contract
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test tests/ui/smoke/it-std-wizard/dashboard-desk-wiring.spec.ts
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test tests/ui/smoke/it-std-wizard/overview-desk-wiring.spec.ts
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test tests/ui/smoke/it-std-wizard/tender-profile-desk-wiring.spec.ts
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test tests/ui/smoke/it-std-wizard/tds-desk-wiring.spec.ts
@@ -266,7 +274,10 @@ it-wizard-downstream-gate:
 		--module kentender_procurement.it_tender_wizard.tests.test_wizard_price_schedule_service
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_downstream_desk_wiring
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.it_tender_wizard.tests.test_it_wizard_ui_price_schedule_layout_guard
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test tests/ui/smoke/it-std-wizard/downstream-desk-wiring.spec.ts
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test tests/ui/smoke/it-std-wizard/price-schedule-desk-wiring.spec.ts
 
 seed-stable-platform:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.seed_stable_platform.run
