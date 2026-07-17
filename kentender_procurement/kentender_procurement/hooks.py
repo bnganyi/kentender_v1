@@ -72,6 +72,7 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/pp4_workbench_typography_harmony.css?v={_desk_asset_v('public/css/pp4_workbench_typography_harmony.css')}",
 ]
 app_include_js = [
+	f"/assets/kentender_procurement/js/kt_cl_routes.js?v={_desk_asset_v('public/js/kt_cl_routes.js')}",
 	f"/assets/kentender_procurement/js/demand_workspace.js?v={_desk_asset_v('public/js/demand_workspace.js')}",
 	f"/assets/kentender_procurement/js/planning_workspace.js?v={_desk_asset_v('public/js/planning_workspace.js')}",
 	f"/assets/kentender_procurement/js/pp2_planning_status_badge.js?v={_desk_asset_v('public/js/pp2_planning_status_badge.js')}",
@@ -146,6 +147,7 @@ page_js = {
 	"plc-module-journey-context": "public/js/plc_module_journey_context_page.js",
 	"tender-management-v2": "public/js/tender_management_v2_workbench_page.js",
 	"it-std-wizard-retired": "public/js/it_std_wizard_retired_page.js",
+	"kt-cl-shell-poc": "public/js/kt_cl_shell_poc_page.js",
 	"it-tender-configuration-dashboard": "public/js/it_std_wizard_retired_page.js",
 	"it-tender-configuration-overview": "public/js/it_std_wizard_retired_page.js",
 	"it-tender-configuration-tender-profile": "public/js/it_std_wizard_retired_page.js",

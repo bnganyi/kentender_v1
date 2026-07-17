@@ -1,0 +1,6 @@
+/*
+ * Civic Ledger utilities entry. Preflight/base is intentionally omitted so we
+ * never reset Frappe Desk globally (corePlugins.preflight = false in config).
+ */
+@tailwind components;
+@tailwind utilities;

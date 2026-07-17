@@ -39,10 +39,17 @@ app_include_css = [
 	"/assets/kentender_core/css/kentender_desk_builder_layout.css",
 	f"/assets/kentender_core/css/kt_module_shell.css?v={_asset_version('public/css/kt_module_shell.css')}",
 	f"/assets/kentender_core/css/kt_workbench_typography.css?v={_asset_version('public/css/kt_workbench_typography.css')}",
+	f"/assets/kentender_core/css/kt_cl_fonts.css?v={_asset_version('public/css/kt_cl_fonts.css')}",
+	f"/assets/kentender_core/css/civic_ledger.css?v={_asset_version('public/css/civic_ledger.css')}",
+	f"/assets/kentender_core/css/kt_cl_code_layout.css?v={_asset_version('public/css/kt_cl_code_layout.css')}",
 ]
 app_include_js = [
 	f"/assets/kentender_core/js/kt_module_registry.js?v={_asset_version('public/js/kt_module_registry.js')}",
 	f"/assets/kentender_core/js/kt_module_shell.js?v={_asset_version('public/js/kt_module_shell.js')}",
+	f"/assets/kentender_core/js/kt_cl_code_spec.js?v={_asset_version('public/js/kt_cl_code_spec.js')}",
+	f"/assets/kentender_core/js/kt_cl_components.js?v={_asset_version('public/js/kt_cl_components.js')}",
+	f"/assets/kentender_core/js/kt_cl_sidebar.js?v={_asset_version('public/js/kt_cl_sidebar.js')}",
+	f"/assets/kentender_core/js/kt_cl_shell.js?v={_asset_version('public/js/kt_cl_shell.js')}",
 ]
 
 # include js, css files in header of web template
@@ -57,7 +64,10 @@ app_include_js = [
 # webform_include_css = {"doctype": "public/css/doctype.css"}
 
 # include js in page
-# page_js = {"page" : "public/js/file.js"}
+# Never append ?v= to page_js values — Frappe resolves them as disk paths.
+page_js = {
+	"kt-cl-components": "public/js/kt_cl_components_gallery_page.js",
+}
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}

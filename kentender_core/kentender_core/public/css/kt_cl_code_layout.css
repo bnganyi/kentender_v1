@@ -1,0 +1,177 @@
+/*
+ * Civic Ledger shell layout — structure from code.html lines 164-335.
+ */
+body.kt-cl-shell {
+	background: var(--cl-background, #f7f9fb);
+	color: var(--cl-on-surface, #191c1e);
+	font-family: "Public Sans", sans-serif;
+	font-size: 13px;
+	line-height: 18px;
+	overflow-x: hidden;
+}
+
+/* Hide native Frappe sidebar + top chrome; custom nav from code.html replaces rail */
+body.kt-cl-shell .body-sidebar-container,
+body.kt-cl-shell .navbar,
+body.kt-cl-shell header.navbar,
+body.kt-cl-shell .page-head,
+body.kt-cl-shell .layout-main-section .page-head,
+body.kt-cl-shell .page-head-content,
+body.kt-cl-shell .page-head-actions {
+	display: none !important;
+}
+
+body.kt-cl-shell .layout-main-section-wrapper,
+body.kt-cl-shell .layout-main-section {
+	padding: 0 !important;
+	max-width: 100% !important;
+}
+
+body.kt-cl-shell .layout-main {
+	max-width: none !important;
+	width: 100% !important;
+}
+
+body.kt-cl-shell .layout-main-section-wrapper {
+	width: 100% !important;
+	flex: 1 1 100% !important;
+}
+
+body.kt-cl-shell .kt-cl-canvas {
+	/* code.html line 309: flex-1 flex flex-col min-h-screen md:ml-64 */
+	margin-left: 0;
+}
+
+/* Frappe/Bootstrap .hidden is `display:none !important`, which beats Tailwind's
+ * non-important responsive display utilities. Re-assert the responsive display
+ * classes the mock relies on (e.g. KPI icon badges `hidden sm:inline-flex`,
+ * mobile-only `sm:hidden`) scoped to the shell. */
+@media (min-width: 640px) {
+	body.kt-cl-shell .sm\:inline-flex {
+		display: inline-flex !important;
+	}
+
+	body.kt-cl-shell .sm\:hidden {
+		display: none !important;
+	}
+
+	body.kt-cl-shell .sm\:flex {
+		display: flex !important;
+	}
+}
+
+@media (min-width: 768px) {
+	body.kt-cl-shell .kt-cl-sidenav {
+		/* code.html line 166 uses hidden md:flex — override Frappe Bootstrap .hidden */
+		display: flex !important;
+	}
+
+	body.kt-cl-shell .md\:flex {
+		display: flex !important;
+	}
+
+	body.kt-cl-shell .kt-cl-canvas {
+		margin-left: 256px;
+	}
+}
+
+body.kt-cl-shell.kt-cl-hydration-pending .kt-cl-canvas {
+	visibility: hidden;
+}
+
+/* Sidebar helpers — preflight is disabled, so lists are reset here; the
+ * collapse toggle hides nested groups via .cl-nested-hidden. */
+.kt-cl-shell .cl-list-reset {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.kt-cl-shell .cl-nested-hidden {
+	display: none !important;
+}
+
+/* Root nav links: Frappe Desk ships a global `a` / `a:hover` link style
+ * (colour + underline) that leaks onto the sidenav anchors. The mock uses a
+ * surface background highlight, never a link underline — kill the underline for
+ * every anchor inside the rail (root links, group children, footer). */
+.kt-cl-shell #kt-cl-sidenav a,
+.kt-cl-shell #kt-cl-sidenav a:hover,
+.kt-cl-shell #kt-cl-sidenav a:focus {
+	text-decoration: none !important;
+}
+
+/* Two-level sub-navigation — refined children block.
+ * Beyond the raw code.html mock: one tree connector line aligned to the RIGHT
+ * edge of the parent icon (16px pad + 20px icon = 36px), children text aligned
+ * under the parent label (36 + 12 = 48px), tight consistent rhythm, and clear
+ * hover/active states. Scoped to .kt-cl-shell; token values mirror
+ * tools/civic-ledger-css/tailwind.config.js (outline-variant #c4c6cf,
+ * on-surface-variant #43474e, primary #000b1d, surface-container-high #e6e8ea,
+ * primary-fixed-dim #adc8f3). The extra descendant class keeps specificity above
+ * single-class Tailwind utilities so the refinement always wins. */
+.kt-cl-shell .kt-cl-nav-children {
+	list-style: none;
+	margin: 4px 0 10px 36px;
+	padding: 0;
+	border-left: 1px solid #c4c6cf;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+
+.kt-cl-shell .kt-cl-nav-children .kt-cl-nav-child {
+	display: flex;
+	align-items: center;
+	margin: 0 8px 0 0;
+	padding: 5px 12px 5px 12px;
+	border-radius: 4px;
+	color: #43474e;
+	font-family: "Public Sans", sans-serif;
+	font-size: 12px;
+	line-height: 16px;
+	text-decoration: none;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	cursor: pointer;
+	transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.kt-cl-shell .kt-cl-nav-children .kt-cl-nav-child:hover,
+.kt-cl-shell .kt-cl-nav-children .kt-cl-nav-child:focus-visible {
+	background-color: #e6e8ea;
+	color: #000b1d;
+	outline: none;
+}
+
+.kt-cl-shell .kt-cl-nav-children .kt-cl-nav-child.is-active {
+	color: #000b1d;
+	font-weight: 500;
+	background-color: rgba(173, 200, 243, 0.2);
+	box-shadow: inset 2px 0 0 0 #000b1d;
+}
+
+/* Bootstrap collision overrides.
+ * Frappe/Bootstrap ship `!important` color utilities (.text-primary, .bg-primary,
+ * .border-primary, .text-secondary, .bg-secondary) whose values differ from the
+ * Civic Ledger palette (--primary is #171717 in Frappe vs #000b1d here). Tailwind's
+ * selector-scoped utilities are NOT `!important`, so Bootstrap wins. Re-assert the
+ * compiled token values scoped to the shell with matching weight so the mock renders
+ * faithfully. Values mirror tools/civic-ledger-css/tailwind.config.js
+ * (primary #000b1d, secondary #515f74). Scoped to .kt-cl-shell so they never leak. */
+.kt-cl-shell .text-primary {
+	color: #000b1d !important;
+}
+.kt-cl-shell .text-secondary {
+	color: #515f74 !important;
+}
+.kt-cl-shell .bg-primary {
+	background-color: #000b1d !important;
+}
+.kt-cl-shell .bg-secondary {
+	background-color: #515f74 !important;
+}
+.kt-cl-shell .border-primary {
+	border-color: #000b1d !important;
+}
