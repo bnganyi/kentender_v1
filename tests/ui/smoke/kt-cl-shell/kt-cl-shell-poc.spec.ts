@@ -6,6 +6,7 @@ import {
 	KT_CL_BENTO,
 	KT_CL_CALENDAR,
 	KT_CL_CALENDAR_ITEM,
+	KT_CL_COLLAPSE_TOGGLE,
 	KT_CL_DATA_TABLE,
 	KT_CL_KPI_CARD,
 	KT_CL_NAV_CHILD,
@@ -75,6 +76,51 @@ test.describe("Civic Ledger shell POC", () => {
 		await expect(nav.getByText("Procurement Packages", { exact: true })).toBeHidden();
 	});
 
+	test("rail collapses to an icon-only mini nav (native Desk pattern)", async ({ page }) => {
+		await page.addInitScript(() => {
+			try {
+				window.localStorage.removeItem("kt-cl-rail-collapsed");
+			} catch (e) {
+				/* ignore */
+			}
+		});
+		await gotoKtClShellPoc(page);
+		const nav = page.locator(KT_CL_SIDENAV);
+		const toggle = nav.locator(KT_CL_COLLAPSE_TOGGLE);
+		await expect(toggle).toBeVisible();
+
+		// Expanded: full width, labels visible.
+		const expandedWidth = await nav.evaluate((el) => Math.round(el.getBoundingClientRect().width));
+		expect(expandedWidth).toBeGreaterThan(220);
+		await expect(nav.getByText("Analytics", { exact: true })).toBeVisible();
+
+		// Collapse → icon-only rail.
+		await toggle.click();
+		await expect(page.locator("body")).toHaveClass(/kt-cl-rail-collapsed/);
+		await expect
+			.poll(async () => nav.evaluate((el) => Math.round(el.getBoundingClientRect().width)))
+			.toBe(64);
+		// Labels hidden, icons (and the anchors themselves) remain.
+		const analyticsLink = nav.locator('a[title="Analytics"]');
+		await expect(analyticsLink).toBeVisible();
+		await expect(analyticsLink.locator(".material-symbols-outlined")).toBeVisible();
+		await expect(analyticsLink.locator(".kt-cl-label")).toBeHidden();
+		// Canvas offset follows the collapsed rail.
+		await expect
+			.poll(async () =>
+				page.locator('[data-testid="kt-cl-page-root"]').evaluate((el) => getComputedStyle(el).marginLeft)
+			)
+			.toBe("64px");
+		// Preference persists.
+		const persisted = await page.evaluate(() => window.localStorage.getItem("kt-cl-rail-collapsed"));
+		expect(persisted).toBe("true");
+
+		// Expand again → back to full width with labels.
+		await toggle.click();
+		await expect(page.locator("body")).not.toHaveClass(/kt-cl-rail-collapsed/);
+		await expect(nav.getByText("Analytics", { exact: true })).toBeVisible();
+	});
+
 	test("two-level children render with a refined connector + indentation + hover", async ({ page }) => {
 		await gotoKtClShellPoc(page);
 		const nav = page.locator(KT_CL_SIDENAV);
@@ -90,10 +136,10 @@ test.describe("Civic Ledger shell POC", () => {
 		expect(listStyle.style).toBe("solid");
 		expect(Math.round(parseFloat(listStyle.marginLeft))).toBe(36);
 
-		// Child text is indented (aligned under the parent label at 48px).
+		// Child text is indented slightly right of the parent label (52px total).
 		const child = childrenList.locator("a.kt-cl-nav-child").first();
 		const paddingLeft = await child.evaluate((el) => getComputedStyle(el).paddingLeft);
-		expect(Math.round(parseFloat(paddingLeft))).toBe(12);
+		expect(Math.round(parseFloat(paddingLeft))).toBe(16);
 
 		// Hover raises the child to the primary colour.
 		await child.hover();

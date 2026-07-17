@@ -76,10 +76,12 @@ class TestStdProdStdLibraryDeskWiring(UnitTestCase):
 	def test_procurement_sidebar_export_points_official_std_library_to_std_library_page(self) -> None:
 		with open(_procurement_sidebar_export_path(), encoding="utf-8") as handle:
 			data = json.load(handle)
+		# Civic Ledger IA renames the STD library entry to "STD Library" (under the
+		# STD Administration group); it still targets the std-library Desk page.
 		rows = [
 			row
 			for row in data.get("items") or []
-			if row.get("label") == "Official STD Library" and row.get("type") == "Link"
+			if row.get("label") == "STD Library" and row.get("type") == "Link"
 		]
 		self.assertEqual(len(rows), 1)
 		self.assertEqual(rows[0].get("link_type"), "Page")
@@ -98,7 +100,7 @@ class TestStdProdStdLibraryDeskWiringSite(IntegrationTestCase):
 			row
 			for row in doc.items
 			if row.type == "Link"
-			and row.label == "Official STD Library"
+			and row.label == "STD Library"
 			and (row.link_type or "").lower() == "page"
 		]
 		self.assertEqual(len(rows), 1)

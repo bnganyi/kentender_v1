@@ -244,16 +244,54 @@ class TestKtClShellLayoutGuard(IntegrationTestCase):
 		)
 		self.assertTrue(page_json.is_file(), f"Missing gallery page fixture: {page_json}")
 
-	def test_procurement_home_permanent_redirect_wired(self) -> None:
+	def test_procurement_home_redirect_is_retired(self) -> None:
+		"""Step 1 (restore + restyle native menu): the custom rail is no longer
+		navigation. The Procurement Home → POC redirect (kt_cl_routes.js) must NOT
+		be registered, so Procurement Home renders its native Workspace + the
+		restyled native `.body-sidebar` rail."""
 		js = frappe.get_hooks("app_include_js", app_name="kentender_procurement", default=[])
 		flat_js = [item for row in js for item in (row if isinstance(row, (list, tuple)) else [row])]
-		self.assertTrue(
+		self.assertFalse(
 			any("kt_cl_routes.js" in str(path) for path in flat_js),
-			"kt_cl_routes.js redirect must be registered in app_include_js",
+			"kt_cl_routes.js redirect must be retired so Procurement Home uses the native sidebar",
 		)
-		source = _proc_public("js", "kt_cl_routes.js").read_text(encoding="utf-8")
-		self.assertIn("Workspaces", source)
-		self.assertIn("Procurement Home", source)
-		self.assertIn("kt-cl-shell-poc", source)
-		# Loop guard: never redirect when already on the POC page.
-		self.assertIn("loop guard", source)
+
+	def test_native_sidebar_restyle_is_wired(self) -> None:
+		"""The scoped native-sidebar restyle stylesheet must ship globally so the
+		native `.body-sidebar` carries the Civic Ledger tokens app-wide."""
+		css_hooks = frappe.get_hooks("app_include_css", app_name="kentender_core", default=[])
+		flat_css = [item for row in css_hooks for item in (row if isinstance(row, (list, tuple)) else [row])]
+		self.assertTrue(
+			any("kt_native_sidebar_civic.css" in str(path) for path in flat_css),
+			"kt_native_sidebar_civic.css must be registered in kentender_core app_include_css",
+		)
+		css = _core_public("css", "kt_native_sidebar_civic.css").read_text(encoding="utf-8")
+		self.assertIn(".body-sidebar", css)
+		self.assertIn(".active-sidebar", css)
+		self.assertIn("--sidebar-width: 256px", css)
+		self.assertIn("Material Symbols Outlined", css)
+
+	def test_rail_collapse_to_icons_is_wired(self) -> None:
+		"""Whole-rail collapse (native Desk pattern): a bottom toggle shrinks the
+		rail to an icon-only mini nav, persisted in localStorage, with labels
+		hidden and the canvas offset following the collapsed width."""
+		sidebar = _core_public("js", "kt_cl_sidebar.js").read_text(encoding="utf-8")
+		css = _core_public("css", "kt_cl_code_layout.css").read_text(encoding="utf-8")
+
+		# Toggle control + persistence + state helpers.
+		self.assertIn("data-kt-cl-collapse", sidebar)
+		self.assertIn('data-testid="kt-cl-collapse-toggle"', sidebar)
+		self.assertIn("left_panel_close", sidebar)
+		self.assertIn("left_panel_open", sidebar)
+		self.assertIn("kt-cl-rail-collapsed", sidebar)
+		self.assertIn("setRailCollapsed", sidebar)
+		self.assertIn("localStorage", sidebar)
+		# Labels are class-tagged so the collapsed rail can hide them.
+		self.assertIn("kt-cl-label", sidebar)
+
+		# CSS contract: collapsed width, hidden labels, canvas offset, transition.
+		self.assertIn("body.kt-cl-shell.kt-cl-rail-collapsed .kt-cl-sidenav", css)
+		self.assertIn("width: 64px !important", css)
+		self.assertIn("margin-left: 64px", css)
+		self.assertIn("transition: width 0.3s", css)
+		self.assertIn(".kt-cl-label", css)

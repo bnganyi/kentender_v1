@@ -79,6 +79,62 @@ body.kt-cl-shell.kt-cl-hydration-pending .kt-cl-canvas {
 	visibility: hidden;
 }
 
+/* ----------------------------------------------------------------------------
+ * Rail collapse — native Frappe Desk pattern (apps/frappe .../sidebar.scss +
+ * sidebar.html `.collapse-sidebar-link`). The whole rail shrinks to an
+ * icon-only mini nav: labels/chevrons/children hide, icons centre, tooltips
+ * (native `title`) show on hover, and the canvas offset follows the new width.
+ * Width transitions like Desk (0.3s cubic-bezier). State is on body.
+ * -------------------------------------------------------------------------- */
+body.kt-cl-shell .kt-cl-sidenav {
+	transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.kt-cl-shell.kt-cl-rail-collapsed .kt-cl-sidenav {
+	width: 64px !important;
+}
+
+@media (min-width: 768px) {
+	body.kt-cl-shell.kt-cl-rail-collapsed .kt-cl-canvas {
+		margin-left: 64px;
+	}
+}
+
+/* Hide text labels, group chevrons and sub-lists in the collapsed rail. */
+body.kt-cl-rail-collapsed .kt-cl-sidenav .kt-cl-label,
+body.kt-cl-rail-collapsed .kt-cl-sidenav .kt-cl-chevron,
+body.kt-cl-rail-collapsed .kt-cl-sidenav [data-kt-cl-nested] {
+	display: none !important;
+}
+
+/* Centre the icons in the collapsed rail (override px-4 / gap-3 / justify-between). */
+body.kt-cl-rail-collapsed .kt-cl-sidenav a,
+body.kt-cl-rail-collapsed .kt-cl-sidenav [data-kt-cl-section],
+body.kt-cl-rail-collapsed .kt-cl-sidenav .kt-cl-collapse-toggle {
+	justify-content: center !important;
+	gap: 0 !important;
+	padding-left: 0 !important;
+	padding-right: 0 !important;
+}
+
+/* Brand block: keep the avatar, centre it once the wordmark/subtitle are hidden. */
+body.kt-cl-rail-collapsed .kt-cl-sidenav [data-testid="kt-cl-sidebar-brand"] {
+	align-items: center;
+}
+body.kt-cl-rail-collapsed .kt-cl-sidenav [data-testid="kt-cl-sidebar-brand"] > div {
+	justify-content: center;
+}
+
+/* Collapse toggle button base (reset native <button> chrome; matches footer links). */
+.kt-cl-shell .kt-cl-collapse-toggle {
+	appearance: none;
+	background: transparent;
+	border: 0;
+	width: 100%;
+	text-align: left;
+	cursor: pointer;
+}
+
 /* Sidebar helpers — preflight is disabled, so lists are reset here; the
  * collapse toggle hides nested groups via .cl-nested-hidden. */
 .kt-cl-shell .cl-list-reset {
@@ -103,9 +159,10 @@ body.kt-cl-shell.kt-cl-hydration-pending .kt-cl-canvas {
 
 /* Two-level sub-navigation — refined children block.
  * Beyond the raw code.html mock: one tree connector line aligned to the RIGHT
- * edge of the parent icon (16px pad + 20px icon = 36px), children text aligned
- * under the parent label (36 + 12 = 48px), tight consistent rhythm, and clear
- * hover/active states. Scoped to .kt-cl-shell; token values mirror
+ * edge of the parent icon (16px pad + 20px icon = 36px), children text indented
+ * slightly right of the parent label (36 + 16 = 52px, matching code.html's
+ * ml-9 + px-4), tight consistent rhythm, and clear hover/active states.
+ * Scoped to .kt-cl-shell; token values mirror
  * tools/civic-ledger-css/tailwind.config.js (outline-variant #c4c6cf,
  * on-surface-variant #43474e, primary #000b1d, surface-container-high #e6e8ea,
  * primary-fixed-dim #adc8f3). The extra descendant class keeps specificity above
@@ -124,7 +181,7 @@ body.kt-cl-shell.kt-cl-hydration-pending .kt-cl-canvas {
 	display: flex;
 	align-items: center;
 	margin: 0 8px 0 0;
-	padding: 5px 12px 5px 12px;
+	padding: 5px 12px 5px 16px;
 	border-radius: 4px;
 	color: #43474e;
 	font-family: "Public Sans", sans-serif;

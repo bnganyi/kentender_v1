@@ -12,6 +12,8 @@ frappe.provide("kentender_core.cl_sidebar");
 
 	var SIDENAV_ID = "kt-cl-sidenav";
 	var STORAGE_KEY = "kt-cl-sidenav-sections";
+	var RAIL_KEY = "kt-cl-rail-collapsed";
+	var RAIL_CLASS = "kt-cl-rail-collapsed";
 
 	function spec() {
 		return kentender_core.cl_code_spec || {};
@@ -88,6 +90,41 @@ frappe.provide("kentender_core.cl_sidebar");
 		}
 	}
 
+	// ---- Rail collapse (whole-rail → icon-only, native Desk pattern) ----
+	function readRailCollapsed() {
+		try {
+			return JSON.parse(localStorage.getItem(RAIL_KEY) || "false") === true;
+		} catch (e) {
+			return false;
+		}
+	}
+
+	function writeRailCollapsed(collapsed) {
+		try {
+			localStorage.setItem(RAIL_KEY, JSON.stringify(!!collapsed));
+		} catch (e) {
+			/* ignore */
+		}
+	}
+
+	function applyRailState(collapsed) {
+		document.body.classList.toggle(RAIL_CLASS, !!collapsed);
+	}
+
+	function setRailCollapsed(collapsed) {
+		collapsed = !!collapsed;
+		applyRailState(collapsed);
+		writeRailCollapsed(collapsed);
+		var label = collapsed ? __("Expand sidebar") : __("Collapse");
+		var $btn = $("#" + SIDENAV_ID + " [data-kt-cl-collapse]");
+		if ($btn.length) {
+			$btn.attr("aria-expanded", collapsed ? "false" : "true");
+			$btn.attr("aria-label", label).attr("title", label);
+			$btn.find(".kt-cl-collapse-icon").text(collapsed ? "left_panel_open" : "left_panel_close");
+			$btn.find(".kt-cl-label").text(label);
+		}
+	}
+
 	// ---- Renderers (code.html 167-305) ----------------------------------
 	function renderBrandBlock(opts) {
 		opts = opts || {};
@@ -97,14 +134,14 @@ frappe.provide("kentender_core.cl_sidebar");
 
 		return (
 			'<div class="p-4 border-b border-outline-variant flex flex-col gap-2" data-testid="kt-cl-sidebar-brand">' +
-			'<div class="flex items-center gap-2 mb-1">' +
+			'<div class="flex items-center gap-2 mb-1 kt-cl-label">' +
 			'<span class="font-headline-md text-headline-md font-bold text-primary">KenTender</span>' +
 			"</div>" +
 			'<div class="flex items-center gap-3">' +
-			'<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">' +
+			'<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant shrink-0">' +
 			avatarInner +
 			"</div>" +
-			"<div>" +
+			'<div class="kt-cl-label">' +
 			'<h2 class="font-body-md text-body-md font-bold text-on-surface leading-tight">' +
 			escapeHtml(opts.portalTitle || __("Procurement Portal")) +
 			"</h2>" +
@@ -131,12 +168,14 @@ frappe.provide("kentender_core.cl_sidebar");
 			cls +
 			'" href="' +
 			escapeHtml(href) +
+			'" title="' +
+			escapeHtml(__(item.label)) +
 			'"' +
 			routeAttr(item) +
 			(active ? ' aria-current="page"' : "") +
 			">" +
 			msIcon(item.icon || "circle", 20) +
-			'<span class="font-body-md text-body-md">' +
+			'<span class="font-body-md text-body-md kt-cl-label">' +
 			escapeHtml(__(item.label)) +
 			"</span></a></li>"
 		);
@@ -162,22 +201,25 @@ frappe.provide("kentender_core.cl_sidebar");
 	}
 
 	function renderNavGroup(group, collapsed) {
-		var chevron = collapsed ? "expand_more" : "expand_less";
+		// code.html uses expand_more (chevron down) when the group is expanded.
+		var chevron = collapsed ? "expand_less" : "expand_more";
 		return (
 			'<li data-testid="kt-cl-nav-group">' +
 			'<div class="' +
 			spec().NAV_PARENT +
 			'" data-kt-cl-section="' +
 			escapeHtml(group.label) +
-			'" role="button" tabindex="0" aria-expanded="' +
+			'" role="button" tabindex="0" title="' +
+			escapeHtml(__(group.label)) +
+			'" aria-expanded="' +
 			(collapsed ? "false" : "true") +
 			'">' +
 			'<div class="flex items-center gap-3">' +
 			msIcon(group.icon || "folder", 20) +
-			'<span class="font-body-md text-body-md">' +
+			'<span class="font-body-md text-body-md kt-cl-label">' +
 			escapeHtml(__(group.label)) +
 			"</span></div>" +
-			msIcon(chevron, 16, "text-outline") +
+			msIcon(chevron, 16, "text-outline kt-cl-chevron") +
 			"</div>" +
 			'<ul class="' +
 			spec().NAV_CHILDREN_LIST +
@@ -194,7 +236,31 @@ frappe.provide("kentender_core.cl_sidebar");
 		);
 	}
 
-	function renderFooter(footerItems) {
+	// Collapse toggle — native Desk pattern: a bottom "Collapse" control with a
+	// panel icon that shrinks the whole rail to icon-only (code source: Frappe
+	// sidebar.html `.collapse-sidebar-link`).
+	function renderCollapseToggle(collapsed) {
+		var icon = collapsed ? "left_panel_open" : "left_panel_close";
+		var label = collapsed ? __("Expand sidebar") : __("Collapse");
+		return (
+			'<button type="button" class="' +
+			spec().NAV_FOOTER_LINK +
+			' kt-cl-collapse-toggle w-full" data-kt-cl-collapse data-testid="kt-cl-collapse-toggle" ' +
+			'aria-label="' +
+			escapeHtml(label) +
+			'" aria-expanded="' +
+			(collapsed ? "false" : "true") +
+			'" title="' +
+			escapeHtml(label) +
+			'">' +
+			msIcon(icon, 20, "kt-cl-collapse-icon") +
+			'<span class="font-body-md text-body-md kt-cl-label">' +
+			escapeHtml(label) +
+			"</span></button>"
+		);
+	}
+
+	function renderFooter(footerItems, collapsed) {
 		var items =
 			footerItems ||
 			[
@@ -222,13 +288,15 @@ frappe.provide("kentender_core.cl_sidebar");
 					spec().NAV_FOOTER_LINK +
 					'" href="' +
 					escapeHtml(it.url || "#") +
+					'" title="' +
+					escapeHtml(__(it.label)) +
 					'"' +
 					target +
 					routeAttr(it) +
 					(it.testid ? ' data-testid="' + escapeHtml(it.testid) + '"' : "") +
 					">" +
 					msIcon(it.icon || "circle", 20) +
-					'<span class="font-body-md text-body-md">' +
+					'<span class="font-body-md text-body-md kt-cl-label">' +
 					escapeHtml(__(it.label)) +
 					"</span></a></li>"
 				);
@@ -239,7 +307,9 @@ frappe.provide("kentender_core.cl_sidebar");
 			'<div class="p-3 border-t border-outline-variant flex flex-col gap-0.5" data-testid="kt-cl-sidebar-footer">' +
 			'<ul class="flex flex-col gap-0.5 cl-list-reset">' +
 			links +
-			"</ul></div>"
+			"</ul>" +
+			renderCollapseToggle(collapsed) +
+			"</div>"
 		);
 	}
 
@@ -248,6 +318,7 @@ frappe.provide("kentender_core.cl_sidebar");
 		var items = opts.items || [];
 		var workspaceKey = opts.workspaceKey || "default";
 		var sectionState = readSectionState(workspaceKey);
+		var railCollapsed = readRailCollapsed();
 
 		var navItems = items
 			.map(function (item) {
@@ -273,7 +344,7 @@ frappe.provide("kentender_core.cl_sidebar");
 			'<ul class="flex flex-col cl-list-reset">' +
 			navItems +
 			"</ul></div>" +
-			renderFooter(opts.footerItems) +
+			renderFooter(opts.footerItems, railCollapsed) +
 			"</nav>"
 		);
 	}
@@ -311,23 +382,40 @@ frappe.provide("kentender_core.cl_sidebar");
 			if (collapsed) {
 				$nested.addClass("cl-nested-hidden");
 				$header.attr("aria-expanded", "false");
-				$header.find(".material-symbols-outlined").last().text("expand_more");
+				$header.find(".material-symbols-outlined").last().text("expand_less");
 			} else {
 				$nested.removeClass("cl-nested-hidden");
 				$header.attr("aria-expanded", "true");
-				$header.find(".material-symbols-outlined").last().text("expand_less");
+				$header.find(".material-symbols-outlined").last().text("expand_more");
 			}
 			writeSectionState(workspaceKey, label, collapsed);
 		}
 
+		function handleSection($header) {
+			// In the collapsed icon-rail, section children are hidden; a click on
+			// the group icon expands the whole rail (native Desk behaviour) rather
+			// than toggling an invisible sub-list.
+			if (document.body.classList.contains(RAIL_CLASS)) {
+				setRailCollapsed(false);
+				return;
+			}
+			toggleSection($header);
+		}
+
 		$nav.find("[data-kt-cl-section]").on("click", function () {
-			toggleSection($(this));
+			handleSection($(this));
 		});
 		$nav.find("[data-kt-cl-section]").on("keydown", function (e) {
 			if (e.key === "Enter" || e.key === " " || e.keyCode === 13 || e.keyCode === 32) {
 				e.preventDefault();
-				toggleSection($(this));
+				handleSection($(this));
 			}
+		});
+
+		$nav.find("[data-kt-cl-collapse]").on("click", function (e) {
+			e.preventDefault();
+			e.stopPropagation();
+			setRailCollapsed(!document.body.classList.contains(RAIL_CLASS));
 		});
 	}
 
@@ -339,11 +427,15 @@ frappe.provide("kentender_core.cl_sidebar");
 		var html = renderSidenav(opts);
 		if (!html) return;
 		$("body").append(html);
+		applyRailState(readRailCollapsed());
 		bindNavEvents(opts.workspaceKey);
 	}
 
 	function unmount() {
 		$("#" + SIDENAV_ID).remove();
+		// Drop the rail-collapse body class so it can't leak onto other pages;
+		// the user's preference stays in localStorage and is re-applied on mount.
+		document.body.classList.remove(RAIL_CLASS);
 	}
 
 	kentender_core.cl_sidebar = {
@@ -352,6 +444,8 @@ frappe.provide("kentender_core.cl_sidebar");
 		renderSidenav: renderSidenav,
 		isActive: isActive,
 		routeToHref: routeToHref,
+		setRailCollapsed: setRailCollapsed,
+		readRailCollapsed: readRailCollapsed,
 	};
 
 	frappe.provide("kentender_core.cl");

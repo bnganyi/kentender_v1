@@ -49,9 +49,9 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		planning = items.get("procurement planning") or {}
 		planning_labels = [row.get("label") for row in planning.get("items") or []]
 		self.assertIn("Procurement Home", planning_labels)
-		self.assertIn("Procurement Planning", planning_labels)
+		# Civic Ledger IA: single canonical flat "Planning" link (P5-001), not a group.
+		self.assertIn("Planning", planning_labels)
 		self.assertIn("Procurement Plans", planning_labels)
-		self.assertIn("Released to Tender", planning_labels)
 		for key in (
 			"my work",
 			"my-work",
@@ -104,7 +104,7 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		)
 
 	def test_procurement_sidebar_one_workspace_row_for_governance(self):
-		"""Official STD Library should target std-library page while governance workspace stays reachable."""
+		"""STD Library targets the std-library page while the governance workspace stays reachable."""
 		if not frappe.db.exists("Workspace Sidebar", "Procurement"):
 			self.skipTest("Procurement Workspace Sidebar not on site")
 		doc = frappe.get_doc("Workspace Sidebar", "Procurement")
@@ -116,13 +116,15 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 			and r.link_to == "Governance & Configuration"
 		]
 		self.assertEqual(len(ws_links), 1)
+		# Civic Ledger IA renames the STD library entry to "STD Library" under the
+		# STD Administration group (was "Official STD Library" under Configuration).
 		page_std_library = [
 			r
 			for r in doc.items
 			if r.type == "Link"
 			and (r.link_type or "").lower() == "page"
 			and r.link_to == "std-library"
-			and r.label == "Official STD Library"
+			and r.label == "STD Library"
 		]
 		self.assertEqual(len(page_std_library), 1)
 

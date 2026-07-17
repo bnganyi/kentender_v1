@@ -8,14 +8,18 @@
 	var POC_ROUTE = ["kt-cl-shell-poc"];
 
 	// Curated IA reproducing code.html 166-289 exactly. "Procurement Home" routes
-	// permanently to this POC page; not-yet-built destinations use "#" like the mock.
+	// permanently to this POC page. Wired module destinations use frappe.set_route
+	// so navigation stays inside the Desk SPA; not-yet-built destinations use "#".
+	//   Strategy Alignment      -> strategy-management workspace slug (portfolio hub)
+	//   Budget & Funding        -> budget-hub page (Budget Management workspace redirects here)
+	//   Demand Intake & Approval -> demand-hub page (DIA workspace redirects here)
 	function civicLedgerIA() {
 		return [
 			{ kind: "link", label: "Procurement Home", icon: "home", route: POC_ROUTE, active: true },
 			{ kind: "link", label: "Analytics", icon: "bar_chart", url: "#" },
-			{ kind: "link", label: "Strategy Alignment", icon: "ads_click", url: "#" },
-			{ kind: "link", label: "Budget & Funding", icon: "account_balance_wallet", url: "#" },
-			{ kind: "link", label: "Demand Intake & Approval", icon: "assignment_ind", url: "#" },
+			{ kind: "link", label: "Strategy Alignment", icon: "ads_click", route: ["strategy-management"] },
+			{ kind: "link", label: "Budget & Funding", icon: "account_balance_wallet", route: ["budget-hub"] },
+			{ kind: "link", label: "Demand Intake & Approval", icon: "assignment_ind", route: ["demand-hub"] },
 			{
 				kind: "group",
 				label: "Tender Management",

@@ -25,6 +25,7 @@ export const KT_CL_TABLE_FOOTER = '[data-testid="kt-cl-table-footer"]';
 export const KT_CL_STATUS_CHIP = '[data-testid="kt-cl-status-chip"]';
 export const KT_CL_NAV_GROUP = '[data-testid="kt-cl-nav-group"]';
 export const KT_CL_NAV_CHILD = '[data-testid="kt-cl-nav-child"]';
+export const KT_CL_COLLAPSE_TOGGLE = '[data-testid="kt-cl-collapse-toggle"]';
 
 export async function gotoKtClShellPoc(page: Page) {
 	await page.goto("/desk/kt-cl-shell-poc");

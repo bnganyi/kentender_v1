@@ -39,6 +39,25 @@ class TestKtClShellPocDeskWiring(UnitTestCase):
 		for call in ("comp.kpiCard", "comp.calendarWidget", "comp.dataTable", "civicLedgerIA"):
 			self.assertIn(call, source)
 
+	def test_side_menu_module_links_are_wired(self) -> None:
+		"""Strategy Alignment, Budget & Funding, and Demand Intake & Approval
+		must route to their real Desk destinations, not the placeholder '#'."""
+		path = os.path.join(
+			frappe.get_app_path("kentender_procurement"),
+			"public",
+			"js",
+			"kt_cl_shell_poc_page.js",
+		)
+		source = open(path, encoding="utf-8").read()
+		expected = (
+			('Strategy Alignment', '["strategy-management"]'),
+			('Budget & Funding', '["budget-hub"]'),
+			('Demand Intake & Approval', '["demand-hub"]'),
+		)
+		for label, route in expected:
+			self.assertIn(label, source)
+			self.assertIn(route, source, f"{label} must be wired to {route}")
+
 	def test_poc_page_fixture_exists(self) -> None:
 		path = os.path.join(
 			frappe.get_app_path("kentender_procurement"),

@@ -1,6 +1,6 @@
 {
  "app": "kentender_procurement",
- "creation": "2026-06-28 21:36:15.852520",
+ "creation": "2026-07-17 23:44:46.715526",
  "docstatus": 0,
  "doctype": "Workspace Sidebar",
  "header_icon": "buying",
@@ -8,7 +8,7 @@
  "items": [
   {
    "child": 0,
-   "collapsible": 1,
+   "collapsible": 0,
    "icon": "home",
    "indent": 0,
    "keep_closed": 0,
@@ -33,14 +33,14 @@
   {
    "child": 0,
    "collapsible": 0,
-   "icon": "inbox",
+   "icon": "chart",
    "indent": 0,
    "keep_closed": 0,
-   "label": "My Work",
-   "link_to": "My Work",
-   "link_type": "Workspace",
+   "label": "Analytics",
+   "link_type": "URL",
    "show_arrow": 0,
-   "type": "Link"
+   "type": "Link",
+   "url": "#"
   },
   {
    "child": 0,
@@ -93,51 +93,91 @@
   },
   {
    "child": 0,
-   "collapsible": 0,
-   "icon": "file-text",
-   "indent": 0,
-   "keep_closed": 0,
-   "label": "Tender Document Readiness",
-   "link_to": "tender-management-v2",
-   "link_type": "Page",
-   "show_arrow": 0,
-   "type": "Link"
-  },
-  {
-   "child": 0,
-   "collapsible": 0,
+   "collapsible": 1,
    "icon": "sell",
    "indent": 0,
    "keep_closed": 0,
    "label": "Tender Management",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Section Break"
+  },
+  {
+   "child": 1,
+   "collapsible": 0,
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Procurement Packages",
+   "link_to": "Procurement Package",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 1,
+   "collapsible": 0,
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Tender Configurations",
+   "link_type": "URL",
+   "show_arrow": 0,
+   "type": "Link",
+   "url": "#"
+  },
+  {
+   "child": 1,
+   "collapsible": 0,
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Tender Documents",
    "link_to": "tender-management-v2",
    "link_type": "Page",
    "show_arrow": 0,
    "type": "Link"
   },
   {
-   "child": 0,
+   "child": 1,
    "collapsible": 0,
-   "icon": "unlock",
    "indent": 0,
    "keep_closed": 0,
-   "label": "Bid Opening",
-   "link_to": "Bid Opening",
+   "label": "Publications",
+   "link_type": "URL",
+   "show_arrow": 0,
+   "type": "Link",
+   "url": "#"
+  },
+  {
+   "child": 1,
+   "collapsible": 0,
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Bid Submissions",
+   "link_type": "URL",
+   "show_arrow": 0,
+   "type": "Link",
+   "url": "#"
+  },
+  {
+   "child": 1,
+   "collapsible": 0,
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Evaluation",
+   "link_to": "Evaluation and Award",
    "link_type": "Workspace",
    "show_arrow": 0,
    "type": "Link"
   },
   {
-   "child": 0,
+   "child": 1,
    "collapsible": 0,
-   "icon": "review",
    "indent": 0,
    "keep_closed": 0,
-   "label": "Evaluation & Award",
-   "link_to": "Evaluation and Award",
-   "link_type": "Workspace",
+   "label": "Awards",
+   "link_type": "URL",
    "show_arrow": 0,
-   "type": "Link"
+   "type": "Link",
+   "url": "#"
   },
   {
    "child": 0,
@@ -165,13 +205,56 @@
   },
   {
    "child": 0,
-   "collapsible": 0,
-   "icon": "search",
+   "collapsible": 1,
+   "icon": "book",
    "indent": 0,
    "keep_closed": 0,
-   "label": "Evidence & Audit",
-   "link_to": "Audit Event",
+   "label": "STD Administration",
    "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Section Break"
+  },
+  {
+   "child": 1,
+   "collapsible": 0,
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "STD Library",
+   "link_to": "std-library",
+   "link_type": "Page",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 1,
+   "collapsible": 0,
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "STD Versions",
+   "link_type": "URL",
+   "show_arrow": 0,
+   "type": "Link",
+   "url": "#"
+  },
+  {
+   "child": 1,
+   "collapsible": 0,
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Forms & Schemas",
+   "link_to": "std-form-schema-manager",
+   "link_type": "Page",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 1,
+   "collapsible": 0,
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Import / Validation",
+   "link_to": "std-import-package-review",
+   "link_type": "Page",
    "show_arrow": 0,
    "type": "Link"
   },
@@ -185,18 +268,6 @@
    "link_type": "DocType",
    "show_arrow": 0,
    "type": "Section Break"
-  },
-  {
-   "child": 1,
-   "collapsible": 0,
-   "icon": "book",
-   "indent": 0,
-   "keep_closed": 0,
-   "label": "Official STD Library",
-   "link_to": "std-library",
-   "link_type": "Page",
-   "show_arrow": 0,
-   "type": "Link"
   },
   {
    "child": 1,
@@ -301,20 +372,9 @@
    "link_type": "DocType",
    "show_arrow": 0,
    "type": "Link"
-  },
-  {
-   "child": 1,
-   "collapsible": 0,
-   "indent": 0,
-   "keep_closed": 0,
-   "label": "Procurement Packages",
-   "link_to": "Procurement Package",
-   "link_type": "DocType",
-   "show_arrow": 0,
-   "type": "Link"
   }
  ],
- "modified": "2026-07-17 18:48:40.558295",
+ "modified": "2026-07-17 23:44:46.715526",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "Procurement",

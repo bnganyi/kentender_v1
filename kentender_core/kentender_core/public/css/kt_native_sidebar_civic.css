@@ -1,0 +1,177 @@
+/*
+ * Civic Ledger — restyle of Frappe's NATIVE Workspace Sidebar (`.body-sidebar`).
+ *
+ * Structure, routing, collapse-to-icons, active detection and per-section
+ * persistence all stay native (see frappe/public/js/frappe/ui/sidebar/*).
+ * This file only overrides the *visual language* to the Civic Ledger tokens
+ * from DESIGN.md — it never replaces the sidebar or fights its layout
+ * (position/placeholder/expand mechanics are left to Frappe core SCSS).
+ *
+ * Tokens (DESIGN.md):
+ *   primary            #000b1d      on-surface          #191c1e
+ *   primary-fixed-dim  #adc8f3      on-surface-variant  #43474e
+ *   surface-container-low  #f2f4f6  surface-container-high #e6e8ea
+ *   outline-variant    #c4c6cf
+ */
+
+/* Expanded rail width = design w-64 (256px); hover tint = surface-container-high.
+   Only the expanded width uses --sidebar-width; the 50px collapsed rail is native. */
+:root {
+	--sidebar-width: 256px;
+	--sidebar-hover-color: #e6e8ea;
+}
+
+/* ---------------------------------------------------------------- rail shell */
+.body-sidebar {
+	background: #f2f4f6 !important; /* surface-container-low */
+	border-right: 1px solid #c4c6cf !important; /* outline-variant */
+	font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* -------------------------------------------------------------- top-level items */
+.body-sidebar .standard-sidebar-item .item-anchor {
+	color: #43474e; /* on-surface-variant */
+	border-radius: 6px;
+}
+.body-sidebar .standard-sidebar-item .sidebar-item-label {
+	font-family: "Public Sans", sans-serif;
+	font-size: 14px;
+	font-weight: 500;
+	color: inherit;
+}
+
+/* hover (skip active + section-break header, mirroring native :has guard) */
+.body-sidebar .standard-sidebar-item:not(.active-sidebar):has(a:not(.section-break)):hover {
+	background-color: #e6e8ea; /* surface-container-high */
+	border-radius: 8px;
+}
+
+/* active = right-border primary + subtle tint (DESIGN.md "Side Navigation") */
+.body-sidebar .standard-sidebar-item.active-sidebar {
+	background: rgba(173, 200, 243, 0.2) !important; /* primary-fixed-dim / 20 */
+	border-right: 4px solid #000b1d !important; /* primary */
+	border-radius: 0 !important;
+	box-shadow: none !important;
+}
+.body-sidebar .standard-sidebar-item.active-sidebar .item-anchor,
+.body-sidebar .standard-sidebar-item.active-sidebar .sidebar-item-label {
+	color: #000b1d !important; /* primary */
+	font-weight: 700 !important;
+}
+.body-sidebar .standard-sidebar-item.active-sidebar .sidebar-item-icon::before {
+	color: #000b1d !important;
+}
+
+/* -------------------------------------------------- Material Symbol icon swap
+ * Native items render a Frappe sprite <svg>; swap it for the design's Material
+ * Symbols glyphs (font already shipped globally by kt_cl_fonts.css) via CSS
+ * ligatures keyed on the item label (data-id). Children are text-only. */
+.body-sidebar .sidebar-item-container > .standard-sidebar-item > .item-anchor > .sidebar-item-icon svg {
+	display: none !important;
+}
+.body-sidebar .sidebar-item-container > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
+	font-family: "Material Symbols Outlined";
+	font-weight: normal;
+	font-style: normal;
+	font-size: 20px;
+	line-height: 1;
+	letter-spacing: normal;
+	text-transform: none;
+	white-space: nowrap;
+	direction: ltr;
+	-webkit-font-feature-settings: "liga";
+	font-feature-settings: "liga";
+	-webkit-font-smoothing: antialiased;
+	font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+.body-sidebar .sidebar-item-container[data-id="Procurement Home"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
+	content: "home";
+}
+.body-sidebar .sidebar-item-container[data-id="Procurement Journeys"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
+	content: "account_tree";
+}
+.body-sidebar .sidebar-item-container[data-id="Planning"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
+	content: "checklist";
+}
+.body-sidebar .sidebar-item-container[data-id="Analytics"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
+	content: "bar_chart";
+}
+.body-sidebar .sidebar-item-container[data-id="Strategy Alignment"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
+	content: "ads_click";
+}
+.body-sidebar .sidebar-item-container[data-id="Budget & Funding"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
+	content: "account_balance_wallet";
+}
+.body-sidebar .sidebar-item-container[data-id="Demand Intake & Approval"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
+	content: "assignment_ind";
+}
+.body-sidebar .sidebar-item-container[data-id="Contract Management"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
+	content: "description";
+}
+.body-sidebar .sidebar-item-container[data-id="Supplier Management"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
+	content: "group";
+}
+
+/* ----------------------------------------------------- section group headers
+ * Section Break headers render `.item-anchor.section-break` (label + control,
+ * no icon span natively). Make them read as bold group headings and inject the
+ * design's Material glyph before the label. */
+.body-sidebar .section-item > .standard-sidebar-item .item-anchor.section-break {
+	color: #43474e !important; /* on-surface-variant */
+	margin-left: 0;
+	margin-top: 8px;
+}
+.body-sidebar .section-item > .standard-sidebar-item .item-anchor.section-break .sidebar-item-label {
+	font-weight: 700;
+	color: #43474e;
+}
+.body-sidebar .section-item > .standard-sidebar-item .item-anchor.section-break::before {
+	font-family: "Material Symbols Outlined";
+	font-size: 20px;
+	line-height: 1;
+	margin-right: 10px;
+	color: #43474e;
+	-webkit-font-feature-settings: "liga";
+	font-feature-settings: "liga";
+	font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+.body-sidebar .section-item[data-id="Tender Management"] > .standard-sidebar-item .item-anchor.section-break::before {
+	content: "gavel";
+}
+.body-sidebar .section-item[data-id="STD Administration"] > .standard-sidebar-item .item-anchor.section-break::before {
+	content: "admin_panel_settings";
+}
+.body-sidebar .section-item[data-id="Configuration"] > .standard-sidebar-item .item-anchor.section-break::before {
+	content: "settings";
+}
+/* group chevron (native drop-icon) tinted to outline */
+.body-sidebar .section-item .sidebar-item-control .drop-icon svg {
+	color: #74777f; /* outline */
+}
+
+/* --------------------------------------------------- nested children (level 2)
+ * Indented block under a group with a subtle left connector rail, smaller and
+ * lighter than top-level items, text-only (P5 §5/§6 visual rules). */
+.body-sidebar .section-item > .nested-container {
+	margin-left: 24px;
+	padding-left: 6px;
+	margin-top: 2px;
+	margin-bottom: 6px;
+	border-left: 1px solid #c4c6cf; /* outline-variant connector rail */
+}
+.body-sidebar .section-item > .nested-container .sidebar-item-icon {
+	display: none !important;
+}
+.body-sidebar .section-item > .nested-container .item-anchor {
+	padding-left: 10px;
+	height: 28px;
+}
+.body-sidebar .section-item > .nested-container .sidebar-item-label {
+	font-size: 13px;
+	font-weight: 500;
+	color: #43474e;
+}
+.body-sidebar .section-item > .nested-container .standard-sidebar-item:not(.active-sidebar):hover .item-anchor,
+.body-sidebar .section-item > .nested-container .standard-sidebar-item:not(.active-sidebar):hover .sidebar-item-label {
+	color: #000b1d; /* primary on hover */
+}
