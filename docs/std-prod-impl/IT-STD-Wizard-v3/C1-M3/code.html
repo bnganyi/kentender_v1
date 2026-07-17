@@ -1,0 +1,528 @@
+<!DOCTYPE html><html lang="en" class="light" style=""><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed-variant": "#3e465c",
+                        "inverse-on-surface": "#eff1f3",
+                        "tertiary-fixed": "#dae2fd",
+                        "tertiary-container": "#192135",
+                        "tertiary": "#030a1d",
+                        "error": "#ba1a1a",
+                        "secondary-container": "#d2e1fa",
+                        "on-background": "#191c1e",
+                        "surface-variant": "#e0e3e5",
+                        "surface": "#f7f9fb",
+                        "primary-container": "#002244",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "error-container": "#ffdad6",
+                        "surface-container": "#eceef0",
+                        "on-tertiary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#d5e3fc",
+                        "surface-tint": "#456085",
+                        "on-tertiary-container": "#8088a1",
+                        "surface-dim": "#d8dadc",
+                        "surface-container-high": "#e6e8ea",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed": "#001c3a",
+                        "surface-container-low": "#f2f4f6",
+                        "inverse-surface": "#2d3133",
+                        "tertiary-fixed-dim": "#bec6e0",
+                        "on-primary-fixed-variant": "#2d486c",
+                        "on-primary": "#ffffff",
+                        "primary": "#000b1d",
+                        "outline-variant": "#c4c6cf",
+                        "on-secondary-container": "#556379",
+                        "surface-bright": "#f7f9fb",
+                        "primary-fixed": "#d4e3ff",
+                        "on-primary-container": "#708ab2",
+                        "on-tertiary-fixed": "#131b2f",
+                        "background": "#f7f9fb",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed-dim": "#adc8f3",
+                        "surface-container-highest": "#e0e3e5",
+                        "outline": "#74777f",
+                        "on-surface-variant": "#43474e",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "on-surface": "#191c1e",
+                        "inverse-primary": "#adc8f3",
+                        "secondary": "#515f74"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "component-gap": "8px",
+                        "input-height": "28px",
+                        "unit": "4px",
+                        "gutter": "12px",
+                        "container-padding": "16px",
+                        "table-row-height": "32px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Public Sans"],
+                        "display": ["Public Sans"],
+                        "body-md": ["Public Sans"],
+                        "label-md": ["JetBrains Mono"],
+                        "label-sm": ["JetBrains Mono"],
+                        "body-lg": ["Public Sans"],
+                        "body-sm": ["Public Sans"],
+                        "headline-md": ["Public Sans"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                        "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    }catch(_e){}</script><meta charset="utf-8"></head><body class="bg-background font-body-md text-on-surface">
+<!-- Sidebar (Shared Components - SideNavBar) -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest dark:bg-inverse-surface border-r border-outline-variant dark:border-outline shadow-sm flex flex-col z-50">
+<div class="p-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">gavel</span>
+</div>
+<div>
+<h1 class="text-headline-md font-headline-md font-bold text-primary dark:text-primary-fixed leading-tight">KenTender</h1>
+<p class="text-label-sm text-on-surface-variant">Government of Kenya</p>
+</div>
+</div>
+</div>
+<div class="px-4 mb-6">
+<button class="w-full py-2.5 bg-primary-container text-white rounded-lg font-headline-md text-[14px] flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]" data-original-icon="add_circle">add_circle</span>
+                New Requisition
+            </button>
+</div>
+<nav class="flex-1 space-y-1 px-2 overflow-y-auto">
+<a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant/50 transition-colors">
+<span class="material-symbols-outlined" data-original-icon="assignment">assignment</span>
+<span class="font-body-md">Planning</span>
+</a>
+<a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg border-r-4 border-primary dark:border-inverse-primary bg-primary-fixed-dim/20 text-on-primary-fixed-variant font-bold transition-colors">
+<span class="material-symbols-outlined" data-original-icon="shopping_cart">shopping_cart</span>
+<span class="font-body-md">Demand</span>
+</a>
+<a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant/50 transition-colors">
+<span class="material-symbols-outlined">gavel</span>
+<span class="font-body-md">Tendering</span>
+</a>
+<a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant/50 transition-colors">
+<span class="material-symbols-outlined" data-original-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-body-md">Budget</span>
+</a>
+<a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant/50 transition-colors">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-body-md">Analytics</span>
+</a>
+<a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant/50 transition-colors">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md">Administration</span>
+</a>
+</nav>
+<div class="mt-auto p-4 space-y-1 border-t border-outline-variant">
+<a href="#" class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:bg-surface-variant/50">
+<span class="material-symbols-outlined">help</span>
+<span class="font-label-md">Help Center</span>
+</a>
+<a href="#" class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:bg-surface-variant/50">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-md">Log Out</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 min-h-screen">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 right-0 w-[calc(100%-256px)] h-14 bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-outline flex justify-between items-center px-6 z-40">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-96">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input type="text" placeholder="Search tender configurations..." class="w-full bg-surface-container-low border border-outline-variant rounded-full pl-10 pr-4 py-1.5 text-body-sm focus:ring-1 focus:ring-primary outline-none">
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" data-original-icon="notifications">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">apps</button>
+<div class="w-8 h-8 rounded-full bg-primary-fixed overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="Official headshot of a government procurement officer in professional attire with a neutral background, high resolution, soft office lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4M5_PA4Lm4oHinb84OvMRvkD2XUb7pTjSwLepcPqcrP7UfnaEnag03CbbK8LBEObIbQmNKSChS3pbPEI7yVwX3gWRn6AFSFtKOD4bKhkUcYsi169sbQhdGYJViha7n87WsHL09mUwjIeuhOcqUjhC7NmsD0wDvRyWaLZOmhLgXQtaFcnqpcujhXdaVetCddm8AvQWvDw1DCbgknmPrMSVcdW2NY0fON8_E1q9gaHZq1-TYOfO4YC_">
+</div>
+</div>
+</header>
+<!-- Page Canvas -->
+<div class="pt-20 px-8 pb-12 max-w-[1280px] mx-auto">
+<!-- Breadcrumbs -->
+<nav class="flex items-center gap-2 text-label-sm text-on-surface-variant mb-6">
+<a class="hover:text-primary" href="#">Dashboard</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<a class="hover:text-primary" href="#">Tender Management</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<a class="hover:text-primary" href="#">Tender Configurations</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-on-surface font-semibold">Configuration Home</span>
+</nav>
+<!-- Page Header -->
+<div class="mb-8">
+<h2 class="text-headline-lg font-headline-lg text-primary mb-1">Tender Configuration Home</h2>
+<p class="text-body-lg text-on-surface-variant">Complete the required configuration steps before review, preview, and publication handoff.</p>
+</div>
+<!-- Context Strip -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 mb-8 gap-0">
+<div class="border-r border-outline-variant/30 px-4 last:border-0">
+<p class="text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">PROCUREMENT PACKAGE Ref</p>
+<p class="text-body-sm font-bold text-primary">PP-ICT-2024-009</p>
+</div>
+<div class="col-span-2 border-r border-outline-variant/30 px-4 last:border-0">
+<p class="text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Procurement Title</p>
+<p class="text-body-sm font-bold text-primary truncate">Data Center Hardware Refresh</p>
+</div>
+<div class="border-r border-outline-variant/30 px-4 last:border-0">
+<p class="text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Procuring Entity</p>
+<p class="text-body-sm font-bold text-primary">National Treasury</p>
+</div>
+<div class="border-r border-outline-variant/30 px-4 last:border-0">
+<p class="text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Method</p>
+<p class="text-body-sm font-bold text-primary">Open National Tender</p>
+</div>
+<div class="border-r border-outline-variant/30 px-4 last:border-0">
+<p class="text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">STD Family</p>
+<p class="text-body-sm font-bold text-primary">Information Technology</p>
+</div>
+<div class="col-span-1 border-r border-outline-variant/30 px-4 last:border-0">
+<p class="text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Status</p>
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-amber-500"></span>
+<span class="text-body-sm font-bold text-primary">In progress</span>
+</div>
+</div>
+<div class="border-r border-outline-variant/30 px-4 last:border-0">
+<p class="text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Issues</p>
+<p class="text-body-sm font-bold text-error">2 Blockers / 3 Warnings</p>
+</div>
+</div>
+<div class="grid grid-cols-12 gap-6">
+<!-- Main Grid Section (Left 9 Columns) -->
+<div class="col-span-12 lg:col-span-9 space-y-6">
+<!-- Next Best Action Panel -->
+<div class="bg-primary-container text-white rounded-xl p-6 shadow-md relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+<div class="relative z-10 flex items-start gap-4">
+<div class="w-12 h-12 rounded-full bg-error flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<div>
+<p class="text-label-md text-primary-fixed-dim uppercase tracking-widest mb-1">Next Best Action</p>
+<h3 class="text-headline-md font-bold mb-1">Fix IT Requirements</h3>
+<p class="text-body-md opacity-90 max-w-xl">Some requirements are missing bidder response, evidence, or acceptance details. This is blocking the configuration progress.</p>
+</div>
+</div>
+<button class="relative z-10 px-8 py-3 bg-white text-primary-container font-bold rounded-lg hover:bg-primary-fixed transition-colors flex-shrink-0">
+                            Fix Now
+                        </button>
+<!-- Decorative background element -->
+<div class="absolute -right-10 -bottom-10 w-48 h-48 bg-white/5 rounded-full blur-3xl"></div>
+<div class="absolute -left-10 -top-10 w-32 h-32 bg-primary/20 rounded-full blur-2xl"></div>
+</div>
+<!-- Configuration Steps Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+<!-- CFG-01 -->
+<div class="bento-card bg-surface-container-lowest border border-outline-variant p-5 rounded-xl flex flex-col h-full">
+<div class="flex justify-between items-start mb-4">
+<span class="text-label-sm font-bold text-on-surface-variant">CFG-01</span>
+<div class="px-2 py-0.5 bg-green-100 text-green-800 rounded flex items-center gap-1">
+<span class="w-1.5 h-1.5 bg-green-600 rounded-full"></span>
+<span class="text-[10px] font-bold uppercase">Complete</span>
+</div>
+</div>
+<h4 class="text-headline-md font-bold text-primary mb-2">Tender Profile</h4>
+<p class="text-body-sm text-on-surface-variant mb-6 line-clamp-3">Confirm tender identity, entity details, procurement method, and basic setup context.</p>
+<div class="mt-auto pt-4 border-t border-outline-variant flex justify-between items-center">
+<span class="text-label-sm text-on-surface-variant">Last update: 2h ago</span>
+<button class="text-primary font-bold text-label-md flex items-center gap-1 hover:underline">
+                                    Review <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+</button>
+</div>
+</div>
+<!-- CFG-02 -->
+<div class="bento-card bg-surface-container-lowest border border-outline-variant p-5 rounded-xl flex flex-col h-full">
+<div class="flex justify-between items-start mb-4">
+<span class="text-label-sm font-bold text-on-surface-variant">CFG-02</span>
+<div class="px-2 py-0.5 bg-green-100 text-green-800 rounded flex items-center gap-1">
+<span class="w-1.5 h-1.5 bg-green-600 rounded-full"></span>
+<span class="text-[10px] font-bold uppercase">Complete</span>
+</div>
+</div>
+<h4 class="text-headline-md font-bold text-primary mb-2">Tender Data Sheet</h4>
+<p class="text-body-sm text-on-surface-variant mb-6 line-clamp-3">Enter tender-specific instructions and parameters completing the TDS section.</p>
+<div class="mt-auto pt-4 border-t border-outline-variant flex justify-between items-center">
+<span class="text-label-sm text-on-surface-variant">Last update: 5h ago</span>
+<button class="text-primary font-bold text-label-md flex items-center gap-1 hover:underline">
+                                    Review <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+</button>
+</div>
+</div>
+<!-- CFG-03 -->
+<div class="bento-card bg-surface-container-lowest border-2 border-error p-5 rounded-xl flex flex-col h-full shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<span class="text-label-sm font-bold text-on-surface-variant">CFG-03</span>
+<div class="px-2 py-0.5 bg-error-container text-error rounded flex items-center gap-1">
+<span class="w-1.5 h-1.5 bg-error rounded-full"></span>
+<span class="text-[10px] font-bold uppercase">Attention</span>
+</div>
+</div>
+<h4 class="text-headline-md font-bold text-primary mb-2">IT Requirements</h4>
+<p class="text-body-sm text-on-surface-variant mb-2 line-clamp-3">Define bidder deliverables, evidence, and acceptance expectations.</p>
+<p class="text-label-sm text-error font-bold mb-4">2 Blockers / 1 Warning</p>
+<div class="mt-auto pt-4 border-t border-outline-variant flex justify-between items-center">
+<span class="text-label-sm text-on-surface-variant">Incomplete</span>
+<button class="bg-primary text-white px-4 py-1.5 rounded text-label-md font-bold hover:opacity-90">
+                                    Fix Now
+                                </button>
+</div>
+</div>
+<!-- CFG-0-->
+<div class="bento-card bg-surface-container-lowest border border-outline-variant p-5 rounded-xl flex flex-col h-full">
+<div class="flex justify-between items-start mb-4">
+<span class="text-label-sm font-bold text-on-surface-variant">CFG-04</span>
+<div class="px-2 py-0.5 bg-secondary-container text-on-secondary-container rounded flex items-center gap-1">
+<span class="w-1.5 h-1.5 bg-secondary rounded-full animate-pulse"></span>
+<span class="text-[10px] font-bold uppercase">In Progress</span>
+</div>
+</div>
+<h4 class="text-headline-md font-bold text-primary mb-2">Implementation Schedule</h4>
+<p class="text-body-sm text-on-surface-variant mb-6 line-clamp-3">Define delivery approach, milestones, durations, and acceptance checkpoints.</p>
+<div class="mt-auto pt-4 border-t border-outline-variant flex justify-between items-center">
+<div class="w-24 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="w-2/3 h-full bg-secondary"></div>
+</div>
+<button class="text-primary font-bold text-label-md flex items-center gap-1 hover:underline">
+                                    Continue <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- CFG-05 -->
+<div class="bento-card bg-surface-container-lowest border border-outline-variant p-5 rounded-xl flex flex-col h-full">
+<div class="flex justify-between items-start mb-4">
+<span class="text-label-sm font-bold text-on-surface-variant">CFG-05</span>
+<div class="px-2 py-0.5 bg-surface-container-high text-on-surface-variant rounded flex items-center gap-1">
+<span class="w-1.5 h-1.5 bg-outline rounded-full"></span>
+<span class="text-[10px] font-bold uppercase">Not Started</span>
+</div>
+</div>
+<h4 class="text-headline-md font-bold text-primary mb-2">System Inventory</h4>
+<p class="text-body-sm text-on-surface-variant mb-6 line-clamp-3">Describe existing systems, sites, and background information for bidders.</p>
+<div class="mt-auto pt-4 border-t border-outline-variant flex justify-between items-center">
+<span class="text-label-sm text-on-surface-variant">0 items added</span>
+<button class="text-primary font-bold text-label-md flex items-center gap-1 hover:underline">
+                                    Start <span class="material-symbols-outlined text-[14px]">add</span>
+</button>
+</div>
+</div>
+<!-- CFG-06 -->
+<div class="bento-card bg-surface-container-lowest border border-outline-variant p-5 rounded-xl flex flex-col h-full">
+<div class="flex justify-between items-start mb-4">
+<span class="text-label-sm font-bold text-on-surface-variant">CFG-06</span>
+<div class="px-2 py-0.5 bg-surface-container-high text-on-surface-variant rounded flex items-center gap-1">
+<span class="text-[10px] font-bold uppercase">Not Started</span>
+</div>
+</div>
+<h4 class="text-headline-md font-bold text-primary mb-2">Price Schedule</h4>
+<p class="text-body-sm text-on-surface-variant mb-6 line-clamp-3">Define supply, installation, and recurrent cost items for bidder pricing.</p>
+<div class="mt-auto pt-4 border-t border-outline-variant flex justify-between items-center">
+<span class="text-label-sm text-on-surface-variant">Pending</span>
+<button class="text-primary font-bold text-label-md flex items-center gap-1 hover:underline">
+                                    Start <span class="material-symbols-outlined text-[14px]">add</span>
+</button>
+</div>
+</div>
+<!-- CFG-07 -->
+<div class="bento-card bg-surface-container-lowest border border-outline-variant p-5 rounded-xl flex flex-col h-full">
+<div class="flex justify-between items-start mb-4">
+<span class="text-label-sm font-bold text-on-surface-variant">CFG-07</span>
+<div class="px-2 py-0.5 bg-surface-container-high text-on-surface-variant rounded flex items-center gap-1">
+<span class="text-[10px] font-bold uppercase">Not Started</span>
+</div>
+</div>
+<h4 class="text-headline-md font-bold text-primary mb-2">Evaluation Setup</h4>
+<p class="text-body-sm text-on-surface-variant mb-6 line-clamp-3">Set preliminary, technical, financial, and qualification evaluation rules.</p>
+<div class="mt-auto pt-4 border-t border-outline-variant flex justify-between items-center">
+<span class="text-label-sm text-on-surface-variant">Default rules ready</span>
+<button class="text-primary font-bold text-label-md flex items-center gap-1 hover:underline">
+                                    Start <span class="material-symbols-outlined text-[14px]">add</span>
+</button>
+</div>
+</div>
+<!-- CFG-08 -->
+<div class="bento-card bg-surface-container-lowest border border-outline-variant p-5 rounded-xl flex flex-col h-full">
+<div class="flex justify-between items-start mb-4">
+<span class="text-label-sm font-bold text-on-surface-variant">CFG-08</span>
+<div class="px-2 py-0.5 bg-surface-container-high text-on-surface-variant rounded flex items-center gap-1">
+<span class="text-[10px] font-bold uppercase">Not Started</span>
+</div>
+</div>
+<h4 class="text-headline-md font-bold text-primary mb-2">Forms &amp; Evidence</h4>
+<p class="text-body-sm text-on-surface-variant mb-6 line-clamp-3">Define non-price forms, declarations, securities, and required evidence.</p>
+<div class="mt-auto pt-4 border-t border-outline-variant flex justify-between items-center">
+<span class="text-label-sm text-on-surface-variant">System default: 4</span>
+<button class="text-primary font-bold text-label-md flex items-center gap-1 hover:underline">
+                                    Start <span class="material-symbols-outlined text-[14px]">add</span>
+</button>
+</div>
+</div>
+<!-- CFG-09 -->
+<div class="bento-card bg-surface-container-low border border-outline-variant border-dashed p-5 rounded-xl flex flex-col h-full opacity-70">
+<div class="flex justify-between items-start mb-4">
+<span class="text-label-sm font-bold text-on-surface-variant">CFG-09</span>
+<div class="px-2 py-0.5 bg-surface-container-high text-on-surface-variant rounded flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">lock</span>
+<span class="text-[10px] font-bold uppercase">Locked</span>
+</div>
+</div>
+<h4 class="text-headline-md font-bold text-on-surface-variant mb-2">Contract Values</h4>
+<p class="text-body-sm text-on-surface-variant mb-6 line-clamp-3">Confirm Special Conditions of Contract (SCC) values for this tender.</p>
+<div class="mt-auto pt-4 border-t border-outline-variant flex justify-between items-center">
+<span class="text-label-sm text-on-surface-variant italic">Prerequisite required</span>
+<button class="text-on-surface-variant font-bold text-label-md flex items-center gap-1 cursor-help">
+                                    View Logic <span class="material-symbols-outlined text-[14px]">info</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Sidebar Section (3 Columns) -->
+<div class="col-span-12 lg:col-span-3 space-y-6">
+<!-- Completion & Handoff Panel -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+<div class="bg-surface-container-low px-5 py-3 border-b border-outline-variant flex items-center justify-between">
+<h3 class="font-bold text-primary text-body-md uppercase tracking-wide"><span style="font-size:11.0pt;line-height:107%;
+font-family:&quot;Aptos&quot;,sans-serif;mso-ascii-theme-font:minor-latin;mso-fareast-font-family:
+Aptos;mso-fareast-theme-font:minor-latin;mso-hansi-theme-font:minor-latin;
+mso-bidi-font-family:&quot;Times New Roman&quot;;mso-bidi-theme-font:minor-bidi;
+mso-ansi-language:EN-US;mso-fareast-language:EN-US;mso-bidi-language:AR-SA">COMPLETION
+&amp; HANDOFF</span></h3>
+<span class="material-symbols-outlined text-primary">verified</span>
+</div>
+<div class="p-2">
+<!-- Readiness Check -->
+<div class="p-3 hover:bg-surface-bright rounded-lg transition-colors border-b border-outline-variant/30 last:border-0 group">
+<div class="flex items-center gap-3 mb-1">
+<div class="w-8 h-8 rounded bg-error/10 text-error flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">assignment_turned_in</span>
+</div>
+<h4 class="font-bold text-primary text-body-sm">Readiness Check</h4>
+</div>
+<div class="pl-11">
+<p class="text-label-sm text-error font-bold mb-2">Blockers found (2)</p>
+<button class="text-[11px] text-primary font-bold flex items-center gap-1 hover:underline">
+                                        View Report <span class="material-symbols-outlined text-[12px]">analytics</span>
+</button>
+</div>
+</div>
+<!-- Review Status -->
+<div class="p-3 hover:bg-surface-bright rounded-lg transition-colors border-b border-outline-variant/30 last:border-0 group">
+<div class="flex items-center gap-3 mb-1">
+<div class="w-8 h-8 rounded bg-outline-variant/20 text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">rate_review</span>
+</div>
+<h4 class="font-bold text-primary text-body-sm">Review Status</h4>
+</div>
+<div class="pl-11">
+<p class="text-label-sm text-on-surface-variant mb-1">Not submitted</p>
+<p class="text-[11px] text-on-surface-variant/70 italic">Submit when ready</p>
+</div>
+</div>
+<!-- Tender Preview -->
+<div class="p-3 hover:bg-surface-bright rounded-lg transition-colors border-b border-outline-variant/30 last:border-0 group opacity-50">
+<div class="flex items-center gap-3 mb-1">
+<div class="w-8 h-8 rounded bg-outline-variant/20 text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
+</div>
+<h4 class="font-bold text-primary text-body-sm">Tender Preview</h4>
+</div>
+<div class="pl-11">
+<p class="text-label-sm text-on-surface-variant">Available after review</p>
+</div>
+</div>
+<!-- Handoff -->
+<div class="p-3 hover:bg-surface-bright rounded-lg transition-colors border-b border-outline-variant/30 last:border-0 group opacity-50">
+<div class="flex items-center gap-3 mb-1">
+<div class="w-8 h-8 rounded bg-outline-variant/20 text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">send</span>
+</div>
+<h4 class="font-bold text-primary text-body-sm">Publication Handoff</h4>
+</div>
+<div class="pl-11">
+<p class="text-label-sm text-on-surface-variant">Available after preview</p>
+</div>
+</div>
+</div>
+<div class="p-4 bg-surface-container-low">
+<button class="w-full py-2 bg-outline text-white rounded font-bold text-body-sm flex items-center justify-center gap-2 cursor-not-allowed" disabled="">
+                                Complete Configuration
+                            </button>
+</div>
+</div>
+<!-- Vibrant KPI Sidebar Widget -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<p class="text-label-md font-bold text-on-surface-variant uppercase mb-2">Overall Progress</p>
+<div class="flex items-end justify-between mb-2">
+<p class="text-[32px] font-bold text-primary leading-none">44%</p>
+<p class="text-label-sm text-on-surface-variant">4 of 9 steps</p>
+</div>
+<div class="w-full h-1.5 bg-surface-container-high rounded-full">
+<div class="h-full bg-primary rounded-full" style="width: 44%"></div>
+</div>
+</div>
+<!-- Helpful Links -->
+<div class="bg-primary/5 border border-primary/10 rounded-xl p-5">
+<h5 class="font-bold text-primary text-label-md uppercase mb-3">Resources</h5>
+<ul class="space-y-3">
+<li class="">
+<a class="text-body-sm text-primary flex items-center justify-between hover:underline" href="#">
+<span class="">IT Standard Document v2.0</span>
+<span class="material-symbols-outlined text-[16px]">download</span>
+</a>
+</li>
+<li class="">
+<a class="text-body-sm text-primary flex items-center justify-between hover:underline" href="#">
+<span class="">Configuration Guide</span>
+<span class="material-symbols-outlined text-[16px]">launch</span>
+</a>
+</li>
+<li class="">
+<a class="text-body-sm text-primary flex items-center justify-between hover:underline" href="#">
+<span class="">Treasury Procurement Regs</span>
+<span class="material-symbols-outlined text-[16px]">description</span>
+</a>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Micro-interaction for hover effects -->
+<script>
+        document.querySelectorAll('.bento-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                // Potential for lightweight JS effects if needed
+            });
+        });
+    </script>
+
+</body></html>

@@ -1,0 +1,389 @@
+<!DOCTYPE html><html lang="en" class="light" style=""><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="stylesheet" href="/assets/kentender_procurement/css/kt_fonts.css"/><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{try{
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#f4f3f9",
+                        "status-exhausted": "#EF4444",
+                        "surface-container": "#eeedf3",
+                        "status-reserved": "#F59E0B",
+                        "on-primary-container": "#7b9ee0",
+                        "on-secondary": "#ffffff",
+                        "secondary-container": "#7bbeff",
+                        "primary-fixed": "#d7e2ff",
+                        "surface-variant": "#e2e2e8",
+                        "surface-container-highest": "#e2e2e8",
+                        "primary": "#001f48",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#dad9df",
+                        "background": "#f9f9fe",
+                        "on-surface-variant": "#434750",
+                        "on-primary": "#ffffff",
+                        "border-subtle": "#E2E8F0",
+                        "tertiary": "#102135",
+                        "surface-container-high": "#e8e7ed",
+                        "secondary-fixed-dim": "#99cbff",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "surface-tint": "#395e9b",
+                        "on-primary-fixed-variant": "#1d4681",
+                        "on-surface": "#1a1b20",
+                        "status-available": "#10B981",
+                        "outline": "#737781",
+                        "primary-fixed-dim": "#abc7ff",
+                        "status-committed": "#6366F1",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "surface-bright": "#f9f9fe",
+                        "on-secondary-fixed": "#001d34",
+                        "error-container": "#ffdad6",
+                        "on-background": "#1a1b20",
+                        "secondary-fixed": "#cfe5ff",
+                        "on-tertiary-container": "#8f9fb8",
+                        "on-tertiary-fixed-variant": "#38485e",
+                        "inverse-primary": "#abc7ff",
+                        "tertiary-fixed": "#d3e4ff",
+                        "surface": "#f9f9fe",
+                        "on-secondary-container": "#004c7c",
+                        "tertiary-container": "#26364b",
+                        "primary-container": "#00346f",
+                        "on-primary-fixed": "#001b3f",
+                        "tertiary-fixed-dim": "#b7c8e2",
+                        "inverse-surface": "#2f3035",
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed-variant": "#004a78",
+                        "secondary": "#01629d",
+                        "outline-variant": "#c3c6d1",
+                        "on-error-container": "#93000a",
+                        "inverse-on-surface": "#f1f0f6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "card-padding": "20px",
+                        "unit": "4px",
+                        "section-gap": "24px",
+                        "gutter": "12px",
+                        "container-padding": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Manrope"],
+                        "headline-lg": ["Manrope"],
+                        "label-caps": ["Inter"],
+                        "headline-sm": ["Manrope"],
+                        "data-mono": ["JetBrains Mono"],
+                        "headline-md": ["Manrope"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "data-mono": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "headline-md": ["22px", { "lineHeight": "30px", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    }catch(_e){}}catch(_e){}</script><meta charset="utf-8"></head><body class="bg-background text-on-background font-body-md antialiased min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-surface border-b border-subtle flex justify-between items-center w-full px-6 h-16 sticky top-0 z-50 shadow-sm">
+<div class="flex items-center gap-4">
+<span class="font-headline-md text-headline-md font-bold text-primary">Validation Report</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+
+</div>
+<div class="w-px h-6 bg-border-subtle"></div>
+<div class="flex gap-4">
+<button class="text-on-surface-variant hover:bg-surface-container-low transition-all p-2 rounded-full flex items-center justify-center" aria-label="history">
+<span class="material-symbols-outlined">history</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low transition-all p-2 rounded-full flex items-center justify-center" aria-label="settings">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low transition-all p-2 rounded-full flex items-center justify-center" aria-label="notifications">
+<span class="material-symbols-outlined" data-original-icon="notifications">notifications</span>
+</button>
+</div>
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center overflow-hidden border border-border-subtle">
+<img alt="User profile avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAg58qXxbIzrROVhSTThjM2SExSyiBv2_QFKqPsVn20KMWFlRflvvqA2xN5PX9e4Hx7BHlmbIQQZ5ReQmv1mCyLex47Nknge15HZWPUYUcEd7W1ALSYrMRYc0eu1jYRDjOMVa-mrfMo4jgbZqZBjspH6Eb2Qwo7TZ-FNQXPEwZcjUaKIwulIcua_6s8xTZcqwLYRsiUQncCzy7lAl0OY_9j8U0FsL1smlJDOZ87mcGYNmxhoGOcT5g4">
+</div>
+</div>
+</header>
+<main class="flex-1 p-container-padding md:p-[24px] max-w-7xl mx-auto w-full flex flex-col gap-section-gap">
+<!---->
+<div class="bg-surface-container-lowest rounded-lg border border-subtle p-4 flex flex-col gap-2">
+<div class="flex flex-wrap gap-x-6 gap-y-2">
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Tender Ref</span>
+<span class="font-data-mono text-data-mono text-on-surface">—</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Tender Title</span>
+<span class="font-body-md text-body-md text-on-surface font-medium">—</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Planning Package Ref</span>
+<span class="font-data-mono text-data-mono text-on-surface">—</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Procuring Entity</span>
+<span class="font-body-md text-body-md text-on-surface">—</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Procurement Method</span>
+<span class="font-body-md text-body-md text-on-surface">—</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Wizard State</span>
+<span class="font-data-mono text-data-mono text-status-exhausted">Validation Failed</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps uppercase text-primary font-bold">Validation Summary</span>
+<span class="font-body-md text-body-md text-on-surface">2 Blockers / 3 Warnings</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Left Content Area (Col 1-2) -->
+<div class="lg:col-span-2 flex flex-col gap-section-gap">
+<!-- Readiness Summary Cards -->
+<div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+<div class="bg-surface-container-lowest border border-subtle rounded-lg p-4 flex flex-col gap-1 items-start justify-center shadow-sm">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Overall Readiness</span>
+<span class="font-headline-sm text-headline-sm text-status-exhausted font-bold">Not Ready</span>
+</div>
+<div class="bg-surface-container-lowest border border-status-exhausted/30 rounded-lg p-4 flex flex-col gap-1 items-start justify-center shadow-sm">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Blockers</span>
+<span class="font-headline-md text-headline-md text-status-exhausted font-bold">0</span>
+</div>
+<div class="bg-surface-container-lowest border border-status-reserved/30 rounded-lg p-4 flex flex-col gap-1 items-start justify-center shadow-sm">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Warnings</span>
+<span class="font-headline-md text-headline-md text-status-reserved font-bold">0</span>
+</div>
+<div class="bg-surface-container-lowest border border-subtle rounded-lg p-4 flex flex-col gap-1 items-start justify-center shadow-sm">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Completed Sections</span>
+<span class="font-headline-md text-headline-md text-on-surface font-bold">0/0</span>
+</div>
+<div class="bg-surface-container-lowest border border-subtle rounded-lg p-4 flex flex-col gap-1 items-start justify-center shadow-sm col-span-2 md:col-span-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Last Run</span>
+<span class="font-data-mono text-data-mono text-on-surface">2024-10-15<br>14:30 EAT</span>
+</div>
+</div>
+<!-- Validation Findings Table -->
+<div class="bg-surface-container-lowest border border-subtle rounded-lg overflow-hidden shadow-sm">
+<div class="p-4 border-b border-subtle bg-surface-container-low flex justify-between items-center">
+<div class="flex items-center gap-2">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Validation Findings</h2>
+<span class="font-body-md text-body-md text-on-surface-variant">Showing 0 of 0 findings</span>
+</div>
+<button class="text-primary font-body-md text-body-md hover:underline flex items-center gap-1">
+<span class="material-symbols-outlined" style="font-size: 18px;">filter_list</span> Filter
+                        </button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-subtle bg-surface/50">
+<th class="p-3 font-label-caps text-label-caps text-on-surface-variant uppercase">Issue</th>
+<th class="p-3 font-label-caps text-label-caps text-on-surface-variant uppercase">Status</th>
+<th class="p-3 font-label-caps text-label-caps text-on-surface-variant uppercase">Severity</th>
+<th class="p-3 font-label-caps text-label-caps text-on-surface-variant uppercase">Screen</th>
+<th class="p-3 font-label-caps text-label-caps text-on-surface-variant uppercase">Impact</th>
+<th class="p-3 font-label-caps text-label-caps text-on-surface-variant uppercase">Recommended Action</th>
+<th class="p-3 font-label-caps text-label-caps text-on-surface-variant uppercase">Actions</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md">
+<tr><td class="p-8 text-center text-on-surface-variant" colspan="6">Not configured — no validation findings.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Section Readiness Checklist -->
+<div class="bg-surface-container-lowest border border-subtle rounded-lg overflow-hidden shadow-sm">
+<div class="p-4 border-b border-subtle bg-surface-container-low">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Section Readiness Checklist</h2>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-subtle bg-surface/50">
+<th class="p-3 font-label-caps text-label-caps text-on-surface-variant uppercase">Section</th>
+<th class="p-3 font-label-caps text-label-caps text-on-surface-variant uppercase">Status</th>
+<th class="p-3 font-label-caps text-label-caps text-on-surface-variant uppercase text-center">Issues</th>
+<th class="p-3 font-label-caps text-label-caps text-on-surface-variant uppercase text-right">Action</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md">
+<tr class="border-b border-subtle hover:bg-surface-container-low transition-colors">
+<td class="p-3 text-on-surface">Tender Profile</td>
+<td class="p-3">
+<span class="text-status-available flex items-center gap-1 text-sm font-medium"><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Passed</span>
+</td>
+<td class="p-3 text-center text-on-surface-variant">0</td>
+<td class="p-3 text-right">
+<button class="text-on-surface-variant hover:text-on-surface text-sm">View</button>
+</td>
+</tr>
+<tr class="border-b border-subtle hover:bg-surface-container-low transition-colors">
+<td class="p-3 text-on-surface">Tender Data Sheet</td>
+<td class="p-3">
+<span class="text-status-available flex items-center gap-1 text-sm font-medium"><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Passed</span>
+</td>
+<td class="p-3 text-center text-on-surface-variant">0</td>
+<td class="p-3 text-right">
+<button class="text-on-surface-variant hover:text-on-surface text-sm">View</button>
+</td>
+</tr>
+<tr class="border-b border-subtle hover:bg-surface-container-low transition-colors">
+<td class="p-3 text-on-surface">IT Requirements</td>
+<td class="p-3">
+<span class="text-status-reserved flex items-center gap-1 text-sm font-medium"><span class="material-symbols-outlined" style="font-size: 16px;">warning</span> Warning</span>
+</td>
+<td class="p-3 text-center text-on-surface-variant">1</td>
+<td class="p-3 text-right">
+<button class="text-primary hover:underline text-sm font-medium">Review</button>
+</td>
+</tr>
+<tr class="border-b border-subtle hover:bg-surface-container-low transition-colors">
+<td class="p-3 text-on-surface">Implementation Schedule</td>
+<td class="p-3">
+<span class="text-status-available flex items-center gap-1 text-sm font-medium"><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Passed</span>
+</td>
+<td class="p-3 text-center text-on-surface-variant">0</td>
+<td class="p-3 text-right">
+<button class="text-on-surface-variant hover:text-on-surface text-sm">View</button>
+</td>
+</tr>
+<tr class="border-b border-subtle hover:bg-surface-container-low transition-colors">
+<td class="p-3 text-on-surface">System Inventory</td>
+<td class="p-3">
+<span class="text-status-available flex items-center gap-1 text-sm font-medium"><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Passed</span>
+</td>
+<td class="p-3 text-center text-on-surface-variant">0</td>
+<td class="p-3 text-right">
+<button class="text-on-surface-variant hover:text-on-surface text-sm">View</button>
+</td>
+</tr>
+<tr class="border-b border-subtle hover:bg-surface-container-low transition-colors">
+<td class="p-3 text-on-surface">Price Schedule</td>
+<td class="p-3">
+<span class="text-status-available flex items-center gap-1 text-sm font-medium"><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Passed</span>
+</td>
+<td class="p-3 text-center text-on-surface-variant">0</td>
+<td class="p-3 text-right">
+<button class="text-on-surface-variant hover:text-on-surface text-sm">View</button>
+</td>
+</tr>
+<tr class="border-b border-subtle hover:bg-surface-container-low transition-colors">
+<td class="p-3 text-on-surface">Evaluation Setup</td>
+<td class="p-3">
+<span class="text-status-exhausted flex items-center gap-1 text-sm font-medium"><span class="material-symbols-outlined" style="font-size: 16px;">cancel</span> Blocked</span>
+</td>
+<td class="p-3 text-center font-medium text-status-exhausted">1</td>
+<td class="p-3 text-right">
+<button class="text-primary hover:underline text-sm font-medium">Fix</button>
+</td>
+</tr>
+<tr class="border-b border-subtle hover:bg-surface-container-low transition-colors">
+<td class="p-3 text-on-surface">Forms &amp; Evidence</td>
+<td class="p-3">
+<span class="text-status-available flex items-center gap-1 text-sm font-medium"><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Passed</span>
+</td>
+<td class="p-3 text-center text-on-surface-variant">0</td>
+<td class="p-3 text-right">
+<button class="text-on-surface-variant hover:text-on-surface text-sm">View</button>
+</td>
+</tr>
+<tr class="border-b border-subtle hover:bg-surface-container-low transition-colors">
+<td class="p-3 text-on-surface">SCC / Contract Carry-Forward</td>
+<td class="p-3">
+<span class="text-status-exhausted flex items-center gap-1 text-sm font-medium"><span class="material-symbols-outlined" style="font-size: 16px;">cancel</span> Blocked</span>
+</td>
+<td class="p-3 text-center font-medium text-status-exhausted">1</td>
+<td class="p-3 text-right">
+<button class="text-primary hover:underline text-sm font-medium">Fix</button>
+</td>
+</tr>
+<tr class="border-b border-subtle hover:bg-surface-container-low transition-colors">
+<td class="p-3 text-on-surface">Review &amp; Approval</td>
+<td class="p-3">
+<span class="text-status-available flex items-center gap-1 text-sm font-medium"><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Passed</span>
+</td>
+<td class="p-3 text-center text-on-surface-variant">0</td>
+<td class="p-3 text-right">
+<button class="text-on-surface-variant hover:text-on-surface text-sm">View</button>
+</td>
+</tr>
+<tr class="border-b border-subtle hover:bg-surface-container-low transition-colors">
+<td class="p-3 text-on-surface">Publication Readiness</td>
+<td class="p-3">
+<span class="text-status-available flex items-center gap-1 text-sm font-medium"><span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span> Passed</span>
+</td>
+<td class="p-3 text-center text-on-surface-variant">0</td>
+<td class="p-3 text-right">
+<button class="text-on-surface-variant hover:text-on-surface text-sm">View</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Right Guidance Panel -->
+<div class="lg:col-span-1 flex flex-col gap-6">
+<div class="bg-surface-container-lowest border border-subtle rounded-lg p-6 shadow-sm flex flex-col gap-4 sticky top-24">
+<h3 class="font-headline-sm text-headline-sm text-on-surface border-b border-subtle pb-2">Readiness Status</h3>
+<div class="flex flex-col gap-3">
+<div class="flex justify-between items-center">
+<span class="text-on-surface-variant">Status:</span>
+<span class="font-bold text-status-exhausted">Not Ready</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-on-surface-variant">Blockers:</span>
+<span class="font-medium text-on-surface">2</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-on-surface-variant">Warnings:</span>
+<span class="font-medium text-on-surface">3</span>
+</div>
+<div class="flex justify-between items-center border-t border-subtle pt-3">
+<span class="text-on-surface-variant">Can Continue:</span>
+<span class="font-bold text-status-exhausted">No</span>
+</div>
+</div>
+<div class="bg-error-container/30 border border-status-exhausted/20 rounded p-3 flex flex-col gap-2 mt-2">
+<span class="font-label-caps text-label-caps text-status-exhausted uppercase">Next Required Action</span>
+<span class="text-body-md text-on-surface">Fix 2 Blockers in Evaluation Setup and SCC / Contract Carry-Forward</span>
+</div>
+<div class="bg-surface-container-low rounded p-3 text-sm text-on-surface-variant flex items-start gap-2 mt-4">
+<span class="material-symbols-outlined text-outline" style="font-size: 18px; margin-top: 2px;">info</span>
+<p class="">Validation checks completeness and consistency. Final approval is completed in the Review &amp; Approval step.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Primary Actions -->
+<footer class="bg-surface border-t border-subtle p-4 mt-auto">
+<div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+<div class="flex gap-3">
+<button class="px-4 py-2 bg-surface-container-high hover:bg-surface-variant text-on-surface rounded-md font-body-md font-medium transition-colors border border-subtle shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-size: 18px;">refresh</span> Run Full Validation
+                </button>
+<button class="px-4 py-2 bg-surface-container-lowest hover:bg-surface-container-low text-on-surface rounded-md font-body-md font-medium transition-colors border border-subtle shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-size: 18px;">download</span> Export Validation Summary
+                </button>
+</div>
+<div class="flex gap-3"></div></div></footer></body></html>

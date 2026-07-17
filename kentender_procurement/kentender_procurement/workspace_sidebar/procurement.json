@@ -118,18 +118,6 @@
   {
    "child": 0,
    "collapsible": 0,
-   "icon": "table",
-   "indent": 0,
-   "keep_closed": 0,
-   "label": "Tender Configuration Dashboard",
-   "link_to": "it-tender-configuration-dashboard",
-   "link_type": "Page",
-   "show_arrow": 0,
-   "type": "Link"
-  },
-  {
-   "child": 0,
-   "collapsible": 0,
    "icon": "unlock",
    "indent": 0,
    "keep_closed": 0,
@@ -326,7 +314,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-07-16 00:07:21.340209",
+ "modified": "2026-07-17 18:48:40.558295",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "Procurement",

@@ -136,7 +136,9 @@ def _find_tm2_tender(tender_code: str) -> dict[str, Any] | None:
 
 def _find_std_instance_by_name(candidate_code: str) -> dict[str, Any] | None:
     """Return Tender STD Instance row dict if ``candidate_code`` is a real DB record."""
-    if not candidate_code or not frappe.db.exists("Tender STD Instance", candidate_code):
+    if not candidate_code or not frappe.db.exists("DocType", "Tender STD Instance"):
+        return None
+    if not frappe.db.exists("Tender STD Instance", candidate_code):
         return None
     return frappe.db.get_value(
         "Tender STD Instance",
@@ -158,7 +160,7 @@ def _find_std_instance_by_name(candidate_code: str) -> dict[str, Any] | None:
 
 def _find_std_instance_by_tm2_tender(tm2_tender_name: str) -> dict[str, Any] | None:
     """Return the active Tender STD Instance linked via ``tm2_tender`` FK."""
-    if not tm2_tender_name:
+    if not tm2_tender_name or not frappe.db.exists("DocType", "Tender STD Instance"):
         return None
     rows = frappe.db.get_all(
         "Tender STD Instance",

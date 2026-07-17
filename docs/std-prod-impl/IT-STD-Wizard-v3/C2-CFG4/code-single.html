@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Implementation Schedule - KenTender</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&amp;family=Public+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-container": "#002244",
+                      "tertiary-fixed": "#dae2fd",
+                      "on-error": "#ffffff",
+                      "on-surface": "#191c1e",
+                      "inverse-primary": "#adc8f3",
+                      "surface-dim": "#d8dadc",
+                      "surface-container-high": "#e6e8ea",
+                      "inverse-on-surface": "#eff1f3",
+                      "tertiary-container": "#192135",
+                      "inverse-surface": "#2d3133",
+                      "secondary": "#515f74",
+                      "on-tertiary-fixed-variant": "#3e465c",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary": "#ffffff",
+                      "on-primary-fixed-variant": "#2d486c",
+                      "on-tertiary-container": "#8088a1",
+                      "surface-container-highest": "#e0e3e5",
+                      "on-error-container": "#93000a",
+                      "tertiary": "#030a1d",
+                      "surface-tint": "#456085",
+                      "tertiary-fixed-dim": "#bec6e0",
+                      "on-secondary-fixed": "#0d1c2e",
+                      "surface-container-low": "#f2f4f6",
+                      "outline-variant": "#c4c6cf",
+                      "on-tertiary-fixed": "#131b2f",
+                      "on-secondary-container": "#556379",
+                      "error": "#ba1a1a",
+                      "error-container": "#ffdad6",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary": "#ffffff",
+                      "outline": "#74777f",
+                      "on-primary-container": "#708ab2",
+                      "primary-fixed-dim": "#adc8f3",
+                      "on-secondary-fixed-variant": "#3a485c",
+                      "secondary-fixed-dim": "#b9c7e0",
+                      "surface-container": "#eceef0",
+                      "surface-variant": "#e0e3e5",
+                      "secondary-fixed": "#d5e3fc",
+                      "primary-fixed": "#d4e3ff",
+                      "on-background": "#191c1e",
+                      "background": "#f7f9fb",
+                      "surface": "#f7f9fb",
+                      "on-surface-variant": "#43474e",
+                      "on-primary-fixed": "#001c3a",
+                      "secondary-container": "#d2e1fa",
+                      "surface-bright": "#f7f9fb",
+                      "primary": "#000b1d"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "input-height": "28px",
+                      "table-row-height": "32px",
+                      "gutter": "12px",
+                      "component-gap": "8px",
+                      "unit": "4px",
+                      "container-padding": "16px"
+              },
+              "fontFamily": {
+                      "label-sm": ["JetBrains Mono"],
+                      "body-sm": ["Public Sans"],
+                      "label-md": ["JetBrains Mono"],
+                      "headline-lg": ["Public Sans"],
+                      "display": ["Public Sans"],
+                      "body-md": ["Public Sans"],
+                      "headline-md": ["Public Sans"],
+                      "body-lg": ["Public Sans"]
+              },
+              "fontSize": {
+                      "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                      "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                      "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                      "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                      "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                      "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md antialiased min-h-screen flex text-body-md font-body-md overflow-x-hidden">
+<!-- SideNavBar -->
+<nav class="bg-primary dark:bg-primary-container fixed left-0 top-0 h-screen w-64 border-r border-outline-variant shadow-sm flex flex-col h-full py-container-padding z-20">
+<div class="px-6 mb-8 flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-primary-container flex items-center justify-center text-on-primary font-bold">K</div>
+<div>
+<h1 class="text-headline-lg font-headline-lg font-bold text-on-primary leading-tight">KenTender</h1>
+<p class="text-label-sm font-label-sm text-on-primary/70">e-Procurement System</p>
+</div>
+</div>
+<div class="px-4 mb-6">
+<button class="w-full bg-primary-fixed text-on-primary-fixed py-2 rounded font-label-md text-label-md flex items-center justify-center gap-2 hover:bg-primary-fixed-dim transition-colors">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                New Procurement
+            </button>
+</div>
+<ul class="flex-1 space-y-1 px-3 text-label-md font-label-md">
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-primary-fixed-dim font-bold border-r-4 border-primary-fixed-dim bg-on-primary-fixed-variant/20 hover:bg-on-primary-fixed-variant/10 transition-colors opacity-90 transition-opacity" href="#">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+                    Planning
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-primary/70 font-medium hover:text-on-primary hover:bg-on-primary-fixed-variant/10 transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">inventory_2</span>
+                    Demand
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-primary/70 font-medium hover:text-on-primary hover:bg-on-primary-fixed-variant/10 transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">gavel</span>
+                    Tendering
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-primary/70 font-medium hover:text-on-primary hover:bg-on-primary-fixed-variant/10 transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+                    Budget
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-primary/70 font-medium hover:text-on-primary hover:bg-on-primary-fixed-variant/10 transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">analytics</span>
+                    Analytics
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-primary/70 font-medium hover:text-on-primary hover:bg-on-primary-fixed-variant/10 transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">settings</span>
+                    Administration
+                </a>
+</li>
+</ul>
+<div class="mt-auto px-3 text-label-md font-label-md">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-primary/70 font-medium hover:text-on-primary hover:bg-on-primary-fixed-variant/10 transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">help</span>
+                Help Center
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-primary/70 font-medium hover:text-on-primary hover:bg-on-primary-fixed-variant/10 transition-colors mt-1" href="#">
+<span class="material-symbols-outlined text-[18px]">logout</span>
+                Log Out
+            </a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 ml-64 flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="bg-surface-container-lowest dark:bg-surface-dim docked top-0 right-0 w-[calc(100%-256px)] border-b border-outline-variant flat no shadows flex justify-between items-center h-16 px-gutter ml-64 fixed z-10">
+<div class="flex items-center gap-6">
+<h2 class="text-headline-md font-headline-md font-semibold text-primary">Procurement Dashboard</h2>
+<nav class="flex gap-4">
+<a class="text-primary font-bold border-b-2 border-primary pb-1 hover:text-primary transition-all underline-offset-4" href="#">Dashboard</a>
+<a class="text-on-surface-variant font-medium hover:text-primary transition-all hover:underline-offset-4" href="#">Reports</a>
+<a class="text-on-surface-variant font-medium hover:text-primary transition-all hover:underline-offset-4" href="#">Archived</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant">search</span>
+<input class="pl-8 pr-3 py-1 bg-surface-container-high border-none rounded text-body-sm font-body-sm w-48 focus:ring-1 focus:ring-primary focus:outline-none" placeholder="Search..." type="text"/>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-variant border border-outline-variant overflow-hidden cursor-pointer">
+<img alt="Administrator Portrait" class="w-full h-full object-cover" data-alt="Administrator Portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBUHn4cVo_kkl18I7dsn2z_piYievjtA7GO06mg35CKcNu4RlbJBsFU1A6mt0I2VSn-jufY2t0mhRwgU4xxR2Whi91PEnqCapULjAdE_--JzB2qtOMoqkzxZIFquSJcafoCQQ3O_WNb0FVzaqSp5WU_B6UHLrBoVPxIzivyNzT-TTuLmWOIKSIgVba8SD-QpM5_2eYK6VmgrEoSIgYN4G4PcDknJTXFS1k26SK2gv9oGl2vmNDeYZqY"/>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<main class="flex-1 mt-16 p-container-padding lg:p-6 overflow-y-auto">
+<!-- Page Header -->
+<div class="mb-6">
+<div class="flex items-center gap-2 text-label-sm font-label-sm text-on-surface-variant mb-2">
+<span class="">Tendering</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="">Configuration</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-primary font-medium">CFG-04</span>
+</div>
+<h2 class="text-headline-lg font-headline-lg text-primary mb-1">Implementation Schedule</h2>
+<p class="text-body-md font-body-md text-on-surface-variant">Define the delivery approach, milestones, deliverables, timing, and acceptance checkpoints for this IT tender.</p>
+</div>
+<!-- Context Strip -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded shadow-sm mb-6 flex flex-wrap divide-x divide-outline-variant text-label-sm font-label-sm">
+<div class="px-4 py-3 flex-1 min-w-[150px]">
+<span class="text-on-surface-variant block mb-1">Procurement Package Ref</span>
+<span class="font-medium text-on-surface">PP-ICT-2024-009</span>
+</div>
+<div class="px-4 py-3 flex-1 min-w-[200px]">
+<span class="text-on-surface-variant block mb-1">Tender Title</span>
+<span class="font-medium text-on-surface truncate">Data Center Hardware Refresh</span>
+</div>
+<div class="px-4 py-3 flex-1 min-w-[150px] hidden md:block">
+<span class="text-on-surface-variant block mb-1">Procuring Entity</span>
+<span class="font-medium text-on-surface">National Treasury</span>
+</div>
+<div class="px-4 py-3 flex-1 min-w-[150px] hidden lg:block">
+<span class="text-on-surface-variant block mb-1">Procurement Method</span>
+<span class="font-medium text-on-surface">Open National Tender</span>
+</div>
+<div class="px-4 py-3 flex-1 min-w-[120px]">
+<span class="text-on-surface-variant block mb-1">Status</span>
+<span class="inline-flex items-center gap-1 bg-tertiary-fixed text-on-tertiary-fixed px-2 py-0.5 rounded-full">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                        In Progress
+                    </span>
+</div>
+<div class="px-4 py-3 flex-1 min-w-[120px]">
+<span class="text-on-surface-variant block mb-1">Issues</span>
+<span class="inline-flex items-center gap-1 text-error font-medium">
+<span class="material-symbols-outlined text-[14px]">error</span>
+                        1 Blocker
+                    </span>
+</div>
+</div>
+<!-- Bento Layout Content -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+<!-- Main Configuration Canvas (Spans 8 cols on XL) -->
+<div class="xl:col-span-8 flex flex-col gap-6">
+<!-- Delivery Approach -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded shadow-sm p-5">
+<h3 class="text-headline-md font-headline-md text-primary mb-4 border-b border-outline-variant pb-2">Delivery Approach</h3>
+<div class="flex gap-4">
+<label class="flex-1 cursor-pointer">
+<input class="sr-only peer" name="delivery_approach" type="radio"/>
+<div class="border border-outline-variant hover:border-outline bg-surface rounded p-4 flex items-start gap-3 transition-colors peer-checked:ring-1 peer-checked:ring-primary"><div class="mt-0.5 text-on-surface-variant"><span class="material-symbols-outlined">radio_button_unchecked</span></div><div><div class="font-medium text-on-surface text-body-md">Phased Delivery</div><div class="text-body-sm text-on-surface-variant mt-1">Delivery is broken down into sequential milestones with specific deliverables and acceptance criteria.</div></div></div>
+</label>
+<label class="flex-1 cursor-pointer">
+<input checked="checked" class="sr-only peer" name="delivery_approach" type="radio"/>
+<div class="border border-primary bg-primary-fixed/20 rounded p-4 flex items-start gap-3 transition-colors peer-checked:ring-1 peer-checked:ring-primary"><div class="mt-0.5 text-primary"><span class="material-symbols-outlined fill">radio_button_checked</span></div><div><div class="font-medium text-on-surface text-body-md">Single Turnkey Delivery</div><div class="text-body-sm text-on-surface-variant mt-1">Complete solution delivered at once. Suitable for straightforward goods supply without complex integration.</div></div></div>
+</label>
+</div>
+</div>
+<!-- Milestones Table -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded shadow-sm p-5 flex-1"><h3 class="text-headline-md font-headline-md text-primary mb-4 border-b border-outline-variant pb-2">Single Delivery Milestone</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div class="space-y-4"><div class="flex flex-col gap-1"><label class="text-label-sm font-label-sm text-on-surface-variant">Expected Delivery Duration</label><input class="px-3 py-2 bg-surface-container-low border border-outline-variant rounded text-body-md" placeholder="e.g., 6 months" type="text"/></div><div class="flex flex-col gap-1"><label class="text-label-sm font-label-sm text-on-surface-variant">Delivery Trigger</label><input class="px-3 py-2 bg-surface-container-low border border-outline-variant rounded text-body-md" placeholder="e.g., Contract signing and notice to proceed" type="text"/></div><div class="flex flex-col gap-1"><label class="text-label-sm font-label-sm text-on-surface-variant">Acceptance Expectation</label><select class="px-3 py-2 bg-surface-container-low border border-outline-variant rounded text-body-md"><option selected="">Acceptance defined</option><option>Acceptance pending</option></select></div></div><div class="space-y-4"><div class="flex flex-col gap-1"><label class="text-label-sm font-label-sm text-on-surface-variant">Key Deliverables</label><textarea class="px-3 py-2 bg-surface-container-low border border-outline-variant rounded text-body-md h-24" placeholder="e.g., Fully supplied, installed, configured..."></textarea></div><div class="flex flex-col gap-1"><label class="text-label-sm font-label-sm text-on-surface-variant">Acceptance Description</label><textarea class="px-3 py-2 bg-surface-container-low border border-outline-variant rounded text-body-md h-24" placeholder="e.g., Procuring Entity confirms delivery..."></textarea></div></div><div class="md:col-span-2 flex flex-col gap-1"><label class="text-label-sm font-label-sm text-on-surface-variant">Evidence Expected</label><textarea class="px-3 py-2 bg-surface-container-low border border-outline-variant rounded text-body-md h-20" placeholder="e.g., Completion report, test results..."></textarea></div><div class="md:col-span-2 flex flex-col gap-1"><label class="text-label-sm font-label-sm text-on-surface-variant">Notes to Bidders (Optional)</label><textarea class="px-3 py-2 bg-surface-container-low border border-outline-variant rounded text-body-md h-20"></textarea></div></div></div>
+</div>
+<!-- Right Guidance Panel (Spans 4 cols on XL) -->
+<div class="xl:col-span-4 flex flex-col gap-6">
+<div class="bg-surface-container-lowest border border-outline-variant rounded shadow-sm p-5 sticky top-20"><div class="flex items-center gap-2 mb-3"><span class="material-symbols-outlined text-primary">info</span><h3 class="text-headline-md font-headline-md text-primary">Implementation Schedule Guidance</h3></div><div class="text-body-sm font-body-sm text-on-surface-variant space-y-4"><p>Define how the successful bidder will deliver the solution. Keep this focused on planned milestones, deliverables, timing, and acceptance checkpoints. Actual delivery, inspection, payment, and contract administration happen after award.</p><div class="bg-surface-bright p-3 rounded border border-outline-variant/50"><p class="text-label-sm font-label-sm font-medium text-on-surface mb-1">What this affects:</p><ul class="list-disc pl-4 space-y-1"><li>Delivery Schedule Section in Tender Document</li><li>Technical Evaluation Criteria formulation</li></ul></div><div class="bg-surface-bright p-3 rounded border border-outline-variant/50"><p class="text-label-sm font-label-sm font-medium text-on-surface mb-1">Used later by:</p><ul class="list-disc pl-4 space-y-1"><li>Bidders (to formulate delivery plans)</li><li>Evaluation Committee</li><li>Contract Management System</li></ul></div><div class="bg-surface-bright p-3 rounded border border-outline-variant/50"><p class="text-label-sm font-label-sm font-medium text-on-surface mb-1 text-error">Not configured here:</p><ul class="list-disc pl-4 space-y-1 text-on-surface-variant/80"><li>Actual delivery tracking</li><li>Inspection records</li><li>Payment processing</li></ul><p class="text-[10px] mt-2 italic text-on-surface-variant/60">These occur post-award in Contract Administration.</p></div></div></div>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="mt-8 pt-4 border-t border-outline-variant flex justify-between items-center bg-surface sticky bottom-0 py-4 z-10">
+<button class="bg-surface border border-outline-variant text-on-surface hover:bg-surface-container px-4 py-2 rounded text-label-md font-label-md transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                    Back to Config Home
+                </button>
+<div class="flex gap-3">
+<button class="bg-surface border border-outline-variant text-on-surface hover:bg-surface-container px-4 py-2 rounded text-label-md font-label-md transition-colors">
+                        Save Draft
+                    </button>
+<button class="bg-surface border border-outline-variant text-primary hover:bg-surface-container px-4 py-2 rounded text-label-md font-label-md transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">fact_check</span>
+                        Run Check
+                    </button>
+<button class="bg-primary text-on-primary hover:bg-primary/90 px-4 py-2 rounded text-label-md font-label-md transition-colors flex items-center gap-2 shadow-sm">
+                        Continue to System Inventory
+                        <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</main>
+</div>
+</body></html>

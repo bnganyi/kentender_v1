@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link rel="stylesheet" href="/assets/kentender_procurement/css/kt_fonts.css"/><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "status-committed": "#6366F1",
+                      "status-exhausted": "#EF4444",
+                      "status-reserved": "#F59E0B",
+                      "on-secondary-fixed-variant": "#004a78",
+                      "on-tertiary-fixed": "#0b1c30",
+                      "on-secondary-fixed": "#001d34",
+                      "primary-fixed": "#d7e2ff",
+                      "surface-container-high": "#e8e7ed",
+                      "on-surface": "#1a1b20",
+                      "background": "#f9f9fe",
+                      "on-primary-fixed": "#001b3f",
+                      "on-primary-container": "#7b9ee0",
+                      "outline": "#737781",
+                      "surface-tint": "#395e9b",
+                      "on-surface-variant": "#434750",
+                      "primary-container": "#00346f",
+                      "primary": "#001f48",
+                      "inverse-on-surface": "#f1f0f6",
+                      "tertiary-fixed": "#d3e4ff",
+                      "secondary-container": "#7bbeff",
+                      "surface-container-highest": "#e2e2e8",
+                      "surface-container": "#eceef0",
+                      "outline-variant": "#c3c6d1",
+                      "on-secondary-container": "#004c7c",
+                      "inverse-primary": "#abc7ff",
+                      "on-background": "#1a1b20",
+                      "on-primary-fixed-variant": "#1d4681",
+                      "on-tertiary": "#ffffff",
+                      "on-error-container": "#93000a",
+                      "inverse-surface": "#2f3035",
+                      "primary-fixed-dim": "#abc7ff",
+                      "on-tertiary-container": "#8f9fb8",
+                      "surface-dim": "#dad9df",
+                      "surface-container-lowest": "#ffffff",
+                      "surface": "#f9f9fe",
+                      "on-tertiary-fixed-variant": "#38485e",
+                      "secondary-fixed": "#cfe5ff",
+                      "error-container": "#ffdad6",
+                      "border-subtle": "#E2E8F0",
+                      "tertiary": "#102135",
+                      "on-secondary": "#ffffff",
+                      "error": "#ba1a1a",
+                      "surface-variant": "#e2e2e8",
+                      "on-primary": "#ffffff",
+                      "tertiary-container": "#26364b",
+                      "secondary-fixed-dim": "#99cbff",
+                      "tertiary-fixed-dim": "#b7c8e2",
+                      "surface-container-low": "#f4f3f9",
+                      "surface-bright": "#f9f9fe",
+                      "status-available": "#10B981",
+                      "secondary": "#01629d",
+                      "on-error": "#ffffff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "12px",
+                      "container-padding": "16px",
+                      "unit": "4px",
+                      "card-padding": "20px",
+                      "section-gap": "24px"
+              },
+              "fontFamily": {
+                      "headline-lg-mobile": [
+                              "Manrope"
+                      ],
+                      "headline-lg": [
+                              "Manrope"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "data-mono": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-md": [
+                              "Manrope"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-sm": [
+                              "Manrope"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-lg": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "data-mono": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-md": [
+                              "22px",
+                              {
+                                      "lineHeight": "30px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-sm": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+            }
+          }
+        }
+    }catch(_e){}</script></head><body class="bg-background text-on-background font-body-md min-h-screen flex flex-col">
+<!-- TopAppBar Component -->
+<header class="bg-surface text-primary border-b border-subtle flex justify-between items-center w-full px-container-padding h-16 sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]" data-icon="arrow_back" data-original-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="text-headline-sm font-headline-sm font-bold text-primary">Review &amp; Approval</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors flex items-center justify-center relative">
+<span class="material-symbols-outlined text-[24px]" data-icon="notifications" data-original-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]" data-icon="help_outline" data-original-icon="help_outline">help_outline</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors flex items-center justify-center ml-2">
+<span class="material-symbols-outlined text-[32px] text-primary" data-icon="account_circle" data-weight="fill">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Context Header -->
+<div class="bg-surface-container-lowest border-b border-subtle px-container-padding py-3 shadow-sm z-40">
+<div class="max-w-7xl mx-auto flex flex-wrap items-center gap-x-6 gap-y-2 text-label-caps font-label-caps text-on-surface-variant"><div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Tender Ref</span>
+<span class="font-data-mono text-data-mono text-on-surface">—</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Tender Title</span>
+<span class="font-body-md text-body-md text-on-surface font-medium">—</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Planning Package Ref</span>
+<span class="font-data-mono text-data-mono text-on-surface">—</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Procuring Entity</span>
+<span class="font-body-md text-body-md text-on-surface">—</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Procurement Method</span>
+<span class="font-body-md text-body-md text-on-surface">—</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Wizard State</span>
+<span class="font-data-mono text-data-mono text-primary">READY_FOR_REVIEW</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps uppercase text-primary font-bold">Validation Summary</span>
+<span class="font-body-md text-body-md text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-status-reserved">warning</span>
+0 Blockers / 3 Warnings
+</span>
+</div></div>
+</div>
+<!-- Main Layout -->
+<main class="flex-1 flex flex-col lg:flex-row max-w-screen-2xl mx-auto w-full">
+<!-- Center Content Canvas -->
+<div class="flex-1 flex flex-col min-w-0 p-container-padding lg:p-section-gap gap-section-gap">
+<!-- Summary Cards (Bento Grid) -->
+<section aria-label="Review Summary">
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-gutter">
+<!-- Review Status -->
+<div class="bg-surface-container-lowest border border-subtle rounded-lg p-card-padding flex flex-col gap-2 relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-1 h-full bg-status-reserved"></div>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]" data-icon="pending_actions">pending_actions</span>
+<h3 class="text-label-caps font-label-caps uppercase">Review Status</h3>
+</div>
+<div class="mt-1">
+<span class="text-headline-md font-headline-md text-status-reserved">Under Review</span>
+</div>
+</div>
+<!-- Validation Status -->
+<div class="bg-surface-container-lowest border border-subtle rounded-lg p-card-padding flex flex-col gap-2 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-status-reserved"></div>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]" data-icon="fact_check">fact_check</span>
+<h3 class="text-label-caps font-label-caps uppercase">Validation Status</h3>
+</div>
+<div class="mt-1">
+<span class="text-body-lg font-body-lg font-semibold text-on-surface">Passed with Warnings</span>
+</div>
+</div>
+<!-- Pending Reviewers -->
+<div class="bg-surface-container-lowest border border-subtle rounded-lg p-card-padding flex flex-col gap-2">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]" data-icon="group">group</span>
+<h3 class="text-label-caps font-label-caps uppercase">Pending Reviewers</h3>
+</div>
+<div class="mt-1">
+<span class="font-data-mono text-[24px] font-bold text-on-surface">2</span>
+</div>
+</div>
+<!-- Returned Issues -->
+<div class="bg-surface-container-lowest border border-subtle rounded-lg p-card-padding flex flex-col gap-2">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]" data-icon="assignment_return">assignment_return</span>
+<h3 class="text-label-caps font-label-caps uppercase">Returned Issues</h3>
+</div>
+<div class="mt-1">
+<span class="font-data-mono text-[24px] font-bold text-on-surface">0</span>
+</div>
+</div>
+<!-- Last Review Action (Spans 2 cols on md, 1 on lg) -->
+<div class="bg-surface-container-lowest border border-subtle rounded-lg p-card-padding flex flex-col gap-2 col-span-2 md:col-span-4 lg:col-span-1">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]" data-icon="history">history</span>
+<h3 class="text-label-caps font-label-caps uppercase">Last Action</h3>
+</div>
+<div class="mt-1 flex flex-col">
+<span class="text-body-md font-body-md text-on-surface truncate">Procurement Review submitted</span>
+<span class="font-data-mono text-[12px] text-outline mt-1">2026-07-12 14:45</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Approval Workflow Tracker -->
+<section class="bg-surface-container-lowest border border-subtle rounded-lg overflow-hidden flex flex-col shadow-sm">
+<div class="p-4 border-b border-subtle bg-surface-container-low flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="account_tree">account_tree</span>
+<h2 class="text-headline-sm font-headline-sm font-semibold text-on-surface">Approval Workflow Tracker</h2>
+</div>
+</div>
+<div class="overflow-x-auto custom-scrollbar">
+<table class="w-full text-left border-collapse min-w-[800px]">
+<thead>
+<tr class="bg-surface text-label-caps font-label-caps text-on-surface-variant border-b border-subtle">
+<th class="p-4 font-semibold w-1/4">Stage</th>
+<th class="p-4 font-semibold w-1/4">Reviewer Role</th>
+<th class="p-4 font-semibold w-[15%]">Status</th>
+<th class="p-4 font-semibold w-[15%]">Decision</th>
+<th class="p-4 font-semibold w-[20%] text-right">Action Date</th>
+</tr>
+</thead>
+<tbody class="text-body-md font-body-md text-on-surface divide-y divide-subtle">
+<!-- Row 1: Complete -->
+<tr class="hover:bg-surface transition-colors group">
+<td class="p-4">
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 rounded-full bg-status-available/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[14px] text-status-available" data-icon="check">check</span>
+</div>
+<span class="font-medium">Procurement Review</span>
+</div>
+</td>
+<td class="p-4 text-on-surface-variant">Procurement Reviewer</td>
+<td class="p-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-medium bg-status-available/10 text-status-available border border-status-available/20">Complete</span>
+</td>
+<td class="p-4 font-medium text-on-surface">Approved</td>
+<td class="p-4 text-right font-data-mono text-outline">2026-07-12</td>
+</tr>
+<!-- Row 2: Pending (Active) -->
+<tr class="hover:bg-surface transition-colors bg-primary-fixed/30 group relative bg-primary-fixed/20">
+<td class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></td>
+<td class="p-4">
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/30">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+</div>
+<span class="font-medium text-primary">Technical Review</span>
+</div>
+</td>
+<td class="p-4 text-on-surface-variant">ICT Reviewer</td>
+<td class="p-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-medium bg-status-reserved/10 text-status-reserved border border-status-reserved/20">Pending</span>
+</td>
+<td class="p-4 text-outline">—</td>
+<td class="p-4 text-right font-data-mono text-outline">—</td>
+</tr>
+<!-- Row 3: Pending -->
+<tr class="hover:bg-surface transition-colors group">
+<td class="p-4">
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 rounded-full border border-outline-variant flex items-center justify-center shrink-0">
+</div>
+<span class="text-on-surface-variant">Legal / Compliance Review</span>
+</div>
+</td>
+<td class="p-4 text-on-surface-variant">Legal Reviewer</td>
+<td class="p-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-medium bg-status-reserved/10 text-status-reserved border border-status-reserved/20">Pending</span>
+</td>
+<td class="p-4 text-outline">—</td>
+<td class="p-4 text-right font-data-mono text-outline">—</td>
+</tr>
+<!-- Row 4: Not Started -->
+<tr class="hover:bg-surface transition-colors group">
+<td class="p-4">
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 rounded-full border border-outline-variant flex items-center justify-center shrink-0 opacity-50">
+</div>
+<span class="text-outline">Final Configuration Approval</span>
+</div>
+</td>
+<td class="p-4 text-outline">Approving Authority</td>
+<td class="p-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-medium bg-surface-container text-on-surface-variant border border-outline-variant">Not Started</span>
+</td>
+<td class="p-4 text-outline">—</td>
+<td class="p-4 text-right font-data-mono text-outline">—</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Review Findings Table -->
+<section class="bg-surface-container-lowest border border-subtle rounded-lg overflow-hidden flex flex-col shadow-sm">
+<div class="p-4 border-b border-subtle bg-surface-container-low flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="fact_check">fact_check</span>
+<h2 class="text-headline-sm font-headline-sm font-semibold text-on-surface">Review Findings</h2>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center justify-center p-1.5 text-on-surface-variant hover:bg-surface rounded-md border border-subtle" title="Filter Findings">
+<span class="material-symbols-outlined text-[20px]" data-icon="filter_list">filter_list</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto custom-scrollbar max-h-[400px]">
+<table class="w-full text-left border-collapse min-w-[1000px]">
+<thead class="sticky top-0 bg-surface z-10 shadow-sm">
+<tr class="text-label-caps font-label-caps text-on-surface-variant border-b border-subtle">
+<th class="p-4 font-semibold w-[25%]">Finding</th>
+<th class="p-4 font-semibold w-[15%]">Raised By</th>
+<th class="p-4 font-semibold w-[10%]">Severity</th><th class="p-4 font-semibold w-[15%]">Required Correction</th>
+<th class="p-4 font-semibold w-[15%]">Related Screen</th>
+<th class="p-4 font-semibold w-[15%]">Status</th>
+<th class="p-4 font-semibold w-[20%] text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="text-body-md font-body-md text-on-surface divide-y divide-subtle">
+<!-- Finding 1: Blocker (Open) -->
+<tr class="hover:bg-surface transition-colors group">
+<td class="p-4 align-top">
+<div class="flex flex-col gap-1">
+<span class="font-medium text-on-surface">Warranty period must be confirmed</span>
+<span class="text-[12px] text-outline">Complete warranty period before approval</span>
+</div>
+</td>
+<td class="p-4 align-top text-on-surface-variant">Legal Reviewer</td>
+<td class="p-4 align-top">
+<div class="flex items-center gap-1.5 text-status-exhausted">
+<span class="material-symbols-outlined text-[16px]" data-icon="cancel" data-weight="fill">cancel</span>
+<span class="text-[12px] font-medium uppercase">Blocker</span>
+</div>
+</td><td class="p-4 align-top text-on-surface-variant">Update warranty duration in Section VI</td>
+<td class="p-4 align-top">
+<span class="inline-block bg-surface-container px-2 py-1 rounded text-[12px] text-on-surface-variant border border-outline-variant">SCC / Contract Carry-Forward</span>
+</td>
+<td class="p-4 align-top">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[12px] font-medium bg-error-container text-on-error-container">Open</span>
+</td>
+<td class="p-4 align-top text-right">
+<button class="inline-flex items-center justify-center px-3 py-1.5 bg-primary text-on-primary rounded text-label-caps font-label-caps font-semibold hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm">
+                                        Fix
+                                    </button>
+</td>
+</tr>
+<!-- Finding 2: Warning (Open) -->
+<tr class="hover:bg-surface transition-colors group">
+<td class="p-4 align-top">
+<div class="flex flex-col gap-1">
+<span class="font-medium text-on-surface">Technical evidence instruction needs clarification</span>
+<span class="text-[12px] text-outline">Clarify accepted evidence format</span>
+</div>
+</td>
+<td class="p-4 align-top text-on-surface-variant">ICT Reviewer</td>
+<td class="p-4 align-top">
+<div class="flex items-center gap-1.5 text-status-reserved">
+<span class="material-symbols-outlined text-[16px]" data-icon="warning" data-weight="fill">warning</span>
+<span class="text-[12px] font-medium uppercase">Warning</span>
+</div>
+</td><td class="p-4 align-top text-on-surface-variant">Clarify if PDF or ZIP is required</td>
+<td class="p-4 align-top">
+<span class="inline-block bg-surface-container px-2 py-1 rounded text-[12px] text-on-surface-variant border border-outline-variant">Forms &amp; Evidence</span>
+</td>
+<td class="p-4 align-top">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[12px] font-medium bg-surface-container-highest text-on-surface">Open</span>
+</td>
+<td class="p-4 align-top text-right">
+<button class="inline-flex items-center justify-center px-3 py-1.5 border border-outline-variant text-primary rounded text-label-caps font-label-caps font-semibold hover:bg-primary-fixed hover:border-primary transition-colors">
+                                        Review
+                                    </button>
+</td>
+</tr>
+<!-- Finding 3: Warning (Accepted) -->
+<tr class="hover:bg-surface transition-colors group opacity-70 hover:opacity-100">
+<td class="p-4 align-top">
+<div class="flex flex-col gap-1">
+<span class="font-medium text-on-surface line-through decoration-outline">Price schedule warning accepted</span>
+<span class="text-[12px] text-outline">Accepted with justification</span>
+</div>
+</td>
+<td class="p-4 align-top text-on-surface-variant">Procurement Reviewer</td>
+<td class="p-4 align-top">
+<div class="flex items-center gap-1.5 text-status-reserved">
+<span class="material-symbols-outlined text-[16px]" data-icon="warning">warning</span>
+<span class="text-[12px] font-medium uppercase">Warning</span>
+</div>
+</td><td class="p-4 align-top text-on-surface-variant">N/A - Justification provided</td>
+<td class="p-4 align-top">
+<span class="inline-block bg-surface-container px-2 py-1 rounded text-[12px] text-on-surface-variant border border-outline-variant">Price Schedule</span>
+</td>
+<td class="p-4 align-top">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[12px] font-medium bg-status-available/10 text-status-available">Accepted</span>
+</td>
+<td class="p-4 align-top text-right">
+<button class="inline-flex items-center justify-center px-3 py-1.5 text-on-surface-variant rounded text-label-caps font-label-caps font-semibold hover:bg-surface-container-high transition-colors">
+                                        View
+                                    </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+<!-- Right Guidance Panel & Actions Sidebar -->
+<aside class="w-full lg:w-80 lg:min-w-[320px] bg-surface-container-lowest border-l border-subtle flex flex-col shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.05)] z-30">
+<div class="p-5 flex flex-col gap-6 sticky top-16 h-[calc(100vh-64px)] overflow-y-auto custom-scrollbar">
+<!-- Status Overview Block -->
+<div class="flex flex-col gap-4">
+<h3 class="text-label-caps font-label-caps text-on-surface-variant uppercase tracking-wider">Current State</h3>
+<div class="bg-surface-container-low rounded-lg p-4 border border-outline-variant/50 flex flex-col gap-3">
+<div class="flex justify-between items-center">
+<span class="text-[13px] text-on-surface-variant">Review Status</span>
+<span class="font-semibold text-status-reserved text-[13px]">Under Review</span>
+</div>
+<div class="h-px w-full bg-border-subtle"></div>
+<div class="flex justify-between items-start gap-2">
+<span class="text-[13px] text-on-surface-variant shrink-0">Current Stage</span>
+<span class="font-medium text-on-surface text-[13px] text-right">Technical Review</span>
+</div>
+<div class="h-px w-full bg-border-subtle"></div>
+<div class="flex justify-between items-start gap-2">
+<span class="text-[13px] text-on-surface-variant shrink-0">Pending Action</span>
+<span class="font-medium text-on-surface text-[13px] text-right">ICT Reviewer decision</span>
+</div>
+</div>
+</div>
+<!-- Validation Summary Block -->
+<div class="flex flex-col gap-4">
+<h3 class="text-label-caps font-label-caps text-on-surface-variant uppercase tracking-wider">Validation Gates</h3>
+<div class="bg-surface-container-low rounded-lg p-4 border border-outline-variant/50 flex flex-col gap-3">
+<div class="flex justify-between items-center">
+<span class="text-[13px] text-on-surface-variant">Validation</span>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px] text-status-reserved" data-icon="warning">warning</span>
+<span class="font-medium text-on-surface text-[13px]">0 Blockers / 0 Warnings</span>
+</div>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-[13px] text-on-surface-variant">Warnings Accepted</span>
+<span class="font-data-mono text-[13px] text-on-surface">1</span>
+</div>
+<div class="h-px w-full bg-border-subtle my-1"></div>
+<div class="flex justify-between items-center">
+<span class="text-[13px] text-on-surface-variant">Render Ready</span>
+<span class="inline-flex px-1.5 py-0.5 bg-surface-variant text-on-surface-variant rounded text-[11px] font-bold uppercase">No</span>
+</div>
+</div>
+</div>
+<!-- Assurance Note -->
+<div class="bg-primary-fixed/20 border-l-4 border-primary rounded-r p-3 mt-2 flex gap-2">
+<span class="material-symbols-outlined text-primary text-[20px] shrink-0 mt-0.5" data-icon="info">info</span>
+<p class="text-[12px] text-on-primary-fixed-variant leading-relaxed">
+                        Review &amp; Approval confirms the tender configuration workflow. Tender publication is handled later after render preview.
+                    </p>
+</div>
+<!-- Spacer -->
+<div class="flex-grow"></div>
+<!-- Primary Actions (Contextual based on role - showing Reviewer view + common actions) -->
+<div class="flex flex-col gap-3 mt-6 border-t border-subtle pt-6">
+<!-- Disabled state example for Main Action -->
+<button class="w-full py-2.5 px-4 bg-surface-variant text-on-surface-variant opacity-50 cursor-not-allowed rounded-md font-semibold text-body-md flex items-center justify-center gap-2" disabled="">
+<span class="material-symbols-outlined text-[20px]" data-icon="send">send</span>
+                        Submit for Review
+                    </button>
+<!-- Reviewer Actions -->
+<div class="flex flex-col gap-2 mt-2">
+<h4 class="text-[11px] font-bold text-outline uppercase tracking-wider mb-1">Reviewer Actions</h4>
+<button class="w-full py-2 px-4 bg-primary text-on-primary rounded-md font-semibold text-body-md hover:bg-primary-container transition-colors shadow-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="thumb_up">thumb_up</span>
+                            Approve Stage
+                        </button>
+<div class="grid grid-cols-2 gap-2">
+<button class="py-2 px-3 bg-surface text-error border border-error/30 rounded-md font-semibold text-[13px] hover:bg-error-container transition-colors flex items-center justify-center gap-1.5"><span class="material-symbols-outlined text-[16px]" data-icon="assignment_return">assignment_return</span>Return for Correction</button>
+<button class="py-2 px-3 bg-surface text-primary border border-primary/30 rounded-md font-semibold text-[13px] hover:bg-primary-fixed transition-colors flex items-center justify-center gap-1.5"><span class="material-symbols-outlined text-[16px]" data-icon="help">help</span>Request Clarification</button>
+</div>
+</div>
+<!-- Utility Actions -->
+<div class="flex flex-col gap-2 mt-4 pt-4 border-t border-subtle">
+<button class="w-full py-2 px-4 bg-surface text-on-surface-variant border border-outline-variant rounded-md font-medium text-[13px] hover:bg-surface-container-high transition-colors flex items-center gap-2 text-left">
+<span class="material-symbols-outlined text-[18px]" data-icon="description">description</span>
+                            View Validation Report
+                        </button>
+<button class="w-full py-2 px-4 bg-surface text-on-surface-variant border border-outline-variant rounded-md font-medium text-[13px] hover:bg-surface-container-high transition-colors flex items-center gap-2 text-left">
+<span class="material-symbols-outlined text-[18px]" data-icon="manage_search">manage_search</span>
+                            View Review History
+                        </button>
+</div>
+<!-- Next Step -->
+<button class="w-full mt-4 py-3 px-4 bg-surface-variant text-on-surface-variant opacity-50 cursor-not-allowed rounded-md font-bold text-body-md flex items-center justify-between border border-outline-variant/30" disabled="" title="Requires APPROVED_FOR_RENDER state">
+                        Continue to Render Preview
+                        <span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</div>
+        &lt;/</aside></main></body></html>

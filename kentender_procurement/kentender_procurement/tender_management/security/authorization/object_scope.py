@@ -161,6 +161,8 @@ class ObjectScopeService:
 			return _outcome_deny("Actor and instance code are required.")
 		if _break_glass(act):
 			return _outcome_ok()
+		if not frappe.db.exists("DocType", "Tender STD Instance"):
+			return _outcome_deny(_("IT Tender Configuration Wizard is retired; STD instance scope is unavailable."))
 		if not frappe.db.exists("Tender STD Instance", inst):
 			return _outcome_deny(f"Tender STD Instance {inst!r} not found.")
 		row = frappe.db.get_value(

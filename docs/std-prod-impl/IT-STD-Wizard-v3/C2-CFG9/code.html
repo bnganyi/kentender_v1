@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en" style=""><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"/><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container": "#eceef0",
+                        "primary-fixed": "#d4e3ff",
+                        "inverse-surface": "#2d3133",
+                        "secondary-container": "#d2e1fa",
+                        "tertiary": "#030a1d",
+                        "primary-container": "#002244",
+                        "on-surface-variant": "#43474e",
+                        "on-secondary-container": "#556379",
+                        "on-background": "#191c1e",
+                        "surface-container-highest": "#e0e3e5",
+                        "surface-variant": "#e0e3e5",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "surface-container-high": "#e6e8ea",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed": "#dae2fd",
+                        "on-surface": "#191c1e",
+                        "tertiary-container": "#192135",
+                        "secondary-fixed": "#d5e3fc",
+                        "surface-bright": "#f7f9fb",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-container": "#8088a1",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "error": "#ba1a1a",
+                        "surface": "#f7f9fb",
+                        "on-error": "#ffffff",
+                        "primary-fixed-dim": "#adc8f3",
+                        "outline-variant": "#c4c6cf",
+                        "on-primary-container": "#708ab2",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed-variant": "#2d486c",
+                        "inverse-on-surface": "#eff1f3",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "outline": "#74777f",
+                        "on-tertiary-fixed": "#131b2f",
+                        "tertiary-fixed-dim": "#bec6e0",
+                        "surface-tint": "#456085",
+                        "inverse-primary": "#adc8f3",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-low": "#f2f4f6",
+                        "secondary": "#515f74",
+                        "surface-dim": "#d8dadc",
+                        "primary": "#000b1d",
+                        "background": "#f7f9fb",
+                        "on-tertiary-fixed-variant": "#3e465c",
+                        "on-primary-fixed": "#001c3a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "table-row-height": "32px",
+                        "input-height": "28px",
+                        "component-gap": "8px",
+                        "gutter": "12px",
+                        "unit": "4px",
+                        "container-padding": "16px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Public Sans"],
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-lg": ["Public Sans"],
+                        "display": ["Public Sans"],
+                        "label-md": ["JetBrains Mono"],
+                        "body-lg": ["Public Sans"],
+                        "headline-md": ["Public Sans"],
+                        "body-sm": ["Public Sans"]
+                    },
+                    "fontSize": {
+                        "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    }catch(_e){}</script><meta charset="utf-8"/></head><body class="bg-surface font-body-md text-on-surface">
+<!-- Side Navigation -->
+<aside class="fixed h-full w-[256px] left-0 top-0 bg-surface-container-lowest border-r border-outline-variant flex flex-col py-container-padding px-gutter z-50">
+<div class="mb-8 px-unit">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">KenTender Configuration</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Public Procurement Portal</p>
+</div>
+<nav class="flex-1 space-y-1">
+<div class="flex items-center gap-unit text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 p-2 rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">assignment</span>
+<span class="font-label-md text-label-md">Planning</span>
+</div>
+<div class="flex items-center gap-unit text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 p-2 rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">shopping_cart</span>
+<span class="font-label-md text-label-md">Demand Management</span>
+</div>
+<div class="flex items-center gap-unit text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 p-2 rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">gavel</span>
+<span class="font-label-md text-label-md">Tendering</span>
+</div>
+<div class="flex items-center gap-unit border-r-4 border-primary bg-primary-fixed-dim/20 text-on-primary-fixed font-bold p-2 rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">fact_check</span>
+<span class="font-label-md text-label-md">Evaluation</span>
+</div>
+<div class="flex items-center gap-unit text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 p-2 rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">description</span>
+<span class="font-label-md text-label-md">Contracting</span>
+</div>
+<div class="flex items-center gap-unit text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 p-2 rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">storefront</span>
+<span class="font-label-md text-label-md">Vendor Portal</span>
+</div>
+</nav>
+<div class="mt-auto border-t border-outline-variant pt-4 space-y-1">
+<div class="flex items-center gap-unit text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 p-2 rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">System Settings</span>
+</div>
+<div class="flex items-center gap-unit text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 p-2 rounded-lg cursor-pointer">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-md text-label-md">Audit Logs</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-[256px] min-h-screen flex flex-col pb-20"><div class="fixed inset-0 bg-primary/5 z-40 pointer-events-none"></div>
+<!-- Top App Bar -->
+<header class="flex justify-between items-center h-[56px] px-container-padding bg-surface-container-lowest border-b border-outline-variant sticky top-0 z-40">
+<div class="flex items-center gap-4">
+<h2 class="font-headline-md text-headline-md font-bold text-primary">Civic Ledger Procurement</h2>
+<div class="h-6 w-px bg-outline-variant"></div>
+<span class="font-label-md text-label-md text-on-surface-variant">Module: CFG-09</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<input class="h-8 w-64 bg-surface-container-low border border-outline-variant rounded-lg px-3 text-body-sm focus:ring-1 focus:ring-secondary-container outline-none transition-all" placeholder="Search parameters..." type="text"/>
+<span class="material-symbols-outlined absolute right-2 top-1.5 text-on-surface-variant text-[18px]">search</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary">help_outline</span>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img alt="Administrator Profile" class="" data-alt="A professional headshot of a government administrator in a dark navy suit with a neutral background, lit by soft directional office lighting. The individual has a serious and authoritative expression, embodying the trustworthy and institutional persona of the Civic Ledger brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAx4hhhVQjFXj-PRceB4rjL5siJZiy2TcOABhOQ7nxmE1LqBu6GCU0Qa-uJ78Yf2baUbVWKZx7O97pioASki0dXPcrYvjovyS4DYNqKkSQoMz-ExABJJlrpSCCP9cTiZm7fMEd0JhvYY0to0Asmpnv7La7ijWG4jMo0gOzPX365On29K6siSWVEWgbOV2ilys5eoqzOKqO1z4-A2lsfRALvvfBfPafOuxLQi_RvgyBPmbV6cuZwBIat"/>
+</div>
+</div>
+</header>
+<!-- Page Header & Title Section -->
+<section class="p-container-padding space-y-4">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-primary">Contract Values</h1>
+<p class="text-on-surface-variant font-body-md">Confirm the tender-specific contract values and obligations that will appear in the contract documents.</p>
+</div>
+<!-- Context Strip -->
+<div class="flex items-center flex-wrap gap-y-2 bg-surface-container-lowest border border-outline-variant p-3 rounded-lg divide-x divide-outline-variant overflow-x-auto shadow-sm">
+<div class="px-4 first:pl-0 flex flex-col">
+<span class="text-[10px] font-label-sm uppercase text-on-surface-variant">Config Ref</span>
+<span class="text-body-sm font-bold">TC-2026-0041</span>
+</div>
+<div class="px-4 flex flex-col">
+<span class="text-[10px] font-label-sm uppercase text-on-surface-variant">Package Ref</span>
+<span class="text-body-sm font-bold">PP-ICT-2026-009</span>
+</div>
+<div class="px-4 flex flex-col max-w-[200px]">
+<span class="text-[10px] font-label-sm uppercase text-on-surface-variant">Tender Title</span>
+<span class="text-body-sm font-bold truncate">Data Center Hardware Refresh</span>
+</div>
+<div class="px-4 flex flex-col">
+<span class="text-[10px] font-label-sm uppercase text-on-surface-variant">STD Family</span>
+<span class="text-body-sm font-bold">Information Technology</span>
+</div>
+<div class="px-4 flex flex-col">
+<span class="text-[10px] font-label-sm uppercase text-on-surface-variant">Procuring Entity</span>
+<span class="text-body-sm font-bold">National Treasury</span>
+</div>
+<div class="px-4 flex flex-col">
+<span class="text-[10px] font-label-sm uppercase text-on-surface-variant">Method</span>
+<span class="text-body-sm font-bold">Open National</span>
+</div>
+<div class="px-4 flex flex-col">
+<span class="text-[10px] font-label-sm uppercase text-on-surface-variant">Wizard State</span>
+<div class="flex items-center gap-1.5">
+<span class="status-dot bg-secondary"></span>
+<span class="text-body-sm font-bold">In Progress</span>
+</div>
+</div>
+<div class="px-4 last:pr-0 flex flex-col">
+<span class="text-[10px] font-label-sm uppercase text-on-surface-variant">Issues</span>
+<div class="flex items-center gap-2">
+<span class="bg-error/10 text-error px-1.5 rounded text-[10px] font-bold">1 BLOCKER</span>
+<span class="bg-secondary-container text-on-secondary-container px-1.5 rounded text-[10px] font-bold">2 WARNINGS</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Main Workspace: Bento Grid -->
+<section class="flex-1 px-container-padding grid grid-cols-12 gap-gutter pb-8">
+<!-- Left: Table Workspace (Col 1-9) -->
+<div class="col-span-9 space-y-4">
+<!-- Table Tabs -->
+<div class="flex items-center border-b border-outline-variant overflow-x-auto no-scrollbar">
+<button class="px-4 py-2 border-b-2 border-primary text-primary font-bold text-label-md whitespace-nowrap">All Contract Values</button>
+<button class="px-4 py-2 text-on-surface-variant hover:text-primary transition-colors text-label-md whitespace-nowrap">SCC Values</button>
+<button class="px-4 py-2 text-on-surface-variant hover:text-primary transition-colors text-label-md whitespace-nowrap">Delivery Obligations</button>
+<button class="px-4 py-2 text-on-surface-variant hover:text-primary transition-colors text-label-md whitespace-nowrap">Support &amp; Warranty</button>
+<button class="px-4 py-2 text-on-surface-variant hover:text-primary transition-colors text-label-md whitespace-nowrap">Securities &amp; Guarantees</button>
+<button class="px-4 py-2 text-on-surface-variant hover:text-primary transition-colors text-label-md whitespace-nowrap">Contract Schedules</button>
+<button class="px-4 py-2 text-error font-bold flex items-center gap-1 text-label-md whitespace-nowrap">
+                        Needs Attention
+                        <span class="bg-error text-on-error px-1.5 rounded-full text-[9px]">2</span>
+</button>
+</div>
+<!-- High-Density Data Table -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden shadow-sm">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-bright border-b border-outline-variant">
+<tr>
+<th class="px-4 py-2 text-[10px] font-label-sm uppercase text-on-surface-variant tracking-wider">Item</th>
+<th class="px-4 py-2 text-[10px] font-label-sm uppercase text-on-surface-variant tracking-wider">Category</th>
+<th class="px-4 py-2 text-[10px] font-label-sm uppercase text-on-surface-variant tracking-wider">Source</th>
+<th class="px-4 py-2 text-[10px] font-label-sm uppercase text-on-surface-variant tracking-wider">Contract Location</th>
+<th class="px-4 py-2 text-[10px] font-label-sm uppercase text-on-surface-variant tracking-wider">Value / Obligation</th>
+<th class="px-4 py-2 text-[10px] font-label-sm uppercase text-on-surface-variant tracking-wider text-center">Status</th>
+<th class="px-4 py-2 text-[10px] font-label-sm uppercase text-on-surface-variant tracking-wider text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/30">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-bright/50 transition-colors group">
+<td class="px-4 py-3 font-bold text-body-sm">Performance Security</td>
+<td class="px-4 py-3 text-body-sm">Securities &amp; Guarantees</td>
+<td class="px-4 py-3 text-body-sm text-on-surface-variant">Tender Data Sheet</td>
+<td class="px-4 py-3 text-body-sm italic">SCC / Contract Data</td>
+<td class="px-4 py-3 text-body-sm">10% of contract price</td>
+<td class="px-4 py-3">
+<div class="flex items-center justify-center gap-2 px-2 py-1 rounded bg-green-50">
+<span class="status-dot bg-green-600"></span>
+<span class="text-[10px] font-bold text-green-700">COMPLETE</span>
+</div>
+</td>
+<td class="px-4 py-3 text-right">
+<button class="text-primary hover:underline font-label-md text-label-md">Edit</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-bright/50 transition-colors group">
+<td class="px-4 py-3 font-bold text-body-sm">Delivery Period</td>
+<td class="px-4 py-3 text-body-sm">SCC Value</td>
+<td class="px-4 py-3 text-body-sm text-on-surface-variant">Implementation Schedule</td>
+<td class="px-4 py-3 text-body-sm italic">SCC / Delivery Schedule</td>
+<td class="px-4 py-3 text-body-sm">6 months from notice to proceed</td>
+<td class="px-4 py-3">
+<div class="flex items-center justify-center gap-2 px-2 py-1 rounded bg-green-50">
+<span class="status-dot bg-green-600"></span>
+<span class="text-[10px] font-bold text-green-700">COMPLETE</span>
+</div>
+</td>
+<td class="px-4 py-3 text-right">
+<button class="text-primary hover:underline font-label-md text-label-md">Edit</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-bright/50 transition-colors group">
+<td class="px-4 py-3 font-bold text-body-sm">On-site Support</td>
+<td class="px-4 py-3 text-body-sm">Support &amp; Warranty</td>
+<td class="px-4 py-3 text-body-sm text-on-surface-variant">IT Requirements</td>
+<td class="px-4 py-3 text-body-sm italic">Contract Schedule: Support</td>
+<td class="px-4 py-3 text-body-sm">3 years next-business-day on-site support</td>
+<td class="px-4 py-3">
+<div class="flex items-center justify-center gap-2 px-2 py-1 rounded bg-green-50">
+<span class="status-dot bg-green-600"></span>
+<span class="text-[10px] font-bold text-green-700">COMPLETE</span>
+</div>
+</td>
+<td class="px-4 py-3 text-right">
+<button class="text-primary hover:underline font-label-md text-label-md">Edit</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-bright/50 transition-colors group">
+<td class="px-4 py-3 font-bold text-body-sm">Data Residency</td>
+<td class="px-4 py-3 text-body-sm">Security &amp; Compliance Obligation</td>
+<td class="px-4 py-3 text-body-sm text-on-surface-variant">IT Requirements</td>
+<td class="px-4 py-3 text-body-sm italic">Contract Schedule: Security</td>
+<td class="px-4 py-3 text-body-sm">Production data must remain in Kenya unless otherwise approved</td>
+<td class="px-4 py-3">
+<div class="flex items-center justify-center gap-2 px-2 py-1 rounded bg-blue-50">
+<span class="status-dot bg-blue-600"></span>
+<span class="text-[10px] font-bold text-blue-700">REVIEW</span>
+</div>
+</td>
+<td class="px-4 py-3 text-right">
+<button class="text-primary hover:underline font-label-md text-label-md">Review</button>
+</td>
+</tr>
+<!-- Row 5 (Blocked/Needs Attention) -->
+<tr class="bg-error/5 hover:bg-error/10 transition-colors group">
+<td class="px-4 py-3 font-bold text-body-sm">Contract Attachments</td>
+<td class="px-4 py-3 text-body-sm">Contract Schedule</td>
+<td class="px-4 py-3 text-body-sm text-on-surface-variant">Forms &amp; Evidence</td>
+<td class="px-4 py-3 text-body-sm italic">Contract Appendices</td>
+<td class="px-4 py-3 text-body-sm text-error font-medium">Missing required attachment list</td>
+<td class="px-4 py-3">
+<div class="flex items-center justify-center gap-2 px-2 py-1 rounded bg-error/10">
+<span class="status-dot bg-error animate-pulse"></span>
+<span class="text-[10px] font-bold text-error">ATTENTION</span>
+</div>
+</td>
+<td class="px-4 py-3 text-right">
+<button class="bg-error text-white px-3 py-1 rounded font-label-md text-label-md hover:bg-error/90 transition-colors">Fix</button>
+</td>
+</tr>
+<!-- Placeholder Row -->
+<tr class="hover:bg-surface-bright/50 transition-colors group opacity-60">
+<td class="px-4 py-3 font-bold text-body-sm">Liquidated Damages</td>
+<td class="px-4 py-3 text-body-sm">SCC Value</td>
+<td class="px-4 py-3 text-body-sm text-on-surface-variant">Tender Data Sheet</td>
+<td class="px-4 py-3 text-body-sm italic">SCC / Termination</td>
+<td class="px-4 py-3 text-body-sm">0.5% per week up to 10% max</td>
+<td class="px-4 py-3">
+<div class="flex items-center justify-center gap-2 px-2 py-1 rounded bg-gray-100">
+<span class="status-dot bg-gray-400"></span>
+<span class="text-[10px] font-bold text-gray-500">N/A</span>
+</div>
+</td>
+<td class="px-4 py-3 text-right">
+<button class="text-on-surface-variant hover:underline font-label-md text-label-md">Edit</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- KPI Bento Sub-Cards -->
+<div class="grid grid-cols-3 gap-4 mt-4">
+<div class="bg-surface-container-lowest p-4 border border-outline-variant rounded-lg relative overflow-hidden shadow-sm">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<div class="font-label-sm text-[10px] uppercase text-on-surface-variant mb-1">Total Obligations</div>
+<div class="text-display font-display text-primary leading-none">24</div>
+<div class="mt-2 flex items-center gap-2">
+<span class="text-green-600 font-bold text-body-sm">82%</span>
+<span class="text-on-surface-variant text-[10px]">Validated</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-4 border border-outline-variant rounded-lg relative overflow-hidden shadow-sm">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
+<div class="font-label-sm text-[10px] uppercase text-on-surface-variant mb-1">Value Sources</div>
+<div class="text-display font-display text-primary leading-none">5</div>
+<div class="mt-2 flex items-center gap-2">
+<span class="text-on-surface-variant text-[10px]">Cross-module links active</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-4 border border-outline-variant rounded-lg relative overflow-hidden shadow-sm">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
+<div class="font-label-sm text-[10px] uppercase text-on-surface-variant mb-1">Risk Exposure</div>
+<div class="text-display font-display text-error leading-none">High</div>
+<div class="mt-2 flex items-center gap-2">
+<span class="text-on-surface-variant text-[10px]">Requires senior review</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Right: Guidance Panel (Col 10-12) -->
+<div class="col-span-3 space-y-4">
+<div class="bg-surface-container-high border border-outline-variant rounded-lg p-5 h-fit sticky top-[72px] shadow-sm">
+<div class="flex items-center gap-2 text-primary mb-4">
+<span class="material-symbols-outlined">info</span>
+<h3 class="font-headline-md text-headline-md font-bold">Contract Values Guidance</h3>
+</div>
+<div class="space-y-4 text-body-md text-on-surface">
+<p class="">Use this screen to confirm the values and obligations that will appear in the contract documents.</p>
+<p class="">Values may come from the <strong>Tender Data Sheet</strong>, <strong>IT Requirements</strong>, <strong>Implementation Schedule</strong>, <strong>Price Schedule</strong>, or <strong>Forms &amp; Evidence</strong>.</p>
+<p class="bg-surface-container-lowest p-3 border border-outline-variant rounded italic text-body-sm">
+                            "Edit only the contract-specific values allowed for this tender configuration. Global template values are locked."
+                        </p>
+<div class="pt-4 border-t border-outline-variant">
+<h4 class="font-label-md text-label-md text-primary uppercase mb-2">Checklist before handoff</h4>
+<ul class="space-y-2">
+<li class="flex items-start gap-2 text-body-sm">
+<span class="material-symbols-outlined text-green-600 text-sm mt-0.5">check_circle</span>
+<span class="">All TDS references mapped to SCC clauses</span>
+</li>
+<li class="flex items-start gap-2 text-body-sm">
+<span class="material-symbols-outlined text-green-600 text-sm mt-0.5">check_circle</span>
+<span class="">Warranty periods align with IT Requirements</span>
+</li>
+<li class="flex items-start gap-2 text-body-sm opacity-50">
+<span class="material-symbols-outlined text-on-surface-variant text-sm mt-0.5">radio_button_unchecked</span>
+<span class="">Security obligations verified by compliance</span>
+</li>
+</ul>
+</div>
+</div>
+<!-- Decorative Graphic -->
+<div class="mt-8 pt-4 border-t border-outline-variant">
+<div class="w-full h-32 bg-surface-container-lowest rounded-lg border border-outline-variant/50 relative overflow-hidden flex items-center justify-center">
+<div class="absolute inset-0 opacity-5">
+<div class="w-full h-full" style="background-image: radial-gradient(#002244 1px, transparent 1px); background-size: 8px 8px;"></div>
+</div>
+<span class="material-symbols-outlined text-outline-variant text-4xl">verified_user</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Sticky Footer -->
+<footer class="fixed bottom-0 ml-[256px] w-[calc(100%-256px)] bg-surface-container-low border-t border-outline-variant flex justify-between items-center py-container-padding px-container-padding z-50">
+<div>
+<button class="flex items-center gap-2 border border-primary text-primary px-4 py-2 rounded-lg font-label-md text-label-md hover:bg-primary/5 transition-colors group">
+<span class="material-symbols-outlined transition-transform group-hover:-translate-x-1">arrow_back</span>
+                    Back to Configuration Home
+                </button>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 border border-outline text-on-surface px-6 py-2 rounded-lg font-label-md text-label-md hover:bg-surface-bright transition-colors">
+<span class="material-symbols-outlined">analytics</span>
+                    Run Check
+                </button>
+<button class="flex items-center gap-2 bg-primary text-on-primary px-8 py-2 rounded-lg font-label-md text-label-md hover:opacity-90 shadow-md transition-all active:scale-95">
+<span class="material-symbols-outlined">save</span>
+                    Save Contract Values
+                </button>
+</div>
+</footer>
+<aside class="fixed top-0 right-0 h-full w-[400px] bg-surface-container-lowest border-l border-outline-variant shadow-md z-50 flex flex-col">
+<!-- Drawer Header -->
+<div class="flex items-center justify-between p-4 border-b border-outline-variant bg-surface-bright">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">edit_note</span>
+<h2 class="font-headline-md text-headline-md text-primary">Edit Contract Value</h2>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-high p-1 rounded-full transition-colors">close</button>
+</div>
+<!-- Drawer Content -->
+<div class="flex-1 overflow-y-auto p-4 space-y-6">
+<!-- Section A: Contract Value -->
+<section class="space-y-3">
+<div class="flex items-center gap-2 mb-1">
+<span class="w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center text-[10px] font-bold">A</span>
+<h3 class="font-label-md text-label-md text-primary uppercase">Contract Value</h3>
+</div>
+<div class="space-y-3">
+<div>
+<label class="block text-[10px] font-label-sm uppercase text-on-surface-variant mb-1">Item Name</label>
+<div class="px-3 py-1.5 bg-surface-container-low border border-outline-variant rounded text-body-sm font-medium text-on-surface-variant">Performance Security</div>
+</div>
+<div>
+<label class="block text-[10px] font-label-sm uppercase text-on-surface-variant mb-1">Category</label>
+<select class="w-full h-input-height bg-surface-container-lowest border border-outline-variant rounded px-2 text-body-sm focus:ring-1 focus:ring-primary outline-none">
+<option>Securities &amp; Guarantees</option>
+<option>SCC Value</option>
+<option>Delivery Obligation</option>
+<option>Support &amp; Warranty</option>
+</select>
+</div>
+<div>
+<label class="block text-[10px] font-label-sm uppercase text-on-surface-variant mb-1">Contract Location</label>
+<input class="w-full h-input-height bg-surface-container-lowest border border-outline-variant rounded px-2 text-body-sm focus:ring-1 focus:ring-primary outline-none" type="text" value="SCC / Contract Data"/>
+</div>
+<div>
+<label class="block text-[10px] font-label-sm uppercase text-on-surface-variant mb-1">Value / Obligation Text</label>
+<textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-body-sm focus:ring-1 focus:ring-primary outline-none min-h-[80px]">10% of contract price</textarea>
+</div>
+<div class="flex flex-col gap-2">
+<label class="flex items-center gap-2 cursor-pointer">
+<input class="rounded border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+<span class="text-body-sm">Not applicable</span>
+</label>
+</div>
+</div>
+</section>
+<!-- Section B: Source -->
+<section class="space-y-3 pt-4 border-t border-outline-variant/30">
+<div class="flex items-center gap-2 mb-1">
+<span class="w-6 h-6 rounded-full bg-secondary text-on-secondary flex items-center justify-center text-[10px] font-bold">B</span>
+<h3 class="font-label-md text-label-md text-secondary uppercase">Source</h3>
+</div>
+<div class="bg-surface-container-low p-3 rounded border border-outline-variant/50 space-y-3">
+<div class="grid grid-cols-2 gap-2">
+<div>
+<label class="block text-[10px] font-label-sm uppercase text-on-surface-variant">Source Screen</label>
+<span class="text-body-sm font-medium">Tender Data Sheet</span>
+</div>
+<div>
+<label class="block text-[10px] font-label-sm uppercase text-on-surface-variant">Source Item</label>
+<span class="text-body-sm font-medium">Performance Security Req.</span>
+</div>
+</div>
+<button class="w-full flex items-center justify-center gap-2 border border-primary text-primary py-1.5 rounded font-label-md text-label-md hover:bg-primary/5 transition-colors">
+<span class="material-symbols-outlined text-sm">open_in_new</span>
+                    Open Source Step
+                </button>
+</div>
+</section>
+<!-- Section C: Review Notes -->
+<section class="space-y-3 pt-4 border-t border-outline-variant/30">
+<div class="flex items-center gap-2 mb-1">
+<span class="w-6 h-6 rounded-full bg-error/20 text-error flex items-center justify-center text-[10px] font-bold">C</span>
+<h3 class="font-label-md text-label-md text-error uppercase">Review Notes</h3>
+</div>
+<div class="space-y-3">
+<div>
+<label class="block text-[10px] font-label-sm uppercase text-on-surface-variant mb-1">Internal Note</label>
+<textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-body-sm focus:ring-1 focus:ring-primary outline-none min-h-[60px]" placeholder="Add notes for the review team..."></textarea>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-[10px] font-label-sm uppercase text-on-surface-variant">Issue Status</span>
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-error/10 text-error">
+<span class="status-dot bg-error"></span>
+<span class="text-[10px] font-bold">NEEDS ATTENTION</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Drawer Footer -->
+<div class="p-4 border-t border-outline-variant bg-surface-container-low flex flex-col gap-2">
+<button class="w-full bg-primary text-on-primary py-2 rounded-lg font-label-md text-label-md hover:opacity-90 transition-all active:scale-95 shadow-sm">
+            Save Contract Value
+        </button>
+<button class="w-full text-on-surface-variant py-2 rounded-lg font-label-md text-label-md hover:bg-surface-container-high transition-colors">
+            Cancel
+        </button>
+</div>
+</aside></main>
+<!-- Global Footer Rights -->
+<div class="fixed bottom-0 left-0 w-[256px] bg-surface-container-low py-2 px-gutter border-r border-t border-outline-variant z-50">
+<p class="font-label-sm text-[9px] text-on-surface-variant text-center leading-tight">
+            © 2024 KenTender Civic Ledger.<br/>Government of Kenya PSM.
+        </p>
+</div>
+<!-- Micro-interaction Scripts -->
+<script>
+        // Subtle hover effects for table rows
+        document.querySelectorAll('tbody tr').forEach(row => {
+            row.addEventListener('mouseenter', () => {
+                row.classList.add('shadow-inner');
+            });
+            row.addEventListener('mouseleave', () => {
+                row.classList.remove('shadow-inner');
+            });
+        });
+
+        // Search bar focus behavior
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('w-80');
+            searchInput.classList.replace('w-64', 'w-80');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('w-80');
+            searchInput.classList.replace('w-80', 'w-64');
+        });
+    </script>
+</body></html>

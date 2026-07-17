@@ -155,7 +155,11 @@ def _purge_non_master_tenders(*, dry_run: bool) -> list[str]:
 			"TM2 Tender Invitation",
 		):
 			frappe.db.delete(tbl, {"tm2_tender": tm2})
-		for inst in frappe.get_all("Tender STD Instance", filters={"tm2_tender": tm2}, pluck="name"):
+		for inst in (
+			frappe.get_all("Tender STD Instance", filters={"tm2_tender": tm2}, pluck="name")
+			if frappe.db.exists("DocType", "Tender STD Instance")
+			else []
+		):
 			if inst == _KEEP_STD_INSTANCE:
 				continue
 			for tbl in (

@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KenTender — System Inventory &amp; Bidder Background</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .bento-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .bento-card:hover {
+            transform: translateY(-1px);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c4c6cf;
+            border-radius: 10px;
+        }
+        .custom-glass {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed": "#d5e3fc",
+                        "inverse-primary": "#adc8f3",
+                        "on-primary": "#ffffff",
+                        "surface-tint": "#456085",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-low": "#f2f4f6",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-error-container": "#93000a",
+                        "surface-container": "#eceef0",
+                        "primary": "#000b1d",
+                        "on-surface-variant": "#43474e",
+                        "secondary": "#515f74",
+                        "on-background": "#191c1e",
+                        "outline-variant": "#c4c6cf",
+                        "outline": "#74777f",
+                        "on-error": "#ffffff",
+                        "secondary-container": "#d2e1fa",
+                        "surface": "#f7f9fb",
+                        "on-secondary": "#ffffff",
+                        "surface-dim": "#d8dadc",
+                        "on-tertiary-fixed-variant": "#3e465c",
+                        "tertiary-fixed": "#dae2fd",
+                        "primary-fixed": "#d4e3ff",
+                        "surface-bright": "#f7f9fb",
+                        "error-container": "#ffdad6",
+                        "error": "#ba1a1a",
+                        "primary-container": "#002244",
+                        "background": "#f7f9fb",
+                        "primary-fixed-dim": "#adc8f3",
+                        "surface-container-high": "#e6e8ea",
+                        "surface-variant": "#e0e3e5",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-surface": "#2d3133",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "tertiary": "#030a1d",
+                        "on-tertiary-container": "#8088a1",
+                        "on-primary-fixed-variant": "#2d486c",
+                        "on-primary-fixed": "#001c3a",
+                        "surface-container-highest": "#e0e3e5",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "on-surface": "#191c1e",
+                        "on-secondary-container": "#556379",
+                        "on-primary-container": "#708ab2",
+                        "tertiary-fixed-dim": "#bec6e0",
+                        "tertiary-container": "#192135",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "on-tertiary-fixed": "#131b2f"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "12px",
+                        "table-row-height": "32px",
+                        "unit": "4px",
+                        "input-height": "28px",
+                        "component-gap": "8px",
+                        "container-padding": "16px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Public Sans"],
+                        "body-lg": ["Public Sans"],
+                        "headline-lg": ["Public Sans"],
+                        "headline-md": ["Public Sans"],
+                        "display": ["Public Sans"],
+                        "body-md": ["Public Sans"],
+                        "label-sm": ["JetBrains Mono"],
+                        "label-md": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                        "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                        "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface font-body-md overflow-x-hidden">
+<!-- Sidebar Navigation -->
+<aside class="w-64 h-screen fixed left-0 top-0 bg-surface border-r border-outline-variant flex flex-col py-container-padding z-50">
+<div class="px-gutter mb-8">
+<h1 class="font-headline-md text-headline-md font-black text-primary">KenTender</h1>
+<p class="font-label-md text-label-md text-secondary opacity-70">Gov Procurement</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center px-gutter py-2 text-secondary hover:bg-surface-container-high transition-all font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="dashboard">dashboard</span> Dashboard
+            </a>
+<a class="flex items-center px-gutter py-2 text-primary font-bold border-r-4 border-primary bg-primary-fixed-dim/20 transition-all font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined mr-3 text-primary" data-icon="event_note">event_note</span> Planning
+            </a>
+<a class="flex items-center px-gutter py-2 text-secondary hover:bg-surface-container-high transition-all font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="shopping_cart">shopping_cart</span> Demand
+            </a>
+<a class="flex items-center px-gutter py-2 text-secondary hover:bg-surface-container-high transition-all font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="gavel">gavel</span> Tendering
+            </a>
+<a class="flex items-center px-gutter py-2 text-secondary hover:bg-surface-container-high transition-all font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="description">description</span> Contracts
+            </a>
+</nav>
+<div class="border-t border-outline-variant pt-container-padding mt-auto">
+<a class="flex items-center px-gutter py-2 text-secondary hover:bg-surface-container-high transition-all font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="settings">settings</span> Settings
+            </a>
+<a class="flex items-center px-gutter py-2 text-secondary hover:bg-surface-container-high transition-all font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="contact_support">contact_support</span> Support
+            </a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 flex flex-col min-h-screen pb-24"><div class="fixed inset-0 bg-primary/20 backdrop-blur-sm z-50 transition-opacity"></div>
+<!-- TopAppBar -->
+<header class="bg-surface-container-lowest h-14 w-full sticky top-0 z-40 border-b border-outline-variant shadow-sm flex justify-between items-center px-gutter">
+<div class="flex items-center space-x-4">
+<h2 class="font-headline-md text-headline-md font-bold text-primary">Procurement Dashboard</h2>
+<div class="bg-surface-container flex items-center px-3 py-1 rounded-lg">
+<span class="material-symbols-outlined text-outline text-sm mr-2" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-sm w-48" placeholder="Search tender data..." type="text"/>
+</div>
+</div>
+<div class="flex items-center space-x-4">
+<button class="material-symbols-outlined text-primary hover:bg-surface-container p-2 rounded-full transition-colors" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined text-primary hover:bg-surface-container p-2 rounded-full transition-colors" data-icon="help_outline">help_outline</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a government procurement officer in a light-filled office. The background is a clean, modern corporate environment with soft cool blue tones and neutral gray furniture, emphasizing a professional and authoritative atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPlg-fVuYuh94w7ibmF9kyUQNuVSYuFNxiktMZ0ok1olF1vDSgpGwtHdAQ7HsC2BDhhyVumscLgjq8uQJHLgLz8bu6c2i4QfWi3D1YI0MmGFQeM4kXqbvLIBpzfSM-b3HeyBjenS3nZZnACk7uIEexsEbO-yzFseOjjlSQa2xhuUdCr6rP0rOkueFtJcA0Deko2tKpYkWFncBp-VVnPYfJWhVbT-zKfXKTOb9ZRrLma_jtn3RdF_U7"/>
+</div>
+</div>
+</header>
+<div class="p-container-padding max-w-[1280px] w-full mx-auto space-y-6">
+<!-- Header Section -->
+<div class="flex justify-between items-end">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-primary">System Inventory &amp; Bidder Background</h1>
+<p class="text-on-surface-variant font-body-lg">Describe the systems, sites, integrations, data, and background context bidders need to understand the IT tender.</p>
+</div>
+</div>
+<!-- Context Strip -->
+<div class="bg-surface-container-low border border-outline-variant flex items-center overflow-x-auto">
+<div class="flex-none px-4 py-2 border-r border-outline-variant flex items-center gap-2 whitespace-nowrap">
+<span class="text-outline font-label-sm text-label-sm">REF:</span>
+<span class="font-label-md text-label-md text-primary">PP-ICT-2024-009</span>
+</div>
+<div class="flex-none px-4 py-2 border-r border-outline-variant flex items-center gap-2 whitespace-nowrap">
+<span class="text-outline font-label-sm text-label-sm">TITLE:</span>
+<span class="font-label-md text-label-md text-primary">Data Center Hardware Refresh</span>
+</div>
+<div class="flex-none px-4 py-2 border-r border-outline-variant flex items-center gap-2 whitespace-nowrap">
+<span class="text-outline font-label-sm text-label-sm">ENTITY:</span>
+<span class="font-label-md text-label-md text-primary">National Treasury</span>
+</div>
+<div class="flex-none px-4 py-2 border-r border-outline-variant flex items-center gap-2 whitespace-nowrap">
+<span class="text-outline font-label-sm text-label-sm">METHOD:</span>
+<span class="font-label-md text-label-md text-primary">Open National Tender</span>
+</div>
+<div class="flex-none px-4 py-2 border-r border-outline-variant flex items-center gap-2 whitespace-nowrap">
+<span class="text-outline font-label-sm text-label-sm">STD:</span>
+<span class="font-label-md text-label-md text-primary">IT (April 2022)</span>
+</div>
+<div class="flex-none px-4 py-2 border-r border-outline-variant flex items-center gap-2 whitespace-nowrap">
+<div class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+<span class="font-label-md text-label-md text-primary">In Progress</span>
+</div>
+<div class="flex-none px-4 py-2 flex items-center gap-3 whitespace-nowrap">
+<span class="text-error font-label-md text-label-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="error">error</span> 2 Blockers
+                    </span>
+<span class="text-amber-700 font-label-md text-label-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="warning">warning</span> 1 Warning
+                    </span>
+</div>
+</div>
+<!-- Disclosure Banner -->
+<div class="bg-secondary-container/30 border-l-4 border-secondary p-4 flex items-start gap-4">
+<span class="material-symbols-outlined text-secondary" data-icon="info">info</span>
+<p class="text-on-secondary-container font-body-md leading-relaxed">
+<strong>Disclosure Guidance:</strong> Only include information bidders need to prepare a responsive tender. Do not disclose passwords, secret keys, private IP addresses, vulnerability details, or internal security procedures.
+                </p>
+</div>
+<!-- Main Layout Grid -->
+<div class="grid grid-cols-12 gap-6 items-start">
+<!-- Left: Table and Filters -->
+<div class="col-span-12 xl:col-span-9 space-y-4">
+<!-- Filters -->
+<div class="flex flex-wrap gap-2 items-center border-b border-outline-variant pb-2 overflow-x-auto scrollbar-hide">
+<button class="px-3 py-1.5 font-label-md text-label-md bg-primary text-on-primary rounded shadow-sm">All</button>
+<button class="px-3 py-1.5 font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high rounded transition-all">Systems in Scope</button>
+<button class="px-3 py-1.5 font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high rounded transition-all">Infrastructure Environment</button>
+<button class="px-3 py-1.5 font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high rounded transition-all">Sites &amp; Users</button>
+<button class="px-3 py-1.5 font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high rounded transition-all">Integrations</button>
+<button class="px-3 py-1.5 font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high rounded transition-all">Data Migration</button>
+<button class="px-3 py-1.5 font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high rounded transition-all">Licensing &amp; Support</button>
+<button class="px-3 py-1.5 font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high rounded transition-all">Background Notes</button>
+<button class="px-3 py-1.5 font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high rounded transition-all">Out of Scope</button>
+<div class="ml-auto flex gap-2">
+<button class="bg-surface-container-lowest border border-outline px-3 py-1 text-primary font-label-md text-label-md flex items-center gap-1.5 hover:bg-surface-container transition-all rounded-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="add">add</span> Note
+</button>
+<button class="bg-primary text-on-primary px-3 py-1 font-label-md text-label-md flex items-center gap-1.5 hover:opacity-90 shadow-sm transition-all rounded-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="inventory_2">inventory_2</span> Item
+</button>
+</div></div>
+<!-- Bento Table Card -->
+<div class="bg-surface-container-lowest border border-outline-variant shadow-sm bento-card overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse min-w-[1000px]">
+<thead class="bg-surface-bright/50 border-b border-outline-variant text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">
+<tr class="h-10">
+<th class="p-2 font-semibold pl-4">ID</th>
+<th class="p-2 font-semibold">Item</th>
+<th class="p-2 font-semibold">Category</th>
+<th class="p-2 font-semibold">Scope</th>
+<th class="p-2 font-semibold">Bidder Consideration</th>
+<th class="p-2 font-semibold">Disclosure STATUS</th>
+<th class="p-2 font-semibold">Price Link</th>
+<th class="p-2 font-semibold">Status</th>
+<th class="p-2 font-semibold">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/30">
+<!-- Row 1 -->
+<tr class="h-table-row-height hover:bg-surface-variant/30 transition-colors">
+<td class="p-2 text-body-sm font-body-sm pl-4 font-label-md text-on-surface-variant">INV-001</td>
+<td class="p-2 text-body-sm font-body-sm">Existing Server Room</td>
+<td class="p-2 text-body-sm font-body-sm"><span class="text-[10px] bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded">Infra Env</span></td>
+<td class="p-2 text-body-sm font-body-sm">Context only</td>
+<td class="p-2 text-body-sm font-body-sm">Account for installation constraints...</td>
+<td class="p-2 text-body-sm font-body-sm">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-[#006b3d]/10 text-[#006b3d] text-label-md">
+<span class="w-1.5 h-1.5 rounded-full bg-green-600"></span> Safe
+                                            </span>
+</td>
+<td class="p-2 text-body-sm font-body-sm"><span class="material-symbols-outlined text-outline text-sm" data-icon="link">link</span></td>
+<td class="p-2 text-body-sm font-body-sm">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-[#006b3d]/10 text-[#006b3d] text-label-md">COMPLETE</span>
+</td>
+<td class="p-2 text-body-sm font-body-sm">
+<button class="text-secondary hover:text-primary transition-colors"><span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span></button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="h-table-row-height hover:bg-surface-variant/30 transition-colors bg-surface-bright/50">
+<td class="p-2 text-body-sm font-body-sm pl-4 font-label-md text-on-surface-variant">INV-002</td>
+<td class="p-2 text-body-sm font-body-sm">Head Office User Groups</td>
+<td class="p-2 text-body-sm font-body-sm"><span class="text-[10px] bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded">Sites &amp; Users</span></td>
+<td class="p-2 text-body-sm font-body-sm">In scope</td>
+<td class="p-2 text-body-sm font-body-sm">Size the solution for head office...</td>
+<td class="p-2 text-body-sm font-body-sm">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-error/10 text-error text-label-md">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span> Review
+                                            </span>
+</td>
+<td class="p-2 text-body-sm font-body-sm"><span class="material-symbols-outlined text-outline text-sm" data-icon="link">link</span></td>
+<td class="p-2 text-body-sm font-body-sm">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-error/10 text-error text-label-md">ATTENTION</span>
+</td>
+<td class="p-2 text-body-sm font-body-sm">
+<button class="text-error hover:opacity-80 transition-opacity font-label-md text-label-md underline">Fix</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="h-table-row-height hover:bg-surface-variant/30 transition-colors">
+<td class="p-2 text-body-sm font-body-sm pl-4 font-label-md text-on-surface-variant">INV-003</td>
+<td class="p-2 text-body-sm font-body-sm">Finance System Integration</td>
+<td class="p-2 text-body-sm font-body-sm"><span class="text-[10px] bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded">Integrations</span></td>
+<td class="p-2 text-body-sm font-body-sm">In scope</td>
+<td class="p-2 text-body-sm font-body-sm">Provide integration approach with...</td>
+<td class="p-2 text-body-sm font-body-sm">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-[#006b3d]/10 text-[#006b3d] text-label-md">
+<span class="w-1.5 h-1.5 rounded-full bg-green-600"></span> Safe
+                                            </span>
+</td>
+<td class="p-2 text-body-sm font-body-sm"><span class="material-symbols-outlined text-outline text-sm" data-icon="link">link</span></td>
+<td class="p-2 text-body-sm font-body-sm">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-[#006b3d]/10 text-[#006b3d] text-label-md">COMPLETE</span>
+</td>
+<td class="p-2 text-body-sm font-body-sm">
+<button class="text-secondary hover:text-primary transition-colors"><span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span></button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="h-table-row-height hover:bg-surface-variant/30 transition-colors bg-surface-bright/50">
+<td class="p-2 text-body-sm font-body-sm pl-4 font-label-md text-on-surface-variant">INV-004</td>
+<td class="p-2 text-body-sm font-body-sm">Legacy Asset Database</td>
+<td class="p-2 text-body-sm font-body-sm"><span class="text-[10px] bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded">Migration</span></td>
+<td class="p-2 text-body-sm font-body-sm">In scope</td>
+<td class="p-2 text-body-sm font-body-sm">Plan data migration, validation...</td>
+<td class="p-2 text-body-sm font-body-sm">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-[#006b3d]/10 text-[#006b3d] text-label-md">
+<span class="w-1.5 h-1.5 rounded-full bg-green-600"></span> Safe
+                                            </span>
+</td>
+<td class="p-2 text-body-sm font-body-sm"><span class="material-symbols-outlined text-outline text-sm" data-icon="link">link</span></td>
+<td class="p-2 text-body-sm font-body-sm">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-[#006b3d]/10 text-[#006b3d] text-label-md">COMPLETE</span>
+</td>
+<td class="p-2 text-body-sm font-body-sm">
+<button class="text-secondary hover:text-primary transition-colors"><span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span></button>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="h-table-row-height hover:bg-surface-variant/30 transition-colors">
+<td class="p-2 text-body-sm font-body-sm pl-4 font-label-md text-on-surface-variant">BG-001</td>
+<td class="p-2 text-body-sm font-body-sm">Current ICT Environment</td>
+<td class="p-2 text-body-sm font-body-sm"><span class="text-[10px] bg-tertiary-fixed text-on-tertiary-fixed px-2 py-0.5 rounded">BG Note</span></td>
+<td class="p-2 text-body-sm font-body-sm">Context only</td>
+<td class="p-2 text-body-sm font-body-sm">Understand current operating model...</td>
+<td class="p-2 text-body-sm font-body-sm">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-[#006b3d]/10 text-[#006b3d] text-label-md">
+<span class="w-1.5 h-1.5 rounded-full bg-green-600"></span> Safe
+                                            </span>
+</td>
+<td class="p-2 text-body-sm font-body-sm"><span class="text-[10px] text-outline italic">None</span></td>
+<td class="p-2 text-body-sm font-body-sm">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-[#006b3d]/10 text-[#006b3d] text-label-md">COMPLETE</span>
+</td>
+<td class="p-2 text-body-sm font-body-sm">
+<button class="text-secondary hover:text-primary transition-colors"><span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span></button>
+</td>
+</tr>
+<!-- Row 6 -->
+<tr class="h-table-row-height hover:bg-surface-variant/30 transition-colors bg-surface-bright/50">
+<td class="p-2 text-body-sm font-body-sm pl-4 font-label-md text-on-surface-variant">BG-002</td>
+<td class="p-2 text-body-sm font-body-sm">Restricted Network Details</td>
+<td class="p-2 text-body-sm font-body-sm"><span class="text-[10px] bg-tertiary-fixed text-on-tertiary-fixed px-2 py-0.5 rounded">BG Note</span></td>
+<td class="p-2 text-body-sm font-body-sm">Context only</td>
+<td class="p-2 text-body-sm font-body-sm">Sensitive technical details...</td>
+<td class="p-2 text-body-sm font-body-sm">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-error/10 text-error text-label-md">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span> REMOVE
+                                            </span>
+</td>
+<td class="p-2 text-body-sm font-body-sm"><span class="text-[10px] text-outline italic">None</span></td>
+<td class="p-2 text-body-sm font-body-sm">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-error/10 text-error text-label-md">ATTENTION</span>
+</td>
+<td class="p-2 text-body-sm font-body-sm">
+<button class="text-error hover:opacity-80 transition-opacity font-label-md text-label-md underline">Fix</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Right: Guidance Panel -->
+<div class="col-span-12 xl:col-span-3 space-y-6">
+<div class="bg-surface-container-lowest border border-outline-variant shadow-sm p-container-padding sticky top-20">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary" data-icon="auto_awesome">auto_awesome</span>
+<h3 class="font-headline-md text-headline-md text-primary">Inventory &amp; Background Guidance</h3>
+</div>
+<p class="text-on-surface-variant font-body-md mb-6 leading-relaxed">
+                            Describe the environment bidders need to understand. Keep binding obligations in IT Requirements and commercial pricing in Price Schedule.
+                        </p>
+<div class="space-y-6">
+<div>
+<h4 class="font-label-md text-label-md text-primary uppercase border-b border-outline-variant pb-1 mb-2">What this affects</h4>
+<p class="text-body-sm text-secondary leading-relaxed">Bidder understanding, price schedule structure, evidence expectations, contract values, and tender preview.</p>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-primary uppercase border-b border-outline-variant pb-1 mb-2">Used later by</h4>
+<ul class="list-disc list-inside text-body-sm text-secondary space-y-1">
+<li class="">Price Schedule</li>
+<li class="">Evaluation Setup</li>
+<li class="">Forms &amp; Evidence</li>
+<li class="">Contract Values</li>
+<li class="">Readiness Check</li>
+</ul>
+</div>
+<div class="p-3 bg-error-container/5 border border-outline-variant rounded">
+<h4 class="font-label-md text-label-md text-error uppercase mb-2">Not configured here</h4>
+<p class="text-body-sm text-on-surface-variant opacity-80 leading-snug">Technical requirements, price amounts, scoring, submission forms, SCC values, security secrets, and post-award asset records.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Action Bar -->
+<footer class="fixed bottom-0 right-0 left-64 bg-surface-container-lowest border-t border-outline-variant px-container-padding py-3 shadow-lg z-50 flex justify-between items-center">
+<div class="flex gap-3">
+<button class="px-4 py-2 border border-outline text-primary font-label-md text-label-md hover:bg-surface-container transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="arrow_back">arrow_back</span> Back to Configuration Home
+                </button>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 border border-outline text-primary font-label-md text-label-md hover:bg-surface-container transition-all">
+                    Save Inventory &amp; Background
+                </button>
+<button class="px-4 py-2 border border-primary text-primary font-label-md text-label-md hover:bg-primary-fixed-dim/10 transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="rule">rule</span> Run Check
+                </button>
+<button class="px-6 py-2 bg-primary text-on-primary font-label-md text-label-md hover:opacity-90 transition-all flex items-center gap-2">
+                    Continue to Price Schedule <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</footer>
+<aside class="fixed top-0 right-0 w-[480px] h-full bg-surface-container-lowest shadow-lg z-50 flex flex-col border-l border-outline-variant">
+<!-- Drawer Header -->
+<div class="p-4 border-b border-outline-variant flex justify-between items-center bg-surface">
+<div>
+<h2 class="font-headline-md text-headline-md text-primary">Edit Inventory Item</h2>
+<p class="text-label-sm text-secondary uppercase tracking-wider">INV-002</p>
+</div>
+<button class="material-symbols-outlined p-2 hover:bg-surface-container rounded-full transition-colors" data-icon="close">close</button>
+</div>
+<!-- Drawer Content (Scrollable) -->
+<div class="flex-1 overflow-y-auto p-container-padding space-y-6">
+<!-- 1. Item Identity -->
+<section class="space-y-4">
+<h3 class="font-label-md text-label-md text-primary uppercase border-b border-outline-variant pb-1">Item Identity</h3>
+<div class="space-y-3">
+<div>
+<label class="block text-label-sm text-secondary mb-1">Item Title</label>
+<input class="w-full bg-surface border border-outline-variant rounded px-3 py-2 text-body-md focus:ring-1 focus:ring-primary" type="text" value="Head Office User Groups"/>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<div>
+<label class="block text-label-sm text-secondary mb-1">Category</label>
+<select class="w-full bg-surface border border-outline-variant rounded px-3 py-2 text-body-md">
+<option>Sites &amp; Users</option>
+<option>Infra Env</option>
+<option>Integrations</option>
+</select>
+</div>
+<div>
+<label class="block text-label-sm text-secondary mb-1">Scope</label>
+<select class="w-full bg-surface border border-outline-variant rounded px-3 py-2 text-body-md">
+<option>In scope</option>
+<option>Context only</option>
+<option>Out of scope</option>
+</select>
+</div>
+</div>
+<div>
+<label class="block text-label-sm text-secondary mb-1">Item Description</label>
+<textarea class="w-full bg-surface border border-outline-variant rounded px-3 py-2 text-body-md h-20">Detailed breakdown of user groups located at the National Treasury head office, including department counts and access levels.</textarea>
+</div>
+</div>
+</section>
+<!-- 2. Bidder Context -->
+<section class="space-y-4">
+<h3 class="font-label-md text-label-md text-primary uppercase border-b border-outline-variant pb-1">Bidder Context</h3>
+<div class="space-y-3">
+<div>
+<label class="block text-label-sm text-secondary mb-1">Bidder Consideration</label>
+<textarea class="w-full bg-surface border border-outline-variant rounded px-3 py-2 text-body-md">Size the solution for head office capacity requirements including peak load during budget cycles.</textarea>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<div>
+<label class="block text-label-sm text-secondary mb-1">Related IT Req</label>
+<div class="flex items-center gap-2 bg-surface-container px-2 py-1.5 rounded border border-outline-variant">
+<span class="material-symbols-outlined text-sm" data-icon="link">link</span>
+<span class="text-label-md">REQ-042</span>
+</div>
+</div>
+<div>
+<label class="block text-label-sm text-secondary mb-1">Milestone</label>
+<div class="flex items-center gap-2 bg-surface-container px-2 py-1.5 rounded border border-outline-variant">
+<span class="material-symbols-outlined text-sm" data-icon="event">event</span>
+<span class="text-label-md">Phase 1</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 3. Inventory Details -->
+<section class="space-y-4">
+<h3 class="font-label-md text-label-md text-primary uppercase border-b border-outline-variant pb-1">Inventory Details</h3>
+<div class="grid grid-cols-2 gap-3">
+<div>
+<label class="block text-label-sm text-secondary mb-1">Location/Site</label>
+<input class="w-full bg-surface border border-outline-variant rounded px-3 py-2 text-body-md" type="text" value="Treasury Building"/>
+</div>
+<div>
+<label class="block text-label-sm text-secondary mb-1">Volume/Count</label>
+<input class="w-full bg-surface border border-outline-variant rounded px-3 py-2 text-body-md" type="text" value="1,200 Users"/>
+</div>
+</div>
+</section>
+<!-- 4. Disclosure -->
+<section class="space-y-4 p-3 bg-error-container/5 border border-error/20 rounded">
+<h3 class="font-label-md text-label-md text-error uppercase border-b border-error/20 pb-1">Disclosure (Needs Attention)</h3>
+<div class="space-y-3">
+<div>
+<label class="block text-label-sm text-secondary mb-1">Disclosure Status</label>
+<select class="w-full bg-surface border border-error rounded px-3 py-2 text-body-md">
+<option>Needs disclosure review</option>
+<option>Safe to disclose</option>
+<option>Remove sensitive detail</option>
+<option>Not configured</option>
+</select>
+</div>
+<div>
+<label class="block text-label-sm text-secondary mb-1">Disclosure Note</label>
+<textarea class="w-full bg-surface border border-outline-variant rounded px-3 py-2 text-body-md">Review if specific department names violate internal security protocols.</textarea>
+</div>
+</div>
+</section>
+<!-- 5. References -->
+<section class="space-y-2">
+<h3 class="font-label-md text-label-md text-primary uppercase text-[10px]">Impacted Modules</h3>
+<div class="flex flex-wrap gap-2">
+<span class="px-2 py-1 bg-secondary-container/30 text-on-secondary-container text-[10px] rounded border border-outline-variant">IT Requirements</span>
+<span class="px-2 py-1 bg-secondary-container/30 text-on-secondary-container text-[10px] rounded border border-outline-variant">Price Schedule</span>
+<span class="px-2 py-1 bg-secondary-container/30 text-on-secondary-container text-[10px] rounded border border-outline-variant">Contract Values</span>
+</div>
+</section>
+</div>
+<!-- Drawer Footer -->
+<div class="p-4 border-t border-outline-variant bg-surface flex gap-3">
+<button class="flex-1 py-2 border border-outline text-primary font-label-md text-label-md hover:bg-surface-container transition-all rounded-sm">Cancel</button>
+<button class="flex-1 py-2 bg-primary text-on-primary font-label-md text-label-md hover:opacity-90 transition-all rounded-sm">Save Changes</button>
+</div>
+</aside></main>
+<script>
+        // Micro-interaction for table rows
+        document.querySelectorAll('tbody tr').forEach(row => {
+            row.addEventListener('click', (e) => {
+                if(e.target.tagName !== 'BUTTON') {
+                    // Visual feedback for row selection
+                    row.classList.toggle('bg-primary/5');
+                }
+            });
+        });
+
+        // Search highlight effect
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('ring-2', 'ring-primary/20', 'border-primary');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('ring-2', 'ring-primary/20', 'border-primary');
+        });
+    </script>
+</body></html>

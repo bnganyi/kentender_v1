@@ -1,0 +1,36 @@
+/* IT Wizard — Tender Configuration Home native Desk shell (Screen 02). */
+
+body.it-wizard-overview-shell .layout-main-section-wrapper,
+body.it-wizard-overview-shell .layout-main-section {
+	padding-top: 0 !important;
+	margin-top: 0 !important;
+}
+
+body.it-wizard-overview-shell .page-body > .container,
+body.it-wizard-overview-shell .frappe-app > .container {
+	padding-left: 0 !important;
+	padding-right: 0 !important;
+	max-width: 100% !important;
+}
+
+/* v2 Screen 02 — page rhythm (design: pt-16 app bar + section-gap between blocks) */
+body.it-wizard-overview-shell .kt-itw-canvas--home {
+	padding-top: 80px;
+	padding-bottom: 32px;
+	min-height: calc(100vh - 80px);
+	gap: 24px;
+}
+
+body.it-wizard-overview-shell .kt-itw-home-header {
+	margin: 0;
+}
+
+body.it-wizard-overview-shell .kt-itw-home-stack {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+}
+
+body.kt-itw-home-drawer-open {
+	overflow: hidden;
+}

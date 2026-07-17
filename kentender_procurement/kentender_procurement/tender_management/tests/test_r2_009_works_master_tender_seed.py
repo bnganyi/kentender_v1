@@ -234,4 +234,3 @@ class TestR2009WorksMasterTenderSeed(IntegrationTestCase):
         )
         st = frappe.db.get_value("TM2 Addendum", {"addendum_code": _ADDENDUM_CODE}, "status")
         self.assertEqual(st, "Issued")
-        self.assertTrue(frappe.db.exists("Tender STD Instance", "STDINST-TND-MOH-2026-001"))

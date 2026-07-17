@@ -3151,17 +3151,7 @@
 	scheduleBoot();
 
 	function launch_it_std_configuration(tender_id, std_version_id, plan_item_id) {
-		frappe.route_options = frappe.route_options || {};
-		if (tender_id) {
-			frappe.route_options.tender_id = tender_id;
-		}
-		if (std_version_id) {
-			frappe.route_options.std_version_id = std_version_id;
-		}
-		if (plan_item_id) {
-			frappe.route_options.plan_item_id = plan_item_id;
-		}
-		frappe.set_route("it-tender-configuration-dashboard");
+		frappe.set_route("it-std-wizard-retired");
 	}
 
 	frappe.provide("kentender.tm2");

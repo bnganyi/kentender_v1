@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Implementation Schedule - Phase Detail View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link rel="stylesheet" href="/assets/kentender_procurement/css/kt_fonts.css"/>
+
+<script id="tailwind-config">try{tailwind.config={darkMode:"class",theme:{extend:{colors:{error:"#ba1a1a",primary:"#001f48","primary-container":"#00346f",secondary:"#01629d","on-primary":"#ffffff","on-secondary":"#ffffff","on-surface":"#1a1b20","on-surface-variant":"#424751",surface:"#f9f9fe",background:"#f9f9fe","surface-container-lowest":"#ffffff","surface-container-low":"#f4f3f9","surface-container":"#eceef0","surface-container-high":"#e8e7ed","surface-variant":"#e2e2e8","border-subtle":"#E2E8F0","outline-variant":"#c3c6d1",outline:"#737781","status-available":"#10B981","status-reserved":"#F59E0B","error-container":"#ffdad6","on-error-container":"#93000a","primary-fixed":"#d7e2ff"},borderRadius:{DEFAULT:"0.25rem",lg:"0.5rem",xl:"0.75rem",full:"9999px"},spacing:{unit:"4px","section-gap":"24px","container-padding":"16px","card-padding":"20px",gutter:"12px"},fontFamily:{"body-md":["Inter"],"label-caps":["Inter"],"headline-sm":["Manrope"],"headline-md":["Manrope"],"data-mono":["JetBrains Mono"]}}}};}catch(_e){}</script>
+</head>
+<body class="bg-background text-on-surface flex flex-col h-full overflow-hidden">
+<header class="bg-surface-container-lowest border-b border-subtle h-16 flex items-center px-6 shrink-0 z-30 shadow-sm">
+<div class="flex items-center flex-1"><span class="font-headline-md text-headline-md font-bold text-primary">Implementation Schedule</span></div>
+</header>
+<div class="bg-surface-container-lowest border-b border-subtle py-3 px-6 shrink-0 overflow-x-auto" data-itw-sched-context="1">
+<div class="flex flex-nowrap space-x-8 min-w-max">
+<div class="flex flex-col"><span class="font-label-caps text-[10px] text-on-surface-variant uppercase tracking-wider mb-0.5">Tender Ref</span><span class="font-data-mono text-data-mono text-primary font-semibold">—</span></div>
+<div class="flex flex-col"><span class="font-label-caps text-[10px] text-on-surface-variant uppercase tracking-wider mb-0.5">Tender Title</span><span class="font-body-md text-body-md text-on-surface font-medium truncate max-w-[200px]">—</span></div>
+<div class="flex flex-col"><span class="font-label-caps text-[10px] text-on-surface-variant uppercase tracking-wider mb-0.5">Planning Package Ref</span><span class="font-data-mono text-data-mono text-on-surface-variant">—</span></div>
+<div class="flex flex-col"><span class="font-label-caps text-[10px] text-on-surface-variant uppercase tracking-wider mb-0.5">Procuring Entity</span><span class="font-body-md text-body-md text-on-surface">—</span></div>
+<div class="flex flex-col"><span class="font-label-caps text-[10px] text-on-surface-variant uppercase tracking-wider mb-0.5">Procurement Method</span><span class="font-body-md text-body-md text-on-surface">—</span></div>
+<div class="flex flex-col"><span class="font-label-caps text-[10px] text-on-surface-variant uppercase tracking-wider mb-0.5">Wizard State</span><span class="font-body-md text-body-md text-on-surface">—</span></div>
+<div class="flex flex-col ml-auto"><span class="font-label-caps text-[10px] text-on-surface-variant uppercase tracking-wider mb-0.5">Validation Summary</span><span class="font-body-md text-body-md text-on-surface-variant">—</span></div>
+</div>
+</div>
+<main class="flex-1 flex min-h-0 overflow-hidden" data-itw-sched-main="1">
+<div class="flex-1 flex flex-col min-w-0 min-h-0 bg-surface overflow-hidden relative p-6" data-itw-sched-composer="1">
+<div class="flex justify-between items-start mb-4 shrink-0" data-itw-sched-header="1">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Implementation Schedule Definition</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1" data-itw-sched-subtitle="1">Define delivery phases, milestones, deliverables, and acceptance checkpoints.</p>
+</div>
+<button class="px-4 py-2 bg-secondary text-on-secondary rounded-md font-body-md font-medium flex items-center gap-2 shadow-sm" data-itw-sched-add-phase="1" type="button"><span class="material-symbols-outlined text-sm">add</span>Add Phase</button>
+</div>
+<div class="bg-surface-container-lowest border border-subtle rounded-lg p-card-padding mb-4 shrink-0 shadow-sm" data-itw-sched-approach="1">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-4">Implementation Approach</h3>
+<div class="flex gap-6">
+<label class="flex items-start gap-3 p-4 border-2 border-primary bg-primary-fixed/10 rounded-md cursor-pointer w-1/2">
+<input class="mt-1 text-primary focus:ring-primary border-outline" data-itw-field="implementation_model" name="approach" type="radio" value="PHASED"/>
+<div><div class="font-body-md font-semibold text-on-surface">Phased Delivery</div><div class="font-body-md text-on-surface-variant text-sm mt-1">Multiple milestones with sequential dependencies and individual acceptance criteria.</div></div>
+</label>
+<label class="flex items-start gap-3 p-4 border border-subtle hover:bg-surface-container-low rounded-md cursor-pointer w-1/2 transition-colors">
+<input class="mt-1 text-primary focus:ring-primary border-outline" data-itw-field="implementation_model" name="approach" type="radio" value="SINGLE_TURNKEY"/>
+<div><div class="font-body-md font-semibold text-on-surface">Single Turnkey Delivery</div><div class="font-body-md text-on-surface-variant text-sm mt-1">One monolithic delivery date with a unified acceptance threshold.</div></div>
+</label>
+</div>
+</div>
+<div class="hidden flex-1 min-h-0 overflow-y-auto" data-itw-sched-mode-host="single-turnkey">
+<div class="bg-surface-container-lowest border border-subtle rounded-lg shadow-sm">
+<div class="p-4 border-b border-subtle">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Single Delivery Milestone</h3>
+<p class="font-body-md text-sm text-on-surface-variant mt-1">Configure one unified delivery, acceptance threshold, and contract obligation.</p>
+</div>
+<div class="p-5 grid grid-cols-2 gap-5">
+<div><label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Expected Delivery Duration</label><input class="w-full bg-surface-container-lowest border border-outline-variant rounded-md p-3 font-body-md text-on-surface" data-itw-turnkey-field="expected_delivery_duration" type="text"/><p class="text-[10px] text-on-surface-variant italic mt-1" data-itw-turnkey-source="expected_delivery_duration">Source: Standard IT Schedule Template</p><div class="flex gap-2 mt-2"><button class="text-primary font-body-md text-[12px] hover:underline" data-itw-turnkey-field-action="edit" data-itw-turnkey-field-key="expected_delivery_duration" type="button">Edit</button><button class="text-primary font-body-md text-[12px] hover:underline" data-itw-turnkey-field-action="reset" data-itw-turnkey-field-key="expected_delivery_duration" type="button">Reset to Template</button></div></div>
+<div><label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Delivery Trigger</label><input class="w-full bg-surface-container-lowest border border-outline-variant rounded-md p-3 font-body-md text-on-surface" data-itw-turnkey-field="delivery_trigger" type="text"/><p class="text-[10px] text-on-surface-variant italic mt-1" data-itw-turnkey-source="delivery_trigger">Source: Schedule template</p><div class="flex gap-2 mt-2"><button class="text-primary font-body-md text-[12px] hover:underline" data-itw-turnkey-field-action="edit" data-itw-turnkey-field-key="delivery_trigger" type="button">Edit</button><button class="text-primary font-body-md text-[12px] hover:underline" data-itw-turnkey-field-action="reset" data-itw-turnkey-field-key="delivery_trigger" type="button">Reset to Template</button></div></div>
+<div class="col-span-2"><label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Key Deliverables</label><textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded-md p-3 font-body-md text-on-surface min-h-[72px]" data-itw-turnkey-field="key_deliverables"></textarea><p class="text-[10px] text-on-surface-variant italic mt-1" data-itw-turnkey-source="key_deliverables">Source: Template + user configuration</p><div class="flex gap-2 mt-2"><button class="text-primary font-body-md text-[12px] hover:underline" data-itw-turnkey-field-action="edit" data-itw-turnkey-field-key="key_deliverables" type="button">Edit</button><button class="text-primary font-body-md text-[12px] hover:underline" data-itw-turnkey-field-action="reset" data-itw-turnkey-field-key="key_deliverables" type="button">Reset to Template</button></div></div>
+<div class="col-span-2"><label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Unified Acceptance Criteria</label><textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded-md p-3 font-body-md text-on-surface min-h-[72px]" data-itw-turnkey-field="unified_acceptance_criteria"></textarea><p class="text-[10px] text-on-surface-variant italic mt-1" data-itw-turnkey-source="unified_acceptance_criteria">Source: User configuration (template-assisted)</p><div class="flex gap-2 mt-2"><button class="text-primary font-body-md text-[12px] hover:underline" data-itw-turnkey-field-action="edit" data-itw-turnkey-field-key="unified_acceptance_criteria" type="button">Edit</button><button class="text-primary font-body-md text-[12px] hover:underline" data-itw-turnkey-field-action="reset" data-itw-turnkey-field-key="unified_acceptance_criteria" type="button">Reset to Template</button></div></div>
+<div class="col-span-2"><label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Evidence Required</label><textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded-md p-3 font-body-md text-on-surface min-h-[72px]" data-itw-turnkey-field="evidence_required"></textarea><p class="text-[10px] text-on-surface-variant italic mt-1" data-itw-turnkey-source="evidence_required">Source: Template + user configuration</p><div class="flex gap-2 mt-2"><button class="text-primary font-body-md text-[12px] hover:underline" data-itw-turnkey-field-action="edit" data-itw-turnkey-field-key="evidence_required" type="button">Edit</button><button class="text-primary font-body-md text-[12px] hover:underline" data-itw-turnkey-field-action="reset" data-itw-turnkey-field-key="evidence_required" type="button">Reset to Template</button></div></div>
+<div><label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Carry forward to contract/delivery obligations</label><select class="w-full bg-surface-container-lowest border border-outline-variant rounded-md p-3 font-body-md text-on-surface" data-itw-turnkey-field="carry_forward_decision"><option value="">Select decision</option><option value="YES">Yes</option><option value="NO">No</option></select><p class="text-[10px] text-on-surface-variant italic mt-1" data-itw-turnkey-source="carry_forward_decision">Source: Schedule default</p><div class="flex gap-2 mt-2"><button class="text-primary font-body-md text-[12px] hover:underline" data-itw-turnkey-field-action="edit" data-itw-turnkey-field-key="carry_forward_decision" type="button">Edit</button><button class="text-primary font-body-md text-[12px] hover:underline" data-itw-turnkey-field-action="reset" data-itw-turnkey-field-key="carry_forward_decision" type="button">Reset to Template</button></div></div>
+</div>
+</div>
+</div>
+<div class="flex-1 flex flex-col min-h-0 overflow-y-auto space-y-4" data-itw-sched-mode-host="phased" data-itw-sched-table-host="1">
+<div class="bg-surface-container-lowest border border-subtle rounded-lg shadow-sm flex flex-col">
+<div class="p-4 border-b border-subtle flex justify-between items-center">
+<h3 class="font-headline-sm text-headline-sm text-on-surface" data-itw-sched-phase-count="1">Defined Phases (0)</h3>
+<div class="flex items-center gap-2"><span class="font-label-caps text-label-caps text-on-surface-variant">Total Duration:</span><span class="font-data-mono text-data-mono bg-surface-container px-2 py-1 rounded" data-itw-sched-total-duration="1">—</span></div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse" data-itw-sched-table="1">
+<thead class="bg-surface-container-low border-b border-subtle font-label-caps text-label-caps text-on-surface-variant" data-itw-sched-table-head="1">
+<tr><th class="p-4 font-medium w-16 text-center">Seq</th><th class="p-4 font-medium">Phase</th><th class="p-4 font-medium">Duration</th><th class="p-4 font-medium">Start Trigger</th><th class="p-4 font-medium">Key Deliverable</th><th class="p-4 font-medium">Acceptance</th><th class="p-4 font-medium">Status</th><th class="p-4 font-medium text-right">Actions</th></tr>
+</thead>
+<tbody class="font-body-md text-body-md"></tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+<aside class="w-72 bg-surface border-l border-subtle flex flex-col shrink-0 z-10 hidden xl:flex min-h-0" data-itw-sched-guidance="1">
+<div class="p-5 border-b border-subtle"><h3 class="font-headline-sm text-[16px] font-bold text-on-surface flex items-center"><span class="material-symbols-outlined mr-2 text-primary">insights</span>Schedule Guidance</h3></div>
+<div class="p-5 overflow-y-auto flex-1 space-y-6">
+<div><div class="flex justify-between items-end mb-2"><span class="font-label-caps text-[11px] text-on-surface-variant uppercase tracking-wider">Completion</span><span class="font-data-mono text-[14px] font-semibold text-on-surface" data-itw-sched-guidance-completion="1">0/0</span></div><div class="w-full bg-surface-variant rounded-full h-2"><div class="bg-primary h-2 rounded-full" style="width:0%"></div></div></div>
+<ul class="space-y-2" data-itw-sched-guidance-gaps="1"></ul>
+<div class="p-4 bg-primary-fixed/10 rounded-lg border border-primary/20"><h4 class="font-label-caps text-[11px] text-primary uppercase tracking-wider mb-1">Next Step</h4><p class="font-body-md text-[12px] text-on-surface-variant" data-itw-sched-guidance-next="1">—</p></div>
+</div>
+</aside>
+</main>
+<aside class="fixed top-0 right-0 h-full w-[480px] bg-surface-container-lowest border-l border-subtle flex flex-col shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.1)] z-[60] translate-x-full transition-transform duration-200" data-itw-sched-drawer="1" data-itw-sched-drawer-hidden="1">
+<div class="px-6 py-5 border-b border-subtle flex justify-between items-center bg-surface shrink-0">
+<div class="flex items-center gap-3"><div class="w-8 h-8 rounded bg-primary-fixed text-primary flex items-center justify-center font-data-mono font-bold border border-primary/20" data-itw-field="phase_seq">—</div><h2 class="font-headline-sm text-headline-sm text-on-surface">Phase Detail Configuration</h2></div>
+<button class="text-on-surface-variant hover:bg-surface-container p-1.5 rounded-full" data-itw-sched-drawer-close="1" type="button"><span class="material-symbols-outlined">close</span></button>
+</div>
+<div class="flex-1 overflow-y-auto p-6 bg-surface-bright space-y-6">
+<div data-itw-sched-section="identity">
+<h3 class="font-headline-md text-headline-md text-on-surface"><input class="w-full bg-transparent border-0 p-0 font-headline-md text-headline-md text-on-surface focus:outline-none focus:ring-0" data-itw-field="title" type="text"/></h3>
+<p class="font-data-mono text-[12px] text-primary mt-1" data-itw-field="phase_code">—</p>
+<p class="text-[10px] text-on-surface-variant italic mt-1" data-itw-sched-source="phase_code">Source: System-generated phase identifier</p>
+</div>
+<div class="grid grid-cols-2 gap-4" data-itw-sched-section="metadata">
+<div class="bg-surface-container-lowest border border-subtle p-3 rounded-md" data-itw-sched-field="duration_label">
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-1">Expected Duration</div>
+<input class="w-full bg-transparent border border-outline-variant rounded-md px-2 py-1 font-body-md text-on-surface" data-itw-field="duration_label" type="text"/>
+<p class="text-[10px] text-on-surface-variant italic mt-1" data-itw-sched-source="duration_label">Source: Standard IT Schedule Template</p>
+<div class="flex gap-2 mt-2"><button class="text-primary font-body-md text-[12px] hover:underline" data-itw-sched-field-action="edit" data-itw-sched-field-key="duration_label" type="button">Edit</button><button class="text-primary font-body-md text-[12px] hover:underline" data-itw-sched-field-action="reset" data-itw-sched-field-key="duration_label" type="button">Reset to Template</button></div>
+</div>
+<div class="bg-surface-container-lowest border border-subtle p-3 rounded-md" data-itw-sched-field="start_trigger">
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-1">Start Trigger</div>
+<input class="w-full bg-transparent border border-outline-variant rounded-md px-2 py-1 font-body-md text-on-surface" data-itw-field="start_trigger" type="text"/>
+<p class="text-[10px] text-on-surface-variant italic mt-1" data-itw-sched-source="start_trigger">Source: Derived from phase sequence</p>
+<div class="flex gap-2 mt-2"><button class="text-primary font-body-md text-[12px] hover:underline" data-itw-sched-field-action="override" data-itw-sched-field-key="start_trigger" type="button">Override</button></div>
+</div>
+</div>
+<div data-itw-sched-section="deliverables"><label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Deliverables</label><textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded-md p-3 text-body-md text-on-surface min-h-[80px] resize-none" data-itw-field="deliverables"></textarea><p class="text-[10px] text-on-surface-variant italic mt-1" data-itw-sched-source="deliverables">Source: Template + user configuration</p></div>
+<div data-itw-sched-section="acceptance"><label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Acceptance Criteria</label><textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded-md p-3 text-body-md text-on-surface min-h-[80px] resize-none" data-itw-field="acceptance_criteria"></textarea><p class="text-[10px] text-on-surface-variant italic mt-1" data-itw-sched-source="acceptance_criteria">Source: User configuration</p></div>
+<div data-itw-sched-section="evidence"><label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">Evidence Required</label><textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded-md p-3 text-body-md text-on-surface min-h-[80px] resize-none" data-itw-field="evidence_required"></textarea><p class="text-[10px] text-on-surface-variant italic mt-1" data-itw-sched-source="evidence_required">Source: Template + user configuration</p></div>
+<div data-itw-sched-section="carry_forward"><label class="flex items-start gap-4 cursor-pointer"><input class="mt-1" data-itw-field="carry_forward_to_contract" type="checkbox"/><span class="font-body-md text-on-surface">Carry forward to contract/delivery obligations</span></label><p class="text-[10px] text-on-surface-variant italic mt-1 ml-8" data-itw-sched-source="carry_forward_to_contract">Source: Schedule defaults (editable)</p></div>
+<ul class="space-y-2" data-itw-sched-warnings-list="1"></ul>
+</div>
+<div class="p-6 border-t border-subtle bg-surface-container-lowest flex justify-end gap-3 shrink-0">
+<button class="px-4 py-2 border border-outline-variant rounded-md text-on-surface font-body-md font-medium" data-itw-sched-drawer-cancel="1" type="button">Cancel</button>
+<button class="px-5 py-2 bg-primary text-on-primary rounded-md font-body-md font-medium" type="button">Save Changes</button>
+</div>
+</aside>
+<footer class="w-full flex justify-between items-center gap-gutter p-card-padding bg-surface-container-lowest border-t border-subtle shrink-0 z-30" data-itw-sched-actions="1">
+<div class="flex items-center space-x-4">
+<button class="flex items-center justify-center text-secondary border border-secondary rounded-lg px-6 py-2 font-body-md hover:bg-surface-container transition-colors bg-surface-container-lowest" type="button"><span class="material-symbols-outlined mr-2 text-[18px]">auto_stories</span>Use Standard IT Schedule Template</button>
+<button class="flex items-center justify-center text-secondary border border-secondary rounded-lg px-6 py-2 font-body-md hover:bg-surface-container transition-colors bg-surface-container-lowest" type="button"><span class="material-symbols-outlined mr-2 text-[18px]">fact_check</span>Run Validation</button>
+<span class="text-body-md text-on-surface-variant font-data-mono text-[12px]" data-itw-sched-last-saved="1">Last saved: —</span>
+<span class="text-body-md text-status-reserved font-body-md text-[12px] hidden" data-itw-sched-warnings-remain="1">Warnings remain</span>
+</div>
+<div class="flex items-center gap-gutter">
+<button class="flex items-center justify-center text-secondary border border-secondary rounded-lg px-6 py-2 font-body-md font-semibold hover:bg-surface-container transition-colors bg-surface-container-lowest" type="button"><span class="material-symbols-outlined mr-2 text-[18px]">save</span>Save Schedule</button>
+<button class="flex items-center justify-center bg-secondary text-on-secondary rounded-lg px-6 py-2 font-body-md font-semibold hover:bg-secondary-container transition-colors flex items-center" type="button">Continue to System Inventory <span class="material-symbols-outlined ml-2 text-[18px]">arrow_forward</span></button>
+</div>
+</footer>
+</body></html>

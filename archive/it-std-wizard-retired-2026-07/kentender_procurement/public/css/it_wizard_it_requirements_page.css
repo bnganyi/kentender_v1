@@ -1,0 +1,27 @@
+/* IT Wizard — IT Requirements Desk shell (native). */
+
+body.it-wizard-it-requirements-shell .page-head,
+body.it-wizard-it-requirements-shell .layout-main-section .page-head,
+body.it-wizard-it-requirements-shell .page-head-content,
+body.it-wizard-it-requirements-shell .page-head-actions {
+	display: none !important;
+}
+
+body.it-wizard-it-requirements-shell .page-body > .container,
+body.it-wizard-it-requirements-shell .frappe-app > .container {
+	padding: 0 !important;
+	max-width: none !important;
+}
+
+body.it-wizard-it-requirements-shell .layout-main-section-wrapper {
+	padding: 0;
+}
+
+body.it-wizard-it-requirements-shell .layout-main-section {
+	padding: 0;
+}
+
+body.it-wizard-it-requirements-shell.it-wizard-native-shell .body-sidebar-container {
+	display: flex;
+}
+

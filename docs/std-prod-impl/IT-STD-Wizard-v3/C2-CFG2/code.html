@@ -1,0 +1,545 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{try{
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-secondary-fixed": "#0d1c2e",
+                        "on-secondary": "#ffffff",
+                        "on-primary-container": "#708ab2",
+                        "tertiary": "#030a1d",
+                        "surface-variant": "#e0e3e5",
+                        "on-tertiary-fixed": "#131b2f",
+                        "on-primary-fixed-variant": "#2d486c",
+                        "surface-dim": "#d8dadc",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "on-tertiary-container": "#8088a1",
+                        "primary-container": "#002244",
+                        "on-error": "#ffffff",
+                        "surface-container-high": "#e6e8ea",
+                        "surface-container": "#eceef0",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-secondary-container": "#556379",
+                        "surface": "#f7f9fb",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed": "#d5e3fc",
+                        "secondary": "#515f74",
+                        "primary": "#000b1d",
+                        "outline": "#74777f",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "inverse-on-surface": "#eff1f3",
+                        "tertiary-container": "#192135",
+                        "on-primary-fixed": "#001c3a",
+                        "secondary-container": "#d2e1fa",
+                        "surface-tint": "#456085",
+                        "surface-container-low": "#f2f4f6",
+                        "inverse-surface": "#2d3133",
+                        "surface-bright": "#f7f9fb",
+                        "on-tertiary": "#ffffff",
+                        "outline-variant": "#c4c6cf",
+                        "tertiary-fixed": "#dae2fd",
+                        "primary-fixed": "#d4e3ff",
+                        "inverse-primary": "#adc8f3",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#43474e",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed-dim": "#bec6e0",
+                        "primary-fixed-dim": "#adc8f3",
+                        "on-background": "#191c1e",
+                        "on-tertiary-fixed-variant": "#3e465c",
+                        "on-surface": "#191c1e",
+                        "error": "#ba1a1a",
+                        "background": "#f7f9fb"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.125rem",
+                        lg: "0.25rem",
+                        xl: "0.5rem",
+                        full: "0.75rem"
+                    },
+                    spacing: {
+                        unit: "4px",
+                        "component-gap": "8px",
+                        "input-height": "28px",
+                        "table-row-height": "32px",
+                        "gutter": "12px",
+                        "container-padding": "16px"
+                    },
+                    fontFamily: {
+                        "body-sm": ["Public Sans"],
+                        "label-md": ["JetBrains Mono"],
+                        "body-md": ["Public Sans"],
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-md": ["Public Sans"],
+                        "display": ["Public Sans"],
+                        "headline-lg": ["Public Sans"],
+                        "body-lg": ["Public Sans"]
+                    },
+                    fontSize: {
+                        "body-sm": ["12px", { lineHeight: "16px", fontWeight: "400" }],
+                        "label-md": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "500" }],
+                        "body-md": ["13px", { lineHeight: "18px", fontWeight: "400" }],
+                        "label-sm": ["10px", { lineHeight: "12px", letterSpacing: "0.04em", fontWeight: "500" }],
+                        "headline-md": ["18px", { lineHeight: "24px", fontWeight: "600" }],
+                        "display": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "headline-lg": ["24px", { lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "600" }],
+                        "body-lg": ["14px", { lineHeight: "20px", fontWeight: "400" }]
+                    }
+                }
+            }
+        };
+    }catch(_e){}}catch(_e){}</script><meta charset="utf-8"></head><body class="bg-background text-on-background font-body-md antialiased overflow-hidden flex h-screen">
+<!-- Prebuilt SideNavBar -->
+<nav class="bg-primary dark:bg-primary-container text-primary-fixed dark:text-primary-fixed-dim font-body-md text-body-md fixed left-0 top-0 h-full w-64 border-r border-outline-variant dark:border-outline flat no shadows flex flex-col py-container-padding z-50">
+<!-- Header -->
+<div class="px-container-padding mb-8 flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-primary-fixed flex items-center justify-center text-primary-container font-bold font-headline-md">KT</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-on-primary dark:text-on-primary-fixed">KenTender</h1>
+<p class="font-label-sm text-label-sm text-on-primary/70">e-Procurement System</p>
+</div>
+</div>
+<!-- CTA -->
+<div class="px-container-padding mb-6">
+<button class="w-full bg-secondary-fixed text-on-secondary-fixed hover:bg-secondary-fixed-dim transition-colors duration-200 py-2 rounded shadow-sm font-label-md flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[16px]">add</span>
+                New Tender
+            </button>
+</div>
+<!-- Navigation Tabs -->
+<ul class="flex-1 flex flex-col gap-1 px-2">
+<li class=""><a class="flex items-center gap-3 px-3 py-2 rounded text-on-primary/70 hover:text-on-primary hover:bg-white/5 transition-colors duration-200 cursor-pointer active:scale-95" href="#"><span class="material-symbols-outlined text-[20px]" data-original-icon="assignment">assignment</span>Planning</a></li>
+<li class=""><a class="flex items-center gap-3 px-3 py-2 rounded text-on-primary/70 hover:text-on-primary hover:bg-white/5 transition-colors duration-200 cursor-pointer active:scale-95" href="#"><span class="material-symbols-outlined text-[20px]" data-original-icon="shopping_cart">shopping_cart</span>Demand</a></li>
+<!-- Active Tab -->
+<li class=""><a class="flex items-center gap-3 px-3 py-2 rounded text-primary-fixed-dim bg-primary-fixed-dim/20 border-r-4 border-secondary-fixed cursor-pointer active:scale-95" href="#"><span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">gavel</span>Tendering</a></li>
+<li class=""><a class="flex items-center gap-3 px-3 py-2 rounded text-on-primary/70 hover:text-on-primary hover:bg-white/5 transition-colors duration-200 cursor-pointer active:scale-95" href="#"><span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>Budget</a></li>
+<li class=""><a class="flex items-center gap-3 px-3 py-2 rounded text-on-primary/70 hover:text-on-primary hover:bg-white/5 transition-colors duration-200 cursor-pointer active:scale-95" href="#"><span class="material-symbols-outlined text-[20px]">leaderboard</span>Analytics</a></li>
+<li class=""><a class="flex items-center gap-3 px-3 py-2 rounded text-on-primary/70 hover:text-on-primary hover:bg-white/5 transition-colors duration-200 cursor-pointer active:scale-95" href="#"><span class="material-symbols-outlined text-[20px]">settings</span>Administration</a></li>
+</ul>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 ml-64 flex flex-col h-screen relative">
+<!-- Prebuilt TopNavBar-->
+<header class="bg-surface-container-lowest dark:bg-surface-container-high text-primary dark:text-primary-fixed font-label-md text-label-md fixed top-0 right-0 w-[calc(100%-256px)] h-16 border-b border-outline-variant dark:border-outline shadow-sm focus-within:ring-1 focus-within:ring-secondary flex items-center justify-between px-container-padding z-40">
+<!-- Left: Search -->
+<div class="flex items-center gap-2 bg-surface-container-low rounded border border-outline-variant px-3 py-1.5 w-64 focus-within:border-secondary">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">search</span>
+<input class="bg-transparent border-none outline-none w-full text-body-sm text-on-surface font-body-sm h-full p-0" placeholder="Search..." type="text">
+</div>
+<!-- Center: Heavy Anchor Title -->
+<div class="absolute left-1/2 transform -translate-x-1/2">
+<h2 class="font-headline-lg text-headline-lg font-bold tracking-tight text-primary">Tender Data Sheet</h2>
+</div>
+<!-- Right: Actions & Profile -->
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-all flex items-center justify-center">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-all flex items-center justify-center">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-variant border border-outline-variant overflow-hidden cursor-pointer">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="Default user avatar showing initials" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAcINdTlotjREwHDulNCq5kpWaG-bhOdP-cmo-iSNR0irsAv__hSULwEEYNy8kNzpotxXQStRk4QQJnFyD-3xuoLXIE_wXKbhLYp2xexy2NVtcNJ5T6SR2lrrvff13IluCpJ04tKnIkXYjR_mqfi45m_Uh3Y085n7beuEhX1AxKKtqZ2qo5fYvCK1aWCQ4PJoqnYlrntJNjYz3cjJpnSPdA5cfO9C2uhJUwjd2JEtNe-kyXnEe6YHCc">
+</div>
+</div>
+</header>
+<!-- Scrollable-->
+<main class="mt-16 flex-1 overflow-y-auto w-full">
+<div class="max-w-[1280px] mx-auto p-container-padding flex flex-col gap-gutter pb-24">
+<!-- Breadcrumb -->
+<nav class="flex items-center gap-2 text-label-sm font-label-sm text-on-surface-variant">
+<a class="hover:text-primary transition-colors" href="#">Dashboard</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<a class="hover:text-primary transition-colors" href="#">Tender Management</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<a class="hover:text-primary transition-colors" href="#">Tender Configurations</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<a class="hover:text-primary transition-colors" href="#">Tender Configuration Home</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-on-surface font-medium">Tender Data Sheet</span>
+</nav>
+<!-- Context Strip -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 mb-8 gap-0">
+<div class="border-r border-outline-variant/30 px-4 last:border-0">
+<p class="text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">PROCUREMENT PACKAGE Ref</p>
+<p class="text-body-sm font-bold text-primary">PP-ICT-2024-009</p>
+</div>
+<div class="col-span-2 border-r border-outline-variant/30 px-4 last:border-0">
+<p class="text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Procurement Title</p>
+<p class="text-body-sm font-bold text-primary truncate">Data Center Hardware Refresh</p>
+</div>
+<div class="border-r border-outline-variant/30 px-4 last:border-0">
+<p class="text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Procuring Entity</p>
+<p class="text-body-sm font-bold text-primary">National Treasury</p>
+</div>
+<div class="border-r border-outline-variant/30 px-4 last:border-0">
+<p class="text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Method</p>
+<p class="text-body-sm font-bold text-primary">Open National Tender</p>
+</div>
+<div class="border-r border-outline-variant/30 px-4 last:border-0">
+<p class="text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">STD Family</p>
+<p class="text-body-sm font-bold text-primary">Information Technology</p>
+</div>
+<div class="col-span-1 border-r border-outline-variant/30 px-4 last:border-0">
+<p class="text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Status</p>
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-amber-500"></span>
+<span class="text-body-sm font-bold text-primary">In progress</span>
+</div>
+</div>
+<div class="border-r border-outline-variant/30 px-4 last:border-0">
+<p class="text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Issues</p>
+<p class="text-body-sm font-bold text-error">0 Blockers / 2 Warnings</p>
+</div>
+</div>
+<!-- Two Column Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-start">
+<!-- Left Column (Form) -->
+<div class="lg:col-span-8 flex flex-col gap-gutter">
+<p class="font-body-md text-on-surface-variant mb-2">Set the tender-specific instructions, dates, submission rules, and allowed options for this IT tender.</p>
+<!-- Section 1: Tender Communication -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm overflow-hidden">
+<div class="bg-surface-container p-3 border-b border-outline-variant flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md text-primary">1. Tender Communication</h3>
+<span class="bg-surface-bright border border-outline-variant text-on-surface-variant font-label-sm px-2 py-1 rounded flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Complete
+                                </span>
+</div>
+<div class="p-container-padding grid grid-cols-1 md:grid-cols-2 gap-component-gap">
+<div class="flex flex-col gap-unit">
+<label class="font-label-md text-label-md text-on-surface-variant">Contact Officer</label>
+<input class="h-input-height border border-outline-variant rounded px-2 text-body-sm font-body-sm text-on-surface focus:ring-1 focus:ring-secondary focus:border-secondary outline-none w-full" type="text" value="Jane Doe">
+</div>
+<div class="flex flex-col gap-unit">
+<label class="font-label-md text-label-md text-on-surface-variant">Contact Email</label>
+<input class="h-input-height border border-outline-variant rounded px-2 text-body-sm font-body-sm text-on-surface focus:ring-1 focus:ring-secondary focus:border-secondary outline-none w-full" type="email" value="procurement@treasury.go.ke">
+</div>
+<div class="flex flex-col gap-unit">
+<label class="font-label-md text-label-md text-on-surface-variant">Clarification Submission Method</label>
+<select class="h-input-height border border-outline-variant rounded px-2 text-body-sm font-body-sm text-on-surface focus:ring-1 focus:ring-secondary focus:border-secondary outline-none w-full bg-surface-bright">
+<option>System Portal Only</option>
+<option>Email</option>
+</select>
+</div>
+<div class="flex flex-col gap-unit">
+<label class="font-label-md text-label-md text-on-surface-variant">Pre-tender Meeting</label>
+<div class="flex items-center gap-4 mt-1 h-input-height">
+<label class="flex items-center gap-2 text-body-sm cursor-pointer">
+<input checked="" class="text-primary focus:ring-secondary" name="meeting" type="radio" value="yes">
+    Yes
+  </label>
+<label class="flex items-center gap-2 text-body-sm cursor-pointer">
+<input class="text-primary focus:ring-secondary" name="meeting" type="radio" value="no">
+    No
+  </label>
+</div>
+</div>
+<div class="flex flex-col gap-unit col-span-1 md:col-span-2 mt-2">
+<label class="font-label-md text-label-md text-on-surface-variant">Pre-tender Meeting Details</label>
+<textarea class="min-h-[80px] border border-outline-variant rounded p-2 text-body-sm font-body-sm text-on-surface focus:ring-1 focus:ring-secondary focus:border-secondary outline-none w-full bg-surface-bright" placeholder="Enter meeting location, link, or instructions..."></textarea>
+</div>
+</div>
+</section>
+<!-- Section 2: Key Dates -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm overflow-hidden">
+<div class="bg-surface-container p-3 border-b border-outline-variant flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md text-primary">2. Key Dates</h3>
+<span class="bg-error-container text-on-error-container border border-error/20 font-label-sm px-2 py-1 rounded flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span> Needs attention
+                                </span>
+</div>
+<div class="p-container-padding grid grid-cols-1 md:grid-cols-2 gap-component-gap">
+<div class="flex flex-col gap-unit">
+<label class="font-label-md text-label-md text-on-surface-variant">Tender Publication Date <span class="text-on-surface-variant/50 font-normal">(Read-only)</span></label>
+<input class="h-input-height border border-outline-variant bg-surface-container-low rounded px-2 text-body-sm font-body-sm text-on-surface-variant w-full cursor-not-allowed" readonly="" type="text" value="System Generated">
+</div>
+<div class="flex flex-col gap-unit">
+<label class="font-label-md text-label-md text-on-surface-variant">Tender Submission Deadline</label>
+<input class="h-input-height border border-error rounded px-2 text-body-sm font-body-sm text-on-surface focus:ring-1 focus:ring-error focus:border-error outline-none w-full bg-error-container/10" type="datetime-local">
+</div>
+<div class="flex flex-col gap-unit">
+<label class="font-label-md text-label-md text-on-surface-variant">Tender Opening Date and Time</label>
+<input class="h-input-height border border-outline-variant rounded px-2 text-body-sm font-body-sm text-on-surface focus:ring-1 focus:ring-secondary focus:border-secondary outline-none w-full" type="datetime-local">
+</div>
+<div class="flex flex-col gap-unit col-span-1">
+<label class="font-label-md text-label-md text-on-surface-variant">Bid Validity Period</label>
+<div class="flex h-input-height">
+<input class="flex-1 border border-outline-variant rounded-l px-2 text-body-sm font-body-sm text-on-surface focus:ring-1 focus:ring-secondary focus:border-secondary outline-none" type="number" value="120">
+<select class="w-24 border border-l-0 border-outline-variant rounded-r px-2 text-body-sm font-body-sm text-on-surface focus:ring-1 focus:ring-secondary focus:border-secondary outline-none bg-surface-bright">
+<option selected="">Days</option>
+<option>Weeks</option>
+<option>Months</option>
+</select>
+</div>
+</div></div>
+</section>
+<!-- Section 3: Submission Rules -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm overflow-hidden">
+<div class="bg-surface-container p-3 border-b border-outline-variant flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md text-primary">3. Submission Rules</h3>
+<span class="bg-surface-bright border border-outline-variant text-on-surface-variant font-label-sm px-2 py-1 rounded flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> In progress
+                                </span>
+</div>
+<div class="p-container-padding grid grid-cols-1 md:grid-cols-2 gap-component-gap">
+<div class="flex flex-col gap-unit">
+<label class="font-label-md text-label-md text-on-surface-variant">Submission Channel</label>
+<select class="h-input-height border border-outline-variant rounded px-2 text-body-sm font-body-sm text-on-surface focus:ring-1 focus:ring-secondary focus:border-secondary outline-none w-full bg-surface-bright">
+<option>Electronic Only (KenTender)</option>
+<option>Physical Only</option>
+<option>Both</option>
+</select>
+</div>
+<div class="flex flex-col gap-unit">
+<label class="font-label-md text-label-md text-on-surface-variant">Submission Language</label>
+<select class="h-input-height border border-outline-variant rounded px-2 text-body-sm font-body-sm text-on-surface focus:ring-1 focus:ring-secondary focus:border-secondary outline-none w-full bg-surface-bright">
+<option>English</option>
+<option>Swahili</option>
+</select>
+</div>
+<div class="flex flex-col gap-unit">
+<label class="font-label-md text-label-md text-on-surface-variant">Tender Currency</label>
+<select class="h-input-height border border-outline-variant rounded px-2 text-body-sm font-body-sm text-on-surface focus:ring-1 focus:ring-secondary focus:border-secondary outline-none w-full bg-surface-bright">
+<option>KES (Kenyan Shilling)</option>
+<option>USD Allowed</option>
+</select>
+</div>
+<div class="flex flex-col gap-unit">
+<label class="font-label-md text-label-md text-on-surface-variant">Alternative Tenders Allowed</label>
+<div class="flex items-center gap-4 mt-1 h-input-height">
+<label class="flex items-center gap-2 text-body-sm cursor-pointer">
+<input class="text-primary focus:ring-secondary" name="alt_tenders" type="radio" value="yes">
+    Yes
+  </label>
+<label class="flex items-center gap-2 text-body-sm cursor-pointer">
+<input checked="" class="text-primary focus:ring-secondary" name="alt_tenders" type="radio" value="no">
+    No
+  </label>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 4: Eligibility and Participation -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm overflow-hidden">
+<div class="bg-surface-container p-3 border-b border-outline-variant flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md text-primary">4. Eligibility and Participation</h3>
+<span class="bg-surface border border-outline-variant text-on-surface-variant font-label-sm px-2 py-1 rounded flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span> Not started
+                                </span>
+</div>
+<div class="p-container-padding grid grid-cols-1 md:grid-cols-2 gap-component-gap">
+<div class="flex flex-col gap-unit">
+<label class="font-label-md text-label-md text-on-surface-variant">Eligible Tenderers</label>
+<select class="h-input-height border border-outline-variant rounded px-2 text-body-sm font-body-sm text-on-surface focus:ring-1 focus:ring-secondary focus:border-secondary outline-none w-full bg-surface-bright">
+<option>Open to all eligible tenderers</option>
+<option>Restricted</option>
+</select>
+</div>
+<div class="flex flex-col gap-unit">
+<label class="font-label-md text-label-md text-on-surface-variant">Reserved Procurement</label>
+<div class="flex items-center gap-4 mt-1 h-input-height">
+<label class="flex items-center gap-2 text-body-sm cursor-pointer">
+<input class="text-primary focus:ring-secondary" name="reserved_proc" type="radio" value="yes">
+    Yes
+  </label>
+<label class="flex items-center gap-2 text-body-sm cursor-pointer">
+<input checked="" class="text-primary focus:ring-secondary" name="reserved_proc" type="radio" value="no">
+    No
+  </label>
+</div>
+</div>
+<div class="flex flex-col gap-unit">
+<label class="font-label-md text-label-md text-on-surface-variant">Reservation Category</label>
+<select class="h-input-height border border-outline-variant rounded px-2 text-body-sm font-body-sm text-on-surface focus:ring-1 focus:ring-secondary focus:border-secondary outline-none w-full bg-surface-bright">
+<option>Youth</option>
+<option>Women</option>
+<option>Persons with Disabilities</option>
+<option>Local Contractors / Suppliers</option>
+<option>Other statutory reservation</option>
+</select>
+</div>
+<div class="flex flex-col gap-unit col-span-1 md:col-span-2 mt-2">
+<label class="font-label-md text-label-md text-on-surface-variant">Local Participation Requirement</label>
+<textarea class="min-h-[80px] border border-outline-variant rounded p-2 text-body-sm font-body-sm text-on-surface focus:ring-1 focus:ring-secondary focus:border-secondary outline-none w-full bg-surface-bright" placeholder="Enter requirements..."></textarea>
+</div>
+</div>
+</section>
+<!-- Section 5: Tender Security -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm overflow-hidden">
+<div class="bg-surface-container p-3 border-b border-outline-variant flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md text-primary">5. Tender Security</h3>
+<span class="bg-surface border border-outline-variant text-on-surface-variant font-label-sm px-2 py-1 rounded flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span> Not started
+                                </span>
+</div>
+<div class="p-container-padding grid grid-cols-1 md:grid-cols-2 gap-component-gap">
+<div class="flex flex-col gap-unit">
+<label class="font-label-md text-label-md text-on-surface-variant">Tender Security Required</label>
+<div class="flex items-center gap-4 mt-1 h-input-height">
+<label class="flex items-center gap-2 text-body-sm cursor-pointer">
+<input class="text-primary focus:ring-secondary" name="security_req" type="radio" value="yes">
+    Yes
+  </label>
+<label class="flex items-center gap-2 text-body-sm cursor-pointer">
+<input checked="" class="text-primary focus:ring-secondary" name="security_req" type="radio" value="no">
+    No
+  </label>
+</div>
+</div>
+<div class="flex flex-col gap-unit">
+<label class="font-label-md text-label-md text-on-surface-variant">Tender Security Type</label>
+<select class="h-input-height border border-outline-variant rounded px-2 text-body-sm font-body-sm text-on-surface focus:ring-1 focus:ring-secondary focus:border-secondary outline-none w-full bg-surface-bright">
+<option>Tender Security</option>
+<option>Tender-Securing Declaration</option>
+<option>Not Required</option>
+</select>
+</div>
+<div class="flex flex-col gap-unit">
+<label class="font-label-md text-label-md text-on-surface-variant">Tender Security Amount</label>
+<div class="flex h-input-height">
+<span class="inline-flex items-center px-3 border border-r-0 border-outline-variant rounded-l bg-surface-container-low text-on-surface-variant text-body-sm">KES</span>
+<input class="flex-1 border border-outline-variant rounded-r px-2 text-body-sm font-body-sm text-on-surface focus:ring-1 focus:ring-secondary focus:border-secondary outline-none w-full" placeholder="0.00" type="number">
+</div>
+</div>
+<div class="flex flex-col gap-unit">
+<label class="font-label-md text-label-md text-on-surface-variant">Tender Security Validity Period</label>
+<div class="flex h-input-height">
+<input class="flex-1 border border-outline-variant rounded-l px-2 text-body-sm font-body-sm text-on-surface focus:ring-1 focus:ring-secondary focus:border-secondary outline-none" type="number" value="30">
+<select class="w-24 border border-l-0 border-outline-variant rounded-r px-2 text-body-sm font-body-sm text-on-surface focus:ring-1 focus:ring-secondary focus:border-secondary outline-none bg-surface-bright">
+<option selected="">Days</option>
+<option>Weeks</option>
+<option>Months</option>
+</select>
+</div>
+</div>
+</div>
+</section>
+<section class="bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm overflow-hidden">
+<div class="bg-surface-container p-3 border-b border-outline-variant flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md text-primary">6. Preferences and Reservations</h3>
+<span class="bg-surface border border-outline-variant text-on-surface-variant font-label-sm px-2 py-1 rounded flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span> Not started
+                                </span>
+</div>
+<div class="p-container-padding grid grid-cols-1 md:grid-cols-2 gap-component-gap">
+<div class="flex flex-col gap-unit">
+<label class="font-label-md text-label-md text-on-surface-variant">Margin of Preference Applies</label>
+<div class="flex items-center gap-4 mt-1 h-input-height">
+<label class="flex items-center gap-2 text-body-sm cursor-pointer">
+<input class="text-primary focus:ring-secondary" name="pref_applies" type="radio" value="yes">
+    Yes
+  </label>
+<label class="flex items-center gap-2 text-body-sm cursor-pointer">
+<input checked="" class="text-primary focus:ring-secondary" name="pref_applies" type="radio" value="no">
+    No
+  </label>
+</div>
+</div>
+<div class="flex flex-col gap-unit">
+<label class="font-label-md text-label-md text-on-surface-variant">Preference Basis</label>
+<select class="h-input-height border border-outline-variant rounded px-2 text-body-sm font-body-sm text-on-surface focus:ring-1 focus:ring-secondary focus:border-secondary outline-none w-full bg-surface-bright">
+<option>Local Content</option>
+<option>Citizen Contractors</option>
+<option>Small and Medium Enterprises</option>
+</select>
+</div>
+<div class="flex flex-col gap-unit col-span-1 md:col-span-2 mt-2">
+<label class="font-label-md text-label-md text-on-surface-variant">Preference Evidence Required</label>
+<textarea class="min-h-[80px] border border-outline-variant rounded p-2 text-body-sm font-body-sm text-on-surface focus:ring-1 focus:ring-secondary focus:border-secondary outline-none w-full bg-surface-bright" placeholder="Enter evidence requirements..."></textarea>
+</div>
+</div>
+</section><section class="bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm overflow-hidden">
+<div class="bg-surface-container p-3 border-b border-outline-variant flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md text-primary">7. Bid Opening</h3>
+<span class="bg-surface border border-outline-variant text-on-surface-variant font-label-sm px-2 py-1 rounded flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span> Not started
+                                </span>
+</div>
+<div class="p-container-padding grid grid-cols-1 md:grid-cols-2 gap-component-gap">
+<div class="flex flex-col gap-unit">
+<label class="font-label-md text-label-md text-on-surface-variant">Opening Method</label>
+<select class="h-input-height border border-outline-variant rounded px-2 text-body-sm font-body-sm text-on-surface focus:ring-1 focus:ring-secondary focus:border-secondary outline-none w-full bg-surface-bright">
+<option>Electronic Opening</option>
+<option>Physical Opening</option>
+<option>Hybrid Opening</option>
+</select>
+</div>
+<div class="flex flex-col gap-unit">
+<label class="font-label-md text-label-md text-on-surface-variant">Opening Location / Portal</label>
+<input class="h-input-height border border-outline-variant rounded px-2 text-body-sm font-body-sm text-on-surface focus:ring-1 focus:ring-secondary focus:border-secondary outline-none w-full" placeholder="e.g. KenTender Portal or Boardroom 4" type="text">
+</div>
+<div class="flex flex-col gap-unit">
+<label class="font-label-md text-label-md text-on-surface-variant">Opening Attendance Allowed</label>
+<div class="flex items-center gap-4 mt-1 h-input-height">
+<label class="flex items-center gap-2 text-body-sm cursor-pointer">
+<input checked="" class="text-primary focus:ring-secondary" name="opening_attendance" type="radio" value="yes">
+    Yes
+  </label>
+<label class="flex items-center gap-2 text-body-sm cursor-pointer">
+<input class="text-primary focus:ring-secondary" name="opening_attendance" type="radio" value="no">
+    No
+  </label>
+</div>
+</div>
+<div class="flex flex-col gap-unit col-span-1 md:col-span-2 mt-2">
+<label class="font-label-md text-label-md text-on-surface-variant">Opening Notes</label>
+<textarea class="min-h-[80px] border border-outline-variant rounded p-2 text-body-sm font-body-sm text-on-surface focus:ring-1 focus:ring-secondary focus:border-secondary outline-none w-full bg-surface-bright" placeholder="Enter any additional notes regarding the opening process..."></textarea>
+</div>
+</div>
+</section></div>
+<!-- Right Column (Guidance Panel) -->
+<div class="lg:col-span-4 sticky top-20">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm overflow-hidden">
+<div class="p-container-padding border-b border-outline-variant bg-surface-bright flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">lightbulb</span>
+<h3 class="font-headline-sm text-headline-sm text-primary font-semibold">Tender Data Sheet Guidance</h3>
+</div>
+<div class="p-container-padding flex flex-col gap-4 text-body-sm text-on-surface-variant font-body-sm">
+<p class="">Complete only the tender-specific instructions required for this procurement. The standard Instructions to Tenderers remain controlled by the selected Standard Tender Document and are not edited here.</p>
+<div class="bg-surface rounded p-3 border border-outline-variant/50">
+<h4 class="font-label-md text-on-surface font-semibold mb-2 uppercase">What this affects</h4>
+<ul class="list-disc pl-4 space-y-1">
+<li class="">Submission instructions</li>
+<li class="">Eligibility settings</li>
+<li class="">Securities</li>
+<li class="">Preference settings</li>
+<li class="">Bid opening details</li>
+</ul>
+</div>
+<div class="bg-surface rounded p-3 border border-outline-variant/50">
+<h4 class="font-label-md text-on-surface font-semibold mb-2 uppercase">Used later by</h4>
+<div class="flex flex-wrap gap-2">
+<span class="bg-surface-container border border-outline-variant px-2 py-1 rounded text-label-sm">Evaluation Setup</span>
+<span class="bg-surface-container border border-outline-variant px-2 py-1 rounded text-label-sm">Forms &amp; Evidence</span>
+<span class="bg-surface-container border border-outline-variant px-2 py-1 rounded text-label-sm">Contract Values</span>
+<span class="bg-surface-container border border-outline-variant px-2 py-1 rounded text-label-sm">Document Preview</span>
+</div>
+</div>
+<div class="bg-surface rounded p-3 border border-outline-variant/50"><h4 class="font-label-md text-on-surface font-semibold mb-2 uppercase">Not configured here</h4><p class="text-body-sm text-on-surface-variant">Technical requirements, price items, evaluation scores, bidder forms, and SCC contract values.</p></div></div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Sticky Footer Actions -->
+<footer class="bg-surface-container-lowest border-t border-outline-variant px-container-padding py-3 flex justify-between items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-30 fixed bottom-0 right-0 w-[calc(100%-256px)]">
+<div>
+<button class="h-8 px-4 rounded border border-outline-variant text-on-surface hover:bg-surface-container transition-colors shadow-sm font-label-md flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">arrow_back</span>
+                    Back to Configuration Home
+                </button>
+</div>
+<div class="flex items-center gap-3">
+<button class="h-8 px-4 rounded border border-outline-variant text-on-surface hover:bg-surface-container transition-colors shadow-sm font-label-md">
+                    Save Draft
+                </button>
+<button class="h-8 px-4 rounded border border-outline-variant text-on-surface hover:bg-surface-container transition-colors shadow-sm font-label-md flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">fact_check</span>
+                    Run Check
+                </button>
+<button class="h-8 px-4 rounded bg-primary-container text-on-primary-container hover:bg-primary hover:text-on-primary transition-colors shadow-sm font-label-md flex items-center gap-2">
+                    Continue to IT Requirements
+                    &lt;</button></div></footer></div>
+
+</body></html>

@@ -1,0 +1,573 @@
+<!DOCTYPE html><html lang="en" class="light" style=""><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#bec6e0",
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#eff1f3",
+                        "primary-container": "#002244",
+                        "outline": "#74777f",
+                        "secondary-fixed": "#d5e3fc",
+                        "on-surface-variant": "#43474e",
+                        "primary-fixed": "#d4e3ff",
+                        "on-primary-fixed-variant": "#2d486c",
+                        "surface-container-highest": "#e0e3e5",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary": "#515f74",
+                        "secondary-container": "#d2e1fa",
+                        "on-tertiary-fixed-variant": "#3e465c",
+                        "on-error": "#ffffff",
+                        "on-background": "#191c1e",
+                        "error": "#ba1a1a",
+                        "on-primary-container": "#708ab2",
+                        "primary-fixed-dim": "#adc8f3",
+                        "inverse-primary": "#adc8f3",
+                        "surface-tint": "#456085",
+                        "tertiary-fixed": "#dae2fd",
+                        "surface-container-high": "#e6e8ea",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "surface-container": "#eceef0",
+                        "surface-variant": "#e0e3e5",
+                        "on-primary": "#ffffff",
+                        "surface": "#f7f9fb",
+                        "background": "#f7f9fb",
+                        "on-tertiary-container": "#8088a1",
+                        "surface-bright": "#f7f9fb",
+                        "on-surface": "#191c1e",
+                        "on-primary-fixed": "#001c3a",
+                        "error-container": "#ffdad6",
+                        "tertiary-container": "#192135",
+                        "surface-container-low": "#f2f4f6",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "primary": "#000b1d",
+                        "on-secondary-container": "#556379",
+                        "outline-variant": "#c4c6cf",
+                        "on-tertiary-fixed": "#131b2f",
+                        "inverse-surface": "#2d3133",
+                        "tertiary": "#030a1d",
+                        "surface-dim": "#d8dadc",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "on-error-container": "#93000a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "input-height": "28px",
+                        "table-row-height": "32px",
+                        "gutter": "12px",
+                        "component-gap": "8px",
+                        "container-padding": "16px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Public Sans"],
+                        "body-md": ["Public Sans"],
+                        "display": ["Public Sans"],
+                        "body-lg": ["Public Sans"],
+                        "label-md": ["JetBrains Mono"],
+                        "headline-md": ["Public Sans"],
+                        "headline-lg": ["Public Sans"],
+                        "label-sm": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                        "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    }catch(_e){}</script><meta charset="utf-8"></head><body class="bg-surface-bright text-on-background font-body-md text-body-md overflow-hidden h-screen flex">
+<!-- SIDE NAVIGATION -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-primary flex flex-col py-container-padding border-r border-outline-variant z-50">
+<div class="px-6 mb-8">
+<h1 class="font-headline-md text-headline-md font-bold text-on-primary">KenTender</h1>
+<p class="text-on-primary/60 text-[11px] uppercase tracking-widest font-bold">e-Procurement System</p>
+</div>
+<nav class="flex-1 space-y-1 px-3">
+<!-- Planning -->
+<a href="#" class="flex items-center px-3 py-2.5 rounded-sm text-on-primary/70 hover:text-on-primary hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined mr-3" data-original-icon="assignment">assignment</span>
+<span class="font-body-md text-body-md">Planning</span>
+</a>
+<!-- Demand -->
+<a href="#" class="flex items-center px-3 py-2.5 rounded-sm text-on-primary/70 hover:text-on-primary hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined mr-3" data-original-icon="shopping_cart">shopping_cart</span>
+<span class="font-body-md text-body-md">Demand</span>
+</a>
+<!-- Tendering (Active Step - Tender Configurations is child of Tendering) -->
+<div class="space-y-1">
+<a href="#" class="flex items-center px-3 py-2.5 rounded-sm text-primary-fixed-dim bg-primary-fixed-dim/20 border-r-4 border-secondary-fixed">
+<span class="material-symbols-outlined mr-3">gavel</span>
+<span class="font-body-md text-body-md">Tendering</span>
+</a>
+<div class="pl-10 space-y-1">
+<a href="#" class="block py-1.5 text-on-primary text-xs font-semibold">Tender Configurations</a>
+<a href="#" class="block py-1.5 text-on-primary/50 text-xs hover:text-on-primary">Bidding Documents</a>
+</div>
+</div>
+<!-- Budget -->
+<a href="#" class="flex items-center px-3 py-2.5 rounded-sm text-on-primary/70 hover:text-on-primary hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined mr-3" data-original-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-body-md text-body-md">Budget</span>
+</a>
+<!-- Analytics -->
+<a href="#" class="flex items-center px-3 py-2.5 rounded-sm text-on-primary/70 hover:text-on-primary hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined mr-3" data-original-icon="leaderboard">leaderboard</span>
+<span class="font-body-md text-body-md">Analytics</span>
+</a>
+<!-- Administration -->
+<a href="#" class="flex items-center px-3 py-2.5 rounded-sm text-on-primary/70 hover:text-on-primary hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined mr-3">settings</span>
+<span class="font-body-md text-body-md">Administration</span>
+</a>
+</nav>
+<div class="px-4 mt-auto">
+<button class="w-full bg-primary-fixed text-on-primary-fixed font-bold py-3 rounded-lg flex items-center justify-center gap-2 active:scale-95 transition-all">
+<span class="material-symbols-outlined">add</span>
+                New Tender
+            </button>
+</div>
+</aside>
+<!-- MAIN CONTENT CANVAS -->
+<main class="flex-1 ml-64 flex flex-col h-screen overflow-hidden pb-16">
+<!-- TOP NAVBAR -->
+<header class="h-16 bg-surface-container-lowest flex items-center justify-between px-container-padding z-40 shadow-sm border-b border-outline-variant">
+<div class="flex items-center gap-4">
+<div class="bg-surface-variant flex items-center px-3 py-1.5 rounded border border-outline-variant focus-within:ring-1 focus-within:ring-secondary">
+<span class="material-symbols-outlined text-on-surface-variant text-sm mr-2">search</span>
+<input type="text" placeholder="Search price items..." class="bg-transparent border-none focus:ring-0 text-sm p-0 w-64">
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-all relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute -top-1 -right-1 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-all">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+</div>
+<div class="flex items-center gap-3 pl-6 border-l border-outline-variant">
+<div class="text-right">
+<p class="font-label-md text-label-md text-on-surface">John Procure</p>
+<p class="text-[10px] text-on-surface-variant font-medium">Head of Procurement</p>
+</div>
+<img alt="User Profile" class="w-8 h-8 rounded-full border border-outline-variant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGqbHoL5Dl12fONvhnRRx2IyloM8h1NccBvaKkgU52WjG4A9kMbhCzUa-EGlI8u3uEQSUkpxjWbOT_YQEKJduFGWC0ZtdjfbF8PgNFMUsgFAgKTwPaPpxXygDp1sJuN1tpVmH95Xvs1nal0MeU0TAuf-jAtC5QUIaAj1xMUmiQsX_R-vHWE3uiUzDkWZaEDgavhbhczv6jCXZKR0y13AsigQPoNiS_7VXCodV5NCewaZlpFk13CsAV">
+</div>
+</div>
+</header>
+<!-- PAGE HEADER & CONTEXT STRIP -->
+<div class="bg-surface border-b border-outline-variant">
+<div class="px-8 pt-6 pb-4">
+<div class="flex justify-between items-end">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Price Schedule</h2>
+<p class="text-on-surface-variant font-body-md">Define how bidders must price the tender.</p>
+</div>
+
+</div>
+</div>
+<!-- CONTEXT STR-->
+<div class="px-8 py-2 bg-surface-container-low border-y border-outline-variant grid grid-cols-4 lg:grid-cols-8 gap-4 overflow-x-auto whitespace-nowrap">
+<div class="flex flex-col">
+<span class="text-[10px] font-label-md text-on-surface-variant uppercase">Procurement Package Ref</span>
+<span class="text-xs font-bold text-on-surface">PP-ICT-2024-009</span>
+</div>
+<div class="flex flex-col col-span-1 lg:col-span-1">
+<span class="text-[10px] font-label-md text-on-surface-variant uppercase">Tender Title</span>
+<span class="text-xs font-bold text-on-surface truncate" title="Data Center Hardware Refresh">Data Center Hardware Refresh</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] font-label-md text-on-surface-variant uppercase">Procuring Entity</span>
+<span class="text-xs font-bold text-on-surface">National Treasury</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] font-label-md text-on-surface-variant uppercase">Procurement Method</span>
+<span class="text-xs font-bold text-on-surface">Open National Tender</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] font-label-md text-on-surface-variant uppercase">STD Family</span>
+<span class="text-xs font-bold text-on-surface">Information Technology</span>
+</div>
+<div class="flex flex-col col-span-1 lg:col-span-1">
+<span class="text-[10px] font-label-md text-on-surface-variant uppercase">Standard Tender Document</span>
+<span class="text-xs font-bold text-on-surface">IT STD — April 2022</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] font-label-md text-on-surface-variant uppercase">Wizard State</span>
+<span class="text-xs font-bold text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">motion_photos_on</span>
+                        In Progress
+                    </span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] font-label-md text-on-surface-variant uppercase">Issues</span>
+<span class="text-xs font-bold text-error flex items-center gap-1">
+                        0 Blockers / 2 Warnings
+                    </span>
+</div>
+</div>
+</div>
+<!-- CONTENT AREA -->
+<div class="flex-1 flex flex-col p-8 bg-surface-bright overflow-hidden">
+<!-- TABS -->
+<div class="flex items-center border-b border-outline-variant mb-6 gap-8">
+<button class="pb-3 text-primary font-bold border-b-2 border-primary text-body-md transition-all">All Price Items</button>
+<button class="pb-3 text-on-surface-variant hover:text-primary transition-all text-body-md">Supply &amp; Installation</button>
+<button class="pb-3 text-on-surface-variant hover:text-primary transition-all text-body-md">Recurrent Costs</button>
+<button class="pb-3 text-on-surface-variant hover:text-primary transition-all text-body-md">Optional / Provisional Items</button>
+<button class="pb-3 text-on-surface-variant hover:text-primary transition-all text-body-md flex items-center gap-2">
+                    Needs Attention
+                    <span class="px-1.5 py-0.5 bg-error/10 text-error text-[10px] rounded-full font-black">2</span>
+</button>
+<div class="ml-auto flex gap-2 pb-2"><button class="bg-surface-container-lowest border border-outline px-3 py-1 text-primary font-label-md text-label-md flex items-center gap-1.5 hover:bg-surface-container transition-all rounded-sm"><span class="material-symbols-outlined text-[16px]">add</span> Item</button><button class="bg-surface-container-lowest border border-outline px-3 py-1 text-primary font-label-md text-label-md flex items-center gap-1.5 hover:bg-surface-container transition-all rounded-sm"><span class="material-symbols-outlined text-[16px]">file_upload</span> Import</button><button class="bg-primary text-on-primary px-3 py-1 font-label-md text-label-md flex items-center gap-1.5 hover:opacity-90 shadow-sm transition-all rounded-sm"><span class="material-symbols-outlined text-[16px]">rule</span> Run Check</button></div></div>
+<!-- DATA TABLE -->
+<div class="flex-1 overflow-hidden flex flex-col bg-surface-container-lowest border border-outline-variant shadow-sm rounded-lg">
+<div class="overflow-x-auto scbar flex-1">
+<table class="w-full text-left border-collapse min-w-[1000px]">
+<thead>
+<tr class="bg-surface-container-high border-b border-outline-variant sticky top-0 z-10">
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Item ID</th>
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Price Item</th>
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Price Group</th>
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Pricing Basis</th>
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Quantity / Duration</th>
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Source</th>
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Evaluated Price</th>
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-center">Status</th>
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<tr class="hover:bg-surface-bright/50 transition-colors group">
+<td class="px-4 py-table-row-height text-label-md font-label-md text-secondary">PRI-001</td>
+<td class="px-4 py-table-row-height font-bold text-on-surface">Server compute nodes</td>
+<td class="px-4 py-table-row-height text-body-sm text-on-surface-variant">Supply &amp; Installation</td>
+<td class="px-4 py-table-row-height text-body-sm text-on-surface-variant">Unit price</td>
+<td class="px-4 py-table-row-height text-body-sm text-on-surface-variant font-medium">12 units</td>
+<td class="px-4 py-table-row-height text-body-sm text-on-surface-variant">System Inventory</td>
+<td class="px-4 py-table-row-height">
+<span class="px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded">Included</span>
+</td>
+<td class="px-4 py-table-row-height text-center">
+<span class="inline-flex items-center text-xs font-bold text-green-700">
+<span class="status-dot bg-green-500"></span> Complete
+                                    </span>
+</td>
+<td class="px-4 py-table-row-height text-right">
+<button class="text-primary hover:underline font-bold text-xs" onclick="toggleDrawer('PRI-001')">Edit</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-bright/50 transition-colors group">
+<td class="px-4 py-table-row-height text-label-md font-label-md text-secondary">PRI-002</td>
+<td class="px-4 py-table-row-height font-bold text-on-surface">Installation and commissioning</td>
+<td class="px-4 py-table-row-height text-body-sm text-on-surface-variant">Supply &amp; Installation</td>
+<td class="px-4 py-table-row-height text-body-sm text-on-surface-variant">Lump sum</td>
+<td class="px-4 py-table-row-height text-body-sm text-on-surface-variant font-medium">1 lot</td>
+<td class="px-4 py-table-row-height text-body-sm text-on-surface-variant">Implementation Schedule</td>
+<td class="px-4 py-table-row-height">
+<span class="px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded">Included</span>
+</td>
+<td class="px-4 py-table-row-height text-center">
+<span class="inline-flex items-center text-xs font-bold text-green-700">
+<span class="status-dot bg-green-500"></span> Complete
+                                    </span>
+</td>
+<td class="px-4 py-table-row-height text-right">
+<button class="text-primary hover:underline font-bold text-xs" onclick="toggleDrawer('PRI-002')">Edit</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-bright/50 transition-colors group">
+<td class="px-4 py-table-row-height text-label-md font-label-md text-secondary">PRI-003</td>
+<td class="px-4 py-table-row-height font-bold text-on-surface">Data migration support</td>
+<td class="px-4 py-table-row-height text-body-sm text-on-surface-variant">Supply &amp; Installation</td>
+<td class="px-4 py-table-row-height text-body-sm text-on-surface-variant">Lump sum</td>
+<td class="px-4 py-table-row-height text-body-sm text-on-surface-variant font-medium">1 workstream</td>
+<td class="px-4 py-table-row-height text-body-sm text-on-surface-variant">IT Requirements</td>
+<td class="px-4 py-table-row-height">
+<span class="px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded">Included</span>
+</td>
+<td class="px-4 py-table-row-height text-center">
+<span class="inline-flex items-center text-xs font-bold text-green-700">
+<span class="status-dot bg-green-500"></span> Complete
+                                    </span>
+</td>
+<td class="px-4 py-table-row-height text-right">
+<button class="text-primary hover:underline font-bold text-xs" onclick="toggleDrawer('PRI-003')">Edit</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-bright/50 transition-colors group">
+<td class="px-4 py-table-row-height text-label-md font-label-md text-secondary">PRI-004</td>
+<td class="px-4 py-table-row-height font-bold text-on-surface">Annual hardware maintenance</td>
+<td class="px-4 py-table-row-height text-body-sm text-on-surface-variant">Recurrent Cost</td>
+<td class="px-4 py-table-row-height text-body-sm text-on-surface-variant">Annual</td>
+<td class="px-4 py-table-row-height text-body-sm text-on-surface-variant font-medium">3 years</td>
+<td class="px-4 py-table-row-height text-body-sm text-on-surface-variant">IT Requirements</td>
+<td class="px-4 py-table-row-height">
+<span class="px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded">Included</span>
+</td>
+<td class="px-4 py-table-row-height text-center">
+<span class="inline-flex items-center text-xs font-bold text-green-700">
+<span class="status-dot bg-green-500"></span> Complete
+                                    </span>
+</td>
+<td class="px-4 py-table-row-height text-right">
+<button class="text-primary hover:underline font-bold text-xs" onclick="toggleDrawer('PRI-004')">Edit</button>
+</td>
+</tr>
+<tr class="bg-amber-50/50 hover:bg-amber-50 transition-colors group">
+<td class="px-4 py-table-row-height text-label-md font-label-md text-secondary">PRI-005</td>
+<td class="px-4 py-table-row-height font-bold text-on-surface">Cloud backup subscription</td>
+<td class="px-4 py-table-row-height text-body-sm text-on-surface-variant">Recurrent Cost</td>
+<td class="px-4 py-table-row-height text-body-sm text-on-surface-variant">Monthly</td>
+<td class="px-4 py-table-row-height text-body-sm text-on-surface-variant font-medium">36 months</td>
+<td class="px-4 py-table-row-height text-body-sm text-on-surface-variant">IT Requirements</td>
+<td class="px-4 py-table-row-height">
+<span class="px-2 py-1 bg-amber-200 text-amber-900 text-[10px] font-bold rounded">Conditional</span>
+</td>
+<td class="px-4 py-table-row-height text-center">
+<span class="inline-flex items-center text-xs font-bold text-amber-700">
+<span class="status-dot bg-amber-500"></span> Needs attention
+                                    </span>
+</td>
+<td class="px-4 py-table-row-height text-right">
+<button class="text-error font-black text-xs px-2 py-1 bg-error/10 rounded border border-error/20" onclick="toggleDrawer('PRI-005')">Fix</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-bright/50 transition-colors group">
+<td class="px-4 py-table-row-height text-label-md font-label-md text-secondary">PRI-006</td>
+<td class="px-4 py-table-row-height font-bold text-on-surface">Optional additional storage shelf</td>
+<td class="px-4 py-table-row-height text-body-sm text-on-surface-variant">Optional / Provisional</td>
+<td class="px-4 py-table-row-height text-body-sm text-on-surface-variant">Unit price</td>
+<td class="px-4 py-table-row-height text-body-sm text-on-surface-variant italic opacity-60 font-body-sm">Bidders to state qty</td>
+<td class="px-4 py-table-row-height text-body-sm text-on-surface-variant">User added</td>
+<td class="px-4 py-table-row-height">
+<span class="px-2 py-1 bg-on-surface-variant/10 text-on-surface-variant text-[10px] font-bold rounded">Excluded</span>
+</td>
+<td class="px-4 py-table-row-height text-center">
+<span class="inline-flex items-center text-xs font-bold text-green-700">
+<span class="status-dot bg-green-500"></span> Complete
+                                    </span>
+</td>
+<td class="px-4 py-table-row-height text-right">
+<button class="text-secondary hover:underline font-bold text-xs" onclick="toggleDrawer('PRI-006')">Review</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- EMPTY STATE (HIDDEN) -->
+<div class="hidden flex-1 flex flex-col items-center justify-center p-12 text-center">
+<span class="material-symbols-outlined text-outline-variant text-[64px] mb-4">payments</span>
+<p class="font-headline-md text-on-surface mb-2">No price items have been configured yet.</p>
+<p class="text-on-surface-variant max-w-md mb-6">Add the price items bidders must use to submit their financial proposal. You can add supply and installation items, recurrent cost items, and optional or provisional items.</p>
+<div class="flex gap-4">
+<button class="px-6 py-2.5 bg-primary text-white font-bold rounded">Add Price Item</button>
+<button class="px-6 py-2.5 border border-outline text-on-surface font-bold rounded">Import Price Items</button>
+</div>
+</div>
+</div>
+<!-- FOOTER NAVIGATION -->
+<footer class="fixed bottom-0 right-0 left-64 bg-surface-container-lowest border-t border-outline-variant px-container-padding py-3 shadow-lg z-50 flex justify-between items-center"><div class="flex items-center"><button class="px-4 py-2 border border-outline text-primary font-label-md text-label-md hover:bg-surface-container transition-all flex items-center gap-2 rounded-sm"><span class="material-symbols-outlined text-sm">arrow_back</span> Back to Configuration Home</button></div><div class="flex gap-3"><button class="px-4 py-2 border border-outline text-primary font-label-md text-label-md hover:bg-surface-container transition-all rounded-sm">Save Price Schedule</button><button class="px-8 py-2 bg-primary text-on-primary font-label-md text-label-md opacity-50 cursor-not-allowed flex items-center gap-2 rounded-sm">Continue to Evaluation Setup <span class="material-symbols-outlined text-sm">arrow_forward</span></button></div></footer>
+</div>
+</main>
+<!-- RIGHT DRAWER (ADD/EDIT/FIX) -->
+<div class="fixed inset-0 bg-primary/40 backdrop-blur-sm z-[60] pointer-events-none opacity-0" id="drawer-overlay"></div>
+<div class="fixed right-0 top-0 h-full w-[500px] bg-white z-[70] shadow-2xl drawer-hidden border-l border-outline-variant flex flex-col" id="drawer-panel">
+<div class="p-6 border-b border-outline-variant flex items-center justify-between bg-surface-container-lowest">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface" id="drawer-title">Edit Price Item</h3>
+<p class="text-xs text-secondary font-label-md mt-1" id="drawer-subtitle">ID: PRI-005</p>
+</div>
+<button class="p-2 hover:bg-surface-variant rounded-full transition-colors" onclick="toggleDrawer()">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto scbar p-6 space-y-8">
+<!-- Section 1: Price Item -->
+<section class="space-y-4">
+<div class="flex items-center gap-2 border-l-4 border-primary pl-3 py-1">
+<h4 class="font-bold text-xs uppercase tracking-widest text-primary">1. Price Item</h4>
+</div>
+<div class="space-y-4">
+<div>
+<label class="block text-[11px] font-bold text-on-surface-variant mb-1 uppercase tracking-wider">Price Item Name</label>
+<input class="w-full h-input-height border-outline-variant rounded focus:ring-secondary focus:border-secondary text-sm" type="text" value="Cloud backup subscription">
+</div>
+<div>
+<label class="block text-[11px] font-bold text-on-surface-variant mb-1 uppercase tracking-wider">Price Group</label>
+<select class="w-full h-input-height border-outline-variant rounded focus:ring-secondary focus:border-secondary text-sm">
+<option>Supply &amp; Installation</option>
+<option selected="">Recurrent Cost</option>
+<option>Optional / Provisional</option>
+</select>
+</div>
+<div>
+<label class="block text-[11px] font-bold text-on-surface-variant mb-1 uppercase tracking-wider">Bidder-facing Description</label>
+<textarea class="w-full border-outline-variant rounded focus:ring-secondary focus:border-secondary text-sm" rows="3">Monthly fee for cloud storage and data retention for 10TB of encrypted data.</textarea>
+</div>
+<div>
+<label class="block text-[11px] font-bold text-on-surface-variant mb-1 uppercase tracking-wider">Source</label>
+<div class="px-3 py-1.5 bg-surface-container rounded border border-outline-variant text-sm font-medium text-on-surface-variant">IT Requirements</div>
+</div>
+</div>
+</section>
+<!-- Section 2: Pricing Basis -->
+<section class="space-y-4">
+<div class="flex items-center gap-2 border-l-4 border-primary pl-3 py-1">
+<h4 class="font-bold text-xs uppercase tracking-widest text-primary">2. Pricing Basis</h4>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block text-[11px] font-bold text-on-surface-variant mb-1 uppercase tracking-wider">Pricing Basis</label>
+<select class="w-full h-input-height border-outline-variant rounded focus:ring-secondary focus:border-secondary text-sm">
+<option selected="">Monthly</option>
+<option>Unit price</option>
+<option>Lump sum</option>
+<option>Annual</option>
+</select>
+</div>
+<div>
+<label class="block text-[11px] font-bold text-on-surface-variant mb-1 uppercase tracking-wider">Quantity</label>
+<input class="w-full h-input-height border-outline-variant rounded focus:ring-secondary focus:border-secondary text-sm" type="number" value="1">
+</div>
+<div>
+<label class="block text-[11px] font-bold text-on-surface-variant mb-1 uppercase tracking-wider">Unit</label>
+<input class="w-full h-input-height border-outline-variant rounded focus:ring-secondary focus:border-secondary text-sm" type="text" value="Subscription">
+</div>
+<div>
+<label class="block text-[11px] font-bold text-on-surface-variant mb-1 uppercase tracking-wider">Duration</label>
+<input class="w-full h-input-height border-outline-variant rounded focus:ring-secondary focus:border-secondary text-sm" type="text" value="36 months">
+</div>
+<div>
+<label class="block text-[11px] font-bold text-on-surface-variant mb-1 uppercase tracking-wider">Currency</label>
+<div class="px-3 py-1.5 bg-surface-container rounded border border-outline-variant text-sm font-medium text-on-surface-variant">KES</div>
+</div>
+<div>
+<label class="block text-[11px] font-bold text-on-surface-variant mb-1 uppercase tracking-wider">Tax Instruction</label>
+<select class="w-full h-input-height border-outline-variant rounded focus:ring-secondary focus:border-secondary text-sm">
+<option>Tax inclusive</option>
+<option selected="">Tax exclusive</option>
+<option>As specified in TDS</option>
+</select>
+</div>
+</div>
+</section>
+<!-- Section 3: Evaluated Price -->
+<section class="space-y-4">
+<div class="flex items-center gap-2 border-l-4 border-error pl-3 py-1">
+<h4 class="font-bold text-xs uppercase tracking-widest text-error">3. Evaluated Price</h4>
+</div>
+<div class="space-y-4">
+<div>
+<label class="block text-[11px] font-bold text-on-surface-variant mb-1 uppercase tracking-wider">Evaluated Price Treatment</label>
+<select class="w-full h-input-height border-outline-variant rounded focus:ring-secondary focus:border-secondary text-sm border-amber-300 bg-amber-50">
+<option>Included</option>
+<option>Excluded</option>
+<option selected="">Conditional</option>
+</select>
+</div>
+<div class="p-3 bg-amber-50 border border-amber-200 rounded">
+<label class="block text-[11px] font-bold text-amber-800 mb-1 uppercase tracking-wider">Conditional Rule</label>
+<textarea class="w-full border-amber-300 rounded focus:ring-amber-500 text-sm" placeholder="Explain when this item is included in the evaluated price..." rows="2"></textarea>
+<p class="text-[10px] text-amber-700 mt-2 italic flex items-center gap-1 font-bold">
+<span class="material-symbols-outlined text-[12px]">info</span>
+                            Explain when this item is included in the evaluated price.
+                        </p>
+</div>
+<div>
+<label class="block text-[11px] font-bold text-on-surface-variant mb-1 uppercase tracking-wider">Bidder Pricing Instruction</label>
+<textarea class="w-full border-outline-variant rounded focus:ring-secondary focus:border-secondary text-sm" rows="2">Bidders must provide a flat monthly rate inclusive of all platform overheads.</textarea>
+</div>
+</div>
+</section>
+<!-- Section 4: References -->
+<section class="space-y-4">
+<div class="flex items-center gap-2 border-l-4 border-outline pl-3 py-1">
+<h4 class="font-bold text-xs uppercase tracking-widest text-outline">4. References</h4>
+</div>
+<div class="space-y-3">
+<div class="p-3 bg-surface border border-outline-variant rounded flex justify-between items-center group">
+<div>
+<p class="text-[10px] text-on-surface-variant uppercase font-bold">Related Requirement</p>
+<p class="text-xs font-bold">REQ-IT-022: Cloud Backup</p>
+</div>
+<a class="text-primary text-[10px] font-black uppercase hover:underline opacity-0 group-hover:opacity-100 transition-all" href="#">View Requirement</a>
+</div>
+<div class="p-3 bg-surface border border-outline-variant rounded flex justify-between items-center group">
+<div>
+<p class="text-[10px] text-on-surface-variant uppercase font-bold">Related Inventory Item</p>
+<p class="text-xs font-bold text-on-surface-variant italic">None linked</p>
+</div>
+</div>
+<div class="p-3 bg-surface border border-outline-variant rounded flex justify-between items-center group">
+<div>
+<p class="text-[10px] text-on-surface-variant uppercase font-bold">Related Milestone</p>
+<p class="text-xs font-bold">M-008: Project Handover</p>
+</div>
+<a class="text-primary text-[10px] font-black uppercase hover:underline opacity-0 group-hover:opacity-100 transition-all" href="#">View Schedule</a>
+</div>
+<div class="flex items-center gap-2 p-2 bg-surface-container-high rounded text-[10px] text-on-surface-variant font-medium italic">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+                        Financial evaluation configured in Evaluation Setup
+                    </div>
+</div>
+</section>
+</div>
+<div class="p-6 border-t border-outline-variant bg-surface-container-lowest flex gap-3">
+<button class="flex-1 py-3 bg-primary text-white font-bold rounded active:scale-95 transition-all">Save Item</button>
+<button class="px-6 py-3 border border-outline-variant text-on-surface font-bold rounded hover:bg-surface-variant transition-all" onclick="toggleDrawer()">Cancel</button>
+</div>
+</div>
+<script>
+        function toggleDrawer(itemId = null) {
+            const overlay = document.getElementById('drawer-overlay');
+            const panel = document.getElementById('drawer-panel');
+            const title = document.getElementById('drawer-title');
+            const subtitle = document.getElementById('drawer-subtitle');
+
+            if (panel.classList.contains('drawer-hidden')) {
+                // Open
+                if (itemId) {
+                    title.innerText = 'Edit Price Item';
+                    subtitle.innerText = `ID: ${itemId}`;
+                } else {
+                    title.innerText = 'Add Price Item';
+                    subtitle.innerText = 'New Draft Item';
+                }
+                
+                overlay.classList.remove('pointer-events-none', 'opacity-0');
+                overlay.classList.add('opacity-100');
+                panel.classList.remove('drawer-hidden');
+            } else {
+                // Close
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('pointer-events-none'), 300);
+                panel.classList.add('drawer-hidden');
+            }
+        }
+
+        // Close on escape
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const panel = document.getElementById('drawer-panel');
+                if (!panel.classList.contains('drawer-hidden')) toggleDrawer();
+            }
+        });
+    </script>
+
+</body></html>

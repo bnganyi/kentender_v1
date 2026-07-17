@@ -1,0 +1,64 @@
+---
+description: IT Tender Wizard — native Frappe Desk architecture lock (no iframe/hydrator, no Tailwind CDN, shared shell/components).
+globs:
+  - apps/kentender_v1/docs/std-prod-impl/IT-STD-Wizard/**
+  - apps/kentender_v1/kentender_procurement/kentender_procurement/it_tender_wizard/**
+  - apps/kentender_v1/kentender_procurement/kentender_procurement/public/it_tender_wizard_impl/**
+  - apps/kentender_v1/kentender_procurement/kentender_procurement/public/js/it_wizard/**
+  - apps/kentender_v1/kentender_procurement/kentender_procurement/public/js/it_wizard_*.js
+  - apps/kentender_v1/kentender_procurement/kentender_procurement/public/css/kt_it_wizard.css
+  - apps/kentender_v1/tests/ui/smoke/it-std-wizard/**
+alwaysApply: false
+---
+
+# IT Tender Wizard — Native Frappe Desk Pattern (hard lock)
+
+Canonical doc: [`NATIVE_DESK_ARCHITECTURE.md`](apps/kentender_v1/docs/std-prod-impl/IT-STD-Wizard/NATIVE_DESK_ARCHITECTURE.md)
+
+## Required
+
+1. **Production screens** — native Frappe Desk page, single DOM, no iframe.
+2. **Thin registrars** — `*_page.js` only registers the route and `frappe.require`s shared + screen modules.
+3. **Shared library** — use `public/js/it_wizard/` (`shell`, `components`, `routes`, `api`) and `public/css/kt_it_wizard.css`.
+4. **Stitch HTML** — `it_tender_wizard_impl/*.html` is design reference only; do not mount at runtime for native/migrated screens.
+5. **Fonts** — self-hosted via `kt_fonts.css` only (no Google Fonts CDN).
+6. **Sidebar** — Procurement left rail visible; call `preserve_procurement_sidebar()` on page show.
+7. **CSS scoping** — body shell class per [`frappe-custom-page-css-scoping.mdc`](frappe-custom-page-css-scoping.mdc).
+8. **Tests** — per-screen Makefile gates only ([`it-wizard-test-gate.mdc`](it-wizard-test-gate.mdc)); Playwright uses plain DOM (no iframe hydration wait for native screens).
+9. **Screen 01 precedent** — extract reusable components; never copy the monolith into new screens.
+
+## Forbidden
+
+- New `mount_page()` wiring for production screens
+- Tailwind CDN (`cdn.tailwindcss.com`) in production JS/CSS or native screen assets
+- Runtime iframe + hydrator for screens marked **native** in the UI tracker
+- Cross-document iframe event handling for new work
+- 15 one-off page implementations without shared shell/components
+
+## Screen module pattern
+
+```javascript
+frappe.pages["it-tender-configuration-<screen>"].on_page_load = function (wrapper) {
+  frappe.require([
+    "/assets/kentender_procurement/js/it_wizard/it_wizard_shell.js",
+    "/assets/kentender_procurement/js/it_wizard/screens/<screen>.js",
+  ], function () {
+    kentender.it_wizard.screens.<screen>.init(wrapper);
+  });
+};
+```
+
+## Migration status
+
+Check **Architecture** column in [`UI_IMPLEMENTATION_TRACKER.md`](apps/kentender_v1/docs/std-prod-impl/IT-STD-Wizard/UI_IMPLEMENTATION_TRACKER.md):
+
+- `native` — must follow this rule exclusively
+- `iframe-transitional` — legacy path allowed until migrated; do not extend iframe pattern for new features on native screens
+
+## Gate
+
+```bash
+make it-wizard-native-architecture-gate SITE=kentender.midas.com
+```
+
+Run when changing IT Wizard Desk wiring, shared library, or native screen modules.

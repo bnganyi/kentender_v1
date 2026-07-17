@@ -1,0 +1,401 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>KenTender - Tender Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-tertiary-container": "#8088a1",
+                        "surface": "#f7f9fb",
+                        "background": "#f7f9fb",
+                        "surface-container": "#eceef0",
+                        "surface-variant": "#e0e3e5",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#dae2fd",
+                        "surface-container-high": "#e6e8ea",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "outline-variant": "#c4c6cf",
+                        "on-tertiary-fixed": "#131b2f",
+                        "inverse-surface": "#2d3133",
+                        "tertiary": "#030a1d",
+                        "surface-dim": "#d8dadc",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "on-error-container": "#93000a",
+                        "primary": "#000b1d",
+                        "on-secondary-container": "#556379",
+                        "on-surface": "#191c1e",
+                        "on-primary-fixed": "#001c3a",
+                        "error-container": "#ffdad6",
+                        "tertiary-container": "#192135",
+                        "surface-container-low": "#f2f4f6",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "surface-bright": "#f7f9fb",
+                        "surface-container-highest": "#e0e3e5",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary": "#515f74",
+                        "secondary-container": "#d2e1fa",
+                        "primary-fixed": "#d4e3ff",
+                        "on-primary-fixed-variant": "#2d486c",
+                        "outline": "#74777f",
+                        "secondary-fixed": "#d5e3fc",
+                        "on-surface-variant": "#43474e",
+                        "tertiary-fixed-dim": "#bec6e0",
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#eff1f3",
+                        "primary-container": "#002244",
+                        "inverse-primary": "#adc8f3",
+                        "surface-tint": "#456085",
+                        "primary-fixed-dim": "#adc8f3",
+                        "on-tertiary-fixed-variant": "#3e465c",
+                        "on-error": "#ffffff",
+                        "on-background": "#191c1e",
+                        "error": "#ba1a1a",
+                        "on-primary-container": "#708ab2"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    spacing: {
+                        "unit": "4px",
+                        "component-gap": "8px",
+                        "container-padding": "16px",
+                        "gutter": "12px",
+                        "input-height": "28px",
+                        "table-row-height": "32px"
+                    },
+                    fontFamily: {
+                        "body-sm": ["Public Sans"],
+                        "body-md": ["Public Sans"],
+                        "display": ["Public Sans"],
+                        "body-lg": ["Public Sans"],
+                        "label-md": ["JetBrains Mono"],
+                        "headline-md": ["Public Sans"],
+                        "headline-lg": ["Public Sans"],
+                        "label-sm": ["JetBrains Mono"]
+                    },
+                    fontSize: {
+                        "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "body-md": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                        "display": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-md": ["11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "headline-md": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-sm": ["10px", { "lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md h-screen flex overflow-hidden">
+<!-- SideNavBar -->
+<aside class="bg-surface-container-lowest dark:bg-inverse-surface border-r border-outline-variant dark:border-outline shadow-sm flex flex-col h-full overflow-y-auto w-64 shrink-0 z-20 absolute md:relative hidden md:flex transition-transform duration-300 transform -translate-x-full md:translate-x-0" id="sidebar">
+<div class="p-gutter flex items-center gap-component-gap border-b border-outline-variant">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold">K</div>
+<div>
+<h1 class="text-headline-md font-headline-md font-bold text-primary dark:text-primary-fixed">KenTender</h1>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Government of Kenya</p>
+</div>
+</div>
+<div class="px-container-padding py-container-padding">
+<button class="w-full bg-primary text-on-primary py-component-gap rounded-DEFAULT font-label-md text-label-md flex items-center justify-center gap-unit hover:bg-primary-container transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[16px]">add</span>
+                New Requisition
+            </button>
+</div>
+<nav class="flex-1 px-component-gap py-component-gap space-y-unit">
+<a class="flex items-center gap-component-gap px-gutter py-component-gap rounded-DEFAULT text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant/50 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">assignment</span>
+<span class="text-label-md font-label-md">Planning</span>
+</a>
+<a class="flex items-center gap-component-gap px-gutter py-component-gap rounded-DEFAULT border-r-4 border-primary dark:border-inverse-primary bg-primary-fixed-dim/20 text-on-primary-fixed-variant font-bold transition-colors duration-200 opacity-90 transition-opacity" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">shopping_cart</span>
+<span class="text-label-md font-label-md">Demand</span>
+</a>
+<a class="flex items-center gap-component-gap px-gutter py-component-gap rounded-DEFAULT text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant/50 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">gavel</span>
+<span class="text-label-md font-label-md">Tendering</span>
+</a>
+<a class="flex items-center gap-component-gap px-gutter py-component-gap rounded-DEFAULT text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant/50 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+<span class="text-label-md font-label-md">Budget</span>
+</a>
+<a class="flex items-center gap-component-gap px-gutter py-component-gap rounded-DEFAULT text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant/50 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-label-md font-label-md">Analytics</span>
+</a>
+<a class="flex items-center gap-component-gap px-gutter py-component-gap rounded-DEFAULT text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant/50 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-label-md font-label-md">Administration</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-outline-variant p-component-gap space-y-unit">
+<a class="flex items-center gap-component-gap px-gutter py-component-gap rounded-DEFAULT text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant/50 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="text-label-md font-label-md">Help Center</span>
+</a>
+<a class="flex items-center gap-component-gap px-gutter py-component-gap rounded-DEFAULT text-on-surface-variant dark:text-surface-variant hover:bg-surface-variant/50 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="text-label-md font-label-md">Log Out</span>
+</a>
+</div>
+</aside>
+<!-- Main Wrapper -->
+<div class="flex-1 flex flex-col min-w-0">
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-outline h-14 shrink-0 flex justify-between items-center px-gutter z-10 w-full relative">
+<div class="flex items-center gap-container-padding">
+<button class="md:hidden p-unit text-on-surface-variant" onclick="document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('sidebar').classList.toggle('hidden');">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="relative w-64 hidden sm:block">
+<span class="material-symbols-outlined absolute left-unit top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+<input class="w-full h-input-height pl-8 pr-unit rounded-DEFAULT border border-outline-variant bg-surface-container-lowest text-body-sm focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container" placeholder="Search..." type="text">
+</div>
+</div>
+<div class="flex items-center gap-component-gap">
+<button class="p-unit text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-variant rounded-full">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-unit text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-variant rounded-full">
+<span class="material-symbols-outlined">apps</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-variant border border-outline-variant overflow-hidden ml-unit">
+<img class="w-full h-full object-cover" data-alt="A small circular avatar placeholder image showing a generic user silhouette in a professional light grey and blue color scheme, indicative of an institutional user profile." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBf5yx8pTATiv3O8iGfG4Fbu7BFd9oEQnv20YqBDkHAi5MFwSKY3_kEjihduNal9gpgziPrteg8dXoRqz6ITYLBjBYvin2TWhhoMA3rB44XJh5rV-lCrvPu7CFpyp3RSLItWVfYw7AbsBMnTqqzDtrO_i2ipe8rZNHysNqVoSZBISQ79dvQdsGXGaoqdREf4jcuaLCxLvQhqaReLp9K11nWTy6WDvYZwWdciQiyyRMxksyKHZs1SJnF">
+</div>
+</div>
+</header>
+<!-- Scrollable Content Canvas -->
+<main class="flex-1 overflow-y-auto bg-surface p-container-padding md:p-6 lg:p-8">
+<div class="max-w-[1280px] mx-auto space-y-6">
+<!-- Breadcrumb & Header -->
+<div>
+<nav aria-label="Breadcrumb" class="flex text-body-sm text-on-surface-variant mb-component-gap">
+<ol class="inline-flex items-center space-x-1 md:space-x-2">
+<li class="inline-flex items-center">
+<a class="hover:text-primary hover:underline" href="#">Dashboard</a>
+</li>
+<li class="">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-[14px] mx-1">chevron_right</span>
+<a class="hover:text-primary hover:underline" href="#">Tender Management</a>
+</div>
+</li>
+<li class="">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-[14px] mx-1">chevron_right</span>
+<a class="hover:text-primary hover:underline" href="#">Tender Configurations</a>
+</div>
+</li>
+<li aria-current="page" class="">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-[14px] mx-1">chevron_right</span>
+<span class="text-on-surface font-semibold">Tender Profile</span>
+</div>
+</li>
+</ol>
+</nav>
+<div class="flex justify-between items-end border-b border-outline-variant pb-container-padding">
+<div>
+<div class="flex items-center gap-component-gap mb-1">
+<span class="bg-primary-container text-on-primary-container text-label-sm font-label-sm px-2 py-0.5 rounded-sm">CFG-01</span>
+<h2 class="text-headline-lg font-headline-lg font-bold text-on-surface">Tender Profile</h2>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-2xl">Confirm the tender identity, procurement context, lot structure, and applicable standard tender document.</p>
+</div>
+<div class="flex items-center gap-unit">
+<div class="flex items-center gap-unit bg-surface-container text-on-surface px-2 py-1 rounded-DEFAULT border border-outline-variant text-label-md font-label-md">
+<div class="w-1.5 h-1.5 rounded-full bg-secondary"></div>
+                                In progress
+                            </div>
+</div>
+</div>
+</div>
+<!-- Context Strip -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 mb-8 gap-0">
+<div class="border-r border-outline-variant/30 px-4 last:border-0">
+<p class="text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">PROCUREMENT PACKAGE Ref</p>
+<p class="text-body-sm font-bold text-primary">PP-ICT-2024-009</p>
+</div>
+<div class="col-span-2 border-r border-outline-variant/30 px-4 last:border-0">
+<p class="text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Procurement Title</p>
+<p class="text-body-sm font-bold text-primary truncate">Data Center Hardware Refresh</p>
+</div>
+<div class="border-r border-outline-variant/30 px-4 last:border-0">
+<p class="text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Procuring Entity</p>
+<p class="text-body-sm font-bold text-primary">National Treasury</p>
+</div>
+<div class="border-r border-outline-variant/30 px-4 last:border-0">
+<p class="text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Method</p>
+<p class="text-body-sm font-bold text-primary">Open National Tender</p>
+</div>
+<div class="border-r border-outline-variant/30 px-4 last:border-0">
+<p class="text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">STD Family</p>
+<p class="text-body-sm font-bold text-primary">Information Technology</p>
+</div>
+<div class="col-span-1 border-r border-outline-variant/30 px-4 last:border-0">
+<p class="text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Status</p>
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-amber-500"></span>
+<span class="text-body-sm font-bold text-primary">In progress</span>
+</div>
+</div>
+<div class="border-r border-outline-variant/30 px-4 last:border-0">
+<p class="text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Issues</p>
+<p class="text-body-sm font-bold text-error">2 Blockers / 3 Warnings</p>
+</div>
+</div>
+<!-- Main Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Left Column: Primary Data -->
+<div class="lg:col-span-8 space-y-6">
+<!-- Tender Identity Section -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-DEFAULT shadow-sm p-container-padding relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary-container"></div>
+<h3 class="text-headline-md font-headline-md font-semibold text-on-surface mb-container-padding pl-2">1. Tender Identity</h3>
+<div class="space-y-4">
+<div class="flex-1 min-w-0 p-2 overflow-hidden">
+<label class="block text-label-md font-label-md text-on-surface mb-unit" for="tender-title">Tender Title <span class="text-error">*</span></label>
+<input class="w-full h-8 px-gutter rounded-DEFAULT border border-outline-variant bg-surface text-body-md focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-shadow" id="tender-title" type="text" value="Data Center Hardware Refresh">
+</div>
+<div class="flex-1 min-w-0 p-2 overflow-hidden">
+<label class="block text-label-md font-label-md text-on-surface mb-unit" for="scope-summary">Short Scope Summary</label>
+<textarea class="w-full p-gutter rounded-DEFAULT border border-outline-variant bg-surface text-body-md focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-shadow resize-y" id="scope-summary" rows="3">Procurement of server, storage, networking, installation, configuration, warranty, and support services for the data center refresh.</textarea>
+</div>
+<div class="flex-1 min-w-0 p-2 overflow-hidden">
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant mb-unit">Procuring Entity</label>
+<div class="h-8 px-gutter flex items-center rounded-DEFAULT border border-outline-variant bg-surface-container text-body-md text-on-surface-variant cursor-not-allowed">
+                                            National Treasury
+                                        </div>
+</div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant mb-unit">Procurement Method</label>
+<div class="h-8 px-gutter flex items-center rounded-DEFAULT border border-outline-variant bg-surface-container text-body-md text-on-surface-variant cursor-not-allowed">
+                                            Open National Tender
+                                        </div>
+</div>
+</div>
+</div>
+</section>
+<!-- Lot Structure Section -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-DEFAULT shadow-sm p-container-padding relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-secondary"></div>
+<h3 class="text-headline-md font-headline-md font-semibold text-on-surface mb-container-padding pl-2">2. Lot Structure</h3>
+<fieldset>
+<legend class="sr-only">Select Lot Structure</legend>
+<div class="flex flex-col sm:flex-row gap-4 mb-4">
+<label class="flex items-center gap-2 p-3 border border-primary-container bg-primary-fixed-dim/10 rounded-DEFAULT cursor-pointer flex-1">
+<input checked="" class="w-4 h-4 text-primary-container border-outline-variant focus:ring-primary-container" name="lot-structure" type="radio" value="single">
+<span class="text-body-md font-body-md font-semibold text-on-surface">Single lot</span>
+</label>
+<label class="flex items-center gap-2 p-3 border border-outline-variant rounded-DEFAULT cursor-pointer flex-1 hover:bg-surface-container transition-colors">
+<input class="w-4 h-4 text-primary-container border-outline-variant focus:ring-primary-container" name="lot-structure" type="radio" value="multiple">
+<span class="text-body-md font-body-md text-on-surface">Multiple lots</span>
+</label>
+<label class="flex items-center gap-2 p-3 border border-outline-variant rounded-DEFAULT cursor-pointer flex-1 hover:bg-surface-container transition-colors">
+<input class="w-4 h-4 text-primary-container border-outline-variant focus:ring-primary-container" name="lot-structure" type="radio" value="na">
+<span class="text-body-md font-body-md text-on-surface">Not applicable</span>
+</label>
+</div>
+</fieldset>
+<!-- Hidden Multiple Lots Table (Placeholder for interaction) -->
+<div class="hidden border border-outline-variant rounded-DEFAULT overflow-hidden mt-4">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container border-b border-outline-variant text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">
+<th class="py-2 px-3 font-semibold w-24">Lot No.</th>
+<th class="py-2 px-3 font-semibold">Lot Title</th>
+<th class="py-2 px-3 font-semibold">Short Description</th>
+</tr>
+</thead>
+<tbody class="text-body-sm font-body-sm">
+<!-- Rows would go here -->
+</tbody>
+</table>
+</div>
+</section>
+</div>
+<!-- Right Column: Secondary Data & Notes -->
+<div class="lg:col-span-4 space-y-6">
+<!-- Standard Tender Document Section -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-DEFAULT shadow-sm p-container-padding relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary-fixed-dim"></div>
+<h3 class="text-headline-md font-headline-md font-semibold text-on-surface mb-container-padding pl-2">3.&nbsp;<span style="color: rgb(31, 35, 40); font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, Helvetica, Arial, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;; font-size: 1.25em;">STD Context</span></h3>
+<div class="space-y-4">
+<div class="flex-1 min-w-0 p-2 overflow-hidden">
+<span class="block text-label-md font-label-md text-on-surface-variant mb-unit">STD Family</span>
+<div class="flex items-center gap-2 text-body-md font-body-md text-on-surface p-2 bg-surface rounded-DEFAULT border border-outline-variant">
+<span class="material-symbols-outlined text-[18px] text-primary-container">folder</span>
+                                        Information Technology
+                                    </div>
+</div>
+<div class="flex-1 min-w-0 p-2 overflow-hidden">
+<span class="block text-label-md font-label-md text-on-surface-variant mb-unit">Standard Tender Document</span>
+<div class="flex items-center gap-2 text-body-md font-body-md text-on-surface p-2 bg-surface rounded-DEFAULT border border-outline-variant">
+<span class="material-symbols-outlined text-[18px] text-primary-container">description</span>
+                                        IT Standard Tender Document
+                                    </div>
+</div>
+<div class="flex-1 min-w-0 p-2 overflow-hidden">
+<span class="block text-label-md font-label-md text-on-surface-variant mb-unit">Version</span>
+<span class="block text-[10px] font-label-sm text-on-surface-variant mb-0 uppercase tracking-wider truncate">
+                                        April 2022
+                                    </span>
+</div>
+</div>
+</section>
+<!-- Profile Notes Section -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-DEFAULT shadow-sm p-container-padding relative overflow-hidden flex flex-col h-[200px]">
+<div class="absolute top-0 left-0 w-1 h-full bg-outline-variant"></div>
+<h3 class="text-headline-md font-headline-md font-semibold text-on-surface mb-container-padding pl-2 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">edit_note</span>
+                                Notes
+                            </h3>
+<div class="flex-1 flex flex-col">
+<label class="sr-only" for="config-note">Configuration Note</label>
+<textarea class="w-full flex-1 p-gutter rounded-DEFAULT border border-outline-variant bg-surface text-body-sm focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-shadow resize-none" id="config-note" placeholder="Add an internal note regarding this configuration..."></textarea>
+</div>
+</section>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="mt-8 pt-container-padding border-t border-outline-variant flex flex-col sm:flex-row items-center justify-end gap-4">
+<button class="w-full sm:w-auto px-4 py-2 border border-outline-variant bg-surface-container-lowest text-on-surface rounded-DEFAULT font-label-md text-label-md hover:bg-surface-variant transition-colors shadow-sm">
+                        Back to Configuration Home
+                    </button>
+<button class="w-full sm:w-auto px-4 py-2 border border-primary-container text-primary-container bg-surface-container-lowest rounded-DEFAULT font-label-md text-label-md hover:bg-primary-fixed-dim/10 transition-colors shadow-sm">
+                        Save Profile
+                    </button>
+<button class="w-full sm:w-auto px-4 py-2 bg-primary-container text-on-primary-container rounded-DEFAULT font-label-md text-label-md hover:bg-primary transition-colors shadow-sm flex items-center justify-center gap-2">
+                        Continue to Data Sheet
+                        <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</main>
+</div>
+
+
+
+
+
+
+</body></html>

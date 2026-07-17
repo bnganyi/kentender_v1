@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link rel="stylesheet" href="/assets/kentender_procurement/css/kt_fonts.css"/>
+
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        try {
+            tailwind.config = {
+                darkMode: "class",
+                theme: {
+                    extend: {
+                        "colors": {
+                            "surface-tint": "#475e8a",
+                            "border-subtle": "#e2e8f0",
+                            "on-tertiary": "#ffffff",
+                            "on-primary": "#ffffff",
+                            "surface-dim": "#d8dadc",
+                            "inverse-on-surface": "#eff1f3",
+                            "indigo-committed": "#6366f1",
+                            "tertiary-fixed": "#d3e4ff",
+                            "surface-container-lowest": "#ffffff",
+                            "tertiary": "#000918",
+                            "secondary": "#02629d",
+                            "on-tertiary-fixed": "#0b1c30",
+                            "inverse-surface": "#2d3133",
+                            "emerald-available": "#10b981",
+                            "primary-fixed-dim": "#afc7f9",
+                            "primary": "#00081b",
+                            "on-secondary": "#ffffff",
+                            "secondary-fixed": "#cfe5ff",
+                            "inverse-primary": "#afc7f9",
+                            "primary-container": "#001f48",
+                            "on-primary-fixed": "#001b3f",
+                            "error-container": "#ffdad6",
+                            "on-surface": "#191c1e",
+                            "on-tertiary-fixed-variant": "#38485e",
+                            "on-primary-fixed-variant": "#2e4771",
+                            "amber-reserved": "#f59e0b",
+                            "surface-container-low": "#f2f4f6",
+                            "rose-exhausted": "#ef4444",
+                            "on-tertiary-container": "#7889a1",
+                            "on-secondary-fixed-variant": "#004a78",
+                            "secondary-fixed-dim": "#99cbff",
+                            "secondary-container": "#7bbeff",
+                            "on-surface-variant": "#44474f",
+                            "outline": "#74777f",
+                            "error": "#ba1a1a",
+                            "on-error-container": "#93000a",
+                            "on-error": "#ffffff",
+                            "on-primary-container": "#7088b6",
+                            "on-background": "#191c1e",
+                            "tertiary-fixed-dim": "#b7c8e2",
+                            "surface-variant": "#e0e3e5",
+                            "background": "#f7f9fb",
+                            "surface-bright": "#f7f9fb",
+                            "on-secondary-container": "#004c7c",
+                            "surface-container-high": "#e6e8ea",
+                            "primary-fixed": "#d7e2ff",
+                            "on-secondary-fixed": "#001d34",
+                            "outline-variant": "#c4c6d0",
+                            "surface-container-highest": "#e0e3e5",
+                            "surface": "#f7f9fb",
+                            "tertiary-container": "#102135",
+                            "surface-container": "#eceef0"
+                        },
+                        "borderRadius": {
+                            "DEFAULT": "0.125rem",
+                            "lg": "0.25rem",
+                            "xl": "0.5rem",
+                            "full": "0.75rem"
+                        },
+                        "spacing": {
+                            "section-gap": "24px",
+                            "container-padding": "16px",
+                            "unit": "4px",
+                            "card-padding": "20px",
+                            "gutter": "12px"
+                        },
+                        "fontFamily": {
+                            "data-mono-lg": ["JetBrains Mono"],
+                            "label-caps": ["Inter"],
+                            "headline-sm": ["Manrope"],
+                            "body-lg": ["Inter"],
+                            "headline-md": ["Manrope"],
+                            "headline-lg-mobile": ["Manrope"],
+                            "data-mono": ["JetBrains Mono"],
+                            "headline-lg": ["Manrope"],
+                            "body-md": ["Inter"]
+                        },
+                        "fontSize": {
+                            "data-mono-lg": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                            "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                            "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                            "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                            "headline-md": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+                            "headline-lg-mobile": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                            "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                            "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                            "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                        }
+                    },
+                },
+            }
+        } catch (_e) {}
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md text-body-md antialiased pt-16">
+<!-- Global Shell / TopNavBar -->
+<header class="bg-surface-container-lowest text-primary border-b border-outline-variant fixed top-0 left-0 w-full z-50 flex justify-between items-center px-container-padding h-16">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="account_balance">account_balance</span>
+<span class="text-headline-md font-headline-md font-bold text-primary">IT Tender Configurations</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-primary hover:bg-surface-container-low transition-colors duration-200 p-2 rounded-full flex items-center justify-center cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<div class="flex items-center gap-2 pl-4 border-l border-outline-variant">
+<div class="text-right hidden md:block">
+<div class="text-label-caps font-label-caps leading-none">Admin User</div>
+<div class="text-[10px] text-on-surface-variant uppercase tracking-wider">Ministry of Finance</div>
+</div>
+<img alt="Admin User profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDC1AKrdEqC-IwEcRBe6NjR27X1Elq2tc3KCMUaHz5ZoFV_rwIl_rLkMVJw69sHd40A5u26zOEls4oGxgmJMSeiiA16hUjTOlDBaBjR99h28odnKqW6IIe9lvwPwa0uzP8u8yLts2_lm-GvGzEKkpxK_2k2ZYi05pyi3uJuRZTcpXRrl-yb-CjbWq90Gzhy6Aq78kQvCmFc3Y8_zBpDZOpomQQskVjt9cJtQKeyRnWQdXa3sHA8bUze"/>
+</div>
+</div>
+</header>
+<main class="max-w-[1600px] mx-auto px-container-padding py-section-gap flex flex-col gap-section-gap">
+<!-- Page Header -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h1 class="text-headline-lg font-headline-lg text-primary mb-1">Tender Configuration Home</h1>
+<p class="text-body-lg font-body-lg text-on-surface-variant">Complete the required setup steps for this IT tender configuration.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-6 py-3 border border-primary text-primary rounded font-label-caps text-label-caps hover:bg-surface-container-low transition-colors">
+                Discard
+            </button>
+<button class="px-6 py-3 bg-primary-container text-on-primary rounded font-label-caps text-label-caps hover:bg-primary-container/90 transition-colors shadow-sm">
+                Finalize Configuration
+            </button>
+</div>
+</section>
+<!-- Tender Context Strip -->
+<section class="bg-surface-container-lowest border border-border-subtle rounded-xl p-card-padding shadow-sm overflow-x-auto">
+<div class="flex gap-8 min-w-max items-center">
+<div class="flex flex-col">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase mb-1">TENDER REF</span>
+<span class="text-data-mono font-data-mono text-on-surface">IT-2024-8902A</span>
+</div>
+<div class="w-px bg-outline-variant h-10 self-center"></div>
+<div class="flex flex-col">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase mb-1">TENDER TITLE</span>
+<span class="text-body-md font-body-md text-on-surface font-semibold">Enterprise Server Fleet Refresh</span>
+</div>
+<div class="w-px bg-outline-variant h-10 self-center"></div>
+<div class="flex flex-col">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase mb-1">PLANNING PKG REF</span>
+<span class="text-data-mono font-data-mono text-on-surface">PP-8902</span>
+</div>
+<div class="w-px bg-outline-variant h-10 self-center"></div>
+<div class="flex flex-col">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase mb-1">PROCURING ENTITY</span>
+<span class="text-body-md font-body-md text-on-surface">Ministry of Technology</span>
+</div>
+<div class="w-px bg-outline-variant h-10 self-center"></div>
+<div class="flex flex-col">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase mb-1">PROCUREMENT METHOD</span>
+<span class="text-body-md font-body-md text-on-surface">Open Competitive Bidding</span>
+</div>
+<div class="w-px bg-outline-variant h-10 self-center"></div>
+<div class="flex flex-col">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase mb-1">WIZARD STATE</span>
+<span class="inline-flex items-center gap-1 text-label-caps font-label-caps text-secondary">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+                    Drafting
+                </span>
+</div>
+<div class="w-px bg-outline-variant h-10 self-center"></div>
+<div class="flex flex-col">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase mb-1">ISSUES</span>
+<span class="text-body-md font-body-md text-error font-semibold">2 Blockers</span>
+</div>
+</div>
+</section>
+<!-- Next Best Action Panel -->
+<section class="bg-secondary-fixed text-on-secondary-fixed rounded-xl p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm border border-secondary-fixed-dim">
+<div class="flex items-start md:items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-lowest text-secondary flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-2xl" data-icon="memory">memory</span>
+</div>
+<div>
+<h2 class="text-headline-md font-headline-md mb-1 text-on-secondary-fixed">Next step: Continue IT Requirements</h2>
+<p class="text-body-md font-body-md text-on-secondary-fixed-variant max-w-2xl">Reason: Define technical specifications and evaluation criteria for hardware.</p>
+</div>
+</div>
+<button class="shrink-0 px-8 py-3 bg-primary-container text-on-primary rounded font-label-caps text-label-caps hover:bg-primary-container/90 transition-colors shadow-sm">
+            Continue
+        </button>
+</section>
+<!-- Configuration Steps Grid -->
+<section>
+<h3 class="text-headline-sm font-headline-sm text-primary mb-6">Configuration Steps</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-gutter">
+<!-- Step 01 -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-xl p-card-padding flex flex-col h-full shadow-sm hover:shadow-md transition-shadow">
+<div class="flex flex-col gap-1 mb-4">
+<span class="text-label-caps font-label-caps text-on-surface-variant">STEP 01</span>
+<div class="flex justify-between items-start gap-2">
+<h4 class="text-body-lg font-body-lg font-semibold text-on-surface">Tender Profile</h4>
+<span class="inline-flex items-center px-2 py-1 rounded bg-emerald-available/10 text-emerald-available text-[10px] font-bold uppercase">Complete</span>
+</div>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant mb-6 flex-grow">Confirm tender identity, bind the Standard Tender Document (STD) package, and set high-level profile attributes.</p>
+<button class="self-start px-4 py-2 border border-outline text-on-surface rounded font-label-caps text-label-caps hover:bg-surface-container-low transition-colors">Review</button>
+</div>
+<!-- Step 02 -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-xl p-card-padding flex flex-col h-full shadow-sm hover:shadow-md transition-shadow">
+<div class="flex flex-col gap-1 mb-4">
+<span class="text-label-caps font-label-caps text-on-surface-variant">STEP 02</span>
+<div class="flex justify-between items-start gap-2">
+<h4 class="text-body-lg font-body-lg font-semibold text-on-surface">Tender Data Sheet</h4>
+<span class="inline-flex items-center px-2 py-1 rounded bg-emerald-available/10 text-emerald-available text-[10px] font-bold uppercase">Complete</span>
+</div>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant mb-6 flex-grow">Set tender-specific dates, submission rules, contacts, securities, currency, language, and other tender parameters.</p>
+<button class="self-start px-4 py-2 border border-outline text-on-surface rounded font-label-caps text-label-caps hover:bg-surface-container-low transition-colors">Review</button>
+</div>
+<!-- Step 03 -->
+<div class="bg-surface-container-lowest border-2 border-secondary rounded-xl p-card-padding flex flex-col h-full shadow-sm">
+<div class="flex flex-col gap-1 mb-4">
+<span class="text-label-caps font-label-caps text-secondary">STEP 03</span>
+<div class="flex justify-between items-start gap-2">
+<h4 class="text-body-lg font-body-lg font-semibold text-on-surface">IT Requirements</h4>
+<span class="inline-flex items-center px-2 py-1 rounded bg-secondary/10 text-secondary text-[10px] font-bold uppercase">In progress</span>
+</div>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant mb-2 flex-grow">Define the functional, technical, security, integration, support, warranty, deliverable, and acceptance requirements bidders must respond to.</p>
+<div class="flex items-center gap-1 text-error text-label-caps font-label-caps mb-4">
+<span class="material-symbols-outlined text-[14px]">error</span>2 Issues
+                </div>
+<button class="self-start px-4 py-2 bg-primary-container text-on-primary rounded font-label-caps text-label-caps hover:bg-primary-container/90 transition-colors">Continue</button>
+</div>
+<!-- Step 04 -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-xl p-card-padding flex flex-col h-full shadow-sm hover:shadow-md transition-shadow">
+<div class="flex flex-col gap-1 mb-4">
+<span class="text-label-caps font-label-caps text-on-surface-variant">STEP 04</span>
+<div class="flex justify-between items-start gap-2">
+<h4 class="text-body-lg font-body-lg font-semibold text-on-surface">Implementation Schedule</h4>
+<span class="inline-flex items-center px-2 py-1 rounded bg-surface-variant text-on-surface-variant text-[10px] font-bold uppercase">Not started</span>
+</div>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant mb-6 flex-grow">Define whether delivery is phased or single-turnkey, then set delivery milestones, expected durations, deliverables, and acceptance checkpoints.</p>
+<button class="self-start px-4 py-2 border border-outline text-on-surface rounded font-label-caps text-label-caps hover:bg-surface-container-low transition-colors">Start</button>
+</div>
+<!-- Step 05 -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-xl p-card-padding flex flex-col h-full shadow-sm hover:shadow-md transition-shadow">
+<div class="flex flex-col gap-1 mb-4">
+<span class="text-label-caps font-label-caps text-on-surface-variant">STEP 05</span>
+<div class="flex justify-between items-start gap-2">
+<h4 class="text-body-lg font-body-lg font-semibold text-on-surface">System Inventory</h4>
+<span class="inline-flex items-center px-2 py-1 rounded bg-surface-variant text-on-surface-variant text-[10px] font-bold uppercase">Not started</span>
+</div>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant mb-6 flex-grow">Describe bidder-relevant existing systems, sites, users, integrations, data, infrastructure, licenses, and background context needed to understand the tender.</p>
+<button class="self-start px-4 py-2 border border-outline text-on-surface rounded font-label-caps text-label-caps hover:bg-surface-container-low transition-colors">Start</button>
+</div>
+<!-- Step 06 -->
+<div class="bg-surface-container-low border border-border-subtle rounded-xl p-card-padding flex flex-col h-full shadow-sm opacity-75">
+<div class="flex flex-col gap-1 mb-4">
+<span class="text-label-caps font-label-caps text-on-surface-variant">STEP 06</span>
+<div class="flex justify-between items-start gap-2">
+<h4 class="text-body-lg font-body-lg font-semibold text-on-surface-variant">Price Schedule</h4>
+<span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-surface-variant text-on-surface-variant text-[10px] font-bold uppercase">
+<span class="material-symbols-outlined text-[14px]">lock</span>Available Later
+                        </span>
+</div>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant mb-6 flex-grow">Define how bidders must price supply, installation, services, recurrent costs, optional items, taxes, currency, quantities, and evaluated price components.</p>
+<div class="pt-4 border-t border-outline-variant">
+<span class="text-label-caps font-label-caps text-on-surface-variant opacity-60">PREREQUISITE: IT REQUIREMENTS</span>
+</div>
+</div>
+<!-- Step 07 -->
+<div class="bg-surface-container-low border border-border-subtle rounded-xl p-card-padding flex flex-col h-full shadow-sm opacity-75">
+<div class="flex flex-col gap-1 mb-4">
+<span class="text-label-caps font-label-caps text-on-surface-variant">STEP 07</span>
+<div class="flex justify-between items-start gap-2">
+<h4 class="text-body-lg font-body-lg font-semibold text-on-surface-variant">Evaluation Setup</h4>
+<span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-surface-variant text-on-surface-variant text-[10px] font-bold uppercase">
+<span class="material-symbols-outlined text-[14px]">lock</span>Available Later
+                        </span>
+</div>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant mb-6 flex-grow">Define responsiveness checks, qualification criteria, technical scoring, financial evaluation method, pass marks, preferences, and post-qualification rules.</p>
+<div class="pt-4 border-t border-outline-variant">
+<span class="text-label-caps font-label-caps text-on-surface-variant opacity-60">PREREQUISITE: IT REQUIREMENTS</span>
+</div>
+</div>
+<!-- Step 08 -->
+<div class="bg-surface-container-low border border-border-subtle rounded-xl p-card-padding flex flex-col h-full shadow-sm opacity-75">
+<div class="flex flex-col gap-1 mb-4">
+<span class="text-label-caps font-label-caps text-on-surface-variant">STEP 08</span>
+<div class="flex justify-between items-start gap-2">
+<h4 class="text-body-lg font-body-lg font-semibold text-on-surface-variant">Forms &amp; Evidence</h4>
+<span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-surface-variant text-on-surface-variant text-[10px] font-bold uppercase">
+<span class="material-symbols-outlined text-[14px]">lock</span>Available Later
+                        </span>
+</div>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant mb-6 flex-grow">Define the forms, declarations, certificates, technical evidence, financial forms, and supporting documents bidders must submit.</p>
+<div class="pt-4 border-t border-outline-variant">
+<span class="text-label-caps font-label-caps text-on-surface-variant opacity-60">PREREQUISITE: EVALUATION SETUP</span>
+</div>
+</div>
+<!-- Step 09 -->
+<div class="bg-surface-container-low border border-border-subtle rounded-xl p-card-padding flex flex-col h-full shadow-sm opacity-75">
+<div class="flex flex-col gap-1 mb-4">
+<span class="text-label-caps font-label-caps text-on-surface-variant">STEP 09</span>
+<div class="flex justify-between items-start gap-2">
+<h4 class="text-body-lg font-body-lg font-semibold text-on-surface-variant">SCC / Contract Values</h4>
+<span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-surface-variant text-on-surface-variant text-[10px] font-bold uppercase">
+<span class="material-symbols-outlined text-[14px]">lock</span>Available Later
+                        </span>
+</div>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant mb-6 flex-grow">Confirm tender-specific contract values, SCC parameters, delivery obligations, warranty/support obligations, acceptance obligations, and contract attachments.</p>
+<div class="pt-4 border-t border-outline-variant">
+<span class="text-label-caps font-label-caps text-on-surface-variant opacity-60">PREREQUISITE: PREVIOUS STEPS</span>
+</div>
+</div>
+<!-- Step 10 -->
+<div class="bg-surface-container-low border border-border-subtle rounded-xl p-card-padding flex flex-col h-full shadow-sm opacity-75">
+<div class="flex flex-col gap-1 mb-4">
+<span class="text-label-caps font-label-caps text-on-surface-variant">STEP 10</span>
+<div class="flex justify-between items-start gap-2">
+<h4 class="text-body-lg font-body-lg font-semibold text-on-surface-variant">Validation</h4>
+<span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-surface-variant text-on-surface-variant text-[10px] font-bold uppercase">
+<span class="material-symbols-outlined text-[14px]">lock</span>Available Later
+                        </span>
+</div>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant mb-6 flex-grow">Check whether the configured tender package is complete, internally consistent, and ready for formal review.</p>
+<div class="pt-4 border-t border-outline-variant">
+<span class="text-label-caps font-label-caps text-on-surface-variant opacity-60">PREREQUISITE: ALL STEPS</span>
+</div>
+</div>
+<!-- Step 11 -->
+<div class="bg-surface-container-low border border-border-subtle rounded-xl p-card-padding flex flex-col h-full shadow-sm opacity-75">
+<div class="flex flex-col gap-1 mb-4">
+<span class="text-label-caps font-label-caps text-on-surface-variant">STEP 11</span>
+<div class="flex justify-between items-start gap-2">
+<h4 class="text-body-lg font-body-lg font-semibold text-on-surface-variant">Review &amp; Approval</h4>
+<span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-surface-variant text-on-surface-variant text-[10px] font-bold uppercase">
+<span class="material-symbols-outlined text-[14px]">lock</span>Available Later
+                        </span>
+</div>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant mb-6 flex-grow">Submit the Tender STD Configuration for procurement, technical, legal/compliance, and final configuration review.</p>
+<div class="pt-4 border-t border-outline-variant">
+<span class="text-label-caps font-label-caps text-on-surface-variant opacity-60">PREREQUISITE: VALIDATION</span>
+</div>
+</div>
+<!-- Step 12 -->
+<div class="bg-surface-container-low border border-border-subtle rounded-xl p-card-padding flex flex-col h-full shadow-sm opacity-75">
+<div class="flex flex-col gap-1 mb-4">
+<span class="text-label-caps font-label-caps text-on-surface-variant">STEP 12</span>
+<div class="flex justify-between items-start gap-2">
+<h4 class="text-body-lg font-body-lg font-semibold text-on-surface-variant">Final Preview</h4>
+<span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-surface-variant text-on-surface-variant text-[10px] font-bold uppercase">
+<span class="material-symbols-outlined text-[14px]">lock</span>Available Later
+                        </span>
+</div>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant mb-6 flex-grow">Review the generated tender package exactly as it will be handed forward, without editing configuration content on this screen.</p>
+<div class="pt-4 border-t border-outline-variant">
+<span class="text-label-caps font-label-caps text-on-surface-variant opacity-60">PREREQUISITE: APPROVAL</span>
+</div>
+</div>
+<!-- Step 13 -->
+<div class="bg-surface-container-low border border-border-subtle rounded-xl p-card-padding flex flex-col h-full shadow-sm opacity-75">
+<div class="flex flex-col gap-1 mb-4">
+<span class="text-label-caps font-label-caps text-on-surface-variant">STEP 13</span>
+<div class="flex justify-between items-start gap-2">
+<h4 class="text-body-lg font-body-lg font-semibold text-on-surface-variant">Publication Readiness</h4>
+<span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-surface-variant text-on-surface-variant text-[10px] font-bold uppercase">
+<span class="material-symbols-outlined text-[14px]">lock</span>Available Later
+                        </span>
+</div>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant mb-6 flex-grow">Confirm that the approved and preview-confirmed package is ready to hand over to Tender Management for publication workflow.</p>
+<div class="pt-4 border-t border-outline-variant">
+<span class="text-label-caps font-label-caps text-on-surface-variant opacity-60">PREREQUISITE: FINAL PREVIEW</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Lightweight Drawer (Step Details) -->
+<!-- Overlay -->
+<div class="fixed inset-0 bg-on-background/40 z-[60] transition-opacity duration-300 hidden"></div>
+<!-- Drawer Aside -->
+<aside class="fixed top-0 right-0 h-full w-full max-w-md bg-surface-container-lowest shadow-xl z-[70] flex flex-col border-l border-outline-variant transition-transform duration-300 translate-x-0">
+<!-- Header -->
+<div class="flex items-center justify-between p-6 border-b border-outline-variant">
+<div class="flex flex-col">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase">STEP 03</span>
+<h2 class="text-headline-sm font-headline-sm text-primary">IT Requirements</h2>
+</div>
+<button class="p-2 hover:bg-surface-container-low rounded-full transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Content Area -->
+<div class="flex-grow overflow-y-auto p-6 flex flex-col gap-8">
+<!-- Status & Issues -->
+<div class="flex items-center gap-8">
+<div class="flex flex-col gap-1">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase">Status</span>
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-secondary/10 text-secondary text-label-caps font-label-caps font-bold">In Progress</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase">Issues</span>
+<span class="inline-flex items-center gap-1 text-error font-bold text-label-caps font-label-caps">
+<span class="material-symbols-outlined text-[14px]">error</span>
+                    2 Blockers
+                </span>
+</div>
+</div>
+<!-- Purpose -->
+<div class="flex flex-col gap-2">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase">Purpose</span>
+<p class="text-body-md font-body-md text-on-surface">
+                Define the functional, technical, security, integration, support, warranty, deliverable, and acceptance requirements bidders must respond to.
+            </p>
+</div>
+<!-- Configured Items -->
+<div class="flex flex-col gap-2">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase">What is configured</span>
+<ul class="list-disc list-inside text-body-md text-on-surface space-y-1">
+<li>Functional Specifications</li>
+<li>Security Standards</li>
+<li>System Integration Requirements</li>
+<li>Acceptance Criteria</li>
+</ul>
+</div>
+<!-- Metadata -->
+<div class="flex flex-col gap-6 pt-4 border-t border-outline-variant">
+<div class="flex flex-col gap-1">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase">Last Updated</span>
+<span class="text-data-mono font-data-mono text-on-surface">2024-10-24 14:30 EAT <span class="font-body-md text-on-surface-variant">by Sarah M.</span></span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase">Progress</span>
+<div class="flex items-center gap-3">
+<div class="flex-grow h-2 bg-surface-variant rounded-full overflow-hidden">
+<div class="bg-secondary h-full w-[45%]"></div>
+</div>
+<span class="text-data-mono font-data-mono text-on-surface">45%</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Area -->
+<div class="p-6 border-t border-outline-variant bg-surface-container-lowest flex flex-col gap-3">
+<button class="w-full py-3 bg-primary-container text-on-primary rounded font-label-caps text-label-caps hover:bg-primary-container/90 transition-colors shadow-sm">
+            Continue Configuration
+        </button>
+<button class="w-full py-3 border border-outline text-on-surface rounded font-label-caps text-label-caps hover:bg-surface-container-low transition-colors">
+            Fix Issues
+        </button>
+</div>
+</aside>
+</body></html>

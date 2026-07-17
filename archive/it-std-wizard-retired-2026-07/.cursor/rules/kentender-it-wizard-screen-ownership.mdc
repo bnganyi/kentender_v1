@@ -1,0 +1,40 @@
+---
+description: IT Tender Wizard screen ownership — Matrix 99 governs field ownership, source presentation, and editability; required before ITW screen work.
+globs:
+  - apps/kentender_v1/docs/std-prod-impl/IT-STD-Wizard/**
+  - apps/kentender_v1/kentender_procurement/kentender_procurement/it_tender_wizard/**
+  - apps/kentender_v1/kentender_procurement/kentender_procurement/public/it_tender_wizard_impl/**
+  - apps/kentender_v1/kentender_procurement/kentender_procurement/public/js/it_wizard_*.js
+  - apps/kentender_v1/tests/ui/smoke/it-std-wizard/**
+alwaysApply: false
+---
+
+# IT Tender Wizard — Screen Ownership
+
+When working on any IT Tender Configuration Wizard screen (static HTML, Desk wiring, services, APIs, or tests):
+
+1. Read and obey [`99 IT_Tender_Wizard_Screen_Ownership_Matrix.md`](apps/kentender_v1/docs/std-prod-impl/IT-STD-Wizard/99%20IT_Tender_Wizard_Screen_Ownership_Matrix.md).
+2. Track work in [`Screen_Ownership_Implementation_Tracker.md`](apps/kentender_v1/docs/std-prod-impl/IT-STD-Wizard/Screen_Ownership_Implementation_Tracker.md).
+3. Follow [`98 IT_Tender_Wizard_Screen_Ownership_Correction_Plan.md`](apps/kentender_v1/docs/std-prod-impl/IT-STD-Wizard/98%20IT_Tender_Wizard_Screen_Ownership_Correction_Plan.md).
+
+## Non-negotiable
+
+- One primary configuration object per screen.
+- Editable field ⇒ current screen owns it.
+- Owned elsewhere ⇒ read-only with source label, owning screen, and Edit in [owning screen].
+- Template-prefilled ⇒ editable with Reset to template (unless STD-locked).
+- No magical / hardcoded / unexplained values.
+- Missing source ⇒ show **Not configured**, never fake data.
+- System Inventory is not Price Schedule; Evaluation owns scores/marks.
+
+## Precedence
+
+Matrix `99` wins over PRD, Domain, API, Governance, Pack, Sprint backlog, and design HTML for field ownership and editability.
+
+## Gate before ITW-08+ wiring
+
+```bash
+make it-wizard-ownership-gate SITE=kentender.midas.com
+```
+
+Do not start ITW-08–15 Desk wiring until the gate is green and the matching `ITW-OWN-008`…`015` precondition row is Ready/Done.

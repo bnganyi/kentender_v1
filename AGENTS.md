@@ -98,18 +98,9 @@ For Frappe-managed artifacts:
 
 If command execution is slow or unavailable: output the exact WSL command, stop after proposing the command, do not simulate the scaffold by creating files manually.
 
-## IT Tender Configuration Wizard — test gates
+## IT STD Wizard (retired)
 
-Per-screen iteration (see **`.cursor/rules/it-wizard-test-gate.mdc`**):
-
-| Task | Command |
-|------|---------|
-| ITW-01 dashboard | `make -C apps/kentender_v1 it-wizard-screen-01-gate SITE=kentender.midas.com` |
-| ITW-02 overview | `make -C apps/kentender_v1 it-wizard-screen-02-gate SITE=kentender.midas.com` |
-| Git-changed paths (PR) | `make -C apps/kentender_v1 it-wizard-changed-gates SITE=kentender.midas.com` |
-| Pre-release / nightly | `make -C apps/kentender_v1 it-wizard-wiring-regression-gate SITE=kentender.midas.com` |
-
-CI: `.github/workflows/it-wizard-gates.yml` — PR plans gates on Ubuntu; bench execution requires a **self-hosted** runner with `BENCH_ROOT` pointing at this frappe-bench.
+The IT Tender Configuration Wizard (v1/v2) was retired in July 2026. Archived code lives under `apps/kentender_v1/archive/it-std-wizard-retired-2026-07/`. Desk routes show `it-std-wizard-retired`. **STD Engine** (`std_engine/`) remains active.
 
 ## Seed & data-quality scripts
 
