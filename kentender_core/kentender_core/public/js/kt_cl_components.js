@@ -1696,6 +1696,31 @@ frappe.provide("kentender_core.cl_components");
 			var saveDisabled = opts.saveDisabled ? " disabled" : "";
 			var continueDisabled = opts.continueDisabled ? " disabled" : "";
 			var continueIcon = opts.continueIcon === false ? "" : msIcon("arrow_forward", 16);
+			var extraEnd = "";
+			var extras = opts.extraEndActions || [];
+			for (var i = 0; i < extras.length; i += 1) {
+				var act = extras[i] || {};
+				var variant = act.variant || "outline";
+				var cls =
+					"kt-cl-wizard-btn kt-cl-wizard-btn--" +
+					(variant === "primary"
+						? "primary"
+						: variant === "secondary"
+							? "secondary"
+							: "outline");
+				extraEnd +=
+					'<button type="button" class="' +
+					cls +
+					'" data-action="' +
+					escapeHtml(act.action || "extra") +
+					'" data-testid="' +
+					escapeHtml(act.testid || "kt-cl-wizard-extra") +
+					'"' +
+					(act.disabled ? " disabled" : "") +
+					">" +
+					escapeHtml(act.label || "") +
+					"</button>";
+			}
 			return (
 				'<div class="kt-cl-wizard-footer" data-testid="' +
 				escapeHtml(footerTestid) +
@@ -1718,6 +1743,7 @@ frappe.provide("kentender_core.cl_components");
 				">" +
 				escapeHtml(opts.saveLabel || __("Save")) +
 				"</button>" +
+				extraEnd +
 				'<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--primary" data-action="' +
 				escapeHtml(opts.continueAction || "continue") +
 				'" data-testid="' +

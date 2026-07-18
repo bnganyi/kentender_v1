@@ -27,6 +27,10 @@
   "lot_structure",
   "lots",
   "configuration_note",
+  "section_tds",
+  "tds_values",
+  "section_it_requirements",
+  "it_requirements",
   "section_issues",
   "blocker_count",
   "warning_count",
@@ -164,6 +168,28 @@
    "fieldtype": "Small Text",
    "label": "Configuration Note",
    "description": "Internal note; must not be rendered into the tender document."
+  },
+  {
+   "fieldname": "section_tds",
+   "fieldtype": "Section Break",
+   "label": "Tender Data Sheet"
+  },
+  {
+   "fieldname": "tds_values",
+   "fieldtype": "JSON",
+   "label": "TDS Values",
+   "description": "CFG-02 Tender Data Sheet field values (flat key/value bag)."
+  },
+  {
+   "fieldname": "section_it_requirements",
+   "fieldtype": "Section Break",
+   "label": "IT Requirements"
+  },
+  {
+   "fieldname": "it_requirements",
+   "fieldtype": "JSON",
+   "label": "IT Requirements",
+   "description": "CFG-03 IT requirement rows (JSON array)."
   },
   {
    "fieldname": "section_issues",

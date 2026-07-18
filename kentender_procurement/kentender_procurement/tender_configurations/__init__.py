@@ -13,8 +13,12 @@ from kentender_procurement.tender_configurations.api import (
 	get_tender_configuration as _get_tender_configuration,
 	get_tender_configuration_home as _get_tender_configuration_home,
 	get_tender_configuration_profile as _get_tender_configuration_profile,
+	get_tender_configuration_requirements as _get_tender_configuration_requirements,
+	get_tender_configuration_tds as _get_tender_configuration_tds,
 	get_tender_configurations_dashboard as _get_tender_configurations_dashboard,
 	save_tender_configuration_profile as _save_tender_configuration_profile,
+	save_tender_configuration_requirements as _save_tender_configuration_requirements,
+	save_tender_configuration_tds as _save_tender_configuration_tds,
 )
 
 # Re-export whitelisted methods at package path:
@@ -73,6 +77,26 @@ def get_tender_configuration_profile(configuration_id: str):
 @frappe.whitelist()
 def save_tender_configuration_profile(configuration_id: str, payload=None):
 	return _save_tender_configuration_profile(configuration_id, payload)
+
+
+@frappe.whitelist()
+def get_tender_configuration_tds(configuration_id: str):
+	return _get_tender_configuration_tds(configuration_id)
+
+
+@frappe.whitelist()
+def save_tender_configuration_tds(configuration_id: str, payload=None):
+	return _save_tender_configuration_tds(configuration_id, payload)
+
+
+@frappe.whitelist()
+def get_tender_configuration_requirements(configuration_id: str):
+	return _get_tender_configuration_requirements(configuration_id)
+
+
+@frappe.whitelist()
+def save_tender_configuration_requirements(configuration_id: str, payload=None):
+	return _save_tender_configuration_requirements(configuration_id, payload)
 
 
 @frappe.whitelist()

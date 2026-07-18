@@ -8,6 +8,13 @@
 **STD family:** Information Technology  
 **Status:** Revised v6 specification  
 
+> **Implementation note (column-clarity amendment):** The Civic Ledger Desk build replaces pack table columns **Acceptance** + **Status** with **Delivery Confirmation Method** + **Setup Status**, and renames response/evidence columns to **Bidder Response Instruction** / **Evidence Instruction**.  
+> - **Delivery Confirmation Method** holds a confirmation *method* (e.g. “Inspection at delivery”), never setup diagnostics.  
+> - **Setup Status** holds `Complete` / `Needs attention` / `Draft` / `Not applicable`.  
+> - Never put “missing”, “defined”, or “valid” in instruction/method columns — only in Setup Status, issue summary, or validation report.  
+> - **Label alignment:** Drawer uses the same names as the table for shared fields — **ID** (read-only; “Assigned on save” when new) and **Requirement** (not “Requirement Title”). Pack §16 “Requirement Title” is superseded by **Requirement** for Desk.  
+> Pack sections below that still say Acceptance / “Acceptance defined” / “Missing acceptance” are superseded for Desk UI by this note and by `COMPONENTS.md` CFG-03 column contract.
+
 ---
 
 ## 1. Purpose

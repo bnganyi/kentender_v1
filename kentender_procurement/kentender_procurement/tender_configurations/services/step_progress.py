@@ -92,9 +92,29 @@ def _cfg01_conditions(doc: Any, _step_state: dict[str, Any]) -> list[dict[str, A
 	return conditions
 
 
+def _cfg02_conditions(doc: Any, _step_state: dict[str, Any]) -> list[dict[str, Any]]:
+	"""CFG-02 Tender Data Sheet exit conditions (C2-CFG2 §8 / §15)."""
+	from kentender_procurement.tender_configurations.services.tds import (
+		tds_exit_conditions_for_doc,
+	)
+
+	return tds_exit_conditions_for_doc(doc)
+
+
+def _cfg03_conditions(doc: Any, _step_state: dict[str, Any]) -> list[dict[str, Any]]:
+	"""CFG-03 IT Requirements exit conditions (C2-CFG3 §16 / §22)."""
+	from kentender_procurement.tender_configurations.services.it_requirements import (
+		requirements_exit_conditions_for_doc,
+	)
+
+	return requirements_exit_conditions_for_doc(doc)
+
+
 # Register field-level checkers as each CFG screen ships. Unregistered → status fallback.
 STEP_CONDITION_BUILDERS: dict[str, ConditionBuilder] = {
 	"CFG-01": _cfg01_conditions,
+	"CFG-02": _cfg02_conditions,
+	"CFG-03": _cfg03_conditions,
 }
 
 

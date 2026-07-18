@@ -102,3 +102,53 @@ def save_tender_configuration_profile(
 	)
 
 	return save_configuration_profile(configuration_id, payload)
+
+
+@frappe.whitelist()
+def get_tender_configuration_tds(configuration_id: str) -> dict[str, Any]:
+	"""CFG-02 Tender Data Sheet GET (C2-CFG2 §13)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.tds import (
+		get_configuration_tds,
+	)
+
+	return get_configuration_tds(configuration_id)
+
+
+@frappe.whitelist()
+def save_tender_configuration_tds(
+	configuration_id: str,
+	payload: dict[str, Any] | str | None = None,
+) -> dict[str, Any]:
+	"""CFG-02 Tender Data Sheet POST (C2-CFG2 §13)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.tds import (
+		save_configuration_tds,
+	)
+
+	return save_configuration_tds(configuration_id, payload)
+
+
+@frappe.whitelist()
+def get_tender_configuration_requirements(configuration_id: str) -> dict[str, Any]:
+	"""CFG-03 IT Requirements GET (C2-CFG3 §19)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.it_requirements import (
+		get_configuration_requirements,
+	)
+
+	return get_configuration_requirements(configuration_id)
+
+
+@frappe.whitelist()
+def save_tender_configuration_requirements(
+	configuration_id: str,
+	payload: dict[str, Any] | str | None = None,
+) -> dict[str, Any]:
+	"""CFG-03 IT Requirements POST (C2-CFG3 §19)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.it_requirements import (
+		save_configuration_requirements,
+	)
+
+	return save_configuration_requirements(configuration_id, payload)

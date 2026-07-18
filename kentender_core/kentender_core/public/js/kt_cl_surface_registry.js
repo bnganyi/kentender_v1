@@ -82,6 +82,24 @@ frappe.provide("kentender_core.cl_surface_registry");
 			crumb(__("Tender Profile")),
 		];
 	}
+	/** CFG-02 leaf: Home is a link; Tender Data Sheet is current. */
+	function trailCfg02Tds() {
+		return [
+			crumbDashboard(),
+			crumbTenderConfigurations(),
+			crumbConfigurationHome(),
+			crumb(__("Tender Data Sheet")),
+		];
+	}
+	/** CFG-03 leaf: Home is a link; IT Requirements is current. */
+	function trailCfg03Requirements() {
+		return [
+			crumbDashboard(),
+			crumbTenderConfigurations(),
+			crumbConfigurationHome(),
+			crumb(__("IT Requirements")),
+		];
+	}
 
 	/**
 	 * A2 screen IDs → routePrefixes use existing Desk page names where present.
@@ -149,8 +167,10 @@ frappe.provide("kentender_core.cl_surface_registry");
 			sidebarWorkspaceKey: SIDEBAR_KEY,
 			chrome: chrome(
 				__("Tender Data Sheet"),
-				__("Enter tender-specific instructions and parameters (Section II)."),
-				trailConfigHome,
+				__(
+					"Set the tender-specific instructions, dates, submission rules, and allowed options for this IT tender."
+				),
+				trailCfg02Tds(),
 				[]
 			),
 		},
@@ -162,7 +182,7 @@ frappe.provide("kentender_core.cl_surface_registry");
 			chrome: chrome(
 				__("IT Requirements"),
 				__("Define what bidders must supply, deliver, integrate, support, or prove."),
-				trailConfigHome,
+				trailCfg03Requirements(),
 				[]
 			),
 		},

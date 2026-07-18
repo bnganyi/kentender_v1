@@ -110,7 +110,7 @@ maps to a `code.html` block and pulls its class strings from `cl_code_spec`.
 | Configuration steps grid | `configurationStepsGrid({ steps })` | `kt-cl-ui01-steps`, `kt-cl-ui01-step-CFG-*` |
 | Completion & Handoff | `handoffPanel({ handoff })` | `kt-cl-ui01-handoff` |
 | Overall Progress | `overallProgressPanel({ complete, total, progressPct })` — `%` is **average of per-step exit-condition progress**; meta is “X of Y steps complete” | `kt-cl-ui01-progress` |
-| Step progress | Computed in `step_progress.py` (register builders in `STEP_CONDITION_BUILDERS`); CFG-01 live; other CFGs status-fallback until their screen ships | `progress_pct`, `show_progress_bar` on step rows |
+| Step progress | Computed in `step_progress.py` (register builders in `STEP_CONDITION_BUILDERS`); CFG-01…CFG-03 live; other CFGs status-fallback until their screen ships | `progress_pct`, `show_progress_bar` on step rows |
 | Resources | `resourcesPanel({ items })` | `kt-cl-ui01-resources` |
 | Step details drawer | `stepDetailsDrawer({ step })` | `kt-cl-ui01-drawer` |
 | Wizard step footer | `wizardStepFooter({ backLabel, saveLabel, continueLabel, … })` — **Back left**, Save + high-contrast Continue right (white on navy) | `kt-cl-wizard-footer`, `kt-cl-wizard-btn--*` |
@@ -131,10 +131,17 @@ Wizard pages must **compose** `configurationContextStrip` — never duplicate th
 
 - Cursor rule: `.cursor/rules/kentender-civic-ledger-queue-lock.mdc`
 - Playwright helpers: `tests/ui/helpers/ktClQueueContract.ts`, `ktClConfigContext.ts`, `ktClUi01LayoutContract.ts`
-- Gates: `make -C apps/kentender_v1 ui-civic-ledger-queue-gate`, `ui-civic-ledger-ui01-gate`, and `ui-civic-ledger-cfg01-gate`
+- Gates: `make -C apps/kentender_v1 ui-civic-ledger-queue-gate`, `ui-civic-ledger-ui01-gate`, `ui-civic-ledger-cfg01-gate`, `ui-civic-ledger-cfg02-gate`, and `ui-civic-ledger-cfg03-gate`
 - UI-01 mockups: `seed_ui01_mockups_for_tests` → `TCFG-MOCK-SHOWCASE` + `TCFG-MOCK-CFG-01`…`09`
 - CFG-01 page: `it_tender_configuration_tender_profile_page.js` + pins `kt-cl-cfg01-*` in `kt_cl_code_layout.css`
-- CFG-01 follow-ups (explicitly out of ticket): multi-version STD picker; Run Readiness Check CTA; real CFG-02 TDS page; relational lots child table; strip Config Ref cell (needs CL lock amendment)
+- CFG-02 page: `it_tender_configuration_tds_page.js` + pins `kt-cl-cfg02-*`; API `get_tender_configuration_tds` / `save_tender_configuration_tds`; `wizardStepFooter` `extraEndActions` for Run Check
+- CFG-03 page: `it_tender_configuration_it_requirements_page.js` + pins `kt-cl-cfg03-*`; API `get_tender_configuration_requirements` / `save_tender_configuration_requirements`; `queueTable` + body-mounted requirement drawer
+- **CFG-03 drawer save:** **Save Requirement** persists immediately (same POST as footer Save Requirements) and remounts with fresh Setup Status / issues / Continue — users must not need a second footer save to clear blockers.
+- **CFG-03 label alignment:** Drawer mirrors table names for shared fields — **ID** (read-only) + **Requirement** (editable title; not “Requirement Title”). ID ≠ Requirement.
+- **CFG-03 column contract (column-clarity amendment):** table columns are ID · Requirement · Category · Treatment · **Bidder Response Instruction** · **Evidence Instruction** · **Delivery Confirmation Method** · **Setup Status** · Action. Instruction/method cells show **content only** (never “missing”, “defined”, or “valid”). Completeness belongs in Setup Status (`Complete` / `Needs attention` / `Draft` / `Not applicable`), issue summary, and Action (`Edit` / `Fix` / `Review`). Persist field: `delivery_confirmation_method` (not `acceptance_expectation` / `acceptance_description`). GET includes `column_contract`.
+- CFG-01 follow-ups (explicitly out of ticket): multi-version STD picker; Run Readiness Check CTA; relational lots child table; strip Config Ref cell (needs CL lock amendment)
+- CFG-02 follow-ups (explicitly out of ticket): WF-01 / publication-owned Tender Publication Date; STD-driven defaults; explicit clarifications-allowed Yes/No; TDS→STD Section II render mapping; deeper security/preference currency rules
+- CFG-03 follow-ups (explicitly out of ticket): child DocType; STD Section V/VI templates; Filter toolbar; delete/reorder; real CFG-04; deep links from References
 - Rollout matrix: [`docs/test-contracts/civic-ledger-queue-rollout-matrix.md`](../../../test-contracts/civic-ledger-queue-rollout-matrix.md)
 
 Reference surface: UI-00 (`it-tender-configuration-dashboard`).

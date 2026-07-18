@@ -83,13 +83,17 @@ Playwright: `expectUi01StructuralLayout` in `ktClUi01LayoutContract.ts`
 make -C apps/kentender_v1 ui-civic-ledger-queue-gate
 make -C apps/kentender_v1 ui-civic-ledger-ui01-gate
 make -C apps/kentender_v1 ui-civic-ledger-cfg01-gate
+make -C apps/kentender_v1 ui-civic-ledger-cfg02-gate
+make -C apps/kentender_v1 ui-civic-ledger-cfg03-gate
 ```
 
 - Queue: `kt-cl-queue-pattern-lock.spec.ts`
 - UI-01: `ui01-layout-contract.spec.ts` + `ui01-home.spec.ts` (+ mockups `ui01-mockup-states.spec.ts` when seeding visual states)
 - CFG-01: `cfg01-tender-profile.spec.ts` (strip, 8/4 layout, lot table, Save success alert, Back-left footer, high-contrast Continue, refresh-safe ID)
-- Wizard footers: compose `wizardStepFooter` — Back left; primary Continue uses **white** on `#002244` (not muted on-primary-container)
-- Step/overall progress: `step_progress.py` exit-condition checklists (`STEP_CONDITION_BUILDERS`); overall % = average of nine step percents — never decorative defaults (e.g. 67%)
+- CFG-02: `cfg02-tender-data-sheet.spec.ts` (strip, 7 groups + sticky guidance, conditional fields, Save / Run Check / Continue, refresh-safe ID)
+- CFG-03: `cfg03-it-requirements.spec.ts` (strip, requirements table + drawer, sticky guidance, Save / Run Check / Continue, refresh-safe ID)
+- Wizard footers: compose `wizardStepFooter` — Back left; optional `extraEndActions` (e.g. Run Check); primary Continue uses **white** on `#002244` (not muted on-primary-container)
+- Step/overall progress: `step_progress.py` exit-condition checklists (`STEP_CONDITION_BUILDERS`); CFG-01…CFG-03 live; overall % = average of nine step percents — never decorative defaults (e.g. 67%)
 - Helpers: `ktClQueueContract.ts`, `ktClConfigContext.ts`, `ktClUi01LayoutContract.ts`
 
 ## Visual mockup fixtures

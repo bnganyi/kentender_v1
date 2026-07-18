@@ -51,11 +51,12 @@ class TestStepProgress(FrappeTestCase):
 		self.assertEqual(out["progress_pct"], 67)
 
 	def test_status_fallback_complete_vs_in_progress(self):
-		done = compute_step_progress("CFG-02", status_label=STEP_COMPLETE, doc=None)
+		# Unregistered steps still use status fallback (CFG-04 has no field builder yet).
+		done = compute_step_progress("CFG-04", status_label=STEP_COMPLETE, doc=None)
 		self.assertEqual(done["progress_pct"], 100)
 		self.assertFalse(done["show_progress_bar"])
 
-		wip = compute_step_progress("CFG-02", status_label=STEP_IN_PROGRESS, doc=None)
+		wip = compute_step_progress("CFG-04", status_label=STEP_IN_PROGRESS, doc=None)
 		self.assertEqual(wip["progress_pct"], 0)
 		self.assertTrue(wip["show_progress_bar"])
 
@@ -96,6 +97,60 @@ class TestStepProgress(FrappeTestCase):
 		self.assertTrue(out["can_continue"])
 		doc.reload()
 		done = compute_step_progress("CFG-01", status_label=STEP_COMPLETE, doc=doc)
+		self.assertEqual(done["progress_pct"], 100)
+
+	def test_cfg02_partial_and_complete(self):
+		from kentender_procurement.tender_configurations.services.tds import (
+			save_configuration_tds,
+		)
+		from kentender_procurement.tender_configurations.tests.test_configuration_tds_api import (
+			_complete_tds_payload,
+		)
+
+		doc = frappe.get_doc("Tender Configuration", self.cfg_id)
+		doc.tds_values = "{}"
+		doc.flags.ignore_mandatory = True
+		doc.save(ignore_permissions=True)
+
+		partial = compute_step_progress(
+			"CFG-02", status_label=STEP_IN_PROGRESS, doc=doc, step_state={}
+		)
+		self.assertGreaterEqual(partial["required_count"], 15)
+		self.assertEqual(partial["progress_pct"], 0)
+
+		out = save_configuration_tds(
+			self.cfg_id, {"tds_values": _complete_tds_payload()}
+		)
+		self.assertTrue(out["can_continue"])
+		doc.reload()
+		done = compute_step_progress("CFG-02", status_label=STEP_COMPLETE, doc=doc)
+		self.assertEqual(done["progress_pct"], 100)
+
+	def test_cfg03_partial_and_complete(self):
+		from kentender_procurement.tender_configurations.services.it_requirements import (
+			save_configuration_requirements,
+		)
+		from kentender_procurement.tender_configurations.tests.test_configuration_it_requirements_api import (
+			_complete_requirement,
+		)
+
+		doc = frappe.get_doc("Tender Configuration", self.cfg_id)
+		doc.it_requirements = "[]"
+		doc.flags.ignore_mandatory = True
+		doc.save(ignore_permissions=True)
+
+		partial = compute_step_progress(
+			"CFG-03", status_label=STEP_IN_PROGRESS, doc=doc, step_state={}
+		)
+		self.assertGreaterEqual(partial["required_count"], 1)
+		self.assertEqual(partial["progress_pct"], 0)
+
+		out = save_configuration_requirements(
+			self.cfg_id, {"requirements": [_complete_requirement()]}
+		)
+		self.assertTrue(out["can_continue"])
+		doc.reload()
+		done = compute_step_progress("CFG-03", status_label=STEP_COMPLETE, doc=doc)
 		self.assertEqual(done["progress_pct"], 100)
 
 	def test_cfg01_multiple_lots_adds_condition(self):
