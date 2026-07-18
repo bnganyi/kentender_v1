@@ -1243,15 +1243,26 @@ frappe.provide("kentender_core.cl_components");
 							"</p>";
 					}
 					var footerLeft = "";
-					if (status === "In progress") {
+					if (
+						step.show_progress_bar &&
+						(status === "In progress" || status === "Needs attention")
+					) {
 						var pct = parseInt(step.progress_pct, 10);
-						if (isNaN(pct)) pct = 67;
-						pct = Math.max(5, Math.min(95, pct));
+						if (isNaN(pct)) pct = 0;
+						pct = Math.max(0, Math.min(100, pct));
+						var met = parseInt(step.progress_met_count, 10);
+						var req = parseInt(step.progress_required_count, 10);
+						var aria =
+							!isNaN(met) && !isNaN(req) && req > 0
+								? __("{0} of {1} required items", [String(met), String(req)])
+								: __("Step progress");
 						footerLeft =
 							'<div class="kt-cl-ui01-step-progress" data-testid="kt-cl-ui01-step-progress-' +
 							escapeHtml(step.id || "") +
 							'" aria-label="' +
-							escapeHtml(__("Step progress")) +
+							escapeHtml(aria) +
+							'" data-progress-pct="' +
+							pct +
 							'">' +
 							'<div class="kt-cl-ui01-step-progress-fill" style="width:' +
 							pct +
@@ -1287,11 +1298,14 @@ frappe.provide("kentender_core.cl_components");
 						escapeHtml(step.id || "") +
 						'" data-step-status="' +
 						escapeHtml(status) +
-						'" data-action="open-drawer">' +
+						'" data-action="open-step" data-route="' +
+						escapeHtml(step.route || "") +
+						'">' +
 						'<div class="kt-cl-ui01-step-card-top">' +
 						'<span class="kt-cl-ui01-step-id">' +
 						escapeHtml(step.id || "") +
 						"</span>" +
+						'<div class="kt-cl-ui01-step-card-top-end">' +
 						'<div class="kt-cl-ui01-step-badge kt-cl-ui01-step-badge--' +
 						badgeTone +
 						'" data-testid="kt-cl-ui01-step-badge-' +
@@ -1300,7 +1314,18 @@ frappe.provide("kentender_core.cl_components");
 						'<span class="kt-cl-ui01-step-badge-dot" aria-hidden="true"></span>' +
 						'<span class="kt-cl-ui01-step-badge-label">' +
 						escapeHtml(status) +
-						"</span></div></div>" +
+						"</span></div>" +
+						'<button type="button" class="kt-cl-ui01-step-details" data-action="open-drawer" data-step-id="' +
+						escapeHtml(step.id || "") +
+						'" data-testid="kt-cl-ui01-step-details-' +
+						escapeHtml(step.id || "") +
+						'" aria-label="' +
+						escapeHtml(__("Step details")) +
+						'" title="' +
+						escapeHtml(__("Step details")) +
+						'">' +
+						msIcon("info", 18) +
+						"</button></div></div>" +
 						'<h4 class="kt-cl-ui01-step-title">' +
 						escapeHtml(step.title || "") +
 						"</h4>" +
@@ -1427,7 +1452,13 @@ frappe.provide("kentender_core.cl_components");
 			var complete = parseInt(opts.complete, 10) || 0;
 			var total = parseInt(opts.total, 10) || 9;
 			if (total < 1) total = 9;
-			var pct = Math.round((complete / total) * 100);
+			/* Prefer average of per-step exit-condition %; fall back to complete/total. */
+			var pct =
+				opts.progressPct != null && opts.progressPct !== ""
+					? parseInt(opts.progressPct, 10)
+					: Math.round((complete / total) * 100);
+			if (isNaN(pct)) pct = 0;
+			pct = Math.max(0, Math.min(100, pct));
 			return (
 				'<div class="kt-cl-ui01-progress" data-testid="kt-cl-ui01-progress">' +
 				'<p class="kt-cl-ui01-progress-label">' +
@@ -1438,7 +1469,7 @@ frappe.provide("kentender_core.cl_components");
 				pct +
 				"%</p>" +
 				'<p class="kt-cl-ui01-progress-meta" data-testid="kt-cl-ui01-progress-meta">' +
-				escapeHtml(__("{0} of {1} steps", [String(complete), String(total)])) +
+				escapeHtml(__("{0} of {1} steps complete", [String(complete), String(total)])) +
 				"</p></div>" +
 				'<div class="kt-cl-ui01-progress-track" aria-hidden="true">' +
 				'<div class="kt-cl-ui01-progress-fill" style="width:' +
@@ -1487,13 +1518,13 @@ frappe.provide("kentender_core.cl_components");
 				db || dw ? db + " Blockers / " + dw + " Warnings" : __("None");
 			var issuesCls = db || dw ? " text-error font-bold" : "";
 			return (
-				'<div class="' +
+				'<div class="kt-cl-ui01-drawer-overlay ' +
 				(h.drawerOverlay || "") +
 				'" data-testid="kt-cl-ui01-drawer-overlay" role="dialog" aria-modal="true">' +
-				'<aside class="' +
+				'<aside class="kt-cl-ui01-drawer ' +
 				(h.drawerPanel || "") +
 				'" data-testid="kt-cl-ui01-drawer">' +
-				'<header class="p-5 border-b border-outline-variant flex justify-between items-start">' +
+				'<header class="kt-cl-ui01-drawer-header">' +
 				"<div>" +
 				'<p class="text-label-sm text-on-surface-variant">' +
 				escapeHtml(step.id || "") +
@@ -1501,12 +1532,12 @@ frappe.provide("kentender_core.cl_components");
 				'<h2 class="text-headline-md font-bold text-primary" data-testid="kt-cl-ui01-drawer-title">' +
 				escapeHtml(step.title || "") +
 				"</h2></div>" +
-				'<button type="button" class="text-on-surface-variant hover:text-primary" data-action="close-drawer" data-testid="kt-cl-ui01-drawer-close" aria-label="' +
+				'<button type="button" class="kt-cl-ui01-drawer-close" data-action="close-drawer" data-testid="kt-cl-ui01-drawer-close" aria-label="' +
 				__("Close") +
 				'">' +
 				msIcon("close", 22) +
 				"</button></header>" +
-				'<div class="p-5 space-y-4 overflow-y-auto flex-1">' +
+				'<div class="kt-cl-ui01-drawer-body">' +
 				"<div><p class=\"text-label-sm text-on-surface-variant uppercase\">" +
 				__("Purpose") +
 				'</p><p class="text-body-md text-on-surface" data-testid="kt-cl-ui01-drawer-purpose">' +
@@ -1534,8 +1565,8 @@ frappe.provide("kentender_core.cl_components");
 				'</p><p class="text-body-sm" data-testid="kt-cl-ui01-drawer-wont">' +
 				escapeHtml(step.will_not_configure || "") +
 				"</p></div></div>" +
-				'<footer class="p-5 border-t border-outline-variant">' +
-				'<button type="button" class="w-full py-3 bg-primary text-on-primary font-bold rounded-lg" data-action="drawer-primary" data-route="' +
+				'<footer class="kt-cl-ui01-drawer-footer">' +
+				'<button type="button" class="kt-cl-ui01-drawer-action" data-action="drawer-primary" data-route="' +
 				escapeHtml(step.route || "") +
 				'" data-testid="kt-cl-ui01-drawer-action">' +
 				escapeHtml(step.action_label || __("Continue")) +
@@ -1649,6 +1680,54 @@ frappe.provide("kentender_core.cl_components");
 				" " +
 				msIcon("arrow_forward", 16) +
 				"</button></footer></section></div>"
+			);
+		},
+
+		/**
+		 * Shared CFG/WF bottom bar: Back on the left; Save + primary Continue on the right.
+		 * Primary CTA uses high-contrast on-primary (white) on navy — not muted on-primary-container.
+		 */
+		wizardStepFooter: function (opts) {
+			opts = opts || {};
+			var footerTestid = opts.testid || "kt-cl-wizard-footer";
+			var backTestid = opts.backTestid || "kt-cl-wizard-back";
+			var saveTestid = opts.saveTestid || "kt-cl-wizard-save";
+			var continueTestid = opts.continueTestid || "kt-cl-wizard-continue";
+			var saveDisabled = opts.saveDisabled ? " disabled" : "";
+			var continueDisabled = opts.continueDisabled ? " disabled" : "";
+			var continueIcon = opts.continueIcon === false ? "" : msIcon("arrow_forward", 16);
+			return (
+				'<div class="kt-cl-wizard-footer" data-testid="' +
+				escapeHtml(footerTestid) +
+				'">' +
+				'<div class="kt-cl-wizard-footer-start">' +
+				'<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--secondary" data-action="' +
+				escapeHtml(opts.backAction || "back-home") +
+				'" data-testid="' +
+				escapeHtml(backTestid) +
+				'">' +
+				escapeHtml(opts.backLabel || __("Back to Configuration Home")) +
+				"</button></div>" +
+				'<div class="kt-cl-wizard-footer-end">' +
+				'<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--outline" data-action="' +
+				escapeHtml(opts.saveAction || "save") +
+				'" data-testid="' +
+				escapeHtml(saveTestid) +
+				'"' +
+				saveDisabled +
+				">" +
+				escapeHtml(opts.saveLabel || __("Save")) +
+				"</button>" +
+				'<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--primary" data-action="' +
+				escapeHtml(opts.continueAction || "continue") +
+				'" data-testid="' +
+				escapeHtml(continueTestid) +
+				'"' +
+				continueDisabled +
+				">" +
+				escapeHtml(opts.continueLabel || __("Continue")) +
+				continueIcon +
+				"</button></div></div>"
 			);
 		},
 	};

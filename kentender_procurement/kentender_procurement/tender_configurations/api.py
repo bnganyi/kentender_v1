@@ -77,3 +77,28 @@ def get_tender_configuration_home(configuration_id: str) -> dict[str, Any]:
 	"""UI-01 home payload (context strip, next action, steps, handoff)."""
 	_require_login()
 	return _get_configuration_home(configuration_id)
+
+
+@frappe.whitelist()
+def get_tender_configuration_profile(configuration_id: str) -> dict[str, Any]:
+	"""CFG-01 Tender Profile GET (C2-CFG1 §13)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.profile import (
+		get_configuration_profile,
+	)
+
+	return get_configuration_profile(configuration_id)
+
+
+@frappe.whitelist()
+def save_tender_configuration_profile(
+	configuration_id: str,
+	payload: dict[str, Any] | str | None = None,
+) -> dict[str, Any]:
+	"""CFG-01 Tender Profile POST (C2-CFG1 §13)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.profile import (
+		save_configuration_profile,
+	)
+
+	return save_configuration_profile(configuration_id, payload)

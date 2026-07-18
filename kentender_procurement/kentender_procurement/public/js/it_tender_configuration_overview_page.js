@@ -88,9 +88,25 @@
 		var h = (kentender_core.cl_code_spec && kentender_core.cl_code_spec.CONFIG_HOME) || {};
 		var next = data.next_action || {};
 		var steps = data.configuration_steps || [];
-		var completeCount = steps.filter(function (s) {
-			return s.status_label === "Complete";
-		}).length;
+		var overall = data.overall_progress || {};
+		var completeCount =
+			overall.complete_count != null
+				? parseInt(overall.complete_count, 10)
+				: steps.filter(function (s) {
+						return s.status_label === "Complete";
+				  }).length;
+		var totalSteps = overall.total != null ? parseInt(overall.total, 10) : steps.length || 9;
+		var overallPct =
+			overall.progress_pct != null
+				? parseInt(overall.progress_pct, 10)
+				: steps.length
+					? Math.round(
+							steps.reduce(function (sum, s) {
+								var p = parseInt(s.progress_pct, 10);
+								return sum + (isNaN(p) ? 0 : p);
+							}, 0) / steps.length
+					  )
+					: 0;
 		var ctx = data.context || data;
 		var stdDoc =
 			ctx.standard_tender_document_label ||
@@ -128,7 +144,11 @@
 			(h.sideCol || "") +
 			'" data-testid="kt-cl-ui01-side">' +
 			comp.handoffPanel({ handoff: data.handoff || {} }) +
-			comp.overallProgressPanel({ complete: completeCount, total: steps.length || 9 }) +
+			comp.overallProgressPanel({
+				complete: completeCount,
+				total: totalSteps,
+				progressPct: overallPct,
+			}) +
 			comp.resourcesPanel({
 				items: [
 					{ label: stdDoc, icon: "download" },
@@ -136,8 +156,10 @@
 				],
 			}) +
 			'<button type="button" class="kt-cl-ui01-back-btn" data-action="back" data-testid="kt-cl-ui01-back">' +
+			'<span class="material-symbols-outlined kt-cl-ui01-back-icon" aria-hidden="true">arrow_back</span>' +
+			"<span>" +
 			__("Back to Tender Configurations") +
-			"</button></aside></div></div>"
+			"</span></button></aside></div></div>"
 		);
 	}
 
@@ -151,8 +173,10 @@
 		return null;
 	}
 
-	function closeDrawer($root) {
-		$root.find('[data-testid="kt-cl-ui01-drawer-overlay"]').remove();
+	function closeDrawer() {
+		$(document.body)
+			.find('[data-testid="kt-cl-ui01-drawer-overlay"]')
+			.remove();
 	}
 
 	function openDrawer($root, stepId) {
@@ -160,8 +184,9 @@
 		if (!step) {
 			return;
 		}
-		closeDrawer($root);
-		$root.append(c().stepDetailsDrawer({ step: step }));
+		closeDrawer();
+		/* Mount on body so position:fixed is not clipped by page scroll/transform hosts. */
+		$(document.body).append(c().stepDetailsDrawer({ step: step }));
 	}
 
 	function bind($root) {
@@ -175,31 +200,63 @@
 			}
 			frappe.set_route("it-tender-configuration-dashboard");
 		});
-		$root.on(
-			"click.ui01",
-			"[data-action='next-action'], [data-action='open-step'], [data-action='handoff'], [data-action='drawer-primary']",
-			function (e) {
-				e.preventDefault();
-				e.stopPropagation();
-				goCfgRoute($(this).attr("data-route"));
-			}
-		);
-		$root.on("click.ui01", "[data-action='open-drawer']", function (e) {
-			if ($(e.target).closest("[data-action='open-step']").length) {
+		$root.on("click.ui01", "[data-action='next-action'], [data-action='handoff']", function (e) {
+			e.preventDefault();
+			e.stopPropagation();
+			goCfgRoute($(this).attr("data-route"));
+		});
+		/* Card body + Review/Continue share open-step — navigate to the step form (not the drawer). */
+		$root.on("click.ui01", "[data-action='open-step']", function (e) {
+			e.preventDefault();
+			e.stopPropagation();
+			var $el = $(this);
+			var status =
+				$el.attr("data-step-status") ||
+				$el.closest("[data-step-status]").attr("data-step-status") ||
+				"";
+			var stepId =
+				$el.attr("data-step-id") || $el.closest("[data-step-id]").attr("data-step-id");
+			var route = $el.attr("data-route") || $el.closest("[data-route]").attr("data-route");
+			if (status === "Not available yet") {
+				openDrawer($root, stepId);
 				return;
 			}
+			goCfgRoute(route);
+		});
+		/* Explicit info control opens the lightweight step drawer. */
+		$root.on("click.ui01", "[data-action='open-drawer']", function (e) {
 			e.preventDefault();
-			openDrawer($root, $(this).attr("data-step-id"));
+			e.stopPropagation();
+			var stepId =
+				$(this).attr("data-step-id") ||
+				$(this).closest("[data-step-id]").attr("data-step-id");
+			openDrawer($root, stepId);
 		});
-		$root.on("click.ui01", "[data-action='close-drawer']", function (e) {
-			e.preventDefault();
-			closeDrawer($root);
-		});
-		$root.on("click.ui01", '[data-testid="kt-cl-ui01-drawer-overlay"]', function (e) {
-			if (e.target === this) {
-				closeDrawer($root);
-			}
-		});
+		/* Drawer is mounted on body — bind on document so actions still work. */
+		$(document)
+			.off(".ui01drawer")
+			.on("click.ui01drawer", "[data-action='close-drawer']", function (e) {
+				e.preventDefault();
+				e.stopPropagation();
+				closeDrawer();
+			})
+			.on("click.ui01drawer", "[data-action='drawer-primary']", function (e) {
+				e.preventDefault();
+				e.stopPropagation();
+				var route = $(this).attr("data-route");
+				closeDrawer();
+				goCfgRoute(route);
+			})
+			.on("click.ui01drawer", '[data-testid="kt-cl-ui01-drawer-overlay"]', function (e) {
+				if (e.target === this) {
+					closeDrawer();
+				}
+			})
+			.on("keydown.ui01drawer", function (e) {
+				if (e.key === "Escape") {
+					closeDrawer();
+				}
+			});
 	}
 
 	function mount(page) {

@@ -686,8 +686,103 @@ body.kt-cl-shell .kt-cl-config-status-dot[data-tone="completed"],
 body.kt-cl-shell .kt-cl-config-status-dot[data-tone="ready_for_publication"] {
 	background: #16a34a !important;
 }
-body.kt-cl-shell [data-testid="kt-cl-ui01-drawer-overlay"] {
-	background: rgba(25, 28, 30, 0.35) !important;
+/* UI-01 step details drawer — must be a right-rail overlay (not in-flow page content).
+ * Tailwind utilities on the markup are not reliable in Desk; pin geometry here. */
+body.kt-cl-shell [data-testid="kt-cl-ui01-drawer-overlay"],
+body.kt-cl-shell .kt-cl-ui01-drawer-overlay {
+	position: fixed !important;
+	inset: 0 !important;
+	z-index: 2100 !important;
+	display: flex !important;
+	justify-content: flex-end !important;
+	align-items: stretch !important;
+	background: rgba(25, 28, 30, 0.45) !important;
+	margin: 0 !important;
+	padding: 0 !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-ui01-drawer"],
+body.kt-cl-shell .kt-cl-ui01-drawer {
+	position: relative !important;
+	display: flex !important;
+	flex-direction: column !important;
+	width: 100% !important;
+	max-width: 28rem !important; /* ~max-w-md */
+	height: 100% !important;
+	max-height: 100vh !important;
+	margin: 0 !important;
+	background: #ffffff !important;
+	border-left: 1px solid #c4c6cf !important;
+	box-shadow: -8px 0 24px rgba(25, 28, 30, 0.18) !important;
+	overflow: hidden !important;
+}
+body.kt-cl-shell .kt-cl-ui01-drawer-header,
+body.kt-cl-shell [data-testid="kt-cl-ui01-drawer"] > header {
+	display: flex !important;
+	justify-content: space-between !important;
+	align-items: flex-start !important;
+	gap: 1rem !important;
+	padding: 1.25rem !important;
+	border-bottom: 1px solid #c4c6cf !important;
+	flex-shrink: 0 !important;
+	background: #ffffff !important;
+}
+body.kt-cl-shell .kt-cl-ui01-drawer-header .material-symbols-outlined {
+	font-size: 22px !important;
+	line-height: 1 !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-ui01-drawer-close"],
+body.kt-cl-shell .kt-cl-ui01-drawer-close {
+	appearance: none !important;
+	border: none !important;
+	background: transparent !important;
+	color: #43474e !important;
+	padding: 0.25rem !important;
+	cursor: pointer !important;
+	box-shadow: none !important;
+	line-height: 1 !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-ui01-drawer-close"]:hover,
+body.kt-cl-shell .kt-cl-ui01-drawer-close:hover {
+	color: #000b1d !important;
+}
+body.kt-cl-shell .kt-cl-ui01-drawer-body {
+	flex: 1 1 auto !important;
+	overflow-y: auto !important;
+	padding: 1.25rem !important;
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 1rem !important;
+	min-height: 0 !important;
+}
+body.kt-cl-shell .kt-cl-ui01-drawer-footer,
+body.kt-cl-shell [data-testid="kt-cl-ui01-drawer"] > footer {
+	flex-shrink: 0 !important;
+	padding: 1.25rem !important;
+	border-top: 1px solid #c4c6cf !important;
+	background: #ffffff !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-ui01-drawer-action"] {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	width: 100% !important;
+	padding: 0.75rem 1rem !important;
+	border: 1px solid #002244 !important;
+	border-radius: 0.5rem !important;
+	background: #002244 !important;
+	color: #ffffff !important;
+	font-weight: 700 !important;
+	font-size: 13px !important;
+	line-height: 18px !important;
+	cursor: pointer !important;
+	box-shadow: none !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-ui01-drawer-action"]:hover {
+	background: #000b1d !important;
+	border-color: #000b1d !important;
+	color: #ffffff !important;
 }
 body.kt-cl-shell [data-testid="kt-cl-ui01-step-card"],
 body.kt-cl-shell .kt-cl-ui01-step-card {
@@ -1255,21 +1350,56 @@ body.kt-cl-shell .kt-cl-ui01-resources-link .material-symbols-outlined {
 	color: #43474e !important;
 }
 
+/* Secondary filled action — must read as a button, not plain text */
 body.kt-cl-shell .kt-cl-ui01-back-btn,
 body.kt-cl-shell [data-testid="kt-cl-ui01-back"] {
 	appearance: none !important;
 	-webkit-appearance: none !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	gap: 0.5rem !important;
 	width: 100% !important;
-	min-height: 36px !important;
-	padding: 0.5rem 1rem !important;
-	border: 1px solid #c4c6cf !important;
-	background: #ffffff !important;
-	color: #000b1d !important;
-	box-shadow: none !important;
-	border-radius: 0.375rem !important;
-	font-weight: 600 !important;
-	font-size: 12px !important;
+	min-height: 40px !important;
+	padding: 0.625rem 1rem !important;
+	border: 1px solid #002244 !important;
+	background: #002244 !important;
+	color: #ffffff !important;
+	box-shadow: 0 1px 2px rgba(0, 11, 29, 0.12) !important;
+	border-radius: 0.5rem !important;
+	font-weight: 700 !important;
+	font-size: 13px !important;
+	line-height: 1.2 !important;
 	cursor: pointer !important;
+	transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+		box-shadow 0.15s ease, transform 0.1s ease !important;
+}
+body.kt-cl-shell .kt-cl-ui01-back-btn .kt-cl-ui01-back-icon,
+body.kt-cl-shell [data-testid="kt-cl-ui01-back"] .kt-cl-ui01-back-icon {
+	font-size: 18px !important;
+	line-height: 1 !important;
+	color: inherit !important;
+}
+body.kt-cl-shell .kt-cl-ui01-back-btn:hover,
+body.kt-cl-shell [data-testid="kt-cl-ui01-back"]:hover,
+body.kt-cl-shell .kt-cl-ui01-back-btn.is-hovered,
+body.kt-cl-shell [data-testid="kt-cl-ui01-back"].is-hovered {
+	background: #000b1d !important;
+	border-color: #000b1d !important;
+	color: #ffffff !important;
+	box-shadow: 0 2px 6px rgba(0, 11, 29, 0.22) !important;
+}
+body.kt-cl-shell .kt-cl-ui01-back-btn:active,
+body.kt-cl-shell [data-testid="kt-cl-ui01-back"]:active {
+	background: #001a33 !important;
+	border-color: #001a33 !important;
+	box-shadow: none !important;
+	transform: translateY(1px) !important;
+}
+body.kt-cl-shell .kt-cl-ui01-back-btn:focus-visible,
+body.kt-cl-shell [data-testid="kt-cl-ui01-back"]:focus-visible {
+	outline: 2px solid #adc8f3 !important;
+	outline-offset: 2px !important;
 }
 
 /* Sharper step cards */
@@ -1305,4 +1435,444 @@ body.kt-cl-shell [data-testid="kt-cl-config-context-strip"] {
 	body.kt-cl-shell .kt-cl-config-context-cell:nth-child(2n) {
 		border-right: none !important;
 	}
+}
+
+body.kt-cl-shell .sr-only {
+	position: absolute !important;
+	width: 1px !important;
+	height: 1px !important;
+	padding: 0 !important;
+	margin: -1px !important;
+	overflow: hidden !important;
+	clip: rect(0, 0, 0, 0) !important;
+	white-space: nowrap !important;
+	border: 0 !important;
+}
+
+/* ── CFG-01 Tender Profile (C2-CFG1 code-single-lot / code-multi-lot) ── */
+body.kt-cl-shell [data-testid="kt-cl-cfg01-layout"],
+body.kt-cl-shell .kt-cl-cfg01-layout {
+	display: grid !important;
+	grid-template-columns: minmax(0, 1fr) !important;
+	gap: 1.5rem !important;
+	margin-top: 0.5rem !important;
+}
+@media (min-width: 1024px) {
+	body.kt-cl-shell [data-testid="kt-cl-cfg01-layout"],
+	body.kt-cl-shell .kt-cl-cfg01-layout {
+		grid-template-columns: minmax(0, 8fr) minmax(0, 4fr) !important;
+		align-items: start !important;
+	}
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg01-main"],
+body.kt-cl-shell .kt-cl-cfg01-main,
+body.kt-cl-shell [data-testid="kt-cl-cfg01-side"],
+body.kt-cl-shell .kt-cl-cfg01-side {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 1.5rem !important;
+	min-width: 0 !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-card,
+body.kt-cl-shell [data-testid^="kt-cl-cfg01-section-"] {
+	position: relative !important;
+	background: #ffffff !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.125rem !important;
+	box-shadow: 0 1px 2px rgba(25, 28, 30, 0.04) !important;
+	padding: 16px !important;
+	overflow: hidden !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-card-accent {
+	position: absolute !important;
+	top: 0 !important;
+	left: 0 !important;
+	width: 4px !important;
+	height: 100% !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-card--identity .kt-cl-cfg01-card-accent {
+	background: #002244 !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-card--lots .kt-cl-cfg01-card-accent {
+	background: #515f74 !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-card--std .kt-cl-cfg01-card-accent {
+	background: #bec6e0 !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-card--notes .kt-cl-cfg01-card-accent {
+	background: #c4c6cf !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-card h3 {
+	margin: 0 0 16px !important;
+	padding-left: 0.5rem !important;
+	font-size: 18px !important;
+	line-height: 24px !important;
+	font-weight: 600 !important;
+	color: #191c1e !important;
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-card h3 .material-symbols-outlined {
+	font-size: 18px !important;
+	color: #43474e !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-field {
+	margin-bottom: 1rem !important;
+	padding: 0.5rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-field label {
+	display: block !important;
+	margin-bottom: 4px !important;
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 11px !important;
+	line-height: 14px !important;
+	font-weight: 500 !important;
+	color: #191c1e !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-req {
+	color: #ba1a1a !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-helper {
+	margin: 4px 0 0 !important;
+	font-size: 12px !important;
+	line-height: 16px !important;
+	color: #43474e !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-input,
+body.kt-cl-shell .kt-cl-cfg01-textarea {
+	width: 100% !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.125rem !important;
+	background: #f7f9fb !important;
+	color: #191c1e !important;
+	font-family: "Public Sans", sans-serif !important;
+	font-size: 13px !important;
+	line-height: 18px !important;
+	padding: 0 12px !important;
+	box-shadow: none !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-input {
+	height: 32px !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-textarea {
+	padding: 12px !important;
+	resize: vertical !important;
+	min-height: 72px !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-textarea--notes {
+	resize: none !important;
+	flex: 1 1 auto !important;
+	min-height: 96px !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-input:focus,
+body.kt-cl-shell .kt-cl-cfg01-textarea:focus {
+	outline: none !important;
+	border-color: #002244 !important;
+	box-shadow: 0 0 0 1px #002244 !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-readonly {
+	height: 32px !important;
+	display: flex !important;
+	align-items: center !important;
+	padding: 0 12px !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.125rem !important;
+	background: #eceef0 !important;
+	color: #43474e !important;
+	font-size: 13px !important;
+	cursor: not-allowed !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-readonly--icon {
+	height: auto !important;
+	min-height: 32px !important;
+	padding: 8px !important;
+	background: #f7f9fb !important;
+	color: #191c1e !important;
+	gap: 0.5rem !important;
+	cursor: default !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-readonly--icon .material-symbols-outlined {
+	font-size: 18px !important;
+	color: #002244 !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-version {
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 10px !important;
+	line-height: 12px !important;
+	letter-spacing: 0.04em !important;
+	text-transform: uppercase !important;
+	color: #43474e !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-readonly-grid {
+	display: grid !important;
+	grid-template-columns: 1fr !important;
+	gap: 0.5rem !important;
+}
+@media (min-width: 640px) {
+	body.kt-cl-shell .kt-cl-cfg01-readonly-grid {
+		grid-template-columns: 1fr 1fr !important;
+	}
+}
+body.kt-cl-shell .kt-cl-cfg01-lot-radios {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 1rem !important;
+	margin: 0 0 1rem !important;
+	border: 0 !important;
+	padding: 0 !important;
+}
+@media (min-width: 640px) {
+	body.kt-cl-shell .kt-cl-cfg01-lot-radios {
+		flex-direction: row !important;
+	}
+}
+body.kt-cl-shell .kt-cl-cfg01-radio {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+	flex: 1 1 0 !important;
+	padding: 12px !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.125rem !important;
+	cursor: pointer !important;
+	background: #ffffff !important;
+	margin: 0 !important;
+	font-weight: 400 !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-radio--selected {
+	border-color: #002244 !important;
+	background: rgba(173, 200, 243, 0.1) !important;
+	font-weight: 600 !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-radio input {
+	width: 16px !important;
+	height: 16px !important;
+	accent-color: #002244 !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-lots-head {
+	display: flex !important;
+	justify-content: space-between !important;
+	align-items: flex-end !important;
+	margin: 1.5rem 0 0.5rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-lots-title {
+	margin: 0 !important;
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 11px !important;
+	letter-spacing: 0.02em !important;
+	text-transform: uppercase !important;
+	color: #43474e !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-lots-table-wrap {
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.125rem !important;
+	overflow: hidden !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-lots-table {
+	width: 100% !important;
+	border-collapse: collapse !important;
+	text-align: left !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-lots-table thead {
+	background: #eceef0 !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-lots-table th {
+	padding: 8px 12px !important;
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 11px !important;
+	font-weight: 600 !important;
+	text-transform: uppercase !important;
+	letter-spacing: 0.02em !important;
+	color: #43474e !important;
+	border-bottom: 1px solid #c4c6cf !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-lots-table td {
+	padding: 8px 12px !important;
+	border-bottom: 1px solid rgba(196, 198, 207, 0.3) !important;
+	vertical-align: middle !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-lots-table .kt-cl-cfg01-input {
+	height: 28px !important;
+	background: #ffffff !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-lot-actions {
+	text-align: right !important;
+	width: 64px !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-icon-btn {
+	border: none !important;
+	background: transparent !important;
+	color: #43474e !important;
+	padding: 4px !important;
+	border-radius: 0.125rem !important;
+	cursor: pointer !important;
+	box-shadow: none !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-icon-btn:hover {
+	color: #ba1a1a !important;
+	background: #ffdad6 !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-icon-btn .material-symbols-outlined {
+	font-size: 18px !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-card--notes {
+	display: flex !important;
+	flex-direction: column !important;
+	min-height: 200px !important;
+}
+/* Shared wizard step footer (CFG-01+): Back left · Save + Continue right */
+body.kt-cl-shell .kt-cl-wizard-footer,
+body.kt-cl-shell [data-testid="kt-cl-cfg01-footer"],
+body.kt-cl-shell [data-testid="kt-cl-wizard-footer"] {
+	margin-top: 2rem !important;
+	padding-top: 16px !important;
+	border-top: 1px solid #c4c6cf !important;
+	display: flex !important;
+	flex-direction: column !important;
+	align-items: stretch !important;
+	justify-content: flex-start !important;
+	gap: 1rem !important;
+	width: 100% !important;
+}
+body.kt-cl-shell .kt-cl-wizard-footer-start {
+	display: flex !important;
+	justify-content: flex-start !important;
+	margin-right: auto !important;
+}
+body.kt-cl-shell .kt-cl-wizard-footer-end {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	align-items: center !important;
+	justify-content: flex-end !important;
+	gap: 1rem !important;
+	margin-left: auto !important;
+}
+@media (min-width: 640px) {
+	body.kt-cl-shell .kt-cl-wizard-footer,
+	body.kt-cl-shell [data-testid="kt-cl-cfg01-footer"],
+	body.kt-cl-shell [data-testid="kt-cl-wizard-footer"] {
+		flex-direction: row !important;
+		align-items: center !important;
+		justify-content: space-between !important;
+	}
+}
+body.kt-cl-shell .kt-cl-wizard-btn,
+body.kt-cl-shell .kt-cl-cfg01-btn,
+body.kt-cl-shell [data-testid="kt-cl-cfg01-back"],
+body.kt-cl-shell [data-testid="kt-cl-cfg01-save"],
+body.kt-cl-shell [data-testid="kt-cl-cfg01-continue"] {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	gap: 0.5rem !important;
+	padding: 8px 16px !important;
+	border-radius: 0.125rem !important;
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 11px !important;
+	line-height: 14px !important;
+	font-weight: 600 !important;
+	letter-spacing: 0.02em !important;
+	cursor: pointer !important;
+	box-shadow: 0 1px 2px rgba(25, 28, 30, 0.06) !important;
+	text-decoration: none !important;
+	height: auto !important;
+	min-height: 0 !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-btn--sm,
+body.kt-cl-shell .kt-cl-wizard-btn--sm {
+	padding: 4px 12px !important;
+	font-weight: 500 !important;
+}
+body.kt-cl-shell .kt-cl-wizard-btn--secondary,
+body.kt-cl-shell .kt-cl-cfg01-btn--secondary {
+	border: 1px solid #c4c6cf !important;
+	background: #ffffff !important;
+	color: #191c1e !important;
+}
+body.kt-cl-shell .kt-cl-wizard-btn--outline,
+body.kt-cl-shell .kt-cl-cfg01-btn--outline {
+	border: 1px solid #002244 !important;
+	background: #ffffff !important;
+	color: #002244 !important;
+}
+/* High-contrast primary CTA (standard for all CFG/WF footers) */
+body.kt-cl-shell .kt-cl-wizard-btn--primary,
+body.kt-cl-shell .kt-cl-cfg01-btn--primary,
+body.kt-cl-shell [data-testid="kt-cl-cfg01-continue"],
+body.kt-cl-shell [data-testid="kt-cl-wizard-continue"] {
+	border: 1px solid #002244 !important;
+	background: #002244 !important;
+	color: #ffffff !important;
+}
+body.kt-cl-shell .kt-cl-wizard-btn--primary .material-symbols-outlined,
+body.kt-cl-shell .kt-cl-cfg01-btn--primary .material-symbols-outlined,
+body.kt-cl-shell [data-testid="kt-cl-cfg01-continue"] .material-symbols-outlined,
+body.kt-cl-shell [data-testid="kt-cl-wizard-continue"] .material-symbols-outlined {
+	font-size: 16px !important;
+	color: #ffffff !important;
+}
+body.kt-cl-shell .kt-cl-wizard-btn:disabled,
+body.kt-cl-shell .kt-cl-cfg01-btn:disabled,
+body.kt-cl-shell [data-testid="kt-cl-cfg01-save"]:disabled,
+body.kt-cl-shell [data-testid="kt-cl-cfg01-continue"]:disabled {
+	opacity: 0.45 !important;
+	cursor: not-allowed !important;
+	pointer-events: none !important;
+}
+body.kt-cl-shell .kt-cl-wizard-btn--secondary:hover:not(:disabled),
+body.kt-cl-shell .kt-cl-cfg01-btn--secondary:hover:not(:disabled) {
+	background: #e0e3e5 !important;
+}
+body.kt-cl-shell .kt-cl-wizard-btn--outline:hover:not(:disabled),
+body.kt-cl-shell .kt-cl-cfg01-btn--outline:hover:not(:disabled) {
+	background: rgba(173, 200, 243, 0.1) !important;
+}
+body.kt-cl-shell .kt-cl-wizard-btn--primary:hover:not(:disabled),
+body.kt-cl-shell .kt-cl-cfg01-btn--primary:hover:not(:disabled),
+body.kt-cl-shell [data-testid="kt-cl-cfg01-continue"]:hover:not(:disabled),
+body.kt-cl-shell [data-testid="kt-cl-wizard-continue"]:hover:not(:disabled) {
+	background: #000b1d !important;
+	border-color: #000b1d !important;
+	color: #ffffff !important;
+}
+
+/* UI-01 step card details (info) control */
+body.kt-cl-shell .kt-cl-ui01-step-card-top-end {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+}
+body.kt-cl-shell .kt-cl-ui01-step-details {
+	appearance: none !important;
+	border: none !important;
+	background: transparent !important;
+	color: #74777f !important;
+	padding: 2px !important;
+	border-radius: 0.125rem !important;
+	cursor: pointer !important;
+	line-height: 1 !important;
+	box-shadow: none !important;
+}
+body.kt-cl-shell .kt-cl-ui01-step-details:hover {
+	color: #002244 !important;
+	background: rgba(173, 200, 243, 0.2) !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg01-blockers"] {
+	margin: 0.75rem 0 0 !important;
+	padding: 12px 16px !important;
+	border: 1px solid #ffdad6 !important;
+	border-radius: 0.125rem !important;
+	background: #fff8f7 !important;
+	color: #93000a !important;
+	font-size: 13px !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg01-blockers"] ul {
+	margin: 0 !important;
+	padding-left: 1.25rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg01-lots.hidden {
+	display: none !important;
 }

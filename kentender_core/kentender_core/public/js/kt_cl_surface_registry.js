@@ -73,6 +73,15 @@ frappe.provide("kentender_core.cl_surface_registry");
 		crumbTenderConfigurations(),
 		crumbConfigurationHome(),
 	];
+	/** CFG-01 leaf: Home is a link; Tender Profile is current. */
+	function trailCfg01Profile() {
+		return [
+			crumbDashboard(),
+			crumbTenderConfigurations(),
+			crumbConfigurationHome(),
+			crumb(__("Tender Profile")),
+		];
+	}
 
 	/**
 	 * A2 screen IDs → routePrefixes use existing Desk page names where present.
@@ -126,8 +135,10 @@ frappe.provide("kentender_core.cl_surface_registry");
 			sidebarWorkspaceKey: SIDEBAR_KEY,
 			chrome: chrome(
 				__("Tender Profile"),
-				__("Confirm basic tender identity and setup context."),
-				trailConfigHome,
+				__(
+					"Confirm the tender identity, procurement context, lot structure, and applicable standard tender document."
+				),
+				trailCfg01Profile(),
 				[]
 			),
 		},

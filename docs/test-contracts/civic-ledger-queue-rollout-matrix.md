@@ -23,16 +23,18 @@ Helpers: `tests/ui/helpers/ktClQueueContract.ts`
 |---------|------|--------|
 | UI-00 Tender Configurations Dashboard | `tests/ui/smoke/it-std-wizard/kt-cl-queue-pattern-lock.spec.ts` | locked |
 | UI-01 Tender Configuration Home | `ui01-layout-contract.spec.ts` + `ui01-home.spec.ts` + `ui01-mockup-states.spec.ts` (`ktClUi01LayoutContract.ts`, 8-cell strip) | locked (structural gate) |
-| CFG-* / WF-* | — | pending (must reuse `configurationContextStrip`) |
+| CFG-01 Tender Profile | `cfg01-tender-profile.spec.ts` (8-cell strip + `kt-cl-cfg01-*` layout) | locked (first CFG page) |
+| CFG-02…CFG-09 / WF-* | — | pending (must reuse `configurationContextStrip`) |
 
 ## Required pattern gates
 
 ```bash
 make -C apps/kentender_v1 ui-civic-ledger-queue-gate
 make -C apps/kentender_v1 ui-civic-ledger-ui01-gate
+make -C apps/kentender_v1 ui-civic-ledger-cfg01-gate
 ```
 
-Run before marking Civic Ledger queue/list or UI-01 home UX work done.
+Run before marking Civic Ledger queue/list, UI-01 home, or CFG-01 profile UX work done.
 
 ## Adoption steps for a new CL queue page
 

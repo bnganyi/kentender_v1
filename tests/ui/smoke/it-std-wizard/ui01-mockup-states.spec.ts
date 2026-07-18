@@ -78,17 +78,18 @@ test.describe("UI-01 mockup configurations (9 CFG states + showcase)", () => {
 		expect(statuses["CFG-04"]).toBe("In progress");
 		expect(statuses["CFG-05"]).toBe("Not started");
 		expect(statuses["CFG-09"]).toBe("Not available yet");
-		await expect(page.getByTestId("kt-cl-ui01-step-progress-CFG-04")).toBeVisible();
-		const fillW = await page
-			.getByTestId("kt-cl-ui01-step-progress-CFG-04")
-			.locator(".kt-cl-ui01-step-progress-fill")
-			.evaluate((el) => el.getBoundingClientRect().width);
-		expect(fillW).toBeGreaterThan(20);
+		/* CFG-04 has no field checklist yet → status fallback 0% (empty bar, not fake 67%). */
+		const cfg04Bar = page.getByTestId("kt-cl-ui01-step-progress-CFG-04");
+		await expect(cfg04Bar).toBeVisible();
+		await expect(cfg04Bar).toHaveAttribute("data-progress-pct", "0");
 		await expect(page.getByTestId("kt-cl-ui01-progress")).toBeVisible();
+		/* Showcase: CFG-01+02 Complete (100), rest 0 → overall 22% average; 2 of 9 complete. */
+		await expect(page.getByTestId("kt-cl-ui01-progress-pct")).toHaveText("22%");
+		await expect(page.getByTestId("kt-cl-ui01-progress-meta")).toContainText(/2 of 9 steps complete/i);
 		await expect(page.getByTestId("kt-cl-ui01-resources")).toBeVisible();
 		await expect(page.getByTestId("kt-cl-ui01-next-label")).toContainText(/Fix IT Requirements/i);
 		await expect(page.getByTestId("kt-cl-ui01-drawer")).toHaveCount(0);
-		await page.getByTestId("kt-cl-ui01-step-CFG-03").click();
+		await page.getByTestId("kt-cl-ui01-step-details-CFG-03").click();
 		await expect(page.getByTestId("kt-cl-ui01-drawer-issues")).toContainText(/Blockers/i);
 	});
 

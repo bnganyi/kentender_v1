@@ -12,7 +12,9 @@ from kentender_procurement.tender_configurations.api import (
 	get_eligible_procurement_packages as _get_eligible_procurement_packages,
 	get_tender_configuration as _get_tender_configuration,
 	get_tender_configuration_home as _get_tender_configuration_home,
+	get_tender_configuration_profile as _get_tender_configuration_profile,
 	get_tender_configurations_dashboard as _get_tender_configurations_dashboard,
+	save_tender_configuration_profile as _save_tender_configuration_profile,
 )
 
 # Re-export whitelisted methods at package path:
@@ -61,6 +63,16 @@ def get_tender_configuration(configuration_id: str):
 @frappe.whitelist()
 def get_tender_configuration_home(configuration_id: str):
 	return _get_tender_configuration_home(configuration_id)
+
+
+@frappe.whitelist()
+def get_tender_configuration_profile(configuration_id: str):
+	return _get_tender_configuration_profile(configuration_id)
+
+
+@frappe.whitelist()
+def save_tender_configuration_profile(configuration_id: str, payload=None):
+	return _save_tender_configuration_profile(configuration_id, payload)
 
 
 @frappe.whitelist()

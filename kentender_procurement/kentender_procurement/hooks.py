@@ -150,7 +150,7 @@ page_js = {
 	"kt-cl-shell-poc": "public/js/kt_cl_shell_poc_page.js",
 	"it-tender-configuration-dashboard": "public/js/it_tender_configurations_dashboard_page.js",
 	"it-tender-configuration-overview": "public/js/it_tender_configuration_overview_page.js",
-	"it-tender-configuration-tender-profile": "public/js/it_std_wizard_retired_page.js",
+	"it-tender-configuration-tender-profile": "public/js/it_tender_configuration_tender_profile_page.js",
 	"it-tender-configuration-tds": "public/js/it_std_wizard_retired_page.js",
 	"it-tender-configuration-it-requirements": "public/js/it_std_wizard_retired_page.js",
 	"it-tender-configuration-implementation-schedule": "public/js/it_std_wizard_retired_page.js",

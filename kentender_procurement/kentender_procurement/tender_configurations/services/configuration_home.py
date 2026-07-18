@@ -367,12 +367,19 @@ def get_configuration_home(configuration_id: str) -> dict[str, Any]:
 	if not frappe.has_permission(doc=doc, ptype="read"):
 		frappe.throw(frappe._("Not permitted"), frappe.PermissionError)
 
+	from kentender_procurement.tender_configurations.services.step_progress import (
+		complete_step_count,
+		overall_progress_pct,
+	)
+
 	catalog = get_steps_for_family(doc.std_family_key)
 	steps_state = _parse_steps_state(getattr(doc, "steps_state", None))
-	steps = merge_step_rows(catalog, steps_state)
+	steps = merge_step_rows(catalog, steps_state, doc=doc)
 	context = build_configuration_context(doc)
 	next_action = _pick_next_action(steps, doc)
 	handoff = _build_handoff(doc, steps)
+	complete_count = complete_step_count(steps)
+	total_steps = len(steps) or 9
 
 	return {
 		"configuration_id": doc.name,
@@ -390,6 +397,11 @@ def get_configuration_home(configuration_id: str) -> dict[str, Any]:
 		"next_action": next_action,
 		"configuration_steps": steps,
 		"handoff": handoff,
+		"overall_progress": {
+			"progress_pct": overall_progress_pct(steps),
+			"complete_count": complete_count,
+			"total": total_steps,
+		},
 	}
 
 
@@ -427,7 +439,6 @@ def steps_state_showcase_nine_cards() -> dict[str, Any]:
 		"CFG-04": {
 			"status_label": STEP_IN_PROGRESS,
 			"last_updated_label": "Today",
-			"progress_pct": 67,
 		},
 		"CFG-05": {"status_label": STEP_NOT_STARTED},
 		"CFG-06": {"status_label": STEP_NOT_STARTED},
@@ -456,8 +467,6 @@ def steps_state_focus_cfg(step_id: str, *, status_label: str | None = None) -> d
 			if focus_status == STEP_NEEDS_ATTENTION:
 				row["blocker_count"] = 2
 				row["warning_count"] = 1
-			if focus_status == STEP_IN_PROGRESS:
-				row["progress_pct"] = 67
 			out[sid] = row
 		else:
 			out[sid] = {"status_label": STEP_NOT_AVAILABLE}

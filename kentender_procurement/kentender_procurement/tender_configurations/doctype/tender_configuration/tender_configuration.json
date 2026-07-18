@@ -22,6 +22,11 @@
   "std_family_label",
   "std_version",
   "std_document_label",
+  "section_profile",
+  "short_scope_summary",
+  "lot_structure",
+  "lots",
+  "configuration_note",
   "section_issues",
   "blocker_count",
   "warning_count",
@@ -131,6 +136,34 @@
    "fieldname": "std_document_label",
    "fieldtype": "Data",
    "label": "Standard Tender Document"
+  },
+  {
+   "fieldname": "section_profile",
+   "fieldtype": "Section Break",
+   "label": "Tender Profile"
+  },
+  {
+   "fieldname": "short_scope_summary",
+   "fieldtype": "Text",
+   "label": "Short Scope Summary"
+  },
+  {
+   "fieldname": "lot_structure",
+   "fieldtype": "Select",
+   "label": "Lot Structure",
+   "options": "\nSingle lot\nMultiple lots\nNot applicable"
+  },
+  {
+   "fieldname": "lots",
+   "fieldtype": "JSON",
+   "label": "Lots",
+   "description": "CFG-01 lot summary rows when lot_structure is Multiple lots."
+  },
+  {
+   "fieldname": "configuration_note",
+   "fieldtype": "Small Text",
+   "label": "Configuration Note",
+   "description": "Internal note; must not be rendered into the tender document."
   },
   {
    "fieldname": "section_issues",

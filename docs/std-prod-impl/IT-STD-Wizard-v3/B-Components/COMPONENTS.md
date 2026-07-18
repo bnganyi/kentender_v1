@@ -105,13 +105,15 @@ maps to a `code.html` block and pulls its class strings from `cl_code_spec`.
 | Filter wiring | `bindFilterBar($root, { onChange(key,value), namespace?, debounceMs? })` | standard search debounce + select change for all queue tables |
 | Queue table | `queueTable({ columns, rows:[{id,cells}], footerText, pagination?, pageSize?, pageSizeOptions?, showPageSize? })` — footer right: Rows per page (left of pager) | `kt-cl-ui00-table`, `kt-cl-ui00-page-size`, `kt-cl-ui00-pager`, `kt-cl-ui00-row-*` |
 | Create config modal | `createTenderConfigurationModal({ hasSelection, selectedLabel, preview, canCreate })` | `kt-cl-uim01-*` |
-| **Configuration context strip (wizard chrome)** | `configurationContextStrip(context)` — **required on UI-01 + every CFG/WF page**; **8 cells** from home `context` DTO (C1-M3 §4) | `kt-cl-config-context-strip`, `kt-cl-config-context-*` |
+| **Configuration context strip (wizard chrome)** | `configurationContextStrip(context)` — **required on UI-01 + every CFG/WF page** (including **CFG-01**); **8 cells** from home/profile `context` DTO (C1-M3 §4). Do not add a 9th “Tender Configuration Ref” cell without a CL lock amendment. | `kt-cl-config-context-strip`, `kt-cl-config-context-*` |
 | Next best action | `nextBestActionPanel({ label, reason, buttonLabel, route, tone? })` | `kt-cl-ui01-next-action` |
 | Configuration steps grid | `configurationStepsGrid({ steps })` | `kt-cl-ui01-steps`, `kt-cl-ui01-step-CFG-*` |
 | Completion & Handoff | `handoffPanel({ handoff })` | `kt-cl-ui01-handoff` |
-| Overall Progress | `overallProgressPanel({ complete, total })` | `kt-cl-ui01-progress` |
+| Overall Progress | `overallProgressPanel({ complete, total, progressPct })` — `%` is **average of per-step exit-condition progress**; meta is “X of Y steps complete” | `kt-cl-ui01-progress` |
+| Step progress | Computed in `step_progress.py` (register builders in `STEP_CONDITION_BUILDERS`); CFG-01 live; other CFGs status-fallback until their screen ships | `progress_pct`, `show_progress_bar` on step rows |
 | Resources | `resourcesPanel({ items })` | `kt-cl-ui01-resources` |
 | Step details drawer | `stepDetailsDrawer({ step })` | `kt-cl-ui01-drawer` |
+| Wizard step footer | `wizardStepFooter({ backLabel, saveLabel, continueLabel, … })` — **Back left**, Save + high-contrast Continue right (white on navy) | `kt-cl-wizard-footer`, `kt-cl-wizard-btn--*` |
 
 ### Wizard context strip (reuse contract)
 
@@ -129,8 +131,10 @@ Wizard pages must **compose** `configurationContextStrip` — never duplicate th
 
 - Cursor rule: `.cursor/rules/kentender-civic-ledger-queue-lock.mdc`
 - Playwright helpers: `tests/ui/helpers/ktClQueueContract.ts`, `ktClConfigContext.ts`, `ktClUi01LayoutContract.ts`
-- Gates: `make -C apps/kentender_v1 ui-civic-ledger-queue-gate` and `make -C apps/kentender_v1 ui-civic-ledger-ui01-gate`
+- Gates: `make -C apps/kentender_v1 ui-civic-ledger-queue-gate`, `ui-civic-ledger-ui01-gate`, and `ui-civic-ledger-cfg01-gate`
 - UI-01 mockups: `seed_ui01_mockups_for_tests` → `TCFG-MOCK-SHOWCASE` + `TCFG-MOCK-CFG-01`…`09`
+- CFG-01 page: `it_tender_configuration_tender_profile_page.js` + pins `kt-cl-cfg01-*` in `kt_cl_code_layout.css`
+- CFG-01 follow-ups (explicitly out of ticket): multi-version STD picker; Run Readiness Check CTA; real CFG-02 TDS page; relational lots child table; strip Config Ref cell (needs CL lock amendment)
 - Rollout matrix: [`docs/test-contracts/civic-ledger-queue-rollout-matrix.md`](../../../test-contracts/civic-ledger-queue-rollout-matrix.md)
 
 Reference surface: UI-00 (`it-tender-configuration-dashboard`).

@@ -215,8 +215,17 @@ def desk_route_for_step(step_id: str) -> str:
 def merge_step_rows(
 	catalog: list[dict[str, str]],
 	steps_state: dict[str, Any] | None,
+	doc: Any | None = None,
 ) -> list[dict[str, Any]]:
-	"""Merge catalog with persisted steps_state into UI-01 configuration_steps rows."""
+	"""Merge catalog with persisted steps_state into UI-01 configuration_steps rows.
+
+	Progress comes from exit-condition checklists (see step_progress.py), not decorative defaults.
+	Pass ``doc`` so registered CFG checkers (e.g. CFG-01) can read live fields.
+	"""
+	from kentender_procurement.tender_configurations.services.step_progress import (
+		compute_step_progress,
+	)
+
 	state = steps_state or {}
 	rows: list[dict[str, Any]] = []
 	for meta in catalog:
@@ -228,16 +237,7 @@ def merge_step_rows(
 		blockers = int(st.get("blocker_count") or 0)
 		warnings = int(st.get("warning_count") or 0)
 		route = desk_route_for_step(sid)
-		# Optional card progress for In progress (C1-M3 design: ~2/3 fill when unset)
-		progress_pct = st.get("progress_pct")
-		if status == STEP_IN_PROGRESS:
-			try:
-				progress_pct = int(progress_pct) if progress_pct is not None else 67
-			except (TypeError, ValueError):
-				progress_pct = 67
-			progress_pct = max(5, min(95, progress_pct))
-		else:
-			progress_pct = None
+		progress = compute_step_progress(sid, status_label=status, doc=doc, step_state=st)
 		rows.append(
 			{
 				"id": sid,
@@ -247,7 +247,10 @@ def merge_step_rows(
 				"blocker_count": blockers,
 				"warning_count": warnings,
 				"last_updated_label": st.get("last_updated_label") or None,
-				"progress_pct": progress_pct,
+				"progress_pct": progress["progress_pct"],
+				"progress_met_count": progress["met_count"],
+				"progress_required_count": progress["required_count"],
+				"show_progress_bar": progress["show_progress_bar"],
 				"action_label": action_for_status(status),
 				"route": route,
 				"will_configure": meta["will_configure"],

@@ -81,6 +81,23 @@ test.describe("UI-01 Tender Configuration Home", () => {
 			.getByTestId("kt-cl-ui01-step-action-CFG-01")
 			.evaluate((el) => getComputedStyle(el).borderStyle);
 		expect(startBorder === "none" || startBorder === "").toBeTruthy();
+
+		/* Affordance: filled navy CTA with back icon (not a ghost/outline text control). */
+		const back = page.getByTestId("kt-cl-ui01-back");
+		await expect(back.locator(".kt-cl-ui01-back-icon")).toBeVisible();
+		const backLook = await back.evaluate((el) => {
+			const cs = getComputedStyle(el);
+			return {
+				bg: cs.backgroundColor,
+				color: cs.color,
+				display: cs.display,
+				weight: cs.fontWeight,
+			};
+		});
+		expect(backLook.bg).toMatch(/rgb\(0,\s*34,\s*68\)/);
+		expect(backLook.color).toMatch(/rgb\(255,\s*255,\s*255\)/);
+		expect(backLook.display).toContain("flex");
+		expect(Number.parseInt(backLook.weight, 10)).toBeGreaterThanOrEqual(600);
 	});
 
 	test("refresh keeps the same configuration (route segment)", async ({ page }) => {
@@ -98,19 +115,70 @@ test.describe("UI-01 Tender Configuration Home", () => {
 		await expect(page.getByTestId("kt-cl-ui01-handoff")).toBeVisible();
 	});
 
-	test("step card opens drawer with Issues; action navigates to CFG stub", async ({ page }) => {
+	test("step card navigates to step form; details opens drawer; Review matches card", async ({
+		page,
+	}) => {
 		await openHome(page);
 
-		await page.getByTestId("kt-cl-ui01-step-CFG-03").click();
+		await page.getByTestId("kt-cl-ui01-step-details-CFG-03").click();
 		await expect(page.getByTestId("kt-cl-ui01-drawer")).toBeVisible({ timeout: 10_000 });
 		await expect(page.getByTestId("kt-cl-ui01-drawer-title")).toHaveText(/IT Requirements/i);
 		await expect(page.getByTestId("kt-cl-ui01-drawer-issues")).toContainText(/Blockers/i);
 		await expect(page.getByTestId("kt-cl-ui01-drawer-will")).not.toBeEmpty();
 		await expect(page.getByTestId("kt-cl-ui01-drawer-wont")).not.toBeEmpty();
+
+		const drawerGeom = await page.evaluate(() => {
+			const overlay = document.querySelector(
+				'[data-testid="kt-cl-ui01-drawer-overlay"]'
+			) as HTMLElement | null;
+			const panel = document.querySelector('[data-testid="kt-cl-ui01-drawer"]') as HTMLElement | null;
+			const home = document.querySelector('[data-testid="kt-cl-ui01-root"]') as HTMLElement | null;
+			if (!overlay || !panel || !home) {
+				return { ok: false, reason: "missing nodes" };
+			}
+			const ocs = getComputedStyle(overlay);
+			const pcs = getComputedStyle(panel);
+			const or = overlay.getBoundingClientRect();
+			const pr = panel.getBoundingClientRect();
+			return {
+				ok: true,
+				overlayFixed: ocs.position === "fixed",
+				overlayFull: or.width >= window.innerWidth - 2 && or.height >= window.innerHeight - 2,
+				panelOnRight: pr.right >= window.innerWidth - 4 && pr.left > window.innerWidth * 0.35,
+				panelNarrow: pr.width <= 480,
+				homeStillPresent: !!home.offsetParent || home.getClientRects().length > 0,
+				panelFlex: pcs.display.includes("flex"),
+			};
+		});
+		expect(drawerGeom.ok, JSON.stringify(drawerGeom)).toBe(true);
+		expect(drawerGeom.overlayFixed, JSON.stringify(drawerGeom)).toBe(true);
+		expect(drawerGeom.overlayFull, JSON.stringify(drawerGeom)).toBe(true);
+		expect(drawerGeom.panelOnRight, JSON.stringify(drawerGeom)).toBe(true);
+		expect(drawerGeom.panelNarrow, JSON.stringify(drawerGeom)).toBe(true);
+
 		await page.getByTestId("kt-cl-ui01-drawer-close").click();
 		await expect(page.getByTestId("kt-cl-ui01-drawer")).toHaveCount(0);
 
+		await page.getByTestId("kt-cl-ui01-step-CFG-01").locator(".kt-cl-ui01-step-title").click();
+		await expect(page).toHaveURL(/it-tender-configuration-tender-profile/, { timeout: 15_000 });
+		await expect(page.locator('[data-testid="kt-cl-cfg01-root"]')).toBeVisible({
+			timeout: 20_000,
+		});
+		await expect(page.getByTestId("kt-cl-ui01-drawer")).toHaveCount(0);
+
+		await openHome(page);
+		await page.getByTestId("kt-cl-ui01-step-details-CFG-01").click();
+		await expect(page.getByTestId("kt-cl-ui01-drawer")).toBeVisible({ timeout: 10_000 });
+		await page.getByTestId("kt-cl-ui01-drawer-action").click();
+		await expect(page).toHaveURL(/it-tender-configuration-tender-profile/, { timeout: 15_000 });
+		await expect(page.getByTestId("kt-cl-ui01-drawer")).toHaveCount(0);
+		await expect(page.locator('[data-testid="kt-cl-cfg01-root"]')).toBeVisible({
+			timeout: 20_000,
+		});
+
+		await openHome(page);
 		await page.getByTestId("kt-cl-ui01-step-action-CFG-01").click();
 		await expect(page).toHaveURL(/it-tender-configuration-tender-profile/, { timeout: 15_000 });
 	});
 });
+
