@@ -1063,6 +1063,486 @@ frappe.provide("kentender_core.cl_components");
 			);
 		},
 
+		configurationContextStrip: function (ctx) {
+			ctx = ctx || {};
+			var h = spec().CONFIG_HOME || {};
+			var blockers = parseInt(ctx.blocker_count, 10) || 0;
+			var warnings = parseInt(ctx.warning_count, 10) || 0;
+			var issuesLabel =
+				ctx.issues_label ||
+				(blockers || warnings
+					? blockers + " Blockers / " + warnings + " Warnings"
+					: __("None"));
+			var issuesCls =
+				blockers || warnings ? h.contextValueError || "" : h.contextValue || "";
+			/* C1-M3 §4 — exactly eight fields (pack labels). */
+			var cells = [
+				{
+					key: "package_ref",
+					label: __("Procurement Package Ref"),
+					value: ctx.procurement_package_ref || "",
+				},
+				{
+					key: "title",
+					label: __("Procurement Title"),
+					value: ctx.procurement_title || "",
+					wide: true,
+				},
+				{
+					key: "entity",
+					label: __("Procuring Entity"),
+					value: ctx.procuring_entity_name || "",
+				},
+				{
+					key: "method",
+					label: __("Procurement Method"),
+					value: ctx.procurement_method_label || "",
+				},
+				{
+					key: "family",
+					label: __("STD Family"),
+					value: ctx.std_family_label || "",
+				},
+				{
+					key: "std_document",
+					label: __("Standard Tender Document"),
+					value: ctx.standard_tender_document_label || "",
+				},
+			];
+			var html = cells
+				.map(function (cell) {
+					return (
+						'<div class="' +
+						(h.contextCell || "") +
+						(cell.wide ? " kt-cl-config-context-cell--wide" : "") +
+						'" data-testid="kt-cl-config-context-' +
+						cell.key +
+						'">' +
+						'<p class="' +
+						(h.contextLabel || "") +
+						'">' +
+						escapeHtml(cell.label) +
+						"</p>" +
+						'<p class="' +
+						(h.contextValue || "") +
+						'">' +
+						escapeHtml(cell.value) +
+						"</p></div>"
+					);
+				})
+				.join("");
+			html +=
+				'<div class="' +
+				(h.contextCell || "") +
+				'" data-testid="kt-cl-config-context-status">' +
+				'<p class="' +
+				(h.contextLabel || "") +
+				'">' +
+				__("Configuration Status") +
+				"</p>" +
+				'<div class="' +
+				(h.contextStatusRow || "") +
+				'">' +
+				'<span class="' +
+				(h.contextStatusDot || "") +
+				'" data-tone="' +
+				escapeHtml(ctx.status_tone || "in_progress") +
+				'" aria-hidden="true"></span>' +
+				'<span class="' +
+				(h.contextValue || "") +
+				'">' +
+				escapeHtml(ctx.configuration_status_label || "") +
+				"</span></div></div>";
+			html +=
+				'<div class="' +
+				(h.contextCell || "") +
+				'" data-testid="kt-cl-config-context-issues">' +
+				'<p class="' +
+				(h.contextLabel || "") +
+				'">' +
+				__("Issues") +
+				"</p>" +
+				'<p class="' +
+				issuesCls +
+				" kt-cl-config-issues-value" +
+				(blockers || warnings ? " is-alert" : "") +
+				'">' +
+				escapeHtml(issuesLabel) +
+				"</p></div>";
+			return (
+				'<div class="' +
+				(h.contextStrip || "") +
+				'" data-testid="kt-cl-config-context-strip">' +
+				html +
+				"</div>"
+			);
+		},
+
+		nextBestActionPanel: function (opts) {
+			opts = opts || {};
+			var h = spec().CONFIG_HOME || {};
+			var tone = opts.tone || "default";
+			var iconName = tone === "attention" || tone === "error" ? "warning" : "arrow_forward";
+			var iconWrap =
+				tone === "attention" || tone === "error"
+					? "w-12 h-12 rounded-full bg-error flex items-center justify-center flex-shrink-0"
+					: "w-12 h-12 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0";
+			/* Layout: single row — copy left, CTA right (C1-M3). Copy prefixes per REVISED_v6. */
+			return (
+				'<div class="kt-cl-ui01-next-action ' +
+				(h.nextAction || "") +
+				'" data-testid="kt-cl-ui01-next-action">' +
+				'<div class="kt-cl-ui01-next-body relative z-10">' +
+				'<div class="kt-cl-ui01-next-icon ' +
+				iconWrap +
+				'">' +
+				msIcon(iconName, 28) +
+				"</div>" +
+				'<div class="kt-cl-ui01-next-copy">' +
+				'<p class="kt-cl-ui01-next-eyebrow">' +
+				__("Next Best Action") +
+				"</p>" +
+				'<h3 class="kt-cl-ui01-next-title" data-testid="kt-cl-ui01-next-label">' +
+				escapeHtml(__("Next step: {0}", [opts.label || ""])) +
+				"</h3>" +
+				'<p class="kt-cl-ui01-next-reason" data-testid="kt-cl-ui01-next-reason">' +
+				escapeHtml(__("Reason: {0}", [opts.reason || ""])) +
+				"</p></div></div>" +
+				'<button type="button" class="kt-cl-ui01-next-btn ' +
+				(h.nextActionBtn || "") +
+				'" data-action="next-action" data-route="' +
+				escapeHtml(opts.route || "") +
+				'" data-testid="kt-cl-ui01-next-btn">' +
+				escapeHtml(opts.buttonLabel || __("Continue")) +
+				"</button>" +
+				'<div class="kt-cl-ui01-next-glow" aria-hidden="true"></div>' +
+				"</div>"
+			);
+		},
+
+		configurationStepsGrid: function (opts) {
+			opts = opts || {};
+			var h = spec().CONFIG_HOME || {};
+			var steps = opts.steps || [];
+			var cards = steps
+				.map(function (step) {
+					var status = step.status_label || "";
+					var cardCls = h.stepCard || "";
+					if (status === "Needs attention") {
+						cardCls = h.stepCardAttention || cardCls;
+					} else if (status === "Not available yet") {
+						cardCls = h.stepCardUnavailable || cardCls;
+					}
+					var issues = "";
+					var b = parseInt(step.blocker_count, 10) || 0;
+					var w = parseInt(step.warning_count, 10) || 0;
+					if (b || w) {
+						issues =
+							'<p class="kt-cl-ui01-step-issues">' +
+							escapeHtml(b + " Blockers / " + w + " Warnings") +
+							"</p>";
+					}
+					var footerLeft = "";
+					if (status === "In progress") {
+						var pct = parseInt(step.progress_pct, 10);
+						if (isNaN(pct)) pct = 67;
+						pct = Math.max(5, Math.min(95, pct));
+						footerLeft =
+							'<div class="kt-cl-ui01-step-progress" data-testid="kt-cl-ui01-step-progress-' +
+							escapeHtml(step.id || "") +
+							'" aria-label="' +
+							escapeHtml(__("Step progress")) +
+							'">' +
+							'<div class="kt-cl-ui01-step-progress-fill" style="width:' +
+							pct +
+							'%"></div></div>';
+					} else if (step.last_updated_label) {
+						footerLeft =
+							'<span class="kt-cl-ui01-step-meta">' +
+							escapeHtml(__("Last update: {0}", [step.last_updated_label])) +
+							"</span>";
+					} else {
+						footerLeft = '<span class="kt-cl-ui01-step-meta"></span>';
+					}
+					var btnPrimary = status === "Needs attention";
+					var btnCls = btnPrimary
+						? "kt-cl-ui01-step-btn kt-cl-ui01-step-btn--primary"
+						: "kt-cl-ui01-step-btn kt-cl-ui01-step-btn--link";
+					var badgeTone =
+						status === "Complete"
+							? "complete"
+							: status === "Needs attention"
+								? "attention"
+								: status === "In progress"
+									? "progress"
+									: status === "Not available yet"
+										? "unavailable"
+										: "default";
+					return (
+						'<div class="' +
+						cardCls +
+						'" data-testid="kt-cl-ui01-step-' +
+						escapeHtml(step.id || "") +
+						'" data-step-id="' +
+						escapeHtml(step.id || "") +
+						'" data-step-status="' +
+						escapeHtml(status) +
+						'" data-action="open-drawer">' +
+						'<div class="kt-cl-ui01-step-card-top">' +
+						'<span class="kt-cl-ui01-step-id">' +
+						escapeHtml(step.id || "") +
+						"</span>" +
+						'<div class="kt-cl-ui01-step-badge kt-cl-ui01-step-badge--' +
+						badgeTone +
+						'" data-testid="kt-cl-ui01-step-badge-' +
+						escapeHtml(step.id || "") +
+						'">' +
+						'<span class="kt-cl-ui01-step-badge-dot" aria-hidden="true"></span>' +
+						'<span class="kt-cl-ui01-step-badge-label">' +
+						escapeHtml(status) +
+						"</span></div></div>" +
+						'<h4 class="kt-cl-ui01-step-title">' +
+						escapeHtml(step.title || "") +
+						"</h4>" +
+						'<p class="kt-cl-ui01-step-desc">' +
+						escapeHtml(step.description || "") +
+						"</p>" +
+						issues +
+						'<div class="kt-cl-ui01-step-footer">' +
+						footerLeft +
+						'<button type="button" class="' +
+						btnCls +
+						'" data-action="open-step" data-route="' +
+						escapeHtml(step.route || "") +
+						'" data-step-id="' +
+						escapeHtml(step.id || "") +
+						'" data-testid="kt-cl-ui01-step-action-' +
+						escapeHtml(step.id || "") +
+						'">' +
+						escapeHtml(step.action_label || __("Start")) +
+						"</button></div></div>"
+					);
+				})
+				.join("");
+			return (
+				'<section data-testid="kt-cl-ui01-steps">' +
+				'<h3 class="' +
+				(h.stepsSectionTitle || "") +
+				'">' +
+				__("Configuration Steps") +
+				"</h3>" +
+				'<div class="' +
+				(h.stepsGrid || "") +
+				'">' +
+				cards +
+				"</div></section>"
+			);
+		},
+
+		handoffPanel: function (opts) {
+			opts = opts || {};
+			var h = spec().CONFIG_HOME || {};
+			var handoff = opts.handoff || {};
+			var order = [
+				"readiness_check",
+				"review_status",
+				"tender_document_preview",
+				"publication_handoff",
+			];
+			var icons = {
+				readiness_check: "assignment_turned_in",
+				review_status: "rate_review",
+				tender_document_preview: "picture_as_pdf",
+				publication_handoff: "send",
+			};
+			var items = order
+				.map(function (key) {
+					var item = handoff[key] || {};
+					var disabled = !item.route && !item.action_label;
+					var status = String(item.status_label || "");
+					var isAlert =
+						/blocker/i.test(status) ||
+						/returned/i.test(status) ||
+						key === "readiness_check" && /found/i.test(status);
+					var actionHtml = "";
+					if (item.action_label) {
+						actionHtml =
+							'<button type="button" class="kt-cl-ui01-handoff-action" data-action="handoff" data-route="' +
+							escapeHtml(item.route || "") +
+							'" data-testid="kt-cl-ui01-handoff-action-' +
+							key +
+							'">' +
+							escapeHtml(item.action_label) +
+							"</button>";
+					}
+					return (
+						'<div class="kt-cl-ui01-handoff-item ' +
+						(h.handoffItem || "") +
+						(disabled ? " is-disabled" : "") +
+						(isAlert ? " is-alert" : "") +
+						'" data-testid="kt-cl-ui01-handoff-' +
+						key +
+						'">' +
+						'<div class="kt-cl-ui01-handoff-item-row">' +
+						'<div class="kt-cl-ui01-handoff-item-icon' +
+						(isAlert ? " is-alert" : "") +
+						'">' +
+						msIcon(icons[key] || "info", 20) +
+						"</div>" +
+						'<div class="kt-cl-ui01-handoff-item-copy">' +
+						'<h4 class="kt-cl-ui01-handoff-item-title">' +
+						escapeHtml(item.label || "") +
+						"</h4>" +
+						'<p class="kt-cl-ui01-handoff-item-status' +
+						(isAlert ? " is-alert" : "") +
+						'">' +
+						escapeHtml(status) +
+						"</p>" +
+						actionHtml +
+						"</div></div></div>"
+					);
+				})
+				.join("");
+			return (
+				'<div class="kt-cl-ui01-handoff ' +
+				(h.handoffRoot || "") +
+				'" data-testid="kt-cl-ui01-handoff">' +
+				'<div class="kt-cl-ui01-handoff-header ' +
+				(h.handoffHeader || "") +
+				'" data-testid="kt-cl-ui01-handoff-header">' +
+				'<h3 class="kt-cl-ui01-handoff-title">' +
+				__("Completion & Handoff") +
+				"</h3>" +
+				'<span class="kt-cl-ui01-handoff-header-icon" aria-hidden="true">' +
+				msIcon("verified", 18) +
+				"</span></div>" +
+				'<div class="kt-cl-ui01-handoff-body">' +
+				items +
+				"</div></div>"
+			);
+		},
+
+		overallProgressPanel: function (opts) {
+			opts = opts || {};
+			var complete = parseInt(opts.complete, 10) || 0;
+			var total = parseInt(opts.total, 10) || 9;
+			if (total < 1) total = 9;
+			var pct = Math.round((complete / total) * 100);
+			return (
+				'<div class="kt-cl-ui01-progress" data-testid="kt-cl-ui01-progress">' +
+				'<p class="kt-cl-ui01-progress-label">' +
+				__("Overall Progress") +
+				"</p>" +
+				'<div class="kt-cl-ui01-progress-row">' +
+				'<p class="kt-cl-ui01-progress-pct" data-testid="kt-cl-ui01-progress-pct">' +
+				pct +
+				"%</p>" +
+				'<p class="kt-cl-ui01-progress-meta" data-testid="kt-cl-ui01-progress-meta">' +
+				escapeHtml(__("{0} of {1} steps", [String(complete), String(total)])) +
+				"</p></div>" +
+				'<div class="kt-cl-ui01-progress-track" aria-hidden="true">' +
+				'<div class="kt-cl-ui01-progress-fill" style="width:' +
+				pct +
+				'%"></div></div></div>'
+			);
+		},
+
+		resourcesPanel: function (opts) {
+			opts = opts || {};
+			var items = opts.items || [];
+			var list = items
+				.map(function (item, idx) {
+					var icon = item.icon || "description";
+					return (
+						'<li class="kt-cl-ui01-resources-item">' +
+						'<span class="kt-cl-ui01-resources-link" data-testid="kt-cl-ui01-resource-' +
+						idx +
+						'">' +
+						"<span>" +
+						escapeHtml(item.label || "") +
+						"</span>" +
+						msIcon(icon, 16) +
+						"</span></li>"
+					);
+				})
+				.join("");
+			return (
+				'<div class="kt-cl-ui01-resources" data-testid="kt-cl-ui01-resources">' +
+				'<h5 class="kt-cl-ui01-resources-title">' +
+				__("Resources") +
+				"</h5>" +
+				"<ul class=\"kt-cl-ui01-resources-list\">" +
+				list +
+				"</ul></div>"
+			);
+		},
+
+		stepDetailsDrawer: function (opts) {
+			opts = opts || {};
+			var h = spec().CONFIG_HOME || {};
+			var step = opts.step || {};
+			var db = parseInt(step.blocker_count, 10) || 0;
+			var dw = parseInt(step.warning_count, 10) || 0;
+			var issuesText =
+				db || dw ? db + " Blockers / " + dw + " Warnings" : __("None");
+			var issuesCls = db || dw ? " text-error font-bold" : "";
+			return (
+				'<div class="' +
+				(h.drawerOverlay || "") +
+				'" data-testid="kt-cl-ui01-drawer-overlay" role="dialog" aria-modal="true">' +
+				'<aside class="' +
+				(h.drawerPanel || "") +
+				'" data-testid="kt-cl-ui01-drawer">' +
+				'<header class="p-5 border-b border-outline-variant flex justify-between items-start">' +
+				"<div>" +
+				'<p class="text-label-sm text-on-surface-variant">' +
+				escapeHtml(step.id || "") +
+				"</p>" +
+				'<h2 class="text-headline-md font-bold text-primary" data-testid="kt-cl-ui01-drawer-title">' +
+				escapeHtml(step.title || "") +
+				"</h2></div>" +
+				'<button type="button" class="text-on-surface-variant hover:text-primary" data-action="close-drawer" data-testid="kt-cl-ui01-drawer-close" aria-label="' +
+				__("Close") +
+				'">' +
+				msIcon("close", 22) +
+				"</button></header>" +
+				'<div class="p-5 space-y-4 overflow-y-auto flex-1">' +
+				"<div><p class=\"text-label-sm text-on-surface-variant uppercase\">" +
+				__("Purpose") +
+				'</p><p class="text-body-md text-on-surface" data-testid="kt-cl-ui01-drawer-purpose">' +
+				escapeHtml(step.description || "") +
+				"</p></div>" +
+				"<div><p class=\"text-label-sm text-on-surface-variant uppercase\">" +
+				__("Status") +
+				'</p><p class="text-body-md font-bold" data-testid="kt-cl-ui01-drawer-status">' +
+				escapeHtml(step.status_label || "") +
+				"</p></div>" +
+				'<div data-testid="kt-cl-ui01-drawer-issues"><p class="text-label-sm text-on-surface-variant uppercase">' +
+				__("Issues") +
+				'</p><p class="text-body-md' +
+				issuesCls +
+				'">' +
+				escapeHtml(issuesText) +
+				"</p></div>" +
+				"<div><p class=\"text-label-sm text-on-surface-variant uppercase\">" +
+				__("What you will configure") +
+				'</p><p class="text-body-sm" data-testid="kt-cl-ui01-drawer-will">' +
+				escapeHtml(step.will_configure || "") +
+				"</p></div>" +
+				"<div><p class=\"text-label-sm text-on-surface-variant uppercase\">" +
+				__("What this step does not configure") +
+				'</p><p class="text-body-sm" data-testid="kt-cl-ui01-drawer-wont">' +
+				escapeHtml(step.will_not_configure || "") +
+				"</p></div></div>" +
+				'<footer class="p-5 border-t border-outline-variant">' +
+				'<button type="button" class="w-full py-3 bg-primary text-on-primary font-bold rounded-lg" data-action="drawer-primary" data-route="' +
+				escapeHtml(step.route || "") +
+				'" data-testid="kt-cl-ui01-drawer-action">' +
+				escapeHtml(step.action_label || __("Continue")) +
+				"</button></footer></aside></div>"
+			);
+		},
+
 		createTenderConfigurationModal: function (opts) {
 			opts = opts || {};
 			var q = spec().QUEUE || {};

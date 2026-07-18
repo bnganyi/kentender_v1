@@ -219,6 +219,44 @@ frappe.provide("kentender_core.cl_code_spec");
 			"p-6 border-t border-outline-variant flex justify-between items-center bg-surface-container-low",
 	};
 
+	/* UI-01 / wizard chrome — C1-M3 code.html (context strip shared across CFG pages). */
+	var CONFIG_HOME = {
+		contextStrip:
+			"kt-cl-config-context-strip bg-surface-container-lowest rounded-lg border border-outline-variant p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 mb-8 gap-0",
+		contextCell: "kt-cl-config-context-cell border-r border-outline-variant/30 px-4 last:border-0",
+		contextLabel:
+			"text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider",
+		contextValue: "text-body-sm font-bold text-primary",
+		contextValueError: "text-body-sm font-bold text-error",
+		contextStatusRow: "flex items-center gap-1.5",
+		contextStatusDot: "kt-cl-config-status-dot w-2 h-2 rounded-full bg-amber-500 shrink-0",
+		layoutGrid: "grid grid-cols-12 gap-6",
+		mainCol: "col-span-12 lg:col-span-9 space-y-6",
+		sideCol: "col-span-12 lg:col-span-3 space-y-6",
+		nextAction:
+			"kt-cl-ui01-next-action bg-primary-container text-white rounded-xl p-6 shadow-md relative overflow-hidden flex flex-row flex-nowrap items-center justify-between gap-6",
+		nextActionBtn:
+			"kt-cl-ui01-next-btn relative z-10 px-8 py-3 bg-white text-primary-container font-bold rounded-lg hover:bg-primary-fixed transition-colors flex-shrink-0 whitespace-nowrap",
+		stepsSectionTitle: "text-headline-md font-bold text-primary mb-4",
+		stepsGrid: "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4",
+		stepCard:
+			"kt-cl-ui01-step-card bento-card bg-surface-container-lowest border border-outline-variant p-5 rounded-xl flex flex-col h-full",
+		stepCardAttention:
+			"kt-cl-ui01-step-card bento-card bg-surface-container-lowest border-2 border-error p-5 rounded-xl flex flex-col h-full shadow-sm",
+		stepCardUnavailable:
+			"kt-cl-ui01-step-card bento-card bg-surface-container-low border border-outline-variant border-dashed p-5 rounded-xl flex flex-col h-full opacity-70",
+		handoffRoot:
+			"kt-cl-ui01-handoff bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm",
+		handoffHeader:
+			"bg-surface-container-low px-5 py-3 border-b border-outline-variant flex items-center justify-between",
+		handoffItem:
+			"p-3 hover:bg-surface-bright rounded-lg transition-colors border-b border-outline-variant/30 last:border-0",
+		drawerOverlay:
+			"fixed inset-0 z-[100] flex justify-end kt-cl-modal-overlay",
+		drawerPanel:
+			"kt-cl-ui01-drawer bg-surface-container-lowest w-full max-w-md h-full shadow-xl border-l border-outline-variant flex flex-col",
+	};
+
 	kentender_core.cl_code_spec = {
 		SIDENAV_ROOT: SIDENAV_ROOT,
 		NAV_LINK_ACTIVE: NAV_LINK_ACTIVE,
@@ -246,6 +284,7 @@ frappe.provide("kentender_core.cl_code_spec");
 		CHIP_DOT: CHIP_DOT,
 		CHIP: CHIP,
 		QUEUE: QUEUE,
+		CONFIG_HOME: CONFIG_HOME,
 		CODE_HTML_PATH: "docs/std-prod-impl/IT-STD-Wizard-v3/B-Components/code.html",
 	};
 })();

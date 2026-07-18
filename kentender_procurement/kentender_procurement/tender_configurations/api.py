@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Whitelisted Tender Configurations APIs (UI-00 / UI-M01)."""
+"""Whitelisted Tender Configurations APIs (UI-00 / UI-M01 / UI-01)."""
 
 from __future__ import annotations
 
@@ -9,6 +9,9 @@ from typing import Any
 
 import frappe
 
+from kentender_procurement.tender_configurations.services.configuration_home import (
+	get_configuration_home as _get_configuration_home,
+)
 from kentender_procurement.tender_configurations.services.create_configuration import (
 	create_tender_configuration as _create,
 	get_configuration as _get_configuration,
@@ -67,3 +70,10 @@ def create_tender_configuration(
 def get_tender_configuration(configuration_id: str) -> dict[str, Any]:
 	_require_login()
 	return _get_configuration(configuration_id)
+
+
+@frappe.whitelist()
+def get_tender_configuration_home(configuration_id: str) -> dict[str, Any]:
+	"""UI-01 home payload (context strip, next action, steps, handoff)."""
+	_require_login()
+	return _get_configuration_home(configuration_id)

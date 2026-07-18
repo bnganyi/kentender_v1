@@ -1,5 +1,5 @@
 ---
-description: Civic Ledger queue/list page lock — compose via kt_cl_*; toolbar, filter bar, queue table footer contracts; Playwright gate.
+description: Civic Ledger wizard/queue lock — compose via kt_cl_*; pixel pins; refresh-safe routes; Playwright gate.
 globs:
   - apps/kentender_v1/kentender_core/**/kt_cl_*
   - apps/kentender_v1/kentender_core/**/civic_ledger*
@@ -11,44 +11,90 @@ globs:
 alwaysApply: false
 ---
 
-# Civic Ledger queue / list page lock
+# Civic Ledger queue / wizard page lock
 
-Applies to **IT STD Wizard v3** Desk surfaces and any page using `kt_cl_shell` / `kt_cl_components` queue patterns (UI-00 and successors).
+Applies to **IT STD Wizard v3** Desk surfaces and any page using `kt_cl_shell` / `kt_cl_components`.
 
 ## Mandatory fresh read (before implementing a new CL page)
 
-1. [`apps/kentender_v1/docs/std-prod-impl/IT-STD-Wizard-v3/B-Components/COMPONENTS.md`](apps/kentender_v1/docs/std-prod-impl/IT-STD-Wizard-v3/B-Components/COMPONENTS.md) — binding component contract
-2. Reference screen: UI-00 (`it_tender_configurations_dashboard_page.js`) + C1-M1 mock when layout is unclear
+1. [`B-Components/COMPONENTS.md`](apps/kentender_v1/docs/std-prod-impl/IT-STD-Wizard-v3/B-Components/COMPONENTS.md)
+2. Screen pack mock `code.html` + REVISED spec for that screen (e.g. C1-M3)
+3. Reference: UI-00 dashboard + UI-01 home
 
-Do **not** invent a third shell or hand-rolled table/filter markup.
+Do **not** invent a third shell or hand-rolled table/filter/strip markup.
 
-## Compose only — no parallel implementations
+**Precedence:** REVISED pack wins on copy/fields/forbidden terms; `code.html` wins on layout geometry when pack is silent. Never ship mock-only labels (`Locked`, `Fix Now`, `Complete Configuration`) when the pack forbids or omits them.
 
-| Concern | Required API |
-|---------|----------------|
-| Shell | `cl_shell.enterNative` + `mountContent` / `updateChrome`; register route in `kt_cl_surface_registry` |
-| Toolbar | Context trail only (ancestors); last crumb bold `SPAN`; **no** toolbar search / page title in strip |
-| Page header | Leaf H1 + subtitle + actions; `hideBreadcrumbs: true` |
-| Filters | `filterBar` + `bindFilterBar` — search flex-grow, `|` sep, compact fields; borders `#c4c6cf` |
-| Queue table | `queueTable` — never custom `<table>` footer/pager |
-| Footer | **Rows per page** select **left of** pager; wire `page_size` + reset page to 1 |
-| References | Store `id`, display `name` + `code` — never raw PKs (dropdown standard) |
+## Compose only
+
+| Concern | Required |
+|---------|----------|
+| Shell | `cl_shell.enterNative` + `mountContent`; surface registry |
+| Toolbar | Context trail only; no search; leaf title in page header |
+| Wizard context | `configurationContextStrip(context)` on **every** UI-01/CFG/WF page — **8 cells** (C1-M3 §4) |
+| Queue | `filterBar` + `bindFilterBar` + `queueTable` (Rows per page left of pager) |
+| UI-01 regions | `nextBestActionPanel` + `configurationStepsGrid` + `handoffPanel` + `stepDetailsDrawer` |
+
+## Pixel fidelity (hard — do not claim done without this)
+
+Frappe/Bootstrap **will** override Tailwind utilities (`h3` color, button borders, grids, `flex-col`). For every new CL surface:
+
+1. Port layout from the screen `code.html`.
+2. **Pin** critical layout/color in `kt_cl_code_layout.css` by `data-testid` (same pattern as UI-00 filters / UI-01 next-action).
+3. Assert in Playwright via shared helpers (`ktClQueueContract.ts`, `ktClConfigContext.ts`, `ktClUi01LayoutContract.ts`).
+4. Touch `kentender_core/hooks.py` + `bench --site kentender.midas.com clear-cache` after CSS/JS edits.
+5. Prefer MCP browser screenshot vs mock before marking UX done.
+
+### UI-01 structural pins (non-negotiable)
+
+These failed in production twice. Do **not** regress:
+
+| Pin | Required behavior |
+|-----|-------------------|
+| Toolbar trail | Dashboard → Tender Configurations → **Tender Configuration Home** (leaf is `SPAN`, not a link) |
+| Next Best Action | Desktop: **single row**, CTA `nowrap` on the **right**, title/reason white on `#002244`. Never `flex-col` in `CONFIG_HOME.nextAction` |
+| Handoff header | Title + verified icon same row, icon in fixed well, vertically centered |
+| Context strip | Exactly **8** cells including Standard Tender Document; pack field labels |
+| Forbidden UI | No `Locked`, `Finalize Configuration`, `Publish Tender`, `Complete Configuration` |
+
+Static guard: `kentender_core.tests.test_ui01_layout_css_contract`  
+Playwright: `expectUi01StructuralLayout` in `ktClUi01LayoutContract.ts`
+
+## Refresh-safe identity routes (hard)
+
+`frappe.route_options` and bare query strings **do not survive refresh**.
+
+- Put durable IDs in the **route segment**: `frappe.set_route("it-tender-configuration-overview", configurationId)` → `/desk/.../overview/<id>`.
+- On load, accept `route[1]` / `route_options` / query, then **rewrite** to the segment URL.
+- Playwright must include a **reload** case that still shows the loaded entity (not the empty-state picker).
 
 ## Disallowed
 
-- Duplicate filter/table HTML outside `kt_cl_components.js`
-- Black / primary borders on filter controls (use outline-variant)
-- Toolbar leaf title or search box
-- Page-header breadcrumb row under the strip
-- Skipping `make ui-civic-ledger-queue-gate` when claiming a new queue page done
+- Hand-rolled context strips / tables / filter bars
+- Relying only on `route_options` for page identity
+- Shipping CL UI that depends on unpinned Tailwind without layout CSS guards
+- Black Desk button chrome on CL action links
+- Claiming pixel-faithful without screenshot/Playwright layout evidence
+- Adding `flex-col` / wrapping next-action without updating the structural gate
 
-## Regression gate before "done"
+## Regression gates (required before UX "done")
 
-1. Shared helpers: `tests/ui/helpers/ktClQueueContract.ts`
-2. Module contract spec under `tests/ui/smoke/<module>/` (UI-00: `kt-cl-queue-pattern-lock.spec.ts`)
-3. Spec listed in `make -C apps/kentender_v1 ui-civic-ledger-queue-gate`
-4. Module smoke still green; touch `kentender_core/hooks.py` + `clear-cache` after CL CSS/JS edits
+```bash
+make -C apps/kentender_v1 ui-civic-ledger-queue-gate
+make -C apps/kentender_v1 ui-civic-ledger-ui01-gate
+```
 
-## Rollout for new CL screens
+- Queue: `kt-cl-queue-pattern-lock.spec.ts`
+- UI-01: `ui01-layout-contract.spec.ts` + `ui01-home.spec.ts` (+ mockups `ui01-mockup-states.spec.ts` when seeding visual states)
+- Helpers: `ktClQueueContract.ts`, `ktClConfigContext.ts`, `ktClUi01LayoutContract.ts`
 
-Add surface registry entry → compose from `cl_components` → call queue contract helpers → add/extend gate spec → update [`docs/test-contracts/civic-ledger-queue-rollout-matrix.md`](apps/kentender_v1/docs/test-contracts/civic-ledger-queue-rollout-matrix.md).
+## Visual mockup fixtures
+
+To QA all CFG card statuses and next-action focuses:
+
+```text
+bench --site kentender.midas.com execute \
+  kentender_procurement.tender_configurations.seed.ui01_mockup_seed.seed_ui01_mockup_configurations
+```
+
+Or Desk: `seed_ui01_mockups_for_tests` → `TCFG-MOCK-SHOWCASE` + `TCFG-MOCK-CFG-01`…`09`.

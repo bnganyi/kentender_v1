@@ -362,7 +362,7 @@
 			e.preventDefault();
 			var id = $(this).attr("data-configuration-id");
 			frappe.route_options = { configuration_id: id };
-			frappe.set_route("it-tender-configuration-overview");
+			frappe.set_route("it-tender-configuration-overview", id);
 		});
 		$root.on("click.ui00", '[data-action="refresh"]', function (e) {
 			e.preventDefault();

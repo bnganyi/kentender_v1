@@ -26,7 +26,15 @@ frappe.provide("kentender_core.cl_surface_registry");
 		return crumb(__("Tender Configurations"), ["it-tender-configuration-dashboard"]);
 	}
 	function crumbConfigurationHome() {
-		return crumb(__("Configuration Home"), ["it-tender-configuration-overview"]);
+		return crumb(__("Tender Configuration Home"), ["it-tender-configuration-overview"]);
+	}
+	/** UI-01 itself: leaf is current (bold, not a link). */
+	function trailUi01Home() {
+		return [
+			crumbDashboard(),
+			crumbTenderConfigurations(),
+			crumb(__("Tender Configuration Home")),
+		];
 	}
 
 	/**
@@ -104,8 +112,10 @@ frappe.provide("kentender_core.cl_surface_registry");
 			sidebarWorkspaceKey: SIDEBAR_KEY,
 			chrome: chrome(
 				__("Tender Configuration Home"),
-				__("Track configuration progress and open the next required step."),
-				trailConfigs,
+				__(
+					"Complete the required configuration steps before review, preview, and publication handoff."
+				),
+				trailUi01Home(),
 				[]
 			),
 		},

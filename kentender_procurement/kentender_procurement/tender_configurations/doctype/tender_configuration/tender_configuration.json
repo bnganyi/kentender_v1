@@ -25,6 +25,7 @@
   "section_issues",
   "blocker_count",
   "warning_count",
+  "steps_state",
   "section_meta",
   "approval_date"
  ],
@@ -149,6 +150,12 @@
    "fieldtype": "Int",
    "label": "Warning Count",
    "non_negative": 1
+  },
+  {
+   "fieldname": "steps_state",
+   "fieldtype": "JSON",
+   "label": "Configuration Steps State",
+   "description": "Per CFG-id progress overlay for UI-01 until CFG screens persist state."
   },
   {
    "fieldname": "section_meta",

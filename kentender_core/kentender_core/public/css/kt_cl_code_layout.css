@@ -598,3 +598,711 @@ body.kt-cl-shell [data-testid="kt-cl-uim01-modal"] > .p-6 {
 		max-width: 100% !important;
 	}
 }
+
+/* UI-01 wizard chrome — shared 8-cell configuration context strip (C1-M3 §4) */
+body.kt-cl-shell [data-testid="kt-cl-config-context-strip"],
+body.kt-cl-shell .kt-cl-config-context-strip {
+	display: grid !important;
+	grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	gap: 0 !important;
+	background: #ffffff !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.5rem !important;
+	padding: 1rem !important;
+	margin-bottom: 2rem !important;
+	box-shadow: 0 1px 2px rgba(25, 28, 30, 0.04) !important;
+}
+@media (min-width: 768px) {
+	body.kt-cl-shell [data-testid="kt-cl-config-context-strip"],
+	body.kt-cl-shell .kt-cl-config-context-strip {
+		grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+	}
+}
+@media (min-width: 1280px) {
+	body.kt-cl-shell [data-testid="kt-cl-config-context-strip"],
+	body.kt-cl-shell .kt-cl-config-context-strip {
+		grid-template-columns: repeat(8, minmax(0, 1fr)) !important;
+	}
+	body.kt-cl-shell .kt-cl-config-context-cell--wide,
+	body.kt-cl-shell [data-testid="kt-cl-config-context-title"] {
+		grid-column: span 1 !important;
+	}
+}
+body.kt-cl-shell .kt-cl-config-context-cell {
+	border-right: 1px solid rgba(196, 198, 207, 0.35) !important;
+	padding-left: 0.75rem !important;
+	padding-right: 0.75rem !important;
+	padding-top: 0.25rem !important;
+	padding-bottom: 0.25rem !important;
+	min-width: 0;
+}
+body.kt-cl-shell .kt-cl-config-context-cell:first-child {
+	padding-left: 0.25rem !important;
+}
+body.kt-cl-shell .kt-cl-config-context-cell:last-child {
+	border-right: none !important;
+	padding-right: 0.25rem !important;
+}
+body.kt-cl-shell .kt-cl-config-context-cell p {
+	margin: 0 !important;
+	overflow-wrap: anywhere !important;
+}
+body.kt-cl-shell .kt-cl-config-context-cell > p:first-child {
+	color: #43474e !important;
+	font-size: 10px !important;
+	line-height: 14px !important;
+	font-weight: 600 !important;
+	letter-spacing: 0.06em !important;
+	text-transform: uppercase !important;
+	margin-bottom: 0.25rem !important;
+}
+body.kt-cl-shell .kt-cl-config-context-cell > p:last-child,
+body.kt-cl-shell .kt-cl-config-context-cell .kt-cl-config-issues-value,
+body.kt-cl-shell .kt-cl-config-context-cell [class*="contextValue"] {
+	color: #000b1d !important;
+	font-size: 12px !important;
+	line-height: 16px !important;
+	font-weight: 700 !important;
+}
+body.kt-cl-shell .kt-cl-config-context-cell .kt-cl-config-issues-value.is-alert {
+	color: #ba1a1a !important;
+	font-weight: 700 !important;
+}
+body.kt-cl-shell .kt-cl-config-status-dot {
+	width: 8px !important;
+	height: 8px !important;
+	border-radius: 999px !important;
+	background: #f59e0b !important;
+	flex-shrink: 0;
+}
+body.kt-cl-shell .kt-cl-config-issues-value.is-alert {
+	color: #ba1a1a !important;
+	font-weight: 700 !important;
+}
+body.kt-cl-shell .kt-cl-config-status-dot[data-tone="needs_attention"] {
+	background: #ba1a1a !important;
+}
+body.kt-cl-shell .kt-cl-config-status-dot[data-tone="completed"],
+body.kt-cl-shell .kt-cl-config-status-dot[data-tone="ready_for_publication"] {
+	background: #16a34a !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-ui01-drawer-overlay"] {
+	background: rgba(25, 28, 30, 0.35) !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-ui01-step-card"],
+body.kt-cl-shell .kt-cl-ui01-step-card {
+	cursor: pointer;
+}
+
+/* UI-01 C1-M3 layout — pin against Bootstrap / missing Tailwind utilities */
+body.kt-cl-shell [data-testid="kt-cl-ui01-layout"],
+body.kt-cl-shell .kt-cl-ui01-layout {
+	display: grid !important;
+	grid-template-columns: minmax(0, 1fr) !important;
+	gap: 1.5rem !important;
+	align-items: start !important;
+}
+@media (min-width: 1024px) {
+	body.kt-cl-shell [data-testid="kt-cl-ui01-layout"],
+	body.kt-cl-shell .kt-cl-ui01-layout {
+		grid-template-columns: minmax(0, 3fr) minmax(260px, 1fr) !important;
+	}
+}
+body.kt-cl-shell [data-testid="kt-cl-ui01-main"],
+body.kt-cl-shell .kt-cl-ui01-main {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 1.5rem !important;
+	min-width: 0 !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-ui01-side"],
+body.kt-cl-shell .kt-cl-ui01-side {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 1rem !important;
+	min-width: 0 !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-ui01-steps"] .grid,
+body.kt-cl-shell [data-testid="kt-cl-ui01-steps"] > div {
+	display: grid !important;
+	grid-template-columns: 1fr !important;
+	gap: 1rem !important;
+}
+@media (min-width: 768px) {
+	body.kt-cl-shell [data-testid="kt-cl-ui01-steps"] .grid,
+	body.kt-cl-shell [data-testid="kt-cl-ui01-steps"] > div {
+		grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	}
+}
+@media (min-width: 1280px) {
+	body.kt-cl-shell [data-testid="kt-cl-ui01-steps"] .grid,
+	body.kt-cl-shell [data-testid="kt-cl-ui01-steps"] > div {
+		grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+	}
+}
+
+/* Next Best Action — single horizontal row: copy left, CTA right (C1-M3) */
+body.kt-cl-shell [data-testid="kt-cl-ui01-next-action"],
+body.kt-cl-shell .kt-cl-ui01-next-action {
+	background: #002244 !important;
+	color: #ffffff !important;
+	border-radius: 0.75rem !important;
+	padding: 1.5rem 1.75rem !important;
+	display: flex !important;
+	flex-direction: row !important;
+	flex-wrap: nowrap !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	gap: 1.5rem !important;
+	position: relative !important;
+	overflow: hidden !important;
+	box-shadow: 0 8px 24px rgba(0, 11, 29, 0.22) !important;
+	min-height: 112px !important;
+}
+body.kt-cl-shell .kt-cl-ui01-next-body {
+	display: flex !important;
+	flex-direction: row !important;
+	align-items: flex-start !important;
+	gap: 1rem !important;
+	flex: 1 1 auto !important;
+	min-width: 0 !important;
+	position: relative !important;
+	z-index: 2 !important;
+}
+body.kt-cl-shell .kt-cl-ui01-next-copy {
+	min-width: 0 !important;
+	flex: 1 1 auto !important;
+}
+body.kt-cl-shell .kt-cl-ui01-next-icon {
+	width: 48px !important;
+	height: 48px !important;
+	border-radius: 999px !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	flex-shrink: 0 !important;
+	background: rgba(255, 255, 255, 0.12) !important;
+}
+body.kt-cl-shell .kt-cl-ui01-next-icon .material-symbols-outlined {
+	color: #ffffff !important;
+	font-size: 28px !important;
+	line-height: 1 !important;
+}
+body.kt-cl-shell .kt-cl-ui01-next-eyebrow {
+	color: #adc8f3 !important;
+	font-size: 11px !important;
+	font-weight: 600 !important;
+	letter-spacing: 0.08em !important;
+	text-transform: uppercase !important;
+	margin: 0 0 0.35rem !important;
+}
+body.kt-cl-shell .kt-cl-ui01-next-title,
+body.kt-cl-shell [data-testid="kt-cl-ui01-next-label"] {
+	color: #ffffff !important;
+	font-size: 18px !important;
+	line-height: 24px !important;
+	font-weight: 700 !important;
+	margin: 0 0 0.35rem !important;
+}
+body.kt-cl-shell .kt-cl-ui01-next-reason,
+body.kt-cl-shell [data-testid="kt-cl-ui01-next-reason"] {
+	color: #ffffff !important;
+	opacity: 0.92 !important;
+	font-size: 13px !important;
+	line-height: 18px !important;
+	margin: 0 !important;
+	max-width: 36rem !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-ui01-next-btn"],
+body.kt-cl-shell .kt-cl-ui01-next-btn {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	background: #ffffff !important;
+	color: #002244 !important;
+	border: none !important;
+	box-shadow: none !important;
+	border-radius: 0.5rem !important;
+	padding: 0.75rem 2rem !important;
+	font-weight: 700 !important;
+	font-size: 14px !important;
+	line-height: 1.2 !important;
+	cursor: pointer !important;
+	flex: 0 0 auto !important;
+	align-self: center !important;
+	white-space: nowrap !important;
+	position: relative !important;
+	z-index: 2 !important;
+	margin: 0 !important;
+}
+body.kt-cl-shell .kt-cl-ui01-next-glow {
+	position: absolute !important;
+	right: -2.5rem !important;
+	bottom: -2.5rem !important;
+	width: 12rem !important;
+	height: 12rem !important;
+	border-radius: 999px !important;
+	background: rgba(255, 255, 255, 0.06) !important;
+	pointer-events: none !important;
+}
+@media (max-width: 719px) {
+	body.kt-cl-shell [data-testid="kt-cl-ui01-next-action"],
+	body.kt-cl-shell .kt-cl-ui01-next-action {
+		flex-wrap: wrap !important;
+	}
+	body.kt-cl-shell [data-testid="kt-cl-ui01-next-btn"],
+	body.kt-cl-shell .kt-cl-ui01-next-btn {
+		width: 100% !important;
+	}
+}
+
+/* Step cards — kill Desk button chrome; status badges */
+body.kt-cl-shell .kt-cl-ui01-step-card,
+body.kt-cl-shell [data-testid^="kt-cl-ui01-step-CFG"] {
+	background: #ffffff !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.75rem !important;
+	padding: 1.25rem !important;
+	display: flex !important;
+	flex-direction: column !important;
+	min-height: 100% !important;
+}
+body.kt-cl-shell .kt-cl-ui01-step-card.border-error,
+body.kt-cl-shell [data-testid^="kt-cl-ui01-step-CFG"].border-error {
+	border: 2px solid #ba1a1a !important;
+}
+body.kt-cl-shell .kt-cl-ui01-step-card-top {
+	display: flex !important;
+	justify-content: space-between !important;
+	align-items: flex-start !important;
+	gap: 0.5rem !important;
+	margin-bottom: 1rem !important;
+}
+body.kt-cl-shell .kt-cl-ui01-step-id {
+	font-size: 11px !important;
+	line-height: 14px !important;
+	font-weight: 700 !important;
+	color: #43474e !important;
+}
+body.kt-cl-shell .kt-cl-ui01-step-title {
+	color: #000b1d !important;
+	font-size: 16px !important;
+	line-height: 22px !important;
+	font-weight: 700 !important;
+	margin: 0 0 0.5rem !important;
+}
+body.kt-cl-shell .kt-cl-ui01-step-desc {
+	color: #43474e !important;
+	font-size: 12px !important;
+	line-height: 18px !important;
+	margin: 0 0 0.5rem !important;
+	display: -webkit-box !important;
+	-webkit-line-clamp: 3 !important;
+	-webkit-box-orient: vertical !important;
+	overflow: hidden !important;
+}
+body.kt-cl-shell .kt-cl-ui01-step-issues {
+	color: #ba1a1a !important;
+	font-size: 11px !important;
+	line-height: 14px !important;
+	font-weight: 700 !important;
+	margin: 0 0 1rem !important;
+}
+body.kt-cl-shell .kt-cl-ui01-step-footer {
+	margin-top: auto !important;
+	padding-top: 1rem !important;
+	border-top: 1px solid #c4c6cf !important;
+	display: flex !important;
+	justify-content: space-between !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+}
+body.kt-cl-shell .kt-cl-ui01-step-meta {
+	font-size: 11px !important;
+	line-height: 14px !important;
+	color: #43474e !important;
+	min-height: 14px !important;
+}
+/* In-progress card micro progress (C1-M3 design: ~w-24 track, ~2/3 fill) */
+body.kt-cl-shell .kt-cl-ui01-step-progress {
+	width: 6rem !important;
+	height: 6px !important;
+	border-radius: 999px !important;
+	background: #e6e8ea !important;
+	overflow: hidden !important;
+	flex-shrink: 0 !important;
+}
+body.kt-cl-shell .kt-cl-ui01-step-progress-fill {
+	height: 100% !important;
+	border-radius: 999px !important;
+	background: #3a485c !important;
+}
+body.kt-cl-shell .kt-cl-ui01-step-badge {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.35rem !important;
+	padding: 0.2rem 0.55rem !important;
+	border-radius: 999px !important;
+	background: #e6e8ea !important;
+	color: #43474e !important;
+	flex-shrink: 0 !important;
+}
+body.kt-cl-shell .kt-cl-ui01-step-badge-dot {
+	width: 6px !important;
+	height: 6px !important;
+	border-radius: 999px !important;
+	background: currentColor !important;
+	flex-shrink: 0 !important;
+}
+body.kt-cl-shell .kt-cl-ui01-step-badge-label {
+	font-size: 10px !important;
+	line-height: 12px !important;
+	font-weight: 700 !important;
+	text-transform: uppercase !important;
+}
+body.kt-cl-shell .kt-cl-ui01-step-badge--complete {
+	background: #dcfce7 !important;
+	color: #166534 !important;
+}
+body.kt-cl-shell .kt-cl-ui01-step-badge--attention {
+	background: #ffdad6 !important;
+	color: #ba1a1a !important;
+}
+body.kt-cl-shell .kt-cl-ui01-step-badge--progress {
+	background: #d2e1fa !important;
+	color: #3a485c !important;
+}
+body.kt-cl-shell .kt-cl-ui01-step-badge--progress .kt-cl-ui01-step-badge-dot {
+	animation: kt-cl-ui01-pulse 1.6s ease-in-out infinite !important;
+}
+body.kt-cl-shell .kt-cl-ui01-step-badge--unavailable {
+	background: #e6e8ea !important;
+	color: #73777f !important;
+}
+@keyframes kt-cl-ui01-pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.35;
+	}
+}
+body.kt-cl-shell .kt-cl-ui01-step-btn {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	border: none !important;
+	box-shadow: none !important;
+	background: transparent !important;
+	cursor: pointer !important;
+	padding: 0 !important;
+	font-weight: 700 !important;
+	font-size: 11px !important;
+	color: #000b1d !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.25rem !important;
+}
+body.kt-cl-shell .kt-cl-ui01-step-btn--primary {
+	background: #000b1d !important;
+	color: #ffffff !important;
+	padding: 0.375rem 1rem !important;
+	border-radius: 0.25rem !important;
+}
+body.kt-cl-shell .kt-cl-ui01-step-btn--link:hover {
+	text-decoration: underline !important;
+}
+/* Completion & Handoff — balanced header + icon (C1-M3) */
+body.kt-cl-shell [data-testid="kt-cl-ui01-handoff"],
+body.kt-cl-shell .kt-cl-ui01-handoff {
+	background: #ffffff !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.75rem !important;
+	overflow: hidden !important;
+	box-shadow: 0 1px 3px rgba(25, 28, 30, 0.06) !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-ui01-handoff-header"],
+body.kt-cl-shell .kt-cl-ui01-handoff-header {
+	display: flex !important;
+	flex-direction: row !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	gap: 0.75rem !important;
+	min-height: 48px !important;
+	padding: 0.75rem 1.25rem !important;
+	background: #f2f4f6 !important;
+	border-bottom: 1px solid #c4c6cf !important;
+}
+body.kt-cl-shell .kt-cl-ui01-handoff-title {
+	margin: 0 !important;
+	padding: 0 !important;
+	flex: 1 1 auto !important;
+	min-width: 0 !important;
+	color: #000b1d !important;
+	font-size: 12px !important;
+	line-height: 16px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.06em !important;
+	text-transform: uppercase !important;
+}
+body.kt-cl-shell .kt-cl-ui01-handoff-header-icon {
+	flex: 0 0 auto !important;
+	width: 28px !important;
+	height: 28px !important;
+	border-radius: 999px !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	background: rgba(0, 11, 29, 0.06) !important;
+	color: #000b1d !important;
+}
+body.kt-cl-shell .kt-cl-ui01-handoff-header-icon .material-symbols-outlined {
+	font-size: 18px !important;
+	line-height: 1 !important;
+	color: #000b1d !important;
+}
+body.kt-cl-shell .kt-cl-ui01-handoff-body {
+	padding: 0.35rem 0.5rem !important;
+}
+body.kt-cl-shell .kt-cl-ui01-handoff-item {
+	padding: 0.75rem !important;
+	border-bottom: 1px solid rgba(196, 198, 207, 0.35) !important;
+	border-radius: 0.5rem !important;
+}
+body.kt-cl-shell .kt-cl-ui01-handoff-item:last-child {
+	border-bottom: none !important;
+}
+body.kt-cl-shell .kt-cl-ui01-handoff-item.is-disabled {
+	opacity: 0.55 !important;
+}
+body.kt-cl-shell .kt-cl-ui01-handoff-item-row {
+	display: flex !important;
+	flex-direction: row !important;
+	align-items: flex-start !important;
+	gap: 0.75rem !important;
+}
+body.kt-cl-shell .kt-cl-ui01-handoff-item-icon {
+	flex: 0 0 auto !important;
+	width: 32px !important;
+	height: 32px !important;
+	border-radius: 0.375rem !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	background: rgba(196, 198, 207, 0.22) !important;
+	color: #43474e !important;
+}
+body.kt-cl-shell .kt-cl-ui01-handoff-item-icon.is-alert {
+	background: rgba(186, 26, 26, 0.1) !important;
+	color: #ba1a1a !important;
+}
+body.kt-cl-shell .kt-cl-ui01-handoff-item-icon .material-symbols-outlined {
+	font-size: 20px !important;
+	line-height: 1 !important;
+	color: inherit !important;
+}
+body.kt-cl-shell .kt-cl-ui01-handoff-item-copy {
+	flex: 1 1 auto !important;
+	min-width: 0 !important;
+}
+body.kt-cl-shell .kt-cl-ui01-handoff-item-title {
+	margin: 0 0 0.2rem !important;
+	color: #000b1d !important;
+	font-size: 13px !important;
+	line-height: 18px !important;
+	font-weight: 700 !important;
+}
+body.kt-cl-shell .kt-cl-ui01-handoff-item-status {
+	margin: 0 0 0.35rem !important;
+	color: #43474e !important;
+	font-size: 11px !important;
+	line-height: 14px !important;
+}
+body.kt-cl-shell .kt-cl-ui01-handoff-item-status.is-alert {
+	color: #ba1a1a !important;
+	font-weight: 700 !important;
+}
+/* Kill Desk/Bootstrap button chrome on handoff text actions */
+body.kt-cl-shell .kt-cl-ui01-handoff-action,
+body.kt-cl-shell [data-testid^="kt-cl-ui01-handoff-action-"] {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.25rem !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	border: none !important;
+	border-width: 0 !important;
+	border-style: none !important;
+	border-color: transparent !important;
+	outline: none !important;
+	box-shadow: none !important;
+	background: transparent !important;
+	background-color: transparent !important;
+	color: #000b1d !important;
+	font-size: 11px !important;
+	line-height: 14px !important;
+	font-weight: 700 !important;
+	cursor: pointer !important;
+	text-decoration: none !important;
+}
+body.kt-cl-shell .kt-cl-ui01-handoff-action:hover,
+body.kt-cl-shell [data-testid^="kt-cl-ui01-handoff-action-"]:hover {
+	text-decoration: underline !important;
+	background: transparent !important;
+	border: none !important;
+	box-shadow: none !important;
+}
+
+/* Overall Progress (sidebar) */
+body.kt-cl-shell [data-testid="kt-cl-ui01-progress"],
+body.kt-cl-shell .kt-cl-ui01-progress {
+	position: relative !important;
+	background: #ffffff !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.75rem !important;
+	padding: 1.25rem 1.25rem 1.25rem 1.35rem !important;
+	overflow: hidden !important;
+	box-shadow: 0 1px 2px rgba(25, 28, 30, 0.04) !important;
+}
+body.kt-cl-shell .kt-cl-ui01-progress::before {
+	content: "" !important;
+	position: absolute !important;
+	left: 0 !important;
+	top: 0 !important;
+	bottom: 0 !important;
+	width: 4px !important;
+	background: #000b1d !important;
+}
+body.kt-cl-shell .kt-cl-ui01-progress-label {
+	margin: 0 0 0.5rem !important;
+	color: #43474e !important;
+	font-size: 11px !important;
+	line-height: 14px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.06em !important;
+	text-transform: uppercase !important;
+}
+body.kt-cl-shell .kt-cl-ui01-progress-row {
+	display: flex !important;
+	align-items: flex-end !important;
+	justify-content: space-between !important;
+	gap: 0.75rem !important;
+	margin-bottom: 0.5rem !important;
+}
+body.kt-cl-shell .kt-cl-ui01-progress-pct {
+	margin: 0 !important;
+	color: #000b1d !important;
+	font-size: 32px !important;
+	line-height: 1 !important;
+	font-weight: 700 !important;
+}
+body.kt-cl-shell .kt-cl-ui01-progress-meta {
+	margin: 0 !important;
+	color: #43474e !important;
+	font-size: 11px !important;
+	line-height: 14px !important;
+}
+body.kt-cl-shell .kt-cl-ui01-progress-track {
+	width: 100% !important;
+	height: 6px !important;
+	border-radius: 999px !important;
+	background: #e6e8ea !important;
+	overflow: hidden !important;
+}
+body.kt-cl-shell .kt-cl-ui01-progress-fill {
+	height: 100% !important;
+	border-radius: 999px !important;
+	background: #000b1d !important;
+}
+
+/* Resources (sidebar) */
+body.kt-cl-shell [data-testid="kt-cl-ui01-resources"],
+body.kt-cl-shell .kt-cl-ui01-resources {
+	background: rgba(0, 11, 29, 0.04) !important;
+	border: 1px solid rgba(0, 11, 29, 0.1) !important;
+	border-radius: 0.75rem !important;
+	padding: 1.25rem !important;
+}
+body.kt-cl-shell .kt-cl-ui01-resources-title {
+	margin: 0 0 0.75rem !important;
+	color: #000b1d !important;
+	font-size: 11px !important;
+	line-height: 14px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.06em !important;
+	text-transform: uppercase !important;
+}
+body.kt-cl-shell .kt-cl-ui01-resources-list {
+	list-style: none !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0.75rem !important;
+}
+body.kt-cl-shell .kt-cl-ui01-resources-link {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	gap: 0.75rem !important;
+	color: #000b1d !important;
+	font-size: 13px !important;
+	line-height: 18px !important;
+}
+body.kt-cl-shell .kt-cl-ui01-resources-link .material-symbols-outlined {
+	font-size: 16px !important;
+	color: #43474e !important;
+}
+
+body.kt-cl-shell .kt-cl-ui01-back-btn,
+body.kt-cl-shell [data-testid="kt-cl-ui01-back"] {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	width: 100% !important;
+	min-height: 36px !important;
+	padding: 0.5rem 1rem !important;
+	border: 1px solid #c4c6cf !important;
+	background: #ffffff !important;
+	color: #000b1d !important;
+	box-shadow: none !important;
+	border-radius: 0.375rem !important;
+	font-weight: 600 !important;
+	font-size: 12px !important;
+	cursor: pointer !important;
+}
+
+/* Sharper step cards */
+body.kt-cl-shell [data-testid^="kt-cl-ui01-step-CFG"] {
+	box-shadow: 0 1px 2px rgba(25, 28, 30, 0.04) !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-ui01-steps"] > h3 {
+	color: #000b1d !important;
+	font-size: 18px !important;
+	line-height: 24px !important;
+	font-weight: 700 !important;
+	margin: 0 0 1rem !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-config-context-strip"] {
+	box-shadow: 0 1px 2px rgba(25, 28, 30, 0.04) !important;
+}
+
+@media (max-width: 1023px) {
+	body.kt-cl-shell [data-testid="kt-cl-config-context-strip"],
+	body.kt-cl-shell .kt-cl-config-context-strip {
+		grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+		row-gap: 1rem !important;
+	}
+	body.kt-cl-shell .kt-cl-config-context-cell:nth-child(4n) {
+		border-right: none !important;
+	}
+}
+@media (max-width: 639px) {
+	body.kt-cl-shell [data-testid="kt-cl-config-context-strip"],
+	body.kt-cl-shell .kt-cl-config-context-strip {
+		grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	}
+	body.kt-cl-shell .kt-cl-config-context-cell:nth-child(2n) {
+		border-right: none !important;
+	}
+}

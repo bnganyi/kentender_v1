@@ -90,6 +90,10 @@ def create_tender_configuration(
 	title = cstr(pkg.package_name or package_code)
 	ref = _next_configuration_ref(package_code)
 
+	from kentender_procurement.tender_configurations.services.configuration_home import (
+		default_steps_state_for_seed,
+	)
+
 	doc = frappe.get_doc(
 		{
 			"doctype": "Tender Configuration",
@@ -108,6 +112,7 @@ def create_tender_configuration(
 			"std_document_label": std["applicable_std_document_label"],
 			"blocker_count": 0,
 			"warning_count": 0,
+			"steps_state": default_steps_state_for_seed(needs_attention=False),
 			"approval_date": pkg.approved_at,
 		}
 	)

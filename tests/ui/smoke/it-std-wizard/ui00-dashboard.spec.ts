@@ -104,13 +104,13 @@ test.describe("UI-00 Tender Configurations Dashboard", () => {
 			})
 			.toBeGreaterThan(0);
 
-		await search.fill("PP-ICT-WIZARD-MODAL-001");
+		await search.fill("TCFG-SEED-PKG-READY-001");
 		await expect
 			.poll(async () => page.locator('[data-testid="kt-cl-ui00-create-row"]').count(), {
 				timeout: 15_000,
 			})
 			.toBe(1);
-		await expect(page.getByText("PP-ICT-WIZARD-MODAL-001").first()).toBeVisible();
+		await expect(page.getByText("TCFG-SEED-PKG-READY-001").first()).toBeVisible();
 	});
 
 	test("empty-state Refresh reloads the dashboard", async ({ page }) => {
@@ -214,9 +214,10 @@ test.describe("UI-00 Tender Configurations Dashboard", () => {
 		await expect(page.locator('[data-testid="kt-cl-uim01-preview"]')).toBeVisible();
 
 		await page.locator('[data-testid="kt-cl-uim01-create"]').click();
-		await expect(page.locator('[data-testid="kt-cl-ui01-stub"]')).toBeVisible({
+		await expect(page.locator('[data-testid="kt-cl-ui01-root"]')).toBeVisible({
 			timeout: 30_000,
 		});
 		await expect(page.locator('[data-testid="kt-cl-ui01-ref"]')).not.toBeEmpty();
+		await expect(page.getByTestId("kt-cl-config-context-strip")).toBeVisible();
 	});
 });

@@ -105,6 +105,19 @@ maps to a `code.html` block and pulls its class strings from `cl_code_spec`.
 | Filter wiring | `bindFilterBar($root, { onChange(key,value), namespace?, debounceMs? })` | standard search debounce + select change for all queue tables |
 | Queue table | `queueTable({ columns, rows:[{id,cells}], footerText, pagination?, pageSize?, pageSizeOptions?, showPageSize? })` — footer right: Rows per page (left of pager) | `kt-cl-ui00-table`, `kt-cl-ui00-page-size`, `kt-cl-ui00-pager`, `kt-cl-ui00-row-*` |
 | Create config modal | `createTenderConfigurationModal({ hasSelection, selectedLabel, preview, canCreate })` | `kt-cl-uim01-*` |
+| **Configuration context strip (wizard chrome)** | `configurationContextStrip(context)` — **required on UI-01 + every CFG/WF page**; **8 cells** from home `context` DTO (C1-M3 §4) | `kt-cl-config-context-strip`, `kt-cl-config-context-*` |
+| Next best action | `nextBestActionPanel({ label, reason, buttonLabel, route, tone? })` | `kt-cl-ui01-next-action` |
+| Configuration steps grid | `configurationStepsGrid({ steps })` | `kt-cl-ui01-steps`, `kt-cl-ui01-step-CFG-*` |
+| Completion & Handoff | `handoffPanel({ handoff })` | `kt-cl-ui01-handoff` |
+| Overall Progress | `overallProgressPanel({ complete, total })` | `kt-cl-ui01-progress` |
+| Resources | `resourcesPanel({ items })` | `kt-cl-ui01-resources` |
+| Step details drawer | `stepDetailsDrawer({ step })` | `kt-cl-ui01-drawer` |
+
+### Wizard context strip (reuse contract)
+
+All Tender Configuration wizard surfaces share one strip. Pass the `context` object from `get_tender_configuration_home` (or a future thin context API). Do **not** hand-roll a second strip.
+
+Cells (fixed order): Package Ref · Title · Entity · Procurement Method · STD Family · Standard Tender Document · Configuration Status (+dot) · Issues.
 
 Sidenav item schema (POC): `link` = `{ kind:'link', label, icon, route|url, active? }`;
 `group` = `{ kind:'group', label, icon, keepClosed?, children:[{ label, route|url }] }`.
@@ -112,10 +125,12 @@ Sidenav item schema (POC): `link` = `{ kind:'link', label, icon, route|url, acti
 ## Pattern lock (agents — do not skip)
 
 Queue/list pages must **compose** the APIs above; do not re-implement table/filter/footer markup.
+Wizard pages must **compose** `configurationContextStrip` — never duplicate the strip markup.
 
 - Cursor rule: `.cursor/rules/kentender-civic-ledger-queue-lock.mdc`
-- Playwright helpers: `tests/ui/helpers/ktClQueueContract.ts`
-- Gate: `make -C apps/kentender_v1 ui-civic-ledger-queue-gate`
+- Playwright helpers: `tests/ui/helpers/ktClQueueContract.ts`, `ktClConfigContext.ts`, `ktClUi01LayoutContract.ts`
+- Gates: `make -C apps/kentender_v1 ui-civic-ledger-queue-gate` and `make -C apps/kentender_v1 ui-civic-ledger-ui01-gate`
+- UI-01 mockups: `seed_ui01_mockups_for_tests` → `TCFG-MOCK-SHOWCASE` + `TCFG-MOCK-CFG-01`…`09`
 - Rollout matrix: [`docs/test-contracts/civic-ledger-queue-rollout-matrix.md`](../../../test-contracts/civic-ledger-queue-rollout-matrix.md)
 
 Reference surface: UI-00 (`it-tender-configuration-dashboard`).
@@ -128,7 +143,7 @@ Reference surface: UI-00 (`it-tender-configuration-dashboard`).
 - `sidebarWorkspaceKey` — native sidebar fast-path key (`procurement`)
 - `chrome.toolbar` / `chrome.pageHeader` — default Civic Ledger chrome for the surface
 
-Only **UI-00** (`it-tender-configuration-dashboard`) ships a live page script in Step 2; other entries are chrome stubs for the router.
+**UI-00** (dashboard) and **UI-01** (configuration home) ship live page scripts; CFG/WF entries remain chrome stubs until those screens are implemented (they must adopt `configurationContextStrip`).
 
 ## CSS pipeline
 

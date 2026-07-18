@@ -6,7 +6,7 @@ BENCH_ROOT ?= /home/midasuser/frappe-bench
 KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency
 INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency
 
-.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate ui-civic-ledger-queue-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate std-verbatim-gate std-step1-gate nssf-calibration-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate
+.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate std-verbatim-gate std-step1-gate nssf-calibration-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate
 
 help:
 	@echo "Targets:"
@@ -32,6 +32,7 @@ help:
 	@echo "  make ui-smoke — Phase La: npm run test:ui:smoke (needs Node, running site, apps/kentender_v1/.env.ui)"
 	@echo "  make ui-workspace-pattern-gate — workspace contract tests (selection, scroll, anti-flicker)"
 	@echo "  make ui-civic-ledger-queue-gate — Civic Ledger queue/list contract (chrome, filters, table footer)"
+	@echo "  make ui-civic-ledger-ui01-gate — UI-01 home structural layout + mockup states"
 	@echo "  make std-verbatim-gate SITE=$(SITE) — BE-14 verbatim extraction + smoke contracts"
 	@echo "  make std-step1-gate SITE=$(SITE) — BE-15 Step 1 activation/consumption/render smoke"
 	@echo "  make nssf-calibration-gate SITE=$(SITE) — CAL-NSSF golden proof gate"
@@ -112,6 +113,12 @@ ui-workspace-pattern-gate:
 ui-civic-ledger-queue-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/it-std-wizard/kt-cl-queue-pattern-lock.spec.ts
+
+ui-civic-ledger-ui01-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/it-std-wizard/ui01-layout-contract.spec.ts \
+		tests/ui/smoke/it-std-wizard/ui01-home.spec.ts \
+		tests/ui/smoke/it-std-wizard/ui01-mockup-states.spec.ts
 
 ui-std-config-gate:
 	@echo "STD Module POC archived (2026-07). Use: make verify-std-archived && npm run test:ui:smoke:std-module-retired"

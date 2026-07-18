@@ -11,6 +11,7 @@ from kentender_procurement.tender_configurations.api import (
 	create_tender_configuration as _create_tender_configuration,
 	get_eligible_procurement_packages as _get_eligible_procurement_packages,
 	get_tender_configuration as _get_tender_configuration,
+	get_tender_configuration_home as _get_tender_configuration_home,
 	get_tender_configurations_dashboard as _get_tender_configurations_dashboard,
 )
 
@@ -58,6 +59,11 @@ def get_tender_configuration(configuration_id: str):
 
 
 @frappe.whitelist()
+def get_tender_configuration_home(configuration_id: str):
+	return _get_tender_configuration_home(configuration_id)
+
+
+@frappe.whitelist()
 def seed_ui00_dashboard_for_tests(clear: int | str = 1):
 	"""Administrator-only seed for Playwright / integration fixtures."""
 	if frappe.session.user != "Administrator":
@@ -65,3 +71,15 @@ def seed_ui00_dashboard_for_tests(clear: int | str = 1):
 	from kentender_procurement.tender_configurations.seed.ui00_seed import seed_ui00_dashboard
 
 	return seed_ui00_dashboard(clear=bool(int(clear)))
+
+
+@frappe.whitelist()
+def seed_ui01_mockups_for_tests(clear: int | str = 1):
+	"""Administrator-only UI-01 mockups: SHOWCASE + CFG-01…09 focus configs."""
+	if frappe.session.user != "Administrator":
+		frappe.throw(frappe._("Not permitted"), frappe.PermissionError)
+	from kentender_procurement.tender_configurations.seed.ui01_mockup_seed import (
+		seed_ui01_mockup_configurations,
+	)
+
+	return seed_ui01_mockup_configurations(clear=bool(int(clear)))

@@ -137,7 +137,7 @@
 					frappe.route_options = {
 						configuration_id: out.configuration_id,
 					};
-					frappe.set_route("it-tender-configuration-overview");
+					frappe.set_route("it-tender-configuration-overview", out.configuration_id);
 				},
 				error: function () {
 					$btn.prop("disabled", false);

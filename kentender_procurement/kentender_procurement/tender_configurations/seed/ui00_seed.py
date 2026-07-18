@@ -17,6 +17,7 @@ from kentender_procurement.tender_configurations.constants import (
 	STATUS_NEEDS_ATTENTION,
 	STATUS_READY_FOR_PUBLICATION,
 	STATUS_READY_FOR_REVIEW,
+	STATUS_UNDER_REVIEW,
 )
 from kentender_procurement.tender_configurations.services.eligibility import ensure_fixture_std_version
 
@@ -27,6 +28,7 @@ PACKAGE_REFS = (
 	f"{SEED_PREFIX}-PKG-CFG-IP",
 	f"{SEED_PREFIX}-PKG-CFG-NA",
 	f"{SEED_PREFIX}-PKG-CFG-RR",
+	f"{SEED_PREFIX}-PKG-CFG-UR",
 	f"{SEED_PREFIX}-PKG-CFG-RP",
 	f"{SEED_PREFIX}-PKG-CFG-DONE",
 )
@@ -153,9 +155,17 @@ def _insert_config(
 	method: str,
 	blockers: int = 0,
 	warnings: int = 0,
+	steps_state: dict | None = None,
 ) -> str:
+	from kentender_procurement.tender_configurations.services.configuration_home import (
+		default_steps_state_for_seed,
+	)
+
 	if frappe.db.exists("Tender Configuration", ref):
 		frappe.delete_doc("Tender Configuration", ref, force=True, ignore_permissions=True)
+	state = steps_state
+	if state is None:
+		state = default_steps_state_for_seed(needs_attention=blockers > 0)
 	doc = frappe.get_doc(
 		{
 			"doctype": "Tender Configuration",
@@ -174,6 +184,7 @@ def _insert_config(
 			"std_document_label": "IT Standard Tender Document — April 2022",
 			"blocker_count": blockers,
 			"warning_count": warnings,
+			"steps_state": state,
 			"approval_date": nowdate(),
 		}
 	)
@@ -208,18 +219,29 @@ def seed_ui00_dashboard(*, clear: bool = True) -> dict[str, Any]:
 	# Works may lack ACTIVE STD — force IT category for eligibility of second ready pkg
 	frappe.db.set_value("Procurement Package", ready_2, "required_std_category", "Information Technology")
 
+	from kentender_procurement.tender_configurations.services.configuration_home import (
+		steps_state_all_complete,
+		steps_state_focus_cfg,
+		steps_state_showcase_nine_cards,
+	)
+	from kentender_procurement.tender_configurations.services.configuration_steps import (
+		STEP_IN_PROGRESS,
+	)
+
 	cfg_pkgs = []
 	for code, title in (
 		(PACKAGE_REFS[2], "ERP Implementation Services"),
 		(PACKAGE_REFS[3], "Network Upgrade Phase 2"),
 		(PACKAGE_REFS[4], "Cloud Hosting Services"),
-		(PACKAGE_REFS[5], "Helpdesk Platform"),
-		(PACKAGE_REFS[6], "Legacy Archive Digitization"),
+		(PACKAGE_REFS[5], "Under Review Hosting Renewal"),
+		(PACKAGE_REFS[6], "Helpdesk Platform"),
+		(PACKAGE_REFS[7], "Legacy Archive Digitization"),
 	):
 		cfg_pkgs.append(
 			_insert_package(code=code, title=title, method="Open Tender", entity=entity)
 		)
 
+	all_done = steps_state_all_complete()
 	configs = [
 		_insert_config(
 			ref=f"{SEED_PREFIX}-TCFG-IP",
@@ -231,6 +253,7 @@ def seed_ui00_dashboard(*, clear: bool = True) -> dict[str, Any]:
 			entity_name=entity_name,
 			method="Open Tender",
 			warnings=2,
+			steps_state=steps_state_focus_cfg("CFG-01", status_label=STEP_IN_PROGRESS),
 		),
 		_insert_config(
 			ref=f"{SEED_PREFIX}-TCFG-NA",
@@ -243,6 +266,7 @@ def seed_ui00_dashboard(*, clear: bool = True) -> dict[str, Any]:
 			method="Open Tender",
 			blockers=2,
 			warnings=1,
+			steps_state=steps_state_showcase_nine_cards(),
 		),
 		_insert_config(
 			ref=f"{SEED_PREFIX}-TCFG-RR",
@@ -253,26 +277,40 @@ def seed_ui00_dashboard(*, clear: bool = True) -> dict[str, Any]:
 			std_version=std_id,
 			entity_name=entity_name,
 			method="Open Tender",
+			steps_state=all_done,
+		),
+		_insert_config(
+			ref=f"{SEED_PREFIX}-TCFG-UR",
+			package_name=cfg_pkgs[3],
+			package_ref=PACKAGE_REFS[5],
+			title="Under Review Hosting Renewal",
+			status=STATUS_UNDER_REVIEW,
+			std_version=std_id,
+			entity_name=entity_name,
+			method="Open Tender",
+			steps_state=all_done,
 		),
 		_insert_config(
 			ref=f"{SEED_PREFIX}-TCFG-RP",
-			package_name=cfg_pkgs[3],
-			package_ref=PACKAGE_REFS[5],
+			package_name=cfg_pkgs[4],
+			package_ref=PACKAGE_REFS[6],
 			title="Helpdesk Platform",
 			status=STATUS_READY_FOR_PUBLICATION,
 			std_version=std_id,
 			entity_name=entity_name,
 			method="Open Tender",
+			steps_state=all_done,
 		),
 		_insert_config(
 			ref=f"{SEED_PREFIX}-TCFG-DONE",
-			package_name=cfg_pkgs[4],
-			package_ref=PACKAGE_REFS[6],
+			package_name=cfg_pkgs[5],
+			package_ref=PACKAGE_REFS[7],
 			title="Legacy Archive Digitization",
 			status=STATUS_COMPLETED,
 			std_version=std_id,
 			entity_name=entity_name,
 			method="Open Tender",
+			steps_state=all_done,
 		),
 	]
 
