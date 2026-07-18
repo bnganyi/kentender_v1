@@ -18,7 +18,6 @@ import {
 	KT_CL_TABLE_FOOTER,
 	KT_CL_TABLE_ROW,
 	KT_CL_TOOLBAR,
-	KT_CL_TOOLBAR_TITLE,
 } from "../../helpers/ktClShell";
 
 test.describe("Civic Ledger shell POC", () => {
@@ -193,9 +192,9 @@ test.describe("Civic Ledger shell POC", () => {
 		const sidebarWidth = await page.locator(KT_CL_SIDENAV).evaluate((el) => el.getBoundingClientRect().width);
 		expect(Math.round(sidebarWidth)).toBe(256);
 
-		// Toolbar height 48px (h-12).
+		// Toolbar height 64px (h-16, C1-M1 TopAppBar).
 		const toolbarHeight = await page.locator(KT_CL_TOOLBAR).evaluate((el) => el.getBoundingClientRect().height);
-		expect(Math.round(toolbarHeight)).toBe(48);
+		expect(Math.round(toolbarHeight)).toBe(64);
 
 		// Primary color #000b1d on the active nav link text.
 		const color = await page
@@ -204,9 +203,9 @@ test.describe("Civic Ledger shell POC", () => {
 			.evaluate((el) => getComputedStyle(el).color);
 		expect(color).toBe("rgb(0, 11, 29)");
 
-		// Public Sans body font applied under the scoped shell.
+		// Public Sans applied on the shell toolbar surface.
 		const fontFamily = await page
-			.locator(KT_CL_TOOLBAR_TITLE)
+			.locator(KT_CL_TOOLBAR)
 			.evaluate((el) => getComputedStyle(el).fontFamily);
 		expect(fontFamily.toLowerCase()).toContain("public sans");
 	});

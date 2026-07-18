@@ -1,0 +1,216 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:configuration_ref",
+ "creation": "2026-07-18 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "configuration_ref",
+  "tender_title",
+  "status",
+  "section_package",
+  "procurement_package",
+  "procurement_package_ref",
+  "package_title",
+  "procuring_entity_code",
+  "procuring_entity_name",
+  "procurement_method",
+  "section_std",
+  "std_family_key",
+  "std_family_label",
+  "std_version",
+  "std_document_label",
+  "section_issues",
+  "blocker_count",
+  "warning_count",
+  "section_meta",
+  "approval_date"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "configuration_ref",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Configuration Ref",
+   "reqd": 1,
+   "unique": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "tender_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tender Title",
+   "reqd": 1
+  },
+  {
+   "default": "In Progress",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "In Progress\nNeeds Attention\nReady for Review\nUnder Review\nReady for Publication\nCompleted",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_package",
+   "fieldtype": "Section Break",
+   "label": "Procurement Package"
+  },
+  {
+   "fieldname": "procurement_package",
+   "fieldtype": "Link",
+   "label": "Procurement Package",
+   "options": "Procurement Package",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "procurement_package_ref",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Procurement Package Ref",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "package_title",
+   "fieldtype": "Data",
+   "label": "Package Title"
+  },
+  {
+   "fieldname": "procuring_entity_code",
+   "fieldtype": "Data",
+   "label": "Procuring Entity Code"
+  },
+  {
+   "fieldname": "procuring_entity_name",
+   "fieldtype": "Data",
+   "label": "Procuring Entity"
+  },
+  {
+   "fieldname": "procurement_method",
+   "fieldtype": "Data",
+   "label": "Procurement Method"
+  },
+  {
+   "fieldname": "section_std",
+   "fieldtype": "Section Break",
+   "label": "Standard Tender Document"
+  },
+  {
+   "fieldname": "std_family_key",
+   "fieldtype": "Data",
+   "label": "STD Family Key",
+   "reqd": 1
+  },
+  {
+   "fieldname": "std_family_label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "STD Family",
+   "reqd": 1
+  },
+  {
+   "fieldname": "std_version",
+   "fieldtype": "Link",
+   "label": "STD Version",
+   "options": "STD Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "std_document_label",
+   "fieldtype": "Data",
+   "label": "Standard Tender Document"
+  },
+  {
+   "fieldname": "section_issues",
+   "fieldtype": "Section Break",
+   "label": "Issues"
+  },
+  {
+   "default": "0",
+   "fieldname": "blocker_count",
+   "fieldtype": "Int",
+   "label": "Blocker Count",
+   "non_negative": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "warning_count",
+   "fieldtype": "Int",
+   "label": "Warning Count",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "section_meta",
+   "fieldtype": "Section Break",
+   "label": "Meta"
+  },
+  {
+   "fieldname": "approval_date",
+   "fieldtype": "Date",
+   "label": "Package Approval Date"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-07-18 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Tender Configurations",
+ "name": "Tender Configuration",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Tender Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Planning Authority",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "tender_title",
+ "track_changes": 1
+}

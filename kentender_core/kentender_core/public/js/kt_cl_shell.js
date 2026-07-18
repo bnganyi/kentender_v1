@@ -1,12 +1,18 @@
 // Civic Ledger desk shell — layout from B-Components/code.html lines 309-335
+// Step 2: native-sidebar mode keeps Frappe .body-sidebar; replaces top chrome only.
 frappe.provide("kentender_core.cl_shell");
 
 (function () {
 	"use strict";
 
 	var SHELL_CLASS = "kt-cl-shell";
+	var NATIVE_CLASS = "kt-cl-shell-native";
 	var HYDRATION_CLASS = "kt-cl-hydration-pending";
 	var PREPAINT_STYLE_ID = "kt-cl-shell-prepaint";
+	var NATIVE_PREPAINT_STYLE_ID = "kt-cl-shell-native-prepaint";
+	var CHROME_HOST_ID = "kt-cl-chrome-host";
+	var routeToken = 0;
+	var nativeActive = false;
 
 	function components() {
 		return kentender_core.cl_components || null;
@@ -24,9 +30,66 @@ frappe.provide("kentender_core.cl_shell");
 		(document.head || document.documentElement).appendChild(style);
 	}
 
+	function injectNativePrepaintStyle() {
+		if (document.getElementById(NATIVE_PREPAINT_STYLE_ID)) return;
+		var style = document.createElement("style");
+		style.id = NATIVE_PREPAINT_STYLE_ID;
+		/* Native mode: hide only top chrome during hydration — keep sidebar visible. */
+		style.textContent =
+			"body.kt-cl-hydration-pending.kt-cl-shell-native .navbar," +
+			"body.kt-cl-hydration-pending.kt-cl-shell-native .page-head{display:none!important;}" +
+			"body.kt-cl-hydration-pending.kt-cl-shell-native #kt-cl-chrome-host{visibility:hidden;}";
+		(document.head || document.documentElement).appendChild(style);
+	}
+
 	function mountSidebar(workspaceKey, sidebarOpts) {
 		if (kentender_core.cl_sidebar && typeof kentender_core.cl_sidebar.mount === "function") {
 			kentender_core.cl_sidebar.mount(workspaceKey, sidebarOpts || {});
+		}
+	}
+
+	function ensureChromeHost() {
+		var existing = document.getElementById(CHROME_HOST_ID);
+		if (existing) return existing;
+
+		var host = document.createElement("div");
+		host.id = CHROME_HOST_ID;
+		host.setAttribute("data-testid", "kt-cl-chrome-host");
+
+		var insertTarget =
+			document.querySelector(".main-section") ||
+			document.querySelector(".page-container") ||
+			document.querySelector(".layout-main-section") ||
+			document.body;
+
+		var pageHead = insertTarget.querySelector(".page-head");
+		if (pageHead && pageHead.parentNode === insertTarget) {
+			insertTarget.insertBefore(host, pageHead);
+		} else {
+			insertTarget.insertBefore(host, insertTarget.firstChild);
+		}
+		return host;
+	}
+
+	function removeChromeHost() {
+		var host = document.getElementById(CHROME_HOST_ID);
+		if (host && host.parentNode) {
+			host.parentNode.removeChild(host);
+		}
+	}
+
+	function ensureNativeSidebar(sidebarWorkspaceKey) {
+		var key = (sidebarWorkspaceKey || "procurement").toLowerCase();
+		try {
+			if (
+				frappe.app &&
+				frappe.app.sidebar &&
+				typeof frappe.app.sidebar.setup === "function"
+			) {
+				frappe.app.sidebar.setup(key);
+			}
+		} catch (e) {
+			/* ignore — boot fast-path may already have the rail */
 		}
 	}
 
@@ -42,12 +105,18 @@ frappe.provide("kentender_core.cl_shell");
 				avatarInitials: opts.avatarInitials,
 			};
 
+			/* Leave native mode if switching to full-replacement POC shell. */
+			if (nativeActive) {
+				this.leaveNative();
+			}
+
 			if (hydrationGate) {
 				injectPrepaintStyle();
 				document.body.classList.add(HYDRATION_CLASS);
 			}
 
 			document.body.classList.add(SHELL_CLASS);
+			document.body.classList.remove(NATIVE_CLASS);
 			mountSidebar(workspaceKey, sidebarOpts);
 
 			if (hydrationGate) {
@@ -61,12 +130,145 @@ frappe.provide("kentender_core.cl_shell");
 
 		leave: function () {
 			document.body.classList.remove(SHELL_CLASS);
+			document.body.classList.remove(NATIVE_CLASS);
 			document.body.classList.remove(HYDRATION_CLASS);
+			nativeActive = false;
 			if (kentender_core.cl_sidebar && typeof kentender_core.cl_sidebar.unmount === "function") {
 				kentender_core.cl_sidebar.unmount();
 			}
 			$(".kt-cl-canvas").remove();
+			removeChromeHost();
 			return this;
+		},
+
+		/**
+		 * Step 2 native-sidebar mode: keep Frappe .body-sidebar, replace top chrome.
+		 * Adds both kt-cl-shell (Tailwind scope) and kt-cl-shell-native (keep rail).
+		 */
+		enterNative: function (opts) {
+			opts = opts || {};
+			var hydrationGate = opts.hydrationGate !== false;
+			var token = ++routeToken;
+
+			/* Tear down full-replacement custom sidenav if present. */
+			if (kentender_core.cl_sidebar && typeof kentender_core.cl_sidebar.unmount === "function") {
+				kentender_core.cl_sidebar.unmount();
+			}
+			$(".kt-cl-canvas").filter(function () {
+				return !$(this).closest("#" + CHROME_HOST_ID).length;
+			}).remove();
+
+			if (hydrationGate) {
+				injectNativePrepaintStyle();
+				document.body.classList.add(HYDRATION_CLASS);
+			}
+
+			document.body.classList.add(SHELL_CLASS);
+			document.body.classList.add(NATIVE_CLASS);
+			nativeActive = true;
+
+			ensureChromeHost();
+			ensureNativeSidebar(opts.sidebarWorkspaceKey);
+
+			if (opts.toolbar || (opts.chrome && opts.chrome.toolbar)) {
+				this.updateChrome({
+					toolbar: opts.toolbar || (opts.chrome && opts.chrome.toolbar) || {},
+				});
+			}
+
+			if (hydrationGate) {
+				requestAnimationFrame(function () {
+					if (token !== routeToken) return;
+					document.body.classList.remove(HYDRATION_CLASS);
+				});
+			}
+
+			return this;
+		},
+
+		leaveNative: function () {
+			routeToken += 1;
+			document.body.classList.remove(NATIVE_CLASS);
+			document.body.classList.remove(SHELL_CLASS);
+			document.body.classList.remove(HYDRATION_CLASS);
+			nativeActive = false;
+			removeChromeHost();
+			return this;
+		},
+
+		isNativeActive: function () {
+			return nativeActive;
+		},
+
+		getRouteToken: function () {
+			return routeToken;
+		},
+
+		isStaleToken: function (token) {
+			return token !== routeToken;
+		},
+
+		/**
+		 * Update persistent toolbar inside #kt-cl-chrome-host (in-place).
+		 * pageHeader is applied via mountContent into page.main.
+		 */
+		updateChrome: function (opts) {
+			opts = opts || {};
+			var comp = components();
+			if (!comp) return null;
+
+			var host = ensureChromeHost();
+			var toolbarOpts = opts.toolbar || {};
+			host.innerHTML = comp.renderTopToolbar(toolbarOpts);
+			comp.bindBreadcrumbRoutes(host);
+			return host;
+		},
+
+		/**
+		 * Mount page header + body content into a page container (typically page.main).
+		 * Toolbar stays in #kt-cl-chrome-host; this only owns the content area.
+		 */
+		mountContent: function (container, opts) {
+			opts = opts || {};
+			var comp = components();
+			if (!comp) return null;
+
+			var $host = container && container.jquery ? container : $(container);
+			if (!$host || !$host.length) return null;
+
+			var pageHeaderOpts = opts.pageHeader || opts.header || {};
+			var mainHtml = opts.mainHtml || "";
+
+			var html =
+				'<div class="kt-cl-native-canvas flex flex-col min-h-0" data-testid="kt-cl-page-root">' +
+				'<main class="flex-1 p-4 md:p-6 overflow-y-auto bg-surface-bright">' +
+				'<div class="max-w-[1280px] mx-auto space-y-4">' +
+				'<div id="kt-cl-page-header-host">' +
+				comp.renderPageHeader(pageHeaderOpts) +
+				"</div>" +
+				'<div data-testid="kt-cl-page-body">' +
+				mainHtml +
+				"</div>" +
+				"</div></main></div>";
+
+			$host.html(html);
+			comp.bindBreadcrumbRoutes($host);
+			return $host;
+		},
+
+		/** Update only the page-header host inside a previously mounted content area. */
+		updatePageChrome: function (container, pageHeaderOpts) {
+			var comp = components();
+			if (!comp) return null;
+			var $host = container && container.jquery ? container : $(container);
+			if (!$host || !$host.length) return null;
+			var $headerHost = $host.find("#kt-cl-page-header-host");
+			if (!$headerHost.length) {
+				return this.mountContent($host, { pageHeader: pageHeaderOpts, mainHtml: "" });
+			}
+			$headerHost.html(comp.renderPageHeader(pageHeaderOpts || {}));
+			comp.bindBreadcrumbRoutes($host);
+			return $host;
 		},
 
 		mountPageChrome: function (container, opts) {
@@ -81,7 +283,7 @@ frappe.provide("kentender_core.cl_shell");
 			var pageHeaderOpts = opts.pageHeader || opts.header || {};
 			var mainHtml = opts.mainHtml || "";
 
-			// code.html lines 309-335
+			// code.html lines 309-335 (full-replacement POC path)
 			var html =
 				'<div class="kt-cl-canvas flex flex-col min-h-screen" data-testid="kt-cl-page-root">' +
 				comp.renderTopToolbar(toolbarOpts) +
@@ -97,6 +299,7 @@ frappe.provide("kentender_core.cl_shell");
 		},
 
 		setupSidebar: mountSidebar,
+		ensureNativeSidebar: ensureNativeSidebar,
 	};
 
 	frappe.provide("kentender_core.cl");

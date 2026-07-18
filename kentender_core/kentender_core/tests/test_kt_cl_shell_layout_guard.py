@@ -59,6 +59,8 @@ class TestKtClShellLayoutGuard(IntegrationTestCase):
 			"kt_cl_components.js",
 			"kt_cl_sidebar.js",
 			"kt_cl_shell.js",
+			"kt_cl_surface_registry.js",
+			"kt_cl_shell_router.js",
 		):
 			self.assertTrue(any(needle in str(path) for path in flat_js), f"{needle} missing from hooks")
 
@@ -158,8 +160,23 @@ class TestKtClShellLayoutGuard(IntegrationTestCase):
 
 	# ---- Frappe integration overrides -----------------------------------
 	def test_layout_hides_frappe_sidebar_when_shell_active(self) -> None:
+		"""Full-replacement POC mode hides the native sidebar; native mode keeps it."""
 		layout = _core_public("css", "kt_cl_code_layout.css").read_text(encoding="utf-8")
-		self.assertIn("body.kt-cl-shell .body-sidebar-container", layout)
+		self.assertIn("body.kt-cl-shell:not(.kt-cl-shell-native) .body-sidebar-container", layout)
+		self.assertIn("body.kt-cl-shell .navbar", layout)
+		self.assertIn("body.kt-cl-shell .page-head", layout)
+
+	def test_native_shell_mode_keeps_sidebar_hides_top_chrome(self) -> None:
+		"""Step 2: kt-cl-shell-native must not hide .body-sidebar-container."""
+		layout = _core_public("css", "kt_cl_code_layout.css").read_text(encoding="utf-8")
+		self.assertIn("kt-cl-shell-native", layout)
+		self.assertIn("#kt-cl-chrome-host", layout)
+		# Native mode must never list body-sidebar-container in a hide rule without :not.
+		self.assertNotIn(
+			"body.kt-cl-shell-native .body-sidebar-container",
+			layout,
+			"native mode must not hide the Workspace Sidebar",
+		)
 
 	# ---- Component library exports --------------------------------------
 	def test_components_js_exports_full_library(self) -> None:
@@ -168,17 +185,27 @@ class TestKtClShellLayoutGuard(IntegrationTestCase):
 			"renderTopToolbar",
 			"renderBreadcrumbs",
 			"renderPageHeader",
+			"renderPageTitle",
 			"kpiCard",
 			"calendarWidget",
 			"dataTable",
 			"statusChip",
 			"bentoGrid",
 			"metricsGrid",
+			"queueSummaryCard",
+			"queueSummaryGrid",
+			"tabBar",
+			"filterBar",
+			"queueTable",
+			"createTenderConfigurationModal",
 		):
 			self.assertIn(fn, source, f"component library missing {fn}")
 		# Library aliases + aggregator namespace.
-		for alias in ("C.topBar", "C.breadcrumbs", "C.button", "kentender_core.cl.components"):
+		for alias in ("C.topBar", "C.breadcrumbs", "C.button", "C.pageTitle", "kentender_core.cl.components"):
 			self.assertIn(alias, source, f"missing library alias/namespace: {alias}")
+		spec = _core_public("js", "kt_cl_code_spec.js").read_text(encoding="utf-8")
+		self.assertIn("PAGE_TITLE", spec)
+		self.assertIn("QUEUE", spec)
 
 	def test_sidebar_js_is_config_driven(self) -> None:
 		source = _core_public("js", "kt_cl_sidebar.js").read_text(encoding="utf-8")
@@ -220,8 +247,29 @@ class TestKtClShellLayoutGuard(IntegrationTestCase):
 
 	def test_shell_js_lifecycle_hooks(self) -> None:
 		source = _core_public("js", "kt_cl_shell.js").read_text(encoding="utf-8")
-		for fn in ("enter:", "leave:", "mountPageChrome:"):
+		for fn in (
+			"enter:",
+			"leave:",
+			"mountPageChrome:",
+			"enterNative:",
+			"leaveNative:",
+			"updateChrome:",
+			"mountContent:",
+		):
 			self.assertIn(fn, source)
+
+	def test_surface_registry_exports_ui00(self) -> None:
+		source = _core_public("js", "kt_cl_surface_registry.js").read_text(encoding="utf-8")
+		self.assertIn('"UI-00"', source)
+		self.assertIn("it-tender-configuration-dashboard", source)
+		self.assertIn("resolveFromRoute", source)
+		self.assertIn("sidebarWorkspaceKey", source)
+
+	def test_shell_router_is_wired(self) -> None:
+		source = _core_public("js", "kt_cl_shell_router.js").read_text(encoding="utf-8")
+		self.assertIn('frappe.router.on("change"', source)
+		self.assertIn("enterNative", source)
+		self.assertIn("leaveNative", source)
 
 	# ---- Desk wiring: POC page + gallery + permanent redirect ------------
 	def test_poc_page_is_wired(self) -> None:

@@ -110,6 +110,7 @@ app_include_js = [
 	f"/assets/kentender_procurement/js/pp2_planning_router.js?v={_desk_asset_v('public/js/pp2_planning_router.js')}",
 	f"/assets/kentender_procurement/js/procurement_home_workspace.js?v={_desk_asset_v('public/js/procurement_home_workspace.js')}",
 	f"/assets/kentender_procurement/js/tm2_workbench_lifecycle.js?v={_desk_asset_v('public/js/tm2_workbench_lifecycle.js')}",
+	f"/assets/kentender_procurement/js/it_tender_configuration_create_modal.js?v={_desk_asset_v('public/js/it_tender_configuration_create_modal.js')}",
 ]
 
 # include js, css files in header of web template
@@ -147,8 +148,8 @@ page_js = {
 	"tender-management-v2": "public/js/tender_management_v2_workbench_page.js",
 	"it-std-wizard-retired": "public/js/it_std_wizard_retired_page.js",
 	"kt-cl-shell-poc": "public/js/kt_cl_shell_poc_page.js",
-	"it-tender-configuration-dashboard": "public/js/it_std_wizard_retired_page.js",
-	"it-tender-configuration-overview": "public/js/it_std_wizard_retired_page.js",
+	"it-tender-configuration-dashboard": "public/js/it_tender_configurations_dashboard_page.js",
+	"it-tender-configuration-overview": "public/js/it_tender_configuration_overview_page.js",
 	"it-tender-configuration-tender-profile": "public/js/it_std_wizard_retired_page.js",
 	"it-tender-configuration-tds": "public/js/it_std_wizard_retired_page.js",
 	"it-tender-configuration-it-requirements": "public/js/it_std_wizard_retired_page.js",

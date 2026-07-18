@@ -1,0 +1,54 @@
+---
+description: Civic Ledger queue/list page lock — compose via kt_cl_*; toolbar, filter bar, queue table footer contracts; Playwright gate.
+globs:
+  - apps/kentender_v1/kentender_core/**/kt_cl_*
+  - apps/kentender_v1/kentender_core/**/civic_ledger*
+  - apps/kentender_v1/kentender_procurement/**/it_tender*
+  - apps/kentender_v1/kentender_procurement/**/tender_configurations/**
+  - apps/kentender_v1/docs/std-prod-impl/IT-STD-Wizard-v3/**
+  - apps/kentender_v1/tests/ui/smoke/it-std-wizard/**
+  - apps/kentender_v1/tests/ui/helpers/ktCl*.ts
+alwaysApply: false
+---
+
+# Civic Ledger queue / list page lock
+
+Applies to **IT STD Wizard v3** Desk surfaces and any page using `kt_cl_shell` / `kt_cl_components` queue patterns (UI-00 and successors).
+
+## Mandatory fresh read (before implementing a new CL page)
+
+1. [`apps/kentender_v1/docs/std-prod-impl/IT-STD-Wizard-v3/B-Components/COMPONENTS.md`](apps/kentender_v1/docs/std-prod-impl/IT-STD-Wizard-v3/B-Components/COMPONENTS.md) — binding component contract
+2. Reference screen: UI-00 (`it_tender_configurations_dashboard_page.js`) + C1-M1 mock when layout is unclear
+
+Do **not** invent a third shell or hand-rolled table/filter markup.
+
+## Compose only — no parallel implementations
+
+| Concern | Required API |
+|---------|----------------|
+| Shell | `cl_shell.enterNative` + `mountContent` / `updateChrome`; register route in `kt_cl_surface_registry` |
+| Toolbar | Context trail only (ancestors); last crumb bold `SPAN`; **no** toolbar search / page title in strip |
+| Page header | Leaf H1 + subtitle + actions; `hideBreadcrumbs: true` |
+| Filters | `filterBar` + `bindFilterBar` — search flex-grow, `|` sep, compact fields; borders `#c4c6cf` |
+| Queue table | `queueTable` — never custom `<table>` footer/pager |
+| Footer | **Rows per page** select **left of** pager; wire `page_size` + reset page to 1 |
+| References | Store `id`, display `name` + `code` — never raw PKs (dropdown standard) |
+
+## Disallowed
+
+- Duplicate filter/table HTML outside `kt_cl_components.js`
+- Black / primary borders on filter controls (use outline-variant)
+- Toolbar leaf title or search box
+- Page-header breadcrumb row under the strip
+- Skipping `make ui-civic-ledger-queue-gate` when claiming a new queue page done
+
+## Regression gate before "done"
+
+1. Shared helpers: `tests/ui/helpers/ktClQueueContract.ts`
+2. Module contract spec under `tests/ui/smoke/<module>/` (UI-00: `kt-cl-queue-pattern-lock.spec.ts`)
+3. Spec listed in `make -C apps/kentender_v1 ui-civic-ledger-queue-gate`
+4. Module smoke still green; touch `kentender_core/hooks.py` + `clear-cache` after CL CSS/JS edits
+
+## Rollout for new CL screens
+
+Add surface registry entry → compose from `cl_components` → call queue contract helpers → add/extend gate spec → update [`docs/test-contracts/civic-ledger-queue-rollout-matrix.md`](apps/kentender_v1/docs/test-contracts/civic-ledger-queue-rollout-matrix.md).

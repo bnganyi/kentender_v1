@@ -40,7 +40,10 @@ bench --site kentender.midas.com clear-cache
 
 - The mock `code.html` changes.
 - A component introduces a Tailwind class not already present in the sources.
+- C1-M1 / C1-M2 screen HTML or `it_tender_*.js` / `kt_cl_*.js` add new utilities.
 
 `sources/code.html` is a copy of
-`docs/std-prod-impl/IT-STD-Wizard-v3/B-Components/code.html`; refresh it when the
-mock changes before recompiling.
+`docs/std-prod-impl/IT-STD-Wizard-v3/B-Components/code.html`. Content also scans
+`docs/.../C1-M1/*.html`, `C1-M2/*.html`, and live `it_tender_*.js` page scripts.
+Refresh `sources/c1-m1-*.html` / `c1-m2-*.html` when those mocks change, then
+recompile.

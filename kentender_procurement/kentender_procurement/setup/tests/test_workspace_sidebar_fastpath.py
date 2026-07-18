@@ -238,6 +238,33 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 				msg=f"STD prod route {route_key!r} should reuse Procurement sidebar rail",
 			)
 
+	def test_bootinfo_includes_it_wizard_page_route_keys(self):
+		"""IT STD Wizard Desk pages must keep the Procurement rail on hard refresh."""
+		if not frappe.db.exists("Workspace Sidebar", "Procurement"):
+			self.skipTest("Procurement sidebar not on site")
+		bootinfo: dict = {"workspace_sidebar_item": {}}
+		patch_bootinfo(bootinfo)
+		items = bootinfo.get("workspace_sidebar_item") or {}
+		proc = items.get("procurement") or {}
+		self.assertTrue(len(proc.get("items") or []) > 0)
+		for route_key in (
+			"it-tender-configuration-dashboard",
+			"it-tender-configuration-overview",
+			"it-tender-configuration-tender-profile",
+			"it-tender-configuration-tds",
+			"it-tender-configuration-publication-readiness",
+		):
+			self.assertIn(
+				route_key,
+				items,
+				msg=f"IT wizard route {route_key!r} requires boot sidebar fast-path key",
+			)
+			self.assertEqual(
+				(items[route_key] or {}).get("items"),
+				proc.get("items"),
+				msg=f"IT wizard route {route_key!r} should reuse Procurement sidebar rail",
+			)
+
 	def test_bootinfo_excludes_procurement_planning_evidence_route_key(self):
 		"""P5A-004 — superseded evidence route must not be an ordinary planning fast-path."""
 		if not frappe.db.exists("Workspace Sidebar", "Procurement"):

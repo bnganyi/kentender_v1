@@ -3,10 +3,9 @@
 
 	var ARCHIVE_PATH = "apps/kentender_v1/archive/it-std-wizard-retired-2026-07/README.md";
 
+	/* UI-00 dashboard + UI-01 overview stub are live — do not bind them here. */
 	var RETIRED_PAGE_NAMES = [
 		"it-std-wizard-retired",
-		"it-tender-configuration-dashboard",
-		"it-tender-configuration-overview",
 		"it-tender-configuration-tender-profile",
 		"it-tender-configuration-tds",
 		"it-tender-configuration-it-requirements",

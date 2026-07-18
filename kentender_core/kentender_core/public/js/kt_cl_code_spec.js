@@ -33,12 +33,18 @@ frappe.provide("kentender_core.cl_code_spec");
 	var NAV_FOOTER_LINK =
 		"flex items-center gap-3 px-3 py-1.5 rounded text-on-surface-variant hover:bg-surface-container-high transition-colors cursor-pointer transition-all duration-200";
 
-	// ---- Top bar (code.html 311-331) ------------------------------------
+	// ---- Top bar (C1-M1 code-in-progress.html TopAppBar) --------------
 	var TOOLBAR_ROOT =
-		"sticky top-0 z-40 flex justify-between items-center px-4 w-full bg-surface border-b border-outline-variant h-12 shrink-0";
+		"sticky top-0 z-40 flex justify-between items-center px-6 w-full bg-surface-container-lowest border-b border-outline-variant h-16 shrink-0";
+	/* Toolbar context trail (ancestors; last crumb bold). */
+	var BREADCRUMB_TOOLBAR =
+		"text-sm font-label-md text-on-surface-variant flex items-center gap-2";
 
-	// ---- Page header (code.html 337-356) --------------------------------
+	// ---- Page header (code.html 337-356 + DESIGN.md display title) ------
 	var BREADCRUMB_ROOT = "flex items-center gap-1 mb-1";
+	/* Semantic class + token utilities; layout CSS asserts DESIGN.md display size
+	 * until civic_ledger.css is regenerated with text-display/font-display. */
+	var PAGE_TITLE = "kt-cl-page-title font-bold text-primary";
 
 	var BTN_OUTLINE =
 		"px-3 py-1.5 rounded border border-primary text-primary hover:bg-primary-fixed/10 transition-colors font-label-md text-label-md flex items-center gap-1.5";
@@ -116,7 +122,7 @@ frappe.provide("kentender_core.cl_code_spec");
 		title: "font-headline-md text-headline-md font-semibold text-on-surface",
 		filterWrap: "relative w-full sm:w-56",
 		select:
-			"w-full pl-8 pr-3 py-1 border border-outline-variant rounded bg-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary text-body-md appearance-none cursor-pointer h-7",
+			"kt-cl-filter-control kt-cl-filter-select w-full pl-8 pr-3 py-1 text-body-md appearance-none cursor-pointer h-7",
 		scroll: "table-container overflow-x-auto w-full",
 		table: "w-full min-w-[800px] text-left border-collapse",
 		theadTr: "bg-surface-bright border-b border-outline-variant",
@@ -156,6 +162,63 @@ frappe.provide("kentender_core.cl_code_spec");
 		rejected: { chip: "bg-error-container/30 text-on-error-container", dot: "bg-error", label: "Rejected" },
 	};
 
+	// ---- UI-00 queue chrome (C1-M1 code-ready-to-configure.html) ---------
+	var QUEUE = {
+		/* C1-M1 mock: fixed 4-column KPI row (responsive handled in layout CSS). */
+		summaryGrid: "grid grid-cols-4 gap-4 mb-8",
+		summaryCard:
+			"bg-surface-container-lowest border border-outline-variant p-4 flex items-center gap-4 relative overflow-hidden",
+		summaryAccent: "absolute left-0 top-0 bottom-0 w-1",
+		summaryIconWrap: "w-10 h-10 rounded bg-surface-container-high flex items-center justify-center shrink-0",
+		summaryLabel: "text-label-md text-on-surface-variant uppercase tracking-tighter",
+		summaryValue: "text-headline-lg font-bold text-primary",
+		canvas:
+			"bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden flex flex-col",
+		tabBar:
+			"flex items-center px-6 border-b border-outline-variant bg-surface-container-low/30 overflow-x-auto no-scrollbar",
+		tabActive:
+			"px-4 py-4 text-label-md font-bold text-primary border-b-2 border-primary whitespace-nowrap",
+		tabIdle:
+			"px-4 py-4 text-label-md font-medium text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap",
+		/* C1-M1 filter strip: search flex-grows into leftover space + | + compact filters. */
+		filterBar:
+			"kt-cl-filter-bar p-4 border-b border-outline-variant bg-surface-container-low/10",
+		filterLabel: "block text-[10px] font-label-md text-on-surface-variant mb-1 uppercase",
+		filterInput: "kt-cl-filter-control kt-cl-filter-input",
+		filterSelect: "kt-cl-filter-control kt-cl-filter-select",
+		tableScroll: "overflow-x-auto overflow-y-auto max-h-[500px]",
+		table: "w-full text-left border-collapse min-w-[1000px]",
+		theadTr: "bg-surface-container-low border-b border-outline-variant sticky top-0 z-10",
+		th: "px-4 py-3 text-label-md text-on-surface-variant uppercase font-bold tracking-wider",
+		tbody: "divide-y divide-outline-variant/30",
+		tr: "hover:bg-surface-bright transition-colors group",
+		tdRef: "px-4 py-2 font-label-md text-primary font-bold",
+		tdTitle: "px-4 py-2 text-body-md font-medium text-on-surface",
+		tdText: "px-4 py-2 text-body-sm",
+		tdMuted: "px-4 py-2 text-label-sm text-on-surface-variant",
+		tdAction: "px-4 py-2",
+		rowBtn: "h-7 px-3 bg-primary text-on-primary rounded text-label-sm hover:opacity-90 whitespace-nowrap",
+		footer:
+			"p-4 bg-surface-bright border-t border-outline-variant flex justify-between items-center gap-3",
+		footerText: "text-label-sm text-on-surface-variant font-medium",
+		footerRight: "kt-cl-table-footer-right flex items-center gap-3",
+		pageSizeWrap: "kt-cl-page-size flex items-center gap-2",
+		pageSizeLabel: "text-label-sm text-on-surface-variant font-medium whitespace-nowrap",
+		pageSizeSelect: "kt-cl-filter-control kt-cl-filter-select kt-cl-page-size-select",
+		pager: "flex gap-2",
+		pagerBtn:
+			"w-8 h-8 flex items-center justify-center rounded border border-outline-variant bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-high transition-colors text-label-sm",
+		pagerBtnActive: "w-8 h-8 flex items-center justify-center rounded bg-primary text-on-primary text-label-sm font-bold",
+		modalOverlay:
+			"fixed inset-0 z-[100] flex items-center justify-center p-4 kt-cl-modal-overlay",
+		modalRoot:
+			"bg-surface-container-lowest w-full max-w-2xl rounded shadow-xl border border-outline-variant flex flex-col max-h-[90vh]",
+		modalHeader: "p-6 border-b border-outline-variant bg-surface-container-low",
+		modalBody: "p-6 overflow-y-auto space-y-8",
+		modalFooter:
+			"p-6 border-t border-outline-variant flex justify-between items-center bg-surface-container-low",
+	};
+
 	kentender_core.cl_code_spec = {
 		SIDENAV_ROOT: SIDENAV_ROOT,
 		NAV_LINK_ACTIVE: NAV_LINK_ACTIVE,
@@ -166,7 +229,9 @@ frappe.provide("kentender_core.cl_code_spec");
 		NAV_CHILD_ACTIVE: NAV_CHILD_ACTIVE,
 		NAV_FOOTER_LINK: NAV_FOOTER_LINK,
 		TOOLBAR_ROOT: TOOLBAR_ROOT,
+		BREADCRUMB_TOOLBAR: BREADCRUMB_TOOLBAR,
 		BREADCRUMB_ROOT: BREADCRUMB_ROOT,
+		PAGE_TITLE: PAGE_TITLE,
 		BTN_OUTLINE: BTN_OUTLINE,
 		BTN_PRIMARY: BTN_PRIMARY,
 		BENTO_GRID: BENTO_GRID,
@@ -180,6 +245,7 @@ frappe.provide("kentender_core.cl_code_spec");
 		CHIP_TYPO: CHIP_TYPO,
 		CHIP_DOT: CHIP_DOT,
 		CHIP: CHIP,
+		QUEUE: QUEUE,
 		CODE_HTML_PATH: "docs/std-prod-impl/IT-STD-Wizard-v3/B-Components/code.html",
 	};
 })();

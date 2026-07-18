@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KenTender — Create Tender Configuration</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100..900&family=Public+Sans:wght@100..900&display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary": "#ffffff",
+                      "tertiary": "#030a1d",
+                      "on-secondary": "#ffffff",
+                      "secondary-fixed-dim": "#b9c7e0",
+                      "primary": "#000b1d",
+                      "on-surface-variant": "#43474e",
+                      "surface-container-lowest": "#ffffff",
+                      "inverse-surface": "#2d3133",
+                      "secondary-container": "#d2e1fa",
+                      "on-surface": "#191c1e",
+                      "on-secondary-fixed": "#0d1c2e",
+                      "on-tertiary-fixed": "#131b2f",
+                      "on-primary-fixed-variant": "#2d486c",
+                      "surface-container-low": "#f2f4f6",
+                      "outline-variant": "#c4c6cf",
+                      "on-error-container": "#93000a",
+                      "surface": "#f7f9fb",
+                      "on-tertiary-fixed-variant": "#3e465c",
+                      "background": "#f7f9fb",
+                      "surface-container-high": "#e6e8ea",
+                      "surface-bright": "#f7f9fb",
+                      "inverse-on-surface": "#eff1f3",
+                      "on-secondary-container": "#556379",
+                      "on-primary-fixed": "#001c3a",
+                      "on-secondary-fixed-variant": "#3a485c",
+                      "on-primary-container": "#708ab2",
+                      "tertiary-fixed": "#dae2fd",
+                      "on-tertiary-container": "#8088a1",
+                      "primary-fixed": "#d4e3ff",
+                      "on-background": "#191c1e",
+                      "inverse-primary": "#adc8f3",
+                      "surface-container": "#eceef0",
+                      "primary-container": "#002244",
+                      "error": "#ba1a1a",
+                      "secondary": "#515f74",
+                      "on-error": "#ffffff",
+                      "surface-dim": "#d8dadc",
+                      "primary-fixed-dim": "#adc8f3",
+                      "surface-container-highest": "#e0e3e5",
+                      "surface-tint": "#456085",
+                      "tertiary-container": "#192135",
+                      "tertiary-fixed-dim": "#bec6e0",
+                      "surface-variant": "#e0e3e5",
+                      "secondary-fixed": "#d5e3fc",
+                      "error-container": "#ffdad6",
+                      "on-primary": "#ffffff",
+                      "outline": "#74777f"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "table-row-height": "32px",
+                      "container-padding": "16px",
+                      "input-height": "28px",
+                      "component-gap": "8px",
+                      "gutter": "12px"
+              },
+              "fontFamily": {
+                      "body-lg": ["Public Sans"],
+                      "label-md": ["JetBrains Mono"],
+                      "headline-md": ["Public Sans"],
+                      "label-sm": ["JetBrains Mono"],
+                      "body-md": ["Public Sans"],
+                      "body-sm": ["Public Sans"],
+                      "headline-lg": ["Public Sans"],
+                      "display": ["Public Sans"]
+              },
+              "fontSize": {
+                      "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                      "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                      "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                      "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                      "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                      "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 16px;
+        }
+        .modal-overlay {
+            background-color: rgba(0, 11, 29, 0.4);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md overflow-hidden">
+<!-- Background Dashboard (Simulated Background) -->
+<div class="fixed inset-0 flex flex-col h-full w-full pointer-events-none opacity-40">
+<!-- TopAppBar Placeholder -->
+<header class="flex justify-between items-center h-16 px-gutter ml-64 bg-surface-container-lowest border-b border-outline-variant">
+<div class="flex items-center gap-4">
+<span class="text-headline-md font-headline-md font-semibold text-primary">Procurement Dashboard</span>
+<div class="bg-surface-container-low px-4 py-2 rounded-lg flex items-center gap-2 w-64 border border-outline-variant">
+<span class="material-symbols-outlined text-on-surface-variant">search</span>
+<span class="text-on-surface-variant">Search tenders...</span>
+</div>
+</div>
+<div class="flex items-center gap-gutter">
+<span class="material-symbols-outlined text-primary">notifications</span>
+<div class="w-8 h-8 rounded-full bg-primary-container"></div>
+</div>
+</header>
+<!-- SideNavBar Placeholder -->
+<aside class="fixed left-0 top-0 h-screen w-64 bg-primary flex flex-col py-container-padding border-r border-outline-variant">
+<div class="px-6 pb-8">
+<h1 class="text-headline-lg font-headline-lg font-bold text-on-primary">KenTender</h1>
+<p class="text-on-primary/70 text-body-sm">e-Procurement System</p>
+</div>
+<nav class="flex-1 space-y-1">
+<div class="px-6 py-3 flex items-center gap-4 text-on-primary/70 font-medium">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="font-label-md text-label-md">Planning</span>
+</div>
+<div class="px-6 py-3 flex items-center gap-4 text-on-primary/70 font-medium">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md text-label-md">Demand</span>
+</div>
+<div class="px-6 py-3 flex items-center gap-4 text-primary-fixed-dim font-bold border-r-4 border-primary-fixed-dim bg-on-primary-fixed-variant/20">
+<span class="material-symbols-outlined">gavel</span>
+<span class="font-label-md text-label-md">Tendering</span>
+</div>
+</nav>
+</aside>
+<!-- Content Area Placeholder (Dashboard) -->
+<main class="ml-64 p-gutter space-y-gutter">
+<div class="grid grid-cols-4 gap-gutter">
+<div class="bg-surface-container-lowest p-6 border-l-4 border-primary shadow-sm h-32 rounded">
+<div class="text-label-md font-label-md text-secondary uppercase mb-2">Total Configurations</div>
+<div class="text-display font-display text-primary">124</div>
+</div>
+<div class="bg-surface-container-lowest p-6 border-l-4 border-primary shadow-sm h-32 rounded">
+<div class="text-label-md font-label-md text-secondary uppercase mb-2">Draft Mode</div>
+<div class="text-display font-display text-primary">12</div>
+</div>
+<div class="bg-surface-container-lowest p-6 border-l-4 border-primary shadow-sm h-32 rounded">
+<div class="text-label-md font-label-md text-secondary uppercase mb-2">Awaiting Approval</div>
+<div class="text-display font-display text-primary">08</div>
+</div>
+<div class="bg-surface-container-lowest p-6 border-l-4 border-primary shadow-sm h-32 rounded">
+<div class="text-label-md font-label-md text-secondary uppercase mb-2">Published</div>
+<div class="text-display font-display text-primary">84</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant h-full rounded shadow-sm overflow-hidden">
+<div class="bg-surface-container border-b border-outline-variant px-gutter py-2 flex justify-between">
+<span class="font-bold text-primary">Active Configurations</span>
+<span class="text-body-sm text-secondary">Updated 2 minutes ago</span>
+</div>
+<div class="divide-y divide-outline-variant">
+<div class="h-10 bg-surface-bright/50"></div>
+<div class="h-10"></div>
+<div class="h-10 bg-surface-bright/50"></div>
+<div class="h-10"></div>
+</div>
+</div>
+</main>
+</div>
+<!-- Modal Overlay -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
+<!-- Modal Container -->
+<section class="bg-surface-container-lowest w-full max-w-2xl rounded shadow-xl border border-outline-variant flex flex-col max-h-[921px]">
+<!-- Modal Header -->
+<header class="p-6 border-b border-outline-variant bg-surface-container-low">
+<div class="flex justify-between items-start mb-2">
+<h2 class="text-headline-lg font-headline-lg text-primary">Create Tender Configuration</h2>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<p class="text-body-md text-on-surface-variant leading-relaxed">
+                    Select an approved procurement package. KenTender will create a tender configuration using the applicable Standard Tender Document.
+                </p>
+</header>
+<!-- Modal Body (Scrollable) -->
+<div class="p-6 overflow-y-auto space-y-8">
+<!-- Searchable Select Field -->
+<div class="space-y-2">
+<label class="block text-body-md font-bold text-primary">
+                        Approved Procurement Package
+                    </label>
+<div class="relative group">
+<div class="flex items-center w-full px-3 py-container-padding bg-surface-container-lowest border border-outline-variant rounded focus-within:ring-1 focus-within:ring-on-secondary-container transition-all cursor-pointer">
+<span class="material-symbols-outlined text-on-surface-variant mr-3">search</span>
+<span class="text-body-md text-primary font-medium flex-1">PP-ICT-2024-009 — Data Center Hardware Refresh · Information Technology</span>
+<span class="material-symbols-outlined text-on-surface-variant">arrow_drop_down</span>
+</div>
+<!-- Dropdown Shadow Effect -->
+<div class="absolute inset-0 pointer-events-none border border-outline shadow-sm opacity-0 group-hover:opacity-10 transition-opacity"></div>
+</div>
+<p class="text-label-md font-label-md text-on-surface-variant">Choose the approved package that needs a tender configuration.</p>
+</div>
+<!-- Read-only Details Section (Selection Active State) -->
+<div class="bg-surface-container-low rounded p-6 border border-outline-variant">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-on-secondary-container" style="font-variation-settings: 'FILL' 1;">info</span>
+<h3 class="text-label-md font-label-md text-on-secondary-container uppercase tracking-wider">Package Details Preview</h3>
+</div>
+<div class="grid grid-cols-2 gap-y-6 gap-x-12">
+<div>
+<span class="text-label-sm font-label-sm text-secondary uppercase block mb-1">Planning Package Ref</span>
+<span class="text-body-md font-medium text-primary">PP-ICT-2024-009</span>
+</div>
+<div>
+<span class="text-label-sm font-label-sm text-secondary uppercase block mb-1">Procurement Title</span>
+<span class="text-body-md font-medium text-primary">Data Center Hardware Refresh</span>
+</div>
+<div>
+<span class="text-label-sm font-label-sm text-secondary uppercase block mb-1">Procuring Entity</span>
+<span class="text-body-md font-medium text-primary">National Treasury</span>
+</div>
+<div>
+<span class="text-label-sm font-label-sm text-secondary uppercase block mb-1">Procurement Method</span>
+<span class="text-body-md font-medium text-primary">Open National Tender</span>
+</div>
+<div>
+<span class="text-label-sm font-label-sm text-secondary uppercase block mb-1">STD Family</span>
+<span class="text-body-md font-medium text-primary">Information Technology</span>
+</div>
+<div>
+<span class="text-label-sm font-label-sm text-secondary uppercase block mb-1">Standard Tender Document</span>
+<span class="text-body-md font-medium text-primary flex items-center gap-1">
+                                IT Standard Tender Document — April 2022
+                                <span class="material-symbols-outlined text-secondary text-sm">open_in_new</span>
+</span>
+</div>
+</div>
+</div>
+<!-- Spacer/Divider -->
+<div class="border-t border-dashed border-outline-variant"></div>
+<!-- Empty State Contextual Note (Visible only when nothing selected) -->
+<div class="hidden bg-surface-container-lowest rounded p-6 border border-outline-variant border-dashed">
+<div class="flex flex-col items-center justify-center py-4 text-center">
+<span class="material-symbols-outlined text-outline text-4xl mb-2">find_in_page</span>
+<p class="text-body-md text-on-surface-variant italic">Select a package to view configuration details</p>
+</div>
+</div>
+</div>
+<!-- Modal Footer -->
+<footer class="p-6 border-t border-outline-variant flex justify-between items-center bg-surface-container-low">
+<button class="px-6 py-2 text-body-md font-medium text-secondary hover:bg-surface-container-highest transition-colors rounded">
+                    Cancel
+                </button>
+<div class="flex gap-gutter">
+<button class="px-8 py-3 bg-primary text-on-primary font-bold text-body-md rounded shadow-sm hover:opacity-90 active:scale-[0.98] transition-all flex items-center gap-2">
+                        Create Configuration
+                        <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</footer>
+</section>
+</div>
+<!-- Interactive script for hover states -->
+<script>
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('mouseenter', () => {
+                btn.style.opacity = '0.9';
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.style.opacity = '1';
+            });
+        });
+    </script>
+</body></html>

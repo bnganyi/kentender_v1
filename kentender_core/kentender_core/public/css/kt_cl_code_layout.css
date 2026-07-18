@@ -1,5 +1,11 @@
 /*
  * Civic Ledger shell layout — structure from code.html lines 164-335.
+ *
+ * Modes:
+ *   body.kt-cl-shell                  — full replacement (POC): hide native sidebar + top chrome
+ *   body.kt-cl-shell.kt-cl-shell-native — Step 2: keep native .body-sidebar; hide only top chrome
+ *
+ * Both modes keep the kt-cl-shell class so Tailwind utilities (important: '.kt-cl-shell') apply.
  */
 body.kt-cl-shell {
 	background: var(--cl-background, #f7f9fb);
@@ -10,8 +16,12 @@ body.kt-cl-shell {
 	overflow-x: hidden;
 }
 
-/* Hide native Frappe sidebar + top chrome; custom nav from code.html replaces rail */
-body.kt-cl-shell .body-sidebar-container,
+/* Full-replacement mode only: hide the native Workspace Sidebar (custom #kt-cl-sidenav takes over). */
+body.kt-cl-shell:not(.kt-cl-shell-native) .body-sidebar-container {
+	display: none !important;
+}
+
+/* Both modes: hide Frappe top navbar + page-head (Civic Ledger toolbar replaces them). */
 body.kt-cl-shell .navbar,
 body.kt-cl-shell header.navbar,
 body.kt-cl-shell .page-head,
@@ -42,6 +52,31 @@ body.kt-cl-shell .kt-cl-canvas {
 	margin-left: 0;
 }
 
+/* Persistent chrome host (Step 2 native mode) — sticky toolbar above page content. */
+body.kt-cl-shell-native #kt-cl-chrome-host {
+	position: sticky;
+	top: 0;
+	z-index: 40;
+	width: 100%;
+}
+
+body.kt-cl-shell-native #kt-cl-chrome-host .kt-cl-canvas,
+body.kt-cl-shell-native .kt-cl-native-canvas {
+	margin-left: 0 !important;
+}
+
+/* DESIGN.md display title (32/40 Public Sans Bold) for pageHeader.title */
+.kt-cl-shell .kt-cl-page-title,
+.kt-cl-shell [data-testid="kt-cl-page-title"] {
+	font-family: "Public Sans", sans-serif;
+	font-size: 32px;
+	font-weight: 700;
+	line-height: 40px;
+	letter-spacing: -0.02em;
+	color: #000b1d;
+	margin: 0 0 4px 0;
+}
+
 /* Frappe/Bootstrap .hidden is `display:none !important`, which beats Tailwind's
  * non-important responsive display utilities. Re-assert the responsive display
  * classes the mock relies on (e.g. KPI icon badges `hidden sm:inline-flex`,
@@ -70,7 +105,9 @@ body.kt-cl-shell .kt-cl-canvas {
 		display: flex !important;
 	}
 
-	body.kt-cl-shell .kt-cl-canvas {
+	/* Full-replacement mode only: offset canvas for custom #kt-cl-sidenav.
+	 * Native mode keeps Frappe's .body-sidebar (no fake md:ml-64). */
+	body.kt-cl-shell:not(.kt-cl-shell-native) .kt-cl-canvas {
 		margin-left: 256px;
 	}
 }
@@ -231,4 +268,333 @@ body.kt-cl-rail-collapsed .kt-cl-sidenav [data-testid="kt-cl-sidebar-brand"] > d
 }
 .kt-cl-shell .border-primary {
 	border-color: #000b1d !important;
+}
+
+/* UI-M01 modal overlay (C1-M2) — above native Workspace Sidebar */
+.kt-cl-shell .kt-cl-modal-overlay {
+	background: rgba(25, 28, 30, 0.45);
+	z-index: 2000 !important;
+}
+.kt-cl-shell .no-scrollbar::-webkit-scrollbar {
+	display: none;
+}
+.kt-cl-shell .no-scrollbar {
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+}
+
+/* Top toolbar utilities — borderless icon buttons + Module | Page separator.
+ * Desk/Bootstrap button defaults must not draw boxes around notifications/help. */
+.kt-cl-shell [data-testid="kt-cl-toolbar"] .kt-cl-toolbar-icon-btn,
+.kt-cl-shell [data-testid="kt-cl-toolbar"] button {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	background: transparent !important;
+	border: none !important;
+	border-radius: 9999px !important;
+	box-shadow: none !important;
+	outline: none !important;
+	/* Match C1-M1 w-10 h-10 icon buttons */
+	width: 40px !important;
+	height: 40px !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	line-height: 1 !important;
+	cursor: pointer;
+	display: inline-flex !important;
+	align-items: center;
+	justify-content: center;
+	color: inherit;
+	flex-shrink: 0;
+}
+.kt-cl-shell [data-testid="kt-cl-toolbar"] .kt-cl-toolbar-icon-btn:hover {
+	background: rgba(25, 28, 30, 0.06) !important;
+}
+.kt-cl-shell [data-testid="kt-cl-toolbar"] {
+	min-height: 64px;
+}
+/* C1-M1 user cluster: sep + tight name/role stack + 32px circle, all vertically centered.
+ * Kill Desk/Bootstrap `p` margins that otherwise blow the text block taller than the avatar. */
+.kt-cl-shell [data-testid="kt-cl-toolbar-user-sep"],
+.kt-cl-shell .kt-cl-toolbar-user-sep {
+	width: 1px !important;
+	height: 24px !important;
+	margin: 0 4px !important;
+	background: #c4c6cf !important;
+	align-self: center;
+	flex-shrink: 0;
+}
+.kt-cl-shell [data-testid="kt-cl-toolbar-user"],
+.kt-cl-shell .kt-cl-toolbar-user {
+	display: flex !important;
+	align-items: center !important;
+	gap: 8px !important;
+	padding-left: 8px !important;
+	min-height: 32px;
+}
+.kt-cl-shell .kt-cl-toolbar-user-meta {
+	display: flex !important;
+	flex-direction: column !important;
+	justify-content: center !important;
+	align-items: flex-end !important;
+	text-align: right;
+	gap: 1px;
+	line-height: 1;
+}
+.kt-cl-shell .kt-cl-toolbar-user-meta p,
+.kt-cl-shell [data-testid="kt-cl-toolbar-user-name"],
+.kt-cl-shell [data-testid="kt-cl-toolbar-user-role"] {
+	margin: 0 !important;
+	padding: 0 !important;
+	display: block !important;
+}
+.kt-cl-shell [data-testid="kt-cl-toolbar-user-name"] {
+	font-size: 12px !important;
+	font-weight: 700 !important;
+	line-height: 14px !important;
+	color: #191c1e !important;
+}
+.kt-cl-shell [data-testid="kt-cl-toolbar-user-role"] {
+	font-size: 10px !important;
+	font-weight: 400 !important;
+	line-height: 12px !important;
+	color: #424753 !important;
+}
+.kt-cl-shell [data-testid="kt-cl-toolbar-avatar"],
+.kt-cl-shell .kt-cl-toolbar-avatar {
+	width: 32px !important;
+	height: 32px !important;
+	border-radius: 9999px !important;
+	overflow: hidden !important;
+	flex-shrink: 0 !important;
+	border: 1px solid #c4c6cf !important;
+	background: #f0f4f8 !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	cursor: pointer;
+	font-size: 11px;
+	font-weight: 700;
+	line-height: 1;
+}
+.kt-cl-shell [data-testid="kt-cl-toolbar-avatar"] img {
+	width: 100% !important;
+	height: 100% !important;
+	object-fit: cover !important;
+	border-radius: 9999px !important;
+}
+@media (min-width: 640px) {
+	body.kt-cl-shell .sm\:block {
+		display: block !important;
+	}
+}
+.kt-cl-shell [data-testid="kt-cl-breadcrumbs"] a {
+	text-decoration: none !important;
+	color: inherit;
+}
+.kt-cl-shell [data-testid="kt-cl-breadcrumbs"] a:hover {
+	color: #000b1d !important;
+	text-decoration: underline !important;
+}
+.kt-cl-shell [data-testid="kt-cl-toolbar"] [data-testid="kt-cl-breadcrumb-current"] {
+	color: #000b1d !important;
+	font-weight: 700 !important;
+}
+
+/* Desk applies default borders/backgrounds to bare <button> elements.
+ * Queue tabs and UI-M01 chrome must follow Civic Ledger classes only. */
+.kt-cl-shell [data-testid="kt-cl-tab-bar"] > button {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	background: transparent !important;
+	border: none !important;
+	border-bottom: 2px solid transparent !important;
+	border-radius: 0 !important;
+	box-shadow: none !important;
+	outline: none !important;
+	margin: 0 !important;
+	line-height: inherit !important;
+}
+.kt-cl-shell [data-testid="kt-cl-tab-bar"] > button[aria-selected="true"] {
+	border-bottom-color: #000b1d !important;
+	color: #000b1d !important;
+	font-weight: 700 !important;
+}
+.kt-cl-shell [data-testid="kt-cl-uim01-modal"] button {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	box-shadow: none !important;
+	outline: none !important;
+}
+.kt-cl-shell [data-testid="kt-cl-uim01-cancel"],
+.kt-cl-shell [data-testid="kt-cl-uim01-close"] {
+	border: none !important;
+	background: transparent !important;
+}
+.kt-cl-shell [data-testid="kt-cl-uim01-create"] {
+	border: none !important;
+}
+.kt-cl-shell [data-testid="kt-cl-uim01-package-trigger"] {
+	border: 1px solid #c4c6cf !important;
+	background: #ffffff !important;
+}
+
+/* C1-M1 queue layout — pin by testid so Frappe/Bootstrap cannot collapse grids.
+ * (Responsive Tailwind lg:/md: variants have been unreliable against Desk CSS.) */
+body.kt-cl-shell [data-testid="kt-cl-queue-summary-grid"] {
+	display: grid !important;
+	grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+	gap: 1rem !important;
+	margin-bottom: 2rem !important;
+}
+/* Queue filter bar — search grows into leftover space; filters stay a compact
+ * right-hand cluster (fixed widths). Border = outline-variant #c4c6cf. */
+body.kt-cl-shell [data-testid="kt-cl-filter-bar"],
+body.kt-cl-shell .kt-cl-filter-bar {
+	display: flex !important;
+	align-items: flex-end !important;
+	flex-wrap: nowrap !important;
+	gap: 0.75rem !important;
+	padding: 1rem !important;
+	width: 100% !important;
+}
+body.kt-cl-shell .kt-cl-filter-search {
+	flex: 1 1 auto !important;
+	min-width: 180px !important;
+	max-width: none !important;
+	width: auto !important;
+}
+body.kt-cl-shell .kt-cl-filter-sep {
+	flex: 0 0 auto !important;
+	align-self: flex-end !important;
+	height: 32px !important;
+	margin: 0 !important;
+	padding: 0 0.15rem !important;
+	color: #c4c6cf !important;
+	font-size: 16px !important;
+	font-weight: 300 !important;
+	line-height: 32px !important;
+	user-select: none;
+}
+body.kt-cl-shell .kt-cl-filter-fields {
+	display: flex !important;
+	flex-wrap: nowrap !important;
+	align-items: flex-end !important;
+	gap: 0.75rem !important;
+	flex: 0 0 auto !important; /* do not absorb empty space — leave it to search */
+	min-width: 0 !important;
+}
+body.kt-cl-shell .kt-cl-filter-field {
+	flex: 0 0 160px !important;
+	width: 160px !important;
+	min-width: 140px !important;
+	max-width: 180px !important;
+}
+body.kt-cl-shell .kt-cl-filter-control,
+body.kt-cl-shell [data-testid="kt-cl-filter-bar"] input,
+body.kt-cl-shell [data-testid="kt-cl-filter-bar"] select,
+body.kt-cl-shell [data-testid="kt-cl-table-filter"] {
+	box-sizing: border-box !important;
+	width: 100% !important;
+	height: 32px !important;
+	margin: 0 !important;
+	padding: 0 0.75rem !important;
+	border: 1px solid #c4c6cf !important; /* -- outline-variant; never black */
+	border-radius: 4px !important;
+	background-color: #ffffff !important;
+	color: #191c1e !important;
+	font-size: 13px !important;
+	line-height: 18px !important;
+	box-shadow: none !important;
+	outline: none !important;
+	-webkit-appearance: none !important;
+	appearance: none !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-filter-bar"] input[type="search"]::-webkit-search-decoration,
+body.kt-cl-shell [data-testid="kt-cl-filter-bar"] input[type="search"]::-webkit-search-cancel-button {
+	-webkit-appearance: none !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-filter-bar"] select,
+body.kt-cl-shell .kt-cl-filter-select,
+body.kt-cl-shell [data-testid="kt-cl-table-filter"] {
+	padding-right: 1.75rem !important;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23424753' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") !important;
+	background-repeat: no-repeat !important;
+	background-position: right 0.6rem center !important;
+	background-color: #ffffff !important;
+	cursor: pointer;
+}
+/* Mock: keep outline-variant border; primary is a soft focus ring only. */
+body.kt-cl-shell .kt-cl-filter-control:focus,
+body.kt-cl-shell [data-testid="kt-cl-filter-bar"] input:focus,
+body.kt-cl-shell [data-testid="kt-cl-filter-bar"] select:focus,
+body.kt-cl-shell [data-testid="kt-cl-table-filter"]:focus {
+	border-color: #c4c6cf !important;
+	box-shadow: 0 0 0 1px rgba(0, 11, 29, 0.28) !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-ui00-empty-action"],
+body.kt-cl-shell .kt-cl-ui00-empty-action {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	border: none !important;
+	box-shadow: none !important;
+	cursor: pointer;
+}
+/* Queue table footer — Rows per page sits left of the page counter. */
+body.kt-cl-shell .kt-cl-table-footer-right,
+body.kt-cl-shell [data-testid="kt-cl-ui00-footer-right"] {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.75rem !important;
+	flex-shrink: 0;
+}
+body.kt-cl-shell .kt-cl-page-size,
+body.kt-cl-shell [data-testid="kt-cl-ui00-page-size-wrap"] {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+}
+body.kt-cl-shell .kt-cl-page-size-select,
+body.kt-cl-shell [data-testid="kt-cl-ui00-page-size"] {
+	width: 72px !important;
+	min-width: 72px !important;
+	max-width: 88px !important;
+	height: 32px !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-queue-summary-card"] {
+	min-height: 0 !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-uim01-modal"] {
+	padding: 0 !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-uim01-modal"] > header,
+body.kt-cl-shell [data-testid="kt-cl-uim01-modal"] > footer {
+	padding: 1.5rem !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-uim01-modal"] > .p-6 {
+	padding: 1.5rem !important;
+}
+@media (max-width: 1023px) {
+	body.kt-cl-shell [data-testid="kt-cl-queue-summary-grid"] {
+		grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	}
+	body.kt-cl-shell [data-testid="kt-cl-filter-bar"],
+	body.kt-cl-shell .kt-cl-filter-bar,
+	body.kt-cl-shell .kt-cl-filter-fields {
+		flex-wrap: wrap !important;
+	}
+	body.kt-cl-shell .kt-cl-filter-sep {
+		display: none !important;
+	}
+}
+@media (max-width: 639px) {
+	body.kt-cl-shell [data-testid="kt-cl-queue-summary-grid"] {
+		grid-template-columns: 1fr !important;
+	}
+	body.kt-cl-shell .kt-cl-filter-search,
+	body.kt-cl-shell .kt-cl-filter-field {
+		flex: 1 1 100% !important;
+		width: 100% !important;
+		max-width: 100% !important;
+	}
 }

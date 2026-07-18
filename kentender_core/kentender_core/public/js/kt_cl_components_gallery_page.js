@@ -140,7 +140,20 @@
 			),
 		);
 
-		out.push(section("top-bar", __("Top bar"), comp.topBar({ title: __("Procurement Home"), showSearch: true })));
+		out.push(
+			section(
+				"top-bar",
+				__("Top bar"),
+				comp.topBar({
+					breadcrumbs: [
+						{ label: __("Dashboard") },
+						{ label: __("Tender Management") },
+					],
+					showSearch: false,
+					showUserMeta: true,
+				})
+			)
+		);
 
 		return (
 			'<div class="kt-cl-shell kt-cl-gallery" data-testid="kt-cl-gallery">' +

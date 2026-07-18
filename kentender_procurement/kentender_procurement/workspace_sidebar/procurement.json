@@ -1,6 +1,6 @@
 {
  "app": "kentender_procurement",
- "creation": "2026-07-17 23:44:46.715526",
+ "creation": "2026-07-18 11:24:11.801755",
  "docstatus": 0,
  "doctype": "Workspace Sidebar",
  "header_icon": "buying",
@@ -119,10 +119,10 @@
    "indent": 0,
    "keep_closed": 0,
    "label": "Tender Configurations",
-   "link_type": "URL",
+   "link_to": "it-tender-configuration-dashboard",
+   "link_type": "Page",
    "show_arrow": 0,
-   "type": "Link",
-   "url": "#"
+   "type": "Link"
   },
   {
    "child": 1,
@@ -374,7 +374,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-07-17 23:44:46.715526",
+ "modified": "2026-07-18 11:50:43.488980",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "Procurement",

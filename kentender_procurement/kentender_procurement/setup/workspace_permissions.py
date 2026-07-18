@@ -185,6 +185,28 @@ _STD_PROD_PAGE_ROUTE_KEYS = (
 for _route_key in _STD_PROD_PAGE_ROUTE_KEYS:
 	_KT_ROUTE_TO_SIDEBAR[_route_key] = "Procurement"
 
+# IT STD Wizard Desk pages (A2 registry) — keep Procurement rail on hard refresh.
+# Keys match kt_cl_surface_registry routePrefixes / Frappe page names.
+_IT_WIZARD_PAGE_ROUTE_KEYS = (
+	"it-tender-configuration-dashboard",
+	"it-tender-configuration-overview",
+	"it-tender-configuration-tender-profile",
+	"it-tender-configuration-tds",
+	"it-tender-configuration-it-requirements",
+	"it-tender-configuration-implementation-schedule",
+	"it-tender-configuration-system-inventory",
+	"it-tender-configuration-price-schedule",
+	"it-tender-configuration-evaluation-setup",
+	"it-tender-configuration-forms-and-evidence",
+	"it-tender-configuration-scc",
+	"it-tender-configuration-validation-report",
+	"it-tender-configuration-review-and-approval",
+	"it-tender-configuration-render-preview",
+	"it-tender-configuration-publication-readiness",
+)
+for _route_key in _IT_WIZARD_PAGE_ROUTE_KEYS:
+	_KT_ROUTE_TO_SIDEBAR[_route_key] = "Procurement"
+
 # G0-012 / R5 sidebar regression: **Strategy Management** and **Budget Management**
 # live in other apps. If those Workspace rows are not ``public`` / are ``is_hidden``,
 # ``allowed_workspaces`` drops them and the primary-rail links **Strategy Alignment**

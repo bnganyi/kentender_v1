@@ -137,13 +137,23 @@
 
 	function pageHeaderConfig() {
 		return {
-			breadcrumbs: [{ label: __("Dashboard") }],
-			current: __("Procurement Home"),
+			hideBreadcrumbs: true,
 			subtitle: __("Fiscal Year 2024/2025 Overview"),
 			actions: [
 				{ label: __("Export APP"), icon: "download", variant: "outline", testid: "kt-cl-action-export", key: "export" },
 				{ label: __("Submit Draft"), icon: "upload_file", variant: "primary", testid: "kt-cl-action-submit", key: "submit" },
 			],
+		};
+	}
+
+	function toolbarConfig() {
+		return {
+			breadcrumbs: [
+				{ label: __("Dashboard"), route: ["Workspaces", "Procurement Home"] },
+				{ label: __("Procurement Home") },
+			],
+			showSearch: false,
+			showUserMeta: true,
 		};
 	}
 
@@ -161,7 +171,7 @@
 		});
 
 		kentender_core.cl_shell.mountPageChrome(page.main, {
-			toolbar: { title: __("Procurement Home"), showSearch: true },
+			toolbar: toolbarConfig(),
 			pageHeader: pageHeaderConfig(),
 			mainHtml: pocMainHtml(),
 		});
