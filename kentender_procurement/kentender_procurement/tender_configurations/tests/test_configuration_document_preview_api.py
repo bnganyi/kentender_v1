@@ -183,7 +183,29 @@ class TestConfigurationDocumentPreviewApi(FrappeTestCase):
 		frappe.db.commit()
 		gen = generate_document_preview(self.cfg_id)
 		self.assertEqual(gen["preview_status"], "Exception found")
-		self.assertIn("Readiness issue", gen.get("render_exception") or "")
+		self.assertFalse(gen.get("preview_html"))
+		self.assertFalse(gen.get("can_download_preview_pdf"))
+		block = gen.get("generation_block") or {}
+		self.assertEqual(block.get("status"), "generation_blocked")
+		self.assertIn("CFG-02", block.get("blocking_area") or "")
+		self.assertNotIn("Readiness issue:", gen.get("preview_html") or "")
+
+	def test_exception_does_not_embed_diagnostics_in_html(self):
+		frappe.db.set_value(
+			"Tender Configuration",
+			self.cfg_id,
+			"system_inventory",
+			json.dumps({"items": []}),
+		)
+		frappe.db.commit()
+		gen = generate_document_preview(self.cfg_id)
+		self.assertEqual(gen["preview_status"], "Exception found")
+		self.assertEqual(gen.get("preview_html") or "", "")
+		block = gen.get("generation_block") or {}
+		self.assertIn("CFG-05", block.get("blocking_area") or "")
+		self.assertIn("no bidder-facing content", (block.get("message") or "").lower())
+		with self.assertRaises(Exception):
+			download_document_preview_pdf(self.cfg_id)
 
 	def test_exception_when_std_version_missing(self):
 		frappe.db.set_value("Tender Configuration", self.cfg_id, "std_version", None)

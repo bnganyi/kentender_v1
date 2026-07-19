@@ -24,6 +24,7 @@ from kentender_procurement.tender_configurations.services.configuration_home imp
 )
 from kentender_procurement.tender_configurations.services.preview_presentation import (
 	assert_no_forbidden_preview_markers,
+	generation_block,
 	render_evaluation_section,
 	render_forms_section,
 	render_information_system_requirements,
@@ -137,14 +138,21 @@ def _render_locked_std_body(
 	outline_key: str,
 	section_suffix: str,
 	parameter_values: dict[str, str],
-) -> tuple[str, str | None, str | None]:
-	"""Return (body_html, render_hash, error_message)."""
+) -> tuple[str, str | None, dict[str, str] | None]:
+	"""Return (body_html, render_hash, generation_block)."""
+	area = (
+		"STD Engine — Instructions to Tenderers"
+		if outline_key == "itt"
+		else "STD Engine — General Conditions of Contract"
+	)
 	if not package_id:
 		return (
 			"",
 			None,
-			frappe._("Bound STD version is required to render locked section {0}.").format(
-				outline_key
+			generation_block(
+				blocking_area=area,
+				message=f"Bound STD version is required to render locked section {outline_key}.",
+				action="Bind an ACTIVE STD version on the tender configuration, then regenerate.",
 			),
 		)
 	try:
@@ -158,16 +166,38 @@ def _render_locked_std_body(
 			parameter_values=parameter_values,
 		)
 	except Exception as exc:
-		return "", None, cstr(exc)
+		return (
+			"",
+			None,
+			generation_block(
+				blocking_area=area,
+				message=cstr(exc),
+				action="Resolve STD bind/render readiness, then regenerate the preview.",
+			),
+		)
 	if not int(result.get("clauseCount") or 0):
 		return (
 			"",
 			None,
-			frappe._("No locked clauses found for section {0} in STD version {1}.").format(
-				outline_key, package_id
+			generation_block(
+				blocking_area=area,
+				message=f"No locked clauses found for section {outline_key} in STD version {package_id}.",
+				action="Import or activate STD locked clauses for this section, then regenerate.",
 			),
 		)
 	return cstr(result.get("html") or ""), cstr(result.get("renderHash") or "") or None, None
+
+
+def _format_block_message(block: dict[str, Any] | str | None) -> str:
+	if not block:
+		return ""
+	if isinstance(block, str):
+		return block
+	area = cstr(block.get("blocking_area") or "").strip()
+	message = cstr(block.get("message") or "").strip()
+	action = cstr(block.get("action") or "").strip()
+	parts = [p for p in (area, message, action) if p]
+	return " ".join(parts) if parts else message
 
 
 def _json_list(doc, field: str, key: str) -> list[dict]:
@@ -189,10 +219,13 @@ def _json_list(doc, field: str, key: str) -> list[dict]:
 def assemble_preview_html(
 	doc,
 ) -> tuple[str, list[dict[str, str]], str | None, dict[str, Any]]:
-	"""Return (html, outline, exception_message, meta)."""
+	"""Return (html, outline, exception_message, meta).
+
+	On blocking readiness/generation errors: return empty HTML (never embed diagnostics
+	in the tender artifact). Structured block lives in meta["generation_block"].
+	"""
 	context = build_configuration_context(doc)
 	outline = [{"key": k, "label": lab} for k, lab in OUTLINE]
-	exception: str | None = None
 	package_id = _resolve_package_id(doc)
 	parameter_values = _build_parameter_values(doc)
 	render_hashes: dict[str, str] = {}
@@ -230,6 +263,8 @@ def assemble_preview_html(
 	sched_html, sched_err = render_schedule_section(milestones)
 	inv_html, inv_err = render_inventory_section(inv_items, not_applicable=inv_na)
 	scc_html, scc_err = render_scc_section(contract_values)
+
+	block: dict[str, str] | None = None
 	for err in (
 		tds_err,
 		eval_err,
@@ -242,25 +277,38 @@ def assemble_preview_html(
 		scc_err,
 	):
 		if err:
-			exception = exception or err
+			block = err if isinstance(err, dict) else generation_block(
+				blocking_area="Document Preview",
+				message=cstr(err),
+				action="Resolve the readiness issue, then regenerate.",
+			)
+			break
 
 	locked_bodies: dict[str, str] = {}
-	for outline_key, section_suffix in LOCKED_STD_SECTIONS.items():
-		body, render_hash, err = _render_locked_std_body(
-			package_id, outline_key, section_suffix, parameter_values
-		)
-		if err:
-			exception = exception or err
-			locked_bodies[outline_key] = (
-				f'<p class="kt-preview-exception">{_esc(err)}</p>'
+	if not block:
+		for outline_key, section_suffix in LOCKED_STD_SECTIONS.items():
+			body, render_hash, err = _render_locked_std_body(
+				package_id, outline_key, section_suffix, parameter_values
 			)
-		else:
+			if err:
+				block = err
+				break
 			locked_bodies[outline_key] = body
 			if render_hash:
 				render_hashes[outline_key] = render_hash
 			forbid = assert_no_forbidden_preview_markers(body)
 			if forbid:
-				exception = exception or forbid
+				block = forbid
+				break
+
+	meta: dict[str, Any] = {
+		"std_version": package_id,
+		"render_hashes": render_hashes,
+		"generation_block": block,
+	}
+	if block:
+		# Option 1: do not generate a tender PDF/HTML artifact with diagnostics.
+		return "", outline, _format_block_message(block), meta
 
 	parts = [
 		'<!DOCTYPE html><html><head><meta charset="utf-8"><title>Tender Document Preview</title>',
@@ -273,7 +321,6 @@ def assemble_preview_html(
 		"h3{color:#002244;font-size:1rem;margin:1rem 0 .35rem;}",
 		".kt-preview-table{width:100%;border-collapse:collapse;font-size:13px;}",
 		".kt-preview-table th,.kt-preview-table td{border:1px solid #c4c6cf;padding:6px 8px;text-align:left;vertical-align:top;}",
-		".kt-preview-exception{color:#ba1a1a;font-size:13px;}",
 		".kt-preview-criterion,.kt-preview-requirement,.kt-preview-form-item{margin:0 0 1rem;}",
 		"</style></head><body>",
 		'<div class="kt-preview-watermark">PREVIEW — NOT FOR PUBLICATION</div>',
@@ -294,57 +341,29 @@ def assemble_preview_html(
 			locked_bodies.get("itt") or "<p></p>",
 			locked=True,
 		),
-		_section_html(
-			"tds",
-			"Tender Data Sheet",
-			tds_html
-			or f'<p class="kt-preview-exception">{_esc(tds_err or "Tender Data Sheet unavailable.")}</p>',
-		),
+		_section_html("tds", "Tender Data Sheet", tds_html or ""),
 		_section_html(
 			"evaluation",
 			"Evaluation and Qualification Criteria",
-			eval_html
-			or f'<p class="kt-preview-exception">{_esc(eval_err or "Evaluation criteria unavailable.")}</p>',
+			eval_html or "",
 		),
 		_section_html("forms", "Tendering Forms", forms_html or ""),
-		_section_html(
-			"price",
-			"Price Schedules",
-			price_html
-			or f'<p class="kt-preview-exception">{_esc(price_err or "Price schedule unavailable.")}</p>',
-		),
+		_section_html("price", "Price Schedules", price_html or ""),
 		_section_html(
 			"requirements_is",
 			"Requirements of the Information System",
 			req_html or "",
 		),
-		_section_html(
-			"technical",
-			"Technical Requirements",
-			tech_html or "",
-		),
-		_section_html(
-			"schedule",
-			"Implementation Schedule",
-			sched_html or "",
-		),
-		_section_html(
-			"inventory",
-			"System Inventory and Background",
-			inv_html
-			or f'<p class="kt-preview-exception">{_esc(inv_err or "System inventory unavailable.")}</p>',
-		),
+		_section_html("technical", "Technical Requirements", tech_html or ""),
+		_section_html("schedule", "Implementation Schedule", sched_html or ""),
+		_section_html("inventory", "System Inventory and Background", inv_html or ""),
 		_section_html(
 			"gcc",
 			"General Conditions of Contract",
 			locked_bodies.get("gcc") or "<p></p>",
 			locked=True,
 		),
-		_section_html(
-			"scc",
-			"Special Conditions of Contract",
-			scc_html or "",
-		),
+		_section_html("scc", "Special Conditions of Contract", scc_html or ""),
 		_section_html(
 			"contract_forms",
 			"Contract Forms and Appendices",
@@ -357,12 +376,9 @@ def assemble_preview_html(
 	html_doc = "".join(parts)
 	forbid = assert_no_forbidden_preview_markers(html_doc)
 	if forbid:
-		exception = exception or forbid
-	meta = {
-		"std_version": package_id,
-		"render_hashes": render_hashes,
-	}
-	return html_doc, outline, exception, meta
+		meta["generation_block"] = forbid
+		return "", outline, _format_block_message(forbid), meta
+	return html_doc, outline, None, meta
 
 
 def _status_label(status: str) -> str:
@@ -424,11 +440,12 @@ def _dto(doc, blob: dict[str, Any], package: dict[str, Any] | None = None) -> di
 			"sent": sent,
 		},
 		"render_exception": blob.get("render_exception"),
+		"generation_block": blob.get("generation_block"),
 		"std_version": blob.get("std_version") or cstr(getattr(doc, "std_version", None) or ""),
 		"render_hashes": blob.get("render_hashes") or {},
+		# Tender PDF only when clean Generated/Confirmed — never on Exception found.
 		"can_download_preview_pdf": bool(blob.get("preview_html"))
-		and preview_status
-		in (PREVIEW_GENERATED, PREVIEW_CONFIRMED, PREVIEW_EXCEPTION),
+		and preview_status in (PREVIEW_GENERATED, PREVIEW_CONFIRMED),
 		"download_pdf_method": (
 			"kentender_procurement.tender_configurations.download_tender_configuration_document_preview_pdf"
 		),
@@ -469,13 +486,16 @@ def generate_document_preview(configuration_id: str) -> dict[str, Any]:
 		)
 	prior = _parse_blob(getattr(doc, "document_preview", None))
 	html_doc, outline, exception, meta = assemble_preview_html(doc)
+	blocked = bool(exception) or bool(meta.get("generation_block"))
 	blob = {
-		"preview_status": PREVIEW_EXCEPTION if exception else PREVIEW_GENERATED,
-		"preview_html": html_doc,
+		"preview_status": PREVIEW_EXCEPTION if blocked else PREVIEW_GENERATED,
+		# Never persist diagnostic HTML into the tender artifact.
+		"preview_html": "" if blocked else html_doc,
 		"outline": outline,
 		"generated_at": str(now_datetime()),
 		"generated_by": frappe.session.user,
 		"render_exception": exception,
+		"generation_block": meta.get("generation_block"),
 		"user_confirmed": 0,
 		"std_version": meta.get("std_version") or "",
 		"render_hashes": meta.get("render_hashes") or {},
@@ -590,6 +610,20 @@ def download_document_preview_pdf(configuration_id: str) -> None:
 	if not frappe.has_permission(doc=doc, ptype="read"):
 		frappe.throw(frappe._("Not permitted"), frappe.PermissionError)
 	blob = _parse_blob(getattr(doc, "document_preview", None))
+	preview_status = cstr(blob.get("preview_status") or "")
+	if preview_status == PREVIEW_EXCEPTION or blob.get("generation_block"):
+		frappe.throw(
+			frappe._(
+				"Preview PDF is unavailable while generation is blocked. "
+				"Resolve the readiness issue and regenerate a clean preview."
+			),
+			title="PREVIEW_PDF_BLOCKED",
+		)
+	if preview_status not in (PREVIEW_GENERATED, PREVIEW_CONFIRMED):
+		frappe.throw(
+			frappe._("Generate a document preview before downloading PDF."),
+			title="PREVIEW_PDF_EMPTY",
+		)
 	html_doc = cstr(blob.get("preview_html") or "").strip()
 	if not html_doc:
 		frappe.throw(

@@ -145,10 +145,43 @@ test.describe("WG-03 Tender Document Preview", () => {
 		expect(disposition + contentType).toMatch(/pdf|octet-stream|download/i);
 	});
 
+	test("exception found disables PDF download and shows banner only", async ({ page }) => {
+		await seedUi00(page);
+		await page.evaluate(async (id) => {
+			// @ts-expect-error frappe on desk
+			await frappe.call({
+				method: "frappe.client.set_value",
+				args: {
+					doctype: "Tender Configuration",
+					name: id,
+					fieldname: "system_inventory",
+					value: JSON.stringify({ items: [] }),
+				},
+			});
+			// @ts-expect-error frappe on desk
+			await frappe.call({
+				method: "kentender_procurement.tender_configurations.generate_tender_configuration_document_preview",
+				args: { configuration_id: id },
+			});
+		}, CONFIG);
+		await openPreview(page);
+		await expect(page.getByTestId("kt-cl-wf03-exception")).toBeVisible({ timeout: 15_000 });
+		await expect(page.getByTestId("kt-cl-wf03-exception-area")).toContainText(/CFG-05/i);
+		await expect(page.getByTestId("kt-cl-wf03-preview-status")).toHaveText(/Exception found/i);
+		await expect(page.getByTestId("kt-cl-wf03-download")).toBeDisabled();
+		await expect(page.getByTestId("kt-cl-wf03-confirm-btn")).toBeDisabled();
+		await expect(page.getByTestId("kt-cl-wf03-preview-empty")).toBeVisible();
+		await expect(page.getByTestId("kt-cl-wf03-preview-frame")).toHaveCount(0);
+		// Restore seed inventory so later serial tests can generate a clean preview.
+		await seedUi00(page);
+	});
+
 	test("return modal requires fields and submits real payload", async ({ page }) => {
+		await seedUi00(page);
 		await openPreview(page);
 		await ensureGenerated(page);
 		await page.reload({ waitUntil: "domcontentloaded" });
+		await expect(page.getByTestId("kt-cl-wf03-return")).toBeEnabled({ timeout: 15_000 });
 		await page.getByTestId("kt-cl-wf03-return").click();
 		await expect(page.getByTestId("kt-cl-wf03-return-modal")).toBeVisible();
 		await page.getByTestId("kt-cl-wf03-return-submit").click();

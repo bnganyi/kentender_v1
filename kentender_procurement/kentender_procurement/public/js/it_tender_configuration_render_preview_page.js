@@ -131,16 +131,30 @@
 	}
 
 	function exceptionBannerHtml(data) {
-		if ((data.preview_status || "") !== "Exception found" && !data.render_exception) {
+		if ((data.preview_status || "") !== "Exception found" && !data.render_exception && !data.generation_block) {
 			return "";
 		}
-		var msg =
-			data.render_exception ||
-			__("Preview generation reported an exception. Fix the bound STD or configuration, then regenerate.");
+		var block = data.generation_block || {};
+		var area = block.blocking_area || "";
+		var message = block.message || data.render_exception || "";
+		var action =
+			block.action ||
+			__("Fix the bound STD or configuration, then regenerate.");
+		if (!message) {
+			message = __("Preview generation was blocked by a readiness issue.");
+		}
 		return (
 			'<div class="kt-cl-wf03-exception" data-testid="kt-cl-wf03-exception" role="alert">' +
-			"<p>" +
-			esc(msg) +
+			(area
+				? '<p class="kt-cl-wf03-exception-area" data-testid="kt-cl-wf03-exception-area"><strong>' +
+					esc(area) +
+					"</strong></p>"
+				: "") +
+			'<p data-testid="kt-cl-wf03-exception-message">' +
+			esc(message) +
+			"</p>" +
+			'<p class="kt-cl-wf03-exception-action" data-testid="kt-cl-wf03-exception-action">' +
+			esc(action) +
 			"</p>" +
 			'<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--secondary" data-action="open-readiness" data-testid="kt-cl-wf03-exception-cta">' +
 			__("Open Readiness Check") +
@@ -149,7 +163,9 @@
 	}
 
 	function previewHtml(data) {
-		var html = data.preview_html || "";
+		var blocked =
+			(data.preview_status || "") === "Exception found" || !!data.generation_block;
+		var html = blocked ? "" : data.preview_html || "";
 		var hasPreview = !!html;
 		var watermark = data.watermark_label || __("PREVIEW — NOT FOR PUBLICATION");
 		var status = data.preview_status_label || data.preview_status || __("Not generated");
@@ -182,6 +198,11 @@
 				__("Open full-page preview") +
 				"</button></div>"
 			: "";
+		var emptyMsg = blocked
+			? __(
+					"Document preview was not generated. Resolve the readiness issue above, then regenerate."
+				)
+			: __("Generate a preview to review the tender document.");
 		var inner = hasPreview
 			? '<div class="kt-cl-wf03-preview-viewport' +
 				(state.fitWidth ? " is-fit-width" : "") +
@@ -193,7 +214,7 @@
 				esc(html) +
 				"</textarea>"
 			: '<div class="kt-cl-wf03-preview-empty" data-testid="kt-cl-wf03-preview-empty">' +
-				esc(__("Generate a preview to review the tender document.")) +
+				esc(emptyMsg) +
 				"</div>";
 		return (
 			'<section class="kt-cl-wf03-preview" data-testid="kt-cl-wf03-preview">' +
@@ -206,9 +227,11 @@
 			"</span></div>" +
 			searchBar +
 			viewToolbar +
-			'<p class="kt-cl-wf03-watermark" data-testid="kt-cl-wf03-watermark">' +
-			esc(watermark) +
-			"</p>" +
+			(hasPreview
+				? '<p class="kt-cl-wf03-watermark" data-testid="kt-cl-wf03-watermark">' +
+					esc(watermark) +
+					"</p>"
+				: "") +
 			inner +
 			"</section>"
 		);
@@ -298,7 +321,7 @@
 	function footerHtml(data) {
 		var canRegen = !!(data && data.can_regenerate_preview);
 		var canReturn = !!(data && data.can_return_for_correction);
-		var hasHtml = !!(data && data.preview_html);
+		var canDownload = !!(data && data.can_download_preview_pdf);
 		return (
 			'<div class="kt-cl-wizard-footer" data-testid="kt-cl-wf03-footer">' +
 			'<div class="kt-cl-wizard-footer-start">' +
@@ -312,7 +335,7 @@
 			__("Regenerate Preview") +
 			"</button>" +
 			'<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--outline" data-action="download" data-testid="kt-cl-wf03-download"' +
-			(hasHtml && !state.busy ? "" : " disabled") +
+			(canDownload && !state.busy ? "" : " disabled") +
 			">" +
 			__("Download Preview PDF") +
 			"</button>" +
@@ -686,6 +709,16 @@
 
 	function downloadPreviewPdf() {
 		if (!state.configurationId || state.busy) {
+			return;
+		}
+		if (!(state.payload && state.payload.can_download_preview_pdf)) {
+			frappe.show_alert(
+				{
+					message: __("Preview PDF is unavailable until a clean preview is generated."),
+					indicator: "orange",
+				},
+				5
+			);
 			return;
 		}
 		var url =
@@ -1108,7 +1141,13 @@
 					state.confirmChecked = true;
 				}
 				remountWithPayload(page, data);
-				if (data && !data.preview_html && data.can_regenerate_preview) {
+				if (
+					data &&
+					!data.preview_html &&
+					data.can_regenerate_preview &&
+					(data.preview_status || "") === "Not generated" &&
+					!data.generation_block
+				) {
 					generatePreview(page);
 				}
 			},

@@ -149,7 +149,9 @@ class TestPreviewPresentation(unittest.TestCase):
 	def test_inventory_empty_is_readiness_unless_na(self):
 		html, err = render_inventory_section([])
 		self.assertEqual(html, "")
-		self.assertIn("Readiness issue", err or "")
+		self.assertIsInstance(err, dict)
+		self.assertEqual(err.get("status"), "generation_blocked")
+		self.assertIn("CFG-05", err.get("blocking_area") or "")
 		html2, err2 = render_inventory_section([], not_applicable=True)
 		self.assertIsNone(err2)
 		self.assertIn("not applicable", html2.lower())
@@ -163,7 +165,15 @@ class TestPreviewPresentation(unittest.TestCase):
 			),
 			"Compute Node Performance technical compliance",
 		)
+		self.assertEqual(
+			expand_requirement_reference(
+				"REQ-001 technical compliance",
+				{"REQ-001": "Compute Node Performance"},
+			),
+			"Compute Node Performance technical compliance",
+		)
 		self.assertIsNotNone(
 			assert_no_forbidden_preview_markers("Locked standard text from bound STD version.")
 		)
+		self.assertIsNotNone(assert_no_forbidden_preview_markers("Readiness issue: CFG-05"))
 		self.assertIsNotNone(assert_no_forbidden_preview_markers("<td>REQ-001</td>"))

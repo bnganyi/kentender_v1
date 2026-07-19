@@ -31,7 +31,20 @@ FORBIDDEN_OUTPUT_MARKERS = (
 	"No additional requirements are specified under this section.",
 	"Price for requirement:",
 	"Technical compliance for:",
+	"Readiness issue:",
+	"generation_blocked",
+	"kt-preview-exception",
 )
+
+
+def generation_block(*, blocking_area: str, message: str, action: str) -> dict[str, str]:
+	"""Structured block for UI banner — never embed in tender HTML/PDF."""
+	return {
+		"status": "generation_blocked",
+		"blocking_area": blocking_area,
+		"message": message,
+		"action": action,
+	}
 
 INTERNAL_ID_RE = re.compile(
 	r"\b(REQ|PRI|PS|ITEM|EV|CRIT)[-_]?\d+\b",
@@ -211,12 +224,26 @@ def expand_requirement_reference(text: str, req_map: dict[str, str]) -> str:
 	if not value:
 		return ""
 
+	def _lookup(token: str) -> str:
+		return req_map.get(token.upper()) or req_map.get(token) or ""
+
+	# "REQ-001 technical compliance" → "<title> technical compliance"
+	m_ref_first = re.match(
+		r"^(REQ[-_]?\d+)\s+technical compliance\.?$",
+		value,
+		re.IGNORECASE,
+	)
+	if m_ref_first:
+		title = _lookup(m_ref_first.group(1))
+		if title:
+			return f"{title} technical compliance"
+
 	def _repl(match: re.Match) -> str:
 		token = match.group(0)
-		return req_map.get(token.upper()) or req_map.get(token) or token
+		return _lookup(token) or token
 
 	expanded = INTERNAL_ID_RE.sub(_repl, value)
-	# "Technical compliance for: <title>" → "<title> technical compliance"
+	# "Technical compliance for: <title|REQ>" → "<title> technical compliance"
 	m = re.match(
 		r"^(Technical compliance for|Price for requirement)\s*:\s*(.+)$",
 		expanded,
@@ -224,6 +251,7 @@ def expand_requirement_reference(text: str, req_map: dict[str, str]) -> str:
 	)
 	if m:
 		subject = m.group(2).strip()
+		subject = _lookup(subject) or subject
 		if m.group(1).lower().startswith("technical"):
 			return f"{subject} technical compliance"
 		return subject
@@ -454,7 +482,11 @@ def render_tds_section(tds: dict[str, Any]) -> tuple[str, str | None]:
 	if not rows:
 		return (
 			"",
-			"Readiness issue: Tender Data Sheet has no bidder-facing content. Complete CFG-02 before generating the preview.",
+			generation_block(
+				blocking_area="CFG-02 Tender Data Sheet",
+				message="Tender Data Sheet has no bidder-facing content.",
+				action="Complete CFG-02 before generating the preview.",
+			),
 		)
 	intro = (
 		"<p>The following Tender Data Sheet provisions apply to this tender and shall be "
@@ -533,7 +565,11 @@ def render_evaluation_section(
 	if not blocks:
 		return (
 			"",
-			"Readiness issue: Evaluation and Qualification Criteria has no bidder-facing content. Complete CFG-07 before generating the preview.",
+			generation_block(
+				blocking_area="CFG-07 Evaluation Setup",
+				message="Evaluation and Qualification Criteria has no bidder-facing content.",
+				action="Complete CFG-07 before generating the preview.",
+			),
 		)
 	intro = (
 		"<p>Tenders will be evaluated in accordance with the following criteria. "
@@ -585,7 +621,11 @@ def render_price_section(
 	if not rows:
 		return (
 			"",
-			"Readiness issue: Price Schedules has no bidder-facing content. Complete CFG-06 before generating the preview.",
+			generation_block(
+				blocking_area="CFG-06 Price Schedule",
+				message="Price Schedules has no bidder-facing content.",
+				action="Complete CFG-06 before generating the preview.",
+			),
 		)
 	intro = (
 		"<p>The Price Schedule below sets out the priced items for this tender. "
@@ -739,7 +779,7 @@ def render_inventory_section(
 	items: list[dict[str, Any]],
 	*,
 	not_applicable: bool = False,
-) -> tuple[str, str | None]:
+) -> tuple[str, dict[str, str] | None]:
 	if not_applicable:
 		return (
 			"<p>System inventory disclosure is not applicable to this tender.</p>",
@@ -755,8 +795,13 @@ def render_inventory_section(
 	if not rows:
 		return (
 			"",
-			"Readiness issue: System Inventory and Background has no bidder-facing content. "
-			"Complete CFG-05 or mark inventory as not applicable before generating the preview.",
+			generation_block(
+				blocking_area="CFG-05 System Inventory and Bidder Background",
+				message="System Inventory and Bidder Background has no bidder-facing content.",
+				action=(
+					"Complete CFG-05 or mark inventory as not applicable before generating the preview."
+				),
+			),
 		)
 	intro = (
 		"<p>The following system inventory and background information is provided for "
@@ -790,17 +835,29 @@ def render_scc_section(values: list[dict[str, Any]]) -> tuple[str, str | None]:
 	return intro + _bidder_table(["Special condition", "Value"], rows), None
 
 
-def assert_no_forbidden_preview_markers(html_doc: str) -> str | None:
+def assert_no_forbidden_preview_markers(html_doc: str) -> dict[str, str] | None:
 	for marker in FORBIDDEN_OUTPUT_MARKERS:
 		if marker in (html_doc or ""):
-			return f"Readiness issue: preview output contains forbidden debug content ({marker!r})."
+			return generation_block(
+				blocking_area="Document Preview Quality Gate",
+				message=f"Preview output contains forbidden diagnostic or debug content ({marker!r}).",
+				action="Regenerate after fixing configuration or STD binding content.",
+			)
 	if re.search(
 		r">contact_officer<|>clarification_deadline<|>tender_security_required<",
 		html_doc or "",
 	):
-		return "Readiness issue: preview output contains raw configuration field names."
+		return generation_block(
+			blocking_area="Document Preview Quality Gate",
+			message="Preview output contains raw configuration field names.",
+			action="Regenerate after fixing the presentation layer mapping.",
+		)
 	if re.search(r">REQ-\d+<|>Item \d+<", html_doc or "", re.I):
-		return "Readiness issue: preview output contains internal identifiers."
+		return generation_block(
+			blocking_area="Document Preview Quality Gate",
+			message="Preview output contains internal identifiers.",
+			action="Expand requirement references into bidder-facing titles before generating.",
+		)
 	return None
 
 
