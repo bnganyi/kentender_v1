@@ -192,13 +192,23 @@
 					{ html: statusChip(setup) },
 					{
 						html:
+							'<div class="kt-cl-cfg03-row-actions">' +
 							'<button type="button" class="kt-cl-cfg03-row-action" data-action="edit-requirement" data-index="' +
 							idx +
 							'" data-testid="kt-cl-cfg03-row-action-' +
 							esc(row.requirement_id || String(idx)) +
 							'">' +
 							esc(action) +
-							"</button>",
+							"</button>" +
+							'<button type="button" class="kt-cl-cfg03-row-delete" data-action="delete-requirement" data-index="' +
+							idx +
+							'" data-testid="kt-cl-cfg03-row-delete-' +
+							esc(row.requirement_id || String(idx)) +
+							'" title="' +
+							esc(__("Remove")) +
+							'" aria-label="' +
+							esc(__("Remove")) +
+							'"><span class="material-symbols-outlined" aria-hidden="true">delete</span></button></div>',
 					},
 				],
 			};
@@ -334,6 +344,14 @@
 		);
 	}
 
+	function sectionTitle(n, label) {
+		return (
+			'<h3 class="kt-cl-cfg03-section-title">' +
+			esc(String(n) + ". " + label) +
+			"</h3>"
+		);
+	}
+
 	function drawerHtml(row, isNew) {
 		row = row || {};
 		var refs = row.references || {
@@ -345,25 +363,26 @@
 			'<div class="kt-cl-cfg03-drawer-overlay" data-testid="kt-cl-cfg03-drawer-overlay" role="dialog" aria-modal="true">' +
 			'<aside class="kt-cl-cfg03-drawer" data-testid="kt-cl-cfg03-drawer">' +
 			'<header class="kt-cl-cfg03-drawer-header">' +
-			"<h2 data-testid=\"kt-cl-cfg03-drawer-title\">" +
+			"<div>" +
+			'<h2 data-testid="kt-cl-cfg03-drawer-title">' +
 			esc(isNew ? __("Add Requirement") : __("Edit Requirement")) +
 			"</h2>" +
+			'<p class="kt-cl-cfg03-drawer-eyebrow">' +
+			esc(__("CFG-03 IT REQUIREMENTS")) +
+			"</p></div>" +
 			'<button type="button" class="kt-cl-cfg03-drawer-close" data-action="close-drawer" data-testid="kt-cl-cfg03-drawer-close" aria-label="' +
 			__("Close") +
 			'"><span class="material-symbols-outlined" aria-hidden="true">close</span></button></header>' +
 			'<div class="kt-cl-cfg03-drawer-body" data-testid="kt-cl-cfg03-drawer-body">' +
-			'<section><h3>' +
-			__("Requirement") +
-			"</h3>" +
+			"<section>" +
+			sectionTitle(1, __("Requirement Core Identity")) +
 			// Labels align with table columns: ID + Requirement (title is not the ID)
 			fieldWrap(
 				__("ID"),
-				'<p class="kt-cl-cfg03-readonly" data-testid="kt-cl-cfg03-drawer-id">' +
-					esc(
-						row.requirement_id
-							? row.requirement_id
-							: __("Assigned on save")
-					) +
+				'<p class="kt-cl-cfg03-readonly" data-testid="kt-cl-cfg03-drawer-id" data-requirement-id="' +
+					esc(row.requirement_id || "") +
+					'">' +
+					esc(row.requirement_id || __("Assigned on save")) +
 					"</p>",
 				false
 			) +
@@ -385,6 +404,7 @@
 					"</textarea>",
 				false
 			) +
+			'<div class="kt-cl-cfg03-grid-2">' +
 			fieldWrap(
 				__("Category"),
 				'<select class="kt-cl-cfg03-select" data-drawer-field="category_label" data-testid="kt-cl-cfg03-drawer-category">' +
@@ -399,10 +419,9 @@
 					"</select>",
 				true
 			) +
-			"</section>" +
-			"<section><h3>" +
-			__("Bidder Response") +
-			"</h3>" +
+			"</div></section>" +
+			"<section>" +
+			sectionTitle(2, __("Bidder Response")) +
 			fieldWrap(
 				__("Bidder Response Format"),
 				'<select class="kt-cl-cfg03-select" data-drawer-field="bidder_response_format" data-testid="kt-cl-cfg03-drawer-response-format">' +
@@ -421,9 +440,8 @@
 				false
 			) +
 			"</section>" +
-			"<section><h3>" +
-			__("Evidence") +
-			"</h3>" +
+			"<section>" +
+			sectionTitle(3, __("Evidence")) +
 			fieldWrap(
 				__("Evidence Requirement"),
 				'<select class="kt-cl-cfg03-select" data-drawer-field="evidence_requirement" data-testid="kt-cl-cfg03-drawer-evidence-requirement">' +
@@ -442,9 +460,8 @@
 				false
 			) +
 			"</section>" +
-			"<section><h3>" +
-			__("Delivery Confirmation") +
-			"</h3>" +
+			"<section>" +
+			sectionTitle(4, __("Delivery Confirmation")) +
 			fieldWrap(
 				__("Delivery Confirmation Method"),
 				'<input type="text" class="kt-cl-cfg03-input" list="kt-cl-cfg03-delivery-methods" data-drawer-field="delivery_confirmation_method" data-testid="kt-cl-cfg03-drawer-delivery-method" placeholder="' +
@@ -469,31 +486,24 @@
 				true
 			) +
 			"</section>" +
-			'<section data-testid="kt-cl-cfg03-drawer-references"><h3>' +
-			__("References") +
-			"</h3>" +
-			"<dl class=\"kt-cl-cfg03-refs\">" +
-			"<div><dt>" +
-			__("Evaluation Setup") +
-			"</dt><dd>" +
+			'<section data-testid="kt-cl-cfg03-drawer-references">' +
+			sectionTitle(5, __("References (Compact)")) +
+			'<ul class="kt-cl-cfg03-refs-compact">' +
+			"<li><span class=\"material-symbols-outlined\" aria-hidden=\"true\">analytics</span>" +
 			esc(refs.evaluation_setup || "") +
-			"</dd></div>" +
-			"<div><dt>" +
-			__("Forms & Evidence") +
-			"</dt><dd>" +
+			"</li>" +
+			"<li><span class=\"material-symbols-outlined\" aria-hidden=\"true\">description</span>" +
 			esc(refs.forms_and_evidence || "") +
-			"</dd></div>" +
-			"<div><dt>" +
-			__("Contract Values") +
-			"</dt><dd>" +
+			"</li>" +
+			"<li><span class=\"material-symbols-outlined\" aria-hidden=\"true\">payments</span>" +
 			esc(refs.contract_values || "") +
-			"</dd></div></dl></section></div>" +
+			"</li></ul></section></div>" +
 			'<footer class="kt-cl-cfg03-drawer-footer">' +
-			'<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--secondary" data-action="close-drawer" data-testid="kt-cl-cfg03-drawer-cancel">' +
-			__("Cancel") +
-			"</button>" +
 			'<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--primary" data-action="save-requirement" data-testid="kt-cl-cfg03-drawer-save">' +
 			__("Save Requirement") +
+			"</button>" +
+			'<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--secondary" data-action="close-drawer" data-testid="kt-cl-cfg03-drawer-cancel">' +
+			__("Cancel") +
 			"</button></footer></aside></div>"
 		);
 	}
@@ -515,11 +525,28 @@
 		$host.empty().off(".cfg03drawer");
 	}
 
+	function nextRequirementId() {
+		var maxN = 0;
+		(state.requirements || []).forEach(function (r) {
+			var m = String((r && r.requirement_id) || "").match(/^REQ-(\d+)$/i);
+			if (m) {
+				maxN = Math.max(maxN, parseInt(m[1], 10));
+			}
+		});
+		var padded = String(maxN + 1);
+		while (padded.length < 3) {
+			padded = "0" + padded;
+		}
+		return "REQ-" + padded;
+	}
+
 	function openDrawer(index) {
 		state.drawerOpen = true;
 		state.editingIndex = typeof index === "number" ? index : -1;
 		var isNew = state.editingIndex < 0;
-		var row = isNew ? {} : state.requirements[state.editingIndex] || {};
+		var row = isNew
+			? { requirement_id: nextRequirementId() }
+			: state.requirements[state.editingIndex] || {};
 		var $host = ensureDrawerHost();
 		$host.html(drawerHtml(row, isNew));
 		$host.off(".cfg03drawer");
@@ -544,8 +571,13 @@
 			var key = String($(this).attr("data-drawer-field") || "");
 			row[key] = String($(this).val() || "").trim();
 		});
+		var previewId = String(
+			$host.find('[data-testid="kt-cl-cfg03-drawer-id"]').attr("data-requirement-id") || ""
+		).trim();
 		if (state.editingIndex >= 0 && state.requirements[state.editingIndex]) {
-			row.requirement_id = state.requirements[state.editingIndex].requirement_id || "";
+			row.requirement_id = state.requirements[state.editingIndex].requirement_id || previewId;
+		} else {
+			row.requirement_id = previewId || nextRequirementId();
 		}
 		return row;
 	}
@@ -680,6 +712,14 @@
 						},
 						6
 					);
+				} else if (opts.fromDelete) {
+					frappe.show_alert(
+						{
+							message: __("Requirement removed"),
+							indicator: "green",
+						},
+						4
+					);
 				} else if (!opts.thenContinue) {
 					frappe.show_alert(
 						{
@@ -737,6 +777,31 @@
 			if (!isNaN(idx)) {
 				openDrawer(idx);
 			}
+		});
+		$root.on("click.cfg03", "[data-action='delete-requirement']", function (e) {
+			e.preventDefault();
+			e.stopPropagation();
+			var idx = parseInt($(this).attr("data-index"), 10);
+			if (isNaN(idx) || idx < 0 || idx >= (state.requirements || []).length) {
+				return;
+			}
+			var row = state.requirements[idx] || {};
+			var label = row.title || row.requirement_id || __("this requirement");
+			kentender_core.cl.confirm({
+				title: __("Remove requirement?"),
+				message: __("{0} will be removed from this configuration.", [label]),
+				confirmLabel: __("Remove"),
+				cancelLabel: __("Cancel"),
+				tone: "danger",
+				onConfirm: function () {
+					state.requirements.splice(idx, 1);
+					state.dirty = true;
+					closeDrawer();
+					if (state.page) {
+						saveRequirements($(state.page.main), state.page, { fromDelete: true });
+					}
+				},
+			});
 		});
 		$root.on("click.cfg03", "[data-action='back-home']", function (e) {
 			e.preventDefault();

@@ -85,6 +85,30 @@ class TestKtClSurfaceRegistryContract(IntegrationTestCase):
 		self.assertIn('["tender-management-v2"]', source)
 		self.assertNotIn("pageTitle: pageTitle", source)
 
+	def test_cfg05_cfg06_trails_include_step_leaf(self) -> None:
+		"""CFG-05/06 must not reuse trailConfigHome (stale “Configuration Home” current)."""
+		source = _registry_source()
+		self.assertIn("trailCfg05SystemInventory", source)
+		self.assertIn("trailCfg06PriceSchedule", source)
+		self.assertIn('crumb(__("System Inventory & Bidder Background"))', source)
+		self.assertIn('crumb(__("Price Schedule"))', source)
+		cfg05 = re.search(
+			r'"CFG-05"\s*:\s*\{(?P<body>.*?)(?=\n\t\t"[A-Z]|\n\t\};)',
+			source,
+			re.DOTALL,
+		)
+		self.assertIsNotNone(cfg05, msg="CFG-05 surface block not found")
+		self.assertIn("trailCfg05SystemInventory()", cfg05.group("body"))
+		self.assertNotIn("trailConfigHome", cfg05.group("body"))
+		cfg06 = re.search(
+			r'"CFG-06"\s*:\s*\{(?P<body>.*?)(?=\n\t\t"[A-Z]|\n\t\};)',
+			source,
+			re.DOTALL,
+		)
+		self.assertIsNotNone(cfg06, msg="CFG-06 surface block not found")
+		self.assertIn("trailCfg06PriceSchedule()", cfg06.group("body"))
+		self.assertNotIn("trailConfigHome", cfg06.group("body"))
+
 	def test_ui00_dashboard_page_js_wired(self) -> None:
 		page_js = frappe.get_hooks("page_js", app_name="kentender_procurement", default={})
 		self.assertIn("it-tender-configuration-dashboard", page_js)

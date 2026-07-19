@@ -13,11 +13,23 @@ from kentender_procurement.tender_configurations.api import (
 	get_tender_configuration as _get_tender_configuration,
 	get_tender_configuration_home as _get_tender_configuration_home,
 	get_tender_configuration_profile as _get_tender_configuration_profile,
+	get_tender_configuration_implementation_schedule as _get_tender_configuration_implementation_schedule,
 	get_tender_configuration_requirements as _get_tender_configuration_requirements,
+	get_tender_configuration_contract_values as _get_tender_configuration_contract_values,
+	get_tender_configuration_evaluation_setup as _get_tender_configuration_evaluation_setup,
+	get_tender_configuration_forms_and_evidence as _get_tender_configuration_forms_and_evidence,
+	get_tender_configuration_price_schedule as _get_tender_configuration_price_schedule,
+	get_tender_configuration_system_inventory as _get_tender_configuration_system_inventory,
 	get_tender_configuration_tds as _get_tender_configuration_tds,
 	get_tender_configurations_dashboard as _get_tender_configurations_dashboard,
+	save_tender_configuration_contract_values as _save_tender_configuration_contract_values,
+	save_tender_configuration_evaluation_setup as _save_tender_configuration_evaluation_setup,
+	save_tender_configuration_forms_and_evidence as _save_tender_configuration_forms_and_evidence,
+	save_tender_configuration_implementation_schedule as _save_tender_configuration_implementation_schedule,
+	save_tender_configuration_price_schedule as _save_tender_configuration_price_schedule,
 	save_tender_configuration_profile as _save_tender_configuration_profile,
 	save_tender_configuration_requirements as _save_tender_configuration_requirements,
+	save_tender_configuration_system_inventory as _save_tender_configuration_system_inventory,
 	save_tender_configuration_tds as _save_tender_configuration_tds,
 )
 
@@ -97,6 +109,66 @@ def get_tender_configuration_requirements(configuration_id: str):
 @frappe.whitelist()
 def save_tender_configuration_requirements(configuration_id: str, payload=None):
 	return _save_tender_configuration_requirements(configuration_id, payload)
+
+
+@frappe.whitelist()
+def get_tender_configuration_implementation_schedule(configuration_id: str):
+	return _get_tender_configuration_implementation_schedule(configuration_id)
+
+
+@frappe.whitelist()
+def save_tender_configuration_implementation_schedule(configuration_id: str, payload=None):
+	return _save_tender_configuration_implementation_schedule(configuration_id, payload)
+
+
+@frappe.whitelist()
+def get_tender_configuration_system_inventory(configuration_id: str):
+	return _get_tender_configuration_system_inventory(configuration_id)
+
+
+@frappe.whitelist()
+def save_tender_configuration_system_inventory(configuration_id: str, payload=None):
+	return _save_tender_configuration_system_inventory(configuration_id, payload)
+
+
+@frappe.whitelist()
+def get_tender_configuration_price_schedule(configuration_id: str):
+	return _get_tender_configuration_price_schedule(configuration_id)
+
+
+@frappe.whitelist()
+def save_tender_configuration_price_schedule(configuration_id: str, payload=None):
+	return _save_tender_configuration_price_schedule(configuration_id, payload)
+
+
+@frappe.whitelist()
+def get_tender_configuration_evaluation_setup(configuration_id: str):
+	return _get_tender_configuration_evaluation_setup(configuration_id)
+
+
+@frappe.whitelist()
+def save_tender_configuration_evaluation_setup(configuration_id: str, payload=None):
+	return _save_tender_configuration_evaluation_setup(configuration_id, payload)
+
+
+@frappe.whitelist()
+def get_tender_configuration_forms_and_evidence(configuration_id: str):
+	return _get_tender_configuration_forms_and_evidence(configuration_id)
+
+
+@frappe.whitelist()
+def save_tender_configuration_forms_and_evidence(configuration_id: str, payload=None):
+	return _save_tender_configuration_forms_and_evidence(configuration_id, payload)
+
+
+@frappe.whitelist()
+def get_tender_configuration_contract_values(configuration_id: str):
+	return _get_tender_configuration_contract_values(configuration_id)
+
+
+@frappe.whitelist()
+def save_tender_configuration_contract_values(configuration_id: str, payload=None):
+	return _save_tender_configuration_contract_values(configuration_id, payload)
 
 
 @frappe.whitelist()

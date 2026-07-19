@@ -487,6 +487,7 @@ def get_configuration_requirements(configuration_id: str) -> dict[str, Any]:
 		"can_continue": can_continue,
 		"has_progress": has_progress,
 		"requirements": requirements_out,
+		"next_requirement_id": _next_requirement_id(raw_rows),
 		"context": context,
 		"options": {
 			"category_label": list(CATEGORIES),

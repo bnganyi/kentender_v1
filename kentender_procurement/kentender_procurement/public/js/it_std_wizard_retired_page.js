@@ -6,9 +6,6 @@
 	/* UI-00 dashboard + UI-01 overview stub are live — do not bind them here. */
 	var RETIRED_PAGE_NAMES = [
 		"it-std-wizard-retired",
-		"it-tender-configuration-implementation-schedule",
-		"it-tender-configuration-system-inventory",
-		"it-tender-configuration-price-schedule",
 		"it-tender-configuration-evaluation-setup",
 		"it-tender-configuration-forms-and-evidence",
 		"it-tender-configuration-scc",

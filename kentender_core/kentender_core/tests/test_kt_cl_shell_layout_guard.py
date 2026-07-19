@@ -198,10 +198,19 @@ class TestKtClShellLayoutGuard(IntegrationTestCase):
 			"filterBar",
 			"queueTable",
 			"createTenderConfigurationModal",
+			"confirmDialog",
+			"showConfirm",
 		):
 			self.assertIn(fn, source, f"component library missing {fn}")
 		# Library aliases + aggregator namespace.
-		for alias in ("C.topBar", "C.breadcrumbs", "C.button", "C.pageTitle", "kentender_core.cl.components"):
+		for alias in (
+			"C.topBar",
+			"C.breadcrumbs",
+			"C.button",
+			"C.pageTitle",
+			"kentender_core.cl.components",
+			"kentender_core.cl.confirm",
+		):
 			self.assertIn(alias, source, f"missing library alias/namespace: {alias}")
 		spec = _core_public("js", "kt_cl_code_spec.js").read_text(encoding="utf-8")
 		self.assertIn("PAGE_TITLE", spec)

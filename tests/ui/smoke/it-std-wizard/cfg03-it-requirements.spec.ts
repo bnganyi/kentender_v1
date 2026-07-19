@@ -136,9 +136,12 @@ test.describe("CFG-03 IT Requirements", () => {
 
 		// Drawer labels must match table columns for ID / Requirement
 		const drawerBody = page.getByTestId("kt-cl-cfg03-drawer-body");
+		await expect(drawerBody.getByText(/1\.\s*Requirement Core Identity/i)).toBeVisible();
+		await expect(drawerBody.getByText(/2\.\s*Bidder Response/i)).toBeVisible();
+		await expect(drawerBody.getByText(/4\.\s*Delivery Confirmation/i)).toBeVisible();
 		await expect(drawerBody.locator("label", { hasText: /^ID$/ })).toBeVisible();
-		await expect(page.getByTestId("kt-cl-cfg03-drawer-id")).toContainText(/Assigned on save/i);
-		await expect(drawerBody.locator("label", { hasText: /^Requirement/ })).toBeVisible();
+		await expect(page.getByTestId("kt-cl-cfg03-drawer-id")).toHaveText(/REQ-001/i);
+		await expect(drawerBody.locator("label", { hasText: /^Requirement(\s|\*)/ })).toBeVisible();
 		await expect(drawerBody).not.toContainText(/Requirement Title/i);
 
 		await fillCompleteRequirement(page);
@@ -227,6 +230,23 @@ test.describe("CFG-03 IT Requirements", () => {
 		await page.reload({ waitUntil: "domcontentloaded" });
 		await expect(page).toHaveURL(new RegExp(`${PAGE_SLUG}/${CONFIG}`), { timeout: 15_000 });
 		await expect(page.locator(ROOT)).toBeVisible({ timeout: 30_000 });
+	});
+
+	test("subtle delete removes requirement row after confirm", async ({ page }) => {
+		await openRequirements(page);
+		await page.getByTestId("kt-cl-cfg03-add").click();
+		await fillCompleteRequirement(page);
+		await page.getByTestId("kt-cl-cfg03-drawer-save").click();
+		await expect(page.getByTestId("kt-cl-cfg03-table")).toContainText(/REQ-001/);
+		await expect(page.getByTestId("kt-cl-cfg03-row-delete-REQ-001")).toBeVisible();
+		await page.getByTestId("kt-cl-cfg03-row-delete-REQ-001").click();
+		await expect(page.getByTestId("kt-cl-confirm-dialog")).toBeVisible({ timeout: 10_000 });
+		await expect(page.getByTestId("kt-cl-confirm-ok")).toHaveText(/Remove/i);
+		await expect(page.getByTestId("kt-cl-confirm-cancel")).toHaveText(/Cancel/i);
+		await page.getByTestId("kt-cl-confirm-ok").click();
+		await expect(page.getByText(/Requirement removed/i)).toBeVisible({ timeout: 15_000 });
+		await expect(page.getByTestId("kt-cl-cfg03-table")).not.toContainText(/REQ-001/);
+		await expect(page.getByTestId("kt-cl-cfg03-continue")).toBeDisabled();
 	});
 
 	test("CFG-02 Continue lands on live IT Requirements page", async ({ page }) => {

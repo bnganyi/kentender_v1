@@ -574,6 +574,101 @@ body.kt-cl-shell [data-testid="kt-cl-uim01-modal"] > footer {
 body.kt-cl-shell [data-testid="kt-cl-uim01-modal"] > .p-6 {
 	padding: 1.5rem !important;
 }
+
+/* Civic Ledger confirm dialog — soft card, not industrial frappe.confirm */
+body.kt-cl-shell [data-testid="kt-cl-confirm-dialog"],
+body.kt-cl-shell .kt-cl-confirm-dialog {
+	width: 100% !important;
+	max-width: 28rem !important;
+	background: #ffffff !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.75rem !important;
+	box-shadow: 0 8px 32px rgba(15, 23, 42, 0.12) !important;
+	display: flex !important;
+	flex-direction: column !important;
+	overflow: hidden !important;
+}
+body.kt-cl-shell .kt-cl-confirm-header {
+	display: flex !important;
+	align-items: flex-start !important;
+	justify-content: space-between !important;
+	gap: 0.75rem !important;
+	padding: 1.25rem 1.25rem 0.5rem !important;
+}
+body.kt-cl-shell .kt-cl-confirm-title {
+	margin: 0 !important;
+	font-size: 1.125rem !important;
+	font-weight: 700 !important;
+	line-height: 1.35 !important;
+	color: #001b3d !important;
+}
+body.kt-cl-shell .kt-cl-confirm-close {
+	appearance: none !important;
+	border: none !important;
+	background: transparent !important;
+	color: #5f6368 !important;
+	padding: 0.25rem !important;
+	border-radius: 9999px !important;
+	cursor: pointer !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	flex-shrink: 0 !important;
+	box-shadow: none !important;
+}
+body.kt-cl-shell .kt-cl-confirm-close:hover {
+	background: rgba(25, 28, 30, 0.06) !important;
+	color: #001b3d !important;
+}
+body.kt-cl-shell .kt-cl-confirm-body {
+	padding: 0.25rem 1.25rem 1rem !important;
+}
+body.kt-cl-shell .kt-cl-confirm-message {
+	margin: 0 !important;
+	font-size: 0.9375rem !important;
+	line-height: 1.5 !important;
+	color: #43474e !important;
+}
+body.kt-cl-shell .kt-cl-confirm-footer {
+	display: flex !important;
+	justify-content: flex-end !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+	padding: 0.75rem 1.25rem 1.25rem !important;
+}
+body.kt-cl-shell .kt-cl-confirm-btn {
+	appearance: none !important;
+	border: none !important;
+	border-radius: 0.375rem !important;
+	font-size: 0.875rem !important;
+	font-weight: 600 !important;
+	padding: 0.55rem 1.1rem !important;
+	cursor: pointer !important;
+	line-height: 1.25 !important;
+	box-shadow: none !important;
+	transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease !important;
+}
+body.kt-cl-shell .kt-cl-confirm-btn--ghost {
+	background: transparent !important;
+	color: #43474e !important;
+}
+body.kt-cl-shell .kt-cl-confirm-btn--ghost:hover {
+	background: rgba(25, 28, 30, 0.06) !important;
+}
+body.kt-cl-shell .kt-cl-confirm-btn--primary {
+	background: #002244 !important;
+	color: #ffffff !important;
+}
+body.kt-cl-shell .kt-cl-confirm-btn--primary:hover {
+	opacity: 0.92 !important;
+}
+body.kt-cl-shell .kt-cl-confirm-btn--danger {
+	background: #b3261e !important;
+	color: #ffffff !important;
+}
+body.kt-cl-shell .kt-cl-confirm-btn--danger:hover {
+	opacity: 0.92 !important;
+}
 @media (max-width: 1023px) {
 	body.kt-cl-shell [data-testid="kt-cl-queue-summary-grid"] {
 		grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -2310,6 +2405,14 @@ body.kt-cl-shell [data-testid="kt-cl-cfg03-table"] [data-testid="kt-cl-ui00-tabl
 	border: none !important;
 	box-shadow: none !important;
 }
+/* First column was flush to the card edge when cell-mono replaced shared px-4. */
+body.kt-cl-shell [data-testid="kt-cl-cfg03-table"] table th,
+body.kt-cl-shell [data-testid="kt-cl-cfg03-table"] table td {
+	padding-left: 1rem !important;
+	padding-right: 1rem !important;
+	padding-top: 0.5rem !important;
+	padding-bottom: 0.5rem !important;
+}
 body.kt-cl-shell .kt-cl-cfg03-cell-mono {
 	font-family: "JetBrains Mono", monospace !important;
 	font-size: 12px !important;
@@ -2330,6 +2433,29 @@ body.kt-cl-shell .kt-cl-cfg03-row-action {
 }
 body.kt-cl-shell .kt-cl-cfg03-row-action:hover {
 	background: rgba(173, 200, 243, 0.12) !important;
+}
+body.kt-cl-shell .kt-cl-cfg03-row-actions {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.35rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg03-row-delete {
+	appearance: none !important;
+	border: none !important;
+	background: transparent !important;
+	color: #80868b !important;
+	padding: 2px !important;
+	cursor: pointer !important;
+	border-radius: 0.125rem !important;
+	line-height: 1 !important;
+	box-shadow: none !important;
+}
+body.kt-cl-shell .kt-cl-cfg03-row-delete:hover {
+	color: #b3261e !important;
+	background: rgba(179, 38, 30, 0.06) !important;
+}
+body.kt-cl-shell .kt-cl-cfg03-row-delete .material-symbols-outlined {
+	font-size: 16px !important;
 }
 body.kt-cl-shell .kt-cl-cfg03-status {
 	display: inline-flex !important;
@@ -2468,7 +2594,7 @@ body.kt-cl-shell [data-testid="kt-cl-cfg03-run-check"]:disabled {
 	pointer-events: none !important;
 }
 
-/* CFG-03 requirement drawer (body-mounted) */
+/* CFG-03 requirement drawer (body-mounted) — visual parity with CFG-04 */
 #kt-cl-cfg03-drawer-host .kt-cl-cfg03-drawer-overlay,
 body.kt-cl-shell .kt-cl-cfg03-drawer-overlay {
 	position: fixed !important;
@@ -2480,7 +2606,7 @@ body.kt-cl-shell .kt-cl-cfg03-drawer-overlay {
 }
 #kt-cl-cfg03-drawer-host .kt-cl-cfg03-drawer,
 body.kt-cl-shell .kt-cl-cfg03-drawer {
-	width: min(28rem, 100vw) !important;
+	width: min(30rem, 100vw) !important;
 	max-width: 100% !important;
 	height: 100% !important;
 	background: #ffffff !important;
@@ -2490,17 +2616,25 @@ body.kt-cl-shell .kt-cl-cfg03-drawer {
 }
 #kt-cl-cfg03-drawer-host .kt-cl-cfg03-drawer-header {
 	display: flex !important;
-	align-items: center !important;
+	align-items: flex-start !important;
 	justify-content: space-between !important;
 	gap: 0.75rem !important;
-	padding: 16px !important;
+	padding: 1.5rem !important;
 	border-bottom: 1px solid #c4c6cf !important;
 }
 #kt-cl-cfg03-drawer-host .kt-cl-cfg03-drawer-header h2 {
-	margin: 0 !important;
+	margin: 0 0 0.25rem !important;
 	font-size: 18px !important;
 	font-weight: 700 !important;
 	color: #002244 !important;
+}
+#kt-cl-cfg03-drawer-host .kt-cl-cfg03-drawer-eyebrow {
+	margin: 0 !important;
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 11px !important;
+	letter-spacing: 0.06em !important;
+	text-transform: uppercase !important;
+	color: #5f6368 !important;
 }
 #kt-cl-cfg03-drawer-host .kt-cl-cfg03-drawer-close {
 	appearance: none !important;
@@ -2514,24 +2648,35 @@ body.kt-cl-shell .kt-cl-cfg03-drawer {
 #kt-cl-cfg03-drawer-host .kt-cl-cfg03-drawer-body {
 	flex: 1 1 auto !important;
 	overflow-y: auto !important;
-	padding: 16px !important;
+	padding: 1.5rem !important;
 	display: flex !important;
 	flex-direction: column !important;
-	gap: 1.25rem !important;
+	gap: 2rem !important;
 }
-#kt-cl-cfg03-drawer-host .kt-cl-cfg03-drawer-body h3 {
+#kt-cl-cfg03-drawer-host .kt-cl-cfg03-drawer-body h3,
+#kt-cl-cfg03-drawer-host .kt-cl-cfg03-section-title {
 	margin: 0 0 0.75rem !important;
-	font-size: 13px !important;
+	padding-bottom: 0.25rem !important;
+	font-size: 12px !important;
 	font-weight: 700 !important;
 	text-transform: uppercase !important;
-	letter-spacing: 0.03em !important;
+	letter-spacing: 0.04em !important;
 	color: #002244 !important;
+	border-bottom: 1px solid rgba(196, 198, 207, 0.55) !important;
+}
+#kt-cl-cfg03-drawer-host .kt-cl-cfg03-grid-2 {
+	display: grid !important;
+	grid-template-columns: 1fr 1fr !important;
+	gap: 1rem !important;
 }
 #kt-cl-cfg03-drawer-host .kt-cl-cfg03-field {
 	display: flex !important;
 	flex-direction: column !important;
 	gap: 0.35rem !important;
 	margin-bottom: 0.75rem !important;
+}
+#kt-cl-cfg03-drawer-host .kt-cl-cfg03-grid-2 > .kt-cl-cfg03-field {
+	margin-bottom: 0 !important;
 }
 #kt-cl-cfg03-drawer-host .kt-cl-cfg03-field label {
 	font-family: "JetBrains Mono", monospace !important;
@@ -2582,11 +2727,2168 @@ body.kt-cl-shell .kt-cl-cfg03-drawer {
 	font-size: 12px !important;
 	color: #43474e !important;
 }
+#kt-cl-cfg03-drawer-host .kt-cl-cfg03-refs-compact {
+	list-style: none !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0.5rem !important;
+}
+#kt-cl-cfg03-drawer-host .kt-cl-cfg03-refs-compact li {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+	font-size: 13px !important;
+	color: #5f6368 !important;
+}
+#kt-cl-cfg03-drawer-host .kt-cl-cfg03-refs-compact .material-symbols-outlined {
+	font-size: 18px !important;
+}
 #kt-cl-cfg03-drawer-host .kt-cl-cfg03-drawer-footer {
 	display: flex !important;
+	justify-content: stretch !important;
+	gap: 0.75rem !important;
+	padding: 1.5rem !important;
+	border-top: 1px solid #c4c6cf !important;
+	background: #f4f5f7 !important;
+}
+#kt-cl-cfg03-drawer-host .kt-cl-cfg03-drawer-footer .kt-cl-wizard-btn {
+	flex: 1 1 0 !important;
+}
+
+
+/* ── CFG-04 Implementation Schedule (C2-CFG3 table + drawer + sticky guidance) ── */
+body.kt-cl-shell [data-testid="kt-cl-cfg04-layout"],
+body.kt-cl-shell .kt-cl-cfg04-layout {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 1.5rem !important;
+	align-items: stretch !important;
+	margin-top: 1rem !important;
+}
+@media (min-width: 1280px) {
+	body.kt-cl-shell [data-testid="kt-cl-cfg04-layout"],
+	body.kt-cl-shell .kt-cl-cfg04-layout {
+		flex-direction: row !important;
+		align-items: start !important;
+	}
+	body.kt-cl-shell [data-testid="kt-cl-cfg04-main"],
+	body.kt-cl-shell .kt-cl-cfg04-main {
+		flex: 1 1 auto !important;
+		min-width: 0 !important;
+	}
+	body.kt-cl-shell:has([data-testid="kt-cl-cfg04-root"]) .kt-cl-native-canvas {
+		display: flex !important;
+		flex-direction: column !important;
+		min-height: 0 !important;
+		max-height: calc(100dvh - 3.25rem) !important;
+		overflow: hidden !important;
+	}
+	body.kt-cl-shell:has([data-testid="kt-cl-cfg04-root"]) .kt-cl-native-canvas > main {
+		flex: 1 1 auto !important;
+		min-height: 0 !important;
+		max-height: 100% !important;
+		overflow-x: hidden !important;
+		overflow-y: auto !important;
+	}
+	body.kt-cl-shell [data-testid="kt-cl-cfg04-side"],
+	body.kt-cl-shell .kt-cl-cfg04-side {
+		position: sticky !important;
+		top: 1.25rem !important;
+		align-self: start !important;
+		width: 20rem !important;
+		flex: 0 0 20rem !important;
+		z-index: 2 !important;
+		max-height: calc(100dvh - 5rem) !important;
+		overflow-y: auto !important;
+	}
+}
+body.kt-cl-shell .kt-cl-cfg04-table-card {
+	background: #ffffff !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.5rem !important;
+	box-shadow: 0 1px 2px rgba(25, 28, 30, 0.06) !important;
+	overflow: hidden !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-table-head {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	gap: 1rem !important;
+	padding: 12px 16px !important;
+	border-bottom: 1px solid #c4c6cf !important;
+	background: #f0f4f8 !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-table-head h3 {
+	margin: 0 !important;
+	font-family: "Manrope", "Noto Sans", sans-serif !important;
+	font-size: 16px !important;
+	font-weight: 700 !important;
+	color: #002244 !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg04-table"] {
+	padding: 0 !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg04-table"] [data-testid="kt-cl-ui00-table"] {
+	border: none !important;
+	box-shadow: none !important;
+}
+/* First column was flush to the card edge when cell-mono replaced shared px-4. */
+body.kt-cl-shell [data-testid="kt-cl-cfg04-table"] table th,
+body.kt-cl-shell [data-testid="kt-cl-cfg04-table"] table td {
+	padding-left: 1rem !important;
+	padding-right: 1rem !important;
+	padding-top: 0.5rem !important;
+	padding-bottom: 0.5rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-cell-mono {
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 12px !important;
+	white-space: nowrap !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-row-action {
+	appearance: none !important;
+	border: 1px solid #002244 !important;
+	background: #ffffff !important;
+	color: #002244 !important;
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 11px !important;
+	font-weight: 600 !important;
+	padding: 4px 10px !important;
+	border-radius: 0.125rem !important;
+	cursor: pointer !important;
+	box-shadow: none !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-row-action:hover {
+	background: rgba(173, 200, 243, 0.12) !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-row-actions {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.35rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-row-delete {
+	appearance: none !important;
+	border: none !important;
+	background: transparent !important;
+	color: #80868b !important;
+	padding: 2px !important;
+	cursor: pointer !important;
+	border-radius: 0.125rem !important;
+	line-height: 1 !important;
+	box-shadow: none !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-row-delete:hover {
+	color: #b3261e !important;
+	background: rgba(179, 38, 30, 0.06) !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-row-delete .material-symbols-outlined {
+	font-size: 16px !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-status {
+	display: inline-flex !important;
+	padding: 2px 8px !important;
+	border-radius: 0.25rem !important;
+	border: 1px solid #c4c6cf !important;
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 11px !important;
+	color: #43474e !important;
+	background: #ffffff !important;
+	white-space: nowrap !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-status--complete {
+	border-color: #4a668a !important;
+	color: #002244 !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-status--needs-attention {
+	background: #ffdad6 !important;
+	border-color: rgba(186, 26, 26, 0.2) !important;
+	color: #690005 !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-status--draft {
+	background: #f2f3f5 !important;
+	border-color: #c4c6cf !important;
+	color: #43474e !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-status--not-applicable {
+	background: #eef1f6 !important;
+	border-color: #c4c6cf !important;
+	color: #43474e !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-guidance {
+	background: #ffffff !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.5rem !important;
+	padding: 16px !important;
+	box-shadow: 0 1px 2px rgba(25, 28, 30, 0.06) !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-guidance-head {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+	margin-bottom: 0.75rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-guidance-head h3 {
+	margin: 0 !important;
+	font-size: 16px !important;
+	font-weight: 700 !important;
+	color: #002244 !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-guidance-head .material-symbols-outlined {
+	color: #002244 !important;
+	font-size: 20px !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-guidance-body {
+	margin: 0 0 1rem !important;
+	font-size: 13px !important;
+	line-height: 1.45 !important;
+	color: #43474e !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-guidance-list {
+	margin: 0 !important;
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0.75rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-guidance-list dt {
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 11px !important;
+	font-weight: 600 !important;
+	color: #002244 !important;
+	margin: 0 0 0.2rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-guidance-list dd {
+	margin: 0 !important;
+	font-size: 12px !important;
+	color: #43474e !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-issues {
+	margin: 0.75rem 0 0 !important;
+	border: 1px solid #ffdad6 !important;
+	border-radius: 0.25rem !important;
+	background: #fff8f7 !important;
+	color: #93000a !important;
+	overflow: hidden !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-issues.hidden {
+	display: none !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-issues-toggle {
+	appearance: none !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	gap: 0.75rem !important;
+	width: 100% !important;
+	padding: 10px 14px !important;
+	border: none !important;
+	background: transparent !important;
+	color: #93000a !important;
+	cursor: pointer !important;
+	text-align: left !important;
+	box-shadow: none !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-issues-toggle-main {
+	display: flex !important;
+	align-items: center !important;
+	flex-wrap: wrap !important;
+	gap: 0.5rem 0.75rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-issues-hint {
+	font-size: 12px !important;
+	opacity: 0.85 !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-issues-body {
+	padding: 0 14px 12px !important;
+	border-top: 1px solid rgba(186, 26, 26, 0.15) !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-issues-body.hidden {
+	display: none !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-issues-body ul {
+	margin: 0 !important;
+	padding-left: 1.25rem !important;
+	max-height: 12rem !important;
+	overflow-y: auto !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg04-footer"] {
+	margin-top: 2rem !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg04-save"]:disabled,
+body.kt-cl-shell [data-testid="kt-cl-cfg04-continue"]:disabled,
+body.kt-cl-shell [data-testid="kt-cl-cfg04-run-check"]:disabled {
+	opacity: 0.45 !important;
+	cursor: not-allowed !important;
+	pointer-events: none !important;
+}
+
+/* CFG-04 requirement drawer (body-mounted) */
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-drawer-overlay,
+body.kt-cl-shell .kt-cl-cfg04-drawer-overlay {
+	position: fixed !important;
+	inset: 0 !important;
+	z-index: 1100 !important;
+	background: rgba(25, 28, 30, 0.45) !important;
+	display: flex !important;
 	justify-content: flex-end !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-drawer,
+body.kt-cl-shell .kt-cl-cfg04-drawer {
+	width: min(30rem, 100vw) !important;
+	max-width: 100% !important;
+	height: 100% !important;
+	background: #ffffff !important;
+	display: flex !important;
+	flex-direction: column !important;
+	box-shadow: -4px 0 24px rgba(25, 28, 30, 0.18) !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-drawer-header {
+	display: flex !important;
+	align-items: flex-start !important;
+	justify-content: space-between !important;
+	gap: 0.75rem !important;
+	padding: 1.5rem !important;
+	border-bottom: 1px solid #c4c6cf !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-drawer-header h2 {
+	margin: 0 0 0.25rem !important;
+	font-size: 18px !important;
+	font-weight: 700 !important;
+	color: #002244 !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-drawer-eyebrow {
+	margin: 0 !important;
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 11px !important;
+	letter-spacing: 0.06em !important;
+	text-transform: uppercase !important;
+	color: #5f6368 !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-drawer-close {
+	appearance: none !important;
+	border: none !important;
+	background: transparent !important;
+	color: #43474e !important;
+	padding: 4px !important;
+	cursor: pointer !important;
+	box-shadow: none !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-drawer-body {
+	flex: 1 1 auto !important;
+	overflow-y: auto !important;
+	padding: 1.5rem !important;
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 2rem !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-drawer-body h3,
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-section-title {
+	margin: 0 0 0.75rem !important;
+	padding-bottom: 0.25rem !important;
+	font-size: 12px !important;
+	font-weight: 700 !important;
+	text-transform: uppercase !important;
+	letter-spacing: 0.04em !important;
+	color: #002244 !important;
+	border-bottom: 1px solid rgba(196, 198, 207, 0.55) !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-grid-2 {
+	display: grid !important;
+	grid-template-columns: 1fr 1fr !important;
+	gap: 1rem !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-duration-row,
+body.kt-cl-shell .kt-cl-cfg04-duration-row {
+	display: grid !important;
+	grid-template-columns: 1fr 7.5rem !important;
+	gap: 0.5rem !important;
+	align-items: stretch !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-chip-field {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0.5rem !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-chips {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	gap: 0.5rem !important;
+	padding: 0.5rem !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.25rem !important;
+	background: #f4f5f7 !important;
+	min-height: 2.5rem !important;
+	align-items: center !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-chip {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.25rem !important;
+	padding: 0.15rem 0.5rem !important;
+	border-radius: 0.25rem !important;
+	background: #d6e3ff !important;
+	color: #001a41 !important;
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 11px !important;
+	font-weight: 600 !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-chip-remove {
+	appearance: none !important;
+	border: none !important;
+	background: transparent !important;
+	color: inherit !important;
+	padding: 0 !important;
+	cursor: pointer !important;
+	display: inline-flex !important;
+	line-height: 1 !important;
+	box-shadow: none !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-chip-remove .material-symbols-outlined {
+	font-size: 14px !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-chip-empty {
+	font-size: 12px !important;
+	color: #5f6368 !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-refs-compact {
+	list-style: none !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0.5rem !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-refs-compact li {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+	font-size: 13px !important;
+	color: #5f6368 !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-refs-compact .material-symbols-outlined {
+	font-size: 18px !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-field {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0.35rem !important;
+	margin-bottom: 0.75rem !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-grid-2 > .kt-cl-cfg04-field {
+	margin-bottom: 0 !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-field label {
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 11px !important;
+	color: #43474e !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-req {
+	color: #ba1a1a !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-field-hint {
+	margin: 0.25rem 0 0 !important;
+	font-size: 12px !important;
+	line-height: 1.35 !important;
+	color: #5f6368 !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-readonly {
+	margin: 0 !important;
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 13px !important;
+	color: #002244 !important;
+	padding: 8px 0 !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-input,
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-select,
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-textarea {
+	width: 100% !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.25rem !important;
+	padding: 8px 10px !important;
+	font-size: 13px !important;
+	background: #ffffff !important;
+	box-shadow: none !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-refs {
+	margin: 0 !important;
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0.65rem !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-refs dt {
+	font-size: 11px !important;
+	font-weight: 600 !important;
+	color: #002244 !important;
+	margin: 0 0 0.15rem !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-refs dd {
+	margin: 0 !important;
+	font-size: 12px !important;
+	color: #43474e !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-drawer-footer {
+	display: flex !important;
+	justify-content: stretch !important;
+	gap: 0.75rem !important;
+	padding: 1.5rem !important;
+	border-top: 1px solid #c4c6cf !important;
+	background: #f4f5f7 !important;
+}
+#kt-cl-cfg04-drawer-host .kt-cl-cfg04-drawer-footer .kt-cl-wizard-btn {
+	flex: 1 1 0 !important;
+}
+
+
+body.kt-cl-shell .kt-cl-cfg04-approach {
+	margin-top: 1rem !important;
+	background: #ffffff !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.5rem !important;
+	padding: 16px !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-approach h3 {
+	margin: 0 0 0.75rem !important;
+	font-size: 13px !important;
+	font-weight: 700 !important;
+	color: #002244 !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-approach-options {
+	display: grid !important;
+	grid-template-columns: 1fr 1fr !important;
+	gap: 0.75rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-approach-option {
+	display: flex !important;
+	gap: 0.65rem !important;
+	align-items: flex-start !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.5rem !important;
+	padding: 12px !important;
+	cursor: pointer !important;
+	background: #f8f9fb !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-approach-option.is-active {
+	border-color: #4a668a !important;
+	background: #eef4fb !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-approach-option strong {
+	display: block !important;
+	font-size: 13px !important;
+	color: #002244 !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-approach-option small {
+	display: block !important;
+	margin-top: 0.2rem !important;
+	font-size: 12px !important;
+	color: #5f6368 !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-single-form {
+	background: #ffffff !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.5rem !important;
+	padding: 16px !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-single-form h3 {
+	margin: 0 0 1rem !important;
+	font-size: 14px !important;
+	font-weight: 700 !important;
+	color: #002244 !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-single-form .kt-cl-cfg04-field {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0.35rem !important;
+	margin-bottom: 0.75rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-single-form .kt-cl-cfg04-field label {
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 11px !important;
+	color: #43474e !important;
+}
+body.kt-cl-shell .kt-cl-cfg04-single-form .kt-cl-cfg04-input,
+body.kt-cl-shell .kt-cl-cfg04-single-form .kt-cl-cfg04-textarea {
+	width: 100% !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.25rem !important;
+	padding: 8px 10px !important;
+	font-size: 13px !important;
+	background: #ffffff !important;
+}
+
+/* ── CFG-05 System Inventory & Bidder Background ── */
+body.kt-cl-shell [data-testid="kt-cl-cfg05-layout"],
+body.kt-cl-shell .kt-cl-cfg05-layout {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 1.5rem !important;
+	align-items: stretch !important;
+	margin-top: 1rem !important;
+}
+@media (min-width: 1280px) {
+	body.kt-cl-shell [data-testid="kt-cl-cfg05-layout"],
+	body.kt-cl-shell .kt-cl-cfg05-layout {
+		flex-direction: row !important;
+		align-items: start !important;
+	}
+	body.kt-cl-shell [data-testid="kt-cl-cfg05-main"],
+	body.kt-cl-shell .kt-cl-cfg05-main {
+		flex: 1 1 auto !important;
+		min-width: 0 !important;
+	}
+	body.kt-cl-shell:has([data-testid="kt-cl-cfg05-root"]) .kt-cl-native-canvas {
+		display: flex !important;
+		flex-direction: column !important;
+		min-height: 0 !important;
+		max-height: calc(100dvh - 3.25rem) !important;
+		overflow: hidden !important;
+	}
+	body.kt-cl-shell:has([data-testid="kt-cl-cfg05-root"]) .kt-cl-native-canvas > main {
+		flex: 1 1 auto !important;
+		min-height: 0 !important;
+		max-height: 100% !important;
+		overflow-x: hidden !important;
+		overflow-y: auto !important;
+	}
+	body.kt-cl-shell [data-testid="kt-cl-cfg05-side"],
+	body.kt-cl-shell .kt-cl-cfg05-side {
+		position: sticky !important;
+		top: 1.25rem !important;
+		align-self: start !important;
+		width: 20rem !important;
+		flex: 0 0 20rem !important;
+		z-index: 2 !important;
+		max-height: calc(100dvh - 5rem) !important;
+		overflow-y: auto !important;
+	}
+}
+/* Disclosure banner: icon left of copy (mock: flex items-start gap-4). */
+body.kt-cl-shell [data-testid="kt-cl-cfg05-banner"],
+body.kt-cl-shell .kt-cl-cfg05-banner {
+	display: flex !important;
+	align-items: flex-start !important;
+	gap: 1rem !important;
+	margin-top: 1rem !important;
+	padding: 12px 16px !important;
+	border: 1px solid #c4c6cf !important;
+	border-left: 4px solid #002244 !important;
+	border-radius: 0.25rem !important;
+	background: #f0f4f8 !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-banner > .material-symbols-outlined {
+	flex: 0 0 auto !important;
+	line-height: 1 !important;
+	margin-top: 2px !important;
+	color: #002244 !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-banner > div {
+	flex: 1 1 auto !important;
+	min-width: 0 !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-banner-primary {
+	margin: 0 !important;
+	font-size: 13px !important;
+	color: #191c1e !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-banner-secondary {
+	margin: 0.35rem 0 0 !important;
+	font-size: 12px !important;
+	color: #43474e !important;
+}
+/* Filters → table: match mock space-y-4 (1rem). */
+body.kt-cl-shell [data-testid="kt-cl-cfg05-main"],
+body.kt-cl-shell .kt-cl-cfg05-main {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 1rem !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg05-filters"],
+body.kt-cl-shell .kt-cl-cfg05-filters {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	gap: 0.5rem !important;
+	margin: 0 !important;
+}
+/* Table action buttons: keep icon + label on one row. */
+body.kt-cl-shell .kt-cl-cfg05-table-actions .kt-cl-wizard-btn {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.35rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-table-actions .kt-cl-wizard-btn > .material-symbols-outlined {
+	font-size: 16px !important;
+	line-height: 1 !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-filter-chip {
+	appearance: none !important;
+	border: 1px solid #c4c6cf !important;
+	background: #ffffff !important;
+	color: #43474e !important;
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 11px !important;
+	font-weight: 600 !important;
+	padding: 6px 10px !important;
+	border-radius: 999px !important;
+	cursor: pointer !important;
+	box-shadow: none !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-filter-chip.is-active,
+body.kt-cl-shell .kt-cl-cfg05-filter-chip[aria-pressed="true"] {
+	background: #002244 !important;
+	border-color: #002244 !important;
+	color: #ffffff !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-table-card {
+	background: #ffffff !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.5rem !important;
+	box-shadow: 0 1px 2px rgba(25, 28, 30, 0.06) !important;
+	overflow: hidden !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-table-head {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	flex-wrap: wrap !important;
 	gap: 0.75rem !important;
 	padding: 12px 16px !important;
+	border-bottom: 1px solid #c4c6cf !important;
+	background: #f0f4f8 !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-table-head h3 {
+	margin: 0 !important;
+	font-size: 16px !important;
+	font-weight: 700 !important;
+	color: #002244 !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-table-actions {
+	display: flex !important;
+	gap: 0.5rem !important;
+	flex-wrap: wrap !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg05-table"] {
+	padding: 0 !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg05-table"] [data-testid="kt-cl-ui00-table"] {
+	border: none !important;
+	box-shadow: none !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg05-table"] table th,
+body.kt-cl-shell [data-testid="kt-cl-cfg05-table"] table td {
+	padding-left: 1rem !important;
+	padding-right: 1rem !important;
+	padding-top: 0.5rem !important;
+	padding-bottom: 0.5rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-cell-mono {
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 12px !important;
+	white-space: nowrap !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-row-action {
+	appearance: none !important;
+	border: 1px solid #002244 !important;
+	background: #ffffff !important;
+	color: #002244 !important;
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 11px !important;
+	font-weight: 600 !important;
+	padding: 4px 10px !important;
+	border-radius: 0.125rem !important;
+	cursor: pointer !important;
+	box-shadow: none !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-row-actions {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.35rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-row-delete {
+	appearance: none !important;
+	border: none !important;
+	background: transparent !important;
+	color: #80868b !important;
+	padding: 2px !important;
+	cursor: pointer !important;
+	border-radius: 0.125rem !important;
+	line-height: 1 !important;
+	box-shadow: none !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-row-delete:hover {
+	color: #b3261e !important;
+	background: rgba(179, 38, 30, 0.06) !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-row-delete .material-symbols-outlined {
+	font-size: 16px !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-status {
+	display: inline-flex !important;
+	padding: 2px 8px !important;
+	border-radius: 0.25rem !important;
+	border: 1px solid #c4c6cf !important;
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 11px !important;
+	color: #43474e !important;
+	background: #ffffff !important;
+	white-space: nowrap !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-status--complete {
+	border-color: #4a668a !important;
+	color: #002244 !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-status--needs-attention {
+	background: #ffdad6 !important;
+	border-color: rgba(186, 26, 26, 0.2) !important;
+	color: #690005 !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-guidance {
+	background: #ffffff !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.5rem !important;
+	padding: 16px !important;
+	box-shadow: 0 1px 2px rgba(25, 28, 30, 0.06) !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-guidance-head {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+	margin-bottom: 0.75rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-guidance-head h3 {
+	margin: 0 !important;
+	font-size: 16px !important;
+	font-weight: 700 !important;
+	color: #002244 !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-guidance-body {
+	margin: 0 0 1rem !important;
+	font-size: 13px !important;
+	color: #43474e !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-guidance-list {
+	margin: 0 !important;
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0.75rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-guidance-list dt {
+	font-size: 11px !important;
+	font-weight: 700 !important;
+	color: #002244 !important;
+	margin: 0 0 0.15rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-guidance-list dd {
+	margin: 0 !important;
+	font-size: 12px !important;
+	color: #43474e !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-issues {
+	margin-top: 1rem !important;
+	border: 1px solid rgba(186, 26, 26, 0.25) !important;
+	border-radius: 0.5rem !important;
+	background: #fff8f7 !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-issues.hidden {
+	display: none !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-issues-toggle {
+	width: 100% !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	gap: 0.75rem !important;
+	padding: 10px 14px !important;
+	border: none !important;
+	background: transparent !important;
+	cursor: pointer !important;
+	box-shadow: none !important;
+	text-align: left !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-issues-toggle-main {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+	color: #690005 !important;
+	font-size: 13px !important;
+	font-weight: 600 !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-issues-body {
+	padding: 0 14px 12px 14px !important;
+	border-top: 1px solid rgba(186, 26, 26, 0.15) !important;
+}
+body.kt-cl-shell .kt-cl-cfg05-issues-body.hidden {
+	display: none !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg05-blockers"] ul {
+	margin: 0 !important;
+	padding-left: 1.25rem !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg05-footer"] {
+	margin-top: 2rem !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg05-save"]:disabled,
+body.kt-cl-shell [data-testid="kt-cl-cfg05-continue"]:disabled,
+body.kt-cl-shell [data-testid="kt-cl-cfg05-run-check"]:disabled {
+	opacity: 0.45 !important;
+	cursor: not-allowed !important;
+	pointer-events: none !important;
+}
+
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-drawer-overlay,
+body.kt-cl-shell .kt-cl-cfg05-drawer-overlay {
+	position: fixed !important;
+	inset: 0 !important;
+	z-index: 1100 !important;
+	background: rgba(25, 28, 30, 0.45) !important;
+	display: flex !important;
+	justify-content: flex-end !important;
+}
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-drawer,
+body.kt-cl-shell .kt-cl-cfg05-drawer {
+	width: min(30rem, 100vw) !important;
+	max-width: 100% !important;
+	height: 100% !important;
+	background: #ffffff !important;
+	display: flex !important;
+	flex-direction: column !important;
+	box-shadow: -4px 0 24px rgba(25, 28, 30, 0.18) !important;
+}
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-drawer-header {
+	display: flex !important;
+	align-items: flex-start !important;
+	justify-content: space-between !important;
+	gap: 0.75rem !important;
+	padding: 1.5rem !important;
+	border-bottom: 1px solid #c4c6cf !important;
+}
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-drawer-header h2 {
+	margin: 0 0 0.25rem !important;
+	font-size: 18px !important;
+	font-weight: 700 !important;
+	color: #002244 !important;
+}
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-drawer-eyebrow {
+	margin: 0 !important;
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 11px !important;
+	letter-spacing: 0.06em !important;
+	text-transform: uppercase !important;
+	color: #5f6368 !important;
+}
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-drawer-close {
+	appearance: none !important;
+	border: none !important;
+	background: transparent !important;
+	color: #43474e !important;
+	padding: 4px !important;
+	cursor: pointer !important;
+	box-shadow: none !important;
+}
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-drawer-body {
+	flex: 1 1 auto !important;
+	overflow-y: auto !important;
+	padding: 1.5rem !important;
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 2rem !important;
+}
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-section-title {
+	margin: 0 0 0.75rem !important;
+	padding-bottom: 0.25rem !important;
+	font-size: 12px !important;
+	font-weight: 700 !important;
+	text-transform: uppercase !important;
+	letter-spacing: 0.04em !important;
+	color: #002244 !important;
+	border-bottom: 1px solid rgba(196, 198, 207, 0.55) !important;
+}
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-grid-2 {
+	display: grid !important;
+	grid-template-columns: 1fr 1fr !important;
+	gap: 1rem !important;
+}
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-field {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0.35rem !important;
+	margin-bottom: 0.75rem !important;
+}
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-grid-2 > .kt-cl-cfg05-field {
+	margin-bottom: 0 !important;
+}
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-field label {
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 11px !important;
+	color: #43474e !important;
+}
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-req {
+	color: #ba1a1a !important;
+}
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-readonly {
+	margin: 0 !important;
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 13px !important;
+	color: #002244 !important;
+	padding: 8px 0 !important;
+}
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-input,
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-select,
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-textarea {
+	width: 100% !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.25rem !important;
+	padding: 8px 10px !important;
+	font-size: 13px !important;
+	background: #ffffff !important;
+	box-shadow: none !important;
+}
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-chip-field {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0.5rem !important;
+}
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-chips {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	gap: 0.5rem !important;
+	padding: 0.5rem !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.25rem !important;
+	background: #f4f5f7 !important;
+	min-height: 2.5rem !important;
+	align-items: center !important;
+}
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-chip {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.25rem !important;
+	padding: 0.15rem 0.5rem !important;
+	border-radius: 0.25rem !important;
+	background: #d6e3ff !important;
+	color: #001a41 !important;
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 11px !important;
+	font-weight: 600 !important;
+}
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-chip-remove {
+	appearance: none !important;
+	border: none !important;
+	background: transparent !important;
+	color: inherit !important;
+	padding: 0 !important;
+	cursor: pointer !important;
+	box-shadow: none !important;
+	display: inline-flex !important;
+}
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-chip-empty {
+	font-size: 12px !important;
+	color: #5f6368 !important;
+}
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-refs-compact {
+	list-style: none !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0.5rem !important;
+}
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-refs-compact li {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+	font-size: 13px !important;
+	color: #5f6368 !important;
+}
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-drawer-footer {
+	display: flex !important;
+	justify-content: stretch !important;
+	gap: 0.75rem !important;
+	padding: 1.5rem !important;
 	border-top: 1px solid #c4c6cf !important;
-	background: #f8f9fb !important;
+	background: #f4f5f7 !important;
+}
+#kt-cl-cfg05-drawer-host .kt-cl-cfg05-drawer-footer .kt-cl-wizard-btn {
+	flex: 1 1 0 !important;
+}
+
+/* ── CFG-06 Price Schedule (C2-CFG6 tabs + table + numbered drawer) ── */
+body.kt-cl-shell [data-testid="kt-cl-cfg06-main"],
+body.kt-cl-shell .kt-cl-cfg06-main {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 1rem !important;
+	margin-top: 1rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg06-tabs-row {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	align-items: flex-end !important;
+	justify-content: space-between !important;
+	gap: 0.75rem 1rem !important;
+	/* Top padding so Add/Import sit below the issues banner / card edge. */
+	padding: 0.75rem 16px 0 !important;
+	border-bottom: 1px solid #c4c6cf !important;
+	background: #ffffff !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg06-tabs"],
+body.kt-cl-shell .kt-cl-cfg06-tabs {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	gap: 0.25rem 1.25rem !important;
+	align-items: center !important;
+}
+body.kt-cl-shell .kt-cl-cfg06-tab {
+	appearance: none !important;
+	border: none !important;
+	background: transparent !important;
+	color: #5f6368 !important;
+	font-family: "Manrope", "Noto Sans", sans-serif !important;
+	font-size: 13px !important;
+	font-weight: 600 !important;
+	padding: 0.75rem 0 !important;
+	border-bottom: 2px solid transparent !important;
+	cursor: pointer !important;
+	box-shadow: none !important;
+	margin-bottom: -1px !important;
+}
+body.kt-cl-shell .kt-cl-cfg06-tab--active,
+body.kt-cl-shell .kt-cl-cfg06-tab[aria-selected="true"] {
+	color: #002244 !important;
+	border-bottom-color: #002244 !important;
+}
+body.kt-cl-shell .kt-cl-cfg06-tabs-actions {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	gap: 0.5rem !important;
+	align-items: center !important;
+	padding-top: 0.25rem !important;
+	padding-bottom: 0.5rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg06-tabs-actions .kt-cl-wizard-btn {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.35rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg06-tabs-actions .kt-cl-wizard-btn > .material-symbols-outlined {
+	font-size: 16px !important;
+	line-height: 1 !important;
+}
+body.kt-cl-shell .kt-cl-cfg06-table-card {
+	background: #ffffff !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.5rem !important;
+	box-shadow: 0 1px 2px rgba(25, 28, 30, 0.06) !important;
+	overflow: hidden !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg06-table"] {
+	padding: 0 !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg06-table"] [data-testid="kt-cl-ui00-table"] {
+	border: none !important;
+	box-shadow: none !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg06-table"] table th,
+body.kt-cl-shell [data-testid="kt-cl-cfg06-table"] table td {
+	padding-left: 1rem !important;
+	padding-right: 0.75rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg06-cell-mono {
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 12px !important;
+	color: #5f6368 !important;
+}
+body.kt-cl-shell .kt-cl-cfg06-row-action {
+	appearance: none !important;
+	border: none !important;
+	background: transparent !important;
+	color: #0b57d0 !important;
+	font-weight: 600 !important;
+	font-size: 13px !important;
+	cursor: pointer !important;
+	padding: 0 !important;
+	text-decoration: underline !important;
+	box-shadow: none !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	line-height: 1.25 !important;
+	height: 1.375rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg06-row-actions {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: flex-end !important;
+	gap: 0.5rem !important;
+	width: 100% !important;
+}
+body.kt-cl-shell .kt-cl-cfg06-row-delete {
+	appearance: none !important;
+	border: none !important;
+	background: transparent !important;
+	color: #80868b !important;
+	padding: 0 !important;
+	cursor: pointer !important;
+	border-radius: 0.125rem !important;
+	line-height: 1 !important;
+	box-shadow: none !important;
+}
+body.kt-cl-shell .kt-cl-cfg06-row-delete:hover {
+	color: #b3261e !important;
+	background: rgba(179, 38, 30, 0.06) !important;
+}
+body.kt-cl-shell .kt-cl-cfg06-row-delete .material-symbols-outlined {
+	font-size: 16px !important;
+}
+/* Shared CFG-03..06: center trash icon with Edit/Fix (buttons default to display:block). */
+body.kt-cl-shell .kt-cl-cfg03-row-delete,
+body.kt-cl-shell .kt-cl-cfg04-row-delete,
+body.kt-cl-shell .kt-cl-cfg05-row-delete,
+body.kt-cl-shell .kt-cl-cfg06-row-delete {
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	width: 1.375rem !important;
+	height: 1.375rem !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	flex-shrink: 0 !important;
+	vertical-align: middle !important;
+}
+body.kt-cl-shell .kt-cl-cfg03-row-delete .material-symbols-outlined,
+body.kt-cl-shell .kt-cl-cfg04-row-delete .material-symbols-outlined,
+body.kt-cl-shell .kt-cl-cfg05-row-delete .material-symbols-outlined,
+body.kt-cl-shell .kt-cl-cfg06-row-delete .material-symbols-outlined {
+	font-size: 16px !important;
+	line-height: 1 !important;
+	display: block !important;
+	font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 20 !important;
+	/* Trash glyph ink sits high in the Material Symbols em-square. */
+	transform: translateY(2px) !important;
+}
+/* Action column: Edit/Fix + delete flush-right so trash icons form one column. */
+body.kt-cl-shell .kt-cl-cfg03-row-actions,
+body.kt-cl-shell .kt-cl-cfg04-row-actions,
+body.kt-cl-shell .kt-cl-cfg05-row-actions,
+body.kt-cl-shell .kt-cl-cfg06-row-actions {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: flex-end !important;
+	gap: 0.5rem !important;
+	width: 100% !important;
+	min-width: 4.75rem !important;
+}
+body.kt-cl-shell td:has(.kt-cl-cfg03-row-actions),
+body.kt-cl-shell td:has(.kt-cl-cfg04-row-actions),
+body.kt-cl-shell td:has(.kt-cl-cfg05-row-actions),
+body.kt-cl-shell td:has(.kt-cl-cfg06-row-actions) {
+	text-align: right !important;
+	white-space: nowrap !important;
+	width: 1% !important;
+}
+body.kt-cl-shell .kt-cl-cfg06-status {
+	display: inline-flex !important;
+	align-items: center !important;
+	padding: 2px 8px !important;
+	border-radius: 0.25rem !important;
+	font-size: 11px !important;
+	font-weight: 700 !important;
+	font-family: "JetBrains Mono", monospace !important;
+	text-transform: uppercase !important;
+}
+body.kt-cl-shell .kt-cl-cfg06-status--complete {
+	background: rgba(0, 107, 61, 0.1) !important;
+	color: #006b3d !important;
+}
+body.kt-cl-shell .kt-cl-cfg06-status--needs-attention {
+	background: rgba(185, 71, 0, 0.12) !important;
+	color: #b94700 !important;
+}
+body.kt-cl-shell .kt-cl-cfg06-issues {
+	margin-top: 1rem !important;
+	border: 1px solid #f9ab00 !important;
+	border-radius: 0.5rem !important;
+	background: #fff8e1 !important;
+}
+body.kt-cl-shell .kt-cl-cfg06-issues.hidden {
+	display: none !important;
+}
+body.kt-cl-shell .kt-cl-cfg06-issues-toggle {
+	display: flex !important;
+	width: 100% !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	gap: 0.75rem !important;
+	padding: 10px 14px !important;
+	border: none !important;
+	background: transparent !important;
+	cursor: pointer !important;
+	box-shadow: none !important;
+}
+body.kt-cl-shell .kt-cl-cfg06-issues-toggle-main {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+	font-weight: 600 !important;
+	color: #191c1e !important;
+}
+body.kt-cl-shell .kt-cl-cfg06-issues-body {
+	padding: 0 14px 12px !important;
+}
+body.kt-cl-shell .kt-cl-cfg06-issues-body.hidden {
+	display: none !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg06-blockers"] ul {
+	margin: 0 !important;
+	padding-left: 1.1rem !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg06-footer"] {
+	margin-top: 1.25rem !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg06-save"]:disabled,
+body.kt-cl-shell [data-testid="kt-cl-cfg06-continue"]:disabled,
+body.kt-cl-shell [data-testid="kt-cl-cfg06-run-check"]:disabled {
+	opacity: 0.5 !important;
+	cursor: not-allowed !important;
+}
+
+/* Drawer hosts must stay unstyled shells; only overlay/drawer children cover the viewport. */
+#kt-cl-cfg06-drawer-host .kt-cl-cfg06-drawer-overlay,
+#kt-cl-cfg07-drawer-host .kt-cl-cfg06-drawer-overlay,
+#kt-cl-cfg08-drawer-host .kt-cl-cfg06-drawer-overlay,
+#kt-cl-cfg09-drawer-host .kt-cl-cfg06-drawer-overlay,
+body.kt-cl-shell .kt-cl-cfg06-drawer-overlay {
+	position: fixed !important;
+	inset: 0 !important;
+	z-index: 1100 !important;
+	background: rgba(0, 34, 68, 0.4) !important;
+	display: flex !important;
+	justify-content: flex-end !important;
+}
+#kt-cl-cfg06-drawer-host .kt-cl-cfg06-drawer,
+#kt-cl-cfg07-drawer-host .kt-cl-cfg06-drawer,
+#kt-cl-cfg08-drawer-host .kt-cl-cfg06-drawer,
+#kt-cl-cfg09-drawer-host .kt-cl-cfg06-drawer,
+body.kt-cl-shell .kt-cl-cfg06-drawer {
+	width: min(500px, 100vw) !important;
+	height: 100% !important;
+	background: #ffffff !important;
+	border-left: 1px solid #c4c6cf !important;
+	display: flex !important;
+	flex-direction: column !important;
+	box-shadow: -8px 0 24px rgba(25, 28, 30, 0.16) !important;
+}
+#kt-cl-cfg06-drawer-host .kt-cl-cfg06-drawer-header,
+#kt-cl-cfg07-drawer-host .kt-cl-cfg06-drawer-header,
+#kt-cl-cfg08-drawer-host .kt-cl-cfg06-drawer-header,
+#kt-cl-cfg09-drawer-host .kt-cl-cfg06-drawer-header {
+	display: flex !important;
+	align-items: flex-start !important;
+	justify-content: space-between !important;
+	gap: 1rem !important;
+	padding: 1.25rem 1.5rem !important;
+	border-bottom: 1px solid #c4c6cf !important;
+	background: #f4f5f7 !important;
+}
+#kt-cl-cfg06-drawer-host .kt-cl-cfg06-drawer-header h2,
+#kt-cl-cfg07-drawer-host .kt-cl-cfg06-drawer-header h2,
+#kt-cl-cfg08-drawer-host .kt-cl-cfg06-drawer-header h2,
+#kt-cl-cfg09-drawer-host .kt-cl-cfg06-drawer-header h2 {
+	margin: 0 !important;
+	font-size: 1.25rem !important;
+	font-weight: 700 !important;
+	color: #002244 !important;
+}
+#kt-cl-cfg06-drawer-host .kt-cl-cfg06-drawer-eyebrow,
+#kt-cl-cfg07-drawer-host .kt-cl-cfg06-drawer-eyebrow,
+#kt-cl-cfg08-drawer-host .kt-cl-cfg06-drawer-eyebrow,
+#kt-cl-cfg09-drawer-host .kt-cl-cfg06-drawer-eyebrow {
+	margin: 0.25rem 0 0 !important;
+	font-size: 11px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.04em !important;
+	color: #5f6368 !important;
+}
+#kt-cl-cfg06-drawer-host .kt-cl-cfg06-drawer-close,
+#kt-cl-cfg07-drawer-host .kt-cl-cfg06-drawer-close,
+#kt-cl-cfg08-drawer-host .kt-cl-cfg06-drawer-close,
+#kt-cl-cfg09-drawer-host .kt-cl-cfg06-drawer-close {
+	appearance: none !important;
+	border: none !important;
+	background: transparent !important;
+	cursor: pointer !important;
+	color: #43474e !important;
+	padding: 0.25rem !important;
+	box-shadow: none !important;
+}
+#kt-cl-cfg06-drawer-host .kt-cl-cfg06-drawer-body,
+#kt-cl-cfg07-drawer-host .kt-cl-cfg06-drawer-body,
+#kt-cl-cfg08-drawer-host .kt-cl-cfg06-drawer-body,
+#kt-cl-cfg09-drawer-host .kt-cl-cfg06-drawer-body {
+	flex: 1 1 auto !important;
+	overflow-y: auto !important;
+	padding: 1.5rem !important;
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 1.5rem !important;
+}
+#kt-cl-cfg06-drawer-host .kt-cl-cfg06-section-title,
+#kt-cl-cfg07-drawer-host .kt-cl-cfg06-section-title,
+#kt-cl-cfg08-drawer-host .kt-cl-cfg06-section-title,
+#kt-cl-cfg09-drawer-host .kt-cl-cfg06-section-title {
+	margin: 0 0 0.75rem !important;
+	padding: 0.25rem 0 0.25rem 0.75rem !important;
+	border-left: 4px solid #002244 !important;
+	font-size: 14px !important;
+	font-weight: 700 !important;
+	color: #002244 !important;
+}
+#kt-cl-cfg06-drawer-host .kt-cl-cfg06-grid-2,
+#kt-cl-cfg07-drawer-host .kt-cl-cfg06-grid-2,
+#kt-cl-cfg08-drawer-host .kt-cl-cfg06-grid-2,
+#kt-cl-cfg09-drawer-host .kt-cl-cfg06-grid-2 {
+	display: grid !important;
+	grid-template-columns: 1fr 1fr !important;
+	gap: 0.75rem !important;
+}
+#kt-cl-cfg06-drawer-host .kt-cl-cfg06-field,
+#kt-cl-cfg07-drawer-host .kt-cl-cfg06-field,
+#kt-cl-cfg08-drawer-host .kt-cl-cfg06-field,
+#kt-cl-cfg09-drawer-host .kt-cl-cfg06-field {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0.35rem !important;
+	margin-bottom: 0.75rem !important;
+}
+#kt-cl-cfg06-drawer-host .kt-cl-cfg06-grid-2 > .kt-cl-cfg06-field,
+#kt-cl-cfg07-drawer-host .kt-cl-cfg06-grid-2 > .kt-cl-cfg06-field,
+#kt-cl-cfg08-drawer-host .kt-cl-cfg06-grid-2 > .kt-cl-cfg06-field,
+#kt-cl-cfg09-drawer-host .kt-cl-cfg06-grid-2 > .kt-cl-cfg06-field {
+	margin-bottom: 0 !important;
+}
+#kt-cl-cfg06-drawer-host .kt-cl-cfg06-field label,
+#kt-cl-cfg07-drawer-host .kt-cl-cfg06-field label,
+#kt-cl-cfg08-drawer-host .kt-cl-cfg06-field label,
+#kt-cl-cfg09-drawer-host .kt-cl-cfg06-field label {
+	font-size: 12px !important;
+	font-weight: 600 !important;
+	color: #43474e !important;
+}
+#kt-cl-cfg06-drawer-host .kt-cl-cfg06-req,
+#kt-cl-cfg07-drawer-host .kt-cl-cfg06-req,
+#kt-cl-cfg08-drawer-host .kt-cl-cfg06-req,
+#kt-cl-cfg09-drawer-host .kt-cl-cfg06-req {
+	color: #b3261e !important;
+}
+#kt-cl-cfg06-drawer-host .kt-cl-cfg06-readonly,
+#kt-cl-cfg07-drawer-host .kt-cl-cfg06-readonly,
+#kt-cl-cfg08-drawer-host .kt-cl-cfg06-readonly,
+#kt-cl-cfg09-drawer-host .kt-cl-cfg06-readonly {
+	margin: 0 !important;
+	padding: 0.5rem 0.75rem !important;
+	background: #f0f4f8 !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.25rem !important;
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 12px !important;
+	color: #191c1e !important;
+}
+#kt-cl-cfg06-drawer-host .kt-cl-cfg06-input,
+#kt-cl-cfg07-drawer-host .kt-cl-cfg06-input,
+#kt-cl-cfg08-drawer-host .kt-cl-cfg06-input,
+#kt-cl-cfg09-drawer-host .kt-cl-cfg06-input,
+#kt-cl-cfg06-drawer-host .kt-cl-cfg06-select,
+#kt-cl-cfg07-drawer-host .kt-cl-cfg06-select,
+#kt-cl-cfg08-drawer-host .kt-cl-cfg06-select,
+#kt-cl-cfg09-drawer-host .kt-cl-cfg06-select,
+#kt-cl-cfg06-drawer-host .kt-cl-cfg06-textarea,
+#kt-cl-cfg07-drawer-host .kt-cl-cfg06-textarea,
+#kt-cl-cfg08-drawer-host .kt-cl-cfg06-textarea,
+#kt-cl-cfg09-drawer-host .kt-cl-cfg06-textarea {
+	width: 100% !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.25rem !important;
+	padding: 0.5rem 0.75rem !important;
+	font-size: 13px !important;
+	background: #ffffff !important;
+	color: #191c1e !important;
+	box-shadow: none !important;
+}
+#kt-cl-cfg06-drawer-host .kt-cl-cfg06-refs-compact,
+#kt-cl-cfg07-drawer-host .kt-cl-cfg06-refs-compact {
+	list-style: none !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0.5rem !important;
+}
+#kt-cl-cfg06-drawer-host .kt-cl-cfg06-refs-compact li,
+#kt-cl-cfg07-drawer-host .kt-cl-cfg06-refs-compact li {
+	display: flex !important;
+	align-items: flex-start !important;
+	gap: 0.5rem !important;
+	font-size: 13px !important;
+	color: #5f6368 !important;
+}
+#kt-cl-cfg06-drawer-host .kt-cl-cfg06-drawer-footer,
+#kt-cl-cfg07-drawer-host .kt-cl-cfg06-drawer-footer,
+#kt-cl-cfg08-drawer-host .kt-cl-cfg06-drawer-footer,
+#kt-cl-cfg09-drawer-host .kt-cl-cfg06-drawer-footer {
+	display: flex !important;
+	justify-content: stretch !important;
+	gap: 0.75rem !important;
+	padding: 1.5rem !important;
+	border-top: 1px solid #c4c6cf !important;
+	background: #f4f5f7 !important;
+}
+#kt-cl-cfg06-drawer-host .kt-cl-cfg06-drawer-footer .kt-cl-wizard-btn,
+#kt-cl-cfg07-drawer-host .kt-cl-cfg06-drawer-footer .kt-cl-wizard-btn,
+#kt-cl-cfg08-drawer-host .kt-cl-cfg06-drawer-footer .kt-cl-wizard-btn,
+#kt-cl-cfg09-drawer-host .kt-cl-cfg06-drawer-footer .kt-cl-wizard-btn {
+	flex: 1 1 0 !important;
+}
+
+/* CFG-07 Evaluation Setup — scoring bento + table-head actions (C2-CFG7) */
+body.kt-cl-shell [data-testid="kt-cl-cfg07-footer"] {
+	margin-top: 1.25rem !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg07-save"]:disabled,
+body.kt-cl-shell [data-testid="kt-cl-cfg07-continue"]:disabled,
+body.kt-cl-shell [data-testid="kt-cl-cfg07-run-check"]:disabled {
+	opacity: 0.5 !important;
+	cursor: not-allowed !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg07-main"] {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 1rem !important;
+	margin-top: 1rem !important;
+}
+
+/* Compact horizontal scoring summary (REVISED §13 + code.html bento) */
+body.kt-cl-shell .kt-cl-cfg07-scoring {
+	display: grid !important;
+	grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+	gap: 0.75rem !important;
+	width: 100% !important;
+}
+body.kt-cl-shell .kt-cl-cfg07-scoring--passfail {
+	display: block !important;
+	background: #ffffff !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.5rem !important;
+	padding: 0.875rem 1rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg07-scoring-passfail {
+	margin: 0 !important;
+	font-size: 14px !important;
+	color: #5f6368 !important;
+}
+body.kt-cl-shell .kt-cl-cfg07-scoring-card {
+	background: #f0f4f8 !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.5rem !important;
+	padding: 0.875rem 1rem !important;
+	min-height: 5.5rem !important;
+	box-shadow: 0 1px 2px rgba(25, 28, 30, 0.04) !important;
+}
+body.kt-cl-shell .kt-cl-cfg07-scoring-card--alert {
+	background: #fce8e6 !important;
+	border-color: #f9dedc !important;
+}
+body.kt-cl-shell .kt-cl-cfg07-scoring-label {
+	margin: 0 0 0.35rem !important;
+	font-size: 11px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.04em !important;
+	text-transform: uppercase !important;
+	color: #5f6368 !important;
+}
+body.kt-cl-shell .kt-cl-cfg07-scoring-card--alert .kt-cl-cfg07-scoring-label {
+	color: #b3261e !important;
+}
+body.kt-cl-shell .kt-cl-cfg07-scoring-value {
+	margin: 0 !important;
+	font-size: 1.75rem !important;
+	font-weight: 700 !important;
+	line-height: 1.15 !important;
+	color: #002244 !important;
+}
+body.kt-cl-shell .kt-cl-cfg07-scoring-value--split {
+	display: flex !important;
+	align-items: baseline !important;
+	gap: 0.25rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg07-scoring-of {
+	font-size: 1rem !important;
+	font-weight: 600 !important;
+	color: #5f6368 !important;
+}
+body.kt-cl-shell .kt-cl-cfg07-scoring-hint {
+	margin: 0.35rem 0 0 !important;
+	font-size: 11px !important;
+	color: #5f6368 !important;
+}
+body.kt-cl-shell .kt-cl-cfg07-scoring-card--alert .kt-cl-cfg07-scoring-hint {
+	color: #b3261e !important;
+}
+body.kt-cl-shell .kt-cl-cfg07-scoring-bar {
+	margin-top: 0.5rem !important;
+	height: 4px !important;
+	background: #e1e3e6 !important;
+	border-radius: 2px !important;
+	overflow: hidden !important;
+}
+body.kt-cl-shell .kt-cl-cfg07-scoring-bar > span {
+	display: block !important;
+	height: 100% !important;
+	background: #002244 !important;
+}
+body.kt-cl-shell .kt-cl-cfg07-scoring-status {
+	margin-top: 0.25rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg07-scoring-input-wrap {
+	display: flex !important;
+	align-items: baseline !important;
+	gap: 0.35rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg07-scoring-input {
+	width: 5.5rem !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.25rem !important;
+	padding: 0.25rem 0.5rem !important;
+	font-size: 1.5rem !important;
+	font-weight: 700 !important;
+	line-height: 1.15 !important;
+	color: #002244 !important;
+	background: #ffffff !important;
+	box-shadow: none !important;
+}
+#kt-cl-cfg07-drawer-host .kt-cl-cfg07-drawer-field-hint,
+body.kt-cl-shell .kt-cl-cfg07-drawer-field-hint {
+	margin: 0.35rem 0 0 !important;
+	font-size: 11px !important;
+	line-height: 1.35 !important;
+	color: #5f6368 !important;
+}
+@media (max-width: 1100px) {
+	body.kt-cl-shell .kt-cl-cfg07-scoring {
+		grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	}
+}
+
+/* Table card: head actions above tabs (CFG-05 / Implementation Schedule pattern) */
+body.kt-cl-shell .kt-cl-cfg07-table-card {
+	background: #ffffff !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.5rem !important;
+	box-shadow: 0 1px 2px rgba(25, 28, 30, 0.06) !important;
+	overflow: hidden !important;
+}
+body.kt-cl-shell .kt-cl-cfg07-table-head {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	flex-wrap: wrap !important;
+	gap: 0.75rem !important;
+	padding: 12px 16px !important;
+	border-bottom: 1px solid #c4c6cf !important;
+	background: #f0f4f8 !important;
+}
+body.kt-cl-shell .kt-cl-cfg07-table-head h3 {
+	margin: 0 !important;
+	font-size: 16px !important;
+	font-weight: 700 !important;
+	color: #002244 !important;
+}
+body.kt-cl-shell .kt-cl-cfg07-table-actions {
+	display: flex !important;
+	gap: 0.5rem !important;
+	flex-wrap: wrap !important;
+	align-items: center !important;
+}
+body.kt-cl-shell .kt-cl-cfg07-table-actions .kt-cl-wizard-btn {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.35rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg07-table-actions .kt-cl-wizard-btn > .material-symbols-outlined {
+	font-size: 16px !important;
+	line-height: 1 !important;
+}
+body.kt-cl-shell .kt-cl-cfg07-tabs-row {
+	display: flex !important;
+	align-items: flex-end !important;
+	padding: 0 16px !important;
+	border-bottom: 1px solid #c4c6cf !important;
+	background: #ffffff !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg07-table"] {
+	padding: 0 !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg07-table"] [data-testid="kt-cl-ui00-table"] {
+	border: none !important;
+	box-shadow: none !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg07-table"] table th,
+body.kt-cl-shell [data-testid="kt-cl-cfg07-table"] table td {
+	padding-left: 16px !important;
+	padding-right: 16px !important;
+}
+
+/* ── CFG-08 Forms & Evidence (C2-CFG8 layout + guidance + table) ── */
+body.kt-cl-shell [data-testid="kt-cl-cfg08-layout"],
+body.kt-cl-shell .kt-cl-cfg08-layout {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 1.5rem !important;
+	align-items: stretch !important;
+	margin-top: 1rem !important;
+}
+@media (min-width: 1280px) {
+	body.kt-cl-shell [data-testid="kt-cl-cfg08-layout"],
+	body.kt-cl-shell .kt-cl-cfg08-layout {
+		flex-direction: row !important;
+		align-items: start !important;
+	}
+	body.kt-cl-shell [data-testid="kt-cl-cfg08-main"],
+	body.kt-cl-shell .kt-cl-cfg08-main {
+		flex: 1 1 auto !important;
+		min-width: 0 !important;
+	}
+	body.kt-cl-shell:has([data-testid="kt-cl-cfg08-root"]) .kt-cl-native-canvas {
+		display: flex !important;
+		flex-direction: column !important;
+		min-height: 0 !important;
+		max-height: calc(100dvh - 3.25rem) !important;
+		overflow: hidden !important;
+	}
+	body.kt-cl-shell:has([data-testid="kt-cl-cfg08-root"]) .kt-cl-native-canvas > main {
+		flex: 1 1 auto !important;
+		min-height: 0 !important;
+		max-height: 100% !important;
+		overflow-x: hidden !important;
+		overflow-y: auto !important;
+	}
+	body.kt-cl-shell [data-testid="kt-cl-cfg08-side"],
+	body.kt-cl-shell .kt-cl-cfg08-side {
+		position: sticky !important;
+		top: 1.25rem !important;
+		align-self: start !important;
+		width: 20rem !important;
+		flex: 0 0 20rem !important;
+		z-index: 2 !important;
+		max-height: calc(100dvh - 5rem) !important;
+		overflow-y: auto !important;
+	}
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg08-main"],
+body.kt-cl-shell .kt-cl-cfg08-main {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 1rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-table-card {
+	background: #ffffff !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.5rem !important;
+	box-shadow: 0 1px 2px rgba(25, 28, 30, 0.06) !important;
+	overflow: hidden !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-table-head {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	flex-wrap: wrap !important;
+	gap: 0.75rem !important;
+	padding: 12px 16px !important;
+	border-bottom: 1px solid #c4c6cf !important;
+	background: #f0f4f8 !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-table-head h3 {
+	margin: 0 !important;
+	font-size: 16px !important;
+	font-weight: 700 !important;
+	color: #002244 !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-table-actions {
+	display: flex !important;
+	gap: 0.5rem !important;
+	flex-wrap: wrap !important;
+	align-items: center !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-table-actions .kt-cl-wizard-btn {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.35rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-table-actions .kt-cl-wizard-btn > .material-symbols-outlined {
+	font-size: 16px !important;
+	line-height: 1 !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-tabs-row {
+	display: flex !important;
+	align-items: flex-end !important;
+	padding: 0 16px !important;
+	border-bottom: 1px solid #c4c6cf !important;
+	background: #ffffff !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg08-table"] {
+	padding: 0 !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg08-table"] [data-testid="kt-cl-ui00-table"] {
+	border: none !important;
+	box-shadow: none !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg08-table"] table th,
+body.kt-cl-shell [data-testid="kt-cl-cfg08-table"] table td {
+	padding-left: 1rem !important;
+	padding-right: 1rem !important;
+	padding-top: 0.5rem !important;
+	padding-bottom: 0.5rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-row-action {
+	appearance: none !important;
+	border: none !important;
+	background: transparent !important;
+	color: #0b57d0 !important;
+	font-weight: 600 !important;
+	font-size: 13px !important;
+	cursor: pointer !important;
+	padding: 0 !important;
+	text-decoration: underline !important;
+	box-shadow: none !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	line-height: 1.25 !important;
+	height: 1.375rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-row-actions {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: flex-end !important;
+	gap: 0.5rem !important;
+	width: 100% !important;
+	min-width: 4.75rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-row-delete {
+	appearance: none !important;
+	border: none !important;
+	background: transparent !important;
+	color: #80868b !important;
+	padding: 0 !important;
+	cursor: pointer !important;
+	border-radius: 0.125rem !important;
+	line-height: 1 !important;
+	box-shadow: none !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	width: 1.375rem !important;
+	height: 1.375rem !important;
+	flex-shrink: 0 !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-row-delete:hover {
+	color: #b3261e !important;
+	background: rgba(179, 38, 30, 0.06) !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-row-delete .material-symbols-outlined {
+	font-size: 16px !important;
+	line-height: 1 !important;
+	display: block !important;
+	transform: translateY(2px) !important;
+}
+body.kt-cl-shell td:has(.kt-cl-cfg08-row-actions) {
+	text-align: right !important;
+	white-space: nowrap !important;
+	width: 1% !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-item-cell,
+body.kt-cl-shell .kt-cl-cfg09-item-cell {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 2px !important;
+	min-width: 0 !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-item-name,
+body.kt-cl-shell .kt-cl-cfg09-item-name {
+	font-weight: 600 !important;
+	color: #191c1e !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-item-id,
+body.kt-cl-shell .kt-cl-cfg09-item-id {
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 11px !important;
+	color: #5f6368 !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-status {
+	display: inline-flex !important;
+	align-items: center !important;
+	padding: 2px 8px !important;
+	border-radius: 0.25rem !important;
+	font-size: 11px !important;
+	font-weight: 700 !important;
+	font-family: "JetBrains Mono", monospace !important;
+	text-transform: uppercase !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-status--complete {
+	background: rgba(0, 107, 61, 0.1) !important;
+	color: #006b3d !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-status--needs-attention {
+	background: rgba(185, 71, 0, 0.12) !important;
+	color: #b94700 !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-status--not-applicable {
+	background: #f0f4f8 !important;
+	color: #5f6368 !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-guidance {
+	background: #ffffff !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.5rem !important;
+	padding: 16px !important;
+	box-shadow: 0 1px 2px rgba(25, 28, 30, 0.06) !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-guidance-head {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+	margin-bottom: 0.75rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-guidance-head h3 {
+	margin: 0 !important;
+	font-size: 16px !important;
+	font-weight: 700 !important;
+	color: #002244 !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-guidance-body {
+	margin: 0 0 1rem !important;
+	font-size: 13px !important;
+	color: #43474e !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-guidance-counters {
+	margin: 0 !important;
+	display: grid !important;
+	grid-template-columns: 1fr 1fr !important;
+	gap: 0.75rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-guidance-counters dt {
+	font-size: 11px !important;
+	font-weight: 700 !important;
+	color: #002244 !important;
+	margin: 0 0 0.15rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg08-guidance-counters dd {
+	margin: 0 !important;
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 1.25rem !important;
+	font-weight: 700 !important;
+	color: #002244 !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg08-footer"] {
+	margin-top: 2rem !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg08-save"]:disabled,
+body.kt-cl-shell [data-testid="kt-cl-cfg08-continue"]:disabled,
+body.kt-cl-shell [data-testid="kt-cl-cfg08-run-check"]:disabled {
+	opacity: 0.45 !important;
+	cursor: not-allowed !important;
+	pointer-events: none !important;
+}
+
+/* CFG-09 Contract Values — layout + guidance + hidden Continue (C2-CFG9) */
+body.kt-cl-shell [data-testid="kt-cl-cfg09-layout"],
+body.kt-cl-shell .kt-cl-cfg09-layout {
+	display: grid !important;
+	grid-template-columns: minmax(0, 1fr) 320px !important;
+	gap: 1.5rem !important;
+	align-items: start !important;
+	margin-top: 1rem !important;
+}
+@media (max-width: 1100px) {
+	body.kt-cl-shell [data-testid="kt-cl-cfg09-layout"],
+	body.kt-cl-shell .kt-cl-cfg09-layout {
+		grid-template-columns: 1fr !important;
+	}
+	body.kt-cl-shell [data-testid="kt-cl-cfg09-main"],
+	body.kt-cl-shell .kt-cl-cfg09-main {
+		order: 1 !important;
+	}
+	body.kt-cl-shell:has([data-testid="kt-cl-cfg09-root"]) .kt-cl-native-canvas {
+		padding-bottom: 0 !important;
+	}
+	body.kt-cl-shell:has([data-testid="kt-cl-cfg09-root"]) .kt-cl-native-canvas > main {
+		padding-bottom: 1.5rem !important;
+	}
+	body.kt-cl-shell [data-testid="kt-cl-cfg09-side"],
+	body.kt-cl-shell .kt-cl-cfg09-side {
+		order: 2 !important;
+		position: static !important;
+		width: 100% !important;
+		max-width: none !important;
+	}
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg09-main"],
+body.kt-cl-shell .kt-cl-cfg09-main {
+	min-width: 0 !important;
+}
+body.kt-cl-shell .kt-cl-cfg09-table-card {
+	background: #ffffff !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.5rem !important;
+	overflow: hidden !important;
+}
+body.kt-cl-shell .kt-cl-cfg09-table-head {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	gap: 1rem !important;
+	padding: 1rem 1rem 0.75rem !important;
+	border-bottom: 1px solid #e8eaed !important;
+}
+body.kt-cl-shell .kt-cl-cfg09-table-head h3 {
+	margin: 0 !important;
+	font-size: 1.125rem !important;
+	font-weight: 700 !important;
+	color: #002244 !important;
+}
+body.kt-cl-shell .kt-cl-cfg09-table-actions {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	gap: 0.5rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg09-table-actions .kt-cl-wizard-btn {
+	white-space: nowrap !important;
+}
+body.kt-cl-shell .kt-cl-cfg09-table-actions .kt-cl-wizard-btn > .material-symbols-outlined {
+	font-size: 18px !important;
+}
+body.kt-cl-shell .kt-cl-cfg09-tabs-row {
+	padding: 0 1rem !important;
+	border-bottom: 1px solid #e8eaed !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg09-table"] {
+	padding: 0 0 0.5rem !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg09-table"] [data-testid="kt-cl-ui00-table"] {
+	border: none !important;
+	border-radius: 0 !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg09-table"] table th,
+body.kt-cl-shell [data-testid="kt-cl-cfg09-table"] table td {
+	padding-left: 1rem !important;
+	padding-right: 1rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg09-row-action {
+	appearance: none !important;
+	border: none !important;
+	background: transparent !important;
+	color: #002244 !important;
+	font-size: 13px !important;
+	font-weight: 600 !important;
+	cursor: pointer !important;
+	padding: 0.25rem 0 !important;
+	text-decoration: underline !important;
+	box-shadow: none !important;
+}
+body.kt-cl-shell .kt-cl-cfg09-row-actions {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg09-status {
+	display: inline-flex !important;
+	align-items: center !important;
+	padding: 0.15rem 0.5rem !important;
+	border-radius: 999px !important;
+	font-size: 11px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.02em !important;
+}
+body.kt-cl-shell .kt-cl-cfg09-status--complete {
+	background: #e6f4ea !important;
+	color: #137333 !important;
+}
+body.kt-cl-shell .kt-cl-cfg09-status--needs-attention {
+	background: #fce8e6 !important;
+	color: #b3261e !important;
+}
+body.kt-cl-shell .kt-cl-cfg09-status--review-before-handoff {
+	background: #fef7e0 !important;
+	color: #b06000 !important;
+}
+body.kt-cl-shell .kt-cl-cfg09-status--not-applicable {
+	background: #f0f4f8 !important;
+	color: #5f6368 !important;
+}
+body.kt-cl-shell .kt-cl-cfg09-guidance {
+	background: #f0f4f8 !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.5rem !important;
+	padding: 1rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg09-guidance-head {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+	margin-bottom: 0.75rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg09-guidance-head h3 {
+	margin: 0 !important;
+	font-size: 1rem !important;
+	font-weight: 700 !important;
+	color: #002244 !important;
+}
+body.kt-cl-shell .kt-cl-cfg09-guidance-body {
+	margin: 0 0 1rem !important;
+	font-size: 13px !important;
+	line-height: 1.5 !important;
+	color: #43474e !important;
+}
+body.kt-cl-shell .kt-cl-cfg09-guidance-counters {
+	display: grid !important;
+	grid-template-columns: 1fr 1fr !important;
+	gap: 0.75rem 1rem !important;
+	margin: 0 !important;
+}
+body.kt-cl-shell .kt-cl-cfg09-guidance-counters dt {
+	font-size: 11px !important;
+	font-weight: 700 !important;
+	color: #002244 !important;
+	margin: 0 0 0.15rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg09-guidance-counters dd {
+	margin: 0 !important;
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 1.25rem !important;
+	font-weight: 700 !important;
+	color: #002244 !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg09-side"],
+body.kt-cl-shell .kt-cl-cfg09-side {
+	position: sticky !important;
+	top: 1rem !important;
+	align-self: start !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg09-footer"] {
+	margin-top: 2rem !important;
+}
+body.kt-cl-shell .kt-cl-cfg09-no-continue [data-testid="kt-cl-cfg09-continue"] {
+	display: none !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-cfg09-save"]:disabled,
+body.kt-cl-shell [data-testid="kt-cl-cfg09-run-check"]:disabled {
+	opacity: 0.45 !important;
+	cursor: not-allowed !important;
+	pointer-events: none !important;
+}
+body.kt-cl-shell .kt-cl-cfg09-checkbox-wrap {
+	display: flex !important;
+	align-items: flex-start !important;
+	gap: 0.5rem !important;
+	font-size: 13px !important;
+	color: #43474e !important;
+}
+body.kt-cl-shell .kt-cl-cfg09-drawer-source-action {
+	margin-top: 0.5rem !important;
 }

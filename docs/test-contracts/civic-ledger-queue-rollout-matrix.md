@@ -26,7 +26,13 @@ Helpers: `tests/ui/helpers/ktClQueueContract.ts`
 | CFG-01 Tender Profile | `cfg01-tender-profile.spec.ts` (8-cell strip + `kt-cl-cfg01-*` layout) | locked (first CFG page) |
 | CFG-02 Tender Data Sheet | `cfg02-tender-data-sheet.spec.ts` (8-cell strip + `kt-cl-cfg02-*` 8/4 layout) | locked |
 | CFG-03 IT Requirements | `cfg03-it-requirements.spec.ts` (strip + table/drawer + sticky guidance; column-clarity: Delivery Confirmation Method + Setup Status) | locked |
-| CFG-04…CFG-09 / WF-* | — | pending (must reuse `configurationContextStrip`) |
+| CFG-04 Implementation Schedule | `cfg04-implementation-schedule.spec.ts` (approach toggle + table/drawer/single form; column-clarity: Acceptance Method + Setup Status; drawer persist) | locked |
+| CFG-05 System Inventory & Bidder Background | `cfg05-system-inventory.spec.ts` (banner + filters + table/drawer; column-clarity: Setup Status; INV/BG ids; drawer persist) | locked |
+| CFG-06 Price Schedule | `cfg06-price-schedule.spec.ts` (tabs + Import + table/drawer; column-clarity: Setup Status; PRI ids; drawer persist) | locked |
+| CFG-07 Evaluation Setup | `cfg07-evaluation-setup.spec.ts` (tabs + Import + table/drawer; Status Complete/Needs attention; EVAL ids; scoring summary; drawer persist) | locked |
+| CFG-08 Forms & Evidence | `cfg08-forms-and-evidence.spec.ts` (filters + table/drawer + guidance; FE ids; Import Standard Forms; Continue to Contract Values) | locked |
+| CFG-09 Contract Values | `cfg09-contract-values.spec.ts` (tabs + table/drawer + guidance; CV ids; Save + Run Check; no Continue) | locked |
+| WF-* | — | pending (must reuse `configurationContextStrip`) |
 
 ## Required pattern gates
 
@@ -36,9 +42,15 @@ make -C apps/kentender_v1 ui-civic-ledger-ui01-gate
 make -C apps/kentender_v1 ui-civic-ledger-cfg01-gate
 make -C apps/kentender_v1 ui-civic-ledger-cfg02-gate
 make -C apps/kentender_v1 ui-civic-ledger-cfg03-gate
+make -C apps/kentender_v1 ui-civic-ledger-cfg04-gate
+make -C apps/kentender_v1 ui-civic-ledger-cfg05-gate
+make -C apps/kentender_v1 ui-civic-ledger-cfg06-gate
+make -C apps/kentender_v1 ui-civic-ledger-cfg07-gate
+make -C apps/kentender_v1 ui-civic-ledger-cfg08-gate
+make -C apps/kentender_v1 ui-civic-ledger-cfg09-gate
 ```
 
-Run before marking Civic Ledger queue/list, UI-01 home, CFG-01…CFG-03 UX work done.
+Run before marking Civic Ledger queue/list, UI-01 home, CFG-01…CFG-09 UX work done.
 
 ## Adoption steps for a new CL queue page
 

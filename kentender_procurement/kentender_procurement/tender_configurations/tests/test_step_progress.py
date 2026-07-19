@@ -51,16 +51,16 @@ class TestStepProgress(FrappeTestCase):
 		self.assertEqual(out["progress_pct"], 67)
 
 	def test_status_fallback_complete_vs_in_progress(self):
-		# Unregistered steps still use status fallback (CFG-04 has no field builder yet).
-		done = compute_step_progress("CFG-04", status_label=STEP_COMPLETE, doc=None)
+		# Unregistered steps (WF-01) still use status fallback when doc is None.
+		done = compute_step_progress("WF-01", status_label=STEP_COMPLETE, doc=None)
 		self.assertEqual(done["progress_pct"], 100)
 		self.assertFalse(done["show_progress_bar"])
 
-		wip = compute_step_progress("CFG-04", status_label=STEP_IN_PROGRESS, doc=None)
+		wip = compute_step_progress("WF-01", status_label=STEP_IN_PROGRESS, doc=None)
 		self.assertEqual(wip["progress_pct"], 0)
 		self.assertTrue(wip["show_progress_bar"])
 
-		na = compute_step_progress("CFG-09", status_label=STEP_NOT_AVAILABLE, doc=None)
+		na = compute_step_progress("WF-01", status_label=STEP_NOT_AVAILABLE, doc=None)
 		self.assertEqual(na["progress_pct"], 0)
 		self.assertFalse(na["show_progress_bar"])
 
@@ -151,6 +151,94 @@ class TestStepProgress(FrappeTestCase):
 		self.assertTrue(out["can_continue"])
 		doc.reload()
 		done = compute_step_progress("CFG-03", status_label=STEP_COMPLETE, doc=doc)
+		self.assertEqual(done["progress_pct"], 100)
+
+	def test_cfg04_partial_and_complete(self):
+		from kentender_procurement.tender_configurations.services.implementation_schedule import (
+			APPROACH_PHASED,
+			save_configuration_implementation_schedule,
+		)
+		from kentender_procurement.tender_configurations.tests.test_configuration_implementation_schedule_api import (
+			_complete_milestone,
+		)
+
+		doc = frappe.get_doc("Tender Configuration", self.cfg_id)
+		doc.implementation_schedule = "{}"
+		doc.flags.ignore_mandatory = True
+		doc.save(ignore_permissions=True)
+
+		partial = compute_step_progress(
+			"CFG-04", status_label=STEP_IN_PROGRESS, doc=doc, step_state={}
+		)
+		self.assertGreaterEqual(partial["required_count"], 2)
+		# Empty phased schedule still meets approach_selected, not has_milestones
+		self.assertLess(partial["progress_pct"], 100)
+		self.assertGreaterEqual(partial["progress_pct"], 0)
+
+		out = save_configuration_implementation_schedule(
+			self.cfg_id,
+			{
+				"delivery_approach": APPROACH_PHASED,
+				"milestones": [_complete_milestone()],
+			},
+		)
+		self.assertTrue(out["can_continue"])
+		doc.reload()
+		done = compute_step_progress("CFG-04", status_label=STEP_COMPLETE, doc=doc)
+		self.assertEqual(done["progress_pct"], 100)
+
+	def test_cfg05_partial_and_complete(self):
+		from kentender_procurement.tender_configurations.services.system_inventory import (
+			save_configuration_system_inventory,
+		)
+		from kentender_procurement.tender_configurations.tests.test_configuration_system_inventory_api import (
+			_complete_item,
+		)
+
+		doc = frappe.get_doc("Tender Configuration", self.cfg_id)
+		doc.system_inventory = "{}"
+		doc.flags.ignore_mandatory = True
+		doc.save(ignore_permissions=True)
+
+		partial = compute_step_progress(
+			"CFG-05", status_label=STEP_IN_PROGRESS, doc=doc, step_state={}
+		)
+		self.assertGreaterEqual(partial["required_count"], 1)
+		self.assertEqual(partial["progress_pct"], 0)
+
+		out = save_configuration_system_inventory(
+			self.cfg_id, {"items": [_complete_item()]}
+		)
+		self.assertTrue(out["can_continue"])
+		doc.reload()
+		done = compute_step_progress("CFG-05", status_label=STEP_COMPLETE, doc=doc)
+		self.assertEqual(done["progress_pct"], 100)
+
+	def test_cfg06_partial_and_complete(self):
+		from kentender_procurement.tender_configurations.services.price_schedule import (
+			save_configuration_price_schedule,
+		)
+		from kentender_procurement.tender_configurations.tests.test_configuration_price_schedule_api import (
+			_complete_item,
+		)
+
+		doc = frappe.get_doc("Tender Configuration", self.cfg_id)
+		doc.price_schedule = "{}"
+		doc.flags.ignore_mandatory = True
+		doc.save(ignore_permissions=True)
+
+		partial = compute_step_progress(
+			"CFG-06", status_label=STEP_IN_PROGRESS, doc=doc, step_state={}
+		)
+		self.assertGreaterEqual(partial["required_count"], 1)
+		self.assertEqual(partial["progress_pct"], 0)
+
+		out = save_configuration_price_schedule(
+			self.cfg_id, {"items": [_complete_item()]}
+		)
+		self.assertTrue(out["can_continue"])
+		doc.reload()
+		done = compute_step_progress("CFG-06", status_label=STEP_COMPLETE, doc=doc)
 		self.assertEqual(done["progress_pct"], 100)
 
 	def test_cfg01_multiple_lots_adds_condition(self):

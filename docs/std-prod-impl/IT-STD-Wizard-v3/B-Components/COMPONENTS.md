@@ -41,7 +41,7 @@ Source: `C1-M1/code-in-progress.html` TopAppBar.
 
 | Slot | Contract |
 |------|----------|
-| Left | **Context trail only** (`toolbar.breadcrumbs`) — ancestors with chevrons; **last crumb bold** (module/parent). Leaf page name is **not** in the strip. |
+| Left | **Context trail** (`toolbar.breadcrumbs`) — ancestors with chevrons; **last crumb bold** = current step (or module home on UI-01). CFG-01+ include the step leaf as current so Continue/Back never leave a stale “Configuration Home” marker. |
 | Right | Notifications · Help · **name + role** · Avatar. **No search** (`showSearch` defaults `false`) |
 | Icons | Borderless Material icon buttons (Desk chrome stripped in `kt_cl_code_layout.css`) |
 | User meta | Name from session; role from first non-system boot role; avatar from `frappe.user_info().image` / initials |
@@ -105,12 +105,13 @@ maps to a `code.html` block and pulls its class strings from `cl_code_spec`.
 | Filter wiring | `bindFilterBar($root, { onChange(key,value), namespace?, debounceMs? })` | standard search debounce + select change for all queue tables |
 | Queue table | `queueTable({ columns, rows:[{id,cells}], footerText, pagination?, pageSize?, pageSizeOptions?, showPageSize? })` — footer right: Rows per page (left of pager) | `kt-cl-ui00-table`, `kt-cl-ui00-page-size`, `kt-cl-ui00-pager`, `kt-cl-ui00-row-*` |
 | Create config modal | `createTenderConfigurationModal({ hasSelection, selectedLabel, preview, canCreate })` | `kt-cl-uim01-*` |
+| Confirm dialog | `confirmDialog` / `showConfirm` / `kentender_core.cl.confirm({ title, message, confirmLabel, cancelLabel, tone, onConfirm, onCancel })` — Civic Ledger card (not industrial `frappe.confirm` Yes/No) | `kt-cl-confirm-*` |
 | **Configuration context strip (wizard chrome)** | `configurationContextStrip(context)` — **required on UI-01 + every CFG/WF page** (including **CFG-01**); **8 cells** from home/profile `context` DTO (C1-M3 §4). Do not add a 9th “Tender Configuration Ref” cell without a CL lock amendment. | `kt-cl-config-context-strip`, `kt-cl-config-context-*` |
 | Next best action | `nextBestActionPanel({ label, reason, buttonLabel, route, tone? })` | `kt-cl-ui01-next-action` |
 | Configuration steps grid | `configurationStepsGrid({ steps })` | `kt-cl-ui01-steps`, `kt-cl-ui01-step-CFG-*` |
 | Completion & Handoff | `handoffPanel({ handoff })` | `kt-cl-ui01-handoff` |
 | Overall Progress | `overallProgressPanel({ complete, total, progressPct })` — `%` is **average of per-step exit-condition progress**; meta is “X of Y steps complete” | `kt-cl-ui01-progress` |
-| Step progress | Computed in `step_progress.py` (register builders in `STEP_CONDITION_BUILDERS`); CFG-01…CFG-03 live; other CFGs status-fallback until their screen ships | `progress_pct`, `show_progress_bar` on step rows |
+| Step progress | Computed in `step_progress.py` (register builders in `STEP_CONDITION_BUILDERS`); CFG-01…CFG-06 live; other CFGs status-fallback until their screen ships | `progress_pct`, `show_progress_bar` on step rows |
 | Resources | `resourcesPanel({ items })` | `kt-cl-ui01-resources` |
 | Step details drawer | `stepDetailsDrawer({ step })` | `kt-cl-ui01-drawer` |
 | Wizard step footer | `wizardStepFooter({ backLabel, saveLabel, continueLabel, … })` — **Back left**, Save + high-contrast Continue right (white on navy) | `kt-cl-wizard-footer`, `kt-cl-wizard-btn--*` |
@@ -131,7 +132,7 @@ Wizard pages must **compose** `configurationContextStrip` — never duplicate th
 
 - Cursor rule: `.cursor/rules/kentender-civic-ledger-queue-lock.mdc`
 - Playwright helpers: `tests/ui/helpers/ktClQueueContract.ts`, `ktClConfigContext.ts`, `ktClUi01LayoutContract.ts`
-- Gates: `make -C apps/kentender_v1 ui-civic-ledger-queue-gate`, `ui-civic-ledger-ui01-gate`, `ui-civic-ledger-cfg01-gate`, `ui-civic-ledger-cfg02-gate`, and `ui-civic-ledger-cfg03-gate`
+- Gates: `make -C apps/kentender_v1 ui-civic-ledger-queue-gate`, `ui-civic-ledger-ui01-gate`, `ui-civic-ledger-cfg01-gate` … `ui-civic-ledger-cfg09-gate`
 - UI-01 mockups: `seed_ui01_mockups_for_tests` → `TCFG-MOCK-SHOWCASE` + `TCFG-MOCK-CFG-01`…`09`
 - CFG-01 page: `it_tender_configuration_tender_profile_page.js` + pins `kt-cl-cfg01-*` in `kt_cl_code_layout.css`
 - CFG-02 page: `it_tender_configuration_tds_page.js` + pins `kt-cl-cfg02-*`; API `get_tender_configuration_tds` / `save_tender_configuration_tds`; `wizardStepFooter` `extraEndActions` for Run Check
@@ -139,9 +140,28 @@ Wizard pages must **compose** `configurationContextStrip` — never duplicate th
 - **CFG-03 drawer save:** **Save Requirement** persists immediately (same POST as footer Save Requirements) and remounts with fresh Setup Status / issues / Continue — users must not need a second footer save to clear blockers.
 - **CFG-03 label alignment:** Drawer mirrors table names for shared fields — **ID** (read-only) + **Requirement** (editable title; not “Requirement Title”). ID ≠ Requirement.
 - **CFG-03 column contract (column-clarity amendment):** table columns are ID · Requirement · Category · Treatment · **Bidder Response Instruction** · **Evidence Instruction** · **Delivery Confirmation Method** · **Setup Status** · Action. Instruction/method cells show **content only** (never “missing”, “defined”, or “valid”). Completeness belongs in Setup Status (`Complete` / `Needs attention` / `Draft` / `Not applicable`), issue summary, and Action (`Edit` / `Fix` / `Review`). Persist field: `delivery_confirmation_method` (not `acceptance_expectation` / `acceptance_description`). GET includes `column_contract`.
+- CFG-04 page: `it_tender_configuration_implementation_schedule_page.js` + pins `kt-cl-cfg04-*`; API `get_tender_configuration_implementation_schedule` / `save_tender_configuration_implementation_schedule`; Phased `queueTable` + body-mounted milestone drawer; Single Turnkey form; approach switch confirm preserves drafts
+- **CFG-04 column contract:** ID · Milestone · Expected Duration · Trigger · Key Deliverable · **Acceptance Method** · **Setup Status** · Action. Acceptance Method = content only (never “Acceptance defined” / “Missing acceptance”). **Save Milestone** persists immediately.
 - CFG-01 follow-ups (explicitly out of ticket): multi-version STD picker; Run Readiness Check CTA; relational lots child table; strip Config Ref cell (needs CL lock amendment)
 - CFG-02 follow-ups (explicitly out of ticket): WF-01 / publication-owned Tender Publication Date; STD-driven defaults; explicit clarifications-allowed Yes/No; TDS→STD Section II render mapping; deeper security/preference currency rules
-- CFG-03 follow-ups (explicitly out of ticket): child DocType; STD Section V/VI templates; Filter toolbar; delete/reorder; real CFG-04; deep links from References
+- CFG-03 follow-ups (explicitly out of ticket): child DocType; STD Section V/VI templates; Filter toolbar; reorder; deep links from References
+- **Row remove (CFG-03…CFG-06):** subtle trash icon beside Edit/Fix; Civic Ledger `kentender_core.cl.confirm` then persist immediately (`kt-cl-cfg0N-row-delete-*`, `kt-cl-confirm-*`)
+- CFG-05 page: `it_tender_configuration_system_inventory_page.js` + pins `kt-cl-cfg05-*`; API `get_tender_configuration_system_inventory` / `save_tender_configuration_system_inventory`; disclosure banner + category filters + `queueTable` + body-mounted item drawer; INV-/BG- auto ids; related req/milestone chips; **Save Item** persists immediately
+- **CFG-05 column contract:** ID · Item · Category · Scope · Bidder Consideration · Disclosure Status · Price Link · **Setup Status** · Action. Content columns never show missing/defined/valid.
+- CFG-04 follow-ups (explicitly out of ticket): child DocType; STD Section VII templates; reorder milestones
+- CFG-05 follow-ups (explicitly out of ticket): child DocType; STD Section VIII/IX templates; real “Linked in Price Schedule” from CFG-06; reorder inventory rows
+- CFG-06 page: `it_tender_configuration_price_schedule_page.js` + pins `kt-cl-cfg06-*`; API `get_tender_configuration_price_schedule` / `save_tender_configuration_price_schedule`; section tabs + Import from CFG-03/04/05 + `queueTable` + numbered drawer; PRI- auto ids; **Save Item** persists immediately; `wizardStepFooter` `extraEndActions` for **Run Check** (same footer strip as CFG-02…05 — not table-level)
+- **CFG-06 column contract:** ID · Price Item · Price Group · Pricing Basis · Quantity / Duration · Source · Evaluated Price · **Setup Status** · Action. Content columns never show missing/defined/valid.
+- CFG-06 follow-ups (explicitly out of ticket): child DocType; STD Section IV templates; Standard IT price template import; reorder price items
+- CFG-07 page: `it_tender_configuration_evaluation_setup_page.js` + reuses `kt-cl-cfg06-*` chrome classes with `kt-cl-cfg07-*` testids; API `get_tender_configuration_evaluation_setup` / `save_tender_configuration_evaluation_setup`; section tabs + Import Suggested Criteria + scoring summary + `queueTable` + criterion drawer; EVAL- auto ids; **Save Criterion** persists immediately; footer **Run Check**; never show bidder scores/rankings/awards
+- **CFG-07 column contract:** Criterion ID · Criterion · Stage · Evaluation Basis · Source / Link · Marks / Rule · Bidder Evidence · **Status** · Action. Status = Complete / Needs attention only.
+- CFG-07 follow-ups (explicitly out of ticket): child DocType; full STD template criterion catalog; CFG-08 deep links for evidence items
+- CFG-08 page: `it_tender_configuration_forms_and_evidence_page.js` + pins `kt-cl-cfg08-*`; API `get_tender_configuration_forms_and_evidence` / `save_tender_configuration_forms_and_evidence`; filter tabs + Import Standard Forms + `queueTable` + drawer A–E; FE- auto ids; **Save Submission Item** persists immediately; footer **Run Check**; Continue → Contract Values when mandatory/conditional rules met
+- **CFG-08 column contract:** Submission Item · Category · Source · Requirement · Bidder Instruction · **Status** · Actions. Status = Complete / Needs attention / Not applicable only. Never show uploads, scores, or price forms.
+- CFG-08 follow-ups (explicitly out of ticket): child DocType; CFG-07 evidence deep-link UX beyond read-only refs
+- CFG-09 page: `it_tender_configuration_scc_page.js` + pins `kt-cl-cfg09-*`; API `get_tender_configuration_contract_values` / `save_tender_configuration_contract_values`; category tabs + suggest-from-upstream hydrate + `queueTable` + drawer; CV- auto ids; **Save Contract Value** persists immediately; footer **Run Check** only (no Continue); never show GCC hashes, award, or post-award admin
+- **CFG-09 column contract:** Item · Category · Source · Contract Location · Value / Obligation · **Status** · Action. Status = Complete / Needs attention / Review before handoff / Not applicable.
+- CFG-09 follow-ups (explicitly out of ticket): child DocType; live WG-01 Readiness page; mock KPI/Risk Exposure cards
 - Rollout matrix: [`docs/test-contracts/civic-ledger-queue-rollout-matrix.md`](../../../test-contracts/civic-ledger-queue-rollout-matrix.md)
 
 Reference surface: UI-00 (`it-tender-configuration-dashboard`).

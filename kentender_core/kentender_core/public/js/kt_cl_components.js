@@ -1684,6 +1684,106 @@ frappe.provide("kentender_core.cl_components");
 		},
 
 		/**
+		 * Civic Ledger confirm dialog (replaces industrial frappe.confirm Yes/No).
+		 * Compact modal: title, message, Cancel + Confirm (primary or danger tone).
+		 */
+		confirmDialog: function (opts) {
+			opts = opts || {};
+			var q = spec().QUEUE || {};
+			var title = opts.title || __("Confirm");
+			var message = opts.message || "";
+			var confirmLabel = opts.confirmLabel || __("Confirm");
+			var cancelLabel = opts.cancelLabel || __("Cancel");
+			var tone = opts.tone === "danger" ? "danger" : "primary";
+			var confirmCls =
+				tone === "danger"
+					? "kt-cl-confirm-btn kt-cl-confirm-btn--danger"
+					: "kt-cl-confirm-btn kt-cl-confirm-btn--primary";
+			var messageHtml = message
+				? '<p class="kt-cl-confirm-message" data-testid="kt-cl-confirm-message">' +
+					escapeHtml(message) +
+					"</p>"
+				: "";
+			return (
+				'<div class="' +
+				(q.modalOverlay || "fixed inset-0 z-[100] flex items-center justify-center p-4 kt-cl-modal-overlay") +
+				'" data-testid="kt-cl-confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="kt-cl-confirm-title">' +
+				'<section class="kt-cl-confirm-dialog" data-testid="kt-cl-confirm-dialog">' +
+				'<header class="kt-cl-confirm-header">' +
+				'<h2 class="kt-cl-confirm-title" id="kt-cl-confirm-title" data-testid="kt-cl-confirm-title">' +
+				escapeHtml(title) +
+				"</h2>" +
+				'<button type="button" class="kt-cl-confirm-close" data-action="close" data-testid="kt-cl-confirm-close" aria-label="' +
+				escapeHtml(__("Close")) +
+				'">' +
+				msIcon("close", 20) +
+				"</button></header>" +
+				'<div class="kt-cl-confirm-body">' +
+				messageHtml +
+				"</div>" +
+				'<footer class="kt-cl-confirm-footer">' +
+				'<button type="button" class="kt-cl-confirm-btn kt-cl-confirm-btn--ghost" data-action="cancel" data-testid="kt-cl-confirm-cancel">' +
+				escapeHtml(cancelLabel) +
+				"</button>" +
+				'<button type="button" class="' +
+				confirmCls +
+				'" data-action="confirm" data-testid="kt-cl-confirm-ok">' +
+				escapeHtml(confirmLabel) +
+				"</button></footer></section></div>"
+			);
+		},
+
+		/**
+		 * Mount confirmDialog and resolve via onConfirm / onCancel.
+		 * Returns the jQuery overlay (also available as kentender_core.cl.confirm).
+		 */
+		showConfirm: function (opts) {
+			opts = opts || {};
+			var self = this;
+			$("body").find('[data-testid="kt-cl-confirm-overlay"]').remove();
+			var $overlay = $(self.confirmDialog(opts)).appendTo("body");
+			var settled = false;
+			function finish(confirmed) {
+				if (settled) {
+					return;
+				}
+				settled = true;
+				$(document).off("keydown.ktClConfirm");
+				$overlay.remove();
+				if (confirmed && typeof opts.onConfirm === "function") {
+					opts.onConfirm();
+				} else if (!confirmed && typeof opts.onCancel === "function") {
+					opts.onCancel();
+				}
+			}
+			$overlay.on("click", '[data-action="cancel"], [data-action="close"]', function (e) {
+				e.preventDefault();
+				finish(false);
+			});
+			$overlay.on("click", '[data-action="confirm"]', function (e) {
+				e.preventDefault();
+				finish(true);
+			});
+			$overlay.on("click", function (e) {
+				if ($(e.target).is('[data-testid="kt-cl-confirm-overlay"]')) {
+					finish(false);
+				}
+			});
+			$(document).on("keydown.ktClConfirm", function (e) {
+				if (e.key === "Escape") {
+					finish(false);
+				}
+			});
+			setTimeout(function () {
+				var $ok = $overlay.find('[data-testid="kt-cl-confirm-ok"]');
+				if ($ok.length) {
+					$ok.trigger("focus");
+				}
+			}, 0);
+			return $overlay;
+		},
+
+		/**
 		 * Shared CFG/WF bottom bar: Back on the left; Save + primary Continue on the right.
 		 * Primary CTA uses high-contrast on-primary (white) on navy — not muted on-primary-container.
 		 */
@@ -1770,4 +1870,8 @@ frappe.provide("kentender_core.cl_components");
 
 	frappe.provide("kentender_core.cl");
 	kentender_core.cl.components = C;
+	/** Short alias used by CFG pages for Civic Ledger confirms. */
+	kentender_core.cl.confirm = function (opts) {
+		return C.showConfirm(opts);
+	};
 })();

@@ -110,11 +110,71 @@ def _cfg03_conditions(doc: Any, _step_state: dict[str, Any]) -> list[dict[str, A
 	return requirements_exit_conditions_for_doc(doc)
 
 
+def _cfg04_conditions(doc: Any, _step_state: dict[str, Any]) -> list[dict[str, Any]]:
+	"""CFG-04 Implementation Schedule exit conditions (C2-CFG4)."""
+	from kentender_procurement.tender_configurations.services.implementation_schedule import (
+		schedule_exit_conditions_for_doc,
+	)
+
+	return schedule_exit_conditions_for_doc(doc)
+
+
+def _cfg05_conditions(doc: Any, _step_state: dict[str, Any]) -> list[dict[str, Any]]:
+	"""CFG-05 System Inventory & Bidder Background exit conditions (C2-CFG5)."""
+	from kentender_procurement.tender_configurations.services.system_inventory import (
+		inventory_exit_conditions_for_doc,
+	)
+
+	return inventory_exit_conditions_for_doc(doc)
+
+
+def _cfg06_conditions(doc: Any, _step_state: dict[str, Any]) -> list[dict[str, Any]]:
+	"""CFG-06 Price Schedule exit conditions (C2-CFG6)."""
+	from kentender_procurement.tender_configurations.services.price_schedule import (
+		price_schedule_exit_conditions_for_doc,
+	)
+
+	return price_schedule_exit_conditions_for_doc(doc)
+
+
+def _cfg07_conditions(doc: Any, _step_state: dict[str, Any]) -> list[dict[str, Any]]:
+	"""CFG-07 Evaluation Setup exit conditions (C2-CFG7)."""
+	from kentender_procurement.tender_configurations.services.evaluation_setup import (
+		evaluation_setup_exit_conditions_for_doc,
+	)
+
+	return evaluation_setup_exit_conditions_for_doc(doc)
+
+
+def _cfg08_conditions(doc: Any, _step_state: dict[str, Any]) -> list[dict[str, Any]]:
+	"""CFG-08 Forms & Evidence exit conditions (C2-CFG8)."""
+	from kentender_procurement.tender_configurations.services.forms_and_evidence import (
+		forms_and_evidence_exit_conditions_for_doc,
+	)
+
+	return forms_and_evidence_exit_conditions_for_doc(doc)
+
+
+def _cfg09_conditions(doc: Any, _step_state: dict[str, Any]) -> list[dict[str, Any]]:
+	"""CFG-09 Contract Values exit conditions (C2-CFG9)."""
+	from kentender_procurement.tender_configurations.services.contract_values import (
+		contract_values_exit_conditions_for_doc,
+	)
+
+	return contract_values_exit_conditions_for_doc(doc)
+
+
 # Register field-level checkers as each CFG screen ships. Unregistered → status fallback.
 STEP_CONDITION_BUILDERS: dict[str, ConditionBuilder] = {
 	"CFG-01": _cfg01_conditions,
 	"CFG-02": _cfg02_conditions,
 	"CFG-03": _cfg03_conditions,
+	"CFG-04": _cfg04_conditions,
+	"CFG-05": _cfg05_conditions,
+	"CFG-06": _cfg06_conditions,
+	"CFG-07": _cfg07_conditions,
+	"CFG-08": _cfg08_conditions,
+	"CFG-09": _cfg09_conditions,
 }
 
 

@@ -8,6 +8,13 @@
 **STD family:** Information Technology  
 **Status:** Revised v6 specification  
 
+> **Implementation note (column-clarity amendment):** The Civic Ledger Desk build replaces pack table columns **Acceptance** + **Status** with **Acceptance Method** + **Setup Status**, and aligns drawer labels with the table (**ID** read-only + **Milestone**, not “Milestone Name”).  
+> - **Acceptance Method** holds how the milestone will later be accepted (content), never setup diagnostics.  
+> - **Setup Status** holds `Complete` / `Needs attention` / `Draft` / `Not applicable`.  
+> - Never put “missing”, “defined”, or “valid” in Acceptance Method — only in Setup Status, issue summary, or Action.  
+> - **Save Milestone** persists immediately (same POST as footer Save Schedule) so issues refresh without a second footer save.  
+> Pack sections below that still say Acceptance / “Acceptance defined” / “Missing acceptance” are superseded for Desk UI by this note and by `COMPONENTS.md` CFG-04 column contract.
+
 ---
 
 ## 1. Purpose

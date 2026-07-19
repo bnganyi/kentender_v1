@@ -100,6 +100,60 @@ frappe.provide("kentender_core.cl_surface_registry");
 			crumb(__("IT Requirements")),
 		];
 	}
+	/** CFG-04 leaf: Home is a link; Implementation Schedule is current. */
+	function trailCfg04ImplementationSchedule() {
+		return [
+			crumbDashboard(),
+			crumbTenderConfigurations(),
+			crumbConfigurationHome(),
+			crumb(__("Implementation Schedule")),
+		];
+	}
+	/** CFG-05 leaf: Home is a link; System Inventory is current. */
+	function trailCfg05SystemInventory() {
+		return [
+			crumbDashboard(),
+			crumbTenderConfigurations(),
+			crumbConfigurationHome(),
+			crumb(__("System Inventory & Bidder Background")),
+		];
+	}
+	/** CFG-06 leaf: Home is a link; Price Schedule is current. */
+	function trailCfg06PriceSchedule() {
+		return [
+			crumbDashboard(),
+			crumbTenderConfigurations(),
+			crumbConfigurationHome(),
+			crumb(__("Price Schedule")),
+		];
+	}
+	/** CFG-07 leaf: Home is a link; Evaluation Setup is current. */
+	function trailCfg07EvaluationSetup() {
+		return [
+			crumbDashboard(),
+			crumbTenderConfigurations(),
+			crumbConfigurationHome(),
+			crumb(__("Evaluation Setup")),
+		];
+	}
+	/** CFG-08 leaf: Home is a link; Forms & Evidence is current. */
+	function trailCfg08FormsEvidence() {
+		return [
+			crumbDashboard(),
+			crumbTenderConfigurations(),
+			crumbConfigurationHome(),
+			crumb(__("Forms & Evidence")),
+		];
+	}
+	/** CFG-09 leaf: Home is a link; Contract Values is current. */
+	function trailCfg09ContractValues() {
+		return [
+			crumbDashboard(),
+			crumbTenderConfigurations(),
+			crumbConfigurationHome(),
+			crumb(__("Contract Values")),
+		];
+	}
 
 	/**
 	 * A2 screen IDs → routePrefixes use existing Desk page names where present.
@@ -193,8 +247,10 @@ frappe.provide("kentender_core.cl_surface_registry");
 			sidebarWorkspaceKey: SIDEBAR_KEY,
 			chrome: chrome(
 				__("Implementation Schedule"),
-				__("Define how the solution should be delivered (Section VII)."),
-				trailConfigHome,
+				__(
+					"Define the delivery approach, milestones, deliverables, timing, and acceptance checkpoints for this IT tender."
+				),
+				trailCfg04ImplementationSchedule(),
 				[]
 			),
 		},
@@ -206,7 +262,7 @@ frappe.provide("kentender_core.cl_surface_registry");
 			chrome: chrome(
 				__("System Inventory & Bidder Background"),
 				__("Disclose bidder-relevant inventory, site, system, and background context."),
-				trailConfigHome,
+				trailCfg05SystemInventory(),
 				[]
 			),
 		},
@@ -218,7 +274,7 @@ frappe.provide("kentender_core.cl_surface_registry");
 			chrome: chrome(
 				__("Price Schedule"),
 				__("Define how bidders should price the tender."),
-				trailConfigHome,
+				trailCfg06PriceSchedule(),
 				[]
 			),
 		},
@@ -230,7 +286,7 @@ frappe.provide("kentender_core.cl_surface_registry");
 			chrome: chrome(
 				__("Evaluation Setup"),
 				__("Configure criteria and scoring for bid evaluation."),
-				trailConfigHome,
+				trailCfg07EvaluationSetup(),
 				[]
 			),
 		},
@@ -242,7 +298,7 @@ frappe.provide("kentender_core.cl_surface_registry");
 			chrome: chrome(
 				__("Forms & Evidence"),
 				__("Select non-price forms, declarations, and evidence requirements."),
-				trailConfigHome,
+				trailCfg08FormsEvidence(),
 				[]
 			),
 		},
@@ -254,7 +310,7 @@ frappe.provide("kentender_core.cl_surface_registry");
 			chrome: chrome(
 				__("Contract Values"),
 				__("Set tender-specific contract values and obligations (SCC)."),
-				trailConfigHome,
+				trailCfg09ContractValues(),
 				[]
 			),
 		},

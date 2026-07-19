@@ -48,6 +48,7 @@ class TestConfigurationItRequirementsApi(FrappeTestCase):
 		for key in (
 			"configuration_id",
 			"requirements",
+			"next_requirement_id",
 			"can_continue",
 			"has_progress",
 			"blockers",
@@ -56,6 +57,7 @@ class TestConfigurationItRequirementsApi(FrappeTestCase):
 			"guidance",
 		):
 			self.assertIn(key, out)
+		self.assertEqual(out["next_requirement_id"], "REQ-001")
 		self.assertIn("Delivery Confirmation Method", out["column_contract"]["columns"])
 		self.assertIn("Setup Status", out["column_contract"]["columns"])
 		self.assertNotIn("Acceptance", out["column_contract"]["columns"])

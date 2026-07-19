@@ -152,3 +152,153 @@ def save_tender_configuration_requirements(
 	)
 
 	return save_configuration_requirements(configuration_id, payload)
+
+
+@frappe.whitelist()
+def get_tender_configuration_implementation_schedule(configuration_id: str) -> dict[str, Any]:
+	"""CFG-04 Implementation Schedule GET (C2-CFG4 §19)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.implementation_schedule import (
+		get_configuration_implementation_schedule,
+	)
+
+	return get_configuration_implementation_schedule(configuration_id)
+
+
+@frappe.whitelist()
+def save_tender_configuration_implementation_schedule(
+	configuration_id: str,
+	payload: dict[str, Any] | str | None = None,
+) -> dict[str, Any]:
+	"""CFG-04 Implementation Schedule POST (C2-CFG4 §19)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.implementation_schedule import (
+		save_configuration_implementation_schedule,
+	)
+
+	return save_configuration_implementation_schedule(configuration_id, payload)
+
+
+@frappe.whitelist()
+def get_tender_configuration_system_inventory(configuration_id: str) -> dict[str, Any]:
+	"""CFG-05 System Inventory & Bidder Background GET (C2-CFG5 §21)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.system_inventory import (
+		get_configuration_system_inventory,
+	)
+
+	return get_configuration_system_inventory(configuration_id)
+
+
+@frappe.whitelist()
+def save_tender_configuration_system_inventory(
+	configuration_id: str,
+	payload: dict[str, Any] | str | None = None,
+) -> dict[str, Any]:
+	"""CFG-05 System Inventory & Bidder Background POST (C2-CFG5 §21)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.system_inventory import (
+		save_configuration_system_inventory,
+	)
+
+	return save_configuration_system_inventory(configuration_id, payload)
+
+
+@frappe.whitelist()
+def get_tender_configuration_price_schedule(configuration_id: str) -> dict[str, Any]:
+	"""CFG-06 Price Schedule GET (C2-CFG6 §20)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.price_schedule import (
+		get_configuration_price_schedule,
+	)
+
+	return get_configuration_price_schedule(configuration_id)
+
+
+@frappe.whitelist()
+def save_tender_configuration_price_schedule(
+	configuration_id: str,
+	payload: dict[str, Any] | str | None = None,
+) -> dict[str, Any]:
+	"""CFG-06 Price Schedule POST (C2-CFG6 §20)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.price_schedule import (
+		save_configuration_price_schedule,
+	)
+
+	return save_configuration_price_schedule(configuration_id, payload)
+
+
+@frappe.whitelist()
+def get_tender_configuration_evaluation_setup(configuration_id: str) -> dict[str, Any]:
+	"""CFG-07 Evaluation Setup GET (C2-CFG7 §21)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.evaluation_setup import (
+		get_configuration_evaluation_setup,
+	)
+
+	return get_configuration_evaluation_setup(configuration_id)
+
+
+@frappe.whitelist()
+def save_tender_configuration_evaluation_setup(
+	configuration_id: str,
+	payload: dict[str, Any] | str | None = None,
+) -> dict[str, Any]:
+	"""CFG-07 Evaluation Setup POST (C2-CFG7 §21)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.evaluation_setup import (
+		save_configuration_evaluation_setup,
+	)
+
+	return save_configuration_evaluation_setup(configuration_id, payload)
+
+
+@frappe.whitelist()
+def get_tender_configuration_forms_and_evidence(configuration_id: str) -> dict[str, Any]:
+	"""CFG-08 Forms & Evidence GET (C2-CFG8 §20)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.forms_and_evidence import (
+		get_configuration_forms_and_evidence,
+	)
+
+	return get_configuration_forms_and_evidence(configuration_id)
+
+
+@frappe.whitelist()
+def save_tender_configuration_forms_and_evidence(
+	configuration_id: str,
+	payload: dict[str, Any] | str | None = None,
+) -> dict[str, Any]:
+	"""CFG-08 Forms & Evidence POST (C2-CFG8 §20)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.forms_and_evidence import (
+		save_configuration_forms_and_evidence,
+	)
+
+	return save_configuration_forms_and_evidence(configuration_id, payload)
+
+
+@frappe.whitelist()
+def get_tender_configuration_contract_values(configuration_id: str) -> dict[str, Any]:
+	"""CFG-09 Contract Values GET (C2-CFG9 §19)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.contract_values import (
+		get_configuration_contract_values,
+	)
+
+	return get_configuration_contract_values(configuration_id)
+
+
+@frappe.whitelist()
+def save_tender_configuration_contract_values(
+	configuration_id: str,
+	payload: dict[str, Any] | str | None = None,
+) -> dict[str, Any]:
+	"""CFG-09 Contract Values POST (C2-CFG9 §19)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.contract_values import (
+		save_configuration_contract_values,
+	)
+
+	return save_configuration_contract_values(configuration_id, payload)
