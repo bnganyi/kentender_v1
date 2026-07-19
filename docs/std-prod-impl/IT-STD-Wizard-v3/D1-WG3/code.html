@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>WG-03 — Tender Document Preview | KenTender</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Config Integration -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-surface-variant": "#43474e",
+            "on-surface": "#191c1e",
+            "background": "#f7f9fb",
+            "on-primary": "#ffffff",
+            "primary-fixed-dim": "#adc8f3",
+            "secondary": "#515f74",
+            "surface-container-high": "#e6e8ea",
+            "error-container": "#ffdad6",
+            "surface-container-highest": "#e0e3e5",
+            "inverse-on-surface": "#eff1f3",
+            "surface-container-lowest": "#ffffff",
+            "error": "#ba1a1a",
+            "secondary-container": "#d2e1fa",
+            "surface-bright": "#f7f9fb",
+            "secondary-fixed-dim": "#b9c7e0",
+            "on-tertiary-fixed-variant": "#3e465c",
+            "tertiary-fixed-dim": "#bec6e0",
+            "surface-container-low": "#f2f4f6",
+            "primary-container": "#002244",
+            "surface-dim": "#d8dadc",
+            "on-secondary-fixed": "#0d1c2e",
+            "surface": "#f7f9fb",
+            "on-error-container": "#93000a",
+            "on-tertiary-container": "#8088a1",
+            "on-tertiary": "#ffffff",
+            "on-primary-container": "#708ab2",
+            "surface-tint": "#456085",
+            "tertiary": "#030a1d",
+            "on-secondary-container": "#556379",
+            "on-primary-fixed": "#001c3a",
+            "surface-container": "#eceef0",
+            "outline": "#74777f",
+            "inverse-primary": "#adc8f3",
+            "on-background": "#191c1e",
+            "inverse-surface": "#2d3133",
+            "on-primary-fixed-variant": "#2d486c",
+            "on-tertiary-fixed": "#131b2f",
+            "primary": "#000b1d",
+            "on-secondary-fixed-variant": "#3a485c",
+            "on-secondary": "#ffffff",
+            "secondary-fixed": "#d5e3fc",
+            "outline-variant": "#c4c6cf",
+            "on-error": "#ffffff",
+            "tertiary-fixed": "#dae2fd",
+            "surface-variant": "#e0e3e5",
+            "primary-fixed": "#d4e3ff",
+            "tertiary-container": "#192135"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "table-row-height": "32px",
+            "input-height": "28px",
+            "container-padding": "16px",
+            "component-gap": "8px",
+            "gutter": "12px",
+            "unit": "4px"
+          },
+          "fontFamily": {
+            "label-sm": ["JetBrains Mono"],
+            "label-md": ["JetBrains Mono"],
+            "display": ["Public Sans"],
+            "headline-md": ["Public Sans"],
+            "headline-lg": ["Public Sans"],
+            "body-sm": ["Public Sans"],
+            "body-lg": ["Public Sans"],
+            "body-md": ["Public Sans"]
+          },
+          "fontSize": {
+            "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+            "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+            "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+            "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+            "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+            "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+            "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+            "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      font-size: 20px;
+    }
+    .watermark {
+      pointer-events: none;
+      user-select: none;
+      transform: rotate(-30deg);
+      opacity: 0.08;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    .nav-active {
+      border-right: 4px solid #000b1d;
+      background-color: rgba(173, 200, 243, 0.2);
+      color: #2d486c;
+      font-weight: 700;
+    }
+    
+    .btn-disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface font-body-md">
+<!-- SideNavBar Anchor -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest border-r border-outline-variant flex flex-col z-50">
+<div class="p-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+<div>
+<h1 class="text-headline-md font-headline-md font-bold text-primary">KenTender</h1>
+<p class="text-label-sm font-label-sm text-on-surface-variant">Government of Kenya</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 overflow-y-auto scrollbar-hide">
+<div class="px-2 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/50 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+<span class="text-label-md font-label-md">Planning</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/50 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="shopping_cart">shopping_cart</span>
+<span class="text-label-md font-label-md">Demand</span>
+</a>
+<!-- Active Tab: Tendering -->
+<a class="flex items-center justify-between px-4 py-3 nav-active transition-colors" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined" data-icon="gavel" style="font-variation-settings: 'FILL' 1;">gavel</span>
+<span class="text-label-md font-label-md">Tender Management</span>
+</div>
+<span class="material-symbols-outlined text-xs">expand_more</span>
+</a>
+<div class="pl-12 py-1 space-y-1">
+<a class="block py-2 text-label-md font-label-md text-on-surface-variant hover:text-primary" href="#">All Tenders</a>
+<a class="block py-2 text-label-md font-label-md text-primary font-bold" href="#">Tender Configurations</a>
+</div>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/50 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="text-label-md font-label-md">Budget</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/50 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="text-label-md font-label-md">Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/50 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="text-label-md font-label-md">Administration</span>
+</a>
+</div>
+</nav>
+<div class="mt-auto border-t border-outline-variant p-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-variant/50 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="text-label-md font-label-md">Help Center</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-variant/50 transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="text-label-md font-label-md">Log Out</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<main class="ml-64 flex flex-col min-h-screen">
+<!-- Top Context Strip -->
+<header class="bg-surface border-b border-outline-variant sticky top-0 z-40">
+<div class="px-gutter py-4">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-4">
+<span class="text-body-sm font-label-sm text-on-surface-variant bg-surface-container-high px-2 py-0.5 rounded">WG-03</span>
+<h2 class="text-headline-md font-headline-md font-bold text-primary">Tender Document Preview</h2>
+</div>
+<div class="flex items-center gap-3"><div class="flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-800 rounded-full text-label-md"><div class="w-1.5 h-1.5 bg-green-600 rounded-full"></div>Review Status: Approved for Preview</div><div class="flex items-center gap-1.5 px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full text-label-md"><div class="w-1.5 h-1.5 bg-on-secondary-container rounded-full"></div>Preview Status: Confirmed</div></div>
+</div>
+<div class="grid grid-cols-5 gap-6 border-t border-outline-variant pt-4"><div><p class="text-label-sm font-label-sm uppercase text-on-surface-variant mb-1">Procurement Package Ref</p><p class="font-headline-md text-body-md font-bold text-primary">PP-ICT-2024-009</p></div><div><p class="text-label-sm font-label-sm uppercase text-on-surface-variant mb-1">Configuration Ref</p><p class="font-headline-md text-body-md font-bold text-primary">TC-2024-00128</p></div><div><p class="text-label-sm font-label-sm uppercase text-on-surface-variant mb-1">Procuring Entity</p><p class="font-headline-md text-body-md font-bold text-primary">National Treasury</p></div><div><p class="text-label-sm font-label-sm uppercase text-on-surface-variant mb-1">Procurement Method</p><p class="font-headline-md text-body-md font-bold text-primary">Open National Tender</p></div><div><p class="text-label-sm font-label-sm uppercase text-on-surface-variant mb-1">Standard Tender Document</p><p class="font-headline-md text-body-md font-bold text-primary">IT Standard Tender Document — April 2022</p></div></div>
+</div>
+</header>
+<!-- Main Body: 3-Column Split -->
+<div class="flex-1 flex overflow-hidden">
+<!-- Left Column: Document Outline (20%) -->
+<aside class="w-1/5 border-r border-outline-variant bg-surface-container-low overflow-y-auto p-4 flex flex-col gap-1">
+<h3 class="text-label-md font-label-md uppercase text-on-surface-variant px-3 py-2">Document Outline</h3>
+<button class="flex items-center gap-2 px-3 py-2 text-left bg-surface-container-lowest shadow-sm rounded border border-primary/20 text-primary font-bold">
+<span class="material-symbols-outlined text-sm">description</span>
+<span class="text-body-md">Cover and Invitation</span>
+</button>
+<button class="flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-variant/30 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">list</span>
+<span class="text-body-md">Instructions to Tenderers</span>
+</button>
+<button class="flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-variant/30 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">list</span>
+<span class="text-body-md">Tender Data Sheet</span>
+</button>
+<button class="flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-variant/30 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">verified_user</span>
+<span class="text-body-md">Evaluation and Qualification Criteria</span>
+</button>
+<button class="flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-variant/30 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">edit_note</span>
+<span class="text-body-md">Tendering Forms</span>
+</button>
+<button class="flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-variant/30 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">payments</span>
+<span class="text-body-md">Price Schedules</span>
+</button>
+<button class="flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-variant/30 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">dns</span>
+<span class="text-body-md">Requirements of the Information System</span>
+</button>
+<button class="flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-variant/30 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">settings_input_component</span>
+<span class="text-body-md">Technical Requirements</span>
+</button>
+<button class="flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-variant/30 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">calendar_month</span>
+<span class="text-body-md">Implementation Schedule</span>
+</button>
+<button class="flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-variant/30 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">inventory_2</span>
+<span class="text-body-md">System Inventory and Background</span>
+</button>
+<button class="flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-variant/30 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">gavel</span>
+<span class="text-body-md">General Conditions of Contract</span>
+</button>
+<button class="flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-variant/30 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">verified</span>
+<span class="text-body-md">Special Conditions of Contract</span>
+</button>
+<button class="flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-variant/30 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">history_edu</span>
+<span class="text-body-md">Contract Forms and Appendices</span>
+</button>
+</aside>
+<!-- Center Column: Document Preview (60%) -->
+<section class="w-3/5 bg-surface-dim p-8 relative flex flex-col gap-4 overflow-y-auto">
+<!-- Preview Toolbar -->
+<div class="bg-surface-container-lowest shadow-sm p-2 flex items-center justify-between rounded sticky top-0 z-10 border border-outline-variant">
+<div class="flex items-center gap-2">
+<button class="p-2 hover:bg-surface-variant rounded"><span class="material-symbols-outlined">zoom_in</span></button>
+<button class="p-2 hover:bg-surface-variant rounded"><span class="material-symbols-outlined">zoom_out</span></button>
+<div class="h-6 w-px bg-outline-variant mx-1"></div>
+<span class="text-label-md px-2">Page 1 of 142</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-2 top-1.5 text-on-surface-variant text-sm">search</span>
+<input class="pl-8 pr-3 py-1 bg-surface-container text-body-sm border border-outline-variant rounded focus:ring-1 focus:ring-secondary outline-none w-48" placeholder="Search document..." type="text"/>
+</div>
+<button class="flex items-center gap-2 px-3 py-1.5 bg-secondary text-on-secondary rounded text-label-md hover:bg-secondary/90 transition-colors">
+<span class="material-symbols-outlined text-sm">download</span>
+              Download Preview PDF
+            </button>
+</div>
+</div>
+<!-- Document Content Simulation -->
+<div class="bg-surface-container-lowest mx-auto w-full max-w-4xl shadow-xl min-h-[1100px] p-16 relative overflow-hidden border border-outline-variant">
+<!-- Watermark Overlay -->
+<div class="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
+<div class="watermark text-[80px] text-primary rotate-[-45deg] whitespace-nowrap">PREVIEW — NOT FOR PUBLICATION</div>
+</div>
+<div class="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none translate-y-[400px]">
+<div class="watermark text-[80px] text-primary rotate-[-45deg] whitespace-nowrap">PREVIEW — NOT FOR PUBLICATION</div>
+</div>
+<div class="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none -translate-y-[400px]">
+<div class="watermark text-[80px] text-primary rotate-[-45deg] whitespace-nowrap">PREVIEW — NOT FOR PUBLICATION</div>
+</div>
+<!-- Document Header -->
+<div class="border-b-4 border-primary pb-8 mb-12 flex justify-between items-start">
+<div class="w-24 h-24 bg-surface-container-low flex items-center justify-center rounded-lg border border-outline-variant">
+<img class="w-20 h-20 opacity-80" data-alt="A formal, high-resolution government emblem of Kenya featuring two lions holding spears and a shield, rendered in a crisp vector-like style suitable for a professional official document header." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBy0OzKosIskPS4f1vXNlIxoGVaBykVTAz4weSniURhw2_Sv1iAL6feJXBK90lTExSqjlhxRQtbPWpbx2XzVL2kTLHqhRf5ikr4zbsXznXb4XOPMzWPjRJWrSUX9dxz1X3Eso1Xl6bii4CJwLfQxiAI_OhwysQLDOjBWJ8FdXW4tGXms2PQklFfjzqWO9mDaDVP26LePk8-l1gF-TSDc5duSVJ4F9vBDraSqXNS7_HS2C_Wt3xv27pz"/>
+</div>
+<div class="text-right">
+<h1 class="text-display font-display text-primary leading-tight">REPUBLIC OF KENYA</h1>
+<p class="text-headline-md font-headline-md text-secondary">National Treasury &amp; Economic Planning</p>
+</div>
+</div>
+<div class="text-center mb-16">
+<h2 class="text-headline-lg font-headline-lg uppercase tracking-widest mb-4">Standard Tender Document</h2>
+<div class="h-1 w-24 bg-secondary mx-auto mb-8"></div>
+<h3 class="text-display font-display text-primary mb-2">TENDER FOR PROCUREMENT OF INFORMATION SYSTEMS</h3>
+<p class="text-body-lg font-body-lg text-secondary italic">(DESIGN, SUPPLY, INSTALLATION, COMMISSIONING AND MAINTENANCE)</p>
+</div>
+<div class="bg-surface-container-low p-8 rounded border border-outline-variant mb-12">
+<div class="grid grid-cols-1 gap-6">
+<div>
+<p class="text-label-sm font-label-sm uppercase text-on-surface-variant mb-1">Procuring Entity</p>
+<p class="text-body-lg font-body-lg font-bold">MINISTRY OF INFORMATION, COMMUNICATION AND THE DIGITAL ECONOMY</p>
+</div>
+<div>
+<p class="text-label-sm font-label-sm uppercase text-on-surface-variant mb-1">Tender Name</p>
+<p class="text-body-lg font-body-lg font-bold">SUPPLY, INSTALLATION AND COMMISSIONING OF DATA CENTER HARDWARE REFRESH AND ASSOCIATED INFRASTRUCTURE</p>
+</div>
+<div class="flex justify-between">
+<div>
+<p class="text-label-sm font-label-sm uppercase text-on-surface-variant mb-1">Configuration Ref</p>
+<p class="text-body-lg font-body-lg font-bold">TC-2024-00128</p>
+</div>
+<div class="text-right">
+<p class="text-label-sm font-label-sm uppercase text-on-surface-variant mb-1">Published Date</p>
+<p class="text-body-lg font-body-lg font-bold">[AUTO-INSERTED ON PUBLISH]</p>
+</div>
+</div>
+</div>
+</div>
+<div class="space-y-6 text-body-lg font-body-lg leading-relaxed text-on-surface">
+<h4 class="font-bold border-b border-outline-variant pb-2">1. INVITATION TO TENDER (ITT)</h4>
+<p class="">1.1 The Ministry of Information, Communication and the Digital Economy invites sealed tenders for the Supply, Installation and Commissioning of Data Center Hardware Refresh and Associated Infrastructure at the Government Data Center, Nairobi.</p>
+<p class="">1.2 Tendering will be conducted under open competitive method using a standardized tender document. Tendering is open to all qualified and interested Tenderers.</p>
+<p class="">1.3 Qualified and interested tenderers may obtain further information and inspect the Tender Documents during office hours (0800 to 1700 hours) at the address given below.</p>
+<p class="">1.4 A complete set of tender documents may be obtained by interested tenders electronically from the Website(s) www.ict.go.ke or www.tenders.go.ke free of charge.</p>
+<div class="pl-8 italic text-secondary text-body-md border-l-4 border-secondary-container py-2">
+                [Note: This document is a generated preview. Final signatures and official stamps will be applied upon digital publication.]
+            </div>
+</div>
+<!-- Page Footer -->
+<div class="absolute bottom-8 left-16 right-16 flex justify-between items-center text-label-sm font-label-sm text-on-surface-variant border-t border-outline-variant pt-4">
+<span class="">KenTender System — Document Preview</span>
+<span class="">Ref: TC-2024-00128</span>
+<span class="">Page 1 / 142</span>
+</div>
+</div>
+</section>
+<!-- Right Column: Confirmation Panel (20%) -->
+<aside class="w-1/5 border-l border-outline-variant bg-surface-container-lowest p-6 flex flex-col gap-6">
+<div>
+<h3 class="text-headline-md font-headline-md text-primary mb-1">Preview Confirmation</h3>
+<p class="text-body-sm text-on-surface-variant">Confirm that the generated tender document reflects the approved configuration before proceeding to Publication Handoff.</p>
+</div>
+<div class="space-y-4">
+<div class="flex items-start gap-3 p-3 rounded bg-surface-container-low border border-outline-variant">
+<span class="material-symbols-outlined text-green-600" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div>
+<p class="text-label-md font-bold text-primary">System Integrity Check</p>
+<p class="text-body-sm text-on-surface-variant">The preview was generated from the approved tender configuration and the bound Standard Tender Document.</p>
+</div>
+</div>
+<div class="space-y-3 pt-2"><p class="text-label-sm font-label-sm uppercase text-on-surface-variant px-1">Review Checklist</p><div class="p-2 text-body-sm text-on-surface-variant italic">Please perform a final visual verification of the document content before confirming.</div></div>
+</div>
+<div class="mt-auto pt-6 border-t border-outline-variant">
+<label class="flex items-start gap-3 p-4 bg-primary-fixed-dim/10 rounded border border-primary-fixed-dim/30 cursor-pointer hover:bg-primary-fixed-dim/20 transition-all">
+<input checked="checked" class="mt-1 w-5 h-5 rounded border-outline text-primary focus:ring-primary" disabled="disabled" id="master-confirm" type="checkbox"/>
+<span class="text-body-sm font-medium text-on-primary-fixed-variant">I confirm that I have reviewed the generated tender document and it may proceed to Publication Handoff.</span>
+</label>
+<div class="mt-4 p-4 bg-surface-container-low rounded border border-outline-variant space-y-3"><h4 class="text-label-sm font-bold text-primary uppercase">Publication Package</h4><ul class="space-y-1.5 text-body-sm text-on-surface-variant"><li class="flex items-center gap-2"><span class="material-symbols-outlined text-xs text-green-600">check</span>Generated tender document PDF</li><li class="flex items-center gap-2"><span class="material-symbols-outlined text-xs text-green-600">check</span>Tender configuration reference</li><li class="flex items-center gap-2"><span class="material-symbols-outlined text-xs text-green-600">check</span>Approved STD version</li><li class="flex items-center gap-2"><span class="material-symbols-outlined text-xs text-green-600">check</span>Readiness report</li><li class="flex items-center gap-2"><span class="material-symbols-outlined text-xs text-green-600">check</span>Review approval record</li><li class="flex items-center gap-2"><span class="material-symbols-outlined text-xs text-green-600">check</span>Preview confirmation record</li></ul><p class="text-xs italic text-on-surface-variant pt-2 border-t border-outline-variant/50">This action does not publish the tender. It sends the approved package to the publication workflow.</p></div></div>
+</aside>
+</div>
+<!-- Footer Action Bar -->
+<footer class="bg-surface-container-lowest border-t border-outline-variant p-4 z-40">
+<div class="flex items-center justify-between max-w-[1280px] mx-auto w-full">
+<div class="flex items-center gap-3">
+<button class="px-4 py-2 border border-error text-error font-label-md rounded hover:bg-error/5 transition-colors flex items-center gap-2" onclick="alert('Opening Correction Reason Modal...')">
+<span class="material-symbols-outlined text-sm">assignment_return</span>
+            Return for Correction
+          </button>
+<button class="px-4 py-2 border border-outline-variant text-on-surface-variant font-label-md rounded hover:bg-surface-variant/30 transition-colors flex items-center gap-2" title="Allowed only if configuration has not changed since approval.">
+<span class="material-symbols-outlined text-sm">refresh</span>
+            Regenerate Preview
+          </button>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-6 py-2 bg-green-600 text-on-primary font-label-md rounded flex items-center gap-2 shadow-sm transition-all" id="btn-confirm"><span class="material-symbols-outlined text-sm">check_circle</span>Preview Confirmed</button>
+<button class="px-6 py-2 bg-primary text-on-primary font-label-md rounded flex items-center gap-2 shadow-sm hover:bg-primary/90 transition-all" id="btn-handoff" onclick="document.getElementById('handoff-modal').classList.remove('hidden')"><span class="material-symbols-outlined text-sm">send</span>Send to Publication Workflow</button>
+</div>
+</div>
+</footer>
+</main>
+<script>
+    const masterCheckbox = document.getElementById('master-confirm');
+    const btnConfirm = document.getElementById('btn-confirm');
+    const btnHandoff = document.getElementById('btn-handoff');
+
+    masterCheckbox.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        btnConfirm.classList.remove('btn-disabled', 'opacity-50', 'cursor-not-allowed');
+        btnConfirm.disabled = false;
+        // Logic for handoff only after confirm is pressed? Usually, we enable handoff after confirmation. 
+        // For this UI, let's enable confirm first.
+      } else {
+        btnConfirm.classList.add('btn-disabled');
+        btnConfirm.disabled = true;
+        btnHandoff.classList.add('btn-disabled');
+        btnHandoff.disabled = true;
+      }
+    });
+
+    btnConfirm.addEventListener('click', () => {
+      if(!btnConfirm.disabled) {
+        btnConfirm.innerHTML = `<span class="material-symbols-outlined text-sm">check</span> Confirmed`;
+        btnConfirm.classList.add('bg-green-600', 'text-white');
+        btnHandoff.classList.remove('btn-disabled');
+        btnHandoff.disabled = false;
+        btnHandoff.classList.add('hover:opacity-90');
+      }
+    });
+
+    // Simple scroll animation for document outline selection highlight
+    const outlineButtons = document.querySelectorAll('aside[class*="w-1/5"] button');
+    outlineButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            outlineButtons.forEach(b => {
+                b.classList.remove('bg-surface-container-lowest', 'shadow-sm', 'border-primary/20', 'text-primary', 'font-bold');
+                b.classList.add('text-on-surface-variant', 'hover:bg-surface-variant/30');
+            });
+            btn.classList.add('bg-surface-container-lowest', 'shadow-sm', 'border-primary/20', 'text-primary', 'font-bold');
+            btn.classList.remove('text-on-surface-variant', 'hover:bg-surface-variant/30');
+        });
+    });
+  </script>
+<div class="fixed inset-0 z-[100] flex items-center justify-center hidden" id="handoff-modal">
+<div class="absolute inset-0 bg-on-surface/40 backdrop-blur-sm"></div>
+<div class="relative bg-surface-container-lowest w-full max-w-md rounded-lg shadow-xl border border-outline-variant overflow-hidden">
+<div class="p-6">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 bg-primary-container rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container">send</span>
+</div>
+<h3 class="text-headline-md font-headline-md font-bold text-primary">Send to Publication Workflow?</h3>
+</div>
+<div class="space-y-3">
+<p class="text-body-md text-on-surface font-medium">This will lock the confirmed preview package and make it available to the Publications team.</p>
+<div class="p-3 bg-surface-container-low rounded border border-outline-variant">
+<p class="text-body-sm text-on-surface-variant italic">This action does not publish the tender, notify bidders, open bid submission, approve an award, or create a contract.</p>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low px-6 py-4 flex justify-end gap-3 border-t border-outline-variant">
+<button class="px-4 py-2 text-label-md font-label-md text-on-surface-variant hover:bg-surface-variant/50 rounded transition-colors" onclick="document.getElementById('handoff-modal').classList.add('hidden')">Cancel</button>
+<button class="px-6 py-2 bg-primary text-on-primary text-label-md font-label-md rounded shadow-sm hover:bg-primary/90 transition-all flex items-center gap-2" onclick="alert('Package sent to Publication Workflow'); document.getElementById('handoff-modal').classList.add('hidden')">
+<span class="material-symbols-outlined text-sm">send</span>
+        Send to Publication Workflow
+      </button>
+</div>
+</div>
+</div></body></html>

@@ -100,7 +100,6 @@ class TestConfigurationHomeApi(FrappeTestCase):
 			"readiness_check",
 			"review_status",
 			"tender_document_preview",
-			"publication_handoff",
 		):
 			self.assertIn(key, handoff)
 			self.assertEqual(
@@ -109,9 +108,9 @@ class TestConfigurationHomeApi(FrappeTestCase):
 					"readiness_check": "Readiness Check",
 					"review_status": "Review Status",
 					"tender_document_preview": "Tender Document Preview",
-					"publication_handoff": "Publication Handoff",
 				}[key],
 			)
+		self.assertNotIn("publication_handoff", handoff)
 
 	def test_forbidden_terms_absent_from_payload_labels(self):
 		home = get_configuration_home(self._needs_attention_id())

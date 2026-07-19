@@ -43,6 +43,11 @@
   "forms_and_evidence",
   "section_contract_values",
   "contract_values",
+  "section_workflow",
+  "readiness_report",
+  "review_workspace",
+  "document_preview",
+  "publication_package",
   "section_issues",
   "blocker_count",
   "warning_count",
@@ -79,7 +84,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "In Progress\nNeeds Attention\nReady for Review\nUnder Review\nReady for Publication\nCompleted",
+   "options": "In Progress\nNeeds Attention\nReady for Review\nUnder Review\nReturned for Correction\nApproved for Preview\nReady for Publication\nCompleted",
    "reqd": 1
   },
   {
@@ -268,6 +273,35 @@
    "fieldtype": "JSON",
    "label": "Contract Values",
    "description": "CFG-09 contract values (JSON object with contract_values array)."
+  },
+  {
+   "fieldname": "section_workflow",
+   "fieldtype": "Section Break",
+   "label": "Workflow Gates"
+  },
+  {
+   "fieldname": "readiness_report",
+   "fieldtype": "JSON",
+   "label": "Readiness Report",
+   "description": "WG-01 readiness findings, checklist, and last-run metadata."
+  },
+  {
+   "fieldname": "review_workspace",
+   "fieldtype": "JSON",
+   "label": "Review Workspace",
+   "description": "WG-02 reviewer checklist, findings, and decision history."
+  },
+  {
+   "fieldname": "document_preview",
+   "fieldtype": "JSON",
+   "label": "Document Preview",
+   "description": "WG-03 generated preview HTML, outline, and confirmation state."
+  },
+  {
+   "fieldname": "publication_package",
+   "fieldtype": "JSON",
+   "label": "Publication Package",
+   "description": "WG-03 handoff snapshot sent to the publication workflow (merged WG-04)."
   },
   {
    "fieldname": "section_issues",

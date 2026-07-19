@@ -1368,21 +1368,19 @@ frappe.provide("kentender_core.cl_components");
 			opts = opts || {};
 			var h = spec().CONFIG_HOME || {};
 			var handoff = opts.handoff || {};
-			var order = [
-				"readiness_check",
-				"review_status",
-				"tender_document_preview",
-				"publication_handoff",
-			];
+			// WG-04 Publication Handoff is merged into Tender Document Preview (3-step workflow).
+			var order = ["readiness_check", "review_status", "tender_document_preview"];
 			var icons = {
 				readiness_check: "assignment_turned_in",
 				review_status: "rate_review",
 				tender_document_preview: "picture_as_pdf",
-				publication_handoff: "send",
 			};
 			var items = order
 				.map(function (key) {
-					var item = handoff[key] || {};
+					var item = handoff[key];
+					if (!item) {
+						return "";
+					}
 					var disabled = !item.route && !item.action_label;
 					var status = String(item.status_label || "");
 					var isAlert =

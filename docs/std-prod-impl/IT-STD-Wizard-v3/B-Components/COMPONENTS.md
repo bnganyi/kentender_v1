@@ -132,7 +132,7 @@ Wizard pages must **compose** `configurationContextStrip` — never duplicate th
 
 - Cursor rule: `.cursor/rules/kentender-civic-ledger-queue-lock.mdc`
 - Playwright helpers: `tests/ui/helpers/ktClQueueContract.ts`, `ktClConfigContext.ts`, `ktClUi01LayoutContract.ts`
-- Gates: `make -C apps/kentender_v1 ui-civic-ledger-queue-gate`, `ui-civic-ledger-ui01-gate`, `ui-civic-ledger-cfg01-gate` … `ui-civic-ledger-cfg09-gate`
+- Gates: `make -C apps/kentender_v1 ui-civic-ledger-queue-gate`, `ui-civic-ledger-ui01-gate`, `ui-civic-ledger-cfg01-gate` … `ui-civic-ledger-cfg09-gate`, `ui-civic-ledger-wg01-gate` … `ui-civic-ledger-wg03-gate`
 - UI-01 mockups: `seed_ui01_mockups_for_tests` → `TCFG-MOCK-SHOWCASE` + `TCFG-MOCK-CFG-01`…`09`
 - CFG-01 page: `it_tender_configuration_tender_profile_page.js` + pins `kt-cl-cfg01-*` in `kt_cl_code_layout.css`
 - CFG-02 page: `it_tender_configuration_tds_page.js` + pins `kt-cl-cfg02-*`; API `get_tender_configuration_tds` / `save_tender_configuration_tds`; `wizardStepFooter` `extraEndActions` for Run Check
@@ -161,7 +161,12 @@ Wizard pages must **compose** `configurationContextStrip` — never duplicate th
 - CFG-08 follow-ups (explicitly out of ticket): child DocType; CFG-07 evidence deep-link UX beyond read-only refs
 - CFG-09 page: `it_tender_configuration_scc_page.js` + pins `kt-cl-cfg09-*`; API `get_tender_configuration_contract_values` / `save_tender_configuration_contract_values`; category tabs + suggest-from-upstream hydrate + `queueTable` + drawer; CV- auto ids; **Save Contract Value** persists immediately; footer **Run Check** only (no Continue); never show GCC hashes, award, or post-award admin
 - **CFG-09 column contract:** Item · Category · Source · Contract Location · Value / Obligation · **Status** · Action. Status = Complete / Needs attention / Review before handoff / Not applicable.
-- CFG-09 follow-ups (explicitly out of ticket): child DocType; live WG-01 Readiness page; mock KPI/Risk Exposure cards
+- CFG-09 follow-ups (explicitly out of ticket): child DocType; mock KPI/Risk Exposure cards
+- WF-01 page: `it_tender_configuration_validation_report_page.js` + pins `kt-cl-wf01-*`; API `get/run/submit` readiness; findings + CFG-01…09 checklist; Submit for Review → WF-02
+- WF-02 page: `it_tender_configuration_review_and_approval_page.js` + pins `kt-cl-wf02-*`; API review get/save/approve/return/clarify; 10-item checklist; Approve for Document Preview → WF-03
+- WF-03 page: `it_tender_configuration_render_preview_page.js` + pins `kt-cl-wf03-*`; HTML preview assembler + Confirm Preview + **Publication Package** panel + **Send to Publication Workflow** (WG-04 merged; no separate handoff screen)
+- **WF-04 retired:** `it-tender-configuration-publication-readiness` redirects to render-preview; UI-01 Completion & Handoff is **3** cards only
+- WF follow-ups (out of ticket): full STD Engine WeasyPrint PDF; live Tender Management Publications module
 - Rollout matrix: [`docs/test-contracts/civic-ledger-queue-rollout-matrix.md`](../../../test-contracts/civic-ledger-queue-rollout-matrix.md)
 
 Reference surface: UI-00 (`it-tender-configuration-dashboard`).

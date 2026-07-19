@@ -12,11 +12,13 @@ import frappe
 from frappe.utils import cstr
 
 from kentender_procurement.tender_configurations.constants import (
+	STATUS_APPROVED_FOR_PREVIEW,
 	STATUS_COMPLETED,
 	STATUS_IN_PROGRESS,
 	STATUS_NEEDS_ATTENTION,
 	STATUS_READY_FOR_PUBLICATION,
 	STATUS_READY_FOR_REVIEW,
+	STATUS_RETURNED_FOR_CORRECTION,
 	STATUS_UNDER_REVIEW,
 )
 from kentender_procurement.tender_configurations.services.configuration_steps import (
@@ -36,6 +38,8 @@ _STATUS_LABELS = {
 	STATUS_NEEDS_ATTENTION: "Needs attention",
 	STATUS_READY_FOR_REVIEW: "Ready for review",
 	STATUS_UNDER_REVIEW: "Under review",
+	STATUS_RETURNED_FOR_CORRECTION: "Returned for correction",
+	STATUS_APPROVED_FOR_PREVIEW: "Approved for preview",
 	STATUS_READY_FOR_PUBLICATION: "Ready for publication",
 	STATUS_COMPLETED: "Completed",
 }
@@ -45,6 +49,8 @@ _STATUS_TONE = {
 	STATUS_NEEDS_ATTENTION: "needs_attention",
 	STATUS_READY_FOR_REVIEW: "ready_for_review",
 	STATUS_UNDER_REVIEW: "under_review",
+	STATUS_RETURNED_FOR_CORRECTION: "returned_for_correction",
+	STATUS_APPROVED_FOR_PREVIEW: "approved_for_preview",
 	STATUS_READY_FOR_PUBLICATION: "ready_for_publication",
 	STATUS_COMPLETED: "completed",
 }
@@ -218,20 +224,51 @@ def _pick_next_action(steps: list[dict[str, Any]], doc) -> dict[str, Any]:
 			"route": HANDOFF_ROUTES["review_status"],
 			"step_id": None,
 		}
+	if status == STATUS_RETURNED_FOR_CORRECTION:
+		from kentender_procurement.tender_configurations.services.review_workspace import (
+			count_open_corrections_for_doc,
+		)
+
+		open_n = count_open_corrections_for_doc(doc)
+		if open_n > 0:
+			reason = (
+				f"{open_n} reviewer correction(s) must be marked as fixed, "
+				"then re-run readiness before resubmitting for review."
+			)
+		else:
+			reason = (
+				"Reviewer corrections are marked fixed. Re-run readiness, "
+				"then submit for review."
+			)
+		return {
+			"label": "Run Readiness Check",
+			"reason": reason,
+			"button_label": "Run Readiness Check",
+			"route": HANDOFF_ROUTES["readiness_check"],
+			"step_id": None,
+		}
+	if status == STATUS_APPROVED_FOR_PREVIEW:
+		return {
+			"label": "Open Tender Document Preview",
+			"reason": "Review approval is complete. Generate and confirm the tender document preview.",
+			"button_label": "Open Preview",
+			"route": HANDOFF_ROUTES["tender_document_preview"],
+			"step_id": None,
+		}
 	if status == STATUS_READY_FOR_PUBLICATION:
 		return {
-			"label": "Mark Ready for Publication",
-			"reason": "The package is confirmed and can be handed to Tender Management.",
-			"button_label": "Mark Ready for Publication",
-			"route": HANDOFF_ROUTES["publication_handoff"],
+			"label": "Send to Publication Workflow",
+			"reason": "The preview is confirmed. Send the package to the publication workflow.",
+			"button_label": "Send to Publication Workflow",
+			"route": HANDOFF_ROUTES["tender_document_preview"],
 			"step_id": None,
 		}
 	if status == STATUS_COMPLETED:
 		return {
-			"label": "Open in Tender Management",
-			"reason": "This configuration has been handed off.",
-			"button_label": "Open in Tender Management",
-			"route": HANDOFF_ROUTES["publication_handoff"],
+			"label": "View Tender Document Preview",
+			"reason": "This configuration has been sent to the publication workflow.",
+			"button_label": "Open Preview",
+			"route": HANDOFF_ROUTES["tender_document_preview"],
 			"step_id": None,
 		}
 	return {
@@ -248,13 +285,14 @@ def _build_handoff(doc, steps: list[dict[str, Any]]) -> dict[str, Any]:
 	status = cstr(doc.status or "")
 	blockers = int(doc.blocker_count or 0)
 
-	if blockers > 0:
-		readiness_status = "Blockers found"
+	if blockers > 0 or status == STATUS_RETURNED_FOR_CORRECTION:
+		readiness_status = "Blockers found" if blockers > 0 else "Returned for correction"
 		readiness_action = "View Readiness Report"
 		readiness_route = HANDOFF_ROUTES["readiness_check"]
 	elif all_complete and status in (
 		STATUS_READY_FOR_REVIEW,
 		STATUS_UNDER_REVIEW,
+		STATUS_APPROVED_FOR_PREVIEW,
 		STATUS_READY_FOR_PUBLICATION,
 		STATUS_COMPLETED,
 	):
@@ -276,50 +314,48 @@ def _build_handoff(doc, steps: list[dict[str, Any]]) -> dict[str, Any]:
 			"Open Review Workspace",
 			HANDOFF_ROUTES["review_status"],
 		)
-	elif status in (STATUS_READY_FOR_PUBLICATION, STATUS_COMPLETED):
+	elif status in (
+		STATUS_APPROVED_FOR_PREVIEW,
+		STATUS_READY_FOR_PUBLICATION,
+		STATUS_COMPLETED,
+	):
 		review_status, review_action, review_route = (
 			"Approved",
 			"Open Review Workspace",
 			HANDOFF_ROUTES["review_status"],
 		)
+	elif status == STATUS_RETURNED_FOR_CORRECTION:
+		review_status, review_action, review_route = (
+			"Returned for correction",
+			"View Readiness Report",
+			HANDOFF_ROUTES["readiness_check"],
+		)
 	elif status == STATUS_READY_FOR_REVIEW:
 		review_status, review_action, review_route = (
-			"Not submitted",
+			"Ready to submit",
 			"Submit for Review",
-			HANDOFF_ROUTES["review_status"],
+			HANDOFF_ROUTES["readiness_check"],
 		)
 	else:
 		review_status, review_action, review_route = "Not submitted", None, None
 
-	if status in (STATUS_READY_FOR_PUBLICATION, STATUS_COMPLETED):
-		preview_status = "Confirmed" if status == STATUS_COMPLETED else "Not confirmed"
+	# Preview card also carries publication handoff (WG-04 merged into WG-03).
+	if status == STATUS_COMPLETED:
+		preview_status = "Sent to publication workflow"
 		preview_action = "Open Tender Document Preview"
 		preview_route = HANDOFF_ROUTES["tender_document_preview"]
-	elif status == STATUS_UNDER_REVIEW or (
-		status == STATUS_READY_FOR_REVIEW and readiness_status == "Passed"
-	):
-		preview_status = "Available after review"
-		preview_action = None
-		preview_route = None
-	else:
-		preview_status = "Available after review"
-		preview_action = None
-		preview_route = None
-
-	if status == STATUS_COMPLETED:
-		pub_status, pub_action, pub_route = (
-			"Handed off",
-			"Open in Tender Management",
-			HANDOFF_ROUTES["publication_handoff"],
-		)
 	elif status == STATUS_READY_FOR_PUBLICATION:
-		pub_status, pub_action, pub_route = (
-			"Ready for handoff",
-			"Mark Ready for Publication",
-			HANDOFF_ROUTES["publication_handoff"],
-		)
+		preview_status = "Confirmed — ready to send"
+		preview_action = "Send to Publication Workflow"
+		preview_route = HANDOFF_ROUTES["tender_document_preview"]
+	elif status == STATUS_APPROVED_FOR_PREVIEW:
+		preview_status = "Available"
+		preview_action = "Open Tender Document Preview"
+		preview_route = HANDOFF_ROUTES["tender_document_preview"]
 	else:
-		pub_status, pub_action, pub_route = "Available after preview", None, None
+		preview_status = "Available after review"
+		preview_action = None
+		preview_route = None
 
 	return {
 		"readiness_check": {
@@ -339,22 +375,12 @@ def _build_handoff(doc, steps: list[dict[str, Any]]) -> dict[str, Any]:
 		"tender_document_preview": {
 			"label": "Tender Document Preview",
 			"description": (
-				"Opens the generated tender document after review approval so the package "
-				"can be confirmed before handoff."
+				"Review the generated tender document, confirm the preview, and send the "
+				"approved package to the publication workflow. This does not publish the tender."
 			),
 			"status_label": preview_status,
 			"action_label": preview_action,
 			"route": preview_route,
-		},
-		"publication_handoff": {
-			"label": "Publication Handoff",
-			"description": (
-				"Marks the approved and confirmed package ready for Tender Management; "
-				"this does not publish the tender."
-			),
-			"status_label": pub_status,
-			"action_label": pub_action,
-			"route": pub_route,
 		},
 	}
 
@@ -372,6 +398,10 @@ def get_configuration_home(configuration_id: str) -> dict[str, Any]:
 		overall_progress_pct,
 	)
 
+	from kentender_procurement.tender_configurations.services.review_workspace import (
+		count_open_corrections_for_doc,
+	)
+
 	catalog = get_steps_for_family(doc.std_family_key)
 	steps_state = _parse_steps_state(getattr(doc, "steps_state", None))
 	steps = merge_step_rows(catalog, steps_state, doc=doc)
@@ -380,6 +410,7 @@ def get_configuration_home(configuration_id: str) -> dict[str, Any]:
 	handoff = _build_handoff(doc, steps)
 	complete_count = complete_step_count(steps)
 	total_steps = len(steps) or 9
+	open_correction_count = count_open_corrections_for_doc(doc)
 
 	return {
 		"configuration_id": doc.name,
@@ -393,6 +424,7 @@ def get_configuration_home(configuration_id: str) -> dict[str, Any]:
 		"configuration_status_label": context["configuration_status_label"],
 		"blocker_count": context["blocker_count"],
 		"warning_count": context["warning_count"],
+		"open_correction_count": open_correction_count,
 		"context": context,
 		"next_action": next_action,
 		"configuration_steps": steps,

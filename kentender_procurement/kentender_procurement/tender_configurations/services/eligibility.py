@@ -200,6 +200,69 @@ def get_package_or_throw(package_id: str):
 	return frappe.get_doc("Procurement Package", package_id)
 
 
+def ensure_fixture_locked_clauses(package_id: str | None = None) -> None:
+	"""Minimal locked ITT/GCC clauses so WG-03 preview can render without Official Library."""
+	from kentender_procurement.tender_configurations.constants import FIXTURE_STD_FAMILY_CODE
+
+	package_id = package_id or FIXTURE_STD_VERSION_ID
+	samples = (
+		(
+			"itt",
+			"Instructions to Tenderers",
+			"The tenderer shall prepare the tender in accordance with the Instructions to Tenderers "
+			"and the Tender Data Sheet. Clarifications shall be submitted through the channel "
+			"specified in the Tender Data Sheet.",
+		),
+		(
+			"gcc",
+			"General Conditions of Contract",
+			"The General Conditions of Contract shall apply to the Contract. Special Conditions "
+			"of Contract, where provided, shall prevail over these General Conditions to the "
+			"extent of any inconsistency.",
+		),
+	)
+	for suffix, title, text in samples:
+		section_key = f"{package_id}.section.{suffix}"
+		if not frappe.db.exists("STD Section", section_key):
+			frappe.get_doc(
+				{
+					"doctype": "STD Section",
+					"package_id": package_id,
+					"family_code": FIXTURE_STD_FAMILY_CODE,
+					"version_code": package_id,
+					"section_key": section_key,
+					"object_key": section_key,
+					"title": title,
+				}
+			).insert(ignore_permissions=True)
+		clause_key = f"{package_id}.clause.{suffix}.preview_001"
+		if not frappe.db.exists("STD Clause", clause_key):
+			frappe.get_doc(
+				{
+					"doctype": "STD Clause",
+					"package_id": package_id,
+					"family_code": FIXTURE_STD_FAMILY_CODE,
+					"version_code": package_id,
+					"clause_key": clause_key,
+					"section": section_key,
+					"object_key": clause_key,
+					"title": title,
+					"clause_text": text,
+				}
+			).insert(ignore_permissions=True)
+		else:
+			# Replace legacy debug/fixture wording so preview never emits fixture markers.
+			existing = cstr(frappe.db.get_value("STD Clause", clause_key, "clause_text") or "")
+			if "fixture" in existing.lower() or "Fixture locked" in existing:
+				frappe.db.set_value(
+					"STD Clause",
+					clause_key,
+					"clause_text",
+					text,
+					update_modified=False,
+				)
+
+
 def ensure_fixture_std_version() -> str:
 	"""Ensure an ACTIVE STD Version exists for IT family (tests/seed)."""
 	from kentender_procurement.tender_configurations.constants import (
@@ -209,6 +272,7 @@ def ensure_fixture_std_version() -> str:
 
 	if frappe.db.exists("STD Version", FIXTURE_STD_VERSION_ID):
 		frappe.db.set_value("STD Version", FIXTURE_STD_VERSION_ID, "lifecycle_state", "ACTIVE")
+		ensure_fixture_locked_clauses(FIXTURE_STD_VERSION_ID)
 		return FIXTURE_STD_VERSION_ID
 
 	if not frappe.db.exists("STD Family", FIXTURE_STD_FAMILY_CODE):
@@ -236,4 +300,5 @@ def ensure_fixture_std_version() -> str:
 		}
 	)
 	doc.insert(ignore_permissions=True)
+	ensure_fixture_locked_clauses(FIXTURE_STD_VERSION_ID)
 	return FIXTURE_STD_VERSION_ID

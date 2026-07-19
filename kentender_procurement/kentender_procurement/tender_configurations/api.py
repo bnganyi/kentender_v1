@@ -302,3 +302,181 @@ def save_tender_configuration_contract_values(
 	)
 
 	return save_configuration_contract_values(configuration_id, payload)
+
+
+# --- WG-01 Readiness ---
+
+
+@frappe.whitelist()
+def get_tender_configuration_readiness(configuration_id: str) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.readiness import get_readiness_report
+
+	return get_readiness_report(configuration_id)
+
+
+@frappe.whitelist()
+def run_tender_configuration_readiness_check(configuration_id: str) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.readiness import run_readiness_check
+
+	return run_readiness_check(configuration_id)
+
+
+@frappe.whitelist()
+def submit_tender_configuration_for_review(
+	configuration_id: str,
+	payload: dict[str, Any] | str | None = None,
+) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.readiness import submit_for_review
+
+	return submit_for_review(configuration_id, payload)
+
+
+# --- WG-02 Review ---
+
+
+@frappe.whitelist()
+def get_tender_configuration_review(configuration_id: str) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.review_workspace import (
+		get_review_workspace,
+	)
+
+	return get_review_workspace(configuration_id)
+
+
+@frappe.whitelist()
+def save_tender_configuration_review(
+	configuration_id: str,
+	payload: dict[str, Any] | str | None = None,
+) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.review_workspace import (
+		save_review_workspace,
+	)
+
+	return save_review_workspace(configuration_id, payload)
+
+
+@frappe.whitelist()
+def approve_tender_configuration_for_preview(
+	configuration_id: str,
+	payload: dict[str, Any] | str | None = None,
+) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.review_workspace import (
+		approve_for_preview,
+	)
+
+	return approve_for_preview(configuration_id, payload)
+
+
+@frappe.whitelist()
+def return_tender_configuration_for_correction(
+	configuration_id: str,
+	payload: dict[str, Any] | str | None = None,
+) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.review_workspace import (
+		return_for_correction,
+	)
+
+	return return_for_correction(configuration_id, payload)
+
+
+@frappe.whitelist()
+def request_tender_configuration_clarification(
+	configuration_id: str,
+	payload: dict[str, Any] | str | None = None,
+) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.review_workspace import (
+		request_clarification,
+	)
+
+	return request_clarification(configuration_id, payload)
+
+
+@frappe.whitelist()
+def resolve_tender_configuration_review_finding(
+	configuration_id: str,
+	finding_id: str,
+) -> dict[str, Any]:
+	"""Preparer marks a returned Correction Required finding as fixed (WG-01)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.review_workspace import (
+		resolve_review_finding,
+	)
+
+	return resolve_review_finding(configuration_id, finding_id)
+
+
+# --- WG-03 Preview + Handoff ---
+
+
+@frappe.whitelist()
+def get_tender_configuration_document_preview(configuration_id: str) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.document_preview import (
+		get_document_preview,
+	)
+
+	return get_document_preview(configuration_id)
+
+
+@frappe.whitelist()
+def generate_tender_configuration_document_preview(configuration_id: str) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.document_preview import (
+		generate_document_preview,
+	)
+
+	return generate_document_preview(configuration_id)
+
+
+@frappe.whitelist()
+def confirm_tender_configuration_document_preview(
+	configuration_id: str,
+	payload: dict[str, Any] | str | None = None,
+) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.document_preview import (
+		confirm_document_preview,
+	)
+
+	return confirm_document_preview(configuration_id, payload)
+
+
+@frappe.whitelist()
+def return_tender_configuration_preview_for_correction(
+	configuration_id: str,
+	payload: dict[str, Any] | str | None = None,
+) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.document_preview import (
+		return_preview_for_correction,
+	)
+
+	return return_preview_for_correction(configuration_id, payload)
+
+
+@frappe.whitelist()
+def send_tender_configuration_to_publication_workflow(configuration_id: str) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.document_preview import (
+		send_to_publication_workflow,
+	)
+
+	return send_to_publication_workflow(configuration_id)
+
+
+@frappe.whitelist()
+def download_tender_configuration_document_preview_pdf(configuration_id: str) -> None:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.document_preview import (
+		download_document_preview_pdf,
+	)
+
+	return download_document_preview_pdf(configuration_id)

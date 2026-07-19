@@ -1,0 +1,169 @@
+# Copyright (c) 2026, KenTender and contributors
+# For license information, please see license.txt
+
+"""Unit tests for WG-03 bidder-facing preview presentation layer."""
+
+from __future__ import annotations
+
+import unittest
+
+from kentender_procurement.tender_configurations.services.preview_presentation import (
+	assert_no_forbidden_preview_markers,
+	expand_requirement_reference,
+	format_currency_amount,
+	format_datetime_bidder,
+	render_evaluation_section,
+	render_information_system_requirements,
+	render_inventory_section,
+	render_price_section,
+	render_tds_section,
+	render_technical_requirements_section,
+	split_requirements,
+)
+
+
+class TestPreviewPresentation(unittest.TestCase):
+	def test_format_datetime_and_currency(self):
+		self.assertEqual(
+			format_datetime_bidder("2026-08-30T15:30"),
+			"30 August 2026, 3:30 PM EAT",
+		)
+		self.assertEqual(format_currency_amount("50000", "KES"), "KES 50,000")
+
+	def test_tds_clause_aware_security_and_no_raw_keys(self):
+		html, err = render_tds_section(
+			{
+				"contact_officer": "ABC",
+				"clarification_deadline": "2026-08-30T15:30",
+				"pre_tender_meeting_details": "",
+				"reservation_category": "",
+				"tender_security_required": "Yes",
+				"tender_security_amount": "50000",
+				"tender_security_currency": "KES",
+				"tender_security_validity_period": "14",
+				"tender_security_validity_unit": "days",
+				"margin_of_preference_applies": "No",
+				"submission_channel": "E-Procurement Portal",
+				"submission_language": "English",
+				"tender_currency": "KES",
+			}
+		)
+		self.assertIsNone(err)
+		self.assertIn("KES 50,000", html)
+		self.assertIn("must remain valid for 14 days", html)
+		self.assertIn("Clarifications must be submitted", html)
+		self.assertIn("Margin of preference does not apply", html)
+		self.assertNotIn("contact_officer", html)
+		self.assertNotIn("Locked standard text", html)
+
+	def test_evaluation_expands_requirement_refs(self):
+		reqs = [
+			{
+				"requirement_id": "REQ-001",
+				"title": "Compute Node Performance",
+				"category_label": "Technical Requirement",
+			}
+		]
+		html, err = render_evaluation_section(
+			[
+				{
+					"criterion_name": "Technical compliance for: REQ-001",
+					"stage": "Technical",
+					"evaluation_basis": "Scored",
+					"marks": "50",
+					"related_requirement_id": "REQ-001",
+					"bidder_evidence": "Required",
+					"evidence_instruction": "Provide datasheets",
+				}
+			],
+			reqs,
+		)
+		self.assertIsNone(err)
+		self.assertIn("Compute Node Performance technical compliance", html)
+		self.assertIn("Scored out of 50 marks", html)
+		self.assertNotIn("REQ-001", html)
+		self.assertNotIn("Technical compliance for:", html)
+
+	def test_price_bidder_facing_labels(self):
+		reqs = [
+			{"requirement_id": "REQ-001", "title": "Compute Node Performance"},
+			{"requirement_id": "REQ-002", "title": "Three-Year On-site Support"},
+		]
+		html, err = render_price_section(
+			[
+				{
+					"item_name": "Price for requirement: REQ-001",
+					"related_requirement_id": "REQ-001",
+					"bidder_facing_description": (
+						"Supply, install, and commission compute nodes meeting the "
+						"specified performance requirement."
+					),
+					"unit": "Lot",
+					"quantity": "1",
+					"currency": "KES",
+				},
+				{
+					"item_name": "Item 2",
+					"related_requirement_id": "REQ-002",
+					"bidder_facing_description": (
+						"Provide three-year on-site support and warranty services."
+					),
+					"unit": "Lot",
+					"quantity": "1",
+					"currency": "KES",
+				},
+			],
+			reqs,
+		)
+		self.assertIsNone(err)
+		self.assertIn("Compute Node Performance", html)
+		self.assertIn("Three-Year On-site Support", html)
+		self.assertIn("[Bidder to complete]", html)
+		self.assertNotIn("Price for requirement:", html)
+		self.assertNotIn(">Item 1<", html)
+		self.assertNotIn("REQ-001", html)
+
+	def test_requirements_split_no_duplication(self):
+		reqs = [
+			{
+				"title": "Helpdesk Continuity",
+				"category_label": "Business Objective",
+				"description": "Business need",
+			},
+			{
+				"title": "Compute Node Performance",
+				"category_label": "Technical Requirement",
+				"description": "Tech need",
+			},
+		]
+		is_rows, tech_rows = split_requirements(reqs)
+		self.assertEqual(len(is_rows), 1)
+		self.assertEqual(len(tech_rows), 1)
+		is_html, _ = render_information_system_requirements(reqs)
+		tech_html, _ = render_technical_requirements_section(reqs)
+		self.assertIn("Helpdesk Continuity", is_html)
+		self.assertNotIn("Compute Node Performance", is_html)
+		self.assertIn("Compute Node Performance", tech_html)
+		self.assertNotIn("Helpdesk Continuity", tech_html)
+
+	def test_inventory_empty_is_readiness_unless_na(self):
+		html, err = render_inventory_section([])
+		self.assertEqual(html, "")
+		self.assertIn("Readiness issue", err or "")
+		html2, err2 = render_inventory_section([], not_applicable=True)
+		self.assertIsNone(err2)
+		self.assertIn("not applicable", html2.lower())
+		self.assertNotIn("No additional requirements", html2)
+
+	def test_expand_and_forbidden(self):
+		self.assertEqual(
+			expand_requirement_reference(
+				"Technical compliance for: REQ-001",
+				{"REQ-001": "Compute Node Performance"},
+			),
+			"Compute Node Performance technical compliance",
+		)
+		self.assertIsNotNone(
+			assert_no_forbidden_preview_markers("Locked standard text from bound STD version.")
+		)
+		self.assertIsNotNone(assert_no_forbidden_preview_markers("<td>REQ-001</td>"))

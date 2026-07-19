@@ -32,7 +32,10 @@ Helpers: `tests/ui/helpers/ktClQueueContract.ts`
 | CFG-07 Evaluation Setup | `cfg07-evaluation-setup.spec.ts` (tabs + Import + table/drawer; Status Complete/Needs attention; EVAL ids; scoring summary; drawer persist) | locked |
 | CFG-08 Forms & Evidence | `cfg08-forms-and-evidence.spec.ts` (filters + table/drawer + guidance; FE ids; Import Standard Forms; Continue to Contract Values) | locked |
 | CFG-09 Contract Values | `cfg09-contract-values.spec.ts` (tabs + table/drawer + guidance; CV ids; Save + Run Check; no Continue) | locked |
-| WF-* | — | pending (must reuse `configurationContextStrip`) |
+| WF-01 Readiness Check & Report | `wg01-readiness.spec.ts` (summary cards + findings + checklist; Submit for Review) | locked |
+| WF-02 Review & Approval | `wg02-review.spec.ts` (checklist + decision panel; Approve for Document Preview) | locked |
+| WF-03 Tender Document Preview (+ handoff) | `wg03-document-preview.spec.ts` (outline + preview + Confirm + Send to Publication Workflow) | locked |
+| WF-04 Publication Handoff | — | retired (merged into WF-03; route redirects to render-preview) |
 
 ## Required pattern gates
 
@@ -48,9 +51,12 @@ make -C apps/kentender_v1 ui-civic-ledger-cfg06-gate
 make -C apps/kentender_v1 ui-civic-ledger-cfg07-gate
 make -C apps/kentender_v1 ui-civic-ledger-cfg08-gate
 make -C apps/kentender_v1 ui-civic-ledger-cfg09-gate
+make -C apps/kentender_v1 ui-civic-ledger-wg01-gate
+make -C apps/kentender_v1 ui-civic-ledger-wg02-gate
+make -C apps/kentender_v1 ui-civic-ledger-wg03-gate
 ```
 
-Run before marking Civic Ledger queue/list, UI-01 home, CFG-01…CFG-09 UX work done.
+Run before marking Civic Ledger queue/list, UI-01 home, CFG-01…CFG-09, or WF-01…WF-03 UX work done.
 
 ## Adoption steps for a new CL queue page
 

@@ -2,6 +2,7 @@ from pathlib import Path
 
 
 def _asset_version(rel_path: str) -> int:
+	# mtime-based cache bust; touch this file after CSS edits so workers re-import hooks.
 	try:
 		return int((Path(__file__).resolve().parent / rel_path).stat().st_mtime)
 	except OSError:

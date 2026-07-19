@@ -154,6 +154,33 @@ frappe.provide("kentender_core.cl_surface_registry");
 			crumb(__("Contract Values")),
 		];
 	}
+	/** WF-01 leaf: Readiness Check & Report. */
+	function trailWf01Readiness() {
+		return [
+			crumbDashboard(),
+			crumbTenderConfigurations(),
+			crumbConfigurationHome(),
+			crumb(__("Readiness Check & Report")),
+		];
+	}
+	/** WF-02 leaf: Review & Approval. */
+	function trailWf02Review() {
+		return [
+			crumbDashboard(),
+			crumbTenderConfigurations(),
+			crumbConfigurationHome(),
+			crumb(__("Review & Approval")),
+		];
+	}
+	/** WF-03 leaf: Tender Document Preview (includes publication handoff). */
+	function trailWf03Preview() {
+		return [
+			crumbDashboard(),
+			crumbTenderConfigurations(),
+			crumbConfigurationHome(),
+			crumb(__("Tender Document Preview")),
+		];
+	}
 
 	/**
 	 * A2 screen IDs → routePrefixes use existing Desk page names where present.
@@ -316,49 +343,58 @@ frappe.provide("kentender_core.cl_surface_registry");
 		},
 		"WF-01": {
 			id: "WF-01",
-			label: "Readiness Report",
+			label: "Readiness Check & Report",
 			routePrefixes: ["it-tender-configuration-validation-report"],
 			sidebarWorkspaceKey: SIDEBAR_KEY,
 			chrome: chrome(
-				__("Readiness Report"),
-				__("Review open readiness findings after Run Readiness Check."),
-				trailConfigHome,
+				__("Readiness Check & Report"),
+				__("Check whether this tender configuration is complete enough for review."),
+				trailWf01Readiness(),
 				[]
 			),
 		},
 		"WF-02": {
 			id: "WF-02",
-			label: "Review Workspace",
+			label: "Review & Approval",
 			routePrefixes: ["it-tender-configuration-review-and-approval"],
 			sidebarWorkspaceKey: SIDEBAR_KEY,
 			chrome: chrome(
-				__("Review Workspace"),
-				__("Reviewer-focused workspace for tender configuration approval."),
-				trailConfigHome,
+				__("Review & Approval"),
+				__(
+					"Review the completed tender configuration and decide whether it can proceed to document preview."
+				),
+				trailWf02Review(),
 				[]
 			),
 		},
 		"WF-03": {
 			id: "WF-03",
 			label: "Tender Document Preview",
-			routePrefixes: ["it-tender-configuration-render-preview"],
+			routePrefixes: [
+				"it-tender-configuration-render-preview",
+				"it-tender-configuration-publication-readiness",
+			],
 			sidebarWorkspaceKey: SIDEBAR_KEY,
 			chrome: chrome(
 				__("Tender Document Preview"),
-				__("Read-only preview of the generated tender document package."),
-				trailConfigHome,
+				__(
+					"Review the generated tender document before sending it to the publication workflow."
+				),
+				trailWf03Preview(),
 				[]
 			),
 		},
 		"WF-04": {
 			id: "WF-04",
-			label: "Publication Handoff",
-			routePrefixes: ["it-tender-configuration-publication-readiness"],
+			label: "Publication Handoff (retired)",
+			routePrefixes: [],
 			sidebarWorkspaceKey: SIDEBAR_KEY,
 			chrome: chrome(
-				__("Publication Handoff"),
-				__("Mark the package ready for Tender Management publication workflow."),
-				trailConfigHome,
+				__("Tender Document Preview"),
+				__(
+					"Publication Handoff is merged into Tender Document Preview. Use Send to Publication Workflow there."
+				),
+				trailWf03Preview(),
 				[]
 			),
 		},

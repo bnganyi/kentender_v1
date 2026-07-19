@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import frappe
@@ -192,6 +193,124 @@ def _insert_config(
 	return doc.name
 
 
+def _apply_bidder_facing_preview_blobs(configuration_id: str) -> None:
+	"""Seed CFG JSON so WG-03 required sections render as bidder-facing content."""
+	frappe.db.set_value(
+		"Tender Configuration",
+		configuration_id,
+		{
+			"tds_values": json.dumps(
+				{
+					"contact_officer": "Jane Doe",
+					"contact_email": "procurement@example.go.ke",
+					"clarification_submission_method": "E-Procurement Portal",
+					"clarification_deadline": "2026-08-30T15:30",
+					"pre_tender_meeting": "No",
+					"tender_submission_deadline": "2026-09-15T17:00",
+					"tender_opening_datetime": "2026-09-15T17:30",
+					"bid_validity_period": "120",
+					"bid_validity_unit": "days",
+					"submission_channel": "E-Procurement Portal",
+					"submission_language": "English",
+					"tender_currency": "KES",
+					"tender_security_required": "Yes",
+					"tender_security_amount": "50000",
+					"tender_security_currency": "KES",
+					"tender_security_validity_period": "14",
+					"tender_security_validity_unit": "days",
+					"margin_of_preference_applies": "No",
+					"opening_method": "Electronic Opening",
+					"opening_location": "KenTender portal",
+					"opening_attendance_allowed": "Yes",
+				}
+			),
+			"it_requirements": json.dumps(
+				[
+					{
+						"requirement_id": "REQ-001",
+						"title": "Helpdesk Service Continuity",
+						"description": (
+							"The solution shall support continuous helpdesk operations with "
+							"defined service levels for incident response."
+						),
+						"category_label": "Business Objective",
+						"treatment_label": "Mandatory",
+					},
+					{
+						"requirement_id": "REQ-002",
+						"title": "Compute Node Performance",
+						"description": (
+							"Compute nodes must meet the stated processor and memory requirements."
+						),
+						"category_label": "Technical Requirement",
+						"treatment_label": "Mandatory",
+					},
+					{
+						"requirement_id": "REQ-003",
+						"title": "Three-Year On-site Support",
+						"description": (
+							"Provide three-year on-site support and warranty services."
+						),
+						"category_label": "Support & Warranty",
+						"treatment_label": "Mandatory",
+					},
+				]
+			),
+			"evaluation_setup": json.dumps(
+				{
+					"criteria": [
+						{
+							"criterion_name": "Tender security submitted",
+							"stage": "Preliminary",
+							"evaluation_basis": "Pass/Fail",
+							"pass_fail_rule": "Must be submitted in required form and amount",
+							"bidder_evidence": "Required",
+						},
+						{
+							"criterion_name": "Technical compliance for: REQ-002",
+							"stage": "Technical",
+							"evaluation_basis": "Scored",
+							"marks": "50",
+							"related_requirement_id": "REQ-002",
+							"bidder_evidence": "Required",
+							"evidence_instruction": "Provide datasheets demonstrating compliance.",
+						},
+					]
+				}
+			),
+			"price_schedule": json.dumps(
+				{
+					"items": [
+						{
+							"item_name": "Price for requirement: REQ-002",
+							"related_requirement_id": "REQ-002",
+							"bidder_facing_description": (
+								"Supply, install, and commission compute nodes meeting the "
+								"specified performance requirement."
+							),
+							"unit": "Lot",
+							"quantity": "1",
+							"currency": "KES",
+						},
+						{
+							"item_name": "Price for requirement: REQ-003",
+							"related_requirement_id": "REQ-003",
+							"bidder_facing_description": (
+								"Provide three-year on-site support and warranty services."
+							),
+							"unit": "Lot",
+							"quantity": "1",
+							"currency": "KES",
+						},
+					]
+				}
+			),
+			"system_inventory": json.dumps({"not_applicable": 1, "items": []}),
+		},
+		update_modified=False,
+	)
+
+
 def seed_ui00_dashboard(*, clear: bool = True) -> dict[str, Any]:
 	"""Load deterministic UI-00 queue data. Idempotent when clear=True."""
 	frappe.set_user("Administrator")
@@ -313,6 +432,17 @@ def seed_ui00_dashboard(*, clear: bool = True) -> dict[str, Any]:
 			steps_state=all_done,
 		),
 	]
+
+	# WG-03 preview requires bidder-facing CFG content on publication-path configs.
+	preview_ready_refs = {
+		f"{SEED_PREFIX}-TCFG-RR",
+		f"{SEED_PREFIX}-TCFG-UR",
+		f"{SEED_PREFIX}-TCFG-RP",
+		f"{SEED_PREFIX}-TCFG-DONE",
+	}
+	for cfg_id in configs:
+		if cfg_id in preview_ready_refs:
+			_apply_bidder_facing_preview_blobs(cfg_id)
 
 	frappe.db.commit()
 	return {
