@@ -13,6 +13,7 @@
 	var STORAGE_KEY = "kt_cl_wf01_configuration_id";
 	var BACK_ROUTE = "it-tender-configuration-overview";
 	var REVIEW_ROUTE = "it-tender-configuration-review-and-approval";
+	var DRAWER_HOST_ID = "kt-cl-wf01-drawer-host";
 
 	var state = {
 		payload: null,
@@ -22,14 +23,16 @@
 		busy: false,
 	};
 
-	var STYLE_ID = "kt-cl-wf01-critical-css-v3";
+	var STYLE_ID = "kt-cl-wf01-critical-css-v4";
 
 	/** Critical layout travels with page JS so Desk CSS cache cannot leave WF-01 unstyled. */
 	function ensureCriticalCss() {
-		var stale = document.getElementById("kt-cl-wf01-critical-css");
-		if (stale && stale.parentNode) {
-			stale.parentNode.removeChild(stale);
-		}
+		["kt-cl-wf01-critical-css", "kt-cl-wf01-critical-css-v3"].forEach(function (id) {
+			var stale = document.getElementById(id);
+			if (stale && stale.parentNode) {
+				stale.parentNode.removeChild(stale);
+			}
+		});
 		if (document.getElementById(STYLE_ID)) {
 			return;
 		}
@@ -96,6 +99,43 @@
 			"[data-testid='kt-cl-wf01-root'] .kt-cl-wf01-corr-action{margin:0 0 .75rem!important;font-size:13px!important;color:#43474e!important;line-height:1.4!important}" +
 			"[data-testid='kt-cl-wf01-root'] .kt-cl-wf01-corr-actions{display:flex!important;flex-wrap:wrap!important;gap:.5rem!important;align-items:center!important}" +
 			"[data-testid='kt-cl-wf01-root'] .kt-cl-wf01-corr-done{font-size:12px!important;font-weight:700!important;color:#15803d!important}" +
+			"[data-testid='kt-cl-wf01-root'] .kt-cl-wf01-corrections-foot{display:flex!important;justify-content:flex-end!important;margin-top:.85rem!important;padding-top:.75rem!important;border-top:1px solid #e7e8eb!important}" +
+			"[data-testid='kt-cl-wf01-root'] .kt-cl-wf01-corrections-history{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:1rem!important;flex-wrap:wrap!important;background:#fff!important;border:1px solid #c4c6cf!important;border-radius:.25rem!important;padding:.75rem 1rem!important;margin-bottom:1.25rem!important}" +
+			"[data-testid='kt-cl-wf01-root'] .kt-cl-wf01-corrections-history-copy{margin:0!important;font-size:13px!important;color:#43474e!important;line-height:1.4!important}" +
+			"[data-testid='kt-cl-wf01-root'] .kt-cl-wf01-corrections-history-copy strong{color:#002244!important}" +
+			"#" +
+			DRAWER_HOST_ID +
+			" .kt-cl-wf01-drawer-overlay{position:fixed!important;inset:0!important;z-index:1300!important;display:block!important}" +
+			"#" +
+			DRAWER_HOST_ID +
+			" .kt-cl-wf01-drawer-backdrop{position:absolute!important;inset:0!important;border:0!important;padding:0!important;margin:0!important;background:rgba(0,34,68,.2)!important;cursor:pointer!important}" +
+			"#" +
+			DRAWER_HOST_ID +
+			" .kt-cl-wf01-drawer{position:fixed!important;top:0!important;right:0!important;bottom:0!important;width:min(420px,100vw)!important;max-width:100%!important;display:flex!important;flex-direction:column!important;background:#fff!important;border-left:1px solid #c4c6cf!important;box-shadow:-8px 0 24px rgba(16,24,40,.16)!important;z-index:1301!important}" +
+			"#" +
+			DRAWER_HOST_ID +
+			" .kt-cl-wf01-drawer-header{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:1rem!important;padding:1rem 1.25rem!important;background:#f0f4f8!important;border-bottom:1px solid #c4c6cf!important;flex-shrink:0!important}" +
+			"#" +
+			DRAWER_HOST_ID +
+			" .kt-cl-wf01-drawer-header h2{margin:0!important;font-size:1.15rem!important;font-weight:700!important;color:#002244!important;line-height:1.3!important}" +
+			"#" +
+			DRAWER_HOST_ID +
+			" .kt-cl-wf01-drawer-close{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:2.25rem!important;height:2.25rem!important;border:0!important;border-radius:999px!important;background:transparent!important;color:#5f6368!important;cursor:pointer!important;padding:0!important;box-shadow:none!important}" +
+			"#" +
+			DRAWER_HOST_ID +
+			" .kt-cl-wf01-drawer-close:hover{background:#e7e8eb!important;color:#002244!important}" +
+			"#" +
+			DRAWER_HOST_ID +
+			" .kt-cl-wf01-drawer-body{flex:1!important;overflow-y:auto!important;padding:1.25rem!important;display:flex!important;flex-direction:column!important;gap:.75rem!important}" +
+			"#" +
+			DRAWER_HOST_ID +
+			" .kt-cl-wf01-drawer-intro{margin:0 0 .25rem!important;font-size:13px!important;color:#43474e!important;line-height:1.45!important}" +
+			"#" +
+			DRAWER_HOST_ID +
+			" .kt-cl-wf01-corr-card{border:1px solid #c4c6cf!important;border-radius:.25rem!important;padding:.85rem 1rem!important;background:#f5f7f5!important}" +
+			"#" +
+			DRAWER_HOST_ID +
+			" .kt-cl-wf01-corr-card--resolved{opacity:.9!important}" +
 			"@media (max-width:1100px){[data-testid='kt-cl-wf01-root'] .kt-cl-wf01-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}[data-testid='kt-cl-wf01-root'] .kt-cl-wf01-bento,[data-testid='kt-cl-wf01-root'] [data-testid='kt-cl-wf01-layout']{grid-template-columns:1fr!important}}";
 		document.head.appendChild(style);
 	}
@@ -298,87 +338,200 @@
 		);
 	}
 
-	function reviewCorrectionsHtml(data) {
-		var items = data.review_corrections || [];
-		if (!items.length) {
-			return "";
-		}
-		var openN = int(data.open_correction_count);
-		var cards = items
-			.map(function (f) {
-				var status = String(f.status || "Open");
-				var isOpen = status === "Open" || status === "";
-				var fid = f.id || "";
-				var route = f.owner_route || "";
-				return (
-					'<div class="kt-cl-wf01-corr-card' +
-					(isOpen ? "" : " kt-cl-wf01-corr-card--resolved") +
-					'" data-testid="kt-cl-wf01-correction-' +
+	function partitionCorrections(items) {
+		var open = [];
+		var resolved = [];
+		(items || []).forEach(function (f) {
+			var status = String(f.status || "Open");
+			if (status === "Open" || status === "") {
+				open.push(f);
+			} else {
+				resolved.push(f);
+			}
+		});
+		return { open: open, resolved: resolved };
+	}
+
+	function correctionCardHtml(f, opts) {
+		opts = opts || {};
+		var status = String(f.status || "Open");
+		var isOpen = status === "Open" || status === "";
+		var fid = f.id || "";
+		var route = f.owner_route || "";
+		var showMarkFixed = opts.showMarkFixed !== false && isOpen;
+		return (
+			'<div class="kt-cl-wf01-corr-card' +
+			(isOpen ? "" : " kt-cl-wf01-corr-card--resolved") +
+			'" data-testid="kt-cl-wf01-correction-' +
+			esc(fid) +
+			'">' +
+			'<div class="kt-cl-wf01-corr-top">' +
+			'<span class="kt-cl-wf01-sev kt-cl-wf01-sev--error">' +
+			esc(f.severity || __("Correction Required")) +
+			"</span>" +
+			'<span class="kt-cl-wf01-corr-status">' +
+			esc(status || "Open") +
+			"</span></div>" +
+			'<p class="kt-cl-wf01-corr-section">' +
+			esc(f.section || "—") +
+			"</p>" +
+			'<p class="kt-cl-wf01-corr-finding">' +
+			esc(f.finding || "—") +
+			"</p>" +
+			'<p class="kt-cl-wf01-corr-action"><strong>' +
+			__("Required action:") +
+			"</strong> " +
+			esc(f.required_action || "—") +
+			"</p>" +
+			'<div class="kt-cl-wf01-corr-actions">' +
+			(route && isOpen
+				? '<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--secondary kt-cl-wizard-btn--sm" data-action="goto-owner" data-route="' +
+					esc(route) +
+					'" data-testid="kt-cl-wf01-corr-open-' +
 					esc(fid) +
 					'">' +
-					'<div class="kt-cl-wf01-corr-top">' +
-					'<span class="kt-cl-wf01-sev kt-cl-wf01-sev--error">' +
-					esc(f.severity || __("Correction Required")) +
-					"</span>" +
-					'<span class="kt-cl-wf01-corr-status">' +
-					esc(status || "Open") +
-					"</span></div>" +
-					'<p class="kt-cl-wf01-corr-section">' +
-					esc(f.section || "—") +
-					"</p>" +
-					'<p class="kt-cl-wf01-corr-finding">' +
-					esc(f.finding || "—") +
-					"</p>" +
-					'<p class="kt-cl-wf01-corr-action"><strong>' +
-					__("Required action:") +
-					"</strong> " +
-					esc(f.required_action || "—") +
-					"</p>" +
-					'<div class="kt-cl-wf01-corr-actions">' +
-					(route
-						? '<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--secondary kt-cl-wizard-btn--sm" data-action="goto-owner" data-route="' +
-							esc(route) +
-							'" data-testid="kt-cl-wf01-corr-open-' +
-							esc(fid) +
-							'">' +
-							__("Open section") +
-							"</button>"
-						: "") +
-					(isOpen
-						? '<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--primary kt-cl-wizard-btn--sm" data-action="mark-fixed" data-finding-id="' +
-							esc(fid) +
-							'" data-testid="kt-cl-wf01-corr-fix-' +
-							esc(fid) +
-							'"' +
-							(state.busy ? " disabled" : "") +
-							">" +
-							__("Mark as fixed") +
-							"</button>"
-						: '<span class="kt-cl-wf01-corr-done">' + __("Fixed") + "</span>") +
-					"</div></div>"
-				);
-			})
-			.join("");
-		return (
-			'<section class="kt-cl-wf01-corrections" data-testid="kt-cl-wf01-corrections">' +
-			'<div class="kt-cl-wf01-corrections-head">' +
-			"<h3>" +
-			__("Corrections Required") +
-			"</h3>" +
-			'<span class="kt-cl-wf01-checklist-badge">' +
-			esc(String(openN)) +
-			" " +
-			__("OPEN") +
-			"</span></div>" +
-			'<p class="kt-cl-wf01-corrections-intro">' +
-			__(
-				"These items were raised by the reviewer. Fix the affected configuration sections, then mark each item as fixed before submitting for review."
-			) +
-			"</p>" +
-			'<div class="kt-cl-wf01-corrections-list">' +
-			cards +
-			"</div></section>"
+					__("Open section") +
+					"</button>"
+				: "") +
+			(showMarkFixed
+				? '<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--primary kt-cl-wizard-btn--sm" data-action="mark-fixed" data-finding-id="' +
+					esc(fid) +
+					'" data-testid="kt-cl-wf01-corr-fix-' +
+					esc(fid) +
+					'"' +
+					(state.busy ? " disabled" : "") +
+					">" +
+					__("Mark as fixed") +
+					"</button>"
+				: isOpen
+					? ""
+					: '<span class="kt-cl-wf01-corr-done">' + __("Fixed") + "</span>") +
+			"</div></div>"
 		);
+	}
+
+	function viewFixedButtonHtml(resolvedCount) {
+		if (!resolvedCount) {
+			return "";
+		}
+		return (
+			'<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--secondary kt-cl-wizard-btn--sm" data-action="open-fixed-corrections" data-testid="kt-cl-wf01-view-fixed-corrections">' +
+			__("View {0} fixed", [resolvedCount]) +
+			"</button>"
+		);
+	}
+
+	function reviewCorrectionsHtml(data) {
+		var parts = partitionCorrections(data.review_corrections || []);
+		var openItems = parts.open;
+		var resolvedItems = parts.resolved;
+		if (!openItems.length && !resolvedItems.length) {
+			return "";
+		}
+		var html = "";
+		if (openItems.length) {
+			html +=
+				'<section class="kt-cl-wf01-corrections" data-testid="kt-cl-wf01-corrections">' +
+				'<div class="kt-cl-wf01-corrections-head">' +
+				"<h3>" +
+				__("Corrections Required") +
+				"</h3>" +
+				'<span class="kt-cl-wf01-checklist-badge">' +
+				esc(String(openItems.length)) +
+				" " +
+				__("OPEN") +
+				"</span></div>" +
+				'<p class="kt-cl-wf01-corrections-intro">' +
+				__(
+					"These items were raised by the reviewer. Fix the affected configuration sections, then mark each item as fixed before submitting for review."
+				) +
+				"</p>" +
+				'<div class="kt-cl-wf01-corrections-list">' +
+				openItems.map(function (f) {
+					return correctionCardHtml(f, { showMarkFixed: true });
+				}).join("") +
+				"</div>" +
+				(resolvedItems.length
+					? '<div class="kt-cl-wf01-corrections-foot">' +
+						viewFixedButtonHtml(resolvedItems.length) +
+						"</div>"
+					: "") +
+				"</section>";
+		} else if (resolvedItems.length) {
+			html +=
+				'<div class="kt-cl-wf01-corrections-history" data-testid="kt-cl-wf01-corrections-history">' +
+				'<p class="kt-cl-wf01-corrections-history-copy">' +
+				__("All reviewer corrections are fixed.") +
+				" <strong>" +
+				esc(String(resolvedItems.length)) +
+				"</strong> " +
+				__(resolvedItems.length === 1 ? "item archived." : "items archived.") +
+				"</p>" +
+				viewFixedButtonHtml(resolvedItems.length) +
+				"</div>";
+		}
+		return html;
+	}
+
+	function drawerHost() {
+		var el = document.getElementById(DRAWER_HOST_ID);
+		if (!el) {
+			el = document.createElement("div");
+			el.id = DRAWER_HOST_ID;
+			document.body.appendChild(el);
+		}
+		return $(el);
+	}
+
+	function closeFixedCorrectionsDrawer() {
+		var $host = drawerHost();
+		$host.off(".wf01drawer");
+		$host.empty();
+	}
+
+	function openFixedCorrectionsDrawer() {
+		var parts = partitionCorrections((state.payload && state.payload.review_corrections) || []);
+		var resolved = parts.resolved;
+		if (!resolved.length) {
+			frappe.show_alert(
+				{ message: __("No fixed corrections to show."), indicator: "blue" },
+				4
+			);
+			return;
+		}
+		var $host = drawerHost();
+		$host.off(".wf01drawer");
+		$host.html(
+			'<div class="kt-cl-wf01-drawer-overlay" data-testid="kt-cl-wf01-fixed-drawer" role="dialog" aria-modal="true" aria-labelledby="kt-cl-wf01-fixed-drawer-title">' +
+				'<button type="button" class="kt-cl-wf01-drawer-backdrop" data-action="close-fixed-corrections" aria-label="' +
+				esc(__("Close")) +
+				'"></button>' +
+				'<aside class="kt-cl-wf01-drawer" data-testid="kt-cl-wf01-fixed-drawer-panel">' +
+				'<header class="kt-cl-wf01-drawer-header">' +
+				'<h2 id="kt-cl-wf01-fixed-drawer-title">' +
+				__("Fixed Corrections") +
+				"</h2>" +
+				'<button type="button" class="kt-cl-wf01-drawer-close" data-action="close-fixed-corrections" data-testid="kt-cl-wf01-fixed-drawer-close" aria-label="' +
+				esc(__("Close")) +
+				'"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>' +
+				"</header>" +
+				'<div class="kt-cl-wf01-drawer-body">' +
+				'<p class="kt-cl-wf01-drawer-intro">' +
+				__(
+					"These reviewer items were marked fixed. They stay available for audit but no longer block submit."
+				) +
+				"</p>" +
+				resolved
+					.map(function (f) {
+						return correctionCardHtml(f, { showMarkFixed: false });
+					})
+					.join("") +
+				"</div></aside></div>"
+		);
+		$host.on("click.wf01drawer", "[data-action='close-fixed-corrections']", function (e) {
+			e.preventDefault();
+			closeFixedCorrectionsDrawer();
+		});
 	}
 
 	function checklistResultMeta(result) {
@@ -605,18 +758,14 @@
 
 	function refreshCorrectionsInPlace($root, data) {
 		var html = reviewCorrectionsHtml(data || {});
-		var $existing = $root.find('[data-testid="kt-cl-wf01-corrections"]');
-		if (html) {
-			if ($existing.length) {
-				$existing.replaceWith(html);
-			} else {
-				$root.find('[data-testid="kt-cl-wf01-guidance"]').after(html);
-			}
-		} else if ($existing.length) {
-			$existing.remove();
-		}
+		$root.find('[data-testid="kt-cl-wf01-corrections"]').remove();
+		$root.find('[data-testid="kt-cl-wf01-corrections-history"]').remove();
 		$root.find('[data-testid="kt-cl-wf01-guidance"]').replaceWith(guidanceHtml(data || {}));
+		if (html) {
+			$root.find('[data-testid="kt-cl-wf01-guidance"]').after(html);
+		}
 		$root.find('[data-testid="kt-cl-wf01-footer"]').replaceWith(footerHtml(data || {}));
+		closeFixedCorrectionsDrawer();
 	}
 
 	function remountWithPayload(page, data) {
@@ -631,6 +780,7 @@
 			sh.updateChrome({ toolbar: surf.chrome.toolbar });
 		}
 		state.payload = data;
+		closeFixedCorrectionsDrawer();
 		sh.mountContent(page.main, {
 			pageHeader: pageHeader,
 			mainHtml: data ? pageHtml(data) : emptyHtml(),
@@ -772,6 +922,10 @@
 			if (el && typeof el.scrollIntoView === "function") {
 				el.scrollIntoView({ behavior: "smooth", block: "start" });
 			}
+		});
+		$root.on("click.wf01", "[data-action='open-fixed-corrections']", function (e) {
+			e.preventDefault();
+			openFixedCorrectionsDrawer();
 		});
 		$root.on("click.wf01", "[data-action='mark-fixed']", function (e) {
 			e.preventDefault();

@@ -391,12 +391,21 @@ def _status_label(status: str) -> str:
 
 
 def _dto(doc, blob: dict[str, Any], package: dict[str, Any] | None = None) -> dict[str, Any]:
-	context = build_configuration_context(doc)
+	context = dict(build_configuration_context(doc))
 	status = cstr(doc.status or "")
 	preview_status = cstr(blob.get("preview_status") or PREVIEW_NOT_GENERATED)
 	confirmed = preview_status == PREVIEW_CONFIRMED
 	pkg = package if package is not None else _parse_blob(getattr(doc, "publication_package", None))
 	sent = bool(pkg.get("sent_at"))
+	block = blob.get("generation_block") if isinstance(blob.get("generation_block"), dict) else None
+	# Preview generation blocks are distinct from WG-01 readiness findings — surface them
+	# in the shared Issues cell so "None" does not contradict the exception banner.
+	if preview_status == PREVIEW_EXCEPTION and block:
+		step = cstr(block.get("owner_step") or "").strip()
+		context["issues_label"] = (
+			f"Preview blocked · {step}" if step else "Preview blocked"
+		)
+		context["issues_alert"] = 1
 
 	return {
 		"configuration_id": doc.name,

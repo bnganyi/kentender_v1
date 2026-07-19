@@ -203,7 +203,16 @@ class TestConfigurationDocumentPreviewApi(FrappeTestCase):
 		self.assertEqual(gen.get("preview_html") or "", "")
 		block = gen.get("generation_block") or {}
 		self.assertIn("CFG-05", block.get("blocking_area") or "")
+		self.assertEqual(block.get("owner_step"), "CFG-05")
+		self.assertEqual(
+			block.get("owner_route"),
+			"it-tender-configuration-system-inventory",
+		)
+		self.assertIn("CFG-05", block.get("cta_label") or "")
 		self.assertIn("no bidder-facing content", (block.get("message") or "").lower())
+		ctx = gen.get("context") or {}
+		self.assertIn("Preview blocked", ctx.get("issues_label") or "")
+		self.assertEqual(ctx.get("issues_alert"), 1)
 		with self.assertRaises(Exception):
 			download_document_preview_pdf(self.cfg_id)
 

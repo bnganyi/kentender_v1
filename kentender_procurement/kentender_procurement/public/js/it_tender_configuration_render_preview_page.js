@@ -136,13 +136,30 @@
 		}
 		var block = data.generation_block || {};
 		var area = block.blocking_area || "";
-		var message = block.message || data.render_exception || "";
+		var message = block.message || "";
+		// Prefer structured fields — never dump the joined render_exception into the banner.
+		if (!message && data.render_exception && !block.blocking_area) {
+			message = data.render_exception;
+		}
 		var action =
 			block.action ||
-			__("Fix the bound STD or configuration, then regenerate.");
+			__("Fix the affected configuration step, then regenerate the preview.");
 		if (!message) {
-			message = __("Preview generation was blocked by a readiness issue.");
+			message = __(
+				"Preview generation was blocked. Complete the owning configuration step, then regenerate."
+			);
 		}
+		var ownerRoute = block.owner_route || "";
+		var ownerStep = block.owner_step || "";
+		var primaryLabel =
+			block.cta_label ||
+			(ownerRoute && ownerStep ? __("Open {0}", [ownerStep]) : __("Open Readiness Check"));
+		var primaryAction = ownerRoute ? "open-owner-step" : "open-readiness";
+		var secondary = ownerRoute
+			? '<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--outline" data-action="open-readiness" data-testid="kt-cl-wf03-exception-readiness">' +
+				__("Open Readiness Check") +
+				"</button>"
+			: "";
 		return (
 			'<div class="kt-cl-wf03-exception" data-testid="kt-cl-wf03-exception" role="alert">' +
 			(area
@@ -156,9 +173,16 @@
 			'<p class="kt-cl-wf03-exception-action" data-testid="kt-cl-wf03-exception-action">' +
 			esc(action) +
 			"</p>" +
-			'<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--secondary" data-action="open-readiness" data-testid="kt-cl-wf03-exception-cta">' +
-			__("Open Readiness Check") +
-			"</button></div>"
+			'<div class="kt-cl-wf03-exception-actions">' +
+			'<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--primary" data-action="' +
+			esc(primaryAction) +
+			'" data-owner-route="' +
+			esc(ownerRoute) +
+			'" data-testid="kt-cl-wf03-exception-cta">' +
+			esc(primaryLabel) +
+			"</button>" +
+			secondary +
+			"</div></div>"
 		);
 	}
 
@@ -169,8 +193,10 @@
 		var hasPreview = !!html;
 		var watermark = data.watermark_label || __("PREVIEW — NOT FOR PUBLICATION");
 		var status = data.preview_status_label || data.preview_status || __("Not generated");
-		var searchBar = hasPreview
-			? '<div class="kt-cl-wf03-search" data-testid="kt-cl-wf03-search">' +
+		var fitActive = !!state.fitWidth;
+		var toolsBar = hasPreview
+			? '<div class="kt-cl-wf03-preview-tools" data-testid="kt-cl-wf03-preview-tools">' +
+				'<div class="kt-cl-wf03-preview-tools-row kt-cl-wf03-search" data-testid="kt-cl-wf03-search">' +
 				'<input type="search" class="kt-cl-wf03-search-input" data-action="search-input" data-testid="kt-cl-wf03-search-input" placeholder="' +
 				esc(__("Search in preview")) +
 				'" value="' +
@@ -178,25 +204,35 @@
 				'" />' +
 				'<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--outline" data-action="search-next" data-testid="kt-cl-wf03-search-next">' +
 				__("Next") +
-				"</button></div>"
-			: "";
-		var viewToolbar = hasPreview
-			? '<div class="kt-cl-wf03-view-toolbar" data-testid="kt-cl-wf03-view-toolbar">' +
-				'<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--outline" data-action="fit-width" data-testid="kt-cl-wf03-fit-width">' +
+				"</button></div>" +
+				'<div class="kt-cl-wf03-preview-tools-row kt-cl-wf03-view-toolbar" data-testid="kt-cl-wf03-view-toolbar">' +
+				'<div class="kt-cl-wf03-view-group" role="group" aria-label="' +
+				esc(__("Zoom")) +
+				'">' +
+				'<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--outline' +
+				(fitActive ? " is-active" : "") +
+				'" data-action="fit-width" data-testid="kt-cl-wf03-fit-width" aria-pressed="' +
+				(fitActive ? "true" : "false") +
+				'">' +
 				__("Fit to width") +
 				"</button>" +
-				'<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--outline" data-action="actual-size" data-testid="kt-cl-wf03-actual-size">' +
+				'<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--outline' +
+				(fitActive ? "" : " is-active") +
+				'" data-action="actual-size" data-testid="kt-cl-wf03-actual-size" aria-pressed="' +
+				(fitActive ? "false" : "true") +
+				'">' +
 				__("Actual size") +
-				"</button>" +
+				"</button></div>" +
 				'<label class="kt-cl-wf03-page-select-wrap">' +
 				'<span class="sr-only">' +
-				__("Page") +
+				__("Section") +
 				"</span>" +
 				'<select class="kt-cl-wf03-page-select" data-action="page-select" data-testid="kt-cl-wf03-page-select"></select>' +
-				"</label>" +
-				'<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--outline" data-action="open-full-preview" data-testid="kt-cl-wf03-open-full">' +
+				"</label></div>" +
+				'<div class="kt-cl-wf03-preview-tools-row kt-cl-wf03-preview-tools-row--full">' +
+				'<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--outline kt-cl-wf03-open-full-btn" data-action="open-full-preview" data-testid="kt-cl-wf03-open-full">' +
 				__("Open full-page preview") +
-				"</button></div>"
+				"</button></div></div>"
 			: "";
 		var emptyMsg = blocked
 			? __(
@@ -225,8 +261,7 @@
 			'<span class="kt-cl-wf03-preview-status" data-testid="kt-cl-wf03-preview-status">' +
 			esc(status) +
 			"</span></div>" +
-			searchBar +
-			viewToolbar +
+			toolsBar +
 			(hasPreview
 				? '<p class="kt-cl-wf03-watermark" data-testid="kt-cl-wf03-watermark">' +
 					esc(watermark) +
@@ -487,8 +522,22 @@
 		if (!$viewport.length) {
 			return;
 		}
-		$viewport.toggleClass("is-fit-width", !!state.fitWidth);
-		$viewport.toggleClass("is-actual-size", !state.fitWidth);
+		var fit = !!state.fitWidth;
+		$viewport.toggleClass("is-fit-width", fit);
+		$viewport.toggleClass("is-actual-size", !fit);
+		var $fit = $root.find('[data-testid="kt-cl-wf03-fit-width"]');
+		var $actual = $root.find('[data-testid="kt-cl-wf03-actual-size"]');
+		$fit.toggleClass("is-active", fit).attr("aria-pressed", fit ? "true" : "false");
+		$actual.toggleClass("is-active", !fit).attr("aria-pressed", fit ? "false" : "true");
+		var frame = $root.find('[data-testid="kt-cl-wf03-preview-frame"]')[0];
+		if (frame) {
+			// Force layout so Actual size (A4 width) is visible vs Fit to width.
+			frame.style.width = fit ? "100%" : "794px";
+			frame.style.maxWidth = fit ? "100%" : "794px";
+			frame.style.marginLeft = fit ? "0" : "auto";
+			frame.style.marginRight = fit ? "0" : "auto";
+			frame.style.display = "block";
+		}
 	}
 
 	function remountWithPayload(page, data) {
@@ -908,25 +957,43 @@
 	}
 
 	function injectWf03Styles() {
-		if (document.getElementById("kt-cl-wf03-inline-style")) {
+		["kt-cl-wf03-inline-style", "kt-cl-wf03-inline-style-v2"].forEach(function (id) {
+			var stale = document.getElementById(id);
+			if (stale && stale.parentNode) {
+				stale.parentNode.removeChild(stale);
+			}
+		});
+		if (document.getElementById("kt-cl-wf03-inline-style-v3")) {
 			return;
 		}
 		var style = document.createElement("style");
-		style.id = "kt-cl-wf03-inline-style";
+		style.id = "kt-cl-wf03-inline-style-v3";
 		style.textContent =
 			".kt-cl-wf03-outline-item{cursor:pointer;padding:.35rem .5rem;border-radius:.25rem}" +
 			".kt-cl-wf03-outline-item:hover{background:rgba(0,34,68,.06)}" +
 			".kt-cl-wf03-outline-item.is-active{background:rgba(0,34,68,.12);font-weight:700;color:#002244}" +
-			".kt-cl-wf03-search{display:flex;gap:.5rem;margin:.5rem 0}" +
-			".kt-cl-wf03-search-input{flex:1;border:1px solid #c4c6cf;border-radius:.25rem;padding:.45rem .65rem}" +
-			".kt-cl-wf03-view-toolbar{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin:.35rem 0 .75rem}" +
-			".kt-cl-wf03-page-select{min-width:12rem;border:1px solid #c4c6cf;border-radius:.25rem;padding:.4rem .55rem;background:#fff}" +
-			".kt-cl-wf03-preview-viewport{min-height:28rem;border:1px solid #c4c6cf;border-radius:.25rem;background:#fff;overflow:auto}" +
-			".kt-cl-wf03-preview-viewport.is-fit-width .kt-cl-wf03-preview-frame{width:100%;min-height:28rem;border:0}" +
-			".kt-cl-wf03-preview-viewport.is-actual-size .kt-cl-wf03-preview-frame{width:794px;min-height:28rem;border:0;margin:0 auto;display:block}" +
+			".kt-cl-wf03-preview-tools{display:flex;flex-direction:column;gap:.5rem;margin:0 0 .75rem;padding:.65rem .75rem;background:#f0f4f8;border:1px solid #c4c6cf;border-radius:.25rem;overflow:hidden;max-width:100%;box-sizing:border-box}" +
+			".kt-cl-wf03-preview-tools-row{display:flex;align-items:center;gap:.5rem;min-width:0;max-width:100%}" +
+			".kt-cl-wf03-preview-tools-row--full{display:flex}" +
+			".kt-cl-wf03-search{margin:0}" +
+			".kt-cl-wf03-search-input{flex:1 1 auto;min-width:0;height:2.25rem;border:1px solid #c4c6cf;border-radius:.25rem;padding:0 .65rem;background:#fff;box-sizing:border-box}" +
+			".kt-cl-wf03-view-toolbar{margin:0;flex-wrap:nowrap}" +
+			".kt-cl-wf03-view-group{display:inline-flex;align-items:center;gap:.35rem;flex:0 0 auto}" +
+			".kt-cl-wf03-page-select-wrap{flex:1 1 auto;min-width:0;margin:0}" +
+			".kt-cl-wf03-page-select{display:block;width:100%;max-width:100%;height:2.25rem;border:1px solid #c4c6cf;border-radius:.25rem;padding:0 .55rem;background:#fff;box-sizing:border-box}" +
+			".kt-cl-wf03-preview-tools .kt-cl-wizard-btn{height:2.25rem;margin:0;flex:0 0 auto;white-space:nowrap}" +
+			".kt-cl-wf03-preview-tools .kt-cl-wizard-btn.is-active{background:#002244;border-color:#002244;color:#fff}" +
+			".kt-cl-wf03-open-full-btn{width:100%;justify-content:center;max-width:100%;box-sizing:border-box}" +
+			".kt-cl-wf03-preview-viewport{min-height:28rem;border:1px solid #c4c6cf;border-radius:.25rem;background:#eef1f5;overflow:auto}" +
+			".kt-cl-wf03-preview-viewport.is-fit-width .kt-cl-wf03-preview-frame{width:100%!important;max-width:100%!important;min-height:28rem;border:0;margin:0;display:block}" +
+			".kt-cl-wf03-preview-viewport.is-actual-size .kt-cl-wf03-preview-frame{width:794px!important;max-width:794px!important;min-height:28rem;border:0;margin:0 auto;display:block;box-shadow:0 0 0 1px #c4c6cf,0 8px 24px rgba(16,24,40,.12);background:#fff}" +
 			".sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}" +
 			".kt-cl-wf03-exception{margin:0 0 1rem;padding:.75rem 1rem;border:1px solid #f2b8b5;border-radius:.25rem;background:#f9dedc;color:#410e0b}" +
 			".kt-cl-wf03-exception p{margin:0 0 .75rem}" +
+			".kt-cl-wf03-exception-actions{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-top:.25rem}" +
+			".kt-cl-wf03-exception-actions .kt-cl-wizard-btn{margin:0}" +
+			".kt-cl-wf03-exception-area{margin-bottom:.35rem!important}" +
+			".kt-cl-wf03-exception-action{font-weight:600}" +
 			"#" +
 			MODAL_HOST_ID +
 			" .kt-cl-wf03-drawer-overlay{position:fixed;inset:0;z-index:1300}" +
@@ -1006,6 +1073,24 @@
 			}
 			frappe.route_options = { configuration_id: state.configurationId };
 			frappe.set_route(READINESS_ROUTE, state.configurationId);
+		});
+		$root.on("click.wf03", "[data-action='open-owner-step']", function (e) {
+			e.preventDefault();
+			if (!state.configurationId) {
+				return;
+			}
+			var route = String($(this).attr("data-owner-route") || "").trim();
+			if (!route) {
+				var block = (state.payload && state.payload.generation_block) || {};
+				route = String(block.owner_route || "").trim();
+			}
+			if (!route) {
+				frappe.route_options = { configuration_id: state.configurationId };
+				frappe.set_route(READINESS_ROUTE, state.configurationId);
+				return;
+			}
+			frappe.route_options = { configuration_id: state.configurationId };
+			frappe.set_route(route, state.configurationId);
 		});
 		$root.on("click.wf03", "[data-action='regenerate']", function (e) {
 			e.preventDefault();

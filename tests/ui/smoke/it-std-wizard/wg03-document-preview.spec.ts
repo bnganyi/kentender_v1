@@ -102,6 +102,22 @@ test.describe("WG-03 Tender Document Preview", () => {
 		await ensureGenerated(page);
 		await page.reload({ waitUntil: "domcontentloaded" });
 		await expect(page.getByTestId("kt-cl-wf03-preview-frame")).toBeVisible({ timeout: 20_000 });
+		await expect(page.getByTestId("kt-cl-wf03-preview-tools")).toBeVisible();
+		await expect(page.getByTestId("kt-cl-wf03-search")).toBeVisible();
+		await expect(page.getByTestId("kt-cl-wf03-view-toolbar")).toBeVisible();
+		// Open full-page stays inside the tools panel (no horizontal spill).
+		const toolsBox = await page.getByTestId("kt-cl-wf03-preview-tools").boundingBox();
+		const fullBox = await page.getByTestId("kt-cl-wf03-open-full").boundingBox();
+		expect(toolsBox && fullBox).toBeTruthy();
+		if (toolsBox && fullBox) {
+			expect(fullBox.x + fullBox.width).toBeLessThanOrEqual(toolsBox.x + toolsBox.width + 1);
+		}
+		await expect(page.getByTestId("kt-cl-wf03-fit-width")).toHaveAttribute("aria-pressed", "true");
+		await page.getByTestId("kt-cl-wf03-actual-size").click();
+		await expect(page.getByTestId("kt-cl-wf03-actual-size")).toHaveAttribute("aria-pressed", "true");
+		await expect(page.getByTestId("kt-cl-wf03-preview-viewport")).toHaveClass(/is-actual-size/);
+		await page.getByTestId("kt-cl-wf03-fit-width").click();
+		await expect(page.getByTestId("kt-cl-wf03-preview-viewport")).toHaveClass(/is-fit-width/);
 		await page.getByTestId("kt-cl-wf03-outline-gcc").click();
 		await expect(page.getByTestId("kt-cl-wf03-outline-gcc")).toHaveClass(/is-active/);
 		const scrolled = await page.evaluate(() => {
@@ -167,11 +183,17 @@ test.describe("WG-03 Tender Document Preview", () => {
 		await openPreview(page);
 		await expect(page.getByTestId("kt-cl-wf03-exception")).toBeVisible({ timeout: 15_000 });
 		await expect(page.getByTestId("kt-cl-wf03-exception-area")).toContainText(/CFG-05/i);
+		await expect(page.getByTestId("kt-cl-wf03-exception-cta")).toHaveText(/Open CFG-05/i);
+		await expect(page.getByTestId("kt-cl-config-context-issues")).toContainText(/Preview blocked/i);
 		await expect(page.getByTestId("kt-cl-wf03-preview-status")).toHaveText(/Exception found/i);
 		await expect(page.getByTestId("kt-cl-wf03-download")).toBeDisabled();
 		await expect(page.getByTestId("kt-cl-wf03-confirm-btn")).toBeDisabled();
 		await expect(page.getByTestId("kt-cl-wf03-preview-empty")).toBeVisible();
 		await expect(page.getByTestId("kt-cl-wf03-preview-frame")).toHaveCount(0);
+		await page.getByTestId("kt-cl-wf03-exception-cta").click();
+		await expect(page).toHaveURL(/it-tender-configuration-system-inventory/, {
+			timeout: 15_000,
+		});
 		// Restore seed inventory so later serial tests can generate a clean preview.
 		await seedUi00(page);
 	});

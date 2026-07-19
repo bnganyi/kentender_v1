@@ -5443,11 +5443,87 @@ body.kt-cl-shell .kt-cl-wf03-preview-status {
 	font-weight: 700 !important;
 	color: #5f6368 !important;
 }
+/* Preview tools — search, zoom/section, then full-page (own row; no spill). */
+body.kt-cl-shell [data-testid="kt-cl-wf03-preview-tools"],
+body.kt-cl-shell .kt-cl-wf03-preview-tools {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0.5rem !important;
+	margin: 0 0 0.75rem !important;
+	padding: 0.65rem 0.75rem !important;
+	background: #f0f4f8 !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.25rem !important;
+	overflow: hidden !important;
+	max-width: 100% !important;
+	box-sizing: border-box !important;
+}
+body.kt-cl-shell .kt-cl-wf03-preview-tools-row {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+	min-width: 0 !important;
+	max-width: 100% !important;
+	margin: 0 !important;
+}
+body.kt-cl-shell .kt-cl-wf03-search-input,
+body.kt-cl-shell .kt-cl-wf03-page-select,
+body.kt-cl-shell .kt-cl-wf03-preview-tools .kt-cl-wizard-btn {
+	height: 2.25rem !important;
+	box-sizing: border-box !important;
+}
+body.kt-cl-shell .kt-cl-wf03-search-input {
+	flex: 1 1 auto !important;
+	min-width: 0 !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.25rem !important;
+	padding: 0 0.65rem !important;
+	background: #fff !important;
+}
+body.kt-cl-shell .kt-cl-wf03-view-group {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.35rem !important;
+	flex: 0 0 auto !important;
+}
+body.kt-cl-shell .kt-cl-wf03-page-select-wrap {
+	flex: 1 1 auto !important;
+	min-width: 0 !important;
+	margin: 0 !important;
+}
+body.kt-cl-shell .kt-cl-wf03-page-select {
+	display: block !important;
+	width: 100% !important;
+	max-width: 100% !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.25rem !important;
+	padding: 0 0.55rem !important;
+	background: #fff !important;
+}
+body.kt-cl-shell .kt-cl-wf03-preview-tools .kt-cl-wizard-btn {
+	margin: 0 !important;
+	flex: 0 0 auto !important;
+	white-space: nowrap !important;
+}
+body.kt-cl-shell .kt-cl-wf03-preview-tools .kt-cl-wizard-btn.is-active {
+	background: #002244 !important;
+	border-color: #002244 !important;
+	color: #fff !important;
+}
+body.kt-cl-shell .kt-cl-wf03-open-full-btn {
+	width: 100% !important;
+	max-width: 100% !important;
+	justify-content: center !important;
+}
 body.kt-cl-shell .kt-cl-wf03-watermark {
 	margin: 0 0 0.75rem !important;
 	font-size: 12px !important;
 	font-weight: 700 !important;
 	color: #b06000 !important;
+}
+body.kt-cl-shell .kt-cl-wf03-preview-viewport {
+	background: #eef1f5 !important;
+	overflow: auto !important;
 }
 body.kt-cl-shell .kt-cl-wf03-preview-frame {
 	width: 100% !important;
@@ -5455,6 +5531,24 @@ body.kt-cl-shell .kt-cl-wf03-preview-frame {
 	border: 1px solid #c4c6cf !important;
 	border-radius: 0.35rem !important;
 	background: #fff !important;
+	display: block !important;
+}
+body.kt-cl-shell
+	.kt-cl-wf03-preview-viewport.is-fit-width
+	[data-testid="kt-cl-wf03-preview-frame"],
+body.kt-cl-shell .kt-cl-wf03-preview-viewport.is-fit-width .kt-cl-wf03-preview-frame {
+	width: 100% !important;
+	max-width: 100% !important;
+	margin: 0 !important;
+}
+body.kt-cl-shell
+	.kt-cl-wf03-preview-viewport.is-actual-size
+	[data-testid="kt-cl-wf03-preview-frame"],
+body.kt-cl-shell .kt-cl-wf03-preview-viewport.is-actual-size .kt-cl-wf03-preview-frame {
+	width: 794px !important;
+	max-width: 794px !important;
+	margin: 0 auto !important;
+	box-shadow: 0 0 0 1px #c4c6cf, 0 8px 24px rgba(16, 24, 40, 0.12) !important;
 }
 body.kt-cl-shell .kt-cl-wf03-preview-empty {
 	min-height: 16rem !important;

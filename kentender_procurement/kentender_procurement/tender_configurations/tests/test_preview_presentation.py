@@ -84,6 +84,55 @@ class TestPreviewPresentation(unittest.TestCase):
 		self.assertNotIn("REQ-001", html)
 		self.assertNotIn("Technical compliance for:", html)
 
+	def test_requirement_title_recovers_when_title_is_req_id(self):
+		"""CFG-03 rows may store title=REQ-001 and the label in description."""
+		reqs = [
+			{
+				"requirement_id": "REQ-001",
+				"title": "REQ-001",
+				"description": "Compute Node Performance",
+				"category_label": "Technical Requirement",
+				"treatment_label": "Evaluation-linked",
+				"evidence_instruction": "Manufacturer datasheet required",
+			}
+		]
+		tech_html, err = render_technical_requirements_section(reqs)
+		self.assertIsNone(err)
+		self.assertIn("Compute Node Performance", tech_html)
+		self.assertNotIn("<h3>REQ-001</h3>", tech_html)
+		eval_html, err2 = render_evaluation_section(
+			[
+				{
+					"criterion_name": "REQ-001 technical compliance",
+					"related_requirement_id": "REQ-001",
+					"stage": "Technical",
+					"evaluation_basis": "Scored",
+					"bidder_evidence": "Required",
+				}
+			],
+			reqs,
+		)
+		self.assertIsNone(err2)
+		self.assertIn("Compute Node Performance technical compliance", eval_html)
+		self.assertNotIn("REQ-001", eval_html)
+		price_html, err3 = render_price_section(
+			[
+				{
+					"item_name": "REQ-001",
+					"related_requirement_id": "REQ-001",
+					"bidder_facing_description": "Price for requirement: REQ-001",
+					"unit": "lot",
+					"quantity": "1",
+					"currency": "KES",
+				}
+			],
+			reqs,
+		)
+		self.assertIsNone(err3)
+		self.assertIn("Compute Node Performance", price_html)
+		self.assertNotIn("REQ-001", price_html)
+		self.assertIsNone(assert_no_forbidden_preview_markers(tech_html + eval_html + price_html))
+
 	def test_price_bidder_facing_labels(self):
 		reqs = [
 			{"requirement_id": "REQ-001", "title": "Compute Node Performance"},
@@ -152,10 +201,47 @@ class TestPreviewPresentation(unittest.TestCase):
 		self.assertIsInstance(err, dict)
 		self.assertEqual(err.get("status"), "generation_blocked")
 		self.assertIn("CFG-05", err.get("blocking_area") or "")
+		self.assertEqual(err.get("owner_step"), "CFG-05")
+		self.assertEqual(
+			err.get("owner_route"),
+			"it-tender-configuration-system-inventory",
+		)
 		html2, err2 = render_inventory_section([], not_applicable=True)
 		self.assertIsNone(err2)
 		self.assertIn("not applicable", html2.lower())
 		self.assertNotIn("No additional requirements", html2)
+
+	def test_inventory_uses_cfg05_item_title_fields(self):
+		"""CFG-05 Complete items use item_title — preview must not treat them as empty."""
+		html, err = render_inventory_section(
+			[
+				{
+					"item_title": "Existing Server Room",
+					"item_description": "Server room on third floor",
+					"bidder_consideration": (
+						"Bidder should account for installation constraints and rack space."
+					),
+					"disclosure_status_label": "Safe to disclose",
+				}
+			]
+		)
+		self.assertIsNone(err)
+		self.assertIn("Existing Server Room", html)
+		self.assertIn("installation constraints", html)
+
+	def test_inventory_skips_non_disclosable_items(self):
+		html, err = render_inventory_section(
+			[
+				{
+					"item_title": "Sensitive Network Map",
+					"bidder_consideration": "Internal only",
+					"disclosure_status_label": "Needs disclosure review",
+				}
+			]
+		)
+		self.assertEqual(html, "")
+		self.assertIsInstance(err, dict)
+		self.assertIn("Safe to disclose", err.get("message") or "")
 
 	def test_expand_and_forbidden(self):
 		self.assertEqual(

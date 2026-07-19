@@ -187,9 +187,16 @@ test.describe("WG-01 Readiness Check & Report", () => {
 		await expect(page.getByTestId(`kt-cl-wf01-corr-fix-${resolvedFindingId}`)).toHaveCount(0, {
 			timeout: 15_000,
 		});
+		// Fixed items leave the main panel so the readiness view stays uncluttered.
+		await expect(page.getByTestId("kt-cl-wf01-corrections")).toHaveCount(0);
+		await expect(page.getByTestId("kt-cl-wf01-corrections-history")).toBeVisible();
+		await expect(page.getByTestId(`kt-cl-wf01-correction-${resolvedFindingId}`)).toHaveCount(0);
+		await page.getByTestId("kt-cl-wf01-view-fixed-corrections").click();
+		await expect(page.getByTestId("kt-cl-wf01-fixed-drawer")).toBeVisible();
 		await expect(page.getByTestId(`kt-cl-wf01-correction-${resolvedFindingId}`)).toContainText(
 			/Fixed|Resolved/i
 		);
-		await expect(page.getByTestId("kt-cl-wf01-corrections")).toContainText(/0\s*OPEN/i);
+		await page.getByTestId("kt-cl-wf01-fixed-drawer-close").click();
+		await expect(page.getByTestId("kt-cl-wf01-fixed-drawer")).toHaveCount(0);
 	});
 });

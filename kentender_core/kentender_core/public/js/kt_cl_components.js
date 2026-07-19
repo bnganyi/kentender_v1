@@ -1068,13 +1068,20 @@ frappe.provide("kentender_core.cl_components");
 			var h = spec().CONFIG_HOME || {};
 			var blockers = parseInt(ctx.blocker_count, 10) || 0;
 			var warnings = parseInt(ctx.warning_count, 10) || 0;
+			var issuesAlert = !!(
+				blockers ||
+				warnings ||
+				ctx.issues_alert === 1 ||
+				ctx.issues_alert === true
+			);
 			var issuesLabel =
 				ctx.issues_label ||
 				(blockers || warnings
 					? blockers + " Blockers / " + warnings + " Warnings"
 					: __("None"));
-			var issuesCls =
-				blockers || warnings ? h.contextValueError || "" : h.contextValue || "";
+			var issuesCls = issuesAlert
+				? h.contextValueError || ""
+				: h.contextValue || "";
 			/* C1-M3 §4 — exactly eight fields (pack labels). */
 			var cells = [
 				{
@@ -1165,7 +1172,7 @@ frappe.provide("kentender_core.cl_components");
 				'<p class="' +
 				issuesCls +
 				" kt-cl-config-issues-value" +
-				(blockers || warnings ? " is-alert" : "") +
+				(issuesAlert ? " is-alert" : "") +
 				'">' +
 				escapeHtml(issuesLabel) +
 				"</p></div>";

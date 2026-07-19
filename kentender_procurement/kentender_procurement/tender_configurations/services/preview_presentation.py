@@ -37,13 +37,38 @@ FORBIDDEN_OUTPUT_MARKERS = (
 )
 
 
-def generation_block(*, blocking_area: str, message: str, action: str) -> dict[str, str]:
-	"""Structured block for UI banner — never embed in tender HTML/PDF."""
+def generation_block(
+	*,
+	blocking_area: str,
+	message: str,
+	action: str,
+	owner_step: str | None = None,
+) -> dict[str, str]:
+	"""Structured block for UI banner — never embed in tender HTML/PDF.
+
+	When ``owner_step`` (or a CFG-NN prefix in ``blocking_area``) resolves, the
+	preview banner CTA routes to that configuration step — not WG-01 readiness,
+	which can still show green while preview generation is blocked.
+	"""
+	from kentender_procurement.tender_configurations.services.configuration_steps import (
+		STEP_ROUTES,
+	)
+
+	step = cstr(owner_step or "").strip().upper()
+	if not step:
+		m = re.match(r"(CFG-\d+)\b", cstr(blocking_area or ""), re.IGNORECASE)
+		if m:
+			step = m.group(1).upper()
+	route = STEP_ROUTES.get(step, "") if step else ""
+	cta = f"Open {step}" if step and route else "Open Readiness Check"
 	return {
 		"status": "generation_blocked",
 		"blocking_area": blocking_area,
 		"message": message,
 		"action": action,
+		"owner_step": step,
+		"owner_route": route,
+		"cta_label": cta,
 	}
 
 INTERNAL_ID_RE = re.compile(
@@ -207,12 +232,26 @@ def format_datetime_bidder(value: Any) -> str:
 	return f"{day} {month} {year}"
 
 
+def _requirement_display_title(req: dict[str, Any]) -> str:
+	"""Prefer a bidder-facing title; CFG-03 mock rows sometimes store REQ-NNN in ``title``."""
+	title = cstr(req.get("title") or req.get("name") or "").strip()
+	desc = cstr(
+		req.get("description") or req.get("requirement_statement") or ""
+	).strip()
+	if title and not _is_internal_label(title):
+		return title
+	# Short description used as the human label when title is an internal id.
+	if desc and not _is_internal_label(desc) and len(desc) <= 160 and "\n" not in desc:
+		return desc
+	return title or desc
+
+
 def _requirement_title_map(requirements: list[dict[str, Any]]) -> dict[str, str]:
 	out: dict[str, str] = {}
 	for req in requirements:
 		rid = cstr(req.get("requirement_id") or req.get("code") or "").strip()
-		title = cstr(req.get("title") or req.get("name") or "").strip()
-		if rid and title:
+		title = _requirement_display_title(req)
+		if rid and title and not _is_internal_label(title):
 			out[rid.upper()] = title
 			out[rid] = title
 	return out
@@ -537,11 +576,21 @@ def render_evaluation_section(
 			continue
 		# Expand related requirement id into title when criterion is a stub.
 		related = cstr(item.get("related_requirement_id") or "").strip()
-		if related and related.upper() in {k.upper() for k in req_map}:
-			title = req_map.get(related.upper()) or req_map.get(related) or related
-			if INTERNAL_ID_RE.search(raw_name) or "compliance for" in raw_name.lower():
-				raw_name = f"{title} technical compliance"
+		related_title = (
+			req_map.get(related.upper()) or req_map.get(related) or ""
+			if related
+			else ""
+		)
+		if related_title and (
+			INTERNAL_ID_RE.search(raw_name) or "compliance for" in raw_name.lower()
+		):
+			raw_name = f"{related_title} technical compliance"
 		name = expand_requirement_reference(raw_name, req_map)
+		if _is_internal_label(name) or INTERNAL_ID_RE.search(name):
+			if related_title:
+				name = f"{related_title} technical compliance"
+			else:
+				continue
 		stage = cstr(item.get("stage_label") or item.get("stage") or "").strip()
 		basis = cstr(
 			item.get("evaluation_basis_label") or item.get("evaluation_basis") or ""
@@ -594,23 +643,30 @@ def render_price_section(
 
 		raw_name = cstr(item.get("item_name") or item.get("price_item") or "").strip()
 		raw_name = expand_requirement_reference(raw_name, req_map)
-		if _is_internal_label(raw_name) or not raw_name:
+		if _is_internal_label(raw_name) or not raw_name or INTERNAL_ID_RE.search(raw_name):
 			raw_name = related_title or ""
 
 		description = cstr(item.get("bidder_facing_description") or "").strip()
 		description = expand_requirement_reference(description, req_map)
-		if not description and related_title:
-			description = (
-				f"Supply, install, and commission works and services meeting the "
-				f"{related_title} requirement."
-			)
-		if not description and raw_name:
-			description = raw_name
+		if not description or _is_internal_label(description) or INTERNAL_ID_RE.search(
+			description
+		):
+			if related_title:
+				description = (
+					f"Supply, install, and commission works and services meeting the "
+					f"{related_title} requirement."
+				)
+			elif raw_name and not INTERNAL_ID_RE.search(raw_name):
+				description = raw_name
+			else:
+				description = ""
 		if not description:
 			continue
 		if not raw_name:
 			# Derive a short item title from description first sentence / related title.
 			raw_name = related_title or description.split(".")[0][:80].strip() or f"Price item {idx}"
+		if INTERNAL_ID_RE.search(raw_name):
+			continue
 
 		unit = cstr(item.get("unit") or "").strip() or "Lot"
 		qty = cstr(item.get("quantity") or "").strip() or "1"
@@ -645,14 +701,23 @@ def render_price_section(
 def _render_requirement_articles(requirements: list[dict[str, Any]]) -> str:
 	parts: list[str] = []
 	for item in requirements:
-		title = cstr(item.get("title") or item.get("name") or "").strip()
+		title = _requirement_display_title(item)
 		statement = cstr(
-			item.get("description")
-			or item.get("requirement_statement")
+			item.get("requirement_statement")
 			or item.get("bidder_response_instruction")
 			or ""
 		).strip()
+		desc = cstr(item.get("description") or "").strip()
+		# When description was promoted to the title, do not repeat it as the body.
+		if not statement:
+			if desc and desc != title and not _is_internal_label(desc):
+				statement = desc
+			else:
+				statement = ""
 		if not title and not statement:
+			continue
+		if _is_internal_label(title):
+			# Still no bidder-facing label — skip rather than emit REQ-NNN headings.
 			continue
 		treatment = cstr(item.get("treatment_label") or "").strip()
 		response = cstr(item.get("bidder_response_format") or "").strip()
@@ -662,7 +727,7 @@ def _render_requirement_articles(requirements: list[dict[str, Any]]) -> str:
 		parts.append(
 			'<article class="kt-preview-requirement">'
 			f"<h3>{_esc(title or 'Requirement')}</h3>"
-			f"<p>{_esc(statement or '—')}</p>"
+			f"<p>{_esc(statement or 'As specified by the Procuring Entity')}</p>"
 			+ (
 				f"<p><strong>Treatment:</strong> {_esc(treatment)}</p>"
 				if treatment
@@ -780,27 +845,71 @@ def render_inventory_section(
 	*,
 	not_applicable: bool = False,
 ) -> tuple[str, dict[str, str] | None]:
+	"""Render CFG-05 inventory using the step's persisted field names.
+
+	CFG-05 stores ``item_title`` / ``item_description`` / ``bidder_consideration``
+	(not ``item_name`` / ``description``). Only items marked Safe to disclose
+	enter the bidder-facing preview.
+	"""
 	if not_applicable:
 		return (
 			"<p>System inventory disclosure is not applicable to this tender.</p>",
 			None,
 		)
 	rows: list[list[str]] = []
+	skipped_disclosure = 0
 	for i in items:
-		name = cstr(i.get("item_name") or i.get("name") or "").strip()
+		# Align with system_inventory.enrich_item field contract.
+		name = cstr(
+			i.get("item_title") or i.get("item_name") or i.get("name") or ""
+		).strip()
 		if not name or _is_internal_label(name):
 			continue
-		desc = cstr(i.get("description") or i.get("background_note") or "").strip()
+		disclosure = cstr(i.get("disclosure_status_label") or "").strip()
+		# Legacy rows without disclosure still render; configured non-safe rows do not.
+		if disclosure and disclosure != "Safe to disclose":
+			skipped_disclosure += 1
+			continue
+		desc = cstr(
+			i.get("bidder_consideration")
+			or i.get("item_description")
+			or i.get("description")
+			or i.get("background_note")
+			or ""
+		).strip()
 		rows.append([name, desc or "As described by the Procuring Entity"])
 	if not rows:
+		if items and skipped_disclosure:
+			message = (
+				"System Inventory has configured items, but none are marked "
+				"Safe to disclose for the bidder document."
+			)
+			action = (
+				"In CFG-05, set Disclosure Status to Safe to disclose for at least one "
+				"item, or mark inventory as not applicable, then regenerate the preview."
+			)
+		elif items:
+			message = (
+				"System Inventory items are present but have no bidder-facing title "
+				"or disclosure-ready content."
+			)
+			action = (
+				"In CFG-05, ensure each disclosed item has a title, description or bidder "
+				"consideration, and Disclosure Status = Safe to disclose — or mark "
+				"inventory as not applicable — then regenerate."
+			)
+		else:
+			message = "System Inventory and Bidder Background has no bidder-facing content."
+			action = (
+				"Complete CFG-05 with at least one Safe to disclose item, or mark "
+				"inventory as not applicable before generating the preview."
+			)
 		return (
 			"",
 			generation_block(
 				blocking_area="CFG-05 System Inventory and Bidder Background",
-				message="System Inventory and Bidder Background has no bidder-facing content.",
-				action=(
-					"Complete CFG-05 or mark inventory as not applicable before generating the preview."
-				),
+				message=message,
+				action=action,
 			),
 		)
 	intro = (
@@ -854,9 +963,16 @@ def assert_no_forbidden_preview_markers(html_doc: str) -> dict[str, str] | None:
 		)
 	if re.search(r">REQ-\d+<|>Item \d+<", html_doc or "", re.I):
 		return generation_block(
-			blocking_area="Document Preview Quality Gate",
-			message="Preview output contains internal identifiers.",
-			action="Expand requirement references into bidder-facing titles before generating.",
+			blocking_area="CFG-03 IT Requirements / CFG-06 Price / CFG-07 Evaluation",
+			message=(
+				"Preview output still contains internal requirement identifiers "
+				"(for example REQ-001) instead of bidder-facing titles."
+			),
+			action=(
+				"In CFG-03, ensure each requirement has a clear title (not only REQ-NNN). "
+				"Then check CFG-06 and CFG-07 use those titles, and regenerate the preview."
+			),
+			owner_step="CFG-03",
 		)
 	return None
 
