@@ -43,11 +43,15 @@
   "forms_and_evidence",
   "section_contract_values",
   "contract_values",
+  "section_bidder_schema",
+  "bidder_submission_schema",
   "section_workflow",
   "readiness_report",
   "review_workspace",
   "document_preview",
   "publication_package",
+  "confirmed_document_package",
+  "it_publication_record",
   "section_issues",
   "blocker_count",
   "warning_count",
@@ -84,7 +88,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "In Progress\nNeeds Attention\nReady for Review\nUnder Review\nReturned for Correction\nApproved for Preview\nReady for Publication\nCompleted",
+   "options": "In Progress\nNeeds Attention\nReady for Review\nUnder Review\nReturned for Correction\nApproved for Preview\nReady for Publication\nSent to Publication Workflow\nCompleted",
    "reqd": 1
   },
   {
@@ -275,6 +279,17 @@
    "description": "CFG-09 contract values (JSON object with contract_values array)."
   },
   {
+   "fieldname": "section_bidder_schema",
+   "fieldtype": "Section Break",
+   "label": "Bidder Submission Schema"
+  },
+  {
+   "fieldname": "bidder_submission_schema",
+   "fieldtype": "Long Text",
+   "label": "Bidder Submission Schema",
+   "description": "E1 schema 10 electronic bidder submission artifact (JSON text). No Desk bidder UI in Phase 1."
+  },
+  {
    "fieldname": "section_workflow",
    "fieldtype": "Section Break",
    "label": "Workflow Gates"
@@ -301,7 +316,23 @@
    "fieldname": "publication_package",
    "fieldtype": "JSON",
    "label": "Publication Package",
-   "description": "WG-03 handoff snapshot sent to the publication workflow (merged WG-04)."
+   "description": "WG-03 / F1 handoff summary sent to the publication workflow."
+  },
+  {
+   "fieldname": "confirmed_document_package",
+   "fieldtype": "Link",
+   "label": "Confirmed Tender Document Package",
+   "options": "Confirmed Tender Document Package",
+   "read_only": 1,
+   "description": "F1 immutable package created on Confirm Preview."
+  },
+  {
+   "fieldname": "it_publication_record",
+   "fieldtype": "Link",
+   "label": "IT Tender Publication Record",
+   "options": "IT Tender Publication Record",
+   "read_only": 1,
+   "description": "F1 publication record created on Send to Publication Workflow."
   },
   {
    "fieldname": "section_issues",

@@ -1,0 +1,15 @@
+source_area,source_pages,owner,configured_output,downstream_output
+Cover,1,CFG-01,Tender profile,Human-readable preview context
+Invitation,5,CFG-01/CFG-02,Invitation render block,Tender notice and document preview
+ITT,6-8,STD Engine locked text,Legal instructions,Read-only preview + bidder acknowledgement
+TDS,9,CFG-02,Tender data parameters,Preview TDS + bidder instructions
+Evaluation,10-12,CFG-07/CFG-08,Evaluation schema + evidence,Evaluator workflow + bidder evidence
+Forms,13-16,CFG-08,Electronic forms,Bidder e-forms/declarations
+Background,17,CFG-05,Bidder-facing context,Tender requirements preview
+Scope/phases,18,CFG-04,Implementation phases,Bidder implementation plan
+Requirements matrix,22-52,CFG-03,Requirement response rows,Bidder compliance matrix
+Schedule,53,CFG-04/CFG-06,Schedule requirements,Delivery and pricing structure
+Price schedule,54-55,CFG-06,Price lines,Bidder price form
+GCC,56-57,STD Engine locked text,Locked contract terms,Read-only preview + acknowledgement
+SCC,58,CFG-09,Contract values,Contract carry-forward
+Contract forms,59-61,CFG-09 / Contract module,Post-award forms,Contract formation

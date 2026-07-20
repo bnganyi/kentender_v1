@@ -1,0 +1,200 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-07-20 17:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "configuration",
+  "configuration_ref",
+  "confirmed_package",
+  "document_hash",
+  "status",
+  "section_setup",
+  "publication_datetime",
+  "clarification_deadline",
+  "submission_deadline",
+  "opening_datetime",
+  "supplier_visibility",
+  "tender_notice",
+  "bidder_workspace_activation",
+  "section_handoff",
+  "received_at",
+  "received_by",
+  "cancelled_at",
+  "cancelled_by",
+  "cancel_reason",
+  "package_payload"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "configuration",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Tender Configuration",
+   "options": "Tender Configuration",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "configuration_ref",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Configuration Ref",
+   "read_only": 1
+  },
+  {
+   "fieldname": "confirmed_package",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Confirmed Tender Document Package",
+   "options": "Confirmed Tender Document Package",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "document_hash",
+   "fieldtype": "Data",
+   "label": "Document Hash",
+   "read_only": 1
+  },
+  {
+   "default": "Awaiting Publication Setup",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Awaiting Publication Setup\nCancelled\nReturned\nPublished",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_setup",
+   "fieldtype": "Section Break",
+   "label": "Publication Setup"
+  },
+  {
+   "fieldname": "publication_datetime",
+   "fieldtype": "Datetime",
+   "label": "Publication Date/Time"
+  },
+  {
+   "fieldname": "clarification_deadline",
+   "fieldtype": "Datetime",
+   "label": "Clarification Deadline"
+  },
+  {
+   "fieldname": "submission_deadline",
+   "fieldtype": "Datetime",
+   "label": "Submission Deadline"
+  },
+  {
+   "fieldname": "opening_datetime",
+   "fieldtype": "Datetime",
+   "label": "Opening Date/Time"
+  },
+  {
+   "fieldname": "supplier_visibility",
+   "fieldtype": "Data",
+   "label": "Supplier Visibility"
+  },
+  {
+   "fieldname": "tender_notice",
+   "fieldtype": "Text",
+   "label": "Tender Notice"
+  },
+  {
+   "default": "0",
+   "fieldname": "bidder_workspace_activation",
+   "fieldtype": "Check",
+   "label": "Bidder Workspace Activation"
+  },
+  {
+   "fieldname": "section_handoff",
+   "fieldtype": "Section Break",
+   "label": "Handoff Meta"
+  },
+  {
+   "fieldname": "received_at",
+   "fieldtype": "Datetime",
+   "label": "Received At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "received_by",
+   "fieldtype": "Link",
+   "label": "Received By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancelled_at",
+   "fieldtype": "Datetime",
+   "label": "Cancelled At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancelled_by",
+   "fieldtype": "Link",
+   "label": "Cancelled By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancel_reason",
+   "fieldtype": "Small Text",
+   "label": "Cancel Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "package_payload",
+   "fieldtype": "Long Text",
+   "label": "Read-Only Package Payload",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-07-20 17:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Tender Configurations",
+ "name": "IT Tender Publication Record",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 1,
+   "read": 1,
+   "report": 0,
+   "role": "All",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

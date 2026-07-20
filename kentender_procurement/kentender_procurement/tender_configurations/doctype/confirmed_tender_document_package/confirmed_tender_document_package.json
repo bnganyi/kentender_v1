@@ -1,0 +1,228 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-07-20 17:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "configuration",
+  "configuration_ref",
+  "procurement_package_ref",
+  "std_version",
+  "configuration_version",
+  "package_status",
+  "document_hash",
+  "section_artifacts",
+  "tender_html",
+  "tender_pdf",
+  "bidder_submission_schema",
+  "evaluation_schema",
+  "price_schedule_schema",
+  "forms_evidence_schema",
+  "contract_carry_forward",
+  "section_records",
+  "readiness_report_ref",
+  "review_approval_ref",
+  "preview_confirmation",
+  "section_meta",
+  "confirmed_at",
+  "confirmed_by",
+  "invalidated_at",
+  "invalidated_by",
+  "invalidation_reason"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "configuration",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Tender Configuration",
+   "options": "Tender Configuration",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "configuration_ref",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Configuration Ref",
+   "read_only": 1
+  },
+  {
+   "fieldname": "procurement_package_ref",
+   "fieldtype": "Data",
+   "label": "Procurement Package Ref",
+   "read_only": 1
+  },
+  {
+   "fieldname": "std_version",
+   "fieldtype": "Data",
+   "label": "STD Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "configuration_version",
+   "fieldtype": "Data",
+   "label": "Configuration Version",
+   "read_only": 1
+  },
+  {
+   "default": "Confirmed",
+   "fieldname": "package_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Package Status",
+   "options": "Confirmed\nAwaiting Publication Setup\nInvalidated",
+   "reqd": 1
+  },
+  {
+   "fieldname": "document_hash",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Document Hash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_artifacts",
+   "fieldtype": "Section Break",
+   "label": "Locked Artifacts"
+  },
+  {
+   "fieldname": "tender_html",
+   "fieldtype": "Long Text",
+   "label": "Generated Tender HTML"
+  },
+  {
+   "fieldname": "tender_pdf",
+   "fieldtype": "Attach",
+   "label": "Generated Tender PDF"
+  },
+  {
+   "fieldname": "bidder_submission_schema",
+   "fieldtype": "Long Text",
+   "label": "Bidder Submission Schema"
+  },
+  {
+   "fieldname": "evaluation_schema",
+   "fieldtype": "Long Text",
+   "label": "Evaluation Schema"
+  },
+  {
+   "fieldname": "price_schedule_schema",
+   "fieldtype": "Long Text",
+   "label": "Price Schedule Schema"
+  },
+  {
+   "fieldname": "forms_evidence_schema",
+   "fieldtype": "Long Text",
+   "label": "Forms Evidence Schema"
+  },
+  {
+   "fieldname": "contract_carry_forward",
+   "fieldtype": "Long Text",
+   "label": "Contract Carry-Forward Values"
+  },
+  {
+   "fieldname": "section_records",
+   "fieldtype": "Section Break",
+   "label": "Source Records"
+  },
+  {
+   "fieldname": "readiness_report_ref",
+   "fieldtype": "Long Text",
+   "label": "Readiness Report Snapshot"
+  },
+  {
+   "fieldname": "review_approval_ref",
+   "fieldtype": "Long Text",
+   "label": "Review Approval Snapshot"
+  },
+  {
+   "fieldname": "preview_confirmation",
+   "fieldtype": "Long Text",
+   "label": "Preview Confirmation Record"
+  },
+  {
+   "fieldname": "section_meta",
+   "fieldtype": "Section Break",
+   "label": "Confirmation Meta"
+  },
+  {
+   "fieldname": "confirmed_at",
+   "fieldtype": "Datetime",
+   "label": "Confirmed At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "confirmed_by",
+   "fieldtype": "Link",
+   "label": "Confirmed By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invalidated_at",
+   "fieldtype": "Datetime",
+   "label": "Invalidated At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invalidated_by",
+   "fieldtype": "Link",
+   "label": "Invalidated By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invalidation_reason",
+   "fieldtype": "Small Text",
+   "label": "Invalidation Reason",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-07-20 17:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Tender Configurations",
+ "name": "Confirmed Tender Document Package",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 1,
+   "read": 1,
+   "report": 0,
+   "role": "All",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

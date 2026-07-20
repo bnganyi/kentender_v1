@@ -306,6 +306,60 @@ def _apply_bidder_facing_preview_blobs(configuration_id: str) -> None:
 				}
 			),
 			"system_inventory": json.dumps({"not_applicable": 1, "items": []}),
+			# F1 / WG-03 preview hard-requires CFG-09 SCC topics.
+			"contract_values": json.dumps(
+				{
+					"contract_values": [
+						{
+							"contract_value_id": "SCC-01",
+							"item_label": "Governing law",
+							"value_or_obligation": "Governing law: Laws of Kenya",
+						},
+						{
+							"contract_value_id": "SCC-02",
+							"item_label": "Scope",
+							"value_or_obligation": "Scope: All modules in Part 2",
+						},
+						{
+							"contract_value_id": "SCC-03",
+							"item_label": "Commencement",
+							"value_or_obligation": (
+								"Commencement within 14 days; 24 month implementation period"
+							),
+						},
+						{
+							"contract_value_id": "SCC-04",
+							"item_label": "Payment",
+							"value_or_obligation": "Milestone payment schedule as agreed",
+						},
+						{
+							"contract_value_id": "SCC-05",
+							"item_label": "Source code / escrow",
+							"value_or_obligation": "Source code escrow within 30 days",
+						},
+						{
+							"contract_value_id": "SCC-06",
+							"item_label": "Subcontracting",
+							"value_or_obligation": "Subcontracting requires prior written approval",
+						},
+						{
+							"contract_value_id": "SCC-07",
+							"item_label": "SLA",
+							"value_or_obligation": "P1 response 4 hours / resolution 24 hours",
+						},
+						{
+							"contract_value_id": "SCC-08",
+							"item_label": "Performance security",
+							"value_or_obligation": "10% performance security of Contract Price",
+						},
+						{
+							"contract_value_id": "SCC-09",
+							"item_label": "Warranty",
+							"value_or_obligation": "Twelve-month warranty after go-live",
+						},
+					]
+				}
+			),
 		},
 		update_modified=False,
 	)
@@ -318,6 +372,14 @@ def seed_ui00_dashboard(*, clear: bool = True) -> dict[str, Any]:
 		_clear_seed()
 
 	std_id = ensure_fixture_std_version()
+	# Preview generation rejects fixture sample ITT/GCC — bind preview-path configs to ACTIVE PPRA.
+	from kentender_procurement.std_engine.constants import CANONICAL_PACKAGE_ID
+	from kentender_procurement.std_engine.services.ensure_active_canonical_std import (
+		ensure_active_canonical_ppra_it_std,
+	)
+
+	ensure_active_canonical_ppra_it_std(force_reimport=False)
+	preview_std_id = CANONICAL_PACKAGE_ID
 	entity = _ensure_pe()
 	entity_name = frappe.db.get_value("Procuring Entity", entity, "entity_name") or "National Treasury"
 
@@ -393,7 +455,7 @@ def seed_ui00_dashboard(*, clear: bool = True) -> dict[str, Any]:
 			package_ref=PACKAGE_REFS[4],
 			title="Cloud Hosting Services",
 			status=STATUS_READY_FOR_REVIEW,
-			std_version=std_id,
+			std_version=preview_std_id,
 			entity_name=entity_name,
 			method="Open Tender",
 			steps_state=all_done,
@@ -404,7 +466,7 @@ def seed_ui00_dashboard(*, clear: bool = True) -> dict[str, Any]:
 			package_ref=PACKAGE_REFS[5],
 			title="Under Review Hosting Renewal",
 			status=STATUS_UNDER_REVIEW,
-			std_version=std_id,
+			std_version=preview_std_id,
 			entity_name=entity_name,
 			method="Open Tender",
 			steps_state=all_done,
@@ -415,7 +477,7 @@ def seed_ui00_dashboard(*, clear: bool = True) -> dict[str, Any]:
 			package_ref=PACKAGE_REFS[6],
 			title="Helpdesk Platform",
 			status=STATUS_READY_FOR_PUBLICATION,
-			std_version=std_id,
+			std_version=preview_std_id,
 			entity_name=entity_name,
 			method="Open Tender",
 			steps_state=all_done,
@@ -426,7 +488,7 @@ def seed_ui00_dashboard(*, clear: bool = True) -> dict[str, Any]:
 			package_ref=PACKAGE_REFS[7],
 			title="Legacy Archive Digitization",
 			status=STATUS_COMPLETED,
-			std_version=std_id,
+			std_version=preview_std_id,
 			entity_name=entity_name,
 			method="Open Tender",
 			steps_state=all_done,

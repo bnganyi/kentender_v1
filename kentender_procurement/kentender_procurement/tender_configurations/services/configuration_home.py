@@ -19,6 +19,7 @@ from kentender_procurement.tender_configurations.constants import (
 	STATUS_READY_FOR_PUBLICATION,
 	STATUS_READY_FOR_REVIEW,
 	STATUS_RETURNED_FOR_CORRECTION,
+	STATUS_SENT_TO_PUBLICATION,
 	STATUS_UNDER_REVIEW,
 )
 from kentender_procurement.tender_configurations.services.configuration_steps import (
@@ -41,6 +42,7 @@ _STATUS_LABELS = {
 	STATUS_RETURNED_FOR_CORRECTION: "Returned for correction",
 	STATUS_APPROVED_FOR_PREVIEW: "Approved for preview",
 	STATUS_READY_FOR_PUBLICATION: "Ready for publication",
+	STATUS_SENT_TO_PUBLICATION: "Sent to publication workflow",
 	STATUS_COMPLETED: "Completed",
 }
 
@@ -52,6 +54,7 @@ _STATUS_TONE = {
 	STATUS_RETURNED_FOR_CORRECTION: "returned_for_correction",
 	STATUS_APPROVED_FOR_PREVIEW: "approved_for_preview",
 	STATUS_READY_FOR_PUBLICATION: "ready_for_publication",
+	STATUS_SENT_TO_PUBLICATION: "completed",
 	STATUS_COMPLETED: "completed",
 }
 
@@ -263,7 +266,7 @@ def _pick_next_action(steps: list[dict[str, Any]], doc) -> dict[str, Any]:
 			"route": HANDOFF_ROUTES["tender_document_preview"],
 			"step_id": None,
 		}
-	if status == STATUS_COMPLETED:
+	if status in (STATUS_COMPLETED, STATUS_SENT_TO_PUBLICATION):
 		return {
 			"label": "View Tender Document Preview",
 			"reason": "This configuration has been sent to the publication workflow.",
@@ -294,6 +297,7 @@ def _build_handoff(doc, steps: list[dict[str, Any]]) -> dict[str, Any]:
 		STATUS_UNDER_REVIEW,
 		STATUS_APPROVED_FOR_PREVIEW,
 		STATUS_READY_FOR_PUBLICATION,
+		STATUS_SENT_TO_PUBLICATION,
 		STATUS_COMPLETED,
 	):
 		readiness_status = "Passed"
@@ -317,6 +321,7 @@ def _build_handoff(doc, steps: list[dict[str, Any]]) -> dict[str, Any]:
 	elif status in (
 		STATUS_APPROVED_FOR_PREVIEW,
 		STATUS_READY_FOR_PUBLICATION,
+		STATUS_SENT_TO_PUBLICATION,
 		STATUS_COMPLETED,
 	):
 		review_status, review_action, review_route = (
@@ -340,7 +345,7 @@ def _build_handoff(doc, steps: list[dict[str, Any]]) -> dict[str, Any]:
 		review_status, review_action, review_route = "Not submitted", None, None
 
 	# Preview card also carries publication handoff (WG-04 merged into WG-03).
-	if status == STATUS_COMPLETED:
+	if status in (STATUS_COMPLETED, STATUS_SENT_TO_PUBLICATION):
 		preview_status = "Sent to publication workflow"
 		preview_action = "Open Tender Document Preview"
 		preview_route = HANDOFF_ROUTES["tender_document_preview"]

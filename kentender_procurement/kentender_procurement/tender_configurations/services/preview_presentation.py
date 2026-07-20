@@ -34,6 +34,58 @@ FORBIDDEN_OUTPUT_MARKERS = (
 	"Readiness issue:",
 	"generation_blocked",
 	"kt-preview-exception",
+	"Source NSSF",
+	"PoC submission deadline",
+	"Confirm Yes/No, cite reference",
+	"tenderer shall prepare the tender in accordance",
+	"[source_id=",
+	"KenTender PoC applies",
+	"Notes to the Procuring Entity",
+	"demo_submission_deadline",
+	"source_submission_deadline",
+	"PoC uses",
+	"advanced for demo",
+)
+
+PE_ONLY_CONTRACT_FORM_MARKERS = (
+	"Notes to the Procuring Entity on preparing the Contract Forms",
+	"Notes to the Procuring Entity",
+)
+
+REQUIRED_SCC_TOPIC_PATTERNS = (
+	("governing law", ("governing law", "laws of kenya")),
+	("scope", ("scope:", "all modules")),
+	("commencement", ("commencement", "24 month", "implementation period")),
+	("payment", ("payment", "milestone")),
+	("source code / escrow", ("source code", "escrow")),
+	("subcontracting", ("subcontract",)),
+	("sla", ("sla", "p1 response")),
+	("performance security", ("performance security",)),
+	("warranty", ("warranty",)),
+)
+
+ALLOWED_PRICE_UNITS = frozenset(
+	{"Users", "Lump sum", "Per month", "Per GB/month", "Annual", "Lot"}
+)
+
+# Never render these TDS keys in the bidder-facing PDF (AUDIT_ONLY).
+TDS_AUDIT_ONLY_KEYS = frozenset(
+	{
+		"opening_notes",
+		"poc_audit_notes",
+		"source_deadline_note",
+		"demo_override_note",
+	}
+)
+
+LOCKED_STD_UNAVAILABLE_MSG = (
+	"Locked STD text unavailable for {section}. "
+	"Load approved STD Engine text before generating preview."
+)
+
+TRUNCATION_HINT_RE = re.compile(
+	r"(?:\b\w{1,3}$)|(?:\bFlo$)|(?:\bas a fu$)|(?:\bproject$)|(?:,\s*$)",
+	re.IGNORECASE,
 )
 
 
@@ -118,6 +170,9 @@ TDS_ITEM_LABELS: dict[str, str] = {
 	"reservation_category": "Reservation category",
 	"local_participation_requirement": "Local participation requirement",
 	"tender_security_required": "Tender security",
+	"professional_indemnity_required": "Professional indemnity cover",
+	"professional_indemnity_amount": "Professional indemnity amount",
+	"professional_indemnity_evidence": "Professional indemnity evidence",
 	"margin_of_preference_applies": "Margin of preference",
 	"preference_basis": "Preference basis",
 	"preference_evidence_required": "Preference evidence",
@@ -152,6 +207,9 @@ TDS_ORDER = (
 	"opening_location",
 	"opening_attendance_allowed",
 	"tender_security_required",
+	"professional_indemnity_required",
+	"professional_indemnity_amount",
+	"professional_indemnity_evidence",
 	"bid_validity_period",
 	"submission_language",
 	"tender_currency",
@@ -165,7 +223,6 @@ TDS_ORDER = (
 	"margin_of_preference_applies",
 	"preference_basis",
 	"preference_evidence_required",
-	"opening_notes",
 	"tender_publication_date",
 )
 
@@ -414,6 +471,24 @@ def format_tds_clause(key: str, values: dict[str, Any]) -> str | None:
 		if money:
 			return f"A tender security is required in the amount of {money}."
 		return "A tender security is required as specified by the Procuring Entity."
+	if key == "professional_indemnity_required":
+		v = cstr(raw or "").strip()
+		if _is_blank(v):
+			return None
+		if v.lower() in ("no", "n", "false", "0", "not required"):
+			return "Professional indemnity cover is not required for this tender."
+		return "Professional indemnity cover: Required."
+	if key == "professional_indemnity_amount":
+		amount = cstr(raw or "").strip()
+		if _is_blank(amount):
+			return None
+		money = format_currency_amount(amount, "KES")
+		return f"Professional indemnity amount: {money}."
+	if key == "professional_indemnity_evidence":
+		v = cstr(raw or "").strip()
+		if _is_blank(v):
+			return None
+		return v if v.lower().startswith("evidence") else f"Evidence: {v}"
 	if key == "bid_validity_period":
 		period = cstr(raw or "").strip()
 		unit = cstr(values.get("bid_validity_unit") or "days").strip() or "days"
@@ -483,9 +558,8 @@ def format_tds_clause(key: str, values: dict[str, Any]) -> str | None:
 			if applies in ("yes", "y", "true", "1") and not _is_blank(v):
 				return f"Preference evidence required: {v}."
 		return None
-	if key == "opening_notes":
-		v = cstr(raw or "").strip()
-		return v if not _is_blank(v) else None
+	if key in TDS_AUDIT_ONLY_KEYS:
+		return None
 	if key == "tender_publication_date":
 		v = cstr(raw or "").strip()
 		if _is_blank(v) or v == "—":
@@ -564,7 +638,7 @@ def render_evaluation_section(
 	requirements: list[dict[str, Any]] | None = None,
 ) -> tuple[str, str | None]:
 	req_map = _requirement_title_map(requirements or [])
-	blocks: list[str] = []
+	rows: list[list[str]] = []
 	for item in criteria:
 		raw_name = cstr(
 			item.get("bidder_facing_wording")
@@ -574,7 +648,6 @@ def render_evaluation_section(
 		).strip()
 		if not raw_name:
 			continue
-		# Expand related requirement id into title when criterion is a stub.
 		related = cstr(item.get("related_requirement_id") or "").strip()
 		related_title = (
 			req_map.get(related.upper()) or req_map.get(related) or ""
@@ -602,16 +675,16 @@ def render_evaluation_section(
 			or item.get("evidence_instruction")
 			or ""
 		).strip()
-		blocks.append(
-			'<article class="kt-preview-criterion">'
-			f"<h3>{_esc(name)}</h3>"
-			f"<p><strong>Stage:</strong> {_esc(stage or '—')}</p>"
-			f"<p><strong>Evaluation basis:</strong> {_esc(basis or '—')}</p>"
-			f"<p><strong>Scoring / rule:</strong> {_esc(scoring)}</p>"
-			f"<p><strong>Bidder evidence:</strong> {_esc(evidence or 'As specified')}</p>"
-			"</article>"
+		rows.append(
+			[
+				stage or "—",
+				name,
+				basis or "—",
+				scoring,
+				evidence or "As specified",
+			]
 		)
-	if not blocks:
+	if not rows:
 		return (
 			"",
 			generation_block(
@@ -622,9 +695,23 @@ def render_evaluation_section(
 		)
 	intro = (
 		"<p>Tenders will be evaluated in accordance with the following criteria. "
-		"Tenderers shall submit the evidence required for each criterion.</p>"
+		"Tenderers shall submit the evidence required for each criterion. "
+		"Interactive responses are completed in the electronic submission workspace.</p>"
 	)
-	return intro + "".join(blocks), None
+	return (
+		intro
+		+ _bidder_table(
+			[
+				"Stage",
+				"Criterion",
+				"Basis",
+				"Maximum marks / pass-fail rule",
+				"Evidence required",
+			],
+			rows,
+		),
+		None,
+	)
 
 
 def render_price_section(
@@ -672,7 +759,7 @@ def render_price_section(
 		qty = cstr(item.get("quantity") or "").strip() or "1"
 		currency = cstr(item.get("currency") or default_currency or "KES").strip() or "KES"
 		rows.append(
-			[raw_name, description, unit, qty, currency, "[Bidder to complete]"]
+			[raw_name, description, unit, qty, currency, "Electronic price entry"]
 		)
 	if not rows:
 		return (
@@ -685,65 +772,181 @@ def render_price_section(
 		)
 	intro = (
 		"<p>The Price Schedule below sets out the priced items for this tender. "
-		"Bidders shall complete prices in the electronic price form generated from this schedule; "
-		"the Bidder price column in this preview is left for completion in that form.</p>"
+		"Bidders shall complete prices in the electronic submission workspace.</p>"
 	)
 	return (
 		intro
 		+ _bidder_table(
-			["Item", "Description", "Unit", "Quantity", "Currency", "Bidder price"],
+			[
+				"Item",
+				"Description",
+				"Unit",
+				"Quantity",
+				"Currency",
+				"Bidder completion method",
+			],
 			rows,
 		),
 		None,
 	)
 
 
-def _render_requirement_articles(requirements: list[dict[str, Any]]) -> str:
-	parts: list[str] = []
+def electronic_schema_reference_html() -> str:
+	return (
+		'<p class="kt-preview-electronic-ref" data-render-block="ELECTRONIC_SCHEMA_REFERENCE">'
+		"Tenderers shall complete Yes/No confirmations, compliance statements, evidence uploads, "
+		"price entries, and declarations in the electronic submission workspace generated from "
+		"this configuration. Interactive controls are not included in this tender document.</p>"
+	)
+
+
+def find_truncated_requirement_texts(
+	requirements: list[dict[str, Any]],
+) -> list[str]:
+	"""Return requirement ids whose PDF-facing text appears truncated."""
+	bad: list[str] = []
+	# Exact end-fragment corruptions (substring match would false-positive on full words).
+	known_endings = (
+		"Podium Flo",
+		"as a fu",
+		"project management experienc",
+		"without vendor dependenc",
+		"ERP project",
+	)
+	for item in requirements or []:
+		rid = cstr(item.get("requirement_id") or item.get("title") or "").strip()
+		for field in ("title", "description", "requirement_statement"):
+			text = cstr(item.get(field) or "").strip()
+			if not text:
+				continue
+			# Strip audit/source appendices before checking.
+			text = re.split(r"\n\nSource family:|\n\n\[source_id=", text, maxsplit=1)[0].strip()
+			if any(text.endswith(frag) for frag in known_endings):
+				bad.append(rid or text[:40])
+				break
+			# Mid-word cut: ends with lowercase letter and no terminal punctuation,
+			# and last token looks incomplete (< 4 chars).
+			if text and text[-1].islower() and text[-1] not in ".!?\"'”":
+				last = text.split()[-1] if text.split() else ""
+				# Ignore trailing tokens that are full words or comma-joined addresses.
+				if "," in last:
+					continue
+				if 1 <= len(last) <= 3 and last.isalpha():
+					bad.append(rid or text[:40])
+					break
+	return bad
+
+
+def _requirement_group_label(item: dict[str, Any]) -> str:
+	family = cstr(
+		item.get("requirement_family")
+		or item.get("category_label")
+		or item.get("source_family")
+		or ""
+	).strip()
+	rid = cstr(item.get("requirement_id") or "").strip().upper()
+	letter = rid[0] if rid and rid[0].isalpha() else ""
+	letter_map = {
+		"A": "A. General Requirements",
+		"B": "B. Pension Management Requirements",
+		"C": "C. General Ledger Requirements",
+		"D": "D. Procurement Module",
+		"E": "E. Inventory / Stores",
+		"F": "F. Fixed Assets",
+		"G": "G. Human Resources / Payroll",
+		"H": "H. Budgeting",
+		"I": "I. Reporting",
+		"J": "J. Integration",
+		"K": "K. Security",
+		"L": "L. Training",
+		"M": "M. Project Management",
+		"N": "N. Non-functional",
+		"S": "S. Support / SLA",
+		"T": "T. Technical / Infrastructure",
+		"W": "W. Warranty / Continuity",
+	}
+	if letter in letter_map:
+		return letter_map[letter]
+	return family or "Requirements"
+
+
+def _compact_response_label(item: dict[str, Any]) -> str:
+	raw = cstr(item.get("bidder_response_format") or "").strip()
+	low = raw.lower()
+	if "yes" in low and "no" in low:
+		return "Yes/No + compliance statement"
+	if "compliance" in low:
+		return "Compliance statement"
+	return raw or "As specified"
+
+
+def _compact_evidence_label(item: dict[str, Any]) -> str:
+	raw = cstr(
+		item.get("evidence_requirement") or item.get("evidence_instruction") or ""
+	).strip()
+	low = raw.lower()
+	if "confirm yes/no" in low or "cite reference" in low:
+		return "Reference pages / upload"
+	if "upload" in low or "evidence required" in low:
+		return "Evidence upload"
+	if "optional" in low:
+		return "Reference pages / optional evidence"
+	# Avoid long workspace instruction paragraphs in PDF.
+	if len(raw) > 80:
+		return "As specified in electronic workspace"
+	return raw or "As specified"
+
+
+def _render_requirement_matrix(requirements: list[dict[str, Any]]) -> str:
+	"""Grouped compliance matrices — CONFIGURED_TABLE, no interactive controls."""
+	groups: dict[str, list[dict[str, Any]]] = {}
 	for item in requirements:
-		title = _requirement_display_title(item)
-		statement = cstr(
-			item.get("requirement_statement")
-			or item.get("bidder_response_instruction")
-			or ""
-		).strip()
-		desc = cstr(item.get("description") or "").strip()
-		# When description was promoted to the title, do not repeat it as the body.
-		if not statement:
-			if desc and desc != title and not _is_internal_label(desc):
-				statement = desc
+		groups.setdefault(_requirement_group_label(item), []).append(item)
+
+	parts: list[str] = [electronic_schema_reference_html()]
+	for group_name, items in groups.items():
+		rows: list[list[str]] = []
+		for item in items:
+			rid = cstr(item.get("requirement_id") or "").strip()
+			title = _requirement_display_title(item)
+			statement = cstr(item.get("requirement_statement") or "").strip()
+			desc = cstr(item.get("description") or "").strip()
+			desc = re.split(r"\n\nSource family:|\n\n\[source_id=", desc, maxsplit=1)[0].strip()
+			body = statement or desc
+			if body and title and body == title:
+				req_text = body
+			elif body and title and body.startswith(title):
+				req_text = body
+			elif title and body and title != body:
+				req_text = f"{title}. {body}" if not body.startswith(title) else body
 			else:
-				statement = ""
-		if not title and not statement:
+				req_text = title or body
+			if not req_text or _is_internal_label(req_text):
+				continue
+			treatment = cstr(item.get("treatment_label") or "").strip() or "Mandatory"
+			rows.append(
+				[
+					rid or "—",
+					req_text,
+					treatment,
+					_compact_response_label(item),
+					_compact_evidence_label(item),
+				]
+			)
+		if not rows:
 			continue
-		if _is_internal_label(title):
-			# Still no bidder-facing label — skip rather than emit REQ-NNN headings.
-			continue
-		treatment = cstr(item.get("treatment_label") or "").strip()
-		response = cstr(item.get("bidder_response_format") or "").strip()
-		evidence = cstr(
-			item.get("evidence_instruction") or item.get("evidence_requirement") or ""
-		).strip()
+		parts.append(f"<h3>{_esc(group_name)}</h3>")
 		parts.append(
-			'<article class="kt-preview-requirement">'
-			f"<h3>{_esc(title or 'Requirement')}</h3>"
-			f"<p>{_esc(statement or 'As specified by the Procuring Entity')}</p>"
-			+ (
-				f"<p><strong>Treatment:</strong> {_esc(treatment)}</p>"
-				if treatment
-				else ""
+			_bidder_table(
+				[
+					"Requirement ID",
+					"Requirement",
+					"Treatment",
+					"Bidder response required",
+					"Evidence / reference required",
+				],
+				rows,
 			)
-			+ (
-				f"<p><strong>Bidder response:</strong> {_esc(response)}</p>"
-				if response
-				else ""
-			)
-			+ (
-				f"<p><strong>Evidence:</strong> {_esc(evidence)}</p>"
-				if evidence
-				else ""
-			)
-			+ "</article>"
 		)
 	return "".join(parts)
 
@@ -751,9 +954,22 @@ def _render_requirement_articles(requirements: list[dict[str, Any]]) -> str:
 def render_information_system_requirements(
 	requirements: list[dict[str, Any]],
 ) -> tuple[str, str | None]:
+	truncated = find_truncated_requirement_texts(requirements)
+	if truncated:
+		return (
+			"",
+			generation_block(
+				blocking_area="CFG-03 IT Requirements",
+				message=(
+					"Requirement text appears truncated for: "
+					+ ", ".join(truncated[:8])
+					+ ". Re-extract full wording from the source tender before generating preview."
+				),
+				action="Fix truncated requirement rows, then regenerate.",
+			),
+		)
 	is_rows, _tech = split_requirements(requirements)
 	if not is_rows:
-		# Optional section when all requirements are technical — cross-reference only.
 		if requirements:
 			return (
 				"<p>Functional and business requirements for this tender are addressed "
@@ -766,10 +982,10 @@ def render_information_system_requirements(
 			None,
 		)
 	intro = (
-		"<p>The Procuring Entity’s requirements for the Information System include "
-		"the following functional, system, and business provisions.</p>"
+		"<p>The Procuring Entity’s requirements for the Information System are set out "
+		"in the compliance matrices below.</p>"
 	)
-	return intro + _render_requirement_articles(is_rows), None
+	return intro + _render_requirement_matrix(is_rows), None
 
 
 def render_technical_requirements_section(
@@ -792,32 +1008,38 @@ def render_technical_requirements_section(
 		"<p>Tenderers shall comply with the following technical, infrastructure, support, "
 		"warranty, and compliance requirements.</p>"
 	)
-	return intro + _render_requirement_articles(tech_rows), None
+	return intro + _render_requirement_matrix(tech_rows), None
 
 
 def render_forms_section(items: list[dict[str, Any]]) -> tuple[str, str | None]:
-	articles: list[str] = []
+	"""CFG evidence appendix only — standard legal forms render from LOCKED_STD_TEXT."""
+	rows: list[list[str]] = []
 	for item in items:
 		name = cstr(item.get("item_name") or item.get("name") or "").strip()
 		if not name or _is_internal_label(name):
 			continue
-		instruction = cstr(
-			item.get("bidder_instruction") or item.get("evidence_instruction") or ""
-		).strip()
-		articles.append(
-			'<article class="kt-preview-form-item">'
-			f"<h3>{_esc(name)}</h3>"
-			f"<p>{_esc(instruction or 'This form or evidence item is required for tender submission.')}</p>"
-			"</article>"
-		)
-	if not articles:
-		return (
-			"<p>Tendering forms and evidence items shall be completed as specified in the "
-			"Instructions to Tenderers and the electronic tendering forms issued with this tender.</p>",
-			None,
-		)
-	intro = "<p>Tenderers shall complete and submit the following forms and evidence items.</p>"
-	return intro + "".join(articles), None
+		category = cstr(item.get("category") or "").strip()
+		# Skip items that are STD form titles; locked STD section owns those.
+		if category.lower() in ("standard form", "std form"):
+			continue
+		requirement = cstr(item.get("requirement") or "").strip() or "Mandatory"
+		response = cstr(item.get("accepted_response_format") or "").strip() or "Evidence"
+		rows.append([name, requirement, response])
+	if not rows:
+		return electronic_schema_reference_html(), None
+	intro = (
+		"<p>In addition to the locked standard tendering forms, the following "
+		"tender-specific evidence items are required. Interactive completion is "
+		"via the electronic submission workspace.</p>"
+	)
+	return (
+		intro
+		+ _bidder_table(
+			["Evidence item", "Requirement", "Bidder completion method"],
+			rows,
+		),
+		None,
+	)
 
 
 def render_schedule_section(milestones: list[dict[str, Any]]) -> tuple[str, str | None]:
@@ -919,23 +1141,175 @@ def render_inventory_section(
 	return intro + _bidder_table(["Item", "Description"], rows), None
 
 
+def _scc_value(row: dict[str, Any]) -> str:
+	return cstr(
+		row.get("value_or_obligation")
+		or row.get("source_value")
+		or row.get("value")
+		or row.get("configured_value")
+		or ""
+	).strip()
+
+
+def assert_scc_values_complete(
+	values: list[dict[str, Any]],
+) -> dict[str, str] | None:
+	"""Hard-fail preview when required CFG-09 SCC topics are missing or empty."""
+	joined = " ".join(
+		f"{cstr(v.get('item_label') or '')} {_scc_value(v)}" for v in (values or [])
+	).lower()
+	missing = []
+	for topic, patterns in REQUIRED_SCC_TOPIC_PATTERNS:
+		if not any(p in joined for p in patterns):
+			missing.append(topic)
+	empty = [
+		cstr(v.get("item_label") or v.get("contract_value_id") or "SCC row")
+		for v in (values or [])
+		if not _scc_value(v)
+	]
+	placeholders = [
+		cstr(v.get("item_label") or v.get("contract_value_id") or "SCC row")
+		for v in (values or [])
+		if _scc_value(v).lower() in ("as specified", "tbd", "n/a", "na", "-")
+	]
+	if missing or empty or placeholders:
+		parts = []
+		if missing:
+			parts.append("missing topics: " + ", ".join(missing))
+		if empty:
+			parts.append("empty values: " + ", ".join(empty[:8]))
+		if placeholders:
+			parts.append("placeholder values: " + ", ".join(placeholders[:8]))
+		return generation_block(
+			blocking_area="CFG-09 Contract Values",
+			message="SCC values incomplete for tender preview (" + "; ".join(parts) + ").",
+			action="Complete CFG-09 SCC values before generating preview.",
+		)
+	return None
+
+
+def assert_price_units_normalized(
+	items: list[dict[str, Any]],
+) -> dict[str, str] | None:
+	if not items:
+		return generation_block(
+			blocking_area="CFG-06 Price Schedule",
+			message="Price schedule lines are missing.",
+			action="Complete CFG-06 with normalized units before generating preview.",
+		)
+	bad = []
+	for item in items:
+		unit = cstr(item.get("unit") or "").strip()
+		name = cstr(item.get("item_name") or item.get("item_id") or "price line")
+		if unit not in ALLOWED_PRICE_UNITS:
+			bad.append(f"{name}={unit or '(blank)'}")
+	if bad:
+		return generation_block(
+			blocking_area="CFG-06 Price Schedule",
+			message=(
+				"Price schedule units are not normalized "
+				f"(expected Users / Lump sum / Per month / Per GB/month / Annual): "
+				+ ", ".join(bad[:8])
+			),
+			action="Normalize CFG-06 units before generating preview.",
+		)
+	return None
+
+
+def strip_pe_only_contract_form_notes(html_body: str) -> str:
+	"""Remove PE preparation notes from bidder-facing Contract Forms locked text."""
+	text = html_body or ""
+	# Drop the PE-only preamble through (but not including) tenderer notes / form 1.
+	text = re.sub(
+		r"Notes to the Procuring Entity on preparing the Contract Forms\.?"
+		r".*?(?=Notes to Tenderers|1\.\s*Noti(?:fi|ﬁ)cation of Intention|$)",
+		"",
+		text,
+		flags=re.I | re.S,
+	)
+	patterns = [
+		r"<p[^>]*>[^<]*Notes to the Procuring Entity[^<]*</p>",
+		r"<div[^>]*>[^<]*Notes to the Procuring Entity[^<]*</div>",
+	]
+	for pat in patterns:
+		text = re.sub(pat, "", text, flags=re.I)
+	text = re.sub(
+		r"Notes to the Procuring Entity\.?",
+		"",
+		text,
+		flags=re.I,
+	)
+	return text
+
+
+def build_render_validation_report(
+	*,
+	doc: Any = None,
+	tds: dict[str, Any] | None = None,
+	contract_values: list[dict[str, Any]] | None = None,
+	price_items: list[dict[str, Any]] | None = None,
+	poc_audit_notes: dict[str, Any] | None = None,
+	generation_block: dict[str, str] | None = None,
+	std_version: str = "",
+) -> dict[str, Any]:
+	"""AUDIT_ONLY report — never embedded in bidder-facing preview HTML/PDF."""
+	tds = tds or {}
+	report = {
+		"report_type": "Render Validation / Audit Report",
+		"bidder_facing": False,
+		"std_version": std_version,
+		"configuration_ref": cstr(getattr(doc, "configuration_ref", None) or getattr(doc, "name", None)),
+		"deadlines": {
+			"tender_submission_deadline": cstr(tds.get("tender_submission_deadline") or ""),
+			"tender_opening_datetime": cstr(tds.get("tender_opening_datetime") or ""),
+			"clarification_deadline": cstr(tds.get("clarification_deadline") or ""),
+		},
+		"poc_audit_notes": poc_audit_notes or {},
+		"scc_row_count": len(contract_values or []),
+		"price_line_count": len(price_items or []),
+		"price_units": sorted(
+			{
+				cstr(i.get("unit") or "")
+				for i in (price_items or [])
+				if cstr(i.get("unit") or "")
+			}
+		),
+		"generation_block": generation_block,
+		"notes": [
+			"PoC source facts, demo overrides, and mapping comments belong only in this report.",
+			"Bidder-facing tender PDF must not contain those diagnostics.",
+		],
+	}
+	if isinstance(poc_audit_notes, dict):
+		report["source_submission_deadline"] = poc_audit_notes.get("source_submission_deadline")
+		report["demo_submission_deadline"] = poc_audit_notes.get("demo_submission_deadline")
+	return report
+
+
 def render_scc_section(values: list[dict[str, Any]]) -> tuple[str, str | None]:
+	gate = assert_scc_values_complete(values)
+	if gate:
+		return "", gate
 	rows: list[list[str]] = []
 	for v in values:
 		label = cstr(v.get("item_label") or v.get("label") or v.get("name") or "").strip()
 		if not label or _is_internal_label(label):
 			continue
-		val = cstr(v.get("value") or v.get("configured_value") or "").strip()
+		val = _scc_value(v)
 		if re.fullmatch(r"[\d.]+", val or ""):
-			# Prefer currency formatting when label suggests money.
 			if any(tok in label.lower() for tok in ("amount", "sum", "price", "value", "security")):
 				val = format_currency_amount(val, "KES")
-		rows.append([label, val or "As specified"])
+		if not val:
+			continue
+		rows.append([label, val])
 	if not rows:
 		return (
-			"<p>Special Conditions of Contract, where applicable, are as configured for this "
-			"tender and prevail over the General Conditions to the extent of any inconsistency.</p>",
-			None,
+			"",
+			generation_block(
+				blocking_area="CFG-09 Contract Values",
+				message="SCC values are missing for tender preview.",
+				action="Complete CFG-09 before generating preview.",
+			),
 		)
 	intro = (
 		"<p>The following Special Conditions of Contract amend or supplement the General "
@@ -961,7 +1335,13 @@ def assert_no_forbidden_preview_markers(html_doc: str) -> dict[str, str] | None:
 			message="Preview output contains raw configuration field names.",
 			action="Regenerate after fixing the presentation layer mapping.",
 		)
-	if re.search(r">REQ-\d+<|>Item \d+<", html_doc or "", re.I):
+	# Allow REQ-* only in Requirement ID matrix cells (data-col="requirement-id").
+	# Flag misuse as headings / bare table cells / Item N labels.
+	if re.search(
+		r"<h3>\s*REQ-\d+\s*</h3>|<td>\s*REQ-\d+\s*</td>|>Item \d+<",
+		html_doc or "",
+		re.I,
+	):
 		return generation_block(
 			blocking_area="CFG-03 IT Requirements / CFG-06 Price / CFG-07 Evaluation",
 			message=(
@@ -987,6 +1367,8 @@ def _bidder_table(headers: list[str], rows: list[Any]) -> str:
 			# Bold first column for item/criterion style tables when header is Item.
 			if i == 0 and headers and headers[0] in ("Item", "Milestone", "TDS item"):
 				tds.append(f"<td><strong>{_esc(c)}</strong></td>")
+			elif i == 0 and headers and headers[0] == "Requirement ID":
+				tds.append(f'<td data-col="requirement-id">{_esc(c)}</td>')
 			else:
 				tds.append(f"<td>{_esc(c)}</td>")
 		body += "<tr>" + "".join(tds) + "</tr>"

@@ -227,13 +227,8 @@ test.describe("WG-03 Tender Document Preview", () => {
 	test("confirm preview reveals publication package panel", async ({ page }) => {
 		await seedUi00(page);
 		await openPreview(page);
-		await expect(page.getByTestId("kt-cl-wf03-preview-frame")).toBeVisible({ timeout: 20_000 });
+		await ensureGenerated(page);
 		await page.evaluate(async (id) => {
-			// @ts-expect-error frappe on desk
-			await frappe.call({
-				method: "kentender_procurement.tender_configurations.generate_tender_configuration_document_preview",
-				args: { configuration_id: id },
-			});
 			// @ts-expect-error frappe on desk
 			await frappe.call({
 				method: "kentender_procurement.tender_configurations.confirm_tender_configuration_document_preview",
@@ -243,18 +238,18 @@ test.describe("WG-03 Tender Document Preview", () => {
 		await page.reload({ waitUntil: "domcontentloaded" });
 		await expect(page.getByTestId("kt-cl-wf03-publication")).toBeVisible({ timeout: 15_000 });
 		await expect(page.getByTestId("kt-cl-wf03-send")).toHaveText(/Send to Publication Workflow/i);
+		await expect(page.getByTestId("kt-cl-wf03-regenerate")).toBeDisabled();
+		await expect(page.getByTestId("kt-cl-wf03-download")).toHaveText(/Download Confirmed PDF/i);
+		await expect(page.getByTestId("kt-cl-wf03-preview-status")).toHaveText(/Preview Confirmed/i);
 		const body = await page.locator(ROOT).innerText();
 		expect(body).not.toMatch(/\bpublish tender\b/i);
 	});
 
 	test("send to publication workflow via API when UI seed incomplete", async ({ page }) => {
+		await seedUi00(page);
 		await openPreview(page);
+		await ensureGenerated(page);
 		await page.evaluate(async (id) => {
-			// @ts-expect-error frappe on desk
-			await frappe.call({
-				method: "kentender_procurement.tender_configurations.generate_tender_configuration_document_preview",
-				args: { configuration_id: id },
-			});
 			// @ts-expect-error frappe on desk
 			await frappe.call({
 				method: "kentender_procurement.tender_configurations.confirm_tender_configuration_document_preview",

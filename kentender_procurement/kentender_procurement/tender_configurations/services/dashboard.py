@@ -18,6 +18,7 @@ from kentender_procurement.tender_configurations.constants import (
 	STATUS_NEEDS_ATTENTION,
 	STATUS_READY_FOR_PUBLICATION,
 	STATUS_READY_FOR_REVIEW,
+	STATUS_SENT_TO_PUBLICATION,
 	STATUS_UNDER_REVIEW,
 	TAB_ACTION_LABELS,
 	TAB_COMPLETED,
@@ -68,7 +69,7 @@ def _next_action_for_status(status: str) -> tuple[str, str]:
 		tab = TAB_READY_FOR_REVIEW
 	elif status == STATUS_READY_FOR_PUBLICATION:
 		tab = TAB_READY_FOR_PUBLICATION
-	elif status == STATUS_COMPLETED:
+	elif status in (STATUS_COMPLETED, STATUS_SENT_TO_PUBLICATION):
 		tab = TAB_COMPLETED
 	else:
 		tab = TAB_IN_PROGRESS
@@ -135,7 +136,7 @@ def _summary_counts() -> dict[str, int]:
 		"needs_attention_count": count_status(STATUS_NEEDS_ATTENTION),
 		"ready_for_review_count": count_status(STATUS_READY_FOR_REVIEW, STATUS_UNDER_REVIEW),
 		"ready_for_publication_count": count_status(STATUS_READY_FOR_PUBLICATION),
-		"completed_count": count_status(STATUS_COMPLETED),
+		"completed_count": count_status(STATUS_COMPLETED, STATUS_SENT_TO_PUBLICATION),
 	}
 
 

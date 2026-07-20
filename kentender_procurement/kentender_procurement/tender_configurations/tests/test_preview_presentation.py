@@ -9,6 +9,8 @@ import unittest
 
 from kentender_procurement.tender_configurations.services.preview_presentation import (
 	assert_no_forbidden_preview_markers,
+	assert_price_units_normalized,
+	assert_scc_values_complete,
 	expand_requirement_reference,
 	format_currency_amount,
 	format_datetime_bidder,
@@ -16,9 +18,11 @@ from kentender_procurement.tender_configurations.services.preview_presentation i
 	render_information_system_requirements,
 	render_inventory_section,
 	render_price_section,
+	render_scc_section,
 	render_tds_section,
 	render_technical_requirements_section,
 	split_requirements,
+	strip_pe_only_contract_form_notes,
 )
 
 
@@ -81,8 +85,11 @@ class TestPreviewPresentation(unittest.TestCase):
 		self.assertIsNone(err)
 		self.assertIn("Compute Node Performance technical compliance", html)
 		self.assertIn("Scored out of 50 marks", html)
+		self.assertIn("kt-preview-table", html)
+		self.assertIn("Maximum marks / pass-fail rule", html)
 		self.assertNotIn("REQ-001", html)
 		self.assertNotIn("Technical compliance for:", html)
+		self.assertNotIn("kt-preview-criterion", html)
 
 	def test_requirement_title_recovers_when_title_is_req_id(self):
 		"""CFG-03 rows may store title=REQ-001 and the label in description."""
@@ -167,7 +174,9 @@ class TestPreviewPresentation(unittest.TestCase):
 		self.assertIsNone(err)
 		self.assertIn("Compute Node Performance", html)
 		self.assertIn("Three-Year On-site Support", html)
-		self.assertIn("[Bidder to complete]", html)
+		self.assertIn("Electronic price entry", html)
+		self.assertIn("Bidder completion method", html)
+		self.assertNotIn("[Bidder to complete]", html)
 		self.assertNotIn("Price for requirement:", html)
 		self.assertNotIn(">Item 1<", html)
 		self.assertNotIn("REQ-001", html)
@@ -194,6 +203,10 @@ class TestPreviewPresentation(unittest.TestCase):
 		self.assertNotIn("Compute Node Performance", is_html)
 		self.assertIn("Compute Node Performance", tech_html)
 		self.assertNotIn("Helpdesk Continuity", tech_html)
+		self.assertIn("kt-preview-table", is_html)
+		self.assertIn("Requirement ID", is_html)
+		self.assertIn("ELECTRONIC_SCHEMA_REFERENCE", is_html)
+		self.assertNotIn("Confirm Yes/No, cite reference", is_html)
 
 	def test_inventory_empty_is_readiness_unless_na(self):
 		html, err = render_inventory_section([])
@@ -263,3 +276,85 @@ class TestPreviewPresentation(unittest.TestCase):
 		)
 		self.assertIsNotNone(assert_no_forbidden_preview_markers("Readiness issue: CFG-05"))
 		self.assertIsNotNone(assert_no_forbidden_preview_markers("<td>REQ-001</td>"))
+		self.assertIsNotNone(assert_no_forbidden_preview_markers("Source NSSF fact"))
+		self.assertIsNotNone(
+			assert_no_forbidden_preview_markers("Confirm Yes/No, cite reference pages")
+		)
+
+	def test_tds_excludes_opening_notes_audit(self):
+		html, err = render_tds_section(
+			{
+				"contact_officer": "Officer",
+				"clarification_deadline": "2026-08-30T15:30",
+				"submission_channel": "E-Procurement Portal",
+				"submission_language": "English",
+				"tender_currency": "KES",
+				"tender_security_required": "No",
+				"margin_of_preference_applies": "No",
+				"opening_notes": "Source NSSF fact: PoC submission deadline advanced",
+			}
+		)
+		self.assertIsNone(err)
+		self.assertNotIn("Source NSSF", html)
+		self.assertNotIn("Opening notes", html)
+
+	def test_scc_rejects_as_specified_and_renders_values(self):
+		block = assert_scc_values_complete(
+			[{"item_label": "Governing law", "value_or_obligation": "As specified"}]
+		)
+		self.assertIsNotNone(block)
+		html, err = render_scc_section(
+			[
+				{"item_label": "Governing law", "value_or_obligation": "Laws of Kenya"},
+				{
+					"item_label": "Scope",
+					"value_or_obligation": "All modules as specified in Part 2",
+				},
+				{
+					"item_label": "Commencement",
+					"value_or_obligation": "Commencement within 14 days; 24 month implementation period",
+				},
+				{
+					"item_label": "Payment",
+					"value_or_obligation": "Milestone payment schedule",
+				},
+				{
+					"item_label": "Source code / escrow",
+					"value_or_obligation": "Source code escrow within 30 days",
+				},
+				{
+					"item_label": "Subcontracting",
+					"value_or_obligation": "Subcontracting requires prior written approval",
+				},
+				{"item_label": "SLA", "value_or_obligation": "P1 response 4 hours"},
+				{
+					"item_label": "Performance security",
+					"value_or_obligation": "10% performance security",
+				},
+				{"item_label": "Warranty", "value_or_obligation": "12 month warranty"},
+			]
+		)
+		self.assertIsNone(err)
+		self.assertIn("Laws of Kenya", html)
+		self.assertNotIn("As specified</td>", html)
+
+	def test_price_units_gate(self):
+		self.assertIsNotNone(
+			assert_price_units_normalized([{"item_name": "X", "unit": "Month"}])
+		)
+		self.assertIsNone(
+			assert_price_units_normalized([{"item_name": "X", "unit": "Per month"}])
+		)
+
+	def test_strip_pe_only_contract_form_notes(self):
+		raw = (
+			"SECTION VIII - CONTRACT FORMS\n"
+			"Notes to the Procuring Entity on preparing the Contract Forms.\n"
+			"Performance Security: PE guidance only.\n"
+			"Notes to Tenderers on working with the Sample Contractual Forms\n"
+			"1. Notification of Intention to Award"
+		)
+		cleaned = strip_pe_only_contract_form_notes(raw)
+		self.assertNotIn("Notes to the Procuring Entity", cleaned)
+		self.assertIn("Notes to Tenderers", cleaned)
+		self.assertIn("Notification of Intention", cleaned)

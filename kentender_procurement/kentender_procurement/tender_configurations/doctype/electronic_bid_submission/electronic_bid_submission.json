@@ -1,0 +1,177 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-07-19 21:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "configuration",
+  "configuration_ref",
+  "std_version",
+  "bidder_label",
+  "status",
+  "section_schema",
+  "schema_hash",
+  "schema_snapshot",
+  "section_responses",
+  "responses",
+  "section_seal",
+  "sealed_at",
+  "sealed_by",
+  "seal_hash",
+  "receipt_code",
+  "receipt_issued_at",
+  "section_audit",
+  "audit_events"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "configuration",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Tender Configuration",
+   "options": "Tender Configuration",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "configuration_ref",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Configuration Ref",
+   "read_only": 1
+  },
+  {
+   "fieldname": "std_version",
+   "fieldtype": "Data",
+   "label": "STD Version Snapshot",
+   "read_only": 1
+  },
+  {
+   "default": "PoC Demo Bidder",
+   "fieldname": "bidder_label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Bidder Label"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Draft\nSealed",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_schema",
+   "fieldtype": "Section Break",
+   "label": "Schema Snapshot"
+  },
+  {
+   "fieldname": "schema_hash",
+   "fieldtype": "Data",
+   "label": "Schema Hash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "schema_snapshot",
+   "fieldtype": "Long Text",
+   "label": "Schema Snapshot"
+  },
+  {
+   "fieldname": "section_responses",
+   "fieldtype": "Section Break",
+   "label": "Responses"
+  },
+  {
+   "fieldname": "responses",
+   "fieldtype": "Long Text",
+   "label": "Responses JSON"
+  },
+  {
+   "fieldname": "section_seal",
+   "fieldtype": "Section Break",
+   "label": "Seal And Receipt"
+  },
+  {
+   "fieldname": "sealed_at",
+   "fieldtype": "Datetime",
+   "label": "Sealed At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sealed_by",
+   "fieldtype": "Link",
+   "label": "Sealed By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "seal_hash",
+   "fieldtype": "Data",
+   "label": "Seal Hash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "receipt_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Receipt Code",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "receipt_issued_at",
+   "fieldtype": "Datetime",
+   "label": "Receipt Issued At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_audit",
+   "fieldtype": "Section Break",
+   "label": "Audit"
+  },
+  {
+   "fieldname": "audit_events",
+   "fieldtype": "Table",
+   "label": "Audit Events",
+   "options": "Electronic Bid Audit Event"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-07-19 21:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Tender Configurations",
+ "name": "Electronic Bid Submission",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

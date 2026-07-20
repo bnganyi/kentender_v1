@@ -1,0 +1,23 @@
+line_id,source_page,module_or_item,phase,users_or_qty,unit,currency,unit_cost_required,total_cost_required,wizard_target,bidder_field_model
+PRICE-00,54,Pension Administration Module,1,5,Users,KES,True,True,CFG-06 Price Schedule,unit_cost_and_total_cost
+PRICE-01,54,Financial Management Modules,1,5,Users,KES,True,True,CFG-06 Price Schedule,unit_cost_and_total_cost
+PRICE-02,54,HR & Payroll Module,1,5,Users,KES,True,True,CFG-06 Price Schedule,unit_cost_and_total_cost
+PRICE-03,54,Procurement Module,2,5,Users,KES,True,True,CFG-06 Price Schedule,unit_cost_and_total_cost
+PRICE-04,54,Customer Relationship Module (CRM),2,5,Users,KES,True,True,CFG-06 Price Schedule,unit_cost_and_total_cost
+PRICE-05,54,E-Board Module for Trustee Meetings,2,13,Users,KES,True,True,CFG-06 Price Schedule,unit_cost_and_total_cost
+PRICE-06,54,Electronic Document Management System (EDMS),2,5,Users,KES,True,True,CFG-06 Price Schedule,unit_cost_and_total_cost
+PRICE-07,54,"Member Self-Service Portals (Mobile App, USSD, Web Portal)",2,Lump sum,Lump sum,KES,False,True,CFG-06 Price Schedule,total_cost_only
+PRICE-08,54,Business Intelligence and Reporting Tools,2,2,Users,KES,True,True,CFG-06 Price Schedule,unit_cost_and_total_cost
+PRICE-09,54,Liveness Certification / Proof of Life Module,2,Lump sum,Lump sum,KES,False,True,CFG-06 Price Schedule,total_cost_only
+PRICE-10,54,Implementation / Professional Services,1 & 2,Lump sum,Lump sum,KES,False,True,CFG-06 Price Schedule,total_cost_only
+PRICE-11,54,Data Migration (all historical data),1,Lump sum,Lump sum,KES,False,True,CFG-06 Price Schedule,total_cost_only
+PRICE-12,54,"Integration (Banks, RBA, KRA, Legacy Systems)",1,Lump sum,Lump sum,KES,False,True,CFG-06 Price Schedule,total_cost_only
+PRICE-13,54,"Training (Secretariat, Trustees, Technical Staff)",1 & 2,Lump sum,Lump sum,KES,False,True,CFG-06 Price Schedule,total_cost_only
+PRICE-14,54,System Documentation & User Manuals (all modules),1 & 2,Lump sum,Lump sum,KES,False,True,CFG-06 Price Schedule,total_cost_only
+PRICE-15,54,Cloud Infrastructure – Compute (Microsoft Azure),1 & 2,Per month,Month,KES,True,True,CFG-06 Price Schedule,unit_cost_and_total_cost
+PRICE-16,54,Cloud Infrastructure – Storage,1 & 2,Per GB/month,GB/month,KES,True,True,CFG-06 Price Schedule,unit_cost_and_total_cost
+PRICE-17,54,Cloud Infrastructure – Backup & Disaster Recovery,1 & 2,Per month,Month,KES,True,True,CFG-06 Price Schedule,unit_cost_and_total_cost
+PRICE-18,54,Annual Maintenance Fee – Year 2 (Post Phase 1),Post Phase 1,Annual,Annual,KES,False,True,CFG-06 Price Schedule,total_cost_only
+PRICE-19,55,Annual Maintenance Fee – Year 3 (Post Phase 2),Post Phase 2,Annual,Annual,KES,False,True,CFG-06 Price Schedule,total_cost_only
+PRICE-20,55,License Renewal – Year 2,Annual,Annual,Annual,KES,False,True,CFG-06 Price Schedule,total_cost_only
+PRICE-21,55,License Renewal – Year 3,Annual,Annual,Annual,KES,False,True,CFG-06 Price Schedule,total_cost_only

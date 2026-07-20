@@ -480,3 +480,92 @@ def download_tender_configuration_document_preview_pdf(configuration_id: str) ->
 	)
 
 	return download_document_preview_pdf(configuration_id)
+
+
+@frappe.whitelist()
+def get_tender_configuration_bidder_submission_schema(configuration_id: str) -> dict[str, Any]:
+	"""Return persisted electronic bidder submission schema artifact (E1 Phase 1)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.bidder_submission_schema import (
+		get_bidder_submission_schema,
+	)
+
+	return get_bidder_submission_schema(configuration_id)
+
+
+@frappe.whitelist()
+def get_tender_configuration_carry_forward_bundle(configuration_id: str) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.contract_carry_forward import (
+		get_carry_forward_bundle,
+	)
+
+	return get_carry_forward_bundle(configuration_id)
+
+
+@frappe.whitelist()
+def get_electronic_bidder_workspace(configuration_id: str) -> dict[str, Any]:
+	from kentender_procurement.tender_configurations.services.electronic_bid import (
+		get_bidder_workspace,
+	)
+
+	return get_bidder_workspace(configuration_id)
+
+
+@frappe.whitelist()
+def create_electronic_bid_draft(configuration_id: str, bidder_label: str | None = None) -> dict[str, Any]:
+	from kentender_procurement.tender_configurations.services.electronic_bid import (
+		create_or_get_draft,
+	)
+
+	return create_or_get_draft(configuration_id, bidder_label)
+
+
+@frappe.whitelist()
+def save_electronic_bid_section(
+	bid_id: str,
+	section_key: str,
+	payload: dict[str, Any] | str | None = None,
+) -> dict[str, Any]:
+	from kentender_procurement.tender_configurations.services.electronic_bid import (
+		save_section_responses,
+	)
+
+	return save_section_responses(bid_id, section_key, payload)
+
+
+@frappe.whitelist()
+def validate_electronic_bid(bid_id: str) -> dict[str, Any]:
+	from kentender_procurement.tender_configurations.services.electronic_bid import (
+		validate_submission,
+	)
+
+	return validate_submission(bid_id)
+
+
+@frappe.whitelist()
+def submit_and_seal_electronic_bid(bid_id: str) -> dict[str, Any]:
+	from kentender_procurement.tender_configurations.services.electronic_bid import (
+		submit_and_seal,
+	)
+
+	return submit_and_seal(bid_id)
+
+
+@frappe.whitelist()
+def get_electronic_bid_receipt(bid_id: str) -> dict[str, Any]:
+	from kentender_procurement.tender_configurations.services.electronic_bid import (
+		get_receipt,
+	)
+
+	return get_receipt(bid_id)
+
+
+@frappe.whitelist()
+def fill_electronic_bid_draft_for_tests(bid_id: str) -> dict[str, Any]:
+	"""Administrator helper for Playwright / integration tests."""
+	from kentender_procurement.tender_configurations.services.electronic_bid import (
+		fill_draft_for_tests,
+	)
+
+	return fill_draft_for_tests(bid_id)

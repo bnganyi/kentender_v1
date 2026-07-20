@@ -372,7 +372,7 @@
 			'<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--outline" data-action="download" data-testid="kt-cl-wf03-download"' +
 			(canDownload && !state.busy ? "" : " disabled") +
 			">" +
-			__("Download Preview PDF") +
+			esc((data && data.download_pdf_label) || __("Download Preview PDF")) +
 			"</button>" +
 			'<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--secondary" data-action="return-correction" data-testid="kt-cl-wf03-return"' +
 			(canReturn && !state.busy ? "" : " disabled") +
@@ -588,22 +588,35 @@
 		if (state.busy || !state.configurationId || !state.confirmChecked) {
 			return;
 		}
-		state.busy = true;
-		frappe.call({
-			method: CONFIRM_API,
-			args: {
-				configuration_id: state.configurationId,
-				payload: { confirm_ready_for_handoff: 1 },
-			},
-			callback: function (r) {
-				state.busy = false;
-				state.confirmChecked = true;
-				remountWithPayload(page, r.message || state.payload);
-				frappe.show_alert({ message: __("Preview confirmed"), indicator: "green" }, 5);
-			},
-			error: function () {
-				state.busy = false;
+		kentender_core.cl.confirm({
+			title: __("Confirm Tender Document Preview?"),
+			message: __(
+				"This confirms that the generated tender document reflects the approved tender configuration. " +
+					"This action does not publish the tender, notify bidders, open bid submission, approve an award, or create a contract. " +
+					"After confirmation, the document package will be locked and may be sent to the publication workflow."
+			),
+			confirmLabel: __("Confirm Preview"),
+			cancelLabel: __("Cancel"),
+			onConfirm: function () {
+				state.busy = true;
 				remountWithPayload(page, state.payload || {});
+				frappe.call({
+					method: CONFIRM_API,
+					args: {
+						configuration_id: state.configurationId,
+						payload: { confirm_ready_for_handoff: 1 },
+					},
+					callback: function (r) {
+						state.busy = false;
+						state.confirmChecked = true;
+						remountWithPayload(page, r.message || state.payload);
+						frappe.show_alert({ message: __("Preview confirmed"), indicator: "green" }, 5);
+					},
+					error: function () {
+						state.busy = false;
+						remountWithPayload(page, state.payload || {});
+					},
+				});
 			},
 		});
 	}
@@ -615,7 +628,8 @@
 		kentender_core.cl.confirm({
 			title: __("Send to Publication Workflow?"),
 			message: __(
-				"This sends the approved package to the publication workflow. It does not publish the tender."
+				"This will make the confirmed tender document package available to the Publications team. " +
+					"This action does not publish the tender, notify bidders, open bid submission, approve an award, or create a contract."
 			),
 			confirmLabel: __("Send to Publication Workflow"),
 			cancelLabel: __("Cancel"),

@@ -149,6 +149,9 @@ EDITABLE_KEYS = frozenset(
 		"opening_location",
 		"opening_attendance_allowed",
 		"opening_notes",
+		"professional_indemnity_required",
+		"professional_indemnity_amount",
+		"professional_indemnity_evidence",
 	}
 )
 

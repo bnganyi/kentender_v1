@@ -111,6 +111,7 @@ app_include_js = [
 	f"/assets/kentender_procurement/js/procurement_home_workspace.js?v={_desk_asset_v('public/js/procurement_home_workspace.js')}",
 	f"/assets/kentender_procurement/js/tm2_workbench_lifecycle.js?v={_desk_asset_v('public/js/tm2_workbench_lifecycle.js')}",
 	f"/assets/kentender_procurement/js/it_tender_configuration_create_modal.js?v={_desk_asset_v('public/js/it_tender_configuration_create_modal.js')}",
+	f"/assets/kentender_procurement/js/electronic_bid/bidder_workspace_renderer.js?v={_desk_asset_v('public/js/electronic_bid/bidder_workspace_renderer.js')}",
 ]
 
 # include js, css files in header of web template
@@ -163,6 +164,7 @@ page_js = {
 	"it-tender-configuration-review-and-approval": "public/js/it_tender_configuration_review_and_approval_page.js",
 	"it-tender-configuration-render-preview": "public/js/it_tender_configuration_render_preview_page.js",
 	"it-tender-configuration-publication-readiness": "public/js/it_tender_configuration_render_preview_page.js",
+	"it-electronic-bidder-workspace": "public/js/it_electronic_bidder_workspace_page.js",
 	"std-library": "public/js/std_prod_std_library_page.js",
 	"std-family-detail": "public/js/std_prod_std_family_detail_page.js",
 	"std-version-detail": "public/js/std_prod_std_version_detail_page.js",

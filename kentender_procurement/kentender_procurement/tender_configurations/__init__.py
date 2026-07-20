@@ -28,6 +28,15 @@ from kentender_procurement.tender_configurations.api import (
 	get_tender_configuration_price_schedule as _get_tender_configuration_price_schedule,
 	get_tender_configuration_system_inventory as _get_tender_configuration_system_inventory,
 	get_tender_configuration_tds as _get_tender_configuration_tds,
+	get_tender_configuration_bidder_submission_schema as _get_tender_configuration_bidder_submission_schema,
+	get_tender_configuration_carry_forward_bundle as _get_tender_configuration_carry_forward_bundle,
+	get_electronic_bidder_workspace as _get_electronic_bidder_workspace,
+	create_electronic_bid_draft as _create_electronic_bid_draft,
+	save_electronic_bid_section as _save_electronic_bid_section,
+	validate_electronic_bid as _validate_electronic_bid,
+	submit_and_seal_electronic_bid as _submit_and_seal_electronic_bid,
+	get_electronic_bid_receipt as _get_electronic_bid_receipt,
+	fill_electronic_bid_draft_for_tests as _fill_electronic_bid_draft_for_tests,
 	get_tender_configurations_dashboard as _get_tender_configurations_dashboard,
 	request_tender_configuration_clarification as _request_tender_configuration_clarification,
 	resolve_tender_configuration_review_finding as _resolve_tender_configuration_review_finding,
@@ -329,3 +338,60 @@ def seed_ui01_mockups_for_tests(clear: int | str = 1):
 	)
 
 	return seed_ui01_mockup_configurations(clear=bool(int(clear)))
+
+
+@frappe.whitelist()
+def get_tender_configuration_bidder_submission_schema(configuration_id: str):
+	return _get_tender_configuration_bidder_submission_schema(configuration_id)
+
+
+@frappe.whitelist()
+def seed_e1_nssf_for_tests(clear: int | str = 1):
+	"""Administrator-only E1 NSSF PoC seed (fixture 09 → TCFG-E1-NSSF-ERP)."""
+	if frappe.session.user != "Administrator":
+		frappe.throw(frappe._("Not permitted"), frappe.PermissionError)
+	from kentender_procurement.tender_configurations.seed.e1_nssf_seed import (
+		seed_e1_nssf_tender_configuration,
+	)
+
+	return seed_e1_nssf_tender_configuration(clear=bool(int(clear)))
+
+
+@frappe.whitelist()
+def get_tender_configuration_carry_forward_bundle(configuration_id: str):
+	return _get_tender_configuration_carry_forward_bundle(configuration_id)
+
+
+@frappe.whitelist()
+def get_electronic_bidder_workspace(configuration_id: str):
+	return _get_electronic_bidder_workspace(configuration_id)
+
+
+@frappe.whitelist()
+def create_electronic_bid_draft(configuration_id: str, bidder_label: str | None = None):
+	return _create_electronic_bid_draft(configuration_id, bidder_label)
+
+
+@frappe.whitelist()
+def save_electronic_bid_section(bid_id: str, section_key: str, payload=None):
+	return _save_electronic_bid_section(bid_id, section_key, payload)
+
+
+@frappe.whitelist()
+def validate_electronic_bid(bid_id: str):
+	return _validate_electronic_bid(bid_id)
+
+
+@frappe.whitelist()
+def submit_and_seal_electronic_bid(bid_id: str):
+	return _submit_and_seal_electronic_bid(bid_id)
+
+
+@frappe.whitelist()
+def get_electronic_bid_receipt(bid_id: str):
+	return _get_electronic_bid_receipt(bid_id)
+
+
+@frappe.whitelist()
+def fill_electronic_bid_draft_for_tests(bid_id: str):
+	return _fill_electronic_bid_draft_for_tests(bid_id)
