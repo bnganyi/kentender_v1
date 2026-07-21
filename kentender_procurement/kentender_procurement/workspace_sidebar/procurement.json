@@ -129,8 +129,8 @@
    "collapsible": 0,
    "indent": 0,
    "keep_closed": 0,
-   "label": "Tender Documents",
-   "link_to": "tender-management-v2",
+   "label": "Publications",
+   "link_to": "publications",
    "link_type": "Page",
    "show_arrow": 0,
    "type": "Link"
@@ -140,11 +140,11 @@
    "collapsible": 0,
    "indent": 0,
    "keep_closed": 0,
-   "label": "Publications",
-   "link_type": "URL",
+   "label": "Tender Management Hub",
+   "link_to": "tender-management-v2",
+   "link_type": "Page",
    "show_arrow": 0,
-   "type": "Link",
-   "url": "#"
+   "type": "Link"
   },
   {
    "child": 1,
@@ -374,7 +374,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-07-19 12:14:33.813454",
+ "modified": "2026-07-21 22:55:59.701876",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "Procurement",

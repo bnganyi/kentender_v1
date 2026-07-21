@@ -13,6 +13,7 @@ import frappe
 from frappe.utils import cstr, now_datetime
 
 from kentender_procurement.tender_configurations.constants import (
+	STATUS_AWAITING_PUBLICATION_SETUP,
 	STATUS_SENT_TO_PUBLICATION,
 )
 from kentender_procurement.tender_configurations.services.contract_carry_forward import (
@@ -27,6 +28,9 @@ PACKAGE_STATUS_AWAITING = "Awaiting Publication Setup"
 PACKAGE_STATUS_INVALIDATED = "Invalidated"
 
 PUBLICATION_STATUS_AWAITING = "Awaiting Publication Setup"
+PUBLICATION_STATUS_READY = "Ready to Publish"
+PUBLICATION_STATUS_SCHEDULED = "Scheduled"
+PUBLICATION_STATUS_PUBLISHED = "Published"
 PUBLICATION_STATUS_CANCELLED = "Cancelled"
 PUBLICATION_STATUS_RETURNED = "Returned"
 
@@ -128,10 +132,10 @@ def assert_configuration_unlocked_for_edit(configuration_id: str) -> None:
 			title="CONFIGURATION_LOCKED",
 		)
 	status = cstr(frappe.db.get_value("Tender Configuration", configuration_id, "status") or "")
-	if status == STATUS_SENT_TO_PUBLICATION:
+	if status in (STATUS_AWAITING_PUBLICATION_SETUP, STATUS_SENT_TO_PUBLICATION, "Published"):
 		frappe.throw(
 			frappe._(
-				"This tender configuration was sent to the publication workflow and is read-only."
+				"This tender configuration is locked for publication setup or has been published."
 			),
 			title="CONFIGURATION_LOCKED",
 		)
@@ -256,8 +260,64 @@ def invalidate_package(package_name: str, *, reason: str = "") -> None:
 	pkg.save(ignore_permissions=True)
 
 
+def get_open_publication_name(configuration_id: str) -> str | None:
+	"""Return non-terminal publication for this configuration, if any."""
+	name = frappe.db.get_value(
+		PUBLICATION_DOCTYPE,
+		{
+			"configuration": configuration_id,
+			"status": [
+				"in",
+				[
+					PUBLICATION_STATUS_AWAITING,
+					PUBLICATION_STATUS_READY,
+					PUBLICATION_STATUS_SCHEDULED,
+				],
+			],
+		},
+		"name",
+		order_by="creation desc",
+	)
+	if name:
+		return cstr(name)
+	linked = cstr(
+		frappe.db.get_value("Tender Configuration", configuration_id, "it_publication_record") or ""
+	)
+	if linked and frappe.db.exists(PUBLICATION_DOCTYPE, linked):
+		status = cstr(frappe.db.get_value(PUBLICATION_DOCTYPE, linked, "status") or "")
+		if status not in (
+			PUBLICATION_STATUS_CANCELLED,
+			PUBLICATION_STATUS_RETURNED,
+			PUBLICATION_STATUS_PUBLISHED,
+		):
+			return linked
+	return None
+
+
 def create_publication_record(doc, package) -> Any:
-	"""Create Publication record linked to confirmed package (does not publish)."""
+	"""Create or reopen Publication record linked to confirmed package (does not publish)."""
+	existing = get_open_publication_name(doc.name)
+	if existing:
+		pub = frappe.get_doc(PUBLICATION_DOCTYPE, existing)
+		pub.flags.ignore_publication_boundary = True
+		pub.confirmed_package = package.name
+		pub.document_hash = package.document_hash
+		pub.status = PUBLICATION_STATUS_AWAITING
+		pub.received_at = now_datetime()
+		pub.received_by = frappe.session.user
+		pub.save(ignore_permissions=True)
+		package.flags.ignore_package_immutability = True
+		package.package_status = PACKAGE_STATUS_AWAITING
+		package.save(ignore_permissions=True)
+		frappe.db.set_value(
+			"Tender Configuration",
+			doc.name,
+			"it_publication_record",
+			pub.name,
+			update_modified=False,
+		)
+		return pub
+
 	payload = {
 		"package_id": package.name,
 		"configuration_ref": cstr(package.configuration_ref or doc.configuration_ref or doc.name),
@@ -310,17 +370,8 @@ def create_publication_record(doc, package) -> Any:
 def cancel_publication_for_configuration(
 	configuration_id: str, *, reason: str = ""
 ) -> str | None:
-	name = frappe.db.get_value(
-		PUBLICATION_DOCTYPE,
-		{
-			"configuration": configuration_id,
-			"status": PUBLICATION_STATUS_AWAITING,
-		},
-		"name",
-		order_by="creation desc",
-	)
+	name = get_open_publication_name(configuration_id)
 	if not name:
-		# Also cancel any non-terminal record linked on the config.
 		name = frappe.db.get_value(
 			"Tender Configuration", configuration_id, "it_publication_record"
 		)
@@ -330,11 +381,13 @@ def cancel_publication_for_configuration(
 	if cstr(pub.status) in (
 		PUBLICATION_STATUS_CANCELLED,
 		PUBLICATION_STATUS_RETURNED,
-		"Published",
+		PUBLICATION_STATUS_PUBLISHED,
 	):
 		return pub.name
 	pub.flags.ignore_publication_boundary = True
+	pub.flags.ignore_publication_lock = True
 	pub.status = PUBLICATION_STATUS_RETURNED
+	pub.setup_locked = 0
 	pub.cancelled_at = now_datetime()
 	pub.cancelled_by = frappe.session.user
 	pub.cancel_reason = cstr(reason or "Returned for Correction")[:500]
@@ -346,8 +399,13 @@ def package_summary_dto(package_name: str | None) -> dict[str, Any]:
 	if not package_name or not frappe.db.exists(PACKAGE_DOCTYPE, package_name):
 		return {}
 	pkg = frappe.get_doc(PACKAGE_DOCTYPE, package_name)
+	# Prefer business codes for UI — never surface the hash package name as "Doc Package Ref".
+	pkg_code = cstr(pkg.procurement_package_ref or pkg.configuration_ref or "").strip()
 	return {
 		"package_id": pkg.name,
+		"package_code": pkg_code,
+		"configuration_ref": cstr(pkg.configuration_ref or ""),
+		"procurement_package_ref": cstr(pkg.procurement_package_ref or ""),
 		"package_status": cstr(pkg.package_status or ""),
 		"document_hash": cstr(pkg.document_hash or ""),
 		"configuration_version": cstr(pkg.configuration_version or ""),

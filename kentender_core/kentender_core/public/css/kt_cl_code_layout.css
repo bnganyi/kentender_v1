@@ -76,6 +76,61 @@ body.kt-cl-shell-native .kt-cl-native-canvas {
 	color: #000b1d;
 	margin: 0 0 4px 0;
 }
+/* C1-M1 pageHeader: title + subtitle block with mb-8 before summary/content */
+body.kt-cl-shell [data-testid="kt-cl-page-header"],
+body.kt-cl-shell .kt-cl-page-header {
+	margin: 0 0 2rem 0 !important;
+	padding: 0 !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-page-subtitle"],
+body.kt-cl-shell .kt-cl-page-subtitle {
+	margin: 0.25rem 0 0 0 !important;
+	font-family: Inter, "IBM Plex Sans", sans-serif !important;
+	font-size: 16px !important;
+	line-height: 24px !important;
+	font-weight: 400 !important;
+	color: #44474e !important;
+}
+/* A2 bento summary cards (shared component, layout=bento) */
+body.kt-cl-shell [data-testid="kt-cl-queue-summary-card"][data-layout="bento"] {
+	display: flex !important;
+	flex-direction: column !important;
+	justify-content: space-between !important;
+	align-items: stretch !important;
+	gap: 0 !important;
+	min-height: 110px !important;
+	padding: 1.5rem !important;
+	border-left-width: 8px !important;
+	border-left-style: solid !important;
+	box-sizing: border-box !important;
+	position: relative !important;
+	overflow: hidden !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-queue-summary-card"][data-layout="bento"] .kt-cl-queue-summary-watermark,
+body.kt-cl-shell [data-testid="kt-cl-queue-summary-card"][data-layout="bento"] .material-symbols-outlined {
+	font-size: 2.25rem !important;
+	line-height: 1 !important;
+	opacity: 0.2 !important;
+	flex-shrink: 0 !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-queue-summary-card"][data-layout="bento"] [data-testid="kt-cl-queue-summary-value"] {
+	font-size: 2.25rem !important;
+	font-weight: 700 !important;
+	line-height: 1 !important;
+	color: #002147 !important;
+	font-family: "IBM Plex Sans", Inter, sans-serif !important;
+}
+/* C1-M1 inline cards: keep icon badge vertically centred with label/value */
+body.kt-cl-shell [data-testid="kt-cl-queue-summary-card"][data-layout="inline"],
+body.kt-cl-shell [data-testid="kt-cl-queue-summary-card"]:not([data-layout]) {
+	display: flex !important;
+	flex-direction: row !important;
+	align-items: center !important;
+	gap: 1rem !important;
+	padding: 1rem !important;
+	position: relative !important;
+	overflow: hidden !important;
+}
 
 /* Frappe/Bootstrap .hidden is `display:none !important`, which beats Tailwind's
  * non-important responsive display utilities. Re-assert the responsive display
@@ -5730,4 +5785,652 @@ body.kt-cl-shell .kt-cl-wf03-pkg-note {
 	width: 100% !important;
 	box-sizing: border-box !important;
 	float: none !important;
+}
+
+/* ========== Publications A1–A3 (mock layout pins; Frappe/Bootstrap must not win) ========== */
+body.kt-cl-shell [data-testid="kt-cl-pub-a3-root"] {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0 !important;
+	width: 100% !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-pub-a3-context-strip"] {
+	display: block !important;
+	background: #ffffff !important;
+	border-bottom: 1px solid #c4c6cf !important;
+	padding: 1rem 1.5rem !important;
+	margin: 0 0 0 0 !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-strip-grid {
+	display: grid !important;
+	grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	gap: 0 !important;
+	max-width: 1440px !important;
+	margin: 0 auto !important;
+}
+@media (min-width: 900px) {
+	body.kt-cl-shell .kt-cl-pub-a3-strip-grid {
+		grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+	}
+}
+body.kt-cl-shell .kt-cl-pub-a3-strip-cell {
+	padding: 0 1rem !important;
+	border-right: 1px solid rgba(196, 198, 207, 0.45) !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-strip-cell:first-child {
+	padding-left: 0 !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-strip-cell:last-child {
+	border-right: 0 !important;
+	padding-right: 0 !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-strip-label {
+	margin: 0 0 0.25rem !important;
+	font-size: 10px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.08em !important;
+	text-transform: uppercase !important;
+	color: #44474e !important;
+	font-family: Inter, "IBM Plex Sans", sans-serif !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-strip-value,
+body.kt-cl-shell .kt-cl-pub-a3-strip-status {
+	margin: 0 !important;
+	font-size: 13px !important;
+	font-weight: 700 !important;
+	color: #002147 !important;
+	font-family: Inter, "IBM Plex Sans", sans-serif !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-strip-value.is-alert {
+	color: #ba1a1a !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-strip-status {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-strip-dot {
+	width: 8px !important;
+	height: 8px !important;
+	border-radius: 999px !important;
+	background: #f59e0b !important;
+	display: inline-block !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-pub-a3-layout"] {
+	display: grid !important;
+	grid-template-columns: 1fr !important;
+	gap: 2rem !important;
+	padding: 2rem !important;
+	max-width: 1440px !important;
+	margin: 0 auto !important;
+	width: 100% !important;
+	box-sizing: border-box !important;
+	background: #faf9fd !important;
+}
+@media (min-width: 1200px) {
+	body.kt-cl-shell [data-testid="kt-cl-pub-a3-layout"] {
+		grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr) !important;
+	}
+}
+body.kt-cl-shell .kt-cl-pub-a3-main {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 1.5rem !important;
+	min-width: 0 !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-rail {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 1.5rem !important;
+	min-width: 0 !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-card {
+	background: #ffffff !important;
+	border: 1px solid rgba(196, 198, 207, 0.45) !important;
+	border-radius: 0.75rem !important;
+	box-shadow: 0 1px 2px rgba(25, 28, 30, 0.04) !important;
+	padding: 1.75rem !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-card--rail {
+	padding: 0 !important;
+	overflow: hidden !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-card-head {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.75rem !important;
+	margin: 0 0 1.25rem !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-card-head h2 {
+	margin: 0 !important;
+	font-size: 1.125rem !important;
+	font-weight: 700 !important;
+	color: #002147 !important;
+	font-family: "IBM Plex Sans", Inter, sans-serif !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-card-head .material-symbols-outlined {
+	color: #002147 !important;
+	font-size: 24px !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-field-grid {
+	display: grid !important;
+	grid-template-columns: 1fr !important;
+	gap: 1.5rem 2rem !important;
+}
+@media (min-width: 768px) {
+	body.kt-cl-shell .kt-cl-pub-a3-field-grid {
+		grid-template-columns: 1fr 1fr !important;
+	}
+}
+body.kt-cl-shell .kt-cl-pub-a3-split {
+	display: grid !important;
+	grid-template-columns: 1fr !important;
+	gap: 1.5rem !important;
+}
+@media (min-width: 768px) {
+	body.kt-cl-shell .kt-cl-pub-a3-split {
+		grid-template-columns: 1fr 1fr !important;
+	}
+}
+body.kt-cl-shell .kt-cl-pub-a3-field {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0.35rem !important;
+	margin: 0 !important;
+	width: 100% !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-label {
+	display: block !important;
+	margin: 0 !important;
+	font-size: 11px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.06em !important;
+	text-transform: uppercase !important;
+	color: #44474e !important;
+	font-family: Inter, sans-serif !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-req {
+	color: #ba1a1a !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-helper {
+	margin: 0.25rem 0 0 !important;
+	font-size: 11px !important;
+	color: #44474e !important;
+	font-family: Inter, sans-serif !important;
+	line-height: 1.4 !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-input,
+body.kt-cl-shell [data-testid="kt-cl-pub-a3-form"] input.kt-cl-pub-a3-input,
+body.kt-cl-shell [data-testid="kt-cl-pub-a3-form"] select.kt-cl-pub-a3-input,
+body.kt-cl-shell [data-testid="kt-cl-pub-a3-form"] textarea.kt-cl-pub-a3-input {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	display: block !important;
+	width: 100% !important;
+	box-sizing: border-box !important;
+	margin: 0 !important;
+	padding: 0.65rem 1rem !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.5rem !important;
+	background: #ffffff !important;
+	color: #1a1b1e !important;
+	font-family: Inter, "IBM Plex Sans", sans-serif !important;
+	font-size: 14px !important;
+	line-height: 1.4 !important;
+	min-height: 42px !important;
+	box-shadow: none !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-input:focus {
+	outline: none !important;
+	border-color: #002147 !important;
+	box-shadow: 0 0 0 1px #002147 !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-readonly {
+	padding: 0.65rem 1rem !important;
+	border: 1px solid rgba(196, 198, 207, 0.5) !important;
+	border-radius: 0.5rem !important;
+	background: #f4f3f7 !important;
+	color: #44474e !important;
+	font-size: 14px !important;
+	font-family: Inter, sans-serif !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-mode {
+	margin-bottom: 1.5rem !important;
+	padding-bottom: 1.5rem !important;
+	border-bottom: 1px solid rgba(196, 198, 207, 0.35) !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-mode-row {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	gap: 1.5rem !important;
+	margin-top: 0.75rem !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-radio {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.65rem !important;
+	font-size: 14px !important;
+	font-weight: 500 !important;
+	color: #1a1b1e !important;
+	font-family: Inter, sans-serif !important;
+	cursor: pointer !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-workspace-card {
+	background: #f4f3f7 !important;
+	border: 1px solid rgba(196, 198, 207, 0.35) !important;
+	border-radius: 0.75rem !important;
+	padding: 1.1rem !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-workspace-row {
+	display: flex !important;
+	justify-content: space-between !important;
+	gap: 1rem !important;
+	align-items: flex-start !important;
+	margin-bottom: 0.75rem !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-workspace-ready {
+	margin: 0.25rem 0 0 !important;
+	font-size: 14px !important;
+	font-weight: 700 !important;
+	color: #107c10 !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-switch {
+	position: relative !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	cursor: pointer !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-switch input {
+	position: absolute !important;
+	opacity: 0 !important;
+	width: 0 !important;
+	height: 0 !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-switch-ui {
+	width: 44px !important;
+	height: 24px !important;
+	border-radius: 999px !important;
+	background: #c4c6cf !important;
+	position: relative !important;
+	display: inline-block !important;
+	transition: background 0.15s ease !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-switch-ui::after {
+	content: "" !important;
+	position: absolute !important;
+	top: 2px !important;
+	left: 2px !important;
+	width: 20px !important;
+	height: 20px !important;
+	border-radius: 999px !important;
+	background: #ffffff !important;
+	transition: transform 0.15s ease !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-switch input:checked + .kt-cl-pub-a3-switch-ui {
+	background: #002147 !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-switch input:checked + .kt-cl-pub-a3-switch-ui::after {
+	transform: translateX(20px) !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-rail-head {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+	padding: 1rem 1.25rem !important;
+	background: rgba(0, 33, 71, 0.05) !important;
+	border-bottom: 1px solid rgba(196, 198, 207, 0.35) !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-rail-head--error {
+	background: rgba(186, 26, 26, 0.05) !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-rail-head h3 {
+	margin: 0 !important;
+	font-size: 11px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.08em !important;
+	text-transform: uppercase !important;
+	color: #002147 !important;
+	font-family: Inter, sans-serif !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-rail-head--error h3 {
+	color: #ba1a1a !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-asset {
+	appearance: none !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	gap: 0.75rem !important;
+	width: 100% !important;
+	margin: 0.25rem 0.5rem !important;
+	padding: 0.9rem 1rem !important;
+	border: 0 !important;
+	border-radius: 0.5rem !important;
+	background: #f4f3f7 !important;
+	color: #1a1b1e !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 14px !important;
+	font-weight: 600 !important;
+	text-align: left !important;
+	cursor: pointer !important;
+	box-shadow: none !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-asset.is-static {
+	cursor: default !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-asset > span:nth-child(2) {
+	flex: 1 !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-hash {
+	font-family: "JetBrains Mono", monospace !important;
+	font-size: 11px !important;
+	color: #44474e !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-val-list {
+	display: flex !important;
+	flex-direction: column !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-val-item {
+	display: flex !important;
+	gap: 0.85rem !important;
+	padding: 1.1rem 1.25rem !important;
+	border-bottom: 1px solid rgba(196, 198, 207, 0.25) !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-val-dot {
+	width: 6px !important;
+	height: 6px !important;
+	margin-top: 0.45rem !important;
+	border-radius: 999px !important;
+	background: #ba1a1a !important;
+	flex-shrink: 0 !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-val-item[data-severity="ok"] .kt-cl-pub-a3-val-dot {
+	background: #107c10 !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-val-item p {
+	margin: 0 !important;
+	font-size: 13px !important;
+	font-weight: 500 !important;
+	color: #1a1b1e !important;
+	font-family: Inter, sans-serif !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-val-status {
+	display: inline-block !important;
+	margin-top: 0.35rem !important;
+	font-size: 10px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.04em !important;
+	text-transform: uppercase !important;
+	color: #ba1a1a !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-val-item[data-severity="ok"] .kt-cl-pub-a3-val-status {
+	color: #107c10 !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-pub-a3-footer"] {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	gap: 1rem !important;
+	padding: 1.1rem 2rem !important;
+	background: #ffffff !important;
+	border-top: 1px solid #c4c6cf !important;
+	position: sticky !important;
+	bottom: 0 !important;
+	z-index: 5 !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-footer-end {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	align-items: center !important;
+	gap: 0.75rem !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-btn {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	gap: 0.5rem !important;
+	padding: 0.65rem 1.35rem !important;
+	border-radius: 0.5rem !important;
+	font-family: Inter, "IBM Plex Sans", sans-serif !important;
+	font-size: 14px !important;
+	font-weight: 700 !important;
+	line-height: 1.2 !important;
+	cursor: pointer !important;
+	box-shadow: none !important;
+	text-decoration: none !important;
+	min-height: 42px !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-btn--secondary {
+	border: 1px solid #c4c6cf !important;
+	background: #ffffff !important;
+	color: #44474e !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-btn--outline {
+	border: 1px solid #002147 !important;
+	background: #ffffff !important;
+	color: #002147 !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-btn--primary {
+	border: 1px solid #002147 !important;
+	background: #002147 !important;
+	color: #ffffff !important;
+	padding-left: 2rem !important;
+	padding-right: 2rem !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-btn:disabled {
+	opacity: 0.45 !important;
+	cursor: not-allowed !important;
+	pointer-events: none !important;
+}
+body.kt-cl-shell .kt-cl-pub-a3-btn--primary .material-symbols-outlined {
+	font-size: 20px !important;
+	color: #ffffff !important;
+}
+
+/* A1 Package Review */
+body.kt-cl-shell [data-testid="kt-cl-pub-a1-layout"] {
+	display: grid !important;
+	grid-template-columns: 1fr !important;
+	gap: 1.5rem !important;
+	padding: 0 !important;
+	width: 100% !important;
+}
+@media (min-width: 1024px) {
+	body.kt-cl-shell [data-testid="kt-cl-pub-a1-layout"] {
+		grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) !important;
+	}
+	body.kt-cl-shell [data-testid="kt-cl-pub-a1-readiness"],
+	body.kt-cl-shell [data-testid="kt-cl-pub-a1-issues"] {
+		grid-column: 1 / -1 !important;
+	}
+}
+body.kt-cl-shell [data-testid="kt-cl-pub-a1-readiness"],
+body.kt-cl-shell [data-testid="kt-cl-pub-a1-bidder"],
+body.kt-cl-shell [data-testid="kt-cl-pub-a1-document"],
+body.kt-cl-shell [data-testid="kt-cl-pub-a1-issues"] {
+	background: #ffffff !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.75rem !important;
+	overflow: hidden !important;
+	box-shadow: 0 1px 2px rgba(25, 28, 30, 0.04) !important;
+}
+body.kt-cl-shell .kt-cl-pub-a1-section-head {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	gap: 1rem !important;
+	padding: 1rem 1.25rem !important;
+	background: #f4f3f7 !important;
+	border-bottom: 1px solid #c4c6cf !important;
+}
+body.kt-cl-shell .kt-cl-pub-a1-section-head h2,
+body.kt-cl-shell .kt-cl-pub-a1-section-head h3 {
+	margin: 0 !important;
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+	font-size: 1rem !important;
+	font-weight: 700 !important;
+	color: #002147 !important;
+	font-family: "IBM Plex Sans", Inter, sans-serif !important;
+}
+body.kt-cl-shell .kt-cl-pub-a1-table {
+	width: 100% !important;
+	border-collapse: collapse !important;
+	font-family: Inter, sans-serif !important;
+}
+body.kt-cl-shell .kt-cl-pub-a1-table th {
+	padding: 0.75rem 1.25rem !important;
+	font-size: 11px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.08em !important;
+	text-transform: uppercase !important;
+	color: #44474e !important;
+	background: #efedf1 !important;
+	border-bottom: 1px solid #c4c6cf !important;
+	text-align: left !important;
+}
+body.kt-cl-shell .kt-cl-pub-a1-table td {
+	padding: 0.75rem 1.25rem !important;
+	font-size: 14px !important;
+	border-bottom: 1px solid #c4c6cf !important;
+	color: #1a1b1e !important;
+	vertical-align: middle !important;
+}
+body.kt-cl-shell .kt-cl-pub-a1-pill {
+	display: inline-flex !important;
+	align-items: center !important;
+	padding: 0.2rem 0.65rem !important;
+	border-radius: 999px !important;
+	font-size: 11px !important;
+	font-weight: 700 !important;
+	background: #e8f5e9 !important;
+	color: #107c10 !important;
+}
+body.kt-cl-shell .kt-cl-pub-a1-pill--warn {
+	background: #fff8e1 !important;
+	color: #b26a00 !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-pub-a1-footer"] .kt-cl-pub-a3-btn {
+	/* reuse A3 soft buttons on A1 footer */
+}
+
+/* A2 Publications queue polish */
+body.kt-cl-shell [data-testid="kt-cl-pub-a2-root"] [data-testid="kt-cl-queue-summary-grid"] {
+	gap: 1rem !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-pub-a2-root"] [data-testid="kt-cl-queue-summary-card"] {
+	border-left-width: 8px !important;
+	min-height: 110px !important;
+	padding: 1.25rem 1.5rem !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-pub-a2-root"] [data-testid="kt-cl-pub-a2-next-action"] {
+	appearance: none !important;
+	background: #002147 !important;
+	color: #ffffff !important;
+	border: 1px solid #002147 !important;
+	border-radius: 0.25rem !important;
+	padding: 0.35rem 1rem !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 13px !important;
+	font-weight: 600 !important;
+}
+
+body.kt-cl-shell .kt-cl-pub-a1-link {
+	appearance: none !important;
+	background: transparent !important;
+	border: 0 !important;
+	padding: 0 !important;
+	color: #005a9e !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 13px !important;
+	font-weight: 700 !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.25rem !important;
+	cursor: pointer !important;
+	box-shadow: none !important;
+}
+body.kt-cl-shell .kt-cl-pub-a1-sev {
+	display: inline-flex !important;
+	padding: 0.2rem 0.65rem !important;
+	border-radius: 999px !important;
+	font-size: 10px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.06em !important;
+	text-transform: uppercase !important;
+	color: #ffffff !important;
+	background: #b26a00 !important;
+}
+body.kt-cl-shell .kt-cl-pub-a1-sev--blocker {
+	background: #ba1a1a !important;
+}
+body.kt-cl-shell .kt-cl-pub-a1-confirmed {
+	margin: 1rem 2rem 0 !important;
+	padding: 1.25rem 1.5rem !important;
+	background: rgba(0, 33, 71, 0.06) !important;
+	border: 1px solid #c4c6cf !important;
+	border-radius: 0.75rem !important;
+}
+body.kt-cl-shell .kt-cl-pub-a1-confirmed p {
+	margin: 0 0 0.5rem !important;
+	font-family: Inter, sans-serif !important;
+}
+body.kt-cl-shell [data-testid="kt-cl-pub-a1-layout"] {
+	padding: 1.5rem 2rem 2rem !important;
+	background: #faf9fd !important;
+	box-sizing: border-box !important;
+}
+body.kt-cl-shell .kt-cl-pub-a2-intro {
+	margin: 0 0 0.5rem !important;
+}
+body.kt-cl-shell .kt-cl-pub-a2-intro h1 {
+	margin: 0 !important;
+	font-size: 1.75rem !important;
+	font-weight: 700 !important;
+	color: #002147 !important;
+	font-family: "IBM Plex Sans", Inter, sans-serif !important;
+}
+body.kt-cl-shell .kt-cl-pub-a2-intro p {
+	margin: 0.35rem 0 0 !important;
+	font-size: 14px !important;
+	color: #44474e !important;
+	font-family: Inter, sans-serif !important;
+}
+body.kt-cl-shell .kt-cl-pub-a2-std-chip {
+	display: inline-flex !important;
+	align-items: center !important;
+	padding: 0.2rem 0.75rem !important;
+	border-radius: 999px !important;
+	border: 1px solid rgba(196, 198, 207, 0.45) !important;
+	background: #efedf1 !important;
+	color: #44474e !important;
+	font-size: 10px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.06em !important;
+	text-transform: uppercase !important;
+	white-space: nowrap !important;
+	font-family: Inter, sans-serif !important;
+}
+body.kt-cl-shell .kt-cl-pub-a2-not-set {
+	font-style: italic !important;
+	opacity: 0.55 !important;
+	color: #44474e !important;
+}
+body.kt-cl-shell .kt-cl-pub-a2-cta,
+body.kt-cl-shell [data-testid="kt-cl-pub-a2-next-action"] {
+	appearance: none !important;
+	background: #002147 !important;
+	color: #ffffff !important;
+	border: 1px solid #002147 !important;
+	border-radius: 0.25rem !important;
+	padding: 0.35rem 1rem !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 13px !important;
+	font-weight: 600 !important;
+	cursor: pointer !important;
+	box-shadow: none !important;
 }

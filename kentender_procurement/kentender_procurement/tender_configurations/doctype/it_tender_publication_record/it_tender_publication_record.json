@@ -9,17 +9,25 @@
   "section_identity",
   "configuration",
   "configuration_ref",
+  "publication_ref",
   "confirmed_package",
   "document_hash",
   "status",
   "section_setup",
+  "publication_mode",
   "publication_datetime",
   "clarification_deadline",
   "submission_deadline",
   "opening_datetime",
+  "bidder_visibility",
   "supplier_visibility",
   "tender_notice",
+  "activate_bidder_workspace",
   "bidder_workspace_activation",
+  "acknowledgement_confirmed",
+  "setup_locked",
+  "published_at",
+  "published_by",
   "section_handoff",
   "received_at",
   "received_by",
@@ -51,6 +59,15 @@
    "read_only": 1
   },
   {
+   "fieldname": "publication_ref",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Publication Ref",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
    "fieldname": "confirmed_package",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -72,13 +89,20 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Awaiting Publication Setup\nCancelled\nReturned\nPublished",
+   "options": "Awaiting Publication Setup\nReady to Publish\nScheduled\nPublished\nReturned\nCancelled",
    "reqd": 1
   },
   {
    "fieldname": "section_setup",
    "fieldtype": "Section Break",
    "label": "Publication Setup"
+  },
+  {
+   "default": "immediate",
+   "fieldname": "publication_mode",
+   "fieldtype": "Select",
+   "label": "Publication Mode",
+   "options": "immediate\nscheduled"
   },
   {
    "fieldname": "publication_datetime",
@@ -101,9 +125,16 @@
    "label": "Opening Date/Time"
   },
   {
+   "fieldname": "bidder_visibility",
+   "fieldtype": "Select",
+   "label": "Bidder Visibility",
+   "options": "\nAll Registered Bidders\nInvited Bidders Only\nPublic Notice Only"
+  },
+  {
    "fieldname": "supplier_visibility",
    "fieldtype": "Data",
-   "label": "Supplier Visibility"
+   "label": "Supplier Visibility (legacy)",
+   "hidden": 1
   },
   {
    "fieldname": "tender_notice",
@@ -112,9 +143,42 @@
   },
   {
    "default": "0",
+   "fieldname": "activate_bidder_workspace",
+   "fieldtype": "Check",
+   "label": "Activate Bidder Workspace"
+  },
+  {
+   "default": "0",
    "fieldname": "bidder_workspace_activation",
    "fieldtype": "Check",
-   "label": "Bidder Workspace Activation"
+   "label": "Bidder Workspace Activation (legacy)",
+   "hidden": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "acknowledgement_confirmed",
+   "fieldtype": "Check",
+   "label": "Acknowledgement Confirmed"
+  },
+  {
+   "default": "0",
+   "fieldname": "setup_locked",
+   "fieldtype": "Check",
+   "label": "Setup Locked",
+   "read_only": 1
+  },
+  {
+   "fieldname": "published_at",
+   "fieldtype": "Datetime",
+   "label": "Published At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "published_by",
+   "fieldtype": "Link",
+   "label": "Published By",
+   "options": "User",
+   "read_only": 1
   },
   {
    "fieldname": "section_handoff",
@@ -162,7 +226,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-07-20 17:00:00.000000",
+ "modified": "2026-07-21 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Tender Configurations",
  "name": "IT Tender Publication Record",

@@ -215,6 +215,12 @@ class TestKtClShellLayoutGuard(IntegrationTestCase):
 		spec = _core_public("js", "kt_cl_code_spec.js").read_text(encoding="utf-8")
 		self.assertIn("PAGE_TITLE", spec)
 		self.assertIn("QUEUE", spec)
+		self.assertIn("summaryCardBento", spec)
+		self.assertIn('layout === "bento"', source)
+		self.assertIn("kt-cl-page-header", source)
+		css = _core_public("css", "kt_cl_code_layout.css").read_text(encoding="utf-8")
+		self.assertIn('[data-testid="kt-cl-page-header"]', css)
+		self.assertIn('[data-layout="bento"]', css)
 
 	def test_sidebar_js_is_config_driven(self) -> None:
 		source = _core_public("js", "kt_cl_sidebar.js").read_text(encoding="utf-8")

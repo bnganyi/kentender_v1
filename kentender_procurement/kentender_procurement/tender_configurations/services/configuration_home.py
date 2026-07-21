@@ -13,9 +13,11 @@ from frappe.utils import cstr
 
 from kentender_procurement.tender_configurations.constants import (
 	STATUS_APPROVED_FOR_PREVIEW,
+	STATUS_AWAITING_PUBLICATION_SETUP,
 	STATUS_COMPLETED,
 	STATUS_IN_PROGRESS,
 	STATUS_NEEDS_ATTENTION,
+	STATUS_PUBLISHED,
 	STATUS_READY_FOR_PUBLICATION,
 	STATUS_READY_FOR_REVIEW,
 	STATUS_RETURNED_FOR_CORRECTION,
@@ -42,8 +44,10 @@ _STATUS_LABELS = {
 	STATUS_RETURNED_FOR_CORRECTION: "Returned for correction",
 	STATUS_APPROVED_FOR_PREVIEW: "Approved for preview",
 	STATUS_READY_FOR_PUBLICATION: "Ready for publication",
-	STATUS_SENT_TO_PUBLICATION: "Sent to publication workflow",
+	STATUS_AWAITING_PUBLICATION_SETUP: "Awaiting publication setup",
+	STATUS_SENT_TO_PUBLICATION: "Awaiting publication setup",
 	STATUS_COMPLETED: "Completed",
+	STATUS_PUBLISHED: "Published",
 }
 
 _STATUS_TONE = {
@@ -54,8 +58,10 @@ _STATUS_TONE = {
 	STATUS_RETURNED_FOR_CORRECTION: "returned_for_correction",
 	STATUS_APPROVED_FOR_PREVIEW: "approved_for_preview",
 	STATUS_READY_FOR_PUBLICATION: "ready_for_publication",
+	STATUS_AWAITING_PUBLICATION_SETUP: "completed",
 	STATUS_SENT_TO_PUBLICATION: "completed",
 	STATUS_COMPLETED: "completed",
+	STATUS_PUBLISHED: "completed",
 }
 
 # Next-action copy from UI-01 §5
@@ -260,18 +266,37 @@ def _pick_next_action(steps: list[dict[str, Any]], doc) -> dict[str, Any]:
 		}
 	if status == STATUS_READY_FOR_PUBLICATION:
 		return {
-			"label": "Send to Publication Workflow",
-			"reason": "The preview is confirmed. Send the package to the publication workflow.",
-			"button_label": "Send to Publication Workflow",
-			"route": HANDOFF_ROUTES["tender_document_preview"],
+			"label": "Continue to Publication Setup",
+			"reason": "The tender package is confirmed. Complete publication setup next.",
+			"button_label": "Open Publication Setup",
+			"route": HANDOFF_ROUTES["publications"],
 			"step_id": None,
 		}
-	if status in (STATUS_COMPLETED, STATUS_SENT_TO_PUBLICATION):
+	if status in (
+		STATUS_AWAITING_PUBLICATION_SETUP,
+		STATUS_SENT_TO_PUBLICATION,
+	):
 		return {
-			"label": "View Tender Document Preview",
-			"reason": "This configuration has been sent to the publication workflow.",
-			"button_label": "Open Preview",
-			"route": HANDOFF_ROUTES["tender_document_preview"],
+			"label": "Complete Publication Setup",
+			"reason": "The tender package is confirmed and awaiting publication setup.",
+			"button_label": "Open Publication Setup",
+			"route": HANDOFF_ROUTES["publications"],
+			"step_id": None,
+		}
+	if status == STATUS_PUBLISHED:
+		return {
+			"label": "View Published Tender",
+			"reason": "This tender has been published.",
+			"button_label": "Open Publications",
+			"route": HANDOFF_ROUTES["publications"],
+			"step_id": None,
+		}
+	if status == STATUS_COMPLETED:
+		return {
+			"label": "View Tender Package Review",
+			"reason": "This configuration has completed the configuration workflow.",
+			"button_label": "Review Package",
+			"route": HANDOFF_ROUTES["package_review"],
 			"step_id": None,
 		}
 	return {
@@ -297,8 +322,10 @@ def _build_handoff(doc, steps: list[dict[str, Any]]) -> dict[str, Any]:
 		STATUS_UNDER_REVIEW,
 		STATUS_APPROVED_FOR_PREVIEW,
 		STATUS_READY_FOR_PUBLICATION,
+		STATUS_AWAITING_PUBLICATION_SETUP,
 		STATUS_SENT_TO_PUBLICATION,
 		STATUS_COMPLETED,
+		STATUS_PUBLISHED,
 	):
 		readiness_status = "Passed"
 		readiness_action = "View Readiness Report"
@@ -321,8 +348,10 @@ def _build_handoff(doc, steps: list[dict[str, Any]]) -> dict[str, Any]:
 	elif status in (
 		STATUS_APPROVED_FOR_PREVIEW,
 		STATUS_READY_FOR_PUBLICATION,
+		STATUS_AWAITING_PUBLICATION_SETUP,
 		STATUS_SENT_TO_PUBLICATION,
 		STATUS_COMPLETED,
+		STATUS_PUBLISHED,
 	):
 		review_status, review_action, review_route = (
 			"Approved",
@@ -344,19 +373,27 @@ def _build_handoff(doc, steps: list[dict[str, Any]]) -> dict[str, Any]:
 	else:
 		review_status, review_action, review_route = "Not submitted", None, None
 
-	# Preview card also carries publication handoff (WG-04 merged into WG-03).
-	if status in (STATUS_COMPLETED, STATUS_SENT_TO_PUBLICATION):
-		preview_status = "Sent to publication workflow"
-		preview_action = "Open Tender Document Preview"
-		preview_route = HANDOFF_ROUTES["tender_document_preview"]
-	elif status == STATUS_READY_FOR_PUBLICATION:
-		preview_status = "Confirmed — ready to send"
-		preview_action = "Send to Publication Workflow"
-		preview_route = HANDOFF_ROUTES["tender_document_preview"]
+	# Package Review is the primary surface after review approval (v7); document preview is nested.
+	if status == STATUS_PUBLISHED:
+		preview_status = "Published"
+		preview_action = "Open Publications"
+		preview_route = HANDOFF_ROUTES["publications"]
+	elif status in (
+		STATUS_AWAITING_PUBLICATION_SETUP,
+		STATUS_SENT_TO_PUBLICATION,
+		STATUS_READY_FOR_PUBLICATION,
+	):
+		preview_status = "Package confirmed — awaiting publication setup"
+		preview_action = "Open Publication Setup"
+		preview_route = HANDOFF_ROUTES["publications"]
+	elif status == STATUS_COMPLETED:
+		preview_status = "Completed"
+		preview_action = "Review Package"
+		preview_route = HANDOFF_ROUTES["package_review"]
 	elif status == STATUS_APPROVED_FOR_PREVIEW:
 		preview_status = "Available"
-		preview_action = "Open Tender Document Preview"
-		preview_route = HANDOFF_ROUTES["tender_document_preview"]
+		preview_action = "Review Package"
+		preview_route = HANDOFF_ROUTES["package_review"]
 	else:
 		preview_status = "Available after review"
 		preview_action = None

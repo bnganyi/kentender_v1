@@ -34,8 +34,11 @@ Helpers: `tests/ui/helpers/ktClQueueContract.ts`
 | CFG-09 Contract Values | `cfg09-contract-values.spec.ts` (tabs + table/drawer + guidance; CV ids; Save + Run Check; no Continue) | locked |
 | WF-01 Readiness Check & Report | `wg01-readiness.spec.ts` (summary cards + findings + checklist; Submit for Review) | locked |
 | WF-02 Review & Approval | `wg02-review.spec.ts` (checklist + decision panel; Approve for Document Preview) | locked |
-| WF-03 Tender Document Preview (+ handoff) | `wg03-document-preview.spec.ts` (outline + preview + Confirm + Send to Publication Workflow) | locked |
-| WF-04 Publication Handoff | — | retired (merged into WF-03; route redirects to render-preview) |
+| WF-03 Tender Document Preview | `wg03-document-preview.spec.ts` (outline + preview; document artifact path under Package Review) | locked (document path) |
+| WF-04 Publication Handoff | — | retired (no Send step; Confirm Package auto-opens Publication Setup) |
+| PUB-A1 Electronic Tender Package Review | `tests/ui/smoke/publications/a1-package-review.spec.ts` | locked (functional) |
+| PUB-A2 Publications Queue | `tests/ui/smoke/publications/a2-publications-queue.spec.ts` (+ queue gate) | locked (functional) |
+| PUB-A3 Publication Setup | `tests/ui/smoke/publications/a3-publication-setup.spec.ts` | locked (functional) |
 
 ## Required pattern gates
 
@@ -54,9 +57,10 @@ make -C apps/kentender_v1 ui-civic-ledger-cfg09-gate
 make -C apps/kentender_v1 ui-civic-ledger-wg01-gate
 make -C apps/kentender_v1 ui-civic-ledger-wg02-gate
 make -C apps/kentender_v1 ui-civic-ledger-wg03-gate
+make -C apps/kentender_v1 ui-publications-gate
 ```
 
-Run before marking Civic Ledger queue/list, UI-01 home, CFG-01…CFG-09, or WF-01…WF-03 UX work done.
+Run before marking Civic Ledger queue/list, UI-01 home, CFG-01…CFG-09, WF-01…WF-03, or Publications A1–A3 UX work done.
 
 ## Adoption steps for a new CL queue page
 

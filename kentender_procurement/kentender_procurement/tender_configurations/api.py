@@ -464,12 +464,97 @@ def return_tender_configuration_preview_for_correction(
 
 @frappe.whitelist()
 def send_tender_configuration_to_publication_workflow(configuration_id: str) -> dict[str, Any]:
+	"""Legacy shim — prefer confirm_tender_package / confirm preview (auto-opens setup)."""
 	_require_login()
 	from kentender_procurement.tender_configurations.services.document_preview import (
 		send_to_publication_workflow,
 	)
 
 	return send_to_publication_workflow(configuration_id)
+
+
+@frappe.whitelist()
+def confirm_tender_package(
+	configuration_id: str,
+	payload: dict[str, Any] | str | None = None,
+) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.document_preview import (
+		confirm_tender_package as _confirm_tender_package,
+	)
+
+	return _confirm_tender_package(configuration_id, payload)
+
+
+@frappe.whitelist()
+def get_package_review_summary(configuration_id: str) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.package_review import (
+		get_package_review_summary as _get,
+	)
+
+	return _get(configuration_id)
+
+
+@frappe.whitelist()
+def list_publications(
+	tab: str | None = None,
+	search: str | None = None,
+	page: int | str | None = None,
+	page_size: int | str | None = None,
+) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.publication_setup import (
+		list_publications as _list,
+	)
+
+	return _list(tab=tab, search=search, page=page, page_size=page_size)
+
+
+@frappe.whitelist()
+def get_publication_setup(publication_id: str) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.publication_setup import (
+		get_publication_setup as _get,
+	)
+
+	return _get(publication_id)
+
+
+@frappe.whitelist()
+def save_publication_setup(
+	publication_id: str,
+	payload: dict[str, Any] | str | None = None,
+) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.publication_setup import (
+		save_publication_setup as _save,
+	)
+
+	return _save(publication_id, payload)
+
+
+@frappe.whitelist()
+def publish_tender(publication_id: str) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.publication_setup import (
+		publish_tender as _publish,
+	)
+
+	return _publish(publication_id)
+
+
+@frappe.whitelist()
+def return_publication_for_correction(
+	publication_id: str,
+	payload: dict[str, Any] | str | None = None,
+) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.publication_setup import (
+		return_publication_for_correction as _ret,
+	)
+
+	return _ret(publication_id, payload)
 
 
 @frappe.whitelist()

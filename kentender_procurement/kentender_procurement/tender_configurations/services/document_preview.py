@@ -14,6 +14,7 @@ from frappe.utils import cstr, now_datetime
 
 from kentender_procurement.tender_configurations.constants import (
 	STATUS_APPROVED_FOR_PREVIEW,
+	STATUS_AWAITING_PUBLICATION_SETUP,
 	STATUS_COMPLETED,
 	STATUS_READY_FOR_PUBLICATION,
 	STATUS_RETURNED_FOR_CORRECTION,
@@ -512,7 +513,10 @@ def _dto(doc, blob: dict[str, Any], package: dict[str, Any] | None = None) -> di
 	preview_status = cstr(blob.get("preview_status") or PREVIEW_NOT_GENERATED)
 	confirmed = preview_status == PREVIEW_CONFIRMED
 	pkg = package if package is not None else _parse_blob(getattr(doc, "publication_package", None))
-	sent = bool(pkg.get("sent_at")) or status == STATUS_SENT_TO_PUBLICATION
+	sent = bool(pkg.get("sent_at")) or status in (
+		STATUS_AWAITING_PUBLICATION_SETUP,
+		STATUS_SENT_TO_PUBLICATION,
+	)
 	block = blob.get("generation_block") if isinstance(blob.get("generation_block"), dict) else None
 	# Preview generation blocks are distinct from WG-01 readiness findings — surface them
 	# in the shared Issues cell so "None" does not contradict the exception banner.
@@ -547,7 +551,7 @@ def _dto(doc, blob: dict[str, Any], package: dict[str, Any] | None = None) -> di
 		"outline": blob.get("outline") or [{"key": k, "label": lab} for k, lab in OUTLINE],
 		"preview_html": blob.get("preview_html") or "",
 		"watermark_label": (
-			"PREVIEW CONFIRMED — READY FOR PUBLICATION HANDOFF"
+			"PACKAGE CONFIRMED — READY FOR PUBLICATION SETUP"
 			if confirmed
 			else "PREVIEW — NOT FOR PUBLICATION"
 		),
@@ -555,7 +559,7 @@ def _dto(doc, blob: dict[str, Any], package: dict[str, Any] | None = None) -> di
 			{"id": cid, "label": lab} for cid, lab in CONFIRM_CHECKS
 		],
 		"user_confirmed": 1 if blob.get("user_confirmed") else 0,
-		# F1 §4: regenerate disabled after Confirm Preview.
+		# F1 §4: regenerate disabled after Confirm Tender Package.
 		"can_regenerate_preview": (
 			status == STATUS_APPROVED_FOR_PREVIEW
 			and preview_status in (PREVIEW_NOT_GENERATED, PREVIEW_GENERATED, PREVIEW_EXCEPTION)
@@ -565,13 +569,14 @@ def _dto(doc, blob: dict[str, Any], package: dict[str, Any] | None = None) -> di
 		and status
 		in (STATUS_APPROVED_FOR_PREVIEW, STATUS_READY_FOR_PUBLICATION)
 		and not confirmed,
-		# Return remains available until published (Sent is still pre-publish).
+		# Return remains available until published.
 		"can_return_for_correction": (
 			preview_status in (PREVIEW_GENERATED, PREVIEW_CONFIRMED)
 			and status
 			in (
 				STATUS_APPROVED_FOR_PREVIEW,
 				STATUS_READY_FOR_PUBLICATION,
+				STATUS_AWAITING_PUBLICATION_SETUP,
 				STATUS_SENT_TO_PUBLICATION,
 			)
 		),
@@ -580,12 +585,19 @@ def _dto(doc, blob: dict[str, Any], package: dict[str, Any] | None = None) -> di
 			"items": confirmed_pkg.get("items") or list(PACKAGE_ITEMS),
 			"note": (
 				"This action does not publish the tender. "
-				"It sends the confirmed package to the publication workflow."
+				"The confirmed package is ready for publication setup."
 			),
 			"sent_at": pkg.get("sent_at") or "",
 			"sent_by": pkg.get("sent_by") or "",
-			"can_send": confirmed and not sent and status == STATUS_READY_FOR_PUBLICATION,
+			# v7: no separate Send step — can_send always false; continue to setup instead.
+			"can_send": False,
 			"sent": sent,
+			"continue_to_setup": 1 if (confirmed or sent) and publication.get("publication_id") else 0,
+			"publication_setup_route": (
+				f"publication-setup/{publication.get('publication_id')}"
+				if publication.get("publication_id")
+				else "publications"
+			),
 			"document_hash": confirmed_pkg.get("document_hash") or blob.get("document_hash") or "",
 			"package_id": confirmed_pkg.get("package_id") or "",
 			"package_status": confirmed_pkg.get("package_status") or "",
@@ -658,11 +670,12 @@ def generate_document_preview(configuration_id: str) -> dict[str, Any]:
 		cstr(prior.get("preview_status")) == PREVIEW_CONFIRMED
 		or prior.get("user_confirmed")
 		or configuration_is_locked_for_edit(doc.name)
-		or cstr(doc.status) in (STATUS_SENT_TO_PUBLICATION, STATUS_COMPLETED)
+		or cstr(doc.status)
+		in (STATUS_AWAITING_PUBLICATION_SETUP, STATUS_SENT_TO_PUBLICATION, STATUS_COMPLETED)
 	):
 		frappe.throw(
 			frappe._(
-				"Preview regeneration is disabled after Confirm Preview. "
+				"Preview regeneration is disabled after Confirm Tender Package. "
 				"Return for Correction before regenerating."
 			),
 			title="PREVIEW_LOCKED",
@@ -722,26 +735,56 @@ def confirm_document_preview(
 	html_doc = cstr(blob.get("preview_html") or "")
 	html_doc = html_doc.replace(
 		"PREVIEW — NOT FOR PUBLICATION",
+		"PACKAGE CONFIRMED — READY FOR PUBLICATION SETUP",
+	)
+	html_doc = html_doc.replace(
 		"PREVIEW CONFIRMED — READY FOR PUBLICATION HANDOFF",
+		"PACKAGE CONFIRMED — READY FOR PUBLICATION SETUP",
 	)
 	blob["preview_html"] = html_doc
 
 	from kentender_procurement.tender_configurations.services.f1_publication_handoff import (
 		create_confirmed_package,
+		create_publication_record,
 	)
 
 	pkg = create_confirmed_package(doc, preview_blob=blob)
 	blob["document_hash"] = cstr(pkg.document_hash or "")
 	blob["confirmed_package_id"] = pkg.name
 
+	# v7 §17: Confirm Tender Package auto-creates/opens Publication Setup.
+	pub = create_publication_record(doc, pkg)
+	package = {
+		"items": list(PACKAGE_ITEMS),
+		"configuration_ref": cstr(doc.configuration_ref or doc.name),
+		"std_document_label": cstr(doc.std_document_label or ""),
+		"std_version": cstr(pkg.std_version or ""),
+		"configuration_version": cstr(pkg.configuration_version or ""),
+		"document_hash": cstr(pkg.document_hash or ""),
+		"confirmed_package_id": pkg.name,
+		"publication_id": pub.name,
+		"publication_status": cstr(pub.status or ""),
+		"sent_at": str(now_datetime()),
+		"sent_by": frappe.session.user,
+		"note": (
+			"This action does not publish the tender. "
+			"The confirmed package is ready for publication setup."
+		),
+	}
 	doc.document_preview = json.dumps(blob)
-	doc.status = STATUS_READY_FOR_PUBLICATION
+	doc.publication_package = json.dumps(package)
+	doc.status = STATUS_AWAITING_PUBLICATION_SETUP
 	doc.confirmed_document_package = pkg.name
+	doc.it_publication_record = pub.name
 	doc.flags.ignore_mandatory = True
 	doc.flags.ignore_f1_publication_lock = True
 	doc.save(ignore_permissions=False)
 	frappe.db.commit()
-	return _dto(doc, blob)
+	out = _dto(doc, blob, package)
+	out["publication_id"] = pub.name
+	out["publication_setup_route"] = f"publication-setup/{pub.name}"
+	out["package_confirmed"] = True
+	return out
 
 
 def return_preview_for_correction(
@@ -863,26 +906,23 @@ def _html_to_pdf_bytes(html_doc: str) -> bytes:
 
 
 def send_to_publication_workflow(configuration_id: str) -> dict[str, Any]:
+	"""Thin shim: v7 Confirm already opens Publication Setup. Idempotent return."""
 	configuration_id = cstr(configuration_id or "").strip()
 	doc = frappe.get_doc("Tender Configuration", configuration_id)
 	if not frappe.has_permission(doc=doc, ptype="write"):
 		frappe.throw(frappe._("Not permitted"), frappe.PermissionError)
 	blob = _parse_blob(getattr(doc, "document_preview", None))
 	if cstr(blob.get("preview_status")) != PREVIEW_CONFIRMED:
-		frappe.throw(
-			frappe._("Confirm the preview before sending to publication workflow."),
-			title="HANDOFF_STATE",
-		)
-	if cstr(doc.status) != STATUS_READY_FOR_PUBLICATION:
-		frappe.throw(
-			frappe._("Configuration is not ready for publication handoff."),
-			title="HANDOFF_STATE",
+		# Prefer canonical confirm path (creates package + publication).
+		return confirm_document_preview(
+			configuration_id, {"confirm_ready_for_handoff": 1}
 		)
 
 	from kentender_procurement.tender_configurations.services.f1_publication_handoff import (
 		PACKAGE_DOCTYPE,
 		create_publication_record,
 		get_active_package_name,
+		get_open_publication_name,
 	)
 
 	pkg_name = cstr(getattr(doc, "confirmed_document_package", None) or "") or get_active_package_name(
@@ -890,42 +930,55 @@ def send_to_publication_workflow(configuration_id: str) -> dict[str, Any]:
 	)
 	if not pkg_name or not frappe.db.exists(PACKAGE_DOCTYPE, pkg_name):
 		frappe.throw(
-			frappe._("Confirmed tender document package is missing. Confirm the preview again."),
+			frappe._("Confirmed tender document package is missing. Confirm the package again."),
 			title="HANDOFF_STATE",
 		)
 	pkg_doc = frappe.get_doc(PACKAGE_DOCTYPE, pkg_name)
-	pub = create_publication_record(doc, pkg_doc)
+	pub_name = cstr(getattr(doc, "it_publication_record", None) or "") or get_open_publication_name(
+		doc.name
+	)
+	if pub_name and frappe.db.exists("IT Tender Publication Record", pub_name):
+		pub = frappe.get_doc("IT Tender Publication Record", pub_name)
+	else:
+		pub = create_publication_record(doc, pkg_doc)
 
-	readiness = _parse_blob(getattr(doc, "readiness_report", None))
-	review = _parse_blob(getattr(doc, "review_workspace", None))
-	package = {
+	package = _parse_blob(getattr(doc, "publication_package", None)) or {
 		"items": list(PACKAGE_ITEMS),
-		"configuration_ref": cstr(doc.configuration_ref or doc.name),
-		"std_document_label": cstr(doc.std_document_label or ""),
-		"std_version": cstr(pkg_doc.std_version or ""),
-		"configuration_version": cstr(pkg_doc.configuration_version or ""),
 		"document_hash": cstr(pkg_doc.document_hash or ""),
 		"confirmed_package_id": pkg_doc.name,
-		"publication_id": pub.name,
-		"publication_status": cstr(pub.status or ""),
-		"readiness_last_checked_at": readiness.get("last_checked_at") or "",
-		"review_approved_at": review.get("approved_at") or "",
-		"preview_confirmed_at": blob.get("confirmed_at") or "",
-		"preview_html_available": 1 if blob.get("preview_html") else 0,
-		"sent_at": str(now_datetime()),
-		"sent_by": frappe.session.user,
-		"note": (
-			"This action does not publish the tender. "
-			"It sends the confirmed package to the publication workflow."
-		),
 	}
+	package["publication_id"] = pub.name
+	package["publication_status"] = cstr(pub.status or "")
+	package["sent_at"] = package.get("sent_at") or str(now_datetime())
+	package["sent_by"] = package.get("sent_by") or frappe.session.user
+	package["note"] = (
+		"This action does not publish the tender. "
+		"The confirmed package is ready for publication setup."
+	)
 	doc.publication_package = json.dumps(package)
 	doc.it_publication_record = pub.name
-	doc.status = STATUS_SENT_TO_PUBLICATION
+	if cstr(doc.status) not in (STATUS_AWAITING_PUBLICATION_SETUP, STATUS_SENT_TO_PUBLICATION):
+		doc.status = STATUS_AWAITING_PUBLICATION_SETUP
 	doc.flags.ignore_mandatory = True
 	doc.flags.ignore_f1_publication_lock = True
 	doc.save(ignore_permissions=False)
 	frappe.db.commit()
 	out = _dto(doc, blob, package)
 	out["sent"] = True
+	out["publication_id"] = pub.name
+	out["publication_setup_route"] = f"publication-setup/{pub.name}"
 	return out
+
+
+def confirm_tender_package(
+	configuration_id: str, payload: dict[str, Any] | str | None = None
+) -> dict[str, Any]:
+	"""v7 canonical Confirm Tender Package (alias of confirm_document_preview)."""
+	if isinstance(payload, str):
+		try:
+			payload = json.loads(payload)
+		except (TypeError, ValueError):
+			payload = {}
+	payload = dict(payload or {})
+	payload.setdefault("confirm_ready_for_handoff", 1)
+	return confirm_document_preview(configuration_id, payload)

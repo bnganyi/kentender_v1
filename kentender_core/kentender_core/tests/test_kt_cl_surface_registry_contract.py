@@ -28,6 +28,9 @@ _A2_SCREEN_IDS: tuple[str, ...] = (
 	"WF-02",
 	"WF-03",
 	"WF-04",
+	"PUB-A1",
+	"PUB-A2",
+	"PUB-A3",
 )
 
 

@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        try {
+            tailwind.config = {
+                darkMode: "class",
+                theme: {
+                    extend: {
+                        "colors": {
+                            "primary": "#002147",
+                            "on-primary": "#ffffff",
+                            "background": "#faf9fd",
+                            "surface": "#faf9fd",
+                            "surface-dim": "#dad9dd",
+                            "surface-bright": "#faf9fd",
+                            "surface-container-lowest": "#ffffff",
+                            "surface-container-low": "#f4f3f7",
+                            "surface-container": "#efedf1",
+                            "surface-container-high": "#e9e7eb",
+                            "surface-container-highest": "#e3e2e6",
+                            "on-surface": "#1a1b1e",
+                            "on-surface-variant": "#44474e",
+                            "outline": "#74777f",
+                            "outline-variant": "#c4c6cf",
+                            "border-subtle": "#EDEBE9",
+                            "secondary": "#006a6a",
+                            "error": "#ba1a1a",
+                            "error-container": "#ffdad6",
+                            "status-passed": "#107C10"
+                        },
+                        "borderRadius": {
+                            "DEFAULT": "0.125rem",
+                            "lg": "0.25rem",
+                            "xl": "0.5rem",
+                            "full": "0.75rem"
+                        },
+                        "spacing": {
+                            "grid-margin": "2rem",
+                            "stack-gap-md": "1.5rem",
+                            "stack-gap-sm": "0.5rem",
+                            "grid-gutter": "1rem"
+                        },
+                        "fontFamily": {
+                            "body-md": ["Inter"],
+                            "headline-lg": ["IBM Plex Sans"],
+                            "headline-md": ["IBM Plex Sans"],
+                            "action-label": ["Inter"],
+                            "data-mono": ["JetBrains Mono"]
+                        }
+                    },
+                },
+            }
+        } catch (_e) {}
+    </script>
+<style>
+        .card-depth {
+            @apply bg-white border border-outline-variant/30 rounded-xl shadow-sm;
+        }
+        .form-label {
+            @apply block text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1;
+        }
+        .form-label.required::after {
+            content: " *";
+            @apply text-error;
+        }
+        .form-input {
+            @apply w-full px-4 py-2.5 bg-white border border-outline-variant rounded-lg text-sm text-on-surface focus:ring-1 focus:ring-primary focus:border-primary focus:outline-none transition-all;
+        }
+        .form-input-readonly {
+            @apply w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant/50 rounded-lg text-sm text-on-surface-variant cursor-not-allowed;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex font-body-md">
+<!-- Sidebar (Full-height SideNavBar) -->
+<nav class="fixed left-0 top-0 h-screen z-50 hidden md:flex flex-col w-64 bg-surface-container-low border-r border-outline-variant">
+<div class="p-6 border-b border-outline-variant">
+<h1 class="text-xl font-bold text-primary tracking-tight">KenTender</h1>
+<div class="mt-4 flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-white overflow-hidden">
+<span class="material-symbols-outlined" data-original-icon="account_balance">account_balance</span>
+</div>
+<div>
+<p class="text-xs font-bold text-on-surface leading-tight">Procurement Portal</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-wider">Public Sector</p>
+</div>
+</div>
+</div>
+<div class="flex-1 py-4 overflow-y-auto sidebar-scroll">
+<ul class="space-y-1 px-2">
+<li>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-white rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">home</span>
+<span class="text-sm font-medium">Procurement Home</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-white rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">bar_chart</span>
+<span class="text-sm font-medium">Analytics</span>
+</a>
+</li>
+<li class="pt-4 pb-1 px-4 text-[10px] font-bold text-on-surface-variant/60 uppercase tracking-widest">Tendering</li>
+<li>
+<button class="w-full flex items-center justify-between px-4 py-2 text-primary font-bold bg-white shadow-sm border border-outline-variant/20 rounded-lg">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px]">gavel</span>
+<span class="text-sm">Tender Management</span>
+</div>
+<span class="material-symbols-outlined text-[18px]">expand_more</span>
+</button>
+<ul class="mt-1 ml-4 border-l-2 border-primary/10 flex flex-col">
+<li><a class="px-6 py-2 text-xs text-on-surface-variant hover:text-primary block" href="#">Procurement Packages</a></li>
+<li><a class="px-6 py-2 text-xs text-on-surface-variant hover:text-primary block" href="#">Tender Configurations</a></li>
+<li><a class="px-6 py-2 text-xs text-primary font-bold bg-primary/5 rounded-r-lg block" href="#">Publications</a></li>
+<li><a class="px-6 py-2 text-xs text-on-surface-variant hover:text-primary block" href="#">Bid Submissions</a></li>
+<li><a class="px-6 py-2 text-xs text-on-surface-variant hover:text-primary block" href="#">Awards</a></li>
+</ul>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-white rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">description</span>
+<span class="text-sm font-medium">Contract Management</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-white rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">admin_panel_settings</span>
+<span class="text-sm font-medium">STD Administration</span>
+</a>
+</li>
+</ul>
+</div>
+<div class="p-4 border-t border-outline-variant bg-surface-container-low">
+<a class="flex items-center gap-3 px-4 py-2 text-xs text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">settings</span>
+<span>Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-xs text-on-surface-variant hover:text-primary transition-colors mt-1" href="#">
+<span class="material-symbols-outlined text-[18px]">logout</span>
+<span>Sign Out</span>
+</a>
+</div>
+</nav>
+<!-- Content Area -->
+<div class="flex-1 md:ml-64 flex flex-col min-h-screen">
+<!-- Top Toolbar (TopNavBar) -->
+<header class="sticky top-0 z-40 bg-white border-b border-outline-variant h-16 flex items-center justify-between px-6 shrink-0">
+<div class="flex items-center gap-4">
+<nav class="hidden lg:flex items-center gap-2 text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">
+<span>Tender Management</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span>Publications</span>
+</nav>
+<div class="h-6 w-px bg-outline-variant hidden lg:block mx-2"></div>
+<h1 class="text-lg font-bold text-primary">Publication Setup</h1>
+</div>
+<div class="flex items-center gap-3">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+<input class="pl-10 pr-4 py-1.5 border border-outline-variant rounded-full bg-surface-container-low text-xs w-64 focus:ring-1 focus:ring-primary focus:border-primary focus:outline-none" placeholder="Search publications..." type="text"/>
+</div>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors">
+<span class="material-symbols-outlined text-[22px]">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors">
+<span class="material-symbols-outlined text-[22px]">help_outline</span>
+</button>
+<button class="ml-2 flex items-center gap-2 border border-outline-variant px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-surface-container-low transition-colors" id="viewAuditBtn">
+<span class="material-symbols-outlined text-[18px]">history</span>
+                View Audit
+            </button>
+</div>
+</header>
+<!-- Context Strip -->
+<section class="bg-white border-b border-outline-variant px-6 py-4">
+<div class="max-w-[1440px] mx-auto grid grid-cols-2 md:grid-cols-6 lg:grid-cols-6 gap-0">
+<div class="border-r border-outline-variant/30 px-4 first:pl-0">
+<p class="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mb-1">Publication Ref</p>
+<p class="text-[13px] font-bold text-primary">PUB-2026-00018</p>
+</div>
+<div class="border-r border-outline-variant/30 px-4">
+<p class="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mb-1">Doc Package Ref</p>
+<p class="text-[13px] font-bold text-primary truncate">TDP-2026-00041</p>
+</div>
+<div class="border-r border-outline-variant/30 px-4">
+<p class="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mb-1">PE</p>
+<p class="text-[13px] font-bold text-primary">NSSF (Kenya)</p>
+</div>
+<div class="border-r border-outline-variant/30 px-4">
+<p class="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mb-1">STD</p>
+<p class="text-[13px] font-bold text-primary">IT STD v4.2</p>
+</div>
+<div class="border-r border-outline-variant/30 px-4">
+<p class="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mb-1">Status</p>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-amber-500"></span>
+<span class="text-[13px] font-bold text-primary">Draft Setup</span>
+</div>
+</div>
+<div class="px-4 last:pr-0">
+<p class="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mb-1">Validation</p>
+<p class="text-[13px] font-bold text-error" id="summaryValidationCount">2 Pending</p>
+</div>
+</div>
+</section>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto bg-background p-8">
+<div class="max-w-[1440px] mx-auto grid grid-cols-12 gap-8">
+<!-- Left Side: Main Form Sections -->
+<div class="col-span-12 xl:col-span-8 space-y-8">
+<!-- Publication Timelines Section -->
+<section class="card-depth p-8">
+<div class="flex items-center gap-3 mb-8">
+<span class="material-symbols-outlined text-primary text-[24px]">calendar_month</span>
+<h2 class="text-lg font-bold text-primary">Publication Timelines</h2>
+</div>
+<div class="mb-10 pb-8 border-b border-outline-variant/30">
+<label class="form-label required">Publication Mode</label>
+<div class="flex flex-col sm:flex-row gap-8 mt-4">
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="relative flex items-center justify-center">
+<input checked="" class="peer sr-only" id="modeImmediate" name="pub_mode" type="radio" value="immediate"/>
+<div class="w-6 h-6 border-2 border-outline-variant rounded-full peer-checked:border-primary transition-all"></div>
+<div class="absolute w-3 h-3 bg-primary rounded-full scale-0 peer-checked:scale-100 transition-transform"></div>
+</div>
+<span class="text-sm font-medium text-on-surface">Publish immediately</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<div class="relative flex items-center justify-center">
+<input class="peer sr-only" id="modeScheduled" name="pub_mode" type="radio" value="scheduled"/>
+<div class="w-6 h-6 border-2 border-outline-variant rounded-full peer-checked:border-primary transition-all"></div>
+<div class="absolute w-3 h-3 bg-primary rounded-full scale-0 peer-checked:scale-100 transition-transform"></div>
+</div>
+<span class="text-sm font-medium text-on-surface">Schedule publication</span>
+</label>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+<div class="space-y-1.5" id="pubDatePickerContainer">
+<label class="form-label required" id="pubDateLabel">Publication Date/Time</label>
+<div id="pubDatePickerWrapper">
+<input class="form-input" id="pubDateInput" type="datetime-local" value="2026-03-15T09:00"/>
+</div>
+<div class="hidden" id="pubDateReadonlyWrapper">
+<div class="form-input-readonly">On publish action (Immediate)</div>
+</div>
+<p class="text-[11px] text-on-surface-variant">Set when this tender becomes visible to bidders.</p>
+</div>
+<div class="space-y-1.5">
+<label class="form-label required">Clarification Deadline</label>
+<input class="form-input" type="datetime-local"/>
+<p class="text-[11px] text-on-surface-variant">Last date for bidders to request clarifications.</p>
+</div>
+<div class="space-y-1.5">
+<label class="form-label required">Submission Deadline</label>
+<input class="form-input" type="datetime-local"/>
+<p class="text-[11px] text-on-surface-variant">Closing date for receiving electronic bids.</p>
+</div>
+<div class="space-y-1.5">
+<label class="form-label required">Opening Date/Time</label>
+<input class="form-input" type="datetime-local"/>
+<p class="text-[11px] text-on-surface-variant">Set when submitted bids may be opened.</p>
+</div>
+</div>
+</section>
+<!-- Tender Notice Section -->
+<section class="card-depth p-8">
+<div class="flex items-center gap-3 mb-8">
+<span class="material-symbols-outlined text-primary text-[24px]">description</span>
+<h2 class="text-lg font-bold text-primary">Tender Notice &amp; Description</h2>
+</div>
+<div class="space-y-6">
+<div>
+<div class="space-y-1.5">
+<label class="form-label required">Public Tender Notice</label>
+<textarea class="form-input min-h-[180px] leading-relaxed w-full" placeholder="Enter the official text that will appear on the public portal..."></textarea>
+<div class="mt-3 flex items-start gap-3 bg-primary/5 p-4 rounded-lg border border-primary/10">
+<span class="material-symbols-outlined text-primary text-[20px] mt-0.5">info</span>
+<p class="text-[12px] text-primary/80 leading-normal">
+                                        This text will appear on the public portal when the tender is published.
+                                    </p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Bidder Visibility & Workspace Section -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<!-- Bidder Visibility Section -->
+<section class="card-depth p-8">
+<div class="flex items-center gap-3 mb-8">
+<span class="material-symbols-outlined text-primary text-[24px]">visibility</span>
+<h2 class="text-lg font-bold text-primary">Bidder Visibility</h2>
+</div>
+<div class="space-y-6">
+<div>
+<label class="form-label">Visibility Scope</label>
+<select class="form-input appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[position:right_0.75rem_center] bg-[length:1.25em_1.25em] bg-no-repeat pr-10">
+<option>Public Open Tender</option>
+<option>Restricted Tender (Pre-qualified)</option>
+<option>Direct Procurement</option>
+</select>
+</div>
+</div>
+</section>
+<!-- Bidder Workspace Section -->
+<section class="card-depth p-8 flex flex-col">
+<div class="flex items-center gap-3 mb-8">
+<span class="material-symbols-outlined text-primary text-[24px]">hub</span>
+<h2 class="text-lg font-bold text-primary">Bidder Workspace</h2>
+</div>
+<div class="flex-1 space-y-6">
+<div class="bg-surface-container-low border border-outline-variant/30 rounded-xl p-5 space-y-4">
+<div class="flex items-center justify-between">
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Bidder Workspace Status</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="w-2 h-2 rounded-full bg-status-passed"></span>
+<span class="text-sm font-bold text-on-surface">Prepared</span>
+</div>
+</div>
+<div class="text-right">
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-2">Activate Bidder Workspace</p>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+<div class="pt-4 border-t border-outline-variant/30">
+<p class="text-[12px] text-on-surface-variant leading-relaxed">
+                                        Enable bidders to view the confirmed tender package, complete required forms, upload evidence, enter prices, and submit bids electronically.
+                                    </p>
+</div>
+</div>
+<div class="flex items-start gap-4 p-5 bg-status-passed/5 rounded-xl border border-status-passed/20">
+<span class="material-symbols-outlined text-status-passed text-[24px]">check_circle</span>
+<div>
+<p class="text-sm font-bold text-status-passed leading-tight">Schema Validated</p>
+<p class="text-[11px] text-on-surface-variant mt-1.5 leading-relaxed">
+                                        Price schedules and technical forms successfully mapped to TDP-2026-00041. Data integrity check passed.
+                                    </p>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- Right Side: Auxiliary Sidebar -->
+<div class="col-span-12 xl:col-span-4 space-y-8">
+<!-- Referenced Assets (Read-only) -->
+<section class="card-depth overflow-hidden">
+<div class="bg-primary/5 px-6 py-4 border-b border-outline-variant/30">
+<h3 class="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">attachment</span>
+                            Referenced Assets
+                        </h3>
+</div>
+<div class="p-2 space-y-1">
+<div class="flex items-center justify-between p-4 rounded-lg bg-surface-container-low transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center border border-outline-variant/30">
+<span class="material-symbols-outlined text-primary text-[22px]">inventory_2</span>
+</div>
+<span class="text-sm font-semibold text-on-surface">Confirmed Package</span>
+</div>
+<span class="material-symbols-outlined text-outline-variant text-[20px]">open_in_new</span>
+</div>
+<div class="flex items-center justify-between p-4 rounded-lg bg-surface-container-low transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center border border-outline-variant/30">
+<span class="material-symbols-outlined text-primary text-[22px]">picture_as_pdf</span>
+</div>
+<span class="text-sm font-semibold text-on-surface">Official Tender Doc</span>
+</div>
+<span class="material-symbols-outlined text-outline-variant text-[20px]">download</span>
+</div>
+<div class="flex items-center justify-between p-4 rounded-lg bg-surface-container-low transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center border border-outline-variant/30">
+<span class="material-symbols-outlined text-primary text-[22px]">schema</span>
+</div>
+<span class="text-sm font-semibold text-on-surface">Price Schedule v1</span>
+</div>
+<span class="material-symbols-outlined text-outline-variant text-[20px]">visibility</span>
+</div>
+</div>
+</section>
+<!-- Validation Checks -->
+<section class="card-depth overflow-hidden">
+<div class="bg-error/5 px-6 py-4 border-b border-error/10">
+<h3 class="text-xs font-bold text-error uppercase tracking-widest flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">report</span>
+                            Validation Checks
+                        </h3>
+</div>
+<div class="divide-y divide-outline-variant/20" id="validationList">
+<div class="p-5 flex gap-4 hover:bg-error/[0.02] transition-colors" id="valCheckDate">
+<div class="w-1.5 h-1.5 rounded-full bg-error mt-2 shrink-0"></div>
+<div>
+<p class="text-[13px] font-medium text-on-surface leading-normal" id="valCheckDateText">Submission deadline must be at least 14 days after publication date.</p>
+<div class="mt-2 flex items-center gap-1.5">
+<span class="text-[10px] font-bold text-error uppercase tracking-tighter" id="valCheckDateStatus">Status: Violating</span>
+</div>
+</div>
+</div>
+<div class="p-5 flex gap-4 hover:bg-error/[0.02] transition-colors" id="valCheckPubDate" style="display:none;">
+<div class="w-1.5 h-1.5 rounded-full bg-error mt-2 shrink-0"></div>
+<div>
+<p class="text-[13px] font-medium text-on-surface leading-normal">Future publication date/time required.</p>
+<div class="mt-2 flex items-center gap-1.5">
+<span class="text-[10px] font-bold text-error uppercase tracking-tighter">Status: Missing</span>
+</div>
+</div>
+</div>
+<div class="p-5 flex gap-4 hover:bg-error/[0.02] transition-colors">
+<div class="w-1.5 h-1.5 rounded-full bg-error mt-2 shrink-0"></div>
+<div>
+<p class="text-[13px] font-medium text-on-surface leading-normal">Public notice text is required for website synchronization.</p>
+<div class="mt-2 flex items-center gap-1.5">
+<span class="text-[10px] font-bold text-error uppercase tracking-tighter">Status: Missing Content</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<!-- Footer: Wizard Navigation -->
+<footer class="bg-white border-t border-outline-variant px-8 py-5 sticky bottom-0 z-40">
+<div class="max-w-[1440px] mx-auto flex justify-between items-center">
+<button class="px-6 py-2.5 border border-outline-variant text-on-surface-variant text-sm font-bold rounded-lg hover:bg-surface-container-low transition-all">
+                Back to Publications
+            </button>
+<div class="flex gap-4 items-center">
+<button class="px-6 py-2.5 border border-outline-variant text-on-surface-variant text-sm font-bold rounded-lg hover:bg-surface-container-low transition-all">
+                    Return for Correction
+                </button>
+<button class="px-6 py-2.5 border border-primary text-primary text-sm font-bold rounded-lg hover:bg-primary/5 transition-all">
+                    Save Setup
+                </button>
+<button class="px-10 py-2.5 bg-primary/40 text-on-primary/60 text-sm font-bold rounded-lg cursor-not-allowed flex items-center gap-3 transition-all" disabled="" id="primaryActionBtn">
+<span class="material-symbols-outlined text-[20px]" id="primaryActionIcon" style="font-variation-settings: 'FILL' 1">send</span>
+<span id="primaryActionLabel">Publish Tender</span>
+</button>
+</div>
+</div>
+</footer>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const modeImmediate = document.getElementById('modeImmediate');
+        const modeScheduled = document.getElementById('modeScheduled');
+        
+        const pubDateWrapper = document.getElementById('pubDatePickerWrapper');
+        const pubDateReadonlyWrapper = document.getElementById('pubDateReadonlyWrapper');
+        
+        const primaryActionBtn = document.getElementById('primaryActionBtn');
+        const primaryActionLabel = document.getElementById('primaryActionLabel');
+        const primaryActionIcon = document.getElementById('primaryActionIcon');
+        
+        const valCheckDateText = document.getElementById('valCheckDateText');
+        const valCheckDateStatus = document.getElementById('valCheckDateStatus');
+        const valCheckPubDate = document.getElementById('valCheckPubDate');
+
+        function updateUI() {
+            if (modeImmediate.checked) {
+                // UI Changes
+                pubDateWrapper.classList.add('hidden');
+                pubDateReadonlyWrapper.classList.remove('hidden');
+                
+                primaryActionLabel.textContent = "Publish Tender";
+                primaryActionIcon.textContent = "send";
+                
+                // Validation Logic Update
+                valCheckDateText.textContent = "Submission deadline must be at least 14 days after current system time (immediate publication).";
+                valCheckPubDate.style.display = 'none';
+                
+                // Tooltip
+                primaryActionBtn.title = "Please resolve content validation checks before publishing.";
+            } else {
+                // UI Changes
+                pubDateWrapper.classList.remove('hidden');
+                pubDateReadonlyWrapper.classList.add('hidden');
+                
+                primaryActionLabel.textContent = "Schedule Tender";
+                primaryActionIcon.textContent = "event_available";
+                
+                // Validation Logic Update
+                valCheckDateText.textContent = "Submission deadline must be at least 14 days after publication date.";
+                valCheckPubDate.style.display = 'flex';
+                
+                // Tooltip
+                primaryActionBtn.title = "Please resolve scheduling and content validation checks before confirming.";
+            }
+        }
+
+        modeImmediate.addEventListener('change', updateUI);
+        modeScheduled.addEventListener('change', updateUI);
+
+        // Initial trigger
+        updateUI();
+
+        // Audit view logic
+        const auditBtn = document.getElementById('viewAuditBtn');
+        if (auditBtn) {
+            auditBtn.addEventListener('click', () => {
+                alert('Opening Audit Trail for PUB-2026-00018');
+            });
+        }
+    });
+</script>
+</body></html>

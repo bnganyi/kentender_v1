@@ -1,0 +1,243 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Publications Dashboard | KenTender Procurement System</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "surface-bright": "#f7f9fb",
+                "secondary-container": "#d2e1fa",
+                "surface-tint": "#456085",
+                "on-tertiary-container": "#8088a1",
+                "on-error-container": "#93000a",
+                "surface-container-low": "#f2f4f6",
+                "background": "#f7f9fb",
+                "primary-fixed": "#d4e3ff",
+                "surface-container-high": "#e6e8ea",
+                "surface-container": "#eceef0",
+                "on-surface": "#191c1e",
+                "on-primary": "#ffffff",
+                "on-surface-variant": "#43474e",
+                "on-primary-fixed-variant": "#2d486c",
+                "secondary": "#515f74",
+                "on-secondary-fixed": "#0d1c2e",
+                "on-primary-container": "#708ab2",
+                "surface-dim": "#d8dadc",
+                "inverse-on-surface": "#eff1f3",
+                "tertiary-fixed": "#dae2fd",
+                "secondary-fixed": "#d5e3fc",
+                "surface-container-lowest": "#ffffff",
+                "on-secondary-container": "#556379",
+                "inverse-primary": "#adc8f3",
+                "error": "#ba1a1a",
+                "outline-variant": "#c4c6cf",
+                "outline": "#74777f",
+                "on-tertiary-fixed": "#131b2f",
+                "tertiary-fixed-dim": "#bec6e0",
+                "tertiary-container": "#192135",
+                "on-secondary-fixed-variant": "#3a485c",
+                "primary-container": "#002244",
+                "on-tertiary": "#ffffff",
+                "on-background": "#191c1e",
+                "on-primary-fixed": "#001c3a",
+                "surface-container-highest": "#e0e3e5",
+                "surface-variant": "#e0e3e5",
+                "secondary-fixed-dim": "#b9c7e0",
+                "primary-fixed-dim": "#adc8f3",
+                "on-error": "#ffffff",
+                "error-container": "#ffdad6",
+                "surface": "#f7f9fb",
+                "on-secondary": "#ffffff",
+                "inverse-surface": "#2d3133",
+                "primary": "#000b1d",
+                "tertiary": "#030a1d",
+                "on-tertiary-fixed-variant": "#3e465c",
+                "border-subtle": "#eceef0",
+                "status-passed": "#107C10",
+                "status-warning": "#BC4B01",
+                "status-blocked": "#D13438",
+                "status-missing": "#605E5C"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+            },
+            "fontFamily": {
+                "headline": ["Public Sans"],
+                "display": ["Public Sans"],
+                "body": ["Public Sans"],
+                "label": ["JetBrains Mono"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            font-family: 'Public Sans', sans-serif;
+            background-color: #f7f9fb;
+            color: #191c1e;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-body">
+<!-- TopNavBar -->
+<header class="bg-surface-container-lowest border-b border-outline-variant flex justify-between items-center w-full px-8 h-16 sticky top-0 z-50">
+<div class="flex items-center gap-6">
+<div class="text-xl font-bold text-primary-container tracking-tight">
+                KenTender Procurement System
+            </div>
+<div class="hidden md:flex items-center gap-4 ml-8">
+<nav class="flex gap-6">
+<a class="text-on-surface-variant text-sm font-semibold hover:bg-surface-container transition-colors px-2 py-1 rounded" href="#">Dashboard</a>
+<a class="text-primary-container font-bold border-b-2 border-primary-container text-sm px-2 py-1" href="#">Publications</a>
+<a class="text-on-surface-variant text-sm font-semibold hover:bg-surface-container transition-colors px-2 py-1 rounded" href="#">Tenders</a>
+<a class="text-on-surface-variant text-sm font-semibold hover:bg-surface-container transition-colors px-2 py-1 rounded" href="#">Audit</a>
+</nav>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border border-outline-variant rounded-full text-sm w-64 focus:ring-1 focus:ring-primary-container outline-none" placeholder="Search publications..." type="text">
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">history</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+</div>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-outline-variant ml-2">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCD8wiwhK34h1t_-xNOmX9Ra-rfcxrxavWQ5B8oSg8CQqWWRCeancfXvy_zgrQQ4fU6zdSiZkPo4X8oD8FqjRyUe3cLeZZ_oG8eHBIYNqFhQuI-XxUPa9D8QJkIZml2gY7koBXTDkzvkJtVcaviuDEM3ai9ohLcDCgvjPDrYJ3BG-Rml5YFQxX2W7hxAa1iByYxWs4w90cEzHnvmxw2ed7pp8a8vi__IWftDKzsJlC7GuFY1ZNQwfC9">
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-grow max-w-[1440px] mx-auto w-full px-8 py-8 flex flex-col gap-6">
+<!-- Header Section -->
+<section class="flex flex-col gap-1">
+<h1 class="text-3xl font-bold text-primary-container font-headline">Publications</h1>
+<p class="text-on-surface-variant">Set publication details, publish confirmed electronic tender packages, and monitor published tenders.</p>
+</section>
+<!-- Summary Cards (Bento Style) -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Awaiting Setup -->
+<div class="bg-surface-container-lowest border border-outline-variant border-l-8 border-l-primary-container p-6 flex flex-col justify-between hover:bg-white transition-colors cursor-default">
+<span class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Awaiting Setup</span>
+<div class="flex items-end justify-between mt-4">
+<span class="text-4xl font-bold text-primary-container">12</span>
+<span class="material-symbols-outlined text-primary-container/20 text-4xl">pending_actions</span>
+</div>
+</div>
+<!-- Ready to Publish -->
+<div class="bg-surface-container-lowest border border-outline-variant border-l-8 border-l-status-passed p-6 flex flex-col justify-between hover:bg-white transition-colors cursor-default">
+<span class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Ready to Publish</span>
+<div class="flex items-end justify-between mt-4">
+<span class="text-4xl font-bold text-status-passed">08</span>
+<span class="material-symbols-outlined text-status-passed/20 text-4xl">publish</span>
+</div>
+</div>
+<!-- Scheduled -->
+<div class="bg-surface-container-lowest border border-outline-variant border-l-8 border-l-status-warning p-6 flex flex-col justify-between hover:bg-white transition-colors cursor-default">
+<span class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Scheduled</span>
+<div class="flex items-end justify-between mt-4">
+<span class="text-4xl font-bold text-status-warning">05</span>
+<span class="material-symbols-outlined text-status-warning/20 text-4xl">schedule</span>
+</div>
+</div>
+<!-- Returned -->
+<div class="bg-surface-container-lowest border border-outline-variant border-l-8 border-l-status-blocked p-6 flex flex-col justify-between hover:bg-white transition-colors cursor-default">
+<span class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Returned</span>
+<div class="flex items-end justify-between mt-4">
+<span class="text-4xl font-bold text-status-blocked">02</span>
+<span class="material-symbols-outlined text-status-blocked/20 text-4xl">assignment_return</span>
+</div>
+</div>
+</section>
+<!-- Tabs & Filter Bar -->
+<section class="flex flex-col gap-4">
+<div class="flex items-center justify-between border-b border-outline-variant">
+<div class="flex gap-8 overflow-x-auto scrollbar-hide">
+<button class="pb-3 px-1 border-b-2 border-primary-container text-primary-container font-bold text-sm whitespace-nowrap">Awaiting Setup (12)</button>
+<button class="pb-3 px-1 border-b-2 border-transparent text-on-surface-variant hover:text-primary-container transition-colors text-sm font-semibold whitespace-nowrap">Ready to Publish (8)</button>
+<button class="pb-3 px-1 border-b-2 border-transparent text-on-surface-variant hover:text-primary-container transition-colors text-sm font-semibold whitespace-nowrap">Scheduled (5)</button>
+<button class="pb-3 px-1 border-b-2 border-transparent text-on-surface-variant hover:text-primary-container transition-colors text-sm font-semibold whitespace-nowrap">Published (42)</button>
+<button class="pb-3 px-1 border-b-2 border-transparent text-on-surface-variant hover:text-primary-container transition-colors text-sm font-semibold whitespace-nowrap">Returned (2)</button>
+<button class="pb-3 px-1 border-b-2 border-transparent text-on-surface-variant hover:text-primary-container transition-colors text-sm font-semibold whitespace-nowrap">All (69)</button>
+</div>
+<div class="flex items-center gap-2 pb-2">
+<button class="flex items-center gap-2 px-3 py-1.5 border border-outline-variant rounded-lg text-sm font-semibold text-on-surface-variant hover:bg-surface-container transition-all">
+<span class="material-symbols-outlined text-[20px]">filter_list</span>
+                        Filter
+                    </button>
+<button class="flex items-center gap-2 px-3 py-1.5 border border-outline-variant rounded-lg text-sm font-semibold text-on-surface-variant hover:bg-surface-container transition-all">
+<span class="material-symbols-outlined text-[20px]">download</span>
+                        Export
+                    </button>
+</div>
+</div>
+</section>
+<!-- High-Density Data Table -->
+<section class="bg-surface-container-lowest border border-outline-variant overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead><tr class="bg-surface-container border-b border-outline-variant"><th class="px-4 py-3 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Publication Ref</th><th class="px-4 py-3 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Tender Title</th><th class="px-4 py-3 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Procuring Entity</th><th class="px-4 py-3 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Standard Tender Document</th><th class="px-4 py-3 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Status</th><th class="px-4 py-3 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Publication Date/Time</th><th class="px-4 py-3 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Submission Deadline</th><th class="px-4 py-3 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Opening Date/Time</th><th class="px-4 py-3 text-xs font-bold text-on-surface-variant uppercase tracking-wider text-center">Issues</th><th class="px-4 py-3 text-xs font-bold text-on-surface-variant uppercase tracking-wider text-right">Next Action</th></tr></thead>
+<tbody class="divide-y divide-outline-variant"><tr class="hover:bg-surface-container-low transition-colors"><td class="px-4 py-3 font-label text-xs text-primary-container">PUB-2026-00018</td><td class="px-4 py-3 text-sm font-semibold text-on-surface">Supply of ERP System for Central Operations</td><td class="px-4 py-3 text-sm text-on-surface-variant">National Social Security Fund (NSSF)</td><td class="px-4 py-3"><span class="bg-surface-container-high text-on-surface-variant text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-outline-variant/30 whitespace-nowrap" title="IT Standard Tender Document — April 2022">IT STD</span></td><td class="px-4 py-3"><span class="bg-surface-container-highest text-on-surface-variant text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap border border-outline-variant">Awaiting Setup</span></td><td class="px-4 py-3 text-sm text-on-surface-variant italic opacity-50">Not set</td><td class="px-4 py-3 text-sm text-on-surface-variant italic opacity-50">Not set</td><td class="px-4 py-3 text-sm text-on-surface-variant italic opacity-50">Not set</td><td class="px-4 py-3 text-center"><span class="text-on-surface-variant font-bold text-sm">0</span></td><td class="px-4 py-3 text-right"><button class="bg-primary-container text-white px-4 py-1.5 rounded text-sm font-semibold hover:opacity-90 transition-opacity">Complete Setup</button></td></tr><tr class="hover:bg-surface-container-low transition-colors"><td class="px-4 py-3 font-label text-xs text-primary-container">PUB-2026-00021</td><td class="px-4 py-3 text-sm font-semibold text-on-surface">Consultancy for Legal Audit of Procurement Process</td><td class="px-4 py-3 text-sm text-on-surface-variant">Attorney General's Office</td><td class="px-4 py-3"><span class="bg-surface-container-high text-on-surface-variant text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-outline-variant/30 whitespace-nowrap" title="Consultancy Standard Tender Document — April 2022">Consultancy STD</span></td><td class="px-4 py-3"><span class="bg-surface-container-highest text-on-surface-variant text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap border border-outline-variant">Awaiting Setup</span></td><td class="px-4 py-3 text-sm text-on-surface-variant italic opacity-50">Not set</td><td class="px-4 py-3 text-sm text-on-surface-variant italic opacity-50">Not set</td><td class="px-4 py-3 text-sm text-on-surface-variant italic opacity-50">Not set</td><td class="px-4 py-3 text-center"><span class="text-on-surface-variant font-bold text-sm">0</span></td><td class="px-4 py-3 text-right"><button class="bg-primary-container text-white px-4 py-1.5 rounded text-sm font-semibold hover:opacity-90 transition-opacity">Complete Setup</button></td></tr><tr class="hover:bg-surface-container-low transition-colors"><td class="px-4 py-3 font-label text-xs text-primary-container">PUB-2026-00025</td><td class="px-4 py-3 text-sm font-semibold text-on-surface">Supply and Delivery of Medical Diagnostic Kits</td><td class="px-4 py-3 text-sm text-on-surface-variant">KEMSA</td><td class="px-4 py-3"><span class="bg-surface-container-high text-on-surface-variant text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-outline-variant/30 whitespace-nowrap" title="Health Standard Tender Document — April 2022">Health STD</span></td><td class="px-4 py-3"><span class="bg-surface-container-highest text-on-surface-variant text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap border border-outline-variant">Awaiting Setup</span></td><td class="px-4 py-3 text-sm text-on-surface-variant italic opacity-50">Not set</td><td class="px-4 py-3 text-sm text-on-surface-variant italic opacity-50">Not set</td><td class="px-4 py-3 text-sm text-on-surface-variant italic opacity-50">Not set</td><td class="px-4 py-3 text-center"><span class="text-status-warning flex items-center justify-center gap-1 font-bold text-sm"><span class="material-symbols-outlined text-[16px]">warning</span> 2 Warnings</span></td><td class="px-4 py-3 text-right"><button class="bg-primary-container text-white px-4 py-1.5 rounded text-sm font-semibold hover:opacity-90 transition-opacity">Complete Setup</button></td></tr></tbody>
+</table>
+</div>
+</section>
+<!-- Footer / Pagination -->
+<footer class="flex items-center justify-between mt-auto py-6">
+<div class="flex items-center gap-4">
+<span class="text-sm text-on-surface-variant">Showing 1 to 12 of 12 awaiting setup records</span>
+<select class="bg-transparent border border-outline-variant rounded px-2 py-1 text-xs font-semibold outline-none text-on-surface-variant">
+<option>25 per page</option>
+<option>50 per page</option>
+<option>100 per page</option>
+</select>
+</div>
+<nav class="flex items-center gap-1"><button class="p-2 hover:bg-surface-container rounded text-on-surface-variant disabled:opacity-30" disabled=""><span class="material-symbols-outlined">chevron_left</span></button><button class="w-8 h-8 flex items-center justify-center rounded bg-primary-container text-white text-sm font-bold">1</button><button class="p-2 hover:bg-surface-container rounded text-on-surface-variant disabled:opacity-30" disabled=""><span class="material-symbols-outlined">chevron_right</span></button></nav>
+</footer>
+</main>
+<script>
+        // Tab selection logic
+        const tabs = document.querySelectorAll('.flex.gap-8 button');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => {
+                    t.classList.remove('border-primary-container', 'text-primary-container', 'font-bold');
+                    t.classList.add('border-transparent', 'text-on-surface-variant', 'font-semibold');
+                });
+                tab.classList.remove('border-transparent', 'text-on-surface-variant', 'font-semibold');
+                tab.classList.add('border-primary-container', 'text-primary-container', 'font-bold');
+            });
+        });
+    </script>
+
+
+
+
+
+
+
+
+</body></html>

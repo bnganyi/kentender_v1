@@ -181,6 +181,28 @@ frappe.provide("kentender_core.cl_surface_registry");
 			crumb(__("Tender Document Preview")),
 		];
 	}
+	/** PUB-A1 leaf: Electronic Tender Package Review. */
+	function trailPubA1PackageReview() {
+		return [
+			crumbDashboard(),
+			crumbTenderConfigurations(),
+			crumbConfigurationHome(),
+			crumb(__("Electronic Tender Package Review")),
+		];
+	}
+	/** PUB-A2 leaf: Publications queue. */
+	function trailPubA2Publications() {
+		return [crumbDashboard(), crumbTenderManagement(), crumb(__("Publications"))];
+	}
+	/** PUB-A3 leaf: Publication Setup. */
+	function trailPubA3Setup() {
+		return [
+			crumbDashboard(),
+			crumbTenderManagement(),
+			crumb(__("Publications"), ["publications"]),
+			crumb(__("Publication Setup")),
+		];
+	}
 
 	/**
 	 * A2 screen IDs → routePrefixes use existing Desk page names where present.
@@ -378,7 +400,7 @@ frappe.provide("kentender_core.cl_surface_registry");
 			chrome: chrome(
 				__("Tender Document Preview"),
 				__(
-					"Review the generated tender document before sending it to the publication workflow."
+					"Review the generated tender document artifact, then confirm the package and continue to Publication Setup."
 				),
 				trailWf03Preview(),
 				[]
@@ -392,9 +414,51 @@ frappe.provide("kentender_core.cl_surface_registry");
 			chrome: chrome(
 				__("Tender Document Preview"),
 				__(
-					"Publication Handoff is merged into Tender Document Preview. Use Send to Publication Workflow there."
+					"Publication Handoff is merged into Tender Document Preview / Package Review. Confirm the package, then continue to Publication Setup."
 				),
 				trailWf03Preview(),
+				[]
+			),
+		},
+		"PUB-A1": {
+			id: "PUB-A1",
+			label: "Electronic Tender Package Review",
+			routePrefixes: ["it-tender-package-review"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Electronic Tender Package Review"),
+				__(
+					"Confirm that the approved configuration has been converted into a complete electronic tender package."
+				),
+				trailPubA1PackageReview(),
+				[]
+			),
+		},
+		"PUB-A2": {
+			id: "PUB-A2",
+			label: "Publications",
+			routePrefixes: ["publications"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Publications"),
+				__(
+					"Set publication details, publish confirmed electronic tender packages, and monitor published tenders."
+				),
+				trailPubA2Publications(),
+				[]
+			),
+		},
+		"PUB-A3": {
+			id: "PUB-A3",
+			label: "Publication Setup",
+			routePrefixes: ["publication-setup"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Publication Setup"),
+				__(
+					"Set publication details and publish the confirmed electronic tender package."
+				),
+				trailPubA3Setup(),
 				[]
 			),
 		},
@@ -431,6 +495,9 @@ frappe.provide("kentender_core.cl_surface_registry");
 				"WF-02",
 				"WF-03",
 				"WF-04",
+				"PUB-A1",
+				"PUB-A2",
+				"PUB-A3",
 			];
 		},
 

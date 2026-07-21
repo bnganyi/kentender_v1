@@ -54,6 +54,13 @@ from kentender_procurement.tender_configurations.api import (
 	save_tender_configuration_system_inventory as _save_tender_configuration_system_inventory,
 	save_tender_configuration_tds as _save_tender_configuration_tds,
 	send_tender_configuration_to_publication_workflow as _send_tender_configuration_to_publication_workflow,
+	confirm_tender_package as _confirm_tender_package,
+	get_package_review_summary as _get_package_review_summary,
+	list_publications as _list_publications,
+	get_publication_setup as _get_publication_setup,
+	save_publication_setup as _save_publication_setup,
+	publish_tender as _publish_tender,
+	return_publication_for_correction as _return_publication_for_correction,
 	submit_tender_configuration_for_review as _submit_tender_configuration_for_review,
 )
 
@@ -266,6 +273,41 @@ def send_tender_configuration_to_publication_workflow(configuration_id: str):
 
 
 @frappe.whitelist()
+def confirm_tender_package(configuration_id: str, payload=None):
+	return _confirm_tender_package(configuration_id, payload)
+
+
+@frappe.whitelist()
+def get_package_review_summary(configuration_id: str):
+	return _get_package_review_summary(configuration_id)
+
+
+@frappe.whitelist()
+def list_publications(tab=None, search=None, page=None, page_size=None):
+	return _list_publications(tab=tab, search=search, page=page, page_size=page_size)
+
+
+@frappe.whitelist()
+def get_publication_setup(publication_id: str):
+	return _get_publication_setup(publication_id)
+
+
+@frappe.whitelist()
+def save_publication_setup(publication_id: str, payload=None):
+	return _save_publication_setup(publication_id, payload)
+
+
+@frappe.whitelist()
+def publish_tender(publication_id: str):
+	return _publish_tender(publication_id)
+
+
+@frappe.whitelist()
+def return_publication_for_correction(publication_id: str, payload=None):
+	return _return_publication_for_correction(publication_id, payload)
+
+
+@frappe.whitelist()
 def download_tender_configuration_document_preview_pdf(configuration_id: str):
 	return _download_tender_configuration_document_preview_pdf(configuration_id)
 
@@ -278,6 +320,18 @@ def seed_ui00_dashboard_for_tests(clear: int | str = 1):
 	from kentender_procurement.tender_configurations.seed.ui00_seed import seed_ui00_dashboard
 
 	return seed_ui00_dashboard(clear=bool(int(clear)))
+
+
+@frappe.whitelist()
+def seed_publications_demo_for_tests(clear: int | str = 0):
+	"""Administrator-only: seed Publications queue tab coverage."""
+	if frappe.session.user != "Administrator":
+		frappe.throw(frappe._("Not permitted"), frappe.PermissionError)
+	from kentender_procurement.tender_configurations.seed.publications_seed import (
+		seed_publications_demo,
+	)
+
+	return seed_publications_demo(clear=bool(int(clear)))
 
 
 @frappe.whitelist()

@@ -11,7 +11,6 @@
 	var GENERATE_API = "kentender_procurement.tender_configurations.generate_tender_configuration_document_preview";
 	var CONFIRM_API = "kentender_procurement.tender_configurations.confirm_tender_configuration_document_preview";
 	var RETURN_API = "kentender_procurement.tender_configurations.return_tender_configuration_preview_for_correction";
-	var SEND_API = "kentender_procurement.tender_configurations.send_tender_configuration_to_publication_workflow";
 	var PDF_API = "kentender_procurement.tender_configurations.download_tender_configuration_document_preview_pdf";
 	var STORAGE_KEY = "kt_cl_wf03_configuration_id";
 	var BACK_ROUTE = "it-tender-configuration-overview";
@@ -307,7 +306,7 @@
 			'<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--primary kt-cl-wf03-confirm-btn" data-action="confirm-preview" data-testid="kt-cl-wf03-confirm-btn"' +
 			(canConfirm && checked && !state.busy && !data.user_confirmed ? "" : " disabled") +
 			">" +
-			__("Confirm Preview") +
+			__("Confirm Tender Package") +
 			"</button></aside>"
 		);
 	}
@@ -328,7 +327,9 @@
 				);
 			})
 			.join("");
-		var sent = !!pkg.sent;
+		var continueSetup = !!(pkg.continue_to_setup || pkg.publication_id);
+		var setupRoute = pkg.publication_setup_route || "";
+		var pubId = pkg.publication_id || "";
 		return (
 			'<section class="kt-cl-wf03-publication" data-testid="kt-cl-wf03-publication">' +
 			"<h3>" +
@@ -340,15 +341,19 @@
 			'<p class="kt-cl-wf03-pkg-note" data-testid="kt-cl-wf03-pkg-note">' +
 			esc(pkg.note || "") +
 			"</p>" +
-			(sent
-				? '<p class="kt-cl-wf03-pkg-sent" data-testid="kt-cl-wf03-pkg-sent">' +
-					__("Sent to publication workflow on {0}", [pkg.sent_at || "—"]) +
-					"</p>"
-				: '<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--primary" data-action="send-publication" data-testid="kt-cl-wf03-send"' +
-					(pkg.can_send && !state.busy ? "" : " disabled") +
+			(continueSetup
+				? '<button type="button" class="kt-cl-wizard-btn kt-cl-wizard-btn--primary" data-action="continue-setup" data-publication-id="' +
+					esc(pubId) +
+					'" data-setup-route="' +
+					esc(setupRoute) +
+					'" data-testid="kt-cl-wf03-continue-setup"' +
+					(!state.busy ? "" : " disabled") +
 					">" +
-					__("Send to Publication Workflow") +
-					"</button>") +
+					__("Continue to Publication Setup") +
+					"</button>"
+				: '<p class="kt-cl-wf03-pkg-sent" data-testid="kt-cl-wf03-pkg-sent">' +
+					__("Package confirmed — open Publication Setup when ready.") +
+					"</p>") +
 			"</section>"
 		);
 	}
@@ -589,13 +594,13 @@
 			return;
 		}
 		kentender_core.cl.confirm({
-			title: __("Confirm Tender Document Preview?"),
+			title: __("Confirm Tender Package?"),
 			message: __(
-				"This confirms that the generated tender document reflects the approved tender configuration. " +
-					"This action does not publish the tender, notify bidders, open bid submission, approve an award, or create a contract. " +
-					"After confirmation, the document package will be locked and may be sent to the publication workflow."
+				"This confirms that the electronic tender package is ready for publication setup. " +
+					"After confirmation, the tender will move to Publication Setup. " +
+					"This action does not publish the tender, notify bidders, open bid submission, evaluate bids, approve an award, or create a contract."
 			),
-			confirmLabel: __("Confirm Preview"),
+			confirmLabel: __("Confirm Tender Package"),
 			cancelLabel: __("Cancel"),
 			onConfirm: function () {
 				state.busy = true;
@@ -610,40 +615,11 @@
 						state.busy = false;
 						state.confirmChecked = true;
 						remountWithPayload(page, r.message || state.payload);
-						frappe.show_alert({ message: __("Preview confirmed"), indicator: "green" }, 5);
-					},
-					error: function () {
-						state.busy = false;
-						remountWithPayload(page, state.payload || {});
-					},
-				});
-			},
-		});
-	}
-
-	function sendToPublication(page) {
-		if (state.busy || !state.configurationId) {
-			return;
-		}
-		kentender_core.cl.confirm({
-			title: __("Send to Publication Workflow?"),
-			message: __(
-				"This will make the confirmed tender document package available to the Publications team. " +
-					"This action does not publish the tender, notify bidders, open bid submission, approve an award, or create a contract."
-			),
-			confirmLabel: __("Send to Publication Workflow"),
-			cancelLabel: __("Cancel"),
-			onConfirm: function () {
-				state.busy = true;
-				remountWithPayload(page, state.payload || {});
-				frappe.call({
-					method: SEND_API,
-					args: { configuration_id: state.configurationId },
-					callback: function (r) {
-						state.busy = false;
-						remountWithPayload(page, r.message || state.payload);
 						frappe.show_alert(
-							{ message: __("Sent to publication workflow"), indicator: "green" },
+							{
+								message: __("Tender package confirmed. Ready for publication setup."),
+								indicator: "green",
+							},
 							5
 						);
 					},
@@ -654,6 +630,32 @@
 				});
 			},
 		});
+	}
+
+	function continueToPublicationSetup($btn) {
+		var pubId = ($btn && $btn.attr("data-publication-id")) || "";
+		var setupRoute = ($btn && $btn.attr("data-setup-route")) || "";
+		var pkg = (state.payload && state.payload.publication_package) || {};
+		if (!pubId) {
+			pubId = pkg.publication_id || "";
+		}
+		if (!setupRoute) {
+			setupRoute = pkg.publication_setup_route || "";
+		}
+		if (pubId) {
+			frappe.set_route("publication-setup", pubId);
+			return;
+		}
+		if (setupRoute) {
+			var parts = String(setupRoute).split("/");
+			if (parts.length >= 2) {
+				frappe.set_route(parts[0], parts[1]);
+				return;
+			}
+			frappe.set_route(setupRoute);
+			return;
+		}
+		frappe.set_route("publications");
 	}
 
 	function previewFrameDoc($root) {
@@ -1165,9 +1167,9 @@
 			e.preventDefault();
 			confirmPreview(page);
 		});
-		$root.on("click.wf03", "[data-action='send-publication']", function (e) {
+		$root.on("click.wf03", "[data-action='continue-setup']", function (e) {
 			e.preventDefault();
-			sendToPublication(page);
+			continueToPublicationSetup($(this));
 		});
 		$root.on("click.wf03", "[data-action='return-correction']", function (e) {
 			e.preventDefault();

@@ -237,15 +237,18 @@ test.describe("WG-03 Tender Document Preview", () => {
 		}, CONFIG);
 		await page.reload({ waitUntil: "domcontentloaded" });
 		await expect(page.getByTestId("kt-cl-wf03-publication")).toBeVisible({ timeout: 15_000 });
-		await expect(page.getByTestId("kt-cl-wf03-send")).toHaveText(/Send to Publication Workflow/i);
+		await expect(page.getByTestId("kt-cl-wf03-continue-setup")).toHaveText(
+			/Continue to Publication Setup/i
+		);
+		await expect(page.getByTestId("kt-cl-wf03-send")).toHaveCount(0);
 		await expect(page.getByTestId("kt-cl-wf03-regenerate")).toBeDisabled();
 		await expect(page.getByTestId("kt-cl-wf03-download")).toHaveText(/Download Confirmed PDF/i);
 		await expect(page.getByTestId("kt-cl-wf03-preview-status")).toHaveText(/Preview Confirmed/i);
 		const body = await page.locator(ROOT).innerText();
-		expect(body).not.toMatch(/\bpublish tender\b/i);
+		expect(body).not.toMatch(/Send to Publication Workflow/i);
 	});
 
-	test("send to publication workflow via API when UI seed incomplete", async ({ page }) => {
+	test("continue to publication setup navigates after confirm", async ({ page }) => {
 		await seedUi00(page);
 		await openPreview(page);
 		await ensureGenerated(page);
@@ -258,13 +261,9 @@ test.describe("WG-03 Tender Document Preview", () => {
 		}, CONFIG);
 		await page.reload({ waitUntil: "domcontentloaded" });
 		await expect(page.getByTestId("kt-cl-wf03-publication")).toBeVisible({ timeout: 20_000 });
-		const sendBtn = page.getByTestId("kt-cl-wf03-send");
-		if (await sendBtn.isEnabled()) {
-			await sendBtn.click();
-			await page.getByTestId("kt-cl-confirm-ok").click();
-			await expect(page.getByTestId("kt-cl-wf03-pkg-sent")).toBeVisible({ timeout: 15_000 });
-		} else {
-			await expect(page.getByTestId("kt-cl-wf03-pkg-sent")).toBeVisible();
-		}
+		const continueBtn = page.getByTestId("kt-cl-wf03-continue-setup");
+		await expect(continueBtn).toBeVisible();
+		await continueBtn.click();
+		await expect(page).toHaveURL(/publication-setup\//, { timeout: 15_000 });
 	});
 });

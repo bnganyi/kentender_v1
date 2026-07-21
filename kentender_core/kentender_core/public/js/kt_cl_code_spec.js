@@ -44,7 +44,7 @@ frappe.provide("kentender_core.cl_code_spec");
 	var BREADCRUMB_ROOT = "flex items-center gap-1 mb-1";
 	/* Semantic class + token utilities; layout CSS asserts DESIGN.md display size
 	 * until civic_ledger.css is regenerated with text-display/font-display. */
-	var PAGE_TITLE = "kt-cl-page-title font-bold text-primary";
+	var PAGE_TITLE = "kt-cl-page-title text-display font-display font-bold text-primary";
 
 	var BTN_OUTLINE =
 		"px-3 py-1.5 rounded border border-primary text-primary hover:bg-primary-fixed/10 transition-colors font-label-md text-label-md flex items-center gap-1.5";
@@ -172,6 +172,14 @@ frappe.provide("kentender_core.cl_code_spec");
 		summaryIconWrap: "w-10 h-10 rounded bg-surface-container-high flex items-center justify-center shrink-0",
 		summaryLabel: "text-label-md text-on-surface-variant uppercase tracking-tighter",
 		summaryValue: "text-headline-lg font-bold text-primary",
+		/* A2 Publications bento: label top, large value + watermark icon */
+		summaryCardBento:
+			"kt-cl-queue-summary-card--bento bg-surface-container-lowest border border-outline-variant border-l-8 p-6 flex flex-col justify-between",
+		summaryLabelBento:
+			"text-xs font-bold text-on-surface-variant uppercase tracking-wider",
+		summaryBentoRow: "flex items-end justify-between mt-4 gap-2",
+		summaryValueBento: "text-4xl font-bold text-primary-container leading-none",
+		summaryWatermarkIcon: "kt-cl-queue-summary-watermark text-4xl",
 		canvas:
 			"bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden flex flex-col",
 		tabBar:

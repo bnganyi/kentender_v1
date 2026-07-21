@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Electronic Tender Package Review | KenTender</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .status-pill-ready { @apply bg-on-secondary-container text-white px-2 py-0.5 rounded-full text-[12px] font-bold tracking-wide; }
+        .status-pill-available { @apply bg-secondary text-white px-2 py-0.5 rounded-full text-[12px] font-bold tracking-wide; }
+        .status-pill-passed { @apply bg-on-secondary-container text-white px-2 py-0.5 rounded-full text-[12px] font-bold tracking-wide; }
+        
+        body {
+            background-color: #f7f9fb;
+            font-family: 'Public Sans', sans-serif;
+        }
+        
+        tr.hover-row:hover {
+            background-color: #eceef0;
+            transition: background-color 0.15s ease-in-out;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-bright": "#f7f9fb",
+                      "secondary-container": "#d2e1fa",
+                      "surface-tint": "#456085",
+                      "on-tertiary-container": "#8088a1",
+                      "on-error-container": "#93000a",
+                      "surface-container-low": "#f2f4f6",
+                      "background": "#f7f9fb",
+                      "primary-fixed": "#d4e3ff",
+                      "surface-container-high": "#e6e8ea",
+                      "surface-container": "#eceef0",
+                      "on-surface": "#191c1e",
+                      "on-primary": "#ffffff",
+                      "on-surface-variant": "#43474e",
+                      "on-primary-fixed-variant": "#2d486c",
+                      "secondary": "#515f74",
+                      "on-secondary-fixed": "#0d1c2e",
+                      "on-primary-container": "#708ab2",
+                      "surface-dim": "#d8dadc",
+                      "inverse-on-surface": "#eff1f3",
+                      "tertiary-fixed": "#dae2fd",
+                      "secondary-fixed": "#d5e3fc",
+                      "surface-container-lowest": "#ffffff",
+                      "on-secondary-container": "#556379",
+                      "inverse-primary": "#adc8f3",
+                      "error": "#ba1a1a",
+                      "outline-variant": "#c4c6cf",
+                      "outline": "#74777f",
+                      "on-tertiary-fixed": "#131b2f",
+                      "tertiary-fixed-dim": "#bec6e0",
+                      "tertiary-container": "#192135",
+                      "on-secondary-fixed-variant": "#3a485c",
+                      "primary-container": "#002244",
+                      "on-tertiary": "#ffffff",
+                      "on-background": "#191c1e",
+                      "on-primary-fixed": "#001c3a",
+                      "surface-container-highest": "#e0e3e5",
+                      "surface-variant": "#e0e3e5",
+                      "secondary-fixed-dim": "#b9c7e0",
+                      "primary-fixed-dim": "#adc8f3",
+                      "on-error": "#ffffff",
+                      "error-container": "#ffdad6",
+                      "surface": "#f7f9fb",
+                      "on-secondary": "#ffffff",
+                      "inverse-surface": "#2d3133",
+                      "primary": "#000b1d",
+                      "tertiary": "#030a1d",
+                      "on-tertiary-fixed-variant": "#3e465c"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "fontFamily": {
+                      "headline": ["Public Sans"],
+                      "display": ["Public Sans"],
+                      "body": ["Public Sans"],
+                      "label": ["JetBrains Mono"]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="min-h-screen flex flex-col font-body">
+<!-- TopNavBar -->
+<header class="bg-surface-container-lowest border-b border-outline-variant sticky top-0 z-50">
+<div class="flex justify-between items-center w-full px-8 h-16">
+<div class="flex items-center gap-4">
+<span class="text-xl font-headline font-bold text-primary">KenTender Procurement System</span>
+</div>
+<div class="flex-1 max-w-md mx-8">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-surface-tint/20" placeholder="Search procurement data..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container p-2 rounded-full transition-colors">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container p-2 rounded-full transition-colors">history</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container p-2 rounded-full transition-colors">help_outline</button>
+</div>
+<div class="h-8 w-8 rounded-full bg-primary-fixed-dim border border-outline-variant overflow-hidden">
+<img alt="Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBE45DxdXlgGLCgGNVt37qmxjpM2bhFf_qSfcZEaGI6BiF9ZXtwv4JlJAogzZgh78PELsbm3BoYhZRPi3KUfiZzCa58Kyn6S5yMA9EByCwd-udbO-vfGnAA83y4zm2o2jFZdENp0Eyo7G9X5ypZC_AkZpuwU6WRbT_IG7esmOUtJg1N3qli03GUtL33k3fP1GKUxt1Jg1SHCcPHeSgXKnItfyOXt32so4dVZZdYAjbd5B54bOD6kRFI"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Page Title Header -->
+<div class="bg-surface-container-lowest px-8 py-8 border-b border-outline-variant">
+<h1 class="text-3xl font-headline font-bold text-primary tracking-tight">Electronic Tender Package Review</h1>
+<p class="text-on-surface-variant mt-2 max-w-3xl">Review the package summary, bidder experience, generated tender document, and any issues before publication setup.</p>
+</div>
+<!-- Context Strip -->
+<div class="bg-surface-container px-8 py-4 border-b border-outline-variant">
+<div class="flex flex-wrap items-center gap-x-10 gap-y-4">
+<div class="flex flex-col">
+<span class="text-[11px] font-label font-bold text-on-surface-variant uppercase tracking-wider">Tender Config Ref</span>
+<span class="text-sm font-label text-primary">TCFG-2026-0018</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[11px] font-label font-bold text-on-surface-variant uppercase tracking-wider">Package Ref</span>
+<span class="text-sm font-label text-primary">PKG-NSSF-ERP-2026</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[11px] font-label font-bold text-on-surface-variant uppercase tracking-wider">Tender Title</span>
+<span class="text-sm font-bold text-primary">Supply of ERP System</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[11px] font-label font-bold text-on-surface-variant uppercase tracking-wider">Procuring Entity</span>
+<span class="text-sm font-bold text-primary">NSSF</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[11px] font-label font-bold text-on-surface-variant uppercase tracking-wider">Method</span>
+<span class="text-sm font-bold text-primary">Open National Tender</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[11px] font-label font-bold text-on-surface-variant uppercase tracking-wider">STD</span>
+<span class="text-sm font-bold text-primary">IT STD</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[11px] font-label font-bold text-on-surface-variant uppercase tracking-wider">Status</span>
+<span class="flex items-center gap-1 text-error font-bold text-xs"><span class="material-symbols-outlined text-[16px]">error</span> BLOCKERS FOUND</span>
+</div>
+</div>
+</div>
+<!-- Main Content Grid -->
+<main class="flex-1 px-8 py-8 max-w-[1440px] mx-auto w-full">
+<div class="grid grid-cols-12 gap-6">
+<!-- Section A: Package Readiness -->
+<section class="col-span-12 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden">
+<div class="px-6 py-4 bg-surface-container-low flex justify-between items-center border-b border-outline-variant">
+<h2 class="text-base font-bold text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px] text-primary">inventory_2</span>
+                    Package Readiness Summary
+                </h2>
+<button class="bg-primary-container text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 transition-opacity">
+                    Open Full Configuration
+                </button>
+</div>
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container text-on-surface-variant">
+<th class="px-6 py-3 text-[11px] font-bold uppercase tracking-widest border-b border-outline-variant">Package Area</th>
+<th class="px-6 py-3 text-[11px] font-bold uppercase tracking-widest border-b border-outline-variant">Status</th>
+<th class="px-6 py-3 text-[11px] font-bold uppercase tracking-widest border-b border-outline-variant">Summary</th>
+</tr>
+</thead>
+<tbody class="text-sm">
+<tr class="hover-row border-b border-outline-variant">
+<td class="px-6 py-3 font-bold text-on-surface">Tender Profile</td>
+<td class="px-6 py-3"><span class="status-pill-ready">Ready</span></td>
+<td class="px-6 py-3 text-on-surface-variant">Core identity compiled</td>
+</tr>
+<tr class="hover-row border-b border-outline-variant">
+<td class="px-6 py-3 font-bold text-on-surface">Tender Data Sheet</td>
+<td class="px-6 py-3"><span class="status-pill-ready">Ready</span></td>
+<td class="px-6 py-3 text-on-surface-variant">Tender instructions compiled</td>
+</tr>
+<tr class="hover-row border-b border-outline-variant">
+<td class="px-6 py-3 font-bold text-on-surface">IT Requirements</td>
+<td class="px-6 py-3"><span class="status-pill-ready">Ready</span></td>
+<td class="px-6 py-3 text-on-surface-variant">80 requirements compiled</td>
+</tr>
+<tr class="hover-row border-b border-outline-variant">
+<td class="px-6 py-3 font-bold text-on-surface">Implementation Schedule</td>
+<td class="px-6 py-3"><span class="status-pill-ready">Ready</span></td>
+<td class="px-6 py-3 text-on-surface-variant">2 delivery phases compiled</td>
+</tr>
+<tr class="hover-row border-b border-outline-variant">
+<td class="px-6 py-3 font-bold text-on-surface">System Inventory &amp; Bidder Background</td>
+<td class="px-6 py-3"><span class="status-pill-ready">Ready</span></td>
+<td class="px-6 py-3 text-on-surface-variant">Bidder background information compiled</td>
+</tr>
+<tr class="hover-row border-b border-outline-variant">
+<td class="px-6 py-3 font-bold text-on-surface">Price Schedule</td>
+<td class="px-6 py-3"><span class="status-pill-ready">Ready</span></td>
+<td class="px-6 py-3 text-on-surface-variant">22 price lines compiled</td>
+</tr>
+<tr class="hover-row border-b border-outline-variant">
+<td class="px-6 py-3 font-bold text-on-surface">Evaluation Setup</td>
+<td class="px-6 py-3"><span class="status-pill-ready">Ready</span></td>
+<td class="px-6 py-3 text-on-surface-variant">Method compiled</td>
+</tr>
+<tr class="hover-row border-b border-outline-variant">
+<td class="px-6 py-3 font-bold text-on-surface">Forms &amp; Evidence</td>
+<td class="px-6 py-3"><span class="status-pill-ready">Ready</span></td>
+<td class="px-6 py-3 text-on-surface-variant">Requirements compiled</td>
+</tr>
+<tr class="hover-row border-b border-outline-variant">
+<td class="px-6 py-3 font-bold text-on-surface">Contract Values</td>
+<td class="px-6 py-3"><span class="status-pill-ready">Ready</span></td>
+<td class="px-6 py-3 text-on-surface-variant">Values compiled</td>
+</tr>
+<tr class="hover-row">
+<td class="px-6 py-3 font-bold text-on-surface">Tender Document</td>
+<td class="px-6 py-3"><span class="status-pill-available">Available</span></td>
+<td class="px-6 py-3 text-on-surface-variant">Generated document available</td>
+</tr>
+</tbody>
+</table>
+</section>
+<!-- Section B: Bidder Experience Summary -->
+<section class="col-span-12 lg:col-span-8 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden">
+<div class="px-6 py-4 bg-surface-container-low flex justify-between items-center border-b border-outline-variant">
+<h2 class="text-base font-bold text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px] text-primary">person_check</span>
+                    Bidder Experience Summary
+                </h2>
+<button class="bg-surface-container-lowest border border-outline text-primary px-4 py-2 rounded-lg text-sm font-bold hover:bg-surface-container transition-colors">
+                    Preview Bidder Workspace
+                </button>
+</div>
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container text-on-surface-variant">
+<th class="px-6 py-3 text-[11px] font-bold uppercase tracking-widest border-b border-outline-variant">Bidder Workspace Area</th>
+<th class="px-6 py-3 text-[11px] font-bold uppercase tracking-widest border-b border-outline-variant">Status</th>
+<th class="px-6 py-3 text-[11px] font-bold uppercase tracking-widest border-b border-outline-variant">Summary</th>
+</tr>
+</thead>
+<tbody class="text-sm">
+<tr class="hover-row border-b border-outline-variant">
+<td class="px-6 py-4 font-bold text-on-surface">Eligibility &amp; Declarations</td>
+<td class="px-6 py-4"><span class="status-pill-ready">Ready</span></td>
+<td class="px-6 py-4 text-on-surface-variant">Digital forms compiled</td>
+</tr>
+<tr class="hover-row border-b border-outline-variant">
+<td class="px-6 py-4 font-bold text-on-surface">Technical Response</td>
+<td class="px-6 py-4"><span class="status-pill-ready">Ready</span></td>
+<td class="px-6 py-4 text-on-surface-variant">Compliance matrix generated</td>
+</tr>
+<tr class="hover-row border-b border-outline-variant">
+<td class="px-6 py-4 font-bold text-on-surface">Implementation Proposal</td>
+<td class="px-6 py-4"><span class="status-pill-ready">Ready</span></td>
+<td class="px-6 py-4 text-on-surface-variant">Timeline submission active</td>
+</tr>
+<tr class="hover-row border-b border-outline-variant">
+<td class="px-6 py-4 font-bold text-on-surface">Evidence Uploads</td>
+<td class="px-6 py-4"><span class="status-pill-ready">Ready</span></td>
+<td class="px-6 py-4 text-on-surface-variant">Categorized slots enabled</td>
+</tr>
+<tr class="hover-row border-b border-outline-variant">
+<td class="px-6 py-4 font-bold text-on-surface">Price Schedule</td>
+<td class="px-6 py-4"><span class="status-pill-ready">Ready</span></td>
+<td class="px-6 py-4 text-on-surface-variant">Interactive pricing grid active</td>
+</tr>
+<tr class="hover-row">
+<td class="px-6 py-4 font-bold text-on-surface">Final Submission</td>
+<td class="px-6 py-4"><span class="status-pill-ready">Ready</span></td>
+<td class="px-6 py-4 text-on-surface-variant">Final review and submission flow prepared.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<!-- Section C: Tender Document Output -->
+<section class="col-span-12 lg:col-span-4 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden flex flex-col">
+<div class="px-6 py-4 bg-surface-container-low border-b border-outline-variant">
+<h2 class="text-base font-bold text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px] text-primary">description</span>
+                    Tender Document Output
+                </h2>
+</div>
+<div class="flex-1">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container text-on-surface-variant">
+<th class="px-6 py-3 text-[11px] font-bold uppercase tracking-widest border-b border-outline-variant">Output</th>
+<th class="px-6 py-3 text-[11px] font-bold uppercase tracking-widest border-b border-outline-variant">Action</th>
+</tr>
+</thead>
+<tbody class="text-sm">
+<tr class="hover-row border-b border-outline-variant">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="font-bold text-on-surface">Generated Tender Document</span>
+<span class="status-pill-available inline-block w-fit mt-1">Available</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<button class="text-surface-tint hover:underline font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">visibility</span> View
+                                </button>
+</td>
+</tr>
+<tr class="hover-row border-b border-outline-variant">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="font-bold text-on-surface">Render Validation</span>
+<span class="status-pill-passed inline-block w-fit mt-1">Passed</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-on-surface-variant italic">Automatic</span>
+</td>
+</tr>
+<tr class="hover-row">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="font-bold text-on-surface">Preview PDF</span>
+<span class="status-pill-available inline-block w-fit mt-1">Available</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<button class="text-surface-tint hover:underline font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">download</span> Download
+                                </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Section D: Issues & Audit -->
+<section class="col-span-12 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden mb-8">
+<div class="px-6 py-4 bg-surface-container-low border-b border-outline-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-error">report</span>
+<h3 class="text-base font-bold text-primary">Package Blockers &amp; Warnings</h3>
+</div>
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container text-on-surface-variant">
+<th class="px-6 py-3 text-[11px] font-bold uppercase tracking-widest border-b border-outline-variant">Severity</th>
+<th class="px-6 py-3 text-[11px] font-bold uppercase tracking-widest border-b border-outline-variant">Issue</th>
+<th class="px-6 py-3 text-[11px] font-bold uppercase tracking-widest border-b border-outline-variant">Area</th>
+<th class="px-6 py-3 text-[11px] font-bold uppercase tracking-widest border-b border-outline-variant">Action</th>
+</tr>
+</thead>
+<tbody class="text-sm">
+<tr class="hover-row border-b border-outline-variant">
+<td class="px-6 py-4"><span class="bg-error text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Blocker</span></td>
+<td class="px-6 py-4 text-on-surface font-medium">Evidence upload rule missing for Tax Compliance Certificate</td>
+<td class="px-6 py-4 text-on-surface-variant">Forms &amp; Evidence</td>
+<td class="px-6 py-4"><button class="text-surface-tint hover:underline font-bold">Fix Area</button></td>
+</tr>
+<tr class="hover-row border-b border-outline-variant">
+<td class="px-6 py-4"><span class="bg-error text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Blocker</span></td>
+<td class="px-6 py-4 text-on-surface font-medium">2 price lines have no bidder entry rule</td>
+<td class="px-6 py-4 text-on-surface-variant">Price Schedule</td>
+<td class="px-6 py-4"><button class="text-surface-tint hover:underline font-bold">Fix Area</button></td>
+</tr>
+<tr class="hover-row">
+<td class="px-6 py-4"><span class="bg-on-tertiary-container text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Warning</span></td>
+<td class="px-6 py-4 text-on-surface font-medium">Generated PDF has table overflow risk</td>
+<td class="px-6 py-4 text-on-surface-variant">Tender Document Output</td>
+<td class="px-6 py-4"><button class="text-surface-tint hover:underline font-bold">View Issue</button></td>
+</tr>
+</tbody>
+</table>
+</section>
+</div>
+</main>
+<!-- Footer Actions -->
+<footer class="bg-surface-container-lowest border-t border-outline-variant p-8 sticky bottom-0 z-40">
+<div class="max-w-[1440px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+<button class="text-on-surface-variant hover:text-primary px-4 py-2 rounded font-bold text-sm transition-colors flex items-center gap-2 order-1">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span> Back to Configuration
+        </button>
+<div class="flex gap-4 w-full md:w-auto order-2">
+<button class="border-2 border-primary-container text-primary-container hover:bg-primary-container/5 px-8 py-3 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 flex-1 md:flex-none">
+                Return for Correction
+            </button>
+<button class="bg-outline text-surface-container px-8 py-3 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 flex-1 md:flex-none cursor-not-allowed" disabled="">
+                Confirm Tender Package <span class="material-symbols-outlined text-[18px]">task_alt</span>
+</button>
+</div>
+</div>
+</footer>
+<script>
+    // Micro-interaction simulation
+    const buttons = document.querySelectorAll('button:not([disabled])');
+    buttons.forEach(btn => {
+        btn.addEventListener('mousedown', () => btn.style.transform = 'scale(0.98)');
+        btn.addEventListener('mouseup', () => btn.style.transform = 'scale(1)');
+        btn.addEventListener('mouseleave', () => btn.style.transform = 'scale(1)');
+    });
+</script>
+</body></html>

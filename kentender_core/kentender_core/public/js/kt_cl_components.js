@@ -262,9 +262,9 @@ frappe.provide("kentender_core.cl_components");
 			opts = opts || {};
 			var text = opts.text || "";
 			if (!text) return "";
-			// code.html line 344
+			// C1-M1 code-ready-to-configure.html: body-lg + mt-1 under display title
 			return (
-				'<p class="font-body-md text-body-md text-on-surface-variant" data-testid="kt-cl-page-subtitle">' +
+				'<p class="kt-cl-page-subtitle text-body-lg text-on-surface-variant mt-1" data-testid="kt-cl-page-subtitle">' +
 				escapeHtml(text) +
 				"</p>"
 			);
@@ -331,7 +331,7 @@ frappe.provide("kentender_core.cl_components");
 				(opts.actions ? this.renderPageHeaderActions(opts.actions) : "");
 
 			return (
-				'<div data-testid="kt-cl-page-header">' +
+				'<div class="kt-cl-page-header" data-testid="kt-cl-page-header">' +
 				breadcrumbsHtml +
 				'<div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-3">' +
 				"<div>" +
@@ -721,18 +721,57 @@ frappe.provide("kentender_core.cl_components");
 			});
 		},
 
-		// ---- UI-00 queue summary (C1-M1 accent cards) --------------------
+		// ---- UI-00 queue summary (C1-M1 inline | A2 bento) ----------------
 		queueSummaryCard: function (opts) {
 			opts = opts || {};
 			var q = spec().QUEUE || {};
+			var layout = opts.layout === "bento" ? "bento" : "inline";
+			var valueText = escapeHtml(opts.value != null ? String(opts.value) : "0");
+			var labelText = escapeHtml(opts.label || "");
+			var keyAttr =
+				'" data-testid="kt-cl-queue-summary-card" data-layout="' +
+				layout +
+				'" data-key="' +
+				escapeHtml(opts.key || "") +
+				'">';
+
+			if (layout === "bento") {
+				// A2 Publications mock: label top, large value + watermark icon.
+				var borderAccent = opts.accentBorderClass || "border-l-primary";
+				return (
+					'<div class="' +
+					(q.summaryCardBento || "") +
+					" " +
+					borderAccent +
+					keyAttr +
+					'<span class="' +
+					(q.summaryLabelBento || "") +
+					'">' +
+					labelText +
+					"</span>" +
+					'<div class="' +
+					(q.summaryBentoRow || "") +
+					'">' +
+					'<span class="' +
+					(q.summaryValueBento || "") +
+					'" data-testid="kt-cl-queue-summary-value">' +
+					valueText +
+					"</span>" +
+					msIcon(
+						opts.icon || "pending_actions",
+						36,
+						opts.iconClass || q.summaryWatermarkIcon || "kt-cl-queue-summary-watermark"
+					) +
+					"</div></div>"
+				);
+			}
+
 			var accent = opts.accentClass || "bg-primary";
 			var iconWrap = opts.iconWrapClass || q.summaryIconWrap || "";
 			return (
 				'<div class="' +
 				(q.summaryCard || "") +
-				'" data-testid="kt-cl-queue-summary-card" data-key="' +
-				escapeHtml(opts.key || "") +
-				'">' +
+				keyAttr +
 				'<div class="' +
 				(q.summaryAccent || "") +
 				" " +
@@ -747,12 +786,12 @@ frappe.provide("kentender_core.cl_components");
 				'<p class="' +
 				(q.summaryLabel || "") +
 				'">' +
-				escapeHtml(opts.label || "") +
+				labelText +
 				"</p>" +
 				'<p class="' +
 				(q.summaryValue || "") +
 				'" data-testid="kt-cl-queue-summary-value">' +
-				escapeHtml(opts.value != null ? String(opts.value) : "0") +
+				valueText +
 				"</p></div></div>"
 			);
 		},

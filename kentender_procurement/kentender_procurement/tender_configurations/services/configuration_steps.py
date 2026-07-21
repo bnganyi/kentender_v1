@@ -41,8 +41,11 @@ HANDOFF_ROUTES = {
 	"readiness_check": "it-tender-configuration-validation-report",
 	"review_status": "it-tender-configuration-review-and-approval",
 	"tender_document_preview": "it-tender-configuration-render-preview",
-	# WG-04 merged into WG-03 — keep key for legacy callers, route to preview.
-	"publication_handoff": "it-tender-configuration-render-preview",
+	"package_review": "it-tender-package-review",
+	"publications": "publications",
+	"publication_setup": "publication-setup",
+	# Legacy key — Package Review is the primary surface after approval.
+	"publication_handoff": "it-tender-package-review",
 }
 
 # Exact catalog from C1-M3 §§6–10 for Information Technology
