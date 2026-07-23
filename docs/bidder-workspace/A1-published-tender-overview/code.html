@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Published Tender Overview - KenTender</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "primary-fixed": "#d6e3fd",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-secondary": "#ffffff",
+                        "on-surface-variant": "#44474c",
+                        "surface-container-low": "#f2f4f6",
+                        "primary-container": "#0e1c2e",
+                        "status-pending-bg": "#fffbeb",
+                        "secondary": "#515f74",
+                        "secondary-fixed": "#d5e3fc",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "on-surface": "#191c1e",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "on-tertiary": "#ffffff",
+                        "status-error": "#ba1a1a",
+                        "background": "#f7f9fb",
+                        "inverse-primary": "#bac7e0",
+                        "surface-tint": "#525f74",
+                        "surface-dim": "#d8dadc",
+                        "on-primary-container": "#77859b",
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-background": "#191c1e",
+                        "tertiary-container": "#001c3a",
+                        "on-secondary-container": "#556379",
+                        "status-approved": "#065f46",
+                        "on-primary-fixed": "#0e1c2e",
+                        "surface-container-high": "#e6e8ea",
+                        "error": "#ba1a1a",
+                        "status-pending": "#92400e",
+                        "secondary-container": "#d2e1fa",
+                        "surface-container": "#eceef0",
+                        "on-primary": "#ffffff",
+                        "surface-bright": "#f7f9fb",
+                        "outline-subtle": "#c4c6cf",
+                        "on-tertiary-container": "#6b85ac",
+                        "tertiary-fixed": "#d4e3ff",
+                        "primary-fixed-dim": "#bac7e0",
+                        "on-primary-fixed-variant": "#3a475c",
+                        "surface-variant": "#e0e3e5",
+                        "status-approved-bg": "#ecfdf5",
+                        "surface": "#f7f9fb",
+                        "primary": "#000000",
+                        "on-tertiary-fixed": "#001c3a",
+                        "outline-strong": "#74777f",
+                        "on-error": "#ffffff",
+                        "tertiary": "#000000",
+                        "on-tertiary-fixed-variant": "#2d486c",
+                        "on-error-container": "#93000a",
+                        "outline-variant": "#c5c6cd",
+                        "tertiary-fixed-dim": "#adc8f3",
+                        "inverse-on-surface": "#eff1f3",
+                        "status-error-bg": "#fff1f2",
+                        "outline": "#75777d",
+                        "inverse-surface": "#2d3133"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gap-component": "8px",
+                        "sidebar-width": "256px",
+                        "max-width": "1280px",
+                        "container-padding": "16px",
+                        "unit": "4px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Public Sans"],
+                        "label-md": ["JetBrains Mono"],
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-lg": ["Public Sans"],
+                        "body-lg": ["Public Sans"],
+                        "headline-md": ["Public Sans"],
+                        "headline-lg-mobile": ["Public Sans"],
+                        "display": ["Public Sans"]
+                    },
+                    "fontSize": {
+                        "body-md": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                        "label-md": ["11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "label-sm": ["10px", { "lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+                        "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-md": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "display": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-container-padding h-14 bg-surface-container-lowest border-b border-outline-subtle hidden md:flex">
+<div class="flex items-center gap-6">
+<span class="font-display text-display text-primary tracking-tighter">KenTender</span>
+<nav class="flex gap-4">
+<a class="text-primary border-b-2 border-primary font-bold font-label-md text-label-md h-14 flex items-center" href="#">Tenders</a>
+<a class="text-on-surface-variant hover:bg-surface-container-low transition-colors font-label-md text-label-md h-14 flex items-center px-2 rounded-t" href="#">My Bids</a>
+<a class="text-on-surface-variant hover:bg-surface-container-low transition-colors font-label-md text-label-md h-14 flex items-center px-2 rounded-t" href="#">Clarifications</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+<img alt="Bidder Profile Avatar" class="w-8 h-8 rounded-full border border-outline-subtle object-cover" data-alt="A professional bidder profile avatar, minimalist headshot, neutral background, sharp focus, adhering to a clean, modern aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpL2vs5ATMpGSQ0w6WPEN8O5u9auJ3GLfdd30TNi2cA1w-JUPr_QV9ZhL3ftmsq5KE-fiRy5pvCXKkA2zgAoa2uHqHzhn9kkHaCGNmqk6CvkN50XU5KoAJIeAtwBFgYHZvurjgFm2bopBR5ogom7gRWaw776cCY2aazXWgF-F_Yb0W5p-6tUJ0yvNJYElGwk8MA5Q3AJ6lvuR8p4llafHheYXXdDjxBHWSZrBQ2h7sEMhz6HRdWxhKHA"/>
+</div>
+</header>
+<div class="flex pt-14">
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto px-container-padding py-6">
+<div class="max-w-max-width mx-auto">
+<!-- Breadcrumb -->
+<nav aria-label="Breadcrumb" class="flex text-on-surface-variant font-label-sm mb-6">
+<ol class="flex items-center gap-2">
+<li><a class="hover:text-primary" href="#">Tenders</a></li>
+<li><span class="material-symbols-outlined text-[14px]">chevron_right</span></li>
+<li aria-current="page" class="text-primary font-bold">KT-2024-089</li>
+</ol>
+</nav>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gap-component">
+<!-- Left Column: Primary Details -->
+<div class="lg:col-span-8 flex flex-col gap-gap-component">
+<!-- Header Card -->
+<div class="bg-surface-container-lowest border border-outline-subtle rounded-DEFAULT p-container-padding">
+<div class="flex justify-between items-start mb-4">
+<div>
+<span class="inline-flex items-center gap-1 bg-status-approved-bg text-status-approved font-label-sm px-2 py-1 border border-outline-subtle rounded-sm mb-2">
+<span class="w-1.5 h-1.5 rounded-full bg-status-approved"></span>
+                                        Open
+                                    </span>
+<h1 class="font-headline-lg text-headline-lg md:font-display md:text-display text-primary mb-1">Supply of ICT Equipment for Ministry of Education</h1>
+<p class="font-label-md text-label-md text-on-surface-variant">Ref: ICT/092/2024 • Ministry of Education</p>
+</div>
+<button class="bg-primary text-on-primary hover:bg-primary/90 px-6 py-2 rounded-DEFAULT font-label-md transition-colors flex items-center gap-2 min-w-[140px] justify-center"><span class="material-symbols-outlined text-[16px]">play_arrow</span><span>Start Bid</span></button>
+</div>
+<div class="border-t border-outline-subtle pt-4 mt-4">
+<h2 class="font-label-md text-label-md text-on-surface-variant uppercase mb-2">Scope Summary</h2>
+<p class="font-body-md text-body-md text-on-surface">Provision of 500 desktop computers, 200 laptops, and associated networking hardware for public schools in the Nairobi region. Includes installation, 3-year warranty, and basic user training.</p>
+</div>
+</div>
+<!-- Documents Section -->
+<div class="bg-surface-container-lowest border border-outline-subtle rounded-DEFAULT p-container-padding">
+<h2 class="font-headline-md text-headline-md text-primary mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined">folder</span>
+                                Tender Documents
+                            </h2>
+<div class="border border-outline-subtle rounded-DEFAULT overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low font-label-md text-label-md uppercase text-on-surface-variant border-b border-outline-subtle">
+<tr>
+<th class="px-4 py-2 font-medium">Document Name</th>
+<th class="px-4 py-2 font-medium">Type</th>
+<th class="px-4 py-2 font-medium">Size</th>
+<th class="px-4 py-2 font-medium text-right">Action</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface divide-y divide-outline-subtle">
+<tr class="hover:bg-surface-container-lowest transition-colors h-[40px]">
+<td class="px-4 py-2 flex items-center gap-2"><span class="material-symbols-outlined text-secondary text-[16px]">picture_as_pdf</span> Official Tender Document</td>
+<td class="px-4 py-2">PDF</td>
+<td class="px-4 py-2">2.4 MB</td>
+<td class="px-4 py-2 text-right"><div class="flex justify-end gap-4"><button class="text-primary hover:underline font-label-sm">View</button><button class="text-primary hover:underline font-label-sm">Download</button></div></td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors h-[40px]">
+<td class="px-4 py-2 flex items-center gap-2"><span class="material-symbols-outlined text-secondary text-[16px]">description</span> Technical Specifications</td>
+<td class="px-4 py-2">DOCX</td>
+<td class="px-4 py-2">1.1 MB</td>
+<td class="px-4 py-2 text-right"><button class="text-primary hover:underline font-label-sm">Download</button></td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors h-[40px]">
+<td class="px-4 py-2 flex items-center gap-2"><span class="material-symbols-outlined text-secondary text-[16px]">grid_on</span> Bill of Quantities (BoQ)</td>
+<td class="px-4 py-2">XLSX</td>
+<td class="px-4 py-2">850 KB</td>
+<td class="px-4 py-2 text-right"><button class="text-primary hover:underline font-label-sm">Download</button></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Clarifications Section -->
+<div class="bg-surface-container-lowest border border-outline-subtle rounded-DEFAULT p-container-padding">
+<div class="flex justify-between items-center mb-4">
+<h2 class="font-headline-md text-headline-md text-primary flex items-center gap-2">
+<span class="material-symbols-outlined">forum</span>
+                                    Clarifications
+                                </h2>
+<div class="flex flex-col items-end"><button class="border border-outline-subtle text-on-surface-variant bg-surface-dim px-4 py-1.5 rounded-DEFAULT font-label-md cursor-not-allowed" disabled="">Ask Question</button><span class="text-[10px] text-status-error mt-1">Clarification deadline has passed</span></div>
+</div>
+<div class="space-y-4">
+<div class="border-l-4 border-primary pl-4 py-2 bg-surface">
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-1">Q: Does the warranty cover accidental damage for laptops?</p>
+<p class="font-body-md text-body-md text-on-surface">A: No, standard warranty applies to manufacturing defects only. Accidental damage coverage is optional and should be quoted separately if offered.</p>
+</div>
+<div class="border-l-4 border-outline-subtle pl-4 py-2 bg-surface">
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-1">Q: Can we bid for partial quantities?</p>
+<p class="font-body-md text-body-md text-on-surface">A: No, partial bids will not be accepted. Bidders must supply the full quantity as stipulated in the BoQ.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Context & Metadata -->
+<div class="lg:col-span-4 flex flex-col gap-gap-component">
+<!-- Timeline Card -->
+<div class="bg-surface-container-lowest border border-outline-subtle rounded-DEFAULT p-container-padding">
+<h2 class="font-headline-md text-headline-md text-primary mb-4">Key Dates</h2>
+<div class="relative border-l border-outline-subtle ml-2 space-y-6">
+<div class="relative pl-6">
+<span class="absolute -left-1.5 top-1 w-3 h-3 rounded-full bg-status-approved border-2 border-surface-container-lowest"></span>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Published Date</p>
+<p class="font-body-md text-body-md text-on-surface font-medium">Oct 12, 2024</p>
+</div>
+<div class="relative pl-6">
+<span class="absolute -left-1.5 top-1 w-3 h-3 rounded-full bg-primary border-2 border-surface-container-lowest"></span>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Clarification Deadline</p>
+<p class="font-body-md text-body-md text-on-surface font-medium">Oct 20, 2024</p>
+</div>
+<div class="relative pl-6">
+<span class="absolute -left-1.5 top-1 w-3 h-3 rounded-full bg-surface-dim border-2 border-surface-container-lowest"></span>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Submission Deadline</p>
+<p class="font-body-md text-body-md text-on-surface font-medium text-status-error">Nov 05, 2024, 10:00 AM</p>
+</div>
+<div class="relative pl-6"><span class="absolute -left-1.5 top-1 w-3 h-3 rounded-full bg-surface-dim border-2 border-surface-container-lowest"></span><p class="font-label-sm text-label-sm text-on-surface-variant">Opening Date/Time</p><p class="font-body-md text-body-md text-on-surface font-medium">Nov 15, 2024, 14:00 EAT</p></div></div>
+</div><div class="bg-surface-container-lowest border border-outline-subtle rounded-DEFAULT p-container-padding"><h3 class="font-label-md text-label-md text-on-surface-variant uppercase mb-3">What you will submit</h3><table class="w-full text-label-sm"><tbody class="divide-y divide-outline-subtle/30"><tr class="h-8"><td>Eligibility &amp; Declarations</td><td class="text-right text-status-approved font-bold">Required</td></tr><tr class="h-8"><td>Technical Response</td><td class="text-right text-status-approved font-bold">Required</td></tr><tr class="h-8"><td>Evidence Uploads</td><td class="text-right text-status-approved font-bold">Required</td></tr><tr class="h-8"><td>Price Schedule</td><td class="text-right text-status-approved font-bold">Required</td></tr><tr class="h-8"><td>Final Submission Confirmation</td><td class="text-right text-status-approved font-bold">Required</td></tr></tbody></table></div>
+<!-- Tender Info Card -->
+<div class="bg-surface-container-lowest border border-outline-subtle rounded-DEFAULT p-container-padding">
+<h2 class="font-headline-md text-headline-md text-primary mb-4">Tender Info</h2>
+<dl class="space-y-3 font-body-md text-body-md">
+<div class="flex justify-between border-b border-outline-subtle pb-1">
+<dt class="text-on-surface-variant">Procurement Method</dt>
+<dd class="text-on-surface font-medium text-right">National Competitive Bidding</dd>
+</div>
+<div class="flex justify-between border-b border-outline-subtle pb-1">
+<dt class="text-on-surface-variant">Category</dt>
+<dd class="text-on-surface font-medium text-right">Goods</dd>
+</div>
+<div class="flex justify-between border-b border-outline-subtle pb-1">
+<dt class="text-on-surface-variant">Bid Security</dt>
+<dd class="text-on-surface font-medium text-right">KES 500,000</dd>
+</div>
+<div class="flex justify-between border-b border-outline-subtle pb-1"><dt class="text-on-surface-variant">Evaluation Method</dt><dd class="text-on-surface font-medium text-right">Quality and Cost Based</dd></div>
+</dl>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Footer -->
+<footer class="w-full flex justify-between items-center px-container-padding h-16 bg-surface-container-lowest border-t border-outline-subtle">
+<span class="font-label-md text-label-md font-bold text-primary">© 2024 KenTender E-Procurement System. All Rights Reserved.</span>
+<nav class="flex gap-4">
+<a class="text-on-surface-variant hover:text-primary transition-colors font-label-sm text-label-sm" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-label-sm text-label-sm" href="#">Terms of Service</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-label-sm text-label-sm" href="#">Public Procurement Authority</a>
+</nav>
+</footer>
+</body></html>

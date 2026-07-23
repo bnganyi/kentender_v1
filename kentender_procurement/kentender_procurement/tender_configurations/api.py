@@ -654,3 +654,61 @@ def fill_electronic_bid_draft_for_tests(bid_id: str) -> dict[str, Any]:
 	)
 
 	return fill_draft_for_tests(bid_id)
+
+
+@frappe.whitelist()
+def get_published_tender_overview(published_tender_ref: str) -> dict[str, Any]:
+	"""Bidder A1 — published tender overview DTO (keyed by publication_ref)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.published_tender_overview import (
+		get_published_tender_overview as _get,
+	)
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def start_or_get_bid_workspace(
+	published_tender_ref: str,
+	bidder_label: str | None = None,
+) -> dict[str, Any]:
+	"""Bidder A1 — start or resume bid workspace for a published tender."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.published_tender_overview import (
+		start_or_get_bid_workspace as _start,
+	)
+
+	return _start(published_tender_ref, bidder_label=bidder_label)
+
+
+@frappe.whitelist()
+def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
+	"""Bidder A2 — Submission Checklist (workspace home) DTO."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.submission_checklist import (
+		get_submission_checklist as _get,
+	)
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def get_tender_documents_addenda(published_tender_ref: str) -> dict[str, Any]:
+	"""Bidder A3 — Tender Documents & Addenda DTO."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.tender_documents_addenda import (
+		get_tender_documents_addenda as _get,
+	)
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def acknowledge_tender_documents(published_tender_ref: str) -> dict[str, Any]:
+	"""Bidder A3 — acknowledge official tender documents (document_acknowledgement section)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.tender_documents_addenda import (
+		acknowledge_tender_documents as _ack,
+	)
+
+	return _ack(published_tender_ref)

@@ -1,0 +1,242 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }} | KenTender{% endblock %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/kentender_procurement/css/available_tenders.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+{% endblock %}
+
+{% block page_content %}
+{% set active_nav = "tenders" %}
+<div class="kt-a0-root" data-testid="kt-a0-tenders-root">
+	{% include "templates/includes/kt_bidder_portal_nav.html" %}
+
+	<main class="kt-a0-main">
+		<section class="kt-a0-hero">
+			<div>
+				<h1 data-testid="kt-a0-title">{{ _("Available Tenders") }}</h1>
+				<p class="kt-a0-subtitle">{{ _("Browse open procurement opportunities and start an electronic bid submission.") }}</p>
+			</div>
+			<form class="kt-a0-search" method="get" action="/tenders" data-testid="kt-a0-search-form">
+				{% if filters.status %}<input type="hidden" name="status" value="{{ filters.status }}">{% endif %}
+				{% if filters.procuring_entity %}<input type="hidden" name="procuring_entity" value="{{ filters.procuring_entity }}">{% endif %}
+				{% if filters.category %}<input type="hidden" name="category" value="{{ filters.category }}">{% endif %}
+				{% if filters.method %}<input type="hidden" name="method" value="{{ filters.method }}">{% endif %}
+				{% if filters.std %}<input type="hidden" name="std" value="{{ filters.std }}">{% endif %}
+				<label class="sr-only" for="kt-a0-q">{{ _("Search") }}</label>
+				<div class="kt-a0-search-field">
+					<span class="material-symbols-outlined" aria-hidden="true">search</span>
+					<input id="kt-a0-q" name="q" type="search" value="{{ filters.q }}"
+						placeholder="{{ _('Search by tender title, reference, procuring entity, or category') }}"
+						data-testid="kt-a0-search-input" />
+				</div>
+				<button type="submit" class="kt-a0-btn kt-a0-btn--secondary" data-testid="kt-a0-filter-submit">
+					<span class="material-symbols-outlined" aria-hidden="true">filter_list</span>
+					{{ _("Filter") }}
+				</button>
+			</form>
+		</section>
+
+		<div class="kt-a0-layout">
+			<aside class="kt-a0-aside" data-testid="kt-a0-aside-filters">
+				<form class="kt-a0-filters" method="get" action="/tenders" data-testid="kt-a0-filters">
+					<div class="kt-a0-filters-head">
+						<h2>{{ _("Active Filters") }}</h2>
+						<a href="/tenders" data-testid="kt-a0-clear-filters">{{ _("Clear all") }}</a>
+					</div>
+					<label>
+						<span>{{ _("Procuring Entity") }}</span>
+						<input type="text" name="procuring_entity" value="{{ filters.procuring_entity }}" placeholder="{{ _('All Entities') }}" />
+					</label>
+					<label>
+						<span>{{ _("Category") }}</span>
+						<input type="text" name="category" value="{{ filters.category }}" placeholder="{{ _('Any') }}" />
+					</label>
+					<label>
+						<span>{{ _("Method") }}</span>
+						<input type="text" name="method" value="{{ filters.method }}" placeholder="{{ _('Any') }}" />
+					</label>
+					<label>
+						<span>{{ _("Standard Tender Document") }}</span>
+						<input type="text" name="std" value="{{ filters.std }}" placeholder="{{ _('Any') }}" />
+					</label>
+					<div class="kt-a0-status-block">
+						<span class="kt-a0-field-label">{{ _("Status") }}</span>
+						<div class="kt-a0-status-buttons" data-testid="kt-a0-status-filter">
+							{% for btn in status_buttons %}
+							<a class="kt-a0-status-btn{% if btn.active %} is-active{% endif %}"
+								href="{{ btn.url }}"
+								data-status="{{ btn.value }}">{{ btn.label }}</a>
+							{% endfor %}
+						</div>
+					</div>
+					<input type="hidden" name="q" value="{{ filters.q }}" />
+					{% if filters.status %}<input type="hidden" name="status" value="{{ filters.status }}">{% endif %}
+					<button type="submit" class="kt-a0-btn kt-a0-btn--primary kt-a0-btn--block">{{ _("Apply Filters") }}</button>
+				</form>
+
+				<div class="kt-a0-activity" data-testid="kt-a0-activity">
+					<div class="kt-a0-activity-head">
+						<h2>{{ _("My Activity") }}</h2>
+					</div>
+					<div class="kt-a0-activity-body">
+						{% if is_guest %}
+						<p>{{ _("Sign in to start or continue a bid.") }}</p>
+						<a class="kt-a0-btn kt-a0-btn--primary kt-a0-btn--block" href="{{ login_url }}" data-testid="kt-a0-sign-in">{{ _("Sign In") }}</a>
+						{% else %}
+						<ul class="kt-a0-counts">
+							<li><span>{{ _("My Draft Bids") }}</span><strong data-testid="kt-a0-count-drafts">{{ counts.draft_bids }}</strong></li>
+							<li><span>{{ _("Submitted Bids") }}</span><strong data-testid="kt-a0-count-submitted">{{ counts.submitted_bids }}</strong></li>
+							<li><span>{{ _("Closing Soon") }}</span><strong data-testid="kt-a0-count-closing">{{ counts.closing_soon }}</strong></li>
+						</ul>
+						{% endif %}
+					</div>
+				</div>
+			</aside>
+
+			<section class="kt-a0-results" data-testid="kt-a0-results">
+				<div class="kt-a0-results-meta">
+					<p><strong data-testid="kt-a0-result-count">{{ counts.result_total }}</strong> {{ _("tenders found") }}</p>
+				</div>
+
+				{% if not tenders %}
+				<div class="kt-a0-empty" data-testid="kt-a0-empty">
+					<p class="kt-a0-empty-title">{{ _("No tenders found.") }}</p>
+					<p>{{ _("Try changing your filters or search terms.") }}</p>
+				</div>
+				{% else %}
+				{% for t in tenders %}
+				<article class="kt-a0-card" data-testid="kt-a0-tender-card" data-ref="{{ t.tender_reference }}">
+					<div class="kt-a0-card-accent" aria-hidden="true"></div>
+					<div class="kt-a0-card-top">
+						<div>
+							<div class="kt-a0-card-meta">
+								<span class="kt-a0-badge kt-a0-badge--{{ t.public_status | lower | replace(' ', '-') }}" data-testid="kt-a0-status">
+									<span class="kt-a0-badge-dot" aria-hidden="true"></span>
+									{{ t.public_status }}
+								</span>
+								<span class="kt-a0-ref" data-testid="kt-a0-ref">{{ _("Ref:") }} {{ t.tender_reference }}</span>
+							</div>
+							<h3 data-testid="kt-a0-card-title">{{ t.title }}</h3>
+							<p class="kt-a0-entity">{{ t.procuring_entity or "—" }}</p>
+						</div>
+						<div class="kt-a0-deadline">
+							<span>{{ _("Deadline") }}</span>
+							<strong data-testid="kt-a0-time-remaining"
+								data-kt-countdown
+								data-deadline="{{ t.submission_deadline_raw }}">{{ t.time_remaining_label }}</strong>
+						</div>
+					</div>
+					<div class="kt-a0-grid4">
+						<div><span>{{ _("Category") }}</span><strong>{{ t.procurement_category or "—" }}</strong></div>
+						<div><span>{{ _("Method") }}</span><strong>{{ t.procurement_method or "—" }}</strong></div>
+						<div><span>{{ _("Published") }}</span><strong>{{ t.published_datetime }}</strong></div>
+						<div><span>{{ _("Standard Tender Document") }}</span><strong class="kt-a0-std">{{ t.standard_tender_document or "—" }}</strong></div>
+					</div>
+					<div class="kt-a0-scope">
+						<span>{{ _("Scope Summary") }}</span>
+						<p>{{ t.scope_summary or "—" }}</p>
+					</div>
+					<div class="kt-a0-dates">
+						<div><span>{{ _("Clarification Deadline") }}</span><strong>{{ t.clarification_deadline }}</strong></div>
+						<div><span>{{ _("Submission Deadline") }}</span><strong>{{ t.submission_deadline }}</strong></div>
+					</div>
+					<div class="kt-a0-actions">
+						<div class="kt-a0-secondary">
+							{% if t.has_document %}
+							<a href="{{ t.view_document_url }}" data-testid="kt-a0-view-doc">
+								<span class="material-symbols-outlined" aria-hidden="true">visibility</span>
+								{{ _("View Documents") }}
+							</a>
+							<a href="{{ t.download_document_url }}" data-testid="kt-a0-download-doc">
+								<span class="material-symbols-outlined" aria-hidden="true">download</span>
+								{{ _("Download Documents") }}
+							</a>
+							{% else %}
+							<span class="kt-a0-muted">{{ _("Document not available") }}</span>
+							{% endif %}
+							<a href="{{ t.clarifications_url }}" data-testid="kt-a0-view-clarifications">
+								<span class="material-symbols-outlined" aria-hidden="true">forum</span>
+								{{ _("View Clarifications") }}
+							</a>
+						</div>
+						<a class="kt-a0-btn kt-a0-btn--primary" href="{{ t.primary_action_url }}"
+							data-testid="kt-a0-primary-action"
+							data-action-label="{{ t.primary_action_label }}">{{ t.primary_action_label }}</a>
+					</div>
+				</article>
+				{% endfor %}
+				{% endif %}
+
+				{% if pagination.total_pages > 1 %}
+				<nav class="kt-a0-pagination" data-testid="kt-a0-pagination">
+					{% if prev_url %}<a href="{{ prev_url }}">{{ _("Previous") }}</a>{% endif %}
+					<span>{{ _("Page") }} {{ pagination.page }} / {{ pagination.total_pages }}</span>
+					{% if next_url %}<a href="{{ next_url }}">{{ _("Next") }}</a>{% endif %}
+				</nav>
+				{% endif %}
+			</section>
+
+			<aside class="kt-a0-rail" data-testid="kt-a0-before-you-bid">
+				<section class="kt-a0-before">
+					<h2>{{ _("Before you bid") }}</h2>
+					<ul class="kt-a0-before-steps">
+						<li>
+							<span class="kt-a0-step">1</span>
+							<div>
+								<strong>{{ _("Review documents") }}</strong>
+								<p>{{ _("Download and thoroughly read the Standard Tender Document.") }}</p>
+							</div>
+						</li>
+						<li>
+							<span class="kt-a0-step">2</span>
+							<div>
+								<strong>{{ _("Check deadlines") }}</strong>
+								<p>{{ _("Note both the clarification deadline and the final submission cut-off.") }}</p>
+							</div>
+						</li>
+						<li>
+							<span class="kt-a0-step">3</span>
+							<div>
+								<strong>{{ _("Prepare declarations") }}</strong>
+								<p>{{ _("Gather required declarations, evidence, technical responses, and price schedule.") }}</p>
+							</div>
+						</li>
+						<li>
+							<span class="kt-a0-step">4</span>
+							<div>
+								<strong>{{ _("Submit electronically") }}</strong>
+								<p>{{ _("Submit electronically through this portal before the deadline.") }}</p>
+							</div>
+						</li>
+					</ul>
+				</section>
+				<section class="kt-a0-support">
+					<h3>{{ _("Technical Support") }}</h3>
+					<p>{{ _("Experiencing issues with the electronic submission system?") }}</p>
+					<a href="#"><span class="material-symbols-outlined" aria-hidden="true">phone_in_talk</span> 0800-KENTENDER</a>
+					<a href="mailto:support@kentender.go.ke"><span class="material-symbols-outlined" aria-hidden="true">mail</span> support@kentender.go.ke</a>
+				</section>
+			</aside>
+		</div>
+	</main>
+
+	<footer class="kt-a0-footer" data-testid="kt-a0-footer">
+		<div class="kt-a0-footer-inner">
+			<div>
+				<strong>KenTender</strong>
+				<p>© {{ copyright_year }} {{ _("KenTender Public Procurement Portal. All rights reserved.") }}</p>
+			</div>
+			<nav>
+				<a href="#">{{ _("Privacy Policy") }}</a>
+				<a href="#">{{ _("Terms of Service") }}</a>
+				<a href="#">{{ _("Accessibility") }}</a>
+				<a href="#">{{ _("Government Portal") }}</a>
+			</nav>
+		</div>
+	</footer>
+</div>
+<script src="/assets/kentender_procurement/js/kt_bidder_countdown.js"></script>
+<script src="/assets/kentender_procurement/js/available_tenders.js"></script>
+{% endblock %}

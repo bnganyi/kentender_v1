@@ -15,6 +15,8 @@ import json
 import os
 
 import frappe
+from frappe.modules.import_file import import_file_by_path
+
 
 def _sidebar_json_path(basename: str) -> str:
 	return os.path.join(
@@ -82,8 +84,16 @@ def reconcile_procurement_navigation_from_exports() -> None:
 		_apply_sidebar_export(data)
 
 
+def sync_tenders_desktop_icon() -> None:
+	"""Desk home tile → public Available Tenders website (/tenders)."""
+	path = os.path.join(frappe.get_app_path("kentender_procurement"), "desktop_icon", "tenders.json")
+	if os.path.isfile(path):
+		import_file_by_path(path, force=True)
+
+
 def run() -> None:
-	if not frappe.db.exists("DocType", "Workspace Sidebar"):
-		return
-	reconcile_procurement_navigation_from_exports()
+	if frappe.db.exists("DocType", "Workspace Sidebar"):
+		reconcile_procurement_navigation_from_exports()
+	if frappe.db.exists("DocType", "Desktop Icon"):
+		sync_tenders_desktop_icon()
 	frappe.clear_cache()

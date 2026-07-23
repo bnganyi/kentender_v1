@@ -1,0 +1,43 @@
+{# Contextual bid workspace left rail — pass active_ws: checklist|prepare|review|submit #}
+<aside class="kt-a2-sidebar" data-testid="kt-a2-sidebar">
+	<div class="kt-a2-sidebar-head">
+		<h2 data-testid="kt-a2-sidebar-title">{{ checklist.tender_title or _("Bid Workspace") }}</h2>
+		<p data-testid="kt-a2-sidebar-ref">{{ _("Ref:") }} {{ checklist.published_tender_ref }}</p>
+	</div>
+	<nav class="kt-a2-sidebar-nav" aria-label="{{ _('Bid workspace navigation') }}">
+		<a class="{% if active_ws == 'checklist' %}is-active{% endif %}"
+			href="{{ checklist.workspace_url }}" data-testid="kt-a2-nav-checklist">
+			<span class="material-symbols-outlined" aria-hidden="true">fact_check</span>
+			{{ _("Checklist") }}
+		</a>
+		<a class="{% if active_ws == 'prepare' %}is-active{% endif %}{% if not checklist.documents_url %} is-disabled{% endif %}"
+			href="{{ checklist.documents_url or '#' }}"
+			{% if not checklist.documents_url %}aria-disabled="true"{% endif %}
+			data-testid="kt-a2-nav-prepare">
+			<span class="material-symbols-outlined" aria-hidden="true">edit_document</span>
+			{{ _("Prepare Bid") }}
+		</a>
+		<a class="is-disabled" href="#" aria-disabled="true" data-testid="kt-a2-nav-review">
+			<span class="material-symbols-outlined" aria-hidden="true">verified</span>
+			{{ _("Review & Validate") }}
+		</a>
+		<a class="is-disabled" href="#" aria-disabled="true" data-testid="kt-a2-nav-submit">
+			<span class="material-symbols-outlined" aria-hidden="true">lock</span>
+			{{ _("Submit & Seal") }}
+		</a>
+	</nav>
+	<div class="kt-a2-sidebar-foot">
+		<a href="{{ checklist.overview_url }}" data-testid="kt-a2-nav-overview">
+			<span class="material-symbols-outlined" aria-hidden="true">info</span>
+			{{ _("View Tender Overview") }}
+		</a>
+		<a href="#" data-testid="kt-a2-nav-support">
+			<span class="material-symbols-outlined" aria-hidden="true">support_agent</span>
+			{{ _("Support") }}
+		</a>
+		<a href="/tenders" data-testid="kt-a2-nav-exit">
+			<span class="material-symbols-outlined" aria-hidden="true">exit_to_app</span>
+			{{ _("Exit Workspace") }}
+		</a>
+	</div>
+</aside>

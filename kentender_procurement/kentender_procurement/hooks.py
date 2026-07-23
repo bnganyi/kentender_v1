@@ -125,6 +125,9 @@ app_include_js = [
 # Resolves dynamic detail paths to ``www/supplier/tenders`` (same shell as list).
 website_route_rules = [
 	{"from_route": "/supplier/tenders/<tender_code>", "to_route": "supplier/tenders"},
+	{"from_route": "/tenders/<publication_ref>/documents", "to_route": "tenders/documents"},
+	{"from_route": "/tenders/<publication_ref>/workspace", "to_route": "tenders/workspace"},
+	{"from_route": "/tenders/<publication_ref>", "to_route": "tenders/overview"},
 ]
 
 # include js, css files in header of web form
@@ -167,6 +170,8 @@ page_js = {
 	"it-tender-package-review": "public/js/it_tender_package_review_page.js",
 	"publications": "public/js/publications_page.js",
 	"publication-setup": "public/js/publication_setup_page.js",
+	"published-tender-overview": "public/js/published_tender_overview_page.js",
+	"bid-submissions": "public/js/bid_submissions_page.js",
 	"it-electronic-bidder-workspace": "public/js/it_electronic_bidder_workspace_page.js",
 	"std-library": "public/js/std_prod_std_library_page.js",
 	"std-family-detail": "public/js/std_prod_std_family_detail_page.js",
@@ -444,6 +449,10 @@ fixtures = [
 				["Procurement", "Demand Intake", "Planning module navigation"],
 			]
 		],
+	},
+	{
+		"dt": "Desktop Icon",
+		"filters": [["name", "in", ["Procurement", "Tenders"]]],
 	},
 ]
 

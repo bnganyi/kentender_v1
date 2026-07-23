@@ -37,6 +37,11 @@ from kentender_procurement.tender_configurations.api import (
 	submit_and_seal_electronic_bid as _submit_and_seal_electronic_bid,
 	get_electronic_bid_receipt as _get_electronic_bid_receipt,
 	fill_electronic_bid_draft_for_tests as _fill_electronic_bid_draft_for_tests,
+	get_published_tender_overview as _get_published_tender_overview,
+	start_or_get_bid_workspace as _start_or_get_bid_workspace,
+	get_submission_checklist as _get_submission_checklist,
+	get_tender_documents_addenda as _get_tender_documents_addenda,
+	acknowledge_tender_documents as _acknowledge_tender_documents,
 	get_tender_configurations_dashboard as _get_tender_configurations_dashboard,
 	request_tender_configuration_clarification as _request_tender_configuration_clarification,
 	resolve_tender_configuration_review_finding as _resolve_tender_configuration_review_finding,
@@ -449,3 +454,28 @@ def get_electronic_bid_receipt(bid_id: str):
 @frappe.whitelist()
 def fill_electronic_bid_draft_for_tests(bid_id: str):
 	return _fill_electronic_bid_draft_for_tests(bid_id)
+
+
+@frappe.whitelist()
+def get_published_tender_overview(published_tender_ref: str):
+	return _get_published_tender_overview(published_tender_ref)
+
+
+@frappe.whitelist()
+def start_or_get_bid_workspace(published_tender_ref: str, bidder_label: str | None = None):
+	return _start_or_get_bid_workspace(published_tender_ref, bidder_label=bidder_label)
+
+
+@frappe.whitelist()
+def get_submission_checklist(published_tender_ref: str):
+	return _get_submission_checklist(published_tender_ref)
+
+
+@frappe.whitelist()
+def get_tender_documents_addenda(published_tender_ref: str):
+	return _get_tender_documents_addenda(published_tender_ref)
+
+
+@frappe.whitelist()
+def acknowledge_tender_documents(published_tender_ref: str):
+	return _acknowledge_tender_documents(published_tender_ref)

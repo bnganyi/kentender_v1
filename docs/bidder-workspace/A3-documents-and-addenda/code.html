@@ -1,0 +1,392 @@
+<!DOCTYPE html><html class="h-full" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>KenTender - Tender Documents &amp; Addenda</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "primary-fixed": "#d6e3fd",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-secondary": "#ffffff",
+                        "on-surface-variant": "#44474c",
+                        "surface-container-low": "#f2f4f6",
+                        "primary-container": "#0e1c2e",
+                        "status-pending-bg": "#fffbeb",
+                        "secondary": "#515f74",
+                        "secondary-fixed": "#d5e3fc",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "on-surface": "#191c1e",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "on-tertiary": "#ffffff",
+                        "status-error": "#ba1a1a",
+                        "background": "#f7f9fb",
+                        "inverse-primary": "#bac7e0",
+                        "surface-tint": "#525f74",
+                        "surface-dim": "#d8dadc",
+                        "on-primary-container": "#77859b",
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-background": "#191c1e",
+                        "tertiary-container": "#001c3a",
+                        "on-secondary-container": "#556379",
+                        "status-approved": "#065f46",
+                        "on-primary-fixed": "#0e1c2e",
+                        "surface-container-high": "#e6e8ea",
+                        "error": "#ba1a1a",
+                        "status-pending": "#92400e",
+                        "secondary-container": "#d2e1fa",
+                        "surface-container": "#eceef0",
+                        "on-primary": "#ffffff",
+                        "surface-bright": "#f7f9fb",
+                        "outline-subtle": "#c4c6cf",
+                        "on-tertiary-container": "#6b85ac",
+                        "tertiary-fixed": "#d4e3ff",
+                        "primary-fixed-dim": "#bac7e0",
+                        "on-primary-fixed-variant": "#3a475c",
+                        "surface-variant": "#e0e3e5",
+                        "status-approved-bg": "#ecfdf5",
+                        "surface": "#f7f9fb",
+                        "primary": "#000000",
+                        "on-tertiary-fixed": "#001c3a",
+                        "outline-strong": "#74777f",
+                        "on-error": "#ffffff",
+                        "tertiary": "#000000",
+                        "on-tertiary-fixed-variant": "#2d486c",
+                        "on-error-container": "#93000a",
+                        "outline-variant": "#c5c6cd",
+                        "tertiary-fixed-dim": "#adc8f3",
+                        "inverse-on-surface": "#eff1f3",
+                        "status-error-bg": "#fff1f2",
+                        "outline": "#75777d",
+                        "inverse-surface": "#2d3133"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gap-component": "8px",
+                        "sidebar-width": "256px",
+                        "max-width": "1280px",
+                        "container-padding": "16px",
+                        "unit": "4px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Public Sans"],
+                        "label-md": ["JetBrains Mono"],
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-lg": ["Public Sans"],
+                        "body-lg": ["Public Sans"],
+                        "headline-md": ["Public Sans"],
+                        "headline-lg-mobile": ["Public Sans"],
+                        "display": ["Public Sans"]
+                    },
+                    "fontSize": {
+                        "body-md": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                        "label-md": ["11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "label-sm": ["10px", { "lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+                        "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-md": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "display": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="h-full bg-background text-on-background font-body-md antialiased overflow-x-hidden selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-container-padding h-14 bg-surface-container-lowest border-b border-outline-subtle">
+<div class="flex items-center space-x-8 h-full">
+<a class="font-display text-display text-primary tracking-tighter" href="#">KenTender</a>
+<nav class="hidden md:flex h-full">
+<ul class="flex items-center space-x-6 h-full"><li class="h-full flex items-center"><a class="text-on-surface-variant h-full flex items-center px-2 hover:bg-surface-container-low transition-colors" href="#">Tenders</a></li><li class="h-full flex items-center"><a class="text-primary border-b-2 border-primary font-bold h-full flex items-center px-2 hover:bg-surface-container-low transition-colors opacity-80" href="#">My Bids</a></li><li class="h-full flex items-center"><a class="text-on-surface-variant h-full flex items-center px-2 hover:bg-surface-container-low transition-colors" href="#">Clarifications</a></li></ul>
+</nav>
+</div>
+<div class="flex items-center space-x-4">
+<button aria-label="Notifications" class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button aria-label="Help" class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded transition-colors">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-outline-subtle bg-surface-container-high">
+<img alt="Bidder Profile Avatar" class="h-full w-full object-cover" data-alt="A professional headshot of a corporate user, neutral expression, soft lighting, modern corporate environment, high resolution." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBviWYrJ3eoXAex4wFBcJz55IY85T4q6ZF1g53IKCZxJC7K2JiqVLFJ-9nT3eSk-prNjzAAsZGW28no2xKUAxXC85rdmzJ3tYgYIXr2ptYOKzGu61_H35mOidINh2OBfi6S1MArXgRH8dV2PTq9rkJOA0kitZijqfS-OVOpGdJ_Gi4DmmVgZolGP0dGPi9dOqsIhp-6cfBnm-Vt18mzXgBWSPItYXGm8er5M2vbsC4zgYfG2oW8VR24bA">
+</div>
+<!-- Mobile Menu Toggle (Visible only on mobile) -->
+<button aria-label="Menu" class="md:hidden text-on-surface-variant p-2 hover:bg-surface-container-low rounded">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+</div>
+</header>
+<!-- SideNavBar & Main Content Wrapper -->
+<div class="pt-14 flex h-full">
+<!-- SideNavBar (Hidden on Mobile, persistent on Desktop) -->
+<aside class="hidden md:flex flex-col fixed left-0 top-14 bottom-0 w-sidebar-width z-40 bg-surface-container-low border-r border-outline-subtle">
+<div class="p-container-padding border-b border-outline-subtle">
+<div class="flex items-center space-x-3 mb-4">
+<div class="h-10 w-10 rounded border border-outline-subtle bg-surface-container-highest overflow-hidden flex-shrink-0">
+<img alt="Procurement Logo" class="h-full w-full object-cover" data-alt="Abstract generic government logo, modern flat design, blue and grey color palette, high contrast, clean lines." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3RMthacSv0shj96cTbyx_OcTnUPYFsFOHyGSkWoAsqtmoqBYRbpBg3DRxNZIygWREnna7OoT24p_Ie5sr6IBV-lQ6iBQhrv7uyCjn8vGMRFuBXJpK13Ye0tY75V8A_al2FXjIAnU8L-VucnHAKXY0ar8Im3cE5JaKpDeH1EhOyEQa05rloTb-ekxDUHHNL_p-A1yCy8JnEqZnhXVjRRip16MO6Jf-OEnaZ4SPw-4Hw1b4emBVu3TZBg">
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md font-bold text-primary truncate" title="Tender #KT-2024-089">Tender #KT-2024-089</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Ref: ICT/092/2024</p>
+</div>
+</div>
+
+</div>
+<nav class="flex-1 overflow-y-auto py-2">
+<ul class="space-y-1">
+<li class="">
+<a class="flex items-center px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="fact_check">fact_check</span>
+<span class="font-label-md text-label-md uppercase">Checklist</span>
+</a>
+</li>
+<li class="">
+<!-- Active State applied to 'Prepare Bid' assuming documents are part of preparation -->
+<a class="flex items-center px-4 py-3 bg-surface-container-highest text-primary border-r-4 border-primary font-bold translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="edit_document" data-weight="fill">edit_document</span>
+<span class="font-label-md text-label-md uppercase">Prepare Bid</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="visibility">visibility</span>
+<span class="font-label-md text-label-md uppercase">Review &amp; Validate</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="send">send</span>
+<span class="font-label-md text-label-md uppercase">Submit &amp; Seal</span>
+</a>
+</li>
+</ul>
+</nav>
+<div class="mt-auto border-t border-outline-subtle p-2">
+<ul class="space-y-1">
+<li class="">
+<a class="flex items-center px-4 py-2 text-on-surface-variant hover:bg-surface-container transition-all rounded" href="#">
+<span class="material-symbols-outlined mr-3 text-[18px]" data-icon="support_agent">support_agent</span>
+<span class="font-label-md text-label-md uppercase">Support</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center px-4 py-2 text-on-surface-variant hover:bg-surface-container transition-all rounded" href="#">
+<span class="material-symbols-outlined mr-3 text-[18px]" data-icon="exit_to_app">exit_to_app</span>
+<span class="font-label-md text-label-md uppercase">Exit Workspace</span>
+</a>
+</li>
+</ul>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 md:ml-sidebar-width overflow-y-auto pb-24">
+<div class="max-w-max-width mx-auto p-container-padding md:p-8 space-y-8">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between border-b border-outline-subtle pb-6 gap-4">
+<div>
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-1">Tender Documents &amp; Addenda</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Review all official documentation and acknowledge any modifications before submission.</p>
+</div>
+<!-- Global Acknowledgement Status KPI -->
+<div class="bg-surface-container-lowest border border-outline-subtle rounded p-4 flex flex-col min-w-[200px] relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-status-pending"></div>
+<span class="font-label-sm text-label-sm uppercase text-on-surface-variant mb-1">Acknowledgment Status</span>
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-status-pending" data-icon="warning">warning</span>
+<span class="font-headline-md text-headline-md text-primary">Action Required</span>
+</div>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Primary Documents Column -->
+<div class="lg:col-span-2 space-y-6">
+<!-- Confirmed Tender Documents Section -->
+<section class="bg-surface-container-lowest border border-outline-subtle rounded flex flex-col">
+<div class="px-5 py-4 border-b border-outline-subtle bg-surface flex justify-between items-center"><h2 class="font-headline-md text-headline-md text-primary flex items-center"><span class="material-symbols-outlined mr-2" data-icon="folder">folder</span>Official Tender Documents</h2><div class="flex items-center space-x-4"><button class="flex items-center space-x-2 py-1.5 px-3 bg-secondary text-on-secondary rounded border border-outline-subtle hover:bg-surface-tint hover:text-white transition-colors font-label-md text-label-md uppercase tracking-wider"><span class="material-symbols-outlined text-[16px]" data-icon="visibility">visibility</span><span class="">View</span></button><button class="flex items-center space-x-2 py-1.5 px-3 bg-surface-container-lowest text-primary rounded border border-outline-subtle hover:bg-surface-container transition-colors font-label-md text-label-md uppercase tracking-wider"><span class="material-symbols-outlined text-[16px]" data-icon="download">download</span><span class="">Download All (.zip)</span></button></div></div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface border-b border-outline-subtle">
+<th class="px-5 py-2 font-label-md text-label-md uppercase text-on-surface-variant font-medium">Document Name</th>
+<th class="px-5 py-2 font-label-md text-label-md uppercase text-on-surface-variant font-medium">Type</th>
+<th class="px-5 py-2 font-label-md text-label-md uppercase text-on-surface-variant font-medium">Size</th>
+<th class="px-5 py-2 font-label-md text-label-md uppercase text-on-surface-variant font-medium text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-subtle">
+<tr class="h-10 hover:bg-surface-container-low transition-colors group">
+<td class="px-5 py-2">
+<div class="flex items-center space-x-3">
+<span class="material-symbols-outlined text-secondary text-[20px]" data-icon="picture_as_pdf">picture_as_pdf</span>
+<span class="font-body-md text-body-md text-primary font-medium">Invitation to Tender (ITT) v1.0</span>
+</div>
+</td>
+<td class="px-5 py-2 font-body-md text-body-md text-on-surface-variant">PDF</td>
+<td class="px-5 py-2 font-body-md text-body-md text-on-surface-variant">2.4 MB</td>
+<td class="px-5 py-2 text-right">
+<div class="flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 text-on-surface-variant hover:text-primary rounded hover:bg-surface-container border border-transparent hover:border-outline-subtle transition-all" title="View">
+<span class="material-symbols-outlined text-[18px]" data-icon="visibility">visibility</span>
+</button>
+<button class="p-1 text-on-surface-variant hover:text-primary rounded hover:bg-surface-container border border-transparent hover:border-outline-subtle transition-all" title="Download">
+<span class="material-symbols-outlined text-[18px]" data-icon="download">download</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="h-10 hover:bg-surface-container-low transition-colors group">
+<td class="px-5 py-2">
+<div class="flex items-center space-x-3">
+<span class="material-symbols-outlined text-secondary text-[20px]" data-icon="description">description</span>
+<span class="font-body-md text-body-md text-primary font-medium">Technical Specifications</span>
+</div>
+</td>
+<td class="px-5 py-2 font-body-md text-body-md text-on-surface-variant">DOCX</td>
+<td class="px-5 py-2 font-body-md text-body-md text-on-surface-variant">1.1 MB</td>
+<td class="px-5 py-2 text-right">
+<div class="flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 text-on-surface-variant hover:text-primary rounded hover:bg-surface-container border border-transparent hover:border-outline-subtle transition-all" title="View">
+<span class="material-symbols-outlined text-[18px]" data-icon="visibility">visibility</span>
+</button>
+<button class="p-1 text-on-surface-variant hover:text-primary rounded hover:bg-surface-container border border-transparent hover:border-outline-subtle transition-all" title="Download">
+<span class="material-symbols-outlined text-[18px]" data-icon="download">download</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="h-10 hover:bg-surface-container-low transition-colors group">
+<td class="px-5 py-2">
+<div class="flex items-center space-x-3">
+<span class="material-symbols-outlined text-secondary text-[20px]" data-icon="table">table</span>
+<span class="font-body-md text-body-md text-primary font-medium">Bill of Quantities (BoQ) Template</span>
+</div>
+</td>
+<td class="px-5 py-2 font-body-md text-body-md text-on-surface-variant">XLSX</td>
+<td class="px-5 py-2 font-body-md text-body-md text-on-surface-variant">450 KB</td>
+<td class="px-5 py-2 text-right">
+<div class="flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 text-on-surface-variant hover:text-primary rounded hover:bg-surface-container border border-transparent hover:border-outline-subtle transition-all" title="View">
+<span class="material-symbols-outlined text-[18px]" data-icon="visibility">visibility</span>
+</button>
+<button class="p-1 text-on-surface-variant hover:text-primary rounded hover:bg-surface-container border border-transparent hover:border-outline-subtle transition-all" title="Download">
+<span class="material-symbols-outlined text-[18px]" data-icon="download">download</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Addenda Section -->
+<section class="bg-surface-container-lowest border border-outline-subtle rounded flex flex-col">
+<div class="px-5 py-4 border-b border-outline-subtle bg-surface flex justify-between items-center">
+<h2 class="font-headline-md text-headline-md text-primary flex items-center"><span class="material-symbols-outlined mr-2" data-icon="update">update</span>Official Addenda</h2>
+<span class="bg-status-pending-bg text-status-pending px-2 py-1 rounded font-label-sm text-label-sm border border-status-pending/20 flex items-center">
+<span class="w-1.5 h-1.5 rounded-full bg-status-pending mr-1.5"></span>
+                                    1 Unacknowledged
+                                </span>
+</div>
+<div class="p-5 space-y-4">
+<!-- Addendum 2 (Pending) -->
+<div class="border border-outline-subtle rounded bg-surface p-4 relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-status-pending"></div>
+<div class="flex flex-col md:flex-row justify-between md:items-start gap-4">
+<div class="space-y-2">
+<div class="flex items-center space-x-2">
+<h3 class="font-headline-md text-headline-md text-primary font-bold">Addendum #02: Revised Delivery Schedule</h3>
+<span class="bg-status-pending-bg text-status-pending px-2 py-0.5 rounded text-xs font-medium border border-status-pending/20">Action Required</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">Published: Oct 24, 2024 • Ref: ADD-KT-089-02</p>
+<p class="font-body-md text-body-md text-primary mt-2">The delivery schedule in section 4.2 has been amended to reflect a 60-day window instead of 45 days. Please review attached revised specification.</p>
+<div class="flex items-center space-x-4 pt-2">
+<a class="flex items-center text-secondary hover:text-primary transition-colors font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[18px] mr-1" data-icon="attachment">attachment</span>
+                                                    Revised_Spec_v2.pdf (1.2 MB)
+                                                </a>
+</div>
+</div>
+<div class="flex flex-col space-y-2 min-w-[140px]">
+<button class="w-full flex items-center justify-center space-x-2 py-2 px-4 bg-primary text-on-primary rounded hover:bg-surface-tint transition-colors font-label-md text-label-md uppercase tracking-wider">
+<span class="material-symbols-outlined text-[16px]" data-icon="check_circle">check_circle</span>
+<span class="">Acknowledge</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Addendum 1 (Acknowledged) -->
+<div class="border border-outline-subtle rounded bg-surface p-4 relative overflow-hidden opacity-70">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-status-approved"></div>
+<div class="flex flex-col md:flex-row justify-between md:items-start gap-4">
+<div class="space-y-2">
+<div class="flex items-center space-x-2">
+<h3 class="font-headline-md text-headline-md text-primary font-medium">Addendum #01: Q&amp;A Responses</h3>
+<span class="bg-status-approved-bg text-status-approved px-2 py-0.5 rounded text-xs font-medium border border-status-approved/20 flex items-center">
+<span class="w-1 h-1 rounded-full bg-status-approved mr-1"></span>
+                                                    Acknowledged
+                                                </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">Published: Oct 18, 2024 • Ref: ADD-KT-089-01</p>
+<p class="font-body-md text-body-md text-primary mt-2 line-clamp-2">Responses to bidder questions submitted before the Oct 15th deadline.</p>
+<div class="flex items-center space-x-4 pt-2">
+<a class="flex items-center text-secondary hover:text-primary transition-colors font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[18px] mr-1" data-icon="attachment">attachment</span>
+                                                    QA_Responses_Set1.pdf (800 KB)
+                                                </a>
+</div>
+</div>
+<div class="flex flex-col items-end space-y-1 min-w-[140px]">
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Acknowledged On</p>
+<p class="font-body-md text-body-md text-primary">Oct 19, 2024</p>
+<p class="font-body-md text-body-md text-on-surface-variant text-xs">by John Doe</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Side Panel Column -->
+<div class="space-y-6">
+<!-- Submission Readiness Card -->
+<div class="bg-surface-container-lowest border border-outline-subtle rounded p-5 flex flex-col h-fit sticky top-6"><h3 class="font-headline-md text-headline-md text-primary mb-4 border-b border-outline-subtle pb-2">Submission Readiness</h3><div class="space-y-3 mb-6"><div class="flex justify-between items-center py-1 border-b border-outline-subtle/30"><span class="text-on-surface-variant">Official tender document viewed</span><span class="text-status-approved font-medium flex items-center"><span class="material-symbols-outlined text-[16px] mr-1">check_circle</span>Complete</span></div><div class="flex justify-between items-center py-1 border-b border-outline-subtle/30"><span class="text-on-surface-variant">Required addenda acknowledged</span><span class="text-status-pending font-medium">1 pending</span></div><div class="flex justify-between items-center py-1 border-b border-outline-subtle/30"><span class="text-on-surface-variant">Submission impact</span><span class="text-status-error font-medium">Blocks final submission</span></div><div class="flex justify-between items-center py-1"><span class="text-on-surface-variant">Time remaining</span><span class="text-primary font-bold">12 days 04 hrs</span></div></div><div class="p-3 bg-status-error-bg border border-status-error/20 rounded"><p class="font-body-md text-body-md text-status-error">You must acknowledge all required addenda before submitting your bid. Submission will remain blocked until required acknowledgements are complete.</p></div></div>
+<!-- System Note -->
+
+</div>
+</div>
+<div class="flex items-center justify-between pt-8 border-t border-outline-subtle"><button class="flex items-center space-x-2 py-2 px-6 border border-outline-strong text-primary rounded hover:bg-surface-container transition-colors font-label-md text-label-md uppercase tracking-wider"><span class="material-symbols-outlined text-[18px]">arrow_back</span><span class="">Back to Checklist</span></button><button class="flex items-center space-x-2 py-2 px-6 bg-primary text-on-primary rounded hover:bg-surface-tint transition-colors font-label-md text-label-md uppercase tracking-wider"><span class="">Acknowledge Required Addenda</span><span class="material-symbols-outlined text-[18px]">arrow_forward</span></button></div></div>
+</main>
+</div>
+<!-- Footer -->
+
+
+
+
+
+
+
+</body></html>

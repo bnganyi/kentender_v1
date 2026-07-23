@@ -1,6 +1,6 @@
 {
  "app": "kentender_procurement",
- "creation": "2026-07-18 11:24:11.801755",
+ "creation": "2026-07-23 15:16:34.896825",
  "docstatus": 0,
  "doctype": "Workspace Sidebar",
  "header_icon": "buying",
@@ -152,10 +152,10 @@
    "indent": 0,
    "keep_closed": 0,
    "label": "Bid Submissions",
-   "link_type": "URL",
+   "link_to": "bid-submissions",
+   "link_type": "Page",
    "show_arrow": 0,
-   "type": "Link",
-   "url": "#"
+   "type": "Link"
   },
   {
    "child": 1,
@@ -374,7 +374,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-07-21 22:55:59.701876",
+ "modified": "2026-07-23 15:16:34.896825",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "Procurement",

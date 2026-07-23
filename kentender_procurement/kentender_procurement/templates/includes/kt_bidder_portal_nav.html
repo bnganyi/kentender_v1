@@ -1,0 +1,18 @@
+{# Shared A0/A1 public bidder top nav — pass active_nav: tenders|my_bids|clarifications|account #}
+<header class="kt-a0-topnav" data-testid="kt-a0-topnav">
+	<div class="kt-a0-topnav-inner">
+		<div class="kt-a0-topnav-left">
+			<div class="kt-a0-brand">KenTender</div>
+			<nav class="kt-a0-nav" aria-label="{{ _('Public bidder navigation') }}">
+				<a class="{% if active_nav == 'tenders' %}is-active{% endif %}" href="/tenders" data-testid="kt-a0-nav-tenders">{{ _("Tenders") }}</a>
+				<a class="{% if active_nav == 'my_bids' %}is-active{% endif %}" href="#" data-testid="kt-a0-nav-my-bids">{{ _("My Bids") }}</a>
+				<a class="{% if active_nav == 'clarifications' %}is-active{% endif %}" href="#" data-testid="kt-a0-nav-clarifications">{{ _("Clarifications") }}</a>
+				<a class="{% if active_nav == 'account' %}is-active{% endif %}" href="#" data-testid="kt-a0-nav-account">{{ _("Account") }}</a>
+			</nav>
+		</div>
+		<div class="kt-a0-topnav-tools" aria-hidden="true">
+			<span class="kt-a0-icon-btn material-symbols-outlined">notifications</span>
+			<span class="kt-a0-icon-btn material-symbols-outlined">help</span>
+		</div>
+	</div>
+</header>

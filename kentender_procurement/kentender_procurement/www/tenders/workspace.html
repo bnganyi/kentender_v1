@@ -1,0 +1,160 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }} | KenTender{% endblock %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/kentender_procurement/css/available_tenders.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/submission_checklist_web.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+{% endblock %}
+
+{% block page_content %}
+{% set c = checklist %}
+{% set active_nav = "my_bids" %}
+{% set active_ws = "checklist" %}
+<div class="kt-a0-root kt-a2-root" data-testid="kt-a2-checklist-root"
+	data-publication-ref="{{ c.published_tender_ref }}"
+	data-bid-id="{{ c.bid_id or '' }}">
+	{% include "templates/includes/kt_bidder_portal_nav.html" %}
+
+	<div class="kt-a2-shell">
+		{% include "templates/includes/kt_bidder_workspace_sidebar.html" %}
+
+		<main class="kt-a2-main">
+			<div class="kt-a2-main-inner">
+				<header class="kt-a2-page-head">
+					<div>
+						<h1 data-testid="kt-a2-title">{{ _("Submission Checklist") }}</h1>
+						<p>{{ _("Manage and track your submission for {0}.").format(c.published_tender_ref) }}</p>
+					</div>
+					{% if c.primary_action_enabled %}
+					<a class="kt-a2-cta" href="{{ c.primary_action_url }}"
+						data-testid="kt-a2-primary-cta"
+						data-action-label="{{ c.primary_action }}">{{ c.primary_action }}</a>
+					{% endif %}
+				</header>
+
+				{% if c.current_issues_summary %}
+				<div class="kt-a2-issues" data-testid="kt-a2-issues">
+					<span class="material-symbols-outlined" aria-hidden="true">error</span>
+					<div>
+						<h3>{{ _("Current Issues") }}</h3>
+						<p>{{ c.current_issues_summary }}</p>
+					</div>
+				</div>
+				{% endif %}
+
+				<div class="kt-a2-kpis">
+					<section class="kt-a2-kpi kt-a2-kpi--summary" data-testid="kt-a2-kpi-summary">
+						<span class="kt-a2-kpi-label">{{ _("Tender Summary") }}</span>
+						<h2 data-testid="kt-a2-tender-title">{{ c.tender_title }}</h2>
+						<div class="kt-a2-kpi-meta">
+							<div>
+								<span>{{ _("Entity") }}</span>
+								<strong data-testid="kt-a2-entity">{{ c.procuring_entity or "—" }}</strong>
+							</div>
+							<div>
+								<span>{{ _("Procurement Method") }}</span>
+								<strong>{{ c.procurement_method or "—" }}</strong>
+							</div>
+						</div>
+					</section>
+					<section class="kt-a2-kpi kt-a2-kpi--deadline" data-testid="kt-a2-kpi-deadline">
+						<span class="kt-a2-kpi-label">{{ _("Submission Deadline") }}</span>
+						<p class="kt-a2-countdown" data-testid="kt-a2-time-remaining"
+							data-kt-countdown
+							data-deadline="{{ c.submission_deadline }}">{{ c.time_remaining_label }}</p>
+						<p class="kt-a2-due">{{ _("Due:") }} {{ c.submission_deadline_display }}</p>
+					</section>
+					<section class="kt-a2-kpi kt-a2-kpi--progress" data-testid="kt-a2-kpi-progress">
+						<div class="kt-a2-progress-head">
+							<span class="kt-a2-kpi-label">{{ _("Submission Progress") }}</span>
+							<strong data-testid="kt-a2-progress-pct">{{ c.progress_percent }}%</strong>
+						</div>
+						<div class="kt-a2-progress-bar" aria-hidden="true">
+							<span style="width: {{ c.progress_percent }}%;"></span>
+						</div>
+						<p data-testid="kt-a2-progress-tasks">
+							{{ _("{0} of {1} required sections complete").format(c.progress_complete, c.progress_total) }}
+						</p>
+					</section>
+				</div>
+
+				<section class="kt-a2-table-card" data-testid="kt-a2-section-checklist">
+					<div class="kt-a2-table-head">
+						<h2>{{ _("Section Checklist") }}</h2>
+					</div>
+					<div class="kt-a2-table-wrap">
+						<table class="kt-a2-table">
+							<thead>
+								<tr>
+									<th>{{ _("Section") }}</th>
+									<th>{{ _("Required") }}</th>
+									<th>{{ _("Status") }}</th>
+									<th>{{ _("Issues") }}</th>
+									<th>{{ _("Last Updated") }}</th>
+									<th class="kt-a2-td-right">{{ _("Action") }}</th>
+								</tr>
+							</thead>
+							<tbody>
+								{% for s in c.sections %}
+								<tr data-testid="kt-a2-section-row" data-section-key="{{ s.section_key }}">
+									<td>{{ s.title }}</td>
+									<td><span class="kt-a2-chip">{{ s.required_label }}</span></td>
+									<td>
+										<span class="kt-a2-status kt-a2-status--{{ s.status | lower | replace(' ', '-') }}"
+											data-testid="kt-a2-section-status">
+											<span class="kt-a2-status-dot" aria-hidden="true"></span>
+											{{ s.status }}
+										</span>
+									</td>
+									<td class="{% if s.status == 'Needs Attention' and s.issues_count %}is-alert{% endif %}">{{ s.issues_label }}</td>
+									<td>{{ s.last_updated }}</td>
+									<td class="kt-a2-td-right">
+										{% if s.action_enabled %}
+										<a class="kt-a2-row-action{% if s.status == 'Needs Attention' %} is-alert{% endif %}"
+											href="{{ s.action_url }}"
+											data-testid="kt-a2-section-action">{{ s.action_label }}</a>
+										{% else %}
+										<span class="kt-a2-muted" data-testid="kt-a2-section-action-disabled">{{ s.action_label }}</span>
+										{% endif %}
+									</td>
+								</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+					</div>
+				</section>
+
+				<section class="kt-a2-docs" data-testid="kt-a2-tender-docs">
+					<h3>{{ _("Tender Documents") }}</h3>
+					<div class="kt-a2-doc-actions">
+						<a href="{{ c.overview_url }}" data-testid="kt-a2-view-overview">
+							<span class="material-symbols-outlined" aria-hidden="true">visibility</span>
+							{{ _("View Tender Overview") }}
+						</a>
+						<a href="{{ c.pdf_url }}" target="_blank" rel="noopener" data-testid="kt-a2-view-pdf">
+							<span class="material-symbols-outlined" aria-hidden="true">visibility</span>
+							{{ _("View Tender Document") }}
+						</a>
+						<a href="{{ c.pdf_url }}" data-testid="kt-a2-download-pdf">
+							<span class="material-symbols-outlined" aria-hidden="true">download</span>
+							{{ _("Download Tender Document") }}
+						</a>
+					</div>
+				</section>
+			</div>
+		</main>
+	</div>
+
+	<footer class="kt-a2-footer" data-testid="kt-a2-footer">
+		<span>© {{ copyright_year }} {{ _("KenTender E-Procurement System. All Rights Reserved.") }}</span>
+		<nav>
+			<a href="#">{{ _("Privacy Policy") }}</a>
+			<a href="#">{{ _("Terms of Service") }}</a>
+			<a href="#">{{ _("Public Procurement Authority") }}</a>
+		</nav>
+	</footer>
+</div>
+<script src="/assets/kentender_procurement/js/kt_bidder_countdown.js"></script>
+{% endblock %}

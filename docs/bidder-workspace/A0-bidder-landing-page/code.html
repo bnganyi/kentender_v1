@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Available Tenders | KenTender</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed": "#d6e3fd",
+                    "tertiary-fixed-dim": "#adc8f3",
+                    "secondary-fixed-dim": "#b9c7e0",
+                    "on-tertiary-container": "#6b85ac",
+                    "surface-dim": "#d8dadc",
+                    "outline": "#75777d",
+                    "surface-container-low": "#f2f4f6",
+                    "error-container": "#ffdad6",
+                    "outline-subtle": "#c4c6cf",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-fixed": "#0d1c2e",
+                    "on-tertiary-fixed": "#001c3a",
+                    "inverse-on-surface": "#eff1f3",
+                    "on-secondary-container": "#556379",
+                    "status-error-bg": "#fff1f2",
+                    "surface-container-lowest": "#ffffff",
+                    "surface": "#f7f9fb",
+                    "outline-variant": "#c5c6cd",
+                    "on-surface": "#191c1e",
+                    "on-error-container": "#93000a",
+                    "status-approved": "#065f46",
+                    "background": "#f7f9fb",
+                    "tertiary-fixed": "#d4e3ff",
+                    "surface-container": "#eceef0",
+                    "on-primary": "#ffffff",
+                    "tertiary": "#000000",
+                    "status-pending": "#92400e",
+                    "secondary-fixed": "#d5e3fc",
+                    "surface-tint": "#525f74",
+                    "surface-container-highest": "#e0e3e5",
+                    "on-surface-variant": "#44474c",
+                    "secondary-container": "#d2e1fa",
+                    "on-error": "#ffffff",
+                    "on-background": "#191c1e",
+                    "primary-container": "#0e1c2e",
+                    "inverse-surface": "#2d3133",
+                    "error": "#ba1a1a",
+                    "tertiary-container": "#001c3a",
+                    "inverse-primary": "#bac7e0",
+                    "on-secondary": "#ffffff",
+                    "secondary": "#515f74",
+                    "on-primary-fixed-variant": "#3a475c",
+                    "outline-strong": "#74777f",
+                    "surface-container-high": "#e6e8ea",
+                    "on-tertiary-fixed-variant": "#2d486c",
+                    "surface-variant": "#e0e3e5",
+                    "primary-fixed-dim": "#bac7e0",
+                    "on-primary-container": "#77859b",
+                    "status-approved-bg": "#ecfdf5",
+                    "status-error": "#ba1a1a",
+                    "primary": "#000000",
+                    "status-pending-bg": "#fffbeb",
+                    "on-primary-fixed": "#0e1c2e",
+                    "surface-bright": "#f7f9fb",
+                    "on-secondary-fixed-variant": "#3a485c"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "sidebar-width": "256px",
+                    "container-padding": "16px",
+                    "max-width": "1280px",
+                    "gutter": "12px",
+                    "gap-component": "8px",
+                    "unit": "4px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Public Sans"],
+                    "label-md": ["JetBrains Mono"],
+                    "body-md": ["Public Sans"],
+                    "label-sm": ["JetBrains Mono"],
+                    "headline-md": ["Public Sans"],
+                    "display": ["Public Sans"],
+                    "headline-lg": ["Public Sans"],
+                    "headline-lg-mobile": ["Public Sans"]
+            },
+            "fontSize": {
+                    "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                    "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Public Sans', sans-serif; background-color: #f7f9fb; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .data-text { font-family: 'JetBrains Mono', monospace; }
+        .bento-card { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .bento-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); }
+        /* High density table-like alignment */
+        .tender-grid { display: grid; gap: 12px; }
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c5c6cd; border-radius: 10px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-primary-fixed selection:text-primary">
+<!-- TopNavBar -->
+<header class="sticky top-0 w-full z-50 flex justify-between items-center px-container-padding bg-surface/95 backdrop-blur-sm border-b border-outline-subtle h-16">
+<div class="flex items-center gap-8">
+<h1 class="text-headline-lg font-headline-lg font-bold text-primary">KenTender</h1>
+<nav class="hidden md:flex items-center gap-6 h-16">
+<a class="text-primary font-bold border-b-2 border-primary pb-1 font-body-md text-body-md h-full flex items-center mt-1" href="#">Tenders</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md h-full flex items-center" href="#">My Bids</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md h-full flex items-center" href="#">Clarifications</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md h-full flex items-center" href="#">Account</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low transition-colors rounded-full relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border-2 border-surface"></span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low transition-colors rounded-full">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center overflow-hidden border border-outline-subtle">
+<img alt="Bidder profile avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuChx_xhEyLYJz26AqlRHDPT5JsrTqIvqy_EKl5pAEklwk3qPW7L3Qj5yeRtblEpDJhpzbfixRwTtD4TLtcpviJp_Rt9oG1jJ9uBZvjF33OHkm8H0gB_OyrrnJjsIX1X8grUfwU7msPPwmRRAyc8oO9qusl0chPIZGirCzJBXKF1XrIhiIYZpn3-DAThR9rachw57KUMz_Hf0ag-kICSe_Hm9HEWAQXBtDFWVk6aEgZ7w4nRJ5r0KgXtrA"/>
+</div>
+</div>
+</header>
+<main class="flex-grow w-full max-w-max-width mx-auto px-container-padding py-8 flex flex-col gap-8">
+<!-- Hero Section & Global Search -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div class="space-y-1">
+<h2 class="text-display font-display text-primary">Available Tenders</h2>
+<p class="text-body-lg font-body-lg text-on-surface-variant max-w-2xl">Browse open procurement opportunities and start an electronic bid submission.</p>
+</div>
+<div class="flex items-center gap-2">
+<div class="relative w-full md:w-96 group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-subtle focus:border-primary focus:ring-1 focus:ring-primary rounded transition-all font-body-md text-body-md" placeholder="Search by tender title, reference, procuring entity, or category" type="text"/>
+</div>
+<button class="flex items-center gap-2 px-4 py-2 border border-outline-subtle hover:bg-surface-container-low transition-colors rounded font-body-md text-body-md font-medium text-primary bg-white">
+<span class="material-symbols-outlined text-[18px]">filter_list</span>
+                    Filter
+                </button>
+</div>
+</div>
+<div class="grid grid-cols-12 gap-gutter items-start">
+<!-- Filters Sidebar -->
+<aside class="col-span-12 lg:col-span-3 space-y-4">
+<div class="bg-surface-container-low p-4 rounded border border-outline-subtle">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-label-md font-label-md uppercase tracking-wider text-on-surface-variant">Active Filters</h3>
+<button class="text-label-sm font-label-sm text-primary hover:underline">Clear all</button>
+</div>
+<div class="space-y-6">
+<!-- Entity -->
+<div class="space-y-2">
+<label class="text-body-sm font-body-sm font-semibold text-primary">Procuring Entity</label>
+<select class="w-full border-outline-subtle rounded py-1.5 font-body-md text-body-md bg-white">
+<option>All Entities</option>
+<option>NSSF</option>
+<option>KRA</option>
+<option>Ministry of ICT</option>
+</select>
+</div>
+<!-- Category -->
+<div class="space-y-2">
+<label class="text-body-sm font-body-sm font-semibold text-primary">Category</label>
+<div class="space-y-2">
+<label class="flex items-center gap-2 text-body-md cursor-pointer">
+<input checked="" class="rounded border-outline-subtle text-primary focus:ring-primary" type="checkbox"/>
+<span>Information Technology</span>
+</label>
+<label class="flex items-center gap-2 text-body-md cursor-pointer">
+<input class="rounded border-outline-subtle text-primary focus:ring-primary" type="checkbox"/>
+<span>Infrastructure</span>
+</label>
+<label class="flex items-center gap-2 text-body-md cursor-pointer">
+<input class="rounded border-outline-subtle text-primary focus:ring-primary" type="checkbox"/>
+<span>Consultancy</span>
+</label>
+</div>
+</div>
+<!-- Status -->
+<div class="space-y-2">
+<label class="text-body-sm font-body-sm font-semibold text-primary">Status</label>
+<div class="grid grid-cols-1 gap-2">
+<button class="text-left px-3 py-1.5 rounded bg-primary text-white text-body-md">Open</button>
+<button class="text-left px-3 py-1.5 rounded bg-white border border-outline-subtle hover:bg-surface-container text-body-md">Closing Soon</button>
+<button class="text-left px-3 py-1.5 rounded bg-white border border-outline-subtle hover:bg-surface-container text-body-md">Clarification Closed</button>
+<button class="text-left px-3 py-1.5 rounded bg-white border border-outline-subtle hover:bg-surface-container text-body-md">Closed</button>
+<button class="text-left px-3 py-1.5 rounded bg-white border border-outline-subtle hover:bg-surface-container text-body-md">Cancelled</button>
+</div>
+</div>
+<!-- Method -->
+<div class="space-y-2">
+<label class="text-body-sm font-body-sm font-semibold text-primary">Method</label>
+<select class="w-full border-outline-subtle rounded py-1.5 font-body-md text-body-md bg-white">
+<option>Open National Tender</option>
+<option>International Competitive Bidding</option>
+</select>
+</div>
+</div>
+</div>
+<!-- Stats Summary (Guest View) -->
+<div class="bg-surface-container-low rounded border border-outline-subtle overflow-hidden">
+<div class="px-4 py-3 border-b border-outline-subtle bg-surface-container-high">
+<h3 class="text-label-md font-label-md uppercase tracking-wider text-primary">My Activity</h3>
+</div>
+<div class="p-6 text-center">
+<p class="text-body-md text-on-surface-variant mb-4">Sign in to start or continue a bid.</p>
+<button class="w-full py-2 bg-primary text-white font-semibold rounded text-body-md hover:bg-primary/90 transition-colors">Sign In</button>
+</div>
+</div>
+</aside>
+<!-- Main Tender List -->
+<div class="col-span-12 lg:col-span-6 flex flex-col gap-4">
+<!-- Active Result Count -->
+<div class="flex justify-between items-center px-2">
+<p class="text-body-md text-on-surface-variant"><span class="font-bold text-primary">42</span> open tenders found</p>
+<div class="flex items-center gap-2">
+<span class="text-label-sm font-label-sm text-on-surface-variant">Sort by:</span>
+<select class="border-none bg-transparent text-label-md font-label-md text-primary focus:ring-0 cursor-pointer py-0">
+<option>Closing Date (Soonest)</option>
+<option>Published Date (Newest)</option>
+</select>
+</div>
+</div>
+<!-- Tender Card 1 -->
+<article class="bento-card bg-white border border-outline-subtle rounded flex flex-col p-5 gap-4 relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary"></div>
+<div class="flex justify-between items-start">
+<div class="space-y-1">
+<div class="flex items-center gap-3">
+<span class="px-2 py-0.5 rounded-sm bg-status-approved-bg text-status-approved text-label-sm font-label-sm flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-status-approved"></span>
+                                    Open
+                                </span>
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-tight">Ref: NSSF/ICT/ERP/2026/001</span>
+</div>
+<h3 class="text-headline-md font-headline-md text-primary leading-tight group-hover:text-tertiary-container transition-colors">Supply of ERP System for Central Operations</h3>
+<p class="text-body-md text-on-surface-variant">National Social Security Fund</p>
+</div>
+<div class="flex flex-col items-end gap-1">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase">Deadline</span>
+<span class="data-text text-status-error font-bold whitespace-nowrap">14d 05h 22m 12s</span>
+</div>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 py-3 border-y border-surface-container">
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-on-surface-variant mb-1">Category</span>
+<span class="text-body-md font-medium">Information Tech</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-on-surface-variant mb-1">Method</span>
+<span class="text-body-md font-medium">Open National</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-on-surface-variant mb-1">Published</span>
+<span class="text-body-md font-medium">Oct 12, 2025</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-on-surface-variant mb-1">Standard Tender Document</span>
+<span class="text-body-md font-medium text-primary underline decoration-outline-subtle underline-offset-4">IT Standard Document</span>
+</div>
+</div>
+<div class="py-2">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase mb-1 block">Scope Summary</span>
+<p class="text-body-md text-on-surface-variant line-clamp-2">Complete provision and licensing of a cloud-native ERP system including HR, Finance, and Payroll modules with 24/7 technical support.</p>
+</div>
+<div class="grid grid-cols-2 gap-4 bg-surface-container-low/50 p-3 rounded">
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-on-surface-variant">Clarification Deadline</span>
+<span class="text-body-md font-semibold text-primary">Oct 20, 2025</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-on-surface-variant">Submission Deadline</span>
+<span class="text-body-md font-semibold text-primary">Nov 05, 2025, 10:00 AM</span>
+</div>
+</div>
+<div class="flex flex-wrap items-center justify-between gap-4 mt-2">
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 text-body-md text-primary hover:underline underline-offset-2">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+                                View Documents
+                            </button>
+<button class="flex items-center gap-2 text-body-md text-primary hover:underline underline-offset-2">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                                Download Documents
+                            </button>
+</div>
+<button class="bg-primary text-white px-6 py-2 rounded font-body-md font-semibold hover:bg-primary/90 transition-colors shadow-sm active:scale-95 duration-150">
+                            View Tender
+                        </button>
+</div>
+</article>
+<!-- Tender Card 2 -->
+<article class="bento-card bg-white border border-outline-subtle rounded flex flex-col p-5 gap-4 relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary"></div>
+<div class="flex justify-between items-start">
+<div class="space-y-1">
+<div class="flex items-center gap-3">
+<span class="px-2 py-0.5 rounded-sm bg-status-approved-bg text-status-approved text-label-sm font-label-sm flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-status-approved"></span>
+                                    Open
+                                </span>
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-tight">Ref: KRA/FAC/BUILD/2026/045</span>
+</div>
+<h3 class="text-headline-md font-headline-md text-primary leading-tight group-hover:text-tertiary-container transition-colors">Renovation of Custom House - Phase II</h3>
+<p class="text-body-md text-on-surface-variant">Kenya Revenue Authority</p>
+</div>
+<div class="flex flex-col items-end gap-1">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase">Deadline</span>
+<span class="data-text text-status-error font-bold whitespace-nowrap">03d 12h 45m 05s</span>
+</div>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 py-3 border-y border-surface-container">
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-on-surface-variant mb-1">Category</span>
+<span class="text-body-md font-medium">Infrastructure</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-on-surface-variant mb-1">Method</span>
+<span class="text-body-md font-medium">Open National</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-on-surface-variant mb-1">Published</span>
+<span class="text-body-md font-medium">Oct 15, 2025</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-on-surface-variant mb-1">Standard Tender Document</span>
+<span class="text-body-md font-medium text-primary underline decoration-outline-subtle underline-offset-4">Works Document</span>
+</div>
+</div>
+<div class="py-2">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase mb-1 block">Scope Summary</span>
+<p class="text-body-md text-on-surface-variant line-clamp-2">Structural reinforcement, electrical rewiring, and interior finishing for the main administrative wing at Custom House.</p>
+</div>
+<div class="grid grid-cols-2 gap-4 bg-surface-container-low/50 p-3 rounded">
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-on-surface-variant">Clarification Deadline</span>
+<span class="text-body-md font-semibold text-primary">Oct 18, 2025</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-on-surface-variant">Submission Deadline</span>
+<span class="text-body-md font-semibold text-primary">Oct 25, 2025, 12:00 PM</span>
+</div>
+</div>
+<div class="flex flex-wrap items-center justify-between gap-4 mt-2">
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 text-body-md text-primary hover:underline underline-offset-2">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+                                View Documents
+                            </button>
+<button class="flex items-center gap-2 text-body-md text-primary hover:underline underline-offset-2">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                                Download Documents
+                            </button>
+</div>
+<button class="bg-primary text-white px-6 py-2 rounded font-body-md font-semibold hover:bg-primary/90 transition-colors shadow-sm active:scale-95 duration-150">
+                            View Tender
+                        </button>
+</div>
+</article>
+<!-- Tender Card 3 (Closing Soon Variation) -->
+<article class="bento-card bg-white border border-outline-subtle rounded flex flex-col p-5 gap-4 relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary"></div>
+<div class="flex justify-between items-start">
+<div class="space-y-1">
+<div class="flex items-center gap-3">
+<span class="px-2 py-0.5 rounded-sm bg-status-pending-bg text-status-pending text-label-sm font-label-sm flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-status-pending"></span>
+                                    Clarification Period Closed
+                                </span>
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-tight">Ref: ICT/KIB/2026/SEC-01</span>
+</div>
+<h3 class="text-headline-md font-headline-md text-primary leading-tight group-hover:text-tertiary-container transition-colors">Managed Cybersecurity Services for Data Center</h3>
+<p class="text-body-md text-on-surface-variant">Konza Technopolis</p>
+</div>
+<div class="flex flex-col items-end gap-1">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase">Deadline</span>
+<span class="data-text text-status-error font-bold whitespace-nowrap">00d 21h 05m 12s</span>
+</div>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 py-3 border-y border-surface-container">
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-on-surface-variant mb-1">Category</span>
+<span class="text-body-md font-medium">Information Tech</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-on-surface-variant mb-1">Method</span>
+<span class="text-body-md font-medium">ICB (International)</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-on-surface-variant mb-1">Published</span>
+<span class="text-body-md font-medium">Oct 05, 2025</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-on-surface-variant mb-1">Standard Tender Document</span>
+<span class="text-body-md font-medium text-primary underline decoration-outline-subtle underline-offset-4">IT Special Document</span>
+</div>
+</div>
+<div class="py-2">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase mb-1 block">Scope Summary</span>
+<p class="text-body-md text-on-surface-variant line-clamp-2">24/7 Monitoring, Detection, and Incident Response for the Konza Data Center Tier III infrastructure.</p>
+</div>
+<div class="grid grid-cols-2 gap-4 bg-surface-container-low/50 p-3 rounded">
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-on-surface-variant">Clarification Deadline</span>
+<span class="text-body-md font-semibold text-on-surface-variant line-through">Oct 12, 2025</span>
+</div>
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-on-surface-variant">Submission Deadline</span>
+<span class="text-body-md font-semibold text-primary">Oct 20, 2025, 09:00 AM</span>
+</div>
+</div>
+<div class="flex flex-wrap items-center justify-between gap-4 mt-2">
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 text-body-md text-primary hover:underline underline-offset-2">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+                                View Documents
+                            </button>
+<button class="flex items-center gap-2 text-body-md text-primary hover:underline underline-offset-2">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                                Download Documents
+                            </button>
+</div>
+<button class="bg-primary text-white px-6 py-2 rounded font-body-md font-semibold hover:bg-primary/90 transition-colors shadow-sm active:scale-95 duration-150">
+                            View Tender
+                        </button>
+</div>
+</article>
+<!-- Pagination Placeholder -->
+<div class="flex justify-center mt-6">
+<nav class="flex items-center gap-1">
+<button class="w-8 h-8 flex items-center justify-center border border-outline-subtle rounded hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center border border-primary bg-primary text-white rounded font-body-md">1</button>
+<button class="w-8 h-8 flex items-center justify-center border border-outline-subtle rounded hover:bg-surface-container transition-colors font-body-md">2</button>
+<button class="w-8 h-8 flex items-center justify-center border border-outline-subtle rounded hover:bg-surface-container transition-colors font-body-md">3</button>
+<span class="px-2 text-on-surface-variant">...</span>
+<button class="w-8 h-8 flex items-center justify-center border border-outline-subtle rounded hover:bg-surface-container transition-colors font-body-md">14</button>
+<button class="w-8 h-8 flex items-center justify-center border border-outline-subtle rounded hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</nav>
+</div>
+</div>
+<!-- Right Side Guidance Panel -->
+<aside class="col-span-12 lg:col-span-3 space-y-6">
+<!-- Guidance Card -->
+<div class="bg-surface-container-lowest border border-outline-subtle rounded p-5 relative overflow-hidden shadow-sm">
+<div class="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+<span class="material-symbols-outlined text-8xl" style="font-variation-settings: 'FILL' 1;">gavel</span>
+</div>
+<h3 class="text-headline-md font-headline-md text-primary mb-4">Before you bid</h3>
+<ul class="space-y-4">
+<li class="flex gap-3">
+<span class="w-6 h-6 rounded-full bg-primary text-white text-label-sm font-bold flex items-center justify-center shrink-0">1</span>
+<div>
+<p class="text-body-md font-bold text-primary">Review documents</p>
+<p class="text-body-sm text-on-surface-variant">Download and thoroughly read the Standard Tender Document.</p>
+</div>
+</li>
+<li class="flex gap-3">
+<span class="w-6 h-6 rounded-full bg-primary text-white text-label-sm font-bold flex items-center justify-center shrink-0">2</span>
+<div>
+<p class="text-body-md font-bold text-primary">Check deadlines</p>
+<p class="text-body-sm text-on-surface-variant">Note both the clarification deadline and the final submission cut-off.</p>
+</div>
+</li>
+<li class="flex gap-3">
+<span class="w-6 h-6 rounded-full bg-primary text-white text-label-sm font-bold flex items-center justify-center shrink-0">3</span>
+<div>
+<p class="text-body-md font-bold text-primary">Prepare declarations</p>
+<p class="text-body-sm text-on-surface-variant">Gather all required legal and ethical self-declaration forms.</p>
+</div>
+</li>
+<li class="flex gap-3">
+<span class="w-6 h-6 rounded-full bg-primary text-white text-label-sm font-bold flex items-center justify-center shrink-0">4</span>
+<div>
+<p class="text-body-md font-bold text-primary">Submit electronically</p>
+<p class="text-body-sm text-on-surface-variant">All bids must be encrypted and submitted through this portal.</p>
+</div>
+</li>
+</ul>
+<div class="mt-6 pt-6 border-t border-outline-subtle">
+<button class="w-full flex items-center justify-center gap-2 px-4 py-2 border border-primary text-primary font-body-md font-semibold rounded hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined text-[18px]">menu_book</span>
+                            Bidder User Guide
+                        </button>
+</div>
+</div>
+<!-- Support Card -->
+<div class="bg-primary-container p-5 rounded border border-outline text-white">
+<h4 class="text-label-md font-label-md uppercase tracking-widest text-on-primary-container mb-2">Technical Support</h4>
+<p class="text-body-md text-on-primary-container mb-4">Experiencing issues with the electronic submission system?</p>
+<div class="space-y-3">
+<a class="flex items-center gap-3 hover:text-primary-fixed transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">phone_in_talk</span>
+<span class="text-body-md font-medium">0800-KENTENDER</span>
+</a>
+<a class="flex items-center gap-3 hover:text-primary-fixed transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">mail</span>
+<span class="text-body-md font-medium">support@kentender.go.ke</span>
+</a>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full px-container-padding py-8 mt-auto bg-surface-container-highest border-t border-outline-subtle">
+<div class="max-w-max-width mx-auto flex flex-col md:flex-row justify-between items-center gap-gap-component">
+<div class="flex flex-col items-center md:items-start gap-1">
+<span class="text-label-md font-label-md font-bold uppercase tracking-widest text-primary">KenTender</span>
+<p class="text-body-md font-body-md text-on-surface-variant text-center md:text-left">© 2024 KenTender Public Procurement Portal. All rights reserved.</p>
+</div>
+<nav class="flex flex-wrap justify-center gap-6">
+<a class="text-label-sm font-label-sm text-on-surface-variant hover:text-primary hover:underline transition-all" href="#">Privacy Policy</a>
+<a class="text-label-sm font-label-sm text-on-surface-variant hover:text-primary hover:underline transition-all" href="#">Terms of Service</a>
+<a class="text-label-sm font-label-sm text-on-surface-variant hover:text-primary hover:underline transition-all" href="#">Accessibility</a>
+<a class="text-label-sm font-label-sm text-on-surface-variant hover:text-primary hover:underline transition-all" href="#">Government Portal</a>
+</nav>
+</div>
+</footer>
+<script>
+        // Micro-interactions for countdown or state updates
+        function updateCountdowns() {
+            // Static simulation for demo purposes
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('KenTender Landing Loaded');
+        });
+    </script>
+</body></html>

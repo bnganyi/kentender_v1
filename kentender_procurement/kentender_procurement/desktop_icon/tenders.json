@@ -1,0 +1,20 @@
+{
+ "app": "kentender_procurement",
+ "bg_color": "blue",
+ "creation": "2026-07-23 15:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Desktop Icon",
+ "hidden": 0,
+ "icon": "retail",
+ "icon_type": "Link",
+ "idx": 42,
+ "label": "Tenders",
+ "link": "/tenders",
+ "link_type": "External",
+ "modified": "2026-07-23 15:00:00.000000",
+ "modified_by": "Administrator",
+ "name": "Tenders",
+ "owner": "Administrator",
+ "roles": [],
+ "standard": 1
+}

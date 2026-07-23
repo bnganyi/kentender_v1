@@ -1,0 +1,219 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }} | KenTender{% endblock %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/kentender_procurement/css/available_tenders.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/submission_checklist_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/documents_addenda_web.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+{% endblock %}
+
+{% block page_content %}
+{% set d = docs %}
+{% set active_nav = "my_bids" %}
+{% set active_ws = "prepare" %}
+<div class="kt-a0-root kt-a2-root kt-a3-root" data-testid="kt-a3-documents-root"
+	data-publication-ref="{{ d.published_tender_ref }}"
+	data-bid-id="{{ d.bid_id or '' }}"
+	data-section-key="{{ d.section_key or '' }}">
+	{% include "templates/includes/kt_bidder_portal_nav.html" %}
+
+	<div class="kt-a2-shell">
+		{% include "templates/includes/kt_bidder_workspace_sidebar.html" %}
+
+		<main class="kt-a2-main">
+			<div class="kt-a3-main-inner">
+				<header class="kt-a3-page-head">
+					<div>
+						<h1 data-testid="kt-a3-title">{{ _("Tender Documents & Addenda") }}</h1>
+						<p>{{ _("Review all official documentation and acknowledge any modifications before submission.") }}</p>
+					</div>
+					<div class="kt-a3-ack-kpi {% if d.acknowledgement_status == 'Complete' %}kt-a3-ack-kpi--ok{% else %}kt-a3-ack-kpi--pending{% endif %}"
+						data-testid="kt-a3-ack-status">
+						<span class="kt-a3-ack-kpi-label">{{ _("Acknowledgment Status") }}</span>
+						<div class="kt-a3-ack-kpi-value">
+							<span class="material-symbols-outlined" aria-hidden="true">
+								{% if d.acknowledgement_status == 'Complete' %}check_circle{% else %}warning{% endif %}
+							</span>
+							<strong>{{ d.acknowledgement_status }}</strong>
+						</div>
+					</div>
+				</header>
+
+				<div class="kt-a3-grid">
+					<div class="kt-a3-primary">
+						<section class="kt-a3-card" data-testid="kt-a3-official-documents">
+							<div class="kt-a3-card-head">
+								<h2>
+									<span class="material-symbols-outlined" aria-hidden="true">folder</span>
+									{{ _("Official Tender Documents") }}
+								</h2>
+								{% if d.primary_pdf_url %}
+								<div class="kt-a3-card-actions">
+									<a class="kt-a3-btn kt-a3-btn--secondary" href="{{ d.primary_pdf_url }}"
+										target="_blank" rel="noopener" data-testid="kt-a3-view-pdf">
+										<span class="material-symbols-outlined" aria-hidden="true">visibility</span>
+										{{ _("View") }}
+									</a>
+									<a class="kt-a3-btn kt-a3-btn--ghost" href="{{ d.primary_pdf_url }}"
+										target="_blank" rel="noopener" data-testid="kt-a3-download-pdf">
+										<span class="material-symbols-outlined" aria-hidden="true">download</span>
+										{{ _("Download") }}
+									</a>
+								</div>
+								{% endif %}
+							</div>
+							<div class="kt-a3-table-wrap">
+								<table class="kt-a3-table" data-testid="kt-a3-documents-table">
+									<thead>
+										<tr>
+											<th>{{ _("Document Name") }}</th>
+											<th>{{ _("Type") }}</th>
+											<th>{{ _("Size") }}</th>
+											<th class="kt-a3-right">{{ _("Actions") }}</th>
+										</tr>
+									</thead>
+									<tbody>
+										{% if d.documents %}
+											{% for doc in d.documents %}
+											<tr data-testid="kt-a3-document-row">
+												<td>
+													<span class="material-symbols-outlined" aria-hidden="true">{{ doc.icon or 'description' }}</span>
+													<span>{{ doc.name }}</span>
+												</td>
+												<td>{{ doc.type or "—" }}</td>
+												<td>{{ doc.size or "—" }}</td>
+												<td class="kt-a3-right">
+													{% if doc.view_url %}
+													<a href="{{ doc.view_url }}" target="_blank" rel="noopener" title="{{ _('View') }}"
+														data-testid="kt-a3-doc-view">
+														<span class="material-symbols-outlined" aria-hidden="true">visibility</span>
+													</a>
+													{% endif %}
+													{% if doc.download_url %}
+													<a href="{{ doc.download_url }}" target="_blank" rel="noopener" title="{{ _('Download') }}"
+														data-testid="kt-a3-doc-download">
+														<span class="material-symbols-outlined" aria-hidden="true">download</span>
+													</a>
+													{% endif %}
+												</td>
+											</tr>
+											{% endfor %}
+										{% else %}
+										<tr>
+											<td colspan="4" class="kt-a3-empty">{{ _("No official tender documents are available yet.") }}</td>
+										</tr>
+										{% endif %}
+									</tbody>
+								</table>
+							</div>
+						</section>
+
+						<section class="kt-a3-card" data-testid="kt-a3-official-addenda">
+							<div class="kt-a3-card-head">
+								<h2>
+									<span class="material-symbols-outlined" aria-hidden="true">update</span>
+									{{ _("Official Addenda") }}
+								</h2>
+							</div>
+							<div class="kt-a3-card-body">
+								{% if d.addenda_empty %}
+								<p class="kt-a3-empty" data-testid="kt-a3-addenda-empty">{{ d.addenda_empty_message }}</p>
+								{% else %}
+									{% for add in d.addenda %}
+									<article class="kt-a3-addendum {% if add.acknowledged %}kt-a3-addendum--acked{% else %}kt-a3-addendum--pending{% endif %}"
+										data-testid="kt-a3-addendum-row">
+										<div>
+											<h3>{{ add.title }}</h3>
+											<p class="kt-a3-muted">
+												{% if add.published_at %}{{ _("Published:") }} {{ add.published_at }} · {% endif %}
+												{% if add.ref %}{{ _("Ref:") }} {{ add.ref }}{% endif %}
+											</p>
+											{% if add.summary %}<p>{{ add.summary }}</p>{% endif %}
+											{% if add.attachment_url or add.view_url %}
+											<a class="kt-a3-attachment" href="{{ add.attachment_url or add.view_url }}" target="_blank" rel="noopener">
+												<span class="material-symbols-outlined" aria-hidden="true">attachment</span>
+												{{ add.attachment_name or _("Attachment") }}
+											</a>
+											{% endif %}
+										</div>
+										<div>
+											{% if add.acknowledged %}
+											<span class="kt-a3-chip kt-a3-chip--ok">{{ _("Acknowledged") }}</span>
+											{% else %}
+											<span class="kt-a3-chip kt-a3-chip--pending">{{ _("Action Required") }}</span>
+											{% endif %}
+										</div>
+									</article>
+									{% endfor %}
+								{% endif %}
+							</div>
+						</section>
+					</div>
+
+					<aside class="kt-a3-readiness" data-testid="kt-a3-readiness">
+						<h3>{{ _("Submission Readiness") }}</h3>
+						<ul>
+							<li>
+								<span>{{ _("Official tender document viewed") }}</span>
+								<strong data-testid="kt-a3-readiness-docs">{{ d.readiness.documents_viewed_label }}</strong>
+							</li>
+							<li>
+								<span>{{ _("Required addenda acknowledged") }}</span>
+								<strong data-testid="kt-a3-readiness-addenda">{{ d.readiness.addenda_label }}</strong>
+							</li>
+							<li>
+								<span>{{ _("Submission impact") }}</span>
+								<strong data-testid="kt-a3-readiness-impact">{{ d.readiness.submission_impact }}</strong>
+							</li>
+							<li>
+								<span>{{ _("Time remaining") }}</span>
+								<strong data-testid="kt-a3-readiness-time"
+									data-kt-countdown
+									data-deadline="{{ d.submission_deadline }}">{{ d.readiness.time_remaining_label }}</strong>
+							</li>
+						</ul>
+						{% if d.readiness.blocker_message %}
+						<div class="kt-a3-blocker" data-testid="kt-a3-blocker">
+							<p>{{ d.readiness.blocker_message }}</p>
+						</div>
+						{% endif %}
+					</aside>
+				</div>
+
+				<footer class="kt-a3-foot">
+					<a class="kt-a3-btn kt-a3-btn--ghost" href="{{ d.back_to_checklist_url }}"
+						data-testid="kt-a3-back-checklist">
+						<span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+						{{ d.back_to_checklist_label }}
+					</a>
+					<div class="kt-a3-foot-actions">
+						{% if d.acknowledge_enabled %}
+						<button type="button" class="kt-a3-btn kt-a3-btn--primary" data-testid="kt-a3-acknowledge"
+							data-publication-ref="{{ d.published_tender_ref }}">
+							<span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+							{{ d.acknowledge_label }}
+						</button>
+						{% endif %}
+						{% if d.continue_enabled %}
+						<a class="kt-a3-btn kt-a3-btn--primary" href="{{ d.continue_url }}"
+							data-testid="kt-a3-continue">
+							{{ d.continue_label }}
+							<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+						</a>
+						{% else %}
+						<span class="kt-a3-btn kt-a3-btn--primary is-disabled" aria-disabled="true"
+							data-testid="kt-a3-continue-disabled">
+							{{ d.continue_label }}
+						</span>
+						{% endif %}
+					</div>
+				</footer>
+			</div>
+		</main>
+	</div>
+</div>
+<script src="/assets/kentender_procurement/js/kt_bidder_countdown.js"></script>
+<script src="/assets/kentender_procurement/js/tender_documents_addenda_web.js"></script>
+{% endblock %}

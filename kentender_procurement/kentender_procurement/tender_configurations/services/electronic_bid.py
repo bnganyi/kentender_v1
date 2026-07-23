@@ -33,6 +33,12 @@ def _require_admin_poc() -> None:
 		frappe.throw(frappe._("Electronic bidder PoC is Administrator-only."), frappe.PermissionError)
 
 
+def _require_logged_in() -> None:
+	"""Portal + Desk draft access — any signed-in user (not Guest)."""
+	if not frappe.session.user or frappe.session.user == "Guest":
+		frappe.throw(frappe._("Please sign in to continue."), frappe.PermissionError)
+
+
 def _parse_json(raw: Any, default: Any = None) -> Any:
 	if raw is None or raw == "":
 		return default if default is not None else {}
@@ -92,7 +98,7 @@ def _progress(schema: dict[str, Any], responses: dict[str, Any]) -> list[dict[st
 
 
 def get_bidder_workspace(configuration_id: str) -> dict[str, Any]:
-	_require_admin_poc()
+	_require_logged_in()
 	configuration_id = cstr(configuration_id or "").strip()
 	if not configuration_id or not frappe.db.exists("Tender Configuration", configuration_id):
 		frappe.throw(frappe._("Tender configuration not found."), title="TCFG_NOT_FOUND")
@@ -136,7 +142,7 @@ def get_bidder_workspace(configuration_id: str) -> dict[str, Any]:
 
 
 def create_or_get_draft(configuration_id: str, bidder_label: str | None = None) -> dict[str, Any]:
-	_require_admin_poc()
+	_require_logged_in()
 	configuration_id = cstr(configuration_id or "").strip()
 	existing = frappe.db.get_value(
 		"Electronic Bid Submission",
@@ -168,7 +174,7 @@ def create_or_get_draft(configuration_id: str, bidder_label: str | None = None) 
 
 
 def save_section_responses(bid_id: str, section_key: str, payload: dict[str, Any] | str | None) -> dict[str, Any]:
-	_require_admin_poc()
+	_require_logged_in()
 	doc = _get_bid(bid_id)
 	if cstr(doc.status) == STATUS_SEALED:
 		frappe.throw(frappe._("Sealed electronic bids are immutable."), title="BID_IMMUTABLE")

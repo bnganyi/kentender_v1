@@ -1,0 +1,231 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }} | KenTender{% endblock %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/kentender_procurement/css/available_tenders.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+{% endblock %}
+
+{% block page_content %}
+{% set o = overview %}
+{% set chip = o.status_chip or "Open" %}
+{% set chip_tone = "error" if chip == "Closed" else ("pending" if chip == "Unavailable" else "approved") %}
+{% set cta_icon = "receipt_long" if o.primary_action == "View Submitted Bid" else ("lock" if o.primary_action == "Closed" else ("block" if o.primary_action == "Unavailable" else "play_arrow")) %}
+{% set dates = dates_display or o.dates %}
+
+<div class="kt-a0-root kt-a1w-root" data-testid="kt-a1w-overview-root"
+	data-publication-ref="{{ o.published_tender_ref }}"
+	data-is-guest="{{ 1 if is_guest else 0 }}"
+	data-login-url="{{ login_url }}"
+	data-workspace-url="{{ workspace_url }}"
+	data-primary-action="{{ o.primary_action }}"
+	data-primary-enabled="{{ o.primary_action_enabled }}">
+	{% include "templates/includes/kt_bidder_portal_nav.html" %}
+
+	<main class="kt-a1w-main">
+		<div class="kt-a1w-shell">
+			<nav class="kt-a1w-breadcrumb" aria-label="{{ _('Breadcrumb') }}" data-testid="kt-a1w-breadcrumb">
+				<ol>
+					<li><a href="/tenders">{{ _("Tenders") }}</a></li>
+					<li><span class="material-symbols-outlined" aria-hidden="true">chevron_right</span></li>
+					<li aria-current="page">{{ o.published_tender_ref }}</li>
+				</ol>
+			</nav>
+
+			<div class="kt-a1w-layout">
+				<div class="kt-a1w-primary">
+					<section class="kt-a1w-card" data-testid="kt-a1w-header">
+						<div class="kt-a1w-header-row">
+							<div>
+								<span class="kt-a1w-status kt-a1w-status--{{ chip_tone }}" data-testid="kt-a1w-status-chip">
+									<span class="kt-a1w-status-dot" aria-hidden="true"></span>
+									{{ chip }}
+								</span>
+								<h1 class="kt-a1w-title" data-testid="kt-a1w-title">{{ o.tender_title or _("Published Tender") }}</h1>
+								<p class="kt-a1w-ref" data-testid="kt-a1w-ref">
+									{{ _("Ref:") }} {{ o.published_tender_ref }}{% if o.procuring_entity %} · {{ o.procuring_entity }}{% endif %}
+								</p>
+								<span class="sr-only" data-testid="kt-a1w-entity">{{ o.procuring_entity or "" }}</span>
+							</div>
+							{% if o.primary_action_enabled and o.primary_action in ("Start Bid", "Continue Bid") and is_guest %}
+							<a class="kt-a1w-cta kt-a1w-cta--primary" href="{{ login_url }}"
+								data-testid="kt-a1w-primary-cta"
+								data-action-label="{{ o.primary_action }}">
+								<span class="material-symbols-outlined" aria-hidden="true">{{ cta_icon }}</span>
+								<span>{{ o.primary_action }}</span>
+							</a>
+							{% elif o.primary_action_enabled and o.primary_action in ("Start Bid", "Continue Bid", "View Submitted Bid") %}
+							<button type="button" class="kt-a1w-cta kt-a1w-cta--primary"
+								data-testid="kt-a1w-primary-cta"
+								data-action="start-bid"
+								data-action-label="{{ o.primary_action }}">
+								<span class="material-symbols-outlined" aria-hidden="true">{{ cta_icon }}</span>
+								<span>{{ o.primary_action }}</span>
+							</button>
+							{% else %}
+							<button type="button" class="kt-a1w-cta kt-a1w-cta--disabled" disabled
+								data-testid="kt-a1w-primary-cta"
+								data-action-label="{{ o.primary_action }}">
+								<span class="material-symbols-outlined" aria-hidden="true">{{ cta_icon }}</span>
+								<span>{{ o.primary_action }}</span>
+							</button>
+							{% endif %}
+						</div>
+						<div class="kt-a1w-scope" data-testid="kt-a1w-scope">
+							<h2 class="kt-a1w-eyebrow">{{ _("Scope Summary") }}</h2>
+							<p>{{ o.scope_summary or "—" }}</p>
+						</div>
+					</section>
+
+					<section class="kt-a1w-card" data-testid="kt-a1w-documents" id="documents">
+						<h2 class="kt-a1w-section-title">
+							<span class="material-symbols-outlined" aria-hidden="true">folder</span>
+							{{ _("Tender Documents") }}
+						</h2>
+						{% if not documents %}
+						<p class="kt-a1w-muted">{{ _("No package documents available.") }}</p>
+						{% else %}
+						<div class="kt-a1w-table-wrap">
+							<table class="kt-a1w-table">
+								<thead>
+									<tr>
+										<th>{{ _("Document Name") }}</th>
+										<th>{{ _("Type") }}</th>
+										<th>{{ _("Size") }}</th>
+										<th class="kt-a1w-td-right">{{ _("Action") }}</th>
+									</tr>
+								</thead>
+								<tbody>
+									{% for d in documents %}
+									<tr data-testid="kt-a1w-doc-row">
+										<td>
+											<span class="material-symbols-outlined kt-a1w-doc-icon" aria-hidden="true">{{ d.icon or "description" }}</span>
+											{{ d.name }}
+										</td>
+										<td>{{ d.type }}</td>
+										<td>{{ d.size or "—" }}</td>
+										<td class="kt-a1w-td-right">
+											{% if d.can_view or d.can_download %}
+											<div class="kt-a1w-doc-actions">
+												{% if d.can_view %}<a class="kt-a1w-link" href="{{ d.view_url }}" target="_blank" rel="noopener" data-testid="kt-a1w-doc-view">{{ _("View") }}</a>{% endif %}
+												{% if d.can_download %}<a class="kt-a1w-link" href="{{ d.download_url }}" data-testid="kt-a1w-doc-download">{{ _("Download") }}</a>{% endif %}
+											</div>
+											{% else %}
+											<span class="kt-a1w-muted">—</span>
+											{% endif %}
+										</td>
+									</tr>
+									{% endfor %}
+								</tbody>
+							</table>
+						</div>
+						{% endif %}
+					</section>
+
+					<section class="kt-a1w-card" data-testid="kt-a1w-clarifications" id="clarifications">
+						<div class="kt-a1w-clarif-head">
+							<h2 class="kt-a1w-section-title">
+								<span class="material-symbols-outlined" aria-hidden="true">forum</span>
+								{{ _("Clarifications") }}
+							</h2>
+							<div class="kt-a1w-ask-wrap">
+								<button type="button" class="kt-a1w-ask" data-testid="kt-a1w-ask-question" disabled>{{ _("Ask Question") }}</button>
+								{% if not o.ask_question_enabled %}
+								<span class="kt-a1w-ask-hint" data-testid="kt-a1w-ask-hint">{{ _("Clarification deadline has passed") }}</span>
+								{% endif %}
+							</div>
+						</div>
+						{% if o.clarifications %}
+						<div class="kt-a1w-qa-list">
+							{% for c in o.clarifications %}
+							<div class="kt-a1w-qa">
+								<p class="kt-a1w-q">Q: {{ c.question if c is mapping else c }}</p>
+								{% if c is mapping and c.answer %}<p class="kt-a1w-a">A: {{ c.answer }}</p>{% endif %}
+							</div>
+							{% endfor %}
+						</div>
+						{% else %}
+						<p class="kt-a1w-muted" data-testid="kt-a1w-clarifications-empty">{{ _("No clarifications published yet.") }}</p>
+						{% endif %}
+					</section>
+				</div>
+
+				<aside class="kt-a1w-aside">
+					<section class="kt-a1w-card" data-testid="kt-a1w-key-dates">
+						<h2 class="kt-a1w-section-title">{{ _("Key Dates") }}</h2>
+						<div class="kt-a1w-timeline">
+							<div class="kt-a1w-tl-item">
+								<span class="kt-a1w-tl-dot kt-a1w-tl-dot--done" aria-hidden="true"></span>
+								<p class="kt-a1w-tl-label">{{ _("Published Date") }}</p>
+								<p class="kt-a1w-tl-value" data-testid="kt-a1w-date-published">{{ dates.published_at or "—" }}</p>
+							</div>
+							<div class="kt-a1w-tl-item">
+								<span class="kt-a1w-tl-dot" aria-hidden="true"></span>
+								<p class="kt-a1w-tl-label">{{ _("Clarification Deadline") }}</p>
+								<p class="kt-a1w-tl-value" data-testid="kt-a1w-date-clarification">{{ dates.clarification_deadline or "—" }}</p>
+							</div>
+							<div class="kt-a1w-tl-item">
+								<span class="kt-a1w-tl-dot" aria-hidden="true"></span>
+								<p class="kt-a1w-tl-label">{{ _("Submission Deadline") }}</p>
+								<p class="kt-a1w-tl-value{% if o.past_submission_deadline %} is-alert{% endif %}"
+									data-testid="kt-a1w-submission-deadline">{{ dates.submission_deadline or "—" }}</p>
+							</div>
+							<div class="kt-a1w-tl-item">
+								<span class="kt-a1w-tl-dot" aria-hidden="true"></span>
+								<p class="kt-a1w-tl-label">{{ _("Opening Date/Time") }}</p>
+								<p class="kt-a1w-tl-value" data-testid="kt-a1w-date-opening">{{ dates.opening_datetime or "—" }}</p>
+							</div>
+						</div>
+					</section>
+
+					<section class="kt-a1w-card" data-testid="kt-a1w-submit-sections">
+						<h3 class="kt-a1w-eyebrow">{{ _("What you will submit") }}</h3>
+						{% if not o.submission_sections %}
+						<p class="kt-a1w-muted">{{ _("Submission sections will appear when the bidder schema is available.") }}</p>
+						{% else %}
+						<table class="kt-a1w-mini-table">
+							<tbody>
+								{% for s in o.submission_sections %}
+								<tr data-testid="kt-a1w-section-row">
+									<td>{{ s.title }}</td>
+									<td class="kt-a1w-td-right{% if s.required %} is-required{% endif %}">{{ s.required_label }}</td>
+								</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+						{% endif %}
+						<p class="sr-only" data-testid="kt-a1w-workspace-status">{{ o.workspace_status }}</p>
+					</section>
+
+					<section class="kt-a1w-card" data-testid="kt-a1w-tender-info">
+						<h2 class="kt-a1w-section-title">{{ _("Tender Info") }}</h2>
+						{% if not o.tender_info %}
+						<p class="kt-a1w-muted">{{ _("No additional tender info.") }}</p>
+						{% else %}
+						<dl class="kt-a1w-info-list">
+							{% for row in o.tender_info %}
+							<div class="kt-a1w-info-row" data-testid="kt-a1w-info-row">
+								<dt>{{ row.label }}</dt>
+								<dd>{{ row.value }}</dd>
+							</div>
+							{% endfor %}
+						</dl>
+						{% endif %}
+					</section>
+				</aside>
+			</div>
+		</div>
+	</main>
+
+	<footer class="kt-a1w-footer" data-testid="kt-a1w-footer">
+		<span>© {{ copyright_year }} {{ _("KenTender E-Procurement System. All Rights Reserved.") }}</span>
+		<nav>
+			<a href="#">{{ _("Privacy Policy") }}</a>
+			<a href="#">{{ _("Terms of Service") }}</a>
+			<a href="#">{{ _("Public Procurement Authority") }}</a>
+		</nav>
+	</footer>
+</div>
+<script src="/assets/kentender_procurement/js/published_tender_overview_web.js"></script>
+{% endblock %}
