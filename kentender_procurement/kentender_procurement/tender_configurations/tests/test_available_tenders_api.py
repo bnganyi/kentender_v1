@@ -30,6 +30,10 @@ from kentender_procurement.tender_configurations.services.available_tenders impo
 	compute_public_status,
 	list_available_tenders,
 	resolve_primary_action,
+	resolve_secondary_action,
+)
+from kentender_procurement.tender_configurations.services.electronic_bid import (
+	create_or_get_draft,
 )
 from kentender_procurement.tender_configurations.services.document_preview import (
 	confirm_document_preview,
@@ -87,11 +91,23 @@ class TestAvailableTendersStatus(unittest.TestCase):
 			),
 			ACTION_VIEW_TENDER,
 		)
+		# Draft must still open overview as primary (addenda / Q&A stay reachable).
 		self.assertEqual(
 			resolve_primary_action(
 				public_status=STATUS_OPEN, is_guest=False, has_draft=True, has_sealed=False
 			),
+			ACTION_VIEW_TENDER,
+		)
+		self.assertEqual(
+			resolve_secondary_action(
+				public_status=STATUS_OPEN, is_guest=False, has_draft=True, has_sealed=False
+			),
 			ACTION_CONTINUE,
+		)
+		self.assertIsNone(
+			resolve_secondary_action(
+				public_status=STATUS_OPEN, is_guest=False, has_draft=False, has_sealed=False
+			)
 		)
 		self.assertEqual(
 			resolve_primary_action(
@@ -205,6 +221,17 @@ class TestAvailableTendersList(unittest.TestCase):
 	def test_overview_url_is_website_portal(self):
 		self.assertEqual(_overview_url("PUB-TEST-001"), "/tenders/PUB-TEST-001")
 		self.assertTrue(_overview_url("PUB/A").startswith("/tenders/"))
+
+	def test_draft_keeps_view_tender_primary_with_continue_secondary(self):
+		_pub_id, ref = self._publish(submission_days=14)
+		frappe.set_user("Administrator")
+		create_or_get_draft(self.cfg_id)
+		out = list_available_tenders({"q": "A0 list scope summary"}, user="Administrator", page_size=50)
+		row = next(t for t in out["tenders"] if t["tender_reference"] == ref)
+		self.assertEqual(row["primary_action_label"], ACTION_VIEW_TENDER)
+		self.assertEqual(row["primary_action_url"], f"/tenders/{ref}")
+		self.assertEqual(row["secondary_action_label"], ACTION_CONTINUE)
+		self.assertEqual(row["secondary_action_url"], f"/tenders/{ref}/workspace")
 
 
 if __name__ == "__main__":

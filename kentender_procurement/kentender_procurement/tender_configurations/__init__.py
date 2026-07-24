@@ -42,6 +42,9 @@ from kentender_procurement.tender_configurations.api import (
 	get_submission_checklist as _get_submission_checklist,
 	get_tender_documents_addenda as _get_tender_documents_addenda,
 	acknowledge_tender_documents as _acknowledge_tender_documents,
+	get_requirement_matrix as _get_requirement_matrix,
+	get_requirement_drawer as _get_requirement_drawer,
+	save_requirement_response as _save_requirement_response,
 	get_tender_configurations_dashboard as _get_tender_configurations_dashboard,
 	request_tender_configuration_clarification as _request_tender_configuration_clarification,
 	resolve_tender_configuration_review_finding as _resolve_tender_configuration_review_finding,
@@ -479,3 +482,39 @@ def get_tender_documents_addenda(published_tender_ref: str):
 @frappe.whitelist()
 def acknowledge_tender_documents(published_tender_ref: str):
 	return _acknowledge_tender_documents(published_tender_ref)
+
+
+@frappe.whitelist()
+def get_requirement_matrix(
+	published_tender_ref: str,
+	section_key: str,
+	group: str | None = None,
+	q: str | None = None,
+	status: str | None = None,
+	page: int | str = 1,
+	page_size: int | str = 10,
+):
+	return _get_requirement_matrix(
+		published_tender_ref,
+		section_key,
+		group=group,
+		q=q,
+		status=status,
+		page=int(page or 1),
+		page_size=int(page_size or 10),
+	)
+
+
+@frappe.whitelist()
+def get_requirement_drawer(published_tender_ref: str, section_key: str, requirement_id: str):
+	return _get_requirement_drawer(published_tender_ref, section_key, requirement_id)
+
+
+@frappe.whitelist()
+def save_requirement_response(
+	published_tender_ref: str,
+	section_key: str,
+	requirement_id: str,
+	payload: dict | str | None = None,
+):
+	return _save_requirement_response(published_tender_ref, section_key, requirement_id, payload)

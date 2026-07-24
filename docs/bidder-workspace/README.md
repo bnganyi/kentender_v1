@@ -13,6 +13,7 @@ Bidders discover published tenders on a **public Website** landing page, open th
 | [`A1-published-tender-overview/`](A1-published-tender-overview/) | Published Tender Overview |
 | [`A2-submission-checklist/`](A2-submission-checklist/) | Submission Checklist (workspace home) |
 | [`A3-documents-and-addenda/`](A3-documents-and-addenda/) | Tender Documents & Addenda (Screen C) |
+| [`A4-requirements/`](A4-requirements/) | Requirement Matrix (Screen D for `requirement_matrix`) |
 | [`IMPLEMENTATION_TRACKER.md`](IMPLEMENTATION_TRACKER.md) | Implementation status |
 
 ## Architecture split
@@ -25,13 +26,15 @@ Bidders discover published tenders on a **public Website** landing page, open th
 | **A1 Desk overview (officer/admin)** | Desk CL page | `/desk/published-tender-overview/<publication_ref>` |
 | **A2 Submission Checklist (bidder)** | Website portal | `/tenders/<publication_ref>/workspace` |
 | **A3 Tender Documents & Addenda (bidder)** | Website portal | `/tenders/<publication_ref>/documents` |
-| Section editor bridge (temporary) | Desk E1 PoC | `/desk/it-electronic-bidder-workspace/<configuration_id>` |
+| **A4 Requirement Matrix (bidder)** | Website portal | `/tenders/<publication_ref>/sections/<section_key>` |
+| Section editor bridge (temporary, non-matrix) | Desk E1 PoC | `/desk/it-electronic-bidder-workspace/<configuration_id>` |
 | Officer Bid Submissions | Desk stub | `/desk/bid-submissions` |
 
-Public top nav on A0–A3 Website: KenTender · Tenders · My Bids · Clarifications · Account  
-A2/A3 share a **contextual left bid sidebar** (Checklist; Prepare Bid → documents; Review / Submit placeholders).  
+Public top nav on A0–A4 Website: KenTender · Tenders · My Bids · Clarifications · Account  
+A2–A4 share a **contextual left bid sidebar** (Checklist; Prepare Bid → documents; Review / Submit placeholders). No permanent “Requirement Matrix” nav item — matrix opens from checklist.  
 Do **not** show officer modules on the bidder portal. Do **not** show Start Bid on A0 (Start Bid is on A1 Website overview only).  
-**View Tender** → Website `/tenders/<ref>`. **Start/Continue Bid** → Website `/tenders/<ref>/workspace`. **Prepare Bid** → Website `/tenders/<ref>/documents`.
+**A0 primary** is always **View Tender** → overview (even when a draft exists), so addenda/Q&A stay reachable. **Continue Bid** on A0 is secondary only.  
+**Start/Continue Bid** on A1 → Website `/tenders/<ref>/workspace`. **Prepare Bid** → Website `/tenders/<ref>/documents`. Matrix checklist rows → `/tenders/<ref>/sections/<section_key>`.
 
 ## Gates
 
@@ -44,4 +47,6 @@ make -C apps/kentender_v1 bw-a2-domain-gate
 make -C apps/kentender_v1 ui-bidder-a2-gate
 make -C apps/kentender_v1 bw-a3-domain-gate
 make -C apps/kentender_v1 ui-bidder-a3-gate
+make -C apps/kentender_v1 bw-a4-domain-gate
+make -C apps/kentender_v1 ui-bidder-a4-gate
 ```

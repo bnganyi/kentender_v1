@@ -161,9 +161,16 @@
 								{{ _("View Clarifications") }}
 							</a>
 						</div>
-						<a class="kt-a0-btn kt-a0-btn--primary" href="{{ t.primary_action_url }}"
-							data-testid="kt-a0-primary-action"
-							data-action-label="{{ t.primary_action_label }}">{{ t.primary_action_label }}</a>
+						<div class="kt-a0-card-actions" data-testid="kt-a0-card-actions">
+							<a class="kt-a0-btn kt-a0-btn--primary" href="{{ t.primary_action_url }}"
+								data-testid="kt-a0-primary-action"
+								data-action-label="{{ t.primary_action_label }}">{{ t.primary_action_label }}</a>
+							{% if t.secondary_action_label and t.secondary_action_url %}
+							<a class="kt-a0-btn kt-a0-btn--secondary" href="{{ t.secondary_action_url }}"
+								data-testid="kt-a0-secondary-action"
+								data-action-label="{{ t.secondary_action_label }}">{{ t.secondary_action_label }}</a>
+							{% endif %}
+						</div>
 					</div>
 				</article>
 				{% endfor %}

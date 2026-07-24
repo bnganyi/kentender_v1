@@ -131,19 +131,36 @@ def resolve_primary_action(
 	has_draft: bool,
 	has_sealed: bool,
 ) -> str:
+	"""A0 primary CTA — prefer overview so addenda/Q&A stay reachable after a draft starts.
+
+	Continue Bid is never primary on the landing page (secondary only).
+	"""
 	if public_status == STATUS_CANCELLED:
 		return ACTION_VIEW_NOTICE
-	if is_guest:
-		return ACTION_VIEW_TENDER
-	if has_sealed:
+	if has_sealed and not is_guest:
 		return ACTION_VIEW_SUBMITTED
+	return ACTION_VIEW_TENDER
+
+
+def resolve_secondary_action(
+	*,
+	public_status: str,
+	is_guest: bool,
+	has_draft: bool,
+	has_sealed: bool,
+) -> str | None:
+	"""Optional resume shortcut; never replaces View Tender as the primary notice path."""
+	if is_guest or public_status == STATUS_CANCELLED:
+		return None
+	if has_sealed:
+		return None  # primary already View Submitted Bid
 	if has_draft and public_status in (
 		STATUS_OPEN,
 		STATUS_CLOSING_SOON,
 		STATUS_CLARIFICATION_CLOSED,
 	):
 		return ACTION_CONTINUE
-	return ACTION_VIEW_TENDER
+	return None
 
 
 def _overview_url(publication_ref: str) -> str:
@@ -315,12 +332,19 @@ def list_available_tenders(
 			has_draft=bool(bid["has_draft"]),
 			has_sealed=bool(bid["has_sealed"]),
 		)
-		if primary == ACTION_CONTINUE:
-			primary_url = _workspace_url(pub_ref)
-		elif primary == ACTION_VIEW_SUBMITTED:
+		secondary = resolve_secondary_action(
+			public_status=public_status,
+			is_guest=is_guest,
+			has_draft=bool(bid["has_draft"]),
+			has_sealed=bool(bid["has_sealed"]),
+		)
+		if primary == ACTION_VIEW_SUBMITTED:
 			primary_url = _workspace_url(pub_ref)
 		else:
 			primary_url = _overview_url(pub_ref)
+		secondary_url = ""
+		if secondary == ACTION_CONTINUE:
+			secondary_url = _workspace_url(pub_ref)
 
 		pkg = package_summary_dto(cstr(row.confirmed_package or "") or None)
 		has_pdf = bool(pkg.get("has_pdf"))
@@ -344,10 +368,14 @@ def list_available_tenders(
 				"scope_summary": scope,
 				"primary_action_label": primary,
 				"primary_action_url": primary_url,
+				"secondary_action_label": secondary or "",
+				"secondary_action_url": secondary_url,
 				"view_document_url": _pdf_url(cfg_id) if has_pdf else "",
 				"download_document_url": _pdf_url(cfg_id) if has_pdf else "",
 				"clarifications_url": _overview_url(pub_ref) + "#clarifications",
 				"has_document": 1 if has_pdf else 0,
+				"has_draft": 1 if bid["has_draft"] else 0,
+				"has_sealed": 1 if bid["has_sealed"] else 0,
 			}
 		)
 

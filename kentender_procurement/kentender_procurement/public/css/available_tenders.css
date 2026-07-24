@@ -605,6 +605,18 @@ body:has(.kt-a1w-root) .page-breadcrumbs {
 	align-items: center;
 	margin-top: 0.35rem;
 }
+.kt-a0-card-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	align-items: center;
+	justify-content: flex-end;
+}
+.kt-a0-btn--secondary:hover {
+	background: #f2f4f6;
+	color: var(--kt-a0-primary);
+	text-decoration: none;
+}
 .kt-a0-secondary {
 	display: flex;
 	flex-wrap: wrap;

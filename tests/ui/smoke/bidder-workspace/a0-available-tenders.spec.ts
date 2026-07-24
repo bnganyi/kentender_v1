@@ -29,18 +29,19 @@ test.describe("A0 Available Tenders portal", () => {
 		const body = await page.locator("body").innerText();
 		expect(body).not.toMatch(/Tender Configurations|Publications|Evaluation and Award/i);
 
-		// Primary actions must not be Start Bid on the landing page.
+		// Primary actions must not be Start Bid / Continue Bid on the landing page.
+		// Continue Bid (if any) is secondary so overview stays the default notice path.
 		const primaries = page.getByTestId("kt-a0-primary-action");
 		const count = await primaries.count();
 		if (count > 0) {
 			for (let i = 0; i < count; i++) {
 				const label = (await primaries.nth(i).getAttribute("data-action-label")) || "";
 				expect(label).not.toBe("Start Bid");
-				expect(["View Tender", "Continue Bid", "View Submitted Bid", "View Notice"]).toContain(
-					label
-				);
+				expect(label).not.toBe("Continue Bid");
+				expect(["View Tender", "View Submitted Bid", "View Notice"]).toContain(label);
 			}
 			await expect(primaries.first()).toHaveAttribute("href", /\/tenders\//);
+			await expect(primaries.first()).not.toHaveAttribute("href", /\/workspace/);
 		}
 	});
 

@@ -712,3 +712,61 @@ def acknowledge_tender_documents(published_tender_ref: str) -> dict[str, Any]:
 	)
 
 	return _ack(published_tender_ref)
+
+
+@frappe.whitelist()
+def get_requirement_matrix(
+	published_tender_ref: str,
+	section_key: str,
+	group: str | None = None,
+	q: str | None = None,
+	status: str | None = None,
+	page: int | str = 1,
+	page_size: int | str = 10,
+) -> dict[str, Any]:
+	"""Bidder A4 — Requirement Matrix section DTO."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.requirement_matrix import (
+		get_requirement_matrix as _get,
+	)
+
+	return _get(
+		published_tender_ref,
+		section_key,
+		group=group,
+		q=q,
+		status=status,
+		page=int(page or 1),
+		page_size=int(page_size or 10),
+	)
+
+
+@frappe.whitelist()
+def get_requirement_drawer(
+	published_tender_ref: str,
+	section_key: str,
+	requirement_id: str,
+) -> dict[str, Any]:
+	"""Bidder A4 — Requirement response drawer DTO."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.requirement_matrix import (
+		get_requirement_drawer as _get,
+	)
+
+	return _get(published_tender_ref, section_key, requirement_id)
+
+
+@frappe.whitelist()
+def save_requirement_response(
+	published_tender_ref: str,
+	section_key: str,
+	requirement_id: str,
+	payload: dict[str, Any] | str | None = None,
+) -> dict[str, Any]:
+	"""Bidder A4 — merge-save one requirement response into electronic bid section map."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.requirement_matrix import (
+		save_requirement_response as _save,
+	)
+
+	return _save(published_tender_ref, section_key, requirement_id, payload)

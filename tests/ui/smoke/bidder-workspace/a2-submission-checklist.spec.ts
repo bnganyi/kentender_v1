@@ -5,8 +5,7 @@ import { loginAsAdministrator } from "../../helpers/auth";
  * A2 Submission Checklist — Website workspace home.
  * Route: /tenders/<publication_ref>/workspace
  *
- * Logged-in users often see Continue Bid / View Submitted Bid (→ workspace)
- * instead of View Tender (→ overview). Prefer those; fall back to overview → workspace.
+ * A0 primary is View Tender → overview; Continue Bid is secondary when a draft exists.
  */
 
 const ROOT = '[data-testid="kt-a0-tenders-root"]';
@@ -28,17 +27,17 @@ test.describe("A2 Submission Checklist portal", () => {
 		await page.goto("/tenders", { waitUntil: "domcontentloaded" });
 		await expect(page.locator(ROOT)).toBeVisible({ timeout: 30_000 });
 
-		const workspaceCta = page
-			.getByTestId("kt-a0-primary-action")
-			.filter({ hasText: /Continue Bid|View Submitted Bid/ })
+		const secondaryContinue = page
+			.getByTestId("kt-a0-secondary-action")
+			.filter({ hasText: "Continue Bid" })
 			.first();
 		const viewTender = page
 			.getByTestId("kt-a0-primary-action")
 			.filter({ hasText: "View Tender" })
 			.first();
 
-		if ((await workspaceCta.count()) > 0) {
-			await workspaceCta.click();
+		if ((await secondaryContinue.count()) > 0) {
+			await secondaryContinue.click();
 			await page.waitForURL(/\/tenders\/[^/?#]+\/workspace/, { timeout: 30_000 });
 		} else if ((await viewTender.count()) > 0) {
 			await viewTender.click();
@@ -56,7 +55,6 @@ test.describe("A2 Submission Checklist portal", () => {
 				await page.goto(`/tenders/${ref}/workspace`, { waitUntil: "domcontentloaded" });
 			}
 		} else {
-			// Last resort: any card href with a publication ref.
 			const anyHref = await page
 				.getByTestId("kt-a0-primary-action")
 				.first()

@@ -1,0 +1,225 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }} | KenTender{% endblock %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/kentender_procurement/css/available_tenders.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/submission_checklist_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/requirement_matrix_web.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+{% endblock %}
+
+{% block page_content %}
+{% set m = matrix %}
+{% set active_nav = "my_bids" %}
+{% set active_ws = "checklist" %}
+<div class="kt-a0-root kt-a2-root kt-a4-root" data-testid="kt-a4-matrix-root"
+	data-publication-ref="{{ m.published_tender_ref }}"
+	data-section-key="{{ m.section_key }}"
+	data-bid-id="{{ m.bid_id or '' }}"
+	data-bid-sealed="{{ m.bid_sealed or 0 }}"
+	data-selected-group="{{ m.selected_group or '' }}"
+	data-workspace-url="{{ m.workspace_url }}"
+	data-next-section-url="{{ m.next_section_url }}">
+	{% include "templates/includes/kt_bidder_portal_nav.html" %}
+
+	<div class="kt-a2-shell">
+		{% include "templates/includes/kt_bidder_workspace_sidebar.html" %}
+
+		<main class="kt-a2-main kt-a4-main">
+			<div class="kt-a4-main-inner">
+				<header class="kt-a4-page-head">
+					<div>
+						<h1 data-testid="kt-a4-title">{{ m.section_title }}</h1>
+						<p data-testid="kt-a4-instructions">{{ m.section_instructions }}</p>
+					</div>
+					<div class="kt-a4-progress" data-testid="kt-a4-progress">
+						<div class="kt-a4-progress-head">
+							<span>{{ _("Overall Progress") }}</span>
+							<span data-testid="kt-a4-progress-label">{{ m.progress_label }}</span>
+						</div>
+						<div class="kt-a4-progress-bar" aria-hidden="true">
+							<span style="width: {{ m.progress_percent }}%;" data-testid="kt-a4-progress-bar"></span>
+						</div>
+					</div>
+				</header>
+
+				<div class="kt-a4-grid">
+					<aside class="kt-a4-groups" data-testid="kt-a4-group-rail">
+						<h3>{{ _("Requirement Sections") }}</h3>
+						<div class="kt-a4-group-list" data-testid="kt-a4-group-list">
+							{% for g in m.groups %}
+							<button type="button"
+								class="kt-a4-group-btn{% if g.group_key == m.selected_group %} is-active{% endif %}"
+								data-testid="kt-a4-group"
+								data-group-key="{{ g.group_key }}"
+								data-group-status="{{ g.status }}">
+								<span class="kt-a4-group-title">{{ g.title }}</span>
+								<span class="kt-a4-group-meta">
+									<span data-testid="kt-a4-group-progress">{{ g.progress_label }}</span>
+									{% if g.status != 'Not Started' %}
+									<span class="kt-a4-group-status kt-a4-status--{{ g.status|lower|replace(' ', '-') }}"
+										data-testid="kt-a4-group-status">{{ g.status }}</span>
+									{% endif %}
+								</span>
+							</button>
+							{% endfor %}
+						</div>
+					</aside>
+
+					<section class="kt-a4-ledger" data-testid="kt-a4-ledger">
+						<div class="kt-a4-ledger-head">
+							<div class="kt-a4-ledger-view" data-testid="kt-a4-current-group">
+								{{ _("Current View:") }} <strong>{{ m.selected_group or "—" }}</strong>
+							</div>
+							<div class="kt-a4-filters">
+								<label class="kt-a4-search">
+									<span class="material-symbols-outlined" aria-hidden="true">search</span>
+									<input type="search" data-testid="kt-a4-search"
+										placeholder="{{ _('Search requirements...') }}"
+										value="{{ m.filters.q or '' }}" />
+								</label>
+								<select data-testid="kt-a4-status-filter" aria-label="{{ _('Filter by status') }}">
+									<option value="">{{ _("All statuses") }}</option>
+									<option value="Not Started"{% if m.filters.status == 'Not Started' %} selected{% endif %}>{{ _("Not Started") }}</option>
+									<option value="In Progress"{% if m.filters.status == 'In Progress' %} selected{% endif %}>{{ _("In Progress") }}</option>
+									<option value="Needs Attention"{% if m.filters.status == 'Needs Attention' %} selected{% endif %}>{{ _("Needs Attention") }}</option>
+									<option value="Complete"{% if m.filters.status == 'Complete' %} selected{% endif %}>{{ _("Complete") }}</option>
+									<option value="Not Applicable"{% if m.filters.status == 'Not Applicable' %} selected{% endif %}>{{ _("Not Applicable") }}</option>
+								</select>
+							</div>
+						</div>
+						<div class="kt-a4-table-wrap">
+							<table class="kt-a4-table" data-testid="kt-a4-requirements-table">
+								<thead>
+									<tr>
+										<th>{{ _("ID") }}</th>
+										<th>{{ _("Requirement") }}</th>
+										<th>{{ _("Type") }}</th>
+										<th>{{ _("Response Summary") }}</th>
+										<th>{{ _("Status") }}</th>
+										<th class="kt-a4-right">{{ _("Action") }}</th>
+									</tr>
+								</thead>
+								<tbody data-testid="kt-a4-requirements-body">
+									{% if m.rows %}
+										{% for r in m.rows %}
+										<tr data-testid="kt-a4-requirement-row"
+											data-requirement-id="{{ r.requirement_id }}"
+											data-status="{{ r.status }}">
+											<td class="kt-a4-mono">{{ r.requirement_id }}</td>
+											<td>
+												<strong class="kt-a4-row-title{% if r.has_short_title %} kt-a4-row-title--short{% endif %}"
+													data-testid="kt-a4-row-title">{{ r.title }}</strong>
+												{% if r.subtitle %}
+												<p class="kt-a4-row-detail" data-testid="kt-a4-row-detail">{{ r.subtitle }}</p>
+												{% endif %}
+											</td>
+											<td><span class="kt-a4-pill">{{ r.mandatory_label }}</span></td>
+											<td class="kt-a4-summary">{{ r.response_summary }}</td>
+											<td>
+												<span class="kt-a4-status kt-a4-status--{{ r.status | lower | replace(' ', '-') }}"
+													data-testid="kt-a4-row-status">
+													<span class="kt-a4-status-dot" aria-hidden="true"></span>
+													{{ r.status }}
+												</span>
+											</td>
+											<td class="kt-a4-right">
+												<button type="button"
+													class="kt-a4-row-action{% if r.status == 'Not Started' %} kt-a4-row-action--start{% elif r.status in ('In Progress', 'Needs Attention') %} kt-a4-row-action--continue{% else %} kt-a4-row-action--review{% endif %}"
+													data-testid="kt-a4-row-action"
+													data-requirement-id="{{ r.requirement_id }}">{{ r.action_label }}</button>
+											</td>
+										</tr>
+										{% endfor %}
+									{% else %}
+										<tr>
+											<td colspan="6" class="kt-a4-empty" data-testid="kt-a4-empty">
+												{{ _("No requirements match the current filters.") }}
+											</td>
+										</tr>
+									{% endif %}
+								</tbody>
+							</table>
+						</div>
+						<div class="kt-a4-pagination" data-testid="kt-a4-pagination">
+							<span data-testid="kt-a4-page-label">
+								{% if m.pagination.total %}
+									{{ _("Showing {0}–{1} of {2}").format(m.pagination.from, m.pagination.to, m.pagination.total) }}
+								{% else %}
+									{{ _("0 requirements") }}
+								{% endif %}
+							</span>
+							<div class="kt-a4-page-btns">
+								<button type="button" data-testid="kt-a4-page-prev"
+									{% if m.pagination.page <= 1 %}disabled{% endif %}>{{ _("Previous") }}</button>
+								<button type="button" data-testid="kt-a4-page-next"
+									{% if m.pagination.page >= m.pagination.total_pages %}disabled{% endif %}>{{ _("Next") }}</button>
+							</div>
+						</div>
+					</section>
+				</div>
+
+				<footer class="kt-a4-foot" data-testid="kt-a4-footer">
+					<a class="kt-a4-btn kt-a4-btn--ghost" href="{{ m.workspace_url }}"
+						data-testid="kt-a4-back-workspace">
+						<span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+						{{ _("Back to Workspace") }}
+					</a>
+					<div class="kt-a4-foot-mid">
+						<span data-testid="kt-a4-last-saved">{{ m.last_saved_display }}</span>
+					</div>
+					<div class="kt-a4-foot-actions">
+						<button type="button" class="kt-a4-btn kt-a4-btn--secondary"
+							data-testid="kt-a4-save-section"{% if m.bid_sealed %} disabled{% endif %}>
+							{{ _("Save Section") }}
+						</button>
+						<a class="kt-a4-btn kt-a4-btn--primary" href="{{ m.next_section_url }}"
+							data-testid="kt-a4-save-continue">
+							{{ _("Save & Continue") }}
+							<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+						</a>
+					</div>
+				</footer>
+			</div>
+
+			<aside class="kt-a4-drawer" data-testid="kt-a4-drawer" hidden aria-hidden="true">
+				<div class="kt-a4-drawer-inner">
+					<header class="kt-a4-drawer-head">
+						<div>
+							<p class="kt-a4-drawer-eyebrow">{{ _("Requirement Details") }}</p>
+							<h2 data-testid="kt-a4-drawer-title"></h2>
+							<p class="kt-a4-drawer-pos" data-testid="kt-a4-drawer-position"></p>
+							<div class="kt-a4-drawer-status-row" data-testid="kt-a4-drawer-status-row" hidden>
+								<span class="kt-a4-drawer-status" data-testid="kt-a4-drawer-status"></span>
+								<span class="kt-a4-drawer-attention" data-testid="kt-a4-drawer-attention" hidden></span>
+							</div>
+						</div>
+						<button type="button" class="kt-a4-drawer-close" data-testid="kt-a4-drawer-close"
+							aria-label="{{ _('Close') }}">
+							<span class="material-symbols-outlined" aria-hidden="true">close</span>
+						</button>
+					</header>
+					<div class="kt-a4-drawer-body" data-testid="kt-a4-drawer-body"></div>
+					<footer class="kt-a4-drawer-foot">
+						<button type="button" class="kt-a4-btn kt-a4-btn--ghost"
+							data-testid="kt-a4-drawer-prev">{{ _("Previous") }}</button>
+						<div class="kt-a4-drawer-foot-actions">
+							<button type="button" class="kt-a4-btn kt-a4-btn--secondary"
+								data-testid="kt-a4-drawer-save"{% if m.bid_sealed %} disabled{% endif %}>
+								{{ _("Save Response") }}
+							</button>
+							<button type="button" class="kt-a4-btn kt-a4-btn--primary"
+								data-testid="kt-a4-drawer-save-next"{% if m.bid_sealed %} disabled{% endif %}>
+								{{ _("Save & Next") }}
+							</button>
+						</div>
+					</footer>
+				</div>
+			</aside>
+		</main>
+	</div>
+</div>
+<script type="application/json" id="kt-a4-bootstrap">{{ m | tojson }}</script>
+<script src="/assets/kentender_procurement/js/requirement_matrix_web.js"></script>
+{% endblock %}

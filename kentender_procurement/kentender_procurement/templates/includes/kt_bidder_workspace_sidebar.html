@@ -1,8 +1,12 @@
 {# Contextual bid workspace left rail — pass active_ws: checklist|prepare|review|submit #}
 <aside class="kt-a2-sidebar" data-testid="kt-a2-sidebar">
 	<div class="kt-a2-sidebar-head">
-		<h2 data-testid="kt-a2-sidebar-title">{{ checklist.tender_title or _("Bid Workspace") }}</h2>
+		<h2 data-testid="kt-a2-sidebar-title">{{ _("Bidder Workspace") }}</h2>
 		<p data-testid="kt-a2-sidebar-ref">{{ _("Ref:") }} {{ checklist.published_tender_ref }}</p>
+		{% if checklist.tender_title %}
+		<p class="kt-a2-sidebar-tender" data-testid="kt-a2-sidebar-tender"
+			title="{{ checklist.tender_title }}">{{ checklist.tender_title }}</p>
+		{% endif %}
 	</div>
 	<nav class="kt-a2-sidebar-nav" aria-label="{{ _('Bid workspace navigation') }}">
 		<a class="{% if active_ws == 'checklist' %}is-active{% endif %}"

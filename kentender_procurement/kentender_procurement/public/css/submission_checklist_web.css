@@ -52,6 +52,7 @@ body:has(.kt-a2-root) .page-breadcrumbs {
 .kt-a2-sidebar-head {
 	padding: 1rem;
 	border-bottom: 1px solid var(--kt-a2-border);
+	min-width: 0;
 }
 .kt-a2-sidebar-head h2 {
 	margin: 0;
@@ -64,6 +65,19 @@ body:has(.kt-a2-root) .page-breadcrumbs {
 	margin: 0.35rem 0 0;
 	font-size: 0.8125rem;
 	color: var(--kt-a2-muted);
+}
+/* Long tender titles must not blow out the 256px rail — clamp + tooltip. */
+.kt-a2-sidebar-tender {
+	margin: 0.5rem 0 0;
+	font-size: 0.75rem;
+	line-height: 1.35;
+	color: var(--kt-a2-muted);
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	overflow: hidden;
+	overflow-wrap: anywhere;
+	word-break: break-word;
 }
 .kt-a2-sidebar-nav {
 	flex: 1;

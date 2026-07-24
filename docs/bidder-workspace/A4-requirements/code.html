@@ -1,313 +1,475 @@
-<!DOCTYPE html>
-
-<html lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Requirement Matrix</title>
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>KenTender - Requirement Matrix</title>
+<!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind Config -->
 <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    "colors": {
-                        "secondary-fixed-dim": "#b9c7e0",
-                        "primary-fixed": "#d6e3fd",
-                        "surface-container-highest": "#e0e3e5",
-                        "on-secondary": "#ffffff",
-                        "on-surface-variant": "#44474c",
-                        "surface-container-low": "#f2f4f6",
-                        "primary-container": "#0e1c2e",
-                        "status-pending-bg": "#fffbeb",
-                        "secondary": "#515f74",
-                        "secondary-fixed": "#d5e3fc",
-                        "on-secondary-fixed-variant": "#3a485c",
-                        "on-surface": "#191c1e",
-                        "on-secondary-fixed": "#0d1c2e",
-                        "on-tertiary": "#ffffff",
-                        "status-error": "#ba1a1a",
-                        "background": "#f7f9fb",
-                        "inverse-primary": "#bac7e0",
-                        "surface-tint": "#525f74",
-                        "surface-dim": "#d8dadc",
-                        "on-primary-container": "#77859b",
-                        "surface-container-lowest": "#ffffff",
-                        "error-container": "#ffdad6",
-                        "on-background": "#191c1e",
-                        "tertiary-container": "#001c3a",
-                        "on-secondary-container": "#556379",
-                        "status-approved": "#065f46",
-                        "on-primary-fixed": "#0e1c2e",
-                        "surface-container-high": "#e6e8ea",
-                        "error": "#ba1a1a",
-                        "status-pending": "#92400e",
-                        "secondary-container": "#d2e1fa",
-                        "surface-container": "#eceef0",
-                        "on-primary": "#ffffff",
-                        "surface-bright": "#f7f9fb",
-                        "outline-subtle": "#c4c6cf",
-                        "on-tertiary-container": "#6b85ac",
-                        "tertiary-fixed": "#d4e3ff",
-                        "primary-fixed-dim": "#bac7e0",
-                        "on-primary-fixed-variant": "#3a475c",
-                        "surface-variant": "#e0e3e5",
-                        "status-approved-bg": "#ecfdf5",
-                        "surface": "#f7f9fb",
-                        "primary": "#000000",
-                        "on-tertiary-fixed": "#001c3a",
-                        "outline-strong": "#74777f",
-                        "on-error": "#ffffff",
-                        "tertiary": "#000000",
-                        "on-tertiary-fixed-variant": "#2d486c",
-                        "on-error-container": "#93000a",
-                        "outline-variant": "#c5c6cd",
-                        "tertiary-fixed-dim": "#adc8f3",
-                        "inverse-on-surface": "#eff1f3",
-                        "status-error-bg": "#fff1f2",
-                        "outline": "#75777d",
-                        "inverse-surface": "#2d3133"
-                    },
-                    "borderRadius": {
-                        "DEFAULT": "0.125rem",
-                        "lg": "0.25rem",
-                        "xl": "0.5rem",
-                        "full": "0.75rem"
-                    },
-                    "spacing": {
-                        "gap-component": "8px",
-                        "sidebar-width": "256px",
-                        "max-width": "1280px",
-                        "container-padding": "16px",
-                        "unit": "4px",
-                        "gutter": "12px"
-                    },
-                    "fontFamily": {
-                        "body-md": ["Public Sans"],
-                        "label-md": ["JetBrains Mono"],
-                        "label-sm": ["JetBrains Mono"],
-                        "headline-lg": ["Public Sans"],
-                        "body-lg": ["Public Sans"],
-                        "headline-md": ["Public Sans"],
-                        "headline-lg-mobile": ["Public Sans"],
-                        "display": ["Public Sans"]
-                    },
-                    "fontSize": {
-                        "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
-                        "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
-                        "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
-                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
-                        "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
-                        "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
-                        "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
-                        "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
-                    }
-                }
-            }
-        }
-    </script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "tertiary": "#000000",
+                  "status-pending": "#92400e",
+                  "secondary-fixed": "#d5e3fc",
+                  "on-primary": "#ffffff",
+                  "secondary-container": "#d2e1fa",
+                  "surface-tint": "#525f74",
+                  "surface-container-highest": "#e0e3e5",
+                  "on-surface-variant": "#44474c",
+                  "error": "#ba1a1a",
+                  "tertiary-container": "#001c3a",
+                  "on-error": "#ffffff",
+                  "on-background": "#191c1e",
+                  "primary-container": "#0e1c2e",
+                  "inverse-surface": "#2d3133",
+                  "inverse-primary": "#bac7e0",
+                  "outline-strong": "#74777f",
+                  "on-secondary": "#ffffff",
+                  "secondary": "#515f74",
+                  "on-primary-fixed-variant": "#3a475c",
+                  "surface-container-high": "#e6e8ea",
+                  "on-primary-container": "#77859b",
+                  "on-tertiary-fixed-variant": "#2d486c",
+                  "surface-variant": "#e0e3e5",
+                  "primary-fixed-dim": "#bac7e0",
+                  "status-approved-bg": "#ecfdf5",
+                  "status-error": "#ba1a1a",
+                  "primary": "#000000",
+                  "status-pending-bg": "#fffbeb",
+                  "on-primary-fixed": "#0e1c2e",
+                  "surface-bright": "#f7f9fb",
+                  "on-secondary-fixed-variant": "#3a485c",
+                  "primary-fixed": "#d6e3fd",
+                  "on-tertiary-container": "#6b85ac",
+                  "surface-dim": "#d8dadc",
+                  "tertiary-fixed-dim": "#adc8f3",
+                  "secondary-fixed-dim": "#b9c7e0",
+                  "surface-container-low": "#f2f4f6",
+                  "outline": "#75777d",
+                  "error-container": "#ffdad6",
+                  "outline-subtle": "#c4c6cf",
+                  "on-tertiary": "#ffffff",
+                  "on-secondary-fixed": "#0d1c2e",
+                  "on-tertiary-fixed": "#001c3a",
+                  "on-secondary-container": "#556379",
+                  "status-error-bg": "#fff1f2",
+                  "inverse-on-surface": "#eff1f3",
+                  "surface-container-lowest": "#ffffff",
+                  "on-surface": "#191c1e",
+                  "on-error-container": "#93000a",
+                  "surface": "#f7f9fb",
+                  "outline-variant": "#c5c6cd",
+                  "tertiary-fixed": "#d4e3ff",
+                  "surface-container": "#eceef0",
+                  "status-approved": "#065f46",
+                  "background": "#f7f9fb"
+          },
+          "borderRadius": {
+                  "DEFAULT": "0.125rem",
+                  "lg": "0.25rem",
+                  "xl": "0.5rem",
+                  "full": "0.75rem"
+          },
+          "spacing": {
+                  "sidebar-width": "256px",
+                  "container-padding": "16px",
+                  "max-width": "1280px",
+                  "gutter": "12px",
+                  "gap-component": "8px",
+                  "unit": "4px"
+          },
+          "fontFamily": {
+                  "headline-lg": ["Public Sans"],
+                  "label-sm": ["JetBrains Mono"],
+                  "headline-md": ["Public Sans"],
+                  "display": ["Public Sans"],
+                  "body-md": ["Public Sans"],
+                  "label-md": ["JetBrains Mono"],
+                  "body-lg": ["Public Sans"]
+          },
+          "fontSize": {
+                  "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                  "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                  "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                  "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                  "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                  "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                  "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #c4c6cf;
+      border-radius: 2px;
+    }
+    .civic-table tr:hover {
+      background-color: #f7f9fb;
+    }
+    .bento-container {
+      display: grid;
+      grid-template-columns: 256px 1fr;
+      gap: 16px;
+      height: calc(100vh - 120px);
+    }
+  </style>
 </head>
-<body class="bg-background text-on-surface font-body-md text-body-md min-h-screen">
-<!-- Top Navigation -->
-<header class="fixed top-0 w-full z-50 flex justify-between items-center px-container-padding h-14 bg-surface-container-lowest border-b border-outline-subtle flat no shadows">
-<div class="flex items-center gap-4">
-<span class="font-display text-display text-primary tracking-tighter">KenTender</span>
-<nav class="hidden md:flex gap-6 ml-8">
-<a class="text-on-surface-variant hover:bg-surface-container-low transition-colors px-2 py-4" href="#">Tenders</a>
-<a class="text-on-surface-variant hover:bg-surface-container-low transition-colors px-2 py-4" href="#">My Bids</a>
-<a class="text-on-surface-variant hover:bg-surface-container-low transition-colors px-2 py-4" href="#">Clarifications</a>
+<body class="bg-background font-body-lg text-on-surface">
+<!-- TopNavBar -->
+<header class="sticky top-0 w-full z-50 flex items-center justify-between px-gutter h-14 bg-surface-container-lowest border-b border-outline-subtle">
+<div class="flex items-center gap-8">
+<div class="font-headline-lg text-headline-lg font-bold text-primary">KenTender</div>
+<nav class="hidden md:flex gap-6 items-center h-full">
+<a class="text-on-secondary-container font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md" href="#">Tenders</a>
+<a class="text-on-secondary-container font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md" href="#">My Bids</a>
+<a class="text-on-secondary-container font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md" href="#">Clarifications</a>
 </nav>
 </div>
 <div class="flex items-center gap-4">
-<button class="text-primary hover:bg-surface-container-low p-2 rounded-full transition-colors">
-<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
-</button>
-<button class="text-primary hover:bg-surface-container-low p-2 rounded-full transition-colors">
-<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
-</button>
-<img alt="Bidder Profile Avatar" class="w-8 h-8 rounded-full border border-outline-subtle object-cover" data-alt="A small circular avatar placeholder representing a bidder profile. Clean corporate styling with light grey background and dark silhouette. Institutional web app context." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiQ1KnPyNZDF_6zN_Y5NzD2Ro333SbRsSL7QPcssXnHpCF_uhjD1ge7BCO6zeOL_gdJwa7t2nlJHIMhmY4JsPVNmgu7kfoQoorg7Ac7Mr7rCEa0Z3YjKx45Eez1FfG8Gl0cDxRsdEoptCqTw3mFlost4EchLKkru67yBw2zWYc3lfM67FIX5HNOo8SV3Vf5uqFDecMXn6vFXGgj810xg4m9mw1JZPEp45reyyubWpWgdJHc3sWWqOj9w"/>
+<span class="font-label-md text-label-md text-primary font-bold">Help Desk</span>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-surface-container-high rounded-full"><span class="material-symbols-outlined text-[20px]">notifications</span></button>
+<button class="p-2 hover:bg-surface-container-high rounded-full"><span class="material-symbols-outlined text-[20px]">settings</span></button>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden border border-outline-subtle">
+<img class="w-full h-full object-cover" data-alt="A professional profile photo of a procurement officer in a crisp business suit, set against a blurred corporate office background with neutral gray tones and soft window lighting, reflecting technical authority and transparency." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrPX3sSVhJlrneNS3h89vU7KNbbht54ZurMo9cnCb0nCjMZwuZyJjmgWjLAYPqB8G6qMPWTBO02V6Jdwqg_au7vTeq9nG43Njd3Ot-11Ue1A2z1o_cZJv6f5E0-gnUptwHfWM_Quuywc_cd2j_noyAQRb66tekQWM2ieTpfl3-DLuuWo3NNFTp-sDfM3Z7zRyD4W9iZ86QHzmeZ4pVHc2GqXTREvbIrr8CI1vPNhXLmyDIjt1D3Q0C-PJRZMYB5sifnunGS9zapEMp">
+</div>
 </div>
 </header>
-<!-- Side Navigation -->
-<nav class="fixed left-0 top-14 bottom-0 w-sidebar-width z-40 flex flex-col bg-surface-container-low border-r border-outline-subtle flat no shadows hidden md:flex">
-<div class="p-container-padding border-b border-outline-subtle">
-<div class="flex items-center gap-3 mb-4">
-<img alt="Procurement Logo" class="w-10 h-10 border border-outline-subtle object-cover" data-alt="A small square logo placeholder for a procurement authority. Minimalist crest or shield design in dark blue on white background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDp00LFtGurwRu-WkV3cUHHvJOzCubcDgOP6Y49jWEDdvbwGDVo9w4TKY56Qmu0JXmIag_G8N3jYPIq4gDLXgUyH1rb6ZbJpLPYKDnInV4lRqzpn7m0T8Uv6Iw8sSfhAyVV14i4LkKmhKDEmH8PrlzsSTnZziMcMZVDvgudXo_IEHkKoeXgGV-f4vo2FU_RwNhpM0U1PwePGzm1yUi7NIZ4y9xpIxjDp6ftAEO7kfB9pUmdi6xgioU4zA"/>
+<!-- Main Layout -->
+<div class="flex h-[calc(100vh-56px)] overflow-hidden">
+<!-- SideNavBar -->
+<aside class="w-sidebar-width flex flex-col bg-surface-container-low border-r border-outline-subtle overflow-y-auto custom-scrollbar">
+<div class="p-4 border-b border-outline-subtle">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-8 h-8 bg-primary rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[18px]" style="font-variation-settings: &quot;FILL&quot; 1;">account_balance</span>
+</div>
 <div>
-<h2 class="font-headline-md text-headline-md font-bold text-primary">Tender #KT-2024-089</h2>
-<p class="font-label-md text-label-md text-on-surface-variant">Ref: ICT/092/2024</p>
+<div class="font-headline-md text-headline-md font-bold text-primary">Bidder Workspace</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Ref: KT-2023-0892</div>
 </div>
 </div>
-<button class="w-full bg-surface-container-lowest border border-outline-subtle text-primary font-label-md text-label-md py-2 px-4 rounded hover:bg-surface-container transition-colors flex items-center justify-center gap-2">
-<span class="material-symbols-outlined text-sm">download</span> Download RFQ
-            </button>
+<button class="w-full mt-4 bg-primary text-on-primary py-2 px-3 rounded flex items-center justify-center gap-2 font-label-md text-label-md hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[16px]">grid_view</span>
+          Requirement Matrix
+        </button>
 </div>
-<div class="flex-1 overflow-y-auto py-2">
-<a class="flex items-center text-on-surface-variant hover:bg-surface-container transition-all px-container-padding py-3 gap-3" href="#">
-<span class="material-symbols-outlined text-lg">fact_check</span> <span class="font-label-md text-label-md">Checklist</span>
+<nav class="flex-1 py-4">
+<div class="px-4 mb-2 font-label-sm text-label-sm uppercase text-outline tracking-widest">Workspace Navigation</div>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">info</span>
+<span class="font-label-md text-label-md">Tender Overview</span>
 </a>
-<a class="flex items-center bg-surface-container-highest text-primary border-r-4 border-primary font-bold px-container-padding py-3 gap-3 translate-x-1 transition-transform" href="#">
-<span class="material-symbols-outlined text-lg">edit_document</span> <span class="font-label-md text-label-md">Prepare Bid</span>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">description</span>
+<span class="font-label-md text-label-md">Tender Documents</span>
 </a>
-<a class="flex items-center text-on-surface-variant hover:bg-surface-container transition-all px-container-padding py-3 gap-3" href="#">
-<span class="material-symbols-outlined text-lg">visibility</span> <span class="font-label-md text-label-md">Review</span>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">fact_check</span>
+<span class="font-label-md text-label-md">Submission Checklist</span>
 </a>
-<a class="flex items-center text-on-surface-variant hover:bg-surface-container transition-all px-container-padding py-3 gap-3" href="#">
-<span class="material-symbols-outlined text-lg">send</span> <span class="font-label-md text-label-md">Submit</span>
+<a class="flex items-center bg-surface-container-highest text-primary border-r-4 border-primary py-3 px-4 scale-[0.99] transition-transform" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]" style="font-variation-settings: &quot;FILL&quot; 1;">edit_document</span>
+<span class="font-label-md text-label-md font-bold">Prepare Bid</span>
 </a>
-</div>
-<div class="p-container-padding border-t border-outline-subtle">
-<a class="flex items-center text-on-surface-variant hover:bg-surface-container transition-all py-2 gap-3" href="#">
-<span class="material-symbols-outlined text-lg">support_agent</span> <span class="font-label-md text-label-md">Support</span>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">verified</span>
+<span class="font-label-md text-label-md">Review &amp; Validate</span>
 </a>
-<a class="flex items-center text-on-surface-variant hover:bg-surface-container transition-all py-2 gap-3" href="#">
-<span class="material-symbols-outlined text-lg">exit_to_app</span> <span class="font-label-md text-label-md">Exit Workspace</span>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">lock</span>
+<span class="font-label-md text-label-md">Submit &amp; Seal</span>
 </a>
-</div>
 </nav>
-<!-- Main Content Area -->
-<main class="pt-14 md:pl-sidebar-width min-h-screen pb-24">
-<div class="max-w-[1280px] mx-auto p-container-padding lg:p-8">
-<div class="mb-8">
-<h1 class="font-display text-display text-primary mb-2">Requirement Matrix</h1>
-<p class="font-body-lg text-body-lg text-on-surface-variant">Complete all mandatory requirements to proceed. Upload evidence where indicated.</p>
+<div class="mt-auto border-t border-outline-subtle p-4 bg-surface-container">
+<div class="flex items-center justify-between mb-4">
+<div class="text-[10px] font-label-sm text-outline uppercase">Response Progress</div>
+<div class="text-primary font-bold font-label-sm">18 / 42 complete — 43%</div>
 </div>
-<div class="flex flex-col lg:flex-row gap-6">
-<!-- Grouped Navigation -->
-<aside class="lg:w-64 flex-shrink-0">
-<div class="bg-surface-container-lowest border border-outline-subtle rounded-lg overflow-hidden sticky top-20">
-<div class="p-4 bg-surface-container-low border-b border-outline-subtle">
-<span class="font-label-md text-label-md text-primary uppercase">Requirement Groups</span>
+<div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+<div class="bg-primary h-full" style="width: 43%;"></div>
 </div>
-<ul class="py-2">
-<li>
-<a class="block px-4 py-3 font-body-md text-body-md text-primary bg-surface-container border-l-4 border-primary font-bold" href="#">Technical Specs <span class="float-right bg-status-pending-bg text-status-pending px-2 py-0.5 rounded font-label-sm text-label-sm">2/5</span></a>
-</li>
-<li>
-<a class="block px-4 py-3 font-body-md text-body-md text-on-surface-variant hover:bg-surface-container-low border-l-4 border-transparent" href="#">Financial Eligibility <span class="float-right bg-status-approved-bg text-status-approved px-2 py-0.5 rounded font-label-sm text-label-sm">Done</span></a>
-</li>
-<li>
-<a class="block px-4 py-3 font-body-md text-body-md text-on-surface-variant hover:bg-surface-container-low border-l-4 border-transparent" href="#">Legal Compliance <span class="float-right bg-surface-variant text-on-surface-variant px-2 py-0.5 rounded font-label-sm text-label-sm">0/3</span></a>
-</li>
-</ul>
+<div class="mt-6 flex flex-col gap-2">
+<a class="flex items-center text-on-surface-variant hover:text-primary transition-colors gap-3 py-1" href="#">
+<span class="material-symbols-outlined text-[18px]">contact_support</span>
+<span class="font-label-sm text-label-sm">Support</span>
+</a>
+<a class="flex items-center text-on-surface-variant hover:text-primary transition-colors gap-3 py-1" href="#">
+<span class="material-symbols-outlined text-[18px]">logout</span>
+<span class="font-label-sm text-label-sm">Sign Out</span>
+</a>
+</div>
 </div>
 </aside>
-<!-- Data Table Container -->
-<div class="flex-1 bg-surface-container-lowest border border-outline-subtle rounded-lg overflow-hidden flex flex-col">
-<div class="p-4 border-b border-outline-subtle flex justify-between items-center bg-surface-container-low">
-<h2 class="font-headline-md text-headline-md text-primary">Technical Specs</h2>
+<!-- Main Canvas -->
+<main class="flex-1 overflow-y-auto bg-background p-6 pb-24 relative">
+<!-- Dashboard Breadcrumbs -->
+<nav class="flex items-center gap-2 mb-6 font-label-sm text-label-sm text-outline">
+<a class="hover:text-primary" href="#">Dashboard</a>
+<span class="material-symbols-outlined text-[12px]">chevron_right</span>
+<a class="hover:text-primary" href="#">Prepare Bid</a>
+<span class="material-symbols-outlined text-[12px]">chevron_right</span>
+<span class="text-primary font-bold">Requirement Matrix</span>
+</nav>
+<!-- Content Header -->
+<div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div class="flex-1">
+<h1 class="font-display text-display text-primary mb-2">Technical Requirements</h1>
+<p class="text-on-surface-variant font-body-lg text-body-lg">Complete each requirement below. Open a requirement to enter or review your response.</p>
+</div>
+<div class="w-full md:w-64">
+<div class="flex justify-between font-label-sm text-label-sm mb-2 text-outline">
+<span class="">Overall Progress</span>
+<span class="">18 / 42 requirements complete</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden border border-outline-subtle">
+<div class="h-full bg-status-approved w-[42.8%]" style="width: 43%;"></div>
+</div>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Left Column: Category Sidebar (Bento Card) -->
+<div class="col-span-12 lg:col-span-3">
+<div class="bg-surface-container-lowest border border-outline-subtle rounded-lg p-4 sticky top-6">
+<h3 class="font-label-sm text-label-sm uppercase text-outline tracking-widest mb-4">Requirement Sections</h3>
+<div class="flex flex-col gap-1"><button class="flex items-center justify-between p-3 rounded hover:bg-surface-container-low transition-colors"><span class="font-label-md text-label-md text-on-surface-variant">General Requirements</span><div class="flex items-center gap-2"><span class="text-[10px] font-label-sm text-outline">9 / 10</span><span class="text-[10px] font-label-sm text-outline uppercase">In Progress</span></div></button>
+<button class="flex items-center justify-between p-3 rounded bg-surface-container-low border-l-4 border-primary">
+<span class="font-label-md text-label-md font-bold text-primary">System Requirements</span>
+<span class="text-[10px] font-label-sm text-outline">5 / 18</span>
+</button>
+<button class="flex items-center justify-between p-3 rounded hover:bg-surface-container-low transition-colors"><span class="font-label-md text-label-md text-on-surface-variant">Functional Requirements</span><span class="text-[10px] font-label-sm text-outline">4 / 8</span></button>
+<button class="flex items-center justify-between p-3 rounded hover:bg-surface-container-low transition-colors"><span class="font-label-md text-label-md text-on-surface-variant">Security Standards</span><span class="text-[10px] font-label-sm text-outline">0 / 4</span></button>
+<button class="flex items-center justify-between p-3 rounded hover:bg-surface-container-low transition-colors"><span class="font-label-md text-label-md text-on-surface-variant">Support Requirements</span><span class="text-[10px] font-label-sm text-outline">0 / 2</span></button></div>
+</div>
+</div>
+<!-- Right Column: Ledger Table (Bento Card) -->
+<div class="col-span-12 lg:col-span-9">
+<div class="bg-surface-container-lowest border border-outline-subtle rounded-lg overflow-hidden shadow-sm">
+<div class="p-4 border-b border-outline-subtle flex items-center justify-between bg-surface-container-low">
+<div class="font-label-md text-label-md font-bold text-primary">Current View: System Requirements</div>
 <div class="flex gap-2">
-<button class="bg-surface-container-lowest border border-outline-subtle text-primary font-label-md text-label-md py-1.5 px-3 rounded hover:bg-surface-container transition-colors">
-                                Filter
-                            </button>
+<div class="relative"><span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-[18px] text-outline">search</span>
+
+<input class="pl-8 pr-4 py-1.5 border border-outline-subtle rounded font-body-md text-body-md focus:ring-1 focus:ring-primary focus:border-primary outline-none" placeholder="Search requirements..." type="text">
+</div>
+<button class="flex items-center gap-2 border border-outline-subtle px-3 py-1.5 rounded font-label-md text-label-md hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[18px]">filter_list</span>
+                  Filter
+                </button>
 </div>
 </div>
-<div class="overflow-x-auto">
-<table class="w-full text-left border-collapse">
+<table class="w-full civic-table text-left border-collapse">
 <thead>
-<tr class="bg-surface-container-low border-b border-outline-subtle">
-<th class="p-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider w-24">Req ID</th>
-<th class="p-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider min-w-[200px]">Requirement text</th>
-<th class="p-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider w-32">Response</th>
-<th class="p-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider min-w-[200px]">Bidder Response</th>
-<th class="p-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider w-32">Evidence</th>
-<th class="p-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider w-24">Status</th>
+<tr class="bg-surface-container-low border-b border-outline-subtle" style="cursor: default;">
+<th class="px-4 py-3 font-label-md text-label-md uppercase text-outline tracking-wider w-16">ID</th>
+<th class="px-4 py-3 font-label-md text-label-md uppercase text-outline tracking-wider">Requirement Description</th>
+<th class="px-4 py-3 font-label-md text-label-md uppercase text-outline tracking-wider w-32">Type</th>
+<th class="px-4 py-3 font-label-md text-label-md uppercase text-outline tracking-wider w-48">Response Summary</th>
+<th class="px-4 py-3 font-label-md text-label-md uppercase text-outline tracking-wider w-32">Status</th>
+<th class="px-4 py-3 font-label-md text-label-md uppercase text-outline tracking-wider w-24 text-right">Action</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-outline-subtle">
-<!-- Row 1 -->
-<tr class="hover:bg-surface-container-low/50 transition-colors h-[40px]">
-<td class="p-3 font-label-sm text-label-sm text-primary">TS-001</td>
-<td class="p-3 font-body-md text-body-md text-on-surface">Provide detailed architecture diagrams for the proposed solution.</td>
-<td class="p-3">
-<span class="inline-flex items-center gap-1 bg-status-error-bg text-status-error px-2 py-1 rounded font-label-sm text-label-sm border border-status-error/20">
-<span class="w-1.5 h-1.5 rounded-full bg-status-error"></span> Mandatory
-                                        </span>
+<tbody class="divide-y divide-outline-subtle font-body-md text-body-md"><!-- Row 1: SR-01 -->
+<tr>
+<td class="px-4 py-3 font-label-sm text-label-sm text-outline">SR-01</td>
+<td class="px-4 py-3 font-bold text-primary">Concurrent Users</td>
+<td class="px-4 py-3">
+<span class="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded font-label-sm text-[9px] uppercase font-bold tracking-wide">Mandatory</span>
 </td>
-<td class="p-3">
-<input class="w-full bg-surface-container-lowest border border-outline-subtle rounded px-2 py-1 font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="Enter response..." type="text" value="Architecture diagrams attached."/>
+<td class="px-4 py-3 text-on-surface-variant truncate max-w-[200px]">50 users</td>
+<td class="px-4 py-3">
+<div class="flex items-center gap-2 text-status-approved font-bold font-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-status-approved"></span>
+                      Complete
+                    </div>
 </td>
-<td class="p-3">
-<button class="flex items-center gap-1 text-primary hover:text-secondary transition-colors font-label-md text-label-md">
-<span class="material-symbols-outlined text-[16px]">upload_file</span> Attached
-                                        </button>
-</td>
-<td class="p-3">
-<span class="inline-flex items-center gap-1 bg-status-approved-bg text-status-approved px-2 py-1 rounded font-label-sm text-label-sm">
-<span class="w-1.5 h-1.5 rounded-full bg-status-approved"></span> Done
-                                        </span>
+<td class="px-4 py-3 text-right">
+<button class="text-primary hover:underline font-bold font-label-sm">Review</button>
 </td>
 </tr>
-<!-- Row 2 -->
-<tr class="hover:bg-surface-container-low/50 transition-colors h-[40px]">
-<td class="p-3 font-label-sm text-label-sm text-primary">TS-002</td>
-<td class="p-3 font-body-md text-body-md text-on-surface">System must support 500 concurrent users with &lt; 2s latency.</td>
-<td class="p-3">
-<span class="inline-flex items-center gap-1 bg-status-error-bg text-status-error px-2 py-1 rounded font-label-sm text-label-sm border border-status-error/20">
-<span class="w-1.5 h-1.5 rounded-full bg-status-error"></span> Mandatory
-                                        </span>
+<!-- Row 2: SR-02 -->
+<tr class="bg-surface-container-low">
+<td class="px-4 py-3 font-label-sm text-label-sm text-outline">SR-02</td>
+<td class="px-4 py-3 font-bold text-primary">Storage Capacity</td>
+<td class="px-4 py-3">
+<span class="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded font-label-sm text-[9px] uppercase font-bold tracking-wide">Mandatory</span>
 </td>
-<td class="p-3">
-<textarea class="w-full bg-surface-container-lowest border border-outline-subtle rounded px-2 py-1 font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none resize-none" placeholder="Detail load testing results..." rows="2"></textarea>
+<td class="px-4 py-3 text-on-surface-variant truncate max-w-[200px]">500 GB</td>
+<td class="px-4 py-3">
+<div class="flex items-center gap-2 text-error font-bold font-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                      Needs Attention
+                    </div>
 </td>
-<td class="p-3">
-<button class="flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md">
-<span class="material-symbols-outlined text-[16px]">attach_file</span> Upload
-                                        </button>
-</td>
-<td class="p-3">
-<span class="inline-flex items-center gap-1 bg-status-pending-bg text-status-pending px-2 py-1 rounded font-label-sm text-label-sm border border-status-pending/20">
-<span class="w-1.5 h-1.5 rounded-full bg-status-pending"></span> Pending
-                                        </span>
+<td class="px-4 py-3 text-right">
+<button class="bg-primary text-on-primary px-3 py-1 rounded font-label-sm text-label-sm hover:opacity-90">Continue</button>
 </td>
 </tr>
-<!-- Row 3 -->
-<tr class="hover:bg-surface-container-low/50 transition-colors h-[40px]">
-<td class="p-3 font-label-sm text-label-sm text-primary">TS-003</td>
-<td class="p-3 font-body-md text-body-md text-on-surface">Optional: Integration with legacy CRM system.</td>
-<td class="p-3">
-<span class="inline-flex items-center gap-1 bg-surface-variant text-on-surface-variant px-2 py-1 rounded font-label-sm text-label-sm">
-                                            Optional
-                                        </span>
+<!-- Row 3: SR-03 -->
+<tr style="cursor: default;">
+<td class="px-4 py-3 font-label-sm text-label-sm text-outline">SR-03</td>
+<td class="px-4 py-3 font-bold text-primary">Role-based access control (RBAC)</td>
+<td class="px-4 py-3">
+<span class="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded font-label-sm text-[9px] uppercase font-bold tracking-wide">Mandatory</span>
 </td>
-<td class="p-3">
-<input class="w-full bg-surface-container-lowest border border-outline-subtle rounded px-2 py-1 font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="Enter response..." type="text"/>
+<td class="px-4 py-3 text-on-surface-variant">Narrative completed</td>
+<td class="px-4 py-3">
+<div class="flex items-center gap-2 text-status-approved font-bold font-label-sm"><span class="w-1.5 h-1.5 rounded-full bg-status-approved"></span>Complete</div>
 </td>
-<td class="p-3 text-on-surface-variant font-label-md text-label-md">
-                                        N/A
-                                    </td>
-<td class="p-3">
-<span class="inline-flex items-center gap-1 bg-surface-variant text-on-surface-variant px-2 py-1 rounded font-label-sm text-label-sm">
-                                            Not Started
-                                        </span>
+<td class="px-4 py-3 text-right">
+<button class="text-primary hover:underline font-bold font-label-sm">Review</button>
 </td>
 </tr>
-</tbody>
+<!-- Row 4: SR-04 -->
+<tr style="cursor: default;">
+<td class="px-4 py-3 font-label-sm text-label-sm text-outline">SR-04</td>
+<td class="px-4 py-3 font-bold text-primary">Recovery Point Objective (RPO)</td>
+<td class="px-4 py-3">
+<span class="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded font-label-sm text-[9px] uppercase font-bold tracking-wide">Mandatory</span>
+</td>
+<td class="px-4 py-3 text-on-surface-variant">No response</td>
+<td class="px-4 py-3">
+<div class="flex items-center gap-2 text-outline font-bold font-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-outline-subtle"></span>
+                      Not Started
+                    </div>
+</td>
+<td class="px-4 py-3 text-right">
+<button class="border border-primary text-primary px-3 py-1 rounded font-label-sm text-label-sm hover:bg-primary hover:text-white transition-colors">Start</button>
+</td>
+</tr>
+<!-- Row 5: SR-05 -->
+<tr>
+<td class="px-4 py-3 font-label-sm text-label-sm text-outline">SR-05</td>
+<td class="px-4 py-3 font-bold text-primary">Single Sign-On (SSO)</td>
+<td class="px-4 py-3">
+<span class="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded font-label-sm text-[9px] uppercase font-bold tracking-wide">Mandatory</span>
+</td>
+<td class="px-4 py-3 text-on-surface-variant">No response</td>
+<td class="px-4 py-3">
+<div class="flex items-center gap-2 text-outline font-bold font-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-outline-subtle"></span>
+                      Not Started
+                    </div>
+</td>
+<td class="px-4 py-3 text-right">
+<button class="border border-primary text-primary px-3 py-1 rounded font-label-sm text-label-sm hover:bg-primary hover:text-white transition-colors">Start</button>
+</td>
+</tr></tbody>
 </table>
+<div class="p-4 border-t border-outline-subtle bg-surface-container-low flex justify-between items-center font-label-sm text-label-sm">
+<span class="text-outline">Showing 1–5 of 18 System Requirements</span>
+<div class="flex gap-2">
+<button class="p-1 hover:bg-surface-container-high rounded border border-outline-subtle disabled:opacity-50" disabled=""><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>
+<button class="p-1 hover:bg-surface-container-high rounded border border-outline-subtle"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>
 </div>
 </div>
 </div>
-<!-- Bottom Action Bar -->
-<div class="fixed bottom-16 right-0 left-0 md:left-sidebar-width bg-surface-container-lowest border-t border-outline-subtle p-4 flex justify-end gap-4 z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-<button class="bg-surface-container-lowest border border-outline-subtle text-primary font-label-md text-label-md py-2 px-6 rounded hover:bg-surface-container transition-colors">
-                    Save Section
-                </button>
-<button class="bg-primary text-on-primary font-label-md text-label-md py-2 px-6 rounded hover:bg-primary/90 transition-colors">
-                    Save &amp; Continue
-                </button>
 </div>
 </div>
-</main>
+<aside class="fixed top-0 right-0 h-full w-[560px] bg-surface-container-lowest shadow-2xl z-[70] flex flex-col border-l border-outline-subtle transition-transform duration-300">
+<!-- Drawer Header -->
+<div class="p-6 border-b border-outline-subtle flex items-center justify-between bg-surface-container-low">
+<div>
+<div class="font-label-sm text-label-sm text-outline uppercase tracking-widest mb-1">Requirement Details</div>
+<h2 class="font-headline-md text-headline-md text-primary">SR-02: Storage Capacity</h2><div class="text-outline font-label-sm text-[10px] mt-0.5">Requirement 2 of 18</div><div class="mt-2 flex items-center gap-2 text-error font-bold font-label-sm"><span class="w-1.5 h-1.5 rounded-full bg-error"></span>Needs Attention</div>
+</div>
+<button class="p-2 hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Drawer Content -->
+<div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
+<div class="mb-8">
+<h3 class="font-label-md text-label-md font-bold text-primary mb-2">Description</h3>
+<p class="text-body-lg text-on-surface-variant">The proposed solution must provide dedicated high-speed storage for archival data processing and retrieval.</p>
+</div>
+<!-- Response Controls -->
+<div class="space-y-6">
+<div>
+<label class="block font-label-md text-label-md font-bold text-primary mb-2">Storage Capacity (GB)</label>
+<div class="relative">
+<input class="w-full p-3 border border-outline-subtle rounded font-body-md focus:ring-1 focus:ring-primary focus:border-primary outline-none" placeholder="Enter value..." type="number" value="500">
+<div class="absolute right-3 top-1/2 -translate-y-1/2 text-outline font-label-md">GB</div>
+</div>
+
+</div>
+<div data-evidence-required="true" class="evidence-section">
+<label class="block font-label-md text-label-md font-bold text-primary mb-2">Mandatory Evidence</label>
+<p class="text-body-md text-on-surface-variant mb-3">Attach technical datasheet</p>
+<div class="border-2 border-dashed border-outline-subtle rounded-lg p-8 flex flex-col items-center justify-center bg-surface-container-low hover:bg-surface-container-high transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-outline text-[32px] mb-2">upload_file</span>
+<span class="font-label-md text-label-md text-primary">Click to upload or drag and drop</span>
+<span class="font-label-sm text-label-sm text-outline mt-1">PDF, DOCX or JPG (Max 10MB)</span>
+</div>
+<p class="mt-2 text-status-error font-label-sm text-[10px] flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">error</span>Required technical evidence has not been added</p></div>
+</div>
+</div>
+<!-- Drawer Footer -->
+<div class="p-6 border-t border-outline-subtle bg-surface-container-low flex flex-col gap-3"><div class="flex items-center justify-between w-full">
+  <button class="border border-outline-subtle text-secondary px-4 py-2 rounded font-label-md text-label-md hover:bg-surface-container-high transition-colors active:scale-95">
+    Previous
+  </button>
+  <div class="flex gap-3">
+    <button class="border border-primary text-primary px-4 py-2 rounded font-label-md text-label-md hover:bg-primary hover:text-white transition-colors active:scale-95">
+      Save Response
+    </button>
+    <button class="bg-primary text-on-primary px-4 py-2 rounded font-label-md text-label-md hover:opacity-90 transition-colors active:scale-95">
+      Save &amp; Next
+    </button>
+  </div>
+</div></div>
+</aside></main>
+</div>
 <!-- Footer -->
-<footer class="fixed bottom-0 right-0 left-0 md:left-sidebar-width z-50 flex justify-between items-center px-container-padding h-16 bg-surface-container-lowest border-t border-outline-subtle flat no shadows">
-<span class="font-label-md text-label-md font-bold text-primary">KenTender</span>
-<div class="flex gap-4">
-<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
-<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a>
-<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors hidden sm:inline" href="#">Public Procurement Authority</a>
+<footer class="fixed bottom-0 right-0 left-sidebar-width h-16 bg-surface-container-lowest border-t border-outline-subtle flex items-center justify-between px-6 z-50 shadow-sm">
+<div class="flex items-center gap-4">
+<button class="border border-outline-subtle text-secondary px-4 py-2 rounded font-label-md text-label-md hover:bg-primary-container transition-colors active:scale-95 duration-100">
+        Back to Workspace
+      </button>
+<div class="h-4 w-px bg-outline-subtle"></div>
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-widest">Last saved: 2:22 PM</span>
 </div>
-<span class="font-body-md text-body-md text-on-surface-variant hidden md:inline">© 2024 KenTender E-Procurement System. All Rights Reserved.</span>
+<div class="flex gap-3">
+<button class="border border-outline-subtle text-secondary px-4 py-2 rounded font-label-md text-label-md hover:bg-primary-container transition-colors active:scale-95 duration-100">
+        Save Section
+      </button>
+<button class="bg-primary text-on-primary px-4 py-2 rounded font-label-md text-label-md hover:opacity-90 transition-colors active:scale-95 duration-100">
+        Save &amp; Continue
+      </button>
+</div>
 </footer>
+<script>
+    // Micro-interactions for table rows
+    document.querySelectorAll('.civic-table tr').forEach(row => {
+      row.addEventListener('mouseenter', () => {
+        row.style.cursor = 'default';
+      });
+    });
+
+    // Dynamic ripple or hover feedback could go here
+  </script>
+
+
 </body></html>

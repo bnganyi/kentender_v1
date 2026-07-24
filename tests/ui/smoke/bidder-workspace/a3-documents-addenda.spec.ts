@@ -25,9 +25,9 @@ test.describe("A3 Tender Documents & Addenda portal", () => {
 		await page.goto("/tenders", { waitUntil: "domcontentloaded" });
 		await expect(page.locator(ROOT)).toBeVisible({ timeout: 30_000 });
 
-		const workspaceCta = page
-			.getByTestId("kt-a0-primary-action")
-			.filter({ hasText: /Continue Bid|View Submitted Bid/ })
+		const secondaryContinue = page
+			.getByTestId("kt-a0-secondary-action")
+			.filter({ hasText: "Continue Bid" })
 			.first();
 		const viewTender = page
 			.getByTestId("kt-a0-primary-action")
@@ -35,8 +35,8 @@ test.describe("A3 Tender Documents & Addenda portal", () => {
 			.first();
 
 		let ref: string | null = null;
-		if ((await workspaceCta.count()) > 0) {
-			const href = await workspaceCta.getAttribute("href");
+		if ((await secondaryContinue.count()) > 0) {
+			const href = await secondaryContinue.getAttribute("href");
 			ref = href ? extractPublicationRef(href) : null;
 			await page.goto(`/tenders/${ref}/workspace`, { waitUntil: "domcontentloaded" });
 		} else if ((await viewTender.count()) > 0) {

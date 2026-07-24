@@ -279,6 +279,12 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 	raw_sections = [s for s in (schema.get("sections") or []) if isinstance(s, dict) and _section_key(s)]
 	any_started = any(_has_payload(responses.get(_section_key(s))) for s in raw_sections)
 
+	from kentender_procurement.tender_configurations.services.requirement_matrix import (
+		is_requirement_matrix_section,
+		matrix_section_roll_up,
+		portal_section_url,
+	)
+
 	# Prerequisites for Final Declaration: every other required (non-final) section complete.
 	prereq_complete = True
 	for sec in raw_sections:
@@ -290,6 +296,12 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 			continue
 		key = _section_key(sec)
 		payload = responses.get(key)
+		if is_requirement_matrix_section(sec):
+			mx_status, _mx_blockers = matrix_section_roll_up(sec, payload)
+			if mx_status != STATUS_COMPLETE:
+				prereq_complete = False
+				break
+			continue
 		if not _has_payload(payload) or _section_is_partial(payload) or _section_has_validation_blockers(payload):
 			prereq_complete = False
 			break
@@ -301,30 +313,41 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 		required = _section_required(sec)
 		not_applicable = bool(sec.get("not_applicable") or sec.get("applicable") is False)
 		payload = responses.get(key)
+		is_matrix = is_requirement_matrix_section(sec)
 		has_responses = _has_payload(payload)
 		has_validation_blockers = _section_has_validation_blockers(payload)
 		is_partial = bool(has_responses and _section_is_partial(payload) and not has_validation_blockers)
 		is_final = _is_final_submission_section(sec)
 		is_locked = bool(is_final and not prereq_complete and not bid_sealed and not has_responses)
 
-		status = resolve_section_status(
-			required=required,
-			has_responses=has_responses,
-			not_applicable=not_applicable,
-			has_validation_blockers=has_validation_blockers,
-			is_partial=is_partial,
-			is_locked=is_locked,
-			bid_sealed=bid_sealed,
-		)
+		if is_matrix and not not_applicable and not bid_sealed:
+			status, mx_blockers = matrix_section_roll_up(sec, payload)
+			has_validation_blockers = bool(mx_blockers) or has_validation_blockers
+		else:
+			status = resolve_section_status(
+				required=required,
+				has_responses=has_responses,
+				not_applicable=not_applicable,
+				has_validation_blockers=has_validation_blockers,
+				is_partial=is_partial,
+				is_locked=is_locked,
+				bid_sealed=bid_sealed,
+			)
+			mx_blockers = 0
 
 		if status == STATUS_NEEDS_ATTENTION:
-			action_label, issues_label, issues_count = "Resolve", "1 Blocker", 1
+			issues_count = max(1, int(mx_blockers or 1))
+			action_label, issues_label = "Resolve", f"{issues_count} Blocker" + (
+				"s" if issues_count != 1 else ""
+			)
 		elif status == STATUS_LOCKED:
 			action_label, issues_label, issues_count = "View", "Complete required sections first", 0
 		elif status == STATUS_COMPLETE:
-			action_label, issues_label, issues_count = "View", "—", 0
+			action_label = "Review" if is_matrix else "View"
+			issues_label, issues_count = "—", 0
 		elif status == STATUS_IN_PROGRESS:
-			action_label, issues_label, issues_count = "Resume", "—", 0
+			action_label = "Continue" if is_matrix else "Resume"
+			issues_label, issues_count = "—", 0
 		elif status == STATUS_NOT_STARTED:
 			action_label, issues_label, issues_count = "Start", "—", 0
 		else:
@@ -338,9 +361,12 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 				last_updated = cstr(modified)
 
 		display_title = title if (title[:1].isdigit() and "." in title[:4]) else f"{idx + 1}. {title}"
-		action_url = (
-			_portal_documents_url(pub_ref) if _is_document_acknowledgement_section(sec) else desk_bridge
-		)
+		if is_matrix:
+			action_url = portal_section_url(pub_ref, key)
+		elif _is_document_acknowledgement_section(sec):
+			action_url = _portal_documents_url(pub_ref)
+		else:
+			action_url = desk_bridge
 		action_enabled = 0 if status in (STATUS_NOT_APPLICABLE, STATUS_LOCKED) else 1
 		sections_out.append(
 			{

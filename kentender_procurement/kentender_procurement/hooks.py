@@ -125,6 +125,7 @@ app_include_js = [
 # Resolves dynamic detail paths to ``www/supplier/tenders`` (same shell as list).
 website_route_rules = [
 	{"from_route": "/supplier/tenders/<tender_code>", "to_route": "supplier/tenders"},
+	{"from_route": "/tenders/<publication_ref>/sections/<section_key>", "to_route": "tenders/section"},
 	{"from_route": "/tenders/<publication_ref>/documents", "to_route": "tenders/documents"},
 	{"from_route": "/tenders/<publication_ref>/workspace", "to_route": "tenders/workspace"},
 	{"from_route": "/tenders/<publication_ref>", "to_route": "tenders/overview"},
