@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KenTender | Certify Form of Tender</title>
+<!-- Google Fonts: Public Sans (Sans-serif) & JetBrains Mono (Monospace) -->
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#d4e3ff",
+                        "surface-bright": "#f7f9fb",
+                        "surface": "#f7f9fb",
+                        "inverse-on-surface": "#eff1f3",
+                        "secondary": "#515f74",
+                        "on-surface": "#191c1e",
+                        "inverse-surface": "#2d3133",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "tertiary-container": "#001c3a",
+                        "status-approved-bg": "#ecfdf5",
+                        "status-pending-bg": "#fffbeb",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#0e1c2e",
+                        "surface-container": "#eceef0",
+                        "tertiary": "#000000",
+                        "on-secondary-container": "#556379",
+                        "surface-variant": "#e0e3e5",
+                        "status-pending": "#92400e",
+                        "secondary-fixed": "#d5e3fc",
+                        "secondary-container": "#d2e1fa",
+                        "outline-subtle": "#c4c6cf",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error": "#ffffff",
+                        "inverse-primary": "#bac7e0",
+                        "surface-container-high": "#e6e8ea",
+                        "primary": "#000000",
+                        "surface-dim": "#d8dadc",
+                        "surface-container-highest": "#e0e3e5",
+                        "background": "#f7f9fb",
+                        "on-primary-fixed-variant": "#3a475c",
+                        "error": "#ba1a1a",
+                        "primary-fixed-dim": "#bac7e0",
+                        "on-primary": "#ffffff",
+                        "on-surface-variant": "#44474c",
+                        "primary-container": "#0e1c2e",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed": "#001c3a",
+                        "on-surface-variant": "#44474c",
+                        "status-error": "#ba1a1a",
+                        "tertiary-fixed-dim": "#adc8f3",
+                        "status-approved": "#065f46",
+                        "outline": "#75777d",
+                        "on-secondary": "#ffffff",
+                        "outline-variant": "#c5c6cd",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "surface-tint": "#525f74",
+                        "on-tertiary-fixed-variant": "#2d486c",
+                        "surface-container-low": "#f2f4f6",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "status-error-bg": "#fff1f2",
+                        "on-tertiary-container": "#6b85ac",
+                        "primary-fixed": "#d6e3fd",
+                        "on-tertiary": "#ffffff",
+                        "on-background": "#191c1e",
+                        "outline-strong": "#74777f"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gap-component": "8px",
+                        "container-padding": "16px",
+                        "unit": "4px",
+                        "max-width": "1280px",
+                        "sidebar-width": "256px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["JetBrains Mono"],
+                        "headline-md": ["Public Sans"],
+                        "headline-lg": ["Public Sans"],
+                        "display": ["Public Sans"],
+                        "body-md": ["Public Sans"],
+                        "label-sm": ["JetBrains Mono"],
+                        "body-lg": ["Public Sans"]
+                    },
+                    "fontSize": {
+                        "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                        "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+            vertical-align: middle;
+            font-size: 20px;
+        }
+        .bento-card {
+            border: 1px solid theme('colors.outline-subtle');
+            background: theme('colors.surface-container-lowest');
+            transition: all 0.2s ease;
+        }
+        .sidebar-active {
+            border-right: 4px solid theme('colors.primary');
+            background: #f2f4f6;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-hidden">
+<!-- TOP NAVIGATION BAR (Immutable via JSON) -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-container-padding h-14 bg-surface-container-lowest border-b border-outline-subtle">
+<div class="flex items-center gap-4">
+<span class="font-display text-headline-md text-primary tracking-tighter">KenTender</span>
+<nav class="hidden md:flex gap-6 ml-8">
+<a class="font-label-md text-label-md text-primary border-b-2 border-primary font-bold py-4" href="#">Tenders</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors py-4" href="#">My Bids</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors py-4" href="#">Clarifications</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container transition-colors rounded-full">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container transition-colors rounded-full">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-subtle">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a corporate procurement officer for a light mode UI. The person is wearing a sharp charcoal suit against a clean white background. High-quality corporate photography style with soft, even studio lighting that emphasizes professionalism and reliability." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0P56skA18PWYnOedikSVsd5x2-N72QV3DJIgX0WPTElL85DzAzplSOAVv5YGtHrLQ0v6ysSv7IELUmkreZEU9TY740fvJVCnTNUmRdYsHlRDJn_PvH5gg25aimgcPjKQh60RqkCxuvSoSsvRsEDRY5gaLhEVKsCa5I93-ALgJrYXYnSnLZBfoW3ub6hauiTiwveAZR9RE_Tm0g69eJqOH55Kt4cesDjVj-AWYMG2MkwHLEtjTDYo4wqLIvhIqLSGTmuCLXiI2Omvy"/>
+</div>
+</div>
+</header>
+<!-- SIDE NAVIGATION (Immutable via JSON) -->
+<aside class="fixed left-0 top-14 bottom-0 w-sidebar-width z-40 flex flex-col bg-surface-container-low border-r border-outline-subtle">
+<div class="p-4 border-b border-outline-subtle">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary flex items-center justify-center text-on-primary rounded">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<div>
+<h2 class="font-label-md text-label-md font-bold text-primary">Tender #KT-2024-089</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Ref: ICT/092/2024</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 py-4">
+<div class="px-3 mb-2">
+<span class="font-label-sm text-label-sm uppercase tracking-widest text-outline">Submission Workflow</span>
+</div>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined">fact_check</span>
+<span class="font-label-md text-label-md">Checklist</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined">edit_document</span>
+<span class="font-label-md text-label-md">Prepare Bid</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 sidebar-active text-primary translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined">visibility</span>
+<span class="font-label-md text-label-md">Review</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined">send</span>
+<span class="font-label-md text-label-md">Submit</span>
+</a>
+</nav>
+<div class="p-4 border-t border-outline-subtle space-y-2">
+<button class="w-full py-2 bg-white border border-outline text-primary font-label-md text-label-md hover:bg-surface-container transition-colors">
+                Download RFQ
+            </button>
+<div class="flex flex-col pt-2">
+<a class="flex items-center gap-2 py-2 text-on-surface-variant hover:text-primary" href="#">
+<span class="material-symbols-outlined">support_agent</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+<a class="flex items-center gap-2 py-2 text-on-surface-variant hover:text-primary" href="#">
+<span class="material-symbols-outlined">exit_to_app</span>
+<span class="font-label-md text-label-md">Exit Workspace</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- MAIN CANVAS -->
+<main class="fixed left-sidebar-width right-0 top-14 bottom-16 overflow-y-auto p-container-padding bg-background">
+<!-- BACKGROUND "SCREEN_4" CONTENT (MOCKED) -->
+<div class="max-w-max-width mx-auto">
+<div class="flex justify-between items-end mb-6">
+<div>
+<nav class="flex gap-2 text-label-sm font-label-sm text-outline mb-1">
+<span>Workspace</span>
+<span>/</span>
+<span>Bid Review</span>
+<span>/</span>
+<span class="text-primary">Form of Tender</span>
+</nav>
+<h1 class="font-headline-lg text-headline-lg text-primary">Form of Tender Review</h1>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 border border-outline text-primary font-label-md text-label-md hover:bg-surface-container transition-all">Save Progress</button>
+<button class="px-4 py-2 bg-primary text-on-primary font-label-md text-label-md">Certify Form</button>
+</div>
+</div>
+<div class="grid grid-cols-12 gap-6">
+<div class="col-span-8 bento-card p-6">
+<h3 class="font-headline-md text-headline-md mb-4 border-b border-outline-subtle pb-2">Terms and Conditions</h3>
+<div class="space-y-4 text-body-md text-on-surface-variant">
+<p>We, the undersigned, offer to supply, deliver, install and commission the Goods and Services in accordance with the Conditions of Contract, Technical Specifications, and the Price Schedules attached herewith.</p>
+<p>If our Tender is accepted, we will obtain the Performance Security as specified in the Tender Documents for the due performance of the Contract. We agree to abide by this Tender for the Tender Validity Period specified and it shall remain binding upon us and may be accepted at any time before the expiration of that period.</p>
+<p>Until a formal Contract is prepared and executed, this Tender, together with your written acceptance thereof and your notification of award, shall constitute a binding Contract between us.</p>
+</div>
+</div>
+<div class="col-span-4 space-y-6">
+<div class="bento-card p-4">
+<div class="flex items-center gap-2 mb-3">
+<span class="w-1 h-6 bg-primary rounded-full"></span>
+<h4 class="font-label-md text-label-md font-bold uppercase text-primary">Financial Summary</h4>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between border-b border-outline-subtle py-2">
+<span class="text-label-sm font-label-sm text-outline">Total Value</span>
+<span class="font-label-md text-label-md font-bold">KES 450,000,000.00</span>
+</div>
+<div class="flex justify-between border-b border-outline-subtle py-2">
+<span class="text-label-sm font-label-sm text-outline">Validity</span>
+<span class="font-label-md text-label-md">120 Days</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- DIALOG OVERLAY -->
+<div class="fixed inset-0 z-[100] flex items-center justify-center bg-primary/20 backdrop-blur-sm p-4 transition-opacity duration-300" id="modal-overlay">
+<!-- Modal Content -->
+<div class="bg-surface-container-lowest w-full max-w-[560px] shadow-2xl border border-outline-subtle animate-in fade-in zoom-in duration-300">
+<!-- Header -->
+<div class="flex items-center justify-between p-6 border-b border-outline-subtle">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-status-approved-bg flex items-center justify-center rounded-full text-status-approved">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-primary">Certify Form of Tender?</h2>
+</div>
+<button class="text-on-surface-variant hover:bg-surface-container p-1 rounded-full transition-colors" onclick="closeModal()">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Body -->
+<div class="p-6">
+<p class="font-body-lg text-body-lg text-on-surface-variant mb-6 leading-relaxed">
+                        By certifying, you confirm that the material terms shown are correct, that you accept the complete Form of Tender terms, and that you are authorized to bind the Tenderer.
+                    </p>
+<!-- Final Summary Card -->
+<div class="bg-surface-container-low border border-outline-subtle p-5">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-outline text-[18px]">summarize</span>
+<span class="font-label-md text-label-md font-bold uppercase tracking-wider text-on-surface-variant">Final Summary</span>
+</div>
+<div class="grid grid-cols-2 gap-y-4 gap-x-6">
+<div>
+<span class="block text-label-sm font-label-sm text-outline uppercase mb-1">Tenderer</span>
+<span class="block font-body-md text-body-md font-semibold text-primary">ABC Limited</span>
+</div>
+<div>
+<span class="block text-label-sm font-label-sm text-outline uppercase mb-1">Tender Reference</span>
+<span class="block font-label-md text-label-md text-primary">KT/ICT/FED-092/2024</span>
+</div>
+<div>
+<span class="block text-label-sm font-label-sm text-outline uppercase mb-1">Offer Type</span>
+<span class="block font-body-md text-body-md text-primary">Base Tender</span>
+</div>
+<div>
+<span class="block text-label-sm font-label-sm text-outline uppercase mb-1">Total Price</span>
+<span class="block font-label-md text-label-md font-bold text-primary">KES 450,000,000.00</span>
+</div>
+<div class="col-span-2 pt-2 border-t border-outline-subtle">
+<span class="block text-label-sm font-label-sm text-outline uppercase mb-1">Authorized Signatory</span>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">face</span>
+<span class="font-body-md text-body-md font-semibold text-primary">Bonface Nganyi</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer -->
+<div class="bg-surface-container-low p-6 flex justify-end gap-3 border-t border-outline-subtle">
+<button class="px-6 py-2.5 font-label-md text-label-md border border-outline-strong text-on-surface-variant hover:bg-surface-variant transition-all hover:scale-95" onclick="closeModal()">
+                        Cancel
+                    </button>
+<button class="px-6 py-2.5 font-label-md text-label-md bg-primary text-on-primary font-bold shadow-md hover:bg-on-primary-fixed-variant transition-all active:scale-95 flex items-center gap-2">
+<span>Certify Form of Tender</span>
+<span class="material-symbols-outlined text-[16px]">draw</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- FOOTER (Immutable via JSON) -->
+<footer class="fixed bottom-0 right-0 left-sidebar-width z-50 flex justify-between items-center px-container-padding h-16 bg-surface-container-lowest border-t border-outline-subtle">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md font-bold text-primary">KenTender</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant">© 2024 KenTender E-Procurement System. All Rights Reserved.</span>
+</div>
+<div class="flex gap-6">
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors font-bold" href="#">Public Procurement Authority</a>
+</div>
+</footer>
+<script>
+        function closeModal() {
+            const overlay = document.getElementById('modal-overlay');
+            overlay.classList.add('opacity-0');
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 300);
+        }
+
+        // Slight micro-interaction for sidebar tabs
+        document.querySelectorAll('aside nav a').forEach(link => {
+            link.addEventListener('mousedown', () => {
+                link.classList.add('scale-95');
+            });
+            link.addEventListener('mouseup', () => {
+                link.classList.remove('scale-95');
+            });
+        });
+    </script>
+</body></html>

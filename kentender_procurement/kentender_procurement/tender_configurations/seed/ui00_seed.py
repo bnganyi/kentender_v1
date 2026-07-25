@@ -58,6 +58,16 @@ def _clear_seed() -> None:
 			pluck="name",
 		)
 	)
+	# Drop bidder drafts before configs — reseeding reuses stable configuration names,
+	# and leftover Electronic Bid Submission rows would otherwise poison new runs.
+	for name in config_names:
+		for bid_id in frappe.get_all(
+			"Electronic Bid Submission",
+			filters={"configuration": name},
+			pluck="name",
+		):
+			frappe.delete_doc("Electronic Bid Submission", bid_id, force=True, ignore_permissions=True)
+
 	for name in config_names:
 		frappe.delete_doc("Tender Configuration", name, force=True, ignore_permissions=True)
 

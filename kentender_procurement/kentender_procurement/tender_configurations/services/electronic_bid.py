@@ -242,6 +242,18 @@ def save_section_responses(bid_id: str, section_key: str, payload: dict[str, Any
 	responses = write_section_response(responses, section_key, body, meta, store_as_envelope=False)
 	doc.responses = json.dumps(responses)
 	_append_audit(doc, "section_saved", {"section_key": section_key})
+	# FoT certifications withdraw when source sections change (docs/lots/price/statutory).
+	if section_key in {
+		"tender_documents_and_addenda",
+		"lot_and_alternative_selection",
+		"price_schedule",
+		"statutory_declarations",
+	}:
+		from kentender_procurement.tender_configurations.services.form_of_tender import (
+			invalidate_fot_certifications,
+		)
+
+		invalidate_fot_certifications(doc, reason=f"{section_key}_changed")
 	doc.save(ignore_permissions=True)
 	frappe.db.commit()
 	return _bid_dto(doc)

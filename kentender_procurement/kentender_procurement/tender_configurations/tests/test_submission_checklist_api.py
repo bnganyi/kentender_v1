@@ -179,7 +179,8 @@ class TestSubmissionChecklistApi(unittest.TestCase):
 		self.assertEqual(len(out["sections"]), 10)
 		keys = [s["section_key"] for s in out["sections"]]
 		self.assertEqual(keys[0], "tender_documents_and_addenda")
-		self.assertEqual(keys[1], "form_of_tender")
+		self.assertEqual(keys[-2], "price_schedule")
+		self.assertEqual(keys[-1], "form_of_tender")
 		self.assertIn("tender_security", keys)
 		for s in out["sections"]:
 			if not s["required"]:
@@ -224,7 +225,8 @@ class TestSubmissionChecklistApi(unittest.TestCase):
 		ref = self._publish()
 		get_submission_checklist(ref)
 		bid_id = resolve_published_tender_backend(ref)["bid_id"]
-		other_key = "confidential_business_questionnaire"
+		# CBQ uses certify-derived status — exercise Needs Attention on a generic section.
+		other_key = "statutory_declarations"
 		acknowledge_tender_documents(ref)
 		save_section_responses(
 			bid_id,
@@ -267,8 +269,8 @@ class TestSubmissionChecklistApi(unittest.TestCase):
 		ref = self._publish()
 		get_submission_checklist(ref)
 		bid_id = resolve_published_tender_backend(ref)["bid_id"]
-		# Documents use version-bound ack status — exercise Resume on a generic section.
-		section_key = "confidential_business_questionnaire"
+		# Documents use version-bound ack; CBQ uses certify-derived status — use a generic section.
+		section_key = "statutory_declarations"
 		save_section_responses(bid_id, section_key, {"draft_answer": "wip", "in_progress": True})
 		out2 = get_submission_checklist(ref)
 		row = next(s for s in out2["sections"] if s["section_key"] == section_key)

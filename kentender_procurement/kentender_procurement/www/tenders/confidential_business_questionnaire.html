@@ -122,6 +122,36 @@
 								</div>
 							</div>
 						</div>
+						{# FoT projection sources — owned by CBQ, not duplicated on Form of Tender. #}
+						<div class="kt-s300-section" data-testid="kt-s300-signatory-soe">
+							<h3>{{ _("Authorized signatory and state ownership") }}</h3>
+							<p>{{ _("These details are used by the Form of Tender. They are not re-entered there.") }}</p>
+							<div class="kt-s300-grid">
+								<div class="kt-s300-field"><label>{{ _("Authorized signatory full name") }} *</label>
+									<input data-answer="authorized_signatory_name" type="text" placeholder="Name of person authorized to bind the Tenderer" data-testid="kt-s300-signatory-name">
+								</div>
+								<div class="kt-s300-field"><label>{{ _("Title / designation") }} *</label>
+									<input data-answer="authorized_signatory_title" type="text" placeholder="e.g. Managing Director" data-testid="kt-s300-signatory-title">
+								</div>
+								<div class="kt-s300-field" style="grid-column:1/-1">
+									<label class="kt-s300-check"><input type="checkbox" data-answer-bool="authority_to_bind_confirmed" data-testid="kt-s300-authority-bind">
+										{{ _("I confirm this signatory is authorized to certify bid forms and bind the Tenderer.") }}
+									</label>
+								</div>
+								<div class="kt-s300-field">
+									<label>{{ _("Is the Tenderer a state-owned enterprise or institution?") }} *</label>
+									<div class="kt-s300-radios">
+										<label><input type="radio" name="state_owned_enterprise" data-answer-radio="state_owned_enterprise" value="yes"> {{ _("Yes") }}</label>
+										<label><input type="radio" name="state_owned_enterprise" data-answer-radio="state_owned_enterprise" value="no"> {{ _("No") }}</label>
+									</div>
+								</div>
+								<div class="kt-s300-field" id="kt-s300-soe-itt47" hidden>
+									<label class="kt-s300-check"><input type="checkbox" data-answer-bool="state_owned_itt47_affirmed" data-testid="kt-s300-soe-itt47">
+										{{ _("Applicable ITT 4.7 conditions are met.") }}
+									</label>
+								</div>
+							</div>
+						</div>
 						<div class="kt-s300-warn">
 							<span class="material-symbols-outlined">warning</span>
 							<span>{{ _("Providing false information in this questionnaire is an offence.") }}</span>
@@ -568,6 +598,14 @@ frappe.ready(function () {
 		root.querySelectorAll("[data-answer]").forEach((el) => {
 			entity.answers[el.getAttribute("data-answer")] = el.value;
 		});
+		root.querySelectorAll("[data-answer-bool]").forEach((el) => {
+			entity.answers[el.getAttribute("data-answer-bool")] = el.checked ? "yes" : "no";
+		});
+		root.querySelectorAll("[data-answer-radio]").forEach((el) => {
+			if (el.checked) entity.answers[el.getAttribute("data-answer-radio")] = el.value;
+		});
+		const soePanel = document.getElementById("kt-s300-soe-itt47");
+		if (soePanel) soePanel.hidden = entity.answers.state_owned_enterprise !== "yes";
 		const rb = {};
 		root.querySelectorAll("[data-rb]").forEach((el) => { rb[el.getAttribute("data-rb")] = el.value; });
 		entity.answers.registering_body = rb;
@@ -653,6 +691,16 @@ frappe.ready(function () {
 		root.querySelectorAll("[data-answer]").forEach((el) => {
 			el.value = a[el.getAttribute("data-answer")] || "";
 		});
+		root.querySelectorAll("[data-answer-bool]").forEach((el) => {
+			const key = el.getAttribute("data-answer-bool");
+			el.checked = a[key] === "yes" || a[key] === true || a[key] === 1 || a[key] === "1";
+		});
+		root.querySelectorAll("[data-answer-radio]").forEach((el) => {
+			const key = el.getAttribute("data-answer-radio");
+			el.checked = String(a[key] || "") === el.value;
+		});
+		const soePanel = document.getElementById("kt-s300-soe-itt47");
+		if (soePanel) soePanel.hidden = a.state_owned_enterprise !== "yes";
 		const rb = a.registering_body || {};
 		root.querySelectorAll("[data-rb]").forEach((el) => { el.value = rb[el.getAttribute("data-rb")] || ""; });
 		if (!rb.name && a.registration_body) {
@@ -1135,6 +1183,12 @@ frappe.ready(function () {
 	root.querySelectorAll('input[name="pe_interest"]').forEach((el) => {
 		el.addEventListener("change", () => {
 			document.getElementById("kt-s300-pe-people").style.display = el.value === "yes" ? "block" : "none";
+		});
+	});
+	root.querySelectorAll('input[data-answer-radio="state_owned_enterprise"]').forEach((el) => {
+		el.addEventListener("change", () => {
+			const panel = document.getElementById("kt-s300-soe-itt47");
+			if (panel) panel.hidden = el.value !== "yes";
 		});
 	});
 	root.querySelectorAll("[data-conflict-answer]").forEach((el) => {

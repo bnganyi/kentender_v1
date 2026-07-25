@@ -47,6 +47,8 @@ from kentender_procurement.tender_configurations.services.form_of_tender import 
 	save_form_of_tender,
 	validate_form_of_tender_response,
 )
+
+# Full Review-and-Certify certify/invalidate coverage lives in test_lean_fot_review_certify.py.
 from kentender_procurement.tender_configurations.services.publication_setup import (
 	publish_tender_for_development_preview,
 	save_publication_setup,
@@ -148,7 +150,9 @@ class TestLeanInstantiatePublish(unittest.TestCase):
 		a = build_electronic_submission_template(self.cfg_id)
 		b = build_electronic_submission_template(self.cfg_id)
 		self.assertEqual(a["hash"], b["hash"])
-		self.assertEqual(a["snapshot"]["sections"][1]["section_key"], "form_of_tender")
+		snap_keys = [s["section_key"] for s in a["snapshot"]["sections"]]
+		self.assertEqual(snap_keys[-2], "price_schedule")
+		self.assertEqual(snap_keys[-1], "form_of_tender")
 
 	def test_published_snapshot_immutable(self):
 		pub_id, _ref = _publish_cfg(self.cfg_id)
@@ -263,77 +267,31 @@ class TestLeanFormOfTender(unittest.TestCase):
 		_seed_bidder_facing_config(self.cfg_id)
 		_, self.ref = _publish_cfg(self.cfg_id)
 
-	def _complete_payload(self) -> dict:
-		fot = get_form_of_tender(self.ref)
-		decls = {}
-		for d in fot.get("declarations") or []:
-			if d.get("applicable") is False:
-				continue
-			if d.get("associated_section_key"):
-				continue
-			if not d.get("required", True):
-				continue
-			decls[d["declaration_id"]] = True
-		return {
-			"bidder_legal_name": "Lean Demo Bidder Ltd",
-			"bidder_business_address": "Nairobi, Kenya",
-			"tender_validity_acknowledged": True,
-			"state_owned_status": "not_state_owned",
-			"commissions_choice": "none",
-			"commissions_rows": [],
-			"declarations": decls,
-			"confirmed": False,
-			"submitted": False,
-		}
-
-	def test_save_reload_and_server_status(self):
-		partial = {
-			"bidder_legal_name": "Partial Bidder",
-			"bidder_business_address": "",
-			"tender_validity_acknowledged": False,
-			"state_owned_status": "",
-			"commissions_choice": "",
-			"declarations": {},
-		}
-		saved = save_form_of_tender(self.ref, partial)
+	def test_save_reload_commissions_only(self):
+		saved = save_form_of_tender(
+			self.ref, {"commissions_choice": "no", "commissions_rows": []}
+		)
 		self.assertTrue(saved.get("saved"))
-		self.assertFalse(saved["response"].get("confirmed"))
-		self.assertFalse(saved["response"].get("submitted"))
-		self.assertIn(saved["section_status"], ("In Progress", "Needs Attention"))
+		self.assertEqual(saved["commissions"]["choice"], "no")
+		self.assertEqual(saved["section_status"], "In Progress")
+		# Save alone does not Complete — certification required.
+		self.assertNotEqual(saved["section_status"], "Complete")
 
 		reloaded = get_form_of_tender(self.ref)
-		self.assertEqual(reloaded["response"].get("bidder_legal_name"), "Partial Bidder")
+		self.assertEqual(reloaded["commissions"]["choice"], "no")
+		self.assertEqual(reloaded.get("bidder_owned_fields"), [])
 
-		complete = save_form_of_tender(self.ref, self._complete_payload())
-		self.assertEqual(complete["section_status"], "Complete")
-		self.assertFalse(complete["response"].get("confirmed"))
-		self.assertFalse(complete["response"].get("submitted"))
-
-		checklist = get_submission_checklist(self.ref)
-		fot_row = next(s for s in checklist["sections"] if s["section_key"] == "form_of_tender")
-		self.assertEqual(fot_row["status"], "Complete")
-
-	def test_validation_errors_returned(self):
+	def test_validation_yes_requires_rows(self):
 		fot = get_form_of_tender(self.ref)
+		section_def = {"repeatable_tables": fot.get("repeatable_tables") or []}
 		result = validate_form_of_tender_response(
-			next(s for s in (fot.get("declarations") and [{}]) or [{}]),
-			{},
+			section_def, {"commissions_choice": "yes", "commissions_rows": []}
 		)
-		# Use section def from DTO path
-		section_def = {
-			"bidder_owned_fields": fot["bidder_owned_fields"],
-			"declarations": fot["declarations"],
-			"repeatable_tables": fot["repeatable_tables"],
-		}
-		result = validate_form_of_tender_response(section_def, {"bidder_legal_name": "X"})
 		self.assertFalse(result["ok"])
 		self.assertGreater(result["issue_count"], 0)
-		codes = {i["code"] for i in result["issues"]}
-		self.assertTrue(codes & {"required", "declaration_required"})
 
 	def test_bidder_isolation(self):
-		save_form_of_tender(self.ref, self._complete_payload())
-		# Create second user and ensure they cannot read Administrator draft via _get_bid path.
+		save_form_of_tender(self.ref, {"commissions_choice": "no"})
 		email = "lean.bidder.b@example.com"
 		if not frappe.db.exists("User", email):
 			user = frappe.get_doc(
@@ -350,10 +308,8 @@ class TestLeanFormOfTender(unittest.TestCase):
 			user.new_password = "LeanBidderB1!"
 			user.save(ignore_permissions=True)
 		frappe.set_user(email)
-		# New draft for B — must not see A's responses.
 		fot_b = get_form_of_tender(self.ref)
-		self.assertNotEqual(fot_b.get("response", {}).get("bidder_legal_name"), "Lean Demo Bidder Ltd")
-		# Direct access to A's bid should fail.
+		self.assertNotEqual(fot_b.get("commissions", {}).get("choice"), "no")
 		bid_a = frappe.db.get_value(
 			"Electronic Bid Submission",
 			{"configuration": self.cfg_id, "owner": "Administrator", "status": "Draft"},

@@ -110,11 +110,298 @@
       "slice_status": "registry_stub_f0"
     },
     {
+      "section_key": "confidential_business_questionnaire",
+      "title": "Confidential Business Questionnaire",
+      "order": 3,
+      "renderer": "questionnaire",
+      "bidder_instructions": "Complete one Confidential Business Questionnaire for the bidder and each required JV entity. Verified identity is read-only; use your account profile for corrections. Certification is deliberate and entity-scoped.",
+      "source_refs": [
+        "PPRA IT STD Section IV — Confidential Business Questionnaire",
+        "IT-BSO-CBQ-001",
+        "IT-BSO-CBQ-012"
+      ],
+      "required": true,
+      "applicability": {
+        "always": true
+      },
+      "confirmation_required_for_submission": false,
+      "completion_rule": "server_derived_from_responses",
+      "locked_legal_text": null,
+      "task_groups": [
+        {
+          "group_key": "entity_selection",
+          "title": "Tendering Entities",
+          "order": 100,
+          "source_refs": [
+            "IT-BSO-CBQ-001"
+          ]
+        },
+        {
+          "group_key": "general_particulars",
+          "title": "General Particulars",
+          "order": 200,
+          "source_refs": [
+            "IT-BSO-CBQ-002",
+            "IT-BSO-CBQ-003"
+          ]
+        },
+        {
+          "group_key": "business_registration",
+          "title": "Business Registration & Capacity",
+          "order": 300,
+          "source_refs": [
+            "IT-BSO-CBQ-004",
+            "IT-BSO-CBQ-005",
+            "IT-BSO-CBQ-006"
+          ]
+        },
+        {
+          "group_key": "entity_type_details",
+          "title": "Ownership & Management",
+          "order": 400,
+          "source_refs": [
+            "IT-BSO-CBQ-007",
+            "IT-BSO-CBQ-008",
+            "IT-BSO-CBQ-009"
+          ]
+        },
+        {
+          "group_key": "relationship_disclosures",
+          "title": "Interests & Relationships",
+          "order": 500,
+          "source_refs": [
+            "IT-BSO-CBQ-010"
+          ]
+        },
+        {
+          "group_key": "conflict_matrix",
+          "title": "Conflict-of-Interest Disclosures",
+          "order": 600,
+          "source_refs": [
+            "IT-BSO-CBQ-011"
+          ],
+          "conflict_rows": [
+            "q1_common_ownership",
+            "q2_subsidy_from_tenderer",
+            "q3_same_legal_representative",
+            "q4_influence_relationship",
+            "q5_affiliate_preparing_specs",
+            "q6_conflicting_supply_role",
+            "q7_relationship_prep_eval_staff",
+            "q8_relationship_impl_supervision_staff",
+            "q9_conflict_resolved"
+          ]
+        },
+        {
+          "group_key": "questionnaire_certification",
+          "title": "Questionnaire Certification",
+          "order": 700,
+          "source_refs": [
+            "IT-BSO-CBQ-012"
+          ]
+        }
+      ],
+      "bidder_owned_fields": [
+        {
+          "field_key": "entity_type",
+          "label": "Entity type",
+          "required": true,
+          "source_refs": [
+            "IT-BSO-CBQ-007"
+          ]
+        },
+        {
+          "field_key": "nature_of_business",
+          "label": "Nature of business",
+          "required": true,
+          "source_refs": [
+            "IT-BSO-CBQ-005"
+          ]
+        },
+        {
+          "field_key": "max_business_value",
+          "label": "Maximum value of business",
+          "required": true,
+          "source_refs": [
+            "IT-BSO-CBQ-005"
+          ]
+        },
+        {
+          "field_key": "trade_licence_number",
+          "label": "Trade licence number",
+          "required": true,
+          "source_refs": [
+            "IT-BSO-CBQ-004"
+          ]
+        },
+        {
+          "field_key": "pe_interest_disclosure",
+          "label": "Interest or relationship with procuring entity",
+          "required": true,
+          "source_refs": [
+            "IT-BSO-CBQ-010"
+          ]
+        }
+      ],
+      "tender_owned_slots": [
+        {
+          "field_key": "tender_name_and_identification",
+          "label": "Tender identification",
+          "binding": "configuration.tender_title",
+          "required": true,
+          "source_refs": [
+            "IT-BSO-CBQ-002"
+          ]
+        }
+      ],
+      "slice_status": "s300_implemented"
+    },
+    {
+      "section_key": "statutory_declarations",
+      "title": "Statutory Declarations",
+      "order": 4,
+      "renderer": "structured_form",
+      "bidder_instructions": "Complete the Certificate of Independent Tender Determination, Self-Declaration, and Code of Ethical Conduct declarations.",
+      "source_refs": [
+        "PPRA IT STD Section IV — Tendering Forms (statutory declarations)"
+      ],
+      "required": true,
+      "applicability": {
+        "always": true
+      },
+      "confirmation_required_for_submission": false,
+      "completion_rule": "server_derived_from_responses",
+      "locked_legal_text": null,
+      "bidder_owned_fields": [],
+      "tender_owned_slots": [],
+      "slice_status": "route_only_not_editable_in_lean_slice"
+    },
+    {
+      "section_key": "tender_security",
+      "title": "Tender Security",
+      "order": 5,
+      "renderer": "evidence_and_declaration",
+      "bidder_instructions": "Provide the required tender security or tender-securing declaration as configured for this tender.",
+      "source_refs": [
+        "PPRA IT STD — Tender Security / Tender-Securing Declaration; TDS"
+      ],
+      "required": true,
+      "applicability": {
+        "when": "tender_security_required"
+      },
+      "confirmation_required_for_submission": false,
+      "completion_rule": "server_derived_from_responses",
+      "locked_legal_text": null,
+      "bidder_owned_fields": [],
+      "tender_owned_slots": [],
+      "slice_status": "route_only_not_editable_in_lean_slice"
+    },
+    {
+      "section_key": "preliminary_requirements_and_evidence",
+      "title": "Preliminary Requirements and Evidence",
+      "order": 6,
+      "renderer": "evidence_matrix",
+      "bidder_instructions": "Upload or declare evidence for preliminary examination requirements.",
+      "source_refs": [
+        "PPRA IT STD Section III — Evaluation and Qualification Criteria (Preliminary)"
+      ],
+      "required": true,
+      "applicability": {
+        "always": true
+      },
+      "confirmation_required_for_submission": false,
+      "completion_rule": "server_derived_from_responses",
+      "locked_legal_text": null,
+      "bidder_owned_fields": [],
+      "tender_owned_slots": [],
+      "slice_status": "route_only_not_editable_in_lean_slice"
+    },
+    {
+      "section_key": "qualification_and_capability",
+      "title": "Qualification and Capability",
+      "order": 7,
+      "renderer": "evidence_matrix",
+      "bidder_instructions": "Respond to qualification and capability criteria with supporting evidence.",
+      "source_refs": [
+        "PPRA IT STD Section III — Qualification Criteria"
+      ],
+      "required": true,
+      "applicability": {
+        "always": true
+      },
+      "confirmation_required_for_submission": false,
+      "completion_rule": "server_derived_from_responses",
+      "locked_legal_text": null,
+      "bidder_owned_fields": [],
+      "tender_owned_slots": [],
+      "slice_status": "route_only_not_editable_in_lean_slice"
+    },
+    {
+      "section_key": "technical_proposal_and_implementation_plan",
+      "title": "Technical Proposal and Implementation Plan",
+      "order": 8,
+      "renderer": "structured_response",
+      "bidder_instructions": "Provide the technical proposal and implementation plan required by the tender.",
+      "source_refs": [
+        "PPRA IT STD Section IV / Part 2 — Technical proposal obligations"
+      ],
+      "required": true,
+      "applicability": {
+        "always": true
+      },
+      "confirmation_required_for_submission": false,
+      "completion_rule": "server_derived_from_responses",
+      "locked_legal_text": null,
+      "bidder_owned_fields": [],
+      "tender_owned_slots": [],
+      "slice_status": "route_only_not_editable_in_lean_slice"
+    },
+    {
+      "section_key": "requirements_compliance",
+      "title": "Requirements Compliance",
+      "order": 9,
+      "renderer": "requirement_matrix",
+      "bidder_instructions": "Respond to each published IT requirement with compliance status and evidence where required.",
+      "source_refs": [
+        "PPRA IT STD Part 2 — Requirements; Section VIII schedule where applicable"
+      ],
+      "required": true,
+      "applicability": {
+        "always": true
+      },
+      "confirmation_required_for_submission": false,
+      "completion_rule": "server_derived_from_responses",
+      "locked_legal_text": null,
+      "bidder_owned_fields": [],
+      "tender_owned_slots": [],
+      "slice_status": "route_only_not_editable_in_lean_slice"
+    },
+    {
+      "section_key": "price_schedule",
+      "title": "Price Schedule",
+      "order": 10,
+      "renderer": "price_schedule",
+      "bidder_instructions": "Complete the electronic price schedule including any discounts. Totals and discount declarations flow read-only into the Form of Tender.",
+      "source_refs": [
+        "PPRA IT STD — Price Schedule forms"
+      ],
+      "required": true,
+      "applicability": {
+        "always": true
+      },
+      "confirmation_required_for_submission": false,
+      "completion_rule": "server_derived_from_responses",
+      "locked_legal_text": null,
+      "bidder_owned_fields": [],
+      "tender_owned_slots": [],
+      "slice_status": "route_only_not_editable_in_lean_slice"
+    },
+    {
       "section_key": "form_of_tender",
       "title": "Form of Tender",
-      "order": 3,
+      "order": 11,
       "renderer": "declaration_form",
-      "bidder_instructions": "Review tender particulars and derived offer values, complete required disclosures, and accept the applicable legal declarations. Saving a draft does not confirm or submit your bid.",
+      "bidder_instructions": "Review the material terms of your offer drawn from completed bid sections, complete the commissions disclosure, and certify the Form of Tender. Certification creates the legal record; saving a draft does not certify.",
       "source_refs": [
         "PPRA IT STD Section IV — Form of Tender (pages 35–37)"
       ],
@@ -234,8 +521,8 @@
           "label": "Commissions, gratuities or fees",
           "control": "select",
           "options": [
-            "none",
-            "disclose"
+            "yes",
+            "no"
           ],
           "required": true
         }
@@ -246,7 +533,7 @@
           "label": "Commissions, gratuities or fees disclosure",
           "required_when": {
             "field": "commissions_choice",
-            "equals": "disclose"
+            "equals": "yes"
           },
           "min_rows_when_required": 1,
           "columns": [
@@ -543,262 +830,6 @@
           "insert": true
         }
       }
-    },
-    {
-      "section_key": "confidential_business_questionnaire",
-      "title": "Confidential Business Questionnaire",
-      "order": 4,
-      "renderer": "questionnaire",
-      "bidder_instructions": "Complete one Confidential Business Questionnaire for the bidder and each required JV entity. Verified identity is read-only; use your account profile for corrections. Certification is deliberate and entity-scoped.",
-      "source_refs": [
-        "PPRA IT STD Section IV — Confidential Business Questionnaire",
-        "IT-BSO-CBQ-001",
-        "IT-BSO-CBQ-012"
-      ],
-      "required": true,
-      "applicability": {
-        "always": true
-      },
-      "confirmation_required_for_submission": false,
-      "completion_rule": "server_derived_from_responses",
-      "locked_legal_text": null,
-      "task_groups": [
-        {
-          "group_key": "entity_selection",
-          "title": "Tendering Entities",
-          "order": 100,
-          "source_refs": ["IT-BSO-CBQ-001"]
-        },
-        {
-          "group_key": "general_particulars",
-          "title": "General Particulars",
-          "order": 200,
-          "source_refs": ["IT-BSO-CBQ-002", "IT-BSO-CBQ-003"]
-        },
-        {
-          "group_key": "business_registration",
-          "title": "Business Registration & Capacity",
-          "order": 300,
-          "source_refs": ["IT-BSO-CBQ-004", "IT-BSO-CBQ-005", "IT-BSO-CBQ-006"]
-        },
-        {
-          "group_key": "entity_type_details",
-          "title": "Ownership & Management",
-          "order": 400,
-          "source_refs": ["IT-BSO-CBQ-007", "IT-BSO-CBQ-008", "IT-BSO-CBQ-009"]
-        },
-        {
-          "group_key": "relationship_disclosures",
-          "title": "Interests & Relationships",
-          "order": 500,
-          "source_refs": ["IT-BSO-CBQ-010"]
-        },
-        {
-          "group_key": "conflict_matrix",
-          "title": "Conflict-of-Interest Disclosures",
-          "order": 600,
-          "source_refs": ["IT-BSO-CBQ-011"],
-          "conflict_rows": [
-            "q1_common_ownership",
-            "q2_subsidy_from_tenderer",
-            "q3_same_legal_representative",
-            "q4_influence_relationship",
-            "q5_affiliate_preparing_specs",
-            "q6_conflicting_supply_role",
-            "q7_relationship_prep_eval_staff",
-            "q8_relationship_impl_supervision_staff",
-            "q9_conflict_resolved"
-          ]
-        },
-        {
-          "group_key": "questionnaire_certification",
-          "title": "Questionnaire Certification",
-          "order": 700,
-          "source_refs": ["IT-BSO-CBQ-012"]
-        }
-      ],
-      "bidder_owned_fields": [
-        {
-          "field_key": "entity_type",
-          "label": "Entity type",
-          "required": true,
-          "source_refs": ["IT-BSO-CBQ-007"]
-        },
-        {
-          "field_key": "nature_of_business",
-          "label": "Nature of business",
-          "required": true,
-          "source_refs": ["IT-BSO-CBQ-005"]
-        },
-        {
-          "field_key": "max_business_value",
-          "label": "Maximum value of business",
-          "required": true,
-          "source_refs": ["IT-BSO-CBQ-005"]
-        },
-        {
-          "field_key": "trade_licence_number",
-          "label": "Trade licence number",
-          "required": true,
-          "source_refs": ["IT-BSO-CBQ-004"]
-        },
-        {
-          "field_key": "pe_interest_disclosure",
-          "label": "Interest or relationship with procuring entity",
-          "required": true,
-          "source_refs": ["IT-BSO-CBQ-010"]
-        }
-      ],
-      "tender_owned_slots": [
-        {
-          "field_key": "tender_name_and_identification",
-          "label": "Tender identification",
-          "binding": "configuration.tender_title",
-          "required": true,
-          "source_refs": ["IT-BSO-CBQ-002"]
-        }
-      ],
-      "slice_status": "s300_implemented"
-    },
-    {
-      "section_key": "statutory_declarations",
-      "title": "Statutory Declarations",
-      "order": 5,
-      "renderer": "structured_form",
-      "bidder_instructions": "Complete the Certificate of Independent Tender Determination, Self-Declaration, and Code of Ethical Conduct declarations.",
-      "source_refs": [
-        "PPRA IT STD Section IV — Tendering Forms (statutory declarations)"
-      ],
-      "required": true,
-      "applicability": {
-        "always": true
-      },
-      "confirmation_required_for_submission": false,
-      "completion_rule": "server_derived_from_responses",
-      "locked_legal_text": null,
-      "bidder_owned_fields": [],
-      "tender_owned_slots": [],
-      "slice_status": "route_only_not_editable_in_lean_slice"
-    },
-    {
-      "section_key": "tender_security",
-      "title": "Tender Security",
-      "order": 6,
-      "renderer": "evidence_and_declaration",
-      "bidder_instructions": "Provide the required tender security or tender-securing declaration as configured for this tender.",
-      "source_refs": [
-        "PPRA IT STD — Tender Security / Tender-Securing Declaration; TDS"
-      ],
-      "required": true,
-      "applicability": {
-        "when": "tender_security_required"
-      },
-      "confirmation_required_for_submission": false,
-      "completion_rule": "server_derived_from_responses",
-      "locked_legal_text": null,
-      "bidder_owned_fields": [],
-      "tender_owned_slots": [],
-      "slice_status": "route_only_not_editable_in_lean_slice"
-    },
-    {
-      "section_key": "preliminary_requirements_and_evidence",
-      "title": "Preliminary Requirements and Evidence",
-      "order": 7,
-      "renderer": "evidence_matrix",
-      "bidder_instructions": "Upload or declare evidence for preliminary examination requirements.",
-      "source_refs": [
-        "PPRA IT STD Section III — Evaluation and Qualification Criteria (Preliminary)"
-      ],
-      "required": true,
-      "applicability": {
-        "always": true
-      },
-      "confirmation_required_for_submission": false,
-      "completion_rule": "server_derived_from_responses",
-      "locked_legal_text": null,
-      "bidder_owned_fields": [],
-      "tender_owned_slots": [],
-      "slice_status": "route_only_not_editable_in_lean_slice"
-    },
-    {
-      "section_key": "qualification_and_capability",
-      "title": "Qualification and Capability",
-      "order": 8,
-      "renderer": "evidence_matrix",
-      "bidder_instructions": "Respond to qualification and capability criteria with supporting evidence.",
-      "source_refs": [
-        "PPRA IT STD Section III — Qualification Criteria"
-      ],
-      "required": true,
-      "applicability": {
-        "always": true
-      },
-      "confirmation_required_for_submission": false,
-      "completion_rule": "server_derived_from_responses",
-      "locked_legal_text": null,
-      "bidder_owned_fields": [],
-      "tender_owned_slots": [],
-      "slice_status": "route_only_not_editable_in_lean_slice"
-    },
-    {
-      "section_key": "technical_proposal_and_implementation_plan",
-      "title": "Technical Proposal and Implementation Plan",
-      "order": 9,
-      "renderer": "structured_response",
-      "bidder_instructions": "Provide the technical proposal and implementation plan required by the tender.",
-      "source_refs": [
-        "PPRA IT STD Section IV / Part 2 — Technical proposal obligations"
-      ],
-      "required": true,
-      "applicability": {
-        "always": true
-      },
-      "confirmation_required_for_submission": false,
-      "completion_rule": "server_derived_from_responses",
-      "locked_legal_text": null,
-      "bidder_owned_fields": [],
-      "tender_owned_slots": [],
-      "slice_status": "route_only_not_editable_in_lean_slice"
-    },
-    {
-      "section_key": "requirements_compliance",
-      "title": "Requirements Compliance",
-      "order": 10,
-      "renderer": "requirement_matrix",
-      "bidder_instructions": "Respond to each published IT requirement with compliance status and evidence where required.",
-      "source_refs": [
-        "PPRA IT STD Part 2 — Requirements; Section VIII schedule where applicable"
-      ],
-      "required": true,
-      "applicability": {
-        "always": true
-      },
-      "confirmation_required_for_submission": false,
-      "completion_rule": "server_derived_from_responses",
-      "locked_legal_text": null,
-      "bidder_owned_fields": [],
-      "tender_owned_slots": [],
-      "slice_status": "route_only_not_editable_in_lean_slice"
-    },
-    {
-      "section_key": "price_schedule",
-      "title": "Price Schedule",
-      "order": 11,
-      "renderer": "price_schedule",
-      "bidder_instructions": "Complete the electronic price schedule. Totals flow read-only into the Form of Tender.",
-      "source_refs": [
-        "PPRA IT STD — Price Schedule forms"
-      ],
-      "required": true,
-      "applicability": {
-        "always": true
-      },
-      "confirmation_required_for_submission": false,
-      "completion_rule": "server_derived_from_responses",
-      "locked_legal_text": null,
-      "bidder_owned_fields": [],
-      "tender_owned_slots": [],
-      "slice_status": "route_only_not_editable_in_lean_slice"
     }
   ],
   "forbidden_shapes": [

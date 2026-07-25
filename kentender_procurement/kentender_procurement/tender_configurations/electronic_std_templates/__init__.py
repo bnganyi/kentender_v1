@@ -12,10 +12,10 @@ PPRA_IT_STD_V1_PATH = TEMPLATE_DIR / "ppra_it_std_v1.json"
 PPRA_IT_STD_V1_APPROVAL_PATH = TEMPLATE_DIR / "ppra_it_std_v1.approval.json"
 
 # Full registry order (F0). Conditional sections may be omitted from a tender snapshot.
+# FoT after Price Schedule (electronic workflow); Final Declaration ships later.
 CANONICAL_SECTION_KEYS = (
 	"tender_documents_and_addenda",
 	"lot_and_alternative_selection",
-	"form_of_tender",
 	"confidential_business_questionnaire",
 	"statutory_declarations",
 	"tender_security",
@@ -24,6 +24,7 @@ CANONICAL_SECTION_KEYS = (
 	"technical_proposal_and_implementation_plan",
 	"requirements_compliance",
 	"price_schedule",
+	"form_of_tender",
 )
 
 CONDITIONAL_SECTION_KEYS = frozenset(

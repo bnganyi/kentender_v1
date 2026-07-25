@@ -591,6 +591,12 @@ def _store_response(bid, payload: dict[str, Any], *, event: str = "section_saved
 	}
 	bid.responses = json.dumps(responses, ensure_ascii=False)
 	_append_audit(bid, event, {"section_key": SECTION_KEY})
+	# FoT is a derived instrument — CBQ changes withdraw FoT certification.
+	from kentender_procurement.tender_configurations.services.form_of_tender import (
+		invalidate_fot_certifications,
+	)
+
+	invalidate_fot_certifications(bid, reason="cbq_changed")
 	bid.save(ignore_permissions=True)
 	frappe.db.commit()
 

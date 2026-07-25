@@ -30,8 +30,9 @@ def get_context(context):
 		frappe.local.flags.redirect_location = "/login?redirect-to=" + quote(fot_path, safe="")
 		raise frappe.Redirect
 
+	offer_id = cstr(frappe.form_dict.get("offer_id") or "").strip() or None
 	try:
-		fot = get_form_of_tender(publication_ref)
+		fot = get_form_of_tender(publication_ref, offer_id=offer_id)
 	except frappe.PermissionError:
 		raise
 	except Exception:
@@ -43,12 +44,16 @@ def get_context(context):
 	context.active_nav = "my_bids"
 	context.active_ws = "checklist"
 	# Sidebar include expects checklist-shaped fields for tender chrome.
+	mo = fot.get("material_offer") or {}
+	pub = cstr(fot.get("published_tender_ref") or publication_ref)
 	context.checklist = {
-		"published_tender_ref": fot.get("published_tender_ref"),
-		"tender_title": (fot.get("tender_owned_values") or {}).get("tender_name_and_identification")
+		"published_tender_ref": pub,
+		"tender_title": mo.get("tender_title")
+		or (fot.get("tender_owned_values") or {}).get("tender_name_and_identification")
 		or "",
 		"workspace_url": fot.get("workspace_url"),
 		"bid_id": fot.get("bid_id"),
+		"overview_url": f"/tenders/{quote(pub, safe='')}",
 	}
 	context.fot = fot
 	context.copyright_year = str(getdate().year)

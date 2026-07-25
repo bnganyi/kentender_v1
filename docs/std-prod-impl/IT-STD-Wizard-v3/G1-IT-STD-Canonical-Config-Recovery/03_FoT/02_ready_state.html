@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Form of Tender | KenTender</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#515f74",
+                        "outline": "#75777d",
+                        "on-error-container": "#93000a",
+                        "primary-fixed": "#d6e3fd",
+                        "surface-tint": "#525f74",
+                        "tertiary-container": "#001c3a",
+                        "outline-strong": "#74777f",
+                        "on-tertiary-fixed": "#001c3a",
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "on-primary-fixed": "#0e1c2e",
+                        "surface-container-lowest": "#ffffff",
+                        "status-error-bg": "#fff1f2",
+                        "primary": "#000000",
+                        "status-approved-bg": "#ecfdf5",
+                        "on-surface": "#191c1e",
+                        "on-secondary": "#ffffff",
+                        "inverse-surface": "#2d3133",
+                        "surface-container-low": "#f2f4f6",
+                        "on-primary-fixed-variant": "#3a475c",
+                        "status-pending": "#92400e",
+                        "secondary-container": "#d2e1fa",
+                        "on-secondary-container": "#556379",
+                        "primary-container": "#0e1c2e",
+                        "on-primary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "surface-bright": "#f7f9fb",
+                        "tertiary-fixed-dim": "#adc8f3",
+                        "surface-variant": "#e0e3e5",
+                        "surface-dim": "#d8dadc",
+                        "error-container": "#ffdad6",
+                        "on-background": "#191c1e",
+                        "surface": "#f7f9fb",
+                        "outline-variant": "#c5c6cd",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-highest": "#e0e3e5",
+                        "inverse-primary": "#bac7e0",
+                        "status-pending-bg": "#fffbeb",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "tertiary": "#000000",
+                        "surface-container": "#eceef0",
+                        "on-tertiary-fixed-variant": "#2d486c",
+                        "status-approved": "#065f46",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "on-surface-variant": "#44474c",
+                        "primary-fixed-dim": "#bac7e0",
+                        "on-tertiary-container": "#6b85ac",
+                        "status-error": "#ba1a1a",
+                        "on-primary-container": "#77859b",
+                        "inverse-on-surface": "#eff1f3",
+                        "background": "#f7f9fb",
+                        "surface-container-high": "#e6e8ea",
+                        "secondary-fixed": "#d5e3fc",
+                        "tertiary-fixed": "#d4e3ff",
+                        "outline-subtle": "#c4c6cf"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "sidebar-width": "256px",
+                        "unit": "4px",
+                        "gap-component": "8px",
+                        "max-width": "1280px",
+                        "gutter": "12px",
+                        "container-padding": "16px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Public Sans"],
+                        "display": ["Public Sans"],
+                        "body-lg": ["Public Sans"],
+                        "label-md": ["JetBrains Mono"],
+                        "headline-md": ["Public Sans"],
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-lg": ["Public Sans"]
+                    },
+                    "fontSize": {
+                        "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 18px;
+            vertical-align: middle;
+        }
+        .sidebar-active {
+            font-variation-settings: 'FILL' 1;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c4c6cf; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background font-body-md text-on-surface selection:bg-primary-fixed selection:text-primary">
+<!-- TopNavBar -->
+<header class="sticky top-0 w-full z-50 flex items-center justify-between px-gutter h-14 bg-surface-container-lowest border-b border-outline-subtle">
+<div class="flex items-center gap-6">
+<span class="font-headline-lg text-headline-lg font-bold text-primary">KenTender</span>
+<nav class="hidden md:flex gap-6 items-center h-full pt-1">
+<a class="text-on-secondary-container font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md" href="#">Tenders</a>
+<a class="text-on-secondary-container font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md" href="#">My Bids</a>
+<a class="text-on-secondary-container font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md" href="#">Clarifications</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant font-label-md text-label-md hover:text-primary">Help Desk</button>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+</button>
+<button class="p-2 hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">settings</span>
+</button>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden border border-outline-subtle">
+<img alt="Bidder Profile" class="" data-alt="A professional headshot of a Kenyan procurement officer in business attire, clean-cut with a friendly but authoritative expression, high-key studio lighting with a neutral gray background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCVOBvHjot7kESpZ3RcK9KX6KK5RNXmIbu980SkesO9J7gw7rzTkZMzeQeqtLBBKRGkFvRhakxjoHPnA1oNw_ncILq24dDVWb9ibm0lDP_BHS29TTcsM7sijpzD_0JU4XlrPgqTaDQRf_h7EsmXTzUccsZO46mtMzxm81Wa6mu0QXWmFaBHu0x_ZMBWgtrzQGPqOlE6br3UO9H2dQCShMqlJ1ODP4J63O_X9yZ0m6ouBzO8sTuseHnfPT6cnin7UA47uE5rKj_ws30"/>
+</div>
+</div>
+</header>
+<!-- Shell Container -->
+<div class="flex">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-14 bottom-0 w-sidebar-width flex flex-col z-40 bg-surface-container-low border-r border-outline-subtle overflow-y-auto">
+<div class="p-container-padding flex items-center gap-3 mb-4">
+<div>
+<div class="font-label-md text-label-md font-bold text-primary uppercase tracking-tight">Bidder Workspace</div>
+</div>
+</div>
+<nav class="flex-1 px-2 space-y-1">
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all duration-150 rounded-lg" href="#">
+<span class="material-symbols-outlined mr-3">info</span>
+<span class="font-body-md text-body-md">Tender Overview</span>
+</a>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all duration-150 rounded-lg" href="#">
+<span class="material-symbols-outlined mr-3">description</span>
+<span class="font-body-md text-body-md">Tender Documents</span>
+</a>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all duration-150 rounded-lg" href="#">
+<span class="material-symbols-outlined mr-3">fact_check</span>
+<span class="font-body-md text-body-md">Submission Checklist</span>
+</a>
+<!-- Active Tab -->
+<a class="flex items-center bg-surface-container-highest text-primary border-r-4 border-primary py-3 px-4 transition-transform scale-[0.99] rounded-l-lg" href="#">
+<span class="material-symbols-outlined mr-3 sidebar-active" style='font-variation-settings: "FILL" 1;'>edit_document</span>
+<span class="font-body-md text-body-md font-semibold">Prepare Bid</span>
+</a>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all duration-150 rounded-lg" href="#">
+<span class="material-symbols-outlined mr-3">verified</span>
+<span class="font-body-md text-body-md">Review &amp; Validate</span>
+</a>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all duration-150 rounded-lg" href="#">
+<span class="material-symbols-outlined mr-3">lock</span>
+<span class="font-body-md text-body-md">Submit &amp; Seal</span>
+</a>
+</nav>
+<div class="mt-auto p-4 border-t border-outline-subtle space-y-2">
+<button class="w-full bg-surface-container-highest text-primary border border-outline py-2 font-label-md text-label-md rounded flex items-center justify-center gap-2 hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">grid_view</span>
+                    Requirement Matrix
+                </button>
+<div class="flex flex-col gap-1">
+<a class="flex items-center text-on-surface-variant py-2 px-4 font-label-md text-label-md hover:text-primary" href="#">
+<span class="material-symbols-outlined mr-3">contact_support</span>
+                        Support
+                    </a>
+<a class="flex items-center text-on-surface-variant py-2 px-4 font-label-md text-label-md hover:text-primary" href="#">
+<span class="material-symbols-outlined mr-3">logout</span>
+                        Sign Out
+                    </a>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-sidebar-width flex-1 min-h-[calc(100vh-56px)] pt-6 px-12 pb-24 overflow-x-hidden">
+<div class="max-w-max-width mx-auto">
+<!-- Breadcrumbs -->
+<nav class="flex items-center gap-2 text-outline font-label-md text-label-md mb-4">
+<a class="hover:text-primary" href="#">Checklist</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<a class="hover:text-primary" href="#">Form of Tender</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-on-surface-variant font-semibold">Review &amp; Certify</span>
+</nav>
+<!-- Page Header -->
+<div class="flex justify-between items-start mb-8">
+<div>
+<h1 class="font-headline-lg text-headline-lg font-bold text-primary mb-1">Form of Tender</h1>
+<p class="text-on-surface-variant font-body-lg text-body-lg">Review the material terms of your offer and certify the Form of Tender.</p>
+</div>
+<span class="px-3 py-1 bg-status-pending-bg text-status-pending font-label-md text-label-md rounded flex items-center gap-1.5 border border-status-pending/20"><span class="w-1.5 h-1.5 rounded-full bg-status-pending"></span>Pending Disclosure</span>
+</div>
+<div class="grid grid-cols-12 gap-gap-component">
+<!-- Material Offer Summary Card -->
+<div class="col-span-12 lg:col-span-8 bg-surface-container-lowest border border-outline-subtle rounded p-container-padding relative">
+<div class="flex justify-between items-center mb-6">
+<h2 class="font-headline-md text-headline-md text-primary flex items-center gap-2">
+<span class="w-1 h-6 bg-primary rounded-full"></span>
+                                Material Offer Summary
+                            </h2>
+</div>
+<div class="grid grid-cols-2 gap-y-6 gap-x-8">
+<div class="space-y-1">
+<span class="font-label-sm text-label-sm uppercase text-outline block">Tenderer</span>
+<span class="font-body-md text-body-md font-semibold">ABC Limited</span><a class="ml-2 text-primary hover:underline font-label-sm text-[10px]" href="#">(Edit in CBQ)</a>
+</div>
+<div class="space-y-1">
+<span class="font-label-sm text-label-sm uppercase text-outline block">Offer</span>
+<span class="font-body-md text-body-md">Base tender</span><a class="ml-2 text-primary hover:underline font-label-sm text-[10px]" href="#">(Edit in Lots &amp; Alternatives)</a>
+</div>
+<div class="col-span-2 space-y-1">
+<span class="font-label-sm text-label-sm uppercase text-outline block">Tender</span>
+<span class="font-body-md text-body-md leading-relaxed">Implementation of Integrated National Cybersecurity Monitoring Framework (KT/ICT/FED-092/2024)</span>
+</div>
+<div class="space-y-1">
+<span class="font-label-sm text-label-sm uppercase text-outline block">Procuring Entity</span>
+<span class="font-body-md text-body-md">Ministry of Information Communication and the Digital Economy</span>
+</div>
+<div class="space-y-1">
+<span class="font-label-sm text-label-sm uppercase text-outline block">Tender Price</span>
+<span class="font-body-md text-body-md font-bold text-primary text-[16px]">KES 450,000,000.00</span><a class="ml-2 text-primary hover:underline font-label-sm text-[10px]" href="#">(Edit in Price Schedule)</a>
+</div>
+<div class="space-y-1">
+<span class="font-label-sm text-label-sm uppercase text-outline block">Selected Lots</span>
+<div class="flex flex-wrap gap-2 pt-1">
+<span class="bg-surface-container px-2 py-0.5 rounded font-label-md text-label-md border border-outline-variant">Lot 1: Core Business System</span>
+<span class="bg-surface-container px-2 py-0.5 rounded font-label-md text-label-md border border-outline-variant">Lot 2: Infrastructure</span>
+<a class="self-center ml-2 text-primary hover:underline font-label-sm text-[10px]" href="#">(Edit in Lots &amp; Alternatives)</a></div>
+</div>
+<div class="space-y-1">
+<span class="font-label-sm text-label-sm uppercase text-outline block">Discounts</span>
+<span class="font-body-md text-body-md text-outline italic">None</span><a class="ml-2 text-primary hover:underline font-label-sm text-[10px]" href="#">(Edit in Price Schedule)</a>
+</div>
+<div class="space-y-1">
+<span class="font-label-sm text-label-sm uppercase text-outline block">Tender Validity Period</span>
+<span class="font-body-md text-body-md font-semibold">120 Days</span>
+</div>
+</div>
+</div>
+<!-- Right Sidebar Info Cards -->
+<div class="col-span-12 lg:col-span-4 space-y-gap-component">
+<!-- Authorized Signatory -->
+<div class="bg-surface-container-lowest border border-outline-subtle rounded p-container-padding">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-label-md text-label-md font-bold uppercase tracking-widest text-secondary">Authorized Signatory</h3><a class="text-primary hover:underline font-label-sm text-[10px] normal-case tracking-normal ml-2" href="#">(Edit in CBQ)</a>
+</div>
+<div class="space-y-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container">person</span>
+</div>
+<div>
+<div class="font-body-md text-body-md font-bold">Bonface Nganyi</div>
+<div class="font-label-md text-label-md text-outline">Managing Director</div>
+</div>
+</div>
+<div class="flex items-center justify-between p-2 bg-status-approved-bg rounded border border-status-approved/10">
+<span class="font-label-md text-label-md text-status-approved">Authority to bind</span>
+<div class="flex items-center gap-1 text-status-approved font-bold">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span class="font-label-sm text-label-sm">CONFIRMED</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Legal Commitments -->
+<div class="bg-surface-container-low border border-outline-subtle rounded p-container-padding">
+<h3 class="font-label-md text-label-md font-bold uppercase tracking-widest text-secondary mb-2">Legal Commitments</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4">Review the complete legal terms before certifying. This action is binding.</p>
+<button class="w-full bg-surface-container-lowest border border-outline py-2 font-label-md text-label-md rounded flex items-center justify-center gap-2 hover:bg-surface-container-high transition-colors" onclick="document.getElementById('terms-drawer').classList.remove('translate-x-full')">
+<span class="material-symbols-outlined">menu_book</span>
+                                Read full Form of Tender terms
+                            </button>
+</div>
+</div>
+<!-- Specific Disclosure Question -->
+<div class="col-span-12 bg-surface-container-lowest border border-outline-subtle rounded p-container-padding mt-4"><div class="flex items-start gap-4">
+<div class="p-2 bg-secondary-container/50 rounded">
+<span class="material-symbols-outlined text-secondary">gavel</span>
+</div>
+<div class="flex-1">
+<h3 class="font-headline-md text-headline-md text-primary mb-2">Commissions, Gratuities and Fees</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4">Have any commissions, gratuities or fees been paid or are to be paid to agents or any other party relating to this Tender?</p>
+<div class="flex gap-8 items-center mb-6">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="w-4 h-4 text-primary focus:ring-primary border-outline-subtle" name="disclosure" onclick="document.getElementById('disclosure-table-container').classList.remove('hidden'); document.getElementById('disclosure-none-text').classList.add('hidden');" type="radio"/>
+<span class="font-body-md text-body-md group-hover:text-primary transition-colors">Yes</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="w-4 h-4 text-primary focus:ring-primary border-outline-subtle" name="disclosure" onclick="document.getElementById('disclosure-table-container').classList.add('hidden'); document.getElementById('disclosure-none-text').classList.remove('hidden');" type="radio"/>
+<span class="font-body-md text-body-md group-hover:text-primary transition-colors">No</span>
+</label>
+</div>
+<div class="hidden text-status-approved font-label-md flex items-center gap-2" id="disclosure-none-text">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+            None declared.
+        </div>
+<div class="hidden space-y-4" id="disclosure-table-container">
+<div class="overflow-x-auto border border-outline-variant rounded">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low border-b border-outline-variant">
+<tr>
+<th class="px-3 py-2 font-label-sm text-label-sm uppercase text-outline">Recipient's Name</th>
+<th class="px-3 py-2 font-label-sm text-label-sm uppercase text-outline">Full Address</th>
+<th class="px-3 py-2 font-label-sm text-label-sm uppercase text-outline">Reason</th>
+<th class="px-3 py-2 font-label-sm text-label-sm uppercase text-outline">Amount</th>
+<th class="px-3 py-2 font-label-sm text-label-sm uppercase text-outline">Currency</th>
+<th class="px-3 py-2 w-10"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<tr class="hover:bg-surface-container-lowest">
+<td class="p-2"><input class="w-full border-outline-subtle rounded text-body-md p-1 focus:ring-primary" placeholder="Name" required="" type="text"/></td>
+<td class="p-2"><input class="w-full border-outline-subtle rounded text-body-md p-1 focus:ring-primary" placeholder="Address" required="" type="text"/></td>
+<td class="p-2"><input class="w-full border-outline-subtle rounded text-body-md p-1 focus:ring-primary" placeholder="Reason" required="" type="text"/></td>
+<td class="p-2"><input class="w-full border-outline-subtle rounded text-body-md p-1 focus:ring-primary" placeholder="0.00" required="" type="number"/></td>
+<td class="p-2"><input class="w-full border-outline-subtle rounded text-body-md p-1 focus:ring-primary" placeholder="KES" required="" type="text"/></td>
+<td class="p-2 text-center">
+<button class="text-outline hover:text-error transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<button class="flex items-center gap-2 text-primary font-label-md hover:underline">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+                Add another recipient
+            </button>
+</div>
+</div>
+</div></div>
+</div>
+<!-- Primary Action Area -->
+<div class="mt-12 flex flex-col items-center gap-6 pb-12">
+<div class="flex items-start gap-2 max-w-2xl bg-surface-container-high/50 p-4 rounded-lg">
+<span class="material-symbols-outlined text-outline mt-0.5">info</span>
+<p class="font-label-md text-label-md text-on-surface-variant italic leading-relaxed">
+                            By clicking "Certify Form of Tender", you confirm that you have read, understood, and agree to the Material Offer Summary and the full Form of Tender terms as published in the Tender Documents.
+                        </p>
+</div>
+<div class="flex flex-col items-center gap-4">
+<button class="px-10 py-3 bg-primary text-on-primary font-headline-md text-headline-md rounded shadow-sm hover:opacity-90 active:scale-95 transition-all duration-100 min-w-[300px]">
+                            Certify Form of Tender
+                        </button>
+<a class="font-label-md text-label-md text-outline hover:text-primary transition-colors underline underline-offset-4" href="#">
+                            Back to Workspace
+                        </a>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Footer Component (Docked) -->
+<footer class="fixed bottom-0 right-0 left-sidebar-width flex items-center justify-between gap-gap-component p-container-padding z-50 bg-surface-container-lowest border-t border-outline-subtle shadow-sm">
+<span class="font-label-sm text-label-sm uppercase tracking-widest text-outline">© 2024 KenTender Procurement Portal. Secure Bid Environment.</span>
+<div class="flex gap-4">
+<button class="border border-outline-subtle text-secondary px-4 py-2 rounded font-label-md text-label-md hover:bg-primary-container hover:text-on-primary transition-colors active:scale-95 duration-100">
+                Back to Workspace
+            </button>
+<button class="border border-outline-subtle text-secondary px-4 py-2 rounded font-label-md text-label-md hover:bg-primary-container hover:text-on-primary transition-colors active:scale-95 duration-100">
+                Save Section
+            </button>
+<button class="bg-primary text-on-primary px-4 py-2 rounded font-label-md text-label-md hover:bg-primary-container transition-colors active:scale-95 duration-100">
+                Save &amp; Continue
+            </button>
+</div>
+</footer>
+<script>
+        // Micro-interactions and simple state management
+        document.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                if (link.innerText.includes('Certify')) return; // Don't trigger on main action for now
+                // Purely visual effect for demo
+                link.classList.add('opacity-50');
+                setTimeout(() => link.classList.remove('opacity-50'), 200);
+            });
+        });
+
+        // Hover effect for disclosure cards
+        const disclosureOptions = document.querySelectorAll('input[name="disclosure"]');
+        disclosureOptions.forEach(opt => {
+            opt.addEventListener('change', () => {
+                console.log('Disclosure selection updated');
+            });
+        });
+    </script>
+<div class="fixed top-0 right-0 h-full w-[600px] bg-surface-container-lowest shadow-2xl border-l border-outline-subtle z-[60] flex flex-col transition-transform duration-300 translate-x-0" id="terms-drawer">
+<!-- Drawer Header -->
+<div class="flex items-center justify-between p-6 border-b border-outline-subtle bg-surface-container-low">
+<h2 class="font-headline-md text-headline-md text-primary">Form of Tender Terms</h2>
+<button class="p-2 hover:bg-surface-container-high rounded-full transition-colors" onclick="document.getElementById('terms-drawer').classList.add('translate-x-full')">
+<span class="material-symbols-outlined text-on-surface-variant">close</span>
+</button>
+</div>
+<!-- Drawer Content -->
+<div class="flex-1 overflow-y-auto p-8 space-y-6">
+<section class="space-y-3">
+<h3 class="font-label-md text-label-md font-bold uppercase tracking-widest text-secondary">A. INSTRUCTIONS TO TENDERERS</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                The Tenderer must prepare this Form of Tender on stationery with its letterhead clearly showing the Tenderer's complete name and business address.
+            </p>
+</section>
+<section class="space-y-4">
+<h3 class="font-label-md text-label-md font-bold uppercase tracking-widest text-secondary">B. CERTIFICATE OF INDEPENDENT TENDER DETERMINATION</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                The undersigned, in submitting the accompanying Tender to the <span class="font-semibold text-primary">Ministry of Information Communication and the Digital Economy</span> for: <span class="font-semibold text-primary">Implementation of Integrated National Cybersecurity Monitoring Framework (KT/ICT/FED-092/2024)</span> in response to the request for tenders made by the Procuring Entity, do hereby make the following statements that I certify to be true and complete in every respect:
+            </p>
+<ol class="list-decimal ml-4 space-y-3 font-body-md text-body-md text-on-surface-variant">
+<li>I have read and I understand the contents of this Certificate;</li>
+<li>I understand that the Tender will be disqualified if this Certificate is found not to be true and complete in every respect;</li>
+<li>I am the authorized officer of the Tenderer (<span class="font-semibold text-primary">ABC Limited</span>) with authority to sign this Certificate, and to submit the Tender on behalf of the Tenderer;</li>
+<li>For the purposes of this Certificate and the Tender, I understand that the word ‘competitor’ shall include any individual or organization, other than the Tenderer, whether or not affiliated with the Tenderer, who:
+                    <ul class="list-[lower-alpha] ml-6 mt-2 space-y-1">
+<li>has been requested to submit a Tender in response to this request for tenders;</li>
+<li>could potentially submit a tender in response to this request for tenders, based on their qualifications, abilities or experience;</li>
+</ul>
+</li>
+<li>The Tenderer discloses that [check one of the following, as applicable]:
+                    <ul class="list-[lower-alpha] ml-6 mt-2 space-y-2">
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">check_box</span>
+<span>The Tenderer has arrived at the Tender independently from, and without consultation, communication, agreement or arrangement with, any competitor;</span>
+</li>
+<li class="flex items-start gap-2 opacity-50">
+<span class="material-symbols-outlined text-outline text-[18px]">check_box_outline_blank</span>
+<span>The Tenderer has entered into consultations, communications, agreements or arrangements with one or more competitors regarding this request for tenders...</span>
+</li>
+</ul>
+</li>
+</ol>
+</section>
+<div class="p-4 bg-surface-container-low rounded-lg border border-outline-variant space-y-2">
+<div class="flex justify-between">
+<span class="font-label-sm text-label-sm uppercase text-outline">Tender Price</span>
+<span class="font-label-md text-label-md font-bold">KES 450,000,000.00</span>
+</div>
+<div class="flex justify-between">
+<span class="font-label-sm text-label-sm uppercase text-outline">Validity Period</span>
+<span class="font-label-md text-label-md font-bold">120 Days</span>
+</div>
+</div>
+</div>
+<!-- Drawer Footer -->
+<div class="p-6 border-t border-outline-subtle bg-surface-container-lowest">
+<button class="w-full border border-outline-subtle text-secondary px-4 py-3 rounded font-label-md text-label-md hover:bg-surface-container-high transition-colors" onclick="document.getElementById('terms-drawer').classList.add('translate-x-full')">
+            Close Terms
+        </button>
+</div>
+</div></body></html>

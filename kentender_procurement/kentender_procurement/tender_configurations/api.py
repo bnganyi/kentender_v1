@@ -729,13 +729,32 @@ def save_form_of_tender(
 	payload: dict[str, Any] | str | None = None,
 	expected_modified: str | None = None,
 ) -> dict[str, Any]:
-	"""Save Form of Tender draft (does not confirm or submit)."""
+	"""Save Form of Tender commissions disclosure (does not certify)."""
 	_require_login()
 	from kentender_procurement.tender_configurations.services.form_of_tender import (
 		save_form_of_tender as _save,
 	)
 
 	return _save(published_tender_ref, payload, expected_modified=expected_modified)
+
+
+@frappe.whitelist()
+def certify_form_of_tender(
+	published_tender_ref: str,
+	offer_id: str | None = None,
+	expected_modified: str | None = None,
+) -> dict[str, Any]:
+	"""Certify one Form of Tender instance (Review and Certify)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.form_of_tender import (
+		certify_form_of_tender as _cert,
+	)
+
+	return _cert(
+		published_tender_ref,
+		offer_id=offer_id,
+		expected_modified=expected_modified,
+	)
 
 
 @frappe.whitelist()

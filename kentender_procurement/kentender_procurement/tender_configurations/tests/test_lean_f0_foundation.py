@@ -204,7 +204,9 @@ class TestLeanF0InstantiateAndApplicability(unittest.TestCase):
 		self.assertIn("tender_security", keys)
 		self.assertIn("form_of_tender", keys)
 		self.assertEqual(keys[0], "tender_documents_and_addenda")
-		self.assertEqual(keys[1], "form_of_tender")
+		# Redesign: FoT after Price Schedule (not early Section IV paper order).
+		self.assertEqual(keys[-2], "price_schedule")
+		self.assertEqual(keys[-1], "form_of_tender")
 
 	def test_nssf_resolves_applicable_section_set(self):
 		out = publish_e1_nssf_with_electronic_template(clear=True)

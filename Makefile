@@ -6,7 +6,7 @@ BENCH_ROOT ?= /home/midasuser/frappe-bench
 KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency
 INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency
 
-.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate std-verbatim-gate std-step1-gate nssf-calibration-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate
+.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate bw-fot-domain-gate ui-bidder-fot-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate std-verbatim-gate std-step1-gate nssf-calibration-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate
 
 help:
 	@echo "Targets:"
@@ -64,6 +64,8 @@ help:
 	@echo "  make ui-bidder-a2-gate — A2 Submission Checklist Website Playwright smoke"
 	@echo "  make ui-bidder-a3-gate — A3 Tender Documents & Addenda Website Playwright smoke"
 	@echo "  make ui-bidder-a4-gate — A4 Requirement Matrix Website Playwright smoke"
+	@echo "  make bw-fot-domain-gate SITE=$(SITE) — FoT Review-and-Certify domain + order tests"
+	@echo "  make ui-bidder-fot-gate — FoT Review-and-Certify Website Playwright smoke"
 	@echo "  make std-verbatim-gate SITE=$(SITE) — BE-14 verbatim extraction + smoke contracts"
 	@echo "  make std-step1-gate SITE=$(SITE) — BE-15 Step 1 activation/consumption/render smoke"
 	@echo "  make nssf-calibration-gate SITE=$(SITE) — CAL-NSSF golden proof gate"
@@ -265,6 +267,18 @@ bw-s300-domain-gate:
 ui-bidder-s300-cbq-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/bidder-workspace/s300-cbq.spec.ts
+
+bw-fot-domain-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_lean_fot_review_certify
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_lean_it_std_template_fot_slice
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_lean_f0_foundation
+
+ui-bidder-fot-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/bidder-workspace/fot-review-certify.spec.ts
 
 bw-a4-domain-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \

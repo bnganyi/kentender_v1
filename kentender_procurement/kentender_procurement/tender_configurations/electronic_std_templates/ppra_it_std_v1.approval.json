@@ -2,7 +2,7 @@
   "template_id": "PPRA-IT-STD",
   "template_version": "1.0",
   "template_file": "ppra_it_std_v1.json",
-  "template_file_hash": "28fd5253d395d2a4ffc3d36fec00e6ce77cddc346c57a6f9c1c6b40455d68027",
+  "template_file_hash": "b89163347f6d93f65a6b34bcca5550974da80df4ba17b5e6a43a1c01639caa67",
   "status": "Draft",
   "source_std_identity": "PPRA IT STD April 2022 / Circular 02/2022",
   "prepared_by": "template.preparer@kentender.local",
@@ -11,7 +11,7 @@
   "reviewed_at": null,
   "approved_by": null,
   "approved_at": null,
-  "notes": "F0 foundation + S100/X100/S300 (Stitch CBQ pixel UI). Template remains Draft. S150 Lots & Alternatives deferred.",
+  "notes": "F0 foundation + FoT after Price Schedule (Review-and-Certify). Template remains Draft. S150 Lots & Alternatives deferred.",
   "lifecycle": [
     "Draft",
     "Reviewed",
