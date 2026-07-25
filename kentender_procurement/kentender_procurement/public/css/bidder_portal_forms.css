@@ -1,0 +1,182 @@
+/* Shared bidder Website form controls — CBQ / FoT / Statutory
+   Operational density: compact white fields, not padded grey h-10 blocks. */
+
+:root {
+	--kt-portal-ink: #191c1e;
+	--kt-portal-muted: #44474c;
+	--kt-portal-outline: #c4c6cf;
+	--kt-portal-primary: #003366;
+	--kt-portal-focus: #6ba3d6;
+	--kt-portal-focus-ring: rgba(107, 163, 214, 0.35);
+	--kt-portal-error: #ba1a1a;
+	--kt-portal-field-h: 32px;
+	--kt-portal-field-pad-y: 6px;
+	--kt-portal-field-pad-x: 10px;
+	--kt-portal-field-radius: 2px;
+	--kt-portal-field-font: 13px;
+	--kt-portal-field-line: 18px;
+}
+
+.kt-portal-req {
+	color: var(--kt-portal-error);
+	font-weight: 700;
+}
+
+/* Text / select / textarea — compact white control */
+.kt-a0-root .kt-s300-field input:not([type="checkbox"]):not([type="radio"]),
+.kt-a0-root .kt-s300-field select,
+.kt-a0-root .kt-s300-field textarea,
+.kt-a0-root .kt-s300-conflict-details textarea,
+.kt-a0-root .kt-fot-table input:not([type="checkbox"]):not([type="radio"]),
+.kt-a0-root .kt-fot-table textarea,
+.kt-a0-root .kt-fot-table select,
+.kt-a0-root .kt-s300-dialog__fields input:not([type="checkbox"]):not([type="radio"]),
+.kt-a0-root .kt-s300-dialog__fields select,
+.kt-a0-root .kt-s300-dialog__fields textarea {
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+	appearance: none;
+	-webkit-appearance: none;
+	border: 1px solid var(--kt-portal-outline) !important;
+	background: #fff !important;
+	border-radius: var(--kt-portal-field-radius) !important;
+	padding: var(--kt-portal-field-pad-y) var(--kt-portal-field-pad-x) !important;
+	height: var(--kt-portal-field-h) !important;
+	min-height: var(--kt-portal-field-h) !important;
+	max-height: var(--kt-portal-field-h) !important;
+	font-family: "Public Sans", system-ui, sans-serif !important;
+	font-size: var(--kt-portal-field-font) !important;
+	line-height: var(--kt-portal-field-line) !important;
+	font-weight: 400 !important;
+	color: var(--kt-portal-ink) !important;
+	box-shadow: none !important;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.kt-a0-root .kt-s300-field textarea,
+.kt-a0-root .kt-s300-conflict-details textarea,
+.kt-a0-root .kt-fot-table textarea,
+.kt-a0-root .kt-s300-dialog__fields textarea {
+	height: auto !important;
+	max-height: none !important;
+	min-height: 64px !important;
+	resize: vertical;
+	line-height: 1.4 !important;
+}
+
+.kt-a0-root .kt-s300-field input::placeholder,
+.kt-a0-root .kt-s300-field textarea::placeholder,
+.kt-a0-root .kt-fot-table input::placeholder,
+.kt-a0-root .kt-s300-dialog__fields input::placeholder {
+	color: #75777d !important;
+	opacity: 1;
+	font-style: normal !important;
+}
+
+.kt-a0-root .kt-s300-field select,
+.kt-a0-root .kt-s300-dialog__fields select {
+	background-image: linear-gradient(45deg, transparent 50%, #44474c 50%),
+		linear-gradient(135deg, #44474c 50%, transparent 50%) !important;
+	background-position: calc(100% - 12px) calc(50% - 2px), calc(100% - 8px) calc(50% - 2px) !important;
+	background-size: 4px 4px, 4px 4px !important;
+	background-repeat: no-repeat !important;
+	padding-right: 1.75rem !important;
+}
+
+.kt-a0-root .kt-s300-field input:not([type="checkbox"]):not([type="radio"]):focus,
+.kt-a0-root .kt-s300-field select:focus,
+.kt-a0-root .kt-s300-field textarea:focus,
+.kt-a0-root .kt-s300-conflict-details textarea:focus,
+.kt-a0-root .kt-fot-table input:focus,
+.kt-a0-root .kt-s300-dialog__fields input:focus,
+.kt-a0-root .kt-s300-dialog__fields select:focus,
+.kt-a0-root .kt-s300-dialog__fields textarea:focus {
+	outline: none !important;
+	border-color: var(--kt-portal-focus) !important;
+	box-shadow: 0 0 0 2px var(--kt-portal-focus-ring) !important;
+}
+
+/* Table cells stay quieter — no double border chrome */
+.kt-a0-root .kt-s300-table input:not([type="checkbox"]):not([type="radio"]) {
+	width: 100%;
+	box-sizing: border-box;
+	border: 0 !important;
+	background: transparent !important;
+	border-radius: 0 !important;
+	padding: 4px 6px !important;
+	height: 28px !important;
+	min-height: 28px !important;
+	max-height: 28px !important;
+	font-family: "Public Sans", system-ui, sans-serif !important;
+	font-size: 13px !important;
+	line-height: 16px !important;
+	box-shadow: none !important;
+}
+.kt-a0-root .kt-s300-table input:focus {
+	outline: none !important;
+	box-shadow: 0 0 0 2px var(--kt-portal-focus-ring) !important;
+	border: 0 !important;
+	background: #fff !important;
+}
+
+/* Flat radios — no OS inset shadow */
+.kt-a0-root .kt-s300-radios input[type="radio"],
+.kt-a0-root .kt-fot-radios input[type="radio"],
+.kt-a0-root .kt-stat-choice-card input[type="radio"] {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	width: 1rem !important;
+	height: 1rem !important;
+	min-width: 1rem !important;
+	max-width: 1rem !important;
+	min-height: 1rem !important;
+	max-height: 1rem !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	border: 1.5px solid var(--kt-portal-muted) !important;
+	border-radius: 50% !important;
+	background: #fff !important;
+	box-shadow: none !important;
+	flex: 0 0 auto;
+	cursor: pointer;
+}
+.kt-a0-root .kt-s300-radios input[type="radio"]:checked,
+.kt-a0-root .kt-fot-radios input[type="radio"]:checked,
+.kt-a0-root .kt-stat-choice-card input[type="radio"]:checked {
+	border-color: var(--kt-portal-primary) !important;
+	background:
+		radial-gradient(circle at center, var(--kt-portal-primary) 0 38%, #fff 42%) !important;
+	box-shadow: none !important;
+}
+
+/* Flat checkboxes */
+.kt-a0-root .kt-s300-check input[type="checkbox"],
+.kt-a0-root .kt-s300-cert-check input[type="checkbox"] {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	width: 1rem !important;
+	height: 1rem !important;
+	min-width: 1rem !important;
+	max-width: 1rem !important;
+	min-height: 1rem !important;
+	max-height: 1rem !important;
+	margin: 0.15rem 0 0 !important;
+	padding: 0 !important;
+	border: 1.5px solid var(--kt-portal-muted) !important;
+	border-radius: 2px !important;
+	background: #fff !important;
+	box-shadow: none !important;
+	flex: 0 0 auto;
+	cursor: pointer;
+}
+.kt-a0-root .kt-s300-check input[type="checkbox"]:checked,
+.kt-a0-root .kt-s300-cert-check input[type="checkbox"]:checked {
+	border-color: var(--kt-portal-primary) !important;
+	background-color: var(--kt-portal-primary) !important;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M3.5 8.5l3 3 6-7'/%3E%3C/svg%3E") !important;
+	background-size: 12px 12px !important;
+	background-position: center !important;
+	background-repeat: no-repeat !important;
+	box-shadow: none !important;
+}

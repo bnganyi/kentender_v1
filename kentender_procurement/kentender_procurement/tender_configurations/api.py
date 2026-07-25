@@ -758,6 +758,46 @@ def certify_form_of_tender(
 
 
 @frappe.whitelist()
+def get_statutory_declarations(published_tender_ref: str) -> dict[str, Any]:
+	"""Statutory Declarations Review-and-Certify DTO."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.statutory_declarations import (
+		get_statutory_declarations as _get,
+	)
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def save_statutory_declarations(
+	published_tender_ref: str,
+	payload: dict[str, Any] | str | None = None,
+	expected_modified: str | None = None,
+) -> dict[str, Any]:
+	"""Save independent-tender answer and competitor disclosures (does not certify)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.statutory_declarations import (
+		save_statutory_declarations as _save,
+	)
+
+	return _save(published_tender_ref, payload, expected_modified=expected_modified)
+
+
+@frappe.whitelist()
+def certify_statutory_declarations(
+	published_tender_ref: str,
+	expected_modified: str | None = None,
+) -> dict[str, Any]:
+	"""Atomically certify the four statutory declaration legal records."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.statutory_declarations import (
+		certify_statutory_declarations as _cert,
+	)
+
+	return _cert(published_tender_ref, expected_modified=expected_modified)
+
+
+@frappe.whitelist()
 def get_confidential_business_questionnaire(published_tender_ref: str) -> dict[str, Any]:
 	"""S300 — Confidential Business Questionnaire DTO."""
 	_require_login()

@@ -4,6 +4,7 @@
 {% block head_include %}
 <link rel="stylesheet" href="/assets/kentender_procurement/css/available_tenders.css">
 <link rel="stylesheet" href="/assets/kentender_procurement/css/submission_checklist_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/bidder_portal_forms.css">
 <link rel="stylesheet" href="/assets/kentender_procurement/css/form_of_tender_web.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
@@ -343,8 +344,15 @@ frappe.ready(function () {
 		tbody.appendChild(tr);
 	}
 
-	function saveDisclosure(cb) {
+	function applyBidModified(msg) {
+		if (msg && msg.bid_modified) {
+			root.setAttribute("data-bid-modified", String(msg.bid_modified));
+		}
+	}
+
+	function saveDisclosure(cb, opts) {
 		if (readOnly || certified) return;
+		opts = opts || {};
 		frappe.call({
 			method: "kentender_procurement.tender_configurations.api.save_form_of_tender",
 			args: {
@@ -354,7 +362,8 @@ frappe.ready(function () {
 			},
 			callback: function (r) {
 				if (r.message) {
-					showToast("Disclosure saved.");
+					applyBidModified(r.message);
+					if (!opts.silent) showToast("Disclosure saved.");
 					if (cb) cb(r.message);
 					else window.location.reload();
 				}
@@ -407,7 +416,9 @@ frappe.ready(function () {
 	if (certifyBtn) {
 		certifyBtn.addEventListener("click", () => {
 			if (certifyBtn.disabled) return;
-			saveDisclosure(() => openDialog());
+			// Persist disclosure, refresh concurrency token, then open dialog.
+			// Cancel must not leave a stale data-bid-modified (KT_FOT_CONFLICT).
+			saveDisclosure(() => openDialog(), { silent: true });
 		});
 	}
 	const cancelBtn = document.getElementById("kt-fot-certify-cancel");

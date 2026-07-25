@@ -394,6 +394,7 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 		is_matrix = is_requirement_matrix_section(sec) or key == "requirements_compliance"
 		is_fot = key == "form_of_tender"
 		is_cbq = key == "confidential_business_questionnaire"
+		is_statutory = key == "statutory_declarations"
 		is_docs = key == "tender_documents_and_addenda" or _is_document_acknowledgement_section(sec)
 		has_responses = _has_payload(payload)
 		has_validation_blockers = _section_has_validation_blockers(payload)
@@ -472,6 +473,15 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 			has_validation_blockers = status == STATUS_NEEDS_ATTENTION
 			has_responses = status != STATUS_NOT_STARTED
 			is_partial = status == STATUS_IN_PROGRESS
+		elif is_statutory and not not_applicable and not bid_sealed:
+			from kentender_procurement.tender_configurations.services.statutory_declarations import (
+				derive_statutory_section_status,
+			)
+
+			status = derive_statutory_section_status(sec, payload if isinstance(payload, dict) else {})
+			has_validation_blockers = status == STATUS_NEEDS_ATTENTION
+			has_responses = status != STATUS_NOT_STARTED
+			is_partial = status == STATUS_IN_PROGRESS
 		elif is_matrix and not not_applicable and not bid_sealed and _has_matrix_requirements(sec, schema):
 			status, mx_blockers = matrix_section_roll_up(sec, payload)
 			has_validation_blockers = bool(mx_blockers) or has_validation_blockers
@@ -498,10 +508,12 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 		elif status == STATUS_LOCKED:
 			action_label, issues_label, issues_count = "View", "Complete required sections first", 0
 		elif status == STATUS_COMPLETE:
-			action_label = "Review" if (is_matrix or is_fot or is_docs or is_cbq) else "View"
+			action_label = "Review" if (is_matrix or is_fot or is_docs or is_cbq or is_statutory) else "View"
 			issues_label, issues_count = "—", 0
 		elif status == STATUS_IN_PROGRESS:
-			action_label = "Continue" if (is_matrix or is_fot or is_docs or is_cbq) else "Resume"
+			action_label = (
+				"Continue" if (is_matrix or is_fot or is_docs or is_cbq or is_statutory) else "Resume"
+			)
 			issues_label, issues_count = "—", 0
 		elif status == STATUS_NOT_STARTED:
 			action_label, issues_label, issues_count = "Start", "—", 0
@@ -528,6 +540,12 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 			)
 
 			action_url = portal_cbq_url(pub_ref)
+		elif is_statutory:
+			from kentender_procurement.tender_configurations.services.statutory_declarations import (
+				portal_statutory_url,
+			)
+
+			action_url = portal_statutory_url(pub_ref)
 		elif key == "tender_documents_and_addenda" or _is_document_acknowledgement_section(sec):
 			action_url = _portal_documents_url(pub_ref)
 		elif is_matrix:

@@ -4,6 +4,7 @@
 {% block head_include %}
 <link rel="stylesheet" href="/assets/kentender_procurement/css/available_tenders.css">
 <link rel="stylesheet" href="/assets/kentender_procurement/css/submission_checklist_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/bidder_portal_forms.css">
 <link rel="stylesheet" href="/assets/kentender_procurement/css/confidential_business_questionnaire_web.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
@@ -102,9 +103,9 @@
 							<h3>{{ _("Entity Details") }}</h3>
 							<div class="kt-s300-grid">
 								<div class="kt-s300-stack">
-									<div class="kt-s300-field"><label>{{ _("Legal name of bidder") }} *</label><input data-field="legal_name" type="text" placeholder="Enter legal business name"></div>
+									<div class="kt-s300-field"><label>{{ _("Legal name of bidder") }} <span class="kt-s300-req" aria-hidden="true">*</span></label><input data-field="legal_name" type="text" placeholder="Enter legal business name"></div>
 									<div class="kt-s300-grid kt-s300-grid--2-tight">
-										<div class="kt-s300-field"><label>{{ _("Country") }} *</label>
+										<div class="kt-s300-field"><label>{{ _("Country") }} <span class="kt-s300-req" aria-hidden="true">*</span></label>
 											<select data-answer="country"><option value="">Select country</option><option>Kenya</option><option>Uganda</option><option>Tanzania</option><option>Other</option></select>
 										</div>
 										<div class="kt-s300-field"><label>{{ _("City") }}</label><input data-answer="city" type="text"></div>
@@ -117,35 +118,44 @@
 								</div>
 								<div class="kt-s300-stack">
 									<div class="kt-s300-field"><label>{{ _("Postal address") }}</label><textarea data-answer="postal_address" rows="2" placeholder="P.O. Box ..."></textarea></div>
-									<div class="kt-s300-field"><label>{{ _("Contact person") }} *</label><input data-answer="contact_person" type="text" placeholder="Full name of contact person"></div>
-									<div class="kt-s300-field"><label>{{ _("Contact email") }} *</label><input data-answer="contact_email" type="email" placeholder="Email for official correspondence"></div>
+									<div class="kt-s300-field"><label>{{ _("Contact person") }} <span class="kt-s300-req" aria-hidden="true">*</span></label><input data-answer="contact_person" type="text" placeholder="Full name of contact person"></div>
+									<div class="kt-s300-field"><label>{{ _("Contact email") }} <span class="kt-s300-req" aria-hidden="true">*</span></label><input data-answer="contact_email" type="email" placeholder="Email for official correspondence"></div>
 								</div>
 							</div>
 						</div>
-						{# FoT projection sources — owned by CBQ, not duplicated on Form of Tender. #}
+						{# FoT / Statutory projection sources — owned by CBQ, not duplicated on those sections. #}
 						<div class="kt-s300-section" data-testid="kt-s300-signatory-soe">
 							<h3>{{ _("Authorized signatory and state ownership") }}</h3>
-							<p>{{ _("These details are used by the Form of Tender. They are not re-entered there.") }}</p>
+							<p>{{ _("These details are used by the Form of Tender and Statutory Declarations. They are not re-entered there.") }}</p>
 							<div class="kt-s300-grid">
-								<div class="kt-s300-field"><label>{{ _("Authorized signatory full name") }} *</label>
+								<div class="kt-s300-field"><label>{{ _("Authorized signatory full name") }} <span class="kt-s300-req" aria-hidden="true">*</span></label>
 									<input data-answer="authorized_signatory_name" type="text" placeholder="Name of person authorized to bind the Tenderer" data-testid="kt-s300-signatory-name">
 								</div>
-								<div class="kt-s300-field"><label>{{ _("Title / designation") }} *</label>
+								<div class="kt-s300-field"><label>{{ _("Title / designation") }} <span class="kt-s300-req" aria-hidden="true">*</span></label>
 									<input data-answer="authorized_signatory_title" type="text" placeholder="e.g. Managing Director" data-testid="kt-s300-signatory-title">
+								</div>
+								<div class="kt-s300-field"><label>{{ _("Postal address") }} <span class="kt-s300-req" aria-hidden="true">*</span></label>
+									<input data-answer="declarant_postal_address" type="text" placeholder="P.O. Box …" data-testid="kt-s300-declarant-postal">
+								</div>
+								<div class="kt-s300-field"><label>{{ _("Place of residence") }} <span class="kt-s300-req" aria-hidden="true">*</span></label>
+									<input data-answer="declarant_place_of_residence" type="text" placeholder="City / locality" data-testid="kt-s300-declarant-place">
+								</div>
+								<div class="kt-s300-field"><label>{{ _("Country of residence") }} <span class="kt-s300-req" aria-hidden="true">*</span></label>
+									<input data-answer="declarant_country_of_residence" type="text" placeholder="Country" data-testid="kt-s300-declarant-country">
 								</div>
 								<div class="kt-s300-field" style="grid-column:1/-1">
 									<label class="kt-s300-check"><input type="checkbox" data-answer-bool="authority_to_bind_confirmed" data-testid="kt-s300-authority-bind">
 										{{ _("I confirm this signatory is authorized to certify bid forms and bind the Tenderer.") }}
 									</label>
 								</div>
-								<div class="kt-s300-field">
-									<label>{{ _("Is the Tenderer a state-owned enterprise or institution?") }} *</label>
+								<div class="kt-s300-field kt-s300-field--span" data-testid="kt-s300-soe-field">
+									<label>{{ _("Is the Tenderer a state-owned enterprise or institution?") }} <span class="kt-s300-req" aria-hidden="true">*</span></label>
 									<div class="kt-s300-radios">
 										<label><input type="radio" name="state_owned_enterprise" data-answer-radio="state_owned_enterprise" value="yes"> {{ _("Yes") }}</label>
 										<label><input type="radio" name="state_owned_enterprise" data-answer-radio="state_owned_enterprise" value="no"> {{ _("No") }}</label>
 									</div>
 								</div>
-								<div class="kt-s300-field" id="kt-s300-soe-itt47" hidden>
+								<div class="kt-s300-field kt-s300-field--span" id="kt-s300-soe-itt47" hidden>
 									<label class="kt-s300-check"><input type="checkbox" data-answer-bool="state_owned_itt47_affirmed" data-testid="kt-s300-soe-itt47">
 										{{ _("Applicable ITT 4.7 conditions are met.") }}
 									</label>
@@ -163,14 +173,14 @@
 						<div class="kt-s300-section">
 							<h3>{{ _("1.0 Trade licence") }}</h3>
 							<div class="kt-s300-grid">
-								<div class="kt-s300-field"><label>{{ _("Current trade licence registration number") }} *</label><input data-answer="trade_licence_number" type="text" placeholder="Enter registration number"></div>
-								<div class="kt-s300-field"><label>{{ _("Expiry date") }} *</label><input data-answer="licence_expiry" type="date"></div>
+								<div class="kt-s300-field"><label>{{ _("Current trade licence registration number") }} <span class="kt-s300-req" aria-hidden="true">*</span></label><input data-answer="trade_licence_number" type="text" placeholder="Enter registration number"></div>
+								<div class="kt-s300-field"><label>{{ _("Expiry date") }} <span class="kt-s300-req" aria-hidden="true">*</span></label><input data-answer="licence_expiry" type="date"></div>
 							</div>
 						</div>
 						<div class="kt-s300-section">
 							<h3>{{ _("2.0 Registering body or agency") }}</h3>
 							<div class="kt-s300-grid">
-								<div class="kt-s300-field"><label>{{ _("Name") }} *</label><input data-rb="name" type="text" placeholder="e.g. Registrar of Companies"></div>
+								<div class="kt-s300-field"><label>{{ _("Name") }} <span class="kt-s300-req" aria-hidden="true">*</span></label><input data-rb="name" type="text" placeholder="e.g. Registrar of Companies"></div>
 								<div class="kt-s300-field"><label>{{ _("Country") }}</label>
 									<select data-rb="country"><option value="">Select country</option><option>Kenya</option><option>Uganda</option><option>Tanzania</option><option>Other</option></select>
 								</div>
@@ -183,32 +193,32 @@
 						<div class="kt-s300-section">
 							<h3>{{ _("3.0 Business operations") }}</h3>
 							<div class="kt-s300-grid kt-s300-grid--3">
-								<div class="kt-s300-field"><label>{{ _("Nature of business") }} *</label><input data-answer="nature_of_business" type="text" placeholder="e.g. IT Solutions Provider"></div>
-								<div class="kt-s300-field"><label>{{ _("Max value of business handled") }} *</label><input data-answer="max_business_value" type="text" placeholder="0.00"></div>
+								<div class="kt-s300-field"><label>{{ _("Nature of business") }} <span class="kt-s300-req" aria-hidden="true">*</span></label><input data-answer="nature_of_business" type="text" placeholder="e.g. IT Solutions Provider"></div>
+								<div class="kt-s300-field"><label>{{ _("Max value of business handled") }} <span class="kt-s300-req" aria-hidden="true">*</span></label><input data-answer="max_business_value" type="text" placeholder="0.00"></div>
 								<div class="kt-s300-field"><label>{{ _("Currency") }}</label>
 									<select data-answer="currency"><option value="KES">Kenya Shilling (KES)</option><option value="USD">US Dollar (USD)</option><option value="EUR">Euro (EUR)</option></select>
 								</div>
 							</div>
 						</div>
-						<div class="kt-s300-section kt-s300-stock-panel" id="kt-s300-stock-wrap">
-							<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:1rem;align-items:center;margin-bottom:1rem">
+						<div class="kt-s300-section kt-s300-stock-panel" id="kt-s300-stock-wrap" data-testid="kt-s300-stock-wrap">
+							<div class="kt-s300-stock-panel__head">
 								<div>
-									<h3 style="margin-bottom:0.35rem">{{ _("Is the bidder listed on a stock exchange?") }}</h3>
-									<p style="margin:0;color:var(--kt-s300-muted)">{{ _("If yes, provide registration details of the listing authority.") }}</p>
+									<h3>{{ _("Is the bidder listed on a stock exchange?") }}</h3>
+									<p>{{ _("If yes, provide registration details of the listing authority.") }}</p>
 								</div>
-								<div class="kt-s300-radios" style="margin:0">
-									<label><input type="radio" name="stock_listed" value="yes"> {{ _("Yes") }}</label>
-									<label><input type="radio" name="stock_listed" value="no"> {{ _("No") }}</label>
+								<div class="kt-s300-radios">
+									<label><input type="radio" name="stock_listed" value="yes" data-testid="kt-s300-stock-yes"> {{ _("Yes") }}</label>
+									<label><input type="radio" name="stock_listed" value="no" data-testid="kt-s300-stock-no"> {{ _("No") }}</label>
 								</div>
 							</div>
-							<div id="kt-s300-stock-panel" style="display:none">
+							<div id="kt-s300-stock-panel" data-testid="kt-s300-stock-panel" hidden>
 								<div class="kt-s300-grid">
 									<div class="kt-s300-field"><label>{{ _("Stock exchange name") }}</label><input data-stock="name" type="text"></div>
 									<div class="kt-s300-field"><label>{{ _("Country") }}</label><input data-stock="country" type="text"></div>
 									<div class="kt-s300-field"><label>{{ _("Physical address") }}</label><input data-stock="physical_address" type="text"></div>
 									<div class="kt-s300-field"><label>{{ _("Postal address") }}</label><input data-stock="postal_address" type="text"></div>
-									<div class="kt-s300-field"><label>{{ _("Email") }}</label><input data-stock="email" type="email"></div>
-									<div class="kt-s300-field"><label>{{ _("Telephone") }}</label><input data-stock="phone" type="text"></div>
+									<div class="kt-s300-field"><label>{{ _("Email") }}</label><input data-stock="email" type="email" data-testid="kt-s300-stock-email"></div>
+									<div class="kt-s300-field"><label>{{ _("Telephone") }}</label><input data-stock="phone" type="text" data-testid="kt-s300-stock-phone"></div>
 								</div>
 							</div>
 						</div>
@@ -228,7 +238,7 @@
 						<div id="kt-s300-own-sole" class="kt-s300-section" style="display:none">
 							<h3>{{ _("Sole proprietor") }}</h3>
 							<div class="kt-s300-grid">
-								<div class="kt-s300-field"><label>{{ _("Full name") }} *</label><input data-answer="proprietor_name" type="text"></div>
+								<div class="kt-s300-field"><label>{{ _("Full name") }} <span class="kt-s300-req" aria-hidden="true">*</span></label><input data-answer="proprietor_name" type="text"></div>
 								<div class="kt-s300-field"><label>{{ _("Age") }}</label><input data-answer="proprietor_age" type="text"></div>
 								<div class="kt-s300-field"><label>{{ _("Citizenship") }}</label><input data-answer="proprietor_citizenship" type="text"></div>
 								<div class="kt-s300-field"><label>{{ _("Country of origin") }}</label><input data-answer="proprietor_country_of_origin" type="text"></div>
@@ -244,7 +254,7 @@
 						<div id="kt-s300-own-company" class="kt-s300-section" style="display:none">
 							<h3>{{ _("Company") }}</h3>
 							<div class="kt-s300-grid">
-								<div class="kt-s300-field"><label>{{ _("Company type") }} *</label><input data-answer="company_type" type="text" placeholder="e.g. private limited"></div>
+								<div class="kt-s300-field"><label>{{ _("Company type") }} <span class="kt-s300-req" aria-hidden="true">*</span></label><input data-answer="company_type" type="text" placeholder="e.g. private limited"></div>
 								<div class="kt-s300-field"><label>{{ _("Nominal capital") }}</label><input data-answer="share_capital_nominal" type="text"></div>
 								<div class="kt-s300-field"><label>{{ _("Issued capital") }}</label><input data-answer="share_capital_issued" type="text"></div>
 							</div>
@@ -458,11 +468,11 @@
 			<div class="kt-s300-dialog__fields" data-testid="kt-s300-certify-dialog-fields">
 				<div class="kt-s300-grid">
 					<div class="kt-s300-field">
-						<label>{{ _("Full name of person certifying") }} *</label>
+						<label>{{ _("Full name of person certifying") }} <span class="kt-s300-req" aria-hidden="true">*</span></label>
 						<input data-cert="certifier_name" type="text" placeholder="{{ _('Enter legal name') }}" autocomplete="name">
 					</div>
 					<div class="kt-s300-field">
-						<label>{{ _("Title or designation") }} *</label>
+						<label>{{ _("Title or designation") }} <span class="kt-s300-req" aria-hidden="true">*</span></label>
 						<input data-cert="certifier_title" type="text" placeholder="{{ _('e.g. Managing Director') }}" autocomplete="organization-title">
 					</div>
 				</div>
@@ -718,7 +728,7 @@ frappe.ready(function () {
 			const el = root.querySelector('input[name="stock_listed"][value="' + listed + '"]');
 			if (el) el.checked = true;
 		}
-		document.getElementById("kt-s300-stock-panel").style.display = listed === "yes" ? "block" : "none";
+		setStockListedPanel(listed === "yes");
 		if (entity.entity_type) {
 			const el = root.querySelector('input[name="entity_type"][value="' + entity.entity_type + '"]');
 			if (el) el.checked = true;
@@ -1172,9 +1182,14 @@ frappe.ready(function () {
 	root.querySelectorAll('input[name="submission_type"]').forEach((el) => {
 		el.addEventListener("change", () => toggleJV(el.value === "jv"));
 	});
+	function setStockListedPanel(open) {
+		const panel = document.getElementById("kt-s300-stock-panel");
+		if (!panel) return;
+		panel.hidden = !open;
+	}
 	root.querySelectorAll('input[name="stock_listed"]').forEach((el) => {
 		el.addEventListener("change", () => {
-			document.getElementById("kt-s300-stock-panel").style.display = el.value === "yes" ? "block" : "none";
+			setStockListedPanel(el.value === "yes");
 		});
 	});
 	root.querySelectorAll('input[name="entity_type"]').forEach((el) => {

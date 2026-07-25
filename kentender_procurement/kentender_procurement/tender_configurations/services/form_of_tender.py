@@ -415,8 +415,11 @@ def _statutory_complete(responses: dict[str, Any], snapshot: dict[str, Any]) -> 
 	)
 	if not has:
 		return True
-	resp = responses.get(STATUTORY_KEY) if isinstance(responses.get(STATUTORY_KEY), dict) else {}
-	return cstr(resp.get("section_status") or "") == STATUS_COMPLETE or bool(resp.get("complete"))
+	from kentender_procurement.tender_configurations.services.statutory_declarations import (
+		is_statutory_certified,
+	)
+
+	return is_statutory_certified(responses)
 
 
 def _lots_confirmed(responses: dict[str, Any], snapshot: dict[str, Any]) -> bool:

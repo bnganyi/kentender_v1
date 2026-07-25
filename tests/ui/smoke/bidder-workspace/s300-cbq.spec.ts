@@ -62,6 +62,89 @@ test.describe("S300 CBQ portal", () => {
 		await expect(page.getByTestId("kt-s300-save-draft")).toBeVisible();
 		await expect(page.getByTestId("kt-a2-sidebar")).toBeVisible();
 		await expect(page.getByTestId("kt-s300-tender-aside")).toBeVisible();
+
+		// Signatory/SOE: full-width SOE label, compact fields, flat radios, red required *.
+		await expect(page.getByTestId("kt-s300-signatory-soe")).toBeVisible();
+		await expect(page.getByTestId("kt-s300-soe-field")).toBeVisible();
+		const polish = await page.evaluate(() => {
+			const auth = document.querySelector(
+				'[data-testid="kt-s300-authority-bind"]'
+			) as HTMLInputElement | null;
+			const soe = document.querySelector(
+				'[data-testid="kt-s300-signatory-soe"] input[type="radio"][value="yes"]'
+			) as HTMLInputElement | null;
+			const text = document.querySelector(
+				'[data-testid="kt-s300-signatory-name"]'
+			) as HTMLInputElement | null;
+			const soeField = document.querySelector(
+				'[data-testid="kt-s300-soe-field"]'
+			) as HTMLElement | null;
+			const soeLabel = soeField?.querySelector("label") as HTMLElement | null;
+			const req = document.querySelector(
+				'[data-testid="kt-s300-signatory-soe"] .kt-s300-req'
+			) as HTMLElement | null;
+			const box = (el: HTMLElement | null) => {
+				if (!el) return null;
+				const r = el.getBoundingClientRect();
+				const cs = getComputedStyle(el);
+				return {
+					w: Math.round(r.width),
+					h: Math.round(r.height),
+					bg: cs.backgroundColor,
+					appearance: cs.appearance,
+				};
+			};
+			return {
+				auth: box(auth),
+				soe: box(soe),
+				text: box(text),
+				soeFieldW: soeField ? Math.round(soeField.getBoundingClientRect().width) : 0,
+				soeLabelH: soeLabel ? Math.round(soeLabel.getBoundingClientRect().height) : 0,
+				reqColor: req ? getComputedStyle(req).color : null,
+				checkLabelTransform: (() => {
+					const el = document.querySelector(
+						'[data-testid="kt-s300-signatory-soe"] label.kt-s300-check'
+					) as HTMLElement | null;
+					return el ? getComputedStyle(el).textTransform : null;
+				})(),
+			};
+		});
+		expect(polish.auth).toBeTruthy();
+		expect(polish.soe).toBeTruthy();
+		expect(polish.text).toBeTruthy();
+		expect(polish.auth!.w).toBeLessThanOrEqual(24);
+		expect(polish.auth!.h).toBeLessThanOrEqual(24);
+		expect(polish.soe!.w).toBeLessThanOrEqual(24);
+		expect(polish.soe!.h).toBeLessThanOrEqual(24);
+		expect(polish.soe!.appearance).toMatch(/none/i);
+		expect(polish.text!.h).toBeLessThanOrEqual(36);
+		expect(polish.text!.bg).toMatch(/rgb\(255,\s*255,\s*255\)/);
+		// Focus ring: light blue border + soft halo (not heavy black).
+		const signatory = page.getByTestId("kt-s300-signatory-name");
+		await signatory.click();
+		await expect(signatory).toBeFocused();
+		await expect
+			.poll(async () => {
+				return signatory.evaluate((el) => {
+					const c = getComputedStyle(el).getPropertyValue("border-top-color");
+					const m = c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+					if (!m) return null;
+					const r = Number(m[1]);
+					const g = Number(m[2]);
+					const b = Number(m[3]);
+					// Light blue-ish: blue channel leads; not ink/black/grey outline.
+					return b > 180 && b > r && b > g && r < 160;
+				});
+			})
+			.toBe(true);
+		const focusShadow = await signatory.evaluate((el) => getComputedStyle(el).boxShadow);
+		expect(focusShadow).not.toBe("none");
+		expect(focusShadow.toLowerCase()).not.toMatch(/rgb\(\s*0,\s*0,\s*0/);
+		expect(polish.soeFieldW).toBeGreaterThan(480);
+		expect(polish.soeLabelH).toBeLessThanOrEqual(28);
+		expect(polish.reqColor).toMatch(/rgb\(186,\s*26,\s*26\)/);
+		expect(polish.checkLabelTransform).toBe("none");
+
 		// Stitch footer: viewport-fixed, full width of main canvas (not inset card).
 		const footerBox = await page.evaluate(() => {
 			const el = document.querySelector('[data-testid="kt-s300-footer"]') as HTMLElement | null;
@@ -188,6 +271,36 @@ test.describe("S300 CBQ portal", () => {
 		await expect(page.locator("#alert-container .desk-alert")).toHaveCount(0, {
 			timeout: 5_000,
 		});
+
+		// Stock listing panel must not clip the last input row (section:last-child padding bug).
+		await expect(page.getByTestId("kt-s300-stock-wrap")).toBeVisible();
+		await page.getByTestId("kt-s300-stock-yes").check();
+		await expect(page.getByTestId("kt-s300-stock-panel")).toBeVisible();
+		const stockClip = await page.evaluate(() => {
+			const wrap = document.querySelector(
+				'[data-testid="kt-s300-stock-wrap"]'
+			) as HTMLElement | null;
+			const email = document.querySelector(
+				'[data-testid="kt-s300-stock-email"]'
+			) as HTMLElement | null;
+			const phone = document.querySelector(
+				'[data-testid="kt-s300-stock-phone"]'
+			) as HTMLElement | null;
+			if (!wrap || !email || !phone) return null;
+			const wr = wrap.getBoundingClientRect();
+			const er = email.getBoundingClientRect();
+			const pr = phone.getBoundingClientRect();
+			const cs = getComputedStyle(wrap);
+			return {
+				padBottom: parseFloat(cs.paddingBottom) || 0,
+				emailBottomInside: er.bottom <= wr.bottom - 4,
+				phoneBottomInside: pr.bottom <= wr.bottom - 4,
+			};
+		});
+		expect(stockClip).toBeTruthy();
+		expect(stockClip!.padBottom).toBeGreaterThanOrEqual(16);
+		expect(stockClip!.emailBottomInside).toBe(true);
+		expect(stockClip!.phoneBottomInside).toBe(true);
 
 		// After continue with restored values: step 1 is complete only if snap had required fields.
 		const step1 = page.locator('[data-step-indicator="1"]');

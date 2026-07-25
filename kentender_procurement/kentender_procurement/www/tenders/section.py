@@ -17,6 +17,10 @@ from kentender_procurement.tender_configurations.services.confidential_business_
 )
 from kentender_procurement.tender_configurations.services.form_of_tender import SECTION_KEY as FOT_KEY
 from kentender_procurement.tender_configurations.services.form_of_tender import portal_fot_url
+from kentender_procurement.tender_configurations.services.statutory_declarations import (
+	SECTION_KEY as STAT_KEY,
+	portal_statutory_url,
+)
 from kentender_procurement.tender_configurations.services.requirement_matrix import (
 	get_requirement_matrix,
 	portal_section_url,
@@ -48,6 +52,10 @@ def get_context(context):
 
 	if section_key == CBQ_KEY:
 		frappe.local.flags.redirect_location = portal_cbq_url(publication_ref)
+		raise frappe.Redirect
+
+	if section_key == STAT_KEY:
+		frappe.local.flags.redirect_location = portal_statutory_url(publication_ref)
 		raise frappe.Redirect
 
 	if section_key in MATRIX_KEYS:

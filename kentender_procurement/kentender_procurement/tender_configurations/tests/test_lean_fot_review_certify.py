@@ -77,6 +77,10 @@ def _publish_cfg(cfg_id: str) -> str:
 
 def _seed_prereqs(ref: str, cfg_id: str) -> None:
 	"""Make FoT ready except commissions (caller sets commissions)."""
+	from kentender_procurement.tender_configurations.services.statutory_declarations import (
+		seed_statutory_certified_for_tests,
+	)
+
 	get_form_of_tender(ref)  # ensure draft
 	acknowledge_tender_documents(ref)
 	seed_price_schedule_for_tests(ref, grand_total=450000000, currency="KES", discounts_offered="no")
@@ -86,7 +90,6 @@ def _seed_prereqs(ref: str, cfg_id: str) -> None:
 	doc = _get_bid(bid_id)
 	responses = _parse_json(doc.responses, {})
 	# Merge — do not wipe docs/price already seeded above.
-	responses["statutory_declarations"] = {"complete": True, "section_status": "Complete"}
 	responses["confidential_business_questionnaire"] = {
 		"entities": [
 			{
@@ -98,6 +101,9 @@ def _seed_prereqs(ref: str, cfg_id: str) -> None:
 					"authorized_signatory_name": "Jane Doe",
 					"authorized_signatory_title": "Managing Director",
 					"authority_to_bind_confirmed": "yes",
+					"declarant_postal_address": "P.O. Box 12345",
+					"declarant_place_of_residence": "Nairobi",
+					"declarant_country_of_residence": "Kenya",
 					"state_owned_enterprise": "no",
 				},
 				"conflict_rows": {},
@@ -115,6 +121,7 @@ def _seed_prereqs(ref: str, cfg_id: str) -> None:
 	doc.responses = json.dumps(responses, ensure_ascii=False)
 	doc.save(ignore_permissions=True)
 	frappe.db.commit()
+	seed_statutory_certified_for_tests(ref)
 
 
 class TestLeanFotReviewCertify(unittest.TestCase):
@@ -230,6 +237,14 @@ class TestLeanFotReviewCertify(unittest.TestCase):
 			"Needs Attention",
 			"In Progress",
 		))
+
+	def test_template_refreshes_concurrency_token_on_save(self):
+		src = frappe.get_app_path(
+			"kentender_procurement", "www", "tenders", "form_of_tender.html"
+		)
+		text = open(src, encoding="utf-8").read()
+		self.assertIn("applyBidModified", text)
+		self.assertIn("{ silent: true }", text)
 
 	def test_template_has_review_certify_markers(self):
 		src = frappe.get_app_path("kentender_procurement", "www", "tenders", "form_of_tender.html")

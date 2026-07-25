@@ -110,6 +110,15 @@ ALLOWED_ANSWER_KEYS = frozenset(
 		"share_capital_nominal",
 		"share_capital_issued",
 		"directors",
+		# FoT / Statutory projection — authorized declarant (owned by CBQ).
+		"authorized_signatory_name",
+		"authorized_signatory_title",
+		"authority_to_bind_confirmed",
+		"declarant_postal_address",
+		"declarant_place_of_residence",
+		"declarant_country_of_residence",
+		"state_owned_enterprise",
+		"state_owned_itt47_affirmed",
 	}
 )
 
@@ -591,12 +600,16 @@ def _store_response(bid, payload: dict[str, Any], *, event: str = "section_saved
 	}
 	bid.responses = json.dumps(responses, ensure_ascii=False)
 	_append_audit(bid, event, {"section_key": SECTION_KEY})
-	# FoT is a derived instrument — CBQ changes withdraw FoT certification.
+	# FoT / Statutory are derived instruments — CBQ changes withdraw certifications.
 	from kentender_procurement.tender_configurations.services.form_of_tender import (
 		invalidate_fot_certifications,
 	)
+	from kentender_procurement.tender_configurations.services.statutory_declarations import (
+		invalidate_statutory_certifications,
+	)
 
 	invalidate_fot_certifications(bid, reason="cbq_changed")
+	invalidate_statutory_certifications(bid, reason="cbq_changed")
 	bid.save(ignore_permissions=True)
 	frappe.db.commit()
 

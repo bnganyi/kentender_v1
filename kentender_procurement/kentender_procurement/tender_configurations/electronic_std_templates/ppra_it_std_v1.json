@@ -261,7 +261,7 @@
       "title": "Statutory Declarations",
       "order": 4,
       "renderer": "structured_form",
-      "bidder_instructions": "Complete the Certificate of Independent Tender Determination, Self-Declaration, and Code of Ethical Conduct declarations.",
+      "bidder_instructions": "Review the four statutory declaration records, answer how this tender was prepared, disclose any competitor interactions if required, and certify the declaration bundle. Certification creates four separate legal records; saving a draft does not certify.",
       "source_refs": [
         "PPRA IT STD Section IV — Tendering Forms (statutory declarations)"
       ],
@@ -271,10 +271,88 @@
       },
       "confirmation_required_for_submission": false,
       "completion_rule": "server_derived_from_responses",
-      "locked_legal_text": null,
-      "bidder_owned_fields": [],
+      "summary_statements": {
+        "sd1": "The Tenderer, its directors and subcontractors have not been debarred from participating in public procurement proceedings.",
+        "sd2": "The Tenderer, its agents and subcontractors have not and will not engage in corruption, fraud, inducement or collusion in this tender.",
+        "code_of_ethics": "The Tenderer has read and understood the applicable procurement legislation and Code of Ethics and commits to comply with them.",
+        "fraud_appendix_ack": "Fraud and Corruption Appendix acknowledged."
+      },
+      "legal_records": [
+        {
+          "record_key": "independent_tender_determination",
+          "title": "Certificate of Independent Tender Determination",
+          "body": "CERTIFICATE OF INDEPENDENT TENDER DETERMINATION\n\nI, the undersigned, in submitting the accompanying Letter of Tender to {procuring_entity_name} for: {tender_title} ({tender_reference}) in response to the request for tenders made by {tenderer_name} do hereby make the following statements that I certify to be true and complete in every respect:\n\n1. I have read and I understand the contents of this Certificate;\n2. I understand that the Tender will be disqualified if this Certificate is found not to be true and complete in every respect;\n3. I am the authorized representative of the Tenderer with authority to sign this Certificate, and to submit the Tender on behalf of the Tenderer;\n4. For the purposes of this Certificate and the Tender, I understand that the word \"competitor\" shall include any individual or organization, other than the Tenderer, whether or not affiliated with the Tenderer, who has been requested to submit a Tender in response to this request for tenders, or who could potentially submit a tender based on their qualifications, abilities or experience;\n5. Independent-tender determination: {independent_tender_statement}\n{competitor_disclosures_block}\n\nDeclarant: {declarant_name}, {declarant_title}\nPostal address: {declarant_postal_address}\nPlace of residence: {declarant_place_of_residence}\nCountry of residence: {declarant_country_of_residence}\nCertified at: {certified_at}"
+        },
+        {
+          "record_key": "sd1_not_debarred",
+          "title": "SD1 - Self-Declaration that the Tenderer is Not Debarred",
+          "body": "SELF-DECLARATION THAT THE PERSON/TENDERER IS NOT DEBARRED IN THE MATTER OF THE PUBLIC PROCUREMENT AND ASSET DISPOSAL ACT 2015\n\nI, {declarant_name} of {declarant_postal_address}, being a resident of {declarant_place_of_residence} in {declarant_country_of_residence}, do hereby make a statement as follows:-\n\n1. THAT I am the {declarant_title} of {tenderer_name}, the Tenderer in respect of Tender No. {tender_reference} for {tender_title} to {procuring_entity_name}.\n2. THAT the Tenderer, its directors and subcontractors have not been debarred from participating in public procurement proceedings.\n3. THAT what is deponed to hereinabove is true to the best of my knowledge, information and belief.\n\nCertified at: {certified_at}"
+        },
+        {
+          "record_key": "sd2_no_corruption",
+          "title": "SD2 - Self-Declaration that the Tenderer will not engage in Corruption or Fraud",
+          "body": "SELF-DECLARATION THAT THE PERSON/TENDERER WILL NOT ENGAGE IN ANY CORRUPT OR FRAUDULENT PRACTICE\n\nI, {declarant_name} of {declarant_postal_address}, being a resident of {declarant_place_of_residence} in {declarant_country_of_residence}, do hereby make a statement as follows:-\n\n1. THAT I am the {declarant_title} of {tenderer_name}, the Tenderer in respect of Tender No. {tender_reference} for {tender_title} to {procuring_entity_name}.\n2. THAT the Tenderer, its agents and subcontractors have not and will not engage in any corrupt or fraudulent practice, inducement or collusive practice in connection with this tender.\n3. THAT what is deponed to hereinabove is true to the best of my knowledge, information and belief.\n\nCertified at: {certified_at}"
+        },
+        {
+          "record_key": "code_of_ethics",
+          "title": "Code of Ethics Declaration",
+          "body": "DECLARATION AND COMMITMENT TO THE CODE OF ETHICS\n\nI, {declarant_name}, {declarant_title} of {tenderer_name}, declare that I have read and fully understood the contents of the Public Procurement and Asset Disposal Act and the Code of Ethics for persons participating in public procurement, and I make this solemn declaration conscientiously believing the same to be true.\n\nI commit to comply with the applicable procurement legislation and Code of Ethics in respect of Tender No. {tender_reference} ({tender_title}) for {procuring_entity_name}.\n\nFRAUD AND CORRUPTION APPENDIX ACKNOWLEDGED\n{fraud_and_corruption_appendix}\n\nDeclarant: {declarant_name}, {declarant_title}\nCertified at: {certified_at}",
+          "appendix_key": "fraud_and_corruption",
+          "appendix_title": "Fraud and Corruption Appendix",
+          "appendix_body": "APPENDIX — FRAUD AND CORRUPTION\n\nThe Tenderer shall not engage in corrupt, fraudulent, collusive, coercive or obstructive practices. For the purposes of this Appendix:\n(a) \"corrupt practice\" means the offering, giving, receiving, or soliciting of anything of value to influence the action of a public official in the procurement process or in contract execution;\n(b) \"fraudulent practice\" means a misrepresentation of facts in order to influence a procurement process or the execution of a contract to the detriment of the Procuring Entity;\n(c) \"collusive practice\" means a scheme or arrangement between two or more tenderers designed to establish tender prices at artificial, non-competitive levels;\n(d) \"coercive practice\" means harming or threatening to harm persons or their property to influence their participation in a procurement process;\n(e) \"obstructive practice\" means deliberately destroying, falsifying, altering or concealing evidence material to an investigation.\n\nThe Tenderer acknowledges that breach of these provisions may result in debarment, cancellation of the contract, and other remedies available in law."
+        }
+      ],
+      "bidder_owned_fields": [
+        {
+          "field_key": "independent_tender_choice",
+          "label": "How was this tender prepared?",
+          "control": "select",
+          "options": [
+            "independent",
+            "disclosed"
+          ],
+          "required": true
+        }
+      ],
+      "repeatable_tables": [
+        {
+          "table_key": "competitor_disclosures",
+          "label": "Competitor disclosures",
+          "required_when": {
+            "field": "independent_tender_choice",
+            "equals": "disclosed"
+          },
+          "min_rows_when_required": 1,
+          "columns": [
+            {
+              "field_key": "competitor_name",
+              "label": "Competitor name",
+              "control": "text",
+              "required": true
+            },
+            {
+              "field_key": "nature_of_interaction",
+              "label": "Nature of interaction",
+              "control": "text",
+              "required": true
+            },
+            {
+              "field_key": "reason",
+              "label": "Reason",
+              "control": "text",
+              "required": true
+            },
+            {
+              "field_key": "complete_details",
+              "label": "Complete details",
+              "control": "text",
+              "required": true
+            }
+          ]
+        }
+      ],
       "tender_owned_slots": [],
-      "slice_status": "route_only_not_editable_in_lean_slice"
+      "slice_status": "statutory_implemented"
     },
     {
       "section_key": "tender_security",

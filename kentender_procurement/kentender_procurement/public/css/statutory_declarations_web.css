@@ -1,0 +1,93 @@
+/* Statutory Declarations — extends FoT Review-and-Certify chrome (form_of_tender_web.css) */
+.kt-stat-records {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	margin-bottom: 1.25rem;
+}
+.kt-stat-record {
+	background: var(--kt-fot-surface, #fff);
+	border: 1px solid var(--kt-fot-outline, #c4c6cf);
+	padding: 1.25rem 1.35rem;
+}
+.kt-stat-record__head {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 1rem;
+	margin-bottom: 0.75rem;
+}
+.kt-stat-record__head h3 {
+	margin: 0;
+	font-size: 18px;
+	line-height: 24px;
+	font-weight: 600;
+}
+.kt-stat-record__badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	font-family: "JetBrains Mono", ui-monospace, monospace;
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	color: var(--kt-fot-ok, #065f46);
+	background: var(--kt-fot-ok-bg, #ecfdf5);
+	padding: 0.25rem 0.5rem;
+	border-radius: 0.125rem;
+}
+.kt-stat-record__badge .material-symbols-outlined {
+	font-size: 14px;
+}
+.kt-stat-choice-card {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.75rem;
+	padding: 1rem;
+	border: 1px solid var(--kt-fot-outline, #c4c6cf);
+	cursor: pointer;
+	margin-bottom: 0.5rem;
+}
+.kt-stat-choice-card:hover {
+	background: var(--kt-fot-surface-low, #f2f4f6);
+}
+.kt-stat-choice-card input {
+	margin-top: 0.2rem;
+}
+.kt-stat-disclosure-hint {
+	color: var(--kt-fot-error, #ba1a1a);
+	font-size: 13px;
+	margin: 0.5rem 0 0;
+}
+.kt-stat-appendix-ack {
+	margin-top: 0.75rem;
+	padding: 0.75rem 1rem;
+	background: var(--kt-fot-surface-low, #f2f4f6);
+	border-left: 4px solid #000;
+	font-size: 13px;
+}
+.kt-stat-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 280px;
+	gap: 1.25rem;
+	align-items: start;
+}
+@media (max-width: 960px) {
+	.kt-stat-layout {
+		grid-template-columns: 1fr;
+	}
+}
+.kt-stat-declarant-meta {
+	font-size: 13px;
+	color: var(--kt-fot-muted, #44474c);
+	margin: 0.25rem 0;
+}
+.kt-stat-drawer-appendix {
+	margin-top: 1.5rem;
+	padding-top: 1rem;
+	border-top: 1px solid var(--kt-fot-outline, #c4c6cf);
+}
+.kt-stat-drawer-appendix h3 {
+	font-size: 14px;
+	margin: 0 0 0.75rem;
+}

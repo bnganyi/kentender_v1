@@ -133,6 +133,10 @@ website_route_rules = [
 		"from_route": "/tenders/<publication_ref>/sections/confidential_business_questionnaire",
 		"to_route": "tenders/confidential_business_questionnaire",
 	},
+	{
+		"from_route": "/tenders/<publication_ref>/sections/statutory_declarations",
+		"to_route": "tenders/statutory_declarations",
+	},
 	{"from_route": "/tenders/<publication_ref>/sections/<section_key>", "to_route": "tenders/section"},
 	{"from_route": "/tenders/<publication_ref>/documents", "to_route": "tenders/documents"},
 	{"from_route": "/tenders/<publication_ref>/evidence", "to_route": "tenders/evidence"},

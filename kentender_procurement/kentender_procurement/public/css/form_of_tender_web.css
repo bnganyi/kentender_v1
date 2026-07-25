@@ -224,7 +224,8 @@
 	margin: 0.75rem 0 1rem;
 	font-size: 13px;
 }
-.kt-fot-radios label { display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; }
+.kt-fot-radios label { display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+/* Radio control chrome: bidder_portal_forms.css */
 
 .kt-fot-table-wrap { overflow-x: auto; margin-bottom: 0.75rem; }
 .kt-fot-table {
@@ -238,12 +239,11 @@
 	padding: 0.35rem;
 	text-align: left;
 }
+/* Table inputs: compact chrome from bidder_portal_forms.css */
 .kt-fot-table input {
 	width: 100%;
-	border: 1px solid var(--kt-fot-outline);
-	padding: 0.35rem 0.5rem;
-	font: inherit;
 	box-sizing: border-box;
+	font: inherit;
 }
 
 .kt-fot-offer-tabs {
@@ -342,15 +342,30 @@
 	border-radius: 0.25rem;
 	text-decoration: none;
 }
-.kt-fot-btn:hover { background: #e0e3e5; }
+.kt-fot-btn:hover { background: #e0e3e5; color: var(--kt-fot-primary); }
 .kt-fot-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .kt-fot-btn--primary {
 	background: var(--kt-fot-primary);
 	color: #fff;
 	border-color: var(--kt-fot-primary);
 }
-.kt-fot-btn--primary:hover { opacity: 0.92; background: var(--kt-fot-primary); }
+/* Keep white label on <a class="kt-fot-btn--primary"> — website a:hover paints ink black
+   and turns the control into a solid black slab (Return to Checklist on certified FoT/Stat). */
+a.kt-fot-btn.kt-fot-btn--primary:hover,
+a.kt-fot-btn.kt-fot-btn--primary:focus,
+a.kt-fot-btn.kt-fot-btn--primary:focus-visible,
+a.kt-fot-btn.kt-fot-btn--primary:active,
+.kt-fot-btn--primary:hover,
+.kt-fot-btn--primary:focus,
+.kt-fot-btn--primary:focus-visible,
+.kt-fot-btn--primary:active {
+	opacity: 0.92;
+	background: var(--kt-fot-primary) !important;
+	color: #fff !important;
+	border-color: var(--kt-fot-primary) !important;
+}
 .kt-fot-btn--ghost { background: transparent; }
+.kt-fot-btn--ghost:hover { background: transparent; color: var(--kt-fot-primary); }
 .kt-fot-btn--block { width: 100%; }
 
 /* Fixed full-width footer (sidebar → right), matching CBQ / Stitch */

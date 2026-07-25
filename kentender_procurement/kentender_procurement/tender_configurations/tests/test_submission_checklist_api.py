@@ -225,8 +225,8 @@ class TestSubmissionChecklistApi(unittest.TestCase):
 		ref = self._publish()
 		get_submission_checklist(ref)
 		bid_id = resolve_published_tender_backend(ref)["bid_id"]
-		# CBQ uses certify-derived status — exercise Needs Attention on a generic section.
-		other_key = "statutory_declarations"
+		# CBQ/Statutory use certify-derived status — exercise Needs Attention on a generic section.
+		other_key = "tender_security"
 		acknowledge_tender_documents(ref)
 		save_section_responses(
 			bid_id,
@@ -269,8 +269,8 @@ class TestSubmissionChecklistApi(unittest.TestCase):
 		ref = self._publish()
 		get_submission_checklist(ref)
 		bid_id = resolve_published_tender_backend(ref)["bid_id"]
-		# Documents use version-bound ack; CBQ uses certify-derived status — use a generic section.
-		section_key = "statutory_declarations"
+		# Documents use version-bound ack; CBQ/Statutory use certify-derived status — use a generic section.
+		section_key = "tender_security"
 		save_section_responses(bid_id, section_key, {"draft_answer": "wip", "in_progress": True})
 		out2 = get_submission_checklist(ref)
 		row = next(s for s in out2["sections"] if s["section_key"] == section_key)
