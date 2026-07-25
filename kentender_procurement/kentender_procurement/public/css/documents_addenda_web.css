@@ -32,6 +32,31 @@ body:has(.kt-a3-root) .page-breadcrumbs {
 	font-size: 0.875rem;
 	color: var(--kt-a2-muted, #44474c);
 }
+.kt-a3-package-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem 1.25rem;
+	margin-top: 0.5rem !important;
+	font-size: 0.8125rem !important;
+}
+.kt-a3-ack-kpi--stale {
+	border-color: #b45309;
+	background: #fffbeb;
+}
+.kt-a3-ack-kpi--stale .kt-a3-ack-kpi-value .material-symbols-outlined {
+	color: #b45309;
+}
+.kt-a3-chip--new {
+	display: inline-block;
+	margin-left: 0.35rem;
+	padding: 0.1rem 0.45rem;
+	font-size: 0.7rem;
+	font-weight: 600;
+	vertical-align: middle;
+	background: #eff6ff;
+	color: #1e40af;
+	border-radius: 0.25rem;
+}
 
 .kt-a3-ack-kpi {
 	min-width: 200px;

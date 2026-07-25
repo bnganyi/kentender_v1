@@ -95,6 +95,14 @@ test.describe("A3 Tender Documents & Addenda portal", () => {
 
 		const body = await page.locator("body").innerText();
 		expect(body).not.toMatch(/Tender Management|Tender Configurations|Evaluation and Award/i);
+		expect(body).not.toMatch(/Package Artifact|document_hash|SHA-256|Current package:/i);
+		expect(body).not.toMatch(/\bDigest\b|\bBWMF\b|\bManifest\b/i);
 		await expect(page.locator("nav.navbar")).toBeHidden();
+		await expect(page.locator('[data-testid="kt-a3-package-meta"]')).toHaveCount(0);
+
+		await page.screenshot({
+			path: "docs/bidder-workspace/A3-documents-and-addenda/artifacts/a3-presentation-boundary-corrected.png",
+			fullPage: true,
+		});
 	});
 });

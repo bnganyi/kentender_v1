@@ -14,9 +14,7 @@
 {% set active_nav = "my_bids" %}
 {% set active_ws = "prepare" %}
 <div class="kt-a0-root kt-a2-root kt-a3-root" data-testid="kt-a3-documents-root"
-	data-publication-ref="{{ d.published_tender_ref }}"
-	data-bid-id="{{ d.bid_id or '' }}"
-	data-section-key="{{ d.section_key or '' }}">
+	data-publication-ref="{{ d.published_tender_ref }}">
 	{% include "templates/includes/kt_bidder_portal_nav.html" %}
 
 	<div class="kt-a2-shell">
@@ -29,7 +27,7 @@
 						<h1 data-testid="kt-a3-title">{{ _("Tender Documents & Addenda") }}</h1>
 						<p>{{ _("Review all official documentation and acknowledge any modifications before submission.") }}</p>
 					</div>
-					<div class="kt-a3-ack-kpi {% if d.acknowledgement_status == 'Complete' %}kt-a3-ack-kpi--ok{% else %}kt-a3-ack-kpi--pending{% endif %}"
+					<div class="kt-a3-ack-kpi {% if d.acknowledgement_status == 'Complete' %}kt-a3-ack-kpi--ok{% elif d.acknowledgement_stale %}kt-a3-ack-kpi--stale{% else %}kt-a3-ack-kpi--pending{% endif %}"
 						data-testid="kt-a3-ack-status">
 						<span class="kt-a3-ack-kpi-label">{{ _("Acknowledgment Status") }}</span>
 						<div class="kt-a3-ack-kpi-value">
@@ -123,11 +121,18 @@
 								{% else %}
 									{% for add in d.addenda %}
 									<article class="kt-a3-addendum {% if add.acknowledged %}kt-a3-addendum--acked{% else %}kt-a3-addendum--pending{% endif %}"
-										data-testid="kt-a3-addendum-row">
+										data-testid="kt-a3-addendum-row"
+										data-addendum-id="{{ add.id }}"
+										data-is-new="{{ add.is_new or 0 }}">
 										<div>
-											<h3>{{ add.title }}</h3>
+											<h3>
+												{{ add.title }}
+												{% if add.is_new and not add.acknowledged %}
+												<span class="kt-a3-chip kt-a3-chip--new" data-testid="kt-a3-addendum-new">{{ _("New") }}</span>
+												{% endif %}
+											</h3>
 											<p class="kt-a3-muted">
-												{% if add.published_at %}{{ _("Published:") }} {{ add.published_at }} · {% endif %}
+												{% if add.published_at or add.issued_at %}{{ _("Published:") }} {{ add.published_at or add.issued_at }} · {% endif %}
 												{% if add.ref %}{{ _("Ref:") }} {{ add.ref }}{% endif %}
 											</p>
 											{% if add.summary %}<p>{{ add.summary }}</p>{% endif %}

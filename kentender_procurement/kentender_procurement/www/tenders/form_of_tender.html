@@ -1,0 +1,293 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }} | KenTender{% endblock %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/kentender_procurement/css/available_tenders.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/submission_checklist_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/form_of_tender_web.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+{% endblock %}
+
+{% block page_content %}
+{% set f = fot %}
+{% set active_nav = "my_bids" %}
+{% set active_ws = "checklist" %}
+{% set tv = f.tender_owned_values or {} %}
+{% set resp = f.response or {} %}
+{% set decls_resp = resp.declarations or {} %}
+{% set price = f.price_summary or {} %}
+<div class="kt-a0-root kt-a2-root kt-fot-root" data-testid="kt-fot-root"
+	data-publication-ref="{{ f.published_tender_ref }}"
+	data-bid-id="{{ f.bid_id or '' }}"
+	data-bid-modified="{{ f.bid_modified or '' }}"
+	data-section-status="{{ f.section_status }}"
+	data-read-only="{{ f.read_only or 0 }}">
+	{% include "templates/includes/kt_bidder_portal_nav.html" %}
+
+	<div class="kt-a2-shell">
+		{% include "templates/includes/kt_bidder_workspace_sidebar.html" %}
+
+		<main class="kt-a2-main kt-fot-main">
+			<div class="kt-fot-main-inner">
+				<header class="kt-fot-page-head">
+					<div>
+						<a class="kt-fot-back" href="{{ f.workspace_url }}" data-testid="kt-fot-back">← {{ _("Back to checklist") }}</a>
+						<h1 data-testid="kt-fot-title">{{ f.section_title }}</h1>
+						<p data-testid="kt-fot-instructions">{{ f.bidder_instructions }}</p>
+					</div>
+					<div class="kt-fot-status" data-testid="kt-fot-status" data-status="{{ f.section_status }}">
+						<span class="kt-fot-status-label">{{ _("Section status") }}</span>
+						<strong>{{ f.section_status }}</strong>
+					</div>
+				</header>
+
+				{% if f.validation and f.validation.issues %}
+				<div class="kt-fot-issues" data-testid="kt-fot-issues">
+					<span class="material-symbols-outlined" aria-hidden="true">error</span>
+					<div>
+						<h3>{{ _("Validation issues") }}</h3>
+						<ul>
+							{% for issue in f.validation.issues %}
+							<li data-testid="kt-fot-issue" data-field="{{ issue.field_key }}">{{ issue.message }}</li>
+							{% endfor %}
+						</ul>
+					</div>
+				</div>
+				{% endif %}
+
+				<section class="kt-fot-card" data-testid="kt-fot-locked-legal">
+					<h2>{{ _("Form of Tender") }}</h2>
+					<pre class="kt-fot-legal">{{ f.locked_legal_preamble }}</pre>
+				</section>
+
+				<section class="kt-fot-card" data-testid="kt-fot-tender-owned">
+					<h2>{{ _("Tender particulars (read-only)") }}</h2>
+					<dl class="kt-fot-dl">
+						<div><dt>{{ _("Tender") }}</dt><dd data-testid="kt-fot-tender-name">{{ tv.tender_name_and_identification or "—" }}</dd></div>
+						<div><dt>{{ _("Procuring entity") }}</dt><dd>{{ tv.procuring_entity_name or "—" }}</dd></div>
+						<div><dt>{{ _("Offer description") }}</dt><dd>{{ tv.offer_description or "—" }}</dd></div>
+						<div><dt>{{ _("Currency") }}</dt><dd>{{ tv.currency or "—" }}</dd></div>
+						<div><dt>{{ _("Tender validity (days)") }}</dt><dd data-testid="kt-fot-validity">{{ tv.tender_validity_days or "—" }}</dd></div>
+					</dl>
+				</section>
+
+				<section class="kt-fot-card" data-testid="kt-fot-price-summary">
+					<h2>{{ _("Offer and price summary") }}</h2>
+					<p class="kt-fot-muted" data-testid="kt-fot-price-message">{{ price.message or _("Totals are derived from the Price Schedule when completed.") }}</p>
+					<dl class="kt-fot-dl">
+						<div><dt>{{ _("Total excluding VAT") }}</dt><dd data-testid="kt-fot-price-ex-vat">{{ price.total_excluding_vat if price.total_excluding_vat is not none else "—" }}</dd></div>
+						<div><dt>{{ _("VAT") }}</dt><dd>{{ price.vat_amount if price.vat_amount is not none else "—" }}</dd></div>
+						<div><dt>{{ _("Grand total") }}</dt><dd data-testid="kt-fot-price-grand">{{ price.grand_total if price.grand_total is not none else "—" }}</dd></div>
+					</dl>
+					<p class="kt-fot-note">{{ _("Bidders do not re-type price totals on the Form of Tender.") }}</p>
+				</section>
+
+				<form class="kt-fot-form" data-testid="kt-fot-form" {% if f.read_only %}aria-disabled="true"{% endif %}>
+					<section class="kt-fot-card" data-testid="kt-fot-bidder-fields">
+						<h2>{{ _("Bidder details and disclosures") }}</h2>
+						<label class="kt-fot-field">
+							<span>{{ _("Bidder legal name") }}</span>
+							<input type="text" name="bidder_legal_name" data-testid="kt-fot-bidder-name"
+								value="{{ resp.bidder_legal_name or '' }}" {% if f.read_only %}disabled{% endif %} />
+						</label>
+						<label class="kt-fot-field">
+							<span>{{ _("Bidder business address") }}</span>
+							<textarea name="bidder_business_address" rows="3" data-testid="kt-fot-bidder-address"
+								{% if f.read_only %}disabled{% endif %}>{{ resp.bidder_business_address or '' }}</textarea>
+						</label>
+						<label class="kt-fot-check">
+							<input type="checkbox" name="tender_validity_acknowledged" value="1"
+								data-testid="kt-fot-validity-ack"
+								{% if resp.tender_validity_acknowledged %}checked{% endif %}
+								{% if f.read_only %}disabled{% endif %} />
+							<span>{{ _("I acknowledge the tender validity period shown above") }}</span>
+						</label>
+						<label class="kt-fot-field">
+							<span>{{ _("Organization status") }}</span>
+							<select name="state_owned_status" data-testid="kt-fot-state-owned" {% if f.read_only %}disabled{% endif %}>
+								<option value="">{{ _("Select…") }}</option>
+								<option value="not_state_owned" {% if resp.state_owned_status == "not_state_owned" %}selected{% endif %}>{{ _("Not state-owned") }}</option>
+								<option value="state_owned" {% if resp.state_owned_status == "state_owned" %}selected{% endif %}>{{ _("State-owned") }}</option>
+							</select>
+						</label>
+						<label class="kt-fot-check kt-fot-state-affirm" data-testid="kt-fot-state-affirm-wrap">
+							<input type="checkbox" name="state_owned_eligibility_affirmation" value="1"
+								data-testid="kt-fot-state-affirm"
+								{% if resp.state_owned_eligibility_affirmation %}checked{% endif %}
+								{% if f.read_only %}disabled{% endif %} />
+							<span>{{ _("State-owned eligibility affirmation") }}</span>
+						</label>
+						<label class="kt-fot-field">
+							<span>{{ _("Commissions, gratuities or fees") }}</span>
+							<select name="commissions_choice" data-testid="kt-fot-commissions-choice" {% if f.read_only %}disabled{% endif %}>
+								<option value="">{{ _("Select…") }}</option>
+								<option value="none" {% if resp.commissions_choice == "none" %}selected{% endif %}>{{ _("None paid or payable") }}</option>
+								<option value="disclose" {% if resp.commissions_choice == "disclose" %}selected{% endif %}>{{ _("Disclose commissions, gratuities or fees") }}</option>
+							</select>
+						</label>
+						<div class="kt-fot-commissions" data-testid="kt-fot-commissions-table">
+							<h3>{{ _("Disclosure rows") }}</h3>
+							<div data-testid="kt-fot-commission-rows">
+								{% set rows = resp.commissions_rows or [] %}
+								{% if not rows %}
+								{% set rows = [{"recipient_name":"","recipient_address":"","reason":"","amount":"","currency": tv.currency or "KES"}] %}
+								{% endif %}
+								{% for row in rows %}
+								<div class="kt-fot-commission-row" data-testid="kt-fot-commission-row">
+									<input type="text" placeholder="{{ _('Recipient name') }}" data-col="recipient_name" value="{{ row.recipient_name or '' }}" {% if f.read_only %}disabled{% endif %} />
+									<input type="text" placeholder="{{ _('Recipient address') }}" data-col="recipient_address" value="{{ row.recipient_address or '' }}" {% if f.read_only %}disabled{% endif %} />
+									<input type="text" placeholder="{{ _('Reason') }}" data-col="reason" value="{{ row.reason or '' }}" {% if f.read_only %}disabled{% endif %} />
+									<input type="text" placeholder="{{ _('Amount') }}" data-col="amount" value="{{ row.amount or '' }}" {% if f.read_only %}disabled{% endif %} />
+									<input type="text" placeholder="{{ _('Currency') }}" data-col="currency" value="{{ row.currency or tv.currency or 'KES' }}" {% if f.read_only %}disabled{% endif %} />
+								</div>
+								{% endfor %}
+							</div>
+							{% if not f.read_only %}
+							<button type="button" class="kt-fot-secondary" data-testid="kt-fot-add-commission">{{ _("Add row") }}</button>
+							{% endif %}
+						</div>
+					</section>
+
+					<section class="kt-fot-card" data-testid="kt-fot-declarations">
+						<h2>{{ _("Legal declarations") }}</h2>
+						{% for d in f.declarations or [] %}
+						{% if d.applicable != False %}
+						<label class="kt-fot-check kt-fot-decl">
+							<input type="checkbox" name="decl_{{ d.declaration_id }}" value="1"
+								data-declaration-id="{{ d.declaration_id }}"
+								data-testid="kt-fot-decl-{{ d.declaration_id }}"
+								{% if decls_resp.get(d.declaration_id) %}checked{% endif %}
+								{% if f.read_only %}disabled{% endif %} />
+							<span>
+								<strong>({{ d.clause_letter }}) {{ d.title }}</strong>
+								<small>{{ d.locked_text }}</small>
+								{% if d.associated_section_key %}
+								<em class="kt-fot-muted">{{ _("Informational link to") }} {{ d.associated_section_key }} — {{ _("not blocking in this slice") }}</em>
+								{% endif %}
+							</span>
+						</label>
+						{% endif %}
+						{% endfor %}
+					</section>
+
+					<section class="kt-fot-card" data-testid="kt-fot-associated">
+						<h2>{{ _("Associated forms") }}</h2>
+						<p class="kt-fot-muted">{{ _("Shown for navigation only until those sections are implemented.") }}</p>
+						<div class="kt-fot-assoc-grid">
+							{% for card in f.associated_forms or [] %}
+							<div class="kt-fot-assoc-card" data-testid="kt-fot-assoc-card">
+								<strong>{{ card.title }}</strong>
+								<span>{{ card.status }}</span>
+								<a href="{{ card.action_url }}">{{ card.action_label }}</a>
+							</div>
+							{% endfor %}
+						</div>
+					</section>
+
+					<div class="kt-fot-actions">
+						<p class="kt-fot-note" data-testid="kt-fot-save-note">{{ _("Save stores a draft only. It does not confirm or submit your bid.") }}</p>
+						{% if not f.read_only %}
+						<button type="submit" class="kt-fot-primary" data-testid="kt-fot-save">{{ _("Save draft") }}</button>
+						{% endif %}
+						<a class="kt-fot-secondary" href="{{ f.workspace_url }}" data-testid="kt-fot-return">{{ _("Return to checklist") }}</a>
+					</div>
+					<div class="kt-fot-flash" data-testid="kt-fot-flash" hidden></div>
+				</form>
+			</div>
+		</main>
+	</div>
+</div>
+<script>
+(function () {
+	const root = document.querySelector("[data-testid='kt-fot-root']");
+	if (!root || root.getAttribute("data-read-only") === "1") return;
+	const form = root.querySelector("[data-testid='kt-fot-form']");
+	const flash = root.querySelector("[data-testid='kt-fot-flash']");
+	const pubRef = root.getAttribute("data-publication-ref");
+	const addBtn = root.querySelector("[data-testid='kt-fot-add-commission']");
+	const rowsHost = root.querySelector("[data-testid='kt-fot-commission-rows']");
+
+	function showFlash(msg, ok) {
+		if (!flash) return;
+		flash.hidden = false;
+		flash.textContent = msg;
+		flash.dataset.ok = ok ? "1" : "0";
+	}
+
+	function collectPayload() {
+		const fd = new FormData(form);
+		const declarations = {};
+		root.querySelectorAll("[data-declaration-id]").forEach((el) => {
+			declarations[el.getAttribute("data-declaration-id")] = el.checked;
+		});
+		const commissions_rows = [];
+		root.querySelectorAll("[data-testid='kt-fot-commission-row']").forEach((row) => {
+			const item = {};
+			row.querySelectorAll("[data-col]").forEach((input) => {
+				item[input.getAttribute("data-col")] = input.value || "";
+			});
+			if (Object.values(item).some((v) => String(v).trim())) commissions_rows.push(item);
+		});
+		return {
+			bidder_legal_name: fd.get("bidder_legal_name") || "",
+			bidder_business_address: fd.get("bidder_business_address") || "",
+			tender_validity_acknowledged: !!fd.get("tender_validity_acknowledged"),
+			state_owned_status: fd.get("state_owned_status") || "",
+			state_owned_eligibility_affirmation: !!fd.get("state_owned_eligibility_affirmation"),
+			commissions_choice: fd.get("commissions_choice") || "",
+			commissions_rows,
+			declarations,
+			confirmed: false,
+			submitted: false,
+		};
+	}
+
+	if (addBtn && rowsHost) {
+		addBtn.addEventListener("click", function () {
+			const div = document.createElement("div");
+			div.className = "kt-fot-commission-row";
+			div.setAttribute("data-testid", "kt-fot-commission-row");
+			["recipient_name", "recipient_address", "reason", "amount", "currency"].forEach((col) => {
+				const input = document.createElement("input");
+				input.type = "text";
+				input.setAttribute("data-col", col);
+				input.placeholder = col.replaceAll("_", " ");
+				div.appendChild(input);
+			});
+			rowsHost.appendChild(div);
+		});
+	}
+
+	form.addEventListener("submit", function (ev) {
+		ev.preventDefault();
+		const payload = collectPayload();
+		const modified = root.getAttribute("data-bid-modified") || "";
+		frappe.call({
+			method: "kentender_procurement.tender_configurations.api.save_form_of_tender",
+			args: {
+				published_tender_ref: pubRef,
+				payload: payload,
+				expected_modified: modified,
+			},
+			callback: function (r) {
+				const msg = (r && r.message) || {};
+				if (msg.saved) {
+					showFlash("Draft saved. Status: " + (msg.section_status || ""), true);
+					root.setAttribute("data-section-status", msg.section_status || "");
+					if (msg.bid_modified) root.setAttribute("data-bid-modified", msg.bid_modified);
+					const statusEl = root.querySelector("[data-testid='kt-fot-status'] strong");
+					if (statusEl) statusEl.textContent = msg.section_status || "";
+					window.location.reload();
+				} else {
+					showFlash("Save failed.", false);
+				}
+			},
+			error: function (err) {
+				showFlash((err && err.message) || "Save failed.", false);
+			},
+		});
+	});
+})();
+</script>
+{% endblock %}

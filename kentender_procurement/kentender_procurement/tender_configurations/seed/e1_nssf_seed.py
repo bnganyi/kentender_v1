@@ -225,10 +225,37 @@ def _apply_cfg_blobs(
 	return schema
 
 
+def _clear_publication_artifacts() -> None:
+	"""Remove NSSF publication + confirmed packages linked to this seed prefix."""
+	pub_names = frappe.get_all(
+		"IT Tender Publication Record",
+		filters={"configuration_ref": ("like", f"{SEED_PREFIX}%")},
+		pluck="name",
+	)
+	pub_names += frappe.get_all(
+		"IT Tender Publication Record",
+		filters={"configuration": ("like", f"{SEED_PREFIX}%")},
+		pluck="name",
+	)
+	for name in set(pub_names):
+		frappe.delete_doc("IT Tender Publication Record", name, force=True, ignore_permissions=True)
+
+	pkg_names = frappe.get_all(
+		"Confirmed Tender Document Package",
+		filters={"configuration_ref": ("like", f"{SEED_PREFIX}%")},
+		pluck="name",
+	)
+	for name in pkg_names:
+		frappe.delete_doc(
+			"Confirmed Tender Document Package", name, force=True, ignore_permissions=True
+		)
+
+
 def seed_e1_nssf_tender_configuration(*, clear: bool = True) -> dict[str, Any]:
 	"""Load E1 NSSF PoC configuration. Idempotent when clear=True."""
 	frappe.set_user("Administrator")
 	if clear:
+		_clear_publication_artifacts()
 		_clear_seed()
 
 	mapped = map_all_cfg_blobs()
@@ -278,6 +305,90 @@ def seed_e1_nssf_tender_configuration(*, clear: bool = True) -> dict[str, Any]:
 			"blocker_count": readiness.get("blocker_count"),
 			"warning_count": readiness.get("warning_count"),
 		},
+	}
+
+
+def publish_e1_nssf_with_electronic_template(*, clear: bool = True) -> dict[str, Any]:
+	"""Seed NSSF config, confirm package, publish with lean electronic template snapshot."""
+	from frappe.utils import add_to_date, now_datetime
+
+	from kentender_procurement.tender_configurations.services.document_preview import (
+		confirm_document_preview,
+		generate_document_preview,
+	)
+	from kentender_procurement.tender_configurations.services.publication_setup import (
+		publish_tender_for_development_preview,
+		save_publication_setup,
+	)
+
+	seeded = seed_e1_nssf_tender_configuration(clear=clear)
+	cfg_id = seeded["configuration_id"]
+	# F0 applicable set for NSSF lean path: no lots, tender security required.
+	# Fixture mapper leaves security "No"; override here (not in the template file).
+	import json as _json
+
+	tds_raw = frappe.db.get_value("Tender Configuration", cfg_id, "tds_values")
+	try:
+		tds = _json.loads(tds_raw) if isinstance(tds_raw, str) else (tds_raw or {})
+	except (TypeError, ValueError):
+		tds = {}
+	if not isinstance(tds, dict):
+		tds = {}
+	tds["tender_security_required"] = "Yes"
+	if cstr(tds.get("tender_security_type") or "") in ("", "Not Required"):
+		tds["tender_security_type"] = "Bank Guarantee"
+	frappe.db.set_value(
+		"Tender Configuration",
+		cfg_id,
+		{"tds_values": _json.dumps(tds, ensure_ascii=False)},
+		update_modified=False,
+	)
+	frappe.db.commit()
+
+	gen = generate_document_preview(cfg_id)
+	if cstr(gen.get("preview_status")) != "Generated":
+		frappe.throw(
+			frappe._("NSSF document preview failed: {0}").format(gen.get("render_exception")),
+			title="NSSF_SEED_PREVIEW",
+		)
+	conf = confirm_document_preview(cfg_id, {"confirm_ready_for_handoff": 1})
+	pub_id = conf["publication_id"]
+	now = now_datetime()
+	save_publication_setup(
+		pub_id,
+		{
+			"publication_mode": "immediate",
+			"publication_datetime": str(now),
+			"tender_notice": "NSSF SPS ERP — lean electronic STD publication.",
+			"clarification_deadline": str(add_to_date(now, days=2)),
+			"submission_deadline": str(add_to_date(now, days=14)),
+			"opening_datetime": str(add_to_date(now, days=15, hours=1)),
+			"bidder_visibility": "All Registered Bidders",
+			"activate_bidder_workspace": 1,
+			"acknowledgement_confirmed": 1,
+		},
+	)
+	# F0: template remains Draft — use development-preview seal for test/NSSF publish.
+	published = publish_tender_for_development_preview(pub_id)
+	pub_ref = cstr(published.get("publication_ref") or "") or cstr(
+		frappe.db.get_value("IT Tender Publication Record", pub_id, "publication_ref") or ""
+	)
+	snap_raw = frappe.db.get_value(
+		"IT Tender Publication Record", pub_id, "electronic_template_snapshot"
+	)
+	import json as _json
+
+	snapshot = _json.loads(snap_raw) if snap_raw else {}
+	return {
+		**seeded,
+		"publication_id": pub_id,
+		"publication_ref": pub_ref,
+		"electronic_template_hash": frappe.db.get_value(
+			"IT Tender Publication Record", pub_id, "electronic_template_hash"
+		),
+		"calibration_counts": (snapshot or {}).get("calibration_counts") or {},
+		"portal_workspace_url": f"/tenders/{pub_ref}/workspace",
+		"portal_fot_url": f"/tenders/{pub_ref}/sections/form_of_tender",
 	}
 
 

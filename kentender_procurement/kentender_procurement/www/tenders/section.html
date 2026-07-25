@@ -10,9 +10,27 @@
 {% endblock %}
 
 {% block page_content %}
-{% set m = matrix %}
 {% set active_nav = "my_bids" %}
 {% set active_ws = "checklist" %}
+{% if not matrix and section_placeholder %}
+{% set p = section_placeholder %}
+<div class="kt-a0-root kt-a2-root" data-testid="kt-section-placeholder-root"
+	data-publication-ref="{{ p.published_tender_ref }}"
+	data-section-key="{{ p.section_key }}">
+	{% include "templates/includes/kt_bidder_portal_nav.html" %}
+	<div class="kt-a2-shell">
+		{% include "templates/includes/kt_bidder_workspace_sidebar.html" %}
+		<main class="kt-a2-main">
+			<div class="kt-a2-main-inner" style="padding:1.5rem;max-width:40rem;">
+				<h1 data-testid="kt-section-placeholder-title">{{ p.section_title }}</h1>
+				<p data-testid="kt-section-placeholder-message">{{ p.message }}</p>
+				<a class="kt-a2-cta" href="{{ p.workspace_url }}" data-testid="kt-section-placeholder-back">{{ _("Back to checklist") }}</a>
+			</div>
+		</main>
+	</div>
+</div>
+{% else %}
+{% set m = matrix %}
 <div class="kt-a0-root kt-a2-root kt-a4-root" data-testid="kt-a4-matrix-root"
 	data-publication-ref="{{ m.published_tender_ref }}"
 	data-section-key="{{ m.section_key }}"
@@ -222,4 +240,5 @@
 </div>
 <script type="application/json" id="kt-a4-bootstrap">{{ m | tojson }}</script>
 <script src="/assets/kentender_procurement/js/requirement_matrix_web.js"></script>
+{% endif %}
 {% endblock %}

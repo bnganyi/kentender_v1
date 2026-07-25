@@ -25,7 +25,7 @@ from kentender_procurement.tender_configurations.services.electronic_bid import 
 	save_section_responses,
 )
 from kentender_procurement.tender_configurations.services.publication_setup import (
-	publish_tender,
+	publish_tender_for_development_preview,
 	save_publication_setup,
 )
 from kentender_procurement.tender_configurations.services.submission_checklist import (
@@ -156,7 +156,7 @@ class TestSubmissionChecklistApi(unittest.TestCase):
 				"acknowledgement_confirmed": 1,
 			},
 		)
-		published = publish_tender(pub_id)
+		published = publish_tender_for_development_preview(pub_id)
 		ref = cstr(published.get("publication_ref") or "") or cstr(
 			frappe.db.get_value("IT Tender Publication Record", pub_id, "publication_ref") or ""
 		)
@@ -176,74 +176,76 @@ class TestSubmissionChecklistApi(unittest.TestCase):
 		self.assertTrue(out["workspace_url"].endswith("/workspace"))
 		self.assertIn("/tenders/", out["workspace_url"])
 		self.assertEqual(out["primary_action"], ACTION_START_FIRST)
-		self.assertGreaterEqual(len(out["sections"]), 3)
-		keys = {s["section_key"] for s in out["sections"]}
-		self.assertTrue(keys)
+		self.assertEqual(len(out["sections"]), 10)
+		keys = [s["section_key"] for s in out["sections"]]
+		self.assertEqual(keys[0], "tender_documents_and_addenda")
+		self.assertEqual(keys[1], "form_of_tender")
+		self.assertIn("tender_security", keys)
 		for s in out["sections"]:
 			if not s["required"]:
 				continue
-			# Final section may be Locked when prerequisites incomplete; others Not Started.
-			self.assertIn(
-				s["status"],
-				(STATUS_NOT_STARTED, STATUS_LOCKED),
-				s,
-			)
-		self.assertTrue(out["desk_bridge_url"].startswith("/app/it-electronic-bidder-workspace/"))
+			self.assertIn(s["status"], (STATUS_NOT_STARTED, STATUS_LOCKED), s)
+		fot = next(s for s in out["sections"] if s["section_key"] == "form_of_tender")
+		self.assertIn("/sections/form_of_tender", fot["action_url"])
 
 	def test_partial_progress_keeps_unstarted_not_attention(self):
 		"""Unstarted required sections stay Not Started / Start — not Needs Attention blockers."""
+		from kentender_procurement.tender_configurations.services.tender_documents_addenda import (
+			acknowledge_tender_documents,
+		)
+
 		ref = self._publish()
 		out = get_submission_checklist(ref)
-		bid_id = out["bid_id"]
-		first_key = out["sections"][0]["section_key"]
-		second_key = out["sections"][1]["section_key"]
+		self.assertNotIn("bid_id", out)
+		docs_key = "tender_documents_and_addenda"
+		other_key = "confidential_business_questionnaire"
 		frappe.set_user("Administrator")
-		save_section_responses(bid_id, first_key, {"ok": True})
+		acknowledge_tender_documents(ref)
 		out2 = get_submission_checklist(ref)
 		self.assertEqual(out2["primary_action"], ACTION_CONTINUE)
 		self.assertEqual(out2["has_blockers"], 0)
 		self.assertFalse(out2.get("current_issues_summary"))
-		first = next(s for s in out2["sections"] if s["section_key"] == first_key)
+		first = next(s for s in out2["sections"] if s["section_key"] == docs_key)
 		self.assertEqual(first["status"], STATUS_COMPLETE)
-		self.assertEqual(first["action_label"], "View")
-		second = next(s for s in out2["sections"] if s["section_key"] == second_key)
+		self.assertIn(first["action_label"], ("View", "Review"))
+		second = next(s for s in out2["sections"] if s["section_key"] == other_key)
 		self.assertEqual(second["status"], STATUS_NOT_STARTED)
 		self.assertEqual(second["action_label"], "Start")
 		self.assertEqual(second["issues_label"], "—")
 
 	def test_needs_attention_only_for_validation_failures(self):
+		from kentender_procurement.tender_configurations.services.published_tender_overview import (
+			resolve_published_tender_backend,
+		)
+		from kentender_procurement.tender_configurations.services.tender_documents_addenda import (
+			acknowledge_tender_documents,
+		)
+
 		ref = self._publish()
-		out = get_submission_checklist(ref)
-		bid_id = out["bid_id"]
-		first_key = out["sections"][0]["section_key"]
-		second_key = out["sections"][1]["section_key"]
-		save_section_responses(bid_id, first_key, {"ok": True})
+		get_submission_checklist(ref)
+		bid_id = resolve_published_tender_backend(ref)["bid_id"]
+		other_key = "confidential_business_questionnaire"
+		acknowledge_tender_documents(ref)
 		save_section_responses(
 			bid_id,
-			second_key,
+			other_key,
 			{"ok": True, "validation_errors": ["Missing required field"]},
 		)
 		out2 = get_submission_checklist(ref)
-		second = next(s for s in out2["sections"] if s["section_key"] == second_key)
+		second = next(s for s in out2["sections"] if s["section_key"] == other_key)
 		self.assertEqual(second["status"], STATUS_NEEDS_ATTENTION)
 		self.assertEqual(second["action_label"], "Resolve")
 		self.assertEqual(second["issues_label"], "1 Blocker")
 		self.assertEqual(out2["primary_action"], ACTION_FIX_ISSUES)
 		self.assertEqual(out2["has_blockers"], 1)
 
-	def test_final_section_locked_until_prerequisites_complete(self):
+	def test_lean_checklist_has_no_pack10_final_section(self):
+		"""Review/Submit are workflow steps — not checklist rows in the lean template."""
 		ref = self._publish()
 		out = get_submission_checklist(ref)
-		final = next((s for s in out["sections"] if s.get("is_final_section")), None)
-		if final is None:
-			final = next(
-				(s for s in out["sections"] if "final_declaration" in s["section_key"]),
-				None,
-			)
-		self.assertIsNotNone(final, "compiled schema should include final declaration section")
-		self.assertEqual(final["status"], STATUS_LOCKED)
-		self.assertEqual(final["issues_label"], "Complete required sections first")
-		self.assertEqual(final["action_enabled"], 0)
+		keys = {s["section_key"] for s in out["sections"]}
+		self.assertNotIn("final_declaration_and_submit", keys)
+		self.assertNotIn(out["primary_action"], ("Submit & Seal Bid", "Review & Validate"))
 
 	def test_contract_conditions_label_override(self):
 		ref = self._publish()
@@ -253,20 +255,25 @@ class TestSubmissionChecklistApi(unittest.TestCase):
 			None,
 		)
 		if row is None:
-			self.skipTest("compiled schema missing contract_terms_acknowledgement")
+			self.skipTest("lean checklist has no contract_terms_acknowledgement section")
 		self.assertIn("Contract Conditions Acknowledgement", row["title"])
 		self.assertNotIn("Contract Terms Acknowledgement", row["title"])
 
 	def test_in_progress_resume_action(self):
+		from kentender_procurement.tender_configurations.services.published_tender_overview import (
+			resolve_published_tender_backend,
+		)
+
 		ref = self._publish()
-		out = get_submission_checklist(ref)
-		bid_id = out["bid_id"]
-		first_key = out["sections"][0]["section_key"]
-		save_section_responses(bid_id, first_key, {"draft_answer": "wip", "in_progress": True})
+		get_submission_checklist(ref)
+		bid_id = resolve_published_tender_backend(ref)["bid_id"]
+		# Documents use version-bound ack status — exercise Resume on a generic section.
+		section_key = "confidential_business_questionnaire"
+		save_section_responses(bid_id, section_key, {"draft_answer": "wip", "in_progress": True})
 		out2 = get_submission_checklist(ref)
-		first = next(s for s in out2["sections"] if s["section_key"] == first_key)
-		self.assertEqual(first["status"], STATUS_IN_PROGRESS)
-		self.assertEqual(first["action_label"], "Resume")
+		row = next(s for s in out2["sections"] if s["section_key"] == section_key)
+		self.assertEqual(row["status"], STATUS_IN_PROGRESS)
+		self.assertEqual(row["action_label"], "Resume")
 
 
 if __name__ == "__main__":

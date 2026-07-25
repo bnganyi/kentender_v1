@@ -27,12 +27,12 @@ from kentender_procurement.tender_configurations.services.published_tender_overv
 no_cache = 1
 
 
-def _pdf_url(configuration_id: str) -> str:
-	return (
-		"/api/method/kentender_procurement.tender_configurations"
-		".download_tender_configuration_document_preview_pdf"
-		f"?configuration_id={quote(configuration_id, safe='')}"
+def _pdf_url(published_tender_ref: str) -> str:
+	from kentender_procurement.tender_configurations.services.bidder_presentation import (
+		published_tender_pdf_url,
 	)
+
+	return published_tender_pdf_url(published_tender_ref)
 
 
 def _format_display_dt(value: Any) -> str:
@@ -110,8 +110,7 @@ def get_context(context):
 	page_path = f"/tenders/{quote(overview['published_tender_ref'], safe='')}"
 	login_url = "/login?redirect-to=" + quote(page_path, safe="")
 
-	cfg_id = cstr(overview.get("configuration_id") or "")
-	pdf_url = _pdf_url(cfg_id) if cfg_id else ""
+	pdf_url = _pdf_url(overview.get("published_tender_ref") or publication_ref)
 	documents = _documents_for_display(overview.get("documents") or [], pdf_url)
 
 	raw_dates = overview.get("dates") or {}

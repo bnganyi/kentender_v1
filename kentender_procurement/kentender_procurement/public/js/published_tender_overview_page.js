@@ -8,7 +8,7 @@
 	var GET_API = "kentender_procurement.tender_configurations.get_published_tender_overview";
 	var START_API = "kentender_procurement.tender_configurations.start_or_get_bid_workspace";
 	var PDF_API =
-		"kentender_procurement.tender_configurations.download_tender_configuration_document_preview_pdf";
+		"kentender_procurement.tender_configurations.download_published_tender_document_pdf";
 	var STORAGE_KEY = "kt_cl_bw_a1_publication_ref";
 
 	var state = {
@@ -400,13 +400,13 @@
 		});
 	}
 
-	function downloadPdf(configurationId) {
-		if (!configurationId) return;
+	function downloadPdf(publicationRef) {
+		if (!publicationRef) return;
 		window.open(
 			"/api/method/" +
 				PDF_API +
-				"?configuration_id=" +
-				encodeURIComponent(configurationId),
+				"?published_tender_ref=" +
+				encodeURIComponent(publicationRef),
 			"_blank"
 		);
 	}
@@ -462,7 +462,7 @@
 		});
 		$root.on("click.bwa1", "[data-action='view-pdf'], [data-action='download-pdf']", function () {
 			if (!state.payload) return;
-			downloadPdf(state.payload.configuration_id);
+			downloadPdf(state.publicationRef || state.payload.published_tender_ref);
 		});
 	}
 

@@ -5,16 +5,29 @@ import { loginAsAdministrator } from "../../helpers/auth";
  * A2 Submission Checklist — Website workspace home.
  * Route: /tenders/<publication_ref>/workspace
  *
- * A0 primary is View Tender → overview; Continue Bid is secondary when a draft exists.
+ * Seeds the lean NSSF published tender (electronic template snapshot) so the
+ * checklist is authoritative and not dependent on stale /tenders cards.
  */
 
-const ROOT = '[data-testid="kt-a0-tenders-root"]';
-const OVERVIEW = '[data-testid="kt-a1w-overview-root"]';
 const CHECKLIST = '[data-testid="kt-a2-checklist-root"]';
 
-function extractPublicationRef(url: string): string | null {
-	const m = url.match(/\/tenders\/([^/?#]+)/);
-	return m?.[1] || null;
+async function seedLeanNssfPublished(page: import("@playwright/test").Page): Promise<string> {
+	await page.waitForFunction(
+		() => typeof (window as unknown as { frappe?: unknown }).frappe !== "undefined",
+	);
+	const result = await page.evaluate(async () => {
+		// @ts-expect-error frappe on desk
+		const r = await frappe.call({
+			method: "kentender_procurement.tender_configurations.publish_e1_nssf_lean_for_tests",
+			args: { clear: 1 },
+		});
+		return r.message || r;
+	});
+	const ref = (result as { publication_ref?: string }).publication_ref || "";
+	if (!ref) {
+		throw new Error("Lean NSSF publish seed failed: " + JSON.stringify(result));
+	}
+	return ref;
 }
 
 test.describe("A2 Submission Checklist portal", () => {
@@ -23,48 +36,14 @@ test.describe("A2 Submission Checklist portal", () => {
 	}) => {
 		await page.setViewportSize({ width: 1400, height: 900 });
 		await loginAsAdministrator(page);
+		await page.goto("/desk", { waitUntil: "domcontentloaded" });
+		const publicationRef = await seedLeanNssfPublished(page);
+		// Re-auth for Website host — long seed / desk session can drop portal cookies.
+		await loginAsAdministrator(page);
 
-		await page.goto("/tenders", { waitUntil: "domcontentloaded" });
-		await expect(page.locator(ROOT)).toBeVisible({ timeout: 30_000 });
-
-		const secondaryContinue = page
-			.getByTestId("kt-a0-secondary-action")
-			.filter({ hasText: "Continue Bid" })
-			.first();
-		const viewTender = page
-			.getByTestId("kt-a0-primary-action")
-			.filter({ hasText: "View Tender" })
-			.first();
-
-		if ((await secondaryContinue.count()) > 0) {
-			await secondaryContinue.click();
-			await page.waitForURL(/\/tenders\/[^/?#]+\/workspace/, { timeout: 30_000 });
-		} else if ((await viewTender.count()) > 0) {
-			await viewTender.click();
-			await page.waitForURL(/\/tenders\/[^/?#]+/, { timeout: 20_000 });
-			await expect(page.locator(OVERVIEW)).toBeVisible({ timeout: 30_000 });
-			const ref = extractPublicationRef(page.url());
-			expect(ref).toBeTruthy();
-
-			const startBid = page.getByTestId("kt-a1w-primary-cta");
-			const label = (await startBid.getAttribute("data-action-label")) || "";
-			if (["Start Bid", "Continue Bid"].includes(label)) {
-				await startBid.click();
-				await page.waitForURL(/\/tenders\/[^/?#]+\/workspace/, { timeout: 30_000 });
-			} else {
-				await page.goto(`/tenders/${ref}/workspace`, { waitUntil: "domcontentloaded" });
-			}
-		} else {
-			const anyHref = await page
-				.getByTestId("kt-a0-primary-action")
-				.first()
-				.getAttribute("href")
-				.catch(() => null);
-			const ref = anyHref ? extractPublicationRef(anyHref) : null;
-			test.skip(!ref, "No tender cards on /tenders — seed a published open tender");
-			await page.goto(`/tenders/${ref}/workspace`, { waitUntil: "domcontentloaded" });
-		}
-
+		await page.goto(`/tenders/${publicationRef}/workspace`, {
+			waitUntil: "domcontentloaded",
+		});
 		expect(page.url()).toMatch(/\/tenders\/[^/?#]+\/workspace/);
 		expect(page.url()).not.toMatch(/\/desk\/|it-electronic-bidder-workspace/);
 
@@ -75,6 +54,11 @@ test.describe("A2 Submission Checklist portal", () => {
 		await expect(page.getByTestId("kt-a2-section-checklist")).toBeVisible();
 		await expect(page.getByTestId("kt-a2-section-row").first()).toBeVisible();
 		await expect(page.getByTestId("kt-a2-primary-cta")).toBeVisible();
+
+		// Lean canonical 10-section checklist (includes Tender Security + Form of Tender).
+		await expect(page.getByTestId("kt-a2-section-row")).toHaveCount(10);
+		await expect(page.locator(CHECKLIST)).toContainText("Form of Tender");
+		await expect(page.locator(CHECKLIST)).toContainText("Tender Security");
 
 		const countdown = page.getByTestId("kt-a2-time-remaining");
 		await expect(countdown).toHaveAttribute("data-kt-countdown", "");

@@ -6,7 +6,7 @@ BENCH_ROOT ?= /home/midasuser/frappe-bench
 KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency
 INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency
 
-.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate std-verbatim-gate std-step1-gate nssf-calibration-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate
+.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate std-verbatim-gate std-step1-gate nssf-calibration-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate
 
 help:
 	@echo "Targets:"
@@ -52,6 +52,13 @@ help:
 	@echo "  make bw-a2-domain-gate SITE=$(SITE) — Submission Checklist (A2) domain + web route tests"
 	@echo "  make bw-a3-domain-gate SITE=$(SITE) — Tender Documents & Addenda (A3) domain + web route tests"
 	@echo "  make bw-a4-domain-gate SITE=$(SITE) — Requirement Matrix (A4) domain + web route tests"
+	@echo "  make bw-manifest-phase1-gate SITE=$(SITE) — G1 Phase 1 BWMF schemas + NSSF fixture errata"
+	@echo "  make bw-manifest-phase2-gate SITE=$(SITE) — G1 Phase 2 schema preflight + persistence"
+	@echo "  make bw-manifest-phase3-gate SITE=$(SITE) — G1 Phase 3 deterministic BWMF compiler"
+	@echo "  make bw-manifest-phase4-gate SITE=$(SITE) — G1 Phase 4 content-addressed resources"
+	@echo "  make bw-manifest-phase5-gate SITE=$(SITE) — G1 Phase 5 governance and atomic publication"
+	@echo "  make bw-manifest-phase2-reset SITE=$(SITE) — clear BWMF persistence rows"
+	@echo "  make bw-manifest-phase2-reseed SITE=$(SITE) — clear + seed BWMF canonical fixture"
 	@echo "  make ui-bidder-a0-gate — A0 Available Tenders Website Playwright smoke"
 	@echo "  make ui-bidder-a1-gate — Bidder A1 Published Tender Overview Playwright smoke"
 	@echo "  make ui-bidder-a2-gate — A2 Submission Checklist Website Playwright smoke"
@@ -240,10 +247,24 @@ bw-a3-domain-gate:
 		--module kentender_procurement.tender_configurations.tests.test_tender_documents_addenda_api
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.tender_configurations.tests.test_tender_documents_addenda_web
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_bidder_presentation_boundary
 
 ui-bidder-a3-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/bidder-workspace/a3-documents-addenda.spec.ts
+
+bw-x100-domain-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_lean_x100_evidence_and_issues
+
+bw-s300-domain-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_lean_s300_confidential_business_questionnaire
+
+ui-bidder-s300-cbq-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/bidder-workspace/s300-cbq.spec.ts
 
 bw-a4-domain-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
@@ -254,6 +275,48 @@ bw-a4-domain-gate:
 ui-bidder-a4-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/bidder-workspace/a4-requirement-matrix.spec.ts
+
+bw-manifest-phase1-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_bwmf_schema_conformance_phase1
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_bwmf_nssf_fixture_errata_phase1
+
+bw-manifest-phase2-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_bwmf_schema_preflight_phase2
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_bwmf_persistence_phase2
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_bwmf_persistence_phase2b
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_bwmf_persistence_phase2c
+
+bw-manifest-phase3-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_bwmf_compiler_phase3
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_bwmf_compile_service_phase3
+
+bw-manifest-phase4-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_bwmf_resource_oracle_phase4
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_bwmf_resource_verifier_phase4a
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_bwmf_materialize_phase4
+
+bw-manifest-phase5-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_bwmf_governance_phase5
+
+bw-manifest-phase2-reset:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
+		kentender_procurement.tender_configurations.seed.bwmf_canonical_fixture.clear_bwmf_canonical_fixture
+
+bw-manifest-phase2-reseed:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
+		kentender_procurement.tender_configurations.seed.bwmf_canonical_fixture.seed_bwmf_canonical_fixture
 
 ui-std-config-gate:
 	@echo "STD Module POC archived (2026-07). Use: make verify-std-archived && npm run test:ui:smoke:std-module-retired"
@@ -308,22 +371,39 @@ std-step1-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
 		--module kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption
 
+# Short --test names required (FQ dotted paths match zero tests under this runner).
+# Fail the gate if any invocation reports "Ran 0 tests".
 nssf-calibration-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption \
-		--test kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption.TestBe15Step1ActivationConsumption.test_cal_nssf_001_fixture_import_without_master_mutation
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption \
-		--test kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption.TestBe15Step1ActivationConsumption.test_cal_nssf_002_golden_bind
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption \
-		--test kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption.TestBe15Step1ActivationConsumption.test_cal_nssf_003_tds_values_validate_against_fixture
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption \
-		--test kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption.TestBe15Step1ActivationConsumption.test_cal_nssf_012_render_uses_official_locked_text
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
-		--module kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption \
-		--test kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption.TestBe15Step1ActivationConsumption.test_cal_nssf_013_fixture_activation_blocked
+	@set -e; \
+	for t in \
+		test_cal_nssf_001_fixture_import_without_master_mutation \
+		test_cal_nssf_002_golden_bind \
+		test_cal_nssf_003_tds_values_validate_against_fixture \
+		test_cal_nssf_012_render_uses_official_locked_text \
+		test_cal_nssf_013_fixture_activation_blocked; do \
+		echo ">>> nssf-calibration-gate: $$t"; \
+		out=$$(cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+			--module kentender_procurement.std_engine.tests.test_be_15_step1_activation_consumption \
+			--test "$$t" 2>&1); \
+		status=$$?; \
+		printf '%s\n' "$$out"; \
+		if printf '%s\n' "$$out" | grep -Eq 'Ran 0 tests?'; then \
+			echo "ERROR: nssf-calibration-gate matched zero tests for $$t" >&2; \
+			exit 1; \
+		fi; \
+		if ! printf '%s\n' "$$out" | grep -Eq 'Ran [1-9][0-9]* tests?'; then \
+			echo "ERROR: nssf-calibration-gate did not report a non-zero test run for $$t" >&2; \
+			exit 1; \
+		fi; \
+		if [ $$status -ne 0 ]; then \
+			echo "ERROR: nssf-calibration-gate failed for $$t (exit $$status)" >&2; \
+			exit $$status; \
+		fi; \
+		if ! printf '%s\n' "$$out" | grep -Eq '^OK$$'; then \
+			echo "ERROR: nssf-calibration-gate did not end OK for $$t" >&2; \
+			exit 1; \
+		fi; \
+	done
 
 e1-nssf-seed-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \

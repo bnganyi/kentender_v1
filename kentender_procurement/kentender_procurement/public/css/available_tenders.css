@@ -709,10 +709,11 @@ body:has(.kt-a1w-root) .page-breadcrumbs {
 	clip: rect(0, 0, 0, 0);
 	border: 0;
 }
-/* Reduce Desk/web chrome clash when embedded in Frappe web template */
+/* Reduce Desk/web chrome clash when embedded in Frappe web template.
+   Vertical bleed only — horizontal -1rem + width:100% creates a page scrollbar. */
 .page-content-wrapper .kt-a0-root,
 .web-page-content .kt-a0-root {
-	margin: -1rem;
+	margin: -1rem 0;
 }
 
 /* A1 Website Published Tender Overview — matches A1 mock / Desk BW-A1 layout */

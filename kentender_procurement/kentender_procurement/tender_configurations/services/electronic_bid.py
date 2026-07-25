@@ -75,11 +75,18 @@ def _append_audit(doc, event: str, detail: dict[str, Any] | None = None) -> None
 	)
 
 
-def _get_bid(bid_id: str):
+def _get_bid(bid_id: str, *, require_owner: bool = True):
 	bid_id = cstr(bid_id or "").strip()
 	if not bid_id or not frappe.db.exists("Electronic Bid Submission", bid_id):
 		frappe.throw(frappe._("Electronic bid not found."), title="BID_NOT_FOUND")
-	return frappe.get_doc("Electronic Bid Submission", bid_id)
+	doc = frappe.get_doc("Electronic Bid Submission", bid_id)
+	if require_owner and frappe.session.user not in (None, "", "Guest", "Administrator"):
+		if cstr(doc.owner) != frappe.session.user:
+			frappe.throw(
+				frappe._("You cannot access another bidder's electronic bid draft."),
+				frappe.PermissionError,
+			)
+	return doc
 
 
 def _progress(schema: dict[str, Any], responses: dict[str, Any]) -> list[dict[str, Any]]:
@@ -141,19 +148,55 @@ def get_bidder_workspace(configuration_id: str) -> dict[str, Any]:
 	}
 
 
-def create_or_get_draft(configuration_id: str, bidder_label: str | None = None) -> dict[str, Any]:
+def _published_electronic_schema(configuration_id: str) -> dict[str, Any] | None:
+	"""Prefer lean published electronic template snapshot for draft schema."""
+	pub_name = frappe.db.get_value(
+		"IT Tender Publication Record",
+		{"configuration": configuration_id, "status": "Published"},
+		"name",
+		order_by="published_at desc",
+	)
+	if not pub_name:
+		return None
+	raw = frappe.db.get_value(
+		"IT Tender Publication Record", pub_name, "electronic_template_snapshot"
+	)
+	snap = _parse_json(raw, {})
+	if not snap.get("sections"):
+		return None
+	digest = frappe.db.get_value(
+		"IT Tender Publication Record", pub_name, "electronic_template_hash"
+	)
+	out = dict(snap)
+	out["schema_hash"] = cstr(digest or snap.get("template_file_hash") or "")
+	return out
+
+
+def create_or_get_draft(
+	configuration_id: str,
+	bidder_label: str | None = None,
+	*,
+	schema_snapshot: dict[str, Any] | None = None,
+	schema_hash: str | None = None,
+) -> dict[str, Any]:
 	_require_logged_in()
 	configuration_id = cstr(configuration_id or "").strip()
-	existing = frappe.db.get_value(
-		"Electronic Bid Submission",
-		{"configuration": configuration_id, "status": STATUS_DRAFT},
-		"name",
-	)
+	owner_filter = {
+		"configuration": configuration_id,
+		"status": STATUS_DRAFT,
+		"owner": frappe.session.user,
+	}
+	existing = frappe.db.get_value("Electronic Bid Submission", owner_filter, "name")
 	if existing:
 		doc = frappe.get_doc("Electronic Bid Submission", existing)
 		return _bid_dto(doc)
 	cfg = frappe.get_doc("Tender Configuration", configuration_id)
-	schema = persist_compiled_schema(configuration_id)
+	schema = schema_snapshot
+	if not schema or not schema.get("sections"):
+		schema = _published_electronic_schema(configuration_id)
+	if not schema or not schema.get("sections"):
+		schema = persist_compiled_schema(configuration_id)
+	digest = cstr(schema_hash or schema.get("schema_hash") or schema.get("template_file_hash") or "")
 	doc = frappe.get_doc(
 		{
 			"doctype": "Electronic Bid Submission",
@@ -162,7 +205,7 @@ def create_or_get_draft(configuration_id: str, bidder_label: str | None = None) 
 			"std_version": cstr(cfg.std_version or ""),
 			"bidder_label": cstr(bidder_label or "PoC Demo Bidder").strip() or "PoC Demo Bidder",
 			"status": STATUS_DRAFT,
-			"schema_hash": schema.get("schema_hash"),
+			"schema_hash": digest,
 			"schema_snapshot": json.dumps(schema),
 			"responses": json.dumps({}),
 		}
@@ -184,8 +227,19 @@ def save_section_responses(bid_id: str, section_key: str, payload: dict[str, Any
 	if isinstance(payload, str):
 		payload = _parse_json(payload, {})
 	payload = payload or {}
+	from kentender_procurement.tender_configurations.services.section_response_envelope import (
+		extract_meta,
+		extract_payload,
+		write_section_response,
+	)
+
+	# Accept bare payload or envelope; store payload-only for FoT/A2 compatibility.
+	meta = extract_meta(payload) if isinstance(payload, dict) else {}
+	body = extract_payload(payload) if isinstance(payload, dict) else {}
+	if not body and isinstance(payload, dict) and "payload" not in payload:
+		body = payload
 	responses = _parse_json(doc.responses, {})
-	responses[section_key] = payload
+	responses = write_section_response(responses, section_key, body, meta, store_as_envelope=False)
 	doc.responses = json.dumps(responses)
 	_append_audit(doc, "section_saved", {"section_key": section_key})
 	doc.save(ignore_permissions=True)
@@ -546,12 +600,19 @@ def submit_and_seal(bid_id: str) -> dict[str, Any]:
 		)
 	doc = _get_bid(bid_id)
 	responses = _parse_json(doc.responses, {})
+	from kentender_procurement.tender_configurations.services.bid_evidence import (
+		freeze_evidence_for_seal,
+	)
+
+	evidence_snap = freeze_evidence_for_seal(bid_id)
+	doc = _get_bid(bid_id)
 	seal_hash = _canonical_hash(
 		{
 			"responses": responses,
 			"schema_hash": doc.schema_hash,
 			"configuration_id": doc.configuration,
 			"std_version": doc.std_version,
+			"evidence_versions": evidence_snap.get("versions") or [],
 		}
 	)
 	receipt = f"EBD-{cstr(doc.configuration_ref or doc.configuration)}-{frappe.generate_hash(length=8).upper()}"

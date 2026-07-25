@@ -22,8 +22,11 @@ from kentender_procurement.tender_configurations.services.document_preview impor
 	generate_document_preview,
 )
 from kentender_procurement.tender_configurations.services.publication_setup import (
-	publish_tender,
+	publish_tender_for_development_preview,
 	save_publication_setup,
+)
+from kentender_procurement.tender_configurations.services.published_tender_overview import (
+	resolve_published_tender_backend,
 )
 from kentender_procurement.tender_configurations.services.tender_documents_addenda import (
 	ACK_STATUS_ACTION_REQUIRED,
@@ -160,7 +163,7 @@ class TestTenderDocumentsAddendaApi(unittest.TestCase):
 				"acknowledgement_confirmed": 1,
 			},
 		)
-		published = publish_tender(pub_id)
+		published = publish_tender_for_development_preview(pub_id)
 		ref = cstr(published.get("publication_ref") or "") or cstr(
 			frappe.db.get_value("IT Tender Publication Record", pub_id, "publication_ref") or ""
 		)
@@ -201,11 +204,15 @@ class TestTenderDocumentsAddendaApi(unittest.TestCase):
 		self.assertEqual(out["acknowledge_enabled"], 0)
 		self.assertEqual(out["continue_enabled"], 1)
 		self.assertEqual(out["continue_label"], "Continue to Next Section")
-		# Response persisted on electronic bid
-		bid = frappe.get_doc("Electronic Bid Submission", out["bid_id"])
+		# Response persisted on electronic bid (binding hashes stay server-side).
+		backend = resolve_published_tender_backend(ref)
+		bid = frappe.get_doc("Electronic Bid Submission", backend["bid_id"])
 		responses = json.loads(bid.responses or "{}")
 		payload = responses.get(out["section_key"]) or {}
 		self.assertTrue(is_documents_acknowledged(payload))
+		self.assertTrue(payload.get("package_document_hash"))
+		self.assertNotIn("package_context", out)
+		self.assertNotIn("bid_id", out)
 
 
 if __name__ == "__main__":

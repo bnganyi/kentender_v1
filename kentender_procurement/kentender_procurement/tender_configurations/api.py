@@ -5,9 +5,11 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import frappe
+from frappe.utils import cstr
 
 from kentender_procurement.tender_configurations.services.configuration_home import (
 	get_configuration_home as _get_configuration_home,
@@ -568,6 +570,24 @@ def download_tender_configuration_document_preview_pdf(configuration_id: str) ->
 
 
 @frappe.whitelist()
+def download_published_tender_document_pdf(published_tender_ref: str) -> None:
+	"""Bidder-facing PDF download keyed by public publication_ref (no configuration_id)."""
+	_require_login()
+	from frappe.utils import cstr
+
+	from kentender_procurement.tender_configurations.services.document_preview import (
+		download_document_preview_pdf,
+	)
+	from kentender_procurement.tender_configurations.services.published_tender_overview import (
+		resolve_published_tender_backend,
+	)
+
+	ref = cstr(published_tender_ref or "").strip()
+	backend = resolve_published_tender_backend(ref)
+	return download_document_preview_pdf(cstr(backend.get("configuration_id") or ""))
+
+
+@frappe.whitelist()
 def get_tender_configuration_bidder_submission_schema(configuration_id: str) -> dict[str, Any]:
 	"""Return persisted electronic bidder submission schema artifact (E1 Phase 1)."""
 	_require_login()
@@ -693,6 +713,105 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 
 
 @frappe.whitelist()
+def get_form_of_tender(published_tender_ref: str) -> dict[str, Any]:
+	"""Lean Website Form of Tender DTO."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.form_of_tender import (
+		get_form_of_tender as _get,
+	)
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def save_form_of_tender(
+	published_tender_ref: str,
+	payload: dict[str, Any] | str | None = None,
+	expected_modified: str | None = None,
+) -> dict[str, Any]:
+	"""Save Form of Tender draft (does not confirm or submit)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.form_of_tender import (
+		save_form_of_tender as _save,
+	)
+
+	return _save(published_tender_ref, payload, expected_modified=expected_modified)
+
+
+@frappe.whitelist()
+def get_confidential_business_questionnaire(published_tender_ref: str) -> dict[str, Any]:
+	"""S300 — Confidential Business Questionnaire DTO."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.confidential_business_questionnaire import (
+		get_confidential_business_questionnaire as _get,
+	)
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def save_confidential_business_questionnaire(
+	published_tender_ref: str,
+	payload: dict[str, Any] | str | None = None,
+) -> dict[str, Any]:
+	"""S300 — save CBQ draft (does not certify)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.confidential_business_questionnaire import (
+		save_confidential_business_questionnaire as _save,
+	)
+	import json as _json
+
+	if isinstance(payload, str):
+		payload = _json.loads(payload) if payload else {}
+	return _save(published_tender_ref, payload)
+
+
+@frappe.whitelist()
+def add_cbq_jv_entity(published_tender_ref: str, legal_name: str | None = None) -> dict[str, Any]:
+	"""S300 — add a JV member questionnaire instance."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.confidential_business_questionnaire import (
+		add_jv_entity as _add,
+	)
+
+	return _add(published_tender_ref, legal_name or "")
+
+
+@frappe.whitelist()
+def certify_cbq_entity(
+	published_tender_ref: str,
+	entity_id: str,
+	certifier_name: str | None = None,
+	certifier_title: str | None = None,
+	authority_affirmed: int | str | bool | None = None,
+) -> dict[str, Any]:
+	"""S300 — deliberate entity-scoped CBQ certification."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.confidential_business_questionnaire import (
+		certify_cbq_entity as _cert,
+	)
+
+	return _cert(
+		published_tender_ref,
+		entity_id,
+		certifier_name=certifier_name,
+		certifier_title=certifier_title,
+		authority_affirmed=authority_affirmed,
+	)
+
+
+@frappe.whitelist()
+def amend_cbq_certification(published_tender_ref: str, entity_id: str) -> dict[str, Any]:
+	"""S300 — confirm amend after certification; clears the cert record."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.confidential_business_questionnaire import (
+		amend_cbq_certification as _amend,
+	)
+
+	return _amend(published_tender_ref, entity_id)
+
+
+@frappe.whitelist()
 def get_tender_documents_addenda(published_tender_ref: str) -> dict[str, Any]:
 	"""Bidder A3 — Tender Documents & Addenda DTO."""
 	_require_login()
@@ -712,6 +831,21 @@ def acknowledge_tender_documents(published_tender_ref: str) -> dict[str, Any]:
 	)
 
 	return _ack(published_tender_ref)
+
+
+@frappe.whitelist()
+def append_issued_addendum(publication_id: str, row: dict[str, Any] | str | None = None) -> dict[str, Any]:
+	"""Administrator-only — append an issued addendum to the publication register (S100)."""
+	_require_login()
+	if frappe.session.user != "Administrator":
+		frappe.throw(frappe._("Not permitted"), frappe.PermissionError)
+	from kentender_procurement.tender_configurations.services.tender_documents_addenda import (
+		append_issued_addendum as _append,
+	)
+
+	if isinstance(row, str):
+		row = json.loads(row)
+	return _append(publication_id, row or {})
 
 
 @frappe.whitelist()
@@ -770,3 +904,113 @@ def save_requirement_response(
 	)
 
 	return _save(published_tender_ref, section_key, requirement_id, payload)
+
+
+@frappe.whitelist()
+def get_evidence_register(published_tender_ref: str) -> dict[str, Any]:
+	"""X100 — bidder Evidence Register DTO."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.bid_evidence import (
+		get_evidence_register as _get,
+	)
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def upload_evidence(
+	published_tender_ref: str,
+	title: str | None = None,
+	evidence_type: str | None = None,
+	filename: str | None = None,
+	content_b64: str | None = None,
+	content_type: str | None = None,
+	metadata: dict[str, Any] | str | None = None,
+) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.bid_evidence import (
+		upload_evidence as _upload,
+	)
+
+	return _upload(
+		published_tender_ref,
+		title=cstr(title or ""),
+		evidence_type=cstr(evidence_type or "supporting_document"),
+		filename=cstr(filename or ""),
+		content_b64=content_b64,
+		content_type=cstr(content_type or "application/pdf"),
+		metadata=metadata,
+	)
+
+
+@frappe.whitelist()
+def replace_evidence(
+	published_tender_ref: str,
+	evidence_id: str,
+	filename: str | None = None,
+	content_b64: str | None = None,
+	content_type: str | None = None,
+) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.bid_evidence import (
+		replace_evidence as _replace,
+	)
+
+	return _replace(
+		published_tender_ref,
+		evidence_id=evidence_id,
+		filename=cstr(filename or ""),
+		content_b64=content_b64,
+		content_type=cstr(content_type or "application/pdf"),
+	)
+
+
+@frappe.whitelist()
+def link_evidence(
+	published_tender_ref: str,
+	evidence_id: str,
+	target_kind: str | None = None,
+	target_key: str | None = None,
+) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.bid_evidence import (
+		link_evidence as _link,
+	)
+
+	return _link(
+		published_tender_ref,
+		evidence_id=evidence_id,
+		target_kind=cstr(target_kind or "obligation"),
+		target_key=cstr(target_key or ""),
+	)
+
+
+@frappe.whitelist()
+def unlink_evidence(
+	published_tender_ref: str,
+	evidence_id: str,
+	target_kind: str | None = None,
+	target_key: str | None = None,
+) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.bid_evidence import (
+		unlink_evidence as _unlink,
+	)
+
+	return _unlink(
+		published_tender_ref,
+		evidence_id=evidence_id,
+		target_kind=cstr(target_kind or "obligation"),
+		target_key=cstr(target_key or ""),
+	)
+
+
+@frappe.whitelist()
+def get_issue_register(published_tender_ref: str) -> dict[str, Any]:
+	"""X100 — bidder Issues register DTO (server-derived)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.bid_issues import (
+		get_issue_register as _get,
+	)
+
+	return _get(published_tender_ref)

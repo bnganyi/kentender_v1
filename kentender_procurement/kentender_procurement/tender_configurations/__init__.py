@@ -11,6 +11,7 @@ from kentender_procurement.tender_configurations.api import (
 	approve_tender_configuration_for_preview as _approve_tender_configuration_for_preview,
 	confirm_tender_configuration_document_preview as _confirm_tender_configuration_document_preview,
 	create_tender_configuration as _create_tender_configuration,
+	download_published_tender_document_pdf as _download_published_tender_document_pdf,
 	download_tender_configuration_document_preview_pdf as _download_tender_configuration_document_preview_pdf,
 	generate_tender_configuration_document_preview as _generate_tender_configuration_document_preview,
 	get_eligible_procurement_packages as _get_eligible_procurement_packages,
@@ -42,6 +43,7 @@ from kentender_procurement.tender_configurations.api import (
 	get_submission_checklist as _get_submission_checklist,
 	get_tender_documents_addenda as _get_tender_documents_addenda,
 	acknowledge_tender_documents as _acknowledge_tender_documents,
+	append_issued_addendum as _append_issued_addendum,
 	get_requirement_matrix as _get_requirement_matrix,
 	get_requirement_drawer as _get_requirement_drawer,
 	save_requirement_response as _save_requirement_response,
@@ -321,6 +323,11 @@ def download_tender_configuration_document_preview_pdf(configuration_id: str):
 
 
 @frappe.whitelist()
+def download_published_tender_document_pdf(published_tender_ref: str):
+	return _download_published_tender_document_pdf(published_tender_ref)
+
+
+@frappe.whitelist()
 def seed_ui00_dashboard_for_tests(clear: int | str = 1):
 	"""Administrator-only seed for Playwright / integration fixtures."""
 	if frappe.session.user != "Administrator":
@@ -420,6 +427,42 @@ def seed_e1_nssf_for_tests(clear: int | str = 1):
 
 
 @frappe.whitelist()
+def publish_e1_nssf_lean_for_tests(clear: int | str = 1):
+	"""Administrator-only: seed NSSF + confirm package + publish with electronic template snapshot."""
+	if frappe.session.user != "Administrator":
+		frappe.throw(frappe._("Not permitted"), frappe.PermissionError)
+	from kentender_procurement.tender_configurations.seed.e1_nssf_seed import (
+		publish_e1_nssf_with_electronic_template,
+	)
+
+	return publish_e1_nssf_with_electronic_template(clear=bool(int(clear)))
+
+
+@frappe.whitelist()
+def seed_bwmf_canonical_for_tests(clear: int | str = 1):
+	"""Administrator-only BWMF canonical persistence fixture (G1 Phase 2)."""
+	if frappe.session.user != "Administrator":
+		frappe.throw(frappe._("Not permitted"), frappe.PermissionError)
+	from kentender_procurement.tender_configurations.seed.bwmf_canonical_fixture import (
+		seed_bwmf_canonical_fixture,
+	)
+
+	return seed_bwmf_canonical_fixture(clear=bool(int(clear)))
+
+
+@frappe.whitelist()
+def clear_bwmf_canonical_for_tests():
+	"""Administrator-only clear of all BWMF persistence rows."""
+	if frappe.session.user != "Administrator":
+		frappe.throw(frappe._("Not permitted"), frappe.PermissionError)
+	from kentender_procurement.tender_configurations.seed.bwmf_canonical_fixture import (
+		clear_bwmf_canonical_fixture,
+	)
+
+	return clear_bwmf_canonical_fixture()
+
+
+@frappe.whitelist()
 def get_tender_configuration_carry_forward_bundle(configuration_id: str):
 	return _get_tender_configuration_carry_forward_bundle(configuration_id)
 
@@ -485,6 +528,18 @@ def acknowledge_tender_documents(published_tender_ref: str):
 
 
 @frappe.whitelist()
+def append_issued_addendum(publication_id: str, row=None):
+	"""Administrator-only: append an issued addendum for S100 tests / calibration."""
+	if frappe.session.user != "Administrator":
+		frappe.throw(frappe._("Not permitted"), frappe.PermissionError)
+	import json as _json
+
+	if isinstance(row, str):
+		row = _json.loads(row)
+	return _append_issued_addendum(publication_id, row or {})
+
+
+@frappe.whitelist()
 def get_requirement_matrix(
 	published_tender_ref: str,
 	section_key: str,
@@ -518,3 +573,87 @@ def save_requirement_response(
 	payload: dict | str | None = None,
 ):
 	return _save_requirement_response(published_tender_ref, section_key, requirement_id, payload)
+
+
+@frappe.whitelist()
+def get_evidence_register(published_tender_ref: str):
+	from kentender_procurement.tender_configurations.services.bid_evidence import (
+		get_evidence_register as _get,
+	)
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def upload_evidence(
+	published_tender_ref: str,
+	title: str | None = None,
+	evidence_type: str | None = None,
+	filename: str | None = None,
+	content_b64: str | None = None,
+	content_type: str | None = None,
+	metadata=None,
+):
+	from kentender_procurement.tender_configurations.api import upload_evidence as _upload
+
+	return _upload(
+		published_tender_ref,
+		title=title,
+		evidence_type=evidence_type,
+		filename=filename,
+		content_b64=content_b64,
+		content_type=content_type,
+		metadata=metadata,
+	)
+
+
+@frappe.whitelist()
+def replace_evidence(
+	published_tender_ref: str,
+	evidence_id: str,
+	filename: str | None = None,
+	content_b64: str | None = None,
+	content_type: str | None = None,
+):
+	from kentender_procurement.tender_configurations.api import replace_evidence as _replace
+
+	return _replace(
+		published_tender_ref,
+		evidence_id,
+		filename=filename,
+		content_b64=content_b64,
+		content_type=content_type,
+	)
+
+
+@frappe.whitelist()
+def link_evidence(
+	published_tender_ref: str,
+	evidence_id: str,
+	target_kind: str | None = None,
+	target_key: str | None = None,
+):
+	from kentender_procurement.tender_configurations.api import link_evidence as _link
+
+	return _link(published_tender_ref, evidence_id, target_kind=target_kind, target_key=target_key)
+
+
+@frappe.whitelist()
+def unlink_evidence(
+	published_tender_ref: str,
+	evidence_id: str,
+	target_kind: str | None = None,
+	target_key: str | None = None,
+):
+	from kentender_procurement.tender_configurations.api import unlink_evidence as _unlink
+
+	return _unlink(published_tender_ref, evidence_id, target_kind=target_kind, target_key=target_key)
+
+
+@frappe.whitelist()
+def get_issue_register(published_tender_ref: str):
+	from kentender_procurement.tender_configurations.services.bid_issues import (
+		get_issue_register as _get,
+	)
+
+	return _get(published_tender_ref)

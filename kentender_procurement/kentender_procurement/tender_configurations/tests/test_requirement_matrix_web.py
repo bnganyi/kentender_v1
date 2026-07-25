@@ -90,8 +90,12 @@ class TestRequirementMatrixWeb(IntegrationTestCase):
 		return ref
 
 	def _ensure_matrix_schema(self, ref: str) -> None:
-		overview = get_published_tender_overview(ref)
-		draft = create_or_get_draft(overview.get("configuration_id") or self.cfg_id)
+		from kentender_procurement.tender_configurations.services.published_tender_overview import (
+			resolve_published_tender_backend,
+		)
+
+		backend = resolve_published_tender_backend(ref)
+		draft = create_or_get_draft(backend.get("configuration_id") or self.cfg_id)
 		bid = frappe.get_doc("Electronic Bid Submission", draft["bid_id"])
 		bid.db_set("schema_snapshot", json.dumps(MATRIX_SCHEMA), update_modified=False)
 		frappe.db.set_value(
@@ -135,10 +139,11 @@ class TestRequirementMatrixWeb(IntegrationTestCase):
 		self.assertIn("Back to Workspace", body)
 		self.assertIn("Save & Continue", body)
 		self.assertIn("requirement_matrix_web.js", body)
-		# Sidebar: short workspace label — not the full tender title as the h2.
+		# Sidebar: short workspace label only — tender ref/title live in page context (e.g. CBQ aside).
 		self.assertIn('data-testid="kt-a2-sidebar-title"', body)
 		self.assertIn("Bidder Workspace", body)
-		self.assertIn('data-testid="kt-a2-sidebar-tender"', body)
+		self.assertNotIn('data-testid="kt-a2-sidebar-tender"', body)
+		self.assertNotIn('data-testid="kt-a2-sidebar-ref"', body)
 		# List rows render title once (no secondary statement mirror in markup).
 		self.assertNotIn("kt-a4-row-desc", body)
 		self.assertNotIn("Tender Configurations", body)

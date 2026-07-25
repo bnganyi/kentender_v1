@@ -485,12 +485,19 @@ def _next_section_url(
 
 		if is_document_acknowledgement_section(s):
 			return portal_documents_url(publication_ref)
-		return _desk_bridge(configuration_id)
+		# Stay on the bidder portal — never expose desk configuration_id bridges.
+		_ = configuration_id
+		return portal_workspace_url(publication_ref)
 	return portal_workspace_url(publication_ref)
 
 
 def _ensure_bid(published_tender_ref: str) -> tuple[dict[str, Any], Any, dict[str, Any], dict[str, Any]]:
+	from kentender_procurement.tender_configurations.services.published_tender_overview import (
+		resolve_published_tender_backend,
+	)
+
 	overview = get_published_tender_overview(published_tender_ref)
+	backend = resolve_published_tender_backend(published_tender_ref)
 	action = overview.get("primary_action")
 	if action in (ACTION_CLOSED, ACTION_UNAVAILABLE):
 		frappe.throw(
@@ -498,15 +505,15 @@ def _ensure_bid(published_tender_ref: str) -> tuple[dict[str, Any], Any, dict[st
 			title="BID_WORKSPACE_UNAVAILABLE",
 		)
 	pub_ref = cstr(overview.get("published_tender_ref") or published_tender_ref)
-	cfg_id = cstr(overview.get("configuration_id") or "")
+	cfg_id = cstr(backend.get("configuration_id") or "")
 	if action == ACTION_VIEW_SUBMITTED or overview.get("bid_status") == STATUS_SEALED:
 		started = start_or_get_bid_workspace(pub_ref)
-		bid_id = started.get("bid_id") or overview.get("bid_id")
+		bid_id = started.get("bid_id") or backend.get("bid_id")
 	else:
 		draft = create_or_get_draft(cfg_id)
 		bid_id = draft.get("bid_id")
 	bid_doc = frappe.get_doc("Electronic Bid Submission", bid_id)
-	cfg = frappe.get_doc("Tender Configuration", cfg_id)
+	cfg = backend.get("configuration") or frappe.get_doc("Tender Configuration", cfg_id)
 	schema = _load_schema(cfg, bid_doc)
 	return overview, bid_doc, schema, {"pub_ref": pub_ref, "cfg_id": cfg_id}
 
@@ -613,8 +620,6 @@ def get_requirement_matrix(
 
 	return {
 		"published_tender_ref": pub_ref,
-		"configuration_id": cfg_id,
-		"bid_id": bid_doc.name,
 		"section_key": _section_key(sec),
 		"section_title": _section_label(sec),
 		"section_instructions": cstr(

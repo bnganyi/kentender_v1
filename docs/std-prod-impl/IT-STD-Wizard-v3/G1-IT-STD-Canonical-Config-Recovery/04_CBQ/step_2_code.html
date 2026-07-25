@@ -1,0 +1,434 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>KenTender | Business Details - Confidential Business Questionnaire</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-low": "#f2f4f6",
+                    "outline-subtle": "#c4c6cf",
+                    "inverse-primary": "#bac7e0",
+                    "secondary-fixed": "#d5e3fc",
+                    "on-background": "#191c1e",
+                    "background": "#f7f9fb",
+                    "tertiary": "#000000",
+                    "surface": "#f7f9fb",
+                    "primary-container": "#0e1c2e",
+                    "primary-fixed": "#d6e3fd",
+                    "secondary": "#515f74",
+                    "surface-bright": "#f7f9fb",
+                    "outline-variant": "#c5c6cd",
+                    "error": "#ba1a1a",
+                    "error-container": "#ffdad6",
+                    "primary": "#000000",
+                    "surface-tint": "#525f74",
+                    "surface-container-highest": "#e0e3e5",
+                    "inverse-surface": "#2d3133",
+                    "on-secondary-container": "#556379",
+                    "status-pending-bg": "#fffbeb",
+                    "tertiary-fixed": "#d4e3ff",
+                    "tertiary-fixed-dim": "#adc8f3",
+                    "on-tertiary-fixed": "#001c3a",
+                    "on-secondary-fixed": "#0d1c2e",
+                    "on-primary-fixed": "#0e1c2e",
+                    "on-error": "#ffffff",
+                    "on-primary-container": "#77859b",
+                    "surface-container-lowest": "#ffffff",
+                    "status-approved-bg": "#ecfdf5",
+                    "secondary-fixed-dim": "#b9c7e0",
+                    "status-error-bg": "#fff1f2",
+                    "surface-variant": "#e0e3e5",
+                    "outline": "#75777d",
+                    "on-tertiary-fixed-variant": "#2d486c",
+                    "on-surface": "#191c1e",
+                    "on-secondary": "#ffffff",
+                    "tertiary-container": "#001c3a",
+                    "status-error": "#ba1a1a",
+                    "on-error-container": "#93000a",
+                    "inverse-on-surface": "#eff1f3",
+                    "surface-dim": "#d8dadc",
+                    "on-secondary-fixed-variant": "#3a485c",
+                    "primary-fixed-dim": "#bac7e0",
+                    "on-surface-variant": "#44474c",
+                    "secondary-container": "#d2e1fa",
+                    "on-primary-fixed-variant": "#3a475c",
+                    "outline-strong": "#74777f",
+                    "on-tertiary-container": "#6b85ac",
+                    "surface-container-high": "#e6e8ea",
+                    "status-approved": "#065f46",
+                    "surface-container": "#eceef0",
+                    "status-pending": "#92400e",
+                    "on-tertiary": "#ffffff",
+                    "on-primary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "max-width": "1280px",
+                    "gap-component": "8px",
+                    "unit": "4px",
+                    "sidebar-width": "256px",
+                    "container-padding": "16px",
+                    "gutter": "12px"
+            },
+            "fontFamily": {
+                    "label-md": ["JetBrains Mono"],
+                    "headline-lg": ["Public Sans"],
+                    "headline-md": ["Public Sans"],
+                    "body-lg": ["Public Sans"],
+                    "label-sm": ["JetBrains Mono"],
+                    "body-md": ["Public Sans"],
+                    "display": ["Public Sans"],
+                    "headline-lg-mobile": ["Public Sans"]
+            },
+            "fontSize": {
+                    "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                    "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+            font-size: 18px;
+        }
+        body {
+            background-color: #f7f9fb;
+            color: #191c1e;
+            font-family: 'Public Sans', sans-serif;
+        }
+        .form-input {
+            border: 1px solid #c4c6cf;
+            padding: 8px 12px;
+            font-size: 13px;
+            border-radius: 2px;
+            width: 100%;
+            transition: border-color 0.2s;
+            background-color: #ffffff;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #000000;
+            box-shadow: 0 0 0 1px #000000;
+        }
+        .section-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            color: #44474c;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-container-padding h-14 bg-surface-container-lowest border-b border-outline-subtle">
+<div class="flex items-center gap-6">
+<span class="font-display text-display text-primary tracking-tighter">KenTender</span>
+<nav class="hidden md:flex gap-4">
+<a class="font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors py-2 px-3 rounded" href="#">Tenders</a>
+<a class="font-label-md text-label-md text-primary border-b-2 border-primary font-bold transition-opacity py-2 px-3" href="#">My Bids</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors py-2 px-3 rounded" href="#">Clarifications</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-primary hover:bg-surface-container-low p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest border border-outline-subtle flex items-center justify-center overflow-hidden cursor-pointer">
+<span class="material-symbols-outlined text-on-surface-variant">account_circle</span>
+</div>
+</div>
+</header>
+<div class="flex flex-1 pt-14">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-14 bottom-0 w-sidebar-width z-40 flex flex-col bg-surface-container-low border-r border-outline-subtle hidden md:flex">
+<div class="p-container-padding border-b border-outline-subtle">
+<h2 class="font-headline-md text-headline-md font-bold text-primary">NSSFSPS/ICT/ERP/001/2025-2026</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Ref: ERP/001/2025</p>
+</div>
+<nav class="flex-1 py-4 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 bg-surface-container-highest text-primary border-r-4 border-primary font-bold translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined">fact_check</span>
+<span class="font-label-md text-label-md">Checklist</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined">edit_document</span>
+<span class="font-label-md text-label-md">Prepare Bid</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined">verified</span>
+<span class="font-label-md text-label-md">Review &amp; Validate</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined">lock</span>
+<span class="font-label-md text-label-md">Submit &amp; Seal</span>
+</a>
+</nav>
+<div class="border-t border-outline-subtle p-2 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">info</span>
+<span class="font-label-md text-label-md">View Tender Overview</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">support_agent</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">exit_to_app</span>
+<span class="font-label-md text-label-md">Exit Workspace</span>
+</a>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="flex-1 md:ml-[256px] p-container-padding md:p-6 lg:p-8 max-w-max-width mx-auto w-full pb-24">
+<!-- Breadcrumbs -->
+<nav class="flex items-center gap-2 mb-6 text-on-surface-variant">
+<span class="font-label-md text-label-md uppercase tracking-wider cursor-pointer hover:text-primary">Checklist</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="font-label-md text-label-md uppercase tracking-wider cursor-pointer hover:text-primary">Confidential Business Questionnaire</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="font-label-md text-label-md uppercase tracking-wider text-primary font-bold">Business Details</span>
+</nav>
+<!-- Header Section -->
+<header class="mb-10">
+<h1 class="font-display text-display text-primary mb-2">Confidential Business Questionnaire</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
+                Provide the trade licence and registration details for the tendering entity.
+            </p>
+</header>
+<!-- Five-step Progress Bar -->
+<div class="relative mb-12">
+<div class="absolute top-4 left-0 right-0 h-px bg-outline-subtle z-0"></div>
+<div class="relative z-10 flex justify-between">
+<!-- Step 1: Complete -->
+<div class="flex flex-col items-center bg-background px-4">
+<div class="w-8 h-8 rounded-full border-2 border-status-approved bg-status-approved text-on-primary flex items-center justify-center font-label-md text-label-md mb-2">
+<span class="material-symbols-outlined !text-[16px]">check</span>
+</div>
+<span class="font-label-md text-label-md text-status-approved font-medium">Bidder Details</span>
+</div>
+<!-- Step 2: Active -->
+<div class="flex flex-col items-center bg-background px-4">
+<div class="w-8 h-8 rounded-full border-2 border-primary bg-primary text-on-primary flex items-center justify-center font-label-md text-label-md mb-2">2</div>
+<span class="font-label-md text-label-md text-primary font-bold">Business Details</span>
+</div>
+<!-- Step 3: Pending -->
+<div class="flex flex-col items-center bg-background px-4 opacity-60">
+<div class="w-8 h-8 rounded-full border-2 border-outline-subtle bg-surface-container-lowest text-outline-strong flex items-center justify-center font-label-md text-label-md mb-2">3</div>
+<span class="font-label-md text-label-md text-outline-strong">Ownership</span>
+</div>
+<!-- Step 4: Pending -->
+<div class="flex flex-col items-center bg-background px-4 opacity-60">
+<div class="w-8 h-8 rounded-full border-2 border-outline-subtle bg-surface-container-lowest text-outline-strong flex items-center justify-center font-label-md text-label-md mb-2">4</div>
+<span class="font-label-md text-label-md text-outline-strong">Conflicts</span>
+</div>
+<!-- Step 5: Pending -->
+<div class="flex flex-col items-center bg-background px-4 opacity-60">
+<div class="w-8 h-8 rounded-full border-2 border-outline-subtle bg-surface-container-lowest text-outline-strong flex items-center justify-center font-label-md text-label-md mb-2">5</div>
+<span class="font-label-md text-label-md text-outline-strong">Certify</span>
+</div>
+</div>
+</div>
+<!-- Tender Info Bar -->
+
+<!-- Main Form Canvas -->
+<div class="bg-surface-container-lowest border border-outline-subtle p-8 shadow-sm">
+<form class="space-y-12">
+<!-- 1.0 TRADE LICENCE -->
+<section>
+<div class="flex items-center justify-between mb-6 border-b border-outline-subtle pb-4">
+<h3 class="font-headline-md text-headline-md">1.0 TRADE LICENCE</h3>
+<span class="text-status-error font-label-sm text-label-sm uppercase tracking-wide">* Required fields</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+<div>
+<label class="block font-body-md text-body-md text-on-surface font-semibold mb-2">Current trade licence registration number *</label>
+<input class="form-input" placeholder="Enter registration number" type="text">
+</div>
+<div>
+<label class="block font-body-md text-body-md text-on-surface font-semibold mb-2">Expiry date *</label>
+<input class="form-input" type="date">
+</div>
+</div>
+</section>
+<!-- 2.0 REGISTERING BODY OR AGENCY -->
+<section>
+<div class="mb-6 border-b border-outline-subtle pb-4">
+<h3 class="font-headline-md text-headline-md">2.0 REGISTERING BODY OR AGENCY</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+<div>
+<label class="block font-body-md text-body-md text-on-surface font-semibold mb-2">Name *</label>
+<input class="form-input" placeholder="e.g. Registrar of Companies" type="text">
+</div>
+<div>
+<label class="block font-body-md text-body-md text-on-surface font-semibold mb-2">Country *</label>
+<select class="form-input">
+<option disabled="" selected="">Select Country</option>
+<option>Kenya</option>
+<option>Uganda</option>
+<option>Tanzania</option>
+<option>Other</option>
+</select>
+</div>
+<div class="md:col-span-2">
+<label class="block font-body-md text-body-md text-on-surface font-semibold mb-2">Physical address *</label>
+<textarea class="form-input" placeholder="Street, Building, Floor..." rows="3"></textarea>
+</div>
+<div>
+<label class="block font-body-md text-body-md text-on-surface font-semibold mb-2">Postal address</label>
+<input class="form-input" placeholder="P.O. Box..." type="text">
+</div>
+<div>
+<label class="block font-body-md text-body-md text-on-surface font-semibold mb-2">Email *</label>
+<input class="form-input" placeholder="official@agency.gov.ke" type="email">
+</div>
+</div>
+</section>
+<!-- 3.0 BUSINESS OPERATIONS -->
+<section>
+<div class="mb-6 border-b border-outline-subtle pb-4">
+<h3 class="font-headline-md text-headline-md">3.0 BUSINESS OPERATIONS</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="md:col-span-1">
+<label class="block font-body-md text-body-md text-on-surface font-semibold mb-2">Nature of business *</label>
+<input class="form-input" placeholder="e.g. IT Solutions Provider" type="text">
+</div>
+<div>
+<label class="block font-body-md text-body-md text-on-surface font-semibold mb-2">Max value of business handled *</label>
+<input class="form-input" placeholder="0.00" type="number">
+</div>
+<div>
+<label class="block font-body-md text-body-md text-on-surface font-semibold mb-2">Currency *</label>
+<select class="form-input">
+<option value="KES">Kenya Shilling (KES)</option>
+<option value="USD">US Dollar (USD)</option>
+<option value="EUR">Euro (EUR)</option>
+</select>
+</div>
+</div>
+</section>
+<!-- Stock Exchange Listing -->
+<section class="bg-surface-container-low p-6 border border-outline-subtle rounded">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+<div>
+<h3 class="font-headline-md text-headline-md">Is the bidder listed on a stock exchange?</h3>
+<p class="text-body-md text-on-surface-variant">If yes, provide registration details of the listing authority.</p>
+</div>
+<div class="flex gap-6">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="w-4 h-4 text-primary focus:ring-primary border-outline-subtle" name="stock_listed" onchange="toggleStockFields(true)" type="radio" value="yes">
+<span class="font-body-md text-body-md font-semibold">Yes</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="w-4 h-4 text-primary focus:ring-primary border-outline-subtle" name="stock_listed" onchange="toggleStockFields(false)" type="radio" value="no">
+<span class="font-body-md text-body-md font-semibold">No</span>
+</label>
+</div>
+</div>
+<!-- Conditional Fields -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 pt-6 border-t border-dashed border-outline-subtle" id="stock-fields" style="display: grid;">
+<div>
+<label class="block font-body-md text-body-md text-on-surface font-semibold mb-2">Stock exchange name *</label>
+<input class="form-input" placeholder="e.g. Nairobi Securities Exchange" type="text">
+</div>
+<div>
+<label class="block font-body-md text-body-md text-on-surface font-semibold mb-2">Country *</label>
+<input class="form-input" placeholder="Country of listing" type="text">
+</div>
+<div class="md:col-span-2">
+<label class="block font-body-md text-body-md text-on-surface font-semibold mb-2">Physical address *</label>
+<textarea class="form-input" placeholder="Exchange headquarters address" rows="2"></textarea>
+</div>
+<div>
+<label class="block font-body-md text-body-md text-on-surface font-semibold mb-2">Postal address</label>
+<input class="form-input" placeholder="P.O. Box..." type="text">
+</div>
+<div>
+<label class="block font-body-md text-body-md text-on-surface font-semibold mb-2">Email *</label>
+<input class="form-input" placeholder="compliance@exchange.org" type="email">
+</div>
+<div>
+<label class="block font-body-md text-body-md text-on-surface font-semibold mb-2">Telephone *</label>
+<input class="form-input" placeholder="+254..." type="tel">
+</div>
+</div>
+</section>
+<!-- Warning Notice -->
+<div class="mt-12 p-4 bg-status-error-bg border border-status-error/20 rounded flex items-center gap-3">
+<span class="material-symbols-outlined text-status-error">warning</span>
+<p class="font-body-md text-body-md text-status-error font-medium">Providing false information in this questionnaire is an offence.</p>
+</div>
+</form>
+</div>
+</main>
+</div>
+<!-- Fixed Footer Actions -->
+<footer class="fixed bottom-0 right-0 left-0 md:left-sidebar-width bg-surface-container-lowest border-t border-outline-subtle p-container-padding z-50 flex justify-between items-center h-16">
+<button class="flex items-center gap-2 text-on-secondary-container hover:text-primary transition-colors font-label-md text-label-md group">
+<span class="material-symbols-outlined group-hover:-translate-x-1 transition-transform">arrow_back</span>
+        BACK TO BIDDER DETAILS
+    </button>
+<div class="flex gap-4">
+<button class="border border-outline-subtle text-primary font-label-md text-label-md px-6 py-2.5 rounded-lg hover:bg-surface-container-high transition-colors">
+            SAVE DRAFT
+        </button>
+<button class="bg-primary text-on-primary font-label-md text-label-md px-8 py-2.5 rounded-lg hover:bg-primary-container transition-all flex items-center gap-2">
+            CONTINUE
+            <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</footer>
+<script>
+    function toggleStockFields(show) {
+        const fields = document.getElementById('stock-fields');
+        if (show) {
+            fields.style.display = 'grid';
+        } else {
+            fields.style.display = 'none';
+        }
+    }
+
+    // Initialize state
+    document.addEventListener('DOMContentLoaded', () => {
+        const listedRadio = document.querySelector('input[name="stock_listed"]:checked');
+        toggleStockFields(listedRadio && listedRadio.value === 'yes');
+    });
+
+    // Interaction for input field labels
+    document.querySelectorAll('.form-input').forEach(input => {
+        input.addEventListener('focus', () => {
+            const label = input.parentElement.querySelector('label');
+            if (label) label.style.color = '#000000';
+        });
+        input.addEventListener('blur', () => {
+            const label = input.parentElement.querySelector('label');
+            if (label) label.style.color = '';
+        });
+    });
+</script>
+
+
+</body></html>

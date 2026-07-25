@@ -16,6 +16,12 @@ Bidders discover published tenders on a **public Website** landing page, open th
 | [`A4-requirements/`](A4-requirements/) | Requirement Matrix (Screen D for `requirement_matrix`) |
 | [`IMPLEMENTATION_TRACKER.md`](IMPLEMENTATION_TRACKER.md) | Implementation status |
 
+## Presentation boundary (permanent)
+
+Bidder-facing screens and APIs must expose only information needed to understand or complete a bidder task. Internal hashes, digests, schema names, manifest identifiers, configuration references, database IDs, artifact types and audit metadata must never appear in bidder-visible HTML, API DTOs, accessibility text, tooltips, filenames or error messages.
+
+Implementation: explicit allowlist projections in `kentender_procurement.tender_configurations.services.bidder_presentation` (and callers such as A3 `tender_documents_addenda`). Integrity hashes remain on the server for acknowledgement binding, audit and addendum invalidation.
+
 ## Architecture split
 
 | Surface | Host | Route |

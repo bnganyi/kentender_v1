@@ -17,7 +17,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Event",
-   "options": "draft_created\nsection_saved\nvalidated\nsubmit_blocked\nsealed\nreceipt_issued",
+   "options": "draft_created\nsection_saved\nvalidated\nsubmit_blocked\nsealed\nreceipt_issued\nevidence_uploaded\nevidence_replaced\nevidence_linked\nevidence_unlinked",
    "reqd": 1
   },
   {

@@ -1,0 +1,1324 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }} | KenTender{% endblock %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/kentender_procurement/css/available_tenders.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/submission_checklist_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/confidential_business_questionnaire_web.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+<style>
+	/* Kill horizontal bleed from .kt-a0-root margin:-1rem (page scrollbar). */
+	.page-content-wrapper .kt-s300-root.kt-a0-root,
+	.web-page-content .kt-s300-root.kt-a0-root {
+		margin-left: 0 !important;
+		margin-right: 0 !important;
+		max-width: 100%;
+		overflow-x: clip;
+	}
+	/* Keep page from horizontal scroll without clipping Frappe toast animations. */
+	html:has(.kt-s300-root) {
+		overflow-x: clip;
+	}
+</style>
+{% endblock %}
+
+{% block page_content %}
+{% set c = cbq %}
+{% set ti = c.tender_info or {} %}
+{% set active_nav = "my_bids" %}
+{% set active_ws = "checklist" %}
+{% set labels = c.conflict_row_labels or {} %}
+{% set keys = c.conflict_row_keys or [] %}
+<div class="kt-a0-root kt-a2-root kt-s300-root" data-testid="kt-s300-cbq-root"
+	data-publication-ref="{{ c.published_tender_ref }}"
+	data-bid-id="{{ c.bid_id or '' }}"
+	data-read-only="{{ c.read_only or 0 }}"
+	data-section-status="{{ c.section_status }}">
+	{% include "templates/includes/kt_bidder_portal_nav.html" %}
+	<div class="kt-a2-shell">
+		{% include "templates/includes/kt_bidder_workspace_sidebar.html" %}
+		<main class="kt-a2-main">
+			<div class="kt-s300-page">
+				<nav class="kt-s300-crumbs" aria-label="Breadcrumb">
+					<a href="{{ c.workspace_url }}">Checklist</a>
+					<span class="material-symbols-outlined" style="font-size:16px">chevron_right</span>
+					<span>Confidential Business Questionnaire</span>
+					<span class="material-symbols-outlined" style="font-size:16px">chevron_right</span>
+					<span class="is-current" data-testid="kt-s300-crumb-step">Bidder Details</span>
+				</nav>
+
+				<header class="kt-s300-head">
+					<h1 data-testid="kt-s300-cbq-title">{{ c.section_title }}</h1>
+					<p data-testid="kt-s300-cbq-instructions">{{ c.bidder_instructions or _("Tell us who is submitting this tender. For a joint venture, complete one questionnaire for each member.") }}</p>
+				</header>
+
+				<nav class="kt-s300-stepper" data-testid="kt-s300-stepper" aria-label="{{ _('Questionnaire steps') }}">
+					{% for n, label in [(1, "Bidder Details"), (2, "Business Details"), (3, "Ownership"), (4, "Conflicts"), (5, "Certify")] %}
+					{% if n > 1 %}
+					<span class="kt-s300-step-connector" aria-hidden="true"></span>
+					{% endif %}
+					<button type="button"
+						class="kt-s300-step {% if n == 1 %}is-active{% endif %}"
+						data-step-indicator="{{ n }}"
+						data-testid="kt-s300-step-btn-{{ n }}"
+						aria-label="{{ _('Go to step') }} {{ n }}: {{ label }}">
+						<span class="kt-s300-step-num" aria-hidden="true">{{ n }}</span>
+						<span class="kt-s300-step-caption">
+							<span class="kt-s300-step-index">{{ _("Step") }} {{ n }}</span>
+							<span class="kt-s300-step-label">{{ label }}</span>
+						</span>
+					</button>
+					{% endfor %}
+				</nav>
+
+				<div class="kt-s300-entity-tabs" data-testid="kt-s300-entity-tabs" hidden></div>
+
+				{# Form + tender aside share one row so the rail tops align with the data card (all steps). #}
+				<div class="kt-s300-layout">
+				<div class="kt-s300-canvas">
+				<div class="kt-s300-card">
+					<!-- Step 1 -->
+					<section class="kt-s300-panel is-active" data-step-panel="1" data-testid="kt-s300-step-1">
+						<div class="kt-s300-section">
+							<h3>{{ _("Submission Type") }}</h3>
+							<p>{{ _("Are you bidding as a single entity or a joint venture?") }}</p>
+							<div class="kt-s300-radios">
+								<label><input type="radio" name="submission_type" value="single" checked> {{ _("Single entity") }}</label>
+								<label><input type="radio" name="submission_type" value="jv"> {{ _("Joint venture") }}</label>
+							</div>
+							<div class="kt-s300-jv-box" id="kt-s300-jv-panel" data-testid="kt-s300-jv-panel">
+								<span class="material-symbols-outlined">info</span>
+								<div>
+									<p><strong data-testid="kt-s300-jv-current">{{ _("Current entity: Lead bidder") }}</strong></p>
+									<p>{{ _("One questionnaire is required for each member.") }}</p>
+									<button type="button" class="kt-s300-btn" data-testid="kt-s300-add-jv">
+										<span class="material-symbols-outlined">add</span> {{ _("Add joint venture member") }}
+									</button>
+								</div>
+							</div>
+						</div>
+						<div class="kt-s300-section">
+							<h3>{{ _("Entity Details") }}</h3>
+							<div class="kt-s300-grid">
+								<div class="kt-s300-stack">
+									<div class="kt-s300-field"><label>{{ _("Legal name of bidder") }} *</label><input data-field="legal_name" type="text" placeholder="Enter legal business name"></div>
+									<div class="kt-s300-grid kt-s300-grid--2-tight">
+										<div class="kt-s300-field"><label>{{ _("Country") }} *</label>
+											<select data-answer="country"><option value="">Select country</option><option>Kenya</option><option>Uganda</option><option>Tanzania</option><option>Other</option></select>
+										</div>
+										<div class="kt-s300-field"><label>{{ _("City") }}</label><input data-answer="city" type="text"></div>
+									</div>
+									<div class="kt-s300-field"><label>{{ _("Location") }}</label><input data-answer="location" type="text"></div>
+									<div class="kt-s300-grid kt-s300-grid--2-tight">
+										<div class="kt-s300-field"><label>{{ _("Building") }}</label><input data-answer="building" type="text"></div>
+										<div class="kt-s300-field"><label>{{ _("Floor") }}</label><input data-answer="floor" type="text"></div>
+									</div>
+								</div>
+								<div class="kt-s300-stack">
+									<div class="kt-s300-field"><label>{{ _("Postal address") }}</label><textarea data-answer="postal_address" rows="2" placeholder="P.O. Box ..."></textarea></div>
+									<div class="kt-s300-field"><label>{{ _("Contact person") }} *</label><input data-answer="contact_person" type="text" placeholder="Full name of contact person"></div>
+									<div class="kt-s300-field"><label>{{ _("Contact email") }} *</label><input data-answer="contact_email" type="email" placeholder="Email for official correspondence"></div>
+								</div>
+							</div>
+						</div>
+						<div class="kt-s300-warn">
+							<span class="material-symbols-outlined">warning</span>
+							<span>{{ _("Providing false information in this questionnaire is an offence.") }}</span>
+						</div>
+					</section>
+
+					<!-- Step 2 -->
+					<section class="kt-s300-panel" data-step-panel="2" data-testid="kt-s300-step-2">
+						<div class="kt-s300-section">
+							<h3>{{ _("1.0 Trade licence") }}</h3>
+							<div class="kt-s300-grid">
+								<div class="kt-s300-field"><label>{{ _("Current trade licence registration number") }} *</label><input data-answer="trade_licence_number" type="text" placeholder="Enter registration number"></div>
+								<div class="kt-s300-field"><label>{{ _("Expiry date") }} *</label><input data-answer="licence_expiry" type="date"></div>
+							</div>
+						</div>
+						<div class="kt-s300-section">
+							<h3>{{ _("2.0 Registering body or agency") }}</h3>
+							<div class="kt-s300-grid">
+								<div class="kt-s300-field"><label>{{ _("Name") }} *</label><input data-rb="name" type="text" placeholder="e.g. Registrar of Companies"></div>
+								<div class="kt-s300-field"><label>{{ _("Country") }}</label>
+									<select data-rb="country"><option value="">Select country</option><option>Kenya</option><option>Uganda</option><option>Tanzania</option><option>Other</option></select>
+								</div>
+								<div class="kt-s300-field" style="grid-column:1/-1"><label>{{ _("Physical address") }}</label><textarea data-rb="physical_address" rows="3" placeholder="Street, Building, Floor..."></textarea></div>
+								<div class="kt-s300-field"><label>{{ _("Postal address") }}</label><input data-rb="postal_address" type="text" placeholder="P.O. Box..."></div>
+								<div class="kt-s300-field"><label>{{ _("Email") }}</label><input data-rb="email" type="email" placeholder="official@agency.gov.ke"></div>
+								<div class="kt-s300-field"><label>{{ _("Telephone") }}</label><input data-rb="phone" type="text"></div>
+							</div>
+						</div>
+						<div class="kt-s300-section">
+							<h3>{{ _("3.0 Business operations") }}</h3>
+							<div class="kt-s300-grid kt-s300-grid--3">
+								<div class="kt-s300-field"><label>{{ _("Nature of business") }} *</label><input data-answer="nature_of_business" type="text" placeholder="e.g. IT Solutions Provider"></div>
+								<div class="kt-s300-field"><label>{{ _("Max value of business handled") }} *</label><input data-answer="max_business_value" type="text" placeholder="0.00"></div>
+								<div class="kt-s300-field"><label>{{ _("Currency") }}</label>
+									<select data-answer="currency"><option value="KES">Kenya Shilling (KES)</option><option value="USD">US Dollar (USD)</option><option value="EUR">Euro (EUR)</option></select>
+								</div>
+							</div>
+						</div>
+						<div class="kt-s300-section kt-s300-stock-panel" id="kt-s300-stock-wrap">
+							<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:1rem;align-items:center;margin-bottom:1rem">
+								<div>
+									<h3 style="margin-bottom:0.35rem">{{ _("Is the bidder listed on a stock exchange?") }}</h3>
+									<p style="margin:0;color:var(--kt-s300-muted)">{{ _("If yes, provide registration details of the listing authority.") }}</p>
+								</div>
+								<div class="kt-s300-radios" style="margin:0">
+									<label><input type="radio" name="stock_listed" value="yes"> {{ _("Yes") }}</label>
+									<label><input type="radio" name="stock_listed" value="no"> {{ _("No") }}</label>
+								</div>
+							</div>
+							<div id="kt-s300-stock-panel" style="display:none">
+								<div class="kt-s300-grid">
+									<div class="kt-s300-field"><label>{{ _("Stock exchange name") }}</label><input data-stock="name" type="text"></div>
+									<div class="kt-s300-field"><label>{{ _("Country") }}</label><input data-stock="country" type="text"></div>
+									<div class="kt-s300-field"><label>{{ _("Physical address") }}</label><input data-stock="physical_address" type="text"></div>
+									<div class="kt-s300-field"><label>{{ _("Postal address") }}</label><input data-stock="postal_address" type="text"></div>
+									<div class="kt-s300-field"><label>{{ _("Email") }}</label><input data-stock="email" type="email"></div>
+									<div class="kt-s300-field"><label>{{ _("Telephone") }}</label><input data-stock="phone" type="text"></div>
+								</div>
+							</div>
+						</div>
+					</section>
+
+					<!-- Step 3 -->
+					<section class="kt-s300-panel" data-step-panel="3" data-testid="kt-s300-step-3">
+						<div class="kt-s300-section">
+							<h3>{{ _("Ownership and Management") }}</h3>
+							<p>{{ _("What type of entity is this bidder?") }}</p>
+							<div class="kt-s300-radios">
+								<label><input type="radio" name="entity_type" value="sole_proprietor"> {{ _("Sole proprietor") }}</label>
+								<label><input type="radio" name="entity_type" value="partnership"> {{ _("Partnership") }}</label>
+								<label><input type="radio" name="entity_type" value="company"> {{ _("Registered company") }}</label>
+							</div>
+						</div>
+						<div id="kt-s300-own-sole" class="kt-s300-section" style="display:none">
+							<h3>{{ _("Sole proprietor") }}</h3>
+							<div class="kt-s300-grid">
+								<div class="kt-s300-field"><label>{{ _("Full name") }} *</label><input data-answer="proprietor_name" type="text"></div>
+								<div class="kt-s300-field"><label>{{ _("Age") }}</label><input data-answer="proprietor_age" type="text"></div>
+								<div class="kt-s300-field"><label>{{ _("Citizenship") }}</label><input data-answer="proprietor_citizenship" type="text"></div>
+								<div class="kt-s300-field"><label>{{ _("Country of origin") }}</label><input data-answer="proprietor_country_of_origin" type="text"></div>
+							</div>
+						</div>
+						<div id="kt-s300-own-partnership" class="kt-s300-section" style="display:none">
+							<h3>{{ _("Partnership members") }}</h3>
+							<div class="kt-s300-table-wrap">
+								<table class="kt-s300-table" data-testid="kt-s300-partners-table"><thead><tr><th>{{ _("Name") }}</th><th>{{ _("Citizenship") }}</th><th>{{ _("Shares %") }}</th></tr></thead><tbody></tbody></table>
+							</div>
+							<button type="button" class="kt-s300-btn" data-add-row="partners" style="margin-top:0.75rem">{{ _("Add partner") }}</button>
+						</div>
+						<div id="kt-s300-own-company" class="kt-s300-section" style="display:none">
+							<h3>{{ _("Company") }}</h3>
+							<div class="kt-s300-grid">
+								<div class="kt-s300-field"><label>{{ _("Company type") }} *</label><input data-answer="company_type" type="text" placeholder="e.g. private limited"></div>
+								<div class="kt-s300-field"><label>{{ _("Nominal capital") }}</label><input data-answer="share_capital_nominal" type="text"></div>
+								<div class="kt-s300-field"><label>{{ _("Issued capital") }}</label><input data-answer="share_capital_issued" type="text"></div>
+							</div>
+							<div class="kt-s300-table-wrap">
+								<table class="kt-s300-table" data-testid="kt-s300-directors-table"><thead><tr><th>{{ _("Director name") }}</th><th>{{ _("Citizenship") }}</th><th>{{ _("Shares %") }}</th></tr></thead><tbody></tbody></table>
+							</div>
+							<button type="button" class="kt-s300-btn" data-add-row="directors" style="margin-top:0.75rem">{{ _("Add director") }}</button>
+						</div>
+					</section>
+
+					<!-- Step 4 -->
+					<section class="kt-s300-panel" data-step-panel="4" data-testid="kt-s300-step-4">
+						<div class="kt-s300-section">
+							<h3>{{ _("Disclosure of interest and potential conflict of interest") }}</h3>
+							<p>{{ _("Is there any person in the Procuring Entity who has an interest or relationship in this bidder?") }}</p>
+							<div class="kt-s300-radios">
+								<label><input type="radio" name="pe_interest" value="yes"> {{ _("Yes") }}</label>
+								<label><input type="radio" name="pe_interest" value="no"> {{ _("No") }}</label>
+							</div>
+							<div id="kt-s300-pe-people" style="display:none">
+								<div class="kt-s300-table-wrap">
+									<table class="kt-s300-table" data-testid="kt-s300-pe-people-table"><thead><tr><th>{{ _("Full name") }}</th><th>{{ _("Designation") }}</th><th>{{ _("Interest / relationship") }}</th></tr></thead><tbody></tbody></table>
+								</div>
+								<button type="button" class="kt-s300-btn" data-add-row="pe_interest_people" style="margin-top:0.75rem">{{ _("Add person") }}</button>
+							</div>
+						</div>
+						<div class="kt-s300-conflict-count" data-testid="kt-s300-conflict-count">0 of 9 answered</div>
+						{% for key in keys %}
+						<div class="kt-s300-conflict" data-testid="kt-s300-conflict-{{ key }}" data-conflict-key="{{ key }}">
+							<p class="kt-s300-conflict-q"><strong>{{ loop.index }}.</strong> {{ labels.get(key, key) }}</p>
+							<div class="kt-s300-radios">
+								<label><input type="radio" name="conflict_{{ key }}" value="yes" data-conflict-answer="{{ key }}"> {{ _("Yes") }}</label>
+								<label><input type="radio" name="conflict_{{ key }}" value="no" data-conflict-answer="{{ key }}"> {{ _("No") }}</label>
+							</div>
+							<div class="kt-s300-conflict-details" data-conflict-details="{{ key }}">
+								<label>{{ _("Details") }}</label>
+								<textarea data-conflict-details-input="{{ key }}" rows="3" placeholder="Enter specific details regarding this conflict..."></textarea>
+							</div>
+						</div>
+						{% endfor %}
+					</section>
+
+					<!-- Step 5: review until certified; certified layout matches step_5_3 (tender meta + cert record). -->
+					<section class="kt-s300-panel" data-step-panel="5" data-testid="kt-s300-step-5">
+						<div id="kt-s300-step5-tender-meta" class="kt-s300-tender-meta" data-testid="kt-s300-step5-tender-meta" hidden>
+							<div>
+								<p class="kt-s300-tender-meta__label">{{ _("Procuring Entity") }}</p>
+								<p class="kt-s300-tender-meta__value" data-tender-meta="procuring_entity">{{ ti.procuring_entity or "—" }}</p>
+							</div>
+							<div>
+								<p class="kt-s300-tender-meta__label">{{ _("Tender Reference") }}</p>
+								<p class="kt-s300-tender-meta__value" data-tender-meta="publication_ref">{{ ti.publication_ref or c.published_tender_ref or "—" }}</p>
+							</div>
+							<div class="kt-s300-tender-meta__span">
+								<p class="kt-s300-tender-meta__label">{{ _("Tender Title") }}</p>
+								<p class="kt-s300-tender-meta__value" data-tender-meta="tender_title">{{ ti.tender_title or c.tender_title or "—" }}</p>
+							</div>
+							<div>
+								<p class="kt-s300-tender-meta__label">{{ _("Tender Opening") }}</p>
+								<p class="kt-s300-tender-meta__value" data-tender-meta="opening_datetime">{{ ti.opening_datetime or "—" }}</p>
+							</div>
+						</div>
+						<div id="kt-s300-review-card" class="kt-s300-section kt-s300-review-card" data-testid="kt-s300-review-card">
+							<div class="kt-s300-review-card__head">
+								<h3>{{ _("Submission Review") }}</h3>
+								<span class="kt-s300-review-card__tag">{{ _("Summary") }}</span>
+							</div>
+							{% for sid, label, blurb in [
+								(1, "Bidder Details", "Registration, Addresses, Contact Person"),
+								(2, "Business Details", "Operations, Nature of Business, Trade License"),
+								(3, "Ownership and Management", "Directors, Shareholders"),
+								(4, "Interests and Conflicts", "Disclosures, Related Parties"),
+							] %}
+							<div class="kt-s300-review-row" data-review-row="{{ sid }}">
+								<div>
+									<strong>{{ label }}</strong>
+									<p class="kt-s300-review-blurb">{{ _(blurb) }}</p>
+								</div>
+								<div class="kt-s300-review-row__actions">
+									<span class="kt-s300-badge kt-s300-badge--warn" data-review-badge="{{ sid }}">{{ _("Needs attention") }}</span>
+									<button type="button" class="kt-s300-btn kt-s300-btn--ghost" data-goto-step="{{ sid }}">
+										<span class="material-symbols-outlined">edit</span> {{ _("Edit") }}
+									</button>
+								</div>
+							</div>
+							{% endfor %}
+						</div>
+						{# Certified record — step_5_3 formal panel (no on-page certifier form). #}
+						<div id="kt-s300-cert-record" class="kt-s300-cert-record" data-testid="kt-s300-cert-record" hidden>
+							<div class="kt-s300-cert-record__header">
+								<div class="kt-s300-cert-record__title">
+									<span class="material-symbols-outlined" aria-hidden="true">verified</span>
+									<h3>{{ _("Questionnaire certified") }}</h3>
+								</div>
+								<span class="kt-s300-cert-record__badge" data-testid="kt-s300-cert-badge">{{ _("Certified") }}</span>
+							</div>
+							<div class="kt-s300-cert-record__body">
+								<div class="kt-s300-cert-quote kt-s300-cert-quote--ok">
+									{{ _("On behalf of the Tenderer, I certify that the information given above is complete, current and accurate as at the date of submission.") }}
+								</div>
+								<div class="kt-s300-cert-record__grid">
+									<div>
+										<p class="kt-s300-cert-record__label">{{ _("Certified for") }}</p>
+										<p class="kt-s300-cert-record__value" data-cert-record="legal_name">—</p>
+									</div>
+									<div>
+										<p class="kt-s300-cert-record__label">{{ _("Certified by") }}</p>
+										<p class="kt-s300-cert-record__value" data-cert-record="certifier_name">—</p>
+									</div>
+									<div>
+										<p class="kt-s300-cert-record__label">{{ _("Capacity") }}</p>
+										<p class="kt-s300-cert-record__value" data-cert-record="certifier_title">—</p>
+									</div>
+									<div>
+										<p class="kt-s300-cert-record__label">{{ _("Tender reference") }}</p>
+										<p class="kt-s300-cert-record__value" data-cert-record="tender_ref">—</p>
+									</div>
+									<div class="kt-s300-cert-record__span">
+										<p class="kt-s300-cert-record__label">{{ _("Certified on") }}</p>
+										<p class="kt-s300-cert-record__value" data-cert-record="certified_on">—</p>
+									</div>
+								</div>
+							</div>
+						</div>
+					</section>
+				</div><!-- /.kt-s300-card -->
+				</div><!-- /.kt-s300-canvas -->
+
+				<aside class="kt-s300-tender-aside" data-testid="kt-s300-tender-aside" aria-label="{{ _('Tender details') }}">
+					<div class="kt-s300-tender-card" data-testid="kt-s300-tender-info">
+						<h4>{{ _("Tender Details") }}</h4>
+						<div class="kt-s300-tender-row">
+							<dt>{{ _("Tender Name") }}</dt>
+							<dd>{{ ti.tender_title or c.tender_title or "—" }}</dd>
+						</div>
+						<div class="kt-s300-tender-row">
+							<dt>{{ _("Tender Ref") }}</dt>
+							<dd>{{ ti.publication_ref or c.published_tender_ref }}</dd>
+						</div>
+						<div class="kt-s300-tender-row">
+							<dt>{{ _("Procuring Entity") }}</dt>
+							<dd>{{ ti.procuring_entity or "—" }}</dd>
+						</div>
+						<div class="kt-s300-tender-row">
+							<dt>{{ _("Submission Deadline") }}</dt>
+							<dd>{{ ti.submission_deadline or "—" }}</dd>
+						</div>
+						<div class="kt-s300-tender-row">
+							<dt>{{ _("Opening Date") }}</dt>
+							<dd>{{ ti.opening_datetime or "—" }}</dd>
+						</div>
+						<div class="kt-s300-tender-row">
+							<dt>{{ _("Procurement Method") }}</dt>
+							<dd>{{ ti.procurement_method or "—" }}</dd>
+						</div>
+					</div>
+				</aside>
+				</div><!-- /.kt-s300-layout -->
+			</div><!-- /.kt-s300-page -->
+		</main>
+	</div><!-- /.kt-a2-shell -->
+
+	{# Stitch: fixed full-width action bar (left = sidebar edge on desktop). #}
+	<footer class="kt-s300-footer" data-testid="kt-s300-footer">
+		<div class="kt-s300-footer-bar">
+			<button type="button" class="kt-s300-btn kt-s300-btn--ghost" data-testid="kt-s300-back" id="kt-s300-back">
+				<span class="material-symbols-outlined">arrow_back</span> {{ _("Back to checklist") }}
+			</button>
+			<div class="kt-s300-footer-left-certified" id="kt-s300-footer-certified-left" hidden>
+				<button type="button" class="kt-s300-btn" data-testid="kt-s300-amend" id="kt-s300-amend">
+					<span class="material-symbols-outlined">edit</span> {{ _("Amend questionnaire") }}
+				</button>
+				<span class="kt-s300-amend-hint" data-testid="kt-s300-amend-hint" id="kt-s300-amend-hint">
+					{{ _("Changing an answer will remove the current certification.") }}
+				</span>
+			</div>
+			<div class="kt-s300-footer-right">
+				<button type="button" class="kt-s300-btn" data-testid="kt-s300-save-draft" id="kt-s300-save">{{ _("Save draft") }}</button>
+				<button type="button" class="kt-s300-btn kt-s300-btn--primary" data-testid="kt-s300-continue" id="kt-s300-continue">
+					{{ _("Continue") }} <span class="material-symbols-outlined">arrow_forward</span>
+				</button>
+				<button type="button" class="kt-s300-btn kt-s300-btn--primary" data-testid="kt-s300-certify" id="kt-s300-certify" style="display:none">{{ _("Certify questionnaire") }}</button>
+				<button type="button" class="kt-s300-btn kt-s300-btn--primary" data-testid="kt-s300-return-checklist" id="kt-s300-return-checklist" hidden>
+					{{ _("Return to checklist") }} <span class="material-symbols-outlined">fact_check</span>
+				</button>
+			</div>
+		</div>
+	</footer>
+
+	{# step_5_2 — certification details belong here, not on the review form #}
+	<div id="kt-s300-certify-dialog" class="kt-s300-dialog" data-testid="kt-s300-certify-dialog" hidden role="dialog" aria-modal="true" aria-labelledby="kt-s300-certify-dialog-title">
+		<div class="kt-s300-dialog__backdrop" data-testid="kt-s300-certify-dialog-backdrop" id="kt-s300-certify-dialog-backdrop"></div>
+		<div class="kt-s300-dialog__panel" data-testid="kt-s300-certify-dialog-panel">
+			<div class="kt-s300-dialog__header">
+				<span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
+				<h3 id="kt-s300-certify-dialog-title">{{ _("Certify this questionnaire?") }}</h3>
+			</div>
+			<div class="kt-s300-dialog__meta">
+				<div>
+					<p class="kt-s300-cert-record__label">{{ _("Bidder name") }}</p>
+					<p class="kt-s300-cert-record__value" data-cert-dialog="legal_name">—</p>
+				</div>
+				<div>
+					<p class="kt-s300-cert-record__label">{{ _("Tender reference") }}</p>
+					<p class="kt-s300-cert-record__value" data-cert-dialog="tender_ref">—</p>
+				</div>
+			</div>
+			<div class="kt-s300-cert-quote" data-testid="kt-s300-certify-dialog-declaration">
+				{{ _("On behalf of the Tenderer, I certify that the information given above is complete, current and accurate as at the date of submission.") }}
+			</div>
+			<div class="kt-s300-dialog__fields" data-testid="kt-s300-certify-dialog-fields">
+				<div class="kt-s300-grid">
+					<div class="kt-s300-field">
+						<label>{{ _("Full name of person certifying") }} *</label>
+						<input data-cert="certifier_name" type="text" placeholder="{{ _('Enter legal name') }}" autocomplete="name">
+					</div>
+					<div class="kt-s300-field">
+						<label>{{ _("Title or designation") }} *</label>
+						<input data-cert="certifier_title" type="text" placeholder="{{ _('e.g. Managing Director') }}" autocomplete="organization-title">
+					</div>
+				</div>
+				<label class="kt-s300-cert-check kt-s300-dialog__check">
+					<input type="checkbox" data-cert="authority_affirmed">
+					<span>{{ _("I confirm that I am authorised to certify this questionnaire for the bidder.") }}</span>
+				</label>
+			</div>
+			<div class="kt-s300-dialog__warn" data-testid="kt-s300-certify-dialog-warn">
+				<span class="material-symbols-outlined" aria-hidden="true">warning</span>
+				<p>{{ _("Changes made after certification will require this questionnaire to be certified again.") }}</p>
+			</div>
+			<div class="kt-s300-dialog__actions">
+				<button type="button" class="kt-s300-btn" data-testid="kt-s300-certify-dialog-cancel" id="kt-s300-certify-dialog-cancel">{{ _("Cancel") }}</button>
+				<button type="button" class="kt-s300-btn kt-s300-btn--primary" data-testid="kt-s300-certify-dialog-confirm" id="kt-s300-certify-dialog-confirm">{{ _("Certify questionnaire") }}</button>
+			</div>
+		</div>
+	</div>
+
+	{# Amend confirmation — clears certification on confirm #}
+	<div id="kt-s300-amend-dialog" class="kt-s300-dialog" data-testid="kt-s300-amend-dialog" hidden role="dialog" aria-modal="true" aria-labelledby="kt-s300-amend-dialog-title">
+		<div class="kt-s300-dialog__backdrop" data-testid="kt-s300-amend-dialog-backdrop" id="kt-s300-amend-dialog-backdrop"></div>
+		<div class="kt-s300-dialog__panel kt-s300-dialog__panel--narrow" data-testid="kt-s300-amend-dialog-panel">
+			<div class="kt-s300-dialog__header">
+				<span class="material-symbols-outlined" aria-hidden="true">edit</span>
+				<h3 id="kt-s300-amend-dialog-title">{{ _("Amend this questionnaire?") }}</h3>
+			</div>
+			<p class="kt-s300-dialog__body">
+				{{ _("Changing an answer will remove the current certification. You will need to certify the questionnaire again before submission.") }}
+			</p>
+			<div class="kt-s300-dialog__warn" data-testid="kt-s300-amend-dialog-warn">
+				<span class="material-symbols-outlined" aria-hidden="true">warning</span>
+				<p>{{ _("The certification record and Certified status will be removed immediately.") }}</p>
+			</div>
+			<div class="kt-s300-dialog__actions">
+				<button type="button" class="kt-s300-btn" data-testid="kt-s300-amend-dialog-cancel" id="kt-s300-amend-dialog-cancel">{{ _("Cancel") }}</button>
+				<button type="button" class="kt-s300-btn kt-s300-btn--primary" data-testid="kt-s300-amend-dialog-confirm" id="kt-s300-amend-dialog-confirm">{{ _("Amend questionnaire") }}</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+frappe.ready(function () {
+	const root = document.querySelector('[data-testid="kt-s300-cbq-root"]');
+	if (!root || typeof frappe === "undefined" || typeof frappe.call !== "function") return;
+	if (typeof frappe.show_alert !== "function") {
+		console.error("CBQ: frappe.show_alert unavailable — draft feedback will not show");
+	}
+	const pubRef = root.getAttribute("data-publication-ref");
+	const readOnly = root.getAttribute("data-read-only") === "1";
+	const stepLabels = ["", "Bidder Details", "Business Details", "Ownership", "Conflicts", "Certify"];
+	const defaultInstructions = (root.querySelector('[data-testid="kt-s300-cbq-instructions"]') || {}).textContent || "";
+	let state = { step: 1, entityIndex: 0, dto: null, visited: { 1: true } };
+	/** Monotonic token so a slower save cannot overwrite newer in-memory/UI state. */
+	let saveSeq = 0;
+
+	function clampStep(n) {
+		const v = Number(n) || 1;
+		if (v < 1) return 1;
+		if (v > 5) return 5;
+		return v;
+	}
+
+	function stepStorageKey() {
+		return "kt-s300-cbq-step:" + (pubRef || "");
+	}
+
+	function readPersistedStep() {
+		try {
+			const u = new URL(window.location.href);
+			const q = parseInt(u.searchParams.get("step") || "", 10);
+			if (q >= 1 && q <= 5) return q;
+		} catch (e) { /* ignore */ }
+		try {
+			const s = parseInt(sessionStorage.getItem(stepStorageKey()) || "", 10);
+			if (s >= 1 && s <= 5) return s;
+		} catch (e) { /* ignore */ }
+		return 1;
+	}
+
+	function persistStep(step) {
+		step = clampStep(step);
+		try {
+			const u = new URL(window.location.href);
+			if (u.searchParams.get("step") !== String(step)) {
+				u.searchParams.set("step", String(step));
+				window.history.replaceState(null, "", u.pathname + u.search + u.hash);
+			}
+		} catch (e) { /* ignore */ }
+		try {
+			sessionStorage.setItem(stepStorageKey(), String(step));
+		} catch (e) { /* ignore */ }
+	}
+
+	/** Clear any open Frappe desk toasts (step change / navigation). */
+	function hideToast() {
+		const host = document.getElementById("alert-container");
+		if (host) host.innerHTML = "";
+	}
+
+	/**
+	 * Canonical KenTender/Frappe toast — frappe.show_alert / frappe.toast only.
+	 * Do not use custom page banners.
+	 */
+	function showToast(msg, warn) {
+		if (typeof frappe === "undefined" || typeof frappe.show_alert !== "function") {
+			console.error("CBQ showToast: frappe.show_alert missing:", msg);
+			return;
+		}
+		const text = typeof __ === "function" ? __(msg) : msg;
+		frappe.show_alert(
+			{
+				message: text,
+				indicator: warn ? "orange" : "green",
+			},
+			4
+		);
+	}
+
+	function activeEntity() {
+		const ents = (state.dto && state.dto.entities) || [];
+		return ents[state.entityIndex] || null;
+	}
+
+	function collectFromDom(entity) {
+		if (!entity) return entity;
+		entity.legal_name = (root.querySelector('[data-field="legal_name"]') || {}).value || "";
+		entity.answers = entity.answers || {};
+		entity.conflict_rows = entity.conflict_rows || {};
+		const st = root.querySelector('input[name="submission_type"]:checked');
+		if (st) entity.answers.submission_type = st.value;
+		root.querySelectorAll("[data-answer]").forEach((el) => {
+			entity.answers[el.getAttribute("data-answer")] = el.value;
+		});
+		const rb = {};
+		root.querySelectorAll("[data-rb]").forEach((el) => { rb[el.getAttribute("data-rb")] = el.value; });
+		entity.answers.registering_body = rb;
+		entity.answers.registration_body = rb.name || "";
+		const stockListed = root.querySelector('input[name="stock_listed"]:checked');
+		if (stockListed) entity.answers.stock_exchange_listed = stockListed.value;
+		const stock = {};
+		root.querySelectorAll("[data-stock]").forEach((el) => { stock[el.getAttribute("data-stock")] = el.value; });
+		entity.answers.stock_exchange = stock;
+		const et = root.querySelector('input[name="entity_type"]:checked');
+		if (et) entity.entity_type = et.value;
+		const pe = root.querySelector('input[name="pe_interest"]:checked');
+		if (pe) entity.answers.pe_interest_disclosure = pe.value;
+		entity.answers.partners = readTable("partners");
+		entity.answers.directors = readTable("directors");
+		entity.answers.pe_interest_people = readTable("pe_interest_people");
+		(state.dto.conflict_row_keys || []).forEach((key) => {
+			const ans = root.querySelector('input[data-conflict-answer="' + key + '"]:checked');
+			const det = root.querySelector('[data-conflict-details-input="' + key + '"]');
+			entity.conflict_rows[key] = {
+				answer: ans ? ans.value : "",
+				details: det ? det.value : "",
+			};
+		});
+		return entity;
+	}
+
+	function readTable(kind) {
+		const map = {
+			partners: '[data-testid="kt-s300-partners-table"] tbody',
+			directors: '[data-testid="kt-s300-directors-table"] tbody',
+			pe_interest_people: '[data-testid="kt-s300-pe-people-table"] tbody',
+		};
+		const tbody = root.querySelector(map[kind]);
+		if (!tbody) return [];
+		const rows = [];
+		tbody.querySelectorAll("tr").forEach((tr) => {
+			const inputs = tr.querySelectorAll("input");
+			if (kind === "pe_interest_people") {
+				rows.push({ name: inputs[0]?.value || "", designation: inputs[1]?.value || "", interest: inputs[2]?.value || "" });
+			} else {
+				rows.push({ name: inputs[0]?.value || "", citizenship: inputs[1]?.value || "", nationality: inputs[1]?.value || "", shares_percent: inputs[2]?.value || "" });
+			}
+		});
+		return rows.filter((r) => r.name);
+	}
+
+	function writeTable(kind, rows) {
+		const map = {
+			partners: '[data-testid="kt-s300-partners-table"] tbody',
+			directors: '[data-testid="kt-s300-directors-table"] tbody',
+			pe_interest_people: '[data-testid="kt-s300-pe-people-table"] tbody',
+		};
+		const tbody = root.querySelector(map[kind]);
+		if (!tbody) return;
+		tbody.innerHTML = "";
+		(rows || []).forEach((r) => addTableRow(kind, r));
+		if (!(rows || []).length) addTableRow(kind, {});
+	}
+
+	function addTableRow(kind, row) {
+		const map = {
+			partners: '[data-testid="kt-s300-partners-table"] tbody',
+			directors: '[data-testid="kt-s300-directors-table"] tbody',
+			pe_interest_people: '[data-testid="kt-s300-pe-people-table"] tbody',
+		};
+		const tbody = root.querySelector(map[kind]);
+		if (!tbody) return;
+		const tr = document.createElement("tr");
+		if (kind === "pe_interest_people") {
+			tr.innerHTML = '<td><input value="' + (row.name || "") + '"></td><td><input value="' + (row.designation || "") + '"></td><td><input value="' + (row.interest || "") + '"></td>';
+		} else {
+			tr.innerHTML = '<td><input value="' + (row.name || "") + '"></td><td><input value="' + (row.citizenship || row.nationality || "") + '"></td><td><input value="' + (row.shares_percent || "") + '"></td>';
+		}
+		tbody.appendChild(tr);
+	}
+
+	function bindEntity(entity) {
+		if (!entity) return;
+		const a = entity.answers || {};
+		const setVal = (sel, val) => { const el = root.querySelector(sel); if (el) el.value = val || ""; };
+		setVal('[data-field="legal_name"]', entity.legal_name);
+		root.querySelectorAll("[data-answer]").forEach((el) => {
+			el.value = a[el.getAttribute("data-answer")] || "";
+		});
+		const rb = a.registering_body || {};
+		root.querySelectorAll("[data-rb]").forEach((el) => { el.value = rb[el.getAttribute("data-rb")] || ""; });
+		if (!rb.name && a.registration_body) {
+			const el = root.querySelector('[data-rb="name"]');
+			if (el) el.value = a.registration_body;
+		}
+		const stock = a.stock_exchange || {};
+		root.querySelectorAll("[data-stock]").forEach((el) => { el.value = stock[el.getAttribute("data-stock")] || ""; });
+		const st = a.submission_type || "single";
+		const stEl = root.querySelector('input[name="submission_type"][value="' + st + '"]');
+		if (stEl) stEl.checked = true;
+		toggleJV(st === "jv");
+		const listed = a.stock_exchange_listed || "";
+		if (listed) {
+			const el = root.querySelector('input[name="stock_listed"][value="' + listed + '"]');
+			if (el) el.checked = true;
+		}
+		document.getElementById("kt-s300-stock-panel").style.display = listed === "yes" ? "block" : "none";
+		if (entity.entity_type) {
+			const el = root.querySelector('input[name="entity_type"][value="' + entity.entity_type + '"]');
+			if (el) el.checked = true;
+		}
+		toggleOwnership(entity.entity_type || "");
+		const pe = a.pe_interest_disclosure || "";
+		if (pe) {
+			const el = root.querySelector('input[name="pe_interest"][value="' + pe + '"]');
+			if (el) el.checked = true;
+		}
+		document.getElementById("kt-s300-pe-people").style.display = pe === "yes" ? "block" : "none";
+		writeTable("partners", a.partners);
+		writeTable("directors", a.directors);
+		writeTable("pe_interest_people", a.pe_interest_people);
+		const rows = entity.conflict_rows || {};
+		(state.dto.conflict_row_keys || []).forEach((key) => {
+			const row = rows[key] || {};
+			if (row.answer) {
+				const el = root.querySelector('input[data-conflict-answer="' + key + '"][value="' + row.answer + '"]');
+				if (el) el.checked = true;
+			} else {
+				root.querySelectorAll('input[data-conflict-answer="' + key + '"]').forEach((x) => { x.checked = false; });
+			}
+			const det = root.querySelector('[data-conflict-details-input="' + key + '"]');
+			if (det) det.value = row.details || "";
+			const box = root.querySelector('[data-conflict-details="' + key + '"]');
+			if (box) box.classList.toggle("is-open", row.answer === "yes");
+		});
+		updateConflictCount();
+		// Certifier inputs live only in the dialog (not on the review form).
+		const nameEl = root.querySelector('[data-cert="certifier_name"]');
+		const titleEl = root.querySelector('[data-cert="certifier_title"]');
+		const aff = root.querySelector('[data-cert="authority_affirmed"]');
+		if (nameEl) nameEl.value = entity.certifier_name || "";
+		if (titleEl) titleEl.value = entity.certifier_title || "";
+		if (aff) aff.checked = !!entity.authority_affirmed;
+		syncCertificationUi(entity);
+		renderEntityTabs();
+		updateReviewBadges();
+		refreshStepper();
+	}
+
+	function tenderRefLabel() {
+		const ti = (state.dto && state.dto.tender_info) || {};
+		return ti.tender_reference || ti.publication_ref || (state.dto && state.dto.published_tender_ref) || pubRef || "—";
+	}
+
+	function bidderLegalName(entity) {
+		if (!entity) return "";
+		return String(entity.certified_for || entity.legal_name || "").trim();
+	}
+
+	function fillCertRecord(entity) {
+		const setRec = (key, val) => {
+			const el = root.querySelector('[data-cert-record="' + key + '"]');
+			if (el) el.textContent = val || "—";
+		};
+		// Certified for = legal name of the bidding entity (Bidder Details), not PE/tender title.
+		setRec("legal_name", bidderLegalName(entity));
+		setRec("certifier_name", entity.certifier_name);
+		setRec("certifier_title", entity.certifier_title);
+		setRec("tender_ref", tenderRefLabel());
+		setRec("certified_on", entity.certified_at_display || "");
+	}
+
+	function syncStep5Layout(entity) {
+		const certified = !!(entity && entity.certified);
+		const onStep5 = state.step === 5;
+		const record = document.getElementById("kt-s300-cert-record");
+		const review = document.getElementById("kt-s300-review-card");
+		const meta = document.getElementById("kt-s300-step5-tender-meta");
+		const aside = root.querySelector('[data-testid="kt-s300-tender-aside"]');
+		const layout = root.querySelector(".kt-s300-layout");
+		const instr = root.querySelector('[data-testid="kt-s300-cbq-instructions"]');
+		if (record) {
+			record.hidden = !(onStep5 && certified);
+			if (certified) fillCertRecord(entity);
+		}
+		// step_5_3: certified view is tender meta + cert record (no submission review / edit list).
+		if (review) review.hidden = onStep5 && certified;
+		if (meta) meta.hidden = !onStep5;
+		if (aside) aside.hidden = onStep5 && certified;
+		if (layout) layout.classList.toggle("is-certified-view", onStep5 && certified);
+		if (instr) {
+			instr.textContent = onStep5 ? "Review and Certify" : defaultInstructions;
+		}
+		const stepLabel = root.querySelector('[data-step-indicator="5"] .kt-s300-step-label');
+		if (stepLabel) stepLabel.textContent = certified ? "Certified" : "Certify";
+		const stepIndex = root.querySelector('[data-step-indicator="5"] .kt-s300-step-index');
+		if (stepIndex) stepIndex.textContent = "Step 5";
+		syncFooterForCert(certified);
+	}
+
+	function syncCertificationUi(entity) {
+		syncStep5Layout(entity);
+	}
+
+	function syncFooterForCert(certified) {
+		const onCertStep = state.step === 5 && certified;
+		const backBtn = document.getElementById("kt-s300-back");
+		const certLeft = document.getElementById("kt-s300-footer-certified-left");
+		const saveBtn = document.getElementById("kt-s300-save");
+		const continueBtn = document.getElementById("kt-s300-continue");
+		const certifyBtn = document.getElementById("kt-s300-certify");
+		const returnBtn = document.getElementById("kt-s300-return-checklist");
+		if (backBtn) backBtn.hidden = onCertStep;
+		if (certLeft) certLeft.hidden = !onCertStep;
+		if (returnBtn) returnBtn.hidden = !onCertStep;
+		if (saveBtn) {
+			saveBtn.hidden = onCertStep;
+			saveBtn.style.display = onCertStep ? "none" : "";
+		}
+		if (continueBtn) {
+			continueBtn.style.display = (!onCertStep && state.step < 5) ? "inline-flex" : "none";
+		}
+		if (certifyBtn) {
+			certifyBtn.style.display = (!onCertStep && state.step === 5) ? "inline-flex" : "none";
+		}
+	}
+
+	function openCertifyDialog() {
+		const ent = collectFromDom(activeEntity()) || {};
+		const setDlg = (key, val) => {
+			const el = root.querySelector('[data-cert-dialog="' + key + '"]');
+			if (el) el.textContent = val || "—";
+		};
+		setDlg("legal_name", bidderLegalName(ent) || String(ent.legal_name || "").trim());
+		setDlg("tender_ref", tenderRefLabel());
+		const nameEl = root.querySelector('[data-cert="certifier_name"]');
+		const titleEl = root.querySelector('[data-cert="certifier_title"]');
+		const affEl = root.querySelector('[data-cert="authority_affirmed"]');
+		if (nameEl) nameEl.value = ent.certifier_name || nameEl.value || "";
+		if (titleEl) titleEl.value = ent.certifier_title || titleEl.value || "";
+		if (affEl && !affEl.checked) affEl.checked = !!ent.authority_affirmed;
+		const dlg = document.getElementById("kt-s300-certify-dialog");
+		if (dlg) {
+			dlg.hidden = false;
+			document.body.classList.add("kt-s300-dialog-open");
+			if (nameEl) nameEl.focus();
+		}
+		return true;
+	}
+
+	function closeCertifyDialog() {
+		const dlg = document.getElementById("kt-s300-certify-dialog");
+		if (dlg) dlg.hidden = true;
+		document.body.classList.remove("kt-s300-dialog-open");
+	}
+
+	function readDialogCertifier() {
+		return {
+			name: ((root.querySelector('[data-cert="certifier_name"]') || {}).value || "").trim(),
+			title: ((root.querySelector('[data-cert="certifier_title"]') || {}).value || "").trim(),
+			affirmed: !!(root.querySelector('[data-cert="authority_affirmed"]') || {}).checked,
+		};
+	}
+
+	function runCertify() {
+		const fields = readDialogCertifier();
+		if (!fields.name || !fields.title) {
+			showToast("Full name and title of the person certifying are required.", true);
+			return;
+		}
+		if (!fields.affirmed) {
+			showToast("Confirm that you are authorised to certify this questionnaire.", true);
+			return;
+		}
+		const ent = collectFromDom(activeEntity());
+		if (!String((ent && ent.legal_name) || "").trim()) {
+			showToast("Legal name of the bidding entity is required before certification.", true);
+			return;
+		}
+		// Silent save — only the certification toast should appear.
+		saveDraft(() => {
+			frappe.call({
+				method: "kentender_procurement.tender_configurations.api.certify_cbq_entity",
+				args: {
+					published_tender_ref: pubRef,
+					entity_id: ent.entity_id,
+					certifier_name: fields.name,
+					certifier_title: fields.title,
+					authority_affirmed: fields.affirmed ? 1 : 0,
+				},
+				callback: function (r) {
+					closeCertifyDialog();
+					if (r.message) {
+						state.dto = r.message;
+						bindEntity(activeEntity());
+						hideToast();
+						showToast("Questionnaire certified.");
+					}
+				},
+				error: function (err) {
+					showToast((err && err.message) || "Certification failed. Complete all required fields.", true);
+				},
+			});
+		}, { silent: true });
+	}
+
+	function entityTabLabel(entity, index) {
+		if (!entity) return "Entity";
+		if (entity.role === "jv_member") {
+			return (entity.legal_name && entity.legal_name.trim())
+				? entity.legal_name.trim()
+				: ("JV member " + index);
+		}
+		return (entity.legal_name && entity.legal_name.trim())
+			? entity.legal_name.trim()
+			: "Lead bidder";
+	}
+
+	function renderEntityTabs() {
+		const host = root.querySelector('[data-testid="kt-s300-entity-tabs"]');
+		if (!host) return;
+		const ents = (state.dto && state.dto.entities) || [];
+		host.innerHTML = "";
+		// Single-entity bids have no switcher (Stitch); avoid a black "action" pill.
+		if (ents.length <= 1) {
+			host.hidden = true;
+			host.classList.remove("is-visible");
+			return;
+		}
+		host.hidden = false;
+		host.classList.add("is-visible");
+		ents.forEach((e, i) => {
+			const btn = document.createElement("button");
+			btn.type = "button";
+			btn.className = "kt-s300-entity-tab" + (i === state.entityIndex ? " is-active" : "");
+			btn.textContent = entityTabLabel(e, i + 1) + (e.certified ? " ✓" : "");
+			btn.addEventListener("click", () => {
+				collectFromDom(activeEntity());
+				state.entityIndex = i;
+				bindEntity(activeEntity());
+			});
+			host.appendChild(btn);
+		});
+	}
+
+	function updateConflictCount() {
+		const keys = state.dto.conflict_row_keys || [];
+		let n = 0;
+		keys.forEach((key) => {
+			if (root.querySelector('input[data-conflict-answer="' + key + '"]:checked')) n += 1;
+		});
+		const el = root.querySelector('[data-testid="kt-s300-conflict-count"]');
+		if (el) el.textContent = n + " of 9 answered";
+	}
+
+	function updateReviewBadges() {
+		const ent = activeEntity();
+		if (!ent) return;
+		const issues = ((state.dto.validation || {}).issues || []).filter((i) => !i.entity_id || i.entity_id === ent.entity_id);
+		const stepIssue = { 1: false, 2: false, 3: false, 4: false };
+		const map = {
+			legal_name: 1, country: 1, contact_person: 1, contact_email: 1,
+			nature_of_business: 2, max_business_value: 2, trade_licence_number: 2, licence_expiry: 2, registering_body: 2, stock_exchange: 2, stock_exchange_listed: 2,
+			entity_type: 3, proprietor_name: 3, partners: 3, directors: 3, company_type: 3,
+			pe_interest_disclosure: 4, pe_interest_people: 4,
+		};
+		issues.forEach((i) => {
+			const fk = i.field_key || "";
+			if (fk.indexOf("q") === 0 || fk.indexOf("conflict") >= 0) stepIssue[4] = true;
+			else if (map[fk]) stepIssue[map[fk]] = true;
+			else stepIssue[1] = true;
+		});
+		[1, 2, 3, 4].forEach((sid) => {
+			const badge = root.querySelector('[data-review-badge="' + sid + '"]');
+			if (!badge) return;
+			const bad = stepIssue[sid] || !ent.legal_name;
+			badge.textContent = bad ? "Needs attention" : "Complete";
+			badge.className = "kt-s300-badge " + (bad ? "kt-s300-badge--warn" : "kt-s300-badge--ok");
+		});
+	}
+
+	function toggleJV(open) {
+		document.getElementById("kt-s300-jv-panel").classList.toggle("is-open", !!open);
+	}
+	function toggleOwnership(etype) {
+		document.getElementById("kt-s300-own-sole").style.display = etype === "sole_proprietor" ? "block" : "none";
+		document.getElementById("kt-s300-own-partnership").style.display = etype === "partnership" ? "block" : "none";
+		document.getElementById("kt-s300-own-company").style.display = etype === "company" ? "block" : "none";
+	}
+
+	function _filled(v) {
+		return String(v == null ? "" : v).trim().length > 0;
+	}
+
+	/** Green check only when required fields for that step are present — not merely visited. */
+	function isStepComplete(stepNum, entity) {
+		if (!entity) return false;
+		const a = entity.answers || {};
+		const rb = a.registering_body || {};
+		if (stepNum === 1) {
+			return _filled(entity.legal_name) && _filled(a.country)
+				&& _filled(a.contact_person) && _filled(a.contact_email);
+		}
+		if (stepNum === 2) {
+			return _filled(a.trade_licence_number) && _filled(a.licence_expiry)
+				&& _filled(a.nature_of_business) && _filled(a.max_business_value)
+				&& _filled(a.stock_exchange_listed)
+				&& _filled(rb.name || a.registration_body);
+		}
+		if (stepNum === 3) {
+			if (!_filled(entity.entity_type)) return false;
+			if (entity.entity_type === "sole_proprietor") return _filled(a.proprietor_name);
+			if (entity.entity_type === "partnership") {
+				return (a.partners || []).some((p) => _filled(p && p.name));
+			}
+			if (entity.entity_type === "company") {
+				return _filled(a.company_type)
+					&& (a.directors || []).some((d) => _filled(d && d.name));
+			}
+			return false;
+		}
+		if (stepNum === 4) {
+			if (!_filled(a.pe_interest_disclosure)) return false;
+			if (a.pe_interest_disclosure === "yes"
+				&& !(a.pe_interest_people || []).some((p) => _filled(p && p.name))) {
+				return false;
+			}
+			const keys = (state.dto && state.dto.conflict_row_keys) || [];
+			const rows = entity.conflict_rows || {};
+			return keys.every((key) => {
+				const row = rows[key] || {};
+				if (!_filled(row.answer)) return false;
+				if (row.answer === "yes" && !_filled(row.details)) return false;
+				return true;
+			});
+		}
+		if (stepNum === 5) return !!entity.certified;
+		return false;
+	}
+
+	function refreshStepper() {
+		const ent = activeEntity();
+		root.querySelectorAll("[data-step-indicator]").forEach((el) => {
+			const n = Number(el.getAttribute("data-step-indicator"));
+			const numEl = el.querySelector(".kt-s300-step-num");
+			const wasVisited = !!state.visited[n];
+			const complete = isStepComplete(n, ent);
+			const isCurrent = n === state.step;
+			// Green/check from saved answers — do not wait until the user opens the step.
+			// Active incomplete/complete steps 1–4 stay "active"; certified step 5 shows done while current.
+			const showDone = complete && (!isCurrent || n === 5);
+			const showIncomplete = wasVisited && !complete && !isCurrent;
+			el.classList.toggle("is-active", isCurrent && !(n === 5 && complete));
+			el.classList.toggle("is-done", showDone);
+			el.classList.toggle("is-incomplete", showIncomplete);
+			el.setAttribute("aria-current", isCurrent ? "step" : "false");
+			el.setAttribute(
+				"data-step-state",
+				showDone
+					? "complete"
+					: (isCurrent
+						? "active"
+						: (showIncomplete ? "incomplete" : "pending"))
+			);
+			if (numEl) {
+				if (showDone) {
+					numEl.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px">check</span>';
+				} else {
+					numEl.textContent = String(n);
+				}
+			}
+		});
+	}
+
+	function setStep(step) {
+		step = clampStep(step);
+		hideToast();
+		if (state.dto) collectFromDom(activeEntity());
+		state.step = step;
+		state.visited[step] = true;
+		persistStep(step);
+		root.querySelectorAll("[data-step-panel]").forEach((p) => {
+			p.classList.toggle("is-active", Number(p.getAttribute("data-step-panel")) === step);
+		});
+		refreshStepper();
+		const ent = activeEntity();
+		const certified = !!(ent && ent.certified);
+		const crumb = root.querySelector('[data-testid="kt-s300-crumb-step"]');
+		if (crumb) {
+			crumb.textContent = (step === 5 && certified) ? "Certified" : (stepLabels[step] || "");
+		}
+		const backBtn = document.getElementById("kt-s300-back");
+		if (backBtn) {
+			backBtn.innerHTML = step === 1
+				? '<span class="material-symbols-outlined">arrow_back</span> Back to checklist'
+				: '<span class="material-symbols-outlined">arrow_back</span> Back';
+		}
+		syncStep5Layout(ent);
+	}
+
+	function saveDraft(cb, opts) {
+		opts = opts || {};
+		if (readOnly) return;
+		if (!state.dto || !state.dto.entities) {
+			showToast("Still loading questionnaire…", true);
+			return;
+		}
+		collectFromDom(activeEntity());
+		const seq = ++saveSeq;
+		const payloadEntities = JSON.parse(JSON.stringify(state.dto.entities || []));
+		frappe.call({
+			method: "kentender_procurement.tender_configurations.api.save_confidential_business_questionnaire",
+			args: { published_tender_ref: pubRef, payload: { entities: payloadEntities } },
+			callback: function (r) {
+				if (seq !== saveSeq) {
+					// Stale response from an earlier save — do not clobber newer edits.
+					return;
+				}
+				if (r.exc) {
+					showToast("Could not save draft.", true);
+					return;
+				}
+				if (r.message) {
+					state.dto = r.message;
+					bindEntity(activeEntity());
+					if (!opts.silent) showToast("Draft saved.");
+					if (cb) cb();
+				} else {
+					showToast("Could not save draft.", true);
+				}
+			},
+			error: function () {
+				if (seq !== saveSeq) return;
+				showToast("Could not save draft.", true);
+			},
+		});
+	}
+
+	function load() {
+		frappe.call({
+			method: "kentender_procurement.tender_configurations.api.get_confidential_business_questionnaire",
+			args: { published_tender_ref: pubRef },
+			callback: function (r) {
+				if (r.exc) {
+					showToast("Could not load questionnaire.", true);
+					return;
+				}
+				state.dto = r.message || {};
+				bindEntity(activeEntity());
+				const initial = readPersistedStep();
+				for (let i = 1; i <= initial; i += 1) state.visited[i] = true;
+				setStep(initial);
+			},
+			error: function () { showToast("Could not load questionnaire.", true); },
+		});
+	}
+
+	root.querySelectorAll('input[name="submission_type"]').forEach((el) => {
+		el.addEventListener("change", () => toggleJV(el.value === "jv"));
+	});
+	root.querySelectorAll('input[name="stock_listed"]').forEach((el) => {
+		el.addEventListener("change", () => {
+			document.getElementById("kt-s300-stock-panel").style.display = el.value === "yes" ? "block" : "none";
+		});
+	});
+	root.querySelectorAll('input[name="entity_type"]').forEach((el) => {
+		el.addEventListener("change", () => toggleOwnership(el.value));
+	});
+	root.querySelectorAll('input[name="pe_interest"]').forEach((el) => {
+		el.addEventListener("change", () => {
+			document.getElementById("kt-s300-pe-people").style.display = el.value === "yes" ? "block" : "none";
+		});
+	});
+	root.querySelectorAll("[data-conflict-answer]").forEach((el) => {
+		el.addEventListener("change", () => {
+			const key = el.getAttribute("data-conflict-answer");
+			const box = root.querySelector('[data-conflict-details="' + key + '"]');
+			if (box) box.classList.toggle("is-open", el.value === "yes" && el.checked);
+			updateConflictCount();
+		});
+	});
+	root.querySelectorAll("[data-add-row]").forEach((btn) => {
+		btn.addEventListener("click", () => addTableRow(btn.getAttribute("data-add-row"), {}));
+	});
+	root.querySelectorAll("[data-goto-step]").forEach((btn) => {
+		btn.addEventListener("click", () => setStep(Number(btn.getAttribute("data-goto-step"))));
+	});
+	root.querySelectorAll("[data-step-indicator]").forEach((btn) => {
+		btn.addEventListener("click", () => {
+			setStep(Number(btn.getAttribute("data-step-indicator")));
+		});
+	});
+
+	document.getElementById("kt-s300-back").addEventListener("click", () => {
+		if (state.step === 1) {
+			window.location.href = (state.dto && state.dto.workspace_url) || "/tenders";
+			return;
+		}
+		setStep(state.step - 1);
+	});
+	document.getElementById("kt-s300-save").addEventListener("click", () => saveDraft());
+	document.getElementById("kt-s300-continue").addEventListener("click", () => {
+		saveDraft(() => setStep(Math.min(5, state.step + 1)));
+	});
+	document.querySelector('[data-testid="kt-s300-add-jv"]').addEventListener("click", () => {
+		collectFromDom(activeEntity());
+		frappe.call({
+			method: "kentender_procurement.tender_configurations.api.add_cbq_jv_entity",
+			args: { published_tender_ref: pubRef, legal_name: "" },
+			callback: function (r) {
+				if (r.message) {
+					state.dto = r.message;
+					state.entityIndex = (state.dto.entities || []).length - 1;
+					bindEntity(activeEntity());
+					showToast("Joint venture member added.");
+				}
+			},
+		});
+	});
+	document.getElementById("kt-s300-certify").addEventListener("click", () => {
+		collectFromDom(activeEntity());
+		openCertifyDialog();
+	});
+	document.getElementById("kt-s300-certify-dialog-cancel").addEventListener("click", () => {
+		closeCertifyDialog();
+	});
+	document.getElementById("kt-s300-certify-dialog-backdrop").addEventListener("click", () => {
+		closeCertifyDialog();
+	});
+	document.getElementById("kt-s300-certify-dialog-confirm").addEventListener("click", () => {
+		runCertify();
+	});
+	document.addEventListener("keydown", (ev) => {
+		if (ev.key !== "Escape") return;
+		const certifyDlg = document.getElementById("kt-s300-certify-dialog");
+		if (certifyDlg && !certifyDlg.hidden) {
+			closeCertifyDialog();
+			return;
+		}
+		const amendDlg = document.getElementById("kt-s300-amend-dialog");
+		if (amendDlg && !amendDlg.hidden) {
+			closeAmendDialog();
+		}
+	});
+	function openAmendDialog() {
+		const ent = activeEntity();
+		if (!ent || !ent.certified) {
+			setStep(1);
+			return;
+		}
+		const dlg = document.getElementById("kt-s300-amend-dialog");
+		if (dlg) {
+			dlg.hidden = false;
+			document.body.classList.add("kt-s300-dialog-open");
+		}
+	}
+
+	function closeAmendDialog() {
+		const dlg = document.getElementById("kt-s300-amend-dialog");
+		if (dlg) dlg.hidden = true;
+		document.body.classList.remove("kt-s300-dialog-open");
+	}
+
+	function runAmend() {
+		const ent = activeEntity();
+		if (!ent || !ent.entity_id) {
+			closeAmendDialog();
+			return;
+		}
+		frappe.call({
+			method: "kentender_procurement.tender_configurations.api.amend_cbq_certification",
+			args: { published_tender_ref: pubRef, entity_id: ent.entity_id },
+			callback: function (r) {
+				closeAmendDialog();
+				if (r.message) {
+					state.dto = r.message;
+					bindEntity(activeEntity());
+					setStep(1);
+					showToast("Certification removed. You can amend the questionnaire.");
+				}
+			},
+			error: function (err) {
+				showToast((err && err.message) || "Could not amend certification.", true);
+			},
+		});
+	}
+
+	document.getElementById("kt-s300-amend").addEventListener("click", () => {
+		openAmendDialog();
+	});
+	document.getElementById("kt-s300-amend-dialog-cancel").addEventListener("click", () => {
+		closeAmendDialog();
+	});
+	document.getElementById("kt-s300-amend-dialog-backdrop").addEventListener("click", () => {
+		closeAmendDialog();
+	});
+	document.getElementById("kt-s300-amend-dialog-confirm").addEventListener("click", () => {
+		runAmend();
+	});
+	document.getElementById("kt-s300-return-checklist").addEventListener("click", () => {
+		const url = (state.dto && state.dto.workspace_url) || ("/tenders/" + encodeURIComponent(pubRef) + "/workspace");
+		window.location.href = url;
+	});
+
+	root.querySelectorAll(".kt-s300-field input, .kt-s300-field select, .kt-s300-field textarea").forEach((el) => {
+		el.addEventListener("focus", () => {
+			const field = el.closest(".kt-s300-field");
+			if (field) field.classList.add("is-focused");
+		});
+		el.addEventListener("blur", () => {
+			const field = el.closest(".kt-s300-field");
+			if (field) field.classList.remove("is-focused");
+		});
+	});
+
+	/** Playwright probe — apply step_5_3 certified chrome without persisting certification. */
+	root.__ktS300ProbeStep5CertifiedLayout = function () {
+		const prevStep = state.step;
+		const ent = activeEntity() || {};
+		const prevCertified = !!ent.certified;
+		ent.certified = true;
+		if (!ent.certified_for) ent.certified_for = ent.legal_name || "Probe Bidder";
+		if (!ent.certifier_name) ent.certifier_name = "Probe Certifier";
+		if (!ent.certifier_title) ent.certifier_title = "Director";
+		if (!ent.certified_at_display) ent.certified_at_display = "1 January 2026, 12:00 p.m. EAT";
+		state.step = 5;
+		state.visited[5] = true;
+		root.querySelectorAll("[data-step-panel]").forEach((p) => {
+			p.classList.toggle("is-active", Number(p.getAttribute("data-step-panel")) === 5);
+		});
+		refreshStepper();
+		syncStep5Layout(ent);
+		const aside = root.querySelector('[data-testid="kt-s300-tender-aside"]');
+		const review = document.getElementById("kt-s300-review-card");
+		const meta = document.getElementById("kt-s300-step5-tender-meta");
+		const record = document.getElementById("kt-s300-cert-record");
+		const layout = root.querySelector(".kt-s300-layout");
+		const instr = root.querySelector('[data-testid="kt-s300-cbq-instructions"]');
+		const result = {
+			reviewHidden: !!(review && review.hidden),
+			asideHidden: !!(aside && aside.hidden),
+			metaVisible: !!(meta && !meta.hidden),
+			recordVisible: !!(record && !record.hidden),
+			layoutCertified: !!(layout && layout.classList.contains("is-certified-view")),
+			instructions: String((instr && instr.textContent) || "").trim(),
+			stepLabel: String(
+				((root.querySelector('[data-step-indicator="5"] .kt-s300-step-label') || {}).textContent) || ""
+			).trim(),
+		};
+		ent.certified = prevCertified;
+		setStep(prevStep);
+		return result;
+	};
+
+	load();
+});
+</script>
+{% endblock %}

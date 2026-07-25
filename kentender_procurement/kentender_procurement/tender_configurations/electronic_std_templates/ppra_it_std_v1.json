@@ -1,0 +1,810 @@
+{
+  "template_id": "PPRA-IT-STD",
+  "template_version": "1.0",
+  "std_family": "information_technology",
+  "source": {
+    "std_document": "PPRA Standard Tender Document for Procurement of Information Technology",
+    "std_label": "IT Standard Tender Document — April 2022",
+    "circular": "PPRA Circular No. 02/2022",
+    "obligation_catalogue": "01. Canonical_PPRA_IT_STD_Bidder_Submission_Obligation_Catalogue_v1.md",
+    "section_blueprint": "02. Canonical_PPRA_IT_STD_Bidder_Submission_Section_Blueprint_v1.md",
+    "fot_specification": "05. KenTender_Form_of_Tender_Electronic_Section_Specification_v1.md"
+  },
+  "sections": [
+    {
+      "section_key": "tender_documents_and_addenda",
+      "title": "Tender Documents and Addenda",
+      "order": 1,
+      "renderer": "document_acknowledgement",
+      "bidder_instructions": "Review and acknowledge the published tender documents and any addenda before completing other sections.",
+      "source_refs": [
+        "PPRA IT STD — Instructions to Tenderers; Tender Documents"
+      ],
+      "required": true,
+      "applicability": {
+        "always": true
+      },
+      "confirmation_required_for_submission": false,
+      "completion_rule": "server_derived_from_responses",
+      "locked_legal_text": null,
+      "task_groups": [
+        {
+          "group_key": "current_tender_package",
+          "title": "Current Tender Package",
+          "order": 100
+        },
+        {
+          "group_key": "addenda_register",
+          "title": "Addenda Register",
+          "order": 200
+        },
+        {
+          "group_key": "required_acknowledgements",
+          "title": "Required Acknowledgements",
+          "order": 300
+        }
+      ],
+      "acknowledgement_policy": {
+        "package_acknowledgement_required": true,
+        "bind_fields": [
+          "publication_ref",
+          "package_id",
+          "package_document_hash",
+          "configuration_version",
+          "addenda_set_digest"
+        ],
+        "invalidate_on": [
+          "package_document_hash_change",
+          "addenda_set_digest_change",
+          "publication_ref_mismatch"
+        ]
+      },
+      "bidder_owned_fields": [
+        {
+          "field_key": "acknowledged",
+          "label": "Acknowledge current tender documents",
+          "control": "acknowledgement",
+          "required": true
+        }
+      ],
+      "tender_owned_slots": [
+        {
+          "field_key": "package_document_hash",
+          "label": "Package document digest",
+          "binding": "package.document_hash",
+          "required": true
+        },
+        {
+          "field_key": "configuration_version",
+          "label": "Configuration version",
+          "binding": "package.configuration_version",
+          "required": false
+        },
+        {
+          "field_key": "publication_date",
+          "label": "Publication date",
+          "binding": "publication.published_at",
+          "required": false
+        }
+      ],
+      "slice_status": "s100_implemented"
+    },
+    {
+      "section_key": "lot_and_alternative_selection",
+      "title": "Lots and Alternatives",
+      "order": 2,
+      "renderer": "lot_selection",
+      "bidder_instructions": "Select the lot(s) and alternative (if permitted) that apply to this tender.",
+      "source_refs": [
+        "PPRA IT STD — Instructions to Tenderers; TDS lot and alternative provisions"
+      ],
+      "required": true,
+      "applicability": {
+        "when": "lots_or_alternatives_configured"
+      },
+      "confirmation_required_for_submission": false,
+      "completion_rule": "server_derived_from_responses",
+      "locked_legal_text": null,
+      "bidder_owned_fields": [],
+      "tender_owned_slots": [],
+      "slice_status": "registry_stub_f0"
+    },
+    {
+      "section_key": "form_of_tender",
+      "title": "Form of Tender",
+      "order": 3,
+      "renderer": "declaration_form",
+      "bidder_instructions": "Review tender particulars and derived offer values, complete required disclosures, and accept the applicable legal declarations. Saving a draft does not confirm or submit your bid.",
+      "source_refs": [
+        "PPRA IT STD Section IV — Form of Tender (pages 35–37)"
+      ],
+      "required": true,
+      "applicability": {
+        "always": true
+      },
+      "confirmation_required_for_submission": false,
+      "completion_rule": "server_derived_from_responses",
+      "locked_legal_preamble": "FORM OF TENDER\n\nTo: {procuring_entity_name}\n\nWe, the undersigned, declare that we have examined and have no reservations to the Tendering document, including Addenda issued.",
+      "tender_owned_slots": [
+        {
+          "field_key": "tender_name_and_identification",
+          "label": "Tender name and identification",
+          "binding": "configuration.tender_title",
+          "required": true
+        },
+        {
+          "field_key": "procuring_entity_name",
+          "label": "Procuring entity",
+          "binding": "configuration.procuring_entity_name",
+          "required": true
+        },
+        {
+          "field_key": "offer_description",
+          "label": "Offer description",
+          "binding": "configuration.short_scope_summary",
+          "required": true
+        },
+        {
+          "field_key": "currency",
+          "label": "Currency",
+          "binding": "tds.tender_currency",
+          "required": true
+        },
+        {
+          "field_key": "tender_validity_days",
+          "label": "Tender validity (days)",
+          "binding": "tds.bid_validity_period",
+          "required": true
+        },
+        {
+          "field_key": "alternatives_permitted",
+          "label": "Alternatives permitted",
+          "binding": "tds.alternatives_permitted",
+          "required": false
+        },
+        {
+          "field_key": "performance_security_percent",
+          "label": "Performance security",
+          "binding": "contract.performance_security",
+          "required": false
+        },
+        {
+          "field_key": "price_total_excluding_vat",
+          "label": "Total excluding VAT",
+          "binding": "price_summary.total_excluding_vat",
+          "derived": true,
+          "required": false
+        },
+        {
+          "field_key": "price_vat_amount",
+          "label": "VAT",
+          "binding": "price_summary.vat_amount",
+          "derived": true,
+          "required": false
+        },
+        {
+          "field_key": "price_grand_total",
+          "label": "Grand total including VAT",
+          "binding": "price_summary.grand_total",
+          "derived": true,
+          "required": false
+        }
+      ],
+      "bidder_owned_fields": [
+        {
+          "field_key": "bidder_legal_name",
+          "label": "Bidder legal name",
+          "control": "text",
+          "required": true
+        },
+        {
+          "field_key": "bidder_business_address",
+          "label": "Bidder business address",
+          "control": "textarea",
+          "required": true
+        },
+        {
+          "field_key": "tender_validity_acknowledged",
+          "label": "I acknowledge the tender validity period shown above",
+          "control": "checkbox",
+          "required": true
+        },
+        {
+          "field_key": "state_owned_status",
+          "label": "Organization status",
+          "control": "select",
+          "options": [
+            "not_state_owned",
+            "state_owned"
+          ],
+          "required": true
+        },
+        {
+          "field_key": "state_owned_eligibility_affirmation",
+          "label": "State-owned eligibility affirmation",
+          "control": "checkbox",
+          "required": false,
+          "conditional_on": {
+            "field": "state_owned_status",
+            "equals": "state_owned"
+          }
+        },
+        {
+          "field_key": "commissions_choice",
+          "label": "Commissions, gratuities or fees",
+          "control": "select",
+          "options": [
+            "none",
+            "disclose"
+          ],
+          "required": true
+        }
+      ],
+      "repeatable_tables": [
+        {
+          "table_key": "commissions_rows",
+          "label": "Commissions, gratuities or fees disclosure",
+          "required_when": {
+            "field": "commissions_choice",
+            "equals": "disclose"
+          },
+          "min_rows_when_required": 1,
+          "columns": [
+            {
+              "field_key": "recipient_name",
+              "label": "Recipient name",
+              "control": "text",
+              "required": true
+            },
+            {
+              "field_key": "recipient_address",
+              "label": "Recipient address",
+              "control": "text",
+              "required": true
+            },
+            {
+              "field_key": "reason",
+              "label": "Reason",
+              "control": "text",
+              "required": true
+            },
+            {
+              "field_key": "amount",
+              "label": "Amount",
+              "control": "money",
+              "required": true
+            },
+            {
+              "field_key": "currency",
+              "label": "Currency",
+              "control": "text",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "declarations": [
+        {
+          "declaration_id": "fot_decl_a",
+          "clause_letter": "a",
+          "title": "No reservations; tender includes all addenda",
+          "locked_text": "(a) No reservations; tender includes all addenda. The tenderer hereby makes this declaration as set out in the Form of Tender contained in the bound PPRA Standard Tender Document for Procurement of Information Technology.",
+          "source_ref": "PPRA IT STD Section IV Form of Tender (a)",
+          "required": true,
+          "conditional": false,
+          "condition": null,
+          "associated_section_key": null
+        },
+        {
+          "declaration_id": "fot_decl_b",
+          "clause_letter": "b",
+          "title": "Eligibility and no conflict of interest",
+          "locked_text": "(b) Eligibility and no conflict of interest. The tenderer hereby makes this declaration as set out in the Form of Tender contained in the bound PPRA Standard Tender Document for Procurement of Information Technology.",
+          "source_ref": "PPRA IT STD Section IV Form of Tender (b)",
+          "required": true,
+          "conditional": false,
+          "condition": null,
+          "associated_section_key": null
+        },
+        {
+          "declaration_id": "fot_decl_c",
+          "clause_letter": "c",
+          "title": "Tender-securing declaration (where applicable)",
+          "locked_text": "(c) Tender-securing declaration (where applicable). The tenderer hereby makes this declaration as set out in the Form of Tender contained in the bound PPRA Standard Tender Document for Procurement of Information Technology.",
+          "source_ref": "PPRA IT STD Section IV Form of Tender (c)",
+          "required": true,
+          "conditional": true,
+          "condition": "tender_security_required",
+          "associated_section_key": null
+        },
+        {
+          "declaration_id": "fot_decl_d",
+          "clause_letter": "d",
+          "title": "Conformity of the offer to tender requirements",
+          "locked_text": "(d) Conformity of the offer to tender requirements. The tenderer hereby makes this declaration as set out in the Form of Tender contained in the bound PPRA Standard Tender Document for Procurement of Information Technology.",
+          "source_ref": "PPRA IT STD Section IV Form of Tender (d)",
+          "required": true,
+          "conditional": false,
+          "condition": null,
+          "associated_section_key": null
+        },
+        {
+          "declaration_id": "fot_decl_e",
+          "clause_letter": "e",
+          "title": "Tender validity period acknowledgement",
+          "locked_text": "(e) Tender validity period acknowledgement. The tenderer hereby makes this declaration as set out in the Form of Tender contained in the bound PPRA Standard Tender Document for Procurement of Information Technology.",
+          "source_ref": "PPRA IT STD Section IV Form of Tender (e)",
+          "required": true,
+          "conditional": false,
+          "condition": null,
+          "associated_section_key": null
+        },
+        {
+          "declaration_id": "fot_decl_f",
+          "clause_letter": "f",
+          "title": "Performance security commitment (where applicable)",
+          "locked_text": "(f) Performance security commitment (where applicable). The tenderer hereby makes this declaration as set out in the Form of Tender contained in the bound PPRA Standard Tender Document for Procurement of Information Technology.",
+          "source_ref": "PPRA IT STD Section IV Form of Tender (f)",
+          "required": true,
+          "conditional": true,
+          "condition": "performance_security_required",
+          "associated_section_key": null
+        },
+        {
+          "declaration_id": "fot_decl_g",
+          "clause_letter": "g",
+          "title": "One tender per tenderer",
+          "locked_text": "(g) One tender per tenderer. The tenderer hereby makes this declaration as set out in the Form of Tender contained in the bound PPRA Standard Tender Document for Procurement of Information Technology.",
+          "source_ref": "PPRA IT STD Section IV Form of Tender (g)",
+          "required": true,
+          "conditional": false,
+          "condition": null,
+          "associated_section_key": null
+        },
+        {
+          "declaration_id": "fot_decl_h",
+          "clause_letter": "h",
+          "title": "Suspension and debarment",
+          "locked_text": "(h) Suspension and debarment. The tenderer hereby makes this declaration as set out in the Form of Tender contained in the bound PPRA Standard Tender Document for Procurement of Information Technology.",
+          "source_ref": "PPRA IT STD Section IV Form of Tender (h)",
+          "required": true,
+          "conditional": false,
+          "condition": null,
+          "associated_section_key": null
+        },
+        {
+          "declaration_id": "fot_decl_i",
+          "clause_letter": "i",
+          "title": "Binding contract if accepted",
+          "locked_text": "(i) Binding contract if accepted. The tenderer hereby makes this declaration as set out in the Form of Tender contained in the bound PPRA Standard Tender Document for Procurement of Information Technology.",
+          "source_ref": "PPRA IT STD Section IV Form of Tender (i)",
+          "required": true,
+          "conditional": false,
+          "condition": null,
+          "associated_section_key": null
+        },
+        {
+          "declaration_id": "fot_decl_j",
+          "clause_letter": "j",
+          "title": "Procuring entity not bound to accept",
+          "locked_text": "(j) Procuring entity not bound to accept. The tenderer hereby makes this declaration as set out in the Form of Tender contained in the bound PPRA Standard Tender Document for Procurement of Information Technology.",
+          "source_ref": "PPRA IT STD Section IV Form of Tender (j)",
+          "required": true,
+          "conditional": false,
+          "condition": null,
+          "associated_section_key": null
+        },
+        {
+          "declaration_id": "fot_decl_k",
+          "clause_letter": "k",
+          "title": "Fraud and corruption",
+          "locked_text": "(k) Fraud and corruption. The tenderer hereby makes this declaration as set out in the Form of Tender contained in the bound PPRA Standard Tender Document for Procurement of Information Technology.",
+          "source_ref": "PPRA IT STD Section IV Form of Tender (k)",
+          "required": true,
+          "conditional": false,
+          "condition": null,
+          "associated_section_key": null
+        },
+        {
+          "declaration_id": "fot_decl_l",
+          "clause_letter": "l",
+          "title": "Collusive practices",
+          "locked_text": "(l) Collusive practices. The tenderer hereby makes this declaration as set out in the Form of Tender contained in the bound PPRA Standard Tender Document for Procurement of Information Technology.",
+          "source_ref": "PPRA IT STD Section IV Form of Tender (l)",
+          "required": true,
+          "conditional": false,
+          "condition": null,
+          "associated_section_key": null
+        },
+        {
+          "declaration_id": "fot_decl_m",
+          "clause_letter": "m",
+          "title": "Code of Ethical Conduct",
+          "locked_text": "(m) Code of Ethical Conduct. The tenderer hereby makes this declaration as set out in the Form of Tender contained in the bound PPRA Standard Tender Document for Procurement of Information Technology.",
+          "source_ref": "PPRA IT STD Section IV Form of Tender (m)",
+          "required": true,
+          "conditional": false,
+          "condition": null,
+          "associated_section_key": null
+        },
+        {
+          "declaration_id": "fot_decl_n",
+          "clause_letter": "n",
+          "title": "Beneficial ownership disclosure commitment",
+          "locked_text": "(n) Beneficial ownership disclosure commitment. The tenderer hereby makes this declaration as set out in the Form of Tender contained in the bound PPRA Standard Tender Document for Procurement of Information Technology.",
+          "source_ref": "PPRA IT STD Section IV Form of Tender (n)",
+          "required": true,
+          "conditional": false,
+          "condition": null,
+          "associated_section_key": null
+        },
+        {
+          "declaration_id": "fot_decl_o",
+          "clause_letter": "o",
+          "title": "Associated Confidential Business Questionnaire",
+          "locked_text": "(o) Associated Confidential Business Questionnaire. The tenderer hereby makes this declaration as set out in the Form of Tender contained in the bound PPRA Standard Tender Document for Procurement of Information Technology.",
+          "source_ref": "PPRA IT STD Section IV Form of Tender (o)",
+          "required": true,
+          "conditional": false,
+          "condition": null,
+          "associated_section_key": "confidential_business_questionnaire"
+        },
+        {
+          "declaration_id": "fot_decl_p",
+          "clause_letter": "p",
+          "title": "Certificate of Independent Tender Determination",
+          "locked_text": "(p) Certificate of Independent Tender Determination. The tenderer hereby makes this declaration as set out in the Form of Tender contained in the bound PPRA Standard Tender Document for Procurement of Information Technology.",
+          "source_ref": "PPRA IT STD Section IV Form of Tender (p)",
+          "required": true,
+          "conditional": false,
+          "condition": null,
+          "associated_section_key": "statutory_declarations"
+        },
+        {
+          "declaration_id": "fot_decl_q",
+          "clause_letter": "q",
+          "title": "Self-Declaration on Fraud and Corruption",
+          "locked_text": "(q) Self-Declaration on Fraud and Corruption. The tenderer hereby makes this declaration as set out in the Form of Tender contained in the bound PPRA Standard Tender Document for Procurement of Information Technology.",
+          "source_ref": "PPRA IT STD Section IV Form of Tender (q)",
+          "required": true,
+          "conditional": false,
+          "condition": null,
+          "associated_section_key": "statutory_declarations"
+        },
+        {
+          "declaration_id": "fot_decl_r",
+          "clause_letter": "r",
+          "title": "Declaration of Code of Ethical Conduct",
+          "locked_text": "(r) Declaration of Code of Ethical Conduct. The tenderer hereby makes this declaration as set out in the Form of Tender contained in the bound PPRA Standard Tender Document for Procurement of Information Technology.",
+          "source_ref": "PPRA IT STD Section IV Form of Tender (r)",
+          "required": true,
+          "conditional": false,
+          "condition": null,
+          "associated_section_key": "statutory_declarations"
+        },
+        {
+          "declaration_id": "fot_decl_s",
+          "clause_letter": "s",
+          "title": "Authorized representative capacity",
+          "locked_text": "(s) Authorized representative capacity. The tenderer hereby makes this declaration as set out in the Form of Tender contained in the bound PPRA Standard Tender Document for Procurement of Information Technology.",
+          "source_ref": "PPRA IT STD Section IV Form of Tender (s)",
+          "required": true,
+          "conditional": false,
+          "condition": null,
+          "associated_section_key": null
+        }
+      ],
+      "associated_form_cards": [
+        {
+          "section_key": "confidential_business_questionnaire",
+          "title": "Confidential Business Questionnaire"
+        },
+        {
+          "section_key": "statutory_declarations",
+          "title": "Certificate of Independent Tender Determination"
+        },
+        {
+          "section_key": "statutory_declarations",
+          "title": "Fraud and Corruption Self-Declaration",
+          "card_id": "fraud_self_declaration"
+        },
+        {
+          "section_key": "statutory_declarations",
+          "title": "Code of Ethical Conduct",
+          "card_id": "ethics_declaration"
+        }
+      ],
+      "validation_rules": [
+        "required_bidder_fields",
+        "required_declarations_accepted",
+        "state_owned_conditional",
+        "commissions_table_when_disclose"
+      ],
+      "slice_completion_rule": "Complete when all required bidder-owned fields and applicable declarations validate. Authorized confirmation and cross-section associated-form blockers are deferred; associated-form cards are informational until those sections exist. Save ≠ confirm/submit.",
+      "collections": {
+        "requirements": {
+          "binding": "configuration.it_requirements",
+          "insert": true
+        },
+        "evaluation_criteria": {
+          "binding": "configuration.evaluation_setup.criteria",
+          "insert": true
+        },
+        "schedule_rows": {
+          "binding": "configuration.implementation_schedule",
+          "insert": true
+        },
+        "price_lines": {
+          "binding": "configuration.price_schedule.items",
+          "insert": true
+        },
+        "contract_values": {
+          "binding": "configuration.contract_values",
+          "insert": true
+        }
+      }
+    },
+    {
+      "section_key": "confidential_business_questionnaire",
+      "title": "Confidential Business Questionnaire",
+      "order": 4,
+      "renderer": "questionnaire",
+      "bidder_instructions": "Complete one Confidential Business Questionnaire for the bidder and each required JV entity. Verified identity is read-only; use your account profile for corrections. Certification is deliberate and entity-scoped.",
+      "source_refs": [
+        "PPRA IT STD Section IV — Confidential Business Questionnaire",
+        "IT-BSO-CBQ-001",
+        "IT-BSO-CBQ-012"
+      ],
+      "required": true,
+      "applicability": {
+        "always": true
+      },
+      "confirmation_required_for_submission": false,
+      "completion_rule": "server_derived_from_responses",
+      "locked_legal_text": null,
+      "task_groups": [
+        {
+          "group_key": "entity_selection",
+          "title": "Tendering Entities",
+          "order": 100,
+          "source_refs": ["IT-BSO-CBQ-001"]
+        },
+        {
+          "group_key": "general_particulars",
+          "title": "General Particulars",
+          "order": 200,
+          "source_refs": ["IT-BSO-CBQ-002", "IT-BSO-CBQ-003"]
+        },
+        {
+          "group_key": "business_registration",
+          "title": "Business Registration & Capacity",
+          "order": 300,
+          "source_refs": ["IT-BSO-CBQ-004", "IT-BSO-CBQ-005", "IT-BSO-CBQ-006"]
+        },
+        {
+          "group_key": "entity_type_details",
+          "title": "Ownership & Management",
+          "order": 400,
+          "source_refs": ["IT-BSO-CBQ-007", "IT-BSO-CBQ-008", "IT-BSO-CBQ-009"]
+        },
+        {
+          "group_key": "relationship_disclosures",
+          "title": "Interests & Relationships",
+          "order": 500,
+          "source_refs": ["IT-BSO-CBQ-010"]
+        },
+        {
+          "group_key": "conflict_matrix",
+          "title": "Conflict-of-Interest Disclosures",
+          "order": 600,
+          "source_refs": ["IT-BSO-CBQ-011"],
+          "conflict_rows": [
+            "q1_common_ownership",
+            "q2_subsidy_from_tenderer",
+            "q3_same_legal_representative",
+            "q4_influence_relationship",
+            "q5_affiliate_preparing_specs",
+            "q6_conflicting_supply_role",
+            "q7_relationship_prep_eval_staff",
+            "q8_relationship_impl_supervision_staff",
+            "q9_conflict_resolved"
+          ]
+        },
+        {
+          "group_key": "questionnaire_certification",
+          "title": "Questionnaire Certification",
+          "order": 700,
+          "source_refs": ["IT-BSO-CBQ-012"]
+        }
+      ],
+      "bidder_owned_fields": [
+        {
+          "field_key": "entity_type",
+          "label": "Entity type",
+          "required": true,
+          "source_refs": ["IT-BSO-CBQ-007"]
+        },
+        {
+          "field_key": "nature_of_business",
+          "label": "Nature of business",
+          "required": true,
+          "source_refs": ["IT-BSO-CBQ-005"]
+        },
+        {
+          "field_key": "max_business_value",
+          "label": "Maximum value of business",
+          "required": true,
+          "source_refs": ["IT-BSO-CBQ-005"]
+        },
+        {
+          "field_key": "trade_licence_number",
+          "label": "Trade licence number",
+          "required": true,
+          "source_refs": ["IT-BSO-CBQ-004"]
+        },
+        {
+          "field_key": "pe_interest_disclosure",
+          "label": "Interest or relationship with procuring entity",
+          "required": true,
+          "source_refs": ["IT-BSO-CBQ-010"]
+        }
+      ],
+      "tender_owned_slots": [
+        {
+          "field_key": "tender_name_and_identification",
+          "label": "Tender identification",
+          "binding": "configuration.tender_title",
+          "required": true,
+          "source_refs": ["IT-BSO-CBQ-002"]
+        }
+      ],
+      "slice_status": "s300_implemented"
+    },
+    {
+      "section_key": "statutory_declarations",
+      "title": "Statutory Declarations",
+      "order": 5,
+      "renderer": "structured_form",
+      "bidder_instructions": "Complete the Certificate of Independent Tender Determination, Self-Declaration, and Code of Ethical Conduct declarations.",
+      "source_refs": [
+        "PPRA IT STD Section IV — Tendering Forms (statutory declarations)"
+      ],
+      "required": true,
+      "applicability": {
+        "always": true
+      },
+      "confirmation_required_for_submission": false,
+      "completion_rule": "server_derived_from_responses",
+      "locked_legal_text": null,
+      "bidder_owned_fields": [],
+      "tender_owned_slots": [],
+      "slice_status": "route_only_not_editable_in_lean_slice"
+    },
+    {
+      "section_key": "tender_security",
+      "title": "Tender Security",
+      "order": 6,
+      "renderer": "evidence_and_declaration",
+      "bidder_instructions": "Provide the required tender security or tender-securing declaration as configured for this tender.",
+      "source_refs": [
+        "PPRA IT STD — Tender Security / Tender-Securing Declaration; TDS"
+      ],
+      "required": true,
+      "applicability": {
+        "when": "tender_security_required"
+      },
+      "confirmation_required_for_submission": false,
+      "completion_rule": "server_derived_from_responses",
+      "locked_legal_text": null,
+      "bidder_owned_fields": [],
+      "tender_owned_slots": [],
+      "slice_status": "route_only_not_editable_in_lean_slice"
+    },
+    {
+      "section_key": "preliminary_requirements_and_evidence",
+      "title": "Preliminary Requirements and Evidence",
+      "order": 7,
+      "renderer": "evidence_matrix",
+      "bidder_instructions": "Upload or declare evidence for preliminary examination requirements.",
+      "source_refs": [
+        "PPRA IT STD Section III — Evaluation and Qualification Criteria (Preliminary)"
+      ],
+      "required": true,
+      "applicability": {
+        "always": true
+      },
+      "confirmation_required_for_submission": false,
+      "completion_rule": "server_derived_from_responses",
+      "locked_legal_text": null,
+      "bidder_owned_fields": [],
+      "tender_owned_slots": [],
+      "slice_status": "route_only_not_editable_in_lean_slice"
+    },
+    {
+      "section_key": "qualification_and_capability",
+      "title": "Qualification and Capability",
+      "order": 8,
+      "renderer": "evidence_matrix",
+      "bidder_instructions": "Respond to qualification and capability criteria with supporting evidence.",
+      "source_refs": [
+        "PPRA IT STD Section III — Qualification Criteria"
+      ],
+      "required": true,
+      "applicability": {
+        "always": true
+      },
+      "confirmation_required_for_submission": false,
+      "completion_rule": "server_derived_from_responses",
+      "locked_legal_text": null,
+      "bidder_owned_fields": [],
+      "tender_owned_slots": [],
+      "slice_status": "route_only_not_editable_in_lean_slice"
+    },
+    {
+      "section_key": "technical_proposal_and_implementation_plan",
+      "title": "Technical Proposal and Implementation Plan",
+      "order": 9,
+      "renderer": "structured_response",
+      "bidder_instructions": "Provide the technical proposal and implementation plan required by the tender.",
+      "source_refs": [
+        "PPRA IT STD Section IV / Part 2 — Technical proposal obligations"
+      ],
+      "required": true,
+      "applicability": {
+        "always": true
+      },
+      "confirmation_required_for_submission": false,
+      "completion_rule": "server_derived_from_responses",
+      "locked_legal_text": null,
+      "bidder_owned_fields": [],
+      "tender_owned_slots": [],
+      "slice_status": "route_only_not_editable_in_lean_slice"
+    },
+    {
+      "section_key": "requirements_compliance",
+      "title": "Requirements Compliance",
+      "order": 10,
+      "renderer": "requirement_matrix",
+      "bidder_instructions": "Respond to each published IT requirement with compliance status and evidence where required.",
+      "source_refs": [
+        "PPRA IT STD Part 2 — Requirements; Section VIII schedule where applicable"
+      ],
+      "required": true,
+      "applicability": {
+        "always": true
+      },
+      "confirmation_required_for_submission": false,
+      "completion_rule": "server_derived_from_responses",
+      "locked_legal_text": null,
+      "bidder_owned_fields": [],
+      "tender_owned_slots": [],
+      "slice_status": "route_only_not_editable_in_lean_slice"
+    },
+    {
+      "section_key": "price_schedule",
+      "title": "Price Schedule",
+      "order": 11,
+      "renderer": "price_schedule",
+      "bidder_instructions": "Complete the electronic price schedule. Totals flow read-only into the Form of Tender.",
+      "source_refs": [
+        "PPRA IT STD — Price Schedule forms"
+      ],
+      "required": true,
+      "applicability": {
+        "always": true
+      },
+      "confirmation_required_for_submission": false,
+      "completion_rule": "server_derived_from_responses",
+      "locked_legal_text": null,
+      "bidder_owned_fields": [],
+      "tender_owned_slots": [],
+      "slice_status": "route_only_not_editable_in_lean_slice"
+    }
+  ],
+  "forbidden_shapes": [
+    "typed_rules_ast",
+    "content_addressed_resources",
+    "chunk_descriptors",
+    "generic_expression_language"
+  ]
+}

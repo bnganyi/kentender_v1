@@ -155,13 +155,17 @@ class TestPublishedTenderOverviewApi(unittest.TestCase):
 		_pub_id, ref = self._confirm_and_publish()
 		ov = get_published_tender_overview(ref)
 		docs = ov.get("documents") or []
-		self.assertTrue(docs, "expected package-driven document rows")
+		self.assertTrue(docs, "expected bidder-facing document rows")
 		names = " ".join(cstr(d.get("name") or "") for d in docs).lower()
 		self.assertNotIn("bill of quantities (boq)", names)
 		self.assertNotIn("technical specifications", names)
-		# Must include real package artifacts or confirmed PDF — not mock DOCX/XLSX samples.
+		# Confirmed PDF only — never internal package checklist artifacts.
 		types = {cstr(d.get("type") or "") for d in docs}
-		self.assertTrue(types & {"PDF", "Package Artifact"}, types)
+		self.assertIn("PDF", types)
+		self.assertNotIn("Package Artifact", types)
+		for d in docs:
+			self.assertNotIn("schema", cstr(d.get("name") or "").lower())
+			self.assertFalse(cstr(d.get("document_key") or "").startswith("pkg_item_"))
 
 	def test_submission_sections_from_schema(self):
 		_pub_id, ref = self._confirm_and_publish()

@@ -496,7 +496,11 @@ def save_publication_setup(
 	return get_publication_setup(pub.name)
 
 
-def publish_tender(publication_id: str) -> dict[str, Any]:
+def publish_tender(
+	publication_id: str,
+	*,
+	development_preview: bool = False,
+) -> dict[str, Any]:
 	publication_id = cstr(publication_id or "").strip()
 	if not publication_id or not frappe.db.exists(PUBLICATION_DOCTYPE, publication_id):
 		frappe.throw(frappe._("Publication record not found."), title="PUBLICATION_NOT_FOUND")
@@ -541,8 +545,22 @@ def publish_tender(publication_id: str) -> dict[str, Any]:
 	if errors:
 		frappe.throw(frappe._(errors[0]), title="PUBLICATION_VALIDATION")
 
+	# Lean electronic STD template — seal immutable snapshot/hash before Published.
+	from kentender_procurement.tender_configurations.services.electronic_std_template import (
+		seal_electronic_template_for_development_preview,
+		seal_electronic_template_on_publication,
+	)
+
 	pub.flags.ignore_publication_boundary = True
 	pub.flags.ignore_publication_lock = True
+	if development_preview:
+		# Administrator-only Draft/Reviewed seal for section and checklist tests (F0).
+		seal_electronic_template_for_development_preview(pub.name)
+		pub.reload()
+		pub.flags.ignore_publication_boundary = True
+		pub.flags.ignore_publication_lock = True
+	else:
+		seal_electronic_template_on_publication(pub)
 	pub.status = PUBLICATION_STATUS_PUBLISHED
 	pub.setup_locked = 1
 	pub.activate_bidder_workspace = 1
@@ -579,7 +597,19 @@ def publish_tender(publication_id: str) -> dict[str, Any]:
 	out = get_publication_setup(pub.name)
 	out["published"] = True
 	out["bidder_workspace_activated"] = True
+	if development_preview:
+		out["development_preview"] = True
 	return out
+
+
+def publish_tender_for_development_preview(publication_id: str) -> dict[str, Any]:
+	"""Publish with Draft/Reviewed electronic template seal (Administrator / test seeds only)."""
+	if frappe.session.user != "Administrator":
+		frappe.throw(
+			frappe._("Development-preview publication is Administrator-only."),
+			frappe.PermissionError,
+		)
+	return publish_tender(publication_id, development_preview=True)
 
 
 def return_publication_for_correction(

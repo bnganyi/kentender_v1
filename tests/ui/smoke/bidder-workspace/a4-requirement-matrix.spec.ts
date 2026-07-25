@@ -88,15 +88,10 @@ test.describe("A4 Requirement Matrix portal", () => {
 		await expect(page.getByTestId("kt-a4-progress-label")).toContainText("requirements complete");
 		await expect(page.getByTestId("kt-a4-back-workspace")).toBeVisible();
 
-		// Sidebar head stays compact — short label + clamped tender title.
+		// Sidebar head: workspace label only (no stray tender ref/title in the nav).
 		await expect(page.getByTestId("kt-a2-sidebar-title")).toHaveText("Bidder Workspace");
-		const sidebarTender = page.getByTestId("kt-a2-sidebar-tender");
-		if ((await sidebarTender.count()) > 0) {
-			await expect(sidebarTender).toBeVisible();
-			const box = await sidebarTender.boundingBox();
-			expect(box).toBeTruthy();
-			expect((box?.height || 0)).toBeLessThan(56);
-		}
+		await expect(page.getByTestId("kt-a2-sidebar-tender")).toHaveCount(0);
+		await expect(page.getByTestId("kt-a2-sidebar-ref")).toHaveCount(0);
 		// Group rail stacks title above progress/status (no single-line crush).
 		const firstGroup = page.getByTestId("kt-a4-group").first();
 		const groupTitleBox = await firstGroup.locator(".kt-a4-group-title").boundingBox();

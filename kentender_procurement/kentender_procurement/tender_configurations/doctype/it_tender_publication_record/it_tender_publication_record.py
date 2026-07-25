@@ -34,6 +34,12 @@ PACKAGE_LOCKED_FIELDS = frozenset(
 		"package_payload",
 		"configuration_ref",
 		"publication_ref",
+		"electronic_template_id",
+		"electronic_template_version",
+		"electronic_template_snapshot",
+		"electronic_template_hash",
+		"publication_version",
+		"prior_publication_version",
 	}
 )
 

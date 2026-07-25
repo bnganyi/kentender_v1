@@ -25,7 +25,7 @@ from kentender_procurement.tender_configurations.services.document_preview impor
 	generate_document_preview,
 )
 from kentender_procurement.tender_configurations.services.publication_setup import (
-	publish_tender,
+	publish_tender_for_development_preview,
 	save_publication_setup,
 )
 from kentender_procurement.tender_configurations.services.tender_documents_addenda import (
@@ -89,7 +89,7 @@ class TestTenderDocumentsAddendaWeb(IntegrationTestCase):
 				"acknowledgement_confirmed": 1,
 			},
 		)
-		published = publish_tender(pub_id)
+		published = publish_tender_for_development_preview(pub_id)
 		ref = published.get("publication_ref") or frappe.db.get_value(
 			"IT Tender Publication Record", pub_id, "publication_ref"
 		)
@@ -128,6 +128,11 @@ class TestTenderDocumentsAddendaWeb(IntegrationTestCase):
 		self.assertIn('data-testid="kt-a2-nav-prepare"', body)
 		self.assertNotIn("Tender Configurations", body)
 		self.assertNotIn("Evaluation and Award", body)
+		self.assertNotIn("kt-a3-package-meta", body)
+		self.assertNotIn("Current package:", body)
+		self.assertNotIn("document_hash", body)
+		self.assertNotIn("Package Artifact", body)
+		self.assertNotIn("configuration_id=", body)
 
 
 if __name__ == "__main__":

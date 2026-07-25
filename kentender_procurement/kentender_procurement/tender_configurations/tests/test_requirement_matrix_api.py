@@ -320,8 +320,12 @@ class TestRequirementMatrixApi(unittest.TestCase):
 
 	def _ensure_matrix_schema(self, ref: str) -> None:
 		"""Bid schema_snapshot wins over config — pin lightweight matrix fixture for tests."""
-		overview = get_published_tender_overview(ref)
-		draft = create_or_get_draft(cstr(overview.get("configuration_id") or self.cfg_id))
+		from kentender_procurement.tender_configurations.services.published_tender_overview import (
+			resolve_published_tender_backend,
+		)
+
+		backend = resolve_published_tender_backend(ref)
+		draft = create_or_get_draft(cstr(backend.get("configuration_id") or self.cfg_id))
 		bid = frappe.get_doc("Electronic Bid Submission", draft["bid_id"])
 		bid.db_set("schema_snapshot", json.dumps(MATRIX_SCHEMA), update_modified=False)
 		frappe.db.set_value(
@@ -388,7 +392,14 @@ class TestRequirementMatrixApi(unittest.TestCase):
 		files = out["drawer"]["response"].get("evidence_uploads") or []
 		self.assertEqual(len(files), 2)
 		self.assertEqual(files[0]["file_name"], "capacity.pdf")
-		bid = frappe.get_doc("Electronic Bid Submission", out["matrix"]["bid_id"])
+		from kentender_procurement.tender_configurations.services.published_tender_overview import (
+			resolve_published_tender_backend,
+		)
+
+		self.assertNotIn("bid_id", out["matrix"])
+		bid = frappe.get_doc(
+			"Electronic Bid Submission", resolve_published_tender_backend(ref)["bid_id"]
+		)
 		responses = json.loads(bid.responses or "{}")
 		section = responses["alpha_compliance_matrix"]
 		self.assertIn("REQ-A1", section)

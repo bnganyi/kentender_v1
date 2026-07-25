@@ -2,11 +2,6 @@
 <aside class="kt-a2-sidebar" data-testid="kt-a2-sidebar">
 	<div class="kt-a2-sidebar-head">
 		<h2 data-testid="kt-a2-sidebar-title">{{ _("Bidder Workspace") }}</h2>
-		<p data-testid="kt-a2-sidebar-ref">{{ _("Ref:") }} {{ checklist.published_tender_ref }}</p>
-		{% if checklist.tender_title %}
-		<p class="kt-a2-sidebar-tender" data-testid="kt-a2-sidebar-tender"
-			title="{{ checklist.tender_title }}">{{ checklist.tender_title }}</p>
-		{% endif %}
 	</div>
 	<nav class="kt-a2-sidebar-nav" aria-label="{{ _('Bid workspace navigation') }}">
 		<a class="{% if active_ws == 'checklist' %}is-active{% endif %}"
@@ -31,6 +26,18 @@
 		</a>
 	</nav>
 	<div class="kt-a2-sidebar-foot">
+		{# Cross-cutting X100 views — outside checklist progress #}
+		{% set _ref = checklist.published_tender_ref %}
+		{% set _evidence_url = checklist.evidence_url or ('/tenders/' ~ _ref ~ '/evidence') %}
+		{% set _issues_url = checklist.issues_url or ('/tenders/' ~ _ref ~ '/issues') %}
+		<a href="{{ _evidence_url }}" data-testid="kt-a2-nav-evidence">
+			<span class="material-symbols-outlined" aria-hidden="true">folder_open</span>
+			{{ _("Evidence") }}
+		</a>
+		<a href="{{ _issues_url }}" data-testid="kt-a2-nav-issues">
+			<span class="material-symbols-outlined" aria-hidden="true">error</span>
+			{{ _("Issues") }}
+		</a>
 		<a href="{{ checklist.overview_url }}" data-testid="kt-a2-nav-overview">
 			<span class="material-symbols-outlined" aria-hidden="true">info</span>
 			{{ _("View Tender Overview") }}

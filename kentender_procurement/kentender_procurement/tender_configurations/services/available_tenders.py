@@ -173,12 +173,12 @@ def _workspace_url(publication_ref: str) -> str:
 	return f"/tenders/{quote(publication_ref, safe='')}/workspace"
 
 
-def _pdf_url(configuration_id: str) -> str:
-	return (
-		"/api/method/kentender_procurement.tender_configurations"
-		".download_tender_configuration_document_preview_pdf"
-		f"?configuration_id={quote(configuration_id, safe='')}"
+def _pdf_url(published_tender_ref: str) -> str:
+	from kentender_procurement.tender_configurations.services.bidder_presentation import (
+		published_tender_pdf_url,
 	)
+
+	return published_tender_pdf_url(published_tender_ref)
 
 
 def _format_user_dt(value: Any) -> str:
@@ -353,8 +353,6 @@ def list_available_tenders(
 			{
 				"title": title,
 				"tender_reference": pub_ref,
-				"publication_id": row.name,
-				"configuration_id": cfg_id,
 				"procuring_entity": entity,
 				"procurement_method": method,
 				"procurement_category": category,
@@ -370,8 +368,8 @@ def list_available_tenders(
 				"primary_action_url": primary_url,
 				"secondary_action_label": secondary or "",
 				"secondary_action_url": secondary_url,
-				"view_document_url": _pdf_url(cfg_id) if has_pdf else "",
-				"download_document_url": _pdf_url(cfg_id) if has_pdf else "",
+				"view_document_url": _pdf_url(pub_ref) if has_pdf else "",
+				"download_document_url": _pdf_url(pub_ref) if has_pdf else "",
 				"clarifications_url": _overview_url(pub_ref) + "#clarifications",
 				"has_document": 1 if has_pdf else 0,
 				"has_draft": 1 if bid["has_draft"] else 0,

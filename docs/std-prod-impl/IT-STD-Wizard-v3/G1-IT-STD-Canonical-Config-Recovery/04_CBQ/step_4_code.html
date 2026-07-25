@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KenTender - CBQ Ownership</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface-variant": "#e0e3e5",
+                        "tertiary-container": "#001c3a",
+                        "status-error-bg": "#fff1f2",
+                        "status-error": "#ba1a1a",
+                        "status-pending": "#92400e",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-dim": "#d8dadc",
+                        "status-approved-bg": "#ecfdf5",
+                        "primary-fixed": "#d6e3fd",
+                        "on-tertiary-fixed": "#001c3a",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "on-error": "#ffffff",
+                        "on-background": "#191c1e",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "outline-strong": "#74777f",
+                        "surface-container-lowest": "#ffffff",
+                        "status-pending-bg": "#fffbeb",
+                        "tertiary": "#000000",
+                        "on-tertiary-container": "#6b85ac",
+                        "primary": "#000000",
+                        "on-secondary-container": "#556379",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-primary-fixed": "#0e1c2e",
+                        "secondary-container": "#d2e1fa",
+                        "on-surface-variant": "#44474c",
+                        "primary-container": "#0e1c2e",
+                        "status-approved": "#065f46",
+                        "surface": "#f7f9fb",
+                        "background": "#f7f9fb",
+                        "on-tertiary-fixed-variant": "#2d486c",
+                        "surface-container": "#eceef0",
+                        "secondary-fixed": "#d5e3fc",
+                        "inverse-primary": "#bac7e0",
+                        "on-primary-fixed-variant": "#3a475c",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#bac7e0",
+                        "outline-variant": "#c5c6cd",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#f2f4f6",
+                        "tertiary-fixed": "#d4e3ff",
+                        "surface-bright": "#f7f9fb",
+                        "surface-container-high": "#e6e8ea",
+                        "on-surface": "#191c1e",
+                        "inverse-surface": "#2d3133",
+                        "surface-tint": "#525f74",
+                        "outline": "#75777d",
+                        "tertiary-fixed-dim": "#adc8f3",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "secondary": "#515f74",
+                        "outline-subtle": "#c4c6cf",
+                        "on-primary-container": "#77859b"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "sidebar-width": "256px",
+                        "gutter": "12px",
+                        "container-padding": "16px",
+                        "max-width": "1280px",
+                        "gap-component": "8px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-lg-mobile": ["Public Sans"],
+                        "body-md": ["Public Sans"],
+                        "display": ["Public Sans"],
+                        "label-md": ["JetBrains Mono"],
+                        "headline-md": ["Public Sans"],
+                        "body-lg": ["Public Sans"],
+                        "headline-lg": ["Public Sans"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bento-card {
+            background: #FFFFFF;
+            border: 1px solid #c4c6cf;
+        }
+        .sidebar-active-bar {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: #000000;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #000000;
+            box-shadow: 0 0 0 1px #000000;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f2f4f6; }
+        ::-webkit-scrollbar-thumb { background: #c4c6cf; }
+        ::-webkit-scrollbar-thumb:hover { background: #75777d; }
+    </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-container-padding h-14 bg-surface-container-lowest border-b border-outline-subtle">
+<div class="flex items-center gap-4">
+<h1 class="font-display text-headline-md text-primary tracking-tighter">KenTender</h1>
+<div class="h-6 w-px bg-outline-subtle mx-2"></div>
+<nav class="hidden md:flex gap-6"><a class="font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors py-2 px-3 rounded" href="#">Tenders</a><a class="font-label-md text-label-md text-primary border-b-2 border-primary font-bold transition-opacity py-2 px-3" href="#">My Bids</a><a class="font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors py-2 px-3 rounded" href="#">Clarifications</a></nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded transition-colors">notifications</button>
+<div class="flex items-center gap-2 px-3 py-1.5 border border-outline-subtle rounded cursor-pointer hover:bg-surface-container-low transition-colors">
+<span class="font-label-md text-on-surface">Account</span>
+<span class="material-symbols-outlined text-[18px]">expand_more</span>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-14 bottom-0 w-sidebar-width z-40 flex flex-col bg-surface-container-low border-r border-outline-subtle">
+<div class="p-4 border-b border-outline-subtle">
+<div class="flex items-center gap-3 mb-1">
+<div class="w-8 h-8 bg-primary-container flex items-center justify-center rounded">
+<span class="material-symbols-outlined text-on-primary-container text-[20px]">corporate_fare</span>
+</div>
+<h2 class="font-headline-md text-headline-md font-bold text-primary">Bidder Workspace</h2>
+</div>
+</div>
+<nav class="flex-1 py-4 overflow-y-auto"><div class="flex-1 py-4 flex flex-col gap-1"><a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all" href="#"><span class="material-symbols-outlined">fact_check</span><span class="font-label-md text-label-md">Checklist</span></a><a class="flex items-center gap-3 px-4 py-3 bg-surface-container-highest text-primary border-r-4 border-primary font-bold translate-x-1 transition-transform" href="#"><span class="material-symbols-outlined">edit_document</span><span class="font-label-md text-label-md">Prepare Bid</span></a><a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all" href="#"><span class="material-symbols-outlined">verified</span><span class="font-label-md text-label-md">Review &amp; Validate</span></a><a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all" href="#"><span class="material-symbols-outlined">lock</span><span class="font-label-md text-label-md">Submit &amp; Seal</span></a></div></nav>
+<div class="p-4 border-t border-outline-subtle">
+<div class="border-t border-outline-subtle p-2 flex flex-col gap-1"><a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container transition-colors" href="#"><span class="material-symbols-outlined text-sm">info</span><span class="font-label-md text-label-md">View Tender Overview</span></a><a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container transition-colors" href="#"><span class="material-symbols-outlined text-sm">support_agent</span><span class="font-label-md text-label-md">Support</span></a><a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container transition-colors" href="#"><span class="material-symbols-outlined text-sm">exit_to_app</span><span class="font-label-md text-label-md">Exit Workspace</span></a></div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-sidebar-width pt-14 pb-16 min-h-screen">
+<div class="max-w-[1000px] mx-auto px-8 py-8">
+<!-- Page Header -->
+<nav class="flex items-center gap-2 text-[10px] font-label-sm text-on-surface-variant uppercase tracking-widest mb-4">
+<span class="">Checklist</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="">Confidential Business Questionnaire</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="text-primary font-bold">Interests and Conflicts</span>
+</nav><header class="mb-10"><h1 class="font-display text-display text-primary mb-2">Confidential Business Questionnaire</h1><p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Interests and Conflicts</p></header>
+<!-- Stepper Progress Bar -->
+<div class="mb-10 bento-card p-4 flex items-center justify-between">
+<!-- Step 1 Complete -->
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-status-approved flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[18px]">check</span>
+</div>
+<div class="hidden lg:block">
+<p class="font-label-sm text-status-approved">Step 1</p>
+<p class="font-label-md text-on-surface-variant">Bidder Details</p>
+</div>
+</div>
+<div class="flex-1 h-px bg-outline-subtle mx-4"></div>
+<!-- Step 2 Complete -->
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-status-approved flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[18px]">check</span>
+</div>
+<div class="hidden lg:block">
+<p class="font-label-sm text-status-approved">Step 2</p>
+<p class="font-label-md text-on-surface-variant">Business Details</p>
+</div>
+</div>
+<div class="flex-1 h-px bg-outline-subtle mx-4"></div>
+<!-- Step 3 Complete -->
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-status-approved flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[18px]">check</span>
+</div>
+<div class="hidden lg:block">
+<p class="font-label-sm text-status-approved">Step 3</p>
+<p class="font-label-md text-on-surface-variant">Ownership</p>
+</div>
+</div>
+<div class="flex-1 h-px bg-outline-subtle mx-4"></div>
+<!-- Step 4 Active -->
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full border-2 border-primary flex items-center justify-center bg-primary text-white">
+<span class="font-label-md">04</span>
+</div>
+<div class="hidden lg:block">
+<p class="font-label-sm text-primary font-bold">Step 4</p>
+<p class="font-label-md text-primary font-bold">Conflicts</p>
+</div>
+</div>
+<div class="flex-1 h-px bg-outline-subtle mx-4"></div>
+<!-- Step 5 Pending -->
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full border-2 border-outline-subtle flex items-center justify-center bg-surface-container-low">
+<span class="font-label-md text-outline">05</span>
+</div>
+<div class="hidden lg:block">
+<p class="font-label-sm text-outline">Step 5</p>
+<p class="font-label-md text-outline">Certify</p>
+</div>
+</div></div>
+<!-- Content Section -->
+<div class="bento-card overflow-hidden">
+<div class="px-6 py-4 border-b border-outline-subtle bg-surface-container-low flex items-center justify-between">
+<h3 class="font-headline-md text-primary">Disclosure of interest and potential conflict of interest</h3>
+<div class="px-3 py-1 bg-primary text-white rounded text-[10px] font-label-sm uppercase tracking-wider">Required</div>
+</div>
+<div class="p-8 space-y-8"><!-- Part A: Relationship Disclosure -->
+<div class="space-y-6">
+<div class="flex items-center justify-between">
+<h4 class="font-headline-md text-primary">Relationships with the Procuring Entity</h4>
+</div>
+<div class="space-y-4">
+<label class="font-label-md text-on-surface uppercase tracking-wider">Is there any person in National Social Security Fund Staff Pension Scheme who has an interest or relationship in this bidder? <span class="text-error">*</span></label>
+<div class="flex gap-4">
+<label class="flex items-center gap-3 px-6 py-3 border border-outline-subtle rounded cursor-pointer hover:bg-surface-container-low transition-colors">
+<input class="text-primary focus:ring-primary w-4 h-4" name="has_relationship" type="radio" value="yes"/>
+<span class="font-body-md">Yes</span>
+</label>
+<label class="flex items-center gap-3 px-6 py-3 border border-outline-subtle rounded cursor-pointer hover:bg-surface-container-low transition-colors">
+<input class="text-primary focus:ring-primary w-4 h-4" name="has_relationship" type="radio" value="no"/>
+<span class="font-body-md">No</span>
+</label>
+</div>
+</div>
+<!-- Hidden Table for Yes -->
+<div class="hidden space-y-4 pt-4" id="relationship-table">
+<div class="overflow-x-auto border border-outline-subtle rounded">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low border-b border-outline-subtle">
+<tr class="font-label-sm text-on-surface-variant uppercase tracking-wider">
+<th class="p-4">Person's Full Name</th>
+<th class="p-4">Designation in Procuring Entity</th>
+<th class="p-4">Interest/Relationship with Bidder</th>
+<th class="p-4"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-subtle">
+<tr class="font-body-md">
+<td class="p-4"><input class="w-full bg-transparent border-none p-0 focus:ring-0" placeholder="Enter name" type="text"/></td>
+<td class="p-4"><input class="w-full bg-transparent border-none p-0 focus:ring-0" placeholder="Enter designation" type="text"/></td>
+<td class="p-4"><input class="w-full bg-transparent border-none p-0 focus:ring-0" placeholder="Describe relationship" type="text"/></td>
+<td class="p-4 text-right"><button class="material-symbols-outlined text-error text-sm">delete</button></td>
+</tr>
+</tbody>
+</table>
+</div>
+<button class="flex items-center gap-2 text-primary font-label-md hover:underline"><span class="material-symbols-outlined text-sm">add</span>Add person</button>
+</div>
+</div>
+<div class="h-px bg-outline-subtle"></div>
+<!-- Part B: Conflict of Interest -->
+<div class="space-y-6">
+<div class="flex justify-between items-end">
+<h4 class="font-headline-md text-primary">Conflict disclosures</h4>
+<span class="font-label-sm text-on-surface-variant uppercase" id="answered-counter">0 OF 9 ANSWERED</span>
+</div>
+<div class="divide-y divide-outline-subtle border border-outline-subtle rounded overflow-hidden">
+<!-- Question 1 -->
+<div class="p-6 space-y-4 bg-surface-container-lowest" data-question-container="q1">
+<div class="flex justify-between gap-8">
+<p class="font-body-md flex-1">1. Tenderer is directly or indirectly controls, is controlled by or is under common control with another tenderer.</p>
+<div class="flex gap-4 shrink-0">
+<label class="flex items-center gap-2 cursor-pointer"><input class="text-primary focus:ring-primary" name="q1" type="radio" value="yes"/> <span class="font-label-md">Yes</span></label>
+<label class="flex items-center gap-2 cursor-pointer"><input class="text-primary focus:ring-primary" name="q1" type="radio" value="no"/> <span class="font-label-md">No</span></label>
+</div>
+</div>
+<div class="hidden mt-4 space-y-2" data-details-container="">
+<label class="font-label-sm text-on-surface-variant uppercase tracking-wider">Provide details <span class="text-error">*</span></label>
+<textarea class="w-full bg-surface-container-low border border-outline-subtle rounded p-3 font-body-md focus:ring-1 focus:ring-primary" placeholder="Enter specific details regarding this conflict..." rows="3"></textarea>
+</div></div>
+<!-- Question 2 -->
+<div class="p-6 space-y-4 bg-surface-container-lowest" data-question-container="q2">
+<div class="flex justify-between gap-8">
+<p class="font-body-md flex-1">2. Tenderer receives or has received any direct or indirect subsidy from another tenderer.</p>
+<div class="flex gap-4 shrink-0">
+<label class="flex items-center gap-2 cursor-pointer"><input class="text-primary focus:ring-primary" name="q2" type="radio" value="yes"/> <span class="font-label-md">Yes</span></label>
+<label class="flex items-center gap-2 cursor-pointer"><input class="text-primary focus:ring-primary" name="q2" type="radio" value="no"/> <span class="font-label-md">No</span></label>
+</div>
+</div>
+<div class="hidden mt-4 space-y-2" data-details-container="">
+<label class="font-label-sm text-on-surface-variant uppercase tracking-wider">Provide details <span class="text-error">*</span></label>
+<textarea class="w-full bg-surface-container-low border border-outline-subtle rounded p-3 font-body-md focus:ring-1 focus:ring-primary" placeholder="Enter specific details regarding this conflict..." rows="3"></textarea>
+</div></div>
+<!-- Question 3 -->
+<div class="p-6 space-y-4 bg-surface-container-lowest" data-question-container="q3">
+<div class="flex justify-between gap-8">
+<p class="font-body-md flex-1">3. Tenderer has the same legal representative as another tenderer.</p>
+<div class="flex gap-4 shrink-0">
+<label class="flex items-center gap-2 cursor-pointer"><input class="text-primary focus:ring-primary" name="q3" type="radio" value="yes"/> <span class="font-label-md">Yes</span></label>
+<label class="flex items-center gap-2 cursor-pointer"><input class="text-primary focus:ring-primary" name="q3" type="radio" value="no"/> <span class="font-label-md">No</span></label>
+</div>
+</div>
+<div class="hidden mt-4 space-y-2" data-details-container="">
+<label class="font-label-sm text-on-surface-variant uppercase tracking-wider">Provide details <span class="text-error">*</span></label>
+<textarea class="w-full bg-surface-container-low border border-outline-subtle rounded p-3 font-body-md focus:ring-1 focus:ring-primary" placeholder="Enter specific details regarding this conflict..." rows="3"></textarea>
+</div></div>
+<!-- Question 4 -->
+<div class="p-6 space-y-4 bg-surface-container-lowest" data-question-container="q4">
+<div class="flex justify-between gap-8">
+<p class="font-body-md flex-1">4. Tenderer has a relationship with another tenderer, directly or through common third parties, that puts it in a position to influence the tender of another tenderer, or influence the decisions of the Procuring Entity regarding this tendering process.</p>
+<div class="flex gap-4 shrink-0">
+<label class="flex items-center gap-2 cursor-pointer"><input class="text-primary focus:ring-primary" name="q4" type="radio" value="yes"/> <span class="font-label-md">Yes</span></label>
+<label class="flex items-center gap-2 cursor-pointer"><input class="text-primary focus:ring-primary" name="q4" type="radio" value="no"/> <span class="font-label-md">No</span></label>
+</div>
+</div>
+<div class="hidden mt-4 space-y-2" data-details-container="">
+<label class="font-label-sm text-on-surface-variant uppercase tracking-wider">Provide details <span class="text-error">*</span></label>
+<textarea class="w-full bg-surface-container-low border border-outline-subtle rounded p-3 font-body-md focus:ring-1 focus:ring-primary" placeholder="Enter specific details regarding this conflict..." rows="3"></textarea>
+</div></div>
+<!-- Question 5 -->
+<div class="p-6 space-y-4 bg-surface-container-lowest" data-question-container="q5">
+<div class="flex justify-between gap-8">
+<p class="font-body-md flex-1">5. Any of the Tenderer's affiliates participated as a consultant in the preparation of the design or technical specifications of the works that are the subject of the tender.</p>
+<div class="flex gap-4 shrink-0">
+<label class="flex items-center gap-2 cursor-pointer"><input class="text-primary focus:ring-primary" name="q5" type="radio" value="yes"/> <span class="font-label-md">Yes</span></label>
+<label class="flex items-center gap-2 cursor-pointer"><input class="text-primary focus:ring-primary" name="q5" type="radio" value="no"/> <span class="font-label-md">No</span></label>
+</div>
+</div>
+<div class="hidden mt-4 space-y-2" data-details-container="">
+<label class="font-label-sm text-on-surface-variant uppercase tracking-wider">Provide details <span class="text-error">*</span></label>
+<textarea class="w-full bg-surface-container-low border border-outline-subtle rounded p-3 font-body-md focus:ring-1 focus:ring-primary" placeholder="Enter specific details regarding this conflict..." rows="3"></textarea>
+</div></div>
+<!-- Question 6 -->
+<div class="p-6 space-y-4 bg-surface-container-lowest" data-question-container="q6">
+<div class="flex justify-between gap-8">
+<p class="font-body-md flex-1">6. Tenderer would be providing goods, works, non-consulting services or consulting services during implementation of the contract specified in this Tender Document.</p>
+<div class="flex gap-4 shrink-0">
+<label class="flex items-center gap-2 cursor-pointer"><input class="text-primary focus:ring-primary" name="q6" type="radio" value="yes"/> <span class="font-label-md">Yes</span></label>
+<label class="flex items-center gap-2 cursor-pointer"><input class="text-primary focus:ring-primary" name="q6" type="radio" value="no"/> <span class="font-label-md">No</span></label>
+</div>
+</div>
+<div class="hidden mt-4 space-y-2" data-details-container="">
+<label class="font-label-sm text-on-surface-variant uppercase tracking-wider">Provide details <span class="text-error">*</span></label>
+<textarea class="w-full bg-surface-container-low border border-outline-subtle rounded p-3 font-body-md focus:ring-1 focus:ring-primary" placeholder="Enter specific details regarding this conflict..." rows="3"></textarea>
+</div></div>
+<!-- Question 7 -->
+<div class="p-6 space-y-4 bg-surface-container-lowest" data-question-container="q7">
+<div class="flex justify-between gap-8">
+<p class="font-body-md flex-1">7. Tenderer has a close business or family relationship with a professional staff of the Procuring Entity who are directly or indirectly involved in the preparation of the Tender document or specifications of the Contract, and/or the Tender evaluation process of such contract.</p>
+<div class="flex gap-4 shrink-0">
+<label class="flex items-center gap-2 cursor-pointer"><input class="text-primary focus:ring-primary" name="q7" type="radio" value="yes"/> <span class="font-label-md">Yes</span></label>
+<label class="flex items-center gap-2 cursor-pointer"><input class="text-primary focus:ring-primary" name="q7" type="radio" value="no"/> <span class="font-label-md">No</span></label>
+</div>
+</div>
+<div class="hidden mt-4 space-y-2" data-details-container="">
+<label class="font-label-sm text-on-surface-variant uppercase tracking-wider">Provide details <span class="text-error">*</span></label>
+<textarea class="w-full bg-surface-container-low border border-outline-subtle rounded p-3 font-body-md focus:ring-1 focus:ring-primary" placeholder="Enter specific details regarding this conflict..." rows="3"></textarea>
+</div></div>
+<!-- Question 8 -->
+<div class="p-6 space-y-4 bg-surface-container-lowest" data-question-container="q8">
+<div class="flex justify-between gap-8">
+<p class="font-body-md flex-1">8. Tenderer has a close business or family relationship with a professional staff of the Procuring Entity who would be involved in the implementation or supervision of the such Contract.</p>
+<div class="flex gap-4 shrink-0">
+<label class="flex items-center gap-2 cursor-pointer"><input class="text-primary focus:ring-primary" name="q8" type="radio" value="yes"/> <span class="font-label-md">Yes</span></label>
+<label class="flex items-center gap-2 cursor-pointer"><input class="text-primary focus:ring-primary" name="q8" type="radio" value="no"/> <span class="font-label-md">No</span></label>
+</div>
+</div>
+<div class="hidden mt-4 space-y-2" data-details-container="">
+<label class="font-label-sm text-on-surface-variant uppercase tracking-wider">Provide details <span class="text-error">*</span></label>
+<textarea class="w-full bg-surface-container-low border border-outline-subtle rounded p-3 font-body-md focus:ring-1 focus:ring-primary" placeholder="Enter specific details regarding this conflict..." rows="3"></textarea>
+</div></div>
+<!-- Question 9 -->
+<div class="p-6 space-y-4 bg-surface-container-lowest" data-question-container="q9" id="q9-container">
+<div class="flex justify-between gap-8">
+<div class="flex-1">
+<p class="font-body-md" id="q9-text">9. Has the conflict stemming from such relationship stated in item 7 and 8 above been resolved in a manner acceptable to the Procuring Entity throughout the tendering process and execution of the Contract?</p>
+<p class="hidden text-label-sm text-outline mt-1 font-bold italic" id="q9-na-label">Not applicable based on previous answers</p>
+</div>
+<div class="flex gap-4 shrink-0">
+<label class="flex items-center gap-2 cursor-pointer"><input class="text-primary focus:ring-primary" name="q9" type="radio" value="yes"/> <span class="font-label-md">Yes</span></label>
+<label class="flex items-center gap-2 cursor-pointer"><input class="text-primary focus:ring-primary" name="q9" type="radio" value="no"/> <span class="font-label-md">No</span></label>
+</div>
+</div>
+<div class="hidden mt-4 space-y-2" data-details-container="">
+<label class="font-label-sm text-on-surface-variant uppercase tracking-wider">Resolution details <span class="text-error">*</span></label>
+<textarea class="w-full bg-surface-container-low border border-outline-subtle rounded p-3 font-body-md focus:ring-1 focus:ring-primary" placeholder="Describe how the conflict was resolved..." rows="3"></textarea>
+</div></div>
+</div>
+</div></div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Shell -->
+<footer class="fixed bottom-0 right-0 left-sidebar-width z-50 flex justify-between items-center px-container-padding h-16 bg-surface-container-lowest border-t border-outline-subtle">
+<button class="flex items-center gap-2 px-4 py-2 text-primary hover:bg-surface-container-low rounded transition-colors group"><span class="material-symbols-outlined text-[20px] transition-transform group-hover:-translate-x-1">arrow_back</span>
+<span class="font-label-md font-bold">Back to Ownership and Management</span></button>
+<div class="flex items-center gap-3">
+<button class="px-6 py-2 border border-outline text-on-surface font-label-md rounded hover:bg-surface-container-low transition-colors">
+                Save draft
+            </button>
+<button class="flex items-center gap-2 px-8 py-2 bg-primary text-on-primary font-label-md font-bold rounded hover:opacity-90 active:scale-95 transition-all">Review questionnaire <span class="material-symbols-outlined text-[20px]">arrow_forward</span></button>
+</div>
+</footer>
+<script>
+(function() {
+    // Selectors
+    const q7Radios = document.querySelectorAll('input[name="q7"]');
+    const q8Radios = document.querySelectorAll('input[name="q8"]');
+    const q9Radios = document.querySelectorAll('input[name="q9"]');
+    const q9Container = document.getElementById('q9-container');
+    const q9Text = document.getElementById('q9-text');
+    const q9NaLabel = document.getElementById('q9-na-label');
+    const counterDisplay = document.getElementById('answered-counter');
+    const allConflictRadios = document.querySelectorAll('.divide-y input[type="radio"]');
+
+    // Part A: Relationship Table Toggle
+    const relRadios = document.querySelectorAll('input[name="has_relationship"]');
+    const relTable = document.getElementById('relationship-table');
+    relRadios.forEach(r => {
+        r.addEventListener('change', () => {
+            relTable.classList.toggle('hidden', r.value !== 'yes');
+        });
+    });
+
+    /**
+     * Logic for Question 9 disabling based on Q7 and Q8
+     */
+    function updateQ9State() {
+        const q7Val = document.querySelector('input[name="q7"]:checked')?.value;
+        const q8Val = document.querySelector('input[name="q8"]:checked')?.value;
+        
+        const isNA = (q7Val === 'no' && q8Val === 'no');
+
+        if (isNA) {
+            // Reset and Disable Q9
+            q9Radios.forEach(r => {
+                r.checked = false;
+                r.disabled = true;
+                r.parentElement.classList.add('opacity-50', 'cursor-not-allowed');
+            });
+            // Visuals
+            q9Text.classList.add('opacity-40');
+            q9NaLabel.classList.remove('hidden');
+            // Hide details
+            const details = q9Container.querySelector('[data-details-container]');
+            if (details) details.classList.add('hidden');
+        } else {
+            // Enable Q9
+            q9Radios.forEach(r => {
+                r.disabled = false;
+                r.parentElement.classList.remove('opacity-50', 'cursor-not-allowed');
+            });
+            // Visuals
+            q9Text.classList.remove('opacity-40');
+            q9NaLabel.classList.add('hidden');
+        }
+        
+        updateAnsweredCounter();
+    }
+
+    /**
+     * Update "X OF 9 ANSWERED" counter
+     */
+    function updateAnsweredCounter() {
+        const names = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9'];
+        let answered = 0;
+
+        const q7Val = document.querySelector('input[name="q7"]:checked')?.value;
+        const q8Val = document.querySelector('input[name="q8"]:checked')?.value;
+        const q9IsNA = (q7Val === 'no' && q8Val === 'no');
+
+        names.forEach(name => {
+            if (name === 'q9' && q9IsNA) {
+                answered++; // Treat as answered if NA
+            } else {
+                const checked = document.querySelector(`input[name="${name}"]:checked`);
+                if (checked) answered++;
+            }
+        });
+
+        counterDisplay.textContent = `${answered} OF 9 ANSWERED`;
+    }
+
+    /**
+     * Toggle required details textarea
+     */
+    function toggleDetailsFields() {
+        const names = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9'];
+        names.forEach(name => {
+            const checked = document.querySelector(`input[name="${name}"]:checked`);
+            const container = document.querySelector(`[data-question-container="${name}"]`);
+            if (!container) return;
+            
+            const details = container.querySelector('[data-details-container]');
+            if (details) {
+                // Show only if 'yes' is selected
+                if (checked && checked.value === 'yes') {
+                    details.classList.remove('hidden');
+                    details.querySelector('textarea').required = true;
+                } else {
+                    details.classList.add('hidden');
+                    details.querySelector('textarea').required = false;
+                }
+            }
+        });
+    }
+
+    // Attach listeners
+    allConflictRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            if (radio.name === 'q7' || radio.name === 'q8') {
+                updateQ9State();
+            }
+            toggleDetailsFields();
+            updateAnsweredCounter();
+        });
+    });
+
+    // Initial state
+    updateQ9State();
+    toggleDetailsFields();
+    updateAnsweredCounter();
+
+    // Validation on Review
+    const reviewBtn = document.querySelector('button.bg-primary.text-on-primary');
+    reviewBtn.addEventListener('click', (e) => {
+        const names = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9'];
+        const q7Val = document.querySelector('input[name="q7"]:checked')?.value;
+        const q8Val = document.querySelector('input[name="q8"]:checked')?.value;
+        const q9IsNA = (q7Val === 'no' && q8Val === 'no');
+
+        for (let name of names) {
+            if (name === 'q9' && q9IsNA) continue;
+            if (!document.querySelector(`input[name="${name}"]:checked`)) {
+                alert(`Please answer conflict disclosure question ${name.replace('q','')}.`);
+                return;
+            }
+        }
+        console.log('Form validated');
+    });
+})();
+</script>
+</body></html>

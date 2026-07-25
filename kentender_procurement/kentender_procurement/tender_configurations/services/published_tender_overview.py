@@ -104,41 +104,43 @@ def _schema_sections(cfg) -> list[dict[str, Any]]:
 	return out
 
 
-def _documents_from_package(pkg_summary: dict[str, Any], configuration_id: str) -> list[dict[str, Any]]:
+def _documents_from_package(
+	pkg_summary: dict[str, Any],
+	*,
+	published_tender_ref: str = "",
+	published_at: str = "",
+) -> list[dict[str, Any]]:
+	"""Bidder-facing tender documents only — never internal package checklist artifacts."""
+	from kentender_procurement.tender_configurations.services.bidder_presentation import (
+		project_bidder_document_row,
+		published_tender_pdf_url,
+	)
+
 	docs: list[dict[str, Any]] = []
 	has_pdf = bool(pkg_summary.get("has_pdf"))
 	if has_pdf:
+		pdf = published_tender_pdf_url(published_tender_ref) if published_tender_ref else ""
 		docs.append(
-			{
-				"document_key": "tender_pdf",
-				"name": "Official Tender Document",
-				"type": "PDF",
-				"size": "",
-				"icon": "picture_as_pdf",
-				"can_view": True,
-				"can_download": True,
-				"configuration_id": configuration_id,
-			}
+			project_bidder_document_row(
+				{
+					"document_key": "tender_pdf",
+					"name": "Official Tender Document",
+					"category": "Official tender document",
+					"type": "PDF",
+					"size": "",
+					"icon": "picture_as_pdf",
+					"can_view": True,
+					"can_download": True,
+					"view_url": pdf,
+					"download_url": pdf,
+					"published_at": published_at,
+				},
+				published_tender_ref=published_tender_ref,
+				published_at=published_at,
+			)
 		)
-	# Package checklist items become document rows (package-driven, not mock DOCX/XLSX).
-	for idx, item in enumerate(pkg_summary.get("items") or []):
-		label = cstr(item).strip()
-		if not label:
-			continue
-		if has_pdf and label.lower().startswith("generated tender pdf"):
-			continue
-		docs.append(
-			{
-				"document_key": f"pkg_item_{idx}",
-				"name": label,
-				"type": "Package Artifact",
-				"size": "",
-				"icon": "description",
-				"can_view": False,
-				"can_download": False,
-				"configuration_id": configuration_id,
-			}
-		)
+	# pkg_summary["items"] is a PE/internal confirmation inventory (schemas, readiness,
+	# hashes, etc.) — not bidder downloads. Do not surface those rows here.
 	return docs
 
 
@@ -242,21 +244,45 @@ def resolve_primary_action(
 	return ACTION_START, True, ""
 
 
-def get_published_tender_overview(published_tender_ref: str) -> dict[str, Any]:
-	"""GET-equivalent overview DTO for Screen A (bidder published tender overview)."""
+def resolve_published_tender_backend(published_tender_ref: str) -> dict[str, Any]:
+	"""Server-only publication/config/package/bid resolution — never return to bidder clients."""
 	pub = _resolve_publication(published_tender_ref)
 	pub_ref = ensure_publication_ref(pub)
-	status = cstr(pub.status or "")
-	published = status == PUBLICATION_STATUS_PUBLISHED
-	activated = bool(_activate_flag(pub))
-	visibility = _visibility(pub)
-
 	cfg_id = cstr(pub.configuration or "").strip()
 	if not cfg_id or not frappe.db.exists("Tender Configuration", cfg_id):
 		frappe.throw(frappe._("Linked tender configuration not found."), title="TCFG_NOT_FOUND")
 	cfg = frappe.get_doc("Tender Configuration", cfg_id)
-	context = build_configuration_context(cfg)
 	pkg = package_summary_dto(cstr(pub.confirmed_package or "") or None)
+	bid = _bid_state(cfg_id)
+	return {
+		"publication": pub,
+		"publication_id": pub.name,
+		"published_tender_ref": pub_ref,
+		"configuration_id": cfg.name,
+		"configuration_ref": cstr(cfg.configuration_ref or cfg.name),
+		"configuration": cfg,
+		"confirmed_package": pkg if isinstance(pkg, dict) else {},
+		"bid_id": bid["bid_id"],
+		"bid_status": bid["bid_status"],
+		"receipt_code": bid["receipt_code"],
+		"has_draft": bid["has_draft"],
+		"has_sealed": bid["has_sealed"],
+		"workspace_status": bid["workspace_status"],
+	}
+
+
+def get_published_tender_overview(published_tender_ref: str) -> dict[str, Any]:
+	"""GET-equivalent overview DTO for Screen A (bidder published tender overview)."""
+	backend = resolve_published_tender_backend(published_tender_ref)
+	pub = backend["publication"]
+	cfg = backend["configuration"]
+	pkg = backend["confirmed_package"]
+	pub_ref = backend["published_tender_ref"]
+	status = cstr(pub.status or "")
+	published = status == PUBLICATION_STATUS_PUBLISHED
+	activated = bool(_activate_flag(pub))
+	visibility = _visibility(pub)
+	context = build_configuration_context(cfg)
 
 	submission_deadline = _as_dt(getattr(pub, "submission_deadline", None))
 	clarification_deadline = _as_dt(getattr(pub, "clarification_deadline", None))
@@ -264,24 +290,21 @@ def get_published_tender_overview(published_tender_ref: str) -> dict[str, Any]:
 	past_deadline = bool(submission_deadline and now > submission_deadline)
 	clarification_closed = bool(clarification_deadline and now > clarification_deadline)
 
-	bid = _bid_state(cfg_id)
 	action, enabled, status_override = resolve_primary_action(
 		published=published,
 		workspace_activated=activated,
 		past_deadline=past_deadline,
-		has_sealed=bool(bid["has_sealed"]),
-		has_draft=bool(bid["has_draft"]),
+		has_sealed=bool(backend["has_sealed"]),
+		has_draft=bool(backend["has_draft"]),
 	)
-	workspace_status = status_override or bid["workspace_status"]
+	workspace_status = status_override or backend["workspace_status"]
 
 	status_chip = "Closed" if past_deadline else ("Open" if published and activated else "Unavailable")
+	published_at = cstr(pub.published_at or pub.publication_datetime or "")
 
 	return {
 		"published_tender_ref": pub_ref,
-		"publication_id": pub.name,
 		"publication_status": status,
-		"configuration_id": cfg.name,
-		"configuration_ref": cstr(cfg.configuration_ref or cfg.name),
 		"tender_title": cstr(context.get("procurement_title") or cfg.tender_title or ""),
 		"procuring_entity": cstr(context.get("procuring_entity_name") or ""),
 		"scope_summary": cstr(getattr(cfg, "short_scope_summary", None) or pub.tender_notice or ""),
@@ -289,7 +312,7 @@ def get_published_tender_overview(published_tender_ref: str) -> dict[str, Any]:
 		"bidder_visibility": visibility,
 		"activate_bidder_workspace": 1 if activated else 0,
 		"dates": {
-			"published_at": cstr(pub.published_at or pub.publication_datetime or ""),
+			"published_at": published_at,
 			"clarification_deadline": cstr(pub.clarification_deadline or ""),
 			"submission_deadline": cstr(pub.submission_deadline or ""),
 			"opening_datetime": cstr(pub.opening_datetime or ""),
@@ -297,19 +320,18 @@ def get_published_tender_overview(published_tender_ref: str) -> dict[str, Any]:
 		"past_submission_deadline": 1 if past_deadline else 0,
 		"clarification_deadline_passed": 1 if clarification_closed else 0,
 		"ask_question_enabled": 0 if clarification_closed else 1,
-		"documents": _documents_from_package(pkg, cfg.name),
-		"confirmed_package": pkg,
+		"documents": _documents_from_package(
+			pkg, published_tender_ref=pub_ref, published_at=published_at
+		),
 		"submission_sections": _schema_sections(cfg),
 		"tender_info": _tender_info_fields(cfg, context),
 		"clarifications": [],
 		"workspace_status": workspace_status,
 		"primary_action": action,
 		"primary_action_enabled": 1 if enabled else 0,
-		"bid_id": bid["bid_id"],
-		"bid_status": bid["bid_status"],
-		"receipt_code": bid["receipt_code"],
+		"bid_status": backend["bid_status"],
+		"receipt_code": backend["receipt_code"],
 		"bidder_workspace_route": f"/tenders/{cstr(pub_ref).strip()}/workspace",
-		"desk_section_bridge_url": f"it-electronic-bidder-workspace/{cfg.name}",
 	}
 
 
@@ -319,6 +341,7 @@ def start_or_get_bid_workspace(
 ) -> dict[str, Any]:
 	"""POST-equivalent: create or return draft workspace; refuse Closed/Unavailable."""
 	overview = get_published_tender_overview(published_tender_ref)
+	backend = resolve_published_tender_backend(published_tender_ref)
 	action = overview.get("primary_action")
 	if action in (ACTION_CLOSED, ACTION_UNAVAILABLE):
 		frappe.throw(
@@ -329,23 +352,20 @@ def start_or_get_bid_workspace(
 		return {
 			"created": False,
 			"view_only": True,
-			"bid_id": overview.get("bid_id"),
+			"bid_id": backend.get("bid_id"),
 			"receipt_code": overview.get("receipt_code"),
-			"configuration_id": overview.get("configuration_id"),
 			"primary_action": action,
 			"bidder_workspace_route": overview.get("bidder_workspace_route"),
 			"overview": overview,
 		}
-	draft = create_or_get_draft(overview["configuration_id"], bidder_label=bidder_label)
+	draft = create_or_get_draft(backend["configuration_id"], bidder_label=bidder_label)
 	refreshed = get_published_tender_overview(published_tender_ref)
 	return {
 		"created": overview.get("primary_action") == ACTION_START,
 		"view_only": False,
 		"bid_id": draft.get("bid_id"),
 		"receipt_code": draft.get("receipt_code"),
-		"configuration_id": overview.get("configuration_id"),
 		"primary_action": refreshed.get("primary_action"),
 		"bidder_workspace_route": overview.get("bidder_workspace_route"),
-		"draft": draft,
 		"overview": refreshed,
 	}

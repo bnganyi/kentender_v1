@@ -34,7 +34,16 @@
   "cancelled_at",
   "cancelled_by",
   "cancel_reason",
-  "package_payload"
+  "package_payload",
+  "section_electronic_template",
+  "electronic_template_id",
+  "electronic_template_version",
+  "electronic_template_snapshot",
+  "electronic_template_hash",
+  "publication_version",
+  "prior_publication_version",
+  "section_issued_addenda",
+  "issued_addenda_json"
  ],
  "fields": [
   {
@@ -221,6 +230,59 @@
    "fieldname": "package_payload",
    "fieldtype": "Long Text",
    "label": "Read-Only Package Payload",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_electronic_template",
+   "fieldtype": "Section Break",
+   "label": "Electronic STD Template Snapshot"
+  },
+  {
+   "fieldname": "electronic_template_id",
+   "fieldtype": "Data",
+   "label": "Electronic Template ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "electronic_template_version",
+   "fieldtype": "Data",
+   "label": "Electronic Template Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "electronic_template_snapshot",
+   "fieldtype": "Long Text",
+   "label": "Electronic Template Snapshot",
+   "read_only": 1
+  },
+  {
+   "fieldname": "electronic_template_hash",
+   "fieldtype": "Data",
+   "label": "Electronic Template Hash",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "publication_version",
+   "fieldtype": "Int",
+   "label": "Publication Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prior_publication_version",
+   "fieldtype": "Data",
+   "label": "Prior Publication Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_issued_addenda",
+   "fieldtype": "Section Break",
+   "label": "Issued Addenda Register"
+  },
+  {
+   "fieldname": "issued_addenda_json",
+   "fieldtype": "Long Text",
+   "label": "Issued Addenda JSON",
    "read_only": 1
   }
  ],

@@ -1,0 +1,188 @@
+/* Lean Form of Tender — bidder Website (A2 visual language) */
+.kt-fot-main-inner {
+	padding: 1.25rem 1.5rem 2.5rem;
+	max-width: 920px;
+}
+.kt-fot-page-head {
+	display: flex;
+	justify-content: space-between;
+	gap: 1rem;
+	align-items: flex-start;
+	margin-bottom: 1.25rem;
+}
+.kt-fot-page-head h1 {
+	margin: 0.35rem 0 0.35rem;
+	font-size: 1.5rem;
+	font-weight: 700;
+}
+.kt-fot-back {
+	font-size: 0.875rem;
+	color: var(--text-muted, #64748b);
+	text-decoration: none;
+}
+.kt-fot-status {
+	border: 1px solid var(--border-color, #e2e8f0);
+	border-radius: 8px;
+	padding: 0.75rem 1rem;
+	min-width: 10rem;
+	background: #fff;
+}
+.kt-fot-status-label {
+	display: block;
+	font-size: 0.75rem;
+	color: var(--text-muted, #64748b);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+.kt-fot-issues {
+	display: flex;
+	gap: 0.75rem;
+	padding: 0.9rem 1rem;
+	border-radius: 8px;
+	background: #fef2f2;
+	border: 1px solid #fecaca;
+	margin-bottom: 1rem;
+}
+.kt-fot-issues ul {
+	margin: 0.35rem 0 0;
+	padding-left: 1.1rem;
+}
+.kt-fot-card {
+	background: #fff;
+	border: 1px solid var(--border-color, #e2e8f0);
+	border-radius: 10px;
+	padding: 1rem 1.15rem;
+	margin-bottom: 1rem;
+}
+.kt-fot-card h2 {
+	margin: 0 0 0.75rem;
+	font-size: 1.05rem;
+}
+.kt-fot-legal {
+	white-space: pre-wrap;
+	font-family: "Public Sans", sans-serif;
+	font-size: 0.9rem;
+	line-height: 1.45;
+	margin: 0;
+}
+.kt-fot-dl {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 0.65rem;
+	margin: 0;
+}
+.kt-fot-dl > div {
+	display: grid;
+	grid-template-columns: 12rem 1fr;
+	gap: 0.5rem;
+}
+.kt-fot-dl dt {
+	color: var(--text-muted, #64748b);
+	font-weight: 500;
+}
+.kt-fot-dl dd {
+	margin: 0;
+}
+.kt-fot-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	margin-bottom: 0.85rem;
+}
+.kt-fot-field input,
+.kt-fot-field textarea,
+.kt-fot-field select {
+	border: 1px solid var(--border-color, #cbd5e1);
+	border-radius: 6px;
+	padding: 0.5rem 0.65rem;
+	font: inherit;
+}
+.kt-fot-check {
+	display: flex;
+	gap: 0.65rem;
+	align-items: flex-start;
+	margin-bottom: 0.75rem;
+}
+.kt-fot-check small {
+	display: block;
+	color: var(--text-muted, #64748b);
+	margin-top: 0.2rem;
+}
+.kt-fot-decl strong {
+	display: block;
+}
+.kt-fot-commission-row {
+	display: grid;
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	gap: 0.4rem;
+	margin-bottom: 0.4rem;
+}
+.kt-fot-commission-row input {
+	border: 1px solid var(--border-color, #cbd5e1);
+	border-radius: 6px;
+	padding: 0.4rem 0.5rem;
+	font: inherit;
+}
+.kt-fot-assoc-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.65rem;
+}
+.kt-fot-assoc-card {
+	border: 1px solid var(--border-color, #e2e8f0);
+	border-radius: 8px;
+	padding: 0.75rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+.kt-fot-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	align-items: center;
+	margin-top: 0.5rem;
+}
+.kt-fot-primary {
+	background: #0f766e;
+	color: #fff;
+	border: 0;
+	border-radius: 8px;
+	padding: 0.6rem 1.1rem;
+	font-weight: 600;
+	cursor: pointer;
+}
+.kt-fot-secondary {
+	display: inline-flex;
+	align-items: center;
+	border: 1px solid var(--border-color, #cbd5e1);
+	border-radius: 8px;
+	padding: 0.55rem 0.95rem;
+	background: #fff;
+	color: inherit;
+	text-decoration: none;
+	cursor: pointer;
+}
+.kt-fot-muted,
+.kt-fot-note {
+	color: var(--text-muted, #64748b);
+	font-size: 0.875rem;
+}
+.kt-fot-flash {
+	margin-top: 0.75rem;
+	padding: 0.65rem 0.85rem;
+	border-radius: 8px;
+	background: #ecfdf5;
+	border: 1px solid #a7f3d0;
+}
+.kt-fot-flash[data-ok="0"] {
+	background: #fef2f2;
+	border-color: #fecaca;
+}
+@media (max-width: 800px) {
+	.kt-fot-dl > div,
+	.kt-fot-commission-row,
+	.kt-fot-assoc-grid {
+		grid-template-columns: 1fr;
+	}
+}

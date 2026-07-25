@@ -125,8 +125,18 @@ app_include_js = [
 # Resolves dynamic detail paths to ``www/supplier/tenders`` (same shell as list).
 website_route_rules = [
 	{"from_route": "/supplier/tenders/<tender_code>", "to_route": "supplier/tenders"},
+	{
+		"from_route": "/tenders/<publication_ref>/sections/form_of_tender",
+		"to_route": "tenders/form_of_tender",
+	},
+	{
+		"from_route": "/tenders/<publication_ref>/sections/confidential_business_questionnaire",
+		"to_route": "tenders/confidential_business_questionnaire",
+	},
 	{"from_route": "/tenders/<publication_ref>/sections/<section_key>", "to_route": "tenders/section"},
 	{"from_route": "/tenders/<publication_ref>/documents", "to_route": "tenders/documents"},
+	{"from_route": "/tenders/<publication_ref>/evidence", "to_route": "tenders/evidence"},
+	{"from_route": "/tenders/<publication_ref>/issues", "to_route": "tenders/issues"},
 	{"from_route": "/tenders/<publication_ref>/workspace", "to_route": "tenders/workspace"},
 	{"from_route": "/tenders/<publication_ref>", "to_route": "tenders/overview"},
 ]
@@ -293,13 +303,11 @@ has_permission = {
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"File": {
+		"on_trash": "kentender_procurement.tender_configurations.bidder_workspace_manifest.repository.cas.prevent_cas_file_trash",
+	},
+}
 
 # Scheduled Tasks
 # ---------------

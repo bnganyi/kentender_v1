@@ -5,6 +5,10 @@
 
 Runtime schema is derived from CFG blobs (190 matrix, 22 price lines, prelim/techqual)
 merged with pack 10 section templates and validation_rules. Never treat NSSF as master STD.
+
+Non-authoritative for the bidder checklist: lean A2 reads
+``IT Tender Publication Record.electronic_template_snapshot`` only.
+``SECTION_KEYS`` below are retained for wizard/preview compile paths, not checklist authority.
 """
 
 from __future__ import annotations
@@ -22,6 +26,7 @@ from kentender_procurement.tender_configurations.services.e1_nssf_fixture_mapper
 	map_bidder_submission_schema,
 )
 
+# Pack-10 keys — NOT the lean bidder checklist authority (see electronic_std_templates.CANONICAL_SECTION_KEYS).
 SECTION_KEYS = (
 	"tender_document_acknowledgement",
 	"form_of_tender",

@@ -25,7 +25,7 @@ from kentender_procurement.tender_configurations.services.document_preview impor
 	generate_document_preview,
 )
 from kentender_procurement.tender_configurations.services.publication_setup import (
-	publish_tender,
+	publish_tender_for_development_preview,
 	save_publication_setup,
 )
 
@@ -76,7 +76,7 @@ class TestSubmissionChecklistWeb(IntegrationTestCase):
 				"acknowledgement_confirmed": 1,
 			},
 		)
-		published = publish_tender(pub_id)
+		published = publish_tender_for_development_preview(pub_id)
 		ref = published.get("publication_ref") or frappe.db.get_value(
 			"IT Tender Publication Record", pub_id, "publication_ref"
 		)

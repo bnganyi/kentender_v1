@@ -17,6 +17,9 @@
   "schema_snapshot",
   "section_responses",
   "responses",
+  "section_evidence",
+  "evidence_register_json",
+  "evidence_seal_snapshot_json",
   "section_seal",
   "sealed_at",
   "sealed_by",
@@ -96,6 +99,22 @@
    "fieldname": "responses",
    "fieldtype": "Long Text",
    "label": "Responses JSON"
+  },
+  {
+   "fieldname": "section_evidence",
+   "fieldtype": "Section Break",
+   "label": "Evidence Register"
+  },
+  {
+   "fieldname": "evidence_register_json",
+   "fieldtype": "Long Text",
+   "label": "Evidence Register JSON"
+  },
+  {
+   "fieldname": "evidence_seal_snapshot_json",
+   "fieldtype": "Long Text",
+   "label": "Evidence Seal Snapshot JSON",
+   "read_only": 1
   },
   {
    "fieldname": "section_seal",

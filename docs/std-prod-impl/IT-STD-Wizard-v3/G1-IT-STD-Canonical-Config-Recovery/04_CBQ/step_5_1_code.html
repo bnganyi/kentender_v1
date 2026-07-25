@@ -1,0 +1,385 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>KenTender - Review and Certify</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface-variant": "#e0e3e5",
+                        "tertiary-container": "#001c3a",
+                        "status-error-bg": "#fff1f2",
+                        "status-error": "#ba1a1a",
+                        "status-pending": "#92400e",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-dim": "#d8dadc",
+                        "status-approved-bg": "#ecfdf5",
+                        "primary-fixed": "#d6e3fd",
+                        "on-tertiary-fixed": "#001c3a",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "on-error": "#ffffff",
+                        "on-background": "#191c1e",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "outline-strong": "#74777f",
+                        "surface-container-lowest": "#ffffff",
+                        "status-pending-bg": "#fffbeb",
+                        "tertiary": "#000000",
+                        "on-tertiary-container": "#6b85ac",
+                        "primary": "#000000",
+                        "on-secondary-container": "#556379",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-primary-fixed": "#0e1c2e",
+                        "secondary-container": "#d2e1fa",
+                        "on-surface-variant": "#44474c",
+                        "primary-container": "#0e1c2e",
+                        "status-approved": "#065f46",
+                        "surface": "#f7f9fb",
+                        "background": "#f7f9fb",
+                        "on-tertiary-fixed-variant": "#2d486c",
+                        "surface-container": "#eceef0",
+                        "secondary-fixed": "#d5e3fc",
+                        "inverse-primary": "#bac7e0",
+                        "on-primary-fixed-variant": "#3a475c",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#bac7e0",
+                        "outline-variant": "#c5c6cd",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#f2f4f6",
+                        "tertiary-fixed": "#d4e3ff",
+                        "surface-bright": "#f7f9fb",
+                        "surface-container-high": "#e6e8ea",
+                        "on-surface": "#191c1e",
+                        "inverse-surface": "#2d3133",
+                        "surface-tint": "#525f74",
+                        "outline": "#75777d",
+                        "tertiary-fixed-dim": "#adc8f3",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "secondary": "#515f74",
+                        "outline-subtle": "#c4c6cf",
+                        "on-primary-container": "#77859b"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "sidebar-width": "256px",
+                        "gutter": "12px",
+                        "container-padding": "16px",
+                        "max-width": "1280px",
+                        "gap-component": "8px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-lg-mobile": ["Public Sans"],
+                        "body-md": ["Public Sans"],
+                        "display": ["Public Sans"],
+                        "label-md": ["JetBrains Mono"],
+                        "headline-md": ["Public Sans"],
+                        "body-lg": ["Public Sans"],
+                        "headline-lg": ["Public Sans"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bento-card {
+            background: #FFFFFF;
+            border: 1px solid #c4c6cf;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #000000;
+            box-shadow: 0 0 0 1px #000000;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f2f4f6; }
+        ::-webkit-scrollbar-thumb { background: #c4c6cf; }
+        ::-webkit-scrollbar-thumb:hover { background: #75777d; }
+    </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-container-padding h-14 bg-surface-container-lowest border-b border-outline-subtle">
+<div class="flex items-center gap-4">
+<h1 class="font-display text-headline-md text-primary tracking-tighter">KenTender</h1>
+<div class="h-6 w-px bg-outline-subtle mx-2"></div>
+<nav class="hidden md:flex gap-6">
+<a class="font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors py-2 px-3 rounded" href="#">Tenders</a>
+<a class="font-label-md text-label-md text-primary border-b-2 border-primary font-bold transition-opacity py-2 px-3" href="#">My Bids</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors py-2 px-3 rounded" href="#">Clarifications</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded transition-colors">notifications</button>
+<div class="flex items-center gap-2 px-3 py-1.5 border border-outline-subtle rounded cursor-pointer hover:bg-surface-container-low transition-colors">
+<span class="font-label-md text-on-surface">Account</span>
+<span class="material-symbols-outlined text-[18px]">expand_more</span>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-14 bottom-0 w-sidebar-width z-40 flex flex-col bg-surface-container-low border-r border-outline-subtle">
+<div class="p-4 border-b border-outline-subtle">
+<div class="flex items-center gap-3 mb-1">
+<div class="w-8 h-8 bg-primary-container flex items-center justify-center rounded">
+<span class="material-symbols-outlined text-on-primary-container text-[20px]">corporate_fare</span>
+</div>
+<h2 class="font-headline-md text-headline-md font-bold text-primary">Bidder Workspace</h2>
+</div>
+</div>
+<nav class="flex-1 py-4 overflow-y-auto">
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined">fact_check</span>
+<span class="font-label-md text-label-md">Checklist</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-surface-container-highest text-primary border-r-4 border-primary font-bold translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined">edit_document</span>
+<span class="font-label-md text-label-md">Prepare Bid</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined">verified</span>
+<span class="font-label-md text-label-md">Review &amp; Validate</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined">lock</span>
+<span class="font-label-md text-label-md">Submit &amp; Seal</span>
+</a>
+</div>
+</nav>
+<div class="p-4 border-t border-outline-subtle">
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">info</span>
+<span class="font-label-md text-label-md">View Tender Overview</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">support_agent</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container transition-colors" href="#">
+<span class="material-symbols-outlined text-sm">exit_to_app</span>
+<span class="font-label-md text-label-md">Exit Workspace</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-sidebar-width pt-14 pb-16 min-h-screen">
+<div class="max-w-[1000px] mx-auto px-8 py-8">
+<!-- Metadata Bar -->
+<!-- Breadcrumb -->
+<!-- Page Header -->
+<header class="mb-8 flex justify-between items-start">
+<div>
+<h1 class="font-display text-display text-primary mb-1">Confidential Business Questionnaire</h1>
+<p class="font-body-lg text-on-surface-variant">Review and Certify</p>
+</div>
+<!-- JV Progress (Integrated) -->
+<div class="flex-col items-end gap-2 flex"><div class="flex gap-3"></div></div></header>
+<!-- Stepper Progress Bar -->
+<div class="mb-8 bento-card p-4 flex items-center justify-between">
+<!-- Step 1 Complete -->
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-status-approved flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[18px]">check</span>
+</div>
+<div class="hidden lg:block">
+<p class="font-label-sm text-status-approved">Step 1</p>
+<p class="font-label-md text-on-surface-variant">Bidder Details</p>
+</div>
+</div>
+<div class="flex-1 h-px bg-outline-subtle mx-4"></div>
+<!-- Step 2 Complete -->
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-status-approved flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[18px]">check</span>
+</div>
+<div class="hidden lg:block">
+<p class="font-label-sm text-status-approved">Step 2</p>
+<p class="font-label-md text-on-surface-variant">Business Details</p>
+</div>
+</div>
+<div class="flex-1 h-px bg-outline-subtle mx-4"></div>
+<!-- Step 3 Complete -->
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-status-approved flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[18px]">check</span>
+</div>
+<div class="hidden lg:block">
+<p class="font-label-sm text-status-approved">Step 3</p>
+<p class="font-label-md text-on-surface-variant">Ownership</p>
+</div>
+</div>
+<div class="flex-1 h-px bg-outline-subtle mx-4"></div>
+<!-- Step 4 Complete -->
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-status-approved flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[18px]">check</span>
+</div>
+<div class="hidden lg:block">
+<p class="font-label-sm text-status-approved">Step 4</p>
+<p class="font-label-md text-on-surface-variant">Conflicts</p>
+</div>
+</div>
+<div class="flex-1 h-px bg-outline-subtle mx-4"></div>
+<!-- Step 5 Active -->
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full border-2 border-primary flex items-center justify-center bg-primary text-white"><span class="font-label-md">05</span></div>
+<div class="hidden lg:block">
+<p class="font-label-sm text-primary font-bold">Step 5</p>
+<p class="font-label-md text-primary font-bold">Certify</p>
+</div>
+</div>
+</div>
+<!-- Content Section -->
+<div class="space-y-6"><div class="mb-6 p-4 bg-surface-container-low rounded border border-outline-subtle grid grid-cols-1 md:grid-cols-2 gap-4"><div class="space-y-1"><p class="text-[10px] font-label-sm text-on-surface-variant uppercase tracking-wider">Procuring Entity</p><p class="font-body-md font-bold">National Social Security Fund</p></div><div class="space-y-1"><p class="text-[10px] font-label-sm text-on-surface-variant uppercase tracking-wider">Tender Reference</p><p class="font-body-md font-bold">NSSF/ERP/01/2023-2024</p></div><div class="md:col-span-2 space-y-1"><p class="text-[10px] font-label-sm text-on-surface-variant uppercase tracking-wider">Tender Title</p><p class="font-body-md font-bold">Supply, Installation, Configuration, Customization, Testing and Commissioning of Enterprise Resource Planning (ERP) System</p></div><div class="space-y-1"><p class="text-[10px] font-label-sm text-on-surface-variant uppercase tracking-wider">Tender Opening</p><p class="font-body-md font-bold">Oct 24, 2023 • 10:00 AM</p></div></div>
+<!-- Review Summary -->
+<div class="bento-card overflow-hidden">
+<div class="px-6 py-4 border-b border-outline-subtle bg-surface-container-low flex items-center justify-between">
+<h3 class="font-headline-md text-primary">Submission Review</h3>
+<div class="px-3 py-1 bg-surface-container-highest text-on-surface-variant rounded text-[10px] font-label-sm uppercase tracking-wider">Summary</div>
+</div>
+<div class="divide-y divide-outline-subtle">
+<!-- Review Row 1 -->
+<div class="p-6 flex items-center justify-between hover:bg-surface-container-low transition-colors">
+<div class="flex items-start gap-4">
+<div class="w-1 h-10 bg-primary mt-1"></div>
+<div>
+<p class="font-body-lg font-bold text-on-surface">Bidder Details</p>
+<p class="font-body-md text-on-surface-variant">Registration, Addresses, Contact Person</p>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-1.5 px-3 py-1 bg-status-approved-bg text-status-approved rounded">
+<span class="w-1.5 h-1.5 rounded-full bg-status-approved"></span>
+<span class="font-label-md uppercase tracking-wider">Complete</span>
+</div>
+<button class="flex items-center gap-2 text-primary font-label-md hover:underline">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+                                    Edit
+                                </button>
+</div>
+</div>
+<!-- Review Row 2 -->
+<div class="p-6 flex items-center justify-between hover:bg-surface-container-low transition-colors">
+<div class="flex items-start gap-4">
+<div class="w-1 h-10 bg-primary mt-1"></div>
+<div>
+<p class="font-body-lg font-bold text-on-surface">Business Details</p>
+<p class="font-body-md text-on-surface-variant">Operations, Nature of Business, Trade License</p>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-1.5 px-3 py-1 bg-status-approved-bg text-status-approved rounded">
+<span class="w-1.5 h-1.5 rounded-full bg-status-approved"></span>
+<span class="font-label-md uppercase tracking-wider">Complete</span>
+</div>
+<button class="flex items-center gap-2 text-primary font-label-md hover:underline">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+                                    Edit
+                                </button>
+</div>
+</div>
+<!-- Review Row 3 -->
+<div class="p-6 flex items-center justify-between hover:bg-surface-container-low transition-colors">
+<div class="flex items-start gap-4">
+<div class="w-1 h-10 bg-primary mt-1"></div>
+<div>
+<p class="font-body-lg font-bold text-on-surface">Ownership and Management</p>
+<p class="font-body-md text-on-surface-variant">Directors, Shareholders</p>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-1.5 px-3 py-1 bg-status-approved-bg text-status-approved rounded">
+<span class="w-1.5 h-1.5 rounded-full bg-status-approved"></span>
+<span class="font-label-md uppercase tracking-wider">Complete</span>
+</div>
+<button class="flex items-center gap-2 text-primary font-label-md hover:underline">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+                                    Edit
+                                </button>
+</div>
+</div>
+<!-- Review Row 4 -->
+<div class="p-6 flex items-center justify-between hover:bg-surface-container-low transition-colors">
+<div class="flex items-start gap-4">
+<div class="w-1 h-10 bg-primary mt-1"></div>
+<div>
+<p class="font-body-lg font-bold text-on-surface">Interests and Conflicts</p>
+<p class="font-body-md text-on-surface-variant">Disclosures, Related Parties</p>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-1.5 px-3 py-1 bg-status-approved-bg text-status-approved rounded">
+<span class="w-1.5 h-1.5 rounded-full bg-status-approved"></span>
+<span class="font-label-md uppercase tracking-wider">Complete</span>
+</div>
+<button class="flex items-center gap-2 text-primary font-label-md hover:underline">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+                                    Edit
+                                </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Certification Section -->
+
+<!-- Legal Notice -->
+</div>
+</div>
+<div class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/50" id="certify-modal">
+<div class="bg-surface p-8 rounded-xl max-w-md w-full shadow-2xl border border-outline-subtle">
+<h3 class="font-display text-headline-md mb-4">Confirm Certification</h3>
+<p class="font-body-lg text-on-surface-variant mb-8">Are you sure you want to certify this questionnaire? Once submitted, you will not be able to edit these details without contacting the procuring entity.</p>
+<div class="flex justify-end gap-4">
+<button class="px-6 py-2 font-label-md text-on-surface hover:bg-surface-container rounded transition-colors">Cancel</button>
+<button class="px-6 py-2 bg-primary text-on-primary font-label-md font-bold rounded hover:opacity-90 transition-all">Confirm &amp; Submit</button>
+</div>
+</div>
+</div></main>
+<!-- Bottom Navigation Footer -->
+<footer class="fixed bottom-0 right-0 left-sidebar-width z-50 flex justify-between items-center px-container-padding h-16 bg-surface-container-lowest border-t border-outline-subtle">
+<button class="flex items-center gap-2 px-4 py-2 text-primary hover:bg-surface-container-low rounded transition-colors group">
+<span class="material-symbols-outlined text-[20px] transition-transform group-hover:-translate-x-1">arrow_back</span>
+<span class="font-label-md font-bold">Back to Interests and Conflicts</span>
+</button>
+<div class="flex items-center gap-3">
+<button class="px-6 py-2 border border-outline text-on-surface font-label-md rounded hover:bg-surface-container-low transition-colors">
+                Save draft
+            </button>
+<button class="flex items-center gap-2 px-8 py-2 bg-primary text-on-primary font-label-md font-bold rounded hover:opacity-90 active:scale-95 transition-all">Certify questionnaire <span class="material-symbols-outlined text-[20px]">lock</span></button>
+</div>
+</footer>
+
+
+
+
+</body></html>
