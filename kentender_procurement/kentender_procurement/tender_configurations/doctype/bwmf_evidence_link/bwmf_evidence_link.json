@@ -1,0 +1,88 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-07-24 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "evidence_version",
+  "workspace",
+  "task_ref",
+  "scope_ref",
+  "link_state",
+  "organization",
+  "bidder_party"
+ ],
+ "fields": [
+  {
+   "fieldname": "evidence_version",
+   "fieldtype": "Link",
+   "label": "Evidence Version",
+   "options": "BWMF Evidence Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "workspace",
+   "fieldtype": "Link",
+   "label": "Workspace",
+   "options": "BWMF Workspace",
+   "reqd": 1
+  },
+  {
+   "fieldname": "task_ref",
+   "fieldtype": "Data",
+   "label": "Task Ref",
+   "reqd": 1
+  },
+  {
+   "fieldname": "scope_ref",
+   "fieldtype": "Data",
+   "label": "Scope Ref"
+  },
+  {
+   "fieldname": "link_state",
+   "fieldtype": "Data",
+   "label": "Link State",
+   "default": "active"
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "label": "Organization",
+   "reqd": 1
+  },
+  {
+   "fieldname": "bidder_party",
+   "fieldtype": "Data",
+   "label": "Bidder Party",
+   "reqd": 1
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-24 12:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Evidence Link",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

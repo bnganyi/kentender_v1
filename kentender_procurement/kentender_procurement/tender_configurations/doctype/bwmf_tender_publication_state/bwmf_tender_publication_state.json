@@ -1,0 +1,98 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:lineage_key",
+ "creation": "2026-07-24 19:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "lineage_key",
+  "published_tender_ref",
+  "active_manifest_version",
+  "active_publication",
+  "public_active",
+  "workspace_available",
+  "organization",
+  "lock_token"
+ ],
+ "fields": [
+  {
+   "fieldname": "lineage_key",
+   "fieldtype": "Data",
+   "label": "Lineage Key",
+   "reqd": 1,
+   "unique": 1,
+   "description": "published_tender_ref lineage lock key"
+  },
+  {
+   "fieldname": "published_tender_ref",
+   "fieldtype": "Data",
+   "label": "Published Tender Ref",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "active_manifest_version",
+   "fieldtype": "Link",
+   "label": "Active Manifest Version",
+   "options": "BWMF Manifest Version"
+  },
+  {
+   "fieldname": "active_publication",
+   "fieldtype": "Link",
+   "label": "Active Publication",
+   "options": "BWMF Manifest Publication"
+  },
+  {
+   "fieldname": "public_active",
+   "fieldtype": "Check",
+   "label": "Public Active",
+   "default": "0"
+  },
+  {
+   "fieldname": "workspace_available",
+   "fieldtype": "Check",
+   "label": "Workspace Available",
+   "default": "0",
+   "description": "Canonical availability flag only; Phase 6 creates workspaces"
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "label": "Organization",
+   "reqd": 1
+  },
+  {
+   "fieldname": "lock_token",
+   "fieldtype": "Data",
+   "label": "Lock Token"
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-24 19:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Tender Publication State",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "title_field": "published_tender_ref"
+}

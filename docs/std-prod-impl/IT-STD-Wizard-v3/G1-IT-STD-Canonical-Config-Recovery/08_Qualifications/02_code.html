@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Contract Performance and Litigation - KenTender</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#2d3133",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "primary-fixed-dim": "#bac7e0",
+                        "surface-bright": "#f7f9fb",
+                        "surface-container": "#eceef0",
+                        "secondary-container": "#d2e1fa",
+                        "on-surface-variant": "#44474c",
+                        "on-tertiary-fixed-variant": "#2d486c",
+                        "on-background": "#191c1e",
+                        "status-approved": "#065f46",
+                        "outline-strong": "#74777f",
+                        "outline-subtle": "#c4c6cf",
+                        "surface": "#f7f9fb",
+                        "primary": "#000000",
+                        "on-tertiary-fixed": "#001c3a",
+                        "tertiary-fixed-dim": "#adc8f3",
+                        "outline": "#75777d",
+                        "on-surface": "#191c1e",
+                        "status-pending": "#92400e",
+                        "on-primary-fixed-variant": "#3a475c",
+                        "on-secondary-container": "#556379",
+                        "surface-container-low": "#f2f4f6",
+                        "inverse-primary": "#bac7e0",
+                        "surface-container-lowest": "#ffffff",
+                        "background": "#f7f9fb",
+                        "on-secondary": "#ffffff",
+                        "primary-container": "#0e1c2e",
+                        "status-error-bg": "#fff1f2",
+                        "secondary-fixed": "#d5e3fc",
+                        "outline-variant": "#c5c6cd",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "on-error-container": "#93000a",
+                        "surface-tint": "#525f74",
+                        "primary-fixed": "#d6e3fd",
+                        "tertiary-fixed": "#d4e3ff",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-container-high": "#e6e8ea",
+                        "on-primary-container": "#77859b",
+                        "status-error": "#ba1a1a",
+                        "secondary": "#515f74",
+                        "tertiary-container": "#001c3a",
+                        "surface-variant": "#e0e3e5",
+                        "on-primary-fixed": "#0e1c2e",
+                        "surface-dim": "#d8dadc",
+                        "error": "#ba1a1a",
+                        "status-approved-bg": "#ecfdf5",
+                        "on-error": "#ffffff",
+                        "status-pending-bg": "#fffbeb",
+                        "on-tertiary-container": "#6b85ac",
+                        "on-tertiary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "tertiary": "#000000",
+                        "on-secondary-fixed-variant": "#3a485c"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-padding": "16px",
+                        "max-width": "1280px",
+                        "sidebar-width": "256px",
+                        "gap-component": "8px",
+                        "unit": "4px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Public Sans"],
+                        "body-lg": ["Public Sans"],
+                        "headline-lg": ["Public Sans"],
+                        "label-sm": ["JetBrains Mono"],
+                        "label-md": ["JetBrains Mono"],
+                        "display": ["Public Sans"],
+                        "body-md": ["Public Sans"],
+                        "headline-md": ["Public Sans"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-lg": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-sm": ["10px", { "lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+                        "label-md": ["11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "display": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                        "headline-md": ["18px", { "lineHeight": "24px", "fontWeight": "600" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #f7f9fb;
+            color: #191c1e;
+            font-family: 'Public Sans', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .data-table-cell {
+            padding: 8px 16px;
+            height: 32px;
+            white-space: nowrap;
+        }
+        
+        /* Utility to toggle visibility based on member selection - for simulation in static HTML */
+        .member-selected .initial-state-msg { display: none; }
+        .member-selected .disclosure-sections { display: block; }
+        .disclosure-sections { display: none; }
+    </style>
+</head>
+<body class="bg-background text-on-background h-screen overflow-hidden flex">
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-0 bottom-0 w-sidebar-width flex flex-col z-40 overflow-y-auto bg-surface-container-low dark:bg-surface-dim text-primary dark:text-primary-fixed font-label-md text-label-md font-body-md text-body-md border-r border-outline-subtle dark:border-outline-strong">
+<div class="p-container-padding border-b border-outline-subtle dark:border-outline-strong">
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">Bidder Workspace</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Ref: KT-2023-0892</p>
+</div>
+<div class="flex-1 py-4">
+<a class="flex items-center text-on-surface-variant dark:text-outline py-3 px-4 hover:bg-surface-container-high dark:hover:bg-on-secondary-fixed-variant transition-all duration-150" href="#">
+<span class="material-symbols-outlined mr-3">info</span>
+            Tender Overview
+        </a>
+<a class="flex items-center text-on-surface-variant dark:text-outline py-3 px-4 hover:bg-surface-container-high dark:hover:bg-on-secondary-fixed-variant transition-all duration-150" href="#">
+<span class="material-symbols-outlined mr-3">description</span>
+            Tender Documents
+        </a>
+<a class="flex items-center text-on-surface-variant dark:text-outline py-3 px-4 hover:bg-surface-container-high dark:hover:bg-on-secondary-fixed-variant transition-all duration-150" href="#">
+<span class="material-symbols-outlined mr-3">fact_check</span>
+            Submission Checklist
+        </a>
+<a class="flex items-center bg-surface-container-highest dark:bg-on-secondary-fixed-variant text-primary dark:text-primary-fixed border-r-4 border-primary dark:border-primary-fixed py-3 px-4" href="#">
+<span class="material-symbols-outlined mr-3">edit_document</span>
+            Prepare Bid
+        </a>
+<a class="flex items-center text-on-surface-variant dark:text-outline py-3 px-4 hover:bg-surface-container-high dark:hover:bg-on-secondary-fixed-variant transition-all duration-150" href="#">
+<span class="material-symbols-outlined mr-3">verified</span>
+            Review &amp; Validate
+        </a>
+<a class="flex items-center text-on-surface-variant dark:text-outline py-3 px-4 hover:bg-surface-container-high dark:hover:bg-on-secondary-fixed-variant transition-all duration-150" href="#">
+<span class="material-symbols-outlined mr-3">lock</span>
+            Submit &amp; Seal
+        </a>
+</div>
+<div class="p-4 border-t border-outline-subtle dark:border-outline-strong">
+<button class="w-full flex items-center justify-center gap-2 border border-outline-subtle text-secondary py-2 rounded mb-4 hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-sm">table_view</span>
+            Requirement Matrix
+        </button>
+<a class="flex items-center text-on-surface-variant py-2 px-2 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined mr-3">contact_support</span> Support
+        </a>
+<a class="flex items-center text-on-surface-variant py-2 px-2 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined mr-3">logout</span> Sign Out
+        </a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="ml-sidebar-width flex-1 overflow-y-auto bg-background pb-24">
+<!-- Header -->
+<header class="px-8 py-8 border-b border-outline-subtle bg-surface-container-lowest sticky top-0 z-30">
+<div class="max-w-[1024px] mx-auto">
+<div class="hidden mb-6 p-4 bg-status-error-bg border border-status-error text-status-error rounded flex items-start gap-3" id="validation-alert">
+<span class="material-symbols-outlined">error</span>
+<div>
+<p class="font-bold">Incomplete Submission</p>
+<p id="validation-message">Please complete all required history for BuildRight Kenya before continuing.</p>
+</div>
+</div>
+<h2 class="font-display text-display text-primary mb-2">Contract Performance and Litigation</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">
+                Provide history of non-performing contracts and litigation. Reporting period: 2019 to date.
+            </p>
+</div>
+</header>
+<div class="px-8 py-8">
+<div class="max-w-[1024px] mx-auto space-y-8">
+<!-- Section 1: Reporting Entity -->
+<section class="bg-surface-container-lowest border border-outline-subtle p-6 rounded">
+<h3 class="font-headline-md text-headline-md text-primary mb-2">1. Reporting Entity</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4">For Joint Ventures, select the member for whom this history is being reported.</p>
+<div class="space-y-4">
+<label class="block">
+<span class="font-label-md text-label-md text-primary uppercase block mb-1">Select Member</span>
+<select class="w-full max-w-md bg-surface border border-outline-subtle text-body-md p-2 rounded focus:ring-1 focus:ring-primary focus:border-primary outline-none" id="member-select">
+<option selected="" value="">Select a member...</option>
+<option value="TechNova Solutions">TechNova Solutions (Complete)</option>
+<option data-status="incomplete" value="BuildRight Kenya">BuildRight Kenya (Incomplete)</option>
+</select>
+</label>
+</div>
+</section>
+<!-- Initial State Message -->
+<div class="initial-state-msg p-12 bg-surface-container-low border border-dashed border-outline-subtle rounded text-center">
+<p class="font-body-lg text-body-lg text-on-surface-variant">Select a reporting member to view or provide its history.</p>
+</div>
+<!-- Disclosure Sections (Hidden until member selected) -->
+<div class="disclosure-sections space-y-8 hidden">
+<!-- Section 2: Non-performing Contracts -->
+<section class="bg-surface-container-lowest border border-outline-subtle p-6 rounded" id="section-non-performing">
+<h3 class="font-headline-md text-headline-md text-primary mb-4">2. Non-performing Contracts</h3>
+<div class="mb-6">
+<p class="font-body-md text-body-md text-primary mb-3">Has <span class="font-bold member-name-placeholder">[Selected Member Name]</span> had any non-performing contracts in the reporting period (2019 to date)?</p>
+<div class="flex gap-4">
+<label class="flex items-center gap-2 cursor-pointer">
+<input class="form-radio text-primary focus:ring-primary border-outline-strong" name="non_perf" type="radio" value="yes"/>
+<span class="font-body-md text-body-md">Yes</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer">
+<input class="form-radio text-primary focus:ring-primary border-outline-strong" name="non_perf" type="radio" value="no"/>
+<span class="font-body-md text-body-md">No</span>
+</label>
+</div>
+</div>
+<!-- Records Table (Visible only when 'Yes' is selected) -->
+<div class="hidden records-container">
+<div class="overflow-x-auto border border-outline-subtle rounded mb-4">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-subtle">
+<th class="font-label-md text-label-md text-on-surface-variant uppercase data-table-cell">Contract</th>
+<th class="font-label-md text-label-md text-on-surface-variant uppercase data-table-cell">Client</th>
+<th class="font-label-md text-label-md text-on-surface-variant uppercase data-table-cell">Currency</th>
+<th class="font-label-md text-label-md text-on-surface-variant uppercase data-table-cell text-right">Amount</th>
+<th class="font-label-md text-label-md text-on-surface-variant uppercase data-table-cell">Current Status</th>
+<th class="font-label-md text-label-md text-on-surface-variant uppercase data-table-cell text-center">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-subtle">
+<!-- Dynamic rows -->
+</tbody>
+</table>
+</div>
+<button class="flex items-center gap-2 px-4 py-2 border border-outline-subtle text-secondary font-label-md text-label-md rounded hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[16px]">add</span>
+                            Add non-performing contract
+                        </button>
+</div>
+<!-- Empty State for "No" -->
+<div class="p-4 bg-status-approved-bg text-status-approved font-body-md text-body-md rounded border border-outline-subtle hidden empty-state">
+                        No records reported for non-performing contracts.
+                    </div>
+</section>
+<!-- Section 3: Pending Litigation -->
+<section class="bg-surface-container-lowest border border-outline-subtle p-6 rounded" id="section-pending-litigation">
+<h3 class="font-headline-md text-headline-md text-primary mb-4">3. Pending Litigation</h3>
+<div class="mb-6">
+<p class="font-body-md text-body-md text-primary mb-3">Is there any pending litigation involving <span class="font-bold member-name-placeholder">[Selected Member Name]</span>?</p>
+<div class="flex gap-4">
+<label class="flex items-center gap-2 cursor-pointer">
+<input class="form-radio text-primary focus:ring-primary border-outline-strong" name="pend_lit" type="radio" value="yes"/>
+<span class="font-body-md text-body-md">Yes</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer">
+<input class="form-radio text-primary focus:ring-primary border-outline-strong" name="pend_lit" type="radio" value="no"/>
+<span class="font-body-md text-body-md">No</span>
+</label>
+</div>
+</div>
+<!-- Records Table (Visible only when 'Yes' is selected) -->
+<div class="hidden records-container">
+<div class="overflow-x-auto border border-outline-subtle rounded mb-4">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-subtle">
+<th class="font-label-md text-label-md text-on-surface-variant uppercase data-table-cell">Case or matter</th>
+<th class="font-label-md text-label-md text-on-surface-variant uppercase data-table-cell">Other party</th>
+<th class="font-label-md text-label-md text-on-surface-variant uppercase data-table-cell">Currency</th>
+<th class="font-label-md text-label-md text-on-surface-variant uppercase data-table-cell text-right">Disputed amount</th>
+<th class="font-label-md text-label-md text-on-surface-variant uppercase data-table-cell">Current status</th>
+<th class="font-label-md text-label-md text-on-surface-variant uppercase data-table-cell text-center">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-subtle">
+<!-- Dynamic rows -->
+</tbody>
+</table>
+</div>
+<button class="flex items-center gap-2 px-4 py-2 border border-outline-subtle text-secondary font-label-md text-label-md rounded hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[16px]">add</span>
+                            Add pending litigation
+                        </button>
+</div>
+<!-- Empty State for "No" -->
+<div class="p-4 bg-status-approved-bg text-status-approved font-body-md text-body-md rounded border border-outline-subtle hidden empty-state">
+                        No records reported for pending litigation.
+                    </div>
+</section>
+<!-- Section 4: Litigation History -->
+<section class="bg-surface-container-lowest border border-outline-subtle p-6 rounded" id="section-litigation-history">
+<h3 class="font-headline-md text-headline-md text-primary mb-4">4. Litigation History</h3>
+<div class="mb-6">
+<p class="font-body-md text-body-md text-primary mb-3">Does <span class="font-bold member-name-placeholder">[Selected Member Name]</span> have any past litigation history for the reporting period (2019 to date)?</p>
+<div class="flex gap-4">
+<label class="flex items-center gap-2 cursor-pointer">
+<input class="form-radio text-primary focus:ring-primary border-outline-strong" name="hist_lit" type="radio" value="yes"/>
+<span class="font-body-md text-body-md">Yes</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer">
+<input class="form-radio text-primary focus:ring-primary border-outline-strong" name="hist_lit" type="radio" value="no"/>
+<span class="font-body-md text-body-md">No</span>
+</label>
+</div>
+</div>
+<!-- Records Table -->
+<div class="hidden records-container">
+<div class="overflow-x-auto border border-outline-subtle rounded mb-4">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-subtle">
+<th class="font-label-md text-label-md text-on-surface-variant uppercase data-table-cell">Case number</th>
+<th class="font-label-md text-label-md text-on-surface-variant uppercase data-table-cell">Outcome</th>
+<th class="font-label-md text-label-md text-on-surface-variant uppercase data-table-cell">Currency</th>
+<th class="font-label-md text-label-md text-on-surface-variant uppercase data-table-cell text-right">Amount</th>
+<th class="font-label-md text-label-md text-on-surface-variant uppercase data-table-cell">Date</th>
+<th class="font-label-md text-label-md text-on-surface-variant uppercase data-table-cell text-center">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-subtle">
+<!-- Dynamic rows -->
+</tbody>
+</table>
+</div>
+<button class="flex items-center gap-2 px-4 py-2 border border-outline-subtle text-secondary font-label-md text-label-md rounded hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[16px]">add</span>
+                            Add Litigation Record
+                        </button>
+</div>
+<!-- Empty State for "No" -->
+<div class="p-4 bg-status-approved-bg text-status-approved font-body-md text-body-md rounded border border-outline-subtle hidden empty-state">
+                        No records reported for litigation history.
+                    </div>
+</section>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="fixed bottom-0 right-0 left-sidebar-width flex justify-between items-center gap-gap-component p-container-padding z-50 bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-subtle dark:border-outline-strong shadow-sm dark:shadow-none font-label-md text-label-md">
+<div class="flex-1">
+<button class="border border-outline-subtle text-secondary dark:text-secondary-fixed-dim px-4 py-2 rounded hover:bg-surface-container-high dark:hover:bg-on-secondary-container transition-colors font-label-md">
+            Back to Workspace
+        </button>
+</div>
+<div class="flex-none text-center hidden md:block">
+<span class="font-label-sm text-label-sm uppercase tracking-widest text-outline">© 2024 KenTender Procurement Portal. Secure Bid Environment.</span>
+</div>
+<div class="flex-1 flex justify-end gap-3">
+<button class="border border-outline-subtle text-secondary dark:text-secondary-fixed-dim px-4 py-2 rounded hover:bg-surface-container-high dark:hover:bg-on-secondary-container transition-colors font-label-md" id="save-draft-btn">
+            Save draft
+        </button>
+<button class="bg-primary dark:bg-primary-fixed text-on-primary dark:text-on-primary-fixed px-4 py-2 rounded hover:bg-primary-container dark:hover:bg-on-secondary-container transition-colors font-label-md active:scale-95 duration-100" id="save-continue-btn">
+            Save and Continue
+        </button>
+</div>
+</footer>
+<script>
+(function() {
+    const selectMember = document.getElementById('member-select');
+    const initialMsg = document.querySelector('.initial-state-msg');
+    const disclosureSections = document.querySelector('.disclosure-sections');
+    const memberNameSpans = document.querySelectorAll('.member-name-placeholder');
+    const validationAlert = document.getElementById('validation-alert');
+    const validationMsg = document.getElementById('validation-message');
+
+    selectMember.addEventListener('change', function() {
+        const selectedName = this.value;
+        validationAlert.classList.add('hidden');
+        
+        if (selectedName) {
+            initialMsg.classList.add('hidden');
+            disclosureSections.classList.remove('hidden');
+            disclosureSections.style.display = 'block';
+            
+            memberNameSpans.forEach(span => {
+                span.textContent = selectedName;
+            });
+        } else {
+            initialMsg.classList.remove('hidden');
+            disclosureSections.classList.add('hidden');
+            disclosureSections.style.display = 'none';
+        }
+    });
+
+    // Handle Yes/No radio logic for each section
+    const sections = document.querySelectorAll('.disclosure-sections section');
+    sections.forEach(section => {
+        const radios = section.querySelectorAll('input[type="radio"]');
+        const recordsContainer = section.querySelector('.records-container');
+        const emptyState = section.querySelector('.empty-state');
+
+        radios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.value === 'yes') {
+                    if (recordsContainer) recordsContainer.classList.remove('hidden');
+                    if (emptyState) emptyState.classList.add('hidden');
+                } else {
+                    if (recordsContainer) recordsContainer.classList.add('hidden');
+                    if (emptyState) emptyState.classList.remove('hidden');
+                }
+            });
+        });
+    });
+
+    // Validation logic for "Save and Continue"
+    const continueBtn = document.getElementById('save-continue-btn');
+    continueBtn.addEventListener('click', function() {
+        const selectedOption = selectMember.options[selectMember.selectedIndex];
+        const isMemberIncomplete = selectedOption && selectedOption.getAttribute('data-status') === 'incomplete';
+        const memberName = selectMember.value;
+
+        if (!memberName) {
+            validationMsg.textContent = "Please select a reporting entity to continue.";
+            validationAlert.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
+        // Simulating logic where "BuildRight Kenya" is incomplete
+        if (isMemberIncomplete) {
+            validationMsg.textContent = `Please complete all required history for ${memberName} before continuing.`;
+            validationAlert.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            validationAlert.classList.add('hidden');
+            // Proceed to next step simulation
+            alert('Progress saved. Redirecting to next section...');
+        }
+    });
+
+    // Save Draft logic (Allows saving without validation)
+    const draftBtn = document.getElementById('save-draft-btn');
+    draftBtn.addEventListener('click', function() {
+        validationAlert.classList.add('hidden');
+        alert('Draft saved successfully.');
+    });
+
+})();
+</script></body></html>

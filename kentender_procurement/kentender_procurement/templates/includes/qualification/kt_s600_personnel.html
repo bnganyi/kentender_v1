@@ -1,0 +1,101 @@
+{# Stitch 05 — Key Personnel matrix + assign drawer hooks #}
+{% set positions = cfg.positions or [] %}
+{% set assignments = bucket.assignments or {} %}
+{% set personnel = c.get("personnel") or [] %}
+
+<section class="kt-s600-block-section" data-testid="kt-s600-personnel">
+	<div class="kt-s600-section-head">
+		<div>
+			<h2 class="kt-s600-page-title-inline">{{ _("Key Personnel") }}</h2>
+			<p class="kt-s600-help">{{ _("Assign people to the positions required for this tender.") }}</p>
+		</div>
+		<div class="kt-s600-progress-box" data-testid="kt-s600-personnel-progress">
+			<span class="kt-s600-eyebrow">{{ _("Completion Progress") }}</span>
+			<strong data-testid="kt-s600-personnel-progress-text">{{ c.get("progress_text") or "0 of 0 positions complete" }}</strong>
+		</div>
+	</div>
+
+	<section class="kt-s600-card kt-s600-card--flush">
+		<div class="kt-s600-card__head">
+			<h3>{{ _("Personnel Matrix") }}</h3>
+		</div>
+		<div class="kt-s600-table-wrap">
+			<table class="kt-s600-data-table">
+				<thead>
+					<tr>
+						<th>{{ _("Required Position") }}</th>
+						<th>{{ _("Requirement Summary") }}</th>
+						<th>{{ _("Assigned Person") }}</th>
+						<th>{{ _("Response Status") }}</th>
+						<th class="is-right">{{ _("Action") }}</th>
+					</tr>
+				</thead>
+				<tbody data-testid="kt-s600-personnel-matrix">
+					{% for pos in positions %}
+					{% set pid = assignments.get(pos.position_id) %}
+					<tr data-position-row data-position-id="{{ pos.position_id }}">
+						<td class="is-strong">{{ pos.title }}</td>
+						<td class="kt-s600-help">{{ pos.qualification_summary }}</td>
+						<td data-assigned-name>
+							{% if not pid %}
+							—
+							{% else %}
+								{% for per in personnel if per.get("person_id") == pid %}
+								{{ per.get("full_name") or per.get("person_id") }}
+								{% else %}
+								{{ pid }}
+								{% endfor %}
+							{% endif %}
+						</td>
+						<td>
+							{% if not pid %}
+							<span class="kt-s600-status" data-status="Not Started">{{ _("Not started") }}</span>
+							{% else %}
+								{% for per in personnel if per.get("person_id") == pid %}
+									{% if per.get("full_name") and (per.get("years_experience") or per.get("experience_years")) and (per.get("cv_attached") or per.get("cv_evidence_id") or per.get("qualifications")) %}
+									<span class="kt-s600-status" data-status="Complete">{{ _("Complete") }}</span>
+									{% else %}
+									<span class="kt-s600-status" data-status="In Progress">{{ _("In progress") }}</span>
+									{% endif %}
+								{% else %}
+								<span class="kt-s600-status" data-status="In Progress">{{ _("In progress") }}</span>
+								{% endfor %}
+							{% endif %}
+						</td>
+						<td class="is-right">
+							{% if not c.get("read_only") %}
+							<button type="button" class="kt-s600-link" data-s600-assign="{{ pos.position_id }}"
+								data-position-title="{{ pos.title }}"
+								data-position-req="{{ pos.qualification_summary }}"
+								data-testid="kt-s600-assign-{{ pos.position_id }}">
+								{{ _("Change") if pid else _("Assign person") }}
+							</button>
+							{% endif %}
+							<select hidden data-position-assign="{{ pos.position_id }}">
+								<option value="">{{ _("Select person…") }}</option>
+								{% for per in personnel %}
+								<option value="{{ per.get('person_id') }}" {% if pid == per.get("person_id") %}selected{% endif %}>
+									{{ per.get("full_name") or per.get("person_id") }}
+								</option>
+								{% endfor %}
+							</select>
+						</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</section>
+
+	<div hidden data-testid="kt-s600-person-list">
+		{% for person in personnel %}
+		<div data-person-row data-person-id="{{ person.get('person_id') }}">
+			<input data-per="name" value="{{ person.get('full_name') or '' }}"/>
+			<input data-per="years" value="{{ person.get('years_experience') or person.get('experience_years') or '' }}"/>
+			<textarea data-per="qual">{{ person.get("qualifications") or "" }}</textarea>
+			<input data-per="member" value="{{ person.get('providing_member') or '' }}"/>
+			<input type="checkbox" data-per="cv" {% if person.get("cv_attached") or person.get("cv_evidence_id") %}checked{% endif %}/>
+		</div>
+		{% endfor %}
+	</div>
+</section>

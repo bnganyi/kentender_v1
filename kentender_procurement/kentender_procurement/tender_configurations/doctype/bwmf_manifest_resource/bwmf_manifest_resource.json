@@ -1,0 +1,172 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-07-24 16:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "resource_version_key",
+  "resource_id",
+  "resource_type",
+  "schema_ref",
+  "schema_version",
+  "item_count",
+  "ordering_contract_json",
+  "resource_digest",
+  "storage_mode",
+  "content_ref",
+  "physical_object_digest",
+  "chunks_json",
+  "source_refs_json",
+  "document_content_digest",
+  "archive_provenance_digest",
+  "immutable",
+  "content_json",
+  "organization"
+ ],
+ "fields": [
+  {
+   "fieldname": "resource_version_key",
+   "fieldtype": "Data",
+   "label": "Resource Version Key",
+   "reqd": 1,
+   "unique": 1,
+   "description": "SHA-256 of resource_id|resource_digest|schema_ref|schema_version (composite unique)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "resource_id",
+   "fieldtype": "Data",
+   "label": "Resource Id",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "resource_type",
+   "fieldtype": "Data",
+   "label": "Resource Type",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "schema_ref",
+   "fieldtype": "Data",
+   "label": "Schema Ref",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "schema_version",
+   "fieldtype": "Data",
+   "label": "Schema Version",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "item_count",
+   "fieldtype": "Int",
+   "label": "Item Count",
+   "reqd": 1
+  },
+  {
+   "fieldname": "ordering_contract_json",
+   "fieldtype": "Small Text",
+   "label": "Ordering Contract Json",
+   "reqd": 1
+  },
+  {
+   "fieldname": "resource_digest",
+   "fieldtype": "Data",
+   "label": "Resource Digest",
+   "reqd": 1,
+   "search_index": 1,
+   "description": "Not globally unique — identical bytes may appear under different resource identities"
+  },
+  {
+   "fieldname": "storage_mode",
+   "fieldtype": "Select",
+   "label": "Storage Mode",
+   "options": "inline\ncontent_addressed\ncontent_addressed_chunked",
+   "reqd": 1
+  },
+  {
+   "fieldname": "content_ref",
+   "fieldtype": "Data",
+   "label": "Content Ref",
+   "description": "Opaque bwmf-cas:v1:<hex> — never a File URL or path",
+   "search_index": 1
+  },
+  {
+   "fieldname": "physical_object_digest",
+   "fieldtype": "Data",
+   "label": "Physical Object Digest"
+  },
+  {
+   "fieldname": "chunks_json",
+   "fieldtype": "Long Text",
+   "label": "Chunks Json"
+  },
+  {
+   "fieldname": "source_refs_json",
+   "fieldtype": "Long Text",
+   "label": "Source Refs Json",
+   "reqd": 1
+  },
+  {
+   "fieldname": "document_content_digest",
+   "fieldtype": "Data",
+   "label": "Document Content Digest"
+  },
+  {
+   "fieldname": "archive_provenance_digest",
+   "fieldtype": "Data",
+   "label": "Archive Provenance Digest"
+  },
+  {
+   "fieldname": "immutable",
+   "fieldtype": "Check",
+   "label": "Immutable",
+   "default": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "content_json",
+   "fieldtype": "Long Text",
+   "label": "Content Json",
+   "description": "Inline storage only; prefer CAS for content_addressed"
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "label": "Organization"
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-24 18:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Manifest Resource",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "title_field": "resource_id"
+}

@@ -1,0 +1,117 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-07-24 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "workspace",
+  "manifest_id",
+  "manifest_version",
+  "payload_digest",
+  "manifest_doc",
+  "is_active",
+  "bound_at",
+  "addendum_impact_plan",
+  "organization",
+  "bidder_party",
+  "active_binding_key"
+ ],
+ "fields": [
+  {
+   "fieldname": "workspace",
+   "fieldtype": "Link",
+   "label": "Workspace",
+   "options": "BWMF Workspace",
+   "reqd": 1
+  },
+  {
+   "fieldname": "manifest_id",
+   "fieldtype": "Data",
+   "label": "Manifest Id",
+   "reqd": 1
+  },
+  {
+   "fieldname": "manifest_version",
+   "fieldtype": "Int",
+   "label": "Manifest Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "payload_digest",
+   "fieldtype": "Data",
+   "label": "Payload Digest",
+   "reqd": 1
+  },
+  {
+   "fieldname": "manifest_doc",
+   "fieldtype": "Link",
+   "label": "Manifest Doc",
+   "options": "BWMF Manifest Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active",
+   "default": 1
+  },
+  {
+   "fieldname": "bound_at",
+   "fieldtype": "Datetime",
+   "label": "Bound At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "addendum_impact_plan",
+   "fieldtype": "Link",
+   "label": "Addendum Impact Plan",
+   "options": "BWMF Addendum Impact Plan"
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "label": "Organization",
+   "reqd": 1
+  },
+  {
+   "fieldname": "bidder_party",
+   "fieldtype": "Data",
+   "label": "Bidder Party",
+   "reqd": 1
+  },
+  {
+   "fieldname": "active_binding_key",
+   "fieldtype": "Data",
+   "label": "Active Binding Key",
+   "unique": 1
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-24 12:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Workspace Manifest Binding",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

@@ -1,0 +1,117 @@
+{
+  "$id": "bwmf/v1/bindings",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "std_template_version_ref",
+    "std_template_digest",
+    "std_source_digest",
+    "obligation_catalogue_version_ref",
+    "obligation_catalogue_digest",
+    "section_blueprint_version_ref",
+    "section_blueprint_digest",
+    "tender_configuration_snapshot_ref",
+    "tender_configuration_digest",
+    "document_package_version_ref",
+    "document_package_digest",
+    "addendum_set_version",
+    "submission_policy_version_ref",
+    "submission_policy_digest",
+    "compiler_contract_version",
+    "compiler_version",
+    "identity_algorithm_version",
+    "rule_language_version"
+  ],
+  "properties": {
+    "std_template_version_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "std_template_digest": {
+      "type": "string",
+      "format": "sha256-digest",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "std_source_digest": {
+      "type": "string",
+      "format": "sha256-digest",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "obligation_catalogue_version_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "obligation_catalogue_digest": {
+      "type": "string",
+      "format": "sha256-digest",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "section_blueprint_version_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "section_blueprint_digest": {
+      "type": "string",
+      "format": "sha256-digest",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "manifest_contract_digest": {
+      "type": "string",
+      "format": "sha256-digest",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "tender_configuration_snapshot_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tender_configuration_digest": {
+      "type": "string",
+      "format": "sha256-digest",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "decision_resource_digest": {
+      "type": "string",
+      "format": "sha256-digest",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "document_package_version_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "document_package_digest": {
+      "type": "string",
+      "format": "sha256-digest",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "addendum_set_version": {
+      "type": "integer"
+    },
+    "submission_policy_version_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "submission_policy_digest": {
+      "type": "string",
+      "format": "sha256-digest",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "compiler_contract_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "compiler_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "identity_algorithm_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rule_language_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

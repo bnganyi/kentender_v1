@@ -1,0 +1,93 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:report_id",
+ "creation": "2026-07-24 16:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "report_id",
+  "source_artifact",
+  "finalized_artifact",
+  "state",
+  "descriptor_set_digest",
+  "report_json",
+  "immutable",
+  "organization"
+ ],
+ "fields": [
+  {
+   "fieldname": "report_id",
+   "fieldtype": "Data",
+   "label": "Report Id",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "source_artifact",
+   "fieldtype": "Link",
+   "label": "Source Artifact",
+   "options": "BWMF Compile Artifact",
+   "reqd": 1
+  },
+  {
+   "fieldname": "finalized_artifact",
+   "fieldtype": "Link",
+   "label": "Finalized Artifact",
+   "options": "BWMF Compile Artifact"
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Select",
+   "label": "State",
+   "options": "Succeeded\nFailed",
+   "reqd": 1
+  },
+  {
+   "fieldname": "descriptor_set_digest",
+   "fieldtype": "Data",
+   "label": "Descriptor Set Digest"
+  },
+  {
+   "fieldname": "report_json",
+   "fieldtype": "Long Text",
+   "label": "Report Json",
+   "reqd": 1
+  },
+  {
+   "fieldname": "immutable",
+   "fieldtype": "Check",
+   "label": "Immutable",
+   "default": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "label": "Organization"
+  }
+ ],
+ "istable": 0,
+ "module": "Tender Configurations",
+ "name": "BWMF Materialization Report",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 0,
+ "title_field": "report_id"
+}

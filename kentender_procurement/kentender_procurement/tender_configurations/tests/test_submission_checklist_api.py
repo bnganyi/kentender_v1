@@ -225,8 +225,8 @@ class TestSubmissionChecklistApi(unittest.TestCase):
 		ref = self._publish()
 		get_submission_checklist(ref)
 		bid_id = resolve_published_tender_backend(ref)["bid_id"]
-		# CBQ/Statutory use certify-derived status — exercise Needs Attention on a generic section.
-		other_key = "tender_security"
+		# Specialized sections use derive_* — exercise Needs Attention on the next generic stub.
+		other_key = "technical_proposal_and_implementation_plan"
 		acknowledge_tender_documents(ref)
 		save_section_responses(
 			bid_id,
@@ -269,13 +269,68 @@ class TestSubmissionChecklistApi(unittest.TestCase):
 		ref = self._publish()
 		get_submission_checklist(ref)
 		bid_id = resolve_published_tender_backend(ref)["bid_id"]
-		# Documents use version-bound ack; CBQ/Statutory use certify-derived status — use a generic section.
-		section_key = "tender_security"
+		# Documents use version-bound ack; specialized sections use derive_* — use next generic stub.
+		section_key = "technical_proposal_and_implementation_plan"
 		save_section_responses(bid_id, section_key, {"draft_answer": "wip", "in_progress": True})
 		out2 = get_submission_checklist(ref)
 		row = next(s for s in out2["sections"] if s["section_key"] == section_key)
 		self.assertEqual(row["status"], STATUS_IN_PROGRESS)
 		self.assertEqual(row["action_label"], "Resume")
+
+	def test_progress_percent_complete_only_exposes_in_progress_counters(self):
+		"""Blueprint §25.4: % is Complete-only; in-progress is a separate counter."""
+		from kentender_procurement.tender_configurations.services.published_tender_overview import (
+			resolve_published_tender_backend,
+		)
+		from kentender_procurement.tender_configurations.services.tender_documents_addenda import (
+			acknowledge_tender_documents,
+		)
+
+		ref = self._publish()
+		get_submission_checklist(ref)
+		bid_id = resolve_published_tender_backend(ref)["bid_id"]
+		acknowledge_tender_documents(ref)
+		save_section_responses(
+			bid_id,
+			"technical_proposal_and_implementation_plan",
+			{"draft_answer": "wip", "in_progress": True},
+		)
+		out = get_submission_checklist(ref)
+		self.assertEqual(out["progress_complete"], 1)
+		self.assertEqual(out["progress_in_progress"], 1)
+		self.assertEqual(out["progress_needs_attention"], 0)
+		self.assertGreater(out["progress_total"], 0)
+		expected_pct = int(round(100.0 * float(out["progress_complete"]) / float(out["progress_total"])))
+		self.assertEqual(out["progress_percent"], expected_pct)
+		# In Progress must not inflate the bar (would be 2/total if weighted equally).
+		weighted_if_half = int(
+			round(100.0 * (float(out["progress_complete"]) + 0.5) / float(out["progress_total"]))
+		)
+		self.assertNotEqual(out["progress_percent"], weighted_if_half)
+
+	def test_progress_needs_attention_counter(self):
+		from kentender_procurement.tender_configurations.services.published_tender_overview import (
+			resolve_published_tender_backend,
+		)
+		from kentender_procurement.tender_configurations.services.tender_documents_addenda import (
+			acknowledge_tender_documents,
+		)
+
+		ref = self._publish()
+		get_submission_checklist(ref)
+		bid_id = resolve_published_tender_backend(ref)["bid_id"]
+		acknowledge_tender_documents(ref)
+		save_section_responses(
+			bid_id,
+			"technical_proposal_and_implementation_plan",
+			{"ok": True, "validation_errors": ["Missing required field"]},
+		)
+		out = get_submission_checklist(ref)
+		self.assertEqual(out["progress_complete"], 1)
+		self.assertEqual(out["progress_needs_attention"], 1)
+		self.assertEqual(out["progress_in_progress"], 0)
+		expected_pct = int(round(100.0 * float(out["progress_complete"]) / float(out["progress_total"])))
+		self.assertEqual(out["progress_percent"], expected_pct)
 
 
 if __name__ == "__main__":

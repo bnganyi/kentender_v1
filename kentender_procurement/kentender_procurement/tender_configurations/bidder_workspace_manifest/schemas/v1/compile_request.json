@@ -1,0 +1,128 @@
+{
+  "$id": "bwmf/v1/compile_request",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "compile_request_id",
+    "compile_mode",
+    "target_manifest_id",
+    "target_manifest_version",
+    "published_tender_ref",
+    "published_tender_version",
+    "input_bindings",
+    "previous_manifest_ref",
+    "requested_by",
+    "requested_at",
+    "expected_input_digests"
+  ],
+  "properties": {
+    "compile_request_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "compile_mode": {
+      "type": "string",
+      "enum": [
+        "preview",
+        "publication",
+        "addendum_preview",
+        "addendum_publication",
+        "replay_validation"
+      ]
+    },
+    "target_manifest_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target_manifest_version": {
+      "type": "integer"
+    },
+    "published_tender_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "published_tender_version": {
+      "type": "integer"
+    },
+    "input_bindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "binding_id",
+          "binding_type",
+          "object_ref",
+          "object_version",
+          "lifecycle_state",
+          "document_content_digest"
+        ],
+        "properties": {
+          "binding_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "binding_type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "object_ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "object_version": {
+            "type": [
+              "string",
+              "integer"
+            ]
+          },
+          "lifecycle_state": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "published",
+              "draft",
+              "superseded"
+            ]
+          },
+          "archive_provenance_digest": {
+            "type": "string",
+            "format": "sha256-digest",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          },
+          "document_content_digest": {
+            "type": "string",
+            "format": "sha256-digest",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "previous_manifest_ref": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "requested_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "requested_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expected_input_digests": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "format": "sha256-digest",
+        "pattern": "^sha256:[0-9a-f]{64}$"
+      },
+      "properties": {},
+      "required": []
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

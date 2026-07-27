@@ -1,0 +1,54 @@
+{
+  "resource_id": "RESOURCE-NSSF-DECISIONS",
+  "resource_type": "controlled_decision",
+  "schema_ref": "bwmf/item/controlled_decision",
+  "schema_version": "1.0.0",
+  "item_count": 8,
+  "ordering_contract": [
+    "order_weight",
+    "decision_id"
+  ],
+  "resource_digest": "sha256:fa677d4b40b1934c8c50a9817733a7c4183d641f1ff3d957ce1e190d5381c5ef",
+  "items": [
+    {
+      "decision_id": "NSSF-DEC-SEC-001",
+      "order_weight": 10,
+      "status": "approved"
+    },
+    {
+      "decision_id": "NSSF-DEC-002",
+      "order_weight": 20,
+      "status": "approved"
+    },
+    {
+      "decision_id": "NSSF-DEC-003",
+      "order_weight": 30,
+      "status": "approved"
+    },
+    {
+      "decision_id": "NSSF-DEC-004",
+      "order_weight": 40,
+      "status": "approved"
+    },
+    {
+      "decision_id": "NSSF-DEC-005",
+      "order_weight": 50,
+      "status": "approved"
+    },
+    {
+      "decision_id": "NSSF-DEC-006",
+      "order_weight": 60,
+      "status": "approved"
+    },
+    {
+      "decision_id": "NSSF-DEC-007",
+      "order_weight": 70,
+      "status": "approved"
+    },
+    {
+      "decision_id": "NSSF-DEC-008",
+      "order_weight": 80,
+      "status": "approved"
+    }
+  ]
+}

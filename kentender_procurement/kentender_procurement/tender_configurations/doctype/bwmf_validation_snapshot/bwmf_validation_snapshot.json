@@ -1,0 +1,113 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:snapshot_id",
+ "creation": "2026-07-24 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "snapshot_id",
+  "workspace",
+  "manifest_doc",
+  "trigger",
+  "result",
+  "result_digest",
+  "snapshot_at",
+  "findings",
+  "organization",
+  "bidder_party"
+ ],
+ "fields": [
+  {
+   "fieldname": "snapshot_id",
+   "fieldtype": "Data",
+   "label": "Snapshot Id",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "workspace",
+   "fieldtype": "Link",
+   "label": "Workspace",
+   "options": "BWMF Workspace",
+   "reqd": 1
+  },
+  {
+   "fieldname": "manifest_doc",
+   "fieldtype": "Link",
+   "label": "Manifest Doc",
+   "options": "BWMF Manifest Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "trigger",
+   "fieldtype": "Data",
+   "label": "Trigger",
+   "reqd": 1
+  },
+  {
+   "fieldname": "result",
+   "fieldtype": "Select",
+   "label": "Result",
+   "options": "pass\nfail",
+   "reqd": 1
+  },
+  {
+   "fieldname": "result_digest",
+   "fieldtype": "Data",
+   "label": "Result Digest",
+   "reqd": 1
+  },
+  {
+   "fieldname": "snapshot_at",
+   "fieldtype": "Datetime",
+   "label": "Snapshot At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "findings",
+   "fieldtype": "Table",
+   "label": "Findings",
+   "options": "BWMF Validation Finding"
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "label": "Organization",
+   "reqd": 1
+  },
+  {
+   "fieldname": "bidder_party",
+   "fieldtype": "Data",
+   "label": "Bidder Party",
+   "reqd": 1
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-24 12:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Validation Snapshot",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "title_field": "snapshot_id"
+}

@@ -1,0 +1,49 @@
+{
+  "resource_id": "RESOURCE-NSSF-TECHNICAL-SCORING",
+  "resource_type": "evaluation_criterion",
+  "schema_ref": "bwmf/item/evaluation_criterion",
+  "schema_version": "1.0.0",
+  "item_count": 7,
+  "ordering_contract": [
+    "order_weight",
+    "criterion_key"
+  ],
+  "resource_digest": "sha256:2207ad23244b116cb97015c34c064234287d81fd3157e93dc7b896e14fb72030",
+  "items": [
+    {
+      "criterion_key": "TECH-0001",
+      "order_weight": 10,
+      "max_score": "20"
+    },
+    {
+      "criterion_key": "TECH-0002",
+      "order_weight": 20,
+      "max_score": "15"
+    },
+    {
+      "criterion_key": "TECH-0003",
+      "order_weight": 30,
+      "max_score": "15"
+    },
+    {
+      "criterion_key": "TECH-0004",
+      "order_weight": 40,
+      "max_score": "15"
+    },
+    {
+      "criterion_key": "TECH-0005",
+      "order_weight": 50,
+      "max_score": "15"
+    },
+    {
+      "criterion_key": "TECH-0006",
+      "order_weight": 60,
+      "max_score": "10"
+    },
+    {
+      "criterion_key": "TECH-0007",
+      "order_weight": 70,
+      "max_score": "10"
+    }
+  ]
+}

@@ -1,0 +1,124 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }} | KenTender{% endblock %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/kentender_procurement/css/available_tenders.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/submission_checklist_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/bidder_portal_forms.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/form_of_tender_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/qualification_and_capability_web.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+<script defer src="/assets/kentender_procurement/js/qualification_and_capability_web.js"></script>
+{% endblock %}
+
+{% block page_content %}
+{% set c = cat %}
+{% set cfg = c.config or {} %}
+{% set bucket = c.bucket or {} %}
+{% set active_nav = "my_bids" %}
+{% set active_ws = "checklist" %}
+<div class="kt-a0-root kt-a2-root kt-fot-root kt-s600-root" data-testid="kt-s600-category-root"
+	data-publication-ref="{{ c.published_tender_ref }}"
+	data-category-key="{{ c.category_key }}"
+	data-bid-id="{{ c.bid_id or '' }}"
+	data-bid-modified="{{ c.bid_modified or '' }}"
+	data-read-only="{{ c.read_only or 0 }}"
+	data-allow-duplicate-personnel="{{ 1 if cfg.get('allow_duplicate_personnel') else 0 }}"
+	data-section-url="{{ c.section_url }}"
+	data-workspace-url="{{ c.workspace_url }}">
+	{% include "templates/includes/kt_bidder_portal_nav.html" %}
+
+	<div class="kt-a2-shell">
+		{% include "templates/includes/kt_bidder_workspace_sidebar.html" %}
+
+		<main class="kt-a2-main kt-fot-main">
+			<div class="kt-fot-main-inner kt-s600-canvas">
+				<nav class="kt-fot-crumbs" aria-label="Breadcrumb" data-testid="kt-s600-cat-crumbs">
+					<a href="{{ c.workspace_url }}">{{ _("Checklist") }}</a>
+					<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+					<a href="{{ c.section_url }}">{{ _("Qualification and Capability") }}</a>
+					<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+					<span class="is-current">{{ c.label }}</span>
+				</nav>
+
+				{# Categories with an in-body progress/metrics card must not repeat status/progress in the page head. #}
+				{% set hide_header_kpi = c.category_key in (
+					"experience",
+					"key_personnel",
+					"delivery_partners",
+				) %}
+				<header class="kt-fot-page-head kt-s600-head">
+					<div>
+						<h1 data-testid="kt-s600-cat-title">{{ c.label }}</h1>
+						{% if c.category_key != "experience" %}
+						<p data-testid="kt-s600-cat-summary">{{ c.requirement_summary }}</p>
+						{% endif %}
+					</div>
+					{% if hide_header_kpi %}
+					<div hidden>
+						<span data-testid="kt-s600-cat-status" data-status="{{ c.status }}">{{ c.status }}</span>
+						<span data-testid="kt-s600-cat-progress">{{ c.progress_text }}</span>
+						<span data-testid="kt-s600-cat-issue" {% if not c.issue %}hidden{% endif %}>{{ c.issue or "" }}</span>
+					</div>
+					{% else %}
+					<div>
+						<span class="kt-s600-status" data-testid="kt-s600-cat-status" data-status="{{ c.status }}">{{ c.status }}</span>
+						<p class="kt-s600-meta" data-testid="kt-s600-cat-progress">{{ c.progress_text }}</p>
+						<p class="kt-s600-issue" data-testid="kt-s600-cat-issue" {% if not c.issue %}hidden{% endif %}>{{ c.issue or "" }}</p>
+					</div>
+					{% endif %}
+				</header>
+
+				{% set auth = c.authoritative or {} %}
+				<section class="kt-s600-auth" data-testid="kt-s600-authoritative">
+					<div><span>{{ _("Bidder") }}</span><strong>{{ auth.bidder_legal_name or "—" }}</strong></div>
+					<div><span>{{ _("Tender reference") }}</span><strong>{{ auth.tender_reference or "—" }}</strong></div>
+					<div><span>{{ _("Procuring entity") }}</span><strong>{{ auth.procuring_entity or "—" }}</strong></div>
+				</section>
+
+				{% if c.category_key == "contract_performance_and_litigation" %}
+				{% include "templates/includes/qualification/kt_s600_contract.html" %}
+				{% elif c.category_key == "financial_capability" %}
+				{% include "templates/includes/qualification/kt_s600_financial.html" %}
+				{% elif c.category_key == "experience" %}
+				{% include "templates/includes/qualification/kt_s600_experience.html" %}
+				{% elif c.category_key == "key_personnel" %}
+				{% include "templates/includes/qualification/kt_s600_personnel.html" %}
+				{% elif c.category_key == "delivery_partners" %}
+				{% include "templates/includes/qualification/kt_s600_partners.html" %}
+				{% endif %}
+
+				<footer class="kt-s600-footer">
+					<a class="kt-s600-btn kt-s600-btn--secondary" href="{{ c.section_url }}" data-testid="kt-s600-cat-back">{{ _("Back to overview") }}</a>
+					{% if not c.read_only %}
+					<button type="button" class="kt-s600-btn" data-s600-save="draft" data-testid="kt-s600-save">{{ _("Save draft") }}</button>
+					<button type="button" class="kt-s600-btn kt-s600-btn--primary" data-s600-save="continue" data-testid="kt-s600-save-continue">{{ _("Save & Continue") }}</button>
+					{% endif %}
+				</footer>
+			</div>
+		</main>
+	</div>
+
+	{# Shared right drawer — project / person / partner #}
+	<div class="kt-s600-drawer-backdrop" data-testid="kt-s600-drawer-backdrop" hidden></div>
+	<aside class="kt-s600-drawer" data-testid="kt-s600-drawer" hidden aria-hidden="true">
+		<header class="kt-s600-drawer__head">
+			<div class="kt-s600-drawer__titles">
+				<p class="kt-s600-drawer__eyebrow" data-testid="kt-s600-drawer-subtitle"></p>
+				<h2 data-testid="kt-s600-drawer-title">{{ _("Record") }}</h2>
+			</div>
+			<button type="button" class="kt-s600-icon-btn" data-s600-drawer-close aria-label="{{ _('Close') }}">
+				<span class="material-symbols-outlined">close</span>
+			</button>
+		</header>
+		<div class="kt-s600-drawer__body" data-testid="kt-s600-drawer-body"></div>
+		<footer class="kt-s600-drawer__foot">
+			<button type="button" class="kt-s600-btn kt-s600-btn--secondary" data-s600-drawer-cancel>{{ _("Cancel") }}</button>
+			<button type="button" class="kt-s600-btn kt-s600-btn--primary" data-s600-drawer-confirm data-testid="kt-s600-drawer-confirm">{{ _("Save") }}</button>
+		</footer>
+	</aside>
+
+	<div class="kt-s600-toast" data-testid="kt-s600-toast" role="status"></div>
+</div>
+{% endblock %}

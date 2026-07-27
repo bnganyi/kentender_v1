@@ -1,0 +1,152 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:package_id",
+ "creation": "2026-07-24 19:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "package_id",
+  "package_version",
+  "state",
+  "review_package_digest",
+  "compile_artifact",
+  "payload_digest",
+  "target_manifest_id",
+  "proposed_manifest_version",
+  "published_tender_ref",
+  "published_tender_version",
+  "organization",
+  "submitter",
+  "submitted_at",
+  "package_json",
+  "immutable"
+ ],
+ "fields": [
+  {
+   "fieldname": "package_id",
+   "fieldtype": "Data",
+   "label": "Package Id",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "package_version",
+   "fieldtype": "Int",
+   "label": "Package Version",
+   "reqd": 1,
+   "default": "1"
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Select",
+   "label": "State",
+   "reqd": 1,
+   "options": "Prepared\nSubmittedForApproval\nApproved\nReturned",
+   "default": "Prepared"
+  },
+  {
+   "fieldname": "review_package_digest",
+   "fieldtype": "Data",
+   "label": "Review Package Digest",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "compile_artifact",
+   "fieldtype": "Link",
+   "label": "Compile Artifact",
+   "reqd": 1,
+   "options": "BWMF Compile Artifact"
+  },
+  {
+   "fieldname": "payload_digest",
+   "fieldtype": "Data",
+   "label": "Payload Digest",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_manifest_id",
+   "fieldtype": "Data",
+   "label": "Target Manifest Id",
+   "reqd": 1
+  },
+  {
+   "fieldname": "proposed_manifest_version",
+   "fieldtype": "Int",
+   "label": "Proposed Manifest Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "published_tender_ref",
+   "fieldtype": "Data",
+   "label": "Published Tender Ref",
+   "reqd": 1
+  },
+  {
+   "fieldname": "published_tender_version",
+   "fieldtype": "Int",
+   "label": "Published Tender Version",
+   "reqd": 1,
+   "default": "1"
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "label": "Organization",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "submitter",
+   "fieldtype": "Data",
+   "label": "Submitter"
+  },
+  {
+   "fieldname": "submitted_at",
+   "fieldtype": "Datetime",
+   "label": "Submitted At"
+  },
+  {
+   "fieldname": "package_json",
+   "fieldtype": "Long Text",
+   "label": "Package Json",
+   "reqd": 1
+  },
+  {
+   "fieldname": "immutable",
+   "fieldtype": "Check",
+   "label": "Immutable",
+   "default": "0",
+   "read_only": 1,
+   "description": "Set on submit for approval; freezes review package content"
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-24 19:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Review Package",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "title_field": "package_id"
+}

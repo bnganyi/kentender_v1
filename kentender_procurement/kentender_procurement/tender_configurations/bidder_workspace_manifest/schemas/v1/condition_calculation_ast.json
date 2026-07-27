@@ -1,0 +1,46 @@
+{
+  "$id": "bwmf/v1/condition_calculation_ast",
+  "schema_version": "1.0.0",
+  "title": "ConditionCalculationAst",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ast_version",
+    "nodes"
+  ],
+  "properties": {
+    "ast_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "node_id",
+          "op"
+        ],
+        "properties": {
+          "node_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "op": {
+            "type": "string",
+            "minLength": 1
+          },
+          "args": {
+            "type": "array"
+          },
+          "ref": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

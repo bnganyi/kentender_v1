@@ -1,0 +1,9 @@
+{
+  "binding_id": "BIND-STD-1",
+  "binding_type": "std_template",
+  "object_ref": "STD-IT-2022",
+  "object_version": "1.0.0",
+  "lifecycle_state": "approved",
+  "archive_provenance_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "document_content_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+}

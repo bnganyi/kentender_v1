@@ -270,6 +270,27 @@ class TestLeanStatutoryDeclarations(unittest.TestCase):
 			)
 		self.assertIn("updated elsewhere", cstr(ctx.exception).lower())
 
+	def test_truncated_modified_token_does_not_false_conflict(self):
+		"""HTML/JSON often drops microseconds — Save draft then Certify must not 409."""
+		from kentender_procurement.tender_configurations.services.statutory_declarations import (
+			_assert_not_stale_modified,
+		)
+
+		_seed_cbq(self.cfg_id)
+		saved = save_statutory_declarations(
+			self.ref, {"independent_tender_choice": "independent"}
+		)
+		mod = cstr(saved.get("bid_modified") or "")
+		self.assertTrue(mod)
+		draft = create_or_get_draft(self.cfg_id)
+		doc = _get_bid(cstr(draft.get("bid_id") or ""))
+		truncated = mod.split(".")[0]
+		# Same-second truncated token must be accepted.
+		_assert_not_stale_modified(doc, truncated)
+		# Certify after save with truncated token (page-render shape).
+		out = certify_statutory_declarations(self.ref, expected_modified=truncated)
+		self.assertTrue(out.get("certification", {}).get("certified") or out.get("certified"))
+
 	def test_template_markers(self):
 		src = frappe.get_app_path(
 			"kentender_procurement", "www", "tenders", "statutory_declarations.html"

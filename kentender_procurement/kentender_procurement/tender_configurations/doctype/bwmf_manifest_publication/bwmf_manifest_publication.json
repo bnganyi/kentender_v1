@@ -1,0 +1,109 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:publication_id",
+ "creation": "2026-07-24 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "publication_id",
+  "manifest_version",
+  "approval",
+  "approval_decision",
+  "published_tender_ref",
+  "published_tender_version",
+  "published_at",
+  "transaction_ref",
+  "payload_digest",
+  "organization"
+ ],
+ "fields": [
+  {
+   "fieldname": "publication_id",
+   "fieldtype": "Data",
+   "label": "Publication Id",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "manifest_version",
+   "fieldtype": "Link",
+   "label": "Manifest Version",
+   "options": "BWMF Manifest Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "approval",
+   "fieldtype": "Link",
+   "label": "Approval",
+   "options": "BWMF Manifest Approval",
+   "description": "Legacy Phase 2 fixture path; Phase 5 uses approval_decision"
+  },
+  {
+   "fieldname": "approval_decision",
+   "fieldtype": "Link",
+   "label": "Approval Decision",
+   "options": "BWMF Approval Decision"
+  },
+  {
+   "fieldname": "payload_digest",
+   "fieldtype": "Data",
+   "label": "Payload Digest"
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "label": "Organization"
+  },
+  {
+   "fieldname": "published_tender_ref",
+   "fieldtype": "Data",
+   "label": "Published Tender Ref",
+   "reqd": 1
+  },
+  {
+   "fieldname": "published_tender_version",
+   "fieldtype": "Int",
+   "label": "Published Tender Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "published_at",
+   "fieldtype": "Datetime",
+   "label": "Published At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "transaction_ref",
+   "fieldtype": "Data",
+   "label": "Transaction Ref"
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-24 12:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Manifest Publication",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "title_field": "publication_id"
+}

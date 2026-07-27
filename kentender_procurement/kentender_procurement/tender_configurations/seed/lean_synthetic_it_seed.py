@@ -17,6 +17,13 @@ from kentender_procurement.std_engine.services.ensure_active_canonical_std impor
 	ensure_active_canonical_ppra_it_std,
 )
 from kentender_procurement.tender_configurations.constants import STATUS_APPROVED_FOR_PREVIEW
+from kentender_procurement.tender_configurations.seed.lean_preliminary_criteria import (
+	lean_preliminary_criteria_rows,
+)
+from kentender_procurement.tender_configurations.seed.lean_qualification_criteria import (
+	FIXTURE_FULL,
+	merge_qualification_into_evaluation,
+)
 from kentender_procurement.tender_configurations.services.configuration_home import (
 	steps_state_all_complete,
 )
@@ -138,7 +145,11 @@ def seed_lean_synthetic_it_published(*, clear: bool = True) -> dict[str, Any]:
 					"bid_validity_period": "90",
 					"bid_validity_unit": "days",
 					"tender_security_required": "Yes",
+					"tender_security_type": "Tender Security",
 					"tender_security_amount": "10000",
+					"tender_security_currency": "KES",
+					"tender_security_validity_period": "28",
+					"tender_security_validity_unit": "days",
 					"submission_channel": "E-Procurement Portal",
 					"alternatives_permitted": "No",
 					"opening_method": "Electronic Opening",
@@ -167,28 +178,27 @@ def seed_lean_synthetic_it_published(*, clear: bool = True) -> dict[str, Any]:
 				]
 			),
 			"evaluation_setup": json.dumps(
-				{
-					"technical_pass_mark": 70,
-					"technical_scoring_total": 100,
-					"criteria": [
-						{
-							"criterion_name": "Tender security",
-							"stage": "Preliminary",
-							"evaluation_basis": "Pass/Fail",
-						},
-						{
-							"criterion_name": "Relevant experience",
-							"stage": "Technical",
-							"evaluation_basis": "Pass/Fail",
-						},
-						{
-							"criterion_name": "Technical approach",
-							"stage": "Technical",
-							"evaluation_basis": "Scored",
-							"marks": "100",
-						},
-					],
-				}
+				merge_qualification_into_evaluation(
+					{
+						"technical_pass_mark": 70,
+						"technical_scoring_total": 100,
+						"criteria": lean_preliminary_criteria_rows()
+						+ [
+							{
+								"criterion_name": "Relevant experience",
+								"stage": "Technical",
+								"evaluation_basis": "Pass/Fail",
+							},
+							{
+								"criterion_name": "Technical approach",
+								"stage": "Technical",
+								"evaluation_basis": "Scored",
+								"marks": "100",
+							},
+						],
+					},
+					fixture=FIXTURE_FULL,
+				)
 			),
 			"implementation_schedule": json.dumps(
 				{

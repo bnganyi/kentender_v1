@@ -1,0 +1,128 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:run_id",
+ "creation": "2026-07-24 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "sec_id",
+  "run_id",
+  "idempotency_key",
+  "compile_request",
+  "compiler_version",
+  "stage",
+  "state",
+  "started_at",
+  "ended_at",
+  "input_set_digest",
+  "output_manifest",
+  "sec_trace",
+  "stage_trace"
+ ],
+ "fields": [
+  {
+   "fieldname": "sec_id",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "run_id",
+   "fieldtype": "Data",
+   "label": "Run Id",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Idempotency Key",
+   "reqd": 1
+  },
+  {
+   "fieldname": "compile_request",
+   "fieldtype": "Link",
+   "label": "Compile Request",
+   "options": "BWMF Compile Request",
+   "reqd": 1
+  },
+  {
+   "fieldname": "compiler_version",
+   "fieldtype": "Data",
+   "label": "Compiler Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "stage",
+   "fieldtype": "Data",
+   "label": "Stage"
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Select",
+   "label": "State",
+   "options": "Queued\nRunning\nSucceeded\nFailed\nCancelled",
+   "reqd": 1,
+   "default": "Queued"
+  },
+  {
+   "fieldname": "started_at",
+   "fieldtype": "Datetime",
+   "label": "Started At"
+  },
+  {
+   "fieldname": "ended_at",
+   "fieldtype": "Datetime",
+   "label": "Ended At"
+  },
+  {
+   "fieldname": "input_set_digest",
+   "fieldtype": "Data",
+   "label": "Input Set Digest"
+  },
+  {
+   "fieldname": "output_manifest",
+   "fieldtype": "Link",
+   "label": "Output Manifest",
+   "options": "BWMF Manifest Version"
+  },
+  {
+   "fieldname": "sec_trace",
+   "fieldtype": "Section Break",
+   "label": "Stage Trace"
+  },
+  {
+   "fieldname": "stage_trace",
+   "fieldtype": "Table",
+   "label": "Stage Trace",
+   "options": "BWMF Compile Stage Trace"
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-24 12:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Compile Run",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "title_field": "run_id"
+}

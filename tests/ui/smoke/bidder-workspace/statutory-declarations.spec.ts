@@ -105,19 +105,43 @@ test.describe("Statutory Declarations portal", () => {
 			"Certify Statutory Declarations?"
 		);
 
-		const canCertify = await page.getByTestId("kt-stat-root").getAttribute("data-can-certify");
-		if (canCertify !== "1") {
+		const prereqsMet = await page.getByTestId("kt-stat-root").getAttribute("data-prereqs-met");
+		if (prereqsMet !== "1") {
+			// CBQ/declarant incomplete — Certify correctly stays gated.
 			await expect(page.getByTestId("kt-stat-certify")).toBeDisabled();
 			return;
 		}
 
-		// Certify → Cancel → Certify again must not throw KT_STAT_CONFLICT.
 		const certify = page.getByTestId("kt-stat-certify");
+		// Selecting the independent answer must enable Certify without Save draft.
+		if (!(await independent.isChecked())) {
+			await expect(certify).toBeDisabled();
+			await independent.check({ force: true });
+		}
+		await expect(certify).toBeEnabled({ timeout: 5_000 });
+		await expect(page.getByTestId("kt-stat-status-chip")).toHaveText(/Ready to certify/i);
+		await expect(page.getByTestId("kt-stat-root")).toHaveAttribute("data-can-certify", "1");
+
+		// Save draft then Certify must not show Updated elsewhere / KT_STAT_CONFLICT.
+		const tokenBeforeSave = await page
+			.getByTestId("kt-stat-root")
+			.getAttribute("data-bid-modified");
+		await page.getByTestId("kt-stat-save").click();
+		await expect
+			.poll(async () => page.getByTestId("kt-stat-root").getAttribute("data-bid-modified"), {
+				timeout: 15_000,
+			})
+			.not.toBe(tokenBeforeSave);
 		await expect(certify).toBeEnabled();
+		await expect(page.getByRole("heading", { name: "KT_STAT_CONFLICT" })).toHaveCount(0);
+		await expect(page.getByRole("heading", { name: "Updated elsewhere" })).toHaveCount(0);
+
+		// Certify → Cancel → Certify again must not throw conflict.
 		const tokenBefore = await page.getByTestId("kt-stat-root").getAttribute("data-bid-modified");
 		await certify.click();
 		await expect(page.getByTestId("kt-stat-certify-dialog")).toBeVisible({ timeout: 15_000 });
 		await expect(page.getByRole("heading", { name: "KT_STAT_CONFLICT" })).toHaveCount(0);
+		await expect(page.getByRole("heading", { name: "Updated elsewhere" })).toHaveCount(0);
 		const tokenAfterOpen = await page
 			.getByTestId("kt-stat-root")
 			.getAttribute("data-bid-modified");

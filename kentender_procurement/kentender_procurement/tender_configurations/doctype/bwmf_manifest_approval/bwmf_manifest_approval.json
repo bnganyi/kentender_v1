@@ -1,0 +1,91 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:approval_id",
+ "creation": "2026-07-24 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "approval_id",
+  "manifest_version",
+  "payload_digest",
+  "validation_report",
+  "approver",
+  "decision",
+  "decided_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "approval_id",
+   "fieldtype": "Data",
+   "label": "Approval Id",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "manifest_version",
+   "fieldtype": "Link",
+   "label": "Manifest Version",
+   "options": "BWMF Manifest Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "payload_digest",
+   "fieldtype": "Data",
+   "label": "Payload Digest",
+   "reqd": 1
+  },
+  {
+   "fieldname": "validation_report",
+   "fieldtype": "Link",
+   "label": "Validation Report",
+   "options": "BWMF Validation Report"
+  },
+  {
+   "fieldname": "approver",
+   "fieldtype": "Data",
+   "label": "Approver",
+   "reqd": 1
+  },
+  {
+   "fieldname": "decision",
+   "fieldtype": "Select",
+   "label": "Decision",
+   "options": "approved\nrejected",
+   "reqd": 1
+  },
+  {
+   "fieldname": "decided_at",
+   "fieldtype": "Datetime",
+   "label": "Decided At",
+   "reqd": 1
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-24 12:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Manifest Approval",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "title_field": "approval_id"
+}

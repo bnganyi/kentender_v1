@@ -2,7 +2,7 @@
   "template_id": "PPRA-IT-STD",
   "template_version": "1.0",
   "template_file": "ppra_it_std_v1.json",
-  "template_file_hash": "625610a0c9c98891da8182842fe9bcb88f3c4b573c5e1ea2396094b3aae00d17",
+  "template_file_hash": "db01b96c26b2e934377f2157c10d4184806e6a417d47984c381c87809b5c49ca",
   "status": "Draft",
   "source_std_identity": "PPRA IT STD April 2022 / Circular 02/2022",
   "prepared_by": "template.preparer@kentender.local",
@@ -11,7 +11,7 @@
   "reviewed_at": null,
   "approved_by": null,
   "approved_at": null,
-  "notes": "F0 + FoT Review-and-Certify + Statutory Declarations bundle. Template remains Draft. S150 Lots deferred.",
+  "notes": "F0 + FoT + Statutory + Tender Security + Preliminary + Qualification (qualification_response). Template remains Draft. S150 Lots deferred.",
   "lifecycle": [
     "Draft",
     "Reviewed",

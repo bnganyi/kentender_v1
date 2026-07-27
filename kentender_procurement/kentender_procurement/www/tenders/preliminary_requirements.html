@@ -1,0 +1,572 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }} | KenTender{% endblock %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/kentender_procurement/css/available_tenders.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/submission_checklist_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/bidder_portal_forms.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/form_of_tender_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/preliminary_requirements_web.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+{% endblock %}
+
+{% block page_content %}
+{% set s = sec %}
+{% set active_nav = "my_bids" %}
+{% set active_ws = "checklist" %}
+<div class="kt-a0-root kt-a2-root kt-fot-root kt-prelim-root" data-testid="kt-prelim-root"
+	data-publication-ref="{{ s.published_tender_ref }}"
+	data-bid-id="{{ s.bid_id or '' }}"
+	data-bid-modified="{{ s.bid_modified or '' }}"
+	data-section-status="{{ s.section_status }}"
+	data-read-only="{{ s.read_only or 0 }}"
+	data-workspace-url="{{ s.workspace_url }}"
+	data-submission-deadline="{{ s.submission_deadline or '' }}">
+	{% include "templates/includes/kt_bidder_portal_nav.html" %}
+
+	<div class="kt-a2-shell">
+		{% include "templates/includes/kt_bidder_workspace_sidebar.html" %}
+
+		<main class="kt-a2-main kt-fot-main">
+			<div class="kt-fot-main-inner">
+				<nav class="kt-fot-crumbs" aria-label="Breadcrumb" data-testid="kt-prelim-crumbs">
+					<a href="{{ s.workspace_url }}">{{ _("Checklist") }}</a>
+					<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+					<span class="is-current">{{ _("Preliminary Requirements") }}</span>
+				</nav>
+
+				<header class="kt-fot-page-head">
+					<div>
+						<h1 data-testid="kt-prelim-title">{{ s.section_title }}</h1>
+						<p data-testid="kt-prelim-instructions">{{ s.bidder_instructions }}</p>
+					</div>
+					<div class="kt-prelim-progress" data-testid="kt-prelim-progress"
+						data-complete="{{ s.show_completion_banner or 0 }}">
+						<span class="kt-prelim-progress__dot" aria-hidden="true"></span>
+						<span data-testid="kt-prelim-progress-label">{{ s.progress_label }}</span>
+					</div>
+				</header>
+
+				<div class="kt-prelim-banner" data-testid="kt-prelim-completion-banner"
+					{% if not s.show_completion_banner %}hidden{% endif %}>
+					<span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+					<span>{{ s.completion_banner_text }}</span>
+				</div>
+
+				<section class="kt-prelim-panel" data-testid="kt-prelim-panel">
+					<div class="kt-prelim-group" data-testid="kt-prelim-evidence-group">
+						<h2 class="kt-prelim-group__title">{{ _("Evidence to provide") }}</h2>
+						{% if s.evidence_group %}
+						<div class="kt-prelim-table-wrap">
+							<table class="kt-prelim-table">
+								<thead>
+									<tr>
+										<th>{{ _("Requirement") }}</th>
+										<th>{{ _("Evidence required") }}</th>
+										<th>{{ _("Status") }}</th>
+										<th class="kt-prelim-action-cell">{{ _("Action") }}</th>
+									</tr>
+								</thead>
+								<tbody data-testid="kt-prelim-evidence-tbody">
+									{% for row in s.evidence_group %}
+									<tr data-testid="kt-prelim-row"
+										data-criterion-id="{{ row.criterion_id }}"
+										data-status="{{ row.status }}"
+										data-method="{{ row.response_method }}">
+										<td>
+											<p class="kt-prelim-req-title">{{ row.title }}</p>
+											<p class="kt-prelim-req-meta">{{ row.required_label }}</p>
+										</td>
+										<td><p class="kt-prelim-instruction">{{ row.evidence_instruction }}</p></td>
+										<td>
+											<span class="kt-prelim-status" data-testid="kt-prelim-row-status"
+												data-status="{{ row.status }}">{{ row.status }}</span>
+										</td>
+										<td class="kt-prelim-action-cell">
+											{% if row.action_label %}
+											<button type="button" class="kt-prelim-action"
+												data-testid="kt-prelim-row-action"
+												data-criterion-id="{{ row.criterion_id }}"
+												{% if s.read_only and row.status != "Complete" %}disabled{% endif %}>
+												{{ row.action_label }}
+											</button>
+											{% endif %}
+										</td>
+									</tr>
+									{% endfor %}
+								</tbody>
+							</table>
+						</div>
+						{% else %}
+						<p class="kt-prelim-empty" data-testid="kt-prelim-evidence-empty">
+							{{ _("No direct evidence requirements for this tender.") }}
+						</p>
+						{% endif %}
+					</div>
+
+					<div class="kt-prelim-group" data-testid="kt-prelim-linked-group">
+						<h2 class="kt-prelim-group__title">{{ _("Requirements handled in other sections") }}</h2>
+						{% if s.linked_group %}
+						<div class="kt-prelim-table-wrap">
+							<table class="kt-prelim-table">
+								<thead>
+									<tr>
+										<th>{{ _("Requirement") }}</th>
+										<th>{{ _("Source section") }}</th>
+										<th>{{ _("Status") }}</th>
+										<th class="kt-prelim-action-cell">{{ _("Action") }}</th>
+									</tr>
+								</thead>
+								<tbody data-testid="kt-prelim-linked-tbody">
+									{% for row in s.linked_group %}
+									<tr data-testid="kt-prelim-linked-row"
+										data-criterion-id="{{ row.criterion_id }}"
+										data-status="{{ row.status }}"
+										data-linked-section="{{ row.linked_section_key }}">
+										<td>
+											<p class="kt-prelim-req-title">{{ row.title }}</p>
+											<p class="kt-prelim-req-meta">{{ row.required_label }}</p>
+										</td>
+										<td>{{ row.linked_section_title or row.linked_section_key }}</td>
+										<td>
+											<span class="kt-prelim-status" data-status="{{ row.status }}">{{ row.status }}</span>
+										</td>
+										<td class="kt-prelim-action-cell">
+											{% if row.action_label and row.linked_section_url %}
+											<a class="kt-prelim-action" data-testid="kt-prelim-linked-action"
+												href="{{ row.linked_section_url }}">{{ row.action_label }}</a>
+											{% endif %}
+										</td>
+									</tr>
+									{% endfor %}
+								</tbody>
+							</table>
+						</div>
+						{% else %}
+						<p class="kt-prelim-empty">{{ _("No linked-section requirements for this tender.") }}</p>
+						{% endif %}
+					</div>
+				</section>
+			</div>
+
+			<footer class="kt-fot-footer" data-testid="kt-prelim-footer">
+				<div class="kt-fot-footer-bar">
+					<a class="kt-prelim-btn" href="{{ s.workspace_url }}" data-testid="kt-prelim-back">{{ _("Back") }}</a>
+					<div class="kt-fot-footer-right">
+						<a class="kt-prelim-btn kt-prelim-btn--primary" href="{{ s.workspace_url }}"
+							data-testid="kt-prelim-continue">{{ _("Continue") }}</a>
+					</div>
+				</div>
+			</footer>
+		</main>
+	</div>
+
+	<div class="kt-prelim-drawer-backdrop" data-testid="kt-prelim-drawer-backdrop" hidden></div>
+	<aside class="kt-prelim-drawer" data-testid="kt-prelim-drawer" hidden aria-hidden="true">
+		<header class="kt-prelim-drawer-head">
+			<div>
+				<p class="kt-prelim-drawer-eyebrow" data-testid="kt-prelim-drawer-required"></p>
+				<h2 data-testid="kt-prelim-drawer-title"></h2>
+				<span class="kt-prelim-status" data-testid="kt-prelim-drawer-status"></span>
+				<p class="kt-prelim-drawer-instruction" data-testid="kt-prelim-drawer-instruction"></p>
+			</div>
+			<button type="button" class="kt-prelim-drawer-close" data-testid="kt-prelim-drawer-close"
+				aria-label="{{ _('Close') }}">
+				<span class="material-symbols-outlined" aria-hidden="true">close</span>
+			</button>
+		</header>
+		<div class="kt-prelim-drawer-body" data-testid="kt-prelim-drawer-body"></div>
+		<footer class="kt-prelim-drawer-foot">
+			<button type="button" class="kt-prelim-btn" data-testid="kt-prelim-drawer-cancel">{{ _("Cancel") }}</button>
+			<button type="button" class="kt-prelim-btn kt-prelim-btn--primary" data-testid="kt-prelim-drawer-save" disabled>
+				{{ _("Save response") }}
+			</button>
+		</footer>
+	</aside>
+
+	<div class="kt-prelim-toast" data-testid="kt-prelim-toast" hidden></div>
+</div>
+
+<script type="application/json" id="kt-prelim-payload">{{ s | tojson }}</script>
+<script>
+(function () {
+	const root = document.querySelector('[data-testid="kt-prelim-root"]');
+	if (!root) return;
+	const payloadEl = document.getElementById("kt-prelim-payload");
+	let state = {};
+	try { state = JSON.parse(payloadEl ? payloadEl.textContent : "{}"); } catch (e) { state = {}; }
+
+	const pubRef = root.getAttribute("data-publication-ref") || "";
+	const readOnly = root.getAttribute("data-read-only") === "1";
+	const drawer = document.querySelector('[data-testid="kt-prelim-drawer"]');
+	const backdrop = document.querySelector('[data-testid="kt-prelim-drawer-backdrop"]');
+	const body = document.querySelector('[data-testid="kt-prelim-drawer-body"]');
+	const saveBtn = document.querySelector('[data-testid="kt-prelim-drawer-save"]');
+	const toast = document.querySelector('[data-testid="kt-prelim-toast"]');
+	let activeCriterion = null;
+	let pendingFile = null;
+	let selectedEvidenceId = "";
+
+	function showToast(msg, isError) {
+		if (!toast) return;
+		toast.textContent = msg;
+		toast.classList.toggle("is-error", !!isError);
+		toast.hidden = false;
+		setTimeout(function () { toast.hidden = true; }, 3200);
+	}
+
+	function allCriteria() {
+		return [].concat(state.evidence_group || [], state.linked_group || []);
+	}
+
+	function findCriterion(id) {
+		return allCriteria().find(function (c) { return c.criterion_id === id; }) || null;
+	}
+
+	function closeDrawer() {
+		if (drawer) { drawer.hidden = true; drawer.setAttribute("aria-hidden", "true"); }
+		if (backdrop) backdrop.hidden = true;
+		activeCriterion = null;
+		pendingFile = null;
+		selectedEvidenceId = "";
+	}
+
+	function setSaveEnabled(on) {
+		if (saveBtn) saveBtn.disabled = !on || readOnly;
+	}
+
+	function setDrawerIssue(message) {
+		const el = body && body.querySelector('[data-testid="kt-prelim-drawer-issue"]');
+		if (!el) return;
+		const msg = String(message || "").trim();
+		if (!msg) {
+			el.hidden = true;
+			el.textContent = "";
+			return;
+		}
+		el.hidden = false;
+		el.textContent = msg;
+	}
+
+	function acceptedTypesFor(crit) {
+		const raw = (crit && crit.accepted_file_types) || [];
+		const list = (raw.length ? raw : [".pdf"]).map(function (t) {
+			const s = String(t || "").trim().toLowerCase();
+			return s ? (s.charAt(0) === "." ? s : "." + s) : "";
+		}).filter(Boolean);
+		return list.length ? list : [".pdf"];
+	}
+
+	function fileExtension(name) {
+		const n = String(name || "");
+		const idx = n.lastIndexOf(".");
+		if (idx < 0) return "";
+		return n.slice(idx).toLowerCase();
+	}
+
+	function validatePendingFile(file, crit) {
+		if (!file) return { ok: false, message: "Choose a file to upload." };
+		const allowed = acceptedTypesFor(crit);
+		const ext = fileExtension(file.name);
+		if (!ext || allowed.indexOf(ext) < 0) {
+			return {
+				ok: false,
+				message: "File type " + (ext || "(none)") +
+					" is not accepted. Use " + allowed.join(", ") + ".",
+			};
+		}
+		const maxMb = Number(crit.max_file_size_mb || 5) || 5;
+		if (file.size > maxMb * 1024 * 1024) {
+			return {
+				ok: false,
+				message: "File exceeds the maximum allowed size of " + maxMb + " MB.",
+			};
+		}
+		return { ok: true, message: "" };
+	}
+
+	function clearFileInput(fileInput) {
+		if (!fileInput) return;
+		fileInput.value = "";
+		pendingFile = null;
+		const chip = body.querySelector('[data-testid="kt-prelim-upload-chip"]');
+		if (chip) chip.hidden = true;
+		const nameEl = body.querySelector('[data-testid="kt-prelim-upload-name"]');
+		if (nameEl) nameEl.textContent = "";
+	}
+
+	function renderDrawer(crit) {
+		activeCriterion = crit;
+		pendingFile = null;
+		selectedEvidenceId = "";
+		document.querySelector('[data-testid="kt-prelim-drawer-required"]').textContent =
+			crit.required_label || (crit.mandatory ? "Required" : "Conditional");
+		document.querySelector('[data-testid="kt-prelim-drawer-title"]').textContent = crit.title || "";
+		const st = document.querySelector('[data-testid="kt-prelim-drawer-status"]');
+		st.textContent = crit.status || "Not Started";
+		st.setAttribute("data-status", crit.status || "Not Started");
+		document.querySelector('[data-testid="kt-prelim-drawer-instruction"]').textContent =
+			crit.evidence_instruction || "";
+
+		const method = crit.response_method || "";
+		const resp = crit.response || {};
+		let html = "";
+		if (crit.issue_message) {
+			html += '<p class="kt-prelim-issue" data-testid="kt-prelim-drawer-issue">' +
+				frappe.utils.escape_html(crit.issue_message) + "</p>";
+		} else {
+			html += '<p class="kt-prelim-issue" data-testid="kt-prelim-drawer-issue" hidden></p>';
+		}
+
+		const allowedTypes = acceptedTypesFor(crit);
+		const types = allowedTypes.join(", ");
+		const acceptAttr = allowedTypes.join(",");
+		const maxMb = crit.max_file_size_mb || 5;
+		const deadline = state.submission_deadline || root.getAttribute("data-submission-deadline") || "";
+
+		if (method === "select_or_upload" || method === "upload") {
+			if (method === "select_or_upload") {
+				html += '<p class="kt-prelim-req-meta">Select saved evidence or upload a new file. Nothing is preselected.</p>';
+				if (deadline && crit.validity_rule === "valid_on_submission_deadline") {
+					html += '<p class="kt-prelim-req-meta">Must be valid on the submission deadline (' +
+						frappe.utils.escape_html(deadline) + ").</p>";
+				}
+				html += '<div class="kt-prelim-evidence-list" data-testid="kt-prelim-saved-list">';
+				const items = state.saved_evidence || [];
+				if (!items.length) {
+					html += '<p class="kt-prelim-empty">No saved evidence on this bid yet.</p>';
+				}
+				items.forEach(function (item) {
+					const expired = item.eligibility_label === "Expired" || item.eligible === 0;
+					const label = expired ? (item.eligibility_label || "Expired") : "";
+					html +=
+						'<label class="kt-prelim-evidence-option" data-eligible="' + (expired ? "0" : "1") + '"' +
+						(expired ? ' data-testid="kt-prelim-evidence-expired"' : "") + ">" +
+						'<input type="radio" name="kt-prelim-evidence" value="' +
+						frappe.utils.escape_html(item.evidence_id || "") + '"' +
+						(expired ? " disabled" : "") +
+						' data-testid="kt-prelim-evidence-option" />' +
+						"<div><strong>" + frappe.utils.escape_html(item.title || item.file_name || "Evidence") + "</strong>" +
+						(label ? '<span class="kt-prelim-badge-expired">' + frappe.utils.escape_html(label) + "</span>" : "") +
+						'<p class="kt-prelim-evidence-meta">' +
+						frappe.utils.escape_html([item.reference_number, item.issuer, item.expiry_or_validity].filter(Boolean).join(" · ")) +
+						"</p></div></label>";
+				});
+				html += "</div>";
+			}
+			html +=
+				'<div class="kt-prelim-upload-zone" data-testid="kt-prelim-upload-zone">' +
+				"<p>Upload new evidence (" + frappe.utils.escape_html(types) + ", max " + maxMb + " MB)</p>" +
+				'<input type="file" data-testid="kt-prelim-file" accept="' +
+				frappe.utils.escape_html(acceptAttr) + '" />' +
+				'<div class="kt-prelim-upload-chip" data-testid="kt-prelim-upload-chip" ' +
+				(resp.file_name ? "" : "hidden") + ">" +
+				'<span class="material-symbols-outlined" aria-hidden="true">attach_file</span>' +
+				'<span data-testid="kt-prelim-upload-name">' +
+				frappe.utils.escape_html(resp.file_name || "") +
+				"</span></div></div>";
+
+			if (crit.validity_rule === "valid_on_submission_deadline" || method === "select_or_upload") {
+				html +=
+					'<div class="kt-prelim-field"><label>Certificate / reference number</label>' +
+					'<input type="text" data-testid="kt-prelim-ref" value="' +
+					frappe.utils.escape_html(resp.reference_number || "") + '" /></div>' +
+					'<div class="kt-prelim-field"><label>Issuer</label>' +
+					'<input type="text" data-testid="kt-prelim-issuer" value="' +
+					frappe.utils.escape_html(resp.issuer || "") + '" /></div>' +
+					'<div class="kt-prelim-field"><label>Issue date</label>' +
+					'<input type="date" data-testid="kt-prelim-issue-date" value="' +
+					frappe.utils.escape_html(resp.issue_date || "") + '" /></div>' +
+					'<div class="kt-prelim-field"><label>Expiry / validity date</label>' +
+					'<input type="date" data-testid="kt-prelim-expiry" value="' +
+					frappe.utils.escape_html(resp.expiry_or_validity || "") + '" /></div>';
+			}
+		} else if (method === "verification_reference") {
+			const fields = crit.verification_fields && crit.verification_fields.length
+				? crit.verification_fields
+				: [{ field_key: "verification_reference", label: "Verification reference", required: true }];
+			const vals = (resp.verification) || resp;
+			fields.forEach(function (f) {
+				html +=
+					'<div class="kt-prelim-field"><label>' +
+					frappe.utils.escape_html(f.label || f.field_key) +
+					"</label><input type=\"text\" data-field-key=\"" +
+					frappe.utils.escape_html(f.field_key) +
+					'" data-testid="kt-prelim-verification-field" value="' +
+					frappe.utils.escape_html(vals[f.field_key] || "") + '" /></div>';
+			});
+		} else if (method === "structured") {
+			(crit.structured_fields || []).forEach(function (f) {
+				const vals = resp.structured || resp;
+				html +=
+					'<div class="kt-prelim-field"><label>' +
+					frappe.utils.escape_html(f.label || f.field_key) +
+					"</label><input type=\"text\" data-field-key=\"" +
+					frappe.utils.escape_html(f.field_key) +
+					'" data-testid="kt-prelim-structured-field" value="' +
+					frappe.utils.escape_html(vals[f.field_key] || "") + '" /></div>';
+			});
+		}
+
+		body.innerHTML = html;
+		setSaveEnabled(false);
+
+		body.querySelectorAll('input[name="kt-prelim-evidence"]').forEach(function (inp) {
+			inp.addEventListener("change", function () {
+				if (inp.disabled) return;
+				selectedEvidenceId = inp.value || "";
+				pendingFile = null;
+				clearFileInput(body.querySelector('[data-testid="kt-prelim-file"]'));
+				setDrawerIssue("");
+				setSaveEnabled(!!selectedEvidenceId);
+			});
+		});
+		const fileInput = body.querySelector('[data-testid="kt-prelim-file"]');
+		if (fileInput) {
+			fileInput.addEventListener("change", function () {
+				const f = fileInput.files && fileInput.files[0];
+				selectedEvidenceId = "";
+				body.querySelectorAll('input[name="kt-prelim-evidence"]').forEach(function (inp) {
+					inp.checked = false;
+				});
+				if (!f) {
+					clearFileInput(fileInput);
+					setDrawerIssue("");
+					setSaveEnabled(false);
+					return;
+				}
+				const check = validatePendingFile(f, activeCriterion || {});
+				if (!check.ok) {
+					clearFileInput(fileInput);
+					setDrawerIssue(check.message);
+					setSaveEnabled(false);
+					showToast(check.message, true);
+					return;
+				}
+				pendingFile = f;
+				const chip = body.querySelector('[data-testid="kt-prelim-upload-chip"]');
+				const nameEl = body.querySelector('[data-testid="kt-prelim-upload-name"]');
+				if (chip && nameEl) {
+					chip.hidden = false;
+					nameEl.textContent = f.name;
+				}
+				setDrawerIssue("");
+				setSaveEnabled(true);
+			});
+		}
+		body.querySelectorAll('[data-testid="kt-prelim-verification-field"], [data-testid="kt-prelim-structured-field"]').forEach(function (inp) {
+			inp.addEventListener("input", function () {
+				const fields = body.querySelectorAll('[data-testid="kt-prelim-verification-field"], [data-testid="kt-prelim-structured-field"]');
+				let ok = true;
+				fields.forEach(function (el) {
+					if (!String(el.value || "").trim()) ok = false;
+				});
+				setSaveEnabled(ok);
+			});
+		});
+
+		if (drawer) { drawer.hidden = false; drawer.setAttribute("aria-hidden", "false"); }
+		if (backdrop) backdrop.hidden = false;
+	}
+
+	function openCriterion(id) {
+		const crit = findCriterion(id);
+		if (!crit) return;
+		renderDrawer(crit);
+	}
+
+	function fileToB64(file) {
+		return new Promise(function (resolve, reject) {
+			const reader = new FileReader();
+			reader.onload = function () {
+				const result = String(reader.result || "");
+				const idx = result.indexOf(",");
+				resolve(idx >= 0 ? result.slice(idx + 1) : result);
+			};
+			reader.onerror = reject;
+			reader.readAsDataURL(file);
+		});
+	}
+
+	async function saveResponse() {
+		if (!activeCriterion || readOnly) return;
+		const method = activeCriterion.response_method;
+		const args = {
+			published_tender_ref: pubRef,
+			criterion_id: activeCriterion.criterion_id,
+			expected_modified: root.getAttribute("data-bid-modified") || null,
+			payload: {},
+		};
+
+		if (method === "upload" || method === "select_or_upload") {
+			if (pendingFile) {
+				const check = validatePendingFile(pendingFile, activeCriterion || {});
+				if (!check.ok) {
+					setDrawerIssue(check.message);
+					showToast(check.message, true);
+					setSaveEnabled(false);
+					return;
+				}
+				const b64 = await fileToB64(pendingFile);
+				args.payload = {
+					action: "upload",
+					filename: pendingFile.name,
+					content_b64: b64,
+					content_type: pendingFile.type || "application/pdf",
+					reference_number: (body.querySelector('[data-testid="kt-prelim-ref"]') || {}).value || "",
+					issuer: (body.querySelector('[data-testid="kt-prelim-issuer"]') || {}).value || "",
+					issue_date: (body.querySelector('[data-testid="kt-prelim-issue-date"]') || {}).value || "",
+					expiry_or_validity: (body.querySelector('[data-testid="kt-prelim-expiry"]') || {}).value || "",
+				};
+			} else if (selectedEvidenceId) {
+				args.payload = { action: "select", evidence_id: selectedEvidenceId };
+			} else {
+				showToast("Select or upload evidence before saving.", true);
+				return;
+			}
+		} else if (method === "verification_reference") {
+			const verification = {};
+			body.querySelectorAll('[data-testid="kt-prelim-verification-field"]').forEach(function (el) {
+				verification[el.getAttribute("data-field-key")] = el.value || "";
+			});
+			args.payload = { verification: verification };
+		} else if (method === "structured") {
+			const structured = {};
+			body.querySelectorAll('[data-testid="kt-prelim-structured-field"]').forEach(function (el) {
+				structured[el.getAttribute("data-field-key")] = el.value || "";
+			});
+			args.payload = { structured: structured };
+		}
+
+		saveBtn.disabled = true;
+		frappe.call({
+			method: "kentender_procurement.tender_configurations.api.save_preliminary_response",
+			args: args,
+			callback: function (r) {
+				if (r.message) {
+					showToast("Response saved.");
+					window.location.reload();
+				}
+			},
+			error: function () {
+				showToast("Could not save response.", true);
+				setSaveEnabled(true);
+			},
+		});
+	}
+
+	root.querySelectorAll('[data-testid="kt-prelim-row-action"]').forEach(function (btn) {
+		btn.addEventListener("click", function () {
+			openCriterion(btn.getAttribute("data-criterion-id"));
+		});
+	});
+	const closeBtn = document.querySelector('[data-testid="kt-prelim-drawer-close"]');
+	const cancelBtn = document.querySelector('[data-testid="kt-prelim-drawer-cancel"]');
+	if (closeBtn) closeBtn.addEventListener("click", closeDrawer);
+	if (cancelBtn) cancelBtn.addEventListener("click", closeDrawer);
+	if (backdrop) backdrop.addEventListener("click", closeDrawer);
+	if (saveBtn) saveBtn.addEventListener("click", function () { saveResponse(); });
+})();
+</script>
+{% endblock %}

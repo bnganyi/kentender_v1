@@ -1,0 +1,73 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-07-24 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "binding_id",
+  "binding_type",
+  "object_ref",
+  "object_version",
+  "lifecycle_state",
+  "document_content_digest",
+  "archive_provenance_digest"
+ ],
+ "fields": [
+  {
+   "fieldname": "binding_id",
+   "fieldtype": "Data",
+   "label": "Binding Id",
+   "reqd": 1
+  },
+  {
+   "fieldname": "binding_type",
+   "fieldtype": "Data",
+   "label": "Binding Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "object_ref",
+   "fieldtype": "Data",
+   "label": "Object Ref",
+   "reqd": 1
+  },
+  {
+   "fieldname": "object_version",
+   "fieldtype": "Data",
+   "label": "Object Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "lifecycle_state",
+   "fieldtype": "Data",
+   "label": "Lifecycle State",
+   "reqd": 1
+  },
+  {
+   "fieldname": "document_content_digest",
+   "fieldtype": "Data",
+   "label": "Document Content Digest",
+   "reqd": 1
+  },
+  {
+   "fieldname": "archive_provenance_digest",
+   "fieldtype": "Data",
+   "label": "Archive Provenance Digest"
+  }
+ ],
+ "istable": 1,
+ "editable_grid": 1,
+ "links": [],
+ "modified": "2026-07-24 12:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Compile Input Binding",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

@@ -1,0 +1,43 @@
+{
+  "$id": "bwmf/v1/validation_diagnostic",
+  "schema_version": "1.0.0",
+  "title": "ValidationDiagnostic",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "diagnostic_id",
+    "severity",
+    "code",
+    "message"
+  ],
+  "properties": {
+    "diagnostic_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "error",
+        "warning",
+        "info"
+      ]
+    },
+    "code": {
+      "type": "string",
+      "minLength": 1
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "blocking": {
+      "type": "boolean"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

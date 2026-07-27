@@ -10,6 +10,13 @@ import json
 import frappe
 
 from kentender_procurement.tender_configurations.constants import STATUS_APPROVED_FOR_PREVIEW
+from kentender_procurement.tender_configurations.seed.lean_preliminary_criteria import (
+	lean_preliminary_criteria_rows,
+)
+from kentender_procurement.tender_configurations.seed.lean_qualification_criteria import (
+	FIXTURE_FULL,
+	merge_qualification_into_evaluation,
+)
 
 def _approve(cfg_id: str):
 	doc = frappe.get_doc("Tender Configuration", cfg_id)
@@ -40,6 +47,7 @@ def _seed_bidder_facing_config(cfg_id: str):
 			"submission_language": "English",
 			"tender_currency": "KES",
 			"tender_security_required": "Yes",
+			"tender_security_type": "Tender Security",
 			"tender_security_amount": "50000",
 			"tender_security_currency": "KES",
 			"tender_security_validity_period": "14",
@@ -69,25 +77,22 @@ def _seed_bidder_facing_config(cfg_id: str):
 		]
 	)
 	doc.evaluation_setup = json.dumps(
-		{
-			"criteria": [
-				{
-					"criterion_name": "Tender security submitted",
-					"stage": "Preliminary",
-					"evaluation_basis": "Pass/Fail",
-					"pass_fail_rule": "Must be submitted in required form and amount",
-					"bidder_evidence": "Required",
-				},
-				{
-					"criterion_name": "Technical compliance for: REQ-002",
-					"stage": "Technical",
-					"evaluation_basis": "Scored",
-					"marks": "50",
-					"related_requirement_id": "REQ-002",
-					"bidder_evidence": "Required",
-				},
-			]
-		}
+		merge_qualification_into_evaluation(
+			{
+				"criteria": lean_preliminary_criteria_rows()
+				+ [
+					{
+						"criterion_name": "Technical compliance for: REQ-002",
+						"stage": "Technical",
+						"evaluation_basis": "Scored",
+						"marks": "50",
+						"related_requirement_id": "REQ-002",
+						"bidder_evidence": "Required",
+					},
+				]
+			},
+			fixture=FIXTURE_FULL,
+		)
 	)
 	doc.price_schedule = json.dumps(
 		{

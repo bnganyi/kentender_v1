@@ -798,6 +798,121 @@ def certify_statutory_declarations(
 
 
 @frappe.whitelist()
+def get_preliminary_requirements(published_tender_ref: str) -> dict[str, Any]:
+	"""Preliminary Requirements and Evidence checklist DTO."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.preliminary_requirements import (
+		get_preliminary_requirements as _get,
+	)
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def save_preliminary_response(
+	published_tender_ref: str,
+	criterion_id: str,
+	payload: dict[str, Any] | str | None = None,
+	expected_modified: str | None = None,
+) -> dict[str, Any]:
+	"""Save one preliminary criterion response (upload / select / verification / structured)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.preliminary_requirements import (
+		save_preliminary_response as _save,
+	)
+
+	return _save(
+		published_tender_ref,
+		criterion_id,
+		payload,
+		expected_modified=expected_modified,
+	)
+
+
+@frappe.whitelist()
+def get_qualification_and_capability(published_tender_ref: str) -> dict[str, Any]:
+	"""Qualification and Capability overview DTO."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.qualification_and_capability import (
+		get_qualification_and_capability as _get,
+	)
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def get_qualification_category(published_tender_ref: str, category_key: str) -> dict[str, Any]:
+	"""One qualification category detail DTO."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.qualification_and_capability import (
+		get_qualification_category as _get,
+	)
+
+	return _get(published_tender_ref, category_key)
+
+
+@frappe.whitelist()
+def save_qualification_category(
+	published_tender_ref: str,
+	category_key: str,
+	payload: dict[str, Any] | str | None = None,
+	expected_modified: str | None = None,
+) -> dict[str, Any]:
+	"""Save one qualification category bucket (+ optional shared collections)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.qualification_and_capability import (
+		save_qualification_category as _save,
+	)
+
+	return _save(
+		published_tender_ref,
+		category_key,
+		payload,
+		expected_modified=expected_modified,
+	)
+
+
+@frappe.whitelist()
+def get_tender_security(published_tender_ref: str) -> dict[str, Any]:
+	"""Tender Security instrument or Tender-Securing Declaration DTO."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.tender_security import (
+		get_tender_security as _get,
+	)
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def save_tender_security(
+	published_tender_ref: str,
+	payload: dict[str, Any] | str | None = None,
+	expected_modified: str | None = None,
+) -> dict[str, Any]:
+	"""Save tender security instrument details (structural validation only)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.tender_security import (
+		save_tender_security as _save,
+	)
+
+	return _save(published_tender_ref, payload, expected_modified=expected_modified)
+
+
+@frappe.whitelist()
+def certify_tender_securing_declaration(
+	published_tender_ref: str,
+	expected_modified: str | None = None,
+) -> dict[str, Any]:
+	"""Certify the Tender-Securing Declaration."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.tender_security import (
+		certify_tender_securing_declaration as _cert,
+	)
+
+	return _cert(published_tender_ref, expected_modified=expected_modified)
+
+
+@frappe.whitelist()
 def get_confidential_business_questionnaire(published_tender_ref: str) -> dict[str, Any]:
 	"""S300 — Confidential Business Questionnaire DTO."""
 	_require_login()

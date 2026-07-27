@@ -1,0 +1,112 @@
+{# Stitch 02 — Contract Performance and Litigation #}
+{% set members = c.jv_members or [] %}
+{% set member_map = bucket.members or {} %}
+{% set first_mid = members[0].member_id if members else "lead" %}
+{% set mrow = member_map.get(first_mid) or {} %}
+<section class="kt-s600-card" data-testid="kt-s600-contract" data-s600-contract>
+	<h2 class="kt-s600-card__title">{{ _("1. Reporting Entity") }}</h2>
+	<p class="kt-s600-help">{{ _("For Joint Ventures, select the member for whom this history is being reported.") }}</p>
+	<div class="kt-s600-field kt-s600-field--md">
+		<label for="kt-s600-member">{{ _("Select Member") }}</label>
+		<select id="kt-s600-member" data-field="member_id" data-testid="kt-s600-member-select" {% if c.read_only %}disabled{% endif %}>
+			<option value="">{{ _("Select a member…") }}</option>
+			{% for m in members %}
+			<option value="{{ m.member_id }}" {% if m.member_id == first_mid %}selected{% endif %}>{{ m.name }}</option>
+			{% endfor %}
+		</select>
+	</div>
+</section>
+
+<div class="kt-s600-initial" data-testid="kt-s600-contract-initial" {% if members %}hidden{% endif %}>
+	<p>{{ _("Select a reporting member to view or provide its history.") }}</p>
+</div>
+
+<div class="kt-s600-disclosure" data-testid="kt-s600-contract-disclosure" {% if not members %}hidden{% endif %}>
+{% for key, title, add_label, cols in [
+	("non_performing", _("2. Non-performing Contracts"),
+	 _("Add non-performing contract"),
+	 [_("Contract"), _("Client"), _("Currency"), _("Amount"), _("Current Status"), _("Action")]),
+	("pending_litigation", _("3. Pending Litigation"),
+	 _("Add pending litigation"),
+	 [_("Case or matter"), _("Other party"), _("Currency"), _("Disputed amount"), _("Current status"), _("Action")]),
+	("litigation_history", _("4. Litigation History"),
+	 _("Add Litigation Record"),
+	 [_("Case number"), _("Outcome"), _("Currency"), _("Amount"), _("Date"), _("Action")])
+] %}
+{% set ans = mrow.get(key) %}
+{% set recs = mrow.get(key ~ "_records") or [] %}
+<section class="kt-s600-card" data-testid="kt-s600-{{ key }}" data-disclosure="{{ key }}">
+	<h2 class="kt-s600-card__title">{{ title }}</h2>
+	<p class="kt-s600-help">
+		{% if key == "non_performing" %}
+		{{ _("Has") }} <strong class="kt-s600-member-name" data-member-name>—</strong> {{ _("had any non-performing contracts in the reporting period?") }}
+		{% elif key == "pending_litigation" %}
+		{{ _("Is there any pending litigation involving") }} <strong class="kt-s600-member-name" data-member-name>—</strong>?
+		{% else %}
+		{{ _("Does") }} <strong class="kt-s600-member-name" data-member-name>—</strong> {{ _("have any past litigation history for the reporting period?") }}
+		{% endif %}
+	</p>
+	<div class="kt-s600-radio-row" data-testid="kt-s600-disclosure-radios-{{ key }}">
+		<label>
+			<input type="radio" name="{{ key }}" value="yes" {% if ans in ("yes", True, 1) %}checked{% endif %} {% if c.read_only %}disabled{% endif %}/>
+			<span>{{ _("Yes") }}</span>
+		</label>
+		<label>
+			<input type="radio" name="{{ key }}" value="no" {% if ans in ("no", False, 0) %}checked{% endif %} {% if c.read_only %}disabled{% endif %}/>
+			<span>{{ _("No") }}</span>
+		</label>
+	</div>
+	<div class="kt-s600-records-panel" data-yes-panel="{{ key }}" {% if ans not in ("yes", True, 1) %}hidden{% endif %}>
+		<div class="kt-s600-table-wrap">
+			<table class="kt-s600-data-table" data-records-table="{{ key }}">
+				<thead>
+					<tr>
+						{% for col in cols %}<th>{{ col }}</th>{% endfor %}
+					</tr>
+				</thead>
+				<tbody data-records-body="{{ key }}">
+					{% for rec in recs %}
+					<tr data-record-row data-record-id="{{ rec.record_id or loop.index }}">
+						{% if key == "non_performing" %}
+						<td><input data-r="contract" value="{{ rec.contract or rec.title or '' }}" {% if c.read_only %}readonly{% endif %}/></td>
+						<td><input data-r="client" value="{{ rec.client or '' }}" {% if c.read_only %}readonly{% endif %}/></td>
+						<td><input data-r="currency" value="{{ rec.currency or 'KES' }}" {% if c.read_only %}readonly{% endif %}/></td>
+						<td class="is-num"><input data-r="amount" value="{{ rec.amount or '' }}" {% if c.read_only %}readonly{% endif %}/></td>
+						<td><input data-r="status" value="{{ rec.status or '' }}" {% if c.read_only %}readonly{% endif %}/></td>
+						{% elif key == "pending_litigation" %}
+						<td><input data-r="matter" value="{{ rec.matter or rec.title or '' }}" {% if c.read_only %}readonly{% endif %}/></td>
+						<td><input data-r="other_party" value="{{ rec.other_party or '' }}" {% if c.read_only %}readonly{% endif %}/></td>
+						<td><input data-r="currency" value="{{ rec.currency or 'KES' }}" {% if c.read_only %}readonly{% endif %}/></td>
+						<td class="is-num"><input data-r="amount" value="{{ rec.amount or '' }}" {% if c.read_only %}readonly{% endif %}/></td>
+						<td><input data-r="status" value="{{ rec.status or '' }}" {% if c.read_only %}readonly{% endif %}/></td>
+						{% else %}
+						<td><input data-r="case_number" value="{{ rec.case_number or rec.title or '' }}" {% if c.read_only %}readonly{% endif %}/></td>
+						<td><input data-r="outcome" value="{{ rec.outcome or '' }}" {% if c.read_only %}readonly{% endif %}/></td>
+						<td><input data-r="currency" value="{{ rec.currency or 'KES' }}" {% if c.read_only %}readonly{% endif %}/></td>
+						<td class="is-num"><input data-r="amount" value="{{ rec.amount or '' }}" {% if c.read_only %}readonly{% endif %}/></td>
+						<td><input data-r="date" value="{{ rec.date or '' }}" {% if c.read_only %}readonly{% endif %}/></td>
+						{% endif %}
+						<td class="is-actions">
+							{% if not c.read_only %}
+							<button type="button" class="kt-s600-link" data-s600-remove-row title="{{ _('Remove') }}">
+								<span class="material-symbols-outlined">delete</span>
+							</button>
+							{% endif %}
+						</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+		{% if not c.read_only %}
+		<button type="button" class="kt-s600-btn kt-s600-btn--ghost" data-s600-add-record="{{ key }}">
+			<span class="material-symbols-outlined">add</span> {{ add_label }}
+		</button>
+		{% endif %}
+	</div>
+	<div class="kt-s600-empty-ok" data-no-panel="{{ key }}" {% if ans not in ("no", False, 0) %}hidden{% endif %}>
+		{{ _("No records reported for this disclosure.") }}
+	</div>
+</section>
+{% endfor %}
+</div>

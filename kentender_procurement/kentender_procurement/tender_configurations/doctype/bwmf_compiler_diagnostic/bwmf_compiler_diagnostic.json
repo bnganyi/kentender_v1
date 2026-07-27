@@ -1,0 +1,95 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:diagnostic_id",
+ "creation": "2026-07-24 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "diagnostic_id",
+  "compile_run",
+  "validation_report",
+  "code",
+  "severity",
+  "stage",
+  "message",
+  "fingerprint"
+ ],
+ "fields": [
+  {
+   "fieldname": "diagnostic_id",
+   "fieldtype": "Data",
+   "label": "Diagnostic Id",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "compile_run",
+   "fieldtype": "Link",
+   "label": "Compile Run",
+   "options": "BWMF Compile Run"
+  },
+  {
+   "fieldname": "validation_report",
+   "fieldtype": "Link",
+   "label": "Validation Report",
+   "options": "BWMF Validation Report"
+  },
+  {
+   "fieldname": "code",
+   "fieldtype": "Data",
+   "label": "Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "label": "Severity",
+   "options": "error\nwarning\ninfo",
+   "reqd": 1
+  },
+  {
+   "fieldname": "stage",
+   "fieldtype": "Data",
+   "label": "Stage"
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Small Text",
+   "label": "Message"
+  },
+  {
+   "fieldname": "fingerprint",
+   "fieldtype": "Data",
+   "label": "Fingerprint",
+   "reqd": 1
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-24 12:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Compiler Diagnostic",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "title_field": "diagnostic_id"
+}

@@ -1,0 +1,123 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-07-24 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "response_id",
+  "version",
+  "workspace",
+  "manifest_doc",
+  "section_key",
+  "state",
+  "response_digest",
+  "values_json",
+  "organization",
+  "bidder_party",
+  "task_ref",
+  "scope_ref"
+ ],
+ "fields": [
+  {
+   "fieldname": "response_id",
+   "fieldtype": "Data",
+   "label": "Response Id",
+   "reqd": 1
+  },
+  {
+   "fieldname": "version",
+   "fieldtype": "Int",
+   "label": "Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "workspace",
+   "fieldtype": "Link",
+   "label": "Workspace",
+   "options": "BWMF Workspace",
+   "reqd": 1
+  },
+  {
+   "fieldname": "manifest_doc",
+   "fieldtype": "Link",
+   "label": "Manifest Doc",
+   "options": "BWMF Manifest Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_key",
+   "fieldtype": "Data",
+   "label": "Section Key",
+   "reqd": 1
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Select",
+   "label": "State",
+   "options": "Immutable",
+   "reqd": 1,
+   "default": "Immutable"
+  },
+  {
+   "fieldname": "response_digest",
+   "fieldtype": "Data",
+   "label": "Response Digest",
+   "reqd": 1
+  },
+  {
+   "fieldname": "values_json",
+   "fieldtype": "Long Text",
+   "label": "Values Json"
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "label": "Organization",
+   "reqd": 1
+  },
+  {
+   "fieldname": "bidder_party",
+   "fieldtype": "Data",
+   "label": "Bidder Party",
+   "reqd": 1
+  },
+  {
+   "fieldname": "task_ref",
+   "fieldtype": "Data",
+   "label": "Task Ref"
+  },
+  {
+   "fieldname": "scope_ref",
+   "fieldtype": "Data",
+   "label": "Scope Ref"
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-24 12:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Response Version",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

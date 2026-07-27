@@ -1,0 +1,150 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:event_id",
+ "creation": "2026-07-24 14:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "event_id",
+  "event_type",
+  "organization",
+  "bidder_party",
+  "workspace",
+  "actor",
+  "event_at",
+  "manifest_doc",
+  "response_ref",
+  "evidence_ref",
+  "confirmation_ref",
+  "submission_ref",
+  "compile_run_ref",
+  "correlation_ref",
+  "idempotency_ref",
+  "metadata_json",
+  "event_digest"
+ ],
+ "fields": [
+  {
+   "fieldname": "event_id",
+   "fieldtype": "Data",
+   "label": "Event Id",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "event_type",
+   "fieldtype": "Data",
+   "label": "Event Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "label": "Organization",
+   "reqd": 1
+  },
+  {
+   "fieldname": "bidder_party",
+   "fieldtype": "Data",
+   "label": "Bidder Party"
+  },
+  {
+   "fieldname": "workspace",
+   "fieldtype": "Link",
+   "label": "Workspace",
+   "options": "BWMF Workspace"
+  },
+  {
+   "fieldname": "actor",
+   "fieldtype": "Data",
+   "label": "Actor",
+   "reqd": 1
+  },
+  {
+   "fieldname": "event_at",
+   "fieldtype": "Datetime",
+   "label": "Event At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "manifest_doc",
+   "fieldtype": "Link",
+   "label": "Manifest Doc",
+   "options": "BWMF Manifest Version"
+  },
+  {
+   "fieldname": "response_ref",
+   "fieldtype": "Data",
+   "label": "Response Ref"
+  },
+  {
+   "fieldname": "evidence_ref",
+   "fieldtype": "Data",
+   "label": "Evidence Ref"
+  },
+  {
+   "fieldname": "confirmation_ref",
+   "fieldtype": "Data",
+   "label": "Confirmation Ref"
+  },
+  {
+   "fieldname": "submission_ref",
+   "fieldtype": "Data",
+   "label": "Submission Ref"
+  },
+  {
+   "fieldname": "compile_run_ref",
+   "fieldtype": "Data",
+   "label": "Compile Run Ref"
+  },
+  {
+   "fieldname": "correlation_ref",
+   "fieldtype": "Data",
+   "label": "Correlation Ref"
+  },
+  {
+   "fieldname": "idempotency_ref",
+   "fieldtype": "Data",
+   "label": "Idempotency Ref"
+  },
+  {
+   "fieldname": "metadata_json",
+   "fieldtype": "Long Text",
+   "label": "Metadata Json"
+  },
+  {
+   "fieldname": "event_digest",
+   "fieldtype": "Data",
+   "label": "Event Digest",
+   "reqd": 1
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-24 14:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Audit Event",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "title_field": "event_id"
+}

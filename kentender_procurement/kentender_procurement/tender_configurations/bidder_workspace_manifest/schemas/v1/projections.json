@@ -1,0 +1,80 @@
+{
+  "$id": "bwmf/v1/projections",
+  "schema_version": "1.0.0",
+  "title": "Projections",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "opening",
+    "evaluation",
+    "contract"
+  ],
+  "properties": {
+    "opening": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fields"
+      ],
+      "properties": {
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "criterion_bindings"
+      ],
+      "properties": {
+        "criterion_bindings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "criterion_ref",
+              "response_refs"
+            ],
+            "properties": {
+              "criterion_ref": {
+                "type": "string",
+                "minLength": 1
+              },
+              "response_refs": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "carry_forward_refs"
+      ],
+      "properties": {
+        "carry_forward_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

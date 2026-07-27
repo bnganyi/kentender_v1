@@ -68,7 +68,7 @@
 					</section>
 					<section class="kt-a2-kpi kt-a2-kpi--progress" data-testid="kt-a2-kpi-progress">
 						<div class="kt-a2-progress-head">
-							<span class="kt-a2-kpi-label">{{ _("Submission Progress") }}</span>
+							<span class="kt-a2-kpi-label" data-testid="kt-a2-progress-label">{{ _("Sections complete") }}</span>
 							<strong data-testid="kt-a2-progress-pct">{{ c.progress_percent }}%</strong>
 						</div>
 						<div class="kt-a2-progress-bar" aria-hidden="true">
@@ -77,6 +77,23 @@
 						<p data-testid="kt-a2-progress-tasks">
 							{{ _("{0} of {1} required sections complete").format(c.progress_complete, c.progress_total) }}
 						</p>
+						{% set in_prog = c.progress_in_progress or 0 %}
+						{% set needs_attn = c.progress_needs_attention or 0 %}
+						{% if in_prog or needs_attn %}
+						<p class="kt-a2-progress-secondary" data-testid="kt-a2-progress-secondary">
+							{% if in_prog %}
+							<span data-testid="kt-a2-progress-in-progress">
+								{{ _("{0} in progress").format(in_prog) }}
+							</span>
+							{% endif %}
+							{% if in_prog and needs_attn %}<span aria-hidden="true"> · </span>{% endif %}
+							{% if needs_attn %}
+							<span data-testid="kt-a2-progress-needs-attention">
+								{{ _("{0} need attention").format(needs_attn) }}
+							</span>
+							{% endif %}
+						</p>
+						{% endif %}
 					</section>
 				</div>
 

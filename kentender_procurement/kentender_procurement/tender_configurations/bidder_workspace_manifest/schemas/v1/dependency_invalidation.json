@@ -1,0 +1,40 @@
+{
+  "$id": "bwmf/v1/dependency_invalidation",
+  "schema_version": "1.0.0",
+  "title": "DependencyInvalidation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "dependency_id",
+    "from_ref",
+    "to_ref",
+    "invalidation_policy"
+  ],
+  "properties": {
+    "dependency_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "from_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "to_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "invalidation_policy": {
+      "type": "string",
+      "enum": [
+        "invalidate",
+        "require_reconfirm",
+        "carry"
+      ]
+    },
+    "reason_code": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

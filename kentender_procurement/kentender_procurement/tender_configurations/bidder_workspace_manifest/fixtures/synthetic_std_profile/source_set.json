@@ -1,0 +1,500 @@
+{
+  "profile": "synthetic_alpha",
+  "std_source": {
+    "std_family": "synthetic_alpha",
+    "std_version": "1.0.0",
+    "profile": "synthetic_alpha"
+  },
+  "catalogue": {
+    "catalogue_id": "CAT-SYN-ALPHA-V1",
+    "version": 1,
+    "obligations": [
+      {
+        "obligation_key": "OBL-eligibility",
+        "section_key": "eligibility",
+        "disposition": "include",
+        "owner": "catalogue"
+      },
+      {
+        "obligation_key": "OBL-technical_offer",
+        "section_key": "technical_offer",
+        "disposition": "include",
+        "owner": "catalogue"
+      },
+      {
+        "obligation_key": "OBL-commercial_offer",
+        "section_key": "commercial_offer",
+        "disposition": "include",
+        "owner": "catalogue"
+      },
+      {
+        "obligation_key": "OBL-declarations",
+        "section_key": "declarations",
+        "disposition": "include",
+        "owner": "catalogue"
+      }
+    ]
+  },
+  "blueprint": {
+    "blueprint_id": "BP-SYN-ALPHA-V1",
+    "version": 1,
+    "sections": [
+      {
+        "section_key": "eligibility",
+        "section_type": "generic",
+        "order_weight": 100,
+        "required": true
+      },
+      {
+        "section_key": "technical_offer",
+        "section_type": "generic",
+        "order_weight": 200,
+        "required": true
+      },
+      {
+        "section_key": "commercial_offer",
+        "section_type": "generic",
+        "order_weight": 300,
+        "required": true
+      },
+      {
+        "section_key": "declarations",
+        "section_type": "generic",
+        "order_weight": 400,
+        "required": true
+      }
+    ]
+  },
+  "manifest_contract": {
+    "contract_id": "CONTRACT-SYN-V1",
+    "version": "1.0.0"
+  },
+  "tender_configuration": {
+    "tender_configuration_id": "TC-SYN-ALPHA-V1",
+    "version": 1,
+    "tender_context": {
+      "tender_reference": "SYN/ALPHA/001",
+      "procuring_entity": "Synthetic Procuring Entity",
+      "contract_name": "Synthetic Goods Supply",
+      "procurement_method": "open",
+      "currency": "USD"
+    },
+    "localization": {
+      "default_locale": "en",
+      "supported_locales": [
+        "en"
+      ],
+      "timezone": "UTC"
+    },
+    "lot_model": {
+      "mode": "multi_lot",
+      "bidder_selectable_lots": true,
+      "alternatives_permitted": true
+    },
+    "submission_policy_source": {
+      "deadline_at": "2027-01-15T12:00:00+00:00",
+      "timezone": "UTC",
+      "server_time_authoritative": true,
+      "late_submission_behavior": "reject",
+      "withdrawal_mode": "not_permitted",
+      "replacement_mode": "not_permitted",
+      "submission_authority_policy_ref": "POL-SYN-AUTH",
+      "reauthentication_policy_ref": "POL-SYN-REAUTH",
+      "seal_policy_ref": "POL-SYN-SEAL",
+      "receipt_policy_ref": "POL-SYN-RECEIPT",
+      "concurrent_submission_policy": "single_authoritative_transaction",
+      "idempotency_policy": "required"
+    },
+    "omit_lots": false
+  },
+  "document_package": {
+    "package_ref": "DOC-PKG-SYN-ALPHA-V1",
+    "package_version": 1,
+    "document_content_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "source_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "active_addenda": []
+  },
+  "collections": {
+    "requirement_groups": [
+      {
+        "group_key": "G-1",
+        "order_weight": 10
+      },
+      {
+        "group_key": "G-2",
+        "order_weight": 20
+      },
+      {
+        "group_key": "G-3",
+        "order_weight": 30
+      }
+    ],
+    "requirements": [
+      {
+        "requirement_key": "R-1",
+        "group_key": "G-2",
+        "order_weight": 10,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "R-2",
+        "group_key": "G-3",
+        "order_weight": 20,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "R-3",
+        "group_key": "G-1",
+        "order_weight": 30,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "R-4",
+        "group_key": "G-2",
+        "order_weight": 40,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "R-5",
+        "group_key": "G-3",
+        "order_weight": 50,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "R-6",
+        "group_key": "G-1",
+        "order_weight": 60,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "R-7",
+        "group_key": "G-2",
+        "order_weight": 70,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "R-8",
+        "group_key": "G-3",
+        "order_weight": 80,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "R-9",
+        "group_key": "G-1",
+        "order_weight": 90,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "R-10",
+        "group_key": "G-2",
+        "order_weight": 100,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "R-11",
+        "group_key": "G-3",
+        "order_weight": 110,
+        "contract_carry_forward": false
+      }
+    ],
+    "preliminary_criteria": [
+      {
+        "criterion_key": "P-1",
+        "order_weight": 10
+      },
+      {
+        "criterion_key": "P-2",
+        "order_weight": 20
+      }
+    ],
+    "qualification_criteria": [
+      {
+        "criterion_key": "Q-1",
+        "order_weight": 10
+      },
+      {
+        "criterion_key": "Q-2",
+        "order_weight": 20
+      },
+      {
+        "criterion_key": "Q-3",
+        "order_weight": 30
+      }
+    ],
+    "technical_scoring": [
+      {
+        "criterion_key": "T-1",
+        "order_weight": 10,
+        "max_score": "25"
+      },
+      {
+        "criterion_key": "T-2",
+        "order_weight": 20,
+        "max_score": "25"
+      },
+      {
+        "criterion_key": "T-3",
+        "order_weight": 30,
+        "max_score": "25"
+      },
+      {
+        "criterion_key": "T-4",
+        "order_weight": 40,
+        "max_score": "25"
+      }
+    ],
+    "schedule_rows": [
+      {
+        "row_key": "S-1",
+        "order_weight": 10
+      },
+      {
+        "row_key": "S-2",
+        "order_weight": 20
+      }
+    ],
+    "price_lines": [
+      {
+        "line_key": "PL-1",
+        "order_weight": 10
+      },
+      {
+        "line_key": "PL-2",
+        "order_weight": 20
+      },
+      {
+        "line_key": "PL-3",
+        "order_weight": 30
+      },
+      {
+        "line_key": "PL-4",
+        "order_weight": 40
+      },
+      {
+        "line_key": "PL-5",
+        "order_weight": 50
+      }
+    ],
+    "contract_conditions": [
+      {
+        "condition_key": "CC-1",
+        "order_weight": 10
+      },
+      {
+        "condition_key": "CC-2",
+        "order_weight": 20
+      }
+    ],
+    "decisions": [
+      {
+        "decision_id": "DEC-SYN-001",
+        "order_weight": 10,
+        "status": "approved"
+      },
+      {
+        "decision_id": "DEC-SYN-002",
+        "order_weight": 20,
+        "status": "approved"
+      }
+    ]
+  },
+  "expected_counts": {
+    "requirement_groups": 3,
+    "requirements": 11,
+    "preliminary_criteria": 2,
+    "qualification_criteria": 3,
+    "technical_scoring": 4,
+    "schedule_rows": 2,
+    "price_lines": 5,
+    "contract_conditions": 2,
+    "decisions": 2
+  },
+  "resource_registry_template": {
+    "descriptor_set_digest": "sha256:2ddd6d47dff54a0136aea96cfae87f31fa5454ce5e4ebabd081098408a1be017",
+    "resources": [
+      {
+        "resource_id": "RESOURCE-SYN-REQUIREMENT_GROUPS",
+        "item_count": 3,
+        "resource_digest": "sha256:40f6ef257d1d9fd7a8a62d9c4dca558846e27ff85502921736f83a87c3564776"
+      },
+      {
+        "resource_id": "RESOURCE-SYN-REQUIREMENTS",
+        "item_count": 11,
+        "resource_digest": "sha256:4ad43b06350b080acaf608ddeeba26070b841f1df845f4a96d296c206e1c8f85"
+      },
+      {
+        "resource_id": "RESOURCE-SYN-PRELIMINARY_CRITERIA",
+        "item_count": 2,
+        "resource_digest": "sha256:9517feab94dc3153b4a3a638f8648e6777e81ccbdaea0e2039ad6df16e62156c"
+      },
+      {
+        "resource_id": "RESOURCE-SYN-QUALIFICATION_CRITERIA",
+        "item_count": 3,
+        "resource_digest": "sha256:beadc1143d8d675ac7d9be8610673feac0583dafb524806b59007fee835540a8"
+      },
+      {
+        "resource_id": "RESOURCE-SYN-TECHNICAL_SCORING",
+        "item_count": 4,
+        "resource_digest": "sha256:305cd16b591420f4fbb87835bacf58c58d5114844e7faf7e269d58426d28bda6"
+      },
+      {
+        "resource_id": "RESOURCE-SYN-SCHEDULE_ROWS",
+        "item_count": 2,
+        "resource_digest": "sha256:b867e1eeef9423d47d7d05a8cbab9f605bd8bc521ca694b2e5634158467546dc"
+      },
+      {
+        "resource_id": "RESOURCE-SYN-PRICE_LINES",
+        "item_count": 5,
+        "resource_digest": "sha256:72ef3a822e1f6d9cea97db526424c4811bd8fb12096ec6d0d1cd5edf3261c7cc"
+      },
+      {
+        "resource_id": "RESOURCE-SYN-CONTRACT_CONDITIONS",
+        "item_count": 2,
+        "resource_digest": "sha256:3c50bde02fbebd534746a8261377e847fe6377dfec630a5e91e5bcb05cbe0097"
+      },
+      {
+        "resource_id": "RESOURCE-SYN-DECISIONS",
+        "item_count": 2,
+        "resource_digest": "sha256:ac5b09ea903812450c4762b47882911f3db01754ca969eea6da2e88e63b3f5bf"
+      }
+    ]
+  },
+  "resource_collection_map": {
+    "RESOURCE-SYN-REQUIREMENT_GROUPS": "requirement_groups",
+    "RESOURCE-SYN-REQUIREMENTS": "requirements",
+    "RESOURCE-SYN-PRELIMINARY_CRITERIA": "preliminary_criteria",
+    "RESOURCE-SYN-QUALIFICATION_CRITERIA": "qualification_criteria",
+    "RESOURCE-SYN-TECHNICAL_SCORING": "technical_scoring",
+    "RESOURCE-SYN-SCHEDULE_ROWS": "schedule_rows",
+    "RESOURCE-SYN-PRICE_LINES": "price_lines",
+    "RESOURCE-SYN-CONTRACT_CONDITIONS": "contract_conditions",
+    "RESOURCE-SYN-DECISIONS": "decisions"
+  },
+  "role_policy": {
+    "policy_ref": "ROLE-SYN",
+    "roles": [
+      "workspace_owner",
+      "authorized_signatory"
+    ],
+    "submit_role": "authorized_signatory"
+  },
+  "rule_registry": {
+    "profile_ref": "RULESET-SYN",
+    "fixture_overrides": []
+  },
+  "validation_registry": {
+    "profile_ref": "VAL-SYN",
+    "fixture_rule_refs": []
+  },
+  "evidence_contract": {
+    "profile_ref": "EV-SYN",
+    "deduplicate_by_content_digest": true,
+    "reuse_by_link": true,
+    "duplicate_upload_for_cross_linked_form": false
+  },
+  "projections": {
+    "opening": "PROJ-SYN-O",
+    "evaluation": "PROJ-SYN-E",
+    "contract": "PROJ-SYN-C"
+  },
+  "section_templates": [
+    {
+      "section_instance_id": "SEC-SYN-100",
+      "section_key": "eligibility",
+      "section_type": "generic",
+      "order_weight": 100,
+      "required": true,
+      "resource_refs": [],
+      "completion_rule_ref": "RULE-SYN-COMPLETE",
+      "invalidation_policy_ref": "INVALIDATE-SYN"
+    },
+    {
+      "section_instance_id": "SEC-SYN-200",
+      "section_key": "technical_offer",
+      "section_type": "generic",
+      "order_weight": 200,
+      "required": true,
+      "resource_refs": [],
+      "completion_rule_ref": "RULE-SYN-COMPLETE",
+      "invalidation_policy_ref": "INVALIDATE-SYN"
+    },
+    {
+      "section_instance_id": "SEC-SYN-300",
+      "section_key": "commercial_offer",
+      "section_type": "generic",
+      "order_weight": 300,
+      "required": true,
+      "resource_refs": [],
+      "completion_rule_ref": "RULE-SYN-COMPLETE",
+      "invalidation_policy_ref": "INVALIDATE-SYN"
+    },
+    {
+      "section_instance_id": "SEC-SYN-400",
+      "section_key": "declarations",
+      "section_type": "generic",
+      "order_weight": 400,
+      "required": true,
+      "resource_refs": [],
+      "completion_rule_ref": "RULE-SYN-COMPLETE",
+      "invalidation_policy_ref": "INVALIDATE-SYN"
+    }
+  ],
+  "cross_cutting_views": [
+    {
+      "view_key": "evidence_register",
+      "title": "Evidence"
+    },
+    {
+      "view_key": "issue_register",
+      "title": "Issues"
+    }
+  ],
+  "workflow_gates": [
+    {
+      "gate_key": "review_and_validate",
+      "order_weight": 100
+    },
+    {
+      "gate_key": "submit_and_seal",
+      "order_weight": 200
+    },
+    {
+      "gate_key": "submission_receipt",
+      "order_weight": 300
+    }
+  ],
+  "scoring_profile": {
+    "maximum_score": "100",
+    "qualification_threshold": "60"
+  },
+  "bindings_template": {
+    "compiler_version": "1.0.0"
+  },
+  "checklist_version": "CHECKLIST-SYN-V1",
+  "declared_digests": {
+    "std_source": "sha256:3cda4d4c11077c0e7417326200209917899877c83b2715c35fbb474d6061d38d",
+    "catalogue": "sha256:ac71dc583f55bdf67993186f510e7276cf77780078ae94bc0b9dd98a9d56f2d3",
+    "blueprint": "sha256:da3b93fc56b0a553f49c46ae403f29f6534c890b9b62b11a8ed5df585772cd64",
+    "manifest_contract": "sha256:c0dda12df8c2106a73007083c21126179b4979d80c293b904a61c0df36707984",
+    "tender_configuration": "sha256:164b0d398482c82b3d4b7fd51ca0401bd1d8615e6a9042a61ae62284f6680005",
+    "document_package": "sha256:6665e392553c81d2a03db9fb95561d7d4d4fae39dcc9427fae7901a7e18c46b5",
+    "collections": "sha256:8a55d03d02da131724da0755f04d342ece06ec62c258587e3cd71cfdb6e8ded9"
+  },
+  "compile_request": {
+    "compile_mode": "preview",
+    "target_manifest_id": "BWMF-SYN-ALPHA-001",
+    "target_manifest_version": 1,
+    "published_tender_ref": "SYN-ALPHA-TENDER-001",
+    "published_tender_version": 1,
+    "compiler_version": "1.0.0",
+    "expected_input_digests": {
+      "std_source": "sha256:3cda4d4c11077c0e7417326200209917899877c83b2715c35fbb474d6061d38d",
+      "catalogue": "sha256:ac71dc583f55bdf67993186f510e7276cf77780078ae94bc0b9dd98a9d56f2d3",
+      "blueprint": "sha256:da3b93fc56b0a553f49c46ae403f29f6534c890b9b62b11a8ed5df585772cd64",
+      "manifest_contract": "sha256:c0dda12df8c2106a73007083c21126179b4979d80c293b904a61c0df36707984",
+      "tender_configuration": "sha256:164b0d398482c82b3d4b7fd51ca0401bd1d8615e6a9042a61ae62284f6680005",
+      "document_package": "sha256:6665e392553c81d2a03db9fb95561d7d4d4fae39dcc9427fae7901a7e18c46b5",
+      "collections": "sha256:8a55d03d02da131724da0755f04d342ece06ec62c258587e3cd71cfdb6e8ded9"
+    }
+  }
+}

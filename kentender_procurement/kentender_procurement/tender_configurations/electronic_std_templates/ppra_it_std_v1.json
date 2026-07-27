@@ -359,27 +359,230 @@
       "title": "Tender Security",
       "order": 5,
       "renderer": "evidence_and_declaration",
-      "bidder_instructions": "Provide the required tender security or tender-securing declaration as configured for this tender.",
+      "bidder_instructions": "Provide the required tender security instrument or certify the tender-securing declaration as configured for this tender. Never both.",
       "source_refs": [
-        "PPRA IT STD — Tender Security / Tender-Securing Declaration; TDS"
+        "PPRA IT STD — ITT 22; Section IV Tender Security forms; Regulations 46 and 155(2); TDS"
       ],
       "required": true,
       "applicability": {
-        "when": "tender_security_required"
+        "when": "tender_security_applicable"
       },
       "confirmation_required_for_submission": false,
       "completion_rule": "server_derived_from_responses",
       "locked_legal_text": null,
-      "bidder_owned_fields": [],
-      "tender_owned_slots": [],
-      "slice_status": "route_only_not_editable_in_lean_slice"
+      "default_permitted_instrument_types": [
+        "Bank Guarantee",
+        "Insurance Bond",
+        "Letter of Credit"
+      ],
+      "default_permitted_electronic_routes": [
+        {
+          "route_key": "upload",
+          "label": "Upload electronic guarantee",
+          "help": "Attach the issuer-issued electronic guarantee. A scanned paper document is not an electronic original."
+        },
+        {
+          "route_key": "issuer_hosted",
+          "label": "Use issuer-hosted guarantee",
+          "help": "Provide the verification location or URL and the guarantee reference that identifies the complete terms."
+        }
+      ],
+      "default_issuer_eligibility": "The instrument must be issued by a bank or financial institution acceptable to the Procuring Entity. The tenderer cannot issue its own security.",
+      "default_beneficiary_binding": "tds.procuring_entity_name",
+      "lot_coverage_mode": "tender_level",
+      "foreign_non_bank_rule": {
+        "applies_when": "issuer_non_bank_outside_kenya",
+        "require_correspondent_or_waiver": true,
+        "help": "When the issuer is a non-bank financial institution outside Kenya, provide Kenyan correspondent financial institution details or evidence that the Procuring Entity waived this requirement before tender submission."
+      },
+      "declaration": {
+        "title": "Tender-Securing Declaration",
+        "summary_intro": "By certifying this declaration, the tenderer undertakes the consequences of withdrawal, failure to execute the contract, or failure to furnish performance security as configured for this tender.",
+        "suspension_triggers": [
+          {
+            "trigger_key": "withdrawal_during_validity",
+            "label": "Withdrawal of the tender during the period of tender validity"
+          },
+          {
+            "trigger_key": "fail_execute_contract",
+            "label": "Failure or refusal to execute the contract when required"
+          },
+          {
+            "trigger_key": "fail_furnish_performance_security",
+            "label": "Failure or refusal to furnish the performance security"
+          }
+        ],
+        "suspension_period_days": 180,
+        "suspension_commencement": "from_date_of_notification_of_award_or_as_configured",
+        "expiry_conditions": [
+          "Expiry of the tender validity period without award",
+          "Notification that the tenderer was unsuccessful",
+          "Execution of the contract and furnishing of any required performance security by the successful tenderer"
+        ],
+        "legal_text_template": "We, the undersigned, declare that:\n\nWe understand that, according to your conditions, tenders must be supported by a Tender-Securing Declaration.\n\nWe accept that we will automatically be suspended from being eligible for bidding in any contract with the Procuring Entity for the configured suspension period if we are in breach of our obligation(s) under the tender conditions, because we:\n(a) have withdrawn our Tender during the period of Tender validity specified; or\n(b) having been notified of the acceptance of our Tender by the Procuring Entity during the period of Tender validity, (i) fail or refuse to execute the Contract, if required, or (ii) fail or refuse to furnish the Performance Security, in accordance with the ITT.\n\nWe understand this Tender-Securing Declaration shall expire if we are not the successful Tenderer, upon the earlier of (i) our receipt of your notification to us of the name of the successful Tenderer; or (ii) twenty-eight days after the expiration of our Tender.\n\nProcuring Entity: {{procuring_entity_name}}\nTender: {{tender_title}} ({{tender_reference}})\nTenderer: {{tenderer_name}}\nTender validity ends: {{tender_validity_end_date}}\nSuspension period: {{suspension_period_days}} days\nSignatory: {{signatory_name}}, {{signatory_title}}"
+      },
+      "bidder_owned_fields": [
+        {
+          "field_key": "instrument_type",
+          "label": "Instrument type",
+          "ownership": "bidder",
+          "data_type": "select"
+        },
+        {
+          "field_key": "instrument_number",
+          "label": "Instrument or guarantee number",
+          "ownership": "bidder",
+          "data_type": "text"
+        },
+        {
+          "field_key": "issuer_legal_name",
+          "label": "Issuing institution legal name",
+          "ownership": "bidder",
+          "data_type": "text"
+        },
+        {
+          "field_key": "issuer_registered_address",
+          "label": "Issuer registered address",
+          "ownership": "bidder",
+          "data_type": "text"
+        },
+        {
+          "field_key": "issuer_country",
+          "label": "Issuer country",
+          "ownership": "bidder",
+          "data_type": "text"
+        },
+        {
+          "field_key": "issue_date",
+          "label": "Issue date",
+          "ownership": "bidder",
+          "data_type": "date"
+        },
+        {
+          "field_key": "expiry_date",
+          "label": "Expiry date",
+          "ownership": "bidder",
+          "data_type": "date"
+        },
+        {
+          "field_key": "guaranteed_amount",
+          "label": "Guaranteed amount",
+          "ownership": "bidder",
+          "data_type": "number"
+        },
+        {
+          "field_key": "currency",
+          "label": "Currency",
+          "ownership": "bidder",
+          "data_type": "select"
+        },
+        {
+          "field_key": "electronic_route",
+          "label": "Electronic submission route",
+          "ownership": "bidder",
+          "data_type": "select"
+        },
+        {
+          "field_key": "upload_file_url",
+          "label": "Uploaded electronic guarantee",
+          "ownership": "bidder",
+          "data_type": "file"
+        },
+        {
+          "field_key": "issuer_hosted_url",
+          "label": "Issuer-hosted verification location or URL",
+          "ownership": "bidder",
+          "data_type": "text"
+        },
+        {
+          "field_key": "guarantee_reference",
+          "label": "Guarantee reference number",
+          "ownership": "bidder",
+          "data_type": "text"
+        },
+        {
+          "field_key": "issuer_is_foreign_non_bank",
+          "label": "Issuer is a non-bank financial institution outside Kenya",
+          "ownership": "bidder",
+          "data_type": "boolean"
+        },
+        {
+          "field_key": "correspondent_institution_name",
+          "label": "Kenyan correspondent financial institution",
+          "ownership": "bidder",
+          "data_type": "text"
+        },
+        {
+          "field_key": "correspondent_details",
+          "label": "Correspondent details",
+          "ownership": "bidder",
+          "data_type": "text"
+        },
+        {
+          "field_key": "waiver_reference",
+          "label": "PE waiver evidence or reference",
+          "ownership": "bidder",
+          "data_type": "text"
+        },
+        {
+          "field_key": "declaration_certified",
+          "label": "Declaration certification",
+          "ownership": "bidder",
+          "data_type": "boolean"
+        }
+      ],
+      "tender_owned_slots": [
+        {
+          "field_key": "required_amount",
+          "label": "Required security amount",
+          "ownership": "tender",
+          "binding": "tds.tender_security_amount"
+        },
+        {
+          "field_key": "required_currency",
+          "label": "Required security currency",
+          "ownership": "tender",
+          "binding": "tds.tender_security_currency"
+        },
+        {
+          "field_key": "validity_period",
+          "label": "Security validity period",
+          "ownership": "tender",
+          "binding": "tds.tender_security_validity_period"
+        },
+        {
+          "field_key": "validity_unit",
+          "label": "Security validity unit",
+          "ownership": "tender",
+          "binding": "tds.tender_security_validity_unit"
+        },
+        {
+          "field_key": "security_type",
+          "label": "Configured security mode",
+          "ownership": "tender",
+          "binding": "tds.tender_security_type"
+        },
+        {
+          "field_key": "bid_validity_period",
+          "label": "Tender validity period",
+          "ownership": "tender",
+          "binding": "tds.bid_validity_period"
+        },
+        {
+          "field_key": "bid_validity_unit",
+          "label": "Tender validity unit",
+          "ownership": "tender",
+          "binding": "tds.bid_validity_unit"
+        }
+      ],
+      "slice_status": "tender_security_implemented"
     },
     {
       "section_key": "preliminary_requirements_and_evidence",
       "title": "Preliminary Requirements and Evidence",
       "order": 6,
-      "renderer": "evidence_matrix",
-      "bidder_instructions": "Upload or declare evidence for preliminary examination requirements.",
+      "renderer": "eligibility_checklist",
+      "bidder_instructions": "Provide the documents and information required for preliminary examination.",
       "source_refs": [
         "PPRA IT STD Section III — Evaluation and Qualification Criteria (Preliminary)"
       ],
@@ -390,16 +593,37 @@
       "confirmation_required_for_submission": false,
       "completion_rule": "server_derived_from_responses",
       "locked_legal_text": null,
-      "bidder_owned_fields": [],
+      "bidder_owned_fields": [
+        {
+          "field_key": "criterion_responses",
+          "label": "Preliminary criterion responses",
+          "ownership": "bidder",
+          "data_type": "object"
+        }
+      ],
       "tender_owned_slots": [],
-      "slice_status": "route_only_not_editable_in_lean_slice"
+      "criterion_field_schema": [
+        "criterion_id",
+        "title",
+        "evidence_instruction",
+        "mandatory",
+        "applicability",
+        "response_method",
+        "linked_section_key",
+        "validity_rule",
+        "accepted_file_types",
+        "max_file_size_mb",
+        "display_order",
+        "structured_fields"
+      ],
+      "slice_status": "preliminary_implemented"
     },
     {
       "section_key": "qualification_and_capability",
       "title": "Qualification and Capability",
       "order": 7,
-      "renderer": "evidence_matrix",
-      "bidder_instructions": "Respond to qualification and capability criteria with supporting evidence.",
+      "renderer": "qualification_response",
+      "bidder_instructions": "Provide the information and evidence demonstrating your organisation's capacity to perform the contract.",
       "source_refs": [
         "PPRA IT STD Section III — Qualification Criteria"
       ],
@@ -410,9 +634,34 @@
       "confirmation_required_for_submission": false,
       "completion_rule": "server_derived_from_responses",
       "locked_legal_text": null,
-      "bidder_owned_fields": [],
+      "bidder_owned_fields": [
+        {
+          "field_key": "categories",
+          "label": "Qualification category responses",
+          "ownership": "bidder",
+          "data_type": "object"
+        },
+        {
+          "field_key": "projects",
+          "label": "Shared experience projects",
+          "ownership": "bidder",
+          "data_type": "array"
+        },
+        {
+          "field_key": "personnel",
+          "label": "Personnel profiles",
+          "ownership": "bidder",
+          "data_type": "array"
+        },
+        {
+          "field_key": "organizations",
+          "label": "Delivery partner organizations",
+          "ownership": "bidder",
+          "data_type": "array"
+        }
+      ],
       "tender_owned_slots": [],
-      "slice_status": "route_only_not_editable_in_lean_slice"
+      "slice_status": "qualification_implemented"
     },
     {
       "section_key": "technical_proposal_and_implementation_plan",

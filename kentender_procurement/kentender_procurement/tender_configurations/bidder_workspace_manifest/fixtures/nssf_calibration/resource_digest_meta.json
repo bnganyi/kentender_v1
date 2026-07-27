@@ -1,0 +1,126 @@
+{
+  "descriptor_set_digest": "sha256:530792ace76ad691c168ab65c111f55a63a2e2d1929aa09ddf00d1d2e62bf6bd",
+  "resources": [
+    {
+      "resource_id": "RESOURCE-NSSF-REQUIREMENT-GROUPS",
+      "item_count": 23,
+      "file": "resources/RESOURCE-NSSF-REQUIREMENT-GROUPS.json",
+      "resource_digest": "sha256:7c8725822187749999b76d04fb843038f1139e2ee249ead40cfffb175d11c78d",
+      "resource_type": "requirement_group",
+      "schema_ref": "bwmf/item/requirement_group",
+      "schema_version": "1.0.0",
+      "ordering_contract": [
+        "order_weight",
+        "group_key"
+      ]
+    },
+    {
+      "resource_id": "RESOURCE-NSSF-REQUIREMENTS",
+      "item_count": 190,
+      "file": "resources/RESOURCE-NSSF-REQUIREMENTS.json",
+      "resource_digest": "sha256:12e64fd25709a935231213071a0e9d04c8aa3094a38a2fb11a44155b17f3d697",
+      "resource_type": "requirement",
+      "schema_ref": "bwmf/item/requirement",
+      "schema_version": "1.0.0",
+      "ordering_contract": [
+        "order_weight",
+        "requirement_key"
+      ]
+    },
+    {
+      "resource_id": "RESOURCE-NSSF-PRELIMINARY-CRITERIA",
+      "item_count": 9,
+      "file": "resources/RESOURCE-NSSF-PRELIMINARY-CRITERIA.json",
+      "resource_digest": "sha256:0ab46d93f32e88876704b39526124a3c9b68f0e1d453e48ac3fa6d7b7e5edebb",
+      "resource_type": "preliminary_criterion",
+      "schema_ref": "bwmf/item/preliminary_criterion",
+      "schema_version": "1.0.0",
+      "ordering_contract": [
+        "order_weight",
+        "criterion_key"
+      ]
+    },
+    {
+      "resource_id": "RESOURCE-NSSF-QUALIFICATION-CRITERIA",
+      "item_count": 9,
+      "file": "resources/RESOURCE-NSSF-QUALIFICATION-CRITERIA.json",
+      "resource_digest": "sha256:54cf1d2458bde735721f7c3e23444df553efdae3c48d524a05bffef9131ff827",
+      "resource_type": "qualification_criterion",
+      "schema_ref": "bwmf/item/qualification_criterion",
+      "schema_version": "1.0.0",
+      "ordering_contract": [
+        "order_weight",
+        "criterion_key"
+      ]
+    },
+    {
+      "resource_id": "RESOURCE-NSSF-TECHNICAL-SCORING",
+      "item_count": 7,
+      "file": "resources/RESOURCE-NSSF-TECHNICAL-SCORING.json",
+      "resource_digest": "sha256:2207ad23244b116cb97015c34c064234287d81fd3157e93dc7b896e14fb72030",
+      "resource_type": "evaluation_criterion",
+      "schema_ref": "bwmf/item/evaluation_criterion",
+      "schema_version": "1.0.0",
+      "ordering_contract": [
+        "order_weight",
+        "criterion_key"
+      ]
+    },
+    {
+      "resource_id": "RESOURCE-NSSF-SCHEDULE",
+      "item_count": 6,
+      "file": "resources/RESOURCE-NSSF-SCHEDULE.json",
+      "resource_digest": "sha256:c33f7eb213e689e2b30ae89d329216373d5b24ac639fa46b926d4fd2a7d64ef8",
+      "resource_type": "implementation_schedule_row",
+      "schema_ref": "bwmf/item/implementation_schedule_row",
+      "schema_version": "1.0.0",
+      "ordering_contract": [
+        "order_weight",
+        "row_key"
+      ]
+    },
+    {
+      "resource_id": "RESOURCE-NSSF-PRICE-LINES",
+      "item_count": 22,
+      "file": "resources/RESOURCE-NSSF-PRICE-LINES.json",
+      "resource_digest": "sha256:895d1c94c3446b07f8a5c4b72e68540e91e5e4a5d13a7126683b9547fff1db2e",
+      "resource_type": "price_line",
+      "schema_ref": "bwmf/item/price_line",
+      "schema_version": "1.0.0",
+      "ordering_contract": [
+        "order_weight",
+        "line_key"
+      ]
+    },
+    {
+      "resource_id": "RESOURCE-NSSF-CONTRACT-CONDITIONS",
+      "item_count": 8,
+      "file": "resources/RESOURCE-NSSF-CONTRACT-CONDITIONS.json",
+      "resource_digest": "sha256:8b90a193c27ef0d6b5d740980630094064e9571fadd160c3bc2b9426f4f9ca94",
+      "resource_type": "contract_condition",
+      "schema_ref": "bwmf/item/contract_condition",
+      "schema_version": "1.0.0",
+      "ordering_contract": [
+        "order_weight",
+        "condition_key"
+      ]
+    },
+    {
+      "resource_id": "RESOURCE-NSSF-DECISIONS",
+      "item_count": 8,
+      "file": "resources/RESOURCE-NSSF-DECISIONS.json",
+      "resource_digest": "sha256:fa677d4b40b1934c8c50a9817733a7c4183d641f1ff3d957ce1e190d5381c5ef",
+      "resource_type": "controlled_decision",
+      "schema_ref": "bwmf/item/controlled_decision",
+      "schema_version": "1.0.0",
+      "ordering_contract": [
+        "order_weight",
+        "decision_id"
+      ]
+    }
+  ],
+  "preview_payload_digest": "sha256:60184f6b419d60866a418d5971d369fd634c7d3211a995f616122c75fc264a7e",
+  "projection_digest": "sha256:9dac86f777ae8c89f5b02e29e82401e5f83e12966891f2337fc7cc98ee0f907d",
+  "diagnostic_digest": "sha256:b3bbc3f30456383236a9ea1b131fee9d6e62519a20e45484c987805260be84f7",
+  "materialized_calibration_payload_digest": "sha256:5ed4eb04041f88e335d27acb20b1da8499ed8a46dfe23294ee57fbd27e22de4a"
+}

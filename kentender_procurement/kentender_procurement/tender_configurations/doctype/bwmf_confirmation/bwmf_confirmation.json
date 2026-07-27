@@ -1,0 +1,147 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:confirmation_id",
+ "creation": "2026-07-24 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "confirmation_id",
+  "workspace",
+  "response_id",
+  "response_version",
+  "response_digest",
+  "legal_text_ref",
+  "legal_text_digest",
+  "statement_digest",
+  "actor_ref",
+  "capacity",
+  "authority",
+  "confirmed_at",
+  "state",
+  "organization",
+  "bidder_party"
+ ],
+ "fields": [
+  {
+   "fieldname": "confirmation_id",
+   "fieldtype": "Data",
+   "label": "Confirmation Id",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "workspace",
+   "fieldtype": "Link",
+   "label": "Workspace",
+   "options": "BWMF Workspace",
+   "reqd": 1
+  },
+  {
+   "fieldname": "response_id",
+   "fieldtype": "Data",
+   "label": "Response Id",
+   "reqd": 1
+  },
+  {
+   "fieldname": "response_version",
+   "fieldtype": "Int",
+   "label": "Response Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "response_digest",
+   "fieldtype": "Data",
+   "label": "Response Digest",
+   "reqd": 1
+  },
+  {
+   "fieldname": "legal_text_ref",
+   "fieldtype": "Data",
+   "label": "Legal Text Ref",
+   "reqd": 1
+  },
+  {
+   "fieldname": "legal_text_digest",
+   "fieldtype": "Data",
+   "label": "Legal Text Digest",
+   "reqd": 1
+  },
+  {
+   "fieldname": "statement_digest",
+   "fieldtype": "Data",
+   "label": "Statement Digest",
+   "reqd": 1
+  },
+  {
+   "fieldname": "actor_ref",
+   "fieldtype": "Data",
+   "label": "Actor Ref",
+   "reqd": 1
+  },
+  {
+   "fieldname": "capacity",
+   "fieldtype": "Data",
+   "label": "Capacity",
+   "reqd": 1
+  },
+  {
+   "fieldname": "authority",
+   "fieldtype": "Link",
+   "label": "Authority",
+   "options": "BWMF Authority Reference"
+  },
+  {
+   "fieldname": "confirmed_at",
+   "fieldtype": "Datetime",
+   "label": "Confirmed At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Select",
+   "label": "State",
+   "options": "confirmed\ninvalidated",
+   "reqd": 1
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "label": "Organization",
+   "reqd": 1
+  },
+  {
+   "fieldname": "bidder_party",
+   "fieldtype": "Data",
+   "label": "Bidder Party",
+   "reqd": 1
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-24 12:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Confirmation",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "title_field": "confirmation_id"
+}

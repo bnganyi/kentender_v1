@@ -1,6 +1,6 @@
 {
  "app": "kentender_procurement",
- "creation": "2026-07-18 11:24:11.839833",
+ "creation": "2026-07-23 15:16:34.928164",
  "docstatus": 0,
  "doctype": "Workspace Sidebar",
  "header_icon": "buying",
@@ -31,7 +31,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-07-21 22:55:59.733899",
+ "modified": "2026-07-26 15:50:28.918925",
  "modified_by": "Administrator",
  "module": "Demand Intake",
  "name": "Demand Intake",

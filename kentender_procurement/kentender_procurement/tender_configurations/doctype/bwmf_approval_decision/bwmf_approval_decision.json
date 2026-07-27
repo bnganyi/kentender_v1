@@ -1,0 +1,141 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:decision_id",
+ "creation": "2026-07-24 19:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "decision_id",
+  "review_package",
+  "review_package_digest",
+  "payload_digest",
+  "decision",
+  "state",
+  "approver",
+  "organization",
+  "decided_at",
+  "return_reason",
+  "correction_owner",
+  "warning_acknowledgements_json",
+  "binding_json",
+  "immutable"
+ ],
+ "fields": [
+  {
+   "fieldname": "decision_id",
+   "fieldtype": "Data",
+   "label": "Decision Id",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "review_package",
+   "fieldtype": "Link",
+   "label": "Review Package",
+   "reqd": 1,
+   "options": "BWMF Review Package"
+  },
+  {
+   "fieldname": "review_package_digest",
+   "fieldtype": "Data",
+   "label": "Review Package Digest",
+   "reqd": 1
+  },
+  {
+   "fieldname": "payload_digest",
+   "fieldtype": "Data",
+   "label": "Payload Digest",
+   "reqd": 1
+  },
+  {
+   "fieldname": "decision",
+   "fieldtype": "Select",
+   "label": "Decision",
+   "reqd": 1,
+   "options": "approved\nreturned"
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Select",
+   "label": "State",
+   "reqd": 1,
+   "options": "Active\nInvalidated",
+   "default": "Active"
+  },
+  {
+   "fieldname": "approver",
+   "fieldtype": "Data",
+   "label": "Approver",
+   "reqd": 1
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "label": "Organization",
+   "reqd": 1
+  },
+  {
+   "fieldname": "decided_at",
+   "fieldtype": "Datetime",
+   "label": "Decided At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "return_reason",
+   "fieldtype": "Small Text",
+   "label": "Return Reason"
+  },
+  {
+   "fieldname": "correction_owner",
+   "fieldtype": "Data",
+   "label": "Correction Owner"
+  },
+  {
+   "fieldname": "warning_acknowledgements_json",
+   "fieldtype": "Long Text",
+   "label": "Warning Acknowledgements Json",
+   "reqd": 1
+  },
+  {
+   "fieldname": "binding_json",
+   "fieldtype": "Long Text",
+   "label": "Binding Json",
+   "reqd": 1
+  },
+  {
+   "fieldname": "immutable",
+   "fieldtype": "Check",
+   "label": "Immutable",
+   "default": "1",
+   "read_only": 1
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-24 19:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Approval Decision",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "title_field": "decision_id"
+}

@@ -1,0 +1,51 @@
+{
+  "$id": "bwmf/v1/role_authority",
+  "schema_version": "1.0.0",
+  "title": "RoleAuthority",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "policy_ref",
+    "roles",
+    "submit_role"
+  ],
+  "properties": {
+    "policy_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "roles": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "submit_role": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authority_refs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "authority_ref",
+          "version"
+        ],
+        "properties": {
+          "authority_ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

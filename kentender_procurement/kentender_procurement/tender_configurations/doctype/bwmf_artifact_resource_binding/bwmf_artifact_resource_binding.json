@@ -1,0 +1,106 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-07-24 16:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "binding_id",
+  "artifact_resource_key",
+  "compile_artifact",
+  "resource_id",
+  "resource_digest",
+  "resource_docname",
+  "content_ref",
+  "immutable",
+  "organization"
+ ],
+ "fields": [
+  {
+   "fieldname": "binding_id",
+   "fieldtype": "Data",
+   "label": "Binding Id",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "artifact_resource_key",
+   "fieldtype": "Data",
+   "label": "Artifact Resource Key",
+   "reqd": 1,
+   "unique": 1,
+   "description": "Composite unique: compile_artifact|resource_id",
+   "read_only": 1
+  },
+  {
+   "fieldname": "compile_artifact",
+   "fieldtype": "Link",
+   "label": "Compile Artifact",
+   "options": "BWMF Compile Artifact",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "resource_id",
+   "fieldtype": "Data",
+   "label": "Resource Id",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "resource_digest",
+   "fieldtype": "Data",
+   "label": "Resource Digest",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "resource_docname",
+   "fieldtype": "Data",
+   "label": "Resource Docname",
+   "description": "BWMF Manifest Resource document name for this exact version"
+  },
+  {
+   "fieldname": "content_ref",
+   "fieldtype": "Data",
+   "label": "Content Ref",
+   "reqd": 1
+  },
+  {
+   "fieldname": "immutable",
+   "fieldtype": "Check",
+   "label": "Immutable",
+   "default": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "label": "Organization"
+  }
+ ],
+ "istable": 0,
+ "module": "Tender Configurations",
+ "name": "BWMF Artifact Resource Binding",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 0,
+ "title_field": "binding_id"
+}

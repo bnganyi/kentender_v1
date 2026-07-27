@@ -1,0 +1,89 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:receipt_id",
+ "creation": "2026-07-24 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "receipt_id",
+  "submission",
+  "verification_value",
+  "issued_at",
+  "safe_summary",
+  "organization",
+  "bidder_party"
+ ],
+ "fields": [
+  {
+   "fieldname": "receipt_id",
+   "fieldtype": "Data",
+   "label": "Receipt Id",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "submission",
+   "fieldtype": "Link",
+   "label": "Submission",
+   "options": "BWMF Submission",
+   "reqd": 1
+  },
+  {
+   "fieldname": "verification_value",
+   "fieldtype": "Data",
+   "label": "Verification Value",
+   "reqd": 1
+  },
+  {
+   "fieldname": "issued_at",
+   "fieldtype": "Datetime",
+   "label": "Issued At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "safe_summary",
+   "fieldtype": "Small Text",
+   "label": "Safe Summary"
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "label": "Organization",
+   "reqd": 1
+  },
+  {
+   "fieldname": "bidder_party",
+   "fieldtype": "Data",
+   "label": "Bidder Party",
+   "reqd": 1
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-24 12:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Submission Receipt",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "title_field": "receipt_id"
+}

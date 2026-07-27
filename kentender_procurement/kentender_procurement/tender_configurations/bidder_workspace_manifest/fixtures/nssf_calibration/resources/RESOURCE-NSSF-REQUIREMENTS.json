@@ -1,0 +1,1344 @@
+{
+  "resource_id": "RESOURCE-NSSF-REQUIREMENTS",
+  "resource_type": "requirement",
+  "schema_ref": "bwmf/item/requirement",
+  "schema_version": "1.0.0",
+  "item_count": 190,
+  "ordering_contract": [
+    "order_weight",
+    "requirement_key"
+  ],
+  "resource_digest": "sha256:12e64fd25709a935231213071a0e9d04c8aa3094a38a2fb11a44155b17f3d697",
+  "items": [
+    {
+      "requirement_key": "REQ-0001",
+      "group_key": "REQGRP-0001",
+      "order_weight": 10,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0002",
+      "group_key": "REQGRP-0002",
+      "order_weight": 20,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0003",
+      "group_key": "REQGRP-0003",
+      "order_weight": 30,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0004",
+      "group_key": "REQGRP-0004",
+      "order_weight": 40,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0005",
+      "group_key": "REQGRP-0005",
+      "order_weight": 50,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0006",
+      "group_key": "REQGRP-0006",
+      "order_weight": 60,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0007",
+      "group_key": "REQGRP-0007",
+      "order_weight": 70,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0008",
+      "group_key": "REQGRP-0008",
+      "order_weight": 80,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0009",
+      "group_key": "REQGRP-0009",
+      "order_weight": 90,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0010",
+      "group_key": "REQGRP-0010",
+      "order_weight": 100,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0011",
+      "group_key": "REQGRP-0011",
+      "order_weight": 110,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0012",
+      "group_key": "REQGRP-0012",
+      "order_weight": 120,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0013",
+      "group_key": "REQGRP-0013",
+      "order_weight": 130,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0014",
+      "group_key": "REQGRP-0014",
+      "order_weight": 140,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0015",
+      "group_key": "REQGRP-0015",
+      "order_weight": 150,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0016",
+      "group_key": "REQGRP-0016",
+      "order_weight": 160,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0017",
+      "group_key": "REQGRP-0017",
+      "order_weight": 170,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0018",
+      "group_key": "REQGRP-0018",
+      "order_weight": 180,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0019",
+      "group_key": "REQGRP-0019",
+      "order_weight": 190,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0020",
+      "group_key": "REQGRP-0020",
+      "order_weight": 200,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0021",
+      "group_key": "REQGRP-0021",
+      "order_weight": 210,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0022",
+      "group_key": "REQGRP-0022",
+      "order_weight": 220,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0023",
+      "group_key": "REQGRP-0023",
+      "order_weight": 230,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0024",
+      "group_key": "REQGRP-0001",
+      "order_weight": 240,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0025",
+      "group_key": "REQGRP-0002",
+      "order_weight": 250,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0026",
+      "group_key": "REQGRP-0003",
+      "order_weight": 260,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0027",
+      "group_key": "REQGRP-0004",
+      "order_weight": 270,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0028",
+      "group_key": "REQGRP-0005",
+      "order_weight": 280,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0029",
+      "group_key": "REQGRP-0006",
+      "order_weight": 290,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0030",
+      "group_key": "REQGRP-0007",
+      "order_weight": 300,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0031",
+      "group_key": "REQGRP-0008",
+      "order_weight": 310,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0032",
+      "group_key": "REQGRP-0009",
+      "order_weight": 320,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0033",
+      "group_key": "REQGRP-0010",
+      "order_weight": 330,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0034",
+      "group_key": "REQGRP-0011",
+      "order_weight": 340,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0035",
+      "group_key": "REQGRP-0012",
+      "order_weight": 350,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0036",
+      "group_key": "REQGRP-0013",
+      "order_weight": 360,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0037",
+      "group_key": "REQGRP-0014",
+      "order_weight": 370,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0038",
+      "group_key": "REQGRP-0015",
+      "order_weight": 380,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0039",
+      "group_key": "REQGRP-0016",
+      "order_weight": 390,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0040",
+      "group_key": "REQGRP-0017",
+      "order_weight": 400,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0041",
+      "group_key": "REQGRP-0018",
+      "order_weight": 410,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0042",
+      "group_key": "REQGRP-0019",
+      "order_weight": 420,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0043",
+      "group_key": "REQGRP-0020",
+      "order_weight": 430,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0044",
+      "group_key": "REQGRP-0021",
+      "order_weight": 440,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0045",
+      "group_key": "REQGRP-0022",
+      "order_weight": 450,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0046",
+      "group_key": "REQGRP-0023",
+      "order_weight": 460,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0047",
+      "group_key": "REQGRP-0001",
+      "order_weight": 470,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0048",
+      "group_key": "REQGRP-0002",
+      "order_weight": 480,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0049",
+      "group_key": "REQGRP-0003",
+      "order_weight": 490,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0050",
+      "group_key": "REQGRP-0004",
+      "order_weight": 500,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0051",
+      "group_key": "REQGRP-0005",
+      "order_weight": 510,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0052",
+      "group_key": "REQGRP-0006",
+      "order_weight": 520,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0053",
+      "group_key": "REQGRP-0007",
+      "order_weight": 530,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0054",
+      "group_key": "REQGRP-0008",
+      "order_weight": 540,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0055",
+      "group_key": "REQGRP-0009",
+      "order_weight": 550,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0056",
+      "group_key": "REQGRP-0010",
+      "order_weight": 560,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0057",
+      "group_key": "REQGRP-0011",
+      "order_weight": 570,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0058",
+      "group_key": "REQGRP-0012",
+      "order_weight": 580,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0059",
+      "group_key": "REQGRP-0013",
+      "order_weight": 590,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0060",
+      "group_key": "REQGRP-0014",
+      "order_weight": 600,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0061",
+      "group_key": "REQGRP-0015",
+      "order_weight": 610,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0062",
+      "group_key": "REQGRP-0016",
+      "order_weight": 620,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0063",
+      "group_key": "REQGRP-0017",
+      "order_weight": 630,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0064",
+      "group_key": "REQGRP-0018",
+      "order_weight": 640,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0065",
+      "group_key": "REQGRP-0019",
+      "order_weight": 650,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0066",
+      "group_key": "REQGRP-0020",
+      "order_weight": 660,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0067",
+      "group_key": "REQGRP-0021",
+      "order_weight": 670,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0068",
+      "group_key": "REQGRP-0022",
+      "order_weight": 680,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0069",
+      "group_key": "REQGRP-0023",
+      "order_weight": 690,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0070",
+      "group_key": "REQGRP-0001",
+      "order_weight": 700,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0071",
+      "group_key": "REQGRP-0002",
+      "order_weight": 710,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0072",
+      "group_key": "REQGRP-0003",
+      "order_weight": 720,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0073",
+      "group_key": "REQGRP-0004",
+      "order_weight": 730,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0074",
+      "group_key": "REQGRP-0005",
+      "order_weight": 740,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0075",
+      "group_key": "REQGRP-0006",
+      "order_weight": 750,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0076",
+      "group_key": "REQGRP-0007",
+      "order_weight": 760,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0077",
+      "group_key": "REQGRP-0008",
+      "order_weight": 770,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0078",
+      "group_key": "REQGRP-0009",
+      "order_weight": 780,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0079",
+      "group_key": "REQGRP-0010",
+      "order_weight": 790,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0080",
+      "group_key": "REQGRP-0011",
+      "order_weight": 800,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0081",
+      "group_key": "REQGRP-0012",
+      "order_weight": 810,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0082",
+      "group_key": "REQGRP-0013",
+      "order_weight": 820,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0083",
+      "group_key": "REQGRP-0014",
+      "order_weight": 830,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0084",
+      "group_key": "REQGRP-0015",
+      "order_weight": 840,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0085",
+      "group_key": "REQGRP-0016",
+      "order_weight": 850,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0086",
+      "group_key": "REQGRP-0017",
+      "order_weight": 860,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0087",
+      "group_key": "REQGRP-0018",
+      "order_weight": 870,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0088",
+      "group_key": "REQGRP-0019",
+      "order_weight": 880,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0089",
+      "group_key": "REQGRP-0020",
+      "order_weight": 890,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0090",
+      "group_key": "REQGRP-0021",
+      "order_weight": 900,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0091",
+      "group_key": "REQGRP-0022",
+      "order_weight": 910,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0092",
+      "group_key": "REQGRP-0023",
+      "order_weight": 920,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0093",
+      "group_key": "REQGRP-0001",
+      "order_weight": 930,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0094",
+      "group_key": "REQGRP-0002",
+      "order_weight": 940,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0095",
+      "group_key": "REQGRP-0003",
+      "order_weight": 950,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0096",
+      "group_key": "REQGRP-0004",
+      "order_weight": 960,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0097",
+      "group_key": "REQGRP-0005",
+      "order_weight": 970,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0098",
+      "group_key": "REQGRP-0006",
+      "order_weight": 980,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0099",
+      "group_key": "REQGRP-0007",
+      "order_weight": 990,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0100",
+      "group_key": "REQGRP-0008",
+      "order_weight": 1000,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0101",
+      "group_key": "REQGRP-0009",
+      "order_weight": 1010,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0102",
+      "group_key": "REQGRP-0010",
+      "order_weight": 1020,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0103",
+      "group_key": "REQGRP-0011",
+      "order_weight": 1030,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0104",
+      "group_key": "REQGRP-0012",
+      "order_weight": 1040,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0105",
+      "group_key": "REQGRP-0013",
+      "order_weight": 1050,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0106",
+      "group_key": "REQGRP-0014",
+      "order_weight": 1060,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0107",
+      "group_key": "REQGRP-0015",
+      "order_weight": 1070,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0108",
+      "group_key": "REQGRP-0016",
+      "order_weight": 1080,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0109",
+      "group_key": "REQGRP-0017",
+      "order_weight": 1090,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0110",
+      "group_key": "REQGRP-0018",
+      "order_weight": 1100,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0111",
+      "group_key": "REQGRP-0019",
+      "order_weight": 1110,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0112",
+      "group_key": "REQGRP-0020",
+      "order_weight": 1120,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0113",
+      "group_key": "REQGRP-0021",
+      "order_weight": 1130,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0114",
+      "group_key": "REQGRP-0022",
+      "order_weight": 1140,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0115",
+      "group_key": "REQGRP-0023",
+      "order_weight": 1150,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0116",
+      "group_key": "REQGRP-0001",
+      "order_weight": 1160,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0117",
+      "group_key": "REQGRP-0002",
+      "order_weight": 1170,
+      "mandatory": true,
+      "contract_carry_forward": true
+    },
+    {
+      "requirement_key": "REQ-0118",
+      "group_key": "REQGRP-0003",
+      "order_weight": 1180,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0119",
+      "group_key": "REQGRP-0004",
+      "order_weight": 1190,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0120",
+      "group_key": "REQGRP-0005",
+      "order_weight": 1200,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0121",
+      "group_key": "REQGRP-0006",
+      "order_weight": 1210,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0122",
+      "group_key": "REQGRP-0007",
+      "order_weight": 1220,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0123",
+      "group_key": "REQGRP-0008",
+      "order_weight": 1230,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0124",
+      "group_key": "REQGRP-0009",
+      "order_weight": 1240,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0125",
+      "group_key": "REQGRP-0010",
+      "order_weight": 1250,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0126",
+      "group_key": "REQGRP-0011",
+      "order_weight": 1260,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0127",
+      "group_key": "REQGRP-0012",
+      "order_weight": 1270,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0128",
+      "group_key": "REQGRP-0013",
+      "order_weight": 1280,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0129",
+      "group_key": "REQGRP-0014",
+      "order_weight": 1290,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0130",
+      "group_key": "REQGRP-0015",
+      "order_weight": 1300,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0131",
+      "group_key": "REQGRP-0016",
+      "order_weight": 1310,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0132",
+      "group_key": "REQGRP-0017",
+      "order_weight": 1320,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0133",
+      "group_key": "REQGRP-0018",
+      "order_weight": 1330,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0134",
+      "group_key": "REQGRP-0019",
+      "order_weight": 1340,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0135",
+      "group_key": "REQGRP-0020",
+      "order_weight": 1350,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0136",
+      "group_key": "REQGRP-0021",
+      "order_weight": 1360,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0137",
+      "group_key": "REQGRP-0022",
+      "order_weight": 1370,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0138",
+      "group_key": "REQGRP-0023",
+      "order_weight": 1380,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0139",
+      "group_key": "REQGRP-0001",
+      "order_weight": 1390,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0140",
+      "group_key": "REQGRP-0002",
+      "order_weight": 1400,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0141",
+      "group_key": "REQGRP-0003",
+      "order_weight": 1410,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0142",
+      "group_key": "REQGRP-0004",
+      "order_weight": 1420,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0143",
+      "group_key": "REQGRP-0005",
+      "order_weight": 1430,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0144",
+      "group_key": "REQGRP-0006",
+      "order_weight": 1440,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0145",
+      "group_key": "REQGRP-0007",
+      "order_weight": 1450,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0146",
+      "group_key": "REQGRP-0008",
+      "order_weight": 1460,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0147",
+      "group_key": "REQGRP-0009",
+      "order_weight": 1470,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0148",
+      "group_key": "REQGRP-0010",
+      "order_weight": 1480,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0149",
+      "group_key": "REQGRP-0011",
+      "order_weight": 1490,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0150",
+      "group_key": "REQGRP-0012",
+      "order_weight": 1500,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0151",
+      "group_key": "REQGRP-0013",
+      "order_weight": 1510,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0152",
+      "group_key": "REQGRP-0014",
+      "order_weight": 1520,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0153",
+      "group_key": "REQGRP-0015",
+      "order_weight": 1530,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0154",
+      "group_key": "REQGRP-0016",
+      "order_weight": 1540,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0155",
+      "group_key": "REQGRP-0017",
+      "order_weight": 1550,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0156",
+      "group_key": "REQGRP-0018",
+      "order_weight": 1560,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0157",
+      "group_key": "REQGRP-0019",
+      "order_weight": 1570,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0158",
+      "group_key": "REQGRP-0020",
+      "order_weight": 1580,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0159",
+      "group_key": "REQGRP-0021",
+      "order_weight": 1590,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0160",
+      "group_key": "REQGRP-0022",
+      "order_weight": 1600,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0161",
+      "group_key": "REQGRP-0023",
+      "order_weight": 1610,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0162",
+      "group_key": "REQGRP-0001",
+      "order_weight": 1620,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0163",
+      "group_key": "REQGRP-0002",
+      "order_weight": 1630,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0164",
+      "group_key": "REQGRP-0003",
+      "order_weight": 1640,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0165",
+      "group_key": "REQGRP-0004",
+      "order_weight": 1650,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0166",
+      "group_key": "REQGRP-0005",
+      "order_weight": 1660,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0167",
+      "group_key": "REQGRP-0006",
+      "order_weight": 1670,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0168",
+      "group_key": "REQGRP-0007",
+      "order_weight": 1680,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0169",
+      "group_key": "REQGRP-0008",
+      "order_weight": 1690,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0170",
+      "group_key": "REQGRP-0009",
+      "order_weight": 1700,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0171",
+      "group_key": "REQGRP-0010",
+      "order_weight": 1710,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0172",
+      "group_key": "REQGRP-0011",
+      "order_weight": 1720,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0173",
+      "group_key": "REQGRP-0012",
+      "order_weight": 1730,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0174",
+      "group_key": "REQGRP-0013",
+      "order_weight": 1740,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0175",
+      "group_key": "REQGRP-0014",
+      "order_weight": 1750,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0176",
+      "group_key": "REQGRP-0015",
+      "order_weight": 1760,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0177",
+      "group_key": "REQGRP-0016",
+      "order_weight": 1770,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0178",
+      "group_key": "REQGRP-0017",
+      "order_weight": 1780,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0179",
+      "group_key": "REQGRP-0018",
+      "order_weight": 1790,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0180",
+      "group_key": "REQGRP-0019",
+      "order_weight": 1800,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0181",
+      "group_key": "REQGRP-0020",
+      "order_weight": 1810,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0182",
+      "group_key": "REQGRP-0021",
+      "order_weight": 1820,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0183",
+      "group_key": "REQGRP-0022",
+      "order_weight": 1830,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0184",
+      "group_key": "REQGRP-0023",
+      "order_weight": 1840,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0185",
+      "group_key": "REQGRP-0001",
+      "order_weight": 1850,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0186",
+      "group_key": "REQGRP-0002",
+      "order_weight": 1860,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0187",
+      "group_key": "REQGRP-0003",
+      "order_weight": 1870,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0188",
+      "group_key": "REQGRP-0004",
+      "order_weight": 1880,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0189",
+      "group_key": "REQGRP-0005",
+      "order_weight": 1890,
+      "mandatory": true,
+      "contract_carry_forward": false
+    },
+    {
+      "requirement_key": "REQ-0190",
+      "group_key": "REQGRP-0006",
+      "order_weight": 1900,
+      "mandatory": true,
+      "contract_carry_forward": false
+    }
+  ]
+}

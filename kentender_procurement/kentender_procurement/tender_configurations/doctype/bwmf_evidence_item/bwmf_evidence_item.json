@@ -1,0 +1,90 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:evidence_id",
+ "creation": "2026-07-24 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "evidence_id",
+  "workspace",
+  "owner_party",
+  "evidence_type",
+  "organization",
+  "bidder_party",
+  "lifecycle_state"
+ ],
+ "fields": [
+  {
+   "fieldname": "evidence_id",
+   "fieldtype": "Data",
+   "label": "Evidence Id",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "workspace",
+   "fieldtype": "Link",
+   "label": "Workspace",
+   "options": "BWMF Workspace",
+   "reqd": 1
+  },
+  {
+   "fieldname": "owner_party",
+   "fieldtype": "Data",
+   "label": "Owner Party",
+   "reqd": 1
+  },
+  {
+   "fieldname": "evidence_type",
+   "fieldtype": "Data",
+   "label": "Evidence Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "label": "Organization",
+   "reqd": 1
+  },
+  {
+   "fieldname": "bidder_party",
+   "fieldtype": "Data",
+   "label": "Bidder Party",
+   "reqd": 1
+  },
+  {
+   "fieldname": "lifecycle_state",
+   "fieldtype": "Data",
+   "label": "Lifecycle State",
+   "default": "active"
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-24 12:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Evidence Item",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "title_field": "evidence_id"
+}

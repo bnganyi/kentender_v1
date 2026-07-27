@@ -657,3 +657,40 @@ def get_issue_register(published_tender_ref: str):
 	)
 
 	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def get_qualification_and_capability(published_tender_ref: str):
+	from kentender_procurement.tender_configurations.api import (
+		get_qualification_and_capability as _get,
+	)
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def get_qualification_category(published_tender_ref: str, category_key: str):
+	from kentender_procurement.tender_configurations.api import (
+		get_qualification_category as _get,
+	)
+
+	return _get(published_tender_ref, category_key)
+
+
+@frappe.whitelist()
+def save_qualification_category(
+	published_tender_ref: str,
+	category_key: str,
+	payload=None,
+	expected_modified: str | None = None,
+):
+	from kentender_procurement.tender_configurations.api import (
+		save_qualification_category as _save,
+	)
+
+	return _save(
+		published_tender_ref,
+		category_key,
+		payload,
+		expected_modified=expected_modified,
+	)

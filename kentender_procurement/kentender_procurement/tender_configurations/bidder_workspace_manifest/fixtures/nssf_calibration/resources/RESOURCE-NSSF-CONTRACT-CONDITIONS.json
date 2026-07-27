@@ -1,0 +1,54 @@
+{
+  "resource_id": "RESOURCE-NSSF-CONTRACT-CONDITIONS",
+  "resource_type": "contract_condition",
+  "schema_ref": "bwmf/item/contract_condition",
+  "schema_version": "1.0.0",
+  "item_count": 8,
+  "ordering_contract": [
+    "order_weight",
+    "condition_key"
+  ],
+  "resource_digest": "sha256:8b90a193c27ef0d6b5d740980630094064e9571fadd160c3bc2b9426f4f9ca94",
+  "items": [
+    {
+      "condition_key": "COND-0001",
+      "order_weight": 10,
+      "label": "COND 1"
+    },
+    {
+      "condition_key": "COND-0002",
+      "order_weight": 20,
+      "label": "COND 2"
+    },
+    {
+      "condition_key": "COND-0003",
+      "order_weight": 30,
+      "label": "COND 3"
+    },
+    {
+      "condition_key": "COND-0004",
+      "order_weight": 40,
+      "label": "COND 4"
+    },
+    {
+      "condition_key": "COND-0005",
+      "order_weight": 50,
+      "label": "COND 5"
+    },
+    {
+      "condition_key": "COND-0006",
+      "order_weight": 60,
+      "label": "COND 6"
+    },
+    {
+      "condition_key": "COND-0007",
+      "order_weight": 70,
+      "label": "COND 7"
+    },
+    {
+      "condition_key": "COND-0008",
+      "order_weight": 80,
+      "label": "COND 8"
+    }
+  ]
+}

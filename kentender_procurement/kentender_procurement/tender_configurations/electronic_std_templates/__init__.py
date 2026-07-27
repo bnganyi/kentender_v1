@@ -43,6 +43,8 @@ ALLOWED_RENDERERS = frozenset(
 		"questionnaire",
 		"evidence_and_declaration",
 		"evidence_matrix",
+		"eligibility_checklist",
+		"qualification_response",
 		"structured_response",
 		"requirement_matrix",
 		"price_schedule",

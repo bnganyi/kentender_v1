@@ -1,0 +1,44 @@
+{
+  "resource_id": "RESOURCE-NSSF-SCHEDULE",
+  "resource_type": "implementation_schedule_row",
+  "schema_ref": "bwmf/item/implementation_schedule_row",
+  "schema_version": "1.0.0",
+  "item_count": 6,
+  "ordering_contract": [
+    "order_weight",
+    "row_key"
+  ],
+  "resource_digest": "sha256:c33f7eb213e689e2b30ae89d329216373d5b24ac639fa46b926d4fd2a7d64ef8",
+  "items": [
+    {
+      "row_key": "SCHED-0001",
+      "order_weight": 10,
+      "label": "SCHED 1"
+    },
+    {
+      "row_key": "SCHED-0002",
+      "order_weight": 20,
+      "label": "SCHED 2"
+    },
+    {
+      "row_key": "SCHED-0003",
+      "order_weight": 30,
+      "label": "SCHED 3"
+    },
+    {
+      "row_key": "SCHED-0004",
+      "order_weight": 40,
+      "label": "SCHED 4"
+    },
+    {
+      "row_key": "SCHED-0005",
+      "order_weight": 50,
+      "label": "SCHED 5"
+    },
+    {
+      "row_key": "SCHED-0006",
+      "order_weight": 60,
+      "label": "SCHED 6"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "$id": "bwmf/v1/evidence",
+  "schema_version": "1.0.0",
+  "title": "EvidenceContract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "evidence_id",
+    "content_digest",
+    "document_content_digest",
+    "mime_type",
+    "version"
+  ],
+  "properties": {
+    "evidence_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "content_digest": {
+      "type": "string",
+      "format": "sha256-digest",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "archive_provenance_digest": {
+      "type": "string",
+      "format": "sha256-digest",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "document_content_digest": {
+      "type": "string",
+      "format": "sha256-digest",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "mime_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "integer"
+    },
+    "filename": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

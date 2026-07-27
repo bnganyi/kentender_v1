@@ -1,0 +1,116 @@
+{# Stitch 06 — Delivery Partners matrix + partner drawer
+   Note: use .get("items") — on a dict, .items is the dict method, not the key. #}
+{% set items = cfg.get("items", []) if cfg else [] %}
+{% set item_map = bucket.get("items", {}) if bucket else {} %}
+{% set orgs = c.organizations or [] %}
+
+<section class="kt-s600-block-section" data-testid="kt-s600-partners">
+	<div class="kt-s600-section-head">
+		<div>
+			<p class="kt-s600-help">{{ _("Identify who will provide each major item or service required by this tender.") }}</p>
+		</div>
+		<div class="kt-s600-progress-box" data-testid="kt-s600-partners-progress">
+			<span class="kt-s600-eyebrow">{{ _("Fulfillment Status") }}</span>
+			<strong data-testid="kt-s600-partners-progress-text">{{ c.get("progress_text") or "0 of 0 complete" }}</strong>
+		</div>
+	</div>
+
+	<label class="kt-s600-flag">
+		<input type="checkbox" data-field="external_provider" {% if (c.flags or {}).external_provider_selected %}checked{% endif %} {% if c.read_only %}disabled{% endif %}/>
+		{{ _("This bid uses an external manufacturer, vendor or subcontractor for a configured item") }}
+	</label>
+
+	<section class="kt-s600-card kt-s600-card--flush">
+		<div class="kt-s600-table-wrap">
+			<table class="kt-s600-data-table">
+				<thead>
+					<tr>
+						<th>{{ _("Item or service") }}</th>
+						<th>{{ _("Minimum criteria") }}</th>
+						<th>{{ _("Provider") }}</th>
+						<th>{{ _("Proposed organization") }}</th>
+						<th>{{ _("Required evidence") }}</th>
+						<th>{{ _("Status") }}</th>
+						<th class="is-right">{{ _("Action") }}</th>
+					</tr>
+				</thead>
+				<tbody data-testid="kt-s600-partners-matrix">
+					{% for item in items %}
+					{% set row = item_map.get(item.item_id) or {} %}
+					<tr data-partner-item="{{ item.item_id }}" data-testid="kt-s600-partner-{{ item.item_id }}">
+						<td>
+							<p class="is-strong">{{ item.title }}</p>
+							<p class="kt-s600-help">{{ item.item_kind or "" }}</p>
+						</td>
+						<td class="is-italic">
+							{% for crit in item.criteria or [] %}
+							<span class="kt-s600-crit-line">{{ crit.title }}</span>
+							{% else %}—{% endfor %}
+						</td>
+						<td>
+							<p class="kt-s600-eyebrow">
+								{% if item.item_kind == "goods" %}{{ _("Who manufactures this item?") }}
+								{% else %}{{ _("Who will perform this service?") }}{% endif %}
+							</p>
+							<div class="kt-s600-radio-col" data-testid="kt-s600-provider-radios-{{ item.item_id }}">
+								<label>
+									<input type="radio" name="provider_{{ item.item_id }}" value="bidder" {% if row.provider == "bidder" %}checked{% endif %} {% if c.read_only %}disabled{% endif %}/>
+									<span>{{ _("Bidder") }}</span>
+								</label>
+								<label>
+									<input type="radio" name="provider_{{ item.item_id }}" value="other" {% if row.provider == "other" %}checked{% endif %} {% if c.read_only %}disabled{% endif %}/>
+									<span>{{ _("Another organization") }}</span>
+								</label>
+							</div>
+						</td>
+						<td>
+							{% for o in orgs if o.organization_id == row.organization_id %}
+							<span data-org-display>{{ o.legal_name }}</span>
+							{% else %}
+							<span data-org-display>{{ row.organization_name or "—" }}</span>
+							{% endfor %}
+							<input type="hidden" data-field="organization_id" value="{{ row.organization_id or '' }}"/>
+							<input type="hidden" data-field="organization_name" value="{{ row.organization_name or '' }}"/>
+							<select hidden data-field="org_role">
+								<option value="Manufacturer">Manufacturer</option>
+								<option value="Vendor">Vendor</option>
+								<option value="Subcontractor">Subcontractor</option>
+							</select>
+						</td>
+						<td>
+							{% for crit in item.criteria or [] %}
+								{% set cres = (row.criteria_responses or {}).get(crit.criterion_id) or {} %}
+								<div data-crit="{{ crit.criterion_id }}" data-tender-specific="{{ 1 if crit.tender_specific else 0 }}" data-pub-ref="{{ c.published_tender_ref }}" hidden>
+									<input type="checkbox" data-crit-complete {% if cres.complete or cres.evidence_id %}checked{% endif %}/>
+									<input data-crit-evidence value="{{ cres.evidence_id or '' }}"/>
+									<span data-crit-title>{{ crit.title }}</span>
+								</div>
+							{% endfor %}
+							<span data-evidence-summary>
+								{% if not item.criteria %}—{% elif row.provider == "bidder" %}{{ _("All criteria addressed") }}
+								{% else %}{{ _("Open partner record to complete evidence") }}{% endif %}
+							</span>
+						</td>
+						<td>
+							{% if row.provider == "bidder" %}
+							<span class="kt-s600-status" data-status="Complete">{{ _("Complete") }}</span>
+							{% elif row.provider %}
+							<span class="kt-s600-status" data-status="In Progress">{{ _("In progress") }}</span>
+							{% else %}
+							<span class="kt-s600-status" data-status="Not Started">{{ _("Not started") }}</span>
+							{% endif %}
+						</td>
+						<td class="is-right">
+							{% if not c.read_only %}
+							<button type="button" class="kt-s600-link" data-s600-edit-partner="{{ item.item_id }}" data-testid="kt-s600-edit-partner-{{ item.item_id }}">
+								<span class="material-symbols-outlined">edit</span>
+							</button>
+							{% endif %}
+						</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</section>
+</section>

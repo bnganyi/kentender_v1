@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tender Security | KenTender Bidder Workspace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error-container": "#93000a",
+                        "status-error-bg": "#fff1f2",
+                        "tertiary-fixed-dim": "#adc8f3",
+                        "tertiary-container": "#001c3a",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "primary-container": "#0e1c2e",
+                        "on-primary-fixed-variant": "#3a475c",
+                        "error-container": "#ffdad6",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-variant": "#e0e3e5",
+                        "secondary-container": "#d2e1fa",
+                        "background": "#f7f9fb",
+                        "tertiary": "#000000",
+                        "status-error": "#ba1a1a",
+                        "tertiary-fixed": "#d4e3ff",
+                        "on-primary-fixed": "#0e1c2e",
+                        "on-surface-variant": "#44474c",
+                        "status-approved-bg": "#ecfdf5",
+                        "surface-bright": "#f7f9fb",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "surface-tint": "#525f74",
+                        "on-background": "#191c1e",
+                        "inverse-surface": "#2d3133",
+                        "primary": "#000000",
+                        "surface-container-high": "#e6e8ea",
+                        "on-secondary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed-variant": "#2d486c",
+                        "on-tertiary-container": "#6b85ac",
+                        "inverse-primary": "#bac7e0",
+                        "primary-fixed-dim": "#bac7e0",
+                        "on-tertiary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-secondary-container": "#556379",
+                        "on-surface": "#191c1e",
+                        "outline": "#75777d",
+                        "surface": "#f7f9fb",
+                        "primary-fixed": "#d6e3fd",
+                        "outline-variant": "#c5c6cd",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "surface-container-low": "#f2f4f6",
+                        "outline-subtle": "#c4c6cf",
+                        "status-approved": "#065f46",
+                        "on-primary-container": "#77859b",
+                        "status-pending": "#92400e",
+                        "secondary-fixed": "#d5e3fc",
+                        "surface-dim": "#d8dadc",
+                        "on-tertiary-fixed": "#001c3a",
+                        "secondary": "#515f74",
+                        "surface-container-highest": "#e0e3e5",
+                        "status-pending-bg": "#fffbeb",
+                        "surface-container": "#eceef0",
+                        "error": "#ba1a1a",
+                        "outline-strong": "#74777f"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gap-component": "8px",
+                        "sidebar-width": "256px",
+                        "container-padding": "16px",
+                        "unit": "4px",
+                        "max-width": "1280px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Public Sans"],
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-lg": ["Public Sans"],
+                        "body-md": ["Public Sans"],
+                        "label-md": ["JetBrains Mono"],
+                        "display": ["Public Sans"],
+                        "body-lg": ["Public Sans"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+            font-size: 20px;
+        }
+        body { font-family: 'Public Sans', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c4c6cf; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background text-on-surface antialiased">
+<!-- TopNavBar -->
+<header class="sticky top-0 w-full z-50 flex items-center justify-between px-gutter h-14 bg-surface-container-lowest dark:bg-inverse-surface border-b border-outline-subtle dark:border-outline-strong">
+<div class="flex items-center gap-8">
+<span class="font-headline-lg text-headline-lg font-bold text-primary dark:text-primary-fixed">KenTender</span>
+<nav class="hidden md:flex gap-6 items-center">
+<a class="text-on-secondary-container dark:text-on-surface-variant font-medium hover:text-primary transition-colors font-body-lg text-body-lg" href="#">Tenders</a>
+<a class="text-primary dark:text-primary-fixed font-bold border-b-2 border-primary dark:border-primary-fixed pb-1 font-body-lg text-body-lg" href="#">My Bids</a>
+<a class="text-on-secondary-container dark:text-on-surface-variant font-medium hover:text-primary transition-colors font-body-lg text-body-lg" href="#">Clarifications</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md">Help Desk</button>
+<div class="flex items-center gap-2">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container transition-all rounded-full">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container transition-all rounded-full">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<div class="h-8 w-8 rounded-full bg-primary-container overflow-hidden border border-outline-subtle">
+<img class="w-full h-full object-cover" data-alt="A professional portrait of a senior procurement specialist in a crisp navy blue suit, set against a minimalist clean office background with soft cinematic lighting. The image style is sharp, authoritative, and corporate-modern, reflecting institutional trust and expertise within a high-end government portal interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCXv295if29UwawdUiLa5ed62nloHkqyXYDHL-Z0WQ1pNnIWOZMQt6X2GKII2eWYRpwk9jrn2_zJ6q5nCzls9QtmDsZaQgOJlmAO2kJHJ8rqYUY3xtPGRLg2teG3XpB68AiOlZqNBO0oXpec-4IjVLfjV6sa-29hboEOWkoa9kLZJKErb563BO4CT-fvuzZbyNIaiGgomP9Regu8j0poSWxXklIr-O5kWxjTRJGC30QUrtKTjoH5vBV3Ze3hWTdxxdM5S-6e_rdFh8"/>
+</div>
+</div>
+</header>
+<!-- Shell Container -->
+<div class="flex min-h-screen">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-14 bottom-0 w-sidebar-width flex flex-col z-40 bg-surface-container-low dark:bg-surface-dim border-r border-outline-subtle dark:border-outline-strong overflow-y-auto">
+<div class="p-container-padding flex items-center gap-3 border-b border-outline-subtle py-6">
+<div class="w-10 h-10 rounded bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined">workspace_premium</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-primary">Bidder Workspace</h2>
+<p class="font-body-md text-body-md text-on-surface-variant opacity-70">Ref: KT-2023-0892</p>
+</div>
+</div>
+<div class="py-4">
+<nav class="flex flex-col">
+<a class="flex items-center text-on-surface-variant hover:bg-surface-container-high py-3 px-4 font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined mr-3">fact_check</span>
+                        Submission Checklist
+                    </a>
+<a class="flex items-center bg-surface-container-highest text-primary border-r-4 border-primary py-3 px-4 font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined mr-3">edit_document</span>
+                        Prepare Bid
+                    </a>
+<a class="flex items-center text-on-surface-variant hover:bg-surface-container-high py-3 px-4 font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined mr-3">verified</span>
+                        Review &amp; Validate
+                    </a>
+<a class="flex items-center text-on-surface-variant hover:bg-surface-container-high py-3 px-4 font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined mr-3">lock</span>
+                        Submit &amp; Seal
+                    </a>
+</nav>
+</div>
+<div class="mt-auto border-t border-outline-subtle p-4">
+<button class="w-full bg-primary text-on-primary py-2 px-4 rounded font-label-md text-label-md mb-4 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined !text-[16px]">grid_view</span>
+                    Requirement Matrix
+                </button>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center text-on-surface-variant hover:text-primary py-2 px-1 font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined mr-2">contact_support</span>
+                        Support
+                    </a>
+<a class="flex items-center text-on-surface-variant hover:text-primary py-2 px-1 font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined mr-2">logout</span>
+                        Sign Out
+                    </a>
+</nav>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-sidebar-width flex-1 p-8 pb-24 bg-background">
+<div class="max-w-[1000px] mx-auto">
+<!-- Page Header -->
+<div class="flex items-center justify-between mb-8">
+<div>
+<div class="flex items-center gap-3 mb-2">
+<h1 class="font-headline-lg text-headline-lg">Tender Security</h1>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-primary bg-primary-container border border-outline-subtle font-label-sm text-label-sm"><span class="w-1.5 h-1.5 rounded-full bg-primary mr-1.5"></span>Ready</span>
+</div>
+<p class="font-body-lg text-body-lg text-on-surface-variant">The required security information has been provided. Legal responsiveness will be determined after tender opening.</p>
+</div>
+</div>
+<!-- Bento Grid: Requirements -->
+<section class="grid grid-cols-12 gap-gap-component mb-8">
+<div class="col-span-12 md:col-span-4 bg-surface-container-lowest p-container-padding border border-outline-subtle relative">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant block mb-1">REQUIRED AMOUNT</span>
+<div class="font-label-md text-[20px] mono text-primary">KES 2,000,000.00</div>
+</div>
+<div class="col-span-12 md:col-span-4 bg-surface-container-lowest p-container-padding border border-outline-subtle">
+<span class="font-label-sm text-label-sm text-on-surface-variant block mb-1">VALIDITY UNTIL</span>
+<div class="font-label-md text-label-md mono text-primary">DECEMBER 31, 2026</div>
+</div>
+<div class="col-span-12 md:col-span-4 bg-surface-container-lowest p-container-padding border border-outline-subtle">
+<span class="font-label-sm text-label-sm text-on-surface-variant block mb-1">INSTRUMENT TYPES</span>
+<div class="font-body-md text-body-md text-primary">Bank Guarantee, Insurance Bond</div>
+</div>
+<div class="col-span-12 md:col-span-6 bg-surface-container-lowest p-container-padding border border-outline-subtle">
+<span class="font-label-sm text-label-sm text-on-surface-variant block mb-1">BENEFICIARY</span>
+<div class="font-body-md text-body-md text-primary uppercase">Ministry of Public Works &amp; Infrastructure</div>
+</div>
+<div class="col-span-12 md:col-span-6 bg-surface-container-lowest p-container-padding border border-outline-subtle">
+<span class="font-label-sm text-label-sm text-on-surface-variant block mb-1">APPLICANT NAME</span>
+<div class="font-body-md text-body-md text-primary uppercase">Apex Construction Solutions Ltd</div>
+</div>
+<div class="col-span-12 bg-surface-container-low p-container-padding border border-outline-subtle border-dashed">
+<span class="font-label-sm text-label-sm text-on-surface-variant block mb-1">ISSUER CONDITIONS</span>
+<div class="font-body-md text-body-md text-on-tertiary-container italic">"The instrument must be issued by a reputable bank or insurance company acceptable to the Procuring Entity."</div>
+</div>
+</section>
+<!-- Data Entry Form -->
+<div class="space-y-8">
+<section>
+<h3 class="font-headline-md text-headline-md mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">account_balance</span>
+                            Instrument Details
+                        </h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-surface-container-lowest p-8 border border-outline-subtle"><div class="space-y-1.5"><label class="font-body-md text-body-md text-on-surface-variant">Instrument Type</label><div class="w-full h-10 px-3 flex items-center bg-surface-container-low border border-outline-subtle rounded font-body-md text-body-md">Bank Guarantee</div></div><div class="space-y-1.5"><label class="font-body-md text-body-md text-on-surface-variant">Guarantee or Instrument Number</label><div class="w-full h-10 px-3 flex items-center bg-surface-container-low border border-outline-subtle rounded font-label-md text-label-md mono">BG/2023/X901</div></div><div class="space-y-1.5 md:col-span-2"><label class="font-body-md text-body-md text-on-surface-variant">Issuing Institution's Legal Name</label><div class="w-full h-10 px-3 flex items-center bg-surface-container-low border border-outline-subtle rounded font-body-md text-body-md">Standard Chartered Bank Kenya Ltd</div></div><div class="space-y-1.5 md:col-span-2"><label class="font-body-md text-body-md text-on-surface-variant">Issuer Registered Address</label><div class="w-full p-3 bg-surface-container-low border border-outline-subtle rounded font-body-md text-body-md">Stanbank House, Moi Avenue, P.O. Box 30003-00100, Nairobi, Kenya</div></div><div class="space-y-1.5"><label class="font-body-md text-body-md text-on-surface-variant">Issuer Country</label><div class="w-full h-10 px-3 flex items-center bg-surface-container-low border border-outline-subtle rounded font-body-md text-body-md">Kenya</div></div><div class="grid grid-cols-2 gap-4"><div class="space-y-1.5"><label class="font-body-md text-body-md text-on-surface-variant">Issue Date</label><div class="w-full h-10 px-3 flex items-center bg-surface-container-low border border-outline-subtle rounded font-label-md text-label-md mono">2023-10-15</div></div><div class="space-y-1.5"><label class="font-body-md text-body-md text-on-surface-variant">Expiry Date</label><div class="w-full h-10 px-3 flex items-center bg-surface-container-low border border-outline-subtle rounded font-label-md text-label-md mono">2026-12-31</div></div></div><div class="space-y-1.5"><label class="font-body-md text-body-md text-on-surface-variant">Guaranteed Amount</label><div class="w-full h-10 px-3 flex items-center bg-surface-container-low border border-outline-subtle rounded font-label-md text-label-md mono">2,000,000.00</div></div><div class="space-y-1.5"><label class="font-body-md text-body-md text-on-surface-variant">Currency</label><div class="w-full h-10 px-3 flex items-center bg-surface-container-low border border-outline-subtle rounded font-label-md text-label-md mono">KES</div></div></div>
+</section>
+<section>
+<h3 class="font-headline-md text-headline-md mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">cloud_upload</span>
+                            Electronic Submission Methods
+                        </h3>
+<div class="space-y-4"><div class="space-y-4"><div class="border border-primary bg-surface-container-low p-6 rounded"><div class="flex items-start gap-4"><span class="material-symbols-outlined text-primary mt-1">check_circle</span><div class="flex-1"><label class="font-body-lg text-body-lg font-bold mb-1 block">Upload electronic guarantee</label><p class="font-body-md text-body-md text-on-surface-variant mb-4">The electronic guarantee has been uploaded and attached to this submission.</p><div class="flex items-center gap-3 p-3 bg-white border border-outline-subtle rounded"><span class="material-symbols-outlined text-primary">description</span><div class="flex-1"><div class="font-label-md text-label-md">BG-2023-X901-STANCHART.pdf</div><div class="text-[10px] opacity-60">2.4 MB • Digitally Signed</div></div><span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary">download</span></div></div></div></div><div class="flex items-center gap-3 p-4 bg-surface-container-low border border-outline-subtle rounded"><span class="material-symbols-outlined text-on-secondary-container">info</span><p class="font-body-md text-body-md text-on-secondary-container">Note: The Procuring Entity will determine legal responsiveness after tender opening.</p></div></div></div>
+</section>
+</div>
+</div>
+</main>
+<!-- Footer Task-specific Toolbar -->
+<footer class="fixed bottom-0 right-0 left-sidebar-width flex justify-between items-center px-8 py-4 z-50 bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-subtle dark:border-outline-strong shadow-sm">
+<div>
+<button class="flex items-center gap-2 text-secondary hover:text-primary transition-all font-label-md text-label-md">
+<span class="material-symbols-outlined">arrow_back</span>
+                    Back to Workspace
+                </button>
+</div>
+<div class="flex items-center gap-gap-component">
+<button class="px-6 py-2 border border-outline-subtle text-secondary font-label-md text-label-md rounded hover:bg-surface-container-high active:scale-95 transition-all">
+                    Save draft
+                </button>
+<button class="px-6 py-2 bg-primary text-on-primary font-label-md text-label-md rounded hover:opacity-90 active:scale-95 transition-all">
+                    Save and continue
+                </button>
+</div>
+</footer>
+</div>
+<script>
+        // Micro-interaction for dropdowns and inputs
+        document.querySelectorAll('input, select, textarea').forEach(el => {
+            el.addEventListener('focus', () => {
+                el.parentElement.querySelector('label')?.classList.add('text-primary');
+            });
+            el.addEventListener('blur', () => {
+                el.parentElement.querySelector('label')?.classList.remove('text-primary');
+            });
+        });
+    </script>
+</body></html>

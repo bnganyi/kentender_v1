@@ -1,0 +1,109 @@
+{
+  "$id": "bwmf/v1/migration_plan_run",
+  "schema_version": "1.0.0",
+  "title": "MigrationPlanRun",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "plan_id",
+    "run_id",
+    "mode",
+    "state",
+    "source_snapshot_digest",
+    "idempotency_key",
+    "items"
+  ],
+  "properties": {
+    "plan_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "dry_run",
+        "execute"
+      ]
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "planned",
+        "running",
+        "completed",
+        "failed"
+      ]
+    },
+    "source_snapshot_digest": {
+      "type": "string",
+      "format": "sha256-digest",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "dry_run_report_digest": {
+      "type": "string",
+      "format": "sha256-digest",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "approval_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source_path",
+          "disposition"
+        ],
+        "properties": {
+          "source_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "disposition": {
+            "type": "string",
+            "enum": [
+              "map",
+              "transform",
+              "drop",
+              "require_reentry",
+              "unmapped"
+            ]
+          },
+          "target_ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reconfirmation_flag": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "report": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "unmapped_count": {
+          "type": "integer"
+        },
+        "output_digest": {
+          "type": "string",
+          "format": "sha256-digest",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

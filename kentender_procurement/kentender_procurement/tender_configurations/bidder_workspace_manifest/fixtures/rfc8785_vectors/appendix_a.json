@@ -1,0 +1,98 @@
+[
+  {
+    "name": "array_order",
+    "input": [
+      1,
+      "a",
+      true,
+      null
+    ],
+    "jcs": "[1,\"a\",true,null]"
+  },
+  {
+    "name": "object_key_order",
+    "input": {
+      "b": 1,
+      "a": 2
+    },
+    "jcs": "{\"a\":2,\"b\":1}"
+  },
+  {
+    "name": "nested",
+    "input": {
+      "z": {
+        "y": [
+          3,
+          2,
+          1
+        ],
+        "x": "m"
+      },
+      "a": true
+    },
+    "jcs": "{\"a\":true,\"z\":{\"x\":\"m\",\"y\":[3,2,1]}}"
+  },
+  {
+    "name": "empty",
+    "input": {},
+    "jcs": "{}"
+  },
+  {
+    "name": "string_escape",
+    "input": {
+      "s": "a\"b\\c"
+    },
+    "jcs": "{\"s\":\"a\\\"b\\\\c\"}"
+  },
+  {
+    "name": "unicode",
+    "input": {
+      "w": "ø"
+    },
+    "jcs": "{\"w\":\"ø\"}"
+  },
+  {
+    "name": "numbers_int",
+    "input": {
+      "n": 100
+    },
+    "jcs": "{\"n\":100}"
+  },
+  {
+    "name": "escape_controls",
+    "input": {
+      "a": "\b\t\n\f\r"
+    },
+    "jcs": "{\"a\":\"\\b\\t\\n\\f\\r\"}"
+  },
+  {
+    "name": "int_zero",
+    "input": {
+      "n": 0
+    },
+    "jcs": "{\"n\":0}"
+  },
+  {
+    "name": "int_negative",
+    "input": {
+      "n": -1
+    },
+    "jcs": "{\"n\":-1}"
+  },
+  {
+    "name": "int_large",
+    "input": {
+      "n": 9007199254740991
+    },
+    "jcs": "{\"n\":9007199254740991}"
+  },
+  {
+    "name": "unicode_property_order",
+    "input": {
+      "€": 1,
+      "a": 2,
+      "é": 3
+    },
+    "jcs": "{\"a\":2,\"é\":3,\"€\":1}"
+  }
+]

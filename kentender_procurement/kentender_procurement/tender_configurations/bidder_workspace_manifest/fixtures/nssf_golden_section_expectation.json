@@ -1,0 +1,21 @@
+{
+  "content_section_keys": [
+    "tender_documents_and_addenda",
+    "form_of_tender",
+    "confidential_business_questionnaire",
+    "statutory_declarations",
+    "tender_security",
+    "preliminary_requirements_and_evidence",
+    "qualification_and_capability",
+    "technical_proposal_and_implementation_plan",
+    "requirements_compliance",
+    "price_schedule"
+  ],
+  "security_decision_id": "NSSF-DEC-SEC-001",
+  "lot_model": {
+    "mode": "single_scope",
+    "bidder_selectable_lots": false,
+    "alternatives_permitted": false
+  },
+  "deadline": "2026-06-30T11:00:00+03:00"
+}

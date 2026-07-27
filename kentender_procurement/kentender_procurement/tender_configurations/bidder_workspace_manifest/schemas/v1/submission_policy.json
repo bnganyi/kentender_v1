@@ -1,0 +1,72 @@
+{
+  "$id": "bwmf/v1/submission_policy",
+  "schema_version": "1.0.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "deadline_at",
+    "timezone",
+    "server_time_authoritative",
+    "late_submission_behavior",
+    "withdrawal_mode",
+    "replacement_mode",
+    "submission_authority_policy_ref",
+    "reauthentication_policy_ref",
+    "seal_policy_ref",
+    "receipt_policy_ref",
+    "concurrent_submission_policy",
+    "idempotency_policy"
+  ],
+  "properties": {
+    "opens_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "deadline_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "timezone": {
+      "type": "string",
+      "minLength": 1
+    },
+    "server_time_authoritative": {
+      "const": true
+    },
+    "late_submission_behavior": {
+      "type": "string",
+      "enum": ["reject", "accept_with_mark", "governed_special"]
+    },
+    "withdrawal_mode": {
+      "type": "string",
+      "enum": ["not_permitted", "permitted_before_deadline", "governed_special"]
+    },
+    "replacement_mode": {
+      "type": "string",
+      "enum": ["not_permitted", "new_sealed_version_before_deadline"]
+    },
+    "submission_authority_policy_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reauthentication_policy_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "seal_policy_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "receipt_policy_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "concurrent_submission_policy": {
+      "const": "single_authoritative_transaction"
+    },
+    "idempotency_policy": {
+      "const": "required"
+    }
+  }
+}

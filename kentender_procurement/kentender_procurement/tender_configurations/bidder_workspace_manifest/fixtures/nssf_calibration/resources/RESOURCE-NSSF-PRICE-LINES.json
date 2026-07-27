@@ -1,0 +1,124 @@
+{
+  "resource_id": "RESOURCE-NSSF-PRICE-LINES",
+  "resource_type": "price_line",
+  "schema_ref": "bwmf/item/price_line",
+  "schema_version": "1.0.0",
+  "item_count": 22,
+  "ordering_contract": [
+    "order_weight",
+    "line_key"
+  ],
+  "resource_digest": "sha256:895d1c94c3446b07f8a5c4b72e68540e91e5e4a5d13a7126683b9547fff1db2e",
+  "items": [
+    {
+      "line_key": "PRICE-0001",
+      "order_weight": 10,
+      "label": "PRICE 1"
+    },
+    {
+      "line_key": "PRICE-0002",
+      "order_weight": 20,
+      "label": "PRICE 2"
+    },
+    {
+      "line_key": "PRICE-0003",
+      "order_weight": 30,
+      "label": "PRICE 3"
+    },
+    {
+      "line_key": "PRICE-0004",
+      "order_weight": 40,
+      "label": "PRICE 4"
+    },
+    {
+      "line_key": "PRICE-0005",
+      "order_weight": 50,
+      "label": "PRICE 5"
+    },
+    {
+      "line_key": "PRICE-0006",
+      "order_weight": 60,
+      "label": "PRICE 6"
+    },
+    {
+      "line_key": "PRICE-0007",
+      "order_weight": 70,
+      "label": "PRICE 7"
+    },
+    {
+      "line_key": "PRICE-0008",
+      "order_weight": 80,
+      "label": "PRICE 8"
+    },
+    {
+      "line_key": "PRICE-0009",
+      "order_weight": 90,
+      "label": "PRICE 9"
+    },
+    {
+      "line_key": "PRICE-0010",
+      "order_weight": 100,
+      "label": "PRICE 10"
+    },
+    {
+      "line_key": "PRICE-0011",
+      "order_weight": 110,
+      "label": "PRICE 11"
+    },
+    {
+      "line_key": "PRICE-0012",
+      "order_weight": 120,
+      "label": "PRICE 12"
+    },
+    {
+      "line_key": "PRICE-0013",
+      "order_weight": 130,
+      "label": "PRICE 13"
+    },
+    {
+      "line_key": "PRICE-0014",
+      "order_weight": 140,
+      "label": "PRICE 14"
+    },
+    {
+      "line_key": "PRICE-0015",
+      "order_weight": 150,
+      "label": "PRICE 15"
+    },
+    {
+      "line_key": "PRICE-0016",
+      "order_weight": 160,
+      "label": "PRICE 16"
+    },
+    {
+      "line_key": "PRICE-0017",
+      "order_weight": 170,
+      "label": "PRICE 17"
+    },
+    {
+      "line_key": "PRICE-0018",
+      "order_weight": 180,
+      "label": "PRICE 18"
+    },
+    {
+      "line_key": "PRICE-0019",
+      "order_weight": 190,
+      "label": "PRICE 19"
+    },
+    {
+      "line_key": "PRICE-0020",
+      "order_weight": 200,
+      "label": "PRICE 20"
+    },
+    {
+      "line_key": "PRICE-0021",
+      "order_weight": 210,
+      "label": "PRICE 21"
+    },
+    {
+      "line_key": "PRICE-0022",
+      "order_weight": 220,
+      "label": "PRICE 22"
+    }
+  ]
+}

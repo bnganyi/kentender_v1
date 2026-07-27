@@ -1,0 +1,2722 @@
+{
+  "profile": "nssf_calibration",
+  "std_source": {
+    "std_family": "information_technology",
+    "std_version": "1.0.0",
+    "profile": "nssf_calibration"
+  },
+  "catalogue": {
+    "catalogue_id": "CAT-NSSF-CAL-V1",
+    "version": 1,
+    "obligations": [
+      {
+        "obligation_key": "OBL-tender_documents_and_addenda",
+        "section_key": "tender_documents_and_addenda",
+        "disposition": "include",
+        "owner": "catalogue"
+      },
+      {
+        "obligation_key": "OBL-form_of_tender",
+        "section_key": "form_of_tender",
+        "disposition": "include",
+        "owner": "catalogue"
+      },
+      {
+        "obligation_key": "OBL-confidential_business_questionnaire",
+        "section_key": "confidential_business_questionnaire",
+        "disposition": "include",
+        "owner": "catalogue"
+      },
+      {
+        "obligation_key": "OBL-statutory_declarations",
+        "section_key": "statutory_declarations",
+        "disposition": "include",
+        "owner": "catalogue"
+      },
+      {
+        "obligation_key": "OBL-tender_security",
+        "section_key": "tender_security",
+        "disposition": "include",
+        "owner": "catalogue"
+      },
+      {
+        "obligation_key": "OBL-preliminary_requirements_and_evidence",
+        "section_key": "preliminary_requirements_and_evidence",
+        "disposition": "include",
+        "owner": "catalogue"
+      },
+      {
+        "obligation_key": "OBL-qualification_and_capability",
+        "section_key": "qualification_and_capability",
+        "disposition": "include",
+        "owner": "catalogue"
+      },
+      {
+        "obligation_key": "OBL-technical_proposal_and_implementation_plan",
+        "section_key": "technical_proposal_and_implementation_plan",
+        "disposition": "include",
+        "owner": "catalogue"
+      },
+      {
+        "obligation_key": "OBL-requirements_compliance",
+        "section_key": "requirements_compliance",
+        "disposition": "include",
+        "owner": "catalogue"
+      },
+      {
+        "obligation_key": "OBL-price_schedule",
+        "section_key": "price_schedule",
+        "disposition": "include",
+        "owner": "catalogue"
+      }
+    ]
+  },
+  "blueprint": {
+    "blueprint_id": "BP-NSSF-CAL-V1",
+    "version": 1,
+    "sections": [
+      {
+        "section_key": "tender_documents_and_addenda",
+        "section_type": "document_acknowledgement",
+        "order_weight": 100,
+        "required": true
+      },
+      {
+        "section_key": "form_of_tender",
+        "section_type": "declaration_form",
+        "order_weight": 200,
+        "required": true
+      },
+      {
+        "section_key": "confidential_business_questionnaire",
+        "section_type": "questionnaire",
+        "order_weight": 300,
+        "required": true
+      },
+      {
+        "section_key": "statutory_declarations",
+        "section_type": "declaration_bundle",
+        "order_weight": 400,
+        "required": true
+      },
+      {
+        "section_key": "tender_security",
+        "section_type": "security_instrument",
+        "order_weight": 450,
+        "required": true
+      },
+      {
+        "section_key": "preliminary_requirements_and_evidence",
+        "section_type": "eligibility_checklist",
+        "order_weight": 500,
+        "required": true
+      },
+      {
+        "section_key": "qualification_and_capability",
+        "section_type": "qualification_response",
+        "order_weight": 600,
+        "required": true
+      },
+      {
+        "section_key": "technical_proposal_and_implementation_plan",
+        "section_type": "technical_response",
+        "order_weight": 700,
+        "required": true
+      },
+      {
+        "section_key": "requirements_compliance",
+        "section_type": "requirement_matrix",
+        "order_weight": 800,
+        "required": true
+      },
+      {
+        "section_key": "price_schedule",
+        "section_type": "price_schedule",
+        "order_weight": 900,
+        "required": true
+      }
+    ]
+  },
+  "manifest_contract": {
+    "contract_id": "CONTRACT-BWMF-V1",
+    "version": "1.0.0"
+  },
+  "tender_configuration": {
+    "tender_configuration_id": "TC-NSSF-CAL-V1",
+    "version": 1,
+    "tender_context": {
+      "tender_reference": "NSSFSPS/ICT/ERP/001/2025-2026",
+      "procuring_entity": "National Social Security Fund Staff Pension Scheme (NSSF SPS)",
+      "contract_name": "Supply, Installation, Configuration, Customization, Testing, Commissioning and Maintenance of an Enterprise Resource Planning (ERP) System",
+      "procurement_method": "open_national_competitive_tendering",
+      "currency": "KES"
+    },
+    "localization": {
+      "default_locale": "en-KE",
+      "supported_locales": [
+        "en-KE"
+      ],
+      "timezone": "Africa/Nairobi"
+    },
+    "lot_model": {
+      "mode": "single_scope",
+      "bidder_selectable_lots": false,
+      "alternatives_permitted": false
+    },
+    "submission_policy_source": {
+      "deadline_at": "2026-06-30T11:00:00+03:00",
+      "timezone": "Africa/Nairobi",
+      "late_submission_behavior": "reject",
+      "withdrawal_mode": "permitted_before_deadline",
+      "replacement_mode": "new_sealed_version_before_deadline",
+      "submission_authority_policy_ref": "POL-SUB-AUTH-1",
+      "reauthentication_policy_ref": "POL-REAUTH-1",
+      "seal_policy_ref": "POL-SEAL-1",
+      "receipt_policy_ref": "POL-RECEIPT-1",
+      "server_time_authoritative": true,
+      "concurrent_submission_policy": "single_authoritative_transaction",
+      "idempotency_policy": "required"
+    },
+    "omit_lots": true,
+    "security_decision_id": "NSSF-DEC-SEC-001"
+  },
+  "document_package": {
+    "package_ref": "DOC-PKG-CAL-NSSF-ERP-001-V1",
+    "package_version": 1,
+    "document_content_digest": "sha256:bb716e97a312548d8469c5513539f0679e83b3336c7d630c2d7d6c77773aeb38",
+    "source_digest": "sha256:bb716e97a312548d8469c5513539f0679e83b3336c7d630c2d7d6c77773aeb38",
+    "active_addenda": []
+  },
+  "collections": {
+    "requirement_groups": [
+      {
+        "group_key": "REQGRP-0001",
+        "order_weight": 10,
+        "label": "REQGRP 1"
+      },
+      {
+        "group_key": "REQGRP-0002",
+        "order_weight": 20,
+        "label": "REQGRP 2"
+      },
+      {
+        "group_key": "REQGRP-0003",
+        "order_weight": 30,
+        "label": "REQGRP 3"
+      },
+      {
+        "group_key": "REQGRP-0004",
+        "order_weight": 40,
+        "label": "REQGRP 4"
+      },
+      {
+        "group_key": "REQGRP-0005",
+        "order_weight": 50,
+        "label": "REQGRP 5"
+      },
+      {
+        "group_key": "REQGRP-0006",
+        "order_weight": 60,
+        "label": "REQGRP 6"
+      },
+      {
+        "group_key": "REQGRP-0007",
+        "order_weight": 70,
+        "label": "REQGRP 7"
+      },
+      {
+        "group_key": "REQGRP-0008",
+        "order_weight": 80,
+        "label": "REQGRP 8"
+      },
+      {
+        "group_key": "REQGRP-0009",
+        "order_weight": 90,
+        "label": "REQGRP 9"
+      },
+      {
+        "group_key": "REQGRP-0010",
+        "order_weight": 100,
+        "label": "REQGRP 10"
+      },
+      {
+        "group_key": "REQGRP-0011",
+        "order_weight": 110,
+        "label": "REQGRP 11"
+      },
+      {
+        "group_key": "REQGRP-0012",
+        "order_weight": 120,
+        "label": "REQGRP 12"
+      },
+      {
+        "group_key": "REQGRP-0013",
+        "order_weight": 130,
+        "label": "REQGRP 13"
+      },
+      {
+        "group_key": "REQGRP-0014",
+        "order_weight": 140,
+        "label": "REQGRP 14"
+      },
+      {
+        "group_key": "REQGRP-0015",
+        "order_weight": 150,
+        "label": "REQGRP 15"
+      },
+      {
+        "group_key": "REQGRP-0016",
+        "order_weight": 160,
+        "label": "REQGRP 16"
+      },
+      {
+        "group_key": "REQGRP-0017",
+        "order_weight": 170,
+        "label": "REQGRP 17"
+      },
+      {
+        "group_key": "REQGRP-0018",
+        "order_weight": 180,
+        "label": "REQGRP 18"
+      },
+      {
+        "group_key": "REQGRP-0019",
+        "order_weight": 190,
+        "label": "REQGRP 19"
+      },
+      {
+        "group_key": "REQGRP-0020",
+        "order_weight": 200,
+        "label": "REQGRP 20"
+      },
+      {
+        "group_key": "REQGRP-0021",
+        "order_weight": 210,
+        "label": "REQGRP 21"
+      },
+      {
+        "group_key": "REQGRP-0022",
+        "order_weight": 220,
+        "label": "REQGRP 22"
+      },
+      {
+        "group_key": "REQGRP-0023",
+        "order_weight": 230,
+        "label": "REQGRP 23"
+      }
+    ],
+    "requirements": [
+      {
+        "requirement_key": "REQ-0001",
+        "group_key": "REQGRP-0001",
+        "order_weight": 10,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0002",
+        "group_key": "REQGRP-0002",
+        "order_weight": 20,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0003",
+        "group_key": "REQGRP-0003",
+        "order_weight": 30,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0004",
+        "group_key": "REQGRP-0004",
+        "order_weight": 40,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0005",
+        "group_key": "REQGRP-0005",
+        "order_weight": 50,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0006",
+        "group_key": "REQGRP-0006",
+        "order_weight": 60,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0007",
+        "group_key": "REQGRP-0007",
+        "order_weight": 70,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0008",
+        "group_key": "REQGRP-0008",
+        "order_weight": 80,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0009",
+        "group_key": "REQGRP-0009",
+        "order_weight": 90,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0010",
+        "group_key": "REQGRP-0010",
+        "order_weight": 100,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0011",
+        "group_key": "REQGRP-0011",
+        "order_weight": 110,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0012",
+        "group_key": "REQGRP-0012",
+        "order_weight": 120,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0013",
+        "group_key": "REQGRP-0013",
+        "order_weight": 130,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0014",
+        "group_key": "REQGRP-0014",
+        "order_weight": 140,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0015",
+        "group_key": "REQGRP-0015",
+        "order_weight": 150,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0016",
+        "group_key": "REQGRP-0016",
+        "order_weight": 160,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0017",
+        "group_key": "REQGRP-0017",
+        "order_weight": 170,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0018",
+        "group_key": "REQGRP-0018",
+        "order_weight": 180,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0019",
+        "group_key": "REQGRP-0019",
+        "order_weight": 190,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0020",
+        "group_key": "REQGRP-0020",
+        "order_weight": 200,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0021",
+        "group_key": "REQGRP-0021",
+        "order_weight": 210,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0022",
+        "group_key": "REQGRP-0022",
+        "order_weight": 220,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0023",
+        "group_key": "REQGRP-0023",
+        "order_weight": 230,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0024",
+        "group_key": "REQGRP-0001",
+        "order_weight": 240,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0025",
+        "group_key": "REQGRP-0002",
+        "order_weight": 250,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0026",
+        "group_key": "REQGRP-0003",
+        "order_weight": 260,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0027",
+        "group_key": "REQGRP-0004",
+        "order_weight": 270,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0028",
+        "group_key": "REQGRP-0005",
+        "order_weight": 280,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0029",
+        "group_key": "REQGRP-0006",
+        "order_weight": 290,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0030",
+        "group_key": "REQGRP-0007",
+        "order_weight": 300,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0031",
+        "group_key": "REQGRP-0008",
+        "order_weight": 310,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0032",
+        "group_key": "REQGRP-0009",
+        "order_weight": 320,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0033",
+        "group_key": "REQGRP-0010",
+        "order_weight": 330,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0034",
+        "group_key": "REQGRP-0011",
+        "order_weight": 340,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0035",
+        "group_key": "REQGRP-0012",
+        "order_weight": 350,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0036",
+        "group_key": "REQGRP-0013",
+        "order_weight": 360,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0037",
+        "group_key": "REQGRP-0014",
+        "order_weight": 370,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0038",
+        "group_key": "REQGRP-0015",
+        "order_weight": 380,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0039",
+        "group_key": "REQGRP-0016",
+        "order_weight": 390,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0040",
+        "group_key": "REQGRP-0017",
+        "order_weight": 400,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0041",
+        "group_key": "REQGRP-0018",
+        "order_weight": 410,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0042",
+        "group_key": "REQGRP-0019",
+        "order_weight": 420,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0043",
+        "group_key": "REQGRP-0020",
+        "order_weight": 430,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0044",
+        "group_key": "REQGRP-0021",
+        "order_weight": 440,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0045",
+        "group_key": "REQGRP-0022",
+        "order_weight": 450,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0046",
+        "group_key": "REQGRP-0023",
+        "order_weight": 460,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0047",
+        "group_key": "REQGRP-0001",
+        "order_weight": 470,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0048",
+        "group_key": "REQGRP-0002",
+        "order_weight": 480,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0049",
+        "group_key": "REQGRP-0003",
+        "order_weight": 490,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0050",
+        "group_key": "REQGRP-0004",
+        "order_weight": 500,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0051",
+        "group_key": "REQGRP-0005",
+        "order_weight": 510,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0052",
+        "group_key": "REQGRP-0006",
+        "order_weight": 520,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0053",
+        "group_key": "REQGRP-0007",
+        "order_weight": 530,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0054",
+        "group_key": "REQGRP-0008",
+        "order_weight": 540,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0055",
+        "group_key": "REQGRP-0009",
+        "order_weight": 550,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0056",
+        "group_key": "REQGRP-0010",
+        "order_weight": 560,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0057",
+        "group_key": "REQGRP-0011",
+        "order_weight": 570,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0058",
+        "group_key": "REQGRP-0012",
+        "order_weight": 580,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0059",
+        "group_key": "REQGRP-0013",
+        "order_weight": 590,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0060",
+        "group_key": "REQGRP-0014",
+        "order_weight": 600,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0061",
+        "group_key": "REQGRP-0015",
+        "order_weight": 610,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0062",
+        "group_key": "REQGRP-0016",
+        "order_weight": 620,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0063",
+        "group_key": "REQGRP-0017",
+        "order_weight": 630,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0064",
+        "group_key": "REQGRP-0018",
+        "order_weight": 640,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0065",
+        "group_key": "REQGRP-0019",
+        "order_weight": 650,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0066",
+        "group_key": "REQGRP-0020",
+        "order_weight": 660,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0067",
+        "group_key": "REQGRP-0021",
+        "order_weight": 670,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0068",
+        "group_key": "REQGRP-0022",
+        "order_weight": 680,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0069",
+        "group_key": "REQGRP-0023",
+        "order_weight": 690,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0070",
+        "group_key": "REQGRP-0001",
+        "order_weight": 700,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0071",
+        "group_key": "REQGRP-0002",
+        "order_weight": 710,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0072",
+        "group_key": "REQGRP-0003",
+        "order_weight": 720,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0073",
+        "group_key": "REQGRP-0004",
+        "order_weight": 730,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0074",
+        "group_key": "REQGRP-0005",
+        "order_weight": 740,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0075",
+        "group_key": "REQGRP-0006",
+        "order_weight": 750,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0076",
+        "group_key": "REQGRP-0007",
+        "order_weight": 760,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0077",
+        "group_key": "REQGRP-0008",
+        "order_weight": 770,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0078",
+        "group_key": "REQGRP-0009",
+        "order_weight": 780,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0079",
+        "group_key": "REQGRP-0010",
+        "order_weight": 790,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0080",
+        "group_key": "REQGRP-0011",
+        "order_weight": 800,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0081",
+        "group_key": "REQGRP-0012",
+        "order_weight": 810,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0082",
+        "group_key": "REQGRP-0013",
+        "order_weight": 820,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0083",
+        "group_key": "REQGRP-0014",
+        "order_weight": 830,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0084",
+        "group_key": "REQGRP-0015",
+        "order_weight": 840,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0085",
+        "group_key": "REQGRP-0016",
+        "order_weight": 850,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0086",
+        "group_key": "REQGRP-0017",
+        "order_weight": 860,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0087",
+        "group_key": "REQGRP-0018",
+        "order_weight": 870,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0088",
+        "group_key": "REQGRP-0019",
+        "order_weight": 880,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0089",
+        "group_key": "REQGRP-0020",
+        "order_weight": 890,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0090",
+        "group_key": "REQGRP-0021",
+        "order_weight": 900,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0091",
+        "group_key": "REQGRP-0022",
+        "order_weight": 910,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0092",
+        "group_key": "REQGRP-0023",
+        "order_weight": 920,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0093",
+        "group_key": "REQGRP-0001",
+        "order_weight": 930,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0094",
+        "group_key": "REQGRP-0002",
+        "order_weight": 940,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0095",
+        "group_key": "REQGRP-0003",
+        "order_weight": 950,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0096",
+        "group_key": "REQGRP-0004",
+        "order_weight": 960,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0097",
+        "group_key": "REQGRP-0005",
+        "order_weight": 970,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0098",
+        "group_key": "REQGRP-0006",
+        "order_weight": 980,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0099",
+        "group_key": "REQGRP-0007",
+        "order_weight": 990,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0100",
+        "group_key": "REQGRP-0008",
+        "order_weight": 1000,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0101",
+        "group_key": "REQGRP-0009",
+        "order_weight": 1010,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0102",
+        "group_key": "REQGRP-0010",
+        "order_weight": 1020,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0103",
+        "group_key": "REQGRP-0011",
+        "order_weight": 1030,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0104",
+        "group_key": "REQGRP-0012",
+        "order_weight": 1040,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0105",
+        "group_key": "REQGRP-0013",
+        "order_weight": 1050,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0106",
+        "group_key": "REQGRP-0014",
+        "order_weight": 1060,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0107",
+        "group_key": "REQGRP-0015",
+        "order_weight": 1070,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0108",
+        "group_key": "REQGRP-0016",
+        "order_weight": 1080,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0109",
+        "group_key": "REQGRP-0017",
+        "order_weight": 1090,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0110",
+        "group_key": "REQGRP-0018",
+        "order_weight": 1100,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0111",
+        "group_key": "REQGRP-0019",
+        "order_weight": 1110,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0112",
+        "group_key": "REQGRP-0020",
+        "order_weight": 1120,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0113",
+        "group_key": "REQGRP-0021",
+        "order_weight": 1130,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0114",
+        "group_key": "REQGRP-0022",
+        "order_weight": 1140,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0115",
+        "group_key": "REQGRP-0023",
+        "order_weight": 1150,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0116",
+        "group_key": "REQGRP-0001",
+        "order_weight": 1160,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0117",
+        "group_key": "REQGRP-0002",
+        "order_weight": 1170,
+        "mandatory": true,
+        "contract_carry_forward": true
+      },
+      {
+        "requirement_key": "REQ-0118",
+        "group_key": "REQGRP-0003",
+        "order_weight": 1180,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0119",
+        "group_key": "REQGRP-0004",
+        "order_weight": 1190,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0120",
+        "group_key": "REQGRP-0005",
+        "order_weight": 1200,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0121",
+        "group_key": "REQGRP-0006",
+        "order_weight": 1210,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0122",
+        "group_key": "REQGRP-0007",
+        "order_weight": 1220,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0123",
+        "group_key": "REQGRP-0008",
+        "order_weight": 1230,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0124",
+        "group_key": "REQGRP-0009",
+        "order_weight": 1240,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0125",
+        "group_key": "REQGRP-0010",
+        "order_weight": 1250,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0126",
+        "group_key": "REQGRP-0011",
+        "order_weight": 1260,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0127",
+        "group_key": "REQGRP-0012",
+        "order_weight": 1270,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0128",
+        "group_key": "REQGRP-0013",
+        "order_weight": 1280,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0129",
+        "group_key": "REQGRP-0014",
+        "order_weight": 1290,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0130",
+        "group_key": "REQGRP-0015",
+        "order_weight": 1300,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0131",
+        "group_key": "REQGRP-0016",
+        "order_weight": 1310,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0132",
+        "group_key": "REQGRP-0017",
+        "order_weight": 1320,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0133",
+        "group_key": "REQGRP-0018",
+        "order_weight": 1330,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0134",
+        "group_key": "REQGRP-0019",
+        "order_weight": 1340,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0135",
+        "group_key": "REQGRP-0020",
+        "order_weight": 1350,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0136",
+        "group_key": "REQGRP-0021",
+        "order_weight": 1360,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0137",
+        "group_key": "REQGRP-0022",
+        "order_weight": 1370,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0138",
+        "group_key": "REQGRP-0023",
+        "order_weight": 1380,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0139",
+        "group_key": "REQGRP-0001",
+        "order_weight": 1390,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0140",
+        "group_key": "REQGRP-0002",
+        "order_weight": 1400,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0141",
+        "group_key": "REQGRP-0003",
+        "order_weight": 1410,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0142",
+        "group_key": "REQGRP-0004",
+        "order_weight": 1420,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0143",
+        "group_key": "REQGRP-0005",
+        "order_weight": 1430,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0144",
+        "group_key": "REQGRP-0006",
+        "order_weight": 1440,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0145",
+        "group_key": "REQGRP-0007",
+        "order_weight": 1450,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0146",
+        "group_key": "REQGRP-0008",
+        "order_weight": 1460,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0147",
+        "group_key": "REQGRP-0009",
+        "order_weight": 1470,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0148",
+        "group_key": "REQGRP-0010",
+        "order_weight": 1480,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0149",
+        "group_key": "REQGRP-0011",
+        "order_weight": 1490,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0150",
+        "group_key": "REQGRP-0012",
+        "order_weight": 1500,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0151",
+        "group_key": "REQGRP-0013",
+        "order_weight": 1510,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0152",
+        "group_key": "REQGRP-0014",
+        "order_weight": 1520,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0153",
+        "group_key": "REQGRP-0015",
+        "order_weight": 1530,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0154",
+        "group_key": "REQGRP-0016",
+        "order_weight": 1540,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0155",
+        "group_key": "REQGRP-0017",
+        "order_weight": 1550,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0156",
+        "group_key": "REQGRP-0018",
+        "order_weight": 1560,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0157",
+        "group_key": "REQGRP-0019",
+        "order_weight": 1570,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0158",
+        "group_key": "REQGRP-0020",
+        "order_weight": 1580,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0159",
+        "group_key": "REQGRP-0021",
+        "order_weight": 1590,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0160",
+        "group_key": "REQGRP-0022",
+        "order_weight": 1600,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0161",
+        "group_key": "REQGRP-0023",
+        "order_weight": 1610,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0162",
+        "group_key": "REQGRP-0001",
+        "order_weight": 1620,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0163",
+        "group_key": "REQGRP-0002",
+        "order_weight": 1630,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0164",
+        "group_key": "REQGRP-0003",
+        "order_weight": 1640,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0165",
+        "group_key": "REQGRP-0004",
+        "order_weight": 1650,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0166",
+        "group_key": "REQGRP-0005",
+        "order_weight": 1660,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0167",
+        "group_key": "REQGRP-0006",
+        "order_weight": 1670,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0168",
+        "group_key": "REQGRP-0007",
+        "order_weight": 1680,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0169",
+        "group_key": "REQGRP-0008",
+        "order_weight": 1690,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0170",
+        "group_key": "REQGRP-0009",
+        "order_weight": 1700,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0171",
+        "group_key": "REQGRP-0010",
+        "order_weight": 1710,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0172",
+        "group_key": "REQGRP-0011",
+        "order_weight": 1720,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0173",
+        "group_key": "REQGRP-0012",
+        "order_weight": 1730,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0174",
+        "group_key": "REQGRP-0013",
+        "order_weight": 1740,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0175",
+        "group_key": "REQGRP-0014",
+        "order_weight": 1750,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0176",
+        "group_key": "REQGRP-0015",
+        "order_weight": 1760,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0177",
+        "group_key": "REQGRP-0016",
+        "order_weight": 1770,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0178",
+        "group_key": "REQGRP-0017",
+        "order_weight": 1780,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0179",
+        "group_key": "REQGRP-0018",
+        "order_weight": 1790,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0180",
+        "group_key": "REQGRP-0019",
+        "order_weight": 1800,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0181",
+        "group_key": "REQGRP-0020",
+        "order_weight": 1810,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0182",
+        "group_key": "REQGRP-0021",
+        "order_weight": 1820,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0183",
+        "group_key": "REQGRP-0022",
+        "order_weight": 1830,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0184",
+        "group_key": "REQGRP-0023",
+        "order_weight": 1840,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0185",
+        "group_key": "REQGRP-0001",
+        "order_weight": 1850,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0186",
+        "group_key": "REQGRP-0002",
+        "order_weight": 1860,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0187",
+        "group_key": "REQGRP-0003",
+        "order_weight": 1870,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0188",
+        "group_key": "REQGRP-0004",
+        "order_weight": 1880,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0189",
+        "group_key": "REQGRP-0005",
+        "order_weight": 1890,
+        "mandatory": true,
+        "contract_carry_forward": false
+      },
+      {
+        "requirement_key": "REQ-0190",
+        "group_key": "REQGRP-0006",
+        "order_weight": 1900,
+        "mandatory": true,
+        "contract_carry_forward": false
+      }
+    ],
+    "preliminary_criteria": [
+      {
+        "criterion_key": "PRELIM-0001",
+        "order_weight": 10,
+        "label": "PRELIM 1"
+      },
+      {
+        "criterion_key": "PRELIM-0002",
+        "order_weight": 20,
+        "label": "PRELIM 2"
+      },
+      {
+        "criterion_key": "PRELIM-0003",
+        "order_weight": 30,
+        "label": "PRELIM 3"
+      },
+      {
+        "criterion_key": "PRELIM-0004",
+        "order_weight": 40,
+        "label": "PRELIM 4"
+      },
+      {
+        "criterion_key": "PRELIM-0005",
+        "order_weight": 50,
+        "label": "PRELIM 5"
+      },
+      {
+        "criterion_key": "PRELIM-0006",
+        "order_weight": 60,
+        "label": "PRELIM 6"
+      },
+      {
+        "criterion_key": "PRELIM-0007",
+        "order_weight": 70,
+        "label": "PRELIM 7"
+      },
+      {
+        "criterion_key": "PRELIM-0008",
+        "order_weight": 80,
+        "label": "PRELIM 8"
+      },
+      {
+        "criterion_key": "PRELIM-0009",
+        "order_weight": 90,
+        "label": "PRELIM 9"
+      }
+    ],
+    "qualification_criteria": [
+      {
+        "criterion_key": "QUAL-0001",
+        "order_weight": 10,
+        "label": "QUAL 1"
+      },
+      {
+        "criterion_key": "QUAL-0002",
+        "order_weight": 20,
+        "label": "QUAL 2"
+      },
+      {
+        "criterion_key": "QUAL-0003",
+        "order_weight": 30,
+        "label": "QUAL 3"
+      },
+      {
+        "criterion_key": "QUAL-0004",
+        "order_weight": 40,
+        "label": "QUAL 4"
+      },
+      {
+        "criterion_key": "QUAL-0005",
+        "order_weight": 50,
+        "label": "QUAL 5"
+      },
+      {
+        "criterion_key": "QUAL-0006",
+        "order_weight": 60,
+        "label": "QUAL 6"
+      },
+      {
+        "criterion_key": "QUAL-0007",
+        "order_weight": 70,
+        "label": "QUAL 7"
+      },
+      {
+        "criterion_key": "QUAL-0008",
+        "order_weight": 80,
+        "label": "QUAL 8"
+      },
+      {
+        "criterion_key": "QUAL-0009",
+        "order_weight": 90,
+        "label": "QUAL 9"
+      }
+    ],
+    "technical_scoring": [
+      {
+        "criterion_key": "TECH-0001",
+        "order_weight": 10,
+        "max_score": "20"
+      },
+      {
+        "criterion_key": "TECH-0002",
+        "order_weight": 20,
+        "max_score": "15"
+      },
+      {
+        "criterion_key": "TECH-0003",
+        "order_weight": 30,
+        "max_score": "15"
+      },
+      {
+        "criterion_key": "TECH-0004",
+        "order_weight": 40,
+        "max_score": "15"
+      },
+      {
+        "criterion_key": "TECH-0005",
+        "order_weight": 50,
+        "max_score": "15"
+      },
+      {
+        "criterion_key": "TECH-0006",
+        "order_weight": 60,
+        "max_score": "10"
+      },
+      {
+        "criterion_key": "TECH-0007",
+        "order_weight": 70,
+        "max_score": "10"
+      }
+    ],
+    "schedule_rows": [
+      {
+        "row_key": "SCHED-0001",
+        "order_weight": 10,
+        "label": "SCHED 1"
+      },
+      {
+        "row_key": "SCHED-0002",
+        "order_weight": 20,
+        "label": "SCHED 2"
+      },
+      {
+        "row_key": "SCHED-0003",
+        "order_weight": 30,
+        "label": "SCHED 3"
+      },
+      {
+        "row_key": "SCHED-0004",
+        "order_weight": 40,
+        "label": "SCHED 4"
+      },
+      {
+        "row_key": "SCHED-0005",
+        "order_weight": 50,
+        "label": "SCHED 5"
+      },
+      {
+        "row_key": "SCHED-0006",
+        "order_weight": 60,
+        "label": "SCHED 6"
+      }
+    ],
+    "price_lines": [
+      {
+        "line_key": "PRICE-0001",
+        "order_weight": 10,
+        "label": "PRICE 1"
+      },
+      {
+        "line_key": "PRICE-0002",
+        "order_weight": 20,
+        "label": "PRICE 2"
+      },
+      {
+        "line_key": "PRICE-0003",
+        "order_weight": 30,
+        "label": "PRICE 3"
+      },
+      {
+        "line_key": "PRICE-0004",
+        "order_weight": 40,
+        "label": "PRICE 4"
+      },
+      {
+        "line_key": "PRICE-0005",
+        "order_weight": 50,
+        "label": "PRICE 5"
+      },
+      {
+        "line_key": "PRICE-0006",
+        "order_weight": 60,
+        "label": "PRICE 6"
+      },
+      {
+        "line_key": "PRICE-0007",
+        "order_weight": 70,
+        "label": "PRICE 7"
+      },
+      {
+        "line_key": "PRICE-0008",
+        "order_weight": 80,
+        "label": "PRICE 8"
+      },
+      {
+        "line_key": "PRICE-0009",
+        "order_weight": 90,
+        "label": "PRICE 9"
+      },
+      {
+        "line_key": "PRICE-0010",
+        "order_weight": 100,
+        "label": "PRICE 10"
+      },
+      {
+        "line_key": "PRICE-0011",
+        "order_weight": 110,
+        "label": "PRICE 11"
+      },
+      {
+        "line_key": "PRICE-0012",
+        "order_weight": 120,
+        "label": "PRICE 12"
+      },
+      {
+        "line_key": "PRICE-0013",
+        "order_weight": 130,
+        "label": "PRICE 13"
+      },
+      {
+        "line_key": "PRICE-0014",
+        "order_weight": 140,
+        "label": "PRICE 14"
+      },
+      {
+        "line_key": "PRICE-0015",
+        "order_weight": 150,
+        "label": "PRICE 15"
+      },
+      {
+        "line_key": "PRICE-0016",
+        "order_weight": 160,
+        "label": "PRICE 16"
+      },
+      {
+        "line_key": "PRICE-0017",
+        "order_weight": 170,
+        "label": "PRICE 17"
+      },
+      {
+        "line_key": "PRICE-0018",
+        "order_weight": 180,
+        "label": "PRICE 18"
+      },
+      {
+        "line_key": "PRICE-0019",
+        "order_weight": 190,
+        "label": "PRICE 19"
+      },
+      {
+        "line_key": "PRICE-0020",
+        "order_weight": 200,
+        "label": "PRICE 20"
+      },
+      {
+        "line_key": "PRICE-0021",
+        "order_weight": 210,
+        "label": "PRICE 21"
+      },
+      {
+        "line_key": "PRICE-0022",
+        "order_weight": 220,
+        "label": "PRICE 22"
+      }
+    ],
+    "contract_conditions": [
+      {
+        "condition_key": "COND-0001",
+        "order_weight": 10,
+        "label": "COND 1"
+      },
+      {
+        "condition_key": "COND-0002",
+        "order_weight": 20,
+        "label": "COND 2"
+      },
+      {
+        "condition_key": "COND-0003",
+        "order_weight": 30,
+        "label": "COND 3"
+      },
+      {
+        "condition_key": "COND-0004",
+        "order_weight": 40,
+        "label": "COND 4"
+      },
+      {
+        "condition_key": "COND-0005",
+        "order_weight": 50,
+        "label": "COND 5"
+      },
+      {
+        "condition_key": "COND-0006",
+        "order_weight": 60,
+        "label": "COND 6"
+      },
+      {
+        "condition_key": "COND-0007",
+        "order_weight": 70,
+        "label": "COND 7"
+      },
+      {
+        "condition_key": "COND-0008",
+        "order_weight": 80,
+        "label": "COND 8"
+      }
+    ],
+    "decisions": [
+      {
+        "decision_id": "NSSF-DEC-SEC-001",
+        "order_weight": 10,
+        "status": "approved"
+      },
+      {
+        "decision_id": "NSSF-DEC-002",
+        "order_weight": 20,
+        "status": "approved"
+      },
+      {
+        "decision_id": "NSSF-DEC-003",
+        "order_weight": 30,
+        "status": "approved"
+      },
+      {
+        "decision_id": "NSSF-DEC-004",
+        "order_weight": 40,
+        "status": "approved"
+      },
+      {
+        "decision_id": "NSSF-DEC-005",
+        "order_weight": 50,
+        "status": "approved"
+      },
+      {
+        "decision_id": "NSSF-DEC-006",
+        "order_weight": 60,
+        "status": "approved"
+      },
+      {
+        "decision_id": "NSSF-DEC-007",
+        "order_weight": 70,
+        "status": "approved"
+      },
+      {
+        "decision_id": "NSSF-DEC-008",
+        "order_weight": 80,
+        "status": "approved"
+      }
+    ]
+  },
+  "expected_counts": {
+    "requirement_groups": 23,
+    "requirements": 190,
+    "preliminary_criteria": 9,
+    "qualification_criteria": 9,
+    "technical_scoring": 7,
+    "schedule_rows": 6,
+    "price_lines": 22,
+    "contract_conditions": 8,
+    "decisions": 8
+  },
+  "resource_registry_template": {
+    "descriptor_set_digest": "sha256:530792ace76ad691c168ab65c111f55a63a2e2d1929aa09ddf00d1d2e62bf6bd",
+    "resources": [
+      {
+        "resource_id": "RESOURCE-NSSF-REQUIREMENT-GROUPS",
+        "item_count": 23,
+        "resource_digest": "sha256:7c8725822187749999b76d04fb843038f1139e2ee249ead40cfffb175d11c78d",
+        "resource_type": "requirement_group",
+        "schema_ref": "bwmf/item/requirement_group",
+        "schema_version": "1.0.0"
+      },
+      {
+        "resource_id": "RESOURCE-NSSF-REQUIREMENTS",
+        "item_count": 190,
+        "resource_digest": "sha256:12e64fd25709a935231213071a0e9d04c8aa3094a38a2fb11a44155b17f3d697",
+        "resource_type": "requirement",
+        "schema_ref": "bwmf/item/requirement",
+        "schema_version": "1.0.0"
+      },
+      {
+        "resource_id": "RESOURCE-NSSF-PRELIMINARY-CRITERIA",
+        "item_count": 9,
+        "resource_digest": "sha256:0ab46d93f32e88876704b39526124a3c9b68f0e1d453e48ac3fa6d7b7e5edebb",
+        "resource_type": "preliminary_criterion",
+        "schema_ref": "bwmf/item/preliminary_criterion",
+        "schema_version": "1.0.0"
+      },
+      {
+        "resource_id": "RESOURCE-NSSF-QUALIFICATION-CRITERIA",
+        "item_count": 9,
+        "resource_digest": "sha256:54cf1d2458bde735721f7c3e23444df553efdae3c48d524a05bffef9131ff827",
+        "resource_type": "qualification_criterion",
+        "schema_ref": "bwmf/item/qualification_criterion",
+        "schema_version": "1.0.0"
+      },
+      {
+        "resource_id": "RESOURCE-NSSF-TECHNICAL-SCORING",
+        "item_count": 7,
+        "resource_digest": "sha256:2207ad23244b116cb97015c34c064234287d81fd3157e93dc7b896e14fb72030",
+        "resource_type": "evaluation_criterion",
+        "schema_ref": "bwmf/item/evaluation_criterion",
+        "schema_version": "1.0.0"
+      },
+      {
+        "resource_id": "RESOURCE-NSSF-SCHEDULE",
+        "item_count": 6,
+        "resource_digest": "sha256:c33f7eb213e689e2b30ae89d329216373d5b24ac639fa46b926d4fd2a7d64ef8",
+        "resource_type": "implementation_schedule_row",
+        "schema_ref": "bwmf/item/implementation_schedule_row",
+        "schema_version": "1.0.0"
+      },
+      {
+        "resource_id": "RESOURCE-NSSF-PRICE-LINES",
+        "item_count": 22,
+        "resource_digest": "sha256:895d1c94c3446b07f8a5c4b72e68540e91e5e4a5d13a7126683b9547fff1db2e",
+        "resource_type": "price_line",
+        "schema_ref": "bwmf/item/price_line",
+        "schema_version": "1.0.0"
+      },
+      {
+        "resource_id": "RESOURCE-NSSF-CONTRACT-CONDITIONS",
+        "item_count": 8,
+        "resource_digest": "sha256:8b90a193c27ef0d6b5d740980630094064e9571fadd160c3bc2b9426f4f9ca94",
+        "resource_type": "contract_condition",
+        "schema_ref": "bwmf/item/contract_condition",
+        "schema_version": "1.0.0"
+      },
+      {
+        "resource_id": "RESOURCE-NSSF-DECISIONS",
+        "item_count": 8,
+        "resource_digest": "sha256:fa677d4b40b1934c8c50a9817733a7c4183d641f1ff3d957ce1e190d5381c5ef",
+        "resource_type": "controlled_decision",
+        "schema_ref": "bwmf/item/controlled_decision",
+        "schema_version": "1.0.0"
+      }
+    ]
+  },
+  "role_policy": {
+    "policy_ref": "ROLE-POLICY-IT-BIDDER-V1",
+    "roles": [
+      "workspace_owner",
+      "bid_preparer",
+      "technical_contributor",
+      "financial_contributor",
+      "authorized_signatory"
+    ],
+    "submit_role": "authorized_signatory"
+  },
+  "rule_registry": {
+    "profile_ref": "RULESET-PPRA-IT-BWS-V1",
+    "fixture_overrides": [
+      "NSSF-RULE-SECURITY-VALIDITY",
+      "NSSF-RULE-NO-ALTERNATIVES",
+      "NSSF-RULE-FIXED-PRICE",
+      "NSSF-RULE-VAT-SEPARATE",
+      "NSSF-RULE-REQ-NO-DEVIATIONS"
+    ]
+  },
+  "validation_registry": {
+    "profile_ref": "VALIDATION-PPRA-IT-BWS-V1",
+    "fixture_rule_refs": [
+      "VAL-NSSF-DOCUMENT-VERSIONS",
+      "VAL-NSSF-FORM-OF-TENDER",
+      "VAL-NSSF-CBQ",
+      "VAL-NSSF-DECLARATIONS",
+      "VAL-NSSF-TENDER-SECURITY",
+      "VAL-NSSF-PRELIMINARY-9",
+      "VAL-NSSF-QUALIFICATION-9",
+      "VAL-NSSF-TECHNICAL-7",
+      "VAL-NSSF-REQUIREMENTS-190",
+      "VAL-NSSF-SCHEDULE-6",
+      "VAL-NSSF-PRICE-22",
+      "VAL-NSSF-SUBMISSION"
+    ]
+  },
+  "evidence_contract": {
+    "profile_ref": "EVIDENCE-CONTRACT-PPRA-IT-V1",
+    "deduplicate_by_content_digest": true,
+    "reuse_by_link": true,
+    "duplicate_upload_for_cross_linked_form": false
+  },
+  "projections": {
+    "opening": "PROJECTION-NSSF-OPENING-V1",
+    "evaluation": "PROJECTION-NSSF-EVALUATION-V1",
+    "contract": "PROJECTION-NSSF-CONTRACT-V1"
+  },
+  "section_templates": [
+    {
+      "section_instance_id": "SEC-NSSF-100",
+      "section_key": "tender_documents_and_addenda",
+      "section_type": "document_acknowledgement",
+      "order_weight": 100,
+      "required": true,
+      "resource_refs": [],
+      "completion_rule_ref": "RULE-DOCUMENT-ACK-CURRENT",
+      "invalidation_policy_ref": "INVALIDATE-DOCUMENT-CHANGE"
+    },
+    {
+      "section_instance_id": "SEC-NSSF-200",
+      "section_key": "form_of_tender",
+      "section_type": "declaration_form",
+      "order_weight": 200,
+      "required": true,
+      "resource_refs": [],
+      "completion_rule_ref": "RULE-FOT-CURRENT-CONFIRMED",
+      "invalidation_policy_ref": "INVALIDATE-FOT-MATERIAL"
+    },
+    {
+      "section_instance_id": "SEC-NSSF-300",
+      "section_key": "confidential_business_questionnaire",
+      "section_type": "questionnaire",
+      "order_weight": 300,
+      "required": true,
+      "resource_refs": [],
+      "completion_rule_ref": "RULE-CBQ-ALL-ENTITIES-CERTIFIED",
+      "invalidation_policy_ref": "INVALIDATE-CBQ-IDENTITY"
+    },
+    {
+      "section_instance_id": "SEC-NSSF-400",
+      "section_key": "statutory_declarations",
+      "section_type": "declaration_bundle",
+      "order_weight": 400,
+      "required": true,
+      "resource_refs": [],
+      "completion_rule_ref": "RULE-DECLARATION-BUNDLE-CURRENT",
+      "invalidation_policy_ref": "INVALIDATE-LEGAL-TEXT-OR-AUTHORITY"
+    },
+    {
+      "section_instance_id": "SEC-NSSF-450",
+      "section_key": "tender_security",
+      "section_type": "security_instrument",
+      "order_weight": 450,
+      "required": true,
+      "resource_refs": [
+        "RESOURCE-NSSF-DECISIONS"
+      ],
+      "completion_rule_ref": "NSSF-RULE-SECURITY-VALIDITY",
+      "invalidation_policy_ref": "INVALIDATE-SECURITY-CONTEXT"
+    },
+    {
+      "section_instance_id": "SEC-NSSF-500",
+      "section_key": "preliminary_requirements_and_evidence",
+      "section_type": "eligibility_checklist",
+      "order_weight": 500,
+      "required": true,
+      "resource_refs": [
+        "RESOURCE-NSSF-PRELIMINARY-CRITERIA"
+      ],
+      "completion_rule_ref": "RULE-ALL-APPLICABLE-MANDATORY-CRITERIA",
+      "invalidation_policy_ref": "INVALIDATE-CRITERION-OR-EVIDENCE"
+    },
+    {
+      "section_instance_id": "SEC-NSSF-600",
+      "section_key": "qualification_and_capability",
+      "section_type": "qualification_response",
+      "order_weight": 600,
+      "required": true,
+      "resource_refs": [
+        "RESOURCE-NSSF-QUALIFICATION-CRITERIA",
+        "RESOURCE-NSSF-TECHNICAL-SCORING"
+      ],
+      "completion_rule_ref": "RULE-QUALIFICATION-COMPLETE",
+      "invalidation_policy_ref": "INVALIDATE-QUALIFICATION-INPUT"
+    },
+    {
+      "section_instance_id": "SEC-NSSF-700",
+      "section_key": "technical_proposal_and_implementation_plan",
+      "section_type": "technical_response",
+      "order_weight": 700,
+      "required": true,
+      "resource_refs": [
+        "RESOURCE-NSSF-SCHEDULE",
+        "RESOURCE-NSSF-TECHNICAL-SCORING"
+      ],
+      "completion_rule_ref": "RULE-TECHNICAL-PLAN-COMPLETE",
+      "invalidation_policy_ref": "INVALIDATE-TECHNICAL-CONTEXT"
+    },
+    {
+      "section_instance_id": "SEC-NSSF-800",
+      "section_key": "requirements_compliance",
+      "section_type": "requirement_matrix",
+      "order_weight": 800,
+      "required": true,
+      "resource_refs": [
+        "RESOURCE-NSSF-REQUIREMENT-GROUPS",
+        "RESOURCE-NSSF-REQUIREMENTS"
+      ],
+      "completion_rule_ref": "RULE-ALL-190-REQUIREMENTS-COMPLETE",
+      "invalidation_policy_ref": "INVALIDATE-CHANGED-REQUIREMENT"
+    },
+    {
+      "section_instance_id": "SEC-NSSF-900",
+      "section_key": "price_schedule",
+      "section_type": "price_schedule",
+      "order_weight": 900,
+      "required": true,
+      "resource_refs": [
+        "RESOURCE-NSSF-PRICE-LINES"
+      ],
+      "completion_rule_ref": "RULE-ALL-22-PRICE-LINES-RECONCILED",
+      "invalidation_policy_ref": "INVALIDATE-PRICE-GRAPH"
+    }
+  ],
+  "cross_cutting_views": [
+    {
+      "view_key": "evidence_register",
+      "title": "Evidence Register"
+    },
+    {
+      "view_key": "issue_register",
+      "title": "Issues"
+    }
+  ],
+  "workflow_gates": [
+    {
+      "gate_key": "review_and_validate",
+      "order_weight": 100
+    },
+    {
+      "gate_key": "submit_and_seal",
+      "order_weight": 200
+    },
+    {
+      "gate_key": "submission_receipt",
+      "order_weight": 300
+    }
+  ],
+  "golden_projection_payload": {
+    "manifest_id": "BWMF-CAL-NSSF-ERP-001-V1",
+    "manifest_version": 1,
+    "published_tender_ref": "CAL-NSSF-NSSFSPS-ICT-ERP-001-2025-2026",
+    "published_tender_version": 1,
+    "std_family": "information_technology",
+    "bindings": {
+      "std_source_digest": "sha256:2e57294f5cd49cfeca476347a3c81922f1efd834fdaa56430c3066efd1f6d251",
+      "obligation_catalogue_digest": "sha256:eb045d1f33fe7c34d67ef18f004266bf3b25bd8eb11fa77ef4705f0691b369ba",
+      "section_blueprint_digest": "sha256:de3cf25fc4087d4d9f65407476b95d4e67a8701db31cd0246446807e30bc7c25",
+      "manifest_contract_digest": "sha256:29c3a28fd80e67873a07e7ab10171b6a6ffd314b27bf66fd713af01d838f2eed",
+      "tender_configuration_digest": "sha256:4db4747950e8831f9385ce52463c4365ae72e6de4b72b8e896deab5b4cd2bfe1",
+      "decision_resource_digest": "sha256:7712b4ed457d9be988d4f27ebbcba1dea61372ca998db0a9fefaf3158ac4bc17",
+      "compiler_version": "1.0.0"
+    },
+    "tender_context": {
+      "tender_reference": "NSSFSPS/ICT/ERP/001/2025-2026",
+      "procuring_entity": "National Social Security Fund Staff Pension Scheme (NSSF SPS)",
+      "contract_name": "Supply, Installation, Configuration, Customization, Testing, Commissioning and Maintenance of an Enterprise Resource Planning (ERP) System",
+      "procurement_method": "open_national_competitive_tendering",
+      "currency": "KES"
+    },
+    "localization": {
+      "default_locale": "en-KE",
+      "supported_locales": [
+        "en-KE"
+      ],
+      "timezone": "Africa/Nairobi"
+    },
+    "submission_policy": {
+      "mode": "electronic_only_calibration",
+      "deadline": "2026-06-30T11:00:00+03:00",
+      "late_submission_policy": "reject",
+      "authorized_submission_required": true,
+      "seal_required": true,
+      "receipt_required": true,
+      "replacement_before_deadline": true
+    },
+    "lot_model": {
+      "mode": "single_scope",
+      "bidder_selectable_lots": false,
+      "alternatives_permitted": false
+    },
+    "document_package": {
+      "package_ref": "DOC-PKG-CAL-NSSF-ERP-001-V1",
+      "package_version": 1,
+      "source_digest": "sha256:bb716e97a312548d8469c5513539f0679e83b3336c7d630c2d7d6c77773aeb38",
+      "active_addenda": []
+    },
+    "role_policy": {
+      "policy_ref": "ROLE-POLICY-IT-BIDDER-V1",
+      "roles": [
+        "workspace_owner",
+        "bid_preparer",
+        "technical_contributor",
+        "financial_contributor",
+        "authorized_signatory"
+      ],
+      "submit_role": "authorized_signatory"
+    },
+    "rule_registry": {
+      "profile_ref": "RULESET-PPRA-IT-BWS-V1",
+      "fixture_overrides": [
+        "NSSF-RULE-SECURITY-VALIDITY",
+        "NSSF-RULE-NO-ALTERNATIVES",
+        "NSSF-RULE-FIXED-PRICE",
+        "NSSF-RULE-VAT-SEPARATE",
+        "NSSF-RULE-REQ-NO-DEVIATIONS"
+      ]
+    },
+    "validation_registry": {
+      "profile_ref": "VALIDATION-PPRA-IT-BWS-V1",
+      "fixture_rule_refs": [
+        "VAL-NSSF-DOCUMENT-VERSIONS",
+        "VAL-NSSF-FORM-OF-TENDER",
+        "VAL-NSSF-CBQ",
+        "VAL-NSSF-DECLARATIONS",
+        "VAL-NSSF-TENDER-SECURITY",
+        "VAL-NSSF-PRELIMINARY-9",
+        "VAL-NSSF-QUALIFICATION-9",
+        "VAL-NSSF-TECHNICAL-7",
+        "VAL-NSSF-REQUIREMENTS-190",
+        "VAL-NSSF-SCHEDULE-6",
+        "VAL-NSSF-PRICE-22",
+        "VAL-NSSF-SUBMISSION"
+      ]
+    },
+    "resource_registry": {
+      "descriptor_set_digest": "sha256:530792ace76ad691c168ab65c111f55a63a2e2d1929aa09ddf00d1d2e62bf6bd",
+      "resources": [
+        {
+          "resource_id": "RESOURCE-NSSF-REQUIREMENT-GROUPS",
+          "item_count": 23,
+          "resource_digest": "sha256:7c8725822187749999b76d04fb843038f1139e2ee249ead40cfffb175d11c78d"
+        },
+        {
+          "resource_id": "RESOURCE-NSSF-REQUIREMENTS",
+          "item_count": 190,
+          "resource_digest": "sha256:12e64fd25709a935231213071a0e9d04c8aa3094a38a2fb11a44155b17f3d697"
+        },
+        {
+          "resource_id": "RESOURCE-NSSF-PRELIMINARY-CRITERIA",
+          "item_count": 9,
+          "resource_digest": "sha256:0ab46d93f32e88876704b39526124a3c9b68f0e1d453e48ac3fa6d7b7e5edebb"
+        },
+        {
+          "resource_id": "RESOURCE-NSSF-QUALIFICATION-CRITERIA",
+          "item_count": 9,
+          "resource_digest": "sha256:54cf1d2458bde735721f7c3e23444df553efdae3c48d524a05bffef9131ff827"
+        },
+        {
+          "resource_id": "RESOURCE-NSSF-TECHNICAL-SCORING",
+          "item_count": 7,
+          "resource_digest": "sha256:2207ad23244b116cb97015c34c064234287d81fd3157e93dc7b896e14fb72030"
+        },
+        {
+          "resource_id": "RESOURCE-NSSF-SCHEDULE",
+          "item_count": 6,
+          "resource_digest": "sha256:c33f7eb213e689e2b30ae89d329216373d5b24ac639fa46b926d4fd2a7d64ef8"
+        },
+        {
+          "resource_id": "RESOURCE-NSSF-PRICE-LINES",
+          "item_count": 22,
+          "resource_digest": "sha256:895d1c94c3446b07f8a5c4b72e68540e91e5e4a5d13a7126683b9547fff1db2e"
+        },
+        {
+          "resource_id": "RESOURCE-NSSF-CONTRACT-CONDITIONS",
+          "item_count": 8,
+          "resource_digest": "sha256:8b90a193c27ef0d6b5d740980630094064e9571fadd160c3bc2b9426f4f9ca94"
+        },
+        {
+          "resource_id": "RESOURCE-NSSF-DECISIONS",
+          "item_count": 8,
+          "resource_digest": "sha256:fa677d4b40b1934c8c50a9817733a7c4183d641f1ff3d957ce1e190d5381c5ef"
+        }
+      ]
+    },
+    "evidence_contract": {
+      "profile_ref": "EVIDENCE-CONTRACT-PPRA-IT-V1",
+      "deduplicate_by_content_digest": true,
+      "reuse_by_link": true,
+      "duplicate_upload_for_cross_linked_form": false
+    },
+    "sections": [
+      {
+        "section_instance_id": "SEC-NSSF-100",
+        "section_key": "tender_documents_and_addenda",
+        "section_type": "document_acknowledgement",
+        "order_weight": 100,
+        "required": true,
+        "resource_refs": [],
+        "completion_rule_ref": "RULE-DOCUMENT-ACK-CURRENT",
+        "invalidation_policy_ref": "INVALIDATE-DOCUMENT-CHANGE"
+      },
+      {
+        "section_instance_id": "SEC-NSSF-200",
+        "section_key": "form_of_tender",
+        "section_type": "declaration_form",
+        "order_weight": 200,
+        "required": true,
+        "resource_refs": [],
+        "completion_rule_ref": "RULE-FOT-CURRENT-CONFIRMED",
+        "invalidation_policy_ref": "INVALIDATE-FOT-MATERIAL"
+      },
+      {
+        "section_instance_id": "SEC-NSSF-300",
+        "section_key": "confidential_business_questionnaire",
+        "section_type": "questionnaire",
+        "order_weight": 300,
+        "required": true,
+        "resource_refs": [],
+        "completion_rule_ref": "RULE-CBQ-ALL-ENTITIES-CERTIFIED",
+        "invalidation_policy_ref": "INVALIDATE-CBQ-IDENTITY"
+      },
+      {
+        "section_instance_id": "SEC-NSSF-400",
+        "section_key": "statutory_declarations",
+        "section_type": "declaration_bundle",
+        "order_weight": 400,
+        "required": true,
+        "resource_refs": [],
+        "completion_rule_ref": "RULE-DECLARATION-BUNDLE-CURRENT",
+        "invalidation_policy_ref": "INVALIDATE-LEGAL-TEXT-OR-AUTHORITY"
+      },
+      {
+        "section_instance_id": "SEC-NSSF-450",
+        "section_key": "tender_security",
+        "section_type": "security_instrument",
+        "order_weight": 450,
+        "required": true,
+        "resource_refs": [
+          "RESOURCE-NSSF-DECISIONS"
+        ],
+        "completion_rule_ref": "NSSF-RULE-SECURITY-VALIDITY",
+        "invalidation_policy_ref": "INVALIDATE-SECURITY-CONTEXT"
+      },
+      {
+        "section_instance_id": "SEC-NSSF-500",
+        "section_key": "preliminary_requirements_and_evidence",
+        "section_type": "eligibility_checklist",
+        "order_weight": 500,
+        "required": true,
+        "resource_refs": [
+          "RESOURCE-NSSF-PRELIMINARY-CRITERIA"
+        ],
+        "completion_rule_ref": "RULE-ALL-APPLICABLE-MANDATORY-CRITERIA",
+        "invalidation_policy_ref": "INVALIDATE-CRITERION-OR-EVIDENCE"
+      },
+      {
+        "section_instance_id": "SEC-NSSF-600",
+        "section_key": "qualification_and_capability",
+        "section_type": "qualification_response",
+        "order_weight": 600,
+        "required": true,
+        "resource_refs": [
+          "RESOURCE-NSSF-QUALIFICATION-CRITERIA",
+          "RESOURCE-NSSF-TECHNICAL-SCORING"
+        ],
+        "completion_rule_ref": "RULE-QUALIFICATION-COMPLETE",
+        "invalidation_policy_ref": "INVALIDATE-QUALIFICATION-INPUT"
+      },
+      {
+        "section_instance_id": "SEC-NSSF-700",
+        "section_key": "technical_proposal_and_implementation_plan",
+        "section_type": "technical_response",
+        "order_weight": 700,
+        "required": true,
+        "resource_refs": [
+          "RESOURCE-NSSF-SCHEDULE",
+          "RESOURCE-NSSF-TECHNICAL-SCORING"
+        ],
+        "completion_rule_ref": "RULE-TECHNICAL-PLAN-COMPLETE",
+        "invalidation_policy_ref": "INVALIDATE-TECHNICAL-CONTEXT"
+      },
+      {
+        "section_instance_id": "SEC-NSSF-800",
+        "section_key": "requirements_compliance",
+        "section_type": "requirement_matrix",
+        "order_weight": 800,
+        "required": true,
+        "resource_refs": [
+          "RESOURCE-NSSF-REQUIREMENT-GROUPS",
+          "RESOURCE-NSSF-REQUIREMENTS"
+        ],
+        "completion_rule_ref": "RULE-ALL-190-REQUIREMENTS-COMPLETE",
+        "invalidation_policy_ref": "INVALIDATE-CHANGED-REQUIREMENT"
+      },
+      {
+        "section_instance_id": "SEC-NSSF-900",
+        "section_key": "price_schedule",
+        "section_type": "price_schedule",
+        "order_weight": 900,
+        "required": true,
+        "resource_refs": [
+          "RESOURCE-NSSF-PRICE-LINES"
+        ],
+        "completion_rule_ref": "RULE-ALL-22-PRICE-LINES-RECONCILED",
+        "invalidation_policy_ref": "INVALIDATE-PRICE-GRAPH"
+      }
+    ],
+    "cross_cutting_views": [
+      {
+        "view_key": "evidence_register",
+        "title": "Evidence Register"
+      },
+      {
+        "view_key": "issue_register",
+        "title": "Issues"
+      }
+    ],
+    "workflow_gates": [
+      {
+        "gate_key": "review_and_validate",
+        "order_weight": 100
+      },
+      {
+        "gate_key": "submit_and_seal",
+        "order_weight": 200
+      },
+      {
+        "gate_key": "submission_receipt",
+        "order_weight": 300
+      }
+    ],
+    "projections": {
+      "opening": "PROJECTION-NSSF-OPENING-V1",
+      "evaluation": "PROJECTION-NSSF-EVALUATION-V1",
+      "contract": "PROJECTION-NSSF-CONTRACT-V1"
+    },
+    "publication_readiness": {
+      "passed": true,
+      "error_count": 0,
+      "warning_count": 2,
+      "information_count": 6,
+      "coverage_summary": {
+        "legacy_sections_dispositioned": 10,
+        "preliminary_criteria": 9,
+        "qualification_criteria": 9,
+        "requirements": 190,
+        "schedule_rows": 6,
+        "price_rows": 22
+      },
+      "section_summary": {
+        "content_sections": 10,
+        "cross_cutting_views": 2,
+        "workflow_gates": 3
+      },
+      "renderer_summary": {
+        "required": 10,
+        "resolved": 10
+      },
+      "rule_summary": {
+        "unresolved": 0
+      },
+      "projection_summary": {
+        "opening": 1,
+        "evaluation": 1,
+        "contract": 1
+      },
+      "diagnostic_digest": "sha256:b3bbc3f30456383236a9ea1b131fee9d6e62519a20e45484c987805260be84f7",
+      "checklist_version": "CHECKLIST-PPRA-IT-BWS-V1"
+    }
+  },
+  "bindings_template": {
+    "std_source_digest": "sha256:2e57294f5cd49cfeca476347a3c81922f1efd834fdaa56430c3066efd1f6d251",
+    "obligation_catalogue_digest": "sha256:eb045d1f33fe7c34d67ef18f004266bf3b25bd8eb11fa77ef4705f0691b369ba",
+    "section_blueprint_digest": "sha256:de3cf25fc4087d4d9f65407476b95d4e67a8701db31cd0246446807e30bc7c25",
+    "manifest_contract_digest": "sha256:29c3a28fd80e67873a07e7ab10171b6a6ffd314b27bf66fd713af01d838f2eed",
+    "tender_configuration_digest": "sha256:4db4747950e8831f9385ce52463c4365ae72e6de4b72b8e896deab5b4cd2bfe1",
+    "decision_resource_digest": "sha256:7712b4ed457d9be988d4f27ebbcba1dea61372ca998db0a9fefaf3158ac4bc17",
+    "compiler_version": "1.0.0"
+  },
+  "calibration_diagnostics": [
+    {
+      "diagnostic_id": "NSSF-DIAG-W001",
+      "severity": "warning",
+      "code": "CALIBRATION_ELECTRONIC_POLICY_OVERRIDE",
+      "message": "The historical source prohibited electronic tenders; this golden fixture applies the approved electronic-only calibration policy and is not a republication."
+    },
+    {
+      "diagnostic_id": "NSSF-DIAG-W002",
+      "severity": "warning",
+      "code": "SOURCE_SECURITY_LABEL_MISLEADING",
+      "message": "The source label Professional Indemnity is retained as provenance, while the operative ITT 22 instrument is compiled as Tender Security under NSSF-DEC-SEC-001."
+    },
+    {
+      "diagnostic_id": "NSSF-DIAG-I001",
+      "severity": "information",
+      "code": "CONTENT_SECTION_COUNT",
+      "message": "Ten bidder-facing content sections were compiled."
+    },
+    {
+      "diagnostic_id": "NSSF-DIAG-I002",
+      "severity": "information",
+      "code": "LOTS_SECTION_OMITTED",
+      "message": "Lots and Alternatives was omitted because no bidder-selectable lots exist and alternatives are prohibited."
+    },
+    {
+      "diagnostic_id": "NSSF-DIAG-I003",
+      "severity": "information",
+      "code": "REQUIREMENT_RESOURCE_BOUND",
+      "message": "The requirements resource contains 190 mandatory rows in 23 ordered groups."
+    },
+    {
+      "diagnostic_id": "NSSF-DIAG-I004",
+      "severity": "information",
+      "code": "PRICE_RESOURCE_BOUND",
+      "message": "The price resource contains 22 lines allocated to canonical supply-installation and recurrent tables."
+    },
+    {
+      "diagnostic_id": "NSSF-DIAG-I005",
+      "severity": "information",
+      "code": "LEGACY_SECTION_DISPOSITION_COMPLETE",
+      "message": "All ten legacy checklist sections have an explicit canonical or deprecated disposition."
+    },
+    {
+      "diagnostic_id": "NSSF-DIAG-I006",
+      "severity": "information",
+      "code": "SOURCE_DEADLINE_SELECTED",
+      "message": "The source deadline of 2026-06-30T11:00:00+03:00 supersedes non-authoritative screenshot dates."
+    }
+  ],
+  "declared_digests": {
+    "std_source": "sha256:35d54f7d84630de420d32d1176a7f1eeb874c30c5a0787a3456d23f36004c630",
+    "catalogue": "sha256:5abf9439104f4d63dc2e593eeeb32de06cb12089849a12e6f772cd0e5825834d",
+    "blueprint": "sha256:32560c657e169bc9d41a298df7d470c4a8507781981092a25665822d4c99ee2d",
+    "manifest_contract": "sha256:a70ab595c7086ab48a01546b8a4b7e173e78b4ee19acdbdc982bb3be47acbf16",
+    "tender_configuration": "sha256:3b69a6c7c965d9a887f5704d64fcac21e7ceac2fba45b08165ff005c99ba31e2",
+    "document_package": "sha256:1898e5ef2e3017583f7d970d8c1fd2ffd7dd7a348ca8a986b95d6b2dcaea69b2",
+    "collections": "sha256:2a9bdd943197b2a04bd974f83d7117cda3821916ecd842dc08c077b3d4df0341",
+    "decisions": "sha256:fa677d4b40b1934c8c50a9817733a7c4183d641f1ff3d957ce1e190d5381c5ef"
+  },
+  "compile_request": {
+    "compile_mode": "preview",
+    "target_manifest_id": "BWMF-CAL-NSSF-ERP-001-V1",
+    "target_manifest_version": 1,
+    "published_tender_ref": "CAL-NSSF-NSSFSPS-ICT-ERP-001-2025-2026",
+    "published_tender_version": 1,
+    "compiler_version": "1.0.0",
+    "expected_input_digests": {
+      "std_source": "sha256:35d54f7d84630de420d32d1176a7f1eeb874c30c5a0787a3456d23f36004c630",
+      "catalogue": "sha256:5abf9439104f4d63dc2e593eeeb32de06cb12089849a12e6f772cd0e5825834d",
+      "blueprint": "sha256:32560c657e169bc9d41a298df7d470c4a8507781981092a25665822d4c99ee2d",
+      "manifest_contract": "sha256:a70ab595c7086ab48a01546b8a4b7e173e78b4ee19acdbdc982bb3be47acbf16",
+      "tender_configuration": "sha256:3b69a6c7c965d9a887f5704d64fcac21e7ceac2fba45b08165ff005c99ba31e2",
+      "document_package": "sha256:1898e5ef2e3017583f7d970d8c1fd2ffd7dd7a348ca8a986b95d6b2dcaea69b2",
+      "collections": "sha256:2a9bdd943197b2a04bd974f83d7117cda3821916ecd842dc08c077b3d4df0341",
+      "decisions": "sha256:fa677d4b40b1934c8c50a9817733a7c4183d641f1ff3d957ce1e190d5381c5ef"
+    }
+  },
+  "resource_collection_map": {
+    "RESOURCE-NSSF-REQUIREMENT-GROUPS": "requirement_groups",
+    "RESOURCE-NSSF-REQUIREMENTS": "requirements",
+    "RESOURCE-NSSF-PRELIMINARY-CRITERIA": "preliminary_criteria",
+    "RESOURCE-NSSF-QUALIFICATION-CRITERIA": "qualification_criteria",
+    "RESOURCE-NSSF-TECHNICAL-SCORING": "technical_scoring",
+    "RESOURCE-NSSF-SCHEDULE": "schedule_rows",
+    "RESOURCE-NSSF-PRICE-LINES": "price_lines",
+    "RESOURCE-NSSF-CONTRACT-CONDITIONS": "contract_conditions",
+    "RESOURCE-NSSF-DECISIONS": "decisions"
+  },
+  "checklist_version": "CHECKLIST-PPRA-IT-BWS-V1",
+  "scoring_profile": {
+    "maximum_score": "100",
+    "qualification_threshold": "75"
+  },
+  "oracle_counts": {
+    "requirement_groups": 23,
+    "requirements": 190,
+    "preliminary_criteria": 9,
+    "qualification_criteria": 9,
+    "technical_scoring": 7,
+    "schedule_rows": 6,
+    "price_lines": 22,
+    "contract_conditions": 8,
+    "decisions": 8,
+    "contract_carry_forward_requirements": 117,
+    "technical_scoring_maximum_score": "100",
+    "technical_scoring_qualification_threshold": "75",
+    "content_sections": 10,
+    "workflow_gates": 3,
+    "scc_conditions": 8,
+    "controlled_decisions": 8
+  }
+}

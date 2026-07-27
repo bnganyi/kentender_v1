@@ -1,0 +1,116 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-07-24 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "sec_id",
+  "manifest_id",
+  "manifest_version",
+  "lifecycle_state",
+  "manifest_schema_version",
+  "payload_digest",
+  "envelope_json",
+  "payload_json",
+  "organization",
+  "published_tender_ref",
+  "published_tender_version"
+ ],
+ "fields": [
+  {
+   "fieldname": "sec_id",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "manifest_id",
+   "fieldtype": "Data",
+   "label": "Manifest Id",
+   "reqd": 1
+  },
+  {
+   "fieldname": "manifest_version",
+   "fieldtype": "Int",
+   "label": "Manifest Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "lifecycle_state",
+   "fieldtype": "Select",
+   "label": "Lifecycle State",
+   "options": "Draft\nPublished\nSuperseded\nCancelled",
+   "reqd": 1,
+   "default": "Draft"
+  },
+  {
+   "fieldname": "manifest_schema_version",
+   "fieldtype": "Data",
+   "label": "Manifest Schema Version",
+   "reqd": 1,
+   "default": "1.0.0"
+  },
+  {
+   "fieldname": "payload_digest",
+   "fieldtype": "Data",
+   "label": "Payload Digest",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "envelope_json",
+   "fieldtype": "Long Text",
+   "label": "Envelope Json",
+   "reqd": 1
+  },
+  {
+   "fieldname": "payload_json",
+   "fieldtype": "Long Text",
+   "label": "Payload Json",
+   "reqd": 1
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "label": "Organization"
+  },
+  {
+   "fieldname": "published_tender_ref",
+   "fieldtype": "Data",
+   "label": "Published Tender Ref"
+  },
+  {
+   "fieldname": "published_tender_version",
+   "fieldtype": "Int",
+   "label": "Published Tender Version"
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-24 12:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Manifest Version",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "title_field": "manifest_id"
+}

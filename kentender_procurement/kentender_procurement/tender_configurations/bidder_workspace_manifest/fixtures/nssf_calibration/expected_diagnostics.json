@@ -1,0 +1,50 @@
+[
+  {
+    "diagnostic_id": "NSSF-DIAG-W001",
+    "severity": "warning",
+    "code": "CALIBRATION_ELECTRONIC_POLICY_OVERRIDE",
+    "message": "The historical source prohibited electronic tenders; this golden fixture applies the approved electronic-only calibration policy and is not a republication."
+  },
+  {
+    "diagnostic_id": "NSSF-DIAG-W002",
+    "severity": "warning",
+    "code": "SOURCE_SECURITY_LABEL_MISLEADING",
+    "message": "The source label Professional Indemnity is retained as provenance, while the operative ITT 22 instrument is compiled as Tender Security under NSSF-DEC-SEC-001."
+  },
+  {
+    "diagnostic_id": "NSSF-DIAG-I001",
+    "severity": "information",
+    "code": "CONTENT_SECTION_COUNT",
+    "message": "Ten bidder-facing content sections were compiled."
+  },
+  {
+    "diagnostic_id": "NSSF-DIAG-I002",
+    "severity": "information",
+    "code": "LOTS_SECTION_OMITTED",
+    "message": "Lots and Alternatives was omitted because no bidder-selectable lots exist and alternatives are prohibited."
+  },
+  {
+    "diagnostic_id": "NSSF-DIAG-I003",
+    "severity": "information",
+    "code": "REQUIREMENT_RESOURCE_BOUND",
+    "message": "The requirements resource contains 190 mandatory rows in 23 ordered groups."
+  },
+  {
+    "diagnostic_id": "NSSF-DIAG-I004",
+    "severity": "information",
+    "code": "PRICE_RESOURCE_BOUND",
+    "message": "The price resource contains 22 lines allocated to canonical supply-installation and recurrent tables."
+  },
+  {
+    "diagnostic_id": "NSSF-DIAG-I005",
+    "severity": "information",
+    "code": "LEGACY_SECTION_DISPOSITION_COMPLETE",
+    "message": "All ten legacy checklist sections have an explicit canonical or deprecated disposition."
+  },
+  {
+    "diagnostic_id": "NSSF-DIAG-I006",
+    "severity": "information",
+    "code": "SOURCE_DEADLINE_SELECTED",
+    "message": "The source deadline of 2026-06-30T11:00:00+03:00 supersedes non-authoritative screenshot dates."
+  }
+]

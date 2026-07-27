@@ -1,0 +1,158 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-07-24 19:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "binding_id",
+  "binding_key",
+  "manifest_version",
+  "resource_id",
+  "resource_docname",
+  "resource_version_key",
+  "resource_type",
+  "schema_ref",
+  "schema_version",
+  "resource_digest",
+  "content_ref",
+  "item_count",
+  "descriptor_order",
+  "binding_digest",
+  "immutable",
+  "organization"
+ ],
+ "fields": [
+  {
+   "fieldname": "binding_id",
+   "fieldtype": "Data",
+   "label": "Binding Id",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "binding_key",
+   "fieldtype": "Data",
+   "label": "Binding Key",
+   "reqd": 1,
+   "unique": 1,
+   "read_only": 1,
+   "description": "Server-derived unique (manifest_version, resource_id)"
+  },
+  {
+   "fieldname": "manifest_version",
+   "fieldtype": "Link",
+   "label": "Manifest Version",
+   "reqd": 1,
+   "options": "BWMF Manifest Version",
+   "search_index": 1
+  },
+  {
+   "fieldname": "resource_id",
+   "fieldtype": "Data",
+   "label": "Resource Id",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "resource_docname",
+   "fieldtype": "Data",
+   "label": "Resource Docname",
+   "reqd": 1
+  },
+  {
+   "fieldname": "resource_version_key",
+   "fieldtype": "Data",
+   "label": "Resource Version Key",
+   "reqd": 1
+  },
+  {
+   "fieldname": "resource_type",
+   "fieldtype": "Data",
+   "label": "Resource Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "schema_ref",
+   "fieldtype": "Data",
+   "label": "Schema Ref",
+   "reqd": 1
+  },
+  {
+   "fieldname": "schema_version",
+   "fieldtype": "Data",
+   "label": "Schema Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "resource_digest",
+   "fieldtype": "Data",
+   "label": "Resource Digest",
+   "reqd": 1
+  },
+  {
+   "fieldname": "content_ref",
+   "fieldtype": "Data",
+   "label": "Content Ref",
+   "reqd": 1
+  },
+  {
+   "fieldname": "item_count",
+   "fieldtype": "Int",
+   "label": "Item Count",
+   "reqd": 1
+  },
+  {
+   "fieldname": "descriptor_order",
+   "fieldtype": "Int",
+   "label": "Descriptor Order",
+   "reqd": 1
+  },
+  {
+   "fieldname": "binding_digest",
+   "fieldtype": "Data",
+   "label": "Binding Digest",
+   "reqd": 1
+  },
+  {
+   "fieldname": "immutable",
+   "fieldtype": "Check",
+   "label": "Immutable",
+   "default": "1",
+   "read_only": 1
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "label": "Organization"
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-24 19:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Manifest Resource Binding",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "title_field": "binding_id"
+}

@@ -1,0 +1,181 @@
+{
+  "schema_version": "1.0.0",
+  "json_schema_draft": "https://json-schema.org/draft/2020-12/schema",
+  "digest_authority": {
+    "document_content_digest": "required_authoritative",
+    "archive_provenance_digest": "optional_separate_provenance"
+  },
+  "schema_ids": [
+    "addendum_diff_impact",
+    "bindings",
+    "common_defs",
+    "compile_request",
+    "condition_calculation_ast",
+    "confirmation",
+    "dependency_invalidation",
+    "evidence",
+    "manifest_envelope",
+    "migration_plan_run",
+    "payload_core",
+    "projections",
+    "resource_descriptor",
+    "response_instance",
+    "role_authority",
+    "section_group_task_field_collection",
+    "source_binding",
+    "submission_policy",
+    "submission_receipt",
+    "validation_diagnostic",
+    "workflow_gates"
+  ],
+  "persistence_concepts": {
+    "compile_request": {
+      "schema_id": "compile_request",
+      "doctype": "BWMF Compile Request"
+    },
+    "compile_input_binding": {
+      "schema_id": "source_binding",
+      "doctype": "BWMF Compile Input Binding"
+    },
+    "compile_run": {
+      "schema_id": "compile_request",
+      "doctype": "BWMF Compile Run"
+    },
+    "compile_stage_trace": {
+      "schema_id": "validation_diagnostic",
+      "doctype": "BWMF Compile Stage Trace"
+    },
+    "compile_artifact": {
+      "schema_id": "manifest_envelope",
+      "doctype": "BWMF Compile Artifact"
+    },
+    "manifest_version": {
+      "schema_id": "manifest_envelope",
+      "doctype": "BWMF Manifest Version"
+    },
+    "manifest_resource": {
+      "schema_id": "resource_descriptor",
+      "doctype": "BWMF Manifest Resource"
+    },
+    "content_object": {
+      "schema_id": "resource_descriptor",
+      "doctype": "BWMF Content Object"
+    },
+    "artifact_resource_binding": {
+      "schema_id": "resource_descriptor",
+      "doctype": "BWMF Artifact Resource Binding"
+    },
+    "materialization_report": {
+      "schema_id": "validation_diagnostic",
+      "doctype": "BWMF Materialization Report"
+    },
+    "compiler_diagnostic": {
+      "schema_id": "validation_diagnostic",
+      "doctype": "BWMF Compiler Diagnostic"
+    },
+    "validation_report": {
+      "schema_id": "validation_diagnostic",
+      "doctype": "BWMF Validation Report"
+    },
+    "manifest_approval": {
+      "schema_id": "manifest_envelope",
+      "doctype": "BWMF Manifest Approval"
+    },
+    "manifest_publication": {
+      "schema_id": "manifest_envelope",
+      "doctype": "BWMF Manifest Publication"
+    },
+    "review_package": {
+      "schema_id": "manifest_envelope",
+      "doctype": "BWMF Review Package"
+    },
+    "approval_decision": {
+      "schema_id": "manifest_envelope",
+      "doctype": "BWMF Approval Decision"
+    },
+    "publication_request": {
+      "schema_id": "compile_request",
+      "doctype": "BWMF Publication Request"
+    },
+    "manifest_resource_binding": {
+      "schema_id": "resource_descriptor",
+      "doctype": "BWMF Manifest Resource Binding"
+    },
+    "lifecycle_event": {
+      "schema_id": "validation_diagnostic",
+      "doctype": "BWMF Lifecycle Event"
+    },
+    "tender_publication_state": {
+      "schema_id": "payload_core",
+      "doctype": "BWMF Tender Publication State"
+    },
+    "addendum_impact_plan": {
+      "schema_id": "addendum_diff_impact",
+      "doctype": "BWMF Addendum Impact Plan"
+    },
+    "workspace": {
+      "schema_id": "payload_core",
+      "doctype": "BWMF Workspace"
+    },
+    "workspace_manifest_binding": {
+      "schema_id": "manifest_envelope",
+      "doctype": "BWMF Workspace Manifest Binding"
+    },
+    "response_version": {
+      "schema_id": "response_instance",
+      "doctype": "BWMF Response Version"
+    },
+    "evidence_item": {
+      "schema_id": "evidence",
+      "doctype": "BWMF Evidence Item"
+    },
+    "evidence_version": {
+      "schema_id": "evidence",
+      "doctype": "BWMF Evidence Version"
+    },
+    "evidence_link": {
+      "schema_id": "evidence",
+      "doctype": "BWMF Evidence Link"
+    },
+    "confirmation": {
+      "schema_id": "confirmation",
+      "doctype": "BWMF Confirmation"
+    },
+    "authority_reference": {
+      "schema_id": "role_authority",
+      "doctype": "BWMF Authority Reference"
+    },
+    "dependency_snapshot": {
+      "schema_id": "dependency_invalidation",
+      "doctype": "BWMF Dependency Snapshot"
+    },
+    "invalidation_event": {
+      "schema_id": "dependency_invalidation",
+      "doctype": "BWMF Invalidation Event"
+    },
+    "validation_snapshot": {
+      "schema_id": "validation_diagnostic",
+      "doctype": "BWMF Validation Snapshot"
+    },
+    "validation_finding": {
+      "schema_id": "validation_diagnostic",
+      "doctype": "BWMF Validation Finding"
+    },
+    "submission": {
+      "schema_id": "submission_receipt",
+      "doctype": "BWMF Submission"
+    },
+    "submission_receipt": {
+      "schema_id": "submission_receipt",
+      "doctype": "BWMF Submission Receipt"
+    },
+    "audit_event": {
+      "schema_id": "validation_diagnostic",
+      "doctype": "BWMF Audit Event"
+    },
+    "idempotency_record": {
+      "schema_id": "compile_request",
+      "doctype": "BWMF Idempotency Record"
+    }
+  }
+}

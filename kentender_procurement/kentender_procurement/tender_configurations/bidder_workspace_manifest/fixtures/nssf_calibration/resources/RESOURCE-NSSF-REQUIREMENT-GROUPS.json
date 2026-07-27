@@ -1,0 +1,129 @@
+{
+  "resource_id": "RESOURCE-NSSF-REQUIREMENT-GROUPS",
+  "resource_type": "requirement_group",
+  "schema_ref": "bwmf/item/requirement_group",
+  "schema_version": "1.0.0",
+  "item_count": 23,
+  "ordering_contract": [
+    "order_weight",
+    "group_key"
+  ],
+  "resource_digest": "sha256:7c8725822187749999b76d04fb843038f1139e2ee249ead40cfffb175d11c78d",
+  "items": [
+    {
+      "group_key": "REQGRP-0001",
+      "order_weight": 10,
+      "label": "REQGRP 1"
+    },
+    {
+      "group_key": "REQGRP-0002",
+      "order_weight": 20,
+      "label": "REQGRP 2"
+    },
+    {
+      "group_key": "REQGRP-0003",
+      "order_weight": 30,
+      "label": "REQGRP 3"
+    },
+    {
+      "group_key": "REQGRP-0004",
+      "order_weight": 40,
+      "label": "REQGRP 4"
+    },
+    {
+      "group_key": "REQGRP-0005",
+      "order_weight": 50,
+      "label": "REQGRP 5"
+    },
+    {
+      "group_key": "REQGRP-0006",
+      "order_weight": 60,
+      "label": "REQGRP 6"
+    },
+    {
+      "group_key": "REQGRP-0007",
+      "order_weight": 70,
+      "label": "REQGRP 7"
+    },
+    {
+      "group_key": "REQGRP-0008",
+      "order_weight": 80,
+      "label": "REQGRP 8"
+    },
+    {
+      "group_key": "REQGRP-0009",
+      "order_weight": 90,
+      "label": "REQGRP 9"
+    },
+    {
+      "group_key": "REQGRP-0010",
+      "order_weight": 100,
+      "label": "REQGRP 10"
+    },
+    {
+      "group_key": "REQGRP-0011",
+      "order_weight": 110,
+      "label": "REQGRP 11"
+    },
+    {
+      "group_key": "REQGRP-0012",
+      "order_weight": 120,
+      "label": "REQGRP 12"
+    },
+    {
+      "group_key": "REQGRP-0013",
+      "order_weight": 130,
+      "label": "REQGRP 13"
+    },
+    {
+      "group_key": "REQGRP-0014",
+      "order_weight": 140,
+      "label": "REQGRP 14"
+    },
+    {
+      "group_key": "REQGRP-0015",
+      "order_weight": 150,
+      "label": "REQGRP 15"
+    },
+    {
+      "group_key": "REQGRP-0016",
+      "order_weight": 160,
+      "label": "REQGRP 16"
+    },
+    {
+      "group_key": "REQGRP-0017",
+      "order_weight": 170,
+      "label": "REQGRP 17"
+    },
+    {
+      "group_key": "REQGRP-0018",
+      "order_weight": 180,
+      "label": "REQGRP 18"
+    },
+    {
+      "group_key": "REQGRP-0019",
+      "order_weight": 190,
+      "label": "REQGRP 19"
+    },
+    {
+      "group_key": "REQGRP-0020",
+      "order_weight": 200,
+      "label": "REQGRP 20"
+    },
+    {
+      "group_key": "REQGRP-0021",
+      "order_weight": 210,
+      "label": "REQGRP 21"
+    },
+    {
+      "group_key": "REQGRP-0022",
+      "order_weight": 220,
+      "label": "REQGRP 22"
+    },
+    {
+      "group_key": "REQGRP-0023",
+      "order_weight": 230,
+      "label": "REQGRP 23"
+    }
+  ]
+}

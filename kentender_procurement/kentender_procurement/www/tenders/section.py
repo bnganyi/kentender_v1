@@ -21,6 +21,18 @@ from kentender_procurement.tender_configurations.services.statutory_declarations
 	SECTION_KEY as STAT_KEY,
 	portal_statutory_url,
 )
+from kentender_procurement.tender_configurations.services.tender_security import (
+	SECTION_KEY as SEC_KEY,
+	portal_tender_security_url,
+)
+from kentender_procurement.tender_configurations.services.preliminary_requirements import (
+	SECTION_KEY as PRELIM_KEY,
+	portal_preliminary_url,
+)
+from kentender_procurement.tender_configurations.services.qualification_and_capability import (
+	SECTION_KEY as QUAL_KEY,
+	portal_qualification_url,
+)
 from kentender_procurement.tender_configurations.services.requirement_matrix import (
 	get_requirement_matrix,
 	portal_section_url,
@@ -56,6 +68,18 @@ def get_context(context):
 
 	if section_key == STAT_KEY:
 		frappe.local.flags.redirect_location = portal_statutory_url(publication_ref)
+		raise frappe.Redirect
+
+	if section_key == SEC_KEY:
+		frappe.local.flags.redirect_location = portal_tender_security_url(publication_ref)
+		raise frappe.Redirect
+
+	if section_key == PRELIM_KEY:
+		frappe.local.flags.redirect_location = portal_preliminary_url(publication_ref)
+		raise frappe.Redirect
+
+	if section_key == QUAL_KEY:
+		frappe.local.flags.redirect_location = portal_qualification_url(publication_ref)
 		raise frappe.Redirect
 
 	if section_key in MATRIX_KEYS:

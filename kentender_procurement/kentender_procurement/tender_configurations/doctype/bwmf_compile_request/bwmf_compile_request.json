@@ -1,0 +1,165 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:compile_request_id",
+ "creation": "2026-07-24 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "sec_id",
+  "compile_request_id",
+  "idempotency_key",
+  "compile_mode",
+  "status",
+  "target_manifest_id",
+  "target_manifest_version",
+  "published_tender_ref",
+  "published_tender_version",
+  "previous_manifest_ref",
+  "requested_by",
+  "requested_at",
+  "expected_input_digests_json",
+  "sec_bind",
+  "input_bindings",
+  "organization",
+  "operation",
+  "request_fingerprint"
+ ],
+ "fields": [
+  {
+   "fieldname": "sec_id",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "compile_request_id",
+   "fieldtype": "Data",
+   "label": "Compile Request Id",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Idempotency Key",
+   "reqd": 1
+  },
+  {
+   "fieldname": "compile_mode",
+   "fieldtype": "Select",
+   "label": "Compile Mode",
+   "options": "preview\npublication\naddendum_preview\naddendum_publication\nreplay_validation",
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nAccepted\nImmutable",
+   "reqd": 1,
+   "default": "Draft"
+  },
+  {
+   "fieldname": "target_manifest_id",
+   "fieldtype": "Data",
+   "label": "Target Manifest Id",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_manifest_version",
+   "fieldtype": "Int",
+   "label": "Target Manifest Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "published_tender_ref",
+   "fieldtype": "Data",
+   "label": "Published Tender Ref",
+   "reqd": 1
+  },
+  {
+   "fieldname": "published_tender_version",
+   "fieldtype": "Int",
+   "label": "Published Tender Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "previous_manifest_ref",
+   "fieldtype": "Data",
+   "label": "Previous Manifest Ref"
+  },
+  {
+   "fieldname": "requested_by",
+   "fieldtype": "Data",
+   "label": "Requested By",
+   "reqd": 1
+  },
+  {
+   "fieldname": "requested_at",
+   "fieldtype": "Datetime",
+   "label": "Requested At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "expected_input_digests_json",
+   "fieldtype": "Long Text",
+   "label": "Expected Input Digests Json"
+  },
+  {
+   "fieldname": "sec_bind",
+   "fieldtype": "Section Break",
+   "label": "Input Bindings"
+  },
+  {
+   "fieldname": "input_bindings",
+   "fieldtype": "Table",
+   "label": "Input Bindings",
+   "options": "BWMF Compile Input Binding"
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "label": "Organization",
+   "reqd": 0
+  },
+  {
+   "fieldname": "operation",
+   "fieldtype": "Data",
+   "label": "Operation",
+   "reqd": 1
+  },
+  {
+   "fieldname": "request_fingerprint",
+   "fieldtype": "Data",
+   "label": "Request Fingerprint",
+   "reqd": 1
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-24 12:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Compile Request",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "title_field": "compile_request_id"
+}

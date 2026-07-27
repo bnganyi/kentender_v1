@@ -1,0 +1,312 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Tender-Securing Declaration | KenTender</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .watermark-pattern {
+            background-image: radial-gradient(circle at 2px 2px, rgba(0,0,0,0.03) 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-container": "#6b85ac",
+                        "status-error": "#ba1a1a",
+                        "error-container": "#ffdad6",
+                        "surface-variant": "#e0e3e5",
+                        "secondary-container": "#d2e1fa",
+                        "surface-dim": "#d8dadc",
+                        "outline-subtle": "#c4c6cf",
+                        "tertiary-fixed": "#d4e3ff",
+                        "error": "#ba1a1a",
+                        "on-surface-variant": "#44474c",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "on-tertiary-fixed": "#001c3a",
+                        "inverse-surface": "#2d3133",
+                        "primary-container": "#0e1c2e",
+                        "inverse-on-surface": "#eff1f3",
+                        "status-error-bg": "#fff1f2",
+                        "on-error": "#ffffff",
+                        "on-background": "#191c1e",
+                        "surface-container-high": "#e6e8ea",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "on-primary": "#ffffff",
+                        "surface": "#f7f9fb",
+                        "secondary": "#515f74",
+                        "on-surface": "#191c1e",
+                        "surface-bright": "#f7f9fb",
+                        "status-pending-bg": "#fffbeb",
+                        "secondary-fixed": "#d5e3fc",
+                        "tertiary": "#000000",
+                        "on-error-container": "#93000a",
+                        "tertiary-container": "#001c3a",
+                        "on-primary-container": "#77859b",
+                        "status-pending": "#92400e",
+                        "surface-tint": "#525f74",
+                        "primary-fixed-dim": "#bac7e0",
+                        "surface-container": "#eceef0",
+                        "on-primary-fixed-variant": "#3a475c",
+                        "on-tertiary-fixed-variant": "#2d486c",
+                        "status-approved-bg": "#ecfdf5",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "primary-fixed": "#d6e3fd",
+                        "primary": "#000000",
+                        "outline-strong": "#74777f",
+                        "surface-container-lowest": "#ffffff",
+                        "status-approved": "#065f46",
+                        "on-secondary-container": "#556379",
+                        "tertiary-fixed-dim": "#adc8f3",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed": "#0e1c2e",
+                        "inverse-primary": "#bac7e0",
+                        "surface-container-highest": "#e0e3e5",
+                        "outline": "#75777d",
+                        "surface-container-low": "#f2f4f6",
+                        "on-secondary": "#ffffff",
+                        "background": "#f7f9fb",
+                        "outline-variant": "#c5c6cd"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "12px",
+                        "container-padding": "16px",
+                        "gap-component": "8px",
+                        "sidebar-width": "256px",
+                        "max-width": "1280px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Public Sans"],
+                        "label-md": ["JetBrains Mono"],
+                        "headline-lg": ["Public Sans"],
+                        "body-md": ["Public Sans"],
+                        "display": ["Public Sans"],
+                        "body-lg": ["Public Sans"],
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-lg-mobile": ["Public Sans"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-surface font-body-md text-on-surface antialiased">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 flex justify-between items-center px-container-padding h-14 bg-surface-container-lowest border-b border-outline-subtle">
+<div class="flex items-center gap-4">
+<span class="font-display text-headline-md text-primary tracking-tighter">KenTender</span>
+<div class="h-6 w-px bg-outline-subtle mx-2"></div>
+<div class="flex gap-6">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Tenders</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">My Bids</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Clarifications</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant p-2 hover:bg-surface-container-low transition-colors rounded-full" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant p-2 hover:bg-surface-container-low transition-colors rounded-full" data-icon="help_outline">help_outline</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-subtle bg-surface-container-highest">
+<img class="w-full h-full object-cover" data-alt="Professional studio portrait of an African female executive, Dr. Catherine W. Odhiambo, wearing a navy blue blazer and corporate attire. The lighting is crisp and modern against a neutral grey background, reflecting her role as a Managing Director in a technical procurement environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD03aiESGttkPAQyEylVtaba15iRU-3dYbhrE5PDZ9NktN0FlYCxnjdqRLyvnSWpdZunq_dUGtgJ2NCSJ9QTzvOpna7igbfyc728H7w0XTHEuV8xfsNJgpI5MytgAS0HEfP8sNVVGqYTUq-witalkcynMg6O07CY4nUbjJS8e9_CaxahS96UbGEHfniHyIKrg1p2QBumovNcD5HiL_PRMOXAq3cBMBo0Vim6wsViJogp4I3POFJ3vLLaDUVbfH6UtHw9O7zG4XRN-AG">
+</div>
+</div>
+</nav>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-14 bottom-0 w-sidebar-width z-40 flex flex-col bg-surface-container-low border-r border-outline-subtle">
+<div class="p-6 border-b border-outline-subtle">
+<div class="flex items-center gap-3 mb-2">
+<div class="p-1.5 bg-primary-container text-white rounded">
+<span class="material-symbols-outlined text-[20px]" data-icon="gavel">gavel</span>
+</div>
+<h2 class="font-headline-md text-[14px] font-bold text-primary truncate">Tender #KT-2024-089</h2>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Ref: ICT/092/2024</p>
+</div>
+<nav class="flex-1 py-4">
+<ul class="space-y-1 px-3">
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container transition-all group" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="fact_check">fact_check</span>
+<span class="font-label-md text-label-md">Checklist</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 bg-surface-container-highest text-primary border-r-4 border-primary font-bold translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="edit_document">edit_document</span>
+<span class="font-label-md text-label-md">Prepare Bid</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="visibility">visibility</span>
+<span class="font-label-md text-label-md">Review</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="send">send</span>
+<span class="font-label-md text-label-md">Submit</span>
+</a>
+</li>
+</ul>
+</nav>
+<div class="p-4 bg-surface-container-high/30">
+<button class="w-full flex items-center justify-center gap-2 py-2 px-4 border border-outline-strong text-primary font-label-md text-label-md hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="download">download</span>
+                Download RFQ
+            </button>
+</div>
+<div class="mt-auto py-4 border-t border-outline-subtle">
+<ul class="space-y-1 px-3">
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="support_agent">support_agent</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="exit_to_app">exit_to_app</span>
+<span class="font-label-md text-label-md">Exit Workspace</span>
+</a>
+</li>
+</ul>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-sidebar-width mt-14 mb-16 min-h-[calc(100vh-120px)] p-8">
+<div class="max-w-max-width mx-auto">
+<!-- Breadcrumbs -->
+<div class="flex items-center gap-2 mb-6 font-label-sm text-label-sm text-on-surface-variant">
+<span class="">Prepare Bid</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-primary font-bold">Tender-Securing Declaration</span>
+</div>
+<div class="flex flex-col gap-8">
+<!-- 1. Formal Confirmation Block -->
+<section class="relative overflow-hidden bg-surface-container-lowest border border-outline-subtle rounded shadow-sm" style="--mouse-x: 87.70833333333333%; --mouse-y: 45.14767932489451%;">
+<!-- Institutional Background Motif -->
+<div class="absolute inset-0 watermark-pattern opacity-40 pointer-events-none"></div>
+<div class="relative p-8">
+<div class="flex justify-between items-start mb-8">
+<div class="space-y-1">
+<h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">Tender-Securing Declaration certified</h1>
+<p class="text-on-surface-variant font-body-md">Official electronic record of administrative commitment.</p>
+</div>
+<div class="flex items-center gap-3 px-4 py-2 bg-status-approved-bg border border-status-approved/20 rounded">
+<span class="material-symbols-outlined text-status-approved text-[20px]" style="font-variation-settings: &quot;FILL&quot; 1;">check_circle</span>
+<span class="font-label-md text-label-md text-status-approved font-bold uppercase tracking-wider">Certified</span>
+</div>
+</div>
+<!-- Data Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 border-t border-b border-outline-subtle/30 py-8 mb-8">
+<div class="space-y-1">
+<label class="font-label-sm text-label-sm text-on-tertiary-container block uppercase">Tenderer</label>
+<p class="font-headline-md text-[16px] text-primary">Global Systems Integrated Ltd</p>
+</div>
+<div class="space-y-1">
+<label class="font-label-sm text-label-sm text-on-tertiary-container block uppercase">Tender reference</label>
+<p class="font-headline-md text-[16px] text-primary">KT/2024/089/INFRA</p>
+</div>
+<div class="space-y-1">
+<label class="font-label-sm text-label-sm text-on-tertiary-container block uppercase">Authorized signatory</label>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">verified_user</span>
+<p class="font-headline-md text-[16px] text-primary">Dr. Catherine W. Odhiambo</p>
+</div>
+</div>
+<div class="space-y-1">
+<label class="font-label-sm text-label-sm text-on-tertiary-container block uppercase">Title/designation</label>
+<p class="font-headline-md text-[16px] text-primary">Managing Director</p>
+</div>
+<div class="space-y-1">
+<label class="font-label-sm text-label-sm text-on-tertiary-container block uppercase">Certification date and time</label>
+<p class="font-label-md text-label-md text-primary bg-surface-container-low px-2 py-1 inline-block rounded">Oct 24, 2024 • 2:45 PM EAT</p>
+</div>
+</div>
+<!-- Institutional Badge Graphic -->
+
+<!-- 2. Secondary Actions -->
+<div class="flex flex-wrap items-center gap-6">
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-4 py-2 border border-outline-subtle text-on-surface font-label-md text-label-md hover:bg-surface-container transition-colors rounded">
+<span class="material-symbols-outlined text-[18px]">article</span>
+                                    View full declaration
+                                </button>
+<button class="flex items-center gap-2 px-4 py-2 border border-outline-subtle text-on-surface font-label-md text-label-md hover:bg-surface-container transition-colors rounded">
+<span class="material-symbols-outlined text-[18px]">policy</span>
+                                    View configured consequences
+                                </button>
+</div>
+<div class="flex items-start gap-2 max-w-sm">
+<span class="material-symbols-outlined text-on-surface-variant text-[16px] mt-0.5">info</span>
+<p class="text-on-surface-variant font-body-md text-[12px] italic leading-tight">
+                                    If the Tenderer, signatory, tender particulars or declaration terms change, this declaration must be certified again.
+                                </p>
+</div>
+</div>
+</div>
+</section>
+<!-- 3. Navigation Action Area -->
+<div class="flex justify-between items-center pt-4 border-t border-outline-subtle">
+<button class="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                        Back to Workspace
+                    </button>
+<button class="bg-primary text-white px-8 py-3 font-label-md text-label-md font-bold uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-[0.98] shadow-sm rounded">
+                        Return to Checklist
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="fixed bottom-0 right-0 left-sidebar-width z-50 flex justify-between items-center px-container-padding h-16 bg-surface-container-lowest border-t border-outline-subtle">
+<p class="font-label-sm text-label-sm text-on-surface-variant">© 2024 KenTender E-Procurement System. All Rights Reserved.</p>
+<div class="flex gap-8">
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Public Procurement Authority</a>
+</div>
+</footer>
+<script>
+        // Micro-interaction for hover effects on the certification block
+        const certBlock = document.querySelector('section');
+        if(certBlock) {
+            certBlock.addEventListener('mousemove', (e) => {
+                const { left, top, width, height } = certBlock.getBoundingClientRect();
+                const x = ((e.clientX - left) / width) * 100;
+                const y = ((e.clientY - top) / height) * 100;
+                certBlock.style.setProperty('--mouse-x', `${x}%`);
+                certBlock.style.setProperty('--mouse-y', `${y}%`);
+            });
+        }
+    </script>
+
+
+</body></html>

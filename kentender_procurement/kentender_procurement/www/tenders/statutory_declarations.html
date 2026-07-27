@@ -27,6 +27,7 @@
 	data-bid-modified="{{ s.bid_modified or '' }}"
 	data-section-status="{{ s.section_status }}"
 	data-can-certify="{{ s.can_certify or 0 }}"
+	data-prereqs-met="{{ s.prereqs_met or 0 }}"
 	data-certified="{{ cert.certified or 0 }}"
 	data-read-only="{{ s.read_only or 0 }}">
 	{% include "templates/includes/kt_bidder_portal_nav.html" %}
@@ -212,9 +213,8 @@
 				<span class="material-symbols-outlined" aria-hidden="true">arrow_back</span> {{ _("Back to checklist") }}
 			</a>
 			<div class="kt-fot-footer-right">
-				{% if not s.can_certify %}
-				<span class="kt-fot-muted" data-testid="kt-stat-footer-hint">{{ _("Complete required fields to certify") }}</span>
-				{% endif %}
+				<span class="kt-fot-muted" data-testid="kt-stat-footer-hint"
+					{% if s.can_certify %}hidden{% endif %}>{{ _("Complete required fields to certify") }}</span>
 				<button type="button" class="kt-fot-btn" data-testid="kt-stat-save" id="kt-stat-save" {% if s.read_only %}disabled{% endif %}>{{ _("Save draft") }}</button>
 				<button type="button" class="kt-fot-btn kt-fot-btn--primary" data-testid="kt-stat-certify" id="kt-stat-certify"
 					{% if not s.can_certify or s.read_only %}disabled{% endif %}>{{ _("Certify Statutory Declarations") }}</button>
@@ -283,6 +283,13 @@ frappe.ready(function () {
 		frappe.show_alert({ message: msg, indicator: warn ? "orange" : "green" }, 4);
 	}
 
+	const DISCLOSURE_COLS = [
+		"competitor_name",
+		"nature_of_interaction",
+		"reason",
+		"complete_details",
+	];
+
 	function collectPayload() {
 		const choiceEl = root.querySelector('input[name="independent_tender_choice"]:checked');
 		const choice = choiceEl ? choiceEl.value : "";
@@ -300,6 +307,41 @@ frappe.ready(function () {
 		};
 	}
 
+	function formReadyForCertify() {
+		const payload = collectPayload();
+		const choice = payload.independent_tender_choice || "";
+		if (choice === "independent") return true;
+		if (choice !== "disclosed") return false;
+		const rows = payload.competitor_disclosures || [];
+		if (!rows.length) return false;
+		return rows.every(function (row) {
+			return DISCLOSURE_COLS.every(function (col) {
+				return String(row[col] || "").trim();
+			});
+		});
+	}
+
+	function syncCertifyUi() {
+		if (readOnly || certified) return;
+		const prereqsMet = root.getAttribute("data-prereqs-met") === "1";
+		const ready = prereqsMet && formReadyForCertify();
+		root.setAttribute("data-can-certify", ready ? "1" : "0");
+		const certifyBtn = document.getElementById("kt-stat-certify");
+		if (certifyBtn) certifyBtn.disabled = !ready;
+		const hint = root.querySelector('[data-testid="kt-stat-footer-hint"]');
+		if (hint) hint.hidden = !!ready;
+		const chip = root.querySelector('[data-testid="kt-stat-status-chip"]');
+		if (chip && !certified) {
+			const label = ready
+				? "Ready to certify"
+				: (collectPayload().independent_tender_choice ? "Incomplete" : "Pending Disclosure");
+			chip.textContent = label;
+			chip.setAttribute("data-status", label);
+		}
+		const banner = root.querySelector('[data-testid="kt-stat-incomplete-banner"]');
+		if (banner && ready) banner.hidden = true;
+	}
+
 	function syncDisclosuresUi() {
 		const choiceEl = root.querySelector('input[name="independent_tender_choice"]:checked');
 		const choice = choiceEl ? choiceEl.value : "";
@@ -309,6 +351,7 @@ frappe.ready(function () {
 			const tbody = document.getElementById("kt-stat-disclosures-tbody");
 			if (tbody && !tbody.querySelector("tr")) addRow();
 		}
+		syncCertifyUi();
 	}
 
 	function addRow(data) {
@@ -340,6 +383,32 @@ frappe.ready(function () {
 		if (msg && msg.bid_modified) {
 			root.setAttribute("data-bid-modified", String(msg.bid_modified));
 		}
+		if (msg && msg.status_chip) {
+			const chip = root.querySelector('[data-testid="kt-stat-status-chip"]');
+			if (chip) {
+				chip.textContent = msg.status_chip;
+				chip.setAttribute("data-status", msg.status_chip);
+			}
+		}
+		if (msg && typeof msg.can_certify !== "undefined") {
+			root.setAttribute("data-can-certify", msg.can_certify ? "1" : "0");
+		}
+		if (msg && typeof msg.prereqs_met !== "undefined") {
+			root.setAttribute("data-prereqs-met", msg.prereqs_met ? "1" : "0");
+		}
+		syncCertifyUi();
+	}
+
+	function refreshBidToken(cb) {
+		frappe.call({
+			method: "kentender_procurement.tender_configurations.api.get_statutory_declarations",
+			args: { published_tender_ref: pubRef },
+			callback: function (r) {
+				if (r.message) applyBidModified(r.message);
+				if (cb) cb(r.message || null);
+			},
+			error: function () { if (cb) cb(null); },
+		});
 	}
 
 	function saveDraft(cb, opts) {
@@ -357,10 +426,22 @@ frappe.ready(function () {
 					applyBidModified(r.message);
 					if (!opts.silent) showToast("Draft saved.");
 					if (cb) cb(r.message);
-					else window.location.reload();
 				}
 			},
-			error: function () { showToast("Could not save draft.", true); },
+			error: function () {
+				// Stale token after Save→Certify: refresh once, then retry.
+				if (!opts._retried) {
+					refreshBidToken(function (fresh) {
+						if (!fresh || !fresh.bid_modified) {
+							showToast("Could not save draft. Reload and try again.", true);
+							return;
+						}
+						saveDraft(cb, Object.assign({}, opts, { _retried: true }));
+					});
+					return;
+				}
+				showToast("Could not save draft. Reload and try again.", true);
+			},
 		});
 	}
 
@@ -392,14 +473,26 @@ frappe.ready(function () {
 		});
 	});
 	syncDisclosuresUi();
+	syncCertifyUi();
 
 	const addBtn = document.getElementById("kt-stat-add-disclosure");
-	if (addBtn) addBtn.addEventListener("click", () => addRow());
+	if (addBtn) {
+		addBtn.addEventListener("click", () => {
+			addRow();
+			syncCertifyUi();
+		});
+	}
 	root.addEventListener("click", (e) => {
 		const btn = e.target.closest(".kt-stat-remove-row");
 		if (!btn) return;
 		const tr = btn.closest("tr");
 		if (tr) tr.remove();
+		syncCertifyUi();
+	});
+	root.addEventListener("input", (e) => {
+		if (e.target && e.target.closest("#kt-stat-disclosures-tbody")) {
+			syncCertifyUi();
+		}
 	});
 
 	const saveBtn = document.getElementById("kt-stat-save");

@@ -50,6 +50,196 @@ def _truthy_flag(val: Any) -> bool:
 	return cstr(val or "").strip().lower() in ("yes", "true", "1", "y")
 
 
+_LINKED_SECTION_TITLES = {
+	"form_of_tender": "Form of Tender",
+	"statutory_declarations": "Statutory Declarations",
+	"tender_security": "Tender Security",
+	"confidential_business_questionnaire": "Confidential Business Questionnaire",
+}
+
+_ALLOWED_RESPONSE_METHODS = frozenset(
+	{
+		"upload",
+		"select_or_upload",
+		"verification_reference",
+		"structured",
+		"linked_section",
+	}
+)
+
+_ALLOWED_APPLICABILITY = frozenset({"always", "jv_only", "single_bidder_only"})
+
+
+def _slug_criterion_id(title: str, index: int) -> str:
+	raw = "".join(ch.lower() if ch.isalnum() else "-" for ch in cstr(title or "").strip())
+	while "--" in raw:
+		raw = raw.replace("--", "-")
+	raw = raw.strip("-") or f"criterion-{index + 1}"
+	return f"prelim-{raw}"[:80]
+
+
+def _normalize_file_types(raw: Any) -> list[str]:
+	if isinstance(raw, str) and raw.strip():
+		parts = [p.strip().lower() for p in raw.replace(";", ",").split(",") if p.strip()]
+		return [("." + p.lstrip(".")) for p in parts]
+	if isinstance(raw, list):
+		out = []
+		for item in raw:
+			p = cstr(item).strip().lower()
+			if p:
+				out.append("." + p.lstrip("."))
+		return out
+	return [".pdf"]
+
+
+def materialize_qualification_categories(
+	evaluation: dict[str, Any] | None,
+	*,
+	default_fixture: str = "full",
+) -> list[dict[str, Any]]:
+	"""Build section categories[] from evaluation_setup.qualification_categories.
+
+	Falls back to lean PE-neutral fixtures when CFG omits categories. Never hard-codes NSSF.
+	"""
+	from kentender_procurement.tender_configurations.seed.lean_qualification_criteria import (
+		MODE_EXCLUDED,
+		lean_qualification_categories,
+	)
+
+	ev = evaluation if isinstance(evaluation, dict) else {}
+	raw = ev.get("qualification_categories")
+	if not isinstance(raw, list) or not raw:
+		raw = lean_qualification_categories(cstr(ev.get("qualification_fixture") or default_fixture))
+	out: list[dict[str, Any]] = []
+	for idx, row in enumerate(raw):
+		if not isinstance(row, dict):
+			continue
+		key = cstr(row.get("category_key") or "").strip()
+		label = cstr(row.get("label") or row.get("title") or "").strip()
+		if not key or not label:
+			continue
+		mode = cstr(row.get("requirement_mode") or "required").strip().lower()
+		if mode not in ("required", "optional", "conditional", "excluded"):
+			mode = "required"
+		criteria = [c for c in (row.get("criteria") or []) if isinstance(c, dict)]
+		positions = [p for p in (row.get("positions") or []) if isinstance(p, dict)]
+		items = [i for i in (row.get("items") or []) if isinstance(i, dict)]
+		# Empty configured category (no criteria/positions/items) is a config error — omit from bidder UI.
+		if mode != MODE_EXCLUDED and not criteria and not positions and not items:
+			continue
+		try:
+			display_order = (
+				int(flt(row.get("display_order")))
+				if row.get("display_order") not in (None, "")
+				else (idx + 1) * 10
+			)
+		except (TypeError, ValueError):
+			display_order = (idx + 1) * 10
+		out.append(
+			{
+				"category_key": key,
+				"label": label,
+				"renderer": cstr(row.get("renderer") or key).strip() or key,
+				"display_order": display_order,
+				"requirement_mode": mode,
+				"condition_key": cstr(row.get("condition_key") or "always").strip() or "always",
+				"requirement_summary": cstr(row.get("requirement_summary") or "").strip(),
+				"scope": cstr(row.get("scope") or "tender").strip() or "tender",
+				"allow_duplicate_personnel": bool(row.get("allow_duplicate_personnel")),
+				"criteria": criteria,
+				"positions": positions,
+				"items": items,
+			}
+		)
+	out.sort(key=lambda r: (int(r.get("display_order") or 0), cstr(r.get("label") or "")))
+	return out
+
+
+def materialize_preliminary_criteria(criteria: list[dict[str, Any]]) -> list[dict[str, Any]]:
+	"""Build section criteria[] from CFG evaluation rows where stage == Preliminary.
+
+	Uses fields present on each evaluation criterion (response method, linked section, etc.).
+	Does not hard-code NSSF titles. Missing method defaults to upload (or linked_section when
+	linked_section_key is set).
+	"""
+	out: list[dict[str, Any]] = []
+	idx = 0
+	for row in criteria or []:
+		if not isinstance(row, dict):
+			continue
+		if cstr(row.get("stage")) != "Preliminary":
+			continue
+		title = cstr(row.get("criterion_name") or row.get("title") or "").strip()
+		if not title:
+			continue
+		cid = cstr(row.get("criterion_id") or "").strip() or _slug_criterion_id(title, idx)
+		method = cstr(row.get("response_method") or "").strip().lower()
+		linked = cstr(row.get("linked_section_key") or "").strip()
+		if linked and method not in _ALLOWED_RESPONSE_METHODS:
+			method = "linked_section"
+		if method not in _ALLOWED_RESPONSE_METHODS:
+			method = "upload"
+		applicability = cstr(row.get("applicability") or "always").strip().lower()
+		if applicability not in _ALLOWED_APPLICABILITY:
+			applicability = "always"
+		instruction = cstr(
+			row.get("evidence_instruction")
+			or row.get("pass_fail_rule")
+			or row.get("bidder_evidence")
+			or ""
+		).strip()
+		if not instruction and method == "linked_section" and linked:
+			section_title = _LINKED_SECTION_TITLES.get(linked, linked.replace("_", " ").title())
+			instruction = f"Complete the {section_title} section in the bidder workspace."
+		try:
+			display_order = int(flt(row.get("display_order"))) if row.get("display_order") not in (None, "") else (idx + 1) * 10
+		except (TypeError, ValueError):
+			display_order = (idx + 1) * 10
+		try:
+			max_mb = int(flt(row.get("max_file_size_mb"))) if row.get("max_file_size_mb") not in (None, "") else 5
+		except (TypeError, ValueError):
+			max_mb = 5
+		mandatory = row.get("mandatory")
+		if mandatory is None:
+			be = cstr(row.get("bidder_evidence") or "").strip().lower()
+			mandatory = be not in ("optional", "not required", "no", "false", "0")
+		item: dict[str, Any] = {
+			"criterion_id": cid,
+			"title": title,
+			"evidence_instruction": instruction,
+			"mandatory": bool(mandatory),
+			"applicability": applicability,
+			"response_method": method,
+			"linked_section_key": linked if method == "linked_section" else "",
+			"linked_section_title": _LINKED_SECTION_TITLES.get(linked, "") if linked else "",
+			"validity_rule": cstr(row.get("validity_rule") or "").strip(),
+			"accepted_file_types": _normalize_file_types(row.get("accepted_file_types")),
+			"max_file_size_mb": max(1, max_mb),
+			"display_order": display_order,
+			"evidence_type": cstr(row.get("evidence_type") or "supporting_document").strip()
+			or "supporting_document",
+			"criterion_group": cstr(row.get("criterion_group") or "").strip(),
+		}
+		structured = row.get("structured_fields")
+		if isinstance(structured, list):
+			item["structured_fields"] = [s for s in structured if isinstance(s, dict)]
+		else:
+			item["structured_fields"] = []
+		ver_fields = row.get("verification_fields")
+		if isinstance(ver_fields, list):
+			item["verification_fields"] = [s for s in ver_fields if isinstance(s, dict)]
+		else:
+			item["verification_fields"] = (
+				[{"field_key": "verification_reference", "label": "Verification reference", "required": True}]
+				if method == "verification_reference"
+				else []
+			)
+		out.append(item)
+		idx += 1
+	out.sort(key=lambda r: (int(r.get("display_order") or 0), cstr(r.get("title") or "")))
+	return out
+
+
 def load_validated_template() -> dict[str, Any]:
 	"""Load curated template + approval; structural checks only (Draft allowed)."""
 	try:
@@ -261,6 +451,30 @@ def _tender_security_required(tds: dict[str, Any]) -> bool:
 	return _truthy_flag(tds.get("tender_security_required"))
 
 
+def resolve_tender_security_mode(tds: dict[str, Any] | None) -> str:
+	"""Map published TDS to instrument | securing_declaration | none.
+
+	Exactly one mode. Declaration and instrument are mutually exclusive.
+	"""
+	tds = tds if isinstance(tds, dict) else {}
+	typ = cstr(tds.get("tender_security_type") or "").strip()
+	req = _tender_security_required(tds)
+	if typ == "Not Required":
+		return "none"
+	if typ == "Tender-Securing Declaration":
+		return "securing_declaration"
+	if typ == "Tender Security":
+		return "instrument"
+	if not req:
+		return "none"
+	# Legacy seeds: required Yes without a canonical type → instrument.
+	return "instrument"
+
+
+def _tender_security_applicable(tds: dict[str, Any]) -> bool:
+	return resolve_tender_security_mode(tds) != "none"
+
+
 def resolve_section_applicability(
 	sec: dict[str, Any],
 	*,
@@ -281,7 +495,11 @@ def resolve_section_applicability(
 	if when == "lots_or_alternatives_configured":
 		return _lots_or_alternatives_configured(tds, cfg)
 	if when == "tender_security_required":
+		# Historic when-clause: still means "instrument-style required flag".
+		# Prefer tender_security_applicable for the lean section row.
 		return _tender_security_required(tds)
+	if when == "tender_security_applicable":
+		return _tender_security_applicable(tds)
 	# Unknown condition — fail closed (omit section).
 	return False
 
@@ -429,6 +647,7 @@ def build_electronic_submission_template(
 	)
 
 	security_required = _tender_security_required(tds)
+	security_mode = resolve_tender_security_mode(tds)
 	instantiated_sections: list[dict[str, Any]] = []
 	for sec in copy.deepcopy(template.get("sections") or []):
 		if not isinstance(sec, dict):
@@ -449,6 +668,21 @@ def build_electronic_submission_template(
 				binding = cstr(slot.get("binding") or "")
 				tender_owned_docs[fk] = _resolve_slot_value(binding, ctx=ctx)
 			sec["tender_owned_values"] = tender_owned_docs
+
+		if key == "tender_security":
+			tender_owned_sec: dict[str, Any] = {}
+			for slot in sec.get("tender_owned_slots") or []:
+				if not isinstance(slot, dict):
+					continue
+				fk = cstr(slot.get("field_key") or "")
+				binding = cstr(slot.get("binding") or "")
+				tender_owned_sec[fk] = _resolve_slot_value(binding, ctx=ctx)
+			sec["tender_owned_values"] = tender_owned_sec
+			sec["security_mode"] = security_mode
+			if security_mode == "securing_declaration":
+				sec["title"] = "Tender-Securing Declaration"
+			elif security_mode == "instrument":
+				sec["title"] = "Tender Security"
 
 		if key == "form_of_tender":
 			tender_owned: dict[str, Any] = {}
@@ -474,6 +708,15 @@ def build_electronic_submission_template(
 					d["required"] = perf_required
 				else:
 					d["applicable"] = True
+
+		if key == "preliminary_requirements_and_evidence":
+			sec["criteria"] = materialize_preliminary_criteria(
+				criteria if isinstance(criteria, list) else []
+			)
+
+		if key == "qualification_and_capability":
+			ev_dict = evaluation if isinstance(evaluation, dict) else {}
+			sec["categories"] = materialize_qualification_categories(ev_dict)
 
 		instantiated_sections.append(sec)
 

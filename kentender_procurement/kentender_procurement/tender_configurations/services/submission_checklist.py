@@ -395,6 +395,9 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 		is_fot = key == "form_of_tender"
 		is_cbq = key == "confidential_business_questionnaire"
 		is_statutory = key == "statutory_declarations"
+		is_tender_security = key == "tender_security"
+		is_preliminary = key == "preliminary_requirements_and_evidence"
+		is_qualification = key == "qualification_and_capability"
 		is_docs = key == "tender_documents_and_addenda" or _is_document_acknowledgement_section(sec)
 		has_responses = _has_payload(payload)
 		has_validation_blockers = _section_has_validation_blockers(payload)
@@ -482,6 +485,53 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 			has_validation_blockers = status == STATUS_NEEDS_ATTENTION
 			has_responses = status != STATUS_NOT_STARTED
 			is_partial = status == STATUS_IN_PROGRESS
+		elif is_tender_security and not not_applicable and not bid_sealed:
+			from kentender_procurement.tender_configurations.services.tender_security import (
+				derive_tender_security_section_status,
+			)
+
+			status = derive_tender_security_section_status(
+				sec, payload if isinstance(payload, dict) else {}
+			)
+			has_validation_blockers = status == STATUS_NEEDS_ATTENTION
+			has_responses = status != STATUS_NOT_STARTED
+			is_partial = status == STATUS_IN_PROGRESS
+		elif is_preliminary and not not_applicable and not bid_sealed:
+			from kentender_procurement.tender_configurations.services.bid_evidence import (
+				_load_register,
+			)
+			from kentender_procurement.tender_configurations.services.preliminary_requirements import (
+				derive_preliminary_section_status,
+			)
+
+			register = _load_register(bid_doc) if bid_doc else {"items": []}
+			register_items = [
+				r for r in (register.get("items") or []) if isinstance(r, dict)
+			]
+			status = derive_preliminary_section_status(
+				sec,
+				payload if isinstance(payload, dict) else {},
+				responses=responses if isinstance(responses, dict) else {},
+				snapshot=schema if isinstance(schema, dict) else {},
+				register_items=register_items,
+				publication_ref=pub_ref,
+			)
+			has_validation_blockers = status == STATUS_NEEDS_ATTENTION
+			has_responses = status != STATUS_NOT_STARTED
+			is_partial = status == STATUS_IN_PROGRESS
+		elif is_qualification and not not_applicable and not bid_sealed:
+			from kentender_procurement.tender_configurations.services.qualification_and_capability import (
+				derive_qualification_section_status,
+			)
+
+			status = derive_qualification_section_status(
+				sec,
+				payload if isinstance(payload, dict) else {},
+				responses=responses if isinstance(responses, dict) else {},
+			)
+			has_validation_blockers = status == STATUS_NEEDS_ATTENTION
+			has_responses = status != STATUS_NOT_STARTED
+			is_partial = status == STATUS_IN_PROGRESS
 		elif is_matrix and not not_applicable and not bid_sealed and _has_matrix_requirements(sec, schema):
 			status, mx_blockers = matrix_section_roll_up(sec, payload)
 			has_validation_blockers = bool(mx_blockers) or has_validation_blockers
@@ -502,17 +552,72 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 				errs = payload.get("validation_errors") or []
 				if isinstance(errs, list) and errs:
 					issues_count = len(errs)
+			if is_preliminary:
+				from kentender_procurement.tender_configurations.services.bid_evidence import (
+					_load_register as _load_reg_prelim,
+				)
+				from kentender_procurement.tender_configurations.services.preliminary_requirements import (
+					preliminary_blocker_messages,
+				)
+
+				reg = _load_reg_prelim(bid_doc) if bid_doc else {"items": []}
+				msgs = preliminary_blocker_messages(
+					sec,
+					payload if isinstance(payload, dict) else {},
+					responses=responses if isinstance(responses, dict) else {},
+					snapshot=schema if isinstance(schema, dict) else {},
+					register_items=[r for r in (reg.get("items") or []) if isinstance(r, dict)],
+					publication_ref=pub_ref,
+				)
+				if msgs:
+					issues_count = len(msgs)
+			if is_qualification:
+				from kentender_procurement.tender_configurations.services.qualification_and_capability import (
+					qualification_blocker_messages,
+				)
+
+				msgs = qualification_blocker_messages(
+					sec,
+					payload if isinstance(payload, dict) else {},
+					responses=responses if isinstance(responses, dict) else {},
+				)
+				if msgs:
+					issues_count = len(msgs)
 			action_label, issues_label = "Resolve", f"{issues_count} Blocker" + (
 				"s" if issues_count != 1 else ""
 			)
 		elif status == STATUS_LOCKED:
 			action_label, issues_label, issues_count = "View", "Complete required sections first", 0
 		elif status == STATUS_COMPLETE:
-			action_label = "Review" if (is_matrix or is_fot or is_docs or is_cbq or is_statutory) else "View"
+			action_label = (
+				"Review"
+				if (
+					is_matrix
+					or is_fot
+					or is_docs
+					or is_cbq
+					or is_statutory
+					or is_tender_security
+					or is_preliminary
+					or is_qualification
+				)
+				else "View"
+			)
 			issues_label, issues_count = "—", 0
 		elif status == STATUS_IN_PROGRESS:
 			action_label = (
-				"Continue" if (is_matrix or is_fot or is_docs or is_cbq or is_statutory) else "Resume"
+				"Continue"
+				if (
+					is_matrix
+					or is_fot
+					or is_docs
+					or is_cbq
+					or is_statutory
+					or is_tender_security
+					or is_preliminary
+					or is_qualification
+				)
+				else "Resume"
 			)
 			issues_label, issues_count = "—", 0
 		elif status == STATUS_NOT_STARTED:
@@ -546,6 +651,24 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 			)
 
 			action_url = portal_statutory_url(pub_ref)
+		elif is_tender_security:
+			from kentender_procurement.tender_configurations.services.tender_security import (
+				portal_tender_security_url,
+			)
+
+			action_url = portal_tender_security_url(pub_ref)
+		elif is_preliminary:
+			from kentender_procurement.tender_configurations.services.preliminary_requirements import (
+				portal_preliminary_url,
+			)
+
+			action_url = portal_preliminary_url(pub_ref)
+		elif is_qualification:
+			from kentender_procurement.tender_configurations.services.qualification_and_capability import (
+				portal_qualification_url,
+			)
+
+			action_url = portal_qualification_url(pub_ref)
 		elif key == "tender_documents_and_addenda" or _is_document_acknowledgement_section(sec):
 			action_url = _portal_documents_url(pub_ref)
 		elif is_matrix:
@@ -583,6 +706,12 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 		if s.get("required") and s["status"] not in (STATUS_NOT_APPLICABLE,)
 	)
 	required_complete = sum(1 for s in sections_out if s.get("required") and s["status"] == STATUS_COMPLETE)
+	required_in_progress = sum(
+		1 for s in sections_out if s.get("required") and s["status"] == STATUS_IN_PROGRESS
+	)
+	required_needs_attention = sum(
+		1 for s in sections_out if s.get("required") and s["status"] == STATUS_NEEDS_ATTENTION
+	)
 	# Locked final section does not count as complete for progress.
 	all_required_complete = (
 		required_total > 0
@@ -659,6 +788,8 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 		"progress_percent": pct,
 		"progress_complete": required_complete,
 		"progress_total": required_total or len(sections_out),
+		"progress_in_progress": required_in_progress,
+		"progress_needs_attention": required_needs_attention,
 		"sections": sections_out,
 		"current_issues_summary": issues_summary,
 		"has_blockers": 1 if has_blockers else 0,

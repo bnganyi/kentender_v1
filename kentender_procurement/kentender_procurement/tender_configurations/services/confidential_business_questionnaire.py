@@ -610,6 +610,11 @@ def _store_response(bid, payload: dict[str, Any], *, event: str = "section_saved
 
 	invalidate_fot_certifications(bid, reason="cbq_changed")
 	invalidate_statutory_certifications(bid, reason="cbq_changed")
+	from kentender_procurement.tender_configurations.services.tender_security import (
+		invalidate_tender_securing_declaration,
+	)
+
+	invalidate_tender_securing_declaration(bid, reason="cbq_changed")
 	bid.save(ignore_permissions=True)
 	frappe.db.commit()
 

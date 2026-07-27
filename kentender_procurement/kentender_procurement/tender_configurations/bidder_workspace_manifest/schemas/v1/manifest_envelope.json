@@ -1,0 +1,230 @@
+{
+  "$id": "bwmf/v1/manifest_envelope",
+  "schema_version": "1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "manifest_schema_version",
+    "control",
+    "payload",
+    "integrity"
+  ],
+  "properties": {
+    "manifest_schema_version": {
+      "const": "1.0.0"
+    },
+    "control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_mode",
+        "generated_at",
+        "generated_by",
+        "compiler_run_id"
+      ],
+      "properties": {
+        "artifact_mode": {
+          "type": "string",
+          "enum": [
+            "preview",
+            "publication",
+            "addendum_preview",
+            "addendum_publication"
+          ]
+        },
+        "generated_at": {
+          "type": "string",
+          "minLength": 1
+        },
+        "generated_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "compiler_run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "validation_report_ref": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifest_id",
+        "manifest_version",
+        "published_tender_ref",
+        "published_tender_version",
+        "std_family",
+        "bindings",
+        "tender_context",
+        "localization",
+        "submission_policy",
+        "lot_model",
+        "document_package",
+        "role_policy",
+        "rule_registry",
+        "validation_registry",
+        "resource_registry",
+        "evidence_contract",
+        "sections",
+        "cross_cutting_views",
+        "workflow_gates",
+        "projections",
+        "publication_readiness"
+      ],
+      "properties": {
+        "manifest_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "manifest_version": {
+          "type": "integer"
+        },
+        "published_tender_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "published_tender_version": {
+          "type": "integer"
+        },
+        "std_family": {
+          "type": "string",
+          "minLength": 1
+        },
+        "bindings": {
+          "type": "object"
+        },
+        "tender_context": {
+          "type": "object"
+        },
+        "localization": {
+          "type": "object"
+        },
+        "submission_policy": {
+          "$ref": "submission_policy"
+        },
+        "lot_model": {
+          "type": "object"
+        },
+        "document_package": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "package_ref",
+            "package_version",
+            "document_content_digest",
+            "active_addenda"
+          ],
+          "properties": {
+            "package_ref": {
+              "type": "string",
+              "minLength": 1
+            },
+            "package_version": {
+              "type": "integer"
+            },
+            "source_digest": {
+              "type": "string",
+              "format": "sha256-digest",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "document_content_digest": {
+              "type": "string",
+              "format": "sha256-digest",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "active_addenda": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "role_policy": {
+          "type": "object"
+        },
+        "rule_registry": {
+          "type": "object"
+        },
+        "validation_registry": {
+          "type": "object"
+        },
+        "resource_registry": {
+          "type": "object"
+        },
+        "evidence_contract": {
+          "type": "object"
+        },
+        "sections": {
+          "type": "array"
+        },
+        "cross_cutting_views": {
+          "type": "object"
+        },
+        "workflow_gates": {
+          "type": "array"
+        },
+        "projections": {
+          "type": "object"
+        },
+        "publication_readiness": {
+          "type": "object"
+        },
+        "extensions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "integrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "payload_digest"
+      ],
+      "properties": {
+        "payload_digest": {
+          "type": "string",
+          "format": "sha256-digest",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "resource_digest_set": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "sha256-digest",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          }
+        },
+        "diagnostic_digest": {
+          "type": "string",
+          "format": "sha256-digest",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "attestation": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "method": {
+              "type": "string",
+              "minLength": 1
+            },
+            "value": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

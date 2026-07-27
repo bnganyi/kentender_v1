@@ -1,0 +1,41 @@
+{
+  "$id": "bwmf/v1/response_instance",
+  "schema_version": "1.0.0",
+  "title": "ResponseInstance",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "response_id",
+    "manifest_ref",
+    "section_key",
+    "version",
+    "values"
+  ],
+  "properties": {
+    "response_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "manifest_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "section_key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "integer"
+    },
+    "values": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "response_contract_digest": {
+      "type": "string",
+      "format": "sha256-digest",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

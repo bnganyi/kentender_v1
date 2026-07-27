@@ -1,0 +1,74 @@
+{
+  "$id": "bwmf/v1/confirmation",
+  "schema_version": "1.0.0",
+  "title": "Confirmation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "confirmation_id",
+    "response_ref",
+    "response_version",
+    "legal_text_ref",
+    "legal_text_digest",
+    "statement_digest",
+    "actor_ref",
+    "capacity",
+    "confirmed_at",
+    "state"
+  ],
+  "properties": {
+    "confirmation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "response_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "response_version": {
+      "type": "integer"
+    },
+    "legal_text_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "legal_text_digest": {
+      "type": "string",
+      "format": "sha256-digest",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "statement_digest": {
+      "type": "string",
+      "format": "sha256-digest",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "actor_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "capacity": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authority_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "confirmed_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "confirmed",
+        "invalidated"
+      ]
+    },
+    "invalidation_ref": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

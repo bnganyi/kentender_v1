@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KenTender Bidder Workspace - Key Personnel</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "status-error-bg": "#fff1f2",
+                        "on-error-container": "#93000a",
+                        "surface-container-lowest": "#ffffff",
+                        "outline-subtle": "#c4c6cf",
+                        "on-tertiary-container": "#6b85ac",
+                        "tertiary-fixed": "#d4e3ff",
+                        "status-pending-bg": "#fffbeb",
+                        "outline-variant": "#c5c6cd",
+                        "outline": "#75777d",
+                        "on-secondary": "#ffffff",
+                        "surface-container-high": "#e6e8ea",
+                        "on-surface": "#191c1e",
+                        "on-surface-variant": "#44474c",
+                        "error-container": "#ffdad6",
+                        "secondary": "#515f74",
+                        "tertiary-container": "#001c3a",
+                        "on-error": "#ffffff",
+                        "tertiary": "#000000",
+                        "on-primary-fixed": "#0e1c2e",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "surface": "#f7f9fb",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-tertiary-fixed": "#001c3a",
+                        "inverse-surface": "#2d3133",
+                        "on-primary": "#ffffff",
+                        "on-background": "#191c1e",
+                        "surface-container": "#eceef0",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#2d486c",
+                        "surface-dim": "#d8dadc",
+                        "surface-container-highest": "#e0e3e5",
+                        "surface-variant": "#e0e3e5",
+                        "status-pending": "#92400e",
+                        "primary-container": "#0e1c2e",
+                        "primary": "#000000",
+                        "outline-strong": "#74777f",
+                        "secondary-container": "#d2e1fa",
+                        "on-secondary-container": "#556379",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "tertiary-fixed-dim": "#adc8f3",
+                        "on-tertiary": "#ffffff",
+                        "status-approved": "#065f46",
+                        "primary-fixed-dim": "#bac7e0",
+                        "on-primary-fixed-variant": "#3a475c",
+                        "surface-tint": "#525f74",
+                        "primary-fixed": "#d6e3fd",
+                        "secondary-fixed": "#d5e3fc",
+                        "surface-bright": "#f7f9fb",
+                        "status-error": "#ba1a1a",
+                        "status-approved-bg": "#ecfdf5",
+                        "surface-container-low": "#f2f4f6",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "background": "#f7f9fb",
+                        "on-primary-container": "#77859b",
+                        "inverse-primary": "#bac7e0"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "container-padding": "16px",
+                        "max-width": "1280px",
+                        "gap-component": "8px",
+                        "sidebar-width": "256px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["JetBrains Mono"],
+                        "headline-lg": ["Public Sans"],
+                        "body-md": ["Public Sans"],
+                        "display": ["Public Sans"],
+                        "body-lg": ["Public Sans"],
+                        "headline-md": ["Public Sans"],
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-lg-mobile": ["Public Sans"]
+                    },
+                    "fontSize": {
+                        "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Public Sans', sans-serif; background-color: #f7f9fb; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .bento-card { transition: all 0.2s ease-in-out; border: 1px solid #c4c6cf; background: #ffffff; }
+        .bento-card:hover { border-color: #75777d; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .sidebar-active-indicator { border-right: 4px solid #000000; background-color: #f2f4f6; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="text-on-surface">
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-surface-dim fixed top-0 w-full z-50 border-b border-outline-subtle dark:border-outline-variant h-12">
+<div class="flex justify-between items-center px-container-padding h-12 w-full mx-auto max-w-max-width">
+<div class="flex items-center gap-4">
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">KenTender Bidder Workspace</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden md:block">
+<span class="material-symbols-outlined absolute left-2 top-1.5 text-on-surface-variant text-body-md">search</span>
+<input class="pl-8 pr-4 py-1 bg-surface-container-low border border-outline-subtle rounded-lg text-body-md focus:ring-1 focus:ring-primary outline-none w-64" placeholder="Search workspace..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-1 hover:bg-surface-container transition-colors rounded-full cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+</button>
+<button class="p-1 hover:bg-surface-container transition-colors rounded-full cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined text-on-surface-variant">help_outline</span>
+</button>
+<div class="h-6 w-px bg-outline-subtle mx-2"></div>
+<span class="font-label-md text-label-md text-primary cursor-pointer">Support</span>
+<div class="w-8 h-8 rounded-full bg-primary-fixed overflow-hidden border border-outline-subtle">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a corporate procurement officer, clean lighting, high resolution, minimalist grey background, wearing business attire, neutral expression, reflecting transparency and technical authority." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_3umVGrtWnx1fpQysbltuDP6IMrp9oH5f6y0Tab3oOGSIdXEDUEB7vRex5Wfpt3Ij3bekwn1sWMvAnWYKKw0qLtJEOpRds6Kf60wSVBUWkfReZdQPktwruNgzqvcw-9xz8Uj64r7_gvt9IgkinUS5K-qmcI4D7xyiGa527s-g9dobf3JaCm391QMkUbTrHtl2rgYepHCRkiyCx51TJVEvuOnxC1SuZ4fCclAWyAB9BBEMyhyd3MRwDBayCthq7y8PfwkKlJZg46yt"/>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-12 h-screen w-sidebar-width bg-surface-container-low dark:bg-surface-container-lowest border-r border-outline-subtle dark:border-outline-variant z-40 overflow-y-auto">
+<div class="flex flex-col py-4 gap-2">
+<div class="px-4 mb-4">
+<div class="flex items-center gap-3 p-2">
+<div class="w-10 h-10 bg-primary-container rounded flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-primary">Project Alpha-2024</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Ref: KT-99281</p>
+</div>
+</div>
+</div>
+<nav class="space-y-1">
+<a class="flex items-center gap-gap-component text-on-surface-variant dark:text-outline p-2 px-4 hover:bg-surface-container-high dark:hover:bg-primary-fixed-dim transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="info">info</span>
+<span class="font-label-md text-label-md">Tender Overview</span>
+</a>
+<a class="flex items-center gap-gap-component text-on-surface-variant dark:text-outline p-2 px-4 hover:bg-surface-container-high dark:hover:bg-primary-fixed-dim transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-label-md text-label-md">Documents</span>
+</a>
+<a class="flex items-center gap-gap-component text-on-surface-variant dark:text-outline p-2 px-4 hover:bg-surface-container-high dark:hover:bg-primary-fixed-dim transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="fact_check">fact_check</span>
+<span class="font-label-md text-label-md">Checklist</span>
+</a>
+<a class="flex items-center gap-gap-component bg-surface-container-highest dark:bg-primary-container text-primary dark:text-on-primary-container border-r-4 border-primary p-2 px-4 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" data-icon="edit_note">edit_note</span>
+<span class="font-label-md text-label-md">Prepare Bid</span>
+</a>
+<a class="flex items-center gap-gap-component text-on-surface-variant dark:text-outline p-2 px-4 hover:bg-surface-container-high dark:hover:bg-primary-fixed-dim transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span>
+<span class="font-label-md text-label-md">Review &amp; Validate</span>
+</a>
+<a class="flex items-center gap-gap-component text-on-surface-variant dark:text-outline p-2 px-4 hover:bg-surface-container-high dark:hover:bg-primary-fixed-dim transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="lock">lock</span>
+<span class="font-label-md text-label-md">Submit &amp; Seal</span>
+</a>
+</nav>
+<div class="mt-8 px-4">
+<button class="w-full py-2 bg-primary text-on-primary rounded-xl font-label-md text-label-md flex items-center justify-center gap-2 hover:brightness-95 transition-all">
+<span class="material-symbols-outlined text-[16px]">add</span>
+                    Quick Actions
+                </button>
+</div>
+<div class="mt-auto border-t border-outline-subtle pt-4 pb-20">
+<a class="flex items-center gap-gap-component text-on-surface-variant p-2 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+<a class="flex items-center gap-gap-component text-on-surface-variant p-2 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-label-md text-label-md">Log Out</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="ml-[256px] mt-12 mb-14 p-container-padding">
+<div class="max-w-max-width mx-auto">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+<div>
+<h1 class="font-display text-display text-primary mb-1">Key Personnel</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">Assign people to the positions required for this tender.</p>
+</div>
+<div class="bg-surface-container-high p-4 rounded-xl flex items-center gap-4 min-w-[240px]">
+<div class="flex-1">
+<div class="flex justify-between mb-1">
+<span class="font-label-sm text-label-sm uppercase">Completion Progress</span>
+<span class="font-label-sm text-label-sm">2 of 4 positions complete</span>
+</div>
+<div class="w-full bg-outline-subtle h-2 rounded-full overflow-hidden">
+<div class="bg-status-approved h-full w-[60%]" style="width: 50%;"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bento Grid - Personnel Table -->
+<div class="bento-card rounded-xl overflow-hidden mb-6">
+<div class="p-4 bg-surface-container-low border-b border-outline-subtle flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md">Personnel Matrix</h3>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full border-collapse">
+<thead>
+<tr class="bg-surface-container-highest border-b border-outline-subtle">
+<th class="text-left py-3 px-4 font-label-md text-label-md uppercase tracking-wider text-on-surface-variant">Required Position</th>
+<th class="text-left py-3 px-4 font-label-md text-label-md uppercase tracking-wider text-on-surface-variant">Requirement Summary</th>
+<th class="text-left py-3 px-4 font-label-md text-label-md uppercase tracking-wider text-on-surface-variant">Assigned Person</th>
+<th class="text-left py-3 px-4 font-label-md text-label-md uppercase tracking-wider text-on-surface-variant">Response Status</th>
+<th class="text-right py-3 px-4 font-label-md text-label-md uppercase tracking-wider text-on-surface-variant">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-subtle">
+<!-- Row 1: Project Manager -->
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="py-4 px-4">
+<div class="flex items-center gap-3">
+<div class="w-1 h-8 bg-status-approved rounded-full"></div>
+<div>
+<div class="font-body-lg font-bold">Project Manager</div>
+</div>
+</div>
+</td>
+<td class="py-4 px-4 font-body-md text-on-surface-variant">
+                                    MSc Project Mgmt, PMP Certified, 10+ Years Exp.
+                                </td>
+<td class="py-4 px-4">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed font-label-md">DM</div>
+<span class="font-body-md font-semibold">David Mwangi</span>
+</div>
+</td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-status-approved-bg text-status-approved font-label-md text-label-md border border-status-approved/20">
+<span class="w-1.5 h-1.5 rounded-full bg-status-approved"></span>
+                                        Complete
+                                    </span>
+</td>
+<td class="py-4 px-4 text-right">
+<div class="flex justify-end gap-2">
+<button class="text-primary hover:underline font-label-md text-label-md">Review</button>
+<button class="text-primary hover:underline font-label-md text-label-md">Change</button>
+</div>
+</td>
+</tr>
+<!-- Row 2: Technical Lead -->
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="py-4 px-4">
+<div class="flex items-center gap-3">
+<div class="w-1 h-8 bg-status-approved rounded-full"></div>
+<div>
+<div class="font-body-lg font-bold">Technical Lead</div>
+</div>
+</div>
+</td>
+<td class="py-4 px-4 font-body-md text-on-surface-variant">
+                                    PhD/MSc Eng, Lead Architect, Cloud Architecture Spec.
+                                </td>
+<td class="py-4 px-4">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed font-label-md">SA</div>
+<span class="font-body-md font-semibold">Sarah Adhiambo</span>
+</div>
+</td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-status-approved-bg text-status-approved font-label-md text-label-md border border-status-approved/20">
+<span class="w-1.5 h-1.5 rounded-full bg-status-approved"></span>
+                                        Complete
+                                    </span>
+</td>
+<td class="py-4 px-4 text-right">
+<div class="flex justify-end gap-2">
+<button class="text-primary hover:underline font-label-md text-label-md">Review</button>
+<button class="text-primary hover:underline font-label-md text-label-md">Change</button>
+</div>
+</td>
+</tr>
+<!-- Row 3: Implementation Specialist (Active Selection) -->
+<tr class="bg-primary-container/5 border-l-4 border-l-primary transition-colors">
+<td class="py-4 px-4">
+<div class="flex items-center gap-3">
+<div class="w-1 h-8 bg-status-pending rounded-full"></div>
+<div>
+<div class="font-body-lg font-bold">Implementation Specialist</div>
+</div>
+</div>
+</td>
+<td class="py-4 px-4 font-body-md text-on-surface-variant">
+                                    BSc Infrastructure, 5+ Years On-site Implementation.
+                                </td>
+<td class="py-4 px-4 font-body-md text-outline italic">
+                                    No person assigned
+                                </td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-status-pending-bg text-status-pending font-label-md text-label-md border border-status-pending/20">
+<span class="w-1.5 h-1.5 rounded-full bg-status-pending"></span>
+                                        Not Started
+                                    </span>
+</td>
+<td class="py-4 px-4 text-right">
+<button class="bg-primary text-on-primary px-3 py-1.5 rounded font-label-md text-label-md hover:brightness-90 transition-all">
+                                        Assign person
+                                    </button>
+</td>
+</tr>
+<!-- Row 4: Quality Auditor -->
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="py-4 px-4">
+<div class="flex items-center gap-3">
+<div class="w-1 h-8 bg-status-pending rounded-full"></div>
+<div>
+<div class="font-body-lg font-bold">Quality Auditor</div>
+</div>
+</div>
+</td>
+<td class="py-4 px-4 font-body-md text-on-surface-variant">
+                                    ISO 9001 Lead Auditor, Industry Compliance Exp.
+                                </td>
+<td class="py-4 px-4 font-body-md text-outline italic">
+                                    No person assigned
+                                </td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-status-pending-bg text-status-pending font-label-md text-label-md border border-status-pending/20">
+<span class="w-1.5 h-1.5 rounded-full bg-status-pending"></span>
+                                        Not Started
+                                    </span>
+</td>
+<td class="py-4 px-4 text-right">
+<button class="bg-primary text-on-primary px-3 py-1.5 rounded font-label-md text-label-md hover:brightness-90 transition-all">
+                                        Assign person
+                                    </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Side Info Alert -->
+</div>
+</main>
+<!-- Side Drawer (Open for Implementation Specialist) -->
+<div class="fixed inset-0 bg-black/40 z-[60] flex justify-end">
+<div class="w-[500px] h-full bg-surface border-l border-outline-subtle shadow-xl overflow-y-auto no-scrollbar flex flex-col">
+<div class="sticky top-0 bg-surface z-10 border-b border-outline-subtle p-6 flex justify-between items-center">
+<div>
+<h2 class="font-headline-md text-headline-md text-primary">Assign person</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Implementation Specialist - BSc Infrastructure, 5+ Years On-site Implementation</p>
+</div>
+<button class="p-2 hover:bg-surface-container-high rounded-full">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="p-6 flex-1 space-y-6"><div class="space-y-6"><div class="flex justify-end mb-4"><button class="px-4 py-2 border border-outline-subtle rounded-lg font-label-md text-label-md hover:bg-surface-container-low transition-all flex items-center gap-2"><span class="material-symbols-outlined text-[18px]">person_add</span> Add new person</button></div><div class="pt-4 border-t border-outline-subtle"><h4 class="font-label-md text-label-md font-bold mb-4">SAVED PERSONNEL</h4><div class="space-y-3"><div class="p-4 border border-outline-subtle rounded-lg hover:border-primary cursor-pointer transition-all bg-white flex items-start gap-3"><div class="mt-1"><div class="w-5 h-5 rounded-full border-2 border-outline-subtle flex items-center justify-center"></div></div><div class="flex-1"><div class="flex justify-between items-start mb-1"><div class="font-body-lg font-bold">John Doe</div><span class="px-2 py-0.5 bg-status-approved-bg text-status-approved text-label-sm rounded-full">Profile Complete</span></div><div class="text-body-md text-on-surface-variant">Senior Engineer • <span class="font-semibold">BuildCorp Ltd</span> <span class="text-label-sm text-outline ml-1">(Lead bidder)</span></div></div></div><div class="p-4 border border-outline-subtle rounded-lg bg-surface-container-low opacity-75 flex items-start gap-3 cursor-not-allowed"><div class="mt-1"><div class="w-5 h-5 rounded-full border-2 border-outline-subtle flex items-center justify-center"></div></div><div class="flex-1"><div class="flex justify-between items-start mb-1"><div class="font-body-lg font-bold">Jane Smith</div><span class="px-2 py-0.5 bg-status-pending-bg text-status-pending text-label-sm rounded-full">Incomplete</span></div><div class="text-body-md text-on-surface-variant">Project Architect • <span class="font-semibold">Design Studio JV</span> <span class="text-label-sm text-outline ml-1">(JV member)</span></div><button class="mt-2 text-primary font-label-md text-label-md hover:underline flex items-center gap-1">Complete profile <span class="material-symbols-outlined text-[14px]">open_in_new</span></button></div></div><div class="p-4 border border-outline-subtle rounded-lg bg-surface-container-low opacity-50 flex items-start gap-3 cursor-not-allowed"><div class="mt-1"><div class="w-5 h-5 rounded-full border-2 border-outline-subtle flex items-center justify-center"></div></div><div class="flex-1"><div class="flex justify-between items-start mb-1"><div class="font-body-lg font-bold">David Mwangi</div><span class="text-label-sm text-status-error">Already assigned to Project Manager</span></div><div class="text-body-md text-on-surface-variant">Senior Consultant • <span class="font-semibold">BuildCorp Ltd</span> <span class="text-label-sm text-outline ml-1">(Lead bidder)</span></div></div></div></div></div></div></div>
+<div class="sticky bottom-0 bg-surface-container-high p-6 border-t border-outline-subtle flex gap-4"><button class="flex-1 bg-primary text-on-primary py-2.5 rounded-xl font-headline-md text-headline-md opacity-50 cursor-not-allowed" disabled="">Assign person</button><button class="px-6 py-2.5 border border-outline-subtle rounded-xl font-headline-md text-headline-md hover:bg-white transition-all">Cancel</button></div>
+</div>
+</div>
+<!-- Footer -->
+<footer class="fixed bottom-0 right-0 w-[calc(100%-256px)] z-40 bg-surface-container-high dark:bg-surface-container border-t border-outline-subtle dark:border-outline-variant h-14">
+<div class="flex justify-between items-center w-full px-container-padding h-14">
+<span class="font-label-sm text-label-sm text-on-surface-variant">© 2024 KenTender Institutional Procurement Systems</span>
+<div class="flex items-center justify-end gap-4 h-14">
+<button class="font-label-md text-label-md bg-secondary-container text-on-secondary-container px-4 py-2 rounded-xl hover:brightness-95 transition-all">Back to Workspace</button>
+<button class="font-label-md text-label-md bg-secondary-container text-on-secondary-container px-4 py-2 rounded-xl hover:brightness-95 transition-all">Save Draft</button>
+<button class="font-label-md text-label-md bg-primary text-on-primary px-4 py-2 rounded-xl hover:brightness-95 transition-all">Save &amp; Continue</button>
+</div>
+</div>
+</footer>
+<script>
+        // Simple micro-interaction for row selection visualization
+        document.querySelectorAll('tbody tr').forEach(row => {
+            row.addEventListener('click', function() {
+                // Remove active state from all rows
+                document.querySelectorAll('tbody tr').forEach(r => {
+                    r.classList.remove('bg-primary-container/5', 'border-l-4', 'border-l-primary');
+                    r.classList.add('hover:bg-surface-bright');
+                });
+                // Add active state to clicked row
+                this.classList.add('bg-primary-container/5', 'border-l-4', 'border-l-primary');
+                this.classList.remove('hover:bg-surface-bright');
+            });
+        });
+    </script>
+</body></html>

@@ -137,6 +137,22 @@ website_route_rules = [
 		"from_route": "/tenders/<publication_ref>/sections/statutory_declarations",
 		"to_route": "tenders/statutory_declarations",
 	},
+	{
+		"from_route": "/tenders/<publication_ref>/sections/tender_security",
+		"to_route": "tenders/tender_security",
+	},
+	{
+		"from_route": "/tenders/<publication_ref>/sections/preliminary_requirements_and_evidence",
+		"to_route": "tenders/preliminary_requirements",
+	},
+	{
+		"from_route": "/tenders/<publication_ref>/sections/qualification_and_capability/<category_key>",
+		"to_route": "tenders/qualification_category",
+	},
+	{
+		"from_route": "/tenders/<publication_ref>/sections/qualification_and_capability",
+		"to_route": "tenders/qualification_and_capability",
+	},
 	{"from_route": "/tenders/<publication_ref>/sections/<section_key>", "to_route": "tenders/section"},
 	{"from_route": "/tenders/<publication_ref>/documents", "to_route": "tenders/documents"},
 	{"from_route": "/tenders/<publication_ref>/evidence", "to_route": "tenders/evidence"},

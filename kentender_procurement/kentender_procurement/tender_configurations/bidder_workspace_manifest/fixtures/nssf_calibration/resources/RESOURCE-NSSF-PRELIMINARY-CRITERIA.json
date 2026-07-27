@@ -1,0 +1,59 @@
+{
+  "resource_id": "RESOURCE-NSSF-PRELIMINARY-CRITERIA",
+  "resource_type": "preliminary_criterion",
+  "schema_ref": "bwmf/item/preliminary_criterion",
+  "schema_version": "1.0.0",
+  "item_count": 9,
+  "ordering_contract": [
+    "order_weight",
+    "criterion_key"
+  ],
+  "resource_digest": "sha256:0ab46d93f32e88876704b39526124a3c9b68f0e1d453e48ac3fa6d7b7e5edebb",
+  "items": [
+    {
+      "criterion_key": "PRELIM-0001",
+      "order_weight": 10,
+      "label": "PRELIM 1"
+    },
+    {
+      "criterion_key": "PRELIM-0002",
+      "order_weight": 20,
+      "label": "PRELIM 2"
+    },
+    {
+      "criterion_key": "PRELIM-0003",
+      "order_weight": 30,
+      "label": "PRELIM 3"
+    },
+    {
+      "criterion_key": "PRELIM-0004",
+      "order_weight": 40,
+      "label": "PRELIM 4"
+    },
+    {
+      "criterion_key": "PRELIM-0005",
+      "order_weight": 50,
+      "label": "PRELIM 5"
+    },
+    {
+      "criterion_key": "PRELIM-0006",
+      "order_weight": 60,
+      "label": "PRELIM 6"
+    },
+    {
+      "criterion_key": "PRELIM-0007",
+      "order_weight": 70,
+      "label": "PRELIM 7"
+    },
+    {
+      "criterion_key": "PRELIM-0008",
+      "order_weight": 80,
+      "label": "PRELIM 8"
+    },
+    {
+      "criterion_key": "PRELIM-0009",
+      "order_weight": 90,
+      "label": "PRELIM 9"
+    }
+  ]
+}

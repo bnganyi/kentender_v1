@@ -1,0 +1,18 @@
+{
+  "requirement_groups": 23,
+  "requirements": 190,
+  "preliminary_criteria": 9,
+  "qualification_criteria": 9,
+  "technical_scoring": 7,
+  "schedule_rows": 6,
+  "price_lines": 22,
+  "contract_conditions": 8,
+  "decisions": 8,
+  "contract_carry_forward_requirements": 117,
+  "technical_scoring_maximum_score": "100",
+  "technical_scoring_qualification_threshold": "75",
+  "content_sections": 10,
+  "workflow_gates": 3,
+  "scc_conditions": 8,
+  "controlled_decisions": 8
+}

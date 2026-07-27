@@ -1,0 +1,199 @@
+{# Stitch 04 — Experience (requirements band + General / Specific tables) #}
+{# Use .get() — Frappe Jinja attribute access on missing dict keys prints errors. #}
+{% set projects = c.get("projects") or [] %}
+{% set min_years = c.get("min_qualifying_years") if c.get("min_qualifying_years") is not none else 5 %}
+{% set min_months = c.get("min_months_in_year") if c.get("min_months_in_year") is not none else 9 %}
+{% set min_specific = c.get("min_specific_projects") if c.get("min_specific_projects") is not none else 2 %}
+{% set year_count = c.get("qualifying_year_count") if c.get("qualifying_year_count") is not none else 0 %}
+{% set specific_count = c.get("specific_count") if c.get("specific_count") is not none else 0 %}
+{% set qualifying_years = c.get("qualifying_years") or [] %}
+
+<section class="kt-s600-req-card" data-testid="kt-s600-exp-config"
+	data-min-years="{{ min_years }}"
+	data-min-months="{{ min_months }}"
+	data-min-specific="{{ min_specific }}">
+	<div class="kt-s600-exp-metrics">
+		<div>
+			<p class="kt-s600-eyebrow">{{ _("General experience required") }}</p>
+			<p class="kt-s600-metric">
+				<strong data-testid="kt-s600-req-min-years">{{ min_years }}</strong>
+				<span>{{ _("qualifying years") }}</span>
+			</p>
+			<p class="kt-s600-help">
+				{{ _("A calendar year counts only when contract activity covers at least") }}
+				<strong data-testid="kt-s600-req-min-months">{{ min_months }}</strong>
+				{{ _("months in that year.") }}
+			</p>
+			<p class="kt-s600-help kt-s600-help--progress" data-testid="kt-s600-qualifying-years">
+				{{ _("Evidenced so far") }}:
+				<strong data-kt-year-count>{{ year_count }}</strong>
+				{% if qualifying_years %}
+				<span data-kt-year-list>({{ qualifying_years|join(", ") }})</span>
+				{% else %}
+				<span data-kt-year-list></span>
+				{% endif %}
+			</p>
+		</div>
+		<div>
+			<p class="kt-s600-eyebrow">{{ _("Specific experience required") }}</p>
+			<p class="kt-s600-metric">
+				<strong data-testid="kt-s600-req-min-specific">{{ min_specific }}</strong>
+				<span>{{ _("similar-contract records") }}</span>
+			</p>
+			<p class="kt-s600-help">
+				{{ _("Provide completed similar contracts that demonstrate capability for this tender.") }}
+			</p>
+			<p class="kt-s600-help kt-s600-help--progress" data-testid="kt-s600-specific-progress">
+				{{ _("Recorded so far") }}:
+				<strong data-kt-specific-count>{{ specific_count }}</strong>
+				{{ _("of") }} {{ min_specific }}
+			</p>
+		</div>
+	</div>
+</section>
+
+<section class="kt-s600-block-section" data-testid="kt-s600-experience" data-s600-experience>
+	<div class="kt-s600-section-head">
+		<div class="kt-s600-section-head__left">
+			<h2>{{ _("General Experience") }}</h2>
+			<span class="kt-s600-chip" data-testid="kt-s600-general-chip">
+				<span data-kt-general-chip-text>{{ year_count }} {{ _("of") }} {{ min_years }} {{ _("qualifying years evidenced") }}</span>
+			</span>
+		</div>
+		{% if not c.get("read_only") %}
+		<button type="button" class="kt-s600-btn kt-s600-btn--primary" data-s600-add-project="general" data-testid="kt-s600-add-project">
+			<span class="material-symbols-outlined">add</span> {{ _("Add project") }}
+		</button>
+		{% endif %}
+	</div>
+	<div class="kt-s600-table-wrap">
+		<table class="kt-s600-data-table">
+			<thead>
+				<tr>
+					<th>{{ _("Contract") }}</th>
+					<th>{{ _("Contract period") }}</th>
+					<th>{{ _("Qualifying years") }}</th>
+					<th>{{ _("Procuring entity") }}</th>
+					<th>{{ _("Role") }}</th>
+					<th class="is-center">{{ _("Status") }}</th>
+					<th class="is-right">{{ _("Action") }}</th>
+				</tr>
+			</thead>
+			<tbody data-testid="kt-s600-general-body" data-project-table="general">
+				{% for p in projects if p.get("use_for_general") %}
+				<tr data-project-row data-project-id="{{ p.get('project_id') }}" data-use-general="1" data-use-specific="{{ 1 if p.get('use_for_specific') else 0 }}">
+					<td class="is-strong">{{ p.get("contract_id") or p.get("description") or "—" }}</td>
+					<td>
+						{% if p.get("start_year") and p.get("end_year") %}
+						{{ p.get("start_month") or 1 }}/{{ p.get("start_year") }} – {{ p.get("end_month") or 12 }}/{{ p.get("end_year") }}
+						{% else %}—{% endif %}
+					</td>
+					<td class="kt-s600-mono">{{ (p.get("qualifying_years") or [])|join(", ") or "—" }}</td>
+					<td>{{ p.get("procuring_entity") or "—" }}</td>
+					<td>{{ p.get("role") or "—" }}</td>
+					<td class="is-center">
+						{% if p.get("contract_id") and p.get("start_year") and p.get("end_year") %}
+						<span class="kt-s600-status" data-status="Complete">{{ _("Complete") }}</span>
+						{% else %}
+						<span class="kt-s600-status" data-status="In Progress">{{ _("In progress") }}</span>
+						{% endif %}
+					</td>
+					<td class="is-right is-actions">
+						{% if not c.get("read_only") %}
+						<button type="button" class="kt-s600-link" data-s600-edit-project title="{{ _('Edit') }}"><span class="material-symbols-outlined">edit</span></button>
+						<button type="button" class="kt-s600-link" data-s600-remove-project title="{{ _('Delete') }}"><span class="material-symbols-outlined">delete</span></button>
+						{% endif %}
+					</td>
+					<td hidden>
+						<input data-p="contract_id" value="{{ p.get('contract_id') or '' }}"/>
+						<input data-p="description" value="{{ p.get('description') or '' }}"/>
+						<input data-p="pe" value="{{ p.get('procuring_entity') or '' }}"/>
+						<input data-p="start_year" value="{{ p.get('start_year') or '' }}"/>
+						<input data-p="start_month" value="{{ p.get('start_month') or 1 }}"/>
+						<input data-p="end_year" value="{{ p.get('end_year') or '' }}"/>
+						<input data-p="end_month" value="{{ p.get('end_month') or 12 }}"/>
+						<input data-p="role" value="{{ p.get('role') or '' }}"/>
+						<input data-p="amount" value="{{ p.get('amount') or '' }}"/>
+						<input data-p="currency" value="{{ p.get('currency') or 'KES' }}"/>
+						<input data-p="similarity" value="{{ p.get('similarity_notes') or '' }}"/>
+						<input type="checkbox" data-p="general" {% if p.get("use_for_general") %}checked{% endif %}/>
+						<input type="checkbox" data-p="specific" {% if p.get("use_for_specific") %}checked{% endif %}/>
+					</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</section>
+
+<section class="kt-s600-block-section" data-testid="kt-s600-specific">
+	<div class="kt-s600-section-head">
+		<div class="kt-s600-section-head__left">
+			<h2>{{ _("Specific Experience") }}</h2>
+			<span class="kt-s600-chip" data-testid="kt-s600-specific-chip">
+				<span data-kt-specific-chip-text>{{ specific_count }} {{ _("of") }} {{ min_specific }} {{ _("required records") }}</span>
+			</span>
+		</div>
+		{% if not c.get("read_only") %}
+		<button type="button" class="kt-s600-btn kt-s600-btn--primary" data-s600-add-project="specific" data-testid="kt-s600-add-specific">
+			<span class="material-symbols-outlined">add</span> {{ _("Add project") }}
+		</button>
+		{% endif %}
+	</div>
+	<div class="kt-s600-table-wrap">
+		<table class="kt-s600-data-table">
+			<thead>
+				<tr>
+					<th>{{ _("Contract") }}</th>
+					<th>{{ _("Completion date") }}</th>
+					<th>{{ _("Role") }}</th>
+					<th>{{ _("Contract value") }}</th>
+					<th>{{ _("Similarity details") }}</th>
+					<th class="is-center">{{ _("Status") }}</th>
+					<th class="is-right">{{ _("Action") }}</th>
+				</tr>
+			</thead>
+			<tbody data-testid="kt-s600-specific-body" data-project-table="specific">
+				{% for p in projects if p.get("use_for_specific") %}
+				<tr data-project-row data-project-id="{{ p.get('project_id') }}" data-use-general="{{ 1 if p.get('use_for_general') else 0 }}" data-use-specific="1">
+					<td class="is-strong">{{ p.get("contract_id") or p.get("description") or "—" }}</td>
+					<td>{% if p.get("end_year") %}{{ p.get("end_month") or 12 }}/{{ p.get("end_year") }}{% else %}—{% endif %}</td>
+					<td>{{ p.get("role") or "—" }}</td>
+					<td class="kt-s600-mono">{% if p.get("amount") %}{{ p.get("currency") or 'KES' }} {{ p.get("amount") }}{% else %}—{% endif %}</td>
+					<td class="is-italic">{{ p.get("similarity_notes") or "—" }}</td>
+					<td class="is-center">
+						{% if p.get("contract_id") and p.get("end_year") %}
+						<span class="kt-s600-status" data-status="Complete">{{ _("Complete") }}</span>
+						{% else %}
+						<span class="kt-s600-status" data-status="In Progress">{{ _("In progress") }}</span>
+						{% endif %}
+					</td>
+					<td class="is-right is-actions">
+						{% if not c.get("read_only") %}
+						<button type="button" class="kt-s600-link" data-s600-edit-project title="{{ _('Edit') }}"><span class="material-symbols-outlined">edit</span></button>
+						<button type="button" class="kt-s600-link" data-s600-remove-project title="{{ _('Delete') }}"><span class="material-symbols-outlined">delete</span></button>
+						{% endif %}
+					</td>
+					<td hidden>
+						<input data-p="contract_id" value="{{ p.get('contract_id') or '' }}"/>
+						<input data-p="description" value="{{ p.get('description') or '' }}"/>
+						<input data-p="pe" value="{{ p.get('procuring_entity') or '' }}"/>
+						<input data-p="start_year" value="{{ p.get('start_year') or '' }}"/>
+						<input data-p="start_month" value="{{ p.get('start_month') or 1 }}"/>
+						<input data-p="end_year" value="{{ p.get('end_year') or '' }}"/>
+						<input data-p="end_month" value="{{ p.get('end_month') or 12 }}"/>
+						<input data-p="role" value="{{ p.get('role') or '' }}"/>
+						<input data-p="amount" value="{{ p.get('amount') or '' }}"/>
+						<input data-p="currency" value="{{ p.get('currency') or 'KES' }}"/>
+						<input data-p="similarity" value="{{ p.get('similarity_notes') or '' }}"/>
+						<input type="checkbox" data-p="general" {% if p.get("use_for_general") %}checked{% endif %}/>
+						<input type="checkbox" data-p="specific" checked/>
+					</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</section>
+
+<div hidden data-testid="kt-s600-project-list"></div>

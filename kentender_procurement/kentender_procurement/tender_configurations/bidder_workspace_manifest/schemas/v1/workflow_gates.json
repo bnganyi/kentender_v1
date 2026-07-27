@@ -1,0 +1,45 @@
+{
+  "$id": "bwmf/v1/workflow_gates",
+  "schema_version": "1.0.0",
+  "title": "WorkflowGates",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "gates"
+  ],
+  "properties": {
+    "gates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "gate_key",
+          "title",
+          "kind"
+        ],
+        "properties": {
+          "gate_key": {
+            "type": "string",
+            "enum": [
+              "review_and_validate",
+              "submit_and_seal",
+              "submission_receipt"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "workflow_gate"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

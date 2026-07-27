@@ -1,0 +1,102 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-07-24 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "workspace",
+  "consumer_ref",
+  "provider_ref",
+  "provider_version",
+  "provider_digest",
+  "dependency_contract_digest",
+  "validated_at",
+  "organization",
+  "bidder_party"
+ ],
+ "fields": [
+  {
+   "fieldname": "workspace",
+   "fieldtype": "Link",
+   "label": "Workspace",
+   "options": "BWMF Workspace",
+   "reqd": 1
+  },
+  {
+   "fieldname": "consumer_ref",
+   "fieldtype": "Data",
+   "label": "Consumer Ref",
+   "reqd": 1
+  },
+  {
+   "fieldname": "provider_ref",
+   "fieldtype": "Data",
+   "label": "Provider Ref",
+   "reqd": 1
+  },
+  {
+   "fieldname": "provider_version",
+   "fieldtype": "Data",
+   "label": "Provider Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "provider_digest",
+   "fieldtype": "Data",
+   "label": "Provider Digest",
+   "reqd": 1
+  },
+  {
+   "fieldname": "dependency_contract_digest",
+   "fieldtype": "Data",
+   "label": "Dependency Contract Digest",
+   "reqd": 1
+  },
+  {
+   "fieldname": "validated_at",
+   "fieldtype": "Datetime",
+   "label": "Validated At",
+   "reqd": 1
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "label": "Organization",
+   "reqd": 1
+  },
+  {
+   "fieldname": "bidder_party",
+   "fieldtype": "Data",
+   "label": "Bidder Party",
+   "reqd": 1
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-24 12:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Dependency Snapshot",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

@@ -1,0 +1,100 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }} | KenTender{% endblock %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/kentender_procurement/css/available_tenders.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/submission_checklist_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/bidder_portal_forms.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/form_of_tender_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/qualification_and_capability_web.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+{% endblock %}
+
+{% block page_content %}
+{% set s = sec %}
+{% set active_nav = "my_bids" %}
+{% set active_ws = "checklist" %}
+<div class="kt-a0-root kt-a2-root kt-fot-root kt-s600-root" data-testid="kt-s600-root"
+	data-publication-ref="{{ s.published_tender_ref }}"
+	data-bid-id="{{ s.bid_id or '' }}"
+	data-section-status="{{ s.section_status }}"
+	data-read-only="{{ s.read_only or 0 }}"
+	data-workspace-url="{{ s.workspace_url }}">
+	{% include "templates/includes/kt_bidder_portal_nav.html" %}
+
+	<div class="kt-a2-shell">
+		{% include "templates/includes/kt_bidder_workspace_sidebar.html" %}
+
+		<main class="kt-a2-main kt-fot-main">
+			<div class="kt-fot-main-inner">
+				<nav class="kt-fot-crumbs" aria-label="Breadcrumb" data-testid="kt-s600-crumbs">
+					<a href="{{ s.workspace_url }}">{{ _("Checklist") }}</a>
+					<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+					<span class="is-current">{{ _("Qualification and Capability") }}</span>
+				</nav>
+
+				<header class="kt-fot-page-head kt-s600-head">
+					<div>
+						<h1 data-testid="kt-s600-title">{{ s.section_title }}</h1>
+						<p data-testid="kt-s600-instructions">{{ s.bidder_instructions }}</p>
+					</div>
+					<div class="kt-s600-kpi" data-testid="kt-s600-kpi">
+						<span class="kt-s600-kpi__label">{{ _("Completion status") }}</span>
+						<strong data-testid="kt-s600-progress-label">{{ s.progress_label }}</strong>
+					</div>
+				</header>
+
+				<section class="kt-s600-panel" data-testid="kt-s600-panel">
+					<div class="kt-s600-table-wrap">
+						<table class="kt-s600-table">
+							<thead>
+								<tr>
+									<th>{{ _("Category") }}</th>
+									<th>{{ _("Requirement summary") }}</th>
+									<th>{{ _("Progress") }}</th>
+									<th>{{ _("Status") }}</th>
+									<th class="kt-s600-action-cell">{{ _("Action") }}</th>
+								</tr>
+							</thead>
+							<tbody data-testid="kt-s600-category-tbody">
+								{% for row in s.categories %}
+								<tr data-testid="kt-s600-category-row"
+									data-category-key="{{ row.category_key }}"
+									data-status="{{ row.status }}">
+									<td>
+										<p class="kt-s600-cat-title">{{ row.label }}</p>
+										{% if row.optional %}
+										<span class="kt-s600-optional" data-testid="kt-s600-optional">{{ _("Optional") }}</span>
+										{% endif %}
+									</td>
+									<td><p class="kt-s600-summary">{{ row.requirement_summary }}</p></td>
+									<td data-testid="kt-s600-row-progress">{{ row.progress_text }}</td>
+									<td>
+										<span class="kt-s600-status" data-testid="kt-s600-row-status"
+											data-status="{{ row.status }}">{{ row.status }}</span>
+									</td>
+									<td class="kt-s600-action-cell">
+										{% if row.action_label and row.action_url %}
+										<a class="kt-s600-action" data-testid="kt-s600-row-action"
+											href="{{ row.action_url }}">{{ row.action_label }}</a>
+										{% else %}
+										<span class="kt-s600-action-muted">—</span>
+										{% endif %}
+									</td>
+								</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+					</div>
+				</section>
+
+				<footer class="kt-s600-footer">
+					<a class="kt-s600-btn kt-s600-btn--secondary" href="{{ s.workspace_url }}"
+						data-testid="kt-s600-back">{{ _("Back to Workspace") }}</a>
+				</footer>
+			</div>
+		</main>
+	</div>
+</div>
+{% endblock %}

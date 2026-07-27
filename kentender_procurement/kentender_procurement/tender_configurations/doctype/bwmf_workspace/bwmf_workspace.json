@@ -1,0 +1,91 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:workspace_id",
+ "creation": "2026-07-24 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "workspace_id",
+  "organization",
+  "bidder_party",
+  "published_tender_ref",
+  "status",
+  "operational_state",
+  "active_submission"
+ ],
+ "fields": [
+  {
+   "fieldname": "workspace_id",
+   "fieldtype": "Data",
+   "label": "Workspace Id",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "label": "Organization",
+   "reqd": 1
+  },
+  {
+   "fieldname": "bidder_party",
+   "fieldtype": "Data",
+   "label": "Bidder Party",
+   "reqd": 1
+  },
+  {
+   "fieldname": "published_tender_ref",
+   "fieldtype": "Data",
+   "label": "Published Tender Ref",
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "not_started\ndraft\nin_progress\nneeds_attention\nready_to_submit\nsubmitted\nwithdrawn\nclosed",
+   "reqd": 1,
+   "default": "not_started"
+  },
+  {
+   "fieldname": "operational_state",
+   "fieldtype": "Data",
+   "label": "Operational State",
+   "description": "Optional coarse internal operational marker; never substitutes for canonical status."
+  },
+  {
+   "fieldname": "active_submission",
+   "fieldtype": "Link",
+   "label": "Active Submission",
+   "options": "BWMF Submission"
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-24 15:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Workspace",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "title_field": "workspace_id"
+}

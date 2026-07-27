@@ -1,0 +1,48 @@
+{
+  "$id": "bwmf/v1/addendum_diff_impact",
+  "schema_version": "1.0.0",
+  "title": "AddendumDiffImpact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "plan_id",
+    "old_manifest_ref",
+    "new_manifest_ref",
+    "change_classes",
+    "plan_digest"
+  ],
+  "properties": {
+    "plan_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "old_manifest_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "new_manifest_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "change_classes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "plan_digest": {
+      "type": "string",
+      "format": "sha256-digest",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "invalidation_actions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

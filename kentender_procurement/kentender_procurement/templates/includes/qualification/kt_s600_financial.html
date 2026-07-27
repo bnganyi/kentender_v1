@@ -1,0 +1,200 @@
+{# Stitch 03 — Financial Capability #}
+{% set years = bucket.financial_years or [] %}
+{% if not years %}
+	{% set years = [{"year": "2023"}, {"year": "2024"}, {"year": "2025"}] %}
+{% endif %}
+{% set turnover = bucket.turnover or {} %}
+{% set turnover_years = turnover.years if turnover.years else none %}
+{% set resources = bucket.resources or {} %}
+{% set resource_lines = resources.lines or [] %}
+{% set criteria = cfg.criteria or [] %}
+
+<section class="kt-s600-req-card" data-testid="kt-s600-configured-requirements">
+	<div class="kt-s600-req-card__head">
+		<span class="material-symbols-outlined">policy</span>
+		<h2>{{ _("Configured Requirements") }}</h2>
+	</div>
+	<div class="kt-s600-req-grid">
+		{% for crit in criteria %}
+		<div class="kt-s600-req-item">
+			<span class="kt-s600-req-num">{{ "%02d"|format(loop.index) }}</span>
+			<p>{{ crit.title or crit.requirement_summary or crit.criterion_id }}</p>
+		</div>
+		{% else %}
+		<div class="kt-s600-req-item">
+			<span class="kt-s600-req-num">01</span>
+			<p>{{ c.requirement_summary }}</p>
+		</div>
+		{% endfor %}
+	</div>
+</section>
+
+<section class="kt-s600-card" data-testid="kt-s600-reporting-entity">
+	<span class="kt-s600-eyebrow">{{ _("Reporting entity") }}</span>
+	{% set members = c.jv_members or [] %}
+	{% if members|length > 1 %}
+	<select data-field="member_id" data-testid="kt-s600-fin-member" {% if c.read_only %}disabled{% endif %}>
+		{% for m in members %}
+		<option value="{{ m.member_id }}">{{ m.name }}</option>
+		{% endfor %}
+	</select>
+	{% else %}
+	<div class="kt-s600-single-entity" data-testid="kt-s600-single-entity">
+		<span class="material-symbols-outlined">corporate_fare</span>
+		<strong>{{ (c.authoritative or {}).bidder_legal_name or _("Bidder") }}</strong>
+		<span class="kt-s600-eyebrow">{{ _("Single Entity Bidder") }}</span>
+	</div>
+	{% endif %}
+</section>
+
+<section class="kt-s600-card kt-s600-card--flush" data-testid="kt-s600-financial">
+	<div class="kt-s600-card__head">
+		<span class="material-symbols-outlined">history_edu</span>
+		<h2>{{ _("Historical Financial Performance") }}</h2>
+	</div>
+	<div class="kt-s600-table-wrap">
+		<table class="kt-s600-data-table">
+			<thead>
+				<tr>
+					<th>{{ _("Financial Year") }}</th>
+					<th>{{ _("Currency") }}</th>
+					<th>{{ _("Total Assets") }}</th>
+					<th>{{ _("Total Liabilities") }}</th>
+					<th>{{ _("Net Worth") }}</th>
+					<th class="is-right">{{ _("Evidence") }}</th>
+				</tr>
+			</thead>
+			<tbody data-testid="kt-s600-fy-body">
+				{% for y in years %}
+				<tr data-fy-row>
+					<td><input data-fy="year" value="{{ y.year or '' }}" {% if c.read_only %}readonly{% endif %}/></td>
+					<td><input data-fy="currency" value="{{ y.currency or 'KES' }}" {% if c.read_only %}readonly{% endif %}/></td>
+					<td><input data-fy="assets" value="{{ y.total_assets or '' }}" {% if c.read_only %}readonly{% endif %}/></td>
+					<td><input data-fy="liabilities" value="{{ y.total_liabilities or '' }}" {% if c.read_only %}readonly{% endif %}/></td>
+					<td><input data-fy="net_worth" value="{{ y.net_worth or '' }}" {% if c.read_only %}readonly{% endif %}/></td>
+					<td class="is-right">
+						<label class="kt-s600-evidence">
+							<input type="checkbox" data-fy="attached" {% if y.statement_attached or y.evidence_id or y.file_name %}checked{% endif %} {% if c.read_only %}disabled{% endif %}/>
+							<input data-fy="file" placeholder="{{ _('File name') }}" value="{{ y.file_name or '' }}" {% if c.read_only %}readonly{% endif %}/>
+						</label>
+					</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</section>
+
+<div class="kt-s600-fin-split">
+	<section class="kt-s600-card kt-s600-card--flush" data-testid="kt-s600-turnover">
+		<div class="kt-s600-card__head">
+			<span class="material-symbols-outlined">finance_chip</span>
+			<h2>{{ _("Average Annual Turnover") }}</h2>
+		</div>
+		<div class="kt-s600-table-wrap">
+			<table class="kt-s600-data-table">
+				<thead>
+					<tr>
+						<th>{{ _("Year") }}</th>
+						<th>{{ _("Source Currency") }}</th>
+						<th>{{ _("Amount") }}</th>
+						<th class="is-right">{{ _("Evaluation Equivalent (KES)") }}</th>
+					</tr>
+				</thead>
+				<tbody data-testid="kt-s600-turnover-body">
+					{% if turnover_years %}
+						{% for ty in turnover_years %}
+						<tr data-to-row>
+							<td><input data-to="year" value="{{ ty.year or '' }}" {% if c.read_only %}readonly{% endif %}/></td>
+							<td><input data-to="currency" value="{{ ty.currency or 'KES' }}" {% if c.read_only %}readonly{% endif %}/></td>
+							<td><input data-to="amount" value="{{ ty.amount or '' }}" data-to-amount {% if c.read_only %}readonly{% endif %}/></td>
+							<td class="is-right"><span data-to-equiv>{{ ty.equivalent_kes or ty.amount or '—' }}</span></td>
+						</tr>
+						{% endfor %}
+					{% else %}
+						{% for y in years %}
+						<tr data-to-row>
+							<td><input data-to="year" value="{{ y.year or '' }}" {% if c.read_only %}readonly{% endif %}/></td>
+							<td><input data-to="currency" value="KES" {% if c.read_only %}readonly{% endif %}/></td>
+							<td><input data-to="amount" value="" data-to-amount {% if c.read_only %}readonly{% endif %}/></td>
+							<td class="is-right"><span data-to-equiv>—</span></td>
+						</tr>
+						{% endfor %}
+					{% endif %}
+				</tbody>
+			</table>
+		</div>
+		<div class="kt-s600-avg-bar">
+			<div>
+				<p class="kt-s600-eyebrow">{{ _("Calculated Average") }}</p>
+				<p class="kt-s600-help">{{ _("Calculated from your entries") }}</p>
+			</div>
+			<div class="kt-s600-avg-bar__value">
+				<strong data-testid="kt-s600-avg-turnover" data-field-display="turnover_average">{{ turnover.average_amount or "0.00" }}</strong>
+				<span>{{ _("KES (READ-ONLY)") }}</span>
+				<input type="hidden" data-field="turnover_amount" value="{{ turnover.average_amount or '' }}"/>
+				<input type="hidden" data-field="turnover_currency" value="{{ turnover.currency or 'KES' }}"/>
+			</div>
+		</div>
+	</section>
+
+	<section class="kt-s600-card kt-s600-card--flush" data-testid="kt-s600-resources">
+		<div class="kt-s600-card__head">
+			<div class="kt-s600-card__head-left">
+				<span class="material-symbols-outlined">account_balance_wallet</span>
+				<h2>{{ _("Financial Resources") }}</h2>
+			</div>
+			{% if not c.read_only %}
+			<button type="button" class="kt-s600-link" data-s600-add-resource data-testid="kt-s600-add-resource">
+				<span class="material-symbols-outlined">add_circle</span> {{ _("Add resource") }}
+			</button>
+			{% endif %}
+		</div>
+		<div class="kt-s600-table-wrap">
+			<table class="kt-s600-data-table">
+				<thead>
+					<tr>
+						<th>{{ _("Resource Type") }}</th>
+						<th>{{ _("Provider") }}</th>
+						<th>{{ _("Amount") }}</th>
+						<th>{{ _("Currency") }}</th>
+						<th class="is-right">{{ _("Evidence") }}</th>
+					</tr>
+				</thead>
+				<tbody data-testid="kt-s600-resources-body">
+					{% if resource_lines %}
+						{% for line in resource_lines %}
+						<tr data-res-row>
+							<td><input data-res="type" value="{{ line.resource_type or '' }}" {% if c.read_only %}readonly{% endif %}/></td>
+							<td><input data-res="provider" value="{{ line.provider or '' }}" {% if c.read_only %}readonly{% endif %}/></td>
+							<td><input data-res="amount" value="{{ line.amount or '' }}" {% if c.read_only %}readonly{% endif %}/></td>
+							<td><input data-res="currency" value="{{ line.currency or 'KES' }}" {% if c.read_only %}readonly{% endif %}/></td>
+							<td class="is-right"><input data-res="evidence" value="{{ line.evidence_id or line.file_name or '' }}" {% if c.read_only %}readonly{% endif %}/></td>
+						</tr>
+						{% endfor %}
+					{% elif resources.amount %}
+						<tr data-res-row>
+							<td><input data-res="type" value="Liquid assets" {% if c.read_only %}readonly{% endif %}/></td>
+							<td><input data-res="provider" value="" {% if c.read_only %}readonly{% endif %}/></td>
+							<td><input data-res="amount" value="{{ resources.amount }}" {% if c.read_only %}readonly{% endif %}/></td>
+							<td><input data-res="currency" value="{{ resources.currency or 'KES' }}" {% if c.read_only %}readonly{% endif %}/></td>
+							<td class="is-right"><input data-res="evidence" value="{{ resources.evidence_id or '' }}" {% if c.read_only %}readonly{% endif %}/></td>
+						</tr>
+					{% else %}
+						<tr data-res-empty>
+							<td colspan="5">
+								<div class="kt-s600-table-empty">
+									<span class="material-symbols-outlined">clinical_notes</span>
+									<p>{{ _("No resource records added yet.") }}</p>
+								</div>
+							</td>
+						</tr>
+					{% endif %}
+				</tbody>
+			</table>
+		</div>
+		<p class="kt-s600-card__foot-note">
+			{{ _("Provide evidence of liquid assets, lines of credit, and other financial means, net of current commitments.") }}
+		</p>
+	</section>
+</div>

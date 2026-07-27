@@ -1,0 +1,329 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Experience Workspace | KenTender</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#f7f9fb",
+                        "error-container": "#ffdad6",
+                        "surface-dim": "#d8dadc",
+                        "status-pending-bg": "#fffbeb",
+                        "status-approved-bg": "#ecfdf5",
+                        "outline-variant": "#c5c6cd",
+                        "on-error": "#ffffff",
+                        "tertiary": "#000000",
+                        "surface-tint": "#525f74",
+                        "secondary-container": "#d2e1fa",
+                        "primary-fixed": "#d6e3fd",
+                        "on-tertiary-container": "#6b85ac",
+                        "on-secondary-container": "#556379",
+                        "on-primary-fixed-variant": "#3a475c",
+                        "status-error-bg": "#fff1f2",
+                        "status-error": "#ba1a1a",
+                        "background": "#f7f9fb",
+                        "on-tertiary-fixed": "#001c3a",
+                        "tertiary-fixed-dim": "#adc8f3",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "on-primary-fixed": "#0e1c2e",
+                        "inverse-surface": "#2d3133",
+                        "outline-subtle": "#c4c6cf",
+                        "outline": "#75777d",
+                        "on-tertiary-fixed-variant": "#2d486c",
+                        "tertiary-fixed": "#d4e3ff",
+                        "surface-container": "#eceef0",
+                        "surface-bright": "#f7f9fb",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-surface": "#191c1e",
+                        "primary-container": "#0e1c2e",
+                        "secondary": "#515f74",
+                        "surface-container-high": "#e6e8ea",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-background": "#191c1e",
+                        "error": "#ba1a1a",
+                        "surface-variant": "#e0e3e5",
+                        "tertiary-container": "#001c3a",
+                        "primary": "#000000",
+                        "on-surface-variant": "#44474c",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "on-primary-container": "#77859b",
+                        "inverse-primary": "#bac7e0",
+                        "secondary-fixed": "#d5e3fc",
+                        "primary-fixed-dim": "#bac7e0",
+                        "surface-container-low": "#f2f4f6",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "status-pending": "#92400e",
+                        "outline-strong": "#74777f",
+                        "status-approved": "#065f46",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "max-width": "1280px",
+                        "sidebar-width": "256px",
+                        "gutter": "12px",
+                        "gap-component": "8px",
+                        "container-padding": "16px"
+                    },
+                    "fontFamily": {
+                        "display": ["Public Sans"],
+                        "body-lg": ["Public Sans"],
+                        "body-md": ["Public Sans"],
+                        "label-md": ["JetBrains Mono"],
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-md": ["Public Sans"],
+                        "headline-lg": ["Public Sans"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+            font-size: 1.25rem;
+        }
+        .sidebar-active-indicator {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: #000000;
+        }
+        .bento-card {
+            background-color: #ffffff;
+            border: 1px solid #c4c6cf;
+            transition: all 0.2s ease;
+        }
+        .bento-card:hover {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .dense-table-row {
+            height: 40px;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c4c6cf;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface antialiased">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 w-full z-50 flex items-center justify-between px-gutter h-14 bg-surface-container-lowest border-b border-outline-subtle">
+<div class="flex items-center gap-8">
+<span class="font-headline-lg text-headline-lg font-bold text-primary">KenTender</span>
+<div class="hidden md:flex items-center gap-6">
+<a class="text-on-secondary-container font-medium hover:text-primary transition-colors" href="#">Tenders</a>
+<a class="text-on-secondary-container font-medium hover:text-primary transition-colors" href="#">My Bids</a>
+<a class="text-on-secondary-container font-medium hover:text-primary transition-colors" href="#">Clarifications</a>
+</div>
+</div>
+<div class="flex items-center bg-surface-container-low px-4 py-1.5 rounded gap-2">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Active Tender</span>
+<span class="font-body-md font-bold text-primary">Project Alpha-2024</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-secondary hover:text-primary transition-colors font-label-md">Help Desk</button>
+<span class="material-symbols-outlined text-secondary cursor-pointer">notifications</span>
+<span class="material-symbols-outlined text-secondary cursor-pointer">settings</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest border border-outline-subtle overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a corporate procurement officer, wearing a crisp dark suit, clean lighting, minimalist background, focused and reliable look for a government-grade digital platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHF13NBBnrrUkvmhINVlgqM1dGrr5CfJy5Zfv5kWFXC7fnzcFmUgFgU0Ke5z7melzJWaXDyFFwGbytTdq5JaYmWlDDhnRd_H-fisXPkst2pHjUjdSV3vx3gnDuZXgbkVCpjjRpCSTxDouI5XlYHj1LcGfOQt9ug12KmO_U2mJdmkXumFpEfb85M0sJskr8wkUg99yHpHysQAYSyqQsECqWasxto9MYqW6NVam6VgovvE2PGDoegwnyfVYzzQAitEZnfEkHkCrFIrec">
+</div>
+</div>
+</header>
+<div class="flex min-h-screen">
+<!-- Side Navigation Bar -->
+<aside class="fixed left-0 top-14 bottom-0 w-sidebar-width flex flex-col z-40 overflow-y-auto bg-surface-container-low border-r border-outline-subtle">
+<div class="p-4 border-b border-outline-subtle">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 bg-primary rounded flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-sm">business_center</span>
+</div>
+<div>
+<p class="font-headline-md text-headline-md font-bold text-primary leading-tight">Bidder Workspace</p>
+<p class="font-label-sm text-label-sm text-outline">Ref: KT-2023-0892</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 py-2">
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined mr-3">info</span>
+<span class="font-label-md text-label-md">Tender Overview</span>
+</a>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined mr-3">description</span>
+<span class="font-label-md text-label-md">Tender Documents</span>
+</a>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined mr-3">fact_check</span>
+<span class="font-label-md text-label-md">Submission Checklist</span>
+</a>
+<a class="relative flex items-center bg-surface-container-highest text-primary py-3 px-4 transition-all" href="#">
+<span class="material-symbols-outlined mr-3" style="font-variation-settings: 'FILL' 1;">edit_document</span>
+<span class="font-label-md text-label-md font-bold">Prepare Bid</span>
+<div class="sidebar-active-indicator"></div>
+</a>
+<div class="ml-10 flex flex-col border-l border-outline-subtle mb-2">
+<a class="py-2 px-4 font-label-sm text-outline hover:text-primary" href="#">Technical Specs</a>
+<a class="py-2 px-4 font-label-sm text-primary font-bold bg-white/50" href="#">Experience</a>
+<a class="py-2 px-4 font-label-sm text-outline hover:text-primary" href="#">Financial Capacity</a>
+</div>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined mr-3">verified</span>
+<span class="font-label-md text-label-md">Review &amp; Validate</span>
+</a>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined mr-3">lock</span>
+<span class="font-label-md text-label-md">Submit &amp; Seal</span>
+</a>
+</nav>
+<div class="p-4 mt-auto">
+<button class="w-full bg-primary text-on-primary py-2 px-4 font-label-md flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-sm">grid_view</span>
+                    Requirement Matrix
+                </button>
+</div>
+<div class="border-t border-outline-subtle p-2">
+<a class="flex items-center text-on-surface-variant py-2 px-4 hover:bg-surface-container-high rounded transition-all" href="#">
+<span class="material-symbols-outlined mr-3">contact_support</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+<a class="flex items-center text-on-surface-variant py-2 px-4 hover:bg-surface-container-high rounded transition-all" href="#">
+<span class="material-symbols-outlined mr-3">logout</span>
+<span class="font-label-md text-label-md">Sign Out</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 ml-[256px] pb-24 p-container-padding max-w-full">
+<!-- Breadcrumbs -->
+<nav class="flex items-center gap-2 mb-6 text-outline font-label-sm text-label-sm uppercase tracking-widest">
+<span class="hover:text-primary cursor-pointer">Workspace</span>
+<span class="material-symbols-outlined text-[10px]">chevron_right</span>
+<span class="hover:text-primary cursor-pointer">Bid Preparation</span>
+<span class="material-symbols-outlined text-[10px]">chevron_right</span>
+<span class="text-primary font-bold">Experience</span>
+</nav>
+<!-- Page Header -->
+<div class="mb-8">
+<h1 class="font-headline-lg text-display text-primary mb-2">Experience</h1>
+<p class="text-secondary max-w-3xl font-body-lg text-body-lg">Provide the contract experience required for this tender.</p>
+</div>
+<!-- Bento Grid - Configuration Summary -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-4 mb-8">
+<div class="md:col-span-12 bento-card p-4 border-l-4 border-l-primary flex flex-wrap gap-8 items-start"><div class="flex-1 min-w-[200px]"><p class="font-label-sm text-label-sm text-outline uppercase mb-2">General experience</p><p class="font-headline-md text-primary flex items-baseline gap-1"><span class="font-bold text-2xl font-label-md">5</span><span class="text-body-md font-medium text-secondary">Years</span></p></div><div class="flex-1 min-w-[200px]"><p class="font-label-sm text-label-sm text-outline uppercase mb-2">Similar contracts required</p><p class="font-headline-md text-primary flex items-baseline gap-1"><span class="font-bold text-2xl font-label-md">3</span></p></div><div class="flex-1 min-w-[200px]"><p class="font-label-sm text-label-sm text-outline uppercase mb-2">Applicable period</p><p class="font-headline-md text-primary flex items-baseline gap-1"><span class="text-body-md font-medium text-secondary">Last</span><span class="font-bold text-2xl font-label-md">7</span><span class="text-body-md font-medium text-secondary">Years</span></p></div><div class="flex-1 min-w-[200px]"><p class="font-label-sm text-label-sm text-outline uppercase mb-2">Minimum value per similar contract</p><p class="font-headline-md text-primary font-bold text-2xl font-label-md">KES 200 million</p></div><div class="md:w-full lg:w-1/3 pt-4 lg:pt-0"><p class="font-label-sm text-label-sm text-outline uppercase mb-1">Similarity characteristics</p><p class="text-body-md text-on-surface italic leading-snug">Design, supply, and implementation of enterprise-scale software systems.</p></div></div>
+</div>
+<!-- Subsection 1: General Experience -->
+<section class="mb-10">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-3">
+<h2 class="font-headline-md text-headline-md text-primary">General Experience</h2>
+<span class="bg-surface-container-high px-2 py-0.5 rounded font-label-sm text-label-sm text-secondary">4 OF 5 QUALIFYING YEARS EVIDENCED</span>
+</div>
+<div class="flex gap-2">
+<button class="border border-outline-subtle hover:bg-surface-container-low px-3 py-1.5 font-label-md flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[18px]">history</span>
+                            Use saved project
+                        </button>
+<button class="bg-primary text-on-primary hover:opacity-90 px-3 py-1.5 font-label-md flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                            Add project
+                        </button>
+</div>
+</div>
+<div class="overflow-x-auto border border-outline-subtle bg-white">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container font-label-md text-label-md text-outline uppercase"><th class="px-4 py-3 font-medium border-b border-outline-subtle">Contract</th><th class="px-4 py-3 font-medium border-b border-outline-subtle">Contract period</th><th class="px-4 py-3 font-medium border-b border-outline-subtle">Qualifying years</th><th class="px-4 py-3 font-medium border-b border-outline-subtle">Procuring entity</th><th class="px-4 py-3 font-medium border-b border-outline-subtle">Role</th><th class="px-4 py-3 font-medium border-b border-outline-subtle text-center">Status</th><th class="px-4 py-3 font-medium border-b border-outline-subtle text-right">Action</th></tr>
+</thead>
+<tbody class="divide-y divide-outline-subtle"><tr class="dense-table-row hover:bg-surface-container-low transition-colors"><td class="px-4 py-2 font-bold text-primary">IFMIS Integration Hub</td><td class="px-4 py-2">January 2020 – December 2022</td><td class="px-4 py-2 font-label-md">2020, 2021, 2022</td><td class="px-4 py-2">National Treasury</td><td class="px-4 py-2">Prime supplier</td><td class="px-4 py-2 text-center"><span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-status-approved-bg text-status-approved font-label-sm"><span class="w-1.5 h-1.5 rounded-full bg-status-approved"></span>COMPLETE</span></td><td class="px-4 py-2 text-right"><div class="flex justify-end gap-2 text-outline"><button class="hover:text-primary"><span class="material-symbols-outlined text-[18px]">edit</span></button><button class="hover:text-status-error"><span class="material-symbols-outlined text-[18px]">delete</span></button></div></td></tr><tr class="dense-table-row hover:bg-surface-container-low transition-colors"><td class="px-4 py-2 font-bold text-primary">County Revenue Cloud</td><td class="px-4 py-2">June 2021 – Present</td><td class="px-4 py-2 font-label-md">2021, 2022, 2023</td><td class="px-4 py-2">Machakos County</td><td class="px-4 py-2">Sub-Contractor</td><td class="px-4 py-2 text-center"><span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-status-pending-bg text-status-pending font-label-sm"><span class="w-1.5 h-1.5 rounded-full bg-status-pending"></span>NEEDS ATTENTION</span></td><td class="px-4 py-2 text-right"><div class="flex justify-end gap-2 text-outline"><button class="hover:text-primary"><span class="material-symbols-outlined text-[18px]">edit</span></button><button class="hover:text-status-error"><span class="material-symbols-outlined text-[18px]">delete</span></button></div></td></tr><tr class="dense-table-row hover:bg-surface-container-low transition-colors"><td class="px-4 py-2 font-bold text-primary">Energy Grid Mgmt Platform</td><td class="px-4 py-2">March 2019 – March 2021</td><td class="px-4 py-2 font-label-md">2019, 2020, 2021</td><td class="px-4 py-2">Kenya Power (KPLC)</td><td class="px-4 py-2">Lead Contractor</td><td class="px-4 py-2 text-center"><span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-status-approved-bg text-status-approved font-label-sm"><span class="w-1.5 h-1.5 rounded-full bg-status-approved"></span>COMPLETE</span></td><td class="px-4 py-2 text-right"><div class="flex justify-end gap-2 text-outline"><button class="hover:text-primary"><span class="material-symbols-outlined text-[18px]">edit</span></button><button class="hover:text-status-error"><span class="material-symbols-outlined text-[18px]">delete</span></button></div></td></tr></tbody>
+</table>
+</div>
+</section>
+<!-- Subsection 2: Similar-Contract Experience -->
+<section class="mb-10">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-3">
+<h2 class="font-headline-md text-headline-md text-primary">Specific Experience</h2>
+<span class="bg-surface-container-high px-2 py-0.5 rounded font-label-sm text-label-sm text-secondary">2 OF 3 REQUIRED RECORDS COMPLETE</span>
+</div>
+<div class="flex gap-2">
+<button class="border border-outline-subtle hover:bg-surface-container-low px-3 py-1.5 font-label-md flex items-center gap-2 transition-colors"><span class="material-symbols-outlined text-[18px]">history</span>Use saved project</button>
+<button class="bg-primary text-on-primary hover:opacity-90 px-3 py-1.5 font-label-md flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                            Add project
+                        </button>
+</div>
+</div>
+<div class="overflow-x-auto border border-outline-subtle bg-white">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container font-label-md text-label-md text-outline uppercase"><th class="px-4 py-3 font-medium border-b border-outline-subtle">Contract</th><th class="px-4 py-3 font-medium border-b border-outline-subtle">Completion date</th><th class="px-4 py-3 font-medium border-b border-outline-subtle">Role</th><th class="px-4 py-3 font-medium border-b border-outline-subtle">Contract value</th><th class="px-4 py-3 font-medium border-b border-outline-subtle">Similarity details</th><th class="px-4 py-3 font-medium border-b border-outline-subtle text-center">Status</th><th class="px-4 py-3 font-medium border-b border-outline-subtle text-right">Action</th></tr>
+</thead>
+<tbody class="divide-y divide-outline-subtle"><tr class="dense-table-row hover:bg-surface-container-low transition-colors"><td class="px-4 py-2 font-bold text-primary">Unified Payroll System</td><td class="px-4 py-2">15 November 2022</td><td class="px-4 py-2">Prime supplier</td><td class="px-4 py-2 font-label-md">KES 640 million</td><td class="px-4 py-2 italic text-body-md">Enterprise ERP; regional government implementation</td><td class="px-4 py-2 text-center"><span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-status-approved-bg text-status-approved font-label-sm"><span class="w-1.5 h-1.5 rounded-full bg-status-approved"></span>COMPLETE</span></td><td class="px-4 py-2 text-right"><div class="flex justify-end gap-2 text-outline"><button class="hover:text-primary"><span class="material-symbols-outlined text-[18px]">edit</span></button><button class="hover:text-status-error"><span class="material-symbols-outlined text-[18px]">delete</span></button></div></td></tr><tr class="dense-table-row hover:bg-surface-container-low transition-colors"><td class="px-4 py-2 font-bold text-primary">Digital Health Registry</td><td class="px-4 py-2">20 October 2021</td><td class="px-4 py-2">Prime supplier</td><td class="px-4 py-2 font-label-md">KES 312 million</td><td class="px-4 py-2 italic text-body-md">Data Interchange, 47 Counties</td><td class="px-4 py-2 text-center"><span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-status-approved-bg text-status-approved font-label-sm"><span class="w-1.5 h-1.5 rounded-full bg-status-approved"></span>COMPLETE</span></td><td class="px-4 py-2 text-right"><div class="flex justify-end gap-2 text-outline"><button class="hover:text-primary"><span class="material-symbols-outlined text-[18px]">edit</span></button><button class="hover:text-status-error"><span class="material-symbols-outlined text-[18px]">delete</span></button></div></td></tr></tbody>
+</table>
+</div>
+<div class="mt-4 bg-surface-container-low p-4 border border-dashed border-outline-subtle flex items-center justify-center"><div class="text-center"><p class="text-outline font-body-md mb-2">1 additional specific-experience record required</p><button class="text-primary font-bold font-label-md hover:underline">+ ADD SPECIFIC-EXPERIENCE RECORD</button></div></div>
+</section>
+</main>
+</div>
+<!-- Footer Action Bar -->
+<footer class="fixed bottom-0 right-0 left-sidebar-width flex items-center justify-between p-container-padding bg-surface-container-lowest border-t border-outline-subtle z-50">
+<div class="flex items-center">
+<button class="border border-outline-subtle text-secondary px-4 py-2 rounded font-label-md flex items-center gap-2 hover:bg-surface-container-low transition-all">
+<span class="material-symbols-outlined text-sm">arrow_back</span>
+                Back to Workspace
+            </button>
+</div>
+<div class="flex flex-col items-center">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-widest">Security Zone • Tier IV Encryption</span>
+<span class="font-label-md text-secondary">Last saved: <span class="font-label-md text-primary">2:45 PM</span></span>
+</div>
+<div class="flex gap-gap-component">
+<button class="border border-outline-subtle text-secondary px-6 py-2 rounded font-label-md hover:bg-surface-container-low transition-all">
+                Save draft
+            </button>
+<button class="bg-primary text-on-primary px-6 py-2 rounded font-label-md hover:opacity-90 transition-opacity active:scale-95 duration-100 flex items-center gap-2">
+                Save &amp; Continue
+                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</footer>
+<script>
+        // Micro-interactions for table rows
+        document.querySelectorAll('.dense-table-row').forEach(row => {
+            row.addEventListener('click', () => {
+                // Potential drawer opening logic here
+                console.log('Opening project details...');
+            });
+        });
+    </script>
+
+
+</body></html>

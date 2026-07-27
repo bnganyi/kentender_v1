@@ -39,6 +39,28 @@ CBQ_KEY = "confidential_business_questionnaire"
 
 STATUS_REQUIRES_RECERTIFICATION = "Requires Recertification"
 
+
+def _assert_not_stale_modified(doc, expected_modified: str | None) -> None:
+	"""Optimistic concurrency — ignore microsecond / formatting drift on the same second."""
+	exp = cstr(expected_modified or "").strip()
+	if not exp:
+		return
+	current = str(getattr(doc, "modified", "") or "")
+	if not current or exp == current:
+		return
+	try:
+		exp_dt = get_datetime(exp)
+		cur_dt = get_datetime(current)
+		if exp_dt.replace(microsecond=0) >= cur_dt.replace(microsecond=0):
+			return
+	except Exception:
+		if exp == current:
+			return
+	frappe.throw(
+		frappe._("This section was updated elsewhere. Reload and try again."),
+		title="Updated elsewhere",
+	)
+
 CHOICE_INDEPENDENT = "independent"
 CHOICE_DISCLOSED = "disclosed"
 
@@ -480,6 +502,14 @@ def get_statutory_declarations(publication_ref: str) -> dict[str, Any]:
 			certified_at_display = certified_at
 
 	can_certify = bool(readiness["ready"]) and not certified
+	# CBQ/declarant blockers must be cleared server-side; independent-choice/disclosures
+	# may still be answered in the form without Save draft before Certify enables.
+	external_blockers = [
+		row
+		for row in (readiness.get("incomplete_sections") or [])
+		if isinstance(row, dict) and cstr(row.get("section_key") or "") != SECTION_KEY
+	]
+	prereqs_met = not external_blockers
 	status_chip = (
 		"Certified"
 		if certified
@@ -521,6 +551,7 @@ def get_statutory_declarations(publication_ref: str) -> dict[str, Any]:
 			"requires_recertification": 1 if stat.get("requires_recertification") else 0,
 		},
 		"can_certify": 1 if can_certify else 0,
+		"prereqs_met": 1 if prereqs_met else 0,
 		"status_chip": status_chip,
 		"section_status": validation["section_status"],
 		"validation": validation,
@@ -560,22 +591,7 @@ def save_statutory_declarations(
 	doc = _get_bid(cstr(draft.get("bid_id") or ""))
 	_assert_bid_owner(doc)
 
-	if expected_modified:
-		current = str(doc.modified)
-		exp = cstr(expected_modified).strip()
-		if exp and exp != current:
-			try:
-				if get_datetime(exp) < get_datetime(current):
-					frappe.throw(
-						frappe._("This section was updated elsewhere. Reload and try again."),
-						title="KT_STAT_CONFLICT",
-					)
-			except Exception:
-				if exp != current:
-					frappe.throw(
-						frappe._("This section was updated elsewhere. Reload and try again."),
-						title="KT_STAT_CONFLICT",
-					)
+	_assert_not_stale_modified(doc, expected_modified)
 
 	tmpl = get_published_electronic_template(cstr(dto["published_tender_ref"]))
 	section_def = _statutory_section(tmpl["snapshot"])
@@ -683,22 +699,7 @@ def certify_statutory_declarations(
 	doc = _get_bid(cstr(draft.get("bid_id") or ""))
 	_assert_bid_owner(doc)
 
-	if expected_modified:
-		current = str(doc.modified)
-		exp = cstr(expected_modified).strip()
-		if exp and exp != current:
-			try:
-				if get_datetime(exp) < get_datetime(current):
-					frappe.throw(
-						frappe._("This section was updated elsewhere. Reload and try again."),
-						title="KT_STAT_CONFLICT",
-					)
-			except Exception:
-				if exp != current:
-					frappe.throw(
-						frappe._("This section was updated elsewhere. Reload and try again."),
-						title="KT_STAT_CONFLICT",
-					)
+	_assert_not_stale_modified(doc, expected_modified)
 
 	declarant = dto.get("declarant") or {}
 	if not declarant.get("complete"):

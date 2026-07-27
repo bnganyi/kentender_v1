@@ -1,0 +1,12 @@
+{
+  "confirmation_id": "CONF-1",
+  "response_ref": "RESP-1",
+  "response_version": 1,
+  "legal_text_ref": "LEGAL-1",
+  "legal_text_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "statement_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "actor_ref": "user:bidder",
+  "capacity": "authorized_signatory",
+  "confirmed_at": "2026-07-24T00:00:00Z",
+  "state": "confirmed"
+}

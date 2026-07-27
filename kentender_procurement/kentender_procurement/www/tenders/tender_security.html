@@ -1,0 +1,650 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }} | KenTender{% endblock %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/kentender_procurement/css/available_tenders.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/submission_checklist_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/bidder_portal_forms.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/form_of_tender_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/tender_security_web.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+{% endblock %}
+
+{% block page_content %}
+{% set s = sec %}
+{% set active_nav = "my_bids" %}
+{% set active_ws = "checklist" %}
+{% set req = s.requirements or {} %}
+{% set inst = s.instrument or {} %}
+{% set decl = s.declaration or {} %}
+{% set cert = s.certification or {} %}
+{% set sig = s.signatory or {} %}
+{% set links = s.edit_links or {} %}
+{% set is_instrument = s.mode == "instrument" %}
+{% set is_declaration = s.mode == "securing_declaration" %}
+{% set amount_display = req.required_amount_display or ((req.required_currency or '') ~ ' ' ~ (req.required_amount or '—')) %}
+<div class="kt-a0-root kt-a2-root kt-fot-root kt-sec-root" data-testid="kt-sec-root"
+	data-publication-ref="{{ s.published_tender_ref }}"
+	data-bid-id="{{ s.bid_id or '' }}"
+	data-bid-modified="{{ s.bid_modified or '' }}"
+	data-mode="{{ s.mode }}"
+	data-section-status="{{ s.section_status }}"
+	data-can-certify="{{ s.can_certify or 0 }}"
+	data-certified="{{ cert.certified or 0 }}"
+	data-read-only="{{ s.read_only or 0 }}"
+	data-workspace-url="{{ s.workspace_url }}">
+	{% include "templates/includes/kt_bidder_portal_nav.html" %}
+
+	<div class="kt-a2-shell">
+		{% include "templates/includes/kt_bidder_workspace_sidebar.html" %}
+
+		<main class="kt-a2-main kt-fot-main">
+			<div class="kt-fot-main-inner">
+				<nav class="kt-fot-crumbs" aria-label="Breadcrumb" data-testid="kt-sec-crumbs">
+					<a href="{{ s.workspace_url }}">{{ _("Checklist") }}</a>
+					<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+					<span class="is-current">{{ s.section_title }}</span>
+				</nav>
+
+				<header class="kt-fot-page-head">
+					<div>
+						<h1 data-testid="kt-sec-title">{{ s.section_title }}</h1>
+						<p data-testid="kt-sec-instructions">
+							{% if is_instrument and s.section_status == "Complete" %}
+								{{ _("The required security information has been provided. Legal responsiveness will be determined after tender opening.") }}
+							{% elif is_declaration %}
+								{{ _("Review and certify the declaration required for this tender. This document is a legally binding commitment in lieu of a Tender Security.") }}
+							{% else %}
+								{{ _("Provide the security required for this tender.") }}
+							{% endif %}
+						</p>
+					</div>
+					<span class="kt-fot-chip" data-testid="kt-sec-status-chip" data-status="{{ s.status_chip }}">{{ s.status_chip }}</span>
+				</header>
+
+				{% if is_instrument %}
+				<section class="kt-sec-bento" data-testid="kt-sec-requirements">
+					<div class="kt-sec-bento__tile kt-sec-bento__tile--4 kt-sec-bento__tile--accent">
+						<span class="kt-sec-bento__label">{{ _("Required amount") }}</span>
+						<div class="kt-sec-bento__value kt-sec-bento__value--lg" data-testid="kt-sec-req-amount">{{ amount_display }}</div>
+					</div>
+					<div class="kt-sec-bento__tile kt-sec-bento__tile--4">
+						<span class="kt-sec-bento__label">{{ _("Validity until") }}</span>
+						<div class="kt-sec-bento__value kt-sec-bento__value--mono" data-testid="kt-sec-req-validity">{{ req.required_validity_display or req.required_validity_date or "—" }}</div>
+					</div>
+					<div class="kt-sec-bento__tile kt-sec-bento__tile--4">
+						<span class="kt-sec-bento__label">{{ _("Instrument types") }}</span>
+						<div class="kt-sec-bento__value" data-testid="kt-sec-req-types">{{ (req.permitted_instrument_types or []) | join(", ") or "—" }}</div>
+					</div>
+					<div class="kt-sec-bento__tile kt-sec-bento__tile--6">
+						<span class="kt-sec-bento__label">{{ _("Beneficiary") }}</span>
+						<div class="kt-sec-bento__value" data-testid="kt-sec-req-beneficiary">{{ req.beneficiary or "—" }}</div>
+					</div>
+					<div class="kt-sec-bento__tile kt-sec-bento__tile--6">
+						<span class="kt-sec-bento__label">{{ _("Applicant name") }}</span>
+						<div class="kt-sec-bento__value" data-testid="kt-sec-req-applicant">{{ req.applicant_name or s.applicant_name or "—" }}</div>
+					</div>
+					<div class="kt-sec-bento__tile kt-sec-bento__tile--12 kt-sec-bento__tile--dashed">
+						<span class="kt-sec-bento__label">{{ _("Issuer conditions") }}</span>
+						<div class="kt-sec-bento__value kt-sec-bento__value--italic" data-testid="kt-sec-req-eligibility">{{ req.issuer_eligibility or "—" }}</div>
+					</div>
+				</section>
+
+				<section data-testid="kt-sec-instrument-form">
+					<h2 class="kt-sec-section-head">
+						<span class="material-symbols-outlined" aria-hidden="true">account_balance</span>
+						{{ _("Instrument Details") }}
+					</h2>
+					<form id="kt-sec-instrument" class="kt-sec-form-panel" autocomplete="off">
+						<div class="kt-sec-form-grid">
+							<label class="kt-sec-field">
+								<span>{{ _("Instrument Type") }}<span class="kt-sec-req" aria-hidden="true">*</span></span>
+								<select name="instrument_type" data-testid="kt-sec-instrument-type" {% if s.read_only %}disabled{% endif %}>
+									<option value="">{{ _("Select Type") }}</option>
+									{% for t in req.permitted_instrument_types or [] %}
+									<option value="{{ t }}" {% if inst.instrument_type == t %}selected{% endif %}>{{ t }}</option>
+									{% endfor %}
+								</select>
+							</label>
+							<label class="kt-sec-field">
+								<span>{{ _("Guarantee or Instrument Number") }}<span class="kt-sec-req" aria-hidden="true">*</span></span>
+								<input class="kt-sec-mono" type="text" name="instrument_number" value="{{ inst.instrument_number or '' }}"
+									placeholder="{{ _('e.g. BG/2026/X901') }}" data-testid="kt-sec-instrument-number" {% if s.read_only %}disabled{% endif %}>
+							</label>
+							<label class="kt-sec-field kt-sec-field--span">
+								<span>{{ _("Issuing Institution's Legal Name") }}<span class="kt-sec-req" aria-hidden="true">*</span></span>
+								<input type="text" name="issuer_legal_name" value="{{ inst.issuer_legal_name or '' }}"
+									placeholder="{{ _('Enter formal bank or insurance name') }}" data-testid="kt-sec-issuer-name" {% if s.read_only %}disabled{% endif %}>
+							</label>
+							<label class="kt-sec-field kt-sec-field--span">
+								<span>{{ _("Issuer Registered Address") }}<span class="kt-sec-req" aria-hidden="true">*</span></span>
+								<textarea name="issuer_registered_address" rows="3" placeholder="{{ _('Provide full physical and postal address') }}"
+									data-testid="kt-sec-issuer-address" {% if s.read_only %}disabled{% endif %}>{{ inst.issuer_registered_address or '' }}</textarea>
+							</label>
+							<label class="kt-sec-field">
+								<span>{{ _("Issuer Country") }}<span class="kt-sec-req" aria-hidden="true">*</span></span>
+								<input type="text" name="issuer_country" value="{{ inst.issuer_country or '' }}"
+									placeholder="{{ _('Select or enter country') }}" data-testid="kt-sec-issuer-country" {% if s.read_only %}disabled{% endif %}>
+							</label>
+							<div class="kt-sec-field kt-sec-field--pair">
+								<label class="kt-sec-field">
+									<span>{{ _("Issue Date") }}<span class="kt-sec-req" aria-hidden="true">*</span></span>
+									<input class="kt-sec-mono" type="date" name="issue_date" value="{{ inst.issue_date or '' }}" data-testid="kt-sec-issue-date" {% if s.read_only %}disabled{% endif %}>
+								</label>
+								<label class="kt-sec-field">
+									<span>{{ _("Expiry Date") }}<span class="kt-sec-req" aria-hidden="true">*</span></span>
+									<input class="kt-sec-mono" type="date" name="expiry_date" value="{{ inst.expiry_date or '' }}" data-testid="kt-sec-expiry-date" {% if s.read_only %}disabled{% endif %}>
+								</label>
+							</div>
+							<label class="kt-sec-field">
+								<span>{{ _("Guaranteed Amount") }}<span class="kt-sec-req" aria-hidden="true">*</span></span>
+								<input class="kt-sec-mono" type="text" name="guaranteed_amount" value="{{ inst.guaranteed_amount or '' }}"
+									placeholder="{{ _('e.g. 10000.00') }}" data-testid="kt-sec-amount" {% if s.read_only %}disabled{% endif %}>
+							</label>
+							<label class="kt-sec-field">
+								<span>{{ _("Currency") }}{% if not req.currency_readonly %}<span class="kt-sec-req" aria-hidden="true">*</span>{% endif %}</span>
+								{% if req.currency_readonly %}
+								<input class="kt-sec-mono is-readonly" type="text" name="currency" value="{{ inst.currency or req.required_currency or '' }}" readonly data-testid="kt-sec-currency">
+								{% else %}
+								<select class="kt-sec-mono" name="currency" data-testid="kt-sec-currency" {% if s.read_only %}disabled{% endif %}>
+									<option value="">{{ _("Select…") }}</option>
+									{% for c in req.permitted_currencies or [] %}
+									<option value="{{ c }}" {% if inst.currency == c %}selected{% endif %}>{{ c }}</option>
+									{% endfor %}
+								</select>
+								{% endif %}
+							</label>
+						</div>
+					</form>
+				</section>
+
+				<section>
+					<h2 class="kt-sec-section-head">
+						<span class="material-symbols-outlined" aria-hidden="true">cloud_upload</span>
+						{{ _("Electronic Submission Methods") }}
+					</h2>
+					<div class="kt-sec-routes" data-testid="kt-sec-routes">
+						{% for route in req.permitted_electronic_routes or [] %}
+						<div class="kt-sec-route {% if inst.electronic_route == route.route_key %}is-selected{% endif %}" data-route-key="{{ route.route_key }}">
+							<label class="kt-sec-route__row">
+								<input type="radio" name="electronic_route" value="{{ route.route_key }}" form="kt-sec-instrument"
+									data-testid="kt-sec-route-{{ route.route_key }}"
+									{% if inst.electronic_route == route.route_key %}checked{% endif %}
+									{% if s.read_only %}disabled{% endif %}>
+								<span class="kt-sec-route__body">
+									<span class="kt-sec-route__label">{{ route.label }}</span>
+									{% if route.help %}<p class="kt-sec-route__help">{{ route.help }}</p>{% endif %}
+
+									{% if route.route_key == "upload" %}
+									<div id="kt-sec-upload-block" data-testid="kt-sec-upload-block" {% if inst.electronic_route != "upload" %}hidden{% endif %}>
+										<label class="kt-sec-dropzone" for="kt-sec-file">
+											<span class="material-symbols-outlined" aria-hidden="true">attachment</span>
+											<span class="kt-sec-dropzone__title">{{ _("Click to browse or drag & drop") }}</span>
+											<span class="kt-sec-dropzone__hint">{{ _("Issuer-issued electronic guarantee only. A scanned paper document is not an electronic original.") }}</span>
+										</label>
+										<input type="file" id="kt-sec-file" data-testid="kt-sec-file" hidden {% if s.read_only %}disabled{% endif %}>
+										<input type="hidden" name="upload_file_url" form="kt-sec-instrument" value="{{ inst.upload_file_url or '' }}" data-testid="kt-sec-upload-url">
+										<input type="hidden" name="upload_file_name" form="kt-sec-instrument" value="{{ inst.upload_file_name or '' }}">
+										<div class="kt-sec-file-chip" data-testid="kt-sec-upload-name" id="kt-sec-upload-chip"
+											{% if not (inst.upload_file_name or inst.upload_file_url) %}hidden{% endif %}>
+											<span class="material-symbols-outlined" aria-hidden="true">description</span>
+											<div>
+												<div class="kt-sec-dropzone__title" id="kt-sec-upload-chip-label">{{ inst.upload_file_name or inst.upload_file_url or "" }}</div>
+											</div>
+										</div>
+									</div>
+									{% endif %}
+
+									{% if route.route_key == "issuer_hosted" %}
+									<div id="kt-sec-hosted-block" class="kt-sec-form-grid" data-testid="kt-sec-hosted-block" {% if inst.electronic_route != "issuer_hosted" %}hidden{% endif %}>
+										<label class="kt-sec-field kt-sec-field--span">
+											<span>{{ _("Guarantee registry or verification URL") }}<span class="kt-sec-req" aria-hidden="true">*</span></span>
+											<input type="text" name="issuer_hosted_url" form="kt-sec-instrument" value="{{ inst.issuer_hosted_url or '' }}"
+												placeholder="{{ _('Enter platform name or verification URL') }}" data-testid="kt-sec-hosted-url" {% if s.read_only %}disabled{% endif %}>
+										</label>
+										<label class="kt-sec-field">
+											<span>{{ _("Guarantee Reference Number") }}<span class="kt-sec-req" aria-hidden="true">*</span></span>
+											<input class="kt-sec-mono" type="text" name="guarantee_reference" form="kt-sec-instrument" value="{{ inst.guarantee_reference or '' }}"
+												placeholder="{{ _('Enter reference number') }}" data-testid="kt-sec-guarantee-ref" {% if s.read_only %}disabled{% endif %}>
+										</label>
+										<p class="kt-sec-dropzone__hint kt-sec-field--span">{{ _("The reference must identify the actual guarantee and its full terms.") }}</p>
+									</div>
+									{% endif %}
+								</span>
+							</label>
+						</div>
+						{% endfor %}
+					</div>
+
+					<div class="kt-sec-foreign" data-testid="kt-sec-foreign">
+						<label class="kt-sec-check">
+							<input type="checkbox" name="issuer_is_foreign_non_bank" value="1" form="kt-sec-instrument"
+								data-testid="kt-sec-foreign-flag"
+								{% if inst.issuer_is_foreign_non_bank %}checked{% endif %}
+								{% if s.read_only %}disabled{% endif %}>
+							<span>{{ _("Issuer is a non-bank financial institution outside Kenya") }}</span>
+						</label>
+						{% if req.foreign_non_bank_help %}
+						<p class="kt-fot-muted">{{ req.foreign_non_bank_help }}</p>
+						{% endif %}
+						<div id="kt-sec-foreign-fields" class="kt-sec-foreign-fields" {% if not inst.issuer_is_foreign_non_bank %}hidden{% endif %}>
+							<label class="kt-sec-field">
+								<span>{{ _("Kenyan correspondent financial institution") }}</span>
+								<input type="text" name="correspondent_institution_name" form="kt-sec-instrument" value="{{ inst.correspondent_institution_name or '' }}" data-testid="kt-sec-correspondent-name" {% if s.read_only %}disabled{% endif %}>
+							</label>
+							<label class="kt-sec-field kt-sec-field--span">
+								<span>{{ _("Correspondent details") }}</span>
+								<input type="text" name="correspondent_details" form="kt-sec-instrument" value="{{ inst.correspondent_details or '' }}" data-testid="kt-sec-correspondent-details" {% if s.read_only %}disabled{% endif %}>
+							</label>
+							<label class="kt-sec-field kt-sec-field--span">
+								<span>{{ _("Or PE waiver evidence / reference") }}</span>
+								<input type="text" name="waiver_reference" form="kt-sec-instrument" value="{{ inst.waiver_reference or '' }}" data-testid="kt-sec-waiver" {% if s.read_only %}disabled{% endif %}>
+							</label>
+						</div>
+					</div>
+
+					<div class="kt-sec-note" data-testid="kt-sec-pe-note">
+						<span class="material-symbols-outlined" aria-hidden="true">info</span>
+						<p>{{ _("Note: The Procuring Entity will determine legal responsiveness after tender opening. Completing this section does not mean the instrument is verified or approved.") }}</p>
+					</div>
+				</section>
+				{% endif %}
+
+				{% if is_declaration %}
+				{% if cert.certified %}
+				<section class="kt-fot-cert-record" data-testid="kt-sec-cert-record">
+					<div class="kt-fot-cert-record__header">
+						<div class="kt-fot-cert-record__title">
+							<span class="material-symbols-outlined" aria-hidden="true">verified</span>
+							<h2>{{ _("Tender-Securing Declaration certified") }}</h2>
+						</div>
+						<span class="kt-fot-cert-record__badge">{{ _("Certified") }}</span>
+					</div>
+					<p class="kt-fot-muted">{{ _("Official electronic record of administrative commitment.") }}</p>
+					<div class="kt-fot-cert-record__grid">
+						<div><span class="kt-fot-label">{{ _("Tenderer") }}</span><strong data-testid="kt-sec-cert-tenderer">{{ s.applicant_name or "—" }}</strong></div>
+						<div><span class="kt-fot-label">{{ _("Tender reference") }}</span><strong>{{ s.published_tender_ref }}</strong></div>
+						<div><span class="kt-fot-label">{{ _("Authorized signatory") }}</span><strong data-testid="kt-sec-cert-name">{{ cert.certifier_name or "—" }}</strong></div>
+						<div><span class="kt-fot-label">{{ _("Title / designation") }}</span><strong data-testid="kt-sec-cert-title">{{ cert.certifier_title or "—" }}</strong></div>
+						<div><span class="kt-fot-label">{{ _("Certification date and time") }}</span><strong data-testid="kt-sec-cert-at">{{ cert.certified_at_display or cert.certified_at or "—" }}</strong></div>
+					</div>
+					<div class="kt-sec-note" style="margin-top:1.5rem;margin-bottom:0">
+						<span class="material-symbols-outlined" aria-hidden="true">info</span>
+						<p>{{ _("If the Tenderer, signatory, tender particulars or declaration terms change, this declaration must be certified again.") }}</p>
+					</div>
+					<div style="margin-top:1rem">
+						<button type="button" class="kt-fot-btn" data-testid="kt-sec-read-full-certified" id="kt-sec-read-full-certified">
+							<span class="material-symbols-outlined" aria-hidden="true">article</span> {{ _("View full declaration") }}
+						</button>
+					</div>
+				</section>
+				{% else %}
+				<section class="kt-sec-card" data-testid="kt-sec-declaration-summary">
+					<div class="kt-sec-card__head">
+						<h2>
+							<span class="material-symbols-outlined" aria-hidden="true">assignment_turned_in</span>
+							{{ _("Declaration Summary") }}
+						</h2>
+						<span class="kt-fot-chip" data-status="{{ s.status_chip }}">{{ s.status_chip }}</span>
+					</div>
+					{% if decl.summary_intro %}<p class="kt-fot-muted" style="margin-top:-0.5rem;margin-bottom:1.5rem">{{ decl.summary_intro }}</p>{% endif %}
+					<div class="kt-sec-decl-grid">
+						<div>
+							<div class="kt-sec-decl-meta">
+								<span class="kt-sec-bento__label">{{ _("Tenderer") }}</span>
+								<p data-testid="kt-sec-decl-tenderer">{{ s.applicant_name or "—" }}</p>
+							</div>
+							<div class="kt-sec-decl-meta">
+								<span class="kt-sec-bento__label">{{ _("Procuring Entity") }}</span>
+								<p data-testid="kt-sec-decl-pe">{{ s.procuring_entity or "—" }}</p>
+							</div>
+							<div class="kt-sec-decl-meta">
+								<span class="kt-sec-bento__label">{{ _("Tender Title") }}</span>
+								<p data-testid="kt-sec-decl-tender">{{ s.tender_title or "—" }}</p>
+							</div>
+						</div>
+						<div>
+							<div class="kt-sec-decl-meta">
+								<span class="kt-sec-bento__label">{{ _("Tender Validity Period") }}</span>
+								<p data-testid="kt-sec-decl-validity">
+									{{ decl.tender_validity_end_date or "—" }}
+									{% if decl.tender_validity_end_date %}<small>{{ _("Ends on") }} {{ decl.tender_validity_end_date }}</small>{% endif %}
+								</p>
+							</div>
+							<div class="kt-sec-decl-meta">
+								<span class="kt-sec-bento__label">{{ _("Suspension Period") }}</span>
+								<p data-testid="kt-sec-decl-suspension" style="color:#ba1a1a">{{ decl.suspension_period_days or "—" }} {{ _("days") }}</p>
+							</div>
+							<div class="kt-sec-decl-meta">
+								<span class="kt-sec-bento__label">{{ _("Reference Number") }}</span>
+								<p>{{ s.published_tender_ref }}</p>
+							</div>
+						</div>
+					</div>
+					<div class="kt-sec-triggers-box">
+						<h3>{{ _("Triggering Events for Suspension") }}</h3>
+						<ul class="kt-sec-triggers" data-testid="kt-sec-triggers">
+							{% for t in decl.suspension_triggers or [] %}
+							<li data-testid="kt-sec-trigger-{{ t.trigger_key }}">
+								<span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+								<span>{{ t.label }}</span>
+							</li>
+							{% endfor %}
+						</ul>
+					</div>
+					<div class="kt-sec-expiry-box" data-testid="kt-sec-expiry-conditions">
+						<h3>{{ _("Declaration Expiry Conditions") }}</h3>
+						<ul>
+							{% for c in decl.expiry_conditions or [] %}
+							<li>{{ c }}</li>
+							{% endfor %}
+						</ul>
+					</div>
+					<div style="display:flex;justify-content:flex-end">
+						<button type="button" class="kt-sec-read-full" data-testid="kt-sec-read-full" id="kt-sec-read-full">
+							<span class="material-symbols-outlined" aria-hidden="true">description</span>
+							{{ _("Read full Tender-Securing Declaration") }}
+						</button>
+					</div>
+				</section>
+
+				<section class="kt-sec-card" data-testid="kt-sec-signatory">
+					<div class="kt-sec-card__head" style="border-bottom:0;padding-bottom:0;margin-bottom:1.25rem">
+						<h2>
+							<span class="material-symbols-outlined" aria-hidden="true">person_check</span>
+							{{ _("Authorized Signatory") }}
+						</h2>
+						{% if not s.read_only %}
+						<a class="kt-fot-btn kt-fot-btn--ghost" href="{{ links.cbq }}" data-testid="kt-sec-change-signatory">{{ _("Change signatory") }}</a>
+						{% endif %}
+					</div>
+					<div class="kt-sec-signatory-grid">
+						<div>
+							<span class="kt-sec-bento__label">{{ _("Full Name") }}</span>
+							<p class="kt-sec-bento__value" data-testid="kt-sec-signatory-name">{{ sig.name or "—" }}</p>
+						</div>
+						<div>
+							<span class="kt-sec-bento__label">{{ _("Title / Designation") }}</span>
+							<p class="kt-sec-bento__value" data-testid="kt-sec-signatory-title">{{ sig.title or "—" }}</p>
+						</div>
+						<div class="kt-sec-signatory-note">
+							<span class="material-symbols-outlined" aria-hidden="true">info</span>
+							<span>{{ _("Signatory identified from the tender-wide authorised signatory. CBQ certification alone is not treated as proof of authority.") }}</span>
+						</div>
+					</div>
+				</section>
+
+				<div class="kt-sec-certify-cta">
+					<p>{{ _("Certification records your identity, capacity, date and time as part of this tender submission.") }}</p>
+					<button type="button" class="kt-fot-btn kt-fot-btn--primary" data-testid="kt-sec-certify" id="kt-sec-certify"
+						{% if not s.can_certify or s.read_only %}disabled{% endif %}>
+						<span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
+						{{ _("Certify Tender-Securing Declaration") }}
+					</button>
+					{% if not s.can_certify %}
+					<span class="kt-fot-muted" data-testid="kt-sec-footer-hint">{{ _("Provide authorised signatory details in the Confidential Business Questionnaire to certify.") }}</span>
+					{% endif %}
+				</div>
+				{% endif %}
+				{% endif %}
+			</div>
+		</main>
+	</div>
+
+	<footer class="kt-fot-footer" data-testid="kt-sec-footer">
+		<div class="kt-fot-footer-bar">
+			{% if is_instrument %}
+			<a class="kt-fot-btn kt-fot-btn--ghost" href="{{ s.workspace_url }}" data-testid="kt-sec-back">
+				<span class="material-symbols-outlined" aria-hidden="true">arrow_back</span> {{ _("Back to Workspace") }}
+			</a>
+			<div class="kt-fot-footer-right">
+				<button type="button" class="kt-fot-btn" data-testid="kt-sec-save" id="kt-sec-save" {% if s.read_only %}disabled{% endif %}>{{ _("Save draft") }}</button>
+				<button type="button" class="kt-fot-btn kt-fot-btn--primary" data-testid="kt-sec-save-continue" id="kt-sec-save-continue" {% if s.read_only %}disabled{% endif %}>{{ _("Save and continue") }}</button>
+			</div>
+			{% elif is_declaration and cert.certified %}
+			<a class="kt-fot-btn kt-fot-btn--ghost" href="{{ s.workspace_url }}" data-testid="kt-sec-back">
+				<span class="material-symbols-outlined" aria-hidden="true">arrow_back</span> {{ _("Back to Workspace") }}
+			</a>
+			<a class="kt-fot-btn kt-fot-btn--primary" href="{{ s.workspace_url }}" data-testid="kt-sec-return-checklist">{{ _("Return to Checklist") }}</a>
+			{% else %}
+			<a class="kt-fot-btn kt-fot-btn--ghost" href="{{ s.workspace_url }}" data-testid="kt-sec-back">
+				<span class="material-symbols-outlined" aria-hidden="true">arrow_back</span> {{ _("Back to Workspace") }}
+			</a>
+			<span></span>
+			{% endif %}
+		</div>
+	</footer>
+
+	{% if is_declaration %}
+	<div id="kt-sec-terms-drawer" class="kt-fot-drawer" data-testid="kt-sec-terms-drawer" hidden>
+		<div class="kt-fot-drawer__backdrop" data-testid="kt-sec-terms-backdrop"></div>
+		<aside class="kt-fot-drawer__panel" role="dialog" aria-labelledby="kt-sec-terms-title">
+			<header class="kt-fot-drawer__head">
+				<h2 id="kt-sec-terms-title">{{ _("Full Tender-Securing Declaration") }}</h2>
+				<button type="button" class="kt-fot-btn kt-fot-btn--ghost" data-testid="kt-sec-terms-close" id="kt-sec-terms-close">{{ _("Close") }}</button>
+			</header>
+			<pre class="kt-fot-legal" data-testid="kt-sec-legal-terms">{{ decl.legal_text or "" }}</pre>
+		</aside>
+	</div>
+
+	<div id="kt-sec-certify-dialog" class="kt-fot-dialog" data-testid="kt-sec-certify-dialog" hidden role="dialog" aria-modal="true" aria-labelledby="kt-sec-certify-title">
+		<div class="kt-fot-dialog__backdrop" data-testid="kt-sec-certify-backdrop"></div>
+		<div class="kt-fot-dialog__panel">
+			<h3 id="kt-sec-certify-title">{{ _("Certify Tender-Securing Declaration?") }}</h3>
+			<p data-testid="kt-sec-certify-copy">{{ _("Certification records the signatory's identity, capacity, date and time as part of this tender submission.") }}</p>
+			<div class="kt-fot-dialog__summary" data-testid="kt-sec-certify-summary">
+				<div><span class="kt-fot-label">{{ _("Tenderer") }}</span><strong>{{ s.applicant_name or "—" }}</strong></div>
+				<div><span class="kt-fot-label">{{ _("Declaration") }}</span><strong>{{ decl.title or _("Tender-Securing Declaration") }}</strong></div>
+				<div><span class="kt-fot-label">{{ _("Signatory") }}</span><strong>{{ sig.name or "—" }}</strong></div>
+				<div><span class="kt-fot-label">{{ _("Capacity") }}</span><strong>{{ sig.title or "—" }}</strong></div>
+			</div>
+			<div class="kt-fot-dialog__actions">
+				<button type="button" class="kt-fot-btn" data-testid="kt-sec-certify-cancel" id="kt-sec-certify-cancel">{{ _("Cancel") }}</button>
+				<button type="button" class="kt-fot-btn kt-fot-btn--primary" data-testid="kt-sec-certify-confirm" id="kt-sec-certify-confirm">{{ _("Certify declaration") }}</button>
+			</div>
+		</div>
+	</div>
+	{% endif %}
+</div>
+
+<script>
+frappe.ready(function () {
+	const root = document.querySelector('[data-testid="kt-sec-root"]');
+	if (!root || typeof frappe === "undefined") return;
+	const pubRef = root.getAttribute("data-publication-ref");
+	const mode = root.getAttribute("data-mode");
+	const readOnly = root.getAttribute("data-read-only") === "1";
+	const workspaceUrl = root.getAttribute("data-workspace-url") || "";
+
+	function showToast(msg, warn) {
+		if (typeof frappe.show_alert !== "function") return;
+		frappe.show_alert({ message: msg, indicator: warn ? "orange" : "green" }, 4);
+	}
+
+	function applyBidModified(msg) {
+		if (msg && msg.bid_modified) {
+			root.setAttribute("data-bid-modified", String(msg.bid_modified));
+		}
+	}
+
+	function syncRouteBlocks() {
+		const route = (root.querySelector('input[name="electronic_route"]:checked') || {}).value || "";
+		root.querySelectorAll(".kt-sec-route").forEach((card) => {
+			card.classList.toggle("is-selected", card.getAttribute("data-route-key") === route);
+		});
+		const upload = document.getElementById("kt-sec-upload-block");
+		const hosted = document.getElementById("kt-sec-hosted-block");
+		if (upload) upload.hidden = route !== "upload";
+		if (hosted) hosted.hidden = route !== "issuer_hosted";
+	}
+
+	function syncForeign() {
+		const flag = root.querySelector('[data-testid="kt-sec-foreign-flag"]');
+		const box = document.getElementById("kt-sec-foreign-fields");
+		if (box) box.hidden = !(flag && flag.checked);
+	}
+
+	function collectInstrument() {
+		const form = document.getElementById("kt-sec-instrument");
+		if (!form) return {};
+		const data = {};
+		const nodes = root.querySelectorAll(
+			'#kt-sec-instrument input, #kt-sec-instrument select, #kt-sec-instrument textarea, [form="kt-sec-instrument"]'
+		);
+		nodes.forEach((el) => {
+			if (!el.name || el.type === "file") return;
+			if (el.type === "radio") {
+				if (el.checked) data[el.name] = el.value;
+				return;
+			}
+			if (el.type === "checkbox") {
+				data[el.name] = el.checked ? 1 : 0;
+				return;
+			}
+			data[el.name] = el.value || "";
+		});
+		return data;
+	}
+
+	function saveInstrument(opts) {
+		opts = opts || {};
+		if (readOnly) return;
+		frappe.call({
+			method: "kentender_procurement.tender_configurations.api.save_tender_security",
+			args: {
+				published_tender_ref: pubRef,
+				payload: { instrument: collectInstrument() },
+				expected_modified: root.getAttribute("data-bid-modified") || null,
+			},
+			callback: function (r) {
+				if (!r.message) return;
+				applyBidModified(r.message);
+				showToast("Tender Security saved.");
+				if (opts.continueToChecklist && workspaceUrl) {
+					window.location.href = workspaceUrl;
+				} else {
+					window.location.reload();
+				}
+			},
+			error: function () { showToast("Could not save.", true); },
+		});
+	}
+
+	if (mode === "instrument") {
+		syncRouteBlocks();
+		syncForeign();
+		root.querySelectorAll('input[name="electronic_route"]').forEach((el) => {
+			el.addEventListener("change", syncRouteBlocks);
+		});
+		const foreignFlag = root.querySelector('[data-testid="kt-sec-foreign-flag"]');
+		if (foreignFlag) foreignFlag.addEventListener("change", syncForeign);
+
+		function showAttachedFile(fileName, fileUrl) {
+			const urlEl = root.querySelector('[name="upload_file_url"]');
+			const nameEl = root.querySelector('[name="upload_file_name"]');
+			const chip = document.getElementById("kt-sec-upload-chip");
+			const label = document.getElementById("kt-sec-upload-chip-label");
+			const display = fileName || fileUrl || "";
+			if (urlEl) urlEl.value = fileUrl || "";
+			if (nameEl) nameEl.value = fileName || "";
+			if (label) label.textContent = display;
+			if (chip) chip.hidden = !display;
+		}
+
+		const fileInput = document.getElementById("kt-sec-file");
+		if (fileInput && !readOnly) {
+			fileInput.addEventListener("change", function () {
+				const file = fileInput.files && fileInput.files[0];
+				if (!file) return;
+				const bidId = root.getAttribute("data-bid-id");
+				const fd = new FormData();
+				fd.append("file", file, file.name);
+				fd.append("is_private", "1");
+				fd.append("folder", "Home/Attachments");
+				fd.append("doctype", "Electronic Bid Submission");
+				fd.append("docname", bidId || "");
+				fetch("/api/method/upload_file", {
+					method: "POST",
+					body: fd,
+					headers: { "X-Frappe-CSRF-Token": frappe.csrf_token || "" },
+					credentials: "same-origin",
+				})
+					.then((r) => r.json())
+					.then((payload) => {
+						if (payload.exc || (payload._server_messages && !payload.message)) {
+							showToast("Upload failed.", true);
+							return;
+						}
+						const msg = payload.message || {};
+						const url = msg.file_url || msg.name || "";
+						const name = msg.file_name || file.name;
+						if (!url && !name) {
+							showToast("Upload failed.", true);
+							return;
+						}
+						showAttachedFile(name, url);
+						showToast("File attached.");
+						// Clear input so the same file can be re-selected later.
+						fileInput.value = "";
+					})
+					.catch(() => showToast("Upload failed.", true));
+			});
+		}
+
+		const saveBtn = document.getElementById("kt-sec-save");
+		if (saveBtn) saveBtn.addEventListener("click", () => saveInstrument());
+		const contBtn = document.getElementById("kt-sec-save-continue");
+		if (contBtn) contBtn.addEventListener("click", () => saveInstrument({ continueToChecklist: true }));
+	}
+
+	if (mode === "securing_declaration") {
+		const drawer = document.getElementById("kt-sec-terms-drawer");
+		function openDrawer() { if (drawer) drawer.hidden = false; }
+		function closeDrawer() { if (drawer) drawer.hidden = true; }
+		["kt-sec-read-full", "kt-sec-read-full-certified"].forEach((id) => {
+			const btn = document.getElementById(id);
+			if (btn) btn.addEventListener("click", openDrawer);
+		});
+		const closeTerms = document.getElementById("kt-sec-terms-close");
+		if (closeTerms) closeTerms.addEventListener("click", closeDrawer);
+		const termsBackdrop = root.querySelector('[data-testid="kt-sec-terms-backdrop"]');
+		if (termsBackdrop) termsBackdrop.addEventListener("click", closeDrawer);
+
+		const dialog = document.getElementById("kt-sec-certify-dialog");
+		function openDialog() { if (dialog) dialog.hidden = false; }
+		function closeDialog() { if (dialog) dialog.hidden = true; }
+		const certifyBtn = document.getElementById("kt-sec-certify");
+		if (certifyBtn) {
+			certifyBtn.addEventListener("click", () => {
+				if (certifyBtn.disabled) return;
+				openDialog();
+			});
+		}
+		const cancelBtn = document.getElementById("kt-sec-certify-cancel");
+		if (cancelBtn) cancelBtn.addEventListener("click", closeDialog);
+		const backdrop = root.querySelector('[data-testid="kt-sec-certify-backdrop"]');
+		if (backdrop) backdrop.addEventListener("click", closeDialog);
+		const confirmBtn = document.getElementById("kt-sec-certify-confirm");
+		if (confirmBtn) {
+			confirmBtn.addEventListener("click", () => {
+				frappe.call({
+					method: "kentender_procurement.tender_configurations.api.certify_tender_securing_declaration",
+					args: {
+						published_tender_ref: pubRef,
+						expected_modified: root.getAttribute("data-bid-modified") || null,
+					},
+					callback: function (r) {
+						if (r.message) {
+							showToast("Declaration certified.");
+							window.location.reload();
+						}
+					},
+					error: function () { showToast("Certification failed.", true); },
+				});
+			});
+		}
+	}
+});
+</script>
+{% endblock %}

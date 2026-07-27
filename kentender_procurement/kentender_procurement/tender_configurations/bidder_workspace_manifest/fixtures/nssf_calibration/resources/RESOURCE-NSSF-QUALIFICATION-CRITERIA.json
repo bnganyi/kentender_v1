@@ -1,0 +1,59 @@
+{
+  "resource_id": "RESOURCE-NSSF-QUALIFICATION-CRITERIA",
+  "resource_type": "qualification_criterion",
+  "schema_ref": "bwmf/item/qualification_criterion",
+  "schema_version": "1.0.0",
+  "item_count": 9,
+  "ordering_contract": [
+    "order_weight",
+    "criterion_key"
+  ],
+  "resource_digest": "sha256:54cf1d2458bde735721f7c3e23444df553efdae3c48d524a05bffef9131ff827",
+  "items": [
+    {
+      "criterion_key": "QUAL-0001",
+      "order_weight": 10,
+      "label": "QUAL 1"
+    },
+    {
+      "criterion_key": "QUAL-0002",
+      "order_weight": 20,
+      "label": "QUAL 2"
+    },
+    {
+      "criterion_key": "QUAL-0003",
+      "order_weight": 30,
+      "label": "QUAL 3"
+    },
+    {
+      "criterion_key": "QUAL-0004",
+      "order_weight": 40,
+      "label": "QUAL 4"
+    },
+    {
+      "criterion_key": "QUAL-0005",
+      "order_weight": 50,
+      "label": "QUAL 5"
+    },
+    {
+      "criterion_key": "QUAL-0006",
+      "order_weight": 60,
+      "label": "QUAL 6"
+    },
+    {
+      "criterion_key": "QUAL-0007",
+      "order_weight": 70,
+      "label": "QUAL 7"
+    },
+    {
+      "criterion_key": "QUAL-0008",
+      "order_weight": 80,
+      "label": "QUAL 8"
+    },
+    {
+      "criterion_key": "QUAL-0009",
+      "order_weight": 90,
+      "label": "QUAL 9"
+    }
+  ]
+}

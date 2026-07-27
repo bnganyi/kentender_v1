@@ -1,0 +1,142 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:submission_id",
+ "creation": "2026-07-24 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "submission_id",
+  "submission_version",
+  "idempotency_key",
+  "workspace",
+  "manifest_doc",
+  "payload_digest",
+  "snapshot_digest",
+  "snapshot_json",
+  "status",
+  "sealed_at",
+  "organization",
+  "bidder_party",
+  "total_amount",
+  "snapshot_schema_version"
+ ],
+ "fields": [
+  {
+   "fieldname": "submission_id",
+   "fieldtype": "Data",
+   "label": "Submission Id",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "submission_version",
+   "fieldtype": "Int",
+   "label": "Submission Version",
+   "reqd": 1,
+   "default": 1
+  },
+  {
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Idempotency Key",
+   "reqd": 1
+  },
+  {
+   "fieldname": "workspace",
+   "fieldtype": "Link",
+   "label": "Workspace",
+   "options": "BWMF Workspace",
+   "reqd": 1
+  },
+  {
+   "fieldname": "manifest_doc",
+   "fieldtype": "Link",
+   "label": "Manifest Doc",
+   "options": "BWMF Manifest Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "payload_digest",
+   "fieldtype": "Data",
+   "label": "Payload Digest",
+   "reqd": 1
+  },
+  {
+   "fieldname": "snapshot_digest",
+   "fieldtype": "Data",
+   "label": "Snapshot Digest",
+   "reqd": 1
+  },
+  {
+   "fieldname": "snapshot_json",
+   "fieldtype": "Long Text",
+   "label": "Snapshot Json",
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Sealed",
+   "reqd": 1,
+   "default": "Sealed"
+  },
+  {
+   "fieldname": "sealed_at",
+   "fieldtype": "Datetime",
+   "label": "Sealed At"
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "label": "Organization",
+   "reqd": 1
+  },
+  {
+   "fieldname": "bidder_party",
+   "fieldtype": "Data",
+   "label": "Bidder Party",
+   "reqd": 1
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Data",
+   "label": "Total Amount"
+  },
+  {
+   "fieldname": "snapshot_schema_version",
+   "fieldtype": "Data",
+   "label": "Snapshot Schema Version",
+   "default": "1.0.0",
+   "reqd": 1
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-24 12:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Submission",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "title_field": "submission_id"
+}

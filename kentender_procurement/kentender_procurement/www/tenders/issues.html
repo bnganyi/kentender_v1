@@ -1,0 +1,80 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }} | KenTender{% endblock %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/kentender_procurement/css/available_tenders.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/submission_checklist_web.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+{% endblock %}
+
+{% block page_content %}
+{% set r = register %}
+{% set active_nav = "my_bids" %}
+{% set active_ws = "checklist" %}
+<div class="kt-a0-root kt-a2-root" data-testid="kt-x100-issues-root"
+	data-publication-ref="{{ r.published_tender_ref }}">
+	{% include "templates/includes/kt_bidder_portal_nav.html" %}
+	<div class="kt-a2-shell">
+		{% include "templates/includes/kt_bidder_workspace_sidebar.html" %}
+		<main class="kt-a2-main">
+			<div class="kt-a2-main-inner" style="padding: 1.5rem;">
+				<header style="margin-bottom: 1.25rem; display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+					<div>
+						<h1 data-testid="kt-x100-issues-title">{{ _("Issues") }}</h1>
+						<p class="text-muted">{{ _("Server-derived blockers, warnings and information. Correct the underlying response to clear a blocker — the client cannot dismiss authoritative issues.") }}</p>
+					</div>
+					<div data-testid="kt-x100-issues-summary">
+						<span>{{ _("Open:") }} {{ r.open_count or 0 }}</span>
+						·
+						<span>{{ _("Blockers:") }} {{ r.blocker_count or 0 }}</span>
+					</div>
+				</header>
+				<section class="kt-a3-card" style="background: #fff; border: 1px solid #e0e3e5; border-radius: 2px;">
+					<div style="overflow-x: auto;">
+						<table class="kt-a3-table" data-testid="kt-x100-issues-table" style="width: 100%; border-collapse: collapse;">
+							<thead>
+								<tr>
+									<th style="text-align: left; padding: 0.5rem 1.25rem;">{{ _("Severity") }}</th>
+									<th style="text-align: left; padding: 0.5rem 1.25rem;">{{ _("Message") }}</th>
+									<th style="text-align: left; padding: 0.5rem 1.25rem;">{{ _("Section") }}</th>
+									<th style="text-align: left; padding: 0.5rem 1.25rem;">{{ _("Action") }}</th>
+								</tr>
+							</thead>
+							<tbody>
+								{% if r.issues %}
+									{% for issue in r.issues %}
+									<tr data-testid="kt-x100-issue-row" data-severity="{{ issue.severity }}">
+										<td style="padding: 0.5rem 1.25rem;">{{ issue.severity }}</td>
+										<td style="padding: 0.5rem 1.25rem;">{{ issue.message }}</td>
+										<td style="padding: 0.5rem 1.25rem;">{{ issue.section_key or "—" }}</td>
+										<td style="padding: 0.5rem 1.25rem;">
+											{% if issue.correction_route and not issue.resolved %}
+											<a href="{{ issue.correction_route }}" data-testid="kt-x100-issue-correct">{{ _("Correct") }}</a>
+											{% elif issue.resolved %}
+											{{ _("Resolved") }}
+											{% else %}—{% endif %}
+										</td>
+									</tr>
+									{% endfor %}
+								{% else %}
+								<tr>
+									<td colspan="4" class="kt-a3-empty" data-testid="kt-x100-issues-empty" style="padding: 1.25rem;">
+										{{ r.empty_message or _("No current issues for this bid.") }}
+									</td>
+								</tr>
+								{% endif %}
+							</tbody>
+						</table>
+					</div>
+				</section>
+				<footer style="margin-top: 1.5rem;">
+					<a class="kt-a3-btn kt-a3-btn--ghost" href="{{ r.workspace_url }}" data-testid="kt-x100-issues-back">
+						{{ _("Back to Checklist") }}
+					</a>
+				</footer>
+			</div>
+		</main>
+	</div>
+</div>
+{% endblock %}

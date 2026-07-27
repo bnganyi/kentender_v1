@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Financial Capability | KenTender Bidder Workspace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-fixed": "#0e1c2e",
+                    "outline-strong": "#74777f",
+                    "on-secondary-fixed": "#0d1c2e",
+                    "surface-variant": "#e0e3e5",
+                    "on-tertiary-container": "#6b85ac",
+                    "surface-bright": "#f7f9fb",
+                    "status-pending": "#92400e",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-highest": "#e0e3e5",
+                    "on-secondary-container": "#556379",
+                    "error-container": "#ffdad6",
+                    "tertiary-fixed": "#d4e3ff",
+                    "outline": "#75777d",
+                    "on-surface": "#191c1e",
+                    "secondary-fixed": "#d5e3fc",
+                    "primary-fixed-dim": "#bac7e0",
+                    "on-tertiary-fixed": "#001c3a",
+                    "tertiary": "#000000",
+                    "surface-dim": "#d8dadc",
+                    "on-secondary-fixed-variant": "#3a485c",
+                    "primary-container": "#0e1c2e",
+                    "inverse-surface": "#2d3133",
+                    "surface-container-high": "#e6e8ea",
+                    "inverse-on-surface": "#eff1f3",
+                    "surface": "#f7f9fb",
+                    "on-background": "#191c1e",
+                    "on-surface-variant": "#44474c",
+                    "primary-fixed": "#d6e3fd",
+                    "status-approved": "#065f46",
+                    "tertiary-container": "#001c3a",
+                    "inverse-primary": "#bac7e0",
+                    "secondary-container": "#d2e1fa",
+                    "on-primary-container": "#77859b",
+                    "on-error": "#ffffff",
+                    "surface-tint": "#525f74",
+                    "status-approved-bg": "#ecfdf5",
+                    "outline-subtle": "#c4c6cf",
+                    "on-secondary": "#ffffff",
+                    "status-pending-bg": "#fffbeb",
+                    "on-error-container": "#93000a",
+                    "error": "#ba1a1a",
+                    "status-error-bg": "#fff1f2",
+                    "secondary": "#515f74",
+                    "surface-container": "#eceef0",
+                    "on-primary": "#ffffff",
+                    "background": "#f7f9fb",
+                    "on-primary-fixed-variant": "#3a475c",
+                    "on-tertiary-fixed-variant": "#2d486c",
+                    "surface-container-low": "#f2f4f6",
+                    "secondary-fixed-dim": "#b9c7e0",
+                    "tertiary-fixed-dim": "#adc8f3",
+                    "outline-variant": "#c5c6cd",
+                    "status-error": "#ba1a1a",
+                    "primary": "#000000",
+                    "on-tertiary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "unit": "4px",
+                    "gap-component": "8px",
+                    "max-width": "1280px",
+                    "sidebar-width": "256px",
+                    "gutter": "12px",
+                    "container-padding": "16px"
+            },
+            "fontFamily": {
+                    "display": ["Public Sans"],
+                    "headline-md": ["Public Sans"],
+                    "headline-lg": ["Public Sans"],
+                    "headline-lg-mobile": ["Public Sans"],
+                    "body-md": ["Public Sans"],
+                    "body-lg": ["Public Sans"],
+                    "label-sm": ["JetBrains Mono"],
+                    "label-md": ["JetBrains Mono"]
+            },
+            "fontSize": {
+                    "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                    "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+            font-size: 1.25rem;
+        }
+        body { font-family: 'Public Sans', sans-serif; background-color: #f7f9fb; }
+        .bento-card {
+            background: #ffffff;
+            border: 1px solid #c4c6cf;
+            transition: all 0.2s ease;
+        }
+        .bento-card:hover {
+            border-color: #75777d;
+        }
+        .data-table th {
+            text-transform: uppercase;
+            background: #f2f4f6;
+            color: #44474c;
+            border-bottom: 1px solid #c4c6cf;
+        }
+        .data-table td {
+            border-bottom: 1px solid #eceef0;
+        }
+        .sidebar-item-active {
+            position: relative;
+        }
+        .sidebar-item-active::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: #000000;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #000000;
+            ring: 1px solid #000000;
+        }
+        .jetbrains-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body class="text-on-surface">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 w-full z-50 flex items-center justify-between px-gutter h-14 bg-surface-container-lowest border-b border-outline-subtle">
+<div class="flex items-center gap-8">
+<span class="font-headline-lg text-headline-lg font-bold text-primary">KenTender</span>
+<nav class="hidden md:flex gap-6">
+<a class="text-on-secondary-container font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md" href="#">Tenders</a>
+<a class="text-primary font-bold border-b-2 border-primary pb-1 font-label-md text-label-md" href="#">My Bids</a>
+<a class="text-on-secondary-container font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md" href="#">Clarifications</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-secondary font-label-md text-label-md hover:text-primary">Help Desk</button>
+<span class="material-symbols-outlined text-secondary cursor-pointer">notifications</span>
+<span class="material-symbols-outlined text-secondary cursor-pointer">settings</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden">
+<img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkJElcotB3--HPtR3RUI3fFxHgyKmHc7KBgO6ciCOiD95i60ibGVuSXkHUIUmiid6nFpK2HHgiJKIkmkxA2d8SMQh9reNJgRVa1m5vPRFUKw2KHnla1M8txwtsjJC81AsbXVtV2yZagdW0GNKe6JK3ozf8PEg2a7rKrnCKpvOVtOn_z85m6hLxD_Dv75nHzPLAmwKaVKQLhr-xXjyW_rQ5Zyj0c5oeViXP9oW2Fo-RAwzPZAejUr0FikZuXGgYZSIDirSkEdoni65B"/>
+</div>
+</div>
+</header>
+<!-- Sidebar Navigation -->
+<aside class="fixed left-0 top-14 bottom-0 w-sidebar-width flex flex-col z-40 overflow-y-auto bg-surface-container-low border-r border-outline-subtle">
+<div class="p-container-padding flex flex-col gap-unit">
+<div class="flex items-center gap-gap-component mb-4">
+<span class="material-symbols-outlined text-primary">workspace_premium</span>
+<div class="flex flex-col">
+<span class="font-headline-md text-headline-md font-bold text-primary">Bidder Workspace</span>
+<span class="font-label-sm text-label-sm text-outline">Ref: KT-2023-0892</span>
+</div>
+</div>
+<button class="w-full text-left py-2 px-4 rounded bg-primary text-on-primary font-label-md text-label-md mb-6 hover:opacity-90">Requirement Matrix</button>
+</div>
+<nav class="flex-1">
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined mr-3">info</span> Tender Overview
+        </a>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined mr-3">description</span> Tender Documents
+        </a>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined mr-3">fact_check</span> Submission Checklist
+        </a>
+<a class="sidebar-item-active flex items-center bg-surface-container-highest text-primary font-bold py-3 px-4 font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined mr-3" style="font-variation-settings: 'FILL' 1;">edit_document</span> Prepare Bid
+        </a>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined mr-3">verified</span> Review &amp; Validate
+        </a>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined mr-3">lock</span> Submit &amp; Seal
+        </a>
+</nav>
+<div class="p-4 border-t border-outline-subtle mt-auto">
+<a class="flex items-center text-on-surface-variant py-2 px-2 hover:text-primary font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined mr-3">contact_support</span> Support
+        </a>
+<a class="flex items-center text-on-surface-variant py-2 px-2 hover:text-error font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined mr-3">logout</span> Sign Out
+        </a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-sidebar-width pt-container-padding px-8 pb-32">
+<!-- Page Header -->
+<div class="mb-8 max-w-max-width mx-auto">
+<h1 class="font-display text-display text-on-surface mb-2">Financial Capability</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Provide financial information and supporting evidence to demonstrate your financial capacity.</p>
+</div>
+<div class="max-w-max-width mx-auto grid grid-cols-12 gap-gap-component">
+<!-- 1. Configured Requirements -->
+<div class="col-span-12 bento-card p-container-padding rounded-lg flex flex-col gap-4 bg-surface-bright border-l-4 border-l-primary">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">policy</span>
+<h2 class="font-headline-md text-headline-md text-primary">Configured Requirements</h2>
+</div>
+<div class="grid md:grid-cols-3 gap-6">
+<div class="flex gap-3 items-start">
+<span class="w-6 h-6 rounded bg-primary-fixed flex items-center justify-center text-primary font-label-sm shrink-0">01</span>
+<p class="font-body-md text-body-md text-on-surface-variant">Audited financial statements for the last 3 years</p>
+</div>
+<div class="flex gap-3 items-start">
+<span class="w-6 h-6 rounded bg-primary-fixed flex items-center justify-center text-primary font-label-sm shrink-0">02</span>
+<p class="font-body-md text-body-md text-on-surface-variant">Minimum average annual turnover of <span class="font-bold text-on-surface">KES 500,000,000.00</span></p>
+</div>
+<div class="flex gap-3 items-start">
+<span class="w-6 h-6 rounded bg-primary-fixed flex items-center justify-center text-primary font-label-sm shrink-0">03</span>
+<p class="font-body-md text-body-md text-on-surface-variant">Demonstrated access to liquid assets of <span class="font-bold text-on-surface">KES 100,000,000.00</span></p>
+</div>
+</div>
+</div>
+<!-- 2. Reporting Entity -->
+<div class="col-span-12 bento-card p-container-padding rounded-lg">
+<div class="flex flex-col md:flex-row md:items-center justify-between mb-4">
+<div class="flex flex-col">
+<h3 class="font-label-md text-label-md text-outline mb-1">REPORTING ENTITY</h3>
+<div class="flex items-center gap-3">
+<select class="border border-outline-subtle rounded-lg px-3 py-2 font-body-md text-body-md bg-white min-w-[320px]" id="memberSelector">
+<option selected="" value="">Select reporting member</option>
+<option value="lead">Lead Partner: Infrastructure Solutions Ltd</option>
+<option value="member_1">Member: Main Contractor Ltd</option>
+<option value="member_2">Member: Regional Civils Co.</option>
+</select>
+</div>
+</div>
+<div class="text-right hidden md:block" id="jvProgressContainer" style="display: none;">
+<p class="font-label-sm text-label-sm text-outline-strong uppercase mb-1">JV Group Progress</p>
+<div class="w-48 bg-surface-container-high h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[33%]"></div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2" id="jvStatusGrid" style="display: none;">
+<div class="p-3 border border-outline-subtle rounded flex justify-between items-center bg-surface-container-low">
+<span class="font-body-md text-body-md">Infrastructure Solutions Ltd</span>
+<span class="material-symbols-outlined text-status-approved" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="p-3 border border-outline-subtle rounded flex justify-between items-center">
+<span class="font-body-md text-body-md">Main Contractor Ltd</span>
+<span class="text-status-pending font-label-sm text-label-sm">INCOMPLETE</span>
+</div>
+<div class="p-3 border border-outline-subtle rounded flex justify-between items-center">
+<span class="font-body-md text-body-md">Regional Civils Co.</span>
+<span class="text-outline font-label-sm text-label-sm">NOT STARTED</span>
+</div>
+</div>
+<!-- Single Bidder View (Alternative state if JV) -->
+<div class="flex items-center gap-3 px-4 py-3 bg-surface-container-low rounded border border-outline-subtle" id="singleBidderView" style="display: none;">
+<span class="material-symbols-outlined text-outline">corporate_fare</span>
+<span class="font-body-md text-body-md font-bold">Infrastructure Solutions Ltd</span>
+<span class="text-label-sm text-outline-strong ml-auto uppercase tracking-wider">Single Entity Bidder</span>
+</div>
+</div>
+<!-- Hidden Entry Sections Container -->
+<div class="col-span-12 grid grid-cols-12 gap-gap-component" id="financialEntrySections" style="display: none;">
+<!-- 3. Historical Financial Performance Section -->
+<div class="col-span-12 bento-card rounded-lg overflow-hidden">
+<div class="px-container-padding py-4 border-b border-outline-subtle flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">history_edu</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Historical Financial Performance</h3>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full data-table">
+<thead>
+<tr>
+<th class="px-4 py-3 text-left font-label-md text-label-md">Financial Year</th>
+<th class="px-4 py-3 text-left font-label-md text-label-md">Currency</th>
+<th class="px-4 py-3 text-left font-label-md text-label-md">Total Assets</th>
+<th class="px-4 py-3 text-left font-label-md text-label-md">Total Liabilities</th>
+<th class="px-4 py-3 text-left font-label-md text-label-md">Net Worth</th>
+<th class="px-4 py-3 text-right font-label-md text-label-md">Evidence</th>
+</tr>
+</thead>
+<tbody class="font-label-sm text-label-sm" id="historicalPerformanceTableBody">
+<!-- Dynamic years generated by script -->
+</tbody>
+</table>
+</div>
+</div>
+<!-- 4. Average Annual Turnover Section -->
+<div class="col-span-12 lg:col-span-7 bento-card rounded-lg flex flex-col">
+<div class="px-container-padding py-4 border-b border-outline-subtle flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">finance_chip</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Average Annual Turnover</h3>
+</div>
+<div class="overflow-x-auto flex-1">
+<table class="w-full data-table">
+<thead>
+<tr>
+<th class="px-4 py-3 text-left font-label-md text-label-md">Year</th>
+<th class="px-4 py-3 text-left font-label-md text-label-md">Source Currency</th>
+<th class="px-4 py-3 text-left font-label-md text-label-md">Amount</th>
+<th class="px-4 py-3 text-right font-label-md text-label-md">Evaluation Equivalent (KES)</th>
+</tr>
+</thead>
+<tbody class="font-label-sm text-label-sm" id="turnoverTableBody">
+<!-- Dynamic years generated by script -->
+</tbody>
+</table>
+</div>
+<div class="p-container-padding bg-surface-container-low flex justify-between items-center">
+<div>
+<p class="font-label-md text-label-md text-outline uppercase">Calculated Average</p>
+<p class="font-label-sm text-label-sm text-outline-strong mt-0.5">Calculated from your entries</p>
+</div>
+<div class="text-right">
+<span class="font-display text-display text-primary leading-tight" id="avgTurnoverLabel">0.00</span>
+<div class="text-outline-strong font-label-sm text-label-sm">KES (READ-ONLY)</div>
+</div>
+</div>
+</div>
+<!-- 5. Available Financial Resources Section -->
+<div class="col-span-12 lg:col-span-5 bento-card rounded-lg flex flex-col">
+<div class="px-container-padding py-4 border-b border-outline-subtle flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">account_balance_wallet</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Financial Resources</h3>
+</div>
+<button class="flex items-center gap-1.5 text-primary font-label-md text-label-md hover:bg-surface-container-high px-3 py-1.5 rounded transition-colors">
+<span class="material-symbols-outlined" style="font-size: 18px;">add_circle</span>
+                        Add resource
+                    </button>
+</div>
+<div class="overflow-x-auto flex-1">
+<table class="w-full data-table">
+<thead>
+<tr>
+<th class="px-4 py-3 text-left font-label-md text-label-md">Resource Type</th>
+<th class="px-4 py-3 text-left font-label-md text-label-md">Provider</th>
+<th class="px-4 py-3 text-left font-label-md text-label-md">Amount</th>
+<th class="px-4 py-3 text-left font-label-md text-label-md">Currency</th>
+<th class="px-4 py-3 text-right font-label-md text-label-md">Evidence</th>
+</tr>
+</thead>
+<tbody class="font-label-sm text-label-sm">
+<tr>
+<td class="px-4 py-4" colspan="5">
+<div class="flex flex-col items-center justify-center py-6 text-outline">
+<span class="material-symbols-outlined" style="font-size: 48px; opacity: 0.2;">clinical_notes</span>
+<p class="mt-2">No resource records added yet.</p>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 border-t border-outline-subtle bg-surface-container-lowest italic">
+<p class="font-body-md text-body-md text-on-tertiary-container">
+                        Provide evidence of liquid assets, lines of credit, and other financial means, net of current commitments.
+                    </p>
+</div>
+</div>
+</div> <!-- End of Entry Sections Container -->
+</div>
+</main>
+<!-- Footer Action Bar -->
+<footer class="fixed bottom-0 right-0 left-sidebar-width flex justify-end items-center gap-gap-component p-container-padding z-50 bg-surface-container-lowest border-t border-outline-subtle shadow-sm">
+<div class="mr-auto">
+<span class="font-label-sm text-label-sm uppercase tracking-widest text-outline">Section: 3.1 Financial Capability</span>
+</div>
+<button class="border border-outline-subtle text-secondary font-label-md text-label-md px-6 py-2 rounded hover:bg-surface-container-high transition-colors">Back to Workspace</button>
+<button class="border border-outline-subtle text-secondary font-label-md text-label-md px-6 py-2 rounded hover:bg-surface-container-high transition-colors">Save draft</button>
+<button class="bg-primary text-on-primary font-label-md text-label-md px-6 py-2 rounded hover:opacity-90 active:scale-95 duration-100 shadow-sm">Save &amp; Continue</button>
+</footer>
+<script>
+    // Configuration
+    const currentYear = new Date().getFullYear();
+    const financialYears = [currentYear - 1, currentYear - 2, currentYear - 3];
+    const currencies = ["KES", "USD", "EUR", "GBP", "UGX", "TZS"];
+
+    // Initialize UI
+    document.addEventListener('DOMContentLoaded', () => {
+        populateTables();
+        setupReportingEntityLogic();
+    });
+
+    function populateTables() {
+        const histBody = document.getElementById('historicalPerformanceTableBody');
+        const turnBody = document.getElementById('turnoverTableBody');
+
+        histBody.innerHTML = '';
+        turnBody.innerHTML = '';
+
+        financialYears.forEach(year => {
+            // Historical Performance Row
+            const histRow = document.createElement('tr');
+            histRow.innerHTML = `
+                <td class="px-4 py-3 font-bold text-on-surface">${year}</td>
+                <td class="px-4 py-2">
+                    <select class="border-none bg-transparent p-1 focus:ring-0 w-full font-label-sm jetbrains-mono">
+                        <option disabled selected value="">Select</option>
+                        ${currencies.map(c => `<option value="${c}">${c}</option>`).join('')}
+                    </select>
+                </td>
+                <td class="px-4 py-2"><input class="w-full border-none bg-transparent p-1 focus:bg-white focus:ring-0 font-label-sm jetbrains-mono text-right asset-input" placeholder="0.00" type="number" step="0.01"/></td>
+                <td class="px-4 py-2"><input class="w-full border-none bg-transparent p-1 focus:bg-white focus:ring-0 font-label-sm jetbrains-mono text-right liability-input" placeholder="0.00" type="number" step="0.01"/></td>
+                <td class="px-4 py-2 bg-surface-container-low font-bold text-right jetbrains-mono net-worth-display">---</td>
+                <td class="px-4 py-2 text-right">
+                    <button class="flex items-center gap-1 ml-auto text-primary hover:underline">
+                        <span class="material-symbols-outlined" style="font-size: 16px;">attach_file</span> Attach
+                    </button>
+                </td>
+            `;
+            histBody.appendChild(histRow);
+
+            // Turnover Row
+            const turnRow = document.createElement('tr');
+            turnRow.innerHTML = `
+                <td class="px-4 py-3 text-on-surface">${year}</td>
+                <td class="px-4 py-2">
+                    <select class="border-none bg-transparent p-1 focus:ring-0 w-full font-label-sm jetbrains-mono">
+                        <option value="KES">KES</option>
+                        ${currencies.filter(c => c !== 'KES').map(c => `<option value="${c}">${c}</option>`).join('')}
+                    </select>
+                </td>
+                <td class="px-4 py-2"><input class="w-full border-none bg-transparent p-1 focus:bg-white focus:ring-0 font-label-sm jetbrains-mono text-right turnover-input" placeholder="0.00" type="number" step="0.01"/></td>
+                <td class="px-4 py-2 text-right bg-surface-container-low jetbrains-mono">---</td>
+            `;
+            turnBody.appendChild(turnRow);
+        });
+
+        // Add calc listeners
+        document.querySelectorAll('.asset-input, .liability-input').forEach(input => {
+            input.addEventListener('input', (e) => {
+                const row = e.target.closest('tr');
+                const assets = parseFloat(row.querySelector('.asset-input').value) || 0;
+                const liabilities = parseFloat(row.querySelector('.liability-input').value) || 0;
+                const netWorthDisplay = row.querySelector('.net-worth-display');
+                
+                if (assets || liabilities) {
+                    const nw = assets - liabilities;
+                    netWorthDisplay.textContent = nw.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    if (nw < 0) netWorthDisplay.classList.add('text-error');
+                    else netWorthDisplay.classList.remove('text-error');
+                } else {
+                    netWorthDisplay.textContent = '---';
+                }
+            });
+        });
+
+        document.querySelectorAll('.turnover-input').forEach(input => {
+            input.addEventListener('input', calculateAverageTurnover);
+        });
+    }
+
+    function calculateAverageTurnover() {
+        const inputs = document.querySelectorAll('.turnover-input');
+        let total = 0;
+        let count = 0;
+        inputs.forEach(input => {
+            const val = parseFloat(input.value);
+            if (!isNaN(val)) {
+                total += val;
+                count++;
+            }
+        });
+        const avg = count > 0 ? total / count : 0;
+        document.getElementById('avgTurnoverLabel').textContent = avg.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+
+    function setupReportingEntityLogic() {
+        const selector = document.getElementById('memberSelector');
+        const entrySections = document.getElementById('financialEntrySections');
+        const jvGrid = document.getElementById('jvStatusGrid');
+        const jvProgress = document.getElementById('jvProgressContainer');
+
+        selector.addEventListener('change', (e) => {
+            if (e.target.value) {
+                entrySections.style.display = 'grid';
+                jvGrid.style.display = 'grid';
+                jvProgress.style.display = 'block';
+                // Simulation of loading specific member records
+                console.log(`Loading records for: ${e.target.value}`);
+            } else {
+                entrySections.style.display = 'none';
+                jvGrid.style.display = 'none';
+                jvProgress.style.display = 'none';
+            }
+        });
+    }
+
+    // Micro-interactions
+    document.querySelectorAll('aside nav a').forEach(item => {
+        item.addEventListener('mousedown', () => item.style.transform = 'scale(0.99)');
+        item.addEventListener('mouseup', () => item.style.transform = 'scale(1)');
+    });
+</script>
+</body></html>

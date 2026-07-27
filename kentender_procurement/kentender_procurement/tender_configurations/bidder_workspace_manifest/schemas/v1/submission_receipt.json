@@ -1,0 +1,60 @@
+{
+  "$id": "bwmf/v1/submission_receipt",
+  "schema_version": "1.0.0",
+  "title": "SubmissionReceipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "submission_id",
+    "submission_version",
+    "manifest_ref",
+    "manifest_digest",
+    "sealed_at",
+    "seal_integrity_digest",
+    "receipt_code",
+    "status"
+  ],
+  "properties": {
+    "submission_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "submission_version": {
+      "type": "integer"
+    },
+    "manifest_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "manifest_digest": {
+      "type": "string",
+      "format": "sha256-digest",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "sealed_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "seal_integrity_digest": {
+      "type": "string",
+      "format": "sha256-digest",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "receipt_code": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "sealed",
+        "superseded"
+      ]
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

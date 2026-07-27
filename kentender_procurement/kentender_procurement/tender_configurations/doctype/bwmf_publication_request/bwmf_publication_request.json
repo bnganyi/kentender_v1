@@ -1,0 +1,128 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:request_id",
+ "creation": "2026-07-24 19:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "request_id",
+  "review_package",
+  "approval_decision",
+  "organization",
+  "requester",
+  "state",
+  "idempotency_key",
+  "request_fingerprint",
+  "result_publication",
+  "result_manifest_version",
+  "error_json",
+  "immutable"
+ ],
+ "fields": [
+  {
+   "fieldname": "request_id",
+   "fieldtype": "Data",
+   "label": "Request Id",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "review_package",
+   "fieldtype": "Link",
+   "label": "Review Package",
+   "reqd": 1,
+   "options": "BWMF Review Package"
+  },
+  {
+   "fieldname": "approval_decision",
+   "fieldtype": "Link",
+   "label": "Approval Decision",
+   "reqd": 1,
+   "options": "BWMF Approval Decision"
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "label": "Organization",
+   "reqd": 1
+  },
+  {
+   "fieldname": "requester",
+   "fieldtype": "Data",
+   "label": "Requester",
+   "reqd": 1
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Select",
+   "label": "State",
+   "reqd": 1,
+   "options": "Requested\nSucceeded\nFailed",
+   "default": "Requested"
+  },
+  {
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Idempotency Key",
+   "reqd": 1
+  },
+  {
+   "fieldname": "request_fingerprint",
+   "fieldtype": "Data",
+   "label": "Request Fingerprint",
+   "reqd": 1
+  },
+  {
+   "fieldname": "result_publication",
+   "fieldtype": "Link",
+   "label": "Result Publication",
+   "options": "BWMF Manifest Publication"
+  },
+  {
+   "fieldname": "result_manifest_version",
+   "fieldtype": "Link",
+   "label": "Result Manifest Version",
+   "options": "BWMF Manifest Version"
+  },
+  {
+   "fieldname": "error_json",
+   "fieldtype": "Long Text",
+   "label": "Error Json"
+  },
+  {
+   "fieldname": "immutable",
+   "fieldtype": "Check",
+   "label": "Immutable",
+   "default": "1",
+   "read_only": 1
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-24 19:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Publication Request",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "title_field": "request_id"
+}

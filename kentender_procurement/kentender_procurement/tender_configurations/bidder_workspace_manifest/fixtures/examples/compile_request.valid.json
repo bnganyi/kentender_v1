@@ -1,0 +1,25 @@
+{
+  "compile_request_id": "REQ-1",
+  "compile_mode": "preview",
+  "target_manifest_id": "BWMF-1",
+  "target_manifest_version": 1,
+  "published_tender_ref": "TENDER-1",
+  "published_tender_version": 1,
+  "input_bindings": [
+    {
+      "binding_id": "BIND-STD-1",
+      "binding_type": "std_template",
+      "object_ref": "STD-IT-2022",
+      "object_version": "1.0.0",
+      "lifecycle_state": "approved",
+      "archive_provenance_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "document_content_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    }
+  ],
+  "previous_manifest_ref": null,
+  "requested_by": "system:test",
+  "requested_at": "2026-07-24T00:00:00Z",
+  "expected_input_digests": {
+    "std_template": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  }
+}

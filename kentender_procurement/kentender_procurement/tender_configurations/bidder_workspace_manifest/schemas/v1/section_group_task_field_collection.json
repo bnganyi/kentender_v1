@@ -1,0 +1,110 @@
+{
+  "$id": "bwmf/v1/section_group_task_field_collection",
+  "schema_version": "1.0.0",
+  "title": "SectionGroupTaskFieldCollection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "section_key",
+    "order_weight",
+    "title",
+    "renderer_type",
+    "groups"
+  ],
+  "properties": {
+    "section_key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "order_weight": {
+      "type": "integer"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "renderer_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "groups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "group_key",
+          "title",
+          "tasks"
+        ],
+        "properties": {
+          "group_key": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "task_key",
+                "title",
+                "fields"
+              ],
+              "properties": {
+                "task_key": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "fields": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "field_key",
+                      "value_kind"
+                    ],
+                    "properties": {
+                      "field_key": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "value_kind": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "required": {
+                        "type": "boolean"
+                      },
+                      "collection": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "item_schema_ref": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

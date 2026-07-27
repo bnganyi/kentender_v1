@@ -1,0 +1,531 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>KenTender | Lots &amp; Alternatives</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+            vertical-align: middle;
+        }
+        body {
+            font-family: 'Public Sans', sans-serif;
+            background-color: #f7f9fb;
+        }
+        .sidebar-active-indicator {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: #000000;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-container": "#001c3a",
+                        "surface-container-lowest": "#ffffff",
+                        "outline-strong": "#74777f",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "outline-variant": "#c5c6cd",
+                        "error": "#ba1a1a",
+                        "surface-bright": "#f7f9fb",
+                        "on-tertiary-fixed-variant": "#2d486c",
+                        "secondary-fixed": "#d5e3fc",
+                        "on-error-container": "#93000a",
+                        "secondary-container": "#d2e1fa",
+                        "tertiary-fixed-dim": "#adc8f3",
+                        "primary": "#000000",
+                        "inverse-surface": "#2d3133",
+                        "surface-container-low": "#f2f4f6",
+                        "status-pending": "#92400e",
+                        "background": "#f7f9fb",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "on-background": "#191c1e",
+                        "primary-container": "#0e1c2e",
+                        "on-primary-container": "#77859b",
+                        "tertiary": "#000000",
+                        "surface-tint": "#525f74",
+                        "tertiary-fixed": "#d4e3ff",
+                        "surface-container": "#eceef0",
+                        "on-primary-fixed-variant": "#3a475c",
+                        "primary-fixed-dim": "#bac7e0",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "surface": "#f7f9fb",
+                        "on-tertiary": "#ffffff",
+                        "outline-subtle": "#c4c6cf",
+                        "on-secondary-container": "#556379",
+                        "status-pending-bg": "#fffbeb",
+                        "inverse-primary": "#bac7e0",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-tertiary-fixed": "#001c3a",
+                        "error-container": "#ffdad6",
+                        "status-error": "#ba1a1a",
+                        "status-approved": "#065f46",
+                        "outline": "#75777d",
+                        "on-error": "#ffffff",
+                        "surface-container-high": "#e6e8ea",
+                        "on-surface-variant": "#44474c",
+                        "surface-dim": "#d8dadc",
+                        "surface-variant": "#e0e3e5",
+                        "inverse-on-surface": "#eff1f3",
+                        "status-error-bg": "#fff1f2",
+                        "on-tertiary-container": "#6b85ac",
+                        "primary-fixed": "#d6e3fd",
+                        "status-approved-bg": "#ecfdf5",
+                        "on-surface": "#191c1e",
+                        "secondary": "#515f74",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "on-primary-fixed": "#0e1c2e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "sidebar-width": "256px",
+                        "max-width": "1280px",
+                        "unit": "4px",
+                        "gap-component": "8px",
+                        "gutter": "12px",
+                        "container-padding": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Public Sans"],
+                        "label-sm": ["JetBrains Mono"],
+                        "body-lg": ["Public Sans"],
+                        "display": ["Public Sans"],
+                        "label-md": ["JetBrains Mono"],
+                        "headline-lg": ["Public Sans"],
+                        "body-md": ["Public Sans"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                        "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- Top Navigation Shell -->
+<nav class="sticky top-0 w-full z-50 flex items-center justify-between px-gutter h-14 bg-surface-container-lowest border-b border-outline-subtle">
+<div class="flex items-center gap-gap-component">
+<span class="font-headline-lg text-headline-lg font-bold text-primary">KenTender</span>
+<div class="h-6 w-px bg-outline-subtle mx-2"></div>
+<div class="flex items-center gap-6">
+<a class="text-on-secondary-container font-medium font-label-md hover:text-primary transition-colors duration-200" href="#">Tenders</a>
+<a class="text-primary font-bold border-b-2 border-primary pb-1 font-label-md" href="#">My Bids</a>
+<a class="text-on-secondary-container font-medium font-label-md hover:text-primary transition-colors duration-200" href="#">Clarifications</a>
+</div>
+</div>
+</nav>
+<!-- Side Navigation Shell -->
+<aside class="fixed left-0 top-14 bottom-0 w-sidebar-width flex flex-col z-40 bg-surface-container-low border-r border-outline-subtle overflow-y-auto">
+<div class="p-container-padding border-b border-outline-subtle">
+<div class="flex items-center gap-3 mb-3">
+<div class="w-10 h-10 bg-primary flex items-center justify-center text-on-primary font-bold rounded text-lg">PE</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface uppercase tracking-wider">Procuring Entity</h3>
+<p class="font-body-md text-body-md font-semibold text-primary">[Entity Name]</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-2 rounded border border-outline-subtle">
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Bidder Workspace</p>
+<p class="font-body-md text-body-md font-bold text-primary truncate">[Tender Title]</p>
+<p class="font-label-sm text-label-sm text-outline">Ref: [Reference Number]</p>
+</div>
+</div>
+<nav class="flex-1 py-4">
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined mr-3">info</span>
+<span class="font-label-md text-label-md">View Tender Overview</span>
+</a>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined mr-3">description</span>
+<span class="font-label-md text-label-md">View Tender Document</span>
+</a>
+<div class="mt-4 border-t border-outline-subtle/30 pt-2">
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined mr-3">fact_check</span>
+<span class="font-label-md text-label-md">Checklist</span>
+</a>
+<div class="bg-surface-container-highest/50 border-y border-outline-subtle/30">
+<a class="flex items-center text-primary font-bold py-3 px-4" href="#">
+<span class="material-symbols-outlined mr-3">edit_document</span>
+<span class="font-label-md text-label-md">Prepare Bid</span>
+</a>
+<a class="flex items-center bg-surface-container-highest text-primary border-r-4 border-primary py-3 px-8 relative" href="#">
+<span class="font-label-md text-label-md">Lots &amp; Alternatives</span>
+<div class="sidebar-active-indicator"></div>
+</a>
+</div>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined mr-3">verified</span>
+<span class="font-label-md text-label-md">Review &amp; Validate</span>
+</a>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined mr-3">lock</span>
+<span class="font-label-md text-label-md">Submit &amp; Seal</span>
+</a>
+</div>
+</nav>
+<div class="p-4 bg-surface-container-lowest mt-auto border-t border-outline-subtle">
+<div class="flex flex-col gap-2">
+<a class="flex items-center text-on-surface-variant gap-2 font-label-md hover:text-primary" href="#">
+<span class="material-symbols-outlined text-[18px]">contact_support</span>Support
+</a>
+<a class="flex items-center text-on-surface-variant gap-2 font-label-md hover:text-error" href="#">
+<span class="material-symbols-outlined text-[18px]">logout</span>Exit Workspace
+</a>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-sidebar-width pt-14 pb-24 px-8 max-w-max-width mx-auto">
+<!-- Header Section -->
+<header class="py-8">
+<nav class="flex items-center gap-2 mb-2">
+<span class="font-label-md text-label-md text-on-surface-variant">Checklist</span>
+<span class="material-symbols-outlined text-[14px] text-outline">chevron_right</span>
+<span class="font-label-md text-label-md text-primary font-bold">Lots &amp; Alternatives</span>
+</nav>
+<h1 class="font-display text-display text-primary">Lots &amp; Alternatives</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant mt-1">Select the lots included in your bid and, where permitted by this tender, identify any alternative offers.</p>
+</header>
+<div class="flex flex-col gap-6">
+<!-- Validation Alert (Hidden by default) -->
+<div class="hidden bg-status-error-bg border border-status-error p-4 flex items-start gap-3" id="validation-error">
+<span class="material-symbols-outlined text-status-error">error</span>
+<div>
+<p class="font-body-md text-status-error font-bold">Please correct the following errors:</p>
+<ul class="list-disc list-inside font-body-md text-status-error mt-1" id="error-list"></ul>
+</div>
+</div>
+<!-- Lots Selection Section -->
+<section class="bg-surface-container-lowest border border-outline-subtle overflow-hidden" id="lots-section">
+<div class="p-4 flex justify-between items-center bg-surface-container-low border-b border-outline-subtle">
+<div>
+<h2 class="font-headline-md text-headline-md text-primary">Lots Selection</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mt-0.5" id="lot-progress">Progress: 2 of 3 lots selected</p><p class="font-label-sm text-label-sm text-primary uppercase mt-1">Selection Rule: You may bid for one or more lots.</p>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse" id="lots-table">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="p-4 border-b border-outline-subtle font-label-md text-label-md text-outline uppercase">Include</th>
+<th class="p-4 border-b border-outline-subtle font-label-md text-label-md text-outline uppercase">Lot No. &amp; Title</th>
+<th class="p-4 border-b border-outline-subtle font-label-md text-label-md text-outline uppercase">Short Scope</th>
+<th class="p-4 border-b border-outline-subtle font-label-md text-label-md text-outline uppercase">Selection Rule</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-subtle">
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-4">
+<input checked="" class="h-4 w-4 rounded border-outline-strong text-primary focus:ring-primary opacity-50" data-lot-id="1" data-lot-title="Lot 1: Core Business System" disabled="" type="checkbox">
+</td>
+<td class="p-4">
+<div class="font-body-md text-body-md font-bold text-primary">Lot 1: Core Business System</div>
+</td>
+<td class="p-4">
+<div class="font-body-md text-body-md text-on-surface-variant">Central ERP core modules, finance, and HR management.</div>
+</td>
+<td class="p-4">
+<span class="font-label-sm text-label-sm bg-surface-container-high px-2 py-1 border border-outline-subtle text-primary">MANDATORY</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-4">
+<input checked="" class="h-4 w-4 rounded border-outline-strong text-primary focus:ring-primary lot-checkbox" data-lot-id="2" data-lot-title="Lot 2: Infrastructure and Integration" type="checkbox">
+</td>
+<td class="p-4">
+<div class="font-body-md text-body-md font-bold text-primary">Lot 2: Infrastructure and Integration</div>
+</td>
+<td class="p-4">
+<div class="font-body-md text-body-md text-on-surface-variant">Server provisioning, networking, and legacy data migration.</div>
+</td>
+<td class="p-4">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Optional</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-4">
+<input class="h-4 w-4 rounded border-outline-strong text-primary focus:ring-primary lot-checkbox" data-lot-id="3" data-lot-title="Lot 3: Training and Support" type="checkbox">
+</td>
+<td class="p-4">
+<div class="font-body-md text-body-md font-bold text-primary">Lot 3: Training and Support</div>
+</td>
+<td class="p-4">
+<div class="font-body-md text-body-md text-on-surface-variant">Technical training for IT staff and user adoption programs.</div>
+</td>
+<td class="p-4">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Optional</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Alternative Tenders Section -->
+<section class="flex flex-col bg-surface-container-lowest border border-outline-subtle" id="alternatives-section">
+<!-- Question Header -->
+<div class="w-full bg-surface-container-low p-4 border-b border-outline-subtle flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div>
+<h3 class="font-headline-md text-headline-md text-primary">Alternative Tenders</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Will you submit an alternative tender for any of the selected lots? <span class="text-error">*</span></p>
+</div>
+<div class="flex flex-row gap-4">
+<label class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-subtle cursor-pointer hover:border-outline-strong transition-colors rounded">
+<input class="h-4 w-4 text-primary focus:ring-primary border-outline-strong" name="alt_tender" onchange="toggleAlternatives(true)" type="radio">
+<span class="font-label-md text-label-md text-on-surface">Yes</span>
+</label>
+<label class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-subtle cursor-pointer hover:border-outline-strong transition-colors rounded">
+<input class="h-4 w-4 text-primary focus:ring-primary border-outline-strong" name="alt_tender" onchange="toggleAlternatives(false)" type="radio">
+<span class="font-label-md text-label-md text-on-surface">No</span>
+</label>
+</div>
+</div>
+<!-- Alternatives Content -->
+<div class="hidden flex flex-col gap-6 p-6" id="alternatives-container">
+<div class="flex flex-col gap-6" id="alternatives-list">
+<!-- Alternative Entry Template -->
+<div class="bg-surface-container-lowest border border-outline-subtle p-5 rounded relative group alternative-entry">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm text-outline uppercase">Alternative Name <span class="text-error">*</span></label>
+<input class="w-full border border-outline-subtle rounded p-2 font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none alt-name" placeholder="e.g. Optimized Schedule" required="" type="text"><p class="text-error text-[10px] mt-1 hidden field-error">This field is required.</p>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm text-outline uppercase">Applicable Selected Lots <span class="text-error">*</span></label>
+<div class="border border-outline-subtle rounded p-2 bg-surface-container-lowest max-h-32 overflow-y-auto lot-multi-select"><label class="flex items-center gap-2 py-1 px-2 hover:bg-surface-container-low cursor-pointer rounded">
+                        <input type="checkbox" value="1" class="h-3.5 w-3.5 text-primary border-outline-strong rounded">
+                        <span class="font-body-md text-on-surface truncate">Lot 1: Core Business System</span>
+                    </label><label class="flex items-center gap-2 py-1 px-2 hover:bg-surface-container-low cursor-pointer rounded">
+                        <input type="checkbox" value="2" class="h-3.5 w-3.5 text-primary border-outline-strong rounded">
+                        <span class="font-body-md text-on-surface truncate">Lot 2: Infrastructure and Integration</span>
+                    </label></div>
+<p class="text-[10px] text-outline mt-1">Select at least one lot this alternative applies to.</p>
+</div>
+<div class="flex flex-col gap-1 lg:col-span-2">
+<label class="font-label-sm text-label-sm text-outline uppercase">Description of how the alternative differs from the base tender <span class="text-error">*</span></label>
+<textarea class="w-full border border-outline-subtle rounded p-2 font-body-md h-24 focus:border-primary focus:ring-1 focus:ring-primary outline-none alt-desc" placeholder="Provide a detailed explanation..." required=""></textarea><p class="text-error text-[10px] mt-1 hidden field-error">This field is required.</p>
+</div>
+</div>
+<button class="absolute top-4 right-4 text-outline hover:text-error transition-colors p-1 flex items-center justify-center opacity-0 group-hover:opacity-100 remove-alt-btn" title="Remove Alternative" type="button">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+<div class="flex flex-col gap-4">
+<button class="w-full border border-dashed border-outline-strong py-3 flex items-center justify-center gap-2 font-label-md text-on-surface hover:bg-surface-container-low transition-all group rounded" onclick="addAlternative()" type="button">
+<span class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">add_circle</span>Add another alternative
+</button>
+<p class="text-label-sm text-on-surface-variant italic border-l-2 border-outline-subtle pl-4 py-1">
+                An alternative does not replace your base tender. You must also complete the required base tender responses.
+            </p>
+</div>
+</div>
+</section>
+<!-- Required Responses Summary -->
+<section class="bg-surface-container-low p-6 border border-outline-subtle rounded text-on-surface">
+<div class="flex items-start gap-4">
+<span class="material-symbols-outlined text-outline text-[24px]">assignment</span>
+<div class="flex-1"><h3 class="font-headline-md text-headline-md text-primary mb-2 leading-none">Required Responses Summary</h3><p class="font-body-md text-body-md text-on-surface-variant mb-4">Your selections determine which responses are required in the following sections.</p><div class="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-8"><div class="flex items-center gap-3"><div class="w-1.5 h-1.5 rounded-full bg-outline"></div><span class="font-body-md text-body-md text-on-surface">Qualification and Capability <span class="text-label-sm text-outline ml-1">(Per selected lot)</span></span></div><div class="flex items-center gap-3"><div class="w-1.5 h-1.5 rounded-full bg-outline"></div><span class="font-body-md text-body-md text-on-surface">Technical Proposal <span class="text-label-sm text-outline ml-1">(Per selected lot)</span></span></div><div class="flex items-center gap-3"><div class="w-1.5 h-1.5 rounded-full bg-outline"></div><span class="font-body-md text-body-md text-on-surface">Requirements Compliance <span class="text-label-sm text-outline ml-1">(Per selected lot)</span></span></div><div class="flex items-center gap-3"><div class="w-1.5 h-1.5 rounded-full bg-outline"></div><span class="font-body-md text-body-md text-on-surface">Price Schedule <span class="text-label-sm text-outline ml-1">(Per selected lot/alternative)</span></span></div></div></div>
+</div>
+</section>
+</div>
+</main>
+<!-- Footer Action Bar -->
+<footer class="fixed bottom-0 right-0 left-sidebar-width flex justify-between items-center px-8 py-4 bg-surface-container-lowest border-t border-outline-subtle z-50">
+<button class="border border-outline-subtle text-secondary px-6 py-2 rounded font-label-md hover:bg-surface-container-low transition-colors flex items-center gap-2 group">
+<span class="material-symbols-outlined text-[18px] group-hover:-translate-x-1 transition-transform">arrow_back</span>Back to Tender Documents &amp; Addenda
+</button>
+<div class="flex gap-4">
+<button class="border border-outline-subtle text-secondary px-6 py-2 rounded font-label-md hover:bg-surface-container-low transition-colors">Save draft</button>
+<button class="bg-primary text-on-primary px-8 py-2 rounded font-label-md hover:opacity-90 active:scale-95 transition-all shadow-sm" onclick="validateAndSubmit()">Confirm selections and continue</button>
+</div>
+</footer>
+<!-- Confirmation Dialog Overlay -->
+<div class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-primary/20 backdrop-blur-[2px]" id="confirm-dialog">
+<div class="bg-surface-container-lowest border border-outline-strong p-8 max-w-md w-full shadow-2xl scale-in">
+<div class="flex items-center gap-3 text-status-pending mb-4">
+<span class="material-symbols-outlined text-[32px]">warning</span>
+<h3 class="font-headline-lg text-headline-lg text-primary">Change your selections?</h3>
+</div>
+<p class="font-body-lg text-body-lg text-on-surface-variant mb-8 leading-relaxed">
+                Removing a lot or alternative will exclude its related responses from the current bid. Saved work will be retained if it is selected again.
+            </p>
+<div class="flex justify-end gap-4">
+<button class="px-6 py-2 border border-outline-subtle text-on-surface-variant font-label-md hover:bg-surface-container-low" onclick="toggleDialog('confirm-dialog', false)">
+                    Cancel
+                </button>
+<button class="px-6 py-2 bg-primary text-on-primary font-label-md hover:opacity-90 active:scale-95 transition-all" onclick="proceedToForm()">
+                    Change selections
+                </button>
+</div>
+</div>
+</div>
+<script>
+        // Track state
+        let originalSelections = {
+            lots: [1, 2],
+            alternatives: []
+        };
+
+        function toggleDialog(id, show) {
+            const dialog = document.getElementById(id);
+            if (show) {
+                dialog.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            } else {
+                dialog.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+        }
+
+        function toggleAlternatives(show) {
+            const container = document.getElementById('alternatives-container');
+            if (show) {
+                container.classList.remove('hidden');
+                if (document.querySelectorAll('.alternative-entry').length === 0) {
+                    addAlternative();
+                }
+            } else {
+                container.classList.add('hidden');
+            }
+            updateLotCheckboxesInAlts();
+        }
+
+        function addAlternative() {
+            const list = document.getElementById('alternatives-list');
+            const template = list.querySelector('.alternative-entry').cloneNode(true);
+            
+            // Clear inputs
+            template.querySelectorAll('input[type="text"], textarea').forEach(i => i.value = '');
+            template.querySelectorAll('input[type="checkbox"]').forEach(i => i.checked = false);
+            template.querySelector('.remove-alt-btn').onclick = function() {
+                if (document.querySelectorAll('.alternative-entry').length > 1) {
+                    this.closest('.alternative-entry').remove();
+                }
+            };
+            
+            list.appendChild(template);
+            updateLotCheckboxesInAlts();
+        }
+
+        function updateLotCheckboxesInAlts() {
+            const selectedLots = Array.from(document.querySelectorAll('input[data-lot-id]:checked')).map(cb => ({
+                id: cb.dataset.lotId,
+                title: cb.dataset.lotTitle
+            }));
+
+            document.querySelectorAll('.lot-multi-select').forEach(container => {
+                const currentSelections = Array.from(container.querySelectorAll('input:checked')).map(cb => cb.value);
+                container.innerHTML = '';
+                
+                selectedLots.forEach(lot => {
+                    const div = document.createElement('label');
+                    div.className = 'flex items-center gap-2 py-1 px-2 hover:bg-surface-container-low cursor-pointer rounded';
+                    const checkedAttr = currentSelections.includes(lot.id) ? 'checked' : '';
+                    div.innerHTML = `
+                        <input type="checkbox" value="${lot.id}" ${checkedAttr} class="h-3.5 w-3.5 text-primary border-outline-strong rounded">
+                        <span class="font-body-md text-on-surface truncate">${lot.title}</span>
+                    `;
+                    container.appendChild(div);
+                });
+
+                if (selectedLots.length === 0) {
+                    container.innerHTML = '<p class="text-label-sm text-status-error p-2">Select at least one lot in the table above first.</p>';
+                }
+            });
+        }
+
+        // Listen for lot checkbox changes
+        document.querySelectorAll('.lot-checkbox').forEach(cb => {
+            cb.addEventListener('change', () => {
+                updateLotCheckboxesInAlts();
+                const total = document.querySelectorAll('input[data-lot-id]').length;
+                const selected = document.querySelectorAll('input[data-lot-id]:checked').length;
+                document.getElementById('lot-progress').innerText = `Progress: ${selected} of ${total} lots selected`;
+            });
+        });
+
+        function validateAndSubmit() {
+            const errors = [];
+            const errorList = document.getElementById('error-list');
+            const selectedLots = document.querySelectorAll('input[data-lot-id]:checked');
+            
+            // 1. Lot validation
+            if (selectedLots.length === 0) {
+                errors.push("At least one lot must be selected to proceed.");
+            }
+
+            // 2. Alternatives validation
+            const isAltSelected = document.querySelector('input[name="alt_tender"]:checked')?.value === 'on';
+            if (isAltSelected) {
+                const entries = document.querySelectorAll('.alternative-entry');
+                entries.forEach((entry, idx) => {
+                    const name = entry.querySelector('.alt-name').value.trim();
+                    const desc = entry.querySelector('.alt-desc').value.trim();
+                    const lots = entry.querySelectorAll('.lot-multi-select input:checked');
+                    
+                    if (!name) errors.push(`Alternative #${idx+1} is missing a name.`);
+                    if (lots.length === 0) errors.push(`Alternative #${idx+1} must be linked to at least one lot.`);
+                    if (!desc) errors.push(`Alternative #${idx+1} is missing a description.`);
+                });
+            }
+
+            if (errors.length > 0) {
+                errorList.innerHTML = errors.map(err => `<li>${err}</li>`).join('');
+                document.getElementById('validation-error').classList.remove('hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            document.getElementById('validation-error').classList.add('hidden');
+            
+            // 3. Confirmation dialog logic
+            const currentLotIds = Array.from(selectedLots).map(cb => parseInt(cb.dataset.lotId));
+            const wasReduced = originalSelections.lots.some(id => !currentLotIds.includes(id));
+            
+            if (wasReduced) {
+                toggleDialog('confirm-dialog', true);
+            } else {
+                proceedToForm();
+            }
+        }
+
+        function proceedToForm() {
+            // In a real app, this would route to 'Form of Tender'
+            alert("Proceeding to Form of Tender...");
+        }
+
+        // Initial setup
+        updateLotCheckboxesInAlts();
+        
+        // Remove delete button from first item initially if it's the only one
+        document.querySelector('.remove-alt-btn').onclick = function() {
+            if (document.querySelectorAll('.alternative-entry').length > 1) {
+                this.closest('.alternative-entry').remove();
+            }
+        };
+    </script>
+
+
+</body></html>

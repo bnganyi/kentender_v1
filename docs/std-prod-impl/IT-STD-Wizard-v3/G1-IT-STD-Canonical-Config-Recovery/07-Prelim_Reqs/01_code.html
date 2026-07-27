@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Preliminary Requirements and Evidence - KenTender</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&amp;family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary": "#000000",
+                      "tertiary-fixed-dim": "#adc8f3",
+                      "on-primary": "#ffffff",
+                      "on-secondary-fixed": "#0d1c2e",
+                      "outline-strong": "#74777f",
+                      "primary": "#000000",
+                      "inverse-primary": "#bac7e0",
+                      "surface-container-low": "#f2f4f6",
+                      "secondary-fixed": "#d5e3fc",
+                      "secondary": "#515f74",
+                      "outline-variant": "#c5c6cd",
+                      "on-secondary-container": "#556379",
+                      "error-container": "#ffdad6",
+                      "status-pending": "#92400e",
+                      "surface": "#f7f9fb",
+                      "on-tertiary-fixed-variant": "#2d486c",
+                      "error": "#ba1a1a",
+                      "inverse-surface": "#2d3133",
+                      "on-secondary-fixed-variant": "#3a485c",
+                      "primary-fixed-dim": "#bac7e0",
+                      "on-surface": "#191c1e",
+                      "surface-tint": "#525f74",
+                      "surface-container": "#eceef0",
+                      "on-primary-container": "#77859b",
+                      "surface-container-lowest": "#ffffff",
+                      "on-error": "#ffffff",
+                      "on-secondary": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "primary-container": "#0e1c2e",
+                      "status-error": "#ba1a1a",
+                      "tertiary-fixed": "#d4e3ff",
+                      "primary-fixed": "#d6e3fd",
+                      "status-error-bg": "#fff1f2",
+                      "on-surface-variant": "#44474c",
+                      "surface-variant": "#e0e3e5",
+                      "surface-container-high": "#e6e8ea",
+                      "on-background": "#191c1e",
+                      "secondary-fixed-dim": "#b9c7e0",
+                      "surface-container-highest": "#e0e3e5",
+                      "on-primary-fixed": "#0e1c2e",
+                      "outline": "#75777d",
+                      "surface-dim": "#d8dadc",
+                      "on-primary-fixed-variant": "#3a475c",
+                      "on-tertiary-fixed": "#001c3a",
+                      "status-approved-bg": "#ecfdf5",
+                      "outline-subtle": "#c4c6cf",
+                      "status-pending-bg": "#fffbeb",
+                      "background": "#f7f9fb",
+                      "secondary-container": "#d2e1fa",
+                      "surface-bright": "#f7f9fb",
+                      "inverse-on-surface": "#eff1f3",
+                      "on-tertiary-container": "#6b85ac",
+                      "tertiary-container": "#001c3a",
+                      "status-approved": "#065f46",
+                      "on-error-container": "#93000a"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "sidebar-width": "256px",
+                      "max-width": "1280px",
+                      "gutter": "12px",
+                      "gap-component": "8px",
+                      "container-padding": "16px"
+              },
+              "fontFamily": {
+                      "label-md": [
+                              "JetBrains Mono"
+                      ],
+                      "body-lg": [
+                              "Public Sans"
+                      ],
+                      "headline-md": [
+                              "Public Sans"
+                      ],
+                      "body-md": [
+                              "Public Sans"
+                      ],
+                      "display": [
+                              "Public Sans"
+                      ],
+                      "label-sm": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-lg-mobile": [
+                              "Public Sans"
+                      ],
+                      "headline-lg": [
+                              "Public Sans"
+                      ]
+              },
+              "fontSize": {
+                      "label-md": [
+                              "11px",
+                              {
+                                      "lineHeight": "14px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-lg": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-sm": [
+                              "10px",
+                              {
+                                      "lineHeight": "12px",
+                                      "letterSpacing": "0.04em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen flex flex-col pt-14 pb-16">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-container-padding h-14 bg-surface-container-lowest dark:bg-inverse-surface border-b border-outline-subtle dark:border-outline-variant">
+<div class="flex items-center gap-container-padding">
+<span class="font-display text-display text-primary dark:text-primary-fixed tracking-tighter text-xl">KenTender</span>
+<nav class="hidden md:flex items-center gap-component h-full ml-8">
+<a class="h-14 px-4 flex items-center text-on-surface-variant dark:text-secondary-fixed-dim hover:bg-surface-container-low dark:hover:bg-secondary-container transition-colors font-body-md text-body-md" href="#">Tenders</a>
+<a class="h-14 px-4 flex items-center text-primary dark:text-primary-fixed border-b-2 border-primary font-bold hover:bg-surface-container-low dark:hover:bg-secondary-container transition-colors font-body-md text-body-md opacity-80 transition-opacity" href="#">My Bids</a>
+<a class="h-14 px-4 flex items-center text-on-surface-variant dark:text-secondary-fixed-dim hover:bg-surface-container-low dark:hover:bg-secondary-container transition-colors font-body-md text-body-md" href="#">Clarifications</a>
+</nav>
+</div>
+<div class="flex items-center gap-unit">
+<button aria-label="Notifications" class="w-10 h-10 flex items-center justify-center rounded hover:bg-surface-container-low transition-colors text-primary">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button aria-label="Help" class="w-10 h-10 flex items-center justify-center rounded hover:bg-surface-container-low transition-colors text-primary">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden ml-2 flex items-center justify-center">
+<img alt="Bidder Profile Avatar" class="w-full h-full object-cover" data-alt="A small, professional circular avatar showing a generic bidder profile icon in a corporate setting. The aesthetic is clean, well-lit, and aligned with a strict light-mode enterprise environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWZHseO92konctqnK6ZWZooL7chruVJ1Th8TYI08e3dT2M_pqjGdWWRdIPVrDWRSifbAYWGJtbX5vvPfVS8gGcAeWmqH2BSv-9_C58Wrdw7mf4j1bq0kJpVcFhVgkBvp3mK0FKdzAnEXOxNfK125k3PXDe9szFwB530plXjFTCgMSqlTbkNj-hnKA69ntQ9Keh47vnxOKmBBVMEvY2sHde0NF8l2jMtg8MxAxhTxdedqCOR1B-G77Q9ixPWDhCccyrqXiC9g-0JeD1"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 w-full max-w-max-width mx-auto px-container-padding py-8 flex flex-col gap-6">
+<!-- Breadcrumb & Header -->
+<div class="flex flex-col gap-4">
+<nav aria-label="Breadcrumb" class="flex items-center text-on-surface-variant font-label-sm text-label-sm gap-2">
+<a class="hover:text-primary transition-colors" href="#">Workspace</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<a class="hover:text-primary transition-colors" href="#">Bid Preparation</a>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-primary font-bold">Preliminary Requirements</span>
+</nav>
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h1 class="font-headline-lg text-headline-lg font-bold text-primary mb-2">Preliminary Requirements and Evidence</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">Provide the documents and information required for preliminary examination.</p>
+</div>
+<div class="flex items-center gap-2 bg-surface-container-low px-3 py-1.5 rounded border border-outline-subtle shrink-0">
+<span class="w-2 h-2 rounded-full bg-status-pending"></span>
+<span class="font-label-md text-label-md text-on-surface">3 of 5 requirements complete</span>
+</div>
+</div>
+</div>
+<!-- Tables Container -->
+<div class="flex flex-col gap-8 bg-surface-container-lowest rounded-DEFAULT border border-outline-subtle p-6 mt-4">
+<!-- Group 1 -->
+<div class="flex flex-col gap-4">
+<h2 class="font-headline-md text-headline-md font-bold text-primary border-b border-outline-subtle pb-2">Evidence to provide</h2>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-subtle">
+<th class="py-2 px-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider w-1/3">Requirement</th>
+<th class="py-2 px-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider w-1/3">EVIDENCE REQUIRED</th>
+<th class="py-2 px-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider w-1/6">Status</th>
+<th class="py-2 px-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider w-1/6 text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-subtle font-body-md text-body-md">
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="py-4 px-4">
+<div class="flex flex-col gap-1">
+<span class="font-medium text-primary">Business registration certificate</span>
+<span class="text-status-error text-label-sm">Required evidence has not been attached.</span>
+</div>
+</td>
+<td class="py-4 px-4 text-on-surface-variant">Upload current registration evidence</td>
+<td class="py-4 px-4">
+<div class="inline-flex items-center gap-1.5 bg-status-pending-bg text-status-pending px-2 py-0.5 rounded border border-status-pending/20 font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-status-pending"></span>
+In progress
+</div>
+</td>
+<td class="py-4 px-4 text-right">
+<button class="font-label-md text-label-md text-primary hover:underline font-bold">Continue</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="py-4 px-4">
+<div class="flex flex-col gap-1">
+<span class="font-medium text-primary">Tax compliance certificate</span>
+<span class="text-status-error text-label-sm">Certificate expires before the tender submission deadline.</span>
+</div>
+</td>
+<td class="py-4 px-4 text-on-surface-variant">Provide a valid certificate</td>
+<td class="py-4 px-4">
+<div class="inline-flex items-center gap-1.5 bg-status-pending-bg text-status-pending px-2 py-0.5 rounded border border-status-pending/20 font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-status-pending"></span>
+Needs attention
+</div>
+</td>
+<td class="py-4 px-4 text-right">
+<button class="font-label-md text-label-md text-primary hover:underline font-bold">Replace</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-bright transition-colors h-10">
+<td class="py-2 px-4 font-medium text-primary">Product authorisation letter</td>
+<td class="py-2 px-4 text-on-surface-variant">Provide current manufacturer or vendor authorisation</td>
+<td class="py-2 px-4">
+<div class="inline-flex items-center gap-1.5 bg-surface-container-high text-on-surface-variant px-2 py-0.5 rounded border border-outline-subtle font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-outline-strong"></span>
+                                        Not started
+                                    </div>
+</td>
+<td class="py-2 px-4 text-right">
+<button class="font-label-md text-label-md text-primary hover:underline font-bold">Start</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-bright transition-colors h-10">
+<td class="py-2 px-4 font-medium text-primary">Joint Venture agreement</td>
+<td class="py-2 px-4 text-on-surface-variant">Provide signed JV agreement (if applicable)</td>
+<td class="py-2 px-4">
+<div class="inline-flex items-center gap-1.5 bg-surface-container-high text-on-surface-variant px-2 py-0.5 rounded border border-outline-subtle font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-outline-strong"></span>
+Not applicable
+</div>
+</td>
+<td class="py-2 px-4 text-right">
+<span class="font-label-md text-label-md text-on-surface-variant opacity-50">—</span>
+</td>
+</tr></tbody>
+</table>
+</div>
+</div>
+<!-- Group 2 -->
+<div class="flex flex-col gap-4">
+<h2 class="font-headline-md text-headline-md font-bold text-primary border-b border-outline-subtle pb-2 pt-4">Requirements handled in other sections</h2>
+<div class="overflow-x-auto bg-surface-bright rounded border border-outline-subtle">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-subtle opacity-80">
+<th class="py-2 px-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider w-1/3">Requirement</th>
+<th class="py-2 px-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider w-1/3">SOURCE SECTION</th>
+<th class="py-2 px-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider w-1/6">Status</th>
+<th class="py-2 px-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider w-1/6 text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-subtle font-body-md text-body-md text-on-surface-variant">
+<tr class="hover:bg-surface-container-lowest transition-colors h-10">
+<td class="py-2 px-4 font-medium">Form of Tender</td>
+<td class="py-2 px-4">Completed in Form of Tender</td>
+<td class="py-2 px-4">
+<div class="inline-flex items-center gap-1.5 bg-status-approved-bg text-status-approved px-2 py-0.5 rounded border border-status-approved/20 font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-status-approved"></span>
+                                        Complete
+                                    </div>
+</td>
+<td class="py-2 px-4 text-right">
+<button class="font-label-md text-label-md text-secondary hover:text-primary transition-colors font-bold">Review</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors h-10">
+<td class="py-2 px-4 font-medium">Statutory Declarations</td>
+<td class="py-2 px-4">Completed in Statutory Declarations</td>
+<td class="py-2 px-4">
+<div class="inline-flex items-center gap-1.5 bg-status-approved-bg text-status-approved px-2 py-0.5 rounded border border-status-approved/20 font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-status-approved"></span>
+                                        Complete
+                                    </div>
+</td>
+<td class="py-2 px-4 text-right">
+<button class="font-label-md text-label-md text-secondary hover:text-primary transition-colors font-bold">Review</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors h-10">
+<td class="py-2 px-4 font-medium">Tender Security</td>
+<td class="py-2 px-4">Completed in Tender Security</td>
+<td class="py-2 px-4">
+<div class="inline-flex items-center gap-1.5 bg-status-approved-bg text-status-approved px-2 py-0.5 rounded border border-status-approved/20 font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-status-approved"></span>
+                                        Complete
+                                    </div>
+</td>
+<td class="py-2 px-4 text-right">
+<button class="font-label-md text-label-md text-secondary hover:text-primary transition-colors font-bold">Review</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+<!-- Workspace Footer Actions -->
+<footer class="fixed bottom-0 left-0 w-full z-50 flex justify-between items-center px-container-padding h-16 bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-subtle">
+<button class="flex items-center gap-2 px-4 h-10 font-label-md text-label-md font-bold text-on-surface-variant hover:text-primary transition-colors border border-transparent hover:border-outline-subtle rounded bg-surface-bright">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+            Back to Workspace
+        </button>
+<button class="flex items-center justify-center px-6 h-10 font-label-md text-label-md font-bold text-on-primary bg-primary hover:bg-primary-container transition-colors rounded shadow-sm">Continue</button>
+</footer>
+</body></html>

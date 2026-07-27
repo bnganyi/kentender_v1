@@ -1,0 +1,30 @@
+{
+  "$id": "bwmf/v1/common_defs",
+  "schema_version": "1.0.0",
+  "$defs": {
+    "Identifier": {
+      "type": "string",
+      "minLength": 1
+    },
+    "Hash": {
+      "type": "string",
+      "format": "sha256-digest",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "Datetime": {
+      "type": "string",
+      "minLength": 1
+    },
+    "SemanticVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "NullOrIdentifier": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

@@ -1,0 +1,154 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:artifact_id",
+ "creation": "2026-07-24 15:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "artifact_id",
+  "compile_run",
+  "compile_mode",
+  "target_manifest_id",
+  "target_manifest_version",
+  "artifact_kind",
+  "digest_label",
+  "payload_digest",
+  "projection_digest",
+  "diagnostic_digest",
+  "immutable",
+  "envelope_json",
+  "payload_json",
+  "resource_candidates_json",
+  "addendum_impact_json",
+  "organization"
+ ],
+ "fields": [
+  {
+   "fieldname": "artifact_id",
+   "fieldtype": "Data",
+   "label": "Artifact Id",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "compile_run",
+   "fieldtype": "Link",
+   "label": "Compile Run",
+   "options": "BWMF Compile Run",
+   "reqd": 1
+  },
+  {
+   "fieldname": "compile_mode",
+   "fieldtype": "Select",
+   "label": "Compile Mode",
+   "options": "preview\npublication\naddendum_preview\naddendum_publication",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_manifest_id",
+   "fieldtype": "Data",
+   "label": "Target Manifest Id",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_manifest_version",
+   "fieldtype": "Int",
+   "label": "Target Manifest Version",
+   "reqd": 1
+  },
+  {
+   "fieldname": "artifact_kind",
+   "fieldtype": "Select",
+   "label": "Artifact Kind",
+   "options": "preview\npublication_candidate\naddendum_preview\naddendum_publication\nfailed_result\nfinalized_materialized",
+   "reqd": 1
+  },
+  {
+   "fieldname": "digest_label",
+   "fieldtype": "Data",
+   "label": "Digest Label",
+   "reqd": 1,
+   "description": "e.g. unmaterialized_preview_payload or failed_result — never final_runtime_manifest"
+  },
+  {
+   "fieldname": "payload_digest",
+   "fieldtype": "Data",
+   "label": "Payload Digest",
+   "description": "Absent/empty for failed_result artifacts — never synthetic"
+  },
+  {
+   "fieldname": "projection_digest",
+   "fieldtype": "Data",
+   "label": "Projection Digest"
+  },
+  {
+   "fieldname": "diagnostic_digest",
+   "fieldtype": "Data",
+   "label": "Diagnostic Digest"
+  },
+  {
+   "fieldname": "immutable",
+   "fieldtype": "Check",
+   "label": "Immutable",
+   "default": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "envelope_json",
+   "fieldtype": "Long Text",
+   "label": "Envelope Json",
+   "reqd": 1,
+   "description": "For failed_result: failure envelope only (not a valid manifest)"
+  },
+  {
+   "fieldname": "payload_json",
+   "fieldtype": "Long Text",
+   "label": "Payload Json",
+   "description": "Absent/empty for failed_result artifacts"
+  },
+  {
+   "fieldname": "resource_candidates_json",
+   "fieldtype": "Long Text",
+   "label": "Resource Candidates Json",
+   "description": "Empty for failed_result — candidates are not a complete manifest"
+  },
+  {
+   "fieldname": "addendum_impact_json",
+   "fieldtype": "Long Text",
+   "label": "Addendum Impact Json"
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Data",
+   "label": "Organization"
+  }
+ ],
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-07-24 15:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Compile Artifact",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "title_field": "artifact_id"
+}

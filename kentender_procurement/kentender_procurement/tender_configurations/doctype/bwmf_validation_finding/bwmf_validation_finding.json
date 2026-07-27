@@ -1,0 +1,66 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-07-24 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "finding_id",
+  "rule_code",
+  "severity",
+  "message",
+  "state",
+  "affected_ref"
+ ],
+ "fields": [
+  {
+   "fieldname": "finding_id",
+   "fieldtype": "Data",
+   "label": "Finding Id",
+   "reqd": 1
+  },
+  {
+   "fieldname": "rule_code",
+   "fieldtype": "Data",
+   "label": "Rule Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "severity",
+   "fieldtype": "Select",
+   "label": "Severity",
+   "options": "error\nwarning\ninfo",
+   "reqd": 1
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Small Text",
+   "label": "Message"
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Data",
+   "label": "State",
+   "reqd": 1
+  },
+  {
+   "fieldname": "affected_ref",
+   "fieldtype": "Data",
+   "label": "Affected Ref"
+  }
+ ],
+ "istable": 1,
+ "editable_grid": 1,
+ "links": [],
+ "modified": "2026-07-24 12:00:00.000000",
+ "module": "Tender Configurations",
+ "name": "BWMF Validation Finding",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}
