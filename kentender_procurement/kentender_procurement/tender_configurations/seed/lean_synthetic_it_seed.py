@@ -20,6 +20,10 @@ from kentender_procurement.tender_configurations.constants import STATUS_APPROVE
 from kentender_procurement.tender_configurations.seed.lean_preliminary_criteria import (
 	lean_preliminary_criteria_rows,
 )
+from kentender_procurement.tender_configurations.seed.lean_technical_proposal import (
+	FIXTURE_FULL as TP_FIXTURE_FULL,
+	merge_technical_proposal_into_evaluation,
+)
 from kentender_procurement.tender_configurations.seed.lean_qualification_criteria import (
 	FIXTURE_FULL,
 	merge_qualification_into_evaluation,
@@ -178,26 +182,29 @@ def seed_lean_synthetic_it_published(*, clear: bool = True) -> dict[str, Any]:
 				]
 			),
 			"evaluation_setup": json.dumps(
-				merge_qualification_into_evaluation(
-					{
-						"technical_pass_mark": 70,
-						"technical_scoring_total": 100,
-						"criteria": lean_preliminary_criteria_rows()
-						+ [
-							{
-								"criterion_name": "Relevant experience",
-								"stage": "Technical",
-								"evaluation_basis": "Pass/Fail",
-							},
-							{
-								"criterion_name": "Technical approach",
-								"stage": "Technical",
-								"evaluation_basis": "Scored",
-								"marks": "100",
-							},
-						],
-					},
-					fixture=FIXTURE_FULL,
+				merge_technical_proposal_into_evaluation(
+					merge_qualification_into_evaluation(
+						{
+							"technical_pass_mark": 70,
+							"technical_scoring_total": 100,
+							"criteria": lean_preliminary_criteria_rows()
+							+ [
+								{
+									"criterion_name": "Relevant experience",
+									"stage": "Technical",
+									"evaluation_basis": "Pass/Fail",
+								},
+								{
+									"criterion_name": "Technical approach",
+									"stage": "Technical",
+									"evaluation_basis": "Scored",
+									"marks": "100",
+								},
+							],
+						},
+						fixture=FIXTURE_FULL,
+					),
+					fixture=TP_FIXTURE_FULL,
 				)
 			),
 			"implementation_schedule": json.dumps(

@@ -1,0 +1,407 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Recurrent Costs | KenTender Bidder Workspace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "status-approved-bg": "#ecfdf5",
+                        "primary": "#000000",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "on-primary-fixed-variant": "#3a475c",
+                        "status-error-bg": "#fff1f2",
+                        "error-container": "#ffdad6",
+                        "outline-strong": "#74777f",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "on-surface": "#191c1e",
+                        "on-secondary-container": "#556379",
+                        "tertiary-fixed-dim": "#adc8f3",
+                        "surface-container-lowest": "#ffffff",
+                        "outline-variant": "#c5c6cd",
+                        "surface-variant": "#e0e3e5",
+                        "primary-fixed-dim": "#bac7e0",
+                        "on-tertiary-fixed": "#001c3a",
+                        "secondary": "#515f74",
+                        "on-error-container": "#93000a",
+                        "secondary-container": "#d2e1fa",
+                        "on-primary": "#ffffff",
+                        "surface-dim": "#d8dadc",
+                        "inverse-surface": "#2d3133",
+                        "background": "#f7f9fb",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#bac7e0",
+                        "status-pending-bg": "#fffbeb",
+                        "surface-container-highest": "#e0e3e5",
+                        "outline": "#75777d",
+                        "surface-container": "#eceef0",
+                        "primary-container": "#0e1c2e",
+                        "surface-bright": "#f7f9fb",
+                        "inverse-on-surface": "#eff1f3",
+                        "error": "#ba1a1a",
+                        "status-approved": "#065f46",
+                        "on-tertiary-fixed-variant": "#2d486c",
+                        "on-surface-variant": "#44474c",
+                        "on-background": "#191c1e",
+                        "surface-container-low": "#f2f4f6",
+                        "status-error": "#ba1a1a",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed": "#0e1c2e",
+                        "surface": "#f7f9fb",
+                        "secondary-fixed": "#d5e3fc",
+                        "on-error": "#ffffff",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "tertiary": "#000000",
+                        "surface-tint": "#525f74",
+                        "surface-container-high": "#e6e8ea",
+                        "status-pending": "#92400e",
+                        "on-tertiary-container": "#6b85ac",
+                        "tertiary-container": "#001c3a",
+                        "outline-subtle": "#c4c6cf",
+                        "primary-fixed": "#d6e3fd",
+                        "tertiary-fixed": "#d4e3ff",
+                        "on-primary-container": "#77859b",
+                        "brand-deep": "#000b1d"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "gutter": "12px",
+                        "gap-component": "8px",
+                        "max-width": "1280px",
+                        "sidebar-width": "256px",
+                        "container-padding": "16px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Public Sans"],
+                        "body-md": ["Public Sans"],
+                        "label-sm": ["JetBrains Mono"],
+                        "label-md": ["JetBrains Mono"],
+                        "display": ["Public Sans"],
+                        "headline-md": ["Public Sans"],
+                        "headline-lg": ["Public Sans"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                        "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+            font-size: 20px;
+            vertical-align: middle;
+        }
+        .sidebar-active-indicator {
+            border-right: 4px solid #000b1d;
+        }
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .table-input:focus {
+            outline: none;
+            box-shadow: inset 0 0 0 1px #000000;
+            border-color: #000000;
+        }
+        .bento-card {
+            background: #ffffff;
+            border: 1px solid #c4c6cf;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-lg text-body-lg selection:bg-primary-fixed selection:text-primary-container">
+<!-- TopNavBar Shell -->
+<header class="sticky top-0 w-full z-50 flex items-center justify-between px-gutter h-14 bg-surface-container-lowest border-b border-outline-subtle">
+<div class="flex items-center gap-6">
+<span class="font-headline-lg text-headline-lg font-bold text-primary">KenTender</span>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-on-secondary-container font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md" href="#">Tenders</a>
+<a class="text-on-secondary-container font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md" href="#">My Bids</a>
+<a class="text-on-secondary-container font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md" href="#">Clarifications</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative flex items-center bg-surface-container rounded-lg px-3 h-9 w-64">
+<span class="material-symbols-outlined text-outline">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-full ml-2" placeholder="Search tender data..." type="text">
+</div>
+<button class="text-on-surface-variant font-label-md text-label-md hover:text-primary">Help Desk</button>
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-primary">notifications</span>
+<span class="material-symbols-outlined text-outline cursor-pointer hover:text-primary">settings</span>
+</div>
+<div class="w-8 h-8 rounded-full overflow-hidden bg-outline-subtle border border-outline-subtle">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a middle-aged male procurement specialist in a sharp navy suit, looking directly at the camera with a confident and trustworthy expression. The background is a clean, bright corporate office with soft natural lighting coming from large windows. The overall aesthetic is professional, formal, and high-quality, aligning with a secure government procurement platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3wIOj8gYnfG_XGtMFJn3lYSNb0am3zFEbBPCDqRF3TY3FotFpqzYuDHCFpwy_GzHGs2VAk6l2DpfPKhrXUzBXvQxIiNp3QSG7arp9X3vIugEiMxtaOds58DWNQnSZzCCI8ZHL8-DDQ5imo4JlvluC65Fy8sK9ahtuNbSOlyHq8jf9JRMBOQ6jPim76zXpkP7BiLtI_LTlK84O1AUVqFIA3SaR-9FXSbnGQWaI1cHgBWpbofOSI3amrA">
+</div>
+</div>
+</header>
+<div class="flex">
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-14 bottom-0 w-sidebar-width flex flex-col z-40 bg-surface-container-low border-r border-outline-subtle overflow-y-auto">
+<div class="p-container-padding flex flex-col gap-1 border-b border-outline-subtle bg-surface-container-lowest">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-brand-deep flex items-center justify-center rounded">
+<span class="material-symbols-outlined text-white">account_balance</span>
+</div>
+<div>
+<h2 class="font-headline-md text-[14px] font-bold text-primary uppercase">Bidder Workspace</h2>
+<p class="font-label-sm text-label-sm text-outline">Ref: KT-2023-0892</p>
+</div>
+</div>
+<button class="mt-4 w-full bg-primary-container text-on-primary-container font-label-md text-label-md py-2 px-3 rounded text-left flex justify-between items-center hover:bg-on-secondary-container hover:text-white transition-all">
+                    Requirement Matrix
+                    <span class="material-symbols-outlined text-[16px]">open_in_new</span>
+</button>
+</div>
+<nav class="flex-1 py-4">
+<ul class="space-y-0.5">
+<li class=""><a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all font-body-md text-body-md gap-3" href="#"><span class="material-symbols-outlined">info</span>Tender Overview</a></li>
+<li class=""><a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all font-body-md text-body-md gap-3" href="#"><span class="material-symbols-outlined">description</span>Tender Documents</a></li>
+<li class=""><a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all font-body-md text-body-md gap-3" href="#"><span class="material-symbols-outlined">fact_check</span>Submission Checklist</a></li>
+<li class=""><a class="flex items-center bg-surface-container-highest text-primary border-r-4 border-brand-deep py-3 px-4 scale-[0.99] transition-transform font-body-md text-body-md gap-3 font-bold" href="#"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">edit_document</span>Prepare Bid</a></li>
+<li class=""><a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all font-body-md text-body-md gap-3" href="#"><span class="material-symbols-outlined">verified</span>Review &amp; Validate</a></li>
+<li class=""><a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all font-body-md text-body-md gap-3" href="#"><span class="material-symbols-outlined">lock</span>Submit &amp; Seal</a></li>
+</ul>
+</nav>
+<div class="mt-auto p-4 border-t border-outline-subtle bg-surface-container-low">
+<a class="flex items-center text-on-surface-variant py-2 px-2 hover:text-primary font-body-md text-body-md gap-3" href="#"><span class="material-symbols-outlined">contact_support</span>Support</a>
+<a class="flex items-center text-on-surface-variant py-2 px-2 hover:text-error font-body-md text-body-md gap-3" href="#"><span class="material-symbols-outlined">logout</span>Sign Out</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-sidebar-width mt-0 flex-1 min-h-screen pb-32">
+<!-- Breadcrumb & Header -->
+<div class="px-10 py-6 bg-white border-b border-outline-subtle">
+<nav class="mb-4">
+<ol class="flex items-center gap-2 font-label-md text-label-md text-outline">
+<li class="hover:text-primary cursor-pointer">Workspace</li>
+<li><span class="material-symbols-outlined text-[14px]">chevron_right</span></li>
+<li class="hover:text-primary cursor-pointer">Bid Preparation</li>
+<li><span class="material-symbols-outlined text-[14px]">chevron_right</span></li>
+<li class="hover:text-primary cursor-pointer">Price Schedule</li>
+<li><span class="material-symbols-outlined text-[14px]">chevron_right</span></li>
+<li class="text-primary font-bold">Recurrent Costs</li>
+</ol>
+</nav>
+<div class="flex justify-between items-end">
+<div>
+<div class="flex items-center gap-3 mb-1">
+<h1 class="font-headline-lg text-headline-lg font-bold text-primary">Recurrent Costs</h1>
+<span class="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded font-label-sm text-label-sm uppercase tracking-wide">LOT 1: Server Infrastructure &amp; Licenses</span>
+</div>
+<p class="text-on-surface-variant max-w-2xl">Enter the recurring costs required for the configured contract period. All unit prices must reflect the total cost of ownership including taxes where applicable.</p>
+</div>
+<div class="text-right min-w-[200px]">
+<div class="flex justify-between font-label-md text-label-md mb-1">
+<span class="">Submission Progress</span>
+<span class="font-bold">3 of 6 items priced</span>
+</div>
+<div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
+<div class="bg-brand-deep h-full w-[50%]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bento Content Grid -->
+<div class="p-10 max-w-[1280px]">
+<div class="bento-card overflow-hidden">
+<div class="bg-surface-container-low px-4 py-2 border-b border-outline-subtle flex justify-between items-center">
+<span class="font-label-md text-label-md text-outline uppercase tracking-wider">Financial Data Entry • 3 Year Forecast</span>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-status-approved"></div>
+<span class="font-label-sm text-label-sm">Validated</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-status-error"></div>
+<span class="font-label-sm text-label-sm">Action Required</span>
+</div>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-subtle">
+<th class="px-4 py-3 font-label-md text-label-md uppercase text-outline w-16">Item</th>
+<th class="px-4 py-3 font-label-md text-label-md uppercase text-outline">Description</th>
+<th class="px-4 py-3 font-label-md text-label-md uppercase text-outline w-16 text-center">Qty</th>
+<th class="px-4 py-3 font-label-md text-label-md uppercase text-outline w-16">Unit</th>
+<th class="px-4 py-3 font-label-md text-label-md uppercase text-outline w-24">Currency</th>
+<th class="px-4 py-3 font-label-md text-label-md uppercase text-outline text-right w-32 bg-surface-container-highest">Year 1</th>
+<th class="px-4 py-3 font-label-md text-label-md uppercase text-outline text-right w-32 bg-surface-container-highest">Year 2</th>
+<th class="px-4 py-3 font-label-md text-label-md uppercase text-outline text-right w-32 bg-surface-container-highest">Year 3</th>
+<th class="px-4 py-3 font-label-md text-label-md uppercase text-outline text-right w-40">Total</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-subtle">
+<!-- Row 2.1 -->
+<tr class="hover:bg-surface-container-lowest transition-colors h-10 group">
+<td class="px-4 py-2 font-label-md text-label-md text-outline">2.1</td>
+<td class="px-4 py-2 text-body-md truncate max-w-xs">Annual software licence renewal</td>
+<td class="px-4 py-2 text-body-md text-center">1</td>
+<td class="px-4 py-2 text-body-md">Lot</td>
+<td class="px-4 py-2">
+<select class="bg-transparent border-none text-body-md p-0 focus:ring-0 cursor-pointer hover:font-bold">
+<option selected="">KES</option>
+<option>USD</option>
+<option>EUR</option>
+</select>
+</td>
+<td class="p-0 bg-surface-container-low group-hover:bg-white border-x border-transparent focus-within:border-primary">
+<input class="w-full h-10 px-4 py-2 text-right border-none bg-transparent font-label-md text-label-md table-input" type="text" value="1,200,000.00">
+</td>
+<td class="p-0 bg-surface-container-low group-hover:bg-white border-x border-transparent focus-within:border-primary">
+<input class="w-full h-10 px-4 py-2 text-right border-none bg-transparent font-label-md text-label-md table-input" type="text" value="1,200,000.00">
+</td>
+<td class="p-0 bg-surface-container-low group-hover:bg-white border-x border-transparent focus-within:border-primary">
+<input class="w-full h-10 px-4 py-2 text-right border-none bg-transparent font-label-md text-label-md table-input" type="text" value="1,200,000.00">
+</td>
+<td class="px-4 py-2 text-right font-label-md text-label-md font-bold">3,600,000.00</td>
+</tr>
+<!-- Row 2.2 -->
+<tr class="hover:bg-surface-container-lowest transition-colors h-10 group">
+<td class="px-4 py-2 font-label-md text-label-md text-outline">2.2</td>
+<td class="px-4 py-2 text-body-md truncate max-w-xs">Application support and maintenance</td>
+<td class="px-4 py-2 text-body-md text-center">1</td>
+<td class="px-4 py-2 text-body-md">Year</td>
+<td class="px-4 py-2">
+<select class="bg-transparent border-none text-body-md p-0 focus:ring-0 cursor-pointer">
+<option selected="">KES</option>
+<option>USD</option>
+</select>
+</td>
+<td class="p-0 bg-surface-container-low group-hover:bg-white border-x border-transparent focus-within:border-primary">
+<input class="w-full h-10 px-4 py-2 text-right border-none bg-transparent font-label-md text-label-md table-input" type="text" value="450,000.00">
+</td>
+<td class="p-0 bg-surface-container-low group-hover:bg-white border-x border-transparent focus-within:border-primary">
+<input class="w-full h-10 px-4 py-2 text-right border-none bg-transparent font-label-md text-label-md table-input" type="text" value="472,500.00">
+</td>
+<td class="p-0 bg-surface-container-low group-hover:bg-white border-x border-transparent focus-within:border-primary">
+<input class="w-full h-10 px-4 py-2 text-right border-none bg-transparent font-label-md text-label-md table-input" type="text" value="496,125.00">
+</td>
+<td class="px-4 py-2 text-right font-label-md text-label-md font-bold">1,418,625.00</td>
+</tr>
+<!-- Row 2.3 -->
+<tr class="hover:bg-surface-container-lowest transition-colors h-10 group">
+<td class="px-4 py-2 font-label-md text-label-md text-outline">2.3</td>
+<td class="px-4 py-2 text-body-md truncate max-w-xs">Technical support services</td>
+<td class="px-4 py-2 text-body-md text-center">12</td>
+<td class="px-4 py-2 text-body-md">Month</td>
+<td class="px-4 py-2">
+<select class="bg-transparent border-none text-body-md p-0 focus:ring-0 cursor-pointer">
+<option selected="">KES</option>
+<option>USD</option>
+</select>
+</td>
+<td class="p-0 bg-surface-container-low group-hover:bg-white border-x border-transparent focus-within:border-primary">
+<input class="w-full h-10 px-4 py-2 text-right border-none bg-transparent font-label-md text-label-md table-input" type="text" value="50,000.00">
+</td>
+<td class="p-0 bg-surface-container-low group-hover:bg-white border-x border-transparent focus-within:border-primary">
+<input class="w-full h-10 px-4 py-2 text-right border-none bg-transparent font-label-md text-label-md table-input" type="text" value="50,000.00">
+</td>
+<td class="p-0 bg-surface-container-low group-hover:bg-white border-x border-transparent focus-within:border-primary">
+<input class="w-full h-10 px-4 py-2 text-right border-none bg-transparent font-label-md text-label-md table-input" type="text" value="55,000.00">
+</td>
+<td class="px-4 py-2 text-right font-label-md text-label-md font-bold">1,860,000.00</td>
+</tr>
+<!-- Row 2.4 - Needs Attention -->
+<tr class="bg-status-error-bg hover:bg-status-error-bg transition-colors h-10 group border-l-4 border-status-error">
+<td class="px-4 py-2 font-label-md text-label-md text-status-error">2.4</td>
+<td class="px-4 py-2 text-body-md truncate max-w-xs text-status-error font-medium">Communications services</td>
+<td class="px-4 py-2 text-body-md text-center">1</td>
+<td class="px-4 py-2 text-body-md">Lump</td>
+<td class="px-4 py-2">
+<select class="bg-transparent border-none text-body-md p-0 focus:ring-0 cursor-pointer">
+<option selected="">KES</option>
+<option>USD</option>
+</select>
+</td>
+<td class="p-0 bg-white border-x border-status-error focus-within:ring-1 focus-within:ring-status-error">
+<input class="w-full h-10 px-4 py-2 text-right border-none bg-transparent font-label-md text-label-md table-input placeholder:text-status-error/40" placeholder="0.00" type="text">
+</td>
+<td class="p-0 bg-white border-x border-status-error focus-within:ring-1 focus-within:ring-status-error">
+<input class="w-full h-10 px-4 py-2 text-right border-none bg-transparent font-label-md text-label-md table-input placeholder:text-status-error/40" placeholder="0.00" type="text">
+</td>
+<td class="p-0 bg-white border-x border-status-error focus-within:ring-1 focus-within:ring-status-error">
+<input class="w-full h-10 px-4 py-2 text-right border-none bg-transparent font-label-md text-label-md table-input placeholder:text-status-error/40" placeholder="0.00" type="text">
+</td>
+<td class="px-4 py-2 text-right font-label-md text-label-md text-status-error font-bold italic">INCOMPLETE</td>
+</tr>
+</tbody>
+<tfoot>
+<tr class="bg-surface-container-lowest">
+<td class="px-4 py-6 text-right" colspan="5">
+<span class="font-label-md text-label-md text-outline uppercase">Schedule Subtotal (KES Equivalent)</span>
+</td>
+<td class="px-4 py-6 text-right" colspan="4">
+<div class="flex flex-col">
+<span class="font-display text-[28px] font-bold text-brand-deep font-label-md leading-none">6,878,625.00</span>
+<span class="text-label-sm font-label-sm text-outline mt-1 uppercase tracking-widest">Calculated automatically</span>
+</div>
+</td>
+</tr>
+</tfoot>
+</table>
+</div>
+</div>
+<!-- Guidance Info Box -->
+
+<!-- Page Actions Toolbar -->
+
+</div>
+<!-- Contextual Footer -->
+
+</main><footer class="fixed bottom-0 right-0 left-sidebar-width flex justify-between items-center px-container-padding h-16 bg-surface-container-lowest border-t border-outline-subtle z-50 shadow-sm"><button class="flex items-center gap-2 px-4 h-10 font-label-md text-label-md font-bold text-on-surface-variant hover:text-primary transition-colors border border-outline-subtle rounded bg-surface-bright"><span class="material-symbols-outlined text-[18px]">arrow_back</span>Back to Price Schedule</button><div class="flex gap-4"><button class="flex items-center gap-2 px-6 h-10 font-label-md text-label-md font-bold text-on-surface-variant hover:text-primary transition-colors border border-outline-subtle rounded bg-surface-bright"><span class="material-symbols-outlined text-[18px]">save</span>Save draft</button><button class="flex items-center justify-center px-8 h-10 font-label-md text-label-md font-bold text-on-primary bg-primary hover:opacity-90 transition-colors rounded shadow-sm">Continue<span class="material-symbols-outlined text-[18px] ml-2">chevron_right</span></button></div></footer>
+</div>
+<!-- Floating Helper Micro-Interaction -->
+
+<script>
+        // Micro-interaction for input formatting
+        const inputs = document.querySelectorAll('.table-input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('bg-white');
+            });
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('bg-white');
+                if(this.value && !isNaN(this.value.replace(/,/g, ''))) {
+                    const num = parseFloat(this.value.replace(/,/g, ''));
+                    this.value = num.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                }
+            });
+        });
+
+        // Simple validation feedback logic
+        setTimeout(() => {
+            const btn = document.getElementById('validation-check');
+            btn.innerHTML = `
+                <span class="material-symbols-outlined text-status-error">warning</span>
+                <span class="font-label-md text-label-md">1 item requires attention</span>
+            `;
+            btn.classList.add('bg-status-error-bg', 'border-status-error');
+        }, 3000);
+    </script>
+
+
+</body></html>

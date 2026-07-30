@@ -23,6 +23,10 @@ from kentender_procurement.tender_configurations.constants import (
 from kentender_procurement.tender_configurations.seed.lean_preliminary_criteria import (
 	lean_preliminary_criteria_rows,
 )
+from kentender_procurement.tender_configurations.seed.lean_technical_proposal import (
+	FIXTURE_FULL as TP_FIXTURE_FULL,
+	merge_technical_proposal_into_evaluation,
+)
 from kentender_procurement.tender_configurations.seed.lean_qualification_criteria import (
 	FIXTURE_FULL,
 	merge_qualification_into_evaluation,
@@ -275,22 +279,25 @@ def _apply_bidder_facing_preview_blobs(configuration_id: str) -> None:
 				]
 			),
 			"evaluation_setup": json.dumps(
-				merge_qualification_into_evaluation(
-					{
-						"criteria": lean_preliminary_criteria_rows()
-						+ [
-							{
-								"criterion_name": "Technical compliance for: REQ-002",
-								"stage": "Technical",
-								"evaluation_basis": "Scored",
-								"marks": "50",
-								"related_requirement_id": "REQ-002",
-								"bidder_evidence": "Required",
-								"evidence_instruction": "Provide datasheets demonstrating compliance.",
-							},
-						]
-					},
-					fixture=FIXTURE_FULL,
+				merge_technical_proposal_into_evaluation(
+					merge_qualification_into_evaluation(
+						{
+							"criteria": lean_preliminary_criteria_rows()
+							+ [
+								{
+									"criterion_name": "Technical compliance for: REQ-002",
+									"stage": "Technical",
+									"evaluation_basis": "Scored",
+									"marks": "50",
+									"related_requirement_id": "REQ-002",
+									"bidder_evidence": "Required",
+									"evidence_instruction": "Provide datasheets demonstrating compliance.",
+								},
+							]
+						},
+						fixture=FIXTURE_FULL,
+					),
+					fixture=TP_FIXTURE_FULL,
 				)
 			),
 			"price_schedule": json.dumps(

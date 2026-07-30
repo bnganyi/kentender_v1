@@ -1,0 +1,136 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }} | KenTender{% endblock %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/kentender_procurement/css/available_tenders.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/submission_checklist_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/bidder_portal_forms.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/form_of_tender_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/qualification_and_capability_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/technical_proposal_web.css?v=tp-handover-check-1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+{# Website script URL — ?v= is valid here (browser URL), not for page_js file hooks. #}
+<script defer src="/assets/kentender_procurement/js/technical_proposal_web.js?v=tp-confirm-nav-1"></script>
+{% endblock %}
+
+{% block page_content %}
+{% set sub = sub %}
+{% set cfg = sub.config or {} %}
+{% set bucket = sub.bucket or {} %}
+{% set active_nav = "my_bids" %}
+{% set active_ws = "checklist" %}
+{# Renderers whose in-body progress card already conveys completion — header KPI would be a duplicate. #}
+{% set hide_header_kpi = sub.renderer in ("implementation_work_plan", "technical_approach") %}
+<div class="kt-a0-root kt-a2-root kt-fot-root kt-s600-root kt-tp-root" data-testid="kt-tp-subsection-root"
+	data-publication-ref="{{ sub.published_tender_ref }}"
+	data-subsection-key="{{ sub.subsection_key }}"
+	data-renderer="{{ sub.renderer }}"
+	data-bid-id="{{ sub.bid_id or '' }}"
+	data-bid-modified="{{ sub.bid_modified or '' }}"
+	data-read-only="{{ sub.read_only or 0 }}"
+	data-section-url="{{ sub.section_url }}"
+	data-workspace-url="{{ sub.workspace_url }}">
+	{% include "templates/includes/kt_bidder_portal_nav.html" %}
+
+	<div class="kt-a2-shell">
+		{% include "templates/includes/kt_bidder_workspace_sidebar.html" %}
+
+		<main class="kt-a2-main kt-fot-main">
+			<div class="kt-fot-main-inner kt-s600-canvas">
+				<nav class="kt-fot-crumbs" aria-label="Breadcrumb" data-testid="kt-tp-sub-crumbs">
+					<a href="{{ sub.workspace_url }}">{{ _("Checklist") }}</a>
+					<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+					<a href="{{ sub.section_url }}">{{ _("Technical Proposal and Implementation Plan") }}</a>
+					<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+					<span class="is-current">{{ sub.title }}</span>
+				</nav>
+
+				<header class="kt-fot-page-head kt-s600-head">
+					<div>
+						<h1 data-testid="kt-tp-sub-title">{{ sub.title }}</h1>
+						<p data-testid="kt-tp-sub-description">{{ sub.description }}</p>
+					</div>
+					{% if hide_header_kpi %}
+					<div hidden>
+						<span data-testid="kt-tp-sub-status" data-status="{{ sub.status }}">{{ sub.status }}</span>
+						<span data-testid="kt-tp-sub-progress">{{ sub.progress_text }}</span>
+						<span data-testid="kt-tp-sub-issue" {% if not sub.issue %}hidden{% endif %}>{{ sub.issue or "" }}</span>
+					</div>
+					{% else %}
+					<div class="kt-s600-kpi kt-tp-kpi" data-testid="kt-tp-sub-kpi">
+						<span class="kt-s600-kpi__label">{{ _("Completion status") }}</span>
+						<strong data-testid="kt-tp-sub-progress">{{ sub.progress_text }}</strong>
+						<span class="kt-s600-status" data-testid="kt-tp-sub-status" data-status="{{ sub.status }}">{{ sub.status }}</span>
+						{% if sub.issue %}
+						<p class="kt-s600-issue" data-testid="kt-tp-sub-issue">{{ sub.issue }}</p>
+						{% endif %}
+					</div>
+					{% endif %}
+				</header>
+
+				{% set auth = sub.authoritative or {} %}
+				<section class="kt-s600-auth" data-testid="kt-tp-authoritative">
+					<div><span>{{ _("Bidder") }}</span><strong>{{ auth.bidder_legal_name or "—" }}</strong></div>
+					<div><span>{{ _("Tender reference") }}</span><strong>{{ auth.tender_reference or "—" }}</strong></div>
+					<div><span>{{ _("Procuring entity") }}</span><strong>{{ auth.procuring_entity or "—" }}</strong></div>
+				</section>
+
+				{% if sub.renderer == "project_organization_and_coordination" %}
+				{% include "templates/includes/technical_proposal/kt_tp_org.html" %}
+				{% elif sub.renderer == "technical_approach" %}
+				{% include "templates/includes/technical_proposal/kt_tp_approach.html" %}
+				{% elif sub.renderer == "implementation_work_plan" %}
+				{% include "templates/includes/technical_proposal/kt_tp_work_plan.html" %}
+				{% elif sub.renderer == "training_and_knowledge_transfer" %}
+				{% include "templates/includes/technical_proposal/kt_tp_training.html" %}
+				{% elif sub.renderer == "testing_and_quality_assurance" %}
+				{% include "templates/includes/technical_proposal/kt_tp_testing.html" %}
+				{% elif sub.renderer == "warranty_defect_repair_and_support" %}
+				{% include "templates/includes/technical_proposal/kt_tp_warranty.html" %}
+				{% elif sub.renderer == "transition_and_handover" %}
+				{% include "templates/includes/technical_proposal/kt_tp_transition.html" %}
+				{% elif sub.renderer == "risks_assumptions_and_dependencies" %}
+				{% include "templates/includes/technical_proposal/kt_tp_risks.html" %}
+				{% elif sub.renderer == "technical_alternatives" %}
+				{% include "templates/includes/technical_proposal/kt_tp_alternatives.html" %}
+				{% else %}
+				<section class="kt-s600-card" data-testid="kt-tp-unsupported">
+					<p class="kt-s600-help">{{ _("This subsection does not have a configured response form yet.") }}</p>
+				</section>
+				{% endif %}
+
+			</div>
+		</main>
+	</div>
+
+	<footer class="kt-s600-footer">
+		<a class="kt-s600-btn kt-s600-btn--secondary" href="{{ sub.section_url }}" data-testid="kt-tp-sub-back">{{ _("Back to overview") }}</a>
+		{% if not sub.read_only %}
+		<button type="button" class="kt-s600-btn" data-tp-save="draft" data-testid="kt-tp-save">{{ _("Save draft") }}</button>
+		<button type="button" class="kt-s600-btn kt-s600-btn--primary" data-tp-save="continue" data-testid="kt-tp-save-continue">{{ _("Save & Continue") }}</button>
+		{% endif %}
+	</footer>
+
+	{# Shared right drawer — activity / test stage / alternative editors #}
+	<div class="kt-s600-drawer-backdrop" data-testid="kt-tp-drawer-backdrop" hidden></div>
+	<aside class="kt-s600-drawer" data-testid="kt-tp-drawer" hidden aria-hidden="true">
+		<header class="kt-s600-drawer__head">
+			<div class="kt-s600-drawer__titles">
+				<p class="kt-s600-drawer__eyebrow" data-testid="kt-tp-drawer-subtitle"></p>
+				<h2 data-testid="kt-tp-drawer-title">{{ _("Record") }}</h2>
+			</div>
+			<button type="button" class="kt-s600-icon-btn" data-tp-drawer-close aria-label="{{ _('Close') }}">
+				<span class="material-symbols-outlined">close</span>
+			</button>
+		</header>
+		<div class="kt-s600-drawer__body" data-testid="kt-tp-drawer-body"></div>
+		<footer class="kt-s600-drawer__foot">
+			<button type="button" class="kt-s600-btn kt-s600-btn--secondary" data-tp-drawer-cancel>{{ _("Cancel") }}</button>
+			<button type="button" class="kt-s600-btn kt-s600-btn--primary" data-tp-drawer-confirm data-testid="kt-tp-drawer-confirm">{{ _("Save") }}</button>
+		</footer>
+	</aside>
+
+	<div class="kt-s600-toast" data-testid="kt-tp-toast" role="status"></div>
+</div>
+{% endblock %}

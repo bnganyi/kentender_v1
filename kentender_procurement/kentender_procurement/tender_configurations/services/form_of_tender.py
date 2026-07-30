@@ -292,33 +292,60 @@ def _signatory_from_cbq(entity: dict[str, Any]) -> dict[str, Any]:
 
 
 def is_price_schedule_complete(resp: Any) -> bool:
+	"""True when bidder completed Price Schedule (pack 11).
+
+	Discounts remain a Form of Tender concern — they are not required on the
+	Price Schedule payload.
+	"""
 	if not isinstance(resp, dict):
 		return False
-	if cstr(resp.get("section_status") or "") == STATUS_COMPLETE or resp.get("complete"):
+	if resp.get("complete_confirmed") in (1, "1", True, "true"):
 		return True
+	if cstr(resp.get("section_status") or "") == STATUS_COMPLETE or resp.get("complete") in (
+		1,
+		"1",
+		True,
+		"true",
+	):
+		return True
+	# Legacy FoT seed payloads that stored discounts on PS
 	totals = resp.get("totals") if isinstance(resp.get("totals"), dict) else {}
-	discounts = _normalize_commissions_choice(resp.get("discounts_offered"))  # reuse yes/no
-	# discounts_offered uses yes/no separately
 	dchoice = cstr(resp.get("discounts_offered") or "").strip().lower()
-	if dchoice not in ("yes", "no"):
-		return False
-	if totals.get("grand_total") is None and totals.get("total_excluding_vat") is None:
-		# Allow explicit complete flag via line items presence
-		if not (resp.get("line_items") or resp.get("items")):
-			return False
-	if dchoice == "yes":
-		if not _filled(resp.get("discount_description")) and not _filled(resp.get("discount_amount_or_percent")):
-			return False
-	return True
+	if dchoice in ("yes", "no") and (
+		totals.get("grand_total") is not None or totals.get("total_excluding_vat") is not None
+	):
+		if dchoice == "yes":
+			if not _filled(resp.get("discount_description")) and not _filled(
+				resp.get("discount_amount_or_percent")
+			):
+				return False
+		return True
+	return False
 
 
 def price_schedule_projection(resp: Any) -> dict[str, Any]:
 	resp = resp if isinstance(resp, dict) else {}
+	try:
+		from kentender_procurement.tender_configurations.services.price_schedule_bidder import (
+			price_schedule_fot_projection,
+		)
+
+		base = price_schedule_fot_projection(resp)
+	except Exception:
+		base = {}
 	totals = resp.get("totals") if isinstance(resp.get("totals"), dict) else {}
+	computed = resp.get("computed") if isinstance(resp.get("computed"), dict) else {}
+	ct = computed.get("totals") if isinstance(computed.get("totals"), dict) else {}
 	dchoice = cstr(resp.get("discounts_offered") or "").strip().lower()
 	complete = is_price_schedule_complete(resp)
-	currency = cstr(totals.get("currency") or resp.get("currency") or "").strip()
-	grand = totals.get("grand_total")
+	currency = cstr(
+		base.get("currency") or totals.get("currency") or ct.get("currency") or resp.get("currency") or ""
+	).strip()
+	grand = base.get("grand_total")
+	if grand is None:
+		grand = totals.get("grand_total")
+	if grand is None:
+		grand = ct.get("grand_total")
 	if grand is None:
 		grand = totals.get("total_excluding_vat")
 	discount_label = "None"
@@ -332,14 +359,25 @@ def price_schedule_projection(resp: Any) -> dict[str, Any]:
 	elif dchoice == "no":
 		discount_label = "None"
 	else:
-		discount_label = "Not completed" if not complete else "None"
+		discount_label = "Declared on Form of Tender" if complete else "Not completed"
+	grand_display = cstr(base.get("grand_total_display") or "").strip()
+	if not grand_display and grand not in (None, ""):
+		try:
+			from kentender_procurement.tender_configurations.services.price_schedule_bidder import (
+				format_money_display,
+			)
+
+			grand_display = format_money_display(grand)
+		except Exception:
+			grand_display = cstr(grand)
 	return {
 		"complete": 1 if complete else 0,
 		"grand_total": grand,
+		"grand_total_display": grand_display,
 		"currency": currency,
 		"total_display": (
-			f"{currency} {grand}".strip()
-			if grand is not None and complete
+			f"{currency} {grand_display}".strip()
+			if grand not in (None, "") and complete
 			else ("Not completed" if not complete else "—")
 		),
 		"discounts_offered": dchoice,
@@ -349,6 +387,7 @@ def price_schedule_projection(resp: Any) -> dict[str, Any]:
 		"discount_amount_or_percent": cstr(resp.get("discount_amount_or_percent") or ""),
 		"discount_currency": cstr(resp.get("discount_currency") or ""),
 		"discount_calculation_method": cstr(resp.get("discount_calculation_method") or ""),
+		"by_currency": base.get("by_currency") or computed.get("by_currency") or {},
 	}
 
 
@@ -1075,6 +1114,7 @@ def seed_price_schedule_for_tests(
 	_assert_bid_owner(doc)
 	price_payload = {
 		"complete": True,
+		"complete_confirmed": 1,
 		"section_status": STATUS_COMPLETE,
 		"discounts_offered": discounts_offered,
 		"discount_description": "" if discounts_offered == "no" else "Early payment",
@@ -1083,7 +1123,18 @@ def seed_price_schedule_for_tests(
 		"discount_currency": currency,
 		"discount_calculation_method": "" if discounts_offered == "no" else "Percent of grand total",
 		"totals": {"grand_total": grand_total, "currency": currency},
+		"computed": {
+			"by_currency": {
+				currency: {
+					"supply_subtotal": str(grand_total),
+					"recurrent_subtotal": "0.00",
+					"grand_total": str(grand_total),
+				}
+			},
+			"totals": {"grand_total": grand_total, "currency": currency},
+		},
 		"currency": currency,
+		"lines": {},
 	}
 	responses = _parse_json(doc.responses, {})
 	responses[PRICE_KEY] = price_payload

@@ -205,13 +205,20 @@ def _apply_cfg_blobs(
 	artifact = schema.setdefault("_kentender_artifact", {})
 	if isinstance(artifact, dict):
 		artifact["poc_audit_notes"] = mapped.get("poc_audit_notes") or {}
+	from kentender_procurement.tender_configurations.seed.lean_technical_proposal import (
+		FIXTURE_FULL as TP_FIXTURE_FULL,
+		merge_technical_proposal_into_evaluation,
+	)
+
+	ev_setup = mapped.get("evaluation_setup") if isinstance(mapped.get("evaluation_setup"), dict) else {}
+	ev_setup = merge_technical_proposal_into_evaluation(ev_setup, fixture=TP_FIXTURE_FULL)
 	values: dict[str, Any] = {
 		"tds_values": json.dumps(mapped["tds_values"]),
 		"it_requirements": json.dumps(mapped["it_requirements"]),
 		"implementation_schedule": json.dumps(mapped["implementation_schedule"]),
 		"system_inventory": json.dumps(mapped["system_inventory"]),
 		"price_schedule": json.dumps(mapped["price_schedule"]),
-		"evaluation_setup": json.dumps(mapped["evaluation_setup"]),
+		"evaluation_setup": json.dumps(ev_setup),
 		"forms_and_evidence": json.dumps(mapped["forms_and_evidence"]),
 		"contract_values": json.dumps(mapped["contract_values"]),
 		"bidder_submission_schema": json.dumps(schema),

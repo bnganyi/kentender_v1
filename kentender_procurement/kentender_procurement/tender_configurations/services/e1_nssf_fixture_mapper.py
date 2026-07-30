@@ -41,13 +41,56 @@ SCHEMA_10_NAME = "10_NSSF_Electronic_Bidder_Submission_Schema.json"
 
 EXPECTED_REQUIREMENT_COUNT = 190
 EXPECTED_PRICE_LINE_COUNT = 22
-EXPECTED_PRELIM_COUNT = 10
+# Nine Section III prelim rows (PRELIM-01…09). Digitised FoT / CITD / SD / security
+# are linked_section — do not append a tenth duplicate indemnity upload.
+EXPECTED_PRELIM_COUNT = 9
 EXPECTED_TECH_QUAL_COUNT = 9
 EXPECTED_TECH_SCORE_COUNT = 7
 EXPECTED_FORMS_COUNT = 4
 EXPECTED_SCC_COUNT = 9
 EXPECTED_TECH_TOTAL = 100
 EXPECTED_TECH_PASS = 75
+
+# Golden crosswalk (§10): electronic owners — never mandatory uploads.
+_NSSF_PRELIM_ELECTRONIC_OWNERS: dict[str, dict[str, str]] = {
+	"PRELIM-05": {
+		"response_method": "linked_section",
+		"linked_section_key": "tender_security",
+		"fulfilment_method": "electronic_section",
+		"owner": "tender_security",
+		"evidence_instruction": (
+			"Complete the Tender Security section in the bidder workspace "
+			"(bank guarantee or insurance bond as published)."
+		),
+	},
+	"PRELIM-06": {
+		"response_method": "linked_section",
+		"linked_section_key": "form_of_tender",
+		"fulfilment_method": "electronic_section",
+		"owner": "form_of_tender",
+		"evidence_instruction": (
+			"Complete and certify the Form of Tender in the bidder workspace."
+		),
+	},
+	"PRELIM-07": {
+		"response_method": "linked_section",
+		"linked_section_key": "statutory_declarations",
+		"fulfilment_method": "electronic_section",
+		"owner": "statutory_declarations",
+		"evidence_instruction": (
+			"Complete the Certificate of Independent Tender Determination in Statutory Declarations."
+		),
+	},
+	"PRELIM-08": {
+		"response_method": "linked_section",
+		"linked_section_key": "statutory_declarations",
+		"fulfilment_method": "electronic_section",
+		"owner": "statutory_declarations",
+		"evidence_instruction": (
+			"Complete the Fraud and Corruption Self-Declaration in Statutory Declarations."
+		),
+	},
+}
 
 # requirement_family keyword → CFG-03 category_label
 _FAMILY_CATEGORY_RULES: tuple[tuple[tuple[str, ...], str], ...] = (
@@ -668,6 +711,28 @@ def map_price_schedule(fixture: dict[str, Any]) -> dict[str, Any]:
 	return {"items": items}
 
 
+def _nssf_prelim_fulfilment(cid: str, docs: str) -> dict[str, Any]:
+	"""Map NSSF prelim ids to one fulfilment method (golden crosswalk PRELIM-05…08)."""
+	owner = _NSSF_PRELIM_ELECTRONIC_OWNERS.get(cid)
+	if owner:
+		return {
+			"response_method": owner["response_method"],
+			"linked_section_key": owner["linked_section_key"],
+			"fulfilment_method": owner["fulfilment_method"],
+			"owner": owner["owner"],
+			"evidence_instruction": owner["evidence_instruction"],
+			"criterion_group": "linked",
+		}
+	return {
+		"response_method": "upload",
+		"linked_section_key": "",
+		"fulfilment_method": "tender_evidence",
+		"owner": "preliminary_requirements",
+		"evidence_instruction": docs or "Provide supporting documentation.",
+		"criterion_group": "eligibility",
+	}
+
+
 def map_evaluation_setup(fixture: dict[str, Any]) -> dict[str, Any]:
 	"""Map Section III lists only (~9+9+7) — not 190 scored requirement rows."""
 	block = _cfg(fixture, "CFG-07")
@@ -682,6 +747,7 @@ def map_evaluation_setup(fixture: dict[str, Any]) -> dict[str, Any]:
 		name = cstr(row.get("criterion") or "").strip()
 		req = cstr(row.get("requirement") or "Mandatory").strip()
 		docs = cstr(row.get("supporting_documentation") or "").strip()
+		fulfilment = _nssf_prelim_fulfilment(cid, docs)
 		criteria.append(
 			{
 				"criterion_id": cid,
@@ -692,27 +758,17 @@ def map_evaluation_setup(fixture: dict[str, Any]) -> dict[str, Any]:
 				"bidder_facing_wording": name,
 				"pass_fail_rule": req or "Must be satisfied",
 				"bidder_evidence": "Required",
-				"evidence_instruction": docs or "Provide supporting documentation.",
+				"evidence_instruction": fulfilment["evidence_instruction"],
+				"response_method": fulfilment["response_method"],
+				"linked_section_key": fulfilment["linked_section_key"],
+				"fulfilment_method": fulfilment["fulfilment_method"],
+				"owner": fulfilment["owner"],
+				"criterion_group": fulfilment["criterion_group"],
 			}
 		)
 
-	profile = map_profile(fixture)
-	if profile.get("professional_indemnity_required"):
-		amt = profile.get("professional_indemnity_amount") or 500000
-		amt_label = f"KES {int(amt):,}" if isinstance(amt, (int, float)) else cstr(amt)
-		criteria.append(
-			{
-				"criterion_id": "PRELIM-INDEMNITY-01",
-				"criterion_name": "Professional indemnity cover",
-				"stage": "Preliminary",
-				"evaluation_basis": "Pass/Fail",
-				"source_type": "TDS",
-				"bidder_facing_wording": "Professional indemnity cover",
-				"pass_fail_rule": f"Required — {amt_label}",
-				"bidder_evidence": "Required",
-				"evidence_instruction": "Upload valid professional indemnity cover",
-			}
-		)
+	# Do not append PRELIM-INDEMNITY-01: PRELIM-05 already owns the bank-guarantee /
+	# insurance-bond instrument via Tender Security; CFG-08 retains PI cover evidence.
 
 	for row in block.get("technical_qualification") or []:
 		if not isinstance(row, dict):

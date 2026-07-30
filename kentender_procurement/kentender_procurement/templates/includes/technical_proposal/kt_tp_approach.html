@@ -1,0 +1,83 @@
+{# Stitch 02 — Technical Approach: narrative topic cards with guidance + status + evidence #}
+{% set questions = cfg.questions or [] %}
+{% set narratives = bucket.narratives or {} %}
+{% set done_n = sub.completed_items or 0 %}
+{% set done_topics = sub.required_items or (questions|length) %}
+{% set pct = ((done_n * 100) / done_topics)|int if done_topics else 0 %}
+
+<section class="kt-tp-block-section" data-testid="kt-tp-approach">
+	<div class="kt-s600-section-head">
+		<div>
+			<h2>{{ _("Response topics") }}</h2>
+			<p class="kt-s600-help">{{ _("Describe your proposed solution and the approach you will use to deliver it.") }}</p>
+		</div>
+		<div class="kt-tp-inline-progress" data-testid="kt-tp-approach-progress">
+			<span class="kt-s600-eyebrow" data-testid="kt-tp-approach-progress-text">{{ done_n }} {{ _("of") }} {{ done_topics }} {{ _("topics complete") }}</span>
+			<div class="kt-tp-progress-card__bar kt-tp-progress-card__bar--inline" role="progressbar"
+				aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100">
+				<span class="kt-tp-progress-card__fill" style="width: {{ pct }}%;"></span>
+			</div>
+		</div>
+	</div>
+
+	<div class="kt-tp-card-stack" data-testid="kt-tp-question-cards">
+		{% for q in questions %}
+		{% set answer = (narratives.get(q.question_id) or "")|trim %}
+		{% set topic_status = "Complete" if answer else "Not Started" %}
+		<section class="kt-tp-card" data-testid="kt-tp-question-card" data-question-row data-question-id="{{ q.question_id }}">
+			<div class="kt-tp-card__head">
+				<div>
+					<span class="kt-tp-badge" data-required="{{ 1 if q.required else 0 }}">
+						{{ _("Required") if q.required else _("Optional") }}
+					</span>
+					<h3>{{ q.title }}</h3>
+				</div>
+				<span class="kt-s600-status kt-tp-topic-status" data-status="{{ topic_status }}" data-testid="kt-tp-topic-status">{{ topic_status }}</span>
+			</div>
+			{% if q.guidance %}
+			<p class="kt-tp-card__guidance" data-testid="kt-tp-topic-guidance">{{ q.guidance }}</p>
+			{% endif %}
+			<textarea class="kt-tp-textarea" data-question="{{ q.question_id }}" rows="6"
+				placeholder="{{ _('Type your response here…') }}"
+				{% if sub.read_only %}disabled{% endif %}>{{ narratives.get(q.question_id) or "" }}</textarea>
+			{% if sub.evidence_url and not sub.read_only %}
+			<a class="kt-tp-support-link" href="{{ sub.evidence_url }}" data-testid="kt-tp-topic-evidence-link">
+				<span class="material-symbols-outlined">add_circle</span>
+				{{ _("Add supporting material") }}
+			</a>
+			{% endif %}
+		</section>
+		{% endfor %}
+	</div>
+
+	<section class="kt-tp-evidence" data-testid="kt-tp-evidence">
+		<div class="kt-s600-section-head">
+			<div>
+				<h2>{{ _("Supporting evidence") }}</h2>
+				<p class="kt-s600-help">{{ _("Optionally link documents from your evidence register. File hashes and storage paths are never shown.") }}</p>
+			</div>
+			{% if sub.evidence_url %}
+			<a class="kt-s600-link" href="{{ sub.evidence_url }}" data-testid="kt-tp-evidence-manage">{{ _("Open evidence register") }}</a>
+			{% endif %}
+		</div>
+		{% set linked_ids = bucket.evidence_ids or [] %}
+		{% if sub.saved_evidence %}
+		<ul class="kt-tp-evidence-list" data-testid="kt-tp-evidence-list">
+			{% for item in sub.saved_evidence %}
+			<li class="kt-tp-evidence-item">
+				<label>
+					<input type="checkbox" data-tp-evidence-id="{{ item.evidence_id }}"
+						{% if item.evidence_id in linked_ids %}checked{% endif %}
+						{% if sub.read_only %}disabled{% endif %}
+						data-testid="kt-tp-evidence-option" />
+					<span class="kt-tp-evidence-title">{{ item.title or item.file_name or _("Untitled") }}</span>
+					{# Never show evidence_type slugs (tax_clearance, supporting_document) in bidder UI #}
+				</label>
+			</li>
+			{% endfor %}
+		</ul>
+		{% else %}
+		<p class="kt-s600-help" data-testid="kt-tp-evidence-empty">{{ _("No saved evidence on this bid yet. Upload files in the evidence register, then return here to link them.") }}</p>
+		{% endif %}
+	</section>
+</section>

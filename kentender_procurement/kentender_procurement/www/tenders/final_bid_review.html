@@ -1,0 +1,159 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }} | KenTender{% endblock %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/kentender_procurement/css/available_tenders.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/submission_checklist_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/final_submission_web.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+<script defer src="/assets/kentender_procurement/js/final_submission_web.js"></script>
+{% endblock %}
+
+{% block page_content %}
+{% set r = review %}
+{% set active_nav = "my_bids" %}
+{% set active_ws = "review" %}
+<div class="kt-a0-root kt-a2-root kt-fs-root" data-testid="kt-fs-fbr-root"
+	data-publication-ref="{{ r.published_tender_ref }}"
+	data-read-only="1">
+	{% include "templates/includes/kt_bidder_portal_nav.html" %}
+	<div class="kt-a2-shell">
+		{% include "templates/includes/kt_bidder_workspace_sidebar.html" %}
+		<main class="kt-a2-main kt-fs-main">
+			<div class="kt-fs-canvas">
+				<nav class="kt-fs-crumbs" aria-label="Breadcrumb">
+					<a href="{{ r.workspace_url }}">{{ _("Checklist") }}</a>
+					<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+					<a href="{{ r.review_and_validate_url }}">{{ _("Review & Validate") }}</a>
+					<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+					<span class="is-current">{{ _("Final Bid Review") }}</span>
+				</nav>
+				<header class="kt-fs-head">
+					<div>
+						<h1 data-testid="kt-fs-fbr-title">{{ _("Final Bid Review") }}</h1>
+						<p data-testid="kt-fs-fbr-lede">{{ _("Review the information that will form your electronic bid.") }}</p>
+					</div>
+					<span class="kt-fs-chip kt-fs-chip--ok kt-fs-chip--ready" data-testid="kt-fs-fbr-status">
+						<span class="kt-fs-status-dot" data-status="Complete" aria-hidden="true"></span>
+						{{ r.status_chip }}
+					</span>
+				</header>
+
+				{# Stitch 02 — tender context summary grid (not a flat meta strip) #}
+				<section class="kt-fs-context-grid" data-testid="kt-fs-fbr-meta">
+					<div class="kt-fs-bento kt-fs-context-card kt-fs-context-card--accent">
+						<span>{{ _("Tender Reference") }}</span>
+						<strong class="kt-fs-money">{{ r.tender_reference }}</strong>
+					</div>
+					<div class="kt-fs-bento kt-fs-context-card">
+						<span>{{ _("Procuring Entity") }}</span>
+						<strong>{{ r.procuring_entity or "—" }}</strong>
+					</div>
+					<div class="kt-fs-bento kt-fs-context-card">
+						<span>{{ _("Submission Deadline") }}</span>
+						<strong class="kt-fs-money">{{ r.submission_deadline_display or "—" }}</strong>
+					</div>
+					<div class="kt-fs-bento kt-fs-context-card kt-fs-context-card--wide">
+						<span>{{ _("Bidder Legal Name") }}</span>
+						<strong>{{ r.bidder_label or "—" }}</strong>
+					</div>
+					<div class="kt-fs-bento kt-fs-context-card">
+						<span>{{ _("Applicable Lots") }}</span>
+						<strong>{{ (r.applicable_lots or [])|join(", ") or "—" }}</strong>
+					</div>
+					<div class="kt-fs-bento kt-fs-context-card kt-fs-context-card--narrow">
+						<span>{{ _("Offer Type") }}</span>
+						<strong>{{ r.offer_type or _("Main offer") }}</strong>
+					</div>
+				</section>
+
+				<section class="kt-fs-section-cards" data-testid="kt-fs-fbr-sections">
+					<h2 class="kt-fs-section-list-title">{{ _("Bid Section Summaries") }}</h2>
+					{% for s in r.sections %}
+					{% set variant = s.card_variant or "default" %}
+					<article class="kt-fs-section-card {% if variant == 'price' %}kt-fs-section-card--price{% elif variant == 'fot' %}kt-fs-section-card--fot{% endif %}"
+						data-testid="kt-fs-fbr-card"
+						data-section-key="{{ s.section_key }}">
+						<div class="kt-fs-section-card-bar">
+							<div class="kt-fs-section-card-bar-left">
+								<span class="kt-fs-section-card-title">{{ loop.index }}. {{ s.title }}</span>
+								<span class="kt-fs-complete-badge" data-status="{{ s.status }}">
+									<span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+									{{ _("COMPLETE") if s.status == "Complete" else s.status }}
+								</span>
+							</div>
+							<a class="kt-fs-btn kt-fs-btn--ghost {% if variant == 'price' %}kt-fs-btn--on-dark{% endif %}"
+								href="{{ s.review_url }}" data-testid="kt-fs-fbr-review">{{ _("Review") }}</a>
+						</div>
+						<div class="kt-fs-section-card-body {% if variant == 'fot' %}kt-fs-section-card-body--fot{% endif %}">
+							{% if variant == "fot" and s.totals_rows %}
+							<div class="kt-fs-fot-price">
+								<span class="kt-fs-field-label">{{ s.summary_label or _("Derived tender price") }}</span>
+								{% for row in s.totals_rows %}
+								<p class="kt-fs-money kt-fs-section-total-value">
+									{% if not loop.first %}+ {% endif %}{{ row.value }}
+								</p>
+								{% endfor %}
+							</div>
+							{% elif s.totals_rows %}
+							<div class="kt-fs-section-totals">
+								{% for row in s.totals_rows %}
+								<div>
+									<span class="kt-fs-field-label">
+										{% if variant == "price" %}
+											{{ _("Itemized total") }} ({{ row.label }})
+										{% else %}
+											{{ row.label }}
+										{% endif %}
+									</span>
+									<p class="kt-fs-money kt-fs-section-total-value">{{ row.value }}</p>
+								</div>
+								{% endfor %}
+							</div>
+							{% endif %}
+							{% if s.detail_rows %}
+							<div class="kt-fs-section-details {% if variant == 'fot' %}kt-fs-section-details--end{% endif %}">
+								{% for row in s.detail_rows %}
+								<div>
+									<span class="kt-fs-field-label">{{ row.label }}</span>
+									<p>
+										{% if "certifier" in (row.label or "")|lower %}
+										<span class="material-symbols-outlined kt-fs-verified" aria-hidden="true">verified_user</span>
+										{% endif %}
+										{{ row.value }}
+									</p>
+								</div>
+								{% endfor %}
+							</div>
+							{% elif s.summary and not s.totals_rows %}
+							<div>
+								<span class="kt-fs-field-label">{{ s.summary_label or _("Summary") }}</span>
+								<p>{{ s.summary }}</p>
+							</div>
+							{% endif %}
+							{% if s.evidence_names %}
+							<div class="kt-fs-evidence-pill">
+								<span class="material-symbols-outlined" aria-hidden="true">attach_file</span>
+								<span>{{ s.evidence_names|length }} {{ _("files supplied") }}</span>
+							</div>
+							{% endif %}
+						</div>
+					</article>
+					{% endfor %}
+				</section>
+			</div>
+		</main>
+		<footer class="kt-fs-footer" data-testid="kt-fs-fbr-footer">
+			<a class="kt-fs-btn kt-fs-btn--ghost" href="{{ r.review_and_validate_url }}" data-testid="kt-fs-fbr-back">
+				<span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+				{{ _("Back to Review & Validate") }}
+			</a>
+			<a class="kt-fs-btn kt-fs-btn--primary" href="{{ r.submit_bid_url }}" data-testid="kt-fs-fbr-continue">
+				{{ _("Continue to Submit Bid") }}
+				<span class="material-symbols-outlined" aria-hidden="true">lock</span>
+			</a>
+		</footer>
+	</div>
+</div>
+{% endblock %}

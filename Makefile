@@ -74,6 +74,14 @@ help:
 	@echo "  make ui-bidder-preliminary-gate — Preliminary Requirements Website Playwright smoke"
 	@echo "  make bw-qualification-domain-gate SITE=$(SITE) — Qualification and Capability domain tests"
 	@echo "  make ui-bidder-qualification-gate — Qualification and Capability Website Playwright smoke"
+	@echo "  make bw-technical-proposal-domain-gate SITE=$(SITE) — Technical Proposal domain + layout guard"
+	@echo "  make ui-bidder-technical-proposal-gate — Technical Proposal Website Playwright smoke"
+	@echo "  make bw-requirements-compliance-domain-gate SITE=$(SITE) — Requirements Compliance domain + layout guard"
+	@echo "  make ui-bidder-requirements-compliance-gate — Requirements Compliance Website Playwright smoke"
+	@echo "  make bw-price-schedule-domain-gate SITE=$(SITE) — Price Schedule domain + layout guard"
+	@echo "  make ui-bidder-price-schedule-gate — Price Schedule Website Playwright smoke"
+	@echo "  make bw-final-submission-domain-gate SITE=$(SITE) — Final Submission domain + layout guard"
+	@echo "  make ui-bidder-final-submission-gate — Final Submission Website Playwright smoke"
 	@echo "  make std-verbatim-gate SITE=$(SITE) — BE-14 verbatim extraction + smoke contracts"
 	@echo "  make std-step1-gate SITE=$(SITE) — BE-15 Step 1 activation/consumption/render smoke"
 	@echo "  make nssf-calibration-gate SITE=$(SITE) — CAL-NSSF golden proof gate"
@@ -321,6 +329,46 @@ bw-qualification-domain-gate:
 ui-bidder-qualification-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 --retries=0 \
 		tests/ui/smoke/bidder-workspace/qualification-and-capability.spec.ts
+
+bw-technical-proposal-domain-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_lean_technical_proposal
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_technical_proposal_stitch_layout_guard
+
+ui-bidder-technical-proposal-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 --retries=0 \
+		tests/ui/smoke/bidder-workspace/technical-proposal.spec.ts
+
+bw-requirements-compliance-domain-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_lean_requirements_compliance
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_requirements_compliance_stitch_layout_guard
+
+ui-bidder-requirements-compliance-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 --retries=0 \
+		tests/ui/smoke/bidder-workspace/requirements-compliance.spec.ts
+
+bw-price-schedule-domain-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_lean_price_schedule
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_price_schedule_stitch_layout_guard
+
+ui-bidder-price-schedule-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 --retries=0 \
+		tests/ui/smoke/bidder-workspace/price-schedule.spec.ts
+
+bw-final-submission-domain-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_final_submission_readiness
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_final_submission_stitch_layout_guard
+
+ui-bidder-final-submission-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 --retries=0 \
+		tests/ui/smoke/bidder-workspace/final-submission.spec.ts
 
 bw-a4-domain-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \

@@ -94,7 +94,10 @@
 	}
 
 	function root() {
-		return document.querySelector('[data-testid="kt-a4-matrix-root"]');
+		return (
+			document.querySelector('[data-testid="kt-rc-workspace-root"]') ||
+			document.querySelector('[data-testid="kt-a4-matrix-root"]')
+		);
 	}
 
 	function storageKey() {
@@ -220,6 +223,8 @@
 							escapeHtml(r.subtitle) +
 							"</p>"
 						: "";
+				var facingRef = r.tender_facing_reference || r.requirement_id || "";
+				var modeLabel = r.mode_label || r.mandatory_label || "";
 				return (
 					'<tr data-testid="kt-a4-requirement-row" data-requirement-id="' +
 					escapeHtml(r.requirement_id) +
@@ -228,8 +233,8 @@
 					'" class="' +
 					selected.trim() +
 					'">' +
-					'<td class="kt-a4-mono">' +
-					escapeHtml(r.requirement_id) +
+					'<td class="kt-a4-mono" data-testid="kt-rc-row-ref">' +
+					escapeHtml(facingRef) +
 					"</td>" +
 					"<td><strong class=\"" +
 					titleClass +
@@ -238,8 +243,8 @@
 					"</strong>" +
 					detail +
 					"</td>" +
-					'<td><span class="kt-a4-pill">' +
-					escapeHtml(r.mandatory_label) +
+					'<td><span class="kt-a4-pill" data-testid="kt-rc-mode">' +
+					escapeHtml(modeLabel) +
 					"</span></td>" +
 					'<td class="kt-a4-summary">' +
 					escapeHtml(r.response_summary) +
@@ -261,35 +266,128 @@
 			.join("");
 	}
 
+	function qsTestId(primary, fallback) {
+		return (
+			document.querySelector('[data-testid="' + primary + '"]') ||
+			(fallback ? document.querySelector('[data-testid="' + fallback + '"]') : null)
+		);
+	}
+
 	function applyMatrix(matrix) {
 		state.matrix = matrix;
 		state.group = matrix.selected_group || state.group;
 		state.page = (matrix.pagination && matrix.pagination.page) || state.page;
-		var progress = document.querySelector('[data-testid="kt-a4-progress-label"]');
+		// RC page uses kt-rc-*; generic A4 section.html still uses kt-a4-*.
+		var progress = qsTestId("kt-rc-progress-label", "kt-a4-progress-label");
 		if (progress) progress.textContent = matrix.progress_label || "";
-		var bar = document.querySelector('[data-testid="kt-a4-progress-bar"]');
+		var bar = qsTestId("kt-rc-progress-bar", "kt-a4-progress-bar");
 		if (bar) bar.style.width = (matrix.progress_percent || 0) + "%";
-		var current = document.querySelector('[data-testid="kt-a4-current-group"]');
+		var current = qsTestId("kt-a4-current-group", "kt-rc-current-group");
 		if (current) {
 			current.innerHTML =
 				"Current View: <strong>" + escapeHtml(matrix.selected_group || "—") + "</strong>";
 		}
-		var last = document.querySelector('[data-testid="kt-a4-last-saved"]');
+		var last = qsTestId("kt-a4-last-saved", "kt-rc-last-saved");
 		if (last) last.textContent = matrix.last_saved_display || "—";
-		var pageLabel = document.querySelector('[data-testid="kt-a4-page-label"]');
+		var pageLabel = qsTestId("kt-a4-page-label", "kt-rc-page-label");
 		var p = matrix.pagination || {};
 		if (pageLabel) {
 			pageLabel.textContent = p.total
 				? "Showing " + p.from + "–" + p.to + " of " + p.total
 				: "0 requirements";
 		}
-		var prev = document.querySelector('[data-testid="kt-a4-page-prev"]');
-		var next = document.querySelector('[data-testid="kt-a4-page-next"]');
+		var prev = qsTestId("kt-a4-page-prev", "kt-rc-page-prev");
+		var next = qsTestId("kt-a4-page-next", "kt-rc-page-next");
 		if (prev) prev.disabled = !p.page || p.page <= 1;
 		if (next) next.disabled = !p.page || p.page >= (p.total_pages || 1);
 		renderGroups(matrix.groups, matrix.selected_group);
 		renderRows(matrix.rows);
 		persistFilters();
+	}
+
+	function tableColumns(field) {
+		var cols = field.columns;
+		if (Array.isArray(cols) && cols.length) {
+			return cols
+				.map(function (c) {
+					return {
+						key: c.key || c.field_key || "",
+						label: c.label || c.key || c.field_key || "Column",
+					};
+				})
+				.filter(function (c) {
+					return c.key;
+				});
+		}
+		return [
+			{ key: "activity", label: "Activity" },
+			{ key: "timing", label: "Timing" },
+		];
+	}
+
+	function normalizeTableRows(value, cols) {
+		var rows = Array.isArray(value) ? value.slice() : [];
+		if (!rows.length) rows = [{}];
+		return rows.map(function (row) {
+			var out = {};
+			cols.forEach(function (c) {
+				out[c.key] = row && row[c.key] != null ? String(row[c.key]) : "";
+			});
+			return out;
+		});
+	}
+
+	function repeatingTableHtml(field, value) {
+		var key = field.field_key || "";
+		var cols = tableColumns(field);
+		var rows = normalizeTableRows(value, cols);
+		var head = cols
+			.map(function (c) {
+				return "<th>" + escapeHtml(c.label) + "</th>";
+			})
+			.join("");
+		head += '<th class="kt-a4-table-actions"></th>';
+		var body = rows
+			.map(function (row, ri) {
+				var cells = cols
+					.map(function (c) {
+						return (
+							"<td><input type=\"text\" data-table-field=\"" +
+							escapeHtml(key) +
+							'" data-row="' +
+							ri +
+							'" data-col="' +
+							escapeHtml(c.key) +
+							'" value="' +
+							escapeHtml(row[c.key] || "") +
+							'" aria-label="' +
+							escapeHtml(c.label) +
+							'" /></td>'
+						);
+					})
+					.join("");
+				cells +=
+					'<td class="kt-a4-table-actions"><button type="button" class="kt-a4-table-remove" data-testid="kt-a4-table-remove" data-table-field="' +
+					escapeHtml(key) +
+					'" data-row="' +
+					ri +
+					'" aria-label="Remove row">Remove</button></td>';
+				return '<tr data-table-row="' + ri + '">' + cells + "</tr>";
+			})
+			.join("");
+		return (
+			'<div class="kt-a4-repeating-table" data-testid="kt-a4-repeating-table" data-field-key="' +
+			escapeHtml(key) +
+			'">' +
+			'<table><thead><tr>' +
+			head +
+			"</tr></thead><tbody data-testid=\"kt-a4-table-body\">" +
+			body +
+			"</tbody></table>" +
+			'<button type="button" class="kt-a4-btn kt-a4-btn--secondary kt-a4-table-add" data-testid="kt-a4-table-add" data-table-field="' +
+			escapeHtml(key) +
+			'">Add row</button></div>'
+		);
 	}
 
 	function fieldControlHtml(field, value) {
@@ -305,7 +403,9 @@
 		}
 		var control = field.control || "text";
 		var html = '<div class="kt-a4-field" data-field-key="' + escapeHtml(key) + '">';
-		html += "<label>" + escapeHtml(label) + req + "</label>";
+		if (control !== "checkbox") {
+			html += "<label>" + escapeHtml(label) + req + "</label>";
+		}
 		if (field.help_text) {
 			html +=
 				'<p class="kt-a4-field-help" data-testid="kt-a4-field-help-' +
@@ -338,6 +438,23 @@
 				escapeHtml(value || "") +
 				'" /></div>' +
 				fieldError;
+		} else if (control === "checkbox") {
+			var checked =
+				value === true || value === 1 || value === "1" || value === "true" || value === "Yes";
+			html +=
+				'<label class="kt-a4-checkbox">' +
+				'<input type="checkbox" name="' +
+				escapeHtml(key) +
+				'" value="1" data-testid="kt-a4-field-' +
+				escapeHtml(key) +
+				'"' +
+				(checked ? " checked" : "") +
+				" />" +
+				"<span>" +
+				escapeHtml(label) +
+				req +
+				"</span></label>" +
+				fieldError;
 		} else if (control === "textarea") {
 			html +=
 				'<textarea name="' +
@@ -348,6 +465,59 @@
 				escapeHtml(value || "") +
 				"</textarea>" +
 				fieldError;
+		} else if (control === "number") {
+			html +=
+				'<input type="number" name="' +
+				escapeHtml(key) +
+				'" value="' +
+				escapeHtml(value === 0 || value === "0" ? "0" : value || "") +
+				'" data-testid="kt-a4-field-' +
+				escapeHtml(key) +
+				'" />' +
+				fieldError;
+		} else if (control === "date") {
+			html +=
+				'<input type="date" name="' +
+				escapeHtml(key) +
+				'" value="' +
+				escapeHtml(value || "") +
+				'" data-testid="kt-a4-field-' +
+				escapeHtml(key) +
+				'" />' +
+				fieldError;
+		} else if (control === "period") {
+			html +=
+				'<input type="text" name="' +
+				escapeHtml(key) +
+				'" value="' +
+				escapeHtml(value || "") +
+				'" placeholder="e.g. 12 months" data-testid="kt-a4-field-' +
+				escapeHtml(key) +
+				'" />' +
+				fieldError;
+		} else if (control === "select") {
+			var opts = Array.isArray(field.options) ? field.options : [];
+			html +=
+				'<select name="' +
+				escapeHtml(key) +
+				'" data-testid="kt-a4-field-' +
+				escapeHtml(key) +
+				'"><option value="">Select…</option>';
+			opts.forEach(function (opt) {
+				var ov = typeof opt === "object" ? opt.value || opt.label || "" : String(opt);
+				var ol = typeof opt === "object" ? opt.label || opt.value || ov : String(opt);
+				html +=
+					'<option value="' +
+					escapeHtml(ov) +
+					'"' +
+					(String(value) === String(ov) ? " selected" : "") +
+					">" +
+					escapeHtml(ol) +
+					"</option>";
+			});
+			html += "</select>" + fieldError;
+		} else if (control === "repeating_table") {
+			html += repeatingTableHtml(field, value) + fieldError;
 		} else if (control === "file") {
 			var files = normalizeFileList(value);
 			state.draftFiles[key] = files.slice();
@@ -397,10 +567,27 @@
 		var statusRow = panel.querySelector('[data-testid="kt-a4-drawer-status-row"]');
 		var statusEl = panel.querySelector('[data-testid="kt-a4-drawer-status"]');
 		var attentionEl = panel.querySelector('[data-testid="kt-a4-drawer-attention"]');
+		var addendumEl = panel.querySelector('[data-testid="kt-rc-addendum-banner"]');
+		var refEyebrow = panel.querySelector('[data-testid="kt-rc-drawer-ref"]');
 		var body = panel.querySelector('[data-testid="kt-a4-drawer-body"]');
 		var headerLabel = drawer.header_title || drawer.title || drawer.requirement_id || "";
 		if (title) title.textContent = headerLabel;
 		if (pos) pos.textContent = drawer.position_label || "";
+		if (refEyebrow && drawer.tender_facing_reference) {
+			refEyebrow.textContent = drawer.tender_facing_reference;
+		}
+		if (addendumEl) {
+			if (drawer.addendum_banner) {
+				addendumEl.hidden = false;
+				addendumEl.textContent = drawer.addendum_banner;
+				if (drawer.change_summary) {
+					addendumEl.textContent += " — " + drawer.change_summary;
+				}
+			} else {
+				addendumEl.hidden = true;
+				addendumEl.textContent = "";
+			}
+		}
 		if (statusRow && statusEl) {
 			if (drawer.status) {
 				statusRow.hidden = false;
@@ -426,11 +613,19 @@
 		}
 		var resp = drawer.response || {};
 		var parts = [];
-		var description = drawer.description || "";
+		if (drawer.mode_label) {
+			parts.push(
+				'<div class="kt-a4-drawer-mode" data-testid="kt-rc-drawer-mode">' +
+					'<span class="kt-a4-pill">' +
+					escapeHtml(drawer.mode_label) +
+					"</span></div>"
+			);
+		}
+		var description = drawer.description || drawer.requirement_statement || "";
 		if (description) {
 			parts.push(
 				'<div class="kt-a4-description" data-testid="kt-a4-drawer-description">' +
-					"<h3>Description</h3>" +
+					"<h3>Requirement</h3>" +
 					"<p>" +
 					escapeHtml(description) +
 					"</p></div>"
@@ -466,11 +661,34 @@
 		if (!body) return {};
 		var payload = {};
 		body.querySelectorAll("[name]").forEach(function (el) {
-			payload[el.getAttribute("name")] = el.value;
+			var name = el.getAttribute("name");
+			if (!name) return;
+			if (el.type === "checkbox") {
+				payload[name] = el.checked ? 1 : 0;
+			} else {
+				payload[name] = el.value;
+			}
 		});
 		body.querySelectorAll(".kt-a4-file-mock[data-field-key]").forEach(function (host) {
 			var key = host.getAttribute("data-field-key");
 			payload[key] = (state.draftFiles[key] || []).slice();
+		});
+		body.querySelectorAll(".kt-a4-repeating-table[data-field-key]").forEach(function (host) {
+			var key = host.getAttribute("data-field-key");
+			var rowMap = {};
+			host.querySelectorAll("[data-table-field][data-row][data-col]").forEach(function (input) {
+				var ri = Number(input.getAttribute("data-row") || 0);
+				var col = input.getAttribute("data-col") || "";
+				if (!rowMap[ri]) rowMap[ri] = {};
+				rowMap[ri][col] = input.value;
+			});
+			payload[key] = Object.keys(rowMap)
+				.sort(function (a, b) {
+					return Number(a) - Number(b);
+				})
+				.map(function (k) {
+					return rowMap[k];
+				});
 		});
 		return payload;
 	}
@@ -527,7 +745,20 @@
 			published_tender_ref: state.publicationRef,
 			section_key: state.sectionKey,
 			requirement_id: requirementId,
-		}).then(openDrawerUi);
+		}).then(function (drawer) {
+			var gk = (drawer && drawer.group_key) || "";
+			// Keep the domain rail / table in sync when Previous / Save & Next cross groups.
+			if (gk && gk !== state.group) {
+				state.group = gk;
+				state.page = 1;
+				return reloadMatrix().then(function () {
+					openDrawerUi(drawer);
+					return drawer;
+				});
+			}
+			openDrawerUi(drawer);
+			return drawer;
+		});
 	}
 
 	function saveResponse(thenNext) {
@@ -657,6 +888,48 @@
 				yesNo.classList.add("is-active");
 				var hidden = wrap.querySelector('input[type="hidden"]');
 				if (hidden) hidden.value = yesNo.getAttribute("data-value") || "";
+				return;
+			}
+			var addRow = e.target.closest('[data-testid="kt-a4-table-add"]');
+			if (addRow) {
+				e.preventDefault();
+				var addKey = addRow.getAttribute("data-table-field") || "";
+				var addHost = document.querySelector(
+					'.kt-a4-repeating-table[data-field-key="' + addKey + '"]'
+				);
+				if (!addHost || !state.drawer) return;
+				var addField = null;
+				(state.drawer.fields || []).forEach(function (f) {
+					if (f.field_key === addKey) addField = f;
+				});
+				if (!addField) return;
+				var current = collectPayload()[addKey] || [];
+				if (!Array.isArray(current)) current = [];
+				current.push({});
+				var addWrap = addHost.closest(".kt-a4-field");
+				if (addWrap) addWrap.outerHTML = fieldControlHtml(addField, current);
+				return;
+			}
+			var removeRow = e.target.closest('[data-testid="kt-a4-table-remove"]');
+			if (removeRow) {
+				e.preventDefault();
+				var rmKey = removeRow.getAttribute("data-table-field") || "";
+				var rmIdx = Number(removeRow.getAttribute("data-row") || -1);
+				var rmHost = document.querySelector(
+					'.kt-a4-repeating-table[data-field-key="' + rmKey + '"]'
+				);
+				if (!rmHost || !state.drawer || rmIdx < 0) return;
+				var rmField = null;
+				(state.drawer.fields || []).forEach(function (f) {
+					if (f.field_key === rmKey) rmField = f;
+				});
+				if (!rmField) return;
+				var rows = collectPayload()[rmKey] || [];
+				if (!Array.isArray(rows)) rows = [];
+				rows.splice(rmIdx, 1);
+				if (!rows.length) rows = [{}];
+				var rmWrap = rmHost.closest(".kt-a4-field");
+				if (rmWrap) rmWrap.outerHTML = fieldControlHtml(rmField, rows);
 			}
 		});
 
@@ -686,6 +959,19 @@
 			if (!input) return;
 			addFilesFromInput(input);
 		});
+
+		var openId = el.getAttribute("data-open-requirement-id") || "";
+		if (!openId) {
+			try {
+				var params = new URLSearchParams(window.location.search || "");
+				openId = params.get("requirement_id") || "";
+			} catch (e2) {
+				openId = "";
+			}
+		}
+		if (openId) {
+			openRequirement(openId);
+		}
 	}
 
 	if (document.readyState === "loading") {

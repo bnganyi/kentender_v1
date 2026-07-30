@@ -89,16 +89,17 @@
 				{% include "templates/includes/qualification/kt_s600_partners.html" %}
 				{% endif %}
 
-				<footer class="kt-s600-footer">
-					<a class="kt-s600-btn kt-s600-btn--secondary" href="{{ c.section_url }}" data-testid="kt-s600-cat-back">{{ _("Back to overview") }}</a>
-					{% if not c.read_only %}
-					<button type="button" class="kt-s600-btn" data-s600-save="draft" data-testid="kt-s600-save">{{ _("Save draft") }}</button>
-					<button type="button" class="kt-s600-btn kt-s600-btn--primary" data-s600-save="continue" data-testid="kt-s600-save-continue">{{ _("Save & Continue") }}</button>
-					{% endif %}
-				</footer>
 			</div>
 		</main>
 	</div>
+
+	<footer class="kt-s600-footer">
+		<a class="kt-s600-btn kt-s600-btn--secondary" href="{{ c.section_url }}" data-testid="kt-s600-cat-back">{{ _("Back to overview") }}</a>
+		{% if not c.read_only %}
+		<button type="button" class="kt-s600-btn" data-s600-save="draft" data-testid="kt-s600-save">{{ _("Save draft") }}</button>
+		<button type="button" class="kt-s600-btn kt-s600-btn--primary" data-s600-save="continue" data-testid="kt-s600-save-continue">{{ _("Save & Continue") }}</button>
+		{% endif %}
+	</footer>
 
 	{# Shared right drawer — project / person / partner #}
 	<div class="kt-s600-drawer-backdrop" data-testid="kt-s600-drawer-backdrop" hidden></div>

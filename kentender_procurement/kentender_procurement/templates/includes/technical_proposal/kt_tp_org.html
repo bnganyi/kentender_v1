@@ -1,0 +1,132 @@
+{# Stitch 04 — Project Organization and Coordination: narratives + roles + coordination matrix #}
+{% set questions = cfg.questions or [] %}
+{% set narratives = bucket.narratives or {} %}
+{% set roles = bucket.resource_roles or [] %}
+{% set matrix = bucket.coordination_matrix or [] %}
+{% set personnel = sub.personnel_refs or [] %}
+
+<section class="kt-tp-block-section" data-testid="kt-tp-org-narratives">
+	<div class="kt-s600-section-head">
+		<div>
+			<h2>{{ _("Management approach") }}</h2>
+			<p class="kt-s600-help">{{ _("Describe management, reporting, communication and escalation arrangements.") }}</p>
+		</div>
+	</div>
+	<div class="kt-tp-card-stack" data-testid="kt-tp-question-cards">
+		{% for q in questions %}
+		<section class="kt-tp-card" data-testid="kt-tp-question-card" data-question-row data-question-id="{{ q.question_id }}">
+			<div class="kt-tp-card__head">
+				<span class="kt-tp-badge" data-required="{{ 1 if q.required else 0 }}">
+					{{ _("Required") if q.required else _("Optional") }}
+				</span>
+				<h3>{{ q.title }}</h3>
+			</div>
+			<textarea class="kt-tp-textarea" data-question="{{ q.question_id }}" rows="5"
+				placeholder="{{ _('Type your response here…') }}"
+				{% if sub.read_only %}disabled{% endif %}>{{ narratives.get(q.question_id) or "" }}</textarea>
+		</section>
+		{% endfor %}
+	</div>
+</section>
+
+<section class="kt-s600-card kt-s600-card--flush" data-testid="kt-tp-roles">
+	<div class="kt-s600-card__head">
+		<h3>{{ _("Project roles and key personnel") }}</h3>
+		<div class="kt-tp-head-actions">
+			{% if sub.personnel_category_url %}
+			<a class="kt-s600-link" href="{{ sub.personnel_category_url }}" data-testid="kt-tp-manage-personnel">{{ _("Manage Key Personnel") }}</a>
+			{% endif %}
+			{% if not sub.read_only %}
+			<button type="button" class="kt-s600-btn" data-tp-add-role data-testid="kt-tp-add-role">
+				<span class="material-symbols-outlined">add</span> {{ _("Add role") }}
+			</button>
+			{% endif %}
+		</div>
+	</div>
+	<div class="kt-s600-table-wrap">
+		<table class="kt-s600-data-table">
+			<thead>
+				<tr>
+					<th>{{ _("Project role") }}</th>
+					<th>{{ _("Assigned person") }}</th>
+					<th>{{ _("Providing organization") }}</th>
+					<th>{{ _("Delivery responsibility") }}</th>
+					<th>{{ _("Decision authority") }}</th>
+					{% if not sub.read_only %}<th class="is-right">{{ _("Action") }}</th>{% endif %}
+				</tr>
+			</thead>
+			<tbody data-testid="kt-tp-roles-body" data-records-body="resource_roles">
+				{% for row in roles %}
+				<tr data-record-row data-record-id="{{ row.role_id or '' }}">
+					<td><input data-r="project_role" value="{{ row.project_role or '' }}" placeholder="{{ _('e.g. Project Manager') }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td>
+						<select data-r="person_id" {% if sub.read_only %}disabled{% endif %}>
+							<option value="">{{ _("Select person…") }}</option>
+							{% for p in personnel %}
+							<option value="{{ p.person_id }}" {% if row.person_id == p.person_id %}selected{% endif %}>{{ p.full_name or p.person_id }}</option>
+							{% endfor %}
+						</select>
+					</td>
+					<td><input data-r="providing_org" value="{{ row.providing_org or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="delivery_responsibility" value="{{ row.delivery_responsibility or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="decision_authority" value="{{ row.decision_authority or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					{% if not sub.read_only %}
+					<td class="is-right is-actions">
+						<button type="button" class="kt-s600-link" data-tp-remove-row title="{{ _('Delete') }}"><span class="material-symbols-outlined">delete</span></button>
+					</td>
+					{% endif %}
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+	<p class="kt-s600-card__foot-note">{{ _("Personnel must be selected from the Key Personnel profiles previously submitted under Qualification and Capability.") }}</p>
+</section>
+
+<select hidden data-testid="kt-tp-personnel-options-template">
+	<option value="">{{ _("Select person…") }}</option>
+	{% for p in personnel %}
+	<option value="{{ p.person_id }}">{{ p.full_name or p.person_id }}</option>
+	{% endfor %}
+</select>
+
+<section class="kt-s600-card kt-s600-card--flush" data-testid="kt-tp-coordination-matrix">
+	<div class="kt-s600-card__head">
+		<h3>{{ _("Responsibility and coordination matrix") }}</h3>
+		{% if not sub.read_only %}
+		<button type="button" class="kt-s600-btn" data-tp-add-matrix-row data-testid="kt-tp-add-matrix-row">
+			<span class="material-symbols-outlined">add</span> {{ _("Add activity line item") }}
+		</button>
+		{% endif %}
+	</div>
+	<div class="kt-s600-table-wrap">
+		<table class="kt-s600-data-table">
+			<thead>
+				<tr>
+					<th>{{ _("Activity or deliverable") }}</th>
+					<th>{{ _("Bidder responsibility") }}</th>
+					<th>{{ _("Procuring entity responsibility") }}</th>
+					<th>{{ _("Third-party responsibility") }}</th>
+					<th>{{ _("Coordination method") }}</th>
+					{% if not sub.read_only %}<th class="is-right">{{ _("Action") }}</th>{% endif %}
+				</tr>
+			</thead>
+			<tbody data-testid="kt-tp-matrix-body" data-records-body="coordination_matrix">
+				{% for row in matrix %}
+				<tr data-record-row data-record-id="{{ row.row_id or '' }}">
+					<td><input data-r="activity_or_deliverable" value="{{ row.activity_or_deliverable or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="bidder_responsibility" value="{{ row.bidder_responsibility or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="pe_responsibility" value="{{ row.pe_responsibility or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="third_party_responsibility" value="{{ row.third_party_responsibility or '' }}" placeholder="{{ _('N/A') }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="coordination_method" value="{{ row.coordination_method or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					{% if not sub.read_only %}
+					<td class="is-right is-actions">
+						<button type="button" class="kt-s600-link" data-tp-remove-row title="{{ _('Delete') }}"><span class="material-symbols-outlined">delete</span></button>
+					</td>
+					{% endif %}
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</section>

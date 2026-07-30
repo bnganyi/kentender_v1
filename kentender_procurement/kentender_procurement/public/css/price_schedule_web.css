@@ -1,0 +1,656 @@
+/* Price Schedule — Stitch 01–04 hand-port (no Tailwind CDN).
+   Structure/density/status treatment mirror pack HTML under 11_Price_Schedule. */
+
+.kt-ps-root {
+	--kt-ps-border: #c4c6cf;
+	--kt-ps-border-subtle: #c4c6cf;
+	--kt-ps-muted: #44474c;
+	--kt-ps-on: #191c1e;
+	--kt-ps-surface: #f7f9fb;
+	--kt-ps-surface-low: #f2f4f6;
+	--kt-ps-surface-high: #e6e8ea;
+	--kt-ps-surface-highest: #e0e3e5;
+	--kt-ps-pending: #92400e;
+	--kt-ps-pending-bg: #fffbeb;
+	--kt-ps-ok: #065f46;
+	--kt-ps-ok-bg: #ecfdf5;
+	--kt-ps-err: #ba1a1a;
+	--kt-ps-err-bg: #fff1f2;
+	--kt-ps-primary-fixed: #d6e3fd;
+	--kt-ps-secondary-container: #d2e1fa;
+	--kt-ps-on-secondary: #556379;
+	font-family: "Public Sans", Inter, system-ui, sans-serif;
+	color: var(--kt-ps-on);
+	background: var(--kt-ps-surface);
+}
+
+.kt-ps-root .kt-a2-main,
+.kt-ps-root .kt-fot-main {
+	background: var(--kt-ps-surface);
+}
+
+.kt-ps-canvas {
+	padding: 1.5rem 1.5rem 5.5rem;
+	max-width: 1536px;
+}
+
+/* —— Typography (Stitch headline / body / label) —— */
+.kt-ps-title {
+	margin: 0 0 0.25rem;
+	font-size: 24px;
+	line-height: 32px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	color: var(--kt-ps-on);
+}
+
+.kt-ps-lede {
+	margin: 0;
+	font-size: 14px;
+	line-height: 20px;
+	color: var(--kt-ps-muted);
+	max-width: 36rem;
+}
+
+.kt-ps-mono {
+	font-family: "JetBrains Mono", ui-monospace, monospace;
+	font-size: 11px;
+	font-weight: 500;
+}
+
+/* —— Page head + progress bento (Stitch 01) —— */
+.kt-ps-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 1.5rem;
+	margin-bottom: 2rem;
+}
+
+.kt-ps-progress-card {
+	min-width: 280px;
+	padding: 1rem;
+	border: 1px solid var(--kt-ps-border);
+	border-radius: 0.5rem;
+	background: #fff;
+}
+
+.kt-ps-progress-card__top {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 0.75rem;
+	margin-bottom: 0.75rem;
+}
+
+.kt-ps-progress-card__label {
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	font-family: "JetBrains Mono", ui-monospace, monospace;
+	color: var(--kt-ps-muted);
+}
+
+.kt-ps-progress-card__pct {
+	font-size: 10px;
+	line-height: 12px;
+	font-family: "JetBrains Mono", ui-monospace, monospace;
+	font-weight: 500;
+	letter-spacing: 0.04em;
+	background: var(--kt-ps-primary-fixed);
+	color: var(--kt-ps-on);
+	padding: 0.15rem 0.45rem;
+	border-radius: 0.125rem;
+}
+
+.kt-ps-progress-card__caption {
+	margin: 0 0 0.75rem;
+	font-size: 18px;
+	line-height: 24px;
+	font-weight: 600;
+	color: var(--kt-ps-on);
+}
+
+.kt-ps-progress-card__bar {
+	width: 100%;
+	height: 6px;
+	border-radius: 999px;
+	background: var(--kt-ps-surface-highest);
+	overflow: hidden;
+}
+
+.kt-ps-progress-card__fill {
+	display: block;
+	height: 100%;
+	background: #000;
+}
+
+/* —— Offer tabs + lot selector —— */
+.kt-ps-controls {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	border-bottom: 1px solid var(--kt-ps-border);
+	margin-bottom: 1.5rem;
+}
+
+.kt-ps-offer-tabs {
+	display: flex;
+	gap: 0;
+}
+
+.kt-ps-offer-tab {
+	appearance: none;
+	background: transparent;
+	border: none;
+	border-bottom: 2px solid transparent;
+	padding: 0.75rem 1.5rem;
+	font-size: 11px;
+	font-weight: 500;
+	font-family: "JetBrains Mono", ui-monospace, monospace;
+	letter-spacing: 0.02em;
+	color: var(--kt-ps-muted);
+	cursor: pointer;
+}
+
+.kt-ps-offer-tab.is-active {
+	border-bottom-color: #000;
+	color: #000;
+	font-weight: 700;
+}
+
+.kt-ps-lot-select {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 10px;
+	font-weight: 500;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	font-family: "JetBrains Mono", ui-monospace, monospace;
+	color: var(--kt-ps-muted);
+}
+
+.kt-ps-lot-select select {
+	font-family: "Public Sans", sans-serif;
+	font-size: 13px;
+	text-transform: none;
+	letter-spacing: normal;
+	font-weight: 400;
+	border: 1px solid var(--kt-ps-border);
+	border-radius: 0.125rem;
+	padding: 0.35rem 1.75rem 0.35rem 0.65rem;
+	background: #fff;
+	color: var(--kt-ps-on);
+}
+
+/* —— Bento table (overview / review / editor) —— */
+.kt-ps-bento {
+	background: #fff;
+	border: 1px solid var(--kt-ps-border);
+	border-radius: 0.5rem;
+	overflow: hidden;
+}
+
+.kt-ps-table-wrap {
+	overflow-x: auto;
+}
+
+.kt-ps-table {
+	width: 100%;
+	border-collapse: collapse;
+	text-align: left;
+}
+
+.kt-ps-table thead tr {
+	background: var(--kt-ps-surface-low);
+	border-bottom: 1px solid var(--kt-ps-border);
+}
+
+.kt-ps-table th {
+	padding: 0.75rem 1.5rem;
+	font-size: 11px;
+	font-weight: 700;
+	font-family: "JetBrains Mono", ui-monospace, monospace;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--kt-ps-muted);
+	white-space: nowrap;
+}
+
+.kt-ps-table td {
+	padding: 1rem 1.5rem;
+	border-top: 1px solid var(--kt-ps-border);
+	vertical-align: middle;
+	font-size: 14px;
+	line-height: 20px;
+}
+
+.kt-ps-table tbody tr:hover {
+	background: var(--kt-ps-surface);
+}
+
+.kt-ps-row-title {
+	margin: 0;
+	font-size: 14px;
+	font-weight: 700;
+	color: var(--kt-ps-on);
+}
+
+.kt-ps-row-sub {
+	margin: 0.15rem 0 0;
+	font-size: 12px;
+	color: var(--kt-ps-muted);
+	opacity: 0.85;
+}
+
+.kt-ps-center { text-align: center; }
+.kt-ps-right { text-align: right; }
+.kt-ps-muted { color: var(--kt-ps-muted); font-size: 12px; }
+
+/* —— Status pills with dots (Stitch) —— */
+.kt-ps-status-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.25rem 0.5rem;
+	border-radius: 0.125rem;
+	font-size: 10px;
+	font-weight: 500;
+	font-family: "JetBrains Mono", ui-monospace, monospace;
+	letter-spacing: 0.02em;
+	background: var(--kt-ps-surface-highest);
+	color: var(--kt-ps-muted);
+}
+
+.kt-ps-status-pill__dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 999px;
+	background: var(--kt-ps-border);
+	flex-shrink: 0;
+}
+
+.kt-ps-status-pill[data-status="Complete"] {
+	background: var(--kt-ps-ok-bg);
+	color: var(--kt-ps-ok);
+}
+.kt-ps-status-pill[data-status="Complete"] .kt-ps-status-pill__dot {
+	background: var(--kt-ps-ok);
+}
+
+.kt-ps-status-pill[data-status="In Progress"],
+.kt-ps-status-pill[data-status="In progress"] {
+	background: var(--kt-ps-pending-bg);
+	color: var(--kt-ps-pending);
+}
+.kt-ps-status-pill[data-status="In Progress"] .kt-ps-status-pill__dot,
+.kt-ps-status-pill[data-status="In progress"] .kt-ps-status-pill__dot {
+	background: var(--kt-ps-pending);
+}
+
+.kt-ps-status-pill[data-status="Needs Attention"] {
+	background: var(--kt-ps-err-bg);
+	color: var(--kt-ps-err);
+}
+.kt-ps-status-pill[data-status="Needs Attention"] .kt-ps-status-pill__dot {
+	background: var(--kt-ps-err);
+}
+
+/* —— Row progress —— */
+.kt-ps-row-progress {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.kt-ps-row-progress__bar {
+	width: 6rem;
+	height: 4px;
+	border-radius: 999px;
+	background: var(--kt-ps-surface-highest);
+	overflow: hidden;
+}
+
+.kt-ps-row-progress__bar--wide {
+	width: 12rem;
+	height: 6px;
+}
+
+.kt-ps-row-progress__bar span {
+	display: block;
+	height: 100%;
+	background: var(--kt-ps-pending);
+}
+
+.kt-ps-row-progress__bar[data-status="Complete"] span,
+.kt-ps-row-progress__bar.is-complete span {
+	background: #000;
+}
+
+.kt-ps-row-progress__bar[data-status="Not Started"] span {
+	background: var(--kt-ps-border);
+}
+
+/* —— Action buttons (Stitch) —— */
+.kt-ps-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.35rem;
+	padding: 0.4rem 1rem;
+	border-radius: 0.25rem;
+	font-size: 11px;
+	font-weight: 500;
+	font-family: "JetBrains Mono", ui-monospace, monospace;
+	letter-spacing: 0.02em;
+	text-decoration: none;
+	cursor: pointer;
+	border: 1px solid transparent;
+	line-height: 1.2;
+	white-space: nowrap;
+}
+
+.kt-ps-btn .material-symbols-outlined {
+	font-size: 18px;
+}
+
+.kt-ps-btn--primary {
+	background: #000;
+	color: #fff;
+	border-color: #000;
+	font-weight: 700;
+}
+
+.kt-ps-btn--primary:hover {
+	opacity: 0.9;
+	color: #fff;
+}
+
+.kt-ps-btn--secondary {
+	background: #fff;
+	color: #515f74;
+	border-color: var(--kt-ps-border);
+}
+
+.kt-ps-btn--secondary:hover {
+	background: var(--kt-ps-surface-high);
+	color: #000;
+}
+
+.kt-ps-btn--ghost {
+	background: transparent;
+	color: #000;
+	border-color: var(--kt-ps-border);
+}
+
+.kt-ps-btn:disabled,
+.kt-ps-btn[disabled] {
+	opacity: 0.45;
+	cursor: not-allowed;
+	pointer-events: none;
+}
+
+.kt-ps-link-action {
+	font-size: 11px;
+	font-family: "JetBrains Mono", ui-monospace, monospace;
+	font-weight: 500;
+	color: #515f74;
+	text-decoration: none;
+}
+
+.kt-ps-link-action:hover {
+	text-decoration: underline;
+}
+
+.kt-ps-link-action--danger {
+	color: var(--kt-ps-err);
+	font-weight: 700;
+}
+
+/* —— Editor (Stitch 02/03) —— */
+.kt-ps-editor-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 1.5rem;
+	margin-bottom: 1.5rem;
+}
+
+.kt-ps-editor-progress {
+	text-align: right;
+}
+
+.kt-ps-editor-table th {
+	padding: 0.5rem 1rem;
+	height: 2.5rem;
+}
+
+.kt-ps-editor-table td {
+	padding: 0.25rem 1rem;
+	font-size: 13px;
+}
+
+.kt-ps-editor-table {
+	min-width: 1000px;
+}
+
+.kt-ps-input {
+	width: 100%;
+	border: 1px solid var(--kt-ps-border);
+	border-radius: 0.125rem;
+	background: #fff;
+	font-family: "Public Sans", sans-serif;
+	font-size: 13px;
+	padding: 0.2rem 0.4rem;
+	color: var(--kt-ps-on);
+}
+
+.kt-ps-input--money {
+	font-family: "JetBrains Mono", ui-monospace, monospace;
+	font-size: 12px;
+	text-align: right;
+}
+
+.kt-ps-line-row.is-error {
+	background: rgba(255, 241, 242, 0.45);
+}
+
+.kt-ps-line-row.is-error .kt-ps-input {
+	border-color: rgba(186, 26, 26, 0.5);
+}
+
+.kt-ps-required-dot {
+	display: inline-block;
+	width: 6px;
+	height: 6px;
+	border-radius: 999px;
+	background: var(--kt-ps-err);
+	margin-left: 0.35rem;
+	vertical-align: middle;
+}
+
+.kt-ps-line-total {
+	font-weight: 700;
+	color: var(--kt-ps-on);
+	font-family: "JetBrains Mono", ui-monospace, monospace;
+	font-size: 12px;
+}
+
+.kt-ps-callout {
+	display: flex;
+	gap: 1rem;
+	align-items: flex-start;
+	margin-top: 1rem;
+	padding: 1rem;
+	border-left: 4px solid #000;
+	background: var(--kt-ps-surface-low);
+}
+
+.kt-ps-callout strong {
+	display: block;
+	font-size: 12px;
+	margin-bottom: 0.25rem;
+}
+
+.kt-ps-callout p {
+	margin: 0;
+	font-size: 13px;
+	color: var(--kt-ps-muted);
+}
+
+.kt-ps-info {
+	display: flex;
+	gap: 1rem;
+	align-items: flex-start;
+	margin-top: 1.5rem;
+	padding: 1rem;
+	border-radius: 0.5rem;
+	border: 1px solid var(--kt-ps-secondary-container);
+	background: rgba(210, 225, 250, 0.3);
+}
+
+.kt-ps-info h4 {
+	margin: 0 0 0.25rem;
+	font-size: 13px;
+	font-weight: 700;
+}
+
+.kt-ps-info p {
+	margin: 0;
+	font-size: 13px;
+	color: var(--kt-ps-on-secondary);
+}
+
+/* —— Review Needs Attention (Stitch 04) —— */
+.kt-ps-attention {
+	display: flex;
+	gap: 1rem;
+	padding: 1rem 1.1rem;
+	margin-bottom: 1rem;
+	border: 1px solid rgba(186, 26, 26, 0.2);
+	border-radius: 0.5rem;
+	background: var(--kt-ps-err-bg);
+}
+
+.kt-ps-attention__icon {
+	color: var(--kt-ps-err);
+	flex-shrink: 0;
+}
+
+.kt-ps-attention__icon .material-symbols-outlined {
+	font-size: 28px;
+}
+
+.kt-ps-attention__title {
+	margin: 0 0 0.5rem;
+	font-size: 18px;
+	font-weight: 600;
+	color: var(--kt-ps-err);
+}
+
+.kt-ps-attention__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.kt-ps-attention__list li {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	margin: 0.55rem 0;
+}
+
+.kt-ps-attention__list li::before {
+	content: "";
+	width: 6px;
+	height: 6px;
+	border-radius: 999px;
+	background: var(--kt-ps-err);
+	flex-shrink: 0;
+}
+
+.kt-ps-attention__list a {
+	color: var(--kt-ps-on);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	font-size: 13px;
+}
+
+.kt-ps-attention__list a:hover {
+	color: var(--kt-ps-err);
+}
+
+.kt-ps-empty {
+	padding: 0.75rem 0 1.25rem;
+	color: var(--kt-ps-muted);
+	font-size: 13px;
+}
+
+.kt-ps-table tfoot td {
+	border-top: 2px solid var(--kt-ps-border);
+	background: var(--kt-ps-surface-low);
+	padding: 1.25rem 1.5rem;
+	font-weight: 600;
+}
+
+/* —— Fixed footer —— */
+.kt-ps-foot {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	z-index: 50;
+	min-height: 4rem;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	padding: 0.75rem 1rem;
+	background: #fff;
+	border-top: 1px solid var(--kt-ps-border);
+	box-shadow: 0 -2px 8px rgba(25, 28, 30, 0.04);
+}
+
+@media (min-width: 992px) {
+	.kt-ps-foot {
+		left: var(--kt-a2-sidebar, 256px);
+	}
+}
+
+.kt-ps-foot-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+	margin-left: auto;
+}
+
+.kt-ps-toast {
+	position: fixed;
+	bottom: 5rem;
+	right: 1.25rem;
+	z-index: 60;
+	max-width: 22rem;
+	padding: 0.75rem 1rem;
+	border-radius: 0.25rem;
+	background: #191c1e;
+	color: #fff;
+	font-size: 13px;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+}
+
+.kt-ps-toast.is-visible {
+	display: block;
+}
+
+.kt-ps-toast[hidden] {
+	display: none !important;
+}

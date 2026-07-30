@@ -1,0 +1,121 @@
+{# Stitch 07 — Risks, Assumptions and Dependencies #}
+{% set risks = bucket.risks or [] %}
+{% set assumptions = bucket.assumptions or [] %}
+{% set deps = bucket.dependencies or [] %}
+
+<section class="kt-s600-card kt-s600-card--flush" data-testid="kt-tp-risks">
+	<div class="kt-s600-card__head">
+		<h3>{{ _("Risk register") }}</h3>
+		{% if not sub.read_only %}
+		<button type="button" class="kt-s600-btn" data-tp-add-risk data-testid="kt-tp-add-risk">
+			<span class="material-symbols-outlined">add</span> {{ _("Add risk") }}
+		</button>
+		{% endif %}
+	</div>
+	<div class="kt-s600-table-wrap">
+		<table class="kt-s600-data-table">
+			<thead>
+				<tr>
+					<th>{{ _("Risk") }}</th>
+					<th>{{ _("Potential effect") }}</th>
+					<th>{{ _("Proposed mitigation") }}</th>
+					<th>{{ _("Responsible party") }}</th>
+					<th>{{ _("Work-plan phase") }}</th>
+					{% if not sub.read_only %}<th class="is-right">{{ _("Action") }}</th>{% endif %}
+				</tr>
+			</thead>
+			<tbody data-testid="kt-tp-risks-body" data-records-body="risks">
+				{% for r in risks %}
+				<tr data-record-row data-record-id="{{ r.risk_id or '' }}">
+					<td><input data-r="risk" value="{{ r.risk or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="potential_effect" value="{{ r.potential_effect or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="mitigation" value="{{ r.mitigation or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="responsible_party" value="{{ r.responsible_party or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="work_plan_phase" value="{{ r.work_plan_phase or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					{% if not sub.read_only %}
+					<td class="is-right is-actions">
+						<button type="button" class="kt-s600-link" data-tp-remove-row title="{{ _('Delete') }}"><span class="material-symbols-outlined">delete</span></button>
+					</td>
+					{% endif %}
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</section>
+
+<section class="kt-s600-card kt-s600-card--flush" data-testid="kt-tp-assumptions">
+	<div class="kt-s600-card__head">
+		<h3>{{ _("Assumptions") }}</h3>
+		{% if not sub.read_only %}
+		<button type="button" class="kt-s600-btn" data-tp-add-assumption data-testid="kt-tp-add-assumption">
+			<span class="material-symbols-outlined">add</span> {{ _("Add assumption") }}
+		</button>
+		{% endif %}
+	</div>
+	<div class="kt-s600-table-wrap">
+		<table class="kt-s600-data-table">
+			<thead>
+				<tr>
+					<th>{{ _("Assumption") }}</th>
+					<th>{{ _("Responsible party") }}</th>
+					<th>{{ _("Effect if incorrect") }}</th>
+					{% if not sub.read_only %}<th class="is-right">{{ _("Action") }}</th>{% endif %}
+				</tr>
+			</thead>
+			<tbody data-testid="kt-tp-assumptions-body" data-records-body="assumptions">
+				{% for a in assumptions %}
+				<tr data-record-row data-record-id="{{ a.assumption_id or '' }}">
+					<td><input data-r="assumption" value="{{ a.assumption or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="responsible_party" value="{{ a.responsible_party or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="effect_if_incorrect" value="{{ a.effect_if_incorrect or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					{% if not sub.read_only %}
+					<td class="is-right is-actions">
+						<button type="button" class="kt-s600-link" data-tp-remove-row title="{{ _('Delete') }}"><span class="material-symbols-outlined">delete</span></button>
+					</td>
+					{% endif %}
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</section>
+
+<section class="kt-s600-card kt-s600-card--flush" data-testid="kt-tp-dependencies">
+	<div class="kt-s600-card__head">
+		<h3>{{ _("Dependencies") }}</h3>
+		{% if not sub.read_only %}
+		<button type="button" class="kt-s600-btn" data-tp-add-dependency data-testid="kt-tp-add-dependency">
+			<span class="material-symbols-outlined">add</span> {{ _("Add dependency") }}
+		</button>
+		{% endif %}
+	</div>
+	<div class="kt-s600-table-wrap">
+		<table class="kt-s600-data-table">
+			<thead>
+				<tr>
+					<th>{{ _("Required input or dependency") }}</th>
+					<th>{{ _("Responsible party") }}</th>
+					<th>{{ _("Required by") }}</th>
+					<th>{{ _("Affected activity") }}</th>
+					{% if not sub.read_only %}<th class="is-right">{{ _("Action") }}</th>{% endif %}
+				</tr>
+			</thead>
+			<tbody data-testid="kt-tp-dependencies-body" data-records-body="dependencies">
+				{% for d in deps %}
+				<tr data-record-row data-record-id="{{ d.dependency_id or '' }}">
+					<td><input data-r="required_input" value="{{ d.required_input or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="responsible_party" value="{{ d.responsible_party or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="required_by" value="{{ d.required_by or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="affected_activity" value="{{ d.affected_activity or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					{% if not sub.read_only %}
+					<td class="is-right is-actions">
+						<button type="button" class="kt-s600-link" data-tp-remove-row title="{{ _('Delete') }}"><span class="material-symbols-outlined">delete</span></button>
+					</td>
+					{% endif %}
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</section>

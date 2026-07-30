@@ -1,0 +1,190 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }} | KenTender{% endblock %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/kentender_procurement/css/available_tenders.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/submission_checklist_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/price_schedule_web.css?v=ps-3">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+<script defer src="/assets/kentender_procurement/js/price_schedule_web.js?v=ps-3"></script>
+{% endblock %}
+
+{% block page_content %}
+{% set e = ed %}
+{% set active_nav = "my_bids" %}
+{% set active_ws = "checklist" %}
+{% set prog = e.progress or {} %}
+{% set is_recurrent = e.is_recurrent %}
+<div class="kt-a0-root kt-a2-root kt-ps-root kt-ps-editor"
+	data-testid="kt-ps-editor-root"
+	data-publication-ref="{{ e.published_tender_ref }}"
+	data-schedule-key="{{ e.schedule_key }}"
+	data-bid-id="{{ e.bid_id or '' }}"
+	data-bid-sealed="{{ e.bid_sealed or 0 }}"
+	data-active-offer-id="{{ e.active_offer_id or 'main' }}"
+	data-active-lot-id="{{ e.active_lot_id or '' }}"
+	data-workspace-url="{{ e.workspace_url }}"
+	data-section-url="{{ e.section_url }}"
+	data-review-url="{{ e.review_url }}"
+	data-continue-url="{{ e.continue_url }}"
+	data-is-recurrent="{{ is_recurrent or 0 }}">
+	{% include "templates/includes/kt_bidder_portal_nav.html" %}
+
+	<div class="kt-a2-shell">
+		{% include "templates/includes/kt_bidder_workspace_sidebar.html" %}
+
+		<main class="kt-a2-main">
+			<div class="kt-ps-canvas">
+				<header class="kt-ps-editor-head">
+					<div>
+						<h1 class="kt-ps-title" data-testid="kt-ps-editor-title">{{ e.schedule_title }}</h1>
+						<p class="kt-ps-lede" data-testid="kt-ps-editor-instructions">
+							{% if is_recurrent %}
+							{{ _("Enter period prices for each recurrent cost item. Quantities and descriptions are fixed by the tender.") }}
+							{% else %}
+							{{ _("Enter your unit prices and origin for each item. Quantities and descriptions are fixed by the tender.") }}
+							{% endif %}
+						</p>
+					</div>
+					<div class="kt-ps-editor-progress" data-testid="kt-ps-editor-progress"
+						data-progress-started="{{ prog.started or 0 }}"
+						data-progress-total="{{ prog.total or 0 }}">
+						<span class="kt-ps-progress-card__label">{{ _("Pricing Progress") }}</span>
+						<div class="kt-ps-row-progress" style="justify-content: flex-end; margin-top: 0.35rem;">
+							<div class="kt-ps-row-progress__bar kt-ps-row-progress__bar--wide" aria-hidden="true">
+								{% set row_pct = prog.progress_percent if prog.progress_percent is defined else (((prog.started or 0) * 100 / prog.total) if prog.total else 0) %}
+								<span data-testid="kt-ps-editor-progress-fill" style="width: {{ row_pct }}%; background:#000;"></span>
+							</div>
+							<strong class="kt-ps-mono" data-testid="kt-ps-editor-progress-label">
+								{{ prog.progress_label or "0 of 0" }} {{ _("items") }}
+							</strong>
+						</div>
+					</div>
+				</header>
+
+				<section class="kt-ps-bento" data-testid="kt-ps-editor-panel">
+					<div class="kt-ps-table-wrap">
+						<table class="kt-ps-table kt-ps-editor-table" data-testid="kt-ps-lines-table">
+							<thead>
+								<tr>
+									<th>{{ _("Item") }}</th>
+									<th>{{ _("Description") }}</th>
+									<th class="kt-ps-center">{{ _("Qty") }}</th>
+									<th class="kt-ps-center">{{ _("Unit") }}</th>
+									{% if e.show_country_column %}
+									<th>{{ _("Country of Origin") }}</th>
+									{% endif %}
+									<th>{{ _("Currency") }}</th>
+									{% if is_recurrent %}
+										{% for pk in e.periods %}
+										<th class="kt-ps-right">{{ e.period_labels.get(pk, pk) }}</th>
+										{% endfor %}
+									{% else %}
+									<th class="kt-ps-right">{{ _("Unit Price") }}</th>
+									<th class="kt-ps-right">{{ _("Total") }}</th>
+									{% endif %}
+								</tr>
+							</thead>
+							<tbody data-testid="kt-ps-lines-tbody">
+								{% for row in e.rows %}
+								<tr data-testid="kt-ps-line-row"
+									data-line-id="{{ row.line_id }}"
+									data-required="{{ row.required }}"
+									class="kt-ps-line-row{% if row.errors %} is-error{% endif %}">
+									<td class="kt-ps-mono" data-testid="kt-ps-line-ref">{{ row.display_reference }}</td>
+									<td>
+										<span data-testid="kt-ps-line-desc">{{ row.description }}</span>
+										{% if row.required %}<span class="kt-ps-required-dot" title="{{ _('Required') }}" aria-hidden="true"></span>{% endif %}
+									</td>
+									<td class="kt-ps-center" data-testid="kt-ps-line-qty">{{ row.quantity }}</td>
+									<td class="kt-ps-center">{{ row.unit }}</td>
+									{% if e.show_country_column %}
+									<td>
+										{% if row.country_of_origin_required %}
+										<select class="kt-ps-input" data-field="country_of_origin"
+											data-testid="kt-ps-country"
+											{% if e.bid_sealed %}disabled{% endif %}>
+											<option value="">{{ _("Select Origin…") }}</option>
+											{% for c in e.countries %}
+											<option value="{{ c }}"{% if row.country_of_origin == c %} selected{% endif %}>{{ c }}</option>
+											{% endfor %}
+										</select>
+										{% else %}
+										<span class="kt-ps-muted">—</span>
+										{% endif %}
+									</td>
+									{% endif %}
+									<td>
+										<select class="kt-ps-input" data-field="currency"
+											data-testid="kt-ps-currency"
+											{% if e.bid_sealed %}disabled{% endif %}>
+											{% for cur in row.permitted_currencies %}
+											<option value="{{ cur }}"{% if row.currency == cur or (not row.currency and loop.first) %} selected{% endif %}>{{ cur }}</option>
+											{% endfor %}
+										</select>
+									</td>
+									{% if is_recurrent %}
+										{% for pk in e.periods %}
+										<td class="kt-ps-right">
+											<input class="kt-ps-input kt-ps-input--money" type="text"
+												data-field="period_price" data-period="{{ pk }}"
+												data-testid="kt-ps-period-price"
+												inputmode="decimal"
+												placeholder="0.00"
+												value="{{ row.period_prices_display.get(pk, row.period_prices.get(pk, '')) }}"
+												{% if e.bid_sealed %}disabled{% endif %} />
+										</td>
+										{% endfor %}
+									{% else %}
+									<td class="kt-ps-right">
+										<input class="kt-ps-input kt-ps-input--money" type="text"
+											data-field="unit_price"
+											data-testid="kt-ps-unit-price"
+											inputmode="decimal"
+											placeholder="0.00"
+											value="{{ row.unit_price_display or '' }}"
+											{% if e.bid_sealed %}disabled{% endif %} />
+									</td>
+									<td class="kt-ps-right kt-ps-line-total" data-testid="kt-ps-line-total"
+										data-qty="{{ row.quantity }}">{{ row.line_total_display or "—" }}</td>
+									{% endif %}
+								</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+					</div>
+				</section>
+
+				<div class="kt-ps-callout" data-testid="kt-ps-editor-callout">
+					<span class="material-symbols-outlined" aria-hidden="true">info</span>
+					<div>
+						<strong>{{ _("Electronic Ledger Validation") }}</strong>
+						<p>{{ _("The Total column is auto-calculated from unit prices and quantities. Mandatory items marked with a red dot must be priced before you can complete this section.") }}</p>
+					</div>
+				</div>
+			</div>
+		</main>
+	</div>
+
+	<footer class="kt-ps-foot" data-testid="kt-ps-editor-footer">
+		<a class="kt-ps-btn kt-ps-btn--secondary" href="{{ e.section_url }}" data-testid="kt-ps-editor-back">
+			<span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+			{{ _("Back to Price Schedule") }}
+		</a>
+		<div class="kt-ps-foot-actions">
+			<button type="button" class="kt-ps-btn kt-ps-btn--secondary" data-testid="kt-ps-save-draft"
+				{% if e.bid_sealed %}disabled{% endif %}>
+				<span class="material-symbols-outlined" aria-hidden="true">save</span>
+				{{ _("Save draft") }}
+			</button>
+			<button type="button" class="kt-ps-btn kt-ps-btn--primary" data-testid="kt-ps-editor-continue"
+				{% if e.bid_sealed %}disabled{% endif %}>
+				{{ _("Continue") }}
+				<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+			</button>
+		</div>
+	</footer>
+	<div class="kt-ps-toast" data-testid="kt-ps-toast" role="status" hidden></div>
+</div>
+{% endblock %}

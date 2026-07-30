@@ -1,0 +1,443 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>KenTender - Technical Proposal &amp; Implementation Plan</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "surface-bright": "#f7f9fb",
+                  "primary": "#000000",
+                  "tertiary-fixed-dim": "#adc8f3",
+                  "surface-container-high": "#e6e8ea",
+                  "on-surface": "#191c1e",
+                  "surface-container-lowest": "#ffffff",
+                  "surface-dim": "#d8dadc",
+                  "on-error-container": "#93000a",
+                  "outline": "#75777d",
+                  "on-error": "#ffffff",
+                  "surface-container": "#eceef0",
+                  "outline-subtle": "#c4c6cf",
+                  "tertiary-container": "#001c3a",
+                  "on-tertiary-fixed-variant": "#2d486c",
+                  "on-primary-container": "#77859b",
+                  "secondary-fixed": "#d5e3fc",
+                  "status-pending": "#92400e",
+                  "secondary-container": "#d2e1fa",
+                  "inverse-on-surface": "#eff1f3",
+                  "status-error": "#ba1a1a",
+                  "surface-container-highest": "#e0e3e5",
+                  "status-pending-bg": "#fffbeb",
+                  "status-approved": "#065f46",
+                  "tertiary-fixed": "#d4e3ff",
+                  "on-surface-variant": "#44474c",
+                  "on-secondary-fixed": "#0d1c2e",
+                  "on-tertiary-container": "#6b85ac",
+                  "on-secondary-container": "#556379",
+                  "primary-fixed": "#d6e3fd",
+                  "surface-tint": "#525f74",
+                  "on-primary-fixed-variant": "#3a475c",
+                  "background": "#f7f9fb",
+                  "on-tertiary": "#ffffff",
+                  "outline-variant": "#c5c6cd",
+                  "error-container": "#ffdad6",
+                  "inverse-primary": "#bac7e0",
+                  "on-primary": "#ffffff",
+                  "inverse-surface": "#2d3133",
+                  "secondary-fixed-dim": "#b9c7e0",
+                  "status-approved-bg": "#ecfdf5",
+                  "on-secondary-fixed-variant": "#3a485c",
+                  "tertiary": "#000000",
+                  "on-tertiary-fixed": "#001c3a",
+                  "on-background": "#191c1e",
+                  "on-secondary": "#ffffff",
+                  "surface-variant": "#e0e3e5",
+                  "status-error-bg": "#fff1f2",
+                  "surface": "#f7f9fb",
+                  "secondary": "#515f74",
+                  "error": "#ba1a1a",
+                  "surface-container-low": "#f2f4f6",
+                  "primary-container": "#0e1c2e",
+                  "outline-strong": "#74777f",
+                  "on-primary-fixed": "#0e1c2e",
+                  "primary-fixed-dim": "#bac7e0"
+          },
+          "borderRadius": {
+                  "DEFAULT": "0.125rem",
+                  "lg": "0.25rem",
+                  "xl": "0.5rem",
+                  "full": "0.75rem"
+          },
+          "spacing": {
+                  "container-padding": "16px",
+                  "gap-component": "8px",
+                  "max-width": "1280px",
+                  "sidebar-width": "256px",
+                  "gutter": "12px",
+                  "unit": "4px"
+          },
+          "fontFamily": {
+                  "label-sm": ["JetBrains Mono"],
+                  "body-md": ["Public Sans"],
+                  "body-lg": ["Public Sans"],
+                  "label-md": ["JetBrains Mono"],
+                  "headline-md": ["Public Sans"],
+                  "display": ["Public Sans"],
+                  "headline-lg": ["Public Sans"]
+          },
+          "fontSize": {
+                  "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                  "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                  "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                  "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                  "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                  "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                  "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    body {
+      font-family: 'Public Sans', sans-serif;
+      background-color: #f7f9fb;
+    }
+    .bento-card {
+      background: #ffffff;
+      border: 1px solid #c4c6cf;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #c4c6cf;
+    }
+  </style>
+</head>
+<body class="text-on-surface">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-container-padding h-14 bg-surface-container-lowest border-b border-outline-subtle">
+<div class="flex items-center gap-6">
+<span class="font-display text-display text-primary tracking-tighter text-[24px]">KenTender</span>
+<nav class="hidden md:flex gap-4">
+<a class="font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low px-3 py-1 rounded transition-colors" href="#">Tenders</a>
+<a class="font-label-md text-label-md text-primary border-b-2 border-primary font-bold px-3 py-1" href="#">My Bids</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low px-3 py-1 rounded transition-colors" href="#">Clarifications</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full">help_outline</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden border border-outline-subtle">
+<img class="w-full h-full object-cover" data-alt="A professional corporate headshot of a procurement officer for a government digital portal, set against a clean, blurred office background. The style is sharp, high-contrast, and clinical, reflecting the efficiency and transparency of the KenTender electronic system. Lighting is bright and even, mimicking a professional studio setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBE7IqvmbVj0XQlopWvybgsD79BZ95QWmP51J_AZo8E4FWJL65m7_EjY4rjMt3D88DRG9G2FxNpUxp6wJudhlolqX6di6XR2Gf2FA9CY5pQWP2lXLPW6-_4i1CmXg6gpfMUAt9g28OMWUA33aO6bPETG0HgIMNIGG0CIwQSQjQCAvEQja1hld68wCLO2uZ1bcjNK2hbsDISKuDyaOy5SsSMWYTAgHyXMOmYPdhpmBM9BFSg4cLyOZYaQA">
+</div>
+</div>
+</header>
+<!-- Side Navigation Bar -->
+<aside class="fixed left-0 top-14 bottom-0 w-sidebar-width z-40 flex flex-col bg-surface-container-low border-r border-outline-subtle">
+<div class="p-4 border-b border-outline-subtle">
+<h2 class="font-headline-md text-[16px] font-bold text-primary truncate">Tender #KT-2024-089</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Ref: ICT/092/2024</p>
+</div>
+<nav class="flex-1 overflow-y-auto custom-scrollbar py-2">
+<div class="px-2 py-1">
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container transition-all rounded group" href="#">
+<span class="material-symbols-outlined">fact_check</span>
+<span class="font-label-md text-label-md">Checklist</span>
+</a>
+</div>
+<div class="px-2 py-1">
+<a class="flex items-center gap-3 p-3 bg-surface-container-highest text-primary border-r-4 border-primary font-bold translate-x-1 transition-transform rounded" href="#">
+<span class="material-symbols-outlined">edit_document</span>
+<span class="font-label-md text-label-md">Prepare Bid</span>
+</a>
+</div>
+<div class="px-2 py-1">
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container transition-all rounded" href="#">
+<span class="material-symbols-outlined">visibility</span>
+<span class="font-label-md text-label-md">Review</span>
+</a>
+</div>
+<div class="px-2 py-1">
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container transition-all rounded" href="#">
+<span class="material-symbols-outlined">send</span>
+<span class="font-label-md text-label-md">Submit</span>
+</a>
+</div>
+</nav>
+<div class="p-4 border-t border-outline-subtle">
+<button class="w-full py-2 bg-primary text-on-primary font-label-md text-label-md rounded flex items-center justify-center gap-2 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">download</span>
+        Download RFQ
+      </button>
+</div>
+<footer class="p-2 bg-surface-container-low border-t border-outline-subtle">
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container transition-all rounded" href="#">
+<span class="material-symbols-outlined">support_agent</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container transition-all rounded" href="#">
+<span class="material-symbols-outlined">exit_to_app</span>
+<span class="font-label-md text-label-md">Exit Workspace</span>
+</a>
+</footer>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-sidebar-width mt-14 mb-16 p-8 max-w-[1280px]" style="opacity: 1; transition: opacity 0.5s ease-in-out;">
+<!-- Header Section -->
+<section class="flex justify-between items-start mb-8">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-primary mb-1">Technical Proposal and Implementation Plan</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">
+          Explain how you will deliver, implement, test and hand over the proposed system.
+        </p>
+</div>
+<div class="bento-card p-4 min-w-[240px]">
+<div class="flex justify-between items-center mb-2">
+<span class="font-label-md text-label-md text-on-surface-variant">SUBSECTION PROGRESS</span>
+<span class="font-label-md text-label-md font-bold text-primary">33%</span>
+</div>
+<div class="w-full bg-surface-container-high h-2 rounded-full mb-2">
+<div class="bg-primary h-2 rounded-full" style="width: 33%"></div>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">2 of 6 required subsections complete</p>
+</div>
+</section>
+<!-- Content Bento Grid -->
+<div class="grid grid-cols-12 gap-gap-component">
+<!-- Main Table Container -->
+<div class="col-span-12 bento-card overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-subtle">
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Subsection</th>
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">What to provide</th>
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Requirement</th>
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Status</th>
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-subtle">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-bright transition-colors" style="transform: translateX(0px); transition: transform 0.2s ease-out;">
+<td class="px-4 py-4">
+<p class="font-body-lg font-semibold text-primary">Technical approach</p>
+</td>
+<td class="px-4 py-4">
+<p class="font-body-md text-on-surface-variant">Proposed solution and delivery methodology</p>
+</td>
+<td class="px-4 py-4">
+<span class="px-2 py-1 bg-surface-container text-on-surface font-label-sm text-label-sm rounded uppercase">Required</span>
+</td>
+<td class="px-4 py-4">
+<div class="inline-flex items-center px-2 py-1 bg-status-approved-bg text-status-approved rounded">
+<span class="status-dot bg-status-approved"></span>
+<span class="font-label-sm text-label-sm font-bold">COMPLETE</span>
+</div>
+</td>
+<td class="px-4 py-4 text-right">
+<button class="font-label-md text-label-md font-bold text-primary hover:underline">Review</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-bright transition-colors" style="transform: translateX(0px); transition: transform 0.2s ease-out;">
+<td class="px-4 py-4">
+<p class="font-body-lg font-semibold text-primary">Implementation work plan</p>
+</td>
+<td class="px-4 py-4">
+<p class="font-body-md text-on-surface-variant">Phases, deliverables and milestones</p>
+</td>
+<td class="px-4 py-4">
+<span class="px-2 py-1 bg-surface-container text-on-surface font-label-sm text-label-sm rounded uppercase">Required</span>
+</td>
+<td class="px-4 py-4">
+<div class="inline-flex items-center px-2 py-1 bg-secondary-container text-on-secondary-container rounded">
+<span class="status-dot bg-secondary"></span>
+<span class="font-label-sm text-label-sm font-bold">IN PROGRESS</span>
+</div>
+</td>
+<td class="px-4 py-4 text-right">
+<button class="font-label-md text-label-md font-bold text-primary hover:underline">Continue</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="px-4 py-4">
+<p class="font-body-lg font-semibold text-primary">Project organization and coordination</p>
+</td>
+<td class="px-4 py-4">
+<p class="font-body-md text-on-surface-variant">Delivery responsibilities and coordination</p>
+</td>
+<td class="px-4 py-4">
+<span class="px-2 py-1 bg-surface-container text-on-surface font-label-sm text-label-sm rounded uppercase">Required</span>
+</td>
+<td class="px-4 py-4">
+<div class="inline-flex items-center px-2 py-1 bg-surface-container-high text-on-surface-variant rounded">
+<span class="status-dot bg-outline"></span>
+<span class="font-label-sm text-label-sm font-bold">NOT STARTED</span>
+</div>
+</td>
+<td class="px-4 py-4 text-right">
+<button class="font-label-md text-label-md font-bold text-primary hover:underline">Start</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="px-4 py-4">
+<p class="font-body-lg font-semibold text-primary">Quality, testing and acceptance</p>
+</td>
+<td class="px-4 py-4">
+<p class="font-body-md text-on-surface-variant">Quality assurance, testing and commissioning</p>
+</td>
+<td class="px-4 py-4">
+<span class="px-2 py-1 bg-surface-container text-on-surface font-label-sm text-label-sm rounded uppercase">Required</span>
+</td>
+<td class="px-4 py-4">
+<div class="inline-flex items-center px-2 py-1 bg-surface-container-high text-on-surface-variant rounded">
+<span class="status-dot bg-outline"></span>
+<span class="font-label-sm text-label-sm font-bold">NOT STARTED</span>
+</div>
+</td>
+<td class="px-4 py-4 text-right">
+<button class="font-label-md text-label-md font-bold text-primary hover:underline">Start</button>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="px-4 py-4">
+<p class="font-body-lg font-semibold text-primary">Transition and knowledge transfer</p>
+</td>
+<td class="px-4 py-4">
+<p class="font-body-md text-on-surface-variant">Migration, training and handover</p>
+</td>
+<td class="px-4 py-4">
+<span class="px-2 py-1 bg-surface-container-lowest border border-outline-subtle text-on-surface-variant font-label-sm text-label-sm rounded uppercase italic">Optional</span>
+</td>
+<td class="px-4 py-4">
+<div class="inline-flex items-center px-2 py-1 bg-surface-container-high text-on-surface-variant rounded">
+<span class="status-dot bg-outline"></span>
+<span class="font-label-sm text-label-sm font-bold">NOT STARTED</span>
+</div>
+</td>
+<td class="px-4 py-4 text-right">
+<button class="font-label-md text-label-md font-bold text-primary hover:underline">Start</button>
+</td>
+</tr>
+<!-- Row 6 -->
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="px-4 py-4">
+<p class="font-body-lg font-semibold text-primary">Risks, assumptions and dependencies</p>
+</td>
+<td class="px-4 py-4">
+<p class="font-body-md text-on-surface-variant">Delivery risks and required inputs</p>
+</td>
+<td class="px-4 py-4">
+<span class="px-2 py-1 bg-surface-container text-on-surface font-label-sm text-label-sm rounded uppercase">Required</span>
+</td>
+<td class="px-4 py-4">
+<div class="inline-flex items-center px-2 py-1 bg-status-error-bg text-status-error rounded">
+<span class="status-dot bg-status-error animate-pulse"></span>
+<span class="font-label-sm text-label-sm font-bold">NEEDS ATTENTION</span>
+</div>
+</td>
+<td class="px-4 py-4 text-right">
+<button class="font-label-md text-label-md font-bold text-status-error hover:underline">Resolve</button>
+</td>
+</tr>
+<!-- Row 7 -->
+<tr class="opacity-60 bg-surface-container-low">
+<td class="px-4 py-4">
+<p class="font-body-lg font-semibold text-on-surface-variant">Technical alternatives</p>
+</td>
+<td class="px-4 py-4">
+<p class="font-body-md text-on-surface-variant">Alternative solution information</p>
+</td>
+<td class="px-4 py-4">
+<span class="px-2 py-1 border border-outline-subtle text-on-surface-variant font-label-sm text-label-sm rounded uppercase italic">Conditional</span>
+</td>
+<td class="px-4 py-4">
+<div class="inline-flex items-center px-2 py-1 text-outline font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] mr-1">block</span>
+                    NOT APPLICABLE
+                  </div>
+</td>
+<td class="px-4 py-4 text-right">
+<span class="font-label-md text-label-md text-outline">—</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Quick Guidance Module -->
+
+<!-- System Health Indicator -->
+
+</div>
+</main>
+<!-- Sticky Footer Actions -->
+<footer class="fixed bottom-0 right-0 left-sidebar-width z-50 flex justify-between items-center px-container-padding h-16 bg-surface-container-lowest border-t border-outline-subtle">
+<button class="flex items-center gap-2 px-4 py-2 text-on-surface-variant hover:text-primary transition-colors group">
+<span class="material-symbols-outlined group-hover:-translate-x-1 transition-transform">arrow_back</span>
+<span class="font-label-md text-label-md">Back to Workspace</span>
+</button>
+<div class="flex items-center gap-4">
+<button class="px-6 py-2 border border-outline-strong text-on-surface font-label-md text-label-md rounded hover:bg-surface-container transition-colors">
+        Save Draft
+      </button>
+<button class="px-8 py-2 bg-primary text-on-primary font-label-md text-label-md rounded hover:opacity-90 transition-opacity flex items-center gap-2 group">
+<span class="font-label-md text-label-md">Continue</span>
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+</footer>
+<!-- System-wide Copyright / Footer component for legal (not shell) -->
+
+<script>
+    // Micro-interaction for table rows
+    document.querySelectorAll('tbody tr').forEach(row => {
+      row.addEventListener('mouseenter', () => {
+        row.style.transform = 'translateX(2px)';
+        row.style.transition = 'transform 0.2s ease-out';
+      });
+      row.addEventListener('mouseleave', () => {
+        row.style.transform = 'translateX(0)';
+      });
+    });
+
+    // Fade in effect for the main container
+    window.addEventListener('DOMContentLoaded', () => {
+      document.querySelector('main').style.opacity = '0';
+      setTimeout(() => {
+        document.querySelector('main').style.transition = 'opacity 0.5s ease-in-out';
+        document.querySelector('main').style.opacity = '1';
+      }, 100);
+    });
+  </script>
+
+
+</body></html>

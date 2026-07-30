@@ -1,0 +1,401 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Project Organization and Coordination - KenTender</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100..900&amp;family=Public+Sans:wght@100..900&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#d4e3ff",
+                    "error": "#ba1a1a",
+                    "on-tertiary-fixed-variant": "#2d486c",
+                    "on-primary": "#ffffff",
+                    "tertiary-container": "#001c3a",
+                    "on-background": "#191c1e",
+                    "status-approved-bg": "#ecfdf5",
+                    "surface-bright": "#f7f9fb",
+                    "secondary-container": "#d2e1fa",
+                    "secondary": "#515f74",
+                    "on-secondary-container": "#556379",
+                    "status-pending": "#92400e",
+                    "on-secondary-fixed-variant": "#3a485c",
+                    "status-pending-bg": "#fffbeb",
+                    "on-surface-variant": "#44474c",
+                    "surface-container-low": "#f2f4f6",
+                    "inverse-primary": "#bac7e0",
+                    "surface-variant": "#e0e3e5",
+                    "background": "#f7f9fb",
+                    "surface-container": "#eceef0",
+                    "on-surface": "#191c1e",
+                    "on-tertiary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "primary-container": "#0e1c2e",
+                    "status-error": "#ba1a1a",
+                    "on-primary-fixed": "#0e1c2e",
+                    "outline-subtle": "#c4c6cf",
+                    "surface-tint": "#525f74",
+                    "on-error": "#ffffff",
+                    "on-primary-fixed-variant": "#3a475c",
+                    "inverse-on-surface": "#eff1f3",
+                    "surface": "#f7f9fb",
+                    "error-container": "#ffdad6",
+                    "tertiary-fixed-dim": "#adc8f3",
+                    "outline-strong": "#74777f",
+                    "surface-dim": "#d8dadc",
+                    "inverse-surface": "#2d3133",
+                    "status-error-bg": "#fff1f2",
+                    "primary-fixed-dim": "#bac7e0",
+                    "surface-container-highest": "#e0e3e5",
+                    "on-tertiary-fixed": "#001c3a",
+                    "surface-container-high": "#e6e8ea",
+                    "on-secondary-fixed": "#0d1c2e",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-fixed-dim": "#b9c7e0",
+                    "primary": "#000000",
+                    "status-approved": "#065f46",
+                    "outline-variant": "#c5c6cd",
+                    "tertiary": "#000000",
+                    "secondary-fixed": "#d5e3fc",
+                    "primary-fixed": "#d6e3fd",
+                    "on-primary-container": "#77859b",
+                    "on-secondary": "#ffffff",
+                    "outline": "#75777d",
+                    "on-tertiary-container": "#6b85ac"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "gutter": "12px",
+                    "unit": "4px",
+                    "sidebar-width": "256px",
+                    "max-width": "1280px",
+                    "container-padding": "16px",
+                    "gap-component": "8px"
+            },
+            "fontFamily": {
+                    "label-sm": ["JetBrains Mono"],
+                    "body-lg": ["Public Sans"],
+                    "label-md": ["JetBrains Mono"],
+                    "display": ["Public Sans"],
+                    "body-md": ["Public Sans"],
+                    "headline-lg": ["Public Sans"],
+                    "headline-md": ["Public Sans"]
+            },
+            "fontSize": {
+                    "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                    "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body {
+            background-color: #f7f9fb;
+            color: #191c1e;
+        }
+        .bento-card {
+            background: #ffffff;
+            border: 1px solid #c4c6cf;
+            border-radius: 0.125rem;
+            transition: all 0.2s ease;
+        }
+        .bento-card:hover {
+            border-color: #75777d;
+        }
+        .accent-bar {
+            width: 4px;
+            background-color: #000000;
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md overflow-x-hidden">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-container-padding h-14 bg-surface-container-lowest border-b border-outline-subtle">
+<div class="flex items-center gap-4">
+<h1 class="font-display text-display text-primary tracking-tighter">KenTender</h1>
+<div class="h-6 w-[1px] bg-outline-subtle mx-2"></div>
+<nav class="hidden md:flex items-center gap-6">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Tenders</a>
+<a class="font-label-md text-label-md text-primary border-b-2 border-primary font-bold" href="#">My Bids</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Clarifications</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined">notifications</span></button>
+<button class="p-2 hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined">help_outline</span></button>
+<div class="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden border border-outline-subtle">
+<img class="w-full h-full object-cover" data-alt="Professional headshot of a senior procurement specialist with a warm expression, wearing formal business attire against a neutral office background. Lighting is soft and professional." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgB3sz6NjJ_5iWhAtrYSjFNwCwvvL5lwF-fgPbcLgvP9GcW7fLuk_g8QsJNQQa6ulokCTVdg98ak3OLq_70OLjJ7zy1p9USTuW1qFB80Qzy3ft2C0Zk2qEyT97iuWWZzBGMwXKhEnCA7mCaaQvGbSJk5y5-80PCxZG6wDX7WinGnrcK-xhRVGKOgX29zkt8vJNgIL5aJPCBJZNT7xEa6iCoPZPdfpI_crvTeo2cGfS64gvH2NsaBCkog">
+</div>
+</div>
+</header>
+<!-- Side Navigation -->
+<aside class="fixed left-0 top-14 bottom-0 w-sidebar-width z-40 flex flex-col bg-surface-container-low border-r border-outline-subtle">
+<div class="p-6">
+<div class="flex items-center gap-3 mb-1">
+<div class="p-1.5 bg-primary text-on-primary rounded">
+<span class="material-symbols-outlined text-[20px]">account_balance</span>
+</div>
+<div>
+<h2 class="font-headline-md text-[14px] font-bold text-primary truncate">Tender #KT-2024-089</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Ref: ICT/092/2024</p>
+</div>
+</div>
+<button class="w-full mt-4 flex items-center justify-center gap-2 py-2 px-4 bg-secondary-container text-on-secondary-container font-label-md text-label-md border border-outline-variant hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-sm">download</span>
+                Download RFQ
+            </button>
+</div>
+<nav class="flex-1 px-3 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined">fact_check</span>
+<span class="font-label-md text-label-md">Checklist</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-surface-container-highest text-primary border-r-4 border-primary font-bold" href="#">
+<span class="material-symbols-outlined">edit_document</span>
+<span class="font-label-md text-label-md">Prepare Bid</span>
+</a>
+<div class="pl-10 space-y-1">
+<a class="block py-1 text-on-surface-variant hover:text-primary font-label-sm text-label-sm" href="#">Administrative</a>
+<a class="block py-1 text-primary font-bold font-label-sm text-label-sm" href="#">Technical Proposal</a>
+<a class="block py-1 text-on-surface-variant hover:text-primary font-label-sm text-label-sm" href="#">Financial Offer</a>
+</div>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined">visibility</span>
+<span class="font-label-md text-label-md">Review</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined">send</span>
+<span class="font-label-md text-label-md">Submit</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-outline-subtle p-3 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined">support_agent</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined">exit_to_app</span>
+<span class="font-label-md text-label-md">Exit Workspace</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-sidebar-width mt-14 mb-16 p-8 min-h-screen">
+<div class="max-w-max-width mx-auto">
+<!-- Breadcrumb -->
+<nav class="mb-4 flex items-center gap-2 font-label-sm text-label-sm text-on-surface-variant">
+<span class="">Workspace</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="">Bid Preparation</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="">Technical Proposal</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-primary font-bold">Project Organization and Coordination</span>
+</nav>
+<!-- Header -->
+<div class="mb-8 flex justify-between items-end">
+<div>
+<h2 class="font-display text-[28px] font-bold text-primary mb-1">Project Organization and Coordination</h2>
+<p class="text-on-surface-variant font-body-lg text-body-lg max-w-3xl">Explain how the implementation will be managed and coordinated</p>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 border border-outline-strong text-secondary font-label-md text-label-md flex items-center gap-2 hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-sm">print</span>
+                        Print View
+                    </button>
+<button class="px-4 py-2 bg-primary text-on-primary font-label-md text-label-md flex items-center gap-2 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-sm">check_circle</span>
+                        Mark Section Complete
+                    </button>
+</div>
+</div>
+<!-- Content Bento Grid -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Section 1: Delivery Management -->
+<section class="col-span-12 bento-card p-6 flex gap-6">
+<div class="accent-bar h-auto"></div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-4">
+<h3 class="font-headline-md text-headline-md flex items-center gap-3">
+                                01 Delivery Management Approach
+                                <span class="bg-error-container text-on-error-container text-[10px] px-2 py-0.5 font-bold tracking-wider rounded-sm">REQUIRED</span>
+</h3>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-sm">history</span>
+                                Last edited 2 hours ago
+                            </div>
+</div>
+<p class="mb-4 text-on-surface-variant italic font-body-md">Describe your management approach, including periodic reporting, internal and external communication protocols, and the decision-making hierarchy.</p>
+<div class="relative group">
+<textarea class="w-full h-48 bg-surface-bright border border-outline-subtle p-4 font-body-md text-body-md focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all resize-none" placeholder="Type your narrative response here..."></textarea>
+<div class="absolute bottom-4 right-4 text-outline-strong font-label-sm text-label-sm">
+                                0 / 1500 words
+                            </div>
+</div>
+</div>
+</section>
+<!-- Section 2: Project Roles -->
+<section class="col-span-12 bento-card overflow-hidden">
+<div class="p-4 bg-surface-container border-b border-outline-subtle flex justify-between items-center">
+<div class="flex items-center gap-3">
+<div class="accent-bar h-4"></div>
+<h3 class="font-label-md text-label-md uppercase tracking-wider font-bold">02 Project Roles &amp; Key Personnel</h3>
+</div>
+<button class="text-primary font-label-md text-label-md flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-sm">group_add</span>
+                            Manage Key Personnel
+                        </button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-subtle">
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase">Project Role</th>
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase">Assigned Person</th>
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase">Providing Org</th>
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase">Delivery Responsibility</th>
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase">Decision Authority</th>
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase text-center">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-subtle">
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="px-4 py-4 font-body-md text-body-md font-bold">Project Manager</td>
+<td class="px-4 py-4 font-body-md text-body-md">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-tertiary-container text-[10px] text-on-tertiary flex items-center justify-center">CO</div>
+                                            Dr. Catherine W. Odhiambo
+                                        </div>
+</td>
+<td class="px-4 py-4 font-body-md text-body-md">Prime Bidder</td>
+<td class="px-4 py-4 font-body-md text-body-md">Overall project delivery and stakeholder management</td>
+<td class="px-4 py-4">
+<span class="bg-secondary-container text-on-secondary-container text-[11px] px-2 py-0.5 rounded-full font-bold">High</span>
+</td>
+<td class="px-4 py-4 text-center">
+<button class="p-1 hover:bg-surface-container-high rounded text-on-surface-variant"><span class="material-symbols-outlined text-md">edit</span></button>
+</td>
+</tr>
+<tr class="bg-status-error-bg/30">
+<td class="px-4 py-4 font-body-md text-body-md font-bold text-error">Technical Lead</td>
+<td class="px-4 py-4">
+<div class="flex items-center gap-2 text-status-error">
+<span class="material-symbols-outlined text-[16px]">warning</span>
+<span class="italic font-label-md text-label-md">[Unassigned]</span>
+</div>
+</td>
+<td class="px-4 py-4 font-label-sm text-label-sm text-on-surface-variant italic">[Select Org]</td>
+<td class="px-4 py-4 font-label-sm text-label-sm text-error italic">Needs attention: Responsibility missing</td>
+<td class="px-4 py-4 font-label-sm text-label-sm text-error italic">Missing</td>
+<td class="px-4 py-4 text-center">
+<button class="px-3 py-1 bg-white border border-error text-error font-label-md text-label-md hover:bg-error hover:text-white transition-all">
+                                            Select Person
+                                        </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-3 bg-surface-container-low border-t border-outline-subtle flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px]">info</span>
+                        Note: Personnel must be drawn from the 'Key Personnel' profiles previously submitted in the administrative section.
+                    </div>
+</section>
+<!-- Section 3: Responsibility and Coordination Matrix -->
+<section class="col-span-12 bento-card overflow-hidden">
+<div class="p-4 bg-surface-container border-b border-outline-subtle">
+<div class="flex items-center gap-3">
+<div class="accent-bar h-4"></div>
+<h3 class="font-label-md text-label-md uppercase tracking-wider font-bold">03 Responsibility and Coordination Matrix</h3>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-subtle">
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase w-1/5">Activity or deliverable</th>
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase w-1/5">Bidder responsibility</th>
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase w-1/5">Procuring Entity responsibility</th>
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase w-1/5">Third-party responsibility</th>
+<th class="px-4 py-3 font-label-md text-label-md text-on-surface-variant uppercase w-1/5">Coordination method</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-subtle">
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="px-4 py-4 font-body-md text-body-md font-bold">Requirements Validation</td>
+<td class="px-4 py-4 font-body-md text-body-md">Conduct workshops and document specs</td>
+<td class="px-4 py-4 font-body-md text-body-md">Provide access to subject matter experts</td>
+<td class="px-4 py-4 font-body-md text-body-md text-on-surface-variant italic">N/A</td>
+<td class="px-4 py-4 font-body-md text-body-md">Weekly steering committee</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="px-4 py-4 font-body-md text-body-md font-bold">Data Migration</td>
+<td class="px-4 py-4 font-body-md text-body-md">Extract and transform data</td>
+<td class="px-4 py-4 font-body-md text-body-md">Provide source data and validate quality</td>
+<td class="px-4 py-4 font-body-md text-body-md">Legacy system vendor</td>
+<td class="px-4 py-4 font-body-md text-body-md">Technical working group</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 border-t border-outline-subtle bg-surface-bright">
+<button class="flex items-center gap-2 text-primary font-label-md text-label-md hover:bg-surface-container-low px-3 py-1 transition-all border border-dashed border-outline-strong">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                            Add Activity Line Item
+                        </button>
+</div>
+</section>
+</div>
+</div>
+</main>
+<!-- Footer Controls -->
+<footer class="fixed bottom-0 right-0 left-sidebar-width z-50 flex justify-between items-center px-container-padding h-16 bg-surface-container-lowest border-t border-outline-subtle shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+<div>
+<button class="flex items-center gap-2 text-on-surface-variant font-label-md text-label-md hover:text-primary transition-colors group">
+<span class="material-symbols-outlined transition-transform group-hover:-translate-x-1">arrow_back</span>
+                Back to Workspace
+            </button>
+</div>
+<div class="flex gap-4">
+<button class="px-6 py-2 border border-outline-strong text-on-surface font-label-md text-label-md hover:bg-surface-container transition-colors">
+                Save Draft
+            </button>
+<button class="px-6 py-2 bg-primary text-on-primary font-label-md text-label-md flex items-center gap-2 hover:opacity-90 transition-opacity">
+                Continue
+                <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+</footer>
+<!-- Interactive Layer: Notification Toast (Optional Scripting) -->
+<script>
+        // Micro-interaction for feedback
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.classList.add('active:scale-95');
+                setTimeout(() => this.classList.remove('active:scale-95'), 150);
+            });
+        });
+    </script>
+
+
+</body></html>

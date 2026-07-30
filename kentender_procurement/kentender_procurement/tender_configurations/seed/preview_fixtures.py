@@ -13,6 +13,10 @@ from kentender_procurement.tender_configurations.constants import STATUS_APPROVE
 from kentender_procurement.tender_configurations.seed.lean_preliminary_criteria import (
 	lean_preliminary_criteria_rows,
 )
+from kentender_procurement.tender_configurations.seed.lean_technical_proposal import (
+	FIXTURE_FULL as TP_FIXTURE_FULL,
+	merge_technical_proposal_into_evaluation,
+)
 from kentender_procurement.tender_configurations.seed.lean_qualification_criteria import (
 	FIXTURE_FULL,
 	merge_qualification_into_evaluation,
@@ -77,21 +81,24 @@ def _seed_bidder_facing_config(cfg_id: str):
 		]
 	)
 	doc.evaluation_setup = json.dumps(
-		merge_qualification_into_evaluation(
-			{
-				"criteria": lean_preliminary_criteria_rows()
-				+ [
-					{
-						"criterion_name": "Technical compliance for: REQ-002",
-						"stage": "Technical",
-						"evaluation_basis": "Scored",
-						"marks": "50",
-						"related_requirement_id": "REQ-002",
-						"bidder_evidence": "Required",
-					},
-				]
-			},
-			fixture=FIXTURE_FULL,
+		merge_technical_proposal_into_evaluation(
+			merge_qualification_into_evaluation(
+				{
+					"criteria": lean_preliminary_criteria_rows()
+					+ [
+						{
+							"criterion_name": "Technical compliance for: REQ-002",
+							"stage": "Technical",
+							"evaluation_basis": "Scored",
+							"marks": "50",
+							"related_requirement_id": "REQ-002",
+							"bidder_evidence": "Required",
+						},
+					]
+				},
+				fixture=FIXTURE_FULL,
+			),
+			fixture=TP_FIXTURE_FULL,
 		)
 	)
 	doc.price_schedule = json.dumps(

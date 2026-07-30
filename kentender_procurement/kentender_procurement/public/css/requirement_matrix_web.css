@@ -411,23 +411,39 @@ body:has(.kt-a4-root) .page-breadcrumbs {
 	cursor: not-allowed;
 }
 
+/*
+ * Viewport-locked action footer (Stitch / FoT contract).
+ * Do NOT use position:sticky here — sticky only pins within the content flow and
+ * appears “inline” when the page is shorter than the viewport.
+ */
 .kt-a4-foot {
-	position: sticky;
+	position: fixed;
 	bottom: 0;
-	z-index: 20;
+	left: 0;
+	right: 0;
+	z-index: 50;
+	min-height: 4rem;
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
 	gap: 0.75rem;
-	margin-top: 1rem;
+	margin: 0;
 	padding: 0.75rem 1rem;
 	background: #fff;
-	border: 1px solid var(--kt-a4-border);
-	border-radius: 0.25rem;
-	box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
+	border: 0;
+	border-top: 1px solid var(--kt-a4-border);
+	border-radius: 0;
+	box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+	box-sizing: border-box;
 }
-.kt-a4-foot-mid {
+@media (min-width: 900px) {
+	.kt-a4-foot {
+		left: var(--kt-a2-sidebar, 256px);
+	}
+}
+.kt-a4-foot-mid,
+.kt-a4-foot-copy {
 	font-size: 10px;
 	color: var(--kt-a4-outline);
 	font-family: "JetBrains Mono", ui-monospace, monospace;
@@ -438,7 +454,9 @@ body:has(.kt-a4-root) .page-breadcrumbs {
 .kt-a4-foot-actions {
 	display: flex;
 	flex-wrap: wrap;
+	align-items: center;
 	gap: 0.5rem;
+	margin-left: auto;
 }
 
 .kt-a4-btn {
@@ -481,14 +499,14 @@ body:has(.kt-a4-root) .page-breadcrumbs {
 	pointer-events: none;
 }
 
-/* 560px drawer — no dim overlay */
+/* 560px drawer — above fixed action footer */
 .kt-a4-drawer {
 	position: fixed;
 	top: 0;
 	right: 0;
 	bottom: 0;
 	width: min(560px, 100vw);
-	z-index: 40;
+	z-index: 100;
 	background: #fff;
 	border-left: 1px solid var(--kt-a4-border);
 	box-shadow: -8px 0 24px rgba(0, 0, 0, 0.08);
@@ -641,6 +659,8 @@ body:has(.kt-a4-root) .page-breadcrumbs {
 	color: var(--kt-a4-muted);
 }
 .kt-a4-field input[type="text"],
+.kt-a4-field input[type="number"],
+.kt-a4-field input[type="date"],
 .kt-a4-field textarea,
 .kt-a4-field select {
 	width: 100%;
@@ -653,10 +673,79 @@ body:has(.kt-a4-root) .page-breadcrumbs {
 	line-height: 18px;
 	background: #fff;
 	color: var(--kt-a4-ink);
+	min-height: 2.5rem;
+	box-sizing: border-box;
 }
 .kt-a4-field textarea {
 	min-height: 96px;
 	resize: vertical;
+}
+.kt-a4-checkbox {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.65rem;
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--kt-a4-ink);
+	cursor: pointer;
+}
+.kt-a4-checkbox input[type="checkbox"] {
+	width: 1.1rem;
+	height: 1.1rem;
+	min-height: 0;
+	margin-top: 0.15rem;
+	flex: 0 0 auto;
+	accent-color: #111;
+}
+.kt-a4-drawer-mode {
+	margin: 0 0 1rem;
+}
+.kt-a4-repeating-table {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+.kt-a4-repeating-table table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 13px;
+}
+.kt-a4-repeating-table th,
+.kt-a4-repeating-table td {
+	border: 1px solid var(--kt-a4-border);
+	padding: 0.35rem;
+	text-align: left;
+	vertical-align: middle;
+}
+.kt-a4-repeating-table th {
+	background: #f8f8f8;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+}
+.kt-a4-repeating-table input[type="text"] {
+	min-height: 2.25rem;
+	border: 0;
+	padding: 0.45rem 0.5rem;
+	width: 100%;
+	background: transparent;
+}
+.kt-a4-table-actions {
+	width: 5.5rem;
+	text-align: center;
+}
+.kt-a4-table-remove {
+	border: 0;
+	background: transparent;
+	color: #b42318;
+	font-size: 12px;
+	font-weight: 600;
+	cursor: pointer;
+	padding: 0.25rem 0.4rem;
+}
+.kt-a4-table-add {
+	align-self: flex-start;
 }
 .kt-a4-yesno {
 	display: flex;
@@ -818,4 +907,142 @@ body:has(.kt-a4-root) .page-breadcrumbs {
 .kt-a4-validation ul {
 	margin: 0.35rem 0 0;
 	padding-left: 1.1rem;
+}
+
+/* Lean Requirements Compliance — review KPIs + issues (Stitch 03) */
+.kt-rc-kpi-grid {
+	display: grid;
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	gap: 0.5rem;
+	margin: 0 0 1.5rem;
+}
+@media (max-width: 960px) {
+	.kt-rc-kpi-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+.kt-rc-kpi {
+	position: relative;
+	background: #fff;
+	border: 1px solid var(--kt-a4-border);
+	border-radius: 0.125rem;
+	padding: 0.85rem 1rem 0.85rem 1.15rem;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	gap: 0.35rem;
+	min-height: 5.5rem;
+	overflow: hidden;
+}
+.kt-rc-kpi::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: 4px;
+	background: #c4c6cf;
+}
+.kt-rc-kpi--complete::before {
+	background: var(--kt-a4-ok);
+}
+.kt-rc-kpi--progress::before {
+	background: #b9c7e0;
+}
+.kt-rc-kpi--attention::before {
+	background: var(--kt-a4-error);
+}
+.kt-rc-kpi--attention span,
+.kt-rc-kpi--attention strong {
+	color: var(--kt-a4-error);
+}
+.kt-rc-kpi span {
+	font-size: 10px;
+	font-family: "JetBrains Mono", ui-monospace, monospace;
+	font-weight: 500;
+	color: var(--kt-a4-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}
+.kt-rc-kpi strong {
+	font-size: 1.5rem;
+	font-weight: 700;
+	line-height: 1.2;
+	color: var(--kt-a4-ink);
+}
+.kt-rc-panel {
+	background: #fff;
+	border: 1px solid var(--kt-a4-border);
+	border-radius: 0.125rem;
+	overflow: hidden;
+	margin: 0 0 1.25rem;
+}
+.kt-rc-panel__head {
+	padding: 0.75rem 1rem;
+	border-bottom: 1px solid var(--kt-a4-border);
+	background: #f2f4f6;
+	font-size: 11px;
+	font-family: "JetBrains Mono", ui-monospace, monospace;
+	font-weight: 500;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--kt-a4-ink);
+}
+.kt-rc-panel__head--alert {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	background: #fff1f2;
+	border-bottom-color: rgba(186, 26, 26, 0.2);
+	color: var(--kt-a4-error);
+	font-weight: 700;
+}
+.kt-rc-panel__head--alert .material-symbols-outlined {
+	font-size: 16px;
+}
+.kt-rc-panel .kt-a4-table {
+	margin: 0;
+}
+.kt-rc-status-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.15rem 0.45rem;
+	border: 1px solid var(--kt-a4-border);
+	border-radius: 0.125rem;
+	background: #f2f4f6;
+	font-size: 10px;
+	font-family: "JetBrains Mono", ui-monospace, monospace;
+	font-weight: 500;
+	text-transform: none;
+	color: var(--kt-a4-muted);
+}
+.kt-rc-status-pill .kt-a4-status-dot {
+	width: 6px;
+	height: 6px;
+}
+.kt-rc-issue-text {
+	color: var(--kt-a4-error);
+	font-weight: 500;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+.kt-rc-issue-text .material-symbols-outlined {
+	font-size: 14px;
+}
+.kt-a4-btn--primary:disabled .material-symbols-outlined,
+.kt-a4-btn.is-disabled .material-symbols-outlined {
+	font-size: 16px;
+}
+.kt-a4-drawer-addendum {
+	margin: 0.35rem 0 0;
+	font-size: 13px;
+	font-weight: 600;
+	color: #b45309;
+}
+.kt-a4-toast.is-visible,
+.kt-rc-root .kt-a4-toast.is-visible {
+	opacity: 1;
+	visibility: visible;
 }

@@ -1,0 +1,64 @@
+{# Stitch 06 (Section 1) — Transition and handover narratives #}
+{% set questions = cfg.questions or [] %}
+{% set narratives = bucket.narratives or {} %}
+
+<section class="kt-tp-block-section" data-testid="kt-tp-transition">
+	<div class="kt-s600-section-head">
+		<div>
+			<h2>{{ _("Cutover, continuity and handover") }}</h2>
+			<p class="kt-s600-help">{{ _("Plan cutover, service continuity and operational handover.") }}</p>
+		</div>
+		<div class="kt-s600-progress-box" data-testid="kt-tp-transition-progress">
+			<span class="kt-s600-eyebrow">{{ _("Topics complete") }}</span>
+			<strong data-testid="kt-tp-transition-progress-text">{{ sub.progress_text }}</strong>
+		</div>
+	</div>
+
+	<div class="kt-tp-card-stack kt-tp-card-grid" data-testid="kt-tp-question-cards">
+		{% for q in questions %}
+		<section class="kt-tp-card" data-testid="kt-tp-question-card" data-question-row data-question-id="{{ q.question_id }}">
+			<div class="kt-tp-card__head">
+				<span class="kt-tp-badge" data-required="{{ 1 if q.required else 0 }}">
+					{{ _("Required") if q.required else _("Optional") }}
+				</span>
+				<h3>{{ q.title }}</h3>
+			</div>
+			<textarea class="kt-tp-textarea" data-question="{{ q.question_id }}" rows="6"
+				placeholder="{{ _('Type your response here…') }}"
+				{% if sub.read_only %}disabled{% endif %}>{{ narratives.get(q.question_id) or "" }}</textarea>
+		</section>
+		{% endfor %}
+	</div>
+
+	{# Stitch 06 §3 — Handover deliverables checklist #}
+	{% set handover = bucket.handover_deliverables or [] %}
+	<section class="kt-s600-card kt-s600-card--flush" data-testid="kt-tp-handover">
+		<div class="kt-s600-card__head">
+			<h3>{{ _("Handover deliverables") }}</h3>
+		</div>
+		{% if handover %}
+		<ul class="kt-tp-handover-list" data-testid="kt-tp-handover-list">
+			{% for row in handover %}
+			<li class="kt-tp-handover-item" data-handover-row data-deliverable-id="{{ row.deliverable_id }}">
+				<label>
+					<input type="checkbox" data-handover-provided
+						{% if row.provided %}checked{% endif %}
+						{% if sub.read_only %}disabled{% endif %}
+						data-testid="kt-tp-handover-check" />
+					<span class="kt-tp-handover-title">{{ row.title }}</span>
+					{% if row.required %}
+					<span class="kt-tp-badge" data-required="1">{{ _("Required") }}</span>
+					{% else %}
+					<span class="kt-tp-badge" data-required="0">{{ _("Optional") }}</span>
+					{% endif %}
+				</label>
+				<input type="hidden" data-handover-title value="{{ row.title or '' }}" />
+				<input type="hidden" data-handover-required value="{{ 1 if row.required else 0 }}" />
+			</li>
+			{% endfor %}
+		</ul>
+		{% else %}
+		<p class="kt-s600-help">{{ _("No handover deliverables are configured for this tender.") }}</p>
+		{% endif %}
+	</section>
+</section>

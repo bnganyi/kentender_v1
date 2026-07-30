@@ -1,0 +1,466 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>KenTender - Quality, Testing and Acceptance</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-fixed-dim": "#adc8f3",
+                      "surface-container-low": "#f2f4f6",
+                      "status-approved": "#065f46",
+                      "secondary-fixed": "#d5e3fc",
+                      "error": "#ba1a1a",
+                      "on-error-container": "#93000a",
+                      "inverse-on-surface": "#eff1f3",
+                      "on-primary-fixed": "#0e1c2e",
+                      "error-container": "#ffdad6",
+                      "tertiary-container": "#001c3a",
+                      "on-background": "#191c1e",
+                      "outline-variant": "#c5c6cd",
+                      "surface-container-highest": "#e0e3e5",
+                      "on-secondary-container": "#556379",
+                      "on-tertiary": "#ffffff",
+                      "tertiary": "#000000",
+                      "secondary-container": "#d2e1fa",
+                      "on-error": "#ffffff",
+                      "inverse-surface": "#2d3133",
+                      "status-pending-bg": "#fffbeb",
+                      "on-primary-fixed-variant": "#3a475c",
+                      "surface-tint": "#525f74",
+                      "surface-container-high": "#e6e8ea",
+                      "tertiary-fixed": "#d4e3ff",
+                      "inverse-primary": "#bac7e0",
+                      "background": "#f7f9fb",
+                      "on-primary-container": "#77859b",
+                      "status-error-bg": "#fff1f2",
+                      "outline-subtle": "#c4c6cf",
+                      "surface-variant": "#e0e3e5",
+                      "status-approved-bg": "#ecfdf5",
+                      "on-secondary": "#ffffff",
+                      "surface-container-lowest": "#ffffff",
+                      "status-pending": "#92400e",
+                      "secondary-fixed-dim": "#b9c7e0",
+                      "surface-container": "#eceef0",
+                      "primary": "#000000",
+                      "secondary": "#515f74",
+                      "on-surface-variant": "#44474c",
+                      "on-primary": "#ffffff",
+                      "surface-dim": "#d8dadc",
+                      "outline-strong": "#74777f",
+                      "surface-bright": "#f7f9fb",
+                      "surface": "#f7f9fb",
+                      "on-tertiary-fixed-variant": "#2d486c",
+                      "primary-fixed-dim": "#bac7e0",
+                      "outline": "#75777d",
+                      "on-tertiary-fixed": "#001c3a",
+                      "on-secondary-fixed": "#0d1c2e",
+                      "primary-fixed": "#d6e3fd",
+                      "on-secondary-fixed-variant": "#3a485c",
+                      "on-tertiary-container": "#6b85ac",
+                      "on-surface": "#191c1e",
+                      "status-error": "#ba1a1a",
+                      "primary-container": "#0e1c2e"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "gutter": "12px",
+                      "unit": "4px",
+                      "gap-component": "8px",
+                      "sidebar-width": "256px",
+                      "max-width": "1280px",
+                      "container-padding": "16px"
+              },
+              "fontFamily": {
+                      "label-md": ["JetBrains Mono"],
+                      "body-md": ["Public Sans"],
+                      "body-lg": ["Public Sans"],
+                      "display": ["Public Sans"],
+                      "headline-md": ["Public Sans"],
+                      "label-sm": ["JetBrains Mono"],
+                      "headline-lg": ["Public Sans"]
+              },
+              "fontSize": {
+                      "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                      "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                      "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                      "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                      "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .sidebar-active-bar {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: #000000;
+        }
+        .high-density-table tr {
+            height: 40px;
+        }
+        .bento-card {
+            border: 1px solid #c4c6cf;
+            transition: all 0.2s ease;
+        }
+        .bento-card:hover {
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-hidden flex flex-col h-screen">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-container-padding h-14 bg-surface-container-lowest border-b border-outline-subtle">
+<div class="flex items-center gap-6">
+<span class="font-display text-display text-primary tracking-tighter">KenTender</span>
+<nav class="hidden md:flex items-center gap-6 h-full">
+<a class="font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors px-2 py-1" href="#">Tenders</a>
+<a class="font-label-md text-label-md text-primary border-b-2 border-primary font-bold px-2 py-1" href="#">My Bids</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-low transition-colors px-2 py-1" href="#">Clarifications</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full">help_outline</button>
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center border border-outline-subtle overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional bidder profile avatar for an electronic procurement system, featuring a sleek, corporate-themed minimalist headshot icon in a clean light-mode environment with soft navy and slate accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6DSFQDD5eJ-ggdjpVIyMkPGxrtlEuHBfsByiPs1J8nX6_1Toi03pznzy5Z8A9dL1F2eSpiLsk_Y859gp087Y9aAF8mbGzoVcKlfPYDuPHkpdYcNgiqTN4flcdAaV0RGevVDbgkO_RMWkYrQn7jn76oCv_ipbJFncIr-nknFCjdSMJDITZAFfyCFSl1_vUc4TZiAUUVcWliACAufQO2OIy6eujsIYXNgreg7y_O0LxzINh3Wi7Zi68cg">
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-14 bottom-0 w-sidebar-width z-40 flex flex-col bg-surface-container-low border-r border-outline-subtle">
+<div class="p-4 border-b border-outline-subtle">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-10 h-10 bg-primary flex items-center justify-center rounded">
+<span class="material-symbols-outlined text-on-primary">fact_check</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md font-bold text-primary">KT-2024-089</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">ICT/092/2024</p>
+</div>
+</div>
+<button class="w-full py-2 px-3 bg-surface-container-highest text-primary font-label-md text-label-md flex items-center justify-center gap-2 border border-outline-subtle hover:bg-surface-container transition-all">
+<span class="material-symbols-outlined text-[16px]">download</span>
+                Download RFQ
+            </button>
+</div>
+<nav class="flex-1 py-4 overflow-y-auto">
+<div class="px-3 mb-2 text-label-sm text-on-surface-variant font-bold opacity-60">MAIN WORKSPACE</div>
+<a class="relative flex items-center px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined mr-3">fact_check</span>
+<span class="font-label-md text-label-md">Checklist</span>
+</a>
+<div class="relative flex flex-col">
+<div class="flex items-center px-4 py-3 bg-surface-container-highest text-primary font-bold translate-x-1 transition-transform">
+<span class="material-symbols-outlined mr-3">edit_document</span>
+<span class="font-label-md text-label-md">Prepare Bid</span>
+<div class="sidebar-active-bar"></div>
+</div>
+<!-- Sub-items -->
+<div class="ml-12 flex flex-col border-l border-outline-variant my-1">
+<a class="px-4 py-2 text-on-surface-variant hover:text-primary text-body-md" href="#">Eligibility Docs</a>
+<a class="px-4 py-2 text-primary font-bold text-body-md border-r-4 border-primary bg-surface-container" href="#">Technical Proposal</a>
+<a class="px-4 py-2 text-on-surface-variant hover:text-primary text-body-md" href="#">Financial Proposal</a>
+</div>
+</div>
+<a class="flex items-center px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined mr-3">visibility</span>
+<span class="font-label-md text-label-md">Review</span>
+</a>
+<a class="flex items-center px-4 py-3 text-on-surface-variant hover:bg-surface-container transition-all" href="#">
+<span class="material-symbols-outlined mr-3">send</span>
+<span class="font-label-md text-label-md">Submit</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-outline-subtle p-2">
+<a class="flex items-center px-4 py-3 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined mr-3">support_agent</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+<a class="flex items-center px-4 py-3 text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined mr-3">exit_to_app</span>
+<span class="font-label-md text-label-md">Exit Workspace</span>
+</a>
+</div>
+</aside>
+<!-- Content Canvas -->
+<main class="ml-sidebar-width mt-14 mb-16 overflow-y-auto flex-1 bg-background p-6">
+<div class="max-w-max-width mx-auto">
+<!-- Breadcrumbs -->
+<nav class="flex items-center gap-2 mb-6 text-label-sm font-label-sm text-on-surface-variant">
+<span class="">Workspace</span>
+<span class="material-symbols-outlined text-[12px]">chevron_right</span>
+<span class="">Bid Preparation</span>
+<span class="material-symbols-outlined text-[12px]">chevron_right</span>
+<span class="">Technical Proposal</span>
+<span class="material-symbols-outlined text-[12px]">chevron_right</span>
+<span class="text-primary font-bold">Quality, Testing and Acceptance</span>
+</nav>
+<!-- Page Header -->
+<div class="flex justify-between items-start mb-8 border-b border-outline-subtle pb-6">
+<div>
+<h1 class="font-display text-display text-primary mb-2">Quality, Testing and Acceptance</h1>
+<p class="text-body-lg text-on-surface-variant max-w-2xl">
+                        Describe how quality will be controlled and how the system will be tested and commissioned
+                    </p>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 border border-outline-subtle bg-surface-container-lowest text-primary font-label-md text-label-md hover:bg-surface-container transition-all">
+<span class="material-symbols-outlined text-[18px]">print</span>
+                        Print View
+                    </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary font-label-md text-label-md hover:opacity-90 transition-all">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+                        Mark Section Complete
+                    </button>
+</div>
+</div>
+<!-- Narrative Sections (Bento Grid) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+<!-- QA -->
+<div class="bento-card p-5 bg-surface-container-lowest flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">01 narrative</span>
+<span class="material-symbols-outlined text-primary">security</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-primary">Quality assurance</h3>
+<textarea class="w-full h-32 bg-background border-outline-subtle font-body-md text-body-md p-3 focus:ring-1 focus:ring-primary focus:border-primary" placeholder="Detail your QA methodologies, standards (ISO, etc.), and internal audit procedures..."></textarea>
+</div>
+<!-- Config Control -->
+<div class="bento-card p-5 bg-surface-container-lowest flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">02 narrative</span>
+<span class="material-symbols-outlined text-primary">account_tree</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-primary">Configuration and change control</h3>
+<textarea class="w-full h-32 bg-background border-outline-subtle font-body-md text-body-md p-3 focus:ring-1 focus:ring-primary focus:border-primary" placeholder="Procedures for handling versioning, baseline management, and change request approvals..."></textarea>
+</div>
+<!-- Defect Management -->
+<div class="bento-card p-5 bg-surface-container-lowest flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">03 narrative</span>
+<span class="material-symbols-outlined text-primary">pest_control</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-primary">Defect management</h3>
+<textarea class="w-full h-32 bg-background border-outline-subtle font-body-md text-body-md p-3 focus:ring-1 focus:ring-primary focus:border-primary" placeholder="Define severity levels, tracking mechanisms, and SLAs for bug remediation..."></textarea>
+</div>
+<!-- Commissioning -->
+<div class="bento-card p-5 bg-surface-container-lowest flex flex-col gap-4 lg:col-span-1">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">04 narrative</span>
+<span class="material-symbols-outlined text-primary">rocket_launch</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-primary">Commissioning</h3>
+<textarea class="w-full h-32 bg-background border-outline-subtle font-body-md text-body-md p-3 focus:ring-1 focus:ring-primary focus:border-primary" placeholder="Outline the final steps for hardware and software deployment into the production environment..."></textarea>
+</div>
+<!-- Operational Acceptance -->
+<div class="bento-card p-5 bg-surface-container-lowest flex flex-col gap-4 lg:col-span-2">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">05 narrative</span>
+<span class="material-symbols-outlined text-primary">verified_user</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-primary">Operational-acceptance preparation</h3>
+<textarea class="w-full h-32 bg-background border-outline-subtle font-body-md text-body-md p-3 focus:ring-1 focus:ring-primary focus:border-primary" placeholder="Describe documentation handover, administrator training, and final sign-off criteria for operational readiness..."></textarea>
+</div>
+</div>
+<!-- Testing Strategy Table -->
+<section class="bg-surface-container-lowest border border-outline-subtle overflow-hidden">
+<div class="p-4 border-b border-outline-subtle flex justify-between items-center bg-surface-container-low">
+<h2 class="font-headline-md text-headline-md text-primary flex items-center gap-3">
+<span class="font-label-sm text-label-sm px-2 py-1 bg-primary text-on-primary">06</span>
+                        TESTING STAGES AND CRITERIA
+                    </h2>
+<button class="flex items-center gap-1 text-primary hover:underline font-label-md text-label-md">
+<span class="material-symbols-outlined text-[16px]">add</span> Add Test Stage
+                    </button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse high-density-table">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-subtle">
+<th class="px-4 py-2 font-label-md text-label-md text-on-surface-variant uppercase">Test stage</th>
+<th class="px-4 py-2 font-label-md text-label-md text-on-surface-variant uppercase">Scope</th>
+<th class="px-4 py-2 font-label-md text-label-md text-on-surface-variant uppercase">Responsible party</th>
+<th class="px-4 py-2 font-label-md text-label-md text-on-surface-variant uppercase">Entry criteria</th>
+<th class="px-4 py-2 font-label-md text-label-md text-on-surface-variant uppercase">Expected output</th>
+<th class="px-4 py-2 font-label-md text-label-md text-on-surface-variant uppercase">Procuring Entity PARTICIPATION</th>
+<th class="px-4 py-2 font-label-md text-label-md text-on-surface-variant uppercase">Work-plan PHASE</th>
+<th class="px-4 py-2 font-label-md text-label-md text-on-surface-variant uppercase">Status</th>
+<th class="px-4 py-2 font-label-md text-label-md text-on-surface-variant uppercase text-center">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-subtle">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-4 py-2 font-bold text-primary">Unit and component testing</td>
+<td class="px-4 py-2 text-on-surface-variant">Code-level validation</td>
+<td class="px-4 py-2">Bidder</td>
+<td class="px-4 py-2">Code completion</td>
+<td class="px-4 py-2">Unit test report</td>
+<td class="px-4 py-2">None</td>
+<td class="px-4 py-2 font-label-sm text-label-sm">Week 8</td>
+<td class="px-4 py-2">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-status-pending-bg text-status-pending text-[11px] font-bold uppercase">
+<span class="w-1.5 h-1.5 rounded-full bg-status-pending"></span>
+                                        In Progress
+                                    </span>
+</td>
+<td class="px-4 py-2 text-center">
+<button class="material-symbols-outlined text-secondary hover:text-primary">edit</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-4 py-2 font-bold text-primary">Integration testing</td>
+<td class="px-4 py-2 text-on-surface-variant">Interface and API testing</td>
+<td class="px-4 py-2">Bidder</td>
+<td class="px-4 py-2">Unit testing complete</td>
+<td class="px-4 py-2">Integration report</td>
+<td class="px-4 py-2">Support</td>
+<td class="px-4 py-2 font-label-sm text-label-sm">Week 10</td>
+<td class="px-4 py-2">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container text-on-surface-variant text-[11px] font-bold uppercase">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                                        Not Started
+                                    </span>
+</td>
+<td class="px-4 py-2 text-center">
+<button class="material-symbols-outlined text-secondary hover:text-primary">edit</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-4 py-2 font-bold text-primary">User acceptance testing</td>
+<td class="px-4 py-2 text-on-surface-variant">Business requirement validation</td>
+<td class="px-4 py-2">Bidder &amp; Procuring Entity</td>
+<td class="px-4 py-2">Integration complete</td>
+<td class="px-4 py-2">Signed UAT report</td>
+<td class="px-4 py-2">High (Daily)</td>
+<td class="px-4 py-2 font-label-sm text-label-sm">Week 16</td>
+<td class="px-4 py-2">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container text-on-surface-variant text-[11px] font-bold uppercase">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                                        Not Started
+                                    </span>
+</td>
+<td class="px-4 py-2 text-center">
+<button class="material-symbols-outlined text-secondary hover:text-primary">edit</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-4 py-2 font-bold text-primary">Performance and security testing</td>
+<td class="px-4 py-2 text-on-surface-variant">Load and vulnerability tests</td>
+<td class="px-4 py-2">Bidder (Specialist)</td>
+<td class="px-4 py-2">Environment stable</td>
+<td class="px-4 py-2">Security audit</td>
+<td class="px-4 py-2">Witnessing</td>
+<td class="px-4 py-2 font-label-sm text-label-sm">Week 17</td>
+<td class="px-4 py-2">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container text-on-surface-variant text-[11px] font-bold uppercase">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                                        Not Started
+                                    </span>
+</td>
+<td class="px-4 py-2 text-center">
+<button class="material-symbols-outlined text-secondary hover:text-primary">edit</button>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-4 py-2 font-bold text-primary">Operational acceptance testing</td>
+<td class="px-4 py-2 text-on-surface-variant">Final system readiness</td>
+<td class="px-4 py-2">Bidder</td>
+<td class="px-4 py-2">UAT &amp; Security complete</td>
+<td class="px-4 py-2">Readiness certificate</td>
+<td class="px-4 py-2">High (Final)</td>
+<td class="px-4 py-2 font-label-sm text-label-sm">Week 18</td>
+<td class="px-4 py-2">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container text-on-surface-variant text-[11px] font-bold uppercase">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                                        Not Started
+                                    </span>
+</td>
+<td class="px-4 py-2 text-center">
+<button class="material-symbols-outlined text-secondary hover:text-primary">edit</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Bottom Disclaimer/Help -->
+
+</div>
+</main>
+<!-- Footer Action Bar -->
+<footer class="fixed bottom-0 right-0 left-sidebar-width z-50 flex justify-between items-center px-container-padding h-16 bg-surface-container-lowest border-t border-outline-subtle">
+<button class="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-all font-label-md text-label-md">
+<span class="material-symbols-outlined">arrow_back</span>
+            Back to Workspace
+        </button>
+<div class="flex items-center gap-4">
+<button class="px-6 py-2 border border-outline-subtle text-primary font-label-md text-label-md hover:bg-surface-container transition-all">
+                Save Draft
+            </button>
+<button class="px-8 py-2 bg-primary text-on-primary font-label-md text-label-md hover:opacity-90 transition-all transform active:scale-95">
+                Continue
+            </button>
+</div>
+</footer>
+<!-- Global Footer Rights -->
+<div class="fixed bottom-0 left-0 w-sidebar-width h-16 bg-surface-container-low border-t border-r border-outline-subtle flex items-center justify-center p-2">
+<p class="font-label-sm text-label-sm text-on-surface-variant text-center opacity-70">
+            © 2024 KenTender System.
+        </p>
+</div>
+<script>
+        // Micro-interactions
+        document.querySelectorAll('textarea').forEach(textarea => {
+            textarea.addEventListener('focus', () => {
+                textarea.parentElement.style.borderColor = '#000000';
+            });
+            textarea.addEventListener('blur', () => {
+                textarea.parentElement.style.borderColor = '#c4c6cf';
+            });
+        });
+
+        // Simulating "Mark Section Complete" logic
+        const completeBtn = document.querySelector('button:has(span:contains("check_circle"))');
+        if(completeBtn) {
+            completeBtn.addEventListener('click', () => {
+                completeBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">verified</span> Completed';
+                completeBtn.classList.remove('bg-primary');
+                completeBtn.classList.add('bg-status-approved', 'text-white');
+            });
+        }
+    </script>
+
+
+</body></html>

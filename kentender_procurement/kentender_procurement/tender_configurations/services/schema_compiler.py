@@ -131,6 +131,14 @@ def _eval_requirements(criteria: list[dict[str, Any]], *, stage: str, basis: str
 		if cstr(row.get("evaluation_basis") or "") != basis:
 			continue
 		cid = cstr(row.get("criterion_id") or "").strip()
+		method = cstr(row.get("response_method") or "").strip().lower()
+		linked = cstr(row.get("linked_section_key") or "").strip()
+		if stage == "Preliminary" and method == "linked_section" and linked:
+			bidder_schema = "linked_section"
+		elif stage == "Preliminary":
+			bidder_schema = "upload_or_e_declaration"
+		else:
+			bidder_schema = "structured_response_plus_upload"
 		out.append(
 			{
 				"id": cid,
@@ -138,11 +146,11 @@ def _eval_requirements(criteria: list[dict[str, Any]], *, stage: str, basis: str
 				"requirement": cstr(row.get("pass_fail_rule") or "Mandatory").strip(),
 				"supporting_documentation": cstr(row.get("evidence_instruction") or "").strip(),
 				"mandatory": True,
-				"bidder_schema": (
-					"upload_or_e_declaration"
-					if stage == "Preliminary"
-					else "structured_response_plus_upload"
-				),
+				"bidder_schema": bidder_schema,
+				"response_method": method or ("linked_section" if linked else ""),
+				"linked_section_key": linked,
+				"fulfilment_method": cstr(row.get("fulfilment_method") or "").strip(),
+				"owner": cstr(row.get("owner") or "").strip(),
 			}
 		)
 	return out

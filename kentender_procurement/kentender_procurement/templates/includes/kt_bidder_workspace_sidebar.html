@@ -16,11 +16,19 @@
 			<span class="material-symbols-outlined" aria-hidden="true">edit_document</span>
 			{{ _("Prepare Bid") }}
 		</a>
-		<a class="is-disabled" href="#" aria-disabled="true" data-testid="kt-a2-nav-review">
+		{% set _review_on = checklist.review_nav_enabled %}
+		<a class="{% if active_ws == 'review' %}is-active{% endif %}{% if not _review_on %} is-disabled{% endif %}"
+			href="{{ checklist.review_nav_url if _review_on else '#' }}"
+			{% if not _review_on %}aria-disabled="true"{% endif %}
+			data-testid="kt-a2-nav-review">
 			<span class="material-symbols-outlined" aria-hidden="true">verified</span>
 			{{ _("Review & Validate") }}
 		</a>
-		<a class="is-disabled" href="#" aria-disabled="true" data-testid="kt-a2-nav-submit">
+		{% set _submit_on = checklist.submit_nav_enabled %}
+		<a class="{% if active_ws == 'submit' %}is-active{% endif %}{% if not _submit_on %} is-disabled{% endif %}"
+			href="{{ checklist.submit_nav_url if _submit_on else '#' }}"
+			{% if not _submit_on %}aria-disabled="true"{% endif %}
+			data-testid="kt-a2-nav-submit">
 			<span class="material-symbols-outlined" aria-hidden="true">lock</span>
 			{{ _("Submit & Seal") }}
 		</a>

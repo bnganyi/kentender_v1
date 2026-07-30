@@ -195,6 +195,34 @@ class TestE1NssfFixtureMapper(unittest.TestCase):
 			val = (r.get("value_or_obligation") or r.get("value") or "").strip().lower()
 			self.assertNotEqual(val, "as specified")
 
+	def test_digitized_prelim_are_linked_sections_not_uploads(self):
+		"""NSSF-GOLD-017 family: FoT / CITD / SD / security never mandatory uploads."""
+		prelim = [
+			c
+			for c in self.mapped["evaluation_setup"]["criteria"]
+			if c.get("stage") == "Preliminary"
+		]
+		self.assertEqual(len(prelim), EXPECTED_PRELIM_COUNT)
+		by_id = {c["criterion_id"]: c for c in prelim}
+		self.assertNotIn("PRELIM-INDEMNITY-01", by_id)
+
+		expected = {
+			"PRELIM-05": "tender_security",
+			"PRELIM-06": "form_of_tender",
+			"PRELIM-07": "statutory_declarations",
+			"PRELIM-08": "statutory_declarations",
+		}
+		for cid, section in expected.items():
+			row = by_id[cid]
+			self.assertEqual(row["response_method"], "linked_section", cid)
+			self.assertEqual(row["linked_section_key"], section, cid)
+			self.assertEqual(row["fulfilment_method"], "electronic_section", cid)
+			self.assertEqual(row["owner"], section, cid)
+
+		for cid in ("PRELIM-01", "PRELIM-02", "PRELIM-03", "PRELIM-04", "PRELIM-09"):
+			self.assertEqual(by_id[cid]["response_method"], "upload", cid)
+			self.assertEqual(by_id[cid]["fulfilment_method"], "tender_evidence", cid)
+
 
 def cstr_int(val) -> int:
 	return int(str(val).strip())

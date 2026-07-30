@@ -47,6 +47,8 @@ from kentender_procurement.tender_configurations.api import (
 	get_requirement_matrix as _get_requirement_matrix,
 	get_requirement_drawer as _get_requirement_drawer,
 	save_requirement_response as _save_requirement_response,
+	get_requirements_compliance_review as _get_requirements_compliance_review,
+	complete_requirements_compliance_section as _complete_requirements_compliance_section,
 	get_tender_configurations_dashboard as _get_tender_configurations_dashboard,
 	request_tender_configuration_clarification as _request_tender_configuration_clarification,
 	resolve_tender_configuration_review_finding as _resolve_tender_configuration_review_finding,
@@ -439,6 +441,22 @@ def publish_e1_nssf_lean_for_tests(clear: int | str = 1):
 
 
 @frappe.whitelist()
+def publish_lean_requirements_compliance_for_tests(
+	clear: int | str = 1,
+	fixture: str | None = None,
+):
+	"""Administrator-only: publish lean Requirements Compliance fixture for Playwright smoke."""
+	if frappe.session.user != "Administrator":
+		frappe.throw(frappe._("Not permitted"), frappe.PermissionError)
+	from kentender_procurement.tender_configurations.seed.lean_requirements_compliance import (
+		FIXTURE_STANDARD,
+		publish_lean_requirements_compliance_for_tests as _publish,
+	)
+
+	return _publish(fixture=fixture or FIXTURE_STANDARD, clear=bool(int(clear)))
+
+
+@frappe.whitelist()
 def seed_bwmf_canonical_for_tests(clear: int | str = 1):
 	"""Administrator-only BWMF canonical persistence fixture (G1 Phase 2)."""
 	if frappe.session.user != "Administrator":
@@ -576,6 +594,16 @@ def save_requirement_response(
 
 
 @frappe.whitelist()
+def get_requirements_compliance_review(published_tender_ref: str):
+	return _get_requirements_compliance_review(published_tender_ref)
+
+
+@frappe.whitelist()
+def complete_requirements_compliance_section(published_tender_ref: str):
+	return _complete_requirements_compliance_section(published_tender_ref)
+
+
+@frappe.whitelist()
 def get_evidence_register(published_tender_ref: str):
 	from kentender_procurement.tender_configurations.services.bid_evidence import (
 		get_evidence_register as _get,
@@ -694,3 +722,154 @@ def save_qualification_category(
 		payload,
 		expected_modified=expected_modified,
 	)
+
+
+@frappe.whitelist()
+def get_technical_proposal(published_tender_ref: str):
+	from kentender_procurement.tender_configurations.api import get_technical_proposal as _get
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def get_technical_proposal_subsection(published_tender_ref: str, subsection_key: str):
+	from kentender_procurement.tender_configurations.api import (
+		get_technical_proposal_subsection as _get,
+	)
+
+	return _get(published_tender_ref, subsection_key)
+
+
+@frappe.whitelist()
+def get_technical_proposal_review(published_tender_ref: str):
+	from kentender_procurement.tender_configurations.api import (
+		get_technical_proposal_review as _get,
+	)
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def save_technical_proposal_subsection(
+	published_tender_ref: str,
+	subsection_key: str,
+	payload=None,
+	expected_modified: str | None = None,
+):
+	from kentender_procurement.tender_configurations.api import (
+		save_technical_proposal_subsection as _save,
+	)
+
+	return _save(
+		published_tender_ref,
+		subsection_key,
+		payload,
+		expected_modified=expected_modified,
+	)
+
+
+@frappe.whitelist()
+def confirm_technical_proposal_integration(
+	published_tender_ref: str,
+	expected_modified: str | None = None,
+):
+	from kentender_procurement.tender_configurations.api import (
+		confirm_technical_proposal_integration as _confirm,
+	)
+
+	return _confirm(published_tender_ref, expected_modified=expected_modified)
+
+
+@frappe.whitelist()
+def get_price_schedule_overview(published_tender_ref: str, offer_id: str | None = None, lot_id: str | None = None):
+	from kentender_procurement.tender_configurations.api import get_price_schedule_overview as _get
+
+	return _get(published_tender_ref, offer_id=offer_id, lot_id=lot_id)
+
+
+@frappe.whitelist()
+def get_price_schedule_editor(
+	published_tender_ref: str,
+	schedule_key: str,
+	offer_id: str | None = None,
+	lot_id: str | None = None,
+):
+	from kentender_procurement.tender_configurations.api import get_price_schedule_editor as _get
+
+	return _get(published_tender_ref, schedule_key, offer_id=offer_id, lot_id=lot_id)
+
+
+@frappe.whitelist()
+def get_price_schedule_review(published_tender_ref: str):
+	from kentender_procurement.tender_configurations.api import get_price_schedule_review as _get
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def save_price_schedule_lines(published_tender_ref: str, payload=None):
+	from kentender_procurement.tender_configurations.api import save_price_schedule_lines as _save
+
+	return _save(published_tender_ref, payload)
+
+
+@frappe.whitelist()
+def complete_price_schedule(published_tender_ref: str):
+	from kentender_procurement.tender_configurations.api import complete_price_schedule as _complete
+
+	return _complete(published_tender_ref)
+
+
+@frappe.whitelist()
+def publish_lean_price_schedule_for_tests(fixture: str = "single_lot", clear: int | bool = 1):
+	from kentender_procurement.tender_configurations.api import (
+		publish_lean_price_schedule_for_tests as _publish,
+	)
+
+	return _publish(fixture=fixture, clear=clear)
+
+
+@frappe.whitelist()
+def get_bid_submission_readiness(published_tender_ref: str):
+	from kentender_procurement.tender_configurations.api import (
+		get_bid_submission_readiness as _get,
+	)
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def get_final_bid_review(published_tender_ref: str):
+	from kentender_procurement.tender_configurations.api import get_final_bid_review as _get
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def get_submit_bid_page(published_tender_ref: str):
+	from kentender_procurement.tender_configurations.api import get_submit_bid_page as _get
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def submit_electronic_bid(published_tender_ref: str, declaration_confirmed: int | bool | str = 0):
+	from kentender_procurement.tender_configurations.api import submit_electronic_bid as _submit
+
+	return _submit(published_tender_ref, declaration_confirmed=declaration_confirmed)
+
+
+@frappe.whitelist()
+def get_submission_receipt(published_tender_ref: str):
+	from kentender_procurement.tender_configurations.api import get_submission_receipt as _get
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def seed_ready_lean_bid_for_final_submission_tests(fixture: str = "single_lot", clear: int | bool = 1):
+	from kentender_procurement.tender_configurations.api import (
+		seed_ready_lean_bid_for_final_submission_tests as _seed,
+	)
+
+	return _seed(fixture=fixture, clear=clear)

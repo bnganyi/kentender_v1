@@ -668,7 +668,7 @@
       "title": "Technical Proposal and Implementation Plan",
       "order": 8,
       "renderer": "structured_response",
-      "bidder_instructions": "Provide the technical proposal and implementation plan required by the tender.",
+      "bidder_instructions": "Explain how you will deliver, implement, test and hand over the proposed system.",
       "source_refs": [
         "PPRA IT STD Section IV / Part 2 — Technical proposal obligations"
       ],
@@ -681,14 +681,14 @@
       "locked_legal_text": null,
       "bidder_owned_fields": [],
       "tender_owned_slots": [],
-      "slice_status": "route_only_not_editable_in_lean_slice"
+      "slice_status": "technical_proposal_implemented"
     },
     {
       "section_key": "requirements_compliance",
       "title": "Requirements Compliance",
       "order": 9,
       "renderer": "requirement_matrix",
-      "bidder_instructions": "Respond to each published IT requirement with compliance status and evidence where required.",
+      "bidder_instructions": "Respond to each applicable requirement and provide the requested supporting evidence.",
       "source_refs": [
         "PPRA IT STD Part 2 — Requirements; Section VIII schedule where applicable"
       ],
@@ -701,7 +701,7 @@
       "locked_legal_text": null,
       "bidder_owned_fields": [],
       "tender_owned_slots": [],
-      "slice_status": "route_only_not_editable_in_lean_slice"
+      "slice_status": "requirements_compliance_implemented"
     },
     {
       "section_key": "price_schedule",

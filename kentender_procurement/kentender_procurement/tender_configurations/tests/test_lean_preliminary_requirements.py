@@ -156,6 +156,51 @@ class TestPreliminaryCriteriaMaterialization(unittest.TestCase):
 		self.assertNotIn("NSSF", blob.upper())
 		self.assertNotIn("NSSFSPS", blob)
 
+	def test_materialize_coerces_digitized_sections_away_from_upload(self):
+		"""Misconfigured CFG that omits response_method must not create FoT/CITD uploads."""
+		rows = materialize_preliminary_criteria(
+			[
+				{
+					"criterion_id": "PRELIM-06",
+					"criterion_name": "Signed Form of Tender by authorized signatory",
+					"stage": "Preliminary",
+					"evidence_instruction": "Signed Form of Tender with authorization letter",
+					"bidder_evidence": "Required",
+				},
+				{
+					"criterion_id": "PRELIM-07",
+					"criterion_name": "Certificate of Independent Tender Determination",
+					"stage": "Preliminary",
+					"evidence_instruction": "Completed and signed form (Section IV)",
+					"response_method": "upload",
+					"bidder_evidence": "Required",
+				},
+				{
+					"criterion_id": "PRELIM-05",
+					"criterion_name": "Professional Indemnity – KES 500,000",
+					"stage": "Preliminary",
+					"evidence_instruction": "Original Bank Guarantee or Insurance Bond",
+					"bidder_evidence": "Required",
+				},
+				{
+					"criterion_name": "Tax compliance certificate",
+					"stage": "Preliminary",
+					"evidence_instruction": "Copy of current TCC",
+					"response_method": "upload",
+					"bidder_evidence": "Required",
+				},
+			]
+		)
+		by_id = {r["criterion_id"]: r for r in rows}
+		self.assertEqual(by_id["PRELIM-06"]["response_method"], "linked_section")
+		self.assertEqual(by_id["PRELIM-06"]["linked_section_key"], "form_of_tender")
+		self.assertEqual(by_id["PRELIM-07"]["response_method"], "linked_section")
+		self.assertEqual(by_id["PRELIM-07"]["linked_section_key"], "statutory_declarations")
+		self.assertEqual(by_id["PRELIM-05"]["response_method"], "linked_section")
+		self.assertEqual(by_id["PRELIM-05"]["linked_section_key"], "tender_security")
+		tax = next(r for r in rows if "Tax compliance" in r["title"])
+		self.assertEqual(tax["response_method"], "upload")
+
 	def test_template_slice_status_and_renderer(self):
 		path = (
 			Path(__file__).resolve().parents[1]

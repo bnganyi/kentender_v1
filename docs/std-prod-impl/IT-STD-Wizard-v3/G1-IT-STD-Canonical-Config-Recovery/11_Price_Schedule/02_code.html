@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KenTender Bidder Workspace - Supply & Installation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100..900&family=Public+Sans:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+            font-size: 18px;
+        }
+        .fill {
+            font-variation-settings: 'FILL' 1;
+        }
+        /* Custom scrollbar for high-density tables */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f2f4f6;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c4c6cf;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #75777d;
+        }
+        .pricing-input:focus {
+            outline: none;
+            box-shadow: none;
+            border-color: #000000;
+        }
+        .bento-card {
+            border: 1px solid #c4c6cf;
+            transition: all 0.2s ease;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed": "#001c3a",
+                        "on-primary-fixed-variant": "#3a475c",
+                        "on-surface": "#191c1e",
+                        "surface-dim": "#d8dadc",
+                        "surface-container": "#eceef0",
+                        "outline-strong": "#74777f",
+                        "inverse-primary": "#bac7e0",
+                        "status-pending-bg": "#fffbeb",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-tertiary-fixed-variant": "#2d486c",
+                        "primary-fixed": "#d6e3fd",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "surface-container-high": "#e6e8ea",
+                        "on-primary-fixed": "#0e1c2e",
+                        "surface-bright": "#f7f9fb",
+                        "surface": "#f7f9fb",
+                        "surface-container-low": "#f2f4f6",
+                        "on-background": "#191c1e",
+                        "outline": "#75777d",
+                        "tertiary-container": "#001c3a",
+                        "on-primary": "#ffffff",
+                        "inverse-surface": "#2d3133",
+                        "surface-container-highest": "#e0e3e5",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary": "#515f74",
+                        "tertiary-fixed-dim": "#adc8f3",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "surface-variant": "#e0e3e5",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "on-tertiary-container": "#6b85ac",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#525f74",
+                        "status-pending": "#92400e",
+                        "status-approved": "#065f46",
+                        "tertiary": "#000000",
+                        "on-error": "#ffffff",
+                        "outline-subtle": "#c4c6cf",
+                        "on-tertiary": "#ffffff",
+                        "status-error": "#ba1a1a",
+                        "outline-variant": "#c5c6cd",
+                        "primary-container": "#0e1c2e",
+                        "error": "#ba1a1a",
+                        "on-primary-container": "#77859b",
+                        "secondary-fixed": "#d5e3fc",
+                        "on-secondary": "#ffffff",
+                        "secondary-container": "#d2e1fa",
+                        "on-error-container": "#93000a",
+                        "primary-fixed-dim": "#bac7e0",
+                        "background": "#f7f9fb",
+                        "primary": "#000000",
+                        "status-error-bg": "#fff1f2",
+                        "on-secondary-container": "#556379",
+                        "status-approved-bg": "#ecfdf5",
+                        "tertiary-fixed": "#d4e3ff",
+                        "on-surface-variant": "#44474c"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "max-width": "1280px",
+                        "gap-component": "8px",
+                        "container-padding": "16px",
+                        "gutter": "12px",
+                        "sidebar-width": "256px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Public Sans"],
+                        "label-sm": ["JetBrains Mono"],
+                        "label-md": ["JetBrains Mono"],
+                        "headline-lg-mobile": ["Public Sans"],
+                        "headline-lg": ["Public Sans"],
+                        "body-md": ["Public Sans"],
+                        "headline-md": ["Public Sans"],
+                        "display": ["Public Sans"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                        "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background font-body-md text-on-surface overflow-hidden">
+<!-- TopNavBar -->
+<nav class="sticky top-0 w-full z-50 flex items-center justify-between px-gutter h-14 bg-surface-container-lowest border-b border-outline-subtle">
+<div class="flex items-center gap-6">
+<span class="font-headline-lg text-headline-lg font-bold text-primary">KenTender</span>
+<div class="hidden md:flex gap-6 items-center">
+<a class="text-on-secondary-container font-medium hover:text-primary transition-colors duration-200" href="#">Tenders</a>
+<a class="text-on-secondary-container font-medium hover:text-primary transition-colors duration-200" href="#">My Bids</a>
+<a class="text-on-secondary-container font-medium hover:text-primary transition-colors duration-200" href="#">Clarifications</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="font-label-md text-label-md text-primary hover:opacity-80 transition-opacity">Help Desk</button>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">settings</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden border border-outline-subtle">
+<img class="w-full h-full object-cover" data-alt="Professional corporate headshot of a procurement officer in a light grey suit against a neutral studio background, high-resolution and clean lighting, symbolizing authority and professionalism." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAy3TYlceJNUEZYfBvPbIpkEecJzTKKEyF5rpwtFN2td4dz8iDAZZwRir1BZQkIImHySNwYDM5Y6y2HrpXI_f-MQ0DqLrBdoGr7vSjMMwPxw2Aen87P-KuGD-tg-nZW-n4IL_JA5YXo9qQ-w_4V77XodRcmrn3bZrXUw_FwkKbXmeo-5QTwWe6-qu1tcj7SafJn_Wy86pwGD1ij9AREvBNMYbAupgzMwZQEjmhWNZpgkBAIwAfRp0180A"/>
+</div>
+</div>
+</nav>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-14 bottom-0 w-sidebar-width flex flex-col z-40 bg-surface-container-low border-r border-outline-subtle overflow-y-auto">
+<div class="p-4 border-b border-outline-subtle">
+<div class="flex items-center gap-3 mb-1">
+<div class="w-8 h-8 bg-primary rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary" style="font-variation-settings: 'FILL' 1;">business_center</span>
+</div>
+<div>
+<div class="font-label-md text-label-md font-bold text-primary">Bidder Workspace</div>
+<div class="text-[10px] text-on-surface-variant font-label-sm">Ref: KT-2023-0892</div>
+</div>
+</div>
+</div>
+<nav class="flex-1 py-4">
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined mr-3">info</span>
+<span class="font-label-md text-label-md">Tender Overview</span>
+</a>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined mr-3">description</span>
+<span class="font-label-md text-label-md">Tender Documents</span>
+</a>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined mr-3">fact_check</span>
+<span class="font-label-md text-label-md">Submission Checklist</span>
+</a>
+<a class="flex items-center bg-surface-container-highest text-primary border-r-4 border-primary py-3 px-4 scale-[0.99]" href="#">
+<span class="material-symbols-outlined mr-3">edit_document</span>
+<span class="font-label-md text-label-md font-bold">Prepare Bid</span>
+</a>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined mr-3">verified</span>
+<span class="font-label-md text-label-md">Review & Validate</span>
+</a>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined mr-3">lock</span>
+<span class="font-label-md text-label-md">Submit & Seal</span>
+</a>
+</nav>
+<div class="p-4">
+<button class="w-full bg-surface-container-highest border border-outline-subtle py-2 px-3 text-label-md font-label-md text-primary flex items-center justify-center gap-2 hover:bg-surface-container-high">
+<span class="material-symbols-outlined">table_chart</span>
+                Requirement Matrix
+            </button>
+</div>
+<div class="mt-auto border-t border-outline-subtle py-4">
+<a class="flex items-center text-on-surface-variant py-2 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined mr-3">contact_support</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+<a class="flex items-center text-on-surface-variant py-2 px-4 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined mr-3">logout</span>
+<span class="font-label-md text-label-md">Sign Out</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="fixed top-14 bottom-14 left-sidebar-width right-0 overflow-y-auto bg-background p-6">
+<div class="max-w-max-width mx-auto">
+<!-- Header Section -->
+<div class="flex justify-between items-end mb-6">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="bg-primary text-on-primary text-[10px] font-label-sm px-1.5 py-0.5 rounded uppercase tracking-wider">Lot 1</span>
+<span class="text-on-surface-variant font-label-md text-label-md">Server Infrastructure & Licenses</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-primary">Supply and Installation</h1>
+<p class="text-on-surface-variant font-body-md text-body-md mt-1">Enter your unit prices and origin for each item. Quantities and descriptions are fixed by the tender.</p>
+</div>
+<div class="text-right">
+<div class="font-label-md text-label-md text-on-surface-variant mb-1">Pricing Progress</div>
+<div class="flex items-center gap-3">
+<div class="w-48 h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="w-[75%] h-full bg-primary"></div>
+</div>
+<span class="font-label-md text-label-md font-bold text-primary">18 of 24 items</span>
+</div>
+</div>
+</div>
+<!-- Pricing Table Container -->
+<div class="bg-surface-container-lowest bento-card rounded-lg overflow-hidden flex flex-col">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse min-w-[1000px]">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-subtle h-10">
+<th class="px-4 py-2 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider w-16">Item</th>
+<th class="px-4 py-2 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Description</th>
+<th class="px-4 py-2 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider w-20 text-center">Qty</th>
+<th class="px-4 py-2 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider w-20 text-center">Unit</th>
+<th class="px-4 py-2 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider w-40">Country of Origin</th>
+<th class="px-4 py-2 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider w-24">Currency</th>
+<th class="px-4 py-2 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider w-36 text-right">Unit Price</th>
+<th class="px-4 py-2 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider w-40 text-right">Total</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-subtle">
+<!-- Sample Row 1 -->
+<tr class="h-10 hover:bg-surface-bright transition-colors">
+<td class="px-4 py-1 font-label-sm text-label-sm text-on-surface-variant">1.1</td>
+<td class="px-4 py-1 font-body-md text-body-md text-primary font-medium">Application servers (Enterprise Grade)</td>
+<td class="px-4 py-1 font-label-md text-label-md text-on-surface-variant text-center">4</td>
+<td class="px-4 py-1 font-body-md text-body-md text-on-surface-variant text-center">Each</td>
+<td class="px-4 py-1">
+<select class="w-full bg-transparent border border-outline-subtle rounded-sm text-body-md py-0.5 px-2 focus:ring-1 focus:ring-primary outline-none">
+<option>Kenya</option>
+<option>Germany</option>
+<option>USA</option>
+</select>
+</td>
+<td class="px-4 py-1">
+<select class="w-full bg-transparent border border-outline-subtle rounded-sm text-body-md py-0.5 px-2 focus:ring-1 focus:ring-primary outline-none">
+<option>KES</option>
+<option>USD</option>
+</select>
+</td>
+<td class="px-4 py-1">
+<input class="w-full text-right bg-surface-container-lowest border border-outline-subtle rounded-sm text-label-md font-label-md py-0.5 px-2 pricing-input" type="text" value="850,000.00"/>
+</td>
+<td class="px-4 py-1 font-label-md text-label-md text-primary text-right font-bold">3,400,000.00</td>
+</tr>
+<!-- Sample Row 2 -->
+<tr class="h-10 hover:bg-surface-bright transition-colors">
+<td class="px-4 py-1 font-label-sm text-label-sm text-on-surface-variant">1.2</td>
+<td class="px-4 py-1 font-body-md text-body-md text-primary font-medium">Network Storage Array (100TB)</td>
+<td class="px-4 py-1 font-label-md text-label-md text-on-surface-variant text-center">1</td>
+<td class="px-4 py-1 font-body-md text-body-md text-on-surface-variant text-center">Set</td>
+<td class="px-4 py-1">
+<select class="w-full bg-transparent border border-outline-subtle rounded-sm text-body-md py-0.5 px-2 focus:ring-1 focus:ring-primary outline-none">
+<option>USA</option>
+<option>Kenya</option>
+<option>Japan</option>
+</select>
+</td>
+<td class="px-4 py-1">
+<select class="w-full bg-transparent border border-outline-subtle rounded-sm text-body-md py-0.5 px-2 focus:ring-1 focus:ring-primary outline-none">
+<option>KES</option>
+<option>USD</option>
+</select>
+</td>
+<td class="px-4 py-1">
+<input class="w-full text-right bg-surface-container-lowest border border-outline-subtle rounded-sm text-label-md font-label-md py-0.5 px-2 pricing-input" type="text" value="12,500,000.00"/>
+</td>
+<td class="px-4 py-1 font-label-md text-label-md text-primary text-right font-bold">12,500,000.00</td>
+</tr>
+<!-- Sample Row 3 -->
+<tr class="h-10 hover:bg-surface-bright transition-colors">
+<td class="px-4 py-1 font-label-sm text-label-sm text-on-surface-variant">1.3</td>
+<td class="px-4 py-1 font-body-md text-body-md text-primary font-medium">Virtualization Licenses (Tier 1)</td>
+<td class="px-4 py-1 font-label-md text-label-md text-on-surface-variant text-center">48</td>
+<td class="px-4 py-1 font-body-md text-body-md text-on-surface-variant text-center">Core</td>
+<td class="px-4 py-1">
+<select class="w-full bg-transparent border border-outline-subtle rounded-sm text-body-md py-0.5 px-2 focus:ring-1 focus:ring-primary outline-none">
+<option>USA</option>
+<option>Kenya</option>
+</select>
+</td>
+<td class="px-4 py-1">
+<select class="w-full bg-transparent border border-outline-subtle rounded-sm text-body-md py-0.5 px-2 focus:ring-1 focus:ring-primary outline-none">
+<option>USD</option>
+<option>KES</option>
+</select>
+</td>
+<td class="px-4 py-1">
+<input class="w-full text-right bg-surface-container-lowest border border-outline-subtle rounded-sm text-label-md font-label-md py-0.5 px-2 pricing-input" type="text" value="450.00"/>
+</td>
+<td class="px-4 py-1 font-label-md text-label-md text-primary text-right font-bold">21,600.00</td>
+</tr>
+<!-- Incomplete Row -->
+<tr class="h-10 bg-status-error-bg/30">
+<td class="px-4 py-1 font-label-sm text-label-sm text-on-surface-variant">1.4</td>
+<td class="px-4 py-1 font-body-md text-body-md text-primary font-medium flex items-center gap-2">
+                                    Installation & Commissioning
+                                    <span class="w-1.5 h-1.5 rounded-full bg-error" title="Mandatory Field"></span>
+</td>
+<td class="px-4 py-1 font-label-md text-label-md text-on-surface-variant text-center">1</td>
+<td class="px-4 py-1 font-body-md text-body-md text-on-surface-variant text-center">Lump</td>
+<td class="px-4 py-1">
+<select class="w-full bg-transparent border border-error/50 rounded-sm text-body-md py-0.5 px-2 focus:ring-1 focus:ring-error outline-none text-error italic">
+<option disabled="" selected="">Select Origin...</option>
+<option>Kenya</option>
+</select>
+</td>
+<td class="px-4 py-1">
+<select class="w-full bg-transparent border border-outline-subtle rounded-sm text-body-md py-0.5 px-2 focus:ring-1 focus:ring-primary outline-none">
+<option>KES</option>
+<option>USD</option>
+</select>
+</td>
+<td class="px-4 py-1">
+<input class="w-full text-right bg-surface-container-lowest border border-error/50 rounded-sm text-label-md font-label-md py-0.5 px-2 pricing-input placeholder:text-error/50" placeholder="0.00" type="text"/>
+</td>
+<td class="px-4 py-1 font-label-md text-label-md text-on-surface-variant text-right">0.00</td>
+</tr>
+</tbody>
+<tfoot>
+<tr class="bg-surface-container h-12 border-t-2 border-outline">
+<td class="px-4 py-2 font-bold text-label-md text-primary uppercase text-right" colspan="6">Schedule Subtotal (KES Equivalent)</td>
+<td class="px-4 py-2 font-bold text-headline-md text-primary text-right font-label-md" colspan="2">15,921,600.00</td>
+</tr>
+</tfoot>
+</table>
+</div>
+</div>
+<!-- Information Callout -->
+<div class="mt-4 p-4 border-l-4 border-primary bg-surface-container-low flex items-start gap-4">
+<span class="material-symbols-outlined text-primary">info</span>
+<div>
+<h4 class="font-bold text-label-md text-primary mb-1">Electronic Ledger Validation</h4>
+<p class="text-body-md text-on-surface-variant">The "Total" column is auto-calculated based on provided Unit Prices and Quantities. Discrepancies between manual calculations and the ledger will be flagged during the technical validation phase. Mandatory items marked with <span class="inline-block w-1.5 h-1.5 rounded-full bg-error"></span> must be priced to avoid bid rejection.</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer Action Bar -->
+<footer class="fixed bottom-0 right-0 left-sidebar-width flex justify-end items-center gap-gap-component p-container-padding z-50 bg-surface-container-lowest border-t border-outline-subtle shadow-sm">
+<div class="mr-auto">
+<span class="font-label-sm text-label-sm uppercase tracking-widest text-outline">© 2024 KenTender Procurement Portal. Secure Bid Environment.</span>
+</div>
+<button class="border border-outline-subtle text-secondary font-label-md text-label-md px-4 py-2 rounded hover:bg-primary-container transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">arrow_back</span>
+            Back to Price Schedule
+        </button>
+<button class="border border-outline-subtle text-secondary font-label-md text-label-md px-4 py-2 rounded hover:bg-primary-container transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">save</span>
+            Save Draft
+        </button>
+<button class="bg-primary text-on-primary font-label-md text-label-md px-6 py-2 rounded flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all">
+            Continue
+            <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</footer>
+<script>
+        // Simple micro-interaction for currency/price updates simulation
+        document.querySelectorAll('.pricing-input').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.parentElement.classList.add('bg-primary/5');
+            });
+            input.addEventListener('blur', function() {
+                this.parentElement.parentElement.classList.remove('bg-primary/5');
+            });
+        });
+
+        // Sticky header observation for subtle shadow
+        const main = document.querySelector('main');
+        main.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            if (main.scrollTop > 10) {
+                nav.classList.add('shadow-md');
+            } else {
+                nav.classList.remove('shadow-md');
+            }
+        });
+    </script>
+</body></html>

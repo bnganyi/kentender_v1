@@ -1,0 +1,80 @@
+{# Stitch 05 — Quality, Testing and Acceptance: QA narratives + test stages #}
+{% set questions = cfg.questions or [] %}
+{% set narratives = bucket.narratives or {} %}
+{% set stages = bucket.test_stages or [] %}
+
+<section class="kt-tp-block-section" data-testid="kt-tp-testing-narratives">
+	<div class="kt-s600-section-head">
+		<div>
+			<h2>{{ _("Quality assurance approach") }}</h2>
+			<p class="kt-s600-help">{{ _("Describe QA methodology, configuration control, change control, defect management, commissioning and operational-acceptance preparation.") }}</p>
+		</div>
+	</div>
+	<div class="kt-tp-card-stack kt-tp-card-grid" data-testid="kt-tp-question-cards">
+		{% for q in questions %}
+		<section class="kt-tp-card" data-testid="kt-tp-question-card" data-question-row data-question-id="{{ q.question_id }}">
+			<div class="kt-tp-card__head">
+				<span class="kt-tp-badge" data-required="{{ 1 if q.required else 0 }}">
+					{{ _("Required") if q.required else _("Optional") }}
+				</span>
+				<h3>{{ q.title }}</h3>
+			</div>
+			<textarea class="kt-tp-textarea" data-question="{{ q.question_id }}" rows="5"
+				placeholder="{{ _('Type your response here…') }}"
+				{% if sub.read_only %}disabled{% endif %}>{{ narratives.get(q.question_id) or "" }}</textarea>
+		</section>
+		{% endfor %}
+	</div>
+</section>
+
+<section class="kt-s600-card kt-s600-card--flush" data-testid="kt-tp-test-stages">
+	<div class="kt-s600-card__head">
+		<h3>{{ _("Testing stages and criteria") }}</h3>
+		{% if not sub.read_only %}
+		<button type="button" class="kt-s600-btn" data-tp-add-stage data-testid="kt-tp-add-stage">
+			<span class="material-symbols-outlined">add</span> {{ _("Add test stage") }}
+		</button>
+		{% endif %}
+	</div>
+	<div class="kt-s600-table-wrap">
+		<table class="kt-s600-data-table">
+			<thead>
+				<tr>
+					<th>{{ _("Test stage") }}</th>
+					<th>{{ _("Scope") }}</th>
+					<th>{{ _("Responsible party") }}</th>
+					<th>{{ _("Entry criteria") }}</th>
+					<th>{{ _("Expected output") }}</th>
+					<th>{{ _("PE participation") }}</th>
+					<th>{{ _("Work-plan phase") }}</th>
+					<th>{{ _("Status") }}</th>
+					{% if not sub.read_only %}<th class="is-right">{{ _("Action") }}</th>{% endif %}
+				</tr>
+			</thead>
+			<tbody data-testid="kt-tp-stages-body" data-records-body="test_stages"
+				data-status-kind="test_stage">
+				{% for s in stages %}
+				{% set row_status = s.row_status or "Not Started" %}
+				<tr data-record-row data-record-id="{{ s.stage_id or '' }}" data-row-status="{{ row_status }}">
+					<td><input data-r="test_stage" value="{{ s.test_stage or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="scope" value="{{ s.scope or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="responsible_party" value="{{ s.responsible_party or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="entry_criteria" value="{{ s.entry_criteria or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="expected_output" value="{{ s.expected_output or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="pe_participation" value="{{ s.pe_participation or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="work_plan_phase" value="{{ s.work_plan_phase or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td data-tp-status-cell>
+						<span class="kt-s600-status" data-status="{{ row_status }}" data-row-status-badge
+							data-testid="kt-tp-stage-status">{{ row_status }}</span>
+					</td>
+					{% if not sub.read_only %}
+					<td class="is-right is-actions" data-tp-action-cell>
+						<button type="button" class="kt-s600-link" data-tp-remove-row title="{{ _('Delete') }}"><span class="material-symbols-outlined">delete</span></button>
+					</td>
+					{% endif %}
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</section>

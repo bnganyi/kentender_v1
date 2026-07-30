@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KenTender - Technical Alternatives</title>
+<!-- Google Fonts: Public Sans & JetBrains Mono -->
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#44474c",
+                        "on-primary-fixed": "#0e1c2e",
+                        "primary": "#000000",
+                        "status-pending": "#92400e",
+                        "primary-container": "#0e1c2e",
+                        "on-primary": "#ffffff",
+                        "surface-dim": "#d8dadc",
+                        "status-pending-bg": "#fffbeb",
+                        "outline-variant": "#c5c6cd",
+                        "on-secondary-fixed-variant": "#3a485c",
+                        "secondary-fixed-dim": "#b9c7e0",
+                        "surface-container-low": "#f2f4f6",
+                        "surface-bright": "#f7f9fb",
+                        "on-primary-fixed-variant": "#3a475c",
+                        "inverse-primary": "#bac7e0",
+                        "secondary": "#515f74",
+                        "status-approved": "#065f46",
+                        "primary-fixed-dim": "#bac7e0",
+                        "error": "#ba1a1a",
+                        "on-tertiary-container": "#6b85ac",
+                        "on-error-container": "#93000a",
+                        "surface": "#f7f9fb",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#2d486c",
+                        "secondary-container": "#d2e1fa",
+                        "tertiary-fixed-dim": "#adc8f3",
+                        "surface-tint": "#525f74",
+                        "primary-fixed": "#d6e3fd",
+                        "on-primary-container": "#77859b",
+                        "status-error": "#ba1a1a",
+                        "surface-variant": "#e0e3e5",
+                        "background": "#f7f9fb",
+                        "status-error-bg": "#fff1f2",
+                        "outline-strong": "#74777f",
+                        "inverse-on-surface": "#eff1f3",
+                        "tertiary": "#000000",
+                        "tertiary-container": "#001c3a",
+                        "surface-container-lowest": "#ffffff",
+                        "outline-subtle": "#c4c6cf",
+                        "surface-container-high": "#e6e8ea",
+                        "tertiary-fixed": "#d4e3ff",
+                        "status-approved-bg": "#ecfdf5",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#2d3133",
+                        "outline": "#75777d",
+                        "surface-container-highest": "#e0e3e5",
+                        "secondary-fixed": "#d5e3fc",
+                        "error-container": "#ffdad6",
+                        "surface-container": "#eceef0",
+                        "on-tertiary": "#ffffff",
+                        "on-background": "#191c1e",
+                        "on-secondary-fixed": "#0d1c2e",
+                        "on-surface": "#191c1e",
+                        "on-secondary-container": "#556379",
+                        "on-tertiary-fixed": "#001c3a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "max-width": "1280px",
+                        "container-padding": "16px",
+                        "gutter": "12px",
+                        "unit": "4px",
+                        "gap-component": "8px",
+                        "sidebar-width": "256px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-md": ["Public Sans"],
+                        "label-md": ["JetBrains Mono"],
+                        "body-md": ["Public Sans"],
+                        "body-lg": ["Public Sans"],
+                        "display": ["Public Sans"],
+                        "headline-lg": ["Public Sans"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+            line-height: 1;
+        }
+        .bento-card {
+            background-color: white;
+            border: 1px solid #c4c6cf;
+            padding: 16px;
+            transition: all 0.2s ease;
+        }
+        .bento-card:hover {
+            border-color: #75777d;
+        }
+        .sidebar-active-indicator {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: #000000;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+    </style>
+</head>
+<body class="bg-background font-body-md text-on-surface flex min-h-screen">
+<!-- Sidebar Section -->
+<aside class="w-sidebar-width h-screen sticky left-0 top-0 flex flex-col bg-surface-container-low border-r border-outline-subtle shrink-0 z-50">
+<div class="px-container-padding py-6 border-b border-outline-subtle">
+<h1 class="font-headline-md text-headline-md text-primary">KenTender</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant opacity-70 mt-1 uppercase tracking-wider">Bidder Workspace</p>
+</div>
+<div class="flex-1 overflow-y-auto py-4">
+<div class="px-4 mb-2">
+<p class="font-label-sm text-label-sm text-secondary uppercase tracking-widest mb-4">Main Workspace</p>
+<nav class="space-y-1">
+<a class="flex items-center px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-high transition-all group" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">checklist</span>
+<span class="font-label-md text-label-md">Checklist</span>
+</a>
+<!-- Active Tab -->
+<div class="relative">
+<a class="flex items-center px-3 py-2.5 bg-surface-container-highest text-primary font-bold transition-all" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">edit_document</span>
+<span class="font-label-md text-label-md">Prepare Bid</span>
+</a>
+<div class="sidebar-active-indicator"></div>
+</div>
+<!-- Sub-nav for Technical Proposal -->
+<div class="pl-9 space-y-1 mt-1 border-l-2 border-outline-variant ml-5">
+<a class="block py-2 text-on-surface-variant hover:text-primary font-label-md text-label-md" href="#">Compliance Matrix</a>
+<a class="block py-2 text-on-surface-variant hover:text-primary font-label-md text-label-md" href="#">Methodology</a>
+<a class="block py-2 text-on-surface-variant hover:text-primary font-label-md text-label-md" href="#">Risks &amp; Dependencies</a>
+<a class="block py-2 text-primary font-bold font-label-md text-label-md" href="#">Technical Alternatives</a>
+<a class="block py-2 text-on-surface-variant hover:text-primary font-label-md text-label-md" href="#">Team Composition</a>
+</div>
+<a class="flex items-center px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-high transition-all group mt-2" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">verified_user</span>
+<span class="font-label-md text-label-md">Review &amp; Validate</span>
+</a>
+<a class="flex items-center px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-high transition-all group" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]">lock</span>
+<span class="font-label-md text-label-md">Submit &amp; Seal</span>
+</a>
+</nav>
+</div>
+</div>
+<div class="p-4 border-t border-outline-subtle bg-surface-container">
+<button class="w-full py-2 bg-primary text-on-primary font-label-md text-label-md flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined text-[16px]">save</span>
+                Save Workspace
+            </button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col min-w-0">
+<!-- Top Navigation Bar -->
+<header class="w-full top-0 sticky bg-surface-container-lowest h-14 flex justify-between items-center px-container-padding z-40 border-b border-outline-subtle">
+<div class="flex items-center gap-2 overflow-hidden">
+<span class="font-label-sm text-label-sm text-secondary truncate">Workspace</span>
+<span class="material-symbols-outlined text-[14px] text-outline">chevron_right</span>
+<span class="font-label-sm text-label-sm text-secondary truncate">Bid Preparation</span>
+<span class="material-symbols-outlined text-[14px] text-outline">chevron_right</span>
+<span class="font-label-sm text-label-sm text-secondary truncate">Technical Proposal</span>
+<span class="material-symbols-outlined text-[14px] text-outline">chevron_right</span>
+<span class="font-label-sm text-label-sm text-primary font-bold truncate">Technical Alternatives</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+<input class="pl-10 pr-4 py-1.5 bg-surface-container-low border border-outline-subtle rounded-none text-body-md focus:ring-1 focus:ring-primary focus:border-primary w-64" placeholder="Search workspace..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined">notifications</span></button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined">help_outline</span></button>
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary text-[12px] font-bold">JD</div>
+</div>
+</div>
+</header>
+<!-- Content Body -->
+<div class="flex-1 overflow-y-auto p-8 max-w-max-width mx-auto w-full pb-32">
+<!-- Header Section -->
+<div class="mb-8 border-l-4 border-primary pl-6">
+<h2 class="font-headline-lg text-headline-lg text-primary tracking-tight">Technical Alternatives</h2>
+<p class="font-body-lg text-on-surface-variant mt-2 max-w-2xl">Provide any permitted alternative solution in addition to your base proposal.</p>
+</div>
+<!-- Dashboard Modules -->
+<div class="grid grid-cols-1 gap-8">
+<!-- Section 1: Permitted Scope -->
+<section class="bento-card">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-primary text-[24px]">verified</span>
+<h3 class="font-headline-md text-headline-md">Permitted Scope</h3>
+</div>
+<p class="font-body-md text-on-surface-variant mb-6">Alternatives are restricted to the following institutional system modules:</p>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+<div class="flex items-center justify-between p-4 bg-surface-container-low border border-outline-subtle">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary">database</span>
+<span class="font-body-md font-semibold">Data Storage Layer</span>
+</div>
+<span class="material-symbols-outlined text-status-approved">check_circle</span>
+</div>
+<div class="flex items-center justify-between p-4 bg-surface-container-low border border-outline-subtle">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary">smartphone</span>
+<span class="font-body-md font-semibold">Mobile Application Framework</span>
+</div>
+<span class="material-symbols-outlined text-status-approved">check_circle</span>
+</div>
+</div>
+<div class="p-4 bg-status-pending-bg border border-status-pending/20 text-status-pending rounded-sm flex gap-3">
+<span class="material-symbols-outlined text-[20px]">info</span>
+<p class="font-label-md text-label-md">Note: The base proposal for all other tender parts remains mandatory and must be strictly adhered to.</p>
+</div>
+</section>
+<!-- Section 2: Alternatives Register -->
+<section class="bento-card">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[24px]">inventory_2</span>
+<h3 class="font-headline-md text-headline-md">Alternatives Register</h3>
+</div>
+<button class="px-4 py-1.5 border border-primary text-primary hover:bg-surface-container-high font-label-md text-label-md transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">add</span>
+                            Add Alternative
+                        </button>
+</div>
+<div class="overflow-x-auto border border-outline-subtle">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-subtle">
+<th class="px-4 py-3 font-label-md text-label-md uppercase tracking-wider text-secondary">Alternative title</th>
+<th class="px-4 py-3 font-label-md text-label-md uppercase tracking-wider text-secondary">Affected system part</th>
+<th class="px-4 py-3 font-label-md text-label-md uppercase tracking-wider text-secondary">Description</th>
+<th class="px-4 py-3 font-label-md text-label-md uppercase tracking-wider text-secondary">Schedule impact</th>
+<th class="px-4 py-3 font-label-md text-label-md uppercase tracking-wider text-secondary whitespace-nowrap">Price-schedule ref</th>
+<th class="px-4 py-3 font-label-md text-label-md uppercase tracking-wider text-secondary">Supporting information</th>
+<th class="px-4 py-3 font-label-md text-label-md uppercase tracking-wider text-secondary">Status</th>
+<th class="px-4 py-3 font-label-md text-label-md uppercase tracking-wider text-secondary text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-subtle">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-lowest transition-colors h-10">
+<td class="px-4 py-3 font-body-md text-primary font-semibold">Flash-Optimized Storage</td>
+<td class="px-4 py-3 font-body-md text-on-surface-variant">Storage Layer</td>
+<td class="px-4 py-3 font-body-md text-on-surface-variant max-w-xs truncate">Uses NVMe SSDs instead of SAS for higher IOPS</td>
+<td class="px-4 py-3 font-body-md text-on-surface-variant whitespace-nowrap">-2 Days (Migration)</td>
+<td class="px-4 py-3 font-label-sm text-label-sm text-secondary">PS-ALT-001</td>
+<td class="px-4 py-3">
+<div class="flex items-center gap-1 text-secondary">
+<span class="material-symbols-outlined text-[16px]">attachment</span>
+<span class="font-label-sm text-label-sm truncate max-w-[100px]">Technical Datasheet</span>
+</div>
+</td>
+<td class="px-4 py-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 bg-status-approved-bg text-status-approved rounded-sm font-label-sm text-label-sm">
+<span class="status-dot bg-status-approved"></span>
+                                            Complete
+                                        </span>
+</td>
+<td class="px-4 py-3 text-right">
+<button class="p-1.5 hover:bg-surface-container-high rounded transition-colors">
+<span class="material-symbols-outlined text-[20px] text-secondary">edit</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-lowest transition-colors h-10">
+<td class="px-4 py-3 font-body-md text-primary font-semibold">Native Mobile App</td>
+<td class="px-4 py-3 font-body-md text-on-surface-variant">Frontend</td>
+<td class="px-4 py-3 font-body-md text-on-surface-variant max-w-xs truncate">Replaces cross-platform framework with native Swift/Kotlin</td>
+<td class="px-4 py-3 font-body-md text-error whitespace-nowrap">+4 Weeks (Dev)</td>
+<td class="px-4 py-3 font-label-sm text-label-sm text-secondary">PS-ALT-002</td>
+<td class="px-4 py-3">
+<div class="flex items-center gap-1 text-secondary">
+<span class="material-symbols-outlined text-[16px]">description</span>
+<span class="font-label-sm text-label-sm truncate max-w-[100px]">Performance Report</span>
+</div>
+</td>
+<td class="px-4 py-3">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 bg-status-pending-bg text-status-pending rounded-sm font-label-sm text-label-sm">
+<span class="status-dot bg-status-pending animate-pulse"></span>
+                                            In progress
+                                        </span>
+</td>
+<td class="px-4 py-3 text-right">
+<button class="p-1.5 hover:bg-surface-container-high rounded transition-colors">
+<span class="material-symbols-outlined text-[20px] text-secondary">edit</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+</div>
+<!-- Sticky Footer Navigation -->
+<footer class="fixed bottom-0 left-sidebar-width right-0 bg-surface-container-lowest border-t border-outline-subtle h-16 flex items-center justify-between px-8 z-40 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 text-secondary hover:text-primary font-label-md text-label-md transition-colors group">
+<span class="material-symbols-outlined text-[18px] group-hover:-translate-x-1 transition-transform">arrow_back</span>
+                Back to Workspace
+            </button>
+</div>
+<div class="flex items-center gap-4">
+<button class="px-6 py-2 border border-outline-strong text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low transition-all">
+                    Save Draft
+                </button>
+<button class="px-8 py-2 bg-primary text-on-primary font-label-md text-label-md flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all">
+                    Continue
+                    <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</footer>
+</main>
+<!-- Visual Atmosphere / Decoration Layer -->
+<div class="fixed inset-0 pointer-events-none z-[-1] opacity-40">
+<div class="absolute top-0 right-0 w-1/3 h-1/3 bg-gradient-to-bl from-surface-container-highest to-transparent"></div>
+<div class="absolute bottom-0 left-sidebar-width w-1/4 h-1/4 bg-gradient-to-tr from-surface-container-high to-transparent"></div>
+</div>
+<script>
+        // Simple micro-interaction for rows
+        document.querySelectorAll('tr').forEach(row => {
+            row.addEventListener('click', (e) => {
+                if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
+                    console.log('Row clicked for contextual details');
+                }
+            });
+        });
+
+        // Search bar focus effect
+        const searchInput = document.querySelector('input[type="text"]');
+        if(searchInput) {
+            searchInput.addEventListener('focus', () => {
+                searchInput.parentElement.classList.add('scale-105');
+                searchInput.parentElement.classList.add('transition-transform');
+            });
+            searchInput.addEventListener('blur', () => {
+                searchInput.parentElement.classList.remove('scale-105');
+            });
+        }
+    </script>
+</body></html>

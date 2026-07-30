@@ -33,6 +33,14 @@ from kentender_procurement.tender_configurations.services.qualification_and_capa
 	SECTION_KEY as QUAL_KEY,
 	portal_qualification_url,
 )
+from kentender_procurement.tender_configurations.services.technical_proposal_and_implementation_plan import (
+	SECTION_KEY as TECH_PROP_KEY,
+	portal_technical_proposal_url,
+)
+from kentender_procurement.tender_configurations.services.price_schedule_bidder import (
+	SECTION_KEY as PRICE_KEY,
+	portal_price_schedule_url,
+)
 from kentender_procurement.tender_configurations.services.requirement_matrix import (
 	get_requirement_matrix,
 	portal_section_url,
@@ -80,6 +88,14 @@ def get_context(context):
 
 	if section_key == QUAL_KEY:
 		frappe.local.flags.redirect_location = portal_qualification_url(publication_ref)
+		raise frappe.Redirect
+
+	if section_key == TECH_PROP_KEY:
+		frappe.local.flags.redirect_location = portal_technical_proposal_url(publication_ref)
+		raise frappe.Redirect
+
+	if section_key == PRICE_KEY:
+		frappe.local.flags.redirect_location = portal_price_schedule_url(publication_ref)
 		raise frappe.Redirect
 
 	if section_key in MATRIX_KEYS:

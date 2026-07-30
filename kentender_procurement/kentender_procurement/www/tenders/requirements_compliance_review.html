@@ -1,0 +1,149 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }} | KenTender{% endblock %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/kentender_procurement/css/available_tenders.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/submission_checklist_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/requirement_matrix_web.css?v=rc-lean-4">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+<script defer src="/assets/kentender_procurement/js/requirements_compliance_review.js?v=rc-lean-5"></script>
+{% endblock %}
+
+{% block page_content %}
+{% set active_nav = "my_bids" %}
+{% set active_ws = "checklist" %}
+{% set r = review %}
+{% set c = r.counts or {} %}
+<div class="kt-a0-root kt-a2-root kt-a4-root kt-rc-root" data-testid="kt-rc-review-root"
+	data-publication-ref="{{ r.published_tender_ref }}"
+	data-section-url="{{ r.section_url }}"
+	data-workspace-url="{{ r.workspace_url }}"
+	data-complete-enabled="{{ r.complete_enabled or 0 }}"
+	data-confirmed="{{ r.section_complete_confirmed or 0 }}"
+	data-bid-sealed="{{ r.bid_sealed or 0 }}">
+	{% include "templates/includes/kt_bidder_portal_nav.html" %}
+
+	<div class="kt-a2-shell">
+		{% include "templates/includes/kt_bidder_workspace_sidebar.html" %}
+
+		<main class="kt-a2-main kt-a4-main">
+			<div class="kt-a4-main-inner">
+				<header class="kt-a4-page-head">
+					<div>
+						<h1 data-testid="kt-rc-review-title">{{ r.page_title }}</h1>
+						<p data-testid="kt-rc-review-instructions">{{ _("Resolve incomplete or changed responses before completing this section.") }}</p>
+					</div>
+				</header>
+
+				<section class="kt-rc-kpi-grid" data-testid="kt-rc-kpi-grid">
+					<div class="kt-rc-kpi" data-testid="kt-rc-kpi-required"><span>{{ _("Required responses") }}</span><strong>{{ c.required or 0 }}</strong></div>
+					<div class="kt-rc-kpi kt-rc-kpi--complete" data-testid="kt-rc-kpi-complete"><span>{{ _("Complete") }}</span><strong>{{ c.complete or 0 }}</strong></div>
+					<div class="kt-rc-kpi kt-rc-kpi--progress" data-testid="kt-rc-kpi-progress"><span>{{ _("In progress") }}</span><strong>{{ c.in_progress or 0 }}</strong></div>
+					<div class="kt-rc-kpi kt-rc-kpi--attention" data-testid="kt-rc-kpi-attention"><span>{{ _("Needs attention") }}</span><strong>{{ c.needs_attention or 0 }}</strong></div>
+					<div class="kt-rc-kpi" data-testid="kt-rc-kpi-not-started"><span>{{ _("Not started") }}</span><strong>{{ c.not_started or 0 }}</strong></div>
+				</section>
+
+				<section class="kt-rc-panel" data-testid="kt-rc-review-groups">
+					<div class="kt-rc-panel__head">{{ _("Requirement Groups") }}</div>
+					<div class="kt-a4-table-wrap">
+						<table class="kt-a4-table">
+							<thead>
+								<tr>
+									<th>{{ _("Group") }}</th>
+									<th class="kt-a4-right">{{ _("Required") }}</th>
+									<th class="kt-a4-right">{{ _("Complete") }}</th>
+									<th class="kt-a4-right">{{ _("Issues") }}</th>
+									<th>{{ _("Status") }}</th>
+									<th class="kt-a4-right">{{ _("Action") }}</th>
+								</tr>
+							</thead>
+							<tbody>
+								{% for g in r.groups or [] %}
+								<tr data-testid="kt-rc-review-group-row">
+									<td>{{ g.title }}</td>
+									<td class="kt-a4-right">{{ g.total }}</td>
+									<td class="kt-a4-right">{{ g.complete }}</td>
+									<td class="kt-a4-right">{{ g.needs_attention or 0 }}</td>
+									<td>
+										<span class="kt-rc-status-pill">
+											<span class="kt-a4-status-dot" aria-hidden="true"></span>
+											{{ g.status }}
+										</span>
+									</td>
+									<td class="kt-a4-right">
+										<a href="{{ r.section_url }}?group={{ g.group_key|urlencode }}" data-testid="kt-rc-group-edit">{{ _("Edit") }}</a>
+									</td>
+								</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+					</div>
+				</section>
+
+				<section class="kt-rc-panel" data-testid="kt-rc-unresolved">
+					<div class="kt-rc-panel__head kt-rc-panel__head--alert">
+						<span class="material-symbols-outlined" aria-hidden="true">warning</span>
+						{{ _("Responses requiring action") }}
+					</div>
+					{% if r.unresolved_issues %}
+					<div class="kt-a4-table-wrap">
+						<table class="kt-a4-table">
+							<thead>
+								<tr>
+									<th>{{ _("Ref") }}</th>
+									<th>{{ _("Requirement") }}</th>
+									<th>{{ _("Issue") }}</th>
+									<th>{{ _("Group") }}</th>
+									<th class="kt-a4-right">{{ _("Action") }}</th>
+								</tr>
+							</thead>
+							<tbody>
+								{% for i in r.unresolved_issues %}
+								<tr data-testid="kt-rc-issue-row">
+									<td class="kt-a4-mono">{{ i.tender_facing_reference }}</td>
+									<td>{{ i.title }}</td>
+									<td>
+										<span class="kt-rc-issue-text">
+											<span class="material-symbols-outlined" aria-hidden="true">error</span>
+											{{ i.issue }}
+										</span>
+									</td>
+									<td>{{ i.group_key }}</td>
+									<td class="kt-a4-right">
+										<a class="kt-a4-btn kt-a4-btn--secondary" href="{{ i.action_url }}" data-testid="kt-rc-issue-resolve">{{ _("Resolve") }}</a>
+									</td>
+								</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+					</div>
+					{% else %}
+					<p class="kt-a4-empty" data-testid="kt-rc-no-issues" style="padding: 1rem;">{{ _("No unresolved required responses.") }}</p>
+					{% endif %}
+				</section>
+			</div>
+		</main>
+	</div>
+
+	<footer class="kt-a4-foot" data-testid="kt-rc-review-footer">
+		<a class="kt-a4-btn kt-a4-btn--secondary" href="{{ r.section_url }}" data-testid="kt-rc-review-back">
+			<span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+			{{ _("Back to Requirements") }}
+		</a>
+		<div class="kt-a4-foot-mid">
+			<span data-testid="kt-rc-review-last-saved">{{ r.last_saved_display or "—" }}</span>
+		</div>
+		<div class="kt-a4-foot-actions">
+			<button type="button" class="kt-a4-btn kt-a4-btn--primary" data-testid="kt-rc-complete-btn"
+				{% if not r.complete_enabled or r.read_only or r.section_complete_confirmed %}disabled{% endif %}
+				title="{% if r.section_complete_confirmed %}{{ _('Section already completed') }}{% elif not r.complete_enabled %}{{ _('Resolve issues before completing') }}{% endif %}">
+				{% if not r.complete_enabled and not r.section_complete_confirmed %}<span class="material-symbols-outlined" aria-hidden="true">lock</span>{% endif %}
+				{% if r.section_complete_confirmed %}{{ _("Section completed") }}{% else %}{{ _("Complete Section") }}{% endif %}
+			</button>
+		</div>
+	</footer>
+
+	<div class="kt-a4-toast" data-testid="kt-rc-review-toast" role="status"></div>
+</div>
+{% endblock %}

@@ -1,0 +1,77 @@
+{# Stitch 08 — Technical Alternatives: Permitted Scope chips + Alternatives Register + Status #}
+{% set alts = bucket.alternatives or [] %}
+{% set scope_rows = cfg.permitted_scope or [] %}
+
+<section class="kt-s600-req-card" data-testid="kt-tp-alternatives-scope">
+	<div class="kt-s600-req-card__head">
+		<span class="material-symbols-outlined">verified</span>
+		<h2>{{ _("Permitted Scope") }}</h2>
+	</div>
+	<p class="kt-s600-help">{{ _("Alternatives are restricted to the institutional system modules listed below. The base proposal for all other tender parts remains mandatory.") }}</p>
+	{% if scope_rows %}
+	<ul class="kt-tp-scope-grid" data-testid="kt-tp-permitted-scope">
+		{% for s in scope_rows %}
+		<li class="kt-tp-scope-chip" data-scope-id="{{ s.scope_id or '' }}">
+			<span class="material-symbols-outlined">{{ s.icon or "check_circle" }}</span>
+			<strong>{{ s.title }}</strong>
+			<span class="material-symbols-outlined kt-tp-scope-chip__ok" aria-hidden="true">check_circle</span>
+		</li>
+		{% endfor %}
+	</ul>
+	{% endif %}
+	<p class="kt-tp-scope-note">
+		<span class="material-symbols-outlined">info</span>
+		{{ _("Note: The base proposal for all other tender parts remains mandatory and must be strictly adhered to.") }}
+	</p>
+</section>
+
+<section class="kt-s600-card kt-s600-card--flush" data-testid="kt-tp-alternatives">
+	<div class="kt-s600-card__head">
+		<h3>{{ _("Alternatives Register") }}</h3>
+		{% if not sub.read_only %}
+		<button type="button" class="kt-s600-btn" data-tp-add-alternative data-testid="kt-tp-add-alternative">
+			<span class="material-symbols-outlined">add</span> {{ _("Add alternative") }}
+		</button>
+		{% endif %}
+	</div>
+	<div class="kt-s600-table-wrap">
+		<table class="kt-s600-data-table">
+			<thead>
+				<tr>
+					<th>{{ _("Alternative title") }}</th>
+					<th>{{ _("Affected system part") }}</th>
+					<th>{{ _("Description") }}</th>
+					<th>{{ _("Schedule impact") }}</th>
+					<th>{{ _("Price-schedule ref") }}</th>
+					<th>{{ _("Supporting information") }}</th>
+					<th>{{ _("Status") }}</th>
+					{% if not sub.read_only %}<th class="is-right">{{ _("Action") }}</th>{% endif %}
+				</tr>
+			</thead>
+			<tbody data-testid="kt-tp-alternatives-body" data-records-body="alternatives"
+				data-status-kind="alternative">
+				{% for a in alts %}
+				{% set row_status = a.row_status or "Not Started" %}
+				<tr data-record-row data-record-id="{{ a.alternative_id or '' }}" data-row-status="{{ row_status }}">
+					<td><input data-r="title" value="{{ a.title or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="affected_system_part" value="{{ a.affected_system_part or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="description" value="{{ a.description or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="schedule_impact" value="{{ a.schedule_impact or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="price_schedule_ref" value="{{ a.price_schedule_ref or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="supporting_info" value="{{ a.supporting_info or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td data-tp-status-cell>
+						<span class="kt-s600-status" data-status="{{ row_status }}" data-row-status-badge
+							data-testid="kt-tp-alt-status">{{ row_status }}</span>
+					</td>
+					{% if not sub.read_only %}
+					<td class="is-right is-actions" data-tp-action-cell>
+						<button type="button" class="kt-s600-link" data-tp-remove-row title="{{ _('Delete') }}"><span class="material-symbols-outlined">delete</span></button>
+					</td>
+					{% endif %}
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+	<p class="kt-s600-card__foot-note">{{ _("If no alternative is proposed, leave this register empty — the base proposal remains complete on its own.") }}</p>
+</section>

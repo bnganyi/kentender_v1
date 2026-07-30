@@ -1,0 +1,65 @@
+{# Stitch 06 (Section 2) — Training and knowledge transfer #}
+{% set rows = bucket.training_activities or [] %}
+{% set audiences = cfg.audiences or [] %}
+
+<section class="kt-s600-card kt-s600-card--flush" data-testid="kt-tp-training">
+	<div class="kt-s600-card__head">
+		<h3>{{ _("Training activities") }}</h3>
+		{% if not sub.read_only %}
+		<button type="button" class="kt-s600-btn" data-tp-add-training data-testid="kt-tp-add-training">
+			<span class="material-symbols-outlined">add</span> {{ _("Add training activity") }}
+		</button>
+		{% endif %}
+	</div>
+	<div class="kt-s600-table-wrap">
+		<table class="kt-s600-data-table">
+			<thead>
+				<tr>
+					<th>{{ _("Audience") }}</th>
+					<th>{{ _("Training topic") }}</th>
+					<th>{{ _("Delivery method") }}</th>
+					<th>{{ _("Duration") }}</th>
+					<th>{{ _("Timing") }}</th>
+					<th>{{ _("Responsible person") }}</th>
+					{% if not sub.read_only %}<th class="is-right">{{ _("Action") }}</th>{% endif %}
+				</tr>
+			</thead>
+			<tbody data-testid="kt-tp-training-body" data-records-body="training_activities">
+				{% for r in rows %}
+				<tr data-record-row data-record-id="{{ r.activity_id or '' }}">
+					<td>
+						{% if audiences %}
+						<select data-r="audience" {% if sub.read_only %}disabled{% endif %}>
+							<option value="">{{ _("Select audience…") }}</option>
+							{% for aud in audiences %}
+							<option value="{{ aud }}" {% if r.audience == aud %}selected{% endif %}>{{ aud }}</option>
+							{% endfor %}
+						</select>
+						{% else %}
+						<input data-r="audience" value="{{ r.audience or '' }}" {% if sub.read_only %}disabled{% endif %}/>
+						{% endif %}
+					</td>
+					<td><input data-r="topic" value="{{ r.topic or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="delivery_method" value="{{ r.delivery_method or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="duration" value="{{ r.duration or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="timing" value="{{ r.timing or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					<td><input data-r="responsible_person" value="{{ r.responsible_person or '' }}" {% if sub.read_only %}disabled{% endif %}/></td>
+					{% if not sub.read_only %}
+					<td class="is-right is-actions">
+						<button type="button" class="kt-s600-link" data-tp-remove-row title="{{ _('Delete') }}"><span class="material-symbols-outlined">delete</span></button>
+					</td>
+					{% endif %}
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+	<p class="kt-s600-card__foot-note">{{ _("At least one complete training activity is required (audience, topic and delivery method).") }}</p>
+</section>
+
+<select hidden data-testid="kt-tp-audience-options-template">
+	<option value="">{{ _("Select audience…") }}</option>
+	{% for aud in audiences %}
+	<option value="{{ aud }}">{{ aud }}</option>
+	{% endfor %}
+</select>

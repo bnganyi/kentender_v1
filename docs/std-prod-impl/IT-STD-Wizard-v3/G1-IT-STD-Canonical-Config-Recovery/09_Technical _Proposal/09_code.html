@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KenTender Bidder Workspace - Review Technical Proposal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-primary": "#bac7e0",
+                    "surface": "#f7f9fb",
+                    "on-secondary": "#ffffff",
+                    "outline-subtle": "#c4c6cf",
+                    "on-primary-fixed": "#0e1c2e",
+                    "surface-tint": "#525f74",
+                    "on-tertiary-container": "#6b85ac",
+                    "surface-bright": "#f7f9fb",
+                    "secondary": "#515f74",
+                    "on-primary": "#ffffff",
+                    "secondary-fixed": "#d5e3fc",
+                    "outline": "#75777d",
+                    "tertiary-fixed": "#d4e3ff",
+                    "on-surface": "#191c1e",
+                    "on-tertiary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-fixed-dim": "#bac7e0",
+                    "surface-container-highest": "#e0e3e5",
+                    "outline-strong": "#74777f",
+                    "on-surface-variant": "#44474c",
+                    "background": "#f7f9fb",
+                    "on-secondary-fixed": "#0d1c2e",
+                    "outline-variant": "#c5c6cd",
+                    "primary-fixed": "#d6e3fd",
+                    "on-primary-container": "#77859b",
+                    "on-background": "#191c1e",
+                    "surface-container": "#eceef0",
+                    "on-primary-fixed-variant": "#3a475c",
+                    "surface-variant": "#e0e3e5",
+                    "secondary-fixed-dim": "#b9c7e0",
+                    "on-error": "#ffffff",
+                    "primary-container": "#0e1c2e",
+                    "status-error-bg": "#fff1f2",
+                    "status-approved": "#065f46",
+                    "on-error-container": "#93000a",
+                    "status-error": "#ba1a1a",
+                    "error-container": "#ffdad6",
+                    "surface-container-high": "#e6e8ea",
+                    "status-pending-bg": "#fffbeb",
+                    "primary": "#000000",
+                    "on-tertiary-fixed": "#001c3a",
+                    "on-secondary-fixed-variant": "#3a485c",
+                    "status-pending": "#92400e",
+                    "secondary-container": "#d2e1fa",
+                    "tertiary": "#000000",
+                    "status-approved-bg": "#ecfdf5",
+                    "error": "#ba1a1a",
+                    "surface-dim": "#d8dadc",
+                    "tertiary-fixed-dim": "#adc8f3",
+                    "on-tertiary-fixed-variant": "#2d486c",
+                    "on-secondary-container": "#556379",
+                    "inverse-on-surface": "#eff1f3",
+                    "inverse-surface": "#2d3133",
+                    "tertiary-container": "#001c3a",
+                    "surface-container-low": "#f2f4f6"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "gap-component": "8px",
+                    "unit": "4px",
+                    "gutter": "12px",
+                    "sidebar-width": "256px",
+                    "container-padding": "16px",
+                    "max-width": "1280px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Public Sans"],
+                    "body-md": ["Public Sans"],
+                    "label-md": ["JetBrains Mono"],
+                    "label-sm": ["JetBrains Mono"],
+                    "display": ["Public Sans"],
+                    "headline-md": ["Public Sans"],
+                    "body-lg": ["Public Sans"]
+            },
+            "fontSize": {
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                    "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Public Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; display: inline-block; vertical-align: middle; }
+        .sidebar-active-indicator { position: absolute; right: 0; top: 0; bottom: 0; width: 4px; background-color: #000000; }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c4c6cf; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface h-screen flex flex-col overflow-hidden">
+<!-- TopNavBar -->
+<header class="w-full top-0 sticky bg-surface-container-lowest border-b border-outline-subtle flex justify-between items-center px-container-padding h-14 z-50">
+<div class="flex items-center gap-4">
+<span class="font-headline-lg text-headline-lg text-primary uppercase tracking-tight">KenTender</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="pl-9 pr-4 py-1.5 bg-surface-container border border-outline-subtle rounded-lg text-body-md w-64 focus:outline-none focus:ring-1 focus:ring-primary" placeholder="Search tender documents..." type="text"/>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant">
+<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors">notifications</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors">help_outline</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors">account_circle</span>
+</div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar -->
+<aside class="w-sidebar-width h-full bg-surface-container-low border-r border-outline-subtle flex flex-col py-4 shrink-0 overflow-y-auto">
+<div class="px-6 mb-8">
+<h2 class="font-headline-md text-headline-md text-primary">Bid Workspace</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Tender ID: KT-2024-081</p>
+</div>
+<nav class="flex-1">
+<!-- Checklist (Inactive) -->
+<div class="relative px-6 py-3 flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high transition-all cursor-pointer">
+<span class="material-symbols-outlined">checklist</span>
+<span class="font-label-md text-label-md">Checklist</span>
+</div>
+<!-- Prepare Bid (Active) -->
+<div class="relative px-6 py-3 flex items-center gap-3 bg-surface-container-highest text-primary font-bold transition-all cursor-pointer">
+<span class="material-symbols-outlined">edit_document</span>
+<span class="font-label-md text-label-md">Prepare Bid</span>
+<div class="sidebar-active-indicator"></div>
+</div>
+<!-- Review & Validate (Inactive) -->
+<div class="relative px-6 py-3 flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high transition-all cursor-pointer">
+<span class="material-symbols-outlined">verified_user</span>
+<span class="font-label-md text-label-md">Review &amp; Validate</span>
+</div>
+<!-- Submit & Seal (Inactive) -->
+<div class="relative px-6 py-3 flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high transition-all cursor-pointer">
+<span class="material-symbols-outlined">lock</span>
+<span class="font-label-md text-label-md">Submit &amp; Seal</span>
+</div>
+</nav>
+<div class="px-6 mt-auto">
+<button class="w-full py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md uppercase tracking-wider hover:opacity-90 transition-opacity">
+                    Save Workspace
+                </button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto p-8 max-w-max-width mx-auto w-full">
+<!-- Header Section -->
+<div class="mb-8">
+<h1 class="font-headline-lg text-headline-lg text-primary mb-2">Review Technical Proposal and Implementation Plan</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Review the summary of your technical proposal and implementation plan before completing this section.</p>
+</div>
+<div class="grid grid-cols-12 gap-6">
+<!-- Subsection Table (Bento Cell) -->
+<div class="col-span-12 bg-surface-container-lowest border border-outline-subtle overflow-hidden">
+<div class="p-4 bg-surface-container-low border-b border-outline-subtle">
+<h3 class="font-label-md text-label-md uppercase text-on-surface-variant">Subsection Completion Status</h3>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container border-b border-outline-subtle h-10">
+<th class="px-4 font-label-sm text-label-sm uppercase text-on-surface-variant">Section</th>
+<th class="px-4 font-label-sm text-label-sm uppercase text-on-surface-variant">Required/Optional</th>
+<th class="px-4 font-label-sm text-label-sm uppercase text-on-surface-variant">Progress</th>
+<th class="px-4 font-label-sm text-label-sm uppercase text-on-surface-variant">Status</th>
+<th class="px-4 font-label-sm text-label-sm uppercase text-on-surface-variant">Current Issue</th>
+<th class="px-4 font-label-sm text-label-sm uppercase text-on-surface-variant">Action</th>
+</tr>
+</thead>
+<tbody class="text-body-md">
+<tr class="h-10 border-b border-outline-subtle hover:bg-surface-container-lowest transition-colors">
+<td class="px-4 py-2 font-semibold">Technical Approach</td>
+<td class="px-4 py-2">Mandatory</td>
+<td class="px-4 py-2">100%</td>
+<td class="px-4 py-2"><span class="status-dot bg-status-approved"></span>Complete</td>
+<td class="px-4 py-2">None</td>
+<td class="px-4 py-2 text-primary font-bold cursor-pointer hover:underline">Edit</td>
+</tr>
+<tr class="h-10 border-b border-outline-subtle hover:bg-surface-container-lowest transition-colors">
+<td class="px-4 py-2 font-semibold">Implementation Work Plan</td>
+<td class="px-4 py-2">Mandatory</td>
+<td class="px-4 py-2">100%</td>
+<td class="px-4 py-2"><span class="status-dot bg-status-approved"></span>Complete</td>
+<td class="px-4 py-2">None</td>
+<td class="px-4 py-2 text-primary font-bold cursor-pointer hover:underline">Edit</td>
+</tr>
+<tr class="h-10 border-b border-outline-subtle hover:bg-surface-container-lowest transition-colors">
+<td class="px-4 py-2 font-semibold">Project Organization and Coordination</td>
+<td class="px-4 py-2">Mandatory</td>
+<td class="px-4 py-2">100%</td>
+<td class="px-4 py-2"><span class="status-dot bg-status-approved"></span>Complete</td>
+<td class="px-4 py-2">None</td>
+<td class="px-4 py-2 text-primary font-bold cursor-pointer hover:underline">Edit</td>
+</tr>
+<tr class="h-10 border-b border-outline-subtle hover:bg-surface-container-lowest transition-colors">
+<td class="px-4 py-2 font-semibold">Quality, Testing and Acceptance</td>
+<td class="px-4 py-2">Mandatory</td>
+<td class="px-4 py-2">100%</td>
+<td class="px-4 py-2"><span class="status-dot bg-status-approved"></span>Complete</td>
+<td class="px-4 py-2">None</td>
+<td class="px-4 py-2 text-primary font-bold cursor-pointer hover:underline">Edit</td>
+</tr>
+<tr class="h-10 border-b border-outline-subtle hover:bg-surface-container-lowest transition-colors">
+<td class="px-4 py-2 font-semibold">Transition and Knowledge Transfer</td>
+<td class="px-4 py-2">Mandatory</td>
+<td class="px-4 py-2">100%</td>
+<td class="px-4 py-2"><span class="status-dot bg-status-approved"></span>Complete</td>
+<td class="px-4 py-2">None</td>
+<td class="px-4 py-2 text-primary font-bold cursor-pointer hover:underline">Edit</td>
+</tr>
+<tr class="h-10 border-b border-outline-subtle hover:bg-surface-container-lowest transition-colors">
+<td class="px-4 py-2 font-semibold">Risks, Assumptions and Dependencies</td>
+<td class="px-4 py-2">Mandatory</td>
+<td class="px-4 py-2">100%</td>
+<td class="px-4 py-2"><span class="status-dot bg-status-approved"></span>Complete</td>
+<td class="px-4 py-2">None</td>
+<td class="px-4 py-2 text-primary font-bold cursor-pointer hover:underline">Edit</td>
+</tr>
+<tr class="h-10 border-b border-outline-subtle hover:bg-surface-container-lowest transition-colors">
+<td class="px-4 py-2 font-semibold">Technical Alternatives</td>
+<td class="px-4 py-2">Optional</td>
+<td class="px-4 py-2">100%</td>
+<td class="px-4 py-2"><span class="status-dot bg-status-approved"></span>Complete</td>
+<td class="px-4 py-2">None</td>
+<td class="px-4 py-2 text-primary font-bold cursor-pointer hover:underline">Edit</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- KPI Cards Section (Consolidated Summary) -->
+<div class="col-span-12 mt-4">
+<h2 class="font-headline-md text-headline-md text-primary mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined">summarize</span> Consolidated Summary
+                    </h2>
+<div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+<!-- Duration -->
+<div class="bg-surface-container-lowest border border-outline-subtle p-4 border-l-4 border-l-primary">
+<span class="font-label-sm text-label-sm text-on-surface-variant block mb-1">WORK-PLAN DURATION</span>
+<span class="font-headline-lg text-headline-lg text-primary">24 Weeks</span>
+</div>
+<!-- Phases & Milestones -->
+<div class="bg-surface-container-lowest border border-outline-subtle p-4 border-l-4 border-l-secondary">
+<span class="font-label-sm text-label-sm text-on-surface-variant block mb-1">PHASES &amp; MILESTONES</span>
+<div class="flex items-baseline gap-2">
+<span class="font-headline-lg text-headline-lg text-primary">6</span>
+<span class="font-body-md text-body-md">Phases,</span>
+<span class="font-headline-lg text-headline-lg text-primary">12</span>
+<span class="font-body-md text-body-md">Milestones</span>
+</div>
+</div>
+<!-- Personnel -->
+<div class="bg-surface-container-lowest border border-outline-subtle p-4 border-l-4 border-l-primary">
+<span class="font-label-sm text-label-sm text-on-surface-variant block mb-1">KEY PERSONNEL</span>
+<span class="font-headline-lg text-headline-lg text-primary">8 Roles</span>
+</div>
+<!-- Testing Stages -->
+<div class="bg-surface-container-lowest border border-outline-subtle p-4 border-l-4 border-l-secondary">
+<span class="font-label-sm text-label-sm text-on-surface-variant block mb-1">TESTING STAGES</span>
+<span class="font-headline-lg text-headline-lg text-primary">5 Stages</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Unit to Operational</p>
+</div>
+<!-- Training -->
+<div class="bg-surface-container-lowest border border-outline-subtle p-4 border-l-4 border-l-primary">
+<span class="font-label-sm text-label-sm text-on-surface-variant block mb-1">TRAINING ACTIVITIES</span>
+<span class="font-headline-lg text-headline-lg text-primary">3 Groups</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Target Audiences</p>
+</div>
+<!-- Risks -->
+<div class="bg-surface-container-lowest border border-outline-subtle p-4 border-l-4 border-l-status-pending">
+<span class="font-label-sm text-label-sm text-on-surface-variant block mb-1">RISKS &amp; DEPENDENCIES</span>
+<div class="flex items-baseline gap-2">
+<span class="font-headline-lg text-headline-lg text-status-pending">2</span>
+<span class="font-body-md text-body-md">Risks,</span>
+<span class="font-headline-lg text-headline-lg text-status-pending">1</span>
+<span class="font-body-md text-body-md">Dependency</span>
+</div>
+</div>
+<!-- Alternatives -->
+<div class="col-span-1 lg:col-span-2 bg-surface-container-lowest border border-outline-subtle p-4 border-l-4 border-l-primary">
+<span class="font-label-sm text-label-sm text-on-surface-variant block mb-1">TECHNICAL ALTERNATIVES</span>
+<span class="font-headline-lg text-headline-lg text-primary">2 Proposed</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Strategic optimizations included in bid package.</p>
+</div>
+</div>
+</div>
+<!-- Confirmation Section -->
+<div class="col-span-12 mt-6 p-6 bg-surface-container-low border border-outline-subtle rounded-lg">
+<label class="flex items-start gap-4 cursor-pointer group">
+<div class="relative flex items-center justify-center mt-1">
+<input class="peer h-5 w-5 rounded border-outline focus:ring-primary text-primary transition-all" type="checkbox"/>
+<span class="material-symbols-outlined absolute opacity-0 peer-checked:opacity-100 text-white pointer-events-none text-base">check</span>
+</div>
+<span class="font-body-lg text-body-lg text-on-surface group-hover:text-primary transition-colors">
+                            I confirm that the bidder accepts responsibility for the successful integration and interoperability of the proposed system components.
+                        </span>
+</label>
+</div>
+</div>
+<!-- Spacer for Toolbar -->
+<div class="h-24"></div>
+</main>
+</div>
+<!-- Bottom Toolbar (Page Actions) -->
+<div class="w-full bg-surface-container-lowest border-t border-outline-subtle py-3 px-container-padding flex justify-between items-center z-50">
+<button class="flex items-center gap-2 font-label-md text-label-md text-secondary hover:text-primary transition-colors uppercase tracking-wider">
+<span class="material-symbols-outlined text-base">arrow_back</span> Back
+        </button>
+<div class="flex gap-4">
+<button class="px-6 py-2 border border-outline-subtle font-label-md text-label-md text-on-surface uppercase tracking-wider hover:bg-surface-container transition-all">
+                Save Draft
+            </button>
+<button class="px-8 py-2 bg-primary text-on-primary font-label-md text-label-md uppercase tracking-wider shadow-sm hover:opacity-90 active:scale-95 transition-all">
+                Complete Section
+            </button>
+</div>
+</div>
+<!-- Footer -->
+<footer class="w-full bg-surface-container border-t border-outline-subtle px-container-padding py-2 flex justify-between items-center z-40">
+<span class="font-label-md text-label-md font-bold text-secondary">KenTender</span>
+<span class="font-label-sm text-label-sm text-secondary">© 2024 KenTender Institutional Procurement. All rights reserved.</span>
+<div class="flex gap-6">
+<a class="font-label-sm text-label-sm text-secondary hover:text-primary transition-all underline" href="#">Terms of Service</a>
+<a class="font-label-sm text-label-sm text-secondary hover:text-primary transition-all underline" href="#">Security Protocols</a>
+<a class="font-label-sm text-label-sm text-secondary hover:text-primary transition-all underline" href="#">Support Hub</a>
+</div>
+</footer>
+<script>
+        // Simple micro-interaction for checkboxes and buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const originalText = this.innerText;
+                if (this.innerText === 'SAVE DRAFT') {
+                    this.innerText = 'SAVING...';
+                    setTimeout(() => { this.innerText = originalText; }, 800);
+                }
+            });
+        });
+    </script>
+</body></html>

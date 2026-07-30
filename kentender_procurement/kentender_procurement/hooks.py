@@ -126,6 +126,22 @@ app_include_js = [
 website_route_rules = [
 	{"from_route": "/supplier/tenders/<tender_code>", "to_route": "supplier/tenders"},
 	{
+		"from_route": "/tenders/<publication_ref>/review-and-validate",
+		"to_route": "tenders/review_and_validate",
+	},
+	{
+		"from_route": "/tenders/<publication_ref>/final-bid-review",
+		"to_route": "tenders/final_bid_review",
+	},
+	{
+		"from_route": "/tenders/<publication_ref>/submit-bid",
+		"to_route": "tenders/submit_bid",
+	},
+	{
+		"from_route": "/tenders/<publication_ref>/submission-receipt",
+		"to_route": "tenders/submission_receipt",
+	},
+	{
 		"from_route": "/tenders/<publication_ref>/sections/form_of_tender",
 		"to_route": "tenders/form_of_tender",
 	},
@@ -152,6 +168,38 @@ website_route_rules = [
 	{
 		"from_route": "/tenders/<publication_ref>/sections/qualification_and_capability",
 		"to_route": "tenders/qualification_and_capability",
+	},
+	{
+		"from_route": "/tenders/<publication_ref>/sections/technical_proposal_and_implementation_plan/review",
+		"to_route": "tenders/technical_proposal_review",
+	},
+	{
+		"from_route": "/tenders/<publication_ref>/sections/technical_proposal_and_implementation_plan/<subsection_key>",
+		"to_route": "tenders/technical_proposal_subsection",
+	},
+	{
+		"from_route": "/tenders/<publication_ref>/sections/technical_proposal_and_implementation_plan",
+		"to_route": "tenders/technical_proposal_and_implementation_plan",
+	},
+	{
+		"from_route": "/tenders/<publication_ref>/sections/requirements_compliance/review",
+		"to_route": "tenders/requirements_compliance_review",
+	},
+	{
+		"from_route": "/tenders/<publication_ref>/sections/requirements_compliance",
+		"to_route": "tenders/requirements_compliance",
+	},
+	{
+		"from_route": "/tenders/<publication_ref>/sections/price_schedule/review",
+		"to_route": "tenders/price_schedule_review",
+	},
+	{
+		"from_route": "/tenders/<publication_ref>/sections/price_schedule/schedules/<schedule_key>",
+		"to_route": "tenders/price_schedule_schedule",
+	},
+	{
+		"from_route": "/tenders/<publication_ref>/sections/price_schedule",
+		"to_route": "tenders/price_schedule",
 	},
 	{"from_route": "/tenders/<publication_ref>/sections/<section_key>", "to_route": "tenders/section"},
 	{"from_route": "/tenders/<publication_ref>/documents", "to_route": "tenders/documents"},

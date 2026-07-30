@@ -178,27 +178,6 @@
 					</section>
 				</div>
 
-				<footer class="kt-a4-foot" data-testid="kt-a4-footer">
-					<a class="kt-a4-btn kt-a4-btn--ghost" href="{{ m.workspace_url }}"
-						data-testid="kt-a4-back-workspace">
-						<span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
-						{{ _("Back to Workspace") }}
-					</a>
-					<div class="kt-a4-foot-mid">
-						<span data-testid="kt-a4-last-saved">{{ m.last_saved_display }}</span>
-					</div>
-					<div class="kt-a4-foot-actions">
-						<button type="button" class="kt-a4-btn kt-a4-btn--secondary"
-							data-testid="kt-a4-save-section"{% if m.bid_sealed %} disabled{% endif %}>
-							{{ _("Save Section") }}
-						</button>
-						<a class="kt-a4-btn kt-a4-btn--primary" href="{{ m.next_section_url }}"
-							data-testid="kt-a4-save-continue">
-							{{ _("Save & Continue") }}
-							<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
-						</a>
-					</div>
-				</footer>
 			</div>
 
 			<aside class="kt-a4-drawer" data-testid="kt-a4-drawer" hidden aria-hidden="true">
@@ -237,8 +216,30 @@
 			</aside>
 		</main>
 	</div>
+
+	<footer class="kt-a4-foot" data-testid="kt-a4-footer">
+		<a class="kt-a4-btn kt-a4-btn--secondary" href="{{ m.workspace_url }}"
+			data-testid="kt-a4-back-workspace">
+			<span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+			{{ _("Back to Workspace") }}
+		</a>
+		<div class="kt-a4-foot-mid">
+			<span data-testid="kt-a4-last-saved">{{ m.last_saved_display }}</span>
+		</div>
+		<div class="kt-a4-foot-actions">
+			<button type="button" class="kt-a4-btn kt-a4-btn--secondary"
+				data-testid="kt-a4-save-section"{% if m.bid_sealed %} disabled{% endif %}>
+				{{ _("Save Section") }}
+			</button>
+			<a class="kt-a4-btn kt-a4-btn--primary" href="{{ m.next_section_url }}"
+				data-testid="kt-a4-save-continue">
+				{{ _("Save & Continue") }}
+				<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+			</a>
+		</div>
+	</footer>
 </div>
 <script type="application/json" id="kt-a4-bootstrap">{{ m | tojson }}</script>
-<script src="/assets/kentender_procurement/js/requirement_matrix_web.js"></script>
+<script src="/assets/kentender_procurement/js/requirement_matrix_web.js?v=rc-lean-4"></script>
 {% endif %}
 {% endblock %}

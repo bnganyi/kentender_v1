@@ -1,0 +1,78 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }} | KenTender{% endblock %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/kentender_procurement/css/available_tenders.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/submission_checklist_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/final_submission_web.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+<script defer src="/assets/kentender_procurement/js/final_submission_web.js"></script>
+{% endblock %}
+
+{% block page_content %}
+{% set r = receipt %}
+{% set active_nav = "my_bids" %}
+{% set active_ws = "submit" %}
+<div class="kt-a0-root kt-a2-root kt-fs-root kt-fs-receipt" data-testid="kt-fs-receipt-root"
+	data-publication-ref="{{ r.published_tender_ref }}">
+	{% include "templates/includes/kt_bidder_portal_nav.html" %}
+	<div class="kt-a2-shell">
+		{% include "templates/includes/kt_bidder_workspace_sidebar.html" %}
+		<main class="kt-a2-main kt-fs-main">
+			<div class="kt-fs-canvas" id="kt-fs-receipt-print">
+				<header class="kt-fs-head">
+					<div>
+						<h1 data-testid="kt-fs-receipt-title">{{ r.status_chip }}</h1>
+						<p data-testid="kt-fs-receipt-message">{{ r.message }}</p>
+					</div>
+					<span class="kt-fs-chip kt-fs-chip--ok">{{ r.submission_status }}</span>
+				</header>
+
+				<section class="kt-fs-bento" data-testid="kt-fs-receipt-summary">
+					<h2>{{ _("Receipt Summary") }}</h2>
+					<div class="kt-fs-meta">
+						<div><span>{{ _("Receipt reference") }}</span><strong data-testid="kt-fs-receipt-code">{{ r.receipt_code }}</strong></div>
+						<div><span>{{ _("Submitted date and time") }}</span>
+							<strong data-testid="kt-fs-receipt-time">{{ r.submitted_at_display }}{% if r.timezone %} ({{ r.timezone }}){% endif %}</strong>
+						</div>
+						<div><span>{{ _("Tender") }}</span><strong>{{ r.tender_title or "—" }}</strong></div>
+						<div><span>{{ _("Tender reference") }}</span><strong>{{ r.tender_reference }}</strong></div>
+						<div><span>{{ _("Procuring entity") }}</span><strong>{{ r.procuring_entity or "—" }}</strong></div>
+						<div><span>{{ _("Bidder legal name") }}</span><strong>{{ r.bidder_label or "—" }}</strong></div>
+						<div><span>{{ _("Submitted by") }}</span><strong>{{ r.submitted_by or "—" }}</strong></div>
+						<div><span>{{ _("Applicable lots") }}</span><strong>{{ (r.applicable_lots or [])|join(", ") or "—" }}</strong></div>
+						<div><span>{{ _("Submission status") }}</span><strong>{{ r.submission_status }}</strong></div>
+					</div>
+					{% set totals = r.price_schedule_totals.by_currency or [] %}
+					{% if totals %}
+					<ul class="kt-fs-totals" data-testid="kt-fs-receipt-totals">
+						{% for t in totals %}
+						<li><span>{{ t.currency }}</span><strong class="kt-fs-money">{{ t.total_display }}</strong></li>
+						{% endfor %}
+					</ul>
+					{% endif %}
+					<p class="kt-fs-note" data-testid="kt-fs-receipt-note">{{ r.receipt_note }}</p>
+				</section>
+
+				<div class="kt-fs-receipt-actions" data-testid="kt-fs-receipt-actions">
+					<button type="button" class="kt-fs-btn kt-fs-btn--ghost" data-testid="kt-fs-receipt-print"
+						data-action="print-receipt">
+						<span class="material-symbols-outlined" aria-hidden="true">print</span>
+						{{ _("Print Receipt") }}
+					</button>
+					<button type="button" class="kt-fs-btn kt-fs-btn--ghost" data-testid="kt-fs-receipt-download"
+						data-action="download-receipt">
+						<span class="material-symbols-outlined" aria-hidden="true">download</span>
+						{{ _("Download Receipt") }}
+					</button>
+					<a class="kt-fs-btn kt-fs-btn--primary" href="{{ r.my_bids_url }}" data-testid="kt-fs-receipt-my-bids">
+						<span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+						{{ _("Return to My Bids") }}
+					</a>
+				</div>
+			</div>
+		</main>
+	</div>
+</div>
+{% endblock %}

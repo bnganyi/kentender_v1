@@ -1,0 +1,138 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }} | KenTender{% endblock %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/kentender_procurement/css/available_tenders.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/submission_checklist_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/price_schedule_web.css?v=ps-3">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+<script defer src="/assets/kentender_procurement/js/price_schedule_web.js?v=ps-3"></script>
+{% endblock %}
+
+{% block page_content %}
+{% set r = review %}
+{% set active_nav = "my_bids" %}
+{% set active_ws = "checklist" %}
+{% set by_cur = (r.computed or {}).get('by_currency') or {} %}
+<div class="kt-a0-root kt-a2-root kt-ps-root kt-ps-review"
+	data-testid="kt-ps-review-root"
+	data-publication-ref="{{ r.published_tender_ref }}"
+	data-bid-id="{{ r.bid_id or '' }}"
+	data-bid-sealed="{{ r.bid_sealed or 0 }}"
+	data-complete-enabled="{{ r.complete_enabled or 0 }}"
+	data-confirmed="{{ r.section_complete_confirmed or 0 }}"
+	data-workspace-url="{{ r.workspace_url }}"
+	data-section-url="{{ r.section_url }}"
+	data-review-url="{{ r.review_url }}">
+	{% include "templates/includes/kt_bidder_portal_nav.html" %}
+
+	<div class="kt-a2-shell">
+		{% include "templates/includes/kt_bidder_workspace_sidebar.html" %}
+
+		<main class="kt-a2-main">
+			<div class="kt-ps-canvas">
+				<header class="kt-ps-head">
+					<div>
+						<h1 class="kt-ps-title" data-testid="kt-ps-review-title">{{ r.page_title }}</h1>
+						<p class="kt-ps-lede" data-testid="kt-ps-review-instructions">
+							{{ _("Resolve pricing issues before completing this section. Totals are calculated by the system.") }}
+						</p>
+					</div>
+				</header>
+
+				{% if r.unresolved_issues %}
+				<section class="kt-ps-attention" data-testid="kt-ps-needs-attention">
+					<div class="kt-ps-attention__icon">
+						<span class="material-symbols-outlined" aria-hidden="true">warning</span>
+					</div>
+					<div>
+						<h2 class="kt-ps-attention__title">{{ _("Needs Attention") }}</h2>
+						<ul class="kt-ps-attention__list">
+							{% for i in r.unresolved_issues %}
+							<li data-testid="kt-ps-issue-row">
+								<a href="{{ i.action_url }}" data-testid="kt-ps-issue-resolve">
+									{{ i.message or i.issue }}
+								</a>
+								<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+							</li>
+							{% endfor %}
+						</ul>
+					</div>
+				</section>
+				{% else %}
+				<p class="kt-ps-empty" data-testid="kt-ps-no-issues">{{ _("No unresolved pricing issues.") }}</p>
+				{% endif %}
+
+				<section class="kt-ps-bento" data-testid="kt-ps-summary-panel">
+					<div class="kt-ps-table-wrap">
+						<table class="kt-ps-table" data-testid="kt-ps-summary-table">
+							<thead>
+								<tr>
+									<th>{{ _("Lot") }}</th>
+									<th>{{ _("Schedule") }}</th>
+									<th>{{ _("Currency") }}</th>
+									<th class="kt-ps-right">{{ _("Subtotal") }}</th>
+									<th class="kt-ps-center">{{ _("Status") }}</th>
+									<th class="kt-ps-right">{{ _("Action") }}</th>
+								</tr>
+							</thead>
+							<tbody>
+								{% for row in r.summary_rows %}
+								<tr data-testid="kt-ps-summary-row" data-status="{{ row.status }}">
+									<td>{{ row.lot_label }}</td>
+									<td>{{ row.schedule_title }}</td>
+									<td>{{ row.currency }}</td>
+									<td class="kt-ps-right kt-ps-mono" data-testid="kt-ps-summary-subtotal">{{ row.subtotal }}</td>
+									<td class="kt-ps-center">
+										<span class="kt-ps-status-pill" data-status="{{ row.status }}">
+											<span class="kt-ps-status-pill__dot" aria-hidden="true"></span>
+											{{ row.status }}
+										</span>
+									</td>
+									<td class="kt-ps-right">
+										<a class="kt-ps-link-action{% if row.status == 'Needs Attention' %} kt-ps-link-action--danger{% endif %}"
+											href="{{ row.edit_url }}" data-testid="kt-ps-summary-edit">
+											{% if row.status == 'Needs Attention' %}{{ _("Resolve") }}{% else %}{{ _("Edit") }}{% endif %}
+										</a>
+									</td>
+								</tr>
+								{% endfor %}
+							</tbody>
+							{% if by_cur %}
+							<tfoot>
+								{% for currency, bucket in by_cur.items() %}
+								<tr data-testid="kt-ps-grand-total-row">
+									<td colspan="3" class="kt-ps-right">{{ _("Total") }} ({{ currency }})</td>
+									<td class="kt-ps-right kt-ps-mono"><strong>{{ bucket.grand_total }}</strong></td>
+									<td colspan="2" class="kt-ps-muted">{{ _("Do not convert or combine different currencies into one total.") }}</td>
+								</tr>
+								{% endfor %}
+							</tfoot>
+							{% endif %}
+						</table>
+					</div>
+				</section>
+			</div>
+		</main>
+	</div>
+
+	<footer class="kt-ps-foot" data-testid="kt-ps-review-footer">
+		<a class="kt-ps-btn kt-ps-btn--secondary" href="{{ r.section_url }}" data-testid="kt-ps-review-back">
+			<span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+			{{ _("Back to Price Schedule") }}
+		</a>
+		<div class="kt-ps-foot-actions">
+			<button type="button" class="kt-ps-btn kt-ps-btn--primary" data-testid="kt-ps-complete-btn"
+				{% if not r.complete_enabled or r.read_only or r.section_complete_confirmed %}disabled{% endif %}
+				title="{% if r.section_complete_confirmed %}{{ _('Section already completed') }}{% elif not r.complete_enabled %}{{ _('Resolve issues before completing') }}{% endif %}">
+				{% if not r.complete_enabled and not r.section_complete_confirmed %}
+				<span class="material-symbols-outlined" aria-hidden="true">lock</span>
+				{% endif %}
+				{% if r.section_complete_confirmed %}{{ _("Price Schedule completed") }}{% else %}{{ _("Complete Price Schedule") }}{% endif %}
+			</button>
+		</div>
+	</footer>
+	<div class="kt-ps-toast" data-testid="kt-ps-toast" role="status" hidden></div>
+</div>
+{% endblock %}

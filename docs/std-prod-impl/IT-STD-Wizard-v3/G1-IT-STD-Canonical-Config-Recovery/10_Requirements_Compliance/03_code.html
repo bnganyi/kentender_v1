@@ -1,0 +1,465 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Review Requirements Compliance - KenTender</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&amp;family=Public+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-fixed": "#d4e3ff",
+                      "surface-container-highest": "#e0e3e5",
+                      "inverse-primary": "#bac7e0",
+                      "secondary-fixed": "#d5e3fc",
+                      "error": "#ba1a1a",
+                      "on-primary-container": "#77859b",
+                      "primary": "#000000",
+                      "primary-container": "#0e1c2e",
+                      "background": "#f7f9fb",
+                      "inverse-on-surface": "#eff1f3",
+                      "on-error": "#ffffff",
+                      "on-primary-fixed-variant": "#3a475c",
+                      "on-tertiary-container": "#6b85ac",
+                      "on-primary": "#ffffff",
+                      "secondary-container": "#d2e1fa",
+                      "tertiary-container": "#001c3a",
+                      "surface-container-low": "#f2f4f6",
+                      "primary-fixed-dim": "#bac7e0",
+                      "status-approved-bg": "#ecfdf5",
+                      "outline": "#75777d",
+                      "on-secondary": "#ffffff",
+                      "status-error-bg": "#fff1f2",
+                      "surface-container": "#eceef0",
+                      "surface-bright": "#f7f9fb",
+                      "outline-strong": "#74777f",
+                      "status-pending-bg": "#fffbeb",
+                      "on-surface": "#191c1e",
+                      "on-secondary-container": "#556379",
+                      "primary-fixed": "#d6e3fd",
+                      "tertiary": "#000000",
+                      "on-tertiary": "#ffffff",
+                      "surface-variant": "#e0e3e5",
+                      "status-error": "#ba1a1a",
+                      "on-secondary-fixed": "#0d1c2e",
+                      "surface": "#f7f9fb",
+                      "error-container": "#ffdad6",
+                      "surface-container-high": "#e6e8ea",
+                      "status-approved": "#065f46",
+                      "on-surface-variant": "#44474c",
+                      "on-error-container": "#93000a",
+                      "secondary": "#515f74",
+                      "surface-container-lowest": "#ffffff",
+                      "outline-variant": "#c5c6cd",
+                      "surface-dim": "#d8dadc",
+                      "status-pending": "#92400e",
+                      "on-primary-fixed": "#0e1c2e",
+                      "on-tertiary-fixed": "#001c3a",
+                      "on-background": "#191c1e",
+                      "on-tertiary-fixed-variant": "#2d486c",
+                      "surface-tint": "#525f74",
+                      "secondary-fixed-dim": "#b9c7e0",
+                      "outline-subtle": "#c4c6cf",
+                      "inverse-surface": "#2d3133",
+                      "tertiary-fixed-dim": "#adc8f3",
+                      "on-secondary-fixed-variant": "#3a485c"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "max-width": "1280px",
+                      "sidebar-width": "256px",
+                      "gutter": "12px",
+                      "gap-component": "8px",
+                      "container-padding": "16px"
+              },
+              "fontFamily": {
+                      "body-md": [
+                              "Public Sans"
+                      ],
+                      "label-md": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-md": [
+                              "Public Sans"
+                      ],
+                      "headline-lg": [
+                              "Public Sans"
+                      ],
+                      "body-lg": [
+                              "Public Sans"
+                      ],
+                      "display": [
+                              "Public Sans"
+                      ],
+                      "label-sm": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-lg-mobile": [
+                              "Public Sans"
+                      ]
+              },
+              "fontSize": {
+                      "body-md": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-md": [
+                              "11px",
+                              {
+                                      "lineHeight": "14px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-md": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-sm": [
+                              "10px",
+                              {
+                                      "lineHeight": "12px",
+                                      "letterSpacing": "0.04em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="sticky top-0 w-full z-50 flex items-center justify-between px-gutter h-14 bg-surface-container-lowest border-b border-outline-subtle flat no shadows">
+<div class="flex items-center gap-6">
+<span class="font-headline-lg text-headline-lg font-bold text-primary">KenTender</span>
+<nav class="hidden md:flex gap-6">
+<a class="text-on-secondary-container font-medium hover:text-primary transition-colors duration-200" href="#">Tenders</a>
+<a class="text-on-secondary-container font-medium hover:text-primary transition-colors duration-200" href="#">My Bids</a>
+<a class="text-on-secondary-container font-medium hover:text-primary transition-colors duration-200" href="#">Clarifications</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-secondary-container font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md">Help Desk</button>
+<div class="flex items-center gap-2">
+<button class="text-on-secondary-container hover:text-primary transition-colors duration-200 p-1 rounded-full"><span class="material-symbols-outlined text-lg">notifications</span></button>
+<button class="text-on-secondary-container hover:text-primary transition-colors duration-200 p-1 rounded-full"><span class="material-symbols-outlined text-lg">settings</span></button>
+</div>
+<img alt="Bidder Profile" class="w-8 h-8 rounded-full object-cover border border-outline-subtle" data-alt="A small, professional headshot of a business person in a dark suit against a neutral gray background, used as a user profile avatar in a web interface. The lighting is bright, clear, and modern." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBn2eJ44JR1QRnoAl5ghJqpSUEpCwML6dCz3Wxkd4PMEnn4B9nZCvK6V8r1zm7gQcv9G-NN99RZsOwoqwKHSOIHcRr_Phh8rnujX1Q7jnMm0JxXO5s7LzM-G16-GupgEw7cvNIyzG0xGxAupwUQatfonSm8r1KfE-S_sy3X8zMT_Dy18M3_eZlPkkPF46-ewchZKvLh0MbPtI3V6Q_Jzx0eVCJl6e_WkE8DxKgzyT1uyexRURETeD5S6Q">
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-14 bottom-0 w-sidebar-width flex flex-col z-40 overflow-y-auto bg-surface-container-low border-r border-outline-subtle flat no shadows">
+<div class="p-4 border-b border-outline-subtle flex items-center gap-3">
+<img alt="Procurement Authority" class="w-10 h-10 rounded object-cover border border-outline-subtle bg-surface-container-lowest" data-alt="A minimalist vector icon of a government building with columns, styled in dark blue and white, representing a procurement authority logo. Clean lines, corporate aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuChSjgo81Oi_TjNtpl57vxldmSgOB_BBgBFApJ32C20xXqQQulmg4mx0rBVDT7W3oPcPeKgz1Q2vkucmslDHlxoMWlDB4c0cQxj-6Hi3f3i1sdxgSo2bvObw8Oc9GrANfTw_WTBNitqYe7LV8zw1eaRrwIbHFLLSPwuY2_aUWZZLmClgiVLPGC4_KwiGj3w6zzMpxO-9vahaiw14is4ePCOR7oH2KzTws1XkQrLh09hH01NVtVjbCougg">
+<div>
+<h2 class="font-headline-md text-headline-md font-bold text-primary leading-tight">Bidder Workspace</h2>
+<p class="font-label-md text-label-md text-on-surface-variant">Ref: KT-2023-0892</p>
+</div>
+</div>
+<div class="p-4">
+<button class="w-full bg-primary text-on-primary font-label-md text-label-md py-2 rounded hover:bg-primary-container transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">dashboard</span> Requirement Matrix
+                </button>
+</div>
+<nav class="flex-1 py-2">
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all duration-150 gap-3" href="#">
+<span class="material-symbols-outlined text-[20px]">info</span>
+<span class="font-label-md text-label-md">Tender Overview</span>
+</a>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all duration-150 gap-3" href="#">
+<span class="material-symbols-outlined text-[20px]">description</span>
+<span class="font-label-md text-label-md">Tender Documents</span>
+</a>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all duration-150 gap-3" href="#">
+<span class="material-symbols-outlined text-[20px]">fact_check</span>
+<span class="font-label-md text-label-md">Submission Checklist</span>
+</a>
+<a class="flex items-center bg-surface-container-highest text-primary border-r-4 border-primary py-3 px-4 scale-[0.99] transition-transform gap-3" href="#">
+<span class="material-symbols-outlined text-[20px] font-bold" style="font-variation-settings: &quot;FILL&quot; 1;">edit_document</span>
+<span class="font-label-md text-label-md font-bold">Prepare Bid</span>
+</a>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all duration-150 gap-3" href="#">
+<span class="material-symbols-outlined text-[20px]">verified</span>
+<span class="font-label-md text-label-md">Review &amp; Validate</span>
+</a>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all duration-150 gap-3" href="#">
+<span class="material-symbols-outlined text-[20px]">lock</span>
+<span class="font-label-md text-label-md">Submit &amp; Seal</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-outline-subtle py-2">
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all duration-150 gap-3" href="#">
+<span class="material-symbols-outlined text-[20px]">contact_support</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+<a class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all duration-150 gap-3" href="#">
+<span class="material-symbols-outlined text-[20px]">logout</span>
+<span class="font-label-md text-label-md">Sign Out</span>
+</a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 ml-[256px] mb-[64px] p-container-padding overflow-y-auto">
+<div class="max-w-[1280px] mx-auto">
+<header class="mb-8">
+<h1 class="font-headline-lg text-headline-lg text-primary mb-2">Review Requirements Compliance</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Resolve incomplete or changed responses before completing this section.</p>
+</header>
+<!-- Metrics Bento -->
+<div class="grid grid-cols-5 gap-gap-component mb-8">
+<div class="bg-surface-container-lowest border border-outline-subtle rounded p-4 relative overflow-hidden flex flex-col justify-between h-24">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-outline-variant"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest pl-2">Required responses</span>
+<span class="font-headline-lg text-headline-lg text-primary pl-2">42</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-subtle rounded p-4 relative overflow-hidden flex flex-col justify-between h-24">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-status-approved"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest pl-2">Complete</span>
+<span class="font-headline-lg text-headline-lg text-primary pl-2">18</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-subtle rounded p-4 relative overflow-hidden flex flex-col justify-between h-24">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary-fixed-dim"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest pl-2">In progress</span>
+<span class="font-headline-lg text-headline-lg text-primary pl-2">12</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-subtle rounded p-4 relative overflow-hidden flex flex-col justify-between h-24 bg-status-error-bg/30">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-status-error"></div>
+<span class="font-label-sm text-label-sm text-status-error uppercase tracking-widest pl-2 font-bold">Needs attention</span>
+<span class="font-headline-lg text-headline-lg text-status-error pl-2 font-bold">5</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-subtle rounded p-4 relative overflow-hidden flex flex-col justify-between h-24">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-outline-subtle"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest pl-2">Not started</span>
+<span class="font-headline-lg text-headline-lg text-primary pl-2">7</span>
+</div>
+</div>
+<!-- Requirement Groups Table -->
+<section class="mb-8 bg-surface-container-lowest border border-outline-subtle rounded overflow-hidden">
+<div class="px-4 py-3 border-b border-outline-subtle bg-surface-container text-on-surface font-label-md text-label-md uppercase">Requirement Groups</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-subtle bg-surface-variant/50">
+<th class="py-2 px-4 font-label-md text-label-md text-on-surface-variant font-medium">Group</th>
+<th class="py-2 px-4 font-label-md text-label-md text-on-surface-variant font-medium w-32 text-right">Required</th>
+<th class="py-2 px-4 font-label-md text-label-md text-on-surface-variant font-medium w-32 text-right">Complete</th>
+<th class="py-2 px-4 font-label-md text-label-md text-on-surface-variant font-medium w-32 text-right">Issues</th>
+<th class="py-2 px-4 font-label-md text-label-md text-on-surface-variant font-medium w-40">Status</th>
+<th class="py-2 px-4 font-label-md text-label-md text-on-surface-variant font-medium w-24 text-right">Action</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md">
+<tr class="border-b border-outline-subtle h-[40px] hover:bg-surface-container-lowest transition-colors">
+<td class="py-1 px-4 font-medium text-primary">General requirements</td>
+<td class="py-1 px-4 text-right font-label-md text-label-md">10</td>
+<td class="py-1 px-4 text-right font-label-md text-label-md">9</td>
+<td class="py-1 px-4 text-right font-label-md text-label-md text-on-surface-variant">0</td>
+<td class="py-1 px-4">
+<div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-status-approved-bg border border-status-approved/20">
+<div class="w-1.5 h-1.5 rounded-full bg-status-approved"></div>
+<span class="font-label-sm text-label-sm text-status-approved font-medium">Complete</span>
+</div>
+</td>
+<td class="py-1 px-4 text-right">
+<button class="text-secondary hover:text-primary font-label-md text-label-md underline">Edit</button>
+</td>
+</tr>
+<tr class="border-b border-outline-subtle h-[40px] bg-status-error-bg/10 hover:bg-status-error-bg/20 transition-colors">
+<td class="py-1 px-4 font-medium text-primary">System requirements</td>
+<td class="py-1 px-4 text-right font-label-md text-label-md">18</td>
+<td class="py-1 px-4 text-right font-label-md text-label-md">5</td>
+<td class="py-1 px-4 text-right font-label-md text-label-md text-status-error font-bold">3</td>
+<td class="py-1 px-4">
+<div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-status-error-bg border border-status-error/20">
+<div class="w-1.5 h-1.5 rounded-full bg-status-error"></div>
+<span class="font-label-sm text-label-sm text-status-error font-medium">Needs attention</span>
+</div>
+</td>
+<td class="py-1 px-4 text-right">
+<button class="text-secondary hover:text-primary font-label-md text-label-md underline">Edit</button>
+</td>
+</tr>
+<tr class="border-b border-outline-subtle h-[40px] hover:bg-surface-container-lowest transition-colors">
+<td class="py-1 px-4 font-medium text-primary">Functional requirements</td>
+<td class="py-1 px-4 text-right font-label-md text-label-md">8</td>
+<td class="py-1 px-4 text-right font-label-md text-label-md">4</td>
+<td class="py-1 px-4 text-right font-label-md text-label-md text-status-pending">1</td>
+<td class="py-1 px-4">
+<div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-status-pending-bg border border-status-pending/20">
+<div class="w-1.5 h-1.5 rounded-full bg-status-pending"></div>
+<span class="font-label-sm text-label-sm text-status-pending font-medium">In progress</span>
+</div>
+</td>
+<td class="py-1 px-4 text-right">
+<button class="text-secondary hover:text-primary font-label-md text-label-md underline">Edit</button>
+</td>
+</tr>
+<tr class="border-b border-outline-subtle h-[40px] hover:bg-surface-container-lowest transition-colors">
+<td class="py-1 px-4 font-medium text-primary">Security requirements</td>
+<td class="py-1 px-4 text-right font-label-md text-label-md">4</td>
+<td class="py-1 px-4 text-right font-label-md text-label-md text-on-surface-variant">0</td>
+<td class="py-1 px-4 text-right font-label-md text-label-md text-status-error font-bold">1</td>
+<td class="py-1 px-4">
+<div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-surface-container border border-outline-subtle">
+<div class="w-1.5 h-1.5 rounded-full bg-outline-strong"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Not started</span>
+</div>
+</td>
+<td class="py-1 px-4 text-right">
+<button class="text-secondary hover:text-primary font-label-md text-label-md underline">Edit</button>
+</td>
+</tr>
+<tr class="h-[40px] hover:bg-surface-container-lowest transition-colors">
+<td class="py-1 px-4 font-medium text-primary">Support requirements</td>
+<td class="py-1 px-4 text-right font-label-md text-label-md">2</td>
+<td class="py-1 px-4 text-right font-label-md text-label-md text-on-surface-variant">0</td>
+<td class="py-1 px-4 text-right font-label-md text-label-md text-on-surface-variant">0</td>
+<td class="py-1 px-4">
+<div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-surface-container border border-outline-subtle">
+<div class="w-1.5 h-1.5 rounded-full bg-outline-strong"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Not started</span>
+</div>
+</td>
+<td class="py-1 px-4 text-right">
+<button class="text-secondary hover:text-primary font-label-md text-label-md underline">Edit</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Responses requiring action Section -->
+<section class="bg-surface-container-lowest border border-status-error/30 rounded overflow-hidden shadow-sm">
+<div class="px-4 py-3 border-b border-status-error/20 bg-status-error-bg/50 flex items-center gap-2 text-status-error font-label-md text-label-md uppercase font-bold">
+<span class="material-symbols-outlined text-[16px]">warning</span>
+                        Responses requiring action
+                    </div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-subtle bg-surface-variant/30">
+<th class="py-2 px-4 font-label-md text-label-md text-on-surface-variant font-medium w-24">Ref</th>
+<th class="py-2 px-4 font-label-md text-label-md text-on-surface-variant font-medium">Requirement</th>
+<th class="py-2 px-4 font-label-md text-label-md text-on-surface-variant font-medium">Issue</th>
+<th class="py-2 px-4 font-label-md text-label-md text-on-surface-variant font-medium w-48">Group</th>
+<th class="py-2 px-4 font-label-md text-label-md text-on-surface-variant font-medium w-24 text-right">Action</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md">
+<tr class="border-b border-outline-subtle h-[40px] hover:bg-surface-container-low transition-colors">
+<td class="py-1 px-4 font-label-md text-label-md text-primary font-medium">SYS-05</td>
+<td class="py-1 px-4 text-primary truncate max-w-[200px]" title="Legacy hardware driver compatibility">Legacy hardware driver compatibility</td>
+<td class="py-1 px-4 text-status-error font-medium flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px]">error</span> Supporting evidence has not been added.</td>
+<td class="py-1 px-4 text-on-surface-variant text-xs">System requirements</td>
+<td class="py-1 px-4 text-right">
+<button class="border border-outline-subtle text-secondary px-2 py-1 rounded text-xs font-label-md hover:bg-surface-container-high transition-colors">Resolve</button>
+</td>
+</tr>
+<tr class="border-b border-outline-subtle h-[40px] hover:bg-surface-container-low transition-colors">
+<td class="py-1 px-4 font-label-md text-label-md text-primary font-medium">SYS-12</td>
+<td class="py-1 px-4 text-primary truncate max-w-[200px]" title="The proposed system must support at least 500 concurrent users.">The proposed system must support at least 500 concurrent users.</td>
+<td class="py-1 px-4 text-status-error font-medium flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px]">error</span> Response must be reviewed after Addendum 2.</td>
+<td class="py-1 px-4 text-on-surface-variant text-xs">System requirements</td>
+<td class="py-1 px-4 text-right">
+<button class="border border-outline-subtle text-secondary px-2 py-1 rounded text-xs font-label-md hover:bg-surface-container-high transition-colors">Resolve</button>
+</td>
+</tr>
+<tr class="border-b border-outline-subtle h-[40px] hover:bg-surface-container-low transition-colors">
+<td class="py-1 px-4 font-label-md text-label-md text-primary font-medium">SEC-01</td>
+<td class="py-1 px-4 text-primary truncate max-w-[200px]" title="Data encryption at rest">Data encryption at rest</td>
+<td class="py-1 px-4 text-status-error font-medium flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px]">error</span> Required explanation is missing.</td>
+<td class="py-1 px-4 text-on-surface-variant text-xs">Security requirements</td>
+<td class="py-1 px-4 text-right">
+<button class="border border-outline-subtle text-secondary px-2 py-1 rounded text-xs font-label-md hover:bg-surface-container-high transition-colors">Resolve</button>
+</td>
+</tr>
+<tr class="border-b border-outline-subtle h-[40px] hover:bg-surface-container-low transition-colors">
+<td class="py-1 px-4 font-label-md text-label-md text-primary font-medium">FUN-03</td>
+<td class="py-1 px-4 text-primary truncate max-w-[200px]" title="API integration with existing ERP">API integration with existing ERP</td>
+<td class="py-1 px-4 text-status-error font-medium flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px]">info</span> A conditional requirement is now applicable.</td>
+<td class="py-1 px-4 text-on-surface-variant text-xs">Functional requirements</td>
+<td class="py-1 px-4 text-right">
+<button class="border border-outline-subtle text-secondary px-2 py-1 rounded text-xs font-label-md hover:bg-surface-container-high transition-colors">Resolve</button>
+</td>
+</tr>
+<tr class="h-[40px] hover:bg-surface-container-low transition-colors">
+<td class="py-1 px-4 font-label-md text-label-md text-primary font-medium">SYS-08</td>
+<td class="py-1 px-4 text-primary truncate max-w-[200px]" title="High availability cluster configuration">High availability cluster configuration</td>
+<td class="py-1 px-4 text-status-error font-medium flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px]">error</span> Required table contains an incomplete row.</td>
+<td class="py-1 px-4 text-on-surface-variant text-xs">System requirements</td>
+<td class="py-1 px-4 text-right">
+<button class="border border-outline-subtle text-secondary px-2 py-1 rounded text-xs font-label-md hover:bg-surface-container-high transition-colors">Resolve</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+</main>
+</div>
+<!-- Footer -->
+<footer class="fixed bottom-0 right-0 left-[256px] flex justify-between items-center px-4 py-3 bg-surface-container-lowest border-t border-outline-subtle shadow-sm z-50 h-16">
+<div class="font-label-sm text-label-sm uppercase tracking-widest text-outline">
+            © 2024 KenTender Procurement Portal. Secure Bid Environment.
+        </div>
+<div class="flex items-center gap-3">
+<button class="border border-outline-subtle text-secondary font-label-md text-label-md px-4 py-2 rounded hover:bg-surface-container-low transition-colors bg-surface-container-lowest">Back to Workspace</button>
+<button class="border border-outline-subtle text-secondary font-label-md text-label-md px-4 py-2 rounded hover:bg-surface-container-low transition-colors bg-surface-container-lowest">Save Section</button>
+<button class="bg-surface-container-highest text-outline font-label-md text-label-md px-4 py-2 rounded cursor-not-allowed opacity-70 flex items-center gap-2" disabled="" title="Resolve issues before completing"><span class="material-symbols-outlined text-sm">lock</span> Complete Section</button>
+</div>
+</footer>
+
+
+</body></html>

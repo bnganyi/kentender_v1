@@ -1,0 +1,134 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }} | KenTender{% endblock %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/kentender_procurement/css/available_tenders.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/submission_checklist_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/final_submission_web.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+<script defer src="/assets/kentender_procurement/js/final_submission_web.js"></script>
+{% endblock %}
+
+{% block page_content %}
+{% set r = ready %}
+{% set active_nav = "my_bids" %}
+{% set active_ws = "review" %}
+{% set ready_ok = r.ready_to_submit %}
+<div class="kt-a0-root kt-a2-root kt-fs-root" data-testid="kt-fs-rav-root"
+	data-publication-ref="{{ r.published_tender_ref }}"
+	data-overall-state="{{ r.overall_state }}"
+	data-ready="{{ r.ready_to_submit or 0 }}">
+	{% include "templates/includes/kt_bidder_portal_nav.html" %}
+	<div class="kt-a2-shell">
+		{% include "templates/includes/kt_bidder_workspace_sidebar.html" %}
+		<main class="kt-a2-main kt-fs-main">
+			<div class="kt-fs-canvas">
+				<nav class="kt-fs-crumbs" aria-label="Breadcrumb" data-testid="kt-fs-rav-crumbs">
+					<a href="{{ r.workspace_url }}">{{ _("Checklist") }}</a>
+					<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+					<span class="is-current">{{ _("Review & Validate") }}</span>
+				</nav>
+				<header class="kt-fs-head">
+					<div>
+						<h1 data-testid="kt-fs-rav-title">{{ _("Review & Validate") }}</h1>
+						<p data-testid="kt-fs-rav-lede">{{ _("Check that every required section is complete before submitting your bid.") }}</p>
+					</div>
+					<span class="kt-fs-chip" data-testid="kt-fs-rav-status" data-state="{{ r.overall_state }}">{{ r.overall_state }}</span>
+				</header>
+
+				{% if r.blocking_issue_count %}
+				<div class="kt-fs-alert kt-fs-alert--error" data-testid="kt-fs-rav-alert">
+					<span class="material-symbols-outlined" aria-hidden="true">error</span>
+					<div>
+						<h3>{{ _("Needs Attention") }}</h3>
+						<p data-testid="kt-fs-rav-blocker-count">
+							{{ _("{0} blocking issue(s) must be resolved before the final submission phase becomes available.").format(r.blocking_issue_count) }}
+						</p>
+					</div>
+				</div>
+				{% endif %}
+
+				<div class="kt-fs-rav-grid">
+					<section class="kt-fs-blockers" data-testid="kt-fs-rav-blockers">
+						<h2>{{ _("Blocking Issues") }}</h2>
+						{% if r.blocking_issues %}
+						{% for issue in r.blocking_issues %}
+						<article class="kt-fs-blocker-card" data-testid="kt-fs-rav-blocker">
+							<p>{{ issue.message }}</p>
+							<a href="{{ issue.resolve_url }}" data-testid="kt-fs-rav-resolve">
+								{{ issue.resolve_label or _("Resolve") }}
+								<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+							</a>
+						</article>
+						{% endfor %}
+						{% else %}
+						<p class="kt-fs-muted" data-testid="kt-fs-rav-no-blockers">{{ _("No blocking issues.") }}</p>
+						{% endif %}
+					</section>
+
+					<section class="kt-fs-bento" data-testid="kt-fs-rav-summary">
+						<div class="kt-fs-bento-head">
+							<h2>{{ _("Section Summary") }}</h2>
+						</div>
+						<div class="kt-fs-table-wrap">
+							<table class="kt-fs-table" data-testid="kt-fs-rav-table">
+								<thead>
+									<tr>
+										<th>{{ _("Section") }}</th>
+										<th>{{ _("Status") }}</th>
+										<th>{{ _("Issues") }}</th>
+										<th>{{ _("Last updated") }}</th>
+										<th class="is-right">{{ _("Action") }}</th>
+									</tr>
+								</thead>
+								<tbody>
+									{% for s in r.sections %}
+									<tr data-testid="kt-fs-rav-row" data-status="{{ s.status }}">
+										<td>{{ s.title }}</td>
+										<td>
+											<span class="kt-fs-status-dot" data-status="{{ s.status }}"></span>
+											{{ s.status }}
+										</td>
+										<td>{{ s.issues_label or "—" }}</td>
+										<td>{{ s.last_updated or "—" }}</td>
+										<td class="is-right">
+											{% if s.action_enabled %}
+											<a href="{{ s.action_url }}" class="kt-fs-link {% if s.status == 'Needs attention' %}is-error{% endif %}"
+												data-testid="kt-fs-rav-row-action">{{ s.action_label }}</a>
+											{% else %}
+											<span class="kt-fs-muted">{{ s.action_label }}</span>
+											{% endif %}
+										</td>
+									</tr>
+									{% endfor %}
+								</tbody>
+							</table>
+						</div>
+					</section>
+				</div>
+			</div>
+		</main>
+		<footer class="kt-fs-footer" data-testid="kt-fs-rav-footer">
+			<a href="{{ r.workspace_url }}" data-testid="kt-fs-rav-back">
+				<span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+				{{ _("Back to Checklist") }}
+			</a>
+			<div class="kt-fs-footer-actions">
+				<button type="button" class="kt-fs-btn kt-fs-btn--ghost" data-testid="kt-fs-rav-validate"
+					data-action="validate-again">{{ _("Validate again") }}</button>
+				{% if ready_ok %}
+				<a class="kt-fs-btn kt-fs-btn--primary" href="{{ r.final_bid_review_url }}"
+					data-testid="kt-fs-rav-continue">{{ _("Review Final Bid") }}</a>
+				{% else %}
+				<button type="button" class="kt-fs-btn kt-fs-btn--primary is-disabled" disabled
+					data-testid="kt-fs-rav-continue" title="{{ _('Resolve all blocking issues to proceed.') }}">
+					{{ _("Review Final Bid") }}
+					<span class="material-symbols-outlined" aria-hidden="true">lock</span>
+				</button>
+				{% endif %}
+			</div>
+		</footer>
+	</div>
+</div>
+{% endblock %}

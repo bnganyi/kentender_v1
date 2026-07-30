@@ -1,0 +1,124 @@
+{# Stitch 03 — Implementation Work Plan: activities table + drawer + helper cards #}
+{% set activities = bucket.activities or [] %}
+{% set max_weeks = cfg.max_completion_weeks or 52 %}
+
+<section class="kt-tp-block-section" data-testid="kt-tp-work-plan">
+	<div class="kt-s600-section-head">
+		<div>
+			<h2>{{ _("Implementation activities") }}</h2>
+			<p class="kt-s600-help">{{ _("Set out the activities, deliverables and milestones for implementing the system.") }}</p>
+		</div>
+		<div class="kt-s600-progress-box" data-testid="kt-tp-work-plan-progress">
+			<span class="kt-s600-eyebrow">{{ _("Contractual period") }}</span>
+			{# Stitch 03 — weeks, not "N of M activities" (that belongs in status/progress_text). #}
+			<strong data-testid="kt-tp-work-plan-progress-text">{{ sub.contractual_period_label or ((cfg.max_completion_weeks or 52) ~ " Weeks") }}</strong>
+			{% if sub.progress_text %}
+			<span class="kt-s600-help" data-testid="kt-tp-work-plan-activity-progress">{{ sub.progress_text }}</span>
+			{% endif %}
+		</div>
+	</div>
+
+	<div class="kt-s600-records-panel">
+		<div class="kt-s600-table-wrap">
+			<table class="kt-s600-data-table" data-testid="kt-tp-work-plan-table">
+				<thead>
+					<tr>
+						<th>{{ _("Phase / Activity") }}</th>
+						<th>{{ _("Deliverable") }}</th>
+						<th class="is-center">{{ _("Start") }}</th>
+						<th class="is-center">{{ _("Dur") }}</th>
+						<th class="is-center">{{ _("End") }}</th>
+						<th>{{ _("Dependency") }}</th>
+						<th>{{ _("Milestone") }}</th>
+						<th>{{ _("Responsible role") }}</th>
+						<th>{{ _("Status") }}</th>
+						{% if not sub.read_only %}<th class="is-right">{{ _("Actions") }}</th>{% endif %}
+					</tr>
+				</thead>
+				<tbody data-testid="kt-tp-work-plan-body" data-records-body="activities">
+					{% for a in activities %}
+					{% set row_status = a.row_status or "Not Started" %}
+					<tr data-record-row data-record-id="{{ a.activity_id or '' }}"
+						data-row-status="{{ row_status }}"
+						{% if row_status == "Needs Attention" %}class="kt-tp-row-attention"{% endif %}>
+						<td class="is-strong" data-cell="activity">{{ a.activity or "—" }}</td>
+						<td class="kt-s600-help" data-cell="deliverable">{{ a.deliverable or "—" }}</td>
+						<td class="is-center kt-s600-mono" data-cell="start_week">{{ "W" ~ a.start_week if a.start_week else "—" }}</td>
+						<td class="is-center kt-s600-mono" data-cell="duration_weeks">{{ (a.duration_weeks ~ "w") if a.duration_weeks else "—" }}</td>
+						<td class="is-center kt-s600-mono" data-cell="completion_week" data-testid="kt-tp-completion-week">{{ "W" ~ a.completion_week if a.completion_week else "—" }}</td>
+						<td data-cell="dependency_id">
+							{% if a.dependency_label == "Missing" %}
+							<span class="kt-s600-issue" data-testid="kt-tp-dep-missing">{{ _("Missing") }}</span>
+							{% else %}
+							{{ a.dependency_label or "—" }}
+							{% endif %}
+						</td>
+						<td data-cell="milestone">
+							{% if a.milestone %}
+							<span class="kt-tp-milestone"><span class="material-symbols-outlined">verified</span>{{ a.milestone }}</span>
+							{% else %}—{% endif %}
+						</td>
+						<td data-cell="project_role">{{ a.project_role or "—" }}</td>
+						<td>
+							<span class="kt-s600-status" data-status="{{ row_status }}" data-testid="kt-tp-activity-status">{{ row_status }}</span>
+						</td>
+						{% if not sub.read_only %}
+						<td class="is-right is-actions">
+							{% if row_status == "Needs Attention" %}
+							<button type="button" class="kt-s600-btn kt-s600-btn--danger kt-tp-resolve-btn" data-tp-edit-activity data-testid="kt-tp-resolve-activity">{{ _("Resolve") }}</button>
+							{% else %}
+							<button type="button" class="kt-s600-link" data-tp-edit-activity title="{{ _('Edit') }}"><span class="material-symbols-outlined">edit</span></button>
+							<button type="button" class="kt-s600-link" data-tp-remove-row title="{{ _('Delete') }}"><span class="material-symbols-outlined">delete</span></button>
+							{% endif %}
+						</td>
+						{% endif %}
+						<td hidden>
+							<input data-a="activity" value="{{ a.activity or '' }}"/>
+							<input data-a="deliverable" value="{{ a.deliverable or '' }}"/>
+							<input data-a="start_week" value="{{ a.start_week or '' }}"/>
+							<input data-a="duration_weeks" value="{{ a.duration_weeks or '' }}"/>
+							<input data-a="dependency_id" value="{{ a.dependency_id or '' }}"/>
+							<input data-a="milestone" value="{{ a.milestone or '' }}"/>
+							<input data-a="project_role" value="{{ a.project_role or '' }}"/>
+						</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+		{% if not sub.read_only %}
+		<button type="button" class="kt-s600-btn kt-s600-btn--secondary" data-tp-add-activity data-testid="kt-tp-add-activity">
+			<span class="material-symbols-outlined">add</span> {{ _("Add Activity") }}
+		</button>
+		{% endif %}
+	</div>
+	{% if sub.issue %}
+	<p class="kt-s600-issue" data-testid="kt-tp-work-plan-issue">{{ sub.issue }}</p>
+	{% endif %}
+
+	<div class="kt-tp-help-grid" data-testid="kt-tp-work-plan-help">
+		<div class="kt-tp-help-card">
+			<span class="material-symbols-outlined">info</span>
+			<div>
+				<h4>{{ _("Weekly Increments") }}</h4>
+				<p>{{ _("Use integer weeks for durations. Completion week is calculated from Contract Effective Date.") }}</p>
+			</div>
+		</div>
+		<div class="kt-tp-help-card">
+			<span class="material-symbols-outlined">account_tree</span>
+			<div>
+				<h4>{{ _("Dependencies") }}</h4>
+				<p>{{ _("Link each activity to a prior activity by name. Missing or circular dependencies are flagged.") }}</p>
+			</div>
+		</div>
+		<div class="kt-tp-help-card">
+			<span class="material-symbols-outlined">verified_user</span>
+			<div>
+				<h4>{{ _("Responsible role") }}</h4>
+				<p>{{ _("Assign a project role for every activity so ownership is clear during delivery.") }}</p>
+			</div>
+		</div>
+	</div>
+</section>
+
+<div hidden data-testid="kt-tp-work-plan-meta" data-max-completion-weeks="{{ max_weeks }}"></div>

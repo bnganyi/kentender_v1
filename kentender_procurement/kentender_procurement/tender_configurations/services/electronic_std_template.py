@@ -69,6 +69,40 @@ _ALLOWED_RESPONSE_METHODS = frozenset(
 
 _ALLOWED_APPLICABILITY = frozenset({"always", "jv_only", "single_bidder_only"})
 
+# Digitised electronic owners — never default these to mandatory upload.
+_DIGITIZED_PRELIM_BY_ID: dict[str, str] = {
+	"PRELIM-05": "tender_security",
+	"PRELIM-06": "form_of_tender",
+	"PRELIM-07": "statutory_declarations",
+	"PRELIM-08": "statutory_declarations",
+	"prelim-form-of-tender": "form_of_tender",
+	"prelim-statutory-declarations": "statutory_declarations",
+	"prelim-tender-security": "tender_security",
+}
+
+
+def _infer_digitized_linked_section(cid: str, title: str, instruction: str) -> str:
+	"""Return linked_section_key when a criterion is owned by a dedicated electronic section."""
+	key = _DIGITIZED_PRELIM_BY_ID.get(cstr(cid or "").strip())
+	if key:
+		return key
+	blob = f"{title} {instruction}".lower()
+	if "form of tender" in blob:
+		return "form_of_tender"
+	if (
+		"independent tender determination" in blob
+		or "certificate of independent" in blob
+		or ("fraud and corruption" in blob and "declaration" in blob)
+		or "self-declaration form" in blob
+	):
+		return "statutory_declarations"
+	if "tender security" in blob or "tender-securing" in blob:
+		return "tender_security"
+	# NSSF mislabel: “Professional Indemnity – KES …” with bank guarantee / insurance bond.
+	if "indemnity" in blob and ("bank guarantee" in blob or "insurance bond" in blob):
+		return "tender_security"
+	return ""
+
 
 def _slug_criterion_id(title: str, index: int) -> str:
 	raw = "".join(ch.lower() if ch.isalnum() else "-" for ch in cstr(title or "").strip())
@@ -90,6 +124,266 @@ def _normalize_file_types(raw: Any) -> list[str]:
 				out.append("." + p.lstrip("."))
 		return out
 	return [".pdf"]
+
+
+def materialize_requirements_compliance(
+	evaluation: dict[str, Any] | None,
+	it_requirements: list[dict[str, Any]] | None = None,
+	*,
+	default_fixture: str = "standard",
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+	"""Build section requirements[] + response field catalog for Requirements Compliance.
+
+	Returns ``(requirements, default_response_fields, flags)``.
+	"""
+	from kentender_procurement.tender_configurations.seed.lean_requirements_compliance import (
+		MODE_EXCLUDED,
+		cstr_fixture,
+		lean_requirements_compliance_rows,
+	)
+	from kentender_procurement.tender_configurations.services.schema_compiler import (
+		RESPONSE_FIELDS_PER_REQUIREMENT,
+	)
+
+	ev = evaluation if isinstance(evaluation, dict) else {}
+	raw = ev.get("requirements_compliance_rows")
+	if not isinstance(raw, list) or not raw:
+		# Prefer pack lean fixtures. Only consume it_requirements when they already carry
+		# lean RC shape (mode + tender-facing ref) — never dump NSSF calibration rows.
+		lean_like: list[dict[str, Any]] = []
+		if isinstance(it_requirements, list):
+			for row in it_requirements:
+				if not isinstance(row, dict):
+					continue
+				if cstr(row.get("requirement_mode") or "").strip() and cstr(
+					row.get("tender_facing_reference") or row.get("reference") or ""
+				).strip():
+					lean_like.append(row)
+		if lean_like:
+			raw = lean_like
+		else:
+			raw = lean_requirements_compliance_rows(
+				cstr(ev.get("requirements_compliance_fixture") or default_fixture)
+			)
+	flags = ev.get("requirements_compliance_flags")
+	if not isinstance(flags, dict):
+		flags = {}
+
+	out: list[dict[str, Any]] = []
+	for idx, row in enumerate(raw):
+		if not isinstance(row, dict):
+			continue
+		rid = cstr(row.get("requirement_id") or row.get("id") or "").strip()
+		if not rid:
+			continue
+		mode = cstr(row.get("requirement_mode") or "").strip().lower()
+		if not mode:
+			# Legacy treatment_label / mandatory
+			treatment = cstr(row.get("treatment_label") or "").strip().lower()
+			if treatment in ("optional",):
+				mode = "optional"
+			elif treatment in ("informational", "info"):
+				mode = "informational"
+			elif row.get("mandatory") in (0, "0", False, "false"):
+				mode = "optional"
+			else:
+				mode = "required"
+		if mode == MODE_EXCLUDED or row.get("withdrawn") in (1, "1", True, "true"):
+			# Keep withdrawn for history but mark excluded/not displayed in active matrix.
+			if mode != MODE_EXCLUDED:
+				mode = MODE_EXCLUDED
+		title = cstr(row.get("requirement_title") or row.get("title") or "").strip()
+		statement = cstr(
+			row.get("requirement_statement") or row.get("description") or title
+		).strip()
+		group = cstr(
+			row.get("category_label")
+			or row.get("group")
+			or row.get("requirement_family")
+			or "General"
+		).strip() or "General"
+		ref = cstr(row.get("tender_facing_reference") or row.get("reference") or "").strip()
+		fields = row.get("response_fields")
+		if not isinstance(fields, list) or not fields:
+			fields = list(RESPONSE_FIELDS_PER_REQUIREMENT)
+		out.append(
+			{
+				"id": rid,
+				"requirement_id": rid,
+				"tender_facing_reference": ref or rid,
+				"requirement_title": title or rid,
+				"title": title or rid,
+				"requirement_statement": statement,
+				"description": statement,
+				"category_label": group,
+				"group": group,
+				"display_order": int(row.get("display_order") or (idx + 1) * 10),
+				"requirement_mode": mode,
+				"mandatory": 1 if mode == "required" else 0,
+				"renderer": cstr(row.get("renderer") or "combined"),
+				"scope": cstr(row.get("scope") or "tender"),
+				"condition_key": cstr(row.get("condition_key") or "always"),
+				"explanation_required": 1 if row.get("explanation_required") not in (0, "0", False) else 0,
+				"evidence_required": 1 if row.get("evidence_required") in (1, "1", True, "true") else 0,
+				"technical_alternative_permitted": 1
+				if row.get("technical_alternative_permitted") in (1, "1", True, "true")
+				else 0,
+				"published_revision": int(row.get("published_revision") or 1),
+				"bidder_facing_change_summary": cstr(row.get("bidder_facing_change_summary") or ""),
+				"updated_by_addendum": cstr(row.get("updated_by_addendum") or ""),
+				"withdrawn": 1 if row.get("withdrawn") in (1, "1", True, "true") else 0,
+				"response_fields": fields,
+				"bidder_response_type": cstr(row.get("bidder_response_type") or ""),
+				"not_applicable": 0,
+			}
+		)
+	out.sort(key=lambda r: (int(r.get("display_order") or 0), cstr(r.get("requirement_id"))))
+	default_fields = list(RESPONSE_FIELDS_PER_REQUIREMENT)
+	# Prefer first required row's fields as section-level default when uniform.
+	for r in out:
+		if r.get("requirement_mode") == "required" and isinstance(r.get("response_fields"), list):
+			default_fields = list(r["response_fields"])
+			break
+	_ = cstr_fixture  # keep import used for callers that pass fixture via evaluation
+	return out, default_fields, flags
+
+
+def _normalize_technical_proposal_subsection_rows(
+	raw: list[Any],
+	*,
+	mode_excluded: str,
+) -> list[dict[str, Any]]:
+	out: list[dict[str, Any]] = []
+	structured = {
+		"implementation_work_plan",
+		"training_and_knowledge_transfer",
+		"risks_assumptions_and_dependencies",
+		"technical_alternatives",
+		"integration_responsibility_confirmation",
+		"project_organization_and_coordination",
+		"testing_and_quality_assurance",
+	}
+	for idx, row in enumerate(raw or []):
+		if not isinstance(row, dict):
+			continue
+		key = cstr(row.get("subsection_key") or "").strip()
+		title = cstr(row.get("title") or "").strip()
+		renderer = cstr(row.get("renderer") or "").strip()
+		if not key or not title:
+			continue
+		mode = cstr(row.get("requirement_mode") or "required").strip().lower()
+		if mode not in ("required", "optional", "conditional", "excluded"):
+			mode = "required"
+		questions = [q for q in (row.get("questions") or []) if isinstance(q, dict)]
+		# Enabled subsection without renderer or questions (where questions expected) is skipped
+		# except known structured renderers that may have empty questions.
+		if mode != mode_excluded and not renderer:
+			continue
+		if mode != mode_excluded and not questions and renderer not in structured:
+			continue
+		try:
+			display_order = (
+				int(flt(row.get("display_order")))
+				if row.get("display_order") not in (None, "")
+				else (idx + 1) * 10
+			)
+		except (TypeError, ValueError):
+			display_order = (idx + 1) * 10
+		out.append(
+			{
+				"subsection_key": key,
+				"title": title,
+				"description": cstr(row.get("description") or ""),
+				"renderer": renderer,
+				"display_order": display_order,
+				"requirement_mode": mode,
+				"condition_key": cstr(row.get("condition_key") or "always"),
+				"scope": cstr(row.get("scope") or "tender"),
+				"questions": questions,
+				"evidence_required": bool(row.get("evidence_required")),
+				"min_activities": row.get("min_activities"),
+				"min_test_stages": row.get("min_test_stages"),
+				"min_risks": row.get("min_risks"),
+				"max_completion_weeks": row.get("max_completion_weeks"),
+				"audiences": row.get("audiences") if isinstance(row.get("audiences"), list) else [],
+			}
+		)
+	out.sort(key=lambda r: int(r.get("display_order") or 0))
+	return out
+
+
+def materialize_technical_proposal_subsections(
+	evaluation: dict[str, Any] | None,
+	*,
+	default_fixture: str = "full",
+) -> list[dict[str, Any]]:
+	"""Build section subsections[] from evaluation_setup.technical_proposal_subsections."""
+	from kentender_procurement.tender_configurations.seed.lean_technical_proposal import (
+		MODE_EXCLUDED,
+		lean_technical_proposal_subsections,
+	)
+
+	ev = evaluation if isinstance(evaluation, dict) else {}
+	fixture = cstr(ev.get("technical_proposal_fixture") or default_fixture).strip() or default_fixture
+	raw = ev.get("technical_proposal_subsections")
+	if not isinstance(raw, list) or not raw:
+		raw = lean_technical_proposal_subsections(fixture)
+	out = _normalize_technical_proposal_subsection_rows(raw, mode_excluded=MODE_EXCLUDED)
+	# Junk / empty config lists must not yield a mandatory section with 0 subsections.
+	if not out:
+		out = _normalize_technical_proposal_subsection_rows(
+			lean_technical_proposal_subsections(fixture),
+			mode_excluded=MODE_EXCLUDED,
+		)
+	return out
+
+
+def heal_technical_proposal_subsections_in_snapshot(
+	snapshot: dict[str, Any],
+	*,
+	configuration_id: str = "",
+	evaluation: dict[str, Any] | None = None,
+) -> bool:
+	"""Fill missing TP subsections on a published snapshot (pre-materialize pubs).
+
+	Returns True when the snapshot was mutated.
+	"""
+	if not isinstance(snapshot, dict):
+		return False
+	sections = snapshot.get("sections")
+	if not isinstance(sections, list):
+		return False
+	sec = next(
+		(
+			s
+			for s in sections
+			if isinstance(s, dict)
+			and cstr(s.get("section_key") or "") == "technical_proposal_and_implementation_plan"
+		),
+		None,
+	)
+	if not sec:
+		return False
+	existing = sec.get("subsections")
+	if isinstance(existing, list) and existing:
+		return False
+	ev = evaluation if isinstance(evaluation, dict) else None
+	if ev is None and configuration_id:
+		ev = _parse_json(
+			frappe.db.get_value("Tender Configuration", configuration_id, "evaluation_setup"),
+			{},
+		)
+		if not isinstance(ev, dict):
+			ev = {}
+	subs = materialize_technical_proposal_subsections(ev or {})
+	if not subs:
+		return False
+	sec["subsections"] = subs
+	sec["slice_status"] = "technical_proposal_implemented"
+	flags = (ev or {}).get("technical_proposal_flags") if isinstance(ev, dict) else None
+	if isinstance(flags, dict):
+		sec["technical_proposal_flags"] = flags
+	return True
 
 
 def materialize_qualification_categories(
@@ -160,7 +454,8 @@ def materialize_preliminary_criteria(criteria: list[dict[str, Any]]) -> list[dic
 
 	Uses fields present on each evaluation criterion (response method, linked section, etc.).
 	Does not hard-code NSSF titles. Missing method defaults to upload (or linked_section when
-	linked_section_key is set).
+	linked_section_key is set). Digitised FoT / declarations / tender security never remain
+	as mandatory uploads even when CFG omitted response_method.
 	"""
 	out: list[dict[str, Any]] = []
 	idx = 0
@@ -175,19 +470,27 @@ def materialize_preliminary_criteria(criteria: list[dict[str, Any]]) -> list[dic
 		cid = cstr(row.get("criterion_id") or "").strip() or _slug_criterion_id(title, idx)
 		method = cstr(row.get("response_method") or "").strip().lower()
 		linked = cstr(row.get("linked_section_key") or "").strip()
-		if linked and method not in _ALLOWED_RESPONSE_METHODS:
-			method = "linked_section"
-		if method not in _ALLOWED_RESPONSE_METHODS:
-			method = "upload"
-		applicability = cstr(row.get("applicability") or "always").strip().lower()
-		if applicability not in _ALLOWED_APPLICABILITY:
-			applicability = "always"
 		instruction = cstr(
 			row.get("evidence_instruction")
 			or row.get("pass_fail_rule")
 			or row.get("bidder_evidence")
 			or ""
 		).strip()
+		inferred = _infer_digitized_linked_section(cid, title, instruction)
+		if inferred and (not linked or method in ("", "upload")):
+			linked = inferred
+			method = "linked_section"
+		if linked and method not in _ALLOWED_RESPONSE_METHODS:
+			method = "linked_section"
+		if method not in _ALLOWED_RESPONSE_METHODS:
+			method = "upload"
+		# Hard guard: digitised electronic sections cannot stay as uploads.
+		if method == "upload" and inferred:
+			linked = inferred
+			method = "linked_section"
+		applicability = cstr(row.get("applicability") or "always").strip().lower()
+		if applicability not in _ALLOWED_APPLICABILITY:
+			applicability = "always"
 		if not instruction and method == "linked_section" and linked:
 			section_title = _LINKED_SECTION_TITLES.get(linked, linked.replace("_", " ").title())
 			instruction = f"Complete the {section_title} section in the bidder workspace."
@@ -203,6 +506,14 @@ def materialize_preliminary_criteria(criteria: list[dict[str, Any]]) -> list[dic
 		if mandatory is None:
 			be = cstr(row.get("bidder_evidence") or "").strip().lower()
 			mandatory = be not in ("optional", "not required", "no", "false", "0")
+		fulfilment_method = cstr(row.get("fulfilment_method") or "").strip()
+		if not fulfilment_method:
+			fulfilment_method = (
+				"electronic_section" if method == "linked_section" else "tender_evidence"
+			)
+		owner = cstr(row.get("owner") or "").strip()
+		if not owner:
+			owner = linked if method == "linked_section" else "preliminary_requirements"
 		item: dict[str, Any] = {
 			"criterion_id": cid,
 			"title": title,
@@ -212,13 +523,16 @@ def materialize_preliminary_criteria(criteria: list[dict[str, Any]]) -> list[dic
 			"response_method": method,
 			"linked_section_key": linked if method == "linked_section" else "",
 			"linked_section_title": _LINKED_SECTION_TITLES.get(linked, "") if linked else "",
+			"fulfilment_method": fulfilment_method,
+			"owner": owner,
 			"validity_rule": cstr(row.get("validity_rule") or "").strip(),
 			"accepted_file_types": _normalize_file_types(row.get("accepted_file_types")),
 			"max_file_size_mb": max(1, max_mb),
 			"display_order": display_order,
 			"evidence_type": cstr(row.get("evidence_type") or "supporting_document").strip()
 			or "supporting_document",
-			"criterion_group": cstr(row.get("criterion_group") or "").strip(),
+			"criterion_group": cstr(row.get("criterion_group") or "").strip()
+			or ("linked" if method == "linked_section" else ""),
 		}
 		structured = row.get("structured_fields")
 		if isinstance(structured, list):
@@ -718,6 +1032,36 @@ def build_electronic_submission_template(
 			ev_dict = evaluation if isinstance(evaluation, dict) else {}
 			sec["categories"] = materialize_qualification_categories(ev_dict)
 
+		if key == "technical_proposal_and_implementation_plan":
+			ev_dict = evaluation if isinstance(evaluation, dict) else {}
+			sec["subsections"] = materialize_technical_proposal_subsections(ev_dict)
+			flags = ev_dict.get("technical_proposal_flags")
+			if isinstance(flags, dict):
+				sec["technical_proposal_flags"] = flags
+			sec["slice_status"] = "technical_proposal_implemented"
+
+		if key == "requirements_compliance":
+			ev_dict = evaluation if isinstance(evaluation, dict) else {}
+			rc_rows, rc_fields, rc_flags = materialize_requirements_compliance(
+				ev_dict, requirements if isinstance(requirements, list) else []
+			)
+			# Active matrix excludes withdrawn/excluded rows from display list.
+			active = [
+				r
+				for r in rc_rows
+				if cstr(r.get("requirement_mode")) != "excluded" and not r.get("withdrawn")
+			]
+			sec["requirements"] = active
+			sec["requirements_history"] = rc_rows
+			sec["response_fields_per_requirement"] = rc_fields
+			sec["section_type"] = "requirement_matrix"
+			sec["requirements_compliance_flags"] = rc_flags
+			sec["slice_status"] = "requirements_compliance_implemented"
+			sec["bidder_instructions"] = cstr(
+				sec.get("bidder_instructions")
+				or "Respond to each applicable requirement and provide the requested supporting evidence."
+			)
+
 		instantiated_sections.append(sec)
 
 	max_score = evaluation.get("technical_scoring_total") if isinstance(evaluation, dict) else None
@@ -739,6 +1083,17 @@ def build_electronic_submission_template(
 			title="KT_ELECTRONIC_TEMPLATE_SECTIONS",
 		)
 	section_keys = [cstr(s.get("section_key")) for s in ordered]
+
+	# Prefer lean-materialized RC rows for collections when present.
+	rc_pub = by_key.get("requirements_compliance") or {}
+	rc_active = rc_pub.get("requirements") if isinstance(rc_pub, dict) else None
+	if isinstance(rc_active, list) and rc_active:
+		requirements = list(rc_active)
+		groups = {
+			cstr(r.get("category_label") or r.get("group") or "General")
+			for r in requirements
+			if isinstance(r, dict)
+		}
 
 	calibration_counts = {
 		"sections": len(ordered),
@@ -830,10 +1185,25 @@ def get_published_electronic_template(publication_ref_or_id: str) -> dict[str, A
 			"Published tender is missing electronic_template_snapshot.",
 			title="KT_ELECTRONIC_TEMPLATE_SNAPSHOT_MISSING",
 		)
+	cfg_id = cstr(pub.configuration or "")
+	# Recover pubs sealed before Technical Proposal subsections were materialized.
+	if heal_technical_proposal_subsections_in_snapshot(snapshot, configuration_id=cfg_id):
+		digest = _canonical_hash(snapshot)
+		frappe.db.set_value(
+			"IT Tender Publication Record",
+			pub.name,
+			{
+				"electronic_template_snapshot": json.dumps(snapshot, ensure_ascii=False),
+				"electronic_template_hash": digest,
+			},
+			update_modified=False,
+		)
+		frappe.db.commit()
+		pub.electronic_template_hash = digest
 	return {
 		"publication_id": pub.name,
 		"publication_ref": cstr(pub.publication_ref or ""),
-		"configuration_id": cstr(pub.configuration or ""),
+		"configuration_id": cfg_id,
 		"template_id": cstr(getattr(pub, "electronic_template_id", None) or snapshot.get("template_id")),
 		"template_version": cstr(
 			getattr(pub, "electronic_template_version", None) or snapshot.get("template_version")

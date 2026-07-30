@@ -1,0 +1,32 @@
+{# Warranty, defect repair and support — narrative question cards #}
+{% set questions = cfg.questions or [] %}
+{% set narratives = bucket.narratives or {} %}
+
+<section class="kt-tp-block-section" data-testid="kt-tp-warranty">
+	<div class="kt-s600-section-head">
+		<div>
+			<h2>{{ _("Warranty and support arrangements") }}</h2>
+			<p class="kt-s600-help">{{ _("Describe warranty, defect reporting and support arrangements.") }}</p>
+		</div>
+		<div class="kt-s600-progress-box" data-testid="kt-tp-warranty-progress">
+			<span class="kt-s600-eyebrow">{{ _("Topics complete") }}</span>
+			<strong data-testid="kt-tp-warranty-progress-text">{{ sub.progress_text }}</strong>
+		</div>
+	</div>
+
+	<div class="kt-tp-card-stack" data-testid="kt-tp-question-cards">
+		{% for q in questions %}
+		<section class="kt-tp-card" data-testid="kt-tp-question-card" data-question-row data-question-id="{{ q.question_id }}">
+			<div class="kt-tp-card__head">
+				<span class="kt-tp-badge" data-required="{{ 1 if q.required else 0 }}">
+					{{ _("Required") if q.required else _("Optional") }}
+				</span>
+				<h3>{{ q.title }}</h3>
+			</div>
+			<textarea class="kt-tp-textarea" data-question="{{ q.question_id }}" rows="6"
+				placeholder="{{ _('Type your response here…') }}"
+				{% if sub.read_only %}disabled{% endif %}>{{ narratives.get(q.question_id) or "" }}</textarea>
+		</section>
+		{% endfor %}
+	</div>
+</section>

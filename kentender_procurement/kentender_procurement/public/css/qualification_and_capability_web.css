@@ -724,17 +724,28 @@
 	font-size: 18px;
 }
 
+/* Viewport-locked action footer — same contract as FoT / Requirements Compliance Stitch. */
 .kt-s600-footer {
-	position: sticky;
+	position: fixed;
 	bottom: 0;
-	z-index: 20;
+	left: 0;
+	right: 0;
+	z-index: 50;
+	min-height: 4rem;
 	display: flex;
 	justify-content: flex-end;
 	align-items: center;
 	gap: 0.65rem;
-	margin-top: 1.5rem;
-	padding: 0.85rem 0;
-	background: linear-gradient(180deg, rgba(247, 249, 251, 0), #f7f9fb 30%);
+	margin: 0;
+	padding: 0.75rem 1rem;
+	background: #fff;
+	border-top: 1px solid var(--kt-s600-border, #c4c6cf);
+	box-sizing: border-box;
+}
+@media (min-width: 900px) {
+	.kt-s600-footer {
+		left: var(--kt-a2-sidebar, 256px);
+	}
 }
 
 .kt-s600-footer .kt-s600-btn--secondary {

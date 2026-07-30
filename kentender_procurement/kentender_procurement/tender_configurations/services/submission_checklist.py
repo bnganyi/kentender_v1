@@ -10,7 +10,7 @@ from typing import Any
 from urllib.parse import quote
 
 import frappe
-from frappe.utils import cstr, format_datetime
+from frappe.utils import cstr, format_datetime, get_datetime
 
 from kentender_procurement.tender_configurations.services.available_tenders import (
 	format_time_remaining,
@@ -60,6 +60,7 @@ ACTION_START_FIRST = "Start First Section"
 ACTION_CONTINUE = "Continue Bid"
 ACTION_FIX_ISSUES = "Fix Issues"
 ACTION_REVIEW_VALIDATE = "Review & Validate"
+ACTION_REVIEW_VALIDATE_BID = "Review & Validate Bid"
 ACTION_SUBMIT_SEAL = "Submit & Seal Bid"
 ACTION_VIEW_RECEIPT = "View Receipt"
 
@@ -165,6 +166,89 @@ def _has_payload(payload: Any) -> bool:
 		return len(payload) > 0
 	return bool(cstr(payload).strip())
 
+
+_TIMESTAMP_KEYS = frozenset(
+	{"saved_at", "certified_at", "acknowledged_at", "updated_at", "last_saved_at"}
+)
+
+
+def _coerce_dt(value: Any):
+	if value in (None, "", 0):
+		return None
+	try:
+		return get_datetime(value)
+	except Exception:
+		return None
+
+
+def _max_dt(current, candidate):
+	if candidate is None:
+		return current
+	if current is None or candidate > current:
+		return candidate
+	return current
+
+
+def _payload_timestamp(payload: Any, *, depth: int = 0):
+	"""Best material timestamp inside a section response payload."""
+	if depth > 3 or payload is None:
+		return None
+	best = None
+	if isinstance(payload, dict):
+		for key, val in payload.items():
+			if key in _TIMESTAMP_KEYS:
+				best = _max_dt(best, _coerce_dt(val))
+			elif isinstance(val, (dict, list)):
+				best = _max_dt(best, _payload_timestamp(val, depth=depth + 1))
+	elif isinstance(payload, list):
+		for item in payload[:50]:
+			best = _max_dt(best, _payload_timestamp(item, depth=depth + 1))
+	return best
+
+
+def build_section_last_updated_map(
+	audit_events: list[Any] | None,
+	responses: dict[str, Any] | None,
+) -> dict[str, Any]:
+	"""Map section_key → latest material save/invalidate datetime (not bid.modified)."""
+	out: dict[str, Any] = {}
+	for ev in audit_events or []:
+		event = cstr(getattr(ev, "event", None) or (ev.get("event") if isinstance(ev, dict) else "")).strip()
+		if event not in ("section_saved", "qualification_category_saved"):
+			continue
+		detail_raw = getattr(ev, "detail_json", None)
+		if detail_raw is None and isinstance(ev, dict):
+			detail_raw = ev.get("detail_json")
+		detail = _parse_json(detail_raw, {})
+		if not isinstance(detail, dict):
+			detail = {}
+		section_key = cstr(detail.get("section_key") or "").strip()
+		if event == "qualification_category_saved" and not section_key:
+			section_key = "qualification_and_capability"
+		if not section_key or section_key == "*":
+			continue
+		event_at = getattr(ev, "event_at", None)
+		if event_at is None and isinstance(ev, dict):
+			event_at = ev.get("event_at")
+		out[section_key] = _max_dt(out.get(section_key), _coerce_dt(event_at))
+
+	for section_key, payload in (responses or {}).items():
+		sk = cstr(section_key or "").strip()
+		if not sk:
+			continue
+		out[sk] = _max_dt(out.get(sk), _payload_timestamp(payload))
+	return out
+
+
+def format_section_last_updated(dt_value: Any) -> str:
+	if not dt_value:
+		return "—"
+	try:
+		return format_datetime(dt_value)
+	except Exception:
+		return cstr(dt_value) or "—"
+
+
 def _is_final_submission_section(sec: dict[str, Any]) -> bool:
 	key = _section_key(sec)
 	if key in FINAL_SECTION_KEYS:
@@ -221,7 +305,11 @@ def resolve_checklist_primary_action(
 	all_required_complete: bool,
 	validation_ok: bool = False,
 ) -> tuple[str, bool]:
-	"""Return (primary_action_label, enabled)."""
+	"""Return (primary_action_label, enabled).
+
+	Checklist CTA enters Review & Validate when all required sections are complete.
+	Submit is a sidebar/workflow action, not the checklist primary (pack §2).
+	"""
 	if bid_sealed:
 		return ACTION_VIEW_RECEIPT, True
 	if has_blockers:
@@ -230,9 +318,9 @@ def resolve_checklist_primary_action(
 		return ACTION_START_FIRST, True
 	if not all_required_complete:
 		return ACTION_CONTINUE, True
-	if validation_ok:
-		return ACTION_SUBMIT_SEAL, True
-	return ACTION_REVIEW_VALIDATE, True
+	# validation_ok retained for callers; both paths enter Review workflow.
+	_ = validation_ok
+	return ACTION_REVIEW_VALIDATE_BID, True
 
 
 def _desk_section_bridge(configuration_id: str) -> str:
@@ -298,6 +386,28 @@ def _load_published_electronic_schema(configuration_id: str, publication_ref: st
 			),
 			title="KT_ELECTRONIC_TEMPLATE_SNAPSHOT_MISSING",
 		)
+	# Heal TP subsections missing from pre-materialize seals (same recovery as portal get).
+	try:
+		from kentender_procurement.tender_configurations.services.electronic_std_template import (
+			_canonical_hash,
+			heal_technical_proposal_subsections_in_snapshot,
+		)
+
+		cfg_for_heal = cstr(configuration_id or "")
+		if heal_technical_proposal_subsections_in_snapshot(schema, configuration_id=cfg_for_heal):
+			digest = _canonical_hash(schema)
+			frappe.db.set_value(
+				"IT Tender Publication Record",
+				name,
+				{
+					"electronic_template_snapshot": json.dumps(schema, ensure_ascii=False),
+					"electronic_template_hash": digest,
+				},
+				update_modified=False,
+			)
+			frappe.db.commit()
+	except Exception:
+		pass
 	digest = frappe.db.get_value(
 		"IT Tender Publication Record", name, "electronic_template_hash"
 	)
@@ -370,7 +480,10 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 			bid_doc.save(ignore_permissions=True)
 			frappe.db.commit()
 	responses = _parse_json(getattr(bid_doc, "responses", None), {}) if bid_doc else {}
-	modified = getattr(bid_doc, "modified", None)
+	section_last_updated = build_section_last_updated_map(
+		list(getattr(bid_doc, "audit_events", None) or []) if bid_doc else [],
+		responses if isinstance(responses, dict) else {},
+	)
 
 	raw_sections = [s for s in (schema.get("sections") or []) if isinstance(s, dict) and _section_key(s)]
 	any_started = any(_has_payload(responses.get(_section_key(s))) for s in raw_sections)
@@ -379,9 +492,11 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 		is_requirement_matrix_section,
 		matrix_section_roll_up,
 		portal_section_url,
+		requirements_compliance_first_action_url,
 	)
 
-	# Lean slice: Review/Submit are workflow steps (not checklist sections) and remain locked.
+	# Final submission is a workflow (not checklist rows). Legacy final section keys
+	# stay Locked if present; lean templates omit them.
 	review_submit_locked = True
 
 	sections_out: list[dict[str, Any]] = []
@@ -398,6 +513,8 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 		is_tender_security = key == "tender_security"
 		is_preliminary = key == "preliminary_requirements_and_evidence"
 		is_qualification = key == "qualification_and_capability"
+		is_technical_proposal = key == "technical_proposal_and_implementation_plan"
+		is_price_schedule = key == "price_schedule"
 		is_docs = key == "tender_documents_and_addenda" or _is_document_acknowledgement_section(sec)
 		has_responses = _has_payload(payload)
 		has_validation_blockers = _section_has_validation_blockers(payload)
@@ -532,9 +649,61 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 			has_validation_blockers = status == STATUS_NEEDS_ATTENTION
 			has_responses = status != STATUS_NOT_STARTED
 			is_partial = status == STATUS_IN_PROGRESS
-		elif is_matrix and not not_applicable and not bid_sealed and _has_matrix_requirements(sec, schema):
-			status, mx_blockers = matrix_section_roll_up(sec, payload)
-			has_validation_blockers = bool(mx_blockers) or has_validation_blockers
+		elif is_technical_proposal and not not_applicable and not bid_sealed:
+			from kentender_procurement.tender_configurations.services.technical_proposal_and_implementation_plan import (
+				derive_technical_proposal_section_status,
+			)
+
+			status = derive_technical_proposal_section_status(
+				sec,
+				payload if isinstance(payload, dict) else {},
+				responses=responses if isinstance(responses, dict) else {},
+			)
+			has_validation_blockers = status == STATUS_NEEDS_ATTENTION
+			has_responses = status != STATUS_NOT_STARTED
+			is_partial = status == STATUS_IN_PROGRESS
+		elif is_price_schedule and not not_applicable and not bid_sealed:
+			from kentender_procurement.tender_configurations.services.price_schedule_bidder import (
+				derive_price_schedule_section_status,
+				hydrate_price_schedule_section,
+				portal_price_schedule_url,
+			)
+
+			hydrate_price_schedule_section(sec, schema=schema, bid_doc=bid_doc, cfg=cfg)
+			status, mx_blockers = derive_price_schedule_section_status(
+				sec, payload if isinstance(payload, dict) else {}
+			)
+			has_validation_blockers = bool(mx_blockers) or status == STATUS_NEEDS_ATTENTION
+			has_responses = status != STATUS_NOT_STARTED
+			is_partial = status == STATUS_IN_PROGRESS
+		elif is_matrix and not not_applicable and not bid_sealed:
+			# RC page hydrates lean fixtures into empty route-only snapshots; checklist
+			# must use the same path or Complete work stays "Not Started" forever.
+			if key == "requirements_compliance":
+				from kentender_procurement.tender_configurations.services.requirement_matrix import (
+					hydrate_requirements_compliance_section,
+				)
+
+				hydrate_requirements_compliance_section(
+					sec, schema=schema, bid_doc=bid_doc
+				)
+			if _has_matrix_requirements(sec, schema):
+				status, mx_blockers = matrix_section_roll_up(
+					sec, payload if isinstance(payload, dict) else {}
+				)
+				has_validation_blockers = bool(mx_blockers) or has_validation_blockers
+				has_responses = status != STATUS_NOT_STARTED
+				is_partial = status == STATUS_IN_PROGRESS
+			else:
+				status = resolve_section_status(
+					required=required,
+					has_responses=has_responses,
+					not_applicable=not_applicable,
+					has_validation_blockers=has_validation_blockers,
+					is_partial=is_partial,
+					is_locked=is_locked,
+					bid_sealed=bid_sealed,
+				)
 		else:
 			status = resolve_section_status(
 				required=required,
@@ -583,6 +752,18 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 				)
 				if msgs:
 					issues_count = len(msgs)
+			if is_technical_proposal:
+				from kentender_procurement.tender_configurations.services.technical_proposal_and_implementation_plan import (
+					technical_proposal_blocker_messages,
+				)
+
+				msgs = technical_proposal_blocker_messages(
+					sec,
+					payload if isinstance(payload, dict) else {},
+					responses=responses if isinstance(responses, dict) else {},
+				)
+				if msgs:
+					issues_count = len(msgs)
 			action_label, issues_label = "Resolve", f"{issues_count} Blocker" + (
 				"s" if issues_count != 1 else ""
 			)
@@ -600,6 +781,8 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 					or is_tender_security
 					or is_preliminary
 					or is_qualification
+					or is_technical_proposal
+					or is_price_schedule
 				)
 				else "View"
 			)
@@ -616,6 +799,8 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 					or is_tender_security
 					or is_preliminary
 					or is_qualification
+					or is_technical_proposal
+					or is_price_schedule
 				)
 				else "Resume"
 			)
@@ -625,12 +810,11 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 		else:
 			action_label, issues_label, issues_count = "View", "—", 0
 
-		last_updated = "—"
-		if has_responses and modified:
-			try:
-				last_updated = format_datetime(modified)
-			except Exception:
-				last_updated = cstr(modified)
+		# Blueprint §25.1: last material saved/invalidated time for this section — never bid.modified.
+		if status in (STATUS_NOT_STARTED, STATUS_NOT_APPLICABLE, STATUS_LOCKED):
+			last_updated = "—"
+		else:
+			last_updated = format_section_last_updated(section_last_updated.get(key))
 
 		display_title = title if (title[:1].isdigit() and "." in title[:4]) else f"{idx + 1}. {title}"
 		if is_fot:
@@ -669,10 +853,46 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 			)
 
 			action_url = portal_qualification_url(pub_ref)
+		elif is_technical_proposal:
+			from kentender_procurement.tender_configurations.services.technical_proposal_and_implementation_plan import (
+				portal_technical_proposal_url,
+				technical_proposal_first_action_url,
+			)
+
+			# Match Qualification / other multi-surface sections: Start/Continue/Review open the
+			# section overview. Only Resolve (Needs Attention) deep-links to the blocking subsection
+			# (Implement doc §18 — checklist must link to the subsection requiring action).
+			if status == STATUS_NEEDS_ATTENTION:
+				action_url = technical_proposal_first_action_url(
+					pub_ref,
+					sec,
+					payload if isinstance(payload, dict) else {},
+					responses=responses if isinstance(responses, dict) else {},
+				)
+			else:
+				action_url = portal_technical_proposal_url(pub_ref)
+		elif is_price_schedule:
+			from kentender_procurement.tender_configurations.services.price_schedule_bidder import (
+				portal_price_schedule_review_url,
+				portal_price_schedule_url,
+			)
+
+			action_url = (
+				portal_price_schedule_review_url(pub_ref)
+				if status == STATUS_COMPLETE
+				else portal_price_schedule_url(pub_ref)
+			)
 		elif key == "tender_documents_and_addenda" or _is_document_acknowledgement_section(sec):
 			action_url = _portal_documents_url(pub_ref)
 		elif is_matrix:
-			action_url = portal_section_url(pub_ref, key)
+			if status == STATUS_NEEDS_ATTENTION and key == "requirements_compliance":
+				action_url = requirements_compliance_first_action_url(
+					pub_ref,
+					sec,
+					payload if isinstance(payload, dict) else {},
+				)
+			else:
+				action_url = portal_section_url(pub_ref, key)
 		else:
 			# Other lean sections: correct Website route (placeholder until implemented).
 			action_url = portal_section_url(pub_ref, key)
@@ -731,20 +951,38 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 		all_required_complete=all_required_complete,
 		validation_ok=False,
 	)
-	# Lean slice: Review & Submit remain locked until later implementation.
-	if primary in (ACTION_REVIEW_VALIDATE, ACTION_SUBMIT_SEAL):
-		primary = ACTION_CONTINUE
-		primary_enabled = True
+	from kentender_procurement.tender_configurations.services.final_submission import (
+		portal_review_and_validate_url,
+		portal_submission_receipt_url,
+		portal_submit_bid_url,
+	)
+
 	primary_url = workspace_path
-	for s in sections_out:
-		if not s.get("action_enabled"):
-			continue
-		if s["status"] in (STATUS_NOT_STARTED, STATUS_IN_PROGRESS, STATUS_NEEDS_ATTENTION):
-			primary_url = s.get("action_url") or workspace_path
-			break
+	if primary == ACTION_VIEW_RECEIPT:
+		primary_url = portal_submission_receipt_url(pub_ref)
+	elif primary in (ACTION_REVIEW_VALIDATE_BID, ACTION_REVIEW_VALIDATE):
+		primary_url = portal_review_and_validate_url(pub_ref)
+	elif primary == ACTION_SUBMIT_SEAL:
+		primary_url = portal_submit_bid_url(pub_ref)
 	else:
-		if sections_out:
-			primary_url = sections_out[0].get("action_url") or workspace_path
+		for s in sections_out:
+			if not s.get("action_enabled"):
+				continue
+			if s["status"] in (STATUS_NOT_STARTED, STATUS_IN_PROGRESS, STATUS_NEEDS_ATTENTION):
+				primary_url = s.get("action_url") or workspace_path
+				break
+		else:
+			if sections_out:
+				primary_url = sections_out[0].get("action_url") or workspace_path
+
+	review_nav_enabled = bool(all_required_complete or bid_sealed)
+	submit_nav_enabled = bool(bid_sealed or (all_required_complete and not has_blockers))
+	review_nav_url = portal_review_and_validate_url(pub_ref) if review_nav_enabled else "#"
+	submit_nav_url = (
+		portal_submission_receipt_url(pub_ref)
+		if bid_sealed
+		else (portal_submit_bid_url(pub_ref) if submit_nav_enabled else "#")
+	)
 
 	pct = 0
 	if required_total:
@@ -796,6 +1034,10 @@ def get_submission_checklist(published_tender_ref: str) -> dict[str, Any]:
 		"primary_action": primary,
 		"primary_action_enabled": 1 if primary_enabled else 0,
 		"primary_action_url": primary_url,
+		"review_nav_enabled": 1 if review_nav_enabled else 0,
+		"review_nav_url": review_nav_url,
+		"submit_nav_enabled": 1 if submit_nav_enabled else 0,
+		"submit_nav_url": submit_nav_url,
 		"overview_url": f"/tenders/{quote(pub_ref, safe='')}",
 		"pdf_url": published_tender_pdf_url(pub_ref),
 		"workspace_status": "Submitted" if bid_sealed else ("Draft" if any_started else "Not Started"),

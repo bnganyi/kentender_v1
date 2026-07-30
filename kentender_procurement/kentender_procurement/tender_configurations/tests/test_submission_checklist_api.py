@@ -37,6 +37,8 @@ from kentender_procurement.tender_configurations.services.submission_checklist i
 	STATUS_LOCKED,
 	STATUS_NEEDS_ATTENTION,
 	STATUS_NOT_STARTED,
+	build_section_last_updated_map,
+	format_section_last_updated,
 	get_submission_checklist,
 	portal_workspace_url,
 	resolve_checklist_primary_action,
@@ -45,6 +47,74 @@ from kentender_procurement.tender_configurations.services.submission_checklist i
 
 
 class TestSubmissionChecklistHelpers(unittest.TestCase):
+	def test_last_updated_is_per_section_not_bid_modified(self):
+		"""Regression: checklist must not stamp every started row with bid.modified."""
+		events = [
+			{
+				"event": "section_saved",
+				"event_at": "2026-07-26 10:00:00",
+				"detail_json": json.dumps({"section_key": "form_of_tender"}),
+			},
+			{
+				"event": "section_saved",
+				"event_at": "2026-07-26 12:30:00",
+				"detail_json": json.dumps({"section_key": "form_of_tender"}),
+			},
+			{
+				"event": "section_saved",
+				"event_at": "2026-07-26 11:15:00",
+				"detail_json": json.dumps({"section_key": "tender_security"}),
+			},
+			{
+				"event": "section_saved",
+				"event_at": "2026-07-26 20:35:59",
+				"detail_json": json.dumps({"section_key": "*"}),
+			},
+			{
+				"event": "qualification_category_saved",
+				"event_at": "2026-07-26 13:00:00",
+				"detail_json": json.dumps({"category_key": "experience"}),
+			},
+		]
+		responses = {
+			"tender_documents_and_addenda": {
+				"acknowledged": True,
+				"acknowledged_at": "2026-07-26 09:05:00",
+			},
+			"preliminary_requirements_and_evidence": {
+				"PRELIM-01": {"saved_at": "2026-07-26 14:00:00", "upload": {"file_name": "a.pdf"}},
+			},
+		}
+		mapped = build_section_last_updated_map(events, responses)
+		self.assertEqual(
+			format_section_last_updated(mapped["form_of_tender"]),
+			format_section_last_updated("2026-07-26 12:30:00"),
+		)
+		self.assertEqual(
+			format_section_last_updated(mapped["tender_security"]),
+			format_section_last_updated("2026-07-26 11:15:00"),
+		)
+		self.assertEqual(
+			format_section_last_updated(mapped["tender_documents_and_addenda"]),
+			format_section_last_updated("2026-07-26 09:05:00"),
+		)
+		self.assertEqual(
+			format_section_last_updated(mapped["qualification_and_capability"]),
+			format_section_last_updated("2026-07-26 13:00:00"),
+		)
+		self.assertEqual(
+			format_section_last_updated(mapped["preliminary_requirements_and_evidence"]),
+			format_section_last_updated("2026-07-26 14:00:00"),
+		)
+		# Wildcard fill/bulk events must not invent a shared stamp for every section.
+		self.assertNotIn("*", mapped)
+		stamps = {
+			format_section_last_updated(mapped["form_of_tender"]),
+			format_section_last_updated(mapped["tender_security"]),
+			format_section_last_updated(mapped["tender_documents_and_addenda"]),
+		}
+		self.assertEqual(len(stamps), 3)
+
 	def test_section_status_matrix(self):
 		self.assertEqual(
 			resolve_section_status(required=True, has_responses=False),
@@ -225,19 +295,30 @@ class TestSubmissionChecklistApi(unittest.TestCase):
 		ref = self._publish()
 		get_submission_checklist(ref)
 		bid_id = resolve_published_tender_backend(ref)["bid_id"]
-		# Specialized sections use derive_* — exercise Needs Attention on the next generic stub.
-		other_key = "technical_proposal_and_implementation_plan"
+		other_key = "confidential_business_questionnaire"
 		acknowledge_tender_documents(ref)
+		# Incomplete CBQ entity → specialized derive reports Needs Attention.
 		save_section_responses(
 			bid_id,
 			other_key,
-			{"ok": True, "validation_errors": ["Missing required field"]},
+			{
+				"entities": [
+					{
+						"entity_id": "ent-bidder-1",
+						"role": "bidder",
+						"legal_name": "Partial Bidder Ltd",
+						"entity_type": "company",
+						"answers": {},
+						"certified": 0,
+					}
+				]
+			},
 		)
 		out2 = get_submission_checklist(ref)
 		second = next(s for s in out2["sections"] if s["section_key"] == other_key)
 		self.assertEqual(second["status"], STATUS_NEEDS_ATTENTION)
 		self.assertEqual(second["action_label"], "Resolve")
-		self.assertEqual(second["issues_label"], "1 Blocker")
+		self.assertIn("Blocker", second["issues_label"])
 		self.assertEqual(out2["primary_action"], ACTION_FIX_ISSUES)
 		self.assertEqual(out2["has_blockers"], 1)
 
@@ -247,7 +328,11 @@ class TestSubmissionChecklistApi(unittest.TestCase):
 		out = get_submission_checklist(ref)
 		keys = {s["section_key"] for s in out["sections"]}
 		self.assertNotIn("final_declaration_and_submit", keys)
-		self.assertNotIn(out["primary_action"], ("Submit & Seal Bid", "Review & Validate"))
+		# Incomplete lean bid still continues preparation (not Review CTA yet).
+		self.assertNotIn(
+			out["primary_action"],
+			("Submit & Seal Bid", "Review & Validate Bid"),
+		)
 
 	def test_contract_conditions_label_override(self):
 		ref = self._publish()
@@ -261,6 +346,34 @@ class TestSubmissionChecklistApi(unittest.TestCase):
 		self.assertIn("Contract Conditions Acknowledgement", row["title"])
 		self.assertNotIn("Contract Terms Acknowledgement", row["title"])
 
+	def _cbq_in_progress_payload(self) -> dict:
+		"""Valid-enough CBQ body that is started but not certified (In Progress)."""
+		from kentender_procurement.tender_configurations.tests.test_lean_s300_confidential_business_questionnaire import (
+			_all_conflicts_no,
+			_complete_company_entity,
+		)
+
+		ent = _complete_company_entity(
+			{"entity_id": "ent-bidder-1", "role": "bidder", "legal_name": "Acme Systems Ltd"}
+		)
+		ent["certified"] = 0
+		ent["conflict_rows"] = _all_conflicts_no()
+		return {"entities": [ent]}
+
+	def _cbq_needs_attention_payload(self) -> dict:
+		return {
+			"entities": [
+				{
+					"entity_id": "ent-bidder-1",
+					"role": "bidder",
+					"legal_name": "Partial Bidder Ltd",
+					"entity_type": "company",
+					"answers": {},
+					"certified": 0,
+				}
+			]
+		}
+
 	def test_in_progress_resume_action(self):
 		from kentender_procurement.tender_configurations.services.published_tender_overview import (
 			resolve_published_tender_backend,
@@ -269,13 +382,12 @@ class TestSubmissionChecklistApi(unittest.TestCase):
 		ref = self._publish()
 		get_submission_checklist(ref)
 		bid_id = resolve_published_tender_backend(ref)["bid_id"]
-		# Documents use version-bound ack; specialized sections use derive_* — use next generic stub.
-		section_key = "technical_proposal_and_implementation_plan"
-		save_section_responses(bid_id, section_key, {"draft_answer": "wip", "in_progress": True})
+		section_key = "confidential_business_questionnaire"
+		save_section_responses(bid_id, section_key, self._cbq_in_progress_payload())
 		out2 = get_submission_checklist(ref)
 		row = next(s for s in out2["sections"] if s["section_key"] == section_key)
 		self.assertEqual(row["status"], STATUS_IN_PROGRESS)
-		self.assertEqual(row["action_label"], "Resume")
+		self.assertEqual(row["action_label"], "Continue")
 
 	def test_progress_percent_complete_only_exposes_in_progress_counters(self):
 		"""Blueprint §25.4: % is Complete-only; in-progress is a separate counter."""
@@ -292,8 +404,8 @@ class TestSubmissionChecklistApi(unittest.TestCase):
 		acknowledge_tender_documents(ref)
 		save_section_responses(
 			bid_id,
-			"technical_proposal_and_implementation_plan",
-			{"draft_answer": "wip", "in_progress": True},
+			"confidential_business_questionnaire",
+			self._cbq_in_progress_payload(),
 		)
 		out = get_submission_checklist(ref)
 		self.assertEqual(out["progress_complete"], 1)
@@ -307,6 +419,12 @@ class TestSubmissionChecklistApi(unittest.TestCase):
 			round(100.0 * (float(out["progress_complete"]) + 0.5) / float(out["progress_total"]))
 		)
 		self.assertNotEqual(out["progress_percent"], weighted_if_half)
+		docs = next(s for s in out["sections"] if s["section_key"] == "tender_documents_and_addenda")
+		cbq = next(
+			s for s in out["sections"] if s["section_key"] == "confidential_business_questionnaire"
+		)
+		self.assertNotEqual(docs["last_updated"], "—")
+		self.assertNotEqual(cbq["last_updated"], "—")
 
 	def test_progress_needs_attention_counter(self):
 		from kentender_procurement.tender_configurations.services.published_tender_overview import (
@@ -322,8 +440,8 @@ class TestSubmissionChecklistApi(unittest.TestCase):
 		acknowledge_tender_documents(ref)
 		save_section_responses(
 			bid_id,
-			"technical_proposal_and_implementation_plan",
-			{"ok": True, "validation_errors": ["Missing required field"]},
+			"confidential_business_questionnaire",
+			self._cbq_needs_attention_payload(),
 		)
 		out = get_submission_checklist(ref)
 		self.assertEqual(out["progress_complete"], 1)
@@ -331,6 +449,96 @@ class TestSubmissionChecklistApi(unittest.TestCase):
 		self.assertEqual(out["progress_in_progress"], 0)
 		expected_pct = int(round(100.0 * float(out["progress_complete"]) / float(out["progress_total"])))
 		self.assertEqual(out["progress_percent"], expected_pct)
+
+	def test_rc_route_only_snapshot_checklist_matches_matrix_complete(self):
+		"""Regression: empty RC snapshot must hydrate before checklist roll-up."""
+		from kentender_procurement.tender_configurations.services.requirement_matrix import (
+			get_requirement_drawer,
+			get_requirement_matrix,
+			save_requirement_response,
+		)
+		from kentender_procurement.tender_configurations.services.tender_documents_addenda import (
+			acknowledge_tender_documents,
+		)
+
+		ref = self._publish()
+		get_submission_checklist(ref)
+		acknowledge_tender_documents(ref)
+		pub_name = frappe.db.get_value(
+			"IT Tender Publication Record", {"publication_ref": ref}, "name"
+		)
+		raw = frappe.db.get_value(
+			"IT Tender Publication Record", pub_name, "electronic_template_snapshot"
+		)
+		snap = json.loads(raw or "{}")
+		for sec in snap.get("sections") or []:
+			if cstr(sec.get("section_key")) == "requirements_compliance":
+				sec["requirements"] = []
+				sec["response_fields_per_requirement"] = []
+				sec["slice_status"] = "route_only_not_editable_in_lean_slice"
+				sec["section_type"] = "requirement_matrix"
+		# Trap that previously made checklist roll up with zero requirement rows.
+		snap.setdefault("collections", {})["requirements"] = [{"requirement_id": "stub"}]
+		frappe.db.set_value(
+			"IT Tender Publication Record",
+			pub_name,
+			"electronic_template_snapshot",
+			json.dumps(snap, ensure_ascii=False),
+			update_modified=False,
+		)
+		frappe.db.commit()
+
+		# Pre-fix: matrix hydrates and can complete; checklist used to stay Not Started.
+		mx = get_requirement_matrix(ref, "requirements_compliance", page_size=50)
+		self.assertGreaterEqual(int(mx.get("progress_total") or 0), 1)
+		# Rows are scoped to the selected domain — walk every group.
+		for group in mx.get("groups") or []:
+			page = get_requirement_matrix(
+				ref,
+				"requirements_compliance",
+				group=cstr(group.get("group_key") or ""),
+				page_size=50,
+			)
+			for row in page.get("rows") or []:
+				if not int(row.get("mandatory") or 0):
+					continue
+				rid = cstr(row.get("requirement_id") or "")
+				drawer = get_requirement_drawer(ref, "requirements_compliance", rid)
+				payload: dict = {}
+				for field in drawer.get("fields") or []:
+					fkey = cstr(field.get("field_key") or "")
+					ftype = cstr(field.get("type") or "")
+					if not fkey or not field.get("required"):
+						continue
+					if ftype == "file":
+						payload[fkey] = [
+							{
+								"file_name": f"{rid}.pdf",
+								"mock": 1,
+								"byte_size": 120,
+								"uploaded_at": str(now_datetime()),
+							}
+						]
+					elif ftype == "number":
+						payload[fkey] = "100"
+					elif ftype == "boolean":
+						payload[fkey] = 1
+					elif ftype == "repeating_table":
+						payload[fkey] = [{"activity": "Integration", "timing": "Week 1"}]
+					else:
+						payload[fkey] = (
+							"Yes" if "yes" in fkey.lower() else "Complete for checklist regression."
+						)
+				save_requirement_response(ref, "requirements_compliance", rid, payload)
+
+		mx2 = get_requirement_matrix(ref, "requirements_compliance", page_size=50)
+		self.assertEqual(mx2.get("section_status"), STATUS_COMPLETE, mx2.get("progress_label"))
+		self.assertEqual(mx2.get("progress_complete"), mx2.get("progress_total"))
+
+		cl = get_submission_checklist(ref)
+		rc = next(s for s in cl["sections"] if s["section_key"] == "requirements_compliance")
+		self.assertEqual(rc["status"], STATUS_COMPLETE, rc)
+		self.assertIn(rc["action_label"], ("Review", "View"))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,168 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }} | KenTender{% endblock %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/kentender_procurement/css/available_tenders.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/submission_checklist_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/price_schedule_web.css?v=ps-3">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+<script defer src="/assets/kentender_procurement/js/price_schedule_web.js?v=ps-3"></script>
+{% endblock %}
+
+{% block page_content %}
+{% set s = sec %}
+{% set active_nav = "my_bids" %}
+{% set active_ws = "checklist" %}
+{% set pct = s.progress_percent if s.progress_percent is defined else 0 %}
+<div class="kt-a0-root kt-a2-root kt-ps-root" data-testid="kt-ps-root"
+	data-publication-ref="{{ s.published_tender_ref }}"
+	data-bid-id="{{ s.bid_id or '' }}"
+	data-section-status="{{ s.section_status }}"
+	data-bid-sealed="{{ s.bid_sealed or 0 }}"
+	data-active-offer-id="{{ s.active_offer_id or 'main' }}"
+	data-active-lot-id="{{ s.active_lot_id or '' }}"
+	data-workspace-url="{{ s.workspace_url }}"
+	data-section-url="{{ s.section_url }}"
+	data-review-url="{{ s.review_url }}"
+	data-continue-url="{{ s.continue_url }}">
+	{% include "templates/includes/kt_bidder_portal_nav.html" %}
+
+	<div class="kt-a2-shell">
+		{% include "templates/includes/kt_bidder_workspace_sidebar.html" %}
+
+		<main class="kt-a2-main">
+			<div class="kt-ps-canvas">
+				<header class="kt-ps-head">
+					<div>
+						<h1 class="kt-ps-title" data-testid="kt-ps-title">{{ s.section_title }}</h1>
+						<p class="kt-ps-lede" data-testid="kt-ps-instructions">{{ s.section_instructions }}</p>
+					</div>
+					<div class="kt-ps-progress-card" data-testid="kt-ps-progress">
+						<div class="kt-ps-progress-card__top">
+							<span class="kt-ps-progress-card__label">{{ _("Submission Progress") }}</span>
+							<span class="kt-ps-progress-card__pct" data-testid="kt-ps-progress-percent">{{ pct }}%</span>
+						</div>
+						<p class="kt-ps-progress-card__caption" data-testid="kt-ps-progress-label">{{ s.progress_label }}</p>
+						<div class="kt-ps-progress-card__bar" role="progressbar"
+							aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100">
+							<span class="kt-ps-progress-card__fill" style="width: {{ pct }}%;"></span>
+						</div>
+					</div>
+				</header>
+
+				{% if s.show_offer_tabs or s.show_lot_selector %}
+				<div class="kt-ps-controls" data-testid="kt-ps-controls">
+					{% if s.show_offer_tabs %}
+					<div class="kt-ps-offer-tabs" data-testid="kt-ps-offer-tabs" role="tablist">
+						{% for o in s.offers %}
+						<button type="button" class="kt-ps-offer-tab{% if o.offer_id == s.active_offer_id %} is-active{% endif %}"
+							data-testid="kt-ps-offer-tab"
+							data-offer-id="{{ o.offer_id }}"
+							role="tab"
+							aria-selected="{{ 'true' if o.offer_id == s.active_offer_id else 'false' }}">
+							{{ o.label or o.offer_id }}
+						</button>
+						{% endfor %}
+					</div>
+					{% else %}
+					<div></div>
+					{% endif %}
+					{% if s.show_lot_selector %}
+					<label class="kt-ps-lot-select" data-testid="kt-ps-lot-selector">
+						<span>{{ _("Lot Selector") }}:</span>
+						<select data-testid="kt-ps-lot-select" aria-label="{{ _('Lot Selector') }}">
+							<option value="">{{ _("All Lots") }}</option>
+							{% for lot in s.lots %}
+							<option value="{{ lot.lot_id }}"{% if lot.lot_id == s.active_lot_id %} selected{% endif %}>
+								{{ lot.label or lot.lot_id }}
+							</option>
+							{% endfor %}
+						</select>
+					</label>
+					{% endif %}
+				</div>
+				{% endif %}
+
+				<section class="kt-ps-bento" data-testid="kt-ps-schedules-panel">
+					<div class="kt-ps-table-wrap">
+						<table class="kt-ps-table" data-testid="kt-ps-schedules-table">
+							<thead>
+								<tr>
+									<th>{{ _("Schedule") }}</th>
+									<th>{{ _("Progress") }}</th>
+									<th>{{ _("Status") }}</th>
+									<th class="kt-ps-right">{{ _("Action") }}</th>
+								</tr>
+							</thead>
+							<tbody data-testid="kt-ps-schedules-tbody">
+								{% for row in s.schedules %}
+								{% set row_pct = row.progress_percent if row.progress_percent is defined else (((row.started or 0) * 100 / row.total) if row.total else 0) %}
+								<tr data-testid="kt-ps-schedule-row"
+									data-schedule-key="{{ row.schedule_key }}"
+									data-status="{{ row.status }}">
+									<td>
+										<p class="kt-ps-row-title" data-testid="kt-ps-schedule-title">{{ row.title }}</p>
+										{% if row.schedule_key == 'supply_installation' %}
+										<p class="kt-ps-row-sub">{{ _("Hardware components, logistics and on-site setup.") }}</p>
+										{% elif row.schedule_key == 'recurrent_costs' %}
+										<p class="kt-ps-row-sub">{{ _("Annual maintenance, licensing and support fees.") }}</p>
+										{% endif %}
+									</td>
+									<td>
+										<div class="kt-ps-row-progress">
+											<div class="kt-ps-row-progress__bar" data-status="{{ row.status }}" aria-hidden="true">
+												<span style="width: {{ row_pct }}%;"></span>
+											</div>
+											<span class="kt-ps-mono" data-testid="kt-ps-schedule-progress">{{ row.progress_label }} {{ _("items") }}</span>
+										</div>
+									</td>
+									<td>
+										<span class="kt-ps-status-pill" data-testid="kt-ps-schedule-status" data-status="{{ row.status }}">
+											<span class="kt-ps-status-pill__dot" aria-hidden="true"></span>
+											{{ row.status }}
+										</span>
+									</td>
+									<td class="kt-ps-right">
+										{% set action = row.action_label or _("Start") %}
+										<a class="kt-ps-btn {% if action == 'Continue' %}kt-ps-btn--primary{% else %}kt-ps-btn--ghost{% endif %}"
+											data-testid="kt-ps-schedule-action"
+											href="{{ row.href }}{% if s.active_offer_id or s.active_lot_id %}?{% if s.active_offer_id %}offer_id={{ s.active_offer_id|urlencode }}{% endif %}{% if s.active_lot_id %}{% if s.active_offer_id %}&{% endif %}lot_id={{ s.active_lot_id|urlencode }}{% endif %}{% endif %}">
+											{{ action }}
+										</a>
+									</td>
+								</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+					</div>
+				</section>
+
+				{% if s.show_offer_tabs %}
+				<div class="kt-ps-info" data-testid="kt-ps-alt-info">
+					<span class="material-symbols-outlined" aria-hidden="true">info</span>
+					<div>
+						<h4>{{ _("Alternative Bid Support") }}</h4>
+						<p>{{ _("You are currently preparing a price schedule for your main offer. If the tender allows, you can create alternative configurations using the tabs above.") }}</p>
+					</div>
+				</div>
+				{% endif %}
+			</div>
+		</main>
+	</div>
+
+	<footer class="kt-ps-foot" data-testid="kt-ps-footer">
+		<a class="kt-ps-btn kt-ps-btn--secondary" href="{{ s.workspace_url }}" data-testid="kt-ps-back">
+			<span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+			{{ _("Back to Checklist") }}
+		</a>
+		<div class="kt-ps-foot-actions">
+			<a class="kt-ps-btn kt-ps-btn--primary" href="{{ s.continue_url }}" data-testid="kt-ps-continue">
+				{{ _("Continue") }}
+				<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+			</a>
+		</div>
+	</footer>
+	<div class="kt-ps-toast" data-testid="kt-ps-toast" role="status" hidden></div>
+</div>
+{% endblock %}

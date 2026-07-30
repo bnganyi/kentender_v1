@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KenTender | Submit Bid</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary": "#ffffff",
+                    "tertiary-container": "#001c3a",
+                    "surface-bright": "#f7f9fb",
+                    "surface-container": "#eceef0",
+                    "surface-tint": "#525f74",
+                    "secondary-fixed-dim": "#b9c7e0",
+                    "on-surface": "#191c1e",
+                    "on-secondary-container": "#556379",
+                    "on-error": "#ffffff",
+                    "inverse-primary": "#bac7e0",
+                    "inverse-surface": "#2d3133",
+                    "primary-fixed": "#d6e3fd",
+                    "outline": "#75777d",
+                    "on-tertiary-container": "#6b85ac",
+                    "surface-container-highest": "#e0e3e5",
+                    "error": "#ba1a1a",
+                    "surface-container-low": "#f2f4f6",
+                    "on-error-container": "#93000a",
+                    "on-tertiary": "#ffffff",
+                    "background": "#f7f9fb",
+                    "on-secondary-fixed": "#0d1c2e",
+                    "on-primary": "#ffffff",
+                    "surface-variant": "#e0e3e5",
+                    "on-primary-fixed": "#0e1c2e",
+                    "outline-variant": "#c5c6cd",
+                    "outline-subtle": "#c4c6cf",
+                    "status-error": "#ba1a1a",
+                    "on-surface-variant": "#44474c",
+                    "status-pending-bg": "#fffbeb",
+                    "status-error-bg": "#fff1f2",
+                    "status-approved": "#065f46",
+                    "primary": "#000000",
+                    "primary-fixed-dim": "#bac7e0",
+                    "on-secondary-fixed-variant": "#3a485c",
+                    "tertiary-fixed-dim": "#adc8f3",
+                    "outline-strong": "#74777f",
+                    "on-primary-fixed-variant": "#3a475c",
+                    "primary-container": "#0e1c2e",
+                    "secondary-fixed": "#d5e3fc",
+                    "on-tertiary-fixed": "#001c3a",
+                    "surface": "#f7f9fb",
+                    "status-approved-bg": "#ecfdf5",
+                    "surface-dim": "#d8dadc",
+                    "surface-container-high": "#e6e8ea",
+                    "on-background": "#191c1e",
+                    "inverse-on-surface": "#eff1f3",
+                    "on-tertiary-fixed-variant": "#2d486c",
+                    "surface-container-lowest": "#ffffff",
+                    "status-pending": "#92400e",
+                    "on-primary-container": "#77859b",
+                    "error-container": "#ffdad6",
+                    "tertiary": "#000000",
+                    "tertiary-fixed": "#d4e3ff",
+                    "secondary-container": "#d2e1fa",
+                    "secondary": "#515f74"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "max-width": "1280px",
+                    "container-padding": "16px",
+                    "unit": "4px",
+                    "gap-component": "8px",
+                    "gutter": "12px",
+                    "sidebar-width": "256px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Public Sans"],
+                    "display": ["Public Sans"],
+                    "body-md": ["Public Sans"],
+                    "body-lg": ["Public Sans"],
+                    "label-md": ["JetBrains Mono"],
+                    "headline-lg-mobile": ["Public Sans"],
+                    "label-sm": ["JetBrains Mono"],
+                    "headline-lg": ["Public Sans"]
+            },
+            "fontSize": {
+                    "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "display": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "body-lg": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-md": ["11px", {"lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .civic-ledger-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 16px;
+        }
+        .bento-card {
+            background: white;
+            border: 1px solid #c4c6cf;
+            padding: 16px;
+            transition: all 0.2s ease;
+        }
+        .bento-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        input[type="checkbox"]:checked {
+            background-color: #000000;
+            border-color: #000000;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 w-full z-50 flex items-center justify-between px-gutter h-14 bg-surface-container-lowest dark:bg-inverse-surface border-b border-outline-subtle dark:border-outline-strong">
+<div class="flex items-center gap-6">
+<span class="font-headline-lg text-headline-lg font-bold text-primary dark:text-primary-fixed">KenTender</span>
+<nav class="hidden md:flex gap-6 items-center">
+<a class="text-on-secondary-container dark:text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md uppercase" href="#">Tenders</a>
+<a class="text-on-secondary-container dark:text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md uppercase" href="#">My Bids</a>
+<a class="text-on-secondary-container dark:text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md uppercase" href="#">Clarifications</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="font-label-md text-label-md text-primary font-bold hover:opacity-80 transition-opacity">Help Desk</button>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">settings</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden border border-outline-subtle">
+<img class="w-full h-full object-cover" data-alt="Professional headshot of an executive African female professional in her 40s wearing a navy business blazer and subtle gold jewelry. High-key lighting, minimalist gray background, sharp focus, institutional corporate photography style with a clean, high-contrast aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDj4Xw4K_qJhiobZNcvTv-6_JaaLqcvc1DX4RPUun3Y-o_qBsQRT-SEX-4eXG6qXANDp7tlYstxBOe54kVxlU0MGHKSGLS2a_hMZ1SMdqebq8XMacbv6oMcefoLrddkdVJxqQ0JLpyUo7BL4QLKWG3Z1UwkiRdL_80kw64UVVgpONhNac_4Cx-XGYE2iktWpGSYF2Fwy1NuMBpTZwB7dc9FiAOlS9HzZNHhTkZtxuhWP4YjC9szK_BpOA"/>
+</div>
+</div>
+</header>
+<!-- Sidebar Navigation -->
+<aside class="fixed left-0 top-14 bottom-0 w-sidebar-width flex flex-col z-40 overflow-y-auto bg-surface-container-low dark:bg-surface-dim border-r border-outline-subtle dark:border-outline-strong">
+<div class="p-4 border-b border-outline-subtle">
+<h2 class="font-headline-md text-headline-md text-primary">Bidder Workspace</h2>
+<p class="font-label-sm text-label-sm text-outline uppercase mt-1">Ref: KT-2023-0892</p>
+</div>
+<nav class="flex-1 py-4">
+<div class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all duration-150 cursor-pointer">
+<span class="material-symbols-outlined mr-3">info</span>
+<span class="font-label-md text-label-md">Tender Overview</span>
+</div>
+<div class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all duration-150 cursor-pointer">
+<span class="material-symbols-outlined mr-3">description</span>
+<span class="font-label-md text-label-md">Tender Documents</span>
+</div>
+<div class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all duration-150 cursor-pointer">
+<span class="material-symbols-outlined mr-3">fact_check</span>
+<span class="font-label-md text-label-md">Submission Checklist</span>
+</div>
+<div class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all duration-150 cursor-pointer">
+<span class="material-symbols-outlined mr-3">edit_document</span>
+<span class="font-label-md text-label-md">Prepare Bid</span>
+</div>
+<div class="flex items-center text-on-surface-variant py-3 px-4 hover:bg-surface-container-high transition-all duration-150 cursor-pointer">
+<span class="material-symbols-outlined mr-3">verified</span>
+<span class="font-label-md text-label-md">Review &amp; Validate</span>
+</div>
+<div class="flex items-center bg-surface-container-highest text-primary border-r-4 border-primary py-3 px-4 scale-[0.99] transition-transform cursor-default">
+<span class="material-symbols-outlined mr-3" style='font-variation-settings: "FILL" 1;'>lock</span>
+<span class="font-label-md text-label-md">Submit &amp; Seal</span>
+</div>
+</nav>
+<div class="p-4 bg-surface-container-lowest border-t border-outline-subtle">
+<button class="w-full py-2 bg-secondary-container text-on-secondary-container font-label-md text-label-md rounded flex items-center justify-center gap-2 hover:bg-primary-container hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined text-[16px]">list_alt</span>
+                Requirement Matrix
+            </button>
+</div>
+<div class="p-2">
+<div class="flex items-center text-on-surface-variant py-2 px-4 hover:bg-surface-container-high transition-all duration-150 cursor-pointer rounded">
+<span class="material-symbols-outlined mr-3">contact_support</span>
+<span class="font-label-md text-label-md">Support</span>
+</div>
+<div class="flex items-center text-on-surface-variant py-2 px-4 hover:bg-surface-container-high transition-all duration-150 cursor-pointer rounded">
+<span class="material-symbols-outlined mr-3 text-error">logout</span>
+<span class="font-label-md text-label-md text-error">Sign Out</span>
+</div>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="ml-sidebar-width pt-6 pb-24 px-10">
+<div class="max-w-max-width mx-auto">
+<!-- Header Section -->
+<div class="flex justify-between items-end mb-8 border-b border-outline-subtle pb-6">
+<div>
+<div class="flex items-center gap-3 mb-1">
+<h1 class="font-display text-display text-primary">Submit Bid</h1>
+<span class="flex items-center bg-status-approved-bg text-status-approved px-2 py-0.5 rounded-full border border-status-approved/20 font-label-sm text-label-sm">
+<span class="status-dot bg-status-approved animate-pulse"></span>
+                            Ready to submit
+                        </span>
+</div>
+<p class="text-on-surface-variant font-body-lg text-body-lg">Confirm the submission details and formally submit your bid.</p>
+</div>
+<div class="text-right">
+<p class="font-label-sm text-label-sm text-outline uppercase">Reference Number</p>
+<p class="font-label-md text-label-md text-primary">REF: KT-2023-0892</p>
+</div>
+</div>
+<div class="civic-ledger-grid">
+<!-- Submission Summary Card -->
+<div class="col-span-12 lg:col-span-8 space-y-4">
+<div class="bento-card relative">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary"></div>
+<h3 class="font-label-md text-label-md text-outline uppercase mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">summarize</span>
+                            Submission Summary
+                        </h3>
+<div class="space-y-4">
+<div class="grid grid-cols-3 gap-4 border-b border-surface-container pb-4">
+<div class="col-span-1 text-on-surface-variant font-label-sm text-label-sm uppercase">Tender Title</div>
+<div class="col-span-2 text-primary font-body-md text-body-md font-semibold">Supply, Installation, Configuration, Customization, and Implementation of ERP System</div>
+</div>
+<div class="grid grid-cols-2 gap-8">
+<div class="space-y-4">
+<div>
+<p class="text-outline font-label-sm text-label-sm uppercase">Procuring Entity</p>
+<p class="text-primary font-body-md text-body-md">National Social Security Fund (NSSF)</p>
+</div>
+<div>
+<p class="text-outline font-label-sm text-label-sm uppercase">Bidder Legal Name</p>
+<p class="text-primary font-body-md text-body-md">Lean Demo IT Services Ltd</p>
+</div>
+</div>
+<div class="space-y-4">
+<div>
+<p class="text-outline font-label-sm text-label-sm uppercase">Applicable Lots</p>
+<p class="text-primary font-body-md text-body-md">Lot 1: Server Infrastructure &amp; Licenses</p>
+</div>
+<div>
+<p class="text-outline font-label-sm text-label-sm uppercase">Submission Deadline</p>
+<p class="text-primary font-label-md text-label-md">09-08-2026 22:46:22</p>
+</div>
+</div>
+</div>
+<div class="mt-6 p-4 bg-surface-container-low border border-outline-subtle">
+<p class="text-outline font-label-sm text-label-sm uppercase mb-2">Total Bid Amount</p>
+<div class="flex flex-col gap-1">
+<span class="text-headline-lg font-label-md text-primary tracking-tight">KES 26,448,261.00</span>
+<span class="text-headline-md font-label-md text-on-surface-variant">+ USD 21,600.00</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Final Declaration -->
+<div class="bento-card bg-surface-container-lowest border-primary">
+<div class="flex gap-4">
+<div class="mt-1">
+<input class="w-5 h-5 rounded border-outline cursor-pointer focus:ring-primary" id="declaration-check" type="checkbox"/>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-primary mb-2">Final Declaration &amp; Confirmation</h3>
+<p class="text-on-surface-variant font-body-md text-body-md leading-relaxed italic mb-4">
+                                    "I confirm that I am authorised to submit this bid on behalf of the bidder and that the electronic bid reviewed above is the bid being submitted."
+                                </p>
+<label class="font-body-md text-body-md text-primary font-semibold cursor-pointer select-none" for="declaration-check">
+                                    I confirm and submit this bid on behalf of the bidder.
+                                </label>
+</div>
+</div>
+</div>
+</div>
+<!-- Authenticated Submitter Card -->
+<div class="col-span-12 lg:col-span-4">
+<div class="bento-card bg-primary-container text-on-primary h-full text-center">
+<h3 class="font-label-md text-label-md text-on-primary-container uppercase mb-6 flex items-center gap-2 justify-center">
+<span class="material-symbols-outlined text-[16px]">how_to_reg</span>
+                            Authenticated Submitter
+                        </h3>
+<div class="flex flex-col items-center text-center mb-8">
+<p class="font-headline-md text-headline-md text-on-primary">Dr. Catherine W. Odhiambo</p>
+<p class="font-label-md text-label-md text-on-primary-container">Managing Director</p>
+</div>
+<div class="space-y-6 pt-6 border-t border-on-secondary-fixed-variant">
+<div>
+<p class="text-on-primary-container font-label-sm text-label-sm uppercase">Organisation</p>
+<p class="font-body-md text-body-md">Lean Demo IT Services Ltd</p>
+</div>
+<div>
+<p class="text-on-primary-container font-label-sm text-label-sm uppercase">Account Email</p>
+<p class="font-body-md text-body-md">c.odhiambo@leandemo.co.ke</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer Action Bar -->
+<footer class="fixed bottom-0 right-0 left-sidebar-width flex justify-between items-center gap-gap-component p-container-padding z-50 bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-subtle dark:border-outline-strong shadow-sm">
+<div>
+<button class="border border-outline-subtle text-secondary font-label-md text-label-md px-6 py-2.5 rounded hover:bg-surface-container-high transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                Back to Final Review
+            </button>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-outline font-label-sm text-label-sm uppercase hidden md:inline">Awaiting Confirmation</span>
+<button class="bg-primary opacity-50 cursor-not-allowed text-on-primary font-label-md text-label-md px-10 py-2.5 rounded flex items-center gap-2 transition-all duration-100" disabled="" id="submit-btn">
+<span class="material-symbols-outlined text-[18px]" style='font-variation-settings: "FILL" 1;'>security</span>
+                Submit Bid
+            </button>
+</div>
+</footer>
+<script>
+        const checkbox = document.getElementById('declaration-check');
+        const submitBtn = document.getElementById('submit-btn');
+
+        checkbox.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                submitBtn.classList.add('hover:bg-primary-container', 'active:scale-95');
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                submitBtn.classList.remove('hover:bg-primary-container', 'active:scale-95');
+            }
+        });
+
+        submitBtn.addEventListener('click', () => {
+            if (!submitBtn.disabled) {
+                // Micro-interaction for submission
+                submitBtn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px]">sync</span> Submitting...';
+                setTimeout(() => {
+                    alert('Bid successfully submitted and sealed. A receipt has been sent to c.odhiambo@leandemo.co.ke');
+                    submitBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">check_circle</span> Submitted';
+                    submitBtn.classList.add('bg-status-approved');
+                }, 1500);
+            }
+        });
+    </script>
+<div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" id="submission-modal">
+<div class="bg-surface-container-lowest border border-outline-subtle rounded-xl shadow-sm max-w-[600px] w-full overflow-hidden">
+<!-- Modal Header -->
+<div class="px-6 py-4 border-b border-outline-subtle flex justify-between items-center">
+<h2 class="font-headline-md text-headline-md text-primary">Submit this bid?</h2>
+<button class="text-on-surface-variant hover:text-primary transition-colors" onclick="document.getElementById('submission-modal').remove()">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Modal Body -->
+<div class="p-6 space-y-6">
+<p class="text-on-surface-variant font-body-md leading-relaxed">
+        This will formally submit the current electronic bid. After submission, it cannot be edited unless the tender rules permit withdrawal or revision before the deadline.
+      </p>
+<!-- Summary Section -->
+<div class="bg-surface-container-low border border-outline-subtle p-4 space-y-3">
+<div class="grid grid-cols-2 gap-4">
+<div>
+<p class="text-outline font-label-sm text-label-sm uppercase">Tender Reference</p>
+<p class="text-primary font-body-md">KT-2023-0892</p>
+</div>
+<div>
+<p class="text-outline font-label-sm text-label-sm uppercase">Bidder Legal Name</p>
+<p class="text-primary font-body-md">Lean Demo IT Services Ltd</p>
+</div>
+<div class="col-span-2">
+<p class="text-outline font-label-sm text-label-sm uppercase">Applicable Lots</p>
+<p class="text-primary font-body-md">Lot 1: Server Infrastructure &amp; Licenses</p>
+</div>
+<div class="col-span-2">
+<p class="text-outline font-label-sm text-label-sm uppercase">Bid Total</p>
+<p class="text-primary font-label-md font-bold">
+<span class="font-label-md">KES 26,448,261.00</span>
+<span class="text-on-surface-variant ml-2">+ USD 21,600.00</span>
+</p>
+</div>
+<div class="col-span-2">
+<p class="text-outline font-label-sm text-label-sm uppercase">Submission Deadline</p>
+<p class="text-primary font-label-md">09-08-2026 22:46:22</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Modal Footer -->
+<div class="px-6 py-4 bg-surface-container-low border-t border-outline-subtle flex justify-end gap-3">
+<button class="px-6 py-2 border border-outline-subtle text-secondary font-label-md text-label-md rounded hover:bg-surface-container-high transition-colors" onclick="document.getElementById('submission-modal').remove()">
+        Cancel
+      </button>
+<button class="px-10 py-2 bg-primary text-on-primary font-label-md text-label-md rounded hover:opacity-90 transition-opacity flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">security</span>
+        Submit Bid
+      </button>
+</div>
+</div>
+</div></body></html>

@@ -273,6 +273,21 @@ def _is_filled(val: Any) -> bool:
 	return bool(cstr(val).strip())
 
 
+def _is_linked_section_filled(val: Any) -> bool:
+	"""True when a dedicated electronic section has a non-empty structured payload."""
+	if not isinstance(val, dict) or not val:
+		return False
+	if val.get("cleared"):
+		return False
+	if _is_filled(val):
+		return True
+	return any(
+		v not in (None, "", [], {})
+		for k, v in val.items()
+		if k not in ("cleared",)
+	)
+
+
 def _money(val: Any) -> float | None:
 	text = cstr(val).strip().replace(",", "")
 	if not text:
@@ -293,10 +308,14 @@ def validate_submission(bid_id: str) -> dict[str, Any]:
 	errors: list[dict[str, str]] = []
 	by_key = _section_map(schema)
 
-	# 1 Preliminary
+	# 1 Preliminary (upload / e-declaration only — linked electronic sections are rule 5)
 	prelim = by_key.get("preliminary_documents") or {}
 	for req in prelim.get("requirements") or []:
 		rid = cstr(req.get("id") or "").strip()
+		method = cstr(req.get("response_method") or "").strip().lower()
+		bidder_schema = cstr(req.get("bidder_schema") or "").strip().lower()
+		if method == "linked_section" or bidder_schema == "linked_section":
+			continue
 		row = (responses.get("preliminary_documents") or {}).get(rid) or {}
 		if not (_is_filled(row.get("upload")) or _is_filled(row.get("e_declaration")) or _is_filled(row)):
 			errors.append(
@@ -389,31 +408,28 @@ def validate_submission(bid_id: str) -> dict[str, Any]:
 				}
 			)
 
-	# 5 Professional indemnity evidence (PRELIM-05 or criterion text match)
-	prelim_resp = responses.get("preliminary_documents") or {}
-	indem = prelim_resp.get("PRELIM-05") or {}
-	if not indem:
-		for req in (by_key.get("preliminary_documents") or {}).get("requirements") or []:
-			if "indemnity" in cstr(req.get("criterion") or "").lower():
-				indem = prelim_resp.get(cstr(req.get("id") or "")) or {}
-				break
-	indem_alt = responses.get("professional_indemnity_evidence") or {}
-	indem_ok = (
-		_is_filled(indem.get("upload"))
-		or _is_filled(indem.get("e_declaration"))
-		or _is_filled(indem)
-		or _is_filled(indem_alt)
-	)
-	if not indem_ok:
-		errors.append(
-			{
-				"rule": "5",
-				"code": "indemnity_missing",
-				"message": "Professional indemnity evidence is required.",
-				"section_key": "preliminary_documents",
-				"item_id": "PRELIM-05",
-			}
-		)
+	# 5 Digitised prelim owners must be completed in their electronic sections
+	# (FoT / Statutory Declarations / Tender Security). PRELIM-05 bank-guarantee
+	# wording is Tender Security — not a duplicate indemnity upload.
+	linked_owners: set[str] = set()
+	for req in (by_key.get("preliminary_documents") or {}).get("requirements") or []:
+		method = cstr(req.get("response_method") or "").strip().lower()
+		bidder_schema = cstr(req.get("bidder_schema") or "").strip().lower()
+		lk = cstr(req.get("linked_section_key") or "").strip()
+		if lk and (method == "linked_section" or bidder_schema == "linked_section"):
+			linked_owners.add(lk)
+	for lk in sorted(linked_owners):
+		section_resp = responses.get(lk) or {}
+		if not _is_linked_section_filled(section_resp):
+			errors.append(
+				{
+					"rule": "5",
+					"code": "linked_section_incomplete",
+					"message": f"Complete the {lk.replace('_', ' ')} section required by preliminary examination.",
+					"section_key": lk,
+					"item_id": lk,
+				}
+			)
 
 	# 6 Deadline
 	tds = _parse_json(
@@ -529,8 +545,30 @@ def _complete_responses_for_tests(schema: dict[str, Any]) -> dict[str, Any]:
 	prelim: dict[str, Any] = {}
 	for req in (by_key.get("preliminary_documents") or {}).get("requirements") or []:
 		rid = cstr(req.get("id") or "")
+		method = cstr(req.get("response_method") or "").strip().lower()
+		bidder_schema = cstr(req.get("bidder_schema") or "").strip().lower()
+		if method == "linked_section" or bidder_schema == "linked_section":
+			continue
 		prelim[rid] = {"upload": {**MOCK_UPLOAD, "uploaded_at": str(now_datetime()), "file_name": f"{rid}.pdf"}}
 	responses["preliminary_documents"] = prelim
+	# Satisfy digitised electronic owners referenced by preliminary linked_section rows.
+	responses.setdefault(
+		"statutory_declarations",
+		{
+			"certified": 1,
+			"independent_tender_determination": True,
+			"fraud_and_corruption_declaration": True,
+		},
+	)
+	responses.setdefault(
+		"tender_security",
+		{
+			"mode": "instrument",
+			"instrument_type": "bank_guarantee",
+			"status": "provided",
+			"upload": {**MOCK_UPLOAD, "uploaded_at": str(now_datetime()), "file_name": "tender-security.pdf"},
+		},
+	)
 
 	tq: dict[str, Any] = {}
 	for req in (by_key.get("technical_qualification") or {}).get("requirements") or []:

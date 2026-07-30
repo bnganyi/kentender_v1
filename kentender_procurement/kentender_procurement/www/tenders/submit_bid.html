@@ -1,0 +1,180 @@
+{% extends "templates/web.html" %}
+{% block title %}{{ title }} | KenTender{% endblock %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/kentender_procurement/css/available_tenders.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/submission_checklist_web.css">
+<link rel="stylesheet" href="/assets/kentender_procurement/css/final_submission_web.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+<script defer src="/assets/kentender_procurement/js/final_submission_web.js"></script>
+{% endblock %}
+
+{% block page_content %}
+{% set p = page %}
+{% set active_nav = "my_bids" %}
+{% set active_ws = "submit" %}
+{% set can = p.can_submit and p.submission_permission and p.deadline_open %}
+{% set totals = (p.price_schedule_totals.by_currency if p.price_schedule_totals else None) or [] %}
+<div class="kt-a0-root kt-a2-root kt-fs-root" data-testid="kt-fs-submit-root"
+	data-publication-ref="{{ p.published_tender_ref }}"
+	data-can-submit="{{ 1 if can else 0 }}">
+	{% include "templates/includes/kt_bidder_portal_nav.html" %}
+	<div class="kt-a2-shell">
+		{% include "templates/includes/kt_bidder_workspace_sidebar.html" %}
+		<main class="kt-a2-main kt-fs-main">
+			<div class="kt-fs-canvas kt-fs-canvas--wide">
+				<nav class="kt-fs-crumbs" aria-label="Breadcrumb">
+					<a href="{{ p.workspace_url }}">{{ _("Checklist") }}</a>
+					<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+					<a href="{{ p.final_bid_review_url }}">{{ _("Final Bid Review") }}</a>
+					<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+					<span class="is-current">{{ _("Submit Bid") }}</span>
+				</nav>
+				<header class="kt-fs-head kt-fs-head--submit">
+					<div>
+						<div class="kt-fs-head-row">
+							<h1 data-testid="kt-fs-submit-title">{{ _("Submit Bid") }}</h1>
+							<span class="kt-fs-chip kt-fs-chip--ok" data-testid="kt-fs-submit-ready">
+								<span class="kt-fs-status-dot" data-status="Complete" aria-hidden="true"></span>
+								{{ p.status_chip or p.overall_state }}
+							</span>
+						</div>
+						<p>{{ _("Confirm the submission details and formally submit your bid.") }}</p>
+					</div>
+					<div class="kt-fs-head-ref">
+						<span>{{ _("Reference Number") }}</span>
+						<strong class="kt-fs-money">{{ p.tender_reference }}</strong>
+					</div>
+				</header>
+
+				<div class="kt-fs-submit-grid">
+					<div class="kt-fs-submit-main">
+						<section class="kt-fs-bento kt-fs-submit-summary" data-testid="kt-fs-submit-meta">
+							<h2>
+								<span class="material-symbols-outlined" aria-hidden="true">summarize</span>
+								{{ _("Submission Summary") }}
+							</h2>
+							<div class="kt-fs-submit-title-row">
+								<span>{{ _("Tender Title") }}</span>
+								<strong>{{ p.tender_title or "—" }}</strong>
+							</div>
+							<div class="kt-fs-submit-meta-grid">
+								<div>
+									<span>{{ _("Procuring Entity") }}</span>
+									<strong>{{ p.procuring_entity or "—" }}</strong>
+								</div>
+								<div>
+									<span>{{ _("Bidder Legal Name") }}</span>
+									<strong>{{ p.bidder_label or "—" }}</strong>
+								</div>
+								<div>
+									<span>{{ _("Applicable Lots") }}</span>
+									<strong>{{ (p.applicable_lots or [])|join(", ") or "—" }}</strong>
+								</div>
+								<div>
+									<span>{{ _("Submission Deadline") }}</span>
+									<strong class="kt-fs-money">{{ p.submission_deadline_display or "—" }}</strong>
+								</div>
+							</div>
+							{% if totals %}
+							<div class="kt-fs-submit-amount" data-testid="kt-fs-submit-totals">
+								<span>{{ _("Total Bid Amount") }}</span>
+								{% for t in totals %}
+								<p class="kt-fs-money {% if loop.first %}kt-fs-submit-amount-primary{% else %}kt-fs-submit-amount-secondary{% endif %}">
+									{% if not loop.first %}+ {% endif %}{{ t.total_display }}
+								</p>
+								{% endfor %}
+							</div>
+							{% endif %}
+						</section>
+
+						{% if p.permission_message %}
+						<div class="kt-fs-alert kt-fs-alert--error" data-testid="kt-fs-submit-permission">
+							<span class="material-symbols-outlined" aria-hidden="true">error</span>
+							<p>{{ p.permission_message }}</p>
+						</div>
+						{% endif %}
+
+						<section class="kt-fs-bento kt-fs-submit-declaration" data-testid="kt-fs-submit-declaration">
+							<label class="kt-fs-declare-block" for="kt-fs-declare">
+								<input type="checkbox" id="kt-fs-declare" data-testid="kt-fs-declare"
+									{% if not p.submission_permission %}disabled{% endif %}>
+								<div>
+									<h3>{{ _("Final Declaration & Confirmation") }}</h3>
+									<p class="kt-fs-declaration">“{{ p.declaration_text }}”</p>
+									<span class="kt-fs-declare-confirm">{{ _("I confirm and submit this bid on behalf of the bidder.") }}</span>
+								</div>
+							</label>
+						</section>
+					</div>
+
+					<aside class="kt-fs-submit-aside">
+						<section class="kt-fs-bento kt-fs-submitter-card" data-testid="kt-fs-submit-identity">
+							<h2>
+								<span class="material-symbols-outlined" aria-hidden="true">how_to_reg</span>
+								{{ _("Authenticated Submitter") }}
+							</h2>
+							<div class="kt-fs-submitter-identity">
+								<p class="kt-fs-submitter-name">{{ p.submitter.full_name }}</p>
+								<p class="kt-fs-submitter-role">{{ p.submitter.role }}</p>
+							</div>
+							<div class="kt-fs-submitter-meta">
+								<div>
+									<span>{{ _("Organisation") }}</span>
+									<strong>{{ p.submitter.organisation or "—" }}</strong>
+								</div>
+								<div>
+									<span>{{ _("Account Email") }}</span>
+									<strong>{{ p.submitter.email }}</strong>
+								</div>
+							</div>
+						</section>
+					</aside>
+				</div>
+			</div>
+		</main>
+		<footer class="kt-fs-footer" data-testid="kt-fs-submit-footer">
+			<a class="kt-fs-btn kt-fs-btn--ghost" href="{{ p.final_bid_review_url }}" data-testid="kt-fs-submit-back">
+				<span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+				{{ _("Back to Final Review") }}
+			</a>
+			<div class="kt-fs-footer-actions">
+				<span class="kt-fs-footer-hint" data-testid="kt-fs-submit-hint">{{ _("Awaiting Confirmation") }}</span>
+				<button type="button" class="kt-fs-btn kt-fs-btn--primary is-disabled" disabled
+					id="kt-fs-submit-btn" data-testid="kt-fs-submit-btn">
+					<span class="material-symbols-outlined" aria-hidden="true">security</span>
+					{{ _("Submit Bid") }}
+				</button>
+			</div>
+		</footer>
+	</div>
+
+	<dialog class="kt-fs-dialog" id="kt-fs-confirm-dialog" data-testid="kt-fs-confirm-dialog">
+		<div class="kt-fs-dialog-inner">
+			<header>
+				<h2 data-testid="kt-fs-confirm-title">{{ _("Submit this bid?") }}</h2>
+				<button type="button" class="kt-fs-dialog-close" data-action="cancel-submit" aria-label="{{ _('Close') }}">
+					<span class="material-symbols-outlined" aria-hidden="true">close</span>
+				</button>
+			</header>
+			<p>{{ _("This will formally submit the current electronic bid. After submission, it cannot be edited unless the tender rules permit withdrawal or revision before the deadline.") }}</p>
+			<ul class="kt-fs-dialog-meta" data-testid="kt-fs-confirm-meta">
+				<li><span>{{ _("Tender reference") }}</span><strong>{{ p.tender_reference }}</strong></li>
+				<li><span>{{ _("Bidder legal name") }}</span><strong>{{ p.bidder_label or "—" }}</strong></li>
+				<li><span>{{ _("Applicable lots") }}</span><strong>{{ (p.applicable_lots or [])|join(", ") or "—" }}</strong></li>
+				<li><span>{{ _("Submission deadline") }}</span><strong>{{ p.submission_deadline_display or "—" }}</strong></li>
+				{% for t in totals %}
+				<li><span>{{ _("Total") }} ({{ t.currency }})</span><strong class="kt-fs-money">{{ t.total_display }}</strong></li>
+				{% endfor %}
+			</ul>
+			<footer>
+				<button type="button" class="kt-fs-btn kt-fs-btn--ghost" data-testid="kt-fs-confirm-cancel"
+					data-action="cancel-submit">{{ _("Cancel") }}</button>
+				<button type="button" class="kt-fs-btn kt-fs-btn--primary" data-testid="kt-fs-confirm-submit"
+					data-action="confirm-submit">{{ _("Submit Bid") }}</button>
+			</footer>
+		</div>
+	</dialog>
+</div>
+{% endblock %}

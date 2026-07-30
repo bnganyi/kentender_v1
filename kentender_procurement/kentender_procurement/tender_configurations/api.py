@@ -873,6 +873,74 @@ def save_qualification_category(
 
 
 @frappe.whitelist()
+def get_technical_proposal(published_tender_ref: str) -> dict[str, Any]:
+	"""Technical Proposal and Implementation Plan overview DTO."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.technical_proposal_and_implementation_plan import (
+		get_technical_proposal as _get,
+	)
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def get_technical_proposal_subsection(published_tender_ref: str, subsection_key: str) -> dict[str, Any]:
+	"""One technical proposal subsection detail DTO."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.technical_proposal_and_implementation_plan import (
+		get_technical_proposal_subsection as _get,
+	)
+
+	return _get(published_tender_ref, subsection_key)
+
+
+@frappe.whitelist()
+def get_technical_proposal_review(published_tender_ref: str) -> dict[str, Any]:
+	"""Technical Proposal review + integration confirmation DTO."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.technical_proposal_and_implementation_plan import (
+		get_technical_proposal_review as _get,
+	)
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def save_technical_proposal_subsection(
+	published_tender_ref: str,
+	subsection_key: str,
+	payload: dict[str, Any] | str | None = None,
+	expected_modified: str | None = None,
+) -> dict[str, Any]:
+	"""Save one technical proposal subsection bucket."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.technical_proposal_and_implementation_plan import (
+		save_technical_proposal_subsection as _save,
+	)
+
+	return _save(
+		published_tender_ref,
+		subsection_key,
+		payload,
+		expected_modified=expected_modified,
+	)
+
+
+@frappe.whitelist()
+def confirm_technical_proposal_integration(
+	published_tender_ref: str,
+	expected_modified: str | None = None,
+) -> dict[str, Any]:
+	"""Confirm integration/interoperability responsibility (does not seal the bid)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.technical_proposal_and_implementation_plan import (
+		confirm_integration_responsibility as _confirm,
+	)
+
+	return _confirm(published_tender_ref, expected_modified=expected_modified)
+
+
+@frappe.whitelist()
 def get_tender_security(published_tender_ref: str) -> dict[str, Any]:
 	"""Tender Security instrument or Tender-Securing Declaration DTO."""
 	_require_login()
@@ -1081,6 +1149,28 @@ def save_requirement_response(
 
 
 @frappe.whitelist()
+def get_requirements_compliance_review(published_tender_ref: str) -> dict[str, Any]:
+	"""Requirements Compliance review screen DTO."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.requirement_matrix import (
+		get_requirements_compliance_review as _get,
+	)
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def complete_requirements_compliance_section(published_tender_ref: str) -> dict[str, Any]:
+	"""Complete Requirements Compliance when ready (does not seal the bid)."""
+	_require_login()
+	from kentender_procurement.tender_configurations.services.requirement_matrix import (
+		complete_requirements_compliance_section as _complete,
+	)
+
+	return _complete(published_tender_ref)
+
+
+@frappe.whitelist()
 def get_evidence_register(published_tender_ref: str) -> dict[str, Any]:
 	"""X100 — bidder Evidence Register DTO."""
 	_require_login()
@@ -1188,3 +1278,134 @@ def get_issue_register(published_tender_ref: str) -> dict[str, Any]:
 	)
 
 	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def get_price_schedule_overview(published_tender_ref: str, offer_id: str | None = None, lot_id: str | None = None) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.price_schedule_bidder import (
+		get_price_schedule_overview as _get,
+	)
+
+	return _get(published_tender_ref, offer_id=offer_id, lot_id=lot_id)
+
+
+@frappe.whitelist()
+def get_price_schedule_editor(
+	published_tender_ref: str,
+	schedule_key: str,
+	offer_id: str | None = None,
+	lot_id: str | None = None,
+) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.price_schedule_bidder import (
+		get_price_schedule_editor as _get,
+	)
+
+	return _get(published_tender_ref, schedule_key, offer_id=offer_id, lot_id=lot_id)
+
+
+@frappe.whitelist()
+def get_price_schedule_review(published_tender_ref: str) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.price_schedule_bidder import (
+		get_price_schedule_review as _get,
+	)
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def save_price_schedule_lines(published_tender_ref: str, payload: dict[str, Any] | str | None = None) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.price_schedule_bidder import (
+		save_price_schedule_lines as _save,
+	)
+
+	return _save(published_tender_ref, payload)
+
+
+@frappe.whitelist()
+def complete_price_schedule(published_tender_ref: str) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.price_schedule_bidder import (
+		complete_price_schedule as _complete,
+	)
+
+	return _complete(published_tender_ref)
+
+
+@frappe.whitelist()
+def publish_lean_price_schedule_for_tests(fixture: str = "single_lot", clear: int | bool = 1) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.seed.lean_price_schedule import (
+		publish_lean_price_schedule_for_tests as _publish,
+	)
+
+	return _publish(fixture=fixture or "single_lot", clear=bool(int(clear)))
+
+
+@frappe.whitelist()
+def get_bid_submission_readiness(published_tender_ref: str) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.final_submission import (
+		get_bid_submission_readiness as _get,
+	)
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def get_final_bid_review(published_tender_ref: str) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.final_submission import (
+		get_final_bid_review as _get,
+	)
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def get_submit_bid_page(published_tender_ref: str) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.final_submission import (
+		get_submit_bid_page as _get,
+	)
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def submit_electronic_bid(
+	published_tender_ref: str,
+	declaration_confirmed: int | bool | str = 0,
+) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.final_submission import (
+		submit_bid as _submit,
+	)
+
+	return _submit(published_tender_ref, declaration_confirmed=declaration_confirmed)
+
+
+@frappe.whitelist()
+def get_submission_receipt(published_tender_ref: str) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.final_submission import (
+		get_submission_receipt as _get,
+	)
+
+	return _get(published_tender_ref)
+
+
+@frappe.whitelist()
+def seed_ready_lean_bid_for_final_submission_tests(
+	fixture: str = "single_lot",
+	clear: int | bool = 1,
+) -> dict[str, Any]:
+	_require_login()
+	from kentender_procurement.tender_configurations.services.final_submission import (
+		seed_ready_lean_bid_for_final_submission_tests as _seed,
+	)
+
+	return _seed(fixture=fixture or "single_lot", clear=bool(int(clear)))
