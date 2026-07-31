@@ -21,7 +21,7 @@ def _desk_asset_v(rel_path: str) -> int:
 
 
 app_name = "kentender_procurement"
-app_title = "Kentender Procurement"
+app_title = "KenTender"
 app_publisher = "KenTender"
 app_description = "KenTender procurement lifecycle module."
 app_email = "dev@kentender.local"
@@ -70,8 +70,10 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/std_prod_std_version_detail_page.css?v={_desk_asset_v('public/css/std_prod_std_version_detail_page.css')}",
 	f"/assets/kentender_procurement/css/std_prod_vertical_slice_pages.css?v={_desk_asset_v('public/css/std_prod_vertical_slice_pages.css')}",
 	f"/assets/kentender_procurement/css/pp4_workbench_typography_harmony.css?v={_desk_asset_v('public/css/pp4_workbench_typography_harmony.css')}",
+	f"/assets/kentender_procurement/css/coming_soon_page.css?v={_desk_asset_v('public/css/coming_soon_page.css')}",
 ]
 app_include_js = [
+	f"/assets/kentender_procurement/js/procurement_sidebar_header.js?v={_desk_asset_v('public/js/procurement_sidebar_header.js')}",
 	f"/assets/kentender_procurement/js/demand_workspace.js?v={_desk_asset_v('public/js/demand_workspace.js')}",
 	f"/assets/kentender_procurement/js/planning_workspace.js?v={_desk_asset_v('public/js/planning_workspace.js')}",
 	f"/assets/kentender_procurement/js/pp2_planning_status_badge.js?v={_desk_asset_v('public/js/pp2_planning_status_badge.js')}",
@@ -247,6 +249,7 @@ page_js = {
 	"it-tender-configuration-render-preview": "public/js/it_tender_configuration_render_preview_page.js",
 	"it-tender-configuration-publication-readiness": "public/js/it_tender_configuration_render_preview_page.js",
 	"it-tender-package-review": "public/js/it_tender_package_review_page.js",
+	"coming-soon": "public/js/coming_soon_page.js",
 	"publications": "public/js/publications_page.js",
 	"publication-setup": "public/js/publication_setup_page.js",
 	"published-tender-overview": "public/js/published_tender_overview_page.js",

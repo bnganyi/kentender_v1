@@ -1,0 +1,46 @@
+{
+  "surface_id": "fs-04-confirm-modal",
+  "title": "Submit Bid confirmation modal",
+  "stitch_file": "04_code.html",
+  "implementation_files": [
+    "kentender_procurement/kentender_procurement/www/tenders/submit_bid.html",
+    "kentender_procurement/kentender_procurement/public/css/final_submission_web.css"
+  ],
+  "required_markers": [
+    "data-testid=\"kt-fs-confirm-dialog\"",
+    "data-testid=\"kt-fs-confirm-summary\"",
+    "data-testid=\"kt-fs-confirm-meta-grid\"",
+    "data-testid=\"kt-fs-confirm-cancel\"",
+    "data-testid=\"kt-fs-confirm-submit\"",
+    "data-testid=\"kt-fs-confirm-title\"",
+    "kt-fs-confirm-overlay",
+    "kt-fs-confirm-card",
+    "kt-fs-confirm-header",
+    "kt-fs-confirm-footer"
+  ],
+  "required_classes": [
+    "kt-fs-confirm-overlay",
+    "kt-fs-confirm-card",
+    "kt-fs-confirm-summary",
+    "kt-fs-confirm-meta-grid",
+    "kt-fs-confirm-header",
+    "kt-fs-confirm-footer"
+  ],
+  "required_text": [
+    "Submit this bid?",
+    "This will formally submit the current electronic bid",
+    "Tender Reference",
+    "Bidder Legal Name",
+    "Applicable Lots",
+    "Bid Total",
+    "Submission Deadline",
+    "Cancel",
+    "Submit Bid",
+    "security"
+  ],
+  "forbidden_markers": [
+    "cdn.tailwindcss.com",
+    "kt-fs-dialog-meta",
+    "class=\"kt-fs-dialog\""
+  ]
+}

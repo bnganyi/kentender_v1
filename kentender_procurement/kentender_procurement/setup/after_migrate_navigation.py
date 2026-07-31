@@ -91,7 +91,23 @@ def sync_tenders_desktop_icon() -> None:
 		import_file_by_path(path, force=True)
 
 
+def sync_coming_soon_page() -> None:
+	"""Ensure Planned capability-overview Page exists for IA availability states."""
+	path = os.path.join(
+		frappe.get_app_path("kentender_procurement"),
+		"kentender_procurement",
+		"page",
+		"coming_soon",
+		"coming_soon.json",
+	)
+	if os.path.isfile(path):
+		import_file_by_path(path, force=True)
+
+
 def run() -> None:
+	# Page targets must exist before Workspace Sidebar Link To validation.
+	if frappe.db.exists("DocType", "Page"):
+		sync_coming_soon_page()
 	if frappe.db.exists("DocType", "Workspace Sidebar"):
 		reconcile_procurement_navigation_from_exports()
 	if frappe.db.exists("DocType", "Desktop Icon"):

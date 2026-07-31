@@ -84,13 +84,10 @@
 	-webkit-font-smoothing: antialiased;
 	font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
 }
-.body-sidebar .sidebar-item-container[data-id="Procurement Home"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
+.body-sidebar .sidebar-item-container[data-id="Home"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
 	content: "home";
 }
-.body-sidebar .sidebar-item-container[data-id="Procurement Journeys"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
-	content: "account_tree";
-}
-.body-sidebar .sidebar-item-container[data-id="Planning"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
+.body-sidebar .sidebar-item-container[data-id="Procurement Plans"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
 	content: "checklist";
 }
 .body-sidebar .sidebar-item-container[data-id="Analytics"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
@@ -102,7 +99,7 @@
 .body-sidebar .sidebar-item-container[data-id="Budget & Funding"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
 	content: "account_balance_wallet";
 }
-.body-sidebar .sidebar-item-container[data-id="Demand Intake & Approval"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
+.body-sidebar .sidebar-item-container[data-id="Demands"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
 	content: "assignment_ind";
 }
 .body-sidebar .sidebar-item-container[data-id="Contract Management"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
@@ -110,6 +107,74 @@
 }
 .body-sidebar .sidebar-item-container[data-id="Supplier Management"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
 	content: "group";
+}
+
+/* Planned availability badge (suffix from boot; auth is a separate gate) */
+.body-sidebar .sidebar-item-suffix {
+	margin-left: auto;
+	padding: 1px 6px;
+	border-radius: 4px;
+	background: #e8e7ed;
+	color: #434750;
+	font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 10px;
+	font-weight: 500;
+	line-height: 14px;
+	letter-spacing: 0.02em;
+	flex-shrink: 0;
+}
+
+/* Workspace header: title Procurement / subtitle KenTender.
+ * ERPNext solid icons draw the rounded tile inside the SVG. Any CSS background on
+ * .sidebar-item-icon is a sharp square and leaks at the four corners — keep it unset. */
+.body-sidebar .sidebar-header .sidebar-item-icon {
+	background: none !important;
+	background-color: transparent !important;
+	border-radius: 0 !important;
+	overflow: visible !important;
+	/* Kill invalid inline `background-color: var();` from unset header_stroke_color */
+	background-image: none !important;
+}
+.body-sidebar .sidebar-header .header-logo {
+	background: transparent !important;
+	border-radius: 0;
+	overflow: visible;
+}
+.body-sidebar .sidebar-header .header-logo img {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+/* Letter/fallback icon only (no solid SVG img) — rounded tile via CSS */
+.body-sidebar .sidebar-header .header-logo:not(:has(img)) .icon-container {
+	background-color: #0289f7 !important;
+	border-radius: 10px;
+	display: flex !important;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+.body-sidebar .sidebar-header .header-logo:not(:has(img)) .icon-container svg {
+	display: none !important;
+}
+.body-sidebar .sidebar-header .header-logo:not(:has(img)) .icon-container::before {
+	content: "shopping_bag";
+	font-family: "Material Symbols Outlined";
+	font-size: 18px;
+	line-height: 1;
+	color: #ffffff;
+	-webkit-font-feature-settings: "liga";
+	font-feature-settings: "liga";
+	font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+.body-sidebar .sidebar-header .header-title {
+	font-weight: 700;
+	color: #000b1d;
+}
+.body-sidebar .sidebar-header .header-subtitle {
+	color: #43474e;
 }
 
 /* ----------------------------------------------------- section group headers
@@ -140,9 +205,6 @@
 }
 .body-sidebar .section-item[data-id="STD Administration"] > .standard-sidebar-item .item-anchor.section-break::before {
 	content: "admin_panel_settings";
-}
-.body-sidebar .section-item[data-id="Configuration"] > .standard-sidebar-item .item-anchor.section-break::before {
-	content: "settings";
 }
 /* group chevron (native drop-icon) tinted to outline */
 .body-sidebar .section-item .sidebar-item-control .drop-icon svg {

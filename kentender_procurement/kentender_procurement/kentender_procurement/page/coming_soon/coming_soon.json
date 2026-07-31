@@ -1,0 +1,27 @@
+{
+ "content": null,
+ "creation": "2026-07-31 10:40:00.000000",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2026-07-31 10:40:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "coming-soon",
+ "owner": "Administrator",
+ "page_name": "coming-soon",
+ "roles": [
+  {"role": "Administrator"},
+  {"role": "System Manager"},
+  {"role": "Procurement Officer"},
+  {"role": "Procurement Planner"},
+  {"role": "Planning Authority"},
+  {"role": "Requisitioner"},
+  {"role": "Finance Reviewer"}
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "Coming Soon"
+}

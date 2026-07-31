@@ -16,8 +16,8 @@ frappe.provide("kentender_core.cl_surface_registry");
 
 	/** Shared crumb targets for Tender Management Civic Ledger surfaces. */
 	function crumbDashboard() {
-		/* Workspace routes are ["Workspaces", "<title>"], not the URL slug. */
-		return crumb(__("Dashboard"), ["Workspaces", "Procurement Home"]);
+		/* Planned Home → capability overview (feature via route_options / query). */
+		return crumb(__("Home"), ["coming-soon"]);
 	}
 	function crumbTenderManagement() {
 		return crumb(__("Tender Management"), ["tender-management-v2"]);
@@ -190,16 +190,16 @@ frappe.provide("kentender_core.cl_surface_registry");
 			crumb(__("Electronic Tender Package Review")),
 		];
 	}
-	/** PUB-A2 leaf: Publications queue. */
+	/** PUB-A2 leaf: Tenders (publications) queue. */
 	function trailPubA2Publications() {
-		return [crumbDashboard(), crumbTenderManagement(), crumb(__("Publications"))];
+		return [crumbDashboard(), crumbTenderManagement(), crumb(__("Tenders"))];
 	}
 	/** PUB-A3 leaf: Publication Setup. */
 	function trailPubA3Setup() {
 		return [
 			crumbDashboard(),
 			crumbTenderManagement(),
-			crumb(__("Publications"), ["publications"]),
+			crumb(__("Tenders"), ["publications"]),
 			crumb(__("Publication Setup")),
 		];
 	}
@@ -444,11 +444,11 @@ frappe.provide("kentender_core.cl_surface_registry");
 		},
 		"PUB-A2": {
 			id: "PUB-A2",
-			label: "Publications",
+			label: "Tenders",
 			routePrefixes: ["publications"],
 			sidebarWorkspaceKey: SIDEBAR_KEY,
 			chrome: chrome(
-				__("Publications"),
+				__("Tenders"),
 				__(
 					"Set publication details, publish confirmed electronic tender packages, and monitor published tenders."
 				),

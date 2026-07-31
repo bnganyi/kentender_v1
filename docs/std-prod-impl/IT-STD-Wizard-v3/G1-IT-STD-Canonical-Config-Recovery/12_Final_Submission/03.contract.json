@@ -1,0 +1,38 @@
+{
+  "surface_id": "fs-03-submit-bid",
+  "title": "Submit Bid",
+  "stitch_file": "03_code.html",
+  "implementation_files": [
+    "kentender_procurement/kentender_procurement/www/tenders/submit_bid.html",
+    "kentender_procurement/kentender_procurement/public/css/final_submission_web.css"
+  ],
+  "required_markers": [
+    "data-testid=\"kt-fs-submit-root\"",
+    "data-testid=\"kt-fs-submit-meta\"",
+    "data-testid=\"kt-fs-submit-identity\"",
+    "data-testid=\"kt-fs-submit-declaration\"",
+    "data-testid=\"kt-fs-declare\"",
+    "data-testid=\"kt-fs-submit-btn\"",
+    "kt-fs-submit-grid",
+    "kt-fs-submitter-card",
+    "Submission Summary"
+  ],
+  "required_classes": [
+    "kt-fs-submit-grid",
+    "kt-fs-submit-summary",
+    "kt-fs-submitter-card",
+    "kt-fs-submit-declaration"
+  ],
+  "required_text": [
+    "Submit Bid",
+    "Submission Summary",
+    "Authenticated Submitter",
+    "Final Declaration",
+    "I confirm and submit this bid on behalf of the bidder.",
+    "Awaiting Confirmation",
+    "Back to Final Review"
+  ],
+  "forbidden_markers": [
+    "cdn.tailwindcss.com"
+  ]
+}

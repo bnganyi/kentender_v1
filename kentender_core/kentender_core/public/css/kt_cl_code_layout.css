@@ -3362,6 +3362,7 @@ body.kt-cl-shell .kt-cl-cfg04-single-form .kt-cl-cfg04-field label {
 	color: #43474e !important;
 }
 body.kt-cl-shell .kt-cl-cfg04-single-form .kt-cl-cfg04-input,
+body.kt-cl-shell .kt-cl-cfg04-single-form .kt-cl-cfg04-select,
 body.kt-cl-shell .kt-cl-cfg04-single-form .kt-cl-cfg04-textarea {
 	width: 100% !important;
 	border: 1px solid #c4c6cf !important;

@@ -75,19 +75,6 @@
    "type": "DocType",
    "url": ""
   },
-  {
-   "color": "",
-   "doc_view": "List",
-   "format": "",
-   "icon": "folder",
-   "kanban_board": "",
-   "label": "Procurement Packages",
-   "link_to": "Procurement Package",
-   "restrict_to_domain": "",
-   "stats_filter": "",
-   "type": "DocType",
-   "url": ""
-  }
  ],
  "title": "My Work"
 }

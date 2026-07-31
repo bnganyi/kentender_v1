@@ -80,13 +80,20 @@ frappe.provide("kentender_core.cl_shell");
 
 	function ensureNativeSidebar(sidebarWorkspaceKey) {
 		var key = (sidebarWorkspaceKey || "procurement").toLowerCase();
+		// setup() uses the argument as the visible header title — never pass the
+		// lowercased boot key (that renders "procurement" instead of "Procurement").
+		var bootItem =
+			frappe.boot &&
+			frappe.boot.workspace_sidebar_item &&
+			frappe.boot.workspace_sidebar_item[key];
+		var title = (bootItem && (bootItem.label || bootItem.title)) || sidebarWorkspaceKey || "Procurement";
 		try {
 			if (
 				frappe.app &&
 				frappe.app.sidebar &&
 				typeof frappe.app.sidebar.setup === "function"
 			) {
-				frappe.app.sidebar.setup(key);
+				frappe.app.sidebar.setup(title);
 			}
 		} catch (e) {
 			/* ignore — boot fast-path may already have the rail */

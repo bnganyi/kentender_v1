@@ -11,7 +11,7 @@ import os
 import frappe
 from frappe.tests import IntegrationTestCase
 
-_EXPECTED_PLANNING_LABEL = "Planning"
+_EXPECTED_PLANNING_LABEL = "Procurement Plans"
 
 _FORBIDDEN_PP2_LABELS: frozenset[str] = frozenset(
 	{

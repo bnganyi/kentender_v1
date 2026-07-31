@@ -1,0 +1,34 @@
+{
+  "surface_id": "fs-01-review-and-validate",
+  "title": "Review & Validate",
+  "stitch_file": "01_code.html",
+  "implementation_files": [
+    "kentender_procurement/kentender_procurement/www/tenders/review_and_validate.html",
+    "kentender_procurement/kentender_procurement/public/css/final_submission_web.css"
+  ],
+  "required_markers": [
+    "data-testid=\"kt-fs-rav-root\"",
+    "data-testid=\"kt-fs-rav-blockers\"",
+    "data-testid=\"kt-fs-rav-summary\"",
+    "data-testid=\"kt-fs-rav-table\"",
+    "data-testid=\"kt-fs-rav-footer\"",
+    "data-testid=\"kt-fs-rav-continue\"",
+    "kt-fs-rav-grid"
+  ],
+  "required_classes": [
+    "kt-fs-rav-grid",
+    "kt-fs-blocker-card",
+    "kt-fs-footer"
+  ],
+  "required_text": [
+    "Review & Validate",
+    "Blocking Issues",
+    "Section Summary",
+    "Validate again",
+    "Review Final Bid",
+    "Back to Checklist"
+  ],
+  "forbidden_markers": [
+    "cdn.tailwindcss.com"
+  ]
+}

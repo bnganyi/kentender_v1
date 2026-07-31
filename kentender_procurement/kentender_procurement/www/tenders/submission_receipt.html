@@ -14,65 +14,123 @@
 {% set r = receipt %}
 {% set active_nav = "my_bids" %}
 {% set active_ws = "submit" %}
+{% set totals = (r.price_schedule_totals.by_currency if r.price_schedule_totals else None) or [] %}
 <div class="kt-a0-root kt-a2-root kt-fs-root kt-fs-receipt" data-testid="kt-fs-receipt-root"
 	data-publication-ref="{{ r.published_tender_ref }}">
 	{% include "templates/includes/kt_bidder_portal_nav.html" %}
 	<div class="kt-a2-shell">
 		{% include "templates/includes/kt_bidder_workspace_sidebar.html" %}
-		<main class="kt-a2-main kt-fs-main">
-			<div class="kt-fs-canvas" id="kt-fs-receipt-print">
-				<header class="kt-fs-head">
-					<div>
-						<h1 data-testid="kt-fs-receipt-title">{{ r.status_chip }}</h1>
-						<p data-testid="kt-fs-receipt-message">{{ r.message }}</p>
+		<main class="kt-a2-main kt-fs-main kt-fs-receipt-main">
+			<div class="kt-fs-receipt-watermark" aria-hidden="true">{{ _("SUBMITTED") }}</div>
+			<div class="kt-fs-canvas kt-fs-canvas--receipt" id="kt-fs-receipt-print">
+				<header class="kt-fs-receipt-hero">
+					<div class="kt-fs-receipt-check" aria-hidden="true">
+						<span class="material-symbols-outlined">check_circle</span>
 					</div>
-					<span class="kt-fs-chip kt-fs-chip--ok">{{ r.submission_status }}</span>
+					<h1 data-testid="kt-fs-receipt-title">{{ r.status_chip }}</h1>
+					<p data-testid="kt-fs-receipt-message">{{ r.message }}</p>
+					<div class="kt-fs-receipt-ref-pill">
+						<span>{{ _("Receipt Reference") }}</span>
+						<strong data-testid="kt-fs-receipt-code">{{ r.receipt_code }}</strong>
+					</div>
+					<div class="kt-fs-receipt-when">
+						<span class="material-symbols-outlined" aria-hidden="true">calendar_today</span>
+						<span data-testid="kt-fs-receipt-time">{{ r.submitted_at_display }}{% if r.timezone %} ({{ r.timezone }}){% endif %}</span>
+					</div>
 				</header>
 
-				<section class="kt-fs-bento" data-testid="kt-fs-receipt-summary">
-					<h2>{{ _("Receipt Summary") }}</h2>
-					<div class="kt-fs-meta">
-						<div><span>{{ _("Receipt reference") }}</span><strong data-testid="kt-fs-receipt-code">{{ r.receipt_code }}</strong></div>
-						<div><span>{{ _("Submitted date and time") }}</span>
-							<strong data-testid="kt-fs-receipt-time">{{ r.submitted_at_display }}{% if r.timezone %} ({{ r.timezone }}){% endif %}</strong>
+				<div class="kt-fs-receipt-grid">
+					<section class="kt-fs-bento kt-fs-receipt-summary-card" data-testid="kt-fs-receipt-summary">
+						<div class="kt-fs-receipt-summary-head">
+							<div>
+								<h2>{{ _("Receipt Summary") }}</h2>
+								<p>{{ _("Formal record of electronic submission") }}</p>
+							</div>
+							<span class="kt-fs-chip kt-fs-chip--ok">{{ r.submission_status }}</span>
 						</div>
-						<div><span>{{ _("Tender") }}</span><strong>{{ r.tender_title or "—" }}</strong></div>
-						<div><span>{{ _("Tender reference") }}</span><strong>{{ r.tender_reference }}</strong></div>
-						<div><span>{{ _("Procuring entity") }}</span><strong>{{ r.procuring_entity or "—" }}</strong></div>
-						<div><span>{{ _("Bidder legal name") }}</span><strong>{{ r.bidder_label or "—" }}</strong></div>
-						<div><span>{{ _("Submitted by") }}</span><strong>{{ r.submitted_by or "—" }}</strong></div>
-						<div><span>{{ _("Applicable lots") }}</span><strong>{{ (r.applicable_lots or [])|join(", ") or "—" }}</strong></div>
-						<div><span>{{ _("Submission status") }}</span><strong>{{ r.submission_status }}</strong></div>
-					</div>
-					{% set totals = r.price_schedule_totals.by_currency or [] %}
-					{% if totals %}
-					<ul class="kt-fs-totals" data-testid="kt-fs-receipt-totals">
-						{% for t in totals %}
-						<li><span>{{ t.currency }}</span><strong class="kt-fs-money">{{ t.total_display }}</strong></li>
-						{% endfor %}
-					</ul>
-					{% endif %}
-					<p class="kt-fs-note" data-testid="kt-fs-receipt-note">{{ r.receipt_note }}</p>
-				</section>
+						<div class="kt-fs-receipt-rows">
+							<div>
+								<span>{{ _("Procuring Entity") }}</span>
+								<strong>{{ r.procuring_entity or "—" }}</strong>
+							</div>
+							<div>
+								<span>{{ _("Tender Title") }}</span>
+								<strong>{{ r.tender_title or "—" }}</strong>
+							</div>
+							<div>
+								<span>{{ _("Reference") }}</span>
+								<strong class="kt-fs-money">{{ r.tender_reference }}</strong>
+							</div>
+							<div>
+								<span>{{ _("Bidder Legal Name") }}</span>
+								<strong>{{ r.bidder_label or "—" }}</strong>
+							</div>
+							<div>
+								<span>{{ _("Submitted By") }}</span>
+								<strong>{{ r.submitted_by or "—" }}</strong>
+							</div>
+						</div>
+					</section>
 
-				<div class="kt-fs-receipt-actions" data-testid="kt-fs-receipt-actions">
-					<button type="button" class="kt-fs-btn kt-fs-btn--ghost" data-testid="kt-fs-receipt-print"
-						data-action="print-receipt">
-						<span class="material-symbols-outlined" aria-hidden="true">print</span>
-						{{ _("Print Receipt") }}
-					</button>
-					<button type="button" class="kt-fs-btn kt-fs-btn--ghost" data-testid="kt-fs-receipt-download"
-						data-action="download-receipt">
-						<span class="material-symbols-outlined" aria-hidden="true">download</span>
-						{{ _("Download Receipt") }}
-					</button>
-					<a class="kt-fs-btn kt-fs-btn--primary" href="{{ r.my_bids_url }}" data-testid="kt-fs-receipt-my-bids">
-						<span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
-						{{ _("Return to My Bids") }}
-					</a>
+					<aside class="kt-fs-bento kt-fs-receipt-totals-card" data-testid="kt-fs-receipt-totals">
+						<h3>
+							<span class="material-symbols-outlined" aria-hidden="true">payments</span>
+							{{ _("Bid Total") }}
+						</h3>
+						{% if totals %}
+						{% for t in totals %}
+						<div class="kt-fs-receipt-currency">
+							<span>{{ t.currency }}</span>
+							<strong class="kt-fs-money">{{ t.total_display }}</strong>
+						</div>
+						{% endfor %}
+						{% else %}
+						<div class="kt-fs-receipt-currency">
+							<span>—</span>
+							<strong class="kt-fs-money">—</strong>
+						</div>
+						{% endif %}
+						<div class="kt-fs-receipt-lots">
+							<span>{{ _("Target Lots") }}</span>
+							<p>{{ (r.applicable_lots or [])|join(", ") or "—" }}</p>
+						</div>
+					</aside>
+
+					<div class="kt-fs-receipt-notes">
+						<section class="kt-fs-receipt-legal" data-testid="kt-fs-receipt-legal">
+							<span class="material-symbols-outlined" aria-hidden="true">gavel</span>
+							<div>
+								<h3>{{ _("Legal Record Message") }}</h3>
+								<p data-testid="kt-fs-receipt-note">{{ r.receipt_note }}</p>
+							</div>
+						</section>
+						<section class="kt-fs-receipt-info" data-testid="kt-fs-receipt-info">
+							<span class="material-symbols-outlined" aria-hidden="true">info</span>
+							<div>
+								<h3>{{ _("Informational Note") }}</h3>
+								<p>{{ r.informational_note }}</p>
+							</div>
+						</section>
+					</div>
 				</div>
 			</div>
 		</main>
+		<footer class="kt-fs-footer kt-fs-footer--end" data-testid="kt-fs-receipt-actions">
+			<button type="button" class="kt-fs-btn kt-fs-btn--ghost" data-testid="kt-fs-receipt-print"
+				data-action="print-receipt">
+				<span class="material-symbols-outlined" aria-hidden="true">print</span>
+				{{ _("Print Receipt") }}
+			</button>
+			<button type="button" class="kt-fs-btn kt-fs-btn--ghost" data-testid="kt-fs-receipt-download"
+				data-action="download-receipt">
+				<span class="material-symbols-outlined" aria-hidden="true">download</span>
+				{{ _("Download Receipt") }}
+			</button>
+			<a class="kt-fs-btn kt-fs-btn--primary" href="{{ r.my_bids_url }}" data-testid="kt-fs-receipt-my-bids">
+				<span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+				{{ _("Return to My Bids") }}
+			</a>
+		</footer>
 	</div>
 </div>
 {% endblock %}

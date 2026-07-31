@@ -48,10 +48,11 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		self.assertIn("procurement planning", items)
 		planning = items.get("procurement planning") or {}
 		planning_labels = [row.get("label") for row in planning.get("items") or []]
-		self.assertIn("Procurement Home", planning_labels)
-		# Civic Ledger IA: single canonical flat "Planning" link (P5-001), not a group.
-		self.assertIn("Planning", planning_labels)
+		self.assertIn("Home", planning_labels)
+		# Civic Ledger IA: single canonical flat Procurement Plans link (P5-001).
 		self.assertIn("Procurement Plans", planning_labels)
+		self.assertNotIn("Planning", planning_labels)
+		self.assertNotIn("Configuration", planning_labels)
 		for key in (
 			"my work",
 			"my-work",
@@ -104,7 +105,7 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		)
 
 	def test_procurement_sidebar_one_workspace_row_for_governance(self):
-		"""STD Library targets the std-library page while the governance workspace stays reachable."""
+		"""Configuration (incl. Governance workspace) is Disabled for deployment; STD Library remains."""
 		if not frappe.db.exists("Workspace Sidebar", "Procurement"):
 			self.skipTest("Procurement Workspace Sidebar not on site")
 		doc = frappe.get_doc("Workspace Sidebar", "Procurement")
@@ -115,9 +116,7 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 			and (r.link_type or "").lower() == "workspace"
 			and r.link_to == "Governance & Configuration"
 		]
-		self.assertEqual(len(ws_links), 1)
-		# Civic Ledger IA renames the STD library entry to "STD Library" under the
-		# STD Administration group (was "Official STD Library" under Configuration).
+		self.assertEqual(len(ws_links), 0, msg="Governance link lives under Configuration — hidden for deployment")
 		page_std_library = [
 			r
 			for r in doc.items
@@ -129,7 +128,7 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		self.assertEqual(len(page_std_library), 1)
 
 	def test_procurement_boot_sidebar_includes_strategy_alignment_and_budget_links(self):
-		"""Regression: G0-012 primary rail must list Strategy Alignment + Budget before DIA."""
+		"""Regression: G0-012 primary rail must list Strategy Alignment + Budget before Demands."""
 		if not frappe.db.exists("Workspace Sidebar", "Procurement"):
 			self.skipTest("Procurement Workspace Sidebar not on site")
 		bootinfo: dict = {"workspace_sidebar_item": {}}
@@ -148,14 +147,14 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 		)
 		try:
 			i_strat = labels.index("Strategy Alignment")
-			i_dia = next(i for i, lab in enumerate(labels) if lab and "Demand Intake" in lab)
+			i_dia = labels.index("Demands")
 			self.assertLess(
 				i_strat,
 				i_dia,
-				msg="Strategy Alignment must appear before Demand Intake in the Procurement rail",
+				msg="Strategy Alignment must appear before Demands in the Procurement rail",
 			)
 		except ValueError:
-			self.fail("Demand Intake sidebar label not found — cannot verify G0-012 order")
+			self.fail("Demands sidebar label not found — cannot verify G0-012 order")
 
 	def test_bootinfo_includes_builder_route_sidebar_keys(self):
 		"""Context-preserving navigation: builder/form routes must map to Procurement sidebar."""

@@ -412,6 +412,18 @@ def seed_ui01_mockups_for_tests(clear: int | str = 1):
 
 
 @frappe.whitelist()
+def seed_demand_to_bidder_journey_sample_for_tests(clear: int | str = 1):
+	"""Quiet Demand (Draft + Planning Ready) + CFG-01…09 + one Published lean tender."""
+	if frappe.session.user != "Administrator":
+		frappe.throw(frappe._("Not permitted"), frappe.PermissionError)
+	from kentender_procurement.tender_configurations.seed.demand_to_bidder_journey_sample import (
+		run as _run_journey,
+	)
+
+	return _run_journey(clear=bool(int(clear)))
+
+
+@frappe.whitelist()
 def get_tender_configuration_bidder_submission_schema(configuration_id: str):
 	return _get_tender_configuration_bidder_submission_schema(configuration_id)
 

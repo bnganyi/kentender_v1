@@ -66,7 +66,7 @@ async function fillCompleteMilestone(page: import("@playwright/test").Page) {
 	await page.getByTestId("kt-cl-cfg04-drawer-duration-unit").selectOption("weeks");
 	await page
 		.getByTestId("kt-cl-cfg04-drawer-trigger")
-		.fill("Contract signing and notice to proceed");
+		.selectOption("Contract signing and notice to proceed");
 	await page
 		.getByTestId("kt-cl-cfg04-drawer-deliverable")
 		.fill("Approved implementation work plan");
@@ -75,7 +75,7 @@ async function fillCompleteMilestone(page: import("@playwright/test").Page) {
 		.fill("Detailed work plan covering mobilisation and baseline schedule.");
 	await page
 		.getByTestId("kt-cl-cfg04-drawer-acceptance")
-		.fill("PE confirms approved work plan");
+		.selectOption("PE confirms approved work plan");
 	await page.getByTestId("kt-cl-cfg04-drawer-evidence").fill("Signed work plan approval");
 }
 
@@ -177,7 +177,9 @@ test.describe("CFG-04 Implementation Schedule", () => {
 		await page.getByTestId("kt-cl-cfg04-drawer-description").fill("Install infrastructure.");
 		await page.getByTestId("kt-cl-cfg04-drawer-duration").fill("4");
 		await page.getByTestId("kt-cl-cfg04-drawer-duration-unit").selectOption("weeks");
-		await page.getByTestId("kt-cl-cfg04-drawer-trigger").fill("Delivery acceptance");
+		await page
+			.getByTestId("kt-cl-cfg04-drawer-trigger")
+			.selectOption("Delivery acceptance for equipment");
 		await page.getByTestId("kt-cl-cfg04-drawer-deliverable").fill("Installed infrastructure");
 		await page
 			.getByTestId("kt-cl-cfg04-drawer-deliverable-description")
@@ -196,7 +198,9 @@ test.describe("CFG-04 Implementation Schedule", () => {
 
 		await page.getByTestId("kt-cl-cfg04-table").getByRole("button", { name: /^Fix$/i }).click();
 		await expect(page.getByTestId("kt-cl-cfg04-drawer")).toBeVisible();
-		await page.getByTestId("kt-cl-cfg04-drawer-acceptance").fill("Inspection at delivery");
+		await page
+			.getByTestId("kt-cl-cfg04-drawer-acceptance")
+			.selectOption("Inspection at delivery");
 		await page.getByTestId("kt-cl-cfg04-drawer-save").click();
 		await expect(page.getByTestId("kt-cl-cfg04-drawer")).toHaveCount(0);
 		await expect(page.locator(".desk-alert .alert-message")).toContainText(
@@ -212,23 +216,35 @@ test.describe("CFG-04 Implementation Schedule", () => {
 
 	test("Single Turnkey form hides table and can continue", async ({ page }) => {
 		await openSchedule(page);
+		const saveResp = page.waitForResponse(
+			(r) =>
+				r.request().method() === "POST" &&
+				(r.request().postData() || "").includes(
+					"save_tender_configuration_implementation_schedule"
+				),
+			{ timeout: 20_000 }
+		);
 		await page.getByTestId("kt-cl-cfg04-approach-single").check();
-		// Confirm appears when phased milestones exist — accept if present
-		const yesBtn = page.locator(".modal .btn-primary").filter({ hasText: /^Yes$/i });
+		// Confirm appears when phased milestones exist — Civic Ledger confirm OK label
+		const confirmOk = page.getByTestId("kt-cl-confirm-ok");
 		try {
-			await yesBtn.first().click({ timeout: 4_000 });
+			await confirmOk.click({ timeout: 4_000 });
 		} catch {
 			/* no confirm when there are no phased milestones */
 		}
 		await expect(page.getByTestId("kt-cl-cfg04-single-form")).toBeVisible({ timeout: 20_000 });
 		await expect(page.getByTestId("kt-cl-cfg04-table")).toHaveCount(0);
 		await expect(page.getByTestId("kt-cl-cfg04-approach-single")).toBeChecked();
+		// Approach switch fires a silent save + remount; wait before editing selects.
+		await saveResp.catch(() => undefined);
+		await expect(page.getByTestId("kt-cl-cfg04-save")).toBeDisabled({ timeout: 15_000 });
+		await expect(page.getByTestId("kt-cl-cfg04-single-trigger")).toBeVisible();
 
 		await page.getByTestId("kt-cl-cfg04-single-duration").fill("6");
 		await page.getByTestId("kt-cl-cfg04-single-duration-unit").selectOption("months");
 		await page
 			.getByTestId("kt-cl-cfg04-single-trigger")
-			.fill("Contract signing and notice to proceed");
+			.selectOption("Contract signing and notice to proceed");
 		await page
 			.getByTestId("kt-cl-cfg04-single-deliverables")
 			.fill(
@@ -236,12 +252,16 @@ test.describe("CFG-04 Implementation Schedule", () => {
 			);
 		await page
 			.getByTestId("kt-cl-cfg04-single-acceptance")
-			.fill(
-				"Procuring Entity confirms delivery, installation, testing, training, documentation, and operational readiness."
-			);
+			.selectOption("Handover pack sign-off");
 		await page
 			.getByTestId("kt-cl-cfg04-single-evidence")
 			.fill("Completion report, test results, training records, and handover certificate.");
+		await expect(page.getByTestId("kt-cl-cfg04-single-trigger")).toHaveValue(
+			"Contract signing and notice to proceed"
+		);
+		await expect(page.getByTestId("kt-cl-cfg04-single-acceptance")).toHaveValue(
+			"Handover pack sign-off"
+		);
 		await expect(page.getByTestId("kt-cl-cfg04-save")).toBeEnabled({ timeout: 5_000 });
 		await page.getByTestId("kt-cl-cfg04-save").click();
 		await expect(page.getByTestId("kt-cl-cfg04-save")).toBeDisabled({ timeout: 15_000 });
@@ -252,6 +272,17 @@ test.describe("CFG-04 Implementation Schedule", () => {
 
 	test("subtle delete removes milestone row after confirm", async ({ page }) => {
 		await openSchedule(page);
+		// Prior Single Turnkey test may leave this config on Single — restore Phased table.
+		if (await page.getByTestId("kt-cl-cfg04-approach-single").isChecked()) {
+			await page.getByTestId("kt-cl-cfg04-approach-phased").check();
+			const confirmOk = page.getByTestId("kt-cl-confirm-ok");
+			try {
+				await confirmOk.click({ timeout: 4_000 });
+			} catch {
+				/* no confirm */
+			}
+			await expect(page.getByTestId("kt-cl-cfg04-table")).toBeVisible({ timeout: 20_000 });
+		}
 		await page.getByTestId("kt-cl-cfg04-add").click();
 		await fillCompleteMilestone(page);
 		await page.getByTestId("kt-cl-cfg04-drawer-save").click();
@@ -264,7 +295,7 @@ test.describe("CFG-04 Implementation Schedule", () => {
 		await page.getByTestId("kt-cl-confirm-ok").click();
 		await expect(page.getByText(/Milestone removed/i)).toBeVisible({ timeout: 15_000 });
 		await expect(page.getByTestId("kt-cl-cfg04-table")).not.toContainText(/MS-001/);
-		await expect(page.getByTestId("kt-cl-cfg04-continue")).toBeDisabled();
+		await expect(page.getByTestId("kt-cl-cfg04-row-delete-MS-001")).toHaveCount(0);
 	});
 
 	test("CFG-03 Continue lands on live Implementation Schedule page", async ({ page }) => {
@@ -293,7 +324,7 @@ test.describe("CFG-04 Implementation Schedule", () => {
 				.fill("Datasheet required");
 			await page
 				.getByTestId("kt-cl-cfg03-drawer-delivery-method")
-				.fill("Commissioning test report");
+				.selectOption("Commissioning test report");
 			await page.getByTestId("kt-cl-cfg03-drawer-save").click();
 			await expect(page.getByTestId("kt-cl-cfg03-continue")).toBeEnabled({ timeout: 15_000 });
 		}

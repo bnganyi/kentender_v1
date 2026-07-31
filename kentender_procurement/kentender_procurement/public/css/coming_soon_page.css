@@ -1,0 +1,272 @@
+/* Capability overview (Planned) — hand-port of docs/misc/coming_soon_code.html */
+
+.kt-coming-soon {
+	--kt-cs-primary: #001f48;
+	--kt-cs-primary-container: #00346f;
+	--kt-cs-on-primary: #ffffff;
+	--kt-cs-on-primary-container: #7b9ee0;
+	--kt-cs-secondary: #01629d;
+	--kt-cs-on-secondary: #ffffff;
+	--kt-cs-surface: #f9f9fe;
+	--kt-cs-surface-lowest: #ffffff;
+	--kt-cs-on-surface: #1a1b20;
+	--kt-cs-on-surface-variant: #434750;
+	--kt-cs-outline-variant: #c3c6d1;
+	--kt-cs-primary-fixed: #d7e2ff;
+	--kt-cs-secondary-fixed: #cfe5ff;
+	--kt-cs-status-available: #10b981;
+	--kt-cs-status-reserved: #f59e0b;
+
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: calc(100vh - 120px);
+	padding: 24px 16px;
+	background: var(--kt-cs-surface);
+	color: var(--kt-cs-on-surface);
+	overflow: hidden;
+	font-family: "Public Sans", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.kt-coming-soon__glow {
+	position: absolute;
+	inset: 0;
+	opacity: 0.2;
+	pointer-events: none;
+}
+
+.kt-coming-soon__glow::before,
+.kt-coming-soon__glow::after {
+	content: "";
+	position: absolute;
+	width: 24rem;
+	height: 24rem;
+	border-radius: 9999px;
+	filter: blur(120px);
+}
+
+.kt-coming-soon__glow::before {
+	top: -10%;
+	right: -5%;
+	background: var(--kt-cs-primary-fixed);
+}
+
+.kt-coming-soon__glow::after {
+	bottom: -10%;
+	left: -5%;
+	background: var(--kt-cs-secondary-fixed);
+}
+
+.kt-coming-soon__watermark {
+	position: absolute;
+	bottom: 0;
+	right: 2.5rem;
+	opacity: 0.05;
+	pointer-events: none;
+	font-family: "Material Symbols Outlined";
+	font-size: 400px;
+	line-height: 1;
+	color: var(--kt-cs-primary);
+	display: none;
+}
+
+@media (min-width: 1024px) {
+	.kt-coming-soon__watermark {
+		display: block;
+	}
+}
+
+.kt-coming-soon__card {
+	position: relative;
+	z-index: 1;
+	width: 100%;
+	max-width: 42rem;
+	background: var(--kt-cs-surface-lowest);
+	border: 1px solid var(--kt-cs-outline-variant);
+	border-radius: 0.75rem;
+	box-shadow: 0 1px 2px rgba(26, 27, 32, 0.06);
+	padding: 3rem 2rem;
+	text-align: center;
+}
+
+@media (min-width: 640px) {
+	.kt-coming-soon__card {
+		padding: 3rem;
+	}
+}
+
+.kt-coming-soon__icon-wrap {
+	margin: 0 auto 2.5rem;
+	width: 8rem;
+	height: 8rem;
+	position: relative;
+}
+
+.kt-coming-soon__icon-main {
+	width: 8rem;
+	height: 8rem;
+	border-radius: 9999px;
+	background: var(--kt-cs-primary-container);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: transform 0.5s ease;
+}
+
+.kt-coming-soon__card:hover .kt-coming-soon__icon-main {
+	transform: scale(1.1);
+}
+
+.kt-coming-soon__icon-main .material-symbols-outlined {
+	font-size: 64px;
+	color: var(--kt-cs-on-primary-container);
+	font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 0, "opsz" 48;
+}
+
+.kt-coming-soon__icon-gear {
+	position: absolute;
+	bottom: -0.5rem;
+	right: -0.5rem;
+	width: 3rem;
+	height: 3rem;
+	border-radius: 0.5rem;
+	background: var(--kt-cs-secondary);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	animation: kt-cs-spin 8s linear infinite;
+}
+
+.kt-coming-soon__icon-gear .material-symbols-outlined {
+	font-size: 24px;
+	color: var(--kt-cs-on-secondary);
+}
+
+@keyframes kt-cs-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.kt-coming-soon__title {
+	font-family: Manrope, "Public Sans", sans-serif;
+	font-size: 28px;
+	line-height: 36px;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	color: var(--kt-cs-primary);
+	margin: 0 0 1rem;
+}
+
+.kt-coming-soon__subtitle {
+	font-family: Manrope, "Public Sans", sans-serif;
+	font-size: 22px;
+	line-height: 30px;
+	font-weight: 400;
+	color: var(--kt-cs-on-surface-variant);
+	margin: 0 0 1.5rem;
+}
+
+.kt-coming-soon__body {
+	max-width: 28rem;
+	margin: 0 auto;
+}
+
+.kt-coming-soon__body p {
+	font-size: 16px;
+	line-height: 24px;
+	color: var(--kt-cs-on-surface-variant);
+	margin: 0;
+}
+
+.kt-coming-soon__status {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 1rem;
+	margin-top: 2rem;
+	padding-top: 2rem;
+	border-top: 1px solid var(--kt-cs-outline-variant);
+}
+
+.kt-coming-soon__dot {
+	width: 0.5rem;
+	height: 0.5rem;
+	border-radius: 9999px;
+}
+
+.kt-coming-soon__dot--available {
+	background: var(--kt-cs-status-available);
+}
+
+.kt-coming-soon__dot--reserved {
+	background: var(--kt-cs-status-reserved);
+	animation: kt-cs-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes kt-cs-pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.35;
+	}
+}
+
+.kt-coming-soon__actions {
+	margin-top: 2.5rem;
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	justify-content: center;
+	align-items: stretch;
+}
+
+@media (min-width: 640px) {
+	.kt-coming-soon__actions {
+		flex-direction: row;
+		align-items: center;
+	}
+}
+
+.kt-coming-soon__btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 0.75rem 2rem;
+	border-radius: 0.5rem;
+	font-size: 12px;
+	line-height: 16px;
+	letter-spacing: 0.05em;
+	font-weight: 700;
+	text-transform: uppercase;
+	border: 1px solid transparent;
+	cursor: pointer;
+	transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.kt-coming-soon__btn--primary {
+	background: var(--kt-cs-primary);
+	color: var(--kt-cs-on-primary);
+}
+
+.kt-coming-soon__btn--primary:hover {
+	background: var(--kt-cs-primary-container);
+}
+
+.kt-coming-soon__btn--ghost {
+	background: transparent;
+	color: var(--kt-cs-primary);
+	border-color: var(--kt-cs-primary);
+}
+
+.kt-coming-soon__btn--ghost:hover {
+	background: #eeedf3;
+}
+
+.kt-coming-soon__btn .material-symbols-outlined {
+	font-size: 18px;
+}

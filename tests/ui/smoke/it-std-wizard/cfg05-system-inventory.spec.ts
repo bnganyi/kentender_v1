@@ -266,7 +266,7 @@ test.describe("CFG-05 System Inventory & Bidder Background", () => {
 			await page.getByTestId("kt-cl-cfg04-drawer-duration-unit").selectOption("weeks");
 			await page
 				.getByTestId("kt-cl-cfg04-drawer-trigger")
-				.fill("Contract signing and notice to proceed");
+				.selectOption("Contract signing and notice to proceed");
 			await page
 				.getByTestId("kt-cl-cfg04-drawer-deliverable")
 				.fill("Approved implementation work plan");
@@ -275,7 +275,7 @@ test.describe("CFG-05 System Inventory & Bidder Background", () => {
 				.fill("Detailed work plan covering mobilisation and baseline schedule.");
 			await page
 				.getByTestId("kt-cl-cfg04-drawer-acceptance")
-				.fill("PE confirms approved work plan");
+				.selectOption("PE confirms approved work plan");
 			await page.getByTestId("kt-cl-cfg04-drawer-save").click();
 			await expect(page.getByTestId("kt-cl-cfg04-continue")).toBeEnabled({ timeout: 15_000 });
 		}

@@ -65,6 +65,18 @@ cd apps/kentender_v1 && make ui-bidder-final-submission-gate
 1. **Leaked internals** — Technical Proposal supporting-evidence list no longer renders `evidence_type` slugs; Final Bid Review no longer shows the FoT “not a separate stored total” implementation note.
 2. **Continue CTA contrast** — Footer rule `.kt-fs-footer > a { color: #515f74 }` overrode primary button text; removed that descendant rule and locked `.kt-fs-btn--primary` to white (`!important`).
 3. **Stitch fidelity** — Final Bid Review rebuilt to context card grid + Bid Section Summaries (price card highlight); Submit Bid rebuilt to Submission Summary | Authenticated Submitter two-column layout.
+
+## Hard Stitch contract gate (2026-07-30)
+
+Root-cause fix: soft layout guards are insufficient. Final Submission now has **per-Stitch-file contracts** (`01.contract.json`–`05.contract.json`) beside Stitch HTML.
+
+- Rule: `.cursor/rules/kentender-bidder-stitch-contract-gate.mdc`
+- Gate: `make bw-final-submission-stitch-contract-gate` (also chained from `bw-final-submission-domain-gate`)
+- Runner: `test_bidder_stitch_contract_gate.py`
+- **04 confirm modal** and **05 receipt** re-ported to Stitch structure (overlay card / hero + totals card + legal/info notes)
+- Playwright asserts confirm summary grid + receipt regions
+
+UI Done for this pack requires the contract gate green for all five surfaces.
 ```
 
 **Gate evidence (this delivery):**

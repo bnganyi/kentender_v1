@@ -153,6 +153,9 @@ _KT_ROUTE_TO_SIDEBAR.update(
 		"tender-management-v2": "Procurement",
 		"audit-event": "Procurement",
 		"audit event": "Procurement",
+		"coming-soon": "Procurement",
+		"publications": "Procurement",
+		"bid-submissions": "Procurement",
 	}
 )
 
@@ -321,6 +324,8 @@ def _build_sidebar_dict(name: str, allowed_workspaces: set[str]) -> dict:
 	``Workspace`` row exists (cross-app G0-012 rail — see module docstring).
 	All other link types are included unconditionally.
 	"""
+	from kentender_procurement.setup.sidebar_availability import apply_availability_to_sidebar_items
+
 	doc = frappe.get_doc("Workspace Sidebar", name)
 	items: list[dict] = []
 
@@ -350,6 +355,10 @@ def _build_sidebar_dict(name: str, allowed_workspaces: set[str]) -> dict:
 					"tab": item.navigate_to_tab,
 				}
 			)
+
+	# Availability (Planned / Disabled) is separate from authorization filters above.
+	if name == "Procurement":
+		items = apply_availability_to_sidebar_items(items)
 
 	return {
 		"label": doc.title or name,

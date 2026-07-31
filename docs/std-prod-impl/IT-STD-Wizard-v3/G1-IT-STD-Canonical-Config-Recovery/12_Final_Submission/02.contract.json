@@ -1,0 +1,36 @@
+{
+  "surface_id": "fs-02-final-bid-review",
+  "title": "Final Bid Review",
+  "stitch_file": "02_code.html",
+  "implementation_files": [
+    "kentender_procurement/kentender_procurement/www/tenders/final_bid_review.html",
+    "kentender_procurement/kentender_procurement/public/css/final_submission_web.css"
+  ],
+  "required_markers": [
+    "data-testid=\"kt-fs-fbr-root\"",
+    "data-testid=\"kt-fs-fbr-meta\"",
+    "data-testid=\"kt-fs-fbr-sections\"",
+    "data-testid=\"kt-fs-fbr-continue\"",
+    "kt-fs-context-grid",
+    "kt-fs-section-card--price",
+    "Bid Section Summaries"
+  ],
+  "required_classes": [
+    "kt-fs-context-grid",
+    "kt-fs-section-card-bar",
+    "kt-fs-complete-badge",
+    "kt-fs-section-card--price"
+  ],
+  "required_text": [
+    "Final Bid Review",
+    "Bid Section Summaries",
+    "Offer Type",
+    "Continue to Submit Bid",
+    "Back to Review & Validate"
+  ],
+  "forbidden_markers": [
+    "cdn.tailwindcss.com",
+    "Form of Tender uses these Price Schedule totals",
+    "Bid totals by currency"
+  ]
+}

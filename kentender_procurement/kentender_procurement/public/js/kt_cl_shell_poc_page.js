@@ -7,28 +7,23 @@
 
 	var POC_ROUTE = ["kt-cl-shell-poc"];
 
-	// Curated IA reproducing code.html 166-289 exactly. "Procurement Home" routes
-	// permanently to this POC page. Wired module destinations use frappe.set_route
-	// so navigation stays inside the Desk SPA; not-yet-built destinations use "#".
-	//   Strategy Alignment      -> strategy-management workspace slug (portfolio hub)
-	//   Budget & Funding        -> budget-hub page (Budget Management workspace redirects here)
-	//   Demand Intake & Approval -> demand-hub page (DIA workspace redirects here)
+	// Curated IA aligned with the native Procurement rail (availability states).
+	// Home stays on this POC page for the demo shell.
 	function civicLedgerIA() {
 		return [
-			{ kind: "link", label: "Procurement Home", icon: "home", route: POC_ROUTE, active: true },
+			{ kind: "link", label: "Home", icon: "home", route: POC_ROUTE, active: true },
 			{ kind: "link", label: "Analytics", icon: "bar_chart", url: "#" },
 			{ kind: "link", label: "Strategy Alignment", icon: "ads_click", route: ["strategy-management"] },
 			{ kind: "link", label: "Budget & Funding", icon: "account_balance_wallet", route: ["budget-hub"] },
-			{ kind: "link", label: "Demand Intake & Approval", icon: "assignment_ind", route: ["demand-hub"] },
+			{ kind: "link", label: "Demands", icon: "assignment_ind", route: ["demand-hub"] },
+			{ kind: "link", label: "Procurement Plans", icon: "checklist", route: ["planning-hub"] },
 			{
 				kind: "group",
 				label: "Tender Management",
 				icon: "gavel",
 				children: [
-					{ label: "Procurement Packages", url: "#" },
 					{ label: "Tender Configurations", url: "#" },
-					{ label: "Tender Documents", url: "#" },
-					{ label: "Publications", url: "#" },
+					{ label: "Tenders", url: "#" },
 					{ label: "Bid Submissions", url: "#" },
 					{ label: "Evaluation", url: "#" },
 					{ label: "Awards", url: "#" },
@@ -41,10 +36,10 @@
 				label: "STD Administration",
 				icon: "admin_panel_settings",
 				children: [
-					{ label: "STD Library", url: "#" },
-					{ label: "STD Versions", url: "#" },
-					{ label: "Forms & Schemas", url: "#" },
-					{ label: "Import / Validation", url: "#" },
+					{ label: "STD Library", route: ["std-library"] },
+					{ label: "STD Versions", route: ["coming-soon"] },
+					{ label: "Forms & Schemas", route: ["std-form-schema-manager"] },
+					{ label: "Import Review", route: ["std-import-package-review"] },
 				],
 			},
 		];
@@ -149,8 +144,8 @@
 	function toolbarConfig() {
 		return {
 			breadcrumbs: [
-				{ label: __("Dashboard"), route: ["Workspaces", "Procurement Home"] },
-				{ label: __("Procurement Home") },
+				{ label: __("Home"), route: POC_ROUTE },
+				{ label: __("Home") },
 			],
 			showSearch: false,
 			showUserMeta: true,

@@ -72,7 +72,12 @@ test.describe("Final Submission portal", () => {
 		await expect(submitBtn).toBeEnabled({ timeout: 5_000 });
 
 		await submitBtn.click();
-		await expect(page.getByTestId("kt-fs-confirm-dialog")).toBeVisible();
+		const confirm = page.getByTestId("kt-fs-confirm-dialog");
+		await expect(confirm).toBeVisible();
+		await expect(page.getByTestId("kt-fs-confirm-summary")).toBeVisible();
+		await expect(page.getByTestId("kt-fs-confirm-meta-grid")).toBeVisible();
+		await expect(confirm.getByText(/Bid Total/i)).toBeVisible();
+		await expect(page.getByTestId("kt-fs-confirm-submit")).toContainText(/Submit Bid/i);
 		await page.getByTestId("kt-fs-confirm-cancel").click();
 		await expect(page).toHaveURL(new RegExp(`/tenders/${publicationRef}/submit-bid`));
 
@@ -81,6 +86,10 @@ test.describe("Final Submission portal", () => {
 		await expect(page.getByTestId("kt-fs-receipt-root")).toBeVisible({ timeout: 60_000 });
 		await expect(page.getByTestId("kt-fs-receipt-code")).not.toHaveText("");
 		await expect(page.getByTestId("kt-fs-receipt-title")).toContainText(/Bid submitted/i);
+		await expect(page.getByTestId("kt-fs-receipt-summary")).toBeVisible();
+		await expect(page.getByTestId("kt-fs-receipt-totals")).toBeVisible();
+		await expect(page.getByTestId("kt-fs-receipt-legal")).toBeVisible();
+		await expect(page.getByTestId("kt-fs-receipt-info")).toBeVisible();
 		const body = await page.locator("body").innerText();
 		expect(body.toLowerCase()).not.toContain("seal_hash");
 		expect(body.toLowerCase()).not.toMatch(/sha256|schema_hash/);

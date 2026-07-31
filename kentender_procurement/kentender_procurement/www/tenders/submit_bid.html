@@ -150,29 +150,60 @@
 		</footer>
 	</div>
 
-	<dialog class="kt-fs-dialog" id="kt-fs-confirm-dialog" data-testid="kt-fs-confirm-dialog">
-		<div class="kt-fs-dialog-inner">
-			<header>
+	{# Stitch 04 — confirmation modal (first-class surface; not a generic dialog list) #}
+	<dialog class="kt-fs-confirm-overlay" id="kt-fs-confirm-dialog" data-testid="kt-fs-confirm-dialog">
+		<div class="kt-fs-confirm-card">
+			<header class="kt-fs-confirm-header">
 				<h2 data-testid="kt-fs-confirm-title">{{ _("Submit this bid?") }}</h2>
-				<button type="button" class="kt-fs-dialog-close" data-action="cancel-submit" aria-label="{{ _('Close') }}">
+				<button type="button" class="kt-fs-confirm-close" data-action="cancel-submit" aria-label="{{ _('Close') }}">
 					<span class="material-symbols-outlined" aria-hidden="true">close</span>
 				</button>
 			</header>
-			<p>{{ _("This will formally submit the current electronic bid. After submission, it cannot be edited unless the tender rules permit withdrawal or revision before the deadline.") }}</p>
-			<ul class="kt-fs-dialog-meta" data-testid="kt-fs-confirm-meta">
-				<li><span>{{ _("Tender reference") }}</span><strong>{{ p.tender_reference }}</strong></li>
-				<li><span>{{ _("Bidder legal name") }}</span><strong>{{ p.bidder_label or "—" }}</strong></li>
-				<li><span>{{ _("Applicable lots") }}</span><strong>{{ (p.applicable_lots or [])|join(", ") or "—" }}</strong></li>
-				<li><span>{{ _("Submission deadline") }}</span><strong>{{ p.submission_deadline_display or "—" }}</strong></li>
-				{% for t in totals %}
-				<li><span>{{ _("Total") }} ({{ t.currency }})</span><strong class="kt-fs-money">{{ t.total_display }}</strong></li>
-				{% endfor %}
-			</ul>
-			<footer>
+			<div class="kt-fs-confirm-body">
+				<p class="kt-fs-confirm-lede">
+					{{ _("This will formally submit the current electronic bid. After submission, it cannot be edited unless the tender rules permit withdrawal or revision before the deadline.") }}
+				</p>
+				<div class="kt-fs-confirm-summary" data-testid="kt-fs-confirm-summary">
+					<div class="kt-fs-confirm-meta-grid" data-testid="kt-fs-confirm-meta-grid">
+						<div>
+							<span>{{ _("Tender Reference") }}</span>
+							<strong>{{ p.tender_reference }}</strong>
+						</div>
+						<div>
+							<span>{{ _("Bidder Legal Name") }}</span>
+							<strong>{{ p.bidder_label or "—" }}</strong>
+						</div>
+						<div class="kt-fs-confirm-span-2">
+							<span>{{ _("Applicable Lots") }}</span>
+							<strong>{{ (p.applicable_lots or [])|join(", ") or "—" }}</strong>
+						</div>
+						<div class="kt-fs-confirm-span-2">
+							<span>{{ _("Bid Total") }}</span>
+							<strong class="kt-fs-confirm-totals">
+								{% if totals %}
+									{% for t in totals %}
+									<span class="kt-fs-money">{% if not loop.first %}<span class="kt-fs-confirm-plus">+ </span>{% endif %}{{ t.total_display }}</span>
+									{% endfor %}
+								{% else %}
+									—
+								{% endif %}
+							</strong>
+						</div>
+						<div class="kt-fs-confirm-span-2">
+							<span>{{ _("Submission Deadline") }}</span>
+							<strong class="kt-fs-money">{{ p.submission_deadline_display or "—" }}</strong>
+						</div>
+					</div>
+				</div>
+			</div>
+			<footer class="kt-fs-confirm-footer">
 				<button type="button" class="kt-fs-btn kt-fs-btn--ghost" data-testid="kt-fs-confirm-cancel"
 					data-action="cancel-submit">{{ _("Cancel") }}</button>
 				<button type="button" class="kt-fs-btn kt-fs-btn--primary" data-testid="kt-fs-confirm-submit"
-					data-action="confirm-submit">{{ _("Submit Bid") }}</button>
+					data-action="confirm-submit">
+					<span class="material-symbols-outlined" aria-hidden="true">security</span>
+					{{ _("Submit Bid") }}
+				</button>
 			</footer>
 		</div>
 	</dialog>

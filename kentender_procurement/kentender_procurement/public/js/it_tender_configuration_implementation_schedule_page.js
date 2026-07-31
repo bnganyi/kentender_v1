@@ -23,6 +23,7 @@
 		mounting: false,
 		dirty: false,
 		saving: false,
+		pendingSave: null,
 		deliveryApproach: APPROACH_PHASED,
 		milestones: [],
 		singleDelivery: {},
@@ -324,9 +325,9 @@
 			) +
 			fieldWrap(
 				__("Delivery Trigger"),
-				'<input type="text" class="kt-cl-cfg04-input" data-single-field="delivery_trigger" data-testid="kt-cl-cfg04-single-trigger" value="' +
-					esc(row.delivery_trigger || "") +
-					'" />',
+				'<select class="kt-cl-cfg04-select" data-single-field="delivery_trigger" data-testid="kt-cl-cfg04-single-trigger">' +
+					selectOpts(optionsFor("start_trigger"), row.delivery_trigger || "") +
+					"</select>",
 				true
 			) +
 			fieldWrap(
@@ -338,10 +339,9 @@
 			) +
 			fieldWrap(
 				__("Acceptance Method"),
-				'<input type="text" class="kt-cl-cfg04-input" list="kt-cl-cfg04-acceptance-methods" data-single-field="acceptance_method" data-testid="kt-cl-cfg04-single-acceptance" value="' +
-					esc(row.acceptance_method || "") +
-					'" />' +
-					acceptanceDatalist(),
+				'<select class="kt-cl-cfg04-select" data-single-field="acceptance_method" data-testid="kt-cl-cfg04-single-acceptance">' +
+					selectOpts(optionsFor("acceptance_method"), row.acceptance_method || "") +
+					"</select>",
 				true
 			) +
 			fieldWrap(
@@ -449,32 +449,34 @@
 		);
 	}
 
-	function acceptanceDatalist() {
-		var opts =
-			(state.payload && state.payload.options && state.payload.options.acceptance_method) ||
-			[];
-		return (
-			'<datalist id="kt-cl-cfg04-acceptance-methods">' +
-			opts
-				.map(function (o) {
-					return '<option value="' + esc(o) + '"></option>';
-				})
-				.join("") +
-			"</datalist>"
-		);
+	function optionsFor(key) {
+		return (state.payload && state.payload.options && state.payload.options[key]) || [];
 	}
 
-	function startTriggerDatalist() {
-		var opts =
-			(state.payload && state.payload.options && state.payload.options.start_trigger) || [];
+	function selectOpts(options, selected) {
+		var opts = (options || []).slice();
+		var sel = selected || "";
+		// Preserve legacy free-text values so existing rows remain editable.
+		if (sel && opts.indexOf(sel) === -1) {
+			opts = [sel].concat(opts);
+		}
 		return (
-			'<datalist id="kt-cl-cfg04-start-triggers">' +
+			'<option value="">' +
+			esc(__("Select…")) +
+			"</option>" +
 			opts
 				.map(function (o) {
-					return '<option value="' + esc(o) + '"></option>';
+					return (
+						'<option value="' +
+						esc(o) +
+						'"' +
+						(sel === o ? " selected" : "") +
+						">" +
+						esc(o) +
+						"</option>"
+					);
 				})
-				.join("") +
-			"</datalist>"
+				.join("")
 		);
 	}
 
@@ -654,10 +656,9 @@
 			"</div>" +
 			fieldWrap(
 				__("Start Trigger"),
-				'<input type="text" class="kt-cl-cfg04-input" list="kt-cl-cfg04-start-triggers" data-drawer-field="start_trigger" data-testid="kt-cl-cfg04-drawer-trigger" value="' +
-					esc(row.start_trigger || "") +
-					'" />' +
-					startTriggerDatalist(),
+				'<select class="kt-cl-cfg04-select" data-drawer-field="start_trigger" data-testid="kt-cl-cfg04-drawer-trigger">' +
+					selectOpts(optionsFor("start_trigger"), row.start_trigger || "") +
+					"</select>",
 				true
 			) +
 			"</section>" +
@@ -683,12 +684,9 @@
 			sectionTitle(3, __("Formal Acceptance Framework")) +
 			fieldWrap(
 				__("Acceptance Method"),
-				'<input type="text" class="kt-cl-cfg04-input" list="kt-cl-cfg04-acceptance-methods" data-drawer-field="acceptance_method" data-testid="kt-cl-cfg04-drawer-acceptance" placeholder="' +
-					esc(__("e.g. Inspection at delivery")) +
-					'" value="' +
-					esc(row.acceptance_method || "") +
-					'" />' +
-					acceptanceDatalist() +
+				'<select class="kt-cl-cfg04-select" data-drawer-field="acceptance_method" data-testid="kt-cl-cfg04-drawer-acceptance">' +
+					selectOpts(optionsFor("acceptance_method"), row.acceptance_method || "") +
+					"</select>" +
 					'<p class="kt-cl-cfg04-field-hint">' +
 					esc(
 						__(
@@ -925,13 +923,19 @@
 
 	function saveSchedule($root, page, opts) {
 		opts = opts || {};
-		if (state.saving || !state.configurationId) {
+		if (!state.configurationId) {
+			return;
+		}
+		// Do not drop user/footer saves while a silent approach save is in flight.
+		if (state.saving) {
+			state.pendingSave = { $root: $root, page: page, opts: opts };
 			return;
 		}
 		if (state.deliveryApproach === APPROACH_SINGLE) {
 			state.singleDelivery = collectSingle($root);
 		}
 		state.saving = true;
+		state.pendingSave = null;
 		setDirty($root, state.dirty);
 		refreshContinue($root);
 		frappe.call({
@@ -947,6 +951,7 @@
 					remountWithPayload(page, state.payload || {}, { keepClientList: true });
 					setDirty($(page.main), true);
 					refreshContinue($(page.main), false);
+					flushPendingSave();
 					return;
 				}
 				var blockerCount = data.blocker_count || 0;
@@ -999,14 +1004,25 @@
 						state.configurationId
 					);
 				}
+				flushPendingSave();
 			},
 			error: function () {
 				state.saving = false;
 				remountWithPayload(page, state.payload || {}, { keepClientList: true });
 				setDirty($(page.main), true);
 				refreshContinue($(page.main), false);
+				flushPendingSave();
 			},
 		});
+	}
+
+	function flushPendingSave() {
+		var pending = state.pendingSave;
+		if (!pending) {
+			return;
+		}
+		state.pendingSave = null;
+		saveSchedule(pending.$root, pending.page, pending.opts || {});
 	}
 
 	function requestApproachChange($root, page, nextApproach) {

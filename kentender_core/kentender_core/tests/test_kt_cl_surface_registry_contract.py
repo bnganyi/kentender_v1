@@ -85,7 +85,7 @@ class TestKtClSurfaceRegistryContract(IntegrationTestCase):
 		self.assertIn("showUserMeta: true", source)
 		self.assertIn("showSearch: false", source)
 		self.assertIn("crumbDashboard", source)
-		self.assertIn('["Workspaces", "Procurement Home"]', source)
+		self.assertIn('["coming-soon"', source)
 		self.assertIn('["tender-management-v2"]', source)
 		self.assertNotIn("pageTitle: pageTitle", source)
 

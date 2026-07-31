@@ -312,17 +312,23 @@
 	}
 
 	function selectOpts(options, selected) {
+		var opts = (options || []).slice();
+		var sel = selected || "";
+		// Preserve legacy free-text values so existing rows remain editable.
+		if (sel && opts.indexOf(sel) === -1) {
+			opts = [sel].concat(opts);
+		}
 		return (
 			'<option value="">' +
 			esc(__("Select…")) +
 			"</option>" +
-			(options || [])
+			opts
 				.map(function (o) {
 					return (
 						'<option value="' +
 						esc(o) +
 						'"' +
-						(selected === o ? " selected" : "") +
+						(sel === o ? " selected" : "") +
 						">" +
 						esc(o) +
 						"</option>"
@@ -360,7 +366,7 @@
 			contract_values: "No contract carry-forward expected",
 		};
 		return (
-			'<div class="kt-cl-cfg03-drawer-overlay" data-testid="kt-cl-cfg03-drawer-overlay" role="dialog" aria-modal="true">' +
+			'<div class="kt-cl-cfg03-drawer-overlay" data-testid="kt-cl-cfg03-drawer-overlay" data-dismiss="explicit-only" role="dialog" aria-modal="true">' +
 			'<aside class="kt-cl-cfg03-drawer" data-testid="kt-cl-cfg03-drawer">' +
 			'<header class="kt-cl-cfg03-drawer-header">' +
 			"<div>" +
@@ -464,18 +470,12 @@
 			sectionTitle(4, __("Delivery Confirmation")) +
 			fieldWrap(
 				__("Delivery Confirmation Method"),
-				'<input type="text" class="kt-cl-cfg03-input" list="kt-cl-cfg03-delivery-methods" data-drawer-field="delivery_confirmation_method" data-testid="kt-cl-cfg03-drawer-delivery-method" placeholder="' +
-					esc(__("e.g. Inspection at delivery")) +
-					'" value="' +
-					esc(row.delivery_confirmation_method || "") +
-					'" />' +
-					'<datalist id="kt-cl-cfg03-delivery-methods">' +
-					(optionsFor("delivery_confirmation_method") || [])
-						.map(function (o) {
-							return '<option value="' + esc(o) + '"></option>';
-						})
-						.join("") +
-					"</datalist>" +
+				'<select class="kt-cl-cfg03-select" data-drawer-field="delivery_confirmation_method" data-testid="kt-cl-cfg03-drawer-delivery-method">' +
+					selectOpts(
+						optionsFor("delivery_confirmation_method"),
+						row.delivery_confirmation_method || ""
+					) +
+					"</select>" +
 					'<p class="kt-cl-cfg03-field-hint">' +
 					esc(
 						__(
@@ -554,11 +554,8 @@
 			e.preventDefault();
 			closeDrawer();
 		});
-		$host.on("click.cfg03drawer", "[data-testid='kt-cl-cfg03-drawer-overlay']", function (e) {
-			if (e.target === this) {
-				closeDrawer();
-			}
-		});
+		// Explicit dismiss only (X / Cancel). Do not close on overlay/backdrop click —
+		// that discards in-progress requirement fields without confirmation.
 		$host.on("click.cfg03drawer", "[data-action='save-requirement']", function (e) {
 			e.preventDefault();
 			saveDrawerRequirement($host);

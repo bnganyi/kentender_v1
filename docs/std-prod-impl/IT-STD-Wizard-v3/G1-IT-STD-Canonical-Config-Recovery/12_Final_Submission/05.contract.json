@@ -1,0 +1,45 @@
+{
+  "surface_id": "fs-05-submission-receipt",
+  "title": "Submission receipt",
+  "stitch_file": "05_code.html",
+  "implementation_files": [
+    "kentender_procurement/kentender_procurement/www/tenders/submission_receipt.html",
+    "kentender_procurement/kentender_procurement/public/css/final_submission_web.css"
+  ],
+  "required_markers": [
+    "data-testid=\"kt-fs-receipt-root\"",
+    "data-testid=\"kt-fs-receipt-code\"",
+    "data-testid=\"kt-fs-receipt-summary\"",
+    "data-testid=\"kt-fs-receipt-totals\"",
+    "data-testid=\"kt-fs-receipt-legal\"",
+    "data-testid=\"kt-fs-receipt-info\"",
+    "data-testid=\"kt-fs-receipt-print\"",
+    "data-testid=\"kt-fs-receipt-download\"",
+    "data-testid=\"kt-fs-receipt-my-bids\"",
+    "kt-fs-receipt-hero",
+    "kt-fs-receipt-grid",
+    "kt-fs-receipt-totals-card"
+  ],
+  "required_classes": [
+    "kt-fs-receipt-hero",
+    "kt-fs-receipt-watermark",
+    "kt-fs-receipt-grid",
+    "kt-fs-receipt-totals-card",
+    "kt-fs-receipt-legal",
+    "kt-fs-receipt-info"
+  ],
+  "required_text": [
+    "Receipt Summary",
+    "Receipt Reference",
+    "Bid Total",
+    "Print Receipt",
+    "Download Receipt",
+    "Return to My Bids",
+    "Legal Record",
+    "Informational Note"
+  ],
+  "forbidden_markers": [
+    "cdn.tailwindcss.com",
+    "seal_hash"
+  ]
+}

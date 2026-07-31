@@ -1,6 +1,6 @@
 {
  "app": "kentender_procurement",
- "creation": "2026-07-23 15:16:34.928164",
+ "creation": "2026-07-31 11:43:31.290268",
  "docstatus": 0,
  "doctype": "Workspace Sidebar",
  "header_icon": "buying",
@@ -8,30 +8,18 @@
  "items": [
   {
    "child": 0,
-   "collapsible": 1,
-   "icon": "home",
-   "indent": 0,
-   "keep_closed": 0,
-   "label": "Procurement Home",
-   "link_to": "Procurement Home",
-   "link_type": "Workspace",
-   "show_arrow": 0,
-   "type": "Link"
-  },
-  {
-   "child": 0,
    "collapsible": 0,
    "icon": "clipboard",
    "indent": 0,
    "keep_closed": 0,
-   "label": "Demand Intake & Approval",
+   "label": "Demands",
    "link_to": "Demand Intake and Approval",
    "link_type": "Workspace",
    "show_arrow": 0,
    "type": "Link"
   }
  ],
- "modified": "2026-07-26 15:50:28.918925",
+ "modified": "2026-07-31 11:43:31.290268",
  "modified_by": "Administrator",
  "module": "Demand Intake",
  "name": "Demand Intake",

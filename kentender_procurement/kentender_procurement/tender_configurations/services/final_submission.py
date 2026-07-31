@@ -789,6 +789,10 @@ def build_submission_receipt_dto(bid_doc, *, publication_ref: str = "") -> dict[
 			"This receipt confirms that the electronic bid was received by KenTender "
 			"at the date and time shown above."
 		),
+		"informational_note": (
+			"This tender permits changes before the submission deadline. "
+			"Any change will require the bid to be submitted again."
+		),
 		"my_bids_url": "/tenders",
 		"workspace_url": portal_workspace_url(pub_ref) if pub_ref else "/tenders",
 	}

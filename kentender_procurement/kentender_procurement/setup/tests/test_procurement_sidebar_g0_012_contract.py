@@ -11,25 +11,18 @@ import os
 import frappe
 from frappe.tests import IntegrationTestCase
 
-# Civic Ledger IA (Step 1 native-sidebar restyle). Backbone follows the
-# B-Components `code.html` spec (Analytics + Tender Management / STD Administration
-# Section-Break groups); the canonical flat ``Planning`` link (P5-001) and the
-# role-gated Configuration specialists (G0-014) are retained; the redundant flat
-# spine links (My Work, Bid Opening, Evaluation & Award, Evidence & Audit,
-# Tender Document Readiness) are dropped in favour of the grouped children.
+# Civic Ledger IA: Planned capability overviews + Available modules.
+# Configuration is Disabled for deployment (omitted from export).
 _EXPECTED_ITEM_LABELS: tuple[str, ...] = (
-	"Procurement Home",
-	"Procurement Journeys",
+	"Home",
 	"Analytics",
 	"Strategy Alignment",
 	"Budget & Funding",
-	"Demand Intake & Approval",
-	"Planning",
+	"Demands",
+	"Procurement Plans",
 	"Tender Management",
-	"Procurement Packages",
 	"Tender Configurations",
-	"Tender Documents",
-	"Publications",
+	"Tenders",
 	"Bid Submissions",
 	"Evaluation",
 	"Awards",
@@ -39,17 +32,7 @@ _EXPECTED_ITEM_LABELS: tuple[str, ...] = (
 	"STD Library",
 	"STD Versions",
 	"Forms & Schemas",
-	"Import / Validation",
-	"Configuration",
-	"Governance & Configuration",
-	"Strategy Alignment (full)",
-	"Budget & Funding (full)",
-	"Procurement Templates",
-	"Risk Profiles",
-	"KPI Profiles",
-	"Decision Criteria Profiles",
-	"Vendor Management Profiles",
-	"Procurement Plans",
+	"Import Review",
 )
 
 
@@ -72,8 +55,7 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 		)
 
 	def test_procurement_sidebar_section_groups_and_children(self):
-		"""Civic Ledger IA: Tender Management + STD Administration are Section-Break
-		groups whose child rows immediately follow them in the exact spec order."""
+		"""Tender Management + STD Administration Section-Break groups."""
 		path = os.path.join(
 			frappe.get_app_path("kentender_procurement"),
 			"workspace_sidebar",
@@ -93,25 +75,23 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 						started = True
 						continue
 					if started:
-						break  # next section ends the group
+						break
 				elif started and int(row.get("child") or 0) == 1:
 					collected.append(label)
 				elif started:
-					break  # a non-child top-level row ends the group
+					break
 			return collected
 
-		# both groups are Section Breaks
 		section_labels = {r.get("label") for r in items if r.get("type") == "Section Break"}
 		self.assertIn("Tender Management", section_labels)
 		self.assertIn("STD Administration", section_labels)
+		self.assertNotIn("Configuration", section_labels)
 
 		self.assertEqual(
 			children_of("Tender Management"),
 			[
-				"Procurement Packages",
 				"Tender Configurations",
-				"Tender Documents",
-				"Publications",
+				"Tenders",
 				"Bid Submissions",
 				"Evaluation",
 				"Awards",
@@ -123,12 +103,64 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 				"STD Library",
 				"STD Versions",
 				"Forms & Schemas",
-				"Import / Validation",
+				"Import Review",
 			],
 		)
 
+	def test_procurement_sidebar_planned_items_route_to_coming_soon(self):
+		path = os.path.join(
+			frappe.get_app_path("kentender_procurement"),
+			"workspace_sidebar",
+			"procurement.json",
+		)
+		with open(path, encoding="utf-8") as f:
+			data = json.load(f)
+		planned = {
+			"Home",
+			"Analytics",
+			"Bid Submissions",
+			"Evaluation",
+			"Awards",
+			"Contract Management",
+			"STD Versions",
+		}
+		for row in data.get("items") or []:
+			label = row.get("label") or ""
+			if label not in planned:
+				continue
+			self.assertEqual(row.get("link_type"), "Page")
+			self.assertEqual(row.get("link_to"), "coming-soon")
+			self.assertIn(label, row.get("route_options") or "")
+
+	def test_std_administration_has_no_url_hash_placeholders(self):
+		"""URL/# links always open a new tab in Frappe — STD Admin must use Page routes."""
+		path = os.path.join(
+			frappe.get_app_path("kentender_procurement"),
+			"workspace_sidebar",
+			"procurement.json",
+		)
+		with open(path, encoding="utf-8") as f:
+			data = json.load(f)
+		in_std = False
+		for row in data.get("items") or []:
+			if row.get("type") == "Section Break" and row.get("label") == "STD Administration":
+				in_std = True
+				continue
+			if in_std and row.get("type") == "Section Break":
+				break
+			if not in_std or int(row.get("child") or 0) != 1:
+				if in_std and row.get("type") == "Link" and int(row.get("child") or 0) != 1:
+					break
+				continue
+			self.assertEqual(
+				(row.get("link_type") or "").lower(),
+				"page",
+				msg=f"STD Administration child {row.get('label')!r} must be a Page link (not URL)",
+			)
+			self.assertNotEqual((row.get("url") or "").strip(), "#")
+
 	def test_procurement_sidebar_drops_flat_spine_duplicates(self):
-		"""Redundant flat spine links must not reappear as top-level rows."""
+		"""Redundant / retired flat spine links must not reappear."""
 		path = os.path.join(
 			frappe.get_app_path("kentender_procurement"),
 			"workspace_sidebar",
@@ -137,8 +169,20 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 		with open(path, encoding="utf-8") as f:
 			data = json.load(f)
 		labels = {row.get("label") for row in data.get("items") or []}
-		for dropped in ("My Work", "Bid Opening", "Evaluation & Award", "Evidence & Audit"):
-			self.assertNotIn(dropped, labels, msg=f"{dropped!r} should be superseded by the grouped IA")
+		for dropped in (
+			"My Work",
+			"Bid Opening",
+			"Evaluation & Award",
+			"Evidence & Audit",
+			"Procurement Journeys",
+			"Tender Management Hub",
+			"Configuration",
+			"Procurement Home",
+			"Demand Intake & Approval",
+			"Publications",
+			"Import / Validation",
+		):
+			self.assertNotIn(dropped, labels, msg=f"{dropped!r} should not appear in current IA")
 
 	def test_procurement_sidebar_workspace_targets_exist_on_site(self):
 		"""Soft gate: when the site has migrated, cross-check Workspace/Page names used by links."""

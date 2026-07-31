@@ -37,16 +37,17 @@ test.describe("Civic Ledger shell POC", () => {
 		await expect(nav).toHaveClass(/w-64/);
 		await expect(page.locator(KT_CL_SIDEBAR_BRAND)).toContainText(/Public Sector/i);
 
-		// 7 top-level links + 2 collapsible groups = 9 items.
-		await expect(nav.locator('[data-testid="kt-cl-nav-item"]')).toHaveCount(7);
+		// 8 top-level links + 2 collapsible groups = 10 items.
+		await expect(nav.locator('[data-testid="kt-cl-nav-item"]')).toHaveCount(8);
 		await expect(nav.locator(KT_CL_NAV_GROUP)).toHaveCount(2);
 
 		for (const label of [
-			"Procurement Home",
+			"Home",
 			"Analytics",
 			"Strategy Alignment",
 			"Budget & Funding",
-			"Demand Intake & Approval",
+			"Demands",
+			"Procurement Plans",
 			"Contract Management",
 			"Supplier Management",
 			"Tender Management",
@@ -55,9 +56,8 @@ test.describe("Civic Ledger shell POC", () => {
 			await expect(nav.getByText(label, { exact: true }).first()).toBeVisible();
 		}
 
-		// Active state on Procurement Home.
-		await expect(nav.getByText("Procurement Home", { exact: true }).first()).toBeVisible();
-		await expect(nav.locator("a.border-r-4.border-primary").first()).toContainText("Procurement Home");
+		await expect(nav.getByText("Home", { exact: true }).first()).toBeVisible();
+		await expect(nav.locator("a.border-r-4.border-primary").first()).toContainText("Home");
 
 		await expect(page.getByTestId("kt-cl-sidebar-settings")).toBeVisible();
 		await expect(page.getByTestId("kt-cl-sidebar-support")).toBeVisible();
@@ -66,13 +66,16 @@ test.describe("Civic Ledger shell POC", () => {
 	test("collapsible group toggles its children", async ({ page }) => {
 		await gotoKtClShellPoc(page);
 		const nav = page.locator(KT_CL_SIDENAV);
-		// Tender Management group has 7 children, STD Administration has 4 = 11 total, expanded by default.
-		await expect(nav.locator(KT_CL_NAV_CHILD)).toHaveCount(11);
-		await expect(nav.getByText("Procurement Packages", { exact: true })).toBeVisible();
+		// Tender Management group has 5 children, STD Administration has 4 = 9 total, expanded by default.
+		await expect(nav.locator(KT_CL_NAV_CHILD)).toHaveCount(9);
+		await expect(nav.getByText("Tender Configurations", { exact: true })).toBeVisible();
+		await expect(nav.getByText("Tenders", { exact: true })).toBeVisible();
+		await expect(nav.getByText("Import Review", { exact: true })).toBeVisible();
+		await expect(nav.getByText("Procurement Packages", { exact: true })).toHaveCount(0);
 
 		// Collapse Tender Management.
 		await nav.locator('[data-kt-cl-section="Tender Management"]').click();
-		await expect(nav.getByText("Procurement Packages", { exact: true })).toBeHidden();
+		await expect(nav.getByText("Tender Configurations", { exact: true })).toBeHidden();
 	});
 
 	test("rail collapses to an icon-only mini nav (native Desk pattern)", async ({ page }) => {

@@ -75,7 +75,7 @@ async function fillCompleteRequirement(page: import("@playwright/test").Page) {
 		.fill("Manufacturer datasheet required");
 	await page
 		.getByTestId("kt-cl-cfg03-drawer-delivery-method")
-		.fill("Commissioning test report");
+		.selectOption("Commissioning test report");
 }
 
 test.describe.configure({ mode: "serial" });
@@ -175,6 +175,29 @@ test.describe("CFG-03 IT Requirements", () => {
 		await page.getByTestId("kt-cl-cfg03-drawer-close").click();
 	});
 
+	test("drawer stays open on backdrop click so draft fields are not discarded", async ({
+		page,
+	}) => {
+		await openRequirements(page);
+		await page.getByTestId("kt-cl-cfg03-add").click();
+		const drawer = page.getByTestId("kt-cl-cfg03-drawer");
+		await expect(drawer).toBeVisible();
+		const overlay = page.getByTestId("kt-cl-cfg03-drawer-overlay");
+		await expect(overlay).toHaveAttribute("data-dismiss", "explicit-only");
+
+		const draftTitle = "Unsaved backdrop draft title";
+		await page.getByTestId("kt-cl-cfg03-drawer-title-input").fill(draftTitle);
+
+		// Click the dimmed backdrop (overlay itself), not the drawer panel.
+		await overlay.click({ position: { x: 8, y: 8 }, force: true });
+		await expect(drawer).toBeVisible();
+		await expect(page.getByTestId("kt-cl-cfg03-drawer-title-input")).toHaveValue(draftTitle);
+
+		// Explicit Cancel still closes.
+		await page.getByTestId("kt-cl-cfg03-drawer-cancel").click();
+		await expect(drawer).toHaveCount(0);
+	});
+
 	test("Drawer Save Requirement refreshes issues without footer Save", async ({ page }) => {
 		await openRequirements(page);
 
@@ -207,7 +230,9 @@ test.describe("CFG-03 IT Requirements", () => {
 		// Fix in drawer → issues refresh/hide without footer Save
 		await page.getByTestId("kt-cl-cfg03-table").getByRole("button", { name: /^Fix$/i }).click();
 		await expect(page.getByTestId("kt-cl-cfg03-drawer")).toBeVisible();
-		await page.getByTestId("kt-cl-cfg03-drawer-delivery-method").fill("Inspection at delivery");
+		await page
+			.getByTestId("kt-cl-cfg03-drawer-delivery-method")
+			.selectOption("Inspection at delivery");
 		await page.getByTestId("kt-cl-cfg03-drawer-save").click();
 		await expect(page.getByTestId("kt-cl-cfg03-drawer")).toHaveCount(0);
 		await expect(page.locator(".desk-alert .alert-message")).toContainText(
@@ -246,7 +271,7 @@ test.describe("CFG-03 IT Requirements", () => {
 		await page.getByTestId("kt-cl-confirm-ok").click();
 		await expect(page.getByText(/Requirement removed/i)).toBeVisible({ timeout: 15_000 });
 		await expect(page.getByTestId("kt-cl-cfg03-table")).not.toContainText(/REQ-001/);
-		await expect(page.getByTestId("kt-cl-cfg03-continue")).toBeDisabled();
+		await expect(page.getByTestId("kt-cl-cfg03-row-delete-REQ-001")).toHaveCount(0);
 	});
 
 	test("CFG-02 Continue lands on live IT Requirements page", async ({ page }) => {
