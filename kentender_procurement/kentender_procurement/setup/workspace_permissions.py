@@ -156,6 +156,14 @@ _KT_ROUTE_TO_SIDEBAR.update(
 		"coming-soon": "Procurement",
 		"publications": "Procurement",
 		"bid-submissions": "Procurement",
+		# Hub pages linked from the Procurement rail (Civic Ledger IA).
+		"demand-hub": "Procurement",
+		"create-demand": "Procurement",
+		"budget-hub": "Procurement",
+		"budget-workbench": "Procurement",
+		"planning-hub": "Procurement",
+		"strategy-builder": "Procurement",
+		"strategy-management": "Procurement",
 	}
 )
 

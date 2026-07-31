@@ -1182,7 +1182,8 @@
 		// completes first, then we restore the correct workspace navigation.
 		setTimeout(function () {
 			if (frappe.app && frappe.app.sidebar && typeof frappe.app.sidebar.setup === "function") {
-				frappe.app.sidebar.setup("Budget Management");
+				// Civic Ledger IA: keep the parent Procurement rail.
+				frappe.app.sidebar.setup("Procurement");
 			}
 		}, 0);
 		_mount(wrapper);

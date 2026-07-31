@@ -35,7 +35,7 @@
 	function _ensureSidebar() {
 		if (!_isBudgetRoute()) return;
 		if (frappe.app && frappe.app.sidebar && typeof frappe.app.sidebar.setup === "function") {
-			frappe.app.sidebar.setup("Budget Management");
+			frappe.app.sidebar.setup("Procurement");
 		}
 	}
 

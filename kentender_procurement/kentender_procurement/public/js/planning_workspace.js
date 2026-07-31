@@ -34,7 +34,7 @@
 	function _ensureSidebar() {
 		if (!_isPlanningHubRoute()) return;
 		if (frappe.app && frappe.app.sidebar && typeof frappe.app.sidebar.setup === "function") {
-			frappe.app.sidebar.setup("Procurement Planning");
+			frappe.app.sidebar.setup("Procurement");
 		}
 	}
 

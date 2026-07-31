@@ -1,6 +1,6 @@
 {
  "app": "kentender_procurement",
- "creation": "2026-07-31 11:43:31.220096",
+ "creation": "2026-07-31 13:00:12.687377",
  "docstatus": 0,
  "doctype": "Workspace Sidebar",
  "header_icon": "buying",
@@ -42,7 +42,8 @@
    "link_to": "Strategy Management",
    "link_type": "Workspace",
    "show_arrow": 0,
-   "type": "Link"
+   "type": "Link",
+   "url": "/desk/strategy-management"
   },
   {
    "child": 0,
@@ -54,7 +55,8 @@
    "link_to": "Budget Management",
    "link_type": "Workspace",
    "show_arrow": 0,
-   "type": "Link"
+   "type": "Link",
+   "url": "/desk/budget-hub"
   },
   {
    "child": 0,
@@ -66,7 +68,8 @@
    "link_to": "Demand Intake and Approval",
    "link_type": "Workspace",
    "show_arrow": 0,
-   "type": "Link"
+   "type": "Link",
+   "url": "/desk/demand-hub"
   },
   {
    "child": 0,
@@ -232,7 +235,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-07-31 11:43:31.220096",
+ "modified": "2026-07-31 13:00:12.687377",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "Procurement",

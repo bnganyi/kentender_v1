@@ -992,7 +992,8 @@
 		// See: .cursor/rules/frappe-custom-page-sidebar-pattern.mdc
 		setTimeout(function () {
 			if (frappe.app && frappe.app.sidebar && typeof frappe.app.sidebar.setup === "function") {
-				frappe.app.sidebar.setup("Demand Intake and Approval");
+				// Civic Ledger IA: keep the parent Procurement rail (not DIA-only).
+				frappe.app.sidebar.setup("Procurement");
 			}
 		}, 0);
 

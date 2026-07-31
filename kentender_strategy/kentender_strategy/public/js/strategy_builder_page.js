@@ -1664,7 +1664,7 @@ frappe.provide("kentender_strategy.strategy_builder");
 		   The class-name conflict that previously caused DOM wipes is fixed, so
 		   this is now safe to call here. */
 		if (setupSidebar && frappe.app && frappe.app.sidebar) {
-			frappe.app.sidebar.setup("Strategy Management");
+			frappe.app.sidebar.setup("Procurement");
 		}
 	}
 

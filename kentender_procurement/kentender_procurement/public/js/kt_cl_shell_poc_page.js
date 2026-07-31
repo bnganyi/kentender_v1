@@ -34,7 +34,7 @@
 			{
 				kind: "group",
 				label: "STD Administration",
-				icon: "admin_panel_settings",
+				icon: "menu_book",
 				children: [
 					{ label: "STD Library", route: ["std-library"] },
 					{ label: "STD Versions", route: ["coming-soon"] },

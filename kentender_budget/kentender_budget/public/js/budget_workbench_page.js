@@ -1934,7 +1934,7 @@
 		// Defer sidebar setup to next tick so Frappe's own reset completes first.
 		setTimeout(function () {
 			if (frappe.app && frappe.app.sidebar && typeof frappe.app.sidebar.setup === "function") {
-				frappe.app.sidebar.setup("Budget Management");
+				frappe.app.sidebar.setup("Procurement");
 			}
 		}, 0);
 

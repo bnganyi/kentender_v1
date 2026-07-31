@@ -1282,7 +1282,7 @@
 
     setTimeout(function () {
       if (frappe.app && frappe.app.sidebar && typeof frappe.app.sidebar.setup === "function") {
-        frappe.app.sidebar.setup("Demand Intake and Approval");
+        frappe.app.sidebar.setup("Procurement");
       }
     }, 0);
 

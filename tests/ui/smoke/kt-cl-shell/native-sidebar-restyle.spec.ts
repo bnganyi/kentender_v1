@@ -117,6 +117,64 @@ test.describe("Civic Ledger — native Workspace Sidebar restyle", () => {
 		expect(styles.iconFont).toContain("Material Symbols Outlined");
 	});
 
+	test("top-level icon columns align and section expanders stay chrome-free", async ({ page }) => {
+		await page.goto("/desk/coming-soon?feature=Home");
+		await expect(page.locator(NATIVE_RAIL)).toBeVisible({ timeout: 30_000 });
+
+		const layout = await page.evaluate(() => {
+			function labelLeft(id: string) {
+				const el = document.querySelector(
+					`.body-sidebar [data-id="${id}"] > .standard-sidebar-item .sidebar-item-label`
+				) as HTMLElement | null;
+				return el ? Math.round(el.getBoundingClientRect().left) : null;
+			}
+			function dropChrome(id: string) {
+				const drop = document.querySelector(
+					`.body-sidebar [data-id="${id}"] > .standard-sidebar-item .drop-icon`
+				) as HTMLElement | null;
+				if (!drop) return null;
+				const cs = getComputedStyle(drop);
+				return {
+					width: cs.width,
+					border: cs.border,
+					outlineStyle: cs.outlineStyle,
+					boxShadow: cs.boxShadow,
+					bg: cs.backgroundColor,
+				};
+			}
+			const stdBefore = getComputedStyle(
+				document.querySelector(
+					'.body-sidebar [data-id="STD Administration"] > .standard-sidebar-item .item-anchor'
+				) as Element,
+				"::before"
+			);
+			return {
+				homeLabel: labelLeft("Home"),
+				plansLabel: labelLeft("Procurement Plans"),
+				tmLabel: labelLeft("Tender Management"),
+				cmLabel: labelLeft("Contract Management"),
+				stdLabel: labelLeft("STD Administration"),
+				stdGlyph: stdBefore.content,
+				tmDrop: dropChrome("Tender Management"),
+				stdDrop: dropChrome("STD Administration"),
+			};
+		});
+
+		expect(layout.homeLabel).not.toBeNull();
+		expect(layout.tmLabel).toBe(layout.homeLabel);
+		expect(layout.stdLabel).toBe(layout.homeLabel);
+		expect(layout.cmLabel).toBe(layout.homeLabel);
+		expect(layout.plansLabel).toBe(layout.homeLabel);
+		expect(layout.stdGlyph).toContain("menu_book");
+		for (const drop of [layout.tmDrop, layout.stdDrop]) {
+			expect(drop).not.toBeNull();
+			expect(drop!.width).toBe("20px");
+			expect(drop!.border).toMatch(/none|0px/);
+			expect(drop!.outlineStyle).toBe("none");
+			expect(drop!.boxShadow).toBe("none");
+		}
+	});
+
 	test("Tender Management is a two-level group that collapses and expands natively", async ({ page }) => {
 		await page.goto("/desk/coming-soon?feature=Home");
 		await expect(page.locator(NATIVE_RAIL)).toBeVisible({ timeout: 30_000 });
@@ -163,6 +221,113 @@ test.describe("Civic Ledger — native Workspace Sidebar restyle", () => {
 		await page.goto("/desk/coming-soon?feature=Home");
 		await expect(page.getByTestId("kt-coming-soon")).toBeVisible({ timeout: 30_000 });
 		await expect(page.getByTestId("kt-coming-soon-title")).toHaveText("Home");
+	});
+
+	test("Planned items select only their own feature (not STD Versions)", async ({ page }) => {
+		await page.goto("/desk/coming-soon?feature=Home");
+		await expect(page.locator(NATIVE_RAIL)).toBeVisible({ timeout: 30_000 });
+
+		const home = page.locator(
+			`${NATIVE_RAIL} .sidebar-item-container[data-id="Home"] > .standard-sidebar-item`
+		);
+		const stdVersions = page.locator(
+			`${NATIVE_RAIL} .sidebar-item-container[data-id="STD Versions"] > .standard-sidebar-item`
+		);
+		await expect(home).toHaveClass(/active-sidebar/);
+		await expect(stdVersions).not.toHaveClass(/active-sidebar/);
+
+		await page.goto("/desk/coming-soon?feature=Analytics");
+		await expect(page.locator(NATIVE_RAIL)).toBeVisible({ timeout: 30_000 });
+		await expect(
+			page.locator(`${NATIVE_RAIL} .sidebar-item-container[data-id="Analytics"] > .standard-sidebar-item`)
+		).toHaveClass(/active-sidebar/);
+		await expect(stdVersions).not.toHaveClass(/active-sidebar/);
+	});
+
+	test("hub routes mark Demands / Plans / Budget active consistently", async ({ page }) => {
+		test.setTimeout(120_000);
+		await page.goto("/desk/demand-hub", { waitUntil: "domcontentloaded" });
+		await expect(page.locator(NATIVE_RAIL)).toBeVisible({ timeout: 30_000 });
+		// Hub pages restore Procurement via deferred sidebar.setup — wait for the spine.
+		await expect(
+			page.locator(`${NATIVE_RAIL} .sidebar-item-container[data-id="Demands"]`)
+		).toBeVisible({ timeout: 15_000 });
+		await expect(page.locator(`${NATIVE_RAIL} .sidebar-header .header-title`)).toHaveText(
+			/^\s*Procurement\s*$/i
+		);
+		await expect(
+			page.locator(`${NATIVE_RAIL} .sidebar-item-container[data-id="Demands"] > .standard-sidebar-item`)
+		).toHaveClass(/active-sidebar/, { timeout: 15_000 });
+
+		await page.goto("/desk/planning-hub");
+		await expect(
+			page.locator(`${NATIVE_RAIL} .sidebar-item-container[data-id="Procurement Plans"]`)
+		).toBeVisible({ timeout: 15_000 });
+		await expect(
+			page.locator(
+				`${NATIVE_RAIL} .sidebar-item-container[data-id="Procurement Plans"] > .standard-sidebar-item`
+			)
+		).toHaveClass(/active-sidebar/, { timeout: 15_000 });
+
+		await page.goto("/desk/budget-hub");
+		await expect(
+			page.locator(`${NATIVE_RAIL} .sidebar-item-container[data-id="Budget & Funding"]`)
+		).toBeVisible({ timeout: 15_000 });
+		await expect(
+			page.locator(
+				`${NATIVE_RAIL} .sidebar-item-container[data-id="Budget & Funding"] > .standard-sidebar-item`
+			)
+		).toHaveClass(/active-sidebar/, { timeout: 15_000 });
+
+		await page.goto("/desk/strategy-management");
+		await expect(
+			page.locator(
+				`${NATIVE_RAIL} .sidebar-item-container[data-id="Strategy Alignment"] > .standard-sidebar-item`
+			)
+		).toHaveClass(/active-sidebar/, { timeout: 15_000 });
+	});
+
+	test("section parents are bold only when a child is active", async ({ page }) => {
+		await page.goto("/desk/coming-soon?feature=Home");
+		await expect(page.locator(NATIVE_RAIL)).toBeVisible({ timeout: 30_000 });
+
+		const weightsQuiet = await page.evaluate(() => {
+			const tm = document.querySelector(
+				'.body-sidebar [data-id="Tender Management"] > .standard-sidebar-item .sidebar-item-label'
+			) as HTMLElement;
+			const std = document.querySelector(
+				'.body-sidebar [data-id="STD Administration"] > .standard-sidebar-item .sidebar-item-label'
+			) as HTMLElement;
+			return {
+				tm: tm ? getComputedStyle(tm).fontWeight : null,
+				std: std ? getComputedStyle(std).fontWeight : null,
+			};
+		});
+		expect(["400", "500"].includes(weightsQuiet.tm || "")).toBe(true);
+		expect(["400", "500"].includes(weightsQuiet.std || "")).toBe(true);
+
+		await page.goto("/desk/it-tender-configuration-dashboard");
+		await expect(page.locator(NATIVE_RAIL)).toBeVisible({ timeout: 30_000 });
+		await expect(
+			page.locator(
+				`${NATIVE_RAIL} .sidebar-item-container[data-id="Tender Configurations"] > .standard-sidebar-item`
+			)
+		).toHaveClass(/active-sidebar/);
+
+		const weightsActive = await page.evaluate(() => {
+			const tm = document.querySelector(
+				'.body-sidebar [data-id="Tender Management"] > .standard-sidebar-item .sidebar-item-label'
+			) as HTMLElement;
+			const std = document.querySelector(
+				'.body-sidebar [data-id="STD Administration"] > .standard-sidebar-item .sidebar-item-label'
+			) as HTMLElement;
+			return {
+				tm: tm ? getComputedStyle(tm).fontWeight : null,
+				std: std ? getComputedStyle(std).fontWeight : null,
+			};
+		});
+		expect(["600", "700", "bold"].includes(weightsActive.tm || "")).toBe(true);
+		expect(["400", "500"].includes(weightsActive.std || "")).toBe(true);
 	});
 
 	test("the native rail persists across navigation", async ({ page }) => {
