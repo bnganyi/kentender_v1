@@ -803,6 +803,10 @@
 			row.editable_here = existing.editable_here;
 			row.read_only_reason = existing.read_only_reason || "";
 			row.source_route = existing.source_route || "";
+			// Preserve STD binding — never drop structured keys on edit.
+			row.parameter_code = existing.parameter_code || "";
+			row.parameter_key = existing.parameter_key || "";
+			row.readiness_parameter_id = existing.readiness_parameter_id || "";
 			if (!isEditableHere(existing)) {
 				row.source_screen = existing.source_screen || row.source_screen;
 			}
@@ -835,6 +839,9 @@
 				editable_here: r.editable_here != null ? r.editable_here : 1,
 				read_only_reason: r.read_only_reason || "",
 				source_route: r.source_route || "",
+				parameter_code: r.parameter_code || "",
+				parameter_key: r.parameter_key || "",
+				readiness_parameter_id: r.readiness_parameter_id || "",
 			};
 		});
 	}
@@ -891,7 +898,8 @@
 		state.saving = true;
 		setDirty($root, state.dirty);
 		var payload = { contract_values: persistableItems() };
-		if (opts.runCheck && !(state.items || []).length) {
+		// Always merge STD-declared parameters on Run Check so blockers map to rows.
+		if (opts.runCheck) {
 			payload.hydrate = 1;
 		}
 		frappe.call({

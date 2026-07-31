@@ -18,7 +18,7 @@ test.describe("Civic Ledger — native Workspace Sidebar restyle", () => {
 	});
 
 	test("renders the native rail (not the custom #kt-cl-sidenav) with the Civic Ledger IA", async ({ page }) => {
-		await page.goto("/desk/coming-soon?feature=Home");
+		await page.goto("/desk/coming-soon?feature=Analytics", { waitUntil: "domcontentloaded" });
 		await expect(page.locator(NATIVE_RAIL)).toBeVisible({ timeout: 30_000 });
 
 		await expect(page.locator("#kt-cl-sidenav")).toHaveCount(0);
@@ -46,7 +46,7 @@ test.describe("Civic Ledger — native Workspace Sidebar restyle", () => {
 	});
 
 	test("shows Procurement / KenTender header with colored icon", async ({ page }) => {
-		await page.goto("/desk/coming-soon?feature=Home");
+		await page.goto("/desk/coming-soon?feature=Analytics", { waitUntil: "domcontentloaded" });
 		await expect(page.locator(NATIVE_RAIL)).toBeVisible({ timeout: 30_000 });
 
 		const header = page.locator(`${NATIVE_RAIL} .sidebar-header`);
@@ -82,7 +82,7 @@ test.describe("Civic Ledger — native Workspace Sidebar restyle", () => {
 	});
 
 	test("applies the Civic Ledger tokens (256px rail, navy active right-border + tint, Material icons)", async ({ page }) => {
-		await page.goto("/desk/coming-soon?feature=Home");
+		await page.goto("/desk/coming-soon?feature=Analytics", { waitUntil: "domcontentloaded" });
 		await expect(page.locator(NATIVE_RAIL)).toBeVisible({ timeout: 30_000 });
 
 		const styles = await page.evaluate(() => {
@@ -118,7 +118,7 @@ test.describe("Civic Ledger — native Workspace Sidebar restyle", () => {
 	});
 
 	test("top-level icon columns align and section expanders stay chrome-free", async ({ page }) => {
-		await page.goto("/desk/coming-soon?feature=Home");
+		await page.goto("/desk/coming-soon?feature=Analytics", { waitUntil: "domcontentloaded" });
 		await expect(page.locator(NATIVE_RAIL)).toBeVisible({ timeout: 30_000 });
 
 		const layout = await page.evaluate(() => {
@@ -176,7 +176,7 @@ test.describe("Civic Ledger — native Workspace Sidebar restyle", () => {
 	});
 
 	test("Tender Management is a two-level group that collapses and expands natively", async ({ page }) => {
-		await page.goto("/desk/coming-soon?feature=Home");
+		await page.goto("/desk/coming-soon?feature=Analytics", { waitUntil: "domcontentloaded" });
 		await expect(page.locator(NATIVE_RAIL)).toBeVisible({ timeout: 30_000 });
 
 		const result = await page.evaluate(() => {
@@ -217,29 +217,33 @@ test.describe("Civic Ledger — native Workspace Sidebar restyle", () => {
 		expect(result.connector).toBe("1px solid");
 	});
 
-	test("Planned Home opens the named capability overview", async ({ page }) => {
-		await page.goto("/desk/coming-soon?feature=Home");
-		await expect(page.getByTestId("kt-coming-soon")).toBeVisible({ timeout: 30_000 });
-		await expect(page.getByTestId("kt-coming-soon-title")).toHaveText("Home");
+	test("functional Home page is Available (not Planned coming-soon)", async ({ page }) => {
+		await page.goto("/desk/kt-procurement-home", { waitUntil: "domcontentloaded" });
+		await expect(page.getByTestId("kt-ph-root")).toBeVisible({ timeout: 30_000 });
+		await expect(page.getByTestId("kt-coming-soon")).toHaveCount(0);
+		const homeText = await page
+			.locator(`${NATIVE_RAIL} .sidebar-item-container[data-id="Home"]`)
+			.innerText();
+		expect(homeText).not.toMatch(/\bPlanned\b/);
 	});
 
 	test("Planned items select only their own feature (not STD Versions)", async ({ page }) => {
-		await page.goto("/desk/coming-soon?feature=Home");
+		await page.goto("/desk/coming-soon?feature=Analytics", { waitUntil: "domcontentloaded" });
 		await expect(page.locator(NATIVE_RAIL)).toBeVisible({ timeout: 30_000 });
 
-		const home = page.locator(
-			`${NATIVE_RAIL} .sidebar-item-container[data-id="Home"] > .standard-sidebar-item`
+		const analytics = page.locator(
+			`${NATIVE_RAIL} .sidebar-item-container[data-id="Analytics"] > .standard-sidebar-item`
 		);
 		const stdVersions = page.locator(
 			`${NATIVE_RAIL} .sidebar-item-container[data-id="STD Versions"] > .standard-sidebar-item`
 		);
-		await expect(home).toHaveClass(/active-sidebar/);
+		await expect(analytics).toHaveClass(/active-sidebar/);
 		await expect(stdVersions).not.toHaveClass(/active-sidebar/);
 
-		await page.goto("/desk/coming-soon?feature=Analytics");
+		await page.goto("/desk/coming-soon?feature=Evaluation");
 		await expect(page.locator(NATIVE_RAIL)).toBeVisible({ timeout: 30_000 });
 		await expect(
-			page.locator(`${NATIVE_RAIL} .sidebar-item-container[data-id="Analytics"] > .standard-sidebar-item`)
+			page.locator(`${NATIVE_RAIL} .sidebar-item-container[data-id="Evaluation"] > .standard-sidebar-item`)
 		).toHaveClass(/active-sidebar/);
 		await expect(stdVersions).not.toHaveClass(/active-sidebar/);
 	});
@@ -288,7 +292,7 @@ test.describe("Civic Ledger — native Workspace Sidebar restyle", () => {
 	});
 
 	test("section parents are bold only when a child is active", async ({ page }) => {
-		await page.goto("/desk/coming-soon?feature=Home");
+		await page.goto("/desk/coming-soon?feature=Analytics", { waitUntil: "domcontentloaded" });
 		await expect(page.locator(NATIVE_RAIL)).toBeVisible({ timeout: 30_000 });
 
 		const weightsQuiet = await page.evaluate(() => {
@@ -331,7 +335,7 @@ test.describe("Civic Ledger — native Workspace Sidebar restyle", () => {
 	});
 
 	test("the native rail persists across navigation", async ({ page }) => {
-		await page.goto("/desk/coming-soon?feature=Home");
+		await page.goto("/desk/coming-soon?feature=Analytics", { waitUntil: "domcontentloaded" });
 		await expect(page.locator(NATIVE_RAIL)).toBeVisible({ timeout: 30_000 });
 
 		await page.goto("/desk/planning-hub");

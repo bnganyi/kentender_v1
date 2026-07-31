@@ -1,8 +1,45 @@
 // Strategy Management workspace — Portfolio Hub with live backend wiring.
+// Stitch source: docs/misc/strategy_management_home_code.html
 (function () {
 	const WS_LABEL = "Strategy Management";
 	let bound = false;
 	let observer = null;
+
+	function ensureFonts() {
+		if (!document.getElementById("kt-sph-fonts")) {
+			const l = document.createElement("link");
+			l.id = "kt-sph-fonts";
+			l.rel = "stylesheet";
+			l.href =
+				"https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700" +
+				"&family=Manrope:wght@500;600;700;800" +
+				"&family=JetBrains+Mono:wght@500;600&display=swap";
+			document.head.appendChild(l);
+		}
+		if (!document.getElementById("kt-sph-icons")) {
+			const l = document.createElement("link");
+			l.id = "kt-sph-icons";
+			l.rel = "stylesheet";
+			l.href =
+				"https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap";
+			document.head.appendChild(l);
+		}
+	}
+
+	function userInitial() {
+		try {
+			let name = "";
+			if (typeof frappe !== "undefined" && frappe.boot && frappe.boot.user_info && frappe.session) {
+				const info = frappe.boot.user_info[frappe.session.user] || {};
+				name = info.fullname || info.name || frappe.session.user || "";
+			}
+			name = String(name).trim();
+			if (!name || name === "Guest") return "A";
+			return name.charAt(0).toUpperCase();
+		} catch (_) {
+			return "A";
+		}
+	}
 
 	function slug(v) {
 		return String(v || "")
@@ -416,8 +453,9 @@
 `;
 	}
 
-	/* ── Portfolio Hub shell skeleton (rendered immediately on mount) ── */
+	/* ── Portfolio Hub shell — Stitch: docs/misc/strategy_management_home_code.html ── */
 	function portfolioHubShellHtml() {
+		const initial = userInitial();
 		return `
 			<div class="kt-sph-shell" data-testid="strategy-portfolio-hub">
 				<header class="kt-sph-topbar" data-testid="sph-topbar">
@@ -429,69 +467,70 @@
 						</div>
 					</div>
 					<div class="kt-sph-topbar__right">
-						<button type="button" class="kt-sph-icon-btn"><span class="material-symbols-outlined">notifications</span></button>
-						<button type="button" class="kt-sph-icon-btn"><span class="material-symbols-outlined">history</span></button>
-						<div class="kt-sph-avatar"></div>
+						<button type="button" class="kt-sph-icon-btn" aria-label="Notifications"><span class="material-symbols-outlined">notifications</span></button>
+						<button type="button" class="kt-sph-icon-btn" aria-label="History"><span class="material-symbols-outlined">history</span></button>
+						<div class="kt-sph-avatar" data-testid="sph-user-avatar">${initial}</div>
 					</div>
 				</header>
 
-				<main class="kt-sph-main">
-					<div class="kt-sph-page-header">
-						<div>
-							<nav class="kt-sph-breadcrumb" data-testid="sph-breadcrumb">
-								<span>Portfolio</span>
-								<span class="material-symbols-outlined">chevron_right</span>
-								<span class="kt-sph-breadcrumb__active">Active Plans</span>
-							</nav>
-							<h1 class="kt-sph-page-title" data-testid="sph-page-title">Strategy Management</h1>
-						</div>
-						<div class="kt-sph-page-actions">
-							<button type="button" class="kt-sph-btn kt-sph-btn--outline">Export Portfolio</button>
-							<button type="button" class="kt-sph-btn kt-sph-btn--primary" data-testid="sph-create-plan-btn">
-								<span class="material-symbols-outlined">add</span>Create New Plan
-							</button>
-						</div>
-					</div>
+				<div class="kt-sph-body">
+					<div class="kt-sph-canvas" data-testid="sph-canvas">
+						<main class="kt-sph-main" data-testid="sph-main">
+							<div class="kt-sph-page-header">
+								<div>
+									<nav class="kt-sph-breadcrumb" data-testid="sph-breadcrumb">
+										<span>Portfolio</span>
+										<span class="material-symbols-outlined">chevron_right</span>
+										<span class="kt-sph-breadcrumb__active">Active Plans</span>
+									</nav>
+									<h1 class="kt-sph-page-title" data-testid="sph-page-title">Strategy Management</h1>
+								</div>
+								<div class="kt-sph-page-actions">
+									<button type="button" class="kt-sph-btn kt-sph-btn--outline">Export Portfolio</button>
+									<button type="button" class="kt-sph-btn kt-sph-btn--primary" data-testid="sph-create-plan-btn">
+										<span class="material-symbols-outlined">add</span> Create New Plan
+									</button>
+								</div>
+							</div>
 
-					<div class="kt-sph-metrics" data-testid="sph-metrics-grid" data-sph-metrics>
-						${skeletonKpiHtml()}
-					</div>
+							<div class="kt-sph-metrics" data-testid="sph-metrics-grid" data-sph-metrics>
+								${skeletonKpiHtml()}
+							</div>
 
-					<div class="kt-sph-plans-grid" data-testid="sph-plans-grid" data-sph-plans>
-						${skeletonCardsHtml()}
-					</div>
+							<div class="kt-sph-plans-grid" data-testid="sph-plans-grid" data-sph-plans>
+								${skeletonCardsHtml()}
+							</div>
+						</main>
 
-					<section class="kt-sph-activity-section">
-						<h3 class="kt-sph-section-heading">Lineage Activity</h3>
-						<div class="kt-sph-table-wrap">
-							<table class="kt-sph-table" data-testid="sph-activity-table" data-sph-activity>
-								<thead>
-									<tr><th>Time</th><th>Action</th><th>Plan</th><th>User</th></tr>
-								</thead>
-								<tbody data-sph-activity-body>
-									<tr><td colspan="4" class="kt-sph-td-muted kt-sph-loading-cell">Loading activity…</td></tr>
-								</tbody>
-							</table>
-						</div>
-					</section>
-				</main>
+						<aside class="kt-sph-aside" data-testid="sph-aside">
+							<div class="kt-sph-aside__hdr">
+								<h3 class="kt-sph-aside__title" data-testid="sph-activity-heading">Lineage Activity</h3>
+							</div>
+							<div class="kt-sph-timeline" data-testid="sph-activity-table" data-sph-activity-body>
+								<div class="kt-sph-tl-loading">Loading activity…</div>
+							</div>
+						</aside>
+					</div>
+				</div>
 			</div>
 		`;
 	}
 
 	function skeletonKpiHtml() {
 		return [
-			{ label: "Total Budget", value: "—", sub: "Loading…", subClass: "" },
-			{ label: "Active Programs", value: "—", sub: "Loading…", subClass: "" },
-			{ label: "Success Rate", value: "—", sub: "Loading…", subClass: "" },
-			{ label: "Draft Plans", value: "—", sub: "Loading…", subClass: "kt-sph-metric-sub--warn" },
+			{ label: "Total Budget", value: "—", sub: "Loading…", subClass: "", mono: true },
+			{ label: "Active Programs", value: "—", sub: "Loading…", subClass: "", mono: false },
+			{ label: "Success Rate", value: "—", sub: "Loading…", subClass: "", mono: false },
+			{ label: "Draft Plans", value: "—", sub: "Loading…", subClass: "kt-sph-metric-sub--warn", mono: false },
 		]
 			.map(
 				(k) => `
 			<div class="kt-sph-metric-card">
 				<p class="kt-sph-metric-label">${k.label}</p>
-				<h3 class="kt-sph-metric-value">${k.value}</h3>
-				${k.sub ? `<p class="kt-sph-metric-sub ${k.subClass}">${k.sub}</p>` : ""}
+				<div>
+					<div class="kt-sph-metric-value${k.mono ? " kt-sph-metric-value--mono" : ""}">${k.value}</div>
+					${k.sub ? `<p class="kt-sph-metric-sub ${k.subClass}">${k.sub}</p>` : ""}
+				</div>
 			</div>`
 			)
 			.join("");
@@ -555,40 +594,40 @@
 
 		const footer = isDraft
 			? `<div class="kt-sph-draft-hint">
-					<span class="material-symbols-outlined kt-sph-draft-hint__icon">edit_note</span>
+					<span class="material-symbols-outlined kt-sph-draft-hint__icon">edit_square</span>
 					<span class="kt-sph-draft-hint__text">Last edited ${modifiedStr}</span>
 				</div>
-				<a href="#" class="kt-sph-card-cta" data-testid="sph-plan-cta" data-plan="${encodeURIComponent(plan.name)}">Continue Setup <span class="material-symbols-outlined">edit</span></a>`
+				<a href="#" class="kt-sph-card-cta" data-testid="sph-plan-cta" data-plan="${encodeURIComponent(plan.name)}" aria-label="Continue setup for ${title}">Continue Setup <span class="material-symbols-outlined">arrow_forward</span></a>`
 			: `<div class="kt-sph-avatar-stack">
 					<span class="kt-sph-avatar kt-sph-avatar--slate-300"></span>
 					<span class="kt-sph-avatar kt-sph-avatar--slate-400"></span>
 				</div>
-				<a href="#" class="kt-sph-card-cta" data-testid="sph-plan-cta" data-plan="${encodeURIComponent(plan.name)}">View Workbench <span class="material-symbols-outlined">arrow_forward</span></a>`;
+				<a href="#" class="kt-sph-card-cta" data-testid="sph-plan-cta" data-plan="${encodeURIComponent(plan.name)}" aria-label="View workbench for ${title}">View Workbench <span class="material-symbols-outlined">arrow_forward</span></a>`;
 
 		return `
 			<div class="kt-sph-plan-card" data-testid="sph-plan-card" data-plan-name="${encodeURIComponent(plan.name)}">
-				<div class="kt-sph-card-header">
-					<div>
+				<div class="kt-sph-card-main">
+					<div class="kt-sph-card-header">
 						<div class="kt-sph-card-header__row">
 							<span class="kt-sph-chip ${chipClass(status)}">${status}</span>
 							${fyLabel ? `<span class="kt-sph-fiscal-year">${fyLabel}</span>` : ""}
 						</div>
-						<h3 class="kt-sph-card-title">${title}</h3>
+						<button type="button" class="kt-sph-icon-btn" aria-label="More actions"><span class="material-symbols-outlined">more_vert</span></button>
 					</div>
-					<button type="button" class="kt-sph-icon-btn"><span class="material-symbols-outlined">more_vert</span></button>
-				</div>
-				<div class="kt-sph-card-body">
-				<div class="kt-sph-stat">
-					<p class="kt-sph-stat-label">Budget</p>
-					<p class="kt-sph-stat-value">${fmtBudget(budget)}</p>
-				</div>
-					<div class="kt-sph-stat">
-						<p class="kt-sph-stat-label">Programs</p>
-						<p class="kt-sph-stat-value">${programs}</p>
-					</div>
-					<div class="kt-sph-stat">
-						<p class="kt-sph-stat-label">Objectives</p>
-						<p class="kt-sph-stat-value">${objectives}</p>
+					<h3 class="kt-sph-card-title">${title}</h3>
+					<div class="kt-sph-card-body">
+						<div class="kt-sph-stat">
+							<p class="kt-sph-stat-label">Budget</p>
+							<p class="kt-sph-stat-value kt-sph-stat-value--mono">${fmtBudget(budget)}</p>
+						</div>
+						<div class="kt-sph-stat">
+							<p class="kt-sph-stat-label">Programs</p>
+							<p class="kt-sph-stat-value">${programs}</p>
+						</div>
+						<div class="kt-sph-stat">
+							<p class="kt-sph-stat-label">Objectives</p>
+							<p class="kt-sph-stat-value">${objectives}</p>
+						</div>
 					</div>
 				</div>
 				<div class="kt-sph-card-footer${isDraft ? " kt-sph-card-footer--draft" : ""}">
@@ -598,13 +637,14 @@
 	}
 
 	function emptyStateCardHtml() {
+		/* Shown only when the plan grid is empty (no plans / no search matches). */
 		return `
 			<div class="kt-sph-plan-card kt-sph-plan-card--empty" data-testid="sph-create-new-card">
 				<div class="kt-sph-empty-icon-wrap">
 					<span class="material-symbols-outlined">add</span>
 				</div>
 				<h4 class="kt-sph-empty-title">Create New Strategy</h4>
-				<p class="kt-sph-empty-text">Define a new planning horizon and budget lineage</p>
+				<p class="kt-sph-empty-text">Define a new planning horizon and budget lineage.</p>
 			</div>`;
 	}
 
@@ -623,40 +663,54 @@
 			const totalBudget = portfolio.total_budget || 0;
 			const successRate = portfolio.success_rate || 0;
 			const dataCoverage = portfolio.data_coverage || 0;
+			const successSub = successRate
+				? `Weighted achievement${dataCoverage ? `. Data coverage: ${dataCoverage}%` : ""}`
+				: "No KPI targets with actuals yet";
 			metricsEl.innerHTML = `
 				<div class="kt-sph-metric-card">
 					<p class="kt-sph-metric-label">Total Budget</p>
-					<h3 class="kt-sph-metric-value">${fmtBudget(totalBudget)}</h3>
-					<p class="kt-sph-metric-sub">${totalBudget ? "Sum of linked demands" : "No linked demands yet"}</p>
+					<div>
+						<div class="kt-sph-metric-value kt-sph-metric-value--mono">${fmtBudget(totalBudget)}</div>
+						<p class="kt-sph-metric-sub">${totalBudget ? "Sum of linked demands" : "No linked demands yet"}</p>
+					</div>
 				</div>
 				<div class="kt-sph-metric-card">
 					<p class="kt-sph-metric-label">Active Programs</p>
-					<h3 class="kt-sph-metric-value">${totalPrograms}</h3>
-					<p class="kt-sph-metric-sub">Across ${activeCount} Active Plan${activeCount !== 1 ? "s" : ""}</p>
+					<div>
+						<div class="kt-sph-metric-value">${totalPrograms}</div>
+						<p class="kt-sph-metric-sub">Across ${activeCount} Active Plan${activeCount !== 1 ? "s" : ""}</p>
+					</div>
 				</div>
 				<div class="kt-sph-metric-card">
 					<p class="kt-sph-metric-label">Success Rate</p>
-					<h3 class="kt-sph-metric-value">${successRate ? successRate + "%" : "—"}</h3>
-					<p class="kt-sph-metric-sub">${successRate ? "Weighted achievement across active plans" : "No KPI targets with actuals yet"}</p>
-					${dataCoverage ? `<p class="kt-sph-metric-sub kt-sph-metric-sub--coverage">Data coverage: ${dataCoverage}%</p>` : ""}
-				</div>				<div class="kt-sph-metric-card">
+					<div>
+						<div class="kt-sph-metric-value">${successRate ? successRate + "%" : "—"}</div>
+						<p class="kt-sph-metric-sub">${successSub}</p>
+					</div>
+				</div>
+				<div class="kt-sph-metric-card">
 					<p class="kt-sph-metric-label">Draft Plans</p>
-					<h3 class="kt-sph-metric-value">${draftCount}</h3>
-					<p class="kt-sph-metric-sub kt-sph-metric-sub--warn">${draftCount > 0 ? "Awaiting Review" : `${totalPlans} plan${totalPlans !== 1 ? "s" : ""} total`}</p>
+					<div>
+						<div class="kt-sph-metric-value">${draftCount}</div>
+						<p class="kt-sph-metric-sub kt-sph-metric-sub--warn">${draftCount > 0 ? "Awaiting Review" : `${totalPlans} plan${totalPlans !== 1 ? "s" : ""} total`}</p>
+					</div>
 				</div>`;
 		}
 
-		/* Plan cards */
+		/* Plan cards — Stitch shows plan cards only; empty card when none */
 		const plansEl = shell.querySelector("[data-sph-plans]");
 		if (plansEl) {
-			const cardsHtml = plans.map((p) => planCardHtml(p)).join("");
-			plansEl.innerHTML = cardsHtml + emptyStateCardHtml();
+			if (plans.length === 0) {
+				plansEl.innerHTML = emptyStateCardHtml();
+			} else {
+				plansEl.innerHTML = plans.map((p) => planCardHtml(p)).join("");
+			}
 		}
 
-		/* Activity table body — populated by parallel loadPortfolioActivity call */
+		/* Activity rail — populated by parallel loadPortfolioActivity call */
 		const activityBody = shell.querySelector("[data-sph-activity-body]");
 		if (activityBody) {
-			activityBody.innerHTML = `<tr><td colspan="4" class="kt-sph-td-muted kt-sph-loading-cell">Loading activity…</td></tr>`;
+			activityBody.innerHTML = `<div class="kt-sph-tl-loading">Loading activity…</div>`;
 		}
 
 		/* Client-side search */
@@ -678,7 +732,11 @@
 						return title.includes(term) || status.includes(term) || fy.includes(term);
 				  })
 				: allPlans;
-			grid.innerHTML = matched.map(planCardHtml).join("") + emptyStateCardHtml();
+			if (matched.length === 0) {
+				grid.innerHTML = emptyStateCardHtml();
+			} else {
+				grid.innerHTML = matched.map(planCardHtml).join("");
+			}
 		});
 	}
 
@@ -695,25 +753,36 @@
 			error: function () {
 				const plansEl = shell.querySelector("[data-sph-plans]");
 				if (plansEl) {
-					plansEl.innerHTML = `<div class="kt-sph-error-row">Could not load plans. Please refresh.</div>` + emptyStateCardHtml();
+					plansEl.innerHTML =
+						`<div class="kt-sph-error-row">Could not load plans. Please refresh.</div>` +
+						emptyStateCardHtml();
 				}
 			},
 		});
 	}
 
-	/* ── Activity helpers ── */
-	function activityRowHtml(item) {
+	/* ── Activity helpers (right-rail timeline) ── */
+	function activityItemHtml(item, isLast) {
 		const dot = item.dot_class || "slate";
 		const label = item.action || "Updated";
 		const plan = item.plan_name || "—";
 		const user = item.user || "—";
 		const time = prettyTime(item.time);
-		return `<tr>
-			<td class="kt-sph-td-muted">${time}</td>
-			<td><div class="kt-sph-action-cell"><span class="kt-sph-dot kt-sph-dot--${dot}"></span><span class="kt-sph-action-label">${label}</span></div></td>
-			<td>${plan}</td>
-			<td class="kt-sph-td-muted">${user}</td>
-		</tr>`;
+		return `<div class="kt-sph-tl-item" data-testid="sph-activity-item">
+			<div class="kt-sph-tl-rail">
+				<span class="kt-sph-dot kt-sph-dot--${dot}"></span>
+				${isLast ? "" : '<span class="kt-sph-tl-line"></span>'}
+			</div>
+			<div class="kt-sph-tl-body">
+				<div class="kt-sph-tl-action kt-sph-action-label">${label}</div>
+				<div class="kt-sph-tl-plan">${plan}</div>
+				<div class="kt-sph-tl-meta">
+					<span>${time}</span>
+					<span aria-hidden="true">•</span>
+					<span>${user}</span>
+				</div>
+			</div>
+		</div>`;
 	}
 
 	function loadPortfolioActivity(shell) {
@@ -726,15 +795,19 @@
 				if (!activityBody) return;
 				const rows = Array.isArray(r && r.message) ? r.message : [];
 				if (rows.length === 0) {
-					activityBody.innerHTML = `<tr><td colspan="4" class="kt-sph-td-muted">No activity recorded yet.</td></tr>`;
+					activityBody.innerHTML = `<div class="kt-sph-tl-empty">No activity recorded yet.</div>`;
 					return;
 				}
-				activityBody.innerHTML = rows.map(activityRowHtml).join("");
+				activityBody.innerHTML = rows
+					.map(function (item, idx) {
+						return activityItemHtml(item, idx === rows.length - 1);
+					})
+					.join("");
 			},
 			error: function () {
 				const activityBody = shell.querySelector("[data-sph-activity-body]");
 				if (activityBody) {
-					activityBody.innerHTML = `<tr><td colspan="4" class="kt-sph-td-muted">Could not load activity.</td></tr>`;
+					activityBody.innerHTML = `<div class="kt-sph-tl-empty">Could not load activity.</div>`;
 				}
 			},
 		});
@@ -746,6 +819,7 @@
 			document.querySelectorAll(".kt-strategy-injected-shell").forEach((el) => el.remove());
 			return;
 		}
+		ensureFonts();
 		document.body.classList.add("kt-strategy-shell");
 		const mount = resolveMount();
 		if (!mount) return;

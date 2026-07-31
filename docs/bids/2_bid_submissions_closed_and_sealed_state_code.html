@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KenTender - Closed & Sealed Bid Details</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&family=JetBrains+Mono:wght@500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Manrope:wght@100..900&display=swap" rel="stylesheet"/>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary": "#01629d",
+                    "surface-container-low": "#f4f3f9",
+                    "secondary-fixed-dim": "#99cbff",
+                    "on-background": "#1a1b20",
+                    "tertiary-fixed": "#d3e4ff",
+                    "inverse-primary": "#abc7ff",
+                    "on-surface": "#1a1b20",
+                    "on-primary": "#ffffff",
+                    "tertiary-container": "#26364b",
+                    "error": "#ba1a1a",
+                    "status-reserved": "#F59E0B",
+                    "on-error": "#ffffff",
+                    "surface-bright": "#f9f9fe",
+                    "on-secondary-container": "#004c7c",
+                    "primary-fixed": "#d7e2ff",
+                    "on-primary-fixed": "#001b3f",
+                    "status-available": "#10B981",
+                    "on-primary-fixed-variant": "#1d4681",
+                    "on-secondary-fixed-variant": "#004a78",
+                    "on-primary-container": "#7b9ee0",
+                    "surface-container-highest": "#e2e2e8",
+                    "error-container": "#ffdad6",
+                    "secondary-fixed": "#cfe5ff",
+                    "surface-container-high": "#e8e7ed",
+                    "status-committed": "#6366F1",
+                    "background": "#f9f9fe",
+                    "on-surface-variant": "#434750",
+                    "primary-fixed-dim": "#abc7ff",
+                    "surface-variant": "#e2e2e8",
+                    "primary-container": "#00346f",
+                    "on-tertiary-fixed": "#0b1c30",
+                    "surface": "#f9f9fe",
+                    "on-secondary": "#ffffff",
+                    "surface-container": "#eeedf3",
+                    "primary": "#001f48",
+                    "status-exhausted": "#EF4444",
+                    "outline": "#737781",
+                    "inverse-on-surface": "#f1f0f6",
+                    "on-tertiary-container": "#8f9fb8",
+                    "on-tertiary-fixed-variant": "#38485e",
+                    "tertiary-fixed-dim": "#b7c8e2",
+                    "secondary-container": "#7bbeff",
+                    "surface-tint": "#395e9b",
+                    "on-secondary-fixed": "#001d34",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary": "#26364b",
+                    "on-tertiary": "#ffffff",
+                    "inverse-surface": "#2f3035",
+                    "on-error-container": "#93000a",
+                    "surface-dim": "#dad9df",
+                    "outline-variant": "#c3c6d1"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "12px",
+                    "container-padding": "16px",
+                    "unit": "4px",
+                    "section-gap": "24px",
+                    "base-unit": "4px",
+                    "card-padding": "20px"
+            },
+            "fontFamily": {
+                    "data-mono": ["JetBrains Mono"],
+                    "body-lg": ["Inter"],
+                    "headline-lg": ["Manrope"],
+                    "label-caps": ["Inter"],
+                    "headline-md": ["Manrope"],
+                    "body-md": ["Inter"],
+                    "headline-sm": ["Manrope"]
+            },
+            "fontSize": {
+                    "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "headline-md": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .data-block-bg { background-color: #ffffff; }
+        .border-subtle { border-color: #E2E8F0; }
+        
+        /* Interactive hover effect for the main vault card */
+        .vault-card:hover .lock-icon {
+            transform: scale(1.1) rotate(-5deg);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-hidden h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-surface-container-lowest flex justify-between items-center px-container-padding h-16 w-full sticky top-0 z-50 border-b border-outline-variant">
+<div class="flex items-center gap-6">
+<span class="font-headline-md text-headline-md font-bold text-primary">KenTender</span>
+<div class="hidden md:flex items-center bg-surface-container-low px-3 py-1.5 rounded-lg border border-outline-variant">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px] mr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-64 p-0" placeholder="Search procurement..." type="text"/>
+</div>
+</div>
+<nav class="flex items-center gap-4">
+<div class="flex items-center gap-2 px-4 py-2 hover:bg-surface-container-low transition-colors cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+</div>
+<div class="flex items-center gap-2 px-4 py-2 hover:bg-surface-container-low transition-colors cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined text-on-surface-variant">help_outline</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center border border-outline-variant">
+<span class="text-on-secondary-container text-xs font-bold">JD</span>
+</div>
+</nav>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar -->
+<aside class="flex flex-col h-full p-4 gap-2 border-r border-outline-variant bg-surface-container-low w-64 shrink-0 hidden md:flex">
+<div class="mb-6 px-2">
+<div class="flex items-center gap-3 mb-1">
+<div class="w-8 h-8 bg-primary rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary text-[20px]">account_balance</span>
+</div>
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">Procurement</span>
+</div>
+<span class="text-label-caps font-label-caps text-on-surface-variant opacity-70">Management Suite</span>
+</div>
+<nav class="flex flex-col gap-1 flex-1">
+<a class="flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined">assignment</span>
+<span class="font-label-caps text-label-caps">Planning</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-label-caps text-label-caps">Requisition</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 bg-secondary-container text-on-secondary-container rounded-lg font-bold scale-95" href="#">
+<span class="material-symbols-outlined">gavel</span>
+<span class="font-label-caps text-label-caps">Tendering</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-caps text-label-caps">Evaluation</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined">verified</span>
+<span class="font-label-caps text-label-caps">Award</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined">history_edu</span>
+<span class="font-label-caps text-label-caps">Contract Management</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-caps text-label-caps">Closeout</span>
+</a>
+</nav>
+<button class="mt-4 w-full bg-primary text-on-primary py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-transform hover:opacity-90 active:scale-95">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span class="font-label-caps text-label-caps">Create New Tender</span>
+</button>
+<div class="mt-auto flex flex-col gap-1 pt-4 border-t border-outline-variant">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-caps text-label-caps">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+<span class="font-label-caps text-label-caps">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 overflow-y-auto p-6 md:p-8">
+<div class="max-w-5xl mx-auto space-y-section-gap">
+<!-- Back Action -->
+<div class="flex items-center">
+<button class="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors font-body-md group">
+<span class="material-symbols-outlined group-hover:-translate-x-1 transition-transform">arrow_back</span>
+                        Back to Bid Submissions
+                    </button>
+</div>
+<!-- Main Header Block -->
+<header class="bg-surface-container-lowest p-card-padding rounded-lg border border-subtle shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+<div class="space-y-2">
+<div class="flex items-center gap-3">
+<span class="font-data-mono text-data-mono text-secondary bg-secondary-container/20 px-2 py-0.5 rounded border border-secondary-container/30">ICT-SRV-2026-004</span>
+<span class="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-bold bg-status-reserved/10 text-status-reserved border border-status-reserved/20">
+<span class="material-symbols-outlined text-[14px] mr-1" style="font-variation-settings: 'FILL' 1;">lock</span>
+                                Closed and sealed
+                            </span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Server Supply and Installation</h1>
+<p class="font-body-md text-on-surface-variant flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]">corporate_fare</span>
+                            ICT Authority
+                        </p>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 border-l-0 md:border-l border-outline-variant md:pl-8">
+<div class="space-y-1">
+<span class="text-label-caps font-label-caps text-on-surface-variant opacity-60 uppercase">Submission Deadline</span>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">calendar_today</span>
+<span class="font-data-mono text-data-mono">29 Jul 2026, 10:00 a.m.</span>
+</div>
+</div>
+<div class="space-y-1">
+<span class="text-label-caps font-label-caps text-on-surface-variant opacity-60 uppercase">Scheduled Opening</span>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">schedule</span>
+<span class="font-data-mono text-data-mono">29 Jul 2026, 10:30 a.m.</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Central Security Card (Data Block) -->
+<div class="bg-surface-container-lowest border border-subtle rounded-xl overflow-hidden shadow-sm">
+<div class="p-12 md:p-24 flex flex-col items-center text-center space-y-6 vault-card">
+<div class="relative">
+<div class="absolute inset-0 bg-secondary/5 rounded-full blur-2xl scale-150"></div>
+<div class="relative w-24 h-24 md:w-32 md:h-32 bg-surface-container-low rounded-full border border-outline-variant flex items-center justify-center shadow-inner lock-icon">
+<span class="material-symbols-outlined text-[48px] md:text-[64px] text-secondary" style="font-variation-settings: 'FILL' 1;">encrypted</span>
+</div>
+</div>
+<div class="max-w-md space-y-3">
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Bids remain sealed</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
+                                Submitted bids cannot be viewed until the authorised bid-opening process is completed.
+                            </p>
+</div>
+<!-- Action Zones -->
+<div class="flex flex-col items-center gap-8 w-full pt-6">
+<!-- User Role Switcher (Simulated Interaction) -->
+<div class="flex p-1 bg-surface-container rounded-lg border border-outline-variant">
+<button class="px-4 py-2 text-label-caps font-label-caps rounded-md bg-white shadow-sm text-primary transition-all" id="view-authorised" onclick="switchView('authorised')">Authorised View</button>
+<button class="px-4 py-2 text-label-caps font-label-caps text-on-surface-variant hover:text-on-surface transition-all" id="view-observer" onclick="switchView('observer')">Observer View</button>
+</div>
+<!-- Dynamic Action Content -->
+<div class="min-h-[80px] flex items-center justify-center w-full" id="action-container">
+<!-- Initial State: Authorised -->
+<div class="flex flex-col items-center gap-4 animate-in fade-in duration-500" id="authorised-actions">
+<button class="bg-primary text-on-primary px-8 py-4 rounded-lg font-bold flex items-center gap-3 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined">lock_open</span>
+                                        Open submitted bids
+                                    </button>
+<span class="text-xs font-label-caps text-on-surface-variant opacity-60">Session opens in 15:42</span>
+</div>
+<div class="hidden flex flex-col items-center gap-3 animate-in fade-in duration-500" id="observer-actions">
+<div class="flex items-center gap-3 text-secondary bg-secondary-container/10 px-6 py-3 rounded-full border border-secondary-container/20">
+<span class="material-symbols-outlined animate-spin" style="animation-duration: 3s;">schedule</span>
+<span class="font-body-lg font-semibold">Waiting for authorised bid opening...</span>
+</div>
+<p class="text-body-md text-on-surface-variant max-w-xs text-center">
+                                        The bid opening committee has not yet initiated the decryption sequence.
+                                    </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Info Banner -->
+<div class="bg-surface-container-low px-card-padding py-4 border-t border-subtle flex items-center justify-between">
+<div class="flex items-center gap-4">
+<span class="flex items-center gap-1.5 text-xs text-on-surface-variant font-medium">
+<span class="material-symbols-outlined text-[14px]">shield</span>
+                                AES-256 Encrypted
+                            </span>
+<span class="h-3 w-px bg-outline-variant"></span>
+<span class="flex items-center gap-1.5 text-xs text-on-surface-variant font-medium">
+<span class="material-symbols-outlined text-[14px]">verified_user</span>
+                                Tamper-proof logs active
+                            </span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-status-available animate-pulse"></span>
+<span class="text-xs font-data-mono text-on-surface-variant">System Status: Secure</span>
+</div>
+</div>
+</div>
+<!-- Supplemental Rules Section -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<div class="bg-surface-container-lowest border border-subtle p-card-padding rounded-lg space-y-3">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-[20px]">policy</span>
+<h3 class="font-headline-sm text-headline-sm">Opening Rules</h3>
+</div>
+<p class="text-body-md text-on-surface-variant">Minimum of two authorised officers required for decryption key submission during the scheduled session.</p>
+</div>
+<div class="bg-surface-container-lowest border border-subtle p-card-padding rounded-lg space-y-3">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-[20px]">visibility_off</span>
+<h3 class="font-headline-sm text-headline-sm">Privacy Protocol</h3>
+</div>
+<p class="text-body-md text-on-surface-variant">Identity of bidders and all financial information is strictly occluded until the electronic seal is officially broken.</p>
+</div>
+<div class="bg-surface-container-lowest border border-subtle p-card-padding rounded-lg space-y-3">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-[20px]">history</span>
+<h3 class="font-headline-sm text-headline-sm">Audit Trail</h3>
+</div>
+<p class="text-body-md text-on-surface-variant">Every attempt to access this vault is logged with timestamp, IP address, and cryptographic signature of the request.</p>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Micro-interaction Scripts -->
+<script>
+        function switchView(role) {
+            const authBtn = document.getElementById('view-authorised');
+            const obsBtn = document.getElementById('view-observer');
+            const authActions = document.getElementById('authorised-actions');
+            const obsActions = document.getElementById('observer-actions');
+
+            if (role === 'authorised') {
+                authBtn.classList.add('bg-white', 'shadow-sm', 'text-primary');
+                authBtn.classList.remove('text-on-surface-variant');
+                obsBtn.classList.remove('bg-white', 'shadow-sm', 'text-primary');
+                obsBtn.classList.add('text-on-surface-variant');
+                
+                authActions.classList.remove('hidden');
+                obsActions.classList.add('hidden');
+            } else {
+                obsBtn.classList.add('bg-white', 'shadow-sm', 'text-primary');
+                obsBtn.classList.remove('text-on-surface-variant');
+                authBtn.classList.remove('bg-white', 'shadow-sm', 'text-primary');
+                authBtn.classList.add('text-on-surface-variant');
+
+                obsActions.classList.remove('hidden');
+                authActions.classList.add('hidden');
+            }
+        }
+    </script>
+</body></html>

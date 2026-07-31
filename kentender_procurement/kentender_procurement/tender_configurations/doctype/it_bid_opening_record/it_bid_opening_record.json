@@ -1,0 +1,173 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-07-31 17:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "opening_ref",
+  "publication",
+  "configuration",
+  "configuration_ref",
+  "publication_ref",
+  "status",
+  "section_timing",
+  "scheduled_opening_datetime",
+  "opened_at",
+  "opened_by",
+  "register_completed_at",
+  "section_register",
+  "active_submission_ids",
+  "active_bid_count",
+  "section_audit",
+  "audit_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "opening_ref",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Opening Ref",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "publication",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Publication",
+   "options": "IT Tender Publication Record",
+   "reqd": 1,
+   "search_index": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "configuration",
+   "fieldtype": "Link",
+   "label": "Tender Configuration",
+   "options": "Tender Configuration",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "configuration_ref",
+   "fieldtype": "Data",
+   "label": "Configuration Ref",
+   "read_only": 1
+  },
+  {
+   "fieldname": "publication_ref",
+   "fieldtype": "Data",
+   "label": "Publication Ref",
+   "read_only": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Draft\nIn Progress\nCompleted",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_timing",
+   "fieldtype": "Section Break",
+   "label": "Opening Timing"
+  },
+  {
+   "fieldname": "scheduled_opening_datetime",
+   "fieldtype": "Datetime",
+   "label": "Scheduled Opening Datetime"
+  },
+  {
+   "fieldname": "opened_at",
+   "fieldtype": "Datetime",
+   "label": "Opened At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "opened_by",
+   "fieldtype": "Link",
+   "label": "Opened By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "register_completed_at",
+   "fieldtype": "Datetime",
+   "label": "Register Completed At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_register",
+   "fieldtype": "Section Break",
+   "label": "Register"
+  },
+  {
+   "fieldname": "active_submission_ids",
+   "fieldtype": "Long Text",
+   "label": "Active Submission Ids JSON",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "active_bid_count",
+   "fieldtype": "Int",
+   "label": "Active Bid Count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_audit",
+   "fieldtype": "Section Break",
+   "label": "Audit"
+  },
+  {
+   "fieldname": "audit_json",
+   "fieldtype": "Long Text",
+   "label": "Audit JSON",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-07-31 17:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Tender Configurations",
+ "name": "IT Bid Opening Record",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Purchase Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

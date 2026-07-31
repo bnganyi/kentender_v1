@@ -673,6 +673,33 @@ def submit_and_seal(bid_id: str) -> dict[str, Any]:
 	doc.seal_hash = seal_hash
 	doc.receipt_code = receipt
 	doc.receipt_issued_at = now
+	# Officer Bid Submissions: stamp publication + identity snapshot at seal.
+	pub_name = frappe.db.get_value(
+		"IT Tender Publication Record",
+		{"configuration": doc.configuration, "status": "Published"},
+		"name",
+	)
+	if pub_name:
+		doc.publication = pub_name
+	fot = responses.get("form_of_tender") if isinstance(responses, dict) else {}
+	if isinstance(fot, dict):
+		legal = cstr(
+			fot.get("tenderer_legal_name")
+			or fot.get("legal_name")
+			or fot.get("bidder_name")
+			or ""
+		).strip()
+		if legal:
+			doc.bidder_legal_name = legal
+	if not cstr(getattr(doc, "bidder_legal_name", None) or "").strip():
+		doc.bidder_legal_name = cstr(doc.bidder_label or "Tenderer")
+	if not cstr(getattr(doc, "offer_type", None) or "").strip():
+		doc.offer_type = "Main"
+	lots_sec = responses.get("lot_and_alternative_selection") if isinstance(responses, dict) else {}
+	if isinstance(lots_sec, dict):
+		lots = lots_sec.get("selected_lots") or lots_sec.get("lots") or []
+		if lots:
+			doc.lots_json = json.dumps(lots if isinstance(lots, list) else [lots])
 	_append_audit(doc, "sealed", {"seal_hash": seal_hash})
 	_append_audit(doc, "receipt_issued", {"receipt_code": receipt})
 	doc.save(ignore_permissions=True)

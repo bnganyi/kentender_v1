@@ -1,6 +1,6 @@
 {
  "app": "kentender_procurement",
- "creation": "2026-07-31 13:00:12.687377",
+ "creation": "2026-07-31 17:37:05.971862",
  "docstatus": 0,
  "doctype": "Workspace Sidebar",
  "header_icon": "buying",
@@ -13,9 +13,8 @@
    "indent": 0,
    "keep_closed": 0,
    "label": "Home",
-   "link_to": "coming-soon",
+   "link_to": "kt-procurement-home",
    "link_type": "Page",
-   "route_options": "{\"feature\": \"Home\"}",
    "show_arrow": 0,
    "type": "Link"
   },
@@ -123,9 +122,8 @@
    "indent": 0,
    "keep_closed": 0,
    "label": "Bid Submissions",
-   "link_to": "coming-soon",
+   "link_to": "bid-submissions",
    "link_type": "Page",
-   "route_options": "{\"feature\": \"Bid Submissions\"}",
    "show_arrow": 0,
    "type": "Link"
   },
@@ -235,7 +233,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-07-31 13:00:12.687377",
+ "modified": "2026-07-31 17:37:05.971862",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "Procurement",

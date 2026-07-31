@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KenTender - Procurement Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface": "#1a1b20",
+                        "on-tertiary-fixed-variant": "#38485e",
+                        "on-surface-variant": "#434750",
+                        "surface": "#f9f9fe",
+                        "primary-fixed": "#d7e2ff",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "secondary-fixed": "#cfe5ff",
+                        "background": "#f9f9fe",
+                        "secondary-fixed-dim": "#99cbff",
+                        "status-available": "#10B981",
+                        "surface-container": "#eceef0",
+                        "surface-container-highest": "#e2e2e8",
+                        "tertiary-fixed": "#d3e4ff",
+                        "status-reserved": "#F59E0B",
+                        "primary-container": "#00346f",
+                        "on-error-container": "#93000a",
+                        "surface-bright": "#f9f9fe",
+                        "tertiary": "#26364b",
+                        "on-secondary-fixed-variant": "#004a78",
+                        "on-primary-fixed": "#001b3f",
+                        "on-secondary-container": "#004c7c",
+                        "primary-fixed-dim": "#abc7ff",
+                        "inverse-on-surface": "#f1f0f6",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-container": "#8f9fb8",
+                        "on-error": "#ffffff",
+                        "primary": "#001f48",
+                        "status-exhausted": "#EF4444",
+                        "surface-dim": "#dad9df",
+                        "status-committed": "#6366F1",
+                        "tertiary-fixed-dim": "#b7c8e2",
+                        "secondary-container": "#7bbeff",
+                        "on-background": "#1a1b20",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary": "#01629d",
+                        "surface-container-high": "#e8e7ed",
+                        "on-primary-fixed-variant": "#1d4681",
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed": "#001d34",
+                        "tertiary-container": "#26364b",
+                        "inverse-primary": "#abc7ff",
+                        "surface-container-low": "#f4f3f9",
+                        "outline": "#737781",
+                        "inverse-surface": "#2f3035",
+                        "error-container": "#ffdad6",
+                        "surface-variant": "#e2e2e8",
+                        "on-primary": "#ffffff",
+                        "outline-variant": "#c3c6d1",
+                        "on-secondary": "#ffffff",
+                        "on-primary-container": "#7b9ee0",
+                        "surface-tint": "#395e9b",
+                        "border-subtle": "#E2E8F0"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "card-padding": "20px",
+                        "base-unit": "4px",
+                        "gutter": "12px",
+                        "container-padding": "16px",
+                        "section-gap": "24px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-sm": ["Manrope"],
+                        "headline-md": ["Manrope"],
+                        "data-mono": ["JetBrains Mono"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Manrope"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- TopNavBar -->
+<nav class="bg-surface-container-lowest dark:bg-surface-container-lowest text-primary dark:text-primary-fixed font-headline-sm text-headline-sm flex justify-between items-center px-container-padding h-16 w-full sticky top-0 z-50 border-b border-outline-variant">
+<div class="flex items-center gap-6">
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">KenTender</span>
+<div class="relative hidden md:flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-outline">search</span>
+<input class="pl-10 pr-4 py-1.5 bg-surface-container-low border border-outline-variant rounded-lg text-body-md focus:outline-none focus:border-primary w-64" placeholder="Search procurements..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors cursor-pointer">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors cursor-pointer">help_outline</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant cursor-pointer active:opacity-80">
+<img class="w-full h-full object-cover" data-alt="A professional corporate headshot of a middle-aged male procurement officer in a crisp white shirt, clean studio lighting with a neutral gray background, representing reliability and institutional trust for a procurement management system." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDaDVKfmqAWUVuspkDXfT2CXZ7CSQV3d-n_UI2pT9PyC_5KFRhsHXrJymgj65O7yRgW5vtf8Tu-C_3ujUeGmvMnzN89Asbkm_TcVott5I38GaHFYT2j8BJ-9Hqm5wywfhhdqQ3xWqoH3n2Ok9vlynUYCmB-RXQml08LBqeBWkaMyizCvnLdhl0VS380UCUywjCBAGvtiyqnWU9E18K5zVhCrJZL7q0hpcI2DpP5NQlwN60ulKXdUAYD9w"/>
+</div>
+</div>
+</nav>
+<div class="flex min-h-[calc(100vh-64px)]">
+<!-- SideNavBar -->
+<aside class="flex flex-col h-full p-4 gap-2 border-r border-outline-variant bg-surface-container-low dark:bg-surface-container-low fixed left-0 top-16 h-[calc(100vh-64px)] w-64">
+<div class="mb-6 px-2">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary">account_balance</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm font-bold text-on-surface leading-tight">Procurement</h2>
+<p class="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold">Management Suite</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Determining Active Tab: None exactly match "Procurement Home", but "Planning" or a custom dashboard icon would fit. Defaulting to Planning as the start of the cycle. -->
+<a class="flex items-center gap-3 px-3 py-2 bg-secondary-container dark:bg-secondary-container text-on-secondary-container dark:text-on-secondary-container rounded-lg font-bold transition-transform scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined">assignment</span>
+<span class="font-label-caps text-label-caps uppercase">Planning</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-label-caps text-label-caps uppercase">Requisition</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">gavel</span>
+<span class="font-label-caps text-label-caps uppercase">Tendering</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-caps text-label-caps uppercase">Evaluation</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">verified</span>
+<span class="font-label-caps text-label-caps uppercase">Award</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">history_edu</span>
+<span class="font-label-caps text-label-caps uppercase">Contract Management</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-caps text-label-caps uppercase">Closeout</span>
+</a>
+</nav>
+<button class="mt-4 w-full bg-primary text-on-primary py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+<span class="font-label-caps text-label-caps uppercase">Create New Tender</span>
+</button>
+<div class="mt-auto border-t border-outline-variant pt-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-caps text-label-caps uppercase">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+<span class="font-label-caps text-label-caps uppercase">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 w-full p-section-gap max-w-[1400px]">
+<!-- Header Section -->
+<header class="mb-8">
+<div class="flex justify-between items-end">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-primary mb-1">Procurement Home</h1>
+<p class="text-body-lg font-body-lg text-on-surface-variant">Review your procurement work, deadlines and portfolio.</p>
+</div>
+<div class="text-right flex gap-6">
+<div>
+<p class="text-[10px] uppercase font-bold text-outline tracking-widest">Procuring Entity</p>
+<p class="font-body-md text-on-surface font-semibold">National Treasury</p>
+</div>
+<div>
+<p class="text-[10px] uppercase font-bold text-outline tracking-widest">Financial Year</p>
+<p class="font-body-md text-on-surface font-semibold">2023/2024</p>
+</div>
+</div>
+</div>
+</header>
+<!-- Requires Your Action Section -->
+<section class="mb-section-gap"><div class="bg-surface-container-lowest border border-border-subtle rounded-lg overflow-hidden shadow-sm"><div class="px-card-padding py-4 border-b border-border-subtle bg-surface-container-low flex items-center justify-between"><h3 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2"><span class="material-symbols-outlined text-error">hub</span>Requires Your Action</h3><span class="px-2 py-1 bg-error-container text-on-error-container text-[11px] font-bold rounded uppercase tracking-tighter">0 Pending</span></div><div class="overflow-x-auto"><table class="w-full text-left border-collapse"><thead class="bg-surface-container text-on-surface-variant uppercase text-[11px] font-bold tracking-widest"><tr class="border-b border-border-subtle"><th class="px-card-padding py-3">Work item</th><th class="px-card-padding py-3">Procurement stage</th><th class="px-card-padding py-3">Action required</th><th class="px-card-padding py-3">Due date</th><th class="px-card-padding py-3 text-right">Action</th></tr></thead><tbody><tr><td class="px-card-padding py-12 text-center" colspan="5"><h4 class="font-headline-sm text-headline-sm text-on-surface mb-2">No actions require your attention</h4><p class="text-body-md font-body-md text-on-surface-variant">New approvals, returned work and other assigned actions will appear here.</p></td></tr></tbody></table></div></div></section>
+<!-- Procurement Pipeline Section -->
+<section class="mb-section-gap">
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg p-card-padding shadow-sm">
+<h3 class="font-headline-sm text-headline-sm text-primary mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined">hub</span>
+                        Procurement Pipeline
+                    </h3>
+<div class="grid grid-cols-1 md:grid-cols-6 gap-4 relative py-8">
+<div class="absolute top-[56px] left-8 right-8 h-0.5 bg-surface-container-highest z-0 hidden md:block"></div>
+<div class="relative z-10 flex flex-col items-center group cursor-pointer">
+<div class="w-12 h-12 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center mb-4 shadow-sm border-4 border-surface-container-lowest group-hover:scale-110 transition-transform"><span class="font-data-mono text-headline-sm">6</span></div>
+<span class="font-label-caps text-[10px] uppercase text-center text-primary font-bold">Demands under review</span>
+</div>
+<div class="relative z-10 flex flex-col items-center group cursor-pointer">
+<div class="w-12 h-12 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant flex items-center justify-center mb-4 border-4 border-surface-container-lowest group-hover:scale-110 transition-transform"><span class="font-data-mono text-headline-sm">4</span></div>
+<span class="font-label-caps text-[10px] uppercase text-center text-on-surface-variant group-hover:text-primary transition-colors">Approved demands awaiting planning</span>
+</div>
+<div class="relative z-10 flex flex-col items-center group cursor-pointer">
+<div class="w-12 h-12 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant flex items-center justify-center mb-4 border-4 border-surface-container-lowest group-hover:scale-110 transition-transform"><span class="font-data-mono text-headline-sm">5</span></div>
+<span class="font-label-caps text-[10px] uppercase text-center text-on-surface-variant group-hover:text-primary transition-colors">Plan items awaiting tender initiation</span>
+</div>
+<div class="relative z-10 flex flex-col items-center group cursor-pointer">
+<div class="w-12 h-12 rounded-full bg-status-reserved/10 text-status-reserved flex items-center justify-center mb-4 border-4 border-surface-container-lowest group-hover:scale-110 transition-transform"><span class="font-data-mono text-headline-sm">3</span></div>
+<span class="font-label-caps text-[10px] uppercase text-center text-on-surface-variant group-hover:text-primary transition-colors">Tenders in preparation</span>
+</div>
+<div class="relative z-10 flex flex-col items-center group cursor-pointer">
+<div class="w-12 h-12 rounded-full bg-status-available/10 text-status-available flex items-center justify-center mb-4 border-4 border-surface-container-lowest group-hover:scale-110 transition-transform"><span class="font-data-mono text-headline-sm">2</span></div>
+<span class="font-label-caps text-[10px] uppercase text-center text-on-surface-variant group-hover:text-primary transition-colors">Published and open</span>
+</div>
+<div class="relative z-10 flex flex-col items-center group cursor-pointer">
+<div class="w-12 h-12 rounded-full bg-surface-container text-outline flex items-center justify-center mb-4 border-4 border-surface-container-lowest group-hover:scale-110 transition-transform"><span class="font-data-mono text-headline-sm">1</span></div>
+<span class="font-label-caps text-[10px] uppercase text-center text-on-surface-variant group-hover:text-primary transition-colors">Closed awaiting next stage</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Two-Column Row -->
+<div class="grid grid-cols-1 gap-section-gap">
+<!-- Left Column: Upcoming Deadlines -->
+<section>
+<div class="bg-surface-container-lowest border border-border-subtle rounded-lg p-card-padding shadow-sm h-full">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+<span class="material-symbols-outlined">event_upcoming</span>
+                                Upcoming Deadlines
+                            </h3>
+<button class="text-[11px] font-bold text-primary uppercase hover:underline">View Calendar</button>
+</div>
+<div class="space-y-4"><div class="flex items-center gap-4 p-3 bg-surface rounded-lg border border-border-subtle group hover:border-primary transition-colors"><div class="flex flex-col items-center justify-center min-w-[50px] h-[50px] bg-error-container text-on-error-container rounded font-bold"><span class="text-[10px] uppercase">Jul</span><span class="text-lg leading-tight">31</span></div><div class="flex-1"><p class="font-body-md font-semibold text-on-surface">Bid submission deadline: ERP System Procurement</p><p class="text-[12px] text-on-surface-variant">11:00 AM • 7 hours remaining</p><button class="mt-1 text-[11px] font-bold text-primary uppercase hover:underline flex items-center gap-1">View tender<span class="material-symbols-outlined text-[14px]">open_in_new</span></button></div><span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">chevron_right</span></div><div class="flex items-center gap-4 p-3 bg-surface rounded-lg border border-border-subtle group hover:border-primary transition-colors"><div class="flex flex-col items-center justify-center min-w-[50px] h-[50px] bg-secondary-container text-on-secondary-container rounded font-bold"><span class="text-[10px] uppercase">Aug</span><span class="text-lg leading-tight">02</span></div><div class="flex-1"><p class="font-body-md font-semibold text-on-surface">Publication date: Office Furniture Framework</p><p class="text-[12px] text-on-surface-variant">2 days remaining</p><button class="mt-1 text-[11px] font-bold text-primary uppercase hover:underline flex items-center gap-1">View<span class="material-symbols-outlined text-[14px]">visibility</span></button></div><span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">chevron_right</span></div><div class="flex items-center gap-4 p-3 bg-surface rounded-lg border border-border-subtle group hover:border-primary transition-colors"><div class="flex flex-col items-center justify-center min-w-[50px] h-[50px] bg-surface-container-highest text-on-surface-variant rounded font-bold"><span class="text-[10px] uppercase">Aug</span><span class="text-lg leading-tight">04</span></div><div class="flex-1"><p class="font-body-md font-semibold text-on-surface">Plan approval deadline: ICT Equipment Plan</p><p class="text-[12px] text-on-surface-variant">4 days remaining</p><button class="mt-1 text-[11px] font-bold text-primary uppercase hover:underline flex items-center gap-1">Review<span class="material-symbols-outlined text-[14px]">rate_review</span></button></div><span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">chevron_right</span></div></div>
+</div>
+</section>
+<!-- Right Column: Portfolio Snapshot -->
+</div>
+</main>
+</div>
+<!-- Floating Action Button Context Check: Suppressed on Dashboard (aligned with instructions to focus on core home layout) -->
+<script>
+        // Micro-interaction for table rows
+        document.querySelectorAll('tbody tr').forEach(row => {
+            row.addEventListener('click', () => {
+                row.classList.add('scale-[0.99]');
+                setTimeout(() => row.classList.remove('scale-[0.99]'), 100);
+            });
+        });
+
+        // Simple observer for status bars
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.transform = 'scaleX(1)';
+                    entry.target.style.opacity = '1';
+                }
+            });
+        }, { threshold: 0.5 });
+
+        document.querySelectorAll('.h-full.bg-status-committed, .h-full.bg-secondary, .h-full.bg-status-reserved').forEach(bar => {
+            bar.style.transform = 'scaleX(0)';
+            bar.style.transformOrigin = 'left';
+            bar.style.transition = 'transform 1s cubic-bezier(0.16, 1, 0.3, 1)';
+            observer.observe(bar);
+        });
+    </script>
+</body></html>

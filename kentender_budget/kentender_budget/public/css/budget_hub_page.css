@@ -207,23 +207,76 @@ body.kt-bgt-shell .kt-bgt-workbench {
 .kt-bgt-body::-webkit-scrollbar { width: 6px; }
 .kt-bgt-body::-webkit-scrollbar-thumb { background: #c2c6d3; border-radius: 3px; }
 
-/* ── Content sections — 24px gap between each ───────────────────────────── */
+/* ── Stitch canvas: main column + 320px right rail (misc/budget_home_code) ─ */
+/* CSS grid (not flex) so the rail stays beside main inside the Desk content
+   width (viewport minus native Procurement sidebar). */
+.kt-bgt-canvas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  max-width: 96rem;
+  margin: 0 auto;
+  align-items: start;
+}
+
+@media (min-width: 1200px) {
+  .kt-bgt-canvas {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+}
+
+@media (min-width: 1400px) {
+  .kt-bgt-canvas {
+    grid-template-columns: minmax(0, 1fr) 320px;
+  }
+}
+
+.kt-bgt-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.kt-bgt-aside {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+@media (min-width: 1200px) {
+  .kt-bgt-aside {
+    position: sticky;
+    top: 0;
+  }
+}
+
+/* Legacy alias — keep selectors from older tests/CSS from breaking */
 .kt-bgt-sections {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  max-width: 1280px;
+  max-width: 96rem;
   margin: 0 auto;
 }
 
 /* ── Page header strip ───────────────────────────────────────────────────── */
 .kt-bgt-page-hdr {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   justify-content: space-between;
   gap: 16px;
   border-bottom: 1px solid #E2E8F0;
   padding-bottom: 24px;
+}
+
+@media (min-width: 768px) {
+  .kt-bgt-page-hdr {
+    flex-direction: row;
+    align-items: flex-end;
+  }
 }
 
 .kt-bgt-page-hdr > div:first-child {
@@ -392,16 +445,19 @@ body.kt-bgt-shell .kt-bgt-workbench {
 }
 
 .kt-bgt-kpi-label {
-  font-size: 11px;
+  /* Stitch label-caps: 12px / 16px / tracking 0.05em / weight 700 */
+  font-size: 12px;
   font-weight: 700;
+  line-height: 16px;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   color: #424751;
   margin-top: 16px;
 }
 
 .kt-bgt-kpi-value {
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  /* Stitch headline-md + data-mono */
+  font-family: 'JetBrains Mono', 'Manrope', monospace;
   font-size: 22px;
   font-weight: 800;
   line-height: 30px;
@@ -440,11 +496,9 @@ body.kt-bgt-shell .kt-bgt-workbench {
 
 .kt-bgt-guardrails-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 12px;
 }
-
-@media (max-width: 768px) { .kt-bgt-guardrails-grid { grid-template-columns: 1fr; } }
 
 .kt-bgt-guardrails-loading {
   display: flex;
@@ -521,14 +575,17 @@ body.kt-bgt-shell .kt-bgt-workbench {
 
 .kt-bgt-guardrail__action:hover { text-decoration: underline; }
 
-/* ── Main 2-col grid (table + movements) ─────────────────────────────────── */
-.kt-bgt-main-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 24px;
+/* ── Envelopes block (full-width in main column) ─────────────────────────── */
+.kt-bgt-envelopes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-@media (max-width: 1100px) { .kt-bgt-main-grid { grid-template-columns: 1fr; } }
+/* Legacy main-grid (unused after Stitch right-rail refactor) */
+.kt-bgt-main-grid {
+  display: contents;
+}
 
 /* ── Section heading ─────────────────────────────────────────────────────── */
 .kt-bgt-section-hdr {
@@ -554,10 +611,10 @@ body.kt-bgt-shell .kt-bgt-workbench {
 }
 
 .kt-bgt-filter-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   white-space: nowrap;
 }
 
@@ -604,11 +661,13 @@ body.kt-bgt-shell .kt-bgt-workbench {
 }
 
 .kt-bgt-table th {
-  padding: 14px 16px;
-  font-size: 11px;
+  /* Stitch: px-6 py-4 + label-caps */
+  padding: 16px 24px;
+  font-size: 12px;
   font-weight: 700;
+  line-height: 16px;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   color: #424751;
 }
 
@@ -620,11 +679,11 @@ body.kt-bgt-shell .kt-bgt-workbench {
 .kt-bgt-table tbody tr:last-child { border-bottom: none; }
 .kt-bgt-table tbody tr:hover { background: #f2f4f6; }
 
-.kt-bgt-table td { padding: 18px 16px; vertical-align: top; }
+.kt-bgt-table td { padding: 20px 24px; vertical-align: top; }
 /* Actions column — centred icon, minimal horizontal padding */
 .kt-bgt-table td:last-child,
 .kt-bgt-table th:last-child {
-  padding: 14px 8px;
+  padding: 16px 12px;
   vertical-align: middle;
   text-align: center;
 }
@@ -785,15 +844,16 @@ body.kt-bgt-shell .kt-bgt-workbench {
   position: relative;
 }
 
-/* Connector drawn only between real items — never when timeline is empty */
-.kt-bgt-tl-item + .kt-bgt-tl-item::after {
+/* Stitch continuous rail (misc/budget_home_code.html) — only when items exist */
+.kt-bgt-timeline:has(.kt-bgt-tl-item)::before {
   content: '';
   position: absolute;
   left: 11px;
-  top: -24px;   /* spans the gap between adjacent items */
-  height: 24px;
+  top: 8px;
+  bottom: 8px;
   width: 2px;
   background: #e6e8ea;
+  z-index: 0;
 }
 
 .kt-bgt-tl-item {

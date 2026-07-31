@@ -299,43 +299,55 @@ class TestPreviewPresentation(unittest.TestCase):
 		self.assertNotIn("Opening notes", html)
 
 	def test_scc_rejects_as_specified_and_renders_values(self):
+		reqs = [{"title": "All modules as specified in Part 2"}]
+		milestones = [
+			{
+				"name": "Commencement",
+				"expected_duration_value": "24",
+				"expected_duration_unit": "months",
+			}
+		]
 		block = assert_scc_values_complete(
-			[{"item_label": "Governing law", "value_or_obligation": "As specified"}]
+			[
+				{
+					"item_label": "Payment schedule",
+					"parameter_code": "IT-SCC-014",
+					"readiness_parameter_id": "payment",
+					"value_or_obligation": "As specified",
+				}
+			],
+			tds={"performance_security_required": "No"},
+			requirements=reqs,
+			milestones=milestones,
 		)
 		self.assertIsNotNone(block)
 		html, err = render_scc_section(
 			[
-				{"item_label": "Governing law", "value_or_obligation": "Laws of Kenya"},
 				{
-					"item_label": "Scope",
-					"value_or_obligation": "All modules as specified in Part 2",
-				},
-				{
-					"item_label": "Commencement",
-					"value_or_obligation": "Commencement within 14 days; 24 month implementation period",
-				},
-				{
-					"item_label": "Payment",
+					"item_label": "Payment schedule",
+					"parameter_code": "IT-SCC-014",
+					"readiness_parameter_id": "payment",
 					"value_or_obligation": "Milestone payment schedule",
 				},
 				{
-					"item_label": "Source code / escrow",
-					"value_or_obligation": "Source code escrow within 30 days",
-				},
-				{
-					"item_label": "Subcontracting",
-					"value_or_obligation": "Subcontracting requires prior written approval",
-				},
-				{"item_label": "SLA", "value_or_obligation": "P1 response 4 hours"},
-				{
-					"item_label": "Performance security",
+					"item_label": "Performance security percentage",
+					"parameter_code": "IT-SCC-029",
+					"readiness_parameter_id": "performance_security",
 					"value_or_obligation": "10% performance security",
 				},
-				{"item_label": "Warranty", "value_or_obligation": "12 month warranty"},
-			]
+				{
+					"item_label": "Warranty period",
+					"parameter_code": "IT-SCC-053",
+					"readiness_parameter_id": "warranty",
+					"value_or_obligation": "12 month warranty",
+				},
+			],
+			tds={},
+			requirements=reqs,
+			milestones=milestones,
 		)
 		self.assertIsNone(err)
-		self.assertIn("Laws of Kenya", html)
+		self.assertIn("Milestone payment schedule", html)
 		self.assertNotIn("As specified</td>", html)
 
 	def test_price_units_gate(self):

@@ -321,6 +321,53 @@ def list_publications(
 	}
 
 
+def _confirmed_package_publish_blockers(pub) -> list[str]:
+	"""Integrity gates that ordinary Publish enforces beyond form-field validation."""
+	errors: list[str] = []
+	if not pub.confirmed_package or not frappe.db.exists(
+		"Confirmed Tender Document Package", pub.confirmed_package
+	):
+		errors.append("Confirmed tender document is missing. Return the tender for correction.")
+		return errors
+	pkg = frappe.get_doc("Confirmed Tender Document Package", pub.confirmed_package)
+	if not pkg.bidder_submission_schema:
+		errors.append("Bidder submission setup is missing. Return the tender for correction.")
+	if not pkg.evaluation_schema:
+		errors.append("Evaluation setup is missing. Return the tender for correction.")
+	if not pkg.price_schedule_schema:
+		errors.append("Price schedule is missing. Return the tender for correction.")
+	if not pkg.forms_evidence_schema:
+		errors.append("Forms and evidence setup is missing. Return the tender for correction.")
+	if not pkg.document_hash:
+		errors.append("Tender integrity check failed. Return the tender for correction.")
+	return errors
+
+
+def _electronic_template_publish_gate() -> dict[str, Any]:
+	"""Platform electronic STD template must be Approved for ordinary (bidder-visible) publish."""
+	from kentender_procurement.tender_configurations.electronic_std_templates.validator import (
+		load_ppra_it_std_v1_approval,
+	)
+
+	approval = load_ppra_it_std_v1_approval()
+	status = cstr(approval.get("status") or "")
+	approved_by = cstr(approval.get("approved_by") or "").strip()
+	ready = status == "Approved" and bool(approved_by)
+	blocker = ""
+	if not ready:
+		blocker = (
+			"The electronic STD template is not Approved for publication "
+			f"(current status: {status or 'unknown'}). "
+			"This is a platform template approval gate, not a tender configuration step."
+		)
+	return {
+		"status": status,
+		"ready": 1 if ready else 0,
+		"approved_by": approved_by,
+		"blocker": blocker,
+	}
+
+
 def get_publication_setup(publication_id: str) -> dict[str, Any]:
 	publication_id = cstr(publication_id or "").strip()
 	if not publication_id or not frappe.db.exists(PUBLICATION_DOCTYPE, publication_id):
@@ -340,6 +387,11 @@ def get_publication_setup(publication_id: str) -> dict[str, Any]:
 	published_at = cstr(getattr(pub, "published_at", None) or "")
 	# Immediate publish must still expose the effective stamp after publish.
 	display_pub_dt = pub_dt or (published_at if status == PUBLICATION_STATUS_PUBLISHED else "")
+	template_gate = _electronic_template_publish_gate()
+	publish_blockers = list(_confirmed_package_publish_blockers(pub))
+	if template_gate.get("blocker"):
+		publish_blockers.append(cstr(template_gate["blocker"]))
+	status_allows_publish = status in (PUBLICATION_STATUS_READY, PUBLICATION_STATUS_SCHEDULED)
 	return {
 		"publication_id": pub.name,
 		"publication_ref": pub_ref,
@@ -374,7 +426,9 @@ def get_publication_setup(publication_id: str) -> dict[str, Any]:
 		},
 		"confirmed_package": pkg_dto,
 		"document_hash": cstr(pub.document_hash or ""),
-		"can_publish": 1 if status in (PUBLICATION_STATUS_READY, PUBLICATION_STATUS_SCHEDULED) else 0,
+		"electronic_template_approval": template_gate,
+		"publish_blockers": publish_blockers,
+		"can_publish": 1 if status_allows_publish and not publish_blockers else 0,
 		"can_return": 1 if status not in (PUBLICATION_STATUS_PUBLISHED, "Cancelled") else 0,
 		"context_links": {
 			"view_package_route": f"it-tender-package-review/{cfg.name}",
@@ -524,23 +578,11 @@ def publish_tender(
 		"activate_bidder_workspace": _activate_flag(pub),
 	}
 	errors = _validate_setup_payload(payload, for_publish=True)
-	# Integrity checks against confirmed package.
-	if not pub.confirmed_package or not frappe.db.exists(
-		"Confirmed Tender Document Package", pub.confirmed_package
-	):
-		errors.append("Confirmed tender document is missing. Return the tender for correction.")
-	else:
-		pkg = frappe.get_doc("Confirmed Tender Document Package", pub.confirmed_package)
-		if not pkg.bidder_submission_schema:
-			errors.append("Bidder submission setup is missing. Return the tender for correction.")
-		if not pkg.evaluation_schema:
-			errors.append("Evaluation setup is missing. Return the tender for correction.")
-		if not pkg.price_schedule_schema:
-			errors.append("Price schedule is missing. Return the tender for correction.")
-		if not pkg.forms_evidence_schema:
-			errors.append("Forms and evidence setup is missing. Return the tender for correction.")
-		if not pkg.document_hash:
-			errors.append("Tender integrity check failed. Return the tender for correction.")
+	errors.extend(_confirmed_package_publish_blockers(pub))
+	if not development_preview:
+		template_gate = _electronic_template_publish_gate()
+		if template_gate.get("blocker"):
+			errors.append(cstr(template_gate["blocker"]))
 
 	if errors:
 		frappe.throw(frappe._(errors[0]), title="PUBLICATION_VALIDATION")

@@ -107,6 +107,18 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 			],
 		)
 
+	def test_procurement_sidebar_home_routes_to_procurement_home_page(self):
+		path = os.path.join(
+			frappe.get_app_path("kentender_procurement"),
+			"workspace_sidebar",
+			"procurement.json",
+		)
+		with open(path, encoding="utf-8") as f:
+			data = json.load(f)
+		home = next(r for r in data.get("items") or [] if r.get("label") == "Home")
+		self.assertEqual(home.get("link_type"), "Page")
+		self.assertEqual(home.get("link_to"), "kt-procurement-home")
+
 	def test_procurement_sidebar_planned_items_route_to_coming_soon(self):
 		path = os.path.join(
 			frappe.get_app_path("kentender_procurement"),
@@ -116,9 +128,7 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 		with open(path, encoding="utf-8") as f:
 			data = json.load(f)
 		planned = {
-			"Home",
 			"Analytics",
-			"Bid Submissions",
 			"Evaluation",
 			"Awards",
 			"Contract Management",
@@ -126,6 +136,10 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 		}
 		for row in data.get("items") or []:
 			label = row.get("label") or ""
+			if label == "Bid Submissions":
+				self.assertEqual(row.get("link_type"), "Page")
+				self.assertEqual(row.get("link_to"), "bid-submissions")
+				continue
 			if label not in planned:
 				continue
 			self.assertEqual(row.get("link_type"), "Page")

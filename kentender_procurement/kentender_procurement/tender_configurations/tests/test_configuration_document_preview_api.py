@@ -167,7 +167,11 @@ class TestConfigurationDocumentPreviewApi(unittest.TestCase):
 		self.assertTrue(doc.it_publication_record)
 		pkg_doc = frappe.get_doc(PACKAGE_DOCTYPE, doc.confirmed_document_package)
 		self.assertEqual(pkg_doc.document_hash, conf.get("document_hash"))
-		self.assertTrue(pkg_doc.bidder_submission_schema or pkg_doc.evaluation_schema)
+		self.assertTrue(
+			cstr(pkg_doc.bidder_submission_schema or "").strip(),
+			"Confirm must compile bidder_submission_schema onto the package (F1 §3).",
+		)
+		self.assertTrue(cstr(pkg_doc.evaluation_schema or "").strip())
 		self.assertTrue(pkg_doc.contract_carry_forward)
 		self.assertTrue(pkg_doc.preview_confirmation)
 		pkg = json.loads(doc.publication_package)

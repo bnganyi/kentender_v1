@@ -165,6 +165,17 @@ def build_confirmed_package_from_doc(doc, *, preview_blob: dict[str, Any]) -> di
 		"preview_status": "Confirmed",
 	}
 
+	# F1 §3: bidder submission schema is a system-generated electronic response artifact
+	# compiled from CFG requirements/price/evaluation — not a separate PE configuration step.
+	# Always compile at confirm (same generation moment as the locked package), matching
+	# evaluation/price/forms which are snapshotted from live CFG fields here.
+	from kentender_procurement.tender_configurations.services.schema_compiler import (
+		persist_compiled_schema,
+	)
+
+	compiled_submission = persist_compiled_schema(doc.name)
+	bidder_submission_blob = _json_dump(compiled_submission) if compiled_submission else ""
+
 	return {
 		"configuration": doc.name,
 		"configuration_ref": cstr(doc.configuration_ref or doc.name),
@@ -174,7 +185,7 @@ def build_confirmed_package_from_doc(doc, *, preview_blob: dict[str, Any]) -> di
 		"package_status": PACKAGE_STATUS_CONFIRMED,
 		"document_hash": document_hash,
 		"tender_html": html_doc,
-		"bidder_submission_schema": cstr(getattr(doc, "bidder_submission_schema", None) or ""),
+		"bidder_submission_schema": bidder_submission_blob,
 		"evaluation_schema": _json_dump(_parse_blob(getattr(doc, "evaluation_setup", None))),
 		"price_schedule_schema": _json_dump(_parse_blob(getattr(doc, "price_schedule", None))),
 		"forms_evidence_schema": _json_dump(_parse_blob(getattr(doc, "forms_and_evidence", None))),

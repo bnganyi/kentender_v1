@@ -1503,6 +1503,14 @@ frappe.provide("kentender_core.cl_components");
 					: Math.round((complete / total) * 100);
 			if (isNaN(pct)) pct = 0;
 			pct = Math.max(0, Math.min(100, pct));
+			/* Never show 100% (or a full bar) while steps remain incomplete — matches
+			   "X of Y steps complete" and fixes CFG-09 still In progress at 100% conditions. */
+			if (complete < total && pct >= 100) {
+				pct = Math.round((complete / total) * 100);
+			}
+			if (complete < total) {
+				pct = Math.min(pct, 99);
+			}
 			return (
 				'<div class="kt-cl-ui01-progress" data-testid="kt-cl-ui01-progress">' +
 				'<p class="kt-cl-ui01-progress-label">' +

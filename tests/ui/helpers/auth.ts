@@ -19,10 +19,12 @@ export async function login(page: Page, username: string, password: string) {
 
 	const outcome = await Promise.race([
 		page.getByText(/Invalid Login/i).waitFor({ state: 'visible', timeout: 60_000 }).then(() => 'invalid' as const),
+		// Website/System Settings app_name is KenTender (was Frappe/ERPNext on older sites).
 		page
-			.getByRole('heading', { name: /Login to Frappe/i })
+			.getByRole('heading', { name: /Login to (KenTender|Frappe|ERPNext)/i })
 			.waitFor({ state: 'hidden', timeout: 60_000 })
 			.then(() => 'ok' as const),
+		page.waitForURL(/\/desk(\/|$)/, { timeout: 60_000 }).then(() => 'ok' as const),
 	]);
 
 	if (outcome === 'invalid') {

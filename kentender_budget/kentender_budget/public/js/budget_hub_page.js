@@ -170,115 +170,115 @@
     </div>
   </header>
 
-  <!-- ── SCROLLABLE BODY ──────────────────────────────────────────────────── -->
+  <!-- ── SCROLLABLE BODY — Stitch main canvas (misc/budget_home_code.html) ── -->
   <div class="kt-bgt-body">
-    <div class="kt-bgt-sections">
+    <div class="kt-bgt-canvas" data-testid="kt-bgt-canvas">
 
-      <!-- ── PAGE HEADER / BREADCRUMB ──────────────────────────────────────── -->
-      <div class="kt-bgt-page-hdr">
-        <div>
-          <nav class="kt-bgt-crumb">
-            <span>Portfolio</span>
-            <span class="kt-bgt-crumb-sep material-symbols-outlined">chevron_right</span>
-            <span class="kt-bgt-crumb-active">Active Budgets</span>
-          </nav>
-          <h1 class="kt-bgt-page-title">Budget Hub</h1>
-          <p class="kt-bgt-page-desc">Financial control layer for FY 2026/27. Manage envelopes, track reservations, and ensure strategic alignment across all procuring entities.</p>
-        </div>
-        <div class="kt-bgt-hdr-actions">
-          <button class="kt-bgt-btn-ghost" type="button">
-            <span class="material-symbols-outlined">download</span>
-            Export Report
-          </button>
-          <button class="kt-bgt-btn-primary" type="button" data-testid="kt-bgt-btn-create">
-            <span class="material-symbols-outlined">add_box</span>
-            Create Budget
-          </button>
-        </div>
-      </div>
+      <!-- MAIN COLUMN -->
+      <div class="kt-bgt-main" data-testid="kt-bgt-main">
 
-      <!-- ── KPI CARDS ─────────────────────────────────────────────────────── -->
-      <div class="kt-bgt-kpis" data-testid="kt-bgt-kpis">
-
-        <div class="kt-bgt-kpi-card" style="border-color:#E2E8F0" onmouseenter="this.style.borderColor='#00629d'" onmouseleave="this.style.borderColor='#E2E8F0'">
-          <div class="kt-bgt-kpi-card__top">
-            <span class="kt-bgt-kpi-icon" style="background:rgba(16,185,129,0.1)">
-              <span class="material-symbols-outlined" style="color:#10B981">account_balance_wallet</span>
-            </span>
-            <span class="kt-bgt-kpi-delta" data-testid="kt-bgt-kpi-delta-available" style="display:none"></span>
-          </div>
+        <!-- ── PAGE HEADER / BREADCRUMB ────────────────────────────────────── -->
+        <div class="kt-bgt-page-hdr">
           <div>
-            <p class="kt-bgt-kpi-label">Available Balance (KES)</p>
-            <h3 class="kt-bgt-kpi-value kt-bgt-kpi--loading" data-testid="kt-bgt-kpi-available">—</h3>
+            <nav class="kt-bgt-crumb">
+              <span>Portfolio</span>
+              <span class="kt-bgt-crumb-sep material-symbols-outlined">chevron_right</span>
+              <span class="kt-bgt-crumb-active">Active Budgets</span>
+            </nav>
+            <h1 class="kt-bgt-page-title">Budget Hub</h1>
+            <p class="kt-bgt-page-desc">Financial control layer for FY 2026/27. Manage envelopes, track reservations, and ensure strategic alignment across all procuring entities.</p>
           </div>
-          <p class="kt-bgt-kpi-footer">Unallocated funding envelope</p>
-        </div>
-
-        <div class="kt-bgt-kpi-card" onmouseenter="this.style.borderColor='#F59E0B'" onmouseleave="this.style.borderColor='#E2E8F0'">
-          <div class="kt-bgt-kpi-card__top">
-            <span class="kt-bgt-kpi-icon" style="background:rgba(245,158,11,0.1)">
-              <span class="material-symbols-outlined" style="color:#F59E0B">lock_clock</span>
-            </span>
-            <span class="kt-bgt-kpi-delta" data-testid="kt-bgt-kpi-delta-reserved" style="display:none"></span>
-          </div>
-          <div>
-            <p class="kt-bgt-kpi-label">Total Reserved</p>
-            <h3 class="kt-bgt-kpi-value kt-bgt-kpi--loading" data-testid="kt-bgt-kpi-reserved">—</h3>
-          </div>
-          <p class="kt-bgt-kpi-footer">Held for approved demands</p>
-        </div>
-
-        <div class="kt-bgt-kpi-card" onmouseenter="this.style.borderColor='#6366F1'" onmouseleave="this.style.borderColor='#E2E8F0'">
-          <div class="kt-bgt-kpi-card__top">
-            <span class="kt-bgt-kpi-icon" style="background:rgba(99,102,241,0.1)">
-              <span class="material-symbols-outlined" style="color:#6366F1">verified</span>
-            </span>
-            <span class="kt-bgt-kpi-delta" data-testid="kt-bgt-kpi-delta-committed" style="display:none"></span>
-          </div>
-          <div>
-            <p class="kt-bgt-kpi-label">Total Committed</p>
-            <h3 class="kt-bgt-kpi-value kt-bgt-kpi--loading" data-testid="kt-bgt-kpi-committed">—</h3>
-          </div>
-          <p class="kt-bgt-kpi-footer">Locked in active contracts</p>
-        </div>
-
-        <div class="kt-bgt-kpi-card" onmouseenter="this.style.borderColor='#00346f'" onmouseleave="this.style.borderColor='#E2E8F0'">
-          <div class="kt-bgt-kpi-card__top">
-            <span class="kt-bgt-kpi-icon" style="background:rgba(0,52,111,0.1)">
-              <span class="material-symbols-outlined" style="color:#00346f">rate_review</span>
-            </span>
-            <span class="kt-bgt-kpi-pulse"></span>
-          </div>
-          <div>
-            <p class="kt-bgt-kpi-label">Pending Approvals</p>
-            <h3 class="kt-bgt-kpi-value kt-bgt-kpi--loading" data-testid="kt-bgt-kpi-pending">—</h3>
-          </div>
-          <p class="kt-bgt-kpi-footer">Requires executive signature</p>
-        </div>
-
-      </div>
-
-      <!-- ── CRITICAL GUARDRAILS ────────────────────────────────────────────── -->
-      <section data-testid="kt-bgt-guardrails-section">
-        <div class="kt-bgt-guardrails__heading">
-          <span class="material-symbols-outlined">warning</span>
-          <h2>Critical Guardrails</h2>
-        </div>
-        <div class="kt-bgt-guardrails-grid" data-testid="kt-bgt-guardrails-grid">
-          <div class="kt-bgt-guardrails-loading">
-            <span class="material-symbols-outlined">pending</span> Checking guardrails…
+          <div class="kt-bgt-hdr-actions">
+            <button class="kt-bgt-btn-ghost" type="button">
+              <span class="material-symbols-outlined">download</span>
+              Export Report
+            </button>
+            <button class="kt-bgt-btn-primary" type="button" data-testid="kt-bgt-btn-create">
+              <span class="material-symbols-outlined">add_box</span>
+              Create Budget
+            </button>
           </div>
         </div>
-      </section>
 
-      <!-- ── ACTIVE BUDGETS + RECENT MOVEMENTS ─────────────────────────────── -->
-      <div class="kt-bgt-main-grid">
+        <!-- ── KPI CARDS ───────────────────────────────────────────────────── -->
+        <div class="kt-bgt-kpis" data-testid="kt-bgt-kpis">
 
-        <!-- Active Budget Envelopes table -->
-        <div>
+          <div class="kt-bgt-kpi-card" style="border-color:#E2E8F0" onmouseenter="this.style.borderColor='#00629d'" onmouseleave="this.style.borderColor='#E2E8F0'">
+            <div class="kt-bgt-kpi-card__top">
+              <span class="kt-bgt-kpi-icon" style="background:rgba(16,185,129,0.1)">
+                <span class="material-symbols-outlined" style="color:#10B981">account_balance_wallet</span>
+              </span>
+              <span class="kt-bgt-kpi-delta" data-testid="kt-bgt-kpi-delta-available" style="display:none"></span>
+            </div>
+            <div>
+              <p class="kt-bgt-kpi-label">Available Balance (KES)</p>
+              <h3 class="kt-bgt-kpi-value kt-bgt-kpi--loading" data-testid="kt-bgt-kpi-available">—</h3>
+            </div>
+            <p class="kt-bgt-kpi-footer">Unallocated funding envelope</p>
+          </div>
+
+          <div class="kt-bgt-kpi-card" onmouseenter="this.style.borderColor='#F59E0B'" onmouseleave="this.style.borderColor='#E2E8F0'">
+            <div class="kt-bgt-kpi-card__top">
+              <span class="kt-bgt-kpi-icon" style="background:rgba(245,158,11,0.1)">
+                <span class="material-symbols-outlined" style="color:#F59E0B">lock_clock</span>
+              </span>
+              <span class="kt-bgt-kpi-delta" data-testid="kt-bgt-kpi-delta-reserved" style="display:none"></span>
+            </div>
+            <div>
+              <p class="kt-bgt-kpi-label">Total Reserved</p>
+              <h3 class="kt-bgt-kpi-value kt-bgt-kpi--loading" data-testid="kt-bgt-kpi-reserved">—</h3>
+            </div>
+            <p class="kt-bgt-kpi-footer">Held for approved demands</p>
+          </div>
+
+          <div class="kt-bgt-kpi-card" onmouseenter="this.style.borderColor='#6366F1'" onmouseleave="this.style.borderColor='#E2E8F0'">
+            <div class="kt-bgt-kpi-card__top">
+              <span class="kt-bgt-kpi-icon" style="background:rgba(99,102,241,0.1)">
+                <span class="material-symbols-outlined" style="color:#6366F1">verified</span>
+              </span>
+              <span class="kt-bgt-kpi-delta" data-testid="kt-bgt-kpi-delta-committed" style="display:none"></span>
+            </div>
+            <div>
+              <p class="kt-bgt-kpi-label">Total Committed</p>
+              <h3 class="kt-bgt-kpi-value kt-bgt-kpi--loading" data-testid="kt-bgt-kpi-committed">—</h3>
+            </div>
+            <p class="kt-bgt-kpi-footer">Locked in active contracts</p>
+          </div>
+
+          <div class="kt-bgt-kpi-card" onmouseenter="this.style.borderColor='#00346f'" onmouseleave="this.style.borderColor='#E2E8F0'">
+            <div class="kt-bgt-kpi-card__top">
+              <span class="kt-bgt-kpi-icon" style="background:rgba(0,52,111,0.1)">
+                <span class="material-symbols-outlined" style="color:#00346f">rate_review</span>
+              </span>
+              <span class="kt-bgt-kpi-pulse"></span>
+            </div>
+            <div>
+              <p class="kt-bgt-kpi-label">Pending Approvals</p>
+              <h3 class="kt-bgt-kpi-value kt-bgt-kpi--loading" data-testid="kt-bgt-kpi-pending">—</h3>
+            </div>
+            <p class="kt-bgt-kpi-footer">Requires executive signature</p>
+          </div>
+
+        </div>
+
+        <!-- ── CRITICAL GUARDRAILS ──────────────────────────────────────────── -->
+        <section data-testid="kt-bgt-guardrails-section">
+          <div class="kt-bgt-guardrails__heading">
+            <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">warning</span>
+            <h2>Critical Guardrails</h2>
+          </div>
+          <div class="kt-bgt-guardrails-grid" data-testid="kt-bgt-guardrails-grid">
+            <div class="kt-bgt-guardrails-loading">
+              <span class="material-symbols-outlined">pending</span> Checking guardrails…
+            </div>
+          </div>
+        </section>
+
+        <!-- ── ACTIVE BUDGET ENVELOPES ─────────────────────────────────────── -->
+        <div class="kt-bgt-envelopes" data-testid="kt-bgt-envelopes">
           <div class="kt-bgt-section-hdr">
             <h2 class="kt-bgt-section-title">Active Budget Envelopes</h2>
-            <div class="kt-bgt-filter-wrap" data-testid="kt-bgt-entity-filter-wrap" style="display:none">
+            <div class="kt-bgt-filter-wrap" data-testid="kt-bgt-entity-filter-wrap">
               <span class="kt-bgt-filter-label">Filter by:</span>
               <select class="kt-bgt-filter-select" data-testid="kt-bgt-entity-filter">
                 <option value="">All Entities</option>
@@ -288,19 +288,19 @@
           <div class="kt-bgt-table-wrap">
             <table class="kt-bgt-table">
               <colgroup>
-                <col style="width:25%"><!-- Budget Name -->
-                <col style="width:27%"><!-- Allocation bar -->
-                <col style="width:22%"><!-- Available (KES) -->
-                <col style="width:16%"><!-- Status -->
-                <col style="width:10%"><!-- Actions -->
+                <col style="width:33%"><!-- Entity / Budget Name -->
+                <col style="width:28%"><!-- Consumption -->
+                <col style="width:18%"><!-- Available (KES) -->
+                <col style="width:14%"><!-- Status -->
+                <col style="width:7%"><!-- Actions -->
               </colgroup>
               <thead>
                 <tr>
-                  <th>Budget Name</th>
-                  <th>Obligation</th>
+                  <th>Entity / Budget Name</th>
+                  <th>Consumption</th>
                   <th>Available (KES)</th>
                   <th>Status</th>
-                  <th></th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody data-testid="kt-bgt-budget-tbody">
@@ -310,24 +310,33 @@
           </div>
         </div>
 
-        <!-- Recent Movements -->
-        <div class="kt-bgt-movements-panel">
-
-          <!-- Strategic Alignment Score — pinned at top -->
-          <div class="kt-bgt-alignment-card">
-            <div class="kt-bgt-alignment-card__content">
-              <h4 class="kt-bgt-alignment-card__label">Strategic Alignment Score</h4>
-              <div class="kt-bgt-alignment-card__score-row">
-                <span class="kt-bgt-alignment-card__score kt-bgt-kpi--loading"
-                      data-testid="kt-bgt-alignment-score">—</span>
-                <span class="kt-bgt-alignment-card__badge"
-                      data-testid="kt-bgt-alignment-badge"></span>
-              </div>
-              <p class="kt-bgt-alignment-card__sub"
-                 data-testid="kt-bgt-alignment-sub">Checking alignment…</p>
+        <!-- ── ANALYTICS ───────────────────────────────────────────────────── -->
+        <div class="kt-bgt-analytics-grid">
+          <div class="kt-bgt-analytics-card" data-testid="kt-bgt-funding-card">
+            <div class="kt-bgt-analytics-card__hdr">
+              <h3 class="kt-bgt-analytics-card__title">Funding Source Distribution</h3>
+              <span class="material-symbols-outlined kt-bgt-analytics-card__more" aria-hidden="true">more_horiz</span>
+            </div>
+            <div class="kt-bgt-donut-wrap" data-testid="kt-bgt-funding-donut-wrap">
+              <div class="kt-bgt-donut-loading">Loading…</div>
             </div>
           </div>
+          <div class="kt-bgt-analytics-card" data-testid="kt-bgt-velocity-card">
+            <div class="kt-bgt-analytics-card__hdr">
+              <h3 class="kt-bgt-analytics-card__title">Consumption Velocity</h3>
+              <span class="material-symbols-outlined kt-bgt-analytics-card__more" aria-hidden="true">more_horiz</span>
+            </div>
+            <div class="kt-bgt-bar-chart" data-testid="kt-bgt-velocity-chart">
+              <div class="kt-bgt-velocity-loading">Loading velocity…</div>
+            </div>
+          </div>
+        </div>
 
+      </div>
+
+      <!-- RIGHT RAIL — Recent Movements then Strategic Alignment (Stitch) -->
+      <aside class="kt-bgt-aside" data-testid="kt-bgt-aside">
+        <div class="kt-bgt-movements-panel">
           <div class="kt-bgt-section-hdr">
             <h2 class="kt-bgt-section-title">Recent Movements</h2>
             <button class="kt-bgt-view-all" type="button" data-testid="kt-bgt-movements-view-all">View All</button>
@@ -341,32 +350,20 @@
           </div>
         </div>
 
-      </div>
-
-      <!-- ── ANALYTICS ──────────────────────────────────────────────────────── -->
-      <div class="kt-bgt-analytics-grid">
-
-        <!-- Funding Source Distribution -->
-        <div class="kt-bgt-analytics-card" data-testid="kt-bgt-funding-card">
-          <div class="kt-bgt-analytics-card__hdr">
-            <h3 class="kt-bgt-analytics-card__title">Funding Source Distribution</h3>
-          </div>
-          <div class="kt-bgt-donut-wrap" data-testid="kt-bgt-funding-donut-wrap">
-            <div class="kt-bgt-donut-loading">Loading…</div>
-          </div>
-        </div>
-
-        <!-- Consumption Velocity -->
-        <div class="kt-bgt-analytics-card" data-testid="kt-bgt-velocity-card">
-          <div class="kt-bgt-analytics-card__hdr">
-            <h3 class="kt-bgt-analytics-card__title">Consumption Velocity</h3>
-          </div>
-          <div class="kt-bgt-bar-chart" data-testid="kt-bgt-velocity-chart">
-            <div class="kt-bgt-velocity-loading">Loading velocity…</div>
+        <div class="kt-bgt-alignment-card">
+          <div class="kt-bgt-alignment-card__content">
+            <h4 class="kt-bgt-alignment-card__label">Strategic Alignment Score</h4>
+            <div class="kt-bgt-alignment-card__score-row">
+              <span class="kt-bgt-alignment-card__score kt-bgt-kpi--loading"
+                    data-testid="kt-bgt-alignment-score">—</span>
+              <span class="kt-bgt-alignment-card__badge"
+                    data-testid="kt-bgt-alignment-badge"></span>
+            </div>
+            <p class="kt-bgt-alignment-card__sub"
+               data-testid="kt-bgt-alignment-sub">Checking alignment…</p>
           </div>
         </div>
-
-      </div>
+      </aside>
 
     </div>
   </div>
@@ -397,9 +394,8 @@
 		};
 		set("kt-bgt-kpi-available", _fmtFull(portfolio.available_sum));
 		set("kt-bgt-kpi-reserved",  _fmtFull(portfolio.reserved_sum));
-		// W1-02: committed is a Phase 2 field (contract commitments not yet wired);
-		// show a neutral dash until convert_to_commitment flows are active in UI.
-		set("kt-bgt-kpi-committed", "\u2013");
+		/* Stitch KPI card — show live committed_sum from Approved/Active portfolios */
+		set("kt-bgt-kpi-committed", _fmtFull(portfolio.committed_sum));
 		set("kt-bgt-kpi-pending",   String(portfolio.pending_approval_count || 0));
 
 		// W3-04: Strategic Alignment Score
@@ -451,18 +447,23 @@
 		const resPct  = Math.min(100, Math.round(bud.reserved_pct    || 0));
 		const hasOblig = comPct > 0 || resPct > 0;
 
+		const entityName = bud.procuring_entity_name || "";
 		const primaryLbl = bud.budget_name || bud.name || "—";
-		const subParts = [];
-		if (bud.fiscal_year)          subParts.push(bud.fiscal_year);
-		if (bud.strategic_plan_title) subParts.push(bud.strategic_plan_title);
-		const subLbl = subParts.join(" \u00b7 ");
+		let subLbl = "";
+		if (bud.strategic_plan_title) {
+			subLbl = "Strategy: " + bud.strategic_plan_title;
+		} else if (entityName) {
+			subLbl = entityName + (bud.fiscal_year ? " · " + bud.fiscal_year : "");
+		} else if (bud.fiscal_year) {
+			subLbl = String(bud.fiscal_year);
+		}
 
 		const barLegend = hasOblig
 			? `<div class="kt-bgt-bar-legend">
-				<span><span class="kt-bgt-dot" style="background:#6366F1"></span>Committed</span>
-				<span><span class="kt-bgt-dot" style="background:#F59E0B"></span>Reserved</span>
+				<span><span class="kt-bgt-dot" style="background:#6366F1"></span> Commit</span>
+				<span><span class="kt-bgt-dot" style="background:#F59E0B"></span> Reserve</span>
 			   </div>`
-			: `<div class="kt-bgt-bar-legend kt-bgt-bar-legend--empty">No obligations</div>`;
+			: `<div class="kt-bgt-bar-legend kt-bgt-bar-legend--empty">No consumption</div>`;
 
 		return `<tr data-budget-name="${bud.name}">
   <td>
@@ -524,12 +525,12 @@
 			}
 		});
 
+		/* Stitch always shows Filter by — keep visible even with a single entity */
+		filterWrap.style.display = "";
 		if (!seen.size) {
-			filterWrap.style.display = "none";
 			return;
 		}
 
-		filterWrap.style.display = "";
 		select.addEventListener("change", () => {
 			const val = select.value;
 			tbody.querySelectorAll("tr[data-budget-name]").forEach(tr => {
@@ -1178,9 +1179,18 @@
 
 	frappe.pages["budget-hub"].on_page_show = function (wrapper) {
 		document.body.classList.add("kt-bgt-shell");
+		function _setBudgetHubTitle() {
+			if (frappe.utils && typeof frappe.utils.set_title === "function") {
+				frappe.utils.set_title("KenTender | Budget Hub");
+			} else {
+				document.title = "KenTender | Budget Hub";
+			}
+		}
+		_setBudgetHubTitle();
 		// Defer sidebar setup to next tick so Frappe's own reset (for non-workspace pages)
 		// completes first, then we restore the correct workspace navigation.
 		setTimeout(function () {
+			_setBudgetHubTitle();
 			if (frappe.app && frappe.app.sidebar && typeof frappe.app.sidebar.setup === "function") {
 				// Civic Ledger IA: keep the parent Procurement rail.
 				frappe.app.sidebar.setup("Procurement");

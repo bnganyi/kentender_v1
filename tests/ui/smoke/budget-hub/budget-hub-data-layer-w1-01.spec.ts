@@ -40,9 +40,10 @@ test('Budget Hub KPI cards populate with live numbers after API load', async ({ 
 	const reserved = page.getByTestId('kt-bgt-kpi-reserved');
 	await expect(reserved).not.toHaveText('—');
 
-	// Committed — W1-02: shows en-dash as Phase 2 placeholder
+	// Committed — live portfolio.committed_sum (Stitch KPI; may be 0)
 	const committed = page.getByTestId('kt-bgt-kpi-committed');
-	await expect(committed).toHaveText('–');
+	await expect(committed).not.toHaveText('—');
+	await expect(committed).not.toHaveText('–');
 	await expect(committed).not.toHaveClass(/kt-bgt-kpi--loading/);
 
 	// Pending Approvals — numeric (may be 0 but must not be dash)
@@ -85,7 +86,8 @@ test('Budget Hub table row has allocation bar, KES amount, and status chip', asy
 	// W1-03: available amount — numeric only, no KES prefix (header says "(KES)")
 	await expect(firstRow.locator('.kt-bgt-avail-value')).toBeVisible();
 	const availText = await firstRow.locator('.kt-bgt-avail-value').textContent();
-	expect(availText?.trim()).toMatch(/^\d[\d,]+$/);
+	// Zero is a valid available amount on under-funded / draft envelopes.
+	expect(availText?.trim()).toMatch(/^\d[\d,]*$/);
 
 	// Status chip present
 	await expect(firstRow.locator('.kt-bgt-chip')).toBeVisible();

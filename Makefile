@@ -92,6 +92,8 @@ help:
 	@echo "  make seed-stable-platform-reset SITE=$(SITE) — clear + reload stable platform seed"
 	@echo "  make seed-demand-to-bidder-journey SITE=$(SITE) — quiet Demand→CFG→bidder sample"
 	@echo "  make seed-stable-platform-validate SITE=$(SITE) — validate stable platform seed only"
+	@echo "  make seed-demo-platform-reset SITE=$(SITE) — clean PEs + linked IT STD demo platform seed"
+	@echo "  make seed-demo-platform-validate SITE=$(SITE) — validate demo platform seed only"
 	@for app in $(INSTALL_ORDER); do \
 		echo "Installing $$app on $(SITE)"; \
 		cd $(BENCH_ROOT) && bench --site $(SITE) install-app $$app || exit 1; \
@@ -233,6 +235,14 @@ ui-publications-gate:
 		tests/ui/smoke/publications/a1-package-review.spec.ts \
 		tests/ui/smoke/publications/a2-publications-queue.spec.ts \
 		tests/ui/smoke/publications/a3-publication-setup.spec.ts
+
+bid-submissions-domain-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
+		--module kentender_procurement.tender_configurations.tests.test_bid_submissions_api
+
+ui-bid-submissions-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/bid-submissions/officer-bid-submissions.spec.ts
 
 bw-domain-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \
@@ -553,3 +563,12 @@ seed-stable-platform-validate:
 seed-demand-to-bidder-journey:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
 		kentender_procurement.tender_configurations.seed.demand_to_bidder_journey_sample.run
+
+seed-demo-platform:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.seed_demo_platform.run --kwargs '{"reset": false}'
+
+seed-demo-platform-reset:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.seed_demo_platform.run --kwargs '{"reset": true}'
+
+seed-demo-platform-validate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.seed_demo_platform.validate

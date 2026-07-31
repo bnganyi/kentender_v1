@@ -104,10 +104,30 @@ def sync_coming_soon_page() -> None:
 		import_file_by_path(path, force=True)
 
 
+def sync_procurement_home_page() -> None:
+	"""Ensure functional Procurement Home Desk Page exists (unique slug)."""
+	path = os.path.join(
+		frappe.get_app_path("kentender_procurement"),
+		"kentender_procurement",
+		"page",
+		"kt_procurement_home",
+		"kt_procurement_home.json",
+	)
+	if os.path.isfile(path):
+		import_file_by_path(path, force=True)
+	# Retire colliding Page slug if an older import created it.
+	if frappe.db.exists("Page", "procurement-home"):
+		frappe.delete_doc("Page", "procurement-home", force=True, ignore_permissions=True)
+	# Hide legacy Workspace so it does not compete with Home navigation.
+	if frappe.db.exists("Workspace", "Procurement Home"):
+		frappe.db.set_value("Workspace", "Procurement Home", "is_hidden", 1)
+
+
 def run() -> None:
 	# Page targets must exist before Workspace Sidebar Link To validation.
 	if frappe.db.exists("DocType", "Page"):
 		sync_coming_soon_page()
+		sync_procurement_home_page()
 	if frappe.db.exists("DocType", "Workspace Sidebar"):
 		reconcile_procurement_navigation_from_exports()
 	if frappe.db.exists("DocType", "Desktop Icon"):

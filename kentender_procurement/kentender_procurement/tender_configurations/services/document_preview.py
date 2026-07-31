@@ -282,6 +282,10 @@ def assemble_preview_html(
 	requirements = _json_list(doc, "it_requirements", "requirements")
 	sched = _parse_blob(getattr(doc, "implementation_schedule", None))
 	milestones = [m for m in (sched.get("milestones") or []) if isinstance(m, dict)]
+	single_delivery = (
+		sched.get("single_delivery") if isinstance(sched.get("single_delivery"), dict) else {}
+	)
+	delivery_approach = cstr(sched.get("delivery_approach") or "")
 	inv = _parse_blob(getattr(doc, "system_inventory", None))
 	inv_items = [
 		i
@@ -308,7 +312,15 @@ def assemble_preview_html(
 	if not block:
 		block = assert_price_units_normalized(price_items)
 	if not block:
-		block = assert_scc_values_complete(contract_values)
+		block = assert_scc_values_complete(
+			contract_values,
+			std_version=cstr(getattr(doc, "std_version", None) or package_id or ""),
+			tds=tds,
+			requirements=requirements,
+			milestones=milestones,
+			single_delivery=single_delivery,
+			delivery_approach=delivery_approach,
+		)
 
 	tds_html, tds_err = render_tds_section(tds)
 	eval_html, eval_err = render_evaluation_section(criteria, requirements)
@@ -320,7 +332,15 @@ def assemble_preview_html(
 	evidence_html, evidence_err = render_forms_section(form_items)
 	sched_html, sched_err = render_schedule_section(milestones)
 	inv_html, inv_err = render_inventory_section(inv_items, not_applicable=inv_na)
-	scc_html, scc_err = render_scc_section(contract_values)
+	scc_html, scc_err = render_scc_section(
+		contract_values,
+		std_version=cstr(getattr(doc, "std_version", None) or package_id or ""),
+		tds=tds,
+		requirements=requirements,
+		milestones=milestones,
+		single_delivery=single_delivery,
+		delivery_approach=delivery_approach,
+	)
 
 	if not block:
 		for err in (

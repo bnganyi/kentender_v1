@@ -114,6 +114,7 @@
 		}
 		add(path);
 		var groups = [
+			["/desk/kt-procurement-home", "/desk/procurement-home"],
 			["/desk/demand-hub", "/desk/demand-intake-and-approval"],
 			["/desk/budget-hub", "/desk/budget-management"],
 			["/desk/planning-hub", "/desk/procurement-planning"],
@@ -159,7 +160,7 @@
 		return false;
 	}
 
-	var KT_ROUTE_PATCH_VERSION = 2;
+	var KT_ROUTE_PATCH_VERSION = 3;
 
 	function patchActiveRouteMatching() {
 		if (!frappe.ui || !frappe.ui.Sidebar) {

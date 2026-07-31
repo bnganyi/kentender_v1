@@ -987,6 +987,9 @@
 
 	frappe.pages["demand-hub"].on_page_show = function (wrapper) {
 		document.body.classList.add("kt-dia-shell");
+		if (frappe.utils && typeof frappe.utils.set_title === "function") {
+			frappe.utils.set_title("KenTender DIA | Demand Management Hub");
+		}
 
 		// REQUIRED: defer so Frappe's sidebar reset fires first, then we restore.
 		// See: .cursor/rules/frappe-custom-page-sidebar-pattern.mdc

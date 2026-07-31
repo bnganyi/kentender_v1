@@ -502,6 +502,13 @@
 				values,
 				optionsFor(data, "tender_security_validity_unit"),
 				{ required: true, hidden: !securityYes }
+			) +
+			selectField(
+				"performance_security_required",
+				__("Performance Security Required"),
+				values,
+				["Yes", "No", "Not applicable"],
+				{ required: false }
 			);
 
 		var preferences =

@@ -164,6 +164,8 @@ _KT_ROUTE_TO_SIDEBAR.update(
 		"planning-hub": "Procurement",
 		"strategy-builder": "Procurement",
 		"strategy-management": "Procurement",
+		"procurement-home": "Procurement",
+		"kt-procurement-home": "Procurement",
 	}
 )
 

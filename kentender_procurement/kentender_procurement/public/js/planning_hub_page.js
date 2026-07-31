@@ -585,6 +585,9 @@
 
 	frappe.pages["planning-hub"].on_page_show = function (wrapper) {
 		document.body.classList.add("kt-pph-shell");
+		if (frappe.utils && typeof frappe.utils.set_title === "function") {
+			frappe.utils.set_title("KenTender - Planning Hub");
+		}
 		setTimeout(function () {
 			if (frappe.app && frappe.app.sidebar && typeof frappe.app.sidebar.setup === "function") {
 				// Civic Ledger IA: keep the parent Procurement rail.

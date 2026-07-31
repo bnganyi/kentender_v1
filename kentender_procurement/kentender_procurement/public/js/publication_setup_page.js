@@ -227,6 +227,19 @@
 				status: __("Missing"),
 			});
 		}
+		// Server publish gates (package integrity + platform electronic STD template approval).
+		var serverBlockers = (state.payload && state.payload.publish_blockers) || [];
+		for (var i = 0; i < serverBlockers.length; i++) {
+			var msg = String(serverBlockers[i] || "").trim();
+			if (!msg) {
+				continue;
+			}
+			checks.push({
+				severity: "blocker",
+				message: __(msg),
+				status: __("Blocked"),
+			});
+		}
 		if (!checks.length) {
 			checks.push({
 				severity: "ok",
@@ -703,6 +716,24 @@
 					args: { publication_id: state.publicationId },
 					callback: function (r) {
 						state.busy = false;
+						if (r && r.exc) {
+							// Exception dialog already shown; reload setup so READY is not false-positive.
+							frappe.call({
+								method: GET_API,
+								args: { publication_id: state.publicationId },
+								callback: function (gr) {
+									if (gr && gr.message) {
+										state.payload = gr.message;
+										syncFormFromPayload(state.payload);
+									}
+									remount(page);
+								},
+								error: function () {
+									remount(page);
+								},
+							});
+							return;
+						}
 						state.payload = r.message || state.payload;
 						syncFormFromPayload(state.payload);
 						remount(page);
@@ -710,7 +741,20 @@
 					},
 					error: function () {
 						state.busy = false;
-						remount(page);
+						frappe.call({
+							method: GET_API,
+							args: { publication_id: state.publicationId },
+							callback: function (gr) {
+								if (gr && gr.message) {
+									state.payload = gr.message;
+									syncFormFromPayload(state.payload);
+								}
+								remount(page);
+							},
+							error: function () {
+								remount(page);
+							},
+						});
 					},
 				});
 			},

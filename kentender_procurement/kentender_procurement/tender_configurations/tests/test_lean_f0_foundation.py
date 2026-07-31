@@ -110,8 +110,9 @@ def _confirm_and_setup(cfg_id: str) -> str:
 
 class TestLeanF0TemplateValidity(unittest.TestCase):
 	def test_template_validity_and_registry_order(self):
-		bundle = assert_valid_ppra_it_std_v1(require_approved=False)
-		self.assertEqual(bundle["approval"]["status"], "Draft")
+		bundle = assert_valid_ppra_it_std_v1(require_approved=True)
+		self.assertEqual(bundle["approval"]["status"], "Approved")
+		self.assertTrue(cstr(bundle["approval"].get("approved_by") or "").strip())
 		self.assertEqual(bundle["template"]["template_id"], "PPRA-IT-STD")
 		keys = [s["section_key"] for s in bundle["template"]["sections"]]
 		self.assertEqual(tuple(keys), CANONICAL_SECTION_KEYS)
@@ -138,7 +139,7 @@ class TestLeanF0LifecycleAndPublishGates(unittest.TestCase):
 		frappe.set_user("Administrator")
 		self.cfg_id = _prep_cfg()
 
-	def test_maker_checker_approved_only_ordinary_publish(self):
+	def test_maker_checker_rejects_unapproved_sidecar(self):
 		approval = {
 			"status": "Draft",
 			"prepared_by": "preparer@example.com",
@@ -157,17 +158,17 @@ class TestLeanF0LifecycleAndPublishGates(unittest.TestCase):
 			msg,
 		)
 
+	def test_ordinary_publish_succeeds_when_template_approved(self):
 		pub_id = _confirm_and_setup(self.cfg_id)
-		with self.assertRaises(frappe.ValidationError) as ctx2:
-			publish_tender(pub_id)
-		title2 = cstr(getattr(ctx2.exception, "title", None) or "")
-		msg2 = cstr(ctx2.exception)
-		self.assertTrue(
-			"KT_ELECTRONIC_TEMPLATE_UNAPPROVED" in title2 or "Approved" in msg2,
-			msg2,
+		published = publish_tender(pub_id)
+		self.assertTrue(published.get("published"))
+		self.assertEqual(published.get("status"), "Published")
+		hash_val = frappe.db.get_value(
+			"IT Tender Publication Record", pub_id, "electronic_template_hash"
 		)
+		self.assertTrue(hash_val)
 
-	def test_development_preview_seal_while_draft(self):
+	def test_development_preview_seal_with_approved_template(self):
 		pub_id = _confirm_and_setup(self.cfg_id)
 		published = publish_tender_for_development_preview(pub_id)
 		self.assertTrue(published.get("published"))
@@ -181,7 +182,7 @@ class TestLeanF0LifecycleAndPublishGates(unittest.TestCase):
 				"IT Tender Publication Record", pub_id, "electronic_template_snapshot"
 			)
 		)
-		self.assertEqual(snap.get("approval_status"), "Draft")
+		self.assertEqual(snap.get("approval_status"), "Approved")
 		self.assertTrue(snap.get("sections"))
 
 

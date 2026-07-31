@@ -46,6 +46,7 @@ app_include_css = [
 	f"/assets/kentender_core/css/kt_native_sidebar_civic.css?v={_asset_version('public/css/kt_native_sidebar_civic.css')}",
 ]
 app_include_js = [
+	f"/assets/kentender_core/js/kt_desk_document_title.js?v={_asset_version('public/js/kt_desk_document_title.js')}",
 	f"/assets/kentender_core/js/kt_module_registry.js?v={_asset_version('public/js/kt_module_registry.js')}",
 	f"/assets/kentender_core/js/kt_module_shell.js?v={_asset_version('public/js/kt_module_shell.js')}",
 	f"/assets/kentender_core/js/kt_cl_code_spec.js?v={_asset_version('public/js/kt_cl_code_spec.js')}",

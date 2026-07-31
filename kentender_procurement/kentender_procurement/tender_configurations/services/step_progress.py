@@ -226,20 +226,39 @@ def compute_step_progress(
 		out = evaluate_conditions(_status_fallback_conditions(status))
 
 	out["show_progress_bar"] = status in (STEP_IN_PROGRESS, STEP_NEEDS_ATTENTION)
+	# Exit conditions can all be met before the step is marked Complete — never
+	# report a full 100% bar / contribution while status is still open.
+	if int(out.get("progress_pct") or 0) >= 100:
+		out["progress_pct"] = 99
 	return out
 
 
 def overall_progress_pct(step_rows: list[dict[str, Any]]) -> int:
-	"""Average of per-step progress_pct values (equal weight per CFG step)."""
+	"""Average of per-step progress_pct values (equal weight per CFG step).
+
+	Never returns 100 while any step with a status_label is not Complete — that
+	was showing "100%" next to "8 of 9 steps complete" when CFG-09 still had
+	open status but a full exit-condition checklist.
+	"""
 	if not step_rows:
 		return 0
 	total = 0
+	has_status = False
 	for row in step_rows:
 		try:
-			total += int(row.get("progress_pct") or 0)
+			pct = int(row.get("progress_pct") or 0)
 		except (TypeError, ValueError):
-			pass
-	return int(round(total / len(step_rows)))
+			pct = 0
+		status = row.get("status_label")
+		if status is not None:
+			has_status = True
+			if status != STEP_COMPLETE:
+				pct = min(pct, 99)
+		total += max(0, min(100, pct))
+	avg = int(round(total / len(step_rows)))
+	if has_status and complete_step_count(step_rows) < len(step_rows):
+		avg = min(avg, 99)
+	return avg
 
 
 def complete_step_count(step_rows: list[dict[str, Any]]) -> int:

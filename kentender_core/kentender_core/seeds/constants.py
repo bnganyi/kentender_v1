@@ -6,7 +6,7 @@ TEST_PASSWORD = "Test@123"
 
 # Canonical Procuring Entity docname for Ministry of Health (WORKS / Budget / PP2).
 ENTITY_MOH = "PE-MOH"
-ENTITY_MOE = "MOE"
+ENTITY_MOE = "PE-MOE"
 
 # Department display names encode spec codes (no department_code field on v1 Procuring Department).
 DEPT_CLIN = "CLIN-SERV — Clinical Services"

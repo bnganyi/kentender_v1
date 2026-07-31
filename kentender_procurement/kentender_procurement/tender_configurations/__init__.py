@@ -885,3 +885,82 @@ def seed_ready_lean_bid_for_final_submission_tests(fixture: str = "single_lot", 
 	)
 
 	return _seed(fixture=fixture, clear=clear)
+
+
+@frappe.whitelist()
+def list_bid_submission_tenders(search=None, stage=None, page=1, page_size=20):
+	from kentender_procurement.tender_configurations.api import list_bid_submission_tenders as _list
+
+	return _list(search=search, stage=stage, page=page, page_size=page_size)
+
+
+@frappe.whitelist()
+def get_bid_submission_sealed_status(publication_id: str):
+	from kentender_procurement.tender_configurations.api import get_bid_submission_sealed_status as _get
+
+	return _get(publication_id)
+
+
+@frappe.whitelist()
+def open_submitted_bids(publication_id: str):
+	from kentender_procurement.tender_configurations.api import open_submitted_bids as _open
+
+	return _open(publication_id)
+
+
+@frappe.whitelist()
+def get_opening_register(publication_id: str):
+	from kentender_procurement.tender_configurations.api import get_opening_register as _get
+
+	return _get(publication_id)
+
+
+@frappe.whitelist()
+def get_submitted_bid_overview(publication_id: str, bid_id: str):
+	from kentender_procurement.tender_configurations.api import get_submitted_bid_overview as _get
+
+	return _get(publication_id, bid_id)
+
+
+@frappe.whitelist()
+def get_submitted_section_response(publication_id: str, bid_id: str, section_key: str):
+	from kentender_procurement.tender_configurations.api import get_submitted_section_response as _get
+
+	return _get(publication_id, bid_id, section_key)
+
+
+@frappe.whitelist()
+def get_submission_receipt_view(publication_id: str, bid_id: str):
+	from kentender_procurement.tender_configurations.api import get_submission_receipt_view as _get
+
+	return _get(publication_id, bid_id)
+
+
+@frappe.whitelist()
+def get_opening_record_view(publication_id: str):
+	from kentender_procurement.tender_configurations.api import get_opening_record_view as _get
+
+	return _get(publication_id)
+
+
+@frappe.whitelist()
+def download_submitted_evidence(publication_id: str, bid_id: str, evidence_key: str):
+	from kentender_procurement.tender_configurations.api import download_submitted_evidence as _dl
+
+	return _dl(publication_id, bid_id, evidence_key)
+
+
+@frappe.whitelist()
+def get_submission_version_history(publication_id: str):
+	from kentender_procurement.tender_configurations.api import get_submission_version_history as _get
+
+	return _get(publication_id)
+
+
+@frappe.whitelist()
+def seed_bid_submissions_officer_fixtures(clear: int | bool = 1):
+	from kentender_procurement.tender_configurations.api import (
+		seed_bid_submissions_officer_fixtures as _seed,
+	)
+
+	return _seed(clear=clear)

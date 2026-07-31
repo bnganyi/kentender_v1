@@ -24,9 +24,19 @@ bench --site <site> execute kentender_core.seeds.reset_strategy_seed.run
 bench --site <site> execute kentender_core.seeds.reset_core_seed.run
 ```
 
+## Demo platform seed (linked IT STD demo)
+
+Preferred **demo / UAT** pack: clean PEs (`PE-MOH`, `PE-MOE`), purge conflicting CFG noise, load stable WORKS+IT chain, then actionable DIA/CFG/publication/bid stages. See [docs/data/DEMO_PLATFORM_SEED.md](../../docs/data/DEMO_PLATFORM_SEED.md).
+
+```bash
+bench --site <site> execute kentender_core.seeds.seed_demo_platform.run --kwargs '{"reset": true}'
+# or: ./apps/kentender_v1/scripts/seed_demo_platform.sh
+make -C apps/kentender_v1 seed-demo-platform-reset SITE=kentender.midas.com
+```
+
 ## Stable platform seed (Works + IT STD)
 
-Canonical MOH dev/UAT dataset covering **Strategy**, **Budget**, **DIA (Demand)**, **Planning**, and **IT STD v1_1** import.
+Canonical MOH domain pack covering **Strategy**, **Budget**, **DIA (Demand)**, **Planning**, and **IT STD** import (used inside the demo platform loader).
 
 ```bash
 # Load (idempotent upsert)
@@ -64,7 +74,7 @@ bench --site <site> execute kentender_core.seeds.reset_strategy_seed.run --kwarg
 
 ## Idempotency
 
-Seeds use stable natural keys: `entity_code` **MOH** / **MOE**, user emails from `constants.SEED_USERS`, strategic plan titles `PLAN_BASIC_NAME` / `PLAN_EXTENDED_NAME`. Re-running a pack updates or replaces content in a deterministic way.
+Seeds use stable natural keys: `entity_code` **PE-MOH** / **PE-MOE**, user emails from `constants.SEED_USERS`, strategic plan titles `PLAN_BASIC_NAME` / `PLAN_EXTENDED_NAME`. Re-running a pack updates or replaces content in a deterministic way.
 
 ## Permissions
 

@@ -142,6 +142,7 @@ EDITABLE_KEYS = frozenset(
 		"tender_security_currency",
 		"tender_security_validity_period",
 		"tender_security_validity_unit",
+		"performance_security_required",
 		"margin_of_preference_applies",
 		"preference_basis",
 		"preference_evidence_required",
@@ -437,6 +438,7 @@ GROUP_FIELD_KEYS: dict[str, tuple[str, ...]] = {
 		"tender_security_type",
 		"tender_security_amount",
 		"tender_security_validity_period",
+		"performance_security_required",
 	),
 	"preferences": (
 		"margin_of_preference_applies",
@@ -575,11 +577,20 @@ def normalize_display_values(doc, values: dict[str, Any]) -> dict[str, Any]:
 		"joint_ventures_allowed",
 		"reserved_procurement",
 		"tender_security_required",
+		"performance_security_required",
 		"margin_of_preference_applies",
 		"opening_attendance_allowed",
 	):
 		if key in out and out[key]:
-			out[key] = _yn(out, key)
+			# Performance security also accepts authorised "Not applicable".
+			if key == "performance_security_required":
+				raw = cstr(out[key]).strip().lower()
+				if raw in ("not applicable", "n/a", "na"):
+					out[key] = "Not applicable"
+				else:
+					out[key] = _yn(out, key) or out[key]
+			else:
+				out[key] = _yn(out, key)
 	return out
 
 

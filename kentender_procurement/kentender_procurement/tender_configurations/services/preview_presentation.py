@@ -52,18 +52,6 @@ PE_ONLY_CONTRACT_FORM_MARKERS = (
 	"Notes to the Procuring Entity",
 )
 
-REQUIRED_SCC_TOPIC_PATTERNS = (
-	("governing law", ("governing law", "laws of kenya")),
-	("scope", ("scope:", "all modules")),
-	("commencement", ("commencement", "24 month", "implementation period")),
-	("payment", ("payment", "milestone")),
-	("source code / escrow", ("source code", "escrow")),
-	("subcontracting", ("subcontract",)),
-	("sla", ("sla", "p1 response")),
-	("performance security", ("performance security",)),
-	("warranty", ("warranty",)),
-)
-
 ALLOWED_PRICE_UNITS = frozenset(
 	{"Users", "Lump sum", "Per month", "Per GB/month", "Annual", "Lot"}
 )
@@ -1153,39 +1141,33 @@ def _scc_value(row: dict[str, Any]) -> str:
 
 def assert_scc_values_complete(
 	values: list[dict[str, Any]],
+	*,
+	std_version: str = "",
+	tds: dict[str, Any] | None = None,
+	requirements: list[dict[str, Any]] | None = None,
+	milestones: list[dict[str, Any]] | None = None,
+	single_delivery: dict[str, Any] | None = None,
+	delivery_approach: str = "",
 ) -> dict[str, str] | None:
-	"""Hard-fail preview when required CFG-09 SCC topics are missing or empty."""
-	joined = " ".join(
-		f"{cstr(v.get('item_label') or '')} {_scc_value(v)}" for v in (values or [])
-	).lower()
-	missing = []
-	for topic, patterns in REQUIRED_SCC_TOPIC_PATTERNS:
-		if not any(p in joined for p in patterns):
-			missing.append(topic)
-	empty = [
-		cstr(v.get("item_label") or v.get("contract_value_id") or "SCC row")
-		for v in (values or [])
-		if not _scc_value(v)
-	]
-	placeholders = [
-		cstr(v.get("item_label") or v.get("contract_value_id") or "SCC row")
-		for v in (values or [])
-		if _scc_value(v).lower() in ("as specified", "tbd", "n/a", "na", "-")
-	]
-	if missing or empty or placeholders:
-		parts = []
-		if missing:
-			parts.append("missing topics: " + ", ".join(missing))
-		if empty:
-			parts.append("empty values: " + ", ".join(empty[:8]))
-		if placeholders:
-			parts.append("placeholder values: " + ", ".join(placeholders[:8]))
-		return generation_block(
-			blocking_area="CFG-09 Contract Values",
-			message="SCC values incomplete for tender preview (" + "; ".join(parts) + ").",
-			action="Complete CFG-09 SCC values before generating preview.",
-		)
-	return None
+	"""Hard-fail preview when an applicable required STD contract parameter is unresolved.
+
+	Uses STD-declared parameter readiness (not a hard-coded generic IT topic checklist).
+	Categories such as Support & Warranty are organisational only and are never
+	treated as missing-topic keys.
+	"""
+	from kentender_procurement.tender_configurations.services.contract_parameter_readiness import (
+		assert_applicable_contract_parameters_resolved,
+	)
+
+	return assert_applicable_contract_parameters_resolved(
+		values,
+		std_version=std_version,
+		tds=tds,
+		requirements=requirements,
+		milestones=milestones,
+		single_delivery=single_delivery,
+		delivery_approach=delivery_approach,
+	)
 
 
 def assert_price_units_normalized(
@@ -1286,8 +1268,25 @@ def build_render_validation_report(
 	return report
 
 
-def render_scc_section(values: list[dict[str, Any]]) -> tuple[str, str | None]:
-	gate = assert_scc_values_complete(values)
+def render_scc_section(
+	values: list[dict[str, Any]],
+	*,
+	std_version: str = "",
+	tds: dict[str, Any] | None = None,
+	requirements: list[dict[str, Any]] | None = None,
+	milestones: list[dict[str, Any]] | None = None,
+	single_delivery: dict[str, Any] | None = None,
+	delivery_approach: str = "",
+) -> tuple[str, str | None]:
+	gate = assert_scc_values_complete(
+		values,
+		std_version=std_version,
+		tds=tds,
+		requirements=requirements,
+		milestones=milestones,
+		single_delivery=single_delivery,
+		delivery_approach=delivery_approach,
+	)
 	if gate:
 		return "", gate
 	rows: list[list[str]] = []

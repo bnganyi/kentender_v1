@@ -15,8 +15,24 @@ from kentender_procurement.std_engine.paths import default_official_pdf_path, de
 
 
 def import_it_std_v1_1(*, replace_draft: bool = True) -> dict[str, Any]:
-	"""Commit the v1_1 IT STD seed package as DRAFT."""
+	"""Commit the v1_1 IT STD seed package as DRAFT.
+
+	Idempotent when ``KE-PPRA-IT-2022-04`` is already ACTIVE (do not re-import).
+	"""
 	frappe.only_for(("System Manager", "Administrator"))
+	if frappe.db.exists("STD Version", IT_STD_VERSION_CODE):
+		lifecycle = (
+			frappe.db.get_value("STD Version", IT_STD_VERSION_CODE, "lifecycle_state") or ""
+		).strip().upper()
+		if lifecycle == "ACTIVE":
+			return {
+				"ok": True,
+				"package_id": IT_STD_VERSION_CODE,
+				"family_code": IT_STD_FAMILY_CODE,
+				"lifecycle_state": "ACTIVE",
+				"idempotent": True,
+				"skipped_import": True,
+			}
 	importer = CommitImporter(
 		zip_path=str(default_seed_zip_path_v1_1()),
 		pdf_path=str(default_official_pdf_path()),
@@ -25,10 +41,22 @@ def import_it_std_v1_1(*, replace_draft: bool = True) -> dict[str, Any]:
 	try:
 		result = importer.run()
 	except Exception as exc:
+		msg = str(exc)
+		# Race / already-ACTIVE: treat as success for seed orchestrators.
+		if "ACTIVE" in msg.upper() and IT_STD_VERSION_CODE in msg:
+			return {
+				"ok": True,
+				"package_id": IT_STD_VERSION_CODE,
+				"family_code": IT_STD_FAMILY_CODE,
+				"lifecycle_state": "ACTIVE",
+				"idempotent": True,
+				"skipped_import": True,
+				"message": msg,
+			}
 		return {
 			"ok": False,
 			"error_code": "STD_IMPORT_FAILED",
-			"message": str(exc),
+			"message": msg,
 		}
 	return {
 		"ok": True,

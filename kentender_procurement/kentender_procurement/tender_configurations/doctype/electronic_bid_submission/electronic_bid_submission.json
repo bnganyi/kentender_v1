@@ -5,13 +5,21 @@
  "creation": "2026-07-19 21:00:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
- "field_order": [
+  "field_order": [
   "section_identity",
   "configuration",
   "configuration_ref",
+  "publication",
   "std_version",
   "bidder_label",
+  "bidder_legal_name",
+  "offer_type",
+  "lots_json",
   "status",
+  "supersedes",
+  "superseded_by",
+  "withdrawn_at",
+  "withdrawn_by",
   "section_schema",
   "schema_hash",
   "schema_snapshot",
@@ -52,6 +60,13 @@
    "read_only": 1
   },
   {
+   "fieldname": "publication",
+   "fieldtype": "Link",
+   "label": "Publication",
+   "options": "IT Tender Publication Record",
+   "search_index": 1
+  },
+  {
    "fieldname": "std_version",
    "fieldtype": "Data",
    "label": "STD Version Snapshot",
@@ -65,14 +80,58 @@
    "label": "Bidder Label"
   },
   {
+   "fieldname": "bidder_legal_name",
+   "fieldtype": "Data",
+   "label": "Bidder Legal Name At Submission",
+   "read_only": 1
+  },
+  {
+   "default": "Main",
+   "fieldname": "offer_type",
+   "fieldtype": "Select",
+   "label": "Offer Type",
+   "options": "Main\nAlternative"
+  },
+  {
+   "fieldname": "lots_json",
+   "fieldtype": "Small Text",
+   "label": "Lots JSON"
+  },
+  {
    "default": "Draft",
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Draft\nSealed",
+   "options": "Draft\nSealed\nWithdrawn",
    "reqd": 1
+  },
+  {
+   "fieldname": "supersedes",
+   "fieldtype": "Link",
+   "label": "Supersedes",
+   "options": "Electronic Bid Submission"
+  },
+  {
+   "fieldname": "superseded_by",
+   "fieldtype": "Link",
+   "label": "Superseded By",
+   "options": "Electronic Bid Submission",
+   "read_only": 1
+  },
+  {
+   "fieldname": "withdrawn_at",
+   "fieldtype": "Datetime",
+   "label": "Withdrawn At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "withdrawn_by",
+   "fieldtype": "Link",
+   "label": "Withdrawn By",
+   "options": "User",
+   "read_only": 1
   },
   {
    "fieldname": "section_schema",

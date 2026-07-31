@@ -1,0 +1,32 @@
+{
+ "content": null,
+ "creation": "2026-07-31 13:40:00.000000",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2026-07-31 14:05:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Procurement",
+ "name": "kt-procurement-home",
+ "owner": "Administrator",
+ "page_name": "kt-procurement-home",
+ "roles": [
+  {"role": "Administrator"},
+  {"role": "System Manager"},
+  {"role": "Requisitioner"},
+  {"role": "Department Approver"},
+  {"role": "Finance Reviewer"},
+  {"role": "Budget Officer"},
+  {"role": "Procurement Planner"},
+  {"role": "Planning Reviewer"},
+  {"role": "Planning Authority"},
+  {"role": "Procurement Officer"},
+  {"role": "Tender Manager"},
+  {"role": "Auditor"}
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "Procurement Home"
+}

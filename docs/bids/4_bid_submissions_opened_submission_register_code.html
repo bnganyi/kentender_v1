@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KenTender - Opened Submission Register</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&amp;family=Inter:wght@400;500;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "on-secondary-container": "#004c7c",
+                  "secondary-fixed": "#cfe5ff",
+                  "on-tertiary-fixed-variant": "#38485e",
+                  "on-error-container": "#93000a",
+                  "on-error": "#ffffff",
+                  "inverse-primary": "#abc7ff",
+                  "surface-container": "#eeedf3",
+                  "inverse-on-surface": "#f1f0f6",
+                  "outline": "#737781",
+                  "surface-container-high": "#e8e7ed",
+                  "surface-bright": "#f9f9fe",
+                  "secondary-fixed-dim": "#99cbff",
+                  "primary-fixed": "#d7e2ff",
+                  "status-available": "#10B981",
+                  "surface-container-low": "#f4f3f9",
+                  "primary-fixed-dim": "#abc7ff",
+                  "on-tertiary": "#ffffff",
+                  "on-primary-fixed-variant": "#1d4681",
+                  "on-surface": "#1a1b20",
+                  "secondary": "#01629d",
+                  "surface-tint": "#395e9b",
+                  "inverse-surface": "#2f3035",
+                  "surface-container-highest": "#e2e2e8",
+                  "surface": "#f9f9fe",
+                  "on-tertiary-fixed": "#0b1c30",
+                  "background": "#f9f9fe",
+                  "status-exhausted": "#EF4444",
+                  "primary": "#001f48",
+                  "error": "#ba1a1a",
+                  "tertiary": "#26364b",
+                  "tertiary-fixed": "#d3e4ff",
+                  "on-tertiary-container": "#8f9fb8",
+                  "surface-variant": "#e2e2e8",
+                  "tertiary-container": "#26364b",
+                  "surface-dim": "#dad9df",
+                  "status-reserved": "#F59E0B",
+                  "on-secondary-fixed": "#001d34",
+                  "on-secondary": "#ffffff",
+                  "surface-container-lowest": "#ffffff",
+                  "outline-variant": "#c3c6d1",
+                  "on-primary": "#ffffff",
+                  "on-surface-variant": "#434750",
+                  "primary-container": "#00346f",
+                  "status-committed": "#6366F1",
+                  "on-background": "#1a1b20",
+                  "tertiary-fixed-dim": "#b7c8e2",
+                  "on-primary-container": "#7b9ee0",
+                  "on-secondary-fixed-variant": "#004a78",
+                  "secondary-container": "#7bbeff",
+                  "on-primary-fixed": "#001b3f",
+                  "error-container": "#ffdad6"
+          },
+          "borderRadius": {
+                  "DEFAULT": "0.25rem",
+                  "lg": "0.5rem",
+                  "xl": "0.75rem",
+                  "full": "9999px"
+          },
+          "spacing": {
+                  "base-unit": "4px",
+                  "container-padding": "16px",
+                  "gutter": "12px",
+                  "section-gap": "24px",
+                  "unit": "4px",
+                  "card-padding": "20px"
+          },
+          "fontFamily": {
+                  "headline-md": ["Manrope"],
+                  "headline-sm": ["Manrope"],
+                  "data-mono": ["JetBrains Mono"],
+                  "label-caps": ["Inter"],
+                  "body-md": ["Inter"],
+                  "headline-lg-mobile": ["Manrope"],
+                  "headline-lg": ["Manrope"],
+                  "body-lg": ["Inter"]
+          },
+          "fontSize": {
+                  "headline-md": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+                  "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                  "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                  "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                  "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                  "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                  "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                  "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f9f9fe;
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+    .scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- Side Navigation Bar -->
+<aside class="fixed left-0 top-0 h-screen w-64 bg-surface-container-low border-r border-outline-variant flex flex-col p-4 gap-2 z-50">
+<div class="flex flex-col gap-1 mb-6 px-2">
+<div class="font-headline-sm text-headline-sm font-bold text-on-surface">Procurement</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant">Management Suite</div>
+</div>
+<nav class="flex flex-col gap-1 flex-grow">
+<!-- Planning -->
+<a class="flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg group scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">assignment</span>
+<span class="font-label-caps text-label-caps">Planning</span>
+</a>
+<!-- Requisition -->
+<a class="flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg group scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-label-caps text-label-caps">Requisition</span>
+</a>
+<!-- Tendering (ACTIVE) -->
+<a class="flex items-center gap-3 px-3 py-2.5 bg-secondary-container text-on-secondary-container rounded-lg font-bold transition-all group scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">gavel</span>
+<span class="font-label-caps text-label-caps">Tendering</span>
+</a>
+<!-- Evaluation -->
+<a class="flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg group scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-caps text-label-caps">Evaluation</span>
+</a>
+<!-- Award -->
+<a class="flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg group scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">verified</span>
+<span class="font-label-caps text-label-caps">Award</span>
+</a>
+<!-- Contract Management -->
+<a class="flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg group scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">history_edu</span>
+<span class="font-label-caps text-label-caps">Contract Management</span>
+</a>
+<!-- Closeout -->
+<a class="flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg group scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-caps text-label-caps">Closeout</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-outline-variant pt-4 flex flex-col gap-1">
+<button class="w-full bg-primary text-on-primary py-3 rounded-lg font-label-caps text-label-caps mb-4 hover:opacity-90 transition-opacity">
+        Create New Tender
+      </button>
+<a class="flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-caps text-label-caps">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+<span class="font-label-caps text-label-caps">Support</span>
+</a>
+</div>
+</aside>
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 right-0 left-64 h-16 bg-surface-container-lowest border-b border-outline-variant flex justify-between items-center px-container-padding z-40">
+<div class="flex items-center gap-section-gap">
+<div class="font-headline-md text-headline-md font-bold text-primary">KenTender</div>
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-lg py-2 pl-10 pr-4 text-body-md font-body-md focus:ring-2 focus:ring-primary/20 outline-none" placeholder="Search tenders..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low transition-colors rounded-full cursor-pointer">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low transition-colors rounded-full cursor-pointer">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-surface-container overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A professional corporate headshot of a government official in a sharp navy suit, lit with soft daylight in a clean, modern office environment. The image uses a shallow depth of field with a neutral, off-white background to maintain focus on the individual, emphasizing trust and institutional authority in a contemporary Kenyan procurement setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1tYDDfUw68Lgc6OkuGNRmCMAHh5cSS9kl4_84w-fMQZsvX_dr_3kHS1zAH5k-yrE7ttOkB_0EUD3yH0bnAy7xmwpTcnDZSxMqD7eLMx2NcCe1BrWj7ADtNDjzzych3hlqoHUJzfIcBkl5iCSeOLhc8-q618G7ZjfwaqYFYt1wfE1Qa1YR09ZZJ5SjcFNwRNPnqIWNtVTGpDlZeh3mPZ4YC4zlc4xvDb7OO2rHhomBv1igu_hUVuHhDg"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-16 min-h-screen p-section-gap">
+<div class="max-w-6xl mx-auto">
+<!-- Breadcrumb / Back Link -->
+<nav class="mb-gutter">
+<a class="inline-flex items-center gap-1 text-primary hover:underline font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+          Back to Bid Submissions
+        </a>
+</nav>
+<!-- Header Area -->
+<div class="flex flex-col gap-4 mb-section-gap">
+<div class="flex flex-col gap-1">
+<div class="font-data-mono text-data-mono text-on-surface-variant">ICT-SRV-2026-004</div>
+<div class="flex items-center gap-3">
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Server Supply and Installation</h1>
+<span class="px-3 py-1 bg-status-available/10 text-status-available text-label-caps font-label-caps rounded-full border border-status-available/20">Opened</span>
+</div>
+<div class="font-body-md text-body-md text-on-surface-variant">Procuring Entity: <span class="font-bold text-on-surface">ICT Authority</span></div>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant border-t border-outline-variant pt-4">
+<div class="flex items-center gap-1.5 font-body-md text-body-md">
+<span class="material-symbols-outlined text-[18px]">event_available</span>
+            Opened date and time: <span class="font-bold text-on-surface">29 Jul 2026, 10:35 a.m.</span>
+</div>
+<div class="h-4 w-[1px] bg-outline-variant"></div>
+<div class="flex items-center gap-1.5 font-body-md text-body-md">
+<span class="material-symbols-outlined text-[18px] text-primary">how_to_reg</span>
+<span class="font-bold text-primary">3 active bids opened</span>
+</div>
+</div>
+</div>
+<!-- Submission Register Table Container -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden shadow-sm transition-all duration-300">
+<div class="overflow-x-auto">
+<table class="w-full border-collapse text-left">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant">
+<th class="px-6 py-4 font-label-caps text-label-caps text-on-surface-variant">Tenderer</th>
+<th class="px-6 py-4 font-label-caps text-label-caps text-on-surface-variant">Submission Receipt</th>
+<th class="px-6 py-4 font-label-caps text-label-caps text-on-surface-variant">Submitted At</th>
+<th class="px-6 py-4 font-label-caps text-label-caps text-on-surface-variant">Lots</th>
+<th class="px-6 py-4 font-label-caps text-label-caps text-on-surface-variant">Offer Type</th>
+<th class="px-6 py-4 font-label-caps text-label-caps text-on-surface-variant">Status</th>
+<th class="px-6 py-4 font-label-caps text-label-caps text-on-surface-variant text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container transition-colors">
+<td class="px-6 py-4">
+<div class="font-body-md text-body-md font-bold text-on-surface">East Africa Systems Ltd</div>
+</td>
+<td class="px-6 py-4">
+<div class="font-data-mono text-data-mono text-on-surface-variant">SUB-2026-00481</div>
+</td>
+<td class="px-6 py-4">
+<div class="font-data-mono text-data-mono text-on-surface-variant">25 Jul 2026, 9:42 a.m.</div>
+</td>
+<td class="px-6 py-4 font-body-md text-body-md">Lot 1</td>
+<td class="px-6 py-4 font-body-md text-body-md">Main offer</td>
+<td class="px-6 py-4">
+<span class="flex items-center gap-1.5 text-status-available font-bold text-label-caps">
+<span class="w-2 h-2 rounded-full bg-status-available"></span>
+                    Opened
+                  </span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2">
+<button class="px-3 py-1.5 bg-primary text-on-primary font-label-caps text-label-caps rounded-lg hover:opacity-90 transition-opacity">View bid</button>
+<button class="px-3 py-1.5 border border-outline text-on-surface-variant font-label-caps text-label-caps rounded-lg hover:bg-surface-container-low transition-colors">View receipt</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container transition-colors">
+<td class="px-6 py-4">
+<div class="font-body-md text-body-md font-bold text-on-surface">ServerWorks Kenya Ltd</div>
+</td>
+<td class="px-6 py-4">
+<div class="font-data-mono text-data-mono text-on-surface-variant">SUB-2026-00486</div>
+</td>
+<td class="px-6 py-4">
+<div class="font-data-mono text-data-mono text-on-surface-variant">25 Jul 2026, 10:17 a.m.</div>
+</td>
+<td class="px-6 py-4 font-body-md text-body-md">Lots 1 and 2</td>
+<td class="px-6 py-4 font-body-md text-body-md">Main offer</td>
+<td class="px-6 py-4">
+<span class="flex items-center gap-1.5 text-status-available font-bold text-label-caps">
+<span class="w-2 h-2 rounded-full bg-status-available"></span>
+                    Opened
+                  </span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2">
+<button class="px-3 py-1.5 bg-primary text-on-primary font-label-caps text-label-caps rounded-lg hover:opacity-90 transition-opacity">View bid</button>
+<button class="px-3 py-1.5 border border-outline text-on-surface-variant font-label-caps text-label-caps rounded-lg hover:bg-surface-container-low transition-colors">View receipt</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container transition-colors">
+<td class="px-6 py-4">
+<div class="font-body-md text-body-md font-bold text-on-surface">Digital Infrastructure Ltd</div>
+</td>
+<td class="px-6 py-4">
+<div class="font-data-mono text-data-mono text-on-surface-variant">SUB-2026-00490</div>
+</td>
+<td class="px-6 py-4">
+<div class="font-data-mono text-data-mono text-on-surface-variant">25 Jul 2026, 10:51 a.m.</div>
+</td>
+<td class="px-6 py-4 font-body-md text-body-md">Lot 2</td>
+<td class="px-6 py-4 font-body-md text-body-md">Alternative offer 1</td>
+<td class="px-6 py-4">
+<span class="flex items-center gap-1.5 text-status-available font-bold text-label-caps">
+<span class="w-2 h-2 rounded-full bg-status-available"></span>
+                    Opened
+                  </span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2">
+<button class="px-3 py-1.5 bg-primary text-on-primary font-label-caps text-label-caps rounded-lg hover:opacity-90 transition-opacity">View bid</button>
+<button class="px-3 py-1.5 border border-outline text-on-surface-variant font-label-caps text-label-caps rounded-lg hover:bg-surface-container-low transition-colors">View receipt</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Audit & Navigation Links -->
+<footer class="mt-section-gap flex items-center justify-between">
+<div class="flex gap-section-gap">
+<a class="group flex items-center gap-2 text-primary font-body-md text-body-md hover:opacity-80 transition-opacity" href="#">
+<span class="material-symbols-outlined p-2 bg-surface-container rounded-full group-hover:bg-primary-container group-hover:text-on-primary-container transition-colors">description</span>
+            View opening record
+          </a>
+<a class="group flex items-center gap-2 text-primary font-body-md text-body-md hover:opacity-80 transition-opacity" href="#">
+<span class="material-symbols-outlined p-2 bg-surface-container rounded-full group-hover:bg-primary-container group-hover:text-on-primary-container transition-colors">history</span>
+            View submission audit history
+          </a>
+</div>
+<div class="text-on-surface-variant font-label-caps text-label-caps">
+          End of Register
+        </div>
+</footer>
+</div>
+</main>
+<script>
+    // Micro-interactions
+    document.querySelectorAll('tr').forEach(row => {
+      row.addEventListener('click', (e) => {
+        if (e.target.tagName !== 'BUTTON') {
+          // Logic for clicking a row could go here
+          console.log('Row clicked');
+        }
+      });
+    });
+
+    // Theme persistence or toggle could be added here if needed
+  </script>
+</body></html>

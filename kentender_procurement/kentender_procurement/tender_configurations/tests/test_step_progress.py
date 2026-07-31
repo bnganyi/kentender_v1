@@ -26,6 +26,7 @@ from kentender_procurement.tender_configurations.services.profile import (
 	save_configuration_profile,
 )
 from kentender_procurement.tender_configurations.services.step_progress import (
+	complete_step_count,
 	compute_step_progress,
 	evaluate_conditions,
 	overall_progress_pct,
@@ -271,6 +272,21 @@ class TestStepProgress(FrappeTestCase):
 		]
 		# (100+100+0+60+0)/5 = 52
 		self.assertEqual(overall_progress_pct(rows), 52)
+
+	def test_overall_never_100_while_a_step_is_still_open(self):
+		"""Regression: 8 Complete + CFG-09 In progress must not show 100% overall."""
+		rows = [{"status_label": STEP_COMPLETE, "progress_pct": 100} for _ in range(8)]
+		rows.append({"status_label": STEP_IN_PROGRESS, "progress_pct": 100})
+		self.assertEqual(complete_step_count(rows), 8)
+		pct = overall_progress_pct(rows)
+		self.assertLess(pct, 100)
+		self.assertEqual(pct, 99)
+
+	def test_open_step_progress_capped_below_100(self):
+		wip = compute_step_progress("CFG-09", status_label=STEP_IN_PROGRESS, doc=None)
+		self.assertLess(wip["progress_pct"], 100)
+		complete = compute_step_progress("CFG-09", status_label=STEP_COMPLETE, doc=None)
+		self.assertEqual(complete["progress_pct"], 100)
 
 	def test_home_payload_includes_overall_progress(self):
 		save_configuration_profile(

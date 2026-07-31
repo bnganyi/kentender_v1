@@ -84,6 +84,10 @@ EDITABLE_KEYS = frozenset(
 		"editable_here",
 		"read_only_reason",
 		"source_route",
+		# Structured STD binding — readiness matches these, not free-text item labels.
+		"parameter_code",
+		"parameter_key",
+		"readiness_parameter_id",
 	}
 )
 BANNED_KEYS = frozenset(
@@ -110,6 +114,7 @@ MSG_NA_REASON = "Add the reason this value is not applicable."
 MSG_PERF_SECURITY = "Performance security value is missing."
 MSG_ATTACHMENTS = "Contract attachment list is incomplete."
 MSG_REVIEW = "Data residency obligation should be reviewed before handoff."
+MSG_PAYMENT_SCHEDULE = "Payment schedule value is missing."
 
 TAB_ALL = "all_contract_values"
 TAB_SCC = "scc_values"
@@ -268,6 +273,9 @@ def enrich_row(row: dict[str, Any]) -> dict[str, Any]:
 		"editable_here": 1 if editable else 0,
 		"read_only_reason": _v(row, "read_only_reason"),
 		"source_route": _v(row, "source_route") or SOURCE_ROUTES.get(source, ""),
+		"parameter_code": _v(row, "parameter_code"),
+		"parameter_key": _v(row, "parameter_key"),
+		"readiness_parameter_id": _v(row, "readiness_parameter_id"),
 		"setup_status_label": status,
 		"status": status,
 		"status_label": status if status != SETUP_DRAFT else SETUP_NEEDS_ATTENTION,
@@ -275,6 +283,25 @@ def enrich_row(row: dict[str, Any]) -> dict[str, Any]:
 		"issue_count": len(unmet),
 		"issue_summary": unmet[0]["message"] if unmet else "",
 	}
+
+
+def _merge_parameter_readiness_blockers(
+	doc, blockers: list[dict[str, str]]
+) -> tuple[list[dict[str, str]], bool]:
+	"""Append STD-declared applicable-parameter blockers (completable fields only)."""
+	from kentender_procurement.tender_configurations.services.contract_parameter_readiness import (
+		readiness_blockers_for_doc,
+	)
+
+	merged = list(blockers)
+	seen = {b.get("message") for b in merged}
+	for pb in readiness_blockers_for_doc(doc):
+		msg = pb.get("message")
+		if msg in seen:
+			continue
+		merged.append(pb)
+		seen.add(msg)
+	return merged, len(merged) == 0
 
 
 def validate_rows(
@@ -380,85 +407,33 @@ def _persist_row(row: dict[str, Any]) -> dict[str, Any]:
 		"editable_here": 0 if cleaned.get("editable_here") == 0 else 1,
 		"read_only_reason": _v(cleaned, "read_only_reason"),
 		"source_route": _v(cleaned, "source_route") or SOURCE_ROUTES.get(source, ""),
+		"parameter_code": _v(cleaned, "parameter_code"),
+		"parameter_key": _v(cleaned, "parameter_key"),
+		"readiness_parameter_id": _v(cleaned, "readiness_parameter_id"),
 	}
 
 
 def _suggest_from_upstream(doc, existing: list[dict[str, Any]]) -> list[dict[str, Any]]:
-	"""Prepare draft contract values from earlier CFG steps when empty."""
-	if existing:
-		return []
-	drafts = [
-		{
-			"item_label": "Performance Security",
-			"category": CAT_SECURITIES,
-			"source_screen": SOURCE_TDS,
-			"contract_location": "SCC / Contract Data",
-			"value_or_obligation": "",
-			"editable_here": 1,
-		},
-		{
-			"item_label": "Delivery Period",
-			"category": CAT_SCC,
-			"source_screen": SOURCE_SCHED,
-			"contract_location": "SCC / Delivery Schedule",
-			"value_or_obligation": "",
-			"editable_here": 1,
-		},
-		{
-			"item_label": "On-site Support",
-			"category": CAT_SUPPORT,
-			"source_screen": SOURCE_REQ,
-			"contract_location": "Contract Schedule: Support",
-			"value_or_obligation": "",
-			"editable_here": 1,
-		},
-		{
-			"item_label": "Data Residency",
-			"category": CAT_SECURITY,
-			"source_screen": SOURCE_REQ,
-			"contract_location": "Contract Schedule: Security",
-			"value_or_obligation": "Production data must remain in Kenya unless otherwise approved",
-			"review_note": "Review before handoff",
-			"editable_here": 1,
-		},
-		{
-			"item_label": "Contract Attachments",
-			"category": CAT_SCHEDULE,
-			"source_screen": SOURCE_FORMS,
-			"contract_location": "Contract Appendices",
-			"value_or_obligation": "Missing required attachment list",
-			"editable_here": 1,
-		},
-	]
-	# Light pull from TDS / schedule if present
-	try:
-		from kentender_procurement.tender_configurations.services.implementation_schedule import (
-			_parse_schedule,
-		)
+	"""Ensure STD-declared CFG-09 rows exist (merge, never invent pack samples).
 
-		sched = _parse_schedule(getattr(doc, "implementation_schedule", None))
-		ms = (sched.get("milestones") or []) if isinstance(sched, dict) else []
-		if ms:
-			first = ms[0]
-			name = cstr(first.get("name") or "").strip()
-			dur = cstr(first.get("expected_duration_value") or "").strip()
-			unit = cstr(first.get("expected_duration_unit") or "").strip()
-			if dur and unit:
-				drafts[1]["value_or_obligation"] = f"{dur} {unit} from notice to proceed"
-				drafts[1]["source_item_label"] = name
-	except Exception:
-		pass
-	return [_persist_row(d) for d in drafts]
+	Run Check always calls this so readiness blockers map to visible table rows.
+	"""
+	from kentender_procurement.tender_configurations.services.contract_parameter_readiness import (
+		ensure_std_declared_contract_values,
+	)
+
+	merged = ensure_std_declared_contract_values(doc, existing or [])
+	return [_persist_row(d) for d in merged]
 
 
 def _guidance() -> dict[str, Any]:
 	return {
 		"title": "Contract Values Guidance",
 		"body": (
-			"Use this screen to confirm the values and obligations that will appear in the "
-			"contract documents. Values may come from the Tender Data Sheet, IT Requirements, "
-			"Implementation Schedule, Price Schedule, or Forms & Evidence. Edit only the "
-			"contract-specific values allowed for this tender configuration."
+			"Run Check loads STD-bound SCC parameters for the selected Standard Tender Document "
+			"(for example Payment schedule = IT-SCC-014). A row satisfies a parameter only when "
+			"it carries that STD binding and has a value or permitted Not applicable. "
+			"Pack-sample rows without a parameter code do not count."
 		),
 		"boundary_note": (
 			"This screen prepares contract documents. It does not manage the signed contract after award."
@@ -501,10 +476,11 @@ def get_configuration_contract_values(
 
 	blob = _parse_blob(getattr(doc, "contract_values", None))
 	raw_rows = blob["contract_values"]
-	if hydrate and not raw_rows:
-		raw_rows = _suggest_from_upstream(doc, [])
+	if hydrate:
+		raw_rows = _suggest_from_upstream(doc, raw_rows)
 	enriched = [enrich_row(row) for row in raw_rows]
 	blockers, warnings, can_continue = validate_rows(raw_rows)
+	blockers, can_continue = _merge_parameter_readiness_blockers(doc, blockers)
 	has_progress = contract_values_has_progress(raw_rows)
 	context = build_configuration_context(doc)
 	status = cstr(doc.status or "")
@@ -606,12 +582,17 @@ def save_configuration_contract_values(
 			item["contract_value_id"] = _next_id(persist)
 		persist.append(item)
 
-	if do_hydrate and not persist:
-		for draft in _suggest_from_upstream(doc, []):
-			draft["contract_value_id"] = _next_id(persist)
-			persist.append(draft)
+	if do_hydrate:
+		persist = _suggest_from_upstream(doc, persist)
+		for item in persist:
+			if not _v(item, "contract_value_id"):
+				item["contract_value_id"] = _next_id(persist)
 
 	blockers, warnings, can_continue = validate_rows(persist)
+	# Persist first so parameter readiness sees the posted CFG-09 rows.
+	blob = {"contract_values": persist}
+	doc.contract_values = json.dumps(blob)
+	blockers, can_continue = _merge_parameter_readiness_blockers(doc, blockers)
 	has_progress = contract_values_has_progress(persist)
 
 	from kentender_procurement.tender_configurations.services.step_progress import (
@@ -619,9 +600,6 @@ def save_configuration_contract_values(
 	)
 
 	progress = evaluate_conditions(contract_values_exit_conditions(persist))
-	blob = {"contract_values": persist}
-
-	doc.contract_values = json.dumps(blob)
 	doc.blocker_count = len(blockers)
 	doc.warning_count = len(warnings)
 	_sync_cfg09_steps_state(

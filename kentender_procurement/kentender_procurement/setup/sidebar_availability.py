@@ -20,9 +20,7 @@ from typing import Any
 # Menu labels that are Planned (badge + coming-soon capability overview).
 PLANNED_SIDEBAR_LABELS: frozenset[str] = frozenset(
 	{
-		"Home",
 		"Analytics",
-		"Bid Submissions",
 		"Evaluation",
 		"Awards",
 		"Contract Management",

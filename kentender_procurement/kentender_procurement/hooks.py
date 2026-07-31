@@ -55,6 +55,7 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/create_package_wizard_page.css?v={_desk_asset_v('public/css/create_package_wizard_page.css')}",
 	f"/assets/kentender_procurement/css/package_detail_page.css?v={_desk_asset_v('public/css/package_detail_page.css')}",
 	f"/assets/kentender_procurement/css/procurement_home_workspace.css?v={_desk_asset_v('public/css/procurement_home_workspace.css')}",
+	f"/assets/kentender_procurement/css/procurement_home_page.css?v={_desk_asset_v('public/css/procurement_home_page.css')}",
 	f"/assets/kentender_procurement/css/procurement_journey_page.css?v={_desk_asset_v('public/css/procurement_journey_page.css')}",
 	f"/assets/kentender_procurement/css/module_journey_context_header.css?v={_desk_asset_v('public/css/module_journey_context_header.css')}",
 	f"/assets/kentender_procurement/css/pp2_planning_status_badge.css?v={_desk_asset_v('public/css/pp2_planning_status_badge.css')}",
@@ -71,6 +72,7 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/std_prod_vertical_slice_pages.css?v={_desk_asset_v('public/css/std_prod_vertical_slice_pages.css')}",
 	f"/assets/kentender_procurement/css/pp4_workbench_typography_harmony.css?v={_desk_asset_v('public/css/pp4_workbench_typography_harmony.css')}",
 	f"/assets/kentender_procurement/css/coming_soon_page.css?v={_desk_asset_v('public/css/coming_soon_page.css')}",
+	f"/assets/kentender_procurement/css/bid_submissions_page.css?v={_desk_asset_v('public/css/bid_submissions_page.css')}",
 ]
 app_include_js = [
 	f"/assets/kentender_procurement/js/procurement_sidebar_header.js?v={_desk_asset_v('public/js/procurement_sidebar_header.js')}",
@@ -126,6 +128,8 @@ app_include_js = [
 # Doc 9 §18.1 — supplier portal URLs (`/supplier/tenders`, `/supplier/tenders/<tender_code>`).
 # Resolves dynamic detail paths to ``www/supplier/tenders`` (same shell as list).
 website_route_rules = [
+	# Prompt canonical alias → thin Website page that redirects into Desk.
+	{"from_route": "/procurement/home", "to_route": "procurement/home"},
 	{"from_route": "/supplier/tenders/<tender_code>", "to_route": "supplier/tenders"},
 	{
 		"from_route": "/tenders/<publication_ref>/review-and-validate",
@@ -222,6 +226,7 @@ doctype_js = {
 
 # Never append ?v= to page_js values — Frappe resolves them as disk paths (meta.py get_code_files_via_hooks).
 page_js = {
+	"kt-procurement-home": "public/js/procurement_home_page.js",
 	"demand-hub": "public/js/demand_hub_page.js",
 	"planning-hub": "public/js/planning_hub_page.js",
 	"demand-workbench": "public/js/demand_workbench_page.js",
