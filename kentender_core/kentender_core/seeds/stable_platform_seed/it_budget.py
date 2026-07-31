@@ -106,6 +106,32 @@ def _find_budget(pe_name: str) -> str | None:
 	)
 
 
+def _sync_budget_total_from_lines(budget_name: str) -> float:
+	"""Keep Budget.total_budget_amount equal to active line allocations.
+
+	The IT supplement adds BUD-MOH-IT-2026-001 on top of the WORKS line. Without
+	this sync, Home/Budget portfolio shows allocated > approved.
+	"""
+	total = flt(
+		frappe.db.sql(
+			"""
+			SELECT COALESCE(SUM(amount_allocated), 0)
+			FROM `tabBudget Line`
+			WHERE budget = %s AND IFNULL(is_active, 1) = 1
+			""",
+			budget_name,
+		)[0][0]
+	)
+	frappe.db.set_value(
+		"Budget",
+		budget_name,
+		"total_budget_amount",
+		total,
+		update_modified=False,
+	)
+	return total
+
+
 def upsert_it_budget_supplement() -> dict[str, Any]:
 	"""Add BUD-MOH-IT-2026-001 to the existing MOH budget cycle."""
 	frappe.only_for(("System Manager", "Administrator"))
@@ -167,12 +193,14 @@ def upsert_it_budget_supplement() -> dict[str, Any]:
 			available,
 			update_modified=False,
 		)
+		budget_total = _sync_budget_total_from_lines(budget_name)
 		return {
 			"ok": True,
 			"budget_line": IT_BUDGET_LINE_CODE,
 			"budget_line_code": IT_BUDGET_LINE_CODE,
 			"created": False,
 			"amount_available": available,
+			"budget_total": budget_total,
 		}
 
 	ensure_currency_kes()
@@ -215,6 +243,7 @@ def upsert_it_budget_supplement() -> dict[str, Any]:
 		},
 		update_modified=False,
 	)
+	budget_total = _sync_budget_total_from_lines(budget_name)
 
 	return {
 		"ok": True,
@@ -222,4 +251,5 @@ def upsert_it_budget_supplement() -> dict[str, Any]:
 		"budget_line_code": IT_BUDGET_LINE_CODE,
 		"created": True,
 		"amount_available": available,
+		"budget_total": budget_total,
 	}

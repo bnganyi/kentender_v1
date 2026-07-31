@@ -189,6 +189,109 @@ def _insert_config(
 	return doc.name
 
 
+def _scc_value(row: dict[str, Any]) -> str:
+	return cstr(
+		row.get("value_or_obligation")
+		or row.get("source_value")
+		or row.get("value")
+		or row.get("configured_value")
+		or ""
+	).strip()
+
+
+def _complete_cfg09_for_readiness(configuration_id: str) -> None:
+	"""Bind STD parameter codes and fill required CFG-09 / TDS values for readiness.
+
+	Fixture 09 labels alone no longer satisfy contract_parameter_readiness (matches by
+	parameter_code / readiness_parameter_id). Gate-ready seeds must complete this step.
+	"""
+	from kentender_procurement.tender_configurations.services.contract_parameter_readiness import (
+		ensure_std_declared_contract_values,
+	)
+
+	doc = frappe.get_doc("Tender Configuration", configuration_id)
+	try:
+		cv_blob = json.loads(doc.contract_values or "{}")
+	except (TypeError, ValueError):
+		cv_blob = {}
+	if not isinstance(cv_blob, dict):
+		cv_blob = {}
+	existing = [r for r in (cv_blob.get("contract_values") or []) if isinstance(r, dict)]
+	merged = ensure_std_declared_contract_values(doc, existing)
+
+	defaults = {
+		"payment": (
+			"Milestone payments per SCC: 30% on contract signature, "
+			"40% on UAT acceptance, 30% on final acceptance."
+		),
+		"warranty": (
+			"Twelve-month warranty after go-live; defects liability aligned to "
+			"Phase 2 support; performance security valid through warranty plus 60 days."
+		),
+		"performance_security": "10% of the Contract Price as an unconditional bank guarantee.",
+		"sla": (
+			"Severity-1 response within 4 hours; Severity-2 next business day; "
+			"monthly uptime target 99.5%."
+		),
+	}
+	present_pids = {
+		cstr(r.get("readiness_parameter_id") or "").strip()
+		for r in merged
+		if cstr(r.get("readiness_parameter_id") or "").strip()
+	}
+	for row in merged:
+		pid = cstr(row.get("readiness_parameter_id") or "").strip()
+		if pid in defaults and not _scc_value(row):
+			row["value_or_obligation"] = defaults[pid]
+			row["value"] = defaults[pid]
+			row["source_value"] = defaults[pid]
+			if not cstr(row.get("source_screen") or "").strip():
+				row["source_screen"] = "User entered"
+			if not cstr(row.get("contract_location") or "").strip():
+				row["contract_location"] = "Special Conditions of Contract"
+			if not cstr(row.get("category") or "").strip():
+				row["category"] = "SCC Value"
+
+	# SLA is applicability-gated; NSSF requirements mention SLA so a bound row is required.
+	if "sla" not in present_pids:
+		merged.append(
+			{
+				"contract_value_id": "SCC-SLA-01",
+				"item_label": "SLA / defect response",
+				"category": "SCC Value",
+				"readiness_parameter_id": "sla",
+				"parameter_code": "IT-SCC-054",
+				"source_screen": "User entered",
+				"source_item_label": "SLA",
+				"source_value": defaults["sla"],
+				"contract_location": "Special Conditions of Contract",
+				"value_or_obligation": defaults["sla"],
+				"value": defaults["sla"],
+				"editable_here": 1,
+			}
+		)
+
+	try:
+		tds = json.loads(doc.tds_values or "{}")
+	except (TypeError, ValueError):
+		tds = {}
+	if not isinstance(tds, dict):
+		tds = {}
+	if not cstr(tds.get("performance_security") or tds.get("performance_security_percent") or "").strip():
+		tds["performance_security_percent"] = "10"
+		tds["performance_security"] = "10% of the Contract Price"
+
+	frappe.db.set_value(
+		"Tender Configuration",
+		configuration_id,
+		{
+			"contract_values": json.dumps({"contract_values": merged}, ensure_ascii=False),
+			"tds_values": json.dumps(tds, ensure_ascii=False),
+		},
+		update_modified=False,
+	)
+
+
 def _apply_cfg_blobs(
 	configuration_id: str,
 	mapped: dict[str, Any],
@@ -229,6 +332,7 @@ def _apply_cfg_blobs(
 		values,
 		update_modified=False,
 	)
+	_complete_cfg09_for_readiness(configuration_id)
 	return schema
 
 
@@ -275,17 +379,31 @@ def seed_e1_nssf_tender_configuration(*, clear: bool = True) -> dict[str, Any]:
 		or profile.get("procuring_entity_name")
 		or "NSSF Staff Pension Scheme"
 	)
-	title = profile.get("tender_title") or "NSSF SPS ERP System"
+	title = cstr(profile.get("tender_title") or "NSSF SPS ERP System").strip()
+	# CFG-01 readiness warns when title length > 120; keep a clear short display title.
+	display_title = (
+		title
+		if len(title) <= 120
+		else "NSSF SPS Enterprise Resource Planning (ERP) System"
+	)
+	scope = cstr_trunc(profile.get("short_scope_summary"), 500) or title
+	if len(scope.split()) < 6:
+		scope = (
+			f"{display_title}. Supply, installation, configuration and maintenance "
+			"of an ERP system for NSSF Staff Pension Scheme."
+		)
 
-	package_name = _insert_package(title=title[:140], entity=entity)
+	package_name = _insert_package(title=display_title[:140], entity=entity)
 	cfg_id = _insert_config(
 		package_name=package_name,
-		title=title[:140],
+		title=display_title[:140],
 		std_version=std_id,
 		entity_code=entity,
 		entity_name=entity_name,
-		short_scope_summary=cstr_trunc(profile.get("short_scope_summary"), 500),
-		configuration_note=cstr_trunc(profile.get("configuration_note"), 1000),
+		short_scope_summary=scope,
+		configuration_note=cstr_trunc(
+			profile.get("configuration_note") or title, 1000
+		),
 	)
 	schema = _apply_cfg_blobs(cfg_id, mapped, std_version=std_id)
 	frappe.db.commit()

@@ -18,7 +18,7 @@ Read-only projection. No Home-persisted totals.
 | Pipeline 6 | TM2 Tender | Closed / Opening Ready (pre-Evaluation) | TM | `/desk/tender-management-v2` |
 | Deadline: bid submission | TM2 Tender Timeline.`submission_deadline_at` | Explicit only | TM | tender workbench |
 | Deadline: clarification | TM2 Tender Timeline.`clarification_deadline_at` | Explicit only | TM | tender workbench |
-| Portfolio budget / allocated / available | `get_budget_landing_data` portfolio | Approved/Active budgets | Budget | `/desk/budget-hub` |
+| Portfolio budget / allocated / available | `get_budget_landing_data` budgets | Approved/Active PE+FY: approved = max(total, line allocated); available = line `amount_available`; allocated = approved − available | Budget | `/desk/budget-hub` |
 | Unfunded approved demand | Demand Approved + budget shortfall sum | DIA budget control shortfall where available | Budget+DIA | `/desk/demand-hub` |
 | Active / open tenders | TM2 Tender counts | Active = prep+pub+open+closed-awaiting; Open = published + deadline future | TM | `/desk/tender-management-v2` |
 

@@ -111,6 +111,7 @@ class TestHomeServiceContract(IntegrationTestCase):
 				"procuring_entity": "PE-MOH",
 				"total_budget_amount": 8_000_000,
 				"allocated_amount": 100_000,
+				"available_amount": 7_900_000,
 			},
 			{
 				"name": "BUD-OTHER-PE",
@@ -119,6 +120,7 @@ class TestHomeServiceContract(IntegrationTestCase):
 				"procuring_entity": "PE-DOE",
 				"total_budget_amount": 5_000_000,
 				"allocated_amount": 2_000_000,
+				"available_amount": 3_000_000,
 			},
 		]
 		approved, allocated, available = _finance_sums_for_context(budgets, "PE-MOH", 2026)
@@ -135,6 +137,7 @@ class TestHomeServiceContract(IntegrationTestCase):
 				"procuring_entity": "MOH",  # alias of PE-MOH
 				"total_budget_amount": 8_000_000,
 				"allocated_amount": 100_000,
+				"available_amount": 7_900_000,
 			},
 			{
 				"name": "BUD-OLD-FY",
@@ -143,12 +146,31 @@ class TestHomeServiceContract(IntegrationTestCase):
 				"procuring_entity": "PE-MOH",
 				"total_budget_amount": 1_000_000,
 				"allocated_amount": 500_000,
+				"available_amount": 500_000,
 			},
 		]
 		approved, allocated, available = _finance_sums_for_context(budgets, "PE-MOH", 2026)
 		self.assertEqual(approved, 8_000_000.0)
-		self.assertEqual(allocated, 100_000.0)
 		self.assertEqual(available, 7_900_000.0)
+		self.assertEqual(allocated, 100_000.0)
+
+	def test_finance_sums_stale_envelope_uses_line_allocations(self):
+		"""When IT lines exceed Budget.total, approved follows line sum; available from lines."""
+		budgets = [
+			{
+				"name": "BUD-MOH",
+				"status": "Approved",
+				"fiscal_year": 2026,
+				"procuring_entity": "PE-MOH",
+				"total_budget_amount": 120_000_000,
+				"allocated_amount": 165_000_000,
+				"available_amount": 28_799_995,
+			},
+		]
+		approved, allocated, available = _finance_sums_for_context(budgets, "PE-MOH", 2026)
+		self.assertEqual(approved, 165_000_000.0)
+		self.assertEqual(available, 28_799_995.0)
+		self.assertEqual(allocated, 165_000_000.0 - 28_799_995.0)
 
 	def test_portfolio_figures_are_internally_consistent(self):
 		"""Live Home: allocated must not exceed approved; available = approved − allocated."""
@@ -166,3 +188,32 @@ class TestHomeServiceContract(IntegrationTestCase):
 		available = float(figures["available_balance"] or 0)
 		self.assertLessEqual(allocated, approved + 0.001)
 		self.assertAlmostEqual(available, max(0.0, approved - allocated), places=2)
+
+	def test_pipeline_excludes_packages_with_tender_or_cfg(self):
+		"""PRD: plan awaiting tender = approved packages without tender/CFG."""
+		from kentender_procurement.procurement_home.services.home_pipeline import (
+			_count_plan_awaiting_tender,
+			_packages_with_tender_initiation,
+		)
+
+		frappe.set_user("Administrator")
+		if not frappe.db.exists("DocType", "Procurement Package"):
+			self.skipTest("Procurement Package missing")
+		claimed = _packages_with_tender_initiation("PE-MOH")
+		count = _count_plan_awaiting_tender("PE-MOH")
+		rows = frappe.get_all(
+			"Procurement Package",
+			filters={
+				"status": ["in", ["Approved", "Ready for Release"]],
+				"procuring_entity_code": ["in", ["PE-MOH", "MOH"]],
+			},
+			fields=["name", "package_code"],
+		)
+		unclaimed = [
+			r
+			for r in rows
+			if (r.name not in claimed) and ((r.package_code or "") not in claimed)
+		]
+		self.assertEqual(count, len(unclaimed))
+		if frappe.db.exists("Procurement Package", "DEMO-MOH-2026-PKG-IP"):
+			self.assertIn("DEMO-MOH-2026-PKG-IP", claimed)

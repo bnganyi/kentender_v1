@@ -64,19 +64,21 @@ def probe_demo_platform_transitions(*, mutate: bool = False) -> dict[str, Any]:
 	except Exception as exc:  # noqa: BLE001
 		add("cfg_walkable_home", False, str(exc))
 
-	# CFG gate-ready — readiness / no fatal missing STD
+	# CFG gate-ready — must pass live readiness with zero blockers
 	try:
 		from kentender_procurement.tender_configurations.services.readiness import (
-			get_readiness_report,
+			_build_findings_and_checklist,
 		)
 
-		ready = get_readiness_report(CFG_GATE_READY)
+		_findings, _checklist, blockers, warnings = _build_findings_and_checklist(
+			CFG_GATE_READY
+		)
 		add(
 			"cfg_gate_ready_readiness",
-			bool(ready),
+			int(blockers or 0) == 0,
 			{
-				"overall": (ready or {}).get("overall"),
-				"blocker_count": (ready or {}).get("blocker_count"),
+				"blocker_count": blockers,
+				"warning_count": warnings,
 				"status": frappe.db.get_value("Tender Configuration", CFG_GATE_READY, "status"),
 			},
 		)
@@ -85,8 +87,8 @@ def probe_demo_platform_transitions(*, mutate: bool = False) -> dict[str, Any]:
 		status = frappe.db.get_value("Tender Configuration", CFG_GATE_READY, "status")
 		add(
 			"cfg_gate_ready_readiness",
-			bool(std) and bool(status),
-			{"fallback": str(exc), "std": std, "status": status},
+			False,
+			{"error": str(exc), "std": std, "status": status},
 		)
 
 	# Bid sealed — can_open probe

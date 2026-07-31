@@ -36,5 +36,8 @@ PKG_GATE_READY: Final[str] = f"{DEMO_PREFIX}-PKG-RFP"
 CFG_GATE_READY: Final[str] = f"{DEMO_PREFIX}-CFG-RFP"
 PKG_PUBLISHED: Final[str] = f"{DEMO_PREFIX}-PKG-PUB"
 CFG_PUBLISHED: Final[str] = f"{DEMO_PREFIX}-CFG-PUB"
+# Second open (receiving) publication so /tenders Open filter is not a single card
+PKG_PUBLISHED_OPEN2: Final[str] = f"{DEMO_PREFIX}-PKG-PUB-OPEN2"
+CFG_PUBLISHED_OPEN2: Final[str] = f"{DEMO_PREFIX}-CFG-PUB-OPEN2"
 
 DEFAULT_PLANNING_CHECKPOINT: Final[str] = "RELEASED_TO_TENDER"

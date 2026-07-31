@@ -38,3 +38,20 @@ class TestDemoPlatformValidateWhenLoaded(FrappeTestCase):
 		self.assertTrue(pe_checks.get("pe_moe"))
 		self.assertTrue(pe_checks.get("home_has_pe_moh"))
 		self.assertTrue(pe_checks.get("home_has_pe_moe"))
+
+
+class TestDemoPlatformGateReadyReadiness(FrappeTestCase):
+	"""When DEMO-MOH-2026-CFG-RFP exists, live readiness must report zero blockers."""
+
+	def test_gate_ready_cfg_has_zero_blockers_when_present(self):
+		from kentender_core.seeds.demo_platform_seed.constants import CFG_GATE_READY
+		from kentender_procurement.tender_configurations.services.readiness import (
+			_build_findings_and_checklist,
+		)
+
+		if not frappe.db.exists("Tender Configuration", CFG_GATE_READY):
+			self.skipTest("Demo gate-ready CFG not loaded")
+		_findings, _checklist, blockers, _warnings = _build_findings_and_checklist(
+			CFG_GATE_READY
+		)
+		self.assertEqual(int(blockers or 0), 0, _findings)

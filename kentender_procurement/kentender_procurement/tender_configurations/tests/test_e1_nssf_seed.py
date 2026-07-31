@@ -104,12 +104,20 @@ class TestE1NssfSeed(unittest.TestCase):
 		form_rows = [i for i in items if str(i.get("item_id") or "").startswith("FORM-")]
 		self.assertEqual(len(form_rows), EXPECTED_FORMS_COUNT)
 		cv = _parse(doc.contract_values)
+		all_cv = [v for v in (cv.get("contract_values") or []) if isinstance(v, dict)]
+		# Fixture SCC-* rows plus readiness-bound STD rows (payment/warranty/SLA, etc.).
 		scc = [
 			v
-			for v in (cv.get("contract_values") or [])
+			for v in all_cv
 			if str(v.get("contract_value_id") or "").startswith("SCC-")
 		]
-		self.assertEqual(len(scc), EXPECTED_SCC_COUNT)
+		self.assertGreaterEqual(len(scc), EXPECTED_SCC_COUNT)
+		bound_pids = {
+			str(v.get("readiness_parameter_id") or "").strip()
+			for v in all_cv
+			if str(v.get("readiness_parameter_id") or "").strip()
+		}
+		self.assertTrue({"payment", "warranty", "performance_security"} <= bound_pids, bound_pids)
 
 	def test_std_version_bound(self):
 		from kentender_procurement.std_engine.constants import CANONICAL_PACKAGE_ID
@@ -152,10 +160,8 @@ class TestE1NssfSeed(unittest.TestCase):
 	def test_readiness_has_zero_blockers(self):
 		report = run_readiness_check(self.cfg_id)
 		self.assertEqual(int(report.get("blocker_count") or 0), 0, report.get("findings"))
-		self.assertIn(
-			report.get("overall_result"),
-			("Ready for Review", "Ready with Warnings"),
-		)
+		self.assertEqual(int(report.get("warning_count") or 0), 0, report.get("findings"))
+		self.assertEqual(report.get("overall_result"), "Ready for Review")
 
 	def test_tds_select_values_match_official_options(self):
 		from kentender_procurement.tender_configurations.services.tds import (

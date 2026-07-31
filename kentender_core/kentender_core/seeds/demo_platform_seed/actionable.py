@@ -16,6 +16,7 @@ from kentender_core.seeds.demo_platform_seed.constants import (
 	CFG_GATE_READY,
 	CFG_NEEDS_ATTENTION,
 	CFG_PUBLISHED,
+	CFG_PUBLISHED_OPEN2,
 	CFG_WALKABLE,
 	DEMAND_DRAFT,
 	DEMAND_PENDING_HOD,
@@ -23,6 +24,7 @@ from kentender_core.seeds.demo_platform_seed.constants import (
 	PKG_GATE_READY,
 	PKG_NEEDS_ATTENTION,
 	PKG_PUBLISHED,
+	PKG_PUBLISHED_OPEN2,
 	PKG_READY_TO_CONFIGURE,
 	PKG_WALKABLE,
 )
@@ -79,14 +81,14 @@ def _seed_demands() -> dict[str, Any]:
 	specs = (
 		(
 			DEMAND_DRAFT,
-			"Demo Draft — District Hospital Clinical Workstations",
+			"District Hospital Clinical Workstations",
 			"Draft",
 			"walkable",
 			"Edit and submit for HoD approval",
 		),
 		(
 			DEMAND_PENDING_HOD,
-			"Demo Pending HoD — Secure Wi‑Fi Expansion Phase 1",
+			"Secure Wi‑Fi Expansion Phase 1",
 			"Pending HoD Approval",
 			"gate_ready",
 			"Approve (HoD) from Demand workbench / Home",
@@ -110,7 +112,9 @@ def _seed_demands() -> dict[str, Any]:
 				"demand_type": "Planned",
 				"requisition_type": "Goods",
 				"budget_line": bl,
-				"beneficiary_summary": "Demo platform seed — linked DIA stage under PE-MOH.",
+				"beneficiary_summary": (
+					"Priority Ministry of Health facilities requiring ICT capacity uplift."
+				),
 				"specification_summary": title,
 				"delivery_location": "Ministry of Health — priority district hospital sites",
 				"items": [
@@ -189,11 +193,19 @@ def _insert_config(
 	if frappe.db.exists("Tender Configuration", ref):
 		frappe.delete_doc("Tender Configuration", ref, force=True, ignore_permissions=True)
 	entity_name = _pe_name()
+	# Gate-ready / publishable rows start In Progress; complete fixture + readiness promote status.
+	insert_status = status
+	if full_payload and status in (
+		STATUS_APPROVED_FOR_PREVIEW,
+		STATUS_READY_FOR_PUBLICATION,
+		STATUS_PUBLISHED,
+	):
+		insert_status = STATUS_IN_PROGRESS
 	row: dict[str, Any] = {
 		"doctype": "Tender Configuration",
 		"configuration_ref": ref,
 		"tender_title": title,
-		"status": status,
+		"status": insert_status,
 		"procurement_package": package_code,
 		"procurement_package_ref": package_code,
 		"package_title": title,
@@ -206,96 +218,104 @@ def _insert_config(
 		"std_document_label": "IT Standard Tender Document — April 2022",
 		"blocker_count": blockers,
 		"warning_count": warnings,
-		"steps_state": steps_state,
+		"steps_state": steps_state if not full_payload else steps_state_focus_cfg("CFG-01"),
 		"approval_date": nowdate(),
-		"short_scope_summary": "Demo platform IT STD configuration (linked PE-MOH).",
+		"lot_structure": "Single lot",
+		# Profile readiness wants ≥6 words in scope (titles alone are often too short).
+		"short_scope_summary": (
+			f"{title}. Ministry of Health IT procurement under the PPRA IT Standard Tender Document."
+		),
 	}
-	if full_payload:
-		row.update(_gate_ready_payload())
 	doc = frappe.get_doc(row)
 	doc.insert(ignore_permissions=True)
+	if full_payload:
+		_fill_complete_cfg_from_e1_fixture(doc.name, target_status=status)
 	return doc.name
 
 
-def _gate_ready_payload() -> dict[str, Any]:
-	"""Minimal complete fields so Ready for Publication / preview is believable."""
-	return {
-		"lot_structure": "Single lot",
-		"tds_values": json.dumps(
-			{
-				"tender_currency": "KES",
-				"bid_validity_period": "90",
-				"bid_validity_unit": "days",
-				"tender_security_required": "Yes",
-				"tender_security_type": "Tender Security",
-				"tender_security_amount": "10000",
-				"tender_security_currency": "KES",
-				"submission_channel": "E-Procurement Portal",
-				"alternatives_permitted": "No",
-				"opening_method": "Electronic Opening",
-			}
-		),
-		"it_requirements": json.dumps(
-			[
-				{
-					"requirement_id": "DEMO-REQ-001",
-					"title": "Network backbone",
-					"description": "Provide campus LAN backbone for the district hospital.",
-					"requirement_family": "System Requirements",
-					"category_label": "Technical Requirement",
-					"treatment_label": "Mandatory",
-				}
-			]
-		),
-		"evaluation_setup": json.dumps(
-			{
-				"technical_pass_mark": 70,
-				"technical_scoring_total": 100,
-				"criteria": [
-					{
-						"criterion_name": "Relevant experience",
-						"stage": "Technical",
-						"evaluation_basis": "Pass/Fail",
-					}
-				],
-			}
-		),
-		"implementation_schedule": json.dumps(
-			{
-				"milestones": [{"milestone_id": "MS-01", "name": "Kick-off", "sequence": "1"}],
-				"delivery_timing_complete": 1,
-			}
-		),
-		"price_schedule": json.dumps(
-			{"items": [{"item_name": "IT lot", "unit": "Lot", "quantity": "1", "currency": "KES"}]}
-		),
-		"contract_values": json.dumps(
-			{
-				"contract_values": [
-					{
-						"contract_value_id": "SCC-01",
-						"item_label": "Governing law",
-						"value_or_obligation": "Laws of Kenya",
-					}
-				]
-			}
-		),
-		"system_inventory": json.dumps({"not_applicable": 1, "items": []}),
-		"forms_and_evidence": json.dumps(
-			{
-				"submission_items": [
-					{"item_id": "FORM-001", "title": "Form of Tender", "category": "Standard Form"}
-				]
-			}
-		),
-		"bidder_submission_schema": json.dumps(
-			{
-				"version": 1,
-				"schema_hash": "demo-platform",
-				"sections": [{"key": "form_of_tender", "title": "Form of Tender", "required": True}],
-			}
-		),
-	}
+def _fill_complete_cfg_from_e1_fixture(configuration_id: str, *, target_status: str) -> dict[str, Any]:
+	"""Apply the proven E1 NSSF CFG-01…09 fixture blobs and refuse to gate if readiness fails.
+
+	Lean / sparse JSON is not sufficient — only map_all_cfg_blobs + schema compile
+	matches run_readiness_check. Stamping steps_state Complete without this is forbidden.
+	"""
+	from kentender_procurement.tender_configurations.seed.e1_nssf_seed import _apply_cfg_blobs
+	from kentender_procurement.tender_configurations.services.e1_nssf_fixture_mapper import (
+		map_all_cfg_blobs,
+	)
+	from kentender_procurement.tender_configurations.services.readiness import (
+		run_readiness_check,
+	)
+
+	mapped = map_all_cfg_blobs()
+	std_id = cstr(
+		frappe.db.get_value("Tender Configuration", configuration_id, "std_version")
+		or CANONICAL_PACKAGE_ID
+	)
+	_apply_cfg_blobs(configuration_id, mapped, std_version=std_id)
+
+	# Electronic publish path expects tender security required (same as NSSF publish seed).
+	tds_raw = frappe.db.get_value("Tender Configuration", configuration_id, "tds_values")
+	try:
+		tds = json.loads(tds_raw) if isinstance(tds_raw, str) else (tds_raw or {})
+	except (TypeError, ValueError):
+		tds = {}
+	if not isinstance(tds, dict):
+		tds = {}
+	tds["tender_security_required"] = "Yes"
+	if cstr(tds.get("tender_security_type") or "") in ("", "Not Required"):
+		tds["tender_security_type"] = "Bank Guarantee"
+	if not cstr(tds.get("tender_security_amount") or "").strip():
+		tds["tender_security_amount"] = "500000"
+	if not cstr(tds.get("tender_security_currency") or "").strip():
+		tds["tender_security_currency"] = "KES"
+	if not cstr(tds.get("tender_security_validity_period") or "").strip():
+		tds["tender_security_validity_period"] = "120"
+	if not cstr(tds.get("tender_security_validity_unit") or "").strip():
+		tds["tender_security_validity_unit"] = "days"
+	frappe.db.set_value(
+		"Tender Configuration",
+		configuration_id,
+		{
+			"tds_values": json.dumps(tds, ensure_ascii=False),
+			"steps_state": json.dumps(steps_state_all_complete()),
+		},
+		update_modified=False,
+	)
+	frappe.db.commit()
+
+	readiness = run_readiness_check(configuration_id)
+	blockers = int(readiness.get("blocker_count") or 0)
+	warnings = int(readiness.get("warning_count") or 0)
+	if blockers > 0 or warnings > 0:
+		frappe.throw(
+			frappe._(
+				"Demo platform CFG {0} still has {1} blocker(s) / {2} warning(s) after E1 fixture fill. "
+				"Refusing to mark gate-ready / publishable."
+			).format(configuration_id, blockers, warnings),
+			title="DEMO_CFG_READINESS_ISSUES",
+		)
+
+	# Promote only after proven clean readiness (never stamp Approved over empty/noisy data).
+	promote_to = target_status
+	if promote_to == STATUS_PUBLISHED:
+		promote_to = STATUS_APPROVED_FOR_PREVIEW
+	elif promote_to == STATUS_READY_FOR_PUBLICATION:
+		promote_to = STATUS_APPROVED_FOR_PREVIEW
+	frappe.db.set_value(
+		"Tender Configuration",
+		configuration_id,
+		{
+			"status": promote_to,
+			"blocker_count": 0,
+			"warning_count": 0,
+			"steps_state": json.dumps(steps_state_all_complete()),
+			"approval_date": nowdate(),
+		},
+		update_modified=False,
+	)
+	frappe.db.commit()
+	return readiness
 
 
 def _seed_cfg_matrix() -> dict[str, Any]:
@@ -303,39 +323,33 @@ def _seed_cfg_matrix() -> dict[str, Any]:
 	if not frappe.db.exists("STD Version", CANONICAL_PACKAGE_ID):
 		frappe.throw(f"Missing ACTIVE STD {CANONICAL_PACKAGE_ID}")
 
-	ready_pkg = _insert_package(PKG_READY_TO_CONFIGURE, "Demo Ready — Hospital Edge Switches")
-	_insert_package(PKG_WALKABLE, "Demo Walkable — County LAN Refresh")
+	ready_pkg = _insert_package(PKG_READY_TO_CONFIGURE, "Hospital Edge Switches")
+	_insert_package(PKG_WALKABLE, "County LAN Refresh")
 	walk = _insert_config(
 		ref=CFG_WALKABLE,
 		package_code=PKG_WALKABLE,
-		title="Demo Walkable — County LAN Refresh",
+		title="County LAN Refresh",
 		status=STATUS_IN_PROGRESS,
 		steps_state=steps_state_focus_cfg("CFG-01", status_label=STEP_IN_PROGRESS),
 	)
-	_insert_package(PKG_NEEDS_ATTENTION, "Demo Needs Attention — Network Upgrade Phase 2")
+	_insert_package(PKG_NEEDS_ATTENTION, "Network Upgrade Phase 2")
 	na = _insert_config(
 		ref=CFG_NEEDS_ATTENTION,
 		package_code=PKG_NEEDS_ATTENTION,
-		title="Demo Needs Attention — Network Upgrade Phase 2",
+		title="Network Upgrade Phase 2",
 		status=STATUS_NEEDS_ATTENTION,
 		steps_state=steps_state_showcase_nine_cards(),
 		blockers=2,
 		warnings=1,
 	)
-	_insert_package(PKG_GATE_READY, "Demo Gate-Ready — HMIS Soft Services Lot")
+	_insert_package(PKG_GATE_READY, "Supply and configuration of HMIS Software")
 	gate = _insert_config(
 		ref=CFG_GATE_READY,
 		package_code=PKG_GATE_READY,
-		title="Demo Gate-Ready — HMIS Soft Services Lot",
-		status=STATUS_READY_FOR_PUBLICATION,
+		title="Supply and configuration of HMIS Software",
+		status=STATUS_APPROVED_FOR_PREVIEW,
 		steps_state=steps_state_all_complete(),
 		full_payload=True,
-	)
-	# Also stamp Approved for Preview so document preview / publication setup paths work
-	frappe.db.set_value(
-		"Tender Configuration",
-		gate,
-		{"status": STATUS_APPROVED_FOR_PREVIEW, "blocker_count": 0, "warning_count": 0},
 	)
 
 	return {
@@ -385,58 +399,83 @@ def _publish_demo_config() -> dict[str, Any]:
 		persist_compiled_schema,
 	)
 
-	_insert_package(PKG_PUBLISHED, "Demo Published — Shared County IT Support Services")
-	cfg = _insert_config(
-		ref=CFG_PUBLISHED,
-		package_code=PKG_PUBLISHED,
-		title="Demo Published — Shared County IT Support Services",
-		status=STATUS_APPROVED_FOR_PREVIEW,
-		steps_state=steps_state_all_complete(),
-		full_payload=True,
-	)
-	persist_compiled_schema(cfg)
-	gen = generate_document_preview(cfg)
-	if gen.get("preview_status") != "Generated":
-		# Fallback: stamp publication directly
-		return _direct_publish(cfg, past_deadline=False, past_opening=False, seal_bids=False)
+	def _publish_open(package_code: str, cfg_ref: str, title: str, notice: str) -> dict[str, Any]:
+		_insert_package(package_code, title)
+		cfg = _insert_config(
+			ref=cfg_ref,
+			package_code=package_code,
+			title=title,
+			status=STATUS_APPROVED_FOR_PREVIEW,
+			steps_state=steps_state_all_complete(),
+			full_payload=True,
+		)
+		persist_compiled_schema(cfg)
+		gen = generate_document_preview(cfg)
+		if gen.get("preview_status") != "Generated":
+			return _direct_publish(
+				cfg,
+				past_deadline=False,
+				past_opening=False,
+				seal_bids=False,
+				tender_notice=notice,
+			)
 
-	conf = confirm_document_preview(cfg, {"confirm_ready_for_handoff": 1})
-	pub_id = conf["publication_id"]
-	now = now_datetime()
-	sub = add_to_date(now, days=14)
-	opn = add_to_date(now, days=15)
-	save_publication_setup(
-		pub_id,
-		{
-			"publication_mode": "immediate",
-			"publication_datetime": str(add_to_date(now, days=-1)),
-			"tender_notice": "Demo platform published IT tender — receiving submissions.",
-			"clarification_deadline": str(add_to_date(sub, days=-2)),
-			"submission_deadline": str(sub),
-			"opening_datetime": str(opn),
-			"bidder_visibility": "All Registered Bidders",
-			"activate_bidder_workspace": 1,
-			"acknowledgement_confirmed": 1,
-		},
+		conf = confirm_document_preview(cfg, {"confirm_ready_for_handoff": 1})
+		pub_id = conf["publication_id"]
+		now = now_datetime()
+		sub = add_to_date(now, days=14)
+		opn = add_to_date(now, days=15)
+		save_publication_setup(
+			pub_id,
+			{
+				"publication_mode": "immediate",
+				"publication_datetime": str(add_to_date(now, days=-1)),
+				"tender_notice": notice,
+				"clarification_deadline": str(add_to_date(sub, days=-2)),
+				"submission_deadline": str(sub),
+				"opening_datetime": str(opn),
+				"bidder_visibility": "All Registered Bidders",
+				"activate_bidder_workspace": 1,
+				"acknowledgement_confirmed": 1,
+			},
+		)
+		publish_tender_for_development_preview(pub_id)
+		frappe.db.set_value(
+			"IT Tender Publication Record",
+			pub_id,
+			{"submission_deadline": sub, "opening_datetime": opn},
+		)
+		frappe.db.set_value("Tender Configuration", cfg, "status", STATUS_PUBLISHED)
+		return {
+			"configuration_ref": cfg_ref,
+			"publication_id": pub_id,
+			"role": "portfolio",
+			"submission_stage": "Receiving submissions",
+			"next_action": "View tender on Bid Submissions landing",
+		}
+
+	primary = _publish_open(
+		PKG_PUBLISHED,
+		CFG_PUBLISHED,
+		"Shared County IT Support Services",
+		"Invitation to tender for shared county IT support services under the IT STD.",
 	)
-	publish_tender_for_development_preview(pub_id)
-	frappe.db.set_value(
-		"IT Tender Publication Record",
-		pub_id,
-		{"submission_deadline": sub, "opening_datetime": opn},
+	secondary = _publish_open(
+		PKG_PUBLISHED_OPEN2,
+		CFG_PUBLISHED_OPEN2,
+		"County EMR Interoperability Platform",
+		"Invitation to tender for county EMR interoperability platform services.",
 	)
-	frappe.db.set_value("Tender Configuration", cfg, "status", STATUS_PUBLISHED)
-	return {
-		"configuration_ref": CFG_PUBLISHED,
-		"publication_id": pub_id,
-		"role": "portfolio",
-		"submission_stage": "Receiving submissions",
-		"next_action": "View tender on Bid Submissions landing",
-	}
+	return {"primary": primary, "secondary_open": secondary}
 
 
 def _direct_publish(
-	cfg_id: str, *, past_deadline: bool, past_opening: bool, seal_bids: bool
+	cfg_id: str,
+	*,
+	past_deadline: bool,
+	past_opening: bool,
+	seal_bids: bool,
+	tender_notice: str | None = None,
 ) -> dict[str, Any]:
 	from kentender_procurement.tender_configurations.seed.bid_submissions_officer_fixtures import (
 		seal_three_bidders,
@@ -452,6 +491,7 @@ def _direct_publish(
 	now = now_datetime()
 	sub = add_to_date(now, days=-2) if past_deadline else add_to_date(now, days=14)
 	opn = add_to_date(now, days=-1) if past_opening else add_to_date(now, days=15)
+	title = cstr(frappe.db.get_value("Tender Configuration", cfg_id, "tender_title") or cfg_id)
 	pkg = frappe.get_doc(
 		{
 			"doctype": PACKAGE_DOCTYPE,
@@ -459,7 +499,7 @@ def _direct_publish(
 			"configuration_ref": cfg_id,
 			"package_status": "Awaiting Publication Setup",
 			"document_hash": frappe.generate_hash(length=32),
-			"tender_html": "<html><body>demo-platform</body></html>",
+			"tender_html": f"<html><body>{frappe.utils.escape_html(title)}</body></html>",
 			"bidder_submission_schema": json.dumps(
 				{
 					"version": 1,
@@ -487,7 +527,7 @@ def _direct_publish(
 			"submission_deadline": sub,
 			"opening_datetime": opn,
 			"publication_datetime": add_to_date(now, days=-3),
-			"tender_notice": "Demo platform publication.",
+			"tender_notice": tender_notice or f"Invitation to tender — {title}.",
 			"activate_bidder_workspace": 1,
 			"electronic_template_snapshot": json.dumps(
 				{
@@ -521,28 +561,28 @@ def _seed_bid_scenarios() -> dict[str, Any]:
 		open_submitted_bids,
 	)
 
-	# Sealed / openable
+	# Sealed / openable — past submission deadline (Closed on bidder portal; openable on Desk)
 	pkg_s = f"{PKG_PUBLISHED}-SEALED"
 	cfg_s = f"{CFG_PUBLISHED}-SEALED"
-	_insert_package(pkg_s, "Demo Sealed — District Firewall Refresh")
+	_insert_package(pkg_s, "District Firewall Refresh")
 	cfg = _insert_config(
 		ref=cfg_s,
 		package_code=pkg_s,
-		title="Demo Sealed — District Firewall Refresh",
+		title="District Firewall Refresh",
 		status=STATUS_APPROVED_FOR_PREVIEW,
 		steps_state=steps_state_all_complete(),
 		full_payload=True,
 	)
 	sealed = _direct_publish(cfg, past_deadline=True, past_opening=True, seal_bids=True)
 
-	# Opened
+	# Opened — past deadline + opened register (Closed on bidder portal)
 	pkg_o = f"{PKG_PUBLISHED}-OPENED"
 	cfg_o = f"{CFG_PUBLISHED}-OPENED"
-	_insert_package(pkg_o, "Demo Opened — Endpoint Security Suite")
+	_insert_package(pkg_o, "Endpoint Security Suite")
 	cfg2 = _insert_config(
 		ref=cfg_o,
 		package_code=pkg_o,
-		title="Demo Opened — Endpoint Security Suite",
+		title="Endpoint Security Suite",
 		status=STATUS_APPROVED_FOR_PREVIEW,
 		steps_state=steps_state_all_complete(),
 		full_payload=True,
@@ -580,6 +620,7 @@ def seed_actionable_stages() -> dict[str, Any]:
 	return {
 		"demands": demands,
 		"tender_configurations": cfg,
-		"published_receiving": published,
+		"published_receiving": published.get("primary") if isinstance(published, dict) else published,
+		"published_open": published,
 		"bid_submissions": bids,
 	}

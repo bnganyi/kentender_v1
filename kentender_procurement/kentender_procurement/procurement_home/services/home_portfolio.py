@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from frappe.utils import flt, get_datetime, now_datetime
+from frappe.utils import flt
 
 from kentender_procurement.procurement_home.services.pe_aliases import pe_aliases
 
@@ -71,13 +71,18 @@ def _finance_sums_for_context(
 ) -> tuple[float, float, float]:
 	"""Approved / allocated / available for selected PE + FY.
 
-	PRD: approved = total Approved/Active funding; allocated = plan allocations
-	on those budgets; available = approved − allocated.
+	Uses Budget & Funding landing figures (PRD: do not invent competing maths):
+
+	- approved = Approved/Active ``total_budget_amount`` (envelope), never below
+	  active line allocations when the envelope is stale
+	- available = sum of Budget Line ``amount_available`` on those budgets
+	- allocated = approved − available (funding already reserved/committed/consumed)
+
 	Draft/Submitted budgets must not leak into any of the three figures.
 	"""
 	aliases = set(pe_aliases(procuring_entity))
 	approved = 0.0
-	allocated = 0.0
+	available = 0.0
 	for b in budgets or []:
 		if fiscal_year is not None and int(b.get("fiscal_year") or 0) != int(fiscal_year):
 			continue
@@ -86,9 +91,13 @@ def _finance_sums_for_context(
 			continue
 		if (b.get("status") or "") not in _APPROVED_ACTIVE:
 			continue
-		approved += flt(b.get("total_budget_amount"))
-		allocated += flt(b.get("allocated_amount"))
-	available = max(0.0, approved - allocated)
+		envelope = flt(b.get("total_budget_amount"))
+		line_allocated = flt(b.get("allocated_amount"))
+		# Defensive: IT supplement historically left envelope < line sum.
+		approved += max(envelope, line_allocated)
+		available += flt(b.get("available_amount"))
+	available = max(0.0, min(available, approved))
+	allocated = max(0.0, approved - available)
 	return approved, allocated, available
 
 
@@ -128,9 +137,13 @@ def _unfunded_approved_demand(pe: str) -> float:
 def _tender_counts(pe: str) -> tuple[int, int]:
 	if not frappe.db.exists("DocType", "TM2 Tender"):
 		return 0, 0
-	filters: dict[str, Any] = {}
-	if frappe.db.has_column("TM2 Tender", "procuring_entity_code"):
-		filters["procuring_entity_code"] = ["in", pe_aliases(pe)]
+	# Keep portfolio open-count aligned with pipeline published_and_open.
+	from kentender_procurement.procurement_home.services.home_pipeline import (
+		_published_open_and_closed_past_deadline,
+		_tm_filters,
+	)
+
+	filters = _tm_filters(pe)
 	active_statuses = [
 		"Draft",
 		"STD Instance Incomplete",
@@ -145,34 +158,7 @@ def _tender_counts(pe: str) -> tuple[int, int]:
 	active = int(
 		frappe.db.count("TM2 Tender", {**filters, "status": ["in", active_statuses]})
 	)
-	published = frappe.get_all(
-		"TM2 Tender",
-		filters={**filters, "status": "Published"},
-		fields=["name", "tender_code"],
-		limit=500,
-	)
-	now = now_datetime()
-	open_count = 0
-	for t in published:
-		deadline = None
-		if frappe.db.exists("DocType", "TM2 Tender Timeline"):
-			deadline = frappe.db.get_value(
-				"TM2 Tender Timeline", {"tm2_tender": t.name}, "submission_deadline_at"
-			)
-			if not deadline:
-				deadline = frappe.db.get_value(
-					"TM2 Tender Timeline",
-					{"tender_code": t.get("tender_code")},
-					"submission_deadline_at",
-				)
-		if deadline:
-			try:
-				if get_datetime(deadline) > now:
-					open_count += 1
-			except Exception:
-				pass
-		else:
-			open_count += 1
+	open_count, _closed = _published_open_and_closed_past_deadline(pe)
 	return active, open_count
 
 

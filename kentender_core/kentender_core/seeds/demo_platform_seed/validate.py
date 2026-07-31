@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
+from frappe.utils import cstr
 
 from kentender_core.seeds.demo_platform_seed.constants import (
 	CFG_GATE_READY,
@@ -69,6 +70,34 @@ def validate_demo_platform_seed() -> dict[str, Any]:
 		"cfg_gate_ready",
 		bool(frappe.db.exists("Tender Configuration", {"configuration_ref": CFG_GATE_READY})),
 	)
+	# Gate-ready must pass live readiness (never status-theater / empty CFG blobs).
+	# Use the read-only findings builder — run_readiness_check can TimestampMismatch
+	# when CFG probes touch the same document mid-save.
+	try:
+		from kentender_procurement.tender_configurations.services.readiness import (
+			_build_findings_and_checklist,
+		)
+
+		if frappe.db.exists("Tender Configuration", CFG_GATE_READY):
+			_findings, _checklist, blockers, warnings = _build_findings_and_checklist(
+				CFG_GATE_READY
+			)
+			ok(
+				"cfg_gate_ready_zero_blockers",
+				int(blockers or 0) == 0,
+				f"blockers={blockers} warnings={warnings}",
+			)
+			ok(
+				"cfg_gate_ready_zero_warnings",
+				int(warnings or 0) == 0,
+				f"warnings={warnings}",
+			)
+		else:
+			ok("cfg_gate_ready_zero_blockers", False, "missing CFG_GATE_READY")
+			ok("cfg_gate_ready_zero_warnings", False, "missing CFG_GATE_READY")
+	except Exception as exc:  # noqa: BLE001
+		ok("cfg_gate_ready_zero_blockers", False, str(exc))
+		ok("cfg_gate_ready_zero_warnings", False, str(exc))
 
 	demo_cfgs = frappe.get_all(
 		"Tender Configuration",
@@ -83,6 +112,47 @@ def validate_demo_platform_seed() -> dict[str, Any]:
 			limit=5,
 		)
 	ok("published_pe_moh", bool(pub_receiving), f"count={len(pub_receiving)}")
+
+	# Bidder portal: Open ≠ officer Published. Past-deadline pubs are Closed on /tenders.
+	try:
+		from kentender_procurement.tender_configurations.services.available_tenders import (
+			STATUS_CLOSED,
+			STATUS_OPEN,
+			list_available_tenders,
+		)
+
+		open_list = list_available_tenders({"status": STATUS_OPEN}, user="Guest", page_size=50)
+		closed_list = list_available_tenders({"status": STATUS_CLOSED}, user="Guest", page_size=50)
+		open_total = int((open_list.get("pagination") or {}).get("total") or 0)
+		closed_total = int((closed_list.get("pagination") or {}).get("total") or 0)
+		open_titles = [
+			cstr((t or {}).get("title") or (t or {}).get("tender_title") or "")
+			for t in (open_list.get("tenders") or [])
+		]
+		# At least two open receiving tenders; sealed/opened land under Closed.
+		ok(
+			"portal_open_count",
+			open_total >= 2,
+			f"open={open_total} titles={open_titles[:5]}",
+		)
+		ok(
+			"portal_closed_has_past_deadline",
+			closed_total >= 2,
+			f"closed={closed_total}",
+		)
+		joined = " | ".join(open_titles).lower()
+		ok(
+			"portal_titles_no_demo_prefix",
+			"demo published" not in joined
+			and "demo sealed" not in joined
+			and "demo opened" not in joined
+			and not any(t.lower().startswith("demo ") for t in open_titles if t),
+			joined[:200],
+		)
+	except Exception as exc:  # noqa: BLE001
+		ok("portal_open_count", False, str(exc))
+		ok("portal_closed_has_past_deadline", False, str(exc))
+		ok("portal_titles_no_demo_prefix", False, str(exc))
 
 	opened = frappe.get_all("IT Bid Opening Record", filters={"status": "Completed"}, limit=1)
 	ok("bid_opening_completed", bool(opened))
