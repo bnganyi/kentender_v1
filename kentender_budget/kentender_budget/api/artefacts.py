@@ -37,46 +37,18 @@ def _fmt_kes(amount: float) -> str:
 # ── Strategy section ───────────────────────────────────────────────────────
 
 def _build_strategy(line: frappe._dict) -> dict:
-	"""Resolve human-readable labels for the strategy hierarchy on the line.
-
-	Resolution order per field:
-	  1. Primary title field (program_title, title, objective_title, target_title)
-	  2. Business code field (program_code, sub_program_code, objective_code, target_code)
-	  3. None — never fall back to the internal primary key / hash name.
-	"""
-
-	def _label(doctype: str, name: str | None, title_field: str, code_field: str | None = None) -> str | None:
-		if not name:
-			return None
-		title = frappe.db.get_value(doctype, name, title_field)
-		if title:
-			return title
-		if code_field:
-			code = frappe.db.get_value(doctype, name, code_field)
-			if code:
-				return code
-		return None  # Document missing or title unpopulated — never expose the raw hash
-
-	program_label = _label("Strategy Program", line.program, "program_title", "program_code")
-	sub_program_label = _label("Sub Program", line.sub_program, "title", "sub_program_code")
-	output_indicator_label = _label("Strategy Objective", line.output_indicator, "objective_title", "objective_code")
-	performance_target_label = _label("Strategy Target", line.performance_target, "target_title", "target_code")
-
-	# Narrative description: prefer Strategy Objective description, fall back to Program description
-	program_description = frappe.db.get_value("Strategy Program", line.program, "description") if line.program else None
-	output_indicator_description = frappe.db.get_value("Strategy Objective", line.output_indicator, "description") if line.output_indicator else None
-	strategy_description = output_indicator_description or program_description or None
-
+	"""Strategy hierarchy labels — neutralized (MVP-1 strategy teardown)."""
+	_ = line
 	return {
-		"program":                  line.program,
-		"program_label":            program_label,
-		"program_description":      strategy_description,
-		"sub_program":              line.sub_program,
-		"sub_program_label":        sub_program_label,
-		"output_indicator":         line.output_indicator,
-		"output_indicator_label":   output_indicator_label,
-		"performance_target":       line.performance_target,
-		"performance_target_label": performance_target_label,
+		"program":                  None,
+		"program_label":            None,
+		"program_description":      None,
+		"sub_program":              None,
+		"sub_program_label":        None,
+		"output_indicator":         None,
+		"output_indicator_label":   None,
+		"performance_target":       None,
+		"performance_target_label": None,
 	}
 
 
@@ -288,11 +260,7 @@ def get_budget_line_artefacts(budget_line_name: str) -> dict:
 	line = frappe.db.get_value(
 		"Budget Line",
 		budget_line_name,
-		[
-			"name", "budget_line_code", "budget_line_name",
-			"strategic_plan", "program", "sub_program",
-			"output_indicator", "performance_target",
-		],
+		["name", "budget_line_code", "budget_line_name"],
 		as_dict=True,
 	)
 

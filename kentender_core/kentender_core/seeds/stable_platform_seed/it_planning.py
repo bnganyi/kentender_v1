@@ -277,40 +277,8 @@ def ensure_it_planning_package(*, actor: str = SEED_ACTOR) -> dict[str, Any]:
 
 
 def _with_plan_draft_for_seed(fn):
-	"""Run seed mutation while strategic plan is temporarily Draft (G2 guard)."""
-	from kentender_strategy.seeds.works_master_strategy_hierarchy import (
-		PLAN_TITLE,
-		START_YEAR,
-		END_YEAR,
-		resolve_procuring_entity_moh,
-	)
-
-	pe = resolve_procuring_entity_moh()
-	if not pe:
-		return fn()
-
-	plan_name = frappe.db.get_value(
-		"Strategic Plan",
-		{
-			"procuring_entity": pe,
-			"start_year": START_YEAR,
-			"end_year": END_YEAR,
-			"strategic_plan_name": PLAN_TITLE,
-		},
-		"name",
-	)
-	if not plan_name:
-		return fn()
-
-	plan = frappe.get_doc("Strategic Plan", plan_name)
-	prev_status = (plan.status or "").strip()
-	if prev_status != "Draft":
-		frappe.db.set_value("Strategic Plan", plan_name, "status", "Draft", update_modified=False)
-	try:
-		return fn()
-	finally:
-		if prev_status != "Draft":
-			frappe.db.set_value("Strategic Plan", plan_name, "status", prev_status, update_modified=False)
+	"""Legacy Strategic Plan Draft guard — no-op after MVP-1 Strategy teardown."""
+	return fn()
 
 
 def upsert_it_planning_supplement(*, include_package: bool = True) -> dict[str, Any]:

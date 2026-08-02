@@ -9,8 +9,6 @@
   "budget",
   "currency",
   "procuring_entity",
-  "strategic_plan",
-  "program",
   "amount",
   "notes",
   "order_index",
@@ -40,23 +38,6 @@
    "label": "Procuring Entity",
    "options": "Procuring Entity",
    "read_only": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "strategic_plan",
-   "fieldtype": "Link",
-   "label": "Strategic Plan",
-   "options": "Strategic Plan",
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "program",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Program",
-   "options": "Strategy Program",
-   "reqd": 1,
    "search_index": 1
   },
   {

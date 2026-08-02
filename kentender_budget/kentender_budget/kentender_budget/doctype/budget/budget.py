@@ -53,7 +53,6 @@ class Budget(Document):
 		self._validate_fiscal_year()
 		self._validate_total_amount()
 		self._validate_revision_guard()
-		self._validate_entity_plan_alignment()
 		self._validate_supersedes()
 		self._validate_version_uniqueness()
 
@@ -102,8 +101,6 @@ class Budget(Document):
 			frappe.throw(_("Budget Name is required."))
 		if not self.procuring_entity:
 			frappe.throw(_("Procuring Entity is required."))
-		if not self.strategic_plan:
-			frappe.throw(_("Strategic Plan is required."))
 		if not self.currency:
 			frappe.throw(_("Currency is required."))
 
@@ -141,15 +138,6 @@ class Budget(Document):
 			return
 		assert_budget_total_reduction_safe(self.name, flt(self.total_budget_amount))
 
-	def _validate_entity_plan_alignment(self):
-		plan_entity = frappe.db.get_value("Strategic Plan", self.strategic_plan, "procuring_entity")
-		if not plan_entity:
-			frappe.throw(_("Strategic Plan is invalid or missing Procuring Entity."))
-		if plan_entity != self.procuring_entity:
-			frappe.throw(
-				_("Strategic Plan must belong to the same Procuring Entity as this Budget (BUD-007).")
-			)
-
 	def _validate_supersedes(self):
 		if not self.supersedes_budget:
 			return
@@ -160,17 +148,16 @@ class Budget(Document):
 			frappe.throw(_("Supersedes Budget must belong to the same Procuring Entity (BUD-008)."))
 
 	def _validate_version_uniqueness(self):
-		"""BUD-009: (procuring_entity, fiscal_year, version_no, strategic_plan) unique among non-cancelled budgets."""
+		"""BUD-009: (procuring_entity, fiscal_year, version_no) unique among non-cancelled budgets."""
 		filters = {
 			"procuring_entity": self.procuring_entity,
 			"fiscal_year": self.fiscal_year,
 			"version_no": self.version_no,
-			"strategic_plan": self.strategic_plan,
 			"status": ["not in", ["Cancelled"]],
 		}
 		existing = frappe.get_all("Budget", filters=filters, pluck="name")
 		others = [n for n in existing if n != self.name]
 		if others:
 			frappe.throw(
-				_("A Budget already exists for this entity, year, version, and strategic plan (BUD-009).")
+				_("A Budget already exists for this entity, year, and version (BUD-009).")
 			)

@@ -1,11 +1,8 @@
-# Copyright (c) 2025, Midas and contributors
-# License: MIT. See LICENSE
-"""seed_strategy_empty — same as core minimal: no Strategic Plans (empty Strategy workspace)."""
+# Copyright (c) 2026, KenTender and contributors
+"""Neutralized by MVP-1 Strategy preparatory teardown."""
 
 from __future__ import annotations
 
-from kentender_core.seeds.seed_core_minimal import run as run_core
-
 
 def run():
-	return run_core()
+	return {"ok": True, "skipped": True, "reason": "mvp1-strategy-teardown"}

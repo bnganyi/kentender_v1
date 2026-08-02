@@ -90,11 +90,9 @@ def _plan_ref(plan_row: dict[str, Any] | None) -> dict[str, str] | None:
 
 
 def _strategy_objective_ref(budget_context: dict[str, Any] | None) -> dict[str, str]:
-	data = (budget_context or {}).get("data") or {}
-	code = (data.get("output_indicator_code") or "").strip()
-	name = (data.get("output_indicator_title") or code).strip()
-	obj_id = (data.get("output_indicator") or "").strip()
-	return {"id": obj_id, "code": code, "name": name}
+	"""Neutralized (MVP-1 strategy teardown)."""
+	_ = budget_context
+	return {"id": "", "code": "", "name": ""}
 
 
 def _default_item_codes(demand_name: str, demand_code: str) -> list[str]:

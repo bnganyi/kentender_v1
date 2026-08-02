@@ -156,7 +156,7 @@ def evaluate_submission_readiness(doc) -> dict[str, Any]:
 		_check(
 			"strategic_plan",
 			_("Strategy linkage present"),
-			bool(doc.strategic_plan),
+			True,  # neutralized — strategy Link fields removed (MVP-1)
 			required=False,
 		)
 	)
@@ -256,16 +256,7 @@ def evaluate_planning_panel_checks(doc) -> dict[str, Any]:
 	)
 	planning_ready = bool(planning.get("ready")) and not integrity.get("blocked")
 
-	strategy_ok = False
-	if doc.budget_line:
-		try:
-			from kentender_budget.api.dia_budget_control import get_budget_line_context
-
-			ctx = get_budget_line_context(doc.budget_line)
-			if ctx.get("ok"):
-				strategy_ok = bool((ctx.get("data") or {}).get("strategic_plan"))
-		except Exception:
-			pass
+	strategy_ok = True  # neutralized — strategy Link fields removed (MVP-1)
 
 	checks: list[dict[str, Any]] = [
 		{
@@ -344,7 +335,7 @@ def evaluate_planning_handoff_readiness(doc) -> dict[str, Any]:
 	checks.append(_check("delivery_location", _("Delivery location provided"), bool((doc.delivery_location or "").strip())))
 
 	budget_line_ok = False
-	strategy_ok = False
+	strategy_ok = True  # neutralized — strategy Link fields removed (MVP-1)
 	budget_available_ok = False
 	if doc.budget_line:
 		try:
@@ -354,7 +345,6 @@ def evaluate_planning_handoff_readiness(doc) -> dict[str, Any]:
 			if ctx.get("ok"):
 				data = ctx.get("data") or {}
 				budget_line_ok = True
-				strategy_ok = bool(data.get("strategic_plan"))
 				if doc.procuring_entity and data.get("procuring_entity") != doc.procuring_entity:
 					budget_line_ok = False
 				if budget_line_ok and flt(doc.total_amount) > 0:
@@ -364,7 +354,14 @@ def evaluate_planning_handoff_readiness(doc) -> dict[str, Any]:
 			pass
 
 	checks.append(_check("budget_line_valid", _("Budget line is valid for this demand"), budget_line_ok))
-	checks.append(_check("strategy_linkage", _("Strategy linkage resolved from budget line"), strategy_ok))
+	checks.append(
+		_check(
+			"strategy_linkage",
+			_("Strategy linkage resolved from budget line"),
+			strategy_ok,
+			required=False,
+		)
+	)
 	checks.append(
 		_check(
 			"budget_availability",
@@ -402,7 +399,7 @@ def evaluate_planning_readiness(doc) -> dict[str, Any]:
 	checks.append(_check("budget_line", _("Budget line linked"), bool(doc.budget_line)))
 
 	budget_line_ok = False
-	strategy_ok = False
+	strategy_ok = True  # neutralized — strategy Link fields removed (MVP-1)
 	budget_available_ok = False
 	if doc.budget_line:
 		try:
@@ -412,7 +409,6 @@ def evaluate_planning_readiness(doc) -> dict[str, Any]:
 			if ctx.get("ok"):
 				data = ctx.get("data") or {}
 				budget_line_ok = True
-				strategy_ok = bool(data.get("strategic_plan"))
 				if doc.procuring_entity and data.get("procuring_entity") != doc.procuring_entity:
 					budget_line_ok = False
 				if budget_line_ok and flt(doc.total_amount) > 0:
@@ -422,7 +418,14 @@ def evaluate_planning_readiness(doc) -> dict[str, Any]:
 			pass
 
 	checks.append(_check("budget_line_valid", _("Budget line is valid for this demand"), budget_line_ok))
-	checks.append(_check("strategy_linkage", _("Strategy linkage resolved from budget line"), strategy_ok))
+	checks.append(
+		_check(
+			"strategy_linkage",
+			_("Strategy linkage resolved from budget line"),
+			strategy_ok,
+			required=False,
+		)
+	)
 	checks.append(
 		_check(
 			"budget_availability",

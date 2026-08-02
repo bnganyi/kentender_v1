@@ -1474,43 +1474,11 @@
 			</div>
 			${textField("department", "Department / Cost Centre",
 				{ placeholder: "e.g. Cost centre or department name" })}
-			<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-				<div class="kt-wbench-modal-field" style="${FIELD_WRAP}" data-field="funding_source">
-					<label class="kt-wbench-modal-lbl" style="${LBL_STYLE}" for="ktwm_funding_source">Funding Source</label>
-					<select id="ktwm_funding_source" name="funding_source"
-						class="kt-wbench-modal-select" style="${INPUT_STYLE}">
-						${LINK_LOADING_OPT}
-					</select>
-				</div>
-				<div class="kt-wbench-modal-field" style="${FIELD_WRAP}" data-field="program">
-					<label class="kt-wbench-modal-lbl" style="${LBL_STYLE}" for="ktwm_program">Programme</label>
-					<select id="ktwm_program" name="program"
-						class="kt-wbench-modal-select" style="${INPUT_STYLE}">
-						${LINK_LOADING_OPT}
-					</select>
-				</div>
-			</div>
-			<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-				<div class="kt-wbench-modal-field" style="${FIELD_WRAP}" data-field="sub_program">
-					<label class="kt-wbench-modal-lbl" style="${LBL_STYLE}" for="ktwm_sub_program">Sub-Programme</label>
-					<select id="ktwm_sub_program" name="sub_program"
-						class="kt-wbench-modal-select" style="${INPUT_STYLE}" disabled>
-						<option value="">— Select Programme first —</option>
-					</select>
-				</div>
-				<div class="kt-wbench-modal-field" style="${FIELD_WRAP}" data-field="output_indicator">
-					<label class="kt-wbench-modal-lbl" style="${LBL_STYLE}" for="ktwm_output_indicator">Output Indicator</label>
-					<select id="ktwm_output_indicator" name="output_indicator"
-						class="kt-wbench-modal-select" style="${INPUT_STYLE}" disabled>
-						<option value="">— Select Sub-Programme first —</option>
-					</select>
-				</div>
-			</div>
-			<div class="kt-wbench-modal-field" style="${FIELD_WRAP}" data-field="performance_target">
-				<label class="kt-wbench-modal-lbl" style="${LBL_STYLE}" for="ktwm_performance_target">Performance Target</label>
-				<select id="ktwm_performance_target" name="performance_target"
-					class="kt-wbench-modal-select" style="${INPUT_STYLE}" disabled>
-					<option value="">— Select Output Indicator first —</option>
+			<div class="kt-wbench-modal-field" style="${FIELD_WRAP}" data-field="funding_source">
+				<label class="kt-wbench-modal-lbl" style="${LBL_STYLE}" for="ktwm_funding_source">Funding Source</label>
+				<select id="ktwm_funding_source" name="funding_source"
+					class="kt-wbench-modal-select" style="${INPUT_STYLE}">
+					${LINK_LOADING_OPT}
 				</select>
 			</div>
 			${textareaField("notes", "Notes")}
@@ -1572,14 +1540,9 @@
 		const overlay = el.firstElementChild;
 		document.body.appendChild(overlay);
 
-		// ── Async: populate Funding Source and Programme selects ─────────────
-		// Both selects start with a "Loading…" placeholder; we fire two parallel
-		// frappe.db.get_list calls and replace the options once they arrive.
-		// After both settle, pre-populate defaults if we are in edit mode.
+		// ── Async: populate Funding Source select ─────────────────────────────
 
-		const fsSelect  = overlay.querySelector("[name='funding_source']");
-		const prgSelect = overlay.querySelector("[name='program']");
-		const strategicPlan = (_budgetData && _budgetData.strategic_plan) || null;
+		const fsSelect = overlay.querySelector("[name='funding_source']");
 
 		function _fillSelect(selectEl, rows, valueFn, labelFn, currentVal) {
 			if (!selectEl) return;
@@ -1614,150 +1577,6 @@
 				fsSelect.innerHTML = "<option value=''>— Could not load —</option>";
 			}
 		});
-
-		// Programme — filtered by budget's strategic_plan when available
-		var prgFilters = strategicPlan
-			? [["strategic_plan", "=", strategicPlan]]
-			: [];
-
-		frappe.db.get_list("Strategy Program", {
-			filters: prgFilters,
-			fields:  ["name", "program_title", "program_code", "strategic_plan"],
-			limit:   500,
-		}).then(function (rows) {
-			_fillSelect(
-				prgSelect,
-				rows,
-				function (r) { return r.name; },
-				function (r) {
-					return r.program_title + (r.program_code ? " (" + r.program_code + ")" : "");
-				},
-				defaults.program || ""
-			);
-			// After Programme is loaded, cascade to Sub-Programme if a default exists
-			if (defaults.program) _loadSubPrograms(defaults.program, defaults.sub_program || "");
-		}).catch(function () {
-			if (prgSelect) {
-				prgSelect.innerHTML = "<option value=''>— Could not load —</option>";
-			}
-		});
-
-		// ── Cascading strategy selects ───────────────────────────────────────
-
-		const subPrgSelect   = overlay.querySelector("[name='sub_program']");
-		const outIndSelect   = overlay.querySelector("[name='output_indicator']");
-		const perfTgtSelect  = overlay.querySelector("[name='performance_target']");
-
-		function _loadSubPrograms(programName, currentVal) {
-			if (!subPrgSelect) return;
-			if (!programName) {
-				subPrgSelect.innerHTML = "<option value=''>— None —</option>";
-				subPrgSelect.disabled  = true;
-				_clearSelect(outIndSelect,  "— Select Sub-Programme first —", true);
-				_clearSelect(perfTgtSelect, "— Select Output Indicator first —", true);
-				return;
-			}
-			subPrgSelect.innerHTML = "<option value=''>Loading…</option>";
-			subPrgSelect.disabled  = false;
-			frappe.db.get_list("Sub Program", {
-				filters: { program: programName },
-				fields:  ["name", "title", "sub_program_code"],
-				order_by: "title asc",
-				limit:   500,
-			}).then(function (rows) {
-				_fillSelect(
-					subPrgSelect, rows,
-					function (r) { return r.name; },
-					function (r) { return r.title + (r.sub_program_code ? " (" + r.sub_program_code + ")" : ""); },
-					currentVal
-				);
-				if (currentVal) _loadOutputIndicators(programName, currentVal, defaults.output_indicator || "");
-			}).catch(function () {
-				subPrgSelect.innerHTML = "<option value=''>— Could not load —</option>";
-			});
-		}
-
-		function _loadOutputIndicators(programName, subProgramName, currentVal) {
-			if (!outIndSelect) return;
-			if (!subProgramName) {
-				_clearSelect(outIndSelect,  "— Select Sub-Programme first —", true);
-				_clearSelect(perfTgtSelect, "— Select Output Indicator first —", true);
-				return;
-			}
-			outIndSelect.innerHTML = "<option value=''>Loading…</option>";
-			outIndSelect.disabled  = false;
-			var filters = [["sub_program", "=", subProgramName]];
-			if (programName) filters.push(["program", "=", programName]);
-			frappe.db.get_list("Strategy Objective", {
-				filters: filters,
-				fields:  ["name", "objective_title", "objective_code"],
-				order_by: "objective_title asc",
-				limit:   500,
-			}).then(function (rows) {
-				_fillSelect(
-					outIndSelect, rows,
-					function (r) { return r.name; },
-					function (r) { return r.objective_title + (r.objective_code ? " (" + r.objective_code + ")" : ""); },
-					currentVal
-				);
-				if (currentVal) _loadPerformanceTargets(currentVal, defaults.performance_target || "");
-			}).catch(function () {
-				outIndSelect.innerHTML = "<option value=''>— Could not load —</option>";
-			});
-		}
-
-		function _loadPerformanceTargets(objectiveName, currentVal) {
-			if (!perfTgtSelect) return;
-			if (!objectiveName) {
-				_clearSelect(perfTgtSelect, "— Select Output Indicator first —", true);
-				return;
-			}
-			perfTgtSelect.innerHTML = "<option value=''>Loading…</option>";
-			perfTgtSelect.disabled  = false;
-			frappe.db.get_list("Strategy Target", {
-				filters: { objective: objectiveName },
-				fields:  ["name", "target_title", "target_code"],
-				order_by: "target_title asc",
-				limit:   500,
-			}).then(function (rows) {
-				_fillSelect(
-					perfTgtSelect, rows,
-					function (r) { return r.name; },
-					function (r) { return r.target_title + (r.target_code ? " (" + r.target_code + ")" : ""); },
-					currentVal
-				);
-			}).catch(function () {
-				perfTgtSelect.innerHTML = "<option value=''>— Could not load —</option>";
-			});
-		}
-
-		function _clearSelect(selectEl, placeholder, disable) {
-			if (!selectEl) return;
-			selectEl.innerHTML = "<option value=''>" + esc(placeholder) + "</option>";
-			selectEl.disabled  = !!disable;
-		}
-
-		// Programme → load Sub-Programme, clear downstream
-		if (prgSelect) {
-			prgSelect.addEventListener("change", function () {
-				_loadSubPrograms(prgSelect.value, "");
-			});
-		}
-
-		// Sub-Programme → load Output Indicator, clear downstream
-		if (subPrgSelect) {
-			subPrgSelect.addEventListener("change", function () {
-				var prg = prgSelect ? prgSelect.value : "";
-				_loadOutputIndicators(prg, subPrgSelect.value, "");
-			});
-		}
-
-		// Output Indicator → load Performance Target
-		if (outIndSelect) {
-			outIndSelect.addEventListener("change", function () {
-				_loadPerformanceTargets(outIndSelect.value, "");
-			});
-		}
 
 		// Auto-focus first input
 		setTimeout(function () {

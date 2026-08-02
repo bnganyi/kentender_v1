@@ -20,7 +20,6 @@ def get_budget_landing_data():
 			"budget_name",
 			"fiscal_year",
 			"status",
-			"strategic_plan",
 			"currency",
 			"total_budget_amount",
 			"procuring_entity",
@@ -113,27 +112,8 @@ def get_budget_landing_data():
 		if row.budget not in primary_line_by_budget:
 			primary_line_by_budget[row.budget] = row.budget_line_name or ""
 
-	# W3-04: Portfolio alignment score — active lines with full hierarchy
-	# (plan + program + sub_program all non-null) ÷ total active lines.
-	alignment_row = frappe.db.sql(
-		"""
-		SELECT
-		    COUNT(*)                                                        AS total_active,
-		    SUM(CASE
-		            WHEN strategic_plan IS NOT NULL AND strategic_plan != ''
-		             AND program        IS NOT NULL AND program        != ''
-		             AND sub_program    IS NOT NULL AND sub_program    != ''
-		            THEN 1 ELSE 0
-		        END)                                                        AS fully_aligned
-		FROM `tabBudget Line`
-		WHERE is_active = 1
-		""",
-		as_dict=True,
-	)
-	_alr = alignment_row[0] if alignment_row else {}
-	_total_al   = int(_alr.get("total_active", 0) or 0)
-	_aligned_al = int(_alr.get("fully_aligned", 0) or 0)
-	alignment_score_pct = round((_aligned_al / _total_al) * 100.0, 1) if _total_al else 0.0
+	# W3-04: Strategy alignment score — neutralized (MVP-1 strategy teardown).
+	alignment_score_pct = 0.0
 
 
 	active_count = sum(1 for b in budgets if b.get("status") == "Approved")
@@ -221,17 +201,6 @@ def get_budget_landing_data():
 			delta_committed_pct = _delta_pct(committed_sum, previous_period_committed)
 
 
-	plan_names = {b.strategic_plan for b in budgets if b.get("strategic_plan")}
-	plan_titles: dict[str, str] = {}
-	if plan_names:
-		for row in frappe.get_all(
-			"Strategic Plan",
-			filters={"name": ["in", list(plan_names)]},
-			fields=["name", "strategic_plan_name"],
-			limit=5000,
-		):
-			plan_titles[row.name] = (row.strategic_plan_name or row.name or "").strip()
-
 	entity_names_set = {b.get("procuring_entity") for b in budgets if b.get("procuring_entity")}
 	entity_names: dict[str, str] = {}
 	entity_codes: dict[str, str] = {}
@@ -308,9 +277,8 @@ def get_budget_landing_data():
 				"budget_name": b.budget_name,
 				"fiscal_year": b.fiscal_year,
 				"status": status,
-				"strategic_plan": b.get("strategic_plan"),
-				"strategic_plan_title": plan_titles.get(b.get("strategic_plan"))
-				or b.get("strategic_plan"),
+				"strategic_plan": None,
+				"strategic_plan_title": "",
 				"currency": b.currency,
 				"total_budget_amount": total,
 			"procuring_entity": b.get("procuring_entity"),

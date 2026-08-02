@@ -161,7 +161,6 @@ ui-smoke:
 
 ui-workspace-pattern-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test \
-		tests/ui/smoke/strategy-landing/strategy-pattern-lock.spec.ts \
 		tests/ui/smoke/budget-landing/budget-pattern-lock.spec.ts \
 		tests/ui/smoke/dia-landing/dia-pattern-lock.spec.ts
 

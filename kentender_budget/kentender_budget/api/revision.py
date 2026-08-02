@@ -61,7 +61,7 @@ def request_revision(budget_name: str | None = None) -> dict:
     # Build new revision document — copy scalar fields, reset lifecycle fields
     new_doc = frappe.new_doc("Budget")
     scalar_copy = [
-        "budget_name", "procuring_entity", "strategic_plan", "fiscal_year",
+        "budget_name", "procuring_entity", "fiscal_year",
         "currency", "effective_date", "closing_date", "budget_owner",
         "order_index", "is_current_version",
     ]
@@ -90,8 +90,7 @@ def request_revision(budget_name: str | None = None) -> dict:
         filters={"budget": predecessor.name, "is_active": 1},
         fields=[
             "budget_line_code", "budget_line_name", "amount_allocated",
-            "funding_source", "strategic_plan", "program",
-            "sub_program", "output_indicator", "performance_target",
+            "funding_source",
             "department", "economic_classification", "notes", "line_status",
         ],
         limit=5000,
@@ -102,7 +101,6 @@ def request_revision(budget_name: str | None = None) -> dict:
         line.procuring_entity = new_doc.procuring_entity
         line.fiscal_year = new_doc.fiscal_year
         line.currency = new_doc.currency
-        line.strategic_plan = src.strategic_plan or new_doc.strategic_plan
         line.budget_line_name = src.budget_line_name
         line.budget_line_code = None  # cleared so autoname generates a new unique code
         line.amount_allocated = flt(src.amount_allocated)
@@ -112,10 +110,6 @@ def request_revision(budget_name: str | None = None) -> dict:
         line.amount_committed = 0.0
         line.amount_consumed = 0.0
         line.funding_source = src.funding_source
-        line.program = src.program
-        line.sub_program = src.sub_program
-        line.output_indicator = src.output_indicator
-        line.performance_target = src.performance_target
         line.department = src.department
         line.economic_classification = src.economic_classification
         line.notes = src.notes or ""

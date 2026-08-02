@@ -4,17 +4,18 @@ frappe.provide("kentender_core.module_registry");
 (function () {
 	const modules = {
 		strategy: {
+			// MVP-1 preparatory teardown: domain removed; rebuild will restore routes.
 			id: "strategy",
-			workspaceRoute: ["Workspaces", "Strategy Management"],
-			workspaceSlug: "strategy-management",
-			workbenchLabel: __("Strategy Management"),
-			backLabel: __("Back to Strategy Workbench"),
-			sidebarWorkspaceKey: "strategy management",
-			builderPage: "strategy-builder",
-			formDoctype: "Strategic Plan",
+			workspaceRoute: [],
+			workspaceSlug: "",
+			workbenchLabel: __("Strategy Alignment"),
+			backLabel: __("Back to Strategy Alignment"),
+			sidebarWorkspaceKey: "strategy",
+			builderPage: "",
+			formDoctype: "",
 			stateKey: "kt_strategy_workbench_state",
 			selectKey: "kt_strategy_workspace_select",
-			routePrefixes: ["strategy-builder", "Form/Strategic Plan"],
+			routePrefixes: [],
 			taskLabels: {
 				builder: __("Manage Structure"),
 				form: __("Edit Plan"),

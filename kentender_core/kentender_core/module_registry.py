@@ -9,14 +9,15 @@ from typing import Any
 # Canonical module definitions — keep in sync with public/js/kt_module_registry.js
 KT_MODULES: dict[str, dict[str, Any]] = {
 	"strategy": {
-		"workspace_label": "Strategy Management",
-		"sidebar_workspace_key": "strategy management",
-		"builder_page": "strategy-builder",
-		"desk_page": "strategy-management",
-		"form_doctype": "Strategic Plan",
+		# MVP-1 preparatory teardown: domain removed; rebuild will restore routes.
+		"workspace_label": "Strategy Alignment",
+		"sidebar_workspace_key": "strategy",
+		"builder_page": "",
+		"desk_page": "",
+		"form_doctype": "",
 		"state_key": "kt_strategy_workbench_state",
 		"select_key": "kt_strategy_workspace_select",
-		"route_prefixes": ("strategy-builder", "strategy-management", "Form/Strategic Plan"),
+		"route_prefixes": (),
 		"sidebar_parent": "Procurement",
 	},
 	"budget": {

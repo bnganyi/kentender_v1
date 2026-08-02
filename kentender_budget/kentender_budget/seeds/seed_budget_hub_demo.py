@@ -101,47 +101,6 @@ def _ensure_pe(entity_code: str, entity_name: str) -> str:
     return doc.name
 
 
-def _ensure_strategic_plan(pe_name: str, title: str) -> str:
-    existing = frappe.db.get_value(
-        "Strategic Plan",
-        {"procuring_entity": pe_name, "strategic_plan_name": title},
-        "name",
-    )
-    if existing:
-        return existing
-    doc = frappe.get_doc({
-        "doctype": "Strategic Plan",
-        "strategic_plan_name": title,
-        "procuring_entity": pe_name,
-        "start_year": 2026,
-        "end_year": 2030,
-        "status": "Draft",       # must be Draft at insert; advanced after hierarchy
-        "version_no": 1,
-        "is_current_version": 1,
-    })
-    doc.insert(ignore_permissions=True)
-    return doc.name
-
-
-def _ensure_program(plan_name: str, code: str, title: str) -> str:
-    existing = frappe.db.get_value(
-        "Strategy Program",
-        {"strategic_plan": plan_name, "program_code": code},
-        "name",
-    )
-    if existing:
-        return existing
-    doc = frappe.get_doc({
-        "doctype": "Strategy Program",
-        "strategic_plan": plan_name,
-        "program_code": code,
-        "program_title": title,
-        "order_index": 1,
-    })
-    doc.insert(ignore_permissions=True)
-    return doc.name
-
-
 def _ensure_funding_source(title: str, code: str, source_type: str) -> str:
     if frappe.db.exists("Funding Source", title):
         return title
@@ -155,7 +114,7 @@ def _ensure_funding_source(title: str, code: str, source_type: str) -> str:
     return title
 
 
-def _ensure_budget(pe_name: str, plan_name: str, cfg: dict) -> tuple[str, bool]:
+def _ensure_budget(pe_name: str, cfg: dict) -> tuple[str, bool]:
     existing = frappe.db.get_value(
         "Budget",
         {"budget_name": cfg["budget_name"], "procuring_entity": pe_name, "fiscal_year": 2026},
@@ -173,7 +132,6 @@ def _ensure_budget(pe_name: str, plan_name: str, cfg: dict) -> tuple[str, bool]:
         "budget_name": cfg["budget_name"],
         "procuring_entity": pe_name,
         "fiscal_year": 2026,
-        "strategic_plan": plan_name,
         "currency": "KES",
         "total_budget_amount": cfg["amount_allocated"],
         "status": "Draft",
@@ -187,8 +145,7 @@ def _ensure_budget(pe_name: str, plan_name: str, cfg: dict) -> tuple[str, bool]:
     return doc.name, True
 
 
-def _ensure_budget_line(pe_name: str, plan_name: str, budget_doc: str,
-                        program_name: str, funding_source: str, cfg: dict) -> tuple[str, bool]:
+def _ensure_budget_line(pe_name: str, budget_doc: str, funding_source: str, cfg: dict) -> tuple[str, bool]:
     if frappe.db.exists("Budget Line", cfg["line_code"]):
         # Relink to the canonical budget if it was recreated under a new doc name
         current_budget = frappe.db.get_value("Budget Line", cfg["line_code"], "budget")
@@ -210,8 +167,6 @@ def _ensure_budget_line(pe_name: str, plan_name: str, budget_doc: str,
         "amount_consumed": cfg["amount_consumed"],
         "currency": "KES",
         "funding_source": funding_source,
-        "strategic_plan": plan_name,
-        "program": program_name,
         "is_active": 1,
         "line_status": cfg["line_status"],
     })
@@ -272,21 +227,14 @@ def run() -> dict[str, Any]:
         "Government of Kenya Development Budget", "GKE-DEVT", "Exchequer"
     )
 
-    # 3. Create Education + Transport entities
+    # 3. Create Education + Transport entities (no Strategy docs — MVP-1 teardown)
     for cfg in ENTITIES:
         pe_name = _ensure_pe(cfg["entity_code"], cfg["entity_name"])
-        plan_name = _ensure_strategic_plan(pe_name, cfg["plan_title"])
-        prog_name = _ensure_program(plan_name, cfg["program_code"], cfg["program_title"])
-        # Advance plan to Active now that hierarchy is in place
-        if frappe.db.get_value("Strategic Plan", plan_name, "status") == "Draft":
-            frappe.db.set_value("Strategic Plan", plan_name, "status", "Active")
         fs_name = _ensure_funding_source(
             cfg["funding_source"], cfg["funding_source_code"], cfg["funding_source_type"]
         )
-        budget_doc, b_created = _ensure_budget(pe_name, plan_name, cfg)
-        line_doc, l_created = _ensure_budget_line(
-            pe_name, plan_name, budget_doc, prog_name, fs_name, cfg
-        )
+        budget_doc, b_created = _ensure_budget(pe_name, cfg)
+        line_doc, l_created = _ensure_budget_line(pe_name, budget_doc, fs_name, cfg)
         results["created"].append({
             "entity": cfg["entity_code"],
             "budget": cfg["budget_name"],

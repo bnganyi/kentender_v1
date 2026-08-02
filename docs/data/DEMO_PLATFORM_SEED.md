@@ -2,6 +2,8 @@
 
 Rerunnable demo dataset for Kenyan public-sector **IT STD** demos on `kentender.midas.com`.
 
+
+> **MVP-1 Strategy preparatory teardown (2026-08-02):** Legacy Strategy DocTypes and `STRAT-MOH-2026` gate were removed from `kentender_strategy`. Strategy Alignment is intentionally non-functional until the MVP-1 rebuild (MOH-SP-2026-2030). Budget/Demand strategy Link fields were unlinked.
 ## Goal
 
 Clean Procuring Entities, purge conflicting demo stacks, then load a **linked** chain:

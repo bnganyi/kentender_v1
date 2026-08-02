@@ -44,37 +44,44 @@ def validate_stable_platform_seed(
 	def _check(code: str, label: str, passed: bool, *, detail: str = "") -> None:
 		checks.append({"code": code, "label": label, "ok": passed, "detail": detail})
 
+	# MVP-1 Strategy teardown: legacy Strategy DocTypes removed; checks are skipped.
 	_check(
 		"STABLE-STRAT-001",
 		"WORKS strategy program",
-		bool(frappe.db.exists("Strategy Program", {"program_code": WORKS_PROGRAM_CODE})),
+		True,
+		detail="skipped:mvp1-strategy-teardown",
 	)
 	_check(
 		"STABLE-STRAT-001B",
 		"WORKS strategy objective",
-		bool(frappe.db.exists("Strategy Objective", {"objective_code": WORKS_OBJECTIVE_CODE})),
+		True,
+		detail="skipped:mvp1-strategy-teardown",
 	)
 	_check(
 		"STABLE-STRAT-001C",
 		"WORKS strategy target",
-		bool(frappe.db.exists("Strategy Target", {"target_code": WORKS_TARGET_CODE})),
+		True,
+		detail="skipped:mvp1-strategy-teardown",
 	)
 
 	if expect_it_supplement:
 		_check(
 			"STABLE-STRAT-002",
 			"IT strategy program",
-			bool(frappe.db.exists("Strategy Program", {"program_code": IT_PROGRAM_CODE})),
+			True,
+			detail="skipped:mvp1-strategy-teardown",
 		)
 		_check(
 			"STABLE-STRAT-003",
 			"IT strategy objective",
-			bool(frappe.db.exists("Strategy Objective", {"objective_code": IT_OBJECTIVE_CODE})),
+			True,
+			detail="skipped:mvp1-strategy-teardown",
 		)
 		_check(
 			"STABLE-STRAT-004",
 			"IT strategy target",
-			bool(frappe.db.exists("Strategy Target", {"target_code": IT_TARGET_CODE})),
+			True,
+			detail="skipped:mvp1-strategy-teardown",
 		)
 		_check(
 			"STABLE-BUD-001",

@@ -27,12 +27,6 @@
   "specification_summary",
   "section_budget_strategy",
   "budget_line",
-  "column_strategy",
-  "strategic_plan",
-  "program",
-  "sub_program",
-  "output_indicator",
-  "performance_target",
   "budget",
   "funding_source",
   "reservation_status",
@@ -201,57 +195,13 @@
    "label": "4. Linkages and planning context"
   },
   {
-   "description": "Active budget lines only. Search matches name or code. After selection, strategy and balances load automatically.",
+   "description": "Active budget lines only. Search matches name or code. After selection, budget and funding balances load automatically.",
    "fieldname": "budget_line",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Budget Line",
    "link_filters": "[[\"Budget Line\", \"is_active\", \"=\", 1]]",
    "options": "Budget Line",
-   "search_index": 1
-  },
-  {
-   "fieldname": "column_strategy",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "strategic_plan",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Strategic Plan",
-   "options": "Strategic Plan",
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "program",
-   "fieldtype": "Link",
-   "label": "Program",
-   "options": "Strategy Program",
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "sub_program",
-   "fieldtype": "Link",
-   "label": "Sub-Program",
-   "options": "Sub Program",
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "output_indicator",
-   "fieldtype": "Link",
-   "label": "Output Indicator",
-   "options": "Strategy Objective",
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
-   "fieldname": "performance_target",
-   "fieldtype": "Link",
-   "label": "Performance Target",
-   "options": "Strategy Target",
    "search_index": 1
   },
   {

@@ -55,11 +55,10 @@ def _demand_name(demand_code: str) -> str | None:
 	return name or (demand_code if frappe.db.exists("Demand", demand_code) else None)
 
 
-def _strategy_label(strategic_plan: str | None) -> str:
-	name = (strategic_plan or "").strip()
-	if not name or not frappe.db.exists("Strategic Plan", name):
-		return ""
-	return (frappe.db.get_value("Strategic Plan", name, "strategic_plan_name") or "").strip()
+def _strategy_label(strategic_plan: str | None = None) -> str:
+	"""Neutralized (MVP-1 strategy teardown)."""
+	_ = strategic_plan
+	return ""
 
 
 def _documents_count(demand_name: str | None) -> int:
@@ -92,13 +91,13 @@ def _demand_card_fields(demand_code: str) -> dict[str, Any]:
 	row = frappe.db.get_value(
 		"Demand",
 		demand_name,
-		("required_by_date", "strategic_plan", "status"),
+		("required_by_date", "status"),
 		as_dict=True,
 	) or {}
 	return {
 		"demand_name": demand_name,
 		"needed_by": str(row.get("required_by_date") or ""),
-		"strategy_label": _strategy_label(row.get("strategic_plan")),
+		"strategy_label": _strategy_label(),
 		"documents_count": _documents_count(demand_name),
 		"funding_label": _funding_label(demand_name),
 	}

@@ -843,16 +843,8 @@
 
     var stratSection =
       '<div class="kt-wbx-strategy">' +
-        '<div class="kt-wbx-strategy-head">Linked Strategic Context</div>' +
+        '<div class="kt-wbx-strategy-head">Budget &amp; Funding</div>' +
         '<div class="kt-wbx-strategy-items">' +
-          '<div class="kt-wbx-strategy-row">' +
-            '<div class="kt-wbx-strategy-icon">' + _ico("center_focus_strong") + '</div>' +
-            '<div>' +
-              '<div class="kt-wbx-strategy-item-label">Strategy Objective</div>' +
-              '<div class="kt-wbx-strategy-item-value">' + _esc(b.strategic_plan_label || b.strategic_plan || "\u2014") + '</div>' +
-              (b.program_label ? '<div style="font-size:12px;opacity:0.65;margin-top:2px">' + _esc(b.program_label) + '</div>' : '') +
-            '</div>' +
-          '</div>' +
           '<div class="kt-wbx-strategy-row">' +
             '<div class="kt-wbx-strategy-icon">' + _ico("account_balance_wallet") + '</div>' +
             '<div style="min-width:0;flex:1">' + budgetLineRowHtml + '</div>' +

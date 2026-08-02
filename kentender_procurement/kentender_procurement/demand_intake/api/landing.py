@@ -143,33 +143,14 @@ _REQUISITION_TYPES = ("Goods", "Works", "Services")
 
 
 def _compute_alignment_for_entity(entity: str) -> int:
-	"""Return % of active demands for *entity* that have a strategic_plan set.
-
-	Used by tests for isolated, predictable assertions.  Returns an int 0–100.
-	"""
-	total = _count_demands({"procuring_entity": entity, "status": _ACTIVE_STATUSES})
-	if not total:
-		return 0
-	linked = _count_demands(
-		{
-			"procuring_entity": entity,
-			"status": _ACTIVE_STATUSES,
-			"strategic_plan": ("!=", ""),
-		}
-	)
-	return round(linked / total * 100)
+	"""Strategy alignment % — neutralized (MVP-1 strategy teardown). Always 0."""
+	_ = entity
+	return 0
 
 
 def compute_strategic_alignment_pct() -> int:
-	"""Return % of all active demands (global) that have a strategic_plan set.
-
-	Used by the hub landing response.  Returns an int 0–100.
-	"""
-	total = _count_demands({"status": _ACTIVE_STATUSES})
-	if not total:
-		return 0
-	linked = _count_demands({"status": _ACTIVE_STATUSES, "strategic_plan": ("!=", "")})
-	return round(linked / total * 100)
+	"""Strategy alignment % — neutralized (MVP-1 strategy teardown). Always 0."""
+	return 0
 
 
 def _build_category_breakdown() -> dict:

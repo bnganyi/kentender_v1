@@ -450,9 +450,7 @@
 		const entityName = bud.procuring_entity_name || "";
 		const primaryLbl = bud.budget_name || bud.name || "—";
 		let subLbl = "";
-		if (bud.strategic_plan_title) {
-			subLbl = "Strategy: " + bud.strategic_plan_title;
-		} else if (entityName) {
+		if (entityName) {
 			subLbl = entityName + (bud.fiscal_year ? " · " + bud.fiscal_year : "");
 		} else if (bud.fiscal_year) {
 			subLbl = String(bud.fiscal_year);
@@ -871,13 +869,6 @@
 				</select>
 				<span style="${ERR_STYLE}" data-err="procuring_entity"></span>
 			</div>
-			<div class="kt-bgt-create-field" style="${FIELD_WRAP}" data-field="strategic_plan">
-				<label style="${LBL_STYLE}" for="ktcb_strategic_plan">Strategic Plan <span style="color:#ba1a1a">*</span></label>
-				<select id="ktcb_strategic_plan" name="strategic_plan" style="${INPUT_STYLE}" disabled>
-					<option value="">— Select Procuring Entity first —</option>
-				</select>
-				<span style="${ERR_STYLE}" data-err="strategic_plan"></span>
-			</div>
 			<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
 				<div class="kt-bgt-create-field" style="${FIELD_WRAP}" data-field="currency">
 					<label style="${LBL_STYLE}" for="ktcb_currency">Currency</label>
@@ -953,7 +944,6 @@
 		document.body.appendChild(overlay);
 
 		var peSelect  = overlay.querySelector("[name='procuring_entity']");
-		var spSelect  = overlay.querySelector("[name='strategic_plan']");
 		var submitBtn = overlay.querySelector(".kt-bgt-create-submit");
 
 		function _close() {
@@ -1008,35 +998,6 @@
 				}).join("");
 		});
 
-		// ── Cascade: when Procuring Entity changes, reload Strategic Plans ────
-		peSelect.addEventListener("change", function () {
-			var pe = peSelect.value;
-			spSelect.innerHTML = `<option value="" disabled selected>Loading…</option>`;
-			spSelect.disabled = true;
-			_showErr("strategic_plan", "");
-			if (!pe) return;
-
-			frappe.db.get_list("Strategic Plan", {
-				filters: { procuring_entity: pe },
-				fields: ["name", "strategic_plan_name"],
-				limit: 200,
-				order_by: "strategic_plan_name asc",
-			}).then(function (rows) {
-				if (!rows || !rows.length) {
-					spSelect.innerHTML = `<option value="">No plans for this entity</option>`;
-					spSelect.disabled = true;
-					return;
-				}
-				spSelect.innerHTML =
-					`<option value="" disabled selected>— Select Strategic Plan —</option>` +
-					rows.map(function (r) {
-						var label = r.strategic_plan_name || r.name;
-						return `<option value="${esc(r.name)}">${esc(label)}</option>`;
-					}).join("");
-				spSelect.disabled = false;
-			});
-		});
-
 		// ── Close handlers ────────────────────────────────────────────────────
 		overlay.querySelector(".kt-bgt-create-close").addEventListener("click", _close);
 		overlay.querySelector(".kt-bgt-create-cancel").addEventListener("click", _close);
@@ -1050,7 +1011,6 @@
 			var budgetName = (overlay.querySelector("[name='budget_name']").value || "").trim();
 			var fiscalYear = overlay.querySelector("[name='fiscal_year']").value;
 			var pe         = peSelect.value;
-			var sp         = spSelect.value;
 			var currency   = overlay.querySelector("[name='currency']").value;
 			var effDate    = overlay.querySelector("[name='effective_date']").value || null;
 			var closeDate  = overlay.querySelector("[name='closing_date']").value || null;
@@ -1059,7 +1019,6 @@
 			if (!budgetName) { _showErr("budget_name", "Budget Name is required."); valid = false; }
 			if (!fiscalYear) { _showErr("fiscal_year", "Fiscal Year is required."); valid = false; }
 			if (!pe)         { _showErr("procuring_entity", "Procuring Entity is required."); valid = false; }
-			if (!sp)         { _showErr("strategic_plan", "Strategic Plan is required."); valid = false; }
 			if (!valid) return;
 
 			_setSubmitting(true);
@@ -1069,7 +1028,6 @@
 					budget_name:      budgetName,
 					procuring_entity: pe,
 					fiscal_year:      parseInt(fiscalYear, 10),
-					strategic_plan:   sp,
 					currency:         currency || "KES",
 					effective_date:   effDate,
 					closing_date:     closeDate,

@@ -100,55 +100,8 @@ def _clear_it_budget_line(*, deleted: dict[str, int]) -> None:
 
 
 def _clear_it_strategy(*, deleted: dict[str, int]) -> None:
-	plan_name = None
-	program_name = frappe.db.get_value(
-		"Strategy Program",
-		{"program_code": IT_PROGRAM_CODE},
-		"name",
-	)
-	if program_name:
-		plan_name = frappe.db.get_value("Strategy Program", program_name, "strategic_plan")
-
-	prev_status = None
-	if plan_name and frappe.db.exists("Strategic Plan", plan_name):
-		prev_status = frappe.db.get_value("Strategic Plan", plan_name, "status")
-		if (prev_status or "").strip() != "Draft":
-			frappe.db.set_value("Strategic Plan", plan_name, "status", "Draft", update_modified=False)
-
-	sub_program_name = None
-	if program_name:
-		sub_program_name = frappe.db.get_value(
-			"Sub Program",
-			{"program": program_name, "sub_program_code": IT_SUB_PROGRAM_CODE},
-			"name",
-		)
-
-	objective_name = None
-	if sub_program_name:
-		objective_name = frappe.db.get_value(
-			"Strategy Objective",
-			{"sub_program": sub_program_name, "objective_code": IT_OBJECTIVE_CODE},
-			"name",
-		)
-
-	target_name = None
-	if objective_name:
-		target_name = frappe.db.get_value(
-			"Strategy Target",
-			{"objective": objective_name, "target_code": IT_TARGET_CODE},
-			"name",
-		)
-
-	for doctype, name in (
-		("Strategy Target", target_name),
-		("Strategy Objective", objective_name),
-		("Sub Program", sub_program_name),
-		("Strategy Program", program_name),
-	):
-		_delete_doc(doctype, name or "", deleted)
-
-	if plan_name and prev_status and (prev_status or "").strip() != "Draft":
-		frappe.db.set_value("Strategic Plan", plan_name, "status", prev_status, update_modified=False)
+	"""No-op: legacy Strategy DocTypes removed in MVP-1 preparatory teardown."""
+	deleted["Strategy (teardown)"] = deleted.get("Strategy (teardown)", 0)
 
 
 def _clear_it_std_draft() -> dict[str, Any]:

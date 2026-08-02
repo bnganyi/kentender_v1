@@ -202,7 +202,7 @@ def _find_budget(pe_name: str) -> str | None:
     )
 
 
-def _ensure_budget(pe_name: str, plan_name: str) -> tuple[str, bool]:
+def _ensure_budget(pe_name: str) -> tuple[str, bool]:
     """Return (budget_doc_name, created). Creates or verifies the Budget cycle."""
     existing = _find_budget(pe_name)
     if existing:
@@ -220,7 +220,6 @@ def _ensure_budget(pe_name: str, plan_name: str) -> tuple[str, bool]:
             "budget_name": BUDGET_NAME,
             "procuring_entity": pe_name,
             "fiscal_year": FISCAL_YEAR,
-            "strategic_plan": plan_name,
             "currency": "KES",
             "total_budget_amount": AMOUNT_ALLOCATED,
             "status": "Draft",          # controller requires Draft on insert
@@ -246,34 +245,20 @@ def _ensure_budget(pe_name: str, plan_name: str) -> tuple[str, bool]:
 
 def _ensure_budget_line(
     pe_name: str,
-    plan_name: str,
     budget_name: str,
-    program_name: str,
-    objective_name: str | None,
-    target_name: str | None,
     funding_source: str,
 ) -> tuple[str, bool]:
     """Return (budget_line_doc_name, created). BUD-MOH-INFRA-2026-001."""
     if frappe.db.exists("Budget Line", BUDGET_LINE_CODE):
-        # Already present. Verify status (is_active); backfill sub_program for DIA joins.
-        # Also relink budget if the parent Budget record has been recreated.
         active = frappe.db.get_value("Budget Line", BUDGET_LINE_CODE, "is_active")
         if not active:
             frappe.db.set_value("Budget Line", BUDGET_LINE_CODE, "is_active", 1)
         current_budget = frappe.db.get_value("Budget Line", BUDGET_LINE_CODE, "budget")
         if current_budget != budget_name and frappe.db.exists("Budget", budget_name):
             frappe.db.set_value("Budget Line", BUDGET_LINE_CODE, "budget", budget_name, update_modified=False)
-        bl_program = frappe.db.get_value("Budget Line", BUDGET_LINE_CODE, "program")
-        bl_sub = frappe.db.get_value("Budget Line", BUDGET_LINE_CODE, "sub_program")
-        if bl_program and not bl_sub:
-            sp = _ensure_works_sub_program(bl_program)
-            if sp:
-                frappe.db.set_value("Budget Line", BUDGET_LINE_CODE, "sub_program", sp)
         return BUDGET_LINE_CODE, False
 
     ensure_currency_kes()
-    sub_program_name = _ensure_works_sub_program(program_name)
-
     payload: dict[str, Any] = {
         "doctype": "Budget Line",
         "budget_line_code": BUDGET_LINE_CODE,
@@ -288,26 +273,9 @@ def _ensure_budget_line(
         "amount_consumed": 0.0,
         "currency": "KES",
         "funding_source": funding_source,
-        "strategic_plan": plan_name,
-        "program": program_name,
         "is_active": 1,
         "notes": BUDGET_LINE_NOTES,
     }
-    if sub_program_name:
-        payload["sub_program"] = sub_program_name
-    if objective_name:
-        # Ensure the Strategy Objective's sub_program matches the budget line's
-        # sub_program (BL-006 guard).  Use direct SQL to bypass the plan-draft
-        # hierarchy guard when the plan is already Active.
-        obj_sp = frappe.db.get_value("Strategy Objective", objective_name, "sub_program")
-        if obj_sp and sub_program_name and obj_sp != sub_program_name:
-            frappe.db.sql(
-                "UPDATE `tabStrategy Objective` SET sub_program=%s WHERE name=%s",
-                (sub_program_name, objective_name),
-            )
-        payload["output_indicator"] = objective_name
-    if target_name:
-        payload["performance_target"] = target_name
 
     doc = frappe.get_doc(payload)
     doc.insert(ignore_permissions=True)
@@ -335,55 +303,19 @@ def upsert_works_master_budget() -> dict[str, Any]:
             ),
         }
 
-    plan_name = _resolve_strategic_plan(pe)
-    if not plan_name:
-        return {
-            "ok": False,
-            "error_code": "MISSING_STRATEGIC_PLAN",
-            "message": (
-                f"No Strategic Plan titled '{PLAN_TITLE}' for Procuring Entity '{pe}'. "
-                "Run R2-004 (strategy seed) before this seed."
-            ),
-        }
-
-    strat_refs = _resolve_strategy_refs(plan_name)
     warnings: list[str] = []
-    if not strat_refs["program"]:
-        warnings.append(
-            f"Strategy Program {PROGRAM_CODE} not found — Budget Line will omit program link. "
-            "Run R2-004 to create the full §8 hierarchy."
-        )
-        return {
-            "ok": False,
-            "error_code": "MISSING_STRATEGY_PROGRAM",
-            "message": (
-                f"Strategy Program '{PROGRAM_CODE}' not found under plan '{plan_name}'. "
-                "Run R2-004 before R2-005."
-            ),
-        }
-    if not strat_refs["objective"]:
-        warnings.append(
-            f"Strategy Objective {OBJECTIVE_CODE} not found; budget line created without output_indicator."
-        )
-    if not strat_refs["target"]:
-        warnings.append(
-            f"Strategy Target {TARGET_CODE} not found; budget line created without performance_target."
-        )
+    # Strategy hierarchy is no longer required (MVP-1 strategy teardown).
 
     # ── Funding Source ───────────────────────────────────────────────────────
     funding_source = _ensure_funding_source()
 
     # ── Budget cycle ─────────────────────────────────────────────────────────
-    budget_doc_name, budget_created = _ensure_budget(pe, plan_name)
+    budget_doc_name, budget_created = _ensure_budget(pe)
 
     # ── Budget Line ──────────────────────────────────────────────────────────
     budget_line_doc_name, bl_created = _ensure_budget_line(
         pe_name=pe,
-        plan_name=plan_name,
         budget_name=budget_doc_name,
-        program_name=strat_refs["program"],
-        objective_name=strat_refs["objective"],
-        target_name=strat_refs["target"],
         funding_source=funding_source,
     )
 
@@ -395,7 +327,7 @@ def upsert_works_master_budget() -> dict[str, Any]:
     return {
         "ok": True,
         "procuring_entity": pe,
-        "strategic_plan": plan_name,
+        "strategic_plan": None,
         "budget": budget_doc_name,
         "budget_line": budget_line_doc_name,
         "codes": {

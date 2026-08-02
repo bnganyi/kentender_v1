@@ -86,49 +86,22 @@ def get_budget_line_context(budget_line_id: str | None = None):
 			"funding_source": bl.funding_source,
 			"funding_source_title": bl.funding_source or "",
 			"funding_source_code": "",
-			"strategic_plan": bl.strategic_plan,
-			"strategic_plan_name": frappe.db.get_value(
-				"Strategic Plan", bl.strategic_plan, "strategic_plan_name"
-			)
-			if bl.strategic_plan
-			else "",
+			# Strategy linkage removed (MVP-1 teardown); keep empty keys for API shape.
+			"strategic_plan": None,
+			"strategic_plan_name": "",
 			"strategic_plan_code": "",
-			"program": bl.program,
-			"program_title": frappe.db.get_value("Strategy Program", bl.program, "program_title")
-			if bl.program
-			else "",
-			"program_code": frappe.db.get_value("Strategy Program", bl.program, "program_code")
-			if bl.program
-			else "",
-			"sub_program": bl.sub_program,
-			"sub_program_title": frappe.db.get_value("Sub Program", bl.sub_program, "title")
-			if bl.sub_program
-			else "",
-			"sub_program_code": frappe.db.get_value("Sub Program", bl.sub_program, "sub_program_code")
-			if bl.sub_program
-			else "",
-			"output_indicator": bl.output_indicator,
-			"output_indicator_title": frappe.db.get_value(
-				"Strategy Objective", bl.output_indicator, "objective_title"
-			)
-			if bl.output_indicator
-			else "",
-			"output_indicator_code": frappe.db.get_value(
-				"Strategy Objective", bl.output_indicator, "objective_code"
-			)
-			if bl.output_indicator
-			else "",
-			"performance_target": bl.performance_target,
-			"performance_target_title": frappe.db.get_value(
-				"Strategy Target", bl.performance_target, "target_title"
-			)
-			if bl.performance_target
-			else "",
-			"performance_target_code": frappe.db.get_value(
-				"Strategy Target", bl.performance_target, "target_code"
-			)
-			if bl.performance_target
-			else "",
+			"program": None,
+			"program_title": "",
+			"program_code": "",
+			"sub_program": None,
+			"sub_program_title": "",
+			"sub_program_code": "",
+			"output_indicator": None,
+			"output_indicator_title": "",
+			"output_indicator_code": "",
+			"performance_target": None,
+			"performance_target_title": "",
+			"performance_target_code": "",
 			"amount_allocated": alloc,
 			"amount_reserved": res,
 			"amount_committed": com,

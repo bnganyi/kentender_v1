@@ -116,7 +116,6 @@ def _get_builder_payload(budget_name: str, lines_filter: str = "active"):
 			"budget_name",
 			"currency",
 			"total_budget_amount",
-			"strategic_plan",
 			"status",
 			"rejection_reason",
 			"rejected_by",
@@ -155,11 +154,6 @@ def _get_builder_payload(budget_name: str, lines_filter: str = "active"):
 			"removed_at",
 			"removed_by",
 			"funding_source",
-			"strategic_plan",
-			"program",
-			"sub_program",
-			"output_indicator",
-			"performance_target",
 			"notes",
 			"department",
 			"economic_classification",
@@ -169,62 +163,8 @@ def _get_builder_payload(budget_name: str, lines_filter: str = "active"):
 		limit=5000,
 	)
 	budget_status = budget.status or "Draft"
-	program_names = {r.program for r in line_rows if r.get("program")}
-	sub_program_names = {r.sub_program for r in line_rows if r.get("sub_program")}
-	out_indicator_names = {r.output_indicator for r in line_rows if r.get("output_indicator")}
-	target_names = {r.performance_target for r in line_rows if r.get("performance_target")}
 	funding_names = {r.funding_source for r in line_rows if r.get("funding_source")}
-	program_labels = {}
-	program_codes = {}
-	sub_program_labels = {}
-	sub_program_codes = {}
-	indicator_labels = {}
-	indicator_codes = {}
-	target_labels = {}
-	target_codes = {}
 	funding_labels = {}
-	if program_names:
-		for row in frappe.get_all(
-			"Strategy Program",
-			filters={"name": ["in", list(program_names)]},
-			fields=["name", "program_title", "program_code"],
-			limit=5000,
-		):
-			program_labels[row.name] = row.program_title or row.name
-			program_codes[row.name] = (row.program_code or "").strip()
-	if sub_program_names:
-		sub_program_fields = ["name", "title"]
-		if frappe.get_meta("Sub Program").has_field("sub_program_code"):
-			sub_program_fields.append("sub_program_code")
-		for row in frappe.get_all(
-			"Sub Program",
-			filters={"name": ["in", list(sub_program_names)]},
-			fields=sub_program_fields,
-			limit=5000,
-		):
-			sub_program_labels[row.name] = row.title or row.name
-			sub_program_codes[row.name] = (row.get("sub_program_code") or "").strip()
-	if out_indicator_names:
-		for row in frappe.get_all(
-			"Strategy Objective",
-			filters={"name": ["in", list(out_indicator_names)]},
-			fields=["name", "objective_title", "objective_code"],
-			limit=5000,
-		):
-			indicator_labels[row.name] = row.objective_title or row.name
-			indicator_codes[row.name] = (row.objective_code or "").strip()
-	if target_names:
-		target_fields = ["name", "target_title"]
-		if frappe.get_meta("Strategy Target").has_field("target_code"):
-			target_fields.append("target_code")
-		for row in frappe.get_all(
-			"Strategy Target",
-			filters={"name": ["in", list(target_names)]},
-			fields=target_fields,
-			limit=5000,
-		):
-			target_labels[row.name] = row.target_title or row.name
-			target_codes[row.name] = (row.get("target_code") or "").strip()
 	if funding_names:
 		for row in frappe.get_all(
 			"Funding Source",
@@ -257,24 +197,24 @@ def _get_builder_payload(budget_name: str, lines_filter: str = "active"):
 			"allocation_state": "Allocated" if allocated > 0 else "Unallocated",
 			"funding_source": row.funding_source,
 			"funding_source_label": funding_labels.get(row.funding_source, row.funding_source),
-			"strategic_plan": row.strategic_plan,
-			"program": row.program,
-			"program_label": program_labels.get(row.program, row.program),
-			"program_code": program_codes.get(row.program, ""),
-			"sub_program": row.sub_program,
-			"sub_program_label": sub_program_labels.get(row.sub_program, row.sub_program),
-			"sub_program_code": sub_program_codes.get(row.sub_program, ""),
-			"output_indicator": row.output_indicator,
-			"output_indicator_label": indicator_labels.get(row.output_indicator, row.output_indicator),
-			"output_indicator_code": indicator_codes.get(row.output_indicator, ""),
-			"performance_target": row.performance_target,
-			"performance_target_label": target_labels.get(row.performance_target, row.performance_target),
-			"performance_target_code": target_codes.get(row.performance_target, ""),
-		"notes": row.notes or "",
-		"department": row.get("department") or "",
-		"economic_classification": row.get("economic_classification") or "",
-		"line_status": _compute_line_status(budget_status, row.is_active, allocated, available),
-	}
+			"strategic_plan": None,
+			"program": None,
+			"program_label": "",
+			"program_code": "",
+			"sub_program": None,
+			"sub_program_label": "",
+			"sub_program_code": "",
+			"output_indicator": None,
+			"output_indicator_label": "",
+			"output_indicator_code": "",
+			"performance_target": None,
+			"performance_target_label": "",
+			"performance_target_code": "",
+			"notes": row.notes or "",
+			"department": row.get("department") or "",
+			"economic_classification": row.get("economic_classification") or "",
+			"line_status": _compute_line_status(budget_status, row.is_active, allocated, available),
+		}
 		row_dict["can_remove"] = _line_can_soft_remove(budget_status, row_dict, demand_n, active_res)
 		row_dict["can_hard_delete"] = _line_can_hard_delete(budget_status, row_dict, demand_n, active_res, total_res)
 		budget_lines.append(row_dict)
@@ -301,13 +241,7 @@ def _get_builder_payload(budget_name: str, lines_filter: str = "active"):
 	lines_allocated_active = sum(1 for r in all_active if flt(r.get("amount_allocated")) > 0)
 	lines_unallocated_active = max(0, line_total_active - lines_allocated_active)
 	remaining_amount = max(0.0, total_budget - allocated_sum)
-	funded_program_rows = frappe.get_all(
-		"Budget Line",
-		filters={"budget": budget.name, "is_active": 1, "amount_allocated": [">", 0]},
-		fields=["program"],
-		limit=5000,
-	)
-	programs_funded = len({r.program for r in funded_program_rows if r.get("program")})
+	programs_funded = 0
 
 	return {
 		"budget": {
@@ -315,7 +249,7 @@ def _get_builder_payload(budget_name: str, lines_filter: str = "active"):
 			"budget_name": budget.budget_name,
 			"currency": budget.currency,
 			"total_budget_amount": total_budget,
-			"strategic_plan": budget.strategic_plan,
+			"strategic_plan": None,
 			"status": budget.status or "Draft",
 			"rejection_reason": budget.get("rejection_reason"),
 			"rejected_by": budget.get("rejected_by"),
@@ -373,6 +307,8 @@ def upsert_budget_line(
 	economic_classification: str | None = None,
 	department: str | None = None,
 ):
+	# program/sub_program/output_indicator/performance_target accepted but ignored (MVP-1 teardown).
+	_ = (program, sub_program, output_indicator, performance_target)
 	if not budget_name:
 		frappe.throw(_("Budget is required."))
 	if not frappe.has_permission("Budget", "write", budget_name):
@@ -404,13 +340,8 @@ def upsert_budget_line(
 		line_doc.budget_line_code = code_value
 	line_doc.amount_allocated = flt(amount_allocated)
 	line_doc.funding_source = funding_source
-	line_doc.program = program
-	line_doc.sub_program = sub_program
-	line_doc.output_indicator = output_indicator
-	line_doc.performance_target = performance_target
 	line_doc.notes = notes or ""
 	line_doc.is_active = 1 if cint(is_active) else 0
-	line_doc.strategic_plan = budget_doc.strategic_plan
 	if economic_classification is not None:
 		line_doc.economic_classification = economic_classification
 	if department is not None:
@@ -506,6 +437,7 @@ def create_budget(
 	closing_date: str | None = None,
 ) -> dict:
 	"""Create a new Draft Budget and return its name so the caller can navigate to the workbench."""
+	_ = strategic_plan  # accepted but ignored (MVP-1 strategy teardown)
 	if not budget_name:
 		frappe.throw(_("Budget Name is required."))
 	if not procuring_entity:
@@ -520,7 +452,6 @@ def create_budget(
 	doc.budget_name = budget_name.strip()
 	doc.procuring_entity = procuring_entity
 	doc.fiscal_year = cint(fiscal_year)
-	doc.strategic_plan = strategic_plan or None
 	doc.currency = currency or "KES"
 	doc.effective_date = effective_date or None
 	doc.closing_date = closing_date or None

@@ -64,7 +64,7 @@ class Demand(Document):
 		self._normalize_procuring_entity()
 		self._sync_is_exception_from_demand_type()
 		if self.budget_line:
-			self._apply_budget_line_strategy()
+			self._apply_budget_line_context()
 
 		if self.procuring_entity and self.request_date and not self.demand_id:
 			self._set_demand_id()
@@ -107,8 +107,8 @@ class Demand(Document):
 		if normalized:
 			self.procuring_entity = normalized
 
-	def _apply_budget_line_strategy(self):
-		"""C1 — derive budget/strategy fields from Budget Line via Budget services only."""
+	def _apply_budget_line_context(self):
+		"""C1 — derive budget/funding fields from Budget Line via Budget services only."""
 		from kentender_budget.api.dia_budget_control import get_budget_line_context
 
 		ctx = get_budget_line_context(self.budget_line)
@@ -122,11 +122,6 @@ class Demand(Document):
 			)
 		self.budget = data.get("budget")
 		self.funding_source = data.get("funding_source")
-		self.strategic_plan = data.get("strategic_plan")
-		self.program = data.get("program")
-		self.sub_program = data.get("sub_program")
-		self.output_indicator = data.get("output_indicator")
-		self.performance_target = data.get("performance_target")
 
 	def validate_submission_gate(self):
 		"""C2–C3 — submit-time validation (delegates to readiness service)."""
