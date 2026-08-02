@@ -859,10 +859,8 @@
 		}).join("");
 		var $host = ensureModalHost();
 		$host.html(
-			'<div class="kt-cl-wf03-drawer-overlay" data-testid="kt-cl-wf03-return-modal">' +
-				'<button type="button" class="kt-cl-wf03-drawer-backdrop" data-action="close-return" aria-label="' +
-				esc(__("Close")) +
-				'"></button>' +
+			'<div class="kt-cl-wf03-drawer-overlay" data-testid="kt-cl-wf03-return-modal" data-dismiss="explicit-only">' +
+				'<div class="kt-cl-wf03-drawer-backdrop" aria-hidden="true"></div>' +
 				'<aside class="kt-cl-wf03-drawer" role="dialog" aria-modal="true">' +
 				'<header class="kt-cl-wf03-drawer-header"><h2>' +
 				__("Return for Correction") +
@@ -1015,7 +1013,7 @@
 			" .kt-cl-wf03-drawer-overlay{position:fixed;inset:0;z-index:1300}" +
 			"#" +
 			MODAL_HOST_ID +
-			" .kt-cl-wf03-drawer-backdrop{position:absolute;inset:0;border:0;background:rgba(0,34,68,.2);cursor:pointer}" +
+			" .kt-cl-wf03-drawer-backdrop{position:absolute;inset:0;border:0;background:rgba(0,34,68,.2);cursor:default;pointer-events:none}" +
 			"#" +
 			MODAL_HOST_ID +
 			" .kt-cl-wf03-drawer{position:fixed;top:0;right:0;bottom:0;width:min(420px,100vw);display:flex;flex-direction:column;background:#fff;border-left:1px solid #c4c6cf;z-index:1301}" +

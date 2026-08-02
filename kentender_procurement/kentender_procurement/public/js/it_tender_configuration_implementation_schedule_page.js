@@ -594,7 +594,7 @@
 			contract_values: "May carry into contract values",
 		};
 		return (
-			'<div class="kt-cl-cfg04-drawer-overlay" data-testid="kt-cl-cfg04-drawer-overlay" role="dialog" aria-modal="true">' +
+			'<div class="kt-cl-cfg04-drawer-overlay" data-testid="kt-cl-cfg04-drawer-overlay" data-dismiss="explicit-only" role="dialog" aria-modal="true">' +
 			'<aside class="kt-cl-cfg04-drawer" data-testid="kt-cl-cfg04-drawer">' +
 			'<header class="kt-cl-cfg04-drawer-header">' +
 			"<div>" +
@@ -761,11 +761,8 @@
 			e.preventDefault();
 			closeDrawer();
 		});
-		$host.on("click.cfg04drawer", "[data-testid='kt-cl-cfg04-drawer-overlay']", function (e) {
-			if (e.target === this) {
-				closeDrawer();
-			}
-		});
+		// Explicit dismiss only (X / Cancel). Do not close on overlay/backdrop click —
+		// that discards in-progress milestone fields without confirmation.
 		$host.on("click.cfg04drawer", "[data-action='save-milestone']", function (e) {
 			e.preventDefault();
 			saveDrawerMilestone($host);

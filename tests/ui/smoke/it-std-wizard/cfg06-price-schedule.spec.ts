@@ -140,6 +140,26 @@ test.describe("CFG-06 Price Schedule", () => {
 		}
 	});
 
+	test("drawer stays open on backdrop click so draft fields are not discarded", async ({
+		page,
+	}) => {
+		await openPriceSchedule(page);
+		await page.getByTestId("kt-cl-cfg06-add").click();
+		const drawer = page.getByTestId("kt-cl-cfg06-drawer");
+		await expect(drawer).toBeVisible();
+		const overlay = page.getByTestId("kt-cl-cfg06-drawer-overlay");
+		await expect(overlay).toHaveAttribute("data-dismiss", "explicit-only");
+
+		const draftName = "Unsaved backdrop draft price item";
+		await page.getByTestId("kt-cl-cfg06-drawer-name").fill(draftName);
+		await overlay.click({ position: { x: 8, y: 8 }, force: true });
+		await expect(drawer).toBeVisible();
+		await expect(page.getByTestId("kt-cl-cfg06-drawer-name")).toHaveValue(draftName);
+
+		await page.getByTestId("kt-cl-cfg06-drawer-close").click();
+		await expect(drawer).toHaveCount(0);
+	});
+
 	test("Add Price Item drawer persists and enables Continue", async ({ page }) => {
 		await openPriceSchedule(page);
 		await page.getByTestId("kt-cl-cfg06-add").click();

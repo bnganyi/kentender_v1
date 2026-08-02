@@ -80,7 +80,7 @@
 			"@media (max-width:1100px){[data-testid='kt-cl-wf02-root'] .kt-cl-wf02-summary,[data-testid='kt-cl-wf02-root'] .kt-cl-wf02-sections,[data-testid='kt-cl-wf02-root'] .kt-cl-wf02-checklist,[data-testid='kt-cl-wf02-root'] .kt-cl-wf02-findings{grid-column:span 12/span 12!important}}" +
 			/* Finding drawer — stacked fields; never Desk side-by-side form chrome */
 			"#kt-cl-wf02-modal-host .kt-cl-wf02-drawer-overlay{position:fixed!important;inset:0!important;z-index:1300!important;display:block!important}" +
-			"#kt-cl-wf02-modal-host .kt-cl-wf02-drawer-backdrop{position:absolute!important;inset:0!important;border:0!important;padding:0!important;margin:0!important;background:rgba(0,34,68,.2)!important;cursor:pointer!important}" +
+			"#kt-cl-wf02-modal-host .kt-cl-wf02-drawer-backdrop{position:absolute!important;inset:0!important;border:0!important;padding:0!important;margin:0!important;background:rgba(0,34,68,.2)!important;cursor:default!important;pointer-events:none!important}" +
 			"#kt-cl-wf02-modal-host .kt-cl-wf02-drawer{position:fixed!important;top:0!important;right:0!important;bottom:0!important;width:min(400px,100vw)!important;max-width:100%!important;display:flex!important;flex-direction:column!important;background:#fff!important;border-left:1px solid #c4c6cf!important;box-shadow:-8px 0 24px rgba(16,24,40,.16)!important;z-index:1301!important}" +
 			"#kt-cl-wf02-modal-host .kt-cl-wf02-drawer-header{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:1rem!important;padding:1rem 1.25rem!important;background:#f0f4f8!important;border-bottom:1px solid #c4c6cf!important;flex-shrink:0!important}" +
 			"#kt-cl-wf02-modal-host .kt-cl-wf02-drawer-header h2{margin:0!important;font-size:1.15rem!important;font-weight:700!important;color:#002244!important;line-height:1.3!important}" +
@@ -534,10 +534,8 @@
 		var $host = ensureModalHost();
 		var sev = presetSeverity || "Correction Required";
 		$host.html(
-			'<div class="kt-cl-wf02-drawer-overlay" data-testid="kt-cl-wf02-finding-drawer" role="dialog" aria-modal="true">' +
-			'<button type="button" class="kt-cl-wf02-drawer-backdrop" data-action="close-modal" aria-label="' +
-			esc(__("Close")) +
-			'"></button>' +
+			'<div class="kt-cl-wf02-drawer-overlay" data-testid="kt-cl-wf02-finding-drawer" data-dismiss="explicit-only" role="dialog" aria-modal="true">' +
+			'<div class="kt-cl-wf02-drawer-backdrop" aria-hidden="true"></div>' +
 			'<aside class="kt-cl-wf02-drawer" data-testid="kt-cl-wf02-finding-drawer-panel">' +
 			'<header class="kt-cl-wf02-drawer-header">' +
 			"<h2>" +
@@ -658,7 +656,7 @@
 		closeModal();
 		var $host = ensureModalHost();
 		$host.html(
-			'<div class="kt-cl-cfg06-drawer-overlay" data-testid="kt-cl-wf02-approve-modal" role="dialog" aria-modal="true">' +
+			'<div class="kt-cl-cfg06-drawer-overlay" data-testid="kt-cl-wf02-approve-modal" data-dismiss="explicit-only" role="dialog" aria-modal="true">' +
 			'<aside class="kt-cl-wf-modal">' +
 			'<header class="kt-cl-cfg06-drawer-header"><h2>' +
 			__("Approve for Document Preview") +
@@ -705,11 +703,8 @@
 			e.preventDefault();
 			closeModal();
 		});
-		$host.on("click.wf02modal", "[data-testid='kt-cl-wf02-approve-modal']", function (e) {
-			if (e.target === this) {
-				closeModal();
-			}
-		});
+		// Explicit dismiss only (Cancel / close actions). Backdrop click must not
+		// discard the approval confirmation checkbox state.
 		$host.on("change.wf02modal", '[data-testid="kt-cl-wf02-approve-confirm"]', function () {
 			if ($(this).prop("checked")) {
 				clearApproveError();

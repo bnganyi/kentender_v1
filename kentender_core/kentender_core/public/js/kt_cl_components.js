@@ -1674,7 +1674,7 @@ frappe.provide("kentender_core.cl_components");
 			return (
 				'<div class="' +
 				(q.modalOverlay || "") +
-				'" data-testid="kt-cl-uim01-overlay" role="dialog" aria-modal="true">' +
+				'" data-testid="kt-cl-uim01-overlay" data-dismiss="explicit-only" role="dialog" aria-modal="true">' +
 				'<section class="' +
 				(q.modalRoot || "") +
 				'" data-testid="kt-cl-uim01-modal">' +

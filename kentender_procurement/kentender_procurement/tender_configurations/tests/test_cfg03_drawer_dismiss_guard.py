@@ -1,7 +1,10 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""CFG-03 — Add/Edit Requirement drawer must not dismiss on backdrop click."""
+"""CFG-03 — Add/Edit Requirement drawer must not dismiss on backdrop click.
+
+Pack-wide coverage lives in ``test_cfg_drawer_dismiss_guard`` (CFG-03…09 + related overlays).
+"""
 
 from __future__ import annotations
 

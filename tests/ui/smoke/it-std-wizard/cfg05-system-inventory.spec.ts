@@ -146,6 +146,26 @@ test.describe("CFG-05 System Inventory & Bidder Background", () => {
 		}
 	});
 
+	test("drawer stays open on backdrop click so draft fields are not discarded", async ({
+		page,
+	}) => {
+		await openInventory(page);
+		await page.getByTestId("kt-cl-cfg05-add").click();
+		const drawer = page.getByTestId("kt-cl-cfg05-drawer");
+		await expect(drawer).toBeVisible();
+		const overlay = page.getByTestId("kt-cl-cfg05-drawer-overlay");
+		await expect(overlay).toHaveAttribute("data-dismiss", "explicit-only");
+
+		const draftTitle = "Unsaved backdrop draft inventory";
+		await page.getByTestId("kt-cl-cfg05-drawer-title-input").fill(draftTitle);
+		await overlay.click({ position: { x: 8, y: 8 }, force: true });
+		await expect(drawer).toBeVisible();
+		await expect(page.getByTestId("kt-cl-cfg05-drawer-title-input")).toHaveValue(draftTitle);
+
+		await page.getByTestId("kt-cl-cfg05-drawer-cancel").click();
+		await expect(drawer).toHaveCount(0);
+	});
+
 	test("Add Inventory Item drawer persists and enables Continue", async ({ page }) => {
 		await openInventory(page);
 		await page.getByTestId("kt-cl-cfg05-add").click();

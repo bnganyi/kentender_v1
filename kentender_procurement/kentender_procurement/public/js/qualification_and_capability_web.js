@@ -1368,11 +1368,9 @@
 		if (t.closest("[data-s600-drawer-confirm]")) {
 			ev.preventDefault();
 			confirmDrawer();
-		} else if (
-			t.closest("[data-s600-drawer-close]") ||
-			t.closest("[data-s600-drawer-cancel]") ||
-			t.closest("[data-testid='kt-s600-drawer-backdrop']")
-		) {
+		} else if (t.closest("[data-s600-drawer-close]") || t.closest("[data-s600-drawer-cancel]")) {
+			// Explicit dismiss only (X / Cancel). Backdrop click must not discard
+			// in-progress drawer fields.
 			ev.preventDefault();
 			closeDrawer();
 		}

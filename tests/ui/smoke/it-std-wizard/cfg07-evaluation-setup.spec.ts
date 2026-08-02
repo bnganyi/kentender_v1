@@ -165,6 +165,26 @@ test.describe("CFG-07 Evaluation Setup", () => {
 		}
 	});
 
+	test("drawer stays open on backdrop click so draft fields are not discarded", async ({
+		page,
+	}) => {
+		await openEvaluationSetup(page);
+		await page.getByTestId("kt-cl-cfg07-add").click();
+		const drawer = page.getByTestId("kt-cl-cfg07-drawer");
+		await expect(drawer).toBeVisible();
+		const overlay = page.getByTestId("kt-cl-cfg07-drawer-overlay");
+		await expect(overlay).toHaveAttribute("data-dismiss", "explicit-only");
+
+		const draftName = "Unsaved backdrop draft criterion";
+		await page.getByTestId("kt-cl-cfg07-drawer-name").fill(draftName);
+		await overlay.click({ position: { x: 8, y: 8 }, force: true });
+		await expect(drawer).toBeVisible();
+		await expect(page.getByTestId("kt-cl-cfg07-drawer-name")).toHaveValue(draftName);
+
+		await page.getByTestId("kt-cl-cfg07-drawer-close").click();
+		await expect(drawer).toHaveCount(0);
+	});
+
 	test("Add criteria drawer persists and enables Continue", async ({ page }) => {
 		await openEvaluationSetup(page);
 		await page.getByTestId("kt-cl-cfg07-add").click();

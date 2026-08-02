@@ -86,11 +86,8 @@
 			e.preventDefault();
 			close();
 		});
-		$overlay.on("click", function (e) {
-			if ($(e.target).is('[data-testid="kt-cl-uim01-overlay"]')) {
-				close();
-			}
-		});
+		// Explicit dismiss only (X / Cancel). Overlay/backdrop click must not discard
+		// package selection mid-create.
 		$overlay.on("click", '[data-action="toggle-package"]', function (e) {
 			e.preventDefault();
 			e.stopPropagation();

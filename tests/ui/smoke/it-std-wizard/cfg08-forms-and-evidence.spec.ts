@@ -141,6 +141,26 @@ test.describe("CFG-08 Forms & Evidence", () => {
 		}
 	});
 
+	test("drawer stays open on backdrop click so draft fields are not discarded", async ({
+		page,
+	}) => {
+		await openFormsAndEvidence(page);
+		await page.getByTestId("kt-cl-cfg08-add").click();
+		const drawer = page.getByTestId("kt-cl-cfg08-drawer");
+		await expect(drawer).toBeVisible();
+		const overlay = page.getByTestId("kt-cl-cfg08-drawer-overlay");
+		await expect(overlay).toHaveAttribute("data-dismiss", "explicit-only");
+
+		const draftName = "Unsaved backdrop draft submission item";
+		await page.getByTestId("kt-cl-cfg08-drawer-name").fill(draftName);
+		await overlay.click({ position: { x: 8, y: 8 }, force: true });
+		await expect(drawer).toBeVisible();
+		await expect(page.getByTestId("kt-cl-cfg08-drawer-name")).toHaveValue(draftName);
+
+		await page.getByTestId("kt-cl-cfg08-drawer-close").click();
+		await expect(drawer).toHaveCount(0);
+	});
+
 	test("Add submission items drawer persists and enables Continue", async ({ page }) => {
 		await openFormsAndEvidence(page);
 		await page.getByTestId("kt-cl-cfg08-add").click();

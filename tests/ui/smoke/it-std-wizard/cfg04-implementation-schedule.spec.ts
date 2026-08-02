@@ -134,6 +134,26 @@ test.describe("CFG-04 Implementation Schedule", () => {
 		}
 	});
 
+	test("drawer stays open on backdrop click so draft fields are not discarded", async ({
+		page,
+	}) => {
+		await openSchedule(page);
+		await page.getByTestId("kt-cl-cfg04-add").click();
+		const drawer = page.getByTestId("kt-cl-cfg04-drawer");
+		await expect(drawer).toBeVisible();
+		const overlay = page.getByTestId("kt-cl-cfg04-drawer-overlay");
+		await expect(overlay).toHaveAttribute("data-dismiss", "explicit-only");
+
+		const draftName = "Unsaved backdrop draft milestone";
+		await page.getByTestId("kt-cl-cfg04-drawer-name").fill(draftName);
+		await overlay.click({ position: { x: 8, y: 8 }, force: true });
+		await expect(drawer).toBeVisible();
+		await expect(page.getByTestId("kt-cl-cfg04-drawer-name")).toHaveValue(draftName);
+
+		await page.getByTestId("kt-cl-cfg04-drawer-cancel").click();
+		await expect(drawer).toHaveCount(0);
+	});
+
 	test("Add Milestone drawer persists and enables Continue", async ({ page }) => {
 		await openSchedule(page);
 		await page.getByTestId("kt-cl-cfg04-add").click();

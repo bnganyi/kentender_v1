@@ -134,6 +134,26 @@ test.describe("CFG-09 Contract Values", () => {
 		await expect(page.getByTestId("kt-cl-cfg09-table")).toContainText(/CV-/);
 	});
 
+	test("drawer stays open on backdrop click so draft fields are not discarded", async ({
+		page,
+	}) => {
+		await openContractValues(page);
+		await page.getByTestId("kt-cl-cfg09-add").click();
+		const drawer = page.getByTestId("kt-cl-cfg09-drawer");
+		await expect(drawer).toBeVisible();
+		const overlay = page.getByTestId("kt-cl-cfg09-drawer-overlay");
+		await expect(overlay).toHaveAttribute("data-dismiss", "explicit-only");
+
+		const draftItem = "Unsaved backdrop draft contract value";
+		await page.getByTestId("kt-cl-cfg09-drawer-item").fill(draftItem);
+		await overlay.click({ position: { x: 8, y: 8 }, force: true });
+		await expect(drawer).toBeVisible();
+		await expect(page.getByTestId("kt-cl-cfg09-drawer-item")).toHaveValue(draftItem);
+
+		await page.getByTestId("kt-cl-cfg09-drawer-close").click();
+		await expect(drawer).toHaveCount(0);
+	});
+
 	test("drawer save enables complete row for Delivery Period", async ({ page }) => {
 		await openContractValues(page);
 		await page.getByTestId("kt-cl-cfg09-add").click();

@@ -627,7 +627,7 @@
 			rowStatus(row) === SETUP_NEEDS_ATTENTION ? __("Save Fix") : __("Save Contract Value");
 
 		return (
-			'<div class="kt-cl-cfg06-drawer-overlay" data-testid="kt-cl-cfg09-drawer-overlay" role="dialog" aria-modal="true">' +
+			'<div class="kt-cl-cfg06-drawer-overlay" data-testid="kt-cl-cfg09-drawer-overlay" data-dismiss="explicit-only" role="dialog" aria-modal="true">' +
 			'<aside class="kt-cl-cfg06-drawer" data-testid="kt-cl-cfg09-drawer">' +
 			'<header class="kt-cl-cfg06-drawer-header">' +
 			"<div>" +
@@ -765,11 +765,8 @@
 			e.preventDefault();
 			closeDrawer();
 		});
-		$host.on("click.cfg09drawer", "[data-testid='kt-cl-cfg09-drawer-overlay']", function (e) {
-			if (e.target === this) {
-				closeDrawer();
-			}
-		});
+		// Explicit dismiss only (X / Cancel). Do not close on overlay/backdrop click —
+		// that discards in-progress contract-value fields without confirmation.
 		$host.on("click.cfg09drawer", "[data-action='save-item']", function (e) {
 			e.preventDefault();
 			saveDrawerItem($host);
