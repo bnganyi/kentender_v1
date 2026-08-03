@@ -1,0 +1,237 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-08-02 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_identity",
+  "objective_code",
+  "version_number",
+  "title",
+  "col_id",
+  "pillar",
+  "status",
+  "scope",
+  "procuring_entity",
+  "section_content",
+  "description",
+  "source_type",
+  "source_reference",
+  "applicability_mode",
+  "measure_guidance",
+  "evidence_guidance",
+  "responsible_function",
+  "default_enforcement_guidance",
+  "effective_from",
+  "effective_to",
+  "supersedes_objective_version",
+  "section_triggers",
+  "triggers"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_identity",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "objective_code",
+   "fieldtype": "Data",
+   "label": "Objective Code",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "version_number",
+   "fieldtype": "Int",
+   "label": "Version Number",
+   "reqd": 1,
+   "default": "1"
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "col_id",
+   "fieldtype": "Column Break",
+   "label": "Col Id"
+  },
+  {
+   "fieldname": "pillar",
+   "fieldtype": "Select",
+   "label": "Pillar",
+   "options": "Strategic and service outcomes\nEconomy and whole-life value\nProcess efficiency\nContract performance and resilience\nInclusion and economic development\nSustainability and asset stewardship\nIntegrity and accountability",
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nSubmitted\nReturned\nApproved\nActive\nSuperseded\nRetired",
+   "reqd": 1,
+   "default": "Draft",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "scope",
+   "fieldtype": "Select",
+   "label": "Scope",
+   "options": "System\nProcuring entity",
+   "reqd": 1,
+   "default": "Procuring entity"
+  },
+  {
+   "fieldname": "procuring_entity",
+   "fieldtype": "Link",
+   "label": "Procuring Entity",
+   "options": "Procuring Entity"
+  },
+  {
+   "fieldname": "section_content",
+   "fieldtype": "Section Break",
+   "label": "Content"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_type",
+   "fieldtype": "Select",
+   "label": "Source Type",
+   "options": "Constitution\nAct\nRegulation\nPolicy\nEntity Strategy\nManagement Objective",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_reference",
+   "fieldtype": "Data",
+   "label": "Source Reference",
+   "reqd": 1
+  },
+  {
+   "fieldname": "applicability_mode",
+   "fieldtype": "Select",
+   "label": "Applicability Mode",
+   "options": "Universal consideration\nCategory-triggered\nProcurement-type-triggered\nAsset-triggered\nDemand-selected",
+   "reqd": 1
+  },
+  {
+   "fieldname": "measure_guidance",
+   "fieldtype": "Small Text",
+   "label": "Measure Guidance",
+   "reqd": 1
+  },
+  {
+   "fieldname": "evidence_guidance",
+   "fieldtype": "Small Text",
+   "label": "Evidence Guidance",
+   "reqd": 1
+  },
+  {
+   "fieldname": "responsible_function",
+   "fieldtype": "Data",
+   "label": "Responsible Function",
+   "reqd": 1
+  },
+  {
+   "fieldname": "default_enforcement_guidance",
+   "fieldtype": "Select",
+   "label": "Default Enforcement Guidance",
+   "options": "Specification\nPreliminary criterion\nEvaluation criterion\nContract clause\nReporting obligation\nOther",
+   "reqd": 1
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Date",
+   "label": "Effective From",
+   "reqd": 1
+  },
+  {
+   "fieldname": "effective_to",
+   "fieldtype": "Date",
+   "label": "Effective To",
+   "reqd": 1
+  },
+  {
+   "fieldname": "supersedes_objective_version",
+   "fieldtype": "Link",
+   "label": "Supersedes Objective Version",
+   "options": "Public Value Objective"
+  },
+  {
+   "fieldname": "section_triggers",
+   "fieldtype": "Section Break",
+   "label": "Applicability triggers"
+  },
+  {
+   "fieldname": "triggers",
+   "fieldtype": "Table",
+   "label": "Triggers",
+   "options": "Objective Applicability Trigger"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-08-02 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Strategy",
+ "name": "Public Value Objective",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "Strategy Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "Strategy Viewer",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 0,
+ "title_field": "title",
+ "search_fields": "objective_code,title,status"
+}

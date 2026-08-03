@@ -212,11 +212,154 @@ frappe.provide("kentender_core.cl_surface_registry");
 		];
 	}
 
+	function crumbStrategyAlignment() {
+		return crumb(__("Strategy Alignment"), ["strategy-alignment"]);
+	}
+	function trailStrategy() {
+		return [crumbDashboard(), crumbStrategyAlignment()];
+	}
+	function trailStrategyPlan(leafLabel) {
+		return [crumbDashboard(), crumbStrategyAlignment(), crumb(leafLabel)];
+	}
+
 	/**
 	 * A2 screen IDs → routePrefixes use existing Desk page names where present.
 	 * UI-M01 is a modal (no Desk route); kept for registry completeness with empty prefixes.
 	 */
 	var surfaces = {
+		"STR-UI-01": {
+			id: "STR-UI-01",
+			label: "Strategy Portfolio",
+			routePrefixes: ["strategy-alignment"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Strategy Alignment"),
+				__(
+					"Govern strategic outcomes, public-value commitments and performance targets used across procurement."
+				),
+				trailStrategy(),
+				[]
+			),
+		},
+		"STR-UI-02": {
+			id: "STR-UI-02",
+			label: "Plan Overview",
+			routePrefixes: ["strategy-plan-overview"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(__("Plan Overview"), "", trailStrategyPlan(__("Plan Overview")), []),
+		},
+		"STR-UI-03": {
+			id: "STR-UI-03",
+			label: "Plan Structure",
+			routePrefixes: ["strategy-plan-structure"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(__("Plan Structure"), "", trailStrategyPlan(__("Plan Structure")), []),
+		},
+		"STR-UI-05": {
+			id: "STR-UI-05",
+			label: "Public Value Objective Catalogue",
+			routePrefixes: ["strategy-pvo-catalogue"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Public Value Objective Catalogue"),
+				"",
+				trailStrategyPlan(__("Public Value Objectives")),
+				[]
+			),
+		},
+		"STR-UI-06": {
+			id: "STR-UI-06",
+			label: "Public Value Objective Editor",
+			routePrefixes: ["strategy-pvo-editor"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Public Value Objective"),
+				"",
+				trailStrategyPlan(__("Public Value Objective")),
+				[]
+			),
+		},
+		"STR-UI-07": {
+			id: "STR-UI-07",
+			label: "Plan Value Commitments",
+			routePrefixes: ["strategy-plan-value-commitments"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Value Commitments"),
+				"",
+				trailStrategyPlan(__("Value Commitments")),
+				[]
+			),
+		},
+		"STR-UI-08": {
+			id: "STR-UI-08",
+			label: "Measurement Register",
+			routePrefixes: ["strategy-plan-measurements"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(__("Measurements"), "", trailStrategyPlan(__("Measurements")), []),
+		},
+		"STR-UI-09": {
+			id: "STR-UI-09",
+			label: "Submit Measurement",
+			routePrefixes: ["strategy-measurement-submit"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Submit Measurement"),
+				"",
+				trailStrategyPlan(__("Submit Measurement")),
+				[]
+			),
+		},
+		"STR-UI-10": {
+			id: "STR-UI-10",
+			label: "Verify Measurement",
+			routePrefixes: ["strategy-measurement-verify"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Verify Measurement"),
+				"",
+				trailStrategyPlan(__("Verify Measurement")),
+				[]
+			),
+		},
+		"STR-UI-11": {
+			id: "STR-UI-11",
+			label: "Corrective Actions",
+			routePrefixes: ["strategy-corrective-actions"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Corrective Actions"),
+				"",
+				trailStrategyPlan(__("Corrective Actions")),
+				[]
+			),
+		},
+		"STR-UI-12": {
+			id: "STR-UI-12",
+			label: "Downstream Usage",
+			routePrefixes: ["strategy-plan-downstream-usage"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Downstream Usage"),
+				"",
+				trailStrategyPlan(__("Downstream Usage")),
+				[]
+			),
+		},
+		"STR-UI-13": {
+			id: "STR-UI-13",
+			label: "Readiness and Review",
+			routePrefixes: ["strategy-plan-review"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(__("Review"), "", trailStrategyPlan(__("Review")), []),
+		},
+		"STR-UI-14": {
+			id: "STR-UI-14",
+			label: "Audit History",
+			routePrefixes: ["strategy-plan-audit"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(__("Audit"), "", trailStrategyPlan(__("Audit")), []),
+		},
 		"UI-00": {
 			id: "UI-00",
 			label: "Tender Configurations Dashboard",

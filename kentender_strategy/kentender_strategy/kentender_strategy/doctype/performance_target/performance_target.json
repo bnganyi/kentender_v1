@@ -1,0 +1,204 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-08-02 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "performance_indicator",
+  "plan_version",
+  "target_code",
+  "title",
+  "comparison_direction",
+  "target_numeric",
+  "target_text",
+  "target_date",
+  "baseline_status",
+  "baseline_numeric",
+  "baseline_text",
+  "baseline_as_of",
+  "baseline_source",
+  "tolerance_value",
+  "period_start",
+  "period_end",
+  "benefit_owner",
+  "measurement_verifier",
+  "status"
+ ],
+ "fields": [
+  {
+   "fieldname": "performance_indicator",
+   "fieldtype": "Link",
+   "label": "Performance Indicator",
+   "options": "Performance Indicator",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "plan_version",
+   "fieldtype": "Link",
+   "label": "Plan Version",
+   "options": "Strategic Plan",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "target_code",
+   "fieldtype": "Data",
+   "label": "Target Code",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "comparison_direction",
+   "fieldtype": "Select",
+   "label": "Comparison Direction",
+   "options": "At least\nAt most\nEqual to\nIncrease to\nReduce to\nAchieve by date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_numeric",
+   "fieldtype": "Float",
+   "label": "Target Numeric"
+  },
+  {
+   "fieldname": "target_text",
+   "fieldtype": "Data",
+   "label": "Target Text"
+  },
+  {
+   "fieldname": "target_date",
+   "fieldtype": "Date",
+   "label": "Target Date"
+  },
+  {
+   "fieldname": "baseline_status",
+   "fieldtype": "Select",
+   "label": "Baseline Status",
+   "options": "Known\nTo be established\nNot applicable",
+   "reqd": 1,
+   "default": "To be established"
+  },
+  {
+   "fieldname": "baseline_numeric",
+   "fieldtype": "Float",
+   "label": "Baseline Numeric"
+  },
+  {
+   "fieldname": "baseline_text",
+   "fieldtype": "Data",
+   "label": "Baseline Text"
+  },
+  {
+   "fieldname": "baseline_as_of",
+   "fieldtype": "Date",
+   "label": "Baseline As Of"
+  },
+  {
+   "fieldname": "baseline_source",
+   "fieldtype": "Data",
+   "label": "Baseline Source"
+  },
+  {
+   "fieldname": "tolerance_value",
+   "fieldtype": "Float",
+   "label": "Tolerance Value"
+  },
+  {
+   "fieldname": "period_start",
+   "fieldtype": "Date",
+   "label": "Period Start",
+   "reqd": 1
+  },
+  {
+   "fieldname": "period_end",
+   "fieldtype": "Date",
+   "label": "Period End",
+   "reqd": 1
+  },
+  {
+   "fieldname": "benefit_owner",
+   "fieldtype": "Data",
+   "label": "Benefit Owner",
+   "reqd": 1
+  },
+  {
+   "fieldname": "measurement_verifier",
+   "fieldtype": "Link",
+   "label": "Measurement Verifier",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Active\nHistorical",
+   "reqd": 1,
+   "default": "Active"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "editable_grid": 0,
+ "links": [],
+ "modified": "2026-08-02 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Strategy",
+ "name": "Performance Target",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "Strategy Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "Strategy Viewer",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 0,
+ "title_field": "title",
+ "search_fields": "target_code,title"
+}

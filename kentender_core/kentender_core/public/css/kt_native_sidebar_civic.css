@@ -15,10 +15,11 @@
  */
 
 /* Expanded rail width = design w-64 (256px); hover tint = surface-container-high.
-   Only the expanded width uses --sidebar-width; the 50px collapsed rail is native. */
+   Collapsed icon rail is 64px (native Frappe uses 50px, which clips Material icons). */
 :root {
 	--sidebar-width: 256px;
 	--sidebar-hover-color: #e6e8ea;
+	--kt-sidebar-collapsed-width: 64px;
 }
 
 /* ---------------------------------------------------------------- rail shell */
@@ -26,6 +27,36 @@
 	background: #f2f4f6 !important; /* surface-container-low */
 	border-right: 1px solid #c4c6cf !important; /* outline-variant */
 	font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+/* Usable icon-only rail — beat Frappe's 50px collapsed default + negative nav margin. */
+.body-sidebar-container:not(.expanded) > .body-sidebar,
+.body-sidebar-container:not(.expanded) .body-sidebar {
+	width: 64px !important;
+	min-width: 64px !important;
+	padding-left: 12px !important;
+	padding-right: 12px !important;
+	overflow-x: visible !important;
+	box-sizing: border-box !important;
+}
+.body-sidebar-container:not(.expanded) .body-sidebar-placeholder {
+	width: 64px !important;
+	min-width: 64px !important;
+}
+.body-sidebar-container:not(.expanded) .body-sidebar .nav-item {
+	margin-left: 0 !important;
+}
+.body-sidebar-container:not(.expanded) .body-sidebar .standard-sidebar-item .item-anchor {
+	justify-content: center !important;
+	padding-left: 0 !important;
+	padding-right: 0 !important;
+}
+.body-sidebar-container:not(.expanded) .body-sidebar .sidebar-item-icon,
+.body-sidebar-container:not(.expanded) .body-sidebar .sidebar-item-icon::before {
+	margin-left: 0 !important;
+	margin-right: 0 !important;
+}
+.body-sidebar-container.expanded .body-sidebar {
+	width: var(--sidebar-width) !important;
 }
 
 /* -------------------------------------------------------------- top-level items */

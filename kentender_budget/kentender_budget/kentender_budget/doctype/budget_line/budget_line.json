@@ -33,6 +33,11 @@
   "economic_classification",
   "column_classification",
   "department",
+  "section_strategy",
+  "strategy_plan_version",
+  "strategy_target",
+  "column_strategy",
+  "strategy_snapshot_label",
   "notes"
  ],
  "fields": [
@@ -217,6 +222,34 @@
    "fieldname": "department",
    "fieldtype": "Data",
    "label": "Department / Cost Centre"
+  },
+  {
+   "fieldname": "section_strategy",
+   "fieldtype": "Section Break",
+   "label": "Strategy Reference",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "strategy_plan_version",
+   "fieldtype": "Link",
+   "label": "Strategy Plan Version",
+   "options": "Strategic Plan"
+  },
+  {
+   "fieldname": "strategy_target",
+   "fieldtype": "Link",
+   "label": "Strategy Target",
+   "options": "Performance Target"
+  },
+  {
+   "fieldname": "column_strategy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "strategy_snapshot_label",
+   "fieldtype": "Data",
+   "label": "Strategy Snapshot Label",
+   "read_only": 1
   },
   {
    "fieldname": "notes",

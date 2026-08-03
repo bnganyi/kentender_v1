@@ -1,0 +1,414 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Plan Overview | ProcureSystem</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error": "#ba1a1a",
+                    "surface-container-high": "#e8e7ed",
+                    "on-secondary-fixed-variant": "#004a78",
+                    "background": "#f9f9fe",
+                    "surface-tint": "#395e9b",
+                    "on-background": "#1a1b20",
+                    "surface-container": "#eceef0",
+                    "primary-container": "#00346f",
+                    "on-secondary-container": "#004c7c",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-fixed": "#d3e4ff",
+                    "surface-container-highest": "#e2e2e8",
+                    "surface-bright": "#f9f9fe",
+                    "on-secondary": "#ffffff",
+                    "status-committed": "#6366F1",
+                    "on-primary-fixed": "#001b3f",
+                    "status-exhausted": "#EF4444",
+                    "on-secondary-fixed": "#001d34",
+                    "surface-container-lowest": "#ffffff",
+                    "status-available": "#10B981",
+                    "on-primary-fixed-variant": "#1d4681",
+                    "primary": "#001f48",
+                    "error-container": "#ffdad6",
+                    "surface-container-low": "#f4f3f9",
+                    "inverse-surface": "#2f3035",
+                    "tertiary-container": "#26364b",
+                    "on-surface": "#1a1b20",
+                    "surface-dim": "#dad9df",
+                    "outline": "#737781",
+                    "on-surface-variant": "#434750",
+                    "status-reserved": "#F59E0B",
+                    "on-tertiary-fixed": "#0b1c30",
+                    "on-tertiary-container": "#8f9fb8",
+                    "secondary-fixed-dim": "#99cbff",
+                    "primary-fixed-dim": "#abc7ff",
+                    "primary-fixed": "#d7e2ff",
+                    "outline-variant": "#c3c6d1",
+                    "inverse-primary": "#abc7ff",
+                    "secondary-container": "#7bbeff",
+                    "on-error-container": "#93000a",
+                    "surface": "#f9f9fe",
+                    "inverse-on-surface": "#f1f0f6",
+                    "tertiary-fixed-dim": "#b7c8e2",
+                    "on-primary": "#ffffff",
+                    "surface-variant": "#e2e2e8",
+                    "on-error": "#ffffff",
+                    "secondary-fixed": "#cfe5ff",
+                    "on-tertiary-fixed-variant": "#38485e",
+                    "tertiary": "#26364b",
+                    "secondary": "#01629d",
+                    "on-primary-container": "#7b9ee0",
+                    "border-subtle": "#E2E8F0"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "unit": "4px",
+                    "base-unit": "4px",
+                    "section-gap": "24px",
+                    "gutter": "12px",
+                    "card-padding": "20px",
+                    "container-padding": "16px"
+            },
+            "fontFamily": {
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Manrope"],
+                    "headline-sm": ["Manrope"],
+                    "headline-lg": ["Manrope"],
+                    "label-caps": ["Inter"],
+                    "data-mono": ["JetBrains Mono"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .nav-active { border-bottom: 2px solid #001f48; }
+    </style>
+</head>
+<body class="bg-surface">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-container-padding h-16 bg-surface-container-lowest border-b border-outline-variant">
+<div class="flex items-center gap-8">
+<span class="font-headline-md text-headline-md font-bold text-primary">ProcureSystem</span>
+<nav class="hidden md:flex gap-6 h-16 items-center">
+<a class="h-full flex items-center text-on-surface-variant font-body-md hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="h-full flex items-center text-primary font-body-md border-b-2 border-primary" href="#">Planning</a>
+<a class="h-full flex items-center text-on-surface-variant font-body-md hover:text-primary transition-colors" href="#">Reporting</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">help</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-white text-xs font-bold">JD</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 flex flex-col py-4 border-r border-outline-variant bg-surface-container-low overflow-y-auto custom-scrollbar">
+<div class="px-4 mb-6">
+<div class="flex items-center gap-3 mb-1">
+<div class="w-8 h-8 rounded bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined" style="font-size: 18px;">account_balance</span>
+</div>
+<div>
+<p class="font-headline-sm text-[14px] font-bold text-on-surface leading-none">Management Portal</p>
+<p class="text-[11px] text-on-surface-variant">Public Sector Unit</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 px-2 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 bg-secondary-container text-on-secondary-container rounded-lg font-bold group transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="event_note">event_note</span>
+<span class="text-body-md font-body-md">Planning</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="assignment_add">assignment_add</span>
+<span class="text-body-md font-body-md">Requisition</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="gavel">gavel</span>
+<span class="text-body-md font-body-md">Tendering</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="text-body-md font-body-md">Evaluation</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="verified">verified</span>
+<span class="text-body-md font-body-md">Award</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="history_edu">history_edu</span>
+<span class="text-body-md font-body-md">Contract Management</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="task_alt">task_alt</span>
+<span class="text-body-md font-body-md">Closeout</span>
+</a>
+</nav>
+<div class="px-2 mt-auto pt-4 border-t border-outline-variant space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="text-body-md font-body-md">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="contact_support">contact_support</span>
+<span class="text-body-md font-body-md">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 mt-16 p-section-gap min-h-[calc(100vh-64px)]">
+<!-- Compact Plan Workspace Header -->
+<header class="mb-section-gap">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<span class="font-data-mono text-data-mono text-primary bg-primary-fixed px-2 py-0.5 rounded text-xs">MOH-SP-2026-2030</span>
+<h1 class="font-headline-lg text-headline-lg text-on-surface mt-2">Ministry of Health Strategic Plan 2026–2030</h1>
+<div class="flex items-center gap-4 mt-2">
+<span class="inline-flex items-center gap-1.5 py-1 px-3 rounded-full bg-status-available/10 text-status-available text-xs font-bold uppercase tracking-wider">
+<span class="w-1.5 h-1.5 rounded-full bg-status-available"></span>
+                            Active
+                        </span>
+<div class="h-4 w-px bg-outline-variant"></div>
+<p class="text-on-surface-variant font-body-md flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+                            Effective 1 July 2026 – 30 June 2030
+                        </p>
+<div class="h-4 w-px bg-outline-variant"></div>
+<p class="text-on-surface-variant font-body-md">Version 1</p>
+</div>
+</div>
+<div class="flex flex-wrap items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 border border-outline-variant text-primary font-body-md rounded-lg hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined" style="font-size: 20px;">download</span> Export Plan
+</button>
+<button class="px-6 py-2.5 bg-primary text-white font-bold text-body-md rounded-lg hover:bg-primary/90 transition-all shadow-sm">
+Create successor version
+</button>
+</div>
+</div>
+<!-- Workspace Tabs -->
+<div class="mt-8 flex gap-8 border-b border-outline-variant">
+<button class="pb-3 text-primary font-bold font-body-md border-b-2 border-primary relative">Overview</button>
+<button class="pb-3 text-on-surface-variant font-body-md hover:text-on-surface transition-colors">Structure</button>
+<button class="pb-3 text-on-surface-variant font-body-md hover:text-on-surface transition-colors">Value Commitments</button>
+<button class="pb-3 text-on-surface-variant font-body-md hover:text-on-surface transition-colors">Measurement</button>
+<button class="pb-3 text-on-surface-variant font-body-md hover:text-on-surface transition-colors">Downstream Usage</button>
+<button class="pb-3 text-on-surface-variant font-body-md hover:text-on-surface transition-colors">Review</button>
+<button class="pb-3 text-on-surface-variant font-body-md hover:text-on-surface transition-colors">Audit</button>
+</div>
+</header>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-section-gap">
+<!-- Left Column: Primary Details -->
+<div class="lg:col-span-8 space-y-section-gap">
+<!-- 1. Plan Details Section -->
+<section class="bg-surface-container-lowest border border-border-subtle rounded-xl p-card-padding">
+<div class="flex items-center justify-between mb-6">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Plan Details</h2>
+<span class="material-symbols-outlined text-outline-variant">info</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+<div class="space-y-1">
+<p class="text-label-caps font-label-caps text-outline uppercase">Plan type</p>
+<p class="text-on-surface font-body-md">Entity Strategic Plan</p>
+</div>
+<div class="space-y-1">
+<p class="text-label-caps font-label-caps text-outline uppercase">Procuring entity</p>
+<p class="text-on-surface font-body-md">Ministry of Health</p>
+</div>
+<div class="space-y-1">
+<p class="text-label-caps font-label-caps text-outline uppercase">Effective period</p>
+<p class="text-on-surface font-body-md">1 July 2026 – 30 June 2030</p>
+</div>
+<div class="space-y-1">
+<p class="text-label-caps font-label-caps text-outline uppercase">Version / Status</p>
+<p class="text-on-surface font-body-md">1 <span class="mx-2 text-outline-variant">•</span> Active</p>
+</div>
+<div class="md:col-span-2 space-y-1 pt-2">
+<p class="text-label-caps font-label-caps text-outline uppercase">Description</p>
+<p class="text-on-surface font-body-md leading-relaxed italic">"Strategic direction for accessible, resilient and cost-effective national health services."</p>
+</div>
+</div>
+</section>
+<!-- 4. Performance Attention (Compact Table) -->
+<section class="bg-surface-container-lowest border border-border-subtle rounded-xl overflow-hidden">
+<div class="p-card-padding border-b border-border-subtle flex justify-between items-center">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Performance Attention</h2>
+<span class="text-xs font-bold text-error bg-error-container/20 px-2 py-0.5 rounded">2 Required Actions</span>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low">
+<th class="px-6 py-3 text-label-caps font-label-caps text-outline uppercase">Target</th>
+<th class="px-6 py-3 text-label-caps font-label-caps text-outline uppercase">Period</th>
+<th class="px-6 py-3 text-label-caps font-label-caps text-outline uppercase">Result</th>
+<th class="px-6 py-3 text-label-caps font-label-caps text-outline uppercase text-right">Next action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-subtle">
+<tr class="hover:bg-surface-container transition-colors">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="font-data-mono text-data-mono text-xs text-primary mb-1">MOH-TGT-01</span>
+<span class="text-body-md font-body-md text-on-surface">At least 99.9% annual availability by 30 June 2028</span>
+</div>
+</td>
+<td class="px-6 py-4 text-body-md text-on-surface-variant">September 2027</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2 py-1 rounded bg-status-reserved/10 text-status-reserved text-[11px] font-bold uppercase">At risk</span>
+</td>
+<td class="px-6 py-4 text-right">
+<a class="text-primary font-bold text-body-md hover:underline inline-flex items-center gap-1" href="#">
+                                            View measurement <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</td>
+</tr>
+<tr class="hover:bg-surface-container transition-colors">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="font-data-mono text-data-mono text-xs text-primary mb-1">MOH-TGT-02</span>
+<span class="text-body-md font-body-md text-on-surface">Restore critical service within 4 hours</span>
+</div>
+</td>
+<td class="px-6 py-4 text-body-md text-on-surface-variant">October 2027</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2 py-1 rounded bg-primary-container/10 text-on-primary-container text-[11px] font-bold uppercase">Measurement due</span>
+</td>
+<td class="px-6 py-4 text-right">
+<a class="text-primary font-bold text-body-md hover:underline inline-flex items-center gap-1" href="#">
+                                            Submit measurement <span class="material-symbols-outlined text-[16px]">add_circle</span>
+</a>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+<!-- Right Column: Summaries -->
+<div class="lg:col-span-4 space-y-section-gap">
+<!-- 2. Plan Structure Summary -->
+<section class="bg-surface-container-lowest border border-border-subtle rounded-xl p-card-padding">
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-4">Plan Structure</h2>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="bg-surface-container-low p-3 rounded-lg border border-border-subtle">
+<p class="font-data-mono text-headline-sm text-primary">2</p>
+<p class="text-label-caps font-label-caps text-outline uppercase text-[10px]">Programmes</p>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg border border-border-subtle">
+<p class="font-data-mono text-headline-sm text-primary">3</p>
+<p class="text-label-caps font-label-caps text-outline uppercase text-[10px]">Sub-programmes</p>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg border border-border-subtle">
+<p class="font-data-mono text-headline-sm text-primary">6</p>
+<p class="text-label-caps font-label-caps text-outline uppercase text-[10px]">Outcomes</p>
+</div>
+<div class="bg-surface-container-low p-3 rounded-lg border border-border-subtle">
+<p class="font-data-mono text-headline-sm text-primary">8</p>
+<p class="text-label-caps font-label-caps text-outline uppercase text-[10px]">Indicators</p>
+</div>
+</div>
+<div class="flex items-center justify-between pt-4 border-t border-border-subtle">
+<span class="font-data-mono text-on-surface-variant">10 Targets total</span>
+<button class="text-primary font-bold text-body-md hover:underline">View structure</button>
+</div>
+</section>
+<!-- 3. Public-value Commitments Summary -->
+<section class="bg-surface-container-lowest border border-border-subtle rounded-xl p-card-padding">
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-4">Public-value Commitments</h2>
+<div class="space-y-4 mb-6">
+<div class="flex items-center justify-between">
+<span class="text-body-md text-on-surface-variant">Commitments active</span>
+<span class="font-data-mono text-on-surface bg-surface-container-highest px-2 py-0.5 rounded">8</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-body-md text-on-surface-variant">Required considerations</span>
+<span class="font-data-mono text-on-surface bg-surface-container-highest px-2 py-0.5 rounded">5</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-body-md text-on-surface-variant">Recommended considerations</span>
+<span class="font-data-mono text-on-surface bg-surface-container-highest px-2 py-0.5 rounded">3</span>
+</div>
+</div>
+<div class="pt-4 border-t border-border-subtle">
+<button class="w-full py-2 border border-outline-variant text-primary font-bold text-body-md rounded-lg hover:bg-surface-container-low transition-colors">
+                            View commitments
+                        </button>
+</div>
+</section>
+<!-- Plan Context Note -->
+<div class="bg-tertiary-container/5 border border-tertiary-container/10 p-4 rounded-xl">
+<div class="flex gap-3">
+<span class="material-symbols-outlined text-on-tertiary-container">policy</span>
+<div>
+<p class="font-body-md text-on-tertiary-fixed-variant leading-snug">
+                                This plan is linked to the <strong>National Health Policy Framework 2025</strong>. Material deviations require cabinet-level justification.
+                            </p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer / Bottom Note -->
+<footer class="mt-section-gap pt-6 border-t border-outline-variant flex flex-col md:flex-row justify-between items-center gap-4">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">lock</span>
+<p class="text-body-md">Active plan versions are locked. Create a successor version to make material changes.</p>
+</div>
+</footer>
+</main>
+<!-- Successor Version Modal (Hidden by Default) -->
+<div class="fixed inset-0 bg-black/50 z-[100] hidden flex items-center justify-center backdrop-blur-sm" id="modal-backdrop">
+<div class="bg-surface-container-lowest w-full max-w-md rounded-xl shadow-xl p-card-padding">
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">Create Successor Version</h3>
+<p class="text-body-md text-on-surface-variant mb-6">This will create an 'In-Progress' draft version (v2) while preserving the current active plan.</p>
+<div class="flex justify-end gap-3">
+<button class="px-4 py-2 text-on-surface-variant font-bold hover:bg-surface-container rounded-lg" onclick="toggleModal()">Cancel</button>
+<button class="px-4 py-2 bg-primary text-white font-bold rounded-lg">Confirm Creation</button>
+</div>
+</div>
+</div>
+<script>
+        function toggleModal() {
+            const modal = document.getElementById('modal-backdrop');
+            modal.classList.toggle('hidden');
+        }
+
+        // Simulating some interactive hover effects for data-mono elements
+        document.querySelectorAll('.font-data-mono').forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                el.classList.add('text-secondary');
+            });
+            el.addEventListener('mouseleave', () => {
+                el.classList.remove('text-secondary');
+            });
+        });
+    </script>
+
+
+</body></html>

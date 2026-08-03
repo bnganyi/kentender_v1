@@ -1,0 +1,371 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>KenTender - Create Strategic Plan</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=Manrope:wght@600;700;800&amp;family=JetBrains+Mono:wght@500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Manrope:wght@100..900&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-high": "#e8e7ed",
+                    "primary-fixed": "#d7e2ff",
+                    "surface-container-highest": "#e2e2e8",
+                    "secondary-fixed": "#cfe5ff",
+                    "on-tertiary-fixed-variant": "#38485e",
+                    "surface-dim": "#dad9df",
+                    "on-background": "#1a1b20",
+                    "secondary": "#01629d",
+                    "tertiary-container": "#26364b",
+                    "background": "#f9f9fe",
+                    "status-available": "#10B981",
+                    "error": "#ba1a1a",
+                    "surface-variant": "#e2e2e8",
+                    "on-primary-fixed": "#001b3f",
+                    "surface": "#f9f9fe",
+                    "on-secondary-fixed": "#001d34",
+                    "status-committed": "#6366F1",
+                    "on-error-container": "#93000a",
+                    "surface-container-low": "#f4f3f9",
+                    "outline": "#737781",
+                    "inverse-on-surface": "#f1f0f6",
+                    "surface-container": "#eeedf3",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-surface": "#2f3035",
+                    "on-primary-fixed-variant": "#1d4681",
+                    "tertiary": "#26364b",
+                    "primary-container": "#00346f",
+                    "status-reserved": "#F59E0B",
+                    "primary-fixed-dim": "#abc7ff",
+                    "on-secondary-container": "#004c7c",
+                    "inverse-primary": "#abc7ff",
+                    "surface-bright": "#f9f9fe",
+                    "tertiary-fixed": "#d3e4ff",
+                    "primary": "#001f48",
+                    "outline-variant": "#c3c6d1",
+                    "status-exhausted": "#EF4444",
+                    "error-container": "#ffdad6",
+                    "on-tertiary": "#ffffff",
+                    "secondary-fixed-dim": "#99cbff",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-fixed": "#0b1c30",
+                    "on-secondary-fixed-variant": "#004a78",
+                    "tertiary-fixed-dim": "#b7c8e2",
+                    "on-primary": "#ffffff",
+                    "on-error": "#ffffff",
+                    "secondary-container": "#7bbeff",
+                    "on-tertiary-container": "#8f9fb8",
+                    "on-primary-container": "#7b9ee0",
+                    "on-surface-variant": "#434750",
+                    "on-surface": "#1a1b20",
+                    "surface-tint": "#395e9b"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "unit": "4px",
+                    "gutter": "12px",
+                    "card-padding": "20px",
+                    "section-gap": "24px",
+                    "container-padding": "16px",
+                    "base-unit": "4px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-lg": ["Manrope"],
+                    "data-mono": ["JetBrains Mono"],
+                    "label-caps": ["Inter"],
+                    "headline-sm": ["Manrope"],
+                    "headline-md": ["Manrope"],
+                    "headline-lg-mobile": ["Manrope"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "headline-md": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .font-manrope { font-family: 'Manrope', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c3c6d1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- TopNavBar (Shared Component) -->
+<header class="sticky top-0 z-50 flex items-center justify-between px-section-gap w-full bg-surface-container-lowest h-16 border-b border-outline-variant">
+<div class="flex items-center gap-section-gap">
+<span class="text-headline-md font-headline-md font-bold text-primary">KenTender</span>
+<div class="hidden md:flex items-center gap-6">
+<nav class="flex gap-gutter">
+<a class="font-headline-sm text-headline-sm text-primary border-b-2 border-primary pb-1" href="#">Planning</a>
+<a class="font-headline-sm text-headline-sm text-on-surface-variant hover:bg-surface-container transition-colors px-2 py-1 rounded" href="#">Requisition</a>
+<a class="font-headline-sm text-headline-sm text-on-surface-variant hover:bg-surface-container transition-colors px-2 py-1 rounded" href="#">Analytics</a>
+</nav>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-lg text-body-md focus:ring-2 focus:ring-primary w-64" placeholder="Search strategy..." type="text">
+</div>
+<div class="flex items-center gap-2">
+<button class="material-symbols-outlined p-2 text-on-surface-variant hover:bg-surface-container transition-all cursor-pointer">notifications</button>
+<button class="material-symbols-outlined p-2 text-on-surface-variant hover:bg-surface-container transition-all cursor-pointer">help_outline</button>
+<button class="material-symbols-outlined p-2 text-on-surface-variant hover:bg-surface-container transition-all cursor-pointer">settings</button>
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center ml-2 border border-outline-variant overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional corporate headshot of a middle-aged male procurement professional with a friendly smile, wearing a sharp navy blue business suit. The background is a clean, softly blurred modern office environment with neutral tones, aligning with a professional finance and resource management brand aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSG6KTLQwF-lDjrYa3tlu_YeevCpVxmne_QQJFp9u1OFhW7BKQa0_dFNrduZsQGey4GXn-zpdMexNnRLPu8Vxsg89gMIn_Dw3FwgwxzbKKRkt-1hZOeV_YD9TpKBOTXRcolNRjh9we6UCiYcMnI4dXXyIrXw4vEMW5-8-KeI-vjYZ39HfjEzCc218nvhudeozByH7GlIjW7d7QVcNT9is2kPZ4oZX68Y-rKOlX0bwKcMD7mheImxfI3A">
+</div>
+</div>
+</div>
+</header>
+<div class="flex min-h-[calc(100vh-64px)]">
+<!-- SideNavBar (Shared Component) -->
+<aside class="hidden md:flex flex-col h-auto w-64 bg-surface border-r border-outline-variant py-container-padding gap-unit shrink-0">
+<div class="px-4 mb-section-gap">
+<h3 class="font-headline-sm text-headline-sm text-primary">Procurement Portal</h3>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Enterprise Management</p>
+</div>
+<nav class="flex-1 px-2 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-primary font-bold bg-secondary-fixed rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="event_note">event_note</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Planning</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Requisition</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="gavel">gavel</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Tendering</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Evaluation</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="verified_user">verified_user</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Award</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="handshake">handshake</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Contract Management</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="archive">archive</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Closeout</span>
+</a>
+</nav>
+<div class="mt-auto px-2 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="support_agent">support_agent</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Support</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">User Manual</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 bg-surface-container-low p-section-gap overflow-y-auto">
+<div class="max-w-5xl mx-auto space-y-section-gap">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<nav class="flex items-center gap-2 text-on-surface-variant mb-2">
+<span class="text-xs uppercase font-bold tracking-widest">Strategy Alignment</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="text-xs uppercase font-bold tracking-widest text-primary">New Plan</span>
+</nav>
+<h1 class="font-manrope font-headline-lg text-headline-lg text-primary">Create strategic plan</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Set up a new strategic framework to guide procurement outcomes.</p>
+</div>
+</div>
+<!-- Bento Grid Layout for Form -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-section-gap">
+<!-- Main Form Section (Col Span 8) -->
+<div class="lg:col-span-8 space-y-section-gap">
+<section class="bg-surface-container-lowest p-card-padding rounded-xl border border-outline-variant shadow-sm">
+<div class="flex items-center gap-2 mb-6 pb-4 border-b border-surface-container">
+<span class="material-symbols-outlined text-primary">description</span>
+<h2 class="font-manrope font-headline-sm text-headline-sm">Basic Information</h2>
+</div>
+<form class="space-y-6" id="planForm">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Plan Code -->
+<div class="space-y-2">
+<label class="block font-label-caps text-label-caps text-on-surface-variant uppercase" for="plan_code">Plan code <span class="text-error">*</span></label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 font-data-mono text-data-mono focus:ring-2 focus:ring-primary focus:border-primary transition-all uppercase" id="plan_code" name="plan_code" placeholder="e.g., MOH-SP-2026-2030" required="" type="text">
+</div>
+<!-- Plan Type -->
+<div class="space-y-2">
+<label class="block font-label-caps text-label-caps text-on-surface-variant uppercase" for="plan_type">Plan type <span class="text-error">*</span></label>
+<select class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all" id="plan_type" name="plan_type" required="">
+<option disabled="" selected="" value="">Select plan type</option>
+<option value="entity">Entity Strategic Plan</option>
+<option value="sector">Sector Strategy</option>
+<option value="programme">Programme Strategy</option>
+<option value="other">Other</option>
+</select>
+</div>
+</div>
+<!-- Plan Title -->
+<div class="space-y-2">
+<label class="block font-label-caps text-label-caps text-on-surface-variant uppercase" for="plan_title">Plan title <span class="text-error">*</span></label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all" id="plan_title" name="plan_title" placeholder="e.g., Ministry of Health Strategic Plan" required="" type="text">
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Start Date -->
+<div class="space-y-2">
+<label class="block font-label-caps text-label-caps text-on-surface-variant uppercase" for="start_date">Start date <span class="text-error">*</span></label>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all appearance-none" id="start_date" name="start_date" required="" type="date">
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">calendar_today</span>
+</div>
+</div>
+<!-- End Date -->
+<div class="space-y-2">
+<label class="block font-label-caps text-label-caps text-on-surface-variant uppercase" for="end_date">End date <span class="text-error">*</span></label>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all appearance-none" id="end_date" name="end_date" required="" type="date">
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">calendar_today</span>
+</div>
+</div>
+</div>
+<!-- Description -->
+<div class="space-y-2">
+<label class="block font-label-caps text-label-caps text-on-surface-variant uppercase" for="description">Description (Optional)</label>
+<textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all resize-none" id="description" name="description" placeholder="Briefly describe the purpose and core mission of this strategic framework..." rows="4"></textarea>
+</div>
+</form>
+</section>
+</div>
+<!-- Sidebar Info / Metadata Section (Col Span 4) -->
+<div class="lg:col-span-4 space-y-section-gap">
+<!-- System Context Metadata -->
+<div class="bg-surface-container-lowest p-card-padding rounded-xl border border-outline-variant shadow-sm space-y-gutter">
+<div class="flex items-center gap-2 pb-2 border-b border-surface-container">
+<span class="material-symbols-outlined text-secondary">info</span>
+<h3 class="font-manrope font-headline-sm text-[16px]">Plan Context</h3>
+</div>
+<div class="space-y-4">
+<div class="flex flex-col gap-1">
+<span class="font-label-caps text-[10px] text-on-surface-variant uppercase">Procuring Entity</span>
+<select class="w-full bg-surface-container border border-outline-variant/30 rounded-lg px-3 py-2 font-body-md text-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+  <option value="national_treasury" selected="">National Treasury</option>
+  <option value="ministry_health">Ministry of Health</option>
+  <option value="ministry_education">Ministry of Education</option>
+  <option value="ict_authority">ICT Authority</option>
+</select>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="flex flex-col gap-1">
+<span class="font-label-caps text-[10px] text-on-surface-variant uppercase">Version</span>
+<span class="font-data-mono text-data-mono text-primary px-3 py-1 bg-primary-fixed rounded w-fit">v1.0.0</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-label-caps text-[10px] text-on-surface-variant uppercase">Status</span>
+<span class="font-label-caps text-[10px] px-3 py-1 bg-surface-container-high text-on-surface-variant rounded-full border border-outline-variant w-fit">DRAFT</span>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-label-caps text-[10px] text-on-surface-variant uppercase">Created by</span>
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-secondary-fixed flex items-center justify-center text-[10px] font-bold text-on-secondary-fixed">JM</div>
+<span class="font-body-md text-body-md">James Mwangi <span class="text-on-surface-variant text-xs">(Lead)</span></span>
+</div>
+</div>
+</div>
+</div>
+<!-- Visual Reinforcement / Quote -->
+<div class="relative overflow-hidden rounded-xl h-48 bg-primary-container p-card-padding flex flex-col justify-end text-white group">
+<div class="absolute inset-0 transition-transform duration-700 group-hover:scale-110 opacity-40" data-alt="Abstract architectural lines and geometric patterns in blue and white, representing strategic framework and structural integrity. The lighting is crisp and modern, reflecting a sense of precision and enterprise growth. High-end professional corporate aesthetic with subtle gradients." style="background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuATiL1JvHEV2g0CuEv2S0iHfARYzoUJCiORsX7LZXWMjzBv5xSQ_myEdEaJ4MKuy8eio8RBGufXjk-tInB8QU54MB5QGmqTnVjZHb7V3SjrSNwVO3fus0czG0qV2zYc8OMYhxvYmrC2vLrxDg4gPihPRpYuXz6GhfgcETO1S9E6mOWBfyP6OyhOSSWD2TF_5SbfbOyRq7NxBVJ5TOKChgPdMTGdLQ9N5yj6aVlcKAIPAgfEuiD0cE_XYw&quot;);"></div><div class="absolute inset-0 bg-primary/60 z-0"></div>
+<div class="relative z-10">
+<span class="material-symbols-outlined text-4xl mb-2 text-primary-fixed">architecture</span>
+<p class="font-headline-sm text-headline-sm leading-tight italic font-bold shadow-sm">"Strategic procurement is the engine of institutional efficiency."</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Action Bar -->
+<div class="flex flex-col sm:flex-row items-center justify-between gap-gutter pt-section-gap border-t border-outline-variant">
+<p class="text-body-md text-on-surface-variant italic">
+<span class="material-symbols-outlined align-middle text-sm mr-1">info</span>
+                        Once created, you will be redirected to define goals and objectives.
+                    </p>
+<div class="flex items-center gap-4 w-full sm:w-auto">
+<button class="flex-1 sm:flex-none px-6 py-2.5 font-manrope font-bold text-primary border-2 border-primary rounded-lg hover:bg-primary/5 transition-all active:scale-95" type="button">
+                            Cancel
+                        </button>
+<button class="flex-1 sm:flex-none px-8 py-2.5 font-manrope font-bold text-white bg-primary rounded-lg shadow-md hover:bg-primary-container hover:shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2" form="planForm" type="submit">
+                            Create plan
+                            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Success Feedback (Hidden by default) -->
+<div class="fixed bottom-6 right-6 z-[100] transform translate-y-24 opacity-0 transition-all duration-500 pointer-events-none" id="successToast">
+<div class="bg-primary text-white p-4 rounded-xl shadow-2xl flex items-center gap-4 border border-primary-fixed/20">
+<div class="bg-white/20 p-2 rounded-lg">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+<div>
+<p class="font-bold">Plan framework initialized</p>
+<p class="text-xs opacity-80">Opening Plan Overview for "MOH Strategic Plan"...</p>
+</div>
+</div>
+</div>
+<script>
+        // Simple Interaction Logic
+        document.getElementById('planForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show feedback
+            const toast = document.getElementById('successToast');
+            toast.classList.remove('translate-y-24', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            
+            // Simulate navigation to the 7-tab view after a delay
+            setTimeout(() => {
+                alert('Success! Redirecting to Plan Overview with tabs: Overview, Structure, Value Commitments, Measurement, Downstream Usage, Review, Audit.');
+                // In a real app: window.location.href = '/strategy/overview/123';
+                toast.classList.add('translate-y-24', 'opacity-0');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 2500);
+        });
+
+        // Handle Uppercase enforcement on plan code
+        const planCodeInput = document.getElementById('plan_code');
+        planCodeInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    </script>
+
+
+</body></html>

@@ -1,0 +1,35 @@
+{
+ "content": null,
+ "creation": "2026-08-02 00:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2026-08-02 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Strategy",
+ "name": "strategy-measurement-submit",
+ "owner": "Administrator",
+ "page_name": "strategy-measurement-submit",
+ "roles": [
+  {
+   "role": "Administrator"
+  },
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Strategy Manager"
+  },
+  {
+   "role": "Planning Authority"
+  },
+  {
+   "role": "Procurement Officer"
+  }
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "Submit Measurement"
+}

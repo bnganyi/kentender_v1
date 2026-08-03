@@ -1,0 +1,196 @@
+/* STR-UI-09 Submit Measurement — Stitch submit_measurement_moh_tgt_01 layout */
+
+.kt-cl-shell .kt-str-root.kt-str-meas-submit-root {
+	background: #f9f9fe !important;
+	min-height: calc(100vh - 120px) !important;
+}
+
+.kt-cl-shell .kt-str-root.kt-str-meas-submit-root [data-testid="kt-str-meas-submit-header"] {
+	background: #ffffff !important;
+	border-bottom: 1px solid #c3c6d1 !important;
+	height: 64px !important;
+	display: flex !important;
+	align-items: center !important;
+	padding-left: 24px !important;
+	padding-right: 24px !important;
+	position: sticky !important;
+	top: 0 !important;
+	z-index: 20 !important;
+}
+
+.kt-cl-shell .kt-str-root.kt-str-meas-submit-root [data-testid="kt-str-meas-submit-canvas"] {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 24px !important;
+	padding: 24px !important;
+	max-width: 64rem !important; /* max-w-5xl */
+	margin-left: auto !important;
+	margin-right: auto !important;
+	width: 100% !important;
+	box-sizing: border-box !important;
+}
+
+/* Stitch .data-block — not in Tailwind dump */
+.kt-cl-shell .kt-str-root .data-block {
+	background-color: #ffffff !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+	padding: 20px !important;
+}
+
+.kt-cl-shell .kt-str-root .rounded-l {
+	border-top-left-radius: 0.25rem !important;
+	border-bottom-left-radius: 0.25rem !important;
+	border-top-right-radius: 0 !important;
+	border-bottom-right-radius: 0 !important;
+}
+
+.kt-cl-shell .kt-str-root .rounded-r {
+	border-top-right-radius: 0.25rem !important;
+	border-bottom-right-radius: 0.25rem !important;
+	border-top-left-radius: 0 !important;
+	border-bottom-left-radius: 0 !important;
+}
+
+.kt-cl-shell .kt-str-root .min-w-\[40px\] {
+	min-width: 40px !important;
+}
+
+.kt-cl-shell .kt-str-root .text-\[10px\] {
+	font-size: 10px !important;
+	letter-spacing: 0.05em !important;
+	text-transform: uppercase !important;
+	font-weight: 700 !important;
+}
+
+.kt-cl-shell .kt-str-root .resize-y {
+	resize: vertical !important;
+}
+
+.kt-cl-shell .kt-str-root .border-l-0 {
+	border-left-width: 0 !important;
+}
+
+/* Derived Result — Stitch preview card (tone from data-kt-str-meas-tone) */
+.kt-cl-shell .kt-str-root .kt-str-meas-derived {
+	position: relative !important;
+	overflow: hidden !important;
+	padding: 1rem !important;
+	border-radius: 0.25rem !important;
+	border: 1px solid transparent !important;
+	background-color: #f9f9fe !important;
+}
+
+.kt-cl-shell .kt-str-root .kt-str-meas-derived-accent {
+	position: absolute !important;
+	left: 0 !important;
+	top: 0 !important;
+	bottom: 0 !important;
+	width: 4px !important;
+}
+
+.kt-cl-shell .kt-str-root .kt-str-meas-derived-badge {
+	display: inline-flex !important;
+	align-items: center !important;
+	color: #ffffff !important;
+	border-radius: 9999px !important;
+	font-size: 10px !important;
+	letter-spacing: 0.05em !important;
+	text-transform: uppercase !important;
+	font-weight: 700 !important;
+	line-height: 1.25 !important;
+}
+
+.kt-cl-shell .kt-str-root .kt-str-meas-derived [data-kt-str-meas-result-explain] {
+	color: #434750 !important; /* on-surface-variant — Stitch italic body */
+	font-style: italic !important;
+}
+
+.kt-cl-shell .kt-str-root .kt-str-meas-derived > .flex > .font-label-caps {
+	color: #434750 !important; /* label stays muted; tone colors badge/variance only */
+}
+
+/* At risk — Stitch amber */
+.kt-cl-shell .kt-str-root .kt-str-meas-derived[data-kt-str-meas-tone="at-risk"] {
+	border-color: #f59e0b !important;
+	background-color: color-mix(in srgb, #f59e0b 12%, #ffffff) !important;
+}
+.kt-cl-shell .kt-str-root .kt-str-meas-derived[data-kt-str-meas-tone="at-risk"] .kt-str-meas-derived-accent {
+	background-color: #f59e0b !important;
+}
+.kt-cl-shell .kt-str-root .kt-str-meas-derived[data-kt-str-meas-tone="at-risk"] .kt-str-meas-derived-badge {
+	background-color: #f59e0b !important;
+}
+.kt-cl-shell .kt-str-root .kt-str-meas-derived[data-kt-str-meas-tone="at-risk"] .kt-str-meas-derived-variance {
+	color: #f59e0b !important;
+}
+
+/* On track — green */
+.kt-cl-shell .kt-str-root .kt-str-meas-derived[data-kt-str-meas-tone="on-track"] {
+	border-color: #10b981 !important;
+	background-color: color-mix(in srgb, #10b981 10%, #ffffff) !important;
+}
+.kt-cl-shell .kt-str-root .kt-str-meas-derived[data-kt-str-meas-tone="on-track"] .kt-str-meas-derived-accent {
+	background-color: #10b981 !important;
+}
+.kt-cl-shell .kt-str-root .kt-str-meas-derived[data-kt-str-meas-tone="on-track"] .kt-str-meas-derived-badge {
+	background-color: #10b981 !important;
+}
+.kt-cl-shell .kt-str-root .kt-str-meas-derived[data-kt-str-meas-tone="on-track"] .kt-str-meas-derived-variance {
+	color: #10b981 !important;
+}
+
+/* Off track — error red */
+.kt-cl-shell .kt-str-root .kt-str-meas-derived[data-kt-str-meas-tone="off-track"] {
+	border-color: #ef4444 !important;
+	background-color: color-mix(in srgb, #ef4444 10%, #ffffff) !important;
+}
+.kt-cl-shell .kt-str-root .kt-str-meas-derived[data-kt-str-meas-tone="off-track"] .kt-str-meas-derived-accent {
+	background-color: #ef4444 !important;
+}
+.kt-cl-shell .kt-str-root .kt-str-meas-derived[data-kt-str-meas-tone="off-track"] .kt-str-meas-derived-badge {
+	background-color: #ef4444 !important;
+}
+.kt-cl-shell .kt-str-root .kt-str-meas-derived[data-kt-str-meas-tone="off-track"] .kt-str-meas-derived-variance {
+	color: #ef4444 !important;
+}
+
+/* Neutral / no data */
+.kt-cl-shell .kt-str-root .kt-str-meas-derived[data-kt-str-meas-tone="neutral"] {
+	border-color: #c3c6d1 !important;
+	background-color: #f4f3f9 !important;
+}
+.kt-cl-shell .kt-str-root .kt-str-meas-derived[data-kt-str-meas-tone="neutral"] .kt-str-meas-derived-accent {
+	background-color: #737781 !important;
+}
+.kt-cl-shell .kt-str-root .kt-str-meas-derived[data-kt-str-meas-tone="neutral"] .kt-str-meas-derived-badge {
+	background-color: #737781 !important;
+}
+.kt-cl-shell .kt-str-root .kt-str-meas-derived[data-kt-str-meas-tone="neutral"] .kt-str-meas-derived-variance {
+	color: #434750 !important;
+}
+
+.kt-cl-shell .kt-str-root.kt-str-meas-submit-root form.grid {
+	display: grid !important;
+	gap: 24px !important;
+}
+
+@media (min-width: 768px) {
+	.kt-cl-shell .kt-str-root.kt-str-meas-submit-root form.md\:grid-cols-2 {
+		grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	}
+}
+
+@media (min-width: 1024px) {
+	.kt-cl-shell .kt-str-root.kt-str-meas-submit-root .lg\:grid-cols-3 {
+		grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+	}
+	/* Stitch: Actual Value 1 col, Derived Result spans 2 */
+	.kt-cl-shell .kt-str-root.kt-str-meas-submit-root .lg\:col-span-1 {
+		grid-column: span 1 / span 1 !important;
+	}
+	.kt-cl-shell .kt-str-root.kt-str-meas-submit-root .lg\:col-span-2,
+	.kt-cl-shell .kt-str-root.kt-str-meas-submit-root .kt-str-meas-derived {
+		grid-column: span 2 / span 2 !important;
+	}
+}

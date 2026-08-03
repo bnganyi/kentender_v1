@@ -60,6 +60,18 @@ _SKIP_FIELD_TYPES = frozenset(
 
 class Demand(Document):
 	def validate(self):
+		if self.get("strategy_target") or self.meta.has_field("strategy_target"):
+			try:
+				from kentender_strategy.services.strategy_consumer import apply_strategy_reference_to_doc
+
+				# Historical refs resolve; only enforce Active for new/changed selections
+				require_active = self.is_new() or self.has_value_changed("strategy_target")
+				if self.strategy_target:
+					apply_strategy_reference_to_doc(
+						self, self.strategy_target, require_active=require_active
+					)
+			except ImportError:
+				pass
 		self._set_audit_defaults()
 		self._normalize_procuring_entity()
 		self._sync_is_exception_from_demand_type()

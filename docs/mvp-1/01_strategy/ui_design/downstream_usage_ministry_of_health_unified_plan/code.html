@@ -1,0 +1,440 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Downstream Usage</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=Manrope:wght@600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary": "#ffffff",
+                    "on-surface-variant": "#434750",
+                    "on-primary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "background": "#f9f9fe",
+                    "surface": "#f9f9fe",
+                    "primary": "#001f48",
+                    "surface-dim": "#dad9df",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-fixed": "#d3e4ff",
+                    "primary-container": "#00346f",
+                    "on-error": "#ffffff",
+                    "secondary-container": "#7bbeff",
+                    "surface-variant": "#e2e2e8",
+                    "surface-container": "#eeedf3",
+                    "on-tertiary-fixed-variant": "#38485e",
+                    "on-primary-fixed": "#001b3f",
+                    "surface-container-low": "#f4f3f9",
+                    "surface-tint": "#395e9b",
+                    "tertiary-fixed-dim": "#b7c8e2",
+                    "on-secondary-fixed-variant": "#004a78",
+                    "status-available": "#10B981",
+                    "primary-fixed": "#d7e2ff",
+                    "inverse-surface": "#2f3035",
+                    "on-secondary-fixed": "#001d34",
+                    "surface-bright": "#f9f9fe",
+                    "inverse-on-surface": "#f1f0f6",
+                    "status-exhausted": "#EF4444",
+                    "on-primary-container": "#7b9ee0",
+                    "error": "#ba1a1a",
+                    "status-committed": "#6366F1",
+                    "surface-container-high": "#e8e7ed",
+                    "status-reserved": "#F59E0B",
+                    "on-surface": "#1a1b20",
+                    "outline": "#737781",
+                    "on-primary-fixed-variant": "#1d4681",
+                    "surface-container-highest": "#e2e2e8",
+                    "secondary-fixed-dim": "#99cbff",
+                    "secondary-fixed": "#cfe5ff",
+                    "tertiary": "#26364b",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-container": "#004c7c",
+                    "tertiary-container": "#26364b",
+                    "on-background": "#1a1b20",
+                    "secondary": "#01629d",
+                    "primary-fixed-dim": "#abc7ff",
+                    "on-tertiary-fixed": "#0b1c30",
+                    "on-error-container": "#93000a",
+                    "on-tertiary-container": "#8f9fb8",
+                    "inverse-primary": "#abc7ff",
+                    "outline-variant": "#c3c6d1"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "unit": "4px",
+                    "gutter": "12px",
+                    "section-gap": "24px",
+                    "container-padding": "16px",
+                    "card-padding": "20px",
+                    "base-unit": "4px"
+            },
+            "fontFamily": {
+                    "body-md": ["Inter"],
+                    "headline-md": ["Manrope"],
+                    "body-lg": ["Inter"],
+                    "headline-sm": ["Manrope"],
+                    "headline-lg": ["Manrope"],
+                    "label-caps": ["Inter"],
+                    "data-mono": ["JetBrains Mono"],
+                    "headline-lg-mobile": ["Manrope"]
+            },
+            "fontSize": {
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-md": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md min-h-screen flex flex-col md:flex-row antialiased">
+<!-- TopNavBar (Mobile Only) -->
+<header class="md:hidden sticky top-0 z-50 flex items-center justify-between px-container-padding w-full h-16 bg-surface-container-lowest border-b border-outline-variant">
+<div class="flex items-center gap-gutter">
+<span class="material-symbols-outlined text-primary cursor-pointer active:opacity-80 transition-all" data-icon="menu" style="font-variation-settings: &quot;FILL&quot; 0;">menu</span>
+<h1 class="text-headline-md font-headline-md font-bold text-primary">KenTender</h1>
+</div>
+<div class="flex items-center gap-gutter text-primary">
+<span class="material-symbols-outlined cursor-pointer active:opacity-80 transition-all" data-icon="notifications" style="font-variation-settings: &quot;FILL&quot; 0;">notifications</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant cursor-pointer">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="A small circular user profile placeholder image with a generic silhouette against a light gray background, indicating an anonymous user state." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4SZgisEeOij_NaKLdGg5HVICoylYB3sX4yJjhe-3lbpkBEfQ9tHo77JW8XXLqMqpNVNWaPOpNySgI_9FXAEcOnSuJv6e5LHRHBUi-ZxyullARE2zAaYpPvJdhL6n-ULd7UafEKG6gGms-lMG45f7P8cL8Fgx2qe_VRuDVa_tibZhBe83HsA2TyBxClITZ0LP-uHLBqm-YUDt6v7CFi1NyfG5F08WQ__CNxoG68dRwrqHbSa-_Xfjuzg">
+</div>
+</div>
+</header>
+<!-- SideNavBar (Desktop) -->
+<nav class="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 bg-surface border-r border-outline-variant py-container-padding gap-unit z-40">
+<!-- Header -->
+<div class="px-container-padding pb-section-gap flex items-center gap-gutter">
+<div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-primary" data-icon="account_balance">account_balance</span>
+</div>
+<div class="overflow-hidden">
+<h1 class="text-headline-sm font-headline-sm text-primary truncate">Procurement Portal</h1>
+<p class="font-label-caps text-label-caps text-on-surface-variant truncate">Enterprise Management</p>
+</div>
+</div>
+<!-- CTA -->
+<div class="px-container-padding pb-gutter">
+<button class="w-full bg-primary text-on-primary py-2 px-4 rounded-lg font-body-md font-medium hover:bg-on-primary-fixed-variant transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                New Procurement
+            </button>
+</div>
+<!-- Navigation Tabs -->
+<div class="flex-1 overflow-y-auto px-unit flex flex-col gap-unit">
+<a class="flex items-center gap-gutter px-container-padding py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-all duration-200 ease-in-out group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="event_note">event_note</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Planning</span>
+</a>
+<a class="flex items-center gap-gutter px-container-padding py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-all duration-200 ease-in-out group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="assignment_turned_in">assignment_turned_in</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Requisition</span>
+</a>
+<a class="flex items-center gap-gutter px-container-padding py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-all duration-200 ease-in-out group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="gavel">gavel</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Tendering</span>
+</a>
+<!-- Active Tab Semantic Match -->
+<a class="flex items-center gap-gutter px-container-padding py-2 text-primary font-bold bg-secondary-fixed rounded-lg transition-all duration-200 ease-in-out group" href="#">
+<span class="material-symbols-outlined text-primary" data-icon="analytics" style="font-variation-settings: &quot;FILL&quot; 1;">analytics</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Evaluation</span>
+</a>
+<a class="flex items-center gap-gutter px-container-padding py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-all duration-200 ease-in-out group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="verified_user">verified_user</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Award</span>
+</a>
+<a class="flex items-center gap-gutter px-container-padding py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-all duration-200 ease-in-out group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="handshake">handshake</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Contract Management</span>
+</a>
+<a class="flex items-center gap-gutter px-container-padding py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-all duration-200 ease-in-out group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="archive">archive</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Closeout</span>
+</a>
+</div>
+<!-- Footer Tabs -->
+<div class="px-unit pt-gutter border-t border-outline-variant flex flex-col gap-unit">
+<a class="flex items-center gap-gutter px-container-padding py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-all duration-200 ease-in-out group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="support_agent">support_agent</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">Support</span>
+</a>
+<a class="flex items-center gap-gutter px-container-padding py-2 text-on-surface-variant hover:text-primary hover:bg-surface-container-high rounded-lg transition-all duration-200 ease-in-out group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="menu_book">menu_book</span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider">User Manual</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 md:ml-64 p-container-padding md:p-section-gap flex flex-col gap-section-gap max-w-[1600px] mx-auto w-full">
+<!-- Workspace Header -->
+<div class="flex flex-col gap-gutter">
+<div class="flex items-center gap-2 text-on-surface-variant font-label-caps text-label-caps">
+<span class="">MOH-SP-2026-2030</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="text-status-reserved">DRAFT</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="">v2</span>
+</div>
+<div class="flex items-center justify-between">
+<h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">Ministry of Health Strategic Plan 2026–2030</h2>
+</div>
+</div>
+<!-- Tabs -->
+<div class="flex items-center gap-6 border-b border-outline-variant overflow-x-auto scrollbar-hide">
+<button class="pb-3 text-body-md font-medium text-on-surface-variant hover:text-on-surface whitespace-nowrap transition-colors">Overview</button>
+<button class="pb-3 text-body-md font-medium text-on-surface-variant hover:text-on-surface whitespace-nowrap transition-colors">Structure</button>
+<button class="pb-3 text-body-md font-medium text-on-surface-variant hover:text-on-surface whitespace-nowrap transition-colors">Value Commitments</button>
+<button class="pb-3 text-body-md font-medium text-on-surface-variant hover:text-on-surface whitespace-nowrap transition-colors">Measurement</button>
+<button class="pb-3 text-body-md font-bold text-primary border-b-2 border-primary whitespace-nowrap">Downstream Usage</button>
+<button class="pb-3 text-body-md font-medium text-on-surface-variant hover:text-on-surface whitespace-nowrap transition-colors">Review</button>
+<button class="pb-3 text-body-md font-medium text-on-surface-variant hover:text-on-surface whitespace-nowrap transition-colors">Audit</button>
+</div>
+<!-- Tab Content Area -->
+<div class="flex flex-col gap-section-gap">
+<!-- Page Header -->
+<section class="flex flex-col md:flex-row md:items-start justify-between gap-gutter">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Downstream usage</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">See where this plan’s targets and value commitments are referenced across procurement.</p>
+</div>
+</section>
+<!-- Summary Strip -->
+<div class="flex flex-wrap gap-3">
+<div class="bg-surface-container-lowest px-4 py-2 rounded-lg border border-outline-variant flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-primary text-[18px]">account_balance</span>
+<span class="text-body-md font-medium text-on-surface">Budget</span>
+<span class="bg-surface-container-highest px-2 py-0.5 rounded-full text-label-caps font-data-mono">3</span>
+</div>
+<div class="bg-surface-container-lowest px-4 py-2 rounded-lg border border-outline-variant flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-primary text-[18px]">inventory_2</span>
+<span class="text-body-md font-medium text-on-surface">Demand</span>
+<span class="bg-surface-container-highest px-2 py-0.5 rounded-full text-label-caps font-data-mono">5</span>
+</div>
+<div class="bg-surface-container-lowest px-4 py-2 rounded-lg border border-outline-variant flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-primary text-[18px]">event_note</span>
+<span class="text-body-md font-medium text-on-surface">Planning</span>
+<span class="bg-surface-container-highest px-2 py-0.5 rounded-full text-label-caps font-data-mono">4</span>
+</div>
+<div class="bg-surface-container-lowest px-4 py-2 rounded-lg border border-outline-variant flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-primary text-[18px]">gavel</span>
+<span class="text-body-md font-medium text-on-surface">Tender</span>
+<span class="bg-surface-container-highest px-2 py-0.5 rounded-full text-label-caps font-data-mono">2</span>
+</div>
+<div class="bg-surface-container-lowest px-4 py-2 rounded-lg border border-outline-variant flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-primary text-[18px]">history_edu</span>
+<span class="text-body-md font-medium text-on-surface">Contract</span>
+<span class="bg-surface-container-highest px-2 py-0.5 rounded-full text-label-caps font-data-mono">1</span>
+</div>
+<div class="bg-surface-container-lowest px-4 py-2 rounded-lg border border-outline-variant flex items-center gap-2 shadow-sm opacity-60">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">domain</span>
+<span class="text-body-md font-medium text-on-surface-variant">Asset</span>
+<span class="bg-surface-container-highest px-2 py-0.5 rounded-full text-label-caps font-data-mono">0</span>
+</div>
+<div class="bg-surface-container-lowest px-4 py-2 rounded-lg border border-outline-variant flex items-center gap-2 shadow-sm opacity-60">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">delete</span>
+<span class="text-body-md font-medium text-on-surface-variant">Disposal</span>
+<span class="bg-surface-container-highest px-2 py-0.5 rounded-full text-label-caps font-data-mono">0</span>
+</div>
+</div>
+<!-- Data Container -->
+<section class="bg-surface-container-lowest rounded-xl border border-subtle border-outline-variant shadow-sm overflow-hidden flex flex-col">
+<!-- Filter Strip -->
+<div class="bg-surface-container-low p-container-padding border-b border-outline-variant flex flex-col gap-gutter">
+<div class="flex flex-wrap items-center gap-2">
+<div class="relative flex-1 min-w-[200px] max-w-xs">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]" data-icon="search">search</span>
+<input class="w-full pl-10 pr-3 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" placeholder="Search record reference..." type="text">
+</div>
+<select class="py-1.5 pl-3 pr-8 bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none bg-no-repeat bg-[right_0.5rem_center] bg-[length:1.5em_1.5em] transition-all" style="background-image: url(&quot;data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23737781%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E&quot;);">
+<option value="">Module: All</option>
+</select>
+<select class="py-1.5 pl-3 pr-8 bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none bg-no-repeat bg-[right_0.5rem_center] bg-[length:1.5em_1.5em] transition-all" style="background-image: url(&quot;data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23737781%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E&quot;);">
+<option value="">Strategy Target: All</option>
+</select>
+<select class="py-1.5 pl-3 pr-8 bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none bg-no-repeat bg-[right_0.5rem_center] bg-[length:1.5em_1.5em] transition-all" style="background-image: url(&quot;data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23737781%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E&quot;);">
+<option value="">Reference Type: All</option>
+<option value="primary">Primary alignment</option>
+<option value="supporting">Supporting alignment</option>
+<option value="value">Value commitment</option>
+</select>
+<select class="py-1.5 pl-3 pr-8 bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none bg-no-repeat bg-[right_0.5rem_center] bg-[length:1.5em_1.5em] transition-all" style="background-image: url(&quot;data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23737781%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E&quot;);">
+<option value="">Status: All</option>
+</select>
+<button class="text-secondary font-medium text-body-md hover:underline px-2 py-1.5 ml-auto">
+                        Clear filters
+                    </button>
+</div>
+</div>
+<!-- Data Table -->
+<div class="overflow-x-auto w-full scrollbar-hide">
+<table class="w-full text-left border-collapse min-w-[1000px]">
+<thead class="bg-surface-container-low border-b border-outline-variant">
+<tr>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider w-1/4">Downstream record</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Module</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider w-1/4">Strategy reference</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Reference type</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Current status</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Last updated</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider whitespace-nowrap text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant bg-surface-container-lowest">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container transition-colors group">
+<td class="py-4 px-4 align-top">
+<div class="flex flex-col">
+<span class="font-data-mono text-data-mono text-primary font-bold">DEM-MOH-2027-014</span>
+<span class="text-body-md text-on-surface-variant mt-0.5 line-clamp-1">Clinical systems infrastructure refresh</span>
+</div>
+</td>
+<td class="py-4 px-4 align-top text-body-md text-on-surface whitespace-nowrap">Demand</td>
+<td class="py-4 px-4 align-top">
+<div class="flex flex-col">
+<span class="font-data-mono text-data-mono text-on-surface font-medium">MOH-TGT-01</span>
+<span class="text-body-md text-on-surface-variant mt-0.5 line-clamp-1">At least 99.9% availability</span>
+</div>
+</td>
+<td class="py-4 px-4 align-top whitespace-nowrap">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full bg-primary text-on-primary font-label-caps text-[11px] font-bold">Primary alignment</span>
+</td>
+<td class="py-4 px-4 align-top whitespace-nowrap">
+<div class="inline-flex items-center gap-1.5 text-status-available text-body-md font-medium">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1">check_circle</span> Approved
+                                </div>
+</td>
+<td class="py-4 px-4 align-top font-data-mono text-data-mono text-on-surface whitespace-nowrap">12 Sep 2027</td>
+<td class="py-4 px-4 align-top text-right whitespace-nowrap">
+<button class="text-secondary hover:text-primary transition-colors p-1 rounded hover:bg-surface-container">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container transition-colors group">
+<td class="py-4 px-4 align-top">
+<div class="flex flex-col">
+<span class="font-data-mono text-data-mono text-primary font-bold">BUD-MOH-2027-008</span>
+<span class="text-body-md text-on-surface-variant mt-0.5 line-clamp-1">Digital health infrastructure allocation</span>
+</div>
+</td>
+<td class="py-4 px-4 align-top text-body-md text-on-surface whitespace-nowrap">Budget</td>
+<td class="py-4 px-4 align-top">
+<div class="flex flex-col">
+<span class="font-data-mono text-data-mono text-on-surface font-medium">MOH-TGT-01</span>
+</div>
+</td>
+<td class="py-4 px-4 align-top whitespace-nowrap">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant font-label-caps text-[11px] font-bold">Supporting alignment</span>
+</td>
+<td class="py-4 px-4 align-top whitespace-nowrap">
+<div class="inline-flex items-center gap-1.5 text-status-available text-body-md font-medium">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1">check_circle</span> Approved
+                                </div>
+</td>
+<td class="py-4 px-4 align-top font-data-mono text-data-mono text-on-surface whitespace-nowrap">28 Aug 2027</td>
+<td class="py-4 px-4 align-top text-right whitespace-nowrap">
+<button class="text-secondary hover:text-primary transition-colors p-1 rounded hover:bg-surface-container">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container transition-colors group">
+<td class="py-4 px-4 align-top">
+<div class="flex flex-col">
+<span class="font-data-mono text-data-mono text-primary font-bold">TND-MOH-ICT-042</span>
+<span class="text-body-md text-on-surface-variant mt-0.5 line-clamp-1">Supply and installation of resilient clinical systems infrastructure</span>
+</div>
+</td>
+<td class="py-4 px-4 align-top text-body-md text-on-surface whitespace-nowrap">Tender</td>
+<td class="py-4 px-4 align-top">
+<div class="flex flex-col">
+<span class="font-data-mono text-data-mono text-on-surface font-medium">PVO-RES-01</span>
+<span class="text-body-md text-on-surface-variant mt-0.5 line-clamp-1">Improve continuity of critical services</span>
+</div>
+</td>
+<td class="py-4 px-4 align-top whitespace-nowrap">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-label-caps text-[11px] font-bold">Value commitment</span>
+</td>
+<td class="py-4 px-4 align-top whitespace-nowrap">
+<div class="inline-flex items-center gap-1.5 text-status-reserved text-body-md font-medium">
+<span class="material-symbols-outlined text-[16px]">pending</span> Configuration
+                                </div>
+</td>
+<td class="py-4 px-4 align-top font-data-mono text-data-mono text-on-surface whitespace-nowrap">20 Sep 2027</td>
+<td class="py-4 px-4 align-top text-right whitespace-nowrap">
+<button class="text-secondary hover:text-primary transition-colors p-1 rounded hover:bg-surface-container">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container transition-colors group">
+<td class="py-4 px-4 align-top">
+<div class="flex flex-col">
+<span class="font-data-mono text-data-mono text-primary font-bold">CTR-MOH-ICT-018</span>
+<span class="text-body-md text-on-surface-variant mt-0.5 line-clamp-1">Clinical systems infrastructure support</span>
+</div>
+</td>
+<td class="py-4 px-4 align-top text-body-md text-on-surface whitespace-nowrap">Contract</td>
+<td class="py-4 px-4 align-top">
+<div class="flex flex-col">
+<span class="font-data-mono text-data-mono text-on-surface font-medium">MOH-TGT-01</span>
+</div>
+</td>
+<td class="py-4 px-4 align-top whitespace-nowrap">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant font-label-caps text-[11px] font-bold">Supporting alignment</span>
+</td>
+<td class="py-4 px-4 align-top whitespace-nowrap">
+<div class="inline-flex items-center gap-1.5 text-status-committed text-body-md font-medium">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1">bolt</span> Active
+                                </div>
+</td>
+<td class="py-4 px-4 align-top font-data-mono text-data-mono text-on-surface whitespace-nowrap">15 Oct 2027</td>
+<td class="py-4 px-4 align-top text-right whitespace-nowrap">
+<button class="text-secondary hover:text-primary transition-colors p-1 rounded hover:bg-surface-container">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Footer Note -->
+<div class="flex gap-2 items-start text-on-surface-variant bg-surface-container p-4 rounded-lg border border-outline-variant">
+<span class="material-symbols-outlined text-[20px] shrink-0 mt-0.5">info</span>
+<p class="text-body-md font-body-md">Historical references remain valid when a strategy version is superseded. Only references requiring remediation appear as issues.</p>
+</div>
+</div>
+</main>
+
+
+</body></html>

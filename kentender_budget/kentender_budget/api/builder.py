@@ -158,6 +158,9 @@ def _get_builder_payload(budget_name: str, lines_filter: str = "active"):
 			"department",
 			"economic_classification",
 			"line_status",
+			"strategy_plan_version",
+			"strategy_target",
+			"strategy_snapshot_label",
 		],
 		order_by="budget_line_code asc, modified asc",
 		limit=5000,
@@ -181,6 +184,8 @@ def _get_builder_payload(budget_name: str, lines_filter: str = "active"):
 		consumed = flt(row.amount_consumed or 0)
 		available = flt(row.amount_available)
 		demand_n, active_res, total_res = _line_reference_counts(row.name)
+		from kentender_strategy.services.strategy_consumer import strategy_fields_from_doc
+
 		row_dict = {
 			"name": row.name,
 			"budget_line_code": row.budget_line_code,
@@ -197,24 +202,12 @@ def _get_builder_payload(budget_name: str, lines_filter: str = "active"):
 			"allocation_state": "Allocated" if allocated > 0 else "Unallocated",
 			"funding_source": row.funding_source,
 			"funding_source_label": funding_labels.get(row.funding_source, row.funding_source),
-			"strategic_plan": None,
-			"program": None,
-			"program_label": "",
-			"program_code": "",
-			"sub_program": None,
-			"sub_program_label": "",
-			"sub_program_code": "",
-			"output_indicator": None,
-			"output_indicator_label": "",
-			"output_indicator_code": "",
-			"performance_target": None,
-			"performance_target_label": "",
-			"performance_target_code": "",
 			"notes": row.notes or "",
 			"department": row.get("department") or "",
 			"economic_classification": row.get("economic_classification") or "",
 			"line_status": _compute_line_status(budget_status, row.is_active, allocated, available),
 		}
+		row_dict.update(strategy_fields_from_doc(row))
 		row_dict["can_remove"] = _line_can_soft_remove(budget_status, row_dict, demand_n, active_res)
 		row_dict["can_hard_delete"] = _line_can_hard_delete(budget_status, row_dict, demand_n, active_res, total_res)
 		budget_lines.append(row_dict)
@@ -307,8 +300,8 @@ def upsert_budget_line(
 	economic_classification: str | None = None,
 	department: str | None = None,
 ):
-	# program/sub_program/output_indicator/performance_target accepted but ignored (MVP-1 teardown).
-	_ = (program, sub_program, output_indicator, performance_target)
+	# Legacy cascade args ignored; performance_target maps to Strategy Reference DTO (§16.1).
+	_ = (program, sub_program, output_indicator)
 	if not budget_name:
 		frappe.throw(_("Budget is required."))
 	if not frappe.has_permission("Budget", "write", budget_name):
@@ -346,6 +339,10 @@ def upsert_budget_line(
 		line_doc.economic_classification = economic_classification
 	if department is not None:
 		line_doc.department = department
+	if performance_target is not None or hasattr(line_doc, "strategy_target"):
+		from kentender_strategy.services.strategy_consumer import apply_strategy_reference_to_doc
+
+		apply_strategy_reference_to_doc(line_doc, performance_target or None, require_active=True)
 	line_doc.save(ignore_permissions=False)
 	return _get_builder_payload(budget_name, lines_filter=lines_filter or "active")
 

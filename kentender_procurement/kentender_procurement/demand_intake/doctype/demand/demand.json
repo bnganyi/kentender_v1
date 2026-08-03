@@ -28,6 +28,9 @@
   "section_budget_strategy",
   "budget_line",
   "budget",
+  "strategy_plan_version",
+  "strategy_target",
+  "strategy_snapshot_label",
   "funding_source",
   "reservation_status",
   "reservation_reference",
@@ -203,6 +206,25 @@
    "link_filters": "[[\"Budget Line\", \"is_active\", \"=\", 1]]",
    "options": "Budget Line",
    "search_index": 1
+  },
+  {
+   "fieldname": "strategy_plan_version",
+   "fieldtype": "Link",
+   "label": "Strategy Plan Version",
+   "options": "Strategic Plan"
+  },
+  {
+   "fieldname": "strategy_target",
+   "fieldtype": "Link",
+   "label": "Strategy Target",
+   "options": "Performance Target",
+   "description": "Active Performance Targets only for new selections. Historical references remain resolvable."
+  },
+  {
+   "fieldname": "strategy_snapshot_label",
+   "fieldtype": "Data",
+   "label": "Strategy Snapshot Label",
+   "read_only": 1
   },
   {
    "fieldname": "budget",

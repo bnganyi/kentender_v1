@@ -1,0 +1,1534 @@
+# Copyright (c) 2026, KenTender and contributors
+"""REQ §16 service contracts + write companions."""
+
+from __future__ import annotations
+
+from typing import Any
+
+import frappe
+from frappe import _
+
+from kentender_strategy.services.strategy_audit import record_event
+from kentender_strategy.services.strategy_domain_guards import CODE_RE
+from kentender_strategy.services.strategy_permissions import (
+	assert_entity_in_scope,
+	can_create_successor_plan,
+	can_edit_draft_plan,
+	entity_for_user,
+	has_cross_entity_authority,
+	require_any_role,
+	ROLE_MANAGER,
+	ROLE_OFFICER,
+)
+from kentender_strategy.services.strategy_readiness import get_plan_readiness
+
+PLAN_TYPES = (
+	"Entity Strategic Plan",
+	"Sector Strategy",
+	"Programme Strategy",
+	"Other",
+)
+
+
+def _ref(id_: str | None, code: str | None = None, name: str | None = None) -> dict | None:
+	if not id_:
+		return None
+	return {"id": id_, "code": code or id_, "name": name or code or id_}
+
+
+def _pe_clause(pe: str | None) -> tuple[str, tuple]:
+	if pe:
+		return "sp.procuring_entity = %s", (pe,)
+	return "1=1", ()
+
+
+def _normalize_period(period: str | None) -> tuple[int | None, int | None]:
+	"""Parse '2026–2030' / '2026-2030' into start/end years."""
+	if not period:
+		return None, None
+	raw = str(period).replace("–", "-").replace("—", "-").strip()
+	parts = [p.strip() for p in raw.split("-") if p.strip()]
+	if len(parts) != 2:
+		return None, None
+	try:
+		return int(parts[0][:4]), int(parts[1][:4])
+	except (TypeError, ValueError):
+		return None, None
+
+
+def _plan_attention(plan_id: str, status: str) -> dict[str, Any]:
+	"""Per-plan attention label for portfolio table."""
+	if status == "Submitted":
+		return {
+			"attention": "Awaiting review",
+			"attention_kind": "review",
+			"attention_icon": "visibility",
+			"attention_tone": "muted",
+		}
+	due = frappe.db.count(
+		"Performance Measurement",
+		{"plan_version": plan_id, "workflow_status": ["in", ["Draft", "Returned"]]},
+	)
+	attn = frappe.db.sql(
+		"""
+		select count(*) from `tabPerformance Measurement`
+		where plan_version = %s
+		  and (
+			workflow_status = 'Submitted'
+			or (workflow_status = 'Verified' and result_status in ('At risk', 'Off track'))
+		  )
+		""",
+		(plan_id,),
+	)[0][0]
+	attn = int(attn or 0)
+	if attn:
+		label = f"{attn} target needs attention" if attn == 1 else f"{attn} targets need attention"
+		return {
+			"attention": label,
+			"attention_kind": "risk",
+			"attention_icon": "warning",
+			"attention_tone": "error",
+			"attention_count": attn,
+		}
+	if due:
+		label = f"{due} measurement due" if due == 1 else f"{due} measurements due"
+		return {
+			"attention": label,
+			"attention_kind": "due",
+			"attention_icon": "schedule",
+			"attention_tone": "committed",
+			"attention_count": due,
+		}
+	return {
+		"attention": "—",
+		"attention_kind": "none",
+		"attention_icon": None,
+		"attention_tone": "muted",
+	}
+
+
+def _entity_label(pe_id: str | None) -> str | None:
+	if not pe_id:
+		return None
+	if frappe.db.exists("DocType", "Procuring Entity"):
+		row = frappe.db.get_value(
+			"Procuring Entity", pe_id, ["entity_name", "entity_code", "name"], as_dict=True
+		)
+		if row:
+			return row.entity_name or row.entity_code or row.name
+	return pe_id
+
+
+def _entity_code(pe_id: str | None) -> str | None:
+	if not pe_id:
+		return None
+	code = frappe.db.get_value("Procuring Entity", pe_id, "entity_code")
+	return code or pe_id
+
+
+def list_strategy_plans(
+	procuring_entity: str | None = None,
+	status: str | None = None,
+	plan_type: str | None = None,
+	search: str | None = None,
+	period: str | None = None,
+) -> list[dict]:
+	filters: dict[str, Any] = {}
+	pe = procuring_entity or entity_for_user()
+	if pe:
+		filters["procuring_entity"] = pe
+	if status and status not in ("Status", "All"):
+		filters["status"] = status
+	if plan_type and plan_type not in ("Plan type", "All"):
+		filters["plan_type"] = plan_type
+	or_filters = None
+	if search:
+		or_filters = [
+			["plan_code", "like", f"%{search}%"],
+			["title", "like", f"%{search}%"],
+		]
+	rows = frappe.get_all(
+		"Strategic Plan",
+		filters=filters,
+		or_filters=or_filters,
+		fields=[
+			"name",
+			"plan_code",
+			"version_number",
+			"title",
+			"procuring_entity",
+			"plan_type",
+			"status",
+			"start_date",
+			"end_date",
+		],
+		order_by="modified desc",
+		limit_page_length=200,
+	)
+	start_year, end_year = _normalize_period(period if period not in ("Period", "All", None) else None)
+	out = []
+	for r in rows:
+		if start_year and end_year and r.start_date and r.end_date:
+			rs = frappe.utils.getdate(r.start_date).year
+			re = frappe.utils.getdate(r.end_date).year
+			# Overlap of plan years with requested period
+			if re < start_year or rs > end_year:
+				continue
+		attn = _plan_attention(r.name, r.status)
+		out.append(
+			{
+				"id": r.name,
+				"code": r.plan_code,
+				"name": r.title,
+				"version_number": r.version_number,
+				"procuring_entity": r.procuring_entity,
+				"procuring_entity_name": _entity_label(r.procuring_entity),
+				"plan_type": r.plan_type,
+				"status": r.status,
+				"start_date": r.start_date,
+				"end_date": r.end_date,
+				**attn,
+			}
+		)
+	return out
+
+
+def get_strategy_portfolio(procuring_entity: str | None = None) -> dict:
+	pe = procuring_entity or entity_for_user()
+	filters = {"procuring_entity": pe} if pe else {}
+	plans = frappe.get_all(
+		"Strategic Plan",
+		filters=filters,
+		fields=["name", "plan_code", "title", "status", "end_date"],
+	)
+	counts = {
+		"draft": 0,
+		"submitted": 0,
+		"active": 0,
+		"expiring": 0,
+		"measurements_due": 0,
+		"measurement_attention": 0,
+	}
+	today = frappe.utils.getdate()
+	for p in plans:
+		st = (p.status or "").lower()
+		if st in counts:
+			counts[st] += 1
+		if p.status == "Active" and p.end_date and frappe.utils.getdate(p.end_date) <= frappe.utils.add_months(today, 6):
+			counts["expiring"] += 1
+
+	pe_sql, pe_args = _pe_clause(pe)
+	due = frappe.db.sql(
+		f"""
+		select count(distinct m.name) from `tabPerformance Measurement` m
+		inner join `tabStrategic Plan` sp on sp.name = m.plan_version
+		where {pe_sql}
+		  and m.workflow_status in ('Draft', 'Returned')
+		""",
+		pe_args,
+	)[0][0]
+	counts["measurements_due"] = int(due or 0)
+
+	# Needs attention: submitted measurements awaiting verify, or verified off-track/at-risk
+	attn = frappe.db.sql(
+		f"""
+		select count(distinct m.name) from `tabPerformance Measurement` m
+		inner join `tabStrategic Plan` sp on sp.name = m.plan_version
+		where {pe_sql}
+		  and (
+			m.workflow_status = 'Submitted'
+			or (m.workflow_status = 'Verified' and m.result_status in ('At risk', 'Off track'))
+		  )
+		""",
+		pe_args,
+	)[0][0]
+	counts["measurement_attention"] = int(attn or 0)
+
+	plan_rows = list_strategy_plans(procuring_entity=pe)
+	entities = []
+	seen_pe = set()
+	for row in plan_rows:
+		pid = row.get("procuring_entity")
+		if pid and pid not in seen_pe:
+			seen_pe.add(pid)
+			entities.append({"id": pid, "name": row.get("procuring_entity_name") or pid})
+
+	return {
+		"counts": counts,
+		"plans": plan_rows,
+		"my_work": _my_work(pe),
+		"entities": entities,
+		"capabilities": {"create_plan": can_edit_draft_plan()},
+	}
+
+
+def _my_work(pe: str | None) -> list[dict]:
+	items: list[dict] = []
+	filters: dict[str, Any] = {"status": "Submitted"}
+	if pe:
+		filters["procuring_entity"] = pe
+	for p in frappe.get_all(
+		"Strategic Plan", filters=filters, fields=["name", "plan_code", "title"], limit=10
+	):
+		items.append(
+			{
+				"type": "plan_review",
+				"label": f"Review submitted plan ({p.plan_code})",
+				"plan": _ref(p.name, p.plan_code, p.title),
+				"route": ["strategy-plan-review", p.plan_code],
+			}
+		)
+
+	pe_sql, pe_args = _pe_clause(pe)
+	draft_meas = frappe.db.sql(
+		f"""
+		select m.name, m.performance_target, sp.plan_code, t.target_code, t.title
+		from `tabPerformance Measurement` m
+		inner join `tabStrategic Plan` sp on sp.name = m.plan_version
+		left join `tabPerformance Target` t on t.name = m.performance_target
+		where {pe_sql}
+		  and m.workflow_status in ('Draft', 'Returned')
+		order by m.measurement_period_end asc
+		limit 5
+		""",
+		pe_args,
+		as_dict=True,
+	)
+	for m in draft_meas:
+		items.append(
+			{
+				"type": "submit_measurement",
+				"label": f"Submit measurement ({m.target_code or 'target'})",
+				"target": _ref(m.performance_target, m.target_code, m.title),
+				"plan_code": m.plan_code,
+				"route": [
+					"strategy-measurement-submit",
+					m.plan_code or "",
+					m.target_code or "",
+				],
+			}
+		)
+
+	submitted_meas = frappe.db.sql(
+		f"""
+		select m.name, m.performance_target, sp.plan_code, t.target_code, t.title
+		from `tabPerformance Measurement` m
+		inner join `tabStrategic Plan` sp on sp.name = m.plan_version
+		left join `tabPerformance Target` t on t.name = m.performance_target
+		where {pe_sql}
+		  and m.workflow_status = 'Submitted'
+		order by m.modified desc
+		limit 5
+		""",
+		pe_args,
+		as_dict=True,
+	)
+	for m in submitted_meas:
+		items.append(
+			{
+				"type": "verify_measurement",
+				"label": f"Verify measurement ({m.target_code or 'target'})",
+				"target": _ref(m.performance_target, m.target_code, m.title),
+				"plan_code": m.plan_code,
+				"route": [
+					"strategy-measurement-verify",
+					m.plan_code or "",
+					m.target_code or "",
+				],
+			}
+		)
+
+	risk = frappe.db.sql(
+		f"""
+		select m.name, m.performance_target, sp.plan_code, t.target_code, t.title, m.result_status
+		from `tabPerformance Measurement` m
+		inner join `tabStrategic Plan` sp on sp.name = m.plan_version
+		left join `tabPerformance Target` t on t.name = m.performance_target
+		where {pe_sql}
+		  and m.workflow_status = 'Verified'
+		  and m.result_status in ('At risk', 'Off track')
+		order by m.measurement_period_end desc
+		limit 5
+		""",
+		pe_args,
+		as_dict=True,
+	)
+	for m in risk:
+		items.append(
+			{
+				"type": "resolve_target",
+				"label": f"Resolve {m.result_status.lower()} target ({m.target_code or 'target'})",
+				"target": _ref(m.performance_target, m.target_code, m.title),
+				"plan_code": m.plan_code,
+				"route": ["strategy-corrective-actions", m.plan_code],
+			}
+		)
+	return items[:12]
+
+
+def get_strategy_tree(plan_version: str | None = None, plan_code: str | None = None) -> dict:
+	plan = _resolve_plan(plan_version, plan_code)
+	programmes = frappe.get_all(
+		"Strategy Programme",
+		filters={"plan_version": plan.name},
+		fields=["name", "programme_code", "title", "description", "responsible_function", "order_index"],
+		order_by="order_index asc",
+	)
+	subs = frappe.get_all(
+		"Strategy Sub Programme",
+		filters={"plan_version": plan.name},
+		fields=[
+			"name",
+			"sub_programme_code",
+			"title",
+			"programme",
+			"description",
+			"responsible_function",
+			"order_index",
+		],
+		order_by="order_index asc",
+	)
+	outcomes = frappe.get_all(
+		"Strategic Outcome",
+		filters={"plan_version": plan.name},
+		fields=[
+			"name",
+			"outcome_code",
+			"title",
+			"programme",
+			"sub_programme",
+			"description",
+			"responsible_function",
+			"executive_owner",
+			"order_index",
+		],
+		order_by="order_index asc",
+	)
+	indicators = frappe.get_all(
+		"Performance Indicator",
+		filters={"plan_version": plan.name},
+		fields=[
+			"name",
+			"indicator_code",
+			"title",
+			"strategic_outcome",
+			"definition",
+			"measurement_type",
+			"unit",
+			"measurement_frequency",
+			"data_source",
+			"responsible_function",
+			"order_index",
+		],
+		order_by="order_index asc",
+	)
+	targets = frappe.get_all(
+		"Performance Target",
+		filters={"plan_version": plan.name},
+		fields=[
+			"name",
+			"target_code",
+			"title",
+			"performance_indicator",
+			"comparison_direction",
+			"target_numeric",
+			"target_text",
+			"target_date",
+			"baseline_status",
+			"baseline_numeric",
+			"baseline_text",
+			"baseline_as_of",
+			"baseline_source",
+			"tolerance_value",
+			"period_start",
+			"period_end",
+			"benefit_owner",
+			"measurement_verifier",
+			"status",
+		],
+		order_by="target_code asc",
+	)
+	tree = []
+	subs_by_p = {}
+	for s in subs:
+		subs_by_p.setdefault(s.programme, []).append(s)
+	outs_by_p = {}
+	outs_by_sub = {}
+	for o in outcomes:
+		if o.sub_programme:
+			outs_by_sub.setdefault(o.sub_programme, []).append(o)
+		else:
+			outs_by_p.setdefault(o.programme, []).append(o)
+	inds_by_o = {}
+	for i in indicators:
+		inds_by_o.setdefault(i.strategic_outcome, []).append(i)
+	tgts_by_i = {}
+	for t in targets:
+		tgts_by_i.setdefault(t.performance_indicator, []).append(t)
+
+	def node(type_, row, code_field, children=None, warnings=None, fields=None):
+		return {
+			"type": type_,
+			"id": row.name,
+			"code": row.get(code_field),
+			"name": row.title,
+			"children": children or [],
+			"warnings": warnings or [],
+			"fields": fields
+			or {
+				"description": row.get("description"),
+				"responsible_function": row.get("responsible_function"),
+				"order_index": row.get("order_index"),
+				"programme": row.get("programme"),
+				"sub_programme": row.get("sub_programme"),
+			},
+		}
+
+	for p in programmes:
+		p_children = []
+		for s in subs_by_p.get(p.name, []):
+			s_children = []
+			for o in outs_by_sub.get(s.name, []):
+				s_children.append(_outcome_node(o, inds_by_o, tgts_by_i))
+			p_children.append(
+				node(
+					"SubProgramme",
+					s,
+					"sub_programme_code",
+					s_children,
+					fields={
+						"description": s.description,
+						"responsible_function": s.responsible_function,
+						"order_index": s.order_index,
+						"programme": s.programme,
+					},
+				)
+			)
+		for o in outs_by_p.get(p.name, []):
+			p_children.append(_outcome_node(o, inds_by_o, tgts_by_i))
+		tree.append(
+			node(
+				"Programme",
+				p,
+				"programme_code",
+				p_children,
+				fields={
+					"description": p.description,
+					"responsible_function": p.responsible_function,
+					"order_index": p.order_index,
+				},
+			)
+		)
+
+	editable = plan.status in ("Draft", "Returned") and can_edit_draft_plan()
+	return {
+		"plan": {
+			"id": plan.name,
+			"code": plan.plan_code,
+			"name": plan.title,
+			"version_number": plan.version_number,
+			"status": plan.status,
+			"start_date": str(plan.start_date) if plan.start_date else None,
+			"end_date": str(plan.end_date) if plan.end_date else None,
+			"effective_period_label": _format_effective_period(plan.start_date, plan.end_date),
+			"plan_type": plan.plan_type,
+			"procuring_entity": plan.procuring_entity,
+			"description": plan.description,
+			"supersedes_plan_version": plan.supersedes_plan_version,
+		},
+		"counts": {
+			"programmes": len(programmes),
+			"sub_programmes": len(subs),
+			"outcomes": len(outcomes),
+			"indicators": len(indicators),
+			"targets": len(targets),
+		},
+		"capabilities": {"editable": editable},
+		"tree": tree,
+	}
+
+
+def _target_node(t, unit=None):
+	return {
+		"type": "PerformanceTarget",
+		"id": t.name,
+		"code": t.target_code,
+		"name": t.title,
+		"children": [],
+		"warnings": [],
+		"unit": unit,
+		"fields": {
+			"performance_indicator": t.performance_indicator,
+			"comparison_direction": t.comparison_direction,
+			"target_numeric": t.target_numeric,
+			"target_text": t.target_text,
+			"target_date": str(t.target_date) if t.target_date else None,
+			"baseline_status": t.baseline_status,
+			"baseline_numeric": t.baseline_numeric,
+			"baseline_text": t.baseline_text,
+			"baseline_as_of": str(t.baseline_as_of) if t.baseline_as_of else None,
+			"baseline_source": t.baseline_source,
+			"tolerance_value": t.tolerance_value,
+			"period_start": str(t.period_start) if t.period_start else None,
+			"period_end": str(t.period_end) if t.period_end else None,
+			"benefit_owner": t.benefit_owner,
+			"measurement_verifier": t.measurement_verifier,
+			"status": t.status,
+		},
+	}
+
+
+def _outcome_node(o, inds_by_o, tgts_by_i):
+	warnings = []
+	o_children = []
+	inds = inds_by_o.get(o.name, [])
+	if not inds:
+		warnings.append("Indicator required")
+	for i in inds:
+		i_children = []
+		for t in tgts_by_i.get(i.name, []):
+			i_children.append(_target_node(t, unit=i.unit))
+		warn_ind = []
+		if not i_children:
+			warn_ind.append("Target required")
+		o_children.append(
+			{
+				"type": "PerformanceIndicator",
+				"id": i.name,
+				"code": i.indicator_code,
+				"name": i.title,
+				"children": i_children,
+				"warnings": warn_ind,
+				"fields": {
+					"strategic_outcome": i.strategic_outcome,
+					"definition": i.definition,
+					"measurement_type": i.measurement_type,
+					"unit": i.unit,
+					"measurement_frequency": i.measurement_frequency,
+					"data_source": i.data_source,
+					"responsible_function": i.responsible_function,
+					"order_index": i.order_index,
+				},
+			}
+		)
+	return {
+		"type": "StrategicOutcome",
+		"id": o.name,
+		"code": o.outcome_code,
+		"name": o.title,
+		"children": o_children,
+		"warnings": warnings,
+		"responsible_function": o.responsible_function,
+		"executive_owner": o.executive_owner,
+		"description": o.description,
+		"fields": {
+			"description": o.description,
+			"responsible_function": o.responsible_function,
+			"executive_owner": o.executive_owner,
+			"programme": o.programme,
+			"sub_programme": o.sub_programme,
+			"order_index": o.order_index,
+		},
+	}
+
+
+def _resolve_plan(plan_version: str | None, plan_code: str | None):
+	if plan_version and frappe.db.exists("Strategic Plan", plan_version):
+		return frappe.get_doc("Strategic Plan", plan_version)
+	# Desk routes may pass plan docname (hash) or business plan_code in the same segment.
+	if plan_code and frappe.db.exists("Strategic Plan", plan_code):
+		return frappe.get_doc("Strategic Plan", plan_code)
+	if plan_code:
+		name = frappe.db.get_value(
+			"Strategic Plan",
+			{"plan_code": plan_code, "status": "Active"},
+			"name",
+		) or frappe.db.get_value(
+			"Strategic Plan", {"plan_code": plan_code}, "name", order_by="version_number desc"
+		)
+		if name:
+			return frappe.get_doc("Strategic Plan", name)
+	frappe.throw(_("Strategic Plan not found"))
+
+
+def _open_successor_exists(plan_code: str, procuring_entity: str) -> bool:
+	return bool(
+		frappe.db.exists(
+			"Strategic Plan",
+			{
+				"plan_code": plan_code,
+				"procuring_entity": procuring_entity,
+				"status": ["in", ["Draft", "Returned", "Submitted"]],
+				"version_number": [">", 1],
+			},
+		)
+	)
+
+
+def _format_effective_period(start, end) -> str | None:
+	if not start or not end:
+		return None
+	sd = frappe.utils.getdate(start)
+	ed = frappe.utils.getdate(end)
+	return f"{sd.day} {sd.strftime('%B %Y')} – {ed.day} {ed.strftime('%B %Y')}"
+
+
+def _period_label(start, end) -> str | None:
+	if not start and not end:
+		return None
+	if start and end:
+		sd = frappe.utils.getdate(start)
+		ed = frappe.utils.getdate(end)
+		if sd.year == ed.year and sd.month == ed.month:
+			return sd.strftime("%B %Y")
+		return f"{sd.strftime('%B %Y')} – {ed.strftime('%B %Y')}"
+	d = frappe.utils.getdate(start or end)
+	return d.strftime("%B %Y")
+
+
+def _overview_attention_rows(plan_name: str) -> list[dict]:
+	"""Rows needing work: due drafts, submitted for review, verified at-risk/off-track."""
+	plan_code = frappe.db.get_value("Strategic Plan", plan_name, "plan_code") or plan_name
+	rows = frappe.db.sql(
+		"""
+		select m.name, m.performance_target, m.measurement_period_start, m.measurement_period_end,
+		       m.workflow_status, m.result_status, t.target_code, t.title as target_title
+		from `tabPerformance Measurement` m
+		left join `tabPerformance Target` t on t.name = m.performance_target
+		where m.plan_version = %s
+		  and (
+			m.workflow_status in ('Draft', 'Returned', 'Submitted')
+			or (m.workflow_status = 'Verified' and m.result_status in ('At risk', 'Off track'))
+		  )
+		order by m.measurement_period_end desc
+		limit 20
+		""",
+		(plan_name,),
+		as_dict=True,
+	)
+	out = []
+	for r in rows:
+		wf = r.workflow_status or ""
+		result = r.result_status or ""
+		tgt_code = r.target_code or r.performance_target
+		if wf in ("Draft", "Returned"):
+			action = "submit-measurement"
+			result_label = "Measurement due"
+			route = ["strategy-measurement-submit", plan_code, tgt_code]
+		elif wf == "Submitted":
+			action = "review-measurement"
+			result_label = result or "Submitted"
+			route = ["strategy-measurement-verify", plan_code, tgt_code]
+		else:
+			action = "view-measurement"
+			result_label = result or "Needs attention"
+			route = ["strategy-measurement-verify", plan_code, tgt_code]
+		out.append(
+			{
+				"id": r.name,
+				"target": _ref(r.performance_target, r.target_code, r.target_title),
+				"period_start": str(r.measurement_period_start) if r.measurement_period_start else None,
+				"period_end": str(r.measurement_period_end) if r.measurement_period_end else None,
+				"period_label": _period_label(r.measurement_period_start, r.measurement_period_end),
+				"result_status": result,
+				"result_label": result_label,
+				"workflow_status": wf,
+				"action": action,
+				"action_label": {
+					"submit-measurement": "Submit measurement",
+					"review-measurement": "Review measurement",
+					"view-measurement": "View measurement",
+				}.get(action, "View"),
+				"route": route,
+			}
+		)
+	return out
+
+
+def get_plan_overview(plan_version: str | None = None, plan_code: str | None = None) -> dict:
+	"""STR-UI-02 aggregate DTO: plan identity, structure counts, commitments, attention."""
+	require_any_role(
+		ROLE_OFFICER,
+		ROLE_MANAGER,
+		"Strategy Viewer",
+		"Strategy Reviewer",
+		"Planning Authority",
+		"Performance Officer",
+		"Performance Verifier",
+		"Auditor",
+		"System Manager",
+	)
+	tree = get_strategy_tree(plan_version=plan_version, plan_code=plan_code)
+	plan_id = tree["plan"]["id"]
+	plan_doc = frappe.get_doc("Strategic Plan", plan_id)
+	assert_entity_in_scope(plan_doc.procuring_entity)
+
+	pe_id = plan_doc.procuring_entity
+	pe_ref = _ref(pe_id, _entity_code(pe_id), _entity_label(pe_id))
+	commitments_dto = list_plan_value_commitments(plan_version=plan_id)
+	commitments = commitments_dto.get("rows") or []
+	required = sum(1 for c in commitments if (c.get("consideration_level") or "").startswith("Required"))
+	recommended = sum(
+		1 for c in commitments if (c.get("consideration_level") or "").startswith("Recommended")
+	)
+	attention_rows = _overview_attention_rows(plan_id)
+	status = plan_doc.status or ""
+	locked = status in ("Approved", "Active", "Superseded", "Archived")
+	open_succ = _open_successor_exists(plan_doc.plan_code, pe_id)
+	can_succ = (
+		can_create_successor_plan()
+		and status in ("Active", "Approved")
+		and not open_succ
+	)
+	empty_structure = not (tree.get("counts") or {}).get("programmes")
+	return {
+		"plan": {
+			"id": plan_doc.name,
+			"code": plan_doc.plan_code,
+			"name": plan_doc.title,
+			"version_number": plan_doc.version_number,
+			"status": status,
+			"start_date": str(plan_doc.start_date) if plan_doc.start_date else None,
+			"end_date": str(plan_doc.end_date) if plan_doc.end_date else None,
+			"effective_period_label": _format_effective_period(plan_doc.start_date, plan_doc.end_date),
+			"plan_type": plan_doc.plan_type,
+			"description": plan_doc.description,
+			"procuring_entity": pe_ref,
+			"supersedes_plan_version": plan_doc.supersedes_plan_version,
+		},
+		"counts": tree.get("counts") or {},
+		"commitments_summary": {
+			"total": len(commitments),
+			"required": required,
+			"recommended": recommended,
+		},
+		"attention_rows": attention_rows,
+		"attention_count": len(attention_rows),
+		"lock": {
+			"show": locked,
+			"message": _(
+				"Active plan versions are locked. Create a successor version to make material changes."
+			)
+			if status == "Active"
+			else _("This plan version is locked."),
+		},
+		"capabilities": {
+			"create_successor": can_succ,
+			"start_structure": status == "Draft" and empty_structure and can_edit_draft_plan(),
+			"export_plan": False,
+		},
+		"show_policy_note": plan_doc.plan_code == "MOH-SP-2026-2030",
+	}
+
+
+def validate_strategy_reference(reference: dict | None = None) -> dict:
+	reference = reference or {}
+	plan_version_id = reference.get("plan_version_id")
+	node_id = reference.get("node_id")
+	node_type = reference.get("node_type") or "PerformanceTarget"
+	if not plan_version_id or not frappe.db.exists("Strategic Plan", plan_version_id):
+		return {"valid": False, "reason": "Unknown plan version"}
+	status = frappe.db.get_value("Strategic Plan", plan_version_id, "status")
+	if status != "Active":
+		# historical may still resolve
+		historical_ok = True
+	else:
+		historical_ok = True
+	if node_type == "PerformanceTarget":
+		tgt = frappe.db.get_value(
+			"Performance Target",
+			node_id,
+			["name", "target_code", "title", "plan_version", "status"],
+			as_dict=True,
+		)
+		if not tgt:
+			return {"valid": False, "reason": "Unknown target"}
+		if tgt.plan_version != plan_version_id:
+			return {"valid": False, "reason": "Target/plan version mismatch"}
+		selectable = status == "Active" and tgt.status == "Active"
+		dto = build_strategy_reference(plan_version_id, node_id)
+		return {"valid": True, "selectable_for_new": selectable, "historical_ok": historical_ok, "reference": dto}
+	return {"valid": False, "reason": f"Unsupported node_type {node_type}"}
+
+
+def build_strategy_reference(plan_version_id: str, target_id: str) -> dict:
+	plan = frappe.get_doc("Strategic Plan", plan_version_id)
+	tgt = frappe.get_doc("Performance Target", target_id)
+	ind = frappe.get_doc("Performance Indicator", tgt.performance_indicator)
+	out = frappe.get_doc("Strategic Outcome", ind.strategic_outcome)
+	prog = frappe.get_doc("Strategy Programme", out.programme)
+	path = [
+		{"type": "Programme", "id": prog.name, "code": prog.programme_code, "name": prog.title},
+	]
+	if out.sub_programme:
+		sub = frappe.get_doc("Strategy Sub Programme", out.sub_programme)
+		path.append(
+			{"type": "SubProgramme", "id": sub.name, "code": sub.sub_programme_code, "name": sub.title}
+		)
+	path.extend(
+		[
+			{"type": "StrategicOutcome", "id": out.name, "code": out.outcome_code, "name": out.title},
+			{
+				"type": "PerformanceIndicator",
+				"id": ind.name,
+				"code": ind.indicator_code,
+				"name": ind.title,
+			},
+			{
+				"type": "PerformanceTarget",
+				"id": tgt.name,
+				"code": tgt.target_code,
+				"name": tgt.title,
+			},
+		]
+	)
+	snapshot = " / ".join(p["name"] for p in path if p["type"] in ("Programme", "SubProgramme", "PerformanceTarget"))
+	return {
+		"plan_version_id": plan.name,
+		"plan_code": plan.plan_code,
+		"plan_version": plan.version_number,
+		"node_type": "PerformanceTarget",
+		"node_id": tgt.name,
+		"node_code": tgt.target_code,
+		"node_name": tgt.title,
+		"path": path,
+		"snapshot_label": snapshot,
+	}
+
+
+def list_active_targets(procuring_entity: str | None = None, plan_code: str | None = None) -> list[dict]:
+	pe = procuring_entity or entity_for_user()
+	plan_filters = {"status": "Active"}
+	if pe:
+		plan_filters["procuring_entity"] = pe
+	if plan_code:
+		plan_filters["plan_code"] = plan_code
+	plans = frappe.get_all("Strategic Plan", filters=plan_filters, pluck="name")
+	if not plans:
+		return []
+	targets = frappe.get_all(
+		"Performance Target",
+		filters={"plan_version": ["in", plans], "status": "Active"},
+		fields=["name", "target_code", "title", "plan_version"],
+	)
+	return [build_strategy_reference(t.plan_version, t.name) for t in targets]
+
+
+def list_applicable_value_commitments(
+	plan_version: str | None = None,
+	procurement_category: str | None = None,
+	procurement_type: str | None = None,
+	asset_condition: str | None = None,
+) -> list[dict]:
+	if not plan_version:
+		return []
+	rows = frappe.get_all(
+		"Plan Value Commitment",
+		filters={"plan_version": plan_version},
+		fields=[
+			"name",
+			"public_value_objective_version",
+			"rationale",
+			"consideration_level",
+			"responsible_owner",
+			"status",
+		],
+	)
+	out = []
+	for r in rows:
+		pvo = frappe.get_doc("Public Value Objective", r.public_value_objective_version)
+		if pvo.status != "Active" and r.status != "Locked":
+			continue
+		if pvo.applicability_mode != "Universal consideration":
+			if pvo.applicability_mode == "Demand-selected":
+				# Always return; demand records selection separately
+				pass
+			else:
+				triggers = pvo.get("triggers") or []
+				ok = False
+				for tr in triggers:
+					if not tr.include:
+						continue
+					if tr.trigger_type == "Procurement Category" and procurement_category == tr.trigger_value:
+						ok = True
+					if tr.trigger_type == "Procurement Type" and procurement_type == tr.trigger_value:
+						ok = True
+					if tr.trigger_type == "Asset Condition" and asset_condition == tr.trigger_value:
+						ok = True
+				# When filters supplied, require a matching include trigger
+				if (procurement_category or procurement_type or asset_condition) and not ok:
+					continue
+		out.append(
+			{
+				"id": r.name,
+				"consideration_level": r.consideration_level,
+				"rationale": r.rationale,
+				"responsible_owner": r.responsible_owner,
+				"objective": _ref(pvo.name, pvo.objective_code, pvo.title),
+				"pillar": pvo.pillar,
+			}
+		)
+	return out
+
+
+def get_strategy_usage(plan_version: str | None = None, plan_code: str | None = None) -> dict:
+	plan = _resolve_plan(plan_version, plan_code)
+	# Derived usage: look for Strategy Reference-like fields if present; otherwise empty groups
+	groups = {
+		"Budget": [],
+		"Demand": [],
+		"Planning": [],
+		"Tender": [],
+		"Contract": [],
+		"Asset": [],
+		"Disposal": [],
+	}
+	if frappe.db.has_column("Demand", "strategy_plan_version"):
+		for d in frappe.get_all(
+			"Demand",
+			filters={"strategy_plan_version": plan.name},
+			fields=["name", "demand_id", "title"],
+			limit=50,
+		):
+			groups["Demand"].append(
+				{"id": d.name, "code": d.demand_id or d.name, "name": d.title or d.name}
+			)
+	if frappe.db.has_column("Budget Line", "strategy_plan_version"):
+		for b in frappe.get_all(
+			"Budget Line",
+			filters={"strategy_plan_version": plan.name},
+			fields=["name", "budget_line_code", "budget_line_name"],
+			limit=50,
+		):
+			groups["Budget"].append(
+				{
+					"id": b.name,
+					"code": b.budget_line_code or b.name,
+					"name": b.budget_line_name or b.name,
+				}
+			)
+	return {"plan": _ref(plan.name, plan.plan_code, plan.title), "groups": groups}
+
+
+def _format_measurement_period_label(start, end) -> str | None:
+	if not start:
+		return None
+	sd = frappe.utils.getdate(start)
+	if end:
+		ed = frappe.utils.getdate(end)
+		if sd.year == ed.year and sd.month == ed.month:
+			return sd.strftime("%B %Y")
+		return f"{sd.strftime('%b %Y')} – {ed.strftime('%b %Y')}"
+	return sd.strftime("%B %Y")
+
+
+def _format_target_value_display(
+	direction: str | None,
+	numeric,
+	text: str | None,
+	unit: str | None,
+) -> str:
+	u = unit or ""
+	if numeric is not None:
+		try:
+			num = float(numeric)
+			num_s = str(int(num)) if num == int(num) else str(num)
+		except (TypeError, ValueError):
+			num_s = str(numeric)
+		if direction in ("At least", "Increase to"):
+			return f"≥{num_s}{u}"
+		if direction in ("At most", "Reduce to"):
+			return f"≤{num_s}{u}"
+		if direction == "Equal to":
+			return f"={num_s}{u}"
+		return f"{num_s}{u}"
+	if text:
+		return text
+	if direction == "Achieve by date":
+		return "Achieve by date"
+	return "—"
+
+
+def _format_actual_display(actual_numeric, unit: str | None) -> str:
+	if actual_numeric is None:
+		return "—"
+	try:
+		num = float(actual_numeric)
+		num_s = str(int(num)) if num == int(num) else str(num)
+	except (TypeError, ValueError):
+		num_s = str(actual_numeric)
+	return f"{num_s}{unit or ''}"
+
+
+def _measurement_next_action(workflow: str | None) -> str | None:
+	if workflow == "Submitted":
+		return "review"
+	if workflow in ("Draft", "Returned"):
+		return "submit"
+	if workflow in ("Verified", "Rejected"):
+		return "view"
+	return None
+
+
+def _corrective_action_label(workflow: str | None, ca_open: bool) -> str:
+	if ca_open:
+		return "Open"
+	if workflow == "Submitted":
+		return "Pending verification"
+	return "None required"
+
+
+def list_measurements(
+	plan_version: str | None = None,
+	plan_code: str | None = None,
+	workflow_status: str | None = None,
+) -> dict:
+	plan = _resolve_plan(plan_version, plan_code)
+	filters: dict[str, Any] = {"plan_version": plan.name}
+	if workflow_status:
+		filters["workflow_status"] = workflow_status
+	rows = frappe.get_all(
+		"Performance Measurement",
+		filters=filters,
+		fields=[
+			"name",
+			"performance_target",
+			"measurement_period_start",
+			"measurement_period_end",
+			"actual_numeric",
+			"workflow_status",
+			"result_status",
+			"submitted_by",
+			"verified_by",
+		],
+		order_by="measurement_period_end desc",
+	)
+	out = []
+	for r in rows:
+		tgt = frappe.db.get_value(
+			"Performance Target",
+			r.performance_target,
+			[
+				"target_code",
+				"title",
+				"comparison_direction",
+				"target_numeric",
+				"target_text",
+				"performance_indicator",
+			],
+			as_dict=True,
+		)
+		unit = None
+		if tgt and tgt.performance_indicator:
+			unit = frappe.db.get_value("Performance Indicator", tgt.performance_indicator, "unit")
+		ca = frappe.db.exists(
+			"Strategy Corrective Action",
+			{"performance_measurement": r.name, "status": ["not in", ["Cancelled", "Verified complete"]]},
+		)
+		ca_open = bool(ca)
+		wf = r.workflow_status
+		out.append(
+			{
+				"id": r.name,
+				"target": _ref(
+					r.performance_target,
+					tgt.target_code if tgt else None,
+					tgt.title if tgt else None,
+				),
+				"period_start": str(r.measurement_period_start) if r.measurement_period_start else None,
+				"period_end": str(r.measurement_period_end) if r.measurement_period_end else None,
+				"period_label": _format_measurement_period_label(
+					r.measurement_period_start, r.measurement_period_end
+				),
+				"target_value_display": _format_target_value_display(
+					tgt.comparison_direction if tgt else None,
+					tgt.target_numeric if tgt else None,
+					tgt.target_text if tgt else None,
+					unit,
+				),
+				"actual_numeric": r.actual_numeric,
+				"actual_display": _format_actual_display(r.actual_numeric, unit),
+				"workflow_status": wf,
+				"result_status": r.result_status,
+				"corrective_action_open": ca_open,
+				"corrective_action_label": _corrective_action_label(wf, ca_open),
+				"next_action": _measurement_next_action(wf),
+			}
+		)
+
+	counts = {
+		"due": 0,  # synthetic Due slots deferred to STR-UI-09
+		"submitted": sum(1 for r in out if r["workflow_status"] == "Submitted"),
+		"verified": sum(1 for r in out if r["workflow_status"] == "Verified"),
+		"needs_attention": sum(
+			1
+			for r in out
+			if r["workflow_status"] in ("Draft", "Returned")
+			or r["corrective_action_open"]
+			or (
+				r["workflow_status"] == "Verified"
+				and r["result_status"] in ("At risk", "Off track")
+				and r["corrective_action_open"]
+			)
+		),
+	}
+
+	default_target = frappe.db.get_value(
+		"Performance Target",
+		{"plan_version": plan.name, "status": "Active"},
+		"target_code",
+		order_by="creation asc",
+	) or (out[0]["target"]["code"] if out else None)
+
+	return {
+		"plan": {
+			"id": plan.name,
+			"code": plan.plan_code,
+			"name": plan.title,
+			"version_number": plan.version_number,
+			"status": plan.status,
+			"start_date": str(plan.start_date) if plan.start_date else None,
+			"end_date": str(plan.end_date) if plan.end_date else None,
+			"effective_period_label": _format_effective_period(plan.start_date, plan.end_date),
+			"supersedes_plan_version": plan.supersedes_plan_version,
+		},
+		"counts": counts,
+		"default_target_code": default_target,
+		"rows": out,
+	}
+
+
+def get_create_plan_context() -> dict:
+	"""Defaults for the Create strategic plan focused page."""
+	if not can_edit_draft_plan():
+		frappe.throw(_("Not permitted to create plans"), frappe.PermissionError)
+	pe = entity_for_user()
+	cross = has_cross_entity_authority()
+	pe_ref = None
+	if pe:
+		pe_ref = {
+			"id": pe,
+			"code": _entity_code(pe),
+			"name": _entity_label(pe),
+		}
+	return {
+		"capabilities": {
+			"create_plan": True,
+			"change_entity": cross or not pe,
+		},
+		"procuring_entity": pe_ref,
+		"plan_types": list(PLAN_TYPES),
+	}
+
+
+def _validate_create_plan_payload(payload: dict) -> dict[str, str]:
+	errors: dict[str, str] = {}
+	plan_code = (payload.get("plan_code") or "").strip()
+	title = (payload.get("title") or "").strip()
+	plan_type = (payload.get("plan_type") or "").strip()
+	pe = (payload.get("procuring_entity") or "").strip() or entity_for_user()
+	start = payload.get("start_date")
+	end = payload.get("end_date")
+
+	if not plan_code:
+		errors["plan_code"] = _("Plan code is required")
+	elif not CODE_RE.match(plan_code):
+		errors["plan_code"] = _("Plan code must use uppercase letters, numbers and hyphens only")
+
+	if not title:
+		errors["title"] = _("Plan title is required")
+
+	if not plan_type:
+		errors["plan_type"] = _("Plan type is required")
+	elif plan_type not in PLAN_TYPES:
+		errors["plan_type"] = _("Select a valid plan type")
+
+	if not pe:
+		errors["procuring_entity"] = _("Procuring entity is required")
+	elif not frappe.db.exists("Procuring Entity", pe):
+		errors["procuring_entity"] = _("Procuring entity is not valid")
+	elif not has_cross_entity_authority():
+		own = entity_for_user()
+		if own and pe != own:
+			errors["procuring_entity"] = _("You may only create plans for your authorised entity")
+
+	if not start:
+		errors["start_date"] = _("Start date is required")
+	if not end:
+		errors["end_date"] = _("End date is required")
+	if start and end:
+		try:
+			sd = frappe.utils.getdate(start)
+			ed = frappe.utils.getdate(end)
+			if ed <= sd:
+				errors["end_date"] = _("End date must be later than start date")
+		except Exception:
+			errors["end_date"] = _("Enter a valid effective period")
+
+	# This workflow creates version 1 only — never a successor.
+	if payload.get("supersedes_plan_version"):
+		errors["supersedes_plan_version"] = _(
+			"Use Create successor version from an existing plan; do not set a predecessor here"
+		)
+	if payload.get("version_number") not in (None, "", 1, "1"):
+		errors["version_number"] = _("New plans are always version 1")
+
+	if plan_code and pe and "plan_code" not in errors and "procuring_entity" not in errors:
+		if frappe.db.exists(
+			"Strategic Plan", {"plan_code": plan_code, "procuring_entity": pe}
+		):
+			errors["plan_code"] = _("Plan code must be unique within the procuring entity")
+
+	return errors
+
+
+def create_plan(payload: dict) -> dict:
+	"""Create a Draft Strategic Plan version (no hierarchy). Returns ok/errors for inline UI."""
+	if not can_edit_draft_plan():
+		frappe.throw(_("Not permitted to create plans"), frappe.PermissionError)
+
+	errors = _validate_create_plan_payload(payload or {})
+	if errors:
+		return {"ok": False, "errors": errors}
+
+	pe = (payload.get("procuring_entity") or "").strip() or entity_for_user()
+	# Defence in depth for API callers that skip field validation path.
+	if not has_cross_entity_authority():
+		assert_entity_in_scope(pe)
+
+	plan_code = (payload.get("plan_code") or "").strip()
+	doc = frappe.get_doc(
+		{
+			"doctype": "Strategic Plan",
+			"plan_code": plan_code,
+			"version_number": 1,
+			"title": (payload.get("title") or "").strip(),
+			"procuring_entity": pe,
+			"plan_type": (payload.get("plan_type") or "").strip(),
+			"start_date": payload.get("start_date"),
+			"end_date": payload.get("end_date"),
+			"description": (payload.get("description") or "").strip() or None,
+			"status": "Draft",
+			"supersedes_plan_version": None,
+		}
+	)
+	doc.insert()
+
+	# Hard guarantee: create workflow must not seed hierarchy placeholders.
+	for dt in (
+		"Strategy Programme",
+		"Strategy Sub Programme",
+		"Strategic Outcome",
+		"Performance Indicator",
+		"Performance Target",
+	):
+		if frappe.db.exists(dt, {"plan_version": doc.name}):
+			frappe.throw(_("Create plan must not auto-generate hierarchy records"))
+
+	audit_id = record_event(
+		entity_type="Strategic Plan",
+		entity_name=doc.name,
+		event_type="Created",
+		prior_state="",
+		new_state="Draft",
+		plan_version=doc.name,
+		summary=f"Created draft plan {doc.plan_code}",
+	)
+	return {
+		"ok": True,
+		"plan": {
+			"id": doc.name,
+			"code": doc.plan_code,
+			"name": doc.title,
+			"status": doc.status,
+			"version_number": doc.version_number,
+			"procuring_entity": doc.procuring_entity,
+			"plan_type": doc.plan_type,
+			"start_date": doc.start_date,
+			"end_date": doc.end_date,
+			"supersedes_plan_version": doc.supersedes_plan_version,
+		},
+		"audit_event": audit_id,
+	}
+
+
+def list_public_value_objectives(
+	procuring_entity: str | None = None,
+	status: str | None = None,
+	search: str | None = None,
+) -> list[dict]:
+	filters: dict[str, Any] = {}
+	pe = procuring_entity or entity_for_user()
+	or_filters = None
+	if pe:
+		filters["procuring_entity"] = pe
+	if status:
+		filters["status"] = status
+	if search:
+		or_filters = [["objective_code", "like", f"%{search}%"], ["title", "like", f"%{search}%"]]
+	rows = frappe.get_all(
+		"Public Value Objective",
+		filters=filters,
+		or_filters=or_filters,
+		fields=["name", "objective_code", "title", "pillar", "status", "source_type", "applicability_mode"],
+		order_by="objective_code asc",
+	)
+	return [
+		{
+			"id": r.name,
+			"code": r.objective_code,
+			"name": r.title,
+			"pillar": r.pillar,
+			"status": r.status,
+			"source_type": r.source_type,
+			"applicability_mode": r.applicability_mode,
+		}
+		for r in rows
+	]
+
+
+def list_plan_value_commitments(plan_version: str | None = None, plan_code: str | None = None) -> dict:
+	plan = _resolve_plan(plan_version, plan_code)
+	rows = frappe.get_all(
+		"Plan Value Commitment",
+		filters={"plan_version": plan.name},
+		fields=[
+			"name",
+			"public_value_objective_version",
+			"rationale",
+			"consideration_level",
+			"responsible_owner",
+			"status",
+		],
+		order_by="creation asc",
+	)
+	out = []
+	for r in rows:
+		pvo = frappe.db.get_value(
+			"Public Value Objective",
+			r.public_value_objective_version,
+			["objective_code", "title", "pillar", "status"],
+			as_dict=True,
+		)
+		raw_links = frappe.get_all(
+			"Plan Value Commitment Link",
+			filters={"parent": r.name},
+			fields=["link_type", "linked_outcome", "linked_target"],
+		)
+		links = []
+		for ln in raw_links:
+			entry = {
+				"link_type": ln.link_type,
+				"linked_outcome": ln.linked_outcome,
+				"linked_target": ln.linked_target,
+				"code": None,
+				"name": None,
+				"outcome": None,
+				"target": None,
+			}
+			if ln.link_type == "Strategic Outcome" and ln.linked_outcome:
+				oc = frappe.db.get_value(
+					"Strategic Outcome",
+					ln.linked_outcome,
+					["outcome_code", "title"],
+					as_dict=True,
+				)
+				if oc:
+					entry["outcome"] = _ref(ln.linked_outcome, oc.outcome_code, oc.title)
+					entry["code"] = oc.outcome_code
+					entry["name"] = oc.title
+			elif ln.link_type == "Performance Target" and ln.linked_target:
+				tg = frappe.db.get_value(
+					"Performance Target",
+					ln.linked_target,
+					["target_code", "title"],
+					as_dict=True,
+				)
+				if tg:
+					entry["target"] = _ref(ln.linked_target, tg.target_code, tg.title)
+					entry["code"] = tg.target_code
+					entry["name"] = tg.title
+			links.append(entry)
+		complete = bool(
+			(r.rationale or "").strip()
+			and (r.responsible_owner or "").strip()
+			and links
+		)
+		out.append(
+			{
+				"id": r.name,
+				"objective": _ref(
+					r.public_value_objective_version,
+					pvo.objective_code if pvo else None,
+					pvo.title if pvo else None,
+				),
+				"objective_pillar": pvo.pillar if pvo else None,
+				"rationale": r.rationale,
+				"consideration_level": r.consideration_level,
+				"responsible_owner": r.responsible_owner,
+				"status": r.status,
+				"links": links,
+				"complete": complete,
+			}
+		)
+	complete_n = sum(1 for r in out if r["complete"])
+	editable = plan.status in ("Draft", "Returned") and can_edit_draft_plan()
+	return {
+		"plan": {
+			"id": plan.name,
+			"code": plan.plan_code,
+			"name": plan.title,
+			"version_number": plan.version_number,
+			"status": plan.status,
+			"start_date": str(plan.start_date) if plan.start_date else None,
+			"end_date": str(plan.end_date) if plan.end_date else None,
+			"effective_period_label": _format_effective_period(plan.start_date, plan.end_date),
+			"supersedes_plan_version": plan.supersedes_plan_version,
+		},
+		"capabilities": {"editable": editable},
+		"progress": {"complete": complete_n, "total": len(out)},
+		"rows": out,
+	}
+
+
+def list_audit_events(plan_version: str | None = None, plan_code: str | None = None) -> list[dict]:
+	plan = _resolve_plan(plan_version, plan_code)
+	rows = frappe.get_all(
+		"Strategy Audit Event",
+		filters={"plan_version": plan.name},
+		fields=[
+			"name",
+			"event_type",
+			"entity_type",
+			"entity_name",
+			"prior_state",
+			"new_state",
+			"reason",
+			"actor",
+			"event_at",
+			"summary",
+		],
+		order_by="event_at desc",
+		limit_page_length=200,
+	)
+	return rows
+
+
+# re-export readiness
+__all__ = [
+	"list_strategy_plans",
+	"get_strategy_portfolio",
+	"get_strategy_tree",
+	"validate_strategy_reference",
+	"list_active_targets",
+	"list_applicable_value_commitments",
+	"get_strategy_usage",
+	"list_measurements",
+	"create_plan",
+	"get_create_plan_context",
+	"get_plan_readiness",
+	"list_public_value_objectives",
+	"list_plan_value_commitments",
+	"list_audit_events",
+	"build_strategy_reference",
+]
