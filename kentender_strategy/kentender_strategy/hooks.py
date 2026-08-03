@@ -34,6 +34,7 @@ app_include_css = [
 	f"/assets/kentender_strategy/css/strategy_alignment_structure.css?v={_v('public/css/strategy_alignment_structure.css')}",
 	f"/assets/kentender_strategy/css/strategy_alignment_value_commitments.css?v={_v('public/css/strategy_alignment_value_commitments.css')}",
 	f"/assets/kentender_strategy/css/strategy_alignment_measurement_submit.css?v={_v('public/css/strategy_alignment_measurement_submit.css')}",
+	f"/assets/kentender_strategy/css/strategy_alignment_measurement_verify.css?v={_v('public/css/strategy_alignment_measurement_verify.css')}",
 	f"/assets/kentender_strategy/css/strategy_alignment_remaining.css?v={_v('public/css/strategy_alignment_remaining.css')}",
 	# Must stay last: restores md:/lg: direction + side paddings after per-screen !important dumps.
 	f"/assets/kentender_strategy/css/strategy_alignment_responsive.css?v={_v('public/css/strategy_alignment_responsive.css')}",
@@ -41,6 +42,7 @@ app_include_css = [
 
 # Fixture modules + shared shell before page_js runs.
 app_include_js = [
+	f"/assets/kentender_strategy/js/strategy_ui_fixtures/table_footer.js?v={_v('public/js/strategy_ui_fixtures/table_footer.js')}",
 	f"/assets/kentender_strategy/js/strategy_ui_fixtures/portfolio.js?v={_v('public/js/strategy_ui_fixtures/portfolio.js')}",
 	f"/assets/kentender_strategy/js/strategy_ui_fixtures/create_plan.js?v={_v('public/js/strategy_ui_fixtures/create_plan.js')}",
 	f"/assets/kentender_strategy/js/strategy_ui_fixtures/overview.js?v={_v('public/js/strategy_ui_fixtures/overview.js')}",

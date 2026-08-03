@@ -333,6 +333,19 @@ class TestKtClShellLayoutGuard(IntegrationTestCase):
 		self.assertIn(".active-sidebar", css)
 		self.assertIn("--sidebar-width: 256px", css)
 		self.assertIn("Material Symbols Outlined", css)
+		# Collapsed rail must stay icon-only (undo Frappe nested auto-open + Planned pills).
+		self.assertIn(
+			".body-sidebar-container:not(.expanded) .section-item > .nested-container",
+			css,
+		)
+		self.assertIn(
+			".body-sidebar-container:not(.expanded) .sidebar-item-suffix",
+			css,
+		)
+		self.assertIn(
+			".item-anchor.section-break.hidden",
+			css,
+		)
 
 	def test_rail_collapse_to_icons_is_wired(self) -> None:
 		"""Whole-rail collapse (native Desk pattern): a bottom toggle shrinks the

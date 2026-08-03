@@ -3,31 +3,9 @@
 frappe.provide("kentender_strategy.ui_fixtures");
 kentender_strategy.ui_fixtures.measurements = function () {
 	return `<div class="kt-str-root kt-str-meas-root" data-testid="kt-str-measurements">
-<!-- Workspace Header -->
-<div class="bg-surface-container-lowest px-8 pt-6 border-b border-outline-variant" data-testid="kt-str-plan-chrome">
-<div class="flex items-start justify-between">
-<div>
-<div class="flex items-center gap-3 mb-1">
-<span class="font-data-mono text-data-mono text-on-surface-variant bg-surface-container px-2 py-1 rounded text-xs" data-kt-str-plan-code>—</span>
-<span class="bg-status-reserved text-on-surface px-2 py-0.5 rounded font-label-caps text-[10px] uppercase font-bold tracking-wide" data-kt-str-plan-status>—</span>
-<span class="text-on-surface-variant text-sm" data-kt-str-plan-version></span>
-</div>
-<h1 class="font-headline-lg text-headline-lg text-primary mt-2" data-kt-str-plan-title>—</h1>
-<p class="text-on-surface-variant mt-1 text-sm" data-kt-str-plan-period></p>
-</div>
-</div>
-<div class="flex gap-6 mt-6 border-b border-surface-variant" data-testid="kt-str-plan-tabs">
-<button type="button" class="kt-str-tab pb-3 text-on-surface-variant hover:text-primary font-medium text-sm transition-colors" data-kt-str-tab="strategy-plan-overview">Overview</button>
-<button type="button" class="kt-str-tab pb-3 text-on-surface-variant hover:text-primary font-medium text-sm transition-colors" data-kt-str-tab="strategy-plan-structure">Structure</button>
-<button type="button" class="kt-str-tab pb-3 text-on-surface-variant hover:text-primary font-medium text-sm transition-colors" data-kt-str-tab="strategy-plan-value-commitments">Value Commitments</button>
-<button type="button" class="kt-str-tab pb-3 text-primary border-b-2 border-primary font-medium text-sm is-active" data-kt-str-tab="strategy-plan-measurements">Measurement</button>
-<button type="button" class="kt-str-tab pb-3 text-on-surface-variant hover:text-primary font-medium text-sm transition-colors" data-kt-str-tab="strategy-plan-downstream-usage">Downstream Usage</button>
-<button type="button" class="kt-str-tab pb-3 text-on-surface-variant hover:text-primary font-medium text-sm transition-colors" data-kt-str-tab="strategy-plan-review">Review</button>
-<button type="button" class="kt-str-tab pb-3 text-on-surface-variant hover:text-primary font-medium text-sm transition-colors" data-kt-str-tab="strategy-plan-audit">Audit</button>
-</div>
-</div>
+<!-- Plan chrome injected by strategy_alignment_shell.planChromeHtml -->
 <!-- Tab Content Area -->
-<div class="flex flex-col gap-section-gap px-8 pt-6 pb-8">
+<div class="flex flex-col gap-section-gap px-8 pt-4 pb-8">
 <section class="flex flex-col md:flex-row md:items-start justify-between gap-gutter" data-testid="kt-str-meas-header">
 <div>
 <h3 class="font-headline-md text-headline-md text-on-surface">Performance measurements</h3>
@@ -68,10 +46,14 @@ kentender_strategy.ui_fixtures.measurements = function () {
 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
 <input class="w-full pl-10 pr-3 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md text-on-surface outline-none" placeholder="Search target..." type="text" data-kt-str-meas-search/>
 </div>
-<select class="py-1.5 pl-3 pr-8 bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md text-on-surface outline-none" data-kt-str-meas-filter-period>
+<div class="relative min-w-[160px]">
+<select class="w-full py-1.5 pl-3 pr-8 bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md text-on-surface outline-none appearance-none" data-kt-str-meas-filter-period aria-label="Measurement period">
 <option value="">Measurement period</option>
 </select>
-<select class="py-1.5 pl-3 pr-8 bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md text-on-surface outline-none" data-kt-str-meas-filter-workflow>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm pointer-events-none" aria-hidden="true">expand_more</span>
+</div>
+<div class="relative min-w-[150px]">
+<select class="w-full py-1.5 pl-3 pr-8 bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md text-on-surface outline-none appearance-none" data-kt-str-meas-filter-workflow aria-label="Workflow status">
 <option value="">Workflow status</option>
 <option value="Draft">Draft</option>
 <option value="Submitted">Submitted</option>
@@ -79,13 +61,18 @@ kentender_strategy.ui_fixtures.measurements = function () {
 <option value="Verified">Verified</option>
 <option value="Rejected">Rejected</option>
 </select>
-<select class="py-1.5 pl-3 pr-8 bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md text-on-surface outline-none" data-kt-str-meas-filter-result>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm pointer-events-none" aria-hidden="true">expand_more</span>
+</div>
+<div class="relative min-w-[140px]">
+<select class="w-full py-1.5 pl-3 pr-8 bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md text-on-surface outline-none appearance-none" data-kt-str-meas-filter-result aria-label="Result status">
 <option value="">Result status</option>
 <option value="On track">On track</option>
 <option value="At risk">At risk</option>
 <option value="Off track">Off track</option>
 <option value="No data">No data</option>
 </select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm pointer-events-none" aria-hidden="true">expand_more</span>
+</div>
 <button type="button" class="text-secondary font-medium text-body-md hover:underline px-2 py-1.5 ml-auto" data-kt-str-action="clear-meas-filters">
                         Clear filters
                     </button>
@@ -109,9 +96,9 @@ kentender_strategy.ui_fixtures.measurements = function () {
 </tbody>
 </table>
 </div>
-<div class="bg-surface-container-low p-4 border-t border-outline-variant flex items-center justify-between text-body-md text-on-surface-variant">
-<span data-kt-str-meas-footer>Showing 0 entries</span>
-</div>
+` +
+		kentender_strategy.ui_fixtures.tablePaginationFooterHtml() +
+		`
 </section>
 </div>
 </div>`;

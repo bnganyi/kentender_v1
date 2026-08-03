@@ -193,7 +193,13 @@ def _activate_pvo(doc) -> None:
 	doc.save(ignore_permissions=True)
 
 
-def transition_measurement(name: str, action: str, reason: str | None = None) -> dict:
+def transition_measurement(
+	name: str,
+	action: str,
+	reason: str | None = None,
+	authorised_exception: bool | int | str | None = None,
+	exception_reason: str | None = None,
+) -> dict:
 	from kentender_strategy.services.strategy_measurement import derive_measurement_result
 
 	doc = frappe.get_doc("Performance Measurement", name)
@@ -210,15 +216,29 @@ def transition_measurement(name: str, action: str, reason: str | None = None) ->
 		if not can_verify_measurement():
 			frappe.throw(_("Only Performance Verifier may decide"), frappe.PermissionError)
 		if doc.submitted_by == frappe.session.user and frappe.session.user != "Administrator":
-			frappe.throw(_("Verifier must not be the submitter"))
+			frappe.throw(_("Verifier must not be the submitter"), frappe.PermissionError)
 		if action in ("Return", "Reject") and not reason:
 			frappe.throw(_("Reason is required"))
 		doc.verification_comment = reason or doc.verification_comment
 		if action == "Verify":
 			doc.verified_by = frappe.session.user
 			doc.verified_at = frappe.utils.now_datetime()
+			derive_measurement_result(doc)
+			exc_flag = _as_bool(authorised_exception)
+			exc_reason = (exception_reason or "").strip()
 			if doc.result_status == "Off track":
-				_ensure_corrective_or_exception(doc)
+				if exc_flag:
+					if not exc_reason:
+						frappe.throw(_("Exception reason is required for an authorised exception"))
+					doc.authorised_exception = 1
+					doc.exception_reason = exc_reason
+				else:
+					doc.authorised_exception = 0
+					doc.exception_reason = None
+					_ensure_corrective_or_exception(doc)
+			else:
+				doc.authorised_exception = 0
+				doc.exception_reason = None
 	prior = doc.workflow_status
 	doc.workflow_status = MEASUREMENT_TRANSITIONS[key]
 	doc.save(ignore_permissions=True)
@@ -234,6 +254,12 @@ def transition_measurement(name: str, action: str, reason: str | None = None) ->
 	return {"name": doc.name, "workflow_status": doc.workflow_status, "result_status": doc.result_status}
 
 
+def _as_bool(value) -> bool:
+	if value in (True, 1, "1", "true", "True", "yes", "Yes"):
+		return True
+	return False
+
+
 def _ensure_corrective_or_exception(doc) -> None:
 	existing = frappe.db.exists(
 		"Strategy Corrective Action",
@@ -241,7 +267,7 @@ def _ensure_corrective_or_exception(doc) -> None:
 	)
 	if existing:
 		return
-	# Auto-open corrective action shell when verifying Off track without one
+	# Auto-open corrective action shell when verifying Off track without authorised exception
 	frappe.get_doc(
 		{
 			"doctype": "Strategy Corrective Action",

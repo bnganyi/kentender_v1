@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { loginAsAdministrator } from "../../helpers/auth";
 
 /**
@@ -7,6 +7,8 @@ import { loginAsAdministrator } from "../../helpers/auth";
  */
 
 const PLAN = "MOH-SP-2026-2030";
+const REVIEW_BLOCKERS_PLAN = "MOH-SP-REVIEW-BLOCK";
+const REVIEW_TX_PLAN = "MOH-SP-REVIEW-TX";
 const TARGET = "MOH-TGT-01";
 
 test.describe.configure({ mode: "serial" });
@@ -28,10 +30,25 @@ test.describe("Strategy Alignment UI shell", () => {
 			timeout: 20_000,
 		});
 		// Seed plan row is rendered from API (not fixture hardcode).
-		await expect(
-			page.locator('[data-testid="kt-str-plans-table"] tr[data-plan-code="MOH-SP-2026-2030"]')
-		).toBeVisible({ timeout: 15_000 });
-		await expect(page.getByText("MOH-SP-2026-2030")).toBeVisible();
+		const mohRow = page.locator(
+			'[data-testid="kt-str-plans-table"] tr[data-plan-code="MOH-SP-2026-2030"]'
+		);
+		await expect(mohRow).toBeVisible({ timeout: 15_000 });
+		await expect(mohRow.getByText("MOH-SP-2026-2030", { exact: true })).toBeVisible();
+		// Compact period + wider Plan column (title must not be squeezed by full month names).
+		await expect(mohRow.locator(".kt-str-plans-col-period")).toHaveText(
+			/^\d{2}-[A-Z][a-z]{2}-\d{4} - \d{2}-[A-Z][a-z]{2}-\d{4}$/
+		);
+		const colWidths = await page.getByTestId("kt-str-plans-table").evaluate((table) => {
+			const plan = table.querySelector(".kt-str-plans-col-plan") as HTMLElement | null;
+			const period = table.querySelector(".kt-str-plans-col-period") as HTMLElement | null;
+			return {
+				planW: plan ? plan.getBoundingClientRect().width : 0,
+				periodW: period ? period.getBoundingClientRect().width : 0,
+			};
+		});
+		expect(colWidths.planW).toBeGreaterThanOrEqual(280);
+		expect(colWidths.planW).toBeGreaterThan(colWidths.periodW);
 		// Summary strip maps Active / Awaiting review / Measurements due / Needs attention.
 		const strip = page.getByTestId("kt-str-summary-strip");
 		await expect(strip.locator('[data-kt-str-count="active"]')).not.toHaveText("—");
@@ -308,6 +325,231 @@ test.describe("Strategy Alignment UI shell", () => {
 		await expect(page).toHaveURL(new RegExp(`strategy-plan-overview/${PLAN}`));
 	});
 
+	test("strategy typography resists Desk Espresso weight/tracking", async ({ page }) => {
+		await page.goto(`/desk/strategy-plan-overview/${PLAN}`, { waitUntil: "domcontentloaded" });
+		await expect(page.locator('[data-testid="kt-str-overview"][data-kt-str-live="1"]')).toBeVisible({
+			timeout: 30_000,
+		});
+		const typo = await page.evaluate(() => {
+			const title = document.querySelector(
+				'[data-testid="kt-str-plan-chrome"] h1'
+			) as HTMLElement | null;
+			const meta = document.querySelector(
+				'[data-testid="kt-str-plan-chrome"] [data-kt-str-chrome-meta] p'
+			) as HTMLElement | null;
+			const section = document.querySelector(
+				'.kt-str-root h2.font-headline-sm'
+			) as HTMLElement | null;
+			const t = title ? getComputedStyle(title) : null;
+			const m = meta ? getComputedStyle(meta) : null;
+			const s = section ? getComputedStyle(section) : null;
+			return {
+				titleFamily: t?.fontFamily || "",
+				titleSize: t?.fontSize || "",
+				titleWeight: t?.fontWeight || "",
+				titleTracking: t?.letterSpacing || "",
+				metaFamily: m?.fontFamily || "",
+				metaSize: m?.fontSize || "",
+				metaWeight: m?.fontWeight || "",
+				metaTracking: m?.letterSpacing || "",
+				metaLine: m?.lineHeight || "",
+				sectionTracking: s?.letterSpacing || "",
+				sectionWeight: s?.fontWeight || "",
+			};
+		});
+		expect(typo.titleFamily).toMatch(/Manrope/i);
+		expect(typo.titleSize).toBe("28px");
+		expect(typo.titleWeight).toBe("700");
+		expect(typo.titleTracking).toBe("-0.56px");
+		expect(typo.metaFamily).toMatch(/Inter/i);
+		expect(typo.metaSize).toBe("14px");
+		expect(typo.metaWeight).toBe("400");
+		expect(typo.metaTracking).toBe("normal");
+		expect(typo.metaLine).toBe("20px");
+		expect(typo.sectionWeight).toBe("600");
+		expect(typo.sectionTracking).toBe("normal");
+	});
+
+	test("VC and Measurements section titles share headline-md density", async ({ page }) => {
+		const samples: { path: string; live: string; title: string }[] = [
+			{
+				path: `/desk/strategy-plan-value-commitments/${PLAN}`,
+				live: '[data-testid="kt-str-value-commitments"][data-kt-str-live="1"]',
+				title: "Plan value commitments",
+			},
+			{
+				path: `/desk/strategy-plan-measurements/${PLAN}`,
+				live: '[data-testid="kt-str-measurements"][data-kt-str-live="1"]',
+				title: "Performance measurements",
+			},
+		];
+		const measured: { size: string; weight: string; family: string; gap: number }[] = [];
+		for (const { path, live, title } of samples) {
+			await page.goto(path, { waitUntil: "domcontentloaded" });
+			await expect(page.locator(live).first()).toBeVisible({ timeout: 30_000 });
+			const info = await page.evaluate((heading) => {
+				const root = document.querySelector(".kt-str-root") as HTMLElement | null;
+				const tabs = root?.querySelector('[data-testid="kt-str-plan-tabs"]') as HTMLElement | null;
+				const h = [...(root?.querySelectorAll("h1,h2,h3") || [])].find((el) =>
+					(el.textContent || "").includes(heading)
+				) as HTMLElement | undefined;
+				if (!h || !tabs) {
+					return null;
+				}
+				const hs = getComputedStyle(h);
+				return {
+					size: hs.fontSize,
+					weight: hs.fontWeight,
+					family: hs.fontFamily,
+					gap: Math.round(h.getBoundingClientRect().top - tabs.getBoundingClientRect().bottom),
+					tag: h.tagName,
+					color: hs.color,
+				};
+			}, title);
+			expect(info).toBeTruthy();
+			expect(info!.family).toMatch(/Manrope/i);
+			expect(info!.size).toBe("22px");
+			expect(info!.weight).toBe("600");
+			expect(info!.tag).toBe("H3");
+			/* Tabs → section title: tightened from pt-6 (24px) to pt-4 (16px). */
+			expect(info!.gap).toBeLessThanOrEqual(20);
+			expect(info!.gap).toBeGreaterThanOrEqual(12);
+			measured.push({ size: info!.size, weight: info!.weight, family: info!.family, gap: info!.gap });
+		}
+		expect(measured[0].size).toBe(measured[1].size);
+		expect(measured[0].weight).toBe(measured[1].weight);
+	});
+
+	async function assertVisiblePlanChrome(page: Page, live: string) {
+		const $live = page.locator(live).first();
+		await expect($live).toBeVisible({ timeout: 30_000 });
+		const $chrome = $live.locator('[data-testid="kt-str-plan-chrome"]');
+		await expect($chrome).toHaveCount(1);
+		await expect($live.locator('[data-testid="kt-str-plan-tabs"]')).toHaveCount(1);
+		const chrome = await $chrome.evaluate((el) => {
+			const codeRow = el.querySelector("[data-kt-str-chrome-code-row]");
+			const code = codeRow?.querySelector("[data-kt-str-plan-code]");
+			const pill = codeRow?.querySelector("[data-kt-str-plan-status-pill]");
+			const meta = el.querySelector("[data-kt-str-chrome-meta]");
+			const statusInMeta = !!meta?.querySelector("[data-kt-str-plan-status-pill], [data-kt-str-plan-status]");
+			const period = (meta?.querySelector("[data-kt-str-plan-period]")?.textContent || "").trim();
+			const version = (meta?.querySelector("[data-kt-str-plan-version]")?.textContent || "").trim();
+			let statusAfterCode = false;
+			if (code && pill && codeRow) {
+				const kids = [...codeRow.children];
+				statusAfterCode = kids.indexOf(pill) === kids.indexOf(code) + 1;
+			}
+			return {
+				code: (code?.textContent || "").trim(),
+				status: (pill?.querySelector("[data-kt-str-plan-status]")?.textContent || "").trim(),
+				statusAfterCode,
+				statusInMeta,
+				period,
+				version,
+				pillTone: pill?.className || "",
+				sticky: getComputedStyle(el).position === "sticky",
+				tabCount: el.querySelectorAll("[data-kt-str-tab]").length,
+				injected: el.classList.contains("kt-str-injected-plan-chrome"),
+			};
+		});
+		expect(chrome.injected).toBe(true);
+		expect(chrome.code).toBe(PLAN);
+		expect(chrome.status).toMatch(/^(Active|Draft|Submitted|Returned|Approved)$/);
+		expect(chrome.statusAfterCode).toBe(true);
+		expect(chrome.statusInMeta).toBe(false);
+		/* Regression: Downstream once painted compact "v1" beside the calendar — forbid that. */
+		expect(chrome.period).toMatch(/^Effective \d{2}-[A-Z][a-z]{2}-\d{4} - \d{2}-[A-Z][a-z]{2}-\d{4}$/);
+		expect(chrome.version).toMatch(/^Version \d+$/);
+		expect(chrome.version).not.toMatch(/^v\d+$/i);
+		expect(chrome.period).not.toMatch(/^v\d+$/i);
+		expect(chrome.sticky).toBe(false);
+		expect(chrome.tabCount).toBe(7);
+		if (chrome.status === "Active" || chrome.status === "Approved") {
+			expect(chrome.pillTone).toMatch(/status-available/);
+		}
+		return chrome;
+	}
+
+	test("shared plan chrome is identical across plan tabs", async ({ page }) => {
+		const routes = [
+			{ path: `/desk/strategy-plan-overview/${PLAN}`, live: '[data-testid="kt-str-overview"][data-kt-str-live="1"]' },
+			{ path: `/desk/strategy-plan-structure/${PLAN}`, live: '[data-testid="kt-str-structure"][data-kt-str-live="1"]' },
+			{
+				path: `/desk/strategy-plan-value-commitments/${PLAN}`,
+				live: '[data-testid="kt-str-value-commitments"][data-kt-str-live="1"]',
+			},
+			{
+				path: `/desk/strategy-plan-measurements/${PLAN}`,
+				live: '[data-testid="kt-str-measurements"][data-kt-str-live="1"]',
+			},
+			{
+				path: `/desk/strategy-plan-downstream-usage/${PLAN}`,
+				live: '[data-testid="kt-str-downstream"][data-kt-str-live="1"]',
+			},
+			{ path: `/desk/strategy-plan-review/${PLAN}`, live: '[data-testid^="kt-str-review-"][data-kt-str-live="1"]' },
+			{ path: `/desk/strategy-plan-audit/${PLAN}`, live: '[data-testid="kt-str-audit"][data-kt-str-live="1"]' },
+		];
+		for (const { path, live } of routes) {
+			await page.goto(path, { waitUntil: "domcontentloaded" });
+			await assertVisiblePlanChrome(page, live);
+		}
+	});
+
+	test("plan tab soft-nav reuses mounted DOM without remount flash", async ({ page }) => {
+		await page.goto(`/desk/strategy-plan-overview/${PLAN}`, { waitUntil: "domcontentloaded" });
+		await expect(page.locator('[data-testid="kt-str-overview"][data-kt-str-live="1"]')).toBeVisible({
+			timeout: 30_000,
+		});
+		const first = await page.locator('[data-testid="kt-str-overview"]').evaluate((el) => ({
+			key: el.getAttribute("data-kt-str-mount-key") || "",
+			gen: el.getAttribute("data-kt-str-mount-gen") || "",
+			live: el.getAttribute("data-kt-str-live") || "",
+		}));
+		expect(first.key).toContain("strategy-plan-overview");
+		expect(Number(first.gen)).toBeGreaterThanOrEqual(1);
+		expect(first.live).toBe("1");
+
+		await page.locator('[data-testid="kt-str-overview"] [data-kt-str-tab="strategy-plan-measurements"]').click();
+		await expect(page.locator('[data-testid="kt-str-measurements"][data-kt-str-live="1"]')).toBeVisible({
+			timeout: 30_000,
+		});
+		await page
+			.locator('[data-testid="kt-str-measurements"] [data-kt-str-tab="strategy-plan-overview"]')
+			.click();
+		await expect(page.locator('[data-testid="kt-str-overview"][data-kt-str-live="1"]')).toBeVisible({
+			timeout: 30_000,
+		});
+		const again = await page.locator('[data-testid="kt-str-overview"]').evaluate((el) => ({
+			key: el.getAttribute("data-kt-str-mount-key") || "",
+			gen: el.getAttribute("data-kt-str-mount-gen") || "",
+			live: el.getAttribute("data-kt-str-live") || "",
+		}));
+		expect(again.key).toBe(first.key);
+		expect(again.gen).toBe(first.gen);
+		expect(again.live).toBe("1");
+	});
+
+	test("shared plan chrome survives soft tab navigation", async ({ page }) => {
+		const hops: { slug: string; live: string }[] = [
+			{ slug: "strategy-plan-downstream-usage", live: '[data-testid="kt-str-downstream"][data-kt-str-live="1"]' },
+			{ slug: "strategy-plan-structure", live: '[data-testid="kt-str-structure"][data-kt-str-live="1"]' },
+			{
+				slug: "strategy-plan-value-commitments",
+				live: '[data-testid="kt-str-value-commitments"][data-kt-str-live="1"]',
+			},
+			{ slug: "strategy-plan-measurements", live: '[data-testid="kt-str-measurements"][data-kt-str-live="1"]' },
+			{ slug: "strategy-plan-review", live: '[data-testid^="kt-str-review-"][data-kt-str-live="1"]' },
+			{ slug: "strategy-plan-audit", live: '[data-testid="kt-str-audit"][data-kt-str-live="1"]' },
+			{ slug: "strategy-plan-overview", live: '[data-testid="kt-str-overview"][data-kt-str-live="1"]' },
+		];
+		await page.goto(`/desk/strategy-plan-overview/${PLAN}`, { waitUntil: "domcontentloaded" });
+		await assertVisiblePlanChrome(page, '[data-testid="kt-str-overview"][data-kt-str-live="1"]');
+		for (const { slug, live } of hops) {
+			await page.locator(`[data-testid="kt-str-plan-chrome"]:visible [data-kt-str-tab="${slug}"]`).click();
+			await assertVisiblePlanChrome(page, live);
+		}
+	});
+
 	test("plan overview mounts Stitch code.html regions", async ({ page }) => {
 		await page.goto(`/desk/strategy-plan-overview/${PLAN}`, { waitUntil: "domcontentloaded" });
 		await expect(page.getByTestId("kt-str-overview")).toBeVisible({ timeout: 30_000 });
@@ -472,7 +714,7 @@ test.describe("Strategy Alignment UI shell", () => {
 		await expect(vc.locator('[data-kt-str-vc-code="PVO-ECO-01"]')).toBeVisible();
 		await expect(vc.getByRole("button", { name: /Add commitment/i })).toHaveCount(0);
 
-		// Under shared plan chrome: section title smaller than plan h1; tight gap after tabs.
+		// Under shared plan chrome: tight gap after tabs; Stitch VC canvas title is headline-lg.
 		const vcDensity = await page.evaluate(() => {
 			const tabs = document.querySelector('[data-testid="kt-str-plan-tabs"]:not([style*="display: none"])');
 			const root = document.querySelector(
@@ -491,8 +733,8 @@ test.describe("Strategy Alignment UI shell", () => {
 		});
 		expect(vcDensity.ok).toBe(true);
 		expect(vcDensity.gap).toBeLessThanOrEqual(32);
-		expect(vcDensity.titlePx).toBeLessThanOrEqual(22);
-		expect(vcDensity.titlePx).toBeLessThan(vcDensity.planPx);
+		expect(vcDensity.planPx).toBeGreaterThanOrEqual(28);
+		expect(vcDensity.titlePx).toBeLessThanOrEqual(vcDensity.planPx);
 
 		const drawer = vc.getByTestId("kt-str-vc-drawer");
 		await expect(drawer).toHaveClass(/translate-x-full/);
@@ -507,16 +749,39 @@ test.describe("Strategy Alignment UI shell", () => {
 
 	test("value commitments Draft can add commitment via drawer", async ({ page }) => {
 		// Successor Draft inherits structure + existing commitments; add an unused Active PVO.
+		// Serial suite may already have an open successor — reuse it when Create is hidden.
 		await page.goto(`/desk/strategy-plan-overview/${PLAN}`, { waitUntil: "domcontentloaded" });
 		await expect(page.locator('[data-testid="kt-str-overview"][data-kt-str-live="1"]')).toBeVisible({
 			timeout: 20_000,
 		});
-		await page.getByTestId("kt-str-create-successor").click();
-		const modal = page.getByTestId("kt-str-successor-modal");
-		await expect(modal).toBeVisible();
-		await page.getByTestId("kt-str-confirm-successor").click();
-		await expect(page).toHaveURL(/strategy-plan-overview\/[a-z0-9]{10,}/i, { timeout: 20_000 });
-		const draftId = await page.locator('[data-testid="kt-str-overview"]').getAttribute("data-kt-str-plan-id");
+		let draftId: string | null = null;
+		const createBtn = page.getByTestId("kt-str-create-successor");
+		if (await createBtn.isVisible()) {
+			await createBtn.click();
+			const modal = page.getByTestId("kt-str-successor-modal");
+			await expect(modal).toBeVisible();
+			await page.getByTestId("kt-str-confirm-successor").click();
+			await expect(page).toHaveURL(/strategy-plan-overview\/[a-z0-9]{10,}/i, { timeout: 20_000 });
+			draftId = await page.locator('[data-testid="kt-str-overview"]').getAttribute("data-kt-str-plan-id");
+		} else {
+			draftId = await page.evaluate(async (planCode) => {
+				const r = await (window as unknown as { frappe: { call: (o: unknown) => Promise<{ message?: { name: string }[] }> } }).frappe.call({
+					method: "frappe.client.get_list",
+					args: {
+						doctype: "Strategic Plan",
+						filters: {
+							plan_code: planCode,
+							status: ["in", ["Draft", "Returned", "Submitted"]],
+							version_number: [">", 1],
+						},
+						fields: ["name"],
+						limit_page_length: 1,
+						order_by: "version_number desc",
+					},
+				});
+				return r.message?.[0]?.name ?? null;
+			}, PLAN);
+		}
 		expect(draftId).toBeTruthy();
 
 		await page.goto(`/desk/strategy-plan-value-commitments/${draftId}`, {
@@ -531,7 +796,7 @@ test.describe("Strategy Alignment UI shell", () => {
 
 		// Add commitment sits beside the title (row), not stacked under it.
 		const vcHeaderLayout = await vc.getByTestId("kt-str-vc-header").evaluate((el) => {
-			const title = el.querySelector("h2, h1") as HTMLElement | null;
+			const title = el.querySelector("h3, h2, h1") as HTMLElement | null;
 			const btn = [...el.querySelectorAll("button")].find((b) =>
 				(b.textContent || "").includes("Add commitment")
 			) as HTMLElement | undefined;
@@ -554,6 +819,34 @@ test.describe("Strategy Alignment UI shell", () => {
 		await vc.getByRole("button", { name: /Add commitment/i }).click();
 		await expect(drawer).toHaveClass(/is-open/);
 		await expect(drawer.getByText("Add Commitment")).toBeVisible();
+
+		// Pillar/Source equal columns; Source stays clear of drawer scrollbar.
+		const filterGeom = await drawer.evaluate((el) => {
+			const scroll = el.querySelector(
+				'[data-testid="kt-str-vc-drawer-scroll"]'
+			) as HTMLElement | null;
+			const pillar = el.querySelector(
+				"[data-kt-str-vc-drawer-pillar]"
+			) as HTMLElement | null;
+			const source = el.querySelector(
+				"[data-kt-str-vc-drawer-source]"
+			) as HTMLElement | null;
+			if (!scroll || !pillar || !source) return { ok: false as const };
+			const sr = scroll.getBoundingClientRect();
+			const pr = pillar.getBoundingClientRect();
+			const so = source.getBoundingClientRect();
+			const clientRight = sr.left + scroll.clientWidth;
+			return {
+				ok: true as const,
+				widthDelta: Math.abs(pr.width - so.width),
+				sourceInset: clientRight - so.right,
+				pillarWidth: pr.width,
+				sourceWidth: so.width,
+			};
+		});
+		expect(filterGeom.ok).toBe(true);
+		expect(filterGeom.widthDelta).toBeLessThanOrEqual(8);
+		expect(filterGeom.sourceInset).toBeGreaterThanOrEqual(16);
 
 		const pvoBtn = drawer.locator("[data-kt-str-action='select-pvo']").filter({ hasText: "PVO-LOC-01" });
 		await expect(pvoBtn).toBeVisible({ timeout: 15_000 });
@@ -592,7 +885,7 @@ test.describe("Strategy Alignment UI shell", () => {
 				slug: "strategy-plan-downstream-usage",
 				testid: "kt-str-downstream",
 			},
-			{ label: "Review", slug: "strategy-plan-review", testid: "kt-str-review-blockers" },
+			{ label: "Review", slug: "strategy-plan-review", testid: "kt-str-review-ready" },
 			{ label: "Audit", slug: "strategy-plan-audit", testid: "kt-str-audit" },
 		];
 
@@ -630,17 +923,31 @@ test.describe("Strategy Alignment UI shell", () => {
 		const split = await page.getByTestId("kt-str-structure-split").evaluate((el) => {
 			const tree = el.querySelector("[data-testid='kt-str-structure-tree']") as HTMLElement;
 			const detail = el.querySelector("[data-testid='kt-str-structure-detail']") as HTMLElement;
+			const detailCard = detail.querySelector(".rounded-xl, [class*='rounded-xl']") as HTMLElement;
 			const cs = getComputedStyle(el);
+			const tcs = getComputedStyle(tree);
+			const treeTop = tree.getBoundingClientRect().top;
+			const cardTop = (detailCard || detail).getBoundingClientRect().top;
 			return {
 				display: cs.display,
+				paddingTop: cs.paddingTop,
+				gap: cs.gap,
 				treeW: tree.getBoundingClientRect().width,
 				detailW: detail.getBoundingClientRect().width,
 				total: el.getBoundingClientRect().width,
+				treeRadius: tcs.borderRadius,
+				treeBorder: tcs.borderTopWidth,
+				topDelta: Math.abs(treeTop - cardTop),
 			};
 		});
 		expect(split.display).toBe("flex");
+		expect(split.paddingTop).toBe("24px");
+		expect(parseFloat(split.gap)).toBeGreaterThanOrEqual(12);
 		expect(split.treeW).toBeGreaterThan(split.total * 0.3);
 		expect(split.detailW).toBeGreaterThan(split.total * 0.45);
+		expect(split.treeRadius).toMatch(/12px|0\.75rem/);
+		expect(parseFloat(split.treeBorder)).toBeGreaterThanOrEqual(1);
+		expect(split.topDelta).toBeLessThanOrEqual(4);
 
 		// Hierarchy indents must survive later .p-2 { padding } !important sheets.
 		const treeIndent = await page.getByTestId("kt-str-structure-tree").evaluate((tree) => {
@@ -756,19 +1063,57 @@ test.describe("Strategy Alignment UI shell", () => {
 		await expect(page.getByTestId("kt-str-structure-drawer-overlay")).toHaveCount(0);
 	});
 
-	test("review state toggle switches blocker and ready fixtures", async ({ page }) => {
+	test("review live binds ready canvas for Active plan", async ({ page }) => {
 		await page.goto(`/desk/strategy-plan-review/${PLAN}`, { waitUntil: "domcontentloaded" });
-		await expect(page.getByTestId("kt-str-review-state-toggle")).toBeVisible({ timeout: 30_000 });
-		await page
-			.getByTestId("kt-str-review-state-toggle")
-			.getByRole("button", { name: "Show ready for submission" })
-			.click({ force: true });
-		await expect(page.getByTestId("kt-str-review-ready")).toBeVisible({ timeout: 30_000 });
-		await page
-			.getByTestId("kt-str-review-state-toggle")
-			.getByRole("button", { name: "Show blockers" })
-			.click({ force: true });
-		await expect(page.getByTestId("kt-str-review-blockers")).toBeVisible({ timeout: 30_000 });
+		const ready = page.locator('[data-testid="kt-str-review-ready"][data-kt-str-live="1"]');
+		await expect(ready).toBeVisible({ timeout: 30_000 });
+		await expect(page.getByTestId("kt-str-review-ready-card")).toBeVisible();
+		await expect(ready.locator("[data-kt-str-plan-code]").first()).toContainText(PLAN, {
+			timeout: 15_000,
+		});
+		await expect(page.getByTestId("kt-str-review-state-toggle")).toBeHidden();
+		await expect(ready.locator("[data-kt-str-plan-status]").first()).toContainText(/Active/i);
+		await expect(ready.locator('[data-kt-str-action="submit-for-review"]')).toBeHidden();
+	});
+
+	test("review live binds blockers canvas with Resolve navigation", async ({ page }) => {
+		await page.goto(`/desk/strategy-plan-review/${REVIEW_BLOCKERS_PLAN}`, {
+			waitUntil: "domcontentloaded",
+		});
+		const blockers = page.locator('[data-testid="kt-str-review-blockers"][data-kt-str-live="1"]');
+		await expect(blockers).toBeVisible({ timeout: 30_000 });
+		await expect(blockers.locator("[data-kt-str-blocker-count-label]")).toContainText(/Blocker/i);
+		await expect(blockers.locator('[data-kt-str-review-group="Structure"]')).toBeVisible();
+		await expect(blockers.locator("[data-kt-str-resolve]").first()).toBeVisible();
+		await expect(blockers.locator('[data-kt-str-action="submit-for-review"]')).toBeDisabled();
+		await blockers.locator('[data-kt-str-action="run-readiness"]').click();
+		await expect(blockers).toHaveAttribute("data-kt-str-live", "1", { timeout: 15_000 });
+		await blockers.locator("[data-kt-str-resolve]").first().click();
+		await expect(page).toHaveURL(/strategy-plan-structure|strategy-plan-overview/, {
+			timeout: 15_000,
+		});
+	});
+
+	test("review submit hides Submit and shows governance CTAs", async ({ page }) => {
+		// Seed resets REVIEW_TX to a ready Draft before each evidence run (see Makefile/bench execute).
+		await page.goto(`/desk/strategy-plan-review/${REVIEW_TX_PLAN}`, {
+			waitUntil: "domcontentloaded",
+		});
+		const ready = page.locator('[data-testid="kt-str-review-ready"][data-kt-str-live="1"]');
+		await expect(ready).toBeVisible({ timeout: 30_000 });
+		await expect(ready.locator("[data-kt-str-plan-status]").first()).toContainText(/Draft/i);
+		const submit = ready.locator('[data-kt-str-action="submit-for-review"]');
+		await expect(submit).toBeVisible({ timeout: 15_000 });
+		await expect(submit).toBeEnabled();
+		await submit.click();
+		await expect(ready.locator("[data-kt-str-review-ready-title]")).toContainText(/Awaiting review/i, {
+			timeout: 20_000,
+		});
+		await expect(ready.locator("[data-kt-str-plan-status]").first()).toContainText(/Submitted/i);
+		await expect(submit).toBeHidden();
+		await expect(ready.locator('[data-kt-str-action="return-for-correction"]')).toBeVisible();
+		await expect(ready.locator('[data-kt-str-action="approve-plan"]')).toBeVisible();
+		await expect(page).toHaveURL(new RegExp(`strategy-plan-review/${REVIEW_TX_PLAN}`));
 	});
 
 	test("satellite surfaces open", async ({ page }) => {
@@ -805,6 +1150,10 @@ test.describe("Strategy Alignment UI shell", () => {
 		await expect(meas).toBeVisible({ timeout: 30_000 });
 		await expect(meas.getByTestId("kt-str-measurements-table")).toBeVisible();
 		await expect(meas.getByRole("heading", { name: "Performance measurements" })).toBeVisible();
+		const measFilters = meas.locator("[data-kt-str-meas-filters]");
+		await expect(
+			measFilters.locator(".material-symbols-outlined", { hasText: "expand_more" })
+		).toHaveCount(3);
 		// Seed truth: two Verified MOH-TGT-01 rows — not fixture-only TGT-02/03.
 		await expect(
 			meas.locator('[data-kt-str-meas-tbody] tr[data-kt-str-target-code="MOH-TGT-01"]')
@@ -823,6 +1172,194 @@ test.describe("Strategy Alignment UI shell", () => {
 		await expect(page.getByTestId("kt-str-measurement-submit")).toBeVisible({ timeout: 30_000 });
 	});
 
+	test("submit measurement uses date fields and live derived result", async ({ page }) => {
+		await page.goto(`/desk/strategy-measurement-submit/${PLAN}/${TARGET}`, {
+			waitUntil: "domcontentloaded",
+		});
+		const root = page.locator('[data-testid="kt-str-measurement-submit"][data-kt-str-live="1"]');
+		await expect(root).toBeVisible({ timeout: 30_000 });
+		await expect(root.locator('[data-kt-str-meas-period-start]')).toHaveAttribute("type", "date");
+		await expect(root.locator('[data-kt-str-meas-period-end]')).toHaveAttribute("type", "date");
+		await expect(root.locator('[data-kt-str-meas-date]')).toHaveAttribute("type", "date");
+
+		const actual = root.locator("[data-kt-str-actual]");
+		await actual.fill("99.82");
+		await expect(root.locator("[data-kt-str-result]")).toHaveText(/AT RISK/i, { timeout: 5_000 });
+		await expect(root.locator("[data-kt-str-meas-derived]")).toHaveAttribute(
+			"data-kt-str-meas-tone",
+			"at-risk"
+		);
+
+		await actual.fill("99.96");
+		await expect(root.locator("[data-kt-str-result]")).toHaveText(/ON TRACK/i, { timeout: 5_000 });
+		await expect(root.locator("[data-kt-str-meas-derived]")).toHaveAttribute(
+			"data-kt-str-meas-tone",
+			"on-track"
+		);
+	});
+
+	test("verify measurement hydrates and stays on page after Verify", async ({ page }) => {
+		const stamp = Date.now().toString().slice(-6);
+		const day = String((Number(stamp) % 27) + 1).padStart(2, "0");
+		const periodStart = `2027-03-${day}`;
+		const periodEnd = `2027-03-${day}`;
+
+		await page.goto(`/desk/strategy-measurement-submit/${PLAN}/${TARGET}`, {
+			waitUntil: "domcontentloaded",
+		});
+		const submitRoot = page.locator(
+			'[data-testid="kt-str-measurement-submit"][data-kt-str-live="1"]'
+		);
+		await expect(submitRoot).toBeVisible({ timeout: 30_000 });
+		await submitRoot.locator("[data-kt-str-meas-period-start]").fill(periodStart);
+		await submitRoot.locator("[data-kt-str-meas-period-end]").fill(periodEnd);
+		await submitRoot.locator("[data-kt-str-meas-date]").fill(periodEnd);
+		await submitRoot.locator("[data-kt-str-actual]").fill("99.85");
+		await submitRoot.locator("[data-kt-str-meas-evidence-source]").fill("PW verify evidence");
+		await submitRoot.getByRole("button", { name: /Submit measurement/i }).click();
+		await expect(submitRoot).toHaveAttribute("data-kt-str-workflow-status", "Submitted", {
+			timeout: 20_000,
+		});
+
+		const verifyUrl = `/desk/strategy-measurement-verify/${PLAN}/${TARGET}`;
+		await page.goto(verifyUrl, { waitUntil: "domcontentloaded" });
+		const root = page.locator('[data-testid="kt-str-measurement-verify"][data-kt-str-live="1"]');
+		await expect(root).toBeVisible({ timeout: 30_000 });
+		await expect(root.getByTestId("kt-str-meas-verify-compare")).toBeVisible();
+		await expect(root.getByTestId("kt-str-meas-verify-decision")).toBeVisible();
+		await expect(root.locator("[data-kt-str-target-code]")).toContainText(TARGET);
+		await expect(root.locator("[data-kt-str-meas-workflow-label]")).toHaveText(/SUBMITTED/i);
+		await expect(root.getByRole("button", { name: /Back to measurements/i })).toBeVisible();
+		await expect(page.getByText(/Back to Contract/i)).toHaveCount(0);
+
+		// Status pill icons share a vertical mid-line with their labels.
+		const pillAlign = await root.locator("[data-kt-str-meas-workflow-pill]").evaluate((el) => {
+			const icon = el.querySelector(".material-symbols-outlined") as HTMLElement | null;
+			const label = el.querySelector("[data-kt-str-meas-workflow-label]") as HTMLElement | null;
+			if (!icon || !label) {
+				return { ok: false, delta: 99 };
+			}
+			const ir = icon.getBoundingClientRect();
+			const lr = label.getBoundingClientRect();
+			return { ok: true, delta: Math.abs(ir.top + ir.height / 2 - (lr.top + lr.height / 2)) };
+		});
+		expect(pillAlign.ok).toBe(true);
+		expect(pillAlign.delta).toBeLessThanOrEqual(2);
+
+		const before = page.url();
+		await root.getByRole("button", { name: /Verify Measurement/i }).click();
+		await expect(root).toHaveAttribute("data-kt-str-workflow-status", "Verified", {
+			timeout: 20_000,
+		});
+		await expect(root.locator("[data-kt-str-meas-workflow-label]")).toHaveText(/VERIFIED/i);
+		await expect(root.locator("[data-kt-str-meas-workflow-icon]")).toHaveText("verified");
+		expect(page.url().split("?")[0]).toBe(before.split("?")[0]);
+		await expect(page).toHaveURL(new RegExp(`strategy-measurement-verify/${PLAN}/${TARGET}`));
+	});
+
+	test("verify measurement requires comments for Return", async ({ page }) => {
+		const stamp = `r${Date.now().toString().slice(-5)}`;
+		const day = String((Number(Date.now()) % 27) + 1).padStart(2, "0");
+		const periodStart = `2027-04-${day}`;
+		const periodEnd = `2027-04-${day}`;
+
+		await page.goto(`/desk/strategy-measurement-submit/${PLAN}/${TARGET}`, {
+			waitUntil: "domcontentloaded",
+		});
+		const submitRoot = page.locator(
+			'[data-testid="kt-str-measurement-submit"][data-kt-str-live="1"]'
+		);
+		await expect(submitRoot).toBeVisible({ timeout: 30_000 });
+		await submitRoot.locator("[data-kt-str-meas-period-start]").fill(periodStart);
+		await submitRoot.locator("[data-kt-str-meas-period-end]").fill(periodEnd);
+		await submitRoot.locator("[data-kt-str-meas-date]").fill(periodEnd);
+		await submitRoot.locator("[data-kt-str-actual]").fill("99.9");
+		await submitRoot
+			.locator("[data-kt-str-meas-evidence-source]")
+			.fill(`PW return ${stamp}`);
+		await submitRoot.getByRole("button", { name: /Submit measurement/i }).click();
+		await expect(submitRoot).toHaveAttribute("data-kt-str-workflow-status", "Submitted", {
+			timeout: 20_000,
+		});
+
+		await page.goto(`/desk/strategy-measurement-verify/${PLAN}/${TARGET}`, {
+			waitUntil: "domcontentloaded",
+		});
+		const root = page.locator('[data-testid="kt-str-measurement-verify"][data-kt-str-live="1"]');
+		await expect(root).toBeVisible({ timeout: 30_000 });
+		await root.locator("[data-kt-str-meas-verify-comments]").fill("");
+		const before = page.url();
+		await root.getByRole("button", { name: /Return for correction/i }).click();
+		await expect(root).toHaveAttribute("data-kt-str-workflow-status", "Submitted", {
+			timeout: 5_000,
+		});
+		expect(page.url().split("?")[0]).toBe(before.split("?")[0]);
+		await expect(root.getByRole("button", { name: /Verify Measurement/i })).toBeEnabled();
+	});
+
+	test("submit measurement stays on the same page like save draft", async ({ page }) => {
+		const submitUrl = `/desk/strategy-measurement-submit/${PLAN}/${TARGET}`;
+		await page.goto(submitUrl, { waitUntil: "domcontentloaded" });
+		const root = page.locator('[data-testid="kt-str-measurement-submit"][data-kt-str-live="1"]');
+		await expect(root).toBeVisible({ timeout: 30_000 });
+
+		// Unique period inside target window so seed Verified rows do not collide.
+		const stamp = Date.now().toString().slice(-6);
+		const day = String((Number(stamp) % 27) + 1).padStart(2, "0");
+		await root.locator("[data-kt-str-meas-period-start]").fill(`2026-11-${day}`);
+		await root.locator("[data-kt-str-meas-period-end]").fill(`2026-11-${day}`);
+		await root.locator("[data-kt-str-meas-date]").fill(`2026-11-${day}`);
+		await root.locator("[data-kt-str-actual]").fill("99.95");
+		await root.locator("[data-kt-str-meas-evidence-source]").fill("UI stay-on-page evidence");
+
+		const before = page.url();
+		await root.getByRole("button", { name: /Submit measurement/i }).click();
+		await expect(root).toHaveAttribute("data-kt-str-workflow-status", "Submitted", {
+			timeout: 20_000,
+		});
+		await expect(page).toHaveURL(new RegExp(`strategy-measurement-submit/${PLAN}/${TARGET}`));
+		expect(page.url()).toContain("strategy-measurement-submit");
+		await expect(root).toBeVisible();
+		// Same surface — did not bounce to register / overview.
+		expect(page.url().split("?")[0]).toBe(before.split("?")[0]);
+	});
+
+	test("downstream usage is live with derived Budget and Demand rows", async ({ page }) => {
+		await page.goto(`/desk/strategy-plan-downstream-usage/${PLAN}`, {
+			waitUntil: "domcontentloaded",
+		});
+		const down = page.locator('[data-testid="kt-str-downstream"][data-kt-str-live="1"]');
+		await expect(down).toBeVisible({ timeout: 30_000 });
+		await expect(page.getByTestId("kt-str-downstream-table")).toBeVisible();
+		await expect(down.locator('[data-kt-str-down-count="Demand"]')).not.toHaveText("0", {
+			timeout: 15_000,
+		});
+		await expect(down.locator('[data-kt-str-down-count="Budget"]')).not.toHaveText("0");
+		await expect(down.locator('[data-kt-str-down-count="Planning"]')).toHaveText("0");
+		await expect(down.locator("[data-kt-str-down-tbody] [data-kt-str-down-row]")).not.toHaveCount(0);
+		await expect(down.getByText("DEM-MOH-2027-014")).toHaveCount(0);
+		await expect(down.locator("[data-kt-str-plan-code]")).toContainText(PLAN);
+
+		const filters = down.locator("[data-kt-str-down-filters]");
+		await expect(
+			filters.locator(".material-symbols-outlined", { hasText: "expand_more" })
+		).toHaveCount(4);
+
+		const beforeCount = await down.locator("[data-kt-str-down-tbody] [data-kt-str-down-row]").count();
+		const demandCount = Number(
+			await down.locator('[data-kt-str-down-count="Demand"]').innerText()
+		);
+		await down.locator("[data-kt-str-down-filter-module]").selectOption("Demand");
+		await expect(down.locator("[data-kt-str-down-tbody] [data-kt-str-down-row]")).toHaveCount(
+			demandCount,
+			{ timeout: 5_000 }
+		);
+		await down.getByRole("button", { name: /Clear filters/i }).click();
+		await expect(down.locator("[data-kt-str-down-tbody] [data-kt-str-down-row]")).toHaveCount(
+			beforeCount
+		);
+	});
+
 	test("downstream and audit mount Stitch tables", async ({ page }) => {
 		await page.goto(`/desk/strategy-plan-downstream-usage/${PLAN}`, {
 			waitUntil: "domcontentloaded",
@@ -836,5 +1373,85 @@ test.describe("Strategy Alignment UI shell", () => {
 		await expect(audit).toBeVisible({ timeout: 30_000 });
 		await expect(page.getByTestId("kt-str-audit-table")).toBeVisible();
 		await expect(audit.getByRole("heading", { name: "Audit history" })).toBeVisible();
+	});
+
+	test("audit table exposes a visible horizontal scrollbar when overflowing", async ({ page }) => {
+		await page.setViewportSize({ width: 1100, height: 900 });
+		await page.goto(`/desk/strategy-plan-audit/${PLAN}`, { waitUntil: "domcontentloaded" });
+		await expect(page.locator('[data-testid="kt-str-audit"][data-kt-str-live="1"]')).toBeVisible({
+			timeout: 30_000,
+		});
+		const scroll = page.getByTestId("kt-str-audit-scroll");
+		await expect(scroll).toBeVisible();
+		const metrics = await scroll.evaluate((el) => {
+			const cs = getComputedStyle(el);
+			return {
+				overflowX: cs.overflowX,
+				scrollbarWidth: cs.scrollbarWidth,
+				scrollWidth: el.scrollWidth,
+				clientWidth: el.clientWidth,
+				hasHideClass: el.classList.contains("scrollbar-hide"),
+			};
+		});
+		expect(metrics.hasHideClass).toBe(false);
+		expect(metrics.overflowX).toMatch(/auto|scroll/);
+		expect(metrics.scrollbarWidth).not.toBe("none");
+		// Wide columns may still fit on some viewports; only assert scroll when overflowing.
+		if (metrics.scrollWidth > metrics.clientWidth) {
+			await scroll.evaluate((el) => {
+				el.scrollLeft = el.scrollWidth;
+			});
+			await expect
+				.poll(async () => scroll.evaluate((el) => el.scrollLeft))
+				.toBeGreaterThan(0);
+		}
+	});
+
+	test("shared table footer paginates Audit and appears on Portfolio", async ({ page }) => {
+		await page.goto(`/desk/strategy-plan-audit/${PLAN}`, { waitUntil: "domcontentloaded" });
+		await expect(page.locator('[data-testid="kt-str-audit"][data-kt-str-live="1"]')).toBeVisible({
+			timeout: 30_000,
+		});
+		const auditFooter = page
+			.locator('[data-testid="kt-str-audit"] [data-testid="kt-str-table-footer"]')
+			.first();
+		await expect(auditFooter).toBeVisible();
+		await expect(auditFooter.locator("[data-kt-str-footer-range]")).toHaveText(
+			/Showing (\d+-\d+ of \d+|0 of 0) records/
+		);
+		await expect(auditFooter.locator("[data-kt-str-footer-page]")).toHaveText(/^\d+ of \d+$/);
+		await expect(auditFooter.locator("[data-kt-str-footer-page-size]")).toHaveValue("10");
+		const sizeOpts = await auditFooter
+			.locator("[data-kt-str-footer-page-size] option")
+			.evaluateAll((els) => els.map((el) => (el as HTMLOptionElement).value));
+		expect(sizeOpts).toEqual(["10", "20", "50", "100"]);
+
+		const countAttr = await page
+			.locator('[data-testid="kt-str-audit"]')
+			.getAttribute("data-kt-str-audit-count");
+		const total = Number(countAttr || "0");
+		if (total > 10) {
+			const next = auditFooter.locator("[data-kt-str-footer-next]");
+			await expect(next).toBeEnabled();
+			await next.click();
+			await expect(auditFooter.locator("[data-kt-str-footer-page]")).toHaveText(/^2 of \d+$/);
+			await expect(auditFooter.locator("[data-kt-str-footer-range]")).toHaveText(
+				/Showing 11-\d+ of \d+ records/
+			);
+		}
+
+		await page.goto("/desk/strategy-alignment", { waitUntil: "domcontentloaded" });
+		await expect(page.locator('[data-testid="kt-str-portfolio"][data-kt-str-live="1"]')).toBeVisible({
+			timeout: 30_000,
+		});
+		const pfFooter = page
+			.locator('[data-testid="kt-str-portfolio"] [data-testid="kt-str-table-footer"]')
+			.first();
+		await expect(pfFooter).toBeVisible();
+		await expect(pfFooter.locator("[data-kt-str-footer-range]")).toHaveText(
+			/Showing (\d+-\d+ of \d+|0 of 0) records/
+		);
+		await expect(pfFooter.locator("[data-kt-str-footer-page-size]")).toHaveValue("10");
+		await expect(pfFooter.locator("[data-kt-str-footer-page]")).toHaveText(/^\d+ of \d+$/);
 	});
 });

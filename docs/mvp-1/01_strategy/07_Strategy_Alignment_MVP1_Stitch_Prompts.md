@@ -1,9 +1,9 @@
 # Strategy Alignment — MVP 1 Stitch Prompts
 
-**Document ID:** STRATEGY-MVP1-STITCH-1.0  
+**Document ID:** STRATEGY-MVP1-STITCH-1.1  
 **Status:** Design input  
-**Date:** 2 August 2026  
-**Requirements baseline:** `STRATEGY-MVP1-REQ-1.0` — Locked and approved  
+**Date:** 3 August 2026  
+**Requirements baseline:** `STRATEGY-MVP1-REQ-1.1` — Locked and approved  
 **Application:** KenTender  
 **Module:** Strategy Alignment  
 **Primary fixture:** Ministry of Health
@@ -12,7 +12,7 @@
 
 1. Give Stitch the current KenTender visual reference before running these prompts.
 2. Run Prompt 00 once to establish the common design contract.
-3. Run Prompts 01–14 separately and in order. Each prompt should produce one screen or one focused interaction state.
+3. Run Prompts 01–15 separately and in order. Each prompt should produce one screen or one focused interaction state.
 4. Use the output of the preceding prompt as the visual reference for the next prompt so typography, spacing, tables, buttons and status treatments remain consistent.
 5. Do not combine all prompts into one generation request.
 6. Review each result against the acceptance checks beneath its prompt before proceeding.
@@ -783,6 +783,151 @@ Do not expose internal database identifiers as primary labels, raw JSON, stack t
 
 ---
 
+## Prompt 15 — STR-UI-15 Strategy Performance
+
+```text
+Design the read-only Strategy Performance screen for Ministry of Health managers and senior stakeholders.
+
+This is a separate management entry view, not an eighth Plan workspace tab and not a generic Analytics dashboard. It must help decision-makers understand verified strategic results, procurement activity supporting those results, public-value treatment and exceptions requiring intervention.
+
+Design only the authenticated page content area. Keep the real KenTender navigation, breadcrumb/header and account controls outside the design.
+
+Header:
+- Title: Strategy Performance
+- Description: “Monitor strategic results and the procurement activity supporting them.”
+- Secondary action: Export report
+- For authorised operational users only, include a quiet “Open Strategy Portfolio” link.
+
+Context filters:
+- Procuring entity: Ministry of Health; show an entity selector only for cross-entity authority
+- Active plan: MOH-SP-2026-2030 — Ministry of Health Strategic Plan 2026–2030
+- Reporting period: July–October 2027
+- Programme: All programmes
+- Sub-programme: All sub-programmes
+- Apply filters and Clear filters
+
+Show a source line directly below the filters:
+- “As at 31 October 2027, 16:30 EAT”
+- “Sources available: Strategy, Budget, Demand, Procurement Plans, Tenders and Contracts”
+
+Use one compact performance strip, not large cards:
+- Active outcomes — 6
+- On track targets — 5
+- At risk targets — 1
+- Off track targets — 1
+- No data — 1
+- Corrective actions overdue — 1
+
+Section 1 — Outcome performance
+
+Use a compact table with columns:
+- Strategic outcome
+- Target results
+- Current direction
+- Aligned procurement activity
+- Management attention
+- Action
+
+Rows:
+1. MOH-OUT-01 — Reliable and accessible digital clinical services | 2 On track, 1 At risk | Improving | 2 approved demands, 1 tender, 1 active contract | Storage corrective action due 31 Oct 2027 | View
+2. MOH-OUT-02 — Cost-effective digital health infrastructure | 1 On track, 1 No data | Stable | 1 approved demand, 1 procurement-plan item | October cost measurement overdue | Review
+3. MOH-OUT-03 — Improved internal and local technical capability | 1 On track, 1 Off track | Declining | 1 active contract | Skills-transfer milestone overdue | Review
+
+Current direction is a concise comparison with the preceding equivalent reporting period, not a forecast. Use text plus a restrained arrow; never rely on the arrow or colour alone.
+
+Selecting View or Review opens a focused drill-down containing the contributing targets, Verified measurements, measurement exceptions, corrective actions and authorised downstream references. Do not open an editable plan structure.
+
+Section 2 — Exceptions requiring intervention
+
+Use a compact table with columns:
+- Exception
+- Affected record
+- Owner
+- Due or age
+- Next action
+
+Rows:
+- Target At risk; corrective action open | MOH-TGT-01 — At least 99.9% annual availability | Head, ICT Infrastructure | Due 31 Oct 2027 | Review action
+- Measurement overdue | MOH-TGT-02 — Restore critical service within 4 hours | Director, Digital Health | 5 days overdue | View target
+- Required value commitment not addressed by one aligned demand | PVO-ECO-01 — Reduce whole-life infrastructure cost | Demand Sponsor | 3 days outstanding | Review treatment
+
+Keep verified underperformance, missing workflow data and overdue corrective actions visibly distinct. Do not combine them into a score.
+
+Section 3 — Procurement contribution
+
+Show one compact stage table. Do not use a funnel that implies every value is additive or directly comparable.
+
+Columns:
+- Lifecycle stage
+- Aligned records
+- Current value
+- Basis
+- Action
+
+Rows:
+- Approved budget | 2 allocations | KES 480,000,000 | Approved allocations aligned to selected targets | View
+- Approved demand | 2 demands | KES 455,000,000 | Approved estimates for the reporting scope | View
+- Procurement plan | 2 plan items | KES 440,000,000 | Approved planned value | View
+- Tender | 1 active tender | KES 420,000,000 | Published estimate | View
+- Contract | 1 active contract | KES 310,000,000 | Awarded contract value | View
+
+Add this explicit note: “Lifecycle values represent different stages and must not be added together.”
+
+Show a funding comparison only because the period, currency and scope are comparable:
+- Approved budget: KES 480,000,000
+- Approved aligned demand: KES 455,000,000
+- Available headroom: KES 25,000,000
+- Calculation basis: approved budget minus approved aligned demand for July 2027–June 2028
+
+Do not label this as savings or benefit achievement.
+
+Section 4 — Public-value commitments
+
+Use a compact table with columns:
+- Commitment
+- Consideration level
+- Downstream treatment
+- Verified achievement evidence
+- Attention
+- Action
+
+Rows:
+- PVO-EFT-01 — Improve availability of critical health services | Required | 4 of 4 aligned Value Cases addressed | MOH-TGT-01: At risk | Corrective action open | View
+- PVO-ECO-01 — Reduce whole-life infrastructure cost | Required | 3 of 4 addressed | No verified outcome measure | 1 treatment outstanding | Review
+- PVO-SUS-02 — Ensure compliant handling of replaced ICT equipment | Required | 2 of 3 addressed | No verified outcome measure yet | Evidence not yet due | View
+- PVO-RES-01 — Improve continuity of critical services | Recommended | 4 of 4 addressed | Linked target On track | None | View
+
+Make the distinction explicit:
+- “Addressed” means the objective was considered and treated in an approved downstream Value Case.
+- It does not prove that the objective was achieved.
+- Achievement requires a linked Verified measurement or another authoritative verified outcome record.
+
+Report interaction:
+- Export report uses the current filters.
+- The export must include reporting period, generation time, source coverage and traceable references.
+- Do not add a confirmation declaration before export.
+
+Access and states:
+- Strategy Viewer sees this page by default and has no create, edit, approval or measurement actions.
+- Restricted evidence remains protected even when its derived status is visible.
+- Show an unavailable-source variant: “Contract data is temporarily unavailable. Contract contribution is excluded from this view.” Do not silently present an incomplete total.
+- Show an empty-period state that explains that no Verified measurements exist and offers Change reporting period as the only action.
+
+Do not add:
+- a composite strategy score;
+- rankings, weights, grades or pass/fail labels;
+- predictive forecasts or AI recommendations;
+- unverified savings, cost avoidance or benefit claims;
+- causal claims that procurement produced the strategic result;
+- editable management values;
+- plan-maintenance tabs or controls;
+- decorative card walls or unrelated organisation-wide analytics.
+```
+
+**Acceptance check:** The screen answers what is being achieved, what procurement activity is aligned, which public-value commitments were addressed versus verified, and what requires intervention—without double counting, unsupported attribution or maintenance controls.
+
+---
+
 ## 2. Cross-screen design verification
 
 Approve the Stitch set only when all of the following are true:
@@ -790,6 +935,7 @@ Approve the Stitch set only when all of the following are true:
 - The real KenTender shell remains outside the generated designs.
 - Portfolio and plan workspace patterns are consistent.
 - The Plan workspace contains exactly seven tabs: Overview, Structure, Value Commitments, Measurement, Downstream Usage, Review and Audit.
+- Strategy Performance is a separate read-only management entry view, not an eighth Plan workspace tab.
 - Programme, optional Sub-programme, Strategic Outcome, Performance Indicator and Performance Target are distinct.
 - Public Value Objectives are a separate governed catalogue.
 - Plan Value Commitments adopt catalogue objectives without copying or rewriting them.
@@ -805,7 +951,12 @@ Approve the Stitch set only when all of the following are true:
 - Status never depends on colour alone.
 - No score, weighting, ranking, pass/fail grade, AI feature or unapproved analytics has been introduced.
 - Empty, returned, read-only and needs-attention states explain the next valid action.
+- Management reporting separates verified performance, workflow exceptions and corrective-action exceptions.
+- Procurement values remain separated by lifecycle stage and are never summed as additive totals.
+- Public-value consideration or treatment is not presented as verified achievement.
+- Strategy Performance shows reporting context, `As at` time, source coverage and traceable drill-downs.
+- No unsupported savings, benefits, forecasts or causal procurement claims appear.
 
 ## 3. Design handoff rule
 
-The approved Stitch outputs are visual and interaction specifications for `STRATEGY-MVP1-REQ-1.0`. They may clarify layout and presentation but may not change the locked functional scope. Any design that introduces a new record, state, role, rule, workflow step or downstream responsibility must be rejected or handled through formal requirements change control before implementation.
+The approved Stitch outputs are visual and interaction specifications for `STRATEGY-MVP1-REQ-1.1`. They may clarify layout and presentation but may not change the locked functional scope. Any design that introduces a new record, state, role, rule, workflow step or downstream responsibility must be rejected or handled through formal requirements change control before implementation.

@@ -3,44 +3,7 @@
 frappe.provide("kentender_strategy.ui_fixtures");
 kentender_strategy.ui_fixtures.overview = function () {
 	return `<div class="kt-str-root" data-testid="kt-str-overview">
-<!-- Compact Plan Workspace Header -->
-<header class="mb-section-gap" data-testid="kt-str-plan-chrome">
-<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
-<div>
-<span class="font-data-mono text-data-mono text-primary bg-primary-fixed px-2 py-0.5 rounded text-xs" data-kt-str-plan-code>MOH-SP-2026-2030</span>
-<h1 class="font-headline-lg text-headline-lg text-on-surface mt-2" data-kt-str-plan-title>Ministry of Health Strategic Plan 2026–2030</h1>
-<div class="flex items-center gap-4 mt-2">
-<span class="inline-flex items-center gap-1.5 py-1 px-3 rounded-full bg-status-available/10 text-status-available text-xs font-bold uppercase tracking-wider" data-kt-str-plan-status-pill>
-<span class="w-1.5 h-1.5 rounded-full bg-status-available" data-kt-str-plan-status-dot></span>
-<span data-kt-str-plan-status>Active</span>
-                        </span>
-<div class="h-4 w-px bg-outline-variant"></div>
-<p class="text-on-surface-variant font-body-md flex items-center gap-2">
-<span class="material-symbols-outlined text-[18px]">calendar_today</span>
-<span data-kt-str-plan-period>Effective 1 July 2026 – 30 June 2030</span>
-                        </p>
-<div class="h-4 w-px bg-outline-variant"></div>
-<p class="text-on-surface-variant font-body-md" data-kt-str-plan-version>Version 1</p>
-</div>
-</div>
-<div class="flex flex-wrap items-center gap-3">
-<button type="button" class="flex items-center gap-2 px-4 py-2 border border-outline-variant text-primary font-body-md rounded-lg hover:bg-surface-container-low transition-colors">
-<span class="material-symbols-outlined" style="font-size: 20px;">download</span> Export Plan
-</button>
-<button type="button" class="px-6 py-2.5 bg-primary text-white font-bold text-body-md rounded-lg hover:bg-primary/90 transition-all shadow-sm" data-kt-str-action="open-successor-modal" data-testid="kt-str-create-successor">Create successor version</button>
-</div>
-</div>
-<!-- Workspace Tabs -->
-<div class="mt-8 flex gap-8 border-b border-outline-variant" data-testid="kt-str-plan-tabs">
-<button type="button" class="kt-str-tab pb-3 text-primary font-bold font-body-md border-b-2 border-primary relative is-active" data-kt-str-tab="strategy-plan-overview">Overview</button>
-<button type="button" class="kt-str-tab pb-3 text-on-surface-variant font-body-md hover:text-on-surface transition-colors" data-kt-str-tab="strategy-plan-structure">Structure</button>
-<button type="button" class="kt-str-tab pb-3 text-on-surface-variant font-body-md hover:text-on-surface transition-colors" data-kt-str-tab="strategy-plan-value-commitments">Value Commitments</button>
-<button type="button" class="kt-str-tab pb-3 text-on-surface-variant font-body-md hover:text-on-surface transition-colors" data-kt-str-tab="strategy-plan-measurements">Measurement</button>
-<button type="button" class="kt-str-tab pb-3 text-on-surface-variant font-body-md hover:text-on-surface transition-colors" data-kt-str-tab="strategy-plan-downstream-usage">Downstream Usage</button>
-<button type="button" class="kt-str-tab pb-3 text-on-surface-variant font-body-md hover:text-on-surface transition-colors" data-kt-str-tab="strategy-plan-review">Review</button>
-<button type="button" class="kt-str-tab pb-3 text-on-surface-variant font-body-md hover:text-on-surface transition-colors" data-kt-str-tab="strategy-plan-audit">Audit</button>
-</div>
-</header>
+<!-- Plan chrome injected by strategy_alignment_shell.planChromeHtml -->
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-section-gap" data-testid="kt-str-overview-bento">
 <!-- Left Column: Primary Details -->
 <div class="lg:col-span-8 space-y-section-gap" data-kt-str-overview-main="1">

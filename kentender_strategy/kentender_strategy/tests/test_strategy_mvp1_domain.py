@@ -19,7 +19,10 @@ from kentender_strategy.services.strategy_contracts import (
 	validate_strategy_reference,
 )
 from kentender_strategy.services.strategy_domain_guards import CODE_RE
-from kentender_strategy.services.strategy_measurement import derive_measurement_result
+from kentender_strategy.services.strategy_measurement import (
+	compute_measurement_result,
+	derive_measurement_result,
+)
 from kentender_strategy.services.strategy_permissions import ensure_strategy_roles
 from kentender_strategy.services.strategy_readiness import get_plan_readiness
 from kentender_strategy.services.strategy_transitions import transition_plan
@@ -116,6 +119,37 @@ class TestStrategyMvp1Domain(FrappeTestCase):
 		doc.actual_numeric = 99.96
 		derive_measurement_result(doc)
 		self.assertEqual(doc.result_status, "On track")
+
+	def test_compute_measurement_result_pure(self):
+		"""Live Submit preview uses the same pure rules as save-time derivation."""
+		at_risk = compute_measurement_result(
+			measurement_type="Percentage",
+			comparison_direction="At least",
+			target_numeric=99.9,
+			tolerance_value=0.1,
+			actual_numeric=99.82,
+		)
+		self.assertEqual(at_risk["result_status"], "At risk")
+		self.assertAlmostEqual(at_risk["variance"], 99.82 - 99.9, places=4)
+
+		on_track = compute_measurement_result(
+			measurement_type="Percentage",
+			comparison_direction="At least",
+			target_numeric=99.9,
+			tolerance_value=0.1,
+			actual_numeric=99.96,
+		)
+		self.assertEqual(on_track["result_status"], "On track")
+
+		empty = compute_measurement_result(
+			measurement_type="Percentage",
+			comparison_direction="At least",
+			target_numeric=99.9,
+			tolerance_value=0.1,
+			actual_numeric=None,
+		)
+		self.assertEqual(empty["result_status"], "No data")
+		self.assertIsNone(empty["variance"])
 
 	def test_list_measurements(self):
 		dto = list_measurements(plan_code=STRATEGY_PLAN_CODE)

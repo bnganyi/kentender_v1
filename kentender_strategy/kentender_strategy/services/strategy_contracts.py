@@ -187,6 +187,7 @@ def list_strategy_plans(
 				"status": r.status,
 				"start_date": r.start_date,
 				"end_date": r.end_date,
+				"effective_period_label": _format_effective_period(r.start_date, r.end_date),
 				**attn,
 			}
 		)
@@ -262,6 +263,28 @@ def get_strategy_portfolio(procuring_entity: str | None = None) -> dict:
 	}
 
 
+def _my_work_meas_key(row) -> tuple:
+	"""Collapse My Work by plan + target (not each measurement period row)."""
+	return (
+		row.get("plan_code") or "",
+		row.get("performance_target") or "",
+		row.get("target_code") or "",
+	)
+
+
+def _collapse_my_work_meas(rows: list) -> list[tuple[Any, int]]:
+	"""Keep first row per plan/target; return (row, count)."""
+	grouped: dict[tuple, dict[str, Any]] = {}
+	order: list[tuple] = []
+	for row in rows:
+		key = _my_work_meas_key(row)
+		if key not in grouped:
+			grouped[key] = {"row": row, "count": 0}
+			order.append(key)
+		grouped[key]["count"] += 1
+	return [(grouped[k]["row"], grouped[k]["count"]) for k in order]
+
+
 def _my_work(pe: str | None) -> list[dict]:
 	items: list[dict] = []
 	filters: dict[str, Any] = {"status": "Submitted"}
@@ -289,16 +312,25 @@ def _my_work(pe: str | None) -> list[dict]:
 		where {pe_sql}
 		  and m.workflow_status in ('Draft', 'Returned')
 		order by m.measurement_period_end asc
-		limit 5
+		limit 40
 		""",
 		pe_args,
 		as_dict=True,
 	)
-	for m in draft_meas:
+	for m, n in _collapse_my_work_meas(draft_meas):
+		code = m.target_code or "target"
+		plan = m.plan_code or ""
+		ref = f"{code} · {plan}" if plan else code
+		label = (
+			f"Submit measurement ({ref})"
+			if n == 1
+			else f"Submit measurements ({ref}) · {n}"
+		)
 		items.append(
 			{
 				"type": "submit_measurement",
-				"label": f"Submit measurement ({m.target_code or 'target'})",
+				"label": label,
+				"count": n,
 				"target": _ref(m.performance_target, m.target_code, m.title),
 				"plan_code": m.plan_code,
 				"route": [
@@ -318,16 +350,25 @@ def _my_work(pe: str | None) -> list[dict]:
 		where {pe_sql}
 		  and m.workflow_status = 'Submitted'
 		order by m.modified desc
-		limit 5
+		limit 40
 		""",
 		pe_args,
 		as_dict=True,
 	)
-	for m in submitted_meas:
+	for m, n in _collapse_my_work_meas(submitted_meas):
+		code = m.target_code or "target"
+		plan = m.plan_code or ""
+		ref = f"{code} · {plan}" if plan else code
+		label = (
+			f"Verify measurement ({ref})"
+			if n == 1
+			else f"Verify measurements ({ref}) · {n}"
+		)
 		items.append(
 			{
 				"type": "verify_measurement",
-				"label": f"Verify measurement ({m.target_code or 'target'})",
+				"label": label,
+				"count": n,
 				"target": _ref(m.performance_target, m.target_code, m.title),
 				"plan_code": m.plan_code,
 				"route": [
@@ -348,16 +389,26 @@ def _my_work(pe: str | None) -> list[dict]:
 		  and m.workflow_status = 'Verified'
 		  and m.result_status in ('At risk', 'Off track')
 		order by m.measurement_period_end desc
-		limit 5
+		limit 40
 		""",
 		pe_args,
 		as_dict=True,
 	)
-	for m in risk:
+	for m, n in _collapse_my_work_meas(risk):
+		code = m.target_code or "target"
+		plan = m.plan_code or ""
+		ref = f"{code} · {plan}" if plan else code
+		status = (m.result_status or "at risk").lower()
+		label = (
+			f"Resolve {status} target ({ref})"
+			if n == 1
+			else f"Resolve {status} target ({ref}) · {n}"
+		)
 		items.append(
 			{
 				"type": "resolve_target",
-				"label": f"Resolve {m.result_status.lower()} target ({m.target_code or 'target'})",
+				"label": label,
+				"count": n,
 				"target": _ref(m.performance_target, m.target_code, m.title),
 				"plan_code": m.plan_code,
 				"route": ["strategy-corrective-actions", m.plan_code],
@@ -666,11 +717,12 @@ def _open_successor_exists(plan_code: str, procuring_entity: str) -> bool:
 
 
 def _format_effective_period(start, end) -> str | None:
+	"""Compact period for tables/headers (e.g. 01-Jul-2026 - 30-Jun-2030)."""
 	if not start or not end:
 		return None
 	sd = frappe.utils.getdate(start)
 	ed = frappe.utils.getdate(end)
-	return f"{sd.day} {sd.strftime('%B %Y')} – {ed.day} {ed.strftime('%B %Y')}"
+	return f"{sd.strftime('%d-%b-%Y')} - {ed.strftime('%d-%b-%Y')}"
 
 
 def _period_label(start, end) -> str | None:
@@ -971,9 +1023,49 @@ def list_applicable_value_commitments(
 	return out
 
 
+def _usage_target_ref(target_id: str | None, snapshot_label: str | None = None) -> dict | None:
+	if not target_id:
+		return None
+	tgt = frappe.db.get_value(
+		"Performance Target",
+		target_id,
+		["name", "target_code", "title"],
+		as_dict=True,
+	)
+	if not tgt:
+		# Prefer snapshot label text when target row is gone.
+		return _ref(target_id, None, snapshot_label)
+	return _ref(tgt.name, tgt.target_code, tgt.title or snapshot_label)
+
+
+def _usage_row(
+	*,
+	module: str,
+	doctype: str,
+	record_id: str,
+	code: str | None,
+	name: str | None,
+	target_id: str | None,
+	snapshot_label: str | None,
+	reference_type: str,
+	status: str | None,
+	modified,
+) -> dict:
+	return {
+		"module": module,
+		"doctype": doctype,
+		"record": _ref(record_id, code, name),
+		"target": _usage_target_ref(target_id, snapshot_label),
+		"reference_type": reference_type,
+		"status": status or "—",
+		"modified": str(modified) if modified else None,
+		"snapshot_label": snapshot_label,
+	}
+
+
 def get_strategy_usage(plan_version: str | None = None, plan_code: str | None = None) -> dict:
+	"""STR-UI-12 / STR-AC-017 — derived read-only downstream references."""
 	plan = _resolve_plan(plan_version, plan_code)
-	# Derived usage: look for Strategy Reference-like fields if present; otherwise empty groups
 	groups = {
 		"Budget": [],
 		"Demand": [],
@@ -983,31 +1075,87 @@ def get_strategy_usage(plan_version: str | None = None, plan_code: str | None = 
 		"Asset": [],
 		"Disposal": [],
 	}
+	rows: list[dict] = []
+
 	if frappe.db.has_column("Demand", "strategy_plan_version"):
 		for d in frappe.get_all(
 			"Demand",
 			filters={"strategy_plan_version": plan.name},
-			fields=["name", "demand_id", "title"],
-			limit=50,
+			fields=[
+				"name",
+				"demand_id",
+				"title",
+				"status",
+				"modified",
+				"strategy_target",
+				"strategy_snapshot_label",
+			],
+			limit=100,
+			order_by="modified desc",
 		):
-			groups["Demand"].append(
-				{"id": d.name, "code": d.demand_id or d.name, "name": d.title or d.name}
+			row = _usage_row(
+				module="Demand",
+				doctype="Demand",
+				record_id=d.name,
+				code=d.demand_id,
+				name=d.title,
+				target_id=d.strategy_target,
+				snapshot_label=d.strategy_snapshot_label,
+				reference_type="Primary alignment",
+				status=d.status,
+				modified=d.modified,
 			)
+			groups["Demand"].append(row)
+			rows.append(row)
+
 	if frappe.db.has_column("Budget Line", "strategy_plan_version"):
 		for b in frappe.get_all(
 			"Budget Line",
 			filters={"strategy_plan_version": plan.name},
-			fields=["name", "budget_line_code", "budget_line_name"],
-			limit=50,
+			fields=[
+				"name",
+				"budget_line_code",
+				"budget_line_name",
+				"line_status",
+				"modified",
+				"strategy_target",
+				"strategy_snapshot_label",
+			],
+			limit=100,
+			order_by="modified desc",
 		):
-			groups["Budget"].append(
-				{
-					"id": b.name,
-					"code": b.budget_line_code or b.name,
-					"name": b.budget_line_name or b.name,
-				}
+			row = _usage_row(
+				module="Budget",
+				doctype="Budget Line",
+				record_id=b.name,
+				code=b.budget_line_code,
+				name=b.budget_line_name,
+				target_id=b.strategy_target,
+				snapshot_label=b.strategy_snapshot_label,
+				reference_type="Supporting alignment",
+				status=b.line_status,
+				modified=b.modified,
 			)
-	return {"plan": _ref(plan.name, plan.plan_code, plan.title), "groups": groups}
+			groups["Budget"].append(row)
+			rows.append(row)
+
+	# Stable table order: module then modified desc already applied per query; merge Demand then Budget.
+	counts = {mod: len(groups[mod]) for mod in groups}
+	return {
+		"plan": {
+			"id": plan.name,
+			"code": plan.plan_code,
+			"name": plan.title,
+			"status": plan.status,
+			"version_number": plan.version_number,
+			"start_date": str(plan.start_date) if plan.start_date else None,
+			"end_date": str(plan.end_date) if plan.end_date else None,
+			"effective_period_label": _format_effective_period(plan.start_date, plan.end_date),
+		},
+		"counts": counts,
+		"rows": rows,
+		"groups": groups,
+	}
 
 
 def _format_measurement_period_label(start, end) -> str | None:

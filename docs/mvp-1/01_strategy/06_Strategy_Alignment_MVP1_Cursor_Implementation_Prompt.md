@@ -1,10 +1,10 @@
 # Strategy Alignment — MVP 1 Cursor Implementation Prompt
 
-**Document ID:** STRATEGY-MVP1-CURSOR-1.0  
+**Document ID:** STRATEGY-MVP1-CURSOR-1.1  
 **Status:** Implementation input  
-**Date:** 2 August 2026  
-**Requirements baseline:** `STRATEGY-MVP1-REQ-1.0` — Locked and approved  
-**Design baseline:** Approved Stitch outputs for `STR-UI-01` through `STR-UI-14`  
+**Date:** 3 August 2026  
+**Requirements baseline:** `STRATEGY-MVP1-REQ-1.1` — Locked and approved  
+**Design baseline:** Approved Stitch outputs for `STR-UI-01` through `STR-UI-15`  
 **Application:** KenTender  
 **Module:** Strategy Alignment  
 **Implementation strategy:** Clean rebuild inside the existing Strategy application boundary
@@ -21,7 +21,7 @@ Do not merge the two passes. The pause is a deletion-safety gate, not a request 
 Before Prompt A, make the following inputs available to Cursor in the repository or its context:
 
 - `Strategy_Alignment_MVP1_Requirements.md`
-- Approved Stitch screen outputs for `STR-UI-01` through `STR-UI-14`
+- Approved Stitch screen outputs for `STR-UI-01` through `STR-UI-15`
 - Existing repository instructions and test commands
 
 `Strategy_Alignment_MVP1_Stitch_Prompts.md` may be supplied as design rationale, but it is not a substitute for the approved Stitch outputs.
@@ -36,9 +36,9 @@ Plan the clean rebuild of KenTender Strategy Alignment MVP 1.
 AUTHORITATIVE INPUTS
 
 1. Strategy_Alignment_MVP1_Requirements.md
-   - Document ID: STRATEGY-MVP1-REQ-1.0
+   - Document ID: STRATEGY-MVP1-REQ-1.1
    - Status: Locked and approved
-2. Approved Stitch outputs for screen IDs STR-UI-01 through STR-UI-14
+2. Approved Stitch outputs for screen IDs STR-UI-01 through STR-UI-15
 3. Repository-level engineering instructions and established KenTender conventions
 
 Read every authoritative input completely before planning. If the locked requirements or any approved screen required for implementation is unavailable, identify the missing input and stop. Do not infer it from legacy code.
@@ -132,6 +132,7 @@ Map the locked domain to exact proposed DocTypes/modules/services/pages. Include
 - Strategy Corrective Action
 - framework-native workflow/audit facilities where suitable
 - downstream Strategy Reference contract owned by consuming records
+- read-only Strategy Performance projection and controlled report export, without a manually maintained reporting ledger
 
 Do not add records absent from the locked requirements without identifying a concrete framework necessity.
 
@@ -144,9 +145,10 @@ State exactly how Budget, Demand and Planning will move from the old cascade to 
 - historical resolution after plan supersession;
 - applicable Plan Value Commitment retrieval;
 - read-only downstream usage in Strategy.
+- authoritative Budget, Demand, Planning, Tender and Contract inputs to Strategy Performance, with lifecycle values kept separate.
 
 F. Screen implementation map
-Map STR-UI-01 through STR-UI-14 to exact page/component/controller/service files. Confirm that the existing shell is retained and no iframe is used.
+Map STR-UI-01 through STR-UI-15 to exact page/component/controller/service files. Confirm that the existing shell is retained and no iframe is used. Treat STR-UI-15 as a separate role-driven management entry view, not an eighth Plan workspace tab.
 
 G. Execution sequence
 Give a short atomic sequence covering:
@@ -159,7 +161,7 @@ Give a short atomic sequence covering:
 7. absence searches for legacy behaviour.
 
 H. Verification matrix
-Map STR-AC-001 through STR-AC-023 and the required test matrix to exact test files or planned test files.
+Map STR-AC-001 through STR-AC-030 and the required test matrix to exact test files or planned test files.
 
 I. Risks and blockers
 Report only repository-specific blockers. Do not reopen approved product choices. Distinguish blockers from ordinary implementation work.
@@ -199,8 +201,8 @@ Do not reopen the architecture choice. Do not ask whether to preserve the legacy
 AUTHORITATIVE ORDER
 
 When resolving implementation questions, use this precedence:
-1. STRATEGY-MVP1-REQ-1.0 locked requirements
-2. Approved Stitch outputs for STR-UI-01 through STR-UI-14
+1. STRATEGY-MVP1-REQ-1.1 locked requirements
+2. Approved Stitch outputs for STR-UI-01 through STR-UI-15
 3. Approved impact-and-deletion plan from Prompt A
 4. Current repository engineering conventions
 5. Legacy code only as dependency evidence
@@ -237,7 +239,12 @@ The completed implementation must contain none of the following in an active MVP
 - editable Approved, Active or Verified records;
 - manually editable downstream usage counts;
 - arbitrary formula, script or compound-rule builders;
-- strategy scores, weights, rankings, grades or pass/fail labels.
+- strategy scores, weights, rankings, grades or pass/fail labels;
+- manually editable Strategy Performance values or reporting totals;
+- summing Budget, Demand, Plan, Tender and Contract values as if lifecycle stages are additive;
+- treating downstream consideration as verified public-value achievement;
+- unverified savings, cost avoidance, benefits, forecasts or causal procurement claims;
+- silent omission of unavailable or stale management-reporting sources.
 
 IMPLEMENTATION REQUIREMENTS
 
@@ -262,7 +269,7 @@ Implement separate governed records for:
 - Performance Measurement as time-series actual evidence;
 - Strategy Corrective Action.
 
-Use the exact fields, controlled values, constraints and state models in sections 6–13 of STRATEGY-MVP1-REQ-1.0. Do not merge concepts to reduce table count.
+Use the exact fields, controlled values, constraints and state models in sections 6–13 of STRATEGY-MVP1-REQ-1.1. Do not merge concepts to reduce table count.
 
 2. Immutability, versioning and history
 
@@ -359,6 +366,8 @@ Implement and permission-test:
 - `get_strategy_usage`
 - `list_measurements`
 - `get_strategy_portfolio`
+- `get_strategy_performance`
+- `export_strategy_performance_report`
 
 Follow repository naming conventions only where they do not change contract semantics.
 
@@ -385,6 +394,51 @@ New selections use effective Active targets only. Historical valid references re
 
 Do not create a manually maintained Strategy-owned usage register when authoritative consuming records can derive the usage.
 
+7.1 Strategy Performance management projection
+
+Implement Strategy Performance as a read-only, server-derived projection for the authorised entity, Active plan and reporting period. Do not create editable reporting totals or a separate shadow data warehouse for MVP 1.
+
+Role routing and access:
+- Strategy Viewer is the read-only management/senior-stakeholder profile and opens Strategy Performance by default.
+- Authorised operational roles may open Strategy Performance and switch to the Strategy Portfolio.
+- Strategy Viewer receives no plan create/edit/review/approval, measurement submission or evidence-management action.
+- Enforce entity and report-export permissions server-side.
+- Showing a derived status must not grant access to restricted underlying evidence.
+
+Performance derivation:
+- Use the latest applicable Verified measurement for each target and reporting period.
+- Return On track, At risk, Off track, Not due and No data distributions without a composite score.
+- Derive Outcome `Needs attention` when any current target is At risk, Off track or overdue without required data, while returning the underlying distribution.
+- Keep missing/overdue, Returned and Rejected measurement workflow exceptions separate from Verified performance results.
+- Return open and overdue corrective actions with owner, due date and authorised drill-down.
+- A trend/direction may compare the current reporting period with the preceding equivalent period only; it is not a forecast.
+
+Procurement contribution:
+- Include only records with valid Strategy alignment references.
+- Return Budget, approved Demand, approved Procurement Plan, Tender and Contract counts and values as separate lifecycle-stage measures.
+- Never sum lifecycle-stage values into one procurement total.
+- Calculate a funding gap or headroom only when budget and aligned demand/plan values have comparable period, currency and scope; return the calculation basis.
+- Do not claim that aligned procurement caused a strategic result.
+- Do not claim savings, cost avoidance or benefit achievement without an authoritative approved baseline, method and verified downstream value.
+
+Public-value reporting:
+- Report whether Required, Recommended or Available commitments were addressed in authorised downstream Value Cases.
+- Keep `Addressed`, `Treated` and `Excluded with approval` separate from achievement.
+- Report achievement only where a linked Verified target measurement or another authoritative verified outcome record exists.
+- Return Required commitments with missing treatment or exclusion decisions as management exceptions; do not convert them into automatic tender criteria.
+
+Lineage and freshness:
+- Every projection response must include applied filters, reporting period, `as_at`, source coverage and unavailable/stale-source indicators.
+- Every summary must drill down to the contributing target, measurement, corrective action or authorised downstream reference.
+- If a source is unavailable, explicitly exclude and label it; do not present incomplete totals as complete.
+- Use bounded aggregate queries and avoid per-target or per-downstream-record query loops.
+
+Report export:
+- Export the current authorised filtered projection, not a separately recomputed unscoped dataset.
+- Include filters, reporting period, generation timestamp, `as_at`, source coverage and traceable references.
+- Prevent formula injection and unsafe data exposure in tabular exports.
+- Do not add an export declaration or confirmation step.
+
 8. User interface
 
 Implement all approved designs:
@@ -402,12 +456,14 @@ Implement all approved designs:
 - STR-UI-12 Downstream Usage
 - STR-UI-13 Readiness and Review
 - STR-UI-14 Audit History
+- STR-UI-15 Strategy Performance
 
 UI rules:
 - retain the real KenTender Procurement rail, breadcrumb/header and account controls;
 - use dedicated live Desk pages/components, not raw DocType lists as the primary experience;
 - port the approved Stitch content-area design into maintainable application code;
 - keep exactly these Plan workspace tabs: Overview, Structure, Value Commitments, Measurement, Downstream Usage, Review and Audit;
+- implement Strategy Performance as a separate management entry view and never as an eighth Plan workspace tab;
 - use a typed hierarchy tree and one adjacent detail region/drawer;
 - show code and title together;
 - use compact tables for catalogue, measurements, actions, usage and audit;
@@ -419,6 +475,11 @@ UI rules:
 - implement empty, loading, returned, read-only, no-permission and error states;
 - implement keyboard navigation, visible focus, accessible labels and adequate contrast;
 - do not add decorative dashboards, card walls, nested accordions, unapproved charts or extra tabs.
+- keep management outcome results, workflow exceptions and corrective-action exceptions distinct;
+- label procurement contribution by lifecycle stage and show the non-additivity note;
+- distinguish public-value treatment from verified achievement;
+- show reporting context, `As at`, source coverage and drill-downs;
+- implement unavailable-source and no-Verified-measurement states without silently showing incomplete totals.
 
 The UI must render live API data. Fixture values must not be embedded in page controllers or templates.
 
@@ -439,6 +500,7 @@ At minimum seed:
 - October 2027 verified 99.96% On track measurement;
 - the storage-controller corrective action, completed and verified;
 - affected Budget, Demand and Planning references using the new Strategy Reference contract.
+- sufficient illustrative targets, measurements, corrective actions and authorised downstream references to exercise Strategy Performance On track, At risk, Off track, No data, missing-treatment and lifecycle-stage contribution states without hardcoding them in the UI.
 
 Fixtures must be idempotent or use the repository’s established deterministic reset pattern. They are illustrative and must not be presented as statutory thresholds.
 
@@ -452,7 +514,7 @@ Implement the scoped notifications/work queues in section 17. Links must open th
 
 11. Tests
 
-Implement the full section 22 test matrix and map tests to STR-AC-001 through STR-AC-023.
+Implement the full section 22 test matrix and map tests to STR-AC-001 through STR-AC-030.
 
 Required coverage includes:
 - domain constraints and cross-version rejection;
@@ -468,7 +530,15 @@ Required coverage includes:
 - Active-only selection and historical reference resolution;
 - tree ordering and typed path DTOs;
 - derived usage and portfolio counts;
-- all fourteen core screens and their essential states;
+- all fifteen core screens and their essential states;
+- Strategy Performance result distributions, Outcome attention derivation and preceding-period direction;
+- distinct workflow, verified-result and corrective-action exceptions;
+- lifecycle-stage contribution without double counting;
+- funding comparison guards for period, currency and scope;
+- public-value treatment versus verified achievement;
+- Strategy Viewer default route, read-only controls and entity/API restrictions;
+- management report filters, source coverage, lineage, export permission and export-safety behaviour;
+- unavailable/stale-source and empty-period states;
 - Budget, Demand, Planning and Home regression where affected;
 - repeatable Ministry of Health fixture execution.
 
@@ -507,10 +577,12 @@ For every remaining match, state why it is valid. Comments, documentation or mig
 DEFINITION OF DONE
 
 The work is complete only when:
-- all STR-AC-001 through STR-AC-023 pass;
+- all STR-AC-001 through STR-AC-030 pass;
 - required backend, permission, service, browser and regression tests pass;
-- all fourteen approved screens are implemented and API-driven;
+- all fifteen approved screens are implemented and API-driven;
 - Budget, Demand and Planning use the new reference contract;
+- Strategy Performance is read-only, entity-scoped, traceable and derived from Verified Strategy data plus authoritative aligned procurement records;
+- management reporting does not double count lifecycle values or equate consideration with achievement;
 - the Ministry of Health fixture loads repeatably;
 - the active code contains no prohibited legacy pattern;
 - no unrelated file or data has been changed;
@@ -522,10 +594,10 @@ Return a concise evidence-based report containing:
 1. Outcome summary.
 2. Domain records created, replaced and deleted.
 3. Services and downstream integrations implemented.
-4. Screen-ID-to-file mapping for STR-UI-01 through STR-UI-14.
+4. Screen-ID-to-file mapping for STR-UI-01 through STR-UI-15.
 5. Data reset and fixture result.
 6. Tests run, with exact pass/fail counts and commands.
-7. STR-AC-001 through STR-AC-023 result table.
+7. STR-AC-001 through STR-AC-030 result table.
 8. Legacy-absence search results.
 9. Changed-file summary.
 10. Any remaining blocker. Do not classify ordinary deferred backlog from the locked requirements as an implementation blocker.
@@ -553,8 +625,16 @@ Perform these checks before accepting the implementation:
 12. Open Downstream Usage and confirm counts/records are derived and read-only.
 13. Supersede a plan and confirm existing Budget/Demand/Planning snapshots remain readable while new selectors show only Active targets.
 14. Test a user from another entity through both the UI and direct API request.
-15. Compare all fourteen screens with the approved Stitch outputs.
-16. Review Cursor’s changed-file and legacy-absence reports before merging.
+15. Open Strategy Performance as Strategy Viewer and confirm it is the default read-only view with no maintenance actions.
+16. Reconcile target distributions against Verified measurements and confirm workflow exceptions remain separate.
+17. Drill from an Outcome to its targets, measurements, corrective actions and authorised downstream references.
+18. Confirm Budget, Demand, Plan, Tender and Contract values remain separate and are never summed.
+19. Confirm a funding comparison appears only for matching period, currency and scope and exposes its basis.
+20. Confirm public-value treatment is not labelled as achievement without Verified outcome evidence.
+21. Simulate an unavailable source and confirm the page and export disclose the exclusion.
+22. Export a filtered management report and confirm filters, period, generation time, source coverage and references are present.
+23. Compare all fifteen screens with the approved Stitch outputs.
+24. Review Cursor’s changed-file and legacy-absence reports before merging.
 
 ## 3. Change-control rule
 

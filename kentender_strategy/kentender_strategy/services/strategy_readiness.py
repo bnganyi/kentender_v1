@@ -6,6 +6,21 @@ from __future__ import annotations
 import frappe
 from frappe import _
 
+from kentender_strategy.services.strategy_permissions import (
+	can_approve_plan,
+	can_review_plan,
+	can_submit_plan,
+)
+
+
+def _chrome_effective_period(start, end) -> str | None:
+	"""Compact period for shared plan chrome (keep local — avoid contracts circular import)."""
+	if not start or not end:
+		return None
+	sd = frappe.utils.getdate(start)
+	ed = frappe.utils.getdate(end)
+	return f"{sd.strftime('%d-%b-%Y')} - {ed.strftime('%d-%b-%Y')}"
+
 
 def get_plan_readiness(plan_name: str) -> dict:
 	plan = frappe.get_doc("Strategic Plan", plan_name)
@@ -260,15 +275,42 @@ def get_plan_readiness(plan_name: str) -> dict:
 		grouped.setdefault(issue["group"], []).append(issue)
 
 	blockers = [i for i in issues if i["severity"] == "blocker"]
+	ready = len(blockers) == 0
 	return {
-		"plan": _ref(plan.name, plan.plan_code, plan.title),
+		"plan": {
+			**_ref(plan.name, plan.plan_code, plan.title),
+			"status": plan.status,
+			"version_number": plan.version_number,
+			"start_date": str(plan.start_date) if plan.start_date else None,
+			"end_date": str(plan.end_date) if plan.end_date else None,
+			"effective_period_label": _chrome_effective_period(plan.start_date, plan.end_date),
+		},
 		"status": plan.status,
-		"ready": len(blockers) == 0,
+		"ready": ready,
 		"blocker_count": len(blockers),
 		"warning_count": len([i for i in issues if i["severity"] == "warning"]),
 		"issues": issues,
 		"grouped": grouped,
+		"return_reason": plan.get("return_reason") or "",
+		"allowed_actions": _allowed_actions(plan.status, ready),
 	}
+
+
+def _allowed_actions(status: str, ready: bool) -> list[str]:
+	"""§11.1 actions visible for current user (server still enforces on transition)."""
+	actions: list[str] = []
+	if status == "Draft" and ready and can_submit_plan():
+		actions.append("Submit")
+	elif status == "Returned" and ready and can_submit_plan():
+		actions.append("Resubmit")
+	elif status == "Submitted":
+		if can_review_plan():
+			actions.append("Return for correction")
+		if can_approve_plan():
+			actions.append("Approve")
+	elif status == "Approved" and can_approve_plan():
+		actions.append("Activate")
+	return actions
 
 
 def assert_plan_ready_for_submit(plan_name: str) -> None:

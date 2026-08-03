@@ -101,6 +101,7 @@
 .kt-cl-shell .kt-str-root .p-6{padding: 1.5rem !important}
 .kt-cl-shell .kt-str-root .p-8{padding: 2rem !important}
 .kt-cl-shell .kt-str-root .px-8{padding-left: 2rem !important; padding-right: 2rem !important}
+.kt-cl-shell .kt-str-root .pt-4{padding-top: 1rem !important}
 .kt-cl-shell .kt-str-root .pt-6{padding-top: 1.5rem !important}
 .kt-cl-shell .kt-str-root .pb-8{padding-bottom: 2rem !important}
 .kt-cl-shell .kt-str-root .pl-9{padding-left: 2.25rem !important}
@@ -135,7 +136,7 @@
 .kt-cl-shell .kt-str-root .text-body-md{font-size: 0.875rem !important; line-height: 1.45 !important}
 .kt-cl-shell .kt-str-root .text-data-mono{font-size: 0.8125rem !important; font-family: "JetBrains Mono", ui-monospace, monospace !important}
 .kt-cl-shell .kt-str-root .text-error{color: #ba1a1a !important}
-.kt-cl-shell .kt-str-root .text-headline-lg{font-size: 1.75rem !important; line-height: 1.25 !important; font-weight: 700 !important}
+.kt-cl-shell .kt-str-root .text-headline-lg{font-size: 28px !important; line-height: 36px !important; font-weight: 700 !important; letter-spacing: -0.02em !important}
 /* Stitch token: headline-md = 22px / 30px / 600 */
 .kt-cl-shell .kt-str-root .text-headline-md{font-size: 22px !important; line-height: 30px !important; font-weight: 600 !important}
 .kt-cl-shell .kt-str-root .text-headline-sm{font-size: 1.125rem !important; line-height: 1.3 !important; font-weight: 600 !important}
@@ -209,6 +210,27 @@
 .kt-cl-shell .kt-str-root [data-testid="kt-str-vc-drawer"].is-open {
   transform: translateX(0) !important;
   pointer-events: auto !important;
+}
+/* Keep Pillar/Source equal and clear of the drawer scrollbar track. */
+.kt-cl-shell .kt-str-root [data-testid="kt-str-vc-drawer-scroll"] {
+  scrollbar-gutter: stable !important;
+  padding-right: 0.25rem !important;
+}
+.kt-cl-shell .kt-str-root [data-testid="kt-str-vc-drawer-filters"] {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 0.5rem !important;
+  width: 100% !important;
+}
+.kt-cl-shell .kt-str-root [data-kt-str-vc-drawer-pillar],
+.kt-cl-shell .kt-str-root [data-kt-str-vc-drawer-source] {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+.kt-cl-shell .kt-str-root .min-w-0 {
+  min-width: 0 !important;
 }
 /* Overlay only — do not shrink the canvas (Stitch used padding-right; that squashes the table). */
 .kt-cl-shell .kt-str-root [data-testid="kt-str-vc-canvas"].drawer-open {

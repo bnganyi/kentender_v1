@@ -4,11 +4,11 @@ frappe.provide("kentender_strategy.ui_fixtures");
 kentender_strategy.ui_fixtures.value_commitments = function () {
 	return `<div class="kt-str-root kt-str-vc-root" data-testid="kt-str-value-commitments">
 <!-- Canvas -->
-<div class="flex-1 px-8 pt-6 pb-8 max-w-[1400px] transition-all duration-300" id="main-canvas" data-testid="kt-str-vc-canvas">
-<header class="mb-section-gap flex justify-between items-start" data-testid="kt-str-vc-header">
-<div class="max-w-3xl">
-<h2 class="font-headline-md text-headline-md text-primary mb-2">Plan value commitments</h2>
-<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">Select the public-value objectives this plan will carry forward and connect each commitment to a strategic outcome or target.</p>
+<div class="flex-1 px-8 pt-4 pb-8 max-w-[1400px] transition-all duration-300" id="main-canvas" data-testid="kt-str-vc-canvas">
+<header class="mb-section-gap flex justify-between items-start gap-4" data-testid="kt-str-vc-header">
+<div class="min-w-0 flex-1">
+<h3 class="font-headline-md text-headline-md text-on-surface">Plan value commitments</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed mt-1">Select the public-value objectives this plan will carry forward and connect each commitment to a strategic outcome or target.</p>
 <div class="mt-4 flex items-center gap-3" data-kt-str-vc-progress>
 <div class="w-48 h-2 bg-surface-container-highest rounded-full overflow-hidden">
 <div class="h-full bg-status-available" data-kt-str-vc-progress-bar style="width:0%"></div>
@@ -16,7 +16,7 @@ kentender_strategy.ui_fixtures.value_commitments = function () {
 <span class="font-label-caps text-label-caps text-on-surface-variant" data-kt-str-vc-progress-label>0 OF 0 COMMITMENTS COMPLETE</span>
 </div>
 </div>
-<button type="button" class="bg-primary text-on-primary px-5 py-2.5 rounded-lg font-body-md font-medium hover:bg-on-primary-fixed-variant transition-colors flex items-center gap-2 shadow-sm" data-kt-str-action="add-vc" data-kt-str-vc-add>
+<button type="button" class="bg-primary text-on-primary px-5 py-2.5 rounded-lg font-body-md font-medium hover:bg-on-primary-fixed-variant transition-colors flex items-center gap-2 shadow-sm shrink-0" data-kt-str-action="add-vc" data-kt-str-vc-add>
 <span class="material-symbols-outlined text-[18px]">add</span>
                         Add commitment
                     </button>
@@ -59,17 +59,17 @@ kentender_strategy.ui_fixtures.value_commitments = function () {
 <span class="material-symbols-outlined">close</span>
 </button>
 </div>
-<div class="flex-1 overflow-y-auto">
+<div class="flex-1 overflow-y-auto" data-testid="kt-str-vc-drawer-scroll">
 <div class="p-6 border-b border-surface-container-high bg-surface-container-low/50" data-kt-str-vc-drawer-library>
 <div class="relative mb-4">
 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
 <input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg py-2 pl-9 pr-4 text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none" placeholder="Search objectives library..." type="text" data-kt-str-vc-drawer-search/>
 </div>
-<div class="flex gap-2">
-<select class="text-sm bg-surface-container-lowest border border-outline-variant rounded-md py-1.5 px-3 focus:ring-primary focus:border-primary flex-1 text-on-surface-variant outline-none" data-kt-str-vc-drawer-pillar>
+<div class="grid grid-cols-2 gap-2" data-testid="kt-str-vc-drawer-filters">
+<select class="text-sm bg-surface-container-lowest border border-outline-variant rounded-md py-1.5 px-3 focus:ring-primary focus:border-primary min-w-0 w-full text-on-surface-variant outline-none" data-kt-str-vc-drawer-pillar>
 <option value="">Pillar: All</option>
 </select>
-<select class="text-sm bg-surface-container-lowest border border-outline-variant rounded-md py-1.5 px-3 focus:ring-primary focus:border-primary flex-1 text-on-surface-variant outline-none" data-kt-str-vc-drawer-source>
+<select class="text-sm bg-surface-container-lowest border border-outline-variant rounded-md py-1.5 px-3 focus:ring-primary focus:border-primary min-w-0 w-full text-on-surface-variant outline-none" data-kt-str-vc-drawer-source>
 <option value="">Source: All</option>
 </select>
 </div>

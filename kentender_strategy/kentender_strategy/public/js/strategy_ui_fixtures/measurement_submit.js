@@ -54,21 +54,25 @@ kentender_strategy.ui_fixtures.measurement_submit = function () {
 <!-- Measurement Form -->
 <section class="data-block bg-surface-container-lowest">
 <h3 class="font-headline-sm text-headline-sm text-primary mb-6 border-b border-surface-variant pb-2">Record Measurement</h3>
-<div class="bg-surface-container p-3 rounded mb-6 flex items-start gap-3 border border-outline-variant">
+<div class="bg-surface-container p-3 rounded mb-6 flex items-start gap-3 border border-outline-variant" data-kt-str-meas-guidance>
 <span class="material-symbols-outlined text-primary mt-0.5">lightbulb</span>
+<div class="flex flex-col gap-1">
 <p class="font-body-md text-body-md text-on-surface">Ensure measurements are not duplicated for the same target and period. Only one official measurement is permitted per period unless superseding a prior record.</p>
+<p class="font-body-md text-body-md text-on-surface" data-kt-str-meas-period-hint>Measurement period must fall within the target period unless an authorised final measurement is recorded.</p>
+</div>
 </div>
 <form class="grid grid-cols-1 md:grid-cols-2 gap-section-gap" data-kt-str-meas-form>
 <div>
-<label class="block font-label-caps text-label-caps text-on-surface mb-1">Measurement Period <span class="text-error">*</span></label>
-<input class="w-full bg-surface border border-outline-variant rounded p-2 font-body-md text-body-md text-on-surface outline-none" type="text" data-kt-str-meas-period value="September 2027"/>
+<label class="block font-label-caps text-label-caps text-on-surface mb-1">Period start <span class="text-error">*</span></label>
+<input class="w-full bg-surface border border-outline-variant rounded p-2 font-body-md text-body-md text-on-surface outline-none" type="date" data-kt-str-meas-period-start value="2027-09-01"/>
 </div>
 <div>
-<label class="block font-label-caps text-label-caps text-on-surface mb-1">Measurement Date <span class="text-error">*</span></label>
-<div class="relative">
-<input class="w-full bg-surface border border-outline-variant rounded p-2 font-body-md text-body-md text-on-surface outline-none pr-10" type="text" data-kt-str-meas-date value="3 October 2027"/>
-<span class="material-symbols-outlined absolute right-3 top-1/2 transform -translate-y-1/2 text-outline">calendar_today</span>
+<label class="block font-label-caps text-label-caps text-on-surface mb-1">Period end <span class="text-error">*</span></label>
+<input class="w-full bg-surface border border-outline-variant rounded p-2 font-body-md text-body-md text-on-surface outline-none" type="date" data-kt-str-meas-period-end value="2027-09-30"/>
 </div>
+<div class="md:col-span-2">
+<label class="block font-label-caps text-label-caps text-on-surface mb-1">Measurement date <span class="text-error">*</span></label>
+<input class="w-full max-w-md bg-surface border border-outline-variant rounded p-2 font-body-md text-body-md text-on-surface outline-none" type="date" data-kt-str-meas-date value="2027-10-03"/>
 </div>
 <div class="md:col-span-2 grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 <div class="lg:col-span-1">

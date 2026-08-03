@@ -122,7 +122,7 @@
 .kt-cl-shell .kt-str-root .text-body-md{font-size: 0.875rem !important; line-height: 1.45 !important}
 .kt-cl-shell .kt-str-root .text-data-mono{font-size: 0.875rem !important; font-family: "JetBrains Mono", ui-monospace, monospace !important}
 .kt-cl-shell .kt-str-root .text-error{color: #ba1a1a !important}
-.kt-cl-shell .kt-str-root .text-headline-lg{font-size: 1.75rem !important; line-height: 1.25 !important; font-weight: 700 !important}
+.kt-cl-shell .kt-str-root .text-headline-lg{font-size: 28px !important; line-height: 36px !important; font-weight: 700 !important; letter-spacing: -0.02em !important}
 .kt-cl-shell .kt-str-root .text-headline-md{font-size: 1.375rem !important; line-height: 1.3 !important; font-weight: 700 !important}
 .kt-cl-shell .kt-str-root .text-headline-sm{font-size: 1.125rem !important; line-height: 1.3 !important; font-weight: 600 !important}
 .kt-cl-shell .kt-str-root .text-label-caps{font-size: 0.75rem !important; letter-spacing: 0.05em !important; text-transform: uppercase !important; font-weight: 700 !important}
@@ -180,6 +180,10 @@
   min-height: 28rem !important;
   overflow: hidden !important;
   width: 100% !important;
+  gap: 1rem !important;
+  padding: 24px !important; /* match former detail p-section-gap so both cards sit level */
+  align-items: stretch !important;
+  box-sizing: border-box !important;
 }
 .kt-cl-shell .kt-str-root [data-testid="kt-str-structure-tree"] {
   width: 40% !important;
@@ -187,11 +191,20 @@
   display: flex !important;
   flex-direction: column !important;
   overflow: hidden !important;
+  min-height: 0 !important;
+  background: #ffffff !important; /* surface-container-lowest */
+  border: 1px solid #c4c6d0 !important; /* outline-variant */
+  border-radius: 0.75rem !important;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
 }
 .kt-cl-shell .kt-str-root [data-testid="kt-str-structure-detail"] {
   width: 60% !important;
   min-width: 0 !important;
+  min-height: 0 !important;
   overflow-y: auto !important;
+  /* Padding lives on the split so the hierarchy card top aligns with the detail card. */
+  padding: 0 !important;
+  background: transparent !important;
 }
 .kt-cl-shell .kt-str-root [data-testid="kt-str-structure-drawer-overlay"] {
   position: fixed !important;

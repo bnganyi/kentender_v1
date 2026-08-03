@@ -1,9 +1,9 @@
 # Strategy Alignment — MVP 1 Requirements
 
-**Document ID:** STRATEGY-MVP1-REQ-1.0  
+**Document ID:** STRATEGY-MVP1-REQ-1.1  
 **Status:** Locked  
-**Date:** 2 August 2026  
-**Approved:** 2 August 2026  
+**Date:** 3 August 2026  
+**Approved:** 3 August 2026  
 **Change control:** Functional changes require a new document version  
 **Module:** Strategy Alignment  
 **Application:** KenTender  
@@ -35,6 +35,7 @@ MVP 1 shall enable a procuring entity to:
 8. Show where strategic targets and value commitments are used downstream.
 9. Preserve historical references when a plan or objective is superseded.
 10. Provide a complete approval and audit record.
+11. Provide managers and senior stakeholders with a read-only, value-driven view of strategic performance, procurement contribution, public-value treatment and exceptions requiring intervention.
 
 ## 3. Design principles
 
@@ -48,6 +49,7 @@ MVP 1 shall enable a procuring entity to:
 8. **System intelligence should be derived.** Users shall not manually recreate cycle-time, usage or coverage reports that the system can calculate.
 9. **Simple structured rules take precedence over configurable scripting.** MVP 1 shall not include an arbitrary formula or rules engine.
 10. **The user interface shall optimise for comprehension and completion, not expose the underlying tables.**
+11. **Management reporting shall distinguish evidence from inference.** The system shall show verified outcomes and authoritative procurement references without claiming that procurement caused an outcome or summing overlapping lifecycle values.
 
 ## 4. Scope
 
@@ -67,6 +69,7 @@ MVP 1 shall enable a procuring entity to:
 - Downstream strategy-reference APIs
 - Applicable-value-commitment APIs
 - Downstream usage and alignment-coverage views
+- Strategy Performance management view and controlled report export
 - Readiness validation
 - Role and permission controls
 - Audit history
@@ -88,6 +91,9 @@ MVP 1 shall enable a procuring entity to:
 - Public disclosure of strategy records
 - Complex weighted strategy scoring
 - Automatic adverse action based on target underperformance
+- Predictive management analytics or automated management recommendations
+- Causal attribution of strategic outcomes to procurement without verified supporting evidence
+- Unverified savings, benefits or cost-avoidance claims
 
 ## 5. Terminology
 
@@ -262,6 +268,29 @@ Changing this list is an administrative configuration change. A pillar does not 
 | STR-FR-122 | The portfolio shall identify Active targets with no linked budget or demand. |
 | STR-FR-123 | The portfolio shall identify downstream records with invalid or superseded references only where remediation is required; valid historical references shall not be flagged. |
 | STR-FR-124 | No spend or benefit shall be attributed to a target without a valid alignment reference. |
+
+### 7.12 Management monitoring and reporting
+
+| ID | Requirement |
+|---|---|
+| STR-FR-130 | Strategy Alignment shall provide a read-only Strategy Performance view for managers and senior stakeholders, separate from the plan-maintenance workspace. |
+| STR-FR-131 | Strategy Viewer shall act as the read-only management/stakeholder profile and shall open Strategy Performance by default; authorised operational roles may switch between Strategy Performance and the Strategy Portfolio. |
+| STR-FR-132 | The view shall be scoped by the user's entity or cross-entity authority and shall support filters for Active plan, reporting period, Programme and Sub-programme where used. |
+| STR-FR-133 | The view shall show target-result distributions derived from the latest applicable Verified measurements: On track, At risk, Off track, Not due and No data. |
+| STR-FR-134 | An Outcome summary shall show its target-status distribution and use `Needs attention` when any current target is At risk, Off track or overdue without required data; it shall not conceal the underlying distribution behind a score. |
+| STR-FR-135 | The view shall identify missing, overdue, Returned and Rejected measurements separately from verified performance results. |
+| STR-FR-136 | The view shall show open and overdue Strategy Corrective Actions, their owners, due dates and direct review links. |
+| STR-FR-137 | Procurement contribution shall be derived only from valid alignment references and shall show Budget, Demand, Planning, Tender and Contract counts and values by outcome or target where authoritative data exists. |
+| STR-FR-138 | Values from different procurement lifecycle stages shall be labelled separately and shall not be summed as if they were additive. |
+| STR-FR-139 | A funding gap may be shown only where approved budget and aligned approved demand or plan values are comparable by period, currency and scope; the calculation basis shall be visible. |
+| STR-FR-140 | The view shall not claim savings, cost avoidance, benefits or causal outcome contribution unless an authoritative downstream record provides an approved baseline, method and verified value. |
+| STR-FR-141 | Public-value reporting shall distinguish consideration from achievement: downstream Value Case treatment shows whether a commitment was addressed, while achievement requires a linked Verified target measurement or another authoritative verified outcome record. |
+| STR-FR-142 | The view shall show Required Plan Value Commitments with missing downstream treatment or approved exclusions as exceptions requiring review, without treating them as automatic tender criteria. |
+| STR-FR-143 | Every management metric shall support drill-down to the contributing targets, measurements, corrective actions or authorised downstream references. |
+| STR-FR-144 | The view shall display an `As at` timestamp and source-coverage note so users can identify unavailable or stale contributing modules. |
+| STR-FR-145 | Authorised users may export the current filtered Strategy Performance view as a controlled management report containing filter context, generation time, source coverage and traceable record references. |
+| STR-FR-146 | Performance data, procurement contribution and management reports shall be system-derived and shall not be editable from Strategy Performance. |
+| STR-FR-147 | Strategy Performance shall not duplicate generic platform Analytics; it shall remain limited to strategy outcomes, targets, public-value commitments, procurement alignment and required management intervention. |
 
 ## 8. Controlled enforcement-guidance routes
 
@@ -544,8 +573,12 @@ Result status is calculated independently after submission and confirmed at veri
 | Verify measurements/actions | No | No | No | No | No | No | Yes | No |
 | View audit history | No | Own actions | Assigned entity | Assigned entity | Assigned authority | Own submissions | Assigned entity | Yes |
 | Export authorised data | No | No | Yes | Yes | Yes | No | Yes | Yes |
+| View Strategy Performance | Yes | Assigned entity | Assigned entity | Assigned entity | Assigned authority | Assigned entity | Assigned entity | Yes |
+| Export Strategy Performance report | Assigned entity | No | Assigned entity | Assigned entity | Assigned authority | No | No | Yes |
 
 Users may hold multiple roles, but same-record segregation guards remain applicable.
+
+Strategy Viewer is the read-only management and senior-stakeholder profile. It does not grant access to Draft plan definitions, restricted evidence or another entity's data.
 
 ## 13. Readiness rules
 
@@ -585,6 +618,7 @@ The readiness screen shall group issues by Structure, Targets, Value Commitments
 | STR-UI-12 | Downstream Usage | Show Budget, Demand, Planning, Tender, Contract, Asset and Disposal references |
 | STR-UI-13 | Readiness and Review | Resolve grouped blockers and submit, return, approve or activate according to authority |
 | STR-UI-14 | Audit History | Show version, workflow, edit and usage events |
+| STR-UI-15 | Strategy Performance | Give managers and senior stakeholders a read-only view of verified performance, procurement contribution, public-value treatment and exceptions |
 
 ## 15. UX requirements
 
@@ -606,6 +640,12 @@ The readiness screen shall group issues by Structure, Targets, Value Commitments
 16. The UI shall not imply that Strategy automatically imposes tender evaluation criteria.
 17. Keyboard navigation, visible focus, accessible labels and non-colour status cues are required.
 18. Navigation and top toolbars are outside the Stitch design scope unless explicitly requested.
+19. Strategy Performance shall be a separate management entry view and shall not become an eighth Plan workspace tab.
+20. Strategy Performance shall lead with outcome and exception information, followed by procurement contribution, public-value treatment and drill-down evidence.
+21. Management summaries shall use compact count strips, concise trend indicators and tables; they shall not use a decorative card wall or an opaque composite score.
+22. Procurement lifecycle values shall remain visibly separated by Budget, Demand, Plan, Tender and Contract stage to prevent double counting.
+23. `Considered`, `Treated` or `Excluded with approval` shall not be presented as proof that a public-value outcome was achieved.
+24. Every derived management value shall expose its reporting period, `As at` time and drill-down path.
 
 ## 16. API and downstream contracts
 
@@ -643,6 +683,8 @@ The readiness screen shall group issues by Structure, Targets, Value Commitments
 | get_strategy_usage | Return read-only downstream references grouped by module and record type |
 | list_measurements | Return period, workflow status, result status and corrective-action summary |
 | get_strategy_portfolio | Return derived portfolio counts and assigned work |
+| get_strategy_performance | Return entity- and plan-scoped outcome/target distributions, measurement exceptions, corrective actions, procurement contribution, public-value treatment and source freshness for a reporting period |
+| export_strategy_performance_report | Export the authorised filtered management view with filters, generation metadata, source coverage and traceable references |
 
 All write services shall enforce document state and permission server-side. UI hiding is not a permission control.
 
@@ -754,6 +796,13 @@ The implementation plan must identify every destructive target before execution.
 | STR-AC-021 | Budget, Demand and Planning integrations use the new reference contract and pass regression tests. |
 | STR-AC-022 | No obsolete Objective/Indicator alias, embedded actual field or legacy selector remains in an active MVP path. |
 | STR-AC-023 | Core screens satisfy the approved Stitch designs without adding unapproved functionality. |
+| STR-AC-024 | Strategy Viewer opens the read-only Strategy Performance view and cannot access plan-maintenance actions or restricted Draft definitions. |
+| STR-AC-025 | Outcome and target summaries are derived from applicable Verified measurements and expose the underlying result distribution. |
+| STR-AC-026 | Missing workflow data, verified underperformance and overdue corrective actions appear as distinct management exceptions with working drill-down links. |
+| STR-AC-027 | Procurement contribution is derived only from valid alignment references and lifecycle-stage values are not summed or double counted. |
+| STR-AC-028 | Public-value reporting distinguishes downstream consideration/treatment from verified achievement. |
+| STR-AC-029 | Every management view and export shows its filters, reporting period, generation or `As at` time and source coverage. |
+| STR-AC-030 | Entity permissions prevent unauthorised Strategy Performance access and report export through both UI and API. |
 
 ## 22. Required test matrix
 
@@ -788,6 +837,10 @@ The implementation plan must identify every destructive target before execution.
 - Usage grouping
 - Portfolio counts
 - Measurement calculations
+- Strategy Performance roll-ups and exception derivation
+- Procurement contribution by lifecycle stage without double counting
+- Public-value consideration versus achievement derivation
+- Management report filter, lineage and source-coverage metadata
 
 ### 22.4 Browser tests
 
@@ -803,6 +856,8 @@ The implementation plan must identify every destructive target before execution.
 - Downstream Usage
 - Empty, returned and attention states
 - Keyboard and focus behaviour for core workflows
+- Strategy Performance filters, drill-downs, empty/stale-source states and report export
+- Strategy Viewer read-only default route and absence of maintenance actions
 
 ### 22.5 Regression
 
@@ -822,6 +877,9 @@ The implementation plan must identify every destructive target before execution.
 6. Status shall never be conveyed by colour alone.
 7. Audit records and approved snapshots shall be durable and exportable by authorised users.
 8. Errors shall identify the corrective action without exposing stack traces or sensitive identifiers.
+9. Strategy Performance queries shall aggregate in bounded server-side operations and shall not issue per-target or per-downstream-record query loops.
+10. Management reports shall reproduce the authorised filtered values and lineage shown at generation time.
+11. Source freshness and unavailable-module conditions shall degrade explicitly rather than silently presenting incomplete totals as complete.
 
 ## 24. Deferred backlog
 
@@ -851,6 +909,9 @@ The following are intentional MVP 1 decisions:
 10. Multiple different plans may be Active for the same entity.
 11. One primary target alignment and optional supporting target alignments are supported downstream.
 12. No scores or weighted strategy ratings are included.
+13. Strategy Performance is a separate read-only management view, not an additional Plan workspace tab and not a replacement for generic platform Analytics.
+14. Procurement contribution is evidence of alignment and activity; it is not automatic proof that procurement caused the strategic result.
+15. Public-value consideration and verified public-value achievement remain separate reporting concepts.
 
 ## 26. Requirements-lock checklist
 
@@ -867,5 +928,6 @@ This document may be marked `Locked` only after confirming:
 - Teardown authority and affected modules
 - MOH fixture
 - Acceptance criteria and test matrix
+- Management monitoring, reporting, permissions and attribution safeguards
 
 Once locked, any functional change requires a new document version. Stitch prompts and the Cursor implementation prompt shall reference the locked version and screen IDs.

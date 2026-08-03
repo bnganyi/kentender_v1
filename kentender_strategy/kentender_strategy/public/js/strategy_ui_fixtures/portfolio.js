@@ -6,13 +6,11 @@ kentender_strategy.ui_fixtures.portfolio = function () {
 	return `<div class="kt-str-root" data-testid="kt-str-portfolio">
 <!-- Header Section -->
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4" data-testid="kt-str-pf-header">
-<div>
+<div class="min-w-0 flex-1">
 <h1 class="font-headline-lg text-headline-lg text-primary">Strategy Alignment</h1>
-<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl mt-1">
-          Govern strategic outcomes, public-value commitments and performance targets used across procurement.
-        </p>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Govern strategic outcomes, public-value commitments and performance targets used across procurement.</p>
 </div>
-<button type="button" data-kt-str-action="create-plan" data-testid="kt-str-create-plan" class="bg-primary text-on-primary px-5 py-2.5 rounded-lg flex items-center gap-2 font-semibold text-body-md shadow-sm hover:opacity-90 transition-all">
+<button type="button" data-kt-str-action="create-plan" data-testid="kt-str-create-plan" class="bg-primary text-on-primary px-5 py-2.5 rounded-lg flex items-center gap-2 font-semibold text-body-md shadow-sm hover:opacity-90 transition-all shrink-0">
 <span class="material-symbols-outlined text-lg">add</span>
         Create strategic plan
       </button>
@@ -106,9 +104,9 @@ kentender_strategy.ui_fixtures.portfolio = function () {
 <table class="w-full text-left border-collapse" data-testid="kt-str-plans-table">
 <thead class="bg-surface-container-low border-b border-outline-variant">
 <tr>
-<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant">Plan</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant kt-str-plans-col-plan">Plan</th>
 <th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant">Type</th>
-<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant">Effective period</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant kt-str-plans-col-period">Effective period</th>
 <th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant text-center">Ver.</th>
 <th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant">Status</th>
 <th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant">Attention</th>
@@ -122,17 +120,10 @@ kentender_strategy.ui_fixtures.portfolio = function () {
 </tbody>
 </table>
 </div>
-<div class="p-3 bg-surface-container-low border-t border-outline-variant flex justify-between items-center">
-<span class="text-body-md text-on-surface-variant" data-kt-str-plans-footer="1">Loading…</span>
-<div class="flex gap-2">
-<button class="px-2 py-1 border border-outline-variant rounded disabled:opacity-30" disabled="">
-<span class="material-symbols-outlined text-lg">chevron_left</span>
-</button>
-<button class="px-2 py-1 border border-outline-variant rounded">
-<span class="material-symbols-outlined text-lg">chevron_right</span>
-</button>
-</div>
-</div>
+` +
+		kentender_strategy.ui_fixtures.tablePaginationFooterHtml() +
+		`
+
 </div>
 </div>
 <!-- My Work Sidebar Section -->

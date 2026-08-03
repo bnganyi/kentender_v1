@@ -364,12 +364,12 @@ def save_measurement_draft(payload: dict) -> dict:
 			frappe.throw(_("Verified measurements are immutable"))
 		doc.update(fields)
 		derive_measurement_result(doc)
-		doc.save()
+		doc.save(ignore_permissions=True)
 	else:
 		fields["doctype"] = "Performance Measurement"
 		doc = frappe.get_doc(fields)
 		derive_measurement_result(doc)
-		doc.insert()
+		doc.insert(ignore_permissions=True)
 	return {
 		"id": doc.name,
 		"workflow_status": doc.workflow_status,
@@ -379,17 +379,23 @@ def save_measurement_draft(payload: dict) -> dict:
 
 
 def upsert_corrective_action(payload: dict) -> dict:
-	require_any_role(ROLE_OFFICER, ROLE_MANAGER, "Performance Officer", "System Manager")
+	require_any_role(
+		ROLE_OFFICER,
+		ROLE_MANAGER,
+		"Performance Officer",
+		"Performance Verifier",
+		"System Manager",
+	)
 	name = payload.get("id") or payload.get("name")
 	fields = {k: v for k, v in payload.items() if k not in ("id", "name", "doctype")}
 	if name and frappe.db.exists("Strategy Corrective Action", name):
 		doc = frappe.get_doc("Strategy Corrective Action", name)
 		doc.update(fields)
-		doc.save()
+		doc.save(ignore_permissions=True)
 	else:
 		fields["doctype"] = "Strategy Corrective Action"
 		doc = frappe.get_doc(fields)
-		doc.insert()
+		doc.insert(ignore_permissions=True)
 	return {"id": doc.name, "status": doc.status}
 
 
@@ -481,17 +487,19 @@ def _measurement_target_payload(tgt) -> dict:
 	indicator_title = None
 	frequency = None
 	data_source = None
+	measurement_type = None
 	if getattr(tgt, "performance_indicator", None):
 		ind = frappe.db.get_value(
 			"Performance Indicator",
 			tgt.performance_indicator,
-			["title", "measurement_frequency", "data_source"],
+			["title", "measurement_frequency", "data_source", "measurement_type"],
 			as_dict=True,
 		)
 		if ind:
 			indicator_title = ind.title
 			frequency = ind.measurement_frequency
 			data_source = ind.data_source
+			measurement_type = ind.measurement_type
 	return {
 		"id": tgt.name,
 		"code": tgt.target_code,
@@ -499,77 +507,132 @@ def _measurement_target_payload(tgt) -> dict:
 		"target_numeric": tgt.target_numeric,
 		"comparison_direction": tgt.comparison_direction,
 		"baseline_numeric": tgt.baseline_numeric,
+		"baseline_as_of": str(tgt.baseline_as_of) if getattr(tgt, "baseline_as_of", None) else None,
 		"tolerance_value": tgt.tolerance_value,
+		"period_start": str(tgt.period_start) if getattr(tgt, "period_start", None) else None,
+		"period_end": str(tgt.period_end) if getattr(tgt, "period_end", None) else None,
 		"indicator_name": indicator_title,
 		"measurement_frequency": frequency,
 		"data_source": data_source,
+		"measurement_type": measurement_type,
 	}
 
 
-def get_measurement(name: str | None = None, target_code: str | None = None, plan_code: str | None = None) -> dict:
-	tgt_name = None
+def _measurement_dto(doc, tgt, *, is_new: bool = False) -> dict:
+	return {
+		"id": None if is_new else doc.name,
+		"performance_target": _measurement_target_payload(tgt),
+		"plan_version": getattr(doc, "plan_version", None) or tgt.plan_version,
+		"measurement_period_start": getattr(doc, "measurement_period_start", None),
+		"measurement_period_end": getattr(doc, "measurement_period_end", None),
+		"measurement_date": getattr(doc, "measurement_date", None),
+		"actual_numeric": getattr(doc, "actual_numeric", None),
+		"actual_text": getattr(doc, "actual_text", None),
+		"evidence_reference": getattr(doc, "evidence_reference", None),
+		"evidence_source": getattr(doc, "evidence_source", None),
+		"commentary": getattr(doc, "commentary", None),
+		"variance": getattr(doc, "variance", None),
+		"result_status": getattr(doc, "result_status", None),
+		"workflow_status": getattr(doc, "workflow_status", None),
+		"submitted_by": getattr(doc, "submitted_by", None),
+		"submitted_at": str(doc.submitted_at) if getattr(doc, "submitted_at", None) else None,
+		"verified_by": getattr(doc, "verified_by", None),
+		"verified_at": str(doc.verified_at) if getattr(doc, "verified_at", None) else None,
+		"verification_comment": getattr(doc, "verification_comment", None),
+		"authorised_exception": int(getattr(doc, "authorised_exception", 0) or 0),
+		"exception_reason": getattr(doc, "exception_reason", None),
+		"is_new": is_new,
+	}
+
+
+def get_measurement(
+	name: str | None = None,
+	target_code: str | None = None,
+	plan_code: str | None = None,
+	purpose: str | None = None,
+) -> dict:
+	"""Load a measurement by id, or the best open row for a target.
+
+	purpose:
+	  - "submit": Draft / Returned only (Verified must not block a new submission)
+	  - "verify": Submitted first, else Verified (review / view)
+	  - default: Draft / Returned / Submitted, then any historical row
+	"""
 	if name and frappe.db.exists("Performance Measurement", name):
 		doc = frappe.get_doc("Performance Measurement", name)
 		tgt = frappe.get_doc("Performance Target", doc.performance_target)
-		return {
-			"id": doc.name,
-			"performance_target": _measurement_target_payload(tgt),
-			"plan_version": doc.plan_version,
-			"measurement_period_start": doc.measurement_period_start,
-			"measurement_period_end": doc.measurement_period_end,
-			"actual_numeric": doc.actual_numeric,
-			"actual_text": doc.actual_text,
-			"evidence_reference": doc.evidence_reference,
-			"evidence_source": doc.evidence_source,
-			"commentary": doc.commentary,
-			"variance": doc.variance,
-			"result_status": doc.result_status,
-			"workflow_status": doc.workflow_status,
-			"submitted_by": doc.submitted_by,
-			"verified_by": doc.verified_by,
-			"verification_comment": doc.verification_comment,
-			"is_new": False,
-		}
+		return _measurement_dto(doc, tgt, is_new=False)
 
 	if target_code:
 		tgt_name = _resolve_target_name_for_code(target_code, plan_code)
 		if not tgt_name:
 			frappe.throw(_("Performance Target {0} not found").format(target_code), frappe.DoesNotExistError)
-		name = frappe.db.get_value(
-			"Performance Measurement",
-			{"performance_target": tgt_name, "workflow_status": ["in", ["Draft", "Returned", "Submitted"]]},
-			"name",
-			order_by="modified desc",
-		) or frappe.db.get_value(
-			"Performance Measurement",
-			{"performance_target": tgt_name},
-			"name",
-			order_by="measurement_period_end desc",
-		)
+		purpose_key = (purpose or "").strip().lower()
+		name = None
+		if purpose_key == "verify":
+			name = frappe.db.get_value(
+				"Performance Measurement",
+				{"performance_target": tgt_name, "workflow_status": "Submitted"},
+				"name",
+				order_by="modified desc",
+			) or frappe.db.get_value(
+				"Performance Measurement",
+				{"performance_target": tgt_name, "workflow_status": "Verified"},
+				"name",
+				order_by="modified desc",
+			)
+		elif purpose_key == "submit":
+			name = frappe.db.get_value(
+				"Performance Measurement",
+				{"performance_target": tgt_name, "workflow_status": ["in", ["Draft", "Returned"]]},
+				"name",
+				order_by="modified desc",
+			)
+		else:
+			name = frappe.db.get_value(
+				"Performance Measurement",
+				{
+					"performance_target": tgt_name,
+					"workflow_status": ["in", ["Draft", "Returned", "Submitted"]],
+				},
+				"name",
+				order_by="modified desc",
+			) or frappe.db.get_value(
+				"Performance Measurement",
+				{"performance_target": tgt_name},
+				"name",
+				order_by="measurement_period_end desc",
+			)
 		if name:
 			return get_measurement(name=name)
 
 		# Submit path with no open/prior measurement — return target shell (do not get_doc(None)).
 		tgt = frappe.get_doc("Performance Target", tgt_name)
-		return {
-			"id": None,
-			"performance_target": _measurement_target_payload(tgt),
-			"plan_version": tgt.plan_version,
-			"measurement_period_start": None,
-			"measurement_period_end": None,
-			"actual_numeric": None,
-			"actual_text": None,
-			"evidence_reference": None,
-			"evidence_source": None,
-			"commentary": None,
-			"variance": None,
-			"result_status": None,
-			"workflow_status": None,
-			"submitted_by": None,
-			"verified_by": None,
-			"verification_comment": None,
-			"is_new": True,
-		}
+		shell = frappe._dict(
+			{
+				"name": None,
+				"plan_version": tgt.plan_version,
+				"measurement_period_start": None,
+				"measurement_period_end": None,
+				"measurement_date": None,
+				"actual_numeric": None,
+				"actual_text": None,
+				"evidence_reference": None,
+				"evidence_source": None,
+				"commentary": None,
+				"variance": None,
+				"result_status": None,
+				"workflow_status": None,
+				"submitted_by": None,
+				"submitted_at": None,
+				"verified_by": None,
+				"verified_at": None,
+				"verification_comment": None,
+				"authorised_exception": 0,
+				"exception_reason": None,
+			}
+		)
+		return _measurement_dto(shell, tgt, is_new=True)
 
 	frappe.throw(_("Performance Measurement not found"), frappe.DoesNotExistError)
 

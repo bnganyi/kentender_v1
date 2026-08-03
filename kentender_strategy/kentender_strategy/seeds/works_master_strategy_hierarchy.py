@@ -278,13 +278,23 @@ def upsert_works_master_strategy_hierarchy(*_args: Any, **_kwargs: Any) -> dict[
 	else:
 		status = frappe.db.get_value("Strategic Plan", plan_name, "status")
 		if status in ("Approved", "Active", "Superseded", "Archived"):
-			# Structure locked — ensure measurements/PVOs only
+			# Structure locked — ensure measurements/PVOs / review fixtures only
 			target_name = frappe.db.get_value(
 				"Performance Target",
 				{"target_code": TARGET_CODE, "plan_version": plan_name},
 				"name",
 			)
 			meas = _ensure_measurements(plan_name, target_name) if target_name else {}
+			from kentender_strategy.seeds.moh_downstream_usage import seed_moh_downstream_usage_refs
+			from kentender_strategy.seeds.moh_review_fixtures import (
+				ensure_review_blockers_draft,
+				ensure_review_transition_draft,
+			)
+
+			downstream = seed_moh_downstream_usage_refs(plan_name=plan_name, target_name=target_name)
+			review_blockers = ensure_review_blockers_draft(pe)
+			# Keep TX fixture as ready Draft for Review submit PW (idempotent wipe/rebuild).
+			review_tx = ensure_review_transition_draft(pe)
 			frappe.db.commit()
 			return {
 				"ok": True,
@@ -305,6 +315,9 @@ def upsert_works_master_strategy_hierarchy(*_args: Any, **_kwargs: Any) -> dict[
 				"measurements": meas,
 				"pvos": pvos,
 				"procuring_entity": pe,
+				"downstream": downstream,
+				"review_blockers": review_blockers,
+				"review_tx": review_tx,
 			}
 		# Reset Draft for rebuild
 		frappe.db.set_value("Strategic Plan", plan_name, "status", "Draft", update_modified=False)
@@ -428,6 +441,11 @@ def upsert_works_master_strategy_hierarchy(*_args: Any, **_kwargs: Any) -> dict[
 		transition_plan(plan_name, "Activate")
 
 	meas = _ensure_measurements(plan_name, target)
+	from kentender_strategy.seeds.moh_downstream_usage import seed_moh_downstream_usage_refs
+	from kentender_strategy.seeds.moh_review_fixtures import ensure_review_blockers_draft
+
+	downstream = seed_moh_downstream_usage_refs(plan_name=plan_name, target_name=target)
+	review_blockers = ensure_review_blockers_draft(pe)
 	frappe.db.commit()
 	return {
 		"ok": True,
@@ -443,4 +461,6 @@ def upsert_works_master_strategy_hierarchy(*_args: Any, **_kwargs: Any) -> dict[
 		"measurements": meas,
 		"pvos": pvos,
 		"procuring_entity": pe,
+		"downstream": downstream,
+		"review_blockers": review_blockers,
 	}

@@ -77,6 +77,7 @@
 			pageHeader: { title: "", subtitle: "", hideBreadcrumbs: true },
 			mainHtml: html,
 		});
+		$(page.main).find("#kt-cl-page-header-host").attr("hidden", "hidden");
 		var $root = $(page.main).find('[data-testid="kt-str-portfolio"]');
 		if (kentender_strategy.alignment && typeof kentender_strategy.alignment.annotatePortfolio === "function") {
 			kentender_strategy.alignment.annotatePortfolio($root);

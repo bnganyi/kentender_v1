@@ -64,10 +64,11 @@
 .kt-cl-shell .kt-str-root .fixed{position:fixed !important}
 .kt-cl-shell .kt-str-root .flex{display:flex !important}
 .kt-cl-shell .kt-str-root .flex-1{flex:1 1 0% !important}
+.kt-cl-shell .kt-str-root .min-w-0{min-width:0 !important}
 .kt-cl-shell .kt-str-root .flex-col{flex-direction:column !important}
 .kt-cl-shell .kt-str-root .flex-wrap{flex-wrap:wrap !important}
-.kt-cl-shell .kt-str-root .font-body-lg{font-family:Inter, "Public Sans", system-ui, sans-serif !important}
-.kt-cl-shell .kt-str-root .font-body-md{font-family:Inter, "Public Sans", system-ui, sans-serif !important}
+.kt-cl-shell .kt-str-root .font-body-lg{font-family:Inter, "Public Sans", system-ui, sans-serif !important; font-weight:400 !important; letter-spacing:normal !important}
+.kt-cl-shell .kt-str-root .font-body-md{font-family:Inter, "Public Sans", system-ui, sans-serif !important; font-weight:400 !important; letter-spacing:normal !important}
 .kt-cl-shell .kt-str-root .font-bold{font-weight:700 !important}
 .kt-cl-shell .kt-str-root .font-data-mono{font-family:JetBrains Mono, "Public Sans", system-ui, sans-serif !important}
 .kt-cl-shell .kt-str-root .font-headline-lg{font-family:Manrope, "Public Sans", system-ui, sans-serif !important}
@@ -241,15 +242,15 @@
 .kt-cl-shell .kt-str-root .text-\[18px\]{font-size:18px !important}
 .kt-cl-shell .kt-str-root .text-\[20px\]{font-size:20px !important}
 .kt-cl-shell .kt-str-root .text-\[64px\]{font-size:64px !important}
-.kt-cl-shell .kt-str-root .text-body-lg{font-size:16px !important; line-height:24px !important; font-weight:400 !important}
-.kt-cl-shell .kt-str-root .text-body-md{font-size:14px !important; line-height:20px !important; font-weight:400 !important}
+.kt-cl-shell .kt-str-root .text-body-lg{font-size:16px !important; line-height:24px !important; font-weight:400 !important; letter-spacing:normal !important}
+.kt-cl-shell .kt-str-root .text-body-md{font-size:14px !important; line-height:20px !important; font-weight:400 !important; letter-spacing:normal !important}
 .kt-cl-shell .kt-str-root .text-center{text-align:center !important}
 .kt-cl-shell .kt-str-root .text-data-mono{font-size:14px !important; line-height:20px !important; font-weight:500 !important}
 .kt-cl-shell .kt-str-root .text-error{color:#ba1a1a !important}
 .kt-cl-shell .kt-str-root .text-headline-lg{font-size:28px !important; line-height:36px !important; font-weight:700 !important; letter-spacing:-0.02em !important}
 .kt-cl-shell .kt-str-root .text-headline-lg-mobile{font-size:24px !important; line-height:32px !important; font-weight:700 !important; letter-spacing:-0.02em !important}
-.kt-cl-shell .kt-str-root .text-headline-md{font-size:22px !important; line-height:30px !important; font-weight:600 !important}
-.kt-cl-shell .kt-str-root .text-headline-sm{font-size:18px !important; line-height:24px !important; font-weight:600 !important}
+.kt-cl-shell .kt-str-root .text-headline-md{font-size:22px !important; line-height:30px !important; font-weight:600 !important; letter-spacing:-0.01em !important}
+.kt-cl-shell .kt-str-root .text-headline-sm{font-size:18px !important; line-height:24px !important; font-weight:600 !important; letter-spacing:normal !important}
 .kt-cl-shell .kt-str-root .text-label-caps{font-size:12px !important; line-height:16px !important; font-weight:700 !important; letter-spacing:0.05em !important; text-transform:uppercase !important}
 .kt-cl-shell .kt-str-root .text-left{text-align:left !important}
 .kt-cl-shell .kt-str-root .text-on-background{color:#1a1b20 !important}
@@ -374,21 +375,61 @@
 }
 
 
-/* Pin Stitch headline tokens — Desk h1/h2 defaults otherwise inflate satellite titles. */
+/* Pin Stitch headline tokens — Desk h1/h2 / Espresso tracking otherwise distort titles. */
 .kt-cl-shell .kt-str-root h1.font-headline-lg,
 .kt-cl-shell .kt-str-root h1.text-headline-lg,
 .kt-cl-shell .kt-str-root h1.text-headline-lg-mobile,
+.kt-cl-shell .kt-str-root h1.font-headline-lg-mobile,
 .kt-cl-shell .kt-str-root h2.font-headline-lg,
 .kt-cl-shell .kt-str-root h2.text-headline-lg,
-.kt-cl-shell .kt-str-root h2.text-headline-lg-mobile {
+.kt-cl-shell .kt-str-root h2.text-headline-lg-mobile,
+.kt-cl-shell .kt-str-root h2.font-headline-lg-mobile,
+.kt-cl-shell .kt-str-root h2.md\:font-headline-lg {
+	font-family: Manrope, "Public Sans", system-ui, sans-serif !important;
 	font-size: 28px !important;
 	line-height: 36px !important;
 	font-weight: 700 !important;
 	letter-spacing: -0.02em !important;
+	margin-top: 0 !important;
+}
+.kt-cl-shell .kt-str-root h1.font-headline-md,
+.kt-cl-shell .kt-str-root h1.text-headline-md,
+.kt-cl-shell .kt-str-root h2.font-headline-md,
+.kt-cl-shell .kt-str-root h2.text-headline-md,
+.kt-cl-shell .kt-str-root h3.font-headline-md,
+.kt-cl-shell .kt-str-root h3.text-headline-md {
+	font-family: Manrope, "Public Sans", system-ui, sans-serif !important;
+	font-size: 22px !important;
+	line-height: 30px !important;
+	font-weight: 600 !important;
+	letter-spacing: -0.01em !important;
+}
+.kt-cl-shell .kt-str-root h2.font-headline-sm,
+.kt-cl-shell .kt-str-root h2.text-headline-sm,
+.kt-cl-shell .kt-str-root h3.font-headline-sm,
+.kt-cl-shell .kt-str-root h3.text-headline-sm {
+	font-family: Manrope, "Public Sans", system-ui, sans-serif !important;
+	font-size: 18px !important;
+	line-height: 24px !important;
+	font-weight: 600 !important;
+	letter-spacing: normal !important;
+}
+/* Shared plan chrome meta — Inter 14/400, never Espresso 420. */
+.kt-cl-shell .kt-str-root [data-testid="kt-str-plan-chrome"] [data-kt-str-chrome-meta],
+.kt-cl-shell .kt-str-root [data-testid="kt-str-plan-chrome"] [data-kt-str-chrome-meta] p,
+.kt-cl-shell .kt-str-root [data-testid="kt-str-plan-chrome"] [data-kt-str-plan-period],
+.kt-cl-shell .kt-str-root [data-testid="kt-str-plan-chrome"] [data-kt-str-plan-version] {
+	font-family: Inter, "Public Sans", system-ui, sans-serif !important;
+	font-size: 14px !important;
+	line-height: 20px !important;
+	font-weight: 400 !important;
+	letter-spacing: normal !important;
 }
 @media (max-width: 767px) {
 	.kt-cl-shell .kt-str-root h1.text-headline-lg-mobile,
-	.kt-cl-shell .kt-str-root h2.text-headline-lg-mobile {
+	.kt-cl-shell .kt-str-root h1.font-headline-lg-mobile,
+	.kt-cl-shell .kt-str-root h2.text-headline-lg-mobile,
+	.kt-cl-shell .kt-str-root h2.font-headline-lg-mobile {
 		font-size: 24px !important;
 		line-height: 32px !important;
 	}
@@ -454,4 +495,18 @@
 @media (min-width:640px){
   .kt-cl-shell .kt-str-root .sm\:flex-row{flex-direction:row !important}
   .kt-cl-shell .kt-str-root .sm\:w-auto{width:auto !important}
+}
+
+/* STR-UI-13 sticky review footer — align under Civic Ledger sidebar, not Stitch md:left-64 */
+.kt-cl-shell .kt-str-root .kt-str-review-footer{
+  left: 0;
+}
+@media (min-width: 768px){
+  .kt-cl-shell .kt-str-root .kt-str-review-footer{
+    left: var(--kt-a2-sidebar, 256px);
+  }
+}
+/* Beat .flex{display:flex !important} for live show/hide of review actions/groups */
+.kt-cl-shell .kt-str-root .hidden{
+  display: none !important;
 }

@@ -55,6 +55,52 @@
 	margin-left: 0 !important;
 	margin-right: 0 !important;
 }
+/*
+ * Collapsed icon rail corrections (Frappe core fights clarity here):
+ * 1) On collapse, Frappe hides `.section-break` and force-opens every nested
+ *    group (`SectionBreakItem.toggle_on_collapse` → `me.open()`). Nested rows
+ *    are text-only in our restyle, so users only see truncated "Planned" pills.
+ * 2) Keep section parents as Material icons; hide nested children until expand.
+ * 3) Hide labels / Planned suffixes / chevrons — icon-only rail.
+ */
+.body-sidebar-container:not(.expanded) .sidebar-item-label,
+.body-sidebar-container:not(.expanded) .sidebar-item-suffix,
+.body-sidebar-container:not(.expanded) .sidebar-item-control,
+.body-sidebar-container:not(.expanded) .drop-icon,
+.body-sidebar-container:not(.expanded) .header-title,
+.body-sidebar-container:not(.expanded) .header-subtitle {
+	display: none !important;
+}
+.body-sidebar-container:not(.expanded) .section-item > .nested-container,
+.body-sidebar-container:not(.expanded) .section-item > .nested-container.hidden {
+	display: none !important;
+}
+.body-sidebar-container:not(.expanded) .section-item .divider {
+	display: none !important;
+}
+.body-sidebar-container:not(.expanded)
+	.section-item
+	> .standard-sidebar-item
+	.item-anchor.section-break,
+.body-sidebar-container:not(.expanded)
+	.section-item
+	> .standard-sidebar-item
+	.item-anchor.section-break.hidden {
+	display: flex !important;
+	justify-content: center !important;
+	align-items: center !important;
+	padding-left: 0 !important;
+	padding-right: 0 !important;
+	margin-left: 0 !important;
+	gap: 0 !important;
+}
+.body-sidebar-container:not(.expanded)
+	.section-item
+	> .standard-sidebar-item
+	.item-anchor.section-break::before {
+	flex: 0 0 34px;
+	margin: 0 !important;
+}
 .body-sidebar-container.expanded .body-sidebar {
 	width: var(--sidebar-width) !important;
 }

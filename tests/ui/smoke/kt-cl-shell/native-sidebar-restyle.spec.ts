@@ -358,4 +358,70 @@ test.describe("Civic Ledger — native Workspace Sidebar restyle", () => {
 		expect(state.topCount).toBe(10);
 		expect(state.hasPlans).toBe(true);
 	});
+
+	test("collapsed rail stays icon-only: nested closed, Planned pills hidden, section icons visible", async ({
+		page,
+	}) => {
+		await page.goto("/desk/coming-soon?feature=Analytics", { waitUntil: "domcontentloaded" });
+		await expect(page.locator(NATIVE_RAIL)).toBeVisible({ timeout: 30_000 });
+
+		const collapsed = await page.evaluate(() => {
+			const sidebar = (window as any).frappe?.app?.sidebar;
+			if (sidebar && typeof sidebar.close === "function") {
+				sidebar.close();
+			} else if (sidebar && typeof sidebar.toggle_width === "function") {
+				if (sidebar.sidebar_expanded) sidebar.toggle_width();
+			} else {
+				document.querySelector<HTMLElement>(".collapse-sidebar-link")?.click();
+			}
+			const container = document.querySelector(".body-sidebar-container");
+			return !!(container && !container.classList.contains("expanded"));
+		});
+		expect(collapsed).toBe(true);
+		await page.waitForTimeout(400);
+
+		const state = await page.evaluate(() => {
+			const rail = document.querySelector(".body-sidebar") as HTMLElement;
+			const tm = document.querySelector(
+				'.body-sidebar .section-item[data-id="Tender Management"]'
+			) as HTMLElement | null;
+			const nested = tm?.querySelector(":scope > .nested-container") as HTMLElement | null;
+			const sectionBreak = tm?.querySelector(".item-anchor.section-break") as HTMLElement | null;
+			const sectionBefore = sectionBreak ? getComputedStyle(sectionBreak, "::before") : null;
+			const analyticsSuffix = document.querySelector(
+				'.body-sidebar [data-id="Analytics"] .sidebar-item-suffix'
+			) as HTMLElement | null;
+			const analyticsIcon = document.querySelector(
+				'.body-sidebar [data-id="Analytics"] .sidebar-item-icon'
+			) as HTMLElement | null;
+			const evaluation = document.querySelector(
+				'.body-sidebar [data-id="Evaluation"]'
+			) as HTMLElement | null;
+			const nestedContainers = Array.from(
+				document.querySelectorAll(".body-sidebar .section-item > .nested-container")
+			) as HTMLElement[];
+			return {
+				railWidth: rail && getComputedStyle(rail).width,
+				nestedDisplay: nested ? getComputedStyle(nested).display : null,
+				allNestedHidden: nestedContainers.every((el) => getComputedStyle(el).display === "none"),
+				sectionBreakDisplay: sectionBreak ? getComputedStyle(sectionBreak).display : null,
+				sectionGlyph: sectionBefore?.content || null,
+				suffixDisplay: analyticsSuffix ? getComputedStyle(analyticsSuffix).display : null,
+				analyticsIconBefore: analyticsIcon ? getComputedStyle(analyticsIcon, "::before").content : null,
+				evaluationOffsetParent: evaluation ? evaluation.offsetParent !== null : null,
+				railText: (rail?.innerText || "").replace(/\s+/g, " ").trim(),
+			};
+		});
+
+		expect(state.railWidth).toBe("64px");
+		expect(state.nestedDisplay).toBe("none");
+		expect(state.allNestedHidden).toBe(true);
+		expect(state.sectionBreakDisplay).toBe("flex");
+		expect(state.sectionGlyph).toContain("gavel");
+		expect(state.suffixDisplay).toBe("none");
+		expect(state.analyticsIconBefore).toContain("bar_chart");
+		expect(state.evaluationOffsetParent).toBe(false);
+		expect(state.railText).not.toMatch(/Pla/);
+		expect(state.railText).not.toMatch(/Planned/);
+	});
 });

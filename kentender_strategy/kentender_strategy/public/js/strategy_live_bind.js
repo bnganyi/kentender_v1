@@ -30,21 +30,145 @@ frappe.provide("kentender_strategy.live");
 		return frappe.utils.escape_html(s == null ? "" : String(s));
 	}
 
+	/**
+	 * Shared client-side table pager bound to [data-kt-str-table-footer].
+	 * opts.renderPage(pageRows, state) paints the current page into tbody.
+	 */
+	function attachTablePagination($root, opts) {
+		opts = opts || {};
+		var existing = $root.data("ktStrPagerApi");
+		if (existing && existing._bound) {
+			if (typeof opts.renderPage === "function") {
+				existing._renderPage = opts.renderPage;
+			}
+			return existing;
+		}
+		var $footer = $root.find("[data-kt-str-table-footer]").first();
+		var state = {
+			page: 1,
+			pageSize: 10,
+			rows: [],
+		};
+		$root.data("ktStrPager", state);
+
+		function totalPages() {
+			var n = state.rows.length;
+			if (!n) {
+				return 1;
+			}
+			return Math.max(1, Math.ceil(n / state.pageSize));
+		}
+
+		function paintChrome() {
+			if (!$footer.length) {
+				return;
+			}
+			var total = state.rows.length;
+			var pages = totalPages();
+			if (state.page > pages) {
+				state.page = pages;
+			}
+			if (state.page < 1) {
+				state.page = 1;
+			}
+			var start = total ? (state.page - 1) * state.pageSize + 1 : 0;
+			var end = Math.min(state.page * state.pageSize, total);
+			var rangeText = total
+				? __("Showing {0}-{1} of {2} records", [String(start), String(end), String(total)])
+				: __("Showing 0 of 0 records");
+			$footer.find("[data-kt-str-footer-range]").text(rangeText);
+			$footer.find("[data-kt-str-footer-page]").text(state.page + " of " + pages);
+			$footer.find("[data-kt-str-footer-page-size]").val(String(state.pageSize));
+			$footer.find("[data-kt-str-footer-prev]").prop("disabled", state.page <= 1);
+			$footer
+				.find("[data-kt-str-footer-next]")
+				.prop("disabled", !total || state.page >= pages);
+		}
+
+		function render() {
+			paintChrome();
+			var startIdx = (state.page - 1) * state.pageSize;
+			var pageRows = state.rows.slice(startIdx, startIdx + state.pageSize);
+			if (typeof api._renderPage === "function") {
+				api._renderPage(pageRows, state);
+			}
+		}
+
+		function setRows(rows, resetPage) {
+			state.rows = rows || [];
+			if (resetPage) {
+				state.page = 1;
+			}
+			render();
+		}
+
+		var api = {
+			_bound: true,
+			_renderPage: opts.renderPage,
+			setRows: setRows,
+			render: render,
+			state: state,
+		};
+		$root.data("ktStrPagerApi", api);
+
+		if ($footer.length && !$footer.data("ktStrPagerBound")) {
+			$footer.data("ktStrPagerBound", 1);
+			$footer.on("change.ktStrPager", "[data-kt-str-footer-page-size]", function () {
+				state.pageSize = parseInt($(this).val(), 10) || 10;
+				state.page = 1;
+				render();
+			});
+			$footer.on("click.ktStrPager", "[data-kt-str-footer-prev]", function (e) {
+				e.preventDefault();
+				if (state.page > 1) {
+					state.page -= 1;
+					render();
+				}
+			});
+			$footer.on("click.ktStrPager", "[data-kt-str-footer-next]", function (e) {
+				e.preventDefault();
+				if (state.page < totalPages()) {
+					state.page += 1;
+					render();
+				}
+			});
+		}
+		return api;
+	}
+
+	/**
+	 * Compact period for tables/headers: "01-Jul-2026 - 30-Jun-2030".
+	 * Never join locale DD-MM-YYYY strings (reads as a digit dump in mono table cells).
+	 */
 	function formatPeriod(start, end) {
+		var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 		function fmt(d) {
 			if (!d) {
 				return "";
 			}
+			var dt = null;
 			try {
-				return frappe.datetime.str_to_user(d);
+				dt = frappe.datetime.str_to_obj(d);
 			} catch (e) {
+				dt = null;
+			}
+			if (!dt || isNaN(dt.getTime())) {
+				var m = String(d).match(/^(\d{4})-(\d{2})-(\d{2})/);
+				if (m) {
+					return m[3] + "-" + months[parseInt(m[2], 10) - 1] + "-" + m[1];
+				}
 				return String(d);
 			}
+			var day = String(dt.getDate()).padStart(2, "0");
+			return day + "-" + months[dt.getMonth()] + "-" + dt.getFullYear();
 		}
 		if (!start && !end) {
 			return "—";
 		}
-		return fmt(start) + "–" + fmt(end);
+		if (start && end) {
+			return fmt(start) + " - " + fmt(end);
+		}
+		return fmt(start || end);
 	}
 
 	function statusPill(status) {
@@ -116,7 +240,7 @@ frappe.provide("kentender_strategy.live");
 					'" data-plan-status="' +
 					esc(p.status) +
 					'">' +
-					'<td class="py-4 px-4"><div class="flex flex-col">' +
+					'<td class="py-4 px-4 kt-str-plans-col-plan"><div class="flex flex-col">' +
 					'<span class="font-data-mono text-data-mono text-secondary mb-0.5">' +
 					esc(p.code) +
 					"</span>" +
@@ -126,8 +250,8 @@ frappe.provide("kentender_strategy.live");
 					'<td class="py-4 px-4 text-body-md text-on-surface-variant">' +
 					esc(p.plan_type || "") +
 					"</td>" +
-					'<td class="py-4 px-4 text-data-mono text-on-surface-variant">' +
-					esc(formatPeriod(p.start_date, p.end_date)) +
+					'<td class="py-4 px-4 text-data-mono text-on-surface-variant whitespace-nowrap kt-str-plans-col-period">' +
+					esc(p.effective_period_label || formatPeriod(p.start_date, p.end_date)) +
 					"</td>" +
 					'<td class="py-4 px-4 text-data-mono text-on-surface-variant text-center">v' +
 					esc(p.version_number || 1) +
@@ -222,16 +346,18 @@ frappe.provide("kentender_strategy.live");
 	}
 
 	function renderPortfolioTable($root, plans, totalHint) {
-		var $tbody = $root.find("[data-kt-str-plans-tbody]");
-		if (!$tbody.length) {
-			$tbody = $root.find('[data-testid="kt-str-plans-table"] tbody');
-		}
-		$tbody.html(renderPlanRows(plans));
-		var n = (plans || []).length;
-		var total = totalHint != null ? totalHint : n;
-		$root
-			.find("[data-kt-str-plans-footer]")
-			.text(__("Showing {0} of {1} strategic plans", [n, total]));
+		var pager = attachTablePagination($root, {
+			renderPage: function (pageRows) {
+				var $tbody = $root.find("[data-kt-str-plans-tbody]");
+				if (!$tbody.length) {
+					$tbody = $root.find('[data-testid="kt-str-plans-table"] tbody');
+				}
+				$tbody.html(renderPlanRows(pageRows));
+			},
+		});
+		/* totalHint kept for callers; pager uses full filtered list length. */
+		void totalHint;
+		pager.setRows(plans || [], true);
 	}
 
 	function bindPortfolio($root) {
@@ -485,14 +611,41 @@ frappe.provide("kentender_strategy.live");
 			});
 	}
 
+	function paintPlanStatusPill($root, status) {
+		var st = status || "";
+		/* Scope to shared plan chrome only — never paint body status chips. */
+		var $chrome = $root.find('[data-testid="kt-str-plan-chrome"], .kt-str-injected-plan-chrome').first();
+		var $scope = $chrome.length ? $chrome : $root;
+		var $pill = $scope.find("[data-kt-str-plan-status-pill]");
+		var $dot = $scope.find("[data-kt-str-plan-status-dot]");
+		$pill.removeClass(
+			"bg-status-available/10 text-status-available bg-status-reserved/10 text-status-reserved bg-surface-variant text-on-surface-variant"
+		);
+		$dot.removeClass("bg-status-available bg-status-reserved bg-outline");
+		if (st === "Active" || st === "Approved") {
+			$pill.addClass("bg-status-available/10 text-status-available");
+			$dot.addClass("bg-status-available");
+		} else if (st === "Submitted" || st === "Returned") {
+			$pill.addClass("bg-status-reserved/10 text-status-reserved");
+			$dot.addClass("bg-status-reserved");
+		} else {
+			$pill.addClass("bg-surface-variant text-on-surface-variant");
+			$dot.addClass("bg-outline");
+		}
+		$scope.find("[data-kt-str-plan-status]").text(st || "—");
+	}
+
 	function bindPlanChrome($root, plan) {
 		if (!plan) {
 			return;
 		}
 		var $chrome = $root.find('[data-testid="kt-str-plan-chrome"], .kt-str-injected-plan-chrome').first();
-		$chrome.find("[data-kt-str-plan-title], h1").first().text(plan.name || "");
-		$chrome.find("[data-kt-str-plan-code], .font-data-mono").first().text(plan.code || "");
-		$chrome.find("[data-kt-str-plan-status]").first().text(plan.status || "");
+		if (!$chrome.length) {
+			return;
+		}
+		$chrome.find("[data-kt-str-plan-title]").first().text(plan.name || "");
+		$chrome.find("[data-kt-str-plan-code]").first().text(plan.code || "");
+		paintPlanStatusPill($root, plan.status || "");
 		var period = "";
 		if (plan.effective_period_label) {
 			period = "Effective " + plan.effective_period_label;
@@ -500,6 +653,7 @@ frappe.provide("kentender_strategy.live");
 			period = "Effective " + formatPeriod(plan.start_date, plan.end_date);
 		}
 		$chrome.find("[data-kt-str-plan-period]").first().text(period);
+		/* Canonical label is "Version N" — never compact "vN" in plan chrome. */
 		$chrome
 			.find("[data-kt-str-plan-version]")
 			.first()
@@ -507,7 +661,14 @@ frappe.provide("kentender_strategy.live");
 	}
 
 	function ensureStartStructureCta($root, plan, counts, capabilities) {
-		var $cluster = $root.find('[data-testid="kt-str-plan-chrome"] .flex.flex-wrap.items-center.gap-3').first();
+		var $cluster = $root
+			.find('[data-testid="kt-str-plan-chrome"] [data-kt-str-chrome-actions]')
+			.first();
+		if (!$cluster.length) {
+			$cluster = $root
+				.find('[data-testid="kt-str-plan-chrome"] .flex.flex-wrap.items-center.gap-3')
+				.first();
+		}
 		if (!$cluster.length) {
 			return;
 		}
@@ -517,6 +678,9 @@ frappe.provide("kentender_strategy.live");
 		var canStart = capabilities && capabilities.start_structure;
 		var canSucc = capabilities && capabilities.create_successor;
 		var $succ = $cluster.find('[data-kt-str-action="open-successor-modal"]');
+		if (!$succ.length) {
+			return;
+		}
 		if (draft && empty && canStart !== false) {
 			$succ.addClass("hidden").attr("aria-hidden", "true");
 			$cluster.append(
@@ -1822,21 +1986,78 @@ frappe.provide("kentender_strategy.live");
 		return reload(null);
 	}
 
+	function renderPvoCatalogueRows(rows) {
+		if (!(rows || []).length) {
+			return (
+				'<tr data-kt-str-empty="1"><td class="py-6 px-4 text-body-md text-on-surface-variant" colspan="8">' +
+				esc(__("No public-value objectives match the current filters.")) +
+				"</td></tr>"
+			);
+		}
+		return rows
+			.map(function (r) {
+				var status = r.status || "Active";
+				var active = String(status).toLowerCase() === "active";
+				var pillCls = active
+					? "bg-status-available/10 text-status-available border border-status-available/20"
+					: "bg-status-reserved/10 text-status-reserved border border-status-reserved/20";
+				var dotCls = active ? "bg-status-available" : "bg-status-reserved";
+				var actionLabel = active ? __("View") : __("Review");
+				var actionCls = active
+					? "text-primary hover:text-primary-container"
+					: "text-secondary hover:text-secondary-container";
+				return (
+					'<tr class="hover:bg-surface-container/50 transition-colors group" data-pvo-id="' +
+					esc(r.id) +
+					'" data-pvo-code="' +
+					esc(r.code) +
+					'">' +
+					'<td class="py-3 px-4"><div class="flex flex-col">' +
+					'<span class="font-data-mono text-data-mono text-primary font-bold">' +
+					esc(r.code) +
+					"</span>" +
+					'<span class="font-body-md text-on-surface font-medium mt-1">' +
+					esc(r.name) +
+					"</span></div></td>" +
+					'<td class="py-3 px-4"><span class="font-body-md text-[13px] text-on-surface">' +
+					esc(r.pillar || "—") +
+					"</span></td>" +
+					'<td class="py-3 px-4 font-body-md text-[13px] text-on-surface-variant">' +
+					esc(r.source_type || "—") +
+					"</td>" +
+					'<td class="py-3 px-4 font-body-md text-[13px] text-on-surface">' +
+					esc(r.applicability_mode || "—") +
+					"</td>" +
+					'<td class="py-3 px-4 font-body-md text-[13px] text-on-surface-variant">—</td>' +
+					'<td class="py-3 px-4 font-data-mono text-data-mono text-on-surface-variant">v1</td>' +
+					'<td class="py-3 px-4"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ' +
+					pillCls +
+					' font-body-md text-xs font-medium"><span class="w-1.5 h-1.5 rounded-full ' +
+					dotCls +
+					'"></span>' +
+					esc(status) +
+					"</span></td>" +
+					'<td class="py-3 px-4 text-right"><button type="button" class="' +
+					actionCls +
+					' font-body-md text-sm font-medium transition-colors" data-kt-str-action="open-pvo" data-pvo-code="' +
+					esc(r.code) +
+					'">' +
+					esc(actionLabel) +
+					"</button></td></tr>"
+				);
+			})
+			.join("");
+	}
+
 	function bindPvoCatalogue($root) {
 		return call("list_public_value_objectives").then(function (rows) {
 			$root.attr("data-kt-str-live", "1");
-			var byCode = {};
-			(rows || []).forEach(function (r) {
-				byCode[r.code] = r;
+			var pager = attachTablePagination($root, {
+				renderPage: function (pageRows) {
+					$root.find("[data-kt-str-pvo-tbody]").html(renderPvoCatalogueRows(pageRows));
+				},
 			});
-			$root.find("table tbody tr").each(function () {
-				var $tr = $(this);
-				var code = $tr.attr("data-pvo-code") || $tr.find(".font-data-mono").first().text().trim();
-				var r = byCode[code];
-				if (r) {
-					$tr.attr("data-pvo-id", r.id).attr("data-pvo-code", r.code);
-				}
-			});
+			pager.setRows(rows || [], true);
 			return rows;
 		});
 	}
@@ -2590,75 +2811,71 @@ frappe.provide("kentender_strategy.live");
 			);
 		}
 
-		function paintRows() {
-			var rows = filteredRows();
+		function paintMeasPageRows(pageRows) {
 			var $tbody = $root.find("[data-kt-str-meas-tbody]");
-			if (!rows.length) {
+			if (!pageRows.length) {
 				$tbody.html(
 					'<tr data-kt-str-meas-empty="1"><td colspan="8" class="py-8 px-4 text-center text-on-surface-variant text-sm">' +
 						esc(__("No performance measurements for this plan yet.")) +
 						"</td></tr>"
 				);
-			} else {
-				$tbody.html(
-					rows
-						.map(function (r) {
-							var tgt = r.target || {};
-							var ca = r.corrective_action_label || "—";
-							var caHtml =
-								r.corrective_action_open
-									? '<span class="text-secondary font-medium">' + esc(ca) + "</span>"
-									: '<span class="text-on-surface-variant' +
-										(ca === "None required" ? " italic" : "") +
-										'">' +
-										esc(ca) +
-										"</span>";
-							return (
-								'<tr class="hover:bg-surface-container transition-colors group" data-kt-str-measurement-id="' +
-								esc(r.id) +
-								'" data-kt-str-target-code="' +
-								esc(tgt.code || "") +
-								'">' +
-								'<td class="py-4 px-4 align-top min-w-[300px]"><div class="flex flex-col"><span class="font-data-mono text-data-mono text-primary font-bold">' +
-								esc(tgt.code || "") +
-								'</span><span class="text-body-md text-on-surface-variant">' +
-								esc(tgt.name || "") +
-								"</span></div></td>" +
-								'<td class="py-4 px-4 align-top text-body-md text-on-surface whitespace-nowrap">' +
-								esc(r.period_label || "—") +
-								"</td>" +
-								'<td class="py-4 px-4 align-top font-data-mono text-data-mono text-on-surface text-right whitespace-nowrap">' +
-								esc(r.target_value_display || "—") +
-								"</td>" +
-								'<td class="py-4 px-4 align-top font-data-mono text-data-mono text-on-surface text-right whitespace-nowrap">' +
-								esc(r.actual_display || "—") +
-								"</td>" +
-								'<td class="py-4 px-4 align-top whitespace-nowrap">' +
-								measResultPill(r.result_status) +
-								"</td>" +
-								'<td class="py-4 px-4 align-top whitespace-nowrap">' +
-								measWorkflowPill(r.workflow_status) +
-								"</td>" +
-								'<td class="py-4 px-4 align-top text-body-md">' +
-								caHtml +
-								"</td>" +
-								'<td class="py-4 px-4 align-top text-right whitespace-nowrap">' +
-								actionButton(r) +
-								"</td></tr>"
-							);
-						})
-						.join("")
-				);
+				return;
 			}
-			var total = ((state.dto && state.dto.rows) || []).length;
-			var shown = rows.length;
-			$root
-				.find("[data-kt-str-meas-footer]")
-				.text(
-					shown
-						? __("Showing {0} of {1} entries", [String(shown), String(total)])
-						: __("Showing 0 entries")
-				);
+			$tbody.html(
+				pageRows
+					.map(function (r) {
+						var tgt = r.target || {};
+						var ca = r.corrective_action_label || "—";
+						var caHtml = r.corrective_action_open
+							? '<span class="text-secondary font-medium">' + esc(ca) + "</span>"
+							: '<span class="text-on-surface-variant' +
+								(ca === "None required" ? " italic" : "") +
+								'">' +
+								esc(ca) +
+								"</span>";
+						return (
+							'<tr class="hover:bg-surface-container transition-colors group" data-kt-str-measurement-id="' +
+							esc(r.id) +
+							'" data-kt-str-target-code="' +
+							esc(tgt.code || "") +
+							'">' +
+							'<td class="py-4 px-4 align-top min-w-[300px]"><div class="flex flex-col"><span class="font-data-mono text-data-mono text-primary font-bold">' +
+							esc(tgt.code || "") +
+							'</span><span class="text-body-md text-on-surface-variant">' +
+							esc(tgt.name || "") +
+							"</span></div></td>" +
+							'<td class="py-4 px-4 align-top text-body-md text-on-surface whitespace-nowrap">' +
+							esc(r.period_label || "—") +
+							"</td>" +
+							'<td class="py-4 px-4 align-top font-data-mono text-data-mono text-on-surface text-right whitespace-nowrap">' +
+							esc(r.target_value_display || "—") +
+							"</td>" +
+							'<td class="py-4 px-4 align-top font-data-mono text-data-mono text-on-surface text-right whitespace-nowrap">' +
+							esc(r.actual_display || "—") +
+							"</td>" +
+							'<td class="py-4 px-4 align-top whitespace-nowrap">' +
+							measResultPill(r.result_status) +
+							"</td>" +
+							'<td class="py-4 px-4 align-top whitespace-nowrap">' +
+							measWorkflowPill(r.workflow_status) +
+							"</td>" +
+							'<td class="py-4 px-4 align-top text-body-md">' +
+							caHtml +
+							"</td>" +
+							'<td class="py-4 px-4 align-top text-right whitespace-nowrap">' +
+							actionButton(r) +
+							"</td></tr>"
+						);
+					})
+					.join("")
+			);
+		}
+
+		function paintRows(resetPage) {
+			var pager = attachTablePagination($root, {
+				renderPage: paintMeasPageRows,
+			});
+			pager.setRows(filteredRows(), !!resetPage);
 		}
 
 		function paint() {
@@ -2688,7 +2905,7 @@ frappe.provide("kentender_strategy.live");
 			bindPlanChrome($root, plan);
 			paintCounts();
 			paintPeriodFilter();
-			paintRows();
+			paintRows(true);
 		}
 
 		function routeToSubmit(targetCode) {
@@ -2763,7 +2980,7 @@ frappe.provide("kentender_strategy.live");
 				$root.find("[data-kt-str-meas-filter-period]").val("");
 				$root.find("[data-kt-str-meas-filter-workflow]").val("");
 				$root.find("[data-kt-str-meas-filter-result]").val("");
-				paintRows();
+				paintRows(true);
 			}
 		});
 
@@ -2777,54 +2994,673 @@ frappe.provide("kentender_strategy.live");
 					state.filterPeriod = $root.find("[data-kt-str-meas-filter-period]").val() || "";
 					state.filterWorkflow = $root.find("[data-kt-str-meas-filter-workflow]").val() || "";
 					state.filterResult = $root.find("[data-kt-str-meas-filter-result]").val() || "";
-					paintRows();
+					paintRows(true);
 				}
 			);
 
 		return reload();
 	}
 
-	function bindReview($root, planCode) {
-		return call("get_plan_readiness_api", { plan_code: planCode }).then(function (ready) {
-			if (!ready) {
-				return;
+	function reviewIssueRow(issue) {
+		var blocker = (issue.severity || "blocker") === "blocker";
+		var sevLabel = blocker ? __("Blocker") : __("Warning");
+		var sevCls = blocker ? "text-status-exhausted" : "text-status-reserved";
+		var icon = blocker ? "cancel" : "warning";
+		var loc = issue.edit_location || "strategy-plan-structure";
+		return (
+			'<div class="flex flex-col md:flex-row md:items-center justify-between p-4 border-b border-surface-variant last:border-b-0 hover:bg-surface-container/30 transition-colors group" data-kt-str-review-issue>' +
+			'<div class="flex gap-4 items-start">' +
+			'<span class="material-symbols-outlined ' +
+			sevCls +
+			' mt-0.5" data-icon="' +
+			icon +
+			'">' +
+			icon +
+			"</span>" +
+			"<div>" +
+			'<div class="flex items-center gap-2 mb-1">' +
+			'<span class="text-data-mono font-data-mono text-xs bg-surface-container px-1.5 py-0.5 rounded text-on-surface-variant">' +
+			esc(issue.code || "") +
+			"</span>" +
+			'<span class="text-xs font-bold ' +
+			sevCls +
+			' uppercase tracking-wider">' +
+			esc(sevLabel) +
+			"</span>" +
+			"</div>" +
+			'<p class="text-body-md font-body-md text-on-surface">' +
+			esc(issue.message || issue.title || "") +
+			"</p>" +
+			"</div></div>" +
+			'<div class="mt-3 md:mt-0 ml-10 md:ml-0">' +
+			'<button type="button" class="text-primary hover:text-primary-container font-semibold text-sm flex items-center gap-1 group-hover:underline" data-kt-str-resolve="' +
+			esc(loc) +
+			'" data-kt-str-record="' +
+			esc(issue.record_id || "") +
+			'">' +
+			__("Resolve") +
+			' <span class="material-symbols-outlined text-[16px]" data-icon="arrow_forward">arrow_forward</span>' +
+			"</button></div></div>"
+		);
+	}
+
+	function setReviewActionVisible($btn, visible) {
+		if (!$btn || !$btn.length) {
+			return;
+		}
+		if (visible) {
+			$btn.removeClass("hidden").removeAttr("hidden").css("display", "");
+		} else {
+			$btn.addClass("hidden").attr("hidden", "hidden").css("display", "none");
+		}
+	}
+
+	function paintReviewStatusPill($root, status) {
+		paintPlanStatusPill($root, status);
+	}
+
+	function paintReviewActions($root, dto) {
+		var actions = dto.allowed_actions || [];
+		var canSubmit = actions.indexOf("Submit") >= 0 || actions.indexOf("Resubmit") >= 0;
+		var isBlockersCanvas = $root.is('[data-testid="kt-str-review-blockers"]');
+		var $submit = $root.find('[data-kt-str-action="submit-for-review"]');
+		var $return = $root.find('[data-kt-str-action="return-for-correction"]');
+		var $approve = $root.find('[data-kt-str-action="approve-plan"]');
+		var $activate = $root.find('[data-kt-str-action="activate-plan"]');
+
+		if (actions.indexOf("Resubmit") >= 0) {
+			$root.find("[data-kt-str-submit-label]").text(__("Resubmit for review"));
+		} else {
+			$root.find("[data-kt-str-submit-label]").text(__("Submit for review"));
+		}
+
+		// Primary CTAs only when listed in allowed_actions. Blockers canvas keeps a
+		// disabled Submit affordance when not allowed (Stitch parity). Ready canvas
+		// never shows Submit unless Submit/Resubmit is allowed.
+		if (canSubmit) {
+			setReviewActionVisible($submit, true);
+			$submit
+				.prop("disabled", false)
+				.removeClass("bg-surface-variant text-outline cursor-not-allowed")
+				.addClass("bg-primary text-on-primary hover:bg-primary-container")
+				.removeAttr("title");
+		} else if (isBlockersCanvas) {
+			setReviewActionVisible($submit, true);
+			$submit
+				.prop("disabled", true)
+				.addClass("bg-surface-variant text-outline cursor-not-allowed")
+				.removeClass("bg-primary text-on-primary hover:bg-primary-container")
+				.attr("title", __("All blockers must be resolved before submission"));
+		} else {
+			setReviewActionVisible($submit, false);
+			$submit.prop("disabled", true);
+		}
+
+		setReviewActionVisible($return, actions.indexOf("Return for correction") >= 0);
+		setReviewActionVisible($approve, actions.indexOf("Approve") >= 0);
+		setReviewActionVisible($activate, actions.indexOf("Activate") >= 0);
+	}
+
+	function paintReviewCanvas($root, dto) {
+		var plan = dto.plan || {};
+		var status = dto.status || plan.status || "";
+		$root.attr("data-kt-str-live", "1");
+		$root.attr("data-kt-str-ready", dto.ready ? "1" : "0");
+		$root.attr("data-kt-str-blocker-count", String(dto.blocker_count || 0));
+		$root.attr("data-kt-str-bound-code", plan.code || "");
+		$root.attr("data-kt-str-route-token", plan.code || plan.id || "");
+		$root.attr("data-kt-str-plan-id", plan.id || "");
+		/* Full shared chrome (period + Version N + status tones) — not code/title-only. */
+		bindPlanChrome(
+			$root,
+			Object.assign({}, plan, {
+				status: status,
+			})
+		);
+		paintReviewStatusPill($root, status);
+
+		var blockers = dto.blocker_count || 0;
+		var warnings = dto.warning_count || 0;
+		$root
+			.find("[data-kt-str-blocker-count-label]")
+			.text(blockers + (blockers === 1 ? " Blocker" : " Blockers"));
+		$root
+			.find("[data-kt-str-warning-count-label]")
+			.text(warnings + (warnings === 1 ? " Warning" : " Warnings"));
+
+		var reason = dto.return_reason || "";
+		var $banner = $root.find("[data-kt-str-return-reason-banner]");
+		if (status === "Returned" && reason) {
+			$banner.removeClass("hidden");
+			$root.find("[data-kt-str-return-reason]").text(reason);
+		} else {
+			$banner.addClass("hidden");
+			$root.find("[data-kt-str-return-reason]").text("");
+		}
+
+		if ($root.is('[data-testid="kt-str-review-ready"]')) {
+			var title = __("Ready for submission");
+			var copy = __(
+				"All readiness checks have passed. This version of the strategic plan can now be submitted for official review."
+			);
+			if (status === "Submitted") {
+				title = __("Awaiting review");
+				copy = __("Readiness checks have passed. Approve or return this plan according to your authority.");
+			} else if (status === "Approved") {
+				title = __("Approved — ready to activate");
+				copy = __("This plan version is approved. Activate it to make it the live strategy for the entity.");
+			} else if (status === "Active") {
+				title = __("Plan is Active");
+				copy = __("All readiness checks pass for this Active plan version.");
+			} else if (status === "Returned") {
+				title = __("Ready to resubmit");
+				copy = __("Return issues are resolved and readiness checks have passed. Resubmit for review.");
 			}
-			$root.attr("data-kt-str-live", "1");
-			$root.attr("data-kt-str-ready", ready.ready ? "1" : "0");
-			$root.attr("data-kt-str-blocker-count", String(ready.blocker_count || 0));
-			$root.off("click.ktStrResolve").on("click.ktStrResolve", "[data-kt-str-resolve]", function (e) {
-				e.preventDefault();
-				var loc = $(this).attr("data-kt-str-resolve");
-				if (loc) {
-					frappe.set_route(loc, planCode);
+			$root.find("[data-kt-str-review-ready-title]").text(title);
+			$root.find("[data-kt-str-review-ready-copy]").text(copy);
+		} else {
+			var grouped = dto.grouped || {};
+			var groups = ["Structure", "Targets", "Value Commitments", "Governance"];
+			groups.forEach(function (g) {
+				var issues = grouped[g] || [];
+				var $card = $root.find('[data-kt-str-review-group="' + g + '"]');
+				if (!issues.length) {
+					$card.addClass("hidden");
+					$card.find("[data-kt-str-review-issues]").empty();
+					return;
 				}
+				$card.removeClass("hidden");
+				var blockerN = issues.filter(function (i) {
+					return (i.severity || "blocker") === "blocker";
+				}).length;
+				var warnN = issues.length - blockerN;
+				var countLabel =
+					blockerN && warnN
+						? blockerN + " / " + warnN
+						: blockerN
+							? blockerN + (blockerN === 1 ? " Blocker" : " Blockers")
+							: warnN + (warnN === 1 ? " Warning" : " Warnings");
+				$card.find("[data-kt-str-review-group-count]").text(countLabel);
+				$card.find("[data-kt-str-review-issues]").html(
+					issues
+						.map(function (i) {
+							return reviewIssueRow(i);
+						})
+						.join("")
+				);
 			});
-			$root.off("click.ktStrTrans").on("click.ktStrTrans", "[data-kt-str-action='submit-plan']", function (e) {
-				e.preventDefault();
-				call("transition_plan", { plan_version: ready.plan.id, action: "Submit" }).then(function () {
-					frappe.show_alert({ message: __("Plan submitted"), indicator: "green" });
-					bindReview($root, planCode);
+			$root.find("[data-kt-str-review-blocked-banner]").toggleClass("hidden", !!dto.ready);
+		}
+
+		paintReviewActions($root, dto);
+		// Hide design fixture toggle once live data is bound.
+		$root
+			.closest('[data-testid="kt-cl-page-body"]')
+			.find('[data-testid="kt-str-review-state-toggle"]')
+			.addClass("hidden");
+	}
+
+	function remountReviewForReadyState(planCode, ready) {
+		if (frappe.route_options) {
+			delete frappe.route_options.kt_str_review_state;
+		}
+		frappe.route_options = frappe.route_options || {};
+		// Force shell pick via temporary flag then clear — use explicit state matching API.
+		frappe.route_options.kt_str_review_state = ready ? "ready" : "blockers";
+		frappe.set_route("strategy-plan-review", planCode);
+		// Clear after navigation so next live load is API-driven.
+		setTimeout(function () {
+			if (frappe.route_options) {
+				delete frappe.route_options.kt_str_review_state;
+			}
+		}, 0);
+	}
+
+	function bindReview($root, planCode) {
+		function reload() {
+			return call("get_plan_readiness_api", { plan_code: planCode }).then(function (dto) {
+				if (!dto) {
+					return dto;
+				}
+				var isReadyCanvas = $root.is('[data-testid="kt-str-review-ready"]');
+				if (!!dto.ready !== isReadyCanvas) {
+					remountReviewForReadyState(planCode, !!dto.ready);
+					return dto;
+				}
+				paintReviewCanvas($root, dto);
+
+				$root.off("click.ktStrResolve").on("click.ktStrResolve", "[data-kt-str-resolve]", function (e) {
+					e.preventDefault();
+					var loc = $(this).attr("data-kt-str-resolve");
+					if (loc) {
+						frappe.set_route(loc, planCode);
+					}
 				});
+
+				$root.off("click.ktStrRunReady").on("click.ktStrRunReady", "[data-kt-str-action='run-readiness']", function (e) {
+					e.preventDefault();
+					frappe.show_alert({ message: __("Running readiness check…"), indicator: "blue" });
+					reload();
+				});
+
+				function doTransition(action, reason) {
+					var args = { plan_version: dto.plan.id, action: action };
+					if (reason) {
+						args.reason = reason;
+					}
+					return call("transition_plan", args).then(function (out) {
+						frappe.show_alert({
+							message: __("Plan updated: {0}", [(out && out.status) || action]),
+							indicator: "green",
+						});
+						return reload();
+					});
+				}
+
+				$root
+					.off("click.ktStrSubmit")
+					.on("click.ktStrSubmit", "[data-kt-str-action='submit-for-review']", function (e) {
+						e.preventDefault();
+						var $btn = $(this);
+						if ($btn.prop("disabled") || $btn.hasClass("hidden") || $btn.attr("hidden")) {
+							return;
+						}
+						var action = dto.status === "Returned" ? "Resubmit" : "Submit";
+						if ((dto.allowed_actions || []).indexOf(action) < 0) {
+							return;
+						}
+						doTransition(action);
+					});
+
+				$root
+					.off("click.ktStrReturnPlan")
+					.on("click.ktStrReturnPlan", "[data-kt-str-action='return-for-correction']", function (e) {
+						e.preventDefault();
+						frappe.prompt(
+							[
+								{
+									fieldname: "reason",
+									fieldtype: "Small Text",
+									label: __("Return reason"),
+									reqd: 1,
+								},
+							],
+							function (values) {
+								doTransition("Return for correction", values.reason);
+							},
+							__("Return for correction"),
+							__("Return")
+						);
+					});
+
+				$root
+					.off("click.ktStrApprove")
+					.on("click.ktStrApprove", "[data-kt-str-action='approve-plan']", function (e) {
+						e.preventDefault();
+						doTransition("Approve");
+					});
+
+				$root
+					.off("click.ktStrActivate")
+					.on("click.ktStrActivate", "[data-kt-str-action='activate-plan']", function (e) {
+						e.preventDefault();
+						doTransition("Activate");
+					});
+
+				return dto;
 			});
-			return ready;
-		});
+		}
+		return reload();
 	}
 
 	function bindDownstream($root, planCode) {
 		return call("get_strategy_usage", { plan_code: planCode }).then(function (usage) {
 			$root.attr("data-kt-str-live", "1");
-			var groups = (usage && usage.groups) || {};
-			Object.keys(groups).forEach(function (g) {
-				$root.attr("data-kt-str-usage-" + g.toLowerCase(), String((groups[g] || []).length));
+			if (!usage || !usage.plan) {
+				return usage;
+			}
+			var plan = usage.plan;
+			$root.attr("data-kt-str-bound-code", plan.code || "");
+			$root.attr("data-kt-str-route-token", plan.code || plan.id || planCode || "");
+			$root.attr("data-kt-str-plan-id", plan.id || "");
+			/* Shared plan chrome — never paint ad-hoc UPPERCASE / vN byline variants. */
+			bindPlanChrome($root, plan);
+
+			var counts = usage.counts || {};
+			var modules = [
+				"Budget",
+				"Demand",
+				"Planning",
+				"Tender",
+				"Contract",
+				"Asset",
+				"Disposal",
+			];
+			modules.forEach(function (mod) {
+				var n = counts[mod] || 0;
+				$root.attr("data-kt-str-usage-" + mod.toLowerCase(), String(n));
+				$root.find('[data-kt-str-down-count="' + mod + '"]').text(String(n));
+				var $chip = $root.find('[data-kt-str-down-chip="' + mod + '"]');
+				if (n > 0) {
+					$chip.removeClass("opacity-60");
+					$chip
+						.find(".material-symbols-outlined")
+						.removeClass("text-on-surface-variant")
+						.addClass("text-primary");
+					$chip
+						.find(".text-body-md")
+						.removeClass("text-on-surface-variant")
+						.addClass("text-on-surface");
+				} else {
+					$chip.addClass("opacity-60");
+				}
 			});
+
+			var allRows = usage.rows || [];
+			$root.data("ktStrDownRows", allRows);
+
+			var targets = {};
+			var statuses = {};
+			allRows.forEach(function (r) {
+				if (r.target && r.target.code) {
+					targets[r.target.code] = r.target.name || r.target.code;
+				}
+				if (r.status) {
+					statuses[r.status] = true;
+				}
+			});
+			var $tgt = $root.find("[data-kt-str-down-filter-target]");
+			var tgtVal = $tgt.val() || "";
+			$tgt.find("option:not(:first)").remove();
+			Object.keys(targets)
+				.sort()
+				.forEach(function (code) {
+					$tgt.append(
+						$("<option></option>").attr("value", code).text(code + " — " + targets[code])
+					);
+				});
+			$tgt.val(tgtVal);
+
+			var $st = $root.find("[data-kt-str-down-filter-status]");
+			var stVal = $st.val() || "";
+			$st.find("option:not(:first)").remove();
+			Object.keys(statuses)
+				.sort()
+				.forEach(function (s) {
+					$st.append($("<option></option>").attr("value", s).text(s));
+				});
+			$st.val(stVal);
+
+			function refTypeClass(rt) {
+				if (rt === "Primary alignment") {
+					return "bg-primary text-on-primary";
+				}
+				if (rt === "Supporting alignment") {
+					return "bg-secondary-fixed text-on-secondary-fixed-variant";
+				}
+				return "bg-surface-container-highest text-on-surface";
+			}
+
+			function formatDownDate(iso) {
+				if (!iso) {
+					return "—";
+				}
+				try {
+					var d = String(iso).slice(0, 10);
+					return frappe.datetime.str_to_user ? frappe.datetime.str_to_user(d) : d;
+				} catch (e) {
+					return String(iso).slice(0, 10);
+				}
+			}
+
+			function paintDownRows(rows) {
+				var $tb = $root.find("[data-kt-str-down-tbody]");
+				$tb.empty();
+				if (!rows.length) {
+					$tb.append(
+						'<tr data-kt-str-down-empty><td colspan="7" class="py-8 px-4 text-center text-on-surface-variant text-body-md">' +
+							esc(__("No downstream references match the current filters.")) +
+							"</td></tr>"
+					);
+					return;
+				}
+				rows.forEach(function (r) {
+					var rec = r.record || {};
+					var tgt = r.target || {};
+					var rt = r.reference_type || "—";
+					var tr =
+						'<tr class="hover:bg-surface-container transition-colors group" data-kt-str-down-row data-kt-str-down-module="' +
+						esc(r.module || "") +
+						'" data-kt-str-down-code="' +
+						esc(rec.code || "") +
+						'">' +
+						'<td class="py-4 px-4 align-top"><div class="flex flex-col">' +
+						'<span class="font-data-mono text-data-mono text-primary font-bold">' +
+						esc(rec.code || "—") +
+						"</span>" +
+						'<span class="text-body-md text-on-surface-variant mt-0.5 line-clamp-1">' +
+						esc(rec.name || "") +
+						"</span></div></td>" +
+						'<td class="py-4 px-4 align-top text-body-md text-on-surface whitespace-nowrap">' +
+						esc(r.module || "") +
+						"</td>" +
+						'<td class="py-4 px-4 align-top"><div class="flex flex-col">' +
+						'<span class="font-data-mono text-data-mono text-on-surface font-medium">' +
+						esc(tgt.code || "—") +
+						"</span>" +
+						(tgt.name
+							? '<span class="text-body-md text-on-surface-variant mt-0.5 line-clamp-1">' +
+								esc(tgt.name) +
+								"</span>"
+							: "") +
+						"</div></td>" +
+						'<td class="py-4 px-4 align-top whitespace-nowrap">' +
+						'<span class="inline-flex items-center px-2.5 py-1 rounded-full font-label-caps text-[11px] font-bold ' +
+						refTypeClass(rt) +
+						'">' +
+						esc(rt) +
+						"</span></td>" +
+						'<td class="py-4 px-4 align-top whitespace-nowrap">' +
+						'<div class="inline-flex items-center gap-1.5 text-body-md font-medium text-on-surface">' +
+						'<span class="material-symbols-outlined text-[16px]">circle</span> ' +
+						esc(r.status || "—") +
+						"</div></td>" +
+						'<td class="py-4 px-4 align-top font-data-mono text-data-mono text-on-surface whitespace-nowrap">' +
+						esc(formatDownDate(r.modified)) +
+						"</td>" +
+						'<td class="py-4 px-4 align-top text-right whitespace-nowrap">' +
+						'<button type="button" class="text-secondary hover:text-primary transition-colors p-1 rounded hover:bg-surface-container" data-kt-str-action="view-downstream" data-kt-str-down-doctype="' +
+						esc(r.doctype || "") +
+						'" data-kt-str-down-id="' +
+						esc(rec.id || "") +
+						'" aria-label="' +
+						esc(__("View")) +
+						'">' +
+						'<span class="material-symbols-outlined">visibility</span></button></td></tr>';
+					$tb.append(tr);
+				});
+			}
+
+			function applyDownFilters() {
+				var q = String($root.find("[data-kt-str-down-search]").val() || "")
+					.trim()
+					.toLowerCase();
+				var mod = $root.find("[data-kt-str-down-filter-module]").val() || "";
+				var tgtCode = $root.find("[data-kt-str-down-filter-target]").val() || "";
+				var rt = $root.find("[data-kt-str-down-filter-reftype]").val() || "";
+				var st = $root.find("[data-kt-str-down-filter-status]").val() || "";
+				var filtered = allRows.filter(function (r) {
+					if (mod && r.module !== mod) {
+						return false;
+					}
+					if (tgtCode && (!r.target || r.target.code !== tgtCode)) {
+						return false;
+					}
+					if (rt && r.reference_type !== rt) {
+						return false;
+					}
+					if (st && r.status !== st) {
+						return false;
+					}
+					if (q) {
+						var hay = [
+							r.module,
+							(r.record && r.record.code) || "",
+							(r.record && r.record.name) || "",
+							(r.target && r.target.code) || "",
+							(r.target && r.target.name) || "",
+							r.reference_type || "",
+							r.status || "",
+						]
+							.join(" ")
+							.toLowerCase();
+						if (hay.indexOf(q) < 0) {
+							return false;
+						}
+					}
+					return true;
+				});
+				paintDownRows(filtered);
+			}
+
+			paintDownRows(allRows);
+
+			$root
+				.off("input.ktStrDown change.ktStrDown")
+				.on(
+					"input.ktStrDown change.ktStrDown",
+					"[data-kt-str-down-search], [data-kt-str-down-filter-module], [data-kt-str-down-filter-target], [data-kt-str-down-filter-reftype], [data-kt-str-down-filter-status]",
+					function () {
+						applyDownFilters();
+					}
+				);
+
+			$root.off("click.ktStrDown").on("click.ktStrDown", "[data-kt-str-action]", function (e) {
+				var action = $(this).attr("data-kt-str-action");
+				if (action === "clear-down-filters") {
+					e.preventDefault();
+					e.stopPropagation();
+					$root.find("[data-kt-str-down-search]").val("");
+					$root.find("[data-kt-str-down-filter-module]").val("");
+					$root.find("[data-kt-str-down-filter-target]").val("");
+					$root.find("[data-kt-str-down-filter-reftype]").val("");
+					$root.find("[data-kt-str-down-filter-status]").val("");
+					paintDownRows(allRows);
+					return;
+				}
+				if (action === "view-downstream") {
+					e.preventDefault();
+					e.stopPropagation();
+					var dt = $(this).attr("data-kt-str-down-doctype");
+					var id = $(this).attr("data-kt-str-down-id");
+					if (dt && id) {
+						frappe.set_route("Form", dt, id);
+					}
+				}
+			});
+
 			return usage;
 		});
 	}
 
+	function formatAuditWhen(iso) {
+		if (!iso) {
+			return "—";
+		}
+		try {
+			if (frappe.datetime && frappe.datetime.str_to_user) {
+				return frappe.datetime.str_to_user(iso);
+			}
+		} catch (e) {
+			/* fall through */
+		}
+		return String(iso).replace("T", " ").slice(0, 16);
+	}
+
+	function renderAuditRows(rows) {
+		if (!(rows || []).length) {
+			return (
+				'<tr data-kt-str-empty="1"><td class="py-6 px-4 text-on-surface-variant" colspan="7">' +
+				esc(__("No audit events for this plan version yet.")) +
+				"</td></tr>"
+			);
+		}
+		return rows
+			.map(function (r) {
+				var prior = r.prior_state || "";
+				var next = r.new_state || "";
+				var summary = r.summary || r.event_type || "";
+				var stateHtml = "";
+				if (prior && next) {
+					stateHtml =
+						'<span class="text-xs text-on-surface-variant">' +
+						esc(prior) +
+						'</span><span class="material-symbols-outlined text-[14px] text-outline mx-1">arrow_forward</span><span class="text-xs font-semibold text-status-available">' +
+						esc(next) +
+						"</span>";
+				} else if (summary) {
+					stateHtml =
+						'<span class="bg-surface-variant px-2 py-0.5 rounded text-xs">' +
+						esc(summary) +
+						"</span>";
+				} else {
+					stateHtml = '<span class="text-on-surface-variant">—</span>';
+				}
+				var record = r.entity_name || r.entity_type || "—";
+				return (
+					'<tr class="hover:bg-surface-container transition-colors group cursor-pointer" data-kt-str-audit-id="' +
+					esc(r.name) +
+					'">' +
+					'<td class="py-2.5 px-4 text-on-surface-variant">' +
+					esc(formatAuditWhen(r.event_at)) +
+					"</td>" +
+					'<td class="py-2.5 px-4 font-medium text-on-surface">' +
+					esc(r.event_type || summary) +
+					"</td>" +
+					'<td class="py-2.5 px-4 font-data-mono text-xs text-primary">' +
+					esc(record) +
+					"</td>" +
+					'<td class="py-2.5 px-4">' +
+					esc(r.actor || "—") +
+					"</td>" +
+					'<td class="py-2.5 px-4"><div class="flex items-center gap-2 flex-wrap">' +
+					stateHtml +
+					"</div></td>" +
+					'<td class="py-2.5 px-4 text-on-surface-variant">' +
+					esc(r.reason || "—") +
+					"</td>" +
+					'<td class="py-2.5 px-4 text-right"><button type="button" class="text-secondary hover:text-primary font-medium text-xs" data-kt-str-action="view-audit">' +
+					esc(__("View")) +
+					"</button></td></tr>"
+				);
+			})
+			.join("");
+	}
+
 	function bindAudit($root, planCode) {
-		return call("list_audit_events", { plan_code: planCode }).then(function (rows) {
+		return Promise.all([
+			call("get_plan_overview", { plan_code: planCode }).catch(function () {
+				return null;
+			}),
+			call("list_audit_events", { plan_code: planCode }),
+		]).then(function (parts) {
+			var dto = parts[0];
+			var rows = parts[1] || [];
 			$root.attr("data-kt-str-live", "1");
-			$root.attr("data-kt-str-audit-count", String((rows || []).length));
+			$root.attr("data-kt-str-audit-count", String(rows.length));
+			if (dto && dto.plan) {
+				var plan = dto.plan;
+				$root.attr("data-kt-str-bound-code", plan.code || "");
+				$root.attr("data-kt-str-route-token", plan.code || plan.id || planCode || "");
+				$root.attr("data-kt-str-plan-id", plan.id || "");
+				bindPlanChrome($root, plan);
+			}
+			var pager = attachTablePagination($root, {
+				renderPage: function (pageRows) {
+					$root.find("[data-kt-str-audit-tbody]").html(renderAuditRows(pageRows));
+				},
+			});
+			pager.setRows(rows, true);
 			return rows;
 		});
 	}
@@ -2863,8 +3699,200 @@ frappe.provide("kentender_strategy.live");
 		});
 	}
 
+	function resultTone(status) {
+		var lower = String(status || "")
+			.trim()
+			.toLowerCase();
+		if (lower === "at risk") {
+			return "at-risk";
+		}
+		if (lower === "on track") {
+			return "on-track";
+		}
+		if (lower === "off track") {
+			return "off-track";
+		}
+		return "neutral";
+	}
+
+	function workflowIcon(status) {
+		var s = String(status || "").toLowerCase();
+		if (s === "verified") {
+			return "verified";
+		}
+		if (s === "returned") {
+			return "replay";
+		}
+		if (s === "rejected") {
+			return "cancel";
+		}
+		if (s === "draft") {
+			return "edit";
+		}
+		return "hourglass_empty";
+	}
+
+	function resultIcon(status) {
+		var s = String(status || "").toLowerCase();
+		if (s === "on track") {
+			return "check_circle";
+		}
+		if (s === "off track") {
+			return "error";
+		}
+		if (s === "at risk") {
+			return "warning";
+		}
+		return "info";
+	}
+
+	function paintVerifyPills($root, workflowStatus, resultStatus) {
+		$root.attr("data-kt-str-workflow-status", workflowStatus || "");
+		$root.attr("data-kt-str-result-status", resultStatus || "");
+		$root.find("[data-kt-str-meas-workflow-label]").text(
+			workflowStatus ? String(workflowStatus).toUpperCase() : "—"
+		);
+		$root.find("[data-kt-str-meas-workflow-icon]").text(workflowIcon(workflowStatus));
+		var tone = resultTone(resultStatus);
+		$root.find("[data-kt-str-result]").text(
+			resultStatus ? String(resultStatus).toUpperCase() : "—"
+		);
+		$root.find("[data-kt-str-meas-result-icon]").text(resultIcon(resultStatus));
+		$root.find("[data-kt-str-meas-result-pill]").attr("data-kt-str-meas-tone", tone);
+		$root.find("[data-kt-str-meas-tone-rail]").attr("data-kt-str-meas-tone", tone);
+		$root.find("[data-kt-str-meas-submitted-body]").attr("data-kt-str-meas-tone", tone);
+	}
+
+	function paintVerifySurface($root, m, tgt, planCode) {
+		paintVerifyPills($root, m.workflow_status, m.result_status);
+
+		if (tgt.baseline_numeric != null) {
+			var bl =
+				String(tgt.baseline_numeric) +
+				"%" +
+				(tgt.baseline_as_of
+					? " " +
+						__("as at") +
+						" " +
+						(frappe.datetime.str_to_user
+							? frappe.datetime.str_to_user(String(tgt.baseline_as_of).slice(0, 10))
+							: String(tgt.baseline_as_of).slice(0, 10))
+					: "");
+			$root.find("[data-kt-str-meas-baseline]").text(bl);
+		}
+		if (m.measurement_period_start && m.measurement_period_end) {
+			$root
+				.find("[data-kt-str-meas-period-label]")
+				.text(formatPeriod(m.measurement_period_start, m.measurement_period_end));
+		} else if (tgt.period_start && tgt.period_end) {
+			$root
+				.find("[data-kt-str-meas-period-label]")
+				.text(formatPeriod(tgt.period_start, tgt.period_end));
+		}
+		if (m.actual_numeric != null) {
+			$root.find("[data-kt-str-actual]").text(String(m.actual_numeric) + "%");
+		} else {
+			$root.find("[data-kt-str-actual]").text("—");
+		}
+		if (m.measurement_date) {
+			var md = String(m.measurement_date).slice(0, 10);
+			$root
+				.find("[data-kt-str-meas-date-display]")
+				.text(frappe.datetime.str_to_user ? frappe.datetime.str_to_user(md) : md);
+		} else {
+			$root.find("[data-kt-str-meas-date-display]").text("—");
+		}
+		$root
+			.find("[data-kt-str-meas-evidence-source]")
+			.text(m.evidence_source || "—");
+		$root
+			.find("[data-kt-str-meas-evidence-ref]")
+			.text(m.evidence_reference || __("No evidence reference"));
+		$root
+			.find("[data-kt-str-meas-evidence-meta]")
+			.text(m.evidence_source || __("Evidence reference"));
+		$root.find("[data-kt-str-meas-submitted-by]").text(m.submitted_by || "—");
+		$root
+			.find("[data-kt-str-meas-commentary]")
+			.text(m.commentary ? '"' + m.commentary + '"' : "—");
+		if (m.verification_comment) {
+			$root.find("[data-kt-str-meas-verify-comments]").val(m.verification_comment);
+		}
+
+		var rs = String(m.result_status || "").toLowerCase();
+		var $ca = $root.find("[data-kt-str-meas-ca-box]");
+		var $exc = $root.find("[data-kt-str-meas-exception-box]");
+		if (rs === "at risk") {
+			$ca.removeClass("hidden").show();
+			$exc.addClass("hidden").hide();
+		} else if (rs === "off track") {
+			$ca.addClass("hidden").hide();
+			$exc.removeClass("hidden").css("display", "flex");
+		} else {
+			$ca.addClass("hidden").hide();
+			$exc.addClass("hidden").hide();
+		}
+
+		$root
+			.off("change.ktStrExc")
+			.on("change.ktStrExc", "[data-kt-str-meas-exception]", function () {
+				var on = $(this).is(":checked");
+				$root.find("[data-kt-str-meas-exception-reason]").toggleClass("hidden", !on);
+			});
+
+		var canDecide = m.workflow_status === "Submitted" && !!m.id;
+		var sameUser =
+			m.submitted_by &&
+			m.submitted_by === frappe.session.user &&
+			frappe.session.user !== "Administrator";
+		if (sameUser) {
+			canDecide = false;
+			$root
+				.find("[data-kt-str-meas-sod-text]")
+				.text(
+					__(
+						"You submitted this measurement. Another Performance Verifier must decide."
+					)
+				);
+		} else if (!m.id || m.is_new) {
+			$root
+				.find("[data-kt-str-meas-sod-text]")
+				.text(__("No submitted measurement is available to verify for this target."));
+		} else if (m.workflow_status && m.workflow_status !== "Submitted") {
+			$root
+				.find("[data-kt-str-meas-sod-text]")
+				.text(
+					__("This measurement is {0}. Decisions are locked.", [
+						m.workflow_status,
+					])
+				);
+		}
+		$root
+			.find(
+				"[data-kt-str-action='verify-measurement'], [data-kt-str-action='request-changes'], [data-kt-str-action='reject-measurement']"
+			)
+			.prop("disabled", !canDecide)
+			.toggleClass("opacity-50 cursor-not-allowed", !canDecide);
+	}
+
+	function applyVerifyDecision($root, m, tr) {
+		if (!tr) {
+			return;
+		}
+		m.workflow_status = tr.workflow_status || m.workflow_status;
+		m.result_status = tr.result_status || m.result_status;
+		// Stay on verify page — only refresh local state / pills (no set_route).
+		paintVerifyPills($root, m.workflow_status, m.result_status);
+		$root
+			.find(
+				"[data-kt-str-action='verify-measurement'], [data-kt-str-action='request-changes'], [data-kt-str-action='reject-measurement']"
+			)
+			.prop("disabled", true)
+			.addClass("opacity-50 cursor-not-allowed");
+	}
+
 	function bindMeasurementForm($root, targetCode, mode, planCode) {
-		var args = { target_code: targetCode };
+		var args = { target_code: targetCode, purpose: mode || "submit" };
 		if (planCode) {
 			args.plan_code = planCode;
 		}
@@ -2917,14 +3945,54 @@ frappe.provide("kentender_strategy.live");
 					.find("[data-kt-str-meas-frequency]")
 					.text(tgt.measurement_frequency || "—");
 				$root.find("[data-kt-str-meas-data-source]").text(tgt.data_source || "—");
-				if (m.is_new) {
+
+				var $periodStart = $root.find("[data-kt-str-meas-period-start]");
+				var $periodEnd = $root.find("[data-kt-str-meas-period-end]");
+				var $measDate = $root.find("[data-kt-str-meas-date]");
+				if (tgt.period_start) {
+					$periodStart.attr("min", tgt.period_start);
+					$periodEnd.attr("min", tgt.period_start);
+					$measDate.attr("min", tgt.period_start);
+				}
+				if (tgt.period_end) {
+					$periodStart.attr("max", tgt.period_end);
+					$periodEnd.attr("max", tgt.period_end);
+					$measDate.attr("max", tgt.period_end);
+				}
+				if (tgt.period_start && tgt.period_end) {
+					// Display in site/user date style (dd/mm/yyyy); keep ISO on inputs for type=date.
+					var rangeLabel = formatPeriod(tgt.period_start, tgt.period_end).replace(
+						/–/g,
+						" – "
+					);
+					var rangeHtml =
+						'<span class="kt-str-meas-period-range" data-kt-str-meas-period-range>' +
+						esc(rangeLabel) +
+						"</span>";
+					$root
+						.find("[data-kt-str-meas-period-hint]")
+						.html(
+							__("Target period:") +
+								" " +
+								rangeHtml +
+								". " +
+								__(
+									"Measurement period must fall within this range unless an authorised final measurement is recorded."
+								)
+						);
+				}
+
+				if (mode === "verify") {
+					paintVerifySurface($root, m, tgt, planCode);
+				} else if (m.is_new) {
 					// Do not keep fixture MOH seed values on a blank submit for this plan/target.
 					$root.find("[data-kt-str-actual]").val("");
 					$root.find("[data-kt-str-meas-evidence-source]").val("");
 					$root.find("[data-kt-str-meas-evidence-ref]").val("");
 					$root.find("[data-kt-str-meas-commentary]").val("");
-					$root.find("[data-kt-str-meas-period]").val("");
-					$root.find("[data-kt-str-meas-date]").val("");
+					$periodStart.val("");
+					$periodEnd.val("");
+					$measDate.val("");
 				} else {
 					if (m.actual_numeric != null) {
 						$root.find("[data-kt-str-actual]").val(m.actual_numeric);
@@ -2938,22 +4006,74 @@ frappe.provide("kentender_strategy.live");
 					if (m.commentary) {
 						$root.find("[data-kt-str-meas-commentary]").val(m.commentary);
 					}
-					if (m.measurement_period_start && m.measurement_period_end) {
-						// period label is painted by register; keep raw range as fallback text
-						$root
-							.find("[data-kt-str-meas-period]")
-							.val(
-								String(m.measurement_period_start) +
-									" – " +
-									String(m.measurement_period_end)
-							);
+					if (m.measurement_period_start) {
+						$periodStart.val(String(m.measurement_period_start).slice(0, 10));
+					}
+					if (m.measurement_period_end) {
+						$periodEnd.val(String(m.measurement_period_end).slice(0, 10));
 					}
 					if (m.measurement_date) {
-						$root.find("[data-kt-str-meas-date]").val(m.measurement_date);
+						$measDate.val(String(m.measurement_date).slice(0, 10));
 					}
 				}
-				(function paintDerived() {
-					var status = String(m.result_status || "").trim();
+
+				function deriveClient(actualRaw) {
+					var actualStr = String(actualRaw == null ? "" : actualRaw).trim();
+					if (!actualStr) {
+						return { result_status: "", variance: null };
+					}
+					var actual = parseFloat(actualStr);
+					if (isNaN(actual)) {
+						return { result_status: "", variance: null };
+					}
+					var target = parseFloat(tgt.target_numeric);
+					if (isNaN(target)) {
+						return { result_status: "", variance: null };
+					}
+					var tol =
+						tgt.tolerance_value == null || tgt.tolerance_value === ""
+							? null
+							: parseFloat(tgt.tolerance_value);
+					var direction = tgt.comparison_direction || "";
+					var mtype = tgt.measurement_type || "Percentage";
+					if (mtype === "Milestone" || mtype === "Boolean") {
+						return {
+							result_status: actual >= 1 ? "On track" : "Off track",
+							variance: null,
+						};
+					}
+					var variance = actual - target;
+					var status = "Off track";
+					if (direction === "At least" || direction === "Increase to") {
+						if (actual >= target) {
+							status = "On track";
+						} else if (tol != null && !isNaN(tol) && actual >= target - tol) {
+							status = "At risk";
+						} else {
+							status = "Off track";
+						}
+					} else if (direction === "At most" || direction === "Reduce to") {
+						if (actual <= target) {
+							status = "On track";
+						} else if (tol != null && !isNaN(tol) && actual <= target + tol) {
+							status = "At risk";
+						} else {
+							status = "Off track";
+						}
+					} else if (direction === "Equal to") {
+						if (tol != null && !isNaN(tol)) {
+							status = Math.abs(actual - target) <= tol ? "On track" : "Off track";
+						} else {
+							status = actual === target ? "On track" : "Off track";
+						}
+					} else {
+						status = actual >= target ? "On track" : "Off track";
+					}
+					return { result_status: status, variance: variance };
+				}
+
+				function paintDerived(status, variance) {
+					status = String(status || "").trim();
 					var tone = "neutral";
 					var lower = status.toLowerCase();
 					if (lower === "at risk") {
@@ -2962,9 +4082,11 @@ frappe.provide("kentender_strategy.live");
 						tone = "on-track";
 					} else if (lower === "off track") {
 						tone = "off-track";
+					} else if (lower === "no data") {
+						tone = "neutral";
+						status = "";
 					}
-					var $derived = $root.find("[data-kt-str-meas-derived]");
-					$derived.attr("data-kt-str-meas-tone", tone);
+					$root.find("[data-kt-str-meas-derived]").attr("data-kt-str-meas-tone", tone);
 					$root
 						.find("[data-kt-str-result]")
 						.text(status ? status.toUpperCase() : "—");
@@ -2983,13 +4105,13 @@ frappe.provide("kentender_strategy.live");
 						explain = __("Actual is outside the {0}% target and tolerance band.", [
 							String(targetNum),
 						]);
-					} else if (!status) {
+					} else {
 						explain = __("Enter an actual value to derive the result.");
 					}
 					$root.find("[data-kt-str-meas-result-explain]").text(explain);
 
-					if (m.variance != null && m.variance !== "") {
-						var v = parseFloat(m.variance);
+					if (variance != null && variance !== "") {
+						var v = parseFloat(variance);
 						var rounded = Math.round(v * 100) / 100;
 						var vLabel =
 							(rounded > 0 ? "+" : rounded < 0 ? "−" : "") +
@@ -3011,7 +4133,16 @@ frappe.provide("kentender_strategy.live");
 								'<span class="material-symbols-outlined text-sm">trending_flat</span> <span data-kt-str-meas-variance-text>—</span>'
 							);
 					}
-				})();
+				}
+
+				paintDerived(m.result_status, m.variance);
+				$root
+					.off("input.ktStrMeasDerive change.ktStrMeasDerive")
+					.on("input.ktStrMeasDerive change.ktStrMeasDerive", "[data-kt-str-actual]", function () {
+						var preview = deriveClient($(this).val());
+						paintDerived(preview.result_status, preview.variance);
+					});
+
 				$root.off("click.ktStrMeasSave").on("click.ktStrMeasSave", "[data-kt-str-action]", function (e) {
 					var action = $(this).attr("data-kt-str-action");
 					if (action === "cancel") {
@@ -3023,49 +4154,233 @@ frappe.provide("kentender_strategy.live");
 						frappe.set_route("strategy-plan-measurements", backPlan);
 						return;
 					}
+					function collectMeasPayload() {
+						var periodStart = $root.find("[data-kt-str-meas-period-start]").val();
+						var periodEnd = $root.find("[data-kt-str-meas-period-end]").val();
+						var measDate = $root.find("[data-kt-str-meas-date]").val();
+						var actualVal = $root.find("[data-kt-str-actual]").val();
+						if (!periodStart || !periodEnd || !measDate) {
+							frappe.show_alert({
+								message: __("Period start, period end, and measurement date are required."),
+								indicator: "orange",
+							});
+							return null;
+						}
+						return {
+							id: m.id || undefined,
+							performance_target: tgt.id,
+							plan_version: m.plan_version,
+							measurement_period_start: periodStart,
+							measurement_period_end: periodEnd,
+							measurement_date: measDate,
+							actual_numeric: actualVal || null,
+							evidence_reference:
+								$root.find("[data-kt-str-meas-evidence-ref]").val() ||
+								m.evidence_reference ||
+								null,
+							evidence_source:
+								$root.find("[data-kt-str-meas-evidence-source]").val() ||
+								m.evidence_source ||
+								null,
+							commentary: $root.find("[data-kt-str-meas-commentary]").val() || null,
+						};
+					}
+
+					function applySaveResult(res) {
+						if (res && res.id) {
+							m.id = res.id;
+							$root.attr("data-kt-str-measurement-id", res.id);
+						}
+						if (res && res.result_status) {
+							paintDerived(res.result_status, res.variance);
+						}
+						if (res && res.workflow_status) {
+							m.workflow_status = res.workflow_status;
+							$root.attr("data-kt-str-workflow-status", res.workflow_status);
+						}
+					}
+
 					if (action === "save-draft") {
 						e.preventDefault();
-						call("save_measurement_draft", {
-							payload: {
-								id: m.id || undefined,
-								performance_target: tgt.id,
-								plan_version: m.plan_version,
-								measurement_period_start: m.measurement_period_start,
-								measurement_period_end: m.measurement_period_end,
-								measurement_date: frappe.datetime.get_today(),
-								actual_numeric: $root.find("[data-kt-str-actual]").val() || m.actual_numeric,
-								evidence_reference: m.evidence_reference,
-								evidence_source: m.evidence_source,
-							},
-						}).then(function () {
+						e.stopPropagation();
+						var draftPayload = collectMeasPayload();
+						if (!draftPayload) {
+							return;
+						}
+						call("save_measurement_draft", { payload: draftPayload }).then(function (res) {
+							applySaveResult(res);
 							frappe.show_alert({ message: __("Draft saved"), indicator: "blue" });
 						});
 					}
 					if (action === "submit-measurement" && mode === "submit") {
 						e.preventDefault();
-						if (!m.id) {
-							frappe.show_alert({
-								message: __("Save a draft measurement before submitting"),
-								indicator: "orange",
-							});
+						e.stopPropagation();
+						var submitPayload = collectMeasPayload();
+						if (!submitPayload) {
 							return;
 						}
-						call("transition_measurement", { name: m.id, action: "Submit" }).then(function () {
-							frappe.show_alert({ message: __("Measurement submitted"), indicator: "green" });
-						});
+						// Persist current fields, then Submit — stay on this page (same as Save draft).
+						call("save_measurement_draft", { payload: submitPayload })
+							.then(function (res) {
+								applySaveResult(res);
+								if (!m.id) {
+									frappe.show_alert({
+										message: __("Could not save measurement before submit"),
+										indicator: "red",
+									});
+									return null;
+								}
+								return call("transition_measurement", {
+									name: m.id,
+									action: "Submit",
+								});
+							})
+							.then(function (tr) {
+								if (!tr) {
+									return;
+								}
+								m.workflow_status = tr.workflow_status || "Submitted";
+								$root.attr("data-kt-str-workflow-status", m.workflow_status);
+								if (tr.result_status) {
+									paintDerived(tr.result_status, tr.variance);
+								}
+								frappe.show_alert({
+									message: __("Measurement submitted"),
+									indicator: "green",
+								});
+							});
 					}
-					if (action === "verify-measurement" && mode === "verify") {
+					if (mode === "verify" && action === "view-evidence") {
 						e.preventDefault();
-						if (!m.id) {
+						e.stopPropagation();
+						var ref = m.evidence_reference || "";
+						if (!ref) {
 							frappe.show_alert({
-								message: __("No measurement available to verify"),
+								message: __("No evidence reference recorded"),
 								indicator: "orange",
 							});
 							return;
 						}
-						call("transition_measurement", { name: m.id, action: "Verify" }).then(function () {
-							frappe.show_alert({ message: __("Measurement verified"), indicator: "green" });
-						});
+						if (/^https?:\/\//i.test(ref)) {
+							window.open(ref, "_blank", "noopener");
+						} else {
+							frappe.show_alert({
+								message: __("Evidence reference: {0}", [ref]),
+								indicator: "blue",
+							});
+						}
+						return;
+					}
+					if (mode === "verify" && (action === "verify-measurement" || action === "request-changes" || action === "reject-measurement")) {
+						e.preventDefault();
+						e.stopPropagation();
+						if (!m.id || m.workflow_status !== "Submitted") {
+							frappe.show_alert({
+								message: __("No submitted measurement available to decide"),
+								indicator: "orange",
+							});
+							return;
+						}
+						var comments = (
+							$root.find("[data-kt-str-meas-verify-comments]").val() || ""
+						).trim();
+						if (
+							(action === "request-changes" || action === "reject-measurement") &&
+							!comments
+						) {
+							frappe.show_alert({
+								message: __("Verification comments are required for Return or Reject"),
+								indicator: "orange",
+							});
+							return;
+						}
+						var apiAction =
+							action === "verify-measurement"
+								? "Verify"
+								: action === "request-changes"
+									? "Return"
+									: "Reject";
+						var args = { name: m.id, action: apiAction, reason: comments || null };
+						if (apiAction === "Verify") {
+							var excOn = $root.find("[data-kt-str-meas-exception]").is(":checked");
+							var excReason = (
+								$root.find("[data-kt-str-meas-exception-reason]").val() || ""
+							).trim();
+							if (String(m.result_status || "").toLowerCase() === "off track" && excOn) {
+								if (!excReason) {
+									frappe.show_alert({
+										message: __("Exception reason is required"),
+										indicator: "orange",
+									});
+									return;
+								}
+								args.authorised_exception = 1;
+								args.exception_reason = excReason;
+							}
+						}
+						call("transition_measurement", args)
+							.then(function (tr) {
+								// Apply decision UI immediately and never navigate away.
+								applyVerifyDecision($root, m, tr);
+								if (apiAction === "Verify") {
+									var wantCa =
+										String(tr.result_status || m.result_status || "")
+											.toLowerCase() === "at risk" &&
+										$root.find("[data-kt-str-meas-create-ca]").is(":checked");
+									if (wantCa) {
+										return call("upsert_corrective_action", {
+											payload: {
+												performance_measurement: m.id,
+												performance_target: tgt.id,
+												plan_version: m.plan_version,
+												action: "Address at-risk performance",
+												owner: m.submitted_by || frappe.session.user,
+												due_date: frappe.datetime.add_days(
+													frappe.datetime.get_today(),
+													30
+												),
+												expected_result: "Return to On track performance",
+												status: "Open",
+											},
+										})
+											.then(function () {
+												return tr;
+											})
+											.catch(function () {
+												frappe.show_alert({
+													message: __(
+														"Measurement verified, but corrective action could not be created"
+													),
+													indicator: "orange",
+												});
+												return tr;
+											});
+									}
+								}
+								return tr;
+							})
+							.then(function (tr) {
+								if (!tr) {
+									return;
+								}
+								var msg =
+									apiAction === "Verify"
+										? __("Measurement verified")
+										: apiAction === "Return"
+											? __("Measurement returned for correction")
+											: __("Measurement rejected");
+								frappe.show_alert({
+									message: msg,
+									indicator: apiAction === "Verify" ? "green" : "orange",
+								});
+							})
+							.catch(function (err) {
+								console.warn("verify decision failed", err);
+								frappe.show_alert({
+									message: __("Could not complete verification decision"),
+									indicator: "red",
+								});
+							});
 					}
 				});
 				return m;

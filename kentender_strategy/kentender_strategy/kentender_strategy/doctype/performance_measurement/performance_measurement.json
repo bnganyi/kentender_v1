@@ -25,6 +25,8 @@
   "verified_by",
   "verified_at",
   "verification_comment",
+  "authorised_exception",
+  "exception_reason",
   "supersedes_measurement"
  ],
  "fields": [
@@ -81,7 +83,7 @@
    "fieldname": "evidence_reference",
    "fieldtype": "Data",
    "label": "Evidence Reference",
-   "reqd": 1
+   "reqd": 0
   },
   {
    "fieldname": "evidence_source",
@@ -146,6 +148,18 @@
    "fieldname": "verification_comment",
    "fieldtype": "Small Text",
    "label": "Verification Comment"
+  },
+  {
+   "default": "0",
+   "fieldname": "authorised_exception",
+   "fieldtype": "Check",
+   "label": "Authorised Exception"
+  },
+  {
+   "depends_on": "eval:doc.authorised_exception",
+   "fieldname": "exception_reason",
+   "fieldtype": "Small Text",
+   "label": "Exception Reason"
   },
   {
    "fieldname": "supersedes_measurement",

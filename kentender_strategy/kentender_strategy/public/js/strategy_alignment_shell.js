@@ -21,6 +21,14 @@ frappe.provide("kentender_strategy.alignment");
 		return kentender_strategy.ui_fixtures || {};
 	}
 
+	function tablePaginationFooterHtml() {
+		var fx = kentender_strategy.ui_fixtures || {};
+		if (typeof fx.tablePaginationFooterHtml === "function") {
+			return fx.tablePaginationFooterHtml();
+		}
+		return "";
+	}
+
 	function shell() {
 		return kentender_core.cl_shell;
 	}
@@ -108,38 +116,12 @@ frappe.provide("kentender_strategy.alignment");
 		$root.find("table").first().attr("data-testid", "kt-str-plans-table");
 	}
 
-	function planChromeHtml(planCode, activeSlug) {
-		var tabs = PLAN_TABS.map(function (t) {
-			var active = t.slug === activeSlug ? " is-active text-primary font-bold border-b-2 border-primary" : "";
-			return (
-				'<button type="button" class="kt-str-tab pb-3 text-on-surface-variant font-body-md' +
-				active +
-				'" data-kt-str-tab="' +
-				t.slug +
-				'">' +
-				frappe.utils.escape_html(t.label) +
-				"</button>"
-			);
-		}).join("");
-		return (
-			/* No mb-section-gap: padded tab canvases (VC etc.) supply their own top spacing. */
-			'<header class="kt-str-injected-plan-chrome" data-testid="kt-str-plan-chrome">' +
-			'<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">' +
-			"<div>" +
-			'<span class="font-data-mono text-data-mono text-primary bg-primary-fixed px-2 py-0.5 rounded text-xs">' +
-			frappe.utils.escape_html(planCode) +
-			"</span>" +
-			'<h1 class="font-headline-lg text-headline-lg text-on-surface mt-2">Ministry of Health Strategic Plan 2026–2030</h1>' +
-			"</div></div>" +
-			'<div class="mt-8 flex gap-8 border-b border-outline-variant" data-testid="kt-str-plan-tabs">' +
-			tabs +
-			"</div></header>"
-		);
-	}
-
 	function renderTabButtons(activeSlug) {
 		return PLAN_TABS.map(function (t) {
-			var active = t.slug === activeSlug ? " is-active text-primary font-bold border-b-2 border-primary" : "";
+			var active =
+				t.slug === activeSlug
+					? " is-active text-primary font-bold border-b-2 border-primary"
+					: " hover:text-on-surface transition-colors";
 			return (
 				'<button type="button" class="kt-str-tab pb-3 text-on-surface-variant font-body-md whitespace-nowrap' +
 				active +
@@ -152,29 +134,98 @@ frappe.provide("kentender_strategy.alignment");
 		}).join("");
 	}
 
+	function chromeActionsHtml(pageSlug) {
+		var exportBtn =
+			'<button type="button" class="flex items-center gap-2 px-4 py-2 border border-outline-variant text-primary font-body-md rounded-lg hover:bg-surface-container-low transition-colors" data-kt-str-action="export-plan">' +
+			'<span class="material-symbols-outlined" style="font-size: 20px;">download</span> Export Plan' +
+			"</button>";
+		if (pageSlug === "strategy-plan-structure") {
+			return (
+				'<button type="button" class="border border-primary text-primary px-4 py-2 rounded-lg font-medium hover:bg-surface-container-low transition-colors flex items-center gap-2" data-kt-str-action="edit-plan-details" data-kt-str-structure-edit-plan>' +
+				'<span class="material-symbols-outlined text-sm">edit</span>' +
+				"Edit Plan Details" +
+				"</button>"
+			);
+		}
+		if (pageSlug === "strategy-plan-overview") {
+			return (
+				exportBtn +
+				'<button type="button" class="px-6 py-2.5 bg-primary text-white font-bold text-body-md rounded-lg hover:bg-primary/90 transition-all shadow-sm" data-kt-str-action="open-successor-modal" data-testid="kt-str-create-successor">Create successor version</button>'
+			);
+		}
+		return exportBtn;
+	}
+
+	/**
+	 * Canonical plan workspace header — one shared artifact for all plan tabs.
+	 * Layout: [code][status] · title · period|version · actions · tabs.
+	 */
+	function planChromeHtml(planCode, activeSlug, pageSlug) {
+		var code = planCode || FIXTURE_PLAN;
+		return (
+			'<header class="kt-str-injected-plan-chrome mb-0" data-testid="kt-str-plan-chrome">' +
+			'<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">' +
+			"<div>" +
+			'<div class="flex flex-wrap items-center gap-2" data-kt-str-chrome-code-row>' +
+			'<span class="font-data-mono text-data-mono text-primary bg-primary-fixed px-2 py-0.5 rounded text-xs" data-kt-str-plan-code>' +
+			frappe.utils.escape_html(code) +
+			"</span>" +
+			'<span class="inline-flex items-center gap-1.5 py-1 px-3 rounded-full bg-surface-variant text-on-surface-variant text-xs font-bold uppercase tracking-wider" data-kt-str-plan-status-pill>' +
+			'<span class="w-1.5 h-1.5 rounded-full bg-outline" data-kt-str-plan-status-dot></span>' +
+			'<span data-kt-str-plan-status>—</span>' +
+			"</span>" +
+			"</div>" +
+			'<h1 class="font-headline-lg text-headline-lg text-on-surface mt-2" data-kt-str-plan-title>—</h1>' +
+			'<div class="flex flex-wrap items-center gap-4 mt-2" data-kt-str-chrome-meta>' +
+			'<p class="text-on-surface-variant font-body-md text-body-md flex items-center gap-2">' +
+			'<span class="material-symbols-outlined text-[18px]">calendar_today</span>' +
+			'<span data-kt-str-plan-period></span>' +
+			"</p>" +
+			'<div class="h-4 w-px bg-outline-variant"></div>' +
+			'<p class="text-on-surface-variant font-body-md text-body-md" data-kt-str-plan-version></p>' +
+			"</div>" +
+			"</div>" +
+			'<div class="flex flex-wrap items-center gap-3" data-kt-str-chrome-actions>' +
+			chromeActionsHtml(pageSlug || activeSlug) +
+			"</div>" +
+			"</div>" +
+			'<div class="mt-8 flex gap-8 border-b border-outline-variant overflow-x-auto" data-testid="kt-str-plan-tabs">' +
+			renderTabButtons(activeSlug) +
+			"</div>" +
+			"</header>"
+		);
+	}
+
 	function annotatePlanTabs($root, activeSlug, planCode) {
-		var $tabRow = $root.find('[data-testid="kt-str-plan-tabs"]').first();
-		if (!$tabRow.length) {
-			var $overviewBtn = $root
-				.find("button, a")
-				.filter(function () {
-					return $(this).text().replace(/\s+/g, " ").trim() === "Overview";
-				})
-				.first();
-			if ($overviewBtn.length) {
-				$tabRow = $overviewBtn.parent();
-				$tabRow.attr("data-testid", "kt-str-plan-tabs");
+		/* Always replace fixture-local chrome with the shared artifact. */
+		$root.find('[data-testid="kt-str-plan-chrome"]').remove();
+		$root.find('[data-testid="kt-str-plan-tabs"]').remove();
+		/* Orphan Stitch tab rows (no testid) that still list Overview…Audit. */
+		$root.children().each(function () {
+			var $el = $(this);
+			if ($el.is("[data-kt-str-structure-issues]")) {
+				return;
 			}
+			var text = ($el.text() || "").replace(/\s+/g, " ");
+			if (
+				text.indexOf("Overview") >= 0 &&
+				text.indexOf("Structure") >= 0 &&
+				text.indexOf("Review") >= 0 &&
+				text.indexOf("Audit") >= 0 &&
+				$el.find("button, a").length >= 5 &&
+				!$el.find(".kt-str-structure-split, [data-testid^='kt-str-']").length
+			) {
+				$el.remove();
+			}
+		});
+
+		var html = planChromeHtml(planCode || FIXTURE_PLAN, activeSlug, activeSlug);
+		var $banner = $root.children("[data-kt-str-structure-issues]").first();
+		if ($banner.length) {
+			$banner.after(html);
+		} else {
+			$root.prepend(html);
 		}
-		if (!$tabRow.length) {
-			$root.prepend(planChromeHtml(planCode || FIXTURE_PLAN, activeSlug));
-			$tabRow = $root.find('[data-testid="kt-str-plan-tabs"]').first();
-			return;
-		}
-		/* Canonicalize to STR-UI plan tabs (some Stitch screens ship divergent labels). */
-		$tabRow
-			.addClass("flex gap-8 border-b border-outline-variant")
-			.html(renderTabButtons(activeSlug));
 	}
 
 	function planRouteToken($root, fallback) {
@@ -400,8 +451,16 @@ frappe.provide("kentender_strategy.alignment");
 				if (
 					liveAction === "submit-measurement" ||
 					liveAction === "verify-measurement" ||
-					liveAction === "save-draft"
+					liveAction === "reject-measurement" ||
+					liveAction === "request-changes" ||
+					liveAction === "view-evidence" ||
+					liveAction === "view-downstream" ||
+					liveAction === "clear-down-filters" ||
+					liveAction === "save-draft" ||
+					liveAction === "cancel"
 				) {
+					// Live bind owns these; stop shell fixture handlers from navigating.
+					e.preventDefault();
 					return;
 				}
 			}
@@ -556,6 +615,17 @@ frappe.provide("kentender_strategy.alignment");
 		});
 	}
 
+	function strategyMountKey(pageSlug, planCode, targetCode, reviewState) {
+		return [pageSlug || "", planCode || "", targetCode || "", reviewState || ""].join("|");
+	}
+
+	function existingStrategyRoot(page) {
+		if (!page || !page.main) {
+			return $();
+		}
+		return $(page.main).find(".kt-str-root").first();
+	}
+
 	function mountStrategyPage(opts) {
 		opts = opts || {};
 		var page = opts.page;
@@ -566,6 +636,7 @@ frappe.provide("kentender_strategy.alignment");
 		var isPlanPage = !!opts.isPlanPage;
 		var isTargetPage = !!opts.isTargetPage;
 		var afterBind = opts.afterBind;
+		var softShow = !!opts.softShow;
 
 		document.body.classList.add("kt-str-surface");
 
@@ -634,7 +705,200 @@ frappe.provide("kentender_strategy.alignment");
 			}
 		}
 
+		var reviewState =
+			frappe.route_options && frappe.route_options.kt_str_review_state
+				? frappe.route_options.kt_str_review_state
+				: "";
+		var targetForKey =
+			measurementParts && measurementParts.targetCode ? measurementParts.targetCode : "";
+		var nextMountKey = strategyMountKey(pageSlug, planCode, targetForKey, reviewState);
+		var $existingRoot = existingStrategyRoot(page);
+		/*
+		 * Soft tab navigation: Frappe keeps page DOM and re-fires on_page_show.
+		 * Remounting via mountContent every show causes a full-page flash.
+		 * Skip wipe when the same route/plan is already mounted and live.
+		 */
+		if (
+			softShow &&
+			$existingRoot.length &&
+			$existingRoot.attr("data-kt-str-mounted") === "1" &&
+			$existingRoot.attr("data-kt-str-mount-key") === nextMountKey
+		) {
+			/* Do not require data-kt-str-live=1 — on_page_show often races the first bind. */
+			if (reviewState && frappe.route_options) {
+				delete frappe.route_options.kt_str_review_state;
+			}
+			return;
+		}
+
 		var fx = fixtures();
+
+		function finishMount(mainHtml, mountedFixtureKey) {
+			sh.mountContent(page.main, {
+				// Stitch canvases own the page title; keep CL header host empty/hidden
+				// so space-y does not invent a toolbar→content gap.
+				pageHeader: { title: "", subtitle: "", hideBreadcrumbs: true },
+				mainHtml: mainHtml,
+			});
+			$(page.main).find("#kt-cl-page-header-host").attr("hidden", "hidden");
+
+			var $body = $(page.main).find('[data-testid="kt-cl-page-body"]');
+			var $root = $body.find(".kt-str-root").first();
+			if (!$root.length) {
+				$root = $body;
+			}
+			var prevGen = parseInt($root.attr("data-kt-str-mount-gen") || "0", 10) || 0;
+			$root.attr("data-kt-str-mounted", "1");
+			$root.attr("data-kt-str-mount-key", nextMountKey);
+			$root.attr("data-kt-str-mount-gen", String(prevGen + 1));
+
+			if (mountedFixtureKey === "portfolio") {
+				annotatePortfolio($root);
+				bindPortfolioNav($root);
+			}
+
+			if (isPlanPage) {
+				annotatePlanTabs($root, pageSlug, planCode);
+				bindPlanTabs($root, planCode);
+				if (pageSlug === "strategy-plan-overview") {
+					bindOverviewNav($root, planCode);
+				}
+				if (pageSlug === "strategy-plan-structure") {
+					bindStructureNav($root, $body);
+				}
+				if (pageSlug === "strategy-plan-value-commitments") {
+					bindValueCommitmentsNav($root);
+				}
+				if (pageSlug === "strategy-plan-measurements") {
+					bindMeasurementsNav($root);
+				}
+				if (
+					pageSlug === "strategy-plan-downstream-usage" ||
+					pageSlug === "strategy-plan-audit" ||
+					pageSlug === "strategy-plan-review"
+				) {
+					bindSatelliteNav($root);
+				}
+				if (pageSlug === "strategy-plan-review") {
+					$body.off("click.ktStrReviewToggle").on(
+						"click.ktStrReviewToggle",
+						"[data-kt-str-review]",
+						function (e) {
+							e.preventDefault();
+							frappe.route_options = frappe.route_options || {};
+							frappe.route_options.kt_str_review_state = $(this).attr("data-kt-str-review");
+							frappe.set_route("strategy-plan-review", planCode);
+						}
+					);
+					bindReviewToggle($root, planCode);
+				}
+			}
+
+			if (mountedFixtureKey === "pvo_catalogue") {
+				bindCatalogueNav($root);
+				bindSatelliteNav($root);
+			}
+			if (
+				mountedFixtureKey === "pvo_editor" ||
+				mountedFixtureKey === "measurement_submit" ||
+				mountedFixtureKey === "measurement_verify" ||
+				mountedFixtureKey === "corrective_actions"
+			) {
+				bindSatelliteNav($root);
+			}
+
+			$body.off("click.ktStrBack").on("click.ktStrBack", "[data-kt-str-back]", function (e) {
+				e.preventDefault();
+				frappe.set_route("strategy-alignment");
+			});
+
+			if (typeof afterBind === "function") {
+				afterBind($root, $body, planCode);
+			}
+
+			var targetCode = null;
+			var measurementPlanCode = planCode;
+			if (measurementParts) {
+				targetCode = measurementParts.targetCode;
+				measurementPlanCode = measurementParts.planCode || planCode;
+				$root.attr("data-kt-str-plan-code", measurementPlanCode || "");
+				$root.attr("data-kt-str-target-code-route", targetCode || "");
+			} else if (isTargetPage) {
+				targetCode = targetCodeFromRoute(FIXTURE_TARGET);
+			}
+			if (kentender_strategy.live && typeof kentender_strategy.live.afterMount === "function") {
+				kentender_strategy.live
+					.afterMount(pageSlug, $root, measurementPlanCode || planCode, targetCode)
+					.then(function () {
+						if (isPlanPage) {
+							var token = planRouteToken($root, planCode);
+							bindPlanTabs($root, token);
+							if (pageSlug === "strategy-plan-overview") {
+								bindOverviewNav($root, token);
+							}
+						}
+					})
+					.catch(function (err) {
+						console.warn("Strategy live bind failed", err);
+						frappe.show_alert({
+							message: __("Could not load live Strategy data"),
+							indicator: "orange",
+						});
+					});
+			}
+		}
+
+		function reviewToggleHtml() {
+			return (
+				'<div class="mb-4 flex gap-2 relative z-40" data-testid="kt-str-review-state-toggle">' +
+				'<button type="button" class="px-3 py-1.5 border border-outline-variant rounded text-sm bg-surface-container-lowest" data-kt-str-review="blockers">Show blockers</button>' +
+				'<button type="button" class="px-3 py-1.5 border border-outline-variant rounded text-sm bg-surface-container-lowest" data-kt-str-review="ready">Show ready for submission</button>' +
+				"</div>"
+			);
+		}
+
+		function pickReviewHtml(state) {
+			var key = "review_blockers";
+			var html = typeof fx.review_blockers === "function" ? fx.review_blockers() : "";
+			if (state === "ready" && typeof fx.review_ready === "function") {
+				key = "review_ready";
+				html = fx.review_ready();
+			}
+			return { fixtureKey: key, mainHtml: reviewToggleHtml() + html };
+		}
+
+		if (fixtureKey === "review_blockers" || fixtureKey === "review_ready") {
+			var explicitState =
+				frappe.route_options && frappe.route_options.kt_str_review_state
+					? frappe.route_options.kt_str_review_state
+					: null;
+			if (explicitState) {
+				var pickedExplicit = pickReviewHtml(explicitState);
+				finishMount(pickedExplicit.mainHtml, pickedExplicit.fixtureKey);
+				return;
+			}
+			if (planCode) {
+				frappe.call({
+					method: "kentender_strategy.api.strategy_api.get_plan_readiness_api",
+					args: { plan_code: planCode },
+					freeze: false,
+					callback: function (r) {
+						var ready = !!(r && r.message && r.message.ready);
+						var picked = pickReviewHtml(ready ? "ready" : "blockers");
+						finishMount(picked.mainHtml, picked.fixtureKey);
+					},
+					error: function () {
+						var picked = pickReviewHtml("blockers");
+						finishMount(picked.mainHtml, picked.fixtureKey);
+					},
+				});
+				return;
+			}
+			var pickedFallback = pickReviewHtml("blockers");
+			finishMount(pickedFallback.mainHtml, pickedFallback.fixtureKey);
+			return;
+		}
+
 		var htmlFn = fx[fixtureKey];
 		var mainHtml =
 			typeof htmlFn === "function"
@@ -642,130 +906,7 @@ frappe.provide("kentender_strategy.alignment");
 				: '<div class="p-4 text-danger">Missing fixture: ' +
 					frappe.utils.escape_html(fixtureKey) +
 					"</div>";
-
-		if (fixtureKey === "review_blockers" || fixtureKey === "review_ready") {
-			var state =
-				(frappe.route_options && frappe.route_options.kt_str_review_state) || "blockers";
-			if (state === "ready" && fx.review_ready) {
-				mainHtml = fx.review_ready();
-				fixtureKey = "review_ready";
-			} else if (fx.review_blockers) {
-				mainHtml = fx.review_blockers();
-				fixtureKey = "review_blockers";
-			}
-			mainHtml =
-				'<div class="mb-4 flex gap-2 relative z-40" data-testid="kt-str-review-state-toggle">' +
-				'<button type="button" class="px-3 py-1.5 border border-outline-variant rounded text-sm bg-surface-container-lowest" data-kt-str-review="blockers">Show blockers</button>' +
-				'<button type="button" class="px-3 py-1.5 border border-outline-variant rounded text-sm bg-surface-container-lowest" data-kt-str-review="ready">Show ready for submission</button>' +
-				"</div>" +
-				mainHtml;
-		}
-
-		sh.mountContent(page.main, {
-			pageHeader: { title: title, subtitle: "", hideBreadcrumbs: true },
-			mainHtml: mainHtml,
-		});
-
-		var $body = $(page.main).find('[data-testid="kt-cl-page-body"]');
-		var $root = $body.find(".kt-str-root").first();
-		if (!$root.length) {
-			$root = $body;
-		}
-
-		if (fixtureKey === "portfolio") {
-			annotatePortfolio($root);
-			bindPortfolioNav($root);
-		}
-
-		if (isPlanPage) {
-			annotatePlanTabs($root, pageSlug, planCode);
-			bindPlanTabs($root, planCode);
-			if (pageSlug === "strategy-plan-overview") {
-				bindOverviewNav($root, planCode);
-			}
-			if (pageSlug === "strategy-plan-structure") {
-				bindStructureNav($root, $body);
-			}
-			if (pageSlug === "strategy-plan-value-commitments") {
-				bindValueCommitmentsNav($root);
-			}
-			if (pageSlug === "strategy-plan-measurements") {
-				bindMeasurementsNav($root);
-			}
-			if (
-				pageSlug === "strategy-plan-downstream-usage" ||
-				pageSlug === "strategy-plan-audit" ||
-				pageSlug === "strategy-plan-review"
-			) {
-				bindSatelliteNav($root);
-			}
-			if (pageSlug === "strategy-plan-review") {
-				$body.off("click.ktStrReviewToggle").on(
-					"click.ktStrReviewToggle",
-					"[data-kt-str-review]",
-					function (e) {
-						e.preventDefault();
-						frappe.route_options = frappe.route_options || {};
-						frappe.route_options.kt_str_review_state = $(this).attr("data-kt-str-review");
-						frappe.set_route("strategy-plan-review", planCode);
-					}
-				);
-				bindReviewToggle($root, planCode);
-			}
-		}
-
-		if (fixtureKey === "pvo_catalogue") {
-			bindCatalogueNav($root);
-			bindSatelliteNav($root);
-		}
-		if (
-			fixtureKey === "pvo_editor" ||
-			fixtureKey === "measurement_submit" ||
-			fixtureKey === "measurement_verify" ||
-			fixtureKey === "corrective_actions"
-		) {
-			bindSatelliteNav($root);
-		}
-
-		$body.off("click.ktStrBack").on("click.ktStrBack", "[data-kt-str-back]", function (e) {
-			e.preventDefault();
-			frappe.set_route("strategy-alignment");
-		});
-
-		if (typeof afterBind === "function") {
-			afterBind($root, $body, planCode);
-		}
-
-		var targetCode = null;
-		var measurementPlanCode = planCode;
-		if (measurementParts) {
-			targetCode = measurementParts.targetCode;
-			measurementPlanCode = measurementParts.planCode || planCode;
-			$root.attr("data-kt-str-plan-code", measurementPlanCode || "");
-			$root.attr("data-kt-str-target-code-route", targetCode || "");
-		} else if (isTargetPage) {
-			targetCode = targetCodeFromRoute(FIXTURE_TARGET);
-		}
-		if (kentender_strategy.live && typeof kentender_strategy.live.afterMount === "function") {
-			kentender_strategy.live
-				.afterMount(pageSlug, $root, measurementPlanCode || planCode, targetCode)
-				.then(function () {
-					if (isPlanPage) {
-						var token = planRouteToken($root, planCode);
-						bindPlanTabs($root, token);
-						if (pageSlug === "strategy-plan-overview") {
-							bindOverviewNav($root, token);
-						}
-					}
-				})
-				.catch(function (err) {
-					console.warn("Strategy live bind failed", err);
-					frappe.show_alert({
-						message: __("Could not load live Strategy data"),
-						indicator: "orange",
-					});
-				});
-		}
+		finishMount(mainHtml, fixtureKey);
 	}
 
 	function registerPage(pageSlug, opts) {
@@ -782,15 +923,18 @@ frappe.provide("kentender_strategy.alignment");
 				Object.assign({}, opts, {
 					page: page,
 					pageSlug: pageSlug,
+					softShow: false,
 				})
 			);
 		};
+		/* Soft show: reuse mounted DOM for the same plan/route (no mountContent wipe). */
 		frappe.pages[pageSlug].on_page_show = function (wrapper) {
 			if (wrapper && wrapper.page) {
 				mountStrategyPage(
 					Object.assign({}, opts, {
 						page: wrapper.page,
 						pageSlug: pageSlug,
+						softShow: true,
 					})
 				);
 			}
@@ -808,5 +952,6 @@ frappe.provide("kentender_strategy.alignment");
 		registerPage: registerPage,
 		openStructureDrawer: openStructureDrawer,
 		annotatePortfolio: annotatePortfolio,
+		tablePaginationFooterHtml: tablePaginationFooterHtml,
 	};
 })();

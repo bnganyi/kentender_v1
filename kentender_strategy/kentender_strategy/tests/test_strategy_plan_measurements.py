@@ -13,7 +13,11 @@ from kentender_strategy.seeds.works_master_strategy_hierarchy import (
 )
 from kentender_strategy.services.strategy_contracts import create_plan, list_measurements
 from kentender_strategy.services.strategy_permissions import ensure_strategy_roles
-from kentender_strategy.services.strategy_writes import get_measurement, upsert_structure_node
+from kentender_strategy.services.strategy_writes import (
+	get_measurement,
+	save_measurement_draft,
+	upsert_structure_node,
+)
 
 
 def _delete_plan_cascade(plan_id: str | None) -> None:
@@ -130,10 +134,24 @@ class TestStrategyPlanMeasurements(FrappeTestCase):
 		self.assertIsInstance(m, dict)
 		self.assertEqual(m["performance_target"]["code"], TARGET_CODE)
 		self.assertTrue(m["performance_target"]["id"])
-		# Seed has Verified rows on Active MOH — must resolve a real measurement id.
+		# Active MOH target must resolve a real measurement (open Submitted preferred over Verified).
 		self.assertTrue(m.get("id"))
-		self.assertEqual(m.get("workflow_status"), "Verified")
+		self.assertIn(
+			m.get("workflow_status"),
+			("Draft", "Returned", "Submitted", "Verified"),
+		)
 		self.assertEqual(m["plan_version"], self.plan_id)
+
+	def test_get_measurement_submit_purpose_skips_verified(self):
+		"""Submit form must open a blank shell when only Verified history exists."""
+		_ensure_user("str.officer.meas.submit@example.com", ["Performance Officer"], self.pe)
+		frappe.set_user("str.officer.meas.submit@example.com")
+		m = get_measurement(
+			target_code=TARGET_CODE, plan_code=STRATEGY_PLAN_CODE, purpose="submit"
+		)
+		self.assertTrue(m.get("is_new"))
+		self.assertIsNone(m.get("id"))
+		self.assertEqual(m["performance_target"]["code"], TARGET_CODE)
 
 	def test_get_measurement_scoped_to_plan_code(self):
 		"""Submit from a plan must not load another plan's measurement for the same target code."""
@@ -242,3 +260,29 @@ class TestStrategyPlanMeasurements(FrappeTestCase):
 		dto = list_measurements(plan_code="TEST-MEAS-EMPTY-PLAN")
 		self.assertIsNone(dto.get("default_target_code"))
 		self.assertEqual(dto["rows"], [])
+
+	def test_evidence_reference_optional_on_draft(self):
+		"""UI does not mark Evidence Reference required; DocType must allow blank."""
+		frappe.set_user("Administrator")
+		meta = frappe.get_meta("Performance Measurement")
+		self.assertFalse(meta.get_field("evidence_reference").reqd)
+		saved = save_measurement_draft(
+			{
+				"performance_target": self.seed["target"],
+				"plan_version": self.plan_id,
+				"measurement_period_start": "2028-01-01",
+				"measurement_period_end": "2028-01-31",
+				"measurement_date": "2028-02-01",
+				"actual_numeric": 99.5,
+				"evidence_source": "Annual plan",
+				# evidence_reference intentionally omitted
+			}
+		)
+		self.assertTrue(saved.get("id"))
+		self.addCleanup(
+			lambda: frappe.delete_doc(
+				"Performance Measurement", saved["id"], force=True, ignore_permissions=True
+			)
+		)
+		ref = frappe.db.get_value("Performance Measurement", saved["id"], "evidence_reference")
+		self.assertFalse(ref)

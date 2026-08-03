@@ -50,6 +50,12 @@ class TestStrategyPortfolioUi01(FrappeTestCase):
 		self.assertTrue(moh.get("start_date"))
 		self.assertTrue(moh.get("end_date"))
 		self.assertIn("version_number", moh)
+		# Compact table range: 01-Jul-2026 - 30-Jun-2030 (not full month names / digit soup)
+		label = moh.get("effective_period_label") or ""
+		self.assertRegex(label, r"^\d{2}-[A-Z][a-z]{2}-\d{4} - \d{2}-[A-Z][a-z]{2}-\d{4}$")
+		self.assertNotRegex(label, r"\d{2}-\d{2}-\d{4}-\d{2}")
+		self.assertNotIn("July", label)
+		self.assertNotIn("June", label)
 
 	def test_list_filters_search_and_status(self):
 		rows = list_strategy_plans(
@@ -72,6 +78,23 @@ class TestStrategyPortfolioUi01(FrappeTestCase):
 		# Seed has verified At risk Sep measurement + CA — expect measurement or CA work item
 		kinds = {i.get("type") for i in pf["my_work"]}
 		self.assertTrue(kinds.intersection({"plan_review", "submit_measurement", "resolve_target", "verify_measurement"}))
+
+	def test_my_work_collapses_duplicate_target_rows(self):
+		"""Multiple measurements for the same plan+target collapse to one My Work line."""
+		pf = get_strategy_portfolio(procuring_entity=self.seed["procuring_entity"])
+		keys = []
+		for item in pf["my_work"]:
+			if item.get("type") not in (
+				"submit_measurement",
+				"verify_measurement",
+				"resolve_target",
+			):
+				continue
+			tgt = item.get("target") or {}
+			key = (item["type"], item.get("plan_code"), tgt.get("id") or tgt.get("code"))
+			keys.append(key)
+			self.assertGreaterEqual(int(item.get("count") or 1), 1)
+		self.assertEqual(len(keys), len(set(keys)), f"duplicate My Work keys: {keys}")
 
 	def test_create_plan_returns_code_and_draft(self):
 		pe = self.seed["procuring_entity"]

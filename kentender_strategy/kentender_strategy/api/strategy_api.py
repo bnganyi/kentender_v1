@@ -204,14 +204,34 @@ def save_measurement_draft(payload=None):
 
 
 @frappe.whitelist()
-def transition_measurement(name: str, action: str, reason: str | None = None):
-	return transitions.transition_measurement(name, action, reason=reason or None)
+def transition_measurement(
+	name: str,
+	action: str,
+	reason: str | None = None,
+	authorised_exception=None,
+	exception_reason: str | None = None,
+):
+	return transitions.transition_measurement(
+		name,
+		action,
+		reason=reason or None,
+		authorised_exception=authorised_exception,
+		exception_reason=exception_reason or None,
+	)
 
 
 @frappe.whitelist()
-def get_measurement(name: str | None = None, target_code: str | None = None, plan_code: str | None = None):
+def get_measurement(
+	name: str | None = None,
+	target_code: str | None = None,
+	plan_code: str | None = None,
+	purpose: str | None = None,
+):
 	return writes.get_measurement(
-		name=name or None, target_code=target_code or None, plan_code=plan_code or None
+		name=name or None,
+		target_code=target_code or None,
+		plan_code=plan_code or None,
+		purpose=purpose or None,
 	)
 
 
