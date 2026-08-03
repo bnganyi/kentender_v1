@@ -29,26 +29,43 @@ test.describe("Strategy Alignment UI shell", () => {
 		await expect(page.locator('[data-testid="kt-str-portfolio"][data-kt-str-live="1"]')).toBeVisible({
 			timeout: 20_000,
 		});
-		// Seed plan row is rendered from API (not fixture hardcode).
+		// Seed Active plan row (Draft successors share the same plan_code).
 		const mohRow = page.locator(
-			'[data-testid="kt-str-plans-table"] tr[data-plan-code="MOH-SP-2026-2030"]'
+			'[data-testid="kt-str-plans-table"] tr[data-plan-code="MOH-SP-2026-2030"][data-plan-status="Active"]'
 		);
 		await expect(mohRow).toBeVisible({ timeout: 15_000 });
 		await expect(mohRow.getByText("MOH-SP-2026-2030", { exact: true })).toBeVisible();
-		// Compact period + wider Plan column (title must not be squeezed by full month names).
-		await expect(mohRow.locator(".kt-str-plans-col-period")).toHaveText(
-			/^\d{2}-[A-Z][a-z]{2}-\d{4} - \d{2}-[A-Z][a-z]{2}-\d{4}$/
+		// Period stacks start/end so Plan/Status get horizontal room.
+		const periodCell = mohRow.locator(".kt-str-plans-col-period");
+		await expect(periodCell.locator(".kt-str-period-start")).toHaveText(
+			/^\d{2}-[A-Z][a-z]{2}-\d{4}$/
 		);
-		const colWidths = await page.getByTestId("kt-str-plans-table").evaluate((table) => {
-			const plan = table.querySelector(".kt-str-plans-col-plan") as HTMLElement | null;
-			const period = table.querySelector(".kt-str-plans-col-period") as HTMLElement | null;
+		await expect(periodCell.locator(".kt-str-period-end")).toHaveText(
+			/^\d{2}-[A-Z][a-z]{2}-\d{4}$/
+		);
+		const colGeom = await mohRow.evaluate((row) => {
+			const plan = row.querySelector(".kt-str-plans-col-plan") as HTMLElement | null;
+			const period = row.querySelector(".kt-str-plans-col-period") as HTMLElement | null;
+			const start = period?.querySelector(".kt-str-period-start") as HTMLElement | null;
+			const end = period?.querySelector(".kt-str-period-end") as HTMLElement | null;
+			const startR = start?.getBoundingClientRect();
+			const endR = end?.getBoundingClientRect();
 			return {
 				planW: plan ? plan.getBoundingClientRect().width : 0,
 				periodW: period ? period.getBoundingClientRect().width : 0,
+				stacked: !!(startR && endR && endR.top > startR.bottom - 2),
+				// Each date must stay on one line (no mid-token wrap like "01-Jul-" / "2026").
+				startSingleLine: !!(startR && startR.height > 0 && startR.height <= 22),
+				endSingleLine: !!(endR && endR.height > 0 && endR.height <= 22),
 			};
 		});
-		expect(colWidths.planW).toBeGreaterThanOrEqual(280);
-		expect(colWidths.planW).toBeGreaterThan(colWidths.periodW);
+		expect(colGeom.planW).toBeGreaterThanOrEqual(220);
+		expect(colGeom.planW).toBeGreaterThan(colGeom.periodW);
+		expect(colGeom.periodW).toBeGreaterThanOrEqual(100);
+		expect(colGeom.periodW).toBeLessThan(160);
+		expect(colGeom.stacked).toBe(true);
+		expect(colGeom.startSingleLine).toBe(true);
+		expect(colGeom.endSingleLine).toBe(true);
 		// Summary strip maps Active / Awaiting review / Measurements due / Needs attention.
 		const strip = page.getByTestId("kt-str-summary-strip");
 		await expect(strip.locator('[data-kt-str-count="active"]')).not.toHaveText("—");
@@ -174,6 +191,37 @@ test.describe("Strategy Alignment UI shell", () => {
 			timeout: 20_000,
 		});
 
+		// Module focus lock: light blue on create fields (not navy primary / 2px ring).
+		const createRoot = page.getByTestId("kt-str-create-plan");
+		const titleField = createRoot.locator('[data-kt-str-field="title"]');
+		await titleField.focus();
+		const createFocus = await titleField.evaluate((el) => {
+			const cs = getComputedStyle(el);
+			const m = (cs.borderColor || "").match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+			return {
+				borderColor: cs.borderColor,
+				boxShadow: cs.boxShadow,
+				r: m ? Number(m[1]) : -1,
+				g: m ? Number(m[2]) : -1,
+				b: m ? Number(m[3]) : -1,
+			};
+		});
+		expect(createFocus.r).toBeGreaterThan(100);
+		expect(createFocus.b).toBeGreaterThan(createFocus.r);
+		expect(createFocus.r).not.toBe(0);
+		expect(createFocus.g).not.toBe(31);
+		expect(createFocus.boxShadow).not.toMatch(/0,\s*31,\s*72|#001f48/i);
+		expect(createFocus.boxShadow.toLowerCase()).not.toBe("none");
+		const peField = createRoot.locator('select[data-kt-str-field="procuring_entity_select"]');
+		await peField.focus();
+		const peFocus = await peField.evaluate((el) => {
+			const c = getComputedStyle(el).borderColor || "";
+			const s = getComputedStyle(el).boxShadow || "";
+			return { c, s, navy: /0,\s*31,\s*72|#001f48/i.test(c + s) };
+		});
+		expect(peFocus.navy).toBe(false);
+		expect(peFocus.c.toLowerCase()).not.toBe("rgb(0, 31, 72)");
+
 		// Inline validation keeps the form open.
 		await page.getByTestId("kt-str-create-plan-submit").click();
 		await expect(page.locator('[data-kt-str-error="plan_code"]')).toBeVisible();
@@ -188,7 +236,6 @@ test.describe("Strategy Alignment UI shell", () => {
 		await expect(page.getByTestId("kt-str-create-quote")).toBeVisible();
 		await expect(page.getByTestId("kt-str-create-actions")).toBeVisible();
 		// Stitch/Tailwind Forms select chevron (SVG background) + date calendar glyphs.
-		const createRoot = page.getByTestId("kt-str-create-plan");
 		await expect(createRoot.locator(".material-symbols-outlined", { hasText: "calendar_today" })).toHaveCount(2);
 		const selectGlyphs = await createRoot.locator("select").evaluateAll((els) =>
 			els.map((el) => {
@@ -527,6 +574,69 @@ test.describe("Strategy Alignment UI shell", () => {
 		expect(again.key).toBe(first.key);
 		expect(again.gen).toBe(first.gen);
 		expect(again.live).toBe("1");
+	});
+
+	test("plan tab hop never flashes empty plan chrome placeholders", async ({ page }) => {
+		await page.goto(`/desk/strategy-plan-overview/${PLAN}`, { waitUntil: "domcontentloaded" });
+		await expect(page.locator('[data-testid="kt-str-overview"][data-kt-str-live="1"]')).toBeVisible({
+			timeout: 30_000,
+		});
+		const seedTitle = (
+			await page
+				.locator(
+					'[data-testid="kt-str-overview"]:visible [data-testid="kt-str-plan-chrome"] [data-kt-str-plan-title]'
+				)
+				.textContent()
+		)?.trim();
+		expect(seedTitle && seedTitle !== "—").toBeTruthy();
+
+		const titles = await page.evaluate(async (tabSlug) => {
+			const samples = [];
+			const push = () => {
+				const visible = [...document.querySelectorAll('[data-testid="kt-str-plan-chrome"]')].find(
+					(node) => {
+						const pc = node.closest(".page-container");
+						if (!pc) return false;
+						return getComputedStyle(pc).display !== "none";
+					}
+				);
+				const title = (
+					(visible && visible.querySelector("[data-kt-str-plan-title]")?.textContent) ||
+					""
+				).trim();
+				samples.push(title);
+			};
+			const tab = document.querySelector(
+				`[data-testid="kt-str-overview"]:not([style*="display: none"]) [data-kt-str-tab="${tabSlug}"]`
+			);
+			if (!tab) return { samples, err: "no-tab" };
+			tab.click();
+			push();
+			await new Promise((r) => requestAnimationFrame(() => r(null)));
+			push();
+			for (let i = 0; i < 8; i++) {
+				await new Promise((r) => setTimeout(r, 40));
+				push();
+			}
+			return { samples, err: null };
+		}, "strategy-plan-structure");
+
+		expect(titles.err).toBeNull();
+		expect(titles.samples.length).toBeGreaterThan(3);
+		// After the destination page is shown, title must stay hydrated (never "—").
+		const afterSwap = titles.samples.slice(1);
+		expect(afterSwap.some((t) => t && t !== "—")).toBe(true);
+		expect(afterSwap.every((t) => !t || t !== "—")).toBe(true);
+		await expect(
+			page.locator(
+				'[data-testid="kt-str-structure"]:visible [data-testid="kt-str-plan-chrome"] [data-kt-str-plan-title]'
+			)
+		).not.toHaveText("—");
+		await expect(
+			page.locator(
+				'[data-testid="kt-str-structure"]:visible [data-testid="kt-str-plan-chrome"] [data-kt-str-plan-title]'
+			)
+		).toHaveText(seedTitle!);
 	});
 
 	test("shared plan chrome survives soft tab navigation", async ({ page }) => {
@@ -1417,27 +1527,50 @@ test.describe("Strategy Alignment UI shell", () => {
 			.first();
 		await expect(auditFooter).toBeVisible();
 		await expect(auditFooter.locator("[data-kt-str-footer-range]")).toHaveText(
-			/Showing (\d+-\d+ of \d+|0 of 0) records/
+			/Showing (\d+(-\d+)? of \d+|0 of 0)/
 		);
-		await expect(auditFooter.locator("[data-kt-str-footer-page]")).toHaveText(/^\d+ of \d+$/);
-		await expect(auditFooter.locator("[data-kt-str-footer-page-size]")).toHaveValue("10");
+		await expect(auditFooter.getByText("Rows per page")).toBeVisible();
+		await expect(auditFooter.locator(".kt-str-footer-page-size-glyph")).toBeVisible();
+		await expect(auditFooter.locator("[data-kt-str-footer-page-size]")).toHaveValue("20");
 		const sizeOpts = await auditFooter
 			.locator("[data-kt-str-footer-page-size] option")
 			.evaluateAll((els) => els.map((el) => (el as HTMLOptionElement).value));
 		expect(sizeOpts).toEqual(["10", "20", "50", "100"]);
 
+		const page1 = auditFooter.locator('[data-kt-str-footer-page-num="1"]');
+		await expect(page1).toBeVisible();
+		await expect(page1).toHaveClass(/is-active/);
+
 		const countAttr = await page
 			.locator('[data-testid="kt-str-audit"]')
 			.getAttribute("data-kt-str-audit-count");
 		const total = Number(countAttr || "0");
-		if (total > 10) {
+		if (total > 20) {
 			const next = auditFooter.locator("[data-kt-str-footer-next]");
 			await expect(next).toBeEnabled();
 			await next.click();
-			await expect(auditFooter.locator("[data-kt-str-footer-page]")).toHaveText(/^2 of \d+$/);
-			await expect(auditFooter.locator("[data-kt-str-footer-range]")).toHaveText(
-				/Showing 11-\d+ of \d+ records/
+			await expect(auditFooter.locator('[data-kt-str-footer-page-num="2"]')).toHaveClass(
+				/is-active/
 			);
+			await expect(auditFooter.locator("[data-kt-str-footer-range]")).toHaveText(
+				/Showing 21-\d+ of \d+/
+			);
+			await auditFooter.locator('[data-kt-str-footer-page-num="1"]').click();
+			await expect(page1).toHaveClass(/is-active/);
+		}
+
+		// Force multi-page chrome when possible: page size 10.
+		if (total > 10) {
+			await auditFooter.locator("[data-kt-str-footer-page-size]").selectOption("10");
+			await expect(auditFooter.locator('[data-kt-str-footer-page-num="1"]')).toHaveClass(
+				/is-active/
+			);
+			await expect(auditFooter.locator("[data-kt-str-footer-next]")).toBeEnabled();
+			const pageNums = await auditFooter
+				.locator("[data-kt-str-footer-page-num]")
+				.evaluateAll((els) => els.map((el) => el.getAttribute("data-kt-str-footer-page-num")));
+			expect(pageNums.length).toBeGreaterThanOrEqual(2);
+			expect(pageNums[0]).toBe("1");
 		}
 
 		await page.goto("/desk/strategy-alignment", { waitUntil: "domcontentloaded" });
@@ -1449,9 +1582,10 @@ test.describe("Strategy Alignment UI shell", () => {
 			.first();
 		await expect(pfFooter).toBeVisible();
 		await expect(pfFooter.locator("[data-kt-str-footer-range]")).toHaveText(
-			/Showing (\d+-\d+ of \d+|0 of 0) records/
+			/Showing (\d+(-\d+)? of \d+|0 of 0)/
 		);
-		await expect(pfFooter.locator("[data-kt-str-footer-page-size]")).toHaveValue("10");
-		await expect(pfFooter.locator("[data-kt-str-footer-page]")).toHaveText(/^\d+ of \d+$/);
+		await expect(pfFooter.getByText("Rows per page")).toBeVisible();
+		await expect(pfFooter.locator("[data-kt-str-footer-page-size]")).toHaveValue("20");
+		await expect(pfFooter.locator('[data-kt-str-footer-page-num="1"]')).toHaveClass(/is-active/);
 	});
 });

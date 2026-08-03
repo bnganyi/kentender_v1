@@ -105,12 +105,12 @@ kentender_strategy.ui_fixtures.portfolio = function () {
 <thead class="bg-surface-container-low border-b border-outline-variant">
 <tr>
 <th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant kt-str-plans-col-plan">Plan</th>
-<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant">Type</th>
-<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant kt-str-plans-col-period">Effective period</th>
-<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant text-center">Ver.</th>
-<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant">Status</th>
-<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant">Attention</th>
-<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant text-right">Action</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant kt-str-plans-col-type">Type</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant kt-str-plans-col-period" title="Effective period">Period</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant text-center kt-str-plans-col-ver">Ver.</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant kt-str-plans-col-status">Status</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant kt-str-plans-col-attention">Attention</th>
+<th class="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant text-right kt-str-plans-col-action">Action</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-surface-container-high" data-kt-str-plans-tbody="1">

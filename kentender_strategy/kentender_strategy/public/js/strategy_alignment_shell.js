@@ -196,6 +196,131 @@ frappe.provide("kentender_strategy.alignment");
 		);
 	}
 
+	/** Cross-tab plan chrome snapshot — prevents "—" flash on first visit to a sibling tab. */
+	var planChromeCache = {};
+
+	function rememberPlanChrome(plan) {
+		if (!plan) {
+			return;
+		}
+		var entry = {
+			code: plan.code || "",
+			name: plan.name || "",
+			status: plan.status || "",
+			effective_period_label: plan.effective_period_label || "",
+			start_date: plan.start_date || "",
+			end_date: plan.end_date || "",
+			version_number: plan.version_number,
+		};
+		if (!entry.code && !entry.name) {
+			return;
+		}
+		if (entry.code) {
+			planChromeCache[entry.code] = entry;
+		}
+		if (plan.id) {
+			planChromeCache[plan.id] = entry;
+		}
+	}
+
+	function harvestPlanChrome(planCode, $exceptChrome) {
+		if (planCode && planChromeCache[planCode]) {
+			return planChromeCache[planCode];
+		}
+		var found = null;
+		$('[data-testid="kt-str-plan-chrome"], .kt-str-injected-plan-chrome').each(function () {
+			if ($exceptChrome && $exceptChrome.length && this === $exceptChrome[0]) {
+				return;
+			}
+			var $c = $(this);
+			var title = ($c.find("[data-kt-str-plan-title]").first().text() || "").trim();
+			if (!title || title === "—") {
+				return;
+			}
+			var code = ($c.find("[data-kt-str-plan-code]").first().text() || "").trim();
+			var $root = $c.closest(".kt-str-root");
+			var rootCode = ($root.attr("data-kt-str-plan-code") || "").trim();
+			var rootId = ($root.attr("data-kt-str-plan-id") || "").trim();
+			if (
+				planCode &&
+				code !== planCode &&
+				rootCode !== planCode &&
+				rootId !== planCode
+			) {
+				return;
+			}
+			var period = ($c.find("[data-kt-str-plan-period]").first().text() || "").trim();
+			var versionText = ($c.find("[data-kt-str-plan-version]").first().text() || "").trim();
+			var versionMatch = versionText.match(/(\d+)/);
+			found = {
+				code: code || planCode || "",
+				name: title,
+				status: ($c.find("[data-kt-str-plan-status]").first().text() || "").trim(),
+				effective_period_label: period.replace(/^Effective\s+/i, ""),
+				version_number: versionMatch ? parseInt(versionMatch[1], 10) : null,
+			};
+			if (found.code) {
+				planChromeCache[found.code] = found;
+			}
+			return false;
+		});
+		return found;
+	}
+
+	function paintCachedStatusPill($chrome, status) {
+		var st = status || "";
+		var $pill = $chrome.find("[data-kt-str-plan-status-pill]");
+		var $dot = $chrome.find("[data-kt-str-plan-status-dot]");
+		$pill.removeClass(
+			"bg-status-available/10 text-status-available bg-status-reserved/10 text-status-reserved bg-surface-variant text-on-surface-variant"
+		);
+		$dot.removeClass("bg-status-available bg-status-reserved bg-outline");
+		if (st === "Active" || st === "Approved") {
+			$pill.addClass("bg-status-available/10 text-status-available");
+			$dot.addClass("bg-status-available");
+		} else if (st === "Submitted" || st === "Returned") {
+			$pill.addClass("bg-status-reserved/10 text-status-reserved");
+			$dot.addClass("bg-status-reserved");
+		} else {
+			$pill.addClass("bg-surface-variant text-on-surface-variant");
+			$dot.addClass("bg-outline");
+		}
+		$chrome.find("[data-kt-str-plan-status]").text(st || "—");
+	}
+
+	function hydratePlanChrome($root, planCode) {
+		var $chrome = $root
+			.find('[data-testid="kt-str-plan-chrome"], .kt-str-injected-plan-chrome')
+			.first();
+		if (!$chrome.length) {
+			return false;
+		}
+		var snap = harvestPlanChrome(planCode, $chrome);
+		if (!snap || !snap.name) {
+			return false;
+		}
+		$chrome.find("[data-kt-str-plan-title]").first().text(snap.name);
+		if (snap.code) {
+			$chrome.find("[data-kt-str-plan-code]").first().text(snap.code);
+		}
+		paintCachedStatusPill($chrome, snap.status || "");
+		if (snap.effective_period_label) {
+			var period = snap.effective_period_label;
+			if (!/^Effective\s+/i.test(period)) {
+				period = "Effective " + period;
+			}
+			$chrome.find("[data-kt-str-plan-period]").first().text(period);
+		}
+		if (snap.version_number != null && snap.version_number !== "") {
+			$chrome
+				.find("[data-kt-str-plan-version]")
+				.first()
+				.text("Version " + snap.version_number);
+		}
+		$chrome.attr("data-kt-str-chrome-hydrated", "1");
+		return true;
+	}
+
 	function annotatePlanTabs($root, activeSlug, planCode) {
 		/* Always replace fixture-local chrome with the shared artifact. */
 		$root.find('[data-testid="kt-str-plan-chrome"]').remove();
@@ -226,6 +351,8 @@ frappe.provide("kentender_strategy.alignment");
 		} else {
 			$root.prepend(html);
 		}
+		/* Fill from sibling tab / cache before first paint of empty placeholders. */
+		hydratePlanChrome($root, planCode);
 	}
 
 	function planRouteToken($root, fallback) {
@@ -947,6 +1074,8 @@ frappe.provide("kentender_strategy.alignment");
 		PLAN_TABS: PLAN_TABS,
 		planCodeFromRoute: planCodeFromRoute,
 		targetCodeFromRoute: targetCodeFromRoute,
+		rememberPlanChrome: rememberPlanChrome,
+		hydratePlanChrome: hydratePlanChrome,
 		measurementRouteParts: measurementRouteParts,
 		mountStrategyPage: mountStrategyPage,
 		registerPage: registerPage,

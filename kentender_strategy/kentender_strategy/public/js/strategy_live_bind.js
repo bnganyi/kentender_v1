@@ -32,6 +32,7 @@ frappe.provide("kentender_strategy.live");
 
 	/**
 	 * Shared client-side table pager bound to [data-kt-str-table-footer].
+	 * Chrome: "Showing X of Y" + Rows per page + numbered pager (1 2 3 … n).
 	 * opts.renderPage(pageRows, state) paints the current page into tbody.
 	 */
 	function attachTablePagination($root, opts) {
@@ -46,7 +47,7 @@ frappe.provide("kentender_strategy.live");
 		var $footer = $root.find("[data-kt-str-table-footer]").first();
 		var state = {
 			page: 1,
-			pageSize: 10,
+			pageSize: 20,
 			rows: [],
 		};
 		$root.data("ktStrPager", state);
@@ -57,6 +58,50 @@ frappe.provide("kentender_strategy.live");
 				return 1;
 			}
 			return Math.max(1, Math.ceil(n / state.pageSize));
+		}
+
+		/** Page tokens: 1 2 3 … n-2 n-1 n (plus neighborhood around current). */
+		function pageItems(current, pages) {
+			if (pages <= 1) {
+				return [1];
+			}
+			if (pages <= 7) {
+				var all = [];
+				for (var i = 1; i <= pages; i++) {
+					all.push(i);
+				}
+				return all;
+			}
+			var show = {};
+			function mark(p) {
+				if (p >= 1 && p <= pages) {
+					show[p] = 1;
+				}
+			}
+			mark(1);
+			mark(2);
+			mark(3);
+			mark(pages - 2);
+			mark(pages - 1);
+			mark(pages);
+			mark(current - 1);
+			mark(current);
+			mark(current + 1);
+			var sorted = Object.keys(show)
+				.map(function (k) {
+					return parseInt(k, 10);
+				})
+				.sort(function (a, b) {
+					return a - b;
+				});
+			var out = [];
+			for (var j = 0; j < sorted.length; j++) {
+				if (j > 0 && sorted[j] - sorted[j - 1] > 1) {
+					out.push("ellipsis");
+				}
+				out.push(sorted[j]);
+			}
+			return out;
 		}
 
 		function paintChrome() {
@@ -73,16 +118,46 @@ frappe.provide("kentender_strategy.live");
 			}
 			var start = total ? (state.page - 1) * state.pageSize + 1 : 0;
 			var end = Math.min(state.page * state.pageSize, total);
-			var rangeText = total
-				? __("Showing {0}-{1} of {2} records", [String(start), String(end), String(total)])
-				: __("Showing 0 of 0 records");
+			var rangeText;
+			if (!total) {
+				rangeText = __("Showing 0 of 0");
+			} else if (start === 1 && end === total) {
+				rangeText = __("Showing {0} of {1}", [String(total), String(total)]);
+			} else {
+				rangeText = __("Showing {0}-{1} of {2}", [String(start), String(end), String(total)]);
+			}
 			$footer.find("[data-kt-str-footer-range]").text(rangeText);
-			$footer.find("[data-kt-str-footer-page]").text(state.page + " of " + pages);
 			$footer.find("[data-kt-str-footer-page-size]").val(String(state.pageSize));
 			$footer.find("[data-kt-str-footer-prev]").prop("disabled", state.page <= 1);
 			$footer
 				.find("[data-kt-str-footer-next]")
 				.prop("disabled", !total || state.page >= pages);
+
+			var $pages = $footer.find("[data-kt-str-footer-pages]");
+			if ($pages.length) {
+				var html = "";
+				pageItems(state.page, pages).forEach(function (tok) {
+					if (tok === "ellipsis") {
+						html +=
+							'<span class="kt-str-footer-ellipsis" data-kt-str-footer-ellipsis aria-hidden="true">…</span>';
+						return;
+					}
+					var active = tok === state.page;
+					html +=
+						'<button type="button" class="kt-str-footer-page-btn' +
+						(active ? " is-active" : "") +
+						'" data-kt-str-footer-page-num="' +
+						tok +
+						'" aria-label="' +
+						__("Page {0}", [String(tok)]) +
+						'"' +
+						(active ? ' aria-current="page"' : "") +
+						">" +
+						tok +
+						"</button>";
+				});
+				$pages.html(html);
+			}
 		}
 
 		function render() {
@@ -114,7 +189,7 @@ frappe.provide("kentender_strategy.live");
 		if ($footer.length && !$footer.data("ktStrPagerBound")) {
 			$footer.data("ktStrPagerBound", 1);
 			$footer.on("change.ktStrPager", "[data-kt-str-footer-page-size]", function () {
-				state.pageSize = parseInt($(this).val(), 10) || 10;
+				state.pageSize = parseInt($(this).val(), 10) || 20;
 				state.page = 1;
 				render();
 			});
@@ -131,6 +206,15 @@ frappe.provide("kentender_strategy.live");
 					state.page += 1;
 					render();
 				}
+			});
+			$footer.on("click.ktStrPager", "[data-kt-str-footer-page-num]", function (e) {
+				e.preventDefault();
+				var p = parseInt($(this).attr("data-kt-str-footer-page-num"), 10);
+				if (!p || p === state.page || p < 1 || p > totalPages()) {
+					return;
+				}
+				state.page = p;
+				render();
 			});
 		}
 		return api;
@@ -169,6 +253,28 @@ frappe.provide("kentender_strategy.live");
 			return fmt(start) + " - " + fmt(end);
 		}
 		return fmt(start || end);
+	}
+
+	/** Portfolio period cell: stack start/end so the column stays narrow. */
+	function periodCellHtml(label, start, end) {
+		var text = label || formatPeriod(start, end);
+		if (!text || text === "—") {
+			return "—";
+		}
+		var parts = String(text).split(/\s+-\s+/);
+		if (parts.length === 2 && parts[0] && parts[1]) {
+			return (
+				'<span class="kt-str-period-wrap">' +
+				'<span class="kt-str-period-start">' +
+				esc(parts[0]) +
+				"</span>" +
+				'<span class="kt-str-period-sep" aria-hidden="true">–</span>' +
+				'<span class="kt-str-period-end">' +
+				esc(parts[1]) +
+				"</span></span>"
+			);
+		}
+		return esc(text);
 	}
 
 	function statusPill(status) {
@@ -240,29 +346,29 @@ frappe.provide("kentender_strategy.live");
 					'" data-plan-status="' +
 					esc(p.status) +
 					'">' +
-					'<td class="py-4 px-4 kt-str-plans-col-plan"><div class="flex flex-col">' +
+					'<td class="py-4 px-4 kt-str-plans-col-plan"><div class="flex flex-col min-w-0">' +
 					'<span class="font-data-mono text-data-mono text-secondary mb-0.5">' +
 					esc(p.code) +
 					"</span>" +
 					'<span class="font-body-md text-body-md font-semibold text-primary">' +
 					esc(p.name) +
 					"</span></div></td>" +
-					'<td class="py-4 px-4 text-body-md text-on-surface-variant">' +
+					'<td class="py-4 px-4 text-body-md text-on-surface-variant kt-str-plans-col-type">' +
 					esc(p.plan_type || "") +
 					"</td>" +
-					'<td class="py-4 px-4 text-data-mono text-on-surface-variant whitespace-nowrap kt-str-plans-col-period">' +
-					esc(p.effective_period_label || formatPeriod(p.start_date, p.end_date)) +
+					'<td class="py-4 px-4 text-data-mono text-on-surface-variant kt-str-plans-col-period">' +
+					periodCellHtml(p.effective_period_label, p.start_date, p.end_date) +
 					"</td>" +
-					'<td class="py-4 px-4 text-data-mono text-on-surface-variant text-center">v' +
+					'<td class="py-4 px-4 text-data-mono text-on-surface-variant text-center kt-str-plans-col-ver">v' +
 					esc(p.version_number || 1) +
 					"</td>" +
-					'<td class="py-4 px-4">' +
+					'<td class="py-4 px-4 kt-str-plans-col-status">' +
 					statusPill(p.status) +
 					"</td>" +
-					'<td class="py-4 px-4">' +
+					'<td class="py-4 px-4 kt-str-plans-col-attention">' +
 					attentionCell(p) +
 					"</td>" +
-					'<td class="py-4 px-4 text-right">' +
+					'<td class="py-4 px-4 text-right kt-str-plans-col-action">' +
 					'<button type="button" data-kt-str-action="open-plan" class="' +
 					actionClass(p.status) +
 					'">' +
@@ -658,6 +764,13 @@ frappe.provide("kentender_strategy.live");
 			.find("[data-kt-str-plan-version]")
 			.first()
 			.text(plan.version_number != null ? "Version " + plan.version_number : "");
+		/* Seed sibling tabs so soft-nav never flashes placeholder chrome. */
+		if (
+			kentender_strategy.alignment &&
+			typeof kentender_strategy.alignment.rememberPlanChrome === "function"
+		) {
+			kentender_strategy.alignment.rememberPlanChrome(plan);
+		}
 	}
 
 	function ensureStartStructureCta($root, plan, counts, capabilities) {

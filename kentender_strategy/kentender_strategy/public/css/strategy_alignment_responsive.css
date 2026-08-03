@@ -134,3 +134,28 @@
 		grid-column: span 9 / span 9 !important;
 	}
 }
+
+/*
+ * Focus chrome lock (loads last — defeats per-screen Stitch/primary overrides).
+ * See .cursor/rules/kentender-strategy-alignment-focus.mdc
+ */
+body.kt-str-surface.kt-cl-shell .kt-str-root :is(input, select, textarea, [contenteditable="true"]):focus,
+body.kt-str-surface.kt-cl-shell .kt-str-root :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+body.kt-str-surface.kt-cl-shell .kt-str-root :is(input, select, textarea).focus\:ring-1:focus,
+body.kt-str-surface.kt-cl-shell .kt-str-root :is(input, select, textarea).focus\:ring-2:focus,
+body.kt-str-surface.kt-cl-shell .kt-str-root :is(input, select, textarea).focus\:ring-primary:focus,
+body.kt-str-surface.kt-cl-shell .kt-str-root :is(input, select, textarea).focus\:border-primary:focus {
+	outline: none !important;
+	border-color: var(--kt-str-focus-border, #7bbeff) !important;
+	/* Max 1px soft halo — never 2–4px navy/black primary rings. */
+	box-shadow: 0 0 0 1px var(--kt-str-focus-ring, color-mix(in srgb, #7bbeff 55%, transparent)) !important;
+	--tw-ring-color: var(--kt-str-focus-border, #7bbeff) !important;
+	--tw-ring-width: 0 !important;
+}
+body.kt-str-surface.kt-cl-shell .kt-str-root :is(input[type="checkbox"], input[type="radio"]):focus,
+body.kt-str-surface.kt-cl-shell .kt-str-root :is(input[type="checkbox"], input[type="radio"]):focus-visible {
+	outline: 2px solid var(--kt-str-focus-border, #7bbeff) !important;
+	outline-offset: 2px !important;
+	box-shadow: none !important;
+	border-color: var(--kt-str-focus-border, #7bbeff) !important;
+}

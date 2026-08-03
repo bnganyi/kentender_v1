@@ -263,13 +263,54 @@
 body.kt-str-surface.kt-str-pf-active #kt-cl-page-header-host { display: none !important; }
 body.kt-str-surface.kt-str-pf-active [data-testid="kt-cl-page-body"] { max-width: none; }
 
-/* Plans table: give Plan title room; keep Effective period compact. */
+/*
+ * Plans table column budget (fixed layout):
+ * Plan gets the flex room; Period is exactly two unreadably-narrow-proof lines
+ * (DD-Mon-YYYY each, nowrap); Type/Attention may wrap; Ver/Status/Action stay tight.
+ */
+.kt-cl-shell .kt-str-root [data-testid="kt-str-plans-table"] {
+  table-layout: fixed !important;
+  width: 100% !important;
+}
 .kt-cl-shell .kt-str-root [data-testid="kt-str-plans-table"] .kt-str-plans-col-plan {
-  min-width: 18rem !important;
   width: 28% !important;
+  min-width: 0 !important;
+}
+.kt-cl-shell .kt-str-root [data-testid="kt-str-plans-table"] .kt-str-plans-col-type {
+  width: 12% !important;
 }
 .kt-cl-shell .kt-str-root [data-testid="kt-str-plans-table"] .kt-str-plans-col-period {
-  width: 1% !important;
+  width: 7.75rem !important;
+  vertical-align: middle !important;
+}
+.kt-cl-shell .kt-str-root [data-testid="kt-str-plans-table"] .kt-str-plans-col-ver {
+  width: 3.25rem !important;
   white-space: nowrap !important;
+}
+.kt-cl-shell .kt-str-root [data-testid="kt-str-plans-table"] .kt-str-plans-col-status {
+  width: 6.5rem !important;
+  white-space: nowrap !important;
+}
+.kt-cl-shell .kt-str-root [data-testid="kt-str-plans-table"] .kt-str-plans-col-attention {
+  width: 16% !important;
+}
+.kt-cl-shell .kt-str-root [data-testid="kt-str-plans-table"] .kt-str-plans-col-action {
+  width: 4.5rem !important;
+  white-space: nowrap !important;
+}
+.kt-cl-shell .kt-str-root [data-testid="kt-str-plans-table"] .kt-str-period-wrap {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 0.125rem !important;
+  line-height: 1.3 !important;
+}
+.kt-cl-shell .kt-str-root [data-testid="kt-str-plans-table"] .kt-str-period-start,
+.kt-cl-shell .kt-str-root [data-testid="kt-str-plans-table"] .kt-str-period-end {
+  display: block !important;
+  white-space: nowrap !important;
+}
+.kt-cl-shell .kt-str-root [data-testid="kt-str-plans-table"] .kt-str-period-sep {
+  display: none !important;
 }
 

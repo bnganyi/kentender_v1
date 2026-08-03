@@ -543,14 +543,8 @@ body.kt-str-create-active .kt-str-field-invalid {
 	color: #ffffff !important;
 }
 
-/* Focus rings (Stitch focus:ring-2 focus:ring-primary) — keep light-blue desk chrome out */
-.kt-cl-shell .kt-str-root[data-testid="kt-str-create-plan"] input:focus,
-.kt-cl-shell .kt-str-root[data-testid="kt-str-create-plan"] select:focus,
-.kt-cl-shell .kt-str-root[data-testid="kt-str-create-plan"] textarea:focus {
-	outline: none !important;
-	border-color: #001f48 !important;
-	box-shadow: 0 0 0 2px color-mix(in srgb, #001f48 35%, transparent) !important;
-}
+/* Field focus: use module lock in strategy_alignment_responsive.css (light blue).
+   Do not reintroduce #001f48 / 2px primary rings here. */
 
 /* Action bar: Stitch sm:flex-row justify-between (must beat later .flex-col dumps) */
 @media (min-width: 640px) {
