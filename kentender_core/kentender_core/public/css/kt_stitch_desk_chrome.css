@@ -1,0 +1,216 @@
+/*
+ * Stitch Desk chrome baseline (permanent).
+ *
+ * Defeats Frappe Desk / Bootstrap bleed that Strategy paid to discover:
+ * - Win98 outset black buttons
+ * - missing Tailwind Forms select chevrons
+ * - Espresso --weight-regular: 420 + tracking on body/labels
+ *
+ * Opt-in: add class `kt-stitch-canvas` on the Stitch main root
+ * (alongside module root, e.g. kt-str-root / kt-bud-root).
+ *
+ * Module CSS may extend tokens; it must NOT omit this baseline or remove
+ * the class. Enforced by kentender_core.tests.test_stitch_desk_chrome_gate.
+ */
+
+.kt-cl-shell .kt-stitch-canvas {
+	--kt-stitch-primary: #001f48;
+	--kt-stitch-primary-container: #00346f;
+	--kt-stitch-on-primary: #ffffff;
+	--kt-stitch-on-primary-container: #7b9ee0;
+	--kt-stitch-secondary: #01629d;
+	--kt-stitch-on-surface: #1a1b20;
+	--kt-stitch-on-surface-variant: #434750;
+	--kt-stitch-outline: #737781;
+	--kt-stitch-outline-variant: #c3c6d1;
+	--kt-stitch-surface: #f9f9fe;
+	--kt-stitch-surface-lowest: #ffffff;
+	/* Desk Espresso uses 420 — Stitch body is 400. */
+	--weight-regular: 400;
+	color: var(--kt-stitch-on-surface);
+	font-family: Inter, "Public Sans", system-ui, sans-serif;
+	font-size: 0.875rem;
+	font-weight: 400;
+	letter-spacing: normal;
+	box-sizing: border-box;
+	width: 100%;
+}
+
+.kt-cl-shell .kt-stitch-canvas *,
+.kt-cl-shell .kt-stitch-canvas *::before,
+.kt-cl-shell .kt-stitch-canvas *::after {
+	box-sizing: border-box;
+}
+
+/* Desk/Bootstrap must not paint Win98 outset black boxes on Stitch buttons. */
+.kt-cl-shell .kt-stitch-canvas button,
+.kt-cl-shell .kt-stitch-canvas .btn {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	background: transparent !important;
+	background-image: none !important;
+	border: none !important;
+	border-width: 0 !important;
+	border-style: none !important;
+	border-color: transparent !important;
+	box-shadow: none !important;
+	outline: none !important;
+	border-radius: 0;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	margin: 0;
+	padding: 0;
+	line-height: inherit;
+	min-height: 0;
+}
+
+.kt-cl-shell .kt-stitch-canvas button.bg-primary {
+	background-color: var(--kt-stitch-primary) !important;
+	color: var(--kt-stitch-on-primary) !important;
+	border: none !important;
+	border-radius: 0.5rem !important;
+	box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+	padding: 0.5rem 1rem !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas button.bg-primary:hover {
+	background-color: var(--kt-stitch-primary-container) !important;
+	color: var(--kt-stitch-on-primary-container) !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas button.border {
+	border: 1px solid var(--kt-stitch-outline) !important;
+	background: var(--kt-stitch-surface-lowest) !important;
+	color: var(--kt-stitch-on-surface) !important;
+	border-radius: 0.5rem !important;
+	padding: 0.5rem 1rem !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas button.border:hover {
+	background-color: #e2e2e8 !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas button.rounded-lg {
+	border-radius: 0.5rem !important;
+}
+
+/* Row / text actions stay chromeless. */
+.kt-cl-shell .kt-stitch-canvas td button.text-primary,
+.kt-cl-shell .kt-stitch-canvas button.text-primary:not(.bg-primary):not(.border) {
+	background: transparent !important;
+	border: none !important;
+	box-shadow: none !important;
+	padding: 0 !important;
+	color: var(--kt-stitch-primary) !important;
+	border-radius: 0 !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas select,
+.kt-cl-shell .kt-stitch-canvas input[type="text"],
+.kt-cl-shell .kt-stitch-canvas input:not([type]),
+.kt-cl-shell .kt-stitch-canvas textarea {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	font: inherit;
+	color: inherit;
+	margin: 0;
+	outline: none;
+	border-width: 1px !important;
+	border-style: solid !important;
+	border-color: var(--kt-stitch-outline-variant) !important;
+	background-color: var(--kt-stitch-surface) !important;
+	border-radius: 0.5rem !important;
+}
+
+/*
+ * Tailwind Forms select chevron stand-in.
+ * Stitch CDN injects this; Desk does not.
+ *
+ * CHRONIC BUG (do not reintroduce): SVG Forms chevron + Material expand_more
+ * sibling stacked → garbled "~" / "∨∨" glyph. Permanent kill uses :has() below
+ * so every Stitch filter bar is safe without per-screen CSS.
+ */
+.kt-cl-shell .kt-stitch-canvas select {
+	background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23434750' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+	background-position: right 0.75rem center !important;
+	background-repeat: no-repeat !important;
+	background-size: 1.25rem 1.25rem !important;
+	padding-right: 2.5rem !important;
+	cursor: pointer !important;
+}
+
+/* Permanent: Material expand_more sibling owns the chevron — suppress SVG. */
+.kt-cl-shell .kt-stitch-canvas select:has(+ .material-symbols-outlined),
+.kt-cl-shell .kt-str-root select:has(+ .material-symbols-outlined),
+.kt-cl-shell .kt-bud-root select:has(+ .material-symbols-outlined) {
+	background-image: none !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas h1,
+.kt-cl-shell .kt-stitch-canvas h2,
+.kt-cl-shell .kt-stitch-canvas h3,
+.kt-cl-shell .kt-stitch-canvas h4,
+.kt-cl-shell .kt-stitch-canvas p {
+	margin: 0;
+}
+
+.kt-cl-shell .kt-stitch-canvas .font-headline-lg,
+.kt-cl-shell .kt-stitch-canvas .font-headline-md,
+.kt-cl-shell .kt-stitch-canvas .font-headline-sm {
+	font-family: Manrope, "Public Sans", system-ui, sans-serif !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas .font-body-lg,
+.kt-cl-shell .kt-stitch-canvas .font-body-md {
+	font-family: Inter, "Public Sans", system-ui, sans-serif !important;
+	font-weight: 400 !important;
+	letter-spacing: normal !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas .font-label-caps,
+.kt-cl-shell .kt-stitch-canvas .text-label-caps {
+	font-family: Inter, "Public Sans", system-ui, sans-serif !important;
+	font-size: 0.75rem !important;
+	letter-spacing: 0.05em !important;
+	text-transform: uppercase !important;
+	font-weight: 700 !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas .text-headline-lg {
+	font-size: 28px !important;
+	line-height: 36px !important;
+	font-weight: 700 !important;
+	letter-spacing: -0.02em !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas .text-headline-sm {
+	font-size: 18px !important;
+	line-height: 24px !important;
+	font-weight: 600 !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas .text-body-lg {
+	font-size: 16px !important;
+	line-height: 24px !important;
+	font-weight: 400 !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas .text-body-md {
+	font-size: 14px !important;
+	line-height: 20px !important;
+	font-weight: 400 !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas .font-data-mono,
+.kt-cl-shell .kt-stitch-canvas .text-data-mono {
+	font-family: "JetBrains Mono", ui-monospace, monospace !important;
+}
+
+.kt-cl-shell .kt-stitch-canvas .material-symbols-outlined {
+	font-family: "Material Symbols Outlined", sans-serif !important;
+	font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24 !important;
+	display: inline-block !important;
+	vertical-align: middle !important;
+	line-height: 1 !important;
+}

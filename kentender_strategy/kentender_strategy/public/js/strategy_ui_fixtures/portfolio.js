@@ -3,7 +3,7 @@
 // Table / My Work / summary counts are live-bound (seed plan MOH-SP-0001 via API).
 frappe.provide("kentender_strategy.ui_fixtures");
 kentender_strategy.ui_fixtures.portfolio = function () {
-	return `<div class="kt-str-root" data-testid="kt-str-portfolio">
+	return `<div class="kt-str-root kt-stitch-canvas" data-testid="kt-str-portfolio">
 <!-- Header Section -->
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4" data-testid="kt-str-pf-header">
 <div class="min-w-0 flex-1">

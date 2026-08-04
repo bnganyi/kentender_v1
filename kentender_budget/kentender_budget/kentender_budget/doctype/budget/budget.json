@@ -1,107 +1,195 @@
 {
  "actions": [],
  "allow_rename": 0,
- "autoname": "format:BUD-{procuring_entity}-{fiscal_year}-.{####}",
- "creation": "2026-04-19 12:00:00.000000",
+ "autoname": "hash",
+ "creation": "2026-08-04 00:00:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_details",
-  "budget_name",
-  "column_break_main",
+  "section_identity",
+  "generated_reference",
+  "title",
+  "col_id",
   "procuring_entity",
-  "fiscal_year",
-  "currency",
-  "total_budget_amount",
-  "section_status",
   "status",
+  "section_period",
+  "fiscal_period",
+  "start_date",
+  "end_date",
+  "col_period",
+  "currency",
+  "budget_owner",
+  "section_registration",
+  "registration_source",
+  "authoritative_reference",
+  "approval_date",
+  "col_reg",
+  "external_approved_total",
+  "approval_evidence",
+  "section_attention",
+  "attention_note",
+  "readiness_issue_count",
+  "section_governance",
   "submitted_by",
   "submitted_at",
-  "approved_by",
-  "approved_at",
-  "section_rejection",
-  "rejection_reason",
-  "column_break_rejection",
-  "rejected_by",
-  "rejected_at",
-  "version_no",
-  "column_break_status_right",
-  "is_current_version",
-  "supersedes_budget",
-  "section_notes",
-  "notes",
-  "section_governance",
-  "budget_owner",
-  "column_governance",
-  "effective_date",
-  "closing_date",
-  "section_meta",
-  "column_break_meta",
-  "created_by",
-  "order_index"
+  "col_gov",
+  "reviewed_by",
+  "reviewed_at",
+  "activated_by",
+  "activated_at",
+  "fixture_namespace"
  ],
  "fields": [
   {
-   "fieldname": "section_details",
+   "fieldname": "section_identity",
    "fieldtype": "Section Break",
-   "label": "Budget details"
+   "label": "Identity"
   },
   {
-   "fieldname": "budget_name",
+   "fieldname": "generated_reference",
    "fieldtype": "Data",
+   "label": "Budget Reference",
+   "reqd": 1,
+   "unique": 1,
    "in_list_view": 1,
-   "label": "Budget Name",
-   "reqd": 1
+   "search_index": 1,
+   "read_only": 1
   },
   {
-   "fieldname": "column_break_main",
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "col_id",
    "fieldtype": "Column Break"
   },
   {
    "fieldname": "procuring_entity",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Procuring Entity",
    "options": "Procuring Entity",
    "reqd": 1,
    "search_index": 1
   },
   {
-   "fieldname": "fiscal_year",
-   "fieldtype": "Int",
-   "in_list_view": 1,
-   "label": "Fiscal Year",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nSubmitted\nReturned\nActive\nClosed\nCancelled",
    "reqd": 1,
+   "default": "Draft",
+   "in_list_view": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "section_period",
+   "fieldtype": "Section Break",
+   "label": "Period"
+  },
+  {
+   "fieldname": "fiscal_period",
+   "fieldtype": "Data",
+   "label": "Fiscal Period",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "col_period",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "currency",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Currency",
    "options": "Currency",
+   "reqd": 1,
+   "default": "KES"
+  },
+  {
+   "fieldname": "budget_owner",
+   "fieldtype": "Data",
+   "label": "Budget Owner",
    "reqd": 1
   },
   {
-   "fieldname": "total_budget_amount",
+   "fieldname": "section_registration",
+   "fieldtype": "Section Break",
+   "label": "Registration"
+  },
+  {
+   "fieldname": "registration_source",
+   "fieldtype": "Select",
+   "label": "Registration Source",
+   "options": "Direct capture",
+   "reqd": 1,
+   "default": "Direct capture",
+   "read_only": 1
+  },
+  {
+   "fieldname": "authoritative_reference",
+   "fieldtype": "Data",
+   "label": "Authoritative Approval Reference",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "approval_date",
+   "fieldtype": "Date",
+   "label": "Approval Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "col_reg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "external_approved_total",
    "fieldtype": "Currency",
-   "label": "Total Budget Amount",
+   "label": "External Approved Total",
    "options": "currency"
   },
   {
-   "fieldname": "section_status",
-   "fieldtype": "Section Break",
-   "label": "Status and version"
+   "fieldname": "approval_evidence",
+   "fieldtype": "Attach",
+   "label": "Approval Evidence"
   },
   {
-   "default": "Draft",
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Status",
-   "options": "Draft\nSubmitted\nApproved\nActive\nClosed\nRevised\nRejected\nCancelled",
-   "reqd": 1,
-   "search_index": 1
+   "fieldname": "section_attention",
+   "fieldtype": "Section Break",
+   "label": "Attention"
+  },
+  {
+   "fieldname": "attention_note",
+   "fieldtype": "Small Text",
+   "label": "Attention Note"
+  },
+  {
+   "fieldname": "readiness_issue_count",
+   "fieldtype": "Int",
+   "label": "Readiness Issue Count",
+   "default": "0",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "section_governance",
+   "fieldtype": "Section Break",
+   "label": "Governance"
   },
   {
    "fieldname": "submitted_by",
@@ -117,136 +205,49 @@
    "read_only": 1
   },
   {
-   "fieldname": "approved_by",
+   "fieldname": "col_gov",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reviewed_by",
    "fieldtype": "Link",
-   "label": "Approved By",
+   "label": "Reviewed By",
    "options": "User",
    "read_only": 1
   },
   {
-   "fieldname": "approved_at",
+   "fieldname": "reviewed_at",
    "fieldtype": "Datetime",
-   "label": "Approved At",
+   "label": "Reviewed At",
    "read_only": 1
   },
   {
-   "fieldname": "section_rejection",
-   "fieldtype": "Section Break",
-   "label": "Rejection"
-  },
-  {
-   "fieldname": "rejection_reason",
-   "fieldtype": "Text",
-   "label": "Rejection Reason"
-  },
-  {
-   "fieldname": "column_break_rejection",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "rejected_by",
+   "fieldname": "activated_by",
    "fieldtype": "Link",
-   "label": "Rejected By",
+   "label": "Activated By",
    "options": "User",
    "read_only": 1
   },
   {
-   "fieldname": "rejected_at",
+   "fieldname": "activated_at",
    "fieldtype": "Datetime",
-   "label": "Rejected At",
+   "label": "Activated At",
    "read_only": 1
   },
   {
-   "default": "1",
-   "fieldname": "version_no",
-   "fieldtype": "Int",
-   "label": "Version Number",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "fieldname": "column_break_status_right",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "1",
-   "fieldname": "is_current_version",
-   "fieldtype": "Check",
-   "label": "Is Current Version",
-   "reqd": 1
-  },
-  {
-   "fieldname": "supersedes_budget",
-   "fieldtype": "Link",
-   "label": "Supersedes Budget",
-   "options": "Budget"
-  },
-  {
-   "fieldname": "section_notes",
-   "fieldtype": "Section Break",
-   "label": "Notes"
-  },
-  {
-   "fieldname": "notes",
-   "fieldtype": "Text",
-   "label": "Notes"
-  },
-  {
-   "fieldname": "section_governance",
-   "fieldtype": "Section Break",
-   "label": "Governance",
-   "collapsible": 1
-  },
-  {
-   "fieldname": "budget_owner",
+   "fieldname": "fixture_namespace",
    "fieldtype": "Data",
-   "label": "Budget Owner",
-   "description": "Name or designation of the person responsible for this budget."
-  },
-  {
-   "fieldname": "column_governance",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "effective_date",
-   "fieldtype": "Date",
-   "label": "Effective Date",
-   "description": "Date from which this budget is active."
-  },
-  {
-   "fieldname": "closing_date",
-   "fieldtype": "Date",
-   "label": "Closing Date",
-   "description": "Date after which no further transactions are permitted."
-  },
-  {
-   "fieldname": "section_meta",
-   "fieldtype": "Section Break",
-   "label": "Metadata"
-  },
-  {
-   "fieldname": "column_break_meta",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "created_by",
-   "fieldtype": "Link",
-   "label": "Created By",
-   "options": "User",
+   "label": "Fixture Namespace",
    "read_only": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "order_index",
-   "fieldtype": "Int",
-   "label": "Order Index",
-   "non_negative": 1,
-   "reqd": 1
   }
  ],
+ "index_web_pages_for_search": 0,
  "links": [],
+ "modified": "2026-08-04 00:00:00.000000",
+ "modified_by": "Administrator",
  "module": "Kentender Budget",
  "name": "Budget",
+ "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [
   {
@@ -263,35 +264,57 @@
   },
   {
    "create": 1,
-   "delete": 1,
-   "email": 1,
+   "delete": 0,
+   "email": 0,
    "export": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Strategy Manager",
-   "share": 1,
+   "role": "Budget Officer",
+   "share": 0,
    "write": 1
   },
   {
    "create": 0,
    "delete": 0,
-   "email": 1,
+   "email": 0,
    "export": 1,
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "Planning Authority",
+   "role": "Budget Reviewer",
    "share": 0,
    "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Budget Authority",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Budget Viewer",
+   "share": 0,
+   "write": 0
   }
  ],
- "search_fields": "budget_name",
- "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "title_field": "budget_name",
  "track_changes": 1,
- "modified": "2026-06-27 12:00:00.000000"
+ "title_field": "title",
+ "search_fields": "generated_reference,title,authoritative_reference,fiscal_period"
 }

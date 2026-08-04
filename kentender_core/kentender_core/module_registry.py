@@ -21,14 +21,21 @@ KT_MODULES: dict[str, dict[str, Any]] = {
 		"sidebar_parent": "Procurement",
 	},
 	"budget": {
+		# MVP-1 Budget & Funding — portfolio entry (BUD-UI-01).
 		"workspace_label": "Budget Management",
 		"sidebar_workspace_key": "budget management",
-		"builder_page": "budget-builder",
-		"desk_page": "budget-hub",
+		"builder_page": "",
+		"desk_page": "budget-funding",
 		"form_doctype": "Budget",
 		"state_key": "kt_budget_workbench_state",
 		"select_key": "kt_budget_workspace_select",
-		"route_prefixes": ("budget-builder", "budget-hub", "budget-workbench", "Form/Budget"),
+		"route_prefixes": (
+			"budget-funding",
+			"budget-register",
+			"budget-funding-performance",
+			"budget-overview",
+			"Form/Budget",
+		),
 		"sidebar_parent": "Procurement",
 	},
 	"dia": {

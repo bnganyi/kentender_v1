@@ -143,26 +143,24 @@ class TestStrategyDownstreamUsage(FrappeTestCase):
 		result = seed_moh_downstream_usage_refs(plan_name=self.plan_id, target_name=self.target_id)
 		self.assertTrue(result.get("ok"), result)
 		demand_name = result["linked"]["demand"]
-		budget_name = result["linked"]["budget_line"]
+		# MVP-1 Budget teardown: Budget Line DocType removed; Demand link is enough.
 		self.assertTrue(demand_name)
-		self.assertTrue(budget_name)
+		self.assertIsNone(result["linked"].get("budget_line"))
 		self.addCleanup(lambda: _clear_strategy_ref("Demand", demand_name))
-		self.addCleanup(lambda: _clear_strategy_ref("Budget Line", budget_name))
 
 		demand_code = frappe.db.get_value("Demand", demand_name, "demand_id")
-		budget_code = frappe.db.get_value("Budget Line", budget_name, "budget_line_code")
 
 		_ensure_user("str.viewer.down.rows@example.com", ["Strategy Viewer"], self.pe)
 		frappe.set_user("str.viewer.down.rows@example.com")
 		dto = get_strategy_usage(plan_code=STRATEGY_PLAN_CODE)
 		self.assertGreaterEqual(dto["counts"]["Demand"], 1)
-		self.assertGreaterEqual(dto["counts"]["Budget"], 1)
+		self.assertEqual(dto["counts"].get("Budget", 0), 0)
 		self.assertEqual(dto["counts"]["Planning"], 0)
 
 		demand_rows = [r for r in dto["rows"] if r["module"] == "Demand"]
 		budget_rows = [r for r in dto["rows"] if r["module"] == "Budget"]
 		self.assertTrue(any(r["record"]["code"] == demand_code for r in demand_rows))
-		self.assertTrue(any(r["record"]["code"] == budget_code for r in budget_rows))
+		self.assertEqual(budget_rows, [])
 
 		sample = next(r for r in demand_rows if r["record"]["code"] == demand_code)
 		self.assertEqual(sample["doctype"], "Demand")

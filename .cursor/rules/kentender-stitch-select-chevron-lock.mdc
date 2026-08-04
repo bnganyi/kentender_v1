@@ -1,0 +1,43 @@
+---
+description: Permanent lock — never stack SVG Forms select chevron with Material expand_more (garbled "~" / ∨∨).
+globs: apps/kentender_v1/**/*.{css,js,ts,html}
+alwaysApply: false
+---
+
+# Stitch select chevron lock (hard — permanent)
+
+## The chronic bug
+
+Filter `<select>`s show a garbled `~` / double-∨ when **both** are active:
+
+1. Tailwind Forms **SVG** `background-image` on the select, **and**
+2. A Material Symbols sibling `<span class="material-symbols-outlined">expand_more</span>`
+
+Agents keep “fixing” one screen with a one-off `background-image: none` — then the next screen regresses.
+
+## Permanent contract
+
+1. **Shared kill** lives in `kentender_core/public/css/kt_stitch_desk_chrome.css`:
+
+   `select:has(+ .material-symbols-outlined) { background-image: none !important; }`
+
+   Scoped under `.kt-stitch-canvas` / `.kt-str-root` / `.kt-bud-root`. Do **not** remove this rule.
+
+2. Module utility sheets that paint the SVG Forms chevron (Strategy/Budget) must include the same `:has(+ .material-symbols-outlined)` kill **immediately after** the SVG rule (load-order belt).
+
+3. **Never** re-scope Budget CSS onto `.kt-str-root` (or Strategy CSS onto `.kt-bud-root`) for select chevrons — cross-module bleed re-stacks glyphs.
+
+4. Page-size footer selects use Material only — already pinned in `kt_stitch_table_footer.css`.
+
+## When adding a new Stitch filter bar
+
+- Prefer Material `expand_more` sibling (portfolio / Downstream pattern) **or** SVG-only (Budget portfolio). Not both.
+- If Material sibling is present, do not add per-screen SVG; the `:has` rule covers it.
+- Gate markers: `kentender_core.stitch_desk_chrome_registry.REQUIRED_SHARED_CSS_MARKERS` must keep `select:has(+ .material-symbols-outlined)`.
+- Playwright: `assertStitchDeskChrome` fails if Material sibling + non-`none` background-image.
+
+## Disallowed
+
+- Deleting the `:has()` kill “because portfolio already sets none”.
+- Copy-pasting Strategy select SVG rules into Budget utilities targeting `.kt-str-root`.
+- Claiming UI Done with garbled filter chevrons on any Stitch Desk surface.

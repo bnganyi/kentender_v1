@@ -1,0 +1,407 @@
+/* BUD-UI-01 — Stitch portfolio chrome pins (defeat Desk/Bootstrap).
+   Mirror strategy_alignment_portfolio.css lessons: button reset, select chevron,
+   typography pins, filter/table geometry. */
+
+.kt-cl-shell .kt-bud-root {
+	--kt-bud-primary: #001f48;
+	--kt-bud-primary-container: #00346f;
+	--kt-bud-on-primary: #ffffff;
+	--kt-bud-on-primary-container: #7b9ee0;
+	--kt-bud-secondary: #01629d;
+	--kt-bud-on-surface: #1a1b20;
+	--kt-bud-on-surface-variant: #434750;
+	--kt-bud-outline: #737781;
+	--kt-bud-outline-variant: #c3c6d1;
+	--kt-bud-surface: #f9f9fe;
+	--kt-bud-surface-lowest: #ffffff;
+	--weight-regular: 400;
+	color: var(--kt-bud-on-surface);
+	font-family: Inter, "Public Sans", system-ui, sans-serif;
+	font-size: 0.875rem;
+	font-weight: 400;
+	letter-spacing: normal;
+	box-sizing: border-box;
+	width: 100%;
+}
+
+.kt-cl-shell .kt-bud-root *,
+.kt-cl-shell .kt-bud-root *::before,
+.kt-cl-shell .kt-bud-root *::after {
+	box-sizing: border-box;
+}
+
+/* Desk/Bootstrap must not paint Win98 outset black boxes on Stitch buttons. */
+.kt-cl-shell .kt-bud-root button,
+.kt-cl-shell .kt-bud-root .btn {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	background: transparent !important;
+	background-image: none !important;
+	border: none !important;
+	border-width: 0 !important;
+	border-style: none !important;
+	border-color: transparent !important;
+	box-shadow: none !important;
+	outline: none !important;
+	border-radius: 0;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	margin: 0;
+	padding: 0;
+	line-height: inherit;
+	min-height: 0;
+}
+
+/* Primary CTA — always navy + white; never Desk Win98 black / dark-on-black. */
+.kt-cl-shell .kt-bud-root button.bg-primary,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-register-budget"] {
+	background-color: #001f48 !important;
+	background-image: none !important;
+	color: #ffffff !important;
+	border: none !important;
+	border-style: none !important;
+	border-radius: 0.5rem !important;
+	box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+	padding: 0.5rem 1rem !important;
+}
+
+.kt-cl-shell .kt-bud-root button.bg-primary .material-symbols-outlined,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-register-budget"] .material-symbols-outlined {
+	color: #ffffff !important;
+}
+
+.kt-cl-shell .kt-bud-root button.bg-primary:hover,
+.kt-cl-shell .kt-bud-root button.bg-primary.hover\:bg-primary-container:hover,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-register-budget"]:hover {
+	background-color: #00346f !important;
+	color: #7b9ee0 !important;
+}
+
+.kt-cl-shell .kt-bud-root button.bg-primary:hover .material-symbols-outlined,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-register-budget"]:hover .material-symbols-outlined {
+	color: #7b9ee0 !important;
+}
+
+/* Bordered secondary CTA (View funding performance). */
+.kt-cl-shell .kt-bud-root button.border {
+	border: 1px solid var(--kt-bud-outline) !important;
+	background: var(--kt-bud-surface-lowest) !important;
+	color: var(--kt-bud-on-surface) !important;
+	border-radius: 0.5rem !important;
+	padding: 0.5rem 1rem !important;
+}
+
+.kt-cl-shell .kt-bud-root button.border:hover,
+.kt-cl-shell .kt-bud-root button.border.hover\:bg-surface-container-highest:hover {
+	background-color: #e2e2e8 !important;
+}
+
+.kt-cl-shell .kt-bud-root button.rounded-lg {
+	border-radius: 0.5rem !important;
+}
+
+/* Row action text buttons stay chromeless. */
+.kt-cl-shell .kt-bud-root td button.text-primary,
+.kt-cl-shell .kt-bud-root button.text-primary:not(.bg-primary):not(.border) {
+	background: transparent !important;
+	border: none !important;
+	box-shadow: none !important;
+	padding: 0 !important;
+	color: var(--kt-bud-primary) !important;
+	border-radius: 0 !important;
+}
+
+.kt-cl-shell .kt-bud-root td button.text-primary:hover {
+	color: var(--kt-bud-secondary) !important;
+}
+
+.kt-cl-shell .kt-bud-root select,
+.kt-cl-shell .kt-bud-root input[type="text"] {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	font: inherit;
+	color: inherit;
+	margin: 0;
+	outline: none;
+	border-width: 1px !important;
+	border-style: solid !important;
+	border-color: var(--kt-bud-outline-variant) !important;
+	background-color: var(--kt-bud-surface) !important;
+	border-radius: 0.5rem !important;
+}
+
+/* Tailwind Forms select chevron stand-in (Stitch CDN provides this; Desk does not). */
+.kt-cl-shell .kt-bud-root select {
+	background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23434750' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+	background-position: right 0.75rem center !important;
+	background-repeat: no-repeat !important;
+	background-size: 1.25rem 1.25rem !important;
+	padding-right: 2.5rem !important;
+	cursor: pointer !important;
+}
+
+.kt-cl-shell .kt-bud-root h1,
+.kt-cl-shell .kt-bud-root h3,
+.kt-cl-shell .kt-bud-root h4,
+.kt-cl-shell .kt-bud-root p {
+	margin: 0;
+}
+
+.kt-cl-shell .kt-bud-root table {
+	border-collapse: collapse;
+	width: 100%;
+}
+
+/* Typography pins — Desk Espresso / theme must not distort Stitch tokens. */
+.kt-cl-shell .kt-bud-root .font-headline-lg,
+.kt-cl-shell .kt-bud-root .font-headline-md,
+.kt-cl-shell .kt-bud-root .font-headline-sm {
+	font-family: Manrope, "Public Sans", system-ui, sans-serif !important;
+}
+
+.kt-cl-shell .kt-bud-root .font-body-lg,
+.kt-cl-shell .kt-bud-root .font-body-md,
+.kt-cl-shell .kt-bud-root .font-label-caps {
+	font-family: Inter, "Public Sans", system-ui, sans-serif !important;
+	font-weight: 400 !important;
+	letter-spacing: normal !important;
+}
+
+.kt-cl-shell .kt-bud-root .font-label-caps {
+	font-size: 0.75rem !important;
+	letter-spacing: 0.05em !important;
+	text-transform: uppercase !important;
+	font-weight: 700 !important;
+}
+
+.kt-cl-shell .kt-bud-root .text-headline-lg {
+	font-size: 28px !important;
+	line-height: 36px !important;
+	font-weight: 700 !important;
+	letter-spacing: -0.02em !important;
+}
+
+.kt-cl-shell .kt-bud-root .text-headline-lg-mobile {
+	font-size: 24px !important;
+	line-height: 32px !important;
+	font-weight: 700 !important;
+}
+
+@media (min-width: 768px) {
+	.kt-cl-shell .kt-bud-root .md\:text-headline-lg {
+		font-size: 28px !important;
+		line-height: 36px !important;
+		font-weight: 700 !important;
+		letter-spacing: -0.02em !important;
+	}
+}
+
+.kt-cl-shell .kt-bud-root .text-headline-md {
+	font-size: 22px !important;
+	line-height: 30px !important;
+	font-weight: 600 !important;
+}
+
+.kt-cl-shell .kt-bud-root .text-headline-sm {
+	font-size: 18px !important;
+	line-height: 24px !important;
+	font-weight: 600 !important;
+}
+
+.kt-cl-shell .kt-bud-root .text-body-lg {
+	font-size: 16px !important;
+	line-height: 24px !important;
+	font-weight: 400 !important;
+}
+
+.kt-cl-shell .kt-bud-root .text-body-md {
+	font-size: 14px !important;
+	line-height: 20px !important;
+	font-weight: 400 !important;
+}
+
+.kt-cl-shell .kt-bud-root .text-label-caps {
+	font-size: 0.75rem !important;
+	line-height: 16px !important;
+	letter-spacing: 0.05em !important;
+	text-transform: uppercase !important;
+	font-weight: 700 !important;
+}
+
+.kt-cl-shell .kt-bud-root .font-data-mono,
+.kt-cl-shell .kt-bud-root .text-data-mono {
+	font-family: "JetBrains Mono", ui-monospace, monospace !important;
+	font-size: 0.875rem !important;
+}
+
+.kt-cl-shell .kt-bud-root .material-symbols-outlined {
+	font-family: "Material Symbols Outlined", sans-serif !important;
+	font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24 !important;
+	display: inline-block !important;
+	vertical-align: middle !important;
+	line-height: 1 !important;
+}
+
+/* Shared layout pins for all Budget Stitch canvases (Desk has no Tailwind). */
+.kt-cl-shell .kt-bud-root .flex {
+	display: flex !important;
+}
+.kt-cl-shell .kt-bud-root .flex-col {
+	flex-direction: column !important;
+}
+.kt-cl-shell .kt-bud-root .flex-1 {
+	flex: 1 1 0% !important;
+}
+.kt-cl-shell .kt-bud-root .items-center {
+	align-items: center !important;
+}
+.kt-cl-shell .kt-bud-root .items-start {
+	align-items: flex-start !important;
+}
+.kt-cl-shell .kt-bud-root .items-end {
+	align-items: flex-end !important;
+}
+.kt-cl-shell .kt-bud-root .justify-between {
+	justify-content: space-between !important;
+}
+.kt-cl-shell .kt-bud-root .justify-end {
+	justify-content: flex-end !important;
+}
+.kt-cl-shell .kt-bud-root .justify-center {
+	justify-content: center !important;
+}
+.kt-cl-shell .kt-bud-root .w-full {
+	width: 100% !important;
+}
+.kt-cl-shell .kt-bud-root .shrink-0 {
+	flex-shrink: 0 !important;
+}
+.kt-cl-shell .kt-bud-root .gap-2 {
+	gap: 0.5rem !important;
+}
+.kt-cl-shell .kt-bud-root .gap-3 {
+	gap: 0.75rem !important;
+}
+.kt-cl-shell .kt-bud-root .gap-4 {
+	gap: 1rem !important;
+}
+.kt-cl-shell .kt-bud-root .gap-gutter {
+	gap: 12px !important;
+}
+.kt-cl-shell .kt-bud-root .gap-section-gap {
+	gap: 24px !important;
+}
+.kt-cl-shell .kt-bud-root .grid {
+	display: grid !important;
+}
+.kt-cl-shell .kt-bud-root .grid-cols-1 {
+	grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+}
+.kt-cl-shell .kt-bud-root .grid-cols-2 {
+	grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+.kt-cl-shell .kt-bud-root .hidden {
+	display: none !important;
+}
+
+/*
+ * Filter bar geometry lock.
+ * .w-full !important on the selects column used to crush flex-1 search to ~58px
+ * (looks like a Win98 icon box around the magnifier). Keep search wide at desktop.
+ */
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-pf-filters"] {
+	display: flex !important;
+	flex-direction: column !important;
+	align-items: stretch !important;
+	gap: 1rem !important;
+	width: 100% !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-pf-filters"] > .flex-1 {
+	min-width: 0 !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-pf-filters"] [data-kt-bud-filter="search"] {
+	width: 100% !important;
+	min-width: 12rem !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-pf-filters"] .relative > .material-symbols-outlined {
+	pointer-events: none !important;
+	border: none !important;
+	background: transparent !important;
+	box-shadow: none !important;
+	color: var(--kt-bud-on-surface-variant) !important;
+}
+
+@media (min-width: 768px) {
+	.kt-cl-shell .kt-bud-root [data-testid="kt-bud-pf-filters"] {
+		flex-direction: row !important;
+		align-items: flex-end !important;
+	}
+	.kt-cl-shell .kt-bud-root [data-testid="kt-bud-pf-filters"] > .flex-1 {
+		flex: 1 1 0% !important;
+		width: auto !important;
+		min-width: 16rem !important;
+	}
+	.kt-cl-shell .kt-bud-root [data-testid="kt-bud-pf-filters"] > .flex.flex-wrap {
+		width: auto !important;
+		flex: 0 0 auto !important;
+	}
+}
+
+/* Summary strip — 4 equal tiles at desktop. */
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-summary-strip"] {
+	display: grid !important;
+	grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	gap: 12px !important;
+	width: 100% !important;
+	margin-bottom: 0;
+}
+
+@media (min-width: 768px) {
+	.kt-cl-shell .kt-bud-root [data-testid="kt-bud-summary-strip"] {
+		grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+	}
+}
+
+/* Table: Stitch column widths; Budget title must not truncate (formal system). */
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-budgets-table"] {
+	table-layout: auto !important;
+	width: 100% !important;
+	min-width: 1100px !important;
+}
+
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-budgets-table"] th.w-80,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-budgets-table"] td:nth-child(1) {
+	width: 20rem !important;
+	min-width: 16rem !important;
+	max-width: none !important;
+}
+
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-budgets-table"] td:nth-child(1) .truncate {
+	overflow: visible !important;
+	text-overflow: clip !important;
+	white-space: normal !important;
+}
+
+.kt-cl-shell .kt-bud-root [data-kt-bud-ref] {
+	font-family: "JetBrains Mono", ui-monospace, monospace !important;
+}
+
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-budgets-table"] th:nth-child(8),
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-budgets-table"] td:nth-child(8) {
+	width: 7rem !important;
+	min-width: 7rem !important;
+}
+
+.kt-cl-shell .kt-bud-root [data-kt-bud-empty="1"].hidden,
+.kt-cl-shell .kt-bud-root [data-kt-bud-table-wrap="1"].hidden {
+	display: none !important;
+}
+
+body.kt-bud-surface.kt-bud-pf-active #kt-cl-page-header-host {
+	display: none !important;
+}
+
+body.kt-bud-surface.kt-bud-pf-active [data-testid="kt-cl-page-body"] {
+	max-width: none;
+}

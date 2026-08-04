@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Budget Lines - MOH Procurement Budget FY 2027/28</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#e8e7ed",
+                        "tertiary-fixed-dim": "#b7c8e2",
+                        "on-surface": "#1a1b20",
+                        "secondary-container": "#7bbeff",
+                        "surface-tint": "#395e9b",
+                        "surface-dim": "#dad9df",
+                        "surface-variant": "#e2e2e8",
+                        "background": "#f9f9fe",
+                        "tertiary-container": "#26364b",
+                        "surface-container-highest": "#e2e2e8",
+                        "surface-container": "#eeedf3",
+                        "on-error": "#ffffff",
+                        "inverse-on-surface": "#f1f0f6",
+                        "surface-bright": "#f9f9fe",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed": "#cfe5ff",
+                        "secondary-fixed-dim": "#99cbff",
+                        "on-primary-fixed-variant": "#1d4681",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#38485e",
+                        "on-surface-variant": "#434750",
+                        "on-tertiary": "#ffffff",
+                        "tertiary": "#26364b",
+                        "on-secondary-fixed-variant": "#004a78",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "inverse-surface": "#2f3035",
+                        "primary-fixed-dim": "#abc7ff",
+                        "on-secondary-container": "#004c7c",
+                        "on-background": "#1a1b20",
+                        "tertiary-fixed": "#d3e4ff",
+                        "surface": "#f9f9fe",
+                        "surface-container-low": "#f4f3f9",
+                        "status-reserved": "#F59E0B",
+                        "on-secondary-fixed": "#001d34",
+                        "primary-fixed": "#d7e2ff",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "error-container": "#ffdad6",
+                        "status-available": "#10B981",
+                        "primary-container": "#00346f",
+                        "on-primary-fixed": "#001b3f",
+                        "on-tertiary-container": "#8f9fb8",
+                        "on-primary-container": "#7b9ee0",
+                        "inverse-primary": "#abc7ff",
+                        "surface-container-lowest": "#ffffff",
+                        "status-exhausted": "#EF4444",
+                        "outline": "#737781",
+                        "secondary": "#01629d",
+                        "outline-variant": "#c3c6d1",
+                        "primary": "#001f48",
+                        "status-committed": "#6366F1"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "12px",
+                        "card-padding": "20px",
+                        "unit": "4px",
+                        "container-padding": "16px",
+                        "section-gap": "24px",
+                        "base-unit": "4px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "headline-lg": ["Manrope"],
+                        "headline-lg-mobile": ["Manrope"],
+                        "data-mono": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-sm": ["Manrope"],
+                        "headline-md": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "data-mono": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "headline-md": ["22px", { "lineHeight": "30px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=JetBrains+Mono:wght@500&amp;family=Manrope:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for table container */
+        .table-scroll::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+        .table-scroll::-webkit-scrollbar-track {
+            background: #f9f9fe;
+        }
+        .table-scroll::-webkit-scrollbar-thumb {
+            background: #c3c6d1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md min-h-screen flex flex-col antialiased">
+<!-- TopAppBar -->
+<header class="bg-surface-container-lowest dark:bg-inverse-surface w-full h-16 border-b border-outline-variant dark:border-outline sticky top-0 z-50 flex items-center justify-between px-gutter">
+<div class="flex items-center gap-4">
+<span aria-label="Menu" class="material-symbols-outlined text-primary cursor-pointer lg:hidden">menu</span>
+<h1 class="font-headline-lg text-headline-lg font-bold text-primary dark:text-inverse-primary hidden sm:block">GovProcure Suite</h1>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary dark:text-inverse-primary sm:hidden">GovProcure</h1>
+</div>
+<div class="flex-1 max-w-md mx-4 hidden md:block">
+<!-- Search placeholder if needed based on "search_bar": "on_left" -->
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary dark:text-inverse-primary hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors p-2 rounded-full cursor-pointer active:opacity-80" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-primary dark:text-inverse-primary hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors p-2 rounded-full cursor-pointer active:opacity-80 hidden sm:block" data-icon="help_outline">help_outline</span>
+<span class="material-symbols-outlined text-primary dark:text-inverse-primary hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors p-2 rounded-full cursor-pointer active:opacity-80" data-icon="settings">settings</span>
+<div class="w-8 h-8 rounded-full bg-surface-container overflow-hidden border border-outline-variant ml-2 flex-shrink-0 cursor-pointer">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a corporate government user in a modern office environment, clean bright lighting, facing forward slightly smiling. Deep blue background. Corporate aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAruQPqGrQqe1RM9MDa3hXil2A8q2rAnYIsGwsU8U1ZYi0HWGRduAO-k0wVyoO7trLAZ-A4GEuyZa2RzOXAanEEvuaEnRZKr9NNG__XgmgP89CSwd5ny8GGqTYmXE42cW7wZyZ3cLokxWNPez7NDxOttbOV6bUtwiPEhqce0Cu1xkupYWuAwqZZm9RXgrAXlnroB3sGEkpxpdqO6DaDu7yDw_81V8ETGlqcs7xv8F9Xzr7JsXTT38UBRA"/>
+</div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar -->
+<nav class="bg-surface-container dark:bg-surface-container-lowest h-[calc(100vh-64px)] w-64 flex flex-col fixed left-0 top-16 border-r border-outline-variant dark:border-outline z-40 hidden lg:flex overflow-y-auto">
+<div class="p-6 border-b border-outline-variant">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded-lg bg-surface-container-lowest flex items-center justify-center border border-outline-variant overflow-hidden shrink-0">
+<img alt="Agency Logo" class="w-full h-full object-cover" data-alt="Minimalist abstract vector logo representing a government institution. High contrast deep blue and white, simple geometric shapes forming a crest or shield pattern." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqEiWhap9FV4ID9oypcn5b-XY4mp2uTM7vGXNGm4nPDL299g9d7wnruQzKi4Z2amCM7xUSZRv5W5KQBIWr3WgqxW-3uRXcXM_oER2FK12cuVslzB8LCm3dcELVMhDfxEc9eB9qO1uNCaZyKacchxZ2tW61XREn11Iu9Tg2VGX1BzkjyeB5EZcIEZrr3N0c5pT5o4SgywkuJR_GVfDeFDNxUV0bbZLvu2Q6PvDcwHidm63CrL-CyclN8w"/>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-inverse-primary leading-tight">Procurement Hub</h2>
+<p class="font-body-md text-body-md text-on-surface-variant text-xs mt-0.5">Strategic Management</p>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary py-2 px-4 rounded-lg font-body-md text-body-md font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'wght' 600;">add</span>
+                    New Requisition
+                </button>
+</div>
+<div class="flex-1 py-4 flex flex-col gap-1 px-3">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-primary dark:text-inverse-primary font-bold bg-primary-fixed-dim/10 border-r-4 border-primary dark:border-inverse-primary scale-100 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="strategy">strategy</span>
+<span class="font-label-caps text-label-caps uppercase">Planning</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-all scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+<span class="font-label-caps text-label-caps uppercase">Requisition</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-all scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="gavel">gavel</span>
+<span class="font-label-caps text-label-caps uppercase">Tendering</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-all scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-label-caps text-label-caps uppercase">Evaluation</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-all scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="verified">verified</span>
+<span class="font-label-caps text-label-caps uppercase">Award</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-all scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="contract">contract</span>
+<span class="font-label-caps text-label-caps uppercase">Contract Management</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-all scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-label-caps text-label-caps uppercase">Closeout</span>
+</a>
+</div>
+<div class="mt-auto p-4 border-t border-outline-variant flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="contact_support">contact_support</span>
+<span class="font-label-caps text-label-caps uppercase">Support</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-label-caps text-label-caps uppercase">Sign Out</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 lg:ml-64 bg-background min-h-[calc(100vh-64px)] overflow-y-auto">
+<!-- Workspace Header -->
+<div class="bg-surface-container-lowest border-b border-outline-variant pt-section-gap px-section-gap">
+<div class="max-w-7xl mx-auto">
+<!-- Breadcrumbs & Status -->
+<div class="flex items-center justify-between mb-4 flex-wrap gap-4">
+<div class="flex items-center gap-2 text-sm text-on-surface-variant">
+<a class="hover:text-primary transition-colors" href="#">Planning</a>
+<span class="material-symbols-outlined text-xs">chevron_right</span>
+<a class="hover:text-primary transition-colors" href="#">Budgets</a>
+<span class="material-symbols-outlined text-xs">chevron_right</span>
+<span class="font-medium text-on-surface">MOH-BUD-0001</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="px-2.5 py-1 rounded-full bg-status-available/10 text-status-available text-xs font-bold uppercase tracking-wider flex items-center gap-1 border border-status-available/20">
+<div class="w-1.5 h-1.5 rounded-full bg-status-available"></div>
+                                Active
+                            </span>
+</div>
+</div>
+<!-- Title & Actions -->
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
+<div>
+<h2 class="font-headline-lg text-headline-lg font-bold text-primary mb-1">Ministry of Health Procurement Budget FY 2027/28</h2>
+<p class="font-data-mono text-data-mono text-on-surface-variant">Ref: MOH-BUD-0001</p>
+</div>
+<div class="flex shrink-0 gap-3">
+<button class="px-4 py-2 rounded-lg border border-outline text-primary font-medium hover:bg-surface-container-low transition-colors text-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">edit_document</span>
+                                Request revision
+                            </button>
+<button class="px-4 py-2 rounded-lg bg-primary text-on-primary font-medium hover:bg-primary/90 transition-colors text-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Tabs -->
+<div class="flex overflow-x-auto no-scrollbar border-b border-outline-variant/50 -mx-section-gap px-section-gap md:mx-0 md:px-0">
+<a class="px-4 py-3 text-sm font-medium text-on-surface-variant hover:text-primary whitespace-nowrap border-b-2 border-transparent transition-colors" href="#">Overview</a>
+<a class="px-4 py-3 text-sm font-bold text-primary whitespace-nowrap border-b-2 border-primary" href="#">Budget Lines</a>
+<a class="px-4 py-3 text-sm font-medium text-on-surface-variant hover:text-primary whitespace-nowrap border-b-2 border-transparent transition-colors" href="#">Funding Activity</a>
+<a class="px-4 py-3 text-sm font-medium text-on-surface-variant hover:text-primary whitespace-nowrap border-b-2 border-transparent transition-colors" href="#">Revisions</a>
+<a class="px-4 py-3 text-sm font-medium text-on-surface-variant hover:text-primary whitespace-nowrap border-b-2 border-transparent transition-colors" href="#">Downstream Usage</a>
+<a class="px-4 py-3 text-sm font-medium text-on-surface-variant hover:text-primary whitespace-nowrap border-b-2 border-transparent transition-colors" href="#">Review</a>
+<a class="px-4 py-3 text-sm font-medium text-on-surface-variant hover:text-primary whitespace-nowrap border-b-2 border-transparent transition-colors" href="#">Audit</a>
+</div>
+</div>
+</div>
+<!-- Tab Content -->
+<div class="p-section-gap max-w-[1400px] mx-auto">
+<!-- Toolbar -->
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+<div class="relative w-full sm:w-72">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full pl-10 pr-4 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm font-body-md placeholder:text-outline" placeholder="Search budget lines..." type="text"/>
+</div>
+<div class="flex gap-2 w-full sm:w-auto">
+<button class="px-3 py-1.5 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-low transition-colors text-sm flex items-center gap-2 flex-1 sm:flex-none justify-center">
+<span class="material-symbols-outlined text-[18px]">filter_list</span>
+                            Filter
+                        </button>
+<button class="px-3 py-1.5 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-low transition-colors text-sm flex items-center gap-2 flex-1 sm:flex-none justify-center">
+<span class="material-symbols-outlined text-[18px]">view_column</span>
+                            Columns
+                        </button>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container text-primary font-medium hover:bg-surface-container-high transition-colors text-sm flex items-center gap-2 shrink-0">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                            New Line
+                        </button>
+</div>
+</div>
+<!-- Table Container -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+<div class="overflow-x-auto table-scroll">
+<table class="w-full text-left border-collapse min-w-[1200px]">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant text-xs text-on-surface-variant uppercase tracking-wider font-semibold font-label-caps">
+<th class="px-4 py-3 w-72">Budget line &amp; Source</th>
+<th class="px-4 py-3">Strategic Target</th>
+<th class="px-4 py-3 text-right">Approved</th>
+<th class="px-4 py-3 text-right">Reserved</th>
+<th class="px-4 py-3 text-right">Committed</th>
+<th class="px-4 py-3 text-right">Available</th>
+<th class="px-4 py-3 text-right">Actual</th>
+<th class="px-4 py-3 w-48">Status / Notes</th>
+<th class="px-4 py-3 w-24 text-center">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/60 font-body-md text-sm">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors group">
+<td class="px-4 py-4 align-top">
+<div class="font-medium text-primary mb-1 leading-snug">Digital clinical systems infrastructure</div>
+<div class="font-data-mono text-xs text-outline mb-2">MOH-LINE-01</div>
+<span class="inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-surface-container text-on-surface-variant border border-outline-variant/30">Exchequer</span>
+</td>
+<td class="px-4 py-4 align-top">
+<div class="text-on-surface mb-1">Digital Health Transformation</div>
+<div class="font-data-mono text-xs text-outline">MOH-ST-04</div>
+</td>
+<td class="px-4 py-4 align-top text-right font-data-mono font-medium text-on-surface">
+                                        KES 300,000,000
+                                    </td>
+<td class="px-4 py-4 align-top text-right font-data-mono text-status-reserved">
+                                        KES 80,000,000
+                                    </td>
+<td class="px-4 py-4 align-top text-right font-data-mono text-status-committed">
+                                        KES 150,000,000
+                                    </td>
+<td class="px-4 py-4 align-top text-right font-data-mono text-status-available font-semibold">
+                                        KES 70,000,000
+                                    </td>
+<td class="px-4 py-4 align-top text-right">
+<div class="font-data-mono text-on-surface mb-1">KES 180,000,000</div>
+<div class="text-[11px] text-error font-medium flex items-center justify-end gap-1">
+<span class="material-symbols-outlined text-[12px]">warning</span> Stale
+                                        </div>
+</td>
+<td class="px-4 py-4 align-top">
+<div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-error/10 text-error text-xs font-semibold mb-2">
+<div class="w-1.5 h-1.5 rounded-full bg-error"></div>
+                                            Needs attention
+                                        </div>
+<div class="text-[11px] text-on-surface-variant leading-tight">
+                                            Actuals last synchronised 3 days ago
+                                        </div>
+</td>
+<td class="px-4 py-4 align-top text-center">
+<button class="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors" title="Review line">
+<span class="material-symbols-outlined text-[20px]">manage_search</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors group">
+<td class="px-4 py-4 align-top">
+<div class="font-medium text-primary mb-1 leading-snug">Digital health technical capability</div>
+<div class="font-data-mono text-xs text-outline mb-2">MOH-LINE-02</div>
+<span class="inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-tertiary-container/10 text-tertiary border border-tertiary-container/20">External Grants</span>
+</td>
+<td class="px-4 py-4 align-top">
+<div class="text-on-surface mb-1">Digital Health Transformation</div>
+<div class="font-data-mono text-xs text-outline">MOH-ST-04</div>
+</td>
+<td class="px-4 py-4 align-top text-right font-data-mono font-medium text-on-surface">
+                                        KES 260,000,000
+                                    </td>
+<td class="px-4 py-4 align-top text-right font-data-mono text-status-reserved">
+                                        KES 65,000,000
+                                    </td>
+<td class="px-4 py-4 align-top text-right font-data-mono text-status-committed">
+                                        KES 160,000,000
+                                    </td>
+<td class="px-4 py-4 align-top text-right font-data-mono text-status-available font-semibold">
+                                        KES 35,000,000
+                                    </td>
+<td class="px-4 py-4 align-top text-right">
+<div class="font-data-mono text-outline italic">Unknown</div>
+</td>
+<td class="px-4 py-4 align-top">
+<div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-status-available/10 text-status-available text-xs font-semibold mb-2">
+<div class="w-1.5 h-1.5 rounded-full bg-status-available"></div>
+                                            Complete
+                                        </div>
+<div class="text-[11px] text-on-surface-variant leading-tight">
+                                            No commitments or expenditure recorded
+                                        </div>
+</td>
+<td class="px-4 py-4 align-top text-center">
+<button class="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors" title="View line">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Footer / Pagination -->
+<div class="border-t border-outline-variant p-4 flex items-center justify-between text-sm text-on-surface-variant bg-surface-container-lowest">
+<div>Showing 1-2 of 2 lines</div>
+<div class="flex gap-1">
+<button class="p-1 rounded hover:bg-surface-container disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<button class="p-1 rounded hover:bg-surface-container disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

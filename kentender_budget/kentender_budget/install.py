@@ -1,20 +1,35 @@
-# Copyright (c) 2026, Midas and contributors
-# License: MIT. See LICENSE
+# Copyright (c) 2026, KenTender and contributors
+# For license information, please see license.txt
+
+"""Install hooks — Budget Management workspace + Desk pages after migrate."""
+
+from __future__ import annotations
 
 import os
 
 import frappe
 from frappe.modules.import_file import import_file_by_path
 
+_PAGES = (
+	"budget_funding",
+	"budget_register",
+	"budget_funding_performance",
+	"budget_overview",
+)
+
+
+def _sync_pages() -> None:
+	base = os.path.join(frappe.get_app_path("kentender_budget"), "kentender_budget", "page")
+	for folder in _PAGES:
+		path = os.path.join(base, folder, f"{folder}.json")
+		if os.path.exists(path):
+			import_file_by_path(path, force=True)
+
 
 def after_migrate():
-	"""Sync Budget Management Desk assets from module JSON (workspace, sidebar, desktop icon)."""
-	_sync_budget_management_workspace()
-	_sync_budget_workspace_sidebar()
-	_sync_budget_desktop_icon()
+	"""Ensure Budget Desk pages + Procurement rail Workspace resolve after migrate."""
+	_sync_pages()
 
-
-def _sync_budget_management_workspace():
 	path = os.path.join(
 		frappe.get_app_path("kentender_budget"),
 		"kentender_budget",
@@ -24,31 +39,34 @@ def _sync_budget_management_workspace():
 	)
 	if os.path.exists(path):
 		import_file_by_path(path, force=True)
-	# G0-016: harmonised label; `title` must stay "Budget Management" for Desk routing (slug).
-	if frappe.db.exists("Workspace", "Budget Management"):
-		frappe.db.set_value(
-			"Workspace",
-			"Budget Management",
-			{"label": "Budget & Funding", "title": "Budget Management"},
-			update_modified=False,
+
+	title = "Budget Management"
+	if not frappe.db.exists("Workspace", title):
+		doc = frappe.get_doc(
+			{
+				"doctype": "Workspace",
+				"label": "Budget & Funding",
+				"title": title,
+				"module": "Kentender Budget",
+				"app": "kentender_budget",
+				"type": "Workspace",
+				"content": "[]",
+				"icon": "money-bill-wave",
+				"public": 0,
+				"is_hidden": 0,
+			}
 		)
+		doc.insert(ignore_permissions=True)
 
-
-def _sync_budget_workspace_sidebar():
-	path = os.path.join(
-		frappe.get_app_path("kentender_budget"),
-		"workspace_sidebar",
-		"budget.json",
+	frappe.db.set_value(
+		"Workspace",
+		title,
+		{
+			"public": 1,
+			"is_hidden": 0,
+			"module": "Kentender Budget",
+			"label": "Budget & Funding",
+			"title": title,
+		},
+		update_modified=False,
 	)
-	if os.path.exists(path):
-		import_file_by_path(path, force=True)
-
-
-def _sync_budget_desktop_icon():
-	path = os.path.join(
-		frappe.get_app_path("kentender_budget"),
-		"desktop_icon",
-		"budget.json",
-	)
-	if os.path.exists(path):
-		import_file_by_path(path, force=True)

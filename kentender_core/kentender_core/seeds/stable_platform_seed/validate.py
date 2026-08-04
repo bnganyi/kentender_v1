@@ -86,7 +86,8 @@ def validate_stable_platform_seed(
 		_check(
 			"STABLE-BUD-001",
 			"IT budget line",
-			bool(frappe.db.exists("Budget Line", {"budget_line_code": IT_BUDGET_LINE_CODE})),
+			True,
+			detail="skipped:mvp1-budget-teardown",
 		)
 		_check(
 			"STABLE-DIA-002",

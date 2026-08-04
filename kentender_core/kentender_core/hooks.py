@@ -44,6 +44,10 @@ app_include_css = [
 	f"/assets/kentender_core/css/civic_ledger.css?v={_asset_version('public/css/civic_ledger.css')}",
 	f"/assets/kentender_core/css/kt_cl_code_layout.css?v={_asset_version('public/css/kt_cl_code_layout.css')}",
 	f"/assets/kentender_core/css/kt_native_sidebar_civic.css?v={_asset_version('public/css/kt_native_sidebar_civic.css')}",
+	# Stitch Desk chrome baseline — Desk bleed defeat (Win98 buttons, select chevron, Espresso 400).
+	f"/assets/kentender_core/css/kt_stitch_desk_chrome.css?v={_asset_version('public/css/kt_stitch_desk_chrome.css')}",
+	# Shared Stitch list-table footer (Showing X of Y + Rows per page + pager).
+	f"/assets/kentender_core/css/kt_stitch_table_footer.css?v={_asset_version('public/css/kt_stitch_table_footer.css')}",
 ]
 app_include_js = [
 	f"/assets/kentender_core/js/kt_desk_document_title.js?v={_asset_version('public/js/kt_desk_document_title.js')}",
@@ -57,6 +61,8 @@ app_include_js = [
 	f"/assets/kentender_core/js/kt_cl_shell.js?v={_asset_version('public/js/kt_cl_shell.js')}",
 	f"/assets/kentender_core/js/kt_cl_surface_registry.js?v={_asset_version('public/js/kt_cl_surface_registry.js')}",
 	f"/assets/kentender_core/js/kt_cl_shell_router.js?v={_asset_version('public/js/kt_cl_shell_router.js')}",
+	f"/assets/kentender_core/js/kt_stitch_table_footer.js?v={_asset_version('public/js/kt_stitch_table_footer.js')}",
+	f"/assets/kentender_core/js/kt_stitch_table_pager.js?v={_asset_version('public/js/kt_stitch_table_pager.js')}",
 ]
 
 # include js, css files in header of web template

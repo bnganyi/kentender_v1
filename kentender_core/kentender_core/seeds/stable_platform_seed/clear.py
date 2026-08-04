@@ -89,14 +89,8 @@ def _clear_it_demand(*, deleted: dict[str, int]) -> None:
 
 
 def _clear_it_budget_line(*, deleted: dict[str, int]) -> None:
-	line_name = frappe.db.get_value("Budget Line", {"budget_line_code": IT_BUDGET_LINE_CODE}, "name")
-	if not line_name:
-		return
-	frappe.flags.budget_line_force_delete = True
-	try:
-		_delete_doc("Budget Line", line_name, deleted)
-	finally:
-		frappe.flags.budget_line_force_delete = False
+	"""No-op: legacy Budget DocTypes removed in MVP-1 preparatory teardown."""
+	deleted["Budget (teardown)"] = deleted.get("Budget (teardown)", 0)
 
 
 def _clear_it_strategy(*, deleted: dict[str, int]) -> None:

@@ -55,7 +55,7 @@
    "link_type": "Workspace",
    "show_arrow": 0,
    "type": "Link",
-   "url": "/desk/budget-hub"
+   "url": "/desk/budget-management"
   },
   {
    "child": 0,
@@ -233,7 +233,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-08-03 14:16:22.275282",
+ "modified": "2026-08-04 20:30:00.656548",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "Procurement",

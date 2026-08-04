@@ -175,9 +175,7 @@ def _compatibility_context(inclusion_code: str) -> dict[str, Any] | None:
 	usable_template = template if _template_usable(template) else None
 	recommended_method = (usable_template.get("default_method") or "").strip() if usable_template else ""
 	procurement_cycle_days = frappe.utils.cint((usable_template or {}).get("procurement_cycle_days")) or None
-	budget_line_active = None
-	if demand.get("budget_line"):
-		budget_line_active = frappe.db.get_value("Budget Line", demand["budget_line"], "is_active")
+	# MVP-1 Budget teardown: Budget Line DocType gone; linked Data value is enough.
 	return {
 		"inclusion_code": inclusion_code,
 		"demand_code": demand_code,
@@ -188,7 +186,7 @@ def _compatibility_context(inclusion_code: str) -> dict[str, Any] | None:
 		"recommended_method": recommended_method,
 		"required_by_date": demand.get("required_by_date"),
 		"procurement_cycle_days": procurement_cycle_days,
-		"funding_ok": bool(demand.get("budget_line")) and budget_line_active in (1, None) and budget_line_active != 0,
+		"funding_ok": bool(demand.get("budget_line")),
 	}
 
 
@@ -303,7 +301,10 @@ def _line_preview(inclusion: dict[str, Any], line_override: dict[str, Any] | Non
 def _budget_line_business_code_safe(budget_line_name: str | None) -> str:
 	if not budget_line_name:
 		return ""
-	return (frappe.db.get_value("Budget Line", budget_line_name, "budget_line_code") or "").strip()
+	# MVP-1 Budget teardown: field is free-text / code; DocType may be absent.
+	if not frappe.db.exists("DocType", "Budget Line"):
+		return (budget_line_name or "").strip()
+	return (frappe.db.get_value("Budget Line", budget_line_name, "budget_line_code") or budget_line_name or "").strip()
 
 
 def _funding_preview(inclusions: list[dict[str, Any]]) -> dict[str, Any]:
@@ -344,14 +345,22 @@ def _funding_preview(inclusions: list[dict[str, Any]]) -> dict[str, Any]:
 			)
 		if budget_line_name not in seen_budget_lines:
 			seen_budget_lines.add(budget_line_name)
-			reserved_row = frappe.db.get_value(
-				"Budget Line", budget_line_name, ("amount_reserved", "budget_line_name"), as_dict=True
-			) or {}
+			reserved_row: dict[str, Any] = {}
+			if frappe.db.exists("DocType", "Budget Line"):
+				reserved_row = (
+					frappe.db.get_value(
+						"Budget Line",
+						budget_line_name,
+						("amount_reserved", "budget_line_name"),
+						as_dict=True,
+					)
+					or {}
+				)
 			reserved_total += flt(reserved_row.get("amount_reserved"))
 			budget_lines.append(
 				{
 					"budget_line_code": _budget_line_business_code_safe(budget_line_name),
-					"budget_line_name": (reserved_row.get("budget_line_name") or "").strip(),
+					"budget_line_name": (reserved_row.get("budget_line_name") or budget_line_name or "").strip(),
 					"amount_reserved": flt(reserved_row.get("amount_reserved")),
 					"amount_available": flt(data.get("amount_available")),
 				}
@@ -360,6 +369,10 @@ def _funding_preview(inclusions: list[dict[str, Any]]) -> dict[str, Any]:
 	funding_difference = reserved_total - package_value
 	if any_missing_budget_line:
 		funding_status = _("Blocked")
+	elif not frappe.db.exists("DocType", "Budget Line"):
+		# MVP-1 Budget teardown: no live balances; linked Data value is enough.
+		funding_status = _("Reserved")
+		funding_difference = 0.0
 	elif funding_difference < 0:
 		funding_status = _("Insufficient")
 	else:

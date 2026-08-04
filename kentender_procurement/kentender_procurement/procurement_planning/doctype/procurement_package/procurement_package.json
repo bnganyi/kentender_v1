@@ -407,9 +407,8 @@
   },
   {
    "fieldname": "budget_line_id",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "label": "Budget Line",
-   "options": "Budget Line",
    "search_index": 1
   },
   {

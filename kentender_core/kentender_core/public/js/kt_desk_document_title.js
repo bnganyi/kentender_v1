@@ -14,7 +14,7 @@
 		"demand-workbench": "Demand Workbench | KenTender DIA",
 		"create-demand": "KenTender DIA - New Demand Intake",
 		"planning-hub": "KenTender - Planning Hub",
-		"budget-hub": "KenTender | Budget Hub",
+		"budget-management": "KenTender | Budget & Funding",
 		"tender-management-v2": "KenTender - Tender Management",
 		"coming-soon": "KenTender - Coming Soon",
 		"std-library": "KenTender - STD Library",

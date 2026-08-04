@@ -70,13 +70,10 @@ def seed_moh_downstream_usage_refs(
 			linked["demand"] = demand_name
 			break
 
-	budget_name = frappe.db.get_value(
-		"Budget Line", {"budget_line_code": SEED_BUDGET_LINE_CODE}, "name"
-	)
-	if budget_name and _link_consumer("Budget Line", budget_name, target_name):
-		linked["budget_line"] = budget_name
+	# MVP-1 Budget teardown: Budget Line DocType removed; Demand link is enough.
+	_ = SEED_BUDGET_LINE_CODE
 
 	return {
-		"ok": bool(linked["demand"] or linked["budget_line"]),
+		"ok": bool(linked["demand"]),
 		"linked": linked,
 	}

@@ -109,6 +109,9 @@ def _delete_package_cascade(package_code: str) -> None:
 
 
 def _purge_budgets(*, dry_run: bool) -> list[str]:
+	# MVP-1 Budget teardown: Budget DocType removed.
+	if not _doctype_exists("Budget"):
+		return []
 	removed: list[str] = []
 	for row in frappe.get_all("Budget", fields=["name", "budget_name"]):
 		if (row.get("budget_name") or "").strip() in _KEEP_BUDGET_NAMES:
@@ -130,6 +133,9 @@ def _purge_budgets(*, dry_run: bool) -> list[str]:
 
 
 def _purge_budget_lines(*, dry_run: bool) -> list[str]:
+	# MVP-1 Budget teardown: Budget Line DocType removed.
+	if not _doctype_exists("Budget Line"):
+		return []
 	removed: list[str] = []
 	for row in frappe.get_all("Budget Line", fields=["name", "budget_line_code"]):
 		if (row.get("budget_line_code") or "").strip() in _KEEP_BUDGET_LINE_CODES:

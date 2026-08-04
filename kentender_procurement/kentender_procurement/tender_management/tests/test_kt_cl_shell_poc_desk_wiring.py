@@ -51,7 +51,8 @@ class TestKtClShellPocDeskWiring(UnitTestCase):
 		source = open(path, encoding="utf-8").read()
 		expected = (
 			('Strategy Alignment', '["strategy-management"]'),
-			('Budget & Funding', '["budget-hub"]'),
+			# MVP-1 Budget teardown: hub page removed; rail uses Workspace placeholder.
+			('Budget & Funding', '["Workspaces", "Budget Management"]'),
 			('Demand Intake & Approval', '["demand-hub"]'),
 		)
 		for label, route in expected:

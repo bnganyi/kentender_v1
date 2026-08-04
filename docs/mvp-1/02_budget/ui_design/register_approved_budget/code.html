@@ -1,0 +1,223 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Register approved budget - KenTender</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#99cbff",
+                        "surface-container-high": "#e8e7ed",
+                        "surface-container": "#eceef0",
+                        "status-committed": "#6366F1",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#26364b",
+                        "status-reserved": "#F59E0B",
+                        "on-tertiary-fixed-variant": "#38485e",
+                        "surface-tint": "#395e9b",
+                        "surface-container-low": "#f4f3f9",
+                        "inverse-surface": "#2f3035",
+                        "inverse-primary": "#abc7ff",
+                        "on-background": "#1a1b20",
+                        "on-primary-container": "#7b9ee0",
+                        "on-surface": "#1a1b20",
+                        "on-secondary-fixed-variant": "#004a78",
+                        "error": "#ba1a1a",
+                        "primary-container": "#00346f",
+                        "surface-bright": "#f9f9fe",
+                        "outline": "#737781",
+                        "background": "#f9f9fe",
+                        "status-exhausted": "#EF4444",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-container": "#004c7c",
+                        "outline-variant": "#c3c6d1",
+                        "surface-variant": "#e2e2e8",
+                        "primary": "#001f48",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed": "#d3e4ff",
+                        "tertiary-container": "#26364b",
+                        "status-available": "#10B981",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-highest": "#e2e2e8",
+                        "surface-dim": "#dad9df",
+                        "primary-fixed-dim": "#abc7ff",
+                        "on-tertiary-container": "#8f9fb8",
+                        "inverse-on-surface": "#f1f0f6",
+                        "on-surface-variant": "#434750",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed-variant": "#1d4681",
+                        "surface": "#f9f9fe",
+                        "tertiary-fixed-dim": "#b7c8e2",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "secondary": "#01629d",
+                        "on-secondary-fixed": "#001d34",
+                        "on-primary-fixed": "#001b3f",
+                        "primary-fixed": "#d7e2ff",
+                        "secondary-fixed": "#cfe5ff",
+                        "secondary-container": "#7bbeff",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "border-subtle": "#E2E8F0",
+                        "data-block-bg": "#FFFFFF"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "12px",
+                        "unit": "4px",
+                        "base-unit": "4px",
+                        "card-padding": "20px",
+                        "section-gap": "24px",
+                        "container-padding": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["Manrope"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg-mobile": ["Manrope"],
+                        "data-mono": ["JetBrains Mono"],
+                        "label-caps": ["Inter"],
+                        "headline-md": ["Manrope"],
+                        "headline-lg": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "data-mono": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "headline-md": ["22px", { "lineHeight": "30px", "fontWeight": "600" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9f9fe; /* surface */
+            color: #1a1b20; /* on-surface */
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased flex flex-col min-h-screen">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-container-padding h-16 bg-surface-container-lowest border-b border-outline-variant flat no shadows">
+<div class="flex items-center gap-4">
+<div class="font-headline-lg text-headline-lg text-primary tracking-tight font-bold">KenTender</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary cursor-pointer hover:bg-surface-container p-2 rounded-full transition-colors" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-primary cursor-pointer hover:bg-surface-container p-2 rounded-full transition-colors" data-icon="settings">settings</span>
+<div class="w-8 h-8 rounded-full bg-surface-container overflow-hidden border border-border-subtle cursor-pointer hover:bg-surface-container transition-colors">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a government official in modern office lighting, corporate aesthetic, subtle neutral background, highly detailed." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOnecQDiTEd1mcz6nEzhcoELdnTEzxeEYws6ckYOYVcDhlRLNd8tGLj_mh5890sOAGYyF1O2ICLMZ-FPpLDQE6a-fBVWuAfLYHfGuikc62glYC12isL3QC41i-oSlkf5_xGYkSce6_q2LnF0XXbemjeFNWR4vKlRY6w0EmcLBpD7ujTY1Gr0z5HMUEOfTPVxGupl3XUAelKNNamyVjGeZTgkoGEv0cIr7uIpjzvAlQ8Yd3SReXH3gJmg">
+</div>
+</div>
+</header>
+<!-- Side Navigation Bar - Hidden as this is a focused task -->
+<!-- Main Content Canvas -->
+<main class="flex-1 mt-16 flex flex-col items-center py-section-gap px-container-padding w-full max-w-4xl mx-auto">
+<!-- Header -->
+<div class="w-full mb-section-gap">
+<h1 class="font-headline-lg text-headline-lg text-primary mb-2">Register approved budget</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Register an approved financial baseline for procurement use in KenTender.</p>
+</div>
+<!-- Form Container -->
+<div class="w-full bg-data-block-bg rounded-lg border border-border-subtle p-card-padding shadow-sm flex flex-col gap-section-gap">
+<!-- Section 1: Budget Identity -->
+<section class="flex flex-col gap-4">
+<h2 class="font-headline-sm text-headline-sm text-on-surface border-b border-border-subtle pb-2">Budget identity</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Procuring Entity (read-only) -->
+<div class="flex flex-col gap-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase">Procuring Entity</label>
+<input class="w-full bg-surface-container-low border-outline-variant text-on-surface-variant font-body-md text-body-md rounded-lg p-2 cursor-not-allowed" disabled="" type="text" value="Ministry of Health">
+</div>
+<!-- Fiscal period -->
+<div class="flex flex-col gap-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase">Fiscal period</label>
+<select class="w-full border-outline-variant text-on-surface font-body-md text-body-md rounded-lg p-2 focus:border-primary focus:ring-1 focus:ring-primary">
+<option>FY 2028/29</option>
+<option>FY 2027/28</option>
+</select>
+</div>
+<!-- Budget title -->
+<div class="flex flex-col gap-1 md:col-span-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase">Budget title</label>
+<input class="w-full border-outline-variant text-on-surface font-body-md text-body-md rounded-lg p-2 focus:border-primary focus:ring-1 focus:ring-primary" type="text" value="Ministry of Health Procurement Budget FY 2028/29">
+</div>
+<!-- Currency -->
+<div class="flex flex-col gap-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase">Currency</label>
+<select class="w-full border-outline-variant text-on-surface font-body-md text-body-md rounded-lg p-2 focus:border-primary focus:ring-1 focus:ring-primary">
+<option>KES</option>
+<option>USD</option>
+</select>
+</div>
+<!-- Budget owner -->
+<div class="flex flex-col gap-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase">Budget owner</label>
+<input class="w-full border-outline-variant text-on-surface font-body-md text-body-md rounded-lg p-2 focus:border-primary focus:ring-1 focus:ring-primary" type="text" value="Director, Finance and Accounts">
+</div>
+</div>
+</section>
+<!-- Section 2: Approval details -->
+<section class="flex flex-col gap-4">
+<h2 class="font-headline-sm text-headline-sm text-on-surface border-b border-border-subtle pb-2">Approval details</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- External approval reference -->
+<div class="flex flex-col gap-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase">External approval reference</label>
+<input class="w-full border-outline-variant text-on-surface font-body-md text-body-md rounded-lg p-2 focus:border-primary focus:ring-1 focus:ring-primary" type="text" value="MOH-FIN-BUD-2028-01">
+</div>
+<!-- Approval date -->
+<div class="flex flex-col gap-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase">Approval date</label>
+<div class="relative">
+<input class="w-full border-outline-variant text-on-surface font-body-md text-body-md rounded-lg p-2 pl-10 focus:border-primary focus:ring-1 focus:ring-primary" type="text" value="15 June 2028">
+<span class="material-symbols-outlined absolute left-3 top-2 text-on-surface-variant" data-icon="calendar_today">calendar_today</span>
+</div>
+</div>
+<!-- Approved total -->
+<div class="flex flex-col gap-1 md:col-span-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase">Approved total</label>
+<div class="relative">
+<span class="absolute left-3 top-3 font-data-mono text-data-mono text-on-surface-variant">KES</span>
+<input class="w-full border-outline-variant text-on-surface font-data-mono text-data-mono text-lg rounded-lg p-3 pl-14 focus:border-primary focus:ring-1 focus:ring-primary font-bold bg-surface-bright" type="number" value="600,000,000">
+</div>
+</div>
+<!-- Approval evidence -->
+<div class="flex flex-col gap-1 md:col-span-2"><label class="font-label-caps text-label-caps text-on-surface-variant uppercase">Approval evidence</label><div class="flex flex-col gap-3"><div class="flex items-center gap-3 border border-outline-variant rounded-lg p-3 bg-surface-container-low"><span class="material-symbols-outlined text-primary">description</span><span class="font-body-md text-body-md text-on-surface flex-1">MOH_Budget_Approval_FY2028_29.pdf</span><button class="text-error hover:text-on-error-container transition-colors" type="button"><span class="material-symbols-outlined">delete</span></button></div><div class="border-2 border-dashed border-outline-variant rounded-lg p-6 flex flex-col items-center justify-center gap-2 bg-surface-container-lowest hover:bg-surface-container-low transition-colors cursor-pointer"><span class="material-symbols-outlined text-on-surface-variant text-headline-lg">cloud_upload</span><div class="text-center"><p class="font-body-md text-body-md text-on-surface">Click to upload or drag and drop</p><p class="font-label-caps text-label-caps text-on-surface-variant">PDF, PNG, or JPG (max. 10MB)</p></div><input type="file" class="hidden" id="file-upload"></div></div></div>
+</div>
+<!-- Information Note -->
+<div class="mt-2 bg-surface-container-low border border-surface-variant rounded-lg p-4 flex gap-3 items-start">
+<span class="material-symbols-outlined text-on-surface-variant mt-0.5" data-icon="info">info</span>
+<p class="font-body-md text-body-md text-on-surface-variant">KenTender records the approved baseline for procurement control. Budget formulation, appropriation and financial approval remain in the authoritative financial process. Future financial-system integration will use an API.</p>
+</div>
+</section>
+</div>
+<!-- Footer Actions -->
+<div class="w-full mt-section-gap flex justify-end items-center gap-4 pb-8">
+<button class="px-6 py-2 rounded-lg border border-outline text-primary font-body-md text-body-md hover:bg-surface-container transition-colors focus:ring-2 focus:ring-primary focus:outline-none" type="button">
+                Cancel
+            </button>
+<button class="px-6 py-2 rounded-lg bg-primary text-on-primary font-body-md text-body-md hover:bg-primary-container transition-colors focus:ring-2 focus:ring-primary focus:outline-none shadow-sm" type="button">
+                Create draft budget
+            </button>
+</div>
+</main>
+
+
+</body></html>

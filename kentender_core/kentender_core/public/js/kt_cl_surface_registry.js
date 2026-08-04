@@ -222,6 +222,16 @@ frappe.provide("kentender_core.cl_surface_registry");
 		return [crumbDashboard(), crumbStrategyAlignment(), crumb(leafLabel)];
 	}
 
+	function crumbBudgetFunding() {
+		return crumb(__("Budget & Funding"), ["budget-funding"]);
+	}
+	function trailBudget() {
+		return [crumbDashboard(), crumbBudgetFunding()];
+	}
+	function trailBudgetLeaf(leafLabel) {
+		return [crumbDashboard(), crumbBudgetFunding(), crumb(leafLabel)];
+	}
+
 	/**
 	 * A2 screen IDs → routePrefixes use existing Desk page names where present.
 	 * UI-M01 is a modal (no Desk route); kept for registry completeness with empty prefixes.
@@ -626,6 +636,53 @@ frappe.provide("kentender_core.cl_surface_registry");
 				trailBwA1Overview(),
 				[]
 			),
+		},
+		/* Budget MVP-1 — must be registered so cl_shell_router does not leaveNative
+		   after page scripts call enterNative (strips kt-cl-shell → Win98 CTA bleed). */
+		"BUD-UI-01": {
+			id: "BUD-UI-01",
+			label: "Budget & Funding Portfolio",
+			routePrefixes: ["budget-funding"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Budget & Funding"),
+				__(
+					"Manage approved procurement funding and monitor its use across the procurement lifecycle."
+				),
+				trailBudget(),
+				[]
+			),
+		},
+		"BUD-UI-02": {
+			id: "BUD-UI-02",
+			label: "Register Approved Budget",
+			routePrefixes: ["budget-register"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Register approved budget"),
+				__("Register an approved financial baseline for procurement use in KenTender."),
+				trailBudgetLeaf(__("Register approved budget")),
+				[]
+			),
+		},
+		"BUD-UI-03": {
+			id: "BUD-UI-03",
+			label: "Budget Funding Performance",
+			routePrefixes: ["budget-funding-performance"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Funding performance"),
+				"",
+				trailBudgetLeaf(__("Funding performance")),
+				[]
+			),
+		},
+		"BUD-UI-04": {
+			id: "BUD-UI-04",
+			label: "Budget Overview",
+			routePrefixes: ["budget-overview"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(__("Budget overview"), "", trailBudgetLeaf(__("Budget overview")), []),
 		},
 	};
 

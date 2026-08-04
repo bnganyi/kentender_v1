@@ -4,6 +4,8 @@ Rerunnable demo dataset for Kenyan public-sector **IT STD** demos on `kentender.
 
 
 > **MVP-1 Strategy preparatory teardown (2026-08-02):** Legacy Strategy DocTypes and `STRAT-MOH-2026` gate were removed from `kentender_strategy`. Strategy Alignment is intentionally non-functional until the MVP-1 rebuild (MOH-SP-0001). Budget/Demand strategy Link fields were unlinked.
+
+> **MVP-1 Budget preparatory teardown (2026-08-04):** Legacy Budget & Funding DocTypes (`Budget`, `Budget Line`, `Budget Allocation`, `Budget Reservation`, `Funding Source`) and Desk pages `budget-hub` / `budget-workbench` were removed from `kentender_budget`. Seeds skip with `mvp1-budget-teardown`. Demand/Package budget fields are Data (no live funding control) until the MVP-1 Budget rebuild. Procurement rail still opens Workspace **Budget Management** as a placeholder.
 ## Goal
 
 Clean Procuring Entities, purge conflicting demo stacks, then load a **linked** chain:

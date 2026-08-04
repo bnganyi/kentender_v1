@@ -241,9 +241,8 @@
 
 /*
  * Default Strategy select chevron (Tailwind Forms plugin stand-in).
- * Stitch CDN injects this; Desk does not. Screens that use a Material
- * `expand_more` sibling must set `background-image: none` on that select
- * (see portfolio filter selects).
+ * Stitch CDN injects this; Desk does not.
+ * Material expand_more sibling → SVG suppressed via :has() (core desk chrome + below).
  */
 .kt-cl-shell .kt-str-root select {
   appearance: none !important;
@@ -254,6 +253,9 @@
   background-size: 1.25rem 1.25rem !important;
   padding-right: 2.5rem !important;
   cursor: pointer !important;
+}
+.kt-cl-shell .kt-str-root select:has(+ .material-symbols-outlined) {
+  background-image: none !important;
 }
 
 .kt-cl-shell [data-testid="kt-str-portfolio"] { display:block; width:100%; }

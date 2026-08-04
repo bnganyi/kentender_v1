@@ -1,17 +1,12 @@
-# Copyright (c) 2026, Midas and contributors
-# License: MIT. See LICENSE
-"""seed_budget_empty — remove all Budget/Budget Allocation records for empty-state testing."""
+# Copyright (c) 2026, KenTender and contributors
+# For license information, please see license.txt
+
+"""seed_budget_empty — neutralized by MVP-1 Budget preparatory teardown."""
 
 from __future__ import annotations
 
-import frappe
-
-from kentender_core.seeds._budget_seed_common import clear_budget_data
+from typing import Any
 
 
-def run():
-	frappe.only_for(("System Manager", "Administrator"))
-	out = clear_budget_data()
-	frappe.db.commit()
-	return out
-
+def run(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
+	return {"ok": True, "skipped": True, "reason": "mvp1-budget-teardown"}

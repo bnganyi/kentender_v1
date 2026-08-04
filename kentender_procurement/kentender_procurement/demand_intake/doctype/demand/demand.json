@@ -198,13 +198,11 @@
    "label": "4. Linkages and planning context"
   },
   {
-   "description": "Active budget lines only. Search matches name or code. After selection, budget and funding balances load automatically.",
+   "description": "MVP-1 Budget teardown: legacy Budget Line Link removed. Field retained as Data until rebuild.",
    "fieldname": "budget_line",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Budget Line",
-   "link_filters": "[[\"Budget Line\", \"is_active\", \"=\", 1]]",
-   "options": "Budget Line",
    "search_index": 1
   },
   {
@@ -228,17 +226,15 @@
   },
   {
    "fieldname": "budget",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "label": "Budget",
-   "options": "Budget",
    "read_only": 1,
    "search_index": 1
   },
   {
    "fieldname": "funding_source",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "label": "Funding Source",
-   "options": "Funding Source",
    "read_only": 1
   },
   {

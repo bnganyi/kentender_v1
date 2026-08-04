@@ -273,7 +273,7 @@ test.describe("Civic Ledger — native Workspace Sidebar restyle", () => {
 			)
 		).toHaveClass(/active-sidebar/, { timeout: 15_000 });
 
-		await page.goto("/desk/budget-hub");
+		await page.goto("/desk/budget-management");
 		await expect(
 			page.locator(`${NATIVE_RAIL} .sidebar-item-container[data-id="Budget & Funding"]`)
 		).toBeVisible({ timeout: 15_000 });

@@ -104,12 +104,9 @@ The IT Tender Configuration Wizard (v1/v2) was retired in July 2026. Archived co
 
 ## Seed & data-quality scripts
 
-One-shot idempotent seed scripts live in `kentender_budget/kentender_budget/seed/`.
-Run via: `bench --site kentender.midas.com execute kentender_budget.seed.<module>.run`
-
-**FK integrity rule (W6-12):** After any seed run that creates `Budget Line` records,
-validate strategy FK chains with `fix_dangling_strategy_refs.run`.  A Budget Line
-pointing to a phantom `program`, `sub_program`, `output_indicator`, or
-`performance_target` will silently return raw IDs in the artefacts panel.  Always
-seed strategy hierarchy (Strategic Plan → Program → Sub Program → Objective → Target)
-before seeding Budget Lines that reference it.
+**MVP-1 Budget preparatory teardown (2026-08):** Legacy Budget DocTypes and
+`kentender_budget.seed.*` scripts were removed. Budget seed entry points return
+`{"ok": True, "skipped": True, "reason": "mvp1-budget-teardown"}` until the
+MVP-1 Budget rebuild (see `docs/mvp-1/02_budget/`). Use
+`kentender_budget.seeds.works_master_budget_seed.upsert_works_master_budget`
+only as a skip stub for callers that still import it.

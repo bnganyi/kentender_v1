@@ -75,8 +75,9 @@ class Demand(Document):
 		self._set_audit_defaults()
 		self._normalize_procuring_entity()
 		self._sync_is_exception_from_demand_type()
-		if self.budget_line:
-			self._apply_budget_line_context()
+		# MVP-1 Budget teardown: Budget Line DocType removed; skip context sync.
+		# if self.budget_line:
+		# 	self._apply_budget_line_context()
 
 		if self.procuring_entity and self.request_date and not self.demand_id:
 			self._set_demand_id()
@@ -120,20 +121,8 @@ class Demand(Document):
 			self.procuring_entity = normalized
 
 	def _apply_budget_line_context(self):
-		"""C1 — derive budget/funding fields from Budget Line via Budget services only."""
-		from kentender_budget.api.dia_budget_control import get_budget_line_context
-
-		ctx = get_budget_line_context(self.budget_line)
-		if not ctx.get("ok"):
-			frappe.throw(_(ctx.get("message") or _("Invalid budget line.")), title=_("Budget Line"))
-		data = ctx.get("data") or {}
-		if self.procuring_entity and data.get("procuring_entity") != self.procuring_entity:
-			frappe.throw(
-				_("Selected budget line belongs to a different procuring entity."),
-				title=_("Budget Line"),
-			)
-		self.budget = data.get("budget")
-		self.funding_source = data.get("funding_source")
+		"""C1 — neutralized (MVP-1 Budget preparatory teardown)."""
+		return
 
 	def validate_submission_gate(self):
 		"""C2–C3 — submit-time validation (delegates to readiness service)."""

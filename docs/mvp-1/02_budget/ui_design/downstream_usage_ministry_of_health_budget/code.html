@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Downstream Usage - Ministry of Health Budget</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed": "#cfe5ff",
+                        "surface-container-high": "#e8e7ed",
+                        "inverse-on-surface": "#f1f0f6",
+                        "surface": "#f9f9fe",
+                        "on-surface": "#1a1b20",
+                        "secondary": "#01629d",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "inverse-surface": "#2f3035",
+                        "tertiary-fixed": "#d3e4ff",
+                        "secondary-fixed-dim": "#99cbff",
+                        "tertiary": "#26364b",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-tint": "#395e9b",
+                        "outline-variant": "#c3c6d1",
+                        "on-secondary": "#ffffff",
+                        "primary": "#001f48",
+                        "on-error-container": "#93000a",
+                        "on-tertiary": "#ffffff",
+                        "surface-container": "#eeedf3",
+                        "primary-fixed": "#d7e2ff",
+                        "surface-container-highest": "#e2e2e8",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-container": "#8f9fb8",
+                        "on-background": "#1a1b20",
+                        "status-reserved": "#F59E0B",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed-variant": "#004a78",
+                        "on-secondary-fixed": "#001d34",
+                        "tertiary-fixed-dim": "#b7c8e2",
+                        "on-primary-fixed-variant": "#1d4681",
+                        "tertiary-container": "#26364b",
+                        "status-exhausted": "#EF4444",
+                        "status-committed": "#6366F1",
+                        "background": "#f9f9fe",
+                        "on-surface-variant": "#434750",
+                        "status-available": "#10B981",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#dad9df",
+                        "on-secondary-container": "#004c7c",
+                        "surface-variant": "#e2e2e8",
+                        "on-primary-fixed": "#001b3f",
+                        "surface-container-low": "#f4f3f9",
+                        "secondary-container": "#7bbeff",
+                        "on-tertiary-fixed-variant": "#38485e",
+                        "primary-fixed-dim": "#abc7ff",
+                        "on-primary-container": "#7b9ee0",
+                        "inverse-primary": "#abc7ff",
+                        "error": "#ba1a1a",
+                        "primary-container": "#00346f",
+                        "outline": "#737781",
+                        "surface-bright": "#f9f9fe"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "card-padding": "20px",
+                        "container-padding": "16px",
+                        "unit": "4px",
+                        "section-gap": "24px",
+                        "gutter": "12px",
+                        "base-unit": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["Manrope"],
+                        "data-mono": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "headline-lg-mobile": ["Manrope"],
+                        "headline-lg": ["Manrope"],
+                        "label-caps": ["Inter"],
+                        "headline-md": ["Manrope"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "data-mono": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "headline-md": ["22px", { "lineHeight": "30px", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md antialiased min-h-screen flex flex-col">
+<!-- Top Navigation (Shell) -->
+<header class="bg-surface-container-lowest border-b border-outline-variant w-full h-16 flex justify-between items-center px-container-padding sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary cursor-pointer hover:bg-surface-container p-2 rounded-full transition-colors" data-icon="menu">menu</span>
+<div class="font-headline-md text-headline-md font-bold text-primary flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="account_balance">account_balance</span>
+                KenTender
+            </div>
+</div>
+<!-- Search -->
+<div class="hidden md:flex flex-1 max-w-xl mx-8">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border border-outline-variant rounded-full text-body-md font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" placeholder="Search budgets, contracts..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-2 text-primary">
+<button class="p-2 rounded-full hover:bg-surface-container transition-colors relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold ml-2 cursor-pointer border border-primary">
+                MH
+            </div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- Side Navigation (Shell) -->
+<aside class="hidden md:flex flex-col w-64 bg-surface h-full py-6 px-4 gap-2 border-r border-outline-variant flex-shrink-0 overflow-y-auto">
+<div class="mb-6 px-2">
+<h2 class="font-headline-sm text-headline-sm font-black text-primary">KenTender</h2>
+<p class="text-label-caps font-label-caps text-on-surface-variant mt-1">Procurement Management</p>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest rounded-lg transition-all scale-95 active:scale-100" href="#">
+<span class="material-symbols-outlined" data-icon="assignment_turned_in">assignment_turned_in</span>
+<span class="font-body-md">Planning</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-secondary-container text-on-secondary-container font-bold rounded-lg transition-all scale-95 active:scale-100" href="#">
+<span class="material-symbols-outlined" data-icon="list_alt">list_alt</span>
+<span class="font-body-md">Requisition</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest rounded-lg transition-all scale-95 active:scale-100" href="#">
+<span class="material-symbols-outlined" data-icon="gavel">gavel</span>
+<span class="font-body-md">Tendering</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest rounded-lg transition-all scale-95 active:scale-100" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-body-md">Evaluation</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest rounded-lg transition-all scale-95 active:scale-100" href="#">
+<span class="material-symbols-outlined" data-icon="verified">verified</span>
+<span class="font-body-md">Award</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest rounded-lg transition-all scale-95 active:scale-100" href="#">
+<span class="material-symbols-outlined" data-icon="handshake">handshake</span>
+<span class="font-body-md">Contract Management</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest rounded-lg transition-all scale-95 active:scale-100" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-body-md">Closeout</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto bg-background">
+<!-- Page Header Container -->
+<div class="bg-surface-container-lowest border-b border-outline-variant px-container-padding md:px-8 pt-8 pb-0">
+<div class="max-w-7xl mx-auto">
+<!-- Breadcrumbs & Actions -->
+<div class="flex justify-between items-start mb-6">
+<div>
+<div class="flex items-center gap-2 text-body-md font-body-md text-on-surface-variant mb-2">
+<a class="hover:text-primary transition-colors" href="#">Budgets</a>
+<span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span>
+<span class="text-on-surface">FY 2027/28</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-primary mb-2">Ministry of Health Procurement Budget FY 2027/28</h1>
+<p class="text-body-lg font-body-lg text-on-surface-variant max-w-3xl">
+                                Full traceability of procurement requirements from initial demand through to contract execution and budget consumption.
+                            </p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-4 py-2 border border-outline-variant rounded-lg text-body-md font-body-md text-primary hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+                                Export
+                            </button>
+</div>
+</div>
+<!-- In-page Navigation Tabs -->
+<div class="flex gap-8 border-b border-outline-variant">
+<a class="pb-3 text-body-md font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Overview</a>
+<a class="pb-3 text-body-md font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Budget Lines</a>
+<a class="pb-3 text-body-md font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Funding Activity</a>
+<a class="pb-3 text-body-md font-body-md text-primary font-bold border-b-2 border-primary relative top-[1px]" href="#">Downstream Usage</a>
+</div>
+</div>
+</div>
+<!-- Main Content Canvas -->
+<div class="p-container-padding md:p-8 max-w-[1600px] mx-auto">
+<!-- Filters & Search for Table -->
+<div class="flex justify-between items-center mb-6">
+<div class="flex gap-3">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm" data-icon="search">search</span>
+<input class="pl-9 pr-4 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-lg text-body-md font-body-md focus:outline-none focus:border-primary w-64" placeholder="Filter by Requirement..." type="text"/>
+</div>
+<button class="flex items-center gap-2 px-3 py-1.5 border border-outline-variant bg-surface-container-lowest rounded-lg text-body-md font-body-md hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="filter_list">filter_list</span>
+                            Filter
+                        </button>
+</div>
+</div>
+<!-- High-Density Traceability Table inside a Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse min-w-[1200px]">
+<thead class="bg-surface-container-low border-b border-outline-variant">
+<tr>
+<th class="py-3 px-4 text-label-caps font-label-caps text-on-surface-variant uppercase tracking-wider font-semibold">Requirement</th>
+<!-- Demand Phase -->
+<th class="py-3 px-4 text-label-caps font-label-caps text-on-surface-variant uppercase tracking-wider border-l border-outline-variant bg-surface-container/50">Demand</th>
+<th class="py-3 px-4 text-label-caps font-label-caps text-on-surface-variant uppercase tracking-wider bg-surface-container/50">Procurement Plan Item</th>
+<!-- Execution Phase -->
+<th class="py-3 px-4 text-label-caps font-label-caps text-on-surface-variant uppercase tracking-wider border-l border-outline-variant">Tender</th>
+<th class="py-3 px-4 text-label-caps font-label-caps text-on-surface-variant uppercase tracking-wider">Contract</th>
+<!-- Financial Phase -->
+<th class="py-3 px-4 text-label-caps font-label-caps text-on-surface-variant uppercase tracking-wider border-l border-outline-variant text-right">Reserved Balance</th>
+<th class="py-3 px-4 text-label-caps font-label-caps text-on-surface-variant uppercase tracking-wider text-right">Commitment</th>
+<!-- Status/Action -->
+<th class="py-3 px-4 text-label-caps font-label-caps text-on-surface-variant uppercase tracking-wider border-l border-outline-variant">Status</th>
+<th class="py-3 px-4 text-label-caps font-label-caps text-on-surface-variant uppercase tracking-wider text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="py-3 px-4 text-body-md font-body-md font-medium text-on-surface">Digital Infrastructure Upgrade</td>
+<!-- Demand Phase -->
+<td class="py-3 px-4 border-l border-outline-variant bg-surface-container/10 group-hover:bg-transparent transition-colors">
+<a class="text-data-mono font-data-mono text-secondary hover:underline" href="#">DM-MOH-2027-042</a>
+</td>
+<td class="py-3 px-4 bg-surface-container/10 group-hover:bg-transparent transition-colors">
+<a class="text-data-mono font-data-mono text-secondary hover:underline" href="#">PPI-MOH-2027-015</a>
+</td>
+<!-- Execution Phase -->
+<td class="py-3 px-4 border-l border-outline-variant">
+<a class="text-data-mono font-data-mono text-secondary hover:underline" href="#">TND-MOH-2027-008</a>
+</td>
+<td class="py-3 px-4">
+<a class="text-data-mono font-data-mono text-secondary hover:underline" href="#">CTR-MOH-2027-005</a>
+</td>
+<!-- Financial Phase -->
+<td class="py-3 px-4 border-l border-outline-variant text-right text-data-mono font-data-mono text-on-surface">KES 145M</td>
+<td class="py-3 px-4 text-right text-data-mono font-data-mono text-on-surface">KES 310M</td>
+<!-- Status/Action -->
+<td class="py-3 px-4 border-l border-outline-variant">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+                                            Active
+                                        </span>
+</td>
+<td class="py-3 px-4 text-right">
+<button class="p-1 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded transition-colors" title="View details">
+<span class="material-symbols-outlined text-sm" data-icon="open_in_new">open_in_new</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 (Mock Data) -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="py-3 px-4 text-body-md font-body-md font-medium text-on-surface">Medical Supplies - Q1</td>
+<td class="py-3 px-4 border-l border-outline-variant bg-surface-container/10 group-hover:bg-transparent transition-colors">
+<a class="text-data-mono font-data-mono text-secondary hover:underline" href="#">DM-MOH-2027-012</a>
+</td>
+<td class="py-3 px-4 bg-surface-container/10 group-hover:bg-transparent transition-colors">
+<a class="text-data-mono font-data-mono text-secondary hover:underline" href="#">PPI-MOH-2027-003</a>
+</td>
+<td class="py-3 px-4 border-l border-outline-variant">
+<a class="text-data-mono font-data-mono text-secondary hover:underline" href="#">TND-MOH-2027-002</a>
+</td>
+<td class="py-3 px-4">
+<span class="text-data-mono font-data-mono text-on-surface-variant italic text-xs">Pending Award</span>
+</td>
+<td class="py-3 px-4 border-l border-outline-variant text-right text-data-mono font-data-mono text-status-reserved">KES 450M</td>
+<td class="py-3 px-4 text-right text-data-mono font-data-mono text-on-surface-variant">-</td>
+<td class="py-3 px-4 border-l border-outline-variant">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                                            Evaluating
+                                        </span>
+</td>
+<td class="py-3 px-4 text-right">
+<button class="p-1 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded transition-colors" title="View details">
+<span class="material-symbols-outlined text-sm" data-icon="open_in_new">open_in_new</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination (Footer) -->
+<div class="px-4 py-3 border-t border-outline-variant flex items-center justify-between bg-surface-container-lowest">
+<span class="text-body-md font-body-md text-on-surface-variant">Showing 1 to 2 of 24 entries</span>
+<div class="flex gap-1">
+<button class="px-3 py-1 border border-outline-variant rounded hover:bg-surface-container transition-colors disabled:opacity-50 text-body-md font-body-md" disabled="">Prev</button>
+<button class="px-3 py-1 border border-primary bg-primary-container text-on-primary-container rounded font-bold text-body-md font-body-md">1</button>
+<button class="px-3 py-1 border border-outline-variant rounded hover:bg-surface-container transition-colors text-body-md font-body-md">2</button>
+<button class="px-3 py-1 border border-outline-variant rounded hover:bg-surface-container transition-colors text-body-md font-body-md">Next</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

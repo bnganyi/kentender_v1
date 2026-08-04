@@ -1,0 +1,401 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Budget Workspace Overview - GovProcure Suite</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=JetBrains+Mono:wght@500&amp;family=Manrope:wght@600;700&amp;display=swap" rel="stylesheet">
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind Config from Guidelines -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary": "#26364b",
+                        "on-secondary": "#ffffff",
+                        "surface-container": "#eeedf3",
+                        "on-primary-container": "#7b9ee0",
+                        "on-primary": "#ffffff",
+                        "surface-container-low": "#f4f3f9",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#001d34",
+                        "surface-variant": "#e2e2e8",
+                        "on-tertiary-fixed-variant": "#38485e",
+                        "on-secondary-fixed-variant": "#004a78",
+                        "surface-container-high": "#e8e7ed",
+                        "secondary-fixed": "#cfe5ff",
+                        "on-surface": "#1a1b20",
+                        "on-error": "#ffffff",
+                        "secondary": "#01629d",
+                        "tertiary-fixed": "#d3e4ff",
+                        "surface-tint": "#395e9b",
+                        "surface-container-highest": "#e2e2e8",
+                        "background": "#f9f9fe",
+                        "on-tertiary-container": "#8f9fb8",
+                        "inverse-surface": "#2f3035",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "status-committed": "#6366F1",
+                        "surface": "#f9f9fe",
+                        "primary-container": "#00346f",
+                        "tertiary-fixed-dim": "#b7c8e2",
+                        "secondary-container": "#7bbeff",
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#abc7ff",
+                        "tertiary-container": "#26364b",
+                        "inverse-on-surface": "#f1f0f6",
+                        "status-reserved": "#F59E0B",
+                        "status-exhausted": "#EF4444",
+                        "on-primary-fixed-variant": "#1d4681",
+                        "on-tertiary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-background": "#1a1b20",
+                        "status-available": "#10B981",
+                        "inverse-primary": "#abc7ff",
+                        "on-secondary-container": "#004c7c",
+                        "on-primary-fixed": "#001b3f",
+                        "outline": "#737781",
+                        "primary-fixed": "#d7e2ff",
+                        "on-error-container": "#93000a",
+                        "outline-variant": "#c3c6d1",
+                        "surface-dim": "#dad9df",
+                        "secondary-fixed-dim": "#99cbff",
+                        "surface-bright": "#f9f9fe",
+                        "primary": "#001f48",
+                        "on-surface-variant": "#434750"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "unit": "4px",
+                        "base-unit": "4px",
+                        "gutter": "12px",
+                        "container-padding": "16px",
+                        "section-gap": "24px",
+                        "card-padding": "20px"
+                    },
+                    fontFamily: {
+                        "data-mono": ["JetBrains Mono"],
+                        "headline-sm": ["Manrope"],
+                        "headline-md": ["Manrope"],
+                        "label-caps": ["Inter"],
+                        "headline-lg": ["Manrope"],
+                        "body-lg": ["Inter"],
+                        "headline-lg-mobile": ["Manrope"],
+                        "body-md": ["Inter"]
+                    },
+                    fontSize: {
+                        "data-mono": ["14px", { lineHeight: "20px", fontWeight: "500" }],
+                        "headline-sm": ["18px", { lineHeight: "24px", fontWeight: "600" }],
+                        "headline-md": ["22px", { lineHeight: "30px", fontWeight: "600" }],
+                        "label-caps": ["12px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "700" }],
+                        "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+                        "headline-lg-mobile": ["24px", { lineHeight: "32px", fontWeight: "700" }],
+                        "body-md": ["14px", { lineHeight: "20px", fontWeight: "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md antialiased min-h-screen flex">
+<!-- JSON Injected Component: SideNavBar -->
+<nav class="fixed left-0 top-0 h-full border-r border-outline-variant bg-surface-container w-64 flex flex-col hidden md:flex z-40">
+<div class="p-4 border-b border-outline-variant flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary font-headline-sm">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<div>
+<div class="font-headline-sm text-primary">Procurement Hub</div>
+<div class="font-body-md text-on-surface-variant text-xs">Strategic Management</div>
+</div>
+</div>
+<div class="p-4">
+<button class="w-full bg-primary text-on-primary rounded-lg py-2 px-4 flex items-center justify-center gap-2 font-body-md hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                New Requisition
+            </button>
+</div>
+<div class="flex-1 overflow-y-auto py-2">
+<!-- Active state logic mapped to 'Planning' based on 'Budget Workspace' -->
+<a class="flex items-center gap-3 px-6 py-3 text-primary font-bold border-r-4 border-primary bg-primary-fixed-dim/10 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined">strategy</span>
+<span class="font-label-caps">Planning</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined">assignment</span>
+<span class="font-label-caps">Requisition</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined">gavel</span>
+<span class="font-label-caps">Tendering</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-caps">Evaluation</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined">verified</span>
+<span class="font-label-caps">Award</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined">contract</span>
+<span class="font-label-caps">Contract Management</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all scale-100 active:scale-95" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-caps">Closeout</span>
+</a>
+</div>
+<div class="border-t border-outline-variant p-2 mt-auto">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-high transition-all rounded" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+<span class="font-label-caps">Support</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-high transition-all rounded" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-caps">Sign Out</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 ml-0 md:ml-64 flex flex-col min-h-screen">
+<!-- TopAppBar Placeholder (since it was missing from predicted, adding a simplified structural one for cohesion) -->
+<header class="sticky top-0 z-30 bg-surface-container-lowest border-b border-outline-variant h-16 flex items-center justify-between px-gutter w-full">
+<div class="flex items-center gap-4">
+<button class="md:hidden text-on-surface-variant">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="font-headline-md text-primary font-bold">GovProcure Suite</div>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant">
+<span class="material-symbols-outlined cursor-pointer hover:text-primary">notifications</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-primary">help_outline</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-primary">settings</span>
+<div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBLqDvuGMoSOkd2UQgGdFxJvseOmmoMzUZ7m_FXZU6MkwQHDEFshAzOsrndbzPE6gjmeKt8QmADBxZKVPQANG-e0FnH86KJy6NlNSYyG-P3irYX2a2OWKsReR8r7ZNoeovVVx1i-0PC0im10AcyADj8Ccp61u5_wznfw5Q11aDCXPvEj77DcUlWy9RZVJWub0RQxQoa4xStmsrvnwPJYm7vyOeLmA_xGfDTcCMytM36ZrF6giRUo6_Waw">
+</div>
+</div>
+</header>
+<!-- Page Header -->
+<div class="bg-surface-container-lowest px-container-padding py-6 border-b border-outline-variant">
+<div class="max-w-7xl mx-auto w-full">
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+<div>
+<div class="flex items-center gap-3 mb-2">
+<span class="font-data-mono text-on-surface-variant bg-surface-container px-2 py-1 rounded text-xs">MOH-BUD-0001</span>
+<span class="bg-status-available/10 text-status-available border border-status-available/20 font-label-caps px-2 py-0.5 rounded-full flex items-center gap-1 uppercase">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> Active
+                            </span>
+</div>
+<h1 class="font-headline-lg text-on-surface md:font-headline-lg-mobile md:hidden">Ministry of Health Procurement Budget FY 2027/28</h1>
+<h1 class="font-headline-lg text-on-surface hidden md:block">Ministry of Health Procurement Budget FY 2027/28</h1>
+</div>
+<div class="flex flex-wrap gap-3">
+<button class="px-4 py-2 rounded-lg border border-outline-variant text-on-surface font-body-md hover:bg-surface-container-low transition-colors bg-surface-container-lowest">
+                            View funding performance
+                        </button>
+<button class="px-4 py-2 rounded-lg bg-primary text-on-primary font-body-md hover:opacity-90 transition-opacity">
+                            Request revision
+                        </button>
+</div>
+</div>
+<!-- Tabs -->
+<div class="flex gap-6 mt-8 overflow-x-auto border-b border-outline-variant hide-scrollbar">
+<button class="pb-3 border-b-2 border-primary text-primary font-body-md font-medium whitespace-nowrap">Overview</button>
+<button class="pb-3 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors font-body-md whitespace-nowrap">Budget Lines</button>
+<button class="pb-3 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors font-body-md whitespace-nowrap">Funding Activity</button>
+<button class="pb-3 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors font-body-md whitespace-nowrap">Revisions</button>
+<button class="pb-3 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors font-body-md whitespace-nowrap">Downstream Usage</button>
+<button class="pb-3 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors font-body-md whitespace-nowrap">Review</button>
+<button class="pb-3 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors font-body-md whitespace-nowrap">Audit</button>
+</div>
+</div>
+</div>
+<!-- Canvas -->
+<div class="flex-1 p-container-padding max-w-7xl mx-auto w-full">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-section-gap">
+<!-- Main Data Column -->
+<div class="lg:col-span-2 flex flex-col gap-section-gap">
+<!-- Identity Strip (Bento-style Grid) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-card-padding">
+
+<div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+<div class="flex flex-col gap-1">
+<span class="font-body-md text-on-surface-variant text-sm">Entity</span>
+<span class="font-body-md text-on-surface font-medium">Ministry of Health</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-body-md text-on-surface-variant text-sm">Fiscal Period</span>
+<span class="font-body-md text-on-surface font-medium">FY 2027/28</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-body-md text-on-surface-variant text-sm">Currency</span>
+<span class="font-data-mono text-on-surface bg-surface-container w-fit px-2 py-0.5 rounded text-sm">KES</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-body-md text-on-surface-variant text-sm">Source</span>
+<span class="font-body-md text-on-surface font-medium">Controlled Import</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-body-md text-on-surface-variant text-sm">External Reference</span>
+<span class="font-data-mono text-on-surface text-sm">TREAS-MOH-27-04</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-body-md text-on-surface-variant text-sm">Last Synchronised</span>
+<span class="font-body-md text-on-surface text-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">sync</span>
+                                    24 Oct 2024, 10:00 AM
+                                </span>
+</div>
+</div>
+</div>
+<!-- Funding Summary Guardrails -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden flex flex-col">
+<div class="bg-surface-container-low px-card-padding py-3 border-b border-outline-variant flex justify-between items-center">
+<h2 class="font-headline-sm text-on-surface">Funding Guardrails</h2>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary">info</span>
+</div>
+<div class="p-card-padding grid grid-cols-3 gap-4 items-stretch">
+<!-- Row 1, Col 1: Approved -->
+<div class="flex flex-col gap-1 border-l-2 border-outline-variant pl-3 py-2">
+    <span class="font-label-caps text-on-surface-variant text-xs uppercase">Approved</span>
+    <span class="font-data-mono text-xl text-on-surface">KES 560M</span>
+</div>
+<!-- Row 1, Col 2: Reserved -->
+<div class="flex flex-col gap-1 border-l-2 border-status-reserved pl-3 bg-status-reserved/5 rounded-r py-2">
+    <span class="font-label-caps text-status-reserved text-xs flex items-center gap-1 uppercase">
+        <span class="material-symbols-outlined text-[14px]">pending_actions</span> Reserved
+    </span>
+    <span class="font-data-mono text-xl text-on-surface">KES 145M</span>
+</div>
+<!-- Row 1, Col 3: Committed -->
+<div class="flex flex-col gap-1 border-l-2 border-status-committed pl-3 bg-status-committed/5 rounded-r py-2">
+    <span class="font-label-caps text-status-committed text-xs flex items-center gap-1 uppercase">
+        <span class="material-symbols-outlined text-[14px]">lock</span> Committed
+    </span>
+    <span class="font-data-mono text-xl text-on-surface">KES 310M</span>
+</div>
+<!-- Row 2, Col 1: Available -->
+<div class="flex flex-col gap-1 border-l-2 border-status-available pl-3 bg-status-available/5 rounded-r py-2">
+    <span class="font-label-caps text-status-available text-xs flex items-center gap-1 uppercase">
+        <span class="material-symbols-outlined text-[14px]">check_circle</span> Available
+    </span>
+    <span class="font-data-mono text-xl text-on-surface">KES 105M</span>
+</div>
+<!-- Row 2, Col 2: Actual Exp -->
+<div class="flex flex-col gap-1 border-l-2 border-outline-variant pl-3 py-2">
+    <span class="font-label-caps text-on-surface-variant text-xs uppercase">Actual expenditure</span>
+    <span class="font-data-mono text-xl text-on-surface">KES 180M</span>
+</div>
+<!-- Row 2, Col 3: Outstanding -->
+<div class="flex flex-col gap-1 border-l-2 border-outline-variant pl-3 py-2">
+    <span class="font-label-caps text-on-surface-variant text-xs uppercase">Outstanding commitment</span>
+    <span class="font-data-mono text-xl text-on-surface">KES 130M</span>
+</div>
+</div>
+<!-- Stacked Allocation Bar -->
+<div class="px-card-padding pb-6">
+<div class="flex justify-between font-label-caps text-on-surface-variant mb-2">
+<span class="">Utilization</span>
+<span class="font-data-mono">100% (KES 560M)</span>
+</div>
+<div class="h-4 w-full rounded-full flex overflow-hidden bg-surface-container-highest">
+<!-- Reserved (145/560 ~ 26%) -->
+<div class="h-full bg-status-reserved" style="width: 25.89%" title="Reserved: KES 145M"></div>
+<!-- Committed (310/560 ~ 55%) -->
+<div class="h-full bg-status-committed border-l border-surface-container-lowest" style="width: 55.35%" title="Committed: KES 310M"></div>
+<!-- Available (105/560 ~ 19%) -->
+<div class="h-full bg-status-available border-l border-surface-container-lowest" style="width: 18.75%" title="Available: KES 105M"></div>
+</div>
+<div class="flex gap-4 mt-2 font-body-md text-xs text-on-surface-variant">
+<div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-status-reserved"></span> Reserved</div>
+<div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-status-committed"></span> Committed</div>
+<div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-status-available"></span> Available</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Secondary Context Column -->
+<div class="flex flex-col gap-section-gap">
+<!-- Strategy Alignment Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-card-padding">
+<div class="flex items-start gap-3">
+<div class="w-8 h-8 rounded bg-primary/10 text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined">account_tree</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-on-surface mb-2">Strategy Alignment</h3>
+<ul class="font-body-md text-on-surface-variant space-y-2 mb-4">
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-[16px] mt-0.5 text-primary">adjust</span>
+                                        2 of 2 lines linked to an Active primary target
+                                    </li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-[16px] mt-0.5 text-primary">playlist_add_check</span>
+                                        4 applicable Plan Value Commitments treated
+                                    </li>
+</ul>
+<button class="text-primary font-body-md font-medium flex items-center gap-1 hover:underline">
+                                    View budget lines <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Attention Section (Warning) -->
+<div class="bg-surface-container-lowest border border-status-reserved rounded-xl p-card-padding relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-status-reserved"></div>
+<div class="flex items-start gap-3">
+<div class="text-status-reserved shrink-0 mt-0.5">
+<span class="material-symbols-outlined">warning</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-on-surface mb-1">Attention Required</h3>
+<p class="font-body-md text-on-surface-variant mb-3">Actual expenditure is stale on 1 line</p>
+<button class="px-3 py-1.5 rounded-lg border border-outline-variant text-on-surface font-body-md text-sm hover:bg-surface-container-low transition-colors">
+                                    Review funding activity
+                                </button>
+</div>
+</div>
+</div>
+<!-- Definitional Note -->
+<div class="bg-surface-container border border-outline-variant rounded-xl p-4 text-sm font-body-md text-on-surface-variant">
+<div class="flex items-center gap-2 mb-2 font-medium text-on-surface">
+<span class="material-symbols-outlined text-[18px]">lightbulb</span>
+                            Definitional Note
+                        </div>
+<p class="leading-relaxed">Available equals approved funding less active reservations and contract commitments. Actual expenditure is shown separately because it is already included within commitments.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<style>
+        /* Custom hide scrollbar utility for tabs */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+
+
+</body></html>

@@ -72,11 +72,9 @@
   },
   {
    "fieldname": "budget_line_id",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Budget Line",
-   "options": "Budget Line",
-   "reqd": 1,
    "search_index": 1
   },
   {

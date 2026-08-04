@@ -1,0 +1,152 @@
+/* Shared Stitch Desk list-table footer — Rows per page + numbered pager.
+   Scoped for .kt-stitch-canvas and Strategy .kt-str-root (legacy class names). */
+
+.kt-cl-shell .kt-stitch-canvas [data-testid="kt-table-footer"],
+.kt-cl-shell .kt-stitch-canvas [data-testid="kt-bud-table-footer"],
+.kt-cl-shell .kt-stitch-canvas .kt-stitch-table-footer,
+.kt-cl-shell .kt-str-root [data-testid="kt-str-table-footer"],
+.kt-cl-shell .kt-str-root .kt-str-table-footer {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	justify-content: space-between !important;
+	align-items: center !important;
+	gap: 0.75rem !important;
+	padding: 1rem !important;
+	background: #ffffff !important;
+	border-top: 1px solid #c3c6d1 !important;
+}
+
+.kt-cl-shell .kt-stitch-table-footer-right,
+.kt-cl-shell .kt-str-table-footer-right {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.75rem !important;
+	flex-shrink: 0 !important;
+}
+
+.kt-cl-shell .kt-stitch-footer-page-size,
+.kt-cl-shell .kt-str-footer-page-size {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+}
+
+.kt-cl-shell .kt-stitch-footer-page-size-control,
+.kt-cl-shell .kt-str-footer-page-size-control {
+	position: relative !important;
+	display: inline-flex !important;
+	align-items: center !important;
+}
+
+/*
+ * Page-size select uses a Material expand_more sibling glyph.
+ * Must beat .kt-stitch-canvas select { background-image: svg… } or the
+ * chevron doubles (∨∨) — Strategy lesson for Material-sibling selects.
+ */
+.kt-cl-shell .kt-stitch-canvas .kt-stitch-footer-page-size-select,
+.kt-cl-shell .kt-stitch-canvas select.kt-stitch-footer-page-size-select,
+.kt-cl-shell .kt-stitch-canvas [data-kt-footer-page-size],
+.kt-cl-shell .kt-str-root .kt-str-footer-page-size-select,
+.kt-cl-shell .kt-str-root select.kt-str-footer-page-size-select,
+.kt-cl-shell .kt-str-root [data-kt-str-footer-page-size] {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	width: 4.5rem !important;
+	min-width: 4.5rem !important;
+	height: 2rem !important;
+	padding: 0 1.75rem 0 0.625rem !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.375rem !important;
+	background-color: #ffffff !important;
+	background-image: none !important;
+	color: #191c1e !important;
+	font-size: 0.8125rem !important;
+	font-weight: 500 !important;
+	line-height: 1 !important;
+	cursor: pointer !important;
+	outline: none !important;
+	box-shadow: none !important;
+}
+
+.kt-cl-shell .kt-stitch-footer-page-size-select:focus,
+.kt-cl-shell .kt-stitch-footer-page-size-select:focus-visible,
+.kt-cl-shell .kt-str-footer-page-size-select:focus,
+.kt-cl-shell .kt-str-footer-page-size-select:focus-visible {
+	border-color: var(--kt-stitch-focus-border, var(--kt-str-focus-border, #7bbeff)) !important;
+	box-shadow: 0 0 0 1px
+		var(--kt-stitch-focus-ring, var(--kt-str-focus-ring, color-mix(in srgb, #7bbeff 55%, transparent))) !important;
+}
+
+.kt-cl-shell .kt-stitch-footer-page-size-glyph,
+.kt-cl-shell .kt-str-footer-page-size-glyph {
+	position: absolute !important;
+	right: 0.25rem !important;
+	top: 50% !important;
+	transform: translateY(-50%) !important;
+	font-size: 18px !important;
+	line-height: 1 !important;
+	color: #43474e !important;
+	pointer-events: none !important;
+}
+
+.kt-cl-shell .kt-stitch-footer-pager,
+.kt-cl-shell .kt-stitch-footer-pages,
+.kt-cl-shell .kt-str-footer-pager,
+.kt-cl-shell .kt-str-footer-pages {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+}
+
+.kt-cl-shell .kt-stitch-footer-page-btn,
+.kt-cl-shell .kt-str-footer-page-btn {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	width: 2rem !important;
+	height: 2rem !important;
+	min-width: 2rem !important;
+	padding: 0 !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.375rem !important;
+	background: #ffffff !important;
+	color: #43474e !important;
+	font-size: 0.75rem !important;
+	font-weight: 600 !important;
+	line-height: 1 !important;
+	cursor: pointer !important;
+	box-shadow: none !important;
+	transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease !important;
+}
+
+.kt-cl-shell .kt-stitch-footer-page-btn:hover:not(:disabled):not(.is-active),
+.kt-cl-shell .kt-str-footer-page-btn:hover:not(:disabled):not(.is-active) {
+	background: #f4f3f9 !important;
+}
+
+.kt-cl-shell .kt-stitch-footer-page-btn:disabled,
+.kt-cl-shell .kt-str-footer-page-btn:disabled {
+	opacity: 0.4 !important;
+	cursor: default !important;
+}
+
+.kt-cl-shell .kt-stitch-footer-page-btn.is-active,
+.kt-cl-shell .kt-str-footer-page-btn.is-active {
+	background: #191c1e !important;
+	border-color: #191c1e !important;
+	color: #ffffff !important;
+}
+
+.kt-cl-shell .kt-stitch-footer-ellipsis,
+.kt-cl-shell .kt-str-footer-ellipsis {
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	min-width: 1rem !important;
+	color: #43474e !important;
+	font-size: 0.875rem !important;
+	line-height: 1 !important;
+	user-select: none !important;
+}

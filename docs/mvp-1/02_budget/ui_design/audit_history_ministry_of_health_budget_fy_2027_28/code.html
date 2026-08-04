@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Audit - Ministry of Health Procurement Budget FY 2027/28</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-fixed-dim": "#abc7ff",
+                      "on-secondary-container": "#004c7c",
+                      "background": "#f9f9fe",
+                      "on-primary-container": "#7b9ee0",
+                      "surface-variant": "#e2e2e8",
+                      "status-committed": "#6366F1",
+                      "on-background": "#1a1b20",
+                      "on-tertiary-fixed": "#0b1c30",
+                      "on-surface": "#1a1b20",
+                      "on-error-container": "#93000a",
+                      "on-tertiary-container": "#8f9fb8",
+                      "tertiary-fixed": "#d3e4ff",
+                      "status-exhausted": "#EF4444",
+                      "primary-container": "#00346f",
+                      "primary-fixed": "#d7e2ff",
+                      "on-surface-variant": "#434750",
+                      "error": "#ba1a1a",
+                      "tertiary-fixed-dim": "#b7c8e2",
+                      "status-available": "#10B981",
+                      "on-primary-fixed": "#001b3f",
+                      "inverse-surface": "#2f3035",
+                      "inverse-on-surface": "#f1f0f6",
+                      "secondary-fixed": "#cfe5ff",
+                      "secondary": "#01629d",
+                      "tertiary-container": "#26364b",
+                      "on-primary": "#ffffff",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-container-low": "#f4f3f9",
+                      "status-reserved": "#F59E0B",
+                      "surface-container-high": "#e8e7ed",
+                      "secondary-container": "#7bbeff",
+                      "error-container": "#ffdad6",
+                      "surface-bright": "#f9f9fe",
+                      "tertiary": "#26364b",
+                      "surface": "#f9f9fe",
+                      "surface-dim": "#dad9df",
+                      "on-secondary": "#ffffff",
+                      "surface-container": "#eeedf3",
+                      "on-tertiary-fixed-variant": "#38485e",
+                      "outline-variant": "#c3c6d1",
+                      "primary": "#001f48",
+                      "on-error": "#ffffff",
+                      "secondary-fixed-dim": "#99cbff",
+                      "surface-tint": "#395e9b",
+                      "outline": "#737781",
+                      "surface-container-highest": "#e2e2e8",
+                      "inverse-primary": "#abc7ff",
+                      "on-secondary-fixed-variant": "#004a78",
+                      "on-tertiary": "#ffffff",
+                      "on-primary-fixed-variant": "#1d4681",
+                      "on-secondary-fixed": "#001d34"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "section-gap": "24px",
+                      "gutter": "12px",
+                      "card-padding": "20px",
+                      "container-padding": "16px",
+                      "base-unit": "4px",
+                      "unit": "4px"
+              },
+              "fontFamily": {
+                      "headline-sm": ["Manrope"],
+                      "headline-md": ["Manrope"],
+                      "label-caps": ["Inter"],
+                      "data-mono": ["JetBrains Mono"],
+                      "body-md": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "headline-lg-mobile": ["Manrope"],
+                      "headline-lg": ["Manrope"]
+              },
+              "fontSize": {
+                      "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                      "headline-md": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+                      "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                      "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                      "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+              }
+            }
+          }
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+        }
+    </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface antialiased flex flex-col min-h-screen">
+<!-- Top Navigation App Bar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-container-padding h-16 bg-surface border-b border-outline-variant flat no shadows font-body-md text-body-md">
+<div class="flex items-center gap-4">
+<!-- Mobile Menu Toggle -->
+<button class="md:hidden text-primary cursor-pointer active:opacity-80 p-2 rounded-full hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<span class="font-headline-md text-headline-md font-bold text-primary">KenTender</span>
+</div>
+<div class="flex-1 max-w-2xl mx-8 hidden md:block">
+<!-- Search bar omitted for brevity as per spec "search_bar": "on_left" in json but let's keep it simple or align with the specific page intent -->
+</div>
+<div class="flex items-center gap-2">
+<button class="text-primary cursor-pointer active:opacity-80 p-2 rounded-full hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-primary cursor-pointer active:opacity-80 p-2 rounded-full hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary-fixed ml-2 overflow-hidden border border-outline-variant">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="A professional headshot of an African user in business attire, modern corporate setting, natural lighting, high quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGtVlGDrvu--aRpeJ4-cn4HOhx_dPEiKG43n_r52VyMqhq-bH1VtgHv7BDl_A7iGB0JLSx13wLcxH-VA1VqRWP9DrWbAnxAaHHduYSUtVRAClaxf2BHzXZa6Gr9YIxLsSwYaVbapzdRnEo6VCFnh3nPik_nhZKhuAXlk7g-0sEKMmL7aTw9Wx-qu9iOi2pbcc3rHgbbyknIYcR5dP7-fJimQd0DRTBftTL1PbgcOsktRev0avxJ9EoyQ"/>
+</div>
+</div>
+</header>
+<div class="flex flex-1 pt-16 h-full">
+<!-- Main Content Area -->
+<main class="flex-1 w-full max-w-[1440px] mx-auto pb-12">
+<!-- Page Header & Tabs -->
+<div class="bg-surface-container-lowest border-b border-outline-variant">
+<div class="px-container-padding md:px-section-gap py-6">
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+<div>
+<div class="flex items-center gap-2 mb-2">
+<span class="bg-status-available text-on-primary font-label-caps text-label-caps px-2 py-0.5 rounded-full">ACTIVE</span>
+<span class="text-on-surface-variant font-data-mono text-data-mono">MOH-BUD-0001</span>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-primary">Ministry of Health Procurement Budget FY 2027/28</h1>
+</div>
+<div class="flex gap-2">
+<button class="flex items-center gap-2 px-4 py-2 border border-outline-variant rounded-lg text-primary font-body-md hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="download">download</span>
+                                Export audit history
+                            </button>
+</div>
+</div>
+</div>
+<!-- Tabs -->
+<div class="px-container-padding md:px-section-gap flex gap-6 overflow-x-auto scrollbar-hide border-t border-outline-variant">
+<a class="py-4 font-body-md text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" href="#">Overview</a>
+<a class="py-4 font-body-md text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" href="#">Budget Lines</a>
+<a class="py-4 font-body-md text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" href="#">Funding Activity</a>
+<a class="py-4 font-body-md text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" href="#">Revisions</a>
+<a class="py-4 font-body-md text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" href="#">Downstream Usage</a>
+<a class="py-4 font-body-md text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" href="#">Review</a>
+<a class="py-4 font-body-md text-primary border-b-2 border-primary font-bold whitespace-nowrap" href="#">Audit</a>
+</div>
+</div>
+<!-- Content Canvas -->
+<div class="p-container-padding md:p-section-gap">
+<!-- Filters Bar -->
+<div class="bg-surface-container-lowest p-card-padding rounded-xl border border-outline-variant shadow-sm mb-section-gap flex flex-col sm:flex-row gap-4 items-end">
+<div class="w-full sm:w-1/3">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Event Type</label>
+<div class="relative">
+<select class="w-full appearance-none bg-surface border border-outline-variant rounded-lg px-3 py-2 font-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+<option>All Events</option>
+<option>Budget activated</option>
+<option>Funding reserved</option>
+<option>Baseline registered</option>
+<option>Revision applied</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">arrow_drop_down</span>
+</div>
+</div>
+<div class="w-full sm:w-1/3">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">User or Integration</label>
+<div class="relative">
+<select class="w-full appearance-none bg-surface border border-outline-variant rounded-lg px-3 py-2 font-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+<option>All Sources</option>
+<option>System</option>
+<option>Integration (Oracle ERP)</option>
+<option>Human Users</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">arrow_drop_down</span>
+</div>
+</div>
+<div class="w-full sm:w-1/3">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Date Range</label>
+<div class="relative">
+<input class="w-full bg-surface border border-outline-variant rounded-lg px-3 py-2 font-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Select dates" type="text" value="Oct 2027"/>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">calendar_month</span>
+</div>
+</div>
+</div>
+<!-- Audit History Table -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant">
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Date and time</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Event</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Record</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider whitespace-nowrap">User or integration</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Before and after summary</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Source reference</th>
+<th class="px-4 py-3 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant bg-surface-container-lowest">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container transition-colors group">
+<td class="px-4 py-4 font-data-mono text-data-mono text-on-surface whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">schedule</span>
+                                            25 Oct 2027, 11:00
+                                        </div>
+</td>
+<td class="px-4 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-variant text-on-surface font-body-md text-[13px]">
+<span class="material-symbols-outlined text-[14px]">edit_note</span>
+                                            Revision applied
+                                        </span>
+</td>
+<td class="px-4 py-4 font-data-mono text-data-mono text-on-surface whitespace-nowrap">BR-2027-042</td>
+<td class="px-4 py-4 font-body-md text-on-surface whitespace-nowrap">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-primary-fixed text-primary flex items-center justify-center font-bold text-xs">SJ</div>
+                                            Sarah Jenkins
+                                        </div>
+</td>
+<td class="px-4 py-4 font-body-md text-on-surface min-w-[200px]">
+                                        Net Change: <span class="font-data-mono font-medium">KES 0.00</span>
+</td>
+<td class="px-4 py-4 font-data-mono text-data-mono text-on-surface-variant whitespace-nowrap">REV-442</td>
+<td class="px-4 py-4 text-right">
+<button class="text-secondary font-body-md font-semibold hover:underline px-2 py-1 rounded hover:bg-secondary-fixed transition-colors">View</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container transition-colors group">
+<td class="px-4 py-4 font-data-mono text-data-mono text-on-surface whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">schedule</span>
+                                            24 Oct 2027, 09:15
+                                        </div>
+</td>
+<td class="px-4 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-body-md text-[13px]">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                                            Budget activated
+                                        </span>
+</td>
+<td class="px-4 py-4 font-data-mono text-data-mono text-on-surface whitespace-nowrap">MOH-BUD-0001</td>
+<td class="px-4 py-4 font-body-md text-on-surface whitespace-nowrap">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-primary-fixed text-primary flex items-center justify-center font-bold text-xs">JM</div>
+                                            James Mwangi
+                                        </div>
+</td>
+<td class="px-4 py-4 font-body-md text-on-surface min-w-[200px]">
+                                        Status: <span class="text-on-surface-variant">Draft</span> <span class="material-symbols-outlined text-[14px] align-middle mx-1">arrow_forward</span> <span class="font-medium text-status-available">Active</span>
+</td>
+<td class="px-4 py-4 font-data-mono text-data-mono text-on-surface-variant whitespace-nowrap">TREAS-MOH-27-04</td>
+<td class="px-4 py-4 text-right">
+<button class="text-secondary font-body-md font-semibold hover:underline px-2 py-1 rounded hover:bg-secondary-fixed transition-colors">View</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container transition-colors group">
+<td class="px-4 py-4 font-data-mono text-data-mono text-on-surface whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">schedule</span>
+                                            23 Oct 2027, 14:30
+                                        </div>
+</td>
+<td class="px-4 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed font-body-md text-[13px]">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+                                            Funding reserved
+                                        </span>
+</td>
+<td class="px-4 py-4 font-data-mono text-data-mono text-on-surface whitespace-nowrap">REQ-2023-892</td>
+<td class="px-4 py-4 font-body-md text-on-surface whitespace-nowrap">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px]">settings</span>
+</div>
+                                            System
+                                        </div>
+</td>
+<td class="px-4 py-4 font-body-md text-on-surface min-w-[200px]">
+                                        Reserved: <span class="font-data-mono font-medium text-status-reserved">KES 455M</span>
+</td>
+<td class="px-4 py-4 font-data-mono text-data-mono text-on-surface-variant whitespace-nowrap">RSV-2023-01</td>
+<td class="px-4 py-4 text-right">
+<button class="text-secondary font-body-md font-semibold hover:underline px-2 py-1 rounded hover:bg-secondary-fixed transition-colors">View</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container transition-colors group">
+<td class="px-4 py-4 font-data-mono text-data-mono text-on-surface whitespace-nowrap">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">schedule</span>
+                                            22 Oct 2027, 10:00
+                                        </div>
+</td>
+<td class="px-4 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-fixed text-on-primary-fixed font-body-md text-[13px]">
+<span class="material-symbols-outlined text-[14px]">dataset</span>
+                                            Baseline registered
+                                        </span>
+</td>
+<td class="px-4 py-4 font-data-mono text-data-mono text-on-surface whitespace-nowrap">MOH-BUD-0001</td>
+<td class="px-4 py-4 font-body-md text-on-surface whitespace-nowrap">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px]">api</span>
+</div>
+                                            Integration (Oracle ERP)
+                                        </div>
+</td>
+<td class="px-4 py-4 font-body-md text-on-surface min-w-[200px]">
+                                        Initial baseline import
+                                    </td>
+<td class="px-4 py-4 font-data-mono text-data-mono text-on-surface-variant whitespace-nowrap">ERP-7721</td>
+<td class="px-4 py-4 text-right">
+<button class="text-secondary font-body-md font-semibold hover:underline px-2 py-1 rounded hover:bg-secondary-fixed transition-colors">View</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination Footer -->
+<div class="bg-surface-container-lowest border-t border-outline-variant px-4 py-3 flex items-center justify-between">
+<div class="font-body-md text-on-surface-variant">
+                            Showing 1 to 4 of 128 entries
+                        </div>
+<div class="flex gap-1">
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-surface-container text-on-surface-variant transition-colors disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-primary-container text-on-primary-container font-medium transition-colors">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-surface-container text-on-surface font-medium transition-colors">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-surface-container text-on-surface font-medium transition-colors">3</button>
+<span class="w-8 h-8 flex items-center justify-center text-on-surface-variant">...</span>
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-surface-container text-on-surface font-medium transition-colors">10</button>
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-surface-container text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

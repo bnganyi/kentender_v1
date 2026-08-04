@@ -178,6 +178,7 @@ def get_home_portfolio(
 
 	if show_finance:
 		try:
+			# MVP-1 Budget teardown: landing returns empty budgets until rebuild.
 			from kentender_budget.api.landing import get_budget_landing_data
 
 			data = get_budget_landing_data() or {}
@@ -200,7 +201,7 @@ def get_home_portfolio(
 						"display": _fmt_money(approved, currency),
 						"currency": currency,
 						"tone": "default",
-						"url": "/desk/budget-hub",
+						"url": "/desk/budget-management",
 					},
 					{
 						"key": "allocated_plans",
@@ -209,7 +210,7 @@ def get_home_portfolio(
 						"display": _fmt_money(allocated, currency),
 						"currency": currency,
 						"tone": "committed",
-						"url": "/desk/budget-hub",
+						"url": "/desk/budget-management",
 					},
 					{
 						"key": "available_balance",
@@ -218,7 +219,7 @@ def get_home_portfolio(
 						"display": _fmt_money(available, currency),
 						"currency": currency,
 						"tone": "available",
-						"url": "/desk/budget-hub",
+						"url": "/desk/budget-management",
 					},
 					{
 						"key": "unfunded_demand",
