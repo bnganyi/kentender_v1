@@ -71,6 +71,53 @@ def _parent_filter_for_order(node_type: str, data: dict) -> dict | None:
 	return None
 
 
+def _blank(value: Any) -> bool:
+	if value is None:
+		return True
+	if isinstance(value, str) and not value.strip():
+		return True
+	return False
+
+
+def _validate_structure_node_fields(node_type: str, data: dict) -> dict[str, str]:
+	"""Field-level validation for structure drawers — return map for inline UI."""
+	errors: dict[str, str] = {}
+	if _blank(data.get("title")):
+		errors["title"] = _("Title is required")
+
+	if node_type in ("Programme", "SubProgramme", "StrategicOutcome"):
+		if _blank(data.get("responsible_function")):
+			errors["responsible_function"] = _("Responsible function is required")
+
+	if node_type == "PerformanceIndicator":
+		if _blank(data.get("definition")):
+			errors["definition"] = _("Definition is required")
+		if _blank(data.get("measurement_type")):
+			errors["measurement_type"] = _("Measurement type is required")
+		if _blank(data.get("measurement_frequency")):
+			errors["measurement_frequency"] = _("Measurement frequency is required")
+		if _blank(data.get("data_source")):
+			errors["data_source"] = _("Data source is required")
+		if _blank(data.get("responsible_function")):
+			errors["responsible_function"] = _("Responsible function is required")
+
+	if node_type == "PerformanceTarget":
+		if _blank(data.get("comparison_direction")):
+			errors["comparison_direction"] = _("Comparison direction is required")
+		if data.get("target_numeric") is None and _blank(data.get("target_text")):
+			errors["target_numeric"] = _("Target value is required")
+		if _blank(data.get("period_start")):
+			errors["period_start"] = _("Period start is required")
+		if _blank(data.get("period_end")):
+			errors["period_end"] = _("Period end is required")
+		if _blank(data.get("benefit_owner")):
+			errors["benefit_owner"] = _("Benefit owner is required")
+		if _blank(data.get("measurement_verifier")):
+			errors["measurement_verifier"] = _("Measurement verifier is required")
+
+	return errors
+
+
 def upsert_structure_node(payload: dict) -> dict:
 	if not can_edit_draft_plan():
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
@@ -143,6 +190,10 @@ def upsert_structure_node(payload: dict) -> dict:
 	elif node_type == "PerformanceTarget" and data.get("performance_indicator"):
 		data["plan_version"] = plan_version
 
+	field_errors = _validate_structure_node_fields(node_type, data)
+	if field_errors:
+		return {"ok": False, "errors": field_errors}
+
 	if data.get("order_index") is None and frappe.get_meta(doctype).has_field("order_index"):
 		data["order_index"] = _next_order_index(
 			doctype, plan_version, _parent_filter_for_order(node_type, data)
@@ -159,7 +210,13 @@ def upsert_structure_node(payload: dict) -> dict:
 		data[code_field] = None
 		doc = frappe.get_doc(data)
 		doc.insert(ignore_permissions=True)
-	return {"id": doc.name, "type": node_type, "code": doc.get(code_field), "name": doc.title}
+	return {
+		"ok": True,
+		"id": doc.name,
+		"type": node_type,
+		"code": doc.get(code_field),
+		"name": doc.title,
+	}
 
 
 def reorder_structure_nodes(plan_version: str, ordered: list[dict]) -> dict:

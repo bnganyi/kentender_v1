@@ -179,6 +179,73 @@ class TestStrategyPlanStructure(FrappeTestCase):
 		self.assertEqual(by_code[tgt["code"]]["fields"].get("target_numeric"), 99.9)
 		self.assertEqual(by_code[out["code"]]["warnings"], [])
 
+	def test_target_missing_benefit_owner_returns_field_errors(self):
+		"""Structured {ok:false, errors} — no MandatoryError / Message dialog path."""
+		_ensure_user("str.officer.struct.err@example.com", ["Strategy Officer"], self.pe)
+		frappe.set_user("str.officer.struct.err@example.com")
+		code = f"STR-ERR-{frappe.generate_hash(length=6).upper()}"
+		created = create_plan(
+			{
+				"title": "Structure field errors",
+				"plan_type": "Entity Strategic Plan",
+				"procuring_entity": self.pe,
+				"start_date": "2026-07-01",
+				"end_date": "2030-06-30",
+			}
+		)
+		plan_id = created["plan"]["id"]
+		self.addCleanup(lambda: _delete_plan_cascade(plan_id))
+		prog = upsert_structure_node(
+			{
+				"type": "Programme",
+				"plan_version": plan_id,
+				"title": "Prog",
+				"responsible_function": "ICT",
+			}
+		)
+		self.assertTrue(prog.get("ok"))
+		out = upsert_structure_node(
+			{
+				"type": "StrategicOutcome",
+				"plan_version": plan_id,
+				"programme": prog["id"],
+				"title": "Out",
+				"responsible_function": "ICT",
+			}
+		)
+		ind = upsert_structure_node(
+			{
+				"type": "PerformanceIndicator",
+				"plan_version": plan_id,
+				"strategic_outcome": out["id"],
+				"title": "Ind",
+				"definition": "def",
+				"measurement_type": "Percentage",
+				"unit": "%",
+				"measurement_frequency": "Monthly",
+				"data_source": "src",
+				"responsible_function": "ICT",
+			}
+		)
+		result = upsert_structure_node(
+			{
+				"type": "PerformanceTarget",
+				"plan_version": plan_id,
+				"performance_indicator": ind["id"],
+				"title": "Target without owner",
+				"comparison_direction": "At least",
+				"target_numeric": 99.9,
+				"period_start": "2027-07-01",
+				"period_end": "2028-06-30",
+				"measurement_verifier": "Administrator",
+				"status": "Active",
+				# benefit_owner omitted on purpose
+			}
+		)
+		self.assertFalse(result.get("ok"))
+		self.assertIn("benefit_owner", result.get("errors") or {})
+		self.assertNotIn("id", result)
+
 	def test_active_plan_blocks_upsert_and_delete(self):
 		_ensure_user("str.officer.struct.active@example.com", ["Strategy Officer"], self.pe)
 		frappe.set_user("str.officer.struct.active@example.com")

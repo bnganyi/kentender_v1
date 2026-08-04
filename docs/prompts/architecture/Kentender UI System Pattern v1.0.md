@@ -119,6 +119,16 @@ MOH-SP-2026-0011 · KES · Draft
 
 **4\. Field Rendering Rules**
 
+**4.0 Form / drawer validation errors (hard rule)**
+
+User-correctable validation must stay **inline** under the field. Do **not** open Frappe’s generic “Message” dialog for missing or invalid inputs.
+
+- API shape: `{ "ok": false, "errors": { "field_name": "Human message" } }`
+- Desk helper: `window.ktFormErrors` / `kentender.formErrors` (`kentender_core/public/js/kt_form_errors.js`)
+- Error slots: `data-kt-field-error` (Strategy alias: `data-kt-str-error`)
+- Cursor enforcement: `.cursor/rules/kentender-form-errors.mdc`
+- Permission / system failures may use toast or a titled dialog; field validation may not.
+
 **4.1 Strict rule**
 
 | **Field Type** | **Render As** |

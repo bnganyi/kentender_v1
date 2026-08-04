@@ -552,11 +552,27 @@ frappe.provide("kentender_strategy.live");
 	}
 
 	function clearCreateErrors($root) {
+		if (window.ktFormErrors) {
+			window.ktFormErrors.clear($root, {
+				errorAttr: "data-kt-str-error",
+				fieldAttr: "data-kt-str-field",
+				invalidClass: "kt-str-field-invalid",
+			});
+			return;
+		}
 		$root.find("[data-kt-str-error]").addClass("hidden").text("");
 		$root.find("[data-kt-str-field]").removeClass("kt-str-field-invalid");
 	}
 
 	function showCreateErrors($root, errors) {
+		if (window.ktFormErrors) {
+			window.ktFormErrors.show($root, errors, {
+				errorAttr: "data-kt-str-error",
+				fieldAttr: "data-kt-str-field",
+				invalidClass: "kt-str-field-invalid",
+			});
+			return;
+		}
 		clearCreateErrors($root);
 		Object.keys(errors || {}).forEach(function (field) {
 			var $err = $root.find('[data-kt-str-error="' + field + '"]');
@@ -1267,6 +1283,16 @@ frappe.provide("kentender_strategy.live");
 			.join("");
 	}
 
+	function fieldErrorSlot(name) {
+		return (
+			'<p class="text-xs text-error hidden" data-kt-str-error="' +
+			esc(name) +
+			'" data-kt-field-error="' +
+			esc(name) +
+			'"></p>'
+		);
+	}
+
 	function fieldInput(name, label, value, opts) {
 		opts = opts || {};
 		var type = opts.type || "text";
@@ -1276,6 +1302,7 @@ frappe.provide("kentender_strategy.live");
 			'<label class="font-label-caps text-label-caps text-on-surface-variant uppercase">' +
 			esc(label) +
 			"</label>";
+		var err = fieldErrorSlot(name);
 		if (opts.codeDisplay) {
 			return (
 				'<div class="space-y-1" data-kt-str-drawer-field="' +
@@ -1290,6 +1317,7 @@ frappe.provide("kentender_strategy.live");
 				'" value="' +
 				esc(value || "") +
 				'"/>' +
+				err +
 				"</div>"
 			);
 		}
@@ -1305,7 +1333,9 @@ frappe.provide("kentender_strategy.live");
 				req +
 				">" +
 				esc(value || "") +
-				"</textarea></div>"
+				"</textarea>" +
+				err +
+				"</div>"
 			);
 		}
 		if (type === "select") {
@@ -1331,30 +1361,36 @@ frappe.provide("kentender_strategy.live");
 				labelHtml +
 				'<select name="' +
 				esc(name) +
-				'" class="w-full border border-outline-variant rounded-lg p-2 text-body-md focus:border-primary outline-none"' +
+				'" class="w-full border border-outline-variant rounded-lg py-2 pl-2 pr-10 text-body-md focus:border-primary outline-none"' +
 				req +
 				">" +
 				optsHtml +
-				"</select></div>"
+				"</select>" +
+				err +
+				"</div>"
 			);
 		}
 		if (opts.unitSuffix != null) {
+			// Joined input+suffix: min-w-0 on the flex input is required so the % addon
+			// stays inside the grid column (otherwise it overflows ~40px and looks misaligned).
 			return (
 				'<div class="space-y-1" data-kt-str-drawer-field="' +
 				esc(name) +
 				'">' +
 				labelHtml +
-				'<div class="flex">' +
+				'<div class="flex w-full min-w-0 items-stretch kt-str-unit-control" data-testid="kt-str-unit-control">' +
 				'<input name="' +
 				esc(name) +
-				'" type="text" class="flex-1 border border-outline-variant rounded-l-lg p-2 text-body-md font-data-mono focus:border-primary outline-none" value="' +
+				'" type="text" class="kt-str-unit-control-input min-w-0 flex-1 border border-outline-variant rounded-l-lg py-2 px-2 text-body-md font-data-mono focus:border-primary outline-none" value="' +
 				esc(value == null ? "" : value) +
 				'"' +
 				req +
 				"/>" +
-				'<span class="bg-surface-container border border-l-0 border-outline-variant rounded-r-lg px-3 flex items-center text-on-surface-variant font-medium">' +
+				'<span class="kt-str-unit-control-suffix bg-surface-container border border-l-0 border-outline-variant rounded-r-lg px-3 flex items-center justify-center shrink-0 text-on-surface-variant font-medium" aria-hidden="true">' +
 				esc(opts.unitSuffix) +
-				"</span></div></div>"
+				"</span></div>" +
+				err +
+				"</div>"
 			);
 		}
 		return (
@@ -1373,7 +1409,9 @@ frappe.provide("kentender_strategy.live");
 			'"' +
 			req +
 			(opts.readonly ? " readonly" : "") +
-			"/></div>"
+			"/>" +
+			err +
+			"</div>"
 		);
 	}
 
@@ -1991,6 +2029,7 @@ frappe.provide("kentender_strategy.live");
 			if (!$overlay.length) {
 				return;
 			}
+			var $panel = $overlay.find('[data-testid="kt-str-structure-drawer-panel"]');
 			var type = $overlay.attr("data-kt-str-drawer-type") || $host.data("kt-str-drawer-type");
 			var mode = $overlay.attr("data-kt-str-drawer-mode") || "add";
 			var fields = readDrawerFields($overlay);
@@ -2015,13 +2054,40 @@ frappe.provide("kentender_strategy.live");
 			if (type === "PerformanceTarget" && !payload.status) {
 				payload.status = "Active";
 			}
+			if (window.ktFormErrors) {
+				window.ktFormErrors.clear($panel.length ? $panel : $overlay, {
+					errorAttr: "data-kt-str-error",
+					invalidClass: "kt-str-field-invalid",
+				});
+			}
 			call("upsert_structure_node", { payload: payload })
 				.then(function (res) {
+					if (res && res.ok === false) {
+						var errors = (res && res.errors) || {};
+						if (window.ktFormErrors) {
+							window.ktFormErrors.show($panel.length ? $panel : $overlay, errors, {
+								errorAttr: "data-kt-str-error",
+								invalidClass: "kt-str-field-invalid",
+							});
+						}
+						return;
+					}
 					closeStructureDrawerLive($host);
 					frappe.show_alert({ message: __("Structure item saved"), indicator: "green" });
 					return reload(res && res.id);
 				})
-				.catch(function () {
+				.catch(function (err) {
+					var mapped =
+						window.ktFormErrors && window.ktFormErrors.fromFrappeError
+							? window.ktFormErrors.fromFrappeError(err)
+							: {};
+					if (mapped && Object.keys(mapped).length) {
+						window.ktFormErrors.show($panel.length ? $panel : $overlay, mapped, {
+							errorAttr: "data-kt-str-error",
+							invalidClass: "kt-str-field-invalid",
+						});
+						return;
+					}
 					frappe.show_alert({ message: __("Could not save structure item"), indicator: "red" });
 				});
 		}

@@ -217,6 +217,19 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 		drawer_fx = _read(FIXTURES / "structure_drawer.js")
 		self.assertIn("kt-str-structure-drawer-overlay", drawer_fx)
 		self.assertIn("kt-str-structure-drawer-panel", drawer_fx)
+		# Target value % suffix must stay inside the column (min-width:0 on flex input).
+		self.assertIn("kt-str-unit-control", _read(LIVE_BIND))
+		self.assertIn("kt-str-unit-control-input", structure_css)
+		self.assertIn("min-width: 0 !important", structure_css)
+		# Structured field errors (ktFormErrors) — drawer slots + no Message-dialog-only path.
+		live_bind = _read(LIVE_BIND)
+		self.assertIn("fieldErrorSlot", live_bind)
+		self.assertIn("data-kt-field-error", live_bind)
+		self.assertIn("ktFormErrors", live_bind)
+		self.assertIn("kt-str-field-invalid", structure_css)
+		core_helper = Path(frappe.get_app_path("kentender_core")) / "public" / "js" / "kt_form_errors.js"
+		self.assertTrue(core_helper.is_file(), f"missing {core_helper}")
+		self.assertIn("window.ktFormErrors", _read(core_helper))
 		self.assertIn("Add performance target", drawer_fx)
 		self.assertIn("Target value", drawer_fx)
 		self.assertIn("rounded-l-lg", drawer_fx)

@@ -246,6 +246,61 @@
   border-color: var(--kt-str-focus-border) !important;
   box-shadow: 0 0 0 1px var(--kt-str-focus-ring) !important;
 }
+.kt-cl-shell .kt-str-root [data-testid="kt-str-structure-drawer-panel"] [data-kt-str-error]:not(.hidden),
+.kt-cl-shell .kt-str-root [data-testid="kt-str-structure-drawer-panel"] [data-kt-field-error]:not(.hidden) {
+  display: block !important;
+  margin-top: 0.25rem !important;
+  color: #ba1a1a !important;
+}
+.kt-cl-shell .kt-str-root [data-testid="kt-str-structure-drawer-panel"] .kt-str-field-invalid,
+.kt-cl-shell .kt-str-root [data-testid="kt-str-structure-drawer-panel"] .kt-field-invalid {
+  border-color: #ba1a1a !important;
+}
+
+/* Target value + unit suffix: Desk/global input{width:100%} blows the % addon out of the column. */
+.kt-cl-shell .kt-str-root .min-w-0{min-width:0 !important}
+.kt-cl-shell .kt-str-root .shrink-0{flex-shrink:0 !important}
+.kt-cl-shell .kt-str-root .items-stretch{align-items:stretch !important}
+.kt-cl-shell .kt-str-root .pl-2{padding-left:0.5rem !important}
+.kt-cl-shell .kt-str-root .pr-10{padding-right:2.5rem !important}
+.kt-cl-shell .kt-str-root [data-testid="kt-str-structure-drawer-panel"] .kt-str-unit-control {
+  display: flex !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+.kt-cl-shell .kt-str-root [data-testid="kt-str-structure-drawer-panel"] .kt-str-unit-control-input {
+  flex: 1 1 0% !important;
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  height: 2.5rem !important;
+  box-sizing: border-box !important;
+}
+.kt-cl-shell .kt-str-root [data-testid="kt-str-structure-drawer-panel"] .kt-str-unit-control-suffix {
+  flex: 0 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 2.5rem !important;
+  height: 2.5rem !important;
+  box-sizing: border-box !important;
+}
+.kt-cl-shell .kt-str-root [data-testid="kt-str-structure-drawer-panel"] select {
+  height: 2.5rem !important;
+  box-sizing: border-box !important;
+}
+.kt-cl-shell .kt-str-root [data-testid="kt-str-structure-drawer-panel"]
+  [data-kt-str-drawer-field="comparison_direction"] select,
+.kt-cl-shell .kt-str-root [data-testid="kt-str-structure-drawer-panel"]
+  [data-kt-str-drawer-field="baseline_status"] select {
+  /* Beat .p-2 shorthand so chevron padding-right from tokens wins. */
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+  padding-left: 0.5rem !important;
+  padding-right: 2.5rem !important;
+}
 
 
 .kt-cl-shell .kt-str-root .absolute{position:absolute !important}

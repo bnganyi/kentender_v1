@@ -47,6 +47,8 @@ app_include_css = [
 ]
 app_include_js = [
 	f"/assets/kentender_core/js/kt_desk_document_title.js?v={_asset_version('public/js/kt_desk_document_title.js')}",
+	# Field-error helper — load early so Strategy / workbench binders can use ktFormErrors.
+	f"/assets/kentender_core/js/kt_form_errors.js?v={_asset_version('public/js/kt_form_errors.js')}",
 	f"/assets/kentender_core/js/kt_module_registry.js?v={_asset_version('public/js/kt_module_registry.js')}",
 	f"/assets/kentender_core/js/kt_module_shell.js?v={_asset_version('public/js/kt_module_shell.js')}",
 	f"/assets/kentender_core/js/kt_cl_code_spec.js?v={_asset_version('public/js/kt_cl_code_spec.js')}",

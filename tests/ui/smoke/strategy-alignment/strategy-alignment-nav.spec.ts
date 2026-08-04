@@ -1283,6 +1283,35 @@ test.describe("Strategy Alignment UI shell", () => {
 		await expect(page.getByTestId("kt-str-structure-drawer-overlay")).toHaveCount(0);
 	});
 
+	test("structure target save shows inline Benefit Owner error (no Message dialog)", async ({
+		page,
+	}) => {
+		await page.goto(`/desk/strategy-plan-structure/${REVIEW_TX_PLAN}`, {
+			waitUntil: "domcontentloaded",
+		});
+		await expect(page.locator('[data-testid="kt-str-structure"][data-kt-str-live="1"]')).toBeVisible({
+			timeout: 30_000,
+		});
+		await page.locator('[data-node-code="REV-IND-01"]').first().click();
+		await page.getByRole("button", { name: /Add Performance Target/i }).click();
+		const panel = page.getByTestId("kt-str-structure-drawer-panel");
+		await expect(panel).toBeVisible({ timeout: 15_000 });
+		await panel.locator('textarea[name="title"]').fill("Inline error target");
+		await panel.locator('select[name="comparison_direction"]').selectOption("At least");
+		await panel.locator('input[name="target_numeric"]').fill("99.9");
+		await panel.locator('input[name="period_start"]').fill("2027-07-01");
+		await panel.locator('input[name="period_end"]').fill("2028-06-30");
+		await panel.locator('input[name="benefit_owner"]').fill("");
+		await panel.locator('input[name="measurement_verifier"]').fill("Administrator");
+		await panel.getByRole("button", { name: /Save target/i }).click();
+		const ownerErr = panel.locator('[data-kt-str-error="benefit_owner"]');
+		await expect(ownerErr).toBeVisible({ timeout: 10_000 });
+		await expect(ownerErr).toContainText(/required/i);
+		await expect(page.getByText(/Value missing for Performance Target/i)).toHaveCount(0);
+		await expect(page.locator(".msgprint, .modal-dialog").filter({ hasText: /^Message$/ })).toHaveCount(0);
+		await expect(panel).toBeVisible();
+	});
+
 	test("review live binds ready canvas for Active plan", async ({ page }) => {
 		await page.goto(`/desk/strategy-plan-review/${PLAN}`, { waitUntil: "domcontentloaded" });
 		const ready = page.locator('[data-testid="kt-str-review-ready"][data-kt-str-live="1"]');
