@@ -1,1 +1,2 @@
 kentender_strategy.patches.mvp1_teardown_drop_legacy_strategy_doctypes
+kentender_strategy.patches.migrate_strategic_plan_types_and_scope

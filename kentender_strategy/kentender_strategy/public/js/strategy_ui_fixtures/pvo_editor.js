@@ -20,9 +20,10 @@ kentender_strategy.ui_fixtures.pvo_editor = function () {
 <h3 class="font-headline-sm text-headline-sm text-on-surface">Objective Details</h3>
 </div>
 <div class="p-card-padding grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-<div>
-<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Objective code</label>
-<input class="w-full bg-surface border-outline-variant rounded-lg px-3 py-2 font-data-mono text-data-mono text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" type="text" value="PVO-SUS-02"/>
+<div data-testid="kt-str-pvo-reference">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Reference</label>
+<input class="w-full bg-surface-container opacity-70 border-outline-variant rounded-lg px-3 py-2 font-data-mono text-data-mono text-on-surface-variant cursor-not-allowed" disabled="" type="text" data-kt-str-pvo-field="objective_code" value="" placeholder="Generated automatically" aria-label="Objective reference"/>
+<p class="text-xs text-on-surface-variant mt-1">Generated automatically (catalogue codes retained when importing controlled obligations)</p>
 </div>
 <div>
 <label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Version</label>

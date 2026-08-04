@@ -53,13 +53,13 @@ Responsive behaviour:
 - Tables may use controlled horizontal scrolling where necessary; preserve the first identifying column and action access.
 
 Use the Ministry of Health fixture consistently:
-- Plan: MOH-SP-2026-2030 — Ministry of Health Strategic Plan 2026–2030
+- Plan: MOH-SP-0001 — Ministry of Health Strategic Plan 2026–2030
 - Version: 1
-- Programme: MOH-PROG-DH — Digital Health Services
-- Sub-programme: MOH-SUB-HIS — Health Information Systems
-- Outcome: MOH-OUT-01 — Reliable and accessible digital clinical services
-- Indicator: MOH-IND-01 — Availability of core clinical information systems
-- Target: MOH-TGT-01 — At least 99.9% annual availability by 30 June 2028
+- Programme: MOH-PROG-0001 — Digital Health Services
+- Sub-programme: MOH-SUB-0001 — Health Information Systems
+- Outcome: MOH-OUT-0001 — Reliable and accessible digital clinical services
+- Indicator: MOH-IND-0001 — Availability of core clinical information systems
+- Target: MOH-TGT-0001 — At least 99.9% annual availability by 30 June 2028
 - Baseline: 97.8% as at 30 June 2026
 
 Use this contract for every subsequent Strategy Alignment screen. Do not generate a screen yet.
@@ -107,7 +107,7 @@ Main content: a compact table with columns:
 - Action
 
 Use these rows:
-1. MOH-SP-2026-2030 — Ministry of Health Strategic Plan 2026–2030 | Entity Strategic Plan | 1 Jul 2026–30 Jun 2030 | v1 | Active | 1 target needs attention | View
+1. MOH-SP-0001 — Ministry of Health Strategic Plan 2026–2030 | Entity Strategic Plan | 1 Jul 2026–30 Jun 2030 | v1 | Active | 1 target needs attention | View
 2. MOH-DHT-2026-2029 — Digital Health Transformation Strategy | Programme Strategy | 1 Jul 2026–30 Jun 2029 | v1 | Active | 2 measurements due | View
 3. MOH-SP-2030-2034 — Ministry of Health Strategic Plan 2030–2034 | Entity Strategic Plan | 1 Jul 2030–30 Jun 2034 | v1 | Submitted | Awaiting review | Review
 
@@ -130,7 +130,7 @@ Do not add charts, trend graphics, recent-activity feeds, strategy scores, compl
 Design the Plan Overview screen for the active Ministry of Health plan.
 
 Use a compact plan workspace header:
-- MOH-SP-2026-2030
+- MOH-SP-0001
 - Ministry of Health Strategic Plan 2026–2030
 - Version 1
 - Active
@@ -168,7 +168,7 @@ Main layout:
    - 3 recommended considerations
    Include a secondary View commitments action.
 4. “Performance attention” compact table with columns Target, Period, Result, Next action. Show:
-   - MOH-TGT-01 — At least 99.9% annual availability by 30 June 2028 | September 2027 | At risk | View measurement
+   - MOH-TGT-0001 — At least 99.9% annual availability by 30 June 2028 | September 2027 | At risk | View measurement
    - MOH-TGT-02 — Restore critical service within 4 hours | October 2027 | Measurement due | Submit measurement
 
 Because this plan is Active, display all plan-definition fields as read-only. Show a quiet message: “Active plan versions are locked. Create a successor version to make material changes.” Provide Create successor version only to authorised users as a secondary action.
@@ -202,13 +202,13 @@ Tree behaviour and content:
 - Do not create a placeholder Sub-programme when none is needed.
 
 Expanded sample branch:
-- Programme — MOH-PROG-DH — Digital Health Services
-  - Sub-programme — MOH-SUB-HIS — Health Information Systems
-    - Outcome — MOH-OUT-01 — Reliable and accessible digital clinical services
-      - Indicator — MOH-IND-01 — Availability of core clinical information systems
-        - Target — MOH-TGT-01 — At least 99.9% annual availability by 30 June 2028
+- Programme — MOH-PROG-0001 — Digital Health Services
+  - Sub-programme — MOH-SUB-0001 — Health Information Systems
+    - Outcome — MOH-OUT-0001 — Reliable and accessible digital clinical services
+      - Indicator — MOH-IND-0001 — Availability of core clinical information systems
+        - Target — MOH-TGT-0001 — At least 99.9% annual availability by 30 June 2028
 
-Select MOH-OUT-01. The right detail panel shows:
+Select MOH-OUT-0001. The right detail panel shows:
 - Type: Strategic Outcome
 - Code and title
 - Description
@@ -239,7 +239,7 @@ Drawer header:
 - Parent path: Digital Health Services / Health Information Systems / Reliable and accessible digital clinical services / Availability of core clinical information systems
 
 Fields in this order:
-1. Target code — MOH-TGT-01
+1. Target code — MOH-TGT-0001
 2. Target title — At least 99.9% annual availability by 30 June 2028
 3. Comparison direction — At least
 4. Target value — 99.9
@@ -402,10 +402,10 @@ Use a compact table with columns:
 - Action
 
 Rows:
-- PVO-EFT-01 — Improve availability of critical health services | Required consideration | Protect continuity of essential digital clinical services | MOH-OUT-01 and MOH-TGT-01 | Director, Digital Health | Complete | Review
-- PVO-ECO-01 — Reduce whole-life infrastructure cost | Required consideration | Ensure infrastructure decisions consider acquisition, energy, maintenance and disposal cost | MOH-OUT-01 | Head, ICT Infrastructure | Complete | Review
+- PVO-EFT-01 — Improve availability of critical health services | Required consideration | Protect continuity of essential digital clinical services | MOH-OUT-0001 and MOH-TGT-0001 | Director, Digital Health | Complete | Review
+- PVO-ECO-01 — Reduce whole-life infrastructure cost | Required consideration | Ensure infrastructure decisions consider acquisition, energy, maintenance and disposal cost | MOH-OUT-0001 | Head, ICT Infrastructure | Complete | Review
 - PVO-SUS-02 — Ensure compliant handling of replaced ICT equipment | Required consideration | Connect ICT replacement to lawful asset stewardship | No link selected | Supply Chain Director | Needs attention | Resolve
-- PVO-LOC-01 — Develop internal and local technical capability | Recommended consideration | Reduce dependency and strengthen service support | MOH-OUT-01 | Director, Digital Health | Complete | Review
+- PVO-LOC-01 — Develop internal and local technical capability | Recommended consideration | Reduce dependency and strengthen service support | MOH-OUT-0001 | Director, Digital Health | Complete | Review
 
 Selecting Add commitment opens a focused selector drawer:
 - Search and filters reduce the list to applicable Active objectives.
@@ -459,8 +459,8 @@ Use a compact table with columns:
 - Action
 
 Rows:
-- MOH-TGT-01 — At least 99.9% annual availability by 30 June 2028 | September 2027 | ≥99.9% | 99.82% | At risk | Verified | Open | View
-- MOH-TGT-01 — At least 99.9% annual availability by 30 June 2028 | October 2027 | ≥99.9% | 99.96% | On track | Verified | None required | View
+- MOH-TGT-0001 — At least 99.9% annual availability by 30 June 2028 | September 2027 | ≥99.9% | 99.82% | At risk | Verified | Open | View
+- MOH-TGT-0001 — At least 99.9% annual availability by 30 June 2028 | October 2027 | ≥99.9% | 99.96% | On track | Verified | None required | View
 - MOH-TGT-02 — Restore critical service within 4 hours | October 2027 | ≤4 hours | — | No data | Due | — | Submit measurement
 - MOH-TGT-03 — Complete regional deployment by 31 December 2027 | Q2 2027/28 | Achieve by date | 80% milestones | At risk | Submitted | Pending verification | Review
 
@@ -478,11 +478,11 @@ Do not add target editing, a chart per row, performance scoring or a “mark com
 ## Prompt 09 — STR-UI-09 Submit Measurement
 
 ```text
-Design the focused Submit Measurement screen for MOH-TGT-01.
+Design the focused Submit Measurement screen for MOH-TGT-0001.
 
 Header:
 - Title: Submit performance measurement
-- Target: MOH-TGT-01 — At least 99.9% annual availability by 30 June 2028
+- Target: MOH-TGT-0001 — At least 99.9% annual availability by 30 June 2028
 - Parent path: Digital Health Services / Health Information Systems / Reliable and accessible digital clinical services
 
 At the top, show a compact read-only target reference:
@@ -527,11 +527,11 @@ Do not ask the submitter to declare that the result is correct, select the resul
 ## Prompt 10 — STR-UI-10 Verify Measurement
 
 ```text
-Design the Verify Measurement screen for the submitted September 2027 result against MOH-TGT-01.
+Design the Verify Measurement screen for the submitted September 2027 result against MOH-TGT-0001.
 
 Header:
 - Title: Verify performance measurement
-- Target: MOH-TGT-01 — At least 99.9% annual availability by 30 June 2028
+- Target: MOH-TGT-0001 — At least 99.9% annual availability by 30 June 2028
 - Workflow status: Submitted
 - Derived result: At risk
 
@@ -601,7 +601,7 @@ Use a compact table with columns:
 - Action
 
 Rows:
-- MOH-TGT-01 / September 2027 | Resolve storage-controller instability and confirm service stability | Head, ICT Infrastructure | 31 October 2027 | In progress | Due in 8 days | Continue
+- MOH-TGT-0001 / September 2027 | Resolve storage-controller instability and confirm service stability | Head, ICT Infrastructure | 31 October 2027 | In progress | Due in 8 days | Continue
 - MOH-TGT-04 / Q1 2027/28 | Validate regional network redundancy plan | Infrastructure Programme Lead | 15 October 2027 | Submitted for verification | Awaiting verification | Review
 - MOH-TGT-05 / August 2027 | Complete delayed energy baseline assessment | Facilities Director | 30 September 2027 | Open | Overdue | Start
 
@@ -664,10 +664,10 @@ Use a compact table with columns:
 - Action
 
 Rows:
-- DEM-MOH-2027-014 — Clinical systems infrastructure refresh | Demand | MOH-TGT-01 — At least 99.9% availability | Primary alignment | Approved | 12 Sep 2027 | View
-- BUD-MOH-2027-008 — Digital health infrastructure allocation | Budget | MOH-TGT-01 | Supporting alignment | Approved | 28 Aug 2027 | View
+- DEM-MOH-2027-014 — Clinical systems infrastructure refresh | Demand | MOH-TGT-0001 — At least 99.9% availability | Primary alignment | Approved | 12 Sep 2027 | View
+- BUD-MOH-2027-008 — Digital health infrastructure allocation | Budget | MOH-TGT-0001 | Supporting alignment | Approved | 28 Aug 2027 | View
 - TND-MOH-ICT-042 — Supply and installation of resilient clinical systems infrastructure | Tender | PVO-RES-01 — Improve continuity of critical services | Value commitment | Configuration | 20 Sep 2027 | View
-- CTR-MOH-ICT-018 — Clinical systems infrastructure support | Contract | MOH-TGT-01 | Supporting alignment | Active | 15 Oct 2027 | View
+- CTR-MOH-ICT-018 — Clinical systems infrastructure support | Contract | MOH-TGT-0001 | Supporting alignment | Active | 15 Oct 2027 | View
 
 Show a quiet note: “Historical references remain valid when a strategy version is superseded. Only references requiring remediation appear as issues.”
 
@@ -765,12 +765,12 @@ Use a chronological compact table with columns:
 - Action
 
 Rows:
-- 1 Jul 2026, 09:15 | Plan activated | MOH-SP-2026-2030 v1 | Principal Secretary, Health | Approved → Active | — | View
-- 28 Jun 2026, 14:40 | Plan approved | MOH-SP-2026-2030 v1 | Planning Authority | Submitted → Approved | Review complete | View
-- 25 Jun 2026, 11:05 | Plan submitted | MOH-SP-2026-2030 v1 | Strategy Manager | Draft → Submitted | — | View
-- 3 Oct 2027, 16:20 | Measurement submitted | MOH-TGT-01 / Sep 2027 | Performance Officer | Draft → Submitted | — | View
-- 5 Oct 2027, 10:10 | Measurement verified | MOH-TGT-01 / Sep 2027 | Performance Verifier | Submitted → Verified | Evidence confirmed | View
-- 12 Sep 2027, 13:30 | Downstream reference created | DEM-MOH-2027-014 | Demand Intake service | Primary alignment to MOH-TGT-01 | — | View reference
+- 1 Jul 2026, 09:15 | Plan activated | MOH-SP-0001 v1 | Principal Secretary, Health | Approved → Active | — | View
+- 28 Jun 2026, 14:40 | Plan approved | MOH-SP-0001 v1 | Planning Authority | Submitted → Approved | Review complete | View
+- 25 Jun 2026, 11:05 | Plan submitted | MOH-SP-0001 v1 | Strategy Manager | Draft → Submitted | — | View
+- 3 Oct 2027, 16:20 | Measurement submitted | MOH-TGT-0001 / Sep 2027 | Performance Officer | Draft → Submitted | — | View
+- 5 Oct 2027, 10:10 | Measurement verified | MOH-TGT-0001 / Sep 2027 | Performance Verifier | Submitted → Verified | Evidence confirmed | View
+- 12 Sep 2027, 13:30 | Downstream reference created | DEM-MOH-2027-014 | Demand Intake service | Primary alignment to MOH-TGT-0001 | — | View reference
 
 Selecting View opens a read-only detail drawer with timestamp, actor, affected record, prior state, new state, reason where required and a concise changed-fields comparison for material edits.
 
@@ -800,7 +800,7 @@ Header:
 
 Context filters:
 - Procuring entity: Ministry of Health; show an entity selector only for cross-entity authority
-- Active plan: MOH-SP-2026-2030 — Ministry of Health Strategic Plan 2026–2030
+- Active plan: MOH-SP-0001 — Ministry of Health Strategic Plan 2026–2030
 - Reporting period: July–October 2027
 - Programme: All programmes
 - Sub-programme: All sub-programmes
@@ -829,7 +829,7 @@ Use a compact table with columns:
 - Action
 
 Rows:
-1. MOH-OUT-01 — Reliable and accessible digital clinical services | 2 On track, 1 At risk | Improving | 2 approved demands, 1 tender, 1 active contract | Storage corrective action due 31 Oct 2027 | View
+1. MOH-OUT-0001 — Reliable and accessible digital clinical services | 2 On track, 1 At risk | Improving | 2 approved demands, 1 tender, 1 active contract | Storage corrective action due 31 Oct 2027 | View
 2. MOH-OUT-02 — Cost-effective digital health infrastructure | 1 On track, 1 No data | Stable | 1 approved demand, 1 procurement-plan item | October cost measurement overdue | Review
 3. MOH-OUT-03 — Improved internal and local technical capability | 1 On track, 1 Off track | Declining | 1 active contract | Skills-transfer milestone overdue | Review
 
@@ -847,7 +847,7 @@ Use a compact table with columns:
 - Next action
 
 Rows:
-- Target At risk; corrective action open | MOH-TGT-01 — At least 99.9% annual availability | Head, ICT Infrastructure | Due 31 Oct 2027 | Review action
+- Target At risk; corrective action open | MOH-TGT-0001 — At least 99.9% annual availability | Head, ICT Infrastructure | Due 31 Oct 2027 | Review action
 - Measurement overdue | MOH-TGT-02 — Restore critical service within 4 hours | Director, Digital Health | 5 days overdue | View target
 - Required value commitment not addressed by one aligned demand | PVO-ECO-01 — Reduce whole-life infrastructure cost | Demand Sponsor | 3 days outstanding | Review treatment
 
@@ -892,7 +892,7 @@ Use a compact table with columns:
 - Action
 
 Rows:
-- PVO-EFT-01 — Improve availability of critical health services | Required | 4 of 4 aligned Value Cases addressed | MOH-TGT-01: At risk | Corrective action open | View
+- PVO-EFT-01 — Improve availability of critical health services | Required | 4 of 4 aligned Value Cases addressed | MOH-TGT-0001: At risk | Corrective action open | View
 - PVO-ECO-01 — Reduce whole-life infrastructure cost | Required | 3 of 4 addressed | No verified outcome measure | 1 treatment outstanding | Review
 - PVO-SUS-02 — Ensure compliant handling of replaced ICT equipment | Required | 2 of 3 addressed | No verified outcome measure yet | Evidence not yet due | View
 - PVO-RES-01 — Improve continuity of critical services | Recommended | 4 of 4 addressed | Linked target On track | None | View

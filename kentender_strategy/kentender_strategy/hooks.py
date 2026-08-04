@@ -36,6 +36,7 @@ app_include_css = [
 	f"/assets/kentender_strategy/css/strategy_alignment_measurement_submit.css?v={_v('public/css/strategy_alignment_measurement_submit.css')}",
 	f"/assets/kentender_strategy/css/strategy_alignment_measurement_verify.css?v={_v('public/css/strategy_alignment_measurement_verify.css')}",
 	f"/assets/kentender_strategy/css/strategy_alignment_remaining.css?v={_v('public/css/strategy_alignment_remaining.css')}",
+	f"/assets/kentender_strategy/css/strategy_alignment_performance.css?v={_v('public/css/strategy_alignment_performance.css')}",
 	# Must stay last: restores md:/lg: direction + side paddings after per-screen !important dumps.
 	f"/assets/kentender_strategy/css/strategy_alignment_responsive.css?v={_v('public/css/strategy_alignment_responsive.css')}",
 ]
@@ -59,6 +60,7 @@ app_include_js = [
 	f"/assets/kentender_strategy/js/strategy_ui_fixtures/review_blockers.js?v={_v('public/js/strategy_ui_fixtures/review_blockers.js')}",
 	f"/assets/kentender_strategy/js/strategy_ui_fixtures/review_ready.js?v={_v('public/js/strategy_ui_fixtures/review_ready.js')}",
 	f"/assets/kentender_strategy/js/strategy_ui_fixtures/audit.js?v={_v('public/js/strategy_ui_fixtures/audit.js')}",
+	f"/assets/kentender_strategy/js/strategy_ui_fixtures/performance.js?v={_v('public/js/strategy_ui_fixtures/performance.js')}",
 	f"/assets/kentender_strategy/js/strategy_live_bind.js?v={_v('public/js/strategy_live_bind.js')}",
 	f"/assets/kentender_strategy/js/strategy_alignment_shell.js?v={_v('public/js/strategy_alignment_shell.js')}",
 	f"/assets/kentender_strategy/js/strategy_alignment_workspace_redirect.js?v={_v('public/js/strategy_alignment_workspace_redirect.js')}",
@@ -67,6 +69,7 @@ app_include_js = [
 # Never append ?v= to page_js — Frappe resolves these as disk paths.
 page_js = {
 	"strategy-alignment": "public/js/strategy_alignment_portfolio_page.js",
+	"strategy-performance": "public/js/strategy_alignment_performance_page.js",
 	"strategy-plan-create": "public/js/strategy_alignment_create_page.js",
 	"strategy-plan-overview": "public/js/strategy_plan_overview_page.js",
 	"strategy-plan-structure": "public/js/strategy_plan_structure_page.js",

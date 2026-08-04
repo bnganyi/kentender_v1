@@ -12,10 +12,137 @@ CODE_RE = re.compile(r"^[A-Z0-9-]+$")
 IMMUTABLE_PLAN = frozenset({"Approved", "Active", "Superseded", "Archived"})
 IMMUTABLE_PVO = frozenset({"Active", "Superseded", "Retired"})
 
+PLAN_TYPE_ENTITY = "Entity Strategic Plan"
+PLAN_TYPE_PROGRAMME = "Programme Strategy"
+PLAN_TYPE_THEMATIC = "Thematic Plan"
+PLAN_TYPE_ANNUAL = "Annual Implementation Plan"
+PLAN_TYPES = (
+	PLAN_TYPE_ENTITY,
+	PLAN_TYPE_PROGRAMME,
+	PLAN_TYPE_THEMATIC,
+	PLAN_TYPE_ANNUAL,
+)
+SUBORDINATE_PLAN_TYPES = frozenset(
+	{PLAN_TYPE_PROGRAMME, PLAN_TYPE_THEMATIC, PLAN_TYPE_ANNUAL}
+)
+SCOPE_TYPE_PE = "Procuring Entity"
+SCOPE_TYPE_PROGRAMME = "Programme"
+SCOPE_TYPE_ENTITY_UNIT = "Entity Unit"
+SCOPE_TYPES = (SCOPE_TYPE_PE, SCOPE_TYPE_PROGRAMME, SCOPE_TYPE_ENTITY_UNIT)
+
 
 def _require_code(code: str, label: str) -> None:
 	if not code or not CODE_RE.match(code):
 		frappe.throw(_("{0} must use uppercase letters, numbers and hyphens").format(label))
+
+
+def _periods_overlap(start_a, end_a, start_b, end_b) -> bool:
+	if not start_a or not end_a or not start_b or not end_b:
+		return False
+	sa = frappe.utils.getdate(start_a)
+	ea = frappe.utils.getdate(end_a)
+	sb = frappe.utils.getdate(start_b)
+	eb = frappe.utils.getdate(end_b)
+	return sa <= eb and sb <= ea
+
+
+def normalize_plan_scope(doc) -> None:
+	"""Auto-fill ESP scope from procuring entity; clear parent for ESP."""
+	if (doc.plan_type or "") == PLAN_TYPE_ENTITY:
+		doc.scope_type = SCOPE_TYPE_PE
+		doc.scope_id = doc.procuring_entity
+		doc.parent_plan = None
+
+
+def validate_plan_activation(doc) -> None:
+	"""STR-FR-005: Active concurrency guards before status flip to Active."""
+	normalize_plan_scope(doc)
+	plan_type = (doc.plan_type or "").strip()
+	if plan_type not in PLAN_TYPES:
+		frappe.throw(_("Select a valid plan type"))
+
+	if plan_type in SUBORDINATE_PLAN_TYPES:
+		if not doc.parent_plan:
+			frappe.throw(
+				_(
+					"Programme Strategy, Thematic Plan and Annual Implementation Plan "
+					"require a parent Entity Strategic Plan before activation"
+				)
+			)
+		parent = frappe.db.get_value(
+			"Strategic Plan",
+			doc.parent_plan,
+			["name", "plan_type", "procuring_entity", "status"],
+			as_dict=True,
+		)
+		if not parent:
+			frappe.throw(_("Parent plan is not valid"))
+		if parent.plan_type != PLAN_TYPE_ENTITY:
+			frappe.throw(_("Parent plan must be an Entity Strategic Plan"))
+		if parent.procuring_entity != doc.procuring_entity:
+			frappe.throw(_("Parent plan must belong to the same procuring entity"))
+		if not doc.scope_type or not doc.scope_id:
+			frappe.throw(_("Organisational scope is required for subordinate plans"))
+		if doc.scope_type == SCOPE_TYPE_PE and doc.scope_id == doc.procuring_entity:
+			frappe.throw(
+				_(
+					"Subordinate plans must use a distinct organisational scope "
+					"(not the whole procuring entity)"
+				)
+			)
+	else:
+		# Entity Strategic Plan
+		if not doc.scope_type or not doc.scope_id:
+			frappe.throw(_("Entity Strategic Plan scope could not be resolved"))
+
+	# Overlap: Active plans with same entity + type + scope (excluding same plan_code supersession)
+	others = frappe.get_all(
+		"Strategic Plan",
+		filters={
+			"procuring_entity": doc.procuring_entity,
+			"plan_type": plan_type,
+			"scope_type": doc.scope_type,
+			"scope_id": doc.scope_id,
+			"status": "Active",
+			"name": ["!=", doc.name],
+		},
+		fields=["name", "plan_code", "title", "start_date", "end_date"],
+	)
+	for row in others:
+		if row.plan_code == doc.plan_code:
+			# Same logical plan — will be superseded atomically
+			continue
+		if _periods_overlap(doc.start_date, doc.end_date, row.start_date, row.end_date):
+			frappe.throw(
+				_(
+					"Cannot activate: Active plan {0} ({1}) already covers an overlapping "
+					"period for the same entity, plan type and scope"
+				).format(row.plan_code, row.title or row.name)
+			)
+
+	# ESP uniqueness is covered by entity+type+scope (scope_id = procuring_entity),
+	# but keep an explicit second pass for clarity / legacy rows with blank scope.
+	if plan_type == PLAN_TYPE_ENTITY:
+		esp_others = frappe.get_all(
+			"Strategic Plan",
+			filters={
+				"procuring_entity": doc.procuring_entity,
+				"plan_type": PLAN_TYPE_ENTITY,
+				"status": "Active",
+				"name": ["!=", doc.name],
+			},
+			fields=["name", "plan_code", "title", "start_date", "end_date"],
+		)
+		for row in esp_others:
+			if row.plan_code == doc.plan_code:
+				continue
+			if _periods_overlap(doc.start_date, doc.end_date, row.start_date, row.end_date):
+				frappe.throw(
+					_(
+						"Only one Active Entity Strategic Plan may cover a given date "
+						"for this entity. Active plan {0} already overlaps."
+					).format(row.plan_code)
+				)
 
 
 def validate_strategic_plan(doc) -> None:
@@ -26,6 +153,8 @@ def validate_strategic_plan(doc) -> None:
 		frappe.throw(_("Start Date must be on or before End Date"))
 	if doc.version_number and int(doc.version_number) > 1 and not doc.supersedes_plan_version:
 		frappe.throw(_("Successor plan versions require Supersedes Plan Version"))
+	if doc.plan_type == PLAN_TYPE_ENTITY:
+		normalize_plan_scope(doc)
 	if not doc.is_new():
 		prev = doc.get_db_value("status") if hasattr(doc, "get_db_value") else None
 		try:
@@ -44,6 +173,9 @@ def validate_strategic_plan(doc) -> None:
 				"end_date",
 				"description",
 				"procuring_entity",
+				"scope_type",
+				"scope_id",
+				"parent_plan",
 			):
 				if doc.has_value_changed(f):
 					frappe.throw(_("Approved/Active plan versions are immutable"))

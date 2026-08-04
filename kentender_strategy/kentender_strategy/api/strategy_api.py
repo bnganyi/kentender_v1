@@ -8,6 +8,7 @@ import json
 import frappe
 
 from kentender_strategy.services import strategy_contracts as contracts
+from kentender_strategy.services import strategy_performance as performance
 from kentender_strategy.services import strategy_transitions as transitions
 from kentender_strategy.services import strategy_writes as writes
 from kentender_strategy.services.strategy_readiness import get_plan_readiness
@@ -126,6 +127,13 @@ def get_create_plan_context():
 @frappe.whitelist()
 def create_plan(payload=None):
 	return contracts.create_plan(_obj(payload) or {})
+
+
+@frappe.whitelist()
+def correct_strategy_reference(doctype: str, name: str, new_code: str, reason: str, plan_version: str | None = None):
+	from kentender_strategy.services.strategy_reference import correct_reference
+
+	return correct_reference(doctype, name, new_code, reason, plan_version=plan_version)
 
 
 @frappe.whitelist()
@@ -261,6 +269,44 @@ def transition_corrective_action(name: str, action: str, reason: str | None = No
 @frappe.whitelist()
 def list_audit_events(plan_version: str | None = None, plan_code: str | None = None):
 	return contracts.list_audit_events(plan_version=plan_version or None, plan_code=plan_code or None)
+
+
+@frappe.whitelist()
+def get_strategy_performance(
+	procuring_entity: str | None = None,
+	plan_code: str | None = None,
+	plan_version: str | None = None,
+	period: str | None = None,
+	programme: str | None = None,
+	sub_programme: str | None = None,
+):
+	return performance.get_strategy_performance(
+		procuring_entity=procuring_entity or None,
+		plan_code=plan_code or None,
+		plan_version=plan_version or None,
+		period=period or None,
+		programme=programme or None,
+		sub_programme=sub_programme or None,
+	)
+
+
+@frappe.whitelist()
+def export_strategy_performance_report(
+	procuring_entity: str | None = None,
+	plan_code: str | None = None,
+	plan_version: str | None = None,
+	period: str | None = None,
+	programme: str | None = None,
+	sub_programme: str | None = None,
+):
+	return performance.export_strategy_performance_report(
+		procuring_entity=procuring_entity or None,
+		plan_code=plan_code or None,
+		plan_version=plan_version or None,
+		period=period or None,
+		programme=programme or None,
+		sub_programme=sub_programme or None,
+	)
 
 
 @frappe.whitelist()

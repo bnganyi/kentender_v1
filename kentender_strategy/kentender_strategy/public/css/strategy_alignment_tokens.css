@@ -291,10 +291,20 @@ body.kt-str-surface .kt-cl-native-canvas > main > .max-w-\[1280px\] {
 	text-decoration: underline !important;
 }
 
+/*
+ * Stitch Tailwind Forms select chevron stand-in.
+ * NEVER leave appearance:none without a glyph — screens that use a Material
+ * expand_more sibling (portfolio filters) must set background-image: none.
+ */
 .kt-cl-shell .kt-str-root select {
 	appearance: none !important;
 	-webkit-appearance: none !important;
 	cursor: pointer !important;
+	background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23434750' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+	background-position: right 0.75rem center !important;
+	background-repeat: no-repeat !important;
+	background-size: 1.25rem 1.25rem !important;
+	padding-right: 2.5rem !important;
 }
 
 .kt-cl-shell .kt-str-root .material-symbols-outlined {

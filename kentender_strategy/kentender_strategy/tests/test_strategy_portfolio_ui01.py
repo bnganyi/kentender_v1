@@ -43,7 +43,9 @@ class TestStrategyPortfolioUi01(FrappeTestCase):
 
 	def test_plans_include_attention_and_period(self):
 		rows = list_strategy_plans(procuring_entity=self.seed["procuring_entity"])
-		moh = next(r for r in rows if r["code"] == STRATEGY_PLAN_CODE)
+		moh = next(
+			r for r in rows if r["code"] == STRATEGY_PLAN_CODE and r["status"] == "Active"
+		)
 		self.assertEqual(moh["status"], "Active")
 		self.assertIn("attention", moh)
 		self.assertIn("attention_kind", moh)
@@ -60,7 +62,7 @@ class TestStrategyPortfolioUi01(FrappeTestCase):
 	def test_list_filters_search_and_status(self):
 		rows = list_strategy_plans(
 			procuring_entity=self.seed["procuring_entity"],
-			search="MOH-SP-2026",
+			search="MOH-SP-0001",
 			status="Active",
 		)
 		self.assertTrue(rows)
@@ -97,11 +99,12 @@ class TestStrategyPortfolioUi01(FrappeTestCase):
 		self.assertEqual(len(keys), len(set(keys)), f"duplicate My Work keys: {keys}")
 
 	def test_create_plan_returns_code_and_draft(self):
+		import re
+
 		pe = self.seed["procuring_entity"]
-		code = f"UI01-CREATE-{frappe.generate_hash(length=6).upper()}"
 		created = create_plan(
 			{
-				"plan_code": code,
+				"plan_code": f"UI01-CREATE-{frappe.generate_hash(length=6).upper()}",
 				"title": "UI01 Create Fixture",
 				"procuring_entity": pe,
 				"plan_type": "Entity Strategic Plan",
@@ -110,7 +113,8 @@ class TestStrategyPortfolioUi01(FrappeTestCase):
 			}
 		)
 		self.assertTrue(created.get("ok"))
-		self.assertEqual(created["plan"]["code"], code)
+		# Client-supplied plan_code is ignored; system assigns {PE}-SP-####.
+		self.assertRegex(created["plan"]["code"], re.compile(r"^[A-Z0-9]+-SP-\d{4}$"))
 		self.assertEqual(created["plan"]["status"], "Draft")
 		self.addCleanup(
 			lambda: frappe.delete_doc(

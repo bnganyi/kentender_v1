@@ -117,6 +117,14 @@ def transition_plan(plan_name: str, action: str, reason: str | None = None) -> d
 
 
 def _activate_plan(doc) -> None:
+	from kentender_strategy.services.strategy_domain_guards import (
+		normalize_plan_scope,
+		validate_plan_activation,
+	)
+
+	normalize_plan_scope(doc)
+	validate_plan_activation(doc)
+
 	# Atomically supersede other Active version of same plan_code+entity
 	others = frappe.get_all(
 		"Strategic Plan",

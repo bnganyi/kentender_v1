@@ -137,8 +137,9 @@ Changing this list is an administrative configuration change. A pillar does not 
 | STR-FR-001 | The system shall list plans scoped to the current procuring entity. |
 | STR-FR-002 | Users with cross-entity authority may switch entity context; other users shall not access another entity's plan records. |
 | STR-FR-003 | Each logical plan shall have a stable `plan_code` and one or more immutable versions. |
+| STR-FR-003a | The system shall automatically assign an immutable, human-readable reference when the record is first saved. Users shall not be required to create or maintain reference codes. Relationships between records and downstream modules shall use immutable internal identifiers rather than reference strings. |
 | STR-FR-004 | Each plan version shall have its own internal identifier, version number, status, effective period and audit history. |
-| STR-FR-005 | Multiple different plans may be Active for an entity, but only one version of the same `plan_code` may be Active. |
+| STR-FR-005 | The system shall prevent activation of a plan version when another Active plan for the same procuring entity, plan type and organisational scope has an overlapping effective period. Only one Active Entity Strategic Plan may cover any given date for an entity (the entity is the scope). Programme Strategy, Thematic Plan and Annual Implementation Plan versions may be Active concurrently only when they have a distinct scope and a recorded `parent_plan` relationship to an Entity Strategic Plan of the same entity. Only one version of the same `plan_code` may be Active; activating a successor shall supersede the prior Active version of that `plan_code`. |
 | STR-FR-006 | Plan search shall support code, title, type, period, status and entity. |
 | STR-FR-007 | Portfolio counts shall be derived for Draft, Submitted, Active, expiring and measurement-attention plans. |
 
@@ -240,7 +241,7 @@ Changing this list is an administrative configuration change. A pillar does not 
 
 | ID | Requirement |
 |---|---|
-| STR-FR-095 | New downstream selections shall use only effective Active plan versions. |
+| STR-FR-095 | New downstream selections shall use only effective Active plan versions. Budget Lines shall link primarily to Performance Targets on the Active Entity Strategic Plan for the entity; targets on Active Programme Strategy, Thematic Plan or Annual Implementation Plan versions may be used only as supporting links. |
 | STR-FR-096 | A reference shall identify the plan version, selected node and complete resolved path. |
 | STR-FR-097 | The Strategy service shall validate that the selected node belongs to the stated plan version and path. |
 | STR-FR-098 | Historical references shall remain resolvable after supersession or archival. |
@@ -313,11 +314,14 @@ Changing this list is an administrative configuration change. A pillar does not 
 | Field | Requirement |
 |---|---|
 | internal_id | System-generated immutable identifier |
-| plan_code | Required stable logical business code |
+| plan_code | System-assigned immutable reference (`{PE}-SP-####`) on first save; same value across versions of the logical plan |
 | version_number | Required positive integer, unique within plan_code and entity |
 | title | Required display title |
 | procuring_entity | Required entity reference |
-| plan_type | Entity Strategic Plan, Sector Strategy, Programme Strategy or Other |
+| plan_type | Entity Strategic Plan, Programme Strategy, Thematic Plan or Annual Implementation Plan |
+| scope_type | Required organisational scope kind (Procuring Entity, Programme or Entity Unit). For Entity Strategic Plan the scope is always Procuring Entity. |
+| scope_id | Required identifier of the organisational scope (for Entity Strategic Plan, the procuring entity). Distinct from other Active plans of the same type. |
+| parent_plan | Required for Programme Strategy, Thematic Plan and Annual Implementation Plan; Link to an Entity Strategic Plan of the same procuring entity (Active or Approved). Null for Entity Strategic Plan. |
 | start_date / end_date | Required valid effective period |
 | description | Optional plain text |
 | supersedes_plan_version | Required for successor versions after the first |
@@ -333,7 +337,7 @@ Changing this list is an administrative configuration change. A pillar does not 
 |---|---|
 | internal_id | Immutable identifier |
 | plan_version | Required parent |
-| programme_code | Required business code |
+| programme_code | System-assigned immutable reference (`{PE}-PROG-####`) on first save |
 | title | Required |
 | description | Optional |
 | responsible_function | Required |
@@ -346,7 +350,7 @@ Changing this list is an administrative configuration change. A pillar does not 
 | internal_id | Immutable identifier |
 | plan_version | Required |
 | programme | Required parent in the same version |
-| sub_programme_code | Required business code |
+| sub_programme_code | System-assigned immutable reference (`{PE}-SUB-####`) on first save |
 | title | Required |
 | description | Optional |
 | responsible_function | Required |
@@ -360,7 +364,7 @@ Changing this list is an administrative configuration change. A pillar does not 
 | plan_version | Required |
 | programme | Required |
 | sub_programme | Optional; if supplied, must belong to programme and plan version |
-| outcome_code | Required business code |
+| outcome_code | System-assigned immutable reference (`{PE}-OUT-####`) on first save; retained across successor plan versions |
 | title | Required result statement |
 | description | Optional |
 | responsible_function | Required |
@@ -373,7 +377,7 @@ Changing this list is an administrative configuration change. A pillar does not 
 |---|---|
 | internal_id | Immutable identifier |
 | strategic_outcome | Required |
-| indicator_code | Required business code |
+| indicator_code | System-assigned immutable reference (`{PE}-IND-####`) on first save |
 | title | Required measure name |
 | definition | Required calculation or assessment definition |
 | measurement_type | Required controlled value |
@@ -389,7 +393,7 @@ Changing this list is an administrative configuration change. A pillar does not 
 |---|---|
 | internal_id | Immutable identifier |
 | performance_indicator | Required |
-| target_code | Required business code |
+| target_code | System-assigned immutable reference (`{PE}-TGT-####`) on first save; retained across successor plan versions |
 | title | Required concise target statement |
 | comparison_direction | Required and type-compatible |
 | target_numeric / target_text / target_date | Exactly the applicable value required |
@@ -408,7 +412,7 @@ Changing this list is an administrative configuration change. A pillar does not 
 | Field | Requirement |
 |---|---|
 | internal_id | Immutable identifier |
-| objective_code | Stable required code |
+| objective_code | System-assigned immutable reference (`{PE}-OBJ-####`) on first save for entity-authored objectives; catalogue codes (`PVO-*`) retained for controlled obligation catalogue entries |
 | version_number | Required positive integer |
 | title | Required desired result |
 | pillar | Required controlled pillar |
@@ -495,7 +499,7 @@ Changing this list is an administrative configuration change. A pillar does not 
 
 1. Internal identifiers shall never be reused.
 2. Business codes shall use uppercase letters, numbers and hyphens.
-3. Codes shall remain immutable after first approval.
+3. System-assigned references are immutable after first save. Only a Strategy Administrator may correct a reference before the plan is activated, with an audited reason. Users shall not create or maintain reference codes.
 4. A child shall never reference a parent from a different plan version.
 5. An Active or Approved plan version shall not be edited.
 6. An Active Public Value Objective version shall not be edited.
@@ -519,7 +523,7 @@ Changing this list is an administrative configuration change. A pillar does not 
 | Returned | Resubmit | Submitted | Strategy Manager | Return issues resolved; readiness passes |
 | Submitted | Return for correction | Returned | Strategy Reviewer or Planning Authority | Reason required |
 | Submitted | Approve | Approved | Planning Authority | Reviewer checks complete; approver is not submitter |
-| Approved | Activate | Active | Planning Authority | Effective period valid; no Active version conflict |
+| Approved | Activate | Active | Planning Authority | Effective period valid; no Active version conflict for the same `plan_code`; no Active overlap for the same entity + plan type + scope; if Entity Strategic Plan, no overlapping Active Entity Strategic Plan for the entity; if subordinate type, `parent_plan` is set to an Entity Strategic Plan of the same entity |
 | Active | Supersede | Superseded | Planning Authority | Approved successor is activated atomically |
 | Active | Archive | Archived | Planning Authority | Only if no successor is required; reason required |
 | Approved | Withdraw approval | Draft | Planning Authority | Not yet Active; reason required |
@@ -654,18 +658,18 @@ The readiness screen shall group issues by Structure, Targets, Value Commitments
 ```json
 {
   "plan_version_id": "SPV-...",
-  "plan_code": "MOH-SP-2026-2030",
+  "plan_code": "MOH-SP-0001",
   "plan_version": 1,
   "node_type": "PerformanceTarget",
   "node_id": "PT-...",
-  "node_code": "MOH-TGT-01",
+  "node_code": "MOH-TGT-0001",
   "node_name": "At least 99.9% availability by 30 June 2028",
   "path": [
-    {"type": "Programme", "id": "...", "code": "MOH-PROG-DH", "name": "Digital Health Services"},
-    {"type": "SubProgramme", "id": "...", "code": "MOH-SUB-HIS", "name": "Health Information Systems"},
-    {"type": "StrategicOutcome", "id": "...", "code": "MOH-OUT-01", "name": "Reliable and accessible digital clinical services"},
-    {"type": "PerformanceIndicator", "id": "...", "code": "MOH-IND-01", "name": "Availability of core clinical information systems"},
-    {"type": "PerformanceTarget", "id": "...", "code": "MOH-TGT-01", "name": "At least 99.9% availability by 30 June 2028"}
+    {"type": "Programme", "id": "...", "code": "MOH-PROG-0001", "name": "Digital Health Services"},
+    {"type": "SubProgramme", "id": "...", "code": "MOH-SUB-0001", "name": "Health Information Systems"},
+    {"type": "StrategicOutcome", "id": "...", "code": "MOH-OUT-0001", "name": "Reliable and accessible digital clinical services"},
+    {"type": "PerformanceIndicator", "id": "...", "code": "MOH-IND-0001", "name": "Availability of core clinical information systems"},
+    {"type": "PerformanceTarget", "id": "...", "code": "MOH-TGT-0001", "name": "At least 99.9% availability by 30 June 2028"}
   ],
   "snapshot_label": "Digital Health Services / Health Information Systems / 99.9% availability by 30 June 2028"
 }
@@ -719,12 +723,12 @@ Notifications shall link directly to the affected screen and shall not expose an
 
 | Entity | Code | Name/value |
 |---|---|---|
-| Plan | MOH-SP-2026-2030 | Ministry of Health Strategic Plan 2026–2030, version 1, Active |
-| Programme | MOH-PROG-DH | Digital Health Services |
-| Sub-programme | MOH-SUB-HIS | Health Information Systems |
-| Outcome | MOH-OUT-01 | Reliable and accessible digital clinical services |
-| Indicator | MOH-IND-01 | Availability of core clinical information systems |
-| Target | MOH-TGT-01 | At least 99.9% annual availability by 30 June 2028 |
+| Plan | MOH-SP-0001 | Ministry of Health Strategic Plan 2026–2030, version 1, Active |
+| Programme | MOH-PROG-0001 | Digital Health Services |
+| Sub-programme | MOH-SUB-0001 | Health Information Systems |
+| Outcome | MOH-OUT-0001 | Reliable and accessible digital clinical services |
+| Indicator | MOH-IND-0001 | Availability of core clinical information systems |
+| Target | MOH-TGT-0001 | At least 99.9% annual availability by 30 June 2028 |
 
 Target baseline: 97.8% as at 30 June 2026. Measurement frequency: monthly. Evidence source: approved infrastructure-monitoring report.
 

@@ -88,7 +88,7 @@ class TestStrategyMvp1Domain(FrappeTestCase):
 				"end_date": "2027-06-30",
 			}
 		).insert(ignore_permissions=True)
-		prog = frappe.db.get_value("Strategy Programme", {"programme_code": "MOH-PROG-DH"}, "name")
+		prog = frappe.db.get_value("Strategy Programme", {"programme_code": "MOH-PROG-0001"}, "name")
 		try:
 			with self.assertRaises(frappe.ValidationError):
 				frappe.get_doc(
@@ -163,7 +163,7 @@ class TestStrategyMvp1Domain(FrappeTestCase):
 		self.assertIn("grouped", result)
 
 	def test_code_pattern(self):
-		self.assertTrue(CODE_RE.match("MOH-TGT-01"))
+		self.assertTrue(CODE_RE.match("MOH-TGT-0001"))
 		self.assertIsNone(CODE_RE.match("moh-tgt"))
 
 	def test_immutable_active_plan(self):

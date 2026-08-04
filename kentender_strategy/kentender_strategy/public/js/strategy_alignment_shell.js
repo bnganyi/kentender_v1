@@ -4,8 +4,8 @@ frappe.provide("kentender_strategy.alignment");
 (function () {
 	"use strict";
 
-	var FIXTURE_PLAN = "MOH-SP-2026-2030";
-	var FIXTURE_TARGET = "MOH-TGT-01";
+	var FIXTURE_PLAN = "MOH-SP-0001";
+	var FIXTURE_TARGET = "MOH-TGT-0001";
 
 	var PLAN_TABS = [
 		{ label: "Overview", slug: "strategy-plan-overview" },

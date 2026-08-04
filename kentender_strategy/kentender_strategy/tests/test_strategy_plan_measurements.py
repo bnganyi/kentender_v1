@@ -127,7 +127,7 @@ class TestStrategyPlanMeasurements(FrappeTestCase):
 		self.assertTrue(dto.get("default_target_code"))
 
 	def test_get_measurement_by_target_code_prefers_active_plan(self):
-		"""Multiple plan versions may share MOH-TGT-01; resolve Active, never get_doc(None)."""
+		"""Multiple plan versions may share MOH-TGT-0001; resolve Active, never get_doc(None)."""
 		_ensure_user("str.officer.meas.get@example.com", ["Strategy Officer"], self.pe)
 		frappe.set_user("str.officer.meas.get@example.com")
 		m = get_measurement(target_code=TARGET_CODE)
@@ -208,7 +208,7 @@ class TestStrategyPlanMeasurements(FrappeTestCase):
 				"responsible_function": "ICT",
 			}
 		)
-		# Reuse MOH-TGT-01 business code on this draft — must still scope by plan.
+		# Reuse MOH-TGT-0001 business code on this draft — must still scope by plan.
 		tgt = upsert_structure_node(
 			{
 				"type": "PerformanceTarget",

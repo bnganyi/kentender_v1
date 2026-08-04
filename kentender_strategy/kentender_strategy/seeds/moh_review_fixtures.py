@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 """Idempotent Review (STR-UI-13) fixtures — incomplete Draft + transition Draft.
 
-Does not mutate MOH-SP-2026-2030 Active master.
+Does not mutate MOH-SP-0001 Active master.
 """
 
 from __future__ import annotations
@@ -13,8 +13,8 @@ import frappe
 from kentender_strategy.seeds.works_master_strategy_hierarchy import resolve_procuring_entity_moh
 from kentender_strategy.services.strategy_permissions import ensure_strategy_roles
 
-REVIEW_BLOCKERS_PLAN_CODE: Final[str] = "MOH-SP-REVIEW-BLOCK"
-REVIEW_TX_PLAN_CODE: Final[str] = "MOH-SP-REVIEW-TX"
+REVIEW_BLOCKERS_PLAN_CODE: Final[str] = "MOH-SP-9001"
+REVIEW_TX_PLAN_CODE: Final[str] = "MOH-SP-9002"
 
 
 def ensure_review_blockers_draft(procuring_entity: str | None = None) -> dict[str, Any]:
@@ -56,9 +56,13 @@ def ensure_review_blockers_draft(procuring_entity: str | None = None) -> dict[st
 				"title": "MOH Review Blockers Fixture",
 				"procuring_entity": pe,
 				"plan_type": "Entity Strategic Plan",
+				"scope_type": "Procuring Entity",
+				"scope_id": pe,
+				"parent_plan": None,
 				"status": "Draft",
-				"start_date": "2026-07-01",
-				"end_date": "2027-06-30",
+				# Non-overlapping with Active MOH-SP-0001 (ends 2030-06-30) for STR-FR-005.
+				"start_date": "2030-07-01",
+				"end_date": "2031-06-30",
 				"description": "STR-UI-13 blockers canvas fixture (empty structure).",
 			}
 		)
@@ -113,9 +117,14 @@ def ensure_review_transition_draft(procuring_entity: str | None = None) -> dict[
 			"title": "MOH Review Transition Fixture",
 			"procuring_entity": pe,
 			"plan_type": "Entity Strategic Plan",
+			"scope_type": "Procuring Entity",
+			"scope_id": pe,
+			"parent_plan": None,
 			"status": "Draft",
-			"start_date": "2026-07-01",
-			"end_date": "2027-06-30",
+			# Non-overlapping with Active MOH-SP-0001 so Activate exercises the matrix
+			# without violating STR-FR-005 (one Active Entity Strategic Plan per entity-date).
+			"start_date": "2030-07-01",
+			"end_date": "2031-06-30",
 			"description": "STR-UI-13 transition matrix fixture.",
 		}
 	)

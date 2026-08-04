@@ -28,11 +28,11 @@ kentender_strategy.ui_fixtures.create_plan = function () {
 </div>
 <form class="space-y-6 kt-str-create-plan-form" id="planForm" data-testid="kt-str-create-plan-form" novalidate>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-<!-- Plan Code -->
-<div class="space-y-2">
-<label class="block font-label-caps text-label-caps text-on-surface-variant uppercase" for="plan_code">Plan code <span class="text-error">*</span></label>
-<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 font-data-mono text-data-mono focus:ring-2 focus:ring-primary focus:border-primary transition-all uppercase" id="plan_code" name="plan_code" data-kt-str-field="plan_code" placeholder="e.g., MOH-SP-2026-2030" required="" type="text" autocomplete="off">
-<p class="text-xs text-error hidden" data-kt-str-error="plan_code"></p>
+<!-- System reference — assigned on first save (never user-entered) -->
+<div class="space-y-2" data-testid="kt-str-create-plan-reference">
+<label class="block font-label-caps text-label-caps text-on-surface-variant uppercase">Reference</label>
+<div class="font-data-mono text-data-mono bg-surface-container px-4 py-2.5 rounded-lg border border-outline-variant text-on-surface-variant" data-kt-str-create-reference>—</div>
+<p class="text-xs text-on-surface-variant" data-kt-str-create-reference-hint>Generated automatically on save</p>
 </div>
 <!-- Plan Type -->
 <div class="space-y-2">
@@ -40,11 +40,30 @@ kentender_strategy.ui_fixtures.create_plan = function () {
 <select class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all" id="plan_type" name="plan_type" data-kt-str-field="plan_type" required="">
 <option disabled="" selected="" value="">Select plan type</option>
 <option value="entity">Entity Strategic Plan</option>
-<option value="sector">Sector Strategy</option>
 <option value="programme">Programme Strategy</option>
-<option value="other">Other</option>
+<option value="thematic">Thematic Plan</option>
+<option value="annual">Annual Implementation Plan</option>
 </select>
 <p class="text-xs text-error hidden" data-kt-str-error="plan_type"></p>
+</div>
+</div>
+<!-- Parent plan + scope (required for subordinate types; hidden for Entity Strategic Plan) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 hidden" data-kt-str-create-subordinate="1">
+<div class="space-y-2">
+<label class="block font-label-caps text-label-caps text-on-surface-variant uppercase" for="parent_plan">Parent plan <span class="text-error">*</span></label>
+<select class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all" id="parent_plan" name="parent_plan" data-kt-str-field="parent_plan" aria-label="Parent Entity Strategic Plan">
+<option value="">Select parent Entity Strategic Plan</option>
+</select>
+<p class="text-xs text-error hidden" data-kt-str-error="parent_plan"></p>
+</div>
+<div class="space-y-2">
+<label class="block font-label-caps text-label-caps text-on-surface-variant uppercase" for="scope_id">Scope <span class="text-error">*</span></label>
+<select class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all" id="scope_type" name="scope_type" data-kt-str-field="scope_type" aria-label="Scope type">
+<option value="Programme">Programme</option>
+<option value="Entity Unit">Entity Unit</option>
+</select>
+<input class="mt-2 w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all" id="scope_id" name="scope_id" data-kt-str-field="scope_id" placeholder="Scope code or identifier" type="text" autocomplete="off" aria-label="Scope identifier">
+<p class="text-xs text-error hidden" data-kt-str-error="scope_id"></p>
 </div>
 </div>
 <!-- Plan Title -->

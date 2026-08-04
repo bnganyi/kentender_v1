@@ -1,5 +1,5 @@
 # Copyright (c) 2026, KenTender and contributors
-"""Idempotent MOH-SP-2026-2030 Strategy seed (STRATEGY-MVP1-REQ-1.0 §19).
+"""Idempotent MOH-SP-0001 Strategy seed (STRATEGY-MVP1-REQ-1.0 §19).
 
 Also keeps legacy constant aliases for works-master / stable-platform importers.
 """
@@ -14,23 +14,23 @@ from kentender_strategy.services.strategy_permissions import ensure_strategy_rol
 from kentender_strategy.services.strategy_transitions import transition_plan
 
 # --- Canonical MVP-1 codes (REQ §19) ---
-STRATEGY_PLAN_CODE: Final[str] = "MOH-SP-2026-2030"
+STRATEGY_PLAN_CODE: Final[str] = "MOH-SP-0001"
 PLAN_TITLE: Final[str] = "Ministry of Health Strategic Plan 2026–2030"
 START_YEAR: Final[int] = 2026
 END_YEAR: Final[int] = 2030
-PROGRAM_CODE: Final[str] = "MOH-PROG-DH"
+PROGRAM_CODE: Final[str] = "MOH-PROG-0001"
 PROGRAM_TITLE: Final[str] = "Digital Health Services"
 PROGRAM_DESCRIPTION: Final[str] = (
 	"Digital clinical services and health information systems that improve access and continuity of care."
 )
-SUB_PROGRAM_CODE: Final[str] = "MOH-SUB-HIS"
+SUB_PROGRAM_CODE: Final[str] = "MOH-SUB-0001"
 SUB_PROGRAM_TITLE: Final[str] = "Health Information Systems"
-OBJECTIVE_CODE: Final[str] = "MOH-OUT-01"  # Strategic Outcome (legacy alias name)
+OBJECTIVE_CODE: Final[str] = "MOH-OUT-0001"  # Strategic Outcome (legacy alias name)
 OBJECTIVE_TITLE: Final[str] = "Reliable and accessible digital clinical services"
 OBJECTIVE_DESCRIPTION: Final[str] = OBJECTIVE_TITLE
-INDICATOR_CODE: Final[str] = "MOH-IND-01"
+INDICATOR_CODE: Final[str] = "MOH-IND-0001"
 INDICATOR_TITLE: Final[str] = "Availability of core clinical information systems"
-TARGET_CODE: Final[str] = "MOH-TGT-01"
+TARGET_CODE: Final[str] = "MOH-TGT-0001"
 TARGET_TITLE: Final[str] = "At least 99.9% annual availability by 30 June 2028"
 TARGET_METRIC_TEXT: Final[str] = "Percent availability"
 
@@ -48,12 +48,70 @@ PVO_FIXTURE = [
 	("PVO-INT-01", "Integrity and accountability", "Minimise uncontrolled contract changes"),
 ]
 
+# Dev/fixture Programme Strategy that may coexist with the Active ESP (STR-FR-005).
+HR_PROGRAMME_PLAN_CODE: Final[str] = "MOH-SP-0002"
+HR_PROGRAMME_SCOPE_ID: Final[str] = "MOH-PROG-HR"
+
+# Period-encoded / review fixture codes retired by STR-FR-003a — remap in place on seed upsert.
+_LEGACY_PERIOD_CODE_REMAP: Final[tuple[tuple[str, str, str, str], ...]] = (
+	("Strategic Plan", "plan_code", "MOH-SP-2026-2030", STRATEGY_PLAN_CODE),
+	("Strategic Plan", "plan_code", "MOH-HR-2026-2030", HR_PROGRAMME_PLAN_CODE),
+	("Strategic Plan", "plan_code", "MOH-SP-HR-2026", HR_PROGRAMME_PLAN_CODE),
+	("Strategic Plan", "plan_code", "MOH-SP-REVIEW-BLOCK", "MOH-SP-9001"),
+	("Strategic Plan", "plan_code", "MOH-SP-REVIEW-TX", "MOH-SP-9002"),
+	("Strategy Programme", "programme_code", "MOH-PROG-DH", PROGRAM_CODE),
+	("Strategy Sub Programme", "sub_programme_code", "MOH-SUB-HIS", SUB_PROGRAM_CODE),
+	("Strategic Outcome", "outcome_code", "MOH-OUT-01", OBJECTIVE_CODE),
+	("Performance Indicator", "indicator_code", "MOH-IND-01", INDICATOR_CODE),
+	("Performance Target", "target_code", "MOH-TGT-01", TARGET_CODE),
+)
+
+
+def _remap_legacy_period_codes() -> None:
+	"""Rewrite retired period-encoded business codes to STR-FR-003a references."""
+	for doctype, field, old_code, new_code in _LEGACY_PERIOD_CODE_REMAP:
+		if old_code == new_code:
+			continue
+		names = frappe.get_all(doctype, filters={field: old_code}, pluck="name")
+		for name in names:
+			frappe.db.set_value(doctype, name, field, new_code, update_modified=False)
+
+
+def _backfill_active_subordinate_parents(pe: str, esp_plan: str) -> None:
+	"""Ensure Active non-ESP plans for the entity have parent_plan + distinct scope."""
+	rows = frappe.get_all(
+		"Strategic Plan",
+		filters={
+			"procuring_entity": pe,
+			"status": "Active",
+			"plan_type": ["!=", "Entity Strategic Plan"],
+		},
+		fields=["name", "plan_code", "parent_plan", "scope_type", "scope_id"],
+	)
+	for row in rows:
+		scope_id = row.scope_id
+		if not scope_id:
+			if row.plan_code == HR_PROGRAMME_PLAN_CODE:
+				scope_id = HR_PROGRAMME_SCOPE_ID
+			else:
+				scope_id = f"SCOPE-{row.plan_code}"
+		frappe.db.set_value(
+			"Strategic Plan",
+			row.name,
+			{
+				"parent_plan": esp_plan,
+				"scope_type": row.scope_type or "Programme",
+				"scope_id": scope_id,
+			},
+			update_modified=False,
+		)
+
 
 def desk_visibility(procuring_entity_name: str) -> dict[str, str]:
 	return {
 		"procuring_entity": procuring_entity_name,
 		"scope_rule": "Entity-scoped Strategy Alignment (MVP-1).",
-		"optional_seed_flag": "MOH-SP-2026-2030",
+		"optional_seed_flag": "MOH-SP-0001",
 	}
 
 
@@ -234,8 +292,9 @@ def _ensure_measurements(plan_name: str, target_name: str) -> dict[str, str]:
 
 
 def upsert_works_master_strategy_hierarchy(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
-	"""Idempotent loader for MOH-SP-2026-2030 (+ PVOs, commitments, measurements)."""
+	"""Idempotent loader for MOH-SP-0001 (+ PVOs, commitments, measurements)."""
 	ensure_strategy_roles()
+	_remap_legacy_period_codes()
 	pe = resolve_procuring_entity_moh()
 	if not pe:
 		return {
@@ -266,6 +325,9 @@ def upsert_works_master_strategy_hierarchy(*_args: Any, **_kwargs: Any) -> dict[
 				"title": PLAN_TITLE,
 				"procuring_entity": pe,
 				"plan_type": "Entity Strategic Plan",
+				"scope_type": "Procuring Entity",
+				"scope_id": pe,
+				"parent_plan": None,
 				"status": "Draft",
 				"start_date": "2026-07-01",
 				"end_date": "2030-06-30",
@@ -276,6 +338,18 @@ def upsert_works_master_strategy_hierarchy(*_args: Any, **_kwargs: Any) -> dict[
 		plan_name = plan.name
 		created = True
 	else:
+		# Backfill ESP scope on existing Active master without mutating locked content via ORM.
+		frappe.db.set_value(
+			"Strategic Plan",
+			plan_name,
+			{
+				"scope_type": "Procuring Entity",
+				"scope_id": pe,
+				"parent_plan": None,
+				"plan_type": "Entity Strategic Plan",
+			},
+			update_modified=False,
+		)
 		status = frappe.db.get_value("Strategic Plan", plan_name, "status")
 		if status in ("Approved", "Active", "Superseded", "Archived"):
 			# Structure locked — ensure measurements/PVOs / review fixtures only
@@ -295,6 +369,7 @@ def upsert_works_master_strategy_hierarchy(*_args: Any, **_kwargs: Any) -> dict[
 			review_blockers = ensure_review_blockers_draft(pe)
 			# Keep TX fixture as ready Draft for Review submit PW (idempotent wipe/rebuild).
 			review_tx = ensure_review_transition_draft(pe)
+			_backfill_active_subordinate_parents(pe, plan_name)
 			frappe.db.commit()
 			return {
 				"ok": True,

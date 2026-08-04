@@ -3,13 +3,13 @@ import { loginAsAdministrator } from "../../helpers/auth";
 
 /**
  * Strategy Alignment MVP-1 — Stitch Desk shells + live API binders.
- * Requires MOH-SP-2026-2030 seed (works_master_strategy_hierarchy).
+ * Requires MOH-SP-0001 seed (works_master_strategy_hierarchy).
  */
 
-const PLAN = "MOH-SP-2026-2030";
-const REVIEW_BLOCKERS_PLAN = "MOH-SP-REVIEW-BLOCK";
-const REVIEW_TX_PLAN = "MOH-SP-REVIEW-TX";
-const TARGET = "MOH-TGT-01";
+const PLAN = "MOH-SP-0001";
+const REVIEW_BLOCKERS_PLAN = "MOH-SP-9001";
+const REVIEW_TX_PLAN = "MOH-SP-9002";
+const TARGET = "MOH-TGT-0001";
 
 test.describe.configure({ mode: "serial" });
 
@@ -17,6 +17,68 @@ test.describe("Strategy Alignment UI shell", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 1000 });
 		await loginAsAdministrator(page);
+	});
+
+	test("Strategy Performance management view loads (STR-UI-15)", async ({ page }) => {
+		await page.goto("/desk/strategy-performance", { waitUntil: "domcontentloaded" });
+		await expect(page.locator('[data-testid="kt-str-performance"][data-kt-str-live="1"]')).toBeVisible({
+			timeout: 30_000,
+		});
+		await expect(page.getByTestId("kt-str-perf-header")).toBeVisible();
+		await expect(page.getByTestId("kt-str-perf-strip")).toBeVisible();
+		await expect(page.getByTestId("kt-str-perf-exceptions")).toBeVisible();
+		await expect(page.getByTestId("kt-str-perf-outcomes")).toBeVisible();
+		await expect(page.getByTestId("kt-str-perf-procurement")).toBeVisible();
+		await expect(page.getByTestId("kt-str-perf-commitments")).toBeVisible();
+		await expect(page.getByTestId("kt-str-perf-export")).toBeVisible();
+		// Stitch regions / column contract (not title-only).
+		await expect(page.getByRole("heading", { name: "Exceptions Requiring Intervention" })).toBeVisible();
+		await expect(page.getByRole("heading", { name: /Outcome Performance/ })).toBeVisible();
+		await expect(page.getByText("Funding Snapshot", { exact: true })).toBeVisible();
+		await expect(page.getByRole("heading", { name: "Aligned Procurement Pipeline" })).toBeVisible();
+		await expect(page.getByRole("heading", { name: "Plan Value Commitments" })).toBeVisible();
+		await expect(page.getByRole("columnheader", { name: /FUNDING TREATMENT/i })).toBeVisible();
+		await expect(page.getByRole("columnheader", { name: /DOWNSTREAM ADOPTION/i })).toBeVisible();
+		// Context filter grid is 4 columns at desktop (not stacked full-width cards).
+		const filterGeom = await page.getByTestId("kt-str-perf-filters").evaluate((el) => {
+			const grid = el.querySelector(":scope > .grid") as HTMLElement | null;
+			if (!grid) return { ok: false };
+			const kids = Array.from(grid.children) as HTMLElement[];
+			if (kids.length < 3) return { ok: false, n: kids.length };
+			const tops = kids.map((k) => k.getBoundingClientRect().top);
+			const sameRow = Math.abs(tops[0] - tops[1]) < 8 && Math.abs(tops[0] - tops[2]) < 8;
+			const widths = kids.slice(0, 3).map((k) => k.getBoundingClientRect().width);
+			return { ok: sameRow && widths.every((w) => w > 80 && w < 520), sameRow, widths };
+		});
+		expect(filterGeom.ok).toBeTruthy();
+		// On-track strip tile keeps Stitch green surface (not plain white).
+		const onTrackBg = await page
+			.locator('[data-testid="kt-str-perf-strip"] .bg-\\[\\#f0fdf4\\]')
+			.evaluate((el) => getComputedStyle(el).backgroundColor);
+		expect(onTrackBg).toMatch(/rgb\(\s*240,\s*253,\s*244\s*\)/);
+		// Filter selects must keep a chevron glyph (Tailwind Forms stand-in or Material sibling).
+		const selectGlyph = await page.locator("#kt-str-perf-programme").evaluate((el) => {
+			const cs = getComputedStyle(el);
+			const bg = cs.backgroundImage || "";
+			const sib = el.nextElementSibling;
+			const material =
+				!!sib &&
+				sib.classList.contains("material-symbols-outlined") &&
+				(sib.textContent || "").trim() === "expand_more";
+			return {
+				hasSvgChevron: bg.includes("svg") || bg.includes("data:image"),
+				material,
+				paddingRight: parseFloat(cs.paddingRight || "0"),
+			};
+		});
+		expect(selectGlyph.hasSvgChevron || selectGlyph.material).toBeTruthy();
+		expect(selectGlyph.paddingRight).toBeGreaterThanOrEqual(24);
+		// Not a Plan workspace tab surface — no seven-tab chrome.
+		await expect(page.getByTestId("kt-str-plan-tabs")).toHaveCount(0);
+		// No create/maintenance controls on Performance.
+		await expect(page.getByTestId("kt-str-create-plan")).toHaveCount(0);
+		await expect(page.getByRole("heading", { name: "Strategy Performance" })).toBeVisible();
+		await expect(page.locator('[data-kt-str-strip="active_targets"]')).not.toHaveText("—");
 	});
 
 	test("portfolio opens from Desk route with Stitch regions", async ({ page }) => {
@@ -29,12 +91,13 @@ test.describe("Strategy Alignment UI shell", () => {
 		await expect(page.locator('[data-testid="kt-str-portfolio"][data-kt-str-live="1"]')).toBeVisible({
 			timeout: 20_000,
 		});
+		await expect(page.getByTestId("kt-str-open-performance")).toBeVisible();
 		// Seed Active plan row (Draft successors share the same plan_code).
 		const mohRow = page.locator(
-			'[data-testid="kt-str-plans-table"] tr[data-plan-code="MOH-SP-2026-2030"][data-plan-status="Active"]'
+			'[data-testid="kt-str-plans-table"] tr[data-plan-code="MOH-SP-0001"][data-plan-status="Active"]'
 		);
 		await expect(mohRow).toBeVisible({ timeout: 15_000 });
-		await expect(mohRow.getByText("MOH-SP-2026-2030", { exact: true })).toBeVisible();
+		await expect(mohRow.getByText("MOH-SP-0001", { exact: true })).toBeVisible();
 		// Period stacks start/end so Plan/Status get horizontal room.
 		const periodCell = mohRow.locator(".kt-str-plans-col-period");
 		await expect(periodCell.locator(".kt-str-period-start")).toHaveText(
@@ -174,9 +237,12 @@ test.describe("Strategy Alignment UI shell", () => {
 		await expect(page.locator('[data-testid="kt-str-plans-table"] [data-kt-str-empty="1"]')).toBeVisible({
 			timeout: 10_000,
 		});
-		await search.fill("MOH-SP-2026");
+		await search.fill("MOH-SP-0001");
+		// Same plan_code may appear as Active + Draft successor versions.
 		await expect(
-			page.locator('[data-testid="kt-str-plans-table"] tr[data-plan-code="MOH-SP-2026-2030"]')
+			page.locator(
+				'[data-testid="kt-str-plans-table"] tr[data-plan-code="MOH-SP-0001"][data-plan-status="Active"]'
+			)
 		).toBeVisible({ timeout: 10_000 });
 	});
 
@@ -222,13 +288,14 @@ test.describe("Strategy Alignment UI shell", () => {
 		expect(peFocus.navy).toBe(false);
 		expect(peFocus.c.toLowerCase()).not.toBe("rgb(0, 31, 72)");
 
-		// Inline validation keeps the form open.
+		// Inline validation keeps the form open (title required — not plan_code).
 		await page.getByTestId("kt-str-create-plan-submit").click();
-		await expect(page.locator('[data-kt-str-error="plan_code"]')).toBeVisible();
+		await expect(page.locator('[data-kt-str-error="title"]')).toBeVisible();
 		await expect(page).toHaveURL(/strategy-plan-create/);
+		await expect(page.getByTestId("kt-str-create-plan-reference")).toBeVisible();
+		await expect(page.getByText("Generated automatically on save")).toBeVisible();
 
 		const suffix = Date.now().toString().slice(-6);
-		const code = `UI01-PW-${suffix}`;
 		// Stitch regions from create_plan/code.html
 		await expect(page.getByTestId("kt-str-create-bento")).toBeVisible();
 		await expect(page.getByText("Basic Information")).toBeVisible();
@@ -237,7 +304,7 @@ test.describe("Strategy Alignment UI shell", () => {
 		await expect(page.getByTestId("kt-str-create-actions")).toBeVisible();
 		// Stitch/Tailwind Forms select chevron (SVG background) + date calendar glyphs.
 		await expect(createRoot.locator(".material-symbols-outlined", { hasText: "calendar_today" })).toHaveCount(2);
-		const selectGlyphs = await createRoot.locator("select").evaluateAll((els) =>
+		const selectGlyphs = await createRoot.locator("select:visible").evaluateAll((els) =>
 			els.map((el) => {
 				const cs = getComputedStyle(el);
 				return {
@@ -246,11 +313,15 @@ test.describe("Strategy Alignment UI shell", () => {
 				};
 			})
 		);
+		// Visible by default: plan type + procuring entity (subordinate parent/scope stay hidden for ESP).
 		expect(selectGlyphs.length).toBe(2);
 		for (const g of selectGlyphs) {
 			expect(g.hasChevron).toBe(true);
 			expect(g.padRight).toBeGreaterThanOrEqual(32);
 		}
+		await expect(createRoot.locator("[data-kt-str-create-subordinate]")).toBeHidden();
+		await expect(createRoot.locator('[data-kt-str-field="plan_type"] option', { hasText: "Thematic Plan" })).toHaveCount(1);
+		await expect(createRoot.locator('[data-kt-str-field="plan_type"] option', { hasText: "Sector Strategy" })).toHaveCount(0);
 		// Quote architecture icon must stay large + primary-fixed (not forced to 20px gray).
 		const arch = await createRoot
 			.locator('[data-testid="kt-str-create-quote"] .material-symbols-outlined')
@@ -295,7 +366,6 @@ test.describe("Strategy Alignment UI shell", () => {
 		expect(actionLayout.cancelW).toBeLessThan(actionLayout.barW * 0.45);
 		expect(actionLayout.submitW).toBeLessThan(actionLayout.barW * 0.45);
 
-		await page.locator('[data-kt-str-field="plan_code"]').fill(code);
 		await page.locator('[data-kt-str-field="title"]').fill(`Playwright Create ${suffix}`);
 		await page.locator('[data-kt-str-field="plan_type"]').selectOption("entity");
 		const peSelect = page.locator('[data-kt-str-field="procuring_entity_select"]');
@@ -313,7 +383,10 @@ test.describe("Strategy Alignment UI shell", () => {
 		await page.locator('[data-kt-str-field="start_date"]').fill("2026-07-01");
 		await page.locator('[data-kt-str-field="end_date"]').fill("2027-06-30");
 		await page.getByTestId("kt-str-create-plan-submit").click();
-		await expect(page).toHaveURL(new RegExp(`strategy-plan-overview/${code}`), { timeout: 20_000 });
+		await expect(page).toHaveURL(/strategy-plan-overview\/[A-Z0-9]+-SP-\d{4}/, { timeout: 20_000 });
+		const overviewUrl = page.url();
+		const refMatch = overviewUrl.match(/strategy-plan-overview\/([A-Z0-9]+-SP-\d{4})/);
+		expect(refMatch?.[1]).toBeTruthy();
 		await expect(page.getByTestId("kt-str-overview")).toBeVisible({ timeout: 30_000 });
 		await expect(page.getByTestId("kt-str-plan-tabs")).toBeVisible();
 		for (const tab of [
@@ -332,34 +405,71 @@ test.describe("Strategy Alignment UI shell", () => {
 
 	test("Create strategic plan Cancel returns to portfolio without creating", async ({ page }) => {
 		const suffix = Date.now().toString().slice(-6);
-		const code = `UI01-CANCEL-${suffix}`;
+		const cancelTitle = `Cancel ${suffix}`;
 		await page.goto("/desk/strategy-plan-create", { waitUntil: "domcontentloaded" });
 		await expect(page.locator('[data-testid="kt-str-create-plan"][data-kt-str-live="1"]')).toBeVisible({
 			timeout: 20_000,
 		});
-		await page.locator('[data-kt-str-field="plan_code"]').fill(code);
-		await page.locator('[data-kt-str-field="title"]').fill(`Cancel ${suffix}`);
+		await expect(page.locator('[data-kt-str-field="plan_code"]')).toHaveCount(0);
+		await page.locator('[data-kt-str-field="title"]').fill(cancelTitle);
 		await page.getByTestId("kt-str-create-plan-cancel").click();
 		await expect(page).toHaveURL(/strategy-alignment/, { timeout: 15_000 });
 		await expect(page.locator('[data-testid="kt-str-portfolio"][data-kt-str-live="1"]')).toBeVisible({
 			timeout: 20_000,
 		});
 		const search = page.getByTestId("kt-str-pf-filters").getByLabel("Search plans");
-		await search.fill(code);
+		await search.fill(cancelTitle);
 		await expect(page.locator('[data-testid="kt-str-plans-table"] [data-kt-str-empty="1"]')).toBeVisible({
 			timeout: 10_000,
 		});
+	});
+
+	test("Create Programme Strategy requires parent and distinct scope (STR-FR-005)", async ({ page }) => {
+		const suffix = Date.now().toString().slice(-6);
+		await page.goto("/desk/strategy-plan-create", { waitUntil: "domcontentloaded" });
+		const createRoot = page.locator('[data-testid="kt-str-create-plan"][data-kt-str-live="1"]');
+		await expect(createRoot).toBeVisible({ timeout: 20_000 });
+		const peSelect = page.locator('[data-kt-str-field="procuring_entity_select"]');
+		await expect(peSelect).toBeVisible();
+		if (!(await peSelect.isDisabled())) {
+			const options = await peSelect.locator("option").allTextContents();
+			const moh = options.find((t) => /MOH|Health|PE-MOH/i.test(t));
+			if (moh) {
+				await peSelect.selectOption({ label: moh.trim() });
+			} else {
+				await peSelect.selectOption({ index: 1 });
+			}
+		}
+		await page.locator('[data-kt-str-field="plan_type"]').selectOption("programme");
+		await expect(createRoot.locator("[data-kt-str-create-subordinate]")).toBeVisible();
+		await page.locator('[data-kt-str-field="title"]').fill(`Programme Strategy ${suffix}`);
+		await page.getByTestId("kt-str-create-plan-submit").click();
+		await expect(page.locator('[data-kt-str-error="parent_plan"]')).toBeVisible();
+		const parentSelect = page.locator('[data-kt-str-field="parent_plan"]');
+		await expect(parentSelect.locator("option")).not.toHaveCount(1, { timeout: 10_000 });
+		const parentValue = await parentSelect.locator("option").nth(1).getAttribute("value");
+		expect(parentValue).toBeTruthy();
+		await parentSelect.selectOption(parentValue!);
+		await page.locator('[data-kt-str-field="scope_type"]').selectOption("Programme");
+		await page.locator('[data-kt-str-field="scope_id"]').fill(`MOH-PROG-UI-${suffix}`);
+		await page.locator('[data-kt-str-field="start_date"]').fill("2026-07-01");
+		await page.locator('[data-kt-str-field="end_date"]').fill("2028-06-30");
+		await page.getByTestId("kt-str-create-plan-submit").click();
+		await expect(page).toHaveURL(/strategy-plan-overview\/[A-Z0-9]+-SP-\d{4}/, { timeout: 20_000 });
+		await expect(page.getByTestId("kt-str-overview")).toBeVisible({ timeout: 30_000 });
 	});
 
 	test("View navigates to plan overview with refresh-safe plan code", async ({ page }) => {
 		await page.goto("/desk/strategy-alignment", { waitUntil: "domcontentloaded" });
 		await expect(page.getByTestId("kt-str-portfolio")).toBeVisible({ timeout: 30_000 });
 		await expect(
-			page.locator(`[data-testid="kt-str-plans-table"] tr[data-plan-code="${PLAN}"]`)
+			page.locator(
+				`[data-testid="kt-str-plans-table"] tr[data-plan-code="${PLAN}"][data-plan-status="Active"]`
+			)
 		).toBeVisible({ timeout: 20_000 });
 		await page
 			.locator(
-				`[data-testid="kt-str-plans-table"] tr[data-plan-code="${PLAN}"] button[data-kt-str-action="open-plan"]`
+				`[data-testid="kt-str-plans-table"] tr[data-plan-code="${PLAN}"][data-plan-status="Active"] button[data-kt-str-action="open-plan"]`
 			)
 			.click();
 		await expect(page).toHaveURL(new RegExp(`strategy-plan-overview/${PLAN}`), {
@@ -1021,8 +1131,8 @@ test.describe("Strategy Alignment UI shell", () => {
 		await expect(page.getByTestId("kt-str-structure-tree")).toBeVisible();
 		await expect(page.getByTestId("kt-str-structure-detail")).toBeVisible();
 		await expect(page.getByText("Structure Hierarchy")).toBeVisible();
-		await expect(page.getByText("MOH-PROG-DH").first()).toBeVisible({ timeout: 15_000 });
-		await expect(page.getByText("MOH-OUT-01").first()).toBeVisible();
+		await expect(page.getByText("MOH-PROG-0001").first()).toBeVisible({ timeout: 15_000 });
+		await expect(page.getByText("MOH-OUT-0001").first()).toBeVisible();
 		await expect(page.locator('[data-testid="kt-str-structure"][data-kt-str-structure-editable="0"]')).toBeVisible();
 		await expect(page.getByRole("button", { name: /Add Structure Item/i })).toHaveCount(0);
 		await expect(page.getByRole("button", { name: /Add Programme/i })).toHaveCount(0);
@@ -1098,8 +1208,8 @@ test.describe("Strategy Alignment UI shell", () => {
 		expect(treeIndent.tgt).toBeGreaterThanOrEqual(100); // pl-28 ≈ 7rem
 
 		// Selecting Outcome updates detail panel from live DTO.
-		await page.locator('[data-node-code="MOH-OUT-01"]').first().click();
-		await expect(page.getByTestId("kt-str-structure-detail").getByText("MOH-OUT-01").first()).toBeVisible();
+		await page.locator('[data-node-code="MOH-OUT-0001"]').first().click();
+		await expect(page.getByTestId("kt-str-structure-detail").getByText("MOH-OUT-0001").first()).toBeVisible();
 		await expect(
 			page
 				.getByTestId("kt-str-structure-detail")
@@ -1109,12 +1219,10 @@ test.describe("Strategy Alignment UI shell", () => {
 
 	test("plan structure Draft empty can add Programme via drawer", async ({ page }) => {
 		const suffix = Date.now().toString().slice(-6);
-		const code = `UI03-STR-${suffix}`;
 		await page.goto("/desk/strategy-plan-create", { waitUntil: "domcontentloaded" });
 		await expect(page.locator('[data-testid="kt-str-create-plan"][data-kt-str-live="1"]')).toBeVisible({
 			timeout: 20_000,
 		});
-		await page.locator('[data-kt-str-field="plan_code"]').fill(code);
 		await page.locator('[data-kt-str-field="title"]').fill(`Structure live ${suffix}`);
 		await page.locator('[data-kt-str-field="plan_type"]').selectOption("entity");
 		const peSelect = page.locator('[data-kt-str-field="procuring_entity_select"]');
@@ -1130,7 +1238,7 @@ test.describe("Strategy Alignment UI shell", () => {
 		await page.locator('[data-kt-str-field="start_date"]').fill("2026-07-01");
 		await page.locator('[data-kt-str-field="end_date"]').fill("2030-06-30");
 		await page.getByTestId("kt-str-create-plan-submit").click();
-		await expect(page).toHaveURL(new RegExp(`strategy-plan-overview/${code}`), { timeout: 20_000 });
+		await expect(page).toHaveURL(/strategy-plan-overview\/[A-Z0-9]+-SP-\d{4}/, { timeout: 20_000 });
 		await page.getByTestId("kt-str-start-plan-structure").click();
 		await expect(page).toHaveURL(/strategy-plan-structure/, { timeout: 15_000 });
 		await expect(page.locator('[data-testid="kt-str-structure"][data-kt-str-live="1"]')).toBeVisible({
@@ -1148,8 +1256,11 @@ test.describe("Strategy Alignment UI shell", () => {
 		const panel = page.getByTestId("kt-str-structure-drawer-panel");
 		await expect(panel.getByRole("heading", { name: /Add Programme/i })).toBeVisible();
 		await expect(overlay).toHaveAttribute("data-dismiss", "explicit-only");
-		// Focus chrome: light blue, not near-black primary.
-		const focusChrome = await panel.locator('input[name="code"]').evaluate((el) => {
+		await expect(panel.getByTestId("kt-str-structure-reference")).toBeVisible();
+		await expect(panel.getByText("Generated automatically on save")).toBeVisible();
+		await expect(panel.locator('input[name="code"]')).toHaveCount(0);
+		// Focus chrome: light blue, not near-black primary (title field — code is system-assigned).
+		const focusChrome = await panel.locator('input[name="title"]').evaluate((el) => {
 			el.focus();
 			const cs = getComputedStyle(el);
 			return { border: cs.borderColor, outline: cs.outlineColor, shadow: cs.boxShadow };
@@ -1158,12 +1269,11 @@ test.describe("Strategy Alignment UI shell", () => {
 		expect(focusChrome.border).not.toMatch(/0,\s*31,\s*72|0 31 72|#001f48/i);
 		await overlay.evaluate((el) => el.dispatchEvent(new MouseEvent("click", { bubbles: true })));
 		await expect(overlay).toBeVisible();
-		await panel.locator('input[name="code"]').fill(`${code}-PROG`);
 		await panel.locator('input[name="title"]').fill("Digital Services Programme");
 		await panel.locator('input[name="responsible_function"]').fill("ICT");
 		await panel.getByRole("button", { name: /^Save$/i }).click();
 		await expect(overlay).toHaveCount(0, { timeout: 15_000 });
-		await expect(page.getByText(`${code}-PROG`).first()).toBeVisible({ timeout: 15_000 });
+		await expect(page.getByText(/^[A-Z0-9]+-PROG-\d{4}$/).first()).toBeVisible({ timeout: 15_000 });
 		await expect(page.getByTestId("kt-str-structure-detail").getByText("Digital Services Programme")).toBeVisible();
 
 		// Cancel closes without save on a second open.
@@ -1264,9 +1374,9 @@ test.describe("Strategy Alignment UI shell", () => {
 		await expect(
 			measFilters.locator(".material-symbols-outlined", { hasText: "expand_more" })
 		).toHaveCount(3);
-		// Seed truth: two Verified MOH-TGT-01 rows — not fixture-only TGT-02/03.
+		// Seed truth: two Verified MOH-TGT-0001 rows — not fixture-only TGT-02/03.
 		await expect(
-			meas.locator('[data-kt-str-meas-tbody] tr[data-kt-str-target-code="MOH-TGT-01"]')
+			meas.locator('[data-kt-str-meas-tbody] tr[data-kt-str-target-code="MOH-TGT-0001"]')
 		).toHaveCount(2, { timeout: 15_000 });
 		await expect(meas.getByText("MOH-TGT-02")).toHaveCount(0);
 		await expect(meas.getByText("MOH-TGT-03")).toHaveCount(0);
@@ -1276,7 +1386,7 @@ test.describe("Strategy Alignment UI shell", () => {
 
 		await meas.getByRole("button", { name: /Submit measurement/i }).first().click();
 		await expect(page).toHaveURL(
-			new RegExp(`strategy-measurement-submit/${PLAN}/MOH-TGT-01`),
+			new RegExp(`strategy-measurement-submit/${PLAN}/MOH-TGT-0001`),
 			{ timeout: 15_000 }
 		);
 		await expect(page.getByTestId("kt-str-measurement-submit")).toBeVisible({ timeout: 30_000 });

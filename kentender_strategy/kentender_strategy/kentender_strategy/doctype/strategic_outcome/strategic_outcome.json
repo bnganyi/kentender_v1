@@ -10,6 +10,7 @@
   "programme",
   "sub_programme",
   "outcome_code",
+  "external_reference",
   "title",
   "description",
   "responsible_function",
@@ -44,6 +45,11 @@
    "label": "Outcome Code",
    "reqd": 1,
    "in_list_view": 1
+  },
+  {
+   "fieldname": "external_reference",
+   "fieldtype": "Data",
+   "label": "External Reference"
   },
   {
    "fieldname": "title",

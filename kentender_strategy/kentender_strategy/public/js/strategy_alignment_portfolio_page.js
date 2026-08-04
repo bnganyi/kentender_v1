@@ -24,6 +24,10 @@
 				frappe.set_route("strategy-plan-create");
 				return;
 			}
+			if (action === "open-performance") {
+				frappe.set_route("strategy-performance");
+				return;
+			}
 
 			var route = routeFromAttr($el);
 			if (route && route.length) {

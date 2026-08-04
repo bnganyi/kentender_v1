@@ -16,6 +16,7 @@ frappe.provide("kentender_core.module_registry");
 			selectKey: "kt_strategy_workspace_select",
 			routePrefixes: [
 				"strategy-alignment",
+				"strategy-performance",
 				"strategy-plan-overview",
 				"strategy-plan-structure",
 				"strategy-plan-value-commitments",

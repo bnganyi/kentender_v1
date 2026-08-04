@@ -278,7 +278,7 @@ Use the exact fields, controlled values, constraints and state models in section
 - Active Public Value Objective versions are immutable.
 - Material change creates a successor version.
 - Activating a successor atomically supersedes the previous Active version.
-- Codes become immutable after first approval.
+- References are system-assigned on first save (never user-entered) and immutable thereafter (Strategy Administrator may correct only pre-activation with audit). Codes become immutable after first approval.
 - Referenced/approved records cannot be deleted.
 - Historical downstream references and human-readable snapshots remain resolvable.
 - Verified measurements are immutable. Corrections create a formally superseding measurement.
@@ -488,12 +488,12 @@ The UI must render live API data. Fixture values must not be embedded in page co
 Replace obsolete Strategy seeds and affected demo references with repeatable fixtures from section 19 of the locked requirements.
 
 At minimum seed:
-- MOH-SP-2026-2030 v1, Active;
-- MOH-PROG-DH;
-- MOH-SUB-HIS;
-- MOH-OUT-01;
-- MOH-IND-01;
-- MOH-TGT-01 with 97.8% baseline and ≥99.9% target;
+- MOH-SP-0001 v1, Active;
+- MOH-PROG-0001;
+- MOH-SUB-0001;
+- MOH-OUT-0001;
+- MOH-IND-0001;
+- MOH-TGT-0001 with 97.8% baseline and ≥99.9% target;
 - the eight specified Public Value Objectives;
 - linked Plan Value Commitments sufficient to exercise Required and Recommended consideration;
 - September 2027 verified 99.82% At risk measurement;

@@ -1,6 +1,6 @@
 // Extracted from docs/mvp-1/01_strategy/ui_design/strategy_portfolio_strategy_alignment/code.html <main>
 // Only surgical data-testid / data-kt-str-action hooks added — Stitch classes preserved.
-// Table / My Work / summary counts are live-bound (seed plan MOH-SP-2026-2030 via API).
+// Table / My Work / summary counts are live-bound (seed plan MOH-SP-0001 via API).
 frappe.provide("kentender_strategy.ui_fixtures");
 kentender_strategy.ui_fixtures.portfolio = function () {
 	return `<div class="kt-str-root" data-testid="kt-str-portfolio">
@@ -10,10 +10,16 @@ kentender_strategy.ui_fixtures.portfolio = function () {
 <h1 class="font-headline-lg text-headline-lg text-primary">Strategy Alignment</h1>
 <p class="font-body-md text-body-md text-on-surface-variant mt-1">Govern strategic outcomes, public-value commitments and performance targets used across procurement.</p>
 </div>
-<button type="button" data-kt-str-action="create-plan" data-testid="kt-str-create-plan" class="bg-primary text-on-primary px-5 py-2.5 rounded-lg flex items-center gap-2 font-semibold text-body-md shadow-sm hover:opacity-90 transition-all shrink-0">
+<div class="flex items-center gap-3 shrink-0">
+<button type="button" data-kt-str-action="open-performance" data-testid="kt-str-open-performance" class="text-primary hover:bg-surface-container px-4 py-2 rounded-lg font-label-caps text-label-caps transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" aria-hidden="true">analytics</span>
+Open Strategy Performance
+</button>
+<button type="button" data-kt-str-action="create-plan" data-testid="kt-str-create-plan" class="bg-primary text-on-primary px-5 py-2.5 rounded-lg flex items-center gap-2 font-semibold text-body-md shadow-sm hover:opacity-90 transition-all">
 <span class="material-symbols-outlined text-lg">add</span>
         Create strategic plan
       </button>
+</div>
 </div>
 <!-- Summary Strip -->
 <div class="grid grid-cols-4 gap-gutter mb-6" data-testid="kt-str-summary-strip">
@@ -70,6 +76,8 @@ kentender_strategy.ui_fixtures.portfolio = function () {
 <option value="">Plan type</option>
 <option value="Entity Strategic Plan">Entity Strategic Plan</option>
 <option value="Programme Strategy">Programme Strategy</option>
+<option value="Thematic Plan">Thematic Plan</option>
+<option value="Annual Implementation Plan">Annual Implementation Plan</option>
 </select>
 <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm pointer-events-none" aria-hidden="true">expand_more</span>
 </div>

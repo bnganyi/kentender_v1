@@ -115,10 +115,9 @@ def upsert_structure_node(payload: dict) -> dict:
 	):
 		if key in payload and key not in data:
 			data[key] = payload[key]
-	if code_field in payload:
-		data[code_field] = payload[code_field]
-	if "code" in payload and code_field not in data:
-		data[code_field] = payload["code"]
+	# Client-supplied codes are ignored on create (system-assigned). On edit, codes are immutable.
+	data.pop(code_field, None)
+	data.pop("code", None)
 
 	plan_version = data.get("plan_version")
 	if not plan_version and name and frappe.db.exists(doctype, name):
@@ -151,10 +150,13 @@ def upsert_structure_node(payload: dict) -> dict:
 
 	if name and frappe.db.exists(doctype, name):
 		doc = frappe.get_doc(doctype, name)
+		# Never overwrite an existing system reference from the payload.
+		data.pop(code_field, None)
 		doc.update(data)
 		doc.save(ignore_permissions=True)
 	else:
 		data["doctype"] = doctype
+		data[code_field] = None
 		doc = frappe.get_doc(data)
 		doc.insert(ignore_permissions=True)
 	return {"id": doc.name, "type": node_type, "code": doc.get(code_field), "name": doc.title}
@@ -218,6 +220,8 @@ def upsert_pvo(payload: dict) -> dict:
 		doc = frappe.get_doc("Public Value Objective", name)
 		if doc.status in ("Active", "Superseded", "Retired"):
 			frappe.throw(_("Active Public Value Objectives are immutable; create a successor"))
+		# Objective codes are immutable after create (catalogue or system).
+		fields.pop("objective_code", None)
 		doc.update(fields)
 		if triggers is not None:
 			doc.set("triggers", [])
@@ -226,6 +230,9 @@ def upsert_pvo(payload: dict) -> dict:
 		doc.save()
 	else:
 		fields["doctype"] = "Public Value Objective"
+		# Empty → system MOH-OBJ-####; catalogue seeds may pass PVO-* explicitly.
+		if not (fields.get("objective_code") or "").strip():
+			fields["objective_code"] = None
 		doc = frappe.get_doc(fields)
 		for tr in triggers or []:
 			doc.append("triggers", tr)
@@ -312,11 +319,12 @@ def upsert_plan_value_commitment(payload: dict) -> dict:
 	else:
 		fields["doctype"] = "Plan Value Commitment"
 		fields.setdefault("status", "Draft")
+		fields["commitment_code"] = None
 		doc = frappe.get_doc(fields)
 		for link in links or []:
 			doc.append("links", link)
 		doc.insert(ignore_permissions=True)
-	return {"id": doc.name, "status": doc.status}
+	return {"id": doc.name, "code": doc.get("commitment_code"), "status": doc.status}
 
 
 def set_commitment_links(commitment_name: str, links: list[dict]) -> dict:
@@ -367,11 +375,13 @@ def save_measurement_draft(payload: dict) -> dict:
 		doc.save(ignore_permissions=True)
 	else:
 		fields["doctype"] = "Performance Measurement"
+		fields["measurement_code"] = None
 		doc = frappe.get_doc(fields)
 		derive_measurement_result(doc)
 		doc.insert(ignore_permissions=True)
 	return {
 		"id": doc.name,
+		"code": doc.get("measurement_code"),
 		"workflow_status": doc.workflow_status,
 		"result_status": doc.result_status,
 		"variance": doc.variance,
@@ -394,9 +404,10 @@ def upsert_corrective_action(payload: dict) -> dict:
 		doc.save(ignore_permissions=True)
 	else:
 		fields["doctype"] = "Strategy Corrective Action"
+		fields["corrective_action_code"] = None
 		doc = frappe.get_doc(fields)
 		doc.insert(ignore_permissions=True)
-	return {"id": doc.name, "status": doc.status}
+	return {"id": doc.name, "code": doc.get("corrective_action_code"), "status": doc.status}
 
 
 def update_plan_identity(plan_name: str, payload: dict) -> dict:
@@ -735,6 +746,9 @@ def create_successor_version(plan_version: str) -> dict:
 			"title": src.title,
 			"procuring_entity": src.procuring_entity,
 			"plan_type": src.plan_type,
+			"scope_type": src.scope_type,
+			"scope_id": src.scope_id,
+			"parent_plan": src.parent_plan,
 			"start_date": src.start_date,
 			"end_date": src.end_date,
 			"description": src.description,

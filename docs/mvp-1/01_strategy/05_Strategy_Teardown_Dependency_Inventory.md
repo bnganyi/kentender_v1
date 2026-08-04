@@ -77,7 +77,7 @@ App boundary: `apps/kentender_v1/kentender_strategy/` (bench symlink `apps/kente
 | Strategy Corrective Action | *(new)* |
 | Strategy Reference DTO + selector services (§16) | `get_active_strategy_*` + five-field Links |
 | STR-UI-01…14 Desk surfaces | strategy-management / strategy-builder |
-| MOH fixture `MOH-SP-2026-2030` + PVOs | `STRAT-MOH-2026` / `PROG-MOH-*` / `OBJ-MOH-*` |
+| MOH fixture `MOH-SP-0001` + PVOs | `STRAT-MOH-2026` / `PROG-MOH-*` / `OBJ-MOH-*` |
 
 ---
 

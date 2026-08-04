@@ -9,7 +9,15 @@ import frappe
 from frappe import _
 
 from kentender_strategy.services.strategy_audit import record_event
-from kentender_strategy.services.strategy_domain_guards import CODE_RE
+from kentender_strategy.services.strategy_domain_guards import (
+	CODE_RE,
+	PLAN_TYPE_ENTITY,
+	PLAN_TYPES,
+	SCOPE_TYPE_PE,
+	SCOPE_TYPES,
+	SUBORDINATE_PLAN_TYPES,
+	normalize_plan_scope,
+)
 from kentender_strategy.services.strategy_permissions import (
 	assert_entity_in_scope,
 	can_create_successor_plan,
@@ -21,13 +29,6 @@ from kentender_strategy.services.strategy_permissions import (
 	ROLE_OFFICER,
 )
 from kentender_strategy.services.strategy_readiness import get_plan_readiness
-
-PLAN_TYPES = (
-	"Entity Strategic Plan",
-	"Sector Strategy",
-	"Programme Strategy",
-	"Other",
-)
 
 
 def _ref(id_: str | None, code: str | None = None, name: str | None = None) -> dict | None:
@@ -158,6 +159,9 @@ def list_strategy_plans(
 			"title",
 			"procuring_entity",
 			"plan_type",
+			"scope_type",
+			"scope_id",
+			"parent_plan",
 			"status",
 			"start_date",
 			"end_date",
@@ -184,6 +188,9 @@ def list_strategy_plans(
 				"procuring_entity": r.procuring_entity,
 				"procuring_entity_name": _entity_label(r.procuring_entity),
 				"plan_type": r.plan_type,
+				"scope_type": r.scope_type,
+				"scope_id": r.scope_id,
+				"parent_plan": _parent_plan_ref(r.parent_plan),
 				"status": r.status,
 				"start_date": r.start_date,
 				"end_date": r.end_date,
@@ -192,6 +199,17 @@ def list_strategy_plans(
 			}
 		)
 	return out
+
+
+def _parent_plan_ref(parent_id: str | None) -> dict | None:
+	if not parent_id:
+		return None
+	row = frappe.db.get_value(
+		"Strategic Plan", parent_id, ["name", "plan_code", "title"], as_dict=True
+	)
+	if not row:
+		return _ref(parent_id)
+	return _ref(row.name, row.plan_code, row.title)
 
 
 def get_strategy_portfolio(procuring_entity: str | None = None) -> dict:
@@ -583,6 +601,9 @@ def get_strategy_tree(plan_version: str | None = None, plan_code: str | None = N
 			"end_date": str(plan.end_date) if plan.end_date else None,
 			"effective_period_label": _format_effective_period(plan.start_date, plan.end_date),
 			"plan_type": plan.plan_type,
+			"scope_type": plan.scope_type,
+			"scope_id": plan.scope_id,
+			"parent_plan": _parent_plan_ref(plan.parent_plan),
 			"procuring_entity": plan.procuring_entity,
 			"description": plan.description,
 			"supersedes_plan_version": plan.supersedes_plan_version,
@@ -844,6 +865,9 @@ def get_plan_overview(plan_version: str | None = None, plan_code: str | None = N
 			"end_date": str(plan_doc.end_date) if plan_doc.end_date else None,
 			"effective_period_label": _format_effective_period(plan_doc.start_date, plan_doc.end_date),
 			"plan_type": plan_doc.plan_type,
+			"scope_type": plan_doc.scope_type,
+			"scope_id": plan_doc.scope_id,
+			"parent_plan": _parent_plan_ref(plan_doc.parent_plan),
 			"description": plan_doc.description,
 			"procuring_entity": pe_ref,
 			"supersedes_plan_version": plan_doc.supersedes_plan_version,
@@ -869,7 +893,7 @@ def get_plan_overview(plan_version: str | None = None, plan_code: str | None = N
 			"start_structure": status == "Draft" and empty_structure and can_edit_draft_plan(),
 			"export_plan": False,
 		},
-		"show_policy_note": plan_doc.plan_code == "MOH-SP-2026-2030",
+		"show_policy_note": plan_doc.plan_code == "MOH-SP-0001",
 	}
 
 
@@ -1359,6 +1383,30 @@ def get_create_plan_context() -> dict:
 			"code": _entity_code(pe),
 			"name": _entity_label(pe),
 		}
+	parent_filters: dict[str, Any] = {
+		"plan_type": PLAN_TYPE_ENTITY,
+		"status": ["in", ["Active", "Approved"]],
+	}
+	if pe:
+		parent_filters["procuring_entity"] = pe
+	parent_options = []
+	for row in frappe.get_all(
+		"Strategic Plan",
+		filters=parent_filters,
+		fields=["name", "plan_code", "title", "status", "procuring_entity"],
+		order_by="status asc, plan_code asc",
+		limit_page_length=100,
+	):
+		parent_options.append(
+			{
+				"id": row.name,
+				"code": row.plan_code,
+				"name": row.title,
+				"status": row.status,
+				"procuring_entity": row.procuring_entity,
+				"label": f"{row.title} ({row.plan_code})",
+			}
+		)
 	return {
 		"capabilities": {
 			"create_plan": True,
@@ -1366,22 +1414,22 @@ def get_create_plan_context() -> dict:
 		},
 		"procuring_entity": pe_ref,
 		"plan_types": list(PLAN_TYPES),
+		"scope_types": [s for s in SCOPE_TYPES if s != SCOPE_TYPE_PE],
+		"parent_plan_options": parent_options,
 	}
 
 
 def _validate_create_plan_payload(payload: dict) -> dict[str, str]:
 	errors: dict[str, str] = {}
-	plan_code = (payload.get("plan_code") or "").strip()
+	# plan_code is system-assigned on first save — never required from the user.
 	title = (payload.get("title") or "").strip()
 	plan_type = (payload.get("plan_type") or "").strip()
 	pe = (payload.get("procuring_entity") or "").strip() or entity_for_user()
 	start = payload.get("start_date")
 	end = payload.get("end_date")
-
-	if not plan_code:
-		errors["plan_code"] = _("Plan code is required")
-	elif not CODE_RE.match(plan_code):
-		errors["plan_code"] = _("Plan code must use uppercase letters, numbers and hyphens only")
+	parent_plan = (payload.get("parent_plan") or "").strip() or None
+	scope_type = (payload.get("scope_type") or "").strip() or None
+	scope_id = (payload.get("scope_id") or "").strip() or None
 
 	if not title:
 		errors["title"] = _("Plan title is required")
@@ -1421,11 +1469,35 @@ def _validate_create_plan_payload(payload: dict) -> dict[str, str]:
 	if payload.get("version_number") not in (None, "", 1, "1"):
 		errors["version_number"] = _("New plans are always version 1")
 
-	if plan_code and pe and "plan_code" not in errors and "procuring_entity" not in errors:
-		if frappe.db.exists(
-			"Strategic Plan", {"plan_code": plan_code, "procuring_entity": pe}
-		):
-			errors["plan_code"] = _("Plan code must be unique within the procuring entity")
+	if plan_type == PLAN_TYPE_ENTITY:
+		# Parent/scope are system-managed for ESP.
+		pass
+	elif plan_type in SUBORDINATE_PLAN_TYPES:
+		if not parent_plan:
+			errors["parent_plan"] = _("Parent Entity Strategic Plan is required")
+		elif pe and "parent_plan" not in errors:
+			parent = frappe.db.get_value(
+				"Strategic Plan",
+				parent_plan,
+				["name", "plan_type", "procuring_entity", "status"],
+				as_dict=True,
+			)
+			if not parent:
+				errors["parent_plan"] = _("Parent plan is not valid")
+			elif parent.plan_type != PLAN_TYPE_ENTITY:
+				errors["parent_plan"] = _("Parent must be an Entity Strategic Plan")
+			elif parent.procuring_entity != pe:
+				errors["parent_plan"] = _("Parent plan must belong to the same procuring entity")
+			elif parent.status not in ("Active", "Approved"):
+				errors["parent_plan"] = _("Parent plan must be Active or Approved")
+		if not scope_type:
+			errors["scope_type"] = _("Scope type is required")
+		elif scope_type not in SCOPE_TYPES or scope_type == SCOPE_TYPE_PE:
+			errors["scope_type"] = _("Select Programme or Entity Unit scope")
+		if not scope_id:
+			errors["scope_id"] = _("Scope identifier is required")
+		elif pe and scope_type == SCOPE_TYPE_PE and scope_id == pe:
+			errors["scope_id"] = _("Subordinate plans need a distinct organisational scope")
 
 	return errors
 
@@ -1444,15 +1516,28 @@ def create_plan(payload: dict) -> dict:
 	if not has_cross_entity_authority():
 		assert_entity_in_scope(pe)
 
-	plan_code = (payload.get("plan_code") or "").strip()
+	plan_type = (payload.get("plan_type") or "").strip()
+	parent_plan = (payload.get("parent_plan") or "").strip() or None
+	scope_type = (payload.get("scope_type") or "").strip() or None
+	scope_id = (payload.get("scope_id") or "").strip() or None
+	if plan_type == PLAN_TYPE_ENTITY:
+		scope_type = SCOPE_TYPE_PE
+		scope_id = pe
+		parent_plan = None
+
+	# Ignore any client-supplied plan_code — before_insert allocates MOH-SP-####.
 	doc = frappe.get_doc(
 		{
 			"doctype": "Strategic Plan",
-			"plan_code": plan_code,
+			"plan_code": None,
+			"external_reference": (payload.get("external_reference") or "").strip() or None,
 			"version_number": 1,
 			"title": (payload.get("title") or "").strip(),
 			"procuring_entity": pe,
-			"plan_type": (payload.get("plan_type") or "").strip(),
+			"plan_type": plan_type,
+			"scope_type": scope_type,
+			"scope_id": scope_id,
+			"parent_plan": parent_plan,
 			"start_date": payload.get("start_date"),
 			"end_date": payload.get("end_date"),
 			"description": (payload.get("description") or "").strip() or None,
@@ -1460,6 +1545,7 @@ def create_plan(payload: dict) -> dict:
 			"supersedes_plan_version": None,
 		}
 	)
+	normalize_plan_scope(doc)
 	doc.insert()
 
 	# Hard guarantee: create workflow must not seed hierarchy placeholders.
@@ -1492,6 +1578,9 @@ def create_plan(payload: dict) -> dict:
 			"version_number": doc.version_number,
 			"procuring_entity": doc.procuring_entity,
 			"plan_type": doc.plan_type,
+			"scope_type": doc.scope_type,
+			"scope_id": doc.scope_id,
+			"parent_plan": _parent_plan_ref(doc.parent_plan),
 			"start_date": doc.start_date,
 			"end_date": doc.end_date,
 			"supersedes_plan_version": doc.supersedes_plan_version,

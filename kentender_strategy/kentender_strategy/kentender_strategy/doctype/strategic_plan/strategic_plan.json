@@ -8,12 +8,18 @@
  "field_order": [
   "section_identity",
   "plan_code",
+  "external_reference",
   "version_number",
   "title",
   "col_id",
   "procuring_entity",
   "plan_type",
   "status",
+  "section_scope",
+  "scope_type",
+  "scope_id",
+  "col_scope",
+  "parent_plan",
   "section_period",
   "start_date",
   "end_date",
@@ -43,6 +49,12 @@
    "reqd": 1,
    "in_list_view": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "external_reference",
+   "fieldtype": "Data",
+   "label": "External Reference",
+   "description": "Optional code from an imported or approved source document"
   },
   {
    "fieldname": "version_number",
@@ -76,7 +88,7 @@
    "fieldname": "plan_type",
    "fieldtype": "Select",
    "label": "Plan Type",
-   "options": "Entity Strategic Plan\nSector Strategy\nProgramme Strategy\nOther",
+   "options": "Entity Strategic Plan\nProgramme Strategy\nThematic Plan\nAnnual Implementation Plan",
    "reqd": 1,
    "default": "Entity Strategic Plan"
   },
@@ -88,6 +100,34 @@
    "reqd": 1,
    "default": "Draft",
    "in_list_view": 1
+  },
+  {
+   "fieldname": "section_scope",
+   "fieldtype": "Section Break",
+   "label": "Scope and parent"
+  },
+  {
+   "fieldname": "scope_type",
+   "fieldtype": "Select",
+   "label": "Scope Type",
+   "options": "Procuring Entity\nProgramme\nEntity Unit"
+  },
+  {
+   "fieldname": "scope_id",
+   "fieldtype": "Data",
+   "label": "Scope Id",
+   "search_index": 1
+  },
+  {
+   "fieldname": "col_scope",
+   "fieldtype": "Column Break",
+   "label": "Col Scope"
+  },
+  {
+   "fieldname": "parent_plan",
+   "fieldtype": "Link",
+   "label": "Parent Plan",
+   "options": "Strategic Plan"
   },
   {
    "fieldname": "section_period",

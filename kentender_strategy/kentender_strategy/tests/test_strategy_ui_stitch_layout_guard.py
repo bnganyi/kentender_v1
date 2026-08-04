@@ -77,7 +77,7 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 		self.assertIn("kt-str-summary-strip", fixture)
 		self.assertIn("data-kt-str-plans-tbody", fixture)
 		self.assertIn('data-kt-str-count="active"', fixture)
-		self.assertIn("MOH-SP-2026-2030", fixture)  # seed reference in fixture header comment
+		self.assertIn("MOH-SP-0001", fixture)  # seed reference in fixture header comment
 		self.assertIn("Create strategic plan", fixture)
 		self.assertIn("renderPlanRows", live)
 		# Portfolio Effective period: compact dates, stacked in the cell (not one wide line).
@@ -107,7 +107,19 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 		self.assertIn("bindCreatePlan", live)
 		create_fx = _read(FIXTURES / "create_plan.js")
 		self.assertIn("kt-str-create-plan", create_fx)
-		self.assertIn('data-kt-str-field="plan_code"', create_fx)
+		# System-assigned reference — never a required user plan_code input.
+		self.assertNotIn('data-kt-str-field="plan_code"', create_fx)
+		self.assertIn("kt-str-create-plan-reference", create_fx)
+		self.assertIn("Generated automatically", create_fx)
+		self.assertIn("kt-str-structure-reference", _read(LIVE_BIND))
+		self.assertIn("Entity Strategic Plan", create_fx)
+		self.assertIn("Programme Strategy", create_fx)
+		self.assertIn("Thematic Plan", create_fx)
+		self.assertIn("Annual Implementation Plan", create_fx)
+		self.assertIn('data-kt-str-field="parent_plan"', create_fx)
+		self.assertIn('data-kt-str-create-subordinate="1"', create_fx)
+		self.assertNotIn("Sector Strategy", create_fx)
+		self.assertNotIn('value="other">Other', create_fx)
 		self.assertIn("Basic Information", create_fx)
 		self.assertIn("Plan Context", create_fx)
 		self.assertIn("lg:col-span-8", create_fx)
@@ -492,7 +504,7 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 
 	def test_fixture_roots_and_markers(self):
 		cases = {
-			"portfolio.js": ("kt-str-portfolio", "Strategy Alignment", "MOH-SP-2026-2030"),
+			"portfolio.js": ("kt-str-portfolio", "Strategy Alignment", "MOH-SP-0001"),
 			"overview.js": ("kt-str-overview", "Plan Details", "kt-str-successor-modal"),
 			"structure.js": ("kt-str-structure", "Structure", "Add Structure Item"),
 			"structure_drawer.js": ("kt-str-structure-drawer", "fixed inset-0", "Target"),
@@ -514,7 +526,25 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 			"downstream.js": ("kt-str-downstream", "data-kt-str-down-tbody", "Downstream usage"),
 			"review_blockers.js": ("kt-str-review-blockers", "data-kt-str-review-group", "run-readiness"),
 			"review_ready.js": ("kt-str-review-ready", "Ready for submission", "submit-for-review"),
-			"audit.js": ("kt-str-audit", "Audit", "MOH-SP-2026-2030"),
+			"audit.js": ("kt-str-audit", "Audit", "MOH-SP-0001"),
+			"performance.js": (
+				"kt-str-performance",
+				"Strategy Performance",
+				"kt-str-perf-export",
+				# Stitch canvas class/region contract (not BEM rewrites).
+				"data-block",
+				"data-table",
+				"Exceptions Requiring Intervention",
+				"Outcome Performance",
+				"Funding Snapshot",
+				"Aligned Procurement Pipeline",
+				"Plan Value Commitments",
+				"FUNDING TREATMENT",
+				"DOWNSTREAM ADOPTION",
+				"md:grid-cols-4",
+				"bg-[#f0fdf4]",
+				"Corrective actions overdue",
+			),
 		}
 		for name, markers in cases.items():
 			path = FIXTURES / name
@@ -526,6 +556,7 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 	def test_desk_pages_registered(self):
 		expected = [
 			"strategy-alignment",
+			"strategy-performance",
 			"strategy-plan-create",
 			"strategy-plan-overview",
 			"strategy-plan-structure",
@@ -542,6 +573,43 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 		]
 		for name in expected:
 			self.assertTrue(frappe.db.exists("Page", name), f"Page missing: {name}")
+		# STR-UI-15 is a separate entry view — never an eighth Plan tab.
+		shell = _read(SHELL)
+		self.assertIn("PLAN_TABS", shell)
+		self.assertNotIn("strategy-performance", shell.split("PLAN_TABS")[1][:800])
+		live = _read(LIVE_BIND)
+		self.assertIn("bindStrategyPerformance", live)
+		self.assertIn("get_strategy_performance", live)
+		perf_css = APP_PUBLIC / "css" / "strategy_alignment_performance.css"
+		self.assertTrue(perf_css.is_file())
+		perf_css_text = _read(perf_css)
+		perf_fixture = _read(FIXTURES / "performance.js")
+		self.assertNotIn("cdn.tailwindcss.com", perf_css_text)
+		# Portfolio-style Stitch utility port — arbitrary strip colours + context grid.
+		for marker in (
+			".data-block",
+			".data-table",
+			"bg-\\[\\#f0fdf4\\]",
+			"md\\:grid-cols-4",
+			"lg\\:grid-cols-2",
+			"kt-str-perf-active",
+			"background-image: none",
+		):
+			self.assertIn(marker, perf_css_text, f"performance.css missing {marker}")
+		# Selects use Material expand_more sibling (portfolio pattern).
+		self.assertIn("expand_more", perf_fixture)
+		self.assertGreaterEqual(perf_fixture.count("expand_more"), 3)
+		# Systemic: tokens must not strip native carets without a stand-in glyph.
+		tokens_css = _read(APP_PUBLIC / "css" / "strategy_alignment_tokens.css")
+		self.assertIn("data:image/svg+xml", tokens_css)
+		self.assertRegex(
+			tokens_css,
+			r"\.kt-cl-shell \.kt-str-root select[\s\S]{0,400}background-image:",
+			"tokens.css select must restore a chevron when appearance:none",
+		)
+		# Must not ship the failed BEM rewrite of Stitch class names.
+		self.assertNotIn("kt-str-data-block", perf_fixture)
+		self.assertNotIn("kt-str-data-table", perf_fixture)
 
 	def test_no_tailwind_cdn_in_strategy_assets(self):
 		for path in APP_PUBLIC.rglob("*"):

@@ -34,7 +34,7 @@ The constitutional standards are not peripheral references. PPADA expressly make
 
 | **Field**             | **Example**                                 |
 | --------------------- | ------------------------------------------- |
-| Code                  | MOH-SP-2026-2030                            |
+| Code                  | MOH-SP-0001                            |
 | Plan                  | Ministry of Health Strategic Plan 2026-2030 |
 | Entity                | Ministry of Health                          |
 | Period                | 1 July 2026-30 June 2030                    |
@@ -46,11 +46,11 @@ The constitutional standards are not peripheral references. PPADA expressly make
 
 | **Level**             | **Code**    | **Name**                                                   |
 | --------------------- | ----------- | ---------------------------------------------------------- |
-| Programme             | MOH-PROG-DH | Digital Health Services                                    |
-| Sub-programme         | MOH-SUB-HIS | Health Information Systems                                 |
-| Strategic outcome     | MOH-OUT-01  | Reliable and accessible digital clinical services          |
-| Performance indicator | MOH-IND-01  | Availability of core clinical information systems          |
-| Performance target    | MOH-TGT-01  | Achieve at least 99.9% annual availability by 30 June 2028 |
+| Programme             | MOH-PROG-0001 | Digital Health Services                                    |
+| Sub-programme         | MOH-SUB-0001 | Health Information Systems                                 |
+| Strategic outcome     | MOH-OUT-0001  | Reliable and accessible digital clinical services          |
+| Performance indicator | MOH-IND-0001  | Availability of core clinical information systems          |
+| Performance target    | MOH-TGT-0001  | Achieve at least 99.9% annual availability by 30 June 2028 |
 
 The entities remain distinct:
 
@@ -64,8 +64,8 @@ The entities remain distinct:
 
 | **Field**             | **Example**                               |
 | --------------------- | ----------------------------------------- |
-| Target code           | MOH-TGT-01                                |
-| Indicator             | MOH-IND-01                                |
+| Target code           | MOH-TGT-0001                                |
+| Indicator             | MOH-IND-0001                                |
 | Measurement type      | Percentage                                |
 | Direction             | At least                                  |
 | Baseline              | 97.8%                                     |
@@ -108,7 +108,7 @@ Supply, installation and support of server infrastructure for the Ministry of He
 
 | **Field**          | **Selection**                                                                                             |
 | ------------------ | --------------------------------------------------------------------------------------------------------- |
-| Plan               | MOH-SP-2026-2030                                                                                          |
+| Plan               | MOH-SP-0001                                                                                          |
 | Programme          | Digital Health Services                                                                                   |
 | Sub-programme      | Health Information Systems                                                                                |
 | Outcome            | Reliable and accessible digital clinical services                                                         |
@@ -196,7 +196,7 @@ They are not the same record.
 
 | **Field**             | **Example**                                                                |
 | --------------------- | -------------------------------------------------------------------------- |
-| Target                | MOH-TGT-01                                                                 |
+| Target                | MOH-TGT-0001                                                                 |
 | Contract              | MOH/ICT/SERVER/2027                                                        |
 | Period                | September 2027                                                             |
 | Actual                | 99.82%                                                                     |

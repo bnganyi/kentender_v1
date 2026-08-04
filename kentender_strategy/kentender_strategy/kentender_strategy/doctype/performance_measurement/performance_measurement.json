@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "performance_target",
+  "measurement_code",
   "plan_version",
   "measurement_period_start",
   "measurement_period_end",
@@ -37,6 +38,14 @@
    "options": "Performance Target",
    "reqd": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "measurement_code",
+   "fieldtype": "Data",
+   "label": "Measurement Code",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1
   },
   {
    "fieldname": "plan_version",

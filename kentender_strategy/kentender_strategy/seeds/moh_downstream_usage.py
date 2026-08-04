@@ -1,5 +1,5 @@
 # Copyright (c) 2026, KenTender and contributors
-"""Link MOH demo Demand / Budget Line records to MOH-TGT-01 for Downstream Usage."""
+"""Link MOH demo Demand / Budget Line records to MOH-TGT-0001 for Downstream Usage."""
 
 from __future__ import annotations
 
