@@ -680,7 +680,15 @@ frappe.provide("kentender_core.cl_surface_registry");
 		"BUD-UI-04": {
 			id: "BUD-UI-04",
 			label: "Budget Overview",
-			routePrefixes: ["budget-overview"],
+			routePrefixes: [
+				"budget-overview",
+				"budget-lines",
+				"budget-funding-activity",
+				"budget-revisions",
+				"budget-downstream",
+				"budget-review",
+				"budget-audit",
+			],
 			sidebarWorkspaceKey: SIDEBAR_KEY,
 			chrome: chrome(__("Budget overview"), "", trailBudgetLeaf(__("Budget overview")), []),
 		},

@@ -9,6 +9,14 @@ kentender_budget.ui_fixtures.register = function () {
 <h1 class="font-headline-lg text-headline-lg text-primary mb-2">Register approved budget</h1>
 <p class="font-body-lg text-body-lg text-on-surface-variant">Register an approved financial baseline for procurement use in KenTender.</p>
 </div>
+<div class="w-full mb-4 hidden bg-error-container/20 border border-error/30 rounded-lg p-4 flex gap-3 items-start" data-testid="kt-bud-register-notice" data-kt-bud-register-notice hidden role="alert" aria-live="polite">
+<span class="material-symbols-outlined text-error mt-0.5" aria-hidden="true">error</span>
+<div class="flex-1 min-w-0">
+<p class="font-body-md text-body-md font-medium text-on-surface" data-kt-bud-register-notice-title>Not permitted</p>
+<p class="font-body-md text-body-md text-on-surface-variant" data-kt-bud-register-notice-msg></p>
+<p class="text-xs text-error hidden" data-kt-bud-error="form"></p>
+</div>
+</div>
 <div class="w-full bg-data-block-bg rounded-lg border border-border-subtle p-card-padding shadow-sm flex flex-col gap-section-gap" data-testid="kt-bud-register-form">
 <section class="flex flex-col gap-4" data-testid="kt-bud-register-identity">
 <h2 class="font-headline-sm text-headline-sm text-on-surface border-b border-border-subtle pb-2">Budget identity</h2>

@@ -1,0 +1,215 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-08-05 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "budget",
+  "budget_line",
+  "generated_reference",
+  "col_a",
+  "status",
+  "event_date",
+  "section_demand",
+  "demand_code",
+  "demand_title",
+  "col_b",
+  "original_amount",
+  "remaining_reserved",
+  "currency",
+  "section_downstream",
+  "current_downstream_reference",
+  "idempotency_key",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "budget",
+   "fieldtype": "Link",
+   "label": "Budget",
+   "options": "Budget",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "budget_line",
+   "fieldtype": "Link",
+   "label": "Budget Line",
+   "options": "Budget Line",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "generated_reference",
+   "fieldtype": "Data",
+   "label": "Reservation Reference",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Reserved\nPartially converted\nConverted\nReleased\nCancelled\nExpired",
+   "reqd": 1,
+   "default": "Reserved",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "event_date",
+   "fieldtype": "Date",
+   "label": "Event Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_demand",
+   "fieldtype": "Section Break",
+   "label": "Demand"
+  },
+  {
+   "fieldname": "demand_code",
+   "fieldtype": "Data",
+   "label": "Demand Code",
+   "reqd": 1
+  },
+  {
+   "fieldname": "demand_title",
+   "fieldtype": "Data",
+   "label": "Demand Title",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "col_b",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "original_amount",
+   "fieldtype": "Currency",
+   "label": "Original Amount",
+   "reqd": 1,
+   "options": "currency"
+  },
+  {
+   "fieldname": "remaining_reserved",
+   "fieldtype": "Currency",
+   "label": "Remaining Reserved",
+   "reqd": 1,
+   "options": "currency"
+  },
+  {
+   "default": "KES",
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_downstream",
+   "fieldtype": "Section Break",
+   "label": "Downstream"
+  },
+  {
+   "fieldname": "current_downstream_reference",
+   "fieldtype": "Data",
+   "label": "Current Downstream Reference"
+  },
+  {
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Idempotency Key",
+   "unique": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-08-05 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Budget",
+ "name": "Funding Reservation",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Budget Officer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Budget Reviewer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Budget Authority",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Budget Viewer",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "event_date",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "title_field": "demand_title",
+ "search_fields": "generated_reference,demand_code,demand_title"
+}

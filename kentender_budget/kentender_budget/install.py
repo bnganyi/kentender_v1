@@ -15,6 +15,12 @@ _PAGES = (
 	"budget_register",
 	"budget_funding_performance",
 	"budget_overview",
+	"budget_lines",
+	"budget_funding_activity",
+	"budget_revisions",
+	"budget_downstream",
+	"budget_review",
+	"budget_audit",
 )
 
 

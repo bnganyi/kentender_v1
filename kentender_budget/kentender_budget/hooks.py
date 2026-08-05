@@ -29,13 +29,20 @@ app_include_css = [
 	f"/assets/kentender_budget/css/budget_funding_utilities.css?v={_v('public/css/budget_funding_utilities.css')}",
 	f"/assets/kentender_budget/css/budget_funding_portfolio.css?v={_v('public/css/budget_funding_portfolio.css')}",
 	f"/assets/kentender_budget/css/budget_funding_register.css?v={_v('public/css/budget_funding_register.css')}",
+	f"/assets/kentender_budget/css/budget_funding_overview.css?v={_v('public/css/budget_funding_overview.css')}",
+	f"/assets/kentender_budget/css/budget_funding_lines.css?v={_v('public/css/budget_funding_lines.css')}",
+	f"/assets/kentender_budget/css/budget_funding_activity.css?v={_v('public/css/budget_funding_activity.css')}",
 	f"/assets/kentender_budget/css/budget_funding_responsive.css?v={_v('public/css/budget_funding_responsive.css')}",
 ]
 
 app_include_js = [
 	f"/assets/kentender_budget/js/budget_ui_fixtures/portfolio.js?v={_v('public/js/budget_ui_fixtures/portfolio.js')}",
 	f"/assets/kentender_budget/js/budget_ui_fixtures/register.js?v={_v('public/js/budget_ui_fixtures/register.js')}",
+	f"/assets/kentender_budget/js/budget_ui_fixtures/overview.js?v={_v('public/js/budget_ui_fixtures/overview.js')}",
+	f"/assets/kentender_budget/js/budget_ui_fixtures/lines.js?v={_v('public/js/budget_ui_fixtures/lines.js')}",
+	f"/assets/kentender_budget/js/budget_ui_fixtures/activity.js?v={_v('public/js/budget_ui_fixtures/activity.js')}",
 	f"/assets/kentender_budget/js/budget_live_bind.js?v={_v('public/js/budget_live_bind.js')}",
+	f"/assets/kentender_budget/js/budget_workspace_shell.js?v={_v('public/js/budget_workspace_shell.js')}",
 	f"/assets/kentender_budget/js/budget_funding_workspace_redirect.js?v={_v('public/js/budget_funding_workspace_redirect.js')}",
 ]
 
@@ -44,7 +51,13 @@ page_js = {
 	"budget-funding": "public/js/budget_funding_portfolio_page.js",
 	"budget-register": "public/js/budget_funding_register_page.js",
 	"budget-funding-performance": "public/js/budget_stub_page.js",
-	"budget-overview": "public/js/budget_stub_page.js",
+	"budget-overview": "public/js/budget_funding_overview_page.js",
+	"budget-lines": "public/js/budget_funding_lines_page.js",
+	"budget-funding-activity": "public/js/budget_funding_activity_page.js",
+	"budget-revisions": "public/js/budget_workspace_stub_pages.js",
+	"budget-downstream": "public/js/budget_workspace_stub_pages.js",
+	"budget-review": "public/js/budget_workspace_stub_pages.js",
+	"budget-audit": "public/js/budget_workspace_stub_pages.js",
 }
 
 after_migrate = "kentender_budget.install.after_migrate"

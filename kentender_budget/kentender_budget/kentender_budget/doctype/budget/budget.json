@@ -29,6 +29,8 @@
   "section_attention",
   "attention_note",
   "readiness_issue_count",
+  "strategy_pvc_treated",
+  "strategy_pvc_applicable",
   "section_governance",
   "submitted_by",
   "submitted_at",
@@ -184,6 +186,20 @@
    "fieldtype": "Int",
    "label": "Readiness Issue Count",
    "default": "0",
+   "non_negative": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "strategy_pvc_treated",
+   "fieldtype": "Int",
+   "label": "Strategy PVC Treated",
+   "non_negative": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "strategy_pvc_applicable",
+   "fieldtype": "Int",
+   "label": "Strategy PVC Applicable",
    "non_negative": 1
   },
   {

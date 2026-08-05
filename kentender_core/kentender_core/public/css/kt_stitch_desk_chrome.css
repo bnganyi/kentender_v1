@@ -97,7 +97,7 @@
 
 /* Row / text actions stay chromeless. */
 .kt-cl-shell .kt-stitch-canvas td button.text-primary,
-.kt-cl-shell .kt-stitch-canvas button.text-primary:not(.bg-primary):not(.border) {
+.kt-cl-shell .kt-stitch-canvas button.text-primary:not(.bg-primary):not(.border):not(.kt-bud-tab):not(.kt-str-tab) {
 	background: transparent !important;
 	border: none !important;
 	box-shadow: none !important;

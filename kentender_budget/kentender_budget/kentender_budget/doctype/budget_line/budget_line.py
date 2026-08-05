@@ -17,3 +17,4 @@ class BudgetLine(Document):
 		)
 		if available < 0:
 			frappe.throw("Budget Line Available cannot be negative.")
+		self.primary_strategy_linked = 1 if (self.primary_target_code or "").strip() else 0

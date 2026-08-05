@@ -1,0 +1,570 @@
+/* BUD-UI-04 / BUD-UI-05 — Budget Lines table + Edit drawer Stitch pins.
+   Pins table geometry, toolbar, drawer 680px/scrim/sticky footer, chevron lock,
+   and Win98 CTA colours. Tab underline inheritance lives in overview CSS. */
+
+/* ---------- Canvas / toolbar ---------- */
+.kt-cl-shell .kt-bud-root[data-testid="kt-bud-lines"],
+.kt-cl-shell [data-testid="kt-bud-lines"] {
+	display: flex !important;
+	flex-direction: column !important;
+	width: 100% !important;
+	min-height: 100% !important;
+	background-color: #f9f9fe !important;
+	color: #1a1b20 !important;
+	font-family: Inter, "Public Sans", system-ui, sans-serif !important;
+}
+
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-lines-canvas"] {
+	display: block !important;
+	width: 100% !important;
+	max-width: 1400px !important;
+	margin-left: auto !important;
+	margin-right: auto !important;
+	padding: 24px 16px !important;
+	box-sizing: border-box !important;
+}
+
+/*
+ * Toolbar geometry lock (do not reuse crushed Tailwind w-full / sm:w-* here).
+ * Portfolio .w-full !important + button.text-primary transparent reset broke
+ * selects (chevron outside) and New Line (plain text link look).
+ */
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-lines-toolbar"],
+.kt-cl-shell .kt-bud-root .kt-bud-lines-toolbar {
+	display: flex !important;
+	flex-direction: column !important;
+	align-items: stretch !important;
+	gap: 1rem !important;
+	margin: 0 0 1.5rem 0 !important;
+	width: 100% !important;
+	box-sizing: border-box !important;
+	background-color: #ffffff !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+	padding: 20px !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-lines-toolbar-search {
+	flex: 1 1 auto !important;
+	min-width: 0 !important;
+	width: 100% !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-lines-search-field {
+	position: relative !important;
+	display: block !important;
+	width: 100% !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-lines-search"] {
+	display: block !important;
+	width: 100% !important;
+	min-width: 0 !important;
+	height: 2.5rem !important;
+	padding: 0.5rem 1rem 0.5rem 2.75rem !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+	background-color: #f9f9fe !important;
+	font-size: 0.875rem !important;
+	line-height: 1.25rem !important;
+	box-sizing: border-box !important;
+}
+.kt-cl-shell .kt-bud-root [data-kt-bud-lines-search-icon] {
+	position: absolute !important;
+	left: 0.75rem !important;
+	top: 50% !important;
+	transform: translateY(-50%) !important;
+	pointer-events: none !important;
+	border: none !important;
+	background: transparent !important;
+	box-shadow: none !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	font-size: 20px !important;
+	line-height: 1 !important;
+	color: #434750 !important;
+	width: 20px !important;
+	height: 20px !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-lines-toolbar-controls {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	align-items: flex-end !important;
+	gap: 1rem !important;
+	width: 100% !important;
+	flex: 0 0 auto !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-lines-filter-field {
+	display: flex !important;
+	flex-direction: column !important;
+	flex: 0 0 auto !important;
+	width: 11.5rem !important;
+	min-width: 11.5rem !important;
+	max-width: 11.5rem !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-lines-filter-field[data-kt-bud-lines-filter-field="target"] {
+	width: 14rem !important;
+	min-width: 14rem !important;
+	max-width: 14rem !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-lines-select-wrap {
+	position: relative !important;
+	display: block !important;
+	width: 100% !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-lines-select-wrap select {
+	display: block !important;
+	width: 100% !important;
+	max-width: 100% !important;
+	height: 2.5rem !important;
+	padding: 0.5rem 2.5rem 0.5rem 0.75rem !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+	background-color: #f9f9fe !important;
+	/* Material expand_more owns the glyph — kill portfolio SVG Forms chevron */
+	background-image: none !important;
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	font-size: 0.875rem !important;
+	line-height: 1.25rem !important;
+	box-sizing: border-box !important;
+	cursor: pointer !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-lines-select-wrap select:has(+ .material-symbols-outlined) {
+	background-image: none !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-lines-select-wrap > .material-symbols-outlined {
+	position: absolute !important;
+	right: 0.75rem !important;
+	top: 50% !important;
+	transform: translateY(-50%) !important;
+	pointer-events: none !important;
+	border: none !important;
+	background: transparent !important;
+	box-shadow: none !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	font-size: 20px !important;
+	line-height: 1 !important;
+	color: #434750 !important;
+	width: 20px !important;
+	height: 20px !important;
+}
+/* New Line — beat portfolio button.text-primary transparent reset */
+.kt-cl-shell .kt-bud-root button.kt-bud-lines-new-btn,
+.kt-cl-shell .kt-bud-root button[data-testid="kt-bud-lines-new"] {
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	gap: 0.35rem !important;
+	flex: 0 0 auto !important;
+	height: 2.5rem !important;
+	min-height: 2.5rem !important;
+	padding: 0 1rem !important;
+	margin: 0 !important;
+	border: none !important;
+	border-radius: 0.5rem !important;
+	background-color: #eeedf3 !important;
+	background-image: none !important;
+	color: #001f48 !important;
+	font-family: Inter, "Public Sans", system-ui, sans-serif !important;
+	font-size: 0.875rem !important;
+	font-weight: 500 !important;
+	line-height: 1.25rem !important;
+	box-shadow: none !important;
+	white-space: nowrap !important;
+	cursor: pointer !important;
+}
+.kt-cl-shell .kt-bud-root button.kt-bud-lines-new-btn:hover,
+.kt-cl-shell .kt-bud-root button[data-testid="kt-bud-lines-new"]:hover {
+	background-color: #e2e2e8 !important;
+	opacity: 1 !important;
+}
+.kt-cl-shell .kt-bud-root button.kt-bud-lines-new-btn .material-symbols-outlined,
+.kt-cl-shell .kt-bud-root button[data-testid="kt-bud-lines-new"] .material-symbols-outlined {
+	font-size: 18px !important;
+	line-height: 1 !important;
+	color: #001f48 !important;
+}
+@media (min-width: 768px) {
+	.kt-cl-shell .kt-bud-root [data-testid="kt-bud-lines-toolbar"],
+	.kt-cl-shell .kt-bud-root .kt-bud-lines-toolbar {
+		flex-direction: row !important;
+		align-items: flex-end !important;
+	}
+	.kt-cl-shell .kt-bud-root .kt-bud-lines-toolbar-search {
+		flex: 1 1 0% !important;
+		min-width: 16rem !important;
+		max-width: none !important;
+	}
+	.kt-cl-shell .kt-bud-root .kt-bud-lines-toolbar-controls {
+		width: auto !important;
+		flex-wrap: nowrap !important;
+	}
+}
+
+/* ---------- Table card ---------- */
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-lines-table-card"] {
+	display: block !important;
+	background-color: #ffffff !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.75rem !important;
+	overflow: hidden !important;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-lines-table"] {
+	width: 100% !important;
+	min-width: 1200px !important;
+	border-collapse: collapse !important;
+	text-align: left !important;
+}
+
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-lines-table"] thead tr {
+	background-color: #f4f3f9 !important;
+	border-bottom: 1px solid #c3c6d1 !important;
+}
+
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-lines-table"] th {
+	padding: 0.75rem 1rem !important;
+	font-family: Inter, "Public Sans", system-ui, sans-serif !important;
+	font-size: 0.75rem !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.05em !important;
+	text-transform: uppercase !important;
+	color: #434750 !important;
+}
+
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-lines-table"] td {
+	padding: 1rem !important;
+	vertical-align: top !important;
+	font-size: 0.875rem !important;
+	line-height: 1.25rem !important;
+}
+
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-lines-table"] tbody tr {
+	border-bottom: 1px solid color-mix(in srgb, #c3c6d1 60%, transparent) !important;
+}
+
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-lines-table"] .font-data-mono,
+.kt-cl-shell .kt-bud-root [data-kt-bud-line-money] {
+	font-family: "JetBrains Mono", ui-monospace, monospace !important;
+}
+
+.kt-cl-shell .kt-bud-root [data-kt-bud-line-status="attention"] {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.375rem !important;
+	padding: 0.25rem 0.5rem !important;
+	border-radius: 0.375rem !important;
+	background-color: color-mix(in srgb, #ba1a1a 10%, transparent) !important;
+	color: #ba1a1a !important;
+	font-size: 0.75rem !important;
+	font-weight: 600 !important;
+}
+
+.kt-cl-shell .kt-bud-root [data-kt-bud-line-status="complete"] {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.375rem !important;
+	padding: 0.25rem 0.5rem !important;
+	border-radius: 0.375rem !important;
+	background-color: color-mix(in srgb, #10b981 10%, transparent) !important;
+	color: #10b981 !important;
+	font-size: 0.75rem !important;
+	font-weight: 600 !important;
+}
+
+.kt-cl-shell .kt-bud-root .text-status-reserved {
+	color: #f59e0b !important;
+}
+.kt-cl-shell .kt-bud-root .text-status-committed {
+	color: #6366f1 !important;
+}
+.kt-cl-shell .kt-bud-root .text-status-available {
+	color: #10b981 !important;
+}
+.kt-cl-shell .kt-bud-root .text-error {
+	color: #ba1a1a !important;
+}
+
+/* In-canvas governance notice — replaces frappe.msgprint for Active locks */
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-lines-notice"],
+.kt-cl-shell .kt-bud-root .kt-bud-lines-notice {
+	display: none !important;
+	align-items: flex-start !important;
+	gap: 0.75rem !important;
+	width: 100% !important;
+	margin: 0 0 1rem 0 !important;
+	padding: 1rem 1.1rem !important;
+	box-sizing: border-box !important;
+	background-color: #fff8e8 !important;
+	border: 1px solid color-mix(in srgb, #f59e0b 35%, #c3c6d1) !important;
+	border-radius: 0.5rem !important;
+	color: #1a1b20 !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-lines-notice"]:not(.hidden):not([hidden]),
+.kt-cl-shell .kt-bud-root .kt-bud-lines-notice:not(.hidden):not([hidden]) {
+	display: flex !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-lines-notice-icon {
+	flex: 0 0 auto !important;
+	margin-top: 0.1rem !important;
+	font-size: 22px !important;
+	line-height: 1 !important;
+	color: #b45309 !important;
+	border: none !important;
+	background: transparent !important;
+	padding: 0 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-lines-notice-body {
+	flex: 1 1 auto !important;
+	min-width: 0 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-lines-notice-title {
+	margin: 0 0 0.15rem 0 !important;
+	font-family: Inter, "Public Sans", system-ui, sans-serif !important;
+	font-size: 0.875rem !important;
+	font-weight: 600 !important;
+	line-height: 1.25rem !important;
+	color: #1a1b20 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-lines-notice-msg {
+	margin: 0 !important;
+	font-family: Inter, "Public Sans", system-ui, sans-serif !important;
+	font-size: 0.875rem !important;
+	font-weight: 400 !important;
+	line-height: 1.35rem !important;
+	color: #434750 !important;
+}
+.kt-cl-shell .kt-bud-root button.kt-bud-lines-notice-cta,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-lines-notice-cta"] {
+	flex: 0 0 auto !important;
+	align-self: center !important;
+	height: 2.25rem !important;
+	padding: 0 0.9rem !important;
+	margin: 0 !important;
+	border: 1px solid #001f48 !important;
+	border-radius: 0.5rem !important;
+	background-color: #ffffff !important;
+	color: #001f48 !important;
+	font-size: 0.8125rem !important;
+	font-weight: 600 !important;
+	line-height: 1 !important;
+	white-space: nowrap !important;
+	cursor: pointer !important;
+	box-shadow: none !important;
+}
+.kt-cl-shell .kt-bud-root button.kt-bud-lines-notice-cta:hover,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-lines-notice-cta"]:hover {
+	background-color: #f4f3f9 !important;
+}
+.kt-cl-shell .kt-bud-root button.kt-bud-lines-notice-dismiss,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-lines-notice-dismiss"] {
+	flex: 0 0 auto !important;
+	align-self: flex-start !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	width: 2rem !important;
+	height: 2rem !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	border: none !important;
+	border-radius: 9999px !important;
+	background: transparent !important;
+	color: #434750 !important;
+	cursor: pointer !important;
+	box-shadow: none !important;
+}
+.kt-cl-shell .kt-bud-root button.kt-bud-lines-notice-dismiss:hover,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-lines-notice-dismiss"]:hover {
+	background-color: color-mix(in srgb, #f59e0b 12%, transparent) !important;
+}
+.kt-cl-shell .kt-bud-root button.kt-bud-lines-notice-dismiss .material-symbols-outlined {
+	font-size: 18px !important;
+	line-height: 1 !important;
+}
+
+/* Action column — underline label only on hover (never the icon) */
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-line-action"] {
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: flex-end !important;
+	gap: 0.25rem !important;
+	color: #001f48 !important;
+	font-weight: 500 !important;
+	font-size: 0.875rem !important;
+	background: transparent !important;
+	border: none !important;
+	box-shadow: none !important;
+	padding: 0 !important;
+	min-height: 0 !important;
+	white-space: nowrap !important;
+	text-decoration: none !important;
+	cursor: pointer !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-line-action"] .kt-bud-line-action-label {
+	text-decoration: none !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-line-action"]:hover,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-line-action"]:focus-visible {
+	text-decoration: none !important;
+	color: #01629d !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-line-action"]:hover .kt-bud-line-action-label,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-line-action"]:focus-visible .kt-bud-line-action-label {
+	text-decoration: underline !important;
+	text-underline-offset: 2px !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-line-action"] .material-symbols-outlined {
+	text-decoration: none !important;
+}
+
+/* ---------- Drawer / scrim ---------- */
+.kt-cl-shell .kt-bud-root .kt-bud-lines-scrim,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-line-drawer-scrim"] {
+	position: fixed !important;
+	inset: 0 !important;
+	background-color: color-mix(in srgb, #2f3035 40%, transparent) !important;
+	backdrop-filter: blur(2px) !important;
+	z-index: 40 !important;
+}
+
+.kt-cl-shell .kt-bud-root .kt-bud-line-drawer,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-line-drawer"] {
+	position: fixed !important;
+	top: 0 !important;
+	right: 0 !important;
+	height: 100% !important;
+	width: 100% !important;
+	max-width: 680px !important; /* Stitch md:w-[680px] */
+	background-color: #ffffff !important;
+	border-left: 1px solid #c3c6d1 !important;
+	box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+	z-index: 50 !important;
+	display: flex !important;
+	flex-direction: column !important;
+	transform: translateX(0) !important;
+}
+
+@media (min-width: 768px) {
+	.kt-cl-shell .kt-bud-root .kt-bud-line-drawer,
+	.kt-cl-shell .kt-bud-root [data-testid="kt-bud-line-drawer"] {
+		width: 680px !important;
+	}
+}
+
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-line-drawer"][hidden],
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-line-drawer-scrim"][hidden] {
+	display: none !important;
+}
+
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-line-drawer-header"] h2,
+.kt-cl-shell .kt-bud-root [data-kt-bud-line-drawer-title] {
+	font-family: Manrope, Inter, system-ui, sans-serif !important;
+	font-size: 22px !important;
+	line-height: 30px !important;
+	font-weight: 600 !important;
+	color: #001f48 !important;
+	margin: 0 !important;
+}
+
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-line-drawer-body"] {
+	flex: 1 1 auto !important;
+	overflow-y: auto !important;
+	padding: 1.5rem !important;
+}
+
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-line-drawer-footer"],
+.kt-cl-shell .kt-bud-root .kt-bud-line-drawer-footer {
+	position: sticky !important;
+	bottom: 0 !important;
+	background-color: #ffffff !important;
+	border-top: 1px solid #c3c6d1 !important;
+	padding: 1rem 1.5rem !important;
+	display: flex !important;
+	flex-direction: column !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	gap: 1rem !important;
+	z-index: 10 !important;
+	box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+}
+@media (min-width: 768px) {
+	.kt-cl-shell .kt-bud-root [data-testid="kt-bud-line-drawer-footer"] {
+		flex-direction: row !important;
+	}
+}
+
+/* Win98 CTA pins */
+.kt-cl-shell .kt-bud-root button[data-testid="kt-bud-line-save"] {
+	background-color: #001f48 !important;
+	background-image: none !important;
+	color: #ffffff !important;
+	border: none !important;
+	border-radius: 0.5rem !important;
+	padding: 0.625rem 1.25rem !important;
+	font-family: Inter, "Public Sans", system-ui, sans-serif !important;
+	font-size: 0.75rem !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.05em !important;
+	text-transform: uppercase !important;
+	box-shadow: none !important;
+}
+/* Active read-only: hide Save even if Desk/button utilities force display */
+.kt-cl-shell .kt-bud-root button[data-testid="kt-bud-line-save"][hidden],
+.kt-cl-shell .kt-bud-root button[data-testid="kt-bud-line-save"].hidden {
+	display: none !important;
+}
+.kt-cl-shell .kt-bud-root button[data-testid="kt-bud-line-request-revision"][hidden],
+.kt-cl-shell .kt-bud-root button[data-testid="kt-bud-line-request-revision"].hidden {
+	display: none !important;
+}
+
+.kt-cl-shell .kt-bud-root button[data-testid="kt-bud-line-cancel"] {
+	background: transparent !important;
+	color: #434750 !important;
+	border: none !important;
+	padding: 0.625rem 1.25rem !important;
+	font-size: 0.75rem !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.05em !important;
+	text-transform: uppercase !important;
+}
+
+/* Chevron lock — Material expand_more sibling kills Forms SVG double-chevron */
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-line-drawer"] select {
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	background-image: none !important;
+	padding-right: 2.5rem !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-line-drawer"] select:has(+ .material-symbols-outlined) {
+	background-image: none !important;
+}
+
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-line-drawer"][data-kt-bud-line-readonly="1"] input,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-line-drawer"][data-kt-bud-line-readonly="1"] select,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-line-drawer"][data-kt-bud-line-readonly="1"] textarea {
+	pointer-events: none !important;
+	opacity: 0.95 !important;
+}
+
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-line-section-funding"] h3,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-line-section-strategy"] h3,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-line-section-pvc"] h3 {
+	font-family: Manrope, Inter, system-ui, sans-serif !important;
+	font-size: 18px !important;
+	line-height: 24px !important;
+	font-weight: 600 !important;
+	color: #001f48 !important;
+	margin: 0 !important;
+}
+
+.kt-cl-shell .kt-bud-root [data-kt-bud-pvc-card] {
+	background-color: #f9f9fe !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+	padding: 1rem !important;
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0.75rem !important;
+}

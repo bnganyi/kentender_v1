@@ -53,6 +53,34 @@ STITCH_DESK_SURFACES: tuple[StitchDeskSurface, ...] = (
 		"select_filter_attr": "data-kt-bud-field",
 		"headline_selector": ".kt-bud-root h1, [data-testid='kt-bud-register'] h1",
 	},
+	{
+		"id": "budget-overview",
+		"app": "kentender_budget",
+		"fixture_rel": "public/js/budget_ui_fixtures/overview.js",
+		"desk_route": "budget-overview",
+		"primary_cta_testid": "kt-bud-overview-primary",
+		"select_filter_attr": "",
+		"headline_selector": ".kt-bud-root h1, [data-testid='kt-bud-overview'] h1, [data-kt-bud-budget-title]",
+	},
+	{
+		"id": "budget-lines",
+		"app": "kentender_budget",
+		"fixture_rel": "public/js/budget_ui_fixtures/lines.js",
+		"desk_route": "budget-lines",
+		"primary_cta_testid": "kt-bud-overview-primary",
+		# Toolbar Budget Source / Strategic Target selects use data-kt-bud-lines-filter.
+		"select_filter_attr": "data-kt-bud-lines-filter",
+		"headline_selector": ".kt-bud-root h1, [data-testid='kt-bud-lines'] h1, [data-kt-bud-budget-title]",
+	},
+	{
+		"id": "budget-funding-activity",
+		"app": "kentender_budget",
+		"fixture_rel": "public/js/budget_ui_fixtures/activity.js",
+		"desk_route": "budget-funding-activity",
+		"primary_cta_testid": "kt-bud-overview-primary",
+		"select_filter_attr": "data-kt-bud-activity-filter",
+		"headline_selector": ".kt-bud-root h1, [data-testid='kt-bud-activity'] h1, [data-kt-bud-budget-title]",
+	},
 )
 
 SHARED_CHROME_CSS_REL = "public/css/kt_stitch_desk_chrome.css"

@@ -104,19 +104,36 @@ def _line_totals(budget_name: str) -> dict[str, float]:
 	rows = frappe.get_all(
 		"Budget Line",
 		filters={"budget": budget_name, "is_active": 1},
-		fields=["approved_amount", "amount_reserved", "amount_committed"],
+		fields=[
+			"approved_amount",
+			"amount_reserved",
+			"amount_committed",
+			"amount_actual",
+			"primary_strategy_linked",
+		],
 	)
-	approved = reserved = committed = 0.0
+	approved = reserved = committed = actual = 0.0
+	lines_total = 0
+	lines_strategy_linked = 0
 	for r in rows:
 		approved += flt(r.approved_amount)
 		reserved += flt(r.amount_reserved)
 		committed += flt(r.amount_committed)
+		actual += flt(getattr(r, "amount_actual", None))
+		lines_total += 1
+		if int(getattr(r, "primary_strategy_linked", 0) or 0):
+			lines_strategy_linked += 1
 	available = approved - reserved - committed
+	outstanding = max(0.0, committed - actual)
 	return {
 		"approved": approved,
 		"reserved": reserved,
 		"committed": committed,
 		"available": available,
+		"actual": actual,
+		"outstanding": outstanding,
+		"lines_total": float(lines_total),
+		"lines_strategy_linked": float(lines_strategy_linked),
 	}
 
 
@@ -565,3 +582,132 @@ def register_budget(payload: dict | None = None) -> dict[str, Any]:
 	)
 	doc.insert()
 	return {"ok": True, "budget": _budget_dto(doc)}
+
+
+def _resolve_budget(budget: str):
+	"""Resolve Budget by generated_reference or document name."""
+	key = (budget or "").strip()
+	if not key:
+		frappe.throw(_("Budget is required"), frappe.ValidationError)
+	name = frappe.db.get_value("Budget", {"generated_reference": key}, "name")
+	if not name and frappe.db.exists("Budget", key):
+		name = key
+	if not name:
+		frappe.throw(_("Budget {0} not found").format(key), frappe.DoesNotExistError)
+	return frappe.get_doc("Budget", name)
+
+
+def _overview_capabilities(status: str) -> dict[str, Any]:
+	"""Status-aware header CTAs for Budget workspace Overview."""
+	if status == "Active":
+		return {
+			"primary_action": "request_revision",
+			"primary_label": "Request revision",
+			"view_funding_performance": True,
+			"open_lines": True,
+		}
+	if status in ("Draft", "Returned"):
+		return {
+			"primary_action": "open_lines",
+			"primary_label": "Budget lines",
+			"view_funding_performance": True,
+			"open_lines": True,
+		}
+	return {
+		"primary_action": "view_funding_performance",
+		"primary_label": "View funding performance",
+		"view_funding_performance": True,
+		"open_lines": True,
+	}
+
+
+def _utilization_bar(approved: float, reserved: float, committed: float, available: float) -> dict[str, Any]:
+	base = approved if approved > 0 else 1.0
+	r_pct = round((reserved / base) * 100.0, 2)
+	c_pct = round((committed / base) * 100.0, 2)
+	a_pct = round(max(0.0, 100.0 - r_pct - c_pct), 2)
+	return {
+		"reserved_pct": r_pct,
+		"committed_pct": c_pct,
+		"available_pct": a_pct,
+		"total_pct": 100.0,
+		"total_display": format_kes_compact(approved),
+	}
+
+
+def get_budget_overview(budget: str) -> dict[str, Any]:
+	"""BUD-UI-03 — entity-scoped Overview DTO with derived funding totals."""
+	require_any_role(
+		ROLE_VIEWER, ROLE_OFFICER, ROLE_REVIEWER, ROLE_AUTHORITY, ROLE_AUDITOR, "System Manager"
+	)
+	doc = _resolve_budget(budget)
+	# Hard PE scope for non-admin session users.
+	resolve_scoped_entity(doc.procuring_entity)
+
+	line = _line_totals(doc.name)
+	currency = doc.currency or "KES"
+	approved = _approved_for_portfolio(doc, line["approved"])
+	reserved = line["reserved"]
+	committed = line["committed"]
+	available = approved - reserved - committed
+	actual = line["actual"]
+	outstanding = max(0.0, committed - actual)
+	status_ui = _STATUS_UI.get(doc.status, doc.status)
+	source_ui = _SOURCE_UI.get(doc.registration_source, doc.registration_source or "Direct capture")
+	attn = _attention(doc)
+	lines_total = int(line["lines_total"])
+	lines_linked = int(line["lines_strategy_linked"])
+	pvc_treated = int(getattr(doc, "strategy_pvc_treated", 0) or 0)
+	pvc_applicable = int(getattr(doc, "strategy_pvc_applicable", 0) or 0)
+
+	return {
+		"id": doc.name,
+		"code": doc.generated_reference,
+		"name": doc.title,
+		"title": doc.title,
+		"status": doc.status,
+		"status_label": status_ui,
+		"procuring_entity": _entity_ref(doc.procuring_entity),
+		"fiscal_period": doc.fiscal_period,
+		"fiscal_period_label": f"FY {doc.fiscal_period}" if doc.fiscal_period else "",
+		"currency": currency,
+		"registration_source": doc.registration_source,
+		"registration_source_label": source_ui,
+		"authoritative_reference": doc.authoritative_reference or "",
+		"budget_owner": doc.budget_owner or "",
+		"approval_date": str(doc.approval_date) if doc.approval_date else "",
+		"last_synchronised": None,
+		"totals": {
+			"approved": approved,
+			"reserved": reserved,
+			"committed": committed,
+			"available": available,
+			"actual": actual,
+			"outstanding": outstanding,
+			"approved_display": format_kes_compact(approved, currency=currency),
+			"reserved_display": format_kes_compact(reserved, currency=currency),
+			"committed_display": format_kes_compact(committed, currency=currency),
+			"available_display": format_kes_compact(available, currency=currency),
+			"actual_display": format_kes_compact(actual, currency=currency),
+			"outstanding_display": format_kes_compact(outstanding, currency=currency),
+		},
+		"utilization_bar": _utilization_bar(approved, reserved, committed, available),
+		"strategy": {
+			"lines_linked": lines_linked,
+			"lines_total": lines_total,
+			"lines_summary": f"{lines_linked} of {lines_total} lines linked to an Active primary target",
+			"pvc_treated": pvc_treated,
+			"pvc_applicable": pvc_applicable,
+			"pvc_summary": f"{pvc_treated} applicable Plan Value Commitments treated",
+		},
+		"attention": {
+			"kind": attn["attention_kind"],
+			"text": attn["attention"] if attn["attention"] != "None" else "",
+			"has_exception": attn["has_exception"],
+		},
+		"definitional_note": (
+			"Available equals approved funding less active reservations and contract commitments. "
+			"Actual expenditure is shown separately because it is already included within commitments."
+		),
+		"capabilities": _overview_capabilities(doc.status),
+	}

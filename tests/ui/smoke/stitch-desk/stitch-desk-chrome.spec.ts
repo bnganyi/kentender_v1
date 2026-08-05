@@ -34,6 +34,31 @@ const SURFACES = [
 		primaryCtaTestId: "kt-str-create-plan",
 		selectSelector: '[data-testid="kt-str-pf-filters"] select',
 	},
+	{
+		id: "budget-overview",
+		route: "/desk/budget-overview/MOH-BUD-0001",
+		rootTestId: "kt-bud-overview",
+		liveAttr: "data-kt-bud-live",
+		primaryCtaTestId: "kt-bud-overview-primary",
+		secondaryCtaTestId: "kt-bud-view-performance",
+	},
+	{
+		id: "budget-lines",
+		route: "/desk/budget-lines/MOH-BUD-0001",
+		rootTestId: "kt-bud-lines",
+		liveAttr: "data-kt-bud-live",
+		primaryCtaTestId: "kt-bud-overview-primary",
+		secondaryCtaTestId: "kt-bud-view-performance",
+	},
+	{
+		id: "budget-funding-activity",
+		route: "/desk/budget-funding-activity/MOH-BUD-0001",
+		rootTestId: "kt-bud-activity",
+		liveAttr: "data-kt-bud-live",
+		primaryCtaTestId: "kt-bud-overview-primary",
+		secondaryCtaTestId: "kt-bud-view-performance",
+		selectSelector: '[data-kt-bud-activity-filter="activity_type"]',
+	},
 ] as const;
 
 test.describe.configure({ mode: "serial" });
@@ -56,7 +81,14 @@ test.describe("Stitch Desk chrome baseline", () => {
 				primaryCtaTestId: surface.primaryCtaTestId,
 				secondaryCtaTestId:
 					"secondaryCtaTestId" in surface ? surface.secondaryCtaTestId : undefined,
-				selectSelector: surface.selectSelector,
+				selectSelector:
+					"selectSelector" in surface ? surface.selectSelector : undefined,
+				headlineSelector:
+					surface.id === "budget-overview" ||
+					surface.id === "budget-lines" ||
+					surface.id === "budget-funding-activity"
+						? "[data-kt-bud-budget-title]"
+						: undefined,
 			});
 		});
 	}

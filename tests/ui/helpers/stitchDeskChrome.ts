@@ -17,8 +17,8 @@ export type StitchDeskChromeOptions = {
 	primaryCtaTestId: string;
 	/** Optional secondary bordered CTA test id. */
 	secondaryCtaTestId?: string;
-	/** CSS selector for a filter <select> inside the canvas. */
-	selectSelector: string;
+	/** CSS selector for a filter <select> inside the canvas. Omit/empty when the surface has no select. */
+	selectSelector?: string;
 	/** Optional headline selector (defaults to canvas h1). */
 	headlineSelector?: string;
 	/** Expect Manrope 28/700 on headline (default true). */
@@ -76,7 +76,6 @@ export async function assertStitchDeskChrome(page: Page, opts: StitchDeskChromeO
 
 	expect(chrome.canvasClass, "root must opt into .kt-stitch-canvas").toBeTruthy();
 	expect(chrome.hasPrimary, `missing primary CTA ${opts.primaryCtaTestId}`).toBeTruthy();
-	expect(chrome.hasSelect, `missing select ${opts.selectSelector}`).toBeTruthy();
 
 	// Primary CTA = Stitch navy, never Desk Win98 outset black.
 	expect(chrome.primaryBg).toBe("rgb(0, 31, 72)");
@@ -88,17 +87,20 @@ export async function assertStitchDeskChrome(page: Page, opts: StitchDeskChromeO
 		expect(chrome.secondaryBorder).toMatch(/1px/);
 	}
 
-	const hasChevron =
-		/svg|data:image/i.test(chrome.selectBgImage) || chrome.materialChevron;
-	expect(hasChevron, "filter select must show chevron glyph").toBeTruthy();
-	expect(chrome.selectPaddingRight).toBeGreaterThanOrEqual(24);
+	if (opts.selectSelector) {
+		expect(chrome.hasSelect, `missing select ${opts.selectSelector}`).toBeTruthy();
+		const hasChevron =
+			/svg|data:image/i.test(chrome.selectBgImage) || chrome.materialChevron;
+		expect(hasChevron, "filter select must show chevron glyph").toBeTruthy();
+		expect(chrome.selectPaddingRight).toBeGreaterThanOrEqual(24);
 
-	// Permanent: never stack SVG Forms chevron + Material expand_more (garbled "~").
-	if (chrome.materialChevron) {
-		expect(
-			chrome.selectBgImage === "none" || chrome.selectBgImage === "",
-			"Material expand_more sibling requires select background-image: none",
-		).toBeTruthy();
+		// Permanent: never stack SVG Forms chevron + Material expand_more (garbled "~").
+		if (chrome.materialChevron) {
+			expect(
+				chrome.selectBgImage === "none" || chrome.selectBgImage === "",
+				"Material expand_more sibling requires select background-image: none",
+			).toBeTruthy();
+		}
 	}
 
 	if (opts.assertHeadline !== false) {

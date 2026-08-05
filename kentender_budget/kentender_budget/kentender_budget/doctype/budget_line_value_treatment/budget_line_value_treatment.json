@@ -1,0 +1,88 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-08-05 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "pvc_id",
+  "pvc_code",
+  "pvc_name",
+  "requirement_level",
+  "treatment",
+  "dedicated_amount",
+  "rationale",
+  "reviewer_accepted"
+ ],
+ "fields": [
+  {
+   "fieldname": "pvc_id",
+   "fieldtype": "Data",
+   "label": "PVC Id",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "pvc_code",
+   "fieldtype": "Data",
+   "label": "PVC Code",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "pvc_name",
+   "fieldtype": "Data",
+   "label": "PVC Name",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "requirement_level",
+   "fieldtype": "Data",
+   "label": "Requirement Level",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "treatment",
+   "fieldtype": "Select",
+   "label": "Treatment",
+   "options": "Dedicated allocation\nEmbedded in line\nNo direct allocation required\nNot applicable",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "dedicated_amount",
+   "fieldtype": "Currency",
+   "label": "Dedicated Amount",
+   "non_negative": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "rationale",
+   "fieldtype": "Small Text",
+   "label": "Rationale"
+  },
+  {
+   "default": "0",
+   "fieldname": "reviewer_accepted",
+   "fieldtype": "Check",
+   "label": "Reviewer Accepted"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "editable_grid": 1,
+ "links": [],
+ "modified": "2026-08-05 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Budget",
+ "name": "Budget Line Value Treatment",
+ "naming_rule": "",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "idx",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 0,
+ "is_submittable": 0
+}

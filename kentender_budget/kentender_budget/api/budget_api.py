@@ -47,3 +47,43 @@ def register_budget(payload: dict | str | None = None):
 	if isinstance(payload, str):
 		payload = frappe.parse_json(payload)
 	return contracts.register_budget(payload or {})
+
+
+@frappe.whitelist()
+def get_budget_overview(budget: str | None = None):
+	ensure_budget_roles()
+	return contracts.get_budget_overview(budget or "")
+
+
+@frappe.whitelist()
+def list_budget_lines(budget: str | None = None):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_line_contracts as line_contracts
+
+	return line_contracts.list_budget_lines(budget or "")
+
+
+@frappe.whitelist()
+def get_budget_line(line: str | None = None):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_line_contracts as line_contracts
+
+	return line_contracts.get_budget_line(line or "")
+
+
+@frappe.whitelist()
+def save_budget_line(payload: dict | str | None = None):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_line_contracts as line_contracts
+
+	if isinstance(payload, str):
+		payload = frappe.parse_json(payload)
+	return line_contracts.save_budget_line(payload or {})
+
+
+@frappe.whitelist()
+def list_funding_activity(budget: str | None = None):
+	ensure_budget_roles()
+	from kentender_budget.services import budget_funding_activity as activity
+
+	return activity.list_funding_activity(budget or "")

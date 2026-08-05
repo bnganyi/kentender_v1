@@ -11,14 +11,28 @@
   "title",
   "col_a",
   "organisational_owner",
+  "classification",
   "is_active",
   "section_funding",
   "funding_source_type",
   "funding_source_name",
+  "external_financial_line_reference",
   "col_b",
   "approved_amount",
   "amount_reserved",
   "amount_committed",
+  "amount_actual",
+  "actual_as_at",
+  "section_strategy",
+  "primary_target_id",
+  "primary_target_code",
+  "primary_target_name",
+  "primary_plan_version_id",
+  "primary_snapshot_label",
+  "primary_strategy_linked",
+  "supporting_targets",
+  "section_pvc",
+  "value_treatments",
   "currency",
   "order_index",
   "fixture_namespace"
@@ -61,6 +75,14 @@
    "reqd": 1
   },
   {
+   "fieldname": "classification",
+   "fieldtype": "Select",
+   "label": "Classification",
+   "options": "Goods\nWorks\nServices\nConsultancy\nCapital expenditure",
+   "reqd": 1,
+   "default": "Capital expenditure"
+  },
+  {
    "default": "1",
    "fieldname": "is_active",
    "fieldtype": "Check",
@@ -84,6 +106,11 @@
    "fieldtype": "Data",
    "label": "Funding Source Name",
    "reqd": 1
+  },
+  {
+   "fieldname": "external_financial_line_reference",
+   "fieldtype": "Data",
+   "label": "External Financial Line Reference"
   },
   {
    "fieldname": "col_b",
@@ -112,6 +139,72 @@
    "non_negative": 1
   },
   {
+   "default": "0",
+   "fieldname": "amount_actual",
+   "fieldtype": "Currency",
+   "label": "Amount Actual",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "actual_as_at",
+   "fieldtype": "Date",
+   "label": "Actual As At"
+  },
+  {
+   "fieldname": "section_strategy",
+   "fieldtype": "Section Break",
+   "label": "Strategy Alignment"
+  },
+  {
+   "fieldname": "primary_target_id",
+   "fieldtype": "Data",
+   "label": "Primary Target Id"
+  },
+  {
+   "fieldname": "primary_target_code",
+   "fieldtype": "Data",
+   "label": "Primary Target Code"
+  },
+  {
+   "fieldname": "primary_target_name",
+   "fieldtype": "Data",
+   "label": "Primary Target Name"
+  },
+  {
+   "fieldname": "primary_plan_version_id",
+   "fieldtype": "Data",
+   "label": "Primary Plan Version Id"
+  },
+  {
+   "fieldname": "primary_snapshot_label",
+   "fieldtype": "Small Text",
+   "label": "Primary Snapshot Label"
+  },
+  {
+   "default": "0",
+   "fieldname": "primary_strategy_linked",
+   "fieldtype": "Check",
+   "label": "Primary Strategy Linked",
+   "read_only": 1
+  },
+  {
+   "fieldname": "supporting_targets",
+   "fieldtype": "Table",
+   "label": "Supporting Targets",
+   "options": "Budget Line Supporting Target"
+  },
+  {
+   "fieldname": "section_pvc",
+   "fieldtype": "Section Break",
+   "label": "Value Treatments"
+  },
+  {
+   "fieldname": "value_treatments",
+   "fieldtype": "Table",
+   "label": "Value Treatments",
+   "options": "Budget Line Value Treatment"
+  },
+  {
    "fieldname": "currency",
    "fieldtype": "Link",
    "label": "Currency",
@@ -135,7 +228,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-08-04 00:00:00.000000",
+ "modified": "2026-08-05 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kentender Budget",
  "name": "Budget Line",

@@ -101,9 +101,9 @@
 	border-radius: 0.5rem !important;
 }
 
-/* Row action text buttons stay chromeless. */
+/* Row action text buttons stay chromeless (exclude Lines New Line pill). */
 .kt-cl-shell .kt-bud-root td button.text-primary,
-.kt-cl-shell .kt-bud-root button.text-primary:not(.bg-primary):not(.border) {
+.kt-cl-shell .kt-bud-root button.text-primary:not(.bg-primary):not(.border):not(.kt-bud-lines-new-btn):not([data-testid="kt-bud-lines-new"]) {
 	background: transparent !important;
 	border: none !important;
 	box-shadow: none !important;
@@ -114,6 +114,11 @@
 
 .kt-cl-shell .kt-bud-root td button.text-primary:hover {
 	color: var(--kt-bud-secondary) !important;
+	text-decoration: none !important;
+}
+.kt-cl-shell .kt-bud-root td button.text-primary:hover .kt-bud-line-action-label {
+	text-decoration: underline !important;
+	text-underline-offset: 2px !important;
 }
 
 .kt-cl-shell .kt-bud-root select,
