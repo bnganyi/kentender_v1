@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from frappe.utils import add_days, today
+from frappe.utils import add_days, flt, now_datetime, today
 
 from kentender_budget.services.budget_permissions import ensure_budget_roles
 from kentender_core.seeds._common import ensure_currency_kes, ensure_procuring_entity
@@ -107,11 +107,19 @@ BUDGETS = (
 		"budget_owner": "Director, Finance and Accounts",
 		"authoritative_reference": "MOH-FIN-BUD-2027-01",
 		"approval_date": "2027-06-15",
+		"approval_evidence": "/private/files/moh-bud-0001-approval.pdf",
 		"external_approved_total": 560_000_000,
 		"attention_note": "Actual expenditure is stale on 1 line",
 		"readiness_issue_count": 0,
 		"strategy_pvc_treated": 4,
 		"strategy_pvc_applicable": 4,
+		# BUD-UI-11 — activation record on Active baseline.
+		"submitted_by": "budget.rev.seed@example.com",
+		"reviewed_by": "Administrator",
+		"activated_by": "Administrator",
+		"submitted_at_offset_days": -40,
+		"reviewed_at_offset_days": -38,
+		"activated_at_offset_days": -35,
 		"lines": (
 			{
 				"generated_reference": "MOH-BL-0001",
@@ -151,6 +159,7 @@ BUDGETS = (
 						"remaining_reserved": 145_000_000,
 						"status": "Partially converted",
 						"event_date": "2027-09-12",
+						"plan_item_code": "PPI-MOH-2027-021",
 						"current_downstream_reference": "TND-MOH-2027-008",
 						"idempotency_key": "MOH_MVP_V1:RSV-MOH-0001",
 					},
@@ -194,6 +203,42 @@ BUDGETS = (
 				"order_index": 2,
 			},
 		),
+		# BUD-UI-08/09 — Draft list smoke + Submitted review smoke (not applied).
+		"budget_revisions": (
+			{
+				"generated_reference": "BR-MOH-0001",
+				"status": "Draft",
+				"revision_type": "Line amendment",
+				"external_approval_reference": "MOF/2027/REV-MOH-01",
+				"approval_date": "2027-11-01",
+				"effective_date": "2027-11-15",
+				"reason": "Externally approved uplift for digital clinical systems infrastructure.",
+				"lines": (
+					{
+						"line_code": "MOH-BL-0001",
+						"change_amount": 25_000_000,
+					},
+				),
+			},
+			{
+				"generated_reference": "BR-MOH-0002",
+				"status": "Submitted",
+				"revision_type": "Line amendment",
+				"external_approval_reference": "MOF/2027/REV-MOH-02",
+				"approval_date": "2027-11-10",
+				"effective_date": "2027-11-20",
+				"reason": "Submitted uplift pending Budget Authority apply.",
+				"approval_evidence": "/private/files/moh-rev-moh-02.pdf",
+				# Non-Admin submitter so Authority/Admin can Apply (AC-018).
+				"submitted_by": "budget.rev.seed@example.com",
+				"lines": (
+					{
+						"line_code": "MOH-BL-0002",
+						"change_amount": 5_000_000,
+					},
+				),
+			},
+		),
 	},
 	{
 		"generated_reference": "MOH-BUD-0002",
@@ -205,9 +250,13 @@ BUDGETS = (
 		"budget_owner": "Director, Finance and Accounts",
 		"authoritative_reference": "MOH-FIN-BUD-2028-01",
 		"approval_date": "2028-06-10",
+		"approval_evidence": "/private/files/moh-bud-0002-approval.pdf",
 		"external_approved_total": 600_000_000,
 		"attention_note": "",
+		# Portfolio funding_exceptions attention (not live readiness blockers).
 		"readiness_issue_count": 2,
+		"submitted_by": "budget.rev.seed@example.com",
+		"submitted_at_offset_days": -2,
 		"lines": (
 			{
 				"generated_reference": "MOH-BL-0003",
@@ -217,8 +266,11 @@ BUDGETS = (
 				"amount_committed": 0,
 				"classification": "Capital expenditure",
 				"organisational_owner": "Director, Digital Health",
+				"funding_source_type": "Exchequer",
+				"funding_source_name": "Government of Kenya Development Budget",
 				"primary_target_code": "MOH-TGT-0001",
 				"primary_target_name": "At least 99.9% annual availability by 30 June 2028",
+				"value_treatments": _PVC_TREATMENTS_BL0001,
 				"order_index": 1,
 			},
 			{
@@ -229,8 +281,11 @@ BUDGETS = (
 				"amount_committed": 0,
 				"classification": "Services",
 				"organisational_owner": "Director, Digital Health",
+				"funding_source_type": "Exchequer",
+				"funding_source_name": "Government of Kenya Development Budget",
 				"primary_target_code": "MOH-TGT-0003",
 				"primary_target_name": "Digital health technical capability target",
+				"value_treatments": _PVC_TREATMENTS_BL0002,
 				"order_index": 2,
 			},
 		),
@@ -245,6 +300,7 @@ BUDGETS = (
 		"budget_owner": "Director, Finance and Accounts",
 		"authoritative_reference": "MOH-FIN-BUD-2026-01",
 		"approval_date": "2026-06-12",
+		"approval_evidence": "/private/files/moh-bud-0003-approval.pdf",
 		"external_approved_total": 520_000_000,
 		"attention_note": "",
 		"readiness_issue_count": 0,
@@ -257,7 +313,60 @@ BUDGETS = (
 				"amount_committed": 520_000_000,
 				"classification": "Capital expenditure",
 				"organisational_owner": "Director, Digital Health",
+				"funding_source_type": "Exchequer",
+				"funding_source_name": "Government of Kenya Development Budget",
+				"primary_target_code": "MOH-TGT-0001",
+				"primary_target_name": "At least 99.9% annual availability by 30 June 2028",
+				"value_treatments": _PVC_TREATMENTS_BL0001,
 				"order_index": 1,
+			},
+		),
+	},
+	# BUD-UI-11 — Draft with intentional readiness blockers (Stitch checklist smoke).
+	{
+		"generated_reference": "MOH-BUD-0004",
+		"title": "Ministry of Health Procurement Budget FY 2029/30",
+		"fiscal_period": "2029/30",
+		"start_date": "2029-07-01",
+		"end_date": "2030-06-30",
+		"status": "Draft",
+		"budget_owner": "Director, Finance and Accounts",
+		"authoritative_reference": "MOH-FIN-BUD-2029-01",
+		"approval_date": "2029-06-10",
+		"approval_evidence": "",
+		"external_approved_total": 200_000_000,
+		"attention_note": "",
+		"readiness_issue_count": 3,
+		"lines": (
+			{
+				"generated_reference": "MOH-BL-0006",
+				"title": "Community health outreach supplies",
+				"approved_amount": 120_000_000,
+				"amount_reserved": 0,
+				"amount_committed": 0,
+				"classification": "Goods",
+				"organisational_owner": "Director, Primary Health",
+				"funding_source_type": "Exchequer",
+				"funding_source_name": "Government of Kenya Development Budget",
+				# Intentional: missing primary Strategy target.
+				"primary_target_code": "",
+				"primary_target_name": "",
+				"order_index": 1,
+			},
+			{
+				"generated_reference": "MOH-BL-0007",
+				"title": "Cold-chain maintenance services",
+				"approved_amount": 80_000_000,
+				"amount_reserved": 0,
+				"amount_committed": 0,
+				"classification": "Services",
+				"organisational_owner": "Director, Primary Health",
+				"funding_source_type": "Exchequer",
+				"funding_source_name": "Government of Kenya Development Budget",
+				"primary_target_code": "MOH-TGT-0003",
+				"primary_target_name": "Digital health technical capability target",
+				# Intentional: no value treatments → Required PVC incomplete.
+				"order_index": 2,
 			},
 		),
 	},
@@ -325,6 +434,7 @@ def _upsert_budget(pe_name: str, spec: dict[str, Any]) -> str:
 		"registration_source": "Direct capture",
 		"authoritative_reference": spec["authoritative_reference"],
 		"approval_date": spec["approval_date"],
+		"approval_evidence": spec.get("approval_evidence") or "",
 		"external_approved_total": spec["external_approved_total"],
 		"status": spec["status"],
 		"attention_note": spec.get("attention_note") or "",
@@ -332,6 +442,7 @@ def _upsert_budget(pe_name: str, spec: dict[str, Any]) -> str:
 		"strategy_pvc_treated": int(spec.get("strategy_pvc_treated") or 0),
 		"strategy_pvc_applicable": int(spec.get("strategy_pvc_applicable") or 0),
 		"fixture_namespace": FIXTURE_NS,
+		"return_reason": "",
 	}
 	if existing:
 		doc = frappe.get_doc("Budget", existing)
@@ -343,7 +454,34 @@ def _upsert_budget(pe_name: str, spec: dict[str, Any]) -> str:
 		doc.insert(ignore_permissions=True)
 		budget_name = doc.name
 
-	# Replace fixture activity then lines (FK-safe order).
+	# Governance timestamps / actors (BUD-UI-11).
+	gov_updates: dict[str, Any] = {}
+	if spec.get("submitted_by"):
+		gov_updates["submitted_by"] = spec["submitted_by"]
+	elif spec["status"] in ("Draft",):
+		gov_updates["submitted_by"] = None
+		gov_updates["submitted_at"] = None
+	if "submitted_at_offset_days" in spec:
+		gov_updates["submitted_at"] = add_days(now_datetime(), int(spec["submitted_at_offset_days"]))
+	if spec.get("reviewed_by"):
+		gov_updates["reviewed_by"] = spec["reviewed_by"]
+	elif spec["status"] in ("Draft", "Submitted", "Returned"):
+		gov_updates["reviewed_by"] = None
+		gov_updates["reviewed_at"] = None
+	if "reviewed_at_offset_days" in spec:
+		gov_updates["reviewed_at"] = add_days(now_datetime(), int(spec["reviewed_at_offset_days"]))
+	if spec.get("activated_by"):
+		gov_updates["activated_by"] = spec["activated_by"]
+	elif spec["status"] != "Active":
+		gov_updates["activated_by"] = None
+		gov_updates["activated_at"] = None
+	if "activated_at_offset_days" in spec:
+		gov_updates["activated_at"] = add_days(now_datetime(), int(spec["activated_at_offset_days"]))
+	if gov_updates:
+		frappe.db.set_value("Budget", budget_name, gov_updates, update_modified=False)
+
+	# Replace fixture revisions + activity then lines (FK-safe order).
+	_clear_fixture_revisions(budget_name)
 	_clear_fixture_activity(budget_name)
 	for line_name in frappe.get_all(
 		"Budget Line",
@@ -427,7 +565,97 @@ def _upsert_budget(pe_name: str, spec: dict[str, Any]) -> str:
 		)
 		line_doc.insert(ignore_permissions=True)
 		_seed_line_activity(budget_name, line_doc.name, line.get("funding_activity"))
+
+	rev_specs = spec.get("budget_revisions")
+	if rev_specs is None and spec.get("budget_revision"):
+		rev_specs = (spec["budget_revision"],)
+	for rev_spec in rev_specs or ():
+		_seed_budget_revision(budget_name, rev_spec)
 	return budget_name
+
+
+def _clear_fixture_revisions(budget_name: str) -> None:
+	"""Delete Budget Revisions for this budget only (never cross-budget by code)."""
+	if not frappe.db.exists("DocType", "Budget Revision"):
+		return
+	for name in frappe.get_all(
+		"Budget Revision",
+		filters={"budget": budget_name},
+		pluck="name",
+	):
+		frappe.delete_doc("Budget Revision", name, force=1, ignore_permissions=True)
+
+
+def _seed_budget_revision(budget_name: str, rev_spec: dict | None) -> None:
+	"""Seed optional Draft/Submitted revision for BUD-UI-08/09 smoke."""
+	if not rev_spec or not frappe.db.exists("DocType", "Budget Revision"):
+		return
+
+	# Idempotent — replace same business code if left from a prior seed.
+	existing = frappe.db.get_value(
+		"Budget Revision",
+		{"generated_reference": rev_spec["generated_reference"]},
+		"name",
+	)
+	if existing:
+		frappe.delete_doc("Budget Revision", existing, force=1, ignore_permissions=True)
+
+	line_rows = []
+	for raw in rev_spec.get("lines") or ():
+		line_code = raw["line_code"]
+		line_name = frappe.db.get_value(
+			"Budget Line",
+			{"budget": budget_name, "generated_reference": line_code},
+			"name",
+		)
+		if not line_name:
+			continue
+		line = frappe.get_doc("Budget Line", line_name)
+		before = flt(line.approved_amount)
+		change = flt(raw.get("change_amount") or 0)
+		after = before + change
+		reserved = flt(line.amount_reserved)
+		committed = flt(line.amount_committed)
+		impact = "Increase" if change > 0 else ("Decrease" if change < 0 else "Balanced")
+		if after < reserved + committed:
+			impact = "Below floor"
+		line_rows.append(
+			{
+				"budget_line": line.name,
+				"line_code": line.generated_reference,
+				"line_title": line.title,
+				"before_amount": before,
+				"change_amount": change,
+				"after_amount": after,
+				"reserved_snapshot": reserved,
+				"committed_snapshot": committed,
+				"impact_status": impact,
+			}
+		)
+	if not line_rows:
+		return
+
+	status = rev_spec.get("status") or "Draft"
+	doc = frappe.get_doc(
+		{
+			"doctype": "Budget Revision",
+			"budget": budget_name,
+			"generated_reference": rev_spec["generated_reference"],
+			"status": status,
+			"revision_type": rev_spec.get("revision_type") or "Line amendment",
+			"external_approval_reference": rev_spec.get("external_approval_reference") or "",
+			"approval_date": rev_spec.get("approval_date"),
+			"effective_date": rev_spec.get("effective_date"),
+			"reason": rev_spec.get("reason") or "",
+			"approval_evidence": rev_spec.get("approval_evidence") or "",
+			"fixture_namespace": FIXTURE_NS,
+			"lines": line_rows,
+		}
+	)
+	if status == "Submitted":
+		doc.submitted_by = rev_spec.get("submitted_by") or "Administrator"
+		doc.submitted_at = now_datetime()
+	doc.insert(ignore_permissions=True)
 
 
 def _clear_fixture_activity(budget_name: str) -> None:
@@ -466,6 +694,7 @@ def _seed_line_activity(budget_name: str, line_name: str, activity: dict | None)
 				"currency": "KES",
 				"status": rsv["status"],
 				"event_date": rsv["event_date"],
+				"plan_item_code": rsv.get("plan_item_code") or "",
 				"current_downstream_reference": rsv.get("current_downstream_reference") or "",
 				"idempotency_key": rsv.get("idempotency_key") or "",
 				"fixture_namespace": FIXTURE_NS,
@@ -522,15 +751,170 @@ def _seed_line_activity(budget_name: str, line_name: str, activity: dict | None)
 		).insert(ignore_permissions=True)
 
 
+def _ensure_seed_revision_officer() -> str:
+	"""User used as Submitted By on BR-MOH-0002 so Admin/Authority can Apply (AC-018)."""
+	email = "budget.rev.seed@example.com"
+	if not frappe.db.exists("User", email):
+		user = frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": email,
+				"first_name": "Budget",
+				"last_name": "Revision Seed",
+				"send_welcome_email": 0,
+				"new_password": "Test@12345",
+			}
+		)
+		user.insert(ignore_permissions=True)
+		user.add_roles("Budget Officer")
+	return email
+
+
+def _clear_fixture_audit(budget_name: str) -> None:
+	if not frappe.db.exists("DocType", "Budget Audit Event"):
+		return
+	frappe.flags.allow_budget_audit_purge = True
+	try:
+		for name in frappe.get_all(
+			"Budget Audit Event",
+			filters={"budget": budget_name, "fixture_namespace": FIXTURE_NS},
+			pluck="name",
+		):
+			frappe.delete_doc("Budget Audit Event", name, force=1, ignore_permissions=True)
+	finally:
+		frappe.flags.allow_budget_audit_purge = False
+
+
+def _seed_budget_audit(budget_name: str, budget_code: str) -> None:
+	"""BUD-UI-12 — pack-aligned immutable audit ledger for MOH-BUD-0001."""
+	if budget_code != "MOH-BUD-0001":
+		return
+	if not frappe.db.exists("DocType", "Budget Audit Event"):
+		return
+
+	from kentender_budget.services.budget_audit_contracts import record_event
+	from kentender_budget.services.budget_line_contracts import format_kes_full
+
+	_clear_fixture_audit(budget_name)
+	officer = "budget.rev.seed@example.com"
+	# Chronological pack §9.3 / governance story (newest-first display via event_at).
+	events = (
+		{
+			"event_type": "Revision applied",
+			"event_at": "2027-10-25 11:00:00",
+			"actor": "Administrator",
+			"actor_kind": "user",
+			"record_code": "BR-MOH-0000",
+			"record_doctype": "Budget Revision",
+			"change_summary": f"Net Change: {format_kes_full(25_000_000)}",
+			"source_reference": "MOF/2027/REV-MOH-00",
+			"reason": "Historical externally approved uplift (audit seed only).",
+		},
+		{
+			"event_type": "Budget activated",
+			"event_at": "2027-10-24 09:15:00",
+			"actor": "Administrator",
+			"actor_kind": "user",
+			"record_code": budget_code,
+			"record_doctype": "Budget",
+			"before_summary": "Submitted",
+			"after_summary": "Active",
+			"change_summary": "Status: Submitted → Active",
+			"source_reference": "MOH-FIN-BUD-2027-01",
+		},
+		{
+			"event_type": "Expenditure snapshot recorded",
+			"event_at": "2027-11-05 08:00:00",
+			"actor": "Finance system",
+			"actor_kind": "integration",
+			"record_code": "EXP-MOH-0001",
+			"record_doctype": "Expenditure Snapshot",
+			"change_summary": f"Actual: {format_kes_full(180_000_000)} (Stale)",
+			"source_reference": "FIN-SNAP-MOH-2027-11",
+		},
+		{
+			"event_type": "Contract commitment recorded",
+			"event_at": "2027-10-28 10:00:00",
+			"actor": "System",
+			"actor_kind": "system",
+			"record_code": "COM-MOH-0001",
+			"record_doctype": "Procurement Commitment",
+			"change_summary": f"Commitment: {format_kes_full(310_000_000)}",
+			"source_reference": "CTR-MOH-2027-005",
+		},
+		{
+			"event_type": "Reservation partially converted",
+			"event_at": "2027-10-28 09:55:00",
+			"actor": "System",
+			"actor_kind": "system",
+			"record_code": "RSV-MOH-0001",
+			"record_doctype": "Funding Reservation",
+			"change_summary": f"Remaining reserved: {format_kes_full(145_000_000)}",
+			"source_reference": "TND-MOH-2027-008",
+		},
+		{
+			"event_type": "Funding reserved",
+			"event_at": "2027-09-12 14:30:00",
+			"actor": "System",
+			"actor_kind": "system",
+			"record_code": "RSV-MOH-0001",
+			"record_doctype": "Funding Reservation",
+			"change_summary": f"Reserved: {format_kes_full(455_000_000)}",
+			"source_reference": "DMD-MOH-2027-014",
+		},
+		{
+			"event_type": "Budget submitted",
+			"event_at": "2027-06-20 10:00:00",
+			"actor": officer,
+			"actor_kind": "user",
+			"record_code": budget_code,
+			"record_doctype": "Budget",
+			"before_summary": "Draft",
+			"after_summary": "Submitted",
+			"change_summary": "Status: Draft → Submitted",
+			"source_reference": "MOH-FIN-BUD-2027-01",
+		},
+		{
+			"event_type": "Baseline registered",
+			"event_at": "2027-06-15 10:00:00",
+			"actor": "Direct capture",
+			"actor_kind": "integration",
+			"record_code": budget_code,
+			"record_doctype": "Budget",
+			"change_summary": "Initial baseline",
+			"source_reference": "MOH-FIN-BUD-2027-01",
+		},
+	)
+	for ev in events:
+		record_event(
+			budget=budget_name,
+			event_type=ev["event_type"],
+			event_at=ev["event_at"],
+			actor=ev["actor"],
+			actor_kind=ev["actor_kind"],
+			record_code=ev["record_code"],
+			record_doctype=ev.get("record_doctype") or "",
+			before_summary=ev.get("before_summary") or "",
+			after_summary=ev.get("after_summary") or "",
+			change_summary=ev.get("change_summary") or "",
+			source_reference=ev.get("source_reference") or "",
+			reason=ev.get("reason") or "",
+			fixture_namespace=FIXTURE_NS,
+		)
+
+
 def upsert_moh_mvp_v1_portfolio() -> dict[str, Any]:
 	"""Idempotent portfolio seed for BUD-UI-01 / Overview / Lines."""
 	frappe.only_for(("System Manager", "Administrator"))
 	ensure_budget_roles()
 	ensure_currency_kes()
+	_ensure_seed_revision_officer()
 	pe_name = ensure_procuring_entity(PE_CODE, PE_NAME)
 	created: list[str] = []
 	for spec in BUDGETS:
-		created.append(_upsert_budget(pe_name, spec))
+		name = _upsert_budget(pe_name, spec)
+		created.append(name)
+		_seed_budget_audit(name, spec["generated_reference"])
 	frappe.db.commit()
 	return {
 		"ok": True,

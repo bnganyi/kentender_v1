@@ -39,6 +39,7 @@
   "reviewed_at",
   "activated_by",
   "activated_at",
+  "return_reason",
   "fixture_namespace"
  ],
  "fields": [
@@ -248,6 +249,12 @@
    "fieldname": "activated_at",
    "fieldtype": "Datetime",
    "label": "Activated At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "return_reason",
+   "fieldtype": "Small Text",
+   "label": "Return Reason",
    "read_only": 1
   },
   {

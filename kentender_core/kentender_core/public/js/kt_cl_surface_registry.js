@@ -665,6 +665,30 @@ frappe.provide("kentender_core.cl_surface_registry");
 				[]
 			),
 		},
+		"BUD-UI-08-CREATE": {
+			id: "BUD-UI-08-CREATE",
+			label: "Create Budget Revision",
+			routePrefixes: ["budget-revision-create"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Create budget revision"),
+				__("Record an externally approved change to the active procurement budget."),
+				trailBudgetLeaf(__("Create budget revision")),
+				[]
+			),
+		},
+		"BUD-UI-09": {
+			id: "BUD-UI-09",
+			label: "Review Budget Revision",
+			routePrefixes: ["budget-revision-review"],
+			sidebarWorkspaceKey: SIDEBAR_KEY,
+			chrome: chrome(
+				__("Review budget revision"),
+				__("Review financial, Strategy and downstream impact before applying an externally approved revision."),
+				trailBudgetLeaf(__("Review budget revision")),
+				[]
+			),
+		},
 		"BUD-UI-03": {
 			id: "BUD-UI-03",
 			label: "Budget Funding Performance",

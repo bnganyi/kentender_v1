@@ -581,6 +581,26 @@ def register_budget(payload: dict | None = None) -> dict[str, Any]:
 		}
 	)
 	doc.insert()
+	try:
+		from kentender_budget.services.budget_audit_contracts import (
+			EVENT_BASELINE,
+			safe_record_event,
+		)
+
+		safe_record_event(
+			budget=doc.name,
+			event_type=EVENT_BASELINE,
+			record_code=doc.generated_reference,
+			record_doctype="Budget",
+			actor=frappe.session.user,
+			actor_kind="user",
+			before_summary="",
+			after_summary="Initial baseline",
+			change_summary="Initial baseline",
+			source_reference=doc.authoritative_reference or "",
+		)
+	except Exception:
+		pass
 	return {"ok": True, "budget": _budget_dto(doc)}
 
 

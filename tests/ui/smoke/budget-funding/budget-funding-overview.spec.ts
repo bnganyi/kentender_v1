@@ -83,7 +83,7 @@ test.describe("Budget Funding overview (BUD-UI-03)", () => {
 		await expect(overview.locator('[data-kt-bud-ov="approved"]')).toHaveText("KES 560M");
 	});
 
-	test("Active primary CTA routes to revisions stub", async ({ page }) => {
+	test("Active primary CTA routes to revision create page", async ({ page }) => {
 		await page.goto("/desk/budget-overview/MOH-BUD-0001", { waitUntil: "domcontentloaded" });
 		const overview = page
 			.locator('[data-testid="kt-bud-overview"][data-kt-bud-live="1"]')
@@ -91,12 +91,11 @@ test.describe("Budget Funding overview (BUD-UI-03)", () => {
 		await expect(overview).toBeVisible({ timeout: 45_000 });
 		await expect(overview.getByTestId("kt-bud-overview-primary")).toHaveText(/Request revision/i);
 		await overview.getByTestId("kt-bud-overview-primary").click();
-		await page.waitForURL(/\/desk\/budget-revisions\/MOH-BUD-0001/, { timeout: 20_000 });
+		await page.waitForURL(/\/desk\/budget-revision-create\/MOH-BUD-0001/, { timeout: 20_000 });
 		await expect(
 			page
-				.locator('[data-testid="kt-bud-workspace-page"]')
-				.filter({ visible: true })
-				.getByTestId("kt-bud-workspace-stub"),
-		).toBeVisible({ timeout: 30_000 });
+				.locator('[data-testid="kt-bud-revision-create"][data-kt-bud-live="1"]')
+				.filter({ visible: true }),
+		).toBeVisible({ timeout: 45_000 });
 	});
 });

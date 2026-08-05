@@ -16,24 +16,7 @@ frappe.provide("kentender_budget.workspace");
 		{ label: "Audit", slug: "budget-audit" },
 	];
 
-	var STUB_COPY = {
-		"budget-revisions": {
-			title: "Revisions",
-			message: "Budget Revisions is next in the Budget MVP-1 build sequence.",
-		},
-		"budget-downstream": {
-			title: "Downstream Usage",
-			message: "Downstream Usage is next in the Budget MVP-1 build sequence.",
-		},
-		"budget-review": {
-			title: "Review",
-			message: "Budget Review is next in the Budget MVP-1 build sequence.",
-		},
-		"budget-audit": {
-			title: "Audit",
-			message: "Budget Audit is next in the Budget MVP-1 build sequence.",
-		},
-	};
+	var STUB_COPY = {};
 
 	function fixtures() {
 		return kentender_budget.ui_fixtures || {};
@@ -84,7 +67,16 @@ frappe.provide("kentender_budget.workspace");
 		}).join("");
 	}
 
-	function chromeActionsHtml() {
+	function chromeActionsHtml(activeSlug) {
+		// Audit Stitch: header action is Export only (not Request revision / View performance).
+		if (activeSlug === "budget-audit") {
+			return (
+				'<button type="button" class="kt-bud-audit-export border flex items-center gap-2 px-4 py-2 rounded-lg border-outline-variant text-primary font-body-md hover:bg-surface-container transition-colors bg-surface-container-lowest" data-testid="kt-bud-audit-export" data-kt-bud-audit-export>' +
+				'<span class="material-symbols-outlined text-[20px]" aria-hidden="true">download</span>' +
+				frappe.utils.escape_html(__("Export audit history")) +
+				"</button>"
+			);
+		}
 		return (
 			'<button type="button" class="px-4 py-2 rounded-lg border border-outline-variant text-on-surface font-body-md hover:bg-surface-container-low transition-colors bg-surface-container-lowest" data-kt-bud-action="open-performance" data-testid="kt-bud-view-performance">' +
 			frappe.utils.escape_html(__("View funding performance")) +
@@ -113,10 +105,10 @@ frappe.provide("kentender_budget.workspace");
 			'<span data-kt-bud-budget-status>—</span>' +
 			"</span>" +
 			"</div>" +
-			'<h1 class="font-headline-lg text-on-surface" data-kt-bud-budget-title>—</h1>' +
+			'<h1 class="font-headline-lg text-headline-lg text-primary" data-kt-bud-budget-title>—</h1>' +
 			"</div>" +
 			'<div class="flex flex-wrap gap-3" data-kt-bud-chrome-actions>' +
-			chromeActionsHtml() +
+			chromeActionsHtml(activeSlug) +
 			"</div>" +
 			"</div>" +
 			'<div class="flex gap-6 mt-8 overflow-x-auto hide-scrollbar" data-testid="kt-bud-workspace-tabs">' +
@@ -194,7 +186,7 @@ frappe.provide("kentender_budget.workspace");
 					return;
 				}
 				if (primary === "request_revision") {
-					frappe.set_route("budget-revisions", code);
+					frappe.set_route("budget-revision-create", code);
 					return;
 				}
 				frappe.set_route("budget-funding-performance");
@@ -237,6 +229,39 @@ frappe.provide("kentender_budget.workspace");
 		}
 	}
 
+	function bindLiveTab($root, pageSlug, budgetCode) {
+		var live = kentender_budget.live || {};
+		var prevGen = parseInt($root.attr("data-kt-bud-mount-gen") || "0", 10) || 0;
+		$root.attr("data-kt-bud-mount-gen", String(prevGen + 1));
+		$root.attr("data-kt-bud-budget-code", budgetCode);
+
+		if (pageSlug === "budget-lines" && typeof live.bindLines === "function") {
+			return live.bindLines($root, budgetCode);
+		}
+		if (
+			pageSlug === "budget-funding-activity" &&
+			typeof live.bindFundingActivity === "function"
+		) {
+			return live.bindFundingActivity($root, budgetCode);
+		}
+		if (pageSlug === "budget-revisions" && typeof live.bindRevisions === "function") {
+			return live.bindRevisions($root, budgetCode);
+		}
+		if (pageSlug === "budget-downstream" && typeof live.bindDownstream === "function") {
+			return live.bindDownstream($root, budgetCode);
+		}
+		if (pageSlug === "budget-review" && typeof live.bindReview === "function") {
+			return live.bindReview($root, budgetCode);
+		}
+		if (pageSlug === "budget-audit" && typeof live.bindAudit === "function") {
+			return live.bindAudit($root, budgetCode);
+		}
+		if (pageSlug === "budget-overview" && typeof live.bindOverview === "function") {
+			return live.bindOverview($root, budgetCode);
+		}
+		return Promise.resolve(null);
+	}
+
 	function mountBudgetPage(opts) {
 		var page = opts.page;
 		var pageSlug = opts.pageSlug;
@@ -260,6 +285,13 @@ frappe.provide("kentender_budget.workspace");
 			$existing.attr("data-kt-bud-mounted") === "1" &&
 			$existing.attr("data-kt-bud-mount-key") === nextMountKey
 		) {
+			// Keep shell DOM; refresh live list/status (e.g. after Apply/Reject on review page).
+			annotateChrome($existing, pageSlug, budgetCode);
+			bindTabs($existing, budgetCode);
+			bindChromeActions($existing, budgetCode);
+			bindLiveTab($existing, pageSlug, budgetCode).catch(function (err) {
+				console.warn("Budget soft-show rebind failed", pageSlug, err);
+			});
 			return;
 		}
 
@@ -292,45 +324,20 @@ frappe.provide("kentender_budget.workspace");
 		if (!$root.length) {
 			$root = $(page.main).find('[data-testid="kt-cl-page-body"]');
 		}
-		var prevGen = parseInt($root.attr("data-kt-bud-mount-gen") || "0", 10) || 0;
 		$root.attr("data-kt-bud-mounted", "1");
 		$root.attr("data-kt-bud-mount-key", nextMountKey);
-		$root.attr("data-kt-bud-mount-gen", String(prevGen + 1));
-		$root.attr("data-kt-bud-budget-code", budgetCode);
 
 		annotateChrome($root, pageSlug, budgetCode);
 		bindTabs($root, budgetCode);
 		bindChromeActions($root, budgetCode);
 
-		var live = kentender_budget.live || {};
-		if (pageSlug === "budget-lines" && typeof live.bindLines === "function") {
-			live.bindLines($root, budgetCode).catch(function (err) {
-				console.warn("Budget lines live bind failed", err);
-				frappe.show_alert({
-					message: __("Could not load budget lines"),
-					indicator: "orange",
-				});
+		bindLiveTab($root, pageSlug, budgetCode).catch(function (err) {
+			console.warn("Budget live bind failed", pageSlug, err);
+			frappe.show_alert({
+				message: __("Could not load budget workspace data"),
+				indicator: "orange",
 			});
-		} else if (
-			pageSlug === "budget-funding-activity" &&
-			typeof live.bindFundingActivity === "function"
-		) {
-			live.bindFundingActivity($root, budgetCode).catch(function (err) {
-				console.warn("Budget funding activity live bind failed", err);
-				frappe.show_alert({
-					message: __("Could not load funding activity"),
-					indicator: "orange",
-				});
-			});
-		} else if (pageSlug === "budget-overview" && typeof live.bindOverview === "function") {
-			live.bindOverview($root, budgetCode).catch(function (err) {
-				console.warn("Budget overview live bind failed", err);
-				frappe.show_alert({
-					message: __("Could not load budget overview"),
-					indicator: "orange",
-				});
-			});
-		}
+		});
 	}
 
 	function registerPage(pageSlug, opts) {

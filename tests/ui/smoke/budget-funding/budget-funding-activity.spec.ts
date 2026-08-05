@@ -25,6 +25,12 @@ test.describe("Budget Funding activity (BUD-UI-07)", () => {
 		await expect(root.getByTestId("kt-bud-workspace-chrome")).toBeVisible();
 		await expect(root.getByTestId("kt-bud-activity-strip")).toBeVisible();
 		await expect(root.getByTestId("kt-bud-activity-toolbar")).toBeVisible();
+		// Search left, filters right.
+		const searchBox = await root.getByTestId("kt-bud-activity-search-wrap").boundingBox();
+		const typeBox = await root.getByTestId("kt-bud-activity-filter-type").boundingBox();
+		expect(searchBox).toBeTruthy();
+		expect(typeBox).toBeTruthy();
+		expect((searchBox?.x || 0) < (typeBox?.x || 0)).toBeTruthy();
 		await expect(root.getByTestId("kt-bud-activity-table")).toBeVisible();
 		await expect(root.getByTestId("kt-bud-activity-table-footer")).toBeVisible();
 		await expect(root.getByTestId("kt-bud-activity-table-footer")).toContainText(/Showing/i);
@@ -68,11 +74,9 @@ test.describe("Budget Funding activity (BUD-UI-07)", () => {
 		await expect(exp).not.toContainText("KES 0");
 
 		// Filter select width matches wrap (chevron inside).
-		const typeBox = await root.getByTestId("kt-bud-activity-filter-type").boundingBox();
 		const typeWrap = await root
 			.locator('[data-kt-bud-activity-filter-field="type"] .kt-bud-activity-select-wrap')
 			.boundingBox();
-		expect(typeBox).toBeTruthy();
 		expect(typeWrap).toBeTruthy();
 		expect(Math.abs((typeBox?.width || 0) - (typeWrap?.width || 0))).toBeLessThan(2);
 

@@ -39,8 +39,15 @@ kentender_budget.ui_fixtures.activity = function () {
 </div>
 </div>
 
-<!-- Toolbar — type / status / date / search -->
+<!-- Toolbar — search left, filters right (Lines pattern) -->
 <div class="kt-bud-activity-toolbar" data-testid="kt-bud-activity-toolbar">
+<div class="kt-bud-activity-toolbar-search" data-testid="kt-bud-activity-search-wrap">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase tracking-wider">Search</label>
+<div class="kt-bud-activity-search-field">
+<span class="material-symbols-outlined" data-kt-bud-activity-search-icon aria-hidden="true">search</span>
+<input type="text" placeholder="Search activity..." aria-label="Search activity" data-testid="kt-bud-activity-search" data-kt-bud-activity-search />
+</div>
+</div>
 <div class="kt-bud-activity-toolbar-filters">
 <div class="kt-bud-activity-filter-field" data-kt-bud-activity-filter-field="type">
 <label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase tracking-wider">Activity type</label>
@@ -71,13 +78,6 @@ kentender_budget.ui_fixtures.activity = function () {
 <div class="kt-bud-activity-filter-field" data-kt-bud-activity-filter-field="date">
 <label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase tracking-wider">Date from</label>
 <input type="date" class="kt-bud-activity-date" aria-label="Date from" data-testid="kt-bud-activity-filter-date" data-kt-bud-activity-filter="date_from" />
-</div>
-</div>
-<div class="kt-bud-activity-toolbar-search" data-testid="kt-bud-activity-search-wrap">
-<label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase tracking-wider">Search</label>
-<div class="kt-bud-activity-search-field">
-<span class="material-symbols-outlined" data-kt-bud-activity-search-icon aria-hidden="true">search</span>
-<input type="text" placeholder="Search activity..." aria-label="Search activity" data-testid="kt-bud-activity-search" data-kt-bud-activity-search />
 </div>
 </div>
 </div>

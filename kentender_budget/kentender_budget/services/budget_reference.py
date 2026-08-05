@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""System-generated Budget / Budget Line references ({PE}-BUD-#### / {PE}-BL-####)."""
+"""System-generated Budget / Budget Line / Revision references."""
 
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ from kentender_strategy.services.strategy_reference import pe_slug
 
 BUD_REF_RE = re.compile(r"^[A-Z0-9]+-BUD-\d{4}$")
 BL_REF_RE = re.compile(r"^[A-Z0-9]+-BL-\d{4}$")
+BR_REF_RE = re.compile(r"^BR-[A-Z0-9]+-\d{4}$")
 
 
 def _max_seq(doctype: str, field: str, prefix: str) -> int:
@@ -79,3 +80,15 @@ def allocate_budget_line_reference(procuring_entity: str) -> str:
 		if not frappe.db.exists("Budget Line", {"generated_reference": candidate}):
 			return candidate
 	frappe.throw(_("Could not allocate a unique Budget Line reference"))
+
+
+def allocate_budget_revision_reference(procuring_entity: str) -> str:
+	"""Allocate next never-reuse `BR-{PE}-####` (BUD-UI-08)."""
+	slug = pe_slug(procuring_entity)
+	prefix = f"BR-{slug}-"
+	_sync_series(prefix, _max_seq("Budget Revision", "generated_reference", prefix))
+	for _ in range(200):
+		candidate = make_autoname(f"{prefix}.####")
+		if not frappe.db.exists("Budget Revision", {"generated_reference": candidate}):
+			return candidate
+	frappe.throw(_("Could not allocate a unique Budget Revision reference"))

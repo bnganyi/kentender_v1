@@ -31,7 +31,11 @@
 				return;
 			}
 			var code = $el.closest("tr").attr("data-budget-code");
-			if (code && (action === "open" || action === "review" || action === "view")) {
+			if (code && action === "review") {
+				frappe.set_route("budget-review", code);
+				return;
+			}
+			if (code && (action === "open" || action === "view")) {
 				frappe.set_route("budget-overview", code);
 			}
 		});

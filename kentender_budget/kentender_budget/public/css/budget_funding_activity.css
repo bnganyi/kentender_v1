@@ -86,8 +86,11 @@
 	display: flex !important;
 	flex-wrap: wrap !important;
 	align-items: flex-end !important;
+	justify-content: flex-end !important;
 	gap: 1rem !important;
-	flex: 1 1 auto !important;
+	flex: 0 0 auto !important;
+	width: auto !important;
+	margin-left: auto !important;
 }
 .kt-cl-shell .kt-bud-root .kt-bud-activity-filter-field {
 	display: flex !important;
@@ -154,9 +157,10 @@
 	box-sizing: border-box !important;
 }
 .kt-cl-shell .kt-bud-root .kt-bud-activity-toolbar-search {
-	flex: 0 0 auto !important;
+	flex: 1 1 auto !important;
+	min-width: 0 !important;
 	width: 100% !important;
-	max-width: 16rem !important;
+	max-width: none !important;
 }
 .kt-cl-shell .kt-bud-root .kt-bud-activity-search-field {
 	position: relative !important;
@@ -193,6 +197,15 @@
 		flex-direction: row !important;
 		align-items: flex-end !important;
 		justify-content: space-between !important;
+	}
+	.kt-cl-shell .kt-bud-root .kt-bud-activity-toolbar-search {
+		flex: 1 1 0% !important;
+		min-width: 16rem !important;
+		max-width: none !important;
+	}
+	.kt-cl-shell .kt-bud-root .kt-bud-activity-toolbar-filters {
+		flex-wrap: nowrap !important;
+		margin-left: auto !important;
 	}
 }
 

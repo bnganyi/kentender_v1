@@ -20,6 +20,7 @@
   "remaining_reserved",
   "currency",
   "section_downstream",
+  "plan_item_code",
   "current_downstream_reference",
   "idempotency_key",
   "fixture_namespace"
@@ -117,6 +118,11 @@
    "fieldname": "section_downstream",
    "fieldtype": "Section Break",
    "label": "Downstream"
+  },
+  {
+   "fieldname": "plan_item_code",
+   "fieldtype": "Data",
+   "label": "Procurement Plan Item Code"
   },
   {
    "fieldname": "current_downstream_reference",

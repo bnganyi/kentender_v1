@@ -6,7 +6,7 @@ BENCH_ROOT ?= /home/midasuser/frappe-bench
 KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency
 INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency
 
-.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate ui-strategy-typography-gate ui-strategy-alignment-ui-gate ui-stitch-desk-chrome-gate ui-budget-funding-portfolio-gate ui-budget-funding-register-gate ui-budget-funding-overview-gate ui-budget-funding-lines-gate ui-budget-funding-activity-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate bw-fot-domain-gate ui-bidder-fot-gate bw-statutory-domain-gate ui-bidder-statutory-gate bw-tender-security-domain-gate ui-bidder-tender-security-gate bw-preliminary-domain-gate ui-bidder-preliminary-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate std-verbatim-gate std-step1-gate nssf-calibration-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate seed-demand-to-bidder-journey
+.PHONY: help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke ui-smoke ui-workspace-pattern-gate ui-strategy-typography-gate ui-strategy-alignment-ui-gate ui-stitch-desk-chrome-gate ui-budget-funding-portfolio-gate ui-budget-funding-register-gate ui-budget-funding-overview-gate ui-budget-funding-lines-gate ui-budget-funding-activity-gate ui-budget-funding-revisions-gate ui-budget-funding-revision-review-gate ui-budget-funding-downstream-gate ui-budget-funding-review-gate ui-budget-funding-audit-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate bw-fot-domain-gate ui-bidder-fot-gate bw-statutory-domain-gate ui-bidder-statutory-gate bw-tender-security-domain-gate ui-bidder-tender-security-gate bw-preliminary-domain-gate ui-bidder-preliminary-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate std-verbatim-gate std-step1-gate nssf-calibration-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate seed-demand-to-bidder-journey
 
 help:
 	@echo "Targets:"
@@ -39,6 +39,11 @@ help:
 	@echo "  make ui-budget-funding-overview-gate — Budget Overview workspace (BUD-UI-03) chrome + domain + Playwright"
 	@echo "  make ui-budget-funding-lines-gate — Budget Lines + Line Editor (BUD-UI-04/05) chrome + domain + Playwright"
 	@echo "  make ui-budget-funding-activity-gate — Funding Activity (BUD-UI-07) chrome + domain + Playwright"
+	@echo "  make ui-budget-funding-revisions-gate — Budget Revisions (BUD-UI-08) chrome + domain + Playwright"
+	@echo "  make ui-budget-funding-revision-review-gate — Budget Revision Review (BUD-UI-09) chrome + domain + Playwright"
+	@echo "  make ui-budget-funding-downstream-gate — Budget Downstream Usage (BUD-UI-10) chrome + domain + Playwright"
+	@echo "  make ui-budget-funding-review-gate — Budget Readiness/Review (BUD-UI-11) chrome + domain + Playwright"
+	@echo "  make ui-budget-funding-audit-gate — Budget Audit History (BUD-UI-12) chrome + domain + Playwright"
 	@echo "  make ui-civic-ledger-queue-gate — Civic Ledger queue/list contract (chrome, filters, table footer)"
 	@echo "  make ui-civic-ledger-ui01-gate — UI-01 home structural layout + mockup states"
 	@echo "  make ui-civic-ledger-cfg01-gate — CFG-01 Tender Profile strip/form/Continue gate"
@@ -233,6 +238,59 @@ ui-budget-funding-activity-gate: ui-stitch-desk-chrome-gate
 		--module kentender_budget.tests.test_budget_ui_stitch_layout_guard
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/budget-funding/budget-funding-activity.spec.ts
+
+# BUD-UI-08 Budget Revisions — domain + layout/chrome + Playwright.
+ui-budget-funding-revisions-gate: ui-stitch-desk-chrome-gate
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_budget.tests.test_budget_revisions
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_budget.tests.test_budget_ui_stitch_layout_guard
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/budget-funding/budget-funding-revisions.spec.ts
+
+# BUD-UI-09 Budget Revision Review — domain + layout/chrome + Playwright.
+ui-budget-funding-revision-review-gate: ui-stitch-desk-chrome-gate
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_budget.tests.test_budget_revision_review
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_budget.tests.test_budget_ui_stitch_layout_guard
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
+		kentender_budget.seeds.moh_mvp_v1_portfolio.upsert_moh_mvp_v1_portfolio
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/budget-funding/budget-funding-revision-review.spec.ts
+
+# BUD-UI-10 Downstream Usage — domain + layout/chrome + Playwright.
+ui-budget-funding-downstream-gate: ui-stitch-desk-chrome-gate
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_budget.tests.test_budget_downstream_usage
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_budget.tests.test_budget_ui_stitch_layout_guard
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
+		kentender_budget.seeds.moh_mvp_v1_portfolio.upsert_moh_mvp_v1_portfolio
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/budget-funding/budget-funding-downstream.spec.ts
+
+# BUD-UI-11 Readiness and Review — domain + layout/chrome + Playwright.
+ui-budget-funding-review-gate: ui-stitch-desk-chrome-gate
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_budget.tests.test_budget_readiness
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_budget.tests.test_budget_ui_stitch_layout_guard
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
+		kentender_budget.seeds.moh_mvp_v1_portfolio.upsert_moh_mvp_v1_portfolio
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/budget-funding/budget-funding-review.spec.ts
+
+# BUD-UI-12 Audit History — domain + layout/chrome + Playwright.
+ui-budget-funding-audit-gate: ui-stitch-desk-chrome-gate
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_budget.tests.test_budget_audit
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
+		--module kentender_budget.tests.test_budget_ui_stitch_layout_guard
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
+		kentender_budget.seeds.moh_mvp_v1_portfolio.upsert_moh_mvp_v1_portfolio
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/budget-funding/budget-funding-audit.spec.ts
 
 ui-civic-ledger-queue-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \

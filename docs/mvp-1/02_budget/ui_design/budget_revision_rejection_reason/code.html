@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Review Budget Revision - KenTender</title>
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;family=Manrope:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-container": "#26364b",
+                    "primary-container": "#00346f",
+                    "on-secondary-container": "#004c7c",
+                    "tertiary-fixed": "#d3e4ff",
+                    "on-tertiary": "#ffffff",
+                    "status-exhausted": "#EF4444",
+                    "status-reserved": "#F59E0B",
+                    "surface-variant": "#e2e2e8",
+                    "secondary-fixed": "#cfe5ff",
+                    "on-primary-fixed": "#001b3f",
+                    "on-secondary": "#ffffff",
+                    "inverse-surface": "#2f3035",
+                    "on-secondary-fixed": "#001d34",
+                    "tertiary-fixed-dim": "#b7c8e2",
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-on-surface": "#f1f0f6",
+                    "surface-container-highest": "#e2e2e8",
+                    "status-available": "#10B981",
+                    "secondary-fixed-dim": "#99cbff",
+                    "surface-container-low": "#f4f3f9",
+                    "outline": "#737781",
+                    "background": "#f9f9fe",
+                    "surface-dim": "#dad9df",
+                    "surface-container": "#eceef0",
+                    "on-primary-container": "#7b9ee0",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-fixed": "#0b1c30",
+                    "primary-fixed": "#d7e2ff",
+                    "status-committed": "#6366F1",
+                    "surface-tint": "#395e9b",
+                    "primary-fixed-dim": "#abc7ff",
+                    "on-surface": "#1a1b20",
+                    "outline-variant": "#c3c6d1",
+                    "on-primary-fixed-variant": "#1d4681",
+                    "secondary-container": "#7bbeff",
+                    "tertiary": "#26364b",
+                    "on-error": "#ffffff",
+                    "on-tertiary-fixed-variant": "#38485e",
+                    "on-tertiary-container": "#8f9fb8",
+                    "surface-container-high": "#e8e7ed",
+                    "on-secondary-fixed-variant": "#004a78",
+                    "surface-bright": "#f9f9fe",
+                    "on-error-container": "#93000a",
+                    "secondary": "#01629d",
+                    "surface": "#f9f9fe",
+                    "error": "#ba1a1a",
+                    "inverse-primary": "#abc7ff",
+                    "on-primary": "#ffffff",
+                    "primary": "#001f48",
+                    "on-surface-variant": "#434750",
+                    "on-background": "#1a1b20"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "12px",
+                    "section-gap": "24px",
+                    "container-padding": "16px",
+                    "unit": "4px",
+                    "card-padding": "20px",
+                    "base-unit": "4px"
+            },
+            "fontFamily": {
+                    "label-caps": ["Inter"],
+                    "headline-lg-mobile": ["Manrope"],
+                    "headline-lg": ["Manrope"],
+                    "headline-md": ["Manrope"],
+                    "data-mono": ["JetBrains Mono"],
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-sm": ["Manrope"]
+            },
+            "fontSize": {
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-md": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+                    "data-mono": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md text-body-md antialiased overflow-x-hidden pb-32">
+<!-- TopNavBar (Shared Component, rendered as specified) -->
+<header class="bg-surface text-primary font-body-md text-body-md docked full-width top-0 border-b border-outline-variant flat no shadows flex justify-between items-center w-full px-container-padding h-16 fixed top-0 z-50">
+<div class="flex items-center gap-4">
+<span class="font-headline-sm text-headline-sm font-bold text-primary">KenTender Budget Catalyst</span>
+</div>
+<div class="flex-1 max-w-md mx-4">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" style="font-size: 20px;">search</span>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-full pl-10 pr-4 py-2 text-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors" placeholder="Search..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button aria-label="Notifications" class="p-2 rounded-full hover:bg-surface-container text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button aria-label="Settings" class="p-2 rounded-full hover:bg-surface-container text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-variant border border-outline-variant overflow-hidden ml-2">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="A professional headshot of a corporate user in a modern office setting, bright natural lighting, minimalist background, tailored for a business software profile picture." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCjBE3OSurM1YA1J515lUFM84Gm6xq89JrSubTCZdMLsB5S757jahRkZ0t-4IXalAKTs12Qg1SPC_uqdYxeMVARhZ-sjwA39l5rB1aWfwAjDfk80S9GRer1a-9x1ppJ-0yXgkZ62pySBU51F945VolLiw2xysXBw0zuphf3N4t3dy_CXxNFFSRU63-2g_LZn7PHILyE1aQIBl7gbO-m8NxiEfnAjtnP8czfd807CB9Il4UooDBCebihPw"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas (Navigation shell suppressed as this is a focused task) -->
+<main class="max-w-7xl mx-auto pt-24 px-container-padding flex flex-col gap-section-gap">
+<!-- Task Header & Context -->
+<div class="flex flex-col gap-4">
+<a class="inline-flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors font-body-md text-body-md w-fit" href="#">
+<span class="material-symbols-outlined" style="font-size: 16px;">arrow_back</span>
+                Back to Revisions
+            </a>
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+<div>
+<div class="flex items-center gap-3 mb-2">
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">Review budget revision</h1>
+<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-status-reserved bg-opacity-20 text-status-reserved font-label-caps text-label-caps border border-status-reserved border-opacity-30">
+<span class="material-symbols-outlined" data-weight="fill" style="font-size: 14px;">pending</span>
+                            Pending Review
+                        </span>
+</div>
+<div class="font-data-mono text-data-mono text-on-surface-variant">Ref: BR-2027-042</div>
+</div>
+</div>
+<!-- Read-only Details (Created details) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-card-padding grid grid-cols-1 md:grid-cols-4 gap-6">
+<div class="flex flex-col gap-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Initiated By</span>
+<span class="font-body-md text-body-md text-on-surface font-medium">Sarah Jenkins (Procurement)</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Date Submitted</span>
+<span class="font-data-mono text-data-mono text-on-surface">24 Oct 2027, 09:15 AM</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Fiscal Period</span>
+<span class="font-body-md text-body-md text-on-surface">FY2027 - Q4</span>
+</div>
+<div class="flex flex-col gap-1 md:col-span-4">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Justification</span>
+<p class="font-body-md text-body-md text-on-surface">Reallocation of funds to cover unexpected surge in laboratory supply costs due to recent supply chain disruptions. Funds pulled from deferred Q3 IT infrastructure upgrades.</p>
+</div>
+</div>
+</div>
+<!-- Blocker Alert Section -->
+<div class="bg-error-container border border-error border-opacity-20 rounded-xl p-4 flex gap-4 items-start shadow-sm">
+<span class="material-symbols-outlined text-error mt-0.5" data-weight="fill">block</span>
+<div class="flex flex-col gap-2 w-full">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-error-container mb-1">Critical Blocker Detected</h3>
+<p class="font-body-md text-body-md text-on-error-container opacity-90">
+                        Revised amount for <strong>'Emergency Lab Supplies'</strong> (<span class="font-data-mono">KES 100,000,000</span>) is below the current Reserved + Committed total (<span class="font-data-mono">KES 120,000,000</span>). You cannot reduce a budget line below its active obligations.
+                    </p>
+</div>
+<button class="inline-flex items-center gap-1 text-error hover:text-on-error-container font-label-caps text-label-caps self-start transition-colors">
+                    View affected line item
+                    <span class="material-symbols-outlined" style="font-size: 14px;">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Review Groups (Bento Grid) -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- 1. Financial Impact -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl flex flex-col overflow-hidden">
+<div class="bg-surface-container-low px-4 py-3 border-b border-outline-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-size: 20px;">account_balance</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Financial Impact</h2>
+</div>
+<div class="p-card-padding flex flex-col gap-6">
+<div>
+<span class="font-label-caps text-label-caps text-on-surface-variant block mb-1">Net Portfolio Change</span>
+<div class="flex items-center gap-2">
+<span class="font-data-mono text-[24px] leading-8 font-semibold text-on-surface">KES 0.00</span>
+<span class="px-2 py-0.5 rounded bg-surface-variant text-on-surface-variant font-label-caps text-[10px]">BALANCED</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 pt-4 border-t border-surface-variant">
+<div>
+<span class="font-label-caps text-label-caps text-on-surface-variant block mb-1">Total Deductions</span>
+<div class="flex items-center gap-1 text-error">
+<span class="material-symbols-outlined" style="font-size: 16px;">arrow_downward</span>
+<span class="font-data-mono text-data-mono">KES 45.2M</span>
+</div>
+</div>
+<div>
+<span class="font-label-caps text-label-caps text-on-surface-variant block mb-1">Total Additions</span>
+<div class="flex items-center gap-1 text-status-available">
+<span class="material-symbols-outlined" style="font-size: 16px;">arrow_upward</span>
+<span class="font-data-mono text-data-mono">KES 45.2M</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- 2. Strategy & Value-Treatment -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl flex flex-col overflow-hidden">
+<div class="bg-surface-container-low px-4 py-3 border-b border-outline-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-size: 20px;">flag</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Strategic Alignment</h2>
+</div>
+<div class="p-card-padding flex flex-col gap-4">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-status-available mt-0.5">check_circle</span>
+<div>
+<span class="font-body-md text-body-md text-on-surface font-medium block">Department Goal Maintained</span>
+<span class="font-body-md text-body-md text-on-surface-variant text-sm">Overall lab functionality metrics remain supported.</span>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-status-reserved mt-0.5">warning</span>
+<div>
+<span class="font-body-md text-body-md text-on-surface font-medium block">Risk Flag: Delayed IT Infrastructure</span>
+<span class="font-body-md text-body-md text-on-surface-variant text-sm">Pulling funds from IT upgrades impacts Q3 SLA targets.</span>
+</div>
+</div>
+</div>
+</div>
+<!-- 3. Downstream Procurement Impact -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl flex flex-col overflow-hidden">
+<div class="bg-surface-container-low px-4 py-3 border-b border-outline-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-size: 20px;">hub</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Downstream Impact</h2>
+</div>
+<div class="p-card-padding flex flex-col gap-4">
+<div class="p-3 bg-surface border border-outline-variant rounded-lg flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Active Tender</span>
+<span class="font-data-mono text-[12px] text-on-surface">TND-27-001</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface">Server Rack Upgrades</span>
+<div class="flex items-center gap-2 text-error text-sm mt-1">
+<span class="material-symbols-outlined" style="font-size: 14px;">link_off</span>
+<span>Funds removed; tender may require cancellation.</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Sticky Footer Actions -->
+<footer class="fixed bottom-0 left-0 w-full bg-surface border-t border-outline-variant z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+<div class="max-w-7xl mx-auto px-container-padding py-4 flex flex-col md:flex-row items-end md:items-center justify-between gap-4">
+<!-- Comment Field -->
+<!-- Action Buttons -->
+<div class="flex items-center gap-3 w-full md:w-auto justify-end shrink-0">
+<button class="px-4 py-2 rounded-lg border border-error text-error hover:bg-error-container hover:text-on-error-container font-body-md font-medium transition-colors">
+                    Reject Revision
+                </button>
+<button class="px-4 py-2 rounded-lg border border-primary text-primary hover:bg-primary-container hover:text-on-primary-container font-body-md font-medium transition-colors">
+                    Return for Correction
+                </button>
+<!-- Disabled Apply Button due to blocker -->
+<button aria-disabled="true" class="px-4 py-2 rounded-lg bg-surface-variant text-outline cursor-not-allowed font-body-md font-medium inline-flex items-center gap-2" disabled="" title="Resolve blockers to apply">
+<span class="material-symbols-outlined" style="font-size: 18px;">lock</span>
+                    Apply Revision
+                </button>
+</div>
+</div>
+</footer>
+<div class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-on-background/40 backdrop-blur-sm" id="rejection-modal">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col">
+<!-- Modal Header -->
+<div class="px-6 py-4 border-b border-outline-variant flex justify-between items-center">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Reject Budget Revision</h2>
+<button class="p-1 rounded-full hover:bg-surface-container text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Modal Body -->
+<div class="p-6 flex flex-col gap-4">
+<p class="font-body-md text-body-md text-on-surface-variant">
+                Provide a mandatory reason for rejection. This feedback will be sent to the initiator (Sarah Jenkins).
+            </p>
+<div class="flex flex-col gap-1">
+<label class="sr-only" for="modal-rejection-reason">Rejection Reason</label>
+<textarea autofocus="" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-on-surface-variant" id="modal-rejection-reason" placeholder="e.g., The proposed reduction of the Emergency Lab Supplies line below the committed threshold is not permitted at this stage." rows="4"></textarea>
+</div>
+</div>
+<!-- Modal Footer -->
+<div class="px-6 py-4 bg-surface-container-low flex justify-end gap-3">
+<button class="px-4 py-2 rounded-lg border border-outline text-on-surface-variant hover:bg-surface-container font-body-md font-medium transition-colors">
+                Cancel
+            </button>
+<button class="px-4 py-2 rounded-lg bg-error text-on-error hover:bg-on-error-container font-body-md font-medium transition-colors">
+                Confirm Rejection
+            </button>
+</div>
+</div>
+</div></body></html>

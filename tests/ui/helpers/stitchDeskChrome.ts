@@ -15,6 +15,11 @@ export type StitchDeskChromeOptions = {
 	rootTestId?: string;
 	/** Primary CTA test id (bg-primary button). */
 	primaryCtaTestId: string;
+	/**
+	 * filled = Stitch navy primary (default).
+	 * bordered = Stitch secondary header action (Audit Export — white + border).
+	 */
+	primaryCtaStyle?: "filled" | "bordered";
 	/** Optional secondary bordered CTA test id. */
 	secondaryCtaTestId?: string;
 	/** CSS selector for a filter <select> inside the canvas. Omit/empty when the surface has no select. */
@@ -77,10 +82,16 @@ export async function assertStitchDeskChrome(page: Page, opts: StitchDeskChromeO
 	expect(chrome.canvasClass, "root must opt into .kt-stitch-canvas").toBeTruthy();
 	expect(chrome.hasPrimary, `missing primary CTA ${opts.primaryCtaTestId}`).toBeTruthy();
 
-	// Primary CTA = Stitch navy, never Desk Win98 outset black.
-	expect(chrome.primaryBg).toBe("rgb(0, 31, 72)");
 	expect(chrome.primaryBorder.toLowerCase()).not.toContain("outset");
 	expect(parseFloat(chrome.primaryRadius)).toBeGreaterThanOrEqual(6);
+	if (opts.primaryCtaStyle === "bordered") {
+		// Audit Stitch header Export — white fill + outline, not navy primary.
+		expect(chrome.primaryBg).toMatch(/rgb\(\s*255,\s*255,\s*255\s*\)/);
+		expect(chrome.primaryBorder).toMatch(/1px/);
+	} else {
+		// Primary CTA = Stitch navy, never Desk Win98 outset black.
+		expect(chrome.primaryBg).toBe("rgb(0, 31, 72)");
+	}
 
 	if (opts.secondaryCtaTestId) {
 		expect(chrome.secondaryBg).toMatch(/rgb\(\s*255,\s*255,\s*255\s*\)/);

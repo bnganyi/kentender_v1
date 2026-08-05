@@ -1,0 +1,1195 @@
+/* BUD-UI-08 Budget Revisions — Stitch create_budget_revision pins.
+   Desk has no Tailwind. portfolio.css pins .grid-cols-1 at higher specificity
+   than utilities' lg:grid-cols-3 — create layout MUST use !important pins. */
+
+.kt-cl-shell .kt-bud-root[data-testid="kt-bud-revisions"] {
+	--kt-bud-primary: #001f48;
+	--kt-bud-primary-container: #00346f;
+	--kt-bud-on-primary: #ffffff;
+	--kt-bud-on-primary-container: #7b9ee0;
+	--kt-bud-outline: #737781;
+	--kt-bud-outline-variant: #c3c6d1;
+	--kt-bud-on-surface: #1a1b20;
+	--kt-bud-on-surface-variant: #434750;
+	--kt-bud-surface: #f9f9fe;
+	--kt-bud-surface-lowest: #ffffff;
+	--kt-bud-surface-low: #f4f3f9;
+	--kt-bud-surface-variant: #e2e2e8;
+	--kt-bud-status-available: #10b981;
+	width: 100% !important;
+	display: block !important;
+	position: relative !important;
+}
+
+/* ---- List ---- */
+.kt-cl-shell .kt-bud-root .kt-bud-rev-list-header {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	align-items: flex-start !important;
+	justify-content: space-between !important;
+	gap: 1rem !important;
+	margin: 0 0 1.25rem 0 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-create-btn {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.35rem !important;
+	padding: 0.5rem 1.25rem !important;
+	border-radius: 9999px !important;
+	background: #001f48 !important;
+	color: #fff !important;
+	border: none !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 0.875rem !important;
+	font-weight: 600 !important;
+	cursor: pointer !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-create-btn:hover {
+	opacity: 0.92 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-table-card {
+	background: #fff !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+	overflow: hidden !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-revisions-table"] th {
+	font-size: 12px !important;
+	letter-spacing: 0.05em !important;
+}
+
+.kt-cl-shell .kt-bud-root .kt-bud-rev-notice {
+	display: flex !important;
+	align-items: flex-start !important;
+	gap: 0.75rem !important;
+	padding: 0.875rem 1rem !important;
+	margin: 0 0 1rem 0 !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+	background: #f4f3f9 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-notice.is-info {
+	border-color: #c3c6d1 !important;
+	background: #f4f3f9 !important;
+	color: #434750 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-notice.is-error {
+	border-color: #ffb4ab !important;
+	background: #ffdad6 !important;
+	color: #410002 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-notice.is-error .kt-bud-rev-notice-icon {
+	color: #ba1a1a !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-notice.is-error .kt-bud-rev-notice-msg {
+	color: #410002 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-notice.hidden,
+.kt-cl-shell .kt-bud-root .kt-bud-rev-notice[hidden] {
+	display: none !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-notice-title {
+	font-weight: 700 !important;
+	margin: 0 0 0.25rem 0 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-notice-msg {
+	margin: 0 !important;
+	white-space: pre-wrap !important;
+	color: #434750 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-optional {
+	font-weight: 400 !important;
+	color: #74777f !important;
+	text-transform: none !important;
+	letter-spacing: normal !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-notice-dismiss {
+	border: none !important;
+	background: transparent !important;
+	cursor: pointer !important;
+	padding: 0 !important;
+	color: #434750 !important;
+}
+
+/* ---- Create page (dedicated route; not in Revisions tab) ---- */
+.kt-cl-shell .kt-bud-root[data-testid="kt-bud-revision-create"],
+.kt-cl-shell .kt-bud-root.kt-bud-rev-create-page {
+	width: 100% !important;
+	display: block !important;
+	background: #ffffff !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-create {
+	position: relative !important;
+	min-height: 480px !important;
+	background: #ffffff !important;
+	display: block !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-create-scroll {
+	max-width: 72rem !important;
+	width: 100% !important;
+	margin: 0 auto !important;
+	padding: 16px 16px 8rem 16px !important;
+	box-sizing: border-box !important;
+}
+@media (min-width: 768px) {
+	.kt-cl-shell .kt-bud-root .kt-bud-rev-create-scroll {
+		padding: 24px 24px 8rem 24px !important;
+	}
+}
+
+.kt-cl-shell .kt-bud-root .kt-bud-rev-create-title {
+	font-family: Manrope, "Public Sans", system-ui, sans-serif !important;
+	font-size: 1.75rem !important;
+	font-weight: 700 !important;
+	line-height: 2.25rem !important;
+	letter-spacing: -0.02em !important;
+	color: #1a1b20 !important;
+	margin: 0 0 0.5rem 0 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-create-sub {
+	font-family: Inter, "Public Sans", system-ui, sans-serif !important;
+	font-size: 1rem !important;
+	line-height: 1.5rem !important;
+	color: #434750 !important;
+	margin: 0 0 1.5rem 0 !important;
+}
+
+/* Stitch main grid: 1/3 details + 2/3 impact/lines */
+.kt-cl-shell .kt-bud-root .kt-bud-rev-main-grid {
+	display: grid !important;
+	grid-template-columns: 1fr !important;
+	gap: 24px !important;
+	width: 100% !important;
+	align-items: start !important;
+}
+@media (min-width: 1024px) {
+	.kt-cl-shell .kt-bud-root .kt-bud-rev-main-grid {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) !important;
+	}
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-main-left,
+.kt-cl-shell .kt-bud-root .kt-bud-rev-main-right {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 24px !important;
+	min-width: 0 !important;
+	width: 100% !important;
+}
+
+/* Details card */
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-rev-details"] {
+	background: #ffffff !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+	padding: 20px !important;
+	box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+	box-sizing: border-box !important;
+	min-width: 0 !important;
+	max-width: 100% !important;
+	overflow: hidden !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-rev-details"] > h3 {
+	font-family: Manrope, "Public Sans", system-ui, sans-serif !important;
+	font-size: 1.125rem !important;
+	font-weight: 700 !important;
+	color: #1a1b20 !important;
+	margin: 0 0 1rem 0 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-fields {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 1rem !important;
+	min-width: 0 !important;
+	width: 100% !important;
+}
+/*
+ * Stack dates in the 1/3 details column. Side-by-side native <input type="date">
+ * overflows the card on Windows Chrome (large intrinsic min-width) even with
+ * minmax(0,1fr) — Effective date was the field that stuck out past the border.
+ */
+.kt-cl-shell .kt-bud-root .kt-bud-rev-dates {
+	display: grid !important;
+	grid-template-columns: minmax(0, 1fr) !important;
+	gap: 1rem !important;
+	width: 100% !important;
+	min-width: 0 !important;
+	box-sizing: border-box !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-dates > .kt-bud-rev-field {
+	min-width: 0 !important;
+	max-width: 100% !important;
+	width: 100% !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-field label {
+	display: block !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 12px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.05em !important;
+	text-transform: uppercase !important;
+	color: #434750 !important;
+	margin: 0 0 0.25rem 0 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-field input[type="text"],
+.kt-cl-shell .kt-bud-root .kt-bud-rev-field input[type="date"],
+.kt-cl-shell .kt-bud-root .kt-bud-rev-field textarea {
+	display: block !important;
+	width: 100% !important;
+	max-width: 100% !important;
+	min-width: 0 !important;
+	box-sizing: border-box !important;
+	background: #f9f9fe !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.25rem !important;
+	padding: 0.5rem 0.75rem !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 0.875rem !important;
+	color: #1a1b20 !important;
+	outline: none !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-field input[type="date"] {
+	display: block !important;
+	padding-right: 2.25rem !important;
+	appearance: none !important;
+	-webkit-appearance: none !important;
+}
+/* Collapse native date internals so the control cannot force a wider box. */
+.kt-cl-shell .kt-bud-root .kt-bud-rev-date-wrap input[type="date"]::-webkit-datetime-edit,
+.kt-cl-shell .kt-bud-root .kt-bud-rev-date-wrap input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+	min-width: 0 !important;
+	width: auto !important;
+	padding: 0 !important;
+}
+/* Hide native picker glyph so only Material calendar/event icon shows (Stitch). */
+.kt-cl-shell .kt-bud-root .kt-bud-rev-date-wrap input[type="date"]::-webkit-calendar-picker-indicator {
+	opacity: 0 !important;
+	position: absolute !important;
+	inset: 0 !important;
+	width: 100% !important;
+	height: 100% !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	cursor: pointer !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-date-wrap {
+	position: relative !important;
+	display: block !important;
+	width: 100% !important;
+	max-width: 100% !important;
+	min-width: 0 !important;
+	box-sizing: border-box !important;
+	overflow: hidden !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-date-wrap .material-symbols-outlined {
+	position: absolute !important;
+	right: 0.5rem !important;
+	top: 50% !important;
+	transform: translateY(-50%) !important;
+	color: #737781 !important;
+	pointer-events: none !important;
+	font-size: 1.125rem !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-field textarea {
+	resize: none !important;
+	min-height: 4.5rem !important;
+}
+
+/* Evidence dropzone */
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-evidence-dropzone"] {
+	border: 2px dashed #c3c6d1 !important;
+	border-radius: 0.25rem !important;
+	background: #f9f9fe !important;
+	padding: 1rem !important;
+	display: flex !important;
+	flex-direction: column !important;
+	align-items: center !important;
+	justify-content: center !important;
+	text-align: center !important;
+	cursor: pointer !important;
+	gap: 0.25rem !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-evidence-dropzone"]:hover {
+	background: #f4f3f9 !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-evidence-dropzone"] .material-symbols-outlined {
+	font-size: 1.875rem !important;
+	color: #737781 !important;
+	margin-bottom: 0.25rem !important;
+}
+.kt-cl-shell .kt-bud-root [data-kt-bud-evidence-chip].hidden {
+	display: none !important;
+}
+.kt-cl-shell .kt-bud-root [data-kt-bud-evidence-chip]:not(.hidden) {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.75rem !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+	padding: 0.75rem !important;
+	background: #f4f3f9 !important;
+	margin-bottom: 0.5rem !important;
+}
+
+.kt-cl-shell .kt-bud-root .kt-bud-rev-finance-note {
+	display: flex !important;
+	align-items: flex-start !important;
+	gap: 0.5rem !important;
+	margin-top: 1rem !important;
+	padding: 0.75rem !important;
+	background: #f4f3f9 !important;
+	border: 1px solid #e2e2e8 !important;
+	border-radius: 0.5rem !important;
+	width: 100% !important;
+	max-width: 100% !important;
+	box-sizing: border-box !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-finance-note p {
+	margin: 0 !important;
+	font-size: 0.75rem !important;
+	color: #434750 !important;
+}
+
+/* Impact bento — 3 cols; demands 1 / tenders 2 */
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-rev-impact"],
+.kt-cl-shell .kt-bud-root .kt-bud-rev-impact {
+	display: grid !important;
+	grid-template-columns: 1fr !important;
+	gap: 1rem !important;
+	width: 100% !important;
+}
+@media (min-width: 768px) {
+	.kt-cl-shell .kt-bud-root [data-testid="kt-bud-rev-impact"],
+	.kt-cl-shell .kt-bud-root .kt-bud-rev-impact {
+		grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+	}
+	.kt-cl-shell .kt-bud-root .kt-bud-rev-impact-tenders {
+		grid-column: span 2 / span 2 !important;
+	}
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-impact-card {
+	background: #f4f3f9 !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+	padding: 1rem !important;
+	display: flex !important;
+	flex-direction: column !important;
+	justify-content: space-between !important;
+	min-height: 5.5rem !important;
+	box-sizing: border-box !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-impact-card .kt-bud-rev-impact-label {
+	font-family: Inter, sans-serif !important;
+	font-size: 12px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.05em !important;
+	text-transform: uppercase !important;
+	color: #434750 !important;
+	margin: 0 0 0.5rem 0 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-impact-card .kt-bud-rev-impact-value {
+	font-family: "JetBrains Mono", ui-monospace, monospace !important;
+	font-size: 1.125rem !important;
+	color: #1a1b20 !important;
+	margin: 0 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-impact-change {
+	background: #00346f !important;
+	color: #7b9ee0 !important;
+	border: none !important;
+	position: relative !important;
+	overflow: hidden !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-impact-change .kt-bud-rev-impact-label {
+	color: rgba(123, 158, 224, 0.85) !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-impact-change .kt-bud-rev-impact-value {
+	color: #7b9ee0 !important;
+	font-size: 1.25rem !important;
+	font-weight: 700 !important;
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-impact-after {
+	border-left: 4px solid #10b981 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-impact-after .kt-bud-rev-impact-value {
+	font-weight: 700 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-impact-stat {
+	background: #ffffff !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+	padding: 0.75rem !important;
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.75rem !important;
+	box-sizing: border-box !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-impact-stat-icon {
+	width: 2.5rem !important;
+	height: 2.5rem !important;
+	border-radius: 9999px !important;
+	background: #e2e2e8 !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	color: #434750 !important;
+	flex: 0 0 auto !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-impact-stat .kt-bud-rev-impact-value {
+	font-family: "JetBrains Mono", ui-monospace, monospace !important;
+	font-weight: 700 !important;
+	font-size: 1rem !important;
+	color: #1a1b20 !important;
+	margin: 0 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-impact-stat .kt-bud-rev-impact-label {
+	font-size: 11px !important;
+	color: #737781 !important;
+	margin: 0 !important;
+}
+
+/* Line Changes table */
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-rev-lines-card"] {
+	background: #ffffff !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+	overflow: hidden !important;
+	display: flex !important;
+	flex-direction: column !important;
+	width: 100% !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-lines-head {
+	background: #f4f3f9 !important;
+	padding: 0.75rem 20px !important;
+	border-bottom: 1px solid #c3c6d1 !important;
+	display: flex !important;
+	justify-content: space-between !important;
+	align-items: center !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-lines-head h3 {
+	font-family: Manrope, "Public Sans", system-ui, sans-serif !important;
+	font-size: 1.125rem !important;
+	font-weight: 700 !important;
+	margin: 0 !important;
+	color: #1a1b20 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-add-line {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.25rem !important;
+	padding: 0.375rem 0.75rem !important;
+	border: none !important;
+	background: transparent !important;
+	color: #001f48 !important;
+	border-radius: 0.25rem !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 12px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.05em !important;
+	text-transform: uppercase !important;
+	cursor: pointer !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-add-line:hover {
+	background: #f4f3f9 !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-rev-lines-table"] {
+	width: 100% !important;
+	min-width: 800px !important;
+	border-collapse: collapse !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-rev-lines-table"] .data-table-header,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-rev-lines-table"] th {
+	font-family: Inter, sans-serif !important;
+	font-size: 11px !important;
+	letter-spacing: 0.04em !important;
+	text-transform: uppercase !important;
+	font-weight: 700 !important;
+	color: #434750 !important;
+	background: #f9f9fe !important;
+	padding: 0.65rem 0.75rem !important;
+	border-bottom: 1px solid #c3c6d1 !important;
+	text-align: left !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-rev-lines-table"] th.text-right,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-rev-lines-table"] td.text-right {
+	text-align: right !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-rev-lines-table"] th.text-center,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-rev-lines-table"] td.text-center {
+	text-align: center !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-rev-lines-table"] td {
+	padding: 0.65rem 0.75rem !important;
+	vertical-align: middle !important;
+	border-bottom: 1px solid #e2e2e8 !important;
+	font-size: 0.875rem !important;
+	color: #1a1b20 !important;
+}
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-rev-lines-table"] tbody tr:hover {
+	background: #f4f3f9 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-change-input {
+	width: 6.5rem !important;
+	text-align: right !important;
+	background: #f4f3f9 !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.25rem !important;
+	padding: 0.25rem 0.5rem !important;
+	font-family: "JetBrains Mono", ui-monospace, monospace !important;
+	font-size: 0.875rem !important;
+	color: #1a1b20 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-change-input.is-error {
+	border-color: #ba1a1a !important;
+	color: #ba1a1a !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-impact-pill {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.25rem !important;
+	padding: 0.2rem 0.5rem !important;
+	border-radius: 9999px !important;
+	background: #e8e7ed !important;
+	font-size: 11px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.04em !important;
+	text-transform: uppercase !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-impact-pill.is-ok {
+	color: #10b981 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-impact-pill.is-bad {
+	color: #ba1a1a !important;
+	background: #ffdad6 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-constraint {
+	background: color-mix(in srgb, #e2e2e8 30%, transparent) !important;
+	padding: 0.5rem 1rem !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 12px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.04em !important;
+	text-transform: uppercase !important;
+	color: #434750 !important;
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+}
+
+/* Sticky footer — Stitch absolute bar within create surface */
+.kt-cl-shell .kt-bud-root .kt-bud-rev-footer,
+.kt-cl-shell .kt-bud-root [data-testid="kt-bud-rev-footer"] {
+	position: sticky !important;
+	bottom: 0 !important;
+	left: 0 !important;
+	right: 0 !important;
+	display: flex !important;
+	flex-direction: column !important;
+	align-items: stretch !important;
+	gap: 0.5rem !important;
+	padding: 0.75rem 1rem 1rem !important;
+	background: #ffffff !important;
+	border-top: 1px solid #c3c6d1 !important;
+	box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+	z-index: 5 !important;
+	box-sizing: border-box !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-footer-row {
+	display: flex !important;
+	justify-content: space-between !important;
+	align-items: center !important;
+	gap: 1rem !important;
+	width: 100% !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-footer-error {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+	padding: 0.5rem 0.75rem !important;
+	border: 1px solid #ffb4ab !important;
+	border-radius: 0.5rem !important;
+	background: #ffdad6 !important;
+	color: #410002 !important;
+	font-size: 0.8125rem !important;
+	font-weight: 600 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-footer-error.hidden,
+.kt-cl-shell .kt-bud-root .kt-bud-rev-footer-error[hidden] {
+	display: none !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-footer-error .material-symbols-outlined {
+	color: #ba1a1a !important;
+	font-size: 1.125rem !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-footer .flex {
+	display: flex !important;
+	gap: 0.75rem !important;
+	align-items: center !important;
+}
+.kt-cl-shell .kt-bud-root .kt-field-invalid,
+.kt-cl-shell .kt-bud-root input.kt-field-invalid,
+.kt-cl-shell .kt-bud-root textarea.kt-field-invalid {
+	border-color: #ba1a1a !important;
+	outline-color: #ba1a1a !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-btn-cancel {
+	padding: 0.5rem 1rem !important;
+	border: 1px solid transparent !important;
+	background: transparent !important;
+	color: #434750 !important;
+	border-radius: 0.5rem !important;
+	cursor: pointer !important;
+	font-size: 0.875rem !important;
+	font-family: Inter, sans-serif !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-btn-cancel:hover {
+	background: #f4f3f9 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-btn-draft {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.35rem !important;
+	padding: 0.5rem 1rem !important;
+	border: 1px solid #001f48 !important;
+	background: #fff !important;
+	color: #001f48 !important;
+	border-radius: 0.5rem !important;
+	cursor: pointer !important;
+	font-size: 0.875rem !important;
+	font-family: Inter, sans-serif !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-btn-draft:hover {
+	background: #d7e2ff !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-btn-submit {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.35rem !important;
+	padding: 0.5rem 1.5rem !important;
+	border: none !important;
+	background: #001f48 !important;
+	color: #fff !important;
+	border-radius: 0.5rem !important;
+	cursor: pointer !important;
+	font-size: 0.875rem !important;
+	font-weight: 600 !important;
+	font-family: Inter, sans-serif !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-btn-submit:hover {
+	opacity: 0.9 !important;
+}
+
+.kt-cl-shell .kt-bud-root [data-kt-bud-error]:not(.hidden) {
+	display: block !important;
+	color: #ba1a1a !important;
+	font-size: 0.75rem !important;
+	margin-top: 0.25rem !important;
+}
+.kt-cl-shell .kt-bud-root .font-data-mono {
+	font-family: "JetBrains Mono", ui-monospace, monospace !important;
+}
+
+/* —— BUD-UI-09 Review canvas —— */
+.kt-cl-shell .kt-bud-root.kt-bud-rev-review-page {
+	display: flex !important;
+	flex-direction: column !important;
+	min-height: calc(100vh - 4rem) !important;
+	background: #f4f3f9 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review {
+	display: flex !important;
+	flex-direction: column !important;
+	flex: 1 1 auto !important;
+	min-width: 0 !important;
+	width: 100% !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-scroll {
+	max-width: 80rem !important;
+	width: 100% !important;
+	margin: 0 auto !important;
+	padding: 1.5rem 1.5rem 9rem 1.5rem !important;
+	box-sizing: border-box !important;
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 1.5rem !important;
+	min-width: 0 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-back {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.25rem !important;
+	border: none !important;
+	background: transparent !important;
+	color: #434750 !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 0.875rem !important;
+	cursor: pointer !important;
+	padding: 0 !important;
+	width: fit-content !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-back:hover {
+	color: #001f48 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-title {
+	font-family: Manrope, "Public Sans", system-ui, sans-serif !important;
+	font-size: 1.75rem !important;
+	font-weight: 700 !important;
+	line-height: 2.25rem !important;
+	color: #1a1b20 !important;
+	margin: 0 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-title-row {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	align-items: center !important;
+	gap: 0.75rem !important;
+	margin-bottom: 0.35rem !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-status {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.25rem !important;
+	padding: 0.25rem 0.75rem !important;
+	border-radius: 999px !important;
+	background: rgba(196, 145, 48, 0.15) !important;
+	color: #8a5b00 !important;
+	border: 1px solid rgba(196, 145, 48, 0.35) !important;
+	font-size: 11px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.05em !important;
+	text-transform: uppercase !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-ref {
+	margin: 0 !important;
+	color: #434750 !important;
+	font-size: 0.875rem !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-details {
+	display: grid !important;
+	grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+	gap: 1.25rem !important;
+	background: #fff !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.75rem !important;
+	padding: 1.25rem !important;
+	box-sizing: border-box !important;
+	width: 100% !important;
+	min-width: 0 !important;
+}
+@media (min-width: 768px) {
+	.kt-cl-shell .kt-bud-root .kt-bud-rev-review-details {
+		grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+	}
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-detail {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0.25rem !important;
+	min-width: 0 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-detail-wide {
+	grid-column: 1 / -1 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-label {
+	font-family: Inter, sans-serif !important;
+	font-size: 11px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.05em !important;
+	text-transform: uppercase !important;
+	color: #737781 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-value {
+	font-family: Inter, sans-serif !important;
+	font-size: 0.875rem !important;
+	color: #1a1b20 !important;
+	margin: 0 !important;
+	word-break: break-word !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-blocker {
+	display: flex !important;
+	gap: 1rem !important;
+	align-items: flex-start !important;
+	background: #ffdad6 !important;
+	border: 1px solid rgba(186, 26, 26, 0.25) !important;
+	border-radius: 0.75rem !important;
+	padding: 1rem !important;
+	box-sizing: border-box !important;
+	width: 100% !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-blocker.hidden {
+	display: none !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-blocker-icon {
+	color: #ba1a1a !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-blocker-title {
+	margin: 0 0 0.35rem 0 !important;
+	font-family: Manrope, sans-serif !important;
+	font-size: 1.05rem !important;
+	font-weight: 700 !important;
+	color: #410002 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-blocker-msg {
+	margin: 0 0 0.75rem 0 !important;
+	font-size: 0.875rem !important;
+	color: #410002 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-blocker-link {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.25rem !important;
+	border: none !important;
+	background: transparent !important;
+	color: #ba1a1a !important;
+	font-size: 11px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.05em !important;
+	text-transform: uppercase !important;
+	cursor: pointer !important;
+	padding: 0 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-groups {
+	display: grid !important;
+	grid-template-columns: 1fr !important;
+	gap: 1.25rem !important;
+	width: 100% !important;
+	min-width: 0 !important;
+}
+@media (min-width: 1024px) {
+	.kt-cl-shell .kt-bud-root .kt-bud-rev-review-groups {
+		grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+	}
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-group {
+	background: #fff !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.75rem !important;
+	overflow: hidden !important;
+	display: flex !important;
+	flex-direction: column !important;
+	min-width: 0 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-group > header {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+	padding: 0.75rem 1rem !important;
+	background: #f4f3f9 !important;
+	border-bottom: 1px solid #c3c6d1 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-group > header h2 {
+	margin: 0 !important;
+	font-family: Manrope, sans-serif !important;
+	font-size: 1rem !important;
+	font-weight: 700 !important;
+	color: #1a1b20 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-group > header .material-symbols-outlined {
+	color: #001f48 !important;
+	font-size: 20px !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-group-body {
+	padding: 1rem !important;
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 1rem !important;
+	min-width: 0 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-net {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.5rem !important;
+	flex-wrap: wrap !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-net .font-data-mono {
+	font-size: 1.35rem !important;
+	font-weight: 600 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-pill {
+	padding: 0.15rem 0.45rem !important;
+	border-radius: 0.25rem !important;
+	background: #e2e2e8 !important;
+	color: #434750 !important;
+	font-size: 10px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.05em !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-fin-split {
+	display: grid !important;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+	gap: 1rem !important;
+	padding-top: 1rem !important;
+	border-top: 1px solid #e2e2e8 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-deduct {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.25rem !important;
+	color: #ba1a1a !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-add {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.25rem !important;
+	color: #1b6b3a !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-item {
+	display: flex !important;
+	align-items: flex-start !important;
+	gap: 0.75rem !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-item.is-ok .material-symbols-outlined {
+	color: #1b6b3a !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-item.is-warn .material-symbols-outlined {
+	color: #8a5b00 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-item-title {
+	display: block !important;
+	font-weight: 600 !important;
+	font-size: 0.875rem !important;
+	color: #1a1b20 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-item-msg {
+	display: block !important;
+	font-size: 0.8rem !important;
+	color: #434750 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-down-card {
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+	padding: 0.75rem !important;
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0.35rem !important;
+	background: #f9f9fe !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-down-top {
+	display: flex !important;
+	justify-content: space-between !important;
+	gap: 0.5rem !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-down-risk {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.35rem !important;
+	color: #ba1a1a !important;
+	font-size: 0.8rem !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-empty {
+	margin: 0 !important;
+	color: #737781 !important;
+	font-size: 0.875rem !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-footer {
+	position: fixed !important;
+	left: var(--kt-a2-sidebar, 0) !important;
+	right: 0 !important;
+	bottom: 0 !important;
+	z-index: 40 !important;
+	background: #fff !important;
+	border-top: 1px solid #c3c6d1 !important;
+	box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+	padding: 1rem 1.5rem !important;
+	display: flex !important;
+	flex-wrap: wrap !important;
+	align-items: center !important;
+	justify-content: flex-end !important;
+	gap: 1rem !important;
+	box-sizing: border-box !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-actions {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	align-items: center !important;
+	justify-content: flex-end !important;
+	gap: 0.75rem !important;
+	flex: 0 1 auto !important;
+	min-width: 0 !important;
+	width: 100% !important;
+}
+
+/* Stitch budget_revision_rejection_reason modal */
+.kt-cl-shell .kt-bud-root .kt-bud-rev-reason-modal {
+	position: fixed !important;
+	inset: 0 !important;
+	z-index: 60 !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	padding: 1rem !important;
+	background: rgba(26, 27, 32, 0.4) !important;
+	backdrop-filter: blur(4px) !important;
+	box-sizing: border-box !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-reason-modal.hidden,
+.kt-cl-shell .kt-bud-root .kt-bud-rev-reason-modal[hidden] {
+	display: none !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-reason-modal-card {
+	background: #fff !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.75rem !important;
+	box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+	width: 100% !important;
+	max-width: 28rem !important;
+	overflow: hidden !important;
+	display: flex !important;
+	flex-direction: column !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-reason-modal-header {
+	padding: 1rem 1.5rem !important;
+	border-bottom: 1px solid #c3c6d1 !important;
+	display: flex !important;
+	justify-content: space-between !important;
+	align-items: center !important;
+	gap: 0.75rem !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-reason-modal-title {
+	margin: 0 !important;
+	font-family: Manrope, sans-serif !important;
+	font-size: 1.125rem !important;
+	font-weight: 600 !important;
+	color: #1a1b20 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-reason-modal-close {
+	border: none !important;
+	background: transparent !important;
+	border-radius: 9999px !important;
+	padding: 0.25rem !important;
+	cursor: pointer !important;
+	color: #434750 !important;
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-reason-modal-close:hover {
+	background: #eceef0 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-reason-modal-body {
+	padding: 1.5rem !important;
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 1rem !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-reason-modal-lead {
+	margin: 0 !important;
+	color: #434750 !important;
+	font-size: 0.875rem !important;
+	line-height: 1.4 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-reason-modal-textarea {
+	display: block !important;
+	width: 100% !important;
+	min-width: 0 !important;
+	box-sizing: border-box !important;
+	border: 1px solid #c3c6d1 !important;
+	border-radius: 0.5rem !important;
+	padding: 0.5rem 0.75rem !important;
+	background: #f4f3f9 !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 0.875rem !important;
+	resize: vertical !important;
+	min-height: 6rem !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-reason-modal-textarea:focus {
+	outline: none !important;
+	border-color: #001f48 !important;
+	box-shadow: 0 0 0 1px #001f48 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-reason-modal-footer {
+	padding: 1rem 1.5rem !important;
+	background: #f4f3f9 !important;
+	display: flex !important;
+	justify-content: flex-end !important;
+	gap: 0.75rem !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-reason-cancel {
+	padding: 0.5rem 1rem !important;
+	border: 1px solid #737781 !important;
+	background: transparent !important;
+	color: #434750 !important;
+	border-radius: 0.5rem !important;
+	cursor: pointer !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 0.875rem !important;
+	font-weight: 500 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-reason-confirm {
+	padding: 0.5rem 1rem !important;
+	border: none !important;
+	border-radius: 0.5rem !important;
+	cursor: pointer !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 0.875rem !important;
+	font-weight: 500 !important;
+	color: #fff !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-reason-confirm.is-reject {
+	background: #ba1a1a !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-reason-confirm.is-return {
+	background: #001f48 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-reject {
+	padding: 0.5rem 1rem !important;
+	border: 1px solid #ba1a1a !important;
+	background: #fff !important;
+	color: #ba1a1a !important;
+	border-radius: 0.5rem !important;
+	cursor: pointer !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 0.875rem !important;
+	font-weight: 600 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-return {
+	padding: 0.5rem 1rem !important;
+	border: 1px solid #001f48 !important;
+	background: #fff !important;
+	color: #001f48 !important;
+	border-radius: 0.5rem !important;
+	cursor: pointer !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 0.875rem !important;
+	font-weight: 600 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-apply {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.35rem !important;
+	padding: 0.5rem 1.25rem !important;
+	border: none !important;
+	background: #001f48 !important;
+	color: #fff !important;
+	border-radius: 0.5rem !important;
+	cursor: pointer !important;
+	font-family: Inter, sans-serif !important;
+	font-size: 0.875rem !important;
+	font-weight: 600 !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-apply.is-locked,
+.kt-cl-shell .kt-bud-root .kt-bud-rev-review-apply:disabled {
+	/* Keep Stitch navy for chrome contract; communicate lock via opacity + icon. */
+	background: #001f48 !important;
+	color: #fff !important;
+	opacity: 0.45 !important;
+	cursor: not-allowed !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-row-clickable {
+	cursor: pointer !important;
+}
+.kt-cl-shell .kt-bud-root .kt-bud-rev-row-clickable:hover {
+	background: #f4f3f9 !important;
+}
+.kt-cl-shell .kt-bud-root .sr-only {
+	position: absolute !important;
+	width: 1px !important;
+	height: 1px !important;
+	padding: 0 !important;
+	margin: -1px !important;
+	overflow: hidden !important;
+	clip: rect(0, 0, 0, 0) !important;
+	border: 0 !important;
+}

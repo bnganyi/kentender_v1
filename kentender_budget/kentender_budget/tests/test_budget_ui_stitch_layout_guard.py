@@ -16,6 +16,12 @@ REGISTER_FIXTURE = APP_PUBLIC / "js" / "budget_ui_fixtures" / "register.js"
 OVERVIEW_FIXTURE = APP_PUBLIC / "js" / "budget_ui_fixtures" / "overview.js"
 LINES_FIXTURE = APP_PUBLIC / "js" / "budget_ui_fixtures" / "lines.js"
 ACTIVITY_FIXTURE = APP_PUBLIC / "js" / "budget_ui_fixtures" / "activity.js"
+DOWNSTREAM_FIXTURE = APP_PUBLIC / "js" / "budget_ui_fixtures" / "downstream.js"
+REVIEW_FIXTURE = APP_PUBLIC / "js" / "budget_ui_fixtures" / "review.js"
+AUDIT_FIXTURE = APP_PUBLIC / "js" / "budget_ui_fixtures" / "audit.js"
+REVISIONS_FIXTURE = APP_PUBLIC / "js" / "budget_ui_fixtures" / "revisions.js"
+REVISION_CREATE_FIXTURE = APP_PUBLIC / "js" / "budget_ui_fixtures" / "revision_create.js"
+REVISION_REVIEW_FIXTURE = APP_PUBLIC / "js" / "budget_ui_fixtures" / "revision_review.js"
 LIVE_BIND = APP_PUBLIC / "js" / "budget_live_bind.js"
 WORKSPACE_SHELL = APP_PUBLIC / "js" / "budget_workspace_shell.js"
 TOKENS = APP_PUBLIC / "css" / "budget_funding_tokens.css"
@@ -25,11 +31,21 @@ REGISTER_CSS = APP_PUBLIC / "css" / "budget_funding_register.css"
 OVERVIEW_CSS = APP_PUBLIC / "css" / "budget_funding_overview.css"
 LINES_CSS = APP_PUBLIC / "css" / "budget_funding_lines.css"
 ACTIVITY_CSS = APP_PUBLIC / "css" / "budget_funding_activity.css"
+DOWNSTREAM_CSS = APP_PUBLIC / "css" / "budget_funding_downstream.css"
+REVIEW_CSS = APP_PUBLIC / "css" / "budget_funding_review.css"
+AUDIT_CSS = APP_PUBLIC / "css" / "budget_funding_audit.css"
+REVISIONS_CSS = APP_PUBLIC / "css" / "budget_funding_revisions.css"
 PORTFOLIO_JS = APP_PUBLIC / "js" / "budget_funding_portfolio_page.js"
 REGISTER_JS = APP_PUBLIC / "js" / "budget_funding_register_page.js"
 OVERVIEW_JS = APP_PUBLIC / "js" / "budget_funding_overview_page.js"
 LINES_JS = APP_PUBLIC / "js" / "budget_funding_lines_page.js"
 ACTIVITY_JS = APP_PUBLIC / "js" / "budget_funding_activity_page.js"
+DOWNSTREAM_JS = APP_PUBLIC / "js" / "budget_funding_downstream_page.js"
+REVIEW_JS = APP_PUBLIC / "js" / "budget_funding_review_page.js"
+AUDIT_JS = APP_PUBLIC / "js" / "budget_funding_audit_page.js"
+REVISIONS_JS = APP_PUBLIC / "js" / "budget_funding_revisions_page.js"
+REVISION_CREATE_JS = APP_PUBLIC / "js" / "budget_funding_revision_create_page.js"
+REVISION_REVIEW_JS = APP_PUBLIC / "js" / "budget_funding_revision_review_page.js"
 REDIRECT = APP_PUBLIC / "js" / "budget_funding_workspace_redirect.js"
 RESPONSIVE = APP_PUBLIC / "css" / "budget_funding_responsive.css"
 
@@ -115,6 +131,8 @@ class TestBudgetUiStitchLayoutGuard(FrappeTestCase):
 			"budget-lines",
 			"budget-funding-activity",
 			"budget-revisions",
+			"budget-revision-create",
+			"budget-revision-review",
 			"budget-downstream",
 			"budget-review",
 			"budget-audit",
@@ -137,6 +155,8 @@ class TestBudgetUiStitchLayoutGuard(FrappeTestCase):
 			"budget-lines",
 			"budget-funding-activity",
 			"budget-revisions",
+			"budget-revision-create",
+			"budget-revision-review",
 			"budget-downstream",
 			"budget-review",
 			"budget-audit",
@@ -170,6 +190,8 @@ class TestBudgetUiStitchLayoutGuard(FrappeTestCase):
 		self.assertIn("ensureBudgetRoute", shell)
 		self.assertIn("registerPage", shell)
 		self.assertIn("softShow", shell)
+		self.assertIn("bindLiveTab", shell)
+		self.assertIn("soft-show rebind", shell)
 		self.assertIn("kt-bud-workspace-chrome", shell)
 		self.assertIn("data-kt-bud-mount-key", shell)
 		# Active tab must not use text-primary (Desk chrome zeros padding/border).
@@ -335,6 +357,11 @@ class TestBudgetUiStitchLayoutGuard(FrappeTestCase):
 		self.assertIn('data-testid="kt-bud-activity-filter-type"', fixture)
 		self.assertIn('data-testid="kt-bud-activity-filter-status"', fixture)
 		self.assertIn('data-testid="kt-bud-activity-search"', fixture)
+		# Search precedes filters in markup (left → right layout).
+		self.assertLess(
+			fixture.index('data-testid="kt-bud-activity-search-wrap"'),
+			fixture.index('kt-bud-activity-toolbar-filters'),
+		)
 		self.assertIn("Outstanding commitment", fixture)
 		self.assertIn("tablePaginationFooterHtml", fixture)
 		self.assertIn('testid: "kt-bud-activity-table-footer"', fixture)
@@ -376,6 +403,354 @@ class TestBudgetUiStitchLayoutGuard(FrappeTestCase):
 		self.assertIn("budget_ui_fixtures/activity.js", includes)
 		css_includes = "\n".join(bud_hooks.app_include_css or [])
 		self.assertIn("budget_funding_activity.css", css_includes)
+
+	def test_downstream_fixture_shell_and_bind(self):
+		for path in (DOWNSTREAM_FIXTURE, DOWNSTREAM_JS, DOWNSTREAM_CSS, WORKSPACE_SHELL, LIVE_BIND):
+			self.assertTrue(path.is_file(), path)
+
+		fixture = _read(DOWNSTREAM_FIXTURE)
+		self.assertIn("kt-stitch-canvas", fixture)
+		self.assertIn('data-testid="kt-bud-downstream"', fixture)
+		self.assertIn('data-testid="kt-bud-downstream-toolbar"', fixture)
+		self.assertIn('data-testid="kt-bud-downstream-table"', fixture)
+		self.assertIn('data-testid="kt-bud-downstream-notice"', fixture)
+		self.assertIn('data-testid="kt-bud-downstream-search"', fixture)
+		self.assertIn('data-testid="kt-bud-downstream-filter-status"', fixture)
+		self.assertIn("Requirement", fixture)
+		self.assertIn("Procurement plan item", fixture)
+		self.assertIn("Reserved balance", fixture)
+		self.assertIn("tablePaginationFooterHtml", fixture)
+		self.assertIn('testid: "kt-bud-downstream-table-footer"', fixture)
+		self.assertIn("expand_more", fixture)
+		self.assertNotIn("cdn.tailwindcss.com", fixture)
+		self.assertNotIn("KES 145M", fixture)
+		self.assertNotIn("DM-MOH-2027-042", fixture)
+		self.assertNotIn("next in the Budget MVP-1 build sequence", fixture)
+
+		shell = _read(WORKSPACE_SHELL)
+		self.assertIn('pageSlug === "budget-downstream"', shell)
+		self.assertIn("bindDownstream", shell)
+		self.assertNotIn("Downstream Usage is next", shell)
+
+		live = _read(LIVE_BIND)
+		self.assertIn("bindDownstream", live)
+		self.assertIn("list_downstream_usage", live)
+		self.assertIn("kt-bud-downstream-action-label", live)
+		self.assertIn("showDownstreamNotice", live)
+
+		page_js = _read(DOWNSTREAM_JS)
+		self.assertIn('registerPage("budget-downstream"', page_js)
+		self.assertIn('fixtureKey: "downstream"', page_js)
+
+		css = _read(DOWNSTREAM_CSS)
+		self.assertIn("kt-bud-downstream-select-wrap", css)
+		self.assertIn("background-image: none !important", css)
+		self.assertIn("11.5rem", css)
+		self.assertIn("kt-bud-downstream-action-label", css)
+		self.assertIn("Win98", css)
+
+		from kentender_budget import hooks as bud_hooks
+
+		self.assertEqual(
+			bud_hooks.page_js.get("budget-downstream"),
+			"public/js/budget_funding_downstream_page.js",
+		)
+		includes = "\n".join(bud_hooks.app_include_js or [])
+		self.assertIn("budget_ui_fixtures/downstream.js", includes)
+		css_includes = "\n".join(bud_hooks.app_include_css or [])
+		self.assertIn("budget_funding_downstream.css", css_includes)
+
+	def test_review_fixture_shell_and_bind(self):
+		for path in (REVIEW_FIXTURE, REVIEW_JS, REVIEW_CSS, WORKSPACE_SHELL, LIVE_BIND):
+			self.assertTrue(path.is_file(), path)
+
+		fixture = _read(REVIEW_FIXTURE)
+		self.assertIn("kt-stitch-canvas", fixture)
+		self.assertIn('data-testid="kt-bud-review"', fixture)
+		self.assertIn('data-testid="kt-bud-review-header"', fixture)
+		self.assertIn('data-testid="kt-bud-review-groups"', fixture)
+		self.assertIn('data-testid="kt-bud-review-footer"', fixture)
+		self.assertIn('data-testid="kt-bud-review-notice"', fixture)
+		self.assertIn('data-testid="kt-bud-review-reason-modal"', fixture)
+		self.assertIn("Readiness Checklist", fixture)
+		self.assertIn("Submit for review", fixture)
+		self.assertIn("Activate budget", fixture)
+		self.assertIn("does not constitute statutory budget approval", fixture)
+		self.assertNotIn("cdn.tailwindcss.com", fixture)
+		self.assertNotIn("next in the Budget MVP-1 build sequence", fixture)
+
+		shell = _read(WORKSPACE_SHELL)
+		self.assertIn('pageSlug === "budget-review"', shell)
+		self.assertIn("bindReview", shell)
+		self.assertNotIn("Budget Review is next", shell)
+
+		live = _read(LIVE_BIND)
+		self.assertIn("bindReview", live)
+		self.assertIn("get_budget_readiness", live)
+		self.assertIn("submit_budget", live)
+		self.assertIn("return_budget", live)
+		self.assertIn("mark_budget_reviewed", live)
+		self.assertIn("activate_budget", live)
+		self.assertIn("showReviewNotice", live)
+
+		page_js = _read(REVIEW_JS)
+		self.assertIn('registerPage("budget-review"', page_js)
+		self.assertIn('fixtureKey: "review"', page_js)
+
+		css = _read(REVIEW_CSS)
+		self.assertIn("kt-bud-review-card", css)
+		self.assertIn("kt-bud-review-footer", css)
+		self.assertIn("kt-bud-review-action-label", css)
+
+		from kentender_budget import hooks as bud_hooks
+
+		self.assertEqual(
+			bud_hooks.page_js.get("budget-review"),
+			"public/js/budget_funding_review_page.js",
+		)
+		includes = "\n".join(bud_hooks.app_include_js or [])
+		self.assertIn("budget_ui_fixtures/review.js", includes)
+		css_includes = "\n".join(bud_hooks.app_include_css or [])
+		self.assertIn("budget_funding_review.css", css_includes)
+
+	def test_audit_fixture_shell_and_bind(self):
+		for path in (AUDIT_FIXTURE, AUDIT_JS, AUDIT_CSS, WORKSPACE_SHELL, LIVE_BIND):
+			self.assertTrue(path.is_file(), path)
+
+		fixture = _read(AUDIT_FIXTURE)
+		self.assertIn("kt-stitch-canvas", fixture)
+		self.assertIn('data-testid="kt-bud-audit"', fixture)
+		self.assertIn('data-testid="kt-bud-audit-toolbar"', fixture)
+		self.assertIn('data-testid="kt-bud-audit-table"', fixture)
+		self.assertIn('data-testid="kt-bud-audit-notice"', fixture)
+		self.assertIn('data-testid="kt-bud-audit-filter-event"', fixture)
+		self.assertIn("Date and time", fixture)
+		self.assertIn("Before and after summary", fixture)
+		self.assertIn("Date Range", fixture)
+		self.assertIn('data-kt-bud-audit-filter-field="date_range"', fixture)
+		# Export is chrome-header only (Stitch) — not inside the filter card.
+		self.assertNotIn("kt-bud-audit-export", fixture)
+		self.assertNotIn("Export audit history", fixture)
+		self.assertIn("tablePaginationFooterHtml", fixture)
+		self.assertIn('testid: "kt-bud-audit-table-footer"', fixture)
+		self.assertIn("expand_more", fixture)
+		self.assertNotIn("cdn.tailwindcss.com", fixture)
+		self.assertNotIn("KES 455M", fixture)
+		self.assertNotIn("next in the Budget MVP-1 build sequence", fixture)
+
+		shell = _read(WORKSPACE_SHELL)
+		self.assertIn('pageSlug === "budget-audit"', shell)
+		self.assertIn("bindAudit", shell)
+		self.assertIn('activeSlug === "budget-audit"', shell)
+		self.assertIn("kt-bud-audit-export", shell)
+		self.assertIn("Export audit history", shell)
+		self.assertNotIn("Budget Audit is next", shell)
+
+		live = _read(LIVE_BIND)
+		self.assertIn("bindAudit", live)
+		self.assertIn("get_budget_audit", live)
+		self.assertIn("kt-bud-audit-action-label", live)
+		self.assertIn("showAuditNotice", live)
+		self.assertIn("csvEscape", live)
+
+		page_js = _read(AUDIT_JS)
+		self.assertIn('registerPage("budget-audit"', page_js)
+		self.assertIn('fixtureKey: "audit"', page_js)
+
+		css = _read(AUDIT_CSS)
+		self.assertIn("kt-bud-audit-select-wrap", css)
+		self.assertIn("background-image: none !important", css)
+		self.assertIn("0.5rem 2.5rem 0.5rem 0.75rem", css)
+		self.assertIn("11.5rem", css)
+		self.assertIn("kt-bud-audit-action-label", css)
+		self.assertIn("Win98", css)
+
+		live = _read(LIVE_BIND)
+		self.assertIn("paintStatusPill($root, budget.status, budget.status_label)", live)
+		self.assertIn("[data-kt-bud-budget-title]", live)
+		# Review chrome title must be painted from readiness DTO (BUD-UI-11/12 regression).
+		review_live = live
+		self.assertIn("function applyReviewDto", review_live)
+		idx = review_live.index("function applyReviewDto")
+		chunk = review_live[idx : idx + 800]
+		self.assertIn("[data-kt-bud-budget-title]", chunk)
+		self.assertIn("paintStatusPill", chunk)
+
+		from kentender_budget import hooks as bud_hooks
+
+		self.assertEqual(
+			bud_hooks.page_js.get("budget-audit"),
+			"public/js/budget_funding_audit_page.js",
+		)
+		includes = "\n".join(bud_hooks.app_include_js or [])
+		self.assertIn("budget_ui_fixtures/audit.js", includes)
+		css_includes = "\n".join(bud_hooks.app_include_css or [])
+		self.assertIn("budget_funding_audit.css", css_includes)
+
+	def test_revisions_fixture_shell_and_bind(self):
+		for path in (
+			REVISIONS_FIXTURE,
+			REVISION_CREATE_FIXTURE,
+			REVISIONS_JS,
+			REVISION_CREATE_JS,
+			REVISIONS_CSS,
+			WORKSPACE_SHELL,
+			LIVE_BIND,
+		):
+			self.assertTrue(path.is_file(), path)
+
+		# List tab — no in-tab create form, no redundant page title.
+		list_fixture = _read(REVISIONS_FIXTURE)
+		self.assertIn("kt-stitch-canvas", list_fixture)
+		self.assertIn('data-testid="kt-bud-revisions"', list_fixture)
+		self.assertIn('data-testid="kt-bud-revisions-list"', list_fixture)
+		self.assertIn("tablePaginationFooterHtml", list_fixture)
+		self.assertIn('testid: "kt-bud-revisions-table-footer"', list_fixture)
+		self.assertIn(">Action</th>", list_fixture)
+		self.assertNotIn("Budget revisions", list_fixture)
+		self.assertNotIn('data-testid="kt-bud-rev-create"', list_fixture)
+		self.assertNotIn('data-testid="kt-bud-rev-create-form"', list_fixture)
+		self.assertNotIn("cdn.tailwindcss.com", list_fixture)
+		self.assertNotIn("next in the Budget MVP-1 build sequence", list_fixture)
+
+		# Dedicated create page fixture (Stitch create canvas).
+		create_fixture = _read(REVISION_CREATE_FIXTURE)
+		self.assertIn('data-testid="kt-bud-revision-create"', create_fixture)
+		self.assertIn('data-testid="kt-bud-rev-create-form"', create_fixture)
+		self.assertIn('data-testid="kt-bud-rev-lines-table"', create_fixture)
+		self.assertIn('data-testid="kt-bud-rev-impact"', create_fixture)
+		self.assertIn('data-testid="kt-bud-rev-save-draft"', create_fixture)
+		self.assertIn('data-testid="kt-bud-rev-submit"', create_fixture)
+		self.assertIn('data-testid="kt-bud-rev-cancel"', create_fixture)
+		self.assertIn('data-testid="kt-bud-rev-footer-error"', create_fixture)
+		self.assertIn("(optional)", create_fixture)
+		self.assertIn('data-testid="kt-bud-rev-add-line"', create_fixture)
+		self.assertIn('data-kt-bud-error="external_approval_reference"', create_fixture)
+		self.assertIn("Create budget revision", create_fixture)
+		self.assertIn("Constraint: Revised amount cannot be below Reserved + Committed.", create_fixture)
+		self.assertNotIn("KES 1,720.5M", create_fixture)
+		self.assertNotIn('data-kt-bud-field="generated_reference"', create_fixture)
+
+		shell = _read(WORKSPACE_SHELL)
+		self.assertIn('pageSlug === "budget-revisions"', shell)
+		self.assertIn("bindRevisions", shell)
+		self.assertIn('budget-revision-create', shell)
+		self.assertNotIn("Budget Revisions is next", shell)
+
+		live = _read(LIVE_BIND)
+		self.assertIn("bindRevisions", live)
+		self.assertIn("bindRevisionCreate", live)
+		self.assertIn("data-kt-bud-rev-list-action", live)
+		self.assertIn("list_budget_revisions", live)
+		self.assertIn("get_budget_revision_create_context", live)
+		self.assertIn("create_budget_revision", live)
+		self.assertIn("submit_budget_revision", live)
+		self.assertIn('set_route("budget-revision-create"', live)
+		self.assertIn("ktFormErrors", live)
+		self.assertNotIn("frappe.msgprint", live)
+
+		page_js = _read(REVISIONS_JS)
+		self.assertIn('registerPage("budget-revisions"', page_js)
+		self.assertIn('fixtureKey: "revisions"', page_js)
+		self.assertIn("isStub: false", page_js)
+
+		create_page = _read(REVISION_CREATE_JS)
+		self.assertIn("budget-revision-create", create_page)
+		self.assertIn("bindRevisionCreate", create_page)
+		self.assertIn("revision_create", create_page)
+
+		css = _read(REVISIONS_CSS)
+		self.assertIn("kt-bud-rev-footer", css)
+		self.assertIn("kt-bud-rev-change-input", css)
+		self.assertIn("kt-bud-rev-impact", css)
+		self.assertIn("kt-bud-rev-main-grid", css)
+		self.assertIn("grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) !important", css)
+		self.assertIn("kt-bud-rev-main-grid", create_fixture)
+		# Dates stack full-width in 1/3 column (side-by-side overflows on Win Chrome).
+		self.assertIn("grid-template-columns: minmax(0, 1fr) !important", css)
+		self.assertIn(".kt-bud-rev-dates", css)
+		self.assertIn("::-webkit-calendar-picker-indicator", css)
+		self.assertIn("kt-bud-rev-date-wrap", create_fixture)
+		self.assertIn("calendar_today", create_fixture)
+		self.assertIn(">event<", create_fixture)
+
+		from kentender_budget import hooks as bud_hooks
+
+		self.assertEqual(
+			bud_hooks.page_js.get("budget-revisions"),
+			"public/js/budget_funding_revisions_page.js",
+		)
+		self.assertEqual(
+			bud_hooks.page_js.get("budget-revision-create"),
+			"public/js/budget_funding_revision_create_page.js",
+		)
+		includes = "\n".join(bud_hooks.app_include_js or [])
+		self.assertIn("budget_ui_fixtures/revisions.js", includes)
+		self.assertIn("budget_ui_fixtures/revision_create.js", includes)
+		css_includes = "\n".join(bud_hooks.app_include_css or [])
+		self.assertIn("budget_funding_revisions.css", css_includes)
+
+	def test_revision_review_fixture_shell_and_bind(self):
+		for path in (
+			REVISION_REVIEW_FIXTURE,
+			REVISION_REVIEW_JS,
+			REVISIONS_CSS,
+			LIVE_BIND,
+		):
+			self.assertTrue(path.is_file(), path)
+
+		fixture = _read(REVISION_REVIEW_FIXTURE)
+		self.assertIn("kt-stitch-canvas", fixture)
+		self.assertIn('data-testid="kt-bud-revision-review"', fixture)
+		self.assertIn('data-testid="kt-bud-rev-review-back"', fixture)
+		self.assertIn('data-testid="kt-bud-rev-review-details"', fixture)
+		self.assertIn('data-testid="kt-bud-rev-review-blocker"', fixture)
+		self.assertIn('data-testid="kt-bud-rev-review-groups"', fixture)
+		self.assertIn('data-testid="kt-bud-rev-review-financial"', fixture)
+		self.assertIn('data-testid="kt-bud-rev-review-strategy"', fixture)
+		self.assertIn('data-testid="kt-bud-rev-review-downstream"', fixture)
+		self.assertIn('data-testid="kt-bud-rev-review-footer"', fixture)
+		self.assertNotIn('data-testid="kt-bud-rev-review-comment"', fixture)
+		self.assertIn('data-testid="kt-bud-rev-reason-modal"', fixture)
+		self.assertIn('data-testid="kt-bud-rev-reason-comment"', fixture)
+		self.assertIn('data-testid="kt-bud-rev-reason-confirm"', fixture)
+		self.assertIn("Reject budget revision", fixture)
+		self.assertIn('data-testid="kt-bud-rev-review-reject"', fixture)
+		self.assertIn('data-testid="kt-bud-rev-review-return"', fixture)
+		self.assertIn('data-testid="kt-bud-rev-review-apply"', fixture)
+		self.assertIn("Strategy and value-treatment impact", fixture)
+		self.assertNotIn("cdn.tailwindcss.com", fixture)
+		self.assertNotIn("BR-2027-042", fixture)
+		self.assertNotIn("KES 45.2M", fixture)
+
+		live = _read(LIVE_BIND)
+		self.assertIn("bindRevisionReview", live)
+		self.assertIn("get_budget_revision_review_context", live)
+		self.assertIn("openReasonModal", live)
+		self.assertIn("data-kt-bud-rev-reason-modal", live)
+		self.assertIn("return_budget_revision", live)
+		self.assertIn("reject_budget_revision", live)
+		self.assertIn("apply_budget_revision", live)
+		self.assertIn('set_route("budget-revision-review"', live)
+		self.assertIn('data-open-action', live)
+
+		page_js = _read(REVISION_REVIEW_JS)
+		self.assertIn("budget-revision-review", page_js)
+		self.assertIn("bindRevisionReview", page_js)
+
+		css = _read(REVISIONS_CSS)
+		self.assertIn("kt-bud-rev-review-footer", css)
+		self.assertIn("kt-bud-rev-review-groups", css)
+		self.assertIn("kt-bud-rev-review-apply", css)
+
+		from kentender_budget import hooks as bud_hooks
+
+		self.assertEqual(
+			bud_hooks.page_js.get("budget-revision-review"),
+			"public/js/budget_funding_revision_review_page.js",
+		)
+		includes = "\n".join(bud_hooks.app_include_js or [])
+		self.assertIn("budget_ui_fixtures/revision_review.js", includes)
 
 	def test_register_fixture_and_bind(self):
 		for path in (REGISTER_FIXTURE, REGISTER_JS, REGISTER_CSS, LIVE_BIND):

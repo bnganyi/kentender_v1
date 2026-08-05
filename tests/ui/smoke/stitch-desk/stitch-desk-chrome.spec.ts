@@ -59,6 +59,54 @@ const SURFACES = [
 		secondaryCtaTestId: "kt-bud-view-performance",
 		selectSelector: '[data-kt-bud-activity-filter="activity_type"]',
 	},
+	{
+		id: "budget-downstream",
+		route: "/desk/budget-downstream/MOH-BUD-0001",
+		rootTestId: "kt-bud-downstream",
+		liveAttr: "data-kt-bud-live",
+		primaryCtaTestId: "kt-bud-overview-primary",
+		secondaryCtaTestId: "kt-bud-view-performance",
+		selectSelector: '[data-kt-bud-downstream-filter="status"]',
+	},
+	{
+		id: "budget-review",
+		route: "/desk/budget-review/MOH-BUD-0001",
+		rootTestId: "kt-bud-review",
+		liveAttr: "data-kt-bud-live",
+		primaryCtaTestId: "kt-bud-overview-primary",
+		secondaryCtaTestId: "kt-bud-view-performance",
+	},
+	{
+		id: "budget-audit",
+		route: "/desk/budget-audit/MOH-BUD-0001",
+		rootTestId: "kt-bud-audit",
+		liveAttr: "data-kt-bud-live",
+		primaryCtaTestId: "kt-bud-audit-export",
+		primaryCtaStyle: "bordered" as const,
+		selectSelector: '[data-kt-bud-audit-filter="event_type"]',
+	},
+	{
+		id: "budget-revisions",
+		route: "/desk/budget-revisions/MOH-BUD-0001",
+		rootTestId: "kt-bud-revisions",
+		liveAttr: "data-kt-bud-live",
+		primaryCtaTestId: "kt-bud-overview-primary",
+		secondaryCtaTestId: "kt-bud-view-performance",
+	},
+	{
+		id: "budget-revision-create",
+		route: "/desk/budget-revision-create/MOH-BUD-0001",
+		rootTestId: "kt-bud-revision-create",
+		liveAttr: "data-kt-bud-live",
+		primaryCtaTestId: "kt-bud-rev-submit",
+	},
+	{
+		id: "budget-revision-review",
+		route: "/desk/budget-revision-review/BR-MOH-0002",
+		rootTestId: "kt-bud-revision-review",
+		liveAttr: "data-kt-bud-live",
+		primaryCtaTestId: "kt-bud-rev-review-apply",
+	},
 ] as const;
 
 test.describe.configure({ mode: "serial" });
@@ -79,6 +127,8 @@ test.describe("Stitch Desk chrome baseline", () => {
 			await assertStitchDeskChrome(page, {
 				rootTestId: surface.rootTestId,
 				primaryCtaTestId: surface.primaryCtaTestId,
+				primaryCtaStyle:
+					"primaryCtaStyle" in surface ? surface.primaryCtaStyle : "filled",
 				secondaryCtaTestId:
 					"secondaryCtaTestId" in surface ? surface.secondaryCtaTestId : undefined,
 				selectSelector:
@@ -86,9 +136,17 @@ test.describe("Stitch Desk chrome baseline", () => {
 				headlineSelector:
 					surface.id === "budget-overview" ||
 					surface.id === "budget-lines" ||
-					surface.id === "budget-funding-activity"
+					surface.id === "budget-funding-activity" ||
+					surface.id === "budget-downstream" ||
+					surface.id === "budget-review" ||
+					surface.id === "budget-audit" ||
+					surface.id === "budget-revisions"
 						? "[data-kt-bud-budget-title]"
-						: undefined,
+						: surface.id === "budget-revision-create"
+							? ".kt-bud-rev-create-title"
+							: surface.id === "budget-revision-review"
+								? ".kt-bud-rev-review-title"
+								: undefined,
 			});
 		});
 	}
