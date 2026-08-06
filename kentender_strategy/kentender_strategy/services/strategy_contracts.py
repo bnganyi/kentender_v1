@@ -24,6 +24,7 @@ from kentender_strategy.services.strategy_permissions import (
 	can_edit_draft_plan,
 	entity_for_user,
 	has_cross_entity_authority,
+	ownership_path_for_unit,
 	require_any_role,
 	ROLE_MANAGER,
 	ROLE_OFFICER,
@@ -440,7 +441,15 @@ def get_strategy_tree(plan_version: str | None = None, plan_code: str | None = N
 	programmes = frappe.get_all(
 		"Strategy Programme",
 		filters={"plan_version": plan.name},
-		fields=["name", "programme_code", "title", "description", "responsible_function", "order_index"],
+		fields=[
+			"name",
+			"programme_code",
+			"title",
+			"description",
+			"responsible_function",
+			"order_index",
+			"owner_org_unit",
+		],
 		order_by="order_index asc",
 	)
 	subs = frappe.get_all(
@@ -454,6 +463,7 @@ def get_strategy_tree(plan_version: str | None = None, plan_code: str | None = N
 			"description",
 			"responsible_function",
 			"order_index",
+			"owner_org_unit",
 		],
 		order_by="order_index asc",
 	)
@@ -470,6 +480,7 @@ def get_strategy_tree(plan_version: str | None = None, plan_code: str | None = N
 			"responsible_function",
 			"executive_owner",
 			"order_index",
+			"owner_org_unit",
 		],
 		order_by="order_index asc",
 	)
@@ -488,6 +499,7 @@ def get_strategy_tree(plan_version: str | None = None, plan_code: str | None = N
 			"data_source",
 			"responsible_function",
 			"order_index",
+			"owner_org_unit",
 		],
 		order_by="order_index asc",
 	)
@@ -514,6 +526,7 @@ def get_strategy_tree(plan_version: str | None = None, plan_code: str | None = N
 			"benefit_owner",
 			"measurement_verifier",
 			"status",
+			"owner_org_unit",
 		],
 		order_by="target_code asc",
 	)
@@ -536,6 +549,16 @@ def get_strategy_tree(plan_version: str | None = None, plan_code: str | None = N
 		tgts_by_i.setdefault(t.performance_indicator, []).append(t)
 
 	def node(type_, row, code_field, children=None, warnings=None, fields=None):
+		base_fields = fields or {
+			"description": row.get("description"),
+			"responsible_function": row.get("responsible_function"),
+			"order_index": row.get("order_index"),
+			"programme": row.get("programme"),
+			"sub_programme": row.get("sub_programme"),
+		}
+		ou = row.get("owner_org_unit")
+		base_fields.setdefault("owner_org_unit", ou or "")
+		base_fields.setdefault("ownership_path", ownership_path_for_unit(ou) if ou else "")
 		return {
 			"type": type_,
 			"id": row.name,
@@ -543,14 +566,7 @@ def get_strategy_tree(plan_version: str | None = None, plan_code: str | None = N
 			"name": row.title,
 			"children": children or [],
 			"warnings": warnings or [],
-			"fields": fields
-			or {
-				"description": row.get("description"),
-				"responsible_function": row.get("responsible_function"),
-				"order_index": row.get("order_index"),
-				"programme": row.get("programme"),
-				"sub_programme": row.get("sub_programme"),
-			},
+			"fields": base_fields,
 		}
 
 	for p in programmes:
@@ -570,6 +586,8 @@ def get_strategy_tree(plan_version: str | None = None, plan_code: str | None = N
 						"responsible_function": s.responsible_function,
 						"order_index": s.order_index,
 						"programme": s.programme,
+						"owner_org_unit": s.owner_org_unit or "",
+						"ownership_path": ownership_path_for_unit(s.owner_org_unit),
 					},
 				)
 			)
@@ -585,6 +603,8 @@ def get_strategy_tree(plan_version: str | None = None, plan_code: str | None = N
 					"description": p.description,
 					"responsible_function": p.responsible_function,
 					"order_index": p.order_index,
+					"owner_org_unit": p.owner_org_unit or "",
+					"ownership_path": ownership_path_for_unit(p.owner_org_unit),
 				},
 			)
 		)
@@ -646,6 +666,8 @@ def _target_node(t, unit=None):
 			"benefit_owner": t.benefit_owner,
 			"measurement_verifier": t.measurement_verifier,
 			"status": t.status,
+			"owner_org_unit": getattr(t, "owner_org_unit", None) or "",
+			"ownership_path": ownership_path_for_unit(getattr(t, "owner_org_unit", None)),
 		},
 	}
 
@@ -680,6 +702,8 @@ def _outcome_node(o, inds_by_o, tgts_by_i):
 					"data_source": i.data_source,
 					"responsible_function": i.responsible_function,
 					"order_index": i.order_index,
+					"owner_org_unit": getattr(i, "owner_org_unit", None) or "",
+					"ownership_path": ownership_path_for_unit(getattr(i, "owner_org_unit", None)),
 				},
 			}
 		)
@@ -700,6 +724,8 @@ def _outcome_node(o, inds_by_o, tgts_by_i):
 			"programme": o.programme,
 			"sub_programme": o.sub_programme,
 			"order_index": o.order_index,
+			"owner_org_unit": getattr(o, "owner_org_unit", None) or "",
+			"ownership_path": ownership_path_for_unit(getattr(o, "owner_org_unit", None)),
 		},
 	}
 

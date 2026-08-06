@@ -84,7 +84,10 @@ class TestMvp1BudgetTeardownShell(FrappeTestCase):
 		self.assertTrue(path.is_file(), msg=f"missing teardown inventory at {path}")
 		source = path.read_text(encoding="utf-8")
 		self.assertIn("04_Budget_Cross_Module_Lifecycle_Tracker.md", source)
-		self.assertIn("MOH_MVP_V1", source)
+		self.assertTrue(
+			"KENTENDER_MVP_V1" in source or "MOH_MVP_V1" in source,
+			msg="teardown inventory must cite the canonical MVP fixture namespace",
+		)
 		section = _section_6(source)
 		self.assertTrue(section, msg="## 6. section not found")
 		self.assertIn("core rebuild", section.lower())

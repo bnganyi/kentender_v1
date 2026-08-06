@@ -13,7 +13,7 @@ import frappe
 from kentender_strategy.services.strategy_permissions import ensure_strategy_roles
 from kentender_strategy.services.strategy_transitions import transition_plan
 
-# --- Canonical MVP-1 codes (MOH_MVP_V1 contract) ---
+# --- Canonical MVP-1 codes (KENTENDER_MVP_V1 contract) ---
 STRATEGY_PLAN_CODE: Final[str] = "MOH-SP-2026-2030"
 PLAN_TITLE: Final[str] = "Ministry of Health Strategic Plan 2026–2030"
 START_YEAR: Final[int] = 2026
@@ -52,7 +52,7 @@ PVO_FIXTURE = [
 HR_PROGRAMME_PLAN_CODE: Final[str] = "MOH-SP-0002"
 HR_PROGRAMME_SCOPE_ID: Final[str] = "MOH-PROG-HR"
 
-# Remap retired 000x codes → contract identities (MOH_MVP_V1).
+# Remap retired 000x codes → contract identities (KENTENDER_MVP_V1).
 _LEGACY_PERIOD_CODE_REMAP: Final[tuple[tuple[str, str, str, str], ...]] = (
 	("Strategic Plan", "plan_code", "MOH-SP-0001", STRATEGY_PLAN_CODE),
 	("Strategic Plan", "plan_code", "MOH-HR-2026-2030", HR_PROGRAMME_PLAN_CODE),
@@ -68,7 +68,7 @@ _LEGACY_PERIOD_CODE_REMAP: Final[tuple[tuple[str, str, str, str], ...]] = (
 
 
 def _remap_legacy_period_codes() -> None:
-	"""Rewrite retired 000x business codes to MOH_MVP_V1 contract references."""
+	"""Rewrite retired 000x business codes to KENTENDER_MVP_V1 contract references."""
 	for doctype, field, old_code, new_code in _LEGACY_PERIOD_CODE_REMAP:
 		if old_code == new_code:
 			continue
@@ -292,7 +292,7 @@ def _ensure_measurements(plan_name: str, target_name: str) -> dict[str, str]:
 
 
 def upsert_works_master_strategy_hierarchy(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
-	"""Idempotent loader — delegates to MOH_MVP_V1 contract Strategy seed."""
+	"""Idempotent loader — delegates to KENTENDER_MVP_V1 contract Strategy seed."""
 	ensure_strategy_roles()
 	_remap_legacy_period_codes()
 	from kentender_strategy.seeds.moh_mvp_v1_strategy import upsert_moh_mvp_v1_strategy

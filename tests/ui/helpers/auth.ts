@@ -78,7 +78,7 @@ export async function loginAsStrategyOfficer(page: Page) {
 export async function loginAsStrategyViewerOtherPe(page: Page) {
 	await login(
 		page,
-		process.env.UI_STRATEGY_VIEWER_OTHER_PE_USER || 'other.entity.officer@example.test',
+		process.env.UI_STRATEGY_VIEWER_OTHER_PE_USER || 'kisumu.health.officer@example.test',
 		process.env.UI_STRATEGY_VIEWER_OTHER_PE_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
@@ -198,7 +198,7 @@ export async function loginAsBudgetOfficerAuthority(page: Page) {
 export async function loginAsBudgetOtherEntity(page: Page) {
 	await login(
 		page,
-		process.env.UI_BUDGET_OTHER_ENTITY_USER || 'other.entity.officer@example.test',
+		process.env.UI_BUDGET_OTHER_ENTITY_USER || 'kisumu.health.officer@example.test',
 		process.env.UI_BUDGET_OTHER_ENTITY_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }

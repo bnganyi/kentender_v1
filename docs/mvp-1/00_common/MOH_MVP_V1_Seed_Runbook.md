@@ -1,60 +1,56 @@
-# MOH_MVP_V1 — Seed Runbook
+# KENTENDER_MVP_V1 — Seed Runbook
 
-**Contract:** [KenTender_MVP_Canonical_Demo_Data_Contract.md](./KenTender_MVP_Canonical_Demo_Data_Contract.md)  
-**Fixture namespace:** `MOH_MVP_V1`  
-**Fixture clock:** `2027-11-03T12:00:00+03:00`  
-**Password:** `Test@123` (`kentender_core.seeds.constants.TEST_PASSWORD`)
+**Contract:** [01_KenTender_MVP_Canonical_Demo_Data_Contract_v2.0.md](01_KenTender_MVP_Canonical_Demo_Data_Contract_v2.0.md)  
+**Scope model:** [00_KenTender_Procuring_Entity_and_Organisation_Scope_Model.md](00_KenTender_Procuring_Entity_and_Organisation_Scope_Model.md)  
+**Fixture namespace:** `KENTENDER_MVP_V1`  
 
-## Reproduce clean canonical data
+> **Obsolete:** Contract v1.1 and the `MOH_MVP_V1` namespace are superseded. Makefile alias `seed-moh-mvp-v1` still points here for one cycle.
 
-From the bench root (`/home/midasuser/frappe-bench`):
+## Purpose
 
-```bash
-# 1) Apply schema (ownership / department_code / fixture fields)
-bench --site kentender.midas.com migrate
+Resettable Ministry of Health + County Government of Kisumu demo foundation:
 
-# 2) Reset + seed + validate (idempotent; safe to re-run)
-cd apps/kentender_v1 && make seed-moh-mvp-v1 SITE=kentender.midas.com
+- Procuring Entities `PE-MOH` and `PE-CGKIS`
+- Organisation Unit Types + Organisation Units
+- User Scope Assignments and Strategy Scope Assignments
+- Strategy / Budget ownership via `owner_org_unit` (no `owner_state_department` / `owner_directorate`)
 
-# Equivalent bench execute:
-bench --site kentender.midas.com execute \
-  kentender_core.seeds.moh_mvp_v1.orchestrator.run_moh_mvp_v1 \
-  --kwargs '{"reset": true, "force": true, "validate": true}'
+## Commands
 
-# 3) Validate only
-cd apps/kentender_v1 && make seed-moh-mvp-v1-validate SITE=kentender.midas.com
-```
-
-Optional: retire leftover non-keep Users/Roles after the pack is loaded:
+From `apps/kentender_v1`:
 
 ```bash
-bench --site kentender.midas.com execute \
-  kentender_core.seeds.mvp1_role_user_cleanup.upsert_mvp1_role_user_cleanup
+make seed-kentender-mvp-v1 SITE=kentender.midas.com
+make seed-kentender-mvp-v1-validate SITE=kentender.midas.com
 ```
 
-## Demo logins (§4.4)
+Or directly:
 
-| Email | Purpose |
+```bash
+bench --site kentender.midas.com execute \
+  kentender_core.seeds.kentender_mvp_v1.orchestrator.run_kentender_mvp_v1 \
+  --kwargs '{"reset": True, "force": True, "validate": True}'
+```
+
+Notes:
+
+- Use Python `True`/`False` in `--kwargs` (not JSON `true`/`false`).
+- Reset is **fixture-scoped** (namespace + known codes). It does **not** wipe unrelated PE-MOH Playwright plans.
+
+## What the seed creates
+
+1. Org graph under `PE-MOH` and `PE-CGKIS`
+2. Canonical `@example.test` users + User Scope Assignments
+3. Ministry plan `MOH-SP-2026-2030` (entity-owned) + Kisumu plan `CGK-SP-HEALTH-2027-2028`
+4. Budgets `MOH-BUD-2027-2028` / draft / closed + `CGK-BUD-2027-2028`
+5. Funding ledger RSV / COM / EXP for the Ministry DHI line
+6. Contract §9 PASS/FAIL report (identity, ownership isolation, cross-entity denial)
+
+## UI personas (`.env.ui`)
+
+| Persona | Email |
 |---|---|
-| `moh.medicalservices.officer@example.test` | Medical Services / DHP officer |
-| `moh.publichealth.officer@example.test` | Public Health / HRMD officer |
-| `moh.strategy.reviewer@example.test` | Strategy reviewer |
-| `moh.budget.reviewer@example.test` | Budget reviewer |
-| `moh.budget.authority@example.test` | Budget authority |
-| `moh.viewer@example.test` | Read-only management viewer |
-| `other.entity.officer@example.test` | Cross-entity denial (PE-MOE) |
-
-## What the orchestrator does
-
-1. Clears `MOH_MVP_V1` Strategy + Budget records (reverse dependency order)  
-2. Upserts PE-MOH/PE-MOE + State Departments + Directorates  
-3. Upserts §4.4 users (disables retired `@moh.test` Strategy/Budget matrix)  
-4. Seeds Strategy plan `MOH-SP-2026-2030` + hierarchy/PVCs/measurements  
-5. Seeds Budgets `MOH-BUD-2027-2028` / `2028-2029` / `2026-2027` + RSV/COM/EXP ledger  
-6. Prints a PASS/FAIL §9 verification report  
-
-**Not in the canonical pack:** readiness/role-matrix edges `MOH-BUD-0002` (Submitted) and `MOH-BUD-0004` / `MOH-BL-0006` (incomplete Draft). Those load only when `upsert_moh_mvp_v1_portfolio(include_test_edges=True)` (default for domain tests).
-
-**Freshness note:** RSV/COM/EXP narrative dates follow the fixture clock `2027-11-03`. Line `actual_as_at` for DHI is set relative to wall-clock `today()` so Desk freshness shows **Stale** without freezing server time.
-
-Production sites refuse the seed unless `developer_mode`, `allow_moh_mvp_v1_seed`, or `force=True`.
+| Medical Services officer | `moh.medicalservices.officer@example.test` |
+| Public Health officer | `moh.publichealth.officer@example.test` |
+| Kisumu health officer (cross-entity denial) | `kisumu.health.officer@example.test` |
+| Password (all) | `Test@123` (see `kentender_core.seeds.constants.TEST_PASSWORD`) |

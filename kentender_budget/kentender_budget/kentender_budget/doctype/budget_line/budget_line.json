@@ -11,8 +11,6 @@
   "title",
   "col_a",
   "organisational_owner",
-  "owner_directorate",
-  "owner_state_department",
   "classification",
   "is_active",
   "section_funding",
@@ -37,7 +35,8 @@
   "value_treatments",
   "currency",
   "order_index",
-  "fixture_namespace"
+  "fixture_namespace",
+  "owner_org_unit"
  ],
  "fields": [
   {
@@ -75,18 +74,6 @@
    "fieldtype": "Data",
    "label": "Organisational Owner",
    "reqd": 1
-  },
-  {
-   "fieldname": "owner_directorate",
-   "fieldtype": "Data",
-   "label": "Owner Directorate",
-   "search_index": 1
-  },
-  {
-   "fieldname": "owner_state_department",
-   "fieldtype": "Data",
-   "label": "Owner State Department",
-   "search_index": 1
   },
   {
    "fieldname": "classification",
@@ -238,6 +225,13 @@
    "fieldtype": "Data",
    "label": "Fixture Namespace",
    "read_only": 1
+  },
+  {
+   "fieldname": "owner_org_unit",
+   "fieldtype": "Link",
+   "label": "Owner Organisation Unit",
+   "options": "Organisation Unit",
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 0,

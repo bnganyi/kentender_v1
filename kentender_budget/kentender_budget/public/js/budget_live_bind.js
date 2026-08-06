@@ -963,6 +963,12 @@ frappe.provide("kentender_budget.live");
 		$drawer
 			.find('[data-kt-bud-line-input="organisational_owner"]')
 			.val(lineDto.organisational_owner || "");
+		var ownershipPath = lineDto.ownership_path || "";
+		var $ownPath = $drawer.find("[data-kt-bud-line-ownership-path]");
+		if ($ownPath.length) {
+			$ownPath.text(ownershipPath || "—");
+			$ownPath.toggleClass("hidden", !ownershipPath);
+		}
 
 		var primary = lineDto.primary_target || {};
 		var $primary = $drawer.find('[data-kt-bud-line-input="primary_target"]');

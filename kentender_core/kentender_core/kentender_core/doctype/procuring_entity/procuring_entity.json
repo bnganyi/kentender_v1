@@ -7,7 +7,16 @@
  "engine": "InnoDB",
  "field_order": [
   "entity_code",
-  "entity_name"
+  "entity_reference",
+  "legal_name",
+  "entity_name",
+  "short_name",
+  "entity_type",
+  "column_break_pe",
+  "status",
+  "external_reference",
+  "effective_from",
+  "effective_to"
  ],
  "fields": [
   {
@@ -16,20 +25,73 @@
    "in_list_view": 1,
    "label": "Entity Code",
    "reqd": 1,
-   "unique": 1
+   "unique": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "entity_reference",
+   "fieldtype": "Data",
+   "label": "Entity Reference",
+   "unique": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "legal_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Legal Name",
+   "reqd": 1
   },
   {
    "fieldname": "entity_name",
    "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Entity Name",
+   "label": "Entity Name (legacy alias)",
+   "description": "Kept for Link title compatibility; prefer legal_name."
+  },
+  {
+   "fieldname": "short_name",
+   "fieldtype": "Data",
+   "label": "Short Name"
+  },
+  {
+   "fieldname": "entity_type",
+   "fieldtype": "Select",
+   "label": "Entity Type",
+   "options": "\nMinistry\nCounty Government\nJudiciary\nCommission\nState Corporation\nPublic University\nOther",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_pe",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Active",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Active\nInactive",
    "reqd": 1
+  },
+  {
+   "fieldname": "external_reference",
+   "fieldtype": "Data",
+   "label": "External Reference"
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Date",
+   "label": "Effective From"
+  },
+  {
+   "fieldname": "effective_to",
+   "fieldtype": "Date",
+   "label": "Effective To"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-18 00:00:00.000000",
+ "modified": "2026-08-06 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kentender Core",
  "name": "Procuring Entity",
@@ -85,12 +147,11 @@
    "write": 0
   }
  ],
- "search_fields": "entity_name,entity_code",
+ "search_fields": "legal_name,entity_name,entity_code,entity_type",
  "show_title_field_in_link": 1,
- "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "title_field": "entity_name",
+ "title_field": "legal_name",
  "track_changes": 1
 }

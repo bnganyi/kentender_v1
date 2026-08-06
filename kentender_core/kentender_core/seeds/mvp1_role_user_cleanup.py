@@ -26,7 +26,7 @@ KEEP_EMAILS = {
 	"bnganyi@yahoo.com",
 	"system@moh.test",
 	*[row[0] for row in SEED_USERS],
-	# MOH_MVP_V1 §4.4 canonical demo personas
+	# KENTENDER_MVP_V1 Contract v2.0 canonical demo personas
 	"moh.medicalservices.officer@example.test",
 	"moh.publichealth.officer@example.test",
 	"moh.strategy.reviewer@example.test",
@@ -51,7 +51,7 @@ KEEP_PREFIXES = (
 
 KEEP_DOMAINS_PARTIAL = (
 	"@kentender.test",  # smoke supplier cohort
-	"@example.test",  # MOH_MVP_V1 canonical personas
+	"@example.test",  # KENTENDER_MVP_V1 canonical personas
 )
 
 ROLES_TO_DISABLE = (

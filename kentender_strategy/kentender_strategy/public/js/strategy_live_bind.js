@@ -1614,9 +1614,9 @@ frappe.provide("kentender_strategy.live");
 				esc(f.responsible_function || node.responsible_function || "—") +
 				"</div></div>" +
 				'<div class="bg-surface p-3 rounded-lg border border-surface-variant">' +
-				'<h3 class="font-label-caps text-[10px] text-on-surface-variant mb-1 uppercase">Executive Owner</h3>' +
-				'<div class="text-sm font-medium text-on-surface">' +
-				esc(f.executive_owner || node.executive_owner || "—") +
+				'<h3 class="font-label-caps text-[10px] text-on-surface-variant mb-1 uppercase">Organisation ownership</h3>' +
+				'<div class="text-sm font-medium text-on-surface" data-testid="kt-str-ownership-path">' +
+				esc(f.ownership_path || f.executive_owner || node.executive_owner || "—") +
 				"</div></div></div>";
 		} else if (node.type === "PerformanceIndicator") {
 			metaGrid =

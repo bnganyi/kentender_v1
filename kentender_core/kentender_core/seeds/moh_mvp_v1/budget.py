@@ -1,13 +1,6 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-from __future__ import annotations
+"""Deprecated shim."""
 
-from typing import Any
-
-
-def upsert_budget() -> dict[str, Any]:
-	from kentender_budget.seeds.moh_mvp_v1_portfolio import upsert_moh_mvp_v1_portfolio
-
-	# Canonical demo pack only — test-edge budgets stay out of make seed-moh-mvp-v1.
-	return upsert_moh_mvp_v1_portfolio(include_test_edges=False)
+from kentender_core.seeds.kentender_mvp_v1.budget import upsert_budget  # noqa: F401

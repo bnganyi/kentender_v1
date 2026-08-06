@@ -153,7 +153,7 @@ Before DocType deletion on `kentender.midas.com`:
 
 **Preparatory teardown completed** — legacy Budget & Funding domain removed.
 
-**MVP-1 Budget core rebuild is in place** — DocTypes, services, Desk portfolio screens, and the working fixture `MOH_MVP_V1` / `MOH-BUD-0001` have been restored under the implementation pack.
+**MVP-1 Budget core rebuild is in place** — DocTypes, services, Desk portfolio screens, and the working fixture `KENTENDER_MVP_V1` / `MOH-BUD-2027-2028` (Contract v2.0) have been restored under the implementation pack.
 
 **Completion level:** approaching **Budget Core Complete**. This is **not** Integration Ready or End-to-End Complete.
 

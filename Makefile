@@ -106,8 +106,9 @@ help:
 	@echo "  make nssf-calibration-gate SITE=$(SITE) — CAL-NSSF golden proof gate"
 	@echo "  make e1-nssf-seed-gate SITE=$(SITE) — E1 NSSF seed mapper + preview (subset)"
 	@echo "  make e1-nssf-poc-gate SITE=$(SITE) — full E1 PoC: seed + bid APIs + Playwright bidder workspace"
-	@echo "  make seed-moh-mvp-v1 SITE=$(SITE) — reset + seed + validate MOH_MVP_V1 canonical demo"
-	@echo "  make seed-moh-mvp-v1-validate SITE=$(SITE) — validate MOH_MVP_V1 invariants only"
+	@echo "  make seed-kentender-mvp-v1 SITE=$(SITE) — reset + seed + validate KENTENDER_MVP_V1 (Contract v2.0)"
+	@echo "  make seed-kentender-mvp-v1-validate SITE=$(SITE) — validate KENTENDER_MVP_V1 invariants only"
+	@echo "  make seed-moh-mvp-v1 SITE=$(SITE) — deprecated alias → seed-kentender-mvp-v1"
 	@echo "  make seed-stable-platform SITE=$(SITE) — load MOH stable platform seed (Works + IT STD)"
 	@echo "  make seed-stable-platform-reset SITE=$(SITE) — clear + reload stable platform seed"
 	@echo "  make seed-demand-to-bidder-journey SITE=$(SITE) — quiet Demand→CFG→bidder sample"
@@ -743,14 +744,19 @@ e1-nssf-poc-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/it-std-wizard/e1-bidder-workspace.spec.ts
 
-seed-moh-mvp-v1:
+seed-kentender-mvp-v1:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
-		kentender_core.seeds.moh_mvp_v1.orchestrator.run_moh_mvp_v1 \
+		kentender_core.seeds.kentender_mvp_v1.orchestrator.run_kentender_mvp_v1 \
 		--kwargs '{"reset": True, "force": True, "validate": True}'
 
-seed-moh-mvp-v1-validate:
+seed-kentender-mvp-v1-validate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
-		kentender_core.seeds.moh_mvp_v1.orchestrator.validate_moh_mvp_v1
+		kentender_core.seeds.kentender_mvp_v1.orchestrator.validate_kentender_mvp_v1
+
+# Deprecated aliases (one cycle).
+seed-moh-mvp-v1: seed-kentender-mvp-v1
+
+seed-moh-mvp-v1-validate: seed-kentender-mvp-v1-validate
 
 seed-stable-platform:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.seed_stable_platform.run

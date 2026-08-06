@@ -109,9 +109,9 @@ def _upsert_user(email: str, full_name: str, roles: tuple[str, ...], pe_name: st
 
 
 def upsert_strategy_role_users() -> dict[str, Any]:
-	"""Delegate to MOH_MVP_V1 §4.4 personas (replaces prior @moh.test matrix)."""
-	from kentender_core.seeds.moh_mvp_v1.org import upsert_org
-	from kentender_core.seeds.moh_mvp_v1.users import upsert_canonical_users
+	"""Delegate to KENTENDER_MVP_V1 Contract v2.0 personas."""
+	from kentender_core.seeds.kentender_mvp_v1.org import upsert_org
+	from kentender_core.seeds.kentender_mvp_v1.users import upsert_canonical_users
 
 	ensure_strategy_roles()
 	org = upsert_org()
@@ -122,6 +122,7 @@ def upsert_strategy_role_users() -> dict[str, Any]:
 		"users": users.get("users") or [],
 		"password": TEST_PASSWORD,
 		"pe_moh": org.get("pe_moh"),
+		"pe_cgkis": org.get("pe_cgkis"),
 		"pe_moe": org.get("pe_moe"),
-		"delegated_to": "moh_mvp_v1.users",
+		"delegated_to": "kentender_mvp_v1.users",
 	}

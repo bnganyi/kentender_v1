@@ -12,6 +12,7 @@ from kentender_strategy.services.strategy_audit import record_event
 from kentender_strategy.services.strategy_domain_guards import _assert_plan_editable
 from kentender_strategy.services.strategy_permissions import (
 	assert_entity_in_scope,
+	assert_org_unit_in_scope,
 	can_create_successor_plan,
 	can_edit_draft_plan,
 	require_any_role,
@@ -176,6 +177,11 @@ def upsert_structure_node(payload: dict) -> dict:
 	pe = frappe.db.get_value("Strategic Plan", plan_version, "procuring_entity")
 	if pe:
 		assert_entity_in_scope(pe)
+	owner_ou = data.get("owner_org_unit")
+	if owner_ou is None and name and frappe.db.exists(doctype, name):
+		owner_ou = frappe.db.get_value(doctype, name, "owner_org_unit")
+	if pe:
+		assert_org_unit_in_scope(pe, owner_ou, require_write=True)
 
 	# Inherit parent links / plan from parent when omitted
 	if node_type == "SubProgramme" and data.get("programme"):

@@ -162,6 +162,7 @@ ${footerHtml}
 <div>
 <label class="block font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase">Responsible owner</label>
 <input type="text" class="w-full bg-surface border border-outline-variant rounded-lg py-2 px-3 text-body-md text-on-surface" data-kt-bud-line-input="organisational_owner" data-testid="kt-bud-line-owner" />
+<p class="mt-1 text-body-sm text-on-surface-variant" data-kt-bud-line-ownership-path data-testid="kt-bud-line-ownership-path"></p>
 </div>
 </div>
 </div>

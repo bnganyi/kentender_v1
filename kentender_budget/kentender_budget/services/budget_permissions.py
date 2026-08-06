@@ -95,10 +95,27 @@ def can_export_funding_performance(user: str | None = None) -> bool:
 
 
 def entity_for_user(user: str | None = None) -> str | None:
-	"""Best-effort procuring entity from User Permission."""
+	"""Best-effort procuring entity from User Scope Assignment / User Permission."""
 	user = user or frappe.session.user
 	if user in ("Administrator", "Guest"):
 		return frappe.db.get_value("Procuring Entity", {"entity_code": "PE-MOH"}, "name")
+	from kentender_core.services.org_scope_access import permitted_procuring_entities
+
+	pes = permitted_procuring_entities(user)
+	if pes is None:
+		return frappe.db.get_value("Procuring Entity", {"entity_code": "PE-MOH"}, "name")
+	if len(pes) == 1:
+		return next(iter(pes))
+	if pes:
+		# Prefer default User Permission among permitted PEs.
+		default = frappe.db.get_value(
+			"User Permission",
+			{"user": user, "allow": "Procuring Entity", "is_default": 1},
+			"for_value",
+		)
+		if default in pes:
+			return default
+		return sorted(pes)[0]
 	pe = frappe.db.get_value(
 		"User Permission",
 		{"user": user, "allow": "Procuring Entity", "is_default": 1},
@@ -110,4 +127,47 @@ def entity_for_user(user: str | None = None) -> str | None:
 		"User Permission",
 		{"user": user, "allow": "Procuring Entity"},
 		"for_value",
+	)
+
+
+def assert_org_unit_in_scope(
+	procuring_entity: str | None,
+	owner_org_unit: str | None,
+	user: str | None = None,
+	*,
+	require_write: bool = False,
+) -> None:
+	from kentender_core.services.org_scope_access import assert_can_access_owned_record
+
+	assert_can_access_owned_record(
+		procuring_entity=procuring_entity,
+		owner_org_unit=owner_org_unit,
+		user=user,
+		require_write=require_write,
+	)
+
+
+def ownership_path_for_unit(owner_org_unit: str | None) -> str:
+	from kentender_core.services.org_scope_access import ownership_path_label
+
+	return ownership_path_label(owner_org_unit)
+
+
+def can_access_budget_line(
+	line,
+	user: str | None = None,
+	*,
+	require_write: bool = False,
+) -> bool:
+	"""Line-level PE + owner_org_unit check."""
+	from kentender_core.services.org_scope_access import can_access_owned_record
+
+	pe = getattr(line, "procuring_entity", None)
+	if not pe and getattr(line, "budget", None):
+		pe = frappe.db.get_value("Budget", line.budget, "procuring_entity")
+	return can_access_owned_record(
+		procuring_entity=pe,
+		owner_org_unit=getattr(line, "owner_org_unit", None),
+		user=user,
+		require_write=require_write,
 	)

@@ -111,6 +111,38 @@ def assert_entity_in_scope(procuring_entity: str | None, user: str | None = None
 	user = user or frappe.session.user
 	if has_cross_entity_authority(user):
 		return
+	from kentender_core.services.org_scope_access import permitted_procuring_entities
+
+	pes = permitted_procuring_entities(user)
+	if pes is None:
+		return
+	if pes and procuring_entity in pes:
+		return
+	# Legacy fallback when User Scope Assignment is absent.
 	own = entity_for_user(user)
 	if not procuring_entity or not own or procuring_entity != own:
 		frappe.throw(_("Not permitted for this procuring entity"), frappe.PermissionError)
+
+
+def assert_org_unit_in_scope(
+	procuring_entity: str | None,
+	owner_org_unit: str | None,
+	user: str | None = None,
+	*,
+	require_write: bool = False,
+) -> None:
+	"""PE + Organisation Unit ownership gate (User Scope Assignment)."""
+	from kentender_core.services.org_scope_access import assert_can_access_owned_record
+
+	assert_can_access_owned_record(
+		procuring_entity=procuring_entity,
+		owner_org_unit=owner_org_unit,
+		user=user,
+		require_write=require_write,
+	)
+
+
+def ownership_path_for_unit(owner_org_unit: str | None) -> str:
+	from kentender_core.services.org_scope_access import ownership_path_label
+
+	return ownership_path_label(owner_org_unit)

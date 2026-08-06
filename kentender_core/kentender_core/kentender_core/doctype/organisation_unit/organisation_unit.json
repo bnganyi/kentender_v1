@@ -1,0 +1,126 @@
+{
+ "actions": [],
+ "autoname": "field:unit_code",
+ "creation": "2026-08-06 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "unit_code",
+  "org_unit_reference",
+  "unit_name",
+  "unit_type",
+  "procuring_entity",
+  "parent_org_unit",
+  "column_break_ou",
+  "status",
+  "effective_from",
+  "effective_to",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "unit_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Unit Code",
+   "reqd": 1,
+   "unique": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "org_unit_reference",
+   "fieldtype": "Data",
+   "label": "Organisation Unit Reference",
+   "unique": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "unit_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Unit Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "unit_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Unit Type",
+   "options": "Organisation Unit Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "procuring_entity",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Procuring Entity",
+   "options": "Procuring Entity",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "parent_org_unit",
+   "fieldtype": "Link",
+   "label": "Parent Organisation Unit",
+   "options": "Organisation Unit"
+  },
+  {
+   "fieldname": "column_break_ou",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Active",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Active\nInactive",
+   "reqd": 1
+  },
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Date",
+   "label": "Effective From"
+  },
+  {
+   "fieldname": "effective_to",
+   "fieldtype": "Date",
+   "label": "Effective To"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture Namespace",
+   "search_index": 1
+  }
+ ],
+ "module": "Kentender Core",
+ "name": "Organisation Unit",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "System Manager"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "Administrator"
+  },
+  {
+   "read": 1,
+   "role": "Desk User"
+  }
+ ],
+ "search_fields": "unit_name,unit_code,procuring_entity",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "unit_name",
+ "track_changes": 1
+}

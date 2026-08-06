@@ -22,6 +22,9 @@ from kentender_budget.services.budget_permissions import (
 	ROLE_OFFICER,
 	ROLE_REVIEWER,
 	ROLE_VIEWER,
+	assert_org_unit_in_scope,
+	can_access_budget_line,
+	ownership_path_for_unit,
 	require_any_role,
 )
 from kentender_budget.services.budget_reference import allocate_budget_line_reference
@@ -240,6 +243,8 @@ def _line_list_dto(doc, budget_status: str, currency: str) -> dict[str, Any]:
 		"funding_source_name": doc.funding_source_name or "",
 		"classification": getattr(doc, "classification", None) or "",
 		"organisational_owner": doc.organisational_owner,
+		"owner_org_unit": getattr(doc, "owner_org_unit", None) or "",
+		"ownership_path": ownership_path_for_unit(getattr(doc, "owner_org_unit", None)),
 		"primary_target": primary,
 		"primary_target_label": (primary or {}).get("name") or "—",
 		"primary_target_code": (primary or {}).get("code") or "",
@@ -281,6 +286,8 @@ def list_budget_lines(budget: str) -> dict[str, Any]:
 	lines = []
 	for r in rows:
 		line = frappe.get_doc("Budget Line", r.name)
+		if not can_access_budget_line(line, require_write=False):
+			continue
 		lines.append(_line_list_dto(line, doc.status, currency))
 	return {
 		"budget": {
@@ -313,6 +320,9 @@ def get_budget_line(line: str) -> dict[str, Any]:
 	doc = _resolve_line(line)
 	budget = frappe.get_doc("Budget", doc.budget)
 	resolve_scoped_entity(budget.procuring_entity)
+	assert_org_unit_in_scope(
+		budget.procuring_entity, getattr(doc, "owner_org_unit", None), require_write=False
+	)
 	currency = doc.currency or budget.currency or "KES"
 	list_row = _line_list_dto(doc, budget.status, currency)
 	treatments = _treatment_dtos(doc)
@@ -542,9 +552,21 @@ def save_budget_line(payload: dict | None = None) -> dict[str, Any]:
 		if doc.budget != budget.name:
 			frappe.throw(_("Budget Line does not belong to this Budget"), frappe.ValidationError)
 
+	if not is_create:
+		assert_org_unit_in_scope(
+			budget.procuring_entity,
+			getattr(doc, "owner_org_unit", None),
+			require_write=True,
+		)
+
 	# Never accept client-supplied generated_reference.
 	doc.title = (payload.get("title") or "").strip()
 	doc.organisational_owner = (payload.get("organisational_owner") or "").strip()
+	if payload.get("owner_org_unit") is not None:
+		doc.owner_org_unit = (payload.get("owner_org_unit") or "").strip()
+		assert_org_unit_in_scope(
+			budget.procuring_entity, doc.owner_org_unit, require_write=True
+		)
 	doc.classification = (payload.get("classification") or "").strip()
 	doc.funding_source_type = (payload.get("funding_source_type") or "").strip()
 	doc.funding_source_name = (payload.get("funding_source_name") or "").strip()

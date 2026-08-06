@@ -2,10 +2,10 @@ import { test, expect } from "@playwright/test";
 import { loginAsStrategyOfficer } from "../../helpers/auth";
 
 /**
- * MOH_MVP_V1 §10 — State Department officer can open Strategy Performance;
- * other-entity denial is covered by domain validate / role matrix.
+ * KENTENDER_MVP_V1 §10 — Medical Services unit officer can open Strategy Performance;
+ * cross-entity denial is covered by domain validate / isolation checks.
  */
-test.describe("MOH_MVP_V1 ownership smoke", () => {
+test.describe("KENTENDER_MVP_V1 ownership smoke", () => {
 	test("Medical Services officer opens Strategy Performance", async ({ page }) => {
 		test.setTimeout(120_000);
 		await loginAsStrategyOfficer(page);

@@ -17,8 +17,7 @@
   "links",
   "section_fixture_ownership",
   "fixture_namespace",
-  "owner_state_department",
-  "owner_directorate"
+  "owner_org_unit"
  ],
  "fields": [
   {
@@ -95,15 +94,10 @@
    "search_index": 1
   },
   {
-   "fieldname": "owner_state_department",
-   "fieldtype": "Data",
-   "label": "Owner State Department",
-   "search_index": 1
-  },
-  {
-   "fieldname": "owner_directorate",
-   "fieldtype": "Data",
-   "label": "Owner Directorate",
+   "fieldname": "owner_org_unit",
+   "fieldtype": "Link",
+   "label": "Owner Organisation Unit",
+   "options": "Organisation Unit",
    "search_index": 1
   }
  ],

@@ -1,12 +1,6 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-from __future__ import annotations
+"""Deprecated shim."""
 
-from typing import Any
-
-
-def upsert_strategy(*, reset: bool = False) -> dict[str, Any]:
-	from kentender_strategy.seeds.moh_mvp_v1_strategy import upsert_moh_mvp_v1_strategy
-
-	return upsert_moh_mvp_v1_strategy(reset=reset)
+from kentender_core.seeds.kentender_mvp_v1.strategy import upsert_strategy  # noqa: F401
