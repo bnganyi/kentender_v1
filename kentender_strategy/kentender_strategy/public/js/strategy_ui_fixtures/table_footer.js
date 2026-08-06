@@ -15,10 +15,10 @@ kentender_strategy.ui_fixtures.tablePaginationFooterHtml = function () {
 	// Fallback if core asset failed to load (should not happen on Desk).
 	return (
 		'<div class="kt-str-table-footer bg-surface-bright border-t border-outline-variant p-4 flex flex-wrap justify-between items-center gap-3" data-testid="kt-str-table-footer" data-kt-str-table-footer data-kt-table-footer>' +
-		'<span class="text-label-sm text-on-surface-variant font-medium" data-kt-str-footer-range data-kt-footer-range>Showing 0 of 0</span>' +
+		'<span class="text-sm text-on-surface-variant font-medium" data-kt-str-footer-range data-kt-footer-range>Showing 0 of 0</span>' +
 		'<div class="kt-str-table-footer-right flex items-center gap-3">' +
 		'<div class="kt-str-footer-page-size flex items-center gap-2">' +
-		'<span class="text-label-sm text-on-surface-variant font-medium whitespace-nowrap">Rows per page</span>' +
+		'<span class="text-sm text-on-surface-variant font-medium whitespace-nowrap">Rows per page</span>' +
 		'<div class="kt-str-footer-page-size-control relative">' +
 		'<select class="kt-str-footer-page-size-select" data-kt-str-footer-page-size data-kt-footer-page-size aria-label="Rows per page">' +
 		'<option value="10">10</option><option value="20" selected>20</option>' +

@@ -609,12 +609,22 @@ body.kt-cl-shell [data-testid="kt-cl-ui00-page-size-wrap"] {
 	align-items: center !important;
 	gap: 0.5rem !important;
 }
+/* Match Stitch Desk footer chrome — readable "Showing…" / "Rows per page" (not 10px label-sm). */
+body.kt-cl-shell [data-testid="kt-cl-ui00-table-footer"],
+body.kt-cl-shell [data-testid="kt-cl-table-footer"],
+body.kt-cl-shell .kt-cl-page-size > label,
+body.kt-cl-shell [data-testid="kt-cl-ui00-page-size-wrap"] > label {
+	font-size: 0.875rem !important;
+	line-height: 1.25rem !important;
+	font-weight: 500 !important;
+}
 body.kt-cl-shell .kt-cl-page-size-select,
 body.kt-cl-shell [data-testid="kt-cl-ui00-page-size"] {
 	width: 72px !important;
 	min-width: 72px !important;
 	max-width: 88px !important;
 	height: 32px !important;
+	font-size: 0.875rem !important;
 }
 body.kt-cl-shell [data-testid="kt-cl-queue-summary-card"] {
 	min-height: 0 !important;

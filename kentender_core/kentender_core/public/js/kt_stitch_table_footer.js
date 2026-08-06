@@ -31,7 +31,7 @@ kentender_core.ui_fixtures.tablePaginationFooterHtml = function (opts) {
 		'" ' +
 		footAttr +
 		" data-kt-table-footer>" +
-		'<span class="text-label-sm text-on-surface-variant font-medium" ' +
+		'<span class="text-sm text-on-surface-variant font-medium" ' +
 		rangeAttr +
 		" data-kt-footer-range>Showing 0 of 0</span>" +
 		'<div class="' +
@@ -44,7 +44,7 @@ kentender_core.ui_fixtures.tablePaginationFooterHtml = function (opts) {
 		'-footer-page-size flex items-center gap-2" ' +
 		sizeWrapAttr +
 		">" +
-		'<span class="text-label-sm text-on-surface-variant font-medium whitespace-nowrap">Rows per page</span>' +
+		'<span class="text-sm text-on-surface-variant font-medium whitespace-nowrap">Rows per page</span>' +
 		'<div class="' +
 		classNs +
 		'-footer-page-size-control relative">' +

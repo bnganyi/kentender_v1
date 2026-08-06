@@ -3,6 +3,7 @@
 
 .kt-cl-shell .kt-stitch-canvas [data-testid="kt-table-footer"],
 .kt-cl-shell .kt-stitch-canvas [data-testid="kt-bud-table-footer"],
+.kt-cl-shell .kt-stitch-canvas [data-testid$="-table-footer"],
 .kt-cl-shell .kt-stitch-canvas .kt-stitch-table-footer,
 .kt-cl-shell .kt-str-root [data-testid="kt-str-table-footer"],
 .kt-cl-shell .kt-str-root .kt-str-table-footer {
@@ -14,6 +15,23 @@
 	padding: 1rem !important;
 	background: #ffffff !important;
 	border-top: 1px solid #c3c6d1 !important;
+}
+
+/*
+ * "Showing X of Y" + "Rows per page" — pin readable size across modules.
+ * Stitch `text-label-sm` is 10px (too small for footer chrome); use 14px.
+ */
+.kt-cl-shell .kt-stitch-canvas [data-kt-footer-range],
+.kt-cl-shell .kt-stitch-canvas [data-kt-str-footer-range],
+.kt-cl-shell .kt-str-root [data-kt-footer-range],
+.kt-cl-shell .kt-str-root [data-kt-str-footer-range],
+.kt-cl-shell .kt-stitch-footer-page-size > span,
+.kt-cl-shell .kt-str-footer-page-size > span,
+.kt-cl-shell .kt-stitch-footer-page-size > label,
+.kt-cl-shell .kt-str-footer-page-size > label {
+	font-size: 0.875rem !important;
+	line-height: 1.25rem !important;
+	font-weight: 500 !important;
 }
 
 .kt-cl-shell .kt-stitch-table-footer-right,
@@ -60,7 +78,7 @@
 	background-color: #ffffff !important;
 	background-image: none !important;
 	color: #191c1e !important;
-	font-size: 0.8125rem !important;
+	font-size: 0.875rem !important;
 	font-weight: 500 !important;
 	line-height: 1 !important;
 	cursor: pointer !important;

@@ -208,10 +208,10 @@ frappe.provide("kentender_core.cl_code_spec");
 		rowBtn: "h-7 px-3 bg-primary text-on-primary rounded text-label-sm hover:opacity-90 whitespace-nowrap",
 		footer:
 			"p-4 bg-surface-bright border-t border-outline-variant flex justify-between items-center gap-3",
-		footerText: "text-label-sm text-on-surface-variant font-medium",
+		footerText: "text-sm text-on-surface-variant font-medium",
 		footerRight: "kt-cl-table-footer-right flex items-center gap-3",
 		pageSizeWrap: "kt-cl-page-size flex items-center gap-2",
-		pageSizeLabel: "text-label-sm text-on-surface-variant font-medium whitespace-nowrap",
+		pageSizeLabel: "text-sm text-on-surface-variant font-medium whitespace-nowrap",
 		pageSizeSelect: "kt-cl-filter-control kt-cl-filter-select kt-cl-page-size-select",
 		pager: "flex gap-2",
 		pagerBtn:

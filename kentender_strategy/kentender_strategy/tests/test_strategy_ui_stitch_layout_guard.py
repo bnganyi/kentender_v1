@@ -412,6 +412,8 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 		core_fx = _read(core_footer)
 		self.assertIn("Rows per page", core_fx)
 		self.assertIn("Showing 0 of 0", core_fx)
+		self.assertIn("text-sm text-on-surface-variant font-medium", core_fx)
+		self.assertNotIn("text-label-sm text-on-surface-variant font-medium", core_fx)
 		self.assertIn('value="10"', core_fx)
 		self.assertIn('value="20"', core_fx)
 		self.assertIn('value="50"', core_fx)
@@ -419,6 +421,16 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 		self.assertIn("expand_more", core_fx)
 		self.assertNotIn("Page Size", core_fx)
 		self.assertNotIn("Showing 0 of 0 records", core_fx)
+		core_footer_css = (
+			Path(frappe.get_app_path("kentender_core"))
+			/ "public"
+			/ "css"
+			/ "kt_stitch_table_footer.css"
+		)
+		self.assertTrue(core_footer_css.is_file(), core_footer_css)
+		footer_css = _read(core_footer_css)
+		self.assertIn("font-size: 0.875rem !important", footer_css)
+		self.assertIn("[data-kt-footer-range]", footer_css)
 		# Shim fallback still carries Strategy attrs if core fails to load.
 		self.assertIn("data-kt-str-footer-page-size", footer_fx)
 		self.assertIn("data-kt-str-footer-pages", footer_fx)
