@@ -49,7 +49,7 @@ const SURFACES = [
 	},
 	{
 		id: "budget-overview",
-		route: "/desk/budget-overview/MOH-BUD-0001",
+		route: "/desk/budget-overview/MOH-BUD-2027-2028",
 		rootTestId: "kt-bud-overview",
 		liveAttr: "data-kt-bud-live",
 		primaryCtaTestId: "kt-bud-overview-primary",
@@ -58,7 +58,7 @@ const SURFACES = [
 	},
 	{
 		id: "budget-lines",
-		route: "/desk/budget-lines/MOH-BUD-0001",
+		route: "/desk/budget-lines/MOH-BUD-2027-2028",
 		rootTestId: "kt-bud-lines",
 		liveAttr: "data-kt-bud-live",
 		primaryCtaTestId: "kt-bud-overview-primary",
@@ -67,7 +67,7 @@ const SURFACES = [
 	},
 	{
 		id: "budget-funding-activity",
-		route: "/desk/budget-funding-activity/MOH-BUD-0001",
+		route: "/desk/budget-funding-activity/MOH-BUD-2027-2028",
 		rootTestId: "kt-bud-activity",
 		liveAttr: "data-kt-bud-live",
 		primaryCtaTestId: "kt-bud-overview-primary",
@@ -77,7 +77,7 @@ const SURFACES = [
 	},
 	{
 		id: "budget-downstream",
-		route: "/desk/budget-downstream/MOH-BUD-0001",
+		route: "/desk/budget-downstream/MOH-BUD-2027-2028",
 		rootTestId: "kt-bud-downstream",
 		liveAttr: "data-kt-bud-live",
 		primaryCtaTestId: "kt-bud-overview-primary",
@@ -87,7 +87,7 @@ const SURFACES = [
 	},
 	{
 		id: "budget-review",
-		route: "/desk/budget-review/MOH-BUD-0001",
+		route: "/desk/budget-review/MOH-BUD-2027-2028",
 		rootTestId: "kt-bud-review",
 		liveAttr: "data-kt-bud-live",
 		primaryCtaTestId: "kt-bud-overview-primary",
@@ -96,7 +96,7 @@ const SURFACES = [
 	},
 	{
 		id: "budget-audit",
-		route: "/desk/budget-audit/MOH-BUD-0001",
+		route: "/desk/budget-audit/MOH-BUD-2027-2028",
 		rootTestId: "kt-bud-audit",
 		liveAttr: "data-kt-bud-live",
 		primaryCtaTestId: "kt-bud-audit-export",
@@ -122,7 +122,7 @@ const SURFACES = [
 	},
 	{
 		id: "budget-revisions",
-		route: "/desk/budget-revisions/MOH-BUD-0001",
+		route: "/desk/budget-revisions/MOH-BUD-2027-2028",
 		rootTestId: "kt-bud-revisions",
 		liveAttr: "data-kt-bud-live",
 		primaryCtaTestId: "kt-bud-overview-primary",
@@ -130,7 +130,7 @@ const SURFACES = [
 	},
 	{
 		id: "budget-revision-create",
-		route: "/desk/budget-revision-create/MOH-BUD-0001",
+		route: "/desk/budget-revision-create/MOH-BUD-2027-2028",
 		rootTestId: "kt-bud-revision-create",
 		liveAttr: "data-kt-bud-live",
 		primaryCtaTestId: "kt-bud-rev-submit",
@@ -193,7 +193,7 @@ test.describe("Stitch Desk chrome baseline", () => {
 
 	test("Material expand_more selects never stack SVG Forms chevron", async ({ page }) => {
 		// Downstream filter bar is the chronic double-chevron surface (SVG + Material).
-		await page.goto("/desk/strategy-plan-downstream-usage/MOH-SP-0001", {
+		await page.goto("/desk/strategy-plan-downstream-usage/MOH-SP-2026-2030", {
 			waitUntil: "domcontentloaded",
 		});
 		const down = page.locator('[data-testid="kt-str-downstream"]');

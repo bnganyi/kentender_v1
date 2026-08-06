@@ -22,8 +22,8 @@ class TestBudgetFundingActivity(FrappeTestCase):
 		cls.seed = upsert_moh_mvp_v1_portfolio()
 
 	def test_list_active_fixture_activity_and_balances(self):
-		dto = list_funding_activity("MOH-BUD-0001")
-		self.assertEqual(dto["budget"]["code"], "MOH-BUD-0001")
+		dto = list_funding_activity("MOH-BUD-2027-2028")
+		self.assertEqual(dto["budget"]["code"], "MOH-BUD-2027-2028")
 		self.assertEqual(dto["budget"]["status"], "Active")
 		self.assertTrue(dto["capabilities"]["read_only"])
 		self.assertEqual(dto["capabilities"]["primary_action"], "request_revision")
@@ -55,7 +55,7 @@ class TestBudgetFundingActivity(FrappeTestCase):
 		self.assertEqual(rsv["related_value"], "KES 145,000,000")
 		self.assertEqual(rsv["action_label"], "View reservation")
 
-		com = by_code["COM-MOH-0001"]
+		com = by_code["COM-MOH-2027-005"]
 		self.assertEqual(com["activity_type"], "commitment")
 		self.assertEqual(com["source_code"], "CTR-MOH-2027-005")
 		self.assertEqual(com["source_name"], "Digital health infrastructure implementation contract")
@@ -63,7 +63,7 @@ class TestBudgetFundingActivity(FrappeTestCase):
 		self.assertEqual(com["status"], "Active")
 		self.assertEqual(com["action_label"], "View contract")
 
-		exp = by_code["EXP-MOH-0001"]
+		exp = by_code["EXP-MOH-2027-005-01"]
 		self.assertEqual(exp["activity_type"], "actual")
 		self.assertEqual(exp["source_name"], "Finance system")
 		self.assertEqual(flt(exp["amount"]), 180_000_000)
@@ -73,7 +73,7 @@ class TestBudgetFundingActivity(FrappeTestCase):
 		self.assertEqual(exp["action_label"], "View reconciliation")
 
 	def test_non_double_count_reservation_and_commitment(self):
-		dto = list_funding_activity("MOH-BUD-0001")
+		dto = list_funding_activity("MOH-BUD-2027-2028")
 		by_code = {r["code"]: r for r in dto["rows"]}
 		remaining = flt(dto["balances"]["reserved"])
 		committed = flt(dto["balances"]["committed"])
@@ -84,7 +84,7 @@ class TestBudgetFundingActivity(FrappeTestCase):
 
 	def test_no_duplicate_rsv_codes_in_activity_rows(self):
 		"""BUD-SUP-005 — Activity projects domain rows only (no audit double-count)."""
-		dto = list_funding_activity("MOH-BUD-0001")
+		dto = list_funding_activity("MOH-BUD-2027-2028")
 		codes = [r["code"] for r in dto["rows"]]
 		self.assertEqual(len(codes), len(set(codes)))
 		self.assertEqual(codes.count("RSV-MOH-0001"), 1)
@@ -107,6 +107,6 @@ class TestBudgetFundingActivity(FrappeTestCase):
 		frappe.set_user(email)
 		try:
 			with self.assertRaises(frappe.PermissionError):
-				list_funding_activity("MOH-BUD-0001")
+				list_funding_activity("MOH-BUD-2027-2028")
 		finally:
 			frappe.set_user("Administrator")

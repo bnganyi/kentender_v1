@@ -11,7 +11,7 @@ from typing import Final
 PE_CODE: Final[str] = "PE-MOH"
 DEMAND_CODE: Final[str] = "DEM-MOH-2026-001"
 DEMAND_ITEM_CODE: Final[str] = "DEMITEM-MOH-2026-001-001"
-BUDGET_LINE_CODE: Final[str] = "MOH-BL-0001"  # Budget Line.generated_reference (MVP-1)
+BUDGET_LINE_CODE: Final[str] = "MOH-BL-DHI-2027"  # Budget Line.generated_reference (MVP-1)
 JOURNEY_CODE: Final[str] = "JRN-MOH-2026-001"
 STD_VERSION_CODE: Final[str] = "STDTV-WORKS-BUILDING-CIVIL-APR2022"
 TENDER_CODE: Final[str] = "TND-MOH-2026-001"

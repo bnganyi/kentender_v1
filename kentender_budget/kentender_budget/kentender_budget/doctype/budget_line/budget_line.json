@@ -11,6 +11,8 @@
   "title",
   "col_a",
   "organisational_owner",
+  "owner_directorate",
+  "owner_state_department",
   "classification",
   "is_active",
   "section_funding",
@@ -73,6 +75,18 @@
    "fieldtype": "Data",
    "label": "Organisational Owner",
    "reqd": 1
+  },
+  {
+   "fieldname": "owner_directorate",
+   "fieldtype": "Data",
+   "label": "Owner Directorate",
+   "search_index": 1
+  },
+  {
+   "fieldname": "owner_state_department",
+   "fieldtype": "Data",
+   "label": "Owner State Department",
+   "search_index": 1
   },
   {
    "fieldname": "classification",

@@ -10,21 +10,22 @@ from frappe.utils import now_datetime
 
 from kentender_budget.seeds.budget_role_users import upsert_budget_role_users
 from kentender_budget.seeds.moh_mvp_v1_portfolio import upsert_moh_mvp_v1_portfolio
+from kentender_core.seeds.moh_mvp_v1.constants import C
 
 
 def prepare_budget_role_matrix_ui() -> dict:
-	"""Reseed portfolio + role users; pin Submitted 0002 for AC-018 dual-role UI."""
+	"""Reseed portfolio + role users; pin Draft budget Submitted for AC-018 dual-role UI."""
 	upsert_budget_role_users()
 	upsert_moh_mvp_v1_portfolio()
-	name = frappe.db.get_value("Budget", {"generated_reference": "MOH-BUD-0002"}, "name")
+	name = frappe.db.get_value("Budget", {"generated_reference": C.BUD_DRAFT}, "name")
 	if name:
 		frappe.db.set_value(
 			"Budget",
 			name,
 			{
 				"status": "Submitted",
-				"submitted_by": "budget.officer.authority@moh.test",
-				"reviewed_by": "budget.reviewer@moh.test",
+				"submitted_by": "moh.budget.officer.authority@example.test",
+				"reviewed_by": "moh.budget.reviewer@example.test",
 				"reviewed_at": now_datetime(),
 				"return_reason": "",
 			},

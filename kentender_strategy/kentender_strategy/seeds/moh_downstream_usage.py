@@ -1,5 +1,5 @@
 # Copyright (c) 2026, KenTender and contributors
-"""Link MOH demo Demand / Budget Line records to MOH-TGT-0001 for Downstream Usage."""
+"""Link MOH demo Demand / Budget Line records to MOH-TGT-AVAIL-2028 for Downstream Usage."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from kentender_strategy.services.strategy_consumer import apply_strategy_referen
 # Prefer IT demand (Approved masters may be workflow-locked — set via db).
 SEED_DEMAND_CODES = ("DEM-MOH-2026-002", "DEMO-MOH-2026-DEM-DRAFT", "DEM-MOH-2026-001")
 # Canonical MVP-1 Budget Line (Budget portfolio fixture).
-SEED_BUDGET_LINE_CODE = "MOH-BL-0001"
+SEED_BUDGET_LINE_CODE = "MOH-BL-DHI-2027"
 # PP2 WORKS master package (PACKAGE_DRAFT+).
 SEED_PACKAGE_CODE = "PKG-MOH-2026-001"
 

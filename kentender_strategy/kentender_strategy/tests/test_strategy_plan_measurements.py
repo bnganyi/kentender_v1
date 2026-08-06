@@ -62,8 +62,6 @@ def _ensure_user(email: str, roles: list[str], procuring_entity: str | None = No
 		"Strategy Manager",
 		"Strategy Reviewer",
 		"Planning Authority",
-		"Performance Officer",
-		"Performance Verifier",
 	):
 		if role in have and role not in roles:
 			user.remove_roles(role)
@@ -127,7 +125,7 @@ class TestStrategyPlanMeasurements(FrappeTestCase):
 		self.assertTrue(dto.get("default_target_code"))
 
 	def test_get_measurement_by_target_code_prefers_active_plan(self):
-		"""Multiple plan versions may share MOH-TGT-0001; resolve Active, never get_doc(None)."""
+		"""Multiple plan versions may share MOH-TGT-AVAIL-2028; resolve Active, never get_doc(None)."""
 		_ensure_user("str.officer.meas.get@example.com", ["Strategy Officer"], self.pe)
 		frappe.set_user("str.officer.meas.get@example.com")
 		m = get_measurement(target_code=TARGET_CODE)
@@ -144,7 +142,7 @@ class TestStrategyPlanMeasurements(FrappeTestCase):
 
 	def test_get_measurement_submit_purpose_skips_verified(self):
 		"""Submit form must open a blank shell when only Verified history exists."""
-		_ensure_user("str.officer.meas.submit@example.com", ["Performance Officer"], self.pe)
+		_ensure_user("str.officer.meas.submit@example.com", ["Strategy Officer"], self.pe)
 		frappe.set_user("str.officer.meas.submit@example.com")
 		m = get_measurement(
 			target_code=TARGET_CODE, plan_code=STRATEGY_PLAN_CODE, purpose="submit"
@@ -208,7 +206,7 @@ class TestStrategyPlanMeasurements(FrappeTestCase):
 				"responsible_function": "ICT",
 			}
 		)
-		# Reuse MOH-TGT-0001 business code on this draft — must still scope by plan.
+		# Reuse MOH-TGT-AVAIL-2028 business code on this draft — must still scope by plan.
 		tgt = upsert_structure_node(
 			{
 				"type": "PerformanceTarget",

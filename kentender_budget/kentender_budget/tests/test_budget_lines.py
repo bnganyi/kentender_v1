@@ -26,8 +26,8 @@ class TestBudgetLines(FrappeTestCase):
 		cls.seed = upsert_moh_mvp_v1_portfolio()
 
 	def test_list_active_fixture_two_lines(self):
-		dto = list_budget_lines("MOH-BUD-0001")
-		self.assertEqual(dto["budget"]["code"], "MOH-BUD-0001")
+		dto = list_budget_lines("MOH-BUD-2027-2028")
+		self.assertEqual(dto["budget"]["code"], "MOH-BUD-2027-2028")
 		self.assertEqual(dto["budget"]["status"], "Active")
 		self.assertEqual(dto["line_count"], 2)
 		self.assertEqual(len(dto["lines"]), 2)
@@ -35,7 +35,7 @@ class TestBudgetLines(FrappeTestCase):
 		self.assertEqual(dto["capabilities"]["primary_action"], "request_revision")
 
 		by_code = {r["code"]: r for r in dto["lines"]}
-		l1 = by_code["MOH-BL-0001"]
+		l1 = by_code["MOH-BL-DHI-2027"]
 		self.assertEqual(l1["title"], "Digital clinical systems infrastructure")
 		self.assertEqual(flt(l1["approved"]), 480_000_000)
 		self.assertEqual(flt(l1["reserved"]), 145_000_000)
@@ -46,10 +46,10 @@ class TestBudgetLines(FrappeTestCase):
 		self.assertEqual(l1["actual_freshness"], "Stale")
 		self.assertEqual(l1["status_label"], "Needs attention")
 		self.assertEqual(l1["action"], "review")
-		self.assertEqual(l1["primary_target_code"], "MOH-TGT-0001")
+		self.assertEqual(l1["primary_target_code"], "MOH-TGT-AVAIL-2028")
 
-		l2 = by_code["MOH-BL-0002"]
-		self.assertEqual(l2["title"], "Digital health technical capability")
+		l2 = by_code["MOH-BL-HWD-2027"]
+		self.assertEqual(l2["title"], "Digital Health Workforce Capacity Development")
 		self.assertEqual(flt(l2["approved"]), 80_000_000)
 		self.assertEqual(l2["actual_display"], "Unknown")
 		self.assertEqual(l2["actual_freshness"], "Unknown")
@@ -58,19 +58,19 @@ class TestBudgetLines(FrappeTestCase):
 		self.assertEqual(l2["action"], "view")
 
 	def test_get_line_editor_dto_and_pvc(self):
-		line = get_budget_line("MOH-BL-0001")
-		self.assertEqual(line["code"], "MOH-BL-0001")
+		line = get_budget_line("MOH-BL-DHI-2027")
+		self.assertEqual(line["code"], "MOH-BL-DHI-2027")
 		self.assertEqual(line["external_financial_line_reference"], "HLTH-INF-2027-004")
 		self.assertEqual(line["classification"], "Capital expenditure")
 		self.assertTrue(line["capabilities"]["read_only"])
 		self.assertFalse(line["capabilities"]["can_save"])
 		self.assertEqual(len(line["supporting_targets"]), 1)
-		self.assertEqual(line["supporting_targets"][0]["code"], "MOH-TGT-0002")
+		self.assertEqual(line["supporting_targets"][0]["code"], "MOH-TGT-RESTORE-2028")
 		self.assertTrue(line["supporting_targets"][0]["reason"])
 		self.assertEqual(len(line["value_treatments"]), 4)
 		codes = {t["code"] for t in line["value_treatments"]}
-		self.assertEqual(codes, {"PVO-EFT-01", "PVO-ECO-01", "PVO-RES-01", "PVO-SUS-02"})
-		eco = next(t for t in line["value_treatments"] if t["code"] == "PVO-ECO-01")
+		self.assertEqual(codes, {"MOH-PVC-EFT-01", "MOH-PVC-ECO-01", "MOH-PVC-RES-01", "MOH-PVC-SUS-02"})
+		eco = next(t for t in line["value_treatments"] if t["code"] == "MOH-PVC-ECO-01")
 		self.assertEqual(eco["treatment"], "Dedicated allocation")
 		self.assertEqual(flt(eco["dedicated_amount"]), 40_000_000)
 		self.assertEqual(flt(line["dedicated_total"]), 40_000_000)
@@ -80,15 +80,15 @@ class TestBudgetLines(FrappeTestCase):
 		with self.assertRaises(frappe.PermissionError):
 			save_budget_line(
 				{
-					"budget": "MOH-BUD-0001",
-					"line": "MOH-BL-0001",
+					"budget": "MOH-BUD-2027-2028",
+					"line": "MOH-BL-DHI-2027",
 					"title": "Should not save",
 					"organisational_owner": "Head, ICT Infrastructure",
 					"classification": "Capital expenditure",
 					"funding_source_type": "Exchequer",
 					"funding_source_name": "Government of Kenya Development Budget",
 					"approved_amount": 480_000_000,
-					"primary_target": {"code": "MOH-TGT-0001", "name": "Target"},
+					"primary_target": {"code": "MOH-TGT-AVAIL-2028", "name": "Target"},
 					"value_treatments": [],
 				}
 			)
@@ -140,12 +140,12 @@ class TestBudgetLines(FrappeTestCase):
 				"funding_source_name": "Exchequer",
 				"approved_amount": 50_000_000,
 				"primary_target": {
-					"code": "MOH-TGT-0001",
+					"code": "MOH-TGT-AVAIL-2028",
 					"name": "Availability target",
 				},
 				"value_treatments": [
 					{
-						"code": "PVO-ECO-01",
+						"code": "MOH-PVC-ECO-01",
 						"name": "Whole-life cost",
 						"requirement_level": "Required",
 						"treatment": "Dedicated allocation",
@@ -200,13 +200,13 @@ class TestBudgetLines(FrappeTestCase):
 				"funding_source_name": "Exchequer",
 				"approved_amount": 50_000_000,
 				"primary_target": {
-					"code": "MOH-TGT-0001",
+					"code": "MOH-TGT-AVAIL-2028",
 					"name": "Availability target",
 				},
 				"supporting_targets": [],
 				"value_treatments": [
 					{
-						"code": "PVO-EFT-01",
+						"code": "MOH-PVC-EFT-01",
 						"name": "Efficiency",
 						"requirement_level": "Required",
 						"treatment": "Embedded in line",
@@ -214,7 +214,7 @@ class TestBudgetLines(FrappeTestCase):
 						"rationale": "Included",
 					},
 					{
-						"code": "PVO-ECO-01",
+						"code": "MOH-PVC-ECO-01",
 						"name": "Whole-life cost",
 						"requirement_level": "Required",
 						"treatment": "Dedicated allocation",
@@ -227,10 +227,10 @@ class TestBudgetLines(FrappeTestCase):
 		self.assertTrue(result.get("ok"), result)
 		line = result["line"]
 		self.assertTrue(line["code"].startswith("MOH-BL-"))
-		self.assertNotEqual(line["code"], "MOH-BL-0001")
+		self.assertNotEqual(line["code"], "MOH-BL-DHI-2027")
 		self.assertEqual(line["title"], "Editable draft line")
 		self.assertEqual(len(line["supporting_targets"]), 0)
-		self.assertEqual(line.get("primary_target_code") or (line.get("primary_target") or {}).get("code"), "MOH-TGT-0001")
+		self.assertEqual(line.get("primary_target_code") or (line.get("primary_target") or {}).get("code"), "MOH-TGT-AVAIL-2028")
 		self.assertEqual(flt(line["dedicated_total"]), 10_000_000)
 		self.assertTrue(line["capabilities"]["can_save"])
 
@@ -254,6 +254,6 @@ class TestBudgetLines(FrappeTestCase):
 		frappe.set_user(email)
 		try:
 			with self.assertRaises(frappe.PermissionError):
-				list_budget_lines("MOH-BUD-0001")
+				list_budget_lines("MOH-BUD-2027-2028")
 		finally:
 			frappe.set_user("Administrator")

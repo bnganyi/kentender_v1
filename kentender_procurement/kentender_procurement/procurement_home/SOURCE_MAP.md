@@ -5,7 +5,7 @@ Read-only projection. No Home-persisted totals.
 | Home value | Source model / API | Filter / rule | Permission | Deep link |
 |---|---|---|---|---|
 | PE choices | `pp_scope.get_user_allowed_entities` + Procuring Entity list | User PE + User Permission; break-glass = all | scope | — |
-| FY choices | Budget.`fiscal_year` distinct | Budgets in selected PE (when field present) | Budget read | — |
+| FY choices | Budget.`fiscal_period` distinct → start year | Budgets in selected PE (when field present) | Budget read | — |
 | Action: demand approval | Demand | `Pending HoD Approval` / `Pending Finance Approval` + role queue | DIA roles | `/desk/demand-workbench/{name}` |
 | Action: returned demand | Demand | `Draft` + `return_reason` + `requested_by=user` | owner | `/desk/demand-workbench/{name}` |
 | Action: plan review / returned | Procurement Package | `In Review` / `Returned for Correction` | PP roles | `/desk/planning-hub` |

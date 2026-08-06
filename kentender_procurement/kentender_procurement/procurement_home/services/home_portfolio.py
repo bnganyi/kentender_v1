@@ -10,7 +10,15 @@ from typing import Any
 import frappe
 from frappe.utils import flt
 
+from kentender_procurement.procurement_home.services.home_context import year_from_fiscal_period
 from kentender_procurement.procurement_home.services.pe_aliases import pe_aliases
+
+
+def _budget_fiscal_year(budget: dict[str, Any]) -> int | None:
+	"""Prefer legacy fiscal_year; otherwise parse Budget.fiscal_period."""
+	if budget.get("fiscal_year") not in (None, ""):
+		return year_from_fiscal_period(budget.get("fiscal_year"))
+	return year_from_fiscal_period(budget.get("fiscal_period"))
 
 
 def _can_see_finance(user: str) -> bool:
@@ -84,7 +92,7 @@ def _finance_sums_for_context(
 	approved = 0.0
 	available = 0.0
 	for b in budgets or []:
-		if fiscal_year is not None and int(b.get("fiscal_year") or 0) != int(fiscal_year):
+		if fiscal_year is not None and _budget_fiscal_year(b) != int(fiscal_year):
 			continue
 		pe_val = (b.get("procuring_entity") or "").strip()
 		if pe_val and pe_val not in aliases:

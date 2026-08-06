@@ -44,8 +44,6 @@ def _ensure_user(email: str, roles: list[str], procuring_entity: str | None = No
 		"Strategy Manager",
 		"Strategy Reviewer",
 		"Planning Authority",
-		"Performance Officer",
-		"Performance Verifier",
 	):
 		if role in have and role not in roles:
 			user.remove_roles(role)

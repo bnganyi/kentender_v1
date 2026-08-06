@@ -28,17 +28,17 @@ PE_MOE_CODE = "PE-MOE"
 
 # (email, full_name, roles..., entity_code)
 BUDGET_ROLE_USERS: tuple[tuple[Any, ...], ...] = (
-	("budget.viewer@moh.test", "Budget Viewer MOH", (ROLE_VIEWER,), PE_MOH_CODE),
-	("budget.officer@moh.test", "Budget Officer MOH", (ROLE_OFFICER,), PE_MOH_CODE),
-	("budget.reviewer@moh.test", "Budget Reviewer MOH", (ROLE_REVIEWER,), PE_MOH_CODE),
-	("budget.authority@moh.test", "Budget Authority MOH", (ROLE_AUTHORITY,), PE_MOH_CODE),
+	("moh.viewer@example.test", "Budget Viewer MOH", (ROLE_VIEWER,), PE_MOH_CODE),
+	("moh.medicalservices.officer@example.test", "Budget Officer MOH", (ROLE_OFFICER,), PE_MOH_CODE),
+	("moh.budget.reviewer@example.test", "Budget Reviewer MOH", (ROLE_REVIEWER,), PE_MOH_CODE),
+	("moh.budget.authority@example.test", "Budget Authority MOH", (ROLE_AUTHORITY,), PE_MOH_CODE),
 	(
-		"budget.officer.authority@moh.test",
+		"moh.budget.officer.authority@example.test",
 		"Budget Officer Authority MOH",
 		(ROLE_OFFICER, ROLE_AUTHORITY),
 		PE_MOH_CODE,
 	),
-	("budget.officer@moe.test", "Budget Officer MOE", (ROLE_OFFICER,), PE_MOE_CODE),
+	("other.entity.officer@example.test", "Budget Officer MOE", (ROLE_OFFICER,), PE_MOE_CODE),
 )
 
 
@@ -123,22 +123,19 @@ def _upsert_user(email: str, full_name: str, roles: tuple[str, ...], pe_name: st
 
 
 def upsert_budget_role_users() -> dict[str, Any]:
-	"""Idempotent seed for BUD-SUP-002 role matrix users."""
+	"""Delegate to MOH_MVP_V1 §4.4 personas (replaces prior @moh.test matrix)."""
+	from kentender_core.seeds.moh_mvp_v1.org import upsert_org
+	from kentender_core.seeds.moh_mvp_v1.users import upsert_canonical_users
+
 	ensure_budget_roles()
-	pe_moh = _ensure_pe(PE_MOH_CODE, "Ministry of Health")
-	pe_moe = _ensure_pe(PE_MOE_CODE, "Ministry of Education")
-	pe_by_code = {PE_MOH_CODE: pe_moh, PE_MOE_CODE: pe_moe}
-
-	created: list[str] = []
-	for email, full_name, roles, entity_code in BUDGET_ROLE_USERS:
-		_upsert_user(email, full_name, roles, pe_by_code[entity_code])
-		created.append(email)
-
+	org = upsert_org()
+	users = upsert_canonical_users()
 	frappe.db.commit()
 	return {
 		"ok": True,
-		"users": created,
+		"users": users.get("users") or [],
 		"password": TEST_PASSWORD,
-		"pe_moh": pe_moh,
-		"pe_moe": pe_moe,
+		"pe_moh": org.get("pe_moh"),
+		"pe_moe": org.get("pe_moe"),
+		"delegated_to": "moh_mvp_v1.users",
 	}

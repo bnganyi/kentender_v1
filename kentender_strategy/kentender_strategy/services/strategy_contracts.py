@@ -824,10 +824,10 @@ def get_plan_overview(plan_version: str | None = None, plan_code: str | None = N
 		ROLE_OFFICER,
 		ROLE_MANAGER,
 		"Strategy Viewer",
+		"Strategy Officer",
+		"Strategy Manager",
 		"Strategy Reviewer",
 		"Planning Authority",
-		"Performance Officer",
-		"Performance Verifier",
 		"Auditor",
 		"System Manager",
 	)
@@ -893,7 +893,7 @@ def get_plan_overview(plan_version: str | None = None, plan_code: str | None = N
 			"start_structure": status == "Draft" and empty_structure and can_edit_draft_plan(),
 			"export_plan": False,
 		},
-		"show_policy_note": plan_doc.plan_code == "MOH-SP-0001",
+		"show_policy_note": plan_doc.plan_code == "MOH-SP-2026-2030",
 	}
 
 

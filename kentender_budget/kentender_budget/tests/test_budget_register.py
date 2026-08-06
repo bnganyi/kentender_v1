@@ -206,7 +206,7 @@ class TestBudgetRegister(FrappeTestCase):
 		self.assertEqual((result.get("budget") or {}).get("approval_evidence") or "", "")
 
 	def test_duplicate_active_fiscal_period_rejected(self):
-		"""MOH-BUD-0001 is Active for 2027/28 — second Draft/Active blocked."""
+		"""MOH-BUD-2027-2028 is Active for 2027/28 — second Draft/Active blocked."""
 		_ensure_user("bud.officer.dup@example.com", ["Budget Officer"], self.pe)
 		frappe.set_user("bud.officer.dup@example.com")
 		result = register_budget(
@@ -241,7 +241,7 @@ class TestBudgetRegister(FrappeTestCase):
 		self.assertIn("fiscal_period", second.get("errors") or {})
 
 	def test_closed_period_allows_new_draft(self):
-		"""MOH-BUD-0003 Closed for 2026/27 — new Draft for that period is allowed."""
+		"""MOH-BUD-2026-2027 Closed for 2026/27 — new Draft for that period is allowed."""
 		_ensure_user("bud.officer.closed@example.com", ["Budget Officer"], self.pe)
 		frappe.set_user("bud.officer.closed@example.com")
 		result = register_budget(

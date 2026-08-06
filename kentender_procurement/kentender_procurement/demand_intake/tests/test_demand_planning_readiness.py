@@ -42,7 +42,7 @@ class TestDemandPlanningReadiness(IntegrationTestCase):
 
 	def _seed_budget_line(self):
 		bl_name = frappe.db.get_value(
-			"Budget Line", {"generated_reference": "MOH-BL-0001"}, "name"
+			"Budget Line", {"generated_reference": "MOH-BL-DHI-2027"}, "name"
 		) or (self.seed.get("downstream") or {}).get("linked", {}).get("budget_line")
 		if not bl_name:
 			return None, None, None

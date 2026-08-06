@@ -11,7 +11,7 @@ import { loginAsProcurementPlanner } from "../../helpers/auth";
 const BENCH_ROOT = path.resolve(__dirname, "../../../../../..");
 const PLAN_CODE = "PLAN-MOH-2026";
 const WORKS_DEMAND_TITLE = "District Hospital Renovation Works";
-const TARGET_CODE = "MOH-TGT-0001";
+const TARGET_CODE = "MOH-TGT-AVAIL-2028";
 
 function resetWorksMasterSeedIncludedInPlan(): void {
 	// Best-effort drain when RQ is overloaded (common after dense Playwright runs).

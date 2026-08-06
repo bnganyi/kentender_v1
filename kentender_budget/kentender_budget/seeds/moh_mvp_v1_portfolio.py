@@ -8,97 +8,112 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from frappe.utils import add_days, flt, now_datetime, today
+from frappe.utils import add_days, flt, get_datetime, today
 
 from kentender_budget.services.budget_permissions import ensure_budget_roles
 from kentender_core.seeds._common import ensure_currency_kes, ensure_procuring_entity
+from kentender_core.seeds.moh_mvp_v1 import constants as C
 
-FIXTURE_NS = "MOH_MVP_V1"
-PE_CODE = "PE-MOH"
-PE_NAME = "Ministry of Health"
+FIXTURE_NS = C.FIXTURE_NS
+PE_CODE = C.PE_MOH
+PE_NAME = C.PE_MOH_NAME
 
-# Pack §9.1 / Stitch Prompt 5 — immutable display snapshots (not live Strategy titles).
-_PVC_TREATMENTS_BL0001 = (
+
+def _fixture_now():
+	return get_datetime(C.FIXTURE_NOW_STR)
+
+
+def _fixture_date_offset(days: int):
+	return C.fixture_date_offset_days(days)
+
+
+def _fixture_datetime_offset(days: int):
+	return get_datetime(C.fixture_datetime_offset_days(days))
+
+
+def _wall_clock_stale_as_at():
+	"""Date old enough to render Stale against real `today()` (fixture clock is narrative)."""
+	from kentender_budget.services.budget_line_contracts import ACTUAL_STALE_DAYS
+
+	return add_days(today(), -(int(ACTUAL_STALE_DAYS) + 1))
+
+
+# Contract §6 — treatments keyed by Plan Value Commitment codes.
+_PVC_TREATMENTS_DHI = (
 	{
-		"pvc_code": "PVO-EFT-01",
-		"pvc_name": "Improve infrastructure efficiency",
+		"pvc_code": "MOH-PVC-EFT-01",
+		"pvc_name": "Improve availability of critical health services",
 		"requirement_level": "Required",
 		"treatment": "Embedded in line",
 		"dedicated_amount": 0,
-		"rationale": (
-			"Efficiency considerations are included in infrastructure sizing, "
-			"energy use and operating requirements."
-		),
+		"rationale": "Infrastructure supports reliable critical health services",
 	},
 	{
-		"pvc_code": "PVO-ECO-01",
+		"pvc_code": "MOH-PVC-ECO-01",
 		"pvc_name": "Reduce whole-life infrastructure cost",
 		"requirement_level": "Required",
 		"treatment": "Dedicated allocation",
 		"dedicated_amount": 40_000_000,
 		"rationale": (
-			"Dedicated to whole-life costing, energy-efficiency and lifecycle-optimisation activities."
+			"KES 40,000,000 for whole-life costing, energy efficiency and lifecycle optimisation"
 		),
 	},
 	{
-		"pvc_code": "PVO-RES-01",
-		"pvc_name": "Improve system resilience",
+		"pvc_code": "MOH-PVC-RES-01",
+		"pvc_name": "Improve continuity of critical services",
 		"requirement_level": "Recommended",
 		"treatment": "Embedded in line",
 		"dedicated_amount": 0,
-		"rationale": "Resilience is included in redundancy, continuity and support activities.",
+		"rationale": "Redundancy, continuity and support requirements are included",
 	},
 	{
-		"pvc_code": "PVO-SUS-02",
-		"pvc_name": "Ensure responsible asset disposal",
+		"pvc_code": "MOH-PVC-SUS-02",
+		"pvc_name": "Ensure compliant handling of replaced ICT equipment",
 		"requirement_level": "Required",
 		"treatment": "No direct allocation required",
 		"dedicated_amount": 0,
-		"rationale": (
-			"Disposal costs are included within the asset-replacement activities funded by this line."
-		),
+		"rationale": "Disposal cost is included in funded asset-replacement activities",
 	},
 )
 
-_PVC_TREATMENTS_BL0002 = (
+_PVC_TREATMENTS_HWD = (
 	{
-		"pvc_code": "PVO-EFT-01",
-		"pvc_name": "Improve infrastructure efficiency",
+		"pvc_code": "MOH-PVC-LOC-01",
+		"pvc_name": "Develop internal and local technical capability",
 		"requirement_level": "Required",
 		"treatment": "Embedded in line",
 		"dedicated_amount": 0,
-		"rationale": "Training delivery uses the existing digital-learning platform.",
+		"rationale": "Training and certification build internal technical capability",
 	},
 	{
-		"pvc_code": "PVO-ECO-01",
+		"pvc_code": "MOH-PVC-EFT-01",
+		"pvc_name": "Improve availability of critical health services",
+		"requirement_level": "Required",
+		"treatment": "Embedded in line",
+		"dedicated_amount": 0,
+		"rationale": "Capability supports continuity of digital clinical services",
+	},
+	{
+		"pvc_code": "MOH-PVC-ECO-01",
 		"pvc_name": "Reduce whole-life infrastructure cost",
 		"requirement_level": "Required",
 		"treatment": "Embedded in line",
 		"dedicated_amount": 0,
-		"rationale": "Training and certification costs are included in the line amount.",
+		"rationale": "Training and certification costs are included in the line amount",
 	},
 	{
-		"pvc_code": "PVO-RES-01",
-		"pvc_name": "Improve system resilience",
+		"pvc_code": "MOH-PVC-RES-01",
+		"pvc_name": "Improve continuity of critical services",
 		"requirement_level": "Recommended",
 		"treatment": "Embedded in line",
 		"dedicated_amount": 0,
-		"rationale": "Continuity capability is included in the training programme.",
-	},
-	{
-		"pvc_code": "PVO-SUS-02",
-		"pvc_name": "Ensure responsible asset disposal",
-		"requirement_level": "Required",
-		"treatment": "Not applicable",
-		"dedicated_amount": 0,
-		"rationale": "The line does not acquire or replace physical assets.",
-		"reviewer_accepted": 1,
+		"rationale": "Continuity capability is included in the training programme",
 	},
 )
 
 BUDGETS = (
 	{
-		"generated_reference": "MOH-BUD-0001",
+		"generated_reference": C.BUD_ACTIVE,
 		"title": "Ministry of Health Procurement Budget FY 2027/28",
 		"fiscal_period": "2027/28",
 		"start_date": "2027-07-01",
@@ -107,65 +122,61 @@ BUDGETS = (
 		"budget_owner": "Director, Finance and Accounts",
 		"authoritative_reference": "MOH-FIN-BUD-2027-01",
 		"approval_date": "2027-06-15",
-		"approval_evidence": "/private/files/moh-bud-0001-approval.pdf",
+		"approval_evidence": "/private/files/moh-bud-2027-approval.pdf",
 		"external_approved_total": 560_000_000,
 		"attention_note": "Actual expenditure is stale on 1 line",
 		"readiness_issue_count": 0,
 		"strategy_pvc_treated": 4,
 		"strategy_pvc_applicable": 4,
-		# BUD-UI-11 — activation record on Active baseline.
-		"submitted_by": "budget.rev.seed@example.com",
-		"reviewed_by": "Administrator",
-		"activated_by": "Administrator",
+		"submitted_by": C.USER_MEDICAL,
+		"reviewed_by": C.USER_BUD_REVIEWER,
+		"activated_by": C.USER_BUD_AUTHORITY,
 		"submitted_at_offset_days": -40,
 		"reviewed_at_offset_days": -38,
 		"activated_at_offset_days": -35,
 		"lines": (
 			{
-				"generated_reference": "MOH-BL-0001",
+				"generated_reference": C.BL_DHI_2027,
 				"title": "Digital clinical systems infrastructure",
 				"approved_amount": 480_000_000,
 				"amount_reserved": 145_000_000,
 				"amount_committed": 310_000_000,
 				"amount_actual": 180_000_000,
-				# Prompt 5: stale actuals (~3 days) — Unknown/Stale not fake zero.
-				"actual_as_at_offset_days": -3,
+				"actual_as_at_stale": True,
 				"classification": "Capital expenditure",
 				"external_financial_line_reference": "HLTH-INF-2027-004",
-				"organisational_owner": "Head, ICT Infrastructure",
+				"organisational_owner": C.DIR_DHP_NAME,
+				"owner_state_department": C.SD_MEDICAL,
+				"owner_directorate": C.DIR_DHP,
 				"funding_source_type": "Exchequer",
 				"funding_source_name": "Government of Kenya Development Budget",
-				"primary_target_code": "MOH-TGT-0001",
+				"primary_target_code": C.TGT_AVAIL_2028,
 				"primary_target_name": "At least 99.9% annual availability by 30 June 2028",
 				"supporting_targets": (
 					{
-						"target_code": "MOH-TGT-0002",
-						"target_name": "Restore critical services within 4 hours",
-						"reason": (
-							"Infrastructure investment supports service restoration "
-							"and continuity requirements."
-						),
+						"target_code": C.TGT_RESTORE_2028,
+						"target_name": "Restore critical services within four hours by 30 June 2028",
+						"reason": "Infrastructure investment supports service restoration and continuity.",
 					},
 				),
-				"value_treatments": _PVC_TREATMENTS_BL0001,
+				"value_treatments": _PVC_TREATMENTS_DHI,
 				"order_index": 1,
-				# Pack §9.3 downstream funding scenario (activity ledger).
 				"funding_activity": {
 					"reservation": {
-						"generated_reference": "RSV-MOH-0001",
-						"demand_code": "DMD-MOH-2027-014",
+						"generated_reference": C.RSV_CODE,
+						"demand_code": C.DEMAND_CODE,
 						"demand_title": "National digital health infrastructure upgrade",
 						"original_amount": 455_000_000,
 						"remaining_reserved": 145_000_000,
 						"status": "Partially converted",
 						"event_date": "2027-09-12",
-						"plan_item_code": "PPI-MOH-2027-021",
-						"current_downstream_reference": "TND-MOH-2027-008",
-						"idempotency_key": "MOH_MVP_V1:RSV-MOH-0001",
+						"plan_item_code": C.PLAN_ITEM_CODE,
+						"current_downstream_reference": C.TENDER_CODE,
+						"idempotency_key": f"{C.FIXTURE_NS}:{C.RSV_CODE}",
 					},
 					"commitment": {
-						"generated_reference": "COM-MOH-0001",
-						"contract_code": "CTR-MOH-2027-005",
+						"generated_reference": C.COM_CODE,
+						"contract_code": C.CONTRACT_CODE,
 						"contract_title": "Digital health infrastructure implementation contract",
 						"original_amount": 310_000_000,
 						"current_amount": 310_000_000,
@@ -174,32 +185,33 @@ BUDGETS = (
 						"event_date": "2027-10-28",
 					},
 					"expenditure": {
-						"generated_reference": "EXP-MOH-0001",
+						"generated_reference": C.EXP_CODE,
 						"source_system": "Finance system",
 						"source_reference": "FIN-SNAP-MOH-2027-11",
-						"contract_code": "CTR-MOH-2027-005",
+						"contract_code": C.CONTRACT_CODE,
 						"amount": 180_000_000,
-						# Pack §9.3: stale reconciliation (not fake zero).
 						"reconciliation_status": "Stale",
 						"source_as_at_offset_days": -3,
 					},
 				},
 			},
 			{
-				"generated_reference": "MOH-BL-0002",
-				"title": "Digital health technical capability",
+				"generated_reference": C.BL_HWD_2027,
+				"title": "Digital Health Workforce Capacity Development",
 				"approved_amount": 80_000_000,
 				"amount_reserved": 0,
 				"amount_committed": 0,
 				"amount_actual": 0,
 				"actual_as_at": None,
 				"classification": "Services",
-				"organisational_owner": "Director, Digital Health",
+				"organisational_owner": C.DIR_HRMD_NAME,
+				"owner_state_department": C.SD_PUBLIC,
+				"owner_directorate": C.DIR_HRMD,
 				"funding_source_type": "Exchequer",
 				"funding_source_name": "Government of Kenya Development Budget",
-				"primary_target_code": "MOH-TGT-0003",
-				"primary_target_name": "Digital health technical capability target",
-				"value_treatments": _PVC_TREATMENTS_BL0002,
+				"primary_target_code": C.TGT_SKILLS_2029,
+				"primary_target_name": "Train and certify 150 digital-health technical staff by 30 June 2029",
+				"value_treatments": _PVC_TREATMENTS_HWD,
 				"order_index": 2,
 			},
 		),
@@ -215,7 +227,7 @@ BUDGETS = (
 				"reason": "Externally approved uplift for digital clinical systems infrastructure.",
 				"lines": (
 					{
-						"line_code": "MOH-BL-0001",
+						"line_code": C.BL_DHI_2027,
 						"change_amount": 25_000_000,
 					},
 				),
@@ -229,11 +241,10 @@ BUDGETS = (
 				"effective_date": "2027-11-20",
 				"reason": "Submitted uplift pending Budget Authority apply.",
 				"approval_evidence": "/private/files/moh-rev-moh-02.pdf",
-				# Non-Admin submitter so Authority/Admin can Apply (AC-018).
 				"submitted_by": "budget.rev.seed@example.com",
 				"lines": (
 					{
-						"line_code": "MOH-BL-0002",
+						"line_code": C.BL_HWD_2027,
 						"change_amount": 5_000_000,
 					},
 				),
@@ -241,22 +252,120 @@ BUDGETS = (
 		),
 	},
 	{
-		"generated_reference": "MOH-BUD-0002",
+		"generated_reference": C.BUD_DRAFT,
 		"title": "Ministry of Health Procurement Budget FY 2028/29",
+		"fiscal_period": "2028/29",
+		"start_date": "2028-07-01",
+		"end_date": "2029-06-30",
+		"status": "Draft",
+		"budget_owner": "Director, Finance and Accounts",
+		"authoritative_reference": "MOH-FIN-BUD-2028-01",
+		"approval_date": "2028-06-10",
+		"approval_evidence": "/private/files/moh-bud-2028-approval.pdf",
+		"external_approved_total": 600_000_000,
+		"attention_note": "",
+		"readiness_issue_count": 0,
+		"lines": (
+			{
+				"generated_reference": C.BL_DHI_2028,
+				"title": "Digital clinical systems infrastructure",
+				"approved_amount": 480_000_000,
+				"amount_reserved": 0,
+				"amount_committed": 0,
+				"classification": "Capital expenditure",
+				"organisational_owner": C.DIR_DHP_NAME,
+				"owner_state_department": C.SD_MEDICAL,
+				"owner_directorate": C.DIR_DHP,
+				"funding_source_type": "Exchequer",
+				"funding_source_name": "Government of Kenya Development Budget",
+				"primary_target_code": C.TGT_AVAIL_2029,
+				"primary_target_name": "Maintain at least 99.95% annual availability by 30 June 2029",
+				"supporting_targets": (
+					{
+						"target_code": C.TGT_RESTORE_2029,
+						"target_name": "Restore critical services within two hours by 30 June 2029",
+						"reason": "Successor restoration target for FY 2028/29 infrastructure line.",
+					},
+				),
+				"value_treatments": _PVC_TREATMENTS_DHI,
+				"order_index": 1,
+			},
+			{
+				"generated_reference": C.BL_HWD_2028,
+				"title": "Digital-health workforce capability",
+				"approved_amount": 120_000_000,
+				"amount_reserved": 0,
+				"amount_committed": 0,
+				"classification": "Services",
+				"organisational_owner": C.DIR_HRMD_NAME,
+				"owner_state_department": C.SD_PUBLIC,
+				"owner_directorate": C.DIR_HRMD,
+				"funding_source_type": "Exchequer",
+				"funding_source_name": "Government of Kenya Development Budget",
+				"primary_target_code": C.TGT_SKILLS_2030,
+				"primary_target_name": "Train and certify 220 digital-health technical staff by 30 June 2030",
+				"value_treatments": _PVC_TREATMENTS_HWD,
+				"order_index": 2,
+			},
+		),
+	},
+	{
+		"generated_reference": C.BUD_CLOSED,
+		"title": "Ministry of Health Procurement Budget FY 2026/27",
+		"fiscal_period": "2026/27",
+		"start_date": "2026-07-01",
+		"end_date": "2027-06-30",
+		"status": "Closed",
+		"budget_owner": "Director, Finance and Accounts",
+		"authoritative_reference": "MOH-FIN-BUD-2026-01",
+		"approval_date": "2026-06-12",
+		"approval_evidence": "/private/files/moh-bud-2026-approval.pdf",
+		"external_approved_total": 520_000_000,
+		"attention_note": "",
+		"readiness_issue_count": 0,
+		"lines": (
+			{
+				"generated_reference": "MOH-BL-CLOSED-2026",
+				"title": "Prior-year digital health envelope",
+				"approved_amount": 520_000_000,
+				"amount_reserved": 0,
+				"amount_committed": 520_000_000,
+				"classification": "Capital expenditure",
+				"organisational_owner": C.DIR_DHP_NAME,
+				"owner_state_department": C.SD_MEDICAL,
+				"owner_directorate": C.DIR_DHP,
+				"funding_source_type": "Exchequer",
+				"funding_source_name": "Government of Kenya Development Budget",
+				"primary_target_code": C.TGT_AVAIL_2028,
+				"primary_target_name": "At least 99.9% annual availability by 30 June 2028",
+				"value_treatments": _PVC_TREATMENTS_DHI,
+				"order_index": 1,
+			},
+		),
+	},
+)
+
+# Test-only edges (not loaded by canonical orchestrator). Kept for readiness /
+# role-matrix / XMOD-STR-001 Playwright that need Submitted + incomplete Draft.
+EDGE_NS = "MOH_MVP_V1_EDGE"
+EDGE_BUDGETS = (
+	{
+		"generated_reference": "MOH-BUD-0002",
+		"title": "Ministry of Health Procurement Budget FY 2028/29 (Submitted edge)",
 		"fiscal_period": "2028/29",
 		"start_date": "2028-07-01",
 		"end_date": "2029-06-30",
 		"status": "Submitted",
 		"budget_owner": "Director, Finance and Accounts",
-		"authoritative_reference": "MOH-FIN-BUD-2028-01",
+		"authoritative_reference": "MOH-FIN-BUD-2028-EDGE-01",
 		"approval_date": "2028-06-10",
 		"approval_evidence": "/private/files/moh-bud-0002-approval.pdf",
 		"external_approved_total": 600_000_000,
 		"attention_note": "",
-		# Portfolio funding_exceptions attention (not live readiness blockers).
 		"readiness_issue_count": 2,
 		"submitted_by": "budget.rev.seed@example.com",
 		"submitted_at_offset_days": -2,
+		"fixture_namespace": EDGE_NS,
 		"lines": (
 			{
 				"generated_reference": "MOH-BL-0003",
@@ -265,12 +374,14 @@ BUDGETS = (
 				"amount_reserved": 0,
 				"amount_committed": 0,
 				"classification": "Capital expenditure",
-				"organisational_owner": "Director, Digital Health",
+				"organisational_owner": C.DIR_DHP_NAME,
+				"owner_state_department": C.SD_MEDICAL,
+				"owner_directorate": C.DIR_DHP,
 				"funding_source_type": "Exchequer",
 				"funding_source_name": "Government of Kenya Development Budget",
-				"primary_target_code": "MOH-TGT-0001",
-				"primary_target_name": "At least 99.9% annual availability by 30 June 2028",
-				"value_treatments": _PVC_TREATMENTS_BL0001,
+				"primary_target_code": C.TGT_AVAIL_2029,
+				"primary_target_name": "Maintain at least 99.95% annual availability by 30 June 2029",
+				"value_treatments": _PVC_TREATMENTS_DHI,
 				"order_index": 1,
 			},
 			{
@@ -280,49 +391,18 @@ BUDGETS = (
 				"amount_reserved": 0,
 				"amount_committed": 0,
 				"classification": "Services",
-				"organisational_owner": "Director, Digital Health",
+				"organisational_owner": C.DIR_HRMD_NAME,
+				"owner_state_department": C.SD_PUBLIC,
+				"owner_directorate": C.DIR_HRMD,
 				"funding_source_type": "Exchequer",
 				"funding_source_name": "Government of Kenya Development Budget",
-				"primary_target_code": "MOH-TGT-0003",
-				"primary_target_name": "Digital health technical capability target",
-				"value_treatments": _PVC_TREATMENTS_BL0002,
+				"primary_target_code": C.TGT_SKILLS_2029,
+				"primary_target_name": "Train and certify 150 digital-health technical staff by 30 June 2029",
+				"value_treatments": _PVC_TREATMENTS_HWD,
 				"order_index": 2,
 			},
 		),
 	},
-	{
-		"generated_reference": "MOH-BUD-0003",
-		"title": "Ministry of Health Procurement Budget FY 2026/27",
-		"fiscal_period": "2026/27",
-		"start_date": "2026-07-01",
-		"end_date": "2027-06-30",
-		"status": "Closed",
-		"budget_owner": "Director, Finance and Accounts",
-		"authoritative_reference": "MOH-FIN-BUD-2026-01",
-		"approval_date": "2026-06-12",
-		"approval_evidence": "/private/files/moh-bud-0003-approval.pdf",
-		"external_approved_total": 520_000_000,
-		"attention_note": "",
-		"readiness_issue_count": 0,
-		"lines": (
-			{
-				"generated_reference": "MOH-BL-0005",
-				"title": "Prior-year digital health envelope",
-				"approved_amount": 520_000_000,
-				"amount_reserved": 0,
-				"amount_committed": 520_000_000,
-				"classification": "Capital expenditure",
-				"organisational_owner": "Director, Digital Health",
-				"funding_source_type": "Exchequer",
-				"funding_source_name": "Government of Kenya Development Budget",
-				"primary_target_code": "MOH-TGT-0001",
-				"primary_target_name": "At least 99.9% annual availability by 30 June 2028",
-				"value_treatments": _PVC_TREATMENTS_BL0001,
-				"order_index": 1,
-			},
-		),
-	},
-	# BUD-UI-11 — Draft with intentional readiness blockers (Stitch checklist smoke).
 	{
 		"generated_reference": "MOH-BUD-0004",
 		"title": "Ministry of Health Procurement Budget FY 2029/30",
@@ -337,6 +417,7 @@ BUDGETS = (
 		"external_approved_total": 200_000_000,
 		"attention_note": "",
 		"readiness_issue_count": 3,
+		"fixture_namespace": EDGE_NS,
 		"lines": (
 			{
 				"generated_reference": "MOH-BL-0006",
@@ -346,9 +427,10 @@ BUDGETS = (
 				"amount_committed": 0,
 				"classification": "Goods",
 				"organisational_owner": "Director, Primary Health",
+				"owner_state_department": C.SD_PUBLIC,
+				"owner_directorate": C.DIR_HRMD,
 				"funding_source_type": "Exchequer",
 				"funding_source_name": "Government of Kenya Development Budget",
-				# Intentional: missing primary Strategy target.
 				"primary_target_code": "",
 				"primary_target_name": "",
 				"order_index": 1,
@@ -361,11 +443,12 @@ BUDGETS = (
 				"amount_committed": 0,
 				"classification": "Services",
 				"organisational_owner": "Director, Primary Health",
+				"owner_state_department": C.SD_PUBLIC,
+				"owner_directorate": C.DIR_HRMD,
 				"funding_source_type": "Exchequer",
 				"funding_source_name": "Government of Kenya Development Budget",
-				"primary_target_code": "MOH-TGT-0003",
-				"primary_target_name": "Digital health technical capability target",
-				# Intentional: no value treatments → Required PVC incomplete.
+				"primary_target_code": C.TGT_SKILLS_2029,
+				"primary_target_name": "Train and certify 150 digital-health technical staff by 30 June 2029",
 				"order_index": 2,
 			},
 		),
@@ -408,7 +491,10 @@ def _resolve_target_snapshot(code: str, fallback_name: str) -> dict[str, str]:
 
 
 def _resolve_pvc_id(code: str) -> str:
-	"""Best-effort link to Plan Value Commitment / Public Value Objective code."""
+	"""Prefer Plan Value Commitment.commitment_code; fall back to PVO code lookup."""
+	pvc = frappe.db.get_value("Plan Value Commitment", {"commitment_code": code}, "name")
+	if pvc:
+		return pvc
 	name = frappe.db.get_value(
 		"Public Value Objective",
 		{"objective_code": code, "status": "Active"},
@@ -418,15 +504,18 @@ def _resolve_pvc_id(code: str) -> str:
 		name = frappe.db.get_value("Public Value Objective", {"objective_code": code}, "name")
 	if not name:
 		return ""
-	pvc = frappe.db.get_value(
-		"Plan Value Commitment",
-		{"public_value_objective_version": name},
-		"name",
+	return (
+		frappe.db.get_value(
+			"Plan Value Commitment",
+			{"public_value_objective_version": name},
+			"name",
+		)
+		or ""
 	)
-	return pvc or ""
 
 
 def _upsert_budget(pe_name: str, spec: dict[str, Any]) -> str:
+	ns = spec.get("fixture_namespace") or FIXTURE_NS
 	existing = frappe.db.get_value(
 		"Budget", {"generated_reference": spec["generated_reference"]}, "name"
 	)
@@ -450,7 +539,7 @@ def _upsert_budget(pe_name: str, spec: dict[str, Any]) -> str:
 		"readiness_issue_count": int(spec.get("readiness_issue_count") or 0),
 		"strategy_pvc_treated": int(spec.get("strategy_pvc_treated") or 0),
 		"strategy_pvc_applicable": int(spec.get("strategy_pvc_applicable") or 0),
-		"fixture_namespace": FIXTURE_NS,
+		"fixture_namespace": ns,
 		"return_reason": "",
 	}
 	if existing:
@@ -471,21 +560,21 @@ def _upsert_budget(pe_name: str, spec: dict[str, Any]) -> str:
 		gov_updates["submitted_by"] = None
 		gov_updates["submitted_at"] = None
 	if "submitted_at_offset_days" in spec:
-		gov_updates["submitted_at"] = add_days(now_datetime(), int(spec["submitted_at_offset_days"]))
+		gov_updates["submitted_at"] = _fixture_datetime_offset(int(spec["submitted_at_offset_days"]))
 	if spec.get("reviewed_by"):
 		gov_updates["reviewed_by"] = spec["reviewed_by"]
 	elif spec["status"] in ("Draft", "Submitted", "Returned"):
 		gov_updates["reviewed_by"] = None
 		gov_updates["reviewed_at"] = None
 	if "reviewed_at_offset_days" in spec:
-		gov_updates["reviewed_at"] = add_days(now_datetime(), int(spec["reviewed_at_offset_days"]))
+		gov_updates["reviewed_at"] = _fixture_datetime_offset(int(spec["reviewed_at_offset_days"]))
 	if spec.get("activated_by"):
 		gov_updates["activated_by"] = spec["activated_by"]
 	elif spec["status"] != "Active":
 		gov_updates["activated_by"] = None
 		gov_updates["activated_at"] = None
 	if "activated_at_offset_days" in spec:
-		gov_updates["activated_at"] = add_days(now_datetime(), int(spec["activated_at_offset_days"]))
+		gov_updates["activated_at"] = _fixture_datetime_offset(int(spec["activated_at_offset_days"]))
 	if gov_updates:
 		frappe.db.set_value("Budget", budget_name, gov_updates, update_modified=False)
 
@@ -494,15 +583,17 @@ def _upsert_budget(pe_name: str, spec: dict[str, Any]) -> str:
 	_clear_fixture_activity(budget_name)
 	for line_name in frappe.get_all(
 		"Budget Line",
-		filters={"budget": budget_name, "fixture_namespace": FIXTURE_NS},
+		filters={"budget": budget_name, "fixture_namespace": ns},
 		pluck="name",
 	):
 		frappe.delete_doc("Budget Line", line_name, force=1, ignore_permissions=True)
 
 	for line in spec.get("lines") or ():
 		actual_as_at = line.get("actual_as_at")
-		if "actual_as_at_offset_days" in line:
-			actual_as_at = add_days(today(), int(line["actual_as_at_offset_days"]))
+		if line.get("actual_as_at_stale"):
+			actual_as_at = _wall_clock_stale_as_at()
+		elif "actual_as_at_offset_days" in line:
+			actual_as_at = _fixture_date_offset(int(line["actual_as_at_offset_days"]))
 
 		primary = None
 		if line.get("primary_target_code"):
@@ -547,6 +638,8 @@ def _upsert_budget(pe_name: str, spec: dict[str, Any]) -> str:
 				"generated_reference": line["generated_reference"],
 				"title": line["title"],
 				"organisational_owner": line["organisational_owner"],
+				"owner_state_department": line.get("owner_state_department") or "",
+				"owner_directorate": line.get("owner_directorate") or "",
 				"classification": line.get("classification") or "Capital expenditure",
 				"funding_source_type": line.get("funding_source_type") or "Exchequer",
 				"funding_source_name": line.get("funding_source_name")
@@ -569,7 +662,7 @@ def _upsert_budget(pe_name: str, spec: dict[str, Any]) -> str:
 				"currency": "KES",
 				"is_active": 1,
 				"order_index": line.get("order_index") or 0,
-				"fixture_namespace": FIXTURE_NS,
+				"fixture_namespace": ns,
 			}
 		)
 		# Fixture may snapshot historical / non-selectable-for-new targets; API save enforces Active.
@@ -665,7 +758,7 @@ def _seed_budget_revision(budget_name: str, rev_spec: dict | None) -> None:
 	)
 	if status == "Submitted":
 		doc.submitted_by = rev_spec.get("submitted_by") or "Administrator"
-		doc.submitted_at = now_datetime()
+		doc.submitted_at = _fixture_now()
 	doc.insert(ignore_permissions=True)
 
 
@@ -742,7 +835,7 @@ def _seed_line_activity(budget_name: str, line_name: str, activity: dict | None)
 	if exp and frappe.db.exists("DocType", "Expenditure Snapshot"):
 		source_as_at = exp.get("source_as_at")
 		if "source_as_at_offset_days" in exp:
-			source_as_at = add_days(today(), int(exp["source_as_at_offset_days"]))
+			source_as_at = _fixture_date_offset(int(exp["source_as_at_offset_days"]))
 		frappe.get_doc(
 			{
 				"doctype": "Expenditure Snapshot",
@@ -797,8 +890,8 @@ def _clear_fixture_audit(budget_name: str) -> None:
 
 
 def _seed_budget_audit(budget_name: str, budget_code: str) -> None:
-	"""BUD-UI-12 — pack-aligned immutable audit ledger for MOH-BUD-0001."""
-	if budget_code != "MOH-BUD-0001":
+	"""BUD-UI-12 — pack-aligned immutable audit ledger for Active FY Budget."""
+	if budget_code != C.BUD_ACTIVE:
 		return
 	if not frappe.db.exists("DocType", "Budget Audit Event"):
 		return
@@ -838,7 +931,7 @@ def _seed_budget_audit(budget_name: str, budget_code: str) -> None:
 			"event_at": "2027-11-05 08:00:00",
 			"actor": "Finance system",
 			"actor_kind": "integration",
-			"record_code": "EXP-MOH-0001",
+			"record_code": "EXP-MOH-2027-005-01",
 			"record_doctype": "Expenditure Snapshot",
 			"change_summary": f"Actual: {format_kes_full(180_000_000)} (Stale)",
 			"source_reference": "FIN-SNAP-MOH-2027-11",
@@ -848,7 +941,7 @@ def _seed_budget_audit(budget_name: str, budget_code: str) -> None:
 			"event_at": "2027-10-28 10:00:00",
 			"actor": "System",
 			"actor_kind": "system",
-			"record_code": "COM-MOH-0001",
+			"record_code": "COM-MOH-2027-005",
 			"record_doctype": "Procurement Commitment",
 			"change_summary": f"Commitment: {format_kes_full(310_000_000)}",
 			"source_reference": "CTR-MOH-2027-005",
@@ -914,25 +1007,34 @@ def _seed_budget_audit(budget_name: str, budget_code: str) -> None:
 		)
 
 
-def upsert_moh_mvp_v1_portfolio() -> dict[str, Any]:
-	"""Idempotent portfolio seed for BUD-UI-01 / Overview / Lines."""
+def upsert_moh_mvp_v1_portfolio(*, include_test_edges: bool = True) -> dict[str, Any]:
+	"""Idempotent portfolio seed for BUD-UI-01 / Overview / Lines.
+
+	Canonical orchestrator passes include_test_edges=False.
+	Domain/UI tests keep edges (Submitted 0002 + incomplete Draft 0004).
+	"""
 	frappe.only_for(("System Manager", "Administrator"))
 	ensure_budget_roles()
 	ensure_currency_kes()
 	_ensure_seed_revision_officer()
 	pe_name = ensure_procuring_entity(PE_CODE, PE_NAME)
+	specs = list(BUDGETS)
+	if include_test_edges:
+		specs.extend(EDGE_BUDGETS)
 	created: list[str] = []
-	for spec in BUDGETS:
+	for spec in specs:
 		name = _upsert_budget(pe_name, spec)
 		created.append(name)
-		_seed_budget_audit(name, spec["generated_reference"])
+		if spec.get("fixture_namespace", FIXTURE_NS) == FIXTURE_NS:
+			_seed_budget_audit(name, spec["generated_reference"])
 	frappe.db.commit()
 	return {
 		"ok": True,
 		"fixture_namespace": FIXTURE_NS,
 		"procuring_entity": pe_name,
 		"budgets": created,
-		"codes": [b["generated_reference"] for b in BUDGETS],
+		"codes": [b["generated_reference"] for b in specs],
+		"include_test_edges": include_test_edges,
 	}
 
 

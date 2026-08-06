@@ -9,6 +9,27 @@ test.describe("Procurement Home — functional Desk page", () => {
 		await loginAsAdministrator(page);
 	});
 
+	test("Desktop → Procurement first open shows left rail without refresh", async ({ page }) => {
+		test.setTimeout(120_000);
+		await page.goto("/desk", { waitUntil: "domcontentloaded" });
+		await page.getByRole("link", { name: /Procurement/i }).first().click();
+		await expect(page).toHaveURL(/\/desk\/kt-procurement-home/, { timeout: 30_000 });
+		await expect(page.getByTestId("kt-ph-root")).toBeVisible({ timeout: 45_000 });
+		const rail = page.locator(".body-sidebar-container");
+		await expect(rail).toBeVisible({ timeout: 30_000 });
+		await expect
+			.poll(async () => {
+				return rail.evaluate((el) => {
+					const s = getComputedStyle(el);
+					return s.display !== "none" && el.getBoundingClientRect().width > 40;
+				});
+			})
+			.toBe(true);
+		await expect(page.locator(`${NATIVE_RAIL} .sidebar-header .header-title`)).toHaveText(
+			/^\s*Procurement\s*$/i
+		);
+	});
+
 	test("loads Stitch content order inside Procurement rail with Home active", async ({ page }) => {
 		test.setTimeout(120_000);
 		await page.goto("/desk/kt-procurement-home", { waitUntil: "domcontentloaded" });

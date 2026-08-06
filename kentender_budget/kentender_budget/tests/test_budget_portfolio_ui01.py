@@ -39,8 +39,8 @@ class TestBudgetPortfolioUi01(FrappeTestCase):
 	def test_list_includes_stitch_fixture_rows(self):
 		rows = list_budgets(procuring_entity=self.seed["procuring_entity"])
 		by_code = {r["code"]: r for r in rows}
-		self.assertIn("MOH-BUD-0001", by_code)
-		active = by_code["MOH-BUD-0001"]
+		self.assertIn("MOH-BUD-2027-2028", by_code)
+		active = by_code["MOH-BUD-2027-2028"]
 		self.assertEqual(active["status"], "Active")
 		self.assertEqual(active["approved_display"], "KES 560M")
 		self.assertEqual(active["available_display"], "KES 105M")
@@ -53,7 +53,7 @@ class TestBudgetPortfolioUi01(FrappeTestCase):
 		self.assertEqual(submitted["available_display"], "Not active")
 		self.assertEqual(submitted["action"], "review")
 
-		closed = by_code["MOH-BUD-0003"]
+		closed = by_code["MOH-BUD-2026-2027"]
 		self.assertEqual(closed["status"], "Closed")
 		self.assertEqual(closed["action"], "view")
 		# Stitch Closed Available is KES 0 (not "Not active" — that is for Submitted).
@@ -63,12 +63,12 @@ class TestBudgetPortfolioUi01(FrappeTestCase):
 	def test_list_filters_search_and_status(self):
 		rows = list_budgets(
 			procuring_entity=self.seed["procuring_entity"],
-			search="MOH-BUD-0001",
+			search="MOH-BUD-2027-2028",
 			status="Active",
 		)
 		self.assertTrue(rows)
 		self.assertTrue(all(r["status"] == "Active" for r in rows))
-		self.assertTrue(any(r["code"] == "MOH-BUD-0001" for r in rows))
+		self.assertTrue(any(r["code"] == "MOH-BUD-2027-2028" for r in rows))
 
 		under = list_budgets(
 			procuring_entity=self.seed["procuring_entity"],

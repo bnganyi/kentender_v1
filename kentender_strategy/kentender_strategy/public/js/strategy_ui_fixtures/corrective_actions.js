@@ -9,7 +9,7 @@ kentender_strategy.ui_fixtures.corrective_actions = function () {
 <ol class="inline-flex items-center space-x-1 md:space-x-2">
 <li class="inline-flex items-center hover:text-primary cursor-pointer">Portfolio</li>
 <li><span class="material-symbols-outlined text-sm mx-1">chevron_right</span></li>
-<li class="inline-flex items-center hover:text-primary cursor-pointer data-mono">MOH-SP-0001</li>
+<li class="inline-flex items-center hover:text-primary cursor-pointer data-mono">MOH-SP-2026-2030</li>
 <li><span class="material-symbols-outlined text-sm mx-1">chevron_right</span></li>
 <li class="inline-flex items-center text-primary font-medium">Measurement</li>
 </ol>
@@ -74,7 +74,7 @@ kentender_strategy.ui_fixtures.corrective_actions = function () {
 <!-- Active Row -->
 <tr class="bg-primary-fixed/30 hover:bg-primary-fixed/40 transition-colors cursor-pointer border-l-2 border-l-primary group">
 <td class="px-4 py-4 align-top">
-<div class="font-data-mono text-primary font-medium">MOH-TGT-0001</div>
+<div class="font-data-mono text-primary font-medium">MOH-TGT-AVAIL-2028</div>
 <div class="text-sm text-on-surface-variant mt-1">September 2027</div>
 </td>
 <td class="px-4 py-4 align-top font-medium pr-6">
@@ -174,7 +174,7 @@ kentender_strategy.ui_fixtures.corrective_actions = function () {
 <div class="p-5 border-b border-[#E2E8F0] bg-surface-container-low flex justify-between items-start">
 <div>
 <div class="flex items-center gap-3 mb-1">
-<span class="font-data-mono font-medium text-primary text-sm">MOH-TGT-0001</span>
+<span class="font-data-mono font-medium text-primary text-sm">MOH-TGT-AVAIL-2028</span>
 <span class="text-on-surface-variant text-sm">/ September 2027</span>
 </div>
 <h3 class="text-headline-sm font-headline-sm mt-2 line-clamp-2 pr-2">Resolve storage-controller instability and confirm service stability</h3>

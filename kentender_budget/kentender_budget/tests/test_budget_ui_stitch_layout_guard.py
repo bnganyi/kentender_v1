@@ -726,8 +726,8 @@ class TestBudgetUiStitchLayoutGuard(FrappeTestCase):
 		page_js = _read(CHECK_RESERVE_JS)
 		self.assertIn("budget-check-reserve", page_js)
 		self.assertIn("openCheckReserve", page_js)
-		self.assertIn("MOH-BL-0002", page_js)
-		self.assertIn("MOH-BL-0001", page_js)
+		self.assertIn("MOH-BL-HWD-2027", page_js)
+		self.assertIn("MOH-BL-DHI-2027", page_js)
 
 		live = _read(LIVE_BIND)
 		self.assertIn("openCheckReserve", live)

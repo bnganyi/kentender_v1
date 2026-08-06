@@ -60,7 +60,7 @@ export async function loginAsStrategyManager(page: Page) {
 export async function loginAsStrategyViewer(page: Page) {
 	await login(
 		page,
-		process.env.UI_STRATEGY_VIEWER_USER || 'strategy.viewer@moh.test',
+		process.env.UI_STRATEGY_VIEWER_USER || 'moh.viewer@example.test',
 		process.env.UI_STRATEGY_VIEWER_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
@@ -69,7 +69,7 @@ export async function loginAsStrategyViewer(page: Page) {
 export async function loginAsStrategyOfficer(page: Page) {
 	await login(
 		page,
-		process.env.UI_STRATEGY_OFFICER_USER || 'strategy.officer@moh.test',
+		process.env.UI_STRATEGY_OFFICER_USER || 'moh.medicalservices.officer@example.test',
 		process.env.UI_STRATEGY_OFFICER_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
@@ -78,7 +78,7 @@ export async function loginAsStrategyOfficer(page: Page) {
 export async function loginAsStrategyViewerOtherPe(page: Page) {
 	await login(
 		page,
-		process.env.UI_STRATEGY_VIEWER_OTHER_PE_USER || 'strategy.viewer@moe.test',
+		process.env.UI_STRATEGY_VIEWER_OTHER_PE_USER || 'other.entity.officer@example.test',
 		process.env.UI_STRATEGY_VIEWER_OTHER_PE_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
@@ -153,7 +153,7 @@ export async function loginAsAuditor(page: Page) {
 export async function loginAsBudgetViewer(page: Page) {
 	await login(
 		page,
-		process.env.UI_BUDGET_VIEWER_USER || 'budget.viewer@moh.test',
+		process.env.UI_BUDGET_VIEWER_USER || 'moh.viewer@example.test',
 		process.env.UI_BUDGET_VIEWER_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
@@ -162,7 +162,7 @@ export async function loginAsBudgetViewer(page: Page) {
 export async function loginAsBudgetOfficer(page: Page) {
 	await login(
 		page,
-		process.env.UI_BUDGET_OFFICER_USER || 'budget.officer@moh.test',
+		process.env.UI_BUDGET_OFFICER_USER || 'moh.medicalservices.officer@example.test',
 		process.env.UI_BUDGET_OFFICER_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
@@ -171,7 +171,7 @@ export async function loginAsBudgetOfficer(page: Page) {
 export async function loginAsBudgetReviewer(page: Page) {
 	await login(
 		page,
-		process.env.UI_BUDGET_REVIEWER_USER || 'budget.reviewer@moh.test',
+		process.env.UI_BUDGET_REVIEWER_USER || 'moh.budget.reviewer@example.test',
 		process.env.UI_BUDGET_REVIEWER_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
@@ -180,7 +180,7 @@ export async function loginAsBudgetReviewer(page: Page) {
 export async function loginAsBudgetAuthority(page: Page) {
 	await login(
 		page,
-		process.env.UI_BUDGET_AUTHORITY_USER || 'budget.authority@moh.test',
+		process.env.UI_BUDGET_AUTHORITY_USER || 'moh.budget.authority@example.test',
 		process.env.UI_BUDGET_AUTHORITY_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
@@ -189,7 +189,7 @@ export async function loginAsBudgetAuthority(page: Page) {
 export async function loginAsBudgetOfficerAuthority(page: Page) {
 	await login(
 		page,
-		process.env.UI_BUDGET_OFFICER_AUTHORITY_USER || 'budget.officer.authority@moh.test',
+		process.env.UI_BUDGET_OFFICER_AUTHORITY_USER || 'moh.budget.officer.authority@example.test',
 		process.env.UI_BUDGET_OFFICER_AUTHORITY_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }
@@ -198,7 +198,7 @@ export async function loginAsBudgetOfficerAuthority(page: Page) {
 export async function loginAsBudgetOtherEntity(page: Page) {
 	await login(
 		page,
-		process.env.UI_BUDGET_OTHER_ENTITY_USER || 'budget.officer@moe.test',
+		process.env.UI_BUDGET_OTHER_ENTITY_USER || 'other.entity.officer@example.test',
 		process.env.UI_BUDGET_OTHER_ENTITY_PASSWORD || DEFAULT_SEED_PASSWORD,
 	);
 }

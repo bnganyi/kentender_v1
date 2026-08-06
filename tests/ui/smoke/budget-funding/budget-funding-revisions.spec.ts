@@ -15,7 +15,7 @@ test.describe("Budget Funding revisions (BUD-UI-08)", () => {
 	});
 
 	test("live list shows seeded draft without in-tab create form", async ({ page }) => {
-		await page.goto("/desk/budget-revisions/MOH-BUD-0001", {
+		await page.goto("/desk/budget-revisions/MOH-BUD-2027-2028", {
 			waitUntil: "domcontentloaded",
 		});
 		const root = page
@@ -50,7 +50,7 @@ test.describe("Budget Funding revisions (BUD-UI-08)", () => {
 	});
 
 	test("Request revision opens dedicated create page with Stitch form", async ({ page }) => {
-		await page.goto("/desk/budget-revisions/MOH-BUD-0001", {
+		await page.goto("/desk/budget-revisions/MOH-BUD-2027-2028", {
 			waitUntil: "domcontentloaded",
 		});
 		const list = page
@@ -83,13 +83,13 @@ test.describe("Budget Funding revisions (BUD-UI-08)", () => {
 
 		await expect(root.locator("[data-kt-bud-rev-impact-before]")).toContainText("KES");
 		await expect(root.locator("[data-kt-bud-rev-impact-before]")).toContainText(",");
-		await expect(root.locator('tr[data-line-code="MOH-BL-0001"]')).toContainText(
+		await expect(root.locator('tr[data-line-code="MOH-BL-DHI-2027"]')).toContainText(
 			"KES 480,000,000",
 		);
-		await expect(root.locator('tr[data-line-code="MOH-BL-0001"]')).toContainText(
+		await expect(root.locator('tr[data-line-code="MOH-BL-DHI-2027"]')).toContainText(
 			"KES 145,000,000",
 		);
-		await expect(root.locator('tr[data-line-code="MOH-BL-0001"]')).toContainText(
+		await expect(root.locator('tr[data-line-code="MOH-BL-DHI-2027"]')).toContainText(
 			"KES 310,000,000",
 		);
 
@@ -137,7 +137,7 @@ test.describe("Budget Funding revisions (BUD-UI-08)", () => {
 	});
 
 	test("submit validation shows inline errors without Frappe Message", async ({ page }) => {
-		await page.goto("/desk/budget-revision-create/MOH-BUD-0001", {
+		await page.goto("/desk/budget-revision-create/MOH-BUD-2027-2028", {
 			waitUntil: "domcontentloaded",
 		});
 		const root = page
@@ -147,7 +147,7 @@ test.describe("Budget Funding revisions (BUD-UI-08)", () => {
 		await expect(root.getByTestId("kt-bud-rev-create-form")).toBeVisible({ timeout: 20_000 });
 
 		const change = root.locator(
-			'tr[data-line-code="MOH-BL-0001"] [data-kt-bud-rev-change]',
+			'tr[data-line-code="MOH-BL-DHI-2027"] [data-kt-bud-rev-change]',
 		);
 		await change.fill("1000000");
 		await change.blur();
@@ -165,7 +165,7 @@ test.describe("Budget Funding revisions (BUD-UI-08)", () => {
 	});
 
 	test("Save draft then Cancel returns to Revisions list", async ({ page }) => {
-		await page.goto("/desk/budget-revision-create/MOH-BUD-0001", {
+		await page.goto("/desk/budget-revision-create/MOH-BUD-2027-2028", {
 			waitUntil: "domcontentloaded",
 		});
 		const root = page
@@ -179,7 +179,7 @@ test.describe("Budget Funding revisions (BUD-UI-08)", () => {
 		await root.locator('[data-kt-bud-field="effective_date"]').fill("2027-12-15");
 		await root.locator('[data-kt-bud-field="reason"]').fill("Playwright draft revision");
 		await root
-			.locator('tr[data-line-code="MOH-BL-0001"] [data-kt-bud-rev-change]')
+			.locator('tr[data-line-code="MOH-BL-DHI-2027"] [data-kt-bud-rev-change]')
 			.fill("2000000");
 
 		await root.getByTestId("kt-bud-rev-save-draft").click();
@@ -197,7 +197,7 @@ test.describe("Budget Funding revisions (BUD-UI-08)", () => {
 	});
 
 	test("Request revision from Overview lands on create page", async ({ page }) => {
-		await page.goto("/desk/budget-overview/MOH-BUD-0001", {
+		await page.goto("/desk/budget-overview/MOH-BUD-2027-2028", {
 			waitUntil: "domcontentloaded",
 		});
 		const ov = page

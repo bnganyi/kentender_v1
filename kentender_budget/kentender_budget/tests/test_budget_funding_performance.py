@@ -50,9 +50,9 @@ class TestBudgetFundingPerformance(FrappeTestCase):
 	def test_coverage_includes_pack_target_codes(self):
 		dto = get_funding_performance()
 		codes = {r["target_code"] for r in dto["coverage_rows"]}
-		self.assertIn("MOH-TGT-0001", codes)
+		self.assertIn("MOH-TGT-AVAIL-2028", codes)
 		self.assertNotIn("MOH-ST-04", codes)
-		row = next(r for r in dto["coverage_rows"] if r["target_code"] == "MOH-TGT-0001")
+		row = next(r for r in dto["coverage_rows"] if r["target_code"] == "MOH-TGT-AVAIL-2028")
 		self.assertIn("KES", row["approved_display"])
 		self.assertNotIn("M", row["approved_display"].replace("MOH", ""))
 		self.assertEqual(row["action_label"], "View Details")
@@ -69,10 +69,10 @@ class TestBudgetFundingPerformance(FrappeTestCase):
 		self.assertIn("Review", exc["action_label"])
 
 	def test_filter_by_primary_target(self):
-		dto = get_funding_performance(primary_target="MOH-TGT-0003")
+		dto = get_funding_performance(primary_target="MOH-TGT-SKILLS-2029")
 		self.assertTrue(dto["coverage_rows"])
 		for r in dto["coverage_rows"]:
-			self.assertEqual(r["target_code"], "MOH-TGT-0003")
+			self.assertEqual(r["target_code"], "MOH-TGT-SKILLS-2029")
 		self.assertEqual(flt(dto["kpis"]["approved"]), 80_000_000)
 
 	def test_filter_by_fiscal_period(self):
@@ -88,7 +88,7 @@ class TestBudgetFundingPerformance(FrappeTestCase):
 		self.assertTrue(exp["lineage"]["entity_name"])
 		self.assertIn("source_coverage", exp["lineage"])
 		codes = {r["target_code"] for r in exp["coverage_rows"]}
-		self.assertIn("MOH-TGT-0001", codes)
+		self.assertIn("MOH-TGT-AVAIL-2028", codes)
 		self.assertEqual(exp["kpis"]["approved_display"], "KES 560,000,000")
 
 	def test_pe_scope_denial(self):

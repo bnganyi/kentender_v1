@@ -83,7 +83,7 @@ test.describe("Budget Funding readiness review (BUD-UI-11)", () => {
 	});
 
 	test("Active shows activation record and no Activate CTA", async ({ page }) => {
-		await page.goto("/desk/budget-review/MOH-BUD-0001", {
+		await page.goto("/desk/budget-review/MOH-BUD-2027-2028", {
 			waitUntil: "domcontentloaded",
 		});
 		const root = page

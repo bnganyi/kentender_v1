@@ -33,7 +33,7 @@ class TestBudgetRevisionReview(FrappeTestCase):
 	def setUp(self):
 		# Isolate from Playwright leftovers / prior test floor mutations.
 		line = frappe.db.get_value(
-			"Budget Line", {"generated_reference": "MOH-BL-0002"}, "name"
+			"Budget Line", {"generated_reference": "MOH-BL-HWD-2027"}, "name"
 		)
 		if line:
 			frappe.db.set_value(
@@ -76,14 +76,14 @@ class TestBudgetRevisionReview(FrappeTestCase):
 		try:
 			saved = create_budget_revision(
 				{
-					"budget": "MOH-BUD-0001",
+					"budget": "MOH-BUD-2027-2028",
 					"external_approval_reference": "MOF/TEST/REV-APPLY",
 					"approval_date": "2027-12-01",
 					"effective_date": "2027-12-15",
 					"reason": "Apply path uplift",
 					"approval_evidence": "/private/files/rev-apply-test.pdf",
 					"lines": [
-						{"budget_line": "MOH-BL-0002", "change_amount": change},
+						{"budget_line": "MOH-BL-HWD-2027", "change_amount": change},
 					],
 				}
 			)
@@ -97,7 +97,7 @@ class TestBudgetRevisionReview(FrappeTestCase):
 
 	def test_list_includes_seeded_submitted(self):
 		upsert_moh_mvp_v1_portfolio()
-		dto = list_budget_revisions("MOH-BUD-0001")
+		dto = list_budget_revisions("MOH-BUD-2027-2028")
 		by_code = {r["code"]: r for r in dto["rows"]}
 		self.assertIn("BR-MOH-0002", by_code)
 		seed = by_code["BR-MOH-0002"]
@@ -139,7 +139,7 @@ class TestBudgetRevisionReview(FrappeTestCase):
 		try:
 			saved = create_budget_revision(
 				{
-					"budget": "MOH-BUD-0001",
+					"budget": "MOH-BUD-2027-2028",
 					"revision": code,
 					"external_approval_reference": "MOF/TEST/REV-RETURNED",
 					"approval_date": "2027-12-01",
@@ -147,7 +147,7 @@ class TestBudgetRevisionReview(FrappeTestCase):
 					"reason": "Resubmit after return",
 					"approval_evidence": "/private/files/rev-return-test.pdf",
 					"lines": [
-						{"budget_line": "MOH-BL-0002", "change_amount": 2_500_000},
+						{"budget_line": "MOH-BL-HWD-2027", "change_amount": 2_500_000},
 					],
 				}
 			)
@@ -195,7 +195,7 @@ class TestBudgetRevisionReview(FrappeTestCase):
 		before = flt(
 			frappe.db.get_value(
 				"Budget Line",
-				{"generated_reference": "MOH-BL-0002"},
+				{"generated_reference": "MOH-BL-HWD-2027"},
 				"approved_amount",
 			)
 		)
@@ -206,7 +206,7 @@ class TestBudgetRevisionReview(FrappeTestCase):
 		after = flt(
 			frappe.db.get_value(
 				"Budget Line",
-				{"generated_reference": "MOH-BL-0002"},
+				{"generated_reference": "MOH-BL-HWD-2027"},
 				"approved_amount",
 			)
 		)
@@ -216,7 +216,7 @@ class TestBudgetRevisionReview(FrappeTestCase):
 		officer = self._make_officer("budget.rev.floor@example.com")
 		code = self._create_and_submit_as(officer, change=1_000_000)
 		line_name = frappe.db.get_value(
-			"Budget Line", {"generated_reference": "MOH-BL-0002"}, "name"
+			"Budget Line", {"generated_reference": "MOH-BL-HWD-2027"}, "name"
 		)
 		try:
 			frappe.db.set_value("Budget Line", line_name, "amount_reserved", 90_000_000)

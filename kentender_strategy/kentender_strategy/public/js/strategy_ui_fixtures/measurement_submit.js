@@ -16,7 +16,7 @@ kentender_strategy.ui_fixtures.measurement_submit = function () {
 <main class="flex-grow p-section-gap max-w-5xl mx-auto w-full flex flex-col gap-section-gap" data-testid="kt-str-meas-submit-canvas">
 <!-- Context Header (path crumbs omitted — Desk breadcrumbs already cover navigation) -->
 <section>
-<h2 class="font-headline-lg text-headline-lg text-on-surface" data-kt-str-target-code>MOH-TGT-0001</h2>
+<h2 class="font-headline-lg text-headline-lg text-on-surface" data-kt-str-target-code>MOH-TGT-AVAIL-2028</h2>
 <p class="font-body-lg text-body-lg text-on-surface-variant mt-2" data-kt-str-target-title>At least 99.9% annual availability by 30 June 2028</p>
 </section>
 <!-- Read-only Reference Data Block -->

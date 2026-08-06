@@ -150,7 +150,7 @@ class TestStrategyPlanValueCommitments(FrappeTestCase):
 				"responsible_function": "ICT",
 			}
 		)
-		pvo = _active_pvo("PVO-LOC-01")
+		pvo = _active_pvo("MOH-PVC-LOC-01")
 		self.assertTrue(pvo)
 		res = upsert_plan_value_commitment(
 			{
@@ -221,7 +221,7 @@ class TestStrategyPlanValueCommitments(FrappeTestCase):
 		)
 		plan_id = created["plan"]["id"]
 		self.addCleanup(lambda: _delete_plan_cascade(plan_id))
-		pvo = _active_pvo("PVO-SUS-02")
+		pvo = _active_pvo("MOH-PVC-SUS-02")
 		doc = frappe.get_doc(
 			{
 				"doctype": "Plan Value Commitment",

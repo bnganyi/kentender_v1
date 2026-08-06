@@ -18,7 +18,7 @@ import {
 
 const BENCH_ROOT = path.resolve(__dirname, "../../../../../..");
 const SITE = process.env.UI_SITE || "kentender.midas.com";
-const STRATEGY_PLAN_CODE = "MOH-SP-0001";
+const STRATEGY_PLAN_CODE = "MOH-SP-2026-2030";
 
 function seedStrategyRoleFixtures(): void {
 	try {

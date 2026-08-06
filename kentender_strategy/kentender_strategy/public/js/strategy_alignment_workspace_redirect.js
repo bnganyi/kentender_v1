@@ -17,8 +17,6 @@
 			"Strategy Manager",
 			"Strategy Reviewer",
 			"Planning Authority",
-			"Performance Officer",
-			"Performance Verifier",
 			"System Manager",
 			"Administrator",
 		];

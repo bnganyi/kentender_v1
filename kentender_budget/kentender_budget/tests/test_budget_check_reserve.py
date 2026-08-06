@@ -34,7 +34,7 @@ class TestBudgetCheckReserve(FrappeTestCase):
 
 	def setUp(self):
 		upsert_moh_mvp_v1_portfolio()
-		# Drop non-seed reservations created by prior tests so MOH-BL-0002 stays clean.
+		# Drop non-seed reservations created by prior tests so MOH-BL-HWD-2027 stays clean.
 		for name in frappe.get_all(
 			"Funding Reservation",
 			filters={"fixture_namespace": ["in", ["", None]], "demand_code": ["like", "DMD-TEST-%"]},
@@ -51,9 +51,9 @@ class TestBudgetCheckReserve(FrappeTestCase):
 		upsert_moh_mvp_v1_portfolio()
 
 	def test_check_available_on_moh_bl_0002_full_money(self):
-		# MOH-BL-0002: 80M approved, 0 reserved/committed → available 80M.
+		# MOH-BL-HWD-2027: 80M approved, 0 reserved/committed → available 80M.
 		dto = check_funding(
-			budget_line="MOH-BL-0002",
+			budget_line="MOH-BL-HWD-2027",
 			requested_amount=50_000_000,
 			demand="DMD-TEST-AVAILABLE",
 		)
@@ -65,14 +65,14 @@ class TestBudgetCheckReserve(FrappeTestCase):
 		self.assertEqual(dto["requested_display"], "KES 50,000,000")
 		self.assertEqual(dto["available_after_display"], "KES 30,000,000")
 		self.assertNotIn("80M", dto["available_before_display"])
-		self.assertEqual(dto["budget_line"]["code"], "MOH-BL-0002")
+		self.assertEqual(dto["budget_line"]["code"], "MOH-BL-HWD-2027")
 		self.assertTrue(dto["capabilities"]["can_reserve"])
 		self.assertEqual(dto["lineage_note"], LINEAGE_NOTE)
 
 	def test_check_insufficient_on_moh_bl_0001(self):
-		# MOH-BL-0001 remaining available = 480 - 145 - 310 = 25M; 455M request fails.
+		# MOH-BL-DHI-2027 remaining available = 480 - 145 - 310 = 25M; 455M request fails.
 		dto = check_funding(
-			budget_line="MOH-BL-0001",
+			budget_line="MOH-BL-DHI-2027",
 			requested_amount=455_000_000,
 			demand="DMD-MOH-2027-014",
 		)
@@ -86,7 +86,7 @@ class TestBudgetCheckReserve(FrappeTestCase):
 		self.assertNotIn("455M", dto["requested_display"])
 
 	def test_check_does_not_mutate_balances(self):
-		line = _line("MOH-BL-0002")
+		line = _line("MOH-BL-HWD-2027")
 		before_r = flt(frappe.db.get_value("Budget Line", line, "amount_reserved"))
 		before_c = flt(frappe.db.get_value("Budget Line", line, "amount_committed"))
 		check_funding(budget_line=line, requested_amount=10_000_000, demand="DMD-TEST-NOMUT")
@@ -96,13 +96,13 @@ class TestBudgetCheckReserve(FrappeTestCase):
 		self.assertEqual(before_c, after_c)
 
 	def test_reserve_creates_reservation_and_bumps_reserved(self):
-		line = _line("MOH-BL-0002")
+		line = _line("MOH-BL-HWD-2027")
 		before = flt(frappe.db.get_value("Budget Line", line, "amount_reserved"))
 		result = reserve_funding(
 			budget_line=line,
 			demand_name="DMD-TEST-RSV-001",
 			requested_amount=40_000_000,
-			idempotency_key="TEST:DMD-TEST-RSV-001:MOH-BL-0002:40000000.00",
+			idempotency_key="TEST:DMD-TEST-RSV-001:MOH-BL-HWD-2027:40000000.00",
 		)
 		self.assertTrue(result["ok"])
 		self.assertFalse(result["reused"])
@@ -118,8 +118,8 @@ class TestBudgetCheckReserve(FrappeTestCase):
 		"""BUD-SUP-005 — new reserve_funding inserts Budget Audit Event (not idempotent reuse)."""
 		from kentender_budget.services.budget_audit_contracts import EVENT_RESERVED
 
-		line = _line("MOH-BL-0002")
-		key = "TEST:DMD-TEST-RSV-AUDIT:MOH-BL-0002:9000000.00"
+		line = _line("MOH-BL-HWD-2027")
+		key = "TEST:DMD-TEST-RSV-AUDIT:MOH-BL-HWD-2027:9000000.00"
 		result = reserve_funding(
 			budget_line=line,
 			demand_name="DMD-TEST-RSV-AUDIT",
@@ -156,8 +156,8 @@ class TestBudgetCheckReserve(FrappeTestCase):
 		self.assertEqual(before, after)
 
 	def test_reserve_idempotent_same_key(self):
-		line = _line("MOH-BL-0002")
-		key = "TEST:DMD-TEST-IDEM:MOH-BL-0002:20000000.00"
+		line = _line("MOH-BL-HWD-2027")
+		key = "TEST:DMD-TEST-IDEM:MOH-BL-HWD-2027:20000000.00"
 		first = reserve_funding(
 			budget_line=line,
 			demand_name="DMD-TEST-IDEM",
@@ -181,7 +181,7 @@ class TestBudgetCheckReserve(FrappeTestCase):
 	def test_reserve_blocks_insufficient(self):
 		with self.assertRaises(frappe.ValidationError):
 			reserve_funding(
-				budget_line="MOH-BL-0001",
+				budget_line="MOH-BL-DHI-2027",
 				demand_name="DMD-TEST-INSUFF",
 				requested_amount=455_000_000,
 				idempotency_key="TEST:DMD-TEST-INSUFF:fail",
@@ -232,7 +232,7 @@ class TestBudgetCheckReserve(FrappeTestCase):
 			)
 
 		kwargs = dict(
-			budget_line="MOH-BL-0001",
+			budget_line="MOH-BL-DHI-2027",
 			demand_name="DMD-TEST-INSUFF-NTF",
 			requested_amount=455_000_000,
 			idempotency_key="TEST:DMD-TEST-INSUFF-NTF:fail",
@@ -253,17 +253,17 @@ class TestBudgetCheckReserve(FrappeTestCase):
 		self.assertEqual(count_after_first, count_after_second)
 
 	def test_dia_shim_check_and_create(self):
-		chk = dia.check_available_budget("MOH-BL-0002", 50_000_000)
+		chk = dia.check_available_budget("MOH-BL-HWD-2027", 50_000_000)
 		self.assertTrue(chk["ok"])
 		self.assertTrue((chk.get("data") or {}).get("sufficient"))
 		self.assertEqual(flt((chk.get("data") or {}).get("amount_available")), 80_000_000)
 
-		bad = dia.check_available_budget("MOH-BL-0001", 455_000_000)
+		bad = dia.check_available_budget("MOH-BL-DHI-2027", 455_000_000)
 		self.assertFalse(bad["ok"])
 		self.assertFalse((bad.get("data") or {}).get("sufficient"))
 
 		res = dia.create_reservation(
-			"MOH-BL-0002",
+			"MOH-BL-HWD-2027",
 			"Demand",
 			"DMD-TEST-DIA-001",
 			30_000_000,
@@ -292,7 +292,7 @@ class TestBudgetCheckReserve(FrappeTestCase):
 		try:
 			with self.assertRaises(frappe.PermissionError):
 				check_funding(
-					budget_line="MOH-BL-0002",
+					budget_line="MOH-BL-HWD-2027",
 					requested_amount=1_000_000,
 					procuring_entity="PE-MOH",
 				)

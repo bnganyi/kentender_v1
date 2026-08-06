@@ -62,7 +62,7 @@ class TestStrategyPortfolioUi01(FrappeTestCase):
 	def test_list_filters_search_and_status(self):
 		rows = list_strategy_plans(
 			procuring_entity=self.seed["procuring_entity"],
-			search="MOH-SP-0001",
+			search="MOH-SP-2026-2030",
 			status="Active",
 		)
 		self.assertTrue(rows)

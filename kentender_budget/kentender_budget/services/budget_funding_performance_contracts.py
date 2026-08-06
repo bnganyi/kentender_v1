@@ -218,7 +218,7 @@ def get_funding_performance(
 		if _line_funding_status(ln) == "Needs attention" or _is_stale_actual(ln):
 			attention_lines += 1
 	# When no line filter but budgets exist, prefer external_approved_total for Active strip
-	# so MOH-BUD-0001 matches Prompt 560M even if line sum differs slightly.
+	# so MOH-BUD-2027-2028 matches Prompt 560M even if line sum differs slightly.
 	if not target_filter and not status_filter and budgets:
 		ext_sum = sum(flt(b.external_approved_total) for b in budgets)
 		if ext_sum > 0:

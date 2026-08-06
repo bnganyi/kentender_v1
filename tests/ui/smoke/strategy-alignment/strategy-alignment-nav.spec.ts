@@ -6,15 +6,15 @@ import { loginAsAdministrator } from "../../helpers/auth";
 
 /**
  * Strategy Alignment MVP-1 — Stitch Desk shells + live API binders.
- * Requires MOH-SP-0001 seed (works_master_strategy_hierarchy).
+ * Requires MOH-SP-2026-2030 seed (works_master_strategy_hierarchy).
  */
 
 const BENCH_ROOT = path.resolve(__dirname, "../../../../../..");
 const SITE = process.env.UI_SITE || "kentender.midas.com";
-const PLAN = "MOH-SP-0001";
+const PLAN = "MOH-SP-2026-2030";
 const REVIEW_BLOCKERS_PLAN = "MOH-SP-9001";
 const REVIEW_TX_PLAN = "MOH-SP-9002";
-const TARGET = "MOH-TGT-0001";
+const TARGET = "MOH-TGT-AVAIL-2028";
 
 function seedStrategyDownstreamFixtures(): void {
 	try {
@@ -145,7 +145,7 @@ test.describe("Strategy Alignment UI shell", () => {
 		expect(planningCount).toBeGreaterThan(0);
 		await expect(planningRow.locator("[data-kt-str-perf-stage-value]")).not.toHaveText("—");
 
-		const adoption = root.locator('[data-kt-str-perf-adoption="PVO-EFT-01"]').first();
+		const adoption = root.locator('[data-kt-str-perf-adoption="MOH-PVC-EFT-01"]').first();
 		await expect(adoption).toBeVisible({ timeout: 15_000 });
 		await expect(adoption).toContainText(/aligned Value Cases addressed/i);
 		await expect(adoption).not.toHaveText(/^0 of /);
@@ -164,10 +164,10 @@ test.describe("Strategy Alignment UI shell", () => {
 		await expect(page.getByTestId("kt-str-open-performance")).toBeVisible();
 		// Seed Active plan row (Draft successors share the same plan_code).
 		const mohRow = page.locator(
-			'[data-testid="kt-str-plans-table"] tr[data-plan-code="MOH-SP-0001"][data-plan-status="Active"]'
+			'[data-testid="kt-str-plans-table"] tr[data-plan-code="MOH-SP-2026-2030"][data-plan-status="Active"]'
 		);
 		await expect(mohRow).toBeVisible({ timeout: 15_000 });
-		await expect(mohRow.getByText("MOH-SP-0001", { exact: true })).toBeVisible();
+		await expect(mohRow.getByText("MOH-SP-2026-2030", { exact: true })).toBeVisible();
 		// Period stacks start/end so Plan/Status get horizontal room.
 		const periodCell = mohRow.locator(".kt-str-plans-col-period");
 		await expect(periodCell.locator(".kt-str-period-start")).toHaveText(
@@ -307,11 +307,11 @@ test.describe("Strategy Alignment UI shell", () => {
 		await expect(page.locator('[data-testid="kt-str-plans-table"] [data-kt-str-empty="1"]')).toBeVisible({
 			timeout: 10_000,
 		});
-		await search.fill("MOH-SP-0001");
+		await search.fill("MOH-SP-2026-2030");
 		// Same plan_code may appear as Active + Draft successor versions.
 		await expect(
 			page.locator(
-				'[data-testid="kt-str-plans-table"] tr[data-plan-code="MOH-SP-0001"][data-plan-status="Active"]'
+				'[data-testid="kt-str-plans-table"] tr[data-plan-code="MOH-SP-2026-2030"][data-plan-status="Active"]'
 			)
 		).toBeVisible({ timeout: 10_000 });
 	});
@@ -370,7 +370,7 @@ test.describe("Strategy Alignment UI shell", () => {
 		await expect(page.getByTestId("kt-str-create-bento")).toBeVisible();
 		await expect(page.getByText("Basic Information")).toBeVisible();
 		await expect(page.getByTestId("kt-str-create-plan-context")).toBeVisible();
-		await expect(page.getByTestId("kt-str-create-quote")).toBeVisible();
+		await expect(page.getByTestId("kt-str-create-quote")).toHaveCount(0);
 		await expect(page.getByTestId("kt-str-create-actions")).toBeVisible();
 		// Stitch/Tailwind Forms select chevron (SVG background) + date calendar glyphs.
 		await expect(createRoot.locator(".material-symbols-outlined", { hasText: "calendar_today" })).toHaveCount(2);
@@ -392,15 +392,6 @@ test.describe("Strategy Alignment UI shell", () => {
 		await expect(createRoot.locator("[data-kt-str-create-subordinate]")).toBeHidden();
 		await expect(createRoot.locator('[data-kt-str-field="plan_type"] option', { hasText: "Thematic Plan" })).toHaveCount(1);
 		await expect(createRoot.locator('[data-kt-str-field="plan_type"] option', { hasText: "Sector Strategy" })).toHaveCount(0);
-		// Quote architecture icon must stay large + primary-fixed (not forced to 20px gray).
-		const arch = await createRoot
-			.locator('[data-testid="kt-str-create-quote"] .material-symbols-outlined')
-			.evaluate((el) => {
-				const cs = getComputedStyle(el);
-				return { size: parseFloat(cs.fontSize), color: cs.color };
-			});
-		expect(arch.size).toBeGreaterThanOrEqual(32);
-		expect(arch.color).toMatch(/215,\s*226,\s*255/);
 
 		// Basic Information icon must share vertical center with the title (no Desk h2 margin drift).
 		const headerAlign = await createRoot.locator("section h2").evaluate((title) => {
@@ -999,9 +990,9 @@ test.describe("Strategy Alignment UI shell", () => {
 		await expect(page.locator('[data-testid="kt-str-plan-tabs"]:visible')).toBeVisible();
 		await expect(vc.getByTestId("kt-str-vc-table")).toBeVisible();
 		await expect(vc.getByText("Plan value commitments")).toBeVisible();
-		// Seed commitments (not fixture-only PVO-SUS-02).
-		await expect(vc.locator('[data-kt-str-vc-code="PVO-EFT-01"]')).toBeVisible();
-		await expect(vc.locator('[data-kt-str-vc-code="PVO-ECO-01"]')).toBeVisible();
+		// Seed commitments (not fixture-only MOH-PVC-SUS-02).
+		await expect(vc.locator('[data-kt-str-vc-code="MOH-PVC-EFT-01"]')).toBeVisible();
+		await expect(vc.locator('[data-kt-str-vc-code="MOH-PVC-ECO-01"]')).toBeVisible();
 		await expect(vc.getByRole("button", { name: /Add commitment/i })).toHaveCount(0);
 
 		// Under shared plan chrome: tight gap after tabs; Stitch VC canvas title is headline-lg.
@@ -1082,7 +1073,7 @@ test.describe("Strategy Alignment UI shell", () => {
 		);
 		await expect(vc).toBeVisible({ timeout: 20_000 });
 		await expect(vc).toHaveAttribute("data-kt-str-vc-editable", "1");
-		await expect(vc.locator('[data-kt-str-vc-code="PVO-EFT-01"]')).toBeVisible();
+		await expect(vc.locator('[data-kt-str-vc-code="MOH-PVC-EFT-01"]')).toBeVisible();
 
 		// Add commitment sits beside the title (row), not stacked under it.
 		const vcHeaderLayout = await vc.getByTestId("kt-str-vc-header").evaluate((el) => {
@@ -1138,7 +1129,7 @@ test.describe("Strategy Alignment UI shell", () => {
 		expect(filterGeom.widthDelta).toBeLessThanOrEqual(8);
 		expect(filterGeom.sourceInset).toBeGreaterThanOrEqual(16);
 
-		const pvoBtn = drawer.locator("[data-kt-str-action='select-pvo']").filter({ hasText: "PVO-LOC-01" });
+		const pvoBtn = drawer.locator("[data-kt-str-action='select-pvo']").filter({ hasText: "MOH-PVC-LOC-01" });
 		await expect(pvoBtn).toBeVisible({ timeout: 15_000 });
 		await pvoBtn.click();
 		await drawer.locator("[data-kt-str-vc-drawer-rationale]").fill("UI07 live wire rationale");
@@ -1146,7 +1137,7 @@ test.describe("Strategy Alignment UI shell", () => {
 		await drawer.locator("[data-kt-str-vc-drawer-links] input[type='checkbox']").first().check();
 		await drawer.getByRole("button", { name: /Save Commitment/i }).click();
 		await expect(drawer).toHaveClass(/translate-x-full/, { timeout: 15_000 });
-		await expect(vc.locator('[data-kt-str-vc-code="PVO-LOC-01"]')).toBeVisible({
+		await expect(vc.locator('[data-kt-str-vc-code="MOH-PVC-LOC-01"]')).toBeVisible({
 			timeout: 15_000,
 		});
 		await expect(page.getByText(/Commitment saved \(UI fixture\)/i)).toHaveCount(0);
@@ -1473,9 +1464,9 @@ test.describe("Strategy Alignment UI shell", () => {
 		await expect(
 			measFilters.locator(".material-symbols-outlined", { hasText: "expand_more" })
 		).toHaveCount(3);
-		// Seed truth: two Verified MOH-TGT-0001 rows — not fixture-only TGT-02/03.
+		// Seed truth: two Verified MOH-TGT-AVAIL-2028 rows — not fixture-only TGT-02/03.
 		await expect(
-			meas.locator('[data-kt-str-meas-tbody] tr[data-kt-str-target-code="MOH-TGT-0001"]')
+			meas.locator('[data-kt-str-meas-tbody] tr[data-kt-str-target-code="MOH-TGT-AVAIL-2028"]')
 		).toHaveCount(2, { timeout: 15_000 });
 		await expect(meas.getByText("MOH-TGT-02")).toHaveCount(0);
 		await expect(meas.getByText("MOH-TGT-03")).toHaveCount(0);
@@ -1485,7 +1476,7 @@ test.describe("Strategy Alignment UI shell", () => {
 
 		await meas.getByRole("button", { name: /Submit measurement/i }).first().click();
 		await expect(page).toHaveURL(
-			new RegExp(`strategy-measurement-submit/${PLAN}/MOH-TGT-0001`),
+			new RegExp(`strategy-measurement-submit/${PLAN}/MOH-TGT-AVAIL-2028`),
 			{ timeout: 15_000 }
 		);
 		await expect(page.getByTestId("kt-str-measurement-submit")).toBeVisible({ timeout: 30_000 });

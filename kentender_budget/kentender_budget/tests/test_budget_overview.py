@@ -22,8 +22,8 @@ class TestBudgetOverview(FrappeTestCase):
 		cls.seed = upsert_moh_mvp_v1_portfolio()
 
 	def test_active_fixture_funding_totals(self):
-		ov = get_budget_overview("MOH-BUD-0001")
-		self.assertEqual(ov["code"], "MOH-BUD-0001")
+		ov = get_budget_overview("MOH-BUD-2027-2028")
+		self.assertEqual(ov["code"], "MOH-BUD-2027-2028")
 		self.assertEqual(ov["status"], "Active")
 		self.assertEqual(ov["status_label"], "Active")
 		totals = ov["totals"]
@@ -115,7 +115,7 @@ class TestBudgetOverview(FrappeTestCase):
 		self.assertEqual(ov["capabilities"]["primary_action"], "open_lines")
 
 	def test_active_capabilities_request_revision(self):
-		ov = get_budget_overview("MOH-BUD-0001")
+		ov = get_budget_overview("MOH-BUD-2027-2028")
 		self.assertEqual(ov["capabilities"]["primary_action"], "request_revision")
 		self.assertTrue(ov["capabilities"]["view_funding_performance"])
 
@@ -155,4 +155,4 @@ class TestBudgetOverview(FrappeTestCase):
 		frappe.set_user(email)
 		self.addCleanup(lambda: frappe.set_user("Administrator"))
 		with self.assertRaises(frappe.PermissionError):
-			get_budget_overview("MOH-BUD-0001")
+			get_budget_overview("MOH-BUD-2027-2028")

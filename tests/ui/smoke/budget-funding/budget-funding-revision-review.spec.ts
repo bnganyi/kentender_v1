@@ -17,7 +17,7 @@ test.describe("Budget Funding revision review (BUD-UI-09)", () => {
 	test("list Submitted row opens dedicated review page with Stitch regions", async ({
 		page,
 	}) => {
-		await page.goto("/desk/budget-revisions/MOH-BUD-0001", {
+		await page.goto("/desk/budget-revisions/MOH-BUD-2027-2028", {
 			waitUntil: "domcontentloaded",
 		});
 		const list = page
@@ -105,7 +105,7 @@ test.describe("Budget Funding revision review (BUD-UI-09)", () => {
 		page,
 	}) => {
 		// Mount Revisions first so return from review hits soft-show (not a cold page load).
-		await page.goto("/desk/budget-revisions/MOH-BUD-0001", {
+		await page.goto("/desk/budget-revisions/MOH-BUD-2027-2028", {
 			waitUntil: "domcontentloaded",
 		});
 		const list = page

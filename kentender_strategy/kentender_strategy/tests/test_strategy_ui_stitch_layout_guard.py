@@ -84,7 +84,7 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 		self.assertIn("kt-str-summary-strip", fixture)
 		self.assertIn("data-kt-str-plans-tbody", fixture)
 		self.assertIn('data-kt-str-count="active"', fixture)
-		self.assertIn("MOH-SP-0001", fixture)  # seed reference in fixture header comment
+		self.assertIn("MOH-SP-2026-2030", fixture)  # seed reference in fixture header comment
 		self.assertIn("Create strategic plan", fixture)
 		self.assertIn("renderPlanRows", live)
 		# Portfolio Effective period: compact dates, stacked in the cell (not one wide line).
@@ -135,11 +135,13 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 		self.assertIn("Create plan", create_fx)
 		self.assertIn("Cancel", create_fx)
 		self.assertIn("successToast", create_fx)
-		self.assertIn("Strategic procurement is the engine of institutional efficiency.", create_fx)
+		self.assertNotIn("kt-str-create-quote", create_fx)
+		self.assertNotIn(
+			"Strategic procurement is the engine of institutional efficiency.", create_fx
+		)
 		self.assertIn("bg-surface-container-low p-section-gap", create_fx)
 		self.assertIn('id="planForm"', create_fx)
 		self.assertEqual(create_fx.count(">calendar_today<"), 2)
-		self.assertIn("architecture", create_fx)
 		self.assertNotIn("cdn.tailwindcss.com", create_fx)
 		create_css = _read(PORTFOLIO_CSS.parent / "strategy_alignment_create.css")
 		self.assertIn("data:image/svg+xml", create_css)
@@ -543,7 +545,7 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 
 	def test_fixture_roots_and_markers(self):
 		cases = {
-			"portfolio.js": ("kt-str-portfolio", "Strategy Alignment", "MOH-SP-0001"),
+			"portfolio.js": ("kt-str-portfolio", "Strategy Alignment", "MOH-SP-2026-2030"),
 			"overview.js": ("kt-str-overview", "Plan Details", "kt-str-successor-modal"),
 			"structure.js": ("kt-str-structure", "Structure", "Add Structure Item"),
 			"structure_drawer.js": ("kt-str-structure-drawer", "fixed inset-0", "Target"),
@@ -565,7 +567,7 @@ class TestStrategyUiStitchLayoutGuard(FrappeTestCase):
 			"downstream.js": ("kt-str-downstream", "data-kt-str-down-tbody", "Downstream usage"),
 			"review_blockers.js": ("kt-str-review-blockers", "data-kt-str-review-group", "run-readiness"),
 			"review_ready.js": ("kt-str-review-ready", "Ready for submission", "submit-for-review"),
-			"audit.js": ("kt-str-audit", "Audit", "MOH-SP-0001"),
+			"audit.js": ("kt-str-audit", "Audit", "MOH-SP-2026-2030"),
 			"performance.js": (
 				"kt-str-performance",
 				"Strategy Performance",

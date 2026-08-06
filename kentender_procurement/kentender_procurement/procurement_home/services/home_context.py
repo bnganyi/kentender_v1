@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 import frappe
@@ -12,9 +13,25 @@ from frappe import _
 
 from kentender_procurement.procurement_planning.permissions import pp_scope
 
+_YEAR_RE = re.compile(r"(\d{4})")
+
 
 def _norm(value: str | None) -> str:
 	return (value or "").strip()
+
+
+def year_from_fiscal_period(value: Any) -> int | None:
+	"""Map Budget.fiscal_period (e.g. 2026/27) or legacy int year → calendar start year."""
+	if value in (None, ""):
+		return None
+	if isinstance(value, int):
+		return value
+	try:
+		return int(value)
+	except (TypeError, ValueError):
+		pass
+	match = _YEAR_RE.search(str(value).strip())
+	return int(match.group(1)) if match else None
 
 
 def _entity_display(name: str) -> dict[str, str]:
@@ -57,17 +74,35 @@ def list_available_entities(user: str | None = None) -> list[dict[str, str]]:
 
 
 def list_available_fiscal_years(procuring_entity: str | None = None) -> list[int]:
-	filters: dict[str, Any] = {}
-	if procuring_entity and frappe.db.has_column("Budget", "procuring_entity"):
-		filters["procuring_entity"] = procuring_entity
-	years = frappe.get_all(
-		"Budget",
-		filters=filters or None,
-		pluck="fiscal_year",
-		distinct=True,
-		order_by="fiscal_year desc",
-	)
-	out = sorted({int(y) for y in years if y}, reverse=True)
+	"""Distinct FY start years from Budget rows (column is fiscal_period, not fiscal_year)."""
+	out: list[int] = []
+	if frappe.db.exists("DocType", "Budget"):
+		filters: dict[str, Any] = {}
+		if procuring_entity and frappe.db.has_column("Budget", "procuring_entity"):
+			filters["procuring_entity"] = procuring_entity
+		if frappe.db.has_column("Budget", "fiscal_period"):
+			periods = frappe.get_all(
+				"Budget",
+				filters=filters or None,
+				pluck="fiscal_period",
+				distinct=True,
+			)
+			out = sorted(
+				{y for p in periods if (y := year_from_fiscal_period(p)) is not None},
+				reverse=True,
+			)
+		elif frappe.db.has_column("Budget", "fiscal_year"):
+			years = frappe.get_all(
+				"Budget",
+				filters=filters or None,
+				pluck="fiscal_year",
+				distinct=True,
+				order_by="fiscal_year desc",
+			)
+			out = sorted(
+				{y for raw in years if (y := year_from_fiscal_period(raw)) is not None},
+				reverse=True,
+			)
 	if not out:
 		from frappe.utils import now_datetime
 

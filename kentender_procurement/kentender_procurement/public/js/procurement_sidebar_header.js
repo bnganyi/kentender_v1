@@ -209,11 +209,39 @@
 		frappe.ui.Sidebar.prototype.__ktProcRoutePatchVersion = KT_ROUTE_PATCH_VERSION;
 	}
 
+	/**
+	 * Desk home leaves `.body-sidebar-container` display:none. Frappe's
+	 * `sidebar.setup()` rebuilds the rail but does not `.show()` it, so the first
+	 * navigation into a Procurement Page (e.g. Home) looks rail-less until refresh.
+	 */
+	function patchSetupShowsRail() {
+		if (!frappe.ui || !frappe.ui.Sidebar || frappe.ui.Sidebar.prototype.__ktProcSetupShowPatched) {
+			return;
+		}
+		var original = frappe.ui.Sidebar.prototype.setup;
+		frappe.ui.Sidebar.prototype.setup = function (workspace_title) {
+			original.apply(this, arguments);
+			try {
+				var page = frappe.container && frappe.container.page && frappe.container.page.page;
+				if (page && page.hide_sidebar) {
+					return;
+				}
+				if (this.wrapper && typeof this.wrapper.show === "function") {
+					this.wrapper.show();
+				}
+			} catch (e) {
+				/* ignore */
+			}
+		};
+		frappe.ui.Sidebar.prototype.__ktProcSetupShowPatched = true;
+	}
+
 	function boot() {
 		patchSidebar();
 		patchHeaderMake();
 		patchWorkspaceGetPath();
 		patchActiveRouteMatching();
+		patchSetupShowsRail();
 	}
 
 	boot();

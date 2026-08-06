@@ -15,7 +15,7 @@ test.describe("Budget Funding activity (BUD-UI-07)", () => {
 	});
 
 	test("live strip and chronological rows with seed money", async ({ page }) => {
-		await page.goto("/desk/budget-funding-activity/MOH-BUD-0001", {
+		await page.goto("/desk/budget-funding-activity/MOH-BUD-2027-2028", {
 			waitUntil: "domcontentloaded",
 		});
 		const root = page
@@ -58,14 +58,14 @@ test.describe("Budget Funding activity (BUD-UI-07)", () => {
 		await expect(rsv).toContainText("KES 145,000,000");
 		await expect(rsv.getByTestId("kt-bud-activity-action")).toHaveText(/View reservation/i);
 
-		const com = root.locator('tr[data-activity-code="COM-MOH-0001"]');
+		const com = root.locator('tr[data-activity-code="COM-MOH-2027-005"]');
 		await expect(com).toBeVisible();
 		await expect(com).toContainText("Contract commitment");
 		await expect(com).toContainText("Digital health infrastructure implementation contract");
 		await expect(com).toContainText("CTR-MOH-2027-005");
 		await expect(com).toContainText("KES 310,000,000");
 
-		const exp = root.locator('tr[data-activity-code="EXP-MOH-0001"]');
+		const exp = root.locator('tr[data-activity-code="EXP-MOH-2027-005-01"]');
 		await expect(exp).toBeVisible();
 		await expect(exp).toContainText("Actual expenditure snapshot");
 		await expect(exp).toContainText("Finance system");
@@ -103,7 +103,7 @@ test.describe("Budget Funding activity (BUD-UI-07)", () => {
 	});
 
 	test("View opens in-canvas notice without Frappe dialog", async ({ page }) => {
-		await page.goto("/desk/budget-funding-activity/MOH-BUD-0001", {
+		await page.goto("/desk/budget-funding-activity/MOH-BUD-2027-2028", {
 			waitUntil: "domcontentloaded",
 		});
 		const root = page
@@ -126,7 +126,7 @@ test.describe("Budget Funding activity (BUD-UI-07)", () => {
 	});
 
 	test("type filter narrows rows", async ({ page }) => {
-		await page.goto("/desk/budget-funding-activity/MOH-BUD-0001", {
+		await page.goto("/desk/budget-funding-activity/MOH-BUD-2027-2028", {
 			waitUntil: "domcontentloaded",
 		});
 		const root = page
@@ -135,8 +135,8 @@ test.describe("Budget Funding activity (BUD-UI-07)", () => {
 		await expect(root).toBeVisible({ timeout: 45_000 });
 
 		await root.getByTestId("kt-bud-activity-filter-type").selectOption("commitment");
-		await expect(root.locator('tr[data-activity-code="COM-MOH-0001"]')).toBeVisible();
+		await expect(root.locator('tr[data-activity-code="COM-MOH-2027-005"]')).toBeVisible();
 		await expect(root.locator('tr[data-activity-code="RSV-MOH-0001"]')).toHaveCount(0);
-		await expect(root.locator('tr[data-activity-code="EXP-MOH-0001"]')).toHaveCount(0);
+		await expect(root.locator('tr[data-activity-code="EXP-MOH-2027-005-01"]')).toHaveCount(0);
 	});
 });

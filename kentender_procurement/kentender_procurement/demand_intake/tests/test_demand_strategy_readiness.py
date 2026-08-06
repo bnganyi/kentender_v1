@@ -24,7 +24,7 @@ from kentender_strategy.services.strategy_contracts import list_applicable_value
 
 
 def _required_fixture(seed_plan: str) -> list[dict]:
-	"""Return Required applicable PVCs without category filter (MOH seed includes PVO-EFT-01)."""
+	"""Return Required applicable PVCs without category filter (MOH seed includes MOH-PVC-EFT-01)."""
 	rows = list_applicable_value_commitments(plan_version=seed_plan)
 	required = [r for r in rows if str(r.get("consideration_level") or "").startswith("Required")]
 	return required

@@ -43,7 +43,7 @@ import { loginAsProcurementPlanner } from '../../helpers/auth';
 const BENCH_ROOT = path.resolve(__dirname, '../../../../../..');
 const PLAN_CODE = 'PLAN-MOH-2026';
 const WORKS_DEMAND_TITLE = 'District Hospital Renovation Works';
-const BUDGET_LINE_CODE = 'MOH-BL-0001'; // Budget Line.generated_reference (MVP-1)
+const BUDGET_LINE_CODE = 'MOH-BL-DHI-2027'; // Budget Line.generated_reference (MVP-1)
 const BUMPED_BUDGET_ALLOCATION = 300_000_000;
 // works_master_budget_seed.AMOUNT_ALLOCATED — the seed's upsert is
 // idempotent-preserve-if-exists, so re-running the seed does NOT reset an
@@ -146,7 +146,7 @@ test.describe('PW12 Package Creation Wizard journey (dedicated page, In Creation
 		// XMOD-STR-004 — Demand Strategy Reference as Name (CODE).
 		const strategy = demandCard.locator('[data-testid="kt-pw-demand-strategy"]');
 		await expect(strategy).toBeVisible({ timeout: 10000 });
-		await expect(strategy).toContainText('MOH-TGT-0001');
+		await expect(strategy).toContainText('MOH-TGT-AVAIL-2028');
 		await expect(strategy).toContainText('(');
 		await expect(strategy).not.toHaveText(/^[a-z0-9]{8,14}$/);
 

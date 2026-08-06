@@ -84,7 +84,7 @@ class TestBudgetReadiness(FrappeTestCase):
 		self.assertIn("blockers", res.get("errors") or {})
 
 	def test_active_shows_activation_record_no_activate(self):
-		dto = get_budget_readiness("MOH-BUD-0001")
+		dto = get_budget_readiness("MOH-BUD-2027-2028")
 		self.assertEqual(dto["budget"]["status"], "Active")
 		self.assertTrue(dto["capabilities"]["show_activation_record"])
 		self.assertFalse(dto["capabilities"]["can_activate"])
@@ -145,14 +145,14 @@ class TestBudgetReadiness(FrappeTestCase):
 		):
 			line = frappe.get_doc("Budget Line", ln)
 			if not (line.primary_target_code or "").strip():
-				line.primary_target_code = "MOH-TGT-0003"
+				line.primary_target_code = "MOH-TGT-SKILLS-2029"
 				line.primary_target_name = "Digital health technical capability target"
 				line.primary_strategy_linked = 1
 			if not line.get("value_treatments"):
 				line.append(
 					"value_treatments",
 					{
-						"pvc_code": "PVO-EFT-01",
+						"pvc_code": "MOH-PVC-EFT-01",
 						"pvc_name": "Improve infrastructure efficiency",
 						"requirement_level": "Required",
 						"treatment": "Embedded in line",
@@ -194,14 +194,14 @@ class TestBudgetReadiness(FrappeTestCase):
 		for ln in frappe.get_all("Budget Line", filters={"budget": doc.name}, pluck="name"):
 			line = frappe.get_doc("Budget Line", ln)
 			if not (line.primary_target_code or "").strip():
-				line.primary_target_code = "MOH-TGT-0003"
+				line.primary_target_code = "MOH-TGT-SKILLS-2029"
 				line.primary_target_name = "Digital health technical capability target"
 				line.primary_strategy_linked = 1
 			if not line.get("value_treatments"):
 				line.append(
 					"value_treatments",
 					{
-						"pvc_code": "PVO-EFT-01",
+						"pvc_code": "MOH-PVC-EFT-01",
 						"pvc_name": "Improve infrastructure efficiency",
 						"requirement_level": "Required",
 						"treatment": "Embedded in line",
@@ -241,6 +241,6 @@ class TestBudgetReadiness(FrappeTestCase):
 		frappe.set_user(email)
 		try:
 			with self.assertRaises(frappe.PermissionError):
-				get_budget_readiness("MOH-BUD-0001")
+				get_budget_readiness("MOH-BUD-2027-2028")
 		finally:
 			frappe.set_user("Administrator")

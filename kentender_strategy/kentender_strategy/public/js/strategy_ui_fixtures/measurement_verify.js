@@ -15,7 +15,7 @@ kentender_strategy.ui_fixtures.measurement_verify = function () {
 <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-2">Verify performance measurement</h1>
 <p class="text-on-surface-variant font-body-lg">
 <span class="font-semibold text-on-surface">Target:</span>
-<span data-kt-str-target-code>MOH-TGT-0001</span> — <span data-kt-str-target-title>At least 99.9% annual availability by 30 June 2028</span>
+<span data-kt-str-target-code>MOH-TGT-AVAIL-2028</span> — <span data-kt-str-target-title>At least 99.9% annual availability by 30 June 2028</span>
                         </p>
 </div>
 <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">

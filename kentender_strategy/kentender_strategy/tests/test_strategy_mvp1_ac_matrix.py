@@ -80,8 +80,6 @@ def _ensure_user(email: str, roles: list[str], procuring_entity: str | None = No
 		"Strategy Manager",
 		"Strategy Reviewer",
 		"Planning Authority",
-		"Performance Officer",
-		"Performance Verifier",
 	):
 		if role in have and role not in roles:
 			user.remove_roles(role)
@@ -117,7 +115,7 @@ class TestStrategyMvp1AcMatrix(FrappeTestCase):
 		)
 		codes_ict = {(c.get("objective") or {}).get("code") for c in with_ict}
 		codes_works = {(c.get("objective") or {}).get("code") for c in without}
-		self.assertIn("PVO-ECO-01", codes_ict)
+		self.assertIn("MOH-PVC-ECO-01", codes_ict)
 		self.assertNotIn("PVO-SUS-01", codes_works)
 
 	def test_str_ac_011_consideration_not_tender_criterion(self):
@@ -259,10 +257,10 @@ class TestStrategyMvp1AcMatrix(FrappeTestCase):
 
 	def test_str_ac_019_audit_records_actor_and_reason(self):
 		officer = _ensure_user(
-			"str.ac019.officer@example.com", ["Performance Officer"], self.pe
+			"str.ac019.officer@example.com", ["Strategy Officer"], self.pe
 		)
 		verifier = _ensure_user(
-			"str.ac019.verifier@example.com", ["Performance Verifier"], self.pe
+			"str.ac019.verifier@example.com", ["Strategy Manager"], self.pe
 		)
 		frappe.set_user(officer)
 		saved = save_measurement_draft(

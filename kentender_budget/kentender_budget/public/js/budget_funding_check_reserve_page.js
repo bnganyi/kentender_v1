@@ -13,17 +13,17 @@
 				demandTitle: "National digital health infrastructure upgrade",
 				department: "Digital Health Directorate",
 				requestedAmount: 455000000,
-				budgetLine: "MOH-BL-0001",
+				budgetLine: "MOH-BL-DHI-2027",
 				mode: "standalone",
 			};
 		}
-		// Available path uses MOH-BL-0002 headroom (80M available).
+		// Available path uses MOH-BL-HWD-2027 headroom (80M available).
 		return {
 			demandName: "DMD-TEST-UI-AVAILABLE",
 			demandTitle: "National digital health capability uplift",
 			department: "Digital Health Directorate",
 			requestedAmount: 50000000,
-			budgetLine: "MOH-BL-0002",
+			budgetLine: "MOH-BL-HWD-2027",
 			mode: "standalone",
 		};
 	}

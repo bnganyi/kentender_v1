@@ -4,7 +4,7 @@ frappe.provide("kentender_budget.workspace");
 (function () {
 	"use strict";
 
-	var FIXTURE_BUDGET = "MOH-BUD-0001";
+	var FIXTURE_BUDGET = "MOH-BUD-2027-2028";
 
 	var BUDGET_TABS = [
 		{ label: "Overview", slug: "budget-overview" },

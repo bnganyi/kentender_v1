@@ -39,8 +39,6 @@ def _ensure_user(email: str, roles: list[str], procuring_entity: str | None = No
 		"Strategy Manager",
 		"Strategy Reviewer",
 		"Planning Authority",
-		"Performance Officer",
-		"Performance Verifier",
 	):
 		if role in have and role not in roles:
 			user.remove_roles(role)
@@ -76,10 +74,10 @@ class TestStrategyMeasurementVerify(FrappeTestCase):
 			if status != "Active":
 				frappe.db.set_value("Strategic Plan", cls.plan_id, "status", "Active")
 		cls.officer = _ensure_user(
-			"str.officer.verify@example.com", ["Performance Officer"], cls.pe
+			"str.officer.verify@example.com", ["Strategy Officer"], cls.pe
 		)
 		cls.verifier = _ensure_user(
-			"str.verifier.verify@example.com", ["Performance Verifier"], cls.pe
+			"str.verifier.verify@example.com", ["Strategy Manager"], cls.pe
 		)
 
 	def tearDown(self):
@@ -158,13 +156,13 @@ class TestStrategyMeasurementVerify(FrappeTestCase):
 		mid = self._submit_measurement(
 			actual=99.9, period_start="2026-12-01", period_end="2026-12-15"
 		)
-		# Officer also holds Performance Verifier for the negative path.
-		_ensure_user(self.officer, ["Performance Officer", "Performance Verifier"], self.pe)
+		# Officer also holds Strategy Manager for the negative SoD path.
+		_ensure_user(self.officer, ["Strategy Officer", "Strategy Manager"], self.pe)
 		frappe.set_user(self.officer)
 		with self.assertRaises(frappe.PermissionError):
 			transition_measurement(mid, "Verify")
 		# Restore officer-only roles for later tests.
-		_ensure_user(self.officer, ["Performance Officer"], self.pe)
+		_ensure_user(self.officer, ["Strategy Officer"], self.pe)
 
 	def test_off_track_verify_creates_corrective_action(self):
 		# Target 99.9 / tol 0.1 → below 99.8 is Off track.

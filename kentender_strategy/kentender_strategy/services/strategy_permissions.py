@@ -11,9 +11,12 @@ ROLE_OFFICER = "Strategy Officer"
 ROLE_MANAGER = "Strategy Manager"
 ROLE_REVIEWER = "Strategy Reviewer"
 ROLE_PLANNING = "Planning Authority"
-ROLE_PERF_OFFICER = "Performance Officer"
-ROLE_PERF_VERIFIER = "Performance Verifier"
 ROLE_AUDITOR = "Auditor"
+
+# Measurement submit/verify mapped onto Strategy Officer / Manager (MVP-1 keep-set).
+# Legacy Role names "Performance Officer" / "Performance Verifier" are retired.
+ROLE_PERF_OFFICER = ROLE_OFFICER
+ROLE_PERF_VERIFIER = ROLE_MANAGER
 
 ALL_STRATEGY_ROLES = (
 	ROLE_VIEWER,
@@ -21,8 +24,6 @@ ALL_STRATEGY_ROLES = (
 	ROLE_MANAGER,
 	ROLE_REVIEWER,
 	ROLE_PLANNING,
-	ROLE_PERF_OFFICER,
-	ROLE_PERF_VERIFIER,
 	ROLE_AUDITOR,
 )
 
@@ -73,11 +74,13 @@ def can_approve_plan() -> bool:
 
 
 def can_submit_measurement() -> bool:
-	return ROLE_PERF_OFFICER in user_roles() or "System Manager" in user_roles()
+	"""Submit measurements: Strategy Officer (MVP-1; was Performance Officer)."""
+	return ROLE_OFFICER in user_roles() or "System Manager" in user_roles()
 
 
 def can_verify_measurement() -> bool:
-	return ROLE_PERF_VERIFIER in user_roles() or "System Manager" in user_roles()
+	"""Verify measurements: Strategy Manager (MVP-1; was Performance Verifier)."""
+	return ROLE_MANAGER in user_roles() or "System Manager" in user_roles()
 
 
 def has_cross_entity_authority(user: str | None = None) -> bool:

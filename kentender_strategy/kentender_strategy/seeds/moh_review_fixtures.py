@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 """Idempotent Review (STR-UI-13) fixtures — incomplete Draft + transition Draft.
 
-Does not mutate MOH-SP-0001 Active master.
+Does not mutate MOH-SP-2026-2030 Active master.
 """
 
 from __future__ import annotations
@@ -60,7 +60,7 @@ def ensure_review_blockers_draft(procuring_entity: str | None = None) -> dict[st
 				"scope_id": pe,
 				"parent_plan": None,
 				"status": "Draft",
-				# Non-overlapping with Active MOH-SP-0001 (ends 2030-06-30) for STR-FR-005.
+				# Non-overlapping with Active MOH-SP-2026-2030 (ends 2030-06-30) for STR-FR-005.
 				"start_date": "2030-07-01",
 				"end_date": "2031-06-30",
 				"description": "STR-UI-13 blockers canvas fixture (empty structure).",
@@ -121,7 +121,7 @@ def ensure_review_transition_draft(procuring_entity: str | None = None) -> dict[
 			"scope_id": pe,
 			"parent_plan": None,
 			"status": "Draft",
-			# Non-overlapping with Active MOH-SP-0001 so Activate exercises the matrix
+			# Non-overlapping with Active MOH-SP-2026-2030 so Activate exercises the matrix
 			# without violating STR-FR-005 (one Active Entity Strategic Plan per entity-date).
 			"start_date": "2030-07-01",
 			"end_date": "2031-06-30",

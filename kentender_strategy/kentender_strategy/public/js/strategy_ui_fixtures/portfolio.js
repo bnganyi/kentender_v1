@@ -1,6 +1,6 @@
 // Extracted from docs/mvp-1/01_strategy/ui_design/strategy_portfolio_strategy_alignment/code.html <main>
 // Only surgical data-testid / data-kt-str-action hooks added — Stitch classes preserved.
-// Table / My Work / summary counts are live-bound (seed plan MOH-SP-0001 via API).
+// Table / My Work / summary counts are live-bound (seed plan MOH-SP-2026-2030 via API).
 frappe.provide("kentender_strategy.ui_fixtures");
 kentender_strategy.ui_fixtures.portfolio = function () {
 	return `<div class="kt-str-root kt-stitch-canvas" data-testid="kt-str-portfolio">

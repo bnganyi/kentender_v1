@@ -9,7 +9,7 @@
 		if (route.length > 1 && route[1]) {
 			return String(route[1]).trim();
 		}
-		return "MOH-BUD-0001";
+		return "MOH-BUD-2027-2028";
 	}
 
 	function revisionCodeFromRoute() {

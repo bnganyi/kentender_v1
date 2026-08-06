@@ -13,7 +13,6 @@ from frappe import _
 from kentender_core.services.notification_service import emit_notification_log
 from kentender_strategy.services.strategy_permissions import (
 	ROLE_MANAGER,
-	ROLE_PERF_VERIFIER,
 	ROLE_PLANNING,
 	ROLE_REVIEWER,
 )
@@ -125,7 +124,7 @@ def _recipients_for_event(event_type: str, *, context: dict) -> list[str]:
 	elif event_type in (EVENT_PVO_RETIRED, EVENT_PVO_SUPERSEDED):
 		users = _filter_by_entity(_users_with_roles([ROLE_MANAGER]), pe)
 	elif event_type == EVENT_MEASUREMENT_SUBMITTED:
-		users = _filter_by_entity(_users_with_roles([ROLE_PERF_VERIFIER]), pe)
+		users = _filter_by_entity(_users_with_roles([ROLE_MANAGER]), pe)
 	elif event_type in (
 		EVENT_MEASUREMENT_RETURNED,
 		EVENT_MEASUREMENT_VERIFIED,
@@ -135,7 +134,7 @@ def _recipients_for_event(event_type: str, *, context: dict) -> list[str]:
 	elif event_type == EVENT_CA_ASSIGNED:
 		users = {owner} if owner else ({submitted_by} if submitted_by else set())
 	elif event_type == EVENT_CA_SUBMITTED:
-		users = _filter_by_entity(_users_with_roles([ROLE_PERF_VERIFIER]), pe)
+		users = _filter_by_entity(_users_with_roles([ROLE_MANAGER]), pe)
 	elif event_type in (EVENT_CA_RETURNED, EVENT_CA_VERIFIED):
 		users = {owner} if owner else set()
 	else:

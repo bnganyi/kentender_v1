@@ -133,7 +133,7 @@ test.describe("Create Demand strategy target (XMOD-STR-002)", () => {
 			{ timeout: 15_000 },
 		);
 		const pick =
-			optionMeta.find((o) => /MOH-TGT-0001/i.test(o.label)) || optionMeta[0];
+			optionMeta.find((o) => /MOH-TGT-AVAIL-2028/i.test(o.label)) || optionMeta[0];
 		await page.selectOption("#kt-cd-strategy-target", pick.value);
 		const [saveResp] = await Promise.all([
 			page.waitForResponse(

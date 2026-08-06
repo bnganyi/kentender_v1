@@ -1,5 +1,5 @@
 # Copyright (c) 2026, KenTender and contributors
-"""Idempotent MOH-SP-0001 Strategy seed (STRATEGY-MVP1-REQ-1.0 §19).
+"""Idempotent MOH-SP-2026-2030 Strategy seed (STRATEGY-MVP1-REQ-1.0 §19).
 
 Also keeps legacy constant aliases for works-master / stable-platform importers.
 """
@@ -13,24 +13,24 @@ import frappe
 from kentender_strategy.services.strategy_permissions import ensure_strategy_roles
 from kentender_strategy.services.strategy_transitions import transition_plan
 
-# --- Canonical MVP-1 codes (REQ §19) ---
-STRATEGY_PLAN_CODE: Final[str] = "MOH-SP-0001"
+# --- Canonical MVP-1 codes (MOH_MVP_V1 contract) ---
+STRATEGY_PLAN_CODE: Final[str] = "MOH-SP-2026-2030"
 PLAN_TITLE: Final[str] = "Ministry of Health Strategic Plan 2026–2030"
 START_YEAR: Final[int] = 2026
 END_YEAR: Final[int] = 2030
-PROGRAM_CODE: Final[str] = "MOH-PROG-0001"
+PROGRAM_CODE: Final[str] = "MOH-PROG-DH"
 PROGRAM_TITLE: Final[str] = "Digital Health Services"
 PROGRAM_DESCRIPTION: Final[str] = (
 	"Digital clinical services and health information systems that improve access and continuity of care."
 )
-SUB_PROGRAM_CODE: Final[str] = "MOH-SUB-0001"
+SUB_PROGRAM_CODE: Final[str] = "MOH-SUB-HIS"
 SUB_PROGRAM_TITLE: Final[str] = "Health Information Systems"
-OBJECTIVE_CODE: Final[str] = "MOH-OUT-0001"  # Strategic Outcome (legacy alias name)
+OBJECTIVE_CODE: Final[str] = "MOH-OUT-RELIABILITY"
 OBJECTIVE_TITLE: Final[str] = "Reliable and accessible digital clinical services"
 OBJECTIVE_DESCRIPTION: Final[str] = OBJECTIVE_TITLE
-INDICATOR_CODE: Final[str] = "MOH-IND-0001"
+INDICATOR_CODE: Final[str] = "MOH-IND-AVAIL-01"
 INDICATOR_TITLE: Final[str] = "Availability of core clinical information systems"
-TARGET_CODE: Final[str] = "MOH-TGT-0001"
+TARGET_CODE: Final[str] = "MOH-TGT-AVAIL-2028"
 TARGET_TITLE: Final[str] = "At least 99.9% annual availability by 30 June 2028"
 TARGET_METRIC_TEXT: Final[str] = "Percent availability"
 
@@ -52,23 +52,23 @@ PVO_FIXTURE = [
 HR_PROGRAMME_PLAN_CODE: Final[str] = "MOH-SP-0002"
 HR_PROGRAMME_SCOPE_ID: Final[str] = "MOH-PROG-HR"
 
-# Period-encoded / review fixture codes retired by STR-FR-003a — remap in place on seed upsert.
+# Remap retired 000x codes → contract identities (MOH_MVP_V1).
 _LEGACY_PERIOD_CODE_REMAP: Final[tuple[tuple[str, str, str, str], ...]] = (
-	("Strategic Plan", "plan_code", "MOH-SP-2026-2030", STRATEGY_PLAN_CODE),
+	("Strategic Plan", "plan_code", "MOH-SP-0001", STRATEGY_PLAN_CODE),
 	("Strategic Plan", "plan_code", "MOH-HR-2026-2030", HR_PROGRAMME_PLAN_CODE),
 	("Strategic Plan", "plan_code", "MOH-SP-HR-2026", HR_PROGRAMME_PLAN_CODE),
 	("Strategic Plan", "plan_code", "MOH-SP-REVIEW-BLOCK", "MOH-SP-9001"),
 	("Strategic Plan", "plan_code", "MOH-SP-REVIEW-TX", "MOH-SP-9002"),
-	("Strategy Programme", "programme_code", "MOH-PROG-DH", PROGRAM_CODE),
-	("Strategy Sub Programme", "sub_programme_code", "MOH-SUB-HIS", SUB_PROGRAM_CODE),
-	("Strategic Outcome", "outcome_code", "MOH-OUT-01", OBJECTIVE_CODE),
-	("Performance Indicator", "indicator_code", "MOH-IND-01", INDICATOR_CODE),
-	("Performance Target", "target_code", "MOH-TGT-01", TARGET_CODE),
+	("Strategy Programme", "programme_code", "MOH-PROG-0001", PROGRAM_CODE),
+	("Strategy Sub Programme", "sub_programme_code", "MOH-SUB-0001", SUB_PROGRAM_CODE),
+	("Strategic Outcome", "outcome_code", "MOH-OUT-0001", OBJECTIVE_CODE),
+	("Performance Indicator", "indicator_code", "MOH-IND-0001", INDICATOR_CODE),
+	("Performance Target", "target_code", "MOH-TGT-0001", TARGET_CODE),
 )
 
 
 def _remap_legacy_period_codes() -> None:
-	"""Rewrite retired period-encoded business codes to STR-FR-003a references."""
+	"""Rewrite retired 000x business codes to MOH_MVP_V1 contract references."""
 	for doctype, field, old_code, new_code in _LEGACY_PERIOD_CODE_REMAP:
 		if old_code == new_code:
 			continue
@@ -111,7 +111,7 @@ def desk_visibility(procuring_entity_name: str) -> dict[str, str]:
 	return {
 		"procuring_entity": procuring_entity_name,
 		"scope_rule": "Entity-scoped Strategy Alignment (MVP-1).",
-		"optional_seed_flag": "MOH-SP-0001",
+		"optional_seed_flag": "MOH-SP-2026-2030",
 	}
 
 
@@ -292,7 +292,31 @@ def _ensure_measurements(plan_name: str, target_name: str) -> dict[str, str]:
 
 
 def upsert_works_master_strategy_hierarchy(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
-	"""Idempotent loader for MOH-SP-0001 (+ PVOs, commitments, measurements)."""
+	"""Idempotent loader — delegates to MOH_MVP_V1 contract Strategy seed."""
+	ensure_strategy_roles()
+	_remap_legacy_period_codes()
+	from kentender_strategy.seeds.moh_mvp_v1_strategy import upsert_moh_mvp_v1_strategy
+
+	result = upsert_moh_mvp_v1_strategy(reset=bool(_kwargs.get("reset")))
+	# Preserve legacy response keys used by stable-platform / tests.
+	if result.get("ok"):
+		result.setdefault("plan_code", STRATEGY_PLAN_CODE)
+		result.setdefault("program", frappe.db.get_value("Strategy Programme", {"programme_code": PROGRAM_CODE}, "name"))
+		result.setdefault(
+			"sub_program",
+			frappe.db.get_value("Strategy Sub Programme", {"sub_programme_code": SUB_PROGRAM_CODE}, "name"),
+		)
+		result.setdefault(
+			"objective",
+			frappe.db.get_value("Strategic Outcome", {"outcome_code": OBJECTIVE_CODE}, "name"),
+		)
+		result.setdefault("target", result.get("target_avail"))
+		result.setdefault("skipped", False)
+	return result
+
+
+def _upsert_works_master_strategy_hierarchy_legacy(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
+	"""Previous inline loader retained for reference; unused."""
 	ensure_strategy_roles()
 	_remap_legacy_period_codes()
 	pe = resolve_procuring_entity_moh()

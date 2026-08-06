@@ -54,7 +54,7 @@ test.describe("Budget Funding role matrix (BUD-SUP-002)", () => {
 		await expect(draft.getByTestId("kt-bud-review-mark")).toBeHidden();
 		await expect(draft.getByTestId("kt-bud-review-activate")).toBeHidden();
 
-		await page.goto("/desk/budget-overview/MOH-BUD-0001", {
+		await page.goto("/desk/budget-overview/MOH-BUD-2027-2028", {
 			waitUntil: "domcontentloaded",
 		});
 		const overview = page
@@ -118,7 +118,7 @@ test.describe("Budget Funding role matrix (BUD-SUP-002)", () => {
 
 	test("Other-entity Officer: PE-MOH review denied", async ({ page }) => {
 		await loginAsBudgetOtherEntity(page);
-		const root = await openReview(page, "MOH-BUD-0001");
+		const root = await openReview(page, "MOH-BUD-2027-2028");
 		await expect(root).toHaveAttribute("data-kt-bud-error", "1", { timeout: 45_000 });
 		await expect(root).toHaveAttribute("data-kt-bud-live", "0");
 	});

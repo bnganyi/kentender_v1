@@ -29,7 +29,7 @@
 		var code = revisionCodeFromRoute();
 		var budgetHint =
 			(kentender_budget.workspace && kentender_budget.workspace.FIXTURE_BUDGET) ||
-			"MOH-BUD-0001";
+			"MOH-BUD-2027-2028";
 		if (typeof sh.enterNative === "function") {
 			sh.enterNative({
 				sidebarWorkspaceKey: "procurement",

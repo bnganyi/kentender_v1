@@ -15,7 +15,7 @@ test.describe("Budget Funding downstream usage (BUD-UI-10)", () => {
 	});
 
 	test("live table shows pack lineage codes and full KES money", async ({ page }) => {
-		await page.goto("/desk/budget-downstream/MOH-BUD-0001", {
+		await page.goto("/desk/budget-downstream/MOH-BUD-2027-2028", {
 			waitUntil: "domcontentloaded",
 		});
 		const root = page
@@ -52,7 +52,7 @@ test.describe("Budget Funding downstream usage (BUD-UI-10)", () => {
 	});
 
 	test("View reservation shows in-canvas notice without Message dialog", async ({ page }) => {
-		await page.goto("/desk/budget-downstream/MOH-BUD-0001", {
+		await page.goto("/desk/budget-downstream/MOH-BUD-2027-2028", {
 			waitUntil: "domcontentloaded",
 		});
 		const root = page
@@ -69,7 +69,7 @@ test.describe("Budget Funding downstream usage (BUD-UI-10)", () => {
 	});
 
 	test("soft-show rebind keeps live table after tab hop", async ({ page }) => {
-		await page.goto("/desk/budget-downstream/MOH-BUD-0001", {
+		await page.goto("/desk/budget-downstream/MOH-BUD-2027-2028", {
 			waitUntil: "domcontentloaded",
 		});
 		const root = page

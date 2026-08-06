@@ -27,7 +27,7 @@ test.describe("Budget Check and Reserve (BUD-UI-06)", () => {
 		await expect(root).toContainText("KES 50,000,000");
 		await expect(root).toContainText("KES 80,000,000");
 		await expect(root).not.toContainText("80M");
-		await expect(root).toContainText("MOH-BL-0002");
+		await expect(root).toContainText("MOH-BL-HWD-2027");
 		await expect(root).toContainText(/will not create additional funding holds/i);
 
 		await assertStitchDeskChrome(page, {
@@ -53,7 +53,7 @@ test.describe("Budget Check and Reserve (BUD-UI-06)", () => {
 		await expect(root).toContainText("KES 455,000,000");
 		await expect(root).toContainText(/Shortfall/i);
 		await expect(root).not.toContainText("455M");
-		await expect(root).toContainText("MOH-BL-0001");
+		await expect(root).toContainText("MOH-BL-DHI-2027");
 		await expect(page.locator(".msgprint")).toHaveCount(0);
 	});
 
@@ -63,10 +63,10 @@ test.describe("Budget Check and Reserve (BUD-UI-06)", () => {
 		await expect(root).toBeVisible({ timeout: 45_000 });
 
 		const lineSelect = root.locator('[data-kt-bud-cr-filter="budget_line"]');
-		await lineSelect.selectOption("MOH-BL-0001");
+		await lineSelect.selectOption("MOH-BL-DHI-2027");
 		const again = page.locator('[data-testid="kt-bud-check-reserve"][data-kt-bud-live="1"]');
 		await expect(again).toBeVisible({ timeout: 20_000 });
-		// 50M request against MOH-BL-0001 (25M available) → insufficient
+		// 50M request against MOH-BL-DHI-2027 (25M available) → insufficient
 		await expect(again.getByTestId("kt-bud-check-reserve-decision-insufficient")).toBeVisible({
 			timeout: 20_000,
 		});

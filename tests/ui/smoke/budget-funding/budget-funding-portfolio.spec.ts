@@ -4,7 +4,7 @@ import { assertStitchDeskChrome } from "../../helpers/stitchDeskChrome";
 
 /**
  * Budget & Funding portfolio (BUD-UI-01) — Stitch Desk shell + live bind.
- * Requires MOH-BUD-0001..0003 seed (moh_mvp_v1_portfolio).
+ * Requires MOH-BUD-2027-2028..0003 seed (moh_mvp_v1_portfolio).
  * Chrome contract also covered by stitch-desk-chrome.spec.ts (shared baseline gate).
  */
 
@@ -30,9 +30,9 @@ test.describe("Budget Funding portfolio (BUD-UI-01)", () => {
 		await expect(page.getByRole("button", { name: /Register approved budget/i })).toBeVisible();
 		await expect(page.getByRole("button", { name: /View funding performance/i })).toBeVisible();
 		await expect(page.locator("[data-kt-bud-budgets-tbody]")).toBeVisible();
-		await expect(page.getByText("MOH-BUD-0001")).toBeVisible({ timeout: 20_000 });
+		await expect(page.getByText("MOH-BUD-2027-2028")).toBeVisible({ timeout: 20_000 });
 		await expect(page.getByText("MOH-BUD-0002")).toBeVisible();
-		await expect(page.getByText("MOH-BUD-0003")).toBeVisible();
+		await expect(page.getByText("MOH-BUD-2026-2027")).toBeVisible();
 		await expect(page.locator("cdn.tailwindcss.com")).toHaveCount(0);
 	});
 
@@ -112,12 +112,12 @@ test.describe("Budget Funding portfolio (BUD-UI-01)", () => {
 		await expect(page.locator('[data-testid="kt-bud-portfolio"][data-kt-bud-live="1"]')).toBeVisible({
 			timeout: 30_000,
 		});
-		await expect(page.getByText("MOH-BUD-0001")).toBeVisible({ timeout: 20_000 });
+		await expect(page.getByText("MOH-BUD-2027-2028")).toBeVisible({ timeout: 20_000 });
 		const statusFilter = page.locator('[data-kt-bud-filter="status"]');
 		await statusFilter.selectOption({ label: "Active" });
-		await expect(page.getByText("MOH-BUD-0001")).toBeVisible({ timeout: 15_000 });
+		await expect(page.getByText("MOH-BUD-2027-2028")).toBeVisible({ timeout: 15_000 });
 		await expect(page.getByText("MOH-BUD-0002")).toHaveCount(0);
-		await expect(page.getByText("MOH-BUD-0003")).toHaveCount(0);
+		await expect(page.getByText("MOH-BUD-2026-2027")).toHaveCount(0);
 	});
 
 	test("strip counts and money match MOH seed / Stitch", async ({ page }) => {
@@ -137,7 +137,7 @@ test.describe("Budget Funding portfolio (BUD-UI-01)", () => {
 		await expect(
 			page.getByText("Ministry of Health Procurement Budget FY 2027/28", { exact: true }),
 		).toBeVisible();
-		await expect(page.locator('[data-kt-bud-ref="MOH-BUD-0001"]')).toHaveText("MOH-BUD-0001");
+		await expect(page.locator('[data-kt-bud-ref="MOH-BUD-2027-2028"]')).toHaveText("MOH-BUD-2027-2028");
 		await expect(page.getByText(/Ref:\s*MOH-BUD/)).toHaveCount(0);
 		await expect(page.getByTestId("kt-bud-table-footer")).toBeVisible();
 		await expect(page.getByTestId("kt-bud-table-footer")).toContainText(/Showing 3 of 3/);
@@ -174,11 +174,11 @@ test.describe("Budget Funding portfolio (BUD-UI-01)", () => {
 		await expect(page.locator('[data-testid="kt-bud-portfolio"][data-kt-bud-live="1"]')).toBeVisible({
 			timeout: 30_000,
 		});
-		await expect(page.getByText("MOH-BUD-0001")).toBeVisible({ timeout: 20_000 });
+		await expect(page.getByText("MOH-BUD-2027-2028")).toBeVisible({ timeout: 20_000 });
 		await page
-			.locator('tr[data-budget-code="MOH-BUD-0001"] [data-kt-bud-action="open"]')
+			.locator('tr[data-budget-code="MOH-BUD-2027-2028"] [data-kt-bud-action="open"]')
 			.click();
-		await page.waitForURL(/\/desk\/budget-overview\/MOH-BUD-0001/, { timeout: 20_000 });
+		await page.waitForURL(/\/desk\/budget-overview\/MOH-BUD-2027-2028/, { timeout: 20_000 });
 		await expect(page.getByTestId("kt-bud-stub")).toBeVisible({ timeout: 20_000 });
 	});
 

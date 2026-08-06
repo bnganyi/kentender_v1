@@ -405,7 +405,7 @@ def save_measurement_draft(payload: dict) -> dict:
 	from kentender_strategy.services.strategy_permissions import can_submit_measurement
 
 	if not can_submit_measurement():
-		frappe.throw(_("Only Performance Officer may save measurements"), frappe.PermissionError)
+		frappe.throw(_("Only Strategy Officer may save measurements"), frappe.PermissionError)
 	name = payload.get("id") or payload.get("name")
 	fields = {k: v for k, v in payload.items() if k not in ("id", "name", "doctype")}
 	fields.setdefault("workflow_status", "Draft")
@@ -449,8 +449,6 @@ def upsert_corrective_action(payload: dict) -> dict:
 	require_any_role(
 		ROLE_OFFICER,
 		ROLE_MANAGER,
-		"Performance Officer",
-		"Performance Verifier",
 		"System Manager",
 	)
 	name = payload.get("id") or payload.get("name")

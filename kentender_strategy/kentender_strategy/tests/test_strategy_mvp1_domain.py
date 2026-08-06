@@ -168,7 +168,7 @@ class TestStrategyMvp1Domain(FrappeTestCase):
 		self.assertIn("grouped", result)
 
 	def test_code_pattern(self):
-		self.assertTrue(CODE_RE.match("MOH-TGT-0001"))
+		self.assertTrue(CODE_RE.match("MOH-TGT-AVAIL-2028"))
 		self.assertIsNone(CODE_RE.match("moh-tgt"))
 
 	def test_immutable_active_plan(self):

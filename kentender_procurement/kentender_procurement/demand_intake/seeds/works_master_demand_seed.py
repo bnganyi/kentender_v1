@@ -24,7 +24,7 @@ from frappe import _
 from kentender_core.seeds._common import ensure_department
 
 DEMAND_ID = "DEM-MOH-2026-001"
-BUDGET_LINE_CODE = "MOH-BL-0001"  # Budget Line.generated_reference (MVP-1)
+BUDGET_LINE_CODE = "MOH-BL-DHI-2027"  # Budget Line.generated_reference (MVP-1)
 DEPT_INFRA = "Infrastructure and Facilities Directorate"
 DEMAND_TITLE = "District Hospital Renovation Works"
 ESTIMATED_UNIT_COST = 98_000_000.0
@@ -50,7 +50,7 @@ def resolve_procuring_entity_moh() -> str | None:
 
 
 def _resolve_budget_line() -> str | None:
-    """Return the Frappe docname of MOH-BL-0001 (generated_reference)."""
+    """Return the Frappe docname of MOH-BL-DHI-2027 (generated_reference)."""
     return frappe.db.get_value("Budget Line", {"generated_reference": BUDGET_LINE_CODE}, "name")
 
 

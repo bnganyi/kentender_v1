@@ -82,8 +82,8 @@ test.describe("Budget line strategy validate (XMOD-STR-001)", () => {
 
 		// Active save.
 		const activeCode =
-			optionValues.find((v) => v === "MOH-TGT-0001") ||
-			optionValues.find((v) => v === "MOH-TGT-0003") ||
+			optionValues.find((v) => v === "MOH-TGT-AVAIL-2028") ||
+			optionValues.find((v) => v === "MOH-TGT-SKILLS-2029") ||
 			optionValues[0];
 		expect(activeCode).toBeTruthy();
 		await primary.selectOption(activeCode!);

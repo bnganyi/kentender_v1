@@ -2601,7 +2601,7 @@ frappe.provide("kentender_budget.live");
 								? __("Revision rejected")
 								: __("Revision applied");
 					frappe.show_alert({ message: msg, indicator: "green" });
-					var budgetCode = $root.attr("data-kt-bud-budget-code") || "MOH-BUD-0001";
+					var budgetCode = $root.attr("data-kt-bud-budget-code") || "MOH-BUD-2027-2028";
 					frappe.set_route("budget-revisions", budgetCode);
 					return result;
 				})
@@ -2614,12 +2614,12 @@ frappe.provide("kentender_budget.live");
 		$root.off(".ktBudRevReview");
 		$root.on("click.ktBudRevReview", "[data-kt-bud-rev-review-back]", function (e) {
 			e.preventDefault();
-			var budgetCode = $root.attr("data-kt-bud-budget-code") || "MOH-BUD-0001";
+			var budgetCode = $root.attr("data-kt-bud-budget-code") || "MOH-BUD-2027-2028";
 			frappe.set_route("budget-revisions", budgetCode);
 		});
 		$root.on("click.ktBudRevReview", "[data-kt-bud-rev-review-view-line]", function (e) {
 			e.preventDefault();
-			var budgetCode = $root.attr("data-kt-bud-budget-code") || "MOH-BUD-0001";
+			var budgetCode = $root.attr("data-kt-bud-budget-code") || "MOH-BUD-2027-2028";
 			frappe.set_route("budget-lines", budgetCode);
 		});
 		$root.on("click.ktBudRevReview", "[data-kt-bud-rev-review-action]", function (e) {

@@ -50,8 +50,6 @@ def _ensure_user(email: str, roles: list[str], procuring_entity: str | None = No
 		"Strategy Manager",
 		"Strategy Reviewer",
 		"Planning Authority",
-		"Performance Officer",
-		"Performance Verifier",
 	):
 		if role in have and role not in roles:
 			user.remove_roles(role)
@@ -109,10 +107,10 @@ class TestStrategyNotifications(FrappeTestCase):
 			"str.notify.manager@example.com", ["Strategy Manager"], cls.pe
 		)
 		cls.officer = _ensure_user(
-			"str.notify.officer@example.com", ["Performance Officer"], cls.pe
+			"str.notify.officer@example.com", ["Strategy Officer"], cls.pe
 		)
 		cls.verifier = _ensure_user(
-			"str.notify.verifier@example.com", ["Performance Verifier"], cls.pe
+			"str.notify.verifier@example.com", ["Strategy Manager"], cls.pe
 		)
 
 	def setUp(self):

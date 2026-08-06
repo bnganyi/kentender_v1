@@ -152,7 +152,7 @@ test.describe("Create Demand PVC treatments (XMOD-STR-003)", () => {
 		const labels = await page.getByTestId("kt-cd-pvc-row").evaluateAll((els) =>
 			els.map((el) => (el.querySelector("strong")?.textContent || "").trim()),
 		);
-		expect(labels.some((l) => /PVO-EFT-01|PVO-/i.test(l))).toBeTruthy();
+		expect(labels.some((l) => /MOH-PVC-EFT-01|PVO-/i.test(l))).toBeTruthy();
 		for (const label of labels) {
 			expect(label).not.toMatch(/^[a-z0-9]{8,12}$/);
 		}

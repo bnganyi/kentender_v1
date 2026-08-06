@@ -91,14 +91,14 @@ class TestStrategyReference(FrappeTestCase):
 			doc.save(ignore_permissions=True)
 
 	def test_seed_uses_new_reference_format(self):
-		self.assertEqual(STRATEGY_PLAN_CODE, "MOH-SP-0001")
-		self.assertEqual(TARGET_CODE, "MOH-TGT-0001")
+		self.assertEqual(STRATEGY_PLAN_CODE, "MOH-SP-2026-2030")
+		self.assertEqual(TARGET_CODE, "MOH-TGT-AVAIL-2028")
 		self.assertTrue(frappe.db.exists("Strategic Plan", {"plan_code": STRATEGY_PLAN_CODE, "status": "Active"}))
 		self.assertTrue(frappe.db.exists("Performance Target", {"target_code": TARGET_CODE}))
 
 	def test_successor_keeps_plan_reference(self):
 		frappe.set_user("Administrator")
-		# Seed may already have an open Draft successor for MOH-SP-0001 — reuse or create.
+		# Seed may already have an open Draft successor for MOH-SP-2026-2030 — reuse or create.
 		open_successor = frappe.db.get_value(
 			"Strategic Plan",
 			{"plan_code": STRATEGY_PLAN_CODE, "status": ["in", ("Draft", "Returned")], "name": ["!=", self.plan]},

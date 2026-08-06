@@ -13,6 +13,7 @@ from frappe.utils.password import update_password
 from kentender_strategy.services.strategy_permissions import (
 	ROLE_MANAGER,
 	ROLE_OFFICER,
+	ROLE_REVIEWER,
 	ROLE_VIEWER,
 	ensure_strategy_roles,
 )
@@ -26,10 +27,11 @@ PE_MOH_CODE = "PE-MOH"
 PE_MOE_CODE = "PE-MOE"
 
 STRATEGY_ROLE_USERS: tuple[tuple[Any, ...], ...] = (
-	("strategy.viewer@moh.test", "Strategy Viewer MOH", (ROLE_VIEWER,), PE_MOH_CODE),
-	("strategy.officer@moh.test", "Strategy Officer MOH", (ROLE_OFFICER,), PE_MOH_CODE),
+	("moh.viewer@example.test", "Strategy Viewer MOH", (ROLE_VIEWER,), PE_MOH_CODE),
+	("moh.medicalservices.officer@example.test", "Strategy Officer MOH", (ROLE_OFFICER,), PE_MOH_CODE),
 	("strategy.manager@moh.test", "Strategy Manager MOH", (ROLE_MANAGER,), PE_MOH_CODE),
-	("strategy.viewer@moe.test", "Strategy Viewer MOE", (ROLE_VIEWER,), PE_MOE_CODE),
+	("moh.strategy.reviewer@example.test", "Strategy Reviewer MOH", (ROLE_REVIEWER,), PE_MOH_CODE),
+	("other.entity.officer@example.test", "Strategy Viewer MOE", (ROLE_VIEWER,), PE_MOE_CODE),
 )
 
 
@@ -107,22 +109,19 @@ def _upsert_user(email: str, full_name: str, roles: tuple[str, ...], pe_name: st
 
 
 def upsert_strategy_role_users() -> dict[str, Any]:
-	"""Idempotent seed for STR-SUP-005 role matrix users (MOH + OTHER-PE Viewer)."""
+	"""Delegate to MOH_MVP_V1 §4.4 personas (replaces prior @moh.test matrix)."""
+	from kentender_core.seeds.moh_mvp_v1.org import upsert_org
+	from kentender_core.seeds.moh_mvp_v1.users import upsert_canonical_users
+
 	ensure_strategy_roles()
-	pe_by_code = {
-		PE_MOH_CODE: _ensure_pe(PE_MOH_CODE, "Ministry of Health"),
-		PE_MOE_CODE: _ensure_pe(PE_MOE_CODE, "Ministry of Education"),
-	}
-	created: list[str] = []
-	for email, full_name, roles, entity_code in STRATEGY_ROLE_USERS:
-		pe_name = pe_by_code[entity_code]
-		_upsert_user(email, full_name, roles, pe_name)
-		created.append(email)
+	org = upsert_org()
+	users = upsert_canonical_users()
 	frappe.db.commit()
 	return {
 		"ok": True,
-		"users": created,
+		"users": users.get("users") or [],
 		"password": TEST_PASSWORD,
-		"pe_moh": pe_by_code[PE_MOH_CODE],
-		"pe_moe": pe_by_code[PE_MOE_CODE],
+		"pe_moh": org.get("pe_moh"),
+		"pe_moe": org.get("pe_moe"),
+		"delegated_to": "moh_mvp_v1.users",
 	}

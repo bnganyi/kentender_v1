@@ -114,14 +114,14 @@ class TestBudgetNotifications(FrappeTestCase):
 		):
 			line = frappe.get_doc("Budget Line", ln)
 			if not (line.primary_target_code or "").strip():
-				line.primary_target_code = "MOH-TGT-0003"
+				line.primary_target_code = "MOH-TGT-SKILLS-2029"
 				line.primary_target_name = "Digital health technical capability target"
 				line.primary_strategy_linked = 1
 			if not line.get("value_treatments"):
 				line.append(
 					"value_treatments",
 					{
-						"pvc_code": "PVO-EFT-01",
+						"pvc_code": "MOH-PVC-EFT-01",
 						"pvc_name": "Improve infrastructure efficiency",
 						"requirement_level": "Required",
 						"treatment": "Embedded in line",
@@ -201,14 +201,14 @@ class TestBudgetNotifications(FrappeTestCase):
 		try:
 			saved = create_budget_revision(
 				{
-					"budget": "MOH-BUD-0001",
+					"budget": "MOH-BUD-2027-2028",
 					"external_approval_reference": "MOF/NOTIFY/REV",
 					"approval_date": "2027-12-01",
 					"effective_date": "2027-12-15",
 					"reason": "Notify path uplift",
 					"approval_evidence": "/private/files/rev-notify.pdf",
 					"lines": [
-						{"budget_line": "MOH-BL-0002", "change_amount": 2_000_000},
+						{"budget_line": "MOH-BL-HWD-2027", "change_amount": 2_000_000},
 					],
 				}
 			)
@@ -236,14 +236,14 @@ class TestBudgetNotifications(FrappeTestCase):
 		try:
 			saved = create_budget_revision(
 				{
-					"budget": "MOH-BUD-0001",
+					"budget": "MOH-BUD-2027-2028",
 					"external_approval_reference": "MOF/NOTIFY/REV-RJ",
 					"approval_date": "2027-12-01",
 					"effective_date": "2027-12-15",
 					"reason": "Reject notify path",
 					"approval_evidence": "/private/files/rev-notify-rj.pdf",
 					"lines": [
-						{"budget_line": "MOH-BL-0002", "change_amount": 1_500_000},
+						{"budget_line": "MOH-BL-HWD-2027", "change_amount": 1_500_000},
 					],
 				}
 			)
@@ -265,14 +265,14 @@ class TestBudgetNotifications(FrappeTestCase):
 		try:
 			saved = create_budget_revision(
 				{
-					"budget": "MOH-BUD-0001",
+					"budget": "MOH-BUD-2027-2028",
 					"external_approval_reference": "MOF/NOTIFY/REV-AP",
 					"approval_date": "2027-12-01",
 					"effective_date": "2027-12-15",
 					"reason": "Apply notify path",
 					"approval_evidence": "/private/files/rev-notify-ap.pdf",
 					"lines": [
-						{"budget_line": "MOH-BL-0002", "change_amount": 1_000_000},
+						{"budget_line": "MOH-BL-HWD-2027", "change_amount": 1_000_000},
 					],
 				}
 			)
@@ -288,7 +288,7 @@ class TestBudgetNotifications(FrappeTestCase):
 		)
 
 	def test_notify_idempotent_and_failure_does_not_break_api(self):
-		doc = frappe.get_doc("Budget", {"generated_reference": "MOH-BUD-0001"})
+		doc = frappe.get_doc("Budget", {"generated_reference": "MOH-BUD-2027-2028"})
 		first = notify_budget_users(
 			EVENT_BUDGET_SUBMITTED,
 			budget_doc=doc,

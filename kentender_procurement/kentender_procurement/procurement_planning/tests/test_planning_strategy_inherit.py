@@ -75,7 +75,7 @@ class TestPlanningStrategyInherit(IntegrationTestCase):
 
 	def _budget_line(self) -> str | None:
 		return frappe.db.get_value(
-			"Budget Line", {"generated_reference": "MOH-BL-0001"}, "name"
+			"Budget Line", {"generated_reference": "MOH-BL-DHI-2027"}, "name"
 		) or (self.seed.get("downstream") or {}).get("linked", {}).get("budget_line")
 
 	def _mk_plan(self) -> str:
@@ -99,7 +99,7 @@ class TestPlanningStrategyInherit(IntegrationTestCase):
 	def _mk_demand(self, *, with_strategy: bool = True):
 		bl = self._budget_line()
 		if not bl:
-			self.skipTest("MOH-BL-0001 Budget Line not present")
+			self.skipTest("MOH-BL-DHI-2027 Budget Line not present")
 		dept = ensure_department(
 			f"Dept STRI {frappe.generate_hash(length=4)}", self.seed["procuring_entity"]
 		)

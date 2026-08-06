@@ -27,8 +27,8 @@ class TestBudgetRevisions(FrappeTestCase):
 		cls.seed = upsert_moh_mvp_v1_portfolio()
 
 	def test_list_includes_seeded_draft(self):
-		dto = list_budget_revisions("MOH-BUD-0001")
-		self.assertEqual(dto["budget"]["code"], "MOH-BUD-0001")
+		dto = list_budget_revisions("MOH-BUD-2027-2028")
+		self.assertEqual(dto["budget"]["code"], "MOH-BUD-2027-2028")
 		self.assertEqual(dto["budget"]["status"], "Active")
 		self.assertTrue(dto["capabilities"]["can_create"])
 		by_code = {r["code"]: r for r in dto["rows"]}
@@ -39,10 +39,10 @@ class TestBudgetRevisions(FrappeTestCase):
 		self.assertEqual(seed["change_total_display"], "+ KES 25,000,000")
 
 	def test_create_context_floors_and_money(self):
-		ctx = get_budget_revision_create_context("MOH-BUD-0001")
+		ctx = get_budget_revision_create_context("MOH-BUD-2027-2028")
 		self.assertEqual(ctx["budget"]["status"], "Active")
 		by_code = {r["code"]: r for r in ctx["lines"]}
-		bl = by_code["MOH-BL-0001"]
+		bl = by_code["MOH-BL-DHI-2027"]
 		self.assertEqual(flt(bl["before_amount"]), 480_000_000)
 		self.assertEqual(bl["before_display"], "KES 480,000,000")
 		self.assertEqual(flt(bl["reserved"]), 145_000_000)
@@ -54,14 +54,14 @@ class TestBudgetRevisions(FrappeTestCase):
 	def test_create_draft_ok(self):
 		result = create_budget_revision(
 			{
-				"budget": "MOH-BUD-0001",
+				"budget": "MOH-BUD-2027-2028",
 				"external_approval_reference": "MOF/TEST/REV-01",
 				"approval_date": "2027-12-01",
 				"effective_date": "2027-12-15",
 				"reason": "Test draft uplift",
 				"lines": [
-					{"budget_line": "MOH-BL-0001", "change_amount": 10_000_000},
-					{"budget_line": "MOH-BL-0002", "change_amount": 0},
+					{"budget_line": "MOH-BL-DHI-2027", "change_amount": 10_000_000},
+					{"budget_line": "MOH-BL-HWD-2027", "change_amount": 0},
 				],
 			}
 		)
@@ -74,31 +74,31 @@ class TestBudgetRevisions(FrappeTestCase):
 		self.assertEqual(rev["impact"]["after_display"], "KES 570,000,000")
 
 	def test_ac016_denies_below_floor(self):
-		# Floor for MOH-BL-0001 is 455M; before 480M → max reduce 25M.
+		# Floor for MOH-BL-DHI-2027 is 455M; before 480M → max reduce 25M.
 		result = create_budget_revision(
 			{
-				"budget": "MOH-BUD-0001",
+				"budget": "MOH-BUD-2027-2028",
 				"reason": "Illegal cut",
 				"lines": [
-					{"budget_line": "MOH-BL-0001", "change_amount": -30_000_000},
+					{"budget_line": "MOH-BL-DHI-2027", "change_amount": -30_000_000},
 				],
 			}
 		)
 		self.assertFalse(result.get("ok"))
 		self.assertIn("lines", result.get("errors") or {})
-		self.assertIn("MOH-BL-0001", result["errors"].get("lines", ""))
+		self.assertIn("MOH-BL-DHI-2027", result["errors"].get("lines", ""))
 
 	def test_submit_succeeds_without_evidence_and_locks(self):
 		saved = create_budget_revision(
 			{
-				"budget": "MOH-BUD-0001",
+				"budget": "MOH-BUD-2027-2028",
 				"external_approval_reference": "MOF/TEST/REV-SUB",
 				"approval_date": "2027-12-01",
 				"effective_date": "2027-12-15",
 				"reason": "Submit path",
 				"approval_evidence": "",
 				"lines": [
-					{"budget_line": "MOH-BL-0001", "change_amount": 5_000_000},
+					{"budget_line": "MOH-BL-DHI-2027", "change_amount": 5_000_000},
 				],
 			}
 		)
@@ -115,10 +115,10 @@ class TestBudgetRevisions(FrappeTestCase):
 		# Immutable — cannot edit after submit
 		again = create_budget_revision(
 			{
-				"budget": "MOH-BUD-0001",
+				"budget": "MOH-BUD-2027-2028",
 				"revision": code,
 				"reason": "Try edit",
-				"lines": [{"budget_line": "MOH-BL-0001", "change_amount": 1}],
+				"lines": [{"budget_line": "MOH-BL-DHI-2027", "change_amount": 1}],
 			}
 		)
 		self.assertFalse(again.get("ok"))
@@ -153,6 +153,6 @@ class TestBudgetRevisions(FrappeTestCase):
 		frappe.set_user(email)
 		try:
 			with self.assertRaises(frappe.PermissionError):
-				list_budget_revisions("MOH-BUD-0001")
+				list_budget_revisions("MOH-BUD-2027-2028")
 		finally:
 			frappe.set_user("Administrator")

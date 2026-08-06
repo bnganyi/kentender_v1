@@ -541,18 +541,6 @@ body.kt-str-create-active .kt-str-field-invalid {
 	transform: scale(1.1) !important;
 }
 
-/* Quote card architecture glyph must win over generic material styles */
-.kt-cl-shell .kt-str-root[data-testid="kt-str-create-plan"] [data-testid="kt-str-create-quote"] .text-4xl.material-symbols-outlined,
-.kt-cl-shell .kt-str-root[data-testid="kt-str-create-plan"] [data-testid="kt-str-create-quote"] .material-symbols-outlined.text-4xl {
-	font-size: 2.25rem !important;
-	line-height: 1 !important;
-	color: #d7e2ff !important;
-}
-.kt-cl-shell .kt-str-root[data-testid="kt-str-create-plan"] [data-testid="kt-str-create-quote"] .text-white,
-.kt-cl-shell .kt-str-root[data-testid="kt-str-create-plan"] [data-testid="kt-str-create-quote"] p {
-	color: #ffffff !important;
-}
-
 /* Field focus: use module lock in strategy_alignment_responsive.css (light blue).
    Do not reintroduce #001f48 / 2px primary rings here. */
 

@@ -34,15 +34,15 @@ class TestBudgetAudit(FrappeTestCase):
 		upsert_moh_mvp_v1_portfolio()
 
 	def test_seeded_moh_0001_ledger_pack_codes_and_full_money(self):
-		dto = get_budget_audit("MOH-BUD-0001")
-		self.assertEqual(dto["budget"]["code"], "MOH-BUD-0001")
+		dto = get_budget_audit("MOH-BUD-2027-2028")
+		self.assertEqual(dto["budget"]["code"], "MOH-BUD-2027-2028")
 		self.assertTrue(dto["capabilities"]["read_only"])
 		self.assertGreaterEqual(dto["row_count"], 7)
 		codes = {r["record_code"] for r in dto["rows"]}
-		self.assertIn("MOH-BUD-0001", codes)
+		self.assertIn("MOH-BUD-2027-2028", codes)
 		self.assertIn("RSV-MOH-0001", codes)
-		self.assertIn("COM-MOH-0001", codes)
-		self.assertIn("EXP-MOH-0001", codes)
+		self.assertIn("COM-MOH-2027-005", codes)
+		self.assertIn("EXP-MOH-2027-005-01", codes)
 		self.assertIn("BR-MOH-0000", codes)
 		joined = " ".join(r["change_summary_display"] for r in dto["rows"])
 		self.assertIn("KES 455,000,000", joined)
@@ -53,11 +53,11 @@ class TestBudgetAudit(FrappeTestCase):
 		self.assertEqual(dto["rows"][0]["action_label"], "View")
 
 	def test_filter_by_event_type(self):
-		dto = get_budget_audit("MOH-BUD-0001", event_type="Funding reserved")
+		dto = get_budget_audit("MOH-BUD-2027-2028", event_type="Funding reserved")
 		self.assertGreaterEqual(dto["row_count"], 1)
 		for r in dto["rows"]:
 			self.assertEqual(r["event_type"], "Funding reserved")
-			self.assertEqual(r["record_code"], "RSV-MOH-0001")
+		self.assertIn("RSV-MOH-0001", {r["record_code"] for r in dto["rows"]})
 
 	def test_immutability_blocks_delete(self):
 		name = frappe.db.get_value(
@@ -111,16 +111,16 @@ class TestBudgetAudit(FrappeTestCase):
 		frappe.set_user(email)
 		try:
 			with self.assertRaises(frappe.PermissionError):
-				get_budget_audit("MOH-BUD-0001")
+				get_budget_audit("MOH-BUD-2027-2028")
 		finally:
 			frappe.set_user("Administrator")
 
 	def test_record_event_helper(self):
-		name = frappe.db.get_value("Budget", {"generated_reference": "MOH-BUD-0003"}, "name")
+		name = frappe.db.get_value("Budget", {"generated_reference": "MOH-BUD-2026-2027"}, "name")
 		ev = record_event(
 			budget=name,
 			event_type="Baseline registered",
-			record_code="MOH-BUD-0003",
+			record_code="MOH-BUD-2026-2027",
 			actor="test",
 			actor_kind="system",
 			change_summary="Test event",
@@ -130,8 +130,8 @@ class TestBudgetAudit(FrappeTestCase):
 
 	def test_reserve_path_creates_event_reserved(self):
 		"""BUD-SUP-005 — live reserve_funding emits Funding reserved audit evidence."""
-		line = frappe.db.get_value("Budget Line", {"generated_reference": "MOH-BL-0002"}, "name")
-		key = "TEST:AUDIT-RSV:MOH-BL-0002:11000000.00"
+		line = frappe.db.get_value("Budget Line", {"generated_reference": "MOH-BL-HWD-2027"}, "name")
+		key = "TEST:AUDIT-RSV:MOH-BL-HWD-2027:11000000.00"
 		result = reserve_funding(
 			budget_line=line,
 			demand_name="DMD-TEST-AUDIT-RSV",
@@ -148,5 +148,5 @@ class TestBudgetAudit(FrappeTestCase):
 			"name",
 		)
 		self.assertTrue(name)
-		dto = get_budget_audit("MOH-BUD-0001", event_type=EVENT_RESERVED)
+		dto = get_budget_audit("MOH-BUD-2027-2028", event_type=EVENT_RESERVED)
 		self.assertTrue(any(r["record_code"] == result["reservation_code"] for r in dto["rows"]))

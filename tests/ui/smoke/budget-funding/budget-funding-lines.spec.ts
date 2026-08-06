@@ -15,7 +15,7 @@ test.describe("Budget Funding lines (BUD-UI-04 / BUD-UI-05)", () => {
 	});
 
 	test("open from Overview tab shows live lines table with seed money", async ({ page }) => {
-		await page.goto("/desk/budget-overview/MOH-BUD-0001", { waitUntil: "domcontentloaded" });
+		await page.goto("/desk/budget-overview/MOH-BUD-2027-2028", { waitUntil: "domcontentloaded" });
 		await expect(
 			page.locator('[data-testid="kt-bud-overview"][data-kt-bud-live="1"]'),
 		).toBeVisible({ timeout: 45_000 });
@@ -24,7 +24,7 @@ test.describe("Budget Funding lines (BUD-UI-04 / BUD-UI-05)", () => {
 			.locator('[data-testid="kt-bud-tab-budget-lines"]')
 			.filter({ visible: true })
 			.click();
-		await page.waitForURL(/\/desk\/budget-lines\/MOH-BUD-0001/, { timeout: 20_000 });
+		await page.waitForURL(/\/desk\/budget-lines\/MOH-BUD-2027-2028/, { timeout: 20_000 });
 
 		const root = page
 			.locator('[data-testid="kt-bud-lines"][data-kt-bud-live="1"]')
@@ -55,10 +55,10 @@ test.describe("Budget Funding lines (BUD-UI-04 / BUD-UI-05)", () => {
 		expect(sourceWrap).toBeTruthy();
 		expect(Math.abs((sourceBox?.width || 0) - (sourceWrap?.width || 0))).toBeLessThan(2);
 
-		const row1 = root.locator('tr[data-line-code="MOH-BL-0001"]');
+		const row1 = root.locator('tr[data-line-code="MOH-BL-DHI-2027"]');
 		await expect(row1).toBeVisible({ timeout: 20_000 });
 		await expect(row1).toContainText("Digital clinical systems infrastructure");
-		await expect(row1).toContainText("MOH-BL-0001");
+		await expect(row1).toContainText("MOH-BL-DHI-2027");
 		await expect(row1).toContainText("KES 480,000,000");
 		await expect(row1).toContainText("KES 25,000,000");
 		await expect(row1).toContainText("Stale");
@@ -75,7 +75,7 @@ test.describe("Budget Funding lines (BUD-UI-04 / BUD-UI-05)", () => {
 			"none",
 		);
 
-		const row2 = root.locator('tr[data-line-code="MOH-BL-0002"]');
+		const row2 = root.locator('tr[data-line-code="MOH-BL-HWD-2027"]');
 		await expect(row2).toBeVisible();
 		await expect(row2).toContainText("Digital health technical capability");
 		await expect(row2).toContainText("Unknown");
@@ -95,7 +95,7 @@ test.describe("Budget Funding lines (BUD-UI-04 / BUD-UI-05)", () => {
 	});
 
 	test("Active New Line shows in-canvas notice without Frappe dialog", async ({ page }) => {
-		await page.goto("/desk/budget-lines/MOH-BUD-0001", { waitUntil: "domcontentloaded" });
+		await page.goto("/desk/budget-lines/MOH-BUD-2027-2028", { waitUntil: "domcontentloaded" });
 		const root = page
 			.locator('[data-testid="kt-bud-lines"][data-kt-bud-live="1"]')
 			.filter({ visible: true });
@@ -117,14 +117,14 @@ test.describe("Budget Funding lines (BUD-UI-04 / BUD-UI-05)", () => {
 	});
 
 	test("Active drawer opens read-only without Save", async ({ page }) => {
-		await page.goto("/desk/budget-lines/MOH-BUD-0001", { waitUntil: "domcontentloaded" });
+		await page.goto("/desk/budget-lines/MOH-BUD-2027-2028", { waitUntil: "domcontentloaded" });
 		const root = page
 			.locator('[data-testid="kt-bud-lines"][data-kt-bud-live="1"]')
 			.filter({ visible: true });
 		await expect(root).toBeVisible({ timeout: 45_000 });
 
 		await root
-			.locator('tr[data-line-code="MOH-BL-0001"] [data-testid="kt-bud-line-action"]')
+			.locator('tr[data-line-code="MOH-BL-DHI-2027"] [data-testid="kt-bud-line-action"]')
 			.click();
 
 		const drawer = root.getByTestId("kt-bud-line-drawer");
@@ -133,7 +133,7 @@ test.describe("Budget Funding lines (BUD-UI-04 / BUD-UI-05)", () => {
 		await expect(root.getByTestId("kt-bud-line-section-funding")).toBeVisible();
 		await expect(root.getByTestId("kt-bud-line-section-strategy")).toBeVisible();
 		await expect(root.getByTestId("kt-bud-line-section-pvc")).toBeVisible();
-		await expect(drawer.locator('[data-kt-bud-line-field="code"]')).toHaveText("MOH-BL-0001");
+		await expect(drawer.locator('[data-kt-bud-line-field="code"]')).toHaveText("MOH-BL-DHI-2027");
 		await expect(root.getByTestId("kt-bud-line-title")).toHaveValue(
 			"Digital clinical systems infrastructure",
 		);
@@ -145,7 +145,7 @@ test.describe("Budget Funding lines (BUD-UI-04 / BUD-UI-05)", () => {
 	});
 
 	test("round-trip Overview keeps shell and lines remount", async ({ page }) => {
-		await page.goto("/desk/budget-lines/MOH-BUD-0001", { waitUntil: "domcontentloaded" });
+		await page.goto("/desk/budget-lines/MOH-BUD-2027-2028", { waitUntil: "domcontentloaded" });
 		const lines = page
 			.locator('[data-testid="kt-bud-lines"][data-kt-bud-live="1"]')
 			.filter({ visible: true });
@@ -153,7 +153,7 @@ test.describe("Budget Funding lines (BUD-UI-04 / BUD-UI-05)", () => {
 		await expect(page.locator("body")).toHaveClass(/kt-cl-shell/);
 
 		await lines.getByTestId("kt-bud-tab-budget-overview").click();
-		await page.waitForURL(/\/desk\/budget-overview\/MOH-BUD-0001/, { timeout: 20_000 });
+		await page.waitForURL(/\/desk\/budget-overview\/MOH-BUD-2027-2028/, { timeout: 20_000 });
 		const overview = page
 			.locator('[data-testid="kt-bud-overview"][data-kt-bud-live="1"]')
 			.filter({ visible: true });
@@ -161,12 +161,12 @@ test.describe("Budget Funding lines (BUD-UI-04 / BUD-UI-05)", () => {
 		await expect(page.locator("body")).toHaveClass(/kt-cl-shell/);
 
 		await overview.getByTestId("kt-bud-tab-budget-lines").click();
-		await page.waitForURL(/\/desk\/budget-lines\/MOH-BUD-0001/, { timeout: 20_000 });
+		await page.waitForURL(/\/desk\/budget-lines\/MOH-BUD-2027-2028/, { timeout: 20_000 });
 		const linesAgain = page
 			.locator('[data-testid="kt-bud-lines"][data-kt-bud-live="1"]')
 			.filter({ visible: true });
 		await expect(linesAgain).toBeVisible({ timeout: 45_000 });
-		await expect(linesAgain.locator('tr[data-line-code="MOH-BL-0001"]')).toContainText(
+		await expect(linesAgain.locator('tr[data-line-code="MOH-BL-DHI-2027"]')).toContainText(
 			"KES 480,000,000",
 		);
 	});

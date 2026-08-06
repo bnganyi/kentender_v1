@@ -29,12 +29,12 @@ from kentender_budget.services.budget_revision_contracts import (
 	submit_budget_revision,
 )
 
-VIEWER = "budget.viewer@moh.test"
-OFFICER = "budget.officer@moh.test"
-REVIEWER = "budget.reviewer@moh.test"
-AUTHORITY = "budget.authority@moh.test"
-DUAL = "budget.officer.authority@moh.test"
-OTHER = "budget.officer@moe.test"
+VIEWER = "moh.viewer@example.test"
+OFFICER = "moh.medicalservices.officer@example.test"
+REVIEWER = "moh.budget.reviewer@example.test"
+AUTHORITY = "moh.budget.authority@example.test"
+DUAL = "moh.budget.officer.authority@example.test"
+OTHER = "other.entity.officer@example.test"
 
 
 class TestBudgetRoleMatrix(FrappeTestCase):
@@ -62,14 +62,14 @@ class TestBudgetRoleMatrix(FrappeTestCase):
 		):
 			line = frappe.get_doc("Budget Line", ln)
 			if not (line.primary_target_code or "").strip():
-				line.primary_target_code = "MOH-TGT-0003"
+				line.primary_target_code = "MOH-TGT-SKILLS-2029"
 				line.primary_target_name = "Digital health technical capability target"
 				line.primary_strategy_linked = 1
 			if not line.get("value_treatments"):
 				line.append(
 					"value_treatments",
 					{
-						"pvc_code": "PVO-EFT-01",
+						"pvc_code": "MOH-PVC-EFT-01",
 						"pvc_name": "Improve infrastructure efficiency",
 						"requirement_level": "Required",
 						"treatment": "Embedded in line",
@@ -82,7 +82,7 @@ class TestBudgetRoleMatrix(FrappeTestCase):
 
 	def test_viewer_active_ok_draft_denied(self):
 		frappe.set_user(VIEWER)
-		active = get_budget_readiness("MOH-BUD-0001")
+		active = get_budget_readiness("MOH-BUD-2027-2028")
 		self.assertEqual(active["budget"]["status"], "Active")
 		perf = get_funding_performance()
 		self.assertTrue(perf["capabilities"]["can_export"])
@@ -98,13 +98,13 @@ class TestBudgetRoleMatrix(FrappeTestCase):
 		with self.assertRaises(frappe.PermissionError):
 			create_budget_revision(
 				{
-					"budget": "MOH-BUD-0001",
+					"budget": "MOH-BUD-2027-2028",
 					"external_approval_reference": "X",
 					"approval_date": "2027-12-01",
 					"effective_date": "2027-12-15",
 					"reason": "viewer deny",
 					"approval_evidence": "/private/files/x.pdf",
-					"lines": [{"budget_line": "MOH-BL-0002", "change_amount": 1_000_000}],
+					"lines": [{"budget_line": "MOH-BL-HWD-2027", "change_amount": 1_000_000}],
 				}
 			)
 
@@ -173,13 +173,13 @@ class TestBudgetRoleMatrix(FrappeTestCase):
 		with self.assertRaises(frappe.PermissionError):
 			create_budget_revision(
 				{
-					"budget": "MOH-BUD-0001",
+					"budget": "MOH-BUD-2027-2028",
 					"external_approval_reference": "X",
 					"approval_date": "2027-12-01",
 					"effective_date": "2027-12-15",
 					"reason": "reviewer deny create",
 					"approval_evidence": "/private/files/x.pdf",
-					"lines": [{"budget_line": "MOH-BL-0002", "change_amount": 1_000_000}],
+					"lines": [{"budget_line": "MOH-BL-HWD-2027", "change_amount": 1_000_000}],
 				}
 			)
 
@@ -207,13 +207,13 @@ class TestBudgetRoleMatrix(FrappeTestCase):
 		with self.assertRaises(frappe.PermissionError):
 			create_budget_revision(
 				{
-					"budget": "MOH-BUD-0001",
+					"budget": "MOH-BUD-2027-2028",
 					"external_approval_reference": "X",
 					"approval_date": "2027-12-01",
 					"effective_date": "2027-12-15",
 					"reason": "authority deny create",
 					"approval_evidence": "/private/files/x.pdf",
-					"lines": [{"budget_line": "MOH-BL-0002", "change_amount": 1_000_000}],
+					"lines": [{"budget_line": "MOH-BL-HWD-2027", "change_amount": 1_000_000}],
 				}
 			)
 		perf = get_funding_performance()
@@ -234,13 +234,13 @@ class TestBudgetRoleMatrix(FrappeTestCase):
 		# Own revision apply denied
 		saved = create_budget_revision(
 			{
-				"budget": "MOH-BUD-0001",
+				"budget": "MOH-BUD-2027-2028",
 				"external_approval_reference": "MOF/ROLE/AC018",
 				"approval_date": "2027-12-01",
 				"effective_date": "2027-12-15",
 				"reason": "AC-018 dual apply deny",
 				"approval_evidence": "/private/files/ac018.pdf",
-				"lines": [{"budget_line": "MOH-BL-0002", "change_amount": 1_000_000}],
+				"lines": [{"budget_line": "MOH-BL-HWD-2027", "change_amount": 1_000_000}],
 			}
 		)
 		self.assertTrue(saved.get("ok"), saved)
@@ -253,7 +253,7 @@ class TestBudgetRoleMatrix(FrappeTestCase):
 	def test_other_entity_cannot_access_moh(self):
 		frappe.set_user(OTHER)
 		with self.assertRaises(frappe.PermissionError):
-			get_budget_readiness("MOH-BUD-0001")
+			get_budget_readiness("MOH-BUD-2027-2028")
 		with self.assertRaises(frappe.PermissionError):
 			get_budget_readiness("MOH-BUD-0002")
 		with self.assertRaises(frappe.PermissionError):
@@ -262,5 +262,5 @@ class TestBudgetRoleMatrix(FrappeTestCase):
 	def test_active_baseline_not_directly_submittable(self):
 		"""AC-015 — Active budgets cannot use Draft submit path."""
 		frappe.set_user(OFFICER)
-		res = submit_budget({"budget": "MOH-BUD-0001"})
+		res = submit_budget({"budget": "MOH-BUD-2027-2028"})
 		self.assertFalse(res.get("ok"))

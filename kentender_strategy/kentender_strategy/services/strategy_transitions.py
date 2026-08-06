@@ -15,8 +15,7 @@ from kentender_strategy.services.strategy_permissions import (
 	can_verify_measurement,
 	require_any_role,
 	ROLE_MANAGER,
-	ROLE_PERF_OFFICER,
-	ROLE_PERF_VERIFIER,
+	ROLE_OFFICER,
 	ROLE_PLANNING,
 	ROLE_REVIEWER,
 )
@@ -225,13 +224,13 @@ def transition_measurement(
 		frappe.throw(_("Invalid measurement transition: {0} / {1}").format(doc.workflow_status, action))
 	if action in ("Submit", "Resubmit"):
 		if not can_submit_measurement():
-			frappe.throw(_("Only Performance Officer may submit"), frappe.PermissionError)
+			frappe.throw(_("Only Strategy Officer may submit measurements"), frappe.PermissionError)
 		derive_measurement_result(doc)
 		doc.submitted_by = frappe.session.user
 		doc.submitted_at = frappe.utils.now_datetime()
 	elif action in ("Return", "Verify", "Reject"):
 		if not can_verify_measurement():
-			frappe.throw(_("Only Performance Verifier may decide"), frappe.PermissionError)
+			frappe.throw(_("Only Strategy Manager may verify measurements"), frappe.PermissionError)
 		if doc.submitted_by == frappe.session.user and frappe.session.user != "Administrator":
 			frappe.throw(_("Verifier must not be the submitter"), frappe.PermissionError)
 		if action in ("Return", "Reject") and not reason:
@@ -323,11 +322,11 @@ def transition_corrective_action(name: str, action: str, reason: str | None = No
 		doc.cancelled_by = frappe.session.user
 	elif action == "Verify":
 		if not can_verify_measurement():
-			frappe.throw(_("Only Performance Verifier may verify actions"), frappe.PermissionError)
+			frappe.throw(_("Only Strategy Manager may verify actions"), frappe.PermissionError)
 		doc.verified_by = frappe.session.user
 		doc.verified_at = frappe.utils.now_datetime()
 	elif action in ("Start", "Submit completion"):
-		require_any_role(ROLE_PERF_OFFICER, ROLE_MANAGER, "System Manager")
+		require_any_role(ROLE_OFFICER, ROLE_MANAGER, "System Manager")
 		if action == "Submit completion" and not doc.completion_evidence:
 			frappe.throw(_("Completion evidence is required"))
 	prior = doc.status

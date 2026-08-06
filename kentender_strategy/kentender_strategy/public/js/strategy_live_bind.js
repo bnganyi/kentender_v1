@@ -4170,7 +4170,7 @@ frappe.provide("kentender_strategy.live");
 				.find("[data-kt-str-meas-sod-text]")
 				.text(
 					__(
-						"You submitted this measurement. Another Performance Verifier must decide."
+						"You submitted this measurement. Another Strategy Manager must decide."
 					)
 				);
 		} else if (!m.id || m.is_new) {

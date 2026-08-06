@@ -25,8 +25,8 @@ class TestBudgetDownstreamUsage(FrappeTestCase):
 		cls.seed = upsert_moh_mvp_v1_portfolio()
 
 	def test_list_seeded_lineage_row_pack_93(self):
-		dto = list_downstream_usage("MOH-BUD-0001")
-		self.assertEqual(dto["budget"]["code"], "MOH-BUD-0001")
+		dto = list_downstream_usage("MOH-BUD-2027-2028")
+		self.assertEqual(dto["budget"]["code"], "MOH-BUD-2027-2028")
 		self.assertTrue(dto["capabilities"]["read_only"])
 		self.assertEqual(dto["capabilities"]["primary_action"], "request_revision")
 		self.assertEqual(dto["capabilities"]["primary_label"], "Request revision")
@@ -49,8 +49,8 @@ class TestBudgetDownstreamUsage(FrappeTestCase):
 		self.assertEqual(flt(row["reserved_balance"]) + flt(row["commitment"]), 455_000_000)
 
 	def test_get_budget_usage_alias(self):
-		a = list_downstream_usage("MOH-BUD-0001")
-		b = get_budget_usage("MOH-BUD-0001")
+		a = list_downstream_usage("MOH-BUD-2027-2028")
+		b = get_budget_usage("MOH-BUD-2027-2028")
 		self.assertEqual(a["row_count"], b["row_count"])
 		self.assertEqual(a["rows"][0]["code"], b["rows"][0]["code"])
 
@@ -78,6 +78,6 @@ class TestBudgetDownstreamUsage(FrappeTestCase):
 		frappe.set_user(email)
 		try:
 			with self.assertRaises(frappe.PermissionError):
-				list_downstream_usage("MOH-BUD-0001")
+				list_downstream_usage("MOH-BUD-2027-2028")
 		finally:
 			frappe.set_user("Administrator")

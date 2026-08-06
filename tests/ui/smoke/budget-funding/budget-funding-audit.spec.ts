@@ -15,7 +15,7 @@ test.describe("Budget Funding audit history (BUD-UI-12)", () => {
 	});
 
 	test("live table shows pack codes and full KES money", async ({ page }) => {
-		await page.goto("/desk/budget-audit/MOH-BUD-0001", {
+		await page.goto("/desk/budget-audit/MOH-BUD-2027-2028", {
 			waitUntil: "domcontentloaded",
 		});
 		const root = page
@@ -41,7 +41,7 @@ test.describe("Budget Funding audit history (BUD-UI-12)", () => {
 		await expect(root.locator('tr[data-record-code="RSV-MOH-0001"]').first()).toBeVisible({
 			timeout: 20_000,
 		});
-		await expect(root.locator('tr[data-record-code="MOH-BUD-0001"]').first()).toBeVisible();
+		await expect(root.locator('tr[data-record-code="MOH-BUD-2027-2028"]').first()).toBeVisible();
 		await expect(root).toContainText("KES 455,000,000");
 		await expect(root).toContainText("KES 145,000,000");
 		await expect(root).not.toContainText("455M");
@@ -58,7 +58,7 @@ test.describe("Budget Funding audit history (BUD-UI-12)", () => {
 	});
 
 	test("event filter narrows rows; View notice without Message dialog", async ({ page }) => {
-		await page.goto("/desk/budget-audit/MOH-BUD-0001", {
+		await page.goto("/desk/budget-audit/MOH-BUD-2027-2028", {
 			waitUntil: "domcontentloaded",
 		});
 		const root = page
@@ -82,7 +82,7 @@ test.describe("Budget Funding audit history (BUD-UI-12)", () => {
 	});
 
 	test("soft-show rebind keeps live table after tab hop", async ({ page }) => {
-		await page.goto("/desk/budget-audit/MOH-BUD-0001", {
+		await page.goto("/desk/budget-audit/MOH-BUD-2027-2028", {
 			waitUntil: "domcontentloaded",
 		});
 		const root = page

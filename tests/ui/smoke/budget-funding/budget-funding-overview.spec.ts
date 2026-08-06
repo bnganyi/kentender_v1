@@ -20,10 +20,10 @@ test.describe("Budget Funding overview (BUD-UI-03)", () => {
 			timeout: 45_000,
 		});
 
-		const row = page.locator('tr[data-budget-code="MOH-BUD-0001"]');
+		const row = page.locator('tr[data-budget-code="MOH-BUD-2027-2028"]');
 		await expect(row).toBeVisible({ timeout: 20_000 });
 		await row.getByRole("button", { name: /Open/i }).click();
-		await page.waitForURL(/\/desk\/budget-overview\/MOH-BUD-0001/, { timeout: 20_000 });
+		await page.waitForURL(/\/desk\/budget-overview\/MOH-BUD-2027-2028/, { timeout: 20_000 });
 
 		const root = page.locator('[data-testid="kt-bud-overview"][data-kt-bud-live="1"]');
 		await expect(root).toBeVisible({ timeout: 45_000 });
@@ -39,7 +39,7 @@ test.describe("Budget Funding overview (BUD-UI-03)", () => {
 
 		await expect(
 			page.locator('[data-testid="kt-bud-workspace-chrome"] span[data-kt-bud-budget-code]'),
-		).toHaveText("MOH-BUD-0001");
+		).toHaveText("MOH-BUD-2027-2028");
 		await expect(page.locator('[data-kt-bud-ov="approved"]')).toHaveText("KES 560M");
 		await expect(page.locator('[data-kt-bud-ov="available"]')).toHaveText("KES 105M");
 		await expect(page.locator('[data-kt-bud-ov="actual"]')).toHaveText("KES 180M");
@@ -54,7 +54,7 @@ test.describe("Budget Funding overview (BUD-UI-03)", () => {
 	});
 
 	test("tabs navigate without flash and round-trip keeps shell", async ({ page }) => {
-		await page.goto("/desk/budget-overview/MOH-BUD-0001", { waitUntil: "domcontentloaded" });
+		await page.goto("/desk/budget-overview/MOH-BUD-2027-2028", { waitUntil: "domcontentloaded" });
 		const root = page.locator('[data-testid="kt-bud-overview"][data-kt-bud-live="1"]');
 		await expect(root).toBeVisible({ timeout: 45_000 });
 
@@ -73,7 +73,7 @@ test.describe("Budget Funding overview (BUD-UI-03)", () => {
 			.locator('[data-testid="kt-bud-tab-budget-lines"]')
 			.filter({ visible: true })
 			.click();
-		await page.waitForURL(/\/desk\/budget-lines\/MOH-BUD-0001/, { timeout: 20_000 });
+		await page.waitForURL(/\/desk\/budget-lines\/MOH-BUD-2027-2028/, { timeout: 20_000 });
 		const linesPage = page
 			.locator('[data-testid="kt-bud-lines"][data-kt-bud-live="1"]')
 			.filter({ visible: true });
@@ -84,7 +84,7 @@ test.describe("Budget Funding overview (BUD-UI-03)", () => {
 		await expect(linesPage.locator("[data-kt-bud-budget-title]")).not.toHaveText("—");
 
 		await linesPage.getByTestId("kt-bud-tab-budget-overview").click();
-		await page.waitForURL(/\/desk\/budget-overview\/MOH-BUD-0001/, { timeout: 20_000 });
+		await page.waitForURL(/\/desk\/budget-overview\/MOH-BUD-2027-2028/, { timeout: 20_000 });
 		const overview = page
 			.locator('[data-testid="kt-bud-overview"][data-kt-bud-live="1"]')
 			.filter({ visible: true });
@@ -103,7 +103,7 @@ test.describe("Budget Funding overview (BUD-UI-03)", () => {
 	});
 
 	test("budget tab hop never flashes empty chrome title placeholders", async ({ page }) => {
-		await page.goto("/desk/budget-overview/MOH-BUD-0001", { waitUntil: "domcontentloaded" });
+		await page.goto("/desk/budget-overview/MOH-BUD-2027-2028", { waitUntil: "domcontentloaded" });
 		const overview = page
 			.locator('[data-testid="kt-bud-overview"][data-kt-bud-live="1"]')
 			.filter({ visible: true });
@@ -154,14 +154,14 @@ test.describe("Budget Funding overview (BUD-UI-03)", () => {
 	});
 
 	test("Active primary CTA routes to revision create page", async ({ page }) => {
-		await page.goto("/desk/budget-overview/MOH-BUD-0001", { waitUntil: "domcontentloaded" });
+		await page.goto("/desk/budget-overview/MOH-BUD-2027-2028", { waitUntil: "domcontentloaded" });
 		const overview = page
 			.locator('[data-testid="kt-bud-overview"][data-kt-bud-live="1"]')
 			.filter({ visible: true });
 		await expect(overview).toBeVisible({ timeout: 45_000 });
 		await expect(overview.getByTestId("kt-bud-overview-primary")).toHaveText(/Request revision/i);
 		await overview.getByTestId("kt-bud-overview-primary").click();
-		await page.waitForURL(/\/desk\/budget-revision-create\/MOH-BUD-0001/, { timeout: 20_000 });
+		await page.waitForURL(/\/desk\/budget-revision-create\/MOH-BUD-2027-2028/, { timeout: 20_000 });
 		await expect(
 			page
 				.locator('[data-testid="kt-bud-revision-create"][data-kt-bud-live="1"]')
